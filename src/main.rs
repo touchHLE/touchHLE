@@ -3,6 +3,7 @@
 #![allow(non_snake_case)]
 
 mod bundle;
+mod window;
 
 use std::path::PathBuf;
 
@@ -44,7 +45,20 @@ fn main() -> Result<(), String> {
         }
     };
 
-    println!("Application name: {}", bundle.display_name());
+    let mut window = window::Window::new(&format!("{} (touchHLE)", bundle.display_name()));
 
-    unimplemented!()
+    let mut events = Vec::new(); // re-use each iteration for efficiency
+    loop {
+        window.poll_for_events(&mut events);
+        for event in events.drain(..) {
+            match event {
+                window::Event::Quit => {
+                    println!("User requested quit, exiting.");
+                    return Ok(());
+                }
+            }
+        }
+
+        // TODO: emulation
+    }
 }

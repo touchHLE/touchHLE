@@ -13,6 +13,7 @@ use std::path::PathBuf;
 
 #[derive(Debug)]
 pub struct Bundle {
+    path: PathBuf,
     plist: Dictionary,
 }
 
@@ -38,10 +39,24 @@ impl Bundle {
             .into_dictionary()
             .ok_or("plist root value is not a dictionary")?;
 
-        Ok(Bundle { plist })
+        Ok(Bundle { path, plist })
     }
 
     pub fn display_name(&self) -> &str {
         self.plist["CFBundleDisplayName"].as_string().unwrap()
+    }
+
+    pub fn launch_image_path(&self) -> PathBuf {
+        if let Some(base_name) = self.plist.get("UILaunchImageFile") {
+            self.path
+                .join(&format!("{}.png", base_name.as_string().unwrap()))
+        } else {
+            self.path.join("Default.png")
+        }
+    }
+
+    pub fn icon_path(&self) -> PathBuf {
+        self.path
+            .join(self.plist["CFBundleIconFile"].as_string().unwrap())
     }
 }

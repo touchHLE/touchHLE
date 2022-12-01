@@ -3,6 +3,7 @@
 #![allow(non_snake_case)]
 
 mod bundle;
+mod image;
 mod window;
 
 use std::path::PathBuf;
@@ -45,7 +46,16 @@ fn main() -> Result<(), String> {
         }
     };
 
-    let mut window = window::Window::new(&format!("{} (touchHLE)", bundle.display_name()));
+    let icon = image::Image::from_file(bundle.icon_path())
+        .map_err(|_| "Could not load icon".to_string())?;
+    let launch_image = image::Image::from_file(bundle.launch_image_path())
+        .map_err(|_| "Could not load launch image".to_string())?;
+
+    let mut window = window::Window::new(
+        &format!("{} (touchHLE)", bundle.display_name()),
+        icon,
+        launch_image,
+    );
 
     let mut events = Vec::new(); // re-use each iteration for efficiency
     loop {

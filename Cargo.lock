@@ -165,6 +165,7 @@ dependencies = [
 name = "touchHLE"
 version = "0.1.0"
 dependencies = [
+ "cc",
  "plist",
  "sdl2",
  "sdl2-sys",

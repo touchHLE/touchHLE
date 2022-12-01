@@ -56,7 +56,10 @@ impl Bundle {
     }
 
     pub fn icon_path(&self) -> PathBuf {
-        self.path
-            .join(self.plist["CFBundleIconFile"].as_string().unwrap())
+        if let Some(filename) = self.plist.get("CFBundleIconFile") {
+            self.path.join(filename.as_string().unwrap())
+        } else {
+            self.path.join("Icon.png")
+        }
     }
 }

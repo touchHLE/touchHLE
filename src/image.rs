@@ -1,7 +1,7 @@
 //! Image decoding. Currently only supports PNG.
 //!
 //! Implemented as a wrapper around the C library stb_image, since it supports
-//! "CgBI" PNG files (an Apple proprietary extension used in iOS apps).
+//! "CgBI" PNG files (an Apple proprietary extension used in iPhone OS apps).
 
 use std::ffi::{c_int, c_uchar, c_void};
 

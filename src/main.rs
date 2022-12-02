@@ -4,6 +4,7 @@
 
 mod bundle;
 mod image;
+mod mach_o;
 mod window;
 
 use std::path::PathBuf;
@@ -56,6 +57,9 @@ fn main() -> Result<(), String> {
         icon,
         launch_image,
     );
+
+    let _mach_o = mach_o::MachO::from_file(bundle.executable_path())
+        .map_err(|e| format!("Could not load executable: {}", e))?;
 
     let mut events = Vec::new(); // re-use each iteration for efficiency
     loop {

@@ -6,6 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+mach_object = "0.1.17"
 plist = "1.3.1"
 # sdl2 crates pinned at 0.35.1 because static linking seems to be broken for
 # 0.35.2 on macOS (build errors about undefined symbols for

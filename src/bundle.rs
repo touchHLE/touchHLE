@@ -46,6 +46,12 @@ impl Bundle {
         self.plist["CFBundleDisplayName"].as_string().unwrap()
     }
 
+    pub fn executable_path(&self) -> PathBuf {
+        // FIXME: Is this key optional? All iPhone apps seem to have it.
+        self.path
+            .join(self.plist["CFBundleExecutable"].as_string().unwrap())
+    }
+
     pub fn launch_image_path(&self) -> PathBuf {
         if let Some(base_name) = self.plist.get("UILaunchImageFile") {
             self.path

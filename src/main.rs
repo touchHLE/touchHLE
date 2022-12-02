@@ -49,8 +49,7 @@ fn main() -> Result<(), String> {
 
     let icon = image::Image::from_file(bundle.icon_path())
         .map_err(|_| "Could not load icon".to_string())?;
-    let launch_image = image::Image::from_file(bundle.launch_image_path())
-        .map_err(|_| "Could not load launch image".to_string())?;
+    let launch_image = image::Image::from_file(bundle.launch_image_path()).ok();
 
     let mut window = window::Window::new(
         &format!("{} (touchHLE)", bundle.display_name()),

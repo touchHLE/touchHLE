@@ -57,7 +57,7 @@ impl Bundle {
             self.path
                 .join(&format!("{}.png", base_name.as_string().unwrap()))
         } else {
-            self.path.join("Default.png")
+            self.path.join("Default.png") // not guaranteed to exist!
         }
     }
 

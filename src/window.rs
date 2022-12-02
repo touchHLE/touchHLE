@@ -43,7 +43,7 @@ pub struct Window {
     event_pump: sdl2::EventPump,
 }
 impl Window {
-    pub fn new(title: &str, icon: Image, launch_image: Image) -> Window {
+    pub fn new(title: &str, icon: Image, launch_image: Option<Image>) -> Window {
         let sdl_ctx = sdl2::init().unwrap();
         let video_ctx = sdl_ctx.video().unwrap();
 
@@ -57,15 +57,17 @@ impl Window {
 
         let event_pump = sdl_ctx.event_pump().unwrap();
 
-        let mut window_surface = window.surface(&event_pump).unwrap();
-        surface_from_image(&launch_image)
-            .blit(
-                Rect::new(0, 0, 320, 480),
-                &mut window_surface,
-                Rect::new(0, 0, 320, 480),
-            )
-            .unwrap();
-        window_surface.finish().unwrap();
+        if let Some(launch_image) = launch_image {
+            let mut window_surface = window.surface(&event_pump).unwrap();
+            surface_from_image(&launch_image)
+                .blit(
+                    Rect::new(0, 0, 320, 480),
+                    &mut window_surface,
+                    Rect::new(0, 0, 320, 480),
+                )
+                .unwrap();
+            window_surface.finish().unwrap();
+        }
 
         Window {
             _sdl_ctx: sdl_ctx,

@@ -1,0 +1,11 @@
+[package]
+name = "touchHLE_dynarmic_wrapper"
+version = { workspace = true }
+edition = { workspace = true }
+
+[lib]
+path = "lib.rs"
+
+[build-dependencies]
+cc = { workspace = true }
+cmake = { workspace = true }

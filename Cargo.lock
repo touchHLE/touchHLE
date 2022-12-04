@@ -251,6 +251,23 @@ dependencies = [
  "plist",
  "sdl2",
  "sdl2-sys",
+ "touchHLE_dynarmic_wrapper",
+ "touchHLE_stb_image_wrapper",
+]
+
+[[package]]
+name = "touchHLE_dynarmic_wrapper"
+version = "0.1.0"
+dependencies = [
+ "cc",
+ "cmake",
+]
+
+[[package]]
+name = "touchHLE_stb_image_wrapper"
+version = "0.1.0"
+dependencies = [
+ "cc",
 ]
 
 [[package]]

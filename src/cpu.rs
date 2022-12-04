@@ -2,10 +2,7 @@
 //!
 //! Implemented using the C++ library dynarmic, which is a dynamic recompiler.
 
-// See build.rs and src/cpu/dynarmic_wrapper.cpp
-extern "C" {
-    fn test_cpu_by_adding_numbers(a: i32, b: i32) -> i32;
-}
+use touchHLE_dynarmic_wrapper::*;
 
 pub struct Cpu {}
 

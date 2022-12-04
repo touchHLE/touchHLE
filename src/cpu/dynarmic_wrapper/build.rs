@@ -26,19 +26,10 @@ impl CPPVersion for cc::Build {
 }
 
 fn main() {
-    let root = Path::new(env!("CARGO_MANIFEST_DIR"));
+    let package_root = Path::new(env!("CARGO_MANIFEST_DIR"));
+    let workspace_root = package_root.join("../../..");
 
-    // image module dependencies
-
-    cc::Build::new()
-        .file(root.join("src/image/stb_image_wrapper.c"))
-        .compile("stb_image_wrapper");
-    rerun_if_changed(&root.join("src/image/stb_image_wrapper.c"));
-    rerun_if_changed(&root.join("vendor/stb/stb_image.h"));
-
-    // cpu module dependencies
-
-    let dynarmic_out = cmake::build(root.join("vendor/dynarmic"));
+    let dynarmic_out = cmake::build(workspace_root.join("vendor/dynarmic"));
     link_search(&dynarmic_out.join("lib"));
     link_lib("dynarmic");
     link_search(&dynarmic_out.join("build/externals/fmt"));
@@ -48,13 +39,13 @@ fn main() {
     link_search(&dynarmic_out.join("build/externals/Zydis"));
     link_lib("Zydis");
     // rerun-if-changed seems to not work if pointed to a directory :(
-    //rerun_if_changed(&root.join("vendor/dynarmic"));
+    //rerun_if_changed(&workspace_root.join("vendor/dynarmic"));
 
     cc::Build::new()
-        .file(root.join("src/cpu/dynarmic_wrapper.cpp"))
+        .file(package_root.join("lib.cpp"))
         .cpp(true)
         .cpp_version("c++17")
         .include(dynarmic_out.join("include"))
         .compile("dynarmic_wrapper");
-    rerun_if_changed(&root.join("src/cpu/dynarmic_wrapper.cpp"));
+    rerun_if_changed(&package_root.join("lib.cpp"));
 }

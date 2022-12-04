@@ -1,0 +1,10 @@
+[package]
+name = "touchHLE_stb_image_wrapper"
+version = { workspace = true }
+edition = { workspace = true }
+
+[lib]
+path = "lib.rs"
+
+[build-dependencies]
+cc = { workspace = true }

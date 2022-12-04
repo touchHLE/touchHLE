@@ -1,7 +1,8 @@
 //! Reading of Mach-O files, the executable and library format on iPhone OS.
 //! Currently only handles executables.
 //!
-//! All usage of the mach_object crate should be confined to this module.
+//! Implemented using the mach_object crate. All usage of that crate should be
+//! confined to this module.
 
 use mach_object::{DyLib, LoadCommand, MachCommand, OFile};
 use std::io::Cursor;

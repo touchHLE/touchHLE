@@ -1,6 +1,7 @@
 //! Abstraction of window setup and event handling.
 //!
-//! All usage of SDL functions and types should be confined to this module.
+//! Implemented using the sdl2 crate (a Rust wrapper for SDL2). All usage of
+//! SDL should be confined to this module.
 //!
 //! There is currently no separation of concerns between a single window and
 //! window system interaction in general, because it is assumed only one window

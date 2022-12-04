@@ -246,6 +246,7 @@ name = "touchHLE"
 version = "0.1.0"
 dependencies = [
  "cc",
+ "cmake",
  "mach_object",
  "plist",
  "sdl2",

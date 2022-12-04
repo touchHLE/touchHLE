@@ -1,17 +1,60 @@
 use std::path::Path;
 
+fn rerun_if_changed(path: &Path) {
+    println!("cargo:rerun-if-changed={}", path.to_str().unwrap());
+}
+fn link_search(path: &Path) {
+    println!("cargo:rustc-link-search=native={}", path.to_str().unwrap());
+}
+fn link_lib(lib: &str) {
+    println!("cargo:rustc-link-lib=static={}", lib);
+}
+
+// See https://github.com/rust-lang/cc-rs/issues/565
+trait CPPVersion {
+    fn cpp_version(&mut self, version: &str) -> &mut Self;
+}
+impl CPPVersion for cc::Build {
+    fn cpp_version(&mut self, version: &str) -> &mut Self {
+        // TODO: test this actually works on Windows
+        if self.get_compiler().is_like_msvc() {
+            self.flag(&format!("/std:{}", version))
+        } else {
+            self.flag(&format!("-std={}", version))
+        }
+    }
+}
+
 fn main() {
-    let root = Path::new(file!()).parent().unwrap();
+    let root = Path::new(env!("CARGO_MANIFEST_DIR"));
+
+    // image module dependencies
 
     cc::Build::new()
         .file(root.join("src/image/stb_image_wrapper.c"))
         .compile("stb_image_wrapper");
-    println!(
-        "cargo:rerun-if-changed={}",
-        root.join("src/image/stb_image_wrapper.c").to_str().unwrap()
-    );
-    println!(
-        "cargo:rerun-if-changed={}",
-        root.join("vendor/stb").to_str().unwrap()
-    );
+    rerun_if_changed(&root.join("src/image/stb_image_wrapper.c"));
+    rerun_if_changed(&root.join("vendor/stb/stb_image.h"));
+
+    // cpu module dependencies
+
+    let dynarmic_out = cmake::build(root.join("vendor/dynarmic"));
+    link_search(&dynarmic_out.join("lib"));
+    link_lib("dynarmic");
+    link_search(&dynarmic_out.join("build/externals/fmt"));
+    link_lib("fmtd");
+    link_search(&dynarmic_out.join("build/externals/mcl/src"));
+    link_lib("mcl");
+    link_search(&dynarmic_out.join("build/externals/Zydis"));
+    link_lib("Zydis");
+    // rerun-if-changed seems to not work if pointed to a directory :(
+    //rerun_if_changed(&root.join("vendor/dynarmic"));
+
+    cc::Build::new()
+        .file(root.join("src/cpu/dynarmic_wrapper.cpp"))
+        .cpp(true)
+        .cpp_version("c++17")
+        .include(dynarmic_out.join("include"))
+        .compile("dynarmic_wrapper");
+    rerun_if_changed(&root.join("src/cpu/dynarmic_wrapper.cpp"));
 }

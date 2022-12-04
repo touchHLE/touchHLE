@@ -3,6 +3,7 @@
 #![allow(non_snake_case)]
 
 mod bundle;
+mod cpu;
 mod image;
 mod mach_o;
 mod window;
@@ -59,6 +60,8 @@ fn main() -> Result<(), String> {
 
     let _mach_o = mach_o::MachO::from_file(bundle.executable_path())
         .map_err(|e| format!("Could not load executable: {}", e))?;
+
+    let _cpu = cpu::Cpu::new();
 
     let mut events = Vec::new(); // re-use each iteration for efficiency
     loop {

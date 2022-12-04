@@ -1,3 +1,6 @@
 [submodule "stb"]
 	path = vendor/stb
 	url = git@github.com:nothings/stb.git
+[submodule "dynarmic"]
+	path = vendor/dynarmic
+	url = git@github.com:merryhime/dynarmic.git

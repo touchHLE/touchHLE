@@ -4,8 +4,8 @@
 //! Implemented using the mach_object crate. All usage of that crate should be
 //! confined to this module.
 
-use mach_object::{DyLib, LoadCommand, MachCommand, OFile};
-use std::io::Cursor;
+use mach_object::{DyLib, LoadCommand, MachCommand, OFile, SymbolIter};
+use std::io::{Cursor, Seek, SeekFrom};
 
 pub struct MachO {}
 
@@ -28,7 +28,15 @@ impl MachO {
         if header.cputype != mach_object::CPU_TYPE_ARM {
             return Err("Executable is not for an ARM CPU!");
         }
+        if header.is_bigend() {
+            return Err("Executable is not little-endian!");
+        }
+        if header.is_64bit() {
+            return Err("Executable is not 32-bit!");
+        }
         // TODO: Check cpusubtype (should be some flavour of ARMv6/ARMv7)
+
+        let mut all_sections = Vec::new();
 
         for MachCommand(command, _size) in commands {
             match command {
@@ -45,8 +53,32 @@ impl MachO {
                         vmaddr,
                         vmaddr + vmsize
                     );
-                    for section in sections {
+                    for section in &sections {
                         println!("- Section: {:?}", section.sectname);
+                    }
+                    all_sections.extend_from_slice(&sections);
+                }
+                LoadCommand::SymTab {
+                    symoff,
+                    nsyms,
+                    stroff,
+                    strsize,
+                } => {
+                    println!("Symbol table:");
+                    if cursor.seek(SeekFrom::Start(symoff.into())).is_ok() {
+                        let mut cursor = cursor.clone();
+                        let symbols = SymbolIter::new(
+                            &mut cursor,
+                            all_sections.clone(),
+                            nsyms,
+                            stroff,
+                            strsize,
+                            /* big endian: */ false,
+                            /* 64-bit: */ false,
+                        );
+                        for symbol in symbols {
+                            println!("- {}", symbol);
+                        }
                     }
                 }
                 LoadCommand::EncryptionInfo { id, .. } => {

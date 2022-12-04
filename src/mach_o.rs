@@ -94,6 +94,11 @@ impl MachO {
                 LoadCommand::LoadDyLib(DyLib { name, .. }) => {
                     println!("Dynamic library: {:?}", name);
                 }
+                // LoadCommand::DyldInfo is apparently a newer thing that 2008
+                // games don't have. Ignore for now? Unsure if/when iOS got it.
+                LoadCommand::DyldInfo { .. } => {
+                    eprintln!("Warning! DyldInfo is not handled.");
+                }
                 _ => (),
             }
         }

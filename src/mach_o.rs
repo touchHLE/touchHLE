@@ -4,7 +4,7 @@
 //! Implemented using the mach_object crate. All usage of that crate should be
 //! confined to this module.
 
-use mach_object::{DyLib, LoadCommand, MachCommand, OFile, SymbolIter};
+use mach_object::{DyLib, LoadCommand, MachCommand, OFile, Symbol, SymbolIter};
 use std::io::{Cursor, Seek, SeekFrom};
 
 pub struct MachO {}
@@ -77,6 +77,9 @@ impl MachO {
                             /* 64-bit: */ false,
                         );
                         for symbol in symbols {
+                            if let Symbol::Debug { .. } = symbol {
+                                continue;
+                            }
                             println!("- {}", symbol);
                         }
                     }

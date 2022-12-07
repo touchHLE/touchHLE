@@ -75,7 +75,7 @@ fn main() -> Result<(), String> {
     let mach_o = mach_o::MachO::load_from_file(bundle.executable_path(), &mut mem)
         .map_err(|e| format!("Could not load executable: {}", e))?;
 
-    let entry_point_addr = mach_o.entry_point_addr.ok_or(
+    let entry_point_addr = mach_o.entry_point_addr.ok_or_else(||
         "Mach-O file has no 'start' symbol, perhaps it is not an executable?".to_string(),
     )?;
 

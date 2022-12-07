@@ -1,3 +1,14 @@
+//! touchHLE is a high-level emulator (HLE) for iPhone OS applications.
+//!
+//! In various places, the terms "guest" and "host" are used to distinguish
+//! between the emulated application (the "guest") and the emulator itself (the
+//! "host"), and more generally, their different environments.
+//! For example:
+//! - The guest is a 32-bit application, so a "guest pointer" is 32 bits.
+//! - The host is a 64-bit application, so a "host pointer" is 64 bits.
+//! - The guest can only directly access "guest memory".
+//! - The host can access both "guest memory" and "host memory".
+
 // Allow the crate to have a non-snake-case name (touchHLE).
 // This also allows items in the crate to have non-snake-case names.
 #![allow(non_snake_case)]
@@ -6,6 +17,7 @@ mod bundle;
 mod cpu;
 mod image;
 mod mach_o;
+mod memory;
 mod window;
 
 use std::path::PathBuf;
@@ -61,7 +73,21 @@ fn main() -> Result<(), String> {
     let _mach_o = mach_o::MachO::from_file(bundle.executable_path())
         .map_err(|e| format!("Could not load executable: {}", e))?;
 
-    let _cpu = cpu::Cpu::new();
+    let mut mem = memory::Memory::new();
+
+    let mut cpu = cpu::Cpu::new();
+
+    // Basic integration test, TODO: run the actual app code
+    mem.write(memory::Ptr::from_bits(0), 0xE0800001u32); // A32: add r0, r0, r1
+    mem.write(memory::Ptr::from_bits(4), 0xEF000001u32); // A32: svc 0
+    let a = 1;
+    let b = 2;
+    cpu.regs_mut()[0] = a;
+    cpu.regs_mut()[1] = b;
+    cpu.regs_mut()[15] = 0; // PC = 0
+    cpu.run(&mut mem);
+    let res = cpu.regs()[0];
+    println!("According to dynarmic, {} + {} = {}!", a, b, res);
 
     let mut events = Vec::new(); // re-use each iteration for efficiency
     loop {

@@ -2,15 +2,22 @@
 //! Currently only handles executables.
 //!
 //! Implemented using the mach_object crate. All usage of that crate should be
-//! confined to this module.
+//! confined to this module. The goal is to read the Mach-O binary exactly once,
+//! storing any information we'll need later.
 
+use crate::memory::{Memory, Ptr};
 use mach_object::{DyLib, LoadCommand, MachCommand, OFile, Symbol, SymbolIter};
 use std::io::{Cursor, Seek, SeekFrom};
 
-pub struct MachO {}
+pub struct MachO {
+    pub entry_point_addr: Option<u32>,
+}
 
 impl MachO {
-    pub fn from_bytes(bytes: &[u8]) -> Result<MachO, &'static str> {
+    /// Load the all the sections from a Mach-O binary (provided as `bytes`)
+    /// into the guest memory (`into_mem`), and return a struct containing
+    /// metadata (e.g. symbols).
+    pub fn load_from_bytes(bytes: &[u8], into_mem: &mut Memory) -> Result<MachO, &'static str> {
         let mut cursor = Cursor::new(bytes);
 
         let file = OFile::parse(&mut cursor).map_err(|_| "Could not parse Mach-O file")?;
@@ -38,21 +45,39 @@ impl MachO {
 
         let mut all_sections = Vec::new();
 
+        let mut entry_point_addr: Option<u32> = None;
+
         for MachCommand(command, _size) in commands {
             match command {
                 LoadCommand::Segment {
                     segname,
                     vmaddr,
                     vmsize,
+                    fileoff,
+                    filesize,
                     sections,
                     ..
                 } => {
                     println!(
-                        "Segment: {:?} ({:#x}–{:#x})",
+                        "Segment: {:?} ({:#x}–{:#x}), {:#x} bytes from file",
                         segname,
                         vmaddr,
-                        vmaddr + vmsize
+                        vmaddr + vmsize,
+                        filesize
                     );
+                    assert!(filesize <= vmsize);
+                    // Copy the bytes from the file into memory. Note that
+                    // filesize may be less than vmsize, in which case the rest
+                    // of the segment should be filled with zeroes. This code
+                    // is assuming the memory is already zeroed.
+                    {
+                        let src = &bytes[fileoff..][..filesize];
+                        let dst = into_mem.bytes_at_mut(
+                            Ptr::from_bits(vmaddr.try_into().unwrap()),
+                            filesize.try_into().unwrap(),
+                        );
+                        dst.copy_from_slice(src);
+                    };
                     for section in &sections {
                         println!("- Section: {:?}", section.sectname);
                     }
@@ -80,7 +105,14 @@ impl MachO {
                             if let Symbol::Debug { .. } = symbol {
                                 continue;
                             }
-                            println!("- {}", symbol);
+                            if let Symbol::Defined {
+                                name: Some("start"),
+                                entry,
+                                ..
+                            } = symbol
+                            {
+                                entry_point_addr = Some(entry.try_into().unwrap());
+                            }
                         }
                     }
                 }
@@ -103,12 +135,19 @@ impl MachO {
             }
         }
 
-        // TODO: actually read stuff
-
-        Ok(MachO {})
+        Ok(MachO { entry_point_addr })
     }
 
-    pub fn from_file<P: AsRef<std::path::Path>>(path: P) -> Result<MachO, &'static str> {
-        Self::from_bytes(&std::fs::read(path).map_err(|_| "Could not read executable file")?)
+    /// Load the all the sections from a Mach-O binary (from `path`) into the
+    /// guest memory (`into_mem`), and return a struct containing metadata
+    /// (e.g. symbols).
+    pub fn load_from_file<P: AsRef<std::path::Path>>(
+        path: P,
+        into_mem: &mut Memory,
+    ) -> Result<MachO, &'static str> {
+        Self::load_from_bytes(
+            &std::fs::read(path).map_err(|_| "Could not read executable file")?,
+            into_mem,
+        )
     }
 }

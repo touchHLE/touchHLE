@@ -70,10 +70,16 @@ fn main() -> Result<(), String> {
         launch_image,
     );
 
-    let _mach_o = mach_o::MachO::from_file(bundle.executable_path())
+    let mut mem = memory::Memory::new();
+
+    let mach_o = mach_o::MachO::load_from_file(bundle.executable_path(), &mut mem)
         .map_err(|e| format!("Could not load executable: {}", e))?;
 
-    let mut mem = memory::Memory::new();
+    let entry_point_addr = mach_o.entry_point_addr.ok_or(
+        "Mach-O file has no 'start' symbol, perhaps it is not an executable?".to_string(),
+    )?;
+
+    println!("Address of start function: {:#x}", entry_point_addr);
 
     let mut cpu = cpu::Cpu::new();
 

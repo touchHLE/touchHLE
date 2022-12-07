@@ -18,6 +18,7 @@ mod cpu;
 mod image;
 mod mach_o;
 mod memory;
+mod stack;
 mod window;
 
 use std::path::PathBuf;
@@ -83,6 +84,18 @@ fn main() -> Result<(), String> {
 
     let mut cpu = cpu::Cpu::new();
 
+    {
+        // FIXME: use actual app name
+        let fake_guest_path = "/User/Applications/00000000-0000-0000-0000-000000000000/Foo.app/Foo";
+        let fake_guest_path_apple_key =
+            "executable_path=/User/Applications/00000000-0000-0000-0000-000000000000/Foo.app/Foo";
+
+        let argv = &[fake_guest_path];
+        let envp = &[];
+        let apple = &[fake_guest_path_apple_key];
+        stack::prep_stack_for_start(&mut mem, &mut cpu, argv, envp, apple);
+    }
+
     // Basic integration test, TODO: run the actual app code
     mem.write(memory::Ptr::from_bits(0), 0xE0800001u32); // A32: add r0, r0, r1
     mem.write(memory::Ptr::from_bits(4), 0xEF000001u32); // A32: svc 0
@@ -90,7 +103,7 @@ fn main() -> Result<(), String> {
     let b = 2;
     cpu.regs_mut()[0] = a;
     cpu.regs_mut()[1] = b;
-    cpu.regs_mut()[15] = 0; // PC = 0
+    cpu.regs_mut()[cpu::Cpu::PC] = 0;
     cpu.run(&mut mem);
     let res = cpu.regs()[0];
     println!("According to dynarmic, {} + {} = {}!", a, b, res);

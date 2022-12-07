@@ -1,6 +1,8 @@
 //! CPU emulation.
 //!
 //! Implemented using the C++ library dynarmic, which is a dynamic recompiler.
+//!
+//! iPhone OS apps used either ARMv6 or ARMv7-A. These are both 32-bit ISAs.
 
 use crate::memory::{ConstPtr, Memory, MutPtr, Ptr, SafeRead};
 
@@ -66,6 +68,14 @@ impl Drop for Cpu {
 }
 
 impl Cpu {
+    /// The register number of the stack pointer.
+    pub const SP: usize = 13;
+    /// The register number of the link register.
+    #[allow(unused)]
+    pub const LR: usize = 14;
+    /// The register number of the program counter.
+    pub const PC: usize = 15;
+
     pub fn new() -> Cpu {
         let dynarmic_wrapper = unsafe { touchHLE_DynarmicWrapper_new() };
         Cpu { dynarmic_wrapper }

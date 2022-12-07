@@ -1,0 +1,82 @@
+//! Utilities related to the stack.
+
+use crate::cpu::Cpu;
+use crate::memory::{GuestUSize, Memory, MutPtr, Ptr};
+
+/// Set up the stack for the main thread, ready to execute the entry-point
+/// of the application (aka `start`).
+///
+/// The entry-point of an iPhone OS application expects certain data to have
+/// been placed on the stack, which it will then pass as arguments to the C
+/// `main` function. On iPhone OS, `main` can have up to four arguments:
+///
+/// ```c
+/// int main(int argc, char *argv[], char *envp[], char *apple[]);
+/// ```
+pub fn prep_stack_for_start(
+    mem: &mut Memory,
+    cpu: &mut Cpu,
+    argv: &[&str],
+    envp: &[&str],
+    apple: &[&str],
+) {
+    let argc: i32 = argv.len().try_into().unwrap();
+
+    // The stack grows downwards, so the very top of the address space seems
+    // like a reasonable place to put it. I don't know where iPhone OS puts it.
+    let stack_base: usize = 1 << 32;
+
+    // Rust vectors grow upwards but we need to grow this one downwards, so
+    // let's push the strings onto it reversed.
+    let mut reversed_data = Vec::<u8>::new();
+    let mut string_ptrs = Vec::<u32>::new();
+
+    fn push_string(
+        string: &str,
+        reversed_data: &mut Vec<u8>,
+        string_ptrs: &mut Vec<u32>,
+        stack_base: usize,
+    ) {
+        reversed_data.reserve(string.bytes().len() + 1);
+        reversed_data.push(b'\0'); // null terminator
+        for &c in string.as_bytes().iter().rev() {
+            reversed_data.push(c);
+        }
+
+        let ptr: u32 = (stack_base - reversed_data.len()).try_into().unwrap();
+        string_ptrs.push(ptr);
+    }
+
+    string_ptrs.push(argc as u32);
+    for arg in argv {
+        push_string(arg, &mut reversed_data, &mut string_ptrs, stack_base);
+    }
+
+    for arg in envp {
+        push_string(arg, &mut reversed_data, &mut string_ptrs, stack_base);
+    }
+    string_ptrs.push(0); // terminator
+
+    for arg in apple {
+        push_string(arg, &mut reversed_data, &mut string_ptrs, stack_base);
+    }
+    string_ptrs.push(0); // terminator
+
+    for ptr in string_ptrs.iter().rev() {
+        reversed_data.extend_from_slice(ptr.to_be_bytes().as_slice());
+    }
+
+    let stack_ptr: MutPtr<u8> =
+        Ptr::from_bits((stack_base - reversed_data.len()).try_into().unwrap());
+    let stack_height: GuestUSize = reversed_data.len().try_into().unwrap();
+
+    let stack_region = mem.bytes_at_mut(stack_ptr, stack_height);
+
+    for i in 0..stack_height {
+        stack_region[i as usize] = reversed_data[(stack_height - i - 1) as usize];
+    }
+
+    //println!("{:?}", std::str::from_utf8(&stack_region.iter().flat_map(|&c| std::ascii::escape_default(c)).collect::<Vec<u8>>()).unwrap());
+
+    cpu.regs_mut()[Cpu::SP] = stack_ptr.to_bits();
+}

@@ -99,14 +99,14 @@ fn main() -> Result<(), String> {
 
     // Basic integration test, TODO: run the actual app code
     mem.write(memory::Ptr::from_bits(0), 0xE0800001u32); // A32: add r0, r0, r1
-    mem.write(memory::Ptr::from_bits(4), 0xEF000001u32); // A32: svc 0
+    mem.write(memory::Ptr::from_bits(4), 0xEF000001u32); // A32: svc 1
     let a = 1;
     let b = 2;
     cpu.regs_mut()[0] = a;
     cpu.regs_mut()[1] = b;
     cpu.regs_mut()[cpu::Cpu::PC] = 0;
     let mut ticks = 100;
-    cpu.run(&mut mem, &mut ticks);
+    let cpu::CpuState::Svc(1) = cpu.run(&mut mem, &mut ticks) else { panic!() };
     let res = cpu.regs()[0];
     println!("According to dynarmic, {} + {} = {}! Took {} ticks.", a, b, res, 100 - ticks);
 

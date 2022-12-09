@@ -24,11 +24,14 @@ void touchHLE_cpu_write_u64(touchHLE_Memory *mem, VAddr addr,
                             std::uint8_t value);
 }
 
+const auto HaltReasonSvc = Dynarmic::HaltReason::UserDefined1;
+
 class Environment final : public Dynarmic::A32::UserCallbacks {
 public:
   Dynarmic::A32::Jit *cpu = nullptr;
   touchHLE_Memory *mem = nullptr;
   std::uint64_t ticks_remaining;
+  uint32_t halting_svc;
 
 private:
   std::uint8_t MemoryRead8(VAddr vaddr) override {
@@ -60,7 +63,10 @@ private:
   void InterpreterFallback(std::uint32_t, size_t) override {
     abort(); // TODO
   }
-  void CallSVC(std::uint32_t) override { cpu->HaltExecution(); }
+  void CallSVC(std::uint32_t svc) override {
+    halting_svc = svc;
+    cpu->HaltExecution(HaltReasonSvc);
+  }
   void ExceptionRaised(std::uint32_t, Dynarmic::A32::Exception) override {
     abort(); // TODO
   }
@@ -89,12 +95,22 @@ public:
   const std::uint32_t *regs() const { return &cpu->Regs().front(); }
   std::uint32_t *regs() { return &cpu->Regs().front(); }
 
-  void run(touchHLE_Memory *mem, std::uint64_t *ticks) {
+  std::int32_t run(touchHLE_Memory *mem, std::uint64_t *ticks) {
     env.mem = mem;
     env.ticks_remaining = *ticks;
-    cpu->Run();
+    Dynarmic::HaltReason hr = cpu->Run();
+    std::int32_t res;
+    if (!hr) {
+      res = -1;
+    } else if (Dynarmic::Has(hr, HaltReasonSvc)) {
+      res = std::int32_t(env.halting_svc);
+    } else {
+      printf("unhandled halt reason %u\n", hr);
+      abort();
+    }
     env.mem = nullptr;
     *ticks = env.ticks_remaining;
+    return res;
   }
 };
 
@@ -113,9 +129,10 @@ std::uint32_t *touchHLE_DynarmicWrapper_regs_mut(DynarmicWrapper *cpu) {
   return cpu->regs();
 }
 
-void touchHLE_DynarmicWrapper_run(DynarmicWrapper *cpu, touchHLE_Memory *mem,
-                                  std::uint64_t *ticks) {
-  cpu->run(mem, ticks);
+std::int32_t touchHLE_DynarmicWrapper_run(DynarmicWrapper *cpu,
+                                          touchHLE_Memory *mem,
+                                          std::uint64_t *ticks) {
+  return cpu->run(mem, ticks);
 }
 }
 

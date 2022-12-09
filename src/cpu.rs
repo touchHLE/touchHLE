@@ -67,6 +67,15 @@ impl Drop for Cpu {
     }
 }
 
+/// Why CPU execution ended.
+#[derive(Debug)]
+pub enum CpuState {
+    /// Execution halted due to using up all remaining ticks.
+    Normal,
+    /// SVC instruction encountered.
+    Svc(u32),
+}
+
 impl Cpu {
     /// The register number of the stack pointer.
     pub const SP: usize = 13;
@@ -94,14 +103,27 @@ impl Cpu {
         }
     }
 
-    // TODO: this should have a return value so we know why execution ended
-    pub fn run(&mut self, mem: &mut Memory, ticks: &mut u64) {
-        unsafe {
+    /// Start CPU execution, with an abstract time limit in "ticks". This will
+    /// return either because the CPU ran out of time (in which case
+    /// `*ticks == 0`) or because something else happened which requires
+    /// attention from the host (in which case `*ticks` is the remaining number
+    /// of ticks). Check the return value!
+    #[must_use]
+    pub fn run(&mut self, mem: &mut Memory, ticks: &mut u64) -> CpuState {
+        let res = unsafe {
             touchHLE_DynarmicWrapper_run(
                 self.dynarmic_wrapper,
                 mem as *mut Memory as *mut touchHLE_Memory,
                 ticks,
             )
+        };
+        match res {
+            -1 => {
+                assert!(*ticks == 0);
+                CpuState::Normal
+            }
+            _ if res < -1 => panic!("Unexpected CPU execution result"),
+            svc => CpuState::Svc(svc as u32),
         }
     }
 }

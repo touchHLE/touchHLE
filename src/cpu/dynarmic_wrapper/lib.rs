@@ -24,5 +24,5 @@ extern "C" {
         cpu: *mut touchHLE_DynarmicWrapper,
         mem: *mut touchHLE_Memory,
         ticks: *mut u64,
-    );
+    ) -> i32;
 }

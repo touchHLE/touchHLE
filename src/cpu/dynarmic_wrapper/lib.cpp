@@ -28,6 +28,7 @@ class Environment final : public Dynarmic::A32::UserCallbacks {
 public:
   Dynarmic::A32::Jit *cpu = nullptr;
   touchHLE_Memory *mem = nullptr;
+  std::uint64_t ticks_remaining;
 
 private:
   std::uint8_t MemoryRead8(VAddr vaddr) override {
@@ -63,8 +64,14 @@ private:
   void ExceptionRaised(std::uint32_t, Dynarmic::A32::Exception) override {
     abort(); // TODO
   }
-  void AddTicks(std::uint64_t) override {}                 // TODO
-  std::uint64_t GetTicksRemaining() override { return 2; } // TODO
+  void AddTicks(std::uint64_t ticks) override {
+    if (ticks > ticks_remaining) {
+      ticks_remaining = 0;
+      return;
+    }
+    ticks_remaining -= ticks;
+  }
+  std::uint64_t GetTicksRemaining() override { return ticks_remaining; }
 };
 
 class DynarmicWrapper {
@@ -82,10 +89,12 @@ public:
   const std::uint32_t *regs() const { return &cpu->Regs().front(); }
   std::uint32_t *regs() { return &cpu->Regs().front(); }
 
-  void run(touchHLE_Memory *mem) {
+  void run(touchHLE_Memory *mem, std::uint64_t *ticks) {
     env.mem = mem;
+    env.ticks_remaining = *ticks;
     cpu->Run();
     env.mem = nullptr;
+    *ticks = env.ticks_remaining;
   }
 };
 
@@ -104,8 +113,9 @@ std::uint32_t *touchHLE_DynarmicWrapper_regs_mut(DynarmicWrapper *cpu) {
   return cpu->regs();
 }
 
-void touchHLE_DynarmicWrapper_run(DynarmicWrapper *cpu, touchHLE_Memory *mem) {
-  cpu->run(mem);
+void touchHLE_DynarmicWrapper_run(DynarmicWrapper *cpu, touchHLE_Memory *mem,
+                                  std::uint64_t *ticks) {
+  cpu->run(mem, ticks);
 }
 }
 

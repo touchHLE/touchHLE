@@ -105,9 +105,10 @@ fn main() -> Result<(), String> {
     cpu.regs_mut()[0] = a;
     cpu.regs_mut()[1] = b;
     cpu.regs_mut()[cpu::Cpu::PC] = 0;
-    cpu.run(&mut mem);
+    let mut ticks = 100;
+    cpu.run(&mut mem, &mut ticks);
     let res = cpu.regs()[0];
-    println!("According to dynarmic, {} + {} = {}!", a, b, res);
+    println!("According to dynarmic, {} + {} = {}! Took {} ticks.", a, b, res, 100 - ticks);
 
     let mut events = Vec::new(); // re-use each iteration for efficiency
     loop {

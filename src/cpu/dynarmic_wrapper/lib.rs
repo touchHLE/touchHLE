@@ -23,5 +23,6 @@ extern "C" {
     pub fn touchHLE_DynarmicWrapper_run(
         cpu: *mut touchHLE_DynarmicWrapper,
         mem: *mut touchHLE_Memory,
+        ticks: *mut u64,
     );
 }

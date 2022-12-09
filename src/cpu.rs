@@ -95,11 +95,12 @@ impl Cpu {
     }
 
     // TODO: this should have a return value so we know why execution ended
-    pub fn run(&mut self, mem: &mut Memory) {
+    pub fn run(&mut self, mem: &mut Memory, ticks: &mut u64) {
         unsafe {
             touchHLE_DynarmicWrapper_run(
                 self.dynarmic_wrapper,
                 mem as *mut Memory as *mut touchHLE_Memory,
+                ticks,
             )
         }
     }

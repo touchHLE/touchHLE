@@ -14,7 +14,6 @@ use crate::memory::{Memory, Ptr};
 use mach_object::{DyLib, LoadCommand, MachCommand, OFile, Symbol, SymbolIter};
 use std::io::{Cursor, Seek, SeekFrom};
 
-#[derive(Debug)]
 pub struct MachO {
     /// Address of the entry-point procedure (aka `start`).
     pub entry_point_addr: Option<u32>,
@@ -24,7 +23,6 @@ pub struct MachO {
     pub sections: Vec<Section>,
 }
 
-#[derive(Debug)]
 pub struct Section {
     /// Section name.
     pub name: String,
@@ -39,7 +37,6 @@ pub struct Section {
 /// Information relevant to certain special sections which contain a series of
 /// pointers or stub functions for indirectly referencing dynamically-linked
 /// symbols.
-#[derive(Debug)]
 pub struct DyldIndirectSymbolInfo {
     /// The size in bytes of an entry (pointer or stub function) in the section.
     pub entry_size: u32,

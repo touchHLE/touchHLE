@@ -118,13 +118,25 @@ fn main() -> Result<(), String> {
 
         let mut ticks = 100;
         while ticks > 0 {
-            match cpu.run(&mut mem, &mut ticks) {
-                cpu::CpuState::Normal => (),
-                cpu::CpuState::Svc(svc) => {
-                    // the program counter is one instruction ahead
-                    let current_instruction = cpu.regs()[cpu::Cpu::PC] - 4;
-                    dyld.handle_svc(&mach_o, current_instruction, svc)
+            // I'm not sure if this actually is unwind-safe, but considering the
+            // emulator will always crash, maybe this is okay.
+            let res = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                match cpu.run(&mut mem, &mut ticks) {
+                    cpu::CpuState::Normal => (),
+                    cpu::CpuState::Svc(svc) => {
+                        // the program counter is one instruction ahead
+                        let current_instruction = cpu.regs()[cpu::Cpu::PC] - 4;
+                        dyld.handle_svc(&mach_o, current_instruction, svc)
+                    }
                 }
+            }));
+            if let Err(e) = res {
+                eprintln!(
+                    "Panic at PC {:#x}, LR {:#x}",
+                    cpu.regs()[cpu::Cpu::PC],
+                    cpu.regs()[cpu::Cpu::LR]
+                );
+                std::panic::resume_unwind(e);
             }
         }
         println!("{} ticks elapsed", ticks);

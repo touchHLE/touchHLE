@@ -259,4 +259,8 @@ impl MachO {
             into_mem,
         )
     }
+
+    pub fn get_section(&self, name: &str) -> Option<&Section> {
+        self.sections.iter().find(|s| s.name == name)
+    }
 }

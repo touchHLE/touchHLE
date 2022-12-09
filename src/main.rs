@@ -15,6 +15,7 @@
 
 mod bundle;
 mod cpu;
+mod dyld;
 mod image;
 mod mach_o;
 mod memory;
@@ -83,6 +84,9 @@ fn main() -> Result<(), String> {
 
     println!("Address of start function: {:#x}", entry_point_addr);
 
+    let mut dyld = dyld::Dyld::new();
+    dyld.setup_lazy_linking(&mach_o, &mut mem);
+
     let mut cpu = cpu::Cpu::new();
 
     {
@@ -97,18 +101,9 @@ fn main() -> Result<(), String> {
         stack::prep_stack_for_start(&mut mem, &mut cpu, argv, envp, apple);
     }
 
-    // Basic integration test, TODO: run the actual app code
-    mem.write(memory::Ptr::from_bits(0), 0xE0800001u32); // A32: add r0, r0, r1
-    mem.write(memory::Ptr::from_bits(4), 0xEF000001u32); // A32: svc 1
-    let a = 1;
-    let b = 2;
-    cpu.regs_mut()[0] = a;
-    cpu.regs_mut()[1] = b;
-    cpu.regs_mut()[cpu::Cpu::PC] = 0;
-    let mut ticks = 100;
-    let cpu::CpuState::Svc(1) = cpu.run(&mut mem, &mut ticks) else { panic!() };
-    let res = cpu.regs()[0];
-    println!("According to dynarmic, {} + {} = {}! Took {} ticks.", a, b, res, 100 - ticks);
+    println!("CPU emulation begins now.");
+
+    cpu.regs_mut()[cpu::Cpu::PC] = entry_point_addr;
 
     let mut events = Vec::new(); // re-use each iteration for efficiency
     loop {
@@ -122,6 +117,17 @@ fn main() -> Result<(), String> {
             }
         }
 
-        // TODO: emulation
+        let mut ticks = 100;
+        while ticks > 0 {
+            match cpu.run(&mut mem, &mut ticks) {
+                cpu::CpuState::Normal => (),
+                cpu::CpuState::Svc(svc) => {
+                    // the program counter is one instruction ahead
+                    let current_instruction = cpu.regs()[cpu::Cpu::PC] - 4;
+                    dyld.handle_svc(&mach_o, current_instruction, svc)
+                }
+            }
+        }
+        println!("{} ticks elapsed", ticks);
     }
 }

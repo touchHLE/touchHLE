@@ -48,6 +48,25 @@ impl<T, const MUT: bool> Ptr<T, MUT> {
     }
 }
 
+// C-like pointer arithmetic
+impl<T, const MUT: bool> std::ops::Add<GuestUSize> for Ptr<T, MUT> {
+    type Output = Self;
+
+    fn add(self, other: GuestUSize) -> Self {
+        let size: GuestUSize = std::mem::size_of::<T>().try_into().unwrap();
+        Self::from_bits(
+            self.to_bits()
+                .checked_add(other.checked_mul(size).unwrap())
+                .unwrap(),
+        )
+    }
+}
+impl<T, const MUT: bool> std::ops::AddAssign<GuestUSize> for Ptr<T, MUT> {
+    fn add_assign(&mut self, rhs: GuestUSize) {
+        *self = *self + rhs;
+    }
+}
+
 /// Marker trait for types that can be safely read from guest memory.
 ///
 /// Reading from guest memory is essentially doing a [std::mem::transmute],

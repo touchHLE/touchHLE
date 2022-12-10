@@ -33,6 +33,12 @@ impl Dyld {
         Dyld {}
     }
 
+    /// Do linking-related tasks that need doing right after loading a binary.
+    pub fn do_initial_linking(&self, bin: &MachO, mem: &mut Memory) {
+        self.setup_lazy_linking(bin, mem);
+        self.do_non_lazy_linking(bin, mem);
+    }
+
     /// Set up lazy-linking stubs for a loaded binary.
     ///
     /// Dynamic linking of functions on iPhone OS usually happens "lazily",
@@ -45,7 +51,7 @@ impl Dyld {
     ///
     /// These stubs already exist in the binary, but they need to be rewritten
     /// so that they will invoke our dynamic linker.
-    pub fn setup_lazy_linking(&self, bin: &MachO, mem: &mut Memory) {
+    fn setup_lazy_linking(&self, bin: &MachO, mem: &mut Memory) {
         let Some(stubs) = bin.get_section("__symbol_stub4") else {
             return;
         };
@@ -65,6 +71,37 @@ impl Dyld {
             // This is preceded by a return instruction, so if we do execute it,
             // something has gone wrong.
             mem.write(ptr + 2, encode_a32_trap());
+        }
+    }
+
+    /// Link non-lazy symbols for a loaded binary.
+    ///
+    /// These are usually constants or Objective-C classes. Since the linking
+    /// must be done upfront, we can't in general delay errors about missing
+    /// implementations until the point of use. For that reason, this will spit
+    /// out a warning to stderr for everything missing, so that there's at least
+    /// some indication about why the emulator might crash.
+    fn do_non_lazy_linking(&self, bin: &MachO, _mem: &mut Memory) {
+        // TODO: Handle symbols that aren't direct. There seem to be a number of
+        // external and even internal references in this section that are stored
+        // in a different way.
+
+        let Some(ptrs) = bin.get_section("__nl_symbol_ptr") else {
+            return;
+        };
+        let info = ptrs.dyld_indirect_symbol_info.as_ref().unwrap();
+
+        let entry_size = info.entry_size;
+        assert!(entry_size == 4);
+        assert!(ptrs.size % entry_size == 0);
+        let ptr_count = ptrs.size / entry_size;
+        for i in 0..ptr_count {
+            let Some(symbol) = info.indirect_undef_symbols[i as usize].as_deref() else {
+                continue;
+            };
+
+            // TODO: look up symbol in host implementations, write pointer
+            eprintln!("Warning: unhandled non-lazy symbol: {:?}", symbol);
         }
     }
 

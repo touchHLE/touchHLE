@@ -84,7 +84,7 @@ fn main() -> Result<(), String> {
     println!("Address of start function: {:#x}", entry_point_addr);
 
     let mut dyld = dyld::Dyld::new();
-    dyld.setup_lazy_linking(&mach_o, &mut mem);
+    dyld.do_initial_linking(&mach_o, &mut mem);
 
     let mut cpu = cpu::Cpu::new();
 

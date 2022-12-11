@@ -82,9 +82,12 @@ impl Dyld {
     /// this will spit out a warning to stderr for everything missing, so that
     /// there's at least some indication about why the emulator might crash.
     fn do_non_lazy_linking(&self, bin: &MachO, _mem: &mut Memory) {
-        for (_, name) in &bin.external_relocations {
+        for (addr, name) in &bin.external_relocations {
             // TODO: look up symbol in host implementations, write pointer
-            eprintln!("Warning: unhandled external relocation: {:?}", name);
+            eprintln!(
+                "Warning: unhandled external relocation {:?} at {:#x}",
+                name, addr
+            );
         }
 
         let Some(ptrs) = bin.get_section("__nl_symbol_ptr") else {
@@ -101,8 +104,13 @@ impl Dyld {
                 continue;
             };
 
+            let ptr = ptrs.addr + i * entry_size;
+
             // TODO: look up symbol in host implementations, write pointer
-            eprintln!("Warning: unhandled non-lazy symbol: {:?}", symbol);
+            eprintln!(
+                "Warning: unhandled non-lazy symbol {:?} at {:#x}",
+                symbol, ptr
+            );
         }
     }
 

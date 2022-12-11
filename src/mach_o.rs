@@ -9,6 +9,7 @@
 //! - Apple's [Overview of the Mach-O Executable Format](https://developer.apple.com/library/archive/documentation/Performance/Conceptual/CodeFootprint/Articles/MachOOverview.html) explains what "segments" and "sections" are, and provides short descriptions of the purposes of some common sections.
 //! - Alex Drummond's [Inside a Hello World executable on OS X](https://adrummond.net/posts/macho) is about macOS circa 2017 rather than iPhone OS circa 2008, so not all of what it says applies, but the sections up to and including "9. The indirect symbol table" are helpful.
 //! - The LLVM functions [`RuntimeDyldMachO::populateIndirectSymbolPointersSection`](https://github.com/llvm/llvm-project/blob/2e999b7dd1934a44d38c3a753460f1e5a217e9a5/llvm/lib/ExecutionEngine/RuntimeDyld/RuntimeDyldMachO.cpp#L179-L220) and [`MachOObjectFile::getIndirectSymbolTableEntry`](https://github.com/llvm/llvm-project/blob/3c09ed006ab35dd8faac03311b14f0857b01949c/llvm/lib/Object/MachOObjectFile.cpp#L4803-L4808) are references for how to read the indirect symbol table.
+//! - `/usr/include/mach-o/reloc.h` in the macOS SDK was the reference for the format of relocation entries.
 
 use crate::memory::{Memory, Ptr};
 use mach_object::{DyLib, LoadCommand, MachCommand, OFile, Symbol, SymbolIter};
@@ -21,6 +22,9 @@ pub struct MachO {
     pub dynamic_libraries: Vec<String>,
     /// Metadata related to sections.
     pub sections: Vec<Section>,
+    /// List of addresses and names of external relocations for the dynamic
+    /// linker to resolve.
+    pub external_relocations: Vec<(u32, String)>,
 }
 
 pub struct Section {
@@ -42,6 +46,27 @@ pub struct DyldIndirectSymbolInfo {
     pub entry_size: u32,
     /// A list of symbol names corresponding to the entries.
     pub indirect_undef_symbols: Vec<Option<String>>,
+}
+
+fn get_sym_by_idx<'a>(
+    idx: u32,
+    (symoff, nsyms, stroff, strsize): (u32, u32, u32, u32),
+    is_bigend: bool,
+    is_64bit: bool,
+    cursor: &'a mut Cursor<&'a [u8]>,
+) -> Option<mach_object::Symbol<'a>> {
+    if idx >= nsyms {
+        return None;
+    }
+
+    let symoff = (symoff + idx * 12) as u64;
+
+    cursor.seek(SeekFrom::Start(symoff)).unwrap();
+
+    // This is not how you're supposed to use SymbolIter but the parse_symbol()
+    // method on it requires the bytestring crate, so...
+    let mut iter = SymbolIter::new(cursor, Vec::new(), 1, stroff, strsize, is_bigend, is_64bit);
+    iter.next()
 }
 
 impl MachO {
@@ -84,6 +109,7 @@ impl MachO {
         let mut entry_point_addr: Option<u32> = None;
         let mut dynamic_libraries = Vec::new();
         let mut indirect_undef_symbols: Vec<Option<String>> = Vec::new();
+        let mut external_relocations: Vec<(u32, String)> = Vec::new();
 
         for MachCommand(command, _size) in commands {
             match command {
@@ -146,41 +172,49 @@ impl MachO {
                 LoadCommand::DySymTab {
                     indirectsymoff,
                     nindirectsyms,
+                    extreloff,
+                    nextrel,
                     ..
                 } => {
-                    let (symoff, nsyms, stroff, strsize) = sym_tab_info.unwrap();
-                    let table = &bytes[indirectsymoff as usize..][..nindirectsyms as usize * 4];
-                    for i in 0..nindirectsyms {
-                        let idx = &table[i as usize * 4..][..4];
+                    let indirectsyms =
+                        &bytes[indirectsymoff as usize..][..nindirectsyms as usize * 4];
+                    for idx in indirectsyms.chunks(4) {
                         assert!(!is_bigend);
                         let idx = u32::from_le_bytes(idx.try_into().unwrap());
 
-                        indirect_undef_symbols.push(if idx >= nsyms {
-                            None
-                        } else {
-                            let symoff = (symoff + idx * 12) as u64;
-                            cursor.seek(SeekFrom::Start(symoff)).unwrap();
-
-                            let mut cursor = cursor.clone();
-                            // This is not how you're supposed to use SymbolIter
-                            // but the parse_symbol() method on it requires the
-                            // bytestring crate, so...
-                            let mut iter = SymbolIter::new(
-                                &mut cursor,
-                                Vec::new(),
-                                1,
-                                stroff,
-                                strsize,
-                                is_bigend,
-                                is_64bit,
-                            );
-                            match iter.next() {
-                                Some(Symbol::Undefined { name: Some(n), .. }) => {
-                                    Some(String::from(n))
-                                }
-                                _ => None,
-                            }
+                        let mut cursor = cursor.clone();
+                        let sym = get_sym_by_idx(
+                            idx,
+                            sym_tab_info.unwrap(),
+                            is_bigend,
+                            is_64bit,
+                            &mut cursor,
+                        );
+                        indirect_undef_symbols.push(match sym {
+                            Some(Symbol::Undefined { name: Some(n), .. }) => Some(String::from(n)),
+                            _ => None,
                         })
+                    }
+
+                    let extrels = &bytes[extreloff as usize..][..nextrel as usize * 8];
+                    for entry in extrels.chunks(8) {
+                        assert!(!is_bigend);
+                        let addr = u32::from_le_bytes(entry[..4].try_into().unwrap());
+                        let sym_idx =
+                            u32::from_le_bytes(entry[4..8].try_into().unwrap()) & 0x00ffffff;
+
+                        let mut cursor = cursor.clone();
+                        let sym = get_sym_by_idx(
+                            sym_idx,
+                            sym_tab_info.unwrap(),
+                            is_bigend,
+                            is_64bit,
+                            &mut cursor,
+                        );
+                        let Some(Symbol::Undefined { name: Some(n), .. }) = sym else {
+                            continue;
+                        };
+                        external_relocations.push((addr, String::from(n)));
                     }
                 }
                 LoadCommand::EncryptionInfo { id, .. } => {
@@ -241,6 +275,7 @@ impl MachO {
             entry_point_addr,
             dynamic_libraries,
             sections,
+            external_relocations,
         })
     }
 

@@ -76,15 +76,16 @@ impl Dyld {
 
     /// Link non-lazy symbols for a loaded binary.
     ///
-    /// These are usually constants or Objective-C classes. Since the linking
-    /// must be done upfront, we can't in general delay errors about missing
-    /// implementations until the point of use. For that reason, this will spit
-    /// out a warning to stderr for everything missing, so that there's at least
-    /// some indication about why the emulator might crash.
+    /// These are usually constants, Objective-C classes, or vtable pointers.
+    /// Since the linking must be done upfront, we can't in general delay errors
+    /// about missing implementations until the point of use. For that reason,
+    /// this will spit out a warning to stderr for everything missing, so that
+    /// there's at least some indication about why the emulator might crash.
     fn do_non_lazy_linking(&self, bin: &MachO, _mem: &mut Memory) {
-        // TODO: Handle symbols that aren't direct. There seem to be a number of
-        // external and even internal references in this section that are stored
-        // in a different way.
+        for (_, name) in &bin.external_relocations {
+            // TODO: look up symbol in host implementations, write pointer
+            eprintln!("Warning: unhandled external relocation: {:?}", name);
+        }
 
         let Some(ptrs) = bin.get_section("__nl_symbol_ptr") else {
             return;

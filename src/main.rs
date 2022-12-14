@@ -55,90 +55,123 @@ fn main() -> Result<(), String> {
         return Err("Path to bundle must be specified".to_string());
     };
 
-    let bundle = match bundle::Bundle::from_host_path(bundle_path) {
-        Ok(bundle) => bundle,
-        Err(err) => {
-            return Err(format!("Application bundle error: {}. Check that the path is to a .app directory. If this is a .ipa file, you need to extract it as a ZIP file to get the .app directory.", err));
+    let mut env = Environment::new(bundle_path)?;
+    env.run();
+    Ok(())
+}
+
+/// The struct containing the entire emulator state.
+struct Environment {
+    _bundle: bundle::Bundle,
+    window: window::Window,
+    mem: memory::Memory,
+    executable: mach_o::MachO,
+    dyld: dyld::Dyld,
+    cpu: cpu::Cpu,
+}
+
+impl Environment {
+    /// Loads the binary and sets up the emulator.
+    fn new(bundle_path: PathBuf) -> Result<Environment, String> {
+        let bundle = match bundle::Bundle::from_host_path(bundle_path) {
+            Ok(bundle) => bundle,
+            Err(err) => {
+                return Err(format!("Application bundle error: {}. Check that the path is to a .app directory. If this is a .ipa file, you need to extract it as a ZIP file to get the .app directory.", err));
+            }
+        };
+
+        let icon = image::Image::from_file(bundle.icon_path())
+            .map_err(|_| "Could not load icon".to_string())?;
+        let launch_image = image::Image::from_file(bundle.launch_image_path()).ok();
+
+        let window = window::Window::new(
+            &format!("{} (touchHLE)", bundle.display_name()),
+            icon,
+            launch_image,
+        );
+
+        let mut mem = memory::Memory::new();
+
+        let executable = mach_o::MachO::load_from_file(bundle.executable_path(), &mut mem)
+            .map_err(|e| format!("Could not load executable: {}", e))?;
+
+        let entry_point_addr = executable.entry_point_addr.ok_or_else(|| {
+            "Mach-O file has no 'start' symbol, perhaps it is not an executable?".to_string()
+        })?;
+
+        println!("Address of start function: {:#x}", entry_point_addr);
+
+        let dyld = dyld::Dyld::new();
+        dyld.do_initial_linking(&executable, &mut mem);
+
+        let mut cpu = cpu::Cpu::new();
+
+        {
+            // FIXME: use actual app name
+            let fake_guest_path =
+                "/User/Applications/00000000-0000-0000-0000-000000000000/Foo.app/Foo";
+            let fake_guest_path_apple_key =
+                "executable_path=/User/Applications/00000000-0000-0000-0000-000000000000/Foo.app/Foo";
+
+            let argv = &[fake_guest_path];
+            let envp = &[];
+            let apple = &[fake_guest_path_apple_key];
+            stack::prep_stack_for_start(&mut mem, &mut cpu, argv, envp, apple);
         }
-    };
 
-    let icon = image::Image::from_file(bundle.icon_path())
-        .map_err(|_| "Could not load icon".to_string())?;
-    let launch_image = image::Image::from_file(bundle.launch_image_path()).ok();
+        println!("CPU emulation begins now.");
 
-    let mut window = window::Window::new(
-        &format!("{} (touchHLE)", bundle.display_name()),
-        icon,
-        launch_image,
-    );
+        cpu.regs_mut()[cpu::Cpu::PC] = entry_point_addr;
 
-    let mut mem = memory::Memory::new();
-
-    let mach_o = mach_o::MachO::load_from_file(bundle.executable_path(), &mut mem)
-        .map_err(|e| format!("Could not load executable: {}", e))?;
-
-    let entry_point_addr = mach_o.entry_point_addr.ok_or_else(|| {
-        "Mach-O file has no 'start' symbol, perhaps it is not an executable?".to_string()
-    })?;
-
-    println!("Address of start function: {:#x}", entry_point_addr);
-
-    let mut dyld = dyld::Dyld::new();
-    dyld.do_initial_linking(&mach_o, &mut mem);
-
-    let mut cpu = cpu::Cpu::new();
-
-    {
-        // FIXME: use actual app name
-        let fake_guest_path = "/User/Applications/00000000-0000-0000-0000-000000000000/Foo.app/Foo";
-        let fake_guest_path_apple_key =
-            "executable_path=/User/Applications/00000000-0000-0000-0000-000000000000/Foo.app/Foo";
-
-        let argv = &[fake_guest_path];
-        let envp = &[];
-        let apple = &[fake_guest_path_apple_key];
-        stack::prep_stack_for_start(&mut mem, &mut cpu, argv, envp, apple);
+        Ok(Environment {
+            _bundle: bundle,
+            window,
+            mem,
+            executable,
+            dyld,
+            cpu,
+        })
     }
 
-    println!("CPU emulation begins now.");
-
-    cpu.regs_mut()[cpu::Cpu::PC] = entry_point_addr;
-
-    let mut events = Vec::new(); // re-use each iteration for efficiency
-    loop {
-        window.poll_for_events(&mut events);
-        for event in events.drain(..) {
-            match event {
-                window::Event::Quit => {
-                    println!("User requested quit, exiting.");
-                    return Ok(());
-                }
-            }
-        }
-
-        let mut ticks = 100;
-        while ticks > 0 {
-            // I'm not sure if this actually is unwind-safe, but considering the
-            // emulator will always crash, maybe this is okay.
-            let res = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-                match cpu.run(&mut mem, &mut ticks) {
-                    cpu::CpuState::Normal => (),
-                    cpu::CpuState::Svc(svc) => {
-                        // the program counter is one instruction ahead
-                        let current_instruction = cpu.regs()[cpu::Cpu::PC] - 4;
-                        dyld.handle_svc(&mach_o, current_instruction, svc)
+    /// Run the emulator. This is the main loop, it won't return until app exit.
+    fn run(&mut self) {
+        let mut events = Vec::new(); // re-use each iteration for efficiency
+        loop {
+            self.window.poll_for_events(&mut events);
+            for event in events.drain(..) {
+                match event {
+                    window::Event::Quit => {
+                        println!("User requested quit, exiting.");
+                        return;
                     }
                 }
-            }));
-            if let Err(e) = res {
-                eprintln!(
-                    "Panic at PC {:#x}, LR {:#x}",
-                    cpu.regs()[cpu::Cpu::PC],
-                    cpu.regs()[cpu::Cpu::LR]
-                );
-                std::panic::resume_unwind(e);
             }
+
+            let mut ticks = 100;
+            while ticks > 0 {
+                // I'm not sure if this actually is unwind-safe, but considering
+                // the emulator will always crash, maybe this is okay.
+                let res = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                    match self.cpu.run(&mut self.mem, &mut ticks) {
+                        cpu::CpuState::Normal => (),
+                        cpu::CpuState::Svc(svc) => {
+                            // the program counter is one instruction ahead
+                            let current_instruction = self.cpu.regs()[cpu::Cpu::PC] - 4;
+                            self.dyld
+                                .handle_svc(&self.executable, current_instruction, svc)
+                        }
+                    }
+                }));
+                if let Err(e) = res {
+                    eprintln!(
+                        "Panic at PC {:#x}, LR {:#x}",
+                        self.cpu.regs()[cpu::Cpu::PC],
+                        self.cpu.regs()[cpu::Cpu::LR]
+                    );
+                    std::panic::resume_unwind(e);
+                }
+            }
+            println!("{} ticks elapsed", ticks);
         }
-        println!("{} ticks elapsed", ticks);
     }
 }

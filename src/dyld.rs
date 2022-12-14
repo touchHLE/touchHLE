@@ -12,10 +12,31 @@
 //!
 //! See [crate::mach_o] for resources.
 
+use crate::abi::CallFromGuest;
 use crate::mach_o::MachO;
 use crate::memory::{Memory, MutPtr, Ptr};
 
-pub struct Dyld {}
+type HostFunction = &'static dyn CallFromGuest;
+
+/// Type for lists of functions exported by host implementations of frameworks.
+///
+/// Each module that wants to expose functions to guest code should export a
+/// constant using this type, e.g.:
+///
+/// ```
+/// pub const FUNCTIONS: FunctionExports = &[
+///    ("_NSFoo", &/* ... */),
+///    ("_NSBar", &/* ... */),
+///    /* ... */
+/// ];
+/// ```
+///
+/// The strings are the mangled symbol names. For C functions, this is just the
+/// name prefixed with an underscore.
+pub type FunctionExports = &'static [(&'static str, HostFunction)];
+
+/// All the lists of functions that the linker should search through.
+const FUNCTION_LISTS: &[FunctionExports] = &[crate::objc::FUNCTIONS];
 
 fn encode_a32_svc(imm: u32) -> u32 {
     assert!(imm & 0xff000000 == 0);
@@ -28,9 +49,15 @@ fn encode_a32_trap() -> u32 {
     0xe7ffdefe
 }
 
+pub struct Dyld {
+    linked_host_functions: Vec<HostFunction>,
+}
+
 impl Dyld {
     pub fn new() -> Dyld {
-        Dyld {}
+        Dyld {
+            linked_host_functions: Vec::new(),
+        }
     }
 
     /// Do linking-related tasks that need doing right after loading a binary.
@@ -114,17 +141,33 @@ impl Dyld {
         }
     }
 
-    /// Handle an SVC instruction encountered during CPU emulation.
-    pub fn handle_svc(&mut self, bin: &MachO, current_instruction: u32, svc: u32) {
+    /// Return a host function that can be called to handle an SVC instruction
+    /// encountered during CPU emulation.
+    pub fn get_svc_handler(
+        &mut self,
+        bin: &MachO,
+        mem: &mut Memory,
+        current_instruction: u32,
+        svc: u32,
+    ) -> HostFunction {
         match svc {
-            0 => self.do_lazy_link(bin, current_instruction),
+            0 => self.do_lazy_link(bin, mem, current_instruction),
             _ => {
-                panic!("Unexpected SVC #{} at {:#x}", svc, current_instruction);
+                let f = self.linked_host_functions.get((svc - 1) as usize);
+                let Some(&f) = f else {
+                    panic!("Unexpected SVC #{} at {:#x}", svc, current_instruction);
+                };
+                f
             }
         }
     }
 
-    fn do_lazy_link(&mut self, bin: &MachO, current_instruction: u32) {
+    fn do_lazy_link(
+        &mut self,
+        bin: &MachO,
+        mem: &mut Memory,
+        current_instruction: u32,
+    ) -> HostFunction {
         let stubs = bin.get_section("__symbol_stub4").unwrap();
         let info = stubs.dyld_indirect_symbol_info.as_ref().unwrap();
 
@@ -135,7 +178,23 @@ impl Dyld {
 
         let symbol = info.indirect_undef_symbols[idx].as_deref().unwrap();
 
-        // TODO: look up symbol in host implementations, write specific SVC
-        unimplemented!("Call to {}", symbol);
+        let Some(&(_, f)) = FUNCTION_LISTS.iter().flat_map(|&n| n).find(|&(sym, _)| {
+            *sym == symbol
+        }) else {
+            panic!("Call to unimplemented function {}", symbol);
+        };
+
+        // Allocate an SVC ID for this host function
+        let idx: u32 = self.linked_host_functions.len().try_into().unwrap();
+        let svc = idx + 1;
+        self.linked_host_functions.push(f);
+
+        // Rewrite stub function to call this host function
+        let stub_function_ptr: MutPtr<u32> = Ptr::from_bits(current_instruction);
+        mem.write(stub_function_ptr, encode_a32_svc(svc));
+        assert!(mem.read(stub_function_ptr + 1) == encode_a32_ret());
+
+        // Return the host function so that we can call it now that we're done.
+        f
     }
 }

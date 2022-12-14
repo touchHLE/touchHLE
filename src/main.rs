@@ -8,17 +8,21 @@
 //! - The host is a 64-bit application, so a "host pointer" is 64 bits.
 //! - The guest can only directly access "guest memory".
 //! - The host can access both "guest memory" and "host memory".
+//! - A "guest function" is emulated Arm code, usually from the app binary.
+//! - A "host function" is a Rust function that is part of this emulator.
 
 // Allow the crate to have a non-snake-case name (touchHLE).
 // This also allows items in the crate to have non-snake-case names.
 #![allow(non_snake_case)]
 
+mod abi;
 mod bundle;
 mod cpu;
 mod dyld;
 mod image;
 mod mach_o;
 mod memory;
+mod objc;
 mod stack;
 mod window;
 
@@ -61,7 +65,7 @@ fn main() -> Result<(), String> {
 }
 
 /// The struct containing the entire emulator state.
-struct Environment {
+pub struct Environment {
     _bundle: bundle::Bundle,
     window: window::Window,
     mem: memory::Memory,
@@ -157,8 +161,13 @@ impl Environment {
                         cpu::CpuState::Svc(svc) => {
                             // the program counter is one instruction ahead
                             let current_instruction = self.cpu.regs()[cpu::Cpu::PC] - 4;
-                            self.dyld
-                                .handle_svc(&self.executable, current_instruction, svc)
+                            let f = self.dyld.get_svc_handler(
+                                &self.executable,
+                                &mut self.mem,
+                                current_instruction,
+                                svc,
+                            );
+                            f.call_from_guest(self);
                         }
                     }
                 }));

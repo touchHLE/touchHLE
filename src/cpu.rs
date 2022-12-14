@@ -2,7 +2,8 @@
 //!
 //! Implemented using the C++ library dynarmic, which is a dynamic recompiler.
 //!
-//! iPhone OS apps used either ARMv6 or ARMv7-A. These are both 32-bit ISAs.
+//! iPhone OS apps used either ARMv6 or ARMv7-A, which are both 32-bit ISAs.
+//! For the moment, only ARMv6 has been tested.
 
 use crate::memory::{ConstPtr, Memory, MutPtr, Ptr, SafeRead};
 

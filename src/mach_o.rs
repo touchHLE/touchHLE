@@ -126,7 +126,7 @@ impl MachO {
                     // filesize may be less than vmsize, in which case the rest
                     // of the segment should be filled with zeroes. This code
                     // is assuming the memory is already zeroed.
-                    {
+                    if filesize > 0 {
                         let src = &bytes[fileoff..][..filesize];
                         let dst = into_mem.bytes_at_mut(
                             Ptr::from_bits(vmaddr.try_into().unwrap()),

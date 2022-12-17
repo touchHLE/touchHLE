@@ -121,6 +121,13 @@ impl Drop for Memory {
 }
 
 impl Memory {
+    /// The first 4KiB of address space on iPhone OS is unused, so null pointer
+    /// accesses can be trapped.
+    ///
+    /// We don't have full memory protection, but we can check accesses in that
+    /// range.
+    const NULL_PAGE_END: u32 = 0x1000;
+
     pub fn new() -> Memory {
         // This will hopefully get the host OS to lazily allocate the memory.
         let layout = std::alloc::Layout::new::<Bytes>();
@@ -136,10 +143,26 @@ impl Memory {
         unsafe { &mut *self.bytes }
     }
 
+    // the performance characteristics of this hasn't been profiled, but it
+    // seems like a good idea to help the compiler optimise for the fast path
+    #[cold]
+    fn null_check_fail(at: u32, size: u32) {
+        panic!(
+            "Attempted null-page access at {:#x} ({:#x} bytes)",
+            at, size
+        )
+    }
+
     pub fn bytes_at<const MUT: bool>(&self, ptr: Ptr<u8, MUT>, count: GuestUSize) -> &[u8] {
+        if ptr.to_bits() < Self::NULL_PAGE_END {
+            Self::null_check_fail(ptr.to_bits(), count)
+        }
         &self.bytes()[ptr.to_bits() as usize..][..count as usize]
     }
     pub fn bytes_at_mut(&mut self, ptr: MutPtr<u8>, count: GuestUSize) -> &mut [u8] {
+        if ptr.to_bits() < Self::NULL_PAGE_END {
+            Self::null_check_fail(ptr.to_bits(), count)
+        }
         &mut self.bytes_mut()[ptr.to_bits() as usize..][..count as usize]
     }
 

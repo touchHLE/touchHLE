@@ -81,6 +81,7 @@ impl Window {
     pub fn poll_for_events(&mut self, events: &mut Vec<Event>) {
         for event in self.event_pump.poll_iter() {
             use sdl2::event::Event as E;
+            #[allow(clippy::single_match)]
             match event {
                 E::Quit { .. } => events.push(Event::Quit),
                 _ => (),

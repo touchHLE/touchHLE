@@ -142,7 +142,9 @@ impl Environment {
         let mut events = Vec::new(); // re-use each iteration for efficiency
         loop {
             self.window.poll_for_events(&mut events);
+            #[allow(clippy::never_loop)]
             for event in events.drain(..) {
+                #[allow(clippy::single_match)]
                 match event {
                     window::Event::Quit => {
                         println!("User requested quit, exiting.");

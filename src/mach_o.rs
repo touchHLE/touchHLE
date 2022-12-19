@@ -114,6 +114,7 @@ impl MachO {
         for MachCommand(command, _size) in commands {
             match command {
                 LoadCommand::Segment {
+                    segname,
                     vmaddr,
                     vmsize,
                     fileoff,
@@ -121,19 +122,43 @@ impl MachO {
                     sections,
                     ..
                 } => {
-                    assert!(filesize <= vmsize);
-                    // Copy the bytes from the file into memory. Note that
-                    // filesize may be less than vmsize, in which case the rest
-                    // of the segment should be filled with zeroes. This code
-                    // is assuming the memory is already zeroed.
-                    if filesize > 0 {
-                        let src = &bytes[fileoff..][..filesize];
-                        let dst = into_mem.bytes_at_mut(
-                            Ptr::from_bits(vmaddr.try_into().unwrap()),
-                            filesize.try_into().unwrap(),
-                        );
-                        dst.copy_from_slice(src);
+                    let vmaddr: u32 = vmaddr.try_into().unwrap();
+                    let vmsize: u32 = vmsize.try_into().unwrap();
+                    let filesize: u32 = filesize.try_into().unwrap();
+
+                    let load_me = match &*segname {
+                        // Special linker data section, not meant to be loaded.
+                        "__LINKEDIT" => false,
+                        // Zero-page handling is hard-coded in memory.rs, so
+                        // check it's where we expect it to be.
+                        "__PAGEZERO" => {
+                            assert!(vmaddr == 0);
+                            assert!(vmsize == Memory::NULL_PAGE_SIZE);
+                            assert!(filesize == 0);
+                            false
+                        }
+                        "__TEXT" | "__DATA" => true,
+                        _ => {
+                            println!("Warning: Unexpected segment name: {}", segname);
+                            true
+                        }
                     };
+
+                    if load_me {
+                        into_mem.reserve(vmaddr, vmsize);
+
+                        // If filesize is less than vmsize, the rest of the
+                        // segment should be filled with zeroes. We are assuming
+                        // the memory is already zeroed!
+                        if filesize > 0 {
+                            assert!(filesize <= vmsize);
+
+                            let src = &bytes[fileoff..][..filesize as usize];
+                            let dst = into_mem.bytes_at_mut(Ptr::from_bits(vmaddr), filesize);
+                            dst.copy_from_slice(src);
+                        }
+                    }
+
                     all_sections.extend_from_slice(&sections);
                 }
                 LoadCommand::SymTab {

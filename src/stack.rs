@@ -22,8 +22,9 @@ pub fn prep_stack_for_start(
 ) {
     let argc: i32 = argv.len().try_into().unwrap();
 
-    // The stack grows downwards, so the very top of the address space seems
-    // like a reasonable place to put it. I don't know where iPhone OS puts it.
+    // We are arbitrarily putting the main thread's stack at the top of the
+    // address space (see also: memory::Memory::MAIN_THREAD_STACK_LOW_END).
+    // Since the stack grows downwards, its first byte would be 0xffffffff.
     let stack_base: usize = 1 << 32;
 
     // Rust vectors grow upwards but we need to grow this one downwards, so
@@ -69,6 +70,8 @@ pub fn prep_stack_for_start(
     let stack_ptr: MutPtr<u8> =
         Ptr::from_bits((stack_base - reversed_data.len()).try_into().unwrap());
     let stack_height: GuestUSize = reversed_data.len().try_into().unwrap();
+
+    assert!(stack_height < Memory::MAIN_THREAD_STACK_SIZE);
 
     let stack_region = mem.bytes_at_mut(stack_ptr, stack_height);
 

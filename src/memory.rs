@@ -9,6 +9,8 @@
 //! Relevant Apple documentation:
 //! * [Memory Usage Performance Guidelines](https://developer.apple.com/library/archive/documentation/Performance/Conceptual/ManagingMemory/ManagingMemory.html)
 
+mod allocator;
+
 /// Equivalent of `usize` for guest memory.
 pub type GuestUSize = u32;
 
@@ -93,6 +95,7 @@ impl<T, const MUT: bool> SafeRead for Ptr<T, MUT> {}
 
 type Bytes = [u8; 1 << 32];
 
+/// The type that owns the guest memory and provides accessors for it.
 pub struct Memory {
     /// This array is 4GiB in size so that it can cover the entire 32-bit
     /// virtual address space, but it should not use that much physical memory,
@@ -112,6 +115,8 @@ pub struct Memory {
     /// One advantage of `[u8; 1 << 32]` over `[u8]` is that it might help rustc
     /// optimize away bounds checks for `memory.bytes[ptr_32bit as usize]`.
     bytes: *mut Bytes,
+
+    allocator: allocator::Allocator,
 }
 
 impl Drop for Memory {
@@ -129,14 +134,26 @@ impl Memory {
     ///
     /// We don't have full memory protection, but we can check accesses in that
     /// range.
-    const NULL_PAGE_END: VAddr = 0x1000;
+    pub const NULL_PAGE_SIZE: VAddr = 0x1000;
+
+    /// [According to Apple](https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/Multithreading/CreatingThreads/CreatingThreads.html)
+    /// among others, the iPhone OS main thread stack size is 1MiB.
+    pub const MAIN_THREAD_STACK_SIZE: GuestUSize = 1024 * 1024;
+
+    /// Address of the lowest byte (not the base) of the main thread's stack.
+    ///
+    /// We are arbitrarily putting the stack at the top of the virtual address
+    /// space (see also: stack.rs), I have no idea if this matches iPhone OS.
+    pub const MAIN_THREAD_STACK_LOW_END: VAddr = 0u32.wrapping_sub(Self::MAIN_THREAD_STACK_SIZE);
 
     pub fn new() -> Memory {
         // This will hopefully get the host OS to lazily allocate the memory.
         let layout = std::alloc::Layout::new::<Bytes>();
         let bytes = unsafe { std::alloc::alloc_zeroed(layout) as *mut Bytes };
 
-        Memory { bytes }
+        let allocator = allocator::Allocator::new();
+
+        Memory { bytes, allocator }
     }
 
     fn bytes(&self) -> &Bytes {
@@ -157,13 +174,13 @@ impl Memory {
     }
 
     pub fn bytes_at<const MUT: bool>(&self, ptr: Ptr<u8, MUT>, count: GuestUSize) -> &[u8] {
-        if ptr.to_bits() < Self::NULL_PAGE_END {
+        if ptr.to_bits() < Self::NULL_PAGE_SIZE {
             Self::null_check_fail(ptr.to_bits(), count)
         }
         &self.bytes()[ptr.to_bits() as usize..][..count as usize]
     }
     pub fn bytes_at_mut(&mut self, ptr: MutPtr<u8>, count: GuestUSize) -> &mut [u8] {
-        if ptr.to_bits() < Self::NULL_PAGE_END {
+        if ptr.to_bits() < Self::NULL_PAGE_SIZE {
             Self::null_check_fail(ptr.to_bits(), count)
         }
         &mut self.bytes_mut()[ptr.to_bits() as usize..][..count as usize]
@@ -189,5 +206,11 @@ impl Memory {
         // It's unaligned because what is well-aligned for the guest is not
         // necessarily well-aligned for the host.
         unsafe { ptr.write_unaligned(value) }
+    }
+
+    /// Permanently mark a region of address space as being unusable to the
+    /// memory allocator.
+    pub fn reserve(&mut self, base: VAddr, size: GuestUSize) {
+        self.allocator.reserve(allocator::Chunk::new(base, size));
     }
 }

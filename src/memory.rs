@@ -12,6 +12,9 @@
 /// Equivalent of `usize` for guest memory.
 pub type GuestUSize = u32;
 
+/// Internal type for representing an untyped virtual address.
+type VAddr = GuestUSize;
+
 /// Pointer type for guest memory, or the "guest pointer" type.
 ///
 /// The `MUT` type parameter determines whether this is mutable or not.
@@ -20,7 +23,7 @@ pub type GuestUSize = u32;
 /// The implemented methods try to mirror the Rust [pointer] type's methods,
 /// where possible.
 #[repr(transparent)]
-pub struct Ptr<T, const MUT: bool>(GuestUSize, std::marker::PhantomData<T>);
+pub struct Ptr<T, const MUT: bool>(VAddr, std::marker::PhantomData<T>);
 
 // #[derive(Clone, Copy)] doesn't work for this type because T isn't always Copy
 impl<T, const MUT: bool> Clone for Ptr<T, MUT> {
@@ -36,10 +39,10 @@ pub type ConstPtr<T> = Ptr<T, false>;
 pub type MutPtr<T> = Ptr<T, true>;
 
 impl<T, const MUT: bool> Ptr<T, MUT> {
-    pub fn to_bits(self) -> GuestUSize {
+    pub fn to_bits(self) -> VAddr {
         self.0
     }
-    pub fn from_bits(bits: GuestUSize) -> Self {
+    pub fn from_bits(bits: VAddr) -> Self {
         Ptr(bits, std::marker::PhantomData)
     }
 
@@ -126,7 +129,7 @@ impl Memory {
     ///
     /// We don't have full memory protection, but we can check accesses in that
     /// range.
-    const NULL_PAGE_END: u32 = 0x1000;
+    const NULL_PAGE_END: VAddr = 0x1000;
 
     pub fn new() -> Memory {
         // This will hopefully get the host OS to lazily allocate the memory.
@@ -146,7 +149,7 @@ impl Memory {
     // the performance characteristics of this hasn't been profiled, but it
     // seems like a good idea to help the compiler optimise for the fast path
     #[cold]
-    fn null_check_fail(at: u32, size: u32) {
+    fn null_check_fail(at: VAddr, size: GuestUSize) {
         panic!(
             "Attempted null-page access at {:#x} ({:#x} bytes)",
             at, size

@@ -125,4 +125,30 @@ impl Allocator {
 
         panic!("Could not reserve chunk {:?}!", chunk);
     }
+
+    pub fn alloc(&mut self, size: GuestUSize) -> VAddr {
+        // TODO: use a better allocation strategy, probably using buckets.
+
+        // iPhone OS's allocator always aligns to 16 bytes at minimum, and this
+        // is also the minimum allocation size.
+        // TODO: also do the 4096-byte alignment.
+        let size = size.max(16);
+        let size = if size % 16 != 0 {
+            size + 16 - (size % 16)
+        } else {
+            size
+        };
+
+        let big_chunk = self.unused_chunks.pop().unwrap();
+
+        assert!(size < big_chunk.size.get());
+
+        let alloc = Chunk::new(big_chunk.base, size);
+        let rump = Chunk::new(big_chunk.base + size, big_chunk.size.get() - size);
+
+        self.used_chunks.push(alloc);
+        self.unused_chunks.push(rump);
+
+        alloc.base
+    }
 }

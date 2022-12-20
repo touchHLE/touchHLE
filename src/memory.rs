@@ -20,27 +20,49 @@ type VAddr = GuestUSize;
 /// Pointer type for guest memory, or the "guest pointer" type.
 ///
 /// The `MUT` type parameter determines whether this is mutable or not.
-/// Don't write it out explicitly, use [ConstPtr] or [MutPtr] instead.
+/// Don't write it out explicitly, use [ConstPtr], [MutPtr], [ConstVoidPtr] or
+/// [MutVoidPtr] instead instead.
 ///
 /// The implemented methods try to mirror the Rust [pointer] type's methods,
 /// where possible.
 #[repr(transparent)]
 pub struct Ptr<T, const MUT: bool>(VAddr, std::marker::PhantomData<T>);
 
-// #[derive(Clone, Copy)] doesn't work for this type because T isn't always Copy
+// #[derive(...)] doesn't work for this type because it expects T to have the
+// trait we want implemented
 impl<T, const MUT: bool> Clone for Ptr<T, MUT> {
     fn clone(&self) -> Self {
         *self
     }
 }
 impl<T, const MUT: bool> Copy for Ptr<T, MUT> {}
+impl<T, const MUT: bool> PartialEq for Ptr<T, MUT> {
+    fn eq(&self, other: &Self) -> bool {
+        self.0 == other.0
+    }
+}
+impl<T, const MUT: bool> Eq for Ptr<T, MUT> {}
+impl<T, const MUT: bool> std::hash::Hash for Ptr<T, MUT> {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.0.hash(state);
+    }
+}
 
 /// Constant guest pointer type (like Rust's `*const T`).
 pub type ConstPtr<T> = Ptr<T, false>;
 /// Mutable guest pointer type (like Rust's `*mut T`).
 pub type MutPtr<T> = Ptr<T, true>;
+#[allow(dead_code)]
+/// Constant guest pointer-to-void type (like C's `const void *`)
+pub type ConstVoidPtr = ConstPtr<std::ffi::c_void>;
+/// Mutable guest pointer-to-void type (like C's `void *`)
+pub type MutVoidPtr = MutPtr<std::ffi::c_void>;
 
 impl<T, const MUT: bool> Ptr<T, MUT> {
+    pub const fn null() -> Self {
+        Ptr(0, std::marker::PhantomData)
+    }
+
     pub fn to_bits(self) -> VAddr {
         self.0
     }
@@ -50,6 +72,12 @@ impl<T, const MUT: bool> Ptr<T, MUT> {
 
     pub fn cast<U>(self) -> Ptr<U, MUT> {
         Ptr::<U, MUT>::from_bits(self.to_bits())
+    }
+}
+
+impl<T, const MUT: bool> std::fmt::Debug for Ptr<T, MUT> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:#x}", self.to_bits())
     }
 }
 
@@ -199,13 +227,40 @@ impl Memory {
         // necessarily well-aligned for the host.
         unsafe { ptr.read_unaligned() }
     }
-    pub fn write<T>(&mut self, ptr: MutPtr<T>, value: T) {
+    pub fn write<T: Sized>(&mut self, ptr: MutPtr<T>, value: T) {
         let size = std::mem::size_of::<T>().try_into().unwrap();
+        assert!(size > 0);
         let slice = self.bytes_at_mut(ptr.cast(), size);
         let ptr: *mut T = slice.as_mut_ptr().cast();
         // It's unaligned because what is well-aligned for the guest is not
         // necessarily well-aligned for the host.
         unsafe { ptr.write_unaligned(value) }
+    }
+
+    pub fn alloc(&mut self, size: GuestUSize) -> MutVoidPtr {
+        Ptr::from_bits(self.allocator.alloc(size))
+    }
+
+    pub fn alloc_and_write<T: Sized>(&mut self, value: T) -> MutPtr<T> {
+        let size = std::mem::size_of::<T>().try_into().unwrap();
+        let ptr = self.alloc(size).cast();
+        self.write(ptr, value);
+        ptr
+    }
+
+    /// Get a C string (null terminated) as a slice.
+    pub fn cstr_at<const MUT: bool>(&self, ptr: Ptr<u8, MUT>) -> &[u8] {
+        let mut len = 0;
+        while self.read(ptr + len) != b'\0' {
+            len += 1;
+        }
+        self.bytes_at(ptr, len)
+    }
+
+    /// Get a C string (null terminated) as a string reference, panicking if it
+    /// is not UTF-8.
+    pub fn cstr_at_utf8<const MUT: bool>(&self, ptr: Ptr<u8, MUT>) -> &str {
+        std::str::from_utf8(self.cstr_at(ptr)).unwrap()
     }
 
     /// Permanently mark a region of address space as being unusable to the

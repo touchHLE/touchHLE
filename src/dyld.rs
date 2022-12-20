@@ -15,6 +15,7 @@
 use crate::abi::CallFromGuest;
 use crate::mach_o::MachO;
 use crate::memory::{Memory, MutPtr, Ptr};
+use crate::objc::ObjC;
 
 type HostFunction = &'static dyn CallFromGuest;
 
@@ -61,9 +62,9 @@ impl Dyld {
     }
 
     /// Do linking-related tasks that need doing right after loading a binary.
-    pub fn do_initial_linking(&self, bin: &MachO, mem: &mut Memory) {
+    pub fn do_initial_linking(&self, bin: &MachO, mem: &mut Memory, objc: &mut ObjC) {
         self.setup_lazy_linking(bin, mem);
-        self.do_non_lazy_linking(bin, mem);
+        self.do_non_lazy_linking(bin, mem, objc);
     }
 
     /// Set up lazy-linking stubs for a loaded binary.
@@ -108,13 +109,21 @@ impl Dyld {
     /// about missing implementations until the point of use. For that reason,
     /// this will spit out a warning to stderr for everything missing, so that
     /// there's at least some indication about why the emulator might crash.
-    fn do_non_lazy_linking(&self, bin: &MachO, _mem: &mut Memory) {
-        for (addr, name) in &bin.external_relocations {
-            // TODO: look up symbol in host implementations, write pointer
-            eprintln!(
-                "Warning: unhandled external relocation {:?} at {:#x}",
-                name, addr
-            );
+    fn do_non_lazy_linking(&self, bin: &MachO, mem: &mut Memory, objc: &mut ObjC) {
+        for &(ptr_ptr, ref name) in &bin.external_relocations {
+            let ptr = if let Some(name) = name.strip_prefix("_OBJC_CLASS_$_") {
+                objc.link_class(name, /* is_metaclass: */ false, mem)
+            } else if let Some(name) = name.strip_prefix("_OBJC_METACLASS_$_") {
+                objc.link_class(name, /* is_metaclass: */ true, mem)
+            } else {
+                // TODO: look up symbol in host implementations, write pointer
+                eprintln!(
+                    "Warning: unhandled external relocation {:?} at {:#x}",
+                    name, ptr_ptr
+                );
+                continue;
+            };
+            mem.write(Ptr::from_bits(ptr_ptr), ptr)
         }
 
         let Some(ptrs) = bin.get_section("__nl_symbol_ptr") else {

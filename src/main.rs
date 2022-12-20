@@ -70,6 +70,7 @@ pub struct Environment {
     window: window::Window,
     mem: memory::Memory,
     executable: mach_o::MachO,
+    objc: objc::ObjC,
     dyld: dyld::Dyld,
     cpu: cpu::Cpu,
 }
@@ -105,8 +106,10 @@ impl Environment {
 
         println!("Address of start function: {:#x}", entry_point_addr);
 
+        let mut objc = objc::ObjC::new();
+
         let dyld = dyld::Dyld::new();
-        dyld.do_initial_linking(&executable, &mut mem);
+        dyld.do_initial_linking(&executable, &mut mem, &mut objc);
 
         let mut cpu = cpu::Cpu::new();
 
@@ -132,6 +135,7 @@ impl Environment {
             window,
             mem,
             executable,
+            objc,
             dyld,
             cpu,
         })

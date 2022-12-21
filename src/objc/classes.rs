@@ -22,16 +22,11 @@ pub type Class = id;
 ///
 /// This lets us delay errors about missing implementations until the first
 /// time the app actually uses them (e.g. when a message is sent).
-struct UnimplementedClass {
-    name: String,
-    is_metaclass: bool,
+pub(super) struct UnimplementedClass {
+    pub(super) name: String,
+    pub(super) is_metaclass: bool,
 }
-
-impl HostObject for UnimplementedClass {
-    fn is_unimplemented_class(&self) -> Option<(&str, bool)> {
-        Some((&self.name, self.is_metaclass))
-    }
-}
+impl HostObject for UnimplementedClass {}
 
 impl super::ObjC {
     /// For use by [crate::dyld]: get the class referenced by an external

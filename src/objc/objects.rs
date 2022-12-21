@@ -14,6 +14,7 @@
 
 use super::Class;
 use crate::memory::{Memory, MutPtr, Ptr, SafeRead};
+use std::any::Any;
 
 /// Memory layout of a minimal Objective-C object. See [id].
 ///
@@ -45,9 +46,19 @@ pub type id = MutPtr<objc_object>;
 pub const nil: id = Ptr::null();
 
 /// Type for host objects.
-pub trait HostObject {
-    fn is_unimplemented_class(&self) -> Option<(&str, bool)> {
-        None
+pub trait HostObject: Any + 'static {}
+
+/// Trait wrapping [HostObject] with a blanket implementation to make
+/// downcasting work. Don't implement it yourself.
+///
+/// This is a workaround for it not being possible to directly cast
+/// `&'a dyn HostObject` to `&'a dyn Any`.
+pub trait AnyHostObject {
+    fn as_any<'a>(&'a self) -> &'a (dyn Any + 'static);
+}
+impl<T: HostObject> AnyHostObject for T {
+    fn as_any<'a>(&'a self) -> &'a (dyn Any + 'static) {
+        self
     }
 }
 
@@ -66,7 +77,7 @@ impl super::ObjC {
     pub fn alloc_object(
         &mut self,
         isa: Class,
-        host_object: Box<dyn HostObject>,
+        host_object: Box<dyn AnyHostObject>,
         mem: &mut Memory,
     ) -> id {
         let guest_object = objc_object { isa };

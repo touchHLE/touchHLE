@@ -24,7 +24,7 @@ mod objects;
 mod selectors;
 
 pub use classes::Class;
-pub use objects::{id, nil, HostObject};
+pub use objects::{id, nil, AnyHostObject, HostObject};
 pub use selectors::SEL;
 
 use messages::objc_msgSend;
@@ -37,7 +37,7 @@ pub struct ObjC {
     /// Mapping of known (guest) object pointers to their host objects.
     ///
     /// If an object isn't in this map, we will consider it not to exist.
-    objects: HashMap<id, Box<dyn HostObject>>,
+    objects: HashMap<id, Box<dyn AnyHostObject>>,
 
     /// Known classes.
     ///

@@ -19,9 +19,14 @@ pub fn objc_msgSend(
 
     let host_object = env.objc.objects.get(&class).unwrap(); // TODO error message
 
-    if let Some((name, _is_metaclass)) = host_object.is_unimplemented_class() {
+    if let Some(&super::classes::UnimplementedClass {
+        ref name,
+        is_metaclass,
+    }) = host_object.as_any().downcast_ref()
+    {
         panic!(
-            "Call to method \"{}\" on unimplemented class \"{}\" ({:?})",
+            "Call to {} method \"{}\" of unimplemented class \"{}\" ({:?})",
+            if is_metaclass { "class" } else { "instance" },
             selector.as_str(&env.mem),
             name,
             class,

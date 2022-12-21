@@ -5,7 +5,7 @@
 //! iPhone OS apps used either ARMv6 or ARMv7-A, which are both 32-bit ISAs.
 //! For the moment, only ARMv6 has been tested.
 
-use crate::memory::{ConstPtr, Memory, MutPtr, Ptr, SafeRead};
+use crate::memory::{ConstPtr, Memory, MutPtr, Ptr, SafeRead, SafeWrite};
 
 // Import functions from C++
 use touchHLE_dynarmic_wrapper::*;
@@ -18,7 +18,7 @@ fn touchHLE_cpu_read_impl<T: SafeRead>(mem: *mut touchHLE_Memory, addr: VAddr) -
     mem.read(ptr)
 }
 
-fn touchHLE_cpu_write_impl<T>(mem: *mut touchHLE_Memory, addr: VAddr, value: T) {
+fn touchHLE_cpu_write_impl<T: SafeWrite>(mem: *mut touchHLE_Memory, addr: VAddr, value: T) {
     let mem = unsafe { &mut *mem.cast::<Memory>() };
     let ptr: MutPtr<T> = Ptr::from_bits(addr);
     mem.write(ptr, value)

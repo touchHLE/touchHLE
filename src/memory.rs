@@ -106,9 +106,8 @@ impl<T, const MUT: bool> std::ops::AddAssign<GuestUSize> for Ptr<T, MUT> {
 /// which is notoriously unsafe in Rust. Only types for which all possible bit
 /// patterns are legal (e.g. integers) should have this trait.
 ///
-/// There is no marker trait for types that can be safely written because
-/// transmuting something _into_ a series of bytes is always safe.
-pub trait SafeRead {}
+/// See also [SafeWrite].
+pub trait SafeRead: Sized {}
 impl SafeRead for i8 {}
 impl SafeRead for u8 {}
 impl SafeRead for i16 {}
@@ -120,6 +119,19 @@ impl SafeRead for u64 {}
 impl SafeRead for f32 {}
 impl SafeRead for f64 {}
 impl<T, const MUT: bool> SafeRead for Ptr<T, MUT> {}
+
+/// Marker trait for types that can be written to guest memory.
+///
+/// Unlike for [SafeRead], there is no (Rust) safety consideration here; it's
+/// just a way to catch accidental use of types unintended for guest use.
+/// This was added after discovering that `()` is "[Sized]" and therefore a
+/// single stray semicolon can wreak havoc...
+///
+/// Especially for structs, be careful that the type matches the expected ABI.
+/// At minimum you should have `#[repr(C, packed)]` and appropriate padding
+/// members.
+pub trait SafeWrite: Sized {}
+impl<T: SafeRead> SafeWrite for T {}
 
 type Bytes = [u8; 1 << 32];
 
@@ -227,7 +239,10 @@ impl Memory {
         // necessarily well-aligned for the host.
         unsafe { ptr.read_unaligned() }
     }
-    pub fn write<T: Sized>(&mut self, ptr: MutPtr<T>, value: T) {
+    pub fn write<T>(&mut self, ptr: MutPtr<T>, value: T)
+    where
+        T: SafeWrite,
+    {
         let size = std::mem::size_of::<T>().try_into().unwrap();
         assert!(size > 0);
         let slice = self.bytes_at_mut(ptr.cast(), size);
@@ -241,7 +256,10 @@ impl Memory {
         Ptr::from_bits(self.allocator.alloc(size))
     }
 
-    pub fn alloc_and_write<T: Sized>(&mut self, value: T) -> MutPtr<T> {
+    pub fn alloc_and_write<T>(&mut self, value: T) -> MutPtr<T>
+    where
+        T: SafeWrite,
+    {
         let size = std::mem::size_of::<T>().try_into().unwrap();
         let ptr = self.alloc(size).cast();
         self.write(ptr, value);

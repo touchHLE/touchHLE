@@ -31,7 +31,7 @@ use messages::objc_msgSend;
 
 /// Main type holding Objective-C runtime state.
 pub struct ObjC {
-    /// Maping of known (guest) object pointers to their host objects.
+    /// Mapping of known (guest) object pointers to their host objects.
     ///
     /// If an object isn't in this map, we will consider it not to exist.
     objects: HashMap<id, Box<dyn HostObject>>,

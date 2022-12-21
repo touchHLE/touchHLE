@@ -63,6 +63,10 @@ impl Dyld {
 
     /// Do linking-related tasks that need doing right after loading a binary.
     pub fn do_initial_linking(&self, bin: &MachO, mem: &mut Memory, objc: &mut ObjC) {
+        // This might not count as "linking", but it's similar enough that this
+        // is the most convenient place to put it.
+        objc.register_selectors(bin, mem);
+
         self.setup_lazy_linking(bin, mem);
         self.do_non_lazy_linking(bin, mem, objc);
     }

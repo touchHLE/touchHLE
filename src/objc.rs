@@ -31,6 +31,9 @@ use messages::objc_msgSend;
 
 /// Main type holding Objective-C runtime state.
 pub struct ObjC {
+    /// Known selectors (interned method name strings).
+    selectors: HashMap<String, SEL>,
+
     /// Mapping of known (guest) object pointers to their host objects.
     ///
     /// If an object isn't in this map, we will consider it not to exist.
@@ -45,6 +48,7 @@ pub struct ObjC {
 impl ObjC {
     pub fn new() -> ObjC {
         ObjC {
+            selectors: HashMap::new(),
             objects: HashMap::new(),
             classes: HashMap::new(),
         }

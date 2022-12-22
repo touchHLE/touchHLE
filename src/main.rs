@@ -19,6 +19,7 @@ mod abi;
 mod bundle;
 mod cpu;
 mod dyld;
+mod frameworks;
 mod image;
 mod mach_o;
 mod memory;

@@ -23,7 +23,7 @@ mod messages;
 mod objects;
 mod selectors;
 
-pub use classes::Class;
+pub use classes::{Class, ClassExports, ClassTemplate};
 pub use objects::{id, nil, AnyHostObject, HostObject};
 pub use selectors::SEL;
 

@@ -17,26 +17,38 @@ pub fn objc_msgSend(
 ) {
     let class = super::ObjC::read_isa(receiver, &env.mem);
 
-    let host_object = env.objc.objects.get(&class).unwrap(); // TODO error message
+    let host_object = env.objc.objects.get(&class).unwrap();
 
-    if let Some(&super::classes::UnimplementedClass {
+    if let Some(&super::classes::ClassHostObject {
+        ref name,
+        is_metaclass,
+        superclass,
+    }) = host_object.as_any().downcast_ref()
+    {
+        unimplemented!(
+            "TODO message sending. Call to {} method \"{}\" of class \"{}\" ({:?}), superclass {:?}",
+            if is_metaclass { "class" } else { "instance" },
+            selector.as_str(&env.mem),
+            name,
+            class,
+            superclass,
+       );
+    } else if let Some(&super::classes::UnimplementedClass {
         ref name,
         is_metaclass,
     }) = host_object.as_any().downcast_ref()
     {
         panic!(
-            "Call to {} method \"{}\" of unimplemented class \"{}\" ({:?})",
-            if is_metaclass { "class" } else { "instance" },
-            selector.as_str(&env.mem),
+            "Class \"{}\" ({:?}) is unimplemented. Call to {} method \"{}\".",
             name,
             class,
+            if is_metaclass { "class" } else { "instance" },
+            selector.as_str(&env.mem),
+        );
+    } else {
+        panic!(
+            "Object {:?}'s class {:?} has an unexpected host object type.",
+            receiver, class
         );
     }
-
-    unimplemented!(
-        "objc_msgSend({:?}, {:?} = {:?}, ...)",
-        receiver,
-        selector,
-        selector.as_str(&env.mem),
-    );
 }

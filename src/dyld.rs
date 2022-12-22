@@ -12,6 +12,8 @@
 //!
 //! See [crate::mach_o] for resources.
 
+mod function_lists;
+
 use crate::abi::CallFromGuest;
 use crate::mach_o::MachO;
 use crate::memory::{Memory, MutPtr, Ptr};
@@ -34,10 +36,21 @@ type HostFunction = &'static dyn CallFromGuest;
 ///
 /// The strings are the mangled symbol names. For C functions, this is just the
 /// name prefixed with an underscore.
+///
+/// See also [crate::objc::ClassExports].
 pub type FunctionExports = &'static [(&'static str, HostFunction)];
 
-/// All the lists of functions that the linker should search through.
-const FUNCTION_LISTS: &[FunctionExports] = &[crate::objc::FUNCTIONS];
+/// Helper for working with [FunctionExports] and similar symbol lists.
+pub fn search_lists<T>(
+    lists: &'static [&'static [(&'static str, T)]],
+    symbol: &str,
+) -> Option<&'static T> {
+    lists
+        .iter()
+        .flat_map(|&n| n)
+        .find(|&(sym, _)| *sym == symbol)
+        .map(|&(_, ref f)| f)
+}
 
 fn encode_a32_svc(imm: u32) -> u32 {
     assert!(imm & 0xff000000 == 0);
@@ -191,9 +204,7 @@ impl Dyld {
 
         let symbol = info.indirect_undef_symbols[idx].as_deref().unwrap();
 
-        let Some(&(_, f)) = FUNCTION_LISTS.iter().flat_map(|&n| n).find(|&(sym, _)| {
-            *sym == symbol
-        }) else {
+        let Some(&f) = search_lists(function_lists::FUNCTION_LISTS, symbol) else {
             panic!("Call to unimplemented function {}", symbol);
         };
 

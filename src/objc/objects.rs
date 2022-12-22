@@ -9,7 +9,8 @@
 //! To make things easier for the host code, our implementation will maintain
 //! two linked representations of an object: an [objc_object] struct allocated
 //! in guest memory, which needs to maintain the same ABI that Apple's runtime
-//! does, and a [HostObject] trait object allocated in host memory, which can be//! used for any data that only our host code needs to access. As a bonus we get
+//! does, and a [HostObject] trait object allocated in host memory, which can be
+//! used for any data that only our host code needs to access. As a bonus we get
 //! some resilience against guest memory corruption.
 
 use super::Class;

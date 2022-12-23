@@ -9,6 +9,7 @@
 //! Resources:
 //! - Apple's [The Objective-C Programming Language](https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/ObjectiveC/Chapters/ocSelectors.html)
 
+use super::ObjC;
 use crate::abi::GuestArg;
 use crate::mach_o::MachO;
 use crate::mem::{ConstPtr, Mem, MutPtr, Ptr};
@@ -33,12 +34,12 @@ impl SEL {
     }
 }
 
-impl super::ObjC {
+impl ObjC {
     /// Register and deduplicate all the selectors of host classes.
     ///
     /// To avoid wasting guest memory, call this after calling
-    /// [super::ObjC::register_bin_selectors], so that selector strings in the
-    /// app binary can be re-used. For that reason this is also called by
+    /// [ObjC::register_bin_selectors], so that selector strings in the app
+    /// binary can be re-used. For that reason this is also called by
     /// [crate::dyld].
     pub fn register_host_selectors(&mut self, _mem: &mut Mem) {
         for &class_list in super::CLASS_LISTS {

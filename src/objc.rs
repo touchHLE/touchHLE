@@ -29,7 +29,7 @@ pub use methods::{HostIMP, IMP};
 pub use objects::{id, nil, AnyHostObject, HostObject, TrivialHostObject};
 pub use selectors::SEL;
 
-use classes::CLASS_LISTS;
+use classes::{ClassHostObject, UnimplementedClass, CLASS_LISTS};
 use messages::objc_msgSend;
 
 /// Main type holding Objective-C runtime state.

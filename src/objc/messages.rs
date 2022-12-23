@@ -5,7 +5,7 @@
 //! - [Apple's documentation of `objc_msgSend`](https://developer.apple.com/documentation/objectivec/1456712-objc_msgsend)
 //! - Mike Ash's [objc_msgSend's New Prototype](https://www.mikeash.com/pyblog/objc_msgsends-new-prototype.html)
 
-use super::{id, nil, IMP, SEL};
+use super::{id, nil, ObjC, IMP, SEL};
 use crate::Environment;
 
 /// `objc_msgSend` itself, the main function of Objective-C.
@@ -25,7 +25,7 @@ pub fn objc_msgSend(env: &mut Environment, receiver: id, selector: SEL) {
         unimplemented!()
     } // TODO: nil handling
 
-    let orig_class = super::ObjC::read_isa(receiver, &env.mem);
+    let orig_class = ObjC::read_isa(receiver, &env.mem);
     assert!(orig_class != nil);
 
     // Traverse the chain of superclasses to find the method implementation.
@@ -36,7 +36,7 @@ pub fn objc_msgSend(env: &mut Environment, receiver: id, selector: SEL) {
             assert!(class != orig_class);
 
             let class_host_object = env.objc.objects.get(&orig_class).unwrap();
-            let &super::classes::ClassHostObject {
+            let &super::ClassHostObject {
                 ref name,
                 is_metaclass,
                 ..
@@ -55,7 +55,7 @@ pub fn objc_msgSend(env: &mut Environment, receiver: id, selector: SEL) {
 
         let host_object = env.objc.objects.get(&class).unwrap();
 
-        if let Some(&super::classes::ClassHostObject {
+        if let Some(&super::ClassHostObject {
             superclass,
             ref methods,
             ..
@@ -68,7 +68,7 @@ pub fn objc_msgSend(env: &mut Environment, receiver: id, selector: SEL) {
             } else {
                 class = superclass;
             }
-        } else if let Some(&super::classes::UnimplementedClass {
+        } else if let Some(&super::UnimplementedClass {
             ref name,
             is_metaclass,
         }) = host_object.as_any().downcast_ref()

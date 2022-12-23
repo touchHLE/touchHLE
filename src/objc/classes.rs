@@ -8,7 +8,7 @@
 mod class_lists;
 pub(super) use class_lists::CLASS_LISTS;
 
-use super::{id, nil, AnyHostObject, HostIMP, HostObject, IMP, SEL};
+use super::{id, nil, AnyHostObject, HostIMP, HostObject, ObjC, IMP, SEL};
 use crate::mem::Mem;
 use std::collections::HashMap;
 
@@ -196,7 +196,7 @@ impl ClassHostObject {
         template: &ClassTemplate,
         is_metaclass: bool,
         superclass: Class,
-        objc: &super::ObjC,
+        objc: &ObjC,
     ) -> Self {
         ClassHostObject {
             name: template.name.to_string(),
@@ -211,7 +211,7 @@ impl ClassHostObject {
                 .iter()
                 .map(|&(name, host_imp)| {
                     // The selector should already have been registered by
-                    // [super::ObjC::register_host_selectors], so we can panic
+                    // [ObjC::register_host_selectors], so we can panic
                     // if it hasn't been.
                     (objc.selectors[name], IMP::Host(host_imp))
                 }),
@@ -220,7 +220,7 @@ impl ClassHostObject {
     }
 }
 
-impl super::ObjC {
+impl ObjC {
     fn get_class(&self, name: &str, is_metaclass: bool, mem: &Mem) -> Option<Class> {
         let class = self.classes.get(name).copied()?;
         Some(if is_metaclass {

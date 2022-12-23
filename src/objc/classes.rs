@@ -82,8 +82,26 @@ macro_rules! _objc_superclass {
 
 #[doc(hidden)]
 #[macro_export]
+macro_rules! _objc_selector {
+    // "foo"
+    ($name:ident) => { stringify!($name) };
+    // "fooWithBar:", "fooWithBar:Baz" etc
+    ($_:tt; $name:ident $(, $namen:ident)*) => {
+        concat!(stringify!($name), ":", $(stringify!($namen), ":"),*)
+    }
+}
+
+#[doc(hidden)]
+#[macro_export]
 macro_rules! _objc_method {
-    ($env:ident, $this:ident, $_cmd:ident, $ty:ty, $block:tt) => {
+    (
+        $env:ident,
+        $this:ident,
+        $_cmd:ident,
+        $retty:ty,
+        $block:tt
+        $(, $ty:ty, $arg:ident)*
+    ) => {
         // The closure must be explicitly casted because a bare closure defaults
         // to a different type than a pure fn pointer, which is the type that
         // HostIMP and CallFromGuest are implemented on.
@@ -94,11 +112,13 @@ macro_rules! _objc_method {
             $this: $crate::objc::id,
             #[allow(unused_variables)]
             $_cmd: $crate::objc::SEL,
-        | -> $ty $block) as fn(
+            $($arg: $ty,)*
+        | -> $retty $block) as fn(
             &mut $crate::Environment,
             $crate::objc::id,
             $crate::objc::SEL,
-        ) -> $ty)
+            $($ty,)*
+        ) -> $retty)
     }
 }
 
@@ -113,11 +133,11 @@ macro_rules! _objc_method {
 ///
 /// @implementation MyClass: NSObject
 ///
-/// + (id)alloc {
+/// + (id)foo {
 ///     // ...
 /// }
 ///
-/// - (id)init {
+/// - (id)barWithQux:(u32)qux {
 ///     // ...
 /// }
 ///
@@ -133,14 +153,14 @@ macro_rules! _objc_method {
 ///         name: "MyClass",
 ///         superclass: Some("NSObject"),
 ///         class_methods: &[
-///             ("alloc", &(|env: &mut Environment, this: id, _cmd: SEL| -> id {
+///             ("foo", &(|env: &mut Environment, this: id, _cmd: SEL| -> id {
 ///                 // ...
 ///             } as fn(&mut Environment, id, SEL) -> id)),
 ///         ],
 ///         instance_methods: &[
-///             ("init", &(|env: &mut Environment, this: id, _cmd: SEL| -> id {
+///             ("barWithQux:", &(|env: &mut Environment, this: id, _cmd: SEL, qux: u32| -> id {
 ///                 // ...
-///             } as &fn(&mut Environment, id, SEL) -> id)),
+///             } as &fn(&mut Environment, id, SEL, u32) -> id)),
 ///         ],
 ///     })
 /// ];
@@ -157,9 +177,13 @@ macro_rules! objc_classes {
         $(
             @implementation $class_name:ident $(: $superclass_name:ident)?
 
-            $( + ($cm_type:ty) $cm_name:ident $cm_block:tt )*
+            $( + ($cm_type:ty) $cm_name:ident $(:($cm_type1:ty) $cm_arg1:ident)?
+                              $($cm_namen:ident:($cm_typen:ty) $cm_argn:ident)*
+                 $cm_block:block )*
 
-            $( - ($im_type:ty) $im_name:ident $im_block:tt )*
+            $( - ($im_type:ty) $im_name:ident $(:($im_type1:ty) $im_arg1:ident)?
+                              $($im_namen:ident:($im_typen:ty) $im_argn:ident)*
+                 $im_block:block )*
 
             @end
         )+
@@ -172,16 +196,40 @@ macro_rules! objc_classes {
                     class_methods: &[
                         $(
                             (
-                                stringify!($cm_name),
-                                $crate::_objc_method!($env, $this, $_cmd, $cm_type, $cm_block)
+                                $crate::_objc_selector!(
+                                    $(($cm_type1);)?
+                                    $cm_name
+                                    $(, $cm_namen)*
+                                ),
+                                $crate::_objc_method!(
+                                    $env,
+                                    $this,
+                                    $_cmd,
+                                    $cm_type,
+                                    { $cm_block }
+                                    $(, $cm_type1, $cm_arg1)?
+                                    $(, $cm_typen, $cm_argn)*
+                                )
                             )
                         ),*
                     ],
                     instance_methods: &[
                         $(
                             (
-                                stringify!($im_name),
-                                $crate::_objc_method!($env, $this, $_cmd, $im_type, $im_block)
+                                $crate::_objc_selector!(
+                                    $(($im_type1);)?
+                                    $im_name
+                                    $(, $im_namen)*
+                                ),
+                                $crate::_objc_method!(
+                                    $env,
+                                    $this,
+                                    $_cmd,
+                                    $im_type,
+                                    { $im_block }
+                                    $(, $im_type1, $im_arg1)?
+                                    $(, $im_typen, $im_argn)*
+                                )
                             )
                         ),*
                     ],

@@ -1,6 +1,6 @@
 //! `NSObject`, the root of most class hierarchies in Objective-C.
 
-use crate::objc::ClassExports;
+use crate::objc::{id, nil, ClassExports};
 
 pub const CLASSES: ClassExports = crate::objc_classes! {
 
@@ -8,11 +8,11 @@ pub const CLASSES: ClassExports = crate::objc_classes! {
 
 @implementation NSObject
 
-+ (()) alloc { // FIXME: return type should be id
-    unimplemented!("[NSObject alloc]")
++ (id) alloc {
+    nil // FIXME: return real object
 }
 
-- (()) init { // FIXME: return type should be id
+- (id) init {
     unimplemented!("[[NSObject alloc] init]")
 }
 

@@ -32,8 +32,8 @@ pub trait CallFromGuest {
 
 macro_rules! impl_CallFromGuest {
     ( $($p:tt => $P:ident),* ) => {
-        impl<$($P),*> CallFromGuest for fn(&mut Environment, $($P),*)
-            where $($P: GuestArg,)* {
+        impl<R, $($P),*> CallFromGuest for fn(&mut Environment, $($P),*) -> R
+            where R: GuestRet, $($P: GuestArg,)* {
             // ignore warnings for the zero-argument case
             #[allow(unused_variables, unused_mut, clippy::unused_unit)]
             fn call_from_guest(&self, env: &mut Environment) {
@@ -42,7 +42,8 @@ macro_rules! impl_CallFromGuest {
                     let mut reg_offset = 0;
                     ($(read_next_arg::<$P>(&mut reg_offset, regs),)*)
                 };
-                self(env, $(args.$p),*);
+                let retval = self(env, $(args.$p),*);
+                retval.to_regs(env.cpu.regs_mut());
             }
         }
     }
@@ -112,5 +113,62 @@ impl<T, const MUT: bool> GuestArg for Ptr<T, MUT> {
     const REG_COUNT: usize = <u32 as GuestArg>::REG_COUNT;
     fn from_regs(regs: &[u32]) -> Self {
         Self::from_bits(<u32 as GuestArg>::from_regs(regs))
+    }
+}
+
+// TODO: Do we need to distinguish arguments from return types, don't they
+// usually behave the same? Are there exceptions? Do we merge the types?
+
+/// Calling convention translation for a function return type.
+pub trait GuestRet: Sized {
+    // The main purpose of GuestArg::REG_COUNT is for advancing the register
+    // index. But there can only be one return value for a function, so we can
+    // probably get away with not having it for now?
+
+    /// Write the return value to registers.
+    fn to_regs(self, regs: &mut [u32]);
+}
+
+macro_rules! impl_GuestRet_with {
+    ($for:ty, $with:ty) => {
+        impl GuestRet for $for {
+            fn to_regs(self, regs: &mut [u32]) {
+                <$with as GuestRet>::to_regs(self as $with, regs)
+            }
+        }
+    };
+}
+
+impl GuestRet for () {
+    fn to_regs(self, _regs: &mut [u32]) {
+        // objc_msgSend (see src/objc/messages.rs) relies on this not touching
+        // the registers, because () will be "returned" after the function it's
+        // meant to be tail-calling.
+    }
+}
+
+// GuestRet implementations for u32-like types
+
+impl GuestRet for u32 {
+    fn to_regs(self, regs: &mut [u32]) {
+        regs[0] = self;
+    }
+}
+
+impl_GuestRet_with!(i32, u32);
+impl_GuestRet_with!(u16, u32);
+impl_GuestRet_with!(i16, u32);
+impl_GuestRet_with!(u8, u32);
+impl_GuestRet_with!(i8, u32);
+
+impl GuestRet for f32 {
+    fn to_regs(self, regs: &mut [u32]) {
+        <u32 as GuestRet>::to_regs(self.to_bits(), regs)
+    }
+}
+
+impl<T, const MUT: bool> GuestRet for Ptr<T, MUT> {
+    fn to_regs(self, regs: &mut [u32]) {
+        <u32 as GuestRet>::to_regs(self.to_bits(), regs)
     }
 }

@@ -15,6 +15,10 @@ use crate::Environment;
 /// rather, left untouched) by `objc_msgSend` when it tail-calls the method
 /// implementation it looks up. This is invisible to the Rust type system; we're
 /// relying on [crate::abi::CallFromGuest] here.
+///
+/// Similarly, the return value of `objc_msgSend` is whatever value is returned
+/// by the method implementation. We are relying on CallFromGuest not
+/// overwriting it.
 #[allow(non_snake_case)]
 pub fn objc_msgSend(env: &mut Environment, receiver: id, selector: SEL) {
     if receiver == nil {

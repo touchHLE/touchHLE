@@ -4,7 +4,7 @@
 //! - [Apple's documentation of `class_addMethod`](https://developer.apple.com/documentation/objectivec/1418901-class_addmethod?language=objc)
 
 use super::{id, SEL};
-use crate::abi::CallFromGuest;
+use crate::abi::{CallFromGuest, GuestRet};
 use crate::Environment;
 
 /// Type for any function implementating a method.
@@ -23,7 +23,7 @@ pub enum IMP {
 /// Type for any host function implementing a method (see also [IMP]).
 pub trait HostIMP: CallFromGuest {}
 
-impl HostIMP for fn(&mut Environment, id, SEL) {}
+impl<R: GuestRet> HostIMP for fn(&mut Environment, id, SEL) -> R {}
 // TODO: support more signatures
 
 // TODO: pub type GuestIMP = ...;

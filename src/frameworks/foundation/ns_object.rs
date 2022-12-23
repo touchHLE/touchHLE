@@ -3,7 +3,19 @@
 use crate::objc::ClassExports;
 
 pub const CLASSES: ClassExports = crate::objc_classes! {
-    @implementation NSObject
-    // TODO
-    @end
+
+(env, this, _cmd);
+
+@implementation NSObject
+
++ (()) alloc { // FIXME: return type should be id
+    unimplemented!("[NSObject alloc]")
+}
+
+- (()) init { // FIXME: return type should be id
+    unimplemented!("[[NSObject alloc] init]")
+}
+
+@end
+
 };

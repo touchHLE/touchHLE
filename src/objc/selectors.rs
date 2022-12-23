@@ -14,7 +14,7 @@ use crate::mach_o::MachO;
 use crate::mem::{ConstPtr, Mem, MutPtr, Ptr};
 
 /// Opaque type used for selectors.
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 #[repr(transparent)]
 #[allow(clippy::upper_case_acronyms)] // silly clippit, this isn't an acronym!
 pub struct SEL(ConstPtr<u8>);
@@ -34,9 +34,31 @@ impl SEL {
 }
 
 impl super::ObjC {
+    /// Register and deduplicate all the selectors of host classes.
+    ///
+    /// To avoid wasting guest memory, call this after calling
+    /// [super::ObjC::register_bin_selectors], so that selector strings in the
+    /// app binary can be re-used. For that reason this is also called by
+    /// [crate::dyld].
+    pub fn register_host_selectors(&mut self, _mem: &mut Mem) {
+        for &class_list in super::CLASS_LISTS {
+            for (_name, template) in class_list {
+                for method_list in [template.class_methods, template.instance_methods] {
+                    for (name, _imp) in method_list {
+                        // TODO allocate strings in guest memory for selectors
+                        // that aren't already registered
+                        self.selectors
+                            .get(*name)
+                            .unwrap_or_else(|| unimplemented!());
+                    }
+                }
+            }
+        }
+    }
+
     /// For use by [crate::dyld]: register and deduplicate all the selectors
     /// referenced in the application binary.
-    pub fn register_selectors(&mut self, bin: &MachO, mem: &mut Mem) {
+    pub fn register_bin_selectors(&mut self, bin: &MachO, mem: &mut Mem) {
         let Some(selrefs) = bin.get_section("__objc_selrefs") else { return; };
 
         assert!(selrefs.size % 4 == 0);

@@ -6,9 +6,11 @@
 //! - [[objc explain]: Classes and metaclasses](http://www.sealiesoftware.com/blog/archive/2009/04/14/objc_explain_Classes_and_metaclasses.html), especially [the PDF diagram](http://www.sealiesoftware.com/blog/class%20diagram.pdf)
 
 mod class_lists;
+pub(super) use class_lists::CLASS_LISTS;
 
-use super::{id, nil, AnyHostObject, HostObject};
+use super::{id, nil, AnyHostObject, HostIMP, HostObject, IMP, SEL};
 use crate::mem::Mem;
+use std::collections::HashMap;
 
 /// Generic pointer to an Objective-C class or metaclass.
 ///
@@ -20,7 +22,7 @@ use crate::mem::Mem;
 pub type Class = id;
 
 /// Our internal representation of a class, e.g. this is where `objc_msgSend`
-/// will look up method implementations (TODO).
+/// will look up method implementations.
 ///
 /// Once we can load classes from the app itself (TODO), we will need to create
 /// these objects for each.
@@ -30,6 +32,7 @@ pub(super) struct ClassHostObject {
     pub(super) name: String,
     pub(super) is_metaclass: bool,
     pub(super) superclass: Class,
+    pub(super) methods: HashMap<SEL, IMP>,
 }
 impl HostObject for ClassHostObject {}
 
@@ -52,6 +55,8 @@ impl HostObject for UnimplementedClass {}
 pub struct ClassTemplate {
     pub name: &'static str,
     pub superclass: Option<&'static str>,
+    pub class_methods: &'static [(&'static str, &'static dyn HostIMP)],
+    pub instance_methods: &'static [(&'static str, &'static dyn HostIMP)],
 }
 
 /// Type for lists of classes exported by host implementations of frameworks.
@@ -75,31 +80,87 @@ macro_rules! _objc_superclass {
     };
 }
 
+#[doc(hidden)]
+#[macro_export]
+macro_rules! _objc_method {
+    ($env:ident, $this:ident, $_cmd:ident, $ty:ty, $block:tt) => {
+        // The closure must be explicitly casted because a bare closure defaults
+        // to a different type than a pure fn pointer, which is the type that
+        // HostIMP and CallFromGuest are implemented on.
+        &((|
+            #[allow(unused_variables)]
+            $env: &mut $crate::Environment,
+            #[allow(unused_variables)]
+            $this: $crate::objc::id,
+            #[allow(unused_variables)]
+            $_cmd: $crate::objc::SEL,
+        | -> $ty $block) as fn(
+            &mut $crate::Environment,
+            $crate::objc::id,
+            $crate::objc::SEL,
+        ) -> $ty)
+    }
+}
+
 /// Macro for creating a list of [ClassTemplate]s (i.e. [ClassExports]).
 /// It imitates the Objective-C class definition syntax.
 ///
 /// ```rust
 /// pub const CLASSES: ClassExports = objc_classes! {
+/// (env, this, _cmd); // Specify names of HostIMP implicit parameters.
+///                    // The second one should be `self` to match Objective-C,
+///                    // but that's reserved in Rust, hence `this`.
+///
 /// @implementation MyClass: NSObject
+///
+/// + (id)alloc {
+///     // ...
+/// }
+///
+/// - (id)init {
+///     // ...
+/// }
+///
 /// @end
 /// };
 /// ```
 ///
-/// will desugar to:
+/// will desugar to approximately:
 ///
 /// ```rust
 /// pub const CLASSES: ClassExports = &[
 ///     ("MyClass", ClassTemplate {
 ///         name: "MyClass",
 ///         superclass: Some("NSObject"),
+///         class_methods: &[
+///             ("alloc", &(|env: &mut Environment, this: id, _cmd: SEL| -> id {
+///                 // ...
+///             } as fn(&mut Environment, id, SEL) -> id)),
+///         ],
+///         instance_methods: &[
+///             ("init", &(|env: &mut Environment, this: id, _cmd: SEL| -> id {
+///                 // ...
+///             } as &fn(&mut Environment, id, SEL) -> id)),
+///         ],
 ///     })
 /// ];
 /// ```
+///
+/// Note that the instance methods must be preceded by the class methods.
 #[macro_export] // documentation comment links are annoying without this
 macro_rules! objc_classes {
     {
+        // Rust's macro hygiene prevents the macro's own names for these
+        // parameters being visible, so we have to get names supplied by the
+        // macro user.
+        ($env:ident, $this:ident, $_cmd:ident);
         $(
             @implementation $class_name:ident $(: $superclass_name:ident)?
+
+            $( + ($cm_type:ty) $cm_name:ident $cm_block:tt )*
+
+            $( - ($im_type:ty) $im_name:ident $im_block:tt )*
+
             @end
         )+
     } => {
@@ -108,6 +169,22 @@ macro_rules! objc_classes {
                 (stringify!($class_name), $crate::objc::ClassTemplate {
                     name: stringify!($class_name),
                     superclass: $crate::_objc_superclass!($(: $superclass_name)?),
+                    class_methods: &[
+                        $(
+                            (
+                                stringify!($cm_name),
+                                $crate::_objc_method!($env, $this, $_cmd, $cm_type, $cm_block)
+                            )
+                        ),*
+                    ],
+                    instance_methods: &[
+                        $(
+                            (
+                                stringify!($im_name),
+                                $crate::_objc_method!($env, $this, $_cmd, $im_type, $im_block)
+                            )
+                        ),*
+                    ],
                 })
             ),+
         ]
@@ -115,11 +192,30 @@ macro_rules! objc_classes {
 }
 
 impl ClassHostObject {
-    fn from_template(template: &ClassTemplate, is_metaclass: bool, superclass: Class) -> Self {
+    fn from_template(
+        template: &ClassTemplate,
+        is_metaclass: bool,
+        superclass: Class,
+        objc: &super::ObjC,
+    ) -> Self {
         ClassHostObject {
             name: template.name.to_string(),
             is_metaclass,
             superclass,
+            methods: HashMap::from_iter(
+                (if is_metaclass {
+                    template.class_methods
+                } else {
+                    template.instance_methods
+                })
+                .iter()
+                .map(|&(name, host_imp)| {
+                    // The selector should already have been registered by
+                    // [super::ObjC::register_host_selectors], so we can panic
+                    // if it hasn't been.
+                    (objc.selectors[name], IMP::Host(host_imp))
+                }),
+            ),
         }
     }
 }
@@ -135,7 +231,7 @@ impl super::ObjC {
     }
 
     fn find_template(name: &str) -> Option<&'static ClassTemplate> {
-        crate::dyld::search_lists(class_lists::CLASS_LISTS, name)
+        crate::dyld::search_lists(CLASS_LISTS, name)
     }
 
     /// For use by [crate::dyld]: get the class referenced by an external
@@ -172,6 +268,7 @@ impl super::ObjC {
                         self.link_class(name, /* is_metaclass: */ false, mem)
                     })
                     .unwrap_or(nil),
+                self,
             ));
             metaclass_host_object = Box::new(ClassHostObject::from_template(
                 template,
@@ -183,6 +280,7 @@ impl super::ObjC {
                         self.link_class(name, /* is_metaclass: */ true, mem)
                     })
                     .unwrap_or(nil),
+                self,
             ));
         } else {
             // We don't have a real implementation for this class, use a

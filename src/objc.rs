@@ -20,13 +20,16 @@ use std::collections::HashMap;
 
 mod classes;
 mod messages;
+mod methods;
 mod objects;
 mod selectors;
 
 pub use classes::{Class, ClassExports, ClassTemplate};
+pub use methods::{HostIMP, IMP};
 pub use objects::{id, nil, AnyHostObject, HostObject};
 pub use selectors::SEL;
 
+use classes::CLASS_LISTS;
 use messages::objc_msgSend;
 
 /// Main type holding Objective-C runtime state.

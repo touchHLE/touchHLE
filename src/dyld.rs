@@ -78,7 +78,8 @@ impl Dyld {
     pub fn do_initial_linking(&self, bin: &MachO, mem: &mut Mem, objc: &mut ObjC) {
         // This might not count as "linking", but it's similar enough that this
         // is the most convenient place to put it.
-        objc.register_selectors(bin, mem);
+        objc.register_bin_selectors(bin, mem);
+        objc.register_host_selectors(mem);
 
         self.setup_lazy_linking(bin, mem);
         self.do_non_lazy_linking(bin, mem, objc);

@@ -7,3 +7,4 @@
 //! See also `dyld/function_lists.rs` and `objc/classes/class_lists.rs`.
 
 pub mod foundation;
+pub mod uikit;

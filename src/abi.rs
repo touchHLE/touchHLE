@@ -3,6 +3,8 @@
 //!
 //! Useful resources:
 //! * Apple's [Writing ARMv6 code for iOS](https://developer.apple.com/documentation/xcode/writing-armv6-code-for-ios), read together with Arm's [Procedure Call Standard for the Arm Architecture (AAPCS32)](https://github.com/ARM-software/abi-aa).
+//!
+//! See also: [crate::mem::SafeRead] and [crate::mem::SafeWrite].
 
 use crate::mem::Ptr;
 use crate::Environment;

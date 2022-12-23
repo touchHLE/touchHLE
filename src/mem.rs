@@ -106,7 +106,7 @@ impl<T, const MUT: bool> std::ops::AddAssign<GuestUSize> for Ptr<T, MUT> {
 /// which is notoriously unsafe in Rust. Only types for which all possible bit
 /// patterns are legal (e.g. integers) should have this trait.
 ///
-/// See also [SafeWrite].
+/// See also [SafeWrite] and [crate::abi].
 pub trait SafeRead: Sized {}
 impl SafeRead for i8 {}
 impl SafeRead for u8 {}
@@ -130,6 +130,8 @@ impl<T, const MUT: bool> SafeRead for Ptr<T, MUT> {}
 /// Especially for structs, be careful that the type matches the expected ABI.
 /// At minimum you should have `#[repr(C, packed)]` and appropriate padding
 /// members.
+///
+/// See also [SafeRead] and [crate::abi].
 pub trait SafeWrite: Sized {}
 impl<T: SafeRead> SafeWrite for T {}
 

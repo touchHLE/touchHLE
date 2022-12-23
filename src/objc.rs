@@ -14,7 +14,7 @@
 //! categories and dynamic class editing).
 
 use crate::dyld::FunctionExports;
-use crate::Environment;
+use crate::export_c_func;
 
 use std::collections::HashMap;
 
@@ -58,7 +58,4 @@ impl ObjC {
     }
 }
 
-pub const FUNCTIONS: FunctionExports = &[(
-    "_objc_msgSend",
-    &(objc_msgSend as fn(&mut Environment, _, _)),
-)];
+pub const FUNCTIONS: FunctionExports = &[export_c_func!(objc_msgSend(_, _))];

@@ -37,8 +37,43 @@ type HostFunction = &'static dyn CallFromGuest;
 /// The strings are the mangled symbol names. For C functions, this is just the
 /// name prefixed with an underscore.
 ///
+/// For convenience, use [crate::export_c_func]:
+///
+/// ```
+/// pub const FUNCTIONS: FunctionExports = &[
+///     export_c_func!(NSFoo(_, _)),
+///     export_c_func!(NSBar()),
+/// ];
+/// ```
+///
 /// See also [crate::objc::ClassExports].
 pub type FunctionExports = &'static [(&'static str, HostFunction)];
+
+/// Macro for exporting a function with C-style name mangling. See [FunctionExports].
+///
+/// ```rust
+/// export_c_func!(NSFoo(_, _))
+/// ```
+///
+/// will desugar to:
+///
+/// ```rust
+/// ("_NSFoo", &(NSFoo as (&mut Environment, _, _) -> _))
+/// ```
+///
+/// The function needs to be explicitly casted because a bare function reference
+/// defaults to a different type than a pure fn pointer, which is the type that
+/// [CallFromGuest] is implemented on. This macro will do the casting for you,
+/// but you will need to supply an underscore for each parameter.
+#[macro_export]
+macro_rules! export_c_func {
+    ($name:ident ($($_:ty),*)) => {
+        (
+            concat!("_", stringify!($name)),
+            &($name as fn(&mut $crate::Environment, $($_),*) -> _)
+        )
+    };
+}
 
 /// Helper for working with [FunctionExports] and similar symbol lists.
 pub fn search_lists<T>(

@@ -5,12 +5,12 @@
 //! will probably take a lot of shortcuts.
 
 use crate::dyld::FunctionExports;
-use crate::Environment;
+use crate::export_c_func;
 
 pub mod ui_application;
 pub mod ui_responder;
 
-pub const FUNCTIONS: FunctionExports = &[(
-    "_UIApplicationMain",
-    &(ui_application::UIApplicationMain as fn(&mut Environment, _, _, _, _)),
-)];
+pub const FUNCTIONS: FunctionExports = {
+    use ui_application::UIApplicationMain;
+    &[export_c_func!(UIApplicationMain(_, _, _, _))]
+};

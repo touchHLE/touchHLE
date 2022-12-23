@@ -13,8 +13,7 @@
 //! classes that are both (considering Objective-C's support for inheritance,
 //! categories and dynamic class editing).
 
-use crate::dyld::FunctionExports;
-use crate::export_c_func;
+use crate::dyld::{export_c_func, FunctionExports};
 
 use std::collections::HashMap;
 
@@ -24,7 +23,7 @@ mod methods;
 mod objects;
 mod selectors;
 
-pub use classes::{Class, ClassExports, ClassTemplate};
+pub use classes::{objc_classes, Class, ClassExports, ClassTemplate};
 pub use methods::{HostIMP, IMP};
 pub use objects::{id, nil, AnyHostObject, HostObject, TrivialHostObject};
 pub use selectors::SEL;

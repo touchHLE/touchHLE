@@ -47,7 +47,7 @@ pub(super) struct UnimplementedClass {
 }
 impl HostObject for UnimplementedClass {}
 
-/// A template for a class defined with [crate::objc_classes].
+/// A template for a class defined with [objc_classes].
 ///
 /// Host implementations of libraries can use these to expose classes to the
 /// application. The runtime will create the actual class ([ClassHostObject]
@@ -62,7 +62,7 @@ pub struct ClassTemplate {
 /// Type for lists of classes exported by host implementations of frameworks.
 ///
 /// Each module that wants to expose functions to guest code should export a
-/// constant using this type. See [crate::objc_classes] for an example.
+/// constant using this type. See [objc_classes] for an example.
 ///
 /// The strings are the class names.
 ///
@@ -190,6 +190,7 @@ macro_rules! objc_classes {
         ]
     }
 }
+pub use crate::objc_classes; // #[macro_export] is weird...
 
 impl ClassHostObject {
     fn from_template(

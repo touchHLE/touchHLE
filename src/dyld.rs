@@ -37,7 +37,7 @@ type HostFunction = &'static dyn CallFromGuest;
 /// The strings are the mangled symbol names. For C functions, this is just the
 /// name prefixed with an underscore.
 ///
-/// For convenience, use [crate::export_c_func]:
+/// For convenience, use [export_c_func]:
 ///
 /// ```
 /// pub const FUNCTIONS: FunctionExports = &[
@@ -74,6 +74,7 @@ macro_rules! export_c_func {
         )
     };
 }
+pub use crate::export_c_func; // #[macro_export] is weird...
 
 /// Helper for working with [FunctionExports] and similar symbol lists.
 pub fn search_lists<T>(

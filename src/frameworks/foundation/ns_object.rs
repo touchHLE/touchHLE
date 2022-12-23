@@ -1,8 +1,8 @@
 //! `NSObject`, the root of most class hierarchies in Objective-C.
 
-use crate::objc::{id, ClassExports, TrivialHostObject};
+use crate::objc::{id, objc_classes, ClassExports, TrivialHostObject};
 
-pub const CLASSES: ClassExports = crate::objc_classes! {
+pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);
 

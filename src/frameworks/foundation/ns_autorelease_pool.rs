@@ -1,8 +1,8 @@
 //! `NSAutoreleasePool`.
 
-use crate::objc::ClassExports;
+use crate::objc::{objc_classes, ClassExports};
 
-pub const CLASSES: ClassExports = crate::objc_classes! {
+pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);
 

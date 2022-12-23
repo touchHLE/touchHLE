@@ -1,10 +1,10 @@
 //! `UIApplication` and `UIApplicationMain`.
 
 use crate::mem::MutPtr;
-use crate::objc::{id, nil, ClassExports};
+use crate::objc::{id, nil, objc_classes, ClassExports};
 use crate::Environment;
 
-pub const CLASSES: ClassExports = crate::objc_classes! {
+pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);
 

@@ -33,7 +33,7 @@ fn main() {
     link_search(&dynarmic_out.join("lib"));
     link_lib("dynarmic");
     link_search(&dynarmic_out.join("build/externals/fmt"));
-    link_lib("fmtd");
+    link_lib(if cfg!(debug_assertions) { "fmtd" } else { "fmt" });
     link_search(&dynarmic_out.join("build/externals/mcl/src"));
     link_lib("mcl");
     link_search(&dynarmic_out.join("build/externals/Zydis"));

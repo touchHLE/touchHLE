@@ -26,7 +26,7 @@ mod selectors;
 
 pub use classes::{Class, ClassExports, ClassTemplate};
 pub use methods::{HostIMP, IMP};
-pub use objects::{id, nil, AnyHostObject, HostObject};
+pub use objects::{id, nil, AnyHostObject, HostObject, TrivialHostObject};
 pub use selectors::SEL;
 
 use classes::CLASS_LISTS;

@@ -63,6 +63,10 @@ impl<T: HostObject> AnyHostObject for T {
     }
 }
 
+/// Empty host object used by `[NSObject alloc]`.
+pub struct TrivialHostObject;
+impl HostObject for TrivialHostObject {}
+
 impl super::ObjC {
     /// Read the all-important `isa`.
     pub(super) fn read_isa(object: id, mem: &Mem) -> Class {

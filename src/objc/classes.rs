@@ -8,7 +8,7 @@
 mod class_lists;
 
 use super::{id, nil, AnyHostObject, HostObject};
-use crate::memory::Memory;
+use crate::mem::Mem;
 
 /// Generic pointer to an Objective-C class or metaclass.
 ///
@@ -125,7 +125,7 @@ impl ClassHostObject {
 }
 
 impl super::ObjC {
-    fn get_class(&self, name: &str, is_metaclass: bool, mem: &Memory) -> Option<Class> {
+    fn get_class(&self, name: &str, is_metaclass: bool, mem: &Mem) -> Option<Class> {
         let class = self.classes.get(name).copied()?;
         Some(if is_metaclass {
             Self::read_isa(class, mem)
@@ -140,7 +140,7 @@ impl super::ObjC {
 
     /// For use by [crate::dyld]: get the class referenced by an external
     /// relocation in the application.
-    pub fn link_class(&mut self, name: &str, is_metaclass: bool, mem: &mut Memory) -> Class {
+    pub fn link_class(&mut self, name: &str, is_metaclass: bool, mem: &mut Mem) -> Class {
         // The class and metaclass must be created together and tracked
         // together, so even though this function only returns one pointer, it
         // must create both. The function must not care whether the metaclass

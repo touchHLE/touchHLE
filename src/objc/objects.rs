@@ -14,7 +14,7 @@
 //! some resilience against guest memory corruption.
 
 use super::Class;
-use crate::memory::{Memory, MutPtr, Ptr, SafeRead};
+use crate::mem::{Mem, MutPtr, Ptr, SafeRead};
 use std::any::Any;
 
 /// Memory layout of a minimal Objective-C object. See [id].
@@ -65,11 +65,11 @@ impl<T: HostObject> AnyHostObject for T {
 
 impl super::ObjC {
     /// Read the all-important `isa`.
-    pub(super) fn read_isa(object: id, mem: &Memory) -> Class {
+    pub(super) fn read_isa(object: id, mem: &Mem) -> Class {
         mem.read(object).isa
     }
     /// Write the all-important `isa`.
-    pub(super) fn write_isa(object: id, isa: Class, mem: &mut Memory) {
+    pub(super) fn write_isa(object: id, isa: Class, mem: &mut Mem) {
         mem.write(object.cast(), isa)
     }
 
@@ -79,7 +79,7 @@ impl super::ObjC {
         &mut self,
         isa: Class,
         host_object: Box<dyn AnyHostObject>,
-        mem: &mut Memory,
+        mem: &mut Mem,
     ) -> id {
         let guest_object = objc_object { isa };
         let ptr = mem.alloc_and_write(guest_object);

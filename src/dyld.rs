@@ -16,7 +16,7 @@ mod function_lists;
 
 use crate::abi::CallFromGuest;
 use crate::mach_o::MachO;
-use crate::memory::{Memory, MutPtr, Ptr};
+use crate::mem::{Mem, MutPtr, Ptr};
 use crate::objc::ObjC;
 
 type HostFunction = &'static dyn CallFromGuest;
@@ -75,7 +75,7 @@ impl Dyld {
     }
 
     /// Do linking-related tasks that need doing right after loading a binary.
-    pub fn do_initial_linking(&self, bin: &MachO, mem: &mut Memory, objc: &mut ObjC) {
+    pub fn do_initial_linking(&self, bin: &MachO, mem: &mut Mem, objc: &mut ObjC) {
         // This might not count as "linking", but it's similar enough that this
         // is the most convenient place to put it.
         objc.register_selectors(bin, mem);
@@ -96,7 +96,7 @@ impl Dyld {
     ///
     /// These stubs already exist in the binary, but they need to be rewritten
     /// so that they will invoke our dynamic linker.
-    fn setup_lazy_linking(&self, bin: &MachO, mem: &mut Memory) {
+    fn setup_lazy_linking(&self, bin: &MachO, mem: &mut Mem) {
         let Some(stubs) = bin.get_section("__symbol_stub4") else {
             return;
         };
@@ -126,7 +126,7 @@ impl Dyld {
     /// about missing implementations until the point of use. For that reason,
     /// this will spit out a warning to stderr for everything missing, so that
     /// there's at least some indication about why the emulator might crash.
-    fn do_non_lazy_linking(&self, bin: &MachO, mem: &mut Memory, objc: &mut ObjC) {
+    fn do_non_lazy_linking(&self, bin: &MachO, mem: &mut Mem, objc: &mut ObjC) {
         for &(ptr_ptr, ref name) in &bin.external_relocations {
             let ptr = if let Some(name) = name.strip_prefix("_OBJC_CLASS_$_") {
                 objc.link_class(name, /* is_metaclass: */ false, mem)
@@ -172,7 +172,7 @@ impl Dyld {
     pub fn get_svc_handler(
         &mut self,
         bin: &MachO,
-        mem: &mut Memory,
+        mem: &mut Mem,
         current_instruction: u32,
         svc: u32,
     ) -> HostFunction {
@@ -191,7 +191,7 @@ impl Dyld {
     fn do_lazy_link(
         &mut self,
         bin: &MachO,
-        mem: &mut Memory,
+        mem: &mut Mem,
         current_instruction: u32,
     ) -> HostFunction {
         let stubs = bin.get_section("__symbol_stub4").unwrap();

@@ -5,56 +5,56 @@
 //! iPhone OS apps used either ARMv6 or ARMv7-A, which are both 32-bit ISAs.
 //! For the moment, only ARMv6 has been tested.
 
-use crate::memory::{ConstPtr, Memory, MutPtr, Ptr, SafeRead, SafeWrite};
+use crate::mem::{ConstPtr, Mem, MutPtr, Ptr, SafeRead, SafeWrite};
 
 // Import functions from C++
 use touchHLE_dynarmic_wrapper::*;
 
 type VAddr = u32;
 
-fn touchHLE_cpu_read_impl<T: SafeRead>(mem: *mut touchHLE_Memory, addr: VAddr) -> T {
-    let mem = unsafe { &mut *mem.cast::<Memory>() };
+fn touchHLE_cpu_read_impl<T: SafeRead>(mem: *mut touchHLE_Mem, addr: VAddr) -> T {
+    let mem = unsafe { &mut *mem.cast::<Mem>() };
     let ptr: ConstPtr<T> = Ptr::from_bits(addr);
     mem.read(ptr)
 }
 
-fn touchHLE_cpu_write_impl<T: SafeWrite>(mem: *mut touchHLE_Memory, addr: VAddr, value: T) {
-    let mem = unsafe { &mut *mem.cast::<Memory>() };
+fn touchHLE_cpu_write_impl<T: SafeWrite>(mem: *mut touchHLE_Mem, addr: VAddr, value: T) {
+    let mem = unsafe { &mut *mem.cast::<Mem>() };
     let ptr: MutPtr<T> = Ptr::from_bits(addr);
     mem.write(ptr, value)
 }
 
 // Export functions for use by C++
 #[no_mangle]
-extern "C" fn touchHLE_cpu_read_u8(mem: *mut touchHLE_Memory, addr: VAddr) -> u8 {
+extern "C" fn touchHLE_cpu_read_u8(mem: *mut touchHLE_Mem, addr: VAddr) -> u8 {
     touchHLE_cpu_read_impl(mem, addr)
 }
 #[no_mangle]
-extern "C" fn touchHLE_cpu_read_u16(mem: *mut touchHLE_Memory, addr: VAddr) -> u16 {
+extern "C" fn touchHLE_cpu_read_u16(mem: *mut touchHLE_Mem, addr: VAddr) -> u16 {
     touchHLE_cpu_read_impl(mem, addr)
 }
 #[no_mangle]
-extern "C" fn touchHLE_cpu_read_u32(mem: *mut touchHLE_Memory, addr: VAddr) -> u32 {
+extern "C" fn touchHLE_cpu_read_u32(mem: *mut touchHLE_Mem, addr: VAddr) -> u32 {
     touchHLE_cpu_read_impl(mem, addr)
 }
 #[no_mangle]
-extern "C" fn touchHLE_cpu_read_u64(mem: *mut touchHLE_Memory, addr: VAddr) -> u64 {
+extern "C" fn touchHLE_cpu_read_u64(mem: *mut touchHLE_Mem, addr: VAddr) -> u64 {
     touchHLE_cpu_read_impl(mem, addr)
 }
 #[no_mangle]
-extern "C" fn touchHLE_cpu_write_u8(mem: *mut touchHLE_Memory, addr: VAddr, value: u8) {
+extern "C" fn touchHLE_cpu_write_u8(mem: *mut touchHLE_Mem, addr: VAddr, value: u8) {
     touchHLE_cpu_write_impl(mem, addr, value);
 }
 #[no_mangle]
-extern "C" fn touchHLE_cpu_write_u16(mem: *mut touchHLE_Memory, addr: VAddr, value: u16) {
+extern "C" fn touchHLE_cpu_write_u16(mem: *mut touchHLE_Mem, addr: VAddr, value: u16) {
     touchHLE_cpu_write_impl(mem, addr, value);
 }
 #[no_mangle]
-extern "C" fn touchHLE_cpu_write_u32(mem: *mut touchHLE_Memory, addr: VAddr, value: u32) {
+extern "C" fn touchHLE_cpu_write_u32(mem: *mut touchHLE_Mem, addr: VAddr, value: u32) {
     touchHLE_cpu_write_impl(mem, addr, value);
 }
 #[no_mangle]
-extern "C" fn touchHLE_cpu_write_u64(mem: *mut touchHLE_Memory, addr: VAddr, value: u64) {
+extern "C" fn touchHLE_cpu_write_u64(mem: *mut touchHLE_Mem, addr: VAddr, value: u64) {
     touchHLE_cpu_write_impl(mem, addr, value);
 }
 
@@ -110,11 +110,11 @@ impl Cpu {
     /// attention from the host (in which case `*ticks` is the remaining number
     /// of ticks). Check the return value!
     #[must_use]
-    pub fn run(&mut self, mem: &mut Memory, ticks: &mut u64) -> CpuState {
+    pub fn run(&mut self, mem: &mut Mem, ticks: &mut u64) -> CpuState {
         let res = unsafe {
             touchHLE_DynarmicWrapper_run(
                 self.dynarmic_wrapper,
-                mem as *mut Memory as *mut touchHLE_Memory,
+                mem as *mut Mem as *mut touchHLE_Mem,
                 ticks,
             )
         };

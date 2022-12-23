@@ -136,7 +136,7 @@ impl<T: SafeRead> SafeWrite for T {}
 type Bytes = [u8; 1 << 32];
 
 /// The type that owns the guest memory and provides accessors for it.
-pub struct Memory {
+pub struct Mem {
     /// This array is 4GiB in size so that it can cover the entire 32-bit
     /// virtual address space, but it should not use that much physical memory,
     /// assuming that the host OS backs it with lazily-allocated pages and we
@@ -159,7 +159,7 @@ pub struct Memory {
     allocator: allocator::Allocator,
 }
 
-impl Drop for Memory {
+impl Drop for Mem {
     fn drop(&mut self) {
         let layout = std::alloc::Layout::new::<Bytes>();
         unsafe {
@@ -168,7 +168,7 @@ impl Drop for Memory {
     }
 }
 
-impl Memory {
+impl Mem {
     /// The first 4KiB of address space on iPhone OS is unused, so null pointer
     /// accesses can be trapped.
     ///
@@ -186,14 +186,14 @@ impl Memory {
     /// space (see also: stack.rs), I have no idea if this matches iPhone OS.
     pub const MAIN_THREAD_STACK_LOW_END: VAddr = 0u32.wrapping_sub(Self::MAIN_THREAD_STACK_SIZE);
 
-    pub fn new() -> Memory {
+    pub fn new() -> Mem {
         // This will hopefully get the host OS to lazily allocate the memory.
         let layout = std::alloc::Layout::new::<Bytes>();
         let bytes = unsafe { std::alloc::alloc_zeroed(layout) as *mut Bytes };
 
         let allocator = allocator::Allocator::new();
 
-        Memory { bytes, allocator }
+        Mem { bytes, allocator }
     }
 
     fn bytes(&self) -> &Bytes {

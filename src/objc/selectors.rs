@@ -11,7 +11,7 @@
 
 use crate::abi::GuestArg;
 use crate::mach_o::MachO;
-use crate::memory::{ConstPtr, Memory, MutPtr, Ptr};
+use crate::mem::{ConstPtr, Mem, MutPtr, Ptr};
 
 /// Opaque type used for selectors.
 #[derive(Debug, Copy, Clone)]
@@ -27,7 +27,7 @@ impl GuestArg for SEL {
 }
 
 impl SEL {
-    pub fn as_str(self, mem: &Memory) -> &str {
+    pub fn as_str(self, mem: &Mem) -> &str {
         // selectors are probably always UTF-8 but this hasn't been verified
         mem.cstr_at_utf8(self.0)
     }
@@ -36,7 +36,7 @@ impl SEL {
 impl super::ObjC {
     /// For use by [crate::dyld]: register and deduplicate all the selectors
     /// referenced in the application binary.
-    pub fn register_selectors(&mut self, bin: &MachO, mem: &mut Memory) {
+    pub fn register_selectors(&mut self, bin: &MachO, mem: &mut Mem) {
         let Some(selrefs) = bin.get_section("__objc_selrefs") else { return; };
 
         assert!(selrefs.size % 4 == 0);

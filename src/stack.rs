@@ -1,7 +1,7 @@
 //! Utilities related to the stack.
 
 use crate::cpu::Cpu;
-use crate::memory::{GuestUSize, Memory, MutPtr, Ptr};
+use crate::mem::{GuestUSize, Mem, MutPtr, Ptr};
 
 /// Set up the stack for the main thread, ready to execute the entry-point
 /// of the application (aka `start`).
@@ -14,7 +14,7 @@ use crate::memory::{GuestUSize, Memory, MutPtr, Ptr};
 /// int main(int argc, char *argv[], char *envp[], char *apple[]);
 /// ```
 pub fn prep_stack_for_start(
-    mem: &mut Memory,
+    mem: &mut Mem,
     cpu: &mut Cpu,
     argv: &[&str],
     envp: &[&str],
@@ -23,7 +23,7 @@ pub fn prep_stack_for_start(
     let argc: i32 = argv.len().try_into().unwrap();
 
     // We are arbitrarily putting the main thread's stack at the top of the
-    // address space (see also: memory::Memory::MAIN_THREAD_STACK_LOW_END).
+    // address space (see also: mem::Mem::MAIN_THREAD_STACK_LOW_END).
     // Since the stack grows downwards, its first byte would be 0xffffffff.
     let stack_base: usize = 1 << 32;
 
@@ -71,7 +71,7 @@ pub fn prep_stack_for_start(
         Ptr::from_bits((stack_base - reversed_data.len()).try_into().unwrap());
     let stack_height: GuestUSize = reversed_data.len().try_into().unwrap();
 
-    assert!(stack_height < Memory::MAIN_THREAD_STACK_SIZE);
+    assert!(stack_height < Mem::MAIN_THREAD_STACK_SIZE);
 
     let stack_region = mem.bytes_at_mut(stack_ptr, stack_height);
 

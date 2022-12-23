@@ -22,7 +22,7 @@ mod dyld;
 mod frameworks;
 mod image;
 mod mach_o;
-mod memory;
+mod mem;
 mod objc;
 mod stack;
 mod window;
@@ -69,7 +69,7 @@ fn main() -> Result<(), String> {
 pub struct Environment {
     _bundle: bundle::Bundle,
     window: window::Window,
-    mem: memory::Memory,
+    mem: mem::Mem,
     executable: mach_o::MachO,
     objc: objc::ObjC,
     dyld: dyld::Dyld,
@@ -96,7 +96,7 @@ impl Environment {
             launch_image,
         );
 
-        let mut mem = memory::Memory::new();
+        let mut mem = mem::Mem::new();
 
         let executable = mach_o::MachO::load_from_file(bundle.executable_path(), &mut mem)
             .map_err(|e| format!("Could not load executable: {}", e))?;

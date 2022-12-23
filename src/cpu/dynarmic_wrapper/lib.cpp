@@ -9,18 +9,18 @@ using VAddr = std::uint32_t;
 
 // Types and functions defined in Rust
 extern "C" {
-struct touchHLE_Memory;
-std::uint8_t touchHLE_cpu_read_u8(touchHLE_Memory *mem, VAddr addr);
-std::uint16_t touchHLE_cpu_read_u16(touchHLE_Memory *mem, VAddr addr);
-std::uint32_t touchHLE_cpu_read_u32(touchHLE_Memory *mem, VAddr addr);
-std::uint64_t touchHLE_cpu_read_u64(touchHLE_Memory *mem, VAddr addr);
-void touchHLE_cpu_write_u8(touchHLE_Memory *mem, VAddr addr,
+struct touchHLE_Mem;
+std::uint8_t touchHLE_cpu_read_u8(touchHLE_Mem *mem, VAddr addr);
+std::uint16_t touchHLE_cpu_read_u16(touchHLE_Mem *mem, VAddr addr);
+std::uint32_t touchHLE_cpu_read_u32(touchHLE_Mem *mem, VAddr addr);
+std::uint64_t touchHLE_cpu_read_u64(touchHLE_Mem *mem, VAddr addr);
+void touchHLE_cpu_write_u8(touchHLE_Mem *mem, VAddr addr,
                            std::uint8_t value);
-void touchHLE_cpu_write_u16(touchHLE_Memory *mem, VAddr addr,
+void touchHLE_cpu_write_u16(touchHLE_Mem *mem, VAddr addr,
                             std::uint8_t value);
-void touchHLE_cpu_write_u32(touchHLE_Memory *mem, VAddr addr,
+void touchHLE_cpu_write_u32(touchHLE_Mem *mem, VAddr addr,
                             std::uint8_t value);
-void touchHLE_cpu_write_u64(touchHLE_Memory *mem, VAddr addr,
+void touchHLE_cpu_write_u64(touchHLE_Mem *mem, VAddr addr,
                             std::uint8_t value);
 }
 
@@ -29,7 +29,7 @@ const auto HaltReasonSvc = Dynarmic::HaltReason::UserDefined1;
 class Environment final : public Dynarmic::A32::UserCallbacks {
 public:
   Dynarmic::A32::Jit *cpu = nullptr;
-  touchHLE_Memory *mem = nullptr;
+  touchHLE_Mem *mem = nullptr;
   std::uint64_t ticks_remaining;
   uint32_t halting_svc;
 
@@ -95,7 +95,7 @@ public:
   const std::uint32_t *regs() const { return &cpu->Regs().front(); }
   std::uint32_t *regs() { return &cpu->Regs().front(); }
 
-  std::int32_t run(touchHLE_Memory *mem, std::uint64_t *ticks) {
+  std::int32_t run(touchHLE_Mem *mem, std::uint64_t *ticks) {
     env.mem = mem;
     env.ticks_remaining = *ticks;
     Dynarmic::HaltReason hr = cpu->Run();
@@ -130,7 +130,7 @@ std::uint32_t *touchHLE_DynarmicWrapper_regs_mut(DynarmicWrapper *cpu) {
 }
 
 std::int32_t touchHLE_DynarmicWrapper_run(DynarmicWrapper *cpu,
-                                          touchHLE_Memory *mem,
+                                          touchHLE_Mem *mem,
                                           std::uint64_t *ticks) {
   return cpu->run(mem, ticks);
 }

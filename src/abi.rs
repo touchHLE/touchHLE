@@ -4,7 +4,7 @@
 //! Useful resources:
 //! * Apple's [Writing ARMv6 code for iOS](https://developer.apple.com/documentation/xcode/writing-armv6-code-for-ios), read together with Arm's [Procedure Call Standard for the Arm Architecture (AAPCS32)](https://github.com/ARM-software/abi-aa).
 
-use crate::memory::Ptr;
+use crate::mem::Ptr;
 use crate::Environment;
 
 /// This trait represents a host function that can be called from guest code.

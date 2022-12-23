@@ -1,4 +1,4 @@
-use super::{GuestUSize, Memory, VAddr};
+use super::{GuestUSize, Mem, VAddr};
 use std::num::NonZeroU32;
 
 /// A non-empty range of bytes in virtual address space.
@@ -91,14 +91,12 @@ pub struct Allocator {
 
 impl Allocator {
     pub fn new() -> Allocator {
-        let null_page = Chunk::new(0, Memory::NULL_PAGE_SIZE);
-        let main_thread_stack = Chunk::new(
-            Memory::MAIN_THREAD_STACK_LOW_END,
-            Memory::MAIN_THREAD_STACK_SIZE,
-        );
+        let null_page = Chunk::new(0, Mem::NULL_PAGE_SIZE);
+        let main_thread_stack =
+            Chunk::new(Mem::MAIN_THREAD_STACK_LOW_END, Mem::MAIN_THREAD_STACK_SIZE);
         let rest = Chunk::new(
-            Memory::NULL_PAGE_SIZE,
-            Memory::MAIN_THREAD_STACK_LOW_END - Memory::NULL_PAGE_SIZE,
+            Mem::NULL_PAGE_SIZE,
+            Mem::MAIN_THREAD_STACK_LOW_END - Mem::NULL_PAGE_SIZE,
         );
 
         Allocator {

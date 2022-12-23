@@ -11,7 +11,7 @@
 //! - The LLVM functions [`RuntimeDyldMachO::populateIndirectSymbolPointersSection`](https://github.com/llvm/llvm-project/blob/2e999b7dd1934a44d38c3a753460f1e5a217e9a5/llvm/lib/ExecutionEngine/RuntimeDyld/RuntimeDyldMachO.cpp#L179-L220) and [`MachOObjectFile::getIndirectSymbolTableEntry`](https://github.com/llvm/llvm-project/blob/3c09ed006ab35dd8faac03311b14f0857b01949c/llvm/lib/Object/MachOObjectFile.cpp#L4803-L4808) are references for how to read the indirect symbol table.
 //! - `/usr/include/mach-o/reloc.h` in the macOS SDK was the reference for the format of relocation entries.
 
-use crate::memory::{Memory, Ptr};
+use crate::mem::{Mem, Ptr};
 use mach_object::{DyLib, LoadCommand, MachCommand, OFile, Symbol, SymbolIter};
 use std::io::{Cursor, Seek, SeekFrom};
 
@@ -73,7 +73,7 @@ impl MachO {
     /// Load the all the sections from a Mach-O binary (provided as `bytes`)
     /// into the guest memory (`into_mem`), and return a struct containing
     /// metadata (e.g. symbols).
-    pub fn load_from_bytes(bytes: &[u8], into_mem: &mut Memory) -> Result<MachO, &'static str> {
+    pub fn load_from_bytes(bytes: &[u8], into_mem: &mut Mem) -> Result<MachO, &'static str> {
         let mut cursor = Cursor::new(bytes);
 
         let file = OFile::parse(&mut cursor).map_err(|_| "Could not parse Mach-O file")?;
@@ -133,7 +133,7 @@ impl MachO {
                         // check it's where we expect it to be.
                         "__PAGEZERO" => {
                             assert!(vmaddr == 0);
-                            assert!(vmsize == Memory::NULL_PAGE_SIZE);
+                            assert!(vmsize == Mem::NULL_PAGE_SIZE);
                             assert!(filesize == 0);
                             false
                         }
@@ -309,7 +309,7 @@ impl MachO {
     /// (e.g. symbols).
     pub fn load_from_file<P: AsRef<std::path::Path>>(
         path: P,
-        into_mem: &mut Memory,
+        into_mem: &mut Mem,
     ) -> Result<MachO, &'static str> {
         Self::load_from_bytes(
             &std::fs::read(path).map_err(|_| "Could not read executable file")?,

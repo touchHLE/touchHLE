@@ -75,6 +75,18 @@ impl<T, const MUT: bool> Ptr<T, MUT> {
     }
 }
 
+impl<T> ConstPtr<T> {
+    #[allow(dead_code)]
+    pub fn cast_mut(self) -> MutPtr<T> {
+        Ptr::from_bits(self.to_bits())
+    }
+}
+impl<T> MutPtr<T> {
+    pub fn cast_const(self) -> ConstPtr<T> {
+        Ptr::from_bits(self.to_bits())
+    }
+}
+
 impl<T, const MUT: bool> std::fmt::Debug for Ptr<T, MUT> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:#x}", self.to_bits())
@@ -265,6 +277,16 @@ impl Mem {
         let size = std::mem::size_of::<T>().try_into().unwrap();
         let ptr = self.alloc(size).cast();
         self.write(ptr, value);
+        ptr
+    }
+
+    /// Allocate and write a null-terminated string. Don't include the null
+    /// terminator in the slice.
+    pub fn alloc_and_write_cstr(&mut self, str_bytes: &[u8]) -> MutPtr<u8> {
+        let len = str_bytes.len().try_into().unwrap();
+        let ptr = self.alloc(len + 1).cast();
+        self.bytes_at_mut(ptr, len).copy_from_slice(str_bytes);
+        self.write(ptr + len, b'\0');
         ptr
     }
 

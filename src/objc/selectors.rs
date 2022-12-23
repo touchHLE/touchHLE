@@ -41,16 +41,16 @@ impl ObjC {
     /// [ObjC::register_bin_selectors], so that selector strings in the app
     /// binary can be re-used. For that reason this is also called by
     /// [crate::dyld].
-    pub fn register_host_selectors(&mut self, _mem: &mut Mem) {
+    pub fn register_host_selectors(&mut self, mem: &mut Mem) {
         for &class_list in super::CLASS_LISTS {
             for (_name, template) in class_list {
                 for method_list in [template.class_methods, template.instance_methods] {
-                    for (name, _imp) in method_list {
-                        // TODO allocate strings in guest memory for selectors
-                        // that aren't already registered
-                        self.selectors
-                            .get(*name)
-                            .unwrap_or_else(|| unimplemented!());
+                    for &(name, _imp) in method_list {
+                        if self.selectors.contains_key(name) {
+                            continue;
+                        }
+                        let sel = SEL(mem.alloc_and_write_cstr(name.as_bytes()).cast_const());
+                        self.selectors.insert(name.to_string(), sel);
                     }
                 }
             }

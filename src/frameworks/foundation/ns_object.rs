@@ -8,11 +8,11 @@ pub const CLASSES: ClassExports = crate::objc_classes! {
 
 @implementation NSObject
 
-+ (id) alloc {
++ (id)alloc {
     env.objc.alloc_object(this, Box::new(TrivialHostObject), &mut env.mem)
 }
 
-- (id) init {
+- (id)init {
     this
 }
 

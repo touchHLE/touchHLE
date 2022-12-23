@@ -64,7 +64,7 @@ pub struct ClassTemplate {
 /// See also [crate::dyld::FunctionExports].
 pub type ClassExports = &'static [(&'static str, ClassTemplate)];
 
-/// Internal macro for [crate::objc_classes].
+#[doc(hidden)]
 #[macro_export]
 macro_rules! _objc_superclass {
     (: $name:ident) => {

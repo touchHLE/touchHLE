@@ -56,9 +56,13 @@ pub trait HostObject: Any + 'static {}
 /// `&'a dyn HostObject` to `&'a dyn Any`.
 pub trait AnyHostObject {
     fn as_any<'a>(&'a self) -> &'a (dyn Any + 'static);
+    fn as_any_mut<'a>(&'a mut self) -> &'a mut (dyn Any + 'static);
 }
 impl<T: HostObject> AnyHostObject for T {
     fn as_any<'a>(&'a self) -> &'a (dyn Any + 'static) {
+        self
+    }
+    fn as_any_mut<'a>(&'a mut self) -> &'a mut (dyn Any + 'static) {
         self
     }
 }
@@ -89,5 +93,20 @@ impl super::ObjC {
         let ptr = mem.alloc_and_write(guest_object);
         self.objects.insert(ptr, host_object);
         ptr
+    }
+
+    /// Get a reference to a host object and downcast it. Panics if there is
+    /// no such object, or if downcasting fails.
+    pub fn borrow<T: AnyHostObject + 'static>(&self, object: id) -> &T {
+        let host_object = self.objects.get(&object).unwrap();
+        host_object.as_any().downcast_ref().unwrap()
+    }
+
+    #[allow(dead_code)]
+    /// Get a reference to a host object and downcast it. Panics if there is
+    /// no such object, or if downcasting fails.
+    pub fn borrow_mut<T: AnyHostObject + 'static>(&mut self, object: id) -> &mut T {
+        let host_object = self.objects.get_mut(&object).unwrap();
+        host_object.as_any_mut().downcast_mut().unwrap()
     }
 }

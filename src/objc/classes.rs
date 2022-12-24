@@ -272,9 +272,26 @@ impl ObjC {
         crate::dyld::search_lists(CLASS_LISTS, name)
     }
 
-    /// For use by [crate::dyld]: get the class referenced by an external
-    /// relocation in the application.
+    /// For use by [crate::dyld]: get the class or metaclass referenced by an
+    /// external relocation in the app binary. If we don't have an
+    /// implementation of the class, a placeholder is used.
     pub fn link_class(&mut self, name: &str, is_metaclass: bool, mem: &mut Mem) -> Class {
+        self.link_class_inner(name, is_metaclass, mem, true)
+    }
+
+    /// For use by host functions: get a particular class. If we don't have an
+    /// implementation of the class, panic.
+    pub fn get_known_class(&mut self, name: &str, mem: &mut Mem) -> Class {
+        self.link_class_inner(name, /* is_metaclass: */ false, mem, false)
+    }
+
+    fn link_class_inner(
+        &mut self,
+        name: &str,
+        is_metaclass: bool,
+        mem: &mut Mem,
+        use_placeholder: bool,
+    ) -> Class {
         // The class and metaclass must be created together and tracked
         // together, so even though this function only returns one pointer, it
         // must create both. The function must not care whether the metaclass
@@ -321,6 +338,10 @@ impl ObjC {
                 self,
             ));
         } else {
+            if !use_placeholder {
+                panic!("Missing implementation for class {}!", name);
+            }
+
             // We don't have a real implementation for this class, use a
             // placeholder.
 

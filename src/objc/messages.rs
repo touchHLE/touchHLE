@@ -124,6 +124,8 @@ where
 ///
 /// Note that argument values that aren't a bare single identifier like `foo`
 /// need to be bracketed.
+///
+/// See also [msg_class], if you want to send a message to a class.
 #[macro_export]
 macro_rules! msg {
     [$env:expr; $receiver:tt $name:ident $(: $arg1:tt)?
@@ -137,3 +139,31 @@ macro_rules! msg {
     }
 }
 pub use crate::msg; // #[macro_export] is weird...
+
+/// Variant of [msg] for sending a message to a named class. Useful for calling
+/// class methods, especially `new`.
+///
+/// ```rust
+/// msg_class![env; SomeClass alloc]
+/// ```
+///
+/// desugars to:
+///
+/// ```rust
+/// msg![env; (env.objc.get_known_class("SomeClass"), &mut env.mem) alloc]
+/// ```
+#[macro_export]
+macro_rules! msg_class {
+    [$env:expr; $receiver_class:ident $name:ident $(: $arg1:tt)?
+                                      $($namen:ident: $argn:tt)*] => {
+        {
+            let class = $env.objc.get_known_class(
+                stringify!($receiver_class),
+                &mut $env.mem
+            );
+            $crate::objc::msg![$env; class $name $(: $arg1)?
+                                           $($namen: $argn)*]
+        }
+    }
+}
+pub use crate::msg_class; // #[macro_export] is weird...

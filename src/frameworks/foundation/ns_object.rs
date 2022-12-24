@@ -16,6 +16,11 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.alloc_object(this, Box::new(TrivialHostObject), &mut env.mem)
 }
 
++ (id)new {
+    let new_object: id = msg![env; this alloc];
+    msg![env; new_object init]
+}
+
 - (id)init {
     this
 }

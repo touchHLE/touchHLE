@@ -8,6 +8,7 @@ use crate::dyld::FunctionExports;
 use crate::export_c_func;
 
 pub mod ui_application;
+pub mod ui_nib;
 pub mod ui_responder;
 
 pub const FUNCTIONS: FunctionExports = {

@@ -67,7 +67,7 @@ fn main() -> Result<(), String> {
 
 /// The struct containing the entire emulator state.
 pub struct Environment {
-    _bundle: bundle::Bundle,
+    bundle: bundle::Bundle,
     window: window::Window,
     mem: mem::Mem,
     executable: mach_o::MachO,
@@ -132,7 +132,7 @@ impl Environment {
         cpu.regs_mut()[cpu::Cpu::PC] = entry_point_addr;
 
         Ok(Environment {
-            _bundle: bundle,
+            bundle,
             window,
             mem,
             executable,

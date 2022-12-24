@@ -68,4 +68,8 @@ impl Bundle {
             self.path.join("Icon.png")
         }
     }
+
+    pub fn main_nib_file(&self) -> Option<&str> {
+        Some(self.plist.get("NSMainNibFile")?.as_string().unwrap())
+    }
 }

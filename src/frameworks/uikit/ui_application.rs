@@ -1,5 +1,6 @@
 //! `UIApplication` and `UIApplicationMain`.
 
+use crate::frameworks::uikit::ui_nib::load_main_nib_file;
 use crate::mem::MutPtr;
 use crate::objc::{id, msg_class, nil, objc_classes, ClassExports};
 use crate::Environment;
@@ -13,8 +14,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 // This should only be called by UIApplicationMain
 - (id)init {
     // TODO: handle the fact this is a singleton
-    // TODO: app initialisation
-    unimplemented!("[(UIApplication*){:?} init]", this);
+    this
 }
 
 @end
@@ -35,7 +35,9 @@ pub(super) fn UIApplicationMain(
         unimplemented!()
     }
 
-    let _ui_application: id = msg_class![env; UIApplication new];
+    let ui_application: id = msg_class![env; UIApplication new];
 
-    unimplemented!("Should enter main loop here")
+    load_main_nib_file(env, ui_application);
+
+    unimplemented!("Send events to UIApplicationDelegate and enter main loop");
 }

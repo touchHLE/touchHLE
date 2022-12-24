@@ -3,6 +3,7 @@
 //! Resources:
 //! - Apple's [Resource Programming Guide](https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/LoadingResources/CocoaNibs/CocoaNibs.html) is very helpful.
 
+use crate::frameworks::foundation::ns_keyed_unarchiver;
 use crate::objc::id;
 use crate::Environment;
 
@@ -19,11 +20,9 @@ use crate::Environment;
 /// ```
 ///
 /// The result value of this function is the `NSArray` of top-level objects.
-pub fn load_main_nib_file(env: &mut Environment, ui_application: id) -> id {
-    let main_nib_file = env.bundle.main_nib_file().unwrap();
-    unimplemented!(
-        "Load main nib file {:?} with owner {:?}",
-        main_nib_file,
-        ui_application
-    );
+pub fn load_main_nib_file(env: &mut Environment, _ui_application: id) -> id {
+    let path = env.bundle.main_nib_file_path();
+    let _dict = ns_keyed_unarchiver::unarchive_object_with_file(env, &path);
+
+    unimplemented!("Finish nib loading");
 }

@@ -69,7 +69,13 @@ impl Bundle {
         }
     }
 
-    pub fn main_nib_file(&self) -> Option<&str> {
-        Some(self.plist.get("NSMainNibFile")?.as_string().unwrap())
+    pub fn main_nib_file_path(&self) -> PathBuf {
+        // FIXME: There might not be a main nib file, or it might be localised
+        // and have multiple paths. This method should definitely be removed
+        // eventually.
+        self.path.join(format!(
+            "{}.nib",
+            self.plist["NSMainNibFile"].as_string().unwrap(),
+        ))
     }
 }

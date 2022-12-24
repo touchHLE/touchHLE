@@ -82,17 +82,6 @@ macro_rules! _objc_superclass {
 
 #[doc(hidden)]
 #[macro_export]
-macro_rules! _objc_selector {
-    // "foo"
-    ($name:ident) => { stringify!($name) };
-    // "fooWithBar:", "fooWithBar:Baz" etc
-    ($_:tt; $name:ident $(, $namen:ident)*) => {
-        concat!(stringify!($name), ":", $(stringify!($namen), ":"),*)
-    }
-}
-
-#[doc(hidden)]
-#[macro_export]
 macro_rules! _objc_method {
     (
         $env:ident,
@@ -196,7 +185,7 @@ macro_rules! objc_classes {
                     class_methods: &[
                         $(
                             (
-                                $crate::_objc_selector!(
+                                $crate::objc::selector!(
                                     $(($cm_type1);)?
                                     $cm_name
                                     $(, $cm_namen)*
@@ -216,7 +205,7 @@ macro_rules! objc_classes {
                     instance_methods: &[
                         $(
                             (
-                                $crate::_objc_selector!(
+                                $crate::objc::selector!(
                                     $(($im_type1);)?
                                     $im_name
                                     $(, $im_namen)*

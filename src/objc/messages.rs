@@ -6,6 +6,7 @@
 //! - Mike Ash's [objc_msgSend's New Prototype](https://www.mikeash.com/pyblog/objc_msgsends-new-prototype.html)
 
 use super::{id, nil, ObjC, IMP, SEL};
+use crate::abi::CallFromHost;
 use crate::Environment;
 
 /// `objc_msgSend` itself, the main function of Objective-C.
@@ -88,3 +89,51 @@ pub fn objc_msgSend(env: &mut Environment, receiver: id, selector: SEL) {
         }
     }
 }
+
+/// Wrapper around [objc_msgSend] which, together with [msg], makes it easy to
+/// send messages in host code. Warning: all types are inferred from the
+/// call-site, be very sure you get them correct!
+///
+/// TODO: Ideally we can constrain the first two args to be `id` and `SEL`?
+///
+/// TODO: Could we pass along dynamic type information to `objc_msgSend` so it
+/// can do runtime type-checking? Perhaps only in debug builds.
+pub fn msg_send<R, P>(env: &mut Environment, args: P) -> R
+where
+    fn(&mut Environment, id, SEL): CallFromHost<R, P>,
+{
+    (objc_msgSend as fn(&mut Environment, id, SEL)).call_from_host(env, args)
+}
+
+/// Macro for sending a message which imitates the Objective-C messaging syntax.
+/// See [msg_send] for the underlying implementation. Warning: all types are
+/// inferred from the call-site, be very sure you get them correct!
+///
+/// ```rust
+/// msg![env; foo setBar:bar withQux:qux];
+/// ```
+///
+/// desugars to:
+///
+/// ```rust
+/// {
+///     let sel = env.objc.lookup_selector("setFoo:withBar").unwrap();
+///     msg_send(env, (foo, sel, bar, qux))
+/// }
+/// ```
+///
+/// Note that argument values that aren't a bare single identifier like `foo`
+/// need to be bracketed.
+#[macro_export]
+macro_rules! msg {
+    [$env:expr; $receiver:tt $name:ident $(: $arg1:tt)?
+                             $($namen:ident: $argn:tt)*] => {
+        {
+            let sel = $crate::objc::selector!($($arg1;)? $name $(, $namen)*);
+            let sel = $env.objc.lookup_selector(sel).unwrap();
+            let args = ($receiver, sel, $($arg1,)? $($argn),*);
+            $crate::objc::msg_send($env, args)
+        }
+    }
+}
+pub use crate::msg; // #[macro_export] is weird...

@@ -57,6 +57,48 @@ impl_CallFromGuest!(0 => P0, 1 => P1);
 impl_CallFromGuest!(0 => P0, 1 => P1, 2 => P2);
 impl_CallFromGuest!(0 => P0, 1 => P1, 2 => P2, 3 => P3);
 
+/// This trait represents a guest or host function that can be called from host
+/// code, but using the guest ABI. See [CallFromGuest], which this is the
+/// inverse of.
+///
+/// This is currently only used for host-to-host message calls, but eventually
+/// this should (TODO) support calling actual guest functions.
+///
+/// This doesn't currently change the PC/LR/stack frame, TODO: decide whether
+/// this should do that once it supports guest functions.
+pub trait CallFromHost<R, P> {
+    fn call_from_host(&self, env: &mut Environment, args: P) -> R;
+}
+
+macro_rules! impl_CallFromHost {
+    ( $($p:tt => $P:ident),* ) => {
+        impl <T, R, $($P),*> CallFromHost<R, ($($P,)*)> for T
+            where T: CallFromGuest, R: GuestRet, $($P: GuestArg,)* {
+            // ignore warnings for the zero-argument case
+            #[allow(unused_variables, unused_mut, clippy::unused_unit)]
+            fn call_from_host(
+                &self,
+                env: &mut Environment,
+                args: ($($P,)*),
+            ) -> R {
+                {
+                    let regs = env.cpu.regs_mut();
+                    let mut reg_offset = 0;
+                    $(write_next_arg::<$P>(&mut reg_offset, regs, args.$p);)*
+                };
+                self.call_from_guest(env);
+                <R as GuestRet>::from_regs(env.cpu.regs())
+            }
+        }
+    }
+}
+
+impl_CallFromHost!();
+impl_CallFromHost!(0 => P0);
+impl_CallFromHost!(0 => P0, 1 => P1);
+impl_CallFromHost!(0 => P0, 1 => P1, 2 => P2);
+impl_CallFromHost!(0 => P0, 1 => P1, 2 => P2, 3 => P3);
+
 /// Calling convention translation for a function argument type.
 pub trait GuestArg: Sized {
     /// How many registers does this argument type consume?
@@ -65,6 +107,10 @@ pub trait GuestArg: Sized {
     /// Read the argument from registers. Only `&regs[0..Self::REG_COUNT]` may
     /// be accessed.
     fn from_regs(regs: &[u32]) -> Self;
+
+    /// Write the argument to registers. Only '&mut regs[0..Self::REG_COUNT]`
+    /// may be accessed.
+    fn to_regs(self, regs: &mut [u32]);
 }
 
 /// Read a single argument from registers. Call this for each argument in order.
@@ -78,12 +124,25 @@ fn read_next_arg<T: GuestArg>(reg_offset: &mut usize, regs: &[u32]) -> T {
     val
 }
 
+/// Write a single argument to registers. Call this for each argument in order.
+fn write_next_arg<T: GuestArg>(reg_offset: &mut usize, regs: &mut [u32], arg: T) {
+    // After the fourth register is used, the arguments go on the stack.
+    // (Support not implemented yet, Rust will panic if indexing out-of-bounds.)
+    let regs = &mut regs[0..4];
+
+    arg.to_regs(&mut regs[*reg_offset..][..T::REG_COUNT]);
+    *reg_offset += T::REG_COUNT;
+}
+
 macro_rules! impl_GuestArg_with {
     ($for:ty, $with:ty) => {
         impl GuestArg for $for {
             const REG_COUNT: usize = <$with as GuestArg>::REG_COUNT;
             fn from_regs(regs: &[u32]) -> Self {
                 <$with as GuestArg>::from_regs(regs) as $for
+            }
+            fn to_regs(self, regs: &mut [u32]) {
+                <u32 as GuestArg>::to_regs(self as $with, regs)
             }
         }
     };
@@ -95,6 +154,9 @@ impl GuestArg for u32 {
     const REG_COUNT: usize = 1;
     fn from_regs(regs: &[u32]) -> Self {
         regs[0]
+    }
+    fn to_regs(self, regs: &mut [u32]) {
+        regs[0] = self;
     }
 }
 
@@ -109,12 +171,18 @@ impl GuestArg for f32 {
     fn from_regs(regs: &[u32]) -> Self {
         Self::from_bits(<u32 as GuestArg>::from_regs(regs))
     }
+    fn to_regs(self, regs: &mut [u32]) {
+        <u32 as GuestArg>::to_regs(self.to_bits(), regs)
+    }
 }
 
 impl<T, const MUT: bool> GuestArg for Ptr<T, MUT> {
     const REG_COUNT: usize = <u32 as GuestArg>::REG_COUNT;
     fn from_regs(regs: &[u32]) -> Self {
         Self::from_bits(<u32 as GuestArg>::from_regs(regs))
+    }
+    fn to_regs(self, regs: &mut [u32]) {
+        <u32 as GuestArg>::to_regs(self.to_bits(), regs)
     }
 }
 
@@ -127,6 +195,9 @@ pub trait GuestRet: Sized {
     // index. But there can only be one return value for a function, so we can
     // probably get away with not having it for now?
 
+    /// Read the return value from registers.
+    fn from_regs(regs: &[u32]) -> Self;
+
     /// Write the return value to registers.
     fn to_regs(self, regs: &mut [u32]);
 }
@@ -134,6 +205,9 @@ pub trait GuestRet: Sized {
 macro_rules! impl_GuestRet_with {
     ($for:ty, $with:ty) => {
         impl GuestRet for $for {
+            fn from_regs(regs: &[u32]) -> Self {
+                <$with as GuestRet>::from_regs(regs) as $for
+            }
             fn to_regs(self, regs: &mut [u32]) {
                 <$with as GuestRet>::to_regs(self as $with, regs)
             }
@@ -147,11 +221,15 @@ impl GuestRet for () {
         // the registers, because () will be "returned" after the function it's
         // meant to be tail-calling.
     }
+    fn from_regs(_regs: &[u32]) -> Self {}
 }
 
 // GuestRet implementations for u32-like types
 
 impl GuestRet for u32 {
+    fn from_regs(regs: &[u32]) -> Self {
+        regs[0]
+    }
     fn to_regs(self, regs: &mut [u32]) {
         regs[0] = self;
     }
@@ -164,12 +242,18 @@ impl_GuestRet_with!(u8, u32);
 impl_GuestRet_with!(i8, u32);
 
 impl GuestRet for f32 {
+    fn from_regs(regs: &[u32]) -> Self {
+        Self::from_bits(<u32 as GuestRet>::from_regs(regs))
+    }
     fn to_regs(self, regs: &mut [u32]) {
         <u32 as GuestRet>::to_regs(self.to_bits(), regs)
     }
 }
 
 impl<T, const MUT: bool> GuestRet for Ptr<T, MUT> {
+    fn from_regs(regs: &[u32]) -> Self {
+        Self::from_bits(<u32 as GuestRet>::from_regs(regs))
+    }
     fn to_regs(self, regs: &mut [u32]) {
         <u32 as GuestRet>::to_regs(self.to_bits(), regs)
     }

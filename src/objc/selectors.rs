@@ -14,6 +14,19 @@ use crate::abi::GuestArg;
 use crate::mach_o::MachO;
 use crate::mem::{ConstPtr, Mem, MutPtr, Ptr};
 
+/// Create a string literal for a selector from Objective-C message syntax
+/// components. Useful for [super::objc_classes] and for [super::msg].
+#[macro_export]
+macro_rules! selector {
+    // "foo"
+    ($name:ident) => { stringify!($name) };
+    // "fooWithBar:", "fooWithBar:Baz" etc
+    ($_:tt; $name:ident $(, $namen:ident)*) => {
+        concat!(stringify!($name), ":", $(stringify!($namen), ":"),*)
+    }
+}
+pub use crate::selector; // #[macro_export] is weird...
+
 /// Opaque type used for selectors.
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 #[repr(transparent)]
@@ -25,6 +38,9 @@ impl GuestArg for SEL {
     fn from_regs(regs: &[u32]) -> Self {
         SEL(<ConstPtr<u8> as GuestArg>::from_regs(regs))
     }
+    fn to_regs(self, regs: &mut [u32]) {
+        self.0.to_regs(regs)
+    }
 }
 
 impl SEL {
@@ -35,6 +51,10 @@ impl SEL {
 }
 
 impl ObjC {
+    pub fn lookup_selector(&self, name: &str) -> Option<SEL> {
+        self.selectors.get(name).copied()
+    }
+
     /// Register and deduplicate all the selectors of host classes.
     ///
     /// To avoid wasting guest memory, call this after calling
@@ -69,16 +89,13 @@ impl ObjC {
             let sel_cstr = mem.read(selref);
             let sel_str = mem.cstr_at_utf8(sel_cstr);
 
-            match self.selectors.get(sel_str) {
-                Some(&existing_sel) => {
-                    if sel_cstr != existing_sel.0 {
-                        mem.write(selref, existing_sel.0);
-                    }
+            if let Some(existing_sel) = self.lookup_selector(sel_str) {
+                if sel_cstr != existing_sel.0 {
+                    mem.write(selref, existing_sel.0);
                 }
-                None => {
-                    let sel = SEL(sel_cstr);
-                    self.selectors.insert(sel_str.to_string(), sel);
-                }
+            } else {
+                let sel = SEL(sel_cstr);
+                self.selectors.insert(sel_str.to_string(), sel);
             }
         }
     }

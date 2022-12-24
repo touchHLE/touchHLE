@@ -25,22 +25,57 @@ impl CPPVersion for cc::Build {
     }
 }
 
+fn build_type_windows() -> &'static str {
+    if cfg!(target_os = "windows") {
+        if cfg!(debug_assertions) {
+            "Debug"
+        } else {
+            "Release"
+        }
+    } else {
+        ""
+    }
+}
+
 fn main() {
     let package_root = Path::new(env!("CARGO_MANIFEST_DIR"));
     let workspace_root = package_root.join("../../..");
 
-    let dynarmic_out = cmake::build(workspace_root.join("vendor/dynarmic"));
+    let mut build = cmake::Config::new(workspace_root.join("vendor/dynarmic"));
+    // This is Windows-specific because on macOS or Linux, you can grab
+    // Boost with your package manager.
+    if cfg!(target_os = "windows") {
+        let boost_path = workspace_root.join("vendor/boost");
+        if !boost_path.is_dir() {
+            panic!("Could not find Boost. Download it from https://www.boost.org/users/download/ and put it at vendor/boost");
+        }
+        build.define("Boost_INCLUDE_DIR", boost_path);
+    }
+    let dynarmic_out = build.build();
+
     link_search(&dynarmic_out.join("lib"));
     link_lib("dynarmic");
-    link_search(&dynarmic_out.join("build/externals/fmt"));
+    link_search(
+        &dynarmic_out
+            .join("build/externals/fmt")
+            .join(build_type_windows()),
+    );
     link_lib(if cfg!(debug_assertions) {
         "fmtd"
     } else {
         "fmt"
     });
-    link_search(&dynarmic_out.join("build/externals/mcl/src"));
+    link_search(
+        &dynarmic_out
+            .join("build/externals/mcl/src")
+            .join(build_type_windows()),
+    );
     link_lib("mcl");
-    link_search(&dynarmic_out.join("build/externals/Zydis"));
+    link_search(
+        &dynarmic_out
+            .join("build/externals/Zydis")
+            .join(build_type_windows()),
+    );
     link_lib("Zydis");
     // rerun-if-changed seems to not work if pointed to a directory :(
     //rerun_if_changed(&workspace_root.join("vendor/dynarmic"));

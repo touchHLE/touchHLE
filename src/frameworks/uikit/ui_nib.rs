@@ -39,7 +39,7 @@ pub const CLASSES: ClassExports = objc_classes! {
         let class_name = get_key(env, coder, "UIClassName");
         let original_class_name = get_key(env, coder, "UIOriginalClassName");
         // TODO: avoid copy
-        let copies = (copy_string(env, class_name), copy_string(env, class_name));
+        let copies = (copy_string(env, class_name), copy_string(env, original_class_name));
         let _: () = msg![env; class_name release];
         let _: () = msg![env; original_class_name release];
         copies

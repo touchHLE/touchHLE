@@ -33,10 +33,8 @@ pub const CLASSES: ClassExports = objc_classes! {
     let host_obj = borrow_host_obj(env, this);
     let already_unarchived = std::mem::take(&mut host_obj.already_unarchived);
 
-    for object in already_unarchived {
-        if let Some(object) = object {
-            let _: () = msg![env; object release];
-        }
+    for &object in already_unarchived.iter().flatten() {
+        let _: () = msg![env; object release];
     }
 
     // FIXME: this should do a super-call instead

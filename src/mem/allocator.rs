@@ -137,17 +137,52 @@ impl Allocator {
             size
         };
 
-        let big_chunk = self.unused_chunks.pop().unwrap();
+        let existing_chunk = {
+            let mut perfect_chunk: Option<usize> = None;
+            let mut big_enough_chunk: Option<(usize, GuestUSize)> = None;
 
-        assert!(size < big_chunk.size.get());
+            // Search from end because we should prefer recently-freed
+            // allocations that might be the right size.
+            for (idx, chunk) in self.unused_chunks.iter().enumerate().rev() {
+                if chunk.size.get() == size {
+                    perfect_chunk = Some(idx);
+                    break;
+                }
+                if chunk.size.get() > size
+                    && (big_enough_chunk.is_none()
+                        || big_enough_chunk.unwrap().1 > chunk.size.get())
+                {
+                    big_enough_chunk = Some((idx, chunk.size.get()));
+                }
+            }
 
-        let alloc = Chunk::new(big_chunk.base, size);
-        let rump = Chunk::new(big_chunk.base + size, big_chunk.size.get() - size);
+            if let Some(idx) = perfect_chunk {
+                self.unused_chunks.remove(idx)
+            } else if let Some((idx, _)) = big_enough_chunk {
+                self.unused_chunks.remove(idx)
+            } else {
+                panic!(
+                    "Could not find large enough chunk to allocate {:#x} bytes",
+                    size
+                )
+            }
+        };
 
-        self.used_chunks.push(alloc);
-        self.unused_chunks.push(rump);
+        if size < existing_chunk.size.get() {
+            let alloc = Chunk::new(existing_chunk.base, size);
+            let rump = Chunk::new(existing_chunk.base + size, existing_chunk.size.get() - size);
 
-        alloc.base
+            let res = alloc.base;
+            self.used_chunks.push(alloc);
+            self.unused_chunks.push(rump);
+            res
+        } else {
+            assert!(size == existing_chunk.size.get());
+
+            let res = existing_chunk.base;
+            self.used_chunks.push(existing_chunk);
+            res
+        }
     }
 
     /// Returns the size of the freed chunk so it can be zeroed if desired

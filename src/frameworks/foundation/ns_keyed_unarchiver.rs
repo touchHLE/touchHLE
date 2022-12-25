@@ -6,10 +6,11 @@
 //!   plists, e.g. `plutil -p` or `println!("{:#?}", plist::Value::...);`.
 //! - Apple's [Archives and Serializations Programming Guide](https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/Archiving/Articles/archives.html)
 
+use super::ns_string::copy_string;
+use crate::mem::MutVoidPtr;
 use crate::objc::{id, msg, objc_classes, ClassExports, HostObject};
 use crate::Environment;
 use plist::{Dictionary, Uid, Value};
-use std::collections::HashMap;
 use std::path::Path;
 
 struct NSKeyedUnarchiverHostObject {
@@ -26,8 +27,17 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 @implementation NSKeyedUnarchiver: NSCoder
 
-// TODO: real init/unarchive methods. This is currently only created by the
-// shortcut method below.
++ (id)allocWithZone:(MutVoidPtr)_zone { // struct _NSZone*
+    let unarchiver = Box::new(NSKeyedUnarchiverHostObject {
+        plist: Dictionary::new(),
+        current_key: None,
+        already_unarchived: Vec::new(),
+    });
+    env.objc.alloc_object(this, unarchiver, &mut env.mem)
+}
+
+// TODO: real init methods. This is currently only initialized by the shortcut
+// function below.
 
 - (())dealloc {
     let host_obj = borrow_host_obj(env, this);
@@ -41,56 +51,68 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.dealloc_object(this, &mut env.mem)
 }
 
+// These methods drive most of the decoding. They get called in two cases:
+// - By the code that initiates the unarchival, e.g. UINib, to retrieve
+//   top-level objects.
+// - By the object currently being unarchived, i.e. something that had
+//   `initWithCoder:` called on it, to retrieve objects from its scope.
+// They are all from the NSCoder abstract class and they return default values
+// if the key is unknown.
+
+- (id)decodeObjectForKey:(id)key { // NSString*
+    let key = copy_string(env, key); // TODO: avoid copying string
+    let host_obj = borrow_host_obj(env, this);
+    let scope = match host_obj.current_key {
+        Some(current_uid) => {
+            &host_obj.plist["$objects"].as_array().unwrap()[current_uid.get() as usize]
+        },
+        None => {
+            &host_obj.plist["$top"]
+        }
+    }.as_dictionary().unwrap();
+    let next_uid = scope[&key].as_uid().copied().unwrap();
+    let object = unarchive_key(env, this, next_uid);
+    msg![env; object retain] // caller must release it
+}
+
+// TODO: add more decode methods
+
 @end
 
 };
-
-/// Shortcut for use by [crate::frameworks::uikit::ui_nib::load_main_nib_file].
-///
-/// This is probably equivalent to calling `decodeObjectForKey:` once for each
-/// of the top-level keys? TODO: rework this to work that way.
-pub fn unarchive_object_with_file(env: &mut Environment, path: &Path) -> HashMap<String, id> {
-    let plist = Value::from_file(path).unwrap();
-    let plist = plist.into_dictionary().unwrap();
-    assert!(plist["$version"].as_unsigned_integer() == Some(100000));
-    assert!(plist["$archiver"].as_string() == Some("NSKeyedArchiver"));
-
-    let top_level_key_list = Vec::from_iter(
-        plist["$top"]
-            .as_dictionary()
-            .unwrap()
-            .into_iter()
-            .map(|(k, v)| (k.clone(), v.as_uid().copied().unwrap())),
-    );
-
-    let key_count = plist["$objects"].as_array().unwrap().len();
-
-    let unarchiver = Box::new(NSKeyedUnarchiverHostObject {
-        plist,
-        current_key: None,
-        already_unarchived: vec![None; key_count],
-    });
-    let class = env.objc.get_known_class("NSKeyedUnarchiver", &mut env.mem);
-    let unarchiver = env.objc.alloc_object(class, unarchiver, &mut env.mem);
-
-    let mut top_level_keys = HashMap::new();
-    for (key_name, key_key) in top_level_key_list {
-        let new_object = unarchive_key(env, unarchiver, key_key);
-        // the HashMap is retaining this object
-        let new_object: id = msg![env; new_object retain];
-        top_level_keys.insert(key_name, new_object);
-    }
-
-    let _: () = msg![env; unarchiver release];
-
-    top_level_keys
-}
 
 fn borrow_host_obj(env: &mut Environment, unarchiver: id) -> &mut NSKeyedUnarchiverHostObject {
     env.objc.borrow_mut(unarchiver)
 }
 
-/// The core of the implementation: recursively unarchive things.
+/// Shortcut for use by [crate::frameworks::uikit::ui_nib::load_main_nib_file].
+///
+/// This is equivalent to calling `initForReadingWithData:` in the proper API.
+pub fn init_for_reading_file(env: &mut Environment, unarchiver: id, path: &Path) {
+    // Should have already been alloc'd the proper way.
+    let host_obj = borrow_host_obj(env, unarchiver);
+    assert!(host_obj.already_unarchived.is_empty());
+    assert!(host_obj.current_key.is_none());
+    assert!(host_obj.plist.is_empty());
+
+    let plist = Value::from_file(path).unwrap();
+    let plist = plist.into_dictionary().unwrap();
+    assert!(plist["$version"].as_unsigned_integer() == Some(100000));
+    assert!(plist["$archiver"].as_string() == Some("NSKeyedArchiver"));
+
+    let key_count = plist["$objects"].as_array().unwrap().len();
+
+    host_obj.already_unarchived = vec![None; key_count];
+    host_obj.plist = plist;
+}
+
+/// The core of the implementation: unarchive something by its uid.
+///
+/// This is recursive in practice: the `initWithCoder:` messages sent by this
+/// function will be received by objects which will then send
+/// `decodeXXXWithKey:` messages back to the unarchiver, which will then call
+/// this function (and so on).
+///
 /// The object returned will have a refcount of 1 and should be considered
 /// owned by the NSKeyedUnarchiver.
 fn unarchive_key(env: &mut Environment, unarchiver: id, key: Uid) -> id {

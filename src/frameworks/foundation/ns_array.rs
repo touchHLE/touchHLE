@@ -4,7 +4,7 @@ use super::ns_keyed_unarchiver;
 use crate::mem::MutVoidPtr;
 use crate::objc::{id, msg, msg_class, objc_classes, ClassExports, HostObject};
 
-// Belongs to _touchHLE_NSArray
+/// Belongs to _touchHLE_NSArray
 struct ArrayHostObject {
     array: Vec<id>,
 }
@@ -74,6 +74,8 @@ pub const CLASSES: ClassExports = objc_classes! {
     // FIXME: this should do a super-call instead
     env.objc.dealloc_object(this, &mut env.mem)
 }
+
+// TODO: accessors, more init methods, etc
 
 @end
 

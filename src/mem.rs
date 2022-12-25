@@ -73,6 +73,10 @@ impl<T, const MUT: bool> Ptr<T, MUT> {
     pub fn cast<U>(self) -> Ptr<U, MUT> {
         Ptr::<U, MUT>::from_bits(self.to_bits())
     }
+
+    pub fn is_null(self) -> bool {
+        self.to_bits() == 0
+    }
 }
 
 impl<T> ConstPtr<T> {

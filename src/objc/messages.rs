@@ -63,8 +63,11 @@ pub fn objc_msgSend(env: &mut Environment, receiver: id, selector: SEL) {
         }) = host_object.as_any().downcast_ref()
         {
             if let Some(imp) = methods.get(&selector) {
-                let IMP::Host(host_imp) = imp;
-                host_imp.call_from_guest(env);
+                if let IMP::Host(host_imp) = imp {
+                    host_imp.call_from_guest(env);
+                } else {
+                    unimplemented!("Guest method call");
+                }
                 return;
             } else {
                 class = superclass;

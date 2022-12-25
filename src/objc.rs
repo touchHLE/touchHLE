@@ -25,12 +25,13 @@ mod selectors;
 
 pub use classes::{objc_classes, Class, ClassExports, ClassTemplate};
 pub use messages::{msg, msg_class, msg_send};
-pub use methods::{HostIMP, IMP};
+pub use methods::{GuestIMP, HostIMP, IMP};
 pub use objects::{id, nil, AnyHostObject, HostObject, TrivialHostObject};
 pub use selectors::{selector, SEL};
 
 use classes::{ClassHostObject, UnimplementedClass, CLASS_LISTS};
 use messages::objc_msgSend;
+use methods::method_list_t;
 use objects::HostObjectEntry;
 
 /// Main type holding Objective-C runtime state.

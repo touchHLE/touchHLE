@@ -6,8 +6,13 @@
 //!
 //! See also: [crate::mem::SafeRead] and [crate::mem::SafeWrite].
 
-use crate::mem::Ptr;
+use crate::mem::{ConstVoidPtr, Ptr};
 use crate::Environment;
+
+/// (Untyped) guest function pointer, wrapped in a struct to prevent mixing with
+/// other pointers.
+#[derive(Copy, Clone, Debug)]
+pub struct GuestFunction(pub ConstVoidPtr);
 
 /// This trait represents a host function that can be called from guest code.
 ///

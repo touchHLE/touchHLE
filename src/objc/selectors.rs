@@ -76,6 +76,20 @@ impl ObjC {
         }
     }
 
+    /// Register a selector from the application binary. Must be a
+    /// static-lifetime constant string.
+    pub(super) fn register_bin_selector(&mut self, sel_cstr: ConstPtr<u8>, mem: &Mem) -> SEL {
+        let sel_str = mem.cstr_at_utf8(sel_cstr);
+
+        if let Some(existing_sel) = self.lookup_selector(sel_str) {
+            existing_sel
+        } else {
+            let sel = SEL(sel_cstr);
+            self.selectors.insert(sel_str.to_string(), sel);
+            sel
+        }
+    }
+
     /// For use by [crate::dyld]: register and deduplicate all the selectors
     /// referenced in the application binary.
     pub fn register_bin_selectors(&mut self, bin: &MachO, mem: &mut Mem) {
@@ -86,16 +100,9 @@ impl ObjC {
         for i in 0..(selrefs.size / 4) {
             let selref = base + i;
             let sel_cstr = mem.read(selref);
-            let sel_str = mem.cstr_at_utf8(sel_cstr);
 
-            if let Some(existing_sel) = self.lookup_selector(sel_str) {
-                if sel_cstr != existing_sel.0 {
-                    mem.write(selref, existing_sel.0);
-                }
-            } else {
-                let sel = SEL(sel_cstr);
-                self.selectors.insert(sel_str.to_string(), sel);
-            }
+            let sel = self.register_bin_selector(sel_cstr, mem);
+            mem.write(selref, sel.0);
         }
     }
 }

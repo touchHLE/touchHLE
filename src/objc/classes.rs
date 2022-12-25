@@ -8,7 +8,7 @@
 mod class_lists;
 pub(super) use class_lists::CLASS_LISTS;
 
-use super::{id, nil, AnyHostObject, HostIMP, HostObject, ObjC, IMP, SEL};
+use super::{id, method_list_t, nil, AnyHostObject, HostIMP, HostObject, ObjC, IMP, SEL};
 use crate::mach_o::MachO;
 use crate::mem::{ConstPtr, ConstVoidPtr, GuestUSize, Mem, Ptr, SafeRead};
 use std::collections::HashMap;
@@ -71,7 +71,7 @@ struct class_rw_t {
     _instance_size: GuestUSize,
     _reserved: u32,
     name: ConstPtr<u8>,
-    _base_methods: ConstVoidPtr,   // method list (TODO)
+    base_methods: ConstPtr<method_list_t>,
     _base_protocols: ConstVoidPtr, // protocol list (TODO)
     _ivars: ConstVoidPtr,          // ivar list (TODO)
     _weak_ivar_layout: u32,
@@ -86,10 +86,10 @@ impl SafeRead for class_rw_t {}
 struct category_t {
     name: ConstPtr<u8>,
     class: Class,
-    _instance_methods: ConstVoidPtr, // method list (TODO)
-    _class_methods: ConstVoidPtr,    // method list (TODO)
-    _protocols: ConstVoidPtr,        // protocol list (TODO)
-    _property_list: ConstVoidPtr,    // property list (TODO)
+    _instance_methods: ConstPtr<method_list_t>,
+    _class_methods: ConstPtr<method_list_t>,
+    _protocols: ConstVoidPtr,     // protocol list (TODO)
+    _property_list: ConstVoidPtr, // property list (TODO)
 }
 impl SafeRead for category_t {}
 
@@ -303,20 +303,28 @@ impl ClassHostObject {
         }
     }
 
-    fn from_bin(class: Class, is_metaclass: bool, mem: &Mem) -> Self {
+    fn from_bin(class: Class, is_metaclass: bool, mem: &Mem, objc: &mut ObjC) -> Self {
         let data1: class_t = mem.read(class.cast());
         let data2: class_rw_t = mem.read(data1.data);
 
         let name = mem.cstr_at_utf8(data2.name).to_string();
         let superclass = data1.superclass;
 
-        ClassHostObject {
+        let mut host_object = ClassHostObject {
             name,
             is_metaclass,
             superclass,
-            methods: HashMap::new(), // TODO
+            methods: HashMap::new(),
+        };
+
+        if !data2.base_methods.is_null() {
+            host_object.add_methods_from_bin(data2.base_methods, mem, objc);
         }
+
+        host_object
     }
+
+    // See methods.rs for binary method parsing
 }
 
 impl ObjC {
@@ -445,23 +453,14 @@ impl ObjC {
             let metaclass = Self::read_isa(class, mem);
 
             let class_host_object = Box::new(ClassHostObject::from_bin(
-                class, /* is_metaclass: */ false, mem,
+                class, /* is_metaclass: */ false, mem, self,
             ));
             let metaclass_host_object = Box::new(ClassHostObject::from_bin(
-                metaclass, /* is_metaclass: */ true, mem,
+                metaclass, /* is_metaclass: */ true, mem, self,
             ));
 
             assert!(class_host_object.name == metaclass_host_object.name);
             let name = class_host_object.name.clone();
-
-            eprintln!(
-                "TODO: register methods of guest class \"{}\" ({:?})",
-                name, class
-            );
-            eprintln!(
-                "TODO: register methods of guest metaclass \"{}\" ({:?})",
-                name, metaclass
-            );
 
             self.register_static_object(class, class_host_object);
             self.register_static_object(metaclass, metaclass_host_object);
@@ -484,6 +483,8 @@ impl ObjC {
             let name = mem.cstr_at_utf8(data.name);
             let class = data.class;
 
+            // TODO: call ClassHostObject::add_methods_from_bin, though the
+            // double-borrow of ObjC will need to be fixed somehow.
             eprintln!(
                 "TODO: apply guest app category \"{}\" {:?} to class {:?}",
                 name, cat_ptr, class

@@ -47,7 +47,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 
     let class = env.objc.get_known_class(&class_name, &mut env.mem);
 
-    let object: id = msg![env; class init];
+    let object: id = msg![env; class alloc];
     let object: id = if original_class_name == "UICustomObject" {
         msg![env; object init]
     } else {

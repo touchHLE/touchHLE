@@ -58,10 +58,8 @@ impl ObjC {
     /// Register and deduplicate all the selectors of host classes.
     ///
     /// To avoid wasting guest memory, call this after calling
-    /// [ObjC::register_bin_selectors], [ObjC::register_bin_classes] and
-    /// [ObjC::register_bin_categories], so that selector strings in the app
-    /// binary can be re-used. In practice it is [crate::dyld] that calls all
-    /// of these.
+    /// [ObjC::register_bin_selectors], so that selector strings in the app
+    /// binary can be re-used. [crate::dyld] calls both of these.
     pub fn register_host_selectors(&mut self, mem: &mut Mem) {
         for &class_list in super::CLASS_LISTS {
             for (_name, template) in class_list {

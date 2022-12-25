@@ -112,15 +112,16 @@ impl Dyld {
 
     /// Do linking-related tasks that need doing right after loading a binary.
     pub fn do_initial_linking(&self, bin: &MachO, mem: &mut Mem, objc: &mut ObjC) {
-        // This might not count as "linking", but it's similar enough that this
-        // is the most convenient place to put it.
         objc.register_bin_selectors(bin, mem);
-        objc.register_bin_classes(bin, mem);
-        objc.register_bin_categories(bin, mem);
         objc.register_host_selectors(mem);
 
         self.setup_lazy_linking(bin, mem);
+        // Must happen before `register_bin_classes`, else superclass pointers
+        // will be wrong.
         self.do_non_lazy_linking(bin, mem, objc);
+
+        objc.register_bin_classes(bin, mem);
+        objc.register_bin_categories(bin, mem);
     }
 
     /// Set up lazy-linking stubs for a loaded binary.

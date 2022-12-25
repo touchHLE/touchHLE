@@ -29,6 +29,20 @@ pub const CLASSES: ClassExports = objc_classes! {
 // TODO: real init/unarchive methods. This is currently only created by the
 // shortcut method below.
 
+- (())dealloc {
+    let host_obj = borrow_host_obj(env, this);
+    let already_unarchived = std::mem::take(&mut host_obj.already_unarchived);
+
+    for object in already_unarchived {
+        if let Some(object) = object {
+            let _: () = msg![env; object release];
+        }
+    }
+
+    // FIXME: this should do a super-call instead
+    env.objc.dealloc_object(this, &mut env.mem)
+}
+
 @end
 
 };
@@ -63,7 +77,10 @@ pub fn unarchive_object_with_file(env: &mut Environment, path: &Path) -> HashMap
 
     let mut top_level_keys = HashMap::new();
     for (key_name, key_key) in top_level_key_list {
-        top_level_keys.insert(key_name, unarchive_key(env, unarchiver, key_key));
+        let new_object = unarchive_key(env, unarchiver, key_key);
+        // the HashMap is retaining this object
+        let new_object: id = msg![env; new_object retain];
+        top_level_keys.insert(key_name, new_object);
     }
 
     let _: () = msg![env; unarchiver release];
@@ -76,6 +93,8 @@ fn borrow_host_obj(env: &mut Environment, unarchiver: id) -> &mut NSKeyedUnarchi
 }
 
 /// The core of the implementation: recursively unarchive things.
+/// The object returned will have a refcount of 1 and should be considered
+/// owned by the NSKeyedUnarchiver.
 fn unarchive_key(env: &mut Environment, unarchiver: id, key: Uid) -> id {
     let host_obj = borrow_host_obj(env, unarchiver);
     if let Some(existing) = host_obj.already_unarchived[key.get() as usize] {
@@ -121,7 +140,6 @@ fn unarchive_key(env: &mut Environment, unarchiver: id, key: Uid) -> id {
             let host_obj = borrow_host_obj(env, unarchiver); // reborrow
             host_obj.current_key = old_current_key;
             host_obj.already_unarchived[key.get() as usize] = Some(new_object);
-            // TODO: do we need to increase a refcount here?
             new_object
         }
         _ => unimplemented!("Unarchive: {:#?}", item),
@@ -129,6 +147,8 @@ fn unarchive_key(env: &mut Environment, unarchiver: id, key: Uid) -> id {
 }
 
 /// Shortcut for use by `[_touchHLE_NSArray initWithCoder:]`.
+///
+/// The objects are to be considered retained by the `Vec`.
 pub fn decode_current_array(env: &mut Environment, unarchiver: id) -> Vec<id> {
     let keys: Vec<Uid> = {
         let host_obj = borrow_host_obj(env, unarchiver);
@@ -142,8 +162,12 @@ pub fn decode_current_array(env: &mut Environment, unarchiver: id) -> Vec<id> {
             .collect()
     };
 
-    // TODO: do we need to increase the refcount for each object?
     keys.into_iter()
-        .map(|key| unarchive_key(env, unarchiver, key))
+        .map(|key| {
+            let new_object = unarchive_key(env, unarchiver, key);
+            // object is retained by the Vec
+            let new_object: id = msg![env; new_object retain];
+            new_object
+        })
         .collect()
 }

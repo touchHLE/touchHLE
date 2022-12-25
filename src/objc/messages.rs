@@ -36,7 +36,7 @@ pub fn objc_msgSend(env: &mut Environment, receiver: id, selector: SEL) {
         if class == nil {
             assert!(class != orig_class);
 
-            let class_host_object = env.objc.objects.get(&orig_class).unwrap();
+            let class_host_object = env.objc.get_host_object(orig_class).unwrap();
             let &super::ClassHostObject {
                 ref name,
                 is_metaclass,
@@ -54,7 +54,7 @@ pub fn objc_msgSend(env: &mut Environment, receiver: id, selector: SEL) {
             );
         }
 
-        let host_object = env.objc.objects.get(&class).unwrap();
+        let host_object = env.objc.get_host_object(class).unwrap();
 
         if let Some(&super::ClassHostObject {
             superclass,

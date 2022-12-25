@@ -358,10 +358,10 @@ impl ObjC {
         // the metaclass's isa can't be nil, so it should point back to the
         // metaclass, but we can't make the object self-referential in a single
         // step, so: write nil and then overwrite it.
-        let metaclass = self.alloc_object(nil, metaclass_host_object, mem);
+        let metaclass = self.alloc_static_object(nil, metaclass_host_object, mem);
         Self::write_isa(metaclass, metaclass, mem);
 
-        let class = self.alloc_object(metaclass, class_host_object, mem);
+        let class = self.alloc_static_object(metaclass, class_host_object, mem);
 
         self.classes.insert(name.to_string(), class);
 

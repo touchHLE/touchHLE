@@ -149,4 +149,16 @@ impl Allocator {
 
         alloc.base
     }
+
+    /// Returns the size of the freed chunk so it can be zeroed if desired
+    #[must_use]
+    pub fn free(&mut self, base: VAddr) -> GuestUSize {
+        let Some(idx) = self.used_chunks.iter().position(|chunk| chunk.base == base) else {
+            panic!("Can't free {:#x}, unknown allocation!", base);
+        };
+        let chunk = self.used_chunks.remove(idx);
+        let size = chunk.size.get();
+        self.unused_chunks.push(chunk);
+        size
+    }
 }

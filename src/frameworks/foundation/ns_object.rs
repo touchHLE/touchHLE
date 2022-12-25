@@ -1,4 +1,9 @@
 //! `NSObject`, the root of most class hierarchies in Objective-C.
+//!
+//! Resources:
+//! - Apple's [Advanced Memory Management Programming Guide](https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/MemoryMgmt/Articles/MemoryMgmt.html)
+//!   explains how reference counting works. Note that we are interested in what
+//!   it calls "manual retain-release", not ARC.
 
 use crate::mem::MutVoidPtr;
 use crate::objc::{id, msg, objc_classes, ClassExports, TrivialHostObject};
@@ -34,11 +39,18 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (id)retain {
-    eprintln!("TODO: [(NSObject*){:?} retain]", this);
+    env.objc.increment_refcount(this);
     this
 }
 - (())release {
-    eprintln!("TODO: [(NSObject*){:?} release]", this);
+    if env.objc.decrement_refcount(this) {
+        let _: () = msg![env; this dealloc];
+    }
+}
+
+- (())dealloc {
+    eprintln!("NSObject: deallocating {:?}", this);
+    env.objc.dealloc_object(this, &mut env.mem)
 }
 
 @end

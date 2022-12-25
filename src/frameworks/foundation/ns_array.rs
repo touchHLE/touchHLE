@@ -2,7 +2,7 @@
 
 use super::ns_keyed_unarchiver;
 use crate::mem::MutVoidPtr;
-use crate::objc::{id, msg_class, objc_classes, ClassExports, HostObject};
+use crate::objc::{id, msg, msg_class, objc_classes, ClassExports, HostObject};
 
 // Belongs to _touchHLE_NSArray
 struct ArrayHostObject {
@@ -56,12 +56,23 @@ pub const CLASSES: ClassExports = objc_classes! {
     // allocating an NSString here would be inconvenient, so let's just take a
     // shortcut.
     // FIXME: What if it's not an NSKeyedUnarchiver?
-    // TODO: refcount handling?
     let objects = ns_keyed_unarchiver::decode_current_array(env, coder);
     let host_object: &mut ArrayHostObject = env.objc.borrow_mut(this);
     assert!(host_object.array.is_empty());
-    host_object.array = objects;
+    host_object.array = objects; // objects are already retained
     this
+}
+
+- (())dealloc {
+    let host_object: &mut ArrayHostObject = env.objc.borrow_mut(this);
+    let array = std::mem::take(&mut host_object.array);
+
+    for object in array {
+        let _: () = msg![env; object release];
+    }
+
+    // FIXME: this should do a super-call instead
+    env.objc.dealloc_object(this, &mut env.mem)
 }
 
 @end

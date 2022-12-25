@@ -31,6 +31,7 @@ pub use selectors::{selector, SEL};
 
 use classes::{ClassHostObject, UnimplementedClass, CLASS_LISTS};
 use messages::objc_msgSend;
+use objects::HostObjectEntry;
 
 /// Main type holding Objective-C runtime state.
 pub struct ObjC {
@@ -40,7 +41,7 @@ pub struct ObjC {
     /// Mapping of known (guest) object pointers to their host objects.
     ///
     /// If an object isn't in this map, we will consider it not to exist.
-    objects: HashMap<id, Box<dyn AnyHostObject>>,
+    objects: HashMap<id, HostObjectEntry>,
 
     /// Known classes.
     ///

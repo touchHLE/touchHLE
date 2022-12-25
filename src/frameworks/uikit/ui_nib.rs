@@ -5,7 +5,7 @@
 //! - GitHub user 0xced's [reverse-engineering of UIClassSwapper](https://gist.github.com/0xced/45daf79b62ad6a20be1c).
 
 use crate::frameworks::foundation::ns_keyed_unarchiver;
-use crate::frameworks::foundation::ns_string::string_with_rust_string;
+use crate::frameworks::foundation::ns_string::{copy_string, string_with_rust_string};
 use crate::objc::{id, msg, msg_class, objc_classes, ClassExports};
 use crate::Environment;
 
@@ -35,8 +35,27 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 // NSCoding implementation
 - (id)initWithCoder:(id)coder {
-    eprintln!("TODO: [(UIClassSwapper*){:?} initWithCoder:{:?}]", this, coder);
-    this
+    let (class_name, original_class_name) = {
+        let class_name = get_key(env, coder, "UIClassName");
+        let original_class_name = get_key(env, coder, "UIOriginalClassName");
+        // TODO: avoid copy
+        let copies = (copy_string(env, class_name), copy_string(env, class_name));
+        let _: () = msg![env; class_name release];
+        let _: () = msg![env; original_class_name release];
+        copies
+    };
+
+    let class = env.objc.get_known_class(&class_name, &mut env.mem);
+
+    let object: id = msg![env; class init];
+    let object: id = if original_class_name == "UICustomObject" {
+        msg![env; object init]
+    } else {
+        msg![env; object initWithCoder:coder]
+    };
+    let _: () = msg![env; this release];
+    // TODO: autorelease the object?
+    object
 }
 
 @end
@@ -53,6 +72,13 @@ pub const CLASSES: ClassExports = objc_classes! {
 @end
 
 };
+
+fn get_key(env: &mut Environment, unarchiver: id, key: &str) -> id {
+    let key = string_with_rust_string(env, key.to_string());
+    let list: id = msg![env; unarchiver decodeObjectForKey:key];
+    let _: () = msg![env; key release];
+    list
+}
 
 /// Shortcut for use by [super::ui_application::UIApplicationMain].
 ///
@@ -77,13 +103,6 @@ pub fn load_main_nib_file(env: &mut Environment, _ui_application: id) -> id {
     //
     // Only the objects, top-level objects and connections lists seem useful
     // right now.
-
-    fn get_key(env: &mut Environment, unarchiver: id, key: &str) -> id {
-        let key = string_with_rust_string(env, key.to_string());
-        let list: id = msg![env; unarchiver decodeObjectForKey:key];
-        let _: () = msg![env; key release];
-        list
-    }
 
     let objects = get_key(env, unarchiver, "UINibObjectsKey");
     let connections = get_key(env, unarchiver, "UINibConnectionsKey");

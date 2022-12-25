@@ -6,7 +6,7 @@
 //!   plists, e.g. `plutil -p` or `println!("{:#?}", plist::Value::...);`.
 //! - Apple's [Archives and Serializations Programming Guide](https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/Archiving/Articles/archives.html)
 
-use super::ns_string::copy_string;
+use super::ns_string::{copy_string, string_with_rust_string};
 use crate::mem::MutVoidPtr;
 use crate::objc::{id, msg, objc_classes, ClassExports, HostObject};
 use crate::Environment;
@@ -124,7 +124,7 @@ fn unarchive_key(env: &mut Environment, unarchiver: id, key: Uid) -> id {
     let objects = host_obj.plist["$objects"].as_array().unwrap();
 
     let item = &objects[key.get() as usize];
-    match item {
+    let new_object = match item {
         // The most general kind of item: a dictionary that contains the info
         // needed to invoke `initWithCoder:` on a class implementing NSCoding.
         Value::Dictionary(dict) => {
@@ -160,10 +160,18 @@ fn unarchive_key(env: &mut Environment, unarchiver: id, key: Uid) -> id {
             let host_obj = borrow_host_obj(env, unarchiver); // reborrow
             host_obj.current_key = old_current_key;
             host_obj.already_unarchived[key.get() as usize] = Some(new_object);
-            new_object
+            return new_object;
+        }
+        Value::String(s) => {
+            let s = s.to_string();
+            string_with_rust_string(env, s)
         }
         _ => unimplemented!("Unarchive: {:#?}", item),
-    }
+    };
+
+    let host_obj = borrow_host_obj(env, unarchiver); // reborrow
+    host_obj.already_unarchived[key.get() as usize] = Some(new_object);
+    new_object
 }
 
 /// Shortcut for use by `[_touchHLE_NSArray initWithCoder:]`.

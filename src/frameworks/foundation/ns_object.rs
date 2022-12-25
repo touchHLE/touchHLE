@@ -21,8 +21,24 @@ pub const CLASSES: ClassExports = objc_classes! {
     msg![env; new_object init]
 }
 
+// See the instance method section for the normal versions of these.
++ (id)retain {
+    this // classes are not refcounted
+}
++ (())release {
+    // classes are not refcounted
+}
+
 - (id)init {
     this
+}
+
+- (id)retain {
+    eprintln!("TODO: [(NSObject*){:?} retain]", this);
+    this
+}
+- (())release {
+    eprintln!("TODO: [(NSObject*){:?} release]", this);
 }
 
 @end

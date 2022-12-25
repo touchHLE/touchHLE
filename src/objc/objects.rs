@@ -95,6 +95,7 @@ impl super::ObjC {
         ptr
     }
 
+    #[allow(dead_code)]
     /// Get a reference to a host object and downcast it. Panics if there is
     /// no such object, or if downcasting fails.
     pub fn borrow<T: AnyHostObject + 'static>(&self, object: id) -> &T {
@@ -102,7 +103,6 @@ impl super::ObjC {
         host_object.as_any().downcast_ref().unwrap()
     }
 
-    #[allow(dead_code)]
     /// Get a reference to a host object and downcast it. Panics if there is
     /// no such object, or if downcasting fails.
     pub fn borrow_mut<T: AnyHostObject + 'static>(&mut self, object: id) -> &mut T {

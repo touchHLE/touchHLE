@@ -10,6 +10,8 @@ use crate::export_c_func;
 pub mod ui_application;
 pub mod ui_nib;
 pub mod ui_responder;
+pub mod ui_view;
+pub mod ui_window;
 
 pub const FUNCTIONS: FunctionExports = {
     use ui_application::UIApplicationMain;

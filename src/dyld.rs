@@ -115,6 +115,8 @@ impl Dyld {
         // This might not count as "linking", but it's similar enough that this
         // is the most convenient place to put it.
         objc.register_bin_selectors(bin, mem);
+        objc.register_bin_classes(bin, mem);
+        objc.register_bin_categories(bin, mem);
         objc.register_host_selectors(mem);
 
         self.setup_lazy_linking(bin, mem);

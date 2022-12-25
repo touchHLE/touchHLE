@@ -103,6 +103,7 @@ impl super::ObjC {
     ) -> id {
         let guest_object = objc_object { isa };
         let ptr = mem.alloc_and_write(guest_object);
+        assert!(!self.objects.contains_key(&ptr));
         self.objects.insert(
             ptr,
             HostObjectEntry {
@@ -133,6 +134,23 @@ impl super::ObjC {
         mem: &mut Mem,
     ) -> id {
         self.alloc_object_inner(isa, host_object, mem, None)
+    }
+
+    /// Associate a host object with an existing static-lifetime (guest) object
+    /// (for example, a class).
+    pub(super) fn register_static_object(
+        &mut self,
+        guest_object: id,
+        host_object: Box<dyn AnyHostObject>,
+    ) {
+        assert!(!self.objects.contains_key(&guest_object));
+        self.objects.insert(
+            guest_object,
+            HostObjectEntry {
+                host_object,
+                refcount: None,
+            },
+        );
     }
 
     /// Get a reference to a host object, if the object exists.

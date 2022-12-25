@@ -9,7 +9,8 @@ mod class_lists;
 pub(super) use class_lists::CLASS_LISTS;
 
 use super::{id, nil, AnyHostObject, HostIMP, HostObject, ObjC, IMP, SEL};
-use crate::mem::Mem;
+use crate::mach_o::MachO;
+use crate::mem::{ConstPtr, ConstVoidPtr, GuestUSize, Mem, Ptr, SafeRead};
 use std::collections::HashMap;
 
 /// Generic pointer to an Objective-C class or metaclass.
@@ -46,6 +47,51 @@ pub(super) struct UnimplementedClass {
     pub(super) is_metaclass: bool,
 }
 impl HostObject for UnimplementedClass {}
+
+/// The layout of a class in an app binary.
+///
+/// The name, field names and field layout are based on what Ghidra outputs.
+#[repr(C, packed)]
+struct class_t {
+    isa: Class, // note that this matches objc_object
+    superclass: Class,
+    _cache: ConstVoidPtr,
+    _vtable: ConstVoidPtr,
+    data: ConstPtr<class_rw_t>,
+}
+impl SafeRead for class_t {}
+
+/// The layout of the main class data in an app binary.
+///
+/// The name, field names and field layout are based on what Ghidra's output.
+#[repr(C, packed)]
+struct class_rw_t {
+    _flags: u32,
+    _instance_start: GuestUSize,
+    _instance_size: GuestUSize,
+    _reserved: u32,
+    name: ConstPtr<u8>,
+    _base_methods: ConstVoidPtr,   // method list (TODO)
+    _base_protocols: ConstVoidPtr, // protocol list (TODO)
+    _ivars: ConstVoidPtr,          // ivar list (TODO)
+    _weak_ivar_layout: u32,
+    _base_properties: ConstVoidPtr, // property list (TODO)
+}
+impl SafeRead for class_rw_t {}
+
+/// The layout of a category in an app binary.
+///
+/// The name, field names and field layout are based on what Ghidra outputs.
+#[repr(C, packed)]
+struct category_t {
+    name: ConstPtr<u8>,
+    class: Class,
+    _instance_methods: ConstVoidPtr, // method list (TODO)
+    _class_methods: ConstVoidPtr,    // method list (TODO)
+    _protocols: ConstVoidPtr,        // protocol list (TODO)
+    _property_list: ConstVoidPtr,    // property list (TODO)
+}
+impl SafeRead for category_t {}
 
 /// A template for a class defined with [objc_classes].
 ///
@@ -256,6 +302,21 @@ impl ClassHostObject {
             ),
         }
     }
+
+    fn from_bin(class: Class, is_metaclass: bool, mem: &Mem) -> Self {
+        let data1: class_t = mem.read(class.cast());
+        let data2: class_rw_t = mem.read(data1.data);
+
+        let name = mem.cstr_at_utf8(data2.name).to_string();
+        let superclass = data1.superclass;
+
+        ClassHostObject {
+            name,
+            is_metaclass,
+            superclass,
+            methods: HashMap::new(), // TODO
+        }
+    }
 }
 
 impl ObjC {
@@ -369,6 +430,64 @@ impl ObjC {
             metaclass
         } else {
             class
+        }
+    }
+
+    /// For use by [crate::dyld]: register all the classes from the application
+    /// binary.
+    pub fn register_bin_classes(&mut self, bin: &MachO, mem: &mut Mem) {
+        let Some(list) = bin.get_section("__objc_classlist") else { return; };
+
+        assert!(list.size % 4 == 0);
+        let base: ConstPtr<Class> = Ptr::from_bits(list.addr);
+        for i in 0..(list.size / 4) {
+            let class = mem.read(base + i);
+            let metaclass = Self::read_isa(class, mem);
+
+            let class_host_object = Box::new(ClassHostObject::from_bin(
+                class, /* is_metaclass: */ false, mem,
+            ));
+            let metaclass_host_object = Box::new(ClassHostObject::from_bin(
+                metaclass, /* is_metaclass: */ true, mem,
+            ));
+
+            assert!(class_host_object.name == metaclass_host_object.name);
+            let name = class_host_object.name.clone();
+
+            eprintln!(
+                "TODO: register methods of guest class \"{}\" ({:?})",
+                name, class
+            );
+            eprintln!(
+                "TODO: register methods of guest metaclass \"{}\" ({:?})",
+                name, metaclass
+            );
+
+            self.register_static_object(class, class_host_object);
+            self.register_static_object(metaclass, metaclass_host_object);
+
+            self.classes.insert(name.to_string(), class);
+        }
+    }
+
+    /// For use by [crate::dyld]: register all the categories from the
+    /// application binary.
+    pub fn register_bin_categories(&mut self, bin: &MachO, mem: &mut Mem) {
+        let Some(list) = bin.get_section("__objc_catlist") else { return; };
+
+        assert!(list.size % 4 == 0);
+        let base: ConstPtr<ConstPtr<category_t>> = Ptr::from_bits(list.addr);
+        for i in 0..(list.size / 4) {
+            let cat_ptr = mem.read(base + i);
+            let data = mem.read(cat_ptr);
+
+            let name = mem.cstr_at_utf8(data.name);
+            let class = data.class;
+
+            eprintln!(
+                "TODO: apply guest app category \"{}\" {:?} to class {:?}",
+                name, cat_ptr, class
+            );
         }
     }
 }

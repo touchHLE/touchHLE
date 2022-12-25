@@ -12,6 +12,8 @@
 //! does, and a [HostObject] trait object allocated in host memory, which can be
 //! used for any data that only our host code needs to access. As a bonus we get
 //! some resilience against guest memory corruption.
+//!
+//! See also: [crate::frameworks::foundation::ns_object].
 
 use super::Class;
 use crate::mem::{Mem, MutPtr, Ptr, SafeRead};

@@ -4,6 +4,8 @@
 //! - Apple's [Advanced Memory Management Programming Guide](https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/MemoryMgmt/Articles/MemoryMgmt.html)
 //!   explains how reference counting works. Note that we are interested in what
 //!   it calls "manual retain-release", not ARC.
+//!
+//! See also: [crate::objc], especially the `objects` module.
 
 use crate::mem::MutVoidPtr;
 use crate::objc::{id, msg, objc_classes, ClassExports, TrivialHostObject};

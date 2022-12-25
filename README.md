@@ -66,8 +66,9 @@ TBD
 We stand on the shoulders of giants. Thank you to:
 
 * The authors of and contributors to the many libraries used by this project: [dynarmic](https://github.com/merryhime/dynarmic), [rust-macho](https://github.com/flier/rust-macho), [SDL](https://libsdl.org/), [rust-sdl2](https://github.com/Rust-SDL2/rust-sdl2), [stb\_image](https://github.com/nothings/stb), [rust-plist](https://github.com/ebarnard/rust-plist), [cc-rs](https://github.com/rust-lang/cc-rs), [cmake-rs](https://github.com/rust-lang/cmake-rs), and the Rust standard library.
-* The Rust project generally.
-* The various people out there who've documented the iPhone OS platform, officially or otherwise. Much of this documentation is linked to within this codebase.
+* The [Rust project](https://https://www.rust-lang.org/) generally.
+* The various people out there who've documented the iPhone OS platform, officially or otherwise. Much of this documentation is linked to within this codebase!
+* The [National Security Agency of the United States of America](https://en.wikipedia.org/wiki/Edward_Snowden), for [Ghidra](https://ghidra-sre.org/).
 * Many friends who took an interest in the project and gave suggestions and encouragement.
 * Developers of early iPhone OS apps. What treasures you created!
 * Apple, and NeXT before them, for creating such fantastic platforms.

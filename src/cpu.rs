@@ -6,7 +6,7 @@
 //! For the moment, only ARMv6 has been tested.
 
 use crate::abi::GuestFunction;
-use crate::mem::{ConstPtr, Mem, MutPtr, Ptr, SafeRead, SafeWrite};
+use crate::mem::{ConstPtr, GuestUSize, Mem, MutPtr, Ptr, SafeRead, SafeWrite};
 
 // Import functions from C++
 use touchHLE_dynarmic_wrapper::*;
@@ -145,6 +145,15 @@ impl Cpu {
         self.branch(new_pc);
         self.regs_mut()[Self::LR] = new_lr.addr_with_thumb_bit();
         (old_pc, old_lr)
+    }
+
+    /// Clear dynarmic's instruction cache for some range of addresses.
+    /// This is of interest to the dynamic linker, which will sometimes rewrite
+    /// code.
+    pub fn invalidate_cache_range(&mut self, base: VAddr, size: GuestUSize) {
+        unsafe {
+            touchHLE_DynarmicWrapper_invalidate_cache_range(self.dynarmic_wrapper, base, size)
+        }
     }
 
     /// Start CPU execution, with an abstract time limit in "ticks". This will

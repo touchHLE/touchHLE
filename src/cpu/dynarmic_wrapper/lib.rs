@@ -13,6 +13,8 @@ pub type touchHLE_DynarmicWrapper = std::ffi::c_void;
 #[allow(non_camel_case_types)]
 pub type touchHLE_Mem = std::ffi::c_void;
 
+type VAddr = u32;
+
 // Import functions from lib.cpp, see build.rs. Note that lib.cpp depends on
 // some functions being exported from Rust, but those are in the main crate.
 extern "C" {
@@ -22,6 +24,11 @@ extern "C" {
     pub fn touchHLE_DynarmicWrapper_regs_mut(cpu: *mut touchHLE_DynarmicWrapper) -> *mut u32;
     pub fn touchHLE_DynarmicWrapper_cpsr(cpu: *const touchHLE_DynarmicWrapper) -> u32;
     pub fn touchHLE_DynarmicWrapper_set_cpsr(cpu: *mut touchHLE_DynarmicWrapper, cpsr: u32);
+    pub fn touchHLE_DynarmicWrapper_invalidate_cache_range(
+        cpu: *mut touchHLE_DynarmicWrapper,
+        start: VAddr,
+        size: u32,
+    );
     pub fn touchHLE_DynarmicWrapper_run(
         cpu: *mut touchHLE_DynarmicWrapper,
         mem: *mut touchHLE_Mem,

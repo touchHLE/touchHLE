@@ -13,20 +13,26 @@
 
 use crate::mem::{Mem, Ptr};
 use mach_object::{DyLib, LoadCommand, MachCommand, OFile, Symbol, SymbolIter};
+use std::collections::HashMap;
 use std::io::{Cursor, Seek, SeekFrom};
 
+#[derive(Debug)]
 pub struct MachO {
-    /// Address of the entry-point procedure (aka `start`).
-    pub entry_point_addr: Option<u32>,
+    /// Name (for debugging purposes)
+    pub name: String,
     /// Paths of dynamic libraries referenced by the binary.
     pub dynamic_libraries: Vec<String>,
     /// Metadata related to sections.
     pub sections: Vec<Section>,
+    /// Symbols exported by the binary. This is a hashmap so the dynamic linker
+    /// can look things up quickly.
+    pub exported_symbols: HashMap<String, u32>,
     /// List of addresses and names of external relocations for the dynamic
     /// linker to resolve.
     pub external_relocations: Vec<(u32, String)>,
 }
 
+#[derive(Debug)]
 pub struct Section {
     /// Section name.
     pub name: String,
@@ -41,6 +47,7 @@ pub struct Section {
 /// Information relevant to certain special sections which contain a series of
 /// pointers or stub functions for indirectly referencing dynamically-linked
 /// symbols.
+#[derive(Debug)]
 pub struct DyldIndirectSymbolInfo {
     /// The size in bytes of an entry (pointer or stub function) in the section.
     pub entry_size: u32,
@@ -73,7 +80,11 @@ impl MachO {
     /// Load the all the sections from a Mach-O binary (provided as `bytes`)
     /// into the guest memory (`into_mem`), and return a struct containing
     /// metadata (e.g. symbols).
-    pub fn load_from_bytes(bytes: &[u8], into_mem: &mut Mem) -> Result<MachO, &'static str> {
+    pub fn load_from_bytes(
+        bytes: &[u8],
+        into_mem: &mut Mem,
+        name: String,
+    ) -> Result<MachO, &'static str> {
         let mut cursor = Cursor::new(bytes);
 
         let file = OFile::parse(&mut cursor).map_err(|_| "Could not parse Mach-O file")?;
@@ -106,8 +117,8 @@ impl MachO {
         let mut sym_tab_info: Option<(u32, u32, u32, u32)> = None;
 
         // Info used for the result
-        let mut entry_point_addr: Option<u32> = None;
         let mut dynamic_libraries = Vec::new();
+        let mut exported_symbols = HashMap::new();
         let mut indirect_undef_symbols: Vec<Option<String>> = Vec::new();
         let mut external_relocations: Vec<(u32, String)> = Vec::new();
 
@@ -184,13 +195,15 @@ impl MachO {
                                 continue;
                             }
                             if let Symbol::Defined {
-                                name: Some("start"),
+                                name: Some(name),
+                                external: true,
                                 entry,
                                 ..
                             } = symbol
                             {
-                                entry_point_addr = Some(entry.try_into().unwrap());
-                            }
+                                let entry: u32 = entry.try_into().unwrap();
+                                exported_symbols.insert(name.to_string(), entry);
+                            };
                         }
                     }
                 }
@@ -216,7 +229,10 @@ impl MachO {
                             &mut cursor,
                         );
                         indirect_undef_symbols.push(match sym {
+                            // apparently used in apps?
                             Some(Symbol::Undefined { name: Some(n), .. }) => Some(String::from(n)),
+                            // apparently used in libraries?
+                            Some(Symbol::Prebound { name: Some(n), .. }) => Some(String::from(n)),
                             _ => None,
                         })
                     }
@@ -271,6 +287,7 @@ impl MachO {
                 let size: u32 = section.size.try_into().unwrap();
 
                 let dyld_indirect_symbol_info = match &*name {
+                    "__picsymbolstub4" => Some(16),
                     "__symbol_stub4" => Some(12),
                     "__nl_symbol_ptr" | "__la_symbol_ptr" => Some(4),
                     _ => None,
@@ -297,9 +314,10 @@ impl MachO {
             .collect();
 
         Ok(MachO {
-            entry_point_addr,
+            name,
             dynamic_libraries,
             sections,
+            exported_symbols,
             external_relocations,
         })
     }
@@ -311,9 +329,17 @@ impl MachO {
         path: P,
         into_mem: &mut Mem,
     ) -> Result<MachO, &'static str> {
+        let name = path
+            .as_ref()
+            .file_name()
+            .unwrap()
+            .to_str()
+            .unwrap()
+            .to_string();
         Self::load_from_bytes(
             &std::fs::read(path).map_err(|_| "Could not read executable file")?,
             into_mem,
+            name,
         )
     }
 

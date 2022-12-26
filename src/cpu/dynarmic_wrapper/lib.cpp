@@ -94,6 +94,10 @@ public:
   std::uint32_t cpsr() const { return cpu->Cpsr(); }
   void set_cpsr(std::uint32_t cpsr) { cpu->SetCpsr(cpsr); }
 
+  void invalidate_cache_range(VAddr start, std::uint32_t size) {
+    cpu->InvalidateCacheRange(start, size);
+  }
+
   std::int32_t run(touchHLE_Mem *mem, std::uint64_t *ticks) {
     env.mem = mem;
     env.ticks_remaining = *ticks;
@@ -134,6 +138,12 @@ std::uint32_t touchHLE_DynarmicWrapper_cpsr(const DynarmicWrapper *cpu) {
 void touchHLE_DynarmicWrapper_set_cpsr(DynarmicWrapper *cpu,
                                        std::uint32_t cpsr) {
   cpu->set_cpsr(cpsr);
+}
+
+void touchHLE_DynarmicWrapper_invalidate_cache_range(DynarmicWrapper *cpu,
+                                                     VAddr start,
+                                                     std::uint32_t size) {
+  cpu->invalidate_cache_range(start, size);
 }
 
 std::int32_t touchHLE_DynarmicWrapper_run(DynarmicWrapper *cpu,

@@ -70,7 +70,9 @@ pub struct Environment {
     bundle: bundle::Bundle,
     window: window::Window,
     mem: mem::Mem,
-    executable: mach_o::MachO,
+    /// Loaded binaries. Index `0` is always the app binary, other entries are
+    /// dynamic libraries.
+    bins: Vec<mach_o::MachO>,
     objc: objc::ObjC,
     dyld: dyld::Dyld,
     cpu: cpu::Cpu,
@@ -101,17 +103,57 @@ impl Environment {
         let executable = mach_o::MachO::load_from_file(bundle.executable_path(), &mut mem)
             .map_err(|e| format!("Could not load executable: {}", e))?;
 
-        let entry_point_addr = executable.entry_point_addr.ok_or_else(|| {
+        let mut dylibs = Vec::new();
+        for dylib in &executable.dynamic_libraries {
+            match &**dylib {
+                // We have host implementations of these
+                "/usr/lib/libSystem.B.dylib" | "/usr/lib/libobjc.A.dylib" => continue,
+                // Free Software bundled with touchHLE
+                "/usr/lib/libgcc_s.1.dylib"
+                | "/usr/lib/libstdc++.6.dylib"
+                | "/usr/lib/libstdc++.6.0.4.dylib" => {
+                    let dylib = dylib.strip_prefix("/usr/lib/").unwrap();
+                    // Resolve symlink
+                    let dylib = if dylib == "libstdc++.6.dylib" {
+                        "libstdc++.6.0.4.dylib"
+                    } else {
+                        dylib
+                    };
+
+                    let dylib = mach_o::MachO::load_from_file(
+                        PathBuf::from("dylibs").join(dylib),
+                        &mut mem,
+                    )
+                    .map_err(|e| format!("Could not load bundled dylib: {}", e))?;
+                    dylibs.push(dylib);
+                }
+                _ => {
+                    // System frameworks will have host implementations.
+                    // TODO: warn about unimplemented frameworks?
+                    if !dylib.starts_with("/System/Library/Frameworks/") {
+                        eprintln!(
+                            "Warning: app binary depends on unexpected dylib \"{}\"",
+                            dylib
+                        );
+                    }
+                }
+            }
+        }
+
+        let entry_point_addr = *executable.exported_symbols.get("start").ok_or_else(|| {
             "Mach-O file has no 'start' symbol, perhaps it is not an executable?".to_string()
         })?;
         let entry_point_addr = abi::GuestFunction::from_addr_with_thumb_bit(entry_point_addr);
 
         println!("Address of start function: {:?}", entry_point_addr);
 
+        let mut bins = dylibs;
+        bins.insert(0, executable);
+
         let mut objc = objc::ObjC::new();
 
         let mut dyld = dyld::Dyld::new();
-        dyld.do_initial_linking(&executable, &mut mem, &mut objc);
+        dyld.do_initial_linking(&bins, &mut mem, &mut objc);
 
         let mut cpu = cpu::Cpu::new();
 
@@ -130,6 +172,10 @@ impl Environment {
 
         println!("CPU emulation begins now.");
 
+        // FIXME: call various static initializers. libstdc++ in particular has
+        // lots of these and eventually we'll hit something that breaks if they
+        // aren't run.
+
         cpu.set_cpsr(cpu::Cpu::CPSR_USER_MODE);
         cpu.branch(entry_point_addr);
 
@@ -137,7 +183,7 @@ impl Environment {
             bundle,
             window,
             mem,
-            executable,
+            bins,
             objc,
             dyld,
             cpu,
@@ -201,13 +247,17 @@ impl Environment {
                                 return;
                             }
 
-                            let f = self.dyld.get_svc_handler(
-                                &self.executable,
+                            if let Some(f) = self.dyld.get_svc_handler(
+                                &self.bins,
                                 &mut self.mem,
+                                &mut self.cpu,
                                 svc_pc,
                                 svc,
-                            );
-                            f.call_from_guest(self);
+                            ) {
+                                f.call_from_guest(self)
+                            } else {
+                                self.cpu.regs_mut()[cpu::Cpu::PC] = svc_pc;
+                            }
                         }
                     }
                 }));

@@ -91,6 +91,9 @@ public:
   const std::uint32_t *regs() const { return &cpu->Regs().front(); }
   std::uint32_t *regs() { return &cpu->Regs().front(); }
 
+  std::uint32_t cpsr() const { return cpu->Cpsr(); }
+  void set_cpsr(std::uint32_t cpsr) { cpu->SetCpsr(cpsr); }
+
   std::int32_t run(touchHLE_Mem *mem, std::uint64_t *ticks) {
     env.mem = mem;
     env.ticks_remaining = *ticks;
@@ -123,6 +126,14 @@ touchHLE_DynarmicWrapper_regs_const(const DynarmicWrapper *cpu) {
 }
 std::uint32_t *touchHLE_DynarmicWrapper_regs_mut(DynarmicWrapper *cpu) {
   return cpu->regs();
+}
+
+std::uint32_t touchHLE_DynarmicWrapper_cpsr(const DynarmicWrapper *cpu) {
+  return cpu->cpsr();
+}
+void touchHLE_DynarmicWrapper_set_cpsr(DynarmicWrapper *cpu,
+                                       std::uint32_t cpsr) {
+  cpu->set_cpsr(cpsr);
 }
 
 std::int32_t touchHLE_DynarmicWrapper_run(DynarmicWrapper *cpu,

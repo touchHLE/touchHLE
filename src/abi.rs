@@ -6,13 +6,85 @@
 //!
 //! See also: [crate::mem::SafeRead] and [crate::mem::SafeWrite].
 
+use crate::cpu::Cpu;
 use crate::mem::{ConstVoidPtr, Ptr};
 use crate::Environment;
 
-/// (Untyped) guest function pointer, wrapped in a struct to prevent mixing with
-/// other pointers.
+/// Address of an A32 or T32 instruction, with the mode encoded using the Thumb
+/// bit. This is also used as an (untyped) guest function pointer.
+///
+/// It is wrapped in a struct to prevent mixing with other pointers.
 #[derive(Copy, Clone, Debug)]
-pub struct GuestFunction(pub ConstVoidPtr);
+pub struct GuestFunction(ConstVoidPtr);
+
+impl GuestFunction {
+    pub const THUMB_BIT: u32 = 0x1;
+
+    pub fn from_addr_with_thumb_bit(addr: u32) -> Self {
+        GuestFunction(Ptr::from_bits(addr))
+    }
+
+    pub fn from_addr_and_thumb_flag(pc: u32, thumb: bool) -> Self {
+        GuestFunction(Ptr::from_bits(pc | ((thumb as u32) * Self::THUMB_BIT)))
+    }
+
+    /// Returns `true` if the function uses regular Thumb (T32) instructions,
+    /// or `false` if it uses regular regular Arm (A32) instructions.
+    pub fn is_thumb(self) -> bool {
+        self.0.to_bits() & Self::THUMB_BIT == Self::THUMB_BIT
+    }
+
+    pub fn addr_with_thumb_bit(self) -> u32 {
+        self.0.to_bits()
+    }
+
+    /// Get the underlying address with the Thumb bit set to 0, i.e. the actual
+    /// memory address of the first instruction.
+    pub fn addr_without_thumb_bit(self) -> u32 {
+        self.0.to_bits() & !Self::THUMB_BIT
+    }
+
+    /// Execute the guest function and return to the host when it is done.
+    ///
+    /// For a host-to-guest call to work, several pieces need to work in
+    /// concert:
+    /// * The arguments to the function need to be placed in registers or the
+    ///   stack according to the calling convention. This is not handled by this
+    ///   method. This might be done via [CallFromHost], or in some other way,
+    ///   e.g. `objc_msgSend` can leave the registers and stack as they are
+    ///   because it passes on the arguments from its caller.
+    /// * This method:
+    ///   * sets the program counter (PC) and Thumb flag to match the function
+    ///     to be called;
+    ///   * sets the link register (LR) to point to a special routine for
+    ///     returning to the host; and
+    ///   * resumes CPU emulation.
+    /// * The emulated function eventually returns to the caller by jumping to
+    ///   the address in the link register, which should be the special routine.
+    /// * The CPU emulation recognises the special routine and returns back to
+    ///   this method.
+    /// * This method restores the original PC, Thumb flag and LR.
+    /// * The return values are extracted from registers or the stack, if
+    ///   appropriate. This is not handled by this method. This might be done
+    ///   via [CallFromHost].
+    ///
+    /// See also [CallFromGuest] and [CallFromHost]. The latter is implemented
+    /// for [GuestFunction] using this method.
+    pub fn call(self, env: &mut Environment) {
+        println!("Begin call to guest function {:?}", self);
+
+        let (old_pc, old_lr) = env
+            .cpu
+            .branch_with_link(self, env.dyld.return_to_host_routine());
+
+        env.run_call();
+
+        env.cpu.branch(old_pc);
+        env.cpu.regs_mut()[Cpu::LR] = old_lr.addr_with_thumb_bit();
+
+        println!("End call to guest function {:?}", self);
+    }
+}
 
 /// This trait represents a host function that can be called from guest code.
 ///
@@ -33,6 +105,8 @@ pub struct GuestFunction(pub ConstVoidPtr);
 /// This module should provide generic implementations of this trait for Rust
 /// [function pointers][fn] with compatible argument and return types. Only
 /// unusual cases should need to provide their own implementation.
+///
+/// See also [GuestFunction::call].
 pub trait CallFromGuest {
     fn call_from_guest(&self, env: &mut Environment);
 }
@@ -65,12 +139,6 @@ impl_CallFromGuest!(0 => P0, 1 => P1, 2 => P2, 3 => P3);
 /// This trait represents a guest or host function that can be called from host
 /// code, but using the guest ABI. See [CallFromGuest], which this is the
 /// inverse of.
-///
-/// This is currently only used for host-to-host message calls, but eventually
-/// this should (TODO) support calling actual guest functions.
-///
-/// This doesn't currently change the PC/LR/stack frame, TODO: decide whether
-/// this should do that once it supports guest functions.
 pub trait CallFromHost<R, P> {
     fn call_from_host(&self, env: &mut Environment, args: P) -> R;
 }
@@ -95,6 +163,26 @@ macro_rules! impl_CallFromHost {
                 <R as GuestRet>::from_regs(env.cpu.regs())
             }
         }
+
+        impl <R, $($P),*> CallFromHost<R, ($($P,)*)> for GuestFunction
+            where R: GuestRet, $($P: GuestArg,)* {
+            // ignore warnings for the zero-argument case
+            #[allow(unused_variables, unused_mut, clippy::unused_unit)]
+            fn call_from_host(
+                &self,
+                env: &mut Environment,
+                args: ($($P,)*),
+            ) -> R {
+                {
+                    let regs = env.cpu.regs_mut();
+                    let mut reg_offset = 0;
+                    $(write_next_arg::<$P>(&mut reg_offset, regs, args.$p);)*
+                };
+                self.call(env);
+                <R as GuestRet>::from_regs(env.cpu.regs())
+            }
+        }
+
     }
 }
 

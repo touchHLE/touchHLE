@@ -65,9 +65,7 @@ pub fn objc_msgSend(env: &mut Environment, receiver: id, selector: SEL) {
             if let Some(imp) = methods.get(&selector) {
                 match imp {
                     IMP::Host(host_imp) => host_imp.call_from_guest(env),
-                    IMP::Guest(guest_imp) => {
-                        unimplemented!("Guest method call: {:?}", guest_imp);
-                    }
+                    IMP::Guest(guest_imp) => guest_imp.call(env),
                 }
                 return;
             } else {

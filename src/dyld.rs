@@ -14,7 +14,7 @@
 
 mod function_lists;
 
-use crate::abi::CallFromGuest;
+use crate::abi::{CallFromGuest, GuestFunction};
 use crate::mach_o::MachO;
 use crate::mem::{Mem, MutPtr, Ptr};
 use crate::objc::ObjC;
@@ -101,17 +101,48 @@ fn encode_a32_trap() -> u32 {
 
 pub struct Dyld {
     linked_host_functions: Vec<HostFunction>,
+    return_to_host_routine: Option<GuestFunction>,
 }
 
 impl Dyld {
+    /// We reserve this SVC ID for invoking the lazy linker.
+    const SVC_LAZY_LINK: u32 = 0;
+    /// We reserve this SVC ID for the special return-to-host routine.
+    pub const SVC_RETURN_TO_HOST: u32 = 1;
+    /// The range of SVC IDs `SVC_LINKED_FUNCTIONS_BASE..` is used to reference
+    /// [Self::linked_host_functions] entries.
+    const SVC_LINKED_FUNCTIONS_BASE: u32 = Self::SVC_RETURN_TO_HOST + 1;
+
     pub fn new() -> Dyld {
         Dyld {
             linked_host_functions: Vec::new(),
+            return_to_host_routine: None,
         }
     }
 
+    pub fn return_to_host_routine(&self) -> GuestFunction {
+        self.return_to_host_routine.unwrap()
+    }
+
     /// Do linking-related tasks that need doing right after loading a binary.
-    pub fn do_initial_linking(&self, bin: &MachO, mem: &mut Mem, objc: &mut ObjC) {
+    pub fn do_initial_linking(&mut self, bin: &MachO, mem: &mut Mem, objc: &mut ObjC) {
+        assert!(self.return_to_host_routine.is_none());
+        self.return_to_host_routine = {
+            let routine = [
+                encode_a32_svc(Self::SVC_RETURN_TO_HOST),
+                // When a return-to-host occurs, it's the host's responsibility
+                // to reset the PC to somewhere else. So something has gone
+                // wrong if this is executed.
+                encode_a32_trap(),
+            ];
+            let ptr: MutPtr<u32> = mem.alloc(4 * 2).cast();
+            mem.write(ptr + 0, routine[0]);
+            mem.write(ptr + 1, routine[1]);
+            let ptr = GuestFunction::from_addr_with_thumb_bit(ptr.to_bits());
+            assert!(!ptr.is_thumb());
+            Some(ptr)
+        };
+
         objc.register_bin_selectors(bin, mem);
         objc.register_host_selectors(mem);
 
@@ -148,8 +179,7 @@ impl Dyld {
         let stub_count = stubs.size / entry_size;
         for i in 0..stub_count {
             let ptr: MutPtr<u32> = Ptr::from_bits(stubs.addr + i * entry_size);
-            // Let's reserve SVC #0 for calling the dynamic linker
-            mem.write(ptr + 0, encode_a32_svc(0));
+            mem.write(ptr + 0, encode_a32_svc(Self::SVC_LAZY_LINK));
             // For convenience, make the stub return once the SVC is done
             // (Otherwise we'd have to manually update the PC)
             mem.write(ptr + 1, encode_a32_ret());
@@ -213,32 +243,30 @@ impl Dyld {
         &mut self,
         bin: &MachO,
         mem: &mut Mem,
-        current_instruction: u32,
+        svc_pc: u32,
         svc: u32,
     ) -> HostFunction {
         match svc {
-            0 => self.do_lazy_link(bin, mem, current_instruction),
-            _ => {
-                let f = self.linked_host_functions.get((svc - 1) as usize);
+            Self::SVC_LAZY_LINK => self.do_lazy_link(bin, mem, svc_pc),
+            Self::SVC_RETURN_TO_HOST => unreachable!(), // don't handle here
+            Self::SVC_LINKED_FUNCTIONS_BASE.. => {
+                let f = self
+                    .linked_host_functions
+                    .get((svc - Self::SVC_LINKED_FUNCTIONS_BASE) as usize);
                 let Some(&f) = f else {
-                    panic!("Unexpected SVC #{} at {:#x}", svc, current_instruction);
+                    panic!("Unexpected SVC #{} at {:#x}", svc, svc_pc);
                 };
                 f
             }
         }
     }
 
-    fn do_lazy_link(
-        &mut self,
-        bin: &MachO,
-        mem: &mut Mem,
-        current_instruction: u32,
-    ) -> HostFunction {
+    fn do_lazy_link(&mut self, bin: &MachO, mem: &mut Mem, svc_pc: u32) -> HostFunction {
         let stubs = bin.get_section("__symbol_stub4").unwrap();
         let info = stubs.dyld_indirect_symbol_info.as_ref().unwrap();
 
-        assert!((stubs.addr..(stubs.addr + stubs.size)).contains(&current_instruction));
-        let offset = current_instruction - stubs.addr;
+        assert!((stubs.addr..(stubs.addr + stubs.size)).contains(&svc_pc));
+        let offset = svc_pc - stubs.addr;
         assert!(offset % info.entry_size == 0);
         let idx = (offset / info.entry_size) as usize;
 
@@ -250,11 +278,11 @@ impl Dyld {
 
         // Allocate an SVC ID for this host function
         let idx: u32 = self.linked_host_functions.len().try_into().unwrap();
-        let svc = idx + 1;
+        let svc = idx + Self::SVC_LINKED_FUNCTIONS_BASE;
         self.linked_host_functions.push(f);
 
         // Rewrite stub function to call this host function
-        let stub_function_ptr: MutPtr<u32> = Ptr::from_bits(current_instruction);
+        let stub_function_ptr: MutPtr<u32> = Ptr::from_bits(svc_pc);
         mem.write(stub_function_ptr, encode_a32_svc(svc));
         assert!(mem.read(stub_function_ptr + 1) == encode_a32_ret());
 

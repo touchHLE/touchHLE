@@ -104,12 +104,13 @@ impl Environment {
         let entry_point_addr = executable.entry_point_addr.ok_or_else(|| {
             "Mach-O file has no 'start' symbol, perhaps it is not an executable?".to_string()
         })?;
+        let entry_point_addr = abi::GuestFunction::from_addr_with_thumb_bit(entry_point_addr);
 
-        println!("Address of start function: {:#x}", entry_point_addr);
+        println!("Address of start function: {:?}", entry_point_addr);
 
         let mut objc = objc::ObjC::new();
 
-        let dyld = dyld::Dyld::new();
+        let mut dyld = dyld::Dyld::new();
         dyld.do_initial_linking(&executable, &mut mem, &mut objc);
 
         let mut cpu = cpu::Cpu::new();
@@ -129,7 +130,8 @@ impl Environment {
 
         println!("CPU emulation begins now.");
 
-        cpu.regs_mut()[cpu::Cpu::PC] = entry_point_addr;
+        cpu.set_cpsr(cpu::Cpu::CPSR_USER_MODE);
+        cpu.branch(entry_point_addr);
 
         Ok(Environment {
             bundle,
@@ -142,8 +144,19 @@ impl Environment {
         })
     }
 
-    /// Run the emulator. This is the main loop, it won't return until app exit.
+    /// Run the emulator. This is the main loop and won't return until app exit.
+    /// Only `main.rs` should call this.
     fn run(&mut self) {
+        self.run_inner(true)
+    }
+
+    /// Run the emulator until the app returns control to the host. This is for
+    /// host-to-guest function calls (see [abi::GuestFunction::call]).
+    pub fn run_call(&mut self) {
+        self.run_inner(false)
+    }
+
+    fn run_inner(&mut self, root: bool) {
         let mut events = Vec::new(); // re-use each iteration for efficiency
         loop {
             self.window.poll_for_events(&mut events);
@@ -153,25 +166,45 @@ impl Environment {
                 match event {
                     window::Event::Quit => {
                         println!("User requested quit, exiting.");
-                        return;
+                        if root {
+                            return;
+                        } else {
+                            panic!("Quit.");
+                        }
                     }
                 }
             }
 
             let mut ticks = 100;
-            while ticks > 0 {
+            let mut early_exit = false;
+            while ticks > 0 && !early_exit {
                 // I'm not sure if this actually is unwind-safe, but considering
-                // the emulator will always crash, maybe this is okay.
+                // the emulator will crash anyway, maybe this is okay.
                 let res = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
                     match self.cpu.run(&mut self.mem, &mut ticks) {
                         cpu::CpuState::Normal => (),
                         cpu::CpuState::Svc(svc) => {
-                            // the program counter is one instruction ahead
-                            let current_instruction = self.cpu.regs()[cpu::Cpu::PC] - 4;
+                            // the program counter is pointing at the
+                            // instruction after the SVC, but we want the
+                            // address of the SVC itself
+                            let svc_pc = self.cpu.regs()[cpu::Cpu::PC] - 4;
+                            if svc == dyld::Dyld::SVC_RETURN_TO_HOST {
+                                assert!(!root);
+                                assert!(
+                                    svc_pc
+                                        == self
+                                            .dyld
+                                            .return_to_host_routine()
+                                            .addr_without_thumb_bit()
+                                );
+                                early_exit = true;
+                                return;
+                            }
+
                             let f = self.dyld.get_svc_handler(
                                 &self.executable,
                                 &mut self.mem,
-                                current_instruction,
+                                svc_pc,
                                 svc,
                             );
                             f.call_from_guest(self);
@@ -187,7 +220,9 @@ impl Environment {
                     std::panic::resume_unwind(e);
                 }
             }
-            println!("{} ticks elapsed", ticks);
+            if !early_exit {
+                println!("{} ticks elapsed", ticks);
+            }
         }
     }
 }

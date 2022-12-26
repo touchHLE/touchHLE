@@ -5,6 +5,7 @@
 //! iPhone OS apps used either ARMv6 or ARMv7-A, which are both 32-bit ISAs.
 //! For the moment, only ARMv6 has been tested.
 
+use crate::abi::GuestFunction;
 use crate::mem::{ConstPtr, Mem, MutPtr, Ptr, SafeRead, SafeWrite};
 
 // Import functions from C++
@@ -86,6 +87,12 @@ impl Cpu {
     /// The register number of the program counter.
     pub const PC: usize = 15;
 
+    /// When this bit is set in CPSR, the CPU is in Thumb mode.
+    pub const CPSR_THUMB: u32 = 0x00000020;
+
+    /// When this bit is set in CPSR, the CPU is in user mode.
+    pub const CPSR_USER_MODE: u32 = 0x00000010;
+
     pub fn new() -> Cpu {
         let dynarmic_wrapper = unsafe { touchHLE_DynarmicWrapper_new() };
         Cpu { dynarmic_wrapper }
@@ -102,6 +109,42 @@ impl Cpu {
             let ptr = touchHLE_DynarmicWrapper_regs_mut(self.dynarmic_wrapper);
             &mut *(ptr as *mut [u32; 16])
         }
+    }
+
+    pub fn cpsr(&self) -> u32 {
+        unsafe { touchHLE_DynarmicWrapper_cpsr(self.dynarmic_wrapper) }
+    }
+    pub fn set_cpsr(&mut self, cpsr: u32) {
+        unsafe { touchHLE_DynarmicWrapper_set_cpsr(self.dynarmic_wrapper, cpsr) }
+    }
+
+    /// Get PC with the Thumb bit appropriately set.
+    pub fn pc_with_thumb_bit(&self) -> GuestFunction {
+        let pc = self.regs()[Self::PC];
+        let thumb = (self.cpsr() & Self::CPSR_THUMB) == Self::CPSR_THUMB;
+        GuestFunction::from_addr_and_thumb_flag(pc, thumb)
+    }
+
+    /// Set PC and the Thumb flag for executing a guest function. Note that this
+    /// does not touch LR.
+    pub fn branch(&mut self, new_pc: GuestFunction) {
+        self.regs_mut()[Self::PC] = new_pc.addr_without_thumb_bit();
+        let cpsr_without_thumb = self.cpsr() & (!Self::CPSR_THUMB);
+        self.set_cpsr(cpsr_without_thumb | ((new_pc.is_thumb() as u32) * Self::CPSR_THUMB))
+    }
+
+    /// Set the PC and Thumb flag (like [Self::branch]), but also set the LR,
+    /// and return the original PC and LR.
+    pub fn branch_with_link(
+        &mut self,
+        new_pc: GuestFunction,
+        new_lr: GuestFunction,
+    ) -> (GuestFunction, GuestFunction) {
+        let old_pc = self.pc_with_thumb_bit();
+        let old_lr = GuestFunction::from_addr_with_thumb_bit(self.regs()[Self::LR]);
+        self.branch(new_pc);
+        self.regs_mut()[Self::LR] = new_lr.addr_with_thumb_bit();
+        (old_pc, old_lr)
     }
 
     /// Start CPU execution, with an abstract time limit in "ticks". This will

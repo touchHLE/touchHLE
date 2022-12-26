@@ -14,14 +14,10 @@ std::uint8_t touchHLE_cpu_read_u8(touchHLE_Mem *mem, VAddr addr);
 std::uint16_t touchHLE_cpu_read_u16(touchHLE_Mem *mem, VAddr addr);
 std::uint32_t touchHLE_cpu_read_u32(touchHLE_Mem *mem, VAddr addr);
 std::uint64_t touchHLE_cpu_read_u64(touchHLE_Mem *mem, VAddr addr);
-void touchHLE_cpu_write_u8(touchHLE_Mem *mem, VAddr addr,
-                           std::uint8_t value);
-void touchHLE_cpu_write_u16(touchHLE_Mem *mem, VAddr addr,
-                            std::uint8_t value);
-void touchHLE_cpu_write_u32(touchHLE_Mem *mem, VAddr addr,
-                            std::uint8_t value);
-void touchHLE_cpu_write_u64(touchHLE_Mem *mem, VAddr addr,
-                            std::uint8_t value);
+void touchHLE_cpu_write_u8(touchHLE_Mem *mem, VAddr addr, std::uint8_t value);
+void touchHLE_cpu_write_u16(touchHLE_Mem *mem, VAddr addr, std::uint8_t value);
+void touchHLE_cpu_write_u32(touchHLE_Mem *mem, VAddr addr, std::uint8_t value);
+void touchHLE_cpu_write_u64(touchHLE_Mem *mem, VAddr addr, std::uint8_t value);
 }
 
 const auto HaltReasonSvc = Dynarmic::HaltReason::UserDefined1;

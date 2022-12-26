@@ -16,7 +16,6 @@ trait CPPVersion {
 }
 impl CPPVersion for cc::Build {
     fn cpp_version(&mut self, version: &str) -> &mut Self {
-        // TODO: test this actually works on Windows
         if self.get_compiler().is_like_msvc() {
             self.flag(&format!("/std:{}", version))
         } else {

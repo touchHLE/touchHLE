@@ -25,9 +25,6 @@ pub type Class = id;
 /// Our internal representation of a class, e.g. this is where `objc_msgSend`
 /// will look up method implementations.
 ///
-/// Once we can load classes from the app itself (TODO), we will need to create
-/// these objects for each.
-///
 /// Note: `superclass` can be `nil`!
 pub(super) struct ClassHostObject {
     pub(super) name: String,

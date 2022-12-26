@@ -13,50 +13,77 @@ use touchHLE_dynarmic_wrapper::*;
 
 type VAddr = u32;
 
-fn touchHLE_cpu_read_impl<T: SafeRead>(mem: *mut touchHLE_Mem, addr: VAddr) -> T {
-    let mem = unsafe { &mut *mem.cast::<Mem>() };
-    let ptr: ConstPtr<T> = Ptr::from_bits(addr);
-    mem.read(ptr)
+fn touchHLE_cpu_read_impl<T: SafeRead + Default>(
+    mem: *mut touchHLE_Mem,
+    addr: VAddr,
+    error: *mut bool,
+) -> T {
+    // If a panic occurs (probably due to a null-pointer access), we can't let
+    // it keep unwinding as it will hit non-Rust stack frames (dynarmic).
+    // Instead we catch the unwind and then tell the C++ code a problem occurred
+    // so it can immediately halt CPU execution and then panic itself, now
+    // with only Rust stack frames to worry about and with CPU state information
+    // available that's useful for debugging.
+    //
+    // TODO: Disable this in debug mode? This relies on dynarmic's
+    // check_halt_on_memory_access option which surely has a significant
+    // performance impact.
+    //
+    // I'm not sure if this actually is unwind-safe, but considering
+    // the emulator will crash anyway, maybe this is okay.
+    let res = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        let mem = unsafe { &mut *mem.cast::<Mem>() };
+        let ptr: ConstPtr<T> = Ptr::from_bits(addr);
+        mem.read(ptr)
+    }));
+    unsafe {
+        error.write(res.is_err());
+    }
+    res.unwrap_or_default()
 }
 
-fn touchHLE_cpu_write_impl<T: SafeWrite>(mem: *mut touchHLE_Mem, addr: VAddr, value: T) {
-    let mem = unsafe { &mut *mem.cast::<Mem>() };
-    let ptr: MutPtr<T> = Ptr::from_bits(addr);
-    mem.write(ptr, value)
+fn touchHLE_cpu_write_impl<T: SafeWrite>(mem: *mut touchHLE_Mem, addr: VAddr, value: T) -> bool {
+    // See comments above about catch_unwind
+    let res = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        let mem = unsafe { &mut *mem.cast::<Mem>() };
+        let ptr: MutPtr<T> = Ptr::from_bits(addr);
+        mem.write(ptr, value)
+    }));
+    res.is_err()
 }
 
 // Export functions for use by C++
 #[no_mangle]
-extern "C" fn touchHLE_cpu_read_u8(mem: *mut touchHLE_Mem, addr: VAddr) -> u8 {
-    touchHLE_cpu_read_impl(mem, addr)
+extern "C" fn touchHLE_cpu_read_u8(mem: *mut touchHLE_Mem, addr: VAddr, error: *mut bool) -> u8 {
+    touchHLE_cpu_read_impl(mem, addr, error)
 }
 #[no_mangle]
-extern "C" fn touchHLE_cpu_read_u16(mem: *mut touchHLE_Mem, addr: VAddr) -> u16 {
-    touchHLE_cpu_read_impl(mem, addr)
+extern "C" fn touchHLE_cpu_read_u16(mem: *mut touchHLE_Mem, addr: VAddr, error: *mut bool) -> u16 {
+    touchHLE_cpu_read_impl(mem, addr, error)
 }
 #[no_mangle]
-extern "C" fn touchHLE_cpu_read_u32(mem: *mut touchHLE_Mem, addr: VAddr) -> u32 {
-    touchHLE_cpu_read_impl(mem, addr)
+extern "C" fn touchHLE_cpu_read_u32(mem: *mut touchHLE_Mem, addr: VAddr, error: *mut bool) -> u32 {
+    touchHLE_cpu_read_impl(mem, addr, error)
 }
 #[no_mangle]
-extern "C" fn touchHLE_cpu_read_u64(mem: *mut touchHLE_Mem, addr: VAddr) -> u64 {
-    touchHLE_cpu_read_impl(mem, addr)
+extern "C" fn touchHLE_cpu_read_u64(mem: *mut touchHLE_Mem, addr: VAddr, error: *mut bool) -> u64 {
+    touchHLE_cpu_read_impl(mem, addr, error)
 }
 #[no_mangle]
-extern "C" fn touchHLE_cpu_write_u8(mem: *mut touchHLE_Mem, addr: VAddr, value: u8) {
-    touchHLE_cpu_write_impl(mem, addr, value);
+extern "C" fn touchHLE_cpu_write_u8(mem: *mut touchHLE_Mem, addr: VAddr, value: u8) -> bool {
+    touchHLE_cpu_write_impl(mem, addr, value)
 }
 #[no_mangle]
-extern "C" fn touchHLE_cpu_write_u16(mem: *mut touchHLE_Mem, addr: VAddr, value: u16) {
-    touchHLE_cpu_write_impl(mem, addr, value);
+extern "C" fn touchHLE_cpu_write_u16(mem: *mut touchHLE_Mem, addr: VAddr, value: u16) -> bool {
+    touchHLE_cpu_write_impl(mem, addr, value)
 }
 #[no_mangle]
-extern "C" fn touchHLE_cpu_write_u32(mem: *mut touchHLE_Mem, addr: VAddr, value: u32) {
-    touchHLE_cpu_write_impl(mem, addr, value);
+extern "C" fn touchHLE_cpu_write_u32(mem: *mut touchHLE_Mem, addr: VAddr, value: u32) -> bool {
+    touchHLE_cpu_write_impl(mem, addr, value)
 }
 #[no_mangle]
-extern "C" fn touchHLE_cpu_write_u64(mem: *mut touchHLE_Mem, addr: VAddr, value: u64) {
-    touchHLE_cpu_write_impl(mem, addr, value);
+extern "C" fn touchHLE_cpu_write_u64(mem: *mut touchHLE_Mem, addr: VAddr, value: u64) -> bool {
+    touchHLE_cpu_write_impl(mem, addr, value)
 }
 
 pub struct Cpu {
@@ -175,7 +202,10 @@ impl Cpu {
                 assert!(*ticks == 0);
                 CpuState::Normal
             }
-            _ if res < -1 => panic!("Unexpected CPU execution result"),
+            -2 => {
+                panic!("Memory error during CPU execution!");
+            }
+            _ if res < -2 => panic!("Unexpected CPU execution result"),
             svc => CpuState::Svc(svc as u32),
         }
     }

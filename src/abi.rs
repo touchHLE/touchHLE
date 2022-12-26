@@ -279,6 +279,16 @@ impl<T, const MUT: bool> GuestArg for Ptr<T, MUT> {
     }
 }
 
+impl GuestArg for GuestFunction {
+    const REG_COUNT: usize = <ConstVoidPtr as GuestArg>::REG_COUNT;
+    fn from_regs(regs: &[u32]) -> Self {
+        GuestFunction(<ConstVoidPtr as GuestArg>::from_regs(regs))
+    }
+    fn to_regs(self, regs: &mut [u32]) {
+        <ConstVoidPtr as GuestArg>::to_regs(self.0, regs)
+    }
+}
+
 // TODO: Do we need to distinguish arguments from return types, don't they
 // usually behave the same? Are there exceptions? Do we merge the types?
 

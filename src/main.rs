@@ -21,6 +21,7 @@ mod cpu;
 mod dyld;
 mod frameworks;
 mod image;
+mod libc;
 mod mach_o;
 mod mem;
 mod objc;

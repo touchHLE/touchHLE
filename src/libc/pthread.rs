@@ -1,9 +1,23 @@
 //! POSIX Threads implementation.
 
+#![allow(non_camel_case_types)]
+
 use crate::abi::GuestFunction;
 use crate::dyld::{export_c_func, FunctionExports};
-use crate::mem::{MutPtr, SafeRead};
+use crate::mem::{MutPtr, MutVoidPtr, Ptr, SafeRead};
 use crate::Environment;
+
+#[derive(Default)]
+pub struct State {
+    /// The `pthread_key_t` value is the index into this vector. The tuple
+    /// contains the pointer to the thread-specific data for the main thread
+    /// (currently no other threads exist) and the destructor pointer.
+    keys: Vec<(MutVoidPtr, GuestFunction)>,
+}
+
+fn get_state(env: &mut Environment) -> &mut State {
+    &mut env.libc_state.pthread
+}
 
 /// Magic number used in `PTHREAD_ONCE_INIT`. This is part of the ABI!
 const MAGIC_ONCE: u32 = 0x30B1BCBA;
@@ -17,6 +31,8 @@ struct pthread_once_t {
     init: u32,
 }
 impl SafeRead for pthread_once_t {}
+
+type pthread_key_t = u32;
 
 fn pthread_once(
     env: &mut Environment,
@@ -40,4 +56,18 @@ fn pthread_once(
     0 // success. TODO: return an error on failure?
 }
 
-pub const FUNCTIONS: FunctionExports = &[export_c_func!(pthread_once(_, _))];
+fn pthread_key_create(
+    env: &mut Environment,
+    key_ptr: MutPtr<pthread_key_t>,
+    destructor: GuestFunction, // void (*destructor)(void *), may be NULL
+) -> i32 {
+    let key: pthread_key_t = get_state(env).keys.len().try_into().unwrap();
+    get_state(env).keys.push((Ptr::null(), destructor));
+    env.mem.write(key_ptr, key);
+    0 // success
+}
+
+pub const FUNCTIONS: FunctionExports = &[
+    export_c_func!(pthread_once(_, _)),
+    export_c_func!(pthread_key_create(_, _)),
+];

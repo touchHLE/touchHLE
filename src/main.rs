@@ -77,6 +77,7 @@ pub struct Environment {
     objc: objc::ObjC,
     dyld: dyld::Dyld,
     cpu: cpu::Cpu,
+    libc_state: libc::State,
 }
 
 impl Environment {
@@ -188,6 +189,7 @@ impl Environment {
             objc,
             dyld,
             cpu,
+            libc_state: Default::default(),
         })
     }
 

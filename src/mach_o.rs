@@ -7,9 +7,11 @@
 //!
 //! Useful resources:
 //! - Apple's [Overview of the Mach-O Executable Format](https://developer.apple.com/library/archive/documentation/Performance/Conceptual/CodeFootprint/Articles/MachOOverview.html) explains what "segments" and "sections" are, and provides short descriptions of the purposes of some common sections.
+//! - Apple's old "OS X ABI Mach-O File Format Reference", which is mirrored in [various](https://github.com/aidansteele/osx-abi-macho-file-format-reference) [places](https://www.symbolcrash.com/wp-content/uploads/2019/02/ABI_MachOFormat.pdf) online.
 //! - Alex Drummond's [Inside a Hello World executable on OS X](https://adrummond.net/posts/macho) is about macOS circa 2017 rather than iPhone OS circa 2008, so not all of what it says applies, but the sections up to and including "9. The indirect symbol table" are helpful.
 //! - The LLVM functions [`RuntimeDyldMachO::populateIndirectSymbolPointersSection`](https://github.com/llvm/llvm-project/blob/2e999b7dd1934a44d38c3a753460f1e5a217e9a5/llvm/lib/ExecutionEngine/RuntimeDyld/RuntimeDyldMachO.cpp#L179-L220) and [`MachOObjectFile::getIndirectSymbolTableEntry`](https://github.com/llvm/llvm-project/blob/3c09ed006ab35dd8faac03311b14f0857b01949c/llvm/lib/Object/MachOObjectFile.cpp#L4803-L4808) are references for how to read the indirect symbol table.
 //! - `/usr/include/mach-o/reloc.h` in the macOS SDK was the reference for the format of relocation entries.
+//! - The [source code of the mach_object crate](https://docs.rs/mach_object/latest/src/mach_object/commands.rs.html) has useful comments that don't show up in the generated documentation, e.g. around `DySymTab`.
 
 use crate::mem::{Mem, Ptr};
 use mach_object::{DyLib, LoadCommand, MachCommand, OFile, Symbol, SymbolIter};
@@ -74,6 +76,87 @@ fn get_sym_by_idx<'a>(
     // method on it requires the bytestring crate, so...
     let mut iter = SymbolIter::new(cursor, Vec::new(), 1, stroff, strsize, is_bigend, is_64bit);
     iter.next()
+}
+
+/// Parsed relocation entry
+#[derive(Debug)]
+enum Reloc {
+    External {
+        addr: u32,
+        sym_idx: u32,
+        is_pc_relative: bool,
+        size: u32,
+        type_: u32,
+    },
+    #[allow(dead_code)]
+    Local {
+        addr: u32,
+        section_idx: u32,
+        is_pc_relative: bool,
+        size: u32,
+        type_: u32,
+    },
+    #[allow(dead_code)]
+    Scattered {
+        offset: u32,
+        value: u32,
+        is_pc_relative: bool,
+        size: u32,
+        type_: u32,
+    },
+}
+impl Reloc {
+    fn parse(is_bigend: bool, entry: [u8; 8]) -> Self {
+        assert!(!is_bigend);
+
+        let word1 = u32::from_le_bytes(entry[..4].try_into().unwrap());
+        let word2 = u32::from_le_bytes(entry[4..8].try_into().unwrap());
+
+        if (word1 & 0x80000000) != 0 {
+            let bitfield = word1;
+            let value = word2;
+
+            let offset = bitfield & 0xffffff;
+            let type_ = (bitfield >> 24) & 0xf;
+            let size = 1 << ((bitfield >> 28) & 3); // log2-encoded pointer size
+            let is_pc_relative = ((bitfield >> 30) & 1) == 1;
+
+            Reloc::Scattered {
+                offset,
+                value,
+                is_pc_relative,
+                size,
+                type_,
+            }
+        } else {
+            let addr = word1;
+            let bitfield = word2;
+
+            let sym_or_section_idx = bitfield & 0xffffff;
+            let is_pc_relative = ((bitfield >> 24) & 1) == 1;
+            let size = 1 << ((bitfield >> 25) & 3); // log2-encoded pointer size
+            let is_external = (bitfield >> 27) & 1;
+            let type_ = (bitfield >> 28) & 0xf;
+
+            if is_external == 1 {
+                Reloc::External {
+                    addr,
+                    sym_idx: sym_or_section_idx,
+                    is_pc_relative,
+                    size,
+                    type_,
+                }
+            } else {
+                Reloc::Local {
+                    addr,
+                    section_idx: sym_or_section_idx,
+                    is_pc_relative,
+                    size,
+                    type_,
+                }
+            }
+        }
+    }
 }
 
 impl MachO {
@@ -239,10 +322,16 @@ impl MachO {
 
                     let extrels = &bytes[extreloff as usize..][..nextrel as usize * 8];
                     for entry in extrels.chunks(8) {
-                        assert!(!is_bigend);
-                        let addr = u32::from_le_bytes(entry[..4].try_into().unwrap());
-                        let sym_idx =
-                            u32::from_le_bytes(entry[4..8].try_into().unwrap()) & 0x00ffffff;
+                        let reloc = Reloc::parse(is_bigend, entry.try_into().unwrap());
+                        let Reloc::External {
+                            addr,
+                            sym_idx,
+                            is_pc_relative: false,
+                            size: 4,
+                            type_: 0, // generic
+                        } = reloc else {
+                            panic!("Unhandled extrel: {:?}", reloc)
+                        };
 
                         let mut cursor = cursor.clone();
                         let sym = get_sym_by_idx(
@@ -252,6 +341,8 @@ impl MachO {
                             is_64bit,
                             &mut cursor,
                         );
+                        // TODO: Figure out to do with the Symbol::Defined
+                        // entries
                         let Some(Symbol::Undefined { name: Some(n), .. }) = sym else {
                             continue;
                         };

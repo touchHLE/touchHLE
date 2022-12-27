@@ -20,7 +20,7 @@ mod function_lists;
 use crate::abi::{CallFromGuest, GuestFunction};
 use crate::cpu::Cpu;
 use crate::mach_o::MachO;
-use crate::mem::{GuestUSize, Mem, MutPtr, Ptr};
+use crate::mem::{ConstVoidPtr, GuestUSize, Mem, MutPtr, Ptr};
 use crate::objc::ObjC;
 
 type HostFunction = &'static dyn CallFromGuest;
@@ -160,7 +160,7 @@ impl Dyld {
             self.setup_lazy_linking(bin, mem);
             // Must happen before `register_bin_classes`, else superclass
             // pointers will be wrong.
-            self.do_non_lazy_linking(bin, mem, objc);
+            self.do_non_lazy_linking(bin, bins, mem, objc);
         }
 
         objc.register_bin_classes(&bins[0], mem);
@@ -224,7 +224,10 @@ impl Dyld {
     /// about missing implementations until the point of use. For that reason,
     /// this will spit out a warning to stderr for everything missing, so that
     /// there's at least some indication about why the emulator might crash.
-    fn do_non_lazy_linking(&self, bin: &MachO, mem: &mut Mem, objc: &mut ObjC) {
+    ///
+    /// `bin` is the binary to link non-lazy symbols for, `bins` is the set of
+    /// binaries symbols may be looked up in.
+    fn do_non_lazy_linking(&self, bin: &MachO, bins: &[MachO], mem: &mut Mem, objc: &mut ObjC) {
         for &(ptr_ptr, ref name) in &bin.external_relocations {
             let ptr = if let Some(name) = name.strip_prefix("_OBJC_CLASS_$_") {
                 objc.link_class(name, /* is_metaclass: */ false, mem)
@@ -250,17 +253,24 @@ impl Dyld {
         assert!(entry_size == 4);
         assert!(ptrs.size % entry_size == 0);
         let ptr_count = ptrs.size / entry_size;
-        for i in 0..ptr_count {
+        'ptr_loop: for i in 0..ptr_count {
             let Some(symbol) = info.indirect_undef_symbols[i as usize].as_deref() else {
                 continue;
             };
 
-            let ptr = ptrs.addr + i * entry_size;
+            let ptr_ptr: MutPtr<ConstVoidPtr> = Ptr::from_bits(ptrs.addr + i * entry_size);
 
-            // TODO: look up symbol, write pointer
+            for other_bin in bins {
+                if let Some(&addr) = other_bin.exported_symbols.get(symbol) {
+                    mem.write(ptr_ptr, Ptr::from_bits(addr));
+                    continue 'ptr_loop;
+                }
+            }
+
+            // TODO: look up symbol in host implementations, write pointer
             eprintln!(
-                "Warning: unhandled non-lazy symbol {:?} at {:#x} in \"{}\"",
-                symbol, ptr, bin.name
+                "Warning: unhandled non-lazy symbol {:?} at {:?} in \"{}\"",
+                symbol, ptr_ptr, bin.name
             );
         }
 

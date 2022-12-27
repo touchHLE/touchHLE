@@ -66,6 +66,9 @@ fn main() -> Result<(), String> {
     Ok(())
 }
 
+/// Note that currently only a single thread (the main thread) is supported.
+type ThreadID = u32;
+
 /// The struct containing the entire emulator state.
 pub struct Environment {
     bundle: bundle::Bundle,
@@ -77,6 +80,7 @@ pub struct Environment {
     objc: objc::ObjC,
     dyld: dyld::Dyld,
     cpu: cpu::Cpu,
+    current_thread: ThreadID,
     libc_state: libc::State,
 }
 
@@ -189,6 +193,7 @@ impl Environment {
             objc,
             dyld,
             cpu,
+            current_thread: 0,
             libc_state: Default::default(),
         })
     }

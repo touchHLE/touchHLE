@@ -196,7 +196,17 @@ impl Environment {
     /// Run the emulator. This is the main loop and won't return until app exit.
     /// Only `main.rs` should call this.
     fn run(&mut self) {
-        self.run_inner(true)
+        // I'm not sure if this actually is unwind-safe, but considering
+        // the emulator will crash anyway, maybe this is okay.
+        let res = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| self.run_inner(true)));
+        if let Err(e) = res {
+            eprintln!(
+                "Panic at PC {:#x}, LR {:#x}",
+                self.cpu.regs()[cpu::Cpu::PC],
+                self.cpu.regs()[cpu::Cpu::LR]
+            );
+            std::panic::resume_unwind(e);
+        }
     }
 
     /// Run the emulator until the app returns control to the host. This is for
@@ -207,8 +217,7 @@ impl Environment {
 
     fn run_inner(&mut self, root: bool) {
         let mut events = Vec::new(); // re-use each iteration for efficiency
-        let mut early_exit = false;
-        while !early_exit {
+        loop {
             self.window.poll_for_events(&mut events);
             #[allow(clippy::never_loop)]
             for event in events.drain(..) {
@@ -226,55 +235,36 @@ impl Environment {
             }
 
             let mut ticks = 100;
-            while ticks > 0 && !early_exit {
-                // I'm not sure if this actually is unwind-safe, but considering
-                // the emulator will crash anyway, maybe this is okay.
-                let res = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-                    match self.cpu.run(&mut self.mem, &mut ticks) {
-                        cpu::CpuState::Normal => (),
-                        cpu::CpuState::Svc(svc) => {
-                            // the program counter is pointing at the
-                            // instruction after the SVC, but we want the
-                            // address of the SVC itself
-                            let svc_pc = self.cpu.regs()[cpu::Cpu::PC] - 4;
-                            if svc == dyld::Dyld::SVC_RETURN_TO_HOST {
-                                assert!(!root);
-                                assert!(
-                                    svc_pc
-                                        == self
-                                            .dyld
-                                            .return_to_host_routine()
-                                            .addr_without_thumb_bit()
-                                );
-                                early_exit = true;
-                                return;
-                            }
+            while ticks > 0 {
+                match self.cpu.run(&mut self.mem, &mut ticks) {
+                    cpu::CpuState::Normal => (),
+                    cpu::CpuState::Svc(svc) => {
+                        // the program counter is pointing at the
+                        // instruction after the SVC, but we want the
+                        // address of the SVC itself
+                        let svc_pc = self.cpu.regs()[cpu::Cpu::PC] - 4;
+                        if svc == dyld::Dyld::SVC_RETURN_TO_HOST {
+                            assert!(!root);
+                            assert!(
+                                svc_pc
+                                    == self.dyld.return_to_host_routine().addr_without_thumb_bit()
+                            );
+                            return;
+                        }
 
-                            if let Some(f) = self.dyld.get_svc_handler(
-                                &self.bins,
-                                &mut self.mem,
-                                &mut self.cpu,
-                                svc_pc,
-                                svc,
-                            ) {
-                                f.call_from_guest(self)
-                            } else {
-                                self.cpu.regs_mut()[cpu::Cpu::PC] = svc_pc;
-                            }
+                        if let Some(f) = self.dyld.get_svc_handler(
+                            &self.bins,
+                            &mut self.mem,
+                            &mut self.cpu,
+                            svc_pc,
+                            svc,
+                        ) {
+                            f.call_from_guest(self)
+                        } else {
+                            self.cpu.regs_mut()[cpu::Cpu::PC] = svc_pc;
                         }
                     }
-                }));
-                if let Err(e) = res {
-                    eprintln!(
-                        "Panic at PC {:#x}, LR {:#x}",
-                        self.cpu.regs()[cpu::Cpu::PC],
-                        self.cpu.regs()[cpu::Cpu::LR]
-                    );
-                    std::panic::resume_unwind(e);
                 }
-            }
-            if !early_exit {
-                println!("{} ticks elapsed", ticks);
             }
         }
     }

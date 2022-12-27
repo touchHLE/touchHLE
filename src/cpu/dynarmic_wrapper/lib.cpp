@@ -1,4 +1,5 @@
 #include <cstdint>
+#include <cstdio>
 
 #include "dynarmic/interface/A32/a32.h"
 #include "dynarmic/interface/A32/config.h"
@@ -63,6 +64,16 @@ private:
     return value;
   }
 
+  std::optional<std::uint32_t> MemoryReadCode(VAddr vaddr) override {
+    bool error;
+    auto value = touchHLE_cpu_read_u32(mem, vaddr, &error);
+    if (error) {
+      return std::nullopt;
+    } else {
+      return value;
+    }
+  }
+
   void MemoryWrite8(VAddr vaddr, std::uint8_t value) override {
     if (touchHLE_cpu_write_u8(mem, vaddr, value)) {
       cpu->HaltExecution(Dynarmic::HaltReason::MemoryAbort);
@@ -91,8 +102,15 @@ private:
     halting_svc = svc;
     cpu->HaltExecution(HaltReasonSvc);
   }
-  void ExceptionRaised(std::uint32_t, Dynarmic::A32::Exception) override {
-    abort(); // TODO
+  void ExceptionRaised(VAddr pc, Dynarmic::A32::Exception exception) override {
+    // MemoryReadCode returned nullopt
+    if (exception == Dynarmic::A32::Exception::NoExecuteFault) {
+      cpu->HaltExecution(Dynarmic::HaltReason::MemoryAbort);
+    } else {
+      std::fprintf(stderr, "ExceptionRaised: unexpected exception %u at %x\n",
+                   unsigned(exception), pc);
+      abort();
+    }
   }
   void AddTicks(std::uint64_t ticks) override {
     if (ticks > ticks_remaining) {

@@ -5,6 +5,7 @@
 //! - Apple's [iOS Manual Pages](https://developer.apple.com/library/archive/documentation/System/Conceptual/ManPages_iPhoneOS/) (contains what would be `man` pages if iOS had a command line)
 
 pub mod pthread;
+pub mod stdlib;
 
 /// Container for state of various child modules
 #[derive(Default)]

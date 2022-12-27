@@ -7,6 +7,7 @@ use crate::libc;
 /// All the lists of functions that the linker should search through.
 pub const FUNCTION_LISTS: &[super::FunctionExports] = &[
     libc::pthread::FUNCTIONS,
+    libc::stdlib::FUNCTIONS,
     crate::objc::FUNCTIONS,
     frameworks::uikit::FUNCTIONS,
 ];

@@ -207,7 +207,8 @@ impl Environment {
 
     fn run_inner(&mut self, root: bool) {
         let mut events = Vec::new(); // re-use each iteration for efficiency
-        loop {
+        let mut early_exit = false;
+        while !early_exit {
             self.window.poll_for_events(&mut events);
             #[allow(clippy::never_loop)]
             for event in events.drain(..) {
@@ -225,7 +226,6 @@ impl Environment {
             }
 
             let mut ticks = 100;
-            let mut early_exit = false;
             while ticks > 0 && !early_exit {
                 // I'm not sure if this actually is unwind-safe, but considering
                 // the emulator will crash anyway, maybe this is okay.

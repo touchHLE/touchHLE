@@ -8,7 +8,7 @@
 
 use super::ns_string::{copy_string, string_with_rust_string};
 use crate::mem::MutVoidPtr;
-use crate::objc::{id, msg, objc_classes, ClassExports, HostObject};
+use crate::objc::{id, msg, objc_classes, release, retain, ClassExports, HostObject};
 use crate::Environment;
 use plist::{Dictionary, Uid, Value};
 use std::path::Path;
@@ -44,7 +44,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     let already_unarchived = std::mem::take(&mut host_obj.already_unarchived);
 
     for &object in already_unarchived.iter().flatten() {
-        let _: () = msg![env; object release];
+        release(env, object);
     }
 
     // FIXME: this should do a super-call instead
@@ -72,7 +72,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     }.as_dictionary().unwrap();
     let next_uid = scope[&key].as_uid().copied().unwrap();
     let object = unarchive_key(env, this, next_uid);
-    msg![env; object retain] // caller must release it
+    retain(env, object) // caller must release it
 }
 
 // TODO: add more decode methods
@@ -194,8 +194,7 @@ pub fn decode_current_array(env: &mut Environment, unarchiver: id) -> Vec<id> {
         .map(|key| {
             let new_object = unarchive_key(env, unarchiver, key);
             // object is retained by the Vec
-            let new_object: id = msg![env; new_object retain];
-            new_object
+            retain(env, new_object)
         })
         .collect()
 }

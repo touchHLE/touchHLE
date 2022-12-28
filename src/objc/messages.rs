@@ -222,3 +222,13 @@ macro_rules! msg_class {
     }
 }
 pub use crate::msg_class; // #[macro_export] is weird...
+
+/// Shorthand for `let _: id = msg![env; object retain];`
+pub fn retain(env: &mut Environment, object: id) -> id {
+    msg![env; object retain]
+}
+
+/// Shorthand for `let _: () = msg![env; object release];`
+pub fn release(env: &mut Environment, object: id) {
+    msg![env; object release]
+}

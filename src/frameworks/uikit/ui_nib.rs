@@ -6,7 +6,7 @@
 
 use crate::frameworks::foundation::ns_keyed_unarchiver;
 use crate::frameworks::foundation::ns_string::{copy_string, string_with_static_str};
-use crate::objc::{id, msg, msg_class, objc_classes, ClassExports};
+use crate::objc::{id, msg, msg_class, objc_classes, release, ClassExports};
 use crate::Environment;
 
 pub const CLASSES: ClassExports = objc_classes! {
@@ -39,12 +39,12 @@ pub const CLASSES: ClassExports = objc_classes! {
     let name_key = string_with_static_str(env, "UIClassName");
     let name_nss: id = msg![env; coder decodeObjectForKey:name_key];
     let name = copy_string(env, name_nss);
-    let _: () = msg![env; name_nss release];
+    release(env, name_nss);
 
     let orig_key = string_with_static_str(env, "UIOriginalClassName");
     let orig_nss: id = msg![env; coder decodeObjectForKey:orig_key];
     let orig = copy_string(env, orig_nss);
-    let _: () = msg![env; orig_nss release];
+    release(env, orig_nss);
 
     let class = env.objc.get_known_class(&name, &mut env.mem);
 
@@ -54,7 +54,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     } else {
         msg![env; object initWithCoder:coder]
     };
-    let _: () = msg![env; this release];
+    release(env, this);
     // TODO: autorelease the object?
     object
 }
@@ -105,7 +105,7 @@ pub fn load_main_nib_file(env: &mut Environment, _ui_application: id) -> id {
     let tlos_key = string_with_static_str(env, "UINibTopLevelObjectsKey");
     let tlos: id = msg![env; unarchiver decodeObjectForKey:tlos_key];
 
-    let _: () = msg![env; unarchiver release];
+    release(env, unarchiver);
 
     unimplemented!(
         "Finish nib loading with {:?}, {:?}, {:?}",

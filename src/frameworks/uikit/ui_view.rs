@@ -2,7 +2,7 @@
 
 use crate::frameworks::foundation::ns_string::{copy_string, string_with_static_str};
 use crate::mem::MutVoidPtr;
-use crate::objc::{id, msg, objc_classes, ClassExports, HostObject};
+use crate::objc::{id, msg, objc_classes, release, ClassExports, HostObject};
 
 struct UIViewHostObject {
     bounds: ((f32, f32), (f32, f32)), // TODO: should use CGRect
@@ -49,12 +49,12 @@ pub const CLASSES: ClassExports = objc_classes! {
     let key_ns_string = string_with_static_str(env, "UIBounds");
     let value = msg![env; coder decodeObjectForKey:key_ns_string];
     let bounds = parse_rect(&copy_string(env, value)).unwrap();
-    let _: () = msg![env; value release];
+    release(env, value);
 
     let key_ns_string = string_with_static_str(env, "UICenter");
     let value = msg![env; coder decodeObjectForKey:key_ns_string];
     let center = parse_point(&copy_string(env, value)).unwrap();
-    let _: () = msg![env; value release];
+    release(env, value);
 
     let host_object: &mut UIViewHostObject = env.objc.borrow_mut(this);
     host_object.bounds = bounds;

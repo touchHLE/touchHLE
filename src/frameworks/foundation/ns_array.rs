@@ -2,7 +2,7 @@
 
 use super::ns_keyed_unarchiver;
 use crate::mem::MutVoidPtr;
-use crate::objc::{id, msg, msg_class, objc_classes, ClassExports, HostObject};
+use crate::objc::{id, msg_class, objc_classes, release, ClassExports, HostObject};
 
 /// Belongs to _touchHLE_NSArray
 struct ArrayHostObject {
@@ -68,7 +68,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     let array = std::mem::take(&mut host_object.array);
 
     for object in array {
-        let _: () = msg![env; object release];
+        release(env, object);
     }
 
     // FIXME: this should do a super-call instead

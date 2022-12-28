@@ -127,7 +127,7 @@ impl super::ObjC {
 
     /// Allocate a static-lifetime (guest) object (for example, a class) and
     /// associate it with its host object.
-    pub(super) fn alloc_static_object(
+    pub fn alloc_static_object(
         &mut self,
         isa: Class,
         host_object: Box<dyn AnyHostObject>,

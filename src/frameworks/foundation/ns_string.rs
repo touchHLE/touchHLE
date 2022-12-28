@@ -3,11 +3,23 @@
 use crate::mem::MutVoidPtr;
 use crate::objc::{id, msg_class, objc_classes, ClassExports, HostObject};
 use crate::Environment;
+use std::borrow::Cow;
+use std::collections::HashMap;
 
-/// Belongs to _touchHLE_NSString
-/// This is an enum because we will have to support UTF-16 eventually
+#[derive(Default)]
+pub struct State {
+    static_str_pool: HashMap<&'static str, id>,
+}
+impl State {
+    fn get(env: &mut Environment) -> &mut Self {
+        &mut env.framework_state.foundation.ns_string
+    }
+}
+
+/// Belongs to _touchHLE_NSString.
+/// This is an enum because we will have to support UTF-16 eventually.
 enum StringHostObject {
-    UTF8(String),
+    UTF8(Cow<'static, str>),
 }
 impl HostObject for StringHostObject {}
 
@@ -36,7 +48,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 @implementation _touchHLE_NSString: NSString
 
 + (id)allocWithZone:(MutVoidPtr)_zone {
-    let host_object = Box::new(StringHostObject::UTF8(String::new()));
+    let host_object = Box::new(StringHostObject::UTF8(Cow::Borrowed("")));
     env.objc.alloc_object(this, host_object, &mut env.mem)
 }
 
@@ -44,20 +56,46 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 @end
 
+// Specialised subclass for static-lifetime strings.
+// See `string_with_static_str`.
+@implementation _touchHLE_NSString_Static: _touchHLE_NSString
+
++ (id)allocWithZone:(MutVoidPtr)_zone {
+    let host_object = Box::new(StringHostObject::UTF8(Cow::Borrowed("")));
+    env.objc.alloc_static_object(this, host_object, &mut env.mem)
+}
+
+- (()) release {}
+
+@end
+
 };
+
+/// Shortcut for host code: get an NSString corresponding to a `&'static str`,
+/// which does not have to be released and is never deallocated.
+pub fn string_with_static_str(env: &mut Environment, from: &'static str) -> id {
+    if let Some(&existing) = State::get(env).static_str_pool.get(from) {
+        existing
+    } else {
+        let new = msg_class![env; _touchHLE_NSString_Static alloc];
+        *env.objc.borrow_mut(new) = StringHostObject::UTF8(Cow::Borrowed(from));
+        State::get(env).static_str_pool.insert(from, new);
+        new
+    }
+}
 
 /// Shortcut for host code, roughly equivalent to `stringWithUTF8String:` in the
 /// proper API.
 pub fn string_with_rust_string(env: &mut Environment, from: String) -> id {
     let string: id = msg_class![env; _touchHLE_NSString alloc];
     let host_object: &mut StringHostObject = env.objc.borrow_mut(string);
-    *host_object = StringHostObject::UTF8(from);
+    *host_object = StringHostObject::UTF8(Cow::Owned(from));
     string
 }
 
-/// Shortcut for host code, retrieves a string in UTF-8.
-/// TODO: Try to avoid allocating a new String where possible.
-pub fn copy_string(env: &mut Environment, string: id) -> String {
+/// Shortcut for host code, provides a view of a string in UTF-8.
+/// TODO: Try to avoid allocating a new String in more cases.
+pub fn copy_string(env: &mut Environment, string: id) -> Cow<'static, str> {
     // TODO: handle foreign subclasses of NSString
     let host_object: &mut StringHostObject = env.objc.borrow_mut(string);
     let StringHostObject::UTF8(utf8) = host_object;

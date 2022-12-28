@@ -14,3 +14,9 @@
 
 pub mod foundation;
 pub mod uikit;
+
+/// Container for state of various child modules
+#[derive(Default)]
+pub struct State {
+    foundation: foundation::State,
+}

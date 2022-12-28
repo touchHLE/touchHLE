@@ -1,6 +1,6 @@
 //! `UIView`.
 
-use crate::frameworks::foundation::ns_string::{copy_string, string_with_rust_string};
+use crate::frameworks::foundation::ns_string::{copy_string, string_with_static_str};
 use crate::mem::MutVoidPtr;
 use crate::objc::{id, msg, objc_classes, ClassExports, HostObject};
 
@@ -41,34 +41,32 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 // NSCoding implementation
 - (id)initWithCoder:(id)coder {
-    let mut bounds: Option<((f32, f32), (f32, f32))> = None;
-    let mut center: Option<(f32, f32)> = None;
-    for key in ["UIBounds", "UICenter"] {
-        // TODO: add an easier and more efficient way to handle these keys!
-        // UINib has the same problem.
-        let key_ns_string = string_with_rust_string(env, key.to_string());
-        let value = msg![env; coder decodeObjectForKey:key_ns_string];
-        let _: () = msg![env; key_ns_string release];
-        // TODO: avoid copy
-        let copy = copy_string(env, value);
-        let _: () = msg![env; value release];
-
-        // TODO: there's a category on NSCoder for decoding these,
-        // implement that
-        if key == "UIBounds" {
-            bounds = Some(parse_rect(&copy).unwrap());
-        } else {
-            center = Some(parse_point(&copy).unwrap());
-        }
-    }
-
+    // TODO: there's a category on NSCoder for decoding CGRect and CGPoint, we
+    //       should implement and use that
+    // TODO: avoid copying strings
     // TODO: decode the various other UIView properties
 
-    let host_object: &mut UIViewHostObject = env.objc.borrow_mut(this);
-    host_object.bounds = bounds.unwrap();
-    host_object.center = center.unwrap();
+    let key_ns_string = string_with_static_str(env, "UIBounds");
+    let value = msg![env; coder decodeObjectForKey:key_ns_string];
+    let bounds = parse_rect(&copy_string(env, value)).unwrap();
+    let _: () = msg![env; value release];
 
-    log_dbg!("[(UIView*){:?} initWithCoder:{:?}] => bounds {:?}, center {:?}", this, coder, bounds, center);
+    let key_ns_string = string_with_static_str(env, "UICenter");
+    let value = msg![env; coder decodeObjectForKey:key_ns_string];
+    let center = parse_point(&copy_string(env, value)).unwrap();
+    let _: () = msg![env; value release];
+
+    let host_object: &mut UIViewHostObject = env.objc.borrow_mut(this);
+    host_object.bounds = bounds;
+    host_object.center = center;
+
+    log_dbg!(
+        "[(UIView*){:?} initWithCoder:{:?}] => bounds {:?}, center {:?}",
+        this,
+        coder,
+        bounds,
+        center
+    );
 
     this
 }

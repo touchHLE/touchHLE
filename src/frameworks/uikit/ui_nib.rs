@@ -5,7 +5,7 @@
 //! - GitHub user 0xced's [reverse-engineering of UIClassSwapper](https://gist.github.com/0xced/45daf79b62ad6a20be1c).
 
 use crate::frameworks::foundation::ns_keyed_unarchiver;
-use crate::frameworks::foundation::ns_string::{copy_string, string_with_rust_string};
+use crate::frameworks::foundation::ns_string::{copy_string, string_with_static_str};
 use crate::objc::{id, msg, msg_class, objc_classes, ClassExports};
 use crate::Environment;
 
@@ -35,20 +35,21 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 // NSCoding implementation
 - (id)initWithCoder:(id)coder {
-    let (class_name, original_class_name) = {
-        let class_name = get_key(env, coder, "UIClassName");
-        let original_class_name = get_key(env, coder, "UIOriginalClassName");
-        // TODO: avoid copy
-        let copies = (copy_string(env, class_name), copy_string(env, original_class_name));
-        let _: () = msg![env; class_name release];
-        let _: () = msg![env; original_class_name release];
-        copies
-    };
 
-    let class = env.objc.get_known_class(&class_name, &mut env.mem);
+    let name_key = string_with_static_str(env, "UIClassName");
+    let name_nss: id = msg![env; coder decodeObjectForKey:name_key];
+    let name = copy_string(env, name_nss);
+    let _: () = msg![env; name_nss release];
+
+    let orig_key = string_with_static_str(env, "UIOriginalClassName");
+    let orig_nss: id = msg![env; coder decodeObjectForKey:orig_key];
+    let orig = copy_string(env, orig_nss);
+    let _: () = msg![env; orig_nss release];
+
+    let class = env.objc.get_known_class(&name, &mut env.mem);
 
     let object: id = msg![env; class alloc];
-    let object: id = if original_class_name == "UICustomObject" {
+    let object: id = if orig == "UICustomObject" {
         msg![env; object init]
     } else {
         msg![env; object initWithCoder:coder]
@@ -72,13 +73,6 @@ pub const CLASSES: ClassExports = objc_classes! {
 @end
 
 };
-
-fn get_key(env: &mut Environment, unarchiver: id, key: &str) -> id {
-    let key = string_with_rust_string(env, key.to_string());
-    let list: id = msg![env; unarchiver decodeObjectForKey:key];
-    let _: () = msg![env; key release];
-    list
-}
 
 /// Shortcut for use by [super::ui_application::UIApplicationMain].
 ///
@@ -104,16 +98,19 @@ pub fn load_main_nib_file(env: &mut Environment, _ui_application: id) -> id {
     // Only the objects, top-level objects and connections lists seem useful
     // right now.
 
-    let objects = get_key(env, unarchiver, "UINibObjectsKey");
-    let connections = get_key(env, unarchiver, "UINibConnectionsKey");
-    let top_level_objects = get_key(env, unarchiver, "UINibTopLevelObjectsKey");
+    let objects_key = string_with_static_str(env, "UINibObjectsKey");
+    let objects: id = msg![env; unarchiver decodeObjectForKey:objects_key];
+    let conns_key = string_with_static_str(env, "UINibConnectionsKey");
+    let conns: id = msg![env; unarchiver decodeObjectForKey:conns_key];
+    let tlos_key = string_with_static_str(env, "UINibTopLevelObjectsKey");
+    let tlos: id = msg![env; unarchiver decodeObjectForKey:tlos_key];
 
     let _: () = msg![env; unarchiver release];
 
     unimplemented!(
         "Finish nib loading with {:?}, {:?}, {:?}",
         objects,
-        connections,
-        top_level_objects
+        conns,
+        tlos,
     );
 }

@@ -84,6 +84,7 @@ pub struct Environment {
     cpu: cpu::Cpu,
     current_thread: ThreadID,
     libc_state: libc::State,
+    framework_state: frameworks::State,
 }
 
 impl Environment {
@@ -197,6 +198,7 @@ impl Environment {
             cpu,
             current_thread: 0,
             libc_state: Default::default(),
+            framework_state: Default::default(),
         })
     }
 

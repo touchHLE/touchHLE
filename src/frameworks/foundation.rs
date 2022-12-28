@@ -12,3 +12,8 @@ pub mod ns_coder;
 pub mod ns_keyed_unarchiver;
 pub mod ns_object;
 pub mod ns_string;
+
+#[derive(Default)]
+pub struct State {
+    ns_string: ns_string::State,
+}

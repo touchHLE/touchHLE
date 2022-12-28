@@ -8,7 +8,7 @@
 //! See also: [crate::objc], especially the `objects` module.
 
 use crate::mem::MutVoidPtr;
-use crate::objc::{id, msg, objc_classes, ClassExports, TrivialHostObject};
+use crate::objc::{id, msg, objc_classes, Class, ClassExports, TrivialHostObject};
 
 pub const CLASSES: ClassExports = objc_classes! {
 
@@ -27,6 +27,10 @@ pub const CLASSES: ClassExports = objc_classes! {
 + (id)new {
     let new_object: id = msg![env; this alloc];
     msg![env; new_object init]
+}
+
++ (Class)class {
+    this
 }
 
 // See the instance method section for the normal versions of these.

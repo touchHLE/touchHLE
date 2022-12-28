@@ -2,11 +2,13 @@
 
 use crate::frameworks::foundation::ns_string::{get_static_str, to_rust_string};
 use crate::mem::MutVoidPtr;
-use crate::objc::{id, msg, objc_classes, release, ClassExports, HostObject};
+use crate::objc::{id, msg, objc_classes, release, Class, ClassExports, HostObject};
 
 struct UIViewHostObject {
     bounds: ((f32, f32), (f32, f32)), // TODO: should use CGRect
     center: (f32, f32),               // TODO: should use CGPoint
+    /// CALayer or subclass.
+    layer: id,
 }
 impl HostObject for UIViewHostObject {}
 
@@ -30,11 +32,19 @@ pub const CLASSES: ClassExports = objc_classes! {
 @implementation UIView: UIResponder
 
 + (id)allocWithZone:(MutVoidPtr)_zone {
+    let layer_class: Class = msg![env; this layerClass];
+    let layer: id = msg![env; layer_class layer];
+
     let host_object = Box::new(UIViewHostObject {
         bounds: ((0.0, 0.0), (0.0, 0.0)),
         center: (0.0, 0.0),
+        layer,
     });
     env.objc.alloc_object(this, host_object, &mut env.mem)
+}
+
++ (Class)layerClass {
+    env.objc.get_known_class("CALayer", &mut env.mem)
 }
 
 // TODO: initWithFrame:, accessors, etc
@@ -68,7 +78,22 @@ pub const CLASSES: ClassExports = objc_classes! {
         center
     );
 
+    let layer = host_object.layer;
+    let _: () = msg![env; layer setDelegate:this];
+
     this
+}
+
+- (())dealloc {
+    let &mut UIViewHostObject { layer, .. } = env.objc.borrow_mut(this);
+    release(env, layer);
+
+    // FIXME: this should do a super-call instead
+    env.objc.dealloc_object(this, &mut env.mem);
+}
+
+- (id)layer {
+    env.objc.borrow_mut::<UIViewHostObject>(this).layer
 }
 
 @end

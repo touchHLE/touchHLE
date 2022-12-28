@@ -12,6 +12,7 @@
 //! page documenting that class, but if there's something interesting in the
 //! Documentation Archive relating to arrays, that might be linked.
 
+pub mod core_animation;
 pub mod foundation;
 pub mod uikit;
 

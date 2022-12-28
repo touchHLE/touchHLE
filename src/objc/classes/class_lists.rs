@@ -1,10 +1,12 @@
 //! Separate module just for the class lists, since this will probably be a
 //! very long and frequently-updated list.
 
-use crate::frameworks::{foundation, uikit};
+use crate::frameworks::{core_animation, foundation, uikit};
 
 /// All the lists of classes that the runtime should search through.
 pub const CLASS_LISTS: &[super::ClassExports] = &[
+    core_animation::ca_eagl_layer::CLASSES,
+    core_animation::ca_layer::CLASSES,
     foundation::ns_array::CLASSES,
     foundation::ns_autorelease_pool::CLASSES,
     foundation::ns_coder::CLASSES,

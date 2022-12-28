@@ -259,6 +259,16 @@ impl_GuestArg_with!(i16, u32);
 impl_GuestArg_with!(u8, u32);
 impl_GuestArg_with!(i8, u32);
 
+impl GuestArg for bool {
+    const REG_COUNT: usize = 1;
+    fn from_regs(regs: &[u32]) -> Self {
+        <u32 as GuestArg>::from_regs(regs) != 0
+    }
+    fn to_regs(self, regs: &mut [u32]) {
+        <u32 as GuestArg>::to_regs(self as u32, regs)
+    }
+}
+
 impl GuestArg for f32 {
     const REG_COUNT: usize = <u32 as GuestArg>::REG_COUNT;
     fn from_regs(regs: &[u32]) -> Self {
@@ -343,6 +353,15 @@ impl_GuestRet_with!(u16, u32);
 impl_GuestRet_with!(i16, u32);
 impl_GuestRet_with!(u8, u32);
 impl_GuestRet_with!(i8, u32);
+
+impl GuestRet for bool {
+    fn from_regs(regs: &[u32]) -> Self {
+        <u32 as GuestRet>::from_regs(regs) != 0
+    }
+    fn to_regs(self, regs: &mut [u32]) {
+        <u32 as GuestRet>::to_regs(self as u32, regs)
+    }
+}
 
 impl GuestRet for f32 {
     fn from_regs(regs: &[u32]) -> Self {

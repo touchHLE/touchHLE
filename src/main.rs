@@ -15,6 +15,8 @@
 // This also allows items in the crate to have non-snake-case names.
 #![allow(non_snake_case)]
 
+#[macro_use]
+mod log;
 mod abi;
 mod bundle;
 mod cpu;
@@ -137,7 +139,7 @@ impl Environment {
                     // System frameworks will have host implementations.
                     // TODO: warn about unimplemented frameworks?
                     if !dylib.starts_with("/System/Library/Frameworks/") {
-                        eprintln!(
+                        log!(
                             "Warning: app binary depends on unexpected dylib \"{}\"",
                             dylib
                         );

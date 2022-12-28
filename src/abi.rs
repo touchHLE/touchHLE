@@ -71,7 +71,7 @@ impl GuestFunction {
     /// See also [CallFromGuest] and [CallFromHost]. The latter is implemented
     /// for [GuestFunction] using this method.
     pub fn call(self, env: &mut Environment) {
-        println!("Begin call to guest function {:?}", self);
+        log_dbg!("Begin call to guest function {:?}", self);
 
         let (old_pc, old_lr) = env
             .cpu
@@ -82,7 +82,7 @@ impl GuestFunction {
         env.cpu.branch(old_pc);
         env.cpu.regs_mut()[Cpu::LR] = old_lr.addr_with_thumb_bit();
 
-        println!("End call to guest function {:?}", self);
+        log_dbg!("End call to guest function {:?}", self);
     }
 }
 

@@ -22,7 +22,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 // NSCoding implementation
 - (id)initWithCoder:(id)coder {
-    eprintln!("TODO: [(UIProxyObject*){:?} initWithCoder:{:?}]", this, coder);
+    log!("TODO: [(UIProxyObject*){:?} initWithCoder:{:?}]", this, coder);
     this
 }
 
@@ -65,7 +65,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 // NSCoding implementation
 - (id)initWithCoder:(id)coder {
-    eprintln!("TODO: [(UIRuntimeOutletConnection*){:?} initWithCoder:{:?}]", this, coder);
+    log!("TODO: [(UIRuntimeOutletConnection*){:?} initWithCoder:{:?}]", this, coder);
     this
 }
 

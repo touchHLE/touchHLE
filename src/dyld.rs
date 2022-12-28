@@ -235,9 +235,11 @@ impl Dyld {
                 objc.link_class(name, /* is_metaclass: */ true, mem)
             } else {
                 // TODO: look up symbol, write pointer
-                eprintln!(
+                log!(
                     "Warning: unhandled external relocation {:?} at {:#x} in \"{}\"",
-                    name, ptr_ptr, bin.name
+                    name,
+                    ptr_ptr,
+                    bin.name
                 );
                 continue;
             };
@@ -268,9 +270,11 @@ impl Dyld {
             }
 
             // TODO: look up symbol in host implementations, write pointer
-            eprintln!(
+            log!(
                 "Warning: unhandled non-lazy symbol {:?} at {:?} in \"{}\"",
-                symbol, ptr_ptr, bin.name
+                symbol,
+                ptr_ptr,
+                bin.name
             );
         }
 
@@ -375,7 +379,7 @@ impl Dyld {
                 };
                 mem.write(la_symbol_ptr, addr);
 
-                println!("Linked {:?} as {:#x} at {:?}", symbol, addr, la_symbol_ptr);
+                log_dbg!("Linked {:?} as {:#x} at {:?}", symbol, addr, la_symbol_ptr);
 
                 // Tell the caller it needs to restart execution at svc_pc.
                 return None;

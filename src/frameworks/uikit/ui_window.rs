@@ -10,7 +10,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 // NSCoding implementation
 - (id)initWithCoder:(id)coder {
-    eprintln!("TODO: [(UIWindow*){:?} initWithCoder:{:?}]", this, coder);
+    log!("TODO: [{:?} initWithCoder:{:?}]", this, coder);
     this
 }
 

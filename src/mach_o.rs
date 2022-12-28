@@ -233,7 +233,7 @@ impl MachO {
                         }
                         "__TEXT" | "__DATA" => true,
                         _ => {
-                            println!("Warning: Unexpected segment name: {}", segname);
+                            log!("Warning: Unexpected segment name: {}", segname);
                             true
                         }
                     };
@@ -362,7 +362,7 @@ impl MachO {
                 // LoadCommand::DyldInfo is apparently a newer thing that 2008
                 // games don't have. Ignore for now? Unsure if/when iOS got it.
                 LoadCommand::DyldInfo { .. } => {
-                    eprintln!("Warning! DyldInfo is not handled.");
+                    log!("Warning! DyldInfo is not handled.");
                 }
                 _ => (),
             }

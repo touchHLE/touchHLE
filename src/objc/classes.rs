@@ -482,9 +482,11 @@ impl ObjC {
 
             // TODO: call ClassHostObject::add_methods_from_bin, though the
             // double-borrow of ObjC will need to be fixed somehow.
-            eprintln!(
+            log!(
                 "TODO: apply guest app category \"{}\" {:?} to class {:?}",
-                name, cat_ptr, class
+                name,
+                cat_ptr,
+                class
             );
         }
     }

@@ -271,13 +271,15 @@ impl Mem {
     }
 
     pub fn alloc(&mut self, size: GuestUSize) -> MutVoidPtr {
-        Ptr::from_bits(self.allocator.alloc(size))
+        let ptr = Ptr::from_bits(self.allocator.alloc(size));
+        log_dbg!("Allocated {:?} ({:#x} bytes)", ptr, size);
+        ptr
     }
 
     pub fn free(&mut self, ptr: MutVoidPtr) {
         let size = self.allocator.free(ptr.to_bits());
         self.bytes_at_mut(ptr.cast(), size).fill(0);
-        eprintln!("Mem: freed {:?} ({:#x} bytes)", ptr, size);
+        log_dbg!("Freed {:?} ({:#x} bytes)", ptr, size);
     }
 
     pub fn alloc_and_write<T>(&mut self, value: T) -> MutPtr<T>

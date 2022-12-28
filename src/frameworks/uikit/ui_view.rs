@@ -1,6 +1,6 @@
 //! `UIView`.
 
-use crate::frameworks::foundation::ns_string::{copy_string, string_with_static_str};
+use crate::frameworks::foundation::ns_string::{get_static_str, to_rust_string};
 use crate::mem::MutVoidPtr;
 use crate::objc::{id, msg, objc_classes, release, ClassExports, HostObject};
 
@@ -46,14 +46,14 @@ pub const CLASSES: ClassExports = objc_classes! {
     // TODO: avoid copying strings
     // TODO: decode the various other UIView properties
 
-    let key_ns_string = string_with_static_str(env, "UIBounds");
+    let key_ns_string = get_static_str(env, "UIBounds");
     let value = msg![env; coder decodeObjectForKey:key_ns_string];
-    let bounds = parse_rect(&copy_string(env, value)).unwrap();
+    let bounds = parse_rect(&to_rust_string(env, value)).unwrap();
     release(env, value);
 
-    let key_ns_string = string_with_static_str(env, "UICenter");
+    let key_ns_string = get_static_str(env, "UICenter");
     let value = msg![env; coder decodeObjectForKey:key_ns_string];
-    let center = parse_point(&copy_string(env, value)).unwrap();
+    let center = parse_point(&to_rust_string(env, value)).unwrap();
     release(env, value);
 
     let host_object: &mut UIViewHostObject = env.objc.borrow_mut(this);

@@ -6,7 +6,7 @@
 //!   plists, e.g. `plutil -p` or `println!("{:#?}", plist::Value::...);`.
 //! - Apple's [Archives and Serializations Programming Guide](https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/Archiving/Articles/archives.html)
 
-use super::ns_string::{copy_string, string_with_rust_string};
+use super::ns_string::{from_rust_string, to_rust_string};
 use crate::mem::MutVoidPtr;
 use crate::objc::{id, msg, objc_classes, release, retain, ClassExports, HostObject};
 use crate::Environment;
@@ -60,7 +60,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 // if the key is unknown.
 
 - (id)decodeObjectForKey:(id)key { // NSString*
-    let key = copy_string(env, key); // TODO: avoid copying string
+    let key = to_rust_string(env, key); // TODO: avoid copying string
     let host_obj = borrow_host_obj(env, this);
     let scope = match host_obj.current_key {
         Some(current_uid) => {
@@ -164,7 +164,7 @@ fn unarchive_key(env: &mut Environment, unarchiver: id, key: Uid) -> id {
         }
         Value::String(s) => {
             let s = s.to_string();
-            string_with_rust_string(env, s)
+            from_rust_string(env, s)
         }
         _ => unimplemented!("Unarchive: {:#?}", item),
     };

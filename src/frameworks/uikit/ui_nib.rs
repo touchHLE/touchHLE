@@ -5,7 +5,7 @@
 //! - GitHub user 0xced's [reverse-engineering of UIClassSwapper](https://gist.github.com/0xced/45daf79b62ad6a20be1c).
 
 use crate::frameworks::foundation::ns_keyed_unarchiver;
-use crate::frameworks::foundation::ns_string::{copy_string, string_with_static_str};
+use crate::frameworks::foundation::ns_string::{get_static_str, to_rust_string};
 use crate::objc::{id, msg, msg_class, objc_classes, release, ClassExports};
 use crate::Environment;
 
@@ -36,14 +36,14 @@ pub const CLASSES: ClassExports = objc_classes! {
 // NSCoding implementation
 - (id)initWithCoder:(id)coder {
 
-    let name_key = string_with_static_str(env, "UIClassName");
+    let name_key = get_static_str(env, "UIClassName");
     let name_nss: id = msg![env; coder decodeObjectForKey:name_key];
-    let name = copy_string(env, name_nss);
+    let name = to_rust_string(env, name_nss);
     release(env, name_nss);
 
-    let orig_key = string_with_static_str(env, "UIOriginalClassName");
+    let orig_key = get_static_str(env, "UIOriginalClassName");
     let orig_nss: id = msg![env; coder decodeObjectForKey:orig_key];
-    let orig = copy_string(env, orig_nss);
+    let orig = to_rust_string(env, orig_nss);
     release(env, orig_nss);
 
     let class = env.objc.get_known_class(&name, &mut env.mem);
@@ -98,11 +98,11 @@ pub fn load_main_nib_file(env: &mut Environment, _ui_application: id) -> id {
     // Only the objects, top-level objects and connections lists seem useful
     // right now.
 
-    let objects_key = string_with_static_str(env, "UINibObjectsKey");
+    let objects_key = get_static_str(env, "UINibObjectsKey");
     let objects: id = msg![env; unarchiver decodeObjectForKey:objects_key];
-    let conns_key = string_with_static_str(env, "UINibConnectionsKey");
+    let conns_key = get_static_str(env, "UINibConnectionsKey");
     let conns: id = msg![env; unarchiver decodeObjectForKey:conns_key];
-    let tlos_key = string_with_static_str(env, "UINibTopLevelObjectsKey");
+    let tlos_key = get_static_str(env, "UINibTopLevelObjectsKey");
     let tlos: id = msg![env; unarchiver decodeObjectForKey:tlos_key];
 
     release(env, unarchiver);

@@ -57,7 +57,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 @end
 
 // Specialised subclass for static-lifetime strings.
-// See `string_with_static_str`.
+// See `get_static_str`.
 @implementation _touchHLE_NSString_Static: _touchHLE_NSString
 
 + (id)allocWithZone:(MutVoidPtr)_zone {
@@ -73,7 +73,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 /// Shortcut for host code: get an NSString corresponding to a `&'static str`,
 /// which does not have to be released and is never deallocated.
-pub fn string_with_static_str(env: &mut Environment, from: &'static str) -> id {
+pub fn get_static_str(env: &mut Environment, from: &'static str) -> id {
     if let Some(&existing) = State::get(env).static_str_pool.get(from) {
         existing
     } else {
@@ -86,7 +86,7 @@ pub fn string_with_static_str(env: &mut Environment, from: &'static str) -> id {
 
 /// Shortcut for host code, roughly equivalent to `stringWithUTF8String:` in the
 /// proper API.
-pub fn string_with_rust_string(env: &mut Environment, from: String) -> id {
+pub fn from_rust_string(env: &mut Environment, from: String) -> id {
     let string: id = msg_class![env; _touchHLE_NSString alloc];
     let host_object: &mut StringHostObject = env.objc.borrow_mut(string);
     *host_object = StringHostObject::UTF8(Cow::Owned(from));
@@ -95,7 +95,7 @@ pub fn string_with_rust_string(env: &mut Environment, from: String) -> id {
 
 /// Shortcut for host code, provides a view of a string in UTF-8.
 /// TODO: Try to avoid allocating a new String in more cases.
-pub fn copy_string(env: &mut Environment, string: id) -> Cow<'static, str> {
+pub fn to_rust_string(env: &mut Environment, string: id) -> Cow<'static, str> {
     // TODO: handle foreign subclasses of NSString
     let host_object: &mut StringHostObject = env.objc.borrow_mut(string);
     let StringHostObject::UTF8(utf8) = host_object;

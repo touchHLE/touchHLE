@@ -218,7 +218,7 @@ fn read_next_arg<T: GuestArg>(reg_offset: &mut usize, regs: &[u32]) -> T {
 }
 
 /// Write a single argument to registers. Call this for each argument in order.
-fn write_next_arg<T: GuestArg>(reg_offset: &mut usize, regs: &mut [u32], arg: T) {
+pub fn write_next_arg<T: GuestArg>(reg_offset: &mut usize, regs: &mut [u32], arg: T) {
     // After the fourth register is used, the arguments go on the stack.
     // (Support not implemented yet, Rust will panic if indexing out-of-bounds.)
     let regs = &mut regs[0..4];

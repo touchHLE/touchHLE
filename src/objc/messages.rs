@@ -4,29 +4,32 @@
 //! - Apple's [Objective-C Runtime Programming Guide](https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/ObjCRuntimeGuide/Articles/ocrtHowMessagingWorks.html)
 //! - [Apple's documentation of `objc_msgSend`](https://developer.apple.com/documentation/objectivec/1456712-objc_msgsend)
 //! - Mike Ash's [objc_msgSend's New Prototype](https://www.mikeash.com/pyblog/objc_msgsends-new-prototype.html)
+//! - Peter Steinberger's [Calling Super at Runtime in Swift](https://steipete.com/posts/calling-super-at-runtime/) explains `objc_msgSendSuper2`
 
-use super::{id, nil, ObjC, IMP, SEL};
+use super::{id, nil, Class, ObjC, IMP, SEL};
 use crate::abi::CallFromHost;
+use crate::mem::{ConstPtr, SafeRead};
 use crate::Environment;
 
-/// `objc_msgSend` itself, the main function of Objective-C.
+/// The core implementation of `objc_msgSend`, the main function of Objective-C.
 ///
-/// Note that while only the receiver and selector parameters are declared here,
-/// a call to `objc_msgSend` may have additional arguments to be forwarded (or
-/// rather, left untouched) by `objc_msgSend` when it tail-calls the method
-/// implementation it looks up. This is invisible to the Rust type system; we're
-/// relying on [crate::abi::CallFromGuest] here.
+/// Note that while only two parameters (usually receiver and selector) are
+/// defined by the wrappers over this function, a call to an `objc_msgSend`
+/// variant may have additional arguments to be forwarded (or rather, left
+/// untouched) by `objc_msgSend` when it tail-calls the method implementation it
+/// looks up. This is invisible to the Rust type system; we're relying on
+/// [crate::abi::CallFromGuest] here.
 ///
 /// Similarly, the return value of `objc_msgSend` is whatever value is returned
 /// by the method implementation. We are relying on CallFromGuest not
 /// overwriting it.
 #[allow(non_snake_case)]
-pub fn objc_msgSend(env: &mut Environment, receiver: id, selector: SEL) {
+fn objc_msgSend_inner(env: &mut Environment, receiver: id, selector: SEL, super2: Option<Class>) {
     if receiver == nil {
         unimplemented!()
     } // TODO: nil handling
 
-    let orig_class = ObjC::read_isa(receiver, &env.mem);
+    let orig_class = super2.unwrap_or_else(|| ObjC::read_isa(receiver, &env.mem));
     assert!(orig_class != nil);
 
     // Traverse the chain of superclasses to find the method implementation.
@@ -44,12 +47,17 @@ pub fn objc_msgSend(env: &mut Environment, receiver: id, selector: SEL) {
             } = class_host_object.as_any().downcast_ref().unwrap();
 
             panic!(
-                "{} {:?} ({}class \"{}\", {:?}) does not respond to selector \"{}\"!",
+                "{} {:?} ({}class \"{}\", {:?}){} does not respond to selector \"{}\"!",
                 if is_metaclass { "Class" } else { "Object" },
                 receiver,
                 if is_metaclass { "meta" } else { "" },
                 name,
                 orig_class,
+                if super2.is_some() {
+                    "'s superclass"
+                } else {
+                    ""
+                },
                 selector.as_str(&env.mem),
             );
         }
@@ -62,6 +70,13 @@ pub fn objc_msgSend(env: &mut Environment, receiver: id, selector: SEL) {
             ..
         }) = host_object.as_any().downcast_ref()
         {
+            // Skip method lookup on first iteration if this is the super-call
+            // variant of objc_msgSend (look up the superclass first)
+            if super2.is_some() && class == orig_class {
+                class = superclass;
+                continue;
+            }
+
             if let Some(imp) = methods.get(&selector) {
                 match imp {
                     IMP::Host(host_imp) => host_imp.call_from_guest(env),
@@ -90,6 +105,44 @@ pub fn objc_msgSend(env: &mut Environment, receiver: id, selector: SEL) {
             );
         }
     }
+}
+
+/// Standard variant of `objc_msgSend`. See [objc_msgSend_inner].
+#[allow(non_snake_case)]
+pub(super) fn objc_msgSend(env: &mut Environment, receiver: id, selector: SEL) {
+    objc_msgSend_inner(env, receiver, selector, /* super2: */ None)
+}
+
+#[repr(C, packed)]
+pub(super) struct objc_super {
+    receiver: id,
+    /// If this is used with `objc_msgSendSuper` (not implemented here, TODO),
+    /// this is a pointer to the superclass to look up the method on.
+    /// If this is used with `objc_msgSendSuper2`, this is a pointer to a class
+    /// and the superclass will be looked up from it.
+    class: Class,
+}
+impl SafeRead for objc_super {}
+
+/// Variant of `objc_msgSend` for supercalls. See [objc_msgSend_inner].
+///
+/// This variant has a weird ABI because it needs to receive an additional piece
+/// of information (a class pointer), but it can't actually take this as an
+/// extra parameter, because that would take one of the argument slots reserved
+/// for arguments passed onto the method implementation. Hence the [objc_super]
+/// pointer in place of the normal [id].
+#[allow(non_snake_case)]
+pub(super) fn objc_msgSendSuper2(
+    env: &mut Environment,
+    super_ptr: ConstPtr<objc_super>,
+    selector: SEL,
+) {
+    let objc_super { receiver, class } = env.mem.read(super_ptr);
+
+    // Rewrite first argument to match the normal ABI.
+    crate::abi::write_next_arg(&mut 0, env.cpu.regs_mut(), receiver);
+
+    objc_msgSend_inner(env, receiver, selector, /* super2: */ Some(class))
 }
 
 /// Wrapper around [objc_msgSend] which, together with [msg], makes it easy to

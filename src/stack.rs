@@ -72,6 +72,9 @@ pub fn prep_stack_for_start(
     let stack_height: GuestUSize = reversed_data.len().try_into().unwrap();
 
     assert!(stack_height < Mem::MAIN_THREAD_STACK_SIZE);
+    // FIXME: make stack always be 4-byte aligned. it is currently aligned only
+    // by accident
+    assert!(stack_height % 4 == 0);
 
     let stack_region = mem.bytes_at_mut(stack_ptr, stack_height);
 

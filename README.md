@@ -8,7 +8,7 @@ This project is not affiliated with or endorsed by Apple Inc in any way. iPhone,
 
 ## What do we mean by high-level emulation?
 
-High-level emulation (HLE) means that we're not emulating the hardware of an iPhone or iPod touch, nor are we emulating the OS kernel. In fact, this emulator does not execute any part of iPhone OS at all! The ARMv6 code in the app binary is emulated by [dynarmic](https://github.com/merryhime/dynarmic), but everything else is done by intercepting the API calls made by the app and providing our own implementations of them. In that respect the touchHLE could be compared to [WINE](https://www.winehq.org/).
+High-level emulation (HLE) means that we're not emulating the hardware of an iPhone or iPod touch, nor are we emulating the OS kernel. In fact, this emulator does not execute any part of iPhone OS at all! The ARMv6 code in the app binary is emulated by [dynarmic](https://github.com/merryhime/dynarmic), but everything else is done by intercepting the API calls made by the app and providing our own implementations of them. In that respect touchHLE could be compared to [WINE](https://www.winehq.org/).
 
 Our implementations are completely free of Apple code and do not require using an Apple platform or a copy of iPhone OS. The only binaries required are libgcc and libstdc++, which are Free Software and included in this repo.
 

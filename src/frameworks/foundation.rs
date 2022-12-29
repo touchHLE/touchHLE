@@ -12,6 +12,7 @@ pub mod ns_coder;
 pub mod ns_keyed_unarchiver;
 pub mod ns_object;
 pub mod ns_string;
+pub mod ns_value;
 
 #[derive(Default)]
 pub struct State {

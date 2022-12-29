@@ -13,6 +13,7 @@ pub const CLASS_LISTS: &[super::ClassExports] = &[
     foundation::ns_keyed_unarchiver::CLASSES,
     foundation::ns_object::CLASSES,
     foundation::ns_string::CLASSES,
+    foundation::ns_value::CLASSES,
     uikit::ui_application::CLASSES,
     uikit::ui_nib::CLASSES,
     uikit::ui_responder::CLASSES,

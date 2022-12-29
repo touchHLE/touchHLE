@@ -12,8 +12,11 @@
 //! page documenting that class, but if there's something interesting in the
 //! Documentation Archive relating to arrays, that might be linked.
 
+#![allow(non_upper_case_globals)] // Lots of Apple constants begin with "k"
+
 pub mod core_animation;
 pub mod foundation;
+pub mod opengles;
 pub mod uikit;
 
 /// Container for state of various child modules

@@ -109,7 +109,7 @@ pub struct ClassTemplate {
 ///
 /// The strings are the class names.
 ///
-/// See also [crate::dyld::FunctionExports].
+/// See also [crate::dyld::ConstantExports] and [crate::dyld::FunctionExports].
 pub type ClassExports = &'static [(&'static str, ClassTemplate)];
 
 #[doc(hidden)]

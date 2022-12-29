@@ -15,13 +15,16 @@
 //!
 //! See [crate::mach_o] for resources.
 
+mod constant_lists;
 mod function_lists;
 
 use crate::abi::{CallFromGuest, GuestFunction};
 use crate::cpu::Cpu;
+use crate::frameworks::foundation::ns_string;
 use crate::mach_o::MachO;
 use crate::mem::{ConstVoidPtr, GuestUSize, Mem, MutPtr, Ptr};
 use crate::objc::ObjC;
+use crate::Environment;
 
 type HostFunction = &'static dyn CallFromGuest;
 
@@ -50,7 +53,7 @@ type HostFunction = &'static dyn CallFromGuest;
 /// ];
 /// ```
 ///
-/// See also [crate::objc::ClassExports].
+/// See also [ConstantExports] and [crate::objc::ClassExports].
 pub type FunctionExports = &'static [(&'static str, HostFunction)];
 
 /// Macro for exporting a function with C-style name mangling. See [FunctionExports].
@@ -80,7 +83,31 @@ macro_rules! export_c_func {
 }
 pub use crate::export_c_func; // #[macro_export] is weird...
 
-/// Helper for working with [FunctionExports] and similar symbol lists.
+/// Type for describing a constant (C `extern const` symbol) that will be
+/// created by the linker if the guest app references it. See [ConstantExports].
+pub enum HostConstant {
+    NSString(&'static str),
+}
+
+/// Type for lists of constants exported by host implementations of frameworks.
+///
+/// Each module that wants to expose functions to guest code should export a
+/// constant using this type, e.g.:
+///
+/// ```
+/// pub const CONSTANT: ConstantExports = &[
+///    ("_kNSFooBar", HostConstant::NSString("NSFooBar")),
+///    /* ... */
+/// ];
+/// ```
+///
+/// The strings are the mangled symbol names. For C constants, this is just the
+/// name prefixed with an underscore.
+///
+/// See also [FunctionExports], [crate::objc::ClassExports].
+pub type ConstantExports = &'static [(&'static str, HostConstant)];
+
+/// Helper for working with symbol lists in the style of [FunctionExports].
 pub fn search_lists<T>(
     lists: &'static [&'static [(&'static str, T)]],
     symbol: &str,
@@ -106,6 +133,7 @@ fn encode_a32_trap() -> u32 {
 pub struct Dyld {
     linked_host_functions: Vec<HostFunction>,
     return_to_host_routine: Option<GuestFunction>,
+    constants_to_link_later: Vec<(MutPtr<ConstVoidPtr>, &'static HostConstant)>,
 }
 
 impl Dyld {
@@ -124,6 +152,7 @@ impl Dyld {
         Dyld {
             linked_host_functions: Vec::new(),
             return_to_host_routine: None,
+            constants_to_link_later: Vec::new(),
         }
     }
 
@@ -227,7 +256,7 @@ impl Dyld {
     ///
     /// `bin` is the binary to link non-lazy symbols for, `bins` is the set of
     /// binaries symbols may be looked up in.
-    fn do_non_lazy_linking(&self, bin: &MachO, bins: &[MachO], mem: &mut Mem, objc: &mut ObjC) {
+    fn do_non_lazy_linking(&mut self, bin: &MachO, bins: &[MachO], mem: &mut Mem, objc: &mut ObjC) {
         for &(ptr_ptr, ref name) in &bin.external_relocations {
             let ptr = if let Some(name) = name.strip_prefix("_OBJC_CLASS_$_") {
                 objc.link_class(name, /* is_metaclass: */ false, mem)
@@ -269,7 +298,13 @@ impl Dyld {
                 }
             }
 
-            // TODO: look up symbol in host implementations, write pointer
+            if let Some(template) = search_lists(constant_lists::CONSTANT_LISTS, symbol) {
+                // Delay linking of constant until we have a `&mut Environment`,
+                // that makes it much easier to build NSString objects etc.
+                self.constants_to_link_later.push((ptr_ptr, template));
+                continue;
+            }
+
             log!(
                 "Warning: unhandled non-lazy symbol {:?} at {:?} in \"{}\"",
                 symbol,
@@ -279,6 +314,20 @@ impl Dyld {
         }
 
         // FIXME: there's probably internal relocations to deal with too.
+    }
+
+    /// Do linking that can only be done once there is a full [Environment].
+    /// Not to be confused with lazy linking.
+    pub fn do_late_linking(env: &mut Environment) {
+        // TODO: do constants ever appear in __nl_symbol_ptr multiple times?
+
+        let to_link = std::mem::take(&mut env.dyld.constants_to_link_later);
+        for (ptr_ptr, template) in to_link {
+            let HostConstant::NSString(static_str) = template;
+            let ns_string = ns_string::get_static_str(env, static_str);
+            let ns_string_ptr = env.mem.alloc_and_write(ns_string);
+            env.mem.write(ptr_ptr, ns_string_ptr.cast().cast_const());
+        }
     }
 
     /// Return a host function that can be called to handle an SVC instruction

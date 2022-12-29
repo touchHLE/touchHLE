@@ -164,7 +164,22 @@ impl Environment {
         let mut dyld = dyld::Dyld::new();
         dyld.do_initial_linking(&bins, &mut mem, &mut objc);
 
-        let mut cpu = cpu::Cpu::new();
+        let cpu = cpu::Cpu::new();
+
+        let mut env = Environment {
+            bundle,
+            window,
+            mem,
+            bins,
+            objc,
+            dyld,
+            cpu,
+            current_thread: 0,
+            libc_state: Default::default(),
+            framework_state: Default::default(),
+        };
+
+        dyld::Dyld::do_late_linking(&mut env);
 
         {
             // FIXME: use actual app name
@@ -176,7 +191,7 @@ impl Environment {
             let argv = &[fake_guest_path];
             let envp = &[];
             let apple = &[fake_guest_path_apple_key];
-            stack::prep_stack_for_start(&mut mem, &mut cpu, argv, envp, apple);
+            stack::prep_stack_for_start(&mut env.mem, &mut env.cpu, argv, envp, apple);
         }
 
         println!("CPU emulation begins now.");
@@ -185,21 +200,10 @@ impl Environment {
         // lots of these and eventually we'll hit something that breaks if they
         // aren't run.
 
-        cpu.set_cpsr(cpu::Cpu::CPSR_USER_MODE);
-        cpu.branch(entry_point_addr);
+        env.cpu.set_cpsr(cpu::Cpu::CPSR_USER_MODE);
+        env.cpu.branch(entry_point_addr);
 
-        Ok(Environment {
-            bundle,
-            window,
-            mem,
-            bins,
-            objc,
-            dyld,
-            cpu,
-            current_thread: 0,
-            libc_state: Default::default(),
-            framework_state: Default::default(),
-        })
+        Ok(env)
     }
 
     /// Run the emulator. This is the main loop and won't return until app exit.

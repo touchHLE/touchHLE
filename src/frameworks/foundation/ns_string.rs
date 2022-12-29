@@ -66,6 +66,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (()) release {}
+- (id) autorelease { this }
 
 @end
 
@@ -84,8 +85,8 @@ pub fn get_static_str(env: &mut Environment, from: &'static str) -> id {
     }
 }
 
-/// Shortcut for host code, roughly equivalent to `stringWithUTF8String:` in the
-/// proper API.
+/// Shortcut for host code, roughly equivalent to
+/// `[[NSString alloc] initWithUTF8String:]` in the proper API.
 pub fn from_rust_string(env: &mut Environment, from: String) -> id {
     let string: id = msg_class![env; _touchHLE_NSString alloc];
     let host_object: &mut StringHostObject = env.objc.borrow_mut(string);

@@ -8,7 +8,7 @@
 //! See also: [crate::objc], especially the `objects` module.
 
 use crate::mem::MutVoidPtr;
-use crate::objc::{id, msg, objc_classes, Class, ClassExports, TrivialHostObject};
+use crate::objc::{id, msg, msg_class, objc_classes, Class, ClassExports, TrivialHostObject};
 
 pub const CLASSES: ClassExports = objc_classes! {
 
@@ -40,6 +40,9 @@ pub const CLASSES: ClassExports = objc_classes! {
 + (())release {
     // classes are not refcounted
 }
++ (())autorelease {
+    // classes are not refcounted
+}
 
 - (id)init {
     this
@@ -55,6 +58,10 @@ pub const CLASSES: ClassExports = objc_classes! {
     if env.objc.decrement_refcount(this) {
         let _: () = msg![env; this dealloc];
     }
+}
+- (id)autorelease {
+    let _: () = msg_class![env; NSAutoreleasePool addObject:this];
+    this
 }
 
 - (())dealloc {

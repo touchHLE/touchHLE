@@ -24,7 +24,7 @@ mod objects;
 mod selectors;
 
 pub use classes::{objc_classes, Class, ClassExports, ClassTemplate};
-pub use messages::{msg, msg_class, msg_send, release, retain};
+pub use messages::{autorelease, msg, msg_class, msg_send, release, retain};
 pub use methods::{GuestIMP, HostIMP, IMP};
 pub use objects::{id, nil, AnyHostObject, HostObject, TrivialHostObject};
 pub use selectors::{selector, SEL};

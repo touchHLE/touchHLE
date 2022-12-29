@@ -8,7 +8,7 @@
 
 use super::ns_string::{from_rust_string, to_rust_string};
 use crate::mem::MutVoidPtr;
-use crate::objc::{id, msg, objc_classes, release, retain, ClassExports, HostObject};
+use crate::objc::{autorelease, id, msg, objc_classes, release, retain, ClassExports, HostObject};
 use crate::Environment;
 use plist::{Dictionary, Uid, Value};
 use std::path::Path;
@@ -72,7 +72,10 @@ pub const CLASSES: ClassExports = objc_classes! {
     }.as_dictionary().unwrap();
     let next_uid = scope[&key].as_uid().copied().unwrap();
     let object = unarchive_key(env, this, next_uid);
-    retain(env, object) // caller must release it
+
+    // on behalf of the caller
+    retain(env, object);
+    autorelease(env, object)
 }
 
 // TODO: add more decode methods
@@ -113,8 +116,8 @@ pub fn init_for_reading_file(env: &mut Environment, unarchiver: id, path: &Path)
 /// `decodeXXXWithKey:` messages back to the unarchiver, which will then call
 /// this function (and so on).
 ///
-/// The object returned will have a refcount of 1 and should be considered
-/// owned by the NSKeyedUnarchiver.
+/// The object returned is retained only by the archiver. Remember to retain and
+/// possibly autorelease it as appropriate.
 fn unarchive_key(env: &mut Environment, unarchiver: id, key: Uid) -> id {
     let host_obj = borrow_host_obj(env, unarchiver);
     if let Some(existing) = host_obj.already_unarchived[key.get() as usize] {
@@ -159,8 +162,8 @@ fn unarchive_key(env: &mut Environment, unarchiver: id, key: Uid) -> id {
 
             let host_obj = borrow_host_obj(env, unarchiver); // reborrow
             host_obj.current_key = old_current_key;
-            host_obj.already_unarchived[key.get() as usize] = Some(new_object);
-            return new_object;
+
+            new_object
         }
         Value::String(s) => {
             let s = s.to_string();

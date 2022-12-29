@@ -232,3 +232,8 @@ pub fn retain(env: &mut Environment, object: id) -> id {
 pub fn release(env: &mut Environment, object: id) {
     msg![env; object release]
 }
+
+/// Shorthand for `let _: id = msg![env; object autorelease];`
+pub fn autorelease(env: &mut Environment, object: id) -> id {
+    msg![env; object autorelease]
+}

@@ -15,5 +15,6 @@ pub mod ns_string;
 
 #[derive(Default)]
 pub struct State {
+    ns_autorelease_pool: ns_autorelease_pool::State,
     ns_string: ns_string::State,
 }

@@ -7,7 +7,7 @@
 //! See also: [crate::mem::SafeRead] and [crate::mem::SafeWrite].
 
 use crate::cpu::Cpu;
-use crate::mem::{ConstVoidPtr, Ptr};
+use crate::mem::{ConstPtr, ConstVoidPtr, Mem, Ptr};
 use crate::Environment;
 
 /// Address of an A32 or T32 instruction, with the mode encoded using the Thumb
@@ -121,9 +121,24 @@ macro_rules! impl_CallFromGuest {
                 let args: ($($P,)*) = {
                     let regs = env.cpu.regs();
                     let mut reg_offset = 0;
-                    ($(read_next_arg::<$P>(&mut reg_offset, regs),)*)
+                    ($(read_next_arg::<$P>(&mut reg_offset, regs, &env.mem),)*)
                 };
                 let retval = self(env, $(args.$p),*);
+                retval.to_regs(env.cpu.regs_mut());
+            }
+        }
+        impl<R, $($P),*> CallFromGuest for fn(&mut Environment, $($P,)* VAList) -> R
+            where R: GuestRet, $($P: GuestArg,)* {
+            // ignore warnings for the zero-argument case
+            #[allow(unused_variables, unused_mut, clippy::unused_unit)]
+            fn call_from_guest(&self, env: &mut Environment) {
+                let mut reg_offset = 0;
+                let args: ($($P,)*) = {
+                    let regs = env.cpu.regs();
+                    ($(read_next_arg::<$P>(&mut reg_offset, regs, &env.mem),)*)
+                };
+                let va_list = VAList { reg_offset };
+                let retval = self(env, $(args.$p,)* va_list);
                 retval.to_regs(env.cpu.regs_mut());
             }
         }
@@ -207,14 +222,24 @@ pub trait GuestArg: Sized {
 }
 
 /// Read a single argument from registers. Call this for each argument in order.
-fn read_next_arg<T: GuestArg>(reg_offset: &mut usize, regs: &[u32]) -> T {
+fn read_next_arg<T: GuestArg>(reg_offset: &mut usize, regs: &[u32], mem: &Mem) -> T {
     // After the fourth register is used, the arguments go on the stack.
-    // (Support not implemented yet, Rust will panic if indexing out-of-bounds.)
-    let regs = &regs[0..4];
+    // In some cases the argument is split over both registers and the stack.
 
-    let val = T::from_regs(&regs[*reg_offset..][..T::REG_COUNT]);
-    *reg_offset += T::REG_COUNT;
-    val
+    let mut fake_regs = [0u32; 4]; // Rust doesn't allow [0u32; Trait::T] alas.
+    let fake_regs = &mut fake_regs[0..T::REG_COUNT];
+
+    for fake_reg in fake_regs.iter_mut() {
+        if *reg_offset < 4 {
+            *fake_reg = regs[*reg_offset];
+        } else {
+            let stack_ptr: ConstPtr<u32> = Ptr::from_bits(regs[Cpu::SP]);
+            *fake_reg = mem.read(stack_ptr + (*reg_offset - 4).try_into().unwrap());
+        }
+        *reg_offset += 1;
+    }
+
+    T::from_regs(fake_regs)
 }
 
 /// Write a single argument to registers. Call this for each argument in order.
@@ -225,6 +250,19 @@ pub fn write_next_arg<T: GuestArg>(reg_offset: &mut usize, regs: &mut [u32], arg
 
     arg.to_regs(&mut regs[*reg_offset..][..T::REG_COUNT]);
     *reg_offset += T::REG_COUNT;
+}
+
+/// Calling convention translation for a variable arguments list (like C
+/// `va_list`).
+pub struct VAList {
+    reg_offset: usize,
+}
+impl VAList {
+    /// Get the next argument, like C's `va_arg()`. Be careful as the type may
+    /// be inferred from the call-site if you don't specify it explicitly.
+    pub fn next<T: GuestArg>(&mut self, env: &mut Environment) -> T {
+        read_next_arg(&mut self.reg_offset, env.cpu.regs_mut(), &env.mem)
+    }
 }
 
 macro_rules! impl_GuestArg_with {

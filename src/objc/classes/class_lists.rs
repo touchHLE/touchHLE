@@ -10,6 +10,7 @@ pub const CLASS_LISTS: &[super::ClassExports] = &[
     foundation::ns_array::CLASSES,
     foundation::ns_autorelease_pool::CLASSES,
     foundation::ns_coder::CLASSES,
+    foundation::ns_dictionary::CLASSES,
     foundation::ns_keyed_unarchiver::CLASSES,
     foundation::ns_object::CLASSES,
     foundation::ns_string::CLASSES,

@@ -4,7 +4,7 @@
 //! - [Apple's documentation of `class_addMethod`](https://developer.apple.com/documentation/objectivec/1418901-class_addmethod?language=objc)
 
 use super::{id, ClassHostObject, ObjC, SEL};
-use crate::abi::{CallFromGuest, GuestArg, GuestFunction, GuestRet};
+use crate::abi::{CallFromGuest, GuestArg, GuestFunction, GuestRet, VAList};
 use crate::mem::{ConstPtr, GuestUSize, Mem, Ptr, SafeRead};
 use crate::Environment;
 
@@ -30,7 +30,20 @@ where
     P1: GuestArg,
 {
 }
+impl<R, P1> HostIMP for fn(&mut Environment, id, SEL, P1, VAList) -> R
+where
+    R: GuestRet,
+    P1: GuestArg,
+{
+}
 impl<R, P1, P2> HostIMP for fn(&mut Environment, id, SEL, P1, P2) -> R
+where
+    R: GuestRet,
+    P1: GuestArg,
+    P2: GuestArg,
+{
+}
+impl<R, P1, P2> HostIMP for fn(&mut Environment, id, SEL, P1, P2, VAList) -> R
 where
     R: GuestRet,
     P1: GuestArg,

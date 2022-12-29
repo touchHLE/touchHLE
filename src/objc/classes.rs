@@ -133,6 +133,7 @@ macro_rules! _objc_method {
         $retty:ty,
         $block:tt
         $(, $ty:ty, $arg:ident)*
+        $(, ...$va_arg:ident: $va_type:ty)?
     ) => {
         // The closure must be explicitly casted because a bare closure defaults
         // to a different type than a pure fn pointer, which is the type that
@@ -145,11 +146,13 @@ macro_rules! _objc_method {
             #[allow(unused_variables)]
             $_cmd: $crate::objc::SEL,
             $($arg: $ty,)*
+            $(mut $va_arg: $va_type,)?
         | -> $retty $block) as fn(
             &mut $crate::Environment,
             $crate::objc::id,
             $crate::objc::SEL,
             $($ty,)*
+            $($va_type,)?
         ) -> $retty)
     }
 }
@@ -173,6 +176,10 @@ macro_rules! _objc_method {
 ///     // ...
 /// }
 ///
+/// - (id)barWithVaArgs:(u32)qux, ...va_args {
+///     // ...
+/// }
+///
 /// @end
 /// };
 /// ```
@@ -193,6 +200,9 @@ macro_rules! _objc_method {
 ///             ("barWithQux:", &(|env: &mut Environment, this: id, _cmd: SEL, qux: u32| -> id {
 ///                 // ...
 ///             } as &fn(&mut Environment, id, SEL, u32) -> id)),
+///             ("barWithVaArgs:", &(|env: &mut Environment, this: id, _cmd: SEL, qux: u32, va_args: VAList| -> id {
+///                 // ...
+///             } as &fn(&mut Environment, id, SEL, u32, VAList) -> id)),
 ///         ],
 ///     })
 /// ];
@@ -211,10 +221,12 @@ macro_rules! objc_classes {
 
             $( + ($cm_type:ty) $cm_name:ident $(:($cm_type1:ty) $cm_arg1:ident)?
                               $($cm_namen:ident:($cm_typen:ty) $cm_argn:ident)*
+                              $(, ...$cm_va_arg:ident)?
                  $cm_block:block )*
 
             $( - ($im_type:ty) $im_name:ident $(:($im_type1:ty) $im_arg1:ident)?
                               $($im_namen:ident:($im_typen:ty) $im_argn:ident)*
+                              $(, ...$im_va_arg:ident)?
                  $im_block:block )*
 
             @end
@@ -241,6 +253,7 @@ macro_rules! objc_classes {
                                     { $cm_block }
                                     $(, $cm_type1, $cm_arg1)?
                                     $(, $cm_typen, $cm_argn)*
+                                    $(, ...$cm_va_arg: $crate::abi::VAList)?
                                 )
                             )
                         ),*
@@ -261,6 +274,7 @@ macro_rules! objc_classes {
                                     { $im_block }
                                     $(, $im_type1, $im_arg1)?
                                     $(, $im_typen, $im_argn)*
+                                    $(, ...$im_va_arg: $crate::abi::VAList)?
                                 )
                             )
                         ),*

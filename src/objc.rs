@@ -32,7 +32,7 @@ pub use selectors::{selector, SEL};
 use classes::{ClassHostObject, UnimplementedClass, CLASS_LISTS};
 use messages::{objc_msgSend, objc_msgSendSuper2};
 use methods::method_list_t;
-use objects::HostObjectEntry;
+use objects::{objc_object, HostObjectEntry};
 
 /// Main type holding Objective-C runtime state.
 pub struct ObjC {

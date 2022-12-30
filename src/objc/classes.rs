@@ -8,7 +8,9 @@
 mod class_lists;
 pub(super) use class_lists::CLASS_LISTS;
 
-use super::{id, method_list_t, nil, AnyHostObject, HostIMP, HostObject, ObjC, IMP, SEL};
+use super::{
+    id, method_list_t, nil, objc_object, AnyHostObject, HostIMP, HostObject, ObjC, IMP, SEL,
+};
 use crate::mach_o::MachO;
 use crate::mem::{ConstPtr, ConstVoidPtr, GuestUSize, Mem, Ptr, SafeRead};
 use std::collections::HashMap;
@@ -31,6 +33,13 @@ pub(super) struct ClassHostObject {
     pub(super) is_metaclass: bool,
     pub(super) superclass: Class,
     pub(super) methods: HashMap<SEL, IMP>,
+    /// Offset into the allocated memory for the object where the ivars of
+    /// instances of this class or metaclass (respectively: normal objects or
+    /// classes) should live. This is always >= the value in the superclass.
+    pub(super) _instance_start: GuestUSize,
+    /// Size of the allocated memory for instances of this class or metaclass.
+    /// This is always >= the value in the superclass.
+    pub(super) instance_size: GuestUSize,
 }
 impl HostObject for ClassHostObject {}
 
@@ -64,8 +73,8 @@ impl SafeRead for class_t {}
 #[repr(C, packed)]
 struct class_rw_t {
     _flags: u32,
-    _instance_start: GuestUSize,
-    _instance_size: GuestUSize,
+    instance_start: GuestUSize,
+    instance_size: GuestUSize,
     _reserved: u32,
     name: ConstPtr<u8>,
     base_methods: ConstPtr<method_list_t>,
@@ -293,6 +302,10 @@ impl ClassHostObject {
         superclass: Class,
         objc: &ObjC,
     ) -> Self {
+        // For our host implementations we store all data in host objects, so
+        // there are no ivars and the size is always just the isa pointer.
+        // This is true for both classes and normal objects.
+        let size = std::mem::size_of::<objc_object>().try_into().unwrap();
         ClassHostObject {
             name: template.name.to_string(),
             is_metaclass,
@@ -311,25 +324,37 @@ impl ClassHostObject {
                     (objc.selectors[name], IMP::Host(host_imp))
                 }),
             ),
+            // maybe this should be 0 for NSObject? does it matter?
+            _instance_start: size,
+            instance_size: size,
         }
     }
 
     fn from_bin(class: Class, is_metaclass: bool, mem: &Mem, objc: &mut ObjC) -> Self {
-        let data1: class_t = mem.read(class.cast());
-        let data2: class_rw_t = mem.read(data1.data);
+        let class_t {
+            superclass, data, ..
+        } = mem.read(class.cast());
+        let class_rw_t {
+            instance_start,
+            instance_size,
+            name,
+            base_methods,
+            ..
+        } = mem.read(data);
 
-        let name = mem.cstr_at_utf8(data2.name).to_string();
-        let superclass = data1.superclass;
+        let name = mem.cstr_at_utf8(name).to_string();
 
         let mut host_object = ClassHostObject {
             name,
             is_metaclass,
             superclass,
             methods: HashMap::new(),
+            _instance_start: instance_start,
+            instance_size,
         };
 
-        if !data2.base_methods.is_null() {
-            host_object.add_methods_from_bin(data2.base_methods, mem, objc);
+        if !base_methods.is_null() {
+            host_object.add_methods_from_bin(base_methods, mem, objc);
         }
 
         host_object
@@ -435,11 +460,19 @@ impl ObjC {
             });
         }
 
-        // the metaclass's isa can't be nil, so it should point back to the
-        // metaclass, but we can't make the object self-referential in a single
-        // step, so: write nil and then overwrite it.
-        let metaclass = self.alloc_static_object(nil, metaclass_host_object, mem);
-        Self::write_isa(metaclass, metaclass, mem);
+        // NSObject's metaclass is special: it is its own metaclass, and it's
+        // the superclass of all other metaclasses.
+        // (FIXME: this actually should apply to any class hiearchy root.)
+        // This creates a chicken-and-egg problem so it has a special path.
+        let metaclass = if name == "NSObject" {
+            let metaclass = mem.alloc_and_write(objc_object { isa: nil });
+            mem.write(metaclass, objc_object { isa: metaclass });
+            self.register_static_object(metaclass, metaclass_host_object);
+            metaclass
+        } else {
+            let isa = self.link_class("NSObject", /* is_metaclass: */ true, mem);
+            self.alloc_static_object(isa, metaclass_host_object, mem)
+        };
 
         let class = self.alloc_static_object(metaclass, class_host_object, mem);
 

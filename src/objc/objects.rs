@@ -15,8 +15,8 @@
 //!
 //! See also: [crate::frameworks::foundation::ns_object].
 
-use super::Class;
-use crate::mem::{Mem, MutPtr, Ptr, SafeRead};
+use super::{Class, ClassHostObject};
+use crate::mem::{GuestUSize, Mem, MutPtr, Ptr, SafeRead};
 use std::any::Any;
 use std::num::NonZeroU32;
 
@@ -33,7 +33,7 @@ pub struct objc_object {
     /// The `isa` pointer cannot answer these questions.
     ///
     /// But it does tell you what class an object belongs to.
-    isa: Class,
+    pub(super) isa: Class,
 }
 impl SafeRead for objc_object {}
 
@@ -89,20 +89,20 @@ impl super::ObjC {
     pub fn read_isa(object: id, mem: &Mem) -> Class {
         mem.read(object).isa
     }
-    /// Write the all-important `isa`.
-    pub(super) fn write_isa(object: id, isa: Class, mem: &mut Mem) {
-        mem.write(object.cast(), isa)
-    }
 
     fn alloc_object_inner(
         &mut self,
         isa: Class,
+        instance_size: GuestUSize,
         host_object: Box<dyn AnyHostObject>,
         mem: &mut Mem,
         refcount: Option<NonZeroU32>,
     ) -> id {
         let guest_object = objc_object { isa };
-        let ptr = mem.alloc_and_write(guest_object);
+        assert!(instance_size >= std::mem::size_of::<objc_object>().try_into().unwrap());
+
+        let ptr: MutPtr<objc_object> = mem.alloc(instance_size).cast();
+        mem.write(ptr, guest_object);
         assert!(!self.objects.contains_key(&ptr));
         self.objects.insert(
             ptr,
@@ -116,24 +116,40 @@ impl super::ObjC {
 
     /// Allocate a reference-counted (guest) object (like `[NSObject alloc]`)
     /// and associate it with its host object.
+    ///
+    /// `isa` must be a real class, as the instance size will be fetched from
+    /// the class.
     pub fn alloc_object(
         &mut self,
         isa: Class,
         host_object: Box<dyn AnyHostObject>,
         mem: &mut Mem,
     ) -> id {
-        self.alloc_object_inner(isa, host_object, mem, Some(NonZeroU32::new(1).unwrap()))
+        let &ClassHostObject { instance_size, .. } = self.borrow(isa);
+        self.alloc_object_inner(
+            isa,
+            instance_size,
+            host_object,
+            mem,
+            Some(NonZeroU32::new(1).unwrap()),
+        )
     }
 
     /// Allocate a static-lifetime (guest) object (for example, a class) and
     /// associate it with its host object.
+    ///
+    /// It is assumed that the guest object's instance size is 4 (just an `isa`)
+    /// like `NSObject`. This means you must not use this function to implement
+    /// the `alloc` method of a class that could be the superclass of any class
+    /// in the guest app!
     pub fn alloc_static_object(
         &mut self,
         isa: Class,
         host_object: Box<dyn AnyHostObject>,
         mem: &mut Mem,
     ) -> id {
-        self.alloc_object_inner(isa, host_object, mem, None)
+        let size = std::mem::size_of::<objc_object>().try_into().unwrap();
+        self.alloc_object_inner(isa, size, host_object, mem, None)
     }
 
     /// Associate a host object with an existing static-lifetime (guest) object

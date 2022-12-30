@@ -2,7 +2,9 @@
 
 use super::NSUInteger;
 use crate::mem::MutVoidPtr;
-use crate::objc::{autorelease, id, msg, objc_classes, retain, ClassExports, HostObject, msg_class, Class};
+use crate::objc::{
+    autorelease, id, msg, msg_class, objc_classes, retain, Class, ClassExports, HostObject,
+};
 
 enum NSNumberHostObject {
     Bool(bool),

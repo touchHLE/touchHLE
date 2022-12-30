@@ -101,6 +101,19 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.alloc_object(this, host_object, &mut env.mem)
 }
 
+- (())dealloc {
+    let obj = std::mem::take(env.objc.borrow_mut::<DictionaryHostObject>(this));
+    for collisions in obj.map.values() {
+        for &(key, value) in collisions {
+            release(env, key);
+            release(env, value);
+        }
+    }
+
+    // FIXME: this should do a super-call instead
+    env.objc.dealloc_object(this, &mut env.mem)
+}
+
 - (id)initWithObjectsAndKeys:(id)first_object, ...va_args {
     let first_key: id = va_args.next(env);
     assert!(first_key != nil); // TODO: raise proper exception

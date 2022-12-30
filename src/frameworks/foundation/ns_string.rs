@@ -47,6 +47,9 @@ pub const CLASSES: ClassExports = objc_classes! {
     super::hash_helper(&to_rust_string(env, this))
 }
 - (bool)isEqualTo:(id)other {
+    if this == other {
+        return true;
+    }
     let class: Class = msg_class![env; NSString class];
     if !msg![env; other isKindOfClass:class] {
         return false;

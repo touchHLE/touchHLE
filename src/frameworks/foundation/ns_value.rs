@@ -2,7 +2,7 @@
 
 use super::NSUInteger;
 use crate::mem::MutVoidPtr;
-use crate::objc::{autorelease, id, msg, objc_classes, retain, ClassExports, HostObject};
+use crate::objc::{autorelease, id, msg, objc_classes, retain, ClassExports, HostObject, msg_class, Class};
 
 enum NSNumberHostObject {
     Bool(bool),
@@ -52,6 +52,18 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (NSUInteger)hash {
     let &NSNumberHostObject::Bool(value) = env.objc.borrow(this);
     super::hash_helper(&value)
+}
+- (bool)isEqualTo:(id)other {
+    if this == other {
+        return true;
+    }
+    let class: Class = msg_class![env; NSNumber class];
+    if !msg![env; other isKindOfClass:class] {
+        return false;
+    }
+    let &NSNumberHostObject::Bool(a) = env.objc.borrow(this);
+    let &NSNumberHostObject::Bool(b) = env.objc.borrow(other);
+    a == b
 }
 
 // TODO: accessors etc

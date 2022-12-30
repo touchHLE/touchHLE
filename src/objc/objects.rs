@@ -86,7 +86,7 @@ impl HostObject for TrivialHostObject {}
 
 impl super::ObjC {
     /// Read the all-important `isa`.
-    pub(super) fn read_isa(object: id, mem: &Mem) -> Class {
+    pub fn read_isa(object: id, mem: &Mem) -> Class {
         mem.read(object).isa
     }
     /// Write the all-important `isa`.

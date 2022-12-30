@@ -504,4 +504,24 @@ impl ObjC {
             );
         }
     }
+
+    pub fn class_is_subclass_of(&self, class: Class, superclass: Class) -> bool {
+        if class == superclass {
+            return true;
+        }
+
+        let mut class = class;
+        loop {
+            let &ClassHostObject {
+                superclass: next, ..
+            } = self.borrow(class);
+            if next == nil {
+                return false;
+            } else if next == superclass {
+                return true;
+            } else {
+                class = next;
+            }
+        }
+    }
 }

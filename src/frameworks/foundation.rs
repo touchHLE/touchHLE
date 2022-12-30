@@ -20,3 +20,18 @@ pub struct State {
     ns_autorelease_pool: ns_autorelease_pool::State,
     ns_string: ns_string::State,
 }
+
+pub type NSUInteger = u32;
+
+/// Utility to help with implementing the `hash` method, which various classes
+/// in Foundation have to do.
+fn hash_helper<T: std::hash::Hash>(hashable: &T) -> NSUInteger {
+    use std::hash::Hasher;
+
+    // Rust documentation says DefaultHasher::new() should always return the
+    // same instance, so this should give consistent hashes.
+    let mut hasher = std::collections::hash_map::DefaultHasher::new();
+    hashable.hash(&mut hasher);
+    let hash_u64: u64 = hasher.finish();
+    (hash_u64 as u32) ^ ((hash_u64 >> 32) as u32)
+}

@@ -2,7 +2,7 @@
 
 use super::ns_keyed_unarchiver;
 use crate::mem::MutVoidPtr;
-use crate::objc::{id, msg_class, objc_classes, release, ClassExports, HostObject};
+use crate::objc::{id, msg_class, objc_classes, release, retain, ClassExports, HostObject};
 
 /// Belongs to _touchHLE_NSArray
 struct ArrayHostObject {
@@ -17,7 +17,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 // NSArray is an abstract class. A subclass must provide:
 // - (NSUInteger)count;
 // - (id)objectAtIndex:(NSUInteger)index;
-// We can pick whichever subclass we want for the various init methods.
+// We can pick whichever subclass we want for the various alloc methods.
 // For the time being, that will always be _touchHLE_NSArray.
 @implementation NSArray: NSObject
 
@@ -26,6 +26,12 @@ pub const CLASSES: ClassExports = objc_classes! {
     // to have the normal behaviour. Unimplemented: call superclass alloc then.
     assert!(this == env.objc.get_known_class("NSArray", &mut env.mem));
     msg_class![env; _touchHLE_NSArray allocWithZone:zone]
+}
+
+// NSCopying implementation
+- (id)copyWithZone:(MutVoidPtr)_zone {
+    // TODO: override this once we have NSMutableArray!
+    retain(env, this)
 }
 
 @end

@@ -7,8 +7,9 @@
 //!
 //! See also: [crate::objc], especially the `objects` module.
 
+use super::NSUInteger;
 use crate::mem::MutVoidPtr;
-use crate::objc::{id, msg, msg_class, objc_classes, Class, ClassExports, TrivialHostObject};
+use crate::objc::{id, msg, msg_class, objc_classes, Class, ClassExports, ObjC, TrivialHostObject};
 
 pub const CLASSES: ClassExports = objc_classes! {
 
@@ -48,6 +49,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     this
 }
 
+
 - (id)retain {
     log_dbg!("[{:?} retain]", this);
     env.objc.increment_refcount(this);
@@ -68,6 +70,31 @@ pub const CLASSES: ClassExports = objc_classes! {
     log_dbg!("[{:?} dealloc]", this);
     env.objc.dealloc_object(this, &mut env.mem)
 }
+
+- (Class)class {
+    ObjC::read_isa(this, &env.mem)
+}
+- (bool)isMemberOfClass:(Class)class {
+    let this_class: Class = msg![env; this class];
+    class == this_class
+}
+- (bool)isKindOfClass:(Class)class {
+    let this_class: Class = msg![env; this class];
+    env.objc.class_is_subclass_of(this_class, class)
+}
+
+- (NSUInteger)hash {
+    this.to_bits()
+}
+- (bool)isEqual:(id)other {
+    this == other
+}
+
+// Helper for NSCopying
+- (id)copy {
+    msg![env; this copyWithZone:(MutVoidPtr::null())]
+}
+
 
 @end
 

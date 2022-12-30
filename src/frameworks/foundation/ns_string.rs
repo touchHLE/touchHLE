@@ -1,7 +1,8 @@
 //! The `NSString` class cluster, including `NSMutableString`.
 
+use super::NSUInteger;
 use crate::mem::MutVoidPtr;
-use crate::objc::{id, msg_class, objc_classes, ClassExports, HostObject};
+use crate::objc::{id, msg, msg_class, objc_classes, retain, Class, ClassExports, HostObject};
 use crate::Environment;
 use std::borrow::Cow;
 use std::collections::HashMap;
@@ -30,7 +31,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 // NSString is an abstract class. A subclass must provide:
 // - (NSUInteger)length;
 // - (unichar)characterAtIndex:(NSUInteger)index;
-// We can pick whichever subclass we want for the various init methods.
+// We can pick whichever subclass we want for the various alloc methods.
 // For the time being, that will always be _touchHLE_NSString.
 @implementation NSString: NSObject
 
@@ -39,6 +40,25 @@ pub const CLASSES: ClassExports = objc_classes! {
     // to have the normal behaviour. Unimplemented: call superclass alloc then.
     assert!(this == env.objc.get_known_class("NSString", &mut env.mem));
     msg_class![env; _touchHLE_NSString allocWithZone:zone]
+}
+
+- (NSUInteger)hash {
+    // TODO: avoid copying
+    super::hash_helper(&to_rust_string(env, this))
+}
+- (bool)isEqualTo:(id)other {
+    let class: Class = msg_class![env; NSString class];
+    if !msg![env; other isKindOfClass:class] {
+        return false;
+    }
+    // TODO: avoid copying
+    to_rust_string(env, this) == to_rust_string(env, other)
+}
+
+// NSCopying implementation
+- (id)copyWithZone:(MutVoidPtr)_zone {
+    // TODO: override this once we have NSMutableString!
+    retain(env, this)
 }
 
 @end
@@ -65,6 +85,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.alloc_static_object(this, host_object, &mut env.mem)
 }
 
+- (id) retain { this }
 - (()) release {}
 - (id) autorelease { this }
 

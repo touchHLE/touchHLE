@@ -16,7 +16,7 @@
 //! See also: [crate::frameworks::foundation::ns_object].
 
 use super::{Class, ClassHostObject};
-use crate::mem::{GuestUSize, Mem, MutPtr, Ptr, SafeRead};
+use crate::mem::{guest_size_of, GuestUSize, Mem, MutPtr, Ptr, SafeRead};
 use std::any::Any;
 use std::num::NonZeroU32;
 
@@ -99,7 +99,7 @@ impl super::ObjC {
         refcount: Option<NonZeroU32>,
     ) -> id {
         let guest_object = objc_object { isa };
-        assert!(instance_size >= std::mem::size_of::<objc_object>().try_into().unwrap());
+        assert!(instance_size >= guest_size_of::<objc_object>());
 
         let ptr: MutPtr<objc_object> = mem.alloc(instance_size).cast();
         mem.write(ptr, guest_object);
@@ -148,7 +148,7 @@ impl super::ObjC {
         host_object: Box<dyn AnyHostObject>,
         mem: &mut Mem,
     ) -> id {
-        let size = std::mem::size_of::<objc_object>().try_into().unwrap();
+        let size = guest_size_of::<objc_object>();
         self.alloc_object_inner(isa, size, host_object, mem, None)
     }
 

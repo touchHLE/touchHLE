@@ -5,7 +5,7 @@
 
 use super::{id, ClassHostObject, ObjC, SEL};
 use crate::abi::{CallFromGuest, GuestArg, GuestFunction, GuestRet, VAList};
-use crate::mem::{ConstPtr, GuestUSize, Mem, Ptr, SafeRead};
+use crate::mem::{guest_size_of, ConstPtr, GuestUSize, Mem, Ptr, SafeRead};
 use crate::Environment;
 
 /// Type for any function implementating a method.
@@ -86,7 +86,7 @@ impl ClassHostObject {
         objc: &mut ObjC,
     ) {
         let method_list_t { entsize, count } = mem.read(method_list_ptr);
-        assert!(entsize as usize >= std::mem::size_of::<method_t>());
+        assert!(entsize >= guest_size_of::<method_t>());
 
         let methods_base_ptr: ConstPtr<method_t> = (method_list_ptr + 1).cast();
 

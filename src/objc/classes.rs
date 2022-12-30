@@ -12,7 +12,7 @@ use super::{
     id, method_list_t, nil, objc_object, AnyHostObject, HostIMP, HostObject, ObjC, IMP, SEL,
 };
 use crate::mach_o::MachO;
-use crate::mem::{ConstPtr, ConstVoidPtr, GuestUSize, Mem, Ptr, SafeRead};
+use crate::mem::{guest_size_of, ConstPtr, ConstVoidPtr, GuestUSize, Mem, Ptr, SafeRead};
 use std::collections::HashMap;
 
 /// Generic pointer to an Objective-C class or metaclass.
@@ -305,7 +305,7 @@ impl ClassHostObject {
         // For our host implementations we store all data in host objects, so
         // there are no ivars and the size is always just the isa pointer.
         // This is true for both classes and normal objects.
-        let size = std::mem::size_of::<objc_object>().try_into().unwrap();
+        let size = guest_size_of::<objc_object>();
         ClassHostObject {
             name: template.name.to_string(),
             is_metaclass,

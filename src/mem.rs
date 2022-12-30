@@ -14,6 +14,12 @@ mod allocator;
 /// Equivalent of `usize` for guest memory.
 pub type GuestUSize = u32;
 
+/// [std::mem::size_of], but returning a [GuestUSize].
+pub const fn guest_size_of<T: Sized>() -> GuestUSize {
+    assert!(std::mem::size_of::<T>() <= u32::MAX as usize);
+    std::mem::size_of::<T>() as u32
+}
+
 /// Internal type for representing an untyped virtual address.
 type VAddr = GuestUSize;
 
@@ -102,7 +108,7 @@ impl<T, const MUT: bool> std::ops::Add<GuestUSize> for Ptr<T, MUT> {
     type Output = Self;
 
     fn add(self, other: GuestUSize) -> Self {
-        let size: GuestUSize = std::mem::size_of::<T>().try_into().unwrap();
+        let size: GuestUSize = guest_size_of::<T>();
         Self::from_bits(
             self.to_bits()
                 .checked_add(other.checked_mul(size).unwrap())
@@ -248,8 +254,7 @@ impl Mem {
     where
         T: SafeRead,
     {
-        let size = std::mem::size_of::<T>().try_into().unwrap();
-        let slice = self.bytes_at(ptr.cast(), size);
+        let slice = self.bytes_at(ptr.cast(), guest_size_of::<T>());
         let ptr: *const T = slice.as_ptr().cast();
         // This is only safe if we are careful with which types SafeRead is
         // implemented for!
@@ -261,7 +266,7 @@ impl Mem {
     where
         T: SafeWrite,
     {
-        let size = std::mem::size_of::<T>().try_into().unwrap();
+        let size = guest_size_of::<T>();
         assert!(size > 0);
         let slice = self.bytes_at_mut(ptr.cast(), size);
         let ptr: *mut T = slice.as_mut_ptr().cast();
@@ -286,8 +291,7 @@ impl Mem {
     where
         T: SafeWrite,
     {
-        let size = std::mem::size_of::<T>().try_into().unwrap();
-        let ptr = self.alloc(size).cast();
+        let ptr = self.alloc(guest_size_of::<T>()).cast();
         self.write(ptr, value);
         ptr
     }

@@ -1,6 +1,6 @@
 //! `CAEAGLLayer`.
 
-use crate::objc::{objc_classes, ClassExports};
+use crate::objc::{id, objc_classes, ClassExports};
 
 pub const CLASSES: ClassExports = objc_classes! {
 
@@ -8,7 +8,11 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 @implementation CAEAGLLayer: CALayer
 
-// TODO
+// EAGLDrawable implementation (the only one)
+// TODO: drawableProperties (getter)
+- (())setDrawableProperties:(id)_properties { // NSDictionary<NSString*, id>*
+    // TODO: actually store the properties somewhere
+}
 
 @end
 

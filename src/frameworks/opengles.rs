@@ -11,7 +11,7 @@
 //!     exposing real OpenGL ES 1.1 provided by Android.
 //!
 //! Useful resources for OpenGL ES 1.1:
-//! - [Reference pages](https://registry.khronos.org/OpenGL-Refpages/es1.1/)
+//! - [Reference pages](https://registry.khronos.org/OpenGL-Refpages/es1.1/xhtml/)
 //! - [Specification](https://registry.khronos.org/OpenGL/specs/es/1.1/es_full_spec_1.1.pdf)
 //! - Extensions:
 //!   - [OES_framebuffer_object](https://registry.khronos.org/OpenGL/extensions/OES/OES_framebuffer_object.txt)

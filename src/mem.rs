@@ -124,23 +124,24 @@ impl<T, const MUT: bool> std::ops::AddAssign<GuestUSize> for Ptr<T, MUT> {
 
 /// Marker trait for types that can be safely read from guest memory.
 ///
+/// See also [SafeWrite] and [crate::abi].
+///
+/// # Safety
 /// Reading from guest memory is essentially doing a [std::mem::transmute],
 /// which is notoriously unsafe in Rust. Only types for which all possible bit
 /// patterns are legal (e.g. integers) should have this trait.
-///
-/// See also [SafeWrite] and [crate::abi].
-pub trait SafeRead: Sized {}
-impl SafeRead for i8 {}
-impl SafeRead for u8 {}
-impl SafeRead for i16 {}
-impl SafeRead for u16 {}
-impl SafeRead for i32 {}
-impl SafeRead for u32 {}
-impl SafeRead for i64 {}
-impl SafeRead for u64 {}
-impl SafeRead for f32 {}
-impl SafeRead for f64 {}
-impl<T, const MUT: bool> SafeRead for Ptr<T, MUT> {}
+pub unsafe trait SafeRead: Sized {}
+unsafe impl SafeRead for i8 {}
+unsafe impl SafeRead for u8 {}
+unsafe impl SafeRead for i16 {}
+unsafe impl SafeRead for u16 {}
+unsafe impl SafeRead for i32 {}
+unsafe impl SafeRead for u32 {}
+unsafe impl SafeRead for i64 {}
+unsafe impl SafeRead for u64 {}
+unsafe impl SafeRead for f32 {}
+unsafe impl SafeRead for f64 {}
+unsafe impl<T, const MUT: bool> SafeRead for Ptr<T, MUT> {}
 
 /// Marker trait for types that can be written to guest memory.
 ///

@@ -63,7 +63,7 @@ pub(super) struct method_list_t {
     count: GuestUSize,
     // entries follow the struct
 }
-impl SafeRead for method_list_t {}
+unsafe impl SafeRead for method_list_t {}
 
 /// The layout of a method in an app binary.
 ///
@@ -74,7 +74,7 @@ struct method_t {
     types: ConstPtr<u8>,
     imp: GuestIMP,
 }
-impl SafeRead for method_t {}
+unsafe impl SafeRead for method_t {}
 
 impl ClassHostObject {
     // See classes.rs for host method parsing

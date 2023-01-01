@@ -35,7 +35,7 @@ pub struct objc_object {
     /// But it does tell you what class an object belongs to.
     pub(super) isa: Class,
 }
-impl SafeRead for objc_object {}
+unsafe impl SafeRead for objc_object {}
 
 /// Generic pointer to an Objective-C object (including classes or metaclasses).
 ///

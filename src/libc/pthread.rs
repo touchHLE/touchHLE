@@ -31,7 +31,7 @@ struct pthread_once_t {
     /// initialized to zero.
     init: u32,
 }
-impl SafeRead for pthread_once_t {}
+unsafe impl SafeRead for pthread_once_t {}
 
 type pthread_key_t = u32;
 

@@ -122,7 +122,7 @@ pub(super) struct objc_super {
     /// and the superclass will be looked up from it.
     class: Class,
 }
-impl SafeRead for objc_super {}
+unsafe impl SafeRead for objc_super {}
 
 /// Variant of `objc_msgSend` for supercalls. See [objc_msgSend_inner].
 ///

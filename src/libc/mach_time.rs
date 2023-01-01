@@ -9,7 +9,7 @@ struct struct_mach_timebase_info {
     numerator: u32,
     denominator: u32,
 }
-impl SafeRead for struct_mach_timebase_info {}
+unsafe impl SafeRead for struct_mach_timebase_info {}
 
 #[allow(non_camel_case_types)]
 type kern_return_t = i32;

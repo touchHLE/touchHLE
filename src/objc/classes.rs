@@ -65,7 +65,7 @@ struct class_t {
     _vtable: ConstVoidPtr,
     data: ConstPtr<class_rw_t>,
 }
-impl SafeRead for class_t {}
+unsafe impl SafeRead for class_t {}
 
 /// The layout of the main class data in an app binary.
 ///
@@ -83,7 +83,7 @@ struct class_rw_t {
     _weak_ivar_layout: u32,
     _base_properties: ConstVoidPtr, // property list (TODO)
 }
-impl SafeRead for class_rw_t {}
+unsafe impl SafeRead for class_rw_t {}
 
 /// The layout of a category in an app binary.
 ///
@@ -97,7 +97,7 @@ struct category_t {
     _protocols: ConstVoidPtr,     // protocol list (TODO)
     _property_list: ConstVoidPtr, // property list (TODO)
 }
-impl SafeRead for category_t {}
+unsafe impl SafeRead for category_t {}
 
 /// A template for a class defined with [objc_classes].
 ///

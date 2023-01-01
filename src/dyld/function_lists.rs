@@ -9,5 +9,6 @@ pub const FUNCTION_LISTS: &[super::FunctionExports] = &[
     libc::pthread::FUNCTIONS,
     libc::stdlib::FUNCTIONS,
     crate::objc::FUNCTIONS,
+    frameworks::opengles::FUNCTIONS,
     frameworks::uikit::FUNCTIONS,
 ];

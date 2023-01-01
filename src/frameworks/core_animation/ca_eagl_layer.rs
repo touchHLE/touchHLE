@@ -1,6 +1,7 @@
 //! `CAEAGLLayer`.
 
-use crate::objc::{id, objc_classes, ClassExports};
+use super::ca_layer::CALayerHostObject;
+use crate::objc::{id, msg, objc_classes, ClassExports};
 
 pub const CLASSES: ClassExports = objc_classes! {
 
@@ -9,9 +10,15 @@ pub const CLASSES: ClassExports = objc_classes! {
 @implementation CAEAGLLayer: CALayer
 
 // EAGLDrawable implementation (the only one)
-// TODO: drawableProperties (getter)
-- (())setDrawableProperties:(id)_properties { // NSDictionary<NSString*, id>*
-    // TODO: actually store the properties somewhere
+
+- (id)drawableProperties {
+    // FIXME: do we need to return an empty dictionary rather than nil?
+    env.objc.borrow::<CALayerHostObject>(this).drawable_properties
+}
+
+- (())setDrawableProperties:(id)props { // NSDictionary<NSString*, id>*
+    let props: id = msg![env; props copy];
+    env.objc.borrow_mut::<CALayerHostObject>(this).drawable_properties = props;
 }
 
 @end

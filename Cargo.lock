@@ -48,6 +48,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "gl_generator"
+version = "0.14.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1a95dfc23a2b4a9a2f5ab41d194f8bfda3cabec42af4e39f08c339eb2a0c124d"
+dependencies = [
+ "khronos_api",
+ "log",
+ "xml-rs",
+]
+
+[[package]]
 name = "hashbrown"
 version = "0.12.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -68,6 +79,12 @@ name = "itoa"
 version = "1.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4217ad341ebadf8d8e724e264f13e593e0648f5b3e94b3896a5df283be015ecc"
+
+[[package]]
+name = "khronos_api"
+version = "3.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e2db585e1d738fc771bf08a151420d3ed193d9d895a36df7f6f8a9456b911ddc"
 
 [[package]]
 name = "lazy_static"
@@ -247,11 +264,13 @@ version = "0.1.0"
 dependencies = [
  "cc",
  "cmake",
+ "gl_generator",
  "mach_object",
  "plist",
  "sdl2",
  "sdl2-sys",
  "touchHLE_dynarmic_wrapper",
+ "touchHLE_gl_bindings",
  "touchHLE_stb_image_wrapper",
 ]
 
@@ -261,6 +280,13 @@ version = "0.1.0"
 dependencies = [
  "cc",
  "cmake",
+]
+
+[[package]]
+name = "touchHLE_gl_bindings"
+version = "0.1.0"
+dependencies = [
+ "gl_generator",
 ]
 
 [[package]]

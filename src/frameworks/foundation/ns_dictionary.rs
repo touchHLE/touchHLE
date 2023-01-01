@@ -88,6 +88,12 @@ pub const CLASSES: ClassExports = objc_classes! {
     autorelease(env, new_dict)
 }
 
+// NSCopying implementation
+- (id)copyWithZone:(MutVoidPtr)_zone {
+    // TODO: override this once we have NSMutableString!
+    retain(env, this)
+}
+
 // TODO
 
 @end

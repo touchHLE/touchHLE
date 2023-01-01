@@ -1,11 +1,13 @@
 //! `CALayer`.
 
-use crate::objc::{id, msg, nil, objc_classes, ClassExports, HostObject};
+use crate::objc::{id, msg, nil, objc_classes, release, ClassExports, HostObject};
 
-struct CALayerHostObject {
+pub(super) struct CALayerHostObject {
     /// Possibly nil, usually a UIView. This is a weak reference.
     delegate: id,
     opaque: bool,
+    /// For CAEAGLLayer only
+    pub(super) drawable_properties: id,
 }
 impl HostObject for CALayerHostObject {}
 
@@ -19,6 +21,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     let host_object = Box::new(CALayerHostObject {
         delegate: nil,
         opaque: false,
+        drawable_properties: nil,
     });
     env.objc.alloc_object(this, host_object, &mut env.mem)
 }
@@ -26,6 +29,13 @@ pub const CLASSES: ClassExports = objc_classes! {
 + (id)layer {
     let new_layer: id = msg![env; this alloc];
     msg![env; new_layer init]
+}
+
+- (())dealloc {
+    let &CALayerHostObject { drawable_properties, .. } = env.objc.borrow(this);
+    if drawable_properties != nil {
+        release(env, drawable_properties);
+    }
 }
 
 - (id)delegate {

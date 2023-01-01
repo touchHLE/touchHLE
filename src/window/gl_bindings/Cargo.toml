@@ -1,0 +1,10 @@
+[package]
+name = "touchHLE_gl_bindings"
+version = { workspace = true }
+edition = { workspace = true }
+
+[lib]
+path = "lib.rs"
+
+[build-dependencies]
+gl_generator = { workspace = true }

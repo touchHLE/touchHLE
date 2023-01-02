@@ -103,7 +103,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 @implementation _touchHLE_NSDictionary: NSDictionary
 
 + (id)allocWithZone:(MutVoidPtr)_zone {
-    let host_object = Box::new(<DictionaryHostObject as Default>::default());
+    let host_object = Box::<DictionaryHostObject>::default();
     env.objc.alloc_object(this, host_object, &mut env.mem)
 }
 

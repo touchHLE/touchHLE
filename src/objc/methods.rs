@@ -15,6 +15,7 @@ use crate::Environment;
 /// In our implementation, we have both "host methods" (Rust functions) and
 /// "guest methods" (functions in the guest app). Either way, the function needs
 /// to conform to the same ABI: [id] and [SEL] must be its first two parameters.
+#[allow(clippy::upper_case_acronyms)]
 pub enum IMP {
     Host(&'static dyn HostIMP),
     Guest(GuestIMP),

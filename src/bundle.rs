@@ -55,7 +55,7 @@ impl Bundle {
     pub fn launch_image_path(&self) -> PathBuf {
         if let Some(base_name) = self.plist.get("UILaunchImageFile") {
             self.path
-                .join(&format!("{}.png", base_name.as_string().unwrap()))
+                .join(format!("{}.png", base_name.as_string().unwrap()))
         } else {
             self.path.join("Default.png") // not guaranteed to exist!
         }

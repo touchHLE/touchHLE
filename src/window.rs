@@ -28,8 +28,8 @@ fn surface_from_image(image: &Image) -> Surface {
     let (width, height) = (width as usize, height as usize);
     let pitch = surface.pitch() as usize;
     surface.with_lock_mut(|dst_pixels| {
-        for y in 0..(height as usize) {
-            for x in 0..(width as usize) {
+        for y in 0..height {
+            for x in 0..width {
                 for channel in 0..4 {
                     let src_idx = y * width * 4 + x * 4 + channel;
                     let dst_idx = y * pitch + x * 4 + channel;

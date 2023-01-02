@@ -2,7 +2,7 @@
 
 use crate::frameworks::uikit::ui_nib::load_main_nib_file;
 use crate::mem::{MutPtr, MutVoidPtr};
-use crate::objc::{id, msg_class, nil, objc_classes, ClassExports, HostObject};
+use crate::objc::{id, msg, msg_class, nil, objc_classes, ClassExports, HostObject};
 use crate::Environment;
 
 #[derive(Default)]
@@ -76,5 +76,13 @@ pub(super) fn UIApplicationMain(
 
     load_main_nib_file(env, ui_application);
 
-    unimplemented!("Send events to UIApplicationDelegate and enter main loop");
+    let delegate: id = msg![env; ui_application delegate];
+    assert!(delegate != nil); // should have been set by now
+
+    let _: () = msg![env; delegate applicationDidFinishLaunching:ui_application];
+
+    // TODO: Are there more messages we need to send?
+    // TODO: Send UIApplicationDidFinishLaunchingNotification?
+
+    unimplemented!("Send more messages and enter main loop");
 }

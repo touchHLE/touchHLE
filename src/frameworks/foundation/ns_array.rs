@@ -1,6 +1,6 @@
 //! The `NSArray` class cluster, including `NSMutableArray`.
 
-use super::ns_keyed_unarchiver;
+use super::{ns_keyed_unarchiver, NSUInteger};
 use crate::mem::MutVoidPtr;
 use crate::objc::{id, msg_class, objc_classes, release, retain, ClassExports, HostObject};
 
@@ -81,7 +81,15 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.dealloc_object(this, &mut env.mem)
 }
 
-// TODO: accessors, more init methods, etc
+// TODO: more init methods, etc
+
+- (NSUInteger)count {
+    env.objc.borrow::<ArrayHostObject>(this).array.len().try_into().unwrap()
+}
+- (id)objectAtIndex:(NSUInteger)index {
+    // TODO: throw real exception rather than panic if out-of-bounds?
+    env.objc.borrow::<ArrayHostObject>(this).array[index as usize]
+}
 
 @end
 

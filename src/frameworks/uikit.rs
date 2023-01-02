@@ -13,6 +13,11 @@ pub mod ui_responder;
 pub mod ui_view;
 pub mod ui_window;
 
+#[derive(Default)]
+pub struct State {
+    ui_application: ui_application::State,
+}
+
 pub const FUNCTIONS: FunctionExports = {
     use ui_application::UIApplicationMain;
     &[export_c_func!(UIApplicationMain(_, _, _, _))]

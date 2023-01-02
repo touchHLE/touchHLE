@@ -3,7 +3,7 @@
 //! Resources:
 //! - [Apple's documentation of `class_addMethod`](https://developer.apple.com/documentation/objectivec/1418901-class_addmethod?language=objc)
 
-use super::{id, ClassHostObject, ObjC, SEL};
+use super::{id, nil, Class, ClassHostObject, ObjC, SEL};
 use crate::abi::{CallFromGuest, GuestArg, GuestFunction, GuestRet, VAList};
 use crate::mem::{guest_size_of, ConstPtr, GuestUSize, Mem, Ptr, SafeRead};
 use crate::Environment;
@@ -105,6 +105,27 @@ impl ClassHostObject {
             // We must deduplicate it like any other.
             let sel = objc.register_bin_selector(name, mem);
             self.methods.insert(sel, IMP::Guest(imp));
+        }
+    }
+}
+
+impl ObjC {
+    /// For use by NSObject's getter/setter search methods.
+    pub fn class_has_method(&self, class: Class, sel: SEL) -> bool {
+        let mut class = class;
+        loop {
+            let &ClassHostObject {
+                superclass,
+                ref methods,
+                ..
+            } = self.borrow(class);
+            if methods.contains_key(&sel) {
+                return true;
+            } else if superclass == nil {
+                return false;
+            } else {
+                class = superclass;
+            }
         }
     }
 }

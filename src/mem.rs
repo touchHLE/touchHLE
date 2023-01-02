@@ -14,6 +14,9 @@ mod allocator;
 /// Equivalent of `usize` for guest memory.
 pub type GuestUSize = u32;
 
+/// Equivalent of `isize` for guest memory.
+pub type GuestISize = i32;
+
 /// [std::mem::size_of], but returning a [GuestUSize].
 pub const fn guest_size_of<T: Sized>() -> GuestUSize {
     assert!(std::mem::size_of::<T>() <= u32::MAX as usize);

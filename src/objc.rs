@@ -21,6 +21,7 @@ mod classes;
 mod messages;
 mod methods;
 mod objects;
+mod properties;
 mod selectors;
 
 pub use classes::{objc_classes, Class, ClassExports, ClassTemplate};
@@ -33,6 +34,7 @@ use classes::{ClassHostObject, UnimplementedClass, CLASS_LISTS};
 use messages::{objc_msgSend, objc_msgSendSuper2};
 use methods::method_list_t;
 use objects::{objc_object, HostObjectEntry};
+use properties::objc_setProperty;
 
 /// Main type holding Objective-C runtime state.
 pub struct ObjC {
@@ -63,4 +65,5 @@ impl ObjC {
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(objc_msgSend(_, _)),
     export_c_func!(objc_msgSendSuper2(_, _)),
+    export_c_func!(objc_setProperty(_, _, _, _, _, _)),
 ];

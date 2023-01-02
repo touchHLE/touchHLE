@@ -24,4 +24,5 @@ pub mod uikit;
 pub struct State {
     foundation: foundation::State,
     opengles: opengles::State,
+    uikit: uikit::State,
 }

@@ -150,6 +150,8 @@ impl_CallFromGuest!(0 => P0);
 impl_CallFromGuest!(0 => P0, 1 => P1);
 impl_CallFromGuest!(0 => P0, 1 => P1, 2 => P2);
 impl_CallFromGuest!(0 => P0, 1 => P1, 2 => P2, 3 => P3);
+impl_CallFromGuest!(0 => P0, 1 => P1, 2 => P2, 3 => P3, 4 => P4);
+impl_CallFromGuest!(0 => P0, 1 => P1, 2 => P2, 3 => P3, 4 => P4, 5 => P5);
 
 /// This trait represents a guest or host function that can be called from host
 /// code, but using the guest ABI. See [CallFromGuest], which this is the

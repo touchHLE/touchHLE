@@ -1,9 +1,20 @@
 //! `UIApplication` and `UIApplicationMain`.
 
 use crate::frameworks::uikit::ui_nib::load_main_nib_file;
-use crate::mem::MutPtr;
-use crate::objc::{id, msg_class, nil, objc_classes, ClassExports};
+use crate::mem::{MutPtr, MutVoidPtr};
+use crate::objc::{id, msg_class, nil, objc_classes, ClassExports, HostObject};
 use crate::Environment;
+
+#[derive(Default)]
+pub struct State {
+    /// [UIApplication sharedApplication]
+    shared_application: Option<id>,
+}
+
+struct UIApplicationHostObject {
+    delegate: id,
+}
+impl HostObject for UIApplicationHostObject {}
 
 pub const CLASSES: ClassExports = objc_classes! {
 
@@ -12,9 +23,35 @@ pub const CLASSES: ClassExports = objc_classes! {
 @implementation UIApplication: UIResponder
 
 // This should only be called by UIApplicationMain
++ (id)allocWithZone:(MutVoidPtr)_zone {
+    let host_object = Box::new(UIApplicationHostObject {
+        delegate: nil,
+    });
+    env.objc.alloc_static_object(this, host_object, &mut env.mem)
+}
+
++ (id)sharedApplication {
+    env.framework_state.uikit.ui_application.shared_application.unwrap()
+}
+
+// This should only be called by UIApplicationMain
 - (id)init {
-    // TODO: handle the fact this is a singleton
+    assert!(env.framework_state.uikit.ui_application.shared_application.is_none());
+    env.framework_state.uikit.ui_application.shared_application = Some(this);
     this
+}
+
+// This is a singleton, it shouldn't be deallocated.
+- (id)retain { this }
+- (id)autorelease { this }
+- (())release {}
+
+- (id)delegate {
+    env.objc.borrow::<UIApplicationHostObject>(this).delegate
+}
+- (())setDelegate:(id)delegate { // something implementing UIApplicationDelegate
+    // This property is non-retaining!
+    env.objc.borrow_mut::<UIApplicationHostObject>(this).delegate = delegate;
 }
 
 @end

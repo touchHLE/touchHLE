@@ -4,12 +4,17 @@
 //! - Apple's [Advanced Memory Management Programming Guide](https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/MemoryMgmt/Articles/MemoryMgmt.html)
 //!   explains how reference counting works. Note that we are interested in what
 //!   it calls "manual retain-release", not ARC.
+//! - Apple's [Key-Value Coding Programming Guide](https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/KeyValueCoding/SearchImplementation.html)
+//!   explains the algorithm `setValue:forKey:` should follow.
 //!
 //! See also: [crate::objc], especially the `objects` module.
 
+use super::ns_string::to_rust_string;
 use super::NSUInteger;
 use crate::mem::MutVoidPtr;
-use crate::objc::{id, msg, msg_class, objc_classes, Class, ClassExports, ObjC, TrivialHostObject};
+use crate::objc::{
+    id, msg, msg_class, msg_send, objc_classes, Class, ClassExports, ObjC, TrivialHostObject,
+};
 
 pub const CLASSES: ClassExports = objc_classes! {
 
@@ -95,6 +100,37 @@ pub const CLASSES: ClassExports = objc_classes! {
     msg![env; this copyWithZone:(MutVoidPtr::null())]
 }
 
+
+// NSKeyValueCoding
+- (())setValue:(id)value
+       forKey:(id)key { // NSString*
+    let key = to_rust_string(env, key); // TODO: avoid copy?
+    assert!(key.is_ascii()); // TODO: do we have to handle non-ASCII keys?
+
+    let class = msg![env; this class];
+
+    if let Some(sel) = env.objc.lookup_selector(&format!(
+        "set{}{}:",
+        key.as_bytes()[0].to_ascii_uppercase() as char,
+        &key[1..],
+    )) {
+        if env.objc.class_has_method(class, sel) {
+            return msg_send(env, (this, sel, value));
+        }
+    }
+
+    if let Some(sel) = env.objc.lookup_selector(&format!(
+        "_set{}{}:",
+        key.as_bytes()[0].to_ascii_uppercase() as char,
+        &key[1..],
+    )) {
+        if env.objc.class_has_method(class, sel) {
+            return msg_send(env, (this, sel, value));
+        }
+    }
+
+    unimplemented!("TODO: object {:?} does not have simple setter method for {}, use fallback", this, key);
+}
 
 @end
 

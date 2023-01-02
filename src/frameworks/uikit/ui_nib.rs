@@ -4,10 +4,19 @@
 //! - Apple's [Resource Programming Guide](https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/LoadingResources/CocoaNibs/CocoaNibs.html) is very helpful.
 //! - GitHub user 0xced's [reverse-engineering of UIClassSwapper](https://gist.github.com/0xced/45daf79b62ad6a20be1c).
 
-use crate::frameworks::foundation::ns_keyed_unarchiver;
 use crate::frameworks::foundation::ns_string::{get_static_str, to_rust_string};
-use crate::objc::{id, msg, msg_class, objc_classes, release, ClassExports};
+use crate::frameworks::foundation::{ns_keyed_unarchiver, NSUInteger};
+use crate::objc::{
+    id, msg, msg_class, nil, objc_classes, release, retain, ClassExports, HostObject,
+};
 use crate::Environment;
+
+struct UIRuntimeOutletConnectionHostObject {
+    destination: id,
+    label: id,
+    source: id,
+}
+impl HostObject for UIRuntimeOutletConnectionHostObject {}
 
 pub const CLASSES: ClassExports = objc_classes! {
 
@@ -22,8 +31,35 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 // NSCoding implementation
 - (id)initWithCoder:(id)coder {
-    log!("TODO: [(UIProxyObject*){:?} initWithCoder:{:?}]", this, coder);
-    this
+    let id_key = get_static_str(env, "UIProxiedObjectIdentifier");
+    let id_nss: id = msg![env; coder decodeObjectForKey:id_key];
+    let id = to_rust_string(env, id_nss);
+    release(env, id_nss);
+
+    if id == "IBFilesOwner" {
+        // The file owner is usually the UIApplication instance.
+        // Replacing the proxy with that instance is important so that the
+        // "delegate" outlet can be connected between it and the
+        // UIApplicationDelegate.
+        //
+        // TODO: This is a bit of a hack. Eventually it would be good to fix:
+        // - The name "UIProxyObject" implies that it might be intended to
+        //   proxy messages to another object, rather than be replaced by it.
+        //   Check what iPhone OS does?
+        // - If/when the UINib class is implemented and arbitrary nib files can
+        //   be deserialized, an app could pick some other object to be the nib
+        //   file owner, which this would need to handle.
+        // - If this object is meant to be replaced, it's probably not meant to
+        //   be done via `initWithCoder:`, but instead by providing a delegate
+        //   to the NSKeyedUnarchiver. That might be needed to implement
+        //   replacement for objects other than the UIApplication instance.
+
+        release(env, this);
+        msg_class![env; UIApplication sharedApplication]
+    } else {
+        log!("TODO: UIProxyObject replacement for {}, instance {:?} left unreplaced", id, this);
+        this
+    }
 }
 
 @end
@@ -61,13 +97,63 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 @end
 
-// Another undocumented type used by nib files.
+// Another undocumented type used by nib files. This one's purpose seems to be
+// to connect outlets once all the objects are deserialized.
 @implementation UIRuntimeOutletConnection: NSObject
+
++ (id)alloc {
+    let host_object = Box::new(UIRuntimeOutletConnectionHostObject {
+        destination: nil,
+        label: nil,
+        source: nil,
+    });
+    env.objc.alloc_object(this, host_object, &mut env.mem)
+}
 
 // NSCoding implementation
 - (id)initWithCoder:(id)coder {
-    log!("TODO: [(UIRuntimeOutletConnection*){:?} initWithCoder:{:?}]", this, coder);
+
+    let destination_key = get_static_str(env, "UIDestination");
+    let destination: id = msg![env; coder decodeObjectForKey: destination_key];
+
+    let label_key = get_static_str(env, "UILabel");
+    let label: id = msg![env; coder decodeObjectForKey: label_key];
+
+    let source_key = get_static_str(env, "UISource");
+    let source: id = msg![env; coder decodeObjectForKey: source_key];
+
+    retain(env, destination);
+    retain(env, source);
+    retain(env, label);
+    let host_obj = env.objc.borrow_mut::<UIRuntimeOutletConnectionHostObject>(this);
+    host_obj.destination = destination;
+    host_obj.label = label;
+    host_obj.source = source;
+
     this
+}
+
+- (())connect {
+    let &UIRuntimeOutletConnectionHostObject {
+        destination,
+        label,
+        source
+    } = env.objc.borrow(this);
+
+    let _: () = msg![env; source setValue:destination forKey:label];
+}
+
+- (())dealloc {
+    let &UIRuntimeOutletConnectionHostObject {
+        destination,
+        label,
+        source
+    } = env.objc.borrow(this);
+    release(env, destination);
+    release(env, label);
+    release(env, source);
+
+    env.objc.dealloc_object(this, &mut env.mem)
 }
 
 @end
@@ -82,9 +168,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 /// return [nib instantiateWithOwner:[UIApplication sharedApplication]
 ///                     optionsOrNil:nil];
 /// ```
-///
-/// The result value of this function is the `NSArray` of top-level objects.
-pub fn load_main_nib_file(env: &mut Environment, _ui_application: id) -> id {
+pub fn load_main_nib_file(env: &mut Environment, _ui_application: id) {
     let path = env.bundle.main_nib_file_path();
 
     let unarchiver = msg_class![env; NSKeyedUnarchiver alloc];
@@ -94,23 +178,20 @@ pub fn load_main_nib_file(env: &mut Environment, _ui_application: id) -> id {
     // UINibAccessibilityConfigurationsKey, UINibConnectionsKey,
     // UINibObjectsKey, UINibTopLevelObjectsKey and UINibVisibleWindowsKey.
     // Each corresponds to an NSArray.
-    //
-    // Only the objects, top-level objects and connections lists seem useful
-    // right now.
 
+    // We don't need to do anything with the list of objects, but deserializing
+    // it ensures everything else is deserialized.
     let objects_key = get_static_str(env, "UINibObjectsKey");
-    let objects: id = msg![env; unarchiver decodeObjectForKey:objects_key];
+    let _objects: id = msg![env; unarchiver decodeObjectForKey:objects_key];
+
+    // Connect all the outlets with UIRuntimeOutletConnection
     let conns_key = get_static_str(env, "UINibConnectionsKey");
     let conns: id = msg![env; unarchiver decodeObjectForKey:conns_key];
-    let tlos_key = get_static_str(env, "UINibTopLevelObjectsKey");
-    let tlos: id = msg![env; unarchiver decodeObjectForKey:tlos_key];
+    let conns_count: NSUInteger = msg![env; conns count];
+    for i in 0..conns_count {
+        let conn: id = msg![env; conns objectAtIndex:i];
+        let _: () = msg![env; conn connect];
+    }
 
     release(env, unarchiver);
-
-    unimplemented!(
-        "Finish nib loading with {:?}, {:?}, {:?}",
-        objects,
-        conns,
-        tlos,
-    );
 }

@@ -79,7 +79,7 @@ pub(super) fn UIApplicationMain(
     let delegate: id = msg![env; ui_application delegate];
     assert!(delegate != nil); // should have been set by now
 
-    let _: () = msg![env; delegate applicationDidFinishLaunching:ui_application];
+    () = msg![env; delegate applicationDidFinishLaunching:ui_application];
 
     // TODO: Are there more messages we need to send?
     // TODO: Send UIApplicationDidFinishLaunchingNotification?

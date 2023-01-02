@@ -140,7 +140,7 @@ pub const CLASSES: ClassExports = objc_classes! {
         source
     } = env.objc.borrow(this);
 
-    let _: () = msg![env; source setValue:destination forKey:label];
+    () = msg![env; source setValue:destination forKey:label];
 }
 
 - (())dealloc {
@@ -190,7 +190,7 @@ pub fn load_main_nib_file(env: &mut Environment, _ui_application: id) {
     let conns_count: NSUInteger = msg![env; conns count];
     for i in 0..conns_count {
         let conn: id = msg![env; conns objectAtIndex:i];
-        let _: () = msg![env; conn connect];
+        () = msg![env; conn connect];
     }
 
     release(env, unarchiver);

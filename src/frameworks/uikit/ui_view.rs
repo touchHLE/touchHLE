@@ -79,7 +79,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     );
 
     let layer = host_object.layer;
-    let _: () = msg![env; layer setDelegate:this];
+    () = msg![env; layer setDelegate:this];
 
     this
 }

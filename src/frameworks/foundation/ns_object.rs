@@ -63,11 +63,11 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (())release {
     log_dbg!("[{:?} release]", this);
     if env.objc.decrement_refcount(this) {
-        let _: () = msg![env; this dealloc];
+        () = msg![env; this dealloc];
     }
 }
 - (id)autorelease {
-    let _: () = msg_class![env; NSAutoreleasePool addObject:this];
+    () = msg_class![env; NSAutoreleasePool addObject:this];
     this
 }
 

@@ -228,7 +228,7 @@ pub fn retain(env: &mut Environment, object: id) -> id {
     msg![env; object retain]
 }
 
-/// Shorthand for `let _: () = msg![env; object release];`
+/// Shorthand for `() = msg![env; object release];`
 pub fn release(env: &mut Environment, object: id) {
     msg![env; object release]
 }

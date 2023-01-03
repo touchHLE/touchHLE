@@ -1,6 +1,6 @@
 //! Handling of Objective-C properties.
 //!
-//! Note that these are not the same as instance variables (ivar), though
+//! Note that these are not the same as instance variables (ivars), though
 //! they're closely related, so maybe this file will end up being used for those
 //! too.
 //!

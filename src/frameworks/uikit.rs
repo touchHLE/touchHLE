@@ -10,12 +10,14 @@ use crate::export_c_func;
 pub mod ui_application;
 pub mod ui_nib;
 pub mod ui_responder;
+pub mod ui_screen;
 pub mod ui_view;
 pub mod ui_window;
 
 #[derive(Default)]
 pub struct State {
     ui_application: ui_application::State,
+    ui_screen: ui_screen::State,
 }
 
 pub const FUNCTIONS: FunctionExports = {

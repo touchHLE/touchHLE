@@ -1,12 +1,13 @@
 //! `UIView`.
 
+use crate::frameworks::core_graphics::{CGPoint, CGRect, CGSize};
 use crate::frameworks::foundation::ns_string::{get_static_str, to_rust_string};
 use crate::mem::MutVoidPtr;
 use crate::objc::{id, msg, objc_classes, release, Class, ClassExports, HostObject};
 
 struct UIViewHostObject {
-    bounds: ((f32, f32), (f32, f32)), // TODO: should use CGRect
-    center: (f32, f32),               // TODO: should use CGPoint
+    bounds: CGRect,
+    center: CGPoint,
     /// CALayer or subclass.
     layer: id,
 }
@@ -16,13 +17,19 @@ fn parse_tuple(string: &str) -> Option<(f32, f32)> {
     let (a, b) = string.split_once(", ")?;
     Some((a.parse().ok()?, b.parse().ok()?))
 }
-fn parse_point(string: &str) -> Option<(f32, f32)> {
-    parse_tuple(string.strip_prefix('{')?.strip_suffix('}')?)
+fn parse_point(string: &str) -> Option<CGPoint> {
+    let (x, y) = parse_tuple(string.strip_prefix('{')?.strip_suffix('}')?)?;
+    Some(CGPoint { x, y })
 }
-fn parse_rect(string: &str) -> Option<((f32, f32), (f32, f32))> {
+fn parse_rect(string: &str) -> Option<CGRect> {
     let string = string.strip_prefix("{{")?.strip_suffix("}}")?;
     let (a, b) = string.split_once("}, {")?;
-    Some((parse_tuple(a)?, parse_tuple(b)?))
+    let (x, y) = parse_tuple(a)?;
+    let (width, height) = parse_tuple(b)?;
+    Some(CGRect {
+        origin: CGPoint { x, y },
+        size: CGSize { width, height },
+    })
 }
 
 pub const CLASSES: ClassExports = objc_classes! {
@@ -36,8 +43,11 @@ pub const CLASSES: ClassExports = objc_classes! {
     let layer: id = msg![env; layer_class layer];
 
     let host_object = Box::new(UIViewHostObject {
-        bounds: ((0.0, 0.0), (0.0, 0.0)),
-        center: (0.0, 0.0),
+        bounds: CGRect {
+            origin: CGPoint { x: 0.0, y: 0.0 },
+            size: CGSize { width: 0.0, height: 0.0 }
+        },
+        center: CGPoint { x: 0.0, y: 0.0 },
         layer,
     });
     env.objc.alloc_object(this, host_object, &mut env.mem)

@@ -7,7 +7,7 @@
 //! See also: [crate::mem::SafeRead] and [crate::mem::SafeWrite].
 
 use crate::cpu::Cpu;
-use crate::mem::{ConstPtr, ConstVoidPtr, Mem, Ptr};
+use crate::mem::{ConstPtr, ConstVoidPtr, GuestUSize, Mem, MutVoidPtr, Ptr};
 use crate::Environment;
 
 /// Address of an A32 or T32 instruction, with the mode encoded using the Thumb
@@ -118,13 +118,20 @@ macro_rules! impl_CallFromGuest {
             // ignore warnings for the zero-argument case
             #[allow(unused_variables, unused_mut, clippy::unused_unit)]
             fn call_from_guest(&self, env: &mut Environment) {
+                let mut reg_offset = 0;
+                let regs = env.cpu.regs();
+                let retval_ptr = R::SIZE_IN_MEM.map(|_| {
+                    read_next_arg(&mut reg_offset, regs, &env.mem)
+                });
                 let args: ($($P,)*) = {
-                    let regs = env.cpu.regs();
-                    let mut reg_offset = 0;
                     ($(read_next_arg::<$P>(&mut reg_offset, regs, &env.mem),)*)
                 };
                 let retval = self(env, $(args.$p),*);
-                retval.to_regs(env.cpu.regs_mut());
+                if let Some(retval_ptr) = retval_ptr {
+                    retval.to_mem(retval_ptr, &mut env.mem);
+                } else {
+                    retval.to_regs(env.cpu.regs_mut());
+                }
             }
         }
         impl<R, $($P),*> CallFromGuest for fn(&mut Environment, $($P,)* VAList) -> R
@@ -133,13 +140,20 @@ macro_rules! impl_CallFromGuest {
             #[allow(unused_variables, unused_mut, clippy::unused_unit)]
             fn call_from_guest(&self, env: &mut Environment) {
                 let mut reg_offset = 0;
+                let regs = env.cpu.regs();
+                let retval_ptr = R::SIZE_IN_MEM.map(|_| {
+                    read_next_arg(&mut reg_offset, regs, &env.mem)
+                });
                 let args: ($($P,)*) = {
-                    let regs = env.cpu.regs();
                     ($(read_next_arg::<$P>(&mut reg_offset, regs, &env.mem),)*)
                 };
                 let va_list = VAList { reg_offset };
                 let retval = self(env, $(args.$p,)* va_list);
-                retval.to_regs(env.cpu.regs_mut());
+                if let Some(retval_ptr) = retval_ptr {
+                    retval.to_mem(retval_ptr, &mut env.mem);
+                } else {
+                    retval.to_regs(env.cpu.regs_mut());
+                }
             }
         }
     }
@@ -171,6 +185,7 @@ macro_rules! impl_CallFromHost {
                 env: &mut Environment,
                 args: ($($P,)*),
             ) -> R {
+                assert!(R::SIZE_IN_MEM.is_none()); // pointer return TODO
                 {
                     let regs = env.cpu.regs_mut();
                     let mut reg_offset = 0;
@@ -190,6 +205,7 @@ macro_rules! impl_CallFromHost {
                 env: &mut Environment,
                 args: ($($P,)*),
             ) -> R {
+                assert!(R::SIZE_IN_MEM.is_none()); // pointer return TODO
                 {
                     let regs = env.cpu.regs_mut();
                     let mut reg_offset = 0;
@@ -344,15 +360,34 @@ impl GuestArg for GuestFunction {
 
 /// Calling convention translation for a function return type.
 pub trait GuestRet: Sized {
-    // The main purpose of GuestArg::REG_COUNT is for advancing the register
-    // index. But there can only be one return value for a function, so we can
-    // probably get away with not having it for now?
+    /// If this is `None`, then the return value is passed directly in
+    /// registers and the `to_regs` and `from_regs` methods should be used.
+    /// If this is `Some(size)`, then the return value is of `size` bytes and is
+    /// stored in memory at the location specified by an implicit pointer
+    /// argument in r0, and the `to_mem` and `from_mem` methods should be used.
+    const SIZE_IN_MEM: Option<GuestUSize> = None;
 
     /// Read the return value from registers.
-    fn from_regs(regs: &[u32]) -> Self;
-
+    fn from_regs(regs: &[u32]) -> Self {
+        let _ = regs;
+        panic!()
+    }
     /// Write the return value to registers.
-    fn to_regs(self, regs: &mut [u32]);
+    fn to_regs(self, regs: &mut [u32]) {
+        let _ = regs;
+        panic!()
+    }
+
+    /// Read the return value from memory.
+    fn from_mem(ptr: ConstVoidPtr, mem: &Mem) -> Self {
+        let _ = (ptr, mem);
+        panic!()
+    }
+    /// Write the return value to memory.
+    fn to_mem(self, ptr: MutVoidPtr, mem: &mut Mem) {
+        let _ = (ptr, mem);
+        panic!()
+    }
 }
 
 macro_rules! impl_GuestRet_with {
@@ -367,6 +402,30 @@ macro_rules! impl_GuestRet_with {
         }
     };
 }
+
+/// Generates a trait implementation of [GuestRet] for a struct type that is
+/// larger than 4 bytes (and thus returned via an implicit pointer parameter
+/// rather than via registers). The type must have implementations of
+/// [crate::mem::SafeRead] and [crate::mem::SafeWrite].
+#[macro_export]
+macro_rules! impl_GuestRet_for_large_struct {
+    ($for:ty) => {
+        impl $crate::abi::GuestRet for $for {
+            const SIZE_IN_MEM: Option<$crate::mem::GuestUSize> =
+                Some($crate::mem::guest_size_of::<$for>());
+
+            fn from_mem(ptr: $crate::mem::ConstVoidPtr, mem: &$crate::mem::Mem) -> Self {
+                let ptr = ptr.cast::<Self>();
+                mem.read(ptr)
+            }
+            fn to_mem(self, ptr: $crate::mem::MutVoidPtr, mem: &mut $crate::mem::Mem) {
+                let ptr = ptr.cast::<Self>();
+                mem.write(ptr, self)
+            }
+        }
+    };
+}
+pub use crate::impl_GuestRet_for_large_struct; // #[macro_export] is weird...
 
 impl GuestRet for () {
     fn to_regs(self, _regs: &mut [u32]) {

@@ -8,7 +8,7 @@
 
 use super::{id, nil, Class, ObjC, IMP, SEL};
 use crate::abi::CallFromHost;
-use crate::mem::{ConstPtr, SafeRead};
+use crate::mem::{ConstPtr, MutVoidPtr, SafeRead};
 use crate::Environment;
 
 /// The core implementation of `objc_msgSend`, the main function of Objective-C.
@@ -110,6 +110,24 @@ fn objc_msgSend_inner(env: &mut Environment, receiver: id, selector: SEL, super2
 /// Standard variant of `objc_msgSend`. See [objc_msgSend_inner].
 #[allow(non_snake_case)]
 pub(super) fn objc_msgSend(env: &mut Environment, receiver: id, selector: SEL) {
+    objc_msgSend_inner(env, receiver, selector, /* super2: */ None)
+}
+
+/// Variant of `objc_msgSend` for methods that return a struct via a pointer.
+/// See [objc_msgSend_inner].
+///
+/// The first parameter here is the pointer for the struct return. This is an
+/// ABI detail that is usually hidden and handled behind-the-scenes by
+/// [crate::abi], but `objc_msgSend` is a special case because of the
+/// pass-through behaviour. Of course, the pass-through only works if the [IMP]
+/// also has the pointer parameter. The caller therefore has to pick the
+/// appropriate `objc_msgSend` variant depending on the method it wants to call.
+pub(super) fn objc_msgSend_stret(
+    env: &mut Environment,
+    _stret: MutVoidPtr,
+    receiver: id,
+    selector: SEL,
+) {
     objc_msgSend_inner(env, receiver, selector, /* super2: */ None)
 }
 

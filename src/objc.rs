@@ -31,7 +31,7 @@ pub use objects::{id, nil, AnyHostObject, HostObject, TrivialHostObject};
 pub use selectors::{selector, SEL};
 
 use classes::{ClassHostObject, UnimplementedClass, CLASS_LISTS};
-use messages::{objc_msgSend, objc_msgSendSuper2};
+use messages::{objc_msgSend, objc_msgSendSuper2, objc_msgSend_stret};
 use methods::method_list_t;
 use objects::{objc_object, HostObjectEntry};
 use properties::objc_setProperty;
@@ -64,6 +64,7 @@ impl ObjC {
 
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(objc_msgSend(_, _)),
+    export_c_func!(objc_msgSend_stret(_, _, _)),
     export_c_func!(objc_msgSendSuper2(_, _)),
     export_c_func!(objc_setProperty(_, _, _, _, _, _)),
 ];

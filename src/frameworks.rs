@@ -15,6 +15,7 @@
 #![allow(non_upper_case_globals)] // Lots of Apple constants begin with "k"
 
 pub mod core_animation;
+pub mod core_graphics;
 pub mod foundation;
 pub mod opengles;
 pub mod uikit;

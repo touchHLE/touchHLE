@@ -1,8 +1,10 @@
 //! `UIApplication` and `UIApplicationMain`.
 
+use super::ui_device::*;
 use crate::frameworks::uikit::ui_nib::load_main_nib_file;
 use crate::mem::{MutPtr, MutVoidPtr};
 use crate::objc::{id, msg, msg_class, nil, objc_classes, ClassExports, HostObject};
+use crate::window::DeviceOrientation;
 use crate::Environment;
 
 #[derive(Default)]
@@ -15,6 +17,8 @@ struct UIApplicationHostObject {
     delegate: id,
 }
 impl HostObject for UIApplicationHostObject {}
+
+type UIInterfaceOrientation = UIDeviceOrientation;
 
 pub const CLASSES: ClassExports = objc_classes! {
 
@@ -52,6 +56,30 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (())setDelegate:(id)delegate { // something implementing UIApplicationDelegate
     // This property is non-retaining!
     env.objc.borrow_mut::<UIApplicationHostObject>(this).delegate = delegate;
+}
+
+// TODO: statusBarHidden getter
+- (())setStatusBarHidden:(bool)_hidden {
+    // TODO: store this somewhere
+}
+- (())setStatusBarHidden:(bool)hidden
+                animated:(bool)_animated {
+    // TODO: animation
+    msg![env; this setStatusBarHidden:hidden]
+}
+
+// TODO: statusBarOrientation getter
+- (())setStatusBarOrientation:(UIInterfaceOrientation)orientation {
+    env.window.rotate_device(match orientation {
+        UIDeviceOrientationPortrait => DeviceOrientation::Portrait,
+        UIDeviceOrientationLandscapeLeft => DeviceOrientation::LandscapeLeft,
+        _ => unimplemented!("Orientation {} not handled yet", orientation),
+    });
+}
+- (())setStatusBarOrientation:(UIInterfaceOrientation)orientation
+                     animated:(bool)_animated {
+    // TODO: animation
+    msg![env; this setStatusBarOrientation:orientation]
 }
 
 @end

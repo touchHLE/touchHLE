@@ -1,5 +1,6 @@
 //! OpenGL context creation etc.
 
+use super::Matrix;
 use crate::image::Image;
 use sdl2::video::GLProfile;
 
@@ -63,7 +64,14 @@ pub fn make_gl_context_current(
     }
 }
 
-pub unsafe fn display_image(image: &Image) {
+pub unsafe fn display_image(image: &Image, viewport: (u32, u32), rotation: &Matrix<2>) {
+    gl::Viewport(
+        0,
+        0,
+        viewport.0.try_into().unwrap(),
+        viewport.1.try_into().unwrap(),
+    );
+
     let src_pixels = image.pixels();
     let (width, height) = image.dimensions();
 
@@ -94,9 +102,11 @@ pub unsafe fn display_image(image: &Image) {
 #version 100
 attribute vec2 pos;
 varying vec2 texCoord;
+uniform mat2 trans;
 void main() {
 gl_Position = vec4(pos * 2.0 - 1.0, 0.0, 1.0);
 texCoord = vec2(pos.x, 1.0 - pos.y); // glTexImage2D loads upside-down
+texCoord = (texCoord - 0.5) * trans + 0.5; // rotate about center
 }
 ";
     let vertex_shader = gl::CreateShader(gl::VERTEX_SHADER);
@@ -133,6 +143,7 @@ gl_FragColor = texture2D(tex, texCoord);
     gl::UseProgram(shader_program);
 
     let pos_attrib = gl::GetAttribLocation(shader_program, "pos\0".as_ptr() as *const _);
+    let trans_uniform = gl::GetUniformLocation(shader_program, "trans\0".as_ptr() as *const _);
     let tex_uniform = gl::GetUniformLocation(shader_program, "tex\0".as_ptr() as *const _);
 
     let mut vertex_array = 0;
@@ -160,6 +171,13 @@ gl_FragColor = texture2D(tex, texCoord);
 
     gl::ActiveTexture(gl::TEXTURE0);
     gl::Uniform1i(tex_uniform, 0);
+
+    gl::UniformMatrix2fv(
+        trans_uniform,
+        1,
+        gl::FALSE,
+        rotation.columns() as *const _ as *const _,
+    );
 
     gl::DrawArrays(gl::TRIANGLES, 0, 6);
 

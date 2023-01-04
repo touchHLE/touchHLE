@@ -21,6 +21,7 @@ pub struct State {
     ns_string: ns_string::State,
 }
 
+pub type NSInteger = i32;
 pub type NSUInteger = u32;
 
 /// Utility to help with implementing the `hash` method, which various classes

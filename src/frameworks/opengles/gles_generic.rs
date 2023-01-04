@@ -14,6 +14,58 @@ pub trait GLES {
         Self: Sized;
     fn make_current(&self, window: &mut crate::window::Window);
 
+    // Matrix stack operations
+    unsafe fn MatrixMode(&mut self, mode: GLenum);
+    unsafe fn LoadIdentity(&mut self);
+    unsafe fn LoadMatrixf(&mut self, m: *const GLfloat);
+    unsafe fn LoadMatrixx(&mut self, m: *const GLfixed);
+    unsafe fn MultMatrixf(&mut self, m: *const GLfloat);
+    unsafe fn MultMatrixx(&mut self, m: *const GLfixed);
+    unsafe fn PushMatrix(&mut self);
+    unsafe fn PopMatrix(&mut self);
+    unsafe fn Orthof(
+        &mut self,
+        left: GLfloat,
+        right: GLfloat,
+        bottom: GLfloat,
+        top: GLfloat,
+        near: GLfloat,
+        far: GLfloat,
+    );
+    unsafe fn Orthox(
+        &mut self,
+        left: GLfixed,
+        right: GLfixed,
+        bottom: GLfixed,
+        top: GLfixed,
+        near: GLfixed,
+        far: GLfixed,
+    );
+    unsafe fn Frustumf(
+        &mut self,
+        left: GLfloat,
+        right: GLfloat,
+        bottom: GLfloat,
+        top: GLfloat,
+        near: GLfloat,
+        far: GLfloat,
+    );
+    unsafe fn Frustumx(
+        &mut self,
+        left: GLfixed,
+        right: GLfixed,
+        bottom: GLfixed,
+        top: GLfixed,
+        near: GLfixed,
+        far: GLfixed,
+    );
+    unsafe fn Rotatef(&mut self, angle: GLfloat, x: GLfloat, y: GLfloat, z: GLfloat);
+    unsafe fn Rotatex(&mut self, angle: GLfixed, x: GLfixed, y: GLfixed, z: GLfixed);
+    unsafe fn Scalef(&mut self, x: GLfloat, y: GLfloat, z: GLfloat);
+    unsafe fn Scalex(&mut self, x: GLfixed, y: GLfixed, z: GLfixed);
+    unsafe fn Translatef(&mut self, x: GLfloat, y: GLfloat, z: GLfloat);
+    unsafe fn Translatex(&mut self, x: GLfixed, y: GLfixed, z: GLfixed);
+
     // OES_framebuffer_object (incomplete)
     unsafe fn GenFramebuffersOES(&mut self, n: GLsizei, framebuffers: *mut GLuint);
     unsafe fn GenRenderbuffersOES(&mut self, n: GLsizei, renderbuffers: *mut GLuint);

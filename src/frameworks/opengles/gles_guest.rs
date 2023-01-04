@@ -2,7 +2,7 @@
 
 use super::GLES;
 use crate::dyld::{export_c_func, FunctionExports};
-use crate::mem::{guest_size_of, GuestUSize, Mem, MutPtr};
+use crate::mem::{guest_size_of, ConstPtr, GuestUSize, Mem, MutPtr};
 use crate::window::gles11::types::*;
 use crate::Environment;
 
@@ -12,6 +12,134 @@ where
 {
     let (_eagl, ref mut gles) = env.framework_state.opengles.current_ctx.as_mut().unwrap();
     f(&mut **gles, &mut env.mem)
+}
+
+// Matrix stack operations
+fn glMatrixMode(env: &mut Environment, mode: GLenum) {
+    with_ctx_and_mem(env, |gles, _mem| {
+        unsafe { gles.MatrixMode(mode) };
+    });
+}
+fn glLoadIdentity(env: &mut Environment) {
+    with_ctx_and_mem(env, |gles, _mem| {
+        unsafe { gles.LoadIdentity() };
+    });
+}
+fn glLoadMatrixf(env: &mut Environment, m: ConstPtr<GLfloat>) {
+    with_ctx_and_mem(env, |gles, mem| {
+        let slice = mem.bytes_at(m.cast(), 16 * guest_size_of::<GLfloat>());
+        unsafe { gles.LoadMatrixf(slice.as_ptr() as *const _) };
+    });
+}
+fn glLoadMatrixx(env: &mut Environment, m: ConstPtr<GLfixed>) {
+    with_ctx_and_mem(env, |gles, mem| {
+        let slice = mem.bytes_at(m.cast(), 16 * guest_size_of::<GLfixed>());
+        unsafe { gles.LoadMatrixx(slice.as_ptr() as *const _) };
+    });
+}
+fn glMultMatrixf(env: &mut Environment, m: ConstPtr<GLfloat>) {
+    with_ctx_and_mem(env, |gles, mem| {
+        let slice = mem.bytes_at(m.cast(), 16 * guest_size_of::<GLfloat>());
+        unsafe { gles.MultMatrixf(slice.as_ptr() as *const _) };
+    });
+}
+fn glMultMatrixx(env: &mut Environment, m: ConstPtr<GLfixed>) {
+    with_ctx_and_mem(env, |gles, mem| {
+        let slice = mem.bytes_at(m.cast(), 16 * guest_size_of::<GLfixed>());
+        unsafe { gles.MultMatrixx(slice.as_ptr() as *const _) };
+    });
+}
+fn glPushMatrix(env: &mut Environment) {
+    with_ctx_and_mem(env, |gles, _mem| {
+        unsafe { gles.PushMatrix() };
+    });
+}
+fn glPopMatrix(env: &mut Environment) {
+    with_ctx_and_mem(env, |gles, _mem| {
+        unsafe { gles.PopMatrix() };
+    });
+}
+fn glOrthof(
+    env: &mut Environment,
+    left: GLfloat,
+    right: GLfloat,
+    bottom: GLfloat,
+    top: GLfloat,
+    near: GLfloat,
+    far: GLfloat,
+) {
+    with_ctx_and_mem(env, |gles, _mem| {
+        unsafe { gles.Orthof(left, right, bottom, top, near, far) };
+    });
+}
+fn glOrthox(
+    env: &mut Environment,
+    left: GLfixed,
+    right: GLfixed,
+    bottom: GLfixed,
+    top: GLfixed,
+    near: GLfixed,
+    far: GLfixed,
+) {
+    with_ctx_and_mem(env, |gles, _mem| {
+        unsafe { gles.Orthox(left, right, bottom, top, near, far) };
+    });
+}
+fn glFrustumf(
+    env: &mut Environment,
+    left: GLfloat,
+    right: GLfloat,
+    bottom: GLfloat,
+    top: GLfloat,
+    near: GLfloat,
+    far: GLfloat,
+) {
+    with_ctx_and_mem(env, |gles, _mem| {
+        unsafe { gles.Frustumf(left, right, bottom, top, near, far) };
+    });
+}
+fn glFrustumx(
+    env: &mut Environment,
+    left: GLfixed,
+    right: GLfixed,
+    bottom: GLfixed,
+    top: GLfixed,
+    near: GLfixed,
+    far: GLfixed,
+) {
+    with_ctx_and_mem(env, |gles, _mem| {
+        unsafe { gles.Frustumx(left, right, bottom, top, near, far) };
+    });
+}
+fn glRotatef(env: &mut Environment, angle: GLfloat, x: GLfloat, y: GLfloat, z: GLfloat) {
+    with_ctx_and_mem(env, |gles, _mem| {
+        unsafe { gles.Rotatef(angle, x, y, z) };
+    });
+}
+fn glRotatex(env: &mut Environment, angle: GLfixed, x: GLfixed, y: GLfixed, z: GLfixed) {
+    with_ctx_and_mem(env, |gles, _mem| {
+        unsafe { gles.Rotatex(angle, x, y, z) };
+    });
+}
+fn glScalef(env: &mut Environment, x: GLfloat, y: GLfloat, z: GLfloat) {
+    with_ctx_and_mem(env, |gles, _mem| {
+        unsafe { gles.Scalef(x, y, z) };
+    });
+}
+fn glScalex(env: &mut Environment, x: GLfixed, y: GLfixed, z: GLfixed) {
+    with_ctx_and_mem(env, |gles, _mem| {
+        unsafe { gles.Scalex(x, y, z) };
+    });
+}
+fn glTranslatef(env: &mut Environment, x: GLfloat, y: GLfloat, z: GLfloat) {
+    with_ctx_and_mem(env, |gles, _mem| {
+        unsafe { gles.Translatef(x, y, z) };
+    });
+}
+fn glTranslatex(env: &mut Environment, x: GLfixed, y: GLfixed, z: GLfixed) {
+    with_ctx_and_mem(env, |gles, _mem| {
+        unsafe { gles.Translatex(x, y, z) };
+    });
 }
 
 // OES_framebuffer_object
@@ -79,6 +207,25 @@ fn glCheckFramebufferStatusOES(env: &mut Environment, target: GLenum) -> GLenum 
 }
 
 pub const FUNCTIONS: FunctionExports = &[
+    // Matrix stack operations
+    export_c_func!(glMatrixMode(_)),
+    export_c_func!(glLoadIdentity()),
+    export_c_func!(glLoadMatrixf(_)),
+    export_c_func!(glLoadMatrixx(_)),
+    export_c_func!(glMultMatrixf(_)),
+    export_c_func!(glMultMatrixx(_)),
+    export_c_func!(glPushMatrix()),
+    export_c_func!(glPopMatrix()),
+    export_c_func!(glOrthof(_, _, _, _, _, _)),
+    export_c_func!(glOrthox(_, _, _, _, _, _)),
+    export_c_func!(glFrustumf(_, _, _, _, _, _)),
+    export_c_func!(glFrustumx(_, _, _, _, _, _)),
+    export_c_func!(glRotatef(_, _, _, _)),
+    export_c_func!(glRotatex(_, _, _, _)),
+    export_c_func!(glScalef(_, _, _)),
+    export_c_func!(glScalex(_, _, _)),
+    export_c_func!(glTranslatef(_, _, _)),
+    export_c_func!(glTranslatex(_, _, _)),
     // OES_framebuffer_object
     export_c_func!(glGenFramebuffersOES(_, _)),
     export_c_func!(glGenRenderbuffersOES(_, _)),

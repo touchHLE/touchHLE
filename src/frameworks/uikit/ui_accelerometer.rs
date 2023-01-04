@@ -1,7 +1,7 @@
 //! `UIAccelerometer`.
 
 use crate::frameworks::foundation::NSTimeInterval;
-use crate::objc::{id, objc_classes, ClassExports, TrivialHostObject, nil};
+use crate::objc::{id, nil, objc_classes, ClassExports, TrivialHostObject};
 
 #[derive(Default)]
 pub struct State {

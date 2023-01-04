@@ -16,6 +16,7 @@ pub const CLASS_LISTS: &[super::ClassExports] = &[
     foundation::ns_string::CLASSES,
     foundation::ns_value::CLASSES,
     opengles::eagl::CLASSES,
+    uikit::ui_accelerometer::CLASSES,
     uikit::ui_application::CLASSES,
     uikit::ui_nib::CLASSES,
     uikit::ui_responder::CLASSES,

@@ -7,6 +7,7 @@
 use crate::dyld::FunctionExports;
 use crate::export_c_func;
 
+pub mod ui_accelerometer;
 pub mod ui_application;
 pub mod ui_device;
 pub mod ui_nib;
@@ -17,6 +18,7 @@ pub mod ui_window;
 
 #[derive(Default)]
 pub struct State {
+    ui_accelerometer: ui_accelerometer::State,
     ui_application: ui_application::State,
     ui_screen: ui_screen::State,
 }

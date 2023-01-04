@@ -24,6 +24,9 @@ pub struct State {
 pub type NSInteger = i32;
 pub type NSUInteger = u32;
 
+/// Number of seconds.
+pub type NSTimeInterval = f64;
+
 /// Utility to help with implementing the `hash` method, which various classes
 /// in Foundation have to do.
 fn hash_helper<T: std::hash::Hash>(hashable: &T) -> NSUInteger {

@@ -1,5 +1,6 @@
 //! `stdlib.h`
 
+use crate::abi::GuestFunction;
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::mem::{GuestUSize, MutVoidPtr};
 use crate::Environment;
@@ -19,8 +20,17 @@ fn free(env: &mut Environment, ptr: MutVoidPtr) {
     env.mem.free(ptr);
 }
 
+fn atexit(
+    _env: &mut Environment,
+    func: GuestFunction, // void (*func)(void)
+) -> i32 {
+    log!("TODO: atexit({:?}) (unimplemented)", func);
+    0 // success
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(malloc(_)),
     export_c_func!(calloc(_, _)),
     export_c_func!(free(_)),
+    export_c_func!(atexit(_)),
 ];

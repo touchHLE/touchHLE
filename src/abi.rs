@@ -355,6 +355,33 @@ impl GuestArg for GuestFunction {
     }
 }
 
+// GuestArg implementations for u64-like types
+
+impl GuestArg for u64 {
+    const REG_COUNT: usize = 2;
+    fn from_regs(regs: &[u32]) -> Self {
+        let mut bytes = [0u8; 8];
+        bytes[0..4].copy_from_slice(&regs[0].to_le_bytes());
+        bytes[4..8].copy_from_slice(&regs[1].to_le_bytes());
+        u64::from_le_bytes(bytes)
+    }
+    fn to_regs(self, regs: &mut [u32]) {
+        let bytes = self.to_le_bytes();
+        regs[0] = u32::from_le_bytes(bytes[0..4].try_into().unwrap());
+        regs[1] = u32::from_le_bytes(bytes[4..8].try_into().unwrap());
+    }
+}
+
+impl GuestArg for f64 {
+    const REG_COUNT: usize = <u64 as GuestArg>::REG_COUNT;
+    fn from_regs(regs: &[u32]) -> Self {
+        Self::from_bits(<u64 as GuestArg>::from_regs(regs))
+    }
+    fn to_regs(self, regs: &mut [u32]) {
+        <u64 as GuestArg>::to_regs(self.to_bits(), regs)
+    }
+}
+
 // TODO: Do we need to distinguish arguments from return types, don't they
 // usually behave the same? Are there exceptions? Do we merge the types?
 
@@ -477,5 +504,30 @@ impl<T, const MUT: bool> GuestRet for Ptr<T, MUT> {
     }
     fn to_regs(self, regs: &mut [u32]) {
         <u32 as GuestRet>::to_regs(self.to_bits(), regs)
+    }
+}
+
+// GuestRet implementations for u64-like types
+
+impl GuestRet for u64 {
+    fn from_regs(regs: &[u32]) -> Self {
+        let mut bytes = [0u8; 8];
+        bytes[0..4].copy_from_slice(&regs[0].to_le_bytes());
+        bytes[4..8].copy_from_slice(&regs[1].to_le_bytes());
+        u64::from_le_bytes(bytes)
+    }
+    fn to_regs(self, regs: &mut [u32]) {
+        let bytes = self.to_le_bytes();
+        regs[0] = u32::from_le_bytes(bytes[0..4].try_into().unwrap());
+        regs[1] = u32::from_le_bytes(bytes[4..8].try_into().unwrap());
+    }
+}
+
+impl GuestRet for f64 {
+    fn from_regs(regs: &[u32]) -> Self {
+        Self::from_bits(<u64 as GuestRet>::from_regs(regs))
+    }
+    fn to_regs(self, regs: &mut [u32]) {
+        <u64 as GuestRet>::to_regs(self.to_bits(), regs)
     }
 }

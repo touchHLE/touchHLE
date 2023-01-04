@@ -69,6 +69,11 @@ impl Window {
         let sdl_ctx = sdl2::init().unwrap();
         let video_ctx = sdl_ctx.video().unwrap();
 
+        // SDL2 disables the screen saver by default, but iPhone OS enables
+        // the idle timer that triggers sleep by default, so we turn it back on
+        // here, and then the app can disable it if it wants to.
+        video_ctx.enable_screen_saver();
+
         // TODO: some apps specify their orientation in Info.plist, we could use
         // that here.
         let device_orientation = DeviceOrientation::Portrait;
@@ -178,6 +183,16 @@ impl Window {
         match self.device_orientation {
             DeviceOrientation::Portrait => Matrix::identity(),
             DeviceOrientation::LandscapeLeft => Matrix::z_rotation(-FRAC_PI_2),
+        }
+    }
+
+    pub fn is_screen_saver_enabled(&self) -> bool {
+        self.video_ctx.is_screen_saver_enabled()
+    }
+    pub fn set_screen_saver_enabled(&mut self, enabled: bool) {
+        match enabled {
+            true => self.video_ctx.enable_screen_saver(),
+            false => self.video_ctx.disable_screen_saver(),
         }
     }
 }

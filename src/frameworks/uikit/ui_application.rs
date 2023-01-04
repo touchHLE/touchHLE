@@ -82,6 +82,13 @@ pub const CLASSES: ClassExports = objc_classes! {
     msg![env; this setStatusBarOrientation:orientation]
 }
 
+- (bool)idleTimerDisabled {
+    !env.window.is_screen_saver_enabled()
+}
+- (())setIdleTimerDisabled:(bool)disabled {
+    env.window.set_screen_saver_enabled(!disabled);
+}
+
 @end
 
 };

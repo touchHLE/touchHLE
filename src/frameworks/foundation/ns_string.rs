@@ -1,11 +1,14 @@
 //! The `NSString` class cluster, including `NSMutableString`.
 
 use super::NSUInteger;
-use crate::mem::MutVoidPtr;
+use crate::mem::{MutPtr, MutVoidPtr};
 use crate::objc::{id, msg, msg_class, objc_classes, retain, Class, ClassExports, HostObject};
 use crate::Environment;
 use std::borrow::Cow;
 use std::collections::HashMap;
+
+pub type NSStringEncoding = NSUInteger;
+pub const NSUTF8StringEncoding: NSUInteger = 4;
 
 #[derive(Default)]
 pub struct State {
@@ -62,6 +65,24 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (id)copyWithZone:(MutVoidPtr)_zone {
     // TODO: override this once we have NSMutableString!
     retain(env, this)
+}
+
+- (bool)getCString:(MutPtr<u8>)buffer
+         maxLength:(NSUInteger)buffer_size
+          encoding:(NSStringEncoding)encoding {
+    assert!(encoding == NSUTF8StringEncoding); // TODO: other encodings
+
+    let src = to_rust_string(env, this);
+    let dest = env.mem.bytes_at_mut(buffer, buffer_size);
+    if dest.len() < src.as_bytes().len() + 1 { // include null terminator
+        return false;
+    }
+
+    for (i, &byte) in src.as_bytes().iter().chain(b"\0".iter()).enumerate() {
+        dest[i] = byte;
+    }
+
+    true
 }
 
 @end

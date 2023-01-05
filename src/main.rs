@@ -32,6 +32,9 @@ mod window;
 
 use std::path::PathBuf;
 
+// FIXME: use actual app name
+const APP_PATH: &str = "/User/Applications/00000000-0000-0000-0000-000000000000/Foo.app";
+
 const USAGE: &str = "\
 Usage:
     touchHLE path/to/some.app
@@ -182,15 +185,12 @@ impl Environment {
         dyld::Dyld::do_late_linking(&mut env);
 
         {
-            // FIXME: use actual app name
-            let fake_guest_path =
-                "/User/Applications/00000000-0000-0000-0000-000000000000/Foo.app/Foo";
-            let fake_guest_path_apple_key =
-                "executable_path=/User/Applications/00000000-0000-0000-0000-000000000000/Foo.app/Foo";
+            let guest_path = format!("{}/Foo", APP_PATH);
+            let guest_path_apple_key = format!("executable_path={}", guest_path);
 
-            let argv = &[fake_guest_path];
+            let argv = &[guest_path.as_str()];
             let envp = &[];
-            let apple = &[fake_guest_path_apple_key];
+            let apple = &[guest_path_apple_key.as_str()];
             stack::prep_stack_for_start(&mut env.mem, &mut env.cpu, argv, envp, apple);
         }
 

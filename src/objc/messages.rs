@@ -158,7 +158,7 @@ pub(super) fn objc_msgSendSuper2(
     let objc_super { receiver, class } = env.mem.read(super_ptr);
 
     // Rewrite first argument to match the normal ABI.
-    crate::abi::write_next_arg(&mut 0, env.cpu.regs_mut(), receiver);
+    crate::abi::write_next_arg(&mut 0, env.cpu.regs_mut(), &mut env.mem, receiver);
 
     objc_msgSend_inner(env, receiver, selector, /* super2: */ Some(class))
 }

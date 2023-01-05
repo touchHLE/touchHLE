@@ -51,6 +51,40 @@ where
     P2: GuestArg,
 {
 }
+impl<R, P1, P2, P3> HostIMP for fn(&mut Environment, id, SEL, P1, P2, P3) -> R
+where
+    R: GuestRet,
+    P1: GuestArg,
+    P2: GuestArg,
+    P3: GuestArg,
+{
+}
+impl<R, P1, P2, P3> HostIMP for fn(&mut Environment, id, SEL, P1, P2, P3, VAList) -> R
+where
+    R: GuestRet,
+    P1: GuestArg,
+    P2: GuestArg,
+    P3: GuestArg,
+{
+}
+impl<R, P1, P2, P3, P4> HostIMP for fn(&mut Environment, id, SEL, P1, P2, P3, P4) -> R
+where
+    R: GuestRet,
+    P1: GuestArg,
+    P2: GuestArg,
+    P3: GuestArg,
+    P4: GuestArg,
+{
+}
+impl<R, P1, P2, P3, P4> HostIMP for fn(&mut Environment, id, SEL, P1, P2, P3, P4, VAList) -> R
+where
+    R: GuestRet,
+    P1: GuestArg,
+    P2: GuestArg,
+    P3: GuestArg,
+    P4: GuestArg,
+{
+}
 
 /// Type for a guest function implementing a method. See [GuestFunction].
 pub type GuestIMP = GuestFunction;

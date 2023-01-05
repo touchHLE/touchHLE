@@ -7,7 +7,7 @@
 //! See also: [crate::mem::SafeRead] and [crate::mem::SafeWrite].
 
 use crate::cpu::Cpu;
-use crate::mem::{ConstPtr, ConstVoidPtr, GuestUSize, Mem, MutVoidPtr, Ptr};
+use crate::mem::{ConstPtr, ConstVoidPtr, GuestUSize, Mem, MutPtr, MutVoidPtr, Ptr};
 use crate::Environment;
 
 /// Address of an A32 or T32 instruction, with the mode encoded using the Thumb
@@ -186,12 +186,15 @@ macro_rules! impl_CallFromHost {
                 args: ($($P,)*),
             ) -> R {
                 assert!(R::SIZE_IN_MEM.is_none()); // pointer return TODO
-                {
-                    let regs = env.cpu.regs_mut();
-                    let mut reg_offset = 0;
-                    $(write_next_arg::<$P>(&mut reg_offset, regs, args.$p);)*
-                };
+                let regs = env.cpu.regs_mut();
+                let old_sp = extend_stack_for_args(
+                    0 $(+ <$P as GuestArg>::REG_COUNT)*,
+                    regs,
+                );
+                let mut reg_offset = 0;
+                $(write_next_arg::<$P>(&mut reg_offset, regs, &mut env.mem, args.$p);)*
                 self.call_from_guest(env);
+                env.cpu.regs_mut()[Cpu::SP] = old_sp;
                 <R as GuestRet>::from_regs(env.cpu.regs())
             }
         }
@@ -206,12 +209,15 @@ macro_rules! impl_CallFromHost {
                 args: ($($P,)*),
             ) -> R {
                 assert!(R::SIZE_IN_MEM.is_none()); // pointer return TODO
-                {
-                    let regs = env.cpu.regs_mut();
-                    let mut reg_offset = 0;
-                    $(write_next_arg::<$P>(&mut reg_offset, regs, args.$p);)*
-                };
+                let regs = env.cpu.regs_mut();
+                let old_sp = extend_stack_for_args(
+                    0 $(+ <$P as GuestArg>::REG_COUNT)*,
+                    regs,
+                );
+                let mut reg_offset = 0;
+                $(write_next_arg::<$P>(&mut reg_offset, regs, &mut env.mem, args.$p);)*
                 self.call(env);
+                env.cpu.regs_mut()[Cpu::SP] = old_sp;
                 <R as GuestRet>::from_regs(env.cpu.regs())
             }
         }
@@ -224,6 +230,8 @@ impl_CallFromHost!(0 => P0);
 impl_CallFromHost!(0 => P0, 1 => P1);
 impl_CallFromHost!(0 => P0, 1 => P1, 2 => P2);
 impl_CallFromHost!(0 => P0, 1 => P1, 2 => P2, 3 => P3);
+impl_CallFromHost!(0 => P0, 1 => P1, 2 => P2, 3 => P3, 4 => P4);
+impl_CallFromHost!(0 => P0, 1 => P1, 2 => P2, 3 => P3, 4 => P4, 5 => P5);
 
 /// Calling convention translation for a function argument type.
 pub trait GuestArg: Sized {
@@ -239,7 +247,8 @@ pub trait GuestArg: Sized {
     fn to_regs(self, regs: &mut [u32]);
 }
 
-/// Read a single argument from registers. Call this for each argument in order.
+/// Read a single argument from registers or the stack. Call this for each
+/// argument in order.
 fn read_next_arg<T: GuestArg>(reg_offset: &mut usize, regs: &[u32], mem: &Mem) -> T {
     // After the fourth register is used, the arguments go on the stack.
     // In some cases the argument is split over both registers and the stack.
@@ -260,14 +269,49 @@ fn read_next_arg<T: GuestArg>(reg_offset: &mut usize, regs: &[u32], mem: &Mem) -
     T::from_regs(fake_regs)
 }
 
-/// Write a single argument to registers. Call this for each argument in order.
-pub fn write_next_arg<T: GuestArg>(reg_offset: &mut usize, regs: &mut [u32], arg: T) {
+/// Decrements the stack pointer to prepare for calling [write_next_arg]. Pass
+/// the sum of the [GuestArg::REG_COUNT]s for all the arguments to be written,
+/// and this will update the stack pointer if necessary, as well as returning
+/// a copy of the original stack pointer so it can be restored later.
+pub fn extend_stack_for_args(reg_count_sum: usize, regs: &mut [u32]) -> u32 {
     // After the fourth register is used, the arguments go on the stack.
-    // (Support not implemented yet, Rust will panic if indexing out-of-bounds.)
-    let regs = &mut regs[0..4];
+    // In some cases the argument is split over both registers and the stack.
 
-    arg.to_regs(&mut regs[*reg_offset..][..T::REG_COUNT]);
-    *reg_offset += T::REG_COUNT;
+    let old = regs[Cpu::SP];
+    if reg_count_sum > 4 {
+        let old: ConstPtr<u32> = Ptr::from_bits(old);
+        regs[Cpu::SP] = (old - (reg_count_sum - 4).try_into().unwrap()).to_bits()
+    }
+    old
+}
+
+/// Write a single argument to registers or the stack. Call this for each
+/// argument in order.
+///
+/// If `reg_offset` is or will be >= 4, the stack pointer **must** be
+/// appropriately decremented in advance! See [extend_stack_for_args].
+pub fn write_next_arg<T: GuestArg>(
+    reg_offset: &mut usize,
+    regs: &mut [u32],
+    mem: &mut Mem,
+    arg: T,
+) {
+    // After the fourth register is used, the arguments go on the stack.
+    // In some cases the argument is split over both registers and the stack.
+
+    let mut fake_regs = [0u32; 4]; // Rust doesn't allow [0u32; Trait::T] alas.
+    let fake_regs = &mut fake_regs[0..T::REG_COUNT];
+    arg.to_regs(fake_regs);
+
+    for &mut fake_reg in fake_regs {
+        if *reg_offset < 4 {
+            regs[*reg_offset] = fake_reg;
+        } else {
+            let stack_ptr: MutPtr<u32> = Ptr::from_bits(regs[Cpu::SP]);
+            mem.write(stack_ptr + (*reg_offset - 4).try_into().unwrap(), fake_reg);
+        }
+        *reg_offset += 1;
+    }
 }
 
 /// Calling convention translation for a variable arguments list (like C

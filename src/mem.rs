@@ -124,6 +124,23 @@ impl<T, const MUT: bool> std::ops::AddAssign<GuestUSize> for Ptr<T, MUT> {
         *self = *self + rhs;
     }
 }
+impl<T, const MUT: bool> std::ops::Sub<GuestUSize> for Ptr<T, MUT> {
+    type Output = Self;
+
+    fn sub(self, other: GuestUSize) -> Self {
+        let size: GuestUSize = guest_size_of::<T>();
+        Self::from_bits(
+            self.to_bits()
+                .checked_sub(other.checked_mul(size).unwrap())
+                .unwrap(),
+        )
+    }
+}
+impl<T, const MUT: bool> std::ops::SubAssign<GuestUSize> for Ptr<T, MUT> {
+    fn sub_assign(&mut self, rhs: GuestUSize) {
+        *self = *self - rhs;
+    }
+}
 
 /// Marker trait for types that can be safely read from guest memory.
 ///

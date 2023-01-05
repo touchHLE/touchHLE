@@ -10,6 +10,7 @@ pub const FUNCTION_LISTS: &[super::FunctionExports] = &[
     libc::math::FUNCTIONS,
     libc::pthread::FUNCTIONS,
     libc::stdlib::FUNCTIONS,
+    libc::string::FUNCTIONS,
     crate::objc::FUNCTIONS,
     core_foundation::cf_bundle::FUNCTIONS,
     core_foundation::cf_type::FUNCTIONS,

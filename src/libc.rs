@@ -8,6 +8,7 @@ pub mod mach_time;
 pub mod math;
 pub mod pthread;
 pub mod stdlib;
+pub mod string;
 
 /// Container for state of various child modules
 #[derive(Default)]

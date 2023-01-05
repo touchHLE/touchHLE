@@ -45,9 +45,9 @@ struct MutexHostObject {
     locked: Option<(ThreadID, NonZeroU32)>,
 }
 
-/// Arbitrary-chosen magic number for `pthread_mutexattr_t` (not Apple's).
+/// Arbitrarily-chosen magic number for `pthread_mutexattr_t` (not Apple's).
 const MAGIC_MUTEXATTR: u32 = u32::from_be_bytes(*b"ATTR");
-/// Arbitrary-chosen magic number for `pthread_mutexattr_t` (not Apple's).
+/// Arbitrarily-chosen magic number for `pthread_mutex_t` (not Apple's).
 const MAGIC_MUTEX: u32 = u32::from_be_bytes(*b"MUTX");
 
 /// Custom typedef for readability (the C API just uses `int`)

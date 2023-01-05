@@ -4,6 +4,7 @@
 //! Useful resources:
 //! - Apple's [iOS Manual Pages](https://developer.apple.com/library/archive/documentation/System/Conceptual/ManPages_iPhoneOS/) (contains what would be `man` pages if iOS had a command line)
 
+pub mod errno;
 pub mod mach_time;
 pub mod math;
 pub mod pthread;

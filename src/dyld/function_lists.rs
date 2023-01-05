@@ -9,6 +9,7 @@ pub const FUNCTION_LISTS: &[super::FunctionExports] = &[
     libc::mach_time::FUNCTIONS,
     libc::math::FUNCTIONS,
     libc::pthread::key::FUNCTIONS,
+    libc::pthread::mutex::FUNCTIONS,
     libc::pthread::once::FUNCTIONS,
     libc::stdlib::FUNCTIONS,
     libc::string::FUNCTIONS,

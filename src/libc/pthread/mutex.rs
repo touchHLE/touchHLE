@@ -139,37 +139,102 @@ fn pthread_mutex_lock(env: &mut Environment, mutex: MutPtr<pthread_mutex_t>) -> 
         return 0; // success
     };
 
-    match host_object.type_ {
-        PTHREAD_MUTEX_NORMAL => {
-            // This case is undefined, we may as well panic.
-            panic!(
-                "Attempted to lock non-error-checking mutex {:?} for thread {}, already locked by thread {}!",
-                mutex, current_thread, locking_thread
-            );
-        }
-        PTHREAD_MUTEX_ERRORCHECK => {
-            log_dbg!("Attempted to lock error-checking mutex {:?} for thread {}, already locked by thread {}. Returning EDEADLK.", mutex, current_thread, locking_thread);
-            EDEADLK
-        }
-        PTHREAD_MUTEX_RECURSIVE => {
-            if locking_thread != current_thread {
-                log_dbg!("Attempted to lock recursive mutex {:?} for thread {}, already locked by thread {}. Returning EPERM.", mutex, current_thread, locking_thread);
-                return EPERM;
+    if locking_thread == current_thread {
+        match host_object.type_ {
+            PTHREAD_MUTEX_NORMAL => {
+                // This case would be a deadlock, we may as well panic.
+                panic!(
+                    "Attempted to lock non-error-checking mutex {:?} for thread {}, already locked by same thread!",
+                    mutex, current_thread,
+                );
             }
-            log_dbg!(
-                "Increasing lock level on recursive mutex {:?}, currently locked by thread {}.",
-                mutex,
-                locking_thread
-            );
-            host_object.locked = Some((locking_thread, lock_count.checked_add(1).unwrap()));
-            0 // success
+            PTHREAD_MUTEX_ERRORCHECK => {
+                log_dbg!("Attempted to lock error-checking mutex {:?} for thread {}, already locked by same thread! Returning EDEADLK.", mutex, current_thread);
+                return EDEADLK;
+            }
+            PTHREAD_MUTEX_RECURSIVE => {
+                log_dbg!(
+                    "Increasing lock level on recursive mutex {:?}, currently locked by thread {}.",
+                    mutex,
+                    locking_thread,
+                );
+                host_object.locked = Some((locking_thread, lock_count.checked_add(1).unwrap()));
+                return 0; // success
+            }
+            _ => unreachable!(),
         }
-        _ => unreachable!(),
     }
+
+    // TODO: wait for unlock on other thread
+    unimplemented!(
+        "Attempted to lock mutex {:?} for thread {}, already locked by thread {}",
+        mutex,
+        current_thread,
+        locking_thread,
+    )
 }
 
-fn pthread_mutex_unlock(_env: &mut Environment, _mutex: MutPtr<pthread_mutex_t>) -> i32 {
-    unimplemented!() // TODO
+fn pthread_mutex_unlock(env: &mut Environment, mutex: MutPtr<pthread_mutex_t>) -> i32 {
+    check_magic!(env, mutex, MAGIC_MUTEX);
+    let current_thread = env.current_thread;
+    let host_object: &mut _ = State::get(env).mutexes.get_mut(&mutex).unwrap();
+
+    let Some((locking_thread, lock_count)) = host_object.locked else {
+        match host_object.type_ {
+            PTHREAD_MUTEX_NORMAL => {
+                // This case is undefined, we may as well panic.
+                panic!(
+                    "Attempted to unlock non-error-checking mutex {:?} for thread {}, already unlocked!",
+                    mutex, current_thread,
+                );
+            },
+            PTHREAD_MUTEX_ERRORCHECK | PTHREAD_MUTEX_RECURSIVE => {
+                log_dbg!(
+                    "Attempted to unlock error-checking or recursive mutex {:?} for thread {}, already unlocked! Returning EPERM.",
+                    mutex, current_thread,
+                );
+                return EPERM;
+            },
+            _ => unreachable!(),
+        }
+    };
+
+    if locking_thread != current_thread {
+        match host_object.type_ {
+            PTHREAD_MUTEX_NORMAL => {
+                // This case is undefined, we may as well panic.
+                panic!(
+                    "Attempted to unlock non-error-checking matrix {:?} for thread {}, locked by different thread {}!",
+                    mutex, current_thread, locking_thread,
+                );
+            }
+            PTHREAD_MUTEX_ERRORCHECK | PTHREAD_MUTEX_RECURSIVE => {
+                log_dbg!(
+                    "Attempted to unlock error-checking or recursive mutex {:?} for thread {}, lobkced by different thread {}! Returning EPERM.",
+                    mutex, current_thread, locking_thread,
+                );
+                return EPERM;
+            }
+            _ => unreachable!(),
+        }
+    }
+
+    if lock_count.get() == 1 {
+        log_dbg!("Unlocked mutex {:?} for thread {}.", mutex, current_thread);
+        host_object.locked = None;
+    } else {
+        assert!(host_object.type_ == PTHREAD_MUTEX_RECURSIVE);
+        log_dbg!(
+            "Decreasing lock level on recursive mutex {:?}, currently locked by thread {}.",
+            mutex,
+            locking_thread
+        );
+        host_object.locked = Some((
+            locking_thread,
+            NonZeroU32::new(lock_count.get() - 1).unwrap(),
+        ));
+    }
+    0 // success
 }
 
 pub const FUNCTIONS: FunctionExports = &[

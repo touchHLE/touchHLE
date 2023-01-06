@@ -271,6 +271,7 @@ dependencies = [
  "sdl2-sys",
  "touchHLE_dynarmic_wrapper",
  "touchHLE_gl_bindings",
+ "touchHLE_openal_soft_wrapper",
  "touchHLE_stb_image_wrapper",
 ]
 
@@ -287,6 +288,13 @@ name = "touchHLE_gl_bindings"
 version = "0.1.0"
 dependencies = [
  "gl_generator",
+]
+
+[[package]]
+name = "touchHLE_openal_soft_wrapper"
+version = "0.1.0"
+dependencies = [
+ "cmake",
 ]
 
 [[package]]

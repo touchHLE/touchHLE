@@ -18,6 +18,7 @@ pub mod core_animation;
 pub mod core_foundation;
 pub mod core_graphics;
 pub mod foundation;
+pub mod openal;
 pub mod opengles;
 pub mod uikit;
 
@@ -25,6 +26,7 @@ pub mod uikit;
 #[derive(Default)]
 pub struct State {
     foundation: foundation::State,
+    openal: openal::State,
     opengles: opengles::State,
     uikit: uikit::State,
 }

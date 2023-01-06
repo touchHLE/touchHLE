@@ -4,3 +4,6 @@
 [submodule "dynarmic"]
 	path = vendor/dynarmic
 	url = https://github.com/merryhime/dynarmic.git
+[submodule "openal-soft"]
+	path = vendor/openal-soft
+	url = https://github.com/kcat/openal-soft

@@ -18,6 +18,7 @@
 #[macro_use]
 mod log;
 mod abi;
+mod audio;
 mod bundle;
 mod cpu;
 mod dyld;

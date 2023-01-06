@@ -24,6 +24,8 @@ fn atexit(
     _env: &mut Environment,
     func: GuestFunction, // void (*func)(void)
 ) -> i32 {
+    // TODO: when this is implemented, make sure it's properly compatible with
+    // __cxa_atexit.
     log!("TODO: atexit({:?}) (unimplemented)", func);
     0 // success
 }

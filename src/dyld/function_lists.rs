@@ -12,6 +12,7 @@ pub const FUNCTION_LISTS: &[super::FunctionExports] = &[
     libc::pthread::key::FUNCTIONS,
     libc::pthread::mutex::FUNCTIONS,
     libc::pthread::once::FUNCTIONS,
+    libc::stdio::printf::FUNCTIONS,
     libc::stdlib::FUNCTIONS,
     libc::string::FUNCTIONS,
     crate::objc::FUNCTIONS,

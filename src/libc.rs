@@ -9,6 +9,7 @@ pub mod errno;
 pub mod mach_time;
 pub mod math;
 pub mod pthread;
+pub mod stdio;
 pub mod stdlib;
 pub mod string;
 

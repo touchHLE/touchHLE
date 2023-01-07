@@ -87,6 +87,7 @@ pub use crate::export_c_func; // #[macro_export] is weird...
 /// created by the linker if the guest app references it. See [ConstantExports].
 pub enum HostConstant {
     NSString(&'static str),
+    NullPtr,
 }
 
 /// Type for lists of constants exported by host implementations of frameworks.
@@ -322,11 +323,15 @@ impl Dyld {
         // TODO: do constants ever appear in __nl_symbol_ptr multiple times?
 
         let to_link = std::mem::take(&mut env.dyld.constants_to_link_later);
-        for (ptr_ptr, template) in to_link {
-            let HostConstant::NSString(static_str) = template;
-            let ns_string = ns_string::get_static_str(env, static_str);
-            let ns_string_ptr = env.mem.alloc_and_write(ns_string);
-            env.mem.write(ptr_ptr, ns_string_ptr.cast().cast_const());
+        for (symbol_ptr_ptr, template) in to_link {
+            // All currently supported constant types are pointers.
+            let symbol_value = match template {
+                HostConstant::NSString(static_str) => ns_string::get_static_str(env, static_str),
+                HostConstant::NullPtr => Ptr::null(),
+            };
+            let symbol_ptr = env.mem.alloc_and_write(symbol_value);
+            env.mem
+                .write(symbol_ptr_ptr, symbol_ptr.cast().cast_const());
         }
     }
 

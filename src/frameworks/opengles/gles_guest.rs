@@ -2,7 +2,7 @@
 
 use super::GLES;
 use crate::dyld::{export_c_func, FunctionExports};
-use crate::mem::{guest_size_of, ConstPtr, GuestUSize, Mem, MutPtr};
+use crate::mem::{ConstPtr, GuestUSize, Mem, MutPtr};
 use crate::window::gles11::types::*;
 use crate::Environment;
 
@@ -27,26 +27,26 @@ fn glLoadIdentity(env: &mut Environment) {
 }
 fn glLoadMatrixf(env: &mut Environment, m: ConstPtr<GLfloat>) {
     with_ctx_and_mem(env, |gles, mem| {
-        let slice = mem.bytes_at(m.cast(), 16 * guest_size_of::<GLfloat>());
-        unsafe { gles.LoadMatrixf(slice.as_ptr() as *const _) };
+        let m = mem.ptr_at(m, 16);
+        unsafe { gles.LoadMatrixf(m) };
     });
 }
 fn glLoadMatrixx(env: &mut Environment, m: ConstPtr<GLfixed>) {
     with_ctx_and_mem(env, |gles, mem| {
-        let slice = mem.bytes_at(m.cast(), 16 * guest_size_of::<GLfixed>());
-        unsafe { gles.LoadMatrixx(slice.as_ptr() as *const _) };
+        let m = mem.ptr_at(m, 16);
+        unsafe { gles.LoadMatrixx(m) };
     });
 }
 fn glMultMatrixf(env: &mut Environment, m: ConstPtr<GLfloat>) {
     with_ctx_and_mem(env, |gles, mem| {
-        let slice = mem.bytes_at(m.cast(), 16 * guest_size_of::<GLfloat>());
-        unsafe { gles.MultMatrixf(slice.as_ptr() as *const _) };
+        let m = mem.ptr_at(m, 16);
+        unsafe { gles.MultMatrixf(m) };
     });
 }
 fn glMultMatrixx(env: &mut Environment, m: ConstPtr<GLfixed>) {
     with_ctx_and_mem(env, |gles, mem| {
-        let slice = mem.bytes_at(m.cast(), 16 * guest_size_of::<GLfixed>());
-        unsafe { gles.MultMatrixx(slice.as_ptr() as *const _) };
+        let m = mem.ptr_at(m, 16);
+        unsafe { gles.MultMatrixx(m) };
     });
 }
 fn glPushMatrix(env: &mut Environment) {
@@ -146,15 +146,15 @@ fn glTranslatex(env: &mut Environment, x: GLfixed, y: GLfixed, z: GLfixed) {
 fn glGenFramebuffersOES(env: &mut Environment, n: GLsizei, framebuffers: MutPtr<GLuint>) {
     with_ctx_and_mem(env, |gles, mem| {
         let n_usize: GuestUSize = n.try_into().unwrap();
-        let slice = mem.bytes_at_mut(framebuffers.cast(), n_usize * guest_size_of::<GLuint>());
-        unsafe { gles.GenFramebuffersOES(n, slice.as_mut_ptr() as *mut _) }
+        let framebuffers = mem.ptr_at_mut(framebuffers, n_usize);
+        unsafe { gles.GenFramebuffersOES(n, framebuffers) }
     })
 }
 fn glGenRenderbuffersOES(env: &mut Environment, n: GLsizei, renderbuffers: MutPtr<GLuint>) {
     with_ctx_and_mem(env, |gles, mem| {
         let n_usize: GuestUSize = n.try_into().unwrap();
-        let slice = mem.bytes_at_mut(renderbuffers.cast(), n_usize * guest_size_of::<GLuint>());
-        unsafe { gles.GenRenderbuffersOES(n, slice.as_mut_ptr() as *mut _) }
+        let renderbuffers = mem.ptr_at_mut(renderbuffers, n_usize);
+        unsafe { gles.GenRenderbuffersOES(n, renderbuffers) }
     })
 }
 fn glBindFramebufferOES(env: &mut Environment, target: GLenum, framebuffer: GLuint) {
@@ -196,8 +196,8 @@ fn glGetRenderbufferParameterivOES(
     params: MutPtr<GLint>,
 ) {
     with_ctx_and_mem(env, |gles, mem| {
-        let slice = mem.bytes_at_mut(params.cast(), guest_size_of::<GLint>());
-        unsafe { gles.GetRenderbufferParameterivOES(target, pname, slice.as_mut_ptr() as *mut _) }
+        let params = mem.ptr_at_mut(params, 1);
+        unsafe { gles.GetRenderbufferParameterivOES(target, pname, params) }
     })
 }
 fn glCheckFramebufferStatusOES(env: &mut Environment, target: GLenum) -> GLenum {

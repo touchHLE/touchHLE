@@ -258,12 +258,16 @@ impl Mem {
         )
     }
 
+    /// Get a slice for reading `count` bytes. This is the basic primitive for
+    /// safe read-only memory access.
     pub fn bytes_at<const MUT: bool>(&self, ptr: Ptr<u8, MUT>, count: GuestUSize) -> &[u8] {
         if ptr.to_bits() < Self::NULL_PAGE_SIZE {
             Self::null_check_fail(ptr.to_bits(), count)
         }
         &self.bytes()[ptr.to_bits() as usize..][..count as usize]
     }
+    /// Get a slice for reading or writing `count` bytes. This is the basic
+    /// primitive for safe read-write memory access.
     pub fn bytes_at_mut(&mut self, ptr: MutPtr<u8>, count: GuestUSize) -> &mut [u8] {
         if ptr.to_bits() < Self::NULL_PAGE_SIZE {
             Self::null_check_fail(ptr.to_bits(), count)
@@ -271,18 +275,56 @@ impl Mem {
         &mut self.bytes_mut()[ptr.to_bits() as usize..][..count as usize]
     }
 
+    /// Get a pointer for reading an array of `count` elements of type `T`.
+    /// Only use this for interfacing with unsafe C-like APIs.
+    ///
+    /// The `count` argument is purely for bounds-checking and does not affect
+    /// the result.
+    ///
+    /// No guarantee is made about the alignment of the resulting pointer!
+    /// Pointers that are well-aligned for the guest are not necessarily
+    /// well-aligned for the host. Rust strictly requires pointers to be
+    /// well-aligned when dereferencing them, or when constructing references or
+    /// slices from them, so **be very careful**.
+    pub fn ptr_at<T, const MUT: bool>(&self, ptr: Ptr<T, MUT>, count: GuestUSize) -> *const T
+    where
+        T: SafeRead,
+    {
+        let size = count.checked_mul(guest_size_of::<T>()).unwrap();
+        self.bytes_at(ptr.cast(), size).as_ptr().cast()
+    }
+    /// Get a pointer for reading or writing to an array of `count` elements of
+    /// type `T`. Only use this for interfacing with unsafe C-like APIs.
+    ///
+    /// The `count` argument is purely for bounds-checking and does not affect
+    /// the result.
+    ///
+    /// No guarantee is made about the alignment of the resulting pointer!
+    /// Pointers that are well-aligned for the guest are not necessarily
+    /// well-aligned for the host. Rust strictly requires pointers to be
+    /// well-aligned when dereferencing them, or when constructing references or
+    /// slices from them, so **be very careful**.
+    pub fn ptr_at_mut<T>(&mut self, ptr: MutPtr<T>, count: GuestUSize) -> *mut T
+    where
+        T: SafeRead + SafeWrite,
+    {
+        let size = count.checked_mul(guest_size_of::<T>()).unwrap();
+        self.bytes_at_mut(ptr.cast(), size).as_mut_ptr().cast()
+    }
+
+    /// Read a value for memory. This is the preferred way to read memory in
+    /// most cases.
     pub fn read<T, const MUT: bool>(&self, ptr: Ptr<T, MUT>) -> T
     where
         T: SafeRead,
     {
-        let slice = self.bytes_at(ptr.cast(), guest_size_of::<T>());
-        let ptr: *const T = slice.as_ptr().cast();
-        // This is only safe if we are careful with which types SafeRead is
+        // This is unsafe unless we are careful with which types SafeRead is
         // implemented for!
-        // It's unaligned because what is well-aligned for the guest is not
-        // necessarily well-aligned for the host.
-        unsafe { ptr.read_unaligned() }
+        // This would also be unsafe if the non-unaligned method was used.
+        unsafe { self.ptr_at(ptr, 1).read_unaligned() }
     }
+    /// Write a value to memory. This is the preferred way to write memory in
+    /// most cases.
     pub fn write<T>(&mut self, ptr: MutPtr<T>, value: T)
     where
         T: SafeWrite,
@@ -293,21 +335,26 @@ impl Mem {
         let ptr: *mut T = slice.as_mut_ptr().cast();
         // It's unaligned because what is well-aligned for the guest is not
         // necessarily well-aligned for the host.
+        // This would be unsafe if the non-unaligned method was used.
         unsafe { ptr.write_unaligned(value) }
     }
 
+    /// Allocate `size` bytes.
     pub fn alloc(&mut self, size: GuestUSize) -> MutVoidPtr {
         let ptr = Ptr::from_bits(self.allocator.alloc(size));
         log_dbg!("Allocated {:?} ({:#x} bytes)", ptr, size);
         ptr
     }
 
+    /// Free an allocation made with one of the `alloc` methods on this type.
     pub fn free(&mut self, ptr: MutVoidPtr) {
         let size = self.allocator.free(ptr.to_bits());
         self.bytes_at_mut(ptr.cast(), size).fill(0);
         log_dbg!("Freed {:?} ({:#x} bytes)", ptr, size);
     }
 
+    /// Allocate memory large enough for a value of type `T` and write the value
+    /// to it. Equivalent to [Self::alloc] + [Self::write].
     pub fn alloc_and_write<T>(&mut self, value: T) -> MutPtr<T>
     where
         T: SafeWrite,
@@ -317,8 +364,8 @@ impl Mem {
         ptr
     }
 
-    /// Allocate and write a null-terminated string. Don't include the null
-    /// terminator in the slice.
+    /// Allocate and write a C string. This method will add a null terminator,
+    /// so it is optimal if the input slice does not already contain one.
     pub fn alloc_and_write_cstr(&mut self, str_bytes: &[u8]) -> MutPtr<u8> {
         let len = str_bytes.len().try_into().unwrap();
         let ptr = self.alloc(len + 1).cast();
@@ -327,7 +374,8 @@ impl Mem {
         ptr
     }
 
-    /// Get a C string (null terminated) as a slice.
+    /// Get a C string (null-terminated) as a slice. The null terminator is not
+    /// included in the slice.
     pub fn cstr_at<const MUT: bool>(&self, ptr: Ptr<u8, MUT>) -> &[u8] {
         let mut len = 0;
         while self.read(ptr + len) != b'\0' {
@@ -336,8 +384,8 @@ impl Mem {
         self.bytes_at(ptr, len)
     }
 
-    /// Get a C string (null terminated) as a string reference, panicking if it
-    /// is not UTF-8.
+    /// Get a C string (null-terminated) as a string slice, panicking if it is
+    /// not UTF-8. The null terminator is not included in the slice.
     pub fn cstr_at_utf8<const MUT: bool>(&self, ptr: Ptr<u8, MUT>) -> &str {
         std::str::from_utf8(self.cstr_at(ptr)).unwrap()
     }

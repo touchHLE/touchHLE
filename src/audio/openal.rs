@@ -76,4 +76,10 @@ pub const AL_NO_ERROR: ALenum = 0;
 #[link(name = "openal")] // see also src/audio/openal_soft_wrapper/build.rs
 extern "C" {
     pub fn alGetError() -> ALenum;
+
+    pub fn alGenSources(n: ALsizei, sources: *mut ALuint);
+    pub fn alDeleteSources(n: ALsizei, sources: *const ALuint);
+
+    pub fn alGenBuffers(n: ALsizei, buffers: *mut ALuint);
+    pub fn alDeleteBuffers(n: ALsizei, buffers: *const ALuint);
 }

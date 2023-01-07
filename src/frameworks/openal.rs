@@ -6,9 +6,10 @@
 //! - [OpenAL 1.1 specification](https://www.openal.org/documentation/openal-1.1-specification.pdf)
 
 use crate::audio::openal as al;
+use crate::audio::openal::al_types::*;
 use crate::audio::openal::alc_types::*;
 use crate::dyld::{export_c_func, FunctionExports};
-use crate::mem::{ConstPtr, ConstVoidPtr, MutPtr, Ptr, SafeWrite};
+use crate::mem::{ConstPtr, ConstVoidPtr, GuestUSize, MutPtr, Ptr, SafeWrite};
 use crate::Environment;
 use std::collections::HashMap;
 
@@ -149,6 +150,28 @@ pub fn alGetError(_env: &mut Environment) -> i32 {
     res
 }
 
+pub fn alGenSources(env: &mut Environment, n: ALsizei, sources: MutPtr<ALuint>) {
+    let n_usize: GuestUSize = n.try_into().unwrap();
+    let sources = env.mem.ptr_at_mut(sources, n_usize);
+    unsafe { al::alGenSources(n, sources) };
+}
+pub fn alDeleteSources(env: &mut Environment, n: ALsizei, sources: ConstPtr<ALuint>) {
+    let n_usize: GuestUSize = n.try_into().unwrap();
+    let sources = env.mem.ptr_at(sources, n_usize);
+    unsafe { al::alDeleteSources(n, sources) };
+}
+
+pub fn alGenBuffers(env: &mut Environment, n: ALsizei, buffers: MutPtr<ALuint>) {
+    let n_usize: GuestUSize = n.try_into().unwrap();
+    let buffers = env.mem.ptr_at_mut(buffers, n_usize);
+    unsafe { al::alGenBuffers(n, buffers) };
+}
+pub fn alDeleteBuffers(env: &mut Environment, n: ALsizei, buffers: ConstPtr<ALuint>) {
+    let n_usize: GuestUSize = n.try_into().unwrap();
+    let buffers = env.mem.ptr_at(buffers, n_usize);
+    unsafe { al::alDeleteBuffers(n, buffers) };
+}
+
 // TODO: more functions
 
 pub const FUNCTIONS: FunctionExports = &[
@@ -160,4 +183,8 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(alcMakeContextCurrent(_)),
     export_c_func!(alcGetProcAddress(_, _)),
     export_c_func!(alGetError()),
+    export_c_func!(alGenSources(_, _)),
+    export_c_func!(alDeleteSources(_, _)),
+    export_c_func!(alGenBuffers(_, _)),
+    export_c_func!(alDeleteBuffers(_, _)),
 ];

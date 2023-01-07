@@ -140,7 +140,7 @@ macro_rules! _objc_method {
         $this:ident,
         $_cmd:ident,
         $retty:ty,
-        $block:tt
+        $block:block
         $(, $ty:ty, $arg:ident)*
         $(, ...$va_arg:ident: $va_type:ty)?
     ) => {
@@ -156,7 +156,7 @@ macro_rules! _objc_method {
             $_cmd: $crate::objc::SEL,
             $($arg: $ty,)*
             $(mut $va_arg: $va_type,)?
-        | -> $retty $block) as fn(
+        | -> $retty {$block}) as fn(
             &mut $crate::Environment,
             $crate::objc::id,
             $crate::objc::SEL,

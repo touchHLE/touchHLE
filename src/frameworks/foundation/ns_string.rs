@@ -1,7 +1,7 @@
 //! The `NSString` class cluster, including `NSMutableString`.
 
 use super::NSUInteger;
-use crate::mem::{MutPtr, MutVoidPtr};
+use crate::mem::{ConstPtr, MutPtr, MutVoidPtr};
 use crate::objc::{id, msg, msg_class, objc_classes, retain, Class, ClassExports, HostObject};
 use crate::Environment;
 use std::borrow::Cow;
@@ -96,7 +96,21 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.alloc_object(this, host_object, &mut env.mem)
 }
 
-// TODO: accessors, init methods, etc
+// TODO: accessors, more init methods, etc
+
+- (id)initWithBytes:(ConstPtr<u8>)bytes
+             length:(NSUInteger)len
+           encoding:(NSStringEncoding)encoding {
+    assert!(encoding == NSUTF8StringEncoding); // TODO: other encodings
+
+    // TODO: error handling
+    let string = std::str::from_utf8(env.mem.bytes_at(bytes, len)).unwrap();
+    let string = string.to_string();
+
+    *env.objc.borrow_mut(this) = StringHostObject::UTF8(Cow::Owned(string));
+
+    this
+}
 
 @end
 

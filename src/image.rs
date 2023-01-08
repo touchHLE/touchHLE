@@ -45,10 +45,6 @@ impl Image {
         })
     }
 
-    pub fn from_file<P: AsRef<std::path::Path>>(path: P) -> Result<Image, ()> {
-        Self::from_bytes(&std::fs::read(path).map_err(|_| ())?)
-    }
-
     pub fn dimensions(&self) -> (u32, u32) {
         self.dimensions
     }

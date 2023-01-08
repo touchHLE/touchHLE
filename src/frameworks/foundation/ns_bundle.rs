@@ -1,6 +1,6 @@
 //! `NSBundle`.
 
-use super::ns_string::get_static_str;
+use super::ns_string::from_rust_string;
 use crate::bundle::Bundle;
 use crate::objc::{id, msg, msg_class, objc_classes, release, ClassExports, HostObject};
 
@@ -30,7 +30,8 @@ pub const CLASSES: ClassExports = objc_classes! {
     if let Some(bundle) = env.framework_state.foundation.ns_bundle.main_bundle {
         bundle
     } else {
-        let bundle_path = get_static_str(env, crate::APP_PATH);
+        let bundle_path = env.bundle.bundle_path().as_str().to_string();
+        let bundle_path = from_rust_string(env, bundle_path);
         let host_object = NSBundleHostObject {
             _bundle: None,
             bundle_path,

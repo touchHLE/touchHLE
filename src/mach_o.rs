@@ -13,6 +13,7 @@
 //! - `/usr/include/mach-o/reloc.h` in the macOS SDK was the reference for the format of relocation entries.
 //! - The [source code of the mach_object crate](https://docs.rs/mach_object/latest/src/mach_object/commands.rs.html) has useful comments that don't show up in the generated documentation, e.g. around `DySymTab`.
 
+use crate::fs::{Fs, GuestPath};
 use crate::mem::{Mem, Ptr};
 use mach_object::{DyLib, LoadCommand, MachCommand, OFile, Symbol, SymbolIter};
 use std::collections::HashMap;
@@ -416,19 +417,15 @@ impl MachO {
     /// Load the all the sections from a Mach-O binary (from `path`) into the
     /// guest memory (`into_mem`), and return a struct containing metadata
     /// (e.g. symbols).
-    pub fn load_from_file<P: AsRef<std::path::Path>>(
+    pub fn load_from_file<P: AsRef<GuestPath>>(
         path: P,
+        fs: &Fs,
         into_mem: &mut Mem,
     ) -> Result<MachO, &'static str> {
-        let name = path
-            .as_ref()
-            .file_name()
-            .unwrap()
-            .to_str()
-            .unwrap()
-            .to_string();
+        let name = path.as_ref().file_name().unwrap().to_string();
         Self::load_from_bytes(
-            &std::fs::read(path).map_err(|_| "Could not read executable file")?,
+            &fs.read(path.as_ref())
+                .map_err(|_| "Could not read executable file")?,
             into_mem,
             name,
         )

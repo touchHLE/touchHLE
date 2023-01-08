@@ -11,7 +11,7 @@ use crate::mem::MutVoidPtr;
 use crate::objc::{autorelease, id, msg, objc_classes, release, retain, ClassExports, HostObject};
 use crate::Environment;
 use plist::{Dictionary, Uid, Value};
-use std::path::Path;
+use std::io::Cursor;
 
 struct NSKeyedUnarchiverHostObject {
     plist: Dictionary,
@@ -91,14 +91,14 @@ fn borrow_host_obj(env: &mut Environment, unarchiver: id) -> &mut NSKeyedUnarchi
 /// Shortcut for use by [crate::frameworks::uikit::ui_nib::load_main_nib_file].
 ///
 /// This is equivalent to calling `initForReadingWithData:` in the proper API.
-pub fn init_for_reading_file(env: &mut Environment, unarchiver: id, path: &Path) {
+pub fn init_for_reading_with_data(env: &mut Environment, unarchiver: id, data: &[u8]) {
     // Should have already been alloc'd the proper way.
     let host_obj = borrow_host_obj(env, unarchiver);
     assert!(host_obj.already_unarchived.is_empty());
     assert!(host_obj.current_key.is_none());
     assert!(host_obj.plist.is_empty());
 
-    let plist = Value::from_file(path).unwrap();
+    let plist = Value::from_reader(Cursor::new(data)).unwrap();
     let plist = plist.into_dictionary().unwrap();
     assert!(plist["$version"].as_unsigned_integer() == Some(100000));
     assert!(plist["$archiver"].as_string() == Some("NSKeyedArchiver"));

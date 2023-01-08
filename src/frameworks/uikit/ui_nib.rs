@@ -171,8 +171,10 @@ pub const CLASSES: ClassExports = objc_classes! {
 pub fn load_main_nib_file(env: &mut Environment, _ui_application: id) {
     let path = env.bundle.main_nib_file_path();
 
+    let data = env.fs.read(path).unwrap();
+
     let unarchiver = msg_class![env; NSKeyedUnarchiver alloc];
-    ns_keyed_unarchiver::init_for_reading_file(env, unarchiver, &path);
+    ns_keyed_unarchiver::init_for_reading_with_data(env, unarchiver, &data);
 
     // The top-level keys in a nib file's keyed archive appear to be
     // UINibAccessibilityConfigurationsKey, UINibConnectionsKey,

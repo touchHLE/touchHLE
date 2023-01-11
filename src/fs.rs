@@ -104,6 +104,13 @@ impl AsRef<GuestPath> for str {
         unsafe { &*(self as *const str as *const GuestPath) }
     }
 }
+impl std::borrow::ToOwned for GuestPath {
+    type Owned = GuestPathBuf;
+
+    fn to_owned(&self) -> GuestPathBuf {
+        GuestPathBuf::from(self)
+    }
+}
 
 /// Like [PathBuf] but for the virtual filesystem.
 #[derive(Debug, Clone)]
@@ -133,6 +140,11 @@ impl std::ops::Deref for GuestPathBuf {
 }
 impl AsRef<GuestPath> for GuestPathBuf {
     fn as_ref(&self) -> &GuestPath {
+        self
+    }
+}
+impl std::borrow::Borrow<GuestPath> for GuestPathBuf {
+    fn borrow(&self) -> &GuestPath {
         self
     }
 }

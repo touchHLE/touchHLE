@@ -2,6 +2,7 @@
 
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::frameworks::core_foundation::cf_url::CFURLRef;
+use crate::frameworks::foundation::ns_url::to_rust_path;
 use crate::frameworks::mac_types::OSStatus;
 use crate::mem::MutPtr;
 use crate::Environment;
@@ -19,7 +20,7 @@ struct OpaqueAudioFileID {
 type AudioFileID = MutPtr<OpaqueAudioFileID>;
 
 fn AudioFileOpenURL(
-    _env: &mut Environment,
+    env: &mut Environment,
     in_file_ref: CFURLRef,
     in_permissions: AudioFilePermissions,
     in_file_type_hint: AudioFileTypeID,
@@ -28,7 +29,7 @@ fn AudioFileOpenURL(
     assert!(in_permissions == kAudioFileReadPermission); // unimplemented
     unimplemented!(
         "AudioFileOpenURL({:?}, {:#x}, {:#x}, {:?})",
-        in_file_ref,
+        to_rust_path(env, in_file_ref),
         in_permissions,
         in_file_type_hint,
         out_audio_file

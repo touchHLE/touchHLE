@@ -2,8 +2,11 @@
 
 use super::ns_string::{to_rust_string, NSUTF8StringEncoding};
 use super::NSUInteger;
+use crate::fs::GuestPath;
 use crate::mem::{MutPtr, MutVoidPtr};
 use crate::objc::{id, msg, nil, objc_classes, release, retain, ClassExports, HostObject};
+use crate::Environment;
+use std::borrow::Cow;
 
 /// It seems like there's two kinds of NSURLs: ones for file paths, and others.
 /// So far only the former is implemented (TODO).
@@ -71,3 +74,14 @@ pub const CLASSES: ClassExports = objc_classes! {
 @end
 
 };
+
+/// Shortcut for host code, provides a view of a URL as a path.
+/// TODO: Try to avoid allocating a new GuestPathBuf in more cases.
+pub fn to_rust_path(env: &mut Environment, url: id) -> Cow<'static, GuestPath> {
+    let path_string: id = msg![env; url path];
+
+    match to_rust_string(env, path_string) {
+        Cow::Borrowed(path) => Cow::Borrowed(path.as_ref()),
+        Cow::Owned(path_buf) => Cow::Owned(path_buf.into()),
+    }
+}

@@ -127,7 +127,21 @@ pub fn alcGetProcAddress(
         log!("Returning NULL for alcGetProcAddress(..., \"alcMacOSXMixerOutputRate\").");
         return Ptr::null();
     }
-    unimplemented!(); // TODO general implementation
+
+    let mangled_func_name = format!("_{}", env.mem.cstr_at_utf8(func_name));
+    assert!(mangled_func_name.starts_with("_al"));
+
+    if let Ok(ptr) = env
+        .dyld
+        .create_proc_address(&mut env.mem, &mut env.cpu, &mangled_func_name)
+    {
+        Ptr::from_bits(ptr.addr_with_thumb_bit())
+    } else {
+        panic!(
+            "Request for procedure address for unimplemented OpenAL function {}",
+            mangled_func_name
+        );
+    }
 }
 
 // TODO: more functions

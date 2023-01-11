@@ -442,4 +442,38 @@ impl Dyld {
 
         panic!("Call to unimplemented function {}", symbol);
     }
+
+    /// Creates a guest function that will call a host function with the name
+    /// `symbol`. This can be used to implement "get proc address" functions.
+    /// Note that no attempt is made to deduplicate or deallocate these, so
+    /// excessive use would create a memory leak.
+    ///
+    /// The name must be the mangled symbol name. Returns [Err] if there's no
+    /// such function.
+    pub fn create_proc_address(
+        &mut self,
+        mem: &mut Mem,
+        cpu: &mut Cpu,
+        symbol: &str,
+    ) -> Result<GuestFunction, ()> {
+        let &f = search_lists(function_lists::FUNCTION_LISTS, symbol).ok_or(())?;
+
+        // Allocate an SVC ID for this host function
+        let idx: u32 = self.linked_host_functions.len().try_into().unwrap();
+        let svc = idx + Self::SVC_LINKED_FUNCTIONS_BASE;
+        self.linked_host_functions.push(f);
+
+        // Create guest function to call this host function
+        let function_ptr = mem.alloc(8);
+        let function_ptr: MutPtr<u32> = function_ptr.cast();
+        mem.write(function_ptr + 0, encode_a32_svc(svc));
+        mem.write(function_ptr + 1, encode_a32_ret());
+
+        // Just in case
+        cpu.invalidate_cache_range(function_ptr.to_bits(), 4);
+
+        Ok(GuestFunction::from_addr_with_thumb_bit(
+            function_ptr.to_bits(),
+        ))
+    }
 }

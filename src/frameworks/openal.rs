@@ -4,6 +4,7 @@
 //!
 //! Resources:
 //! - [OpenAL 1.1 specification](https://www.openal.org/documentation/openal-1.1-specification.pdf)
+//! - Apple's [Technical Note TN2199: OpenAL FAQ for iPhone OS](https://web.archive.org/web/20090826202158/http://developer.apple.com/iPhone/library/technotes/tn2008/tn2199.html)
 
 use crate::audio::openal as al;
 use crate::audio::openal::al_types::*;
@@ -175,6 +176,10 @@ pub fn alDeleteSources(env: &mut Environment, n: ALsizei, sources: ConstPtr<ALui
     unsafe { al::alDeleteSources(n, sources) };
 }
 
+pub fn alSourcei(_env: &mut Environment, source: ALuint, param: ALenum, value: ALint) {
+    unsafe { al::alSourcei(source, param, value) };
+}
+
 pub fn alGenBuffers(env: &mut Environment, n: ALsizei, buffers: MutPtr<ALuint>) {
     let n_usize: GuestUSize = n.try_into().unwrap();
     let buffers = env.mem.ptr_at_mut(buffers, n_usize);
@@ -184,6 +189,42 @@ pub fn alDeleteBuffers(env: &mut Environment, n: ALsizei, buffers: ConstPtr<ALui
     let n_usize: GuestUSize = n.try_into().unwrap();
     let buffers = env.mem.ptr_at(buffers, n_usize);
     unsafe { al::alDeleteBuffers(n, buffers) };
+}
+
+pub fn alBufferData(
+    env: &mut Environment,
+    buffer: ALuint,
+    format: ALenum,
+    data: ConstVoidPtr,
+    size: ALsizei,
+    samplerate: ALsizei,
+) {
+    let size_usize: GuestUSize = size.try_into().unwrap();
+    let data_slice = env.mem.bytes_at(data.cast(), size_usize);
+    unsafe {
+        al::alBufferData(
+            buffer,
+            format,
+            data_slice.as_ptr() as *const _,
+            size,
+            samplerate,
+        )
+    };
+}
+
+/// This is an Apple extension that treats the data passed as a static buffer
+/// rather than a temporary one, which means it never has to be copied.
+/// OpenAL Soft doesn't support this, so we pass through to `alBufferData`
+/// and hope the guest app doesn't rely on the static-ness (it shouldn't).
+pub fn alBufferDataStatic(
+    env: &mut Environment,
+    buffer: ALuint,
+    format: ALenum,
+    data: ConstVoidPtr,
+    size: ALsizei,
+    samplerate: ALsizei,
+) {
+    alBufferData(env, buffer, format, data, size, samplerate);
 }
 
 // TODO: more functions
@@ -199,6 +240,9 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(alGetError()),
     export_c_func!(alGenSources(_, _)),
     export_c_func!(alDeleteSources(_, _)),
+    export_c_func!(alSourcei(_, _, _)),
     export_c_func!(alGenBuffers(_, _)),
     export_c_func!(alDeleteBuffers(_, _)),
+    export_c_func!(alBufferData(_, _, _, _, _)),
+    export_c_func!(alBufferDataStatic(_, _, _, _, _)),
 ];

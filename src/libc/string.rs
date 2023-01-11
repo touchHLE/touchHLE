@@ -6,12 +6,9 @@ use crate::Environment;
 use std::cmp::Ordering;
 
 fn strlen(env: &mut Environment, s: ConstPtr<u8>) -> GuestUSize {
-    let mut size = 0;
-    while env.mem.read(s + size) != b'\0' {
-        size += 1;
-    }
-    size
+    env.mem.cstr_at(s).len().try_into().unwrap()
 }
+
 fn strcpy(env: &mut Environment, dest: MutPtr<u8>, src: ConstPtr<u8>) -> MutPtr<u8> {
     {
         let (mut dest, mut src) = (dest, src);
@@ -33,6 +30,12 @@ fn strcat(env: &mut Environment, dest: MutPtr<u8>, src: ConstPtr<u8>) -> MutPtr<
         strcpy(env, dest, src);
     }
     dest
+}
+
+fn strdup(env: &mut Environment, src: ConstPtr<u8>) -> MutPtr<u8> {
+    let len = strlen(env, src);
+    let new = env.mem.alloc(len + 1).cast();
+    strcpy(env, new, src)
 }
 
 fn strcmp(env: &mut Environment, a: ConstPtr<u8>, b: ConstPtr<u8>) -> i32 {
@@ -60,5 +63,6 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(strlen(_)),
     export_c_func!(strcpy(_, _)),
     export_c_func!(strcat(_, _)),
+    export_c_func!(strdup(_)),
     export_c_func!(strcmp(_, _)),
 ];

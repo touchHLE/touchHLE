@@ -335,7 +335,7 @@ macro_rules! impl_GuestArg_with {
                 <$with as GuestArg>::from_regs(regs) as $for
             }
             fn to_regs(self, regs: &mut [u32]) {
-                <u32 as GuestArg>::to_regs(self as $with, regs)
+                <$with as GuestArg>::to_regs(self as $with, regs)
             }
         }
     };
@@ -415,6 +415,8 @@ impl GuestArg for u64 {
         regs[1] = u32::from_le_bytes(bytes[4..8].try_into().unwrap());
     }
 }
+
+impl_GuestArg_with!(i64, u64);
 
 impl GuestArg for f64 {
     const REG_COUNT: usize = <u64 as GuestArg>::REG_COUNT;
@@ -566,6 +568,8 @@ impl GuestRet for u64 {
         regs[1] = u32::from_le_bytes(bytes[4..8].try_into().unwrap());
     }
 }
+
+impl_GuestRet_with!(i64, u64);
 
 impl GuestRet for f64 {
     fn from_regs(regs: &[u32]) -> Self {

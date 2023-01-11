@@ -16,6 +16,7 @@
 
 pub mod audio_toolbox;
 pub mod core_animation;
+pub mod core_audio_types;
 pub mod core_foundation;
 pub mod core_graphics;
 pub mod foundation;
@@ -27,6 +28,7 @@ pub mod uikit;
 /// Container for state of various child modules
 #[derive(Default)]
 pub struct State {
+    audio_toolbox: audio_toolbox::State,
     foundation: foundation::State,
     openal: openal::State,
     opengles: opengles::State,

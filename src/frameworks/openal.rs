@@ -4,7 +4,7 @@
 //!
 //! Resources:
 //! - [OpenAL 1.1 specification](https://www.openal.org/documentation/openal-1.1-specification.pdf)
-//! - Apple's [Technical Note TN2199: OpenAL FAQ for iPhone OS](https://web.archive.org/web/20090826202158/http://developer.apple.com/iPhone/library/technotes/tn2008/tn2199.html)
+//! - Apple's [Technical Note TN2199: OpenAL FAQ for iPhone OS](https://web.archive.org/web/20090826202158/http://developer.apple.com/iPhone/library/technotes/tn2008/tn2199.html) (also available [here](https://developer.apple.com/library/archive/technotes/tn2199/_index.html))
 
 use crate::audio::openal as al;
 use crate::audio::openal::al_types::*;

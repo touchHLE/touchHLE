@@ -13,6 +13,7 @@
 //! Documentation Archive relating to arrays, that might be linked.
 
 #![allow(non_upper_case_globals)] // Lots of Apple constants begin with "k"
+#![allow(clippy::too_many_arguments)] // It's not our fault!
 
 pub mod audio_toolbox;
 pub mod core_animation;

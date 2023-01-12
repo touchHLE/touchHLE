@@ -37,6 +37,10 @@ unsafe impl SafeRead for AudioStreamBasicDescription {}
 /// Usually a FourCC.
 pub type AudioFormatID = u32;
 pub const kAudioFormatLinearPCM: AudioFormatID = fourcc(b"lpcm");
+pub const kAudioFormatAppleIMA4: AudioFormatID = fourcc(b"ima4");
 
 pub type AudioFormatFlags = u32;
+pub const kAudioFormatFlagIsFloat: AudioFormatFlags = 1 << 0;
+pub const kAudioFormatFlagIsBigEndian: AudioFormatFlags = 1 << 1;
 pub const kAudioFormatFlagIsSignedInteger: AudioFormatFlags = 1 << 2;
+pub const kAudioFormatFlagIsPacked: AudioFormatFlags = 1 << 3;

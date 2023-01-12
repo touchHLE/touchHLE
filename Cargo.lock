@@ -27,6 +27,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "14c189c53d098945499cdfa7ecc63567cf3886b3332b312a5b4585d8d3a6a610"
 
 [[package]]
+name = "caf"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8fb1715abe8ffd1caeca4e30b9d803ecb75698bef0e59d207d4b0f16757744e7"
+dependencies = [
+ "byteorder",
+]
+
+[[package]]
 name = "cc"
 version = "1.0.77"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -268,6 +277,7 @@ dependencies = [
 name = "touchHLE"
 version = "0.1.0"
 dependencies = [
+ "caf",
  "cc",
  "cmake",
  "gl_generator",

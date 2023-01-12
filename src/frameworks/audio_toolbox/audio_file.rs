@@ -1,10 +1,11 @@
 //! `AudioFile.h` (Audio File Services)
 
-use crate::audio::{AudioFile, AudioFormat, SampleFormat};
+use crate::audio; // Keep this module namespaced to avoid confusion
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::frameworks::core_audio_types::{
-    debug_fourcc, fourcc, kAudioFormatFlagIsSignedInteger, kAudioFormatLinearPCM,
-    AudioStreamBasicDescription,
+    debug_fourcc, fourcc, kAudioFormatAppleIMA4, kAudioFormatFlagIsBigEndian,
+    kAudioFormatFlagIsFloat, kAudioFormatFlagIsPacked, kAudioFormatFlagIsSignedInteger,
+    kAudioFormatLinearPCM, AudioStreamBasicDescription,
 };
 use crate::frameworks::core_foundation::cf_url::CFURLRef;
 use crate::frameworks::foundation::ns_url::to_rust_path;
@@ -24,7 +25,7 @@ impl State {
 }
 
 struct AudioFileHostObject {
-    audio_file: AudioFile,
+    audio_file: audio::AudioFile,
 }
 
 #[repr(C, packed)]
@@ -48,6 +49,8 @@ type AudioFileTypeID = u32;
 type AudioFilePropertyID = u32;
 const kAudioFilePropertyDataFormat: AudioFilePropertyID = fourcc(b"dfmt");
 const kAudioFilePropertyAudioDataByteCount: AudioFilePropertyID = fourcc(b"bcnt");
+const kAudioFilePropertyAudioDataPacketCount: AudioFilePropertyID = fourcc(b"pcnt");
+const kAudioFilePropertyPacketSizeUpperBound: AudioFilePropertyID = fourcc(b"pkub");
 
 fn AudioFileOpenURL(
     env: &mut Environment,
@@ -62,7 +65,7 @@ fn AudioFileOpenURL(
     assert!(in_file_type_hint == 0);
 
     let path = to_rust_path(env, in_file_ref);
-    let Ok(audio_file) = AudioFile::open_for_reading(path, &env.fs) else {
+    let Ok(audio_file) = audio::AudioFile::open_for_reading(path, &env.fs) else {
         log!("Warning: AudioFileOpenURL() for path {:?} failed", in_file_ref);
         return kAudioFileFileNotFoundError;
     };
@@ -95,6 +98,8 @@ fn AudioFileGetProperty(
     let required_size: GuestUSize = match in_property_id {
         kAudioFilePropertyDataFormat => guest_size_of::<AudioStreamBasicDescription>(),
         kAudioFilePropertyAudioDataByteCount => guest_size_of::<u64>(),
+        kAudioFilePropertyAudioDataPacketCount => guest_size_of::<u64>(),
+        kAudioFilePropertyPacketSizeUpperBound => guest_size_of::<u32>(),
         _ => unimplemented!(
             "Unimplemented property ID: {}",
             debug_fourcc(in_property_id)
@@ -112,27 +117,66 @@ fn AudioFileGetProperty(
 
     match in_property_id {
         kAudioFilePropertyDataFormat => {
-            let AudioFormat {
-                channels,
+            let audio::AudioDescription {
                 sample_rate,
-                sample_format: SampleFormat::LinearPcmS16,
-            } = host_object.audio_file.audio_format();
-            let desc = AudioStreamBasicDescription {
-                sample_rate: sample_rate.into(),
-                format_id: kAudioFormatLinearPCM,
-                format_flags: kAudioFormatFlagIsSignedInteger,
-                bytes_per_packet: u32::from(channels) * 2,
-                frames_per_packet: 1,                     // uncompressed
-                bytes_per_frame: u32::from(channels) * 2, // interleaved
-                channels_per_frame: channels.into(),
-                bits_per_channel: 16,
-                _reserved: 0,
+                format,
+                bytes_per_packet,
+                frames_per_packet,
+                channels_per_frame,
+                bits_per_channel,
+            } = host_object.audio_file.audio_description();
+
+            let desc: AudioStreamBasicDescription = match format {
+                audio::AudioFormat::LinearPcm {
+                    is_float,
+                    is_little_endian,
+                } => {
+                    let is_packed = (bits_per_channel * channels_per_frame * frames_per_packet)
+                        == (bytes_per_packet * 8);
+                    let format_flags = (u32::from(is_float) * kAudioFormatFlagIsFloat)
+                        | (u32::from(!is_float) * kAudioFormatFlagIsSignedInteger)
+                        | (u32::from(is_packed) * kAudioFormatFlagIsPacked)
+                        | (u32::from(!is_little_endian) * kAudioFormatFlagIsBigEndian);
+                    AudioStreamBasicDescription {
+                        sample_rate,
+                        format_id: kAudioFormatLinearPCM,
+                        format_flags,
+                        bytes_per_packet,
+                        frames_per_packet,
+                        bytes_per_frame: bytes_per_packet / frames_per_packet,
+                        channels_per_frame,
+                        bits_per_channel,
+                        _reserved: 0,
+                    }
+                }
+                audio::AudioFormat::AppleIma4 => {
+                    AudioStreamBasicDescription {
+                        sample_rate,
+                        format_id: kAudioFormatAppleIMA4,
+                        format_flags: 0,
+                        bytes_per_packet,
+                        frames_per_packet,
+                        bytes_per_frame: 0, // compressed
+                        channels_per_frame,
+                        bits_per_channel,
+                        _reserved: 0,
+                    }
+                }
             };
             env.mem.write(out_property_data.cast(), desc);
         }
         kAudioFilePropertyAudioDataByteCount => {
-            let byte_count = host_object.audio_file.byte_count();
+            let byte_count: u64 = host_object.audio_file.byte_count();
             env.mem.write(out_property_data.cast(), byte_count);
+        }
+        kAudioFilePropertyAudioDataPacketCount => {
+            let packet_count: u64 = host_object.audio_file.packet_count();
+            env.mem.write(out_property_data.cast(), packet_count);
+        }
+        kAudioFilePropertyPacketSizeUpperBound => {
+            let packet_size_upper_bound: u32 = host_object.audio_file.packet_size_upper_bound();
+            env.mem
+                .write(out_property_data.cast(), packet_size_upper_bound);
         }
         _ => unreachable!(),
     }
@@ -166,6 +210,50 @@ fn AudioFileReadBytes(
     0 // success
 }
 
+fn AudioFileReadPackets(
+    env: &mut Environment,
+    in_audio_file: AudioFileID,
+    in_use_cache: bool,
+    out_num_bytes: MutPtr<u32>,
+    out_packet_descriptions: MutVoidPtr, // unimplemented
+    in_starting_packet: i64,
+    io_num_packets: MutPtr<u32>,
+    out_buffer: MutVoidPtr,
+) -> OSStatus {
+    // Variable-size packets are not implemented currently. When they are,
+    // this parameter should be a `MutPtr<AudioStreamPacketDescription>`.
+    assert!(out_packet_descriptions.is_null());
+
+    let host_object = State::get(&mut env.framework_state)
+        .audio_files
+        .get_mut(&in_audio_file)
+        .unwrap();
+    let packet_size = host_object.audio_file.packet_size_fixed();
+
+    let packets_to_read = env.mem.read(io_num_packets);
+
+    let starting_byte = i64::from(packet_size)
+        .checked_mul(in_starting_packet)
+        .unwrap();
+    let bytes_to_read = packets_to_read.checked_mul(packet_size).unwrap();
+
+    env.mem.write(out_num_bytes, bytes_to_read);
+    let res = AudioFileReadBytes(
+        env,
+        in_audio_file,
+        in_use_cache,
+        starting_byte,
+        out_num_bytes,
+        out_buffer,
+    );
+
+    let bytes_read = env.mem.read(out_num_bytes);
+    let packets_read = bytes_read / packet_size;
+    env.mem.write(io_num_packets, packets_read);
+
+    res
+}
+
 fn AudioFileClose(env: &mut Environment, in_audio_file: AudioFileID) -> OSStatus {
     let _host_object = State::get(&mut env.framework_state)
         .audio_files
@@ -183,5 +271,6 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(AudioFileOpenURL(_, _, _, _)),
     export_c_func!(AudioFileGetProperty(_, _, _, _)),
     export_c_func!(AudioFileReadBytes(_, _, _, _, _)),
+    export_c_func!(AudioFileReadPackets(_, _, _, _, _, _, _)),
     export_c_func!(AudioFileClose(_)),
 ];

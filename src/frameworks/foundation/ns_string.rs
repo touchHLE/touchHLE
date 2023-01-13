@@ -2,7 +2,9 @@
 
 use super::NSUInteger;
 use crate::mem::{ConstPtr, MutPtr, MutVoidPtr};
-use crate::objc::{id, msg, msg_class, objc_classes, retain, Class, ClassExports, HostObject};
+use crate::objc::{
+    autorelease, id, msg, msg_class, objc_classes, retain, Class, ClassExports, HostObject,
+};
 use crate::Environment;
 use std::borrow::Cow;
 use std::collections::HashMap;
@@ -43,6 +45,13 @@ pub const CLASSES: ClassExports = objc_classes! {
     // to have the normal behaviour. Unimplemented: call superclass alloc then.
     assert!(this == env.objc.get_known_class("NSString", &mut env.mem));
     msg_class![env; _touchHLE_NSString allocWithZone:zone]
+}
+
++ (id)stringWithCString:(ConstPtr<u8>)c_string
+               encoding:(NSStringEncoding)encoding {
+    let new: id = msg![env; this alloc];
+    let new: id = msg![env; new initWithCString:c_string encoding:encoding];
+    autorelease(env, new)
 }
 
 - (NSUInteger)hash {
@@ -110,6 +119,12 @@ pub const CLASSES: ClassExports = objc_classes! {
     *env.objc.borrow_mut(this) = StringHostObject::UTF8(Cow::Owned(string));
 
     this
+}
+
+- (id)initWithCString:(ConstPtr<u8>)c_string
+             encoding:(NSStringEncoding)encoding {
+    let len: NSUInteger = env.mem.cstr_at(c_string).len().try_into().unwrap();
+    msg![env; this initWithBytes:c_string length:len encoding:encoding]
 }
 
 @end

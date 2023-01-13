@@ -6,5 +6,6 @@ use crate::frameworks::{core_foundation, opengles};
 /// All the lists of constants that the linker should search through.
 pub const CONSTANT_LISTS: &[super::ConstantExports] = &[
     core_foundation::cf_allocator::CONSTANTS,
+    core_foundation::cf_run_loop::CONSTANTS,
     opengles::eagl::CONSTANTS,
 ];

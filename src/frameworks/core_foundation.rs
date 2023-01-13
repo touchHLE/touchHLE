@@ -14,6 +14,7 @@
 pub mod cf_allocator;
 pub mod cf_bundle;
 pub mod cf_run_loop;
+pub mod cf_string;
 pub mod cf_type;
 pub mod cf_url;
 

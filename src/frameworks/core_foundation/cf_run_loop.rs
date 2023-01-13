@@ -8,6 +8,7 @@ use crate::objc::msg_class;
 use crate::Environment;
 
 pub type CFRunLoopRef = super::CFTypeRef;
+pub type CFRunLoopMode = super::cf_string::CFStringRef;
 
 fn CFRunLoopGetCurrent(env: &mut Environment) -> CFRunLoopRef {
     msg_class![env; NSRunLoop currentRunLoop]
@@ -17,7 +18,7 @@ fn CFRunLoopGetMain(env: &mut Environment) -> CFRunLoopRef {
     msg_class![env; NSRunLoop mainRunLoop]
 }
 
-const kCFRunLoopCommonModes: &str = "kCFRunLoopCommonModes";
+pub const kCFRunLoopCommonModes: &str = "kCFRunLoopCommonModes";
 
 pub const CONSTANTS: ConstantExports = &[(
     "_kCFRunLoopCommonModes",

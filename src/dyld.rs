@@ -263,6 +263,8 @@ impl Dyld {
                 objc.link_class(name, /* is_metaclass: */ false, mem)
             } else if let Some(name) = name.strip_prefix("_OBJC_METACLASS_$_") {
                 objc.link_class(name, /* is_metaclass: */ true, mem)
+            } else if name == "___CFConstantStringClassReference" {
+                ns_string::handle_constant_string(mem, objc, Ptr::from_bits(ptr_ptr))
             } else {
                 // TODO: look up symbol, write pointer
                 log!(

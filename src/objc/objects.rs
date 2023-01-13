@@ -154,7 +154,7 @@ impl super::ObjC {
 
     /// Associate a host object with an existing static-lifetime (guest) object
     /// (for example, a class).
-    pub(super) fn register_static_object(
+    pub fn register_static_object(
         &mut self,
         guest_object: id,
         host_object: Box<dyn AnyHostObject>,

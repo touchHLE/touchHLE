@@ -2,9 +2,9 @@
 
 use super::NSUInteger;
 use crate::fs::GuestPath;
-use crate::mem::{ConstPtr, MutPtr, MutVoidPtr};
+use crate::mem::{ConstPtr, Mem, MutPtr, MutVoidPtr, SafeRead};
 use crate::objc::{
-    autorelease, id, msg, msg_class, objc_classes, retain, Class, ClassExports, HostObject,
+    autorelease, id, msg, msg_class, objc_classes, retain, Class, ClassExports, HostObject, ObjC,
 };
 use crate::Environment;
 use std::borrow::Cow;
@@ -223,7 +223,45 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 @end
 
+// Specialised subclass for static-lifetime strings from the guest app binary.
+// (This may be useful eventually for efficiently implementing accessors that
+// provide a pointer to the string bytes.)
+@implementation _touchHLE_NSString_CFConstantString: _touchHLE_NSString_Static
+@end
+
 };
+
+/// For use by [crate::dyld]: Handle a static string found in the app binary
+/// (`isa` = `___CFConstantStringClassReference`). Set up the correct host
+/// object and return the `isa` to be written.
+pub fn handle_constant_string(mem: &mut Mem, objc: &mut ObjC, constant_str: id) -> Class {
+    // Ghidra calls it this. The field names and types are guesswork.
+    #[allow(non_camel_case_types)]
+    struct cfstringStruct {
+        _isa: Class,
+        flags: u32,
+        bytes: ConstPtr<u8>,
+        length: NSUInteger,
+    }
+    unsafe impl SafeRead for cfstringStruct {}
+
+    let cfstringStruct {
+        _isa,
+        flags,
+        bytes,
+        length,
+    } = mem.read(constant_str.cast());
+    assert!(flags == 0x7C8); // no idea what this means
+
+    // All the strings I've seen are ASCII, so this might be wrong.
+    let decoded = std::str::from_utf8(mem.bytes_at(bytes, length)).unwrap();
+
+    let host_object = StringHostObject::UTF8(Cow::Owned(String::from(decoded)));
+
+    objc.register_static_object(constant_str, Box::new(host_object));
+
+    objc.get_known_class("_touchHLE_NSString_CFConstantString", mem)
+}
 
 /// Shortcut for host code: get an NSString corresponding to a `&'static str`,
 /// which does not have to be released and is never deallocated.

@@ -1,6 +1,7 @@
 //! The `NSString` class cluster, including `NSMutableString`.
 
 use super::NSUInteger;
+use crate::fs::GuestPath;
 use crate::mem::{ConstPtr, MutPtr, MutVoidPtr};
 use crate::objc::{
     autorelease, id, msg, msg_class, objc_classes, retain, Class, ClassExports, HostObject,
@@ -28,6 +29,15 @@ enum StringHostObject {
     UTF8(Cow<'static, str>),
 }
 impl HostObject for StringHostObject {}
+impl StringHostObject {
+    fn decode(bytes: Cow<[u8]>, encoding: NSStringEncoding) -> StringHostObject {
+        assert!(encoding == NSUTF8StringEncoding); // TODO: other encodings
+
+        // TODO: error handling
+        let string = String::from_utf8(bytes.into_owned()).unwrap();
+        StringHostObject::UTF8(Cow::Owned(string))
+    }
+}
 
 pub const CLASSES: ClassExports = objc_classes! {
 
@@ -51,6 +61,16 @@ pub const CLASSES: ClassExports = objc_classes! {
                encoding:(NSStringEncoding)encoding {
     let new: id = msg![env; this alloc];
     let new: id = msg![env; new initWithCString:c_string encoding:encoding];
+    autorelease(env, new)
+}
+
++ (id)stringWithContentsOfFile:(id)path // NSString*
+                      encoding:(NSStringEncoding)encoding
+                         error:(MutPtr<id>)error { // NSError**
+    let new: id = msg![env; this alloc];
+    let new: id = msg![env; new initWithContentsOfFile:path
+                                              encoding:encoding
+                                                 error:error];
     autorelease(env, new)
 }
 
@@ -113,10 +133,10 @@ pub const CLASSES: ClassExports = objc_classes! {
     assert!(encoding == NSUTF8StringEncoding); // TODO: other encodings
 
     // TODO: error handling
-    let string = std::str::from_utf8(env.mem.bytes_at(bytes, len)).unwrap();
-    let string = string.to_string();
+    let slice = env.mem.bytes_at(bytes, len);
+    let host_object = StringHostObject::decode(Cow::Borrowed(slice), encoding);
 
-    *env.objc.borrow_mut(this) = StringHostObject::UTF8(Cow::Owned(string));
+    *env.objc.borrow_mut(this) = host_object;
 
     this
 }
@@ -125,6 +145,22 @@ pub const CLASSES: ClassExports = objc_classes! {
              encoding:(NSStringEncoding)encoding {
     let len: NSUInteger = env.mem.cstr_at(c_string).len().try_into().unwrap();
     msg![env; this initWithBytes:c_string length:len encoding:encoding]
+}
+
+- (id)initWithContentsOfFile:(id)path // NSString*
+                    encoding:(NSStringEncoding)encoding
+                       error:(MutPtr<id>)error { // NSError**
+    assert!(error.is_null()); // TODO: error handling
+
+    // TODO: avoid copy?
+    let path = to_rust_string(env, path);
+    let bytes = env.fs.read(GuestPath::new(&path)).unwrap();
+
+    let host_object = StringHostObject::decode(Cow::Owned(bytes), encoding);
+
+    *env.objc.borrow_mut(this) = host_object;
+
+    this
 }
 
 @end

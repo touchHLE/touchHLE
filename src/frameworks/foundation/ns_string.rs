@@ -9,9 +9,12 @@ use crate::objc::{
 use crate::Environment;
 use std::borrow::Cow;
 use std::collections::HashMap;
+use std::string::FromUtf16Error;
 
 pub type NSStringEncoding = NSUInteger;
 pub const NSUTF8StringEncoding: NSUInteger = 4;
+pub const NSUnicodeStringEncoding: NSUInteger = 10;
+pub const NSUTF16StringEncoding: NSUInteger = NSUnicodeStringEncoding;
 
 #[derive(Default)]
 pub struct State {
@@ -23,19 +26,58 @@ impl State {
     }
 }
 
+type UTF16String = Vec<u16>;
+
 /// Belongs to _touchHLE_NSString.
-/// This is an enum because we will have to support UTF-16 eventually.
 enum StringHostObject {
     UTF8(Cow<'static, str>),
+    UTF16(UTF16String),
 }
 impl HostObject for StringHostObject {}
 impl StringHostObject {
     fn decode(bytes: Cow<[u8]>, encoding: NSStringEncoding) -> StringHostObject {
-        assert!(encoding == NSUTF8StringEncoding); // TODO: other encodings
+        if bytes.len() == 0 {
+            return StringHostObject::UTF8(Cow::Borrowed(""));
+        }
 
         // TODO: error handling
-        let string = String::from_utf8(bytes.into_owned()).unwrap();
-        StringHostObject::UTF8(Cow::Owned(string))
+
+        match encoding {
+            NSUTF8StringEncoding => {
+                let string = String::from_utf8(bytes.into_owned()).unwrap();
+                StringHostObject::UTF8(Cow::Owned(string))
+            }
+            NSUTF16StringEncoding => {
+                assert!(bytes.len() % 2 == 0);
+
+                let is_big_endian = match &bytes[0..2] {
+                    [0xFE, 0xFF] => true,
+                    [0xFF, 0xFE] => false,
+                    // TODO: what does NSUnicodeStringEncoding mean if no BOM is
+                    // present?
+                    _ => unimplemented!("Default endianness"),
+                };
+
+                StringHostObject::UTF16(if is_big_endian {
+                    bytes
+                        .chunks(2)
+                        .map(|chunk| u16::from_be_bytes(chunk.try_into().unwrap()))
+                        .collect()
+                } else {
+                    bytes
+                        .chunks(2)
+                        .map(|chunk| u16::from_le_bytes(chunk.try_into().unwrap()))
+                        .collect()
+                })
+            }
+            _ => panic!("Unimplemented encoding: {}", encoding),
+        }
+    }
+    fn to_utf8(&self) -> Result<Cow<'static, str>, FromUtf16Error> {
+        match self {
+            StringHostObject::UTF8(utf8) => Ok(utf8.clone()),
+            StringHostObject::UTF16(utf16) => Ok(Cow::Owned(String::from_utf16(utf16)?)),
+        }
     }
 }
 
@@ -143,6 +185,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 - (id)initWithCString:(ConstPtr<u8>)c_string
              encoding:(NSStringEncoding)encoding {
+    assert!(encoding != NSUTF16StringEncoding);
     let len: NSUInteger = env.mem.cstr_at(c_string).len().try_into().unwrap();
     msg![env; this initWithBytes:c_string length:len encoding:encoding]
 }
@@ -205,10 +248,15 @@ pub fn from_rust_string(env: &mut Environment, from: String) -> id {
 }
 
 /// Shortcut for host code, provides a view of a string in UTF-8.
+/// Warning: This may panic if the string is not valid UTF-16!
+///
 /// TODO: Try to avoid allocating a new String in more cases.
+///
+/// TODO: Try to avoid converting from UTF-16 in more cases.
 pub fn to_rust_string(env: &mut Environment, string: id) -> Cow<'static, str> {
     // TODO: handle foreign subclasses of NSString
-    let host_object: &mut StringHostObject = env.objc.borrow_mut(string);
-    let StringHostObject::UTF8(utf8) = host_object;
-    utf8.clone()
+    env.objc
+        .borrow_mut::<StringHostObject>(string)
+        .to_utf8()
+        .unwrap()
 }

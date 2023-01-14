@@ -113,6 +113,27 @@ impl<'a> Clone for CodeUnitIterator<'a> {
         }
     }
 }
+impl<'a> CodeUnitIterator<'a> {
+    /// If the sequence of code units in `prefix` is a prefix of `self`,
+    /// return [Some] with `self` advanced past that prefix, otherwise [None].
+    fn strip_prefix(&self, prefix: &CodeUnitIterator) -> Option<Self> {
+        let mut self_match = self.clone();
+        let mut prefix_match = prefix.clone();
+        loop {
+            match prefix_match.next() {
+                None => {
+                    return Some(self_match);
+                }
+                Some(prefix_c) => {
+                    let self_c = self_match.next();
+                    if self_c != Some(prefix_c) {
+                        return None;
+                    }
+                }
+            }
+        }
+    }
+}
 
 pub const CLASSES: ClassExports = objc_classes! {
 
@@ -202,32 +223,17 @@ pub const CLASSES: ClassExports = objc_classes! {
 
     let mut components = Vec::<Utf16String>::new();
     let mut current_component: Utf16String = Vec::new();
-    'outer: loop {
-        // attempt to match a separator
-        {
-            let mut main_match = main_iter.clone();
-            let mut sep_match = sep_iter.clone();
-            'inner: loop {
-                match sep_match.next() {
-                    None => {
-                        components.push(std::mem::take(&mut current_component));
-                        main_iter = main_match;
-                        continue 'outer;
-                    },
-                    Some(sep_c) => {
-                        let main_c = main_match.next();
-                        if main_c != Some(sep_c) {
-                            break 'inner;
-                        }
-                    }
-                }
+    loop {
+        if let Some(new_main_iter) = main_iter.strip_prefix(&sep_iter) {
+            // matched separator, end current component
+            components.push(std::mem::take(&mut current_component));
+            main_iter = new_main_iter;
+        } else {
+            // no separator match, extend the current component
+            match main_iter.next() {
+                Some(cur) => current_component.push(cur),
+                None => break,
             }
-        }
-
-        // no separator match, extend the current component
-        match main_iter.next() {
-            Some(cur) => current_component.push(cur),
-            None => break,
         }
     }
     components.push(current_component);
@@ -259,32 +265,17 @@ pub const CLASSES: ClassExports = objc_classes! {
     assert!(target_iter.clone().next().is_some());
 
     let mut result: Utf16String = Vec::new();
-    'outer: loop {
-        // attempt to match target
-        {
-            let mut main_match = main_iter.clone();
-            let mut target_match = target_iter.clone();
-            'inner: loop {
-                match target_match.next() {
-                    None => {
-                        result.extend(replacement_iter.clone());
-                        main_iter = main_match;
-                        continue 'outer;
-                    },
-                    Some(target_c) => {
-                        let main_c = main_match.next();
-                        if main_c != Some(target_c) {
-                            break 'inner;
-                        }
-                    }
-                }
+    loop {
+        if let Some(new_main_iter) = main_iter.strip_prefix(&target_iter) {
+            // matched target, replace it
+            result.extend(replacement_iter.clone());
+            main_iter = new_main_iter;
+        } else {
+            // no match, copy as normal
+            match main_iter.next() {
+                Some(cur) => result.push(cur),
+                None => break,
             }
-        }
-
-        // no match, copy as normal
-        match main_iter.next() {
-            Some(cur) => result.push(cur),
-            None => break,
         }
     }
 

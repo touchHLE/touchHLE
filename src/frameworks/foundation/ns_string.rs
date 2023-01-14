@@ -185,6 +185,13 @@ pub const CLASSES: ClassExports = objc_classes! {
     // TODO: avoid copying
     to_rust_string(env, this) == to_rust_string(env, other)
 }
+- (bool)isEqualToString:(id)other { // NSString*
+    if this == other {
+        return true;
+    }
+    // TODO: avoid copying
+    to_rust_string(env, this) == to_rust_string(env, other)
+}
 
 // NSCopying implementation
 - (id)copyWithZone:(MutVoidPtr)_zone {

@@ -190,6 +190,7 @@ fn resolve_path<'a>(path: &'a GuestPath, relative_to: Option<&'a GuestPath>) -> 
 pub struct Fs {
     root: FsNode,
     current_directory: GuestPathBuf,
+    home_directory: GuestPathBuf,
 }
 impl Fs {
     /// Construct the filesystem with some pre-defined nodes (e.g. dylibs)
@@ -205,6 +206,7 @@ impl Fs {
         const FAKE_UUID: &str = "00000000-0000-0000-0000-000000000000";
 
         let home_directory = GuestPathBuf::from(format!("/User/Applications/{}", FAKE_UUID));
+        let current_directory = home_directory.clone();
 
         let bundle_guest_path = home_directory.join(&bundle_dir_name);
 
@@ -246,10 +248,16 @@ impl Fs {
         (
             Fs {
                 root,
-                current_directory: home_directory,
+                current_directory,
+                home_directory,
             },
             bundle_guest_path,
         )
+    }
+
+    /// Get the absolute path of the guest app's (sandboxed) home directory.
+    pub fn home_directory(&self) -> &GuestPath {
+        &self.home_directory
     }
 
     fn get_node(&self, path: &GuestPath) -> Option<&FsNode> {

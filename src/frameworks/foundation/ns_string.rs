@@ -26,18 +26,18 @@ impl State {
     }
 }
 
-type UTF16String = Vec<u16>;
+type Utf16String = Vec<u16>;
 
 /// Belongs to _touchHLE_NSString.
 enum StringHostObject {
-    UTF8(Cow<'static, str>),
-    UTF16(UTF16String),
+    Utf8(Cow<'static, str>),
+    Utf16(Utf16String),
 }
 impl HostObject for StringHostObject {}
 impl StringHostObject {
     fn decode(bytes: Cow<[u8]>, encoding: NSStringEncoding) -> StringHostObject {
         if bytes.len() == 0 {
-            return StringHostObject::UTF8(Cow::Borrowed(""));
+            return StringHostObject::Utf8(Cow::Borrowed(""));
         }
 
         // TODO: error handling
@@ -45,7 +45,7 @@ impl StringHostObject {
         match encoding {
             NSUTF8StringEncoding => {
                 let string = String::from_utf8(bytes.into_owned()).unwrap();
-                StringHostObject::UTF8(Cow::Owned(string))
+                StringHostObject::Utf8(Cow::Owned(string))
             }
             NSUTF16StringEncoding => {
                 assert!(bytes.len() % 2 == 0);
@@ -58,7 +58,7 @@ impl StringHostObject {
                     _ => unimplemented!("Default endianness"),
                 };
 
-                StringHostObject::UTF16(if is_big_endian {
+                StringHostObject::Utf16(if is_big_endian {
                     bytes
                         .chunks(2)
                         .map(|chunk| u16::from_be_bytes(chunk.try_into().unwrap()))
@@ -75,8 +75,8 @@ impl StringHostObject {
     }
     fn to_utf8(&self) -> Result<Cow<'static, str>, FromUtf16Error> {
         match self {
-            StringHostObject::UTF8(utf8) => Ok(utf8.clone()),
-            StringHostObject::UTF16(utf16) => Ok(Cow::Owned(String::from_utf16(utf16)?)),
+            StringHostObject::Utf8(utf8) => Ok(utf8.clone()),
+            StringHostObject::Utf16(utf16) => Ok(Cow::Owned(String::from_utf16(utf16)?)),
         }
     }
 }
@@ -163,7 +163,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 @implementation _touchHLE_NSString: NSString
 
 + (id)allocWithZone:(MutVoidPtr)_zone {
-    let host_object = Box::new(StringHostObject::UTF8(Cow::Borrowed("")));
+    let host_object = Box::new(StringHostObject::Utf8(Cow::Borrowed("")));
     env.objc.alloc_object(this, host_object, &mut env.mem)
 }
 
@@ -213,7 +213,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 @implementation _touchHLE_NSString_Static: _touchHLE_NSString
 
 + (id)allocWithZone:(MutVoidPtr)_zone {
-    let host_object = Box::new(StringHostObject::UTF8(Cow::Borrowed("")));
+    let host_object = Box::new(StringHostObject::Utf8(Cow::Borrowed("")));
     env.objc.alloc_static_object(this, host_object, &mut env.mem)
 }
 
@@ -256,7 +256,7 @@ pub fn handle_constant_string(mem: &mut Mem, objc: &mut ObjC, constant_str: id) 
     // All the strings I've seen are ASCII, so this might be wrong.
     let decoded = std::str::from_utf8(mem.bytes_at(bytes, length)).unwrap();
 
-    let host_object = StringHostObject::UTF8(Cow::Owned(String::from(decoded)));
+    let host_object = StringHostObject::Utf8(Cow::Owned(String::from(decoded)));
 
     objc.register_static_object(constant_str, Box::new(host_object));
 
@@ -270,7 +270,7 @@ pub fn get_static_str(env: &mut Environment, from: &'static str) -> id {
         existing
     } else {
         let new = msg_class![env; _touchHLE_NSString_Static alloc];
-        *env.objc.borrow_mut(new) = StringHostObject::UTF8(Cow::Borrowed(from));
+        *env.objc.borrow_mut(new) = StringHostObject::Utf8(Cow::Borrowed(from));
         State::get(env).static_str_pool.insert(from, new);
         new
     }
@@ -281,7 +281,7 @@ pub fn get_static_str(env: &mut Environment, from: &'static str) -> id {
 pub fn from_rust_string(env: &mut Environment, from: String) -> id {
     let string: id = msg_class![env; _touchHLE_NSString alloc];
     let host_object: &mut StringHostObject = env.objc.borrow_mut(string);
-    *host_object = StringHostObject::UTF8(Cow::Owned(from));
+    *host_object = StringHostObject::Utf8(Cow::Owned(from));
     string
 }
 

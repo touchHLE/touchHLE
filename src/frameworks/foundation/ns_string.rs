@@ -59,6 +59,7 @@ impl StringHostObject {
                     // present?
                     _ => unimplemented!("Default endianness"),
                 };
+                // TODO: Should the BOM be stripped? Always/sometimes/never?
 
                 StringHostObject::Utf16(if is_big_endian {
                     bytes

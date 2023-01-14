@@ -294,6 +294,15 @@ pub const CLASSES: ClassExports = objc_classes! {
     autorelease(env, result_ns_string)
 }
 
+- (id)stringByAppendingPathComponent:(id)component { // NSString*
+    // TODO: avoid copying
+    let combined = GuestPath::new(&to_rust_string(env, this))
+        .join(to_rust_string(env, component));
+    let new_string = from_rust_string(env, String::from(combined));
+    autorelease(env, new_string);
+    new_string
+}
+
 @end
 
 // Our private subclass that is the single implementation of NSString for the

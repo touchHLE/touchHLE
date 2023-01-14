@@ -385,3 +385,21 @@ pub fn to_rust_string(env: &mut Environment, string: id) -> Cow<'static, str> {
         .to_utf8()
         .unwrap()
 }
+
+/// Shortcut for host code, calls a callback once for each UTF-16 code-unit in a
+/// string. This is equivalent to a for loop using the `length` and
+/// `characterAtIndex:` methods, but much more efficient.
+pub fn for_each_code_unit<F>(env: &mut Environment, string: id, mut f: F)
+where
+    F: FnMut(NSUInteger, u16),
+{
+    // TODO: handle foreign subclasses of NSString
+    let mut idx: NSUInteger = 0;
+    env.objc
+        .borrow::<StringHostObject>(string)
+        .iter_code_units()
+        .for_each(|c| {
+            f(idx, c);
+            idx += 1;
+        });
+}

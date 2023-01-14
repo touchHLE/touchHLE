@@ -9,6 +9,7 @@
 pub mod ns_array;
 pub mod ns_autorelease_pool;
 pub mod ns_bundle;
+pub mod ns_character_set;
 pub mod ns_coder;
 pub mod ns_dictionary;
 pub mod ns_keyed_unarchiver;

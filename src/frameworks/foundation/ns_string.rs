@@ -27,6 +27,17 @@ impl State {
     }
 }
 
+/// Constant strings embedded in the app binary use this struct. The name is
+/// according to Ghidra, the rest is guesswork.
+#[allow(non_camel_case_types)]
+struct cfstringStruct {
+    _isa: Class,
+    flags: u32,
+    bytes: ConstPtr<u8>,
+    length: NSUInteger,
+}
+unsafe impl SafeRead for cfstringStruct {}
+
 type Utf16String = Vec<u16>;
 
 /// Belongs to _touchHLE_NSString.
@@ -303,6 +314,17 @@ pub const CLASSES: ClassExports = objc_classes! {
     new_string
 }
 
+- (ConstPtr<u8>)UTF8String {
+    // TODO: avoid copying
+    let string = to_rust_string(env, this);
+    let c_string = env.mem.alloc_and_write_cstr(string.as_bytes()).cast_const();
+    let length: NSUInteger = (string.len() + 1).try_into().unwrap();
+    // NSData will handle releasing the string (it is autoreleased)
+    let _: id = msg_class![env; NSData dataWithBytesNoCopy:c_string
+                                                    length:length];
+    c_string
+}
+
 @end
 
 // Our private subclass that is the single implementation of NSString for the
@@ -371,9 +393,14 @@ pub const CLASSES: ClassExports = objc_classes! {
 @end
 
 // Specialised subclass for static-lifetime strings from the guest app binary.
-// (This may be useful eventually for efficiently implementing accessors that
-// provide a pointer to the string bytes.)
 @implementation _touchHLE_NSString_CFConstantString: _touchHLE_NSString_Static
+
+- (ConstPtr<u8>)UTF8String {
+    let cfstringStruct { bytes, .. } = env.mem.read(this.cast());
+
+    bytes
+}
+
 @end
 
 };
@@ -382,16 +409,6 @@ pub const CLASSES: ClassExports = objc_classes! {
 /// (`isa` = `___CFConstantStringClassReference`). Set up the correct host
 /// object and return the `isa` to be written.
 pub fn handle_constant_string(mem: &mut Mem, objc: &mut ObjC, constant_str: id) -> Class {
-    // Ghidra calls it this. The field names and types are guesswork.
-    #[allow(non_camel_case_types)]
-    struct cfstringStruct {
-        _isa: Class,
-        flags: u32,
-        bytes: ConstPtr<u8>,
-        length: NSUInteger,
-    }
-    unsafe impl SafeRead for cfstringStruct {}
-
     let cfstringStruct {
         _isa,
         flags,

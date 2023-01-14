@@ -13,6 +13,7 @@ pub mod ns_character_set;
 pub mod ns_coder;
 pub mod ns_dictionary;
 pub mod ns_keyed_unarchiver;
+pub mod ns_locale;
 pub mod ns_object;
 pub mod ns_run_loop;
 pub mod ns_string;
@@ -23,6 +24,7 @@ pub mod ns_value;
 pub struct State {
     ns_autorelease_pool: ns_autorelease_pool::State,
     ns_bundle: ns_bundle::State,
+    ns_locale: ns_locale::State,
     ns_run_loop: ns_run_loop::State,
     ns_string: ns_string::State,
 }

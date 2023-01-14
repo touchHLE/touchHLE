@@ -3,6 +3,7 @@
 use super::{ns_keyed_unarchiver, NSUInteger};
 use crate::mem::MutVoidPtr;
 use crate::objc::{id, msg_class, objc_classes, release, retain, ClassExports, HostObject};
+use crate::Environment;
 
 /// Belongs to _touchHLE_NSArray
 struct ArrayHostObject {
@@ -94,3 +95,12 @@ pub const CLASSES: ClassExports = objc_classes! {
 @end
 
 };
+
+/// Shortcut for host code, roughly equivalent to
+/// `[[NSArray alloc] initWithObjects:count]` but without copying.
+/// The elements should already be "retained by" the `Vec`.
+pub fn from_vec(env: &mut Environment, objects: Vec<id>) -> id {
+    let array: id = msg_class![env; NSArray alloc];
+    env.objc.borrow_mut::<ArrayHostObject>(array).array = objects;
+    array
+}

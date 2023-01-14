@@ -1,5 +1,6 @@
 //! The `NSString` class cluster, including `NSMutableString`.
 
+use super::ns_array;
 use super::NSUInteger;
 use crate::fs::GuestPath;
 use crate::mem::{ConstPtr, Mem, MutPtr, MutVoidPtr, SafeRead};
@@ -79,6 +80,36 @@ impl StringHostObject {
             StringHostObject::Utf16(utf16) => Ok(Cow::Owned(String::from_utf16(utf16)?)),
         }
     }
+    /// Iterate over the string as UTF-16 code units.
+    fn iter_code_units(&self) -> CodeUnitIterator {
+        match self {
+            StringHostObject::Utf8(utf8) => CodeUnitIterator::Utf8(utf8.encode_utf16()),
+            StringHostObject::Utf16(utf16) => CodeUnitIterator::Utf16(utf16.iter()),
+        }
+    }
+}
+
+enum CodeUnitIterator<'a> {
+    Utf8(std::str::EncodeUtf16<'a>),
+    Utf16(std::slice::Iter<'a, u16>),
+}
+impl<'a> Iterator for CodeUnitIterator<'a> {
+    type Item = u16;
+
+    fn next(&mut self) -> Option<u16> {
+        match self {
+            CodeUnitIterator::Utf8(iter) => iter.next(),
+            CodeUnitIterator::Utf16(iter) => iter.next().copied(),
+        }
+    }
+}
+impl<'a> Clone for CodeUnitIterator<'a> {
+    fn clone(&self) -> Self {
+        match self {
+            CodeUnitIterator::Utf8(iter) => CodeUnitIterator::Utf8(iter.clone()),
+            CodeUnitIterator::Utf16(iter) => CodeUnitIterator::Utf16(iter.clone()),
+        }
+    }
 }
 
 pub const CLASSES: ClassExports = objc_classes! {
@@ -154,6 +185,61 @@ pub const CLASSES: ClassExports = objc_classes! {
     }
 
     true
+}
+
+- (id)componentsSeparatedByString:(id)separator { // NSString*
+    // TODO: support foreign subclasses (perhaps via a helper function that
+    // copies the string first)
+    let mut main_iter = env.objc.borrow::<StringHostObject>(this)
+        .iter_code_units();
+    let sep_iter = env.objc.borrow::<StringHostObject>(separator)
+        .iter_code_units();
+
+    // TODO: zero-length separator support
+    assert!(sep_iter.clone().next().is_some());
+
+    let mut components = Vec::<Utf16String>::new();
+    let mut current_component: Utf16String = Vec::new();
+    'outer: loop {
+        // attempt to match a separator
+        {
+            let mut main_match = main_iter.clone();
+            let mut sep_match = sep_iter.clone();
+            'inner: loop {
+                match sep_match.next() {
+                    None => {
+                        components.push(std::mem::take(&mut current_component));
+                        main_iter = main_match;
+                        continue 'outer;
+                    },
+                    Some(sep_c) => {
+                        let main_c = main_match.next();
+                        if main_c != Some(sep_c) {
+                            break 'inner;
+                        }
+                    }
+                }
+            }
+        }
+
+        // no separator match, extend the current component
+        match main_iter.next() {
+            Some(cur) => current_component.push(cur),
+            None => break,
+        }
+    }
+    components.push(current_component);
+
+    // TODO: For a foreign subclass of NSString, do we have to return that
+    // subclass? The signature implies this isn't the case and it's probably not
+    // worth the effort, but it's an interesting question.
+    let class = env.objc.get_known_class("_touchHLE_NSString", &mut env.mem);
+
+    let component_ns_strings = components.drain(..).map(|utf16| {
+        let host_object = Box::new(StringHostObject::Utf16(utf16));
+        env.objc.alloc_object(class, host_object, &mut env.mem)
+    }).collect();
+    ns_array::from_vec(env, component_ns_strings)
 }
 
 @end

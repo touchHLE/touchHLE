@@ -243,6 +243,58 @@ pub const CLASSES: ClassExports = objc_classes! {
     ns_array::from_vec(env, component_ns_strings)
 }
 
+- (id)stringByReplacingOccurrencesOfString:(id)target // NSString*
+                                withString:(id)replacement { // NSString*
+    // TODO: support foreign subclasses (perhaps via a helper function that
+    // copies the string first)
+    let mut main_iter = env.objc.borrow::<StringHostObject>(this)
+        .iter_code_units();
+    let target_iter = env.objc.borrow::<StringHostObject>(target)
+        .iter_code_units();
+    let replacement_iter = env.objc.borrow::<StringHostObject>(replacement)
+        .iter_code_units();
+
+    // TODO: zero-length target support?
+    assert!(target_iter.clone().next().is_some());
+
+    let mut result: Utf16String = Vec::new();
+    'outer: loop {
+        // attempt to match target
+        {
+            let mut main_match = main_iter.clone();
+            let mut target_match = target_iter.clone();
+            'inner: loop {
+                match target_match.next() {
+                    None => {
+                        result.extend(replacement_iter.clone());
+                        main_iter = main_match;
+                        continue 'outer;
+                    },
+                    Some(target_c) => {
+                        let main_c = main_match.next();
+                        if main_c != Some(target_c) {
+                            break 'inner;
+                        }
+                    }
+                }
+            }
+        }
+
+        // no match, copy as normal
+        match main_iter.next() {
+            Some(cur) => result.push(cur),
+            None => break,
+        }
+    }
+
+    // TODO: For a foreign subclass of NSString, do we have to return that
+    // subclass? The signature implies this isn't the case and it's probably not
+    // worth the effort, but it's an interesting question.
+    let result_ns_string = msg_class![env; _touchHLE_NSString alloc];
+    *env.objc.borrow_mut(result_ns_string) = StringHostObject::Utf16(result);
+    autorelease(env, result_ns_string)
+}
+
 @end
 
 // Our private subclass that is the single implementation of NSString for the

@@ -17,4 +17,5 @@ pub mod string;
 #[derive(Default)]
 pub struct State {
     pthread: pthread::State,
+    stdio: stdio::State,
 }

@@ -307,4 +307,12 @@ impl Fs {
             _ => Err(()),
         }
     }
+
+    /// Like [std::fs::File::open] but for the guest filesystem.
+    pub fn open<P: AsRef<GuestPath>>(&self, path: P) -> Result<std::fs::File, ()> {
+        match self.get_node(path.as_ref()).ok_or(())? {
+            FsNode::File { host_path } => std::fs::File::open(host_path).map_err(|_| ()),
+            _ => Err(()),
+        }
+    }
 }

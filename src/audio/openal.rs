@@ -80,6 +80,7 @@ extern "C" {
     pub fn alGenSources(n: ALsizei, sources: *mut ALuint);
     pub fn alDeleteSources(n: ALsizei, sources: *const ALuint);
 
+    pub fn alSourcef(source: ALuint, param: ALenum, value: ALfloat);
     pub fn alSourcei(source: ALuint, param: ALenum, value: ALint);
 
     pub fn alGenBuffers(n: ALsizei, buffers: *mut ALuint);

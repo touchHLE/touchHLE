@@ -176,6 +176,9 @@ fn alDeleteSources(env: &mut Environment, n: ALsizei, sources: ConstPtr<ALuint>)
     unsafe { al::alDeleteSources(n, sources) };
 }
 
+fn alSourcef(_env: &mut Environment, source: ALuint, param: ALenum, value: ALfloat) {
+    unsafe { al::alSourcef(source, param, value) };
+}
 fn alSourcei(_env: &mut Environment, source: ALuint, param: ALenum, value: ALint) {
     unsafe { al::alSourcei(source, param, value) };
 }
@@ -240,6 +243,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(alGetError()),
     export_c_func!(alGenSources(_, _)),
     export_c_func!(alDeleteSources(_, _)),
+    export_c_func!(alSourcef(_, _, _)),
     export_c_func!(alSourcei(_, _, _)),
     export_c_func!(alGenBuffers(_, _)),
     export_c_func!(alDeleteBuffers(_, _)),

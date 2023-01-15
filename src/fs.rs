@@ -193,22 +193,41 @@ pub struct Fs {
     home_directory: GuestPathBuf,
 }
 impl Fs {
-    /// Construct the filesystem with some pre-defined nodes (e.g. dylibs)
-    /// and the contents of the guest app bundle. Returns the new filesystem and
-    /// the guest path of the bundle.
+    /// Construct a filesystem containing a home directory for the app, its
+    /// bundle and documents, and the bundled shared libraries. Returns the new
+    /// filesystem and the guest path of the bundle.
     ///
-    /// The `bundle_name` argument will be used as the name of the bundle
+    /// The `bundle_dir_name` argument will be used as the name of the bundle
     /// directory in the guest filesystem, and must end in `.app`.
     /// This allows the host directory for the bundle to be renamed from its
     /// original name without confusing the app. Supposedly Apple does something
     /// similar when executing iOS apps on modern Macs.
-    pub fn new(bundle_host_path: &Path, bundle_dir_name: String) -> (Fs, GuestPathBuf) {
+    ///
+    /// The `bundle_id` argument should be some value that uniquely identifies
+    /// the app. This will be used to construct the host path for the app's
+    /// sandbox directory, where documents can be stored. A directory will be
+    /// created at that path if it does not already exist.
+    pub fn new(
+        bundle_host_path: &Path,
+        bundle_dir_name: String,
+        bundle_id: &str,
+    ) -> (Fs, GuestPathBuf) {
         const FAKE_UUID: &str = "00000000-0000-0000-0000-000000000000";
 
         let home_directory = GuestPathBuf::from(format!("/User/Applications/{}", FAKE_UUID));
         let current_directory = home_directory.clone();
 
         let bundle_guest_path = home_directory.join(&bundle_dir_name);
+
+        let documents_host_path = Path::new("touchHLE_sandbox")
+            .join(bundle_id)
+            .join("Documents");
+        if let Err(e) = std::fs::create_dir_all(&documents_host_path) {
+            panic!(
+                "Could not create documents directory for app at {:?}: {:?}",
+                documents_host_path, e
+            );
+        }
 
         // Some Free Software libraries are bundled with touchHLE.
         let dylibs_host_path = Path::new("dylibs");
@@ -235,15 +254,20 @@ impl Fs {
                     FsNode::dir().with_child(
                         FAKE_UUID,
                         FsNode::Directory {
-                            children: HashMap::from([(
-                                bundle_dir_name,
-                                FsNode::from_host_dir(bundle_host_path),
-                            )]),
+                            children: HashMap::from([
+                                (bundle_dir_name, FsNode::from_host_dir(bundle_host_path)),
+                                (
+                                    "Documents".to_string(),
+                                    FsNode::from_host_dir(&documents_host_path),
+                                ),
+                            ]),
                         },
                     ),
                 ),
             )
             .with_child("usr", FsNode::dir().with_child("lib", usr_lib));
+
+        log_dbg!("Initial filesystem layout: {:#?}", root);
 
         (
             Fs {

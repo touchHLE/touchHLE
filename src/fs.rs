@@ -3,25 +3,34 @@
 //! This lets us put files and directories where the guest app expects them to
 //! be, without constraining the layout of the host filesystem.
 //!
-//! Currently the filesystem layout is frozen at the point of creation, so files
-//! and directories can't be created, deleted, renamed or moved.
+//! Currently the filesystem layout is frozen at the point of creation. Except
+//! for creating new files in existing directories, no nodes can be created,
+//! deleted, renamed or moved.
 //!
 //! All files in the guest filesystem have a corresponding file in the host
 //! filesystem. Accessing a file requires traversing the guest filesystem's
 //! directory structure to find out the host path, but after that is done, the
 //! host file is accessed directly; there is no virtualization of file I/O.
-//! Currently only read-only access is permitted.
+//!
+//! Directories only need a corresponding directory in the host filesystem if
+//! they are writeable (i.e. if new files can be created in them).
 
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
 #[derive(Debug)]
 enum FsNode {
-    File { host_path: PathBuf },
-    Directory { children: HashMap<String, FsNode> },
+    File {
+        host_path: PathBuf,
+        writeable: bool,
+    },
+    Directory {
+        children: HashMap<String, FsNode>,
+        writeable: Option<PathBuf>,
+    },
 }
 impl FsNode {
-    fn from_host_dir(host_path: &Path) -> Self {
+    fn from_host_dir(host_path: &Path, writeable: bool) -> Self {
         let mut children = HashMap::new();
         for entry in std::fs::read_dir(host_path).unwrap() {
             let entry = entry.unwrap();
@@ -32,32 +41,49 @@ impl FsNode {
             if kind.is_symlink() {
                 unimplemented!("Symlink: {:?}", host_path);
             } else if kind.is_file() {
-                children.insert(name, FsNode::File { host_path });
+                children.insert(
+                    name,
+                    FsNode::File {
+                        host_path,
+                        writeable,
+                    },
+                );
             } else if kind.is_dir() {
-                children.insert(name, FsNode::from_host_dir(&host_path));
+                children.insert(name, FsNode::from_host_dir(&host_path, writeable));
             } else {
                 panic!("{:?} is not a symlink, file or directory", host_path);
             }
         }
-        FsNode::Directory { children }
+        FsNode::Directory {
+            children,
+            writeable: match writeable {
+                true => Some(host_path.to_owned()),
+                false => None,
+            },
+        }
     }
 
-    // Convenience methods for constructing the initial filesystem layout
+    // Convenience methods for constructing the read-only parts of the initial
+    // filesystem layout
 
     fn dir() -> Self {
         FsNode::Directory {
             children: HashMap::new(),
+            writeable: None,
         }
     }
     fn with_child(mut self, name: &str, child: FsNode) -> Self {
-        let FsNode::Directory { ref mut children } = self else {
+        let FsNode::Directory { ref mut children, writeable: _ } = self else {
             panic!();
         };
         assert!(children.insert(String::from(name), child).is_none());
         self
     }
     fn file(host_path: PathBuf) -> Self {
-        FsNode::File { host_path }
+        FsNode::File {
+            host_path,
+            writeable: false,
+        }
     }
 }
 
@@ -185,6 +211,47 @@ fn resolve_path<'a>(path: &'a GuestPath, relative_to: Option<&'a GuestPath>) -> 
     components
 }
 
+/// Like [std::fs::OpenOptions] but for the guest filesystem.
+/// TODO: `create_new`.
+pub struct GuestOpenOptions {
+    read: bool,
+    write: bool,
+    append: bool,
+    create: bool,
+    truncate: bool,
+}
+impl GuestOpenOptions {
+    pub fn new() -> GuestOpenOptions {
+        GuestOpenOptions {
+            read: false,
+            write: false,
+            append: false,
+            create: false,
+            truncate: false,
+        }
+    }
+    pub fn read(&mut self) -> &mut Self {
+        self.read = true;
+        self
+    }
+    pub fn write(&mut self) -> &mut Self {
+        self.write = true;
+        self
+    }
+    pub fn append(&mut self) -> &mut Self {
+        self.append = true;
+        self
+    }
+    pub fn create(&mut self) -> &mut Self {
+        self.create = true;
+        self
+    }
+    pub fn truncate(&mut self) -> &mut Self {
+        self.truncate = true;
+        self
+    }
+}
+
 /// The type that owns the guest filesystem and provides accessors for it.
 #[derive(Debug)]
 pub struct Fs {
@@ -255,12 +322,22 @@ impl Fs {
                         FAKE_UUID,
                         FsNode::Directory {
                             children: HashMap::from([
-                                (bundle_dir_name, FsNode::from_host_dir(bundle_host_path)),
+                                (
+                                    bundle_dir_name,
+                                    FsNode::from_host_dir(
+                                        bundle_host_path,
+                                        /* writeable: */ false,
+                                    ),
+                                ),
                                 (
                                     "Documents".to_string(),
-                                    FsNode::from_host_dir(&documents_host_path),
+                                    FsNode::from_host_dir(
+                                        &documents_host_path,
+                                        /* writeable: */ true,
+                                    ),
                                 ),
                             ]),
+                            writeable: None,
                         },
                     ),
                 ),
@@ -284,35 +361,152 @@ impl Fs {
         &self.home_directory
     }
 
-    fn get_node(&self, path: &GuestPath) -> Option<&FsNode> {
+    /// Get the node at a given path, if it exists.
+    fn lookup_node(&self, path: &GuestPath) -> Option<&FsNode> {
         let mut node = &self.root;
         for component in resolve_path(path, Some(&self.current_directory)) {
-            match node {
-                FsNode::Directory { children } => node = children.get(component)?,
-                _ => return None,
-            }
+            let FsNode::Directory { children, writeable: _ } = node else {
+                return None;
+            };
+            node = children.get(component)?
         }
         Some(node)
     }
 
+    /// Get the parent of the node at a given path, if it exists, and return it
+    /// together with the final path component. This is an alternative to
+    /// [Self::lookup_node] useful when writing to a file, where it might not
+    /// exist yet (but its parent directory does).
+    fn lookup_parent_node(&mut self, path: &GuestPath) -> Option<(&mut FsNode, String)> {
+        let components = resolve_path(path, Some(&self.current_directory));
+        let (&final_component, parent_components) = components.split_last()?;
+
+        let mut parent = &mut self.root;
+        for &component in parent_components {
+            let FsNode::Directory { children, writeable: _ } = parent else {
+                return None;
+            };
+            parent = children.get_mut(component)?
+        }
+
+        Some((parent, final_component.to_string()))
+    }
+
     /// Like [std::path::Path::is_file] but for the guest filesystem.
     pub fn is_file(&self, path: &GuestPath) -> bool {
-        matches!(self.get_node(path), Some(FsNode::File { .. }))
+        matches!(self.lookup_node(path), Some(FsNode::File { .. }))
     }
 
     /// Like [std::fs::read] but for the guest filesystem.
     pub fn read<P: AsRef<GuestPath>>(&self, path: P) -> Result<Vec<u8>, ()> {
-        match self.get_node(path.as_ref()).ok_or(())? {
-            FsNode::File { host_path } => std::fs::read(host_path).map_err(|_| ()),
-            _ => Err(()),
-        }
+        let node = self.lookup_node(path.as_ref()).ok_or(())?;
+        let FsNode::File {
+            host_path,
+            writeable: _,
+        } = node else {
+            return Err(())
+        };
+        std::fs::read(host_path).map_err(|_| ())
     }
 
     /// Like [std::fs::File::open] but for the guest filesystem.
+    #[allow(dead_code)]
     pub fn open<P: AsRef<GuestPath>>(&self, path: P) -> Result<std::fs::File, ()> {
-        match self.get_node(path.as_ref()).ok_or(())? {
-            FsNode::File { host_path } => std::fs::File::open(host_path).map_err(|_| ()),
-            _ => Err(()),
+        let node = self.lookup_node(path.as_ref()).ok_or(())?;
+        let FsNode::File {
+            host_path,
+            writeable: _,
+        } = node else {
+            return Err(())
+        };
+        std::fs::File::open(host_path).map_err(|_| ())
+    }
+
+    /// Like [std::fs::File::options] but for the guest filesystem.
+    pub fn open_with_options<P: AsRef<GuestPath>>(
+        &mut self,
+        path: P,
+        options: GuestOpenOptions,
+    ) -> Result<std::fs::File, ()> {
+        let GuestOpenOptions {
+            read,
+            write,
+            append,
+            create,
+            truncate,
+        } = options;
+        assert!((!truncate && !create) || write || append);
+
+        let path = path.as_ref();
+
+        let (parent_node, new_filename) = self.lookup_parent_node(path).ok_or(())?;
+        let FsNode::Directory {
+            children,
+            writeable: dir_host_path,
+        } = parent_node else {
+            return Err(());
+        };
+
+        // Open an existing file if possible
+
+        if let Some(existing_file) = children.get(&new_filename) {
+            let FsNode::File {
+                host_path,
+                writeable,
+            } = existing_file else {
+                return Err(());
+            };
+            if !writeable && (append || write) {
+                log!("Warning: attempt to write to read-only file {:?}", path);
+                return Err(());
+            }
+            return std::fs::File::options()
+                .read(read)
+                .write(write)
+                .append(append)
+                .create(false)
+                .truncate(truncate)
+                .open(host_path)
+                .map_err(|_| ());
+        };
+
+        // Create a new file otherwise
+
+        let Some(dir_host_path) = dir_host_path else {
+            log!("Warning: attempt to create file at path {:?}, but directory is read-only", path);
+            return Err(());
+        };
+
+        for c in new_filename.chars() {
+            if std::path::is_separator(c) {
+                panic!("Attempt to create file at path {:?}, but filename contains path separator character {:?}!", path, c);
+            }
         }
+
+        let host_path = dir_host_path.join(&new_filename);
+
+        let file = std::fs::File::options()
+            .read(read)
+            .write(write)
+            .append(append)
+            .create(create)
+            .truncate(truncate)
+            .open(&host_path)
+            .map_err(|_| ());
+        if file.is_ok() {
+            log_dbg!(
+                "Created file at path {:?} (host path: {:?})",
+                path,
+                host_path
+            );
+            children.insert(
+                new_filename,
+                FsNode::File {
+                    host_path,
+                    writeable: true,
+                },
+            );
+        }
+        file
     }
 }

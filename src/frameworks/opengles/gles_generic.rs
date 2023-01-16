@@ -14,6 +14,27 @@ pub trait GLES {
         Self: Sized;
     fn make_current(&self, window: &mut crate::window::Window);
 
+    // Generic state manipulation
+    unsafe fn GetError(&mut self) -> GLenum;
+    unsafe fn GetIntegerv(&mut self, pname: GLenum, params: *mut GLint);
+
+    // Textures
+    unsafe fn GenTextures(&mut self, n: GLsizei, textures: *mut GLuint);
+    unsafe fn BindTexture(&mut self, target: GLenum, texture: GLuint);
+    unsafe fn TexParameteri(&mut self, target: GLenum, pname: GLenum, param: GLint);
+    unsafe fn TexImage2D(
+        &mut self,
+        target: GLenum,
+        level: GLint,
+        internalformat: GLint,
+        width: GLsizei,
+        height: GLsizei,
+        border: GLint,
+        format: GLenum,
+        type_: GLenum,
+        pixels: *const GLvoid,
+    );
+
     // Matrix stack operations
     unsafe fn MatrixMode(&mut self, mode: GLenum);
     unsafe fn LoadIdentity(&mut self);

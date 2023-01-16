@@ -2,7 +2,8 @@
 
 use super::GLES;
 use crate::dyld::{export_c_func, FunctionExports};
-use crate::mem::{ConstPtr, GuestUSize, Mem, MutPtr};
+use crate::mem::{ConstPtr, ConstVoidPtr, GuestUSize, Mem, MutPtr};
+use crate::window::gles11;
 use crate::window::gles11::types::*;
 use crate::Environment;
 
@@ -37,6 +38,29 @@ fn panic_on_gl_errors(gles: &mut dyn GLES) {
     if did_error {
         panic!();
     }
+}
+
+// Generic state manipulation
+fn glGetError(env: &mut Environment) -> GLenum {
+    with_ctx_and_mem(env, |gles, _mem| {
+        let err = unsafe { gles.GetError() };
+        if err != 0 {
+            log!("Warning: glGetError() returned {:#x}", err);
+        }
+        err
+    })
+}
+fn glGetIntegerv(env: &mut Environment, pname: GLenum, params: MutPtr<GLint>) {
+    with_ctx_and_mem(env, |gles, mem| {
+        // This function family can return a huge number of things.
+        // TODO: support more possible values.
+        let param_count = match pname {
+            gles11::TEXTURE_BINDING_2D => 1,
+            _ => unimplemented!("pname value {:#x}", pname),
+        };
+        let params = mem.ptr_at_mut(params, param_count);
+        unsafe { gles.GetIntegerv(pname, params) };
+    });
 }
 
 // Matrix stack operations
@@ -167,6 +191,69 @@ fn glTranslatex(env: &mut Environment, x: GLfixed, y: GLfixed, z: GLfixed) {
     });
 }
 
+// Textures
+fn glGenTextures(env: &mut Environment, n: GLsizei, textures: MutPtr<GLuint>) {
+    with_ctx_and_mem(env, |gles, mem| {
+        let n_usize: GuestUSize = n.try_into().unwrap();
+        let textures = mem.ptr_at_mut(textures, n_usize);
+        unsafe { gles.GenTextures(n, textures) }
+    })
+}
+fn glBindTexture(env: &mut Environment, target: GLenum, texture: GLuint) {
+    with_ctx_and_mem(env, |gles, _mem| unsafe {
+        gles.BindTexture(target, texture)
+    })
+}
+fn glTexParameteri(env: &mut Environment, target: GLenum, pname: GLenum, param: GLint) {
+    with_ctx_and_mem(env, |gles, _mem| unsafe {
+        gles.TexParameteri(target, pname, param)
+    })
+}
+fn glTexImage2D(
+    env: &mut Environment,
+    target: GLenum,
+    level: GLint,
+    internalformat: GLint,
+    width: GLsizei,
+    height: GLsizei,
+    border: GLint,
+    format: GLenum,
+    type_: GLenum,
+    pixels: ConstVoidPtr,
+) {
+    with_ctx_and_mem(env, |gles, mem| unsafe {
+        let bytes_per_pixel: GuestUSize = match type_ {
+            gles11::UNSIGNED_BYTE => match format {
+                gles11::ALPHA | gles11::LUMINANCE => 1,
+                gles11::LUMINANCE_ALPHA => 2,
+                gles11::RGB => 3,
+                gles11::RGBA => 4,
+                _ => panic!("Unexpected format {:#x}", format),
+            },
+            gles11::UNSIGNED_SHORT_5_6_5
+            | gles11::UNSIGNED_SHORT_4_4_4_4
+            | gles11::UNSIGNED_SHORT_5_5_5_1 => 2,
+            _ => panic!("Unexpected type {:#x}", type_),
+        };
+        let pixel_count: GuestUSize = width.checked_mul(height).unwrap().try_into().unwrap();
+        // This is approximate, it doesn't account for alignment.
+        let pixels = mem
+            .ptr_at(pixels.cast::<u8>(), pixel_count * bytes_per_pixel)
+            .cast::<GLvoid>();
+        gles.TexImage2D(
+            target,
+            level,
+            internalformat,
+            width,
+            height,
+            border,
+            format,
+            type_,
+            pixels,
+        )
+    })
+}
+
 // OES_framebuffer_object
 fn glGenFramebuffersOES(env: &mut Environment, n: GLsizei, framebuffers: MutPtr<GLuint>) {
     with_ctx_and_mem(env, |gles, mem| {
@@ -232,6 +319,9 @@ fn glCheckFramebufferStatusOES(env: &mut Environment, target: GLenum) -> GLenum 
 }
 
 pub const FUNCTIONS: FunctionExports = &[
+    // Generic state manipulation
+    export_c_func!(glGetError()),
+    export_c_func!(glGetIntegerv(_, _)),
     // Matrix stack operations
     export_c_func!(glMatrixMode(_)),
     export_c_func!(glLoadIdentity()),
@@ -251,6 +341,11 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(glScalex(_, _, _)),
     export_c_func!(glTranslatef(_, _, _)),
     export_c_func!(glTranslatex(_, _, _)),
+    // Textures
+    export_c_func!(glGenTextures(_, _)),
+    export_c_func!(glBindTexture(_, _)),
+    export_c_func!(glTexParameteri(_, _, _)),
+    export_c_func!(glTexImage2D(_, _, _, _, _, _, _, _, _)),
     // OES_framebuffer_object
     export_c_func!(glGenFramebuffersOES(_, _)),
     export_c_func!(glGenRenderbuffersOES(_, _)),

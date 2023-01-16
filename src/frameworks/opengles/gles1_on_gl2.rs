@@ -45,6 +45,84 @@ impl GLES for GLES1OnGL2 {
         window.make_gl_context_current(&self.gl_ctx);
     }
 
+    // Generic state manipulation
+    unsafe fn GetError(&mut self) -> GLenum {
+        gl21::GetError()
+    }
+    unsafe fn GetIntegerv(&mut self, pname: GLenum, params: *mut GLint) {
+        // This function family can return a huge number of things.
+        // TODO: support more possible values.
+        assert!(pname == gl21::TEXTURE_BINDING_2D);
+        gl21::GetIntegerv(pname, params);
+    }
+
+    // Textures
+    unsafe fn GenTextures(&mut self, n: GLsizei, textures: *mut GLuint) {
+        gl21::GenTextures(n, textures)
+    }
+    unsafe fn BindTexture(&mut self, target: GLenum, texture: GLuint) {
+        assert!(target == gl21::TEXTURE_2D);
+        gl21::BindTexture(target, texture)
+    }
+    unsafe fn TexParameteri(&mut self, target: GLenum, pname: GLenum, param: GLint) {
+        assert!(target == gl21::TEXTURE_2D);
+        assert!(
+            pname == gl21::TEXTURE_MIN_FILTER
+                || pname == gl21::TEXTURE_MAG_FILTER
+                || pname == gl21::TEXTURE_WRAP_S
+                || pname == gl21::TEXTURE_WRAP_T
+                || pname == gl21::GENERATE_MIPMAP
+        );
+        gl21::TexParameteri(target, pname, param);
+    }
+    unsafe fn TexImage2D(
+        &mut self,
+        target: GLenum,
+        level: GLint,
+        internalformat: GLint,
+        width: GLsizei,
+        height: GLsizei,
+        border: GLint,
+        format: GLenum,
+        type_: GLenum,
+        pixels: *const GLvoid,
+    ) {
+        assert!(target == gl21::TEXTURE_2D);
+        assert!(level >= 0);
+        assert!(
+            internalformat as GLenum == gl21::ALPHA
+                || internalformat as GLenum == gl21::RGB
+                || internalformat as GLenum == gl21::RGBA
+                || internalformat as GLenum == gl21::LUMINANCE
+                || internalformat as GLenum == gl21::LUMINANCE_ALPHA
+        );
+        assert!(border == 0);
+        assert!(
+            format == gl21::ALPHA
+                || format == gl21::RGB
+                || format == gl21::RGBA
+                || format == gl21::LUMINANCE
+                || format == gl21::LUMINANCE_ALPHA
+        );
+        assert!(
+            type_ == gl21::UNSIGNED_BYTE
+                || type_ == gl21::UNSIGNED_SHORT_5_6_5
+                || type_ == gl21::UNSIGNED_SHORT_4_4_4_4
+                || type_ == gl21::UNSIGNED_SHORT_5_5_5_1
+        );
+        gl21::TexImage2D(
+            target,
+            level,
+            internalformat,
+            width,
+            height,
+            border,
+            format,
+            type_,
+            pixels,
+        )
+    }
+
     // Matrix stack operations
     unsafe fn MatrixMode(&mut self, mode: GLenum) {
         assert!(mode == gl21::MODELVIEW || mode == gl21::PROJECTION || mode == gl21::TEXTURE);

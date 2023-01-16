@@ -88,6 +88,7 @@ pub use crate::export_c_func; // #[macro_export] is weird...
 pub enum HostConstant {
     NSString(&'static str),
     NullPtr,
+    Custom(fn(&mut Mem) -> ConstVoidPtr),
 }
 
 /// Type for lists of constants exported by host implementations of frameworks.
@@ -322,18 +323,24 @@ impl Dyld {
     /// Do linking that can only be done once there is a full [Environment].
     /// Not to be confused with lazy linking.
     pub fn do_late_linking(env: &mut Environment) {
-        // TODO: do constants ever appear in __nl_symbol_ptr multiple times?
+        // TODO: do symbols ever appear in __nl_symbol_ptr multiple times?
 
         let to_link = std::mem::take(&mut env.dyld.constants_to_link_later);
         for (symbol_ptr_ptr, template) in to_link {
-            // All currently supported constant types are pointers.
-            let symbol_value = match template {
-                HostConstant::NSString(static_str) => ns_string::get_static_str(env, static_str),
-                HostConstant::NullPtr => Ptr::null(),
+            let symbol_ptr: ConstVoidPtr = match template {
+                HostConstant::NSString(static_str) => {
+                    let string_ptr = ns_string::get_static_str(env, static_str);
+                    let string_ptr_ptr = env.mem.alloc_and_write(string_ptr);
+                    string_ptr_ptr.cast().cast_const()
+                }
+                HostConstant::NullPtr => {
+                    let null_ptr: ConstVoidPtr = Ptr::null();
+                    let null_ptr_ptr = env.mem.alloc_and_write(null_ptr);
+                    null_ptr_ptr.cast().cast_const()
+                }
+                HostConstant::Custom(f) => f(&mut env.mem),
             };
-            let symbol_ptr = env.mem.alloc_and_write(symbol_value);
-            env.mem
-                .write(symbol_ptr_ptr, symbol_ptr.cast().cast_const());
+            env.mem.write(symbol_ptr_ptr, symbol_ptr.cast());
         }
     }
 

@@ -41,6 +41,11 @@ fn printf_inner(env: &mut Environment, format: ConstPtr<u8>, mut args: VAList) -
                 let c_string: ConstPtr<u8> = args.next(env);
                 res.extend_from_slice(env.mem.cstr_at(c_string));
             }
+            b'd' | b'i' => {
+                let int: i32 = args.next(env);
+                // TODO: avoid copy?
+                res.extend_from_slice(format!("{}", int).as_bytes());
+            }
             // TODO: more specifiers
             _ => unimplemented!("Format character '{}'", specifier as char),
         }

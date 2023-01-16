@@ -10,6 +10,7 @@ use crate::export_c_func;
 pub mod ui_accelerometer;
 pub mod ui_application;
 pub mod ui_device;
+pub mod ui_font;
 pub mod ui_nib;
 pub mod ui_responder;
 pub mod ui_screen;

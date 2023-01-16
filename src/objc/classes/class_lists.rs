@@ -24,6 +24,7 @@ pub const CLASS_LISTS: &[super::ClassExports] = &[
     opengles::eagl::CLASSES,
     uikit::ui_accelerometer::CLASSES,
     uikit::ui_application::CLASSES,
+    uikit::ui_font::CLASSES,
     uikit::ui_nib::CLASSES,
     uikit::ui_responder::CLASSES,
     uikit::ui_screen::CLASSES,

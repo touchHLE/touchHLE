@@ -11,7 +11,28 @@ where
     T: FnOnce(&mut dyn GLES, &mut Mem) -> U,
 {
     let (_eagl, ref mut gles) = env.framework_state.opengles.current_ctx.as_mut().unwrap();
-    f(&mut **gles, &mut env.mem)
+    //panic_on_gl_errors(&mut **gles);
+    let res = f(&mut **gles, &mut env.mem);
+    //panic_on_gl_errors(&mut **gles);
+    #[allow(clippy::let_and_return)]
+    res
+}
+
+/// Useful for debugging
+#[allow(dead_code)]
+fn panic_on_gl_errors(gles: &mut dyn GLES) {
+    let mut did_error = false;
+    loop {
+        let err = unsafe { gles.GetError() };
+        if err == 0 {
+            break;
+        }
+        did_error = true;
+        println!("glGetError() => {:#x}", err);
+    }
+    if did_error {
+        panic!();
+    }
 }
 
 // Matrix stack operations

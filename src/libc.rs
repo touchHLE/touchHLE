@@ -19,4 +19,5 @@ pub mod string;
 pub struct State {
     pthread: pthread::State,
     stdio: stdio::State,
+    string: string::State,
 }

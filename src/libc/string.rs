@@ -1,9 +1,14 @@
 //! `string.h`
 
 use crate::dyld::{export_c_func, FunctionExports};
-use crate::mem::{ConstPtr, ConstVoidPtr, GuestUSize, MutPtr, MutVoidPtr};
+use crate::mem::{ConstPtr, ConstVoidPtr, GuestUSize, MutPtr, MutVoidPtr, Ptr};
 use crate::Environment;
 use std::cmp::Ordering;
+
+#[derive(Default)]
+pub struct State {
+    strtok: Option<MutPtr<u8>>,
+}
 
 fn memcpy(
     env: &mut Environment,
@@ -96,6 +101,51 @@ fn strcmp(env: &mut Environment, a: ConstPtr<u8>, b: ConstPtr<u8>) -> i32 {
     }
 }
 
+fn strtok(env: &mut Environment, s: MutPtr<u8>, sep: ConstPtr<u8>) -> MutPtr<u8> {
+    let s = if s.is_null() {
+        let state = env.libc_state.string.strtok.unwrap();
+        if state.is_null() {
+            env.libc_state.string.strtok = None;
+            return Ptr::null();
+        }
+        state
+    } else {
+        s
+    };
+
+    let sep = env.mem.cstr_at(sep);
+
+    let mut token_start = s;
+    loop {
+        let c = env.mem.read(token_start);
+        if c == b'\0' {
+            env.libc_state.string.strtok = None;
+            return Ptr::null();
+        } else if sep.contains(&c) {
+            token_start += 1;
+        } else {
+            break;
+        }
+    }
+
+    let mut token_end = token_start;
+    let next_token = loop {
+        let c = env.mem.read(token_end);
+        if sep.contains(&c) {
+            env.mem.write(token_end, b'\0');
+            break token_end + 1;
+        } else if c == b'\0' {
+            break Ptr::null();
+        } else {
+            token_end += 1;
+        }
+    };
+
+    env.libc_state.string.strtok = Some(next_token);
+
+    token_start
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(memcpy(_, _, _)),
     export_c_func!(memmove(_, _, _)),
@@ -104,4 +154,5 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(strcat(_, _)),
     export_c_func!(strdup(_)),
     export_c_func!(strcmp(_, _)),
+    export_c_func!(strtok(_, _)),
 ];

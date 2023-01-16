@@ -309,7 +309,7 @@ impl Fs {
         }
 
         // Some Free Software libraries are bundled with touchHLE.
-        let dylibs_host_path = Path::new("dylibs");
+        let dylibs_host_path = Path::new("touchHLE_dylibs");
         let usr_lib = FsNode::dir()
             .with_child(
                 "libgcc_s.1.dylib",

@@ -418,7 +418,7 @@ impl Fs {
         } = node else {
             return Err(())
         };
-        Ok(handle_open_err(std::fs::read(&host_path), &host_path))
+        Ok(handle_open_err(std::fs::read(host_path), host_path))
     }
 
     /// Like [std::fs::File::open] but for the guest filesystem.
@@ -431,7 +431,7 @@ impl Fs {
         } = node else {
             return Err(())
         };
-        Ok(handle_open_err(std::fs::File::open(&host_path), &host_path))
+        Ok(handle_open_err(std::fs::File::open(host_path), host_path))
     }
 
     /// Like [std::fs::File::options] but for the guest filesystem.
@@ -479,8 +479,8 @@ impl Fs {
                     .append(append)
                     .create(false)
                     .truncate(truncate)
-                    .open(&host_path),
-                &host_path,
+                    .open(host_path),
+                host_path,
             ));
         };
 

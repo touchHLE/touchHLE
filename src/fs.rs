@@ -252,6 +252,18 @@ impl GuestOpenOptions {
     }
 }
 
+/// Handles host I/O errors by panicking. This is intended specifically for
+/// opening files. The assumption is that the guest filesystem contains all the
+/// information needed to tell if opening a file should succeed, so if opening
+/// the file nonetheless fails, there's either a bug or the user has done
+/// something wrong.
+fn handle_open_err<T>(open_result: std::io::Result<T>, host_path: &Path) -> T {
+    match open_result {
+        Ok(ok) => ok,
+        Err(e) => panic!("Unexpected I/O failure when trying to access real path {:?}: {}. This might indicate that files needed by touchHLE are missing, or were moved while it was running.", host_path, e),
+    }
+}
+
 /// The type that owns the guest filesystem and provides accessors for it.
 #[derive(Debug)]
 pub struct Fs {
@@ -406,7 +418,7 @@ impl Fs {
         } = node else {
             return Err(())
         };
-        std::fs::read(host_path).map_err(|_| ())
+        Ok(handle_open_err(std::fs::read(&host_path), &host_path))
     }
 
     /// Like [std::fs::File::open] but for the guest filesystem.
@@ -419,7 +431,7 @@ impl Fs {
         } = node else {
             return Err(())
         };
-        std::fs::File::open(host_path).map_err(|_| ())
+        Ok(handle_open_err(std::fs::File::open(&host_path), &host_path))
     }
 
     /// Like [std::fs::File::options] but for the guest filesystem.
@@ -460,17 +472,23 @@ impl Fs {
                 log!("Warning: attempt to write to read-only file {:?}", path);
                 return Err(());
             }
-            return std::fs::File::options()
-                .read(read)
-                .write(write)
-                .append(append)
-                .create(false)
-                .truncate(truncate)
-                .open(host_path)
-                .map_err(|_| ());
+            return Ok(handle_open_err(
+                std::fs::File::options()
+                    .read(read)
+                    .write(write)
+                    .append(append)
+                    .create(false)
+                    .truncate(truncate)
+                    .open(&host_path),
+                &host_path,
+            ));
         };
 
         // Create a new file otherwise
+
+        if !create {
+            return Err(());
+        }
 
         let Some(dir_host_path) = dir_host_path else {
             log!("Warning: attempt to create file at path {:?}, but directory is read-only", path);
@@ -485,28 +503,28 @@ impl Fs {
 
         let host_path = dir_host_path.join(&new_filename);
 
-        let file = std::fs::File::options()
-            .read(read)
-            .write(write)
-            .append(append)
-            .create(create)
-            .truncate(truncate)
-            .open(&host_path)
-            .map_err(|_| ());
-        if file.is_ok() {
-            log_dbg!(
-                "Created file at path {:?} (host path: {:?})",
-                path,
-                host_path
-            );
-            children.insert(
-                new_filename,
-                FsNode::File {
-                    host_path,
-                    writeable: true,
-                },
-            );
-        }
-        file
+        let file = handle_open_err(
+            std::fs::File::options()
+                .read(read)
+                .write(write)
+                .append(append)
+                .create(create)
+                .truncate(truncate)
+                .open(&host_path),
+            &host_path,
+        );
+        log_dbg!(
+            "Created file at path {:?} (host path: {:?})",
+            path,
+            host_path
+        );
+        children.insert(
+            new_filename,
+            FsNode::File {
+                host_path,
+                writeable: true,
+            },
+        );
+        Ok(file)
     }
 }

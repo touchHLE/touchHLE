@@ -63,6 +63,9 @@ pub const CLASSES: ClassExports = objc_classes! {
 
     retain(env, this);
 
+    // Clear flag value, we're changing context anyway.
+    let _ = env.window.is_app_gl_ctx_no_longer_current();
+
     let old_ctx = std::mem::take(&mut env.framework_state.opengles.current_ctx);
     if let Some((old_eagl, old_gles)) = old_ctx {
         let host_obj = env.objc.borrow_mut::<EAGLContextHostObject>(old_eagl);
@@ -116,6 +119,10 @@ pub const CLASSES: ClassExports = objc_classes! {
     // Unclear from documentation if this method requires an appropriate context
     // to already be active, but that seems to be the case in practice?
     let (_eagl, ref mut gles) = env.framework_state.opengles.current_ctx.as_mut().unwrap();
+    if env.window.is_app_gl_ctx_no_longer_current() {
+        log_dbg!("Restoring guest app OpenGL context.");
+        gles.make_current(&mut env.window);
+    }
     unsafe {
         gles.RenderbufferStorageOES(target, internalformat, width, height)
     }

@@ -63,6 +63,7 @@ pub struct Window {
     event_pump: sdl2::EventPump,
     splash_image_and_gl_ctx: Option<(Image, GLContext)>,
     device_orientation: DeviceOrientation,
+    app_gl_ctx_no_longer_current: bool,
 }
 impl Window {
     pub fn new(title: &str, icon: Image, launch_image: Option<Image>) -> Window {
@@ -110,6 +111,7 @@ impl Window {
             event_pump,
             splash_image_and_gl_ctx,
             device_orientation: DeviceOrientation::Portrait,
+            app_gl_ctx_no_longer_current: false,
         };
         window.display_splash();
         window
@@ -134,6 +136,17 @@ impl Window {
         gl::make_gl_context_current(&self.video_ctx, &self.window, gl_ctx);
     }
 
+    /// Retrieve and reset the flag that indicates if the current OpenGL context
+    /// was changed to one outside of the control of the guest app.
+    ///
+    /// This should be checked before making OpenGL calls on behalf of the guest
+    /// app, so its context can be restored.
+    pub fn is_app_gl_ctx_no_longer_current(&mut self) -> bool {
+        let value = self.app_gl_ctx_no_longer_current;
+        self.app_gl_ctx_no_longer_current = false;
+        value
+    }
+
     fn display_splash(&mut self) {
         let Some((image, gl_ctx)) = &self.splash_image_and_gl_ctx else {
             panic!();
@@ -141,6 +154,8 @@ impl Window {
 
         let matrix = self.content_rotation_matrix();
         let viewport = size_for_orientation(self.device_orientation);
+
+        self.app_gl_ctx_no_longer_current = true;
 
         gl::make_gl_context_current(&self.video_ctx, &self.window, gl_ctx);
         unsafe { gl::display_image(image, viewport, &matrix) };

@@ -11,6 +11,10 @@ where
     T: FnOnce(&mut dyn GLES, &mut Mem) -> U,
 {
     let (_eagl, ref mut gles) = env.framework_state.opengles.current_ctx.as_mut().unwrap();
+    if env.window.is_app_gl_ctx_no_longer_current() {
+        log_dbg!("Restoring guest app OpenGL context.");
+        gles.make_current(&mut env.window);
+    }
     //panic_on_gl_errors(&mut **gles);
     let res = f(&mut **gles, &mut env.mem);
     //panic_on_gl_errors(&mut **gles);

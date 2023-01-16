@@ -50,6 +50,26 @@ fn glGetError(env: &mut Environment) -> GLenum {
         err
     })
 }
+fn glEnable(env: &mut Environment, cap: GLenum) {
+    with_ctx_and_mem(env, |gles, _mem| {
+        unsafe { gles.Enable(cap) };
+    });
+}
+fn glDisable(env: &mut Environment, cap: GLenum) {
+    with_ctx_and_mem(env, |gles, _mem| {
+        unsafe { gles.Disable(cap) };
+    });
+}
+fn glEnableClientState(env: &mut Environment, array: GLenum) {
+    with_ctx_and_mem(env, |gles, _mem| {
+        unsafe { gles.EnableClientState(array) };
+    });
+}
+fn glDisableClientState(env: &mut Environment, array: GLenum) {
+    with_ctx_and_mem(env, |gles, _mem| {
+        unsafe { gles.DisableClientState(array) };
+    });
+}
 fn glGetIntegerv(env: &mut Environment, pname: GLenum, params: MutPtr<GLint>) {
     with_ctx_and_mem(env, |gles, mem| {
         // This function family can return a huge number of things.
@@ -321,6 +341,10 @@ fn glCheckFramebufferStatusOES(env: &mut Environment, target: GLenum) -> GLenum 
 pub const FUNCTIONS: FunctionExports = &[
     // Generic state manipulation
     export_c_func!(glGetError()),
+    export_c_func!(glEnable(_)),
+    export_c_func!(glDisable(_)),
+    export_c_func!(glEnableClientState(_)),
+    export_c_func!(glDisableClientState(_)),
     export_c_func!(glGetIntegerv(_, _)),
     // Matrix stack operations
     export_c_func!(glMatrixMode(_)),

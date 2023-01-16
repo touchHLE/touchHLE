@@ -31,6 +31,56 @@ unsafe fn matrix_fixed_to_float(m: *const gles11::types::GLfixed) -> [GLfloat; 1
     matrix
 }
 
+/// List of capabilities shared by OpenGL ES 1.1 and OpenGL 2.1.
+///
+/// Note: There can be arbitrarily many lights or clip planes, depending on
+/// implementation limits. We might eventually need to check those rather than
+/// just providing the minimum.
+///
+/// TODO: GL_POINT_SPRITE_OES?
+const CAPABILITIES: &[GLenum] = &[
+    gl21::ALPHA_TEST,
+    gl21::BLEND,
+    gl21::COLOR_LOGIC_OP,
+    gl21::CLIP_PLANE0,
+    gl21::LIGHT0,
+    gl21::LIGHT1,
+    gl21::LIGHT2,
+    gl21::LIGHT3,
+    gl21::LIGHT4,
+    gl21::LIGHT5,
+    gl21::LIGHT6,
+    gl21::LIGHT7,
+    gl21::COLOR_MATERIAL,
+    gl21::CULL_FACE,
+    gl21::DEPTH_TEST,
+    gl21::DITHER,
+    gl21::FOG,
+    gl21::LIGHTING,
+    gl21::LINE_SMOOTH,
+    gl21::MULTISAMPLE,
+    gl21::NORMALIZE,
+    gl21::POINT_SMOOTH,
+    gl21::POLYGON_OFFSET_FILL,
+    gl21::RESCALE_NORMAL,
+    gl21::SAMPLE_ALPHA_TO_COVERAGE,
+    gl21::SAMPLE_ALPHA_TO_ONE,
+    gl21::SAMPLE_COVERAGE,
+    gl21::SCISSOR_TEST,
+    gl21::STENCIL_TEST,
+    gl21::TEXTURE_2D,
+];
+
+/// List of client-side capabilities shared by OpenGL ES 1.1 and OpenGL 2.1.
+///
+/// TODO: GL_POINT_SIZE_ARRAY_OES?
+const CLIENT_CAPABILITIES: &[GLenum] = &[
+    gl21::COLOR_ARRAY,
+    gl21::NORMAL_ARRAY,
+    gl21::TEXTURE_COORD_ARRAY,
+    gl21::VERTEX_ARRAY,
+];
+
 pub struct GLES1OnGL2 {
     gl_ctx: GLContext,
 }
@@ -48,6 +98,22 @@ impl GLES for GLES1OnGL2 {
     // Generic state manipulation
     unsafe fn GetError(&mut self) -> GLenum {
         gl21::GetError()
+    }
+    unsafe fn Enable(&mut self, cap: GLenum) {
+        assert!(CAPABILITIES.contains(&cap));
+        gl21::Enable(cap);
+    }
+    unsafe fn Disable(&mut self, cap: GLenum) {
+        assert!(CAPABILITIES.contains(&cap));
+        gl21::Disable(cap);
+    }
+    unsafe fn EnableClientState(&mut self, array: GLenum) {
+        assert!(CLIENT_CAPABILITIES.contains(&array));
+        gl21::EnableClientState(array);
+    }
+    unsafe fn DisableClientState(&mut self, array: GLenum) {
+        assert!(CLIENT_CAPABILITIES.contains(&array));
+        gl21::DisableClientState(array);
     }
     unsafe fn GetIntegerv(&mut self, pname: GLenum, params: *mut GLint) {
         // This function family can return a huge number of things.

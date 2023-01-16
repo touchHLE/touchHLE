@@ -16,6 +16,10 @@ pub trait GLES {
 
     // Generic state manipulation
     unsafe fn GetError(&mut self) -> GLenum;
+    unsafe fn Enable(&mut self, cap: GLenum);
+    unsafe fn Disable(&mut self, cap: GLenum);
+    unsafe fn EnableClientState(&mut self, array: GLenum);
+    unsafe fn DisableClientState(&mut self, array: GLenum);
     unsafe fn GetIntegerv(&mut self, pname: GLenum, params: *mut GLint);
 
     // Textures

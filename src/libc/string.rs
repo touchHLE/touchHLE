@@ -18,6 +18,30 @@ fn memcpy(
     dest
 }
 
+fn memmove(
+    env: &mut Environment,
+    dest: MutVoidPtr,
+    src: ConstVoidPtr,
+    size: GuestUSize,
+) -> MutVoidPtr {
+    match src.to_bits().cmp(&dest.to_bits()) {
+        Ordering::Equal => (),
+        Ordering::Less => {
+            for i in (0..size).rev() {
+                env.mem
+                    .write(dest.cast::<u8>() + i, env.mem.read(src.cast::<u8>() + i));
+            }
+        }
+        Ordering::Greater => {
+            for i in 0..size {
+                env.mem
+                    .write(dest.cast::<u8>() + i, env.mem.read(src.cast::<u8>() + i));
+            }
+        }
+    }
+    dest
+}
+
 fn strlen(env: &mut Environment, s: ConstPtr<u8>) -> GuestUSize {
     env.mem.cstr_at(s).len().try_into().unwrap()
 }
@@ -74,6 +98,7 @@ fn strcmp(env: &mut Environment, a: ConstPtr<u8>, b: ConstPtr<u8>) -> i32 {
 
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(memcpy(_, _, _)),
+    export_c_func!(memmove(_, _, _)),
     export_c_func!(strlen(_)),
     export_c_func!(strcpy(_, _)),
     export_c_func!(strcat(_, _)),

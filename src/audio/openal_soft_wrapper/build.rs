@@ -11,8 +11,6 @@ fn link_lib(lib: &str) {
 }
 
 fn main() {
-    // TODO: test this on Windows
-
     let package_root = Path::new(env!("CARGO_MANIFEST_DIR"));
     let workspace_root = package_root.join("../../..");
 
@@ -21,7 +19,12 @@ fn main() {
     let openal_soft_out = build.build();
 
     link_search(&openal_soft_out.join("lib"));
-    link_lib("openal");
+    // see also src/audio/openal.rs
+    link_lib(if cfg!(target_os = "windows") {
+        "OpenAL32"
+    } else {
+        "openal"
+    });
     // rerun-if-changed seems to not work if pointed to a directory :(
     //rerun_if_changed(&workspace_root.join("vendor/openal-soft"));
 }

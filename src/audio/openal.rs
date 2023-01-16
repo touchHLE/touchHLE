@@ -35,7 +35,9 @@ pub const ALC_FALSE: ALCboolean = 0;
 #[allow(dead_code)]
 pub const ALC_TRUE: ALCboolean = 1;
 
-#[link(name = "openal")] // see also src/audio/openal_soft_wrapper/build.rs
+// see also src/audio/openal_soft_wrapper/build.rs
+#[cfg_attr(windows, link(name = "OpenAL32", kind = "static"))]
+#[cfg_attr(not(windows), link(name = "openal", kind = "static"))]
 extern "C" {
     pub fn alcOpenDevice(devicename: *const ALCchar) -> *mut ALCdevice;
     pub fn alcCloseDevice(device: *mut ALCdevice) -> ALCboolean;
@@ -73,7 +75,9 @@ use al_types::*;
 
 pub const AL_NO_ERROR: ALenum = 0;
 
-#[link(name = "openal")] // see also src/audio/openal_soft_wrapper/build.rs
+// see also src/audio/openal_soft_wrapper/build.rs
+#[cfg_attr(windows, link(name = "OpenAL32", kind = "static"))]
+#[cfg_attr(not(windows), link(name = "openal", kind = "static"))]
 extern "C" {
     pub fn alGetError() -> ALenum;
 

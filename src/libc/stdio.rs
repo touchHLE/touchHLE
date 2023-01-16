@@ -5,7 +5,7 @@ use crate::fs::{GuestOpenOptions, GuestPath};
 use crate::mem::{ConstPtr, ConstVoidPtr, GuestUSize, MutPtr, MutVoidPtr, Ptr, SafeRead};
 use crate::Environment;
 use std::collections::HashMap;
-use std::io::{Read, Write};
+use std::io::{Read, Seek, SeekFrom, Write};
 
 pub mod printf;
 
@@ -145,6 +145,49 @@ fn fwrite(
     items_written
 }
 
+const SEEK_SET: i32 = 0;
+const SEEK_CUR: i32 = 1;
+const SEEK_END: i32 = 2;
+fn fseek(env: &mut Environment, file_ptr: MutPtr<FILE>, offset: i32, whence: i32) -> i32 {
+    let file = env.libc_state.stdio.files.get_mut(&file_ptr).unwrap();
+
+    let from = match whence {
+        // not sure whether offset is treated as signed or unsigned when using
+        // SEEK_SET, so `.try_into()` seems safer.
+        SEEK_SET => SeekFrom::Start(offset.try_into().unwrap()),
+        SEEK_CUR => SeekFrom::Current(offset.into()),
+        SEEK_END => SeekFrom::End(offset.into()),
+        _ => panic!("Unsupported \"whence\" parameter to fseek(): {}", whence),
+    };
+
+    let res = match file.file.seek(from) {
+        Ok(_) => 0,
+        // TODO: set errno
+        Err(_) => -1,
+    };
+    log_dbg!(
+        "fseek({:?}, {:#x}, {}) => {}",
+        file_ptr,
+        offset,
+        whence,
+        res
+    );
+    res
+}
+
+fn ftell(env: &mut Environment, file_ptr: MutPtr<FILE>) -> i32 {
+    let file = env.libc_state.stdio.files.get_mut(&file_ptr).unwrap();
+
+    let res = match file.file.stream_position() {
+        // TODO: What's the correct behaviour if the position is beyond 2GiB?
+        Ok(pos) => pos.try_into().unwrap(),
+        // TODO: set errno
+        Err(_) => -1,
+    };
+    log_dbg!("ftell({:?}) => {:?}", file_ptr, res);
+    res
+}
+
 fn fclose(env: &mut Environment, file_ptr: MutPtr<FILE>) -> i32 {
     let file = env.libc_state.stdio.files.remove(&file_ptr).unwrap();
 
@@ -167,5 +210,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(fopen(_, _)),
     export_c_func!(fread(_, _, _, _)),
     export_c_func!(fwrite(_, _, _, _)),
+    export_c_func!(fseek(_, _, _)),
+    export_c_func!(ftell(_)),
     export_c_func!(fclose(_)),
 ];

@@ -210,11 +210,8 @@ impl Environment {
         // the emulator will crash anyway, maybe this is okay.
         let res = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| self.run_inner(true)));
         if let Err(e) = res {
-            eprintln!(
-                "Panic at PC {:#x}, LR {:#x}",
-                self.cpu.regs()[cpu::Cpu::PC],
-                self.cpu.regs()[cpu::Cpu::LR]
-            );
+            eprintln!("Register state immediately after panic:");
+            self.cpu.dump_regs();
             std::panic::resume_unwind(e);
         }
     }

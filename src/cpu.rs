@@ -138,6 +138,24 @@ impl Cpu {
         }
     }
 
+    pub fn dump_regs(&self) {
+        let regs = self.regs();
+        for row in 0..4 {
+            for col in 0..4 {
+                let reg_idx = row * 4 + col;
+                match reg_idx {
+                    Self::SP => eprint!("\t SP: "),
+                    Self::LR => eprint!("\t LR: "),
+                    Self::PC => eprint!("\t PC: "),
+                    _ if reg_idx <= 9 => eprint!("\t R{}: ", reg_idx),
+                    _ => eprint!("\tR{}: ", reg_idx),
+                };
+                eprint!("{:#010x}", regs[reg_idx]);
+            }
+            eprintln!();
+        }
+    }
+
     pub fn cpsr(&self) -> u32 {
         unsafe { touchHLE_DynarmicWrapper_cpsr(self.dynarmic_wrapper) }
     }

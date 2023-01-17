@@ -208,7 +208,8 @@ macro_rules! msg {
                              $($namen:ident: $argn:tt)*] => {
         {
             let sel = $crate::objc::selector!($($arg1;)? $name $(, $namen)*);
-            let sel = $env.objc.lookup_selector(sel).unwrap();
+            let sel = $env.objc.lookup_selector(sel)
+                .expect("Unknown selector");
             let args = ($receiver, sel, $($arg1,)? $($argn),*);
             $crate::objc::msg_send($env, args)
         }

@@ -7,7 +7,7 @@
 //! See also: [crate::mem::SafeRead] and [crate::mem::SafeWrite].
 
 use crate::cpu::Cpu;
-use crate::mem::{ConstPtr, ConstVoidPtr, GuestUSize, Mem, MutPtr, MutVoidPtr, Ptr};
+use crate::mem::{ConstPtr, ConstVoidPtr, GuestUSize, Mem, MutPtr, MutVoidPtr, Ptr, SafeRead};
 use crate::Environment;
 
 /// Address of an A32 or T32 instruction, with the mode encoded using the Thumb
@@ -16,7 +16,7 @@ use crate::Environment;
 /// It is wrapped in a struct to prevent mixing with other pointers.
 #[derive(Copy, Clone, Debug)]
 pub struct GuestFunction(ConstVoidPtr);
-
+unsafe impl SafeRead for GuestFunction {}
 impl GuestFunction {
     pub const THUMB_BIT: u32 = 0x1;
 

@@ -193,11 +193,21 @@ impl Environment {
 
         println!("CPU emulation begins now.");
 
-        // FIXME: call various static initializers. libstdc++ in particular has
-        // lots of these and eventually we'll hit something that breaks if they
-        // aren't run.
-
         env.cpu.set_cpsr(cpu::Cpu::CPSR_USER_MODE);
+
+        // FIXME: call library static initializers too
+        if let Some(mod_init_func) = env.bins[0].get_section("__mod_init_func") {
+            log_dbg!("Calling static initializers for {:?}", env.bins[0].name);
+            assert!(mod_init_func.size % 4 == 0);
+            let base: mem::ConstPtr<abi::GuestFunction> = mem::Ptr::from_bits(mod_init_func.addr);
+            let count = mod_init_func.size / 4;
+            for i in 0..count {
+                let func = env.mem.read(base + i);
+                func.call(&mut env);
+            }
+            log_dbg!("Static initialization done");
+        }
+
         env.cpu.branch(entry_point_addr);
 
         Ok(env)

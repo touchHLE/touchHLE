@@ -26,7 +26,10 @@ use crate::Environment;
 #[allow(non_snake_case)]
 fn objc_msgSend_inner(env: &mut Environment, receiver: id, selector: SEL, super2: Option<Class>) {
     if receiver == nil {
-        unimplemented!()
+        // https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/ObjectiveC/Chapters/ocObjectsClasses.html#//apple_ref/doc/uid/TP30001163-CH11-SW7
+        log_dbg!("[nil {}]", selector.as_str(&env.mem));
+        env.cpu.regs_mut()[0..2].fill(0);
+        return;
     } // TODO: nil handling
 
     let orig_class = super2.unwrap_or_else(|| ObjC::read_isa(receiver, &env.mem));
@@ -243,15 +246,27 @@ pub use crate::msg_class; // #[macro_export] is weird...
 
 /// Shorthand for `let _: id = msg![env; object retain];`
 pub fn retain(env: &mut Environment, object: id) -> id {
+    if object == nil {
+        // fast path
+        return nil;
+    }
     msg![env; object retain]
 }
 
 /// Shorthand for `() = msg![env; object release];`
 pub fn release(env: &mut Environment, object: id) {
+    if object == nil {
+        // fast path
+        return;
+    }
     msg![env; object release]
 }
 
 /// Shorthand for `let _: id = msg![env; object autorelease];`
 pub fn autorelease(env: &mut Environment, object: id) -> id {
+    if object == nil {
+        // fast path
+        return nil;
+    }
     msg![env; object autorelease]
 }

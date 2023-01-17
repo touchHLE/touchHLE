@@ -169,6 +169,8 @@ impl MachO {
         into_mem: &mut Mem,
         name: String,
     ) -> Result<MachO, &'static str> {
+        log_dbg!("Reading {:?}", name);
+
         let mut cursor = Cursor::new(bytes);
 
         let file = OFile::parse(&mut cursor).map_err(|_| "Could not parse Mach-O file")?;
@@ -377,6 +379,8 @@ impl MachO {
                 let name = section.sectname.clone();
                 let addr: u32 = section.addr.try_into().unwrap();
                 let size: u32 = section.size.try_into().unwrap();
+
+                log_dbg!("Section: {:?} {:#x} ({:#x} bytes)", name, addr, size);
 
                 let dyld_indirect_symbol_info = match &*name {
                     "__picsymbolstub4" => Some(16),

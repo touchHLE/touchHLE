@@ -17,6 +17,7 @@ pub const FUNCTION_LISTS: &[super::FunctionExports] = &[
     libc::stdio::printf::FUNCTIONS,
     libc::stdlib::FUNCTIONS,
     libc::string::FUNCTIONS,
+    libc::time::FUNCTIONS,
     crate::objc::FUNCTIONS,
     audio_toolbox::audio_file::FUNCTIONS,
     audio_toolbox::audio_queue::FUNCTIONS,

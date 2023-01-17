@@ -13,6 +13,7 @@ pub mod pthread;
 pub mod stdio;
 pub mod stdlib;
 pub mod string;
+pub mod time;
 
 /// Container for state of various child modules
 #[derive(Default)]
@@ -20,4 +21,5 @@ pub struct State {
     pthread: pthread::State,
     stdio: stdio::State,
     string: string::State,
+    time: time::State,
 }

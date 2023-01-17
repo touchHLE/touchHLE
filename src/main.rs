@@ -227,14 +227,14 @@ impl Environment {
             eprintln!(" 0. {:#x} (LR)", lr);
         }
         let mut i = 0;
-        let mut frame_pointer: mem::ConstPtr<u8> = mem::Ptr::from_bits(regs[7]);
+        let mut fp: mem::ConstPtr<u8> = mem::Ptr::from_bits(regs[abi::FRAME_POINTER]);
         loop {
-            if frame_pointer.to_bits() < mem::Mem::MAIN_THREAD_STACK_LOW_END {
-                eprintln!("Next FP ({:?}) is outside the stack.", frame_pointer);
+            if fp.to_bits() < mem::Mem::MAIN_THREAD_STACK_LOW_END {
+                eprintln!("Next FP ({:?}) is outside the stack.", fp);
                 break;
             }
-            lr = self.mem.read((frame_pointer + 4).cast());
-            frame_pointer = self.mem.read(frame_pointer.cast());
+            lr = self.mem.read((fp + 4).cast());
+            fp = self.mem.read(fp.cast());
             if lr == return_to_host_routine_addr {
                 eprintln!("{:2}. [RETURN TO HOST]", i);
             } else {

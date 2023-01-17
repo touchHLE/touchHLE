@@ -10,6 +10,9 @@ use crate::cpu::Cpu;
 use crate::mem::{ConstPtr, ConstVoidPtr, GuestUSize, Mem, MutPtr, MutVoidPtr, Ptr, SafeRead};
 use crate::Environment;
 
+/// The register number of the frame pointer in Apple's ABI.
+pub const FRAME_POINTER: usize = 7;
+
 /// Address of an A32 or T32 instruction, with the mode encoded using the Thumb
 /// bit. This is also used as an (untyped) guest function pointer.
 ///
@@ -77,10 +80,28 @@ impl GuestFunction {
             .cpu
             .branch_with_link(self, env.dyld.return_to_host_routine());
 
+        // Create a new guest stack frame. This is redundant considering we are
+        // storing this data on the host stack, but this makes stack traces work
+        // nicely. :)
+        let (old_sp, old_fp) = {
+            let regs = env.cpu.regs_mut();
+            let old_sp = regs[Cpu::SP];
+            let old_fp = regs[FRAME_POINTER];
+            env.mem
+                .write(Ptr::from_bits(regs[Cpu::SP]), regs[FRAME_POINTER]);
+            env.mem.write(Ptr::from_bits(regs[Cpu::SP] + 4), old_lr);
+            regs[Cpu::SP] -= 8;
+            regs[FRAME_POINTER] = old_sp;
+            (old_sp, old_fp)
+        };
+
         env.run_call();
 
         env.cpu.branch(old_pc);
-        env.cpu.regs_mut()[Cpu::LR] = old_lr.addr_with_thumb_bit();
+        let regs = env.cpu.regs_mut();
+        regs[Cpu::LR] = old_lr.addr_with_thumb_bit();
+        regs[Cpu::SP] = old_sp;
+        regs[FRAME_POINTER] = old_fp;
 
         log_dbg!("End call to guest function {:?}", self);
     }

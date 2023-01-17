@@ -3,7 +3,7 @@
 use super::ui_device::*;
 use crate::frameworks::uikit::ui_nib::load_main_nib_file;
 use crate::mem::{MutPtr, MutVoidPtr};
-use crate::objc::{id, msg, msg_class, nil, objc_classes, ClassExports, HostObject};
+use crate::objc::{id, msg, msg_class, nil, objc_classes, retain, ClassExports, HostObject};
 use crate::window::DeviceOrientation;
 use crate::Environment;
 
@@ -54,8 +54,11 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.borrow::<UIApplicationHostObject>(this).delegate
 }
 - (())setDelegate:(id)delegate { // something implementing UIApplicationDelegate
-    // This property is non-retaining!
-    env.objc.borrow_mut::<UIApplicationHostObject>(this).delegate = delegate;
+    // This property is quasi-non-retaining: https://stackoverflow.com/a/14271150/736162
+    // TODO: release the first delegate, but not any subsequent delegates
+    let host_object = env.objc.borrow_mut::<UIApplicationHostObject>(this);
+    assert!(host_object.delegate == nil);
+    host_object.delegate = delegate;
 }
 
 // TODO: statusBarHidden getter
@@ -107,14 +110,34 @@ pub(super) fn UIApplicationMain(
         unimplemented!()
     }
 
-    let ui_application: id = msg_class![env; UIApplication new];
+    // UIKit creates and drains autorelease pools when handling events.
+    // It's not clear what granularity this should happen with, but this
+    // granularity has already caught several bugs. :)
 
-    load_main_nib_file(env, ui_application);
+    let (ui_application, delegate) = {
+        let pool: id = msg_class![env; NSAutoreleasePool new];
 
-    let delegate: id = msg![env; ui_application delegate];
-    assert!(delegate != nil); // should have been set by now
+        let ui_application: id = msg_class![env; UIApplication new];
 
-    () = msg![env; delegate applicationDidFinishLaunching:ui_application];
+        load_main_nib_file(env, ui_application);
+
+        // The delegate must have been created by this point.
+        // While notionally UIApplication does not retain its delegate (see
+        // `setDelegate:` above), we do have to retain this first one.
+        let delegate: id = msg![env; ui_application delegate];
+        assert!(delegate != nil); // should have been set by now
+        retain(env, delegate);
+
+        let _: () = msg![env; pool drain];
+
+        (ui_application, delegate)
+    };
+
+    {
+        let pool: id = msg_class![env; NSAutoreleasePool new];
+        () = msg![env; delegate applicationDidFinishLaunching:ui_application];
+        let _: () = msg![env; pool drain];
+    }
 
     // TODO: Are there more messages we need to send?
     // TODO: Send UIApplicationDidFinishLaunchingNotification?

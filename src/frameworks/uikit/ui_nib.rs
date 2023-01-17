@@ -34,7 +34,6 @@ pub const CLASSES: ClassExports = objc_classes! {
     let id_key = get_static_str(env, "UIProxiedObjectIdentifier");
     let id_nss: id = msg![env; coder decodeObjectForKey:id_key];
     let id = to_rust_string(env, id_nss);
-    release(env, id_nss);
 
     if id == "IBFilesOwner" {
         // The file owner is usually the UIApplication instance.
@@ -75,12 +74,10 @@ pub const CLASSES: ClassExports = objc_classes! {
     let name_key = get_static_str(env, "UIClassName");
     let name_nss: id = msg![env; coder decodeObjectForKey:name_key];
     let name = to_rust_string(env, name_nss);
-    release(env, name_nss);
 
     let orig_key = get_static_str(env, "UIOriginalClassName");
     let orig_nss: id = msg![env; coder decodeObjectForKey:orig_key];
     let orig = to_rust_string(env, orig_nss);
-    release(env, orig_nss);
 
     let class = env.objc.get_known_class(&name, &mut env.mem);
 

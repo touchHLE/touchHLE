@@ -69,12 +69,10 @@ pub const CLASSES: ClassExports = objc_classes! {
     let key_ns_string = get_static_str(env, "UIBounds");
     let value = msg![env; coder decodeObjectForKey:key_ns_string];
     let bounds = parse_rect(&to_rust_string(env, value)).unwrap();
-    release(env, value);
 
     let key_ns_string = get_static_str(env, "UICenter");
     let value = msg![env; coder decodeObjectForKey:key_ns_string];
     let center = parse_point(&to_rust_string(env, value)).unwrap();
-    release(env, value);
 
     let host_object: &mut UIViewHostObject = env.objc.borrow_mut(this);
     host_object.bounds = bounds;

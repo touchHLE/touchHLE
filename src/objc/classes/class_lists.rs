@@ -19,6 +19,7 @@ pub const CLASS_LISTS: &[super::ClassExports] = &[
     foundation::ns_object::CLASSES,
     foundation::ns_run_loop::CLASSES,
     foundation::ns_string::CLASSES,
+    foundation::ns_timer::CLASSES,
     foundation::ns_url::CLASSES,
     foundation::ns_value::CLASSES,
     opengles::eagl::CLASSES,

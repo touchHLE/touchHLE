@@ -1,9 +1,30 @@
 //! `NSRunLoop`.
 
+use super::{ns_string, ns_timer};
+use crate::dyld::{ConstantExports, HostConstant};
 use crate::frameworks::audio_toolbox::audio_queue::AudioQueueRef;
-use crate::frameworks::core_foundation::cf_run_loop::CFRunLoopRef;
-use crate::objc::{id, msg, objc_classes, ClassExports, HostObject};
+use crate::frameworks::core_foundation::cf_run_loop::{
+    kCFRunLoopCommonModes, kCFRunLoopDefaultMode, CFRunLoopRef,
+};
+use crate::objc::{id, msg, objc_classes, retain, ClassExports, HostObject};
 use crate::Environment;
+
+/// `NSString*`
+pub type NSRunLoopMode = id;
+// FIXME: Maybe this shouldn't be the same value? See: https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/Multithreading/RunLoopManagement/RunLoopManagement.html
+pub const NSRunLoopCommonModes: &str = kCFRunLoopCommonModes;
+pub const NSDefaultRunLoopMode: &str = kCFRunLoopDefaultMode;
+
+pub const CONSTANTS: ConstantExports = &[
+    (
+        "_NSRunLoopCommonModes",
+        HostConstant::NSString(NSRunLoopCommonModes),
+    ),
+    (
+        "_NSRunLoopDefaultMode",
+        HostConstant::NSString(NSDefaultRunLoopMode),
+    ),
+];
 
 #[derive(Default)]
 pub struct State {
@@ -13,6 +34,8 @@ pub struct State {
 struct NSRunLoopHostObject {
     /// Weak reference. Audio queue must remove itself when destroyed (TODO).
     audio_queues: Vec<AudioQueueRef>,
+    /// Strong references to `NSTimer*`. Timers are owned by the run loop.
+    timers: Vec<id>,
 }
 impl HostObject for NSRunLoopHostObject {}
 
@@ -28,6 +51,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     } else {
         let host_object = Box::new(NSRunLoopHostObject {
             audio_queues: Vec::new(),
+            timers: Vec::new(),
         });
         let new = env.objc.alloc_static_object(this, host_object, &mut env.mem);
         env.framework_state.foundation.ns_run_loop.main_thread_run_loop = Some(new);
@@ -41,6 +65,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 // TODO: more accessors
+// TODO: actually be able to run the run loop
 
 - (id) retain { this }
 - (()) release {}
@@ -49,6 +74,22 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (CFRunLoopRef)getCFRunLoop {
     // In our implementation these are the same type (they aren't in Apple's).
     this
+}
+
+- (())addTimer:(id)timer // NSTimer*
+       forMode:(NSRunLoopMode)mode {
+    let default_mode = ns_string::get_static_str(env, NSDefaultRunLoopMode);
+    // TODO: handle other modes
+    assert!(msg![env; mode isEqualToString:default_mode]);
+
+    log_dbg!("Adding timer {:?} to run loop {:?}", timer, this);
+
+    retain(env, timer);
+
+    let host_object = env.objc.borrow_mut::<NSRunLoopHostObject>(this);
+    assert!(!host_object.timers.contains(&timer)); // TODO: what do we do here?
+    host_object.timers.push(timer);
+    ns_timer::set_run_loop(env, timer, this);
 }
 
 @end

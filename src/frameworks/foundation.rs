@@ -19,6 +19,7 @@ pub mod ns_locale;
 pub mod ns_object;
 pub mod ns_run_loop;
 pub mod ns_string;
+pub mod ns_timer;
 pub mod ns_url;
 pub mod ns_value;
 

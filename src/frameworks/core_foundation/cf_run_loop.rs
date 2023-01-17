@@ -19,11 +19,18 @@ fn CFRunLoopGetMain(env: &mut Environment) -> CFRunLoopRef {
 }
 
 pub const kCFRunLoopCommonModes: &str = "kCFRunLoopCommonModes";
+pub const kCFRunLoopDefaultMode: &str = "kCFRunLoopDefaultMode";
 
-pub const CONSTANTS: ConstantExports = &[(
-    "_kCFRunLoopCommonModes",
-    HostConstant::NSString(kCFRunLoopCommonModes),
-)];
+pub const CONSTANTS: ConstantExports = &[
+    (
+        "_kCFRunLoopCommonModes",
+        HostConstant::NSString(kCFRunLoopCommonModes),
+    ),
+    (
+        "_kCFRunLoopDefaultMode",
+        HostConstant::NSString(kCFRunLoopDefaultMode),
+    ),
+];
 
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CFRunLoopGetCurrent()),

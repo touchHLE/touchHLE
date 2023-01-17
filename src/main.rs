@@ -296,7 +296,7 @@ impl Environment {
                 }
             }
 
-            let mut ticks = 100;
+            let mut ticks = 100_000;
             while ticks > 0 {
                 match self.cpu.run(&mut self.mem, &mut ticks) {
                     cpu::CpuState::Normal => (),

@@ -21,6 +21,7 @@ pub struct State {
     mach_time: mach_time::State,
     pthread: pthread::State,
     stdio: stdio::State,
+    stdlib: stdlib::State,
     string: string::State,
     time: time::State,
 }

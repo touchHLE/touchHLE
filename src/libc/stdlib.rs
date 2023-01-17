@@ -5,6 +5,11 @@ use crate::dyld::{export_c_func, FunctionExports};
 use crate::mem::{ConstPtr, GuestUSize, MutVoidPtr};
 use crate::Environment;
 
+#[derive(Default)]
+pub struct State {
+    rand: u32,
+}
+
 fn malloc(env: &mut Environment, size: GuestUSize) -> MutVoidPtr {
     assert!(size != 0);
     env.mem.alloc(size)
@@ -96,6 +101,24 @@ fn atof(env: &mut Environment, s: ConstPtr<u8>) -> f64 {
     s.parse().unwrap_or(0.0)
 }
 
+fn srand(env: &mut Environment, seed: u32) {
+    env.libc_state.stdlib.rand = seed;
+}
+
+fn rand(env: &mut Environment) -> i32 {
+    // The state must not be zero for this algorithm to work. This also makes
+    // the default seed be 1, which matches the C standard.
+    let mut state: u32 = env.libc_state.stdlib.rand.max(1);
+    // https://en.wikipedia.org/wiki/Xorshift#Example_implementation
+    // xorshift32 is not a good random number generator, but it is cute one!
+    // It's not like anyone expects the C stdlib `rand()` to be good.
+    state ^= state << 13;
+    state ^= state >> 17;
+    state ^= state << 5;
+    env.libc_state.stdlib.rand = state;
+    state as i32
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(malloc(_)),
     export_c_func!(calloc(_, _)),
@@ -103,4 +126,6 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(atexit(_)),
     export_c_func!(atoi(_)),
     export_c_func!(atof(_)),
+    export_c_func!(srand(_)),
+    export_c_func!(rand()),
 ];

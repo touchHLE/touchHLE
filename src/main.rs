@@ -65,6 +65,18 @@ fn main() -> Result<(), String> {
         return Err("Path to bundle must be specified".to_string());
     };
 
+    // When PowerShell does tab-completion on a directory, for some reason it
+    // expands it to `'..\My Bundle.app\'` and that trailing \ seems to
+    // get interpreted as escaping a double quotation mark? Let's just tolerate
+    // this.
+    #[cfg(windows)]
+    let bundle_path = if let Some(fixed) = bundle_path.to_str().and_then(|s| s.strip_suffix('"')) {
+        log!("Assuming bundle path was meant to be {:?}.", fixed);
+        PathBuf::from(fixed)
+    } else {
+        bundle_path
+    };
+
     let mut env = Environment::new(bundle_path)?;
     env.run();
     Ok(())

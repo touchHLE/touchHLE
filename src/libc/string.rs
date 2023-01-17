@@ -10,6 +10,11 @@ pub struct State {
     strtok: Option<MutPtr<u8>>,
 }
 
+fn memset(env: &mut Environment, dest: MutVoidPtr, ch: i32, count: GuestUSize) -> MutVoidPtr {
+    env.mem.bytes_at_mut(dest.cast(), count).fill(ch as u8);
+    dest
+}
+
 fn memcpy(
     env: &mut Environment,
     dest: MutVoidPtr,
@@ -147,6 +152,7 @@ fn strtok(env: &mut Environment, s: MutPtr<u8>, sep: ConstPtr<u8>) -> MutPtr<u8>
 }
 
 pub const FUNCTIONS: FunctionExports = &[
+    export_c_func!(memset(_, _, _)),
     export_c_func!(memcpy(_, _, _)),
     export_c_func!(memmove(_, _, _)),
     export_c_func!(strlen(_)),

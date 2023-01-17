@@ -22,6 +22,10 @@ pub trait GLES {
     unsafe fn DisableClientState(&mut self, array: GLenum);
     unsafe fn GetIntegerv(&mut self, pname: GLenum, params: *mut GLint);
 
+    // Other state manipulation
+    unsafe fn BlendFunc(&mut self, sfactor: GLenum, dfactor: GLenum);
+    unsafe fn ShadeModel(&mut self, mode: GLenum);
+
     // Textures
     unsafe fn GenTextures(&mut self, n: GLsizei, textures: *mut GLuint);
     unsafe fn BindTexture(&mut self, target: GLenum, texture: GLuint);

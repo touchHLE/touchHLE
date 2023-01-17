@@ -83,6 +83,16 @@ fn glGetIntegerv(env: &mut Environment, pname: GLenum, params: MutPtr<GLint>) {
     });
 }
 
+// Other state manipulation
+fn glBlendFunc(env: &mut Environment, sfactor: GLenum, dfactor: GLenum) {
+    with_ctx_and_mem(env, |gles, _mem| unsafe {
+        gles.BlendFunc(sfactor, dfactor)
+    })
+}
+fn glShadeModel(env: &mut Environment, mode: GLenum) {
+    with_ctx_and_mem(env, |gles, _mem| unsafe { gles.ShadeModel(mode) })
+}
+
 // Matrix stack operations
 fn glMatrixMode(env: &mut Environment, mode: GLenum) {
     with_ctx_and_mem(env, |gles, _mem| {
@@ -346,6 +356,9 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(glEnableClientState(_)),
     export_c_func!(glDisableClientState(_)),
     export_c_func!(glGetIntegerv(_, _)),
+    // Other state manipulation
+    export_c_func!(glBlendFunc(_, _)),
+    export_c_func!(glShadeModel(_)),
     // Matrix stack operations
     export_c_func!(glMatrixMode(_)),
     export_c_func!(glLoadIdentity()),

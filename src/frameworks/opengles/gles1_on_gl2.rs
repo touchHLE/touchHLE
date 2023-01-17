@@ -122,6 +122,38 @@ impl GLES for GLES1OnGL2 {
         gl21::GetIntegerv(pname, params);
     }
 
+    // Other state manipulation
+    unsafe fn BlendFunc(&mut self, sfactor: GLenum, dfactor: GLenum) {
+        assert!([
+            gl21::ZERO,
+            gl21::ONE,
+            gl21::DST_COLOR,
+            gl21::ONE_MINUS_DST_COLOR,
+            gl21::SRC_ALPHA,
+            gl21::ONE_MINUS_SRC_ALPHA,
+            gl21::DST_ALPHA,
+            gl21::ONE_MINUS_DST_ALPHA,
+            gl21::SRC_ALPHA_SATURATE
+        ]
+        .contains(&sfactor));
+        assert!([
+            gl21::ZERO,
+            gl21::ONE,
+            gl21::SRC_COLOR,
+            gl21::ONE_MINUS_SRC_COLOR,
+            gl21::SRC_ALPHA,
+            gl21::ONE_MINUS_SRC_ALPHA,
+            gl21::DST_ALPHA,
+            gl21::ONE_MINUS_DST_ALPHA
+        ]
+        .contains(&dfactor));
+        gl21::BlendFunc(sfactor, dfactor);
+    }
+    unsafe fn ShadeModel(&mut self, mode: GLenum) {
+        assert!(mode == gl21::FLAT || mode == gl21::SMOOTH);
+        gl21::ShadeModel(mode);
+    }
+
     // Textures
     unsafe fn GenTextures(&mut self, n: GLsizei, textures: *mut GLuint) {
         gl21::GenTextures(n, textures)

@@ -215,18 +215,18 @@ impl Environment {
 
     fn stack_trace(&self) {
         eprintln!(
-            "-1. {:#x} (PC)",
+            " 0. {:#x} (PC)",
             self.cpu.pc_with_thumb_bit().addr_with_thumb_bit()
         );
         let regs = self.cpu.regs();
         let mut lr = regs[cpu::Cpu::LR];
         let return_to_host_routine_addr = self.dyld.return_to_host_routine().addr_with_thumb_bit();
         if lr == return_to_host_routine_addr {
-            eprintln!(" 0. [host function] (LR)");
+            eprintln!(" 1. [host function] (LR)");
         } else {
-            eprintln!(" 0. {:#x} (LR)", lr);
+            eprintln!(" 1. {:#x} (LR)", lr);
         }
-        let mut i = 0;
+        let mut i = 2;
         let mut fp: mem::ConstPtr<u8> = mem::Ptr::from_bits(regs[abi::FRAME_POINTER]);
         loop {
             if fp.to_bits() < mem::Mem::MAIN_THREAD_STACK_LOW_END {

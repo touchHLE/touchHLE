@@ -222,7 +222,7 @@ impl Environment {
         let mut lr = regs[cpu::Cpu::LR];
         let return_to_host_routine_addr = self.dyld.return_to_host_routine().addr_with_thumb_bit();
         if lr == return_to_host_routine_addr {
-            eprintln!(" 0. [RETURN TO HOST] (LR)");
+            eprintln!(" 0. [host function] (LR)");
         } else {
             eprintln!(" 0. {:#x} (LR)", lr);
         }
@@ -236,7 +236,7 @@ impl Environment {
             lr = self.mem.read((fp + 4).cast());
             fp = self.mem.read(fp.cast());
             if lr == return_to_host_routine_addr {
-                eprintln!("{:2}. [RETURN TO HOST]", i);
+                eprintln!("{:2}. [host function]", i);
             } else {
                 eprintln!("{:2}. {:#x}", i, lr);
             }

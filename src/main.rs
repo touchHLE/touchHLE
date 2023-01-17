@@ -220,7 +220,12 @@ impl Environment {
         );
         let regs = self.cpu.regs();
         let mut lr = regs[cpu::Cpu::LR];
-        eprintln!(" 0. {:#x} (LR)", lr);
+        let return_to_host_routine_addr = self.dyld.return_to_host_routine().addr_with_thumb_bit();
+        if lr == return_to_host_routine_addr {
+            eprintln!(" 0. [RETURN TO HOST] (LR)");
+        } else {
+            eprintln!(" 0. {:#x} (LR)", lr);
+        }
         let mut i = 0;
         let mut frame_pointer: mem::ConstPtr<u8> = mem::Ptr::from_bits(regs[7]);
         loop {
@@ -230,7 +235,11 @@ impl Environment {
             }
             lr = self.mem.read((frame_pointer + 4).cast());
             frame_pointer = self.mem.read(frame_pointer.cast());
-            eprintln!("{:2}. {:#x}", i, lr);
+            if lr == return_to_host_routine_addr {
+                eprintln!("{:2}. [RETURN TO HOST]", i);
+            } else {
+                eprintln!("{:2}. {:#x}", i, lr);
+            }
             i += 1;
         }
     }

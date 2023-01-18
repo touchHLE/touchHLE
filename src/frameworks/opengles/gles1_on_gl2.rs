@@ -118,11 +118,34 @@ impl GLES for GLES1OnGL2 {
     unsafe fn GetIntegerv(&mut self, pname: GLenum, params: *mut GLint) {
         // This function family can return a huge number of things.
         // TODO: support more possible values.
-        assert!(pname == gl21::TEXTURE_BINDING_2D);
+        assert!([
+            gl21::ARRAY_BUFFER_BINDING,
+            gl21::ELEMENT_ARRAY_BUFFER_BINDING,
+            gl21::MATRIX_MODE,
+            gl21::TEXTURE_BINDING_2D
+        ]
+        .contains(&pname));
         gl21::GetIntegerv(pname, params);
     }
 
     // Other state manipulation
+    unsafe fn AlphaFunc(&mut self, func: GLenum, ref_: GLclampf) {
+        assert!([
+            gl21::NEVER,
+            gl21::LESS,
+            gl21::EQUAL,
+            gl21::LEQUAL,
+            gl21::GREATER,
+            gl21::NOTEQUAL,
+            gl21::GEQUAL,
+            gl21::ALWAYS
+        ]
+        .contains(&func));
+        gl21::AlphaFunc(func, ref_)
+    }
+    unsafe fn AlphaFuncx(&mut self, func: GLenum, ref_: GLclampx) {
+        self.AlphaFunc(func, fixed_to_float(ref_))
+    }
     unsafe fn BlendFunc(&mut self, sfactor: GLenum, dfactor: GLenum) {
         assert!([
             gl21::ZERO,
@@ -152,6 +175,131 @@ impl GLES for GLES1OnGL2 {
     unsafe fn ShadeModel(&mut self, mode: GLenum) {
         assert!(mode == gl21::FLAT || mode == gl21::SMOOTH);
         gl21::ShadeModel(mode);
+    }
+    unsafe fn Scissor(&mut self, x: GLint, y: GLint, width: GLsizei, height: GLsizei) {
+        gl21::Scissor(x, y, width, height)
+    }
+    unsafe fn Viewport(&mut self, x: GLint, y: GLint, width: GLsizei, height: GLsizei) {
+        gl21::Viewport(x, y, width, height)
+    }
+
+    // Pointers
+    unsafe fn ColorPointer(
+        &mut self,
+        size: GLint,
+        type_: GLenum,
+        stride: GLsizei,
+        pointer: *const GLvoid,
+    ) {
+        assert!(size == 4);
+        // TODO: fixed-point
+        assert!(type_ == gl21::UNSIGNED_BYTE || type_ == gl21::FLOAT);
+        gl21::ColorPointer(size, type_, stride, pointer)
+    }
+    unsafe fn NormalPointer(&mut self, type_: GLenum, stride: GLsizei, pointer: *const GLvoid) {
+        // TODO: fixed-point
+        assert!(type_ == gl21::BYTE || type_ == gl21::SHORT || type_ == gl21::FLOAT);
+        gl21::NormalPointer(type_, stride, pointer)
+    }
+    unsafe fn TexCoordPointer(
+        &mut self,
+        size: GLint,
+        type_: GLenum,
+        stride: GLsizei,
+        pointer: *const GLvoid,
+    ) {
+        assert!(size == 2 || size == 3 || size == 4);
+        // TODO: byte and fixed-point
+        assert!(type_ == gl21::SHORT || type_ == gl21::FLOAT);
+        gl21::TexCoordPointer(size, type_, stride, pointer)
+    }
+    unsafe fn VertexPointer(
+        &mut self,
+        size: GLint,
+        type_: GLenum,
+        stride: GLsizei,
+        pointer: *const GLvoid,
+    ) {
+        assert!(size == 2 || size == 3 || size == 4);
+        // TODO: byte and fixed-point
+        assert!(type_ == gl21::SHORT || type_ == gl21::FLOAT);
+        gl21::VertexPointer(size, type_, stride, pointer)
+    }
+
+    // Drawing
+    unsafe fn DrawArrays(&mut self, mode: GLenum, first: GLint, count: GLsizei) {
+        assert!([
+            gl21::POINTS,
+            gl21::LINE_STRIP,
+            gl21::LINE_LOOP,
+            gl21::LINES,
+            gl21::TRIANGLE_STRIP,
+            gl21::TRIANGLE_FAN,
+            gl21::TRIANGLES
+        ]
+        .contains(&mode));
+        gl21::DrawArrays(mode, first, count);
+    }
+    unsafe fn DrawElements(
+        &mut self,
+        mode: GLenum,
+        count: GLsizei,
+        type_: GLenum,
+        indices: *const GLvoid,
+    ) {
+        assert!([
+            gl21::POINTS,
+            gl21::LINE_STRIP,
+            gl21::LINE_LOOP,
+            gl21::LINES,
+            gl21::TRIANGLE_STRIP,
+            gl21::TRIANGLE_FAN,
+            gl21::TRIANGLES
+        ]
+        .contains(&mode));
+        assert!(type_ == gl21::UNSIGNED_BYTE || type_ == gl21::UNSIGNED_SHORT);
+        gl21::DrawElements(mode, count, type_, indices);
+    }
+
+    // Clearing
+    unsafe fn Clear(&mut self, mask: GLbitfield) {
+        assert!(
+            mask & !(gl21::COLOR_BUFFER_BIT | gl21::DEPTH_BUFFER_BIT | gl21::STENCIL_BUFFER_BIT)
+                == 0
+        );
+        gl21::Clear(mask)
+    }
+    unsafe fn ClearColor(
+        &mut self,
+        red: GLclampf,
+        green: GLclampf,
+        blue: GLclampf,
+        alpha: GLclampf,
+    ) {
+        gl21::ClearColor(red, green, blue, alpha)
+    }
+    unsafe fn ClearColorx(
+        &mut self,
+        red: GLclampx,
+        green: GLclampx,
+        blue: GLclampx,
+        alpha: GLclampx,
+    ) {
+        gl21::ClearColor(
+            fixed_to_float(red),
+            fixed_to_float(green),
+            fixed_to_float(blue),
+            fixed_to_float(alpha),
+        )
+    }
+    unsafe fn ClearDepthf(&mut self, depth: GLclampf) {
+        gl21::ClearDepth(depth.into())
+    }
+    unsafe fn ClearDepthx(&mut self, depth: GLclampx) {
+        self.ClearDepthf(fixed_to_float(depth))
+    }
+    unsafe fn ClearStencil(&mut self, s: GLint) {
+        gl21::ClearStencil(s)
     }
 
     // Textures

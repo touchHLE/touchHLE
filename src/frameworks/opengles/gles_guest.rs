@@ -75,7 +75,7 @@ fn glGetIntegerv(env: &mut Environment, pname: GLenum, params: MutPtr<GLint>) {
         // This function family can return a huge number of things.
         // TODO: support more possible values.
         let param_count = match pname {
-            gles11::TEXTURE_BINDING_2D => 1,
+            gles11::MATRIX_MODE | gles11::TEXTURE_BINDING_2D => 1,
             _ => unimplemented!("pname value {:#x}", pname),
         };
         let params = mem.ptr_at_mut(params, param_count);
@@ -84,6 +84,12 @@ fn glGetIntegerv(env: &mut Environment, pname: GLenum, params: MutPtr<GLint>) {
 }
 
 // Other state manipulation
+fn glAlphaFunc(env: &mut Environment, func: GLenum, ref_: GLclampf) {
+    with_ctx_and_mem(env, |gles, _mem| unsafe { gles.AlphaFunc(func, ref_) })
+}
+fn glAlphaFuncx(env: &mut Environment, func: GLenum, ref_: GLclampx) {
+    with_ctx_and_mem(env, |gles, _mem| unsafe { gles.AlphaFuncx(func, ref_) })
+}
 fn glBlendFunc(env: &mut Environment, sfactor: GLenum, dfactor: GLenum) {
     with_ctx_and_mem(env, |gles, _mem| unsafe {
         gles.BlendFunc(sfactor, dfactor)
@@ -91,6 +97,136 @@ fn glBlendFunc(env: &mut Environment, sfactor: GLenum, dfactor: GLenum) {
 }
 fn glShadeModel(env: &mut Environment, mode: GLenum) {
     with_ctx_and_mem(env, |gles, _mem| unsafe { gles.ShadeModel(mode) })
+}
+fn glScissor(env: &mut Environment, x: GLint, y: GLint, width: GLsizei, height: GLsizei) {
+    with_ctx_and_mem(env, |gles, _mem| unsafe {
+        gles.Scissor(x, y, width, height)
+    })
+}
+fn glViewport(env: &mut Environment, x: GLint, y: GLint, width: GLsizei, height: GLsizei) {
+    with_ctx_and_mem(env, |gles, _mem| unsafe {
+        gles.Viewport(x, y, width, height)
+    })
+}
+
+// Pointers
+
+/// One of the ugliest things in OpenGL is that, depending on dynamic state, the
+/// pointer parameter of certain functions is either a pointer or an offset!
+unsafe fn translate_pointer_or_offset(
+    gles: &mut dyn GLES,
+    mem: &Mem,
+    pointer_or_offset: ConstVoidPtr,
+    which_binding: GLenum,
+) -> *const GLvoid {
+    let mut buffer_binding = 0;
+    gles.GetIntegerv(which_binding, &mut buffer_binding);
+    if buffer_binding != 0 {
+        let offset = pointer_or_offset.to_bits();
+        offset as usize as *const _
+    } else {
+        let pointer = pointer_or_offset;
+        // bounds checking is hopeless here
+        mem.ptr_at(pointer.cast::<u8>(), 0).cast::<GLvoid>()
+    }
+}
+
+fn glColorPointer(
+    env: &mut Environment,
+    size: GLint,
+    type_: GLenum,
+    stride: GLsizei,
+    pointer: ConstVoidPtr,
+) {
+    with_ctx_and_mem(env, |gles, mem| unsafe {
+        let pointer = translate_pointer_or_offset(gles, mem, pointer, gles11::ARRAY_BUFFER_BINDING);
+        gles.ColorPointer(size, type_, stride, pointer)
+    })
+}
+fn glNormalPointer(env: &mut Environment, type_: GLenum, stride: GLsizei, pointer: ConstVoidPtr) {
+    with_ctx_and_mem(env, |gles, mem| unsafe {
+        let pointer = translate_pointer_or_offset(gles, mem, pointer, gles11::ARRAY_BUFFER_BINDING);
+        gles.NormalPointer(type_, stride, pointer)
+    })
+}
+fn glTexCoordPointer(
+    env: &mut Environment,
+    size: GLint,
+    type_: GLenum,
+    stride: GLsizei,
+    pointer: ConstVoidPtr,
+) {
+    with_ctx_and_mem(env, |gles, mem| unsafe {
+        let pointer = translate_pointer_or_offset(gles, mem, pointer, gles11::ARRAY_BUFFER_BINDING);
+        gles.TexCoordPointer(size, type_, stride, pointer)
+    })
+}
+fn glVertexPointer(
+    env: &mut Environment,
+    size: GLint,
+    type_: GLenum,
+    stride: GLsizei,
+    pointer: ConstVoidPtr,
+) {
+    with_ctx_and_mem(env, |gles, mem| unsafe {
+        let pointer = translate_pointer_or_offset(gles, mem, pointer, gles11::ARRAY_BUFFER_BINDING);
+        gles.VertexPointer(size, type_, stride, pointer)
+    })
+}
+
+// Drawing
+fn glDrawArrays(env: &mut Environment, mode: GLenum, first: GLint, count: GLsizei) {
+    with_ctx_and_mem(env, |gles, _mem| unsafe {
+        gles.DrawArrays(mode, first, count)
+    })
+}
+fn glDrawElements(
+    env: &mut Environment,
+    mode: GLenum,
+    count: GLsizei,
+    type_: GLenum,
+    indices: ConstVoidPtr,
+) {
+    with_ctx_and_mem(env, |gles, mem| unsafe {
+        let indices = translate_pointer_or_offset(gles, mem, indices, gles11::ELEMENT_ARRAY_BUFFER);
+        gles.DrawElements(mode, count, type_, indices)
+    })
+}
+
+// Clearing
+fn glClear(env: &mut Environment, mask: GLbitfield) {
+    with_ctx_and_mem(env, |gles, _mem| unsafe { gles.Clear(mask) });
+}
+fn glClearColor(
+    env: &mut Environment,
+    red: GLclampf,
+    green: GLclampf,
+    blue: GLclampf,
+    alpha: GLclampf,
+) {
+    with_ctx_and_mem(env, |gles, _mem| unsafe {
+        gles.ClearColor(red, green, blue, alpha)
+    });
+}
+fn glClearColorx(
+    env: &mut Environment,
+    red: GLclampx,
+    green: GLclampx,
+    blue: GLclampx,
+    alpha: GLclampx,
+) {
+    with_ctx_and_mem(env, |gles, _mem| unsafe {
+        gles.ClearColorx(red, green, blue, alpha)
+    });
+}
+fn glClearDepthf(env: &mut Environment, depth: GLclampf) {
+    with_ctx_and_mem(env, |gles, _mem| unsafe { gles.ClearDepthf(depth) });
+}
+fn glClearDepthx(env: &mut Environment, depth: GLclampx) {
+    with_ctx_and_mem(env, |gles, _mem| unsafe { gles.ClearDepthx(depth) });
+}
+fn glClearStencil(env: &mut Environment, s: GLint) {
+    with_ctx_and_mem(env, |gles, _mem| unsafe { gles.ClearStencil(s) });
 }
 
 // Matrix stack operations
@@ -357,8 +493,27 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(glDisableClientState(_)),
     export_c_func!(glGetIntegerv(_, _)),
     // Other state manipulation
+    export_c_func!(glAlphaFunc(_, _)),
+    export_c_func!(glAlphaFuncx(_, _)),
     export_c_func!(glBlendFunc(_, _)),
     export_c_func!(glShadeModel(_)),
+    export_c_func!(glScissor(_, _, _, _)),
+    export_c_func!(glViewport(_, _, _, _)),
+    // Pointers
+    export_c_func!(glColorPointer(_, _, _, _)),
+    export_c_func!(glNormalPointer(_, _, _)),
+    export_c_func!(glTexCoordPointer(_, _, _, _)),
+    export_c_func!(glVertexPointer(_, _, _, _)),
+    // Drawing
+    export_c_func!(glDrawArrays(_, _, _)),
+    export_c_func!(glDrawElements(_, _, _, _)),
+    // Clearing
+    export_c_func!(glClear(_)),
+    export_c_func!(glClearColor(_, _, _, _)),
+    export_c_func!(glClearColorx(_, _, _, _)),
+    export_c_func!(glClearDepthf(_)),
+    export_c_func!(glClearDepthx(_)),
+    export_c_func!(glClearStencil(_)),
     // Matrix stack operations
     export_c_func!(glMatrixMode(_)),
     export_c_func!(glLoadIdentity()),

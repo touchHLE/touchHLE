@@ -23,8 +23,66 @@ pub trait GLES {
     unsafe fn GetIntegerv(&mut self, pname: GLenum, params: *mut GLint);
 
     // Other state manipulation
+    unsafe fn AlphaFunc(&mut self, func: GLenum, ref_: GLclampf);
+    unsafe fn AlphaFuncx(&mut self, func: GLenum, ref_: GLclampx);
     unsafe fn BlendFunc(&mut self, sfactor: GLenum, dfactor: GLenum);
     unsafe fn ShadeModel(&mut self, mode: GLenum);
+    unsafe fn Scissor(&mut self, x: GLint, y: GLint, width: GLsizei, height: GLsizei);
+    unsafe fn Viewport(&mut self, x: GLint, y: GLint, width: GLsizei, height: GLsizei);
+
+    // Pointers
+    unsafe fn ColorPointer(
+        &mut self,
+        size: GLint,
+        type_: GLenum,
+        stride: GLsizei,
+        pointer: *const GLvoid,
+    );
+    unsafe fn NormalPointer(&mut self, type_: GLenum, stride: GLsizei, pointer: *const GLvoid);
+    unsafe fn TexCoordPointer(
+        &mut self,
+        size: GLint,
+        type_: GLenum,
+        stride: GLsizei,
+        pointer: *const GLvoid,
+    );
+    unsafe fn VertexPointer(
+        &mut self,
+        size: GLint,
+        type_: GLenum,
+        stride: GLsizei,
+        pointer: *const GLvoid,
+    );
+
+    // Drawing
+    unsafe fn DrawArrays(&mut self, mode: GLenum, first: GLint, count: GLsizei);
+    unsafe fn DrawElements(
+        &mut self,
+        mode: GLenum,
+        count: GLsizei,
+        type_: GLenum,
+        indices: *const GLvoid,
+    );
+
+    // Clearing
+    unsafe fn Clear(&mut self, mask: GLbitfield);
+    unsafe fn ClearColor(
+        &mut self,
+        red: GLclampf,
+        green: GLclampf,
+        blue: GLclampf,
+        alpha: GLclampf,
+    );
+    unsafe fn ClearColorx(
+        &mut self,
+        red: GLclampx,
+        green: GLclampx,
+        blue: GLclampx,
+        alpha: GLclampx,
+    );
+    unsafe fn ClearDepthf(&mut self, depth: GLclampf);
+    unsafe fn ClearDepthx(&mut self, depth: GLclampx);
+    unsafe fn ClearStencil(&mut self, s: GLint);
 
     // Textures
     unsafe fn GenTextures(&mut self, n: GLsizei, textures: *mut GLuint);

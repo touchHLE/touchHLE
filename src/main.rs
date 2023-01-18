@@ -278,23 +278,12 @@ impl Environment {
     }
 
     fn run_inner(&mut self, root: bool) {
-        let mut events = Vec::new(); // re-use each iteration for efficiency
         loop {
-            self.window.poll_for_events(&mut events);
-            #[allow(clippy::never_loop)]
-            for event in events.drain(..) {
-                #[allow(clippy::single_match)]
-                match event {
-                    window::Event::Quit => {
-                        println!("User requested quit, exiting.");
-                        if root {
-                            return;
-                        } else {
-                            panic!("Quit.");
-                        }
-                    }
-                }
-            }
+            // We need to poll for events occasionally during CPU execution so
+            // that the host OS doesn't consider touchHLE unresponsive.
+            // This is not free so we should avoid doing it too often.
+            // 100,000 ticks is an arbitrary number.
+            self.window.poll_for_events();
 
             let mut ticks = 100_000;
             while ticks > 0 {

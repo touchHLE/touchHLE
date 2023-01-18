@@ -7,6 +7,7 @@ use crate::frameworks::core_foundation::cf_run_loop::{
     kCFRunLoopCommonModes, kCFRunLoopDefaultMode, CFRunLoopRef,
 };
 use crate::objc::{id, msg, objc_classes, retain, ClassExports, HostObject};
+use crate::window::Event;
 use crate::Environment;
 
 /// `NSString*`
@@ -65,7 +66,6 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 // TODO: more accessors
-// TODO: actually be able to run the run loop
 
 - (id) retain { this }
 - (()) release {}
@@ -92,6 +92,11 @@ pub const CLASSES: ClassExports = objc_classes! {
     ns_timer::set_run_loop(env, timer, this);
 }
 
+- (())run {
+    run_run_loop(env, this);
+}
+// TODO: other run methods
+
 @end
 
 };
@@ -105,4 +110,20 @@ pub fn add_audio_queue(env: &mut Environment, run_loop: id, queue: AudioQueueRef
         .borrow_mut::<NSRunLoopHostObject>(run_loop)
         .audio_queues
         .push(queue);
+}
+
+fn run_run_loop(env: &mut Environment, run_loop: id) {
+    log_dbg!("Entering run loop {:?} (indefinitely)", run_loop);
+
+    loop {
+        env.window.poll_for_events();
+
+        while let Some(event) = env.window.pop_event() {
+            // FIXME: tell the app when we're about to quit
+            let Event::Quit = event;
+            panic!("User requested quit, exiting.");
+        }
+
+        // TODO: handle timers and audio queues
+    }
 }

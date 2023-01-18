@@ -17,6 +17,7 @@ use matrix::Matrix;
 use crate::image::Image;
 use sdl2::pixels::PixelFormatEnum;
 use sdl2::surface::Surface;
+use std::collections::VecDeque;
 use std::f32::consts::FRAC_PI_2;
 
 #[derive(Copy, Clone, Eq, PartialEq)]
@@ -61,6 +62,7 @@ pub struct Window {
     video_ctx: sdl2::VideoSubsystem,
     window: sdl2::video::Window,
     event_pump: sdl2::EventPump,
+    event_queue: VecDeque<Event>,
     splash_image_and_gl_ctx: Option<(Image, GLContext)>,
     device_orientation: DeviceOrientation,
     app_gl_ctx_no_longer_current: bool,
@@ -109,6 +111,7 @@ impl Window {
             video_ctx,
             window,
             event_pump,
+            event_queue: VecDeque::new(),
             splash_image_and_gl_ctx,
             device_orientation: DeviceOrientation::Portrait,
             app_gl_ctx_no_longer_current: false,
@@ -117,15 +120,22 @@ impl Window {
         window
     }
 
-    pub fn poll_for_events(&mut self, events: &mut Vec<Event>) {
+    /// Poll for events from the OS. This needs to be done reasonably often
+    /// (60Hz is probably fine) so that the host OS doesn't consider touchHLE
+    /// to be unresponsive. Note that events are not returned by this function,
+    /// since we often need to defer actually handling them.
+    pub fn poll_for_events(&mut self) {
         for event in self.event_pump.poll_iter() {
             use sdl2::event::Event as E;
-            #[allow(clippy::single_match)]
-            match event {
-                E::Quit { .. } => events.push(Event::Quit),
-                _ => (),
+            if let E::Quit { .. } = event {
+                self.event_queue.push_back(Event::Quit);
             }
         }
+    }
+
+    /// Pop an event from the queue (in FIFO order)
+    pub fn pop_event(&mut self) -> Option<Event> {
+        self.event_queue.pop_front()
     }
 
     pub fn create_gl_context(&mut self, version: GLVersion) -> GLContext {

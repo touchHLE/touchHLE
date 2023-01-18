@@ -142,5 +142,11 @@ pub(super) fn UIApplicationMain(
     // TODO: Are there more messages we need to send?
     // TODO: Send UIApplicationDidFinishLaunchingNotification?
 
-    unimplemented!("Send more messages and enter main loop");
+    // TODO: It might be nicer to return from this function (even though it's
+    // conceptually noreturn) and set some global flag that changes how the
+    // execution works from this point onwards, though the only real advantages
+    // would be a prettier backtrace and maybe the quit button not having to
+    // panic.
+    let run_loop: id = msg_class![env; NSRunLoop mainRunLoop];
+    let _: () = msg![env; run_loop run];
 }

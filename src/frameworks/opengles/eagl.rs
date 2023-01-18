@@ -58,7 +58,6 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 + (bool)setCurrentContext:(id)context { // EAGLContext*
-    assert!(context != nil); // TODO: nil handling
     assert!(env.current_thread == 0); // TODO: per-thread contexts
 
     retain(env, context);
@@ -74,10 +73,12 @@ pub const CLASSES: ClassExports = objc_classes! {
         release(env, old_eagl);
     }
 
-    let host_obj = env.objc.borrow_mut::<EAGLContextHostObject>(context);
-    let gles_ctx = std::mem::take(&mut host_obj.gles_ctx).unwrap();
-    gles_ctx.make_current(&mut env.window);
-    env.framework_state.opengles.current_ctx = Some((context, gles_ctx));
+    if context != nil {
+        let host_obj = env.objc.borrow_mut::<EAGLContextHostObject>(context);
+        let gles_ctx = std::mem::take(&mut host_obj.gles_ctx).unwrap();
+        gles_ctx.make_current(&mut env.window);
+        env.framework_state.opengles.current_ctx = Some((context, gles_ctx));
+    }
 
     true
 }

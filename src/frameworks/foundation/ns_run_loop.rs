@@ -1,4 +1,7 @@
 //! `NSRunLoop`.
+//!
+//! Resources:
+//! - Apple's [Threading Programming Guide](https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/Multithreading/Introduction/Introduction.html)
 
 use super::{ns_string, ns_timer};
 use crate::dyld::{ConstantExports, HostConstant};

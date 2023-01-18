@@ -61,7 +61,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     assert!(context != nil); // TODO: nil handling
     assert!(env.current_thread == 0); // TODO: per-thread contexts
 
-    retain(env, this);
+    retain(env, context);
 
     // Clear flag value, we're changing context anyway.
     let _ = env.window.is_app_gl_ctx_no_longer_current();
@@ -77,7 +77,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     let host_obj = env.objc.borrow_mut::<EAGLContextHostObject>(context);
     let gles_ctx = std::mem::take(&mut host_obj.gles_ctx).unwrap();
     gles_ctx.make_current(&mut env.window);
-    env.framework_state.opengles.current_ctx = Some((this, gles_ctx));
+    env.framework_state.opengles.current_ctx = Some((context, gles_ctx));
 
     true
 }

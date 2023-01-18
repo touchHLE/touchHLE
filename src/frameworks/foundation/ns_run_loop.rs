@@ -9,7 +9,7 @@ use crate::frameworks::audio_toolbox::audio_queue::AudioQueueRef;
 use crate::frameworks::core_foundation::cf_run_loop::{
     kCFRunLoopCommonModes, kCFRunLoopDefaultMode, CFRunLoopRef,
 };
-use crate::objc::{id, msg, objc_classes, retain, ClassExports, HostObject};
+use crate::objc::{id, msg, objc_classes, release, retain, ClassExports, HostObject};
 use crate::window::Event;
 use crate::Environment;
 
@@ -37,8 +37,10 @@ pub struct State {
 
 struct NSRunLoopHostObject {
     /// Weak reference. Audio queue must remove itself when destroyed (TODO).
+    /// They are in no particular order.
     audio_queues: Vec<AudioQueueRef>,
-    /// Strong references to `NSTimer*`. Timers are owned by the run loop.
+    /// Strong references to `NSTimer*` in no particular order. Timers are owned
+    /// by the run loop. The timer must remove itself when invalidated.
     timers: Vec<id>,
 }
 impl HostObject for NSRunLoopHostObject {}
@@ -115,8 +117,32 @@ pub fn add_audio_queue(env: &mut Environment, run_loop: id, queue: AudioQueueRef
         .push(queue);
 }
 
+/// For use by NSTimer so it can remove itself once it's invalidated.
+pub(super) fn remove_timer(env: &mut Environment, run_loop: id, timer: id) {
+    let NSRunLoopHostObject { timers, .. } = env.objc.borrow_mut(run_loop);
+
+    let mut i = 0;
+    let mut release_count = 0;
+    while i < timers.len() {
+        if timers[i] == timer {
+            timers.swap_remove(i);
+            release_count += 1;
+        } else {
+            i += 1;
+        }
+    }
+    assert!(release_count == 1); // TODO?
+    for _ in 0..release_count {
+        release(env, timer);
+    }
+}
+
 fn run_run_loop(env: &mut Environment, run_loop: id) {
     log_dbg!("Entering run loop {:?} (indefinitely)", run_loop);
+
+    // Temporary vectors used to track timers without needing a reference to the
+    // environment or to lock the object. Re-used each iteration for efficiency.
+    let mut timers_tmp = Vec::new();
 
     loop {
         env.window.poll_for_events();
@@ -127,6 +153,13 @@ fn run_run_loop(env: &mut Environment, run_loop: id) {
             panic!("User requested quit, exiting.");
         }
 
-        // TODO: handle timers and audio queues
+        assert!(timers_tmp.is_empty());
+        timers_tmp.extend_from_slice(&env.objc.borrow::<NSRunLoopHostObject>(run_loop).timers);
+
+        for timer in timers_tmp.drain(..) {
+            ns_timer::handle_timer(env, timer);
+        }
+
+        // TODO: handle audio queues
     }
 }

@@ -64,12 +64,12 @@ pub fn make_gl_context_current(
     }
 }
 
-pub unsafe fn display_image(image: &Image, viewport: (u32, u32), rotation: &Matrix<2>) {
+pub unsafe fn display_image(image: &Image, viewport_offset: (u32, u32), viewport_size: (u32, u32), rotation: &Matrix<2>) {
     gl::Viewport(
-        0,
-        0,
-        viewport.0.try_into().unwrap(),
-        viewport.1.try_into().unwrap(),
+        viewport_offset.0.try_into().unwrap(),
+        viewport_offset.1.try_into().unwrap(),
+        viewport_size.0.try_into().unwrap(),
+        viewport_size.1.try_into().unwrap(),
     );
 
     let src_pixels = image.pixels();

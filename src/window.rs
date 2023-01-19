@@ -63,6 +63,10 @@ pub struct Window {
     window: sdl2::video::Window,
     event_pump: sdl2::EventPump,
     event_queue: VecDeque<Event>,
+    #[cfg(target_os = "macos")]
+    max_height: u32,
+    #[cfg(target_os = "macos")]
+    viewport_y_offset: u32,
     splash_image_and_gl_ctx: Option<(Image, GLContext)>,
     device_orientation: DeviceOrientation,
     app_gl_ctx_no_longer_current: bool,
@@ -112,6 +116,10 @@ impl Window {
             window,
             event_pump,
             event_queue: VecDeque::new(),
+            #[cfg(target_os = "macos")]
+            max_height: height,
+            #[cfg(target_os = "macos")]
+            viewport_y_offset: 0,
             splash_image_and_gl_ctx,
             device_orientation: DeviceOrientation::Portrait,
             app_gl_ctx_no_longer_current: false,
@@ -163,12 +171,16 @@ impl Window {
         };
 
         let matrix = self.content_rotation_matrix();
-        let viewport = size_for_orientation(self.device_orientation);
+        let viewport_size = size_for_orientation(self.device_orientation);
+        #[cfg(target_os = "macos")]
+        let viewport_offset = (0, self.viewport_y_offset);
+        #[cfg(not(target_os = "macos"))]
+        let viewport_offset = (0, 0);
 
         self.app_gl_ctx_no_longer_current = true;
 
         gl::make_gl_context_current(&self.video_ctx, &self.window, gl_ctx);
-        unsafe { gl::display_image(image, viewport, &matrix) };
+        unsafe { gl::display_image(image, viewport_offset, viewport_size, &matrix) };
         self.window.gl_swap_window();
 
         // hold onto GL context so the image doesn't disappear, and hold
@@ -186,18 +198,25 @@ impl Window {
         }
 
         let (width, height) = size_for_orientation(new_orientation);
+
+        // macOS quirk: when resizing the window, the new framebuffer's size is
+        // apparently max(new_size, old_size) in each dimension, but the
+        // viewport is positioned wrong on the y axis for some reason, so we
+        // need to apply an offset.
+        // Recreating the OpenGL context was an alternative workaround, but that
+        // apparently stops other OpenGL contexts drawing to the framebuffer!
+        #[cfg(target_os = "macos")]
+        {
+            let (_old_width, old_height) = self.window.size();
+            self.max_height = self.max_height.max(old_height).max(height);
+            self.viewport_y_offset = self.max_height - height;
+        }
+
         self.window.set_size(width, height).unwrap();
 
         self.device_orientation = new_orientation;
 
-        if let Some((image, gl_ctx)) = self.splash_image_and_gl_ctx.take() {
-            // macOS quirk: resizing the window makes the OpenGL framebuffer be
-            // displayed in the wrong part of the window. Recreating the context
-            // seems to fix this?
-            std::mem::drop(gl_ctx);
-            let gl_ctx = gl::create_gl_context(&self.video_ctx, &self.window, GLVersion::GL32Core);
-            self.splash_image_and_gl_ctx = Some((image, gl_ctx));
-
+        if self.splash_image_and_gl_ctx.is_some() {
             self.display_splash();
         }
     }

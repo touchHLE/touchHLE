@@ -38,7 +38,7 @@ unsafe fn matrix_fixed_to_float(m: *const gles11::types::GLfixed) -> [GLfloat; 1
 /// just providing the minimum.
 ///
 /// TODO: GL_POINT_SPRITE_OES?
-const CAPABILITIES: &[GLenum] = &[
+pub(super) const CAPABILITIES: &[GLenum] = &[
     gl21::ALPHA_TEST,
     gl21::BLEND,
     gl21::COLOR_LOGIC_OP,
@@ -74,7 +74,7 @@ const CAPABILITIES: &[GLenum] = &[
 /// List of client-side capabilities shared by OpenGL ES 1.1 and OpenGL 2.1.
 ///
 /// TODO: GL_POINT_SIZE_ARRAY_OES?
-const CLIENT_CAPABILITIES: &[GLenum] = &[
+pub(super) const CLIENT_CAPABILITIES: &[GLenum] = &[
     gl21::COLOR_ARRAY,
     gl21::NORMAL_ARRAY,
     gl21::TEXTURE_COORD_ARRAY,

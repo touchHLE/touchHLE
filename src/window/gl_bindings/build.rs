@@ -16,7 +16,7 @@ fn main() {
         (2, 1),
         Profile::Compatibility,
         Fallbacks::None,
-        ["GL_EXT_framebuffer_object"],
+        ["GL_EXT_framebuffer_object", "GL_EXT_framebuffer_blit"],
     )
     .write_bindings(GlobalGenerator, &mut file)
     .unwrap();

@@ -17,6 +17,16 @@ impl<const N: usize> Matrix<N> {
     pub fn columns(&self) -> &[[f32; N]; N] {
         &self.0
     }
+
+    pub fn from<const M: usize>(other: &Matrix<M>) -> Self {
+        let mut new = Self::identity();
+        for i in 0..M {
+            for j in 0..M {
+                new.0[i][j] = other.0[i][j];
+            }
+        }
+        new
+    }
 }
 
 impl Matrix<2> {

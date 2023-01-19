@@ -12,7 +12,7 @@ mod gl;
 mod matrix;
 
 pub use gl::{gl21compat, gl32core, gles11, GLContext, GLVersion};
-use matrix::Matrix;
+pub use matrix::Matrix;
 
 use crate::image::Image;
 use sdl2::pixels::PixelFormatEnum;
@@ -171,11 +171,8 @@ impl Window {
         };
 
         let matrix = self.content_rotation_matrix();
-        let viewport_size = size_for_orientation(self.device_orientation);
-        #[cfg(target_os = "macos")]
-        let viewport_offset = (0, self.viewport_y_offset);
-        #[cfg(not(target_os = "macos"))]
-        let viewport_offset = (0, 0);
+        let viewport_size = self.size_in_current_orientation();
+        let viewport_offset = (0, self.viewport_y_offset());
 
         self.app_gl_ctx_no_longer_current = true;
 
@@ -185,6 +182,12 @@ impl Window {
 
         // hold onto GL context so the image doesn't disappear, and hold
         // onto image so we can rotate later if necessary
+    }
+
+    /// Swap front-buffer and back-buffer so the result of OpenGL rendering is
+    /// presented.
+    pub fn swap_window(&mut self) {
+        self.window.gl_swap_window();
     }
 
     /// Consider the emulated device to be rotated to a particular orientation.
@@ -221,9 +224,22 @@ impl Window {
         }
     }
 
+    /// Get the size in pixels of the window. The aspect ratio reflects the
+    /// orientation passed to [Self::rotate_device].
+    pub fn size_in_current_orientation(&self) -> (u32, u32) {
+        size_for_orientation(self.device_orientation)
+    }
+
+    pub fn viewport_y_offset(&self) -> u32 {
+        #[cfg(target_os = "macos")]
+        return self.viewport_y_offset;
+        #[cfg(not(target_os = "macos"))]
+        return 0;
+    }
+
     /// Get a transformation matrix that can be applied to the content presented
     /// by the app to make it appear upright.
-    fn content_rotation_matrix(&self) -> Matrix<2> {
+    pub fn content_rotation_matrix(&self) -> Matrix<2> {
         match self.device_orientation {
             DeviceOrientation::Portrait => Matrix::identity(),
             DeviceOrientation::LandscapeLeft => Matrix::z_rotation(-FRAC_PI_2),

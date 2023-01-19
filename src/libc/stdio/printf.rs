@@ -4,6 +4,7 @@ use crate::abi::VAList;
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::mem::{ConstPtr, MutPtr};
 use crate::Environment;
+use std::io::Write;
 
 fn printf_inner(env: &mut Environment, format: ConstPtr<u8>, mut args: VAList) -> Vec<u8> {
     log_dbg!(
@@ -71,6 +72,15 @@ fn sprintf(env: &mut Environment, dest: MutPtr<u8>, format: ConstPtr<u8>, args: 
     res.len().try_into().unwrap()
 }
 
+fn printf(env: &mut Environment, format: ConstPtr<u8>, args: VAList) -> i32 {
+    let res = printf_inner(env, format, args);
+    let _ = std::io::stdout().write_all(&res);
+    res.len().try_into().unwrap()
+}
+
 // TODO: more printf variants
 
-pub const FUNCTIONS: FunctionExports = &[export_c_func!(sprintf(_, _, _))];
+pub const FUNCTIONS: FunctionExports = &[
+    export_c_func!(sprintf(_, _, _)),
+    export_c_func!(printf(_, _)),
+];

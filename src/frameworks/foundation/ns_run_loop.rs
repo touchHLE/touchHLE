@@ -151,7 +151,8 @@ fn run_run_loop(env: &mut Environment, run_loop: id) {
         while let Some(event) = env.window.pop_event() {
             // FIXME: tell the app when we're about to quit
             let Event::Quit = event;
-            panic!("User requested quit, exiting.");
+            println!("User requested quit, exiting.");
+            std::process::exit(0);
         }
 
         assert!(timers_tmp.is_empty());

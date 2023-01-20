@@ -25,7 +25,7 @@ const STEP_SIZE_TABLE: &[u16] = &[
 
 /// Decode a 34-byte IMA4 ADPCM packet to 16-bit signed integer PCM.
 ///
-/// The packet is always a single channel. For stereo, the the packets alternate
+/// The packet is always a single channel. For stereo, the packets alternate
 /// between left and right, such that the first packet is for the left channel
 /// and every other packet is for the right channel.
 pub fn decode_ima4(in_packet: &[u8; 34]) -> [i16; 64] {

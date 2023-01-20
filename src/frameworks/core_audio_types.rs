@@ -18,7 +18,7 @@ pub fn debug_fourcc(fourcc: u32) -> String {
     }
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Copy, Clone)]
 #[repr(C, packed)]
 pub struct AudioStreamBasicDescription {
     // Hz
@@ -33,6 +33,46 @@ pub struct AudioStreamBasicDescription {
     pub _reserved: u32,
 }
 unsafe impl SafeRead for AudioStreamBasicDescription {}
+impl std::fmt::Debug for AudioStreamBasicDescription {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let &AudioStreamBasicDescription {
+            sample_rate,
+            format_id,
+            format_flags,
+            bytes_per_packet,
+            frames_per_packet,
+            bytes_per_frame,
+            channels_per_frame,
+            bits_per_channel,
+            _reserved,
+        } = self;
+        f.debug_struct("AudioStreamBasicDescription")
+            .field("sample_rate", &sample_rate)
+            .field("format_id", &debug_fourcc(format_id))
+            .field("format_flags", &{
+                let mut flags = Vec::new();
+                if (format_flags & kAudioFormatFlagIsFloat) != 0 {
+                    flags.push("kAudioFormatFlagIsFloat");
+                }
+                if (format_flags & kAudioFormatFlagIsBigEndian) != 0 {
+                    flags.push("kAudioFormatFlagIsBigEndian");
+                }
+                if (format_flags & kAudioFormatFlagIsSignedInteger) != 0 {
+                    flags.push("kAudioFormatFlagIsSignedInteger");
+                }
+                if (format_flags & kAudioFormatFlagIsPacked) != 0 {
+                    flags.push("kAudioFormatFlagIsPacked");
+                }
+                flags
+            })
+            .field("bytes_per_packet", &bytes_per_packet)
+            .field("frames_per_packet", &frames_per_packet)
+            .field("bytes_per_frame", &bytes_per_frame)
+            .field("channels_per_frame", &channels_per_frame)
+            .field("bits_per_channel", &bits_per_channel)
+            .finish()
+    }
+}
 
 /// Usually a FourCC.
 pub type AudioFormatID = u32;

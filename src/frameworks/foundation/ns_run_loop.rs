@@ -5,7 +5,7 @@
 
 use super::{ns_string, ns_timer};
 use crate::dyld::{ConstantExports, HostConstant};
-use crate::frameworks::audio_toolbox::audio_queue::AudioQueueRef;
+use crate::frameworks::audio_toolbox::audio_queue::{handle_audio_queue, AudioQueueRef};
 use crate::frameworks::core_foundation::cf_run_loop::{
     kCFRunLoopCommonModes, kCFRunLoopDefaultMode, CFRunLoopRef,
 };
@@ -140,9 +140,10 @@ pub(super) fn remove_timer(env: &mut Environment, run_loop: id, timer: id) {
 fn run_run_loop(env: &mut Environment, run_loop: id) {
     log_dbg!("Entering run loop {:?} (indefinitely)", run_loop);
 
-    // Temporary vectors used to track timers without needing a reference to the
+    // Temporary vectors used to track things without needing a reference to the
     // environment or to lock the object. Re-used each iteration for efficiency.
     let mut timers_tmp = Vec::new();
+    let mut audio_queues_tmp = Vec::new();
 
     loop {
         env.window.poll_for_events();
@@ -160,6 +161,15 @@ fn run_run_loop(env: &mut Environment, run_loop: id) {
             ns_timer::handle_timer(env, timer);
         }
 
-        // TODO: handle audio queues
+        assert!(audio_queues_tmp.is_empty());
+        audio_queues_tmp.extend_from_slice(
+            &env.objc
+                .borrow::<NSRunLoopHostObject>(run_loop)
+                .audio_queues,
+        );
+
+        for audio_queue in audio_queues_tmp.drain(..) {
+            handle_audio_queue(env, audio_queue);
+        }
     }
 }

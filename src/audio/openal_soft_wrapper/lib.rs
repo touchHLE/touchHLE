@@ -80,6 +80,21 @@ use al_types::*;
 
 pub const AL_NO_ERROR: ALenum = 0;
 
+pub const AL_SOURCE_STATE: ALenum = 0x1010;
+
+pub const AL_INITIAL: ALenum = 0x1011;
+pub const AL_PLAYING: ALenum = 0x1012;
+pub const AL_PAUSED: ALenum = 0x1013;
+pub const AL_STOPPED: ALenum = 0x1014;
+
+pub const AL_BUFFERS_QUEUED: ALenum = 0x1015;
+pub const AL_BUFFERS_PROCESSED: ALenum = 0x1016;
+
+pub const AL_FORMAT_MONO8: ALenum = 0x1100;
+pub const AL_FORMAT_MONO16: ALenum = 0x1101;
+pub const AL_FORMAT_STEREO8: ALenum = 0x1102;
+pub const AL_FORMAT_STEREO16: ALenum = 0x1103;
+
 extern "C" {
     pub fn alGetError() -> ALenum;
 
@@ -88,6 +103,12 @@ extern "C" {
 
     pub fn alSourcef(source: ALuint, param: ALenum, value: ALfloat);
     pub fn alSourcei(source: ALuint, param: ALenum, value: ALint);
+    pub fn alGetSourcei(source: ALuint, param: ALenum, value: *mut ALint);
+
+    pub fn alSourcePlay(source: ALuint);
+
+    pub fn alSourceQueueBuffers(source: ALuint, nb: ALsizei, buffers: *const ALuint);
+    pub fn alSourceUnqueueBuffers(source: ALuint, nb: ALsizei, buffers: *mut ALuint);
 
     pub fn alGenBuffers(n: ALsizei, buffers: *mut ALuint);
     pub fn alDeleteBuffers(n: ALsizei, buffers: *const ALuint);

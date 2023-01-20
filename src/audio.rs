@@ -7,6 +7,9 @@
 //! Resources:
 //! - [Apple Core Audio Format Specification 1.0](https://developer.apple.com/library/archive/documentation/MusicAudio/Reference/CAFSpec/CAF_intro/CAF_intro.html)
 
+mod ima4;
+
+pub use ima4::decode_ima4;
 pub use touchHLE_openal_soft_wrapper as openal;
 
 use crate::fs::{Fs, GuestPath};

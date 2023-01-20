@@ -1,9 +1,17 @@
 //! `AudioQueue.h` (Audio Queue Services)
+//!
+//! The audio playback here is mapped onto OpenAL Soft for convenience.
+//! Apple's implementation probably uses Core Audio instead.
 
-use crate::abi::GuestFunction;
+use crate::abi::{CallFromHost, GuestFunction};
+use crate::audio::decode_ima4;
+use crate::audio::openal as al;
+use crate::audio::openal::al_types::*;
+use crate::audio::openal::alc_types::*;
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::frameworks::core_audio_types::{
-    debug_fourcc, kAudioFormatAppleIMA4, kAudioFormatLinearPCM, AudioStreamBasicDescription,
+    kAudioFormatAppleIMA4, kAudioFormatFlagIsBigEndian, kAudioFormatFlagIsFloat,
+    kAudioFormatFlagIsPacked, kAudioFormatLinearPCM, AudioStreamBasicDescription,
 };
 use crate::frameworks::core_foundation::cf_run_loop::{
     kCFRunLoopCommonModes, CFRunLoopMode, CFRunLoopRef,
@@ -11,7 +19,7 @@ use crate::frameworks::core_foundation::cf_run_loop::{
 use crate::frameworks::foundation::ns_run_loop;
 use crate::frameworks::foundation::ns_string::get_static_str;
 use crate::frameworks::mac_types::OSStatus;
-use crate::mem::{ConstPtr, GuestUSize, MutPtr, MutVoidPtr, Ptr, SafeRead};
+use crate::mem::{ConstPtr, ConstVoidPtr, GuestUSize, Mem, MutPtr, MutVoidPtr, Ptr, SafeRead};
 use crate::objc::msg;
 use crate::Environment;
 use std::collections::{HashMap, VecDeque};
@@ -19,22 +27,61 @@ use std::collections::{HashMap, VecDeque};
 #[derive(Default)]
 pub struct State {
     audio_queues: HashMap<AudioQueueRef, AudioQueueHostObject>,
+    al_device_and_context: Option<(*mut ALCdevice, *mut ALCcontext)>,
 }
 impl State {
-    pub fn get(framework_state: &mut crate::frameworks::State) -> &mut Self {
+    fn get(framework_state: &mut crate::frameworks::State) -> &mut Self {
         &mut framework_state.audio_toolbox.audio_queue
+    }
+    fn make_al_context_current(&mut self) -> ContextRestorer {
+        let old_al_context = unsafe { al::alcGetCurrentContext() };
+
+        if self.al_device_and_context.is_none() {
+            let device = unsafe { al::alcOpenDevice(std::ptr::null()) };
+            assert!(!device.is_null());
+            let context = unsafe { al::alcCreateContext(device, std::ptr::null()) };
+            assert!(!context.is_null());
+            log_dbg!(
+                "New internal OpenAL device ({:?}) and context ({:?})",
+                device,
+                context
+            );
+            self.al_device_and_context = Some((device, context));
+        }
+        let (device, context) = self.al_device_and_context.unwrap();
+        assert!(!device.is_null() && !context.is_null());
+
+        // Ensures the existing context, which will belong to the guest app,
+        // is restored once we're done.
+        ContextRestorer(old_al_context)
+    }
+}
+
+#[must_use]
+struct ContextRestorer(*mut ALCcontext);
+impl Drop for ContextRestorer {
+    fn drop(&mut self) {
+        assert!(unsafe { al::alcMakeContextCurrent(self.0) } == al::ALC_TRUE)
     }
 }
 
 struct AudioQueueHostObject {
-    _format: AudioStreamBasicDescription,
-    _callback_proc: AudioQueueOutputCallback,
-    _callback_user_data: MutVoidPtr,
+    format: AudioStreamBasicDescription,
+    callback_proc: AudioQueueOutputCallback,
+    callback_user_data: MutVoidPtr,
     /// Weak reference
     _run_loop: CFRunLoopRef,
     volume: f32,
     buffers: Vec<AudioQueueBufferRef>,
+    /// There is also a queue of OpenAL buffers, which must be kept in sync:
+    /// the nth item in this queue must also be the nth item in the OpenAL
+    /// queue, though the OpenAL queue may be shorter.
     buffer_queue: VecDeque<AudioQueueBufferRef>,
+    /// Tracks whether this audio queue has been started, so we can restart the
+    /// OpenAL source if it automatically stops due to running out of data.
+    is_running: bool,
+    al_source: Option<ALuint>,
+    al_unused_buffers: Vec<ALuint>,
 }
 
 #[repr(C, packed)]
@@ -93,18 +140,17 @@ fn AudioQueueNewOutput(
 
     let format = env.mem.read(in_format);
 
-    let format_id = format.format_id;
-    // others not implemented yet
-    assert!(format_id == kAudioFormatLinearPCM || format_id == kAudioFormatAppleIMA4);
-
     let host_object = AudioQueueHostObject {
-        _format: format,
-        _callback_proc: in_callback_proc,
-        _callback_user_data: in_user_data,
+        format,
+        callback_proc: in_callback_proc,
+        callback_user_data: in_user_data,
         _run_loop: in_callback_run_loop,
         volume: 1.0,
         buffers: Vec::new(),
         buffer_queue: VecDeque::new(),
+        is_running: false,
+        al_source: None,
+        al_unused_buffers: Vec::new(),
     };
 
     let aq_ref = env.mem.alloc_and_write(OpaqueAudioQueue { _filler: 0 });
@@ -115,9 +161,13 @@ fn AudioQueueNewOutput(
 
     ns_run_loop::add_audio_queue(env, in_callback_run_loop, aq_ref);
 
+    if !is_supported_audio_format(&format) {
+        log_dbg!("Warning: Audio queue {:?} will be ignored because its format is not yet supported: {:#?}", aq_ref, format);
+    }
+
     log_dbg!(
-        "AudioQueueNewOutput() for format {}, new audio queue handle: {:?}",
-        debug_fourcc(format_id),
+        "AudioQueueNewOutput() for format {:#?}, new audio queue handle: {:?}",
+        format,
         aq_ref,
     );
 
@@ -188,6 +238,276 @@ fn AudioQueueEnqueueBuffer(
     assert!(host_object.buffers.contains(&in_buffer));
 
     host_object.buffer_queue.push_back(in_buffer);
+    log_dbg!("New buffer enqueued: {:?}", in_buffer);
+
+    0 // success
+}
+
+/// Check if the format of an audio queue is one we currently support.
+/// If not, we should skip trying to play it rather than crash.
+fn is_supported_audio_format(format: &AudioStreamBasicDescription) -> bool {
+    let &AudioStreamBasicDescription {
+        format_id,
+        format_flags,
+        channels_per_frame,
+        bits_per_channel,
+        ..
+    } = format;
+    match format_id {
+        kAudioFormatAppleIMA4 => {
+            // TODO: stereo (requires interleaving)
+            channels_per_frame == 1
+        }
+        kAudioFormatLinearPCM => {
+            // TODO: support more PCM formats
+            (channels_per_frame == 1 || channels_per_frame == 2)
+                && (bits_per_channel == 8 || bits_per_channel == 16)
+                && (format_flags & kAudioFormatFlagIsPacked) != 0
+                && (format_flags & kAudioFormatFlagIsBigEndian) == 0
+                && (format_flags & kAudioFormatFlagIsFloat) == 0
+        }
+        _ => false,
+    }
+}
+
+/// Decode an [AudioQueueBuffer]'s content to raw PCM suitable for an OpenAL
+/// buffer.
+fn decode_buffer(
+    mem: &Mem,
+    format: &AudioStreamBasicDescription,
+    buffer: &AudioQueueBuffer,
+) -> (ALenum, ALsizei, Vec<u8>) {
+    let data_slice = mem.bytes_at(buffer.audio_data.cast(), buffer.audio_data_byte_size);
+
+    assert!(is_supported_audio_format(format));
+
+    match format.format_id {
+        kAudioFormatAppleIMA4 => {
+            assert!(data_slice.len() % 34 == 0);
+            let mut out_pcm = Vec::<u8>::with_capacity((data_slice.len() / 34) * 64 * 2);
+
+            for packet in data_slice.chunks(34) {
+                let pcm_packet: [i16; 64] = decode_ima4(packet.try_into().unwrap());
+                let pcm_bytes: &[u8] =
+                    unsafe { std::slice::from_raw_parts(pcm_packet.as_ptr() as *const u8, 128) };
+                out_pcm.extend_from_slice(pcm_bytes);
+            }
+
+            (al::AL_FORMAT_MONO16, format.sample_rate as ALsizei, out_pcm)
+        }
+        kAudioFormatLinearPCM => {
+            let f = match (format.channels_per_frame, format.bits_per_channel) {
+                (1, 8) => al::AL_FORMAT_MONO8,
+                (1, 16) => al::AL_FORMAT_MONO16,
+                (2, 8) => al::AL_FORMAT_STEREO8,
+                (2, 16) => al::AL_FORMAT_STEREO16,
+                _ => unreachable!(),
+            };
+            (f, format.sample_rate as ALsizei, data_slice.to_owned())
+        }
+        _ => unreachable!(),
+    }
+}
+
+/// Ensure an audio queue has an OpenAL source and at least one queued OpenAL
+/// buffer.
+fn prime_audio_queue(
+    env: &mut Environment,
+    in_aq: AudioQueueRef,
+    context_restorer: Option<ContextRestorer>,
+) -> ContextRestorer {
+    let state = State::get(&mut env.framework_state);
+
+    let context_restorer = context_restorer.unwrap_or_else(|| state.make_al_context_current());
+    let host_object = state.audio_queues.get_mut(&in_aq).unwrap();
+
+    if !is_supported_audio_format(&host_object.format) {
+        return context_restorer;
+    }
+
+    if host_object.al_source.is_none() {
+        let mut al_source = 0;
+        unsafe { al::alGenSources(1, &mut al_source) };
+        assert!(unsafe { al::alGetError() } == 0);
+        host_object.al_source = Some(al_source);
+    }
+    let al_source = host_object.al_source.unwrap();
+
+    loop {
+        let mut al_buffers_queued = 0;
+        let mut al_buffers_processed = 0;
+        unsafe {
+            al::alGetSourcei(al_source, al::AL_BUFFERS_QUEUED, &mut al_buffers_queued);
+            al::alGetSourcei(
+                al_source,
+                al::AL_BUFFERS_PROCESSED,
+                &mut al_buffers_processed,
+            );
+            assert!(al::alGetError() == 0);
+        }
+        let al_buffers_queued: usize = al_buffers_queued.try_into().unwrap();
+        let al_buffers_processed: usize = al_buffers_processed.try_into().unwrap();
+
+        assert!(al_buffers_queued <= host_object.buffer_queue.len());
+        let unprocessed_buffers = al_buffers_queued - al_buffers_processed;
+
+        if unprocessed_buffers > 1 || al_buffers_queued == host_object.buffer_queue.len() {
+            break;
+        }
+
+        let next_buffer_idx = al_buffers_queued;
+        let next_buffer_ref = host_object.buffer_queue[next_buffer_idx];
+        let next_buffer = env.mem.read(next_buffer_ref);
+
+        log_dbg!(
+            "Decoding buffer {:?} for queue {:?}",
+            next_buffer_ref,
+            in_aq
+        );
+
+        let next_al_buffer = host_object.al_unused_buffers.pop().unwrap_or_else(|| {
+            let mut al_buffer = 0;
+            unsafe { al::alGenBuffers(1, &mut al_buffer) };
+            assert!(unsafe { al::alGetError() } == 0);
+            al_buffer
+        });
+
+        let (al_format, al_frequency, data) =
+            decode_buffer(&env.mem, &host_object.format, &next_buffer);
+        unsafe {
+            al::alBufferData(
+                next_al_buffer,
+                al_format,
+                data.as_ptr() as *const ALvoid,
+                data.len().try_into().unwrap(),
+                al_frequency,
+            )
+        };
+        unsafe { al::alSourceQueueBuffers(al_source, 1, &next_al_buffer) };
+        assert!(unsafe { al::alGetError() } == 0);
+    }
+
+    context_restorer
+}
+
+/// For use by `NSRunLoop`: check the status of an audio queue, recycle buffers,
+/// call callbacks, push new buffers etc.
+pub fn handle_audio_queue(env: &mut Environment, in_aq: AudioQueueRef) {
+    // Collect used buffers and call the user callback so the app can provide
+    // new buffers.
+
+    let state = State::get(&mut env.framework_state);
+
+    let context_restorer = state.make_al_context_current();
+
+    let host_object = state.audio_queues.get_mut(&in_aq).unwrap();
+    let Some(al_source) = host_object.al_source else {
+        return;
+    };
+    if !is_supported_audio_format(&host_object.format) {
+        return;
+    }
+
+    let mut buffers_to_reuse = Vec::new();
+
+    loop {
+        let mut al_buffers_processed = 0;
+        unsafe {
+            al::alGetSourcei(
+                al_source,
+                al::AL_BUFFERS_PROCESSED,
+                &mut al_buffers_processed,
+            );
+            assert!(al::alGetError() == 0);
+        }
+        if al_buffers_processed == 0 {
+            break;
+        }
+
+        let mut al_buffer = 0;
+        unsafe {
+            al::alSourceUnqueueBuffers(al_source, 1, &mut al_buffer);
+            assert!(al::alGetError() == 0);
+        }
+        let buffer_ref = host_object.buffer_queue.pop_front().unwrap();
+
+        host_object.al_unused_buffers.push(al_buffer);
+        buffers_to_reuse.push(buffer_ref);
+    }
+
+    let &mut AudioQueueHostObject {
+        callback_proc,
+        callback_user_data,
+        is_running,
+        ..
+    } = host_object;
+
+    for buffer_ref in buffers_to_reuse.drain(..) {
+        log_dbg!(
+            "Recyling buffer {:?} for queue {:?}. Calling callback {:?} with user data {:?}.",
+            buffer_ref,
+            in_aq,
+            callback_proc,
+            callback_user_data
+        );
+
+        let () = callback_proc.call_from_host(env, (callback_user_data, in_aq, buffer_ref));
+    }
+
+    // Push new buffers etc.
+
+    let _context_restorer = prime_audio_queue(env, in_aq, Some(context_restorer));
+
+    if is_running {
+        unsafe {
+            let mut al_source_state = 0;
+            al::alGetSourcei(al_source, al::AL_SOURCE_STATE, &mut al_source_state);
+            assert!(al::alGetError() == 0);
+            // Source probably ran out data and needs restarting
+            // TODO: We currently have to do this even when touchHLE is not
+            // lagging, because we're not ensuring OpenAL always has at least
+            // one buffer it hasn't processed yet. We need to change our queue
+            // handling.
+            if al_source_state == al::AL_STOPPED {
+                al::alSourcePlay(al_source);
+                log_dbg!("Restarted OpenAL source for queue {:?}", in_aq);
+            }
+        }
+    }
+}
+
+fn AudioQueuePrime(
+    env: &mut Environment,
+    in_aq: AudioQueueRef,
+    _in_number_of_frames_to_prepare: u32,
+    out_number_of_frames_prepared: MutPtr<u32>,
+) -> OSStatus {
+    assert!(out_number_of_frames_prepared.is_null()); // TODO
+    let _context_restorer = prime_audio_queue(env, in_aq, None);
+    0 // success
+}
+
+fn AudioQueueStart(
+    env: &mut Environment,
+    in_aq: AudioQueueRef,
+    in_device_start_time: ConstVoidPtr, // should be `const AudioTimeStamp*`
+) -> OSStatus {
+    assert!(in_device_start_time.is_null()); // TODO
+
+    let _context_restorer = prime_audio_queue(env, in_aq, None);
+
+    let host_object = State::get(&mut env.framework_state)
+        .audio_queues
+        .get_mut(&in_aq)
+        .unwrap();
+
+    host_object.is_running = true;
+
+    if is_supported_audio_format(&host_object.format) {
+        let al_source = host_object.al_source.unwrap();
+        unsafe { al::alSourcePlay(al_source) };
+        assert!(unsafe { al::alGetError() } == 0);
+    }
 
     0 // success
 }
@@ -197,4 +517,6 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(AudioQueueSetParameter(_, _, _)),
     export_c_func!(AudioQueueAllocateBuffer(_, _, _)),
     export_c_func!(AudioQueueEnqueueBuffer(_, _, _, _)),
+    export_c_func!(AudioQueuePrime(_, _, _)),
+    export_c_func!(AudioQueueStart(_, _)),
 ];

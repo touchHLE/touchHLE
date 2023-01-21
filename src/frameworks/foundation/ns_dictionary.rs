@@ -21,7 +21,7 @@ pub(super) struct DictionaryHostObject {
     /// The keys are the hash values, the values are a list of key-value pairs
     /// where the keys have the same hash value.
     map: HashMap<Hash, Vec<(id, id)>>,
-    count: NSUInteger,
+    pub(super) count: NSUInteger,
 }
 impl HostObject for DictionaryHostObject {}
 impl DictionaryHostObject {
@@ -69,6 +69,9 @@ impl DictionaryHostObject {
                 release(env, value);
             }
         }
+    }
+    pub(super) fn iter_keys(&self) -> impl Iterator<Item = id> + '_ {
+        self.map.values().flatten().map(|&(key, _value)| key)
     }
 }
 

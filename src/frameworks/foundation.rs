@@ -13,6 +13,7 @@ pub mod ns_character_set;
 pub mod ns_coder;
 pub mod ns_data;
 pub mod ns_dictionary;
+pub mod ns_fast_enumeration;
 pub mod ns_file_manager;
 pub mod ns_keyed_unarchiver;
 pub mod ns_locale;

@@ -18,7 +18,8 @@ pub struct State {
 struct UITouchHostObject {
     /// Strong reference to the `UIView`
     view: id,
-    location_in_view: CGPoint,
+    /// Relative to screen
+    location: CGPoint,
     timestamp: NSTimeInterval,
 }
 impl HostObject for UITouchHostObject {}
@@ -32,7 +33,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 + (id)allocWithZone:(MutVoidPtr)_zone {
     let host_object = Box::new(UITouchHostObject {
         view: nil,
-        location_in_view: CGPoint { x: 0.0, y: 0.0 },
+        location: CGPoint { x: 0.0, y: 0.0 },
         timestamp: 0.0,
     });
     env.objc.alloc_object(this, host_object, &mut env.mem)
@@ -45,9 +46,13 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (CGPoint)locationInView:(id)that_view { // UIView*
-    let &UITouchHostObject { view, location_in_view, .. } = env.objc.borrow(this);
-    assert!(that_view == view); // FIXME, see below
-    location_in_view
+    let &UITouchHostObject { location, .. } = env.objc.borrow(this);
+    if that_view == nil {
+        location
+    } else {
+        // FIXME, see below
+        resolve_point_in_view(env, that_view, location).unwrap()
+    }
 }
 
 - (id)view {
@@ -66,7 +71,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 };
 
-fn resolve_point_in_view(env: &mut Environment, view: id, coords: (f32, f32)) -> Option<CGPoint> {
+fn resolve_point_in_view(env: &mut Environment, view: id, point: CGPoint) -> Option<CGPoint> {
     let (expected_width, expected_height) = env.window.size_unrotated();
     let expected_width = expected_width as CGFloat;
     let expected_height = expected_height as CGFloat;
@@ -81,12 +86,12 @@ fn resolve_point_in_view(env: &mut Environment, view: id, coords: (f32, f32)) ->
     }
 
     Some(CGPoint {
-        x: coords.0 - bounds.origin.x,
-        y: coords.1 - bounds.origin.y,
+        x: point.x - bounds.origin.x,
+        y: point.y - bounds.origin.y,
     })
 }
 
-fn find_view_for_touch(env: &mut Environment, coords: (f32, f32)) -> Option<(id, CGPoint)> {
+fn find_view_for_touch(env: &mut Environment, point: CGPoint) -> Option<id> {
     // FIXME: This is a massive hack that is only going to work for apps that
     // have a single view which handles all touch inputs. We should eventually
     // implement the proper responder chain.
@@ -104,12 +109,12 @@ fn find_view_for_touch(env: &mut Environment, coords: (f32, f32)) -> Option<(id,
         // FIXME: This is an even bigger hack, it is assuming there is a single
         // view with the same size as the screen, and can't account for
         // the view hierarchy's effects on the co-ordinate system!
-        let Some(point) = resolve_point_in_view(env, view, coords) else {
+        if resolve_point_in_view(env, view, point).is_none() {
             continue;
-        };
+        }
 
         log_dbg!("Picked view {:?} for touch event", view);
-        return Some((view, point));
+        return Some(view);
     }
 
     log!("Warning: touch event ignored, can't find appropriate view (FIXME)");
@@ -127,7 +132,12 @@ pub fn handle_event(env: &mut Environment, event: Event) {
 
             log_dbg!("Touch down: {:?}", coords);
 
-            let Some((view, point)) = find_view_for_touch(env, coords) else {
+            let location = CGPoint {
+                x: coords.0,
+                y: coords.1,
+            };
+
+            let Some(view) = find_view_for_touch(env, location) else {
                 return;
             };
 
@@ -144,7 +154,7 @@ pub fn handle_event(env: &mut Environment, event: Event) {
             retain(env, view);
             *env.objc.borrow_mut(new_touch) = UITouchHostObject {
                 view,
-                location_in_view: point,
+                location,
                 timestamp,
             };
             autorelease(env, new_touch);
@@ -175,12 +185,16 @@ pub fn handle_event(env: &mut Environment, event: Event) {
 
             log_dbg!("Touch move: {:?}", coords);
 
+            let location = CGPoint {
+                x: coords.0,
+                y: coords.1,
+            };
+
             let timestamp: NSTimeInterval = msg_class![env; NSProcessInfo systemUptime];
 
             let view = env.objc.borrow::<UITouchHostObject>(touch).view;
-            let point = resolve_point_in_view(env, view, coords).unwrap();
             let host_object = env.objc.borrow_mut::<UITouchHostObject>(touch);
-            host_object.location_in_view = point;
+            host_object.location = location;
             host_object.timestamp = timestamp;
 
             let pool: id = msg_class![env; NSAutoreleasePool new];
@@ -208,12 +222,16 @@ pub fn handle_event(env: &mut Environment, event: Event) {
 
             log_dbg!("Touch up: {:?}", coords);
 
+            let location = CGPoint {
+                x: coords.0,
+                y: coords.1,
+            };
+
             let timestamp: NSTimeInterval = msg_class![env; NSProcessInfo systemUptime];
 
             let view = env.objc.borrow::<UITouchHostObject>(touch).view;
-            let point = resolve_point_in_view(env, view, coords).unwrap();
             let host_object = env.objc.borrow_mut::<UITouchHostObject>(touch);
-            host_object.location_in_view = point;
+            host_object.location = location;
             host_object.timestamp = timestamp;
 
             let pool: id = msg_class![env; NSAutoreleasePool new];

@@ -33,9 +33,7 @@ impl State {
     fn get(framework_state: &mut crate::frameworks::State) -> &mut Self {
         &mut framework_state.audio_toolbox.audio_queue
     }
-    fn make_al_context_current(&mut self) -> ContextRestorer {
-        let old_al_context = unsafe { al::alcGetCurrentContext() };
-
+    fn make_al_context_current(&mut self) -> ContextManager {
         if self.al_device_and_context.is_none() {
             let device = unsafe { al::alcOpenDevice(std::ptr::null()) };
             assert!(!device.is_null());
@@ -51,15 +49,22 @@ impl State {
         let (device, context) = self.al_device_and_context.unwrap();
         assert!(!device.is_null() && !context.is_null());
 
-        // Ensures the existing context, which will belong to the guest app,
-        // is restored once we're done.
-        ContextRestorer(old_al_context)
+        // This object will make sure the existing context, which will belong
+        // to the guest app, is restored once we're done.
+        ContextManager::make_active(context)
     }
 }
 
 #[must_use]
-struct ContextRestorer(*mut ALCcontext);
-impl Drop for ContextRestorer {
+struct ContextManager(*mut ALCcontext);
+impl ContextManager {
+    pub fn make_active(new_context: *mut ALCcontext) -> ContextManager {
+        let old_context = unsafe { al::alcGetCurrentContext() };
+        assert!(unsafe { al::alcMakeContextCurrent(new_context) } == al::ALC_TRUE);
+        ContextManager(old_context)
+    }
+}
+impl Drop for ContextManager {
     fn drop(&mut self) {
         assert!(unsafe { al::alcMakeContextCurrent(self.0) } == al::ALC_TRUE)
     }
@@ -314,15 +319,15 @@ fn decode_buffer(
 fn prime_audio_queue(
     env: &mut Environment,
     in_aq: AudioQueueRef,
-    context_restorer: Option<ContextRestorer>,
-) -> ContextRestorer {
+    context_manager: Option<ContextManager>,
+) -> ContextManager {
     let state = State::get(&mut env.framework_state);
 
-    let context_restorer = context_restorer.unwrap_or_else(|| state.make_al_context_current());
+    let context_manager = context_manager.unwrap_or_else(|| state.make_al_context_current());
     let host_object = state.audio_queues.get_mut(&in_aq).unwrap();
 
     if !is_supported_audio_format(&host_object.format) {
-        return context_restorer;
+        return context_manager;
     }
 
     if host_object.al_source.is_none() {
@@ -387,7 +392,7 @@ fn prime_audio_queue(
         assert!(unsafe { al::alGetError() } == 0);
     }
 
-    context_restorer
+    context_manager
 }
 
 /// For use by `NSRunLoop`: check the status of an audio queue, recycle buffers,
@@ -398,7 +403,7 @@ pub fn handle_audio_queue(env: &mut Environment, in_aq: AudioQueueRef) {
 
     let state = State::get(&mut env.framework_state);
 
-    let context_restorer = state.make_al_context_current();
+    let context_manager = state.make_al_context_current();
 
     let host_object = state.audio_queues.get_mut(&in_aq).unwrap();
     let Some(al_source) = host_object.al_source else {
@@ -456,7 +461,7 @@ pub fn handle_audio_queue(env: &mut Environment, in_aq: AudioQueueRef) {
 
     // Push new buffers etc.
 
-    let _context_restorer = prime_audio_queue(env, in_aq, Some(context_restorer));
+    let _context_manager = prime_audio_queue(env, in_aq, Some(context_manager));
 
     if is_running {
         unsafe {
@@ -483,7 +488,7 @@ fn AudioQueuePrime(
     out_number_of_frames_prepared: MutPtr<u32>,
 ) -> OSStatus {
     assert!(out_number_of_frames_prepared.is_null()); // TODO
-    let _context_restorer = prime_audio_queue(env, in_aq, None);
+    let _context_manager = prime_audio_queue(env, in_aq, None);
     0 // success
 }
 
@@ -494,7 +499,7 @@ fn AudioQueueStart(
 ) -> OSStatus {
     assert!(in_device_start_time.is_null()); // TODO
 
-    let _context_restorer = prime_audio_queue(env, in_aq, None);
+    let _context_manager = prime_audio_queue(env, in_aq, None);
 
     let host_object = State::get(&mut env.framework_state)
         .audio_queues

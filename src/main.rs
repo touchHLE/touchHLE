@@ -38,9 +38,22 @@ const USAGE: &str = "\
 Usage:
     touchHLE path/to/some.app
 
-Options:
+General options:
     --help
         Print this help text.
+
+Debugging options:
+    --breakpoint=...
+        This option sets a primitive breakpoint at a provided memory address.
+        The target instruction will be overwritten shortly after the binary is
+        loaded, and executing the instruction will cause touchHLE to panic.
+
+        The address is hexadecimal and can have an optional '0x' prefix.
+        If the target instruction is a Thumb instruction, either the lowest bit
+        of the address must be set, or the address should be prefixed with 'T',
+        e.g. 'T0xF00' or 'TF00'.
+
+        To set multiple breakpoints, use several '--breakpoint=' arguments.
 ";
 
 fn main() -> Result<(), String> {
@@ -48,12 +61,20 @@ fn main() -> Result<(), String> {
     let _ = args.next().unwrap(); // skip argv[0]
 
     let mut bundle_path: Option<PathBuf> = None;
+    let mut breakpoints = Vec::new();
     for arg in args {
         if arg == "--help" {
             println!("{}", USAGE);
             return Ok(());
         } else if bundle_path.is_none() {
             bundle_path = Some(PathBuf::from(arg));
+        } else if let Some(addr) = arg.strip_prefix("--breakpoint=") {
+            let is_thumb = addr.starts_with('T');
+            let addr = addr.strip_prefix('T').unwrap_or(addr);
+            let addr = addr.strip_prefix("0x").unwrap_or(addr);
+            let addr = u32::from_str_radix(addr, 16)
+                .map_err(|_| "Incorrect breakpoint syntax".to_string())?;
+            breakpoints.push(if is_thumb { addr | 0x1 } else { addr });
         } else {
             eprintln!("{}", USAGE);
             return Err(format!("Unexpected argument: {:?}", arg));
@@ -77,7 +98,7 @@ fn main() -> Result<(), String> {
         bundle_path
     };
 
-    let mut env = Environment::new(bundle_path)?;
+    let mut env = Environment::new(bundle_path, breakpoints)?;
     env.run();
     Ok(())
 }
@@ -106,7 +127,7 @@ pub struct Environment {
 
 impl Environment {
     /// Loads the binary and sets up the emulator.
-    fn new(bundle_path: PathBuf) -> Result<Environment, String> {
+    fn new(bundle_path: PathBuf, breakpoints: Vec<u32>) -> Result<Environment, String> {
         let startup_time = std::time::Instant::now();
 
         let (bundle, fs) = match bundle::Bundle::new_bundle_and_fs_from_host_path(bundle_path) {
@@ -178,6 +199,10 @@ impl Environment {
 
         let mut dyld = dyld::Dyld::new();
         dyld.do_initial_linking(&bins, &mut mem, &mut objc);
+
+        for breakpoint in breakpoints {
+            dyld.set_breakpoint(&mut mem, breakpoint);
+        }
 
         let cpu = cpu::Cpu::new();
 

@@ -2,6 +2,7 @@
 
 use super::ui_view::UIViewHostObject;
 use crate::frameworks::core_graphics::{CGFloat, CGPoint};
+use crate::frameworks::foundation::{NSTimeInterval, NSUInteger};
 use crate::mem::MutVoidPtr;
 use crate::objc::{
     autorelease, id, msg, msg_class, nil, objc_classes, release, retain, ClassExports, HostObject,
@@ -18,6 +19,7 @@ struct UITouchHostObject {
     /// Strong reference to the `UIView`
     view: id,
     location_in_view: CGPoint,
+    timestamp: NSTimeInterval,
 }
 impl HostObject for UITouchHostObject {}
 
@@ -31,6 +33,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     let host_object = Box::new(UITouchHostObject {
         view: nil,
         location_in_view: CGPoint { x: 0.0, y: 0.0 },
+        timestamp: 0.0,
     });
     env.objc.alloc_object(this, host_object, &mut env.mem)
 }
@@ -42,13 +45,21 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (CGPoint)locationInView:(id)that_view { // UIView*
-    let &UITouchHostObject { view, location_in_view } = env.objc.borrow(this);
+    let &UITouchHostObject { view, location_in_view, .. } = env.objc.borrow(this);
     assert!(that_view == view); // FIXME, see below
     location_in_view
 }
 
 - (id)view {
     env.objc.borrow::<UITouchHostObject>(this).view
+}
+
+- (NSTimeInterval)timestamp {
+    env.objc.borrow::<UITouchHostObject>(this).timestamp
+}
+
+- (NSUInteger)tapCount {
+    1 // TODO: support double-taps etc
 }
 
 @end
@@ -123,11 +134,18 @@ pub fn handle_event(env: &mut Environment, event: Event) {
             // UIKit creates and drains autorelease pools when handling events.
             let pool: id = msg_class![env; NSAutoreleasePool new];
 
+            // Note: if the emulator is heavily lagging, this timestamp is going
+            // to be far off from the truth, since it should represent the
+            // time when the event actually happened, not the time when the
+            // event was dispatched. Maybe we'll need to fix this eventually.
+            let timestamp: NSTimeInterval = msg_class![env; NSProcessInfo systemUptime];
+
             let new_touch: id = msg_class![env; UITouch alloc];
             retain(env, view);
             *env.objc.borrow_mut(new_touch) = UITouchHostObject {
                 view,
                 location_in_view: point,
+                timestamp,
             };
             autorelease(env, new_touch);
 
@@ -157,11 +175,13 @@ pub fn handle_event(env: &mut Environment, event: Event) {
 
             log_dbg!("Touch move: {:?}", coords);
 
+            let timestamp: NSTimeInterval = msg_class![env; NSProcessInfo systemUptime];
+
             let view = env.objc.borrow::<UITouchHostObject>(touch).view;
             let point = resolve_point_in_view(env, view, coords).unwrap();
-            env.objc
-                .borrow_mut::<UITouchHostObject>(touch)
-                .location_in_view = point;
+            let host_object = env.objc.borrow_mut::<UITouchHostObject>(touch);
+            host_object.location_in_view = point;
+            host_object.timestamp = timestamp;
 
             let pool: id = msg_class![env; NSAutoreleasePool new];
 
@@ -188,11 +208,13 @@ pub fn handle_event(env: &mut Environment, event: Event) {
 
             log_dbg!("Touch up: {:?}", coords);
 
+            let timestamp: NSTimeInterval = msg_class![env; NSProcessInfo systemUptime];
+
             let view = env.objc.borrow::<UITouchHostObject>(touch).view;
             let point = resolve_point_in_view(env, view, coords).unwrap();
-            env.objc
-                .borrow_mut::<UITouchHostObject>(touch)
-                .location_in_view = point;
+            let host_object = env.objc.borrow_mut::<UITouchHostObject>(touch);
+            host_object.location_in_view = point;
+            host_object.timestamp = timestamp;
 
             let pool: id = msg_class![env; NSAutoreleasePool new];
 

@@ -87,6 +87,8 @@ type ThreadID = u32;
 
 /// The struct containing the entire emulator state.
 pub struct Environment {
+    /// Reference point for various timing functions.
+    startup_time: std::time::Instant,
     bundle: bundle::Bundle,
     fs: fs::Fs,
     window: window::Window,
@@ -105,6 +107,8 @@ pub struct Environment {
 impl Environment {
     /// Loads the binary and sets up the emulator.
     fn new(bundle_path: PathBuf) -> Result<Environment, String> {
+        let startup_time = std::time::Instant::now();
+
         let (bundle, fs) = match bundle::Bundle::new_bundle_and_fs_from_host_path(bundle_path) {
             Ok(bundle) => bundle,
             Err(err) => {
@@ -178,6 +182,7 @@ impl Environment {
         let cpu = cpu::Cpu::new();
 
         let mut env = Environment {
+            startup_time,
             bundle,
             fs,
             window,

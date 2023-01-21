@@ -18,7 +18,6 @@ pub mod time;
 /// Container for state of various child modules
 #[derive(Default)]
 pub struct State {
-    mach_time: mach_time::State,
     pthread: pthread::State,
     stdio: stdio::State,
     stdlib: stdlib::State,

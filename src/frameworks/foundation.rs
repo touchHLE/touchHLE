@@ -19,6 +19,7 @@ pub mod ns_keyed_unarchiver;
 pub mod ns_locale;
 pub mod ns_null;
 pub mod ns_object;
+pub mod ns_process_info;
 pub mod ns_run_loop;
 pub mod ns_set;
 pub mod ns_string;

@@ -5,9 +5,14 @@ use crate::frameworks::foundation::ns_string::{get_static_str, to_rust_string};
 use crate::mem::MutVoidPtr;
 use crate::objc::{id, msg, objc_classes, release, Class, ClassExports, HostObject};
 
-struct UIViewHostObject {
-    bounds: CGRect,
-    center: CGPoint,
+#[derive(Default)]
+pub struct State {
+    pub(super) views: Vec<id>,
+}
+
+pub(super) struct UIViewHostObject {
+    pub(super) bounds: CGRect,
+    pub(super) center: CGPoint,
     /// CALayer or subclass.
     layer: id,
 }
@@ -89,12 +94,18 @@ pub const CLASSES: ClassExports = objc_classes! {
     let layer = host_object.layer;
     () = msg![env; layer setDelegate:this];
 
+    env.framework_state.uikit.ui_view.views.push(this);
+
     this
 }
 
 - (())dealloc {
     let &mut UIViewHostObject { layer, .. } = env.objc.borrow_mut(this);
     release(env, layer);
+
+    env.framework_state.uikit.ui_view.views.swap_remove(
+        env.framework_state.uikit.ui_view.views.iter().position(|&v| v == this).unwrap()
+    );
 
     // FIXME: this should do a super-call instead
     env.objc.dealloc_object(this, &mut env.mem);

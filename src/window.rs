@@ -15,6 +15,7 @@ pub use gl::{gl21compat, gl32core, gles11, GLContext, GLVersion};
 pub use matrix::Matrix;
 
 use crate::image::Image;
+use sdl2::mouse::MouseButton;
 use sdl2::pixels::PixelFormatEnum;
 use sdl2::surface::Surface;
 use std::collections::VecDeque;
@@ -32,8 +33,12 @@ fn size_for_orientation(orientation: DeviceOrientation) -> (u32, u32) {
     }
 }
 
+#[derive(Debug)]
 pub enum Event {
     Quit,
+    TouchDown((f32, f32)),
+    TouchMove((f32, f32)),
+    TouchUp((f32, f32)),
 }
 
 fn surface_from_image(image: &Image) -> Surface {
@@ -133,11 +138,43 @@ impl Window {
     /// to be unresponsive. Note that events are not returned by this function,
     /// since we often need to defer actually handling them.
     pub fn poll_for_events(&mut self) {
-        for event in self.event_pump.poll_iter() {
+        fn transform_input_coords(window: &Window, (in_x, in_y): (i32, i32)) -> (f32, f32) {
+            let (in_w, in_h) = window.size_in_current_orientation();
+            // normalize to unit square centred on origin
+            let x = in_x as f32 / in_w as f32 - 0.5;
+            let y = in_y as f32 / in_h as f32 - 0.5;
+            // rotate
+            let matrix = window.input_rotation_matrix();
+            let [x, y] = matrix.transform([x, y]);
+            // back to pixels
+            let (out_w, out_h) = window.size_unrotated();
+            let out_x = (x + 0.5) * out_w as f32;
+            let out_y = (y + 0.5) * out_h as f32;
+            (out_x, out_y)
+        }
+
+        while let Some(event) = self.event_pump.poll_event() {
             use sdl2::event::Event as E;
-            if let E::Quit { .. } = event {
-                self.event_queue.push_back(Event::Quit);
-            }
+            self.event_queue.push_back(match event {
+                E::Quit { .. } => Event::Quit,
+                // TODO: support for real touch inputs and multi-touch
+                E::MouseButtonDown {
+                    x,
+                    y,
+                    mouse_btn: MouseButton::Left,
+                    ..
+                } => Event::TouchDown(transform_input_coords(self, (x, y))),
+                E::MouseMotion {
+                    x, y, mousestate, ..
+                } if mousestate.left() => Event::TouchMove(transform_input_coords(self, (x, y))),
+                E::MouseButtonUp {
+                    x,
+                    y,
+                    mouse_btn: MouseButton::Left,
+                    ..
+                } => Event::TouchUp(transform_input_coords(self, (x, y))),
+                _ => continue,
+            })
         }
     }
 
@@ -170,7 +207,7 @@ impl Window {
             panic!();
         };
 
-        let matrix = self.content_rotation_matrix();
+        let matrix = self.output_rotation_matrix();
         let viewport_size = self.size_in_current_orientation();
         let viewport_offset = (0, self.viewport_y_offset());
 
@@ -224,10 +261,15 @@ impl Window {
         }
     }
 
-    /// Get the size in pixels of the window. The aspect ratio reflects the
-    /// orientation passed to [Self::rotate_device].
+    /// Get the size in pixels of the window with the aspect ratio reflecting
+    /// rotation (see [Self::rotate_device]).
     pub fn size_in_current_orientation(&self) -> (u32, u32) {
         size_for_orientation(self.device_orientation)
+    }
+
+    /// Get the size in pixels of the window without rotation.
+    pub fn size_unrotated(&self) -> (u32, u32) {
+        size_for_orientation(DeviceOrientation::Portrait)
     }
 
     pub fn viewport_y_offset(&self) -> u32 {
@@ -237,12 +279,22 @@ impl Window {
         return 0;
     }
 
-    /// Get a transformation matrix that can be applied to the content presented
-    /// by the app to make it appear upright.
-    pub fn content_rotation_matrix(&self) -> Matrix<2> {
+    /// Transformation matrix for texture co-ordinates when sampling the
+    /// framebuffer presented by the app. Rotates the framebuffer to match the
+    /// window. See [Self::rotate_device].
+    pub fn output_rotation_matrix(&self) -> Matrix<2> {
         match self.device_orientation {
             DeviceOrientation::Portrait => Matrix::identity(),
             DeviceOrientation::LandscapeLeft => Matrix::z_rotation(-FRAC_PI_2),
+        }
+    }
+
+    /// Transformation matrix for touch inputs received by the window. Rotates
+    /// them to match the app. See [Self::rotate_device].
+    pub fn input_rotation_matrix(&self) -> Matrix<2> {
+        match self.device_orientation {
+            DeviceOrientation::Portrait => Matrix::identity(),
+            DeviceOrientation::LandscapeLeft => Matrix::z_rotation(FRAC_PI_2),
         }
     }
 

@@ -298,7 +298,7 @@ unsafe fn present_renderbuffer(env: &mut Environment) {
     let tex_coords: [f32; 12] = [0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0];
     gl::EnableClientState(gl::TEXTURE_COORD_ARRAY);
     gl::TexCoordPointer(2, gl::FLOAT, 0, tex_coords.as_ptr() as *const GLvoid);
-    let matrix = Matrix::<4>::from(&env.window.content_rotation_matrix());
+    let matrix = Matrix::<4>::from(&env.window.output_rotation_matrix());
     gl::MatrixMode(gl::TEXTURE);
     gl::LoadMatrixf(matrix.columns().as_ptr() as *const _);
     gl::Enable(gl::TEXTURE_2D);

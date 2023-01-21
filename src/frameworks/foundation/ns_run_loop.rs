@@ -9,8 +9,8 @@ use crate::frameworks::audio_toolbox::audio_queue::{handle_audio_queue, AudioQue
 use crate::frameworks::core_foundation::cf_run_loop::{
     kCFRunLoopCommonModes, kCFRunLoopDefaultMode, CFRunLoopRef,
 };
+use crate::frameworks::uikit;
 use crate::objc::{id, msg, objc_classes, release, retain, ClassExports, HostObject};
-use crate::window::Event;
 use crate::Environment;
 
 /// `NSString*`
@@ -148,12 +148,7 @@ fn run_run_loop(env: &mut Environment, run_loop: id) {
     loop {
         env.window.poll_for_events();
 
-        while let Some(event) = env.window.pop_event() {
-            // FIXME: tell the app when we're about to quit
-            let Event::Quit = event;
-            println!("User requested quit, exiting.");
-            std::process::exit(0);
-        }
+        uikit::handle_events(env);
 
         assert!(timers_tmp.is_empty());
         timers_tmp.extend_from_slice(&env.objc.borrow::<NSRunLoopHostObject>(run_loop).timers);

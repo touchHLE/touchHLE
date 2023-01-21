@@ -11,9 +11,9 @@ use std::collections::HashMap;
 /// Alias for the return type of the `hash` method of the `NSObject` protocol.
 type Hash = NSUInteger;
 
-/// Belongs to _touchHLE_NSDictionary
+/// Belongs to _touchHLE_NSDictionary, also used by _touchHLE_NSSet
 #[derive(Debug, Default)]
-struct DictionaryHostObject {
+pub(super) struct DictionaryHostObject {
     /// Since we need custom hashing and custom equality, and these both need a
     /// `&mut Environment`, we can't just use a `HashMap<id, id>`.
     /// So here we are using a `HashMap` as a primitive for implementing a
@@ -25,7 +25,7 @@ struct DictionaryHostObject {
 }
 impl HostObject for DictionaryHostObject {}
 impl DictionaryHostObject {
-    fn lookup(&self, env: &mut Environment, key: id) -> id {
+    pub(super) fn lookup(&self, env: &mut Environment, key: id) -> id {
         let hash: Hash = msg![env; key hash];
         let Some(collisions) = self.map.get(&hash) else {
             return nil;
@@ -37,8 +37,12 @@ impl DictionaryHostObject {
         }
         nil
     }
-    fn insert(&mut self, env: &mut Environment, key: id, value: id) {
-        let key: id = msg![env; key copy];
+    pub(super) fn insert(&mut self, env: &mut Environment, key: id, value: id, copy_key: bool) {
+        let key: id = if copy_key {
+            msg![env; key copy]
+        } else {
+            retain(env, key)
+        };
         let hash: Hash = msg![env; key hash];
 
         let value = retain(env, value);
@@ -57,6 +61,14 @@ impl DictionaryHostObject {
         }
         collisions.push((key, value));
         self.count += 1;
+    }
+    pub(super) fn release(&mut self, env: &mut Environment) {
+        for collisions in self.map.values() {
+            for &(key, value) in collisions {
+                release(env, key);
+                release(env, value);
+            }
+        }
     }
 }
 
@@ -108,13 +120,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (())dealloc {
-    let obj = std::mem::take(env.objc.borrow_mut::<DictionaryHostObject>(this));
-    for collisions in obj.map.values() {
-        for &(key, value) in collisions {
-            release(env, key);
-            release(env, value);
-        }
-    }
+    std::mem::take(env.objc.borrow_mut::<DictionaryHostObject>(this)).release(env);
 
     // FIXME: this should do a super-call instead
     env.objc.dealloc_object(this, &mut env.mem)
@@ -125,7 +131,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     assert!(first_key != nil); // TODO: raise proper exception
 
     let mut host_object = <DictionaryHostObject as Default>::default();
-    host_object.insert(env, first_key, first_object);
+    host_object.insert(env, first_key, first_object, /* copy_key: */ true);
 
     loop {
         let object: id = va_args.next(env);
@@ -134,7 +140,7 @@ pub const CLASSES: ClassExports = objc_classes! {
         }
         let key: id = va_args.next(env);
         assert!(key != nil); // TODO: raise proper exception
-        host_object.insert(env, key, object);
+        host_object.insert(env, key, object, /* copy_key: */ true);
     }
 
     *env.objc.borrow_mut(this) = host_object;

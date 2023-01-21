@@ -27,6 +27,17 @@ impl<const N: usize> Matrix<N> {
         }
         new
     }
+
+    /// Transform a vector using the matrix.
+    pub fn transform(&self, vector: [f32; N]) -> [f32; N] {
+        let mut new = [0f32; N];
+        for (i, basis_vector) in self.columns().iter().enumerate() {
+            for j in 0..N {
+                new[j] += basis_vector[j] * vector[i];
+            }
+        }
+        new
+    }
 }
 
 impl Matrix<2> {

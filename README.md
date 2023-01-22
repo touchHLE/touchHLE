@@ -1,34 +1,20 @@
 # touchHLE: high-level emulator for iPhone OS apps
 
-**touchHLE** is a high-level emulator for iPhone OS apps. It has a particular focus on games, runs on modern desktop operating systems, and is written in Rust.
+**touchHLE** is a high-level emulator (HLE) for iPhone OS apps. It runs on modern desktop operating systems, and is written in Rust.
+
+As an HLE, touchHLE is radically different from a low-level emulator (LLE) like QEMU. The only code the [emulated CPU](https://github.com/merryhime/dynarmic) executes is the app binary and [a handful of libraries](touchHLE_dylibs/); iPhone OS and the actual iPhone/iPod touch hardware are not emulated. touchHLE takes the place of iPhone OS and provides its own implementations of the system frameworks (Foundation, UIKit, OpenGL ES, OpenAL, etc).
+
+The goal of this project is to run games from the early days of iOS. Only iPhone/iPod touch apps for iPhone OS 2.x have been tested so far. Modern/64-bit iOS app support is explicitly a non-goal, and support for apps that aren't games is unlikely to be prioritized due to the complexity. On the other hand, it's likely that we'll attempt to support apps for some newer 32-bit versions (especially 3.x and 4.x) and the iPad in future.
 
 ## Important disclaimer
 
 This project is not affiliated with or endorsed by Apple Inc in any way. iPhone, iPhone OS, iOS, iPod, iPod touch and iPad may be trademarks of Apple Inc in the United States or other countries.
 
-## What do we mean by high-level emulation?
-
-High-level emulation (HLE) means that we're not emulating the hardware of an iPhone or iPod touch, nor are we emulating the OS kernel. In fact, this emulator does not execute any part of iPhone OS at all! The ARMv6 code in the app binary is emulated by [dynarmic](https://github.com/merryhime/dynarmic), but everything else is done by intercepting the API calls made by the app and providing our own implementations of them. In that respect touchHLE could be compared to [WINE](https://www.winehq.org/).
-
-Our implementations are completely free of Apple code and do not require using an Apple platform or a copy of iPhone OS. The only binaries required are libgcc and libstdc++, which are Free Software and included in this repo.
-
-## iPhone OS
-
-You could say this is an emulator for iOS apps, but it's specifically targeted at apps from the early days of the iPhone and iPod touch, back when iOS was still called “iPhone OS”. It also only supports 32-bit apps, and currently only has iPhone OS 2.x's version of libstdc++.
-
-It might eventually support iPad apps, at which point saying “iOS” would be more appropriate.
-
-## The focus on games
-
-* Nostalgia for iPod touch games :)
-* Games are convenient targets for HLE because they tend to use only the thinner parts of the OS's API surface: 3D rendering via OpenGL ES, audio output, input handling, and various miscellaneous tasks, but not anything as complex as the UI toolkit. They also tend to use C++, whose standard library we don't need to reimplement. This should mean that much less effort needs to be expended to get games working versus other types of apps.
-* Video games demand to be treated as art, and art demands to be remembered. iOS apps are such a recent invention that they might appear to be unendangered, but old apps can no longer be bought or run on modern devices, and iOS was early in adopting a DRM system that makes installation of apps only possible for so long as Apple continues to run the servers. We risk losing important cultural history without immediate preservation efforts.
-
 ## Platform support
 
 touchHLE has been tested on x64 Windows and x64 macOS. It probably works on x64 Linux too but this hasn't been tested. AArch64 (including Apple Silicon) has not been tested.
 
-32-bit and big-endian systems are unlikely to ever be supported.
+32-bit and big-endian host platforms are probably never going to be supported.
 
 It would be desirable to eventually support Android. That is probably not too much work.
 

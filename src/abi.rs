@@ -87,11 +87,11 @@ impl GuestFunction {
             let regs = env.cpu.regs_mut();
             let old_sp = regs[Cpu::SP];
             let old_fp = regs[FRAME_POINTER];
+            regs[Cpu::SP] -= 8;
+            regs[FRAME_POINTER] = old_sp;
             env.mem
                 .write(Ptr::from_bits(regs[Cpu::SP]), regs[FRAME_POINTER]);
             env.mem.write(Ptr::from_bits(regs[Cpu::SP] + 4), old_lr);
-            regs[Cpu::SP] -= 8;
-            regs[FRAME_POINTER] = old_sp;
             (old_sp, old_fp)
         };
 

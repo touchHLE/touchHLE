@@ -183,6 +183,13 @@ fn alSourcei(_env: &mut Environment, source: ALuint, param: ALenum, value: ALint
     unsafe { al::alSourcei(source, param, value) };
 }
 
+fn alSourcePlay(_env: &mut Environment, source: ALuint) {
+    unsafe { al::alSourcePlay(source) };
+}
+fn alSourceStop(_env: &mut Environment, source: ALuint) {
+    unsafe { al::alSourceStop(source) };
+}
+
 fn alGenBuffers(env: &mut Environment, n: ALsizei, buffers: MutPtr<ALuint>) {
     let n_usize: GuestUSize = n.try_into().unwrap();
     let buffers = env.mem.ptr_at_mut(buffers, n_usize);
@@ -245,6 +252,8 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(alDeleteSources(_, _)),
     export_c_func!(alSourcef(_, _, _)),
     export_c_func!(alSourcei(_, _, _)),
+    export_c_func!(alSourcePlay(_)),
+    export_c_func!(alSourceStop(_)),
     export_c_func!(alGenBuffers(_, _)),
     export_c_func!(alDeleteBuffers(_, _)),
     export_c_func!(alBufferData(_, _, _, _, _)),

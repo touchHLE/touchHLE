@@ -38,7 +38,7 @@ TBD
 
 ## App support
 
-TBD
+- Super Monkey Ball (2008, App Store launch title): SEGA logo, OOI logo and title screens fully working. Main menu and main game not accessible yet.
 
 # Building
 

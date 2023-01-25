@@ -93,6 +93,22 @@ impl StringHostObject {
             StringHostObject::Utf16(utf16) => Ok(Cow::Owned(String::from_utf16(utf16)?)),
         }
     }
+    /// Mutate the object, converting to UTF-16 if the string was not already
+    /// UTF-16. Returns a reference to the UTF-16 content and a boolean that is
+    /// [true] if a conversion happened.
+    fn convert_to_utf16_inplace(&mut self) -> (&mut Utf16String, bool) {
+        let converted = match self {
+            Self::Utf8(_) => {
+                *self = Self::Utf16(self.iter_code_units().collect());
+                true
+            }
+            Self::Utf16(_) => false,
+        };
+        let Self::Utf16(utf16) = self else {
+            unreachable!();
+        };
+        (utf16, converted)
+    }
     /// Iterate over the string as UTF-16 code units.
     fn iter_code_units(&self) -> CodeUnitIterator {
         match self {
@@ -179,6 +195,40 @@ pub const CLASSES: ClassExports = objc_classes! {
                                               encoding:encoding
                                                  error:error];
     autorelease(env, new)
+}
+
+// These are the two methods that have to be overridden by subclasses, so these
+// implementations don't have to care about foreign subclasses.
+- (NSUInteger)length {
+    let host_object = env.objc.borrow_mut::<StringHostObject>(this);
+
+    // To know what length the string has in UTF-16, we need to convert it to
+    // UTF-16. If `length` is used, it's likely other methods that operate on
+    // UTF-16 code unit boundaries will also be used (e.g. `characterAt:`), so
+    // persisting the UTF-16 version lets us potentially optimize future method
+    // calls. This is a heuristic though and won't always be optimal.
+    let (utf16, did_convert) = host_object.convert_to_utf16_inplace();
+    if did_convert {
+        log_dbg!("[{:?} length]: converted string to UTF-16", this);
+    }
+
+    utf16.len().try_into().unwrap()
+}
+- (u16)characterAtIndex:(NSUInteger)index {
+    let host_object = env.objc.borrow_mut::<StringHostObject>(this);
+
+    // The string has to be in UTF-16 to get O(1) rather than O(n) indexing, and
+    // it's likely this method will be called many times, so converting it to
+    // UTF-16 as early as possible and persisting that representation is
+    // probably best for performance. This is a heuristic though and won't
+    // always be optimal.
+    let (utf16, did_convert) = host_object.convert_to_utf16_inplace();
+    if did_convert {
+        log_dbg!("[{:?} characterAtIndex:{:?}]: converted string to UTF-16", this, index);
+    }
+
+    // TODO: raise exception instead of panicking?
+    utf16[index as usize]
 }
 
 - (NSUInteger)hash {
@@ -268,6 +318,54 @@ pub const CLASSES: ClassExports = objc_classes! {
     ns_array::from_vec(env, component_ns_strings)
 }
 
+- (id)stringByTrimmingCharactersInSet:(id)set { // NSCharacterSet*
+    let initial_length: NSUInteger = msg![env; this length];
+
+    let mut res_start: NSUInteger = 0;
+    let mut res_end = initial_length;
+
+    while res_start < initial_length {
+        let c: u16 = msg![env; this characterAtIndex:res_start];
+        if msg![env; set characterIsMember:c] {
+            res_start += 1;
+        } else {
+            break;
+        }
+    }
+
+    while res_end > res_start {
+        let c: u16 = msg![env; this characterAtIndex:(res_end - 1)];
+        if msg![env; set characterIsMember:c] {
+            res_end -= 1;
+        } else {
+            break;
+        }
+    }
+
+    assert!(res_end >= res_start);
+    let res_length = res_end - res_start;
+
+    let res = if res_length == initial_length {
+        retain(env, this)
+    } else {
+        // TODO: just call `substringWithRange:` here instead, the only reason
+        // the current code doesn't is that it would require figuring out the
+        // ABI of NSRange.
+        let mut res_utf16: Utf16String = Vec::with_capacity(res_length as usize);
+
+        for_each_code_unit(env, this, |idx, c| {
+            if res_start <= idx && idx < res_end {
+                res_utf16.push(c);
+            }
+        });
+
+        let res = msg_class![env; _touchHLE_NSString alloc];
+        *env.objc.borrow_mut(res) = StringHostObject::Utf16(res_utf16);
+        res
+    };
+    autorelease(env, res)
+}
+
 - (id)stringByReplacingOccurrencesOfString:(id)target // NSString*
                                 withString:(id)replacement { // NSString*
     // TODO: support foreign subclasses (perhaps via a helper function that
@@ -336,7 +434,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.alloc_object(this, host_object, &mut env.mem)
 }
 
-// TODO: accessors, more init methods, etc
+// TODO: more init methods
 
 - (id)initWithBytes:(ConstPtr<u8>)bytes
              length:(NSUInteger)len

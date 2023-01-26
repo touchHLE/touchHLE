@@ -2,6 +2,8 @@
 
 use super::ns_array;
 use super::NSUInteger;
+use crate::frameworks::core_graphics::CGSize;
+use crate::frameworks::uikit::ui_font::{self, NSLineBreakByWordWrapping, NSLineBreakMode};
 use crate::fs::GuestPath;
 use crate::mem::{ConstPtr, Mem, MutPtr, MutVoidPtr, SafeRead};
 use crate::objc::{
@@ -421,6 +423,28 @@ pub const CLASSES: ClassExports = objc_classes! {
     let _: id = msg_class![env; NSData dataWithBytesNoCopy:c_string
                                                     length:length];
     c_string
+}
+
+// These come from a category in UIKit (UIStringDrawing).
+// TODO: Implement categories so we can completely move the code to UIFont.
+// TODO: More `sizeWithFont:` variants
+- (CGSize)sizeWithFont:(id)font { // UIFont*
+    // TODO: avoid copy
+    let text = to_rust_string(env, this);
+    ui_font::size_with_font(env, font, &text, None)
+}
+- (CGSize)sizeWithFont:(id)font // UIFont*
+     constrainedToSize:(CGSize)size {
+    msg![env; this sizeWithFont:font
+              constrainedToSize:size
+                  lineBreakMode:NSLineBreakByWordWrapping]
+}
+- (CGSize)sizeWithFont:(id)font // UIFont*
+     constrainedToSize:(CGSize)size
+         lineBreakMode:(NSLineBreakMode)line_break_mode {
+    // TODO: avoid copy
+    let text = to_rust_string(env, this);
+    ui_font::size_with_font(env, font, &text, Some((size, line_break_mode)))
 }
 
 @end

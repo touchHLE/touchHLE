@@ -22,6 +22,7 @@ mod audio;
 mod bundle;
 mod cpu;
 mod dyld;
+mod font;
 mod frameworks;
 mod fs;
 mod image;

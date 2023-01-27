@@ -12,6 +12,20 @@ pub struct CGPoint {
 }
 unsafe impl SafeRead for CGPoint {}
 impl_GuestRet_for_large_struct!(CGPoint);
+impl GuestArg for CGPoint {
+    const REG_COUNT: usize = 2;
+
+    fn from_regs(regs: &[u32]) -> Self {
+        CGPoint {
+            x: GuestArg::from_regs(&regs[0..1]),
+            y: GuestArg::from_regs(&regs[1..2]),
+        }
+    }
+    fn to_regs(self, regs: &mut [u32]) {
+        self.x.to_regs(&mut regs[0..1]);
+        self.y.to_regs(&mut regs[1..2]);
+    }
+}
 
 #[derive(Copy, Clone, Debug)]
 #[repr(C, packed)]
@@ -44,3 +58,17 @@ pub struct CGRect {
 }
 unsafe impl SafeRead for CGRect {}
 impl_GuestRet_for_large_struct!(CGRect);
+impl GuestArg for CGRect {
+    const REG_COUNT: usize = 4;
+
+    fn from_regs(regs: &[u32]) -> Self {
+        CGRect {
+            origin: GuestArg::from_regs(&regs[0..2]),
+            size: GuestArg::from_regs(&regs[2..4]),
+        }
+    }
+    fn to_regs(self, regs: &mut [u32]) {
+        self.origin.to_regs(&mut regs[0..2]);
+        self.size.to_regs(&mut regs[2..4]);
+    }
+}

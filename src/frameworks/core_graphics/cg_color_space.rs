@@ -19,8 +19,8 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 };
 
-struct CGColorSpaceHostObject {
-    _name: &'static str,
+pub(super) struct CGColorSpaceHostObject {
+    pub(super) name: &'static str,
 }
 impl HostObject for CGColorSpaceHostObject {}
 
@@ -37,7 +37,7 @@ pub fn CGColorSpaceCreateWithName(env: &mut Environment, name: CFStringRef) -> C
     env.objc.alloc_object(
         isa,
         Box::new(CGColorSpaceHostObject {
-            _name: kCGColorSpaceGenericRGB,
+            name: kCGColorSpaceGenericRGB,
         }),
         &mut env.mem,
     )

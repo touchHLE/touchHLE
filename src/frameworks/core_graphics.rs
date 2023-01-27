@@ -1,7 +1,10 @@
 //! The Core Graphics framework.
 
+pub mod cg_bitmap_context;
 pub mod cg_color_space;
+pub mod cg_context;
 mod cg_geometry;
+pub mod cg_image;
 
 pub type CGFloat = f32;
 

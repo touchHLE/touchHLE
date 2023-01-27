@@ -1,0 +1,182 @@
+//! `CGBitmapContext.h`
+
+use super::cg_color_space::{kCGColorSpaceGenericRGB, CGColorSpaceHostObject, CGColorSpaceRef};
+use super::cg_context::{CGContextHostObject, CGContextRef, CGContextSubclass};
+use super::cg_image::{
+    kCGImageAlphaFirst, kCGImageAlphaLast, kCGImageAlphaNone, kCGImageAlphaNoneSkipFirst,
+    kCGImageAlphaNoneSkipLast, kCGImageAlphaOnly, kCGImageAlphaPremultipliedFirst,
+    kCGImageAlphaPremultipliedLast, CGImageAlphaInfo,
+};
+use super::{CGFloat, CGRect};
+use crate::dyld::{export_c_func, FunctionExports};
+use crate::mem::{GuestUSize, Mem, MutVoidPtr};
+use crate::Environment;
+
+#[derive(Copy, Clone)]
+pub(super) struct CGBitmapContextData {
+    data: MutVoidPtr,
+    width: GuestUSize,
+    height: GuestUSize,
+    bits_per_component: GuestUSize,
+    bytes_per_row: GuestUSize,
+    color_space: &'static str,
+    alpha_info: CGImageAlphaInfo,
+}
+
+fn CGBitmapContextCreate(
+    env: &mut Environment,
+    data: MutVoidPtr,
+    width: GuestUSize,
+    height: GuestUSize,
+    bits_per_component: GuestUSize,
+    bytes_per_row: GuestUSize,
+    color_space: CGColorSpaceRef,
+    bitmap_info: u32,
+) -> CGContextRef {
+    assert!(!data.is_null()); // TODO: support memory allocation
+    assert!(bits_per_component == 8); // TODO: support other bit depths
+    assert!(components_for_rgb(bitmap_info).is_ok());
+
+    let color_space = env.objc.borrow::<CGColorSpaceHostObject>(color_space).name;
+    // TODO: support other color spaces
+    assert!(color_space == kCGColorSpaceGenericRGB);
+
+    let host_object = CGContextHostObject {
+        subclass: CGContextSubclass::CGBitmapContext(CGBitmapContextData {
+            data,
+            width,
+            height,
+            bits_per_component,
+            bytes_per_row,
+            color_space: kCGColorSpaceGenericRGB,
+            alpha_info: bitmap_info,
+        }),
+        // TODO: is this the correct default?
+        rgb_fill_color: (0.0, 0.0, 0.0, 0.0),
+    };
+    let isa = env
+        .objc
+        .get_known_class("_touchHLE_CGContext", &mut env.mem);
+    env.objc
+        .alloc_object(isa, Box::new(host_object), &mut env.mem)
+}
+
+fn components_for_rgb(alpha_info: CGImageAlphaInfo) -> Result<GuestUSize, ()> {
+    match alpha_info {
+        kCGImageAlphaNone => Ok(3), // RGB
+        kCGImageAlphaPremultipliedLast
+        | kCGImageAlphaPremultipliedFirst
+        | kCGImageAlphaLast
+        | kCGImageAlphaFirst
+        | kCGImageAlphaNoneSkipLast
+        | kCGImageAlphaNoneSkipFirst => Ok(4), // RGBA/ARGB/RGBX/XRGB
+        kCGImageAlphaOnly => Ok(1), // A
+        _ => Err(()),               // unknown values
+    }
+}
+
+fn bytes_per_pixel(data: &CGBitmapContextData) -> GuestUSize {
+    let &CGBitmapContextData {
+        bits_per_component,
+        color_space,
+        alpha_info,
+        ..
+    } = data;
+    assert!(bits_per_component == 8);
+    assert!(color_space == kCGColorSpaceGenericRGB);
+    components_for_rgb(alpha_info).unwrap()
+}
+
+fn get_pixels<'a>(data: &CGBitmapContextData, mem: &'a mut Mem) -> &'a mut [u8] {
+    let pixel_data_size = data.height.checked_mul(data.bytes_per_row).unwrap();
+    mem.bytes_at_mut(data.data.cast(), pixel_data_size)
+}
+
+fn put_pixel(
+    data: &CGBitmapContextData,
+    pixels: &mut [u8],
+    coords: (GuestUSize, GuestUSize),
+    pixel: (CGFloat, CGFloat, CGFloat, CGFloat),
+) {
+    let (x, y) = coords;
+    if x >= data.width || y >= data.height {
+        return;
+    }
+    let pixel_size = bytes_per_pixel(data);
+    let first_component_idx = (y * data.bytes_per_row + x * pixel_size) as usize;
+
+    let (r, g, b, a) = pixel;
+    match data.alpha_info {
+        kCGImageAlphaNone => {
+            pixels[first_component_idx] = (r * 255.0) as u8;
+            pixels[first_component_idx + 1] = (g * 255.0) as u8;
+            pixels[first_component_idx + 2] = (b * 255.0) as u8;
+        }
+        kCGImageAlphaPremultipliedLast => {
+            let (r, g, b) = (r * a, g * a, b * a);
+            pixels[first_component_idx] = (r * 255.0) as u8;
+            pixels[first_component_idx + 1] = (g * 255.0) as u8;
+            pixels[first_component_idx + 2] = (b * 255.0) as u8;
+            pixels[first_component_idx + 3] = (a * 255.0) as u8;
+        }
+        kCGImageAlphaPremultipliedFirst => {
+            let (r, g, b) = (r * a, g * a, b * a);
+            pixels[first_component_idx] = (a * 255.0) as u8;
+            pixels[first_component_idx + 1] = (r * 255.0) as u8;
+            pixels[first_component_idx + 2] = (g * 255.0) as u8;
+            pixels[first_component_idx + 3] = (b * 255.0) as u8;
+        }
+        kCGImageAlphaLast => {
+            pixels[first_component_idx] = (r * 255.0) as u8;
+            pixels[first_component_idx + 1] = (g * 255.0) as u8;
+            pixels[first_component_idx + 2] = (b * 255.0) as u8;
+            pixels[first_component_idx + 3] = (a * 255.0) as u8;
+        }
+        kCGImageAlphaFirst => {
+            pixels[first_component_idx] = (a * 255.0) as u8;
+            pixels[first_component_idx + 1] = (r * 255.0) as u8;
+            pixels[first_component_idx + 2] = (g * 255.0) as u8;
+            pixels[first_component_idx + 3] = (b * 255.0) as u8;
+        }
+        kCGImageAlphaNoneSkipLast => {
+            pixels[first_component_idx] = (r * 255.0) as u8;
+            pixels[first_component_idx + 1] = (g * 255.0) as u8;
+            pixels[first_component_idx + 2] = (b * 255.0) as u8;
+            // alpha component skipped
+        }
+        kCGImageAlphaNoneSkipFirst => {
+            // alpha component skipped
+            pixels[first_component_idx + 1] = (r * 255.0) as u8;
+            pixels[first_component_idx + 2] = (g * 255.0) as u8;
+            pixels[first_component_idx + 3] = (b * 255.0) as u8;
+        }
+        kCGImageAlphaOnly => {
+            pixels[first_component_idx] = (a * 255.0) as u8;
+        }
+        _ => unreachable!(), // checked by bytes_per_pixel
+    }
+}
+
+/// Implementation of `CGContextFillRect` for `CGBitmapContext`.
+pub(super) fn fill_rect(env: &mut Environment, context: CGContextRef, rect: CGRect) {
+    let &CGContextHostObject {
+        subclass: CGContextSubclass::CGBitmapContext(bitmap_data),
+        rgb_fill_color,
+    } = env.objc.borrow(context);
+
+    // TODO: correct anti-aliasing
+    let x_start = (rect.origin.x.round() as GuestUSize).min(0);
+    let y_start = (rect.origin.y.round() as GuestUSize).min(0);
+    let x_end = ((rect.origin.x + rect.size.width).round() as GuestUSize).max(bitmap_data.width);
+    let y_end = ((rect.origin.y + rect.size.height).round() as GuestUSize).max(bitmap_data.height);
+
+    let pixels = get_pixels(&bitmap_data, &mut env.mem);
+    for y in y_start..y_end {
+        for x in x_start..x_end {
+            put_pixel(&bitmap_data, pixels, (x, y), rgb_fill_color);
+        }
+    }
+}
+
+pub const FUNCTIONS: FunctionExports =
+    &[export_c_func!(CGBitmapContextCreate(_, _, _, _, _, _, _))];

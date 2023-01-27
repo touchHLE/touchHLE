@@ -10,6 +10,7 @@ use super::cg_image::{
 use super::{CGFloat, CGRect};
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::mem::{GuestUSize, Mem, MutVoidPtr};
+use crate::objc::ObjC;
 use crate::Environment;
 
 #[derive(Copy, Clone)]
@@ -157,23 +158,66 @@ fn put_pixel(
     }
 }
 
+/// Abstract interface for use by host code that wants to draw in a bitmap
+/// context.
+pub struct CGBitmapContextDrawer<'a> {
+    bitmap_info: CGBitmapContextData,
+    rgb_fill_color: (CGFloat, CGFloat, CGFloat, CGFloat),
+    pixels: &'a mut [u8],
+}
+impl CGBitmapContextDrawer<'_> {
+    pub fn new<'a>(
+        objc: &ObjC,
+        mem: &'a mut Mem,
+        context: CGContextRef,
+    ) -> CGBitmapContextDrawer<'a> {
+        let &CGContextHostObject {
+            subclass: CGContextSubclass::CGBitmapContext(bitmap_info),
+            rgb_fill_color,
+        } = objc.borrow(context);
+
+        let pixels = get_pixels(&bitmap_info, mem);
+
+        CGBitmapContextDrawer {
+            bitmap_info,
+            rgb_fill_color,
+            pixels,
+        }
+    }
+
+    pub fn width(&self) -> GuestUSize {
+        self.bitmap_info.width
+    }
+    pub fn height(&self) -> GuestUSize {
+        self.bitmap_info.height
+    }
+    pub fn rgb_fill_color(&self) -> (CGFloat, CGFloat, CGFloat, CGFloat) {
+        self.rgb_fill_color
+    }
+
+    pub fn put_pixel(
+        &mut self,
+        coords: (GuestUSize, GuestUSize),
+        color: (CGFloat, CGFloat, CGFloat, CGFloat),
+    ) {
+        put_pixel(&self.bitmap_info, self.pixels, coords, color)
+    }
+}
+
 /// Implementation of `CGContextFillRect` for `CGBitmapContext`.
 pub(super) fn fill_rect(env: &mut Environment, context: CGContextRef, rect: CGRect) {
-    let &CGContextHostObject {
-        subclass: CGContextSubclass::CGBitmapContext(bitmap_data),
-        rgb_fill_color,
-    } = env.objc.borrow(context);
+    let mut drawer = CGBitmapContextDrawer::new(&env.objc, &mut env.mem, context);
 
     // TODO: correct anti-aliasing
     let x_start = (rect.origin.x.round() as GuestUSize).min(0);
     let y_start = (rect.origin.y.round() as GuestUSize).min(0);
-    let x_end = ((rect.origin.x + rect.size.width).round() as GuestUSize).max(bitmap_data.width);
-    let y_end = ((rect.origin.y + rect.size.height).round() as GuestUSize).max(bitmap_data.height);
+    let x_end = ((rect.origin.x + rect.size.width).round() as GuestUSize).max(drawer.width());
+    let y_end = ((rect.origin.y + rect.size.height).round() as GuestUSize).max(drawer.height());
 
-    let pixels = get_pixels(&bitmap_data, &mut env.mem);
+    let color = drawer.rgb_fill_color();
     for y in y_start..y_end {
         for x in x_start..x_end {
-            put_pixel(&bitmap_data, pixels, (x, y), rgb_fill_color);
+            drawer.put_pixel((x, y), color)
         }
     }
 }

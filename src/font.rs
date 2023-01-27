@@ -3,7 +3,7 @@
 //! This is implemented using the [rusttype] library. All usage of that library
 //! should be confined to this module.
 
-use rusttype::{Rect, Scale};
+use rusttype::{Point, Rect, Scale};
 use std::cmp;
 
 pub struct Font {
@@ -23,6 +23,7 @@ impl Font {
         Font { font }
     }
 
+    // TODO: add a Japanese font (for Super Monkey Ball when LANG=ja)
     pub fn sans_regular() -> Font {
         Self::from_file("touchHLE_fonts/LiberationSans-Regular.ttf")
     }
@@ -41,7 +42,9 @@ impl Font {
             .font
             .layout(text, Scale::uniform(font_size), Default::default())
         {
-            let glyph_bounds = glyph.pixel_bounding_box().unwrap();
+            let Some(glyph_bounds) = glyph.pixel_bounding_box() else {
+                continue;
+            };
             text_bounds.min.x = cmp::min(text_bounds.min.x, glyph_bounds.min.x);
             text_bounds.min.y = cmp::min(text_bounds.min.y, glyph_bounds.min.y);
             text_bounds.max.x = cmp::max(text_bounds.max.x, glyph_bounds.max.x);
@@ -49,5 +52,36 @@ impl Font {
         }
 
         (text_bounds.width() as f32, text_bounds.height() as f32)
+    }
+
+    /// Draw text. Calls the provided callback for each pixel, providing the
+    /// coverage (a value between 0.0 and 1.0).
+    pub fn draw<F: FnMut((u32, u32), f32)>(
+        &self,
+        font_size: f32,
+        text: &str,
+        origin: (f32, f32),
+        mut put_pixel: F,
+    ) {
+        for glyph in self.font.layout(
+            text,
+            Scale::uniform(font_size),
+            Point {
+                x: origin.0,
+                y: 0.0,
+            },
+        ) {
+            let Some(glyph_bounds) = glyph.pixel_bounding_box() else {
+                continue;
+            };
+            // y needs to be flipped to point up
+            // FIXME: blending
+            let glyph_height = glyph_bounds.height() as u32;
+            let x_offset = glyph_bounds.min.x as u32;
+            let y_offset = (origin.1.round() as u32) - (glyph_bounds.max.y as u32);
+            glyph.draw(|x, y, coverage| {
+                put_pixel((x_offset + x, y_offset + (glyph_height - y)), coverage)
+            });
+        }
     }
 }

@@ -24,7 +24,7 @@ fn UIGraphicsPopContext(env: &mut Environment) {
     let context = env.framework_state.uikit.ui_graphics.context_stack.pop();
     CGContextRelease(env, context.unwrap());
 }
-fn UIGraphicsGetCurrentContext(env: &mut Environment) -> CGContextRef {
+pub(super) fn UIGraphicsGetCurrentContext(env: &mut Environment) -> CGContextRef {
     env.framework_state
         .uikit
         .ui_graphics

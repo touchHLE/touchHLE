@@ -2,8 +2,10 @@
 
 use super::ns_array;
 use super::NSUInteger;
-use crate::frameworks::core_graphics::CGSize;
-use crate::frameworks::uikit::ui_font::{self, NSLineBreakByWordWrapping, NSLineBreakMode};
+use crate::frameworks::core_graphics::{CGRect, CGSize};
+use crate::frameworks::uikit::ui_font::{
+    self, UILineBreakMode, UILineBreakModeWordWrap, UITextAlignment, UITextAlignmentLeft,
+};
 use crate::fs::GuestPath;
 use crate::mem::{ConstPtr, Mem, MutPtr, MutVoidPtr, SafeRead};
 use crate::objc::{
@@ -437,14 +439,38 @@ pub const CLASSES: ClassExports = objc_classes! {
      constrainedToSize:(CGSize)size {
     msg![env; this sizeWithFont:font
               constrainedToSize:size
-                  lineBreakMode:NSLineBreakByWordWrapping]
+                  lineBreakMode:UILineBreakModeWordWrap]
 }
 - (CGSize)sizeWithFont:(id)font // UIFont*
      constrainedToSize:(CGSize)size
-         lineBreakMode:(NSLineBreakMode)line_break_mode {
+         lineBreakMode:(UILineBreakMode)line_break_mode {
     // TODO: avoid copy
     let text = to_rust_string(env, this);
     ui_font::size_with_font(env, font, &text, Some((size, line_break_mode)))
+}
+
+- (CGSize)drawInRect:(CGRect)rect
+            withFont:(id)font { // UIFont*
+    msg![env; this drawInRect:rect
+                     withFont:font
+                lineBreakMode:UILineBreakModeWordWrap
+                    alignment:UITextAlignmentLeft]
+}
+- (CGSize)drawInRect:(CGRect)rect
+            withFont:(id)font // UIFont*
+       lineBreakMode:(UILineBreakMode)line_break_mode {
+    msg![env; this drawInRect:rect
+                     withFont:font
+                lineBreakMode:line_break_mode
+                    alignment:UITextAlignmentLeft]
+}
+- (CGSize)drawInRect:(CGRect)rect
+            withFont:(id)font // UIFont*
+       lineBreakMode:(UILineBreakMode)line_break_mode
+           alignment:(UITextAlignment)align {
+    // TODO: avoid copy
+    let text = to_rust_string(env, this);
+    ui_font::draw_in_rect(env, font, &text, rect, line_break_mode, align)
 }
 
 @end

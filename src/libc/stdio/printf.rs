@@ -28,6 +28,21 @@ fn printf_inner(env: &mut Environment, format: ConstPtr<u8>, mut args: VAList) -
             continue;
         }
 
+        let pad_char = if env.mem.read(current_format) == b'0' {
+            current_format += 1;
+            '0'
+        } else {
+            ' '
+        };
+        let pad_width = {
+            let mut pad_width = 0;
+            while let c @ b'0'..=b'9' = env.mem.read(current_format) {
+                pad_width = pad_width * 10 + (c - b'0') as usize;
+                current_format += 1;
+            }
+            pad_width
+        };
+
         let specifier = env.mem.read(current_format);
         current_format += 1;
 
@@ -40,12 +55,21 @@ fn printf_inner(env: &mut Environment, format: ConstPtr<u8>, mut args: VAList) -
         match specifier {
             b's' => {
                 let c_string: ConstPtr<u8> = args.next(env);
+                assert!(pad_char == ' ' && pad_width == 0); // TODO
                 res.extend_from_slice(env.mem.cstr_at(c_string));
             }
             b'd' | b'i' => {
                 let int: i32 = args.next(env);
                 // TODO: avoid copy?
-                res.extend_from_slice(format!("{}", int).as_bytes());
+                if pad_width > 0 {
+                    if pad_char == '0' {
+                        res.extend_from_slice(format!("{:01$}", int, pad_width).as_bytes());
+                    } else {
+                        res.extend_from_slice(format!("{:1$}", int, pad_width).as_bytes());
+                    }
+                } else {
+                    res.extend_from_slice(format!("{}", int).as_bytes());
+                }
             }
             // TODO: more specifiers
             _ => unimplemented!("Format character '{}'", specifier as char),

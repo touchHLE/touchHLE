@@ -187,12 +187,17 @@ fn AudioQueueSetParameter(
 ) -> OSStatus {
     assert!(in_param_id == kAudioQueueParam_Volume); // others unimplemented
 
-    let host_object = State::get(&mut env.framework_state)
-        .audio_queues
-        .get_mut(&in_aq)
-        .unwrap();
+    let state = State::get(&mut env.framework_state);
+    let host_object = state.audio_queues.get_mut(&in_aq).unwrap();
 
     host_object.volume = in_value;
+    if let Some(al_source) = host_object.al_source {
+        let _context_manager = state.make_al_context_current();
+        unsafe {
+            al::alSourcef(al_source, al::AL_MAX_GAIN, in_value);
+            assert!(al::alGetError() == 0);
+        }
+    }
 
     0 // success
 }
@@ -332,8 +337,11 @@ fn prime_audio_queue(
 
     if host_object.al_source.is_none() {
         let mut al_source = 0;
-        unsafe { al::alGenSources(1, &mut al_source) };
-        assert!(unsafe { al::alGetError() } == 0);
+        unsafe {
+            al::alGenSources(1, &mut al_source);
+            al::alSourcef(al_source, al::AL_MAX_GAIN, host_object.volume);
+            assert!(al::alGetError() == 0);
+        };
         host_object.al_source = Some(al_source);
     }
     let al_source = host_object.al_source.unwrap();

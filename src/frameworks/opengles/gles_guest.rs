@@ -365,6 +365,13 @@ fn glGenTextures(env: &mut Environment, n: GLsizei, textures: MutPtr<GLuint>) {
         unsafe { gles.GenTextures(n, textures) }
     })
 }
+fn glDeleteTextures(env: &mut Environment, n: GLsizei, textures: ConstPtr<GLuint>) {
+    with_ctx_and_mem(env, |gles, mem| {
+        let n_usize: GuestUSize = n.try_into().unwrap();
+        let textures = mem.ptr_at(textures, n_usize);
+        unsafe { gles.DeleteTextures(n, textures) }
+    })
+}
 fn glBindTexture(env: &mut Environment, target: GLenum, texture: GLuint) {
     with_ctx_and_mem(env, |gles, _mem| unsafe {
         gles.BindTexture(target, texture)
@@ -535,6 +542,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(glTranslatex(_, _, _)),
     // Textures
     export_c_func!(glGenTextures(_, _)),
+    export_c_func!(glDeleteTextures(_, _)),
     export_c_func!(glBindTexture(_, _)),
     export_c_func!(glTexParameteri(_, _, _)),
     export_c_func!(glTexImage2D(_, _, _, _, _, _, _, _, _)),

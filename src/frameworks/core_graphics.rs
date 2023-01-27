@@ -1,5 +1,6 @@
 //! The Core Graphics framework.
 
+pub mod cg_color_space;
 mod cg_geometry;
 
 pub type CGFloat = f32;

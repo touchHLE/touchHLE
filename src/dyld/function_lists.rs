@@ -1,7 +1,9 @@
 //! Separate module just for the function lists, since this will probably be a
 //! very long and frequently-updated list.
 
-use crate::frameworks::{audio_toolbox, core_foundation, foundation, openal, opengles, uikit};
+use crate::frameworks::{
+    audio_toolbox, core_foundation, core_graphics, foundation, openal, opengles, uikit,
+};
 use crate::libc;
 
 /// All the lists of functions that the linker should search through.
@@ -25,6 +27,7 @@ pub const FUNCTION_LISTS: &[super::FunctionExports] = &[
     core_foundation::cf_run_loop::FUNCTIONS,
     core_foundation::cf_type::FUNCTIONS,
     core_foundation::cf_url::FUNCTIONS,
+    core_graphics::cg_color_space::FUNCTIONS,
     foundation::ns_file_manager::FUNCTIONS,
     openal::FUNCTIONS,
     opengles::FUNCTIONS,

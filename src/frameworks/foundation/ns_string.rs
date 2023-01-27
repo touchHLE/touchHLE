@@ -184,6 +184,12 @@ pub const CLASSES: ClassExports = objc_classes! {
     msg_class![env; _touchHLE_NSString allocWithZone:zone]
 }
 
++ (id)stringWithCString:(ConstPtr<u8>)c_string {
+    let new: id = msg![env; this alloc];
+    let new: id = msg![env; new initWithCString:c_string];
+    autorelease(env, new)
+}
+
 + (id)stringWithCString:(ConstPtr<u8>)c_string
                encoding:(NSStringEncoding)encoding {
     let new: id = msg![env; this alloc];
@@ -498,6 +504,15 @@ pub const CLASSES: ClassExports = objc_classes! {
     *env.objc.borrow_mut(this) = host_object;
 
     this
+}
+
+- (id)initWithCString:(ConstPtr<u8>)c_string {
+    // This is a deprecated method nobody should use, but unfortunately, it is
+    // used. The encoding it should use is [NSString defaultCStringEncoding]
+    // but I don't want to figure out what that is on all platforms, and the use
+    // I've seen of this method was on ASCII strings, so let's just hardcode
+    // UTF-8 and hope that works.
+    msg![env; this initWithCString:c_string encoding:NSUTF8StringEncoding]
 }
 
 - (id)initWithCString:(ConstPtr<u8>)c_string

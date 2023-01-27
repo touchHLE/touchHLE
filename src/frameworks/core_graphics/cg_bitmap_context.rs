@@ -96,10 +96,14 @@ fn get_pixels<'a>(data: &CGBitmapContextData, mem: &'a mut Mem) -> &'a mut [u8] 
 fn put_pixel(
     data: &CGBitmapContextData,
     pixels: &mut [u8],
-    coords: (GuestUSize, GuestUSize),
+    coords: (i32, i32),
     pixel: (CGFloat, CGFloat, CGFloat, CGFloat),
 ) {
     let (x, y) = coords;
+    if x < 0 || y < 0 {
+        return;
+    }
+    let (x, y) = (x as GuestUSize, y as GuestUSize);
     if x >= data.width || y >= data.height {
         return;
     }
@@ -195,11 +199,7 @@ impl CGBitmapContextDrawer<'_> {
         self.rgb_fill_color
     }
 
-    pub fn put_pixel(
-        &mut self,
-        coords: (GuestUSize, GuestUSize),
-        color: (CGFloat, CGFloat, CGFloat, CGFloat),
-    ) {
+    pub fn put_pixel(&mut self, coords: (i32, i32), color: (CGFloat, CGFloat, CGFloat, CGFloat)) {
         put_pixel(&self.bitmap_info, self.pixels, coords, color)
     }
 }
@@ -217,7 +217,7 @@ pub(super) fn fill_rect(env: &mut Environment, context: CGContextRef, rect: CGRe
     let color = drawer.rgb_fill_color();
     for y in y_start..y_end {
         for x in x_start..x_end {
-            drawer.put_pixel((x, y), color)
+            drawer.put_pixel((x as _, y as _), color)
         }
     }
 }

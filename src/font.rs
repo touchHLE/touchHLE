@@ -56,7 +56,7 @@ impl Font {
 
     /// Draw text. Calls the provided callback for each pixel, providing the
     /// coverage (a value between 0.0 and 1.0).
-    pub fn draw<F: FnMut((u32, u32), f32)>(
+    pub fn draw<F: FnMut((i32, i32), f32)>(
         &self,
         font_size: f32,
         text: &str,
@@ -76,10 +76,11 @@ impl Font {
             };
             // y needs to be flipped to point up
             // FIXME: blending
-            let glyph_height = glyph_bounds.height() as u32;
-            let x_offset = glyph_bounds.min.x as u32;
-            let y_offset = (origin.1.round() as u32) - (glyph_bounds.max.y as u32);
+            let glyph_height = glyph_bounds.height();
+            let x_offset = glyph_bounds.min.x;
+            let y_offset = (origin.1.round() as i32) - glyph_bounds.max.y;
             glyph.draw(|x, y, coverage| {
+                let (x, y) = (x as i32, y as i32);
                 put_pixel((x_offset + x, y_offset + (glyph_height - y)), coverage)
             });
         }

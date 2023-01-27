@@ -1,6 +1,7 @@
 //! `UIApplication` and `UIApplicationMain`.
 
 use super::ui_device::*;
+use crate::dyld::{export_c_func, FunctionExports};
 use crate::frameworks::uikit::ui_nib::load_main_nib_file;
 use crate::mem::{MutPtr, MutVoidPtr};
 use crate::objc::{id, msg, msg_class, nil, objc_classes, retain, ClassExports, HostObject};
@@ -150,3 +151,5 @@ pub(super) fn UIApplicationMain(
     let run_loop: id = msg_class![env; NSRunLoop mainRunLoop];
     let _: () = msg![env; run_loop run];
 }
+
+pub const FUNCTIONS: FunctionExports = &[export_c_func!(UIApplicationMain(_, _, _, _))];

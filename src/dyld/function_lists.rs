@@ -33,5 +33,6 @@ pub const FUNCTION_LISTS: &[super::FunctionExports] = &[
     foundation::ns_file_manager::FUNCTIONS,
     openal::FUNCTIONS,
     opengles::FUNCTIONS,
-    uikit::FUNCTIONS,
+    uikit::ui_application::FUNCTIONS,
+    uikit::ui_graphics::FUNCTIONS,
 ];

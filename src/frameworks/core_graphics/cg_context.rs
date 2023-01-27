@@ -31,12 +31,12 @@ pub(super) enum CGContextSubclass {
 
 pub type CGContextRef = CFTypeRef;
 
-fn CGContextRelease(env: &mut Environment, c: CGContextRef) {
+pub fn CGContextRelease(env: &mut Environment, c: CGContextRef) {
     if !c.is_null() {
         CFRelease(env, c);
     }
 }
-fn CGContextRetain(env: &mut Environment, c: CGContextRef) -> CGContextRef {
+pub fn CGContextRetain(env: &mut Environment, c: CGContextRef) -> CGContextRef {
     if !c.is_null() {
         CFRetain(env, c)
     } else {

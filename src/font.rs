@@ -2,6 +2,11 @@
 //!
 //! This is implemented using the [rusttype] library. All usage of that library
 //! should be confined to this module.
+//!
+//! TODO: Less terrible text layout. RustType doesn't do text layout so this
+//! code has its own, not particularly good implementation. We might want to
+//! switch to something like cosmic-text in future, but that has a _lot_ more
+//! dependencies.
 
 use rusttype::{Point, Rect, Scale};
 use std::cmp;
@@ -14,6 +19,12 @@ pub enum TextAlignment {
     Left,
     Center,
     Right,
+}
+
+#[derive(Copy, Clone)]
+pub enum WrapMode {
+    Word,
+    Char,
 }
 
 fn update_bounds(text_bounds: &mut Rect<i32>, glyph_bounds: &Rect<i32>) {
@@ -59,29 +70,109 @@ impl Font {
         (v_metrics.ascent - v_metrics.descent, v_metrics.line_gap)
     }
 
+    /// Calculate the width of a line. This does not handle newlines!
+    fn calculate_line_width(&self, font_size: f32, line: &str) -> f32 {
+        let mut line_bounds: Rect<i32> = Default::default();
+
+        for glyph in self.font.layout(line, scale(font_size), Default::default()) {
+            let Some(glyph_bounds) = glyph.pixel_bounding_box() else {
+                continue;
+            };
+            update_bounds(&mut line_bounds, &glyph_bounds);
+        }
+
+        line_bounds.width() as f32
+    }
+
     /// Break text into lines with known widths.
-    fn break_lines<'a>(&self, font_size: f32, text: &'a str) -> Vec<(f32, &'a str)> {
+    fn break_lines<'a>(
+        &self,
+        font_size: f32,
+        text: &'a str,
+        wrap: Option<(f32, WrapMode)>,
+    ) -> Vec<(f32, &'a str)> {
         let mut lines = Vec::new();
 
         for line in text.lines() {
-            let mut line_bounds: Rect<i32> = Default::default();
+            let Some((wrap_width, wrap_mode)) = wrap else {
+                lines.push((self.calculate_line_width(font_size, line), line));
+                continue;
+            };
 
-            for glyph in self.font.layout(line, scale(font_size), Default::default()) {
-                let Some(glyph_bounds) = glyph.pixel_bounding_box() else {
-                    continue;
+            // Find points at which the line could be wrapped
+            let mut wrap_points = Vec::new();
+            match wrap_mode {
+                WrapMode::Word => {
+                    let mut word_start = 0;
+
+                    loop {
+                        if let Some(i) = line[word_start..].find(|c: char| c.is_whitespace()) {
+                            let word_end = word_start + i;
+                            // Include any additional whitespace in the word,
+                            // so that the next word begins with non-whitespace.
+                            if let Some(i) = line[word_end..].find(|c: char| !c.is_whitespace()) {
+                                wrap_points.push(word_end + i);
+                                word_start = word_end + i;
+                            } else {
+                                wrap_points.push(word_end);
+                                word_start = word_end;
+                            }
+                        } else {
+                            wrap_points.push(line.len());
+                            break;
+                        }
+                    }
+                }
+                WrapMode::Char => {
+                    let mut char_end = 1.min(line.len());
+
+                    while char_end <= line.len() {
+                        if line.is_char_boundary(char_end) {
+                            wrap_points.push(char_end);
+                        }
+                        char_end += 1;
+                    }
+                }
+            };
+
+            let mut next_wrap_point_idx = 0;
+            let mut line_start = 0;
+
+            while next_wrap_point_idx < wrap_points.len() {
+                // Find optimal line wrapping by binary search.
+                // `binary_search_by` returns Err when there's no exactly
+                // matching line length, which is usually going to be the case.
+                let wrap_search_result =
+                    wrap_points[next_wrap_point_idx..].binary_search_by(|&wrap_point| {
+                        let line = &line[line_start..wrap_point];
+                        let line_width = self.calculate_line_width(font_size, line);
+                        line_width.partial_cmp(&wrap_width).unwrap()
+                    });
+                let wrap_point_idx = match wrap_search_result {
+                    Ok(i) => next_wrap_point_idx + i,
+                    Err(i) => (next_wrap_point_idx + i).wrapping_sub(1),
                 };
-                update_bounds(&mut line_bounds, &glyph_bounds);
-            }
 
-            lines.push((line_bounds.width() as f32, line));
+                let line_end = wrap_points[wrap_point_idx];
+                let line = &line[line_start..line_end];
+                lines.push((self.calculate_line_width(font_size, line), line));
+
+                next_wrap_point_idx = wrap_point_idx + 1;
+                line_start = line_end;
+            }
         }
 
         lines
     }
 
     /// Calculate the on-screen width and height of text with a given font size.
-    pub fn calculate_text_size(&self, font_size: f32, text: &str) -> (f32, f32) {
-        let lines = self.break_lines(font_size, text);
+    pub fn calculate_text_size(
+        &self,
+        font_size: f32,
+        text: &str,
+        wrap: Option<(f32, WrapMode)>,
+    ) -> (f32, f32) {
+        let lines = self.break_lines(font_size, text, wrap);
 
         let width = lines
             .iter()
@@ -99,10 +190,11 @@ impl Font {
         font_size: f32,
         text: &str,
         origin: (f32, f32),
+        wrap: Option<(f32, WrapMode)>,
         alignment: TextAlignment,
         mut put_pixel: F,
     ) {
-        let lines = self.break_lines(font_size, text);
+        let lines = self.break_lines(font_size, text, wrap);
 
         let (line_height, line_gap) = self.line_height_and_gap(font_size);
         let mut line_y = line_height * ((lines.len() - 1) as f32)

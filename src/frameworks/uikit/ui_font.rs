@@ -1,7 +1,7 @@
 //! `UIFont`.
 
 use super::ui_graphics::UIGraphicsGetCurrentContext;
-use crate::font::{Font, TextAlignment};
+use crate::font::{Font, TextAlignment, WrapMode};
 use crate::frameworks::core_graphics::cg_bitmap_context::CGBitmapContextDrawer;
 use crate::frameworks::core_graphics::{CGFloat, CGRect, CGSize};
 use crate::frameworks::foundation::NSInteger;
@@ -19,9 +19,7 @@ impl HostObject for UIFontHostObject {}
 /// This is put here for convenience since it's font-related.
 /// Apple puts it in its own header, also in UIKit.
 pub type UILineBreakMode = NSInteger;
-#[allow(dead_code)]
 pub const UILineBreakModeWordWrap: UILineBreakMode = 0;
-#[allow(dead_code)]
 pub const UILineBreakModeCharacterWrap: UILineBreakMode = 1;
 #[allow(dead_code)]
 pub const UILineBreakModeClip: UILineBreakMode = 2;
@@ -77,18 +75,30 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 };
 
+fn convert_line_break_mode(ui_mode: UILineBreakMode) -> WrapMode {
+    match ui_mode {
+        UILineBreakModeWordWrap => WrapMode::Word,
+        UILineBreakModeCharacterWrap => WrapMode::Char,
+        _ => unimplemented!("TODO: line break mode {}", ui_mode),
+    }
+}
+
 /// Called by the `sizeWithFont:` method family on `NSString`.
 pub fn size_with_font(
     env: &mut Environment,
     font: id,
     text: &str,
-    _constrained: Option<(CGSize, UILineBreakMode)>,
+    constrained: Option<(CGSize, UILineBreakMode)>,
 ) -> CGSize {
     let host_object = env.objc.borrow::<UIFontHostObject>(font);
 
     // FIXME: line break support
 
-    let (width, height) = host_object.font.calculate_text_size(host_object.size, text);
+    let wrap = constrained.map(|(size, ui_mode)| (size.width, convert_line_break_mode(ui_mode)));
+
+    let (width, height) = host_object
+        .font
+        .calculate_text_size(host_object.size, text, wrap);
 
     CGSize { width, height }
 }
@@ -125,6 +135,7 @@ pub fn draw_in_rect(
         host_object.size,
         text,
         (rect.origin.x + origin_x_offset, rect.origin.y),
+        Some((rect.size.width, convert_line_break_mode(line_break_mode))),
         alignment,
         |(x, y), coverage| {
             let (r, g, b, a) = fill_color;

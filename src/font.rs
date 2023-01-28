@@ -10,6 +10,19 @@ pub struct Font {
     font: rusttype::Font<'static>,
 }
 
+pub enum TextAlignment {
+    Left,
+    Center,
+    Right,
+}
+
+fn update_bounds(text_bounds: &mut Rect<i32>, glyph_bounds: &Rect<i32>) {
+    text_bounds.min.x = cmp::min(text_bounds.min.x, glyph_bounds.min.x);
+    text_bounds.min.y = cmp::min(text_bounds.min.y, glyph_bounds.min.y);
+    text_bounds.max.x = cmp::max(text_bounds.max.x, glyph_bounds.max.x);
+    text_bounds.max.y = cmp::max(text_bounds.max.y, glyph_bounds.max.y);
+}
+
 impl Font {
     fn from_file(path: &str) -> Font {
         let Ok(bytes) = std::fs::read(path) else {
@@ -34,24 +47,45 @@ impl Font {
         Self::from_file("touchHLE_fonts/LiberationSans-Italic.ttf")
     }
 
-    /// Calculate the on-screen width and height of text with a given font size.
-    pub fn calculate_text_size(&self, font_size: f32, text: &str) -> (f32, f32) {
-        let mut text_bounds: Rect<i32> = Default::default();
+    fn line_height_and_gap(&self, font_size: f32) -> (f32, f32) {
+        let v_metrics = self.font.v_metrics(Scale::uniform(font_size));
+        (v_metrics.ascent - v_metrics.descent, v_metrics.line_gap)
+    }
 
-        for glyph in self
-            .font
-            .layout(text, Scale::uniform(font_size), Default::default())
-        {
-            let Some(glyph_bounds) = glyph.pixel_bounding_box() else {
-                continue;
-            };
-            text_bounds.min.x = cmp::min(text_bounds.min.x, glyph_bounds.min.x);
-            text_bounds.min.y = cmp::min(text_bounds.min.y, glyph_bounds.min.y);
-            text_bounds.max.x = cmp::max(text_bounds.max.x, glyph_bounds.max.x);
-            text_bounds.max.y = cmp::max(text_bounds.max.y, glyph_bounds.max.y);
+    /// Break text into lines with known widths.
+    fn break_lines<'a>(&self, font_size: f32, text: &'a str) -> Vec<(f32, &'a str)> {
+        let mut lines = Vec::new();
+
+        for line in text.lines() {
+            let mut line_bounds: Rect<i32> = Default::default();
+
+            for glyph in self
+                .font
+                .layout(line, Scale::uniform(font_size), Default::default())
+            {
+                let Some(glyph_bounds) = glyph.pixel_bounding_box() else {
+                    continue;
+                };
+                update_bounds(&mut line_bounds, &glyph_bounds);
+            }
+
+            lines.push((line_bounds.width() as f32, line));
         }
 
-        (text_bounds.width() as f32, text_bounds.height() as f32)
+        lines
+    }
+
+    /// Calculate the on-screen width and height of text with a given font size.
+    pub fn calculate_text_size(&self, font_size: f32, text: &str) -> (f32, f32) {
+        let lines = self.break_lines(font_size, text);
+
+        let width = lines
+            .iter()
+            .fold(0.0, |sum, &(line_width, _line)| sum + line_width);
+        let (line_height, line_gap) = self.line_height_and_gap(font_size);
+        let height = line_height * (lines.len() as f32) + line_gap * ((lines.len() - 1) as f32);
+
+        (width, height)
     }
 
     /// Draw text. Calls the provided callback for each pixel, providing the
@@ -61,28 +95,44 @@ impl Font {
         font_size: f32,
         text: &str,
         origin: (f32, f32),
+        alignment: TextAlignment,
         mut put_pixel: F,
     ) {
-        for glyph in self.font.layout(
-            text,
-            Scale::uniform(font_size),
-            Point {
-                x: origin.0,
-                y: 0.0,
-            },
-        ) {
-            let Some(glyph_bounds) = glyph.pixel_bounding_box() else {
-                continue;
+        let lines = self.break_lines(font_size, text);
+
+        let (line_height, line_gap) = self.line_height_and_gap(font_size);
+        let mut line_y = line_height * ((lines.len() - 1) as f32)
+            + line_gap * (lines.len().saturating_sub(2) as f32)
+            - self.font.v_metrics(Scale::uniform(font_size)).descent;
+
+        for (line_width, line_text) in lines {
+            let line_x_offset = match alignment {
+                TextAlignment::Left => 0.0,
+                TextAlignment::Center => -line_width / 2.0,
+                TextAlignment::Right => -line_width,
             };
-            // y needs to be flipped to point up
-            // FIXME: blending
-            let glyph_height = glyph_bounds.height();
-            let x_offset = glyph_bounds.min.x;
-            let y_offset = (origin.1.round() as i32) - glyph_bounds.max.y;
-            glyph.draw(|x, y, coverage| {
-                let (x, y) = (x as i32, y as i32);
-                put_pixel((x_offset + x, y_offset + (glyph_height - y)), coverage)
-            });
+            for glyph in self.font.layout(
+                line_text,
+                Scale::uniform(font_size),
+                Point {
+                    x: origin.0 + line_x_offset,
+                    y: 0.0,
+                },
+            ) {
+                let Some(glyph_bounds) = glyph.pixel_bounding_box() else {
+                    continue;
+                };
+                // y needs to be flipped to point up
+                // FIXME: blending
+                let glyph_height = glyph_bounds.height();
+                let x_offset = glyph_bounds.min.x;
+                let y_offset = ((origin.1 + line_y).round() as i32) - glyph_bounds.max.y;
+                glyph.draw(|x, y, coverage| {
+                    let (x, y) = (x as i32, y as i32);
+                    put_pixel((x_offset + x, y_offset + (glyph_height - y)), coverage)
+                });
+            }
+            line_y -= line_height + line_gap;
         }
     }
 }

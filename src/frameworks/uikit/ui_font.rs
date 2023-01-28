@@ -1,7 +1,7 @@
 //! `UIFont`.
 
 use super::ui_graphics::UIGraphicsGetCurrentContext;
-use crate::font::Font;
+use crate::font::{Font, TextAlignment};
 use crate::frameworks::core_graphics::cg_bitmap_context::CGBitmapContextDrawer;
 use crate::frameworks::core_graphics::{CGFloat, CGRect, CGSize};
 use crate::frameworks::foundation::NSInteger;
@@ -108,16 +108,16 @@ pub fn draw_in_rect(
 
     let host_object = env.objc.borrow::<UIFontHostObject>(font);
 
-    // FIXME: line break support
+    // FIXME: wrapping support
 
     let mut drawer = CGBitmapContextDrawer::new(&env.objc, &mut env.mem, context);
 
     let fill_color = drawer.rgb_fill_color();
 
-    let origin_x_offset = match alignment {
-        UITextAlignmentLeft => 0.0,
-        UITextAlignmentCenter => (rect.size.width - text_size.width) / 2.0,
-        UITextAlignmentRight => rect.size.width - text_size.width,
+    let (origin_x_offset, alignment) = match alignment {
+        UITextAlignmentLeft => (0.0, TextAlignment::Left),
+        UITextAlignmentCenter => (rect.size.width / 2.0, TextAlignment::Center),
+        UITextAlignmentRight => (rect.size.width, TextAlignment::Right),
         _ => unimplemented!(),
     };
 
@@ -125,6 +125,7 @@ pub fn draw_in_rect(
         host_object.size,
         text,
         (rect.origin.x + origin_x_offset, rect.origin.y),
+        alignment,
         |(x, y), coverage| {
             let (r, g, b, a) = fill_color;
             let (r, g, b, a) = (r * coverage, g * coverage, b * coverage, a * coverage);

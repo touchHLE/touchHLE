@@ -176,7 +176,7 @@ impl Font {
 
         let width = lines
             .iter()
-            .fold(0.0, |sum, &(line_width, _line)| sum + line_width);
+            .fold(0f32, |widest, &(line_width, _line)| widest.max(line_width));
         let (line_height, line_gap) = self.line_height_and_gap(font_size);
         let height = line_height * (lines.len() as f32) + line_gap * ((lines.len() - 1) as f32);
 

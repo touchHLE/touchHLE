@@ -4,7 +4,9 @@ use super::ns_string::{to_rust_string, NSUTF8StringEncoding};
 use super::NSUInteger;
 use crate::fs::GuestPath;
 use crate::mem::{MutPtr, MutVoidPtr};
-use crate::objc::{id, msg, nil, objc_classes, release, retain, ClassExports, HostObject};
+use crate::objc::{
+    autorelease, id, msg, nil, objc_classes, release, retain, ClassExports, HostObject,
+};
 use crate::Environment;
 use std::borrow::Cow;
 
@@ -16,6 +18,8 @@ enum NSURLHostObject {
     /// This is a wrapper around NSString so that conversions between NSURL
     /// and NSString, which happen often, can be simple and efficient.
     FileURL { ns_string: id },
+    /// Non-file URL.
+    OtherURL { ns_string: id },
 }
 impl HostObject for NSURLHostObject {}
 
@@ -30,9 +34,17 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.alloc_object(this, Box::new(host_object), &mut env.mem)
 }
 
++ (id)URLWithString:(id)url { // NSString*
+    let new: id = msg![env; this alloc];
+    let new: id = msg![env; new initWithString:url];
+    autorelease(env, new)
+}
+
 - (())dealloc {
-    let &NSURLHostObject::FileURL { ns_string } = env.objc.borrow(this);
-    release(env, ns_string);
+    match *env.objc.borrow(this) {
+        NSURLHostObject::FileURL { ns_string } => release(env, ns_string),
+        NSURLHostObject::OtherURL { ns_string } => release(env, ns_string),
+    }
     env.objc.dealloc_object(this, &mut env.mem)
 }
 
@@ -56,14 +68,26 @@ pub const CLASSES: ClassExports = objc_classes! {
     this
 }
 
+- (id)initWithString:(id)url { // NSString*
+    // FIXME: this should parse the URL
+    assert!(!to_rust_string(env, url).starts_with("file:")); // TODO
+    let url: id = msg![env; url copy];
+    *env.objc.borrow_mut(this) = NSURLHostObject::OtherURL { ns_string: url };
+    this
+}
+
 - (id)path {
-    let &NSURLHostObject::FileURL { ns_string } = env.objc.borrow(this);
+    let &NSURLHostObject::FileURL { ns_string } = env.objc.borrow(this) else {
+        unimplemented!(); // TODO
+    };
     ns_string
 }
 
 - (bool)getFileSystemRepresentation:(MutPtr<u8>)buffer
                           maxLength:(NSUInteger)buffer_size {
-    let &NSURLHostObject::FileURL { ns_string } = env.objc.borrow(this);
+    let &NSURLHostObject::FileURL { ns_string } = env.objc.borrow(this) else {
+        unimplemented!(); // TODO
+    };
     msg![env; ns_string getCString:buffer
                          maxLength:buffer_size
                           encoding:NSUTF8StringEncoding]

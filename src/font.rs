@@ -38,7 +38,7 @@ fn scale(font_size: f32) -> Scale {
     // iPhone OS's interpretation of font size is slightly different, reason
     // unknown. This is not the same as the Windows pt vs Mac pt issue.
     // This scale factor has been eyeball'd, it's not exact.
-    Scale::uniform(font_size * 1.15)
+    Scale::uniform(font_size * 1.125)
 }
 
 impl Font {

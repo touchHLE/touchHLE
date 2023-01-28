@@ -23,6 +23,13 @@ fn update_bounds(text_bounds: &mut Rect<i32>, glyph_bounds: &Rect<i32>) {
     text_bounds.max.y = cmp::max(text_bounds.max.y, glyph_bounds.max.y);
 }
 
+fn scale(font_size: f32) -> Scale {
+    // iPhone OS's interpretation of font size is slightly different, reason
+    // unknown. This is not the same as the Windows pt vs Mac pt issue.
+    // This scale factor has been eyeball'd, it's not exact.
+    Scale::uniform(font_size * 1.15)
+}
+
 impl Font {
     fn from_file(path: &str) -> Font {
         let Ok(bytes) = std::fs::read(path) else {
@@ -48,7 +55,7 @@ impl Font {
     }
 
     fn line_height_and_gap(&self, font_size: f32) -> (f32, f32) {
-        let v_metrics = self.font.v_metrics(Scale::uniform(font_size));
+        let v_metrics = self.font.v_metrics(scale(font_size));
         (v_metrics.ascent - v_metrics.descent, v_metrics.line_gap)
     }
 
@@ -59,10 +66,7 @@ impl Font {
         for line in text.lines() {
             let mut line_bounds: Rect<i32> = Default::default();
 
-            for glyph in self
-                .font
-                .layout(line, Scale::uniform(font_size), Default::default())
-            {
+            for glyph in self.font.layout(line, scale(font_size), Default::default()) {
                 let Some(glyph_bounds) = glyph.pixel_bounding_box() else {
                     continue;
                 };
@@ -103,7 +107,7 @@ impl Font {
         let (line_height, line_gap) = self.line_height_and_gap(font_size);
         let mut line_y = line_height * ((lines.len() - 1) as f32)
             + line_gap * (lines.len().saturating_sub(2) as f32)
-            - self.font.v_metrics(Scale::uniform(font_size)).descent;
+            - self.font.v_metrics(scale(font_size)).descent;
 
         for (line_width, line_text) in lines {
             let line_x_offset = match alignment {
@@ -113,7 +117,7 @@ impl Font {
             };
             for glyph in self.font.layout(
                 line_text,
-                Scale::uniform(font_size),
+                scale(font_size),
                 Point {
                     x: origin.0 + line_x_offset,
                     y: 0.0,

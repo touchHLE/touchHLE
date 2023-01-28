@@ -308,3 +308,7 @@ impl Window {
         }
     }
 }
+
+pub fn open_url(url: &str) {
+    let _ = sdl2::url::open_url(url);
+}

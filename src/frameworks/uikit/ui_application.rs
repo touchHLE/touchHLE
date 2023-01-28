@@ -2,6 +2,7 @@
 
 use super::ui_device::*;
 use crate::dyld::{export_c_func, FunctionExports};
+use crate::frameworks::foundation::ns_string;
 use crate::frameworks::uikit::ui_nib::load_main_nib_file;
 use crate::mem::{MutPtr, MutVoidPtr};
 use crate::objc::{id, msg, msg_class, nil, objc_classes, retain, ClassExports, HostObject};
@@ -91,6 +92,20 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 - (())setIdleTimerDisabled:(bool)disabled {
     env.window.set_screen_saver_enabled(!disabled);
+}
+
+- (bool)openURL:(id)url { // NSURL
+    let ns_string = msg![env; url absoluteURL];
+    let url_string = ns_string::to_rust_string(env, ns_string);
+    crate::window::open_url(&url_string);
+
+    // iPhone OS doesn't really do multitasking, so the app expects to close
+    // when a URL is opened, e.g. Super Monkey Ball keeps opening the URL every
+    // frame! Super Monkey Ball also doesn't check whether opening failed, so
+    // it's probably best to always exit.
+    println!("App opened URL {:?}, exiting.", url_string);
+    // FIXME: tell the app that it's quitting so it handles it properly.
+    std::process::exit(0);
 }
 
 @end

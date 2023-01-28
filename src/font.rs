@@ -54,7 +54,6 @@ impl Font {
         Font { font }
     }
 
-    // TODO: add a Japanese font (for Super Monkey Ball when LANG=ja)
     pub fn sans_regular() -> Font {
         Self::from_file("touchHLE_fonts/LiberationSans-Regular.ttf")
     }
@@ -63,6 +62,12 @@ impl Font {
     }
     pub fn sans_italic() -> Font {
         Self::from_file("touchHLE_fonts/LiberationSans-Italic.ttf")
+    }
+    pub fn sans_regular_ja() -> Font {
+        Self::from_file("touchHLE_fonts/NotoSansJP-Regular.otf")
+    }
+    pub fn sans_bold_ja() -> Font {
+        Self::from_file("touchHLE_fonts/NotoSansJP-Bold.otf")
     }
 
     fn line_height_and_gap(&self, font_size: f32) -> (f32, f32) {

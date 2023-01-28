@@ -8,9 +8,25 @@ use crate::frameworks::foundation::NSInteger;
 use crate::objc::{autorelease, id, objc_classes, ClassExports, HostObject};
 use crate::Environment;
 
+#[derive(Default)]
+pub(super) struct State {
+    regular: Option<Font>,
+    bold: Option<Font>,
+    italic: Option<Font>,
+    regular_ja: Option<Font>,
+    bold_ja: Option<Font>,
+}
+
+#[derive(Copy, Clone)]
+enum FontKind {
+    Regular,
+    Bold,
+    Italic,
+}
+
 struct UIFontHostObject {
     size: CGFloat,
-    font: Font,
+    kind: FontKind,
 }
 impl HostObject for UIFontHostObject {}
 
@@ -45,27 +61,38 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 @implementation UIFont: NSObject
 
-// TODO: cache these fonts in case an app uses them in multiple sizes
 + (id)systemFontOfSize:(CGFloat)size {
+    // Cache for later use
+    if env.framework_state.uikit.ui_font.regular.is_none() {
+        env.framework_state.uikit.ui_font.regular = Some(Font::sans_regular());
+    }
     let host_object = UIFontHostObject {
         size,
-        font: Font::sans_regular(),
+        kind: FontKind::Regular,
     };
     let new = env.objc.alloc_object(this, Box::new(host_object), &mut env.mem);
     autorelease(env, new)
 }
 + (id)boldSystemFontOfSize:(CGFloat)size {
+    // Cache for later use
+    if env.framework_state.uikit.ui_font.bold.is_none() {
+        env.framework_state.uikit.ui_font.bold = Some(Font::sans_bold());
+    }
     let host_object = UIFontHostObject {
         size,
-        font: Font::sans_bold(),
+        kind: FontKind::Bold,
     };
     let new = env.objc.alloc_object(this, Box::new(host_object), &mut env.mem);
     autorelease(env, new)
 }
 + (id)italicSystemFontOfSize:(CGFloat)size {
+    // Cache for later use
+    if env.framework_state.uikit.ui_font.italic.is_none() {
+        env.framework_state.uikit.ui_font.italic = Some(Font::sans_italic());
+    }
     let host_object = UIFontHostObject {
         size,
-        font: Font::sans_italic(),
+        kind: FontKind::Italic,
     };
     let new = env.objc.alloc_object(this, Box::new(host_object), &mut env.mem);
     autorelease(env, new)
@@ -83,6 +110,44 @@ fn convert_line_break_mode(ui_mode: UILineBreakMode) -> WrapMode {
     }
 }
 
+fn get_font<'a>(state: &'a mut State, kind: FontKind, text: &str) -> &'a Font {
+    // The default fonts (see font.rs) are the Liberation family, which are a
+    // good substitute for Helvetica, the iPhone OS system font. Unfortunately,
+    // there is no CJK support in these fonts. To support Super Monkey Ball in
+    // Japanese, let's fall back to Noto Sans JP when necessary.
+    // FIXME: This heuristic is incomplete and a proper font fallback system
+    // should be used instead.
+    for c in text.chars() {
+        let c = c as u32;
+        if (0x3000..=0x30FF).contains(&c) || // JA punctuation, kana
+           (0xFF00..=0xFFEF).contains(&c) || // full-width/half-width chars
+           (0x4e00..=0x9FA0).contains(&c) || // various kanji
+           (0x3400..=0x4DBF).contains(&c) { // more kanji
+            match kind {
+                // CJK has no italic equivalent
+                FontKind::Regular | FontKind::Italic => {
+                    if state.regular_ja.is_none() {
+                        state.regular_ja = Some(Font::sans_regular_ja());
+                    }
+                    return state.regular_ja.as_ref().unwrap();
+                },
+                FontKind::Bold => {
+                    if state.bold_ja.is_none() {
+                        state.bold_ja = Some(Font::sans_bold_ja());
+                    }
+                    return state.bold_ja.as_ref().unwrap();
+                },
+            }
+        }
+    }
+
+    match kind {
+        FontKind::Regular => state.regular.as_ref().unwrap(),
+        FontKind::Bold => state.bold.as_ref().unwrap(),
+        FontKind::Italic => state.italic.as_ref().unwrap(),
+    }
+}
+
 /// Called by the `sizeWithFont:` method family on `NSString`.
 pub fn size_with_font(
     env: &mut Environment,
@@ -92,13 +157,17 @@ pub fn size_with_font(
 ) -> CGSize {
     let host_object = env.objc.borrow::<UIFontHostObject>(font);
 
+    let font = get_font(
+        &mut env.framework_state.uikit.ui_font,
+        host_object.kind,
+        text,
+    );
+
     // FIXME: line break support
 
     let wrap = constrained.map(|(size, ui_mode)| (size.width, convert_line_break_mode(ui_mode)));
 
-    let (width, height) = host_object
-        .font
-        .calculate_text_size(host_object.size, text, wrap);
+    let (width, height) = font.calculate_text_size(host_object.size, text, wrap);
 
     CGSize { width, height }
 }
@@ -118,6 +187,12 @@ pub fn draw_in_rect(
 
     let host_object = env.objc.borrow::<UIFontHostObject>(font);
 
+    let font = get_font(
+        &mut env.framework_state.uikit.ui_font,
+        host_object.kind,
+        text,
+    );
+
     // FIXME: wrapping support
 
     let mut drawer = CGBitmapContextDrawer::new(&env.objc, &mut env.mem, context);
@@ -131,7 +206,7 @@ pub fn draw_in_rect(
         _ => unimplemented!(),
     };
 
-    host_object.font.draw(
+    font.draw(
         host_object.size,
         text,
         (rect.origin.x + origin_x_offset, rect.origin.y),

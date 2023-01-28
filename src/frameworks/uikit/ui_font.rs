@@ -163,8 +163,6 @@ pub fn size_with_font(
         text,
     );
 
-    // FIXME: line break support
-
     let wrap = constrained.map(|(size, ui_mode)| (size.width, convert_line_break_mode(ui_mode)));
 
     let (width, height) = font.calculate_text_size(host_object.size, text, wrap);
@@ -192,8 +190,6 @@ pub fn draw_in_rect(
         host_object.kind,
         text,
     );
-
-    // FIXME: wrapping support
 
     let mut drawer = CGBitmapContextDrawer::new(&env.objc, &mut env.mem, context);
 

@@ -36,6 +36,11 @@ pub trait GLES {
     unsafe fn Lightfv(&mut self, light: GLenum, pname: GLenum, params: *const GLfloat);
     unsafe fn Lightxv(&mut self, light: GLenum, pname: GLenum, params: *const GLfixed);
 
+    // Buffers
+    unsafe fn GenBuffers(&mut self, n: GLsizei, buffers: *mut GLuint);
+    unsafe fn DeleteBuffers(&mut self, n: GLsizei, buffers: *const GLuint);
+    unsafe fn BindBuffer(&mut self, target: GLenum, buffer: GLuint);
+
     // Pointers
     unsafe fn ColorPointer(
         &mut self,

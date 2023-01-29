@@ -403,6 +403,18 @@ impl GLES for GLES1OnGL2 {
         gl21::Lightfv(light, pname, params_float.as_ptr());
     }
 
+    // Buffers
+    unsafe fn GenBuffers(&mut self, n: GLsizei, buffers: *mut GLuint) {
+        gl21::GenBuffers(n, buffers)
+    }
+    unsafe fn DeleteBuffers(&mut self, n: GLsizei, buffers: *const GLuint) {
+        gl21::DeleteBuffers(n, buffers)
+    }
+    unsafe fn BindBuffer(&mut self, target: GLenum, buffer: GLuint) {
+        assert!(target == gl21::ARRAY_BUFFER || target == gl21::ELEMENT_ARRAY_BUFFER);
+        gl21::BindBuffer(target, buffer)
+    }
+
     // Pointers
     unsafe fn ColorPointer(
         &mut self,

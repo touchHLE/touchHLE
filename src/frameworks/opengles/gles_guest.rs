@@ -143,6 +143,25 @@ fn glLightxv(env: &mut Environment, light: GLenum, pname: GLenum, params: ConstP
     })
 }
 
+// Textures
+fn glGenBuffers(env: &mut Environment, n: GLsizei, buffers: MutPtr<GLuint>) {
+    with_ctx_and_mem(env, |gles, mem| {
+        let n_usize: GuestUSize = n.try_into().unwrap();
+        let buffers = mem.ptr_at_mut(buffers, n_usize);
+        unsafe { gles.GenBuffers(n, buffers) }
+    })
+}
+fn glDeleteBuffers(env: &mut Environment, n: GLsizei, buffers: ConstPtr<GLuint>) {
+    with_ctx_and_mem(env, |gles, mem| {
+        let n_usize: GuestUSize = n.try_into().unwrap();
+        let buffers = mem.ptr_at(buffers, n_usize);
+        unsafe { gles.DeleteBuffers(n, buffers) }
+    })
+}
+fn glBindBuffer(env: &mut Environment, target: GLenum, buffer: GLuint) {
+    with_ctx_and_mem(env, |gles, _mem| unsafe { gles.BindBuffer(target, buffer) })
+}
+
 // Pointers
 
 /// One of the ugliest things in OpenGL is that, depending on dynamic state, the
@@ -546,6 +565,10 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(glLightx(_, _, _)),
     export_c_func!(glLightfv(_, _, _)),
     export_c_func!(glLightxv(_, _, _)),
+    // Buffers
+    export_c_func!(glGenBuffers(_, _)),
+    export_c_func!(glDeleteBuffers(_, _)),
+    export_c_func!(glBindBuffer(_, _)),
     // Pointers
     export_c_func!(glColorPointer(_, _, _, _)),
     export_c_func!(glNormalPointer(_, _, _)),

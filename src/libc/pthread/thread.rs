@@ -2,7 +2,7 @@
 
 use crate::abi::GuestFunction;
 use crate::dyld::{export_c_func, FunctionExports};
-use crate::mem::{ConstPtr, MutPtr, MutVoidPtr, SafeRead};
+use crate::mem::{ConstPtr, MutPtr, MutVoidPtr, Ptr, SafeRead};
 use crate::{Environment, ThreadID};
 use std::collections::HashMap;
 
@@ -124,9 +124,18 @@ fn pthread_create(
     0 // success
 }
 
+fn pthread_self(_env: &mut Environment) -> pthread_t {
+    // FIXME: Implement this for real. Super Monkey Ball conveniently checks
+    // if this returns zero and skips some code for querying thread properties
+    // if so, even though zero isn't a meaningful value...
+    log!("Warning: TODO: pthread_self() (returning 0)");
+    Ptr::null()
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(pthread_attr_init(_)),
     export_c_func!(pthread_attr_setdetachstate(_, _)),
     export_c_func!(pthread_attr_destroy(_)),
     export_c_func!(pthread_create(_, _, _, _)),
+    export_c_func!(pthread_self()),
 ];

@@ -11,8 +11,9 @@ pub struct State {
 }
 
 fn malloc(env: &mut Environment, size: GuestUSize) -> MutVoidPtr {
-    assert!(size != 0);
-    env.mem.alloc(size)
+    // size == 0 is an implementation-defined case. macOS will give you an
+    // allocation so presumably iPhone OS does too.
+    env.mem.alloc(size.max(1))
 }
 
 fn calloc(env: &mut Environment, count: GuestUSize, size: GuestUSize) -> MutVoidPtr {

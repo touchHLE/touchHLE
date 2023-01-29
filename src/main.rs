@@ -324,26 +324,32 @@ impl Environment {
         let stack_high_addr = stack_alloc.to_bits() + stack_size;
         assert!(stack_high_addr % 4 == 0);
 
-        let mut context = cpu::CpuContext::new();
-        // Save CPU state for current thread to `context` and reset CPU
-        // registers to zeroes.
-        self.cpu.swap_context(&mut context);
-        self.cpu.set_cpsr(cpu::Cpu::CPSR_USER_MODE);
-        self.cpu.regs_mut()[cpu::Cpu::SP] = stack_high_addr;
-        self.cpu.regs_mut()[0] = user_data.to_bits();
-        self.cpu
-            .branch_with_link(start_routine, self.dyld.return_to_host_routine());
-        // Restore CPU state of current thread, get our new thread's state.
-        self.cpu.swap_context(&mut context);
-
         self.threads.push(Thread {
             active: true,
-            context: Some(context),
+            context: Some(cpu::CpuContext::new()),
             stack: stack_alloc.to_bits()..=(stack_high_addr - 1),
         });
         let new_thread_id = self.threads.len() - 1;
 
         log_dbg!("Created new thread {} with stack {:#x}–{:#x}, will execute function {:?} with data {:?}", new_thread_id, stack_alloc.to_bits(), (stack_high_addr - 1), start_routine, user_data);
+
+        // Sadly, we must execute the new thread immediately, because
+        // Super Monkey Ball has code like this:
+        //
+        //    is_thread_done = 0;
+        //    pthread_create(...);
+        //    while (is_thread_done != 0) {}
+        //
+        let old_thread = self.current_thread;
+        self.switch_thread(new_thread_id);
+        // All other registers are zero in this shiny new context.
+        self.cpu.set_cpsr(cpu::Cpu::CPSR_USER_MODE);
+        self.cpu.regs_mut()[cpu::Cpu::SP] = stack_high_addr;
+        self.cpu.regs_mut()[0] = user_data.to_bits();
+        start_routine.call(self);
+        self.threads[new_thread_id].active = false;
+
+        self.switch_thread(old_thread);
 
         new_thread_id
     }
@@ -379,6 +385,22 @@ impl Environment {
         self.run_inner(false)
     }
 
+    fn switch_thread(&mut self, new_thread: ThreadID) {
+        assert!(new_thread != self.current_thread);
+
+        log_dbg!(
+            "Switching thread: {} => {}",
+            self.current_thread,
+            new_thread
+        );
+
+        let mut context = self.threads[new_thread].context.take().unwrap();
+        self.cpu.swap_context(&mut context);
+        assert!(self.threads[self.current_thread].context.is_none());
+        self.threads[self.current_thread].context = Some(context);
+        self.current_thread = new_thread;
+    }
+
     fn run_inner(&mut self, root: bool) {
         let initial_thread = self.current_thread;
         assert!(self.threads[initial_thread].active);
@@ -401,24 +423,15 @@ impl Environment {
                         // address of the SVC itself
                         let svc_pc = self.cpu.regs()[cpu::Cpu::PC] - 4;
                         if svc == dyld::Dyld::SVC_RETURN_TO_HOST {
+                            assert!(!root);
+                            // FIXME/TODO: How do we handle a return-to-host on
+                            // the wrong thread? Defer it somehow?
+                            assert!(self.current_thread == initial_thread);
                             assert!(
                                 svc_pc
                                     == self.dyld.return_to_host_routine().addr_without_thumb_bit()
                             );
-                            // Normal callback return
-                            if !root && self.current_thread == initial_thread {
-                                return;
-                            // Secondary thread init function return
-                            // TODO: Test this actually works.
-                            // TODO: Use a different SVC for this, the double
-                            // meaning here seems dangerous.
-                            } else if self.current_thread != 0 {
-                                log_dbg!("Thread {} init finished", self.current_thread);
-                                self.threads[self.current_thread].active = false;
-                                break;
-                            } else {
-                                panic!("Unexpected return-to-host");
-                            }
+                            return;
                         }
 
                         if let Some(f) = self.dyld.get_svc_handler(
@@ -449,15 +462,8 @@ impl Environment {
                 if !self.threads[next].active {
                     continue;
                 }
-                let Some(mut context) = self.threads[next].context.take() else {
-                    continue;
-                };
                 // Candidate found, switch to it.
-                log_dbg!("Switching thread: {} => {}", self.current_thread, next);
-                self.cpu.swap_context(&mut context);
-                assert!(self.threads[self.current_thread].context.is_none());
-                self.threads[self.current_thread].context = Some(context);
-                self.current_thread = next;
+                self.switch_thread(next);
                 break;
             }
         }

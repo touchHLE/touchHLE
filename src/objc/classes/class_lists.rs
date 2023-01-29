@@ -24,6 +24,7 @@ pub const CLASS_LISTS: &[super::ClassExports] = &[
     foundation::ns_run_loop::CLASSES,
     foundation::ns_set::CLASSES,
     foundation::ns_string::CLASSES,
+    foundation::ns_thread::CLASSES,
     foundation::ns_timer::CLASSES,
     foundation::ns_url::CLASSES,
     foundation::ns_value::CLASSES,

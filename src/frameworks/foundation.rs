@@ -23,6 +23,7 @@ pub mod ns_process_info;
 pub mod ns_run_loop;
 pub mod ns_set;
 pub mod ns_string;
+pub mod ns_thread;
 pub mod ns_timer;
 pub mod ns_url;
 pub mod ns_value;

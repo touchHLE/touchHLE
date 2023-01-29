@@ -43,8 +43,8 @@ const kEAGLRenderingAPIOpenGLES2: EAGLRenderingAPI = 2;
 #[allow(dead_code)]
 const kEAGLRenderingAPIOpenGLES3: EAGLRenderingAPI = 3;
 
-pub struct EAGLContextHostObject {
-    gles_ctx: Option<Box<dyn GLES>>,
+pub(super) struct EAGLContextHostObject {
+    pub(super) gles_ctx: Option<Box<dyn GLES>>,
 }
 impl HostObject for EAGLContextHostObject {}
 
@@ -60,26 +60,26 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 + (bool)setCurrentContext:(id)context { // EAGLContext*
-    assert!(env.current_thread == 0); // TODO: per-thread contexts
-
     retain(env, context);
 
     // Clear flag value, we're changing context anyway.
     let _ = env.window.is_app_gl_ctx_no_longer_current();
 
-    let old_ctx = std::mem::take(&mut env.framework_state.opengles.current_ctx);
-    if let Some((old_eagl, old_gles)) = old_ctx {
-        let host_obj = env.objc.borrow_mut::<EAGLContextHostObject>(old_eagl);
-        assert!(host_obj.gles_ctx.is_none());
-        host_obj.gles_ctx = Some(old_gles);
-        release(env, old_eagl);
+    let current_ctx = env.framework_state.opengles.current_ctx_for_thread(env.current_thread);
+
+    if let Some(old_ctx) = std::mem::take(current_ctx) {
+        release(env, old_ctx);
+        env.framework_state.opengles.current_ctx_thread = None;
     }
+
+    // reborrow
+    let current_ctx = env.framework_state.opengles.current_ctx_for_thread(env.current_thread);
 
     if context != nil {
         let host_obj = env.objc.borrow_mut::<EAGLContextHostObject>(context);
-        let gles_ctx = std::mem::take(&mut host_obj.gles_ctx).unwrap();
-        gles_ctx.make_current(&mut env.window);
-        env.framework_state.opengles.current_ctx = Some((context, gles_ctx));
+        host_obj.gles_ctx.as_mut().unwrap().make_current(&mut env.window);
+        *current_ctx = Some(context);
+        env.framework_state.opengles.current_ctx_thread = Some(env.current_thread);
     }
 
     true
@@ -121,11 +121,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 
     // Unclear from documentation if this method requires an appropriate context
     // to already be active, but that seems to be the case in practice?
-    let (_eagl, ref mut gles) = env.framework_state.opengles.current_ctx.as_mut().unwrap();
-    if env.window.is_app_gl_ctx_no_longer_current() {
-        log_dbg!("Restoring guest app OpenGL context.");
-        gles.make_current(&mut env.window);
-    }
+    let gles = super::sync_context(&mut env.framework_state.opengles, &mut env.objc, &mut env.window, env.current_thread);
     unsafe {
         gles.RenderbufferStorageOES(target, internalformat, width, height)
     }
@@ -136,13 +132,9 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (bool)presentRenderbuffer:(NSUInteger)target {
     assert!(target == gles11::RENDERBUFFER_OES);
 
-    if env.window.is_app_gl_ctx_no_longer_current() {
-        log_dbg!("Restoring guest app OpenGL context.");
-        let &mut (eagl, ref mut gles) = env.framework_state.opengles.current_ctx.as_mut().unwrap();
-        assert!(eagl == this); // FIXME: does API require this?
-        gles.make_current(&mut env.window);
-    }
-
+    // Unclear from documentation if this method requires an appropriate context
+    // to already be active, but that seems to be the case in practice?
+    super::sync_context(&mut env.framework_state.opengles, &mut env.objc, &mut env.window, env.current_thread);
     unsafe {
         present_renderbuffer(env);
     }

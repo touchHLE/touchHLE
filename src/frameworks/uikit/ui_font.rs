@@ -110,6 +110,7 @@ fn convert_line_break_mode(ui_mode: UILineBreakMode) -> WrapMode {
     }
 }
 
+#[rustfmt::skip]
 fn get_font<'a>(state: &'a mut State, kind: FontKind, text: &str) -> &'a Font {
     // The default fonts (see font.rs) are the Liberation family, which are a
     // good substitute for Helvetica, the iPhone OS system font. Unfortunately,

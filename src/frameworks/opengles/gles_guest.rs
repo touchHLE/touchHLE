@@ -222,7 +222,8 @@ fn glDrawElements(
     indices: ConstVoidPtr,
 ) {
     with_ctx_and_mem(env, |gles, mem| unsafe {
-        let indices = translate_pointer_or_offset(gles, mem, indices, gles11::ELEMENT_ARRAY_BUFFER);
+        let indices =
+            translate_pointer_or_offset(gles, mem, indices, gles11::ELEMENT_ARRAY_BUFFER_BINDING);
         gles.DrawElements(mode, count, type_, indices)
     })
 }

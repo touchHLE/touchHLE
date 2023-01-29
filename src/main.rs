@@ -414,6 +414,7 @@ impl Environment {
                             // meaning here seems dangerous.
                             } else if self.current_thread != 0 {
                                 log_dbg!("Thread {} init finished", self.current_thread);
+                                self.threads[self.current_thread].active = false;
                                 break;
                             } else {
                                 panic!("Unexpected return-to-host");

@@ -75,7 +75,7 @@ struct AudioQueueHostObject {
     callback_proc: AudioQueueOutputCallback,
     callback_user_data: MutVoidPtr,
     /// Weak reference
-    _run_loop: CFRunLoopRef,
+    run_loop: CFRunLoopRef,
     volume: f32,
     buffers: Vec<AudioQueueBufferRef>,
     /// There is also a queue of OpenAL buffers, which must be kept in sync:
@@ -149,7 +149,7 @@ fn AudioQueueNewOutput(
         format,
         callback_proc: in_callback_proc,
         callback_user_data: in_user_data,
-        _run_loop: in_callback_run_loop,
+        run_loop: in_callback_run_loop,
         volume: 1.0,
         buffers: Vec::new(),
         buffer_queue: VecDeque::new(),
@@ -403,6 +403,31 @@ fn prime_audio_queue(
     context_manager
 }
 
+fn unqueue_buffers<F: FnMut(ALuint)>(al_source: ALuint, mut callback: F) {
+    loop {
+        let mut al_buffers_processed = 0;
+        unsafe {
+            al::alGetSourcei(
+                al_source,
+                al::AL_BUFFERS_PROCESSED,
+                &mut al_buffers_processed,
+            );
+            assert!(al::alGetError() == 0);
+        }
+        if al_buffers_processed == 0 {
+            break;
+        }
+
+        let mut al_buffer = 0;
+        unsafe {
+            al::alSourceUnqueueBuffers(al_source, 1, &mut al_buffer);
+            assert!(al::alGetError() == 0);
+        }
+
+        callback(al_buffer);
+    }
+}
+
 /// For use by `NSRunLoop`: check the status of an audio queue, recycle buffers,
 /// call callbacks, push new buffers etc.
 pub fn handle_audio_queue(env: &mut Environment, in_aq: AudioQueueRef) {
@@ -423,30 +448,11 @@ pub fn handle_audio_queue(env: &mut Environment, in_aq: AudioQueueRef) {
 
     let mut buffers_to_reuse = Vec::new();
 
-    loop {
-        let mut al_buffers_processed = 0;
-        unsafe {
-            al::alGetSourcei(
-                al_source,
-                al::AL_BUFFERS_PROCESSED,
-                &mut al_buffers_processed,
-            );
-            assert!(al::alGetError() == 0);
-        }
-        if al_buffers_processed == 0 {
-            break;
-        }
-
-        let mut al_buffer = 0;
-        unsafe {
-            al::alSourceUnqueueBuffers(al_source, 1, &mut al_buffer);
-            assert!(al::alGetError() == 0);
-        }
-        let buffer_ref = host_object.buffer_queue.pop_front().unwrap();
-
+    unqueue_buffers(al_source, |al_buffer| {
         host_object.al_unused_buffers.push(al_buffer);
+        let buffer_ref = host_object.buffer_queue.pop_front().unwrap();
         buffers_to_reuse.push(buffer_ref);
-    }
+    });
 
     let &mut AudioQueueHostObject {
         callback_proc,
@@ -525,6 +531,66 @@ fn AudioQueueStart(
     0 // success
 }
 
+fn AudioQueueStop(env: &mut Environment, in_aq: AudioQueueRef, in_immediate: bool) -> OSStatus {
+    let state = State::get(&mut env.framework_state);
+
+    let _context_manager = state.make_al_context_current();
+
+    let host_object = state.audio_queues.get_mut(&in_aq).unwrap();
+    host_object.is_running = false;
+
+    if in_immediate && is_supported_audio_format(&host_object.format) {
+        let al_source = host_object.al_source.unwrap();
+        unsafe { al::alSourceStop(al_source) };
+        assert!(unsafe { al::alGetError() } == 0);
+    }
+
+    0 // success
+}
+
+fn AudioQueueDispose(env: &mut Environment, in_aq: AudioQueueRef, in_immediate: bool) -> OSStatus {
+    assert!(in_immediate); // TODO
+
+    let state = State::get(&mut env.framework_state);
+
+    let mut host_object = state.audio_queues.remove(&in_aq).unwrap();
+
+    log_dbg!("Disposing of audio queue {:?}", in_aq);
+
+    env.mem.free(in_aq.cast());
+
+    for buffer_ptr in host_object.buffers {
+        let buffer = env.mem.read(buffer_ptr);
+        env.mem.free(buffer.audio_data);
+        env.mem.free(buffer_ptr.cast());
+    }
+
+    if let Some(al_source) = host_object.al_source {
+        let _context_manager = state.make_al_context_current();
+
+        unsafe {
+            al::alSourceStop(al_source);
+            assert!(al::alGetError() == 0);
+        }
+
+        unqueue_buffers(al_source, |al_buffer| {
+            host_object.al_unused_buffers.push(al_buffer)
+        });
+
+        unsafe {
+            al::alDeleteBuffers(
+                host_object.al_unused_buffers.len().try_into().unwrap(),
+                host_object.al_unused_buffers.as_ptr(),
+            );
+            assert!(al::alGetError() == 0);
+        }
+    }
+
+    ns_run_loop::remove_audio_queue(env, host_object.run_loop, in_aq);
+
+    0 // success
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(AudioQueueNewOutput(_, _, _, _, _, _, _)),
     export_c_func!(AudioQueueSetParameter(_, _, _)),
@@ -532,4 +598,6 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(AudioQueueEnqueueBuffer(_, _, _, _)),
     export_c_func!(AudioQueuePrime(_, _, _)),
     export_c_func!(AudioQueueStart(_, _)),
+    export_c_func!(AudioQueueStop(_, _)),
+    export_c_func!(AudioQueueDispose(_, _)),
 ];

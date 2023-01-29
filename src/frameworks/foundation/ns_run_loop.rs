@@ -117,6 +117,16 @@ pub fn add_audio_queue(env: &mut Environment, run_loop: id, queue: AudioQueueRef
         .push(queue);
 }
 
+/// For use by Audio Toolbox.
+pub fn remove_audio_queue(env: &mut Environment, run_loop: id, queue: AudioQueueRef) {
+    let queues = &mut env
+        .objc
+        .borrow_mut::<NSRunLoopHostObject>(run_loop)
+        .audio_queues;
+    let queue_idx = queues.iter().position(|&item| item == queue).unwrap();
+    queues.remove(queue_idx);
+}
+
 /// For use by NSTimer so it can remove itself once it's invalidated.
 pub(super) fn remove_timer(env: &mut Environment, run_loop: id, timer: id) {
     let NSRunLoopHostObject { timers, .. } = env.objc.borrow_mut(run_loop);

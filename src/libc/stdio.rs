@@ -206,6 +206,14 @@ fn fclose(env: &mut Environment, file_ptr: MutPtr<FILE>) -> i32 {
     }
 }
 
+fn puts(env: &mut Environment, s: ConstPtr<u8>) -> i32 {
+    let _ = std::io::stdout().write_all(env.mem.cstr_at(s));
+    let _ = std::io::stdout().write_all(b"\n");
+    // TODO: I/O error handling
+    // TODO: is this the return value iPhone OS uses?
+    0
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(fopen(_, _)),
     export_c_func!(fread(_, _, _, _)),
@@ -213,4 +221,5 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(fseek(_, _, _)),
     export_c_func!(ftell(_)),
     export_c_func!(fclose(_)),
+    export_c_func!(puts(_)),
 ];

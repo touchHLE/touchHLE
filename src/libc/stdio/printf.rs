@@ -98,6 +98,7 @@ fn sprintf(env: &mut Environment, dest: MutPtr<u8>, format: ConstPtr<u8>, args: 
 
 fn printf(env: &mut Environment, format: ConstPtr<u8>, args: VAList) -> i32 {
     let res = printf_inner(env, format, args);
+    // TODO: I/O error handling
     let _ = std::io::stdout().write_all(&res);
     res.len().try_into().unwrap()
 }

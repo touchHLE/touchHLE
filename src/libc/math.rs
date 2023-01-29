@@ -3,6 +3,17 @@
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::Environment;
 
+// Exponential functions
+// FIXME: These should theoretically set errno, though it's unlikely apps
+// actually check it.
+// TODO: implement the rest
+fn sqrt(_env: &mut Environment, arg: f64) -> f64 {
+    arg.sqrt()
+}
+fn sqrtf(_env: &mut Environment, arg: f32) -> f32 {
+    arg.sqrt()
+}
+
 // Trigonometric functions
 
 // FIXME: These should theoretically set errno, though it's unlikely apps
@@ -96,6 +107,9 @@ fn atanhf(_env: &mut Environment, arg: f32) -> f32 {
 }
 
 pub const FUNCTIONS: FunctionExports = &[
+    // Exponential functions
+    export_c_func!(sqrt(_)),
+    export_c_func!(sqrtf(_)),
     // Trigonometric functions
     export_c_func!(sin(_)),
     export_c_func!(sinf(_)),

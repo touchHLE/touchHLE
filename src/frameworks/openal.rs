@@ -182,12 +182,39 @@ fn alSourcef(_env: &mut Environment, source: ALuint, param: ALenum, value: ALflo
 fn alSourcei(_env: &mut Environment, source: ALuint, param: ALenum, value: ALint) {
     unsafe { al::alSourcei(source, param, value) };
 }
+fn alGetSourcef(env: &mut Environment, source: ALuint, param: ALenum, value: MutPtr<ALfloat>) {
+    unsafe { al::alGetSourcef(source, param, env.mem.ptr_at_mut(value, 1)) };
+}
+fn alGetSourcei(env: &mut Environment, source: ALuint, param: ALenum, value: MutPtr<ALint>) {
+    unsafe { al::alGetSourcei(source, param, env.mem.ptr_at_mut(value, 1)) };
+}
 
 fn alSourcePlay(_env: &mut Environment, source: ALuint) {
     unsafe { al::alSourcePlay(source) };
 }
 fn alSourceStop(_env: &mut Environment, source: ALuint) {
     unsafe { al::alSourceStop(source) };
+}
+
+fn alSourceQueueBuffers(
+    env: &mut Environment,
+    source: ALuint,
+    nb: ALsizei,
+    buffers: ConstPtr<ALuint>,
+) {
+    let nb_usize: GuestUSize = nb.try_into().unwrap();
+    let buffers = env.mem.ptr_at(buffers, nb_usize);
+    unsafe { al::alSourceQueueBuffers(source, nb, buffers) }
+}
+fn alSourceUnqueueBuffers(
+    env: &mut Environment,
+    source: ALuint,
+    nb: ALsizei,
+    buffers: MutPtr<ALuint>,
+) {
+    let nb_usize: GuestUSize = nb.try_into().unwrap();
+    let buffers = env.mem.ptr_at_mut(buffers, nb_usize);
+    unsafe { al::alSourceUnqueueBuffers(source, nb, buffers) }
 }
 
 fn alGenBuffers(env: &mut Environment, n: ALsizei, buffers: MutPtr<ALuint>) {
@@ -250,10 +277,14 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(alGetError()),
     export_c_func!(alGenSources(_, _)),
     export_c_func!(alDeleteSources(_, _)),
+    export_c_func!(alGetSourcef(_, _, _)),
+    export_c_func!(alGetSourcei(_, _, _)),
     export_c_func!(alSourcef(_, _, _)),
     export_c_func!(alSourcei(_, _, _)),
     export_c_func!(alSourcePlay(_)),
     export_c_func!(alSourceStop(_)),
+    export_c_func!(alSourceQueueBuffers(_, _, _)),
+    export_c_func!(alSourceUnqueueBuffers(_, _, _)),
     export_c_func!(alGenBuffers(_, _)),
     export_c_func!(alDeleteBuffers(_, _)),
     export_c_func!(alBufferData(_, _, _, _, _)),

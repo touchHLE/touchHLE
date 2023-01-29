@@ -105,6 +105,7 @@ extern "C" {
 
     pub fn alSourcef(source: ALuint, param: ALenum, value: ALfloat);
     pub fn alSourcei(source: ALuint, param: ALenum, value: ALint);
+    pub fn alGetSourcef(source: ALuint, param: ALenum, value: *mut ALfloat);
     pub fn alGetSourcei(source: ALuint, param: ALenum, value: *mut ALint);
 
     pub fn alSourcePlay(source: ALuint);

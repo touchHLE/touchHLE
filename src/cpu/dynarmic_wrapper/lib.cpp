@@ -3,6 +3,7 @@
 
 #include "dynarmic/interface/A32/a32.h"
 #include "dynarmic/interface/A32/config.h"
+#include "dynarmic/interface/A32/context.h"
 
 namespace touchHLE::cpu {
 
@@ -146,6 +147,12 @@ public:
     cpu->InvalidateCacheRange(start, size);
   }
 
+  void swap_context(void *context) {
+    Dynarmic::A32::Context tmp = cpu->SaveContext();
+    cpu->LoadContext(*(Dynarmic::A32::Context *)context);
+    *(Dynarmic::A32::Context *)context = tmp;
+  }
+
   std::int32_t run(touchHLE_Mem *mem, std::uint64_t *ticks) {
     env.mem = mem;
     env.ticks_remaining = *ticks;
@@ -190,6 +197,11 @@ void touchHLE_DynarmicWrapper_set_cpsr(DynarmicWrapper *cpu,
   cpu->set_cpsr(cpsr);
 }
 
+void touchHLE_DynarmicWrapper_swap_context(DynarmicWrapper *cpu,
+                                           void *context) {
+  cpu->swap_context(context);
+}
+
 void touchHLE_DynarmicWrapper_invalidate_cache_range(DynarmicWrapper *cpu,
                                                      VAddr start,
                                                      std::uint32_t size) {
@@ -200,6 +212,13 @@ std::int32_t touchHLE_DynarmicWrapper_run(DynarmicWrapper *cpu,
                                           touchHLE_Mem *mem,
                                           std::uint64_t *ticks) {
   return cpu->run(mem, ticks);
+}
+
+void *touchHLE_DynarmicWrapper_Context_new() {
+  return (void *)new Dynarmic::A32::Context();
+}
+void touchHLE_DynarmicWrapper_Context_delete(void *context) {
+  delete (Dynarmic::A32::Context *)context;
 }
 }
 

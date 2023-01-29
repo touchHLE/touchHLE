@@ -32,4 +32,5 @@ pub mod thread;
 pub struct State {
     key: key::State,
     mutex: mutex::State,
+    thread: thread::State,
 }

@@ -3,7 +3,18 @@
 use crate::abi::GuestFunction;
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::mem::{ConstPtr, MutPtr, MutVoidPtr, SafeRead};
-use crate::Environment;
+use crate::{Environment, ThreadID};
+use std::collections::HashMap;
+
+#[derive(Default)]
+pub struct State {
+    threads: HashMap<pthread_t, ThreadHostObject>,
+}
+impl State {
+    fn get(env: &mut Environment) -> &mut Self {
+        &mut env.libc_state.pthread.thread
+    }
+}
 
 /// Apple's implementation is a 4-byte magic number followed by an 36-byte
 /// opaque region. We only have to match the size theirs has.
@@ -34,10 +45,15 @@ unsafe impl SafeRead for OpaqueThread {}
 
 type pthread_t = MutPtr<OpaqueThread>;
 
+struct ThreadHostObject {
+    _thread_id: ThreadID,
+    _attr: pthread_attr_t,
+}
+
 /// Arbitrarily-chosen magic number for `pthread_attr_t` (not Apple's).
 const MAGIC_ATTR: u32 = u32::from_be_bytes(*b"ThAt");
 /// Arbitrarily-chosen magic number for `pthread_t` (not Apple's).
-const _MAGIC_THREAD: u32 = u32::from_be_bytes(*b"THRD");
+const MAGIC_THREAD: u32 = u32::from_be_bytes(*b"THRD");
 
 /// Custom typedef for readability (the C API just uses `int`)
 type DetachState = i32;
@@ -75,10 +91,10 @@ fn pthread_attr_destroy(env: &mut Environment, attr: MutPtr<pthread_attr_t>) -> 
 
 fn pthread_create(
     env: &mut Environment,
-    _thread: MutPtr<pthread_t>,
+    thread: MutPtr<pthread_t>,
     attr: ConstPtr<pthread_attr_t>,
     start_routine: GuestFunction, // (*void)(void *)
-    arg: MutVoidPtr,
+    user_data: MutVoidPtr,
 ) -> i32 {
     let attr = if !attr.is_null() {
         check_magic!(env, attr, MAGIC_ATTR);
@@ -87,12 +103,25 @@ fn pthread_create(
         DEFAULT_ATTR
     };
 
-    unimplemented!(
-        "Create thread with {:?}, {:?}, {:?}",
-        attr,
-        start_routine,
-        arg
-    ); // TODO
+    let thread_id = env.new_thread(start_routine, user_data);
+
+    let opaque = env.mem.alloc_and_write(OpaqueThread {
+        magic: MAGIC_THREAD,
+    });
+    env.mem.write(thread, opaque);
+
+    assert!(!State::get(env).threads.contains_key(&opaque));
+    State::get(env).threads.insert(
+        opaque,
+        ThreadHostObject {
+            _thread_id: thread_id,
+            _attr: attr,
+        },
+    );
+
+    log_dbg!("pthread_create({:?}, {:?}, {:?}, {:?}) => 0 (success), created new pthread_t {:?} (thread ID: {})", thread, attr, start_routine, user_data, opaque, thread_id);
+
+    0 // success
 }
 
 pub const FUNCTIONS: FunctionExports = &[

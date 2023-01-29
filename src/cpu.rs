@@ -96,6 +96,23 @@ impl Drop for Cpu {
     }
 }
 
+/// Object for storing the state of a CPU (registers etc), useful when switching
+/// threads.
+pub struct CpuContext {
+    context: *mut Dynarmic_A32_Context,
+}
+impl CpuContext {
+    pub fn new() -> Self {
+        let context = unsafe { touchHLE_DynarmicWrapper_Context_new() };
+        CpuContext { context }
+    }
+}
+impl Drop for CpuContext {
+    fn drop(&mut self) {
+        unsafe { touchHLE_DynarmicWrapper_Context_delete(self.context) }
+    }
+}
+
 /// Why CPU execution ended.
 #[derive(Debug)]
 pub enum CpuState {
@@ -161,6 +178,12 @@ impl Cpu {
     }
     pub fn set_cpsr(&mut self, cpsr: u32) {
         unsafe { touchHLE_DynarmicWrapper_set_cpsr(self.dynarmic_wrapper, cpsr) }
+    }
+
+    /// Swap the current state of the CPU (registers etc) with the state stored
+    /// in the context object.
+    pub fn swap_context(&mut self, context: &mut CpuContext) {
+        unsafe { touchHLE_DynarmicWrapper_swap_context(self.dynarmic_wrapper, context.context) }
     }
 
     /// Get PC with the Thumb bit appropriately set.

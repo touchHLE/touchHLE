@@ -104,8 +104,23 @@ fn main() -> Result<(), String> {
     Ok(())
 }
 
-/// Note that currently only a single thread (the main thread) is supported.
-type ThreadID = u32;
+/// Index into the [Vec] of threads. Thread 0 is always the main thread.
+type ThreadID = usize;
+
+struct Thread {
+    /// Once a thread finishes, this is set to false.
+    active: bool,
+    /// Context object containing the CPU state for this thread.
+    ///
+    /// There should always be `(threads.len() - 1)` contexts in existence.
+    /// When a thread is currently executing, its state is stored directly in
+    /// the CPU, rather than in a context object. In that case, this field is
+    /// None. See also: [std::mem::take] and [cpu::Cpu::swap_context].
+    context: Option<cpu::CpuContext>,
+    /// Address range of this thread's stack, used to check if addresses are in
+    /// range while producing a stack trace.
+    stack: std::ops::RangeInclusive<u32>,
+}
 
 /// The struct containing the entire emulator state.
 pub struct Environment {
@@ -122,6 +137,7 @@ pub struct Environment {
     dyld: dyld::Dyld,
     cpu: cpu::Cpu,
     current_thread: ThreadID,
+    threads: Vec<Thread>,
     libc_state: libc::State,
     framework_state: frameworks::State,
 }
@@ -207,6 +223,12 @@ impl Environment {
 
         let cpu = cpu::Cpu::new();
 
+        let main_thread = Thread {
+            active: true,
+            context: None,
+            stack: mem::Mem::MAIN_THREAD_STACK_LOW_END..=0u32.wrapping_sub(1),
+        };
+
         let mut env = Environment {
             startup_time,
             bundle,
@@ -218,6 +240,7 @@ impl Environment {
             dyld,
             cpu,
             current_thread: 0,
+            threads: vec![main_thread],
             libc_state: Default::default(),
             framework_state: Default::default(),
         };
@@ -257,6 +280,7 @@ impl Environment {
     }
 
     fn stack_trace(&self) {
+        let stack_range = self.threads[self.current_thread].stack.clone();
         eprintln!(
             " 0. {:#x} (PC)",
             self.cpu.pc_with_thumb_bit().addr_with_thumb_bit()
@@ -272,7 +296,7 @@ impl Environment {
         let mut i = 2;
         let mut fp: mem::ConstPtr<u8> = mem::Ptr::from_bits(regs[abi::FRAME_POINTER]);
         loop {
-            if fp.to_bits() < mem::Mem::MAIN_THREAD_STACK_LOW_END {
+            if !stack_range.contains(&fp.to_bits()) {
                 eprintln!("Next FP ({:?}) is outside the stack.", fp);
                 break;
             }
@@ -287,6 +311,43 @@ impl Environment {
         }
     }
 
+    /// Create a new thread and return its ID. The `start_routine` and
+    /// `user_data` arguments have the same meaning as the last two arguments to
+    /// `pthread_create`.
+    pub fn new_thread(
+        &mut self,
+        start_routine: abi::GuestFunction,
+        user_data: mem::MutVoidPtr,
+    ) -> ThreadID {
+        let stack_size = mem::Mem::SECONDARY_THREAD_STACK_SIZE;
+        let stack_alloc = self.mem.alloc(stack_size);
+        let stack_high_addr = stack_alloc.to_bits() + stack_size;
+        assert!(stack_high_addr % 4 == 0);
+
+        let mut context = cpu::CpuContext::new();
+        // Save CPU state for current thread to `context` and reset CPU
+        // registers to zeroes.
+        self.cpu.swap_context(&mut context);
+        self.cpu.set_cpsr(cpu::Cpu::CPSR_USER_MODE);
+        self.cpu.regs_mut()[cpu::Cpu::SP] = stack_high_addr;
+        self.cpu.regs_mut()[0] = user_data.to_bits();
+        self.cpu
+            .branch_with_link(start_routine, self.dyld.return_to_host_routine());
+        // Restore CPU state of current thread, get our new thread's state.
+        self.cpu.swap_context(&mut context);
+
+        self.threads.push(Thread {
+            active: true,
+            context: Some(context),
+            stack: stack_alloc.to_bits()..=(stack_high_addr - 1),
+        });
+        let new_thread_id = self.threads.len() - 1;
+
+        log_dbg!("Created new thread {} with stack {:#x}–{:#x}, will execute function {:?} with data {:?}", new_thread_id, stack_alloc.to_bits(), (stack_high_addr - 1), start_routine, user_data);
+
+        new_thread_id
+    }
+
     /// Run the emulator. This is the main loop and won't return until app exit.
     /// Only `main.rs` should call this.
     fn run(&mut self) {
@@ -296,7 +357,14 @@ impl Environment {
         if let Err(e) = res {
             eprintln!("Register state immediately after panic:");
             self.cpu.dump_regs();
-            eprintln!("Attempting to produce stack trace:");
+            if self.current_thread == 0 {
+                eprintln!("Attempting to produce stack trace for main thread:");
+            } else {
+                eprintln!(
+                    "Attempting to produce stack trace for thread {}:",
+                    self.current_thread
+                );
+            }
             self.stack_trace();
             std::panic::resume_unwind(e);
         }
@@ -304,11 +372,18 @@ impl Environment {
 
     /// Run the emulator until the app returns control to the host. This is for
     /// host-to-guest function calls (see [abi::GuestFunction::call]).
+    ///
+    /// Note that this might execute code from other threads while waiting for
+    /// the app to return control on the original thread!
     pub fn run_call(&mut self) {
         self.run_inner(false)
     }
 
     fn run_inner(&mut self, root: bool) {
+        let initial_thread = self.current_thread;
+        assert!(self.threads[initial_thread].active);
+        assert!(self.threads[initial_thread].context.is_none());
+
         loop {
             // We need to poll for events occasionally during CPU execution so
             // that the host OS doesn't consider touchHLE unresponsive.
@@ -326,12 +401,23 @@ impl Environment {
                         // address of the SVC itself
                         let svc_pc = self.cpu.regs()[cpu::Cpu::PC] - 4;
                         if svc == dyld::Dyld::SVC_RETURN_TO_HOST {
-                            assert!(!root);
                             assert!(
                                 svc_pc
                                     == self.dyld.return_to_host_routine().addr_without_thumb_bit()
                             );
-                            return;
+                            // Normal callback return
+                            if !root && self.current_thread == initial_thread {
+                                return;
+                            // Secondary thread init function return
+                            // TODO: Test this actually works.
+                            // TODO: Use a different SVC for this, the double
+                            // meaning here seems dangerous.
+                            } else if self.current_thread != 0 {
+                                log_dbg!("Thread {} init finished", self.current_thread);
+                                break;
+                            } else {
+                                panic!("Unexpected return-to-host");
+                            }
                         }
 
                         if let Some(f) = self.dyld.get_svc_handler(
@@ -347,6 +433,31 @@ impl Environment {
                         }
                     }
                 }
+            }
+
+            // Find next thread to execute
+            let mut next = self.current_thread;
+            loop {
+                next = (next + 1) % self.threads.len();
+                // Back where we started: couldn't find a suitable new
+                // thread.
+                if next == self.current_thread {
+                    assert!(self.threads[self.current_thread].active);
+                    break;
+                }
+                if !self.threads[next].active {
+                    continue;
+                }
+                let Some(mut context) = self.threads[next].context.take() else {
+                    continue;
+                };
+                // Candidate found, switch to it.
+                log_dbg!("Switching thread: {} => {}", self.current_thread, next);
+                self.cpu.swap_context(&mut context);
+                assert!(self.threads[self.current_thread].context.is_none());
+                self.threads[self.current_thread].context = Some(context);
+                self.current_thread = next;
+                break;
             }
         }
     }

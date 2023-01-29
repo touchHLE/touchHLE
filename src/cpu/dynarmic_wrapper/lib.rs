@@ -12,6 +12,9 @@ pub type touchHLE_DynarmicWrapper = std::ffi::c_void;
 /// `c_void` is used here to avoid depending on it directly)
 #[allow(non_camel_case_types)]
 pub type touchHLE_Mem = std::ffi::c_void;
+/// Opaque C++ type
+#[allow(non_camel_case_types)]
+pub type Dynarmic_A32_Context = std::ffi::c_void;
 
 type VAddr = u32;
 
@@ -24,6 +27,10 @@ extern "C" {
     pub fn touchHLE_DynarmicWrapper_regs_mut(cpu: *mut touchHLE_DynarmicWrapper) -> *mut u32;
     pub fn touchHLE_DynarmicWrapper_cpsr(cpu: *const touchHLE_DynarmicWrapper) -> u32;
     pub fn touchHLE_DynarmicWrapper_set_cpsr(cpu: *mut touchHLE_DynarmicWrapper, cpsr: u32);
+    pub fn touchHLE_DynarmicWrapper_swap_context(
+        cpu: *mut touchHLE_DynarmicWrapper,
+        context: *mut Dynarmic_A32_Context,
+    );
     pub fn touchHLE_DynarmicWrapper_invalidate_cache_range(
         cpu: *mut touchHLE_DynarmicWrapper,
         start: VAddr,
@@ -34,4 +41,7 @@ extern "C" {
         mem: *mut touchHLE_Mem,
         ticks: *mut u64,
     ) -> i32;
+
+    pub fn touchHLE_DynarmicWrapper_Context_new() -> *mut Dynarmic_A32_Context;
+    pub fn touchHLE_DynarmicWrapper_Context_delete(context: *mut Dynarmic_A32_Context);
 }

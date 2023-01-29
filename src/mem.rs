@@ -231,6 +231,9 @@ impl Mem {
     /// space (see also: stack.rs), I have no idea if this matches iPhone OS.
     pub const MAIN_THREAD_STACK_LOW_END: VAddr = 0u32.wrapping_sub(Self::MAIN_THREAD_STACK_SIZE);
 
+    /// iPhone OS secondary thread stack size.
+    pub const SECONDARY_THREAD_STACK_SIZE: GuestUSize = 512 * 1024;
+
     pub fn new() -> Mem {
         // This will hopefully get the host OS to lazily allocate the memory.
         let layout = std::alloc::Layout::new::<Bytes>();

@@ -30,6 +30,12 @@ pub trait GLES {
     unsafe fn Scissor(&mut self, x: GLint, y: GLint, width: GLsizei, height: GLsizei);
     unsafe fn Viewport(&mut self, x: GLint, y: GLint, width: GLsizei, height: GLsizei);
 
+    // Lighting
+    unsafe fn Lightf(&mut self, light: GLenum, pname: GLenum, param: GLfloat);
+    unsafe fn Lightx(&mut self, light: GLenum, pname: GLenum, param: GLfixed);
+    unsafe fn Lightfv(&mut self, light: GLenum, pname: GLenum, params: *const GLfloat);
+    unsafe fn Lightxv(&mut self, light: GLenum, pname: GLenum, params: *const GLfixed);
+
     // Pointers
     unsafe fn ColorPointer(
         &mut self,

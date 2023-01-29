@@ -111,6 +111,38 @@ fn glViewport(env: &mut Environment, x: GLint, y: GLint, width: GLsizei, height:
     })
 }
 
+// Lighting
+fn glLightf(env: &mut Environment, light: GLenum, pname: GLenum, param: GLfloat) {
+    with_ctx_and_mem(env, |gles, _mem| unsafe {
+        gles.Lightf(light, pname, param)
+    })
+}
+fn glLightx(env: &mut Environment, light: GLenum, pname: GLenum, param: GLfixed) {
+    with_ctx_and_mem(env, |gles, _mem| unsafe {
+        gles.Lightx(light, pname, param)
+    })
+}
+fn glLightfv(env: &mut Environment, light: GLenum, pname: GLenum, params: ConstPtr<GLfloat>) {
+    let &(_, pcount) = super::gles1_on_gl2::LIGHT_PARAMS
+        .iter()
+        .find(|&&(pname2, _)| pname == pname2)
+        .unwrap();
+    with_ctx_and_mem(env, |gles, mem| {
+        let params = mem.ptr_at(params, pcount.into());
+        unsafe { gles.Lightfv(light, pname, params) }
+    })
+}
+fn glLightxv(env: &mut Environment, light: GLenum, pname: GLenum, params: ConstPtr<GLfixed>) {
+    let &(_, pcount) = super::gles1_on_gl2::LIGHT_PARAMS
+        .iter()
+        .find(|&&(pname2, _)| pname == pname2)
+        .unwrap();
+    with_ctx_and_mem(env, |gles, mem| {
+        let params = mem.ptr_at(params, pcount.into());
+        unsafe { gles.Lightxv(light, pname, params) }
+    })
+}
+
 // Pointers
 
 /// One of the ugliest things in OpenGL is that, depending on dynamic state, the
@@ -508,6 +540,11 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(glShadeModel(_)),
     export_c_func!(glScissor(_, _, _, _)),
     export_c_func!(glViewport(_, _, _, _)),
+    // Lighting
+    export_c_func!(glLightf(_, _, _)),
+    export_c_func!(glLightx(_, _, _)),
+    export_c_func!(glLightfv(_, _, _)),
+    export_c_func!(glLightxv(_, _, _)),
     // Pointers
     export_c_func!(glColorPointer(_, _, _, _)),
     export_c_func!(glNormalPointer(_, _, _)),

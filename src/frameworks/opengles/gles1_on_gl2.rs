@@ -81,6 +81,21 @@ pub(super) const CLIENT_CAPABILITIES: &[GLenum] = &[
     gl21::VERTEX_ARRAY,
 ];
 
+/// List of `glLightfv`/`glLightxv` parameters shared by OpenGL ES 1.1 and
+/// OpenGL 2.1, together with the number of float/fixed-point values they take.
+pub(super) const LIGHT_PARAMS: &[(GLenum, u8)] = &[
+    (gl21::AMBIENT, 4),
+    (gl21::DIFFUSE, 4),
+    (gl21::SPECULAR, 4),
+    (gl21::POSITION, 4),
+    (gl21::SPOT_CUTOFF, 1),
+    (gl21::SPOT_DIRECTION, 3),
+    (gl21::SPOT_EXPONENT, 1),
+    (gl21::CONSTANT_ATTENUATION, 1),
+    (gl21::LINEAR_ATTENUATION, 1),
+    (gl21::QUADRATIC_ATTENUATION, 1),
+];
+
 pub struct GLES1OnGL2 {
     gl_ctx: GLContext,
 }
@@ -181,6 +196,33 @@ impl GLES for GLES1OnGL2 {
     }
     unsafe fn Viewport(&mut self, x: GLint, y: GLint, width: GLsizei, height: GLsizei) {
         gl21::Viewport(x, y, width, height)
+    }
+
+    // Lighting
+    unsafe fn Lightf(&mut self, light: GLenum, pname: GLenum, param: GLfloat) {
+        assert!(LIGHT_PARAMS
+            .iter()
+            .any(|&(pname2, pcount)| pname == pname2 && pcount == 1));
+        gl21::Lightf(light, pname, param);
+    }
+    unsafe fn Lightx(&mut self, light: GLenum, pname: GLenum, param: GLfixed) {
+        self.Lightf(light, pname, fixed_to_float(param));
+    }
+    unsafe fn Lightfv(&mut self, light: GLenum, pname: GLenum, params: *const GLfloat) {
+        assert!(LIGHT_PARAMS.iter().any(|&(pname2, _)| pname == pname2));
+        gl21::Lightfv(light, pname, params);
+    }
+    unsafe fn Lightxv(&mut self, light: GLenum, pname: GLenum, params: *const GLfixed) {
+        let mut params_float = [0.0; 4];
+        let &(_, pcount) = LIGHT_PARAMS
+            .iter()
+            .find(|&&(pname2, _)| pname == pname2)
+            .unwrap();
+        #[allow(clippy::needless_range_loop)]
+        for i in 0..(pcount as usize) {
+            params_float[i] = fixed_to_float(params.add(i).read())
+        }
+        gl21::Lightfv(light, pname, params_float.as_ptr());
     }
 
     // Pointers

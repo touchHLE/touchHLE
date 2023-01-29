@@ -26,6 +26,7 @@ pub trait GLES {
     unsafe fn AlphaFunc(&mut self, func: GLenum, ref_: GLclampf);
     unsafe fn AlphaFuncx(&mut self, func: GLenum, ref_: GLclampx);
     unsafe fn BlendFunc(&mut self, sfactor: GLenum, dfactor: GLenum);
+    unsafe fn DepthMask(&mut self, flag: GLboolean);
     unsafe fn ShadeModel(&mut self, mode: GLenum);
     unsafe fn Scissor(&mut self, x: GLint, y: GLint, width: GLsizei, height: GLsizei);
     unsafe fn Viewport(&mut self, x: GLint, y: GLint, width: GLsizei, height: GLsizei);
@@ -40,6 +41,10 @@ pub trait GLES {
     unsafe fn GenBuffers(&mut self, n: GLsizei, buffers: *mut GLuint);
     unsafe fn DeleteBuffers(&mut self, n: GLsizei, buffers: *const GLuint);
     unsafe fn BindBuffer(&mut self, target: GLenum, buffer: GLuint);
+
+    // Non-pointers
+    unsafe fn Color4f(&mut self, red: GLfloat, green: GLfloat, blue: GLfloat, alpha: GLfloat);
+    unsafe fn Color4x(&mut self, red: GLfixed, green: GLfixed, blue: GLfixed, alpha: GLfixed);
 
     // Pointers
     unsafe fn ColorPointer(

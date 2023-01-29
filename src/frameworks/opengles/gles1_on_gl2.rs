@@ -365,6 +365,9 @@ impl GLES for GLES1OnGL2 {
         .contains(&dfactor));
         gl21::BlendFunc(sfactor, dfactor);
     }
+    unsafe fn DepthMask(&mut self, flag: GLboolean) {
+        gl21::DepthMask(flag)
+    }
     unsafe fn ShadeModel(&mut self, mode: GLenum) {
         assert!(mode == gl21::FLAT || mode == gl21::SMOOTH);
         gl21::ShadeModel(mode);
@@ -413,6 +416,19 @@ impl GLES for GLES1OnGL2 {
     unsafe fn BindBuffer(&mut self, target: GLenum, buffer: GLuint) {
         assert!(target == gl21::ARRAY_BUFFER || target == gl21::ELEMENT_ARRAY_BUFFER);
         gl21::BindBuffer(target, buffer)
+    }
+
+    // Non-pointers
+    unsafe fn Color4f(&mut self, red: GLfloat, green: GLfloat, blue: GLfloat, alpha: GLfloat) {
+        gl21::Color4f(red, green, blue, alpha)
+    }
+    unsafe fn Color4x(&mut self, red: GLfixed, green: GLfixed, blue: GLfixed, alpha: GLfixed) {
+        gl21::Color4f(
+            fixed_to_float(red),
+            fixed_to_float(green),
+            fixed_to_float(blue),
+            fixed_to_float(alpha),
+        )
     }
 
     // Pointers

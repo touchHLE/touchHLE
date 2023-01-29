@@ -97,6 +97,9 @@ fn glBlendFunc(env: &mut Environment, sfactor: GLenum, dfactor: GLenum) {
         gles.BlendFunc(sfactor, dfactor)
     })
 }
+fn glDepthMask(env: &mut Environment, flag: GLboolean) {
+    with_ctx_and_mem(env, |gles, _mem| unsafe { gles.DepthMask(flag) })
+}
 fn glShadeModel(env: &mut Environment, mode: GLenum) {
     with_ctx_and_mem(env, |gles, _mem| unsafe { gles.ShadeModel(mode) })
 }
@@ -160,6 +163,18 @@ fn glDeleteBuffers(env: &mut Environment, n: GLsizei, buffers: ConstPtr<GLuint>)
 }
 fn glBindBuffer(env: &mut Environment, target: GLenum, buffer: GLuint) {
     with_ctx_and_mem(env, |gles, _mem| unsafe { gles.BindBuffer(target, buffer) })
+}
+
+// Non-pointers
+fn glColor4f(env: &mut Environment, red: GLfloat, green: GLfloat, blue: GLfloat, alpha: GLfloat) {
+    with_ctx_and_mem(env, |gles, _mem| unsafe {
+        gles.Color4f(red, green, blue, alpha)
+    })
+}
+fn glColor4x(env: &mut Environment, red: GLfixed, green: GLfixed, blue: GLfixed, alpha: GLfixed) {
+    with_ctx_and_mem(env, |gles, _mem| unsafe {
+        gles.Color4x(red, green, blue, alpha)
+    })
 }
 
 // Pointers
@@ -557,6 +572,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(glAlphaFunc(_, _)),
     export_c_func!(glAlphaFuncx(_, _)),
     export_c_func!(glBlendFunc(_, _)),
+    export_c_func!(glDepthMask(_)),
     export_c_func!(glShadeModel(_)),
     export_c_func!(glScissor(_, _, _, _)),
     export_c_func!(glViewport(_, _, _, _)),
@@ -569,6 +585,9 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(glGenBuffers(_, _)),
     export_c_func!(glDeleteBuffers(_, _)),
     export_c_func!(glBindBuffer(_, _)),
+    // Non-pointers
+    export_c_func!(glColor4f(_, _, _, _)),
+    export_c_func!(glColor4x(_, _, _, _)),
     // Pointers
     export_c_func!(glColorPointer(_, _, _, _)),
     export_c_func!(glNormalPointer(_, _, _)),

@@ -119,8 +119,8 @@ impl Font {
                                 wrap_points.push(word_end + i);
                                 word_start = word_end + i;
                             } else {
-                                wrap_points.push(word_end);
-                                word_start = word_end;
+                                wrap_points.push(line.len());
+                                break;
                             }
                         } else {
                             wrap_points.push(line.len());

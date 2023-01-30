@@ -24,7 +24,9 @@ TBD
 
 ## App support
 
-- Super Monkey Ball (2008, App Store launch title): logo screens, title screen and menus fully working in all languages. Main game not accessible yet.
+- Super Monkey Ball (2008, App Store launch title) is fully playable.
+
+No other apps are known to work right now. :)
 
 # Building
 

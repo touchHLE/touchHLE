@@ -7,6 +7,7 @@
 pub mod ctype;
 pub mod cxxabi;
 pub mod errno;
+pub mod mach_thread_info;
 pub mod mach_time;
 pub mod math;
 pub mod pthread;

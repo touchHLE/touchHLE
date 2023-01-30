@@ -2,13 +2,14 @@
 
 use crate::abi::GuestFunction;
 use crate::dyld::{export_c_func, FunctionExports};
-use crate::mem::{ConstPtr, MutPtr, MutVoidPtr, Ptr, SafeRead};
+use crate::mem::{ConstPtr, MutPtr, MutVoidPtr, SafeRead};
 use crate::{Environment, ThreadID};
 use std::collections::HashMap;
 
 #[derive(Default)]
 pub struct State {
     threads: HashMap<pthread_t, ThreadHostObject>,
+    main_thread_object_created: bool,
 }
 impl State {
     fn get(env: &mut Environment) -> &mut Self {
@@ -46,7 +47,7 @@ unsafe impl SafeRead for OpaqueThread {}
 type pthread_t = MutPtr<OpaqueThread>;
 
 struct ThreadHostObject {
-    _thread_id: ThreadID,
+    thread_id: ThreadID,
     _attr: pthread_attr_t,
 }
 
@@ -114,7 +115,7 @@ fn pthread_create(
     State::get(env).threads.insert(
         opaque,
         ThreadHostObject {
-            _thread_id: thread_id,
+            thread_id,
             _attr: attr,
         },
     );
@@ -124,12 +125,47 @@ fn pthread_create(
     0 // success
 }
 
-fn pthread_self(_env: &mut Environment) -> pthread_t {
-    // FIXME: Implement this for real. Super Monkey Ball conveniently checks
-    // if this returns zero and skips some code for querying thread properties
-    // if so, even though zero isn't a meaningful value...
-    log!("Warning: TODO: pthread_self() (returning 0)");
-    Ptr::null()
+fn pthread_self(env: &mut Environment) -> pthread_t {
+    let current_thread = env.current_thread;
+
+    // The main thread is a special case since it's not created via pthreads,
+    // so we need to create its object on-demand.
+    if current_thread == 0 && !State::get(env).main_thread_object_created {
+        State::get(env).main_thread_object_created = true;
+
+        let opaque = env.mem.alloc_and_write(OpaqueThread {
+            magic: MAGIC_THREAD,
+        });
+
+        assert!(!State::get(env).threads.contains_key(&opaque));
+        State::get(env).threads.insert(
+            opaque,
+            ThreadHostObject {
+                thread_id: 0,
+                _attr: DEFAULT_ATTR,
+            },
+        );
+        log_dbg!(
+            "pthread_self: created pthread object {:?} for main thread",
+            opaque
+        );
+    }
+
+    let (&ptr, _) = State::get(env)
+        .threads
+        .iter()
+        .find(|&(_ptr, host_obj)| host_obj.thread_id == current_thread)
+        .unwrap();
+    ptr
+}
+
+type mach_port_t = u32;
+
+/// Undocumented Darwin function that returns a `mach_port_t`, which in practice
+/// is used by apps as a unique thread ID.
+fn pthread_mach_thread_np(env: &mut Environment, thread: pthread_t) -> mach_port_t {
+    let host_object = State::get(env).threads.get(&thread).unwrap();
+    host_object.thread_id.try_into().unwrap()
 }
 
 pub const FUNCTIONS: FunctionExports = &[
@@ -138,4 +174,5 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(pthread_attr_destroy(_)),
     export_c_func!(pthread_create(_, _, _, _)),
     export_c_func!(pthread_self()),
+    export_c_func!(pthread_mach_thread_np(_)),
 ];

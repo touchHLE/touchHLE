@@ -28,6 +28,19 @@ impl<const N: usize> Matrix<N> {
         new
     }
 
+    pub fn multiply(&self, other: &Self) -> Self {
+        let mut res = [[0f32; N]; N];
+        #[allow(clippy::needless_range_loop)]
+        for i in 0..N {
+            for j in 0..N {
+                for k in 0..N {
+                    res[i][j] += self.0[i][k] * other.0[k][j];
+                }
+            }
+        }
+        Matrix(res)
+    }
+
     /// Transform a vector using the matrix.
     pub fn transform(&self, vector: [f32; N]) -> [f32; N] {
         let mut new = [0f32; N];
@@ -43,5 +56,21 @@ impl<const N: usize> Matrix<N> {
 impl Matrix<2> {
     pub fn z_rotation(angle: f32) -> Matrix<2> {
         Matrix([[angle.cos(), angle.sin()], [-angle.sin(), angle.cos()]])
+    }
+}
+impl Matrix<3> {
+    pub fn x_rotation(angle: f32) -> Matrix<3> {
+        Matrix([
+            [1.0, 0.0, 0.0],
+            [0.0, angle.cos(), angle.sin()],
+            [0.0, -angle.sin(), angle.cos()],
+        ])
+    }
+    pub fn y_rotation(angle: f32) -> Matrix<3> {
+        Matrix([
+            [angle.cos(), 0.0, -angle.sin()],
+            [0.0, 1.0, 0.0],
+            [angle.sin(), 0.0, angle.cos()],
+        ])
     }
 }

@@ -36,7 +36,7 @@ pub fn handle_events(env: &mut Environment) {
 
     loop {
         let Some(event) = env.window.pop_event() else {
-            return;
+            break;
         };
 
         match event {
@@ -50,4 +50,6 @@ pub fn handle_events(env: &mut Environment) {
             }
         }
     }
+
+    ui_accelerometer::handle_accelerometer(env);
 }

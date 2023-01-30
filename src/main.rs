@@ -43,6 +43,49 @@ General options:
     --help
         Print this help text.
 
+Game controller (accelerometer simulation) options:
+    --deadzone=...
+        Configures the size of the \"dead zone\" for analog stick inputs.
+
+        The default value is 0.1, which means that 10% of the stick's range on
+        the X and Y axes around the center position will be collapsed into a
+        single point, so that movements in that range are ignored.
+
+        This is a floating-point (decimal) number between 0 and 1.
+
+    --x-tilt-range=...
+    --y-tilt-range=...
+        Set the simulated rotation range of the device on its X or Y axis.
+
+        By default, an analog stick's axis is mapped to a rotation range of 60°
+        (30° in either direction). If you wanted a range of 90° on the X axis,
+        you could use --x-tilt-range=90.
+
+        Note that the device's X axis is mapped to the analog stick's Y axis
+        and vice-versa, because tilting the device to the left means rotating
+        it on its Y axis, and so on.
+
+        This is a floating-point (decimal) number of degrees, without a degree
+        symbol. It may be negative.
+
+    --x-tilt-offset=...
+    --y-tilt-offset=...
+        Offset the simulated angle of the device on its X or Y axis.
+
+        By default, the device is simulated as being level with the ground when
+        the stick is in the center/neutral position. This option is intended for
+        games that use a different angle relative to the ground as their neutral
+        position. For example, if a game expects you to hold the device in a
+        landscape orientation, with a 45° angle to the ground, you might use
+        --y-tilt-offset=45.
+
+        Note that the device's X axis is mapped to the analog stick's Y axis
+        and vice-versa, because tilting the device to the left means rotating
+        it on its Y axis, and so on.
+
+        This is a floating-point (decimal) number of degrees, without a degree
+        symbol. It may be negative.
+
 Debugging options:
     --breakpoint=...
         This option sets a primitive breakpoint at a provided memory address.
@@ -57,25 +100,64 @@ Debugging options:
         To set multiple breakpoints, use several '--breakpoint=' arguments.
 ";
 
+pub struct Options {
+    deadzone: f32,
+    x_tilt_range: f32,
+    y_tilt_range: f32,
+    x_tilt_offset: f32,
+    y_tilt_offset: f32,
+    breakpoints: Vec<u32>,
+}
+
 fn main() -> Result<(), String> {
+    fn parse_degrees(arg: &str, name: &str) -> Result<f32, String> {
+        let arg: f32 = arg
+            .parse()
+            .map_err(|_| format!("Value for {} is invalid", name))?;
+        if !arg.is_finite() || !(-360.0..=360.0).contains(&arg) {
+            return Err(format!("Value for {} is out of range", name));
+        }
+        Ok(arg)
+    }
+
     let mut args = std::env::args();
     let _ = args.next().unwrap(); // skip argv[0]
 
+    let mut options = Options {
+        deadzone: 0.1,
+        x_tilt_range: 60.0,
+        y_tilt_range: 60.0,
+        x_tilt_offset: 0.0,
+        y_tilt_offset: 0.0,
+        breakpoints: Vec::new(),
+    };
+
     let mut bundle_path: Option<PathBuf> = None;
-    let mut breakpoints = Vec::new();
     for arg in args {
         if arg == "--help" {
             println!("{}", USAGE);
             return Ok(());
         } else if bundle_path.is_none() {
             bundle_path = Some(PathBuf::from(arg));
+        } else if let Some(value) = arg.strip_prefix("--deadzone=") {
+            options.deadzone = parse_degrees(value, "deadzone")?;
+        } else if let Some(value) = arg.strip_prefix("--x-tilt-range=") {
+            options.x_tilt_range = parse_degrees(value, "X tilt range")?;
+        } else if let Some(value) = arg.strip_prefix("--y-tilt-range=") {
+            options.y_tilt_range = parse_degrees(value, "Y tilt range")?;
+        } else if let Some(value) = arg.strip_prefix("--x-tilt-offset=") {
+            options.x_tilt_offset = parse_degrees(value, "X tilt offset")?;
+        } else if let Some(value) = arg.strip_prefix("--y-tilt-offset=") {
+            options.y_tilt_offset = parse_degrees(value, "Y tilt offset")?;
         } else if let Some(addr) = arg.strip_prefix("--breakpoint=") {
             let is_thumb = addr.starts_with('T');
             let addr = addr.strip_prefix('T').unwrap_or(addr);
             let addr = addr.strip_prefix("0x").unwrap_or(addr);
             let addr = u32::from_str_radix(addr, 16)
                 .map_err(|_| "Incorrect breakpoint syntax".to_string())?;
-            breakpoints.push(if is_thumb { addr | 0x1 } else { addr });
+            options
+                .breakpoints
+                .push(if is_thumb { addr | 0x1 } else { addr });
         } else {
             eprintln!("{}", USAGE);
             return Err(format!("Unexpected argument: {:?}", arg));
@@ -99,7 +181,7 @@ fn main() -> Result<(), String> {
         bundle_path
     };
 
-    let mut env = Environment::new(bundle_path, breakpoints)?;
+    let mut env = Environment::new(bundle_path, options)?;
     env.run();
     Ok(())
 }
@@ -140,11 +222,12 @@ pub struct Environment {
     threads: Vec<Thread>,
     libc_state: libc::State,
     framework_state: frameworks::State,
+    options: Options,
 }
 
 impl Environment {
     /// Loads the binary and sets up the emulator.
-    fn new(bundle_path: PathBuf, breakpoints: Vec<u32>) -> Result<Environment, String> {
+    fn new(bundle_path: PathBuf, options: Options) -> Result<Environment, String> {
         let startup_time = std::time::Instant::now();
 
         let (bundle, fs) = match bundle::Bundle::new_bundle_and_fs_from_host_path(bundle_path) {
@@ -169,6 +252,7 @@ impl Environment {
             &format!("{} (touchHLE)", bundle.display_name()),
             icon,
             launch_image,
+            &options,
         );
 
         let mut mem = mem::Mem::new();
@@ -217,7 +301,7 @@ impl Environment {
         let mut dyld = dyld::Dyld::new();
         dyld.do_initial_linking(&bins, &mut mem, &mut objc);
 
-        for breakpoint in breakpoints {
+        for &breakpoint in &options.breakpoints {
             dyld.set_breakpoint(&mut mem, breakpoint);
         }
 
@@ -243,6 +327,7 @@ impl Environment {
             threads: vec![main_thread],
             libc_state: Default::default(),
             framework_state: Default::default(),
+            options,
         };
 
         dyld::Dyld::do_late_linking(&mut env);

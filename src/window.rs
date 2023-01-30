@@ -75,9 +75,17 @@ pub struct Window {
     splash_image_and_gl_ctx: Option<(Image, GLContext)>,
     device_orientation: DeviceOrientation,
     app_gl_ctx_no_longer_current: bool,
+    controller_ctx: sdl2::GameControllerSubsystem,
+    controllers: Vec<sdl2::controller::GameController>,
+    deadzone: f32,
 }
 impl Window {
-    pub fn new(title: &str, icon: Image, launch_image: Option<Image>) -> Window {
+    pub fn new(
+        title: &str,
+        icon: Image,
+        launch_image: Option<Image>,
+        options: &crate::Options,
+    ) -> Window {
         let sdl_ctx = sdl2::init().unwrap();
         let video_ctx = sdl_ctx.video().unwrap();
 
@@ -115,6 +123,8 @@ impl Window {
             None
         };
 
+        let controller_ctx = sdl_ctx.game_controller().unwrap();
+
         let mut window = Window {
             _sdl_ctx: sdl_ctx,
             video_ctx,
@@ -128,6 +138,9 @@ impl Window {
             splash_image_and_gl_ctx,
             device_orientation: DeviceOrientation::Portrait,
             app_gl_ctx_no_longer_current: false,
+            controller_ctx,
+            controllers: Vec::new(),
+            deadzone: options.deadzone,
         };
         window.display_splash();
         window
@@ -173,6 +186,14 @@ impl Window {
                     mouse_btn: MouseButton::Left,
                     ..
                 } => Event::TouchUp(transform_input_coords(self, (x, y))),
+                E::ControllerDeviceAdded { which, .. } => {
+                    self.controller_added(which);
+                    continue;
+                }
+                E::ControllerDeviceRemoved { which, .. } => {
+                    self.controller_removed(which);
+                    continue;
+                }
                 _ => continue,
             })
         }
@@ -181,6 +202,52 @@ impl Window {
     /// Pop an event from the queue (in FIFO order)
     pub fn pop_event(&mut self) -> Option<Event> {
         self.event_queue.pop_front()
+    }
+
+    fn controller_added(&mut self, joystick_idx: u32) {
+        let Ok(controller) = self.controller_ctx.open(joystick_idx) else {
+            log!("Warning: A new controller was connected, but it couldn't be accessed!");
+            return;
+        };
+        log!("New controller connected: {}", controller.name());
+        self.controllers.push(controller);
+    }
+    fn controller_removed(&mut self, instance_id: u32) {
+        let Some(idx) = self.controllers.iter().position(|controller| controller.instance_id() == instance_id) else {
+            return;
+        };
+        let controller = self.controllers.remove(idx);
+        log!("Warning: Controller disconnected: {}", controller.name());
+    }
+    pub fn have_controllers(&self) -> bool {
+        !self.controllers.is_empty()
+    }
+    /// Get the summed current X and Y positions of the game controllers'
+    /// analog sticks. Each axis value is in the range [-1, 1].
+    ///
+    /// The assumption is the stick will be used for accelerometer emulation,
+    /// so the values are corrected for window rotation.
+    pub fn get_controller_sticks(&self) -> (f32, f32) {
+        fn convert_axis(axis: i16, deadzone: f32) -> f32 {
+            assert!(deadzone >= 0.0);
+            let axis = ((axis as f32) / (i16::MAX as f32)).clamp(-1.0, 1.0);
+            let abs_axis = (axis.abs().max(deadzone) - deadzone) / (1.0 - deadzone);
+            abs_axis.copysign(axis)
+        }
+
+        let (mut x, mut y) = (0.0, 0.0);
+        for controller in &self.controllers {
+            use sdl2::controller::Axis;
+            for (x_axis, y_axis) in [(Axis::LeftX, Axis::LeftY), (Axis::RightX, Axis::RightY)] {
+                x += convert_axis(controller.axis(x_axis), self.deadzone);
+                y += convert_axis(controller.axis(y_axis), self.deadzone);
+            }
+        }
+        let (x, y) = (x.clamp(-1.0, 1.0), y.clamp(-1.0, 1.0));
+
+        let [x, y] = self.input_rotation_matrix().transform([x, y]);
+
+        (x.clamp(-1.0, 1.0), y.clamp(-1.0, 1.0)) // just in case
     }
 
     pub fn create_gl_context(&mut self, version: GLVersion) -> GLContext {

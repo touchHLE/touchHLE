@@ -116,12 +116,14 @@ fn prng(state: u32) -> u32 {
     state
 }
 
+const RAND_MAX: i32 = i32::MAX;
+
 fn srand(env: &mut Environment, seed: u32) {
     env.libc_state.stdlib.rand = seed;
 }
 fn rand(env: &mut Environment) -> i32 {
     env.libc_state.stdlib.rand = prng(env.libc_state.stdlib.rand);
-    env.libc_state.stdlib.rand as i32
+    (env.libc_state.stdlib.rand as i32) & RAND_MAX
 }
 
 // BSD's "better" random number generator, with an implementation that is not
@@ -131,7 +133,7 @@ fn srandom(env: &mut Environment, seed: u32) {
 }
 fn random(env: &mut Environment) -> i32 {
     env.libc_state.stdlib.random = prng(env.libc_state.stdlib.random);
-    env.libc_state.stdlib.random as i32
+    (env.libc_state.stdlib.random as i32) & RAND_MAX
 }
 
 pub const FUNCTIONS: FunctionExports = &[

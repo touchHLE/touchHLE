@@ -8,6 +8,7 @@ use crate::Environment;
 #[derive(Default)]
 pub struct State {
     rand: u32,
+    random: u32,
 }
 
 fn malloc(env: &mut Environment, size: GuestUSize) -> MutVoidPtr {
@@ -102,22 +103,35 @@ fn atof(env: &mut Environment, s: ConstPtr<u8>) -> f64 {
     s.parse().unwrap_or(0.0)
 }
 
-fn srand(env: &mut Environment, seed: u32) {
-    env.libc_state.stdlib.rand = seed;
-}
-
-fn rand(env: &mut Environment) -> i32 {
+fn prng(state: u32) -> u32 {
     // The state must not be zero for this algorithm to work. This also makes
     // the default seed be 1, which matches the C standard.
-    let mut state: u32 = env.libc_state.stdlib.rand.max(1);
+    let mut state: u32 = state.max(1);
     // https://en.wikipedia.org/wiki/Xorshift#Example_implementation
     // xorshift32 is not a good random number generator, but it is cute one!
     // It's not like anyone expects the C stdlib `rand()` to be good.
     state ^= state << 13;
     state ^= state >> 17;
     state ^= state << 5;
-    env.libc_state.stdlib.rand = state;
-    state as i32
+    state
+}
+
+fn srand(env: &mut Environment, seed: u32) {
+    env.libc_state.stdlib.rand = seed;
+}
+fn rand(env: &mut Environment) -> i32 {
+    env.libc_state.stdlib.rand = prng(env.libc_state.stdlib.rand);
+    env.libc_state.stdlib.rand as i32
+}
+
+// BSD's "better" random number generator, with an implementation that is not
+// actually better.
+fn srandom(env: &mut Environment, seed: u32) {
+    env.libc_state.stdlib.random = seed;
+}
+fn random(env: &mut Environment) -> i32 {
+    env.libc_state.stdlib.random = prng(env.libc_state.stdlib.random);
+    env.libc_state.stdlib.random as i32
 }
 
 pub const FUNCTIONS: FunctionExports = &[
@@ -129,4 +143,6 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(atof(_)),
     export_c_func!(srand(_)),
     export_c_func!(rand()),
+    export_c_func!(srandom(_)),
+    export_c_func!(random()),
 ];

@@ -71,14 +71,58 @@ pub(super) const CAPABILITIES: &[GLenum] = &[
     gl21::TEXTURE_2D,
 ];
 
-/// List of client-side capabilities shared by OpenGL ES 1.1 and OpenGL 2.1.
+pub(super) struct ArrayInfo {
+    /// Enum used by `glEnableClientState`, `glDisableClientState` and
+    /// `glGetBoolean`.
+    pub(super) name: GLenum,
+    /// Buffer binding enum for `glGetInteger`.
+    buffer_binding: GLenum,
+    /// Size enum for `glGetInteger`.
+    size: Option<GLenum>,
+    /// Stride enum for `glGetInteger`.
+    stride: GLenum,
+    /// Pointer enum for `glGetPointer`.
+    pointer: GLenum,
+}
+
+struct ArrayStateBackup {
+    size: Option<GLint>,
+    stride: GLsizei,
+    pointer: *const GLvoid,
+}
+
+/// List of arrays shared by OpenGL ES 1.1 and OpenGL 2.1.
 ///
 /// TODO: GL_POINT_SIZE_ARRAY_OES?
-pub(super) const CLIENT_CAPABILITIES: &[GLenum] = &[
-    gl21::COLOR_ARRAY,
-    gl21::NORMAL_ARRAY,
-    gl21::TEXTURE_COORD_ARRAY,
-    gl21::VERTEX_ARRAY,
+pub(super) const ARRAYS: &[ArrayInfo] = &[
+    ArrayInfo {
+        name: gl21::COLOR_ARRAY,
+        buffer_binding: gl21::COLOR_ARRAY_BUFFER_BINDING,
+        size: Some(gl21::COLOR_ARRAY_SIZE),
+        stride: gl21::COLOR_ARRAY_STRIDE,
+        pointer: gl21::COLOR_ARRAY_POINTER,
+    },
+    ArrayInfo {
+        name: gl21::NORMAL_ARRAY,
+        buffer_binding: gl21::NORMAL_ARRAY_BUFFER_BINDING,
+        size: None,
+        stride: gl21::NORMAL_ARRAY_STRIDE,
+        pointer: gl21::NORMAL_ARRAY_POINTER,
+    },
+    ArrayInfo {
+        name: gl21::TEXTURE_COORD_ARRAY,
+        buffer_binding: gl21::TEXTURE_COORD_ARRAY_BUFFER_BINDING,
+        size: Some(gl21::TEXTURE_COORD_ARRAY_SIZE),
+        stride: gl21::TEXTURE_COORD_ARRAY_STRIDE,
+        pointer: gl21::TEXTURE_COORD_ARRAY_POINTER,
+    },
+    ArrayInfo {
+        name: gl21::VERTEX_ARRAY,
+        buffer_binding: gl21::VERTEX_ARRAY_BUFFER_BINDING,
+        size: Some(gl21::VERTEX_ARRAY_SIZE),
+        stride: gl21::VERTEX_ARRAY_STRIDE,
+        pointer: gl21::VERTEX_ARRAY_POINTER,
+    },
 ];
 
 /// List of `glLightfv`/`glLightxv` parameters shared by OpenGL ES 1.1 and
@@ -98,11 +142,145 @@ pub(super) const LIGHT_PARAMS: &[(GLenum, u8)] = &[
 
 pub struct GLES1OnGL2 {
     gl_ctx: GLContext,
+    pointer_is_fixed_point: [bool; ARRAYS.len()],
+    fixed_point_translation_buffers: [Vec<GLfloat>; ARRAYS.len()],
+}
+impl GLES1OnGL2 {
+    /// If any arrays with fixed-point data are in use at the time of a draw
+    /// call, this function will convert the data to floating-point and
+    /// replace the pointers. [Self::restore_fixed_point_arrays] can be called
+    /// after to restore the original state.
+    unsafe fn translate_fixed_point_arrays(
+        &mut self,
+        first: GLint,
+        count: GLsizei,
+    ) -> [Option<ArrayStateBackup>; ARRAYS.len()] {
+        let mut backups: [Option<ArrayStateBackup>; ARRAYS.len()] = Default::default();
+        for (i, array_info) in ARRAYS.iter().enumerate() {
+            // Decide whether we need to do anything for this array
+
+            if !self.pointer_is_fixed_point[i] {
+                continue;
+            }
+
+            let mut is_active = gl21::FALSE;
+            gl21::GetBooleanv(array_info.name, &mut is_active);
+            if is_active != gl21::TRUE {
+                continue;
+            }
+
+            let mut buffer_binding = 0;
+            gl21::GetIntegerv(array_info.buffer_binding, &mut buffer_binding);
+            // TODO: translation for bound array buffers
+            assert!(buffer_binding == 0);
+
+            // Get and back up data
+
+            let size = array_info.size.map(|size_enum| {
+                let mut size: GLint = 0;
+                gl21::GetIntegerv(size_enum, &mut size);
+                size
+            });
+            let mut stride: GLsizei = 0;
+            gl21::GetIntegerv(array_info.stride, &mut stride);
+            let mut pointer: *mut GLvoid = std::ptr::null_mut();
+            // The second argument to glGetPointerv must be a mutable pointer,
+            // but gl_generator generates the wrong signature by mistake, see
+            // https://github.com/brendanzab/gl-rs/issues/541
+            #[allow(clippy::unnecessary_mut_passed)]
+            gl21::GetPointerv(array_info.pointer, &mut pointer);
+            let pointer = pointer.cast_const();
+
+            backups[i] = Some(ArrayStateBackup {
+                size,
+                stride,
+                pointer,
+            });
+
+            // Create translated array and substitute pointer
+
+            let size = size.unwrap_or_else(|| {
+                assert!(array_info.name == gl21::NORMAL_ARRAY);
+                3
+            });
+            let stride = if stride == 0 {
+                // tightly packed mode
+                size * 4 // sizeof(gl::FLOAT)
+            } else {
+                stride
+            };
+
+            let buffer = &mut self.fixed_point_translation_buffers[i];
+            buffer.clear();
+            buffer.resize(((first + count) * size).try_into().unwrap(), 0.0);
+
+            {
+                assert!(first >= 0 && count >= 0 && size >= 0 && stride >= 0);
+                let first = first as usize;
+                let count = count as usize;
+                let size = size as usize;
+                let stride = stride as usize;
+                for j in first..(first + count) {
+                    let vector_ptr: *const GLvoid = pointer.add(j * stride);
+                    let vector_ptr: *const GLfixed = vector_ptr.cast();
+                    for k in 0..size {
+                        buffer[j * size + k] = fixed_to_float(vector_ptr.add(k).read_unaligned());
+                    }
+                }
+            }
+
+            let buffer_ptr: *const GLfloat = buffer.as_ptr();
+            let buffer_ptr: *const GLvoid = buffer_ptr.cast();
+            match array_info.name {
+                gl21::COLOR_ARRAY => gl21::ColorPointer(size, gl21::FLOAT, 0, buffer_ptr),
+                gl21::NORMAL_ARRAY => {
+                    assert!(size == 3);
+                    gl21::NormalPointer(gl21::FLOAT, 0, buffer_ptr)
+                }
+                gl21::TEXTURE_COORD_ARRAY => {
+                    gl21::TexCoordPointer(size, gl21::FLOAT, 0, buffer_ptr)
+                }
+                gl21::VERTEX_ARRAY => gl21::VertexPointer(size, gl21::FLOAT, 0, buffer_ptr),
+                _ => unreachable!(),
+            }
+        }
+        backups
+    }
+    unsafe fn restore_fixed_point_arrays(
+        &mut self,
+        from_backup: [Option<ArrayStateBackup>; ARRAYS.len()],
+    ) {
+        for (i, backup) in from_backup.into_iter().enumerate() {
+            let array_info = &ARRAYS[i];
+            let Some(ArrayStateBackup { size, stride, pointer }) = backup else {
+                continue;
+            };
+
+            match array_info.name {
+                gl21::COLOR_ARRAY => {
+                    gl21::ColorPointer(size.unwrap(), gl21::FLOAT, stride, pointer)
+                }
+                gl21::NORMAL_ARRAY => {
+                    assert!(size.is_none());
+                    gl21::NormalPointer(gl21::FLOAT, stride, pointer)
+                }
+                gl21::TEXTURE_COORD_ARRAY => {
+                    gl21::TexCoordPointer(size.unwrap(), gl21::FLOAT, stride, pointer)
+                }
+                gl21::VERTEX_ARRAY => {
+                    gl21::VertexPointer(size.unwrap(), gl21::FLOAT, stride, pointer)
+                }
+                _ => unreachable!(),
+            }
+        }
+    }
 }
 impl GLES for GLES1OnGL2 {
     fn new(window: &mut Window) -> Self {
         Self {
             gl_ctx: window.create_gl_context(GLVersion::GL21Compat),
+            pointer_is_fixed_point: [false; ARRAYS.len()],
+            fixed_point_translation_buffers: [Vec::new(), Vec::new(), Vec::new(), Vec::new()],
         }
     }
 
@@ -123,11 +301,11 @@ impl GLES for GLES1OnGL2 {
         gl21::Disable(cap);
     }
     unsafe fn EnableClientState(&mut self, array: GLenum) {
-        assert!(CLIENT_CAPABILITIES.contains(&array));
+        assert!(ARRAYS.iter().any(|&ArrayInfo { name, .. }| name == array));
         gl21::EnableClientState(array);
     }
     unsafe fn DisableClientState(&mut self, array: GLenum) {
-        assert!(CLIENT_CAPABILITIES.contains(&array));
+        assert!(ARRAYS.iter().any(|&ArrayInfo { name, .. }| name == array));
         gl21::DisableClientState(array);
     }
     unsafe fn GetIntegerv(&mut self, pname: GLenum, params: *mut GLint) {
@@ -234,14 +412,26 @@ impl GLES for GLES1OnGL2 {
         pointer: *const GLvoid,
     ) {
         assert!(size == 4);
-        // TODO: fixed-point
-        assert!(type_ == gl21::UNSIGNED_BYTE || type_ == gl21::FLOAT);
-        gl21::ColorPointer(size, type_, stride, pointer)
+        if type_ == gles11::FIXED {
+            // Translation deferred until draw call
+            self.pointer_is_fixed_point[0] = true;
+            gl21::ColorPointer(size, gl21::FLOAT, stride, pointer)
+        } else {
+            assert!(type_ == gl21::UNSIGNED_BYTE || type_ == gl21::FLOAT);
+            self.pointer_is_fixed_point[0] = false;
+            gl21::ColorPointer(size, type_, stride, pointer)
+        }
     }
     unsafe fn NormalPointer(&mut self, type_: GLenum, stride: GLsizei, pointer: *const GLvoid) {
-        // TODO: fixed-point
-        assert!(type_ == gl21::BYTE || type_ == gl21::SHORT || type_ == gl21::FLOAT);
-        gl21::NormalPointer(type_, stride, pointer)
+        if type_ == gles11::FIXED {
+            // Translation deferred until draw call
+            self.pointer_is_fixed_point[1] = true;
+            gl21::NormalPointer(gl21::FLOAT, stride, pointer)
+        } else {
+            assert!(type_ == gl21::BYTE || type_ == gl21::SHORT || type_ == gl21::FLOAT);
+            self.pointer_is_fixed_point[1] = false;
+            gl21::NormalPointer(type_, stride, pointer)
+        }
     }
     unsafe fn TexCoordPointer(
         &mut self,
@@ -251,9 +441,16 @@ impl GLES for GLES1OnGL2 {
         pointer: *const GLvoid,
     ) {
         assert!(size == 2 || size == 3 || size == 4);
-        // TODO: byte and fixed-point
-        assert!(type_ == gl21::SHORT || type_ == gl21::FLOAT);
-        gl21::TexCoordPointer(size, type_, stride, pointer)
+        if type_ == gles11::FIXED {
+            // Translation deferred until draw call
+            self.pointer_is_fixed_point[2] = true;
+            gl21::TexCoordPointer(size, gl21::FLOAT, stride, pointer)
+        } else {
+            // TODO: byte
+            assert!(type_ == gl21::SHORT || type_ == gl21::FLOAT);
+            self.pointer_is_fixed_point[2] = false;
+            gl21::TexCoordPointer(size, type_, stride, pointer)
+        }
     }
     unsafe fn VertexPointer(
         &mut self,
@@ -263,9 +460,16 @@ impl GLES for GLES1OnGL2 {
         pointer: *const GLvoid,
     ) {
         assert!(size == 2 || size == 3 || size == 4);
-        // TODO: byte and fixed-point
-        assert!(type_ == gl21::SHORT || type_ == gl21::FLOAT);
-        gl21::VertexPointer(size, type_, stride, pointer)
+        if type_ == gles11::FIXED {
+            // Translation deferred until draw call
+            self.pointer_is_fixed_point[3] = true;
+            gl21::VertexPointer(size, gl21::FLOAT, stride, pointer)
+        } else {
+            // TODO: byte
+            assert!(type_ == gl21::SHORT || type_ == gl21::FLOAT);
+            self.pointer_is_fixed_point[3] = false;
+            gl21::VertexPointer(size, type_, stride, pointer)
+        }
     }
 
     // Drawing
@@ -280,7 +484,12 @@ impl GLES for GLES1OnGL2 {
             gl21::TRIANGLES
         ]
         .contains(&mode));
+
+        let state_backup = self.translate_fixed_point_arrays(first, count);
+
         gl21::DrawArrays(mode, first, count);
+
+        self.restore_fixed_point_arrays(state_backup);
     }
     unsafe fn DrawElements(
         &mut self,
@@ -300,7 +509,64 @@ impl GLES for GLES1OnGL2 {
         ]
         .contains(&mode));
         assert!(type_ == gl21::UNSIGNED_BYTE || type_ == gl21::UNSIGNED_SHORT);
+
+        let state_backup = if self.pointer_is_fixed_point.iter().any(|&is_fixed| is_fixed) {
+            // Scan the index buffer to find the range of data that may need
+            // fixed-point translation.
+            // TODO: Would it be more efficient to turn this into a non-indexed
+            // draw-call instead?
+
+            let mut index_buffer_binding = 0;
+            gl21::GetIntegerv(
+                gl21::ELEMENT_ARRAY_BUFFER_BINDING,
+                &mut index_buffer_binding,
+            );
+            // TODO: handling of bound index array buffers
+            assert!(index_buffer_binding == 0);
+
+            let mut first = usize::MAX;
+            let mut last = usize::MIN;
+            assert!(count >= 0);
+            match type_ {
+                gl21::UNSIGNED_BYTE => {
+                    let indices_ptr: *const GLubyte = indices.cast();
+                    for i in 0..(count as usize) {
+                        let index = indices_ptr.add(i).read_unaligned();
+                        first = first.min(index as usize);
+                        last = last.max(index as usize);
+                    }
+                }
+                gl21::UNSIGNED_SHORT => {
+                    let indices_ptr: *const GLushort = indices.cast();
+                    for i in 0..(count as usize) {
+                        let index = indices_ptr.add(i).read_unaligned();
+                        first = first.min(index as usize);
+                        last = last.max(index as usize);
+                    }
+                }
+                _ => unreachable!(),
+            }
+
+            let (first, count) = if first == usize::MAX && last == usize::MIN {
+                assert!(count == 0);
+                (0, 0)
+            } else {
+                (
+                    first.try_into().unwrap(),
+                    (last + 1 - first).try_into().unwrap(),
+                )
+            };
+
+            Some(self.translate_fixed_point_arrays(first, count))
+        } else {
+            None
+        };
+
         gl21::DrawElements(mode, count, type_, indices);
+
+        if let Some(state_backup) = state_backup {
+            self.restore_fixed_point_arrays(state_backup);
+        }
     }
 
     // Clearing

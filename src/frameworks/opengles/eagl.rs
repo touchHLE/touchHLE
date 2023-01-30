@@ -256,8 +256,8 @@ unsafe fn present_renderbuffer(env: &mut Environment) {
     // Backing up and then clearing all of it is the easiest way to ensure
     // that drawing the quad works.
     gl::PushClientAttrib(gl::CLIENT_ALL_ATTRIB_BITS);
-    for &cap in super::gles1_on_gl2::CLIENT_CAPABILITIES {
-        gl::DisableClientState(cap);
+    for array in super::gles1_on_gl2::ARRAYS {
+        gl::DisableClientState(array.name);
     }
     gl::PushAttrib(gl::ALL_ATTRIB_BITS);
     for &cap in super::gles1_on_gl2::CAPABILITIES {

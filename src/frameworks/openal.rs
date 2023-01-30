@@ -186,7 +186,29 @@ fn alGetSourcef(env: &mut Environment, source: ALuint, param: ALenum, value: Mut
     unsafe { al::alGetSourcef(source, param, env.mem.ptr_at_mut(value, 1)) };
 }
 fn alGetSourcei(env: &mut Environment, source: ALuint, param: ALenum, value: MutPtr<ALint>) {
-    unsafe { al::alGetSourcei(source, param, env.mem.ptr_at_mut(value, 1)) };
+    // Game-specific hack: Super Monkey Ball has some code like:
+    //
+    //    alGetSourcei(source, AL_BUFFERS_QUEUED, &n);
+    //    alSourceUnqueueBuffers(source, n, &buffers);
+    //
+    // This is apparently incorrect code. OpenAL Soft produces an error and
+    // Super Monkey Ball's audio is partly broken after that point.
+    // If we pretend AL_BUFFERS_PROCESSED was used, everything works.
+    // TODO: Test on iPhone OS and figure out why Super Monkey Ball works there.
+    // This might be hiding some bug in touchHLE.
+    if param == al::AL_BUFFERS_QUEUED && env.bundle.bundle_identifier() == "com.ooi.supermonkeyball"
+    {
+        log!("Applying game-specific hack for Super Monkey Ball: treating alGetSourcei(_, AL_BUFFERS_QUEUED, _) as alGetSourcei(_, AL_BUFFERS_PROCESSED, _)");
+        unsafe {
+            al::alGetSourcei(
+                source,
+                al::AL_BUFFERS_PROCESSED,
+                env.mem.ptr_at_mut(value, 1),
+            )
+        };
+    } else {
+        unsafe { al::alGetSourcei(source, param, env.mem.ptr_at_mut(value, 1)) };
+    }
 }
 
 fn alSourcePlay(_env: &mut Environment, source: ALuint) {

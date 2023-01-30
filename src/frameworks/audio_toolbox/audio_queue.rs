@@ -536,7 +536,11 @@ fn AudioQueueStop(env: &mut Environment, in_aq: AudioQueueRef, in_immediate: boo
 
     let _context_manager = state.make_al_context_current();
 
-    let host_object = state.audio_queues.get_mut(&in_aq).unwrap();
+    // This happens in Super Monkey Ball. TODO: figure out why.
+    let Some(mut host_object) = state.audio_queues.get_mut(&in_aq) else {
+        log!("Tolerating stopping of unknown audio queue {:?}", in_aq);
+        return 0; // success
+    };
     host_object.is_running = false;
 
     if in_immediate && is_supported_audio_format(&host_object.format) {
@@ -553,7 +557,11 @@ fn AudioQueueDispose(env: &mut Environment, in_aq: AudioQueueRef, in_immediate: 
 
     let state = State::get(&mut env.framework_state);
 
-    let mut host_object = state.audio_queues.remove(&in_aq).unwrap();
+    // This happens in Super Monkey Ball. TODO: figure out why.
+    let Some(mut host_object) = state.audio_queues.remove(&in_aq) else {
+        log!("Tolerating disposal of unknown audio queue {:?}", in_aq);
+        return 0; // success
+    };
 
     log_dbg!("Disposing of audio queue {:?}", in_aq);
 

@@ -156,7 +156,7 @@ fn run_run_loop(env: &mut Environment, run_loop: id) {
     let mut audio_queues_tmp = Vec::new();
 
     loop {
-        env.window.poll_for_events();
+        env.window.poll_for_events(&env.options);
 
         uikit::handle_events(env);
 

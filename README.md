@@ -18,6 +18,8 @@ touchHLE has been tested on x64 Windows and x64 macOS. It probably works on x64 
 
 It would be desirable to eventually support Android. That is probably not too much work.
 
+Since the current targets are desktop operating systems, touch input is simulated via mouse input or the right analog stick on a game controller, and accelerometer input (rotation only) is simulated via the left analog stick on a game controller.
+
 ## Development status
 
 TBD

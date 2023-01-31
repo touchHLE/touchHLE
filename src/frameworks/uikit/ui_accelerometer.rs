@@ -67,12 +67,7 @@ pub const CLASSES: ClassExports = objc_classes! {
         env.framework_state.uikit.ui_accelerometer.delegate = None;
     } else {
         env.framework_state.uikit.ui_accelerometer.delegate = Some(delegate);
-        log!("This app uses the accelerometer.");
-        if env.window.have_controllers() {
-            log!("Please connect a controller with an analog stick for accelerometer simulation.");
-        } else {
-            log!("Your connected controller's analog stick will be used for accelerometer simulation.");
-        }
+        env.window.print_accelerometer_notice();
     }
 }
 

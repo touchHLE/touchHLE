@@ -495,7 +495,7 @@ impl Environment {
             // that the host OS doesn't consider touchHLE unresponsive.
             // This is not free so we should avoid doing it too often.
             // 100,000 ticks is an arbitrary number.
-            self.window.poll_for_events();
+            self.window.poll_for_events(&self.options);
 
             let mut ticks = 100_000;
             while ticks > 0 {

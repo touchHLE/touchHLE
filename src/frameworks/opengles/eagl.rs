@@ -296,6 +296,26 @@ unsafe fn present_renderbuffer(env: &mut Environment) {
     gl::Enable(gl::TEXTURE_2D);
     gl::DrawArrays(gl::TRIANGLES, 0, 6);
 
+    // Display virtual cursor
+    if let Some((x, y, pressed)) = env.window.virtual_cursor_visible_at() {
+        gl::DisableClientState(gl::TEXTURE_COORD_ARRAY);
+        gl::Disable(gl::TEXTURE_2D);
+
+        gl::Enable(gl::BLEND);
+        gl::BlendFunc(gl::ONE, gl::ONE_MINUS_SRC_ALPHA);
+        gl::Color4f(0.0, 0.0, 0.0, if pressed { 2.0 / 3.0 } else { 1.0 / 3.0 });
+
+        let radius = 10.0;
+
+        let mut vertices = vertices;
+        for i in (0..vertices.len()).step_by(2) {
+            vertices[i] = (vertices[i] * radius + x) / (viewport_size.0 as f32 / 2.0) - 1.0;
+            vertices[i + 1] = 1.0 - (vertices[i + 1] * radius + y) / (viewport_size.1 as f32 / 2.0);
+        }
+        gl::VertexPointer(2, gl::FLOAT, 0, vertices.as_ptr() as *const GLvoid);
+        gl::DrawArrays(gl::TRIANGLES, 0, 6);
+    }
+
     // Restore all the state saved before rendering
     gl::BindBuffer(gl::ARRAY_BUFFER, old_array_buffer);
     for mode in [gl::MODELVIEW, gl::PROJECTION, gl::TEXTURE] {

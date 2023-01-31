@@ -78,6 +78,7 @@ pub struct Window {
     app_gl_ctx_no_longer_current: bool,
     controller_ctx: sdl2::GameControllerSubsystem,
     controllers: Vec<sdl2::controller::GameController>,
+    virtual_cursor_last: Option<(f32, f32, bool, bool)>,
 }
 impl Window {
     pub fn new(title: &str, icon: Image, launch_image: Option<Image>) -> Window {
@@ -135,6 +136,7 @@ impl Window {
             app_gl_ctx_no_longer_current: false,
             controller_ctx,
             controllers: Vec::new(),
+            virtual_cursor_last: None,
         };
         window.display_splash();
         window
@@ -144,12 +146,12 @@ impl Window {
     /// (60Hz is probably fine) so that the host OS doesn't consider touchHLE
     /// to be unresponsive. Note that events are not returned by this function,
     /// since we often need to defer actually handling them.
-    pub fn poll_for_events(&mut self) {
-        fn transform_input_coords(window: &Window, (in_x, in_y): (i32, i32)) -> (f32, f32) {
+    pub fn poll_for_events(&mut self, options: &Options) {
+        fn transform_input_coords(window: &Window, (in_x, in_y): (f32, f32)) -> (f32, f32) {
             let (in_w, in_h) = window.size_in_current_orientation();
             // normalize to unit square centred on origin
-            let x = in_x as f32 / in_w as f32 - 0.5;
-            let y = in_y as f32 / in_h as f32 - 0.5;
+            let x = in_x / in_w as f32 - 0.5;
+            let y = in_y / in_h as f32 - 0.5;
             // rotate
             let matrix = window.input_rotation_matrix();
             let [x, y] = matrix.transform([x, y]);
@@ -170,16 +172,18 @@ impl Window {
                     y,
                     mouse_btn: MouseButton::Left,
                     ..
-                } => Event::TouchDown(transform_input_coords(self, (x, y))),
+                } => Event::TouchDown(transform_input_coords(self, (x as f32, y as f32))),
                 E::MouseMotion {
                     x, y, mousestate, ..
-                } if mousestate.left() => Event::TouchMove(transform_input_coords(self, (x, y))),
+                } if mousestate.left() => {
+                    Event::TouchMove(transform_input_coords(self, (x as f32, y as f32)))
+                }
                 E::MouseButtonUp {
                     x,
                     y,
                     mouse_btn: MouseButton::Left,
                     ..
-                } => Event::TouchUp(transform_input_coords(self, (x, y))),
+                } => Event::TouchUp(transform_input_coords(self, (x as f32, y as f32))),
                 E::ControllerDeviceAdded { which, .. } => {
                     self.controller_added(which);
                     continue;
@@ -187,6 +191,28 @@ impl Window {
                 E::ControllerDeviceRemoved { which, .. } => {
                     self.controller_removed(which);
                     continue;
+                }
+                // Virtual cursor handling only. Accelerometer handling uses
+                // polling.
+                E::ControllerButtonUp { .. }
+                | E::ControllerButtonDown { .. }
+                | E::ControllerAxisMotion { .. } => {
+                    let (new_x, new_y, new_pressed, visible) = self.get_virtual_cursor(options);
+                    let (old_x, old_y, old_pressed, _) =
+                        self.virtual_cursor_last.unwrap_or_default();
+                    self.virtual_cursor_last = Some((new_x, new_y, new_pressed, visible));
+                    match (old_pressed, new_pressed) {
+                        (false, true) => {
+                            Event::TouchDown(transform_input_coords(self, (new_x, new_y)))
+                        }
+                        (true, false) => {
+                            Event::TouchUp(transform_input_coords(self, (new_x, new_y)))
+                        }
+                        _ if (new_x, new_y) != (old_x, old_y) && new_pressed => {
+                            Event::TouchMove(transform_input_coords(self, (new_x, new_y)))
+                        }
+                        _ => continue,
+                    }
                 }
                 _ => continue,
             })
@@ -203,7 +229,10 @@ impl Window {
             log!("Warning: A new controller was connected, but it couldn't be accessed!");
             return;
         };
-        log!("New controller connected: {}", controller.name());
+        log!(
+            "New controller connected: {}. Left stick = device tilt. Right stick = touch input.",
+            controller.name()
+        );
         self.controllers.push(controller);
     }
     fn controller_removed(&mut self, instance_id: u32) {
@@ -213,15 +242,24 @@ impl Window {
         let controller = self.controllers.remove(idx);
         log!("Warning: Controller disconnected: {}", controller.name());
     }
-    pub fn have_controllers(&self) -> bool {
-        !self.controllers.is_empty()
+    pub fn print_accelerometer_notice(&self) {
+        log!("This app uses the accelerometer.");
+        if self.controllers.is_empty() {
+            log!("Connect a controller to get accelerometer simulation.");
+        } else {
+            log!("Your connected controller's left analog stick will be used for accelerometer simulation.");
+        }
     }
 
     /// Get the real (TODO) or simulated accelerometer output.
     /// See also [crate::frameworks::uikit::ui_accelerometer].
     pub fn get_acceleration(&self, options: &Options) -> (f32, f32, f32) {
-        // Get analog stick inputs. The range is [-1, 1] on each axis.
-        let (controller_x, controller_y) = self.get_controller_sticks(options);
+        // Get left analog stick input. The range is [-1, 1] on each axis.
+        let (x, y, _) = self.get_controller_stick(options, true);
+
+        // Correct for window rotation
+        let [x, y] = self.input_rotation_matrix().transform([x, y]);
+        let (x, y) = (x.clamp(-1.0, 1.0), y.clamp(-1.0, 1.0)); // just in case
 
         // Let's simulate tilting the device based on the analog stick inputs.
         //
@@ -242,8 +280,8 @@ impl Window {
         // corresponds to forward/backward movement, but rotating about the Y
         // axis means tilting the device left/right, and gravity points in the
         // opposite direction of the device's tilt.
-        let x_rotation = neutral_x - x_rotation_range * controller_y;
-        let y_rotation = neutral_y - y_rotation_range * controller_x;
+        let x_rotation = neutral_x - x_rotation_range * y;
+        let y_rotation = neutral_y - y_rotation_range * x;
 
         let matrix =
             Matrix::<3>::y_rotation(y_rotation).multiply(&Matrix::<3>::x_rotation(x_rotation));
@@ -252,12 +290,63 @@ impl Window {
         (x, y, z)
     }
 
-    /// Get the summed current X and Y positions of the game controllers'
-    /// analog sticks. Each axis value is in the range [-1, 1].
-    ///
-    /// The assumption is the stick will be used for accelerometer emulation,
-    /// so the values are corrected for window rotation.
-    fn get_controller_sticks(&self, options: &Options) -> (f32, f32) {
+    /// For use when redrawing the screen: Get the cached on-screen position and
+    /// press state of the analog stick-controlled virtual cursor, if it is
+    /// visible.
+    pub fn virtual_cursor_visible_at(&self) -> Option<(f32, f32, bool)> {
+        let (x, y, pressed, visible) = self.virtual_cursor_last?;
+        if visible {
+            Some((x, y, pressed))
+        } else {
+            None
+        }
+    }
+
+    /// Get the new  on-screen position, click state and visibility of the
+    /// analog stick-controlled virtual cursor.
+    fn get_virtual_cursor(&self, options: &Options) -> (f32, f32, bool, bool) {
+        // Get right analog stick input. The range is [-1, 1] on each axis.
+        let (x, y, pressed) = self.get_controller_stick(options, false);
+
+        // The cursor is intended to only show up once you move the analog stick
+        // out of its deadzone, or while the button is held.
+        let visible = pressed || x != 0.0 || y != 0.0;
+
+        // Though the analog stick output fits within a square, its actual range
+        // is usually a circle enclosed by the square. So we need to cut out
+        // a square within that circle.
+        let (x, y) = {
+            let limit = std::f32::consts::FRAC_PI_4.sin();
+            let x_abs = x.abs().min(limit) / limit;
+            let y_abs = y.abs().min(limit) / limit;
+            (x_abs.copysign(x), y_abs.copysign(y))
+        };
+
+        // Aspect ratio handling: cut the square down to a rectangle
+        // TODO: It would be better to directly cut out a rectangle from the
+        // circle.
+        let (width, height) = self.size_in_current_orientation();
+        let (width, height) = (width as f32, height as f32);
+        let (x, y) = {
+            let (x_abs, y_abs) = if width < height {
+                (x.abs().min(width / height) / (width / height), y.abs())
+            } else {
+                (x.abs(), y.abs().min(height / width) / (height / width))
+            };
+            (x_abs.copysign(x), y_abs.copysign(y))
+        };
+
+        // Convert to window co-ordinates
+        let x = (x / 2.0 + 0.5) * width;
+        let y = (y / 2.0 + 0.5) * height;
+
+        (x, y, pressed, visible)
+    }
+
+    /// Get the summed X and Y positions and button state of the left or right
+    /// analog stick of the game controllers. Each axis value is in the range
+    /// [-1, 1].
+    fn get_controller_stick(&self, options: &Options, left: bool) -> (f32, f32, bool) {
         fn convert_axis(axis: i16, deadzone: f32) -> f32 {
             assert!(deadzone >= 0.0);
             let axis = ((axis as f32) / (i16::MAX as f32)).clamp(-1.0, 1.0);
@@ -266,18 +355,21 @@ impl Window {
         }
 
         let (mut x, mut y) = (0.0, 0.0);
+        let mut pressed = false;
         for controller in &self.controllers {
-            use sdl2::controller::Axis;
-            for (x_axis, y_axis) in [(Axis::LeftX, Axis::LeftY), (Axis::RightX, Axis::RightY)] {
-                x += convert_axis(controller.axis(x_axis), options.deadzone);
-                y += convert_axis(controller.axis(y_axis), options.deadzone);
-            }
+            use sdl2::controller::{Axis, Button};
+            let (x_axis, y_axis, button) = if left {
+                (Axis::LeftX, Axis::LeftY, Button::LeftStick)
+            } else {
+                (Axis::RightX, Axis::RightY, Button::RightStick)
+            };
+            x += convert_axis(controller.axis(x_axis), options.deadzone);
+            y += convert_axis(controller.axis(y_axis), options.deadzone);
+            pressed |= controller.button(button);
         }
         let (x, y) = (x.clamp(-1.0, 1.0), y.clamp(-1.0, 1.0));
 
-        let [x, y] = self.input_rotation_matrix().transform([x, y]);
-
-        (x.clamp(-1.0, 1.0), y.clamp(-1.0, 1.0)) // just in case
+        (x, y, pressed)
     }
 
     pub fn create_gl_context(&mut self, version: GLVersion) -> GLContext {

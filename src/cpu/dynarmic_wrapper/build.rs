@@ -72,7 +72,7 @@ fn main() {
     link_lib("mcl");
     link_search(
         &dynarmic_out
-            .join("build/externals/Zydis")
+            .join("build/externals/zydis")
             .join(build_type_windows()),
     );
     link_lib("Zydis");

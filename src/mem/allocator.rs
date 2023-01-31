@@ -193,7 +193,20 @@ impl Allocator {
         };
         let chunk = self.used_chunks.remove(idx);
         let size = chunk.size.get();
-        self.unused_chunks.push(chunk);
+
+        if let Some(other_chunk_idx) = self.unused_chunks.iter().position(|other_chunk| {
+            (other_chunk.base as u64) == (chunk.last_byte() as u64 + 1)
+                || (chunk.base as u64) == (other_chunk.last_byte() as u64 + 1)
+        }) {
+            let other_chunk = self.unused_chunks.swap_remove(other_chunk_idx);
+            let combined = Chunk::new(
+                chunk.base.min(other_chunk.base),
+                chunk.size.get() + other_chunk.size.get(),
+            );
+            self.unused_chunks.push(combined);
+        } else {
+            self.unused_chunks.push(chunk);
+        }
         size
     }
 }

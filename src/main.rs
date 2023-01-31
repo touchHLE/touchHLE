@@ -252,7 +252,6 @@ impl Environment {
             &format!("{} (touchHLE)", bundle.display_name()),
             icon,
             launch_image,
-            &options,
         );
 
         let mut mem = mem::Mem::new();

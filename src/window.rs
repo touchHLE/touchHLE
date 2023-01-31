@@ -15,6 +15,7 @@ pub use gl::{gl21compat, gl32core, gles11, GLContext, GLVersion};
 pub use matrix::Matrix;
 
 use crate::image::Image;
+use crate::Options;
 use sdl2::mouse::MouseButton;
 use sdl2::pixels::PixelFormatEnum;
 use sdl2::surface::Surface;
@@ -77,15 +78,9 @@ pub struct Window {
     app_gl_ctx_no_longer_current: bool,
     controller_ctx: sdl2::GameControllerSubsystem,
     controllers: Vec<sdl2::controller::GameController>,
-    deadzone: f32,
 }
 impl Window {
-    pub fn new(
-        title: &str,
-        icon: Image,
-        launch_image: Option<Image>,
-        options: &crate::Options,
-    ) -> Window {
+    pub fn new(title: &str, icon: Image, launch_image: Option<Image>) -> Window {
         let sdl_ctx = sdl2::init().unwrap();
         let video_ctx = sdl_ctx.video().unwrap();
 
@@ -140,7 +135,6 @@ impl Window {
             app_gl_ctx_no_longer_current: false,
             controller_ctx,
             controllers: Vec::new(),
-            deadzone: options.deadzone,
         };
         window.display_splash();
         window
@@ -222,12 +216,48 @@ impl Window {
     pub fn have_controllers(&self) -> bool {
         !self.controllers.is_empty()
     }
+
+    /// Get the real (TODO) or simulated accelerometer output.
+    /// See also [crate::frameworks::uikit::ui_accelerometer].
+    pub fn get_acceleration(&self, options: &Options) -> (f32, f32, f32) {
+        // Get analog stick inputs. The range is [-1, 1] on each axis.
+        let (controller_x, controller_y) = self.get_controller_sticks(options);
+
+        // Let's simulate tilting the device based on the analog stick inputs.
+        //
+        // If an iPhone is lying flat on its back, level with the ground, and it
+        // is on Earth, the accelerometer will report approximately (0, 0, -1).
+        // The acceleration x and y axes are aligned with the screen's x and y
+        // axes. +x points to the right of the screen, +y points to the top of
+        // the screen, and +z points away from the screen. In the example
+        // scenario, the z axis is parallel to gravity.
+
+        let gravity: [f32; 3] = [0.0, 0.0, -1.0];
+
+        let neutral_x = options.x_tilt_offset.to_radians();
+        let neutral_y = options.y_tilt_offset.to_radians();
+        let x_rotation_range = options.x_tilt_range.to_radians() / 2.0;
+        let y_rotation_range = options.y_tilt_range.to_radians() / 2.0;
+        // (x, y) are swapped and inverted because the controller Y axis usually
+        // corresponds to forward/backward movement, but rotating about the Y
+        // axis means tilting the device left/right, and gravity points in the
+        // opposite direction of the device's tilt.
+        let x_rotation = neutral_x - x_rotation_range * controller_y;
+        let y_rotation = neutral_y - y_rotation_range * controller_x;
+
+        let matrix =
+            Matrix::<3>::y_rotation(y_rotation).multiply(&Matrix::<3>::x_rotation(x_rotation));
+        let [x, y, z] = matrix.transform(gravity);
+
+        (x, y, z)
+    }
+
     /// Get the summed current X and Y positions of the game controllers'
     /// analog sticks. Each axis value is in the range [-1, 1].
     ///
     /// The assumption is the stick will be used for accelerometer emulation,
     /// so the values are corrected for window rotation.
-    pub fn get_controller_sticks(&self) -> (f32, f32) {
+    fn get_controller_sticks(&self, options: &Options) -> (f32, f32) {
         fn convert_axis(axis: i16, deadzone: f32) -> f32 {
             assert!(deadzone >= 0.0);
             let axis = ((axis as f32) / (i16::MAX as f32)).clamp(-1.0, 1.0);
@@ -239,8 +269,8 @@ impl Window {
         for controller in &self.controllers {
             use sdl2::controller::Axis;
             for (x_axis, y_axis) in [(Axis::LeftX, Axis::LeftY), (Axis::RightX, Axis::RightY)] {
-                x += convert_axis(controller.axis(x_axis), self.deadzone);
-                y += convert_axis(controller.axis(y_axis), self.deadzone);
+                x += convert_axis(controller.axis(x_axis), options.deadzone);
+                y += convert_axis(controller.axis(y_axis), options.deadzone);
             }
         }
         let (x, y) = (x.clamp(-1.0, 1.0), y.clamp(-1.0, 1.0));

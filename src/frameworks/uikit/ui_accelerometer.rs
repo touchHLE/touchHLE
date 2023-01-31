@@ -9,7 +9,6 @@ use crate::objc::{
     autorelease, id, msg, msg_class, nil, objc_classes, release, ClassExports, HostObject,
     TrivialHostObject,
 };
-use crate::window::Matrix;
 use crate::Environment;
 use std::time::{Duration, Instant};
 
@@ -152,43 +151,16 @@ pub(super) fn handle_accelerometer(env: &mut Environment) {
         state.due_by = Some(now.checked_add(rust_interval).unwrap());
     }
 
-    // Get analog stick inputs. The range is [-1, 1] on each axis.
-    let (controller_x, controller_y) = env.window.get_controller_sticks();
-
-    // Let's simulate tilting the device based on the analog stick inputs.
-    //
-    // If an iPhone is lying flat on its back, level with the ground, and it is
-    // on Earth, the accelerometer will report approximately (0, 0, -1).
-    // The acceleration x and y axes are aligned with the screen's x and y axes.
-    // +x points to the right of the screen, +y points to the top of the
-    // of the screen, and +z points away from the screen. In the example
-    // scenario, the z axis is parallel to gravity.
-
-    let gravity: [f32; 3] = [0.0, 0.0, -1.0];
-
-    let neutral_x = env.options.x_tilt_offset.to_radians();
-    let neutral_y = env.options.y_tilt_offset.to_radians();
-    let x_rotation_range = env.options.x_tilt_range.to_radians() / 2.0;
-    let y_rotation_range = env.options.y_tilt_range.to_radians() / 2.0;
-    // (x, y) are swapped and inverted because the controller Y axis usually
-    // corresponds to forward/backward movement, but rotating about the Y axis
-    // means tilting the device left/right, and gravity points in the opposite
-    // direction of the device's tilt.
-    let x_rotation = neutral_x - x_rotation_range * controller_y;
-    let y_rotation = neutral_y - y_rotation_range * controller_x;
-
-    let matrix = Matrix::<3>::y_rotation(y_rotation).multiply(&Matrix::<3>::x_rotation(x_rotation));
-    let rotated_gravity = matrix.transform(gravity);
-
     // UIKit creates and drains autorelease pools when handling events.
     let pool: id = msg_class![env; NSAutoreleasePool new];
 
+    let (x, y, z) = env.window.get_acceleration(&env.options);
     let timestamp: NSTimeInterval = msg_class![env; NSProcessInfo systemUptime];
     let acceleration: id = msg_class![env; UIAcceleration alloc];
     *env.objc.borrow_mut(acceleration) = UIAccelerationHostObject {
-        x: rotated_gravity[0].into(),
-        y: rotated_gravity[1].into(),
-        z: rotated_gravity[2].into(),
+        x: x.into(),
+        y: y.into(),
+        z: z.into(),
         timestamp,
     };
     autorelease(env, acceleration);

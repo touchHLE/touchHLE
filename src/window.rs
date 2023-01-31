@@ -138,7 +138,9 @@ impl Window {
             controllers: Vec::new(),
             virtual_cursor_last: None,
         };
-        window.display_splash();
+        if window.splash_image_and_gl_ctx.is_some() {
+            window.display_splash();
+        }
         window
     }
 

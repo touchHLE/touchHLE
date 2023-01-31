@@ -316,6 +316,9 @@ unsafe fn present_renderbuffer(env: &mut Environment) {
         gl::DrawArrays(gl::TRIANGLES, 0, 6);
     }
 
+    // Clean up the texture
+    gl::DeleteTextures(1, &texture);
+
     // Restore all the state saved before rendering
     gl::BindBuffer(gl::ARRAY_BUFFER, old_array_buffer);
     for mode in [gl::MODELVIEW, gl::PROJECTION, gl::TEXTURE] {

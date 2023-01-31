@@ -21,16 +21,18 @@ use sdl2::pixels::PixelFormatEnum;
 use sdl2::surface::Surface;
 use std::collections::VecDeque;
 use std::f32::consts::FRAC_PI_2;
+use std::num::NonZeroU32;
 
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub enum DeviceOrientation {
     Portrait,
     LandscapeLeft,
 }
-fn size_for_orientation(orientation: DeviceOrientation) -> (u32, u32) {
+fn size_for_orientation(orientation: DeviceOrientation, scale_hack: NonZeroU32) -> (u32, u32) {
+    let scale_hack = scale_hack.get();
     match orientation {
-        DeviceOrientation::Portrait => (320, 480),
-        DeviceOrientation::LandscapeLeft => (480, 320),
+        DeviceOrientation::Portrait => (320 * scale_hack, 480 * scale_hack),
+        DeviceOrientation::LandscapeLeft => (480 * scale_hack, 320 * scale_hack),
     }
 }
 
@@ -73,6 +75,7 @@ pub struct Window {
     max_height: u32,
     #[cfg(target_os = "macos")]
     viewport_y_offset: u32,
+    scale_hack: NonZeroU32,
     splash_image_and_gl_ctx: Option<(Image, GLContext)>,
     device_orientation: DeviceOrientation,
     app_gl_ctx_no_longer_current: bool,
@@ -81,7 +84,7 @@ pub struct Window {
     virtual_cursor_last: Option<(f32, f32, bool, bool)>,
 }
 impl Window {
-    pub fn new(title: &str, icon: Image, launch_image: Option<Image>) -> Window {
+    pub fn new(title: &str, icon: Image, launch_image: Option<Image>, options: &Options) -> Window {
         let sdl_ctx = sdl2::init().unwrap();
         let video_ctx = sdl_ctx.video().unwrap();
 
@@ -90,11 +93,13 @@ impl Window {
         // here, and then the app can disable it if it wants to.
         video_ctx.enable_screen_saver();
 
+        let scale_hack = options.scale_hack;
+
         // TODO: some apps specify their orientation in Info.plist, we could use
         // that here.
         let device_orientation = DeviceOrientation::Portrait;
 
-        let (width, height) = size_for_orientation(device_orientation);
+        let (width, height) = size_for_orientation(device_orientation, scale_hack);
         let mut window = video_ctx
             .window(title, width, height)
             .position_centered()
@@ -131,6 +136,7 @@ impl Window {
             max_height: height,
             #[cfg(target_os = "macos")]
             viewport_y_offset: 0,
+            scale_hack,
             splash_image_and_gl_ctx,
             device_orientation: DeviceOrientation::Portrait,
             app_gl_ctx_no_longer_current: false,
@@ -158,7 +164,7 @@ impl Window {
             let matrix = window.input_rotation_matrix();
             let [x, y] = matrix.transform([x, y]);
             // back to pixels
-            let (out_w, out_h) = window.size_unrotated();
+            let (out_w, out_h) = window.size_unrotated_unscaled();
             let out_x = (x + 0.5) * out_w as f32;
             let out_y = (y + 0.5) * out_h as f32;
             (out_x, out_y)
@@ -428,7 +434,7 @@ impl Window {
             return;
         }
 
-        let (width, height) = size_for_orientation(new_orientation);
+        let (width, height) = size_for_orientation(new_orientation, self.scale_hack);
 
         // macOS quirk: when resizing the window, the new framebuffer's size is
         // apparently max(new_size, old_size) in each dimension, but the
@@ -453,14 +459,21 @@ impl Window {
     }
 
     /// Get the size in pixels of the window with the aspect ratio reflecting
-    /// rotation (see [Self::rotate_device]).
+    /// rotation (see [Self::rotate_device]). This also has the scale hack
+    /// applied.
     pub fn size_in_current_orientation(&self) -> (u32, u32) {
-        size_for_orientation(self.device_orientation)
+        size_for_orientation(self.device_orientation, self.scale_hack)
     }
 
-    /// Get the size in pixels of the window without rotation.
-    pub fn size_unrotated(&self) -> (u32, u32) {
-        size_for_orientation(DeviceOrientation::Portrait)
+    /// Get the size in pixels of the window without rotation or scaling.
+    pub fn size_unrotated_unscaled(&self) -> (u32, u32) {
+        size_for_orientation(DeviceOrientation::Portrait, NonZeroU32::new(1).unwrap())
+    }
+
+    /// Get the size in pixels of the window without rotation but with the
+    /// scale hack.
+    pub fn size_unrotated_scalehacked(&self) -> (u32, u32) {
+        size_for_orientation(DeviceOrientation::Portrait, self.scale_hack)
     }
 
     pub fn viewport_y_offset(&self) -> u32 {

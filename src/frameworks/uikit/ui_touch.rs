@@ -72,7 +72,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 };
 
 fn resolve_point_in_view(env: &mut Environment, view: id, point: CGPoint) -> Option<CGPoint> {
-    let (expected_width, expected_height) = env.window.size_unrotated();
+    let (expected_width, expected_height) = env.window.size_unrotated_unscaled();
     let expected_width = expected_width as CGFloat;
     let expected_height = expected_height as CGFloat;
 

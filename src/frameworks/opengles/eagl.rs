@@ -117,13 +117,13 @@ pub const CLASSES: ClassExports = objc_classes! {
     };
 
     // FIXME: get width and height from the layer!
-    let (width, height) = (320, 480);
+    let (width, height) = env.window.size_unrotated_scalehacked();
 
     // Unclear from documentation if this method requires an appropriate context
     // to already be active, but that seems to be the case in practice?
     let gles = super::sync_context(&mut env.framework_state.opengles, &mut env.objc, &mut env.window, env.current_thread);
     unsafe {
-        gles.RenderbufferStorageOES(target, internalformat, width, height)
+        gles.RenderbufferStorageOES(target, internalformat, width.try_into().unwrap(), height.try_into().unwrap())
     }
 
     true

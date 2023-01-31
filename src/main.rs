@@ -43,7 +43,18 @@ General options:
     --help
         Print this help text.
 
-Game controller (accelerometer simulation) options:
+View options:
+    --scale-hack=...
+        Set a scaling factor for the window. touchHLE will attempt to run the
+        app with an increased internal resolution. This is a hack and there's
+        no guarantee it will work correctly for all apps.
+
+        The default is no scale hack, which is equivalent to a value of 1 (i.e.
+        a scale of 1×).
+
+        This is a natural number that is at least 1.
+
+Game controller options:
     --deadzone=...
         Configures the size of the \"dead zone\" for analog stick inputs.
 
@@ -101,6 +112,7 @@ Debugging options:
 ";
 
 pub struct Options {
+    scale_hack: std::num::NonZeroU32,
     deadzone: f32,
     x_tilt_range: f32,
     y_tilt_range: f32,
@@ -124,6 +136,7 @@ fn main() -> Result<(), String> {
     let _ = args.next().unwrap(); // skip argv[0]
 
     let mut options = Options {
+        scale_hack: std::num::NonZeroU32::new(1).unwrap(),
         deadzone: 0.1,
         x_tilt_range: 60.0,
         y_tilt_range: 60.0,
@@ -139,6 +152,10 @@ fn main() -> Result<(), String> {
             return Ok(());
         } else if bundle_path.is_none() {
             bundle_path = Some(PathBuf::from(arg));
+        } else if let Some(value) = arg.strip_prefix("--scale-hack=") {
+            options.scale_hack = value
+                .parse()
+                .map_err(|_| "Invalid scale hack factor".to_string())?;
         } else if let Some(value) = arg.strip_prefix("--deadzone=") {
             options.deadzone = parse_degrees(value, "deadzone")?;
         } else if let Some(value) = arg.strip_prefix("--x-tilt-range=") {
@@ -252,6 +269,7 @@ impl Environment {
             &format!("{} (touchHLE)", bundle.display_name()),
             icon,
             launch_image,
+            &options,
         );
 
         let mut mem = mem::Mem::new();

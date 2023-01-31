@@ -104,11 +104,31 @@ fn glShadeModel(env: &mut Environment, mode: GLenum) {
     with_ctx_and_mem(env, |gles, _mem| unsafe { gles.ShadeModel(mode) })
 }
 fn glScissor(env: &mut Environment, x: GLint, y: GLint, width: GLsizei, height: GLsizei) {
+    // apply scale hack
+    let (width, height) = if x == 0
+        && y == 0
+        && (width as u32, height as u32) == env.window.size_unrotated_unscaled()
+    {
+        let (width, height) = env.window.size_unrotated_scalehacked();
+        (width as GLsizei, height as GLsizei)
+    } else {
+        (width, height)
+    };
     with_ctx_and_mem(env, |gles, _mem| unsafe {
         gles.Scissor(x, y, width, height)
     })
 }
 fn glViewport(env: &mut Environment, x: GLint, y: GLint, width: GLsizei, height: GLsizei) {
+    // apply scale hack
+    let (width, height) = if x == 0
+        && y == 0
+        && (width as u32, height as u32) == env.window.size_unrotated_unscaled()
+    {
+        let (width, height) = env.window.size_unrotated_scalehacked();
+        (width as GLsizei, height as GLsizei)
+    } else {
+        (width, height)
+    };
     with_ctx_and_mem(env, |gles, _mem| unsafe {
         gles.Viewport(x, y, width, height)
     })
@@ -528,6 +548,13 @@ fn glRenderbufferStorageOES(
     width: GLsizei,
     height: GLsizei,
 ) {
+    // apply scale hack
+    let (width, height) = if (width as u32, height as u32) == env.window.size_unrotated_unscaled() {
+        let (width, height) = env.window.size_unrotated_scalehacked();
+        (width as GLsizei, height as GLsizei)
+    } else {
+        (width, height)
+    };
     with_ctx_and_mem(env, |gles, _mem| unsafe {
         gles.RenderbufferStorageOES(target, internalformat, width, height)
     })

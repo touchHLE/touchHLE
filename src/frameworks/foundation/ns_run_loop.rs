@@ -12,6 +12,7 @@ use crate::frameworks::core_foundation::cf_run_loop::{
 use crate::frameworks::uikit;
 use crate::objc::{id, msg, objc_classes, release, retain, ClassExports, HostObject};
 use crate::Environment;
+use std::time::Duration;
 
 /// `NSString*`
 pub type NSRunLoopMode = id;
@@ -177,5 +178,14 @@ fn run_run_loop(env: &mut Environment, run_loop: id) {
         for audio_queue in audio_queues_tmp.drain(..) {
             handle_audio_queue(env, audio_queue);
         }
+
+        // This is a hack, but it saves a lot of CPU usage, as much as 75%!
+        // 5ms is an arbitrary but apparently effective value. If it's too small
+        // there won't be much benefit, and if it's too large there'll be too
+        // much lag.
+        // TODO: Try to calculate how much time remains until the next event
+        // and sleep only that much.
+        // FIXME: Run the app's other threads if they are active.
+        std::thread::sleep(Duration::from_millis(5));
     }
 }

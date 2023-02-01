@@ -104,8 +104,8 @@ pub const CLASSES: ClassExports = objc_classes! {
     // frame! Super Monkey Ball also doesn't check whether opening failed, so
     // it's probably best to always exit.
     println!("App opened URL {:?}, exiting.", url_string);
-    // FIXME: tell the app that it's quitting so it handles it properly.
-    std::process::exit(0);
+    exit(env);
+    true
 }
 
 @end
@@ -155,7 +155,7 @@ pub(super) fn UIApplicationMain(
         let _: () = msg![env; pool drain];
     }
 
-    // TODO: Are there more messages we need to send?
+    // FIXME: There are more messages we should send.
     // TODO: Send UIApplicationDidFinishLaunchingNotification?
 
     // TODO: It might be nicer to return from this function (even though it's
@@ -165,6 +165,22 @@ pub(super) fn UIApplicationMain(
     // panic.
     let run_loop: id = msg_class![env; NSRunLoop mainRunLoop];
     let _: () = msg![env; run_loop run];
+}
+
+/// Tell the app it's about to quit and then exit.
+pub(super) fn exit(env: &mut Environment) {
+    let ui_application: id = msg_class![env; UIApplication sharedApplication];
+    let delegate: id = msg![env; ui_application delegate];
+
+    // FIXME: There are more messages we should send.
+
+    {
+        let pool: id = msg_class![env; NSAutoreleasePool new];
+        () = msg![env; delegate applicationWillTerminate:ui_application];
+        let _: () = msg![env; pool drain];
+    }
+
+    std::process::exit(0);
 }
 
 pub const FUNCTIONS: FunctionExports = &[export_c_func!(UIApplicationMain(_, _, _, _))];

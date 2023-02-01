@@ -40,10 +40,9 @@ pub fn handle_events(env: &mut Environment) {
         };
 
         match event {
-            // FIXME: tell the app when we're about to quit
             Event::Quit => {
                 println!("User requested quit, exiting.");
-                std::process::exit(0);
+                ui_application::exit(env);
             }
             Event::TouchDown(..) | Event::TouchMove(..) | Event::TouchUp(..) => {
                 ui_touch::handle_event(env, event)

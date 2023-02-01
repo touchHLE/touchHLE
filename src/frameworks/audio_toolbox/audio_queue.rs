@@ -543,10 +543,11 @@ fn AudioQueueStop(env: &mut Environment, in_aq: AudioQueueRef, in_immediate: boo
     };
     host_object.is_running = false;
 
-    if in_immediate && is_supported_audio_format(&host_object.format) {
-        let al_source = host_object.al_source.unwrap();
-        unsafe { al::alSourceStop(al_source) };
-        assert!(unsafe { al::alGetError() } == 0);
+    if in_immediate {
+        if let Some(al_source) = host_object.al_source {
+            unsafe { al::alSourceStop(al_source) };
+            assert!(unsafe { al::alGetError() } == 0);
+        }
     }
 
     0 // success

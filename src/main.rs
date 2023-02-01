@@ -206,9 +206,30 @@ fn main() -> Result<(), String> {
 /// Index into the [Vec] of threads. Thread 0 is always the main thread.
 type ThreadID = usize;
 
+/// Bookkeeping for a thread.
 struct Thread {
     /// Once a thread finishes, this is set to false.
     active: bool,
+    /// Set to [true] when a thread is running its startup routine (i.e. the
+    /// function pointer passed to `pthread_create`). When it returns to the
+    /// host, it should become inactive.
+    in_start_routine: bool,
+    /// Set to [true] when a thread is currently waiting for a host function
+    /// call to return.
+    ///
+    /// This is needed when a guest function calls a host function, and that
+    /// host function calls a guest function on a different thread. While
+    /// executing the function on the other thread, [Environment::run_inner]
+    /// must ensure it does not switch back to the original thread and execute
+    /// guest code, as that thread is still waiting for the host function to
+    /// return.
+    ///
+    /// A host function that is being waited for can call back into guest code
+    /// on the same thread, in which case this will be set to [false] for the
+    /// duration of that call. This flag only indicates that the top-most "stack
+    /// frame" of the thread is a host function, not whether there are any host
+    /// functions at all.
+    in_host_function: bool,
     /// Context object containing the CPU state for this thread.
     ///
     /// There should always be `(threads.len() - 1)` contexts in existence.
@@ -326,6 +347,8 @@ impl Environment {
 
         let main_thread = Thread {
             active: true,
+            in_start_routine: false, // main thread never terminates
+            in_host_function: false,
             context: None,
             stack: mem::Mem::MAIN_THREAD_STACK_LOW_END..=0u32.wrapping_sub(1),
         };
@@ -428,6 +451,8 @@ impl Environment {
 
         self.threads.push(Thread {
             active: true,
+            in_start_routine: true,
+            in_host_function: false,
             context: Some(cpu::CpuContext::new()),
             stack: stack_alloc.to_bits()..=(stack_high_addr - 1),
         });
@@ -435,22 +460,17 @@ impl Environment {
 
         log_dbg!("Created new thread {} with stack {:#x}–{:#x}, will execute function {:?} with data {:?}", new_thread_id, stack_alloc.to_bits(), (stack_high_addr - 1), start_routine, user_data);
 
-        // Sadly, we must execute the new thread immediately, because
-        // Super Monkey Ball has code like this:
-        //
-        //    is_thread_done = 0;
-        //    pthread_create(...);
-        //    while (is_thread_done != 0) {}
-        //
         let old_thread = self.current_thread;
+
+        // Switch to the new context (all zeroes) and set up the registers
+        // (which we can only do by switching). The original thread's state
+        // should be the same as before.
         self.switch_thread(new_thread_id);
-        // All other registers are zero in this shiny new context.
         self.cpu.set_cpsr(cpu::Cpu::CPSR_USER_MODE);
         self.cpu.regs_mut()[cpu::Cpu::SP] = stack_high_addr;
         self.cpu.regs_mut()[0] = user_data.to_bits();
-        start_routine.call(self);
-        self.threads[new_thread_id].active = false;
-
+        self.cpu
+            .branch_with_link(start_routine, self.dyld.return_to_host_routine());
         self.switch_thread(old_thread);
 
         new_thread_id
@@ -484,7 +504,10 @@ impl Environment {
     /// Note that this might execute code from other threads while waiting for
     /// the app to return control on the original thread!
     pub fn run_call(&mut self) {
-        self.run_inner(false)
+        let was_in_host_function = self.threads[self.current_thread].in_host_function;
+        self.threads[self.current_thread].in_host_function = false;
+        self.run_inner(false);
+        self.threads[self.current_thread].in_host_function = was_in_host_function;
     }
 
     fn switch_thread(&mut self, new_thread: ThreadID) {
@@ -525,15 +548,29 @@ impl Environment {
                         // address of the SVC itself
                         let svc_pc = self.cpu.regs()[cpu::Cpu::PC] - 4;
                         if svc == dyld::Dyld::SVC_RETURN_TO_HOST {
-                            assert!(!root);
-                            // FIXME/TODO: How do we handle a return-to-host on
-                            // the wrong thread? Defer it somehow?
-                            assert!(self.current_thread == initial_thread);
                             assert!(
                                 svc_pc
                                     == self.dyld.return_to_host_routine().addr_without_thumb_bit()
                             );
-                            return;
+                            assert!(!root);
+                            // FIXME/TODO: How do we handle a return-to-host on
+                            // the wrong thread? Defer it somehow?
+                            if !root && self.current_thread == initial_thread {
+                                // Normal return from host-to-guest call
+                                return;
+                            } else if self.threads[self.current_thread].in_start_routine {
+                                // Secondary thread finished starting
+                                // TODO: Having two meanings for this SVC is
+                                // dangerous, use a different SVC for this case.
+                                log_dbg!(
+                                    "Thread {} finished start routine and became inactive",
+                                    self.current_thread
+                                );
+                                self.threads[self.current_thread].active = false;
+                                break;
+                            } else {
+                                panic!("Unexpected return-to-host!");
+                            }
                         }
 
                         if let Some(f) = self.dyld.get_svc_handler(
@@ -543,7 +580,12 @@ impl Environment {
                             svc_pc,
                             svc,
                         ) {
-                            f.call_from_guest(self)
+                            let was_in_host_function =
+                                self.threads[self.current_thread].in_host_function;
+                            self.threads[self.current_thread].in_host_function = true;
+                            f.call_from_guest(self);
+                            self.threads[self.current_thread].in_host_function =
+                                was_in_host_function;
                         } else {
                             self.cpu.regs_mut()[cpu::Cpu::PC] = svc_pc;
                         }
@@ -561,7 +603,7 @@ impl Environment {
                     assert!(self.threads[self.current_thread].active);
                     break;
                 }
-                if !self.threads[next].active {
+                if !self.threads[next].active || self.threads[next].in_host_function {
                     continue;
                 }
                 // Candidate found, switch to it.

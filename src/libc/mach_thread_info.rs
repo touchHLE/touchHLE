@@ -125,4 +125,29 @@ fn thread_info(
     KERN_SUCCESS
 }
 
-pub const FUNCTIONS: FunctionExports = &[export_c_func!(thread_info(_, _, _, _))];
+type thread_t = mach_port_t;
+type thread_policy_flavor_t = natural_t;
+type thread_policy_t = MutPtr<integer_t>;
+
+// This is actually from the thread policy file.
+fn thread_policy_set(
+    _env: &mut Environment,
+    thread: thread_t,
+    flavor: thread_policy_flavor_t,
+    policy_info: thread_policy_t,
+    count: mach_msg_type_number_t,
+) -> kern_return_t {
+    log!(
+        "TODO: thread_policy_set({}, {}, {:?}, {}) (ignored)",
+        thread,
+        flavor,
+        policy_info,
+        count
+    );
+    KERN_SUCCESS
+}
+
+pub const FUNCTIONS: FunctionExports = &[
+    export_c_func!(thread_info(_, _, _, _)),
+    export_c_func!(thread_policy_set(_, _, _, _)),
+];

@@ -243,7 +243,7 @@ impl Window {
             return;
         };
         log!(
-            "New controller connected: {}. Left stick = device tilt. Right stick = touch input.",
+            "New controller connected: {}. Left stick = device tilt. Right stick = touch input (press the stick or shoulder button to tap/hold).",
             controller.name()
         );
         self.controllers.push(controller);
@@ -371,14 +371,25 @@ impl Window {
         let mut pressed = false;
         for controller in &self.controllers {
             use sdl2::controller::{Axis, Button};
-            let (x_axis, y_axis, button) = if left {
-                (Axis::LeftX, Axis::LeftY, Button::LeftStick)
+            let (x_axis, y_axis, button1, button2) = if left {
+                (
+                    Axis::LeftX,
+                    Axis::LeftY,
+                    Button::LeftStick,
+                    Button::LeftShoulder,
+                )
             } else {
-                (Axis::RightX, Axis::RightY, Button::RightStick)
+                (
+                    Axis::RightX,
+                    Axis::RightY,
+                    Button::RightStick,
+                    Button::RightShoulder,
+                )
             };
             x += convert_axis(controller.axis(x_axis), options.deadzone);
             y += convert_axis(controller.axis(y_axis), options.deadzone);
-            pressed |= controller.button(button);
+            pressed |= controller.button(button1);
+            pressed |= controller.button(button2);
         }
         let (x, y) = (x.clamp(-1.0, 1.0), y.clamp(-1.0, 1.0));
 

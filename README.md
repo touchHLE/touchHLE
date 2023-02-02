@@ -26,9 +26,19 @@ TBD
 
 ## App support
 
-- Super Monkey Ball (2008, App Store launch title) is fully playable.
+- Super Monkey Ball (2008, App Store launch title), tested versions 1.0, 1.02, 1.3 (1.3 is the most heavily tested)
+  - Fully playable, everything works. Among other things:
+    - Sound effects and music
+    - Logo, title, menu, ranking, settings and credits screens
+    - Main Game, Instant Game (Shuffle Play) and Practice game modes
+    - Save game persistence (settings, unlocks, records)
+    - The tutorial (in the versions that have it)
+  - Consistent full fps (30fps) in release builds even on a fairly underpowered laptop (2017 Retina MacBook, passively cooled!)
+  - Special enhancement: can be run with increased internal resolution via the `--scale-hack=` option. Resolutions up to circa 4K have been tested. No noticeable performance impact at small scales (2×, 3×).
+  - Recommended game controller settings: `--y-tilt-offset=24`
+  - Known issue: memory leak of approximately 0.2MB/second on macOS. All obvious issues in the emulator itself have been ruled out, so it might be a problem in macOS itself, SDL2, or some other dependency. Thankfully this is slow enough that it shouldn't be a problem for most play sessions.
 
-No other apps are known to work right now. :)
+No other apps are known to work right now. This will surely improve in future. :)
 
 # Building
 

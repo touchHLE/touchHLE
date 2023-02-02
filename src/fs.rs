@@ -38,9 +38,16 @@ impl FsNode {
             let host_path = entry.path();
             let name = entry.file_name().into_string().unwrap();
 
-            if kind.is_symlink() {
-                unimplemented!("Symlink: {:?}", host_path);
-            } else if kind.is_file() {
+            // There is no support for symlinks within the virtual filesystem,
+            // but symlinks aren't uncommon in app bundles, so we treat a
+            // symlink as if it were a copy of the file it points to.
+            let kind = if kind.is_symlink() {
+                std::fs::metadata(&host_path).unwrap().file_type()
+            } else {
+                kind
+            };
+
+            if kind.is_file() {
                 children.insert(
                     name,
                     FsNode::File {

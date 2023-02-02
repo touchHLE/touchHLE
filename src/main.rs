@@ -27,6 +27,7 @@ mod frameworks;
 mod fs;
 mod image;
 mod libc;
+mod licenses;
 mod mach_o;
 mod mem;
 mod objc;
@@ -41,7 +42,10 @@ Usage:
 
 General options:
     --help
-        Print this help text.
+        Display this help text.
+
+    --copyright
+        Display copyright, authorship and license information.
 
 View options:
     --scale-hack=...
@@ -149,6 +153,9 @@ fn main() -> Result<(), String> {
     for arg in args {
         if arg == "--help" {
             println!("{}", USAGE);
+            return Ok(());
+        } else if arg == "--copyright" {
+            licenses::print();
             return Ok(());
         } else if bundle_path.is_none() {
             bundle_path = Some(PathBuf::from(arg));

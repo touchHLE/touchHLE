@@ -206,15 +206,11 @@ fn main() -> Result<(), String> {
 
     // When PowerShell does tab-completion on a directory, for some reason it
     // expands it to `'..\My Bundle.app\'` and that trailing \ seems to
-    // get interpreted as escaping a double quotation mark? Let's just tolerate
-    // this.
+    // get interpreted as escaping a double quotation mark?
     #[cfg(windows)]
-    let bundle_path = if let Some(fixed) = bundle_path.to_str().and_then(|s| s.strip_suffix('"')) {
-        log!("Assuming bundle path was meant to be {:?}.", fixed);
-        PathBuf::from(fixed)
-    } else {
-        bundle_path
-    };
+    if let Some(fixed) = bundle_path.to_str().and_then(|s| s.strip_suffix('"')) {
+        log!("Warning: The bundle path has a trailing quotation mark! This often happens accidentally on Windows when tab-completing, because '\\\"' gets interpreted by Rust in the wrong way. Did you meant to write {:?}?", fixed);
+    }
 
     let mut env = Environment::new(bundle_path, options)?;
     env.run();

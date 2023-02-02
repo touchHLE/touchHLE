@@ -25,4 +25,11 @@ fn __cxa_atexit(
     0 // success
 }
 
-pub const FUNCTIONS: FunctionExports = &[export_c_func!(__cxa_atexit(_, _, _))];
+fn __cxa_finalize(_env: &mut Environment, d: MutVoidPtr) {
+    log!("TODO: __cxa_finalize({:?}) (unimplemented)", d);
+}
+
+pub const FUNCTIONS: FunctionExports = &[
+    export_c_func!(__cxa_atexit(_, _, _)),
+    export_c_func!(__cxa_finalize(_)),
+];

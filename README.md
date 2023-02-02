@@ -20,7 +20,7 @@ Architectures other than x64 and AArch64 are completely unsupported, and this is
 
 It would be desirable to eventually support Android. That is probably not too much work.
 
-Since the current targets are desktop operating systems, touch input is simulated via mouse input or the right analog stick on a game controller, and accelerometer input (rotation only) is simulated via the left analog stick on a game controller.
+Since the current targets are desktop operating systems, touch input is simulated via mouse input or the right analog stick on a game controller, and accelerometer input (rotation only) is simulated via the left analog stick on a game controller. **Real accelerometer support coming soon, but not in the first release.**
 
 ## Development status
 

@@ -24,7 +24,9 @@ Since the current targets are desktop operating systems, touch input is simulate
 
 ## Development status
 
-TBD
+Real development started in December 2022, and this is so far [a single person](https://hikari.noyu.me/)'s full-time passion project. There's only a single release so far and no promises can be made about the future. Please be patient.
+
+Currently, the supported functionality is not much more than what the single supported app uses. The code tries to be reasonably complete where it can, though.
 
 ## App support
 

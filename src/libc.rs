@@ -6,6 +6,7 @@
 
 pub mod ctype;
 pub mod cxxabi;
+pub mod dlfcn;
 pub mod errno;
 pub mod keymgr;
 pub mod mach_thread_info;

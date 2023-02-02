@@ -239,7 +239,7 @@ struct Thread {
     context: Option<cpu::CpuContext>,
     /// Address range of this thread's stack, used to check if addresses are in
     /// range while producing a stack trace.
-    stack: std::ops::RangeInclusive<u32>,
+    stack: Option<std::ops::RangeInclusive<u32>>,
 }
 
 /// The struct containing the entire emulator state.
@@ -350,7 +350,7 @@ impl Environment {
             in_start_routine: false, // main thread never terminates
             in_host_function: false,
             context: None,
-            stack: mem::Mem::MAIN_THREAD_STACK_LOW_END..=0u32.wrapping_sub(1),
+            stack: Some(mem::Mem::MAIN_THREAD_STACK_LOW_END..=0u32.wrapping_sub(1)),
         };
 
         let mut env = Environment {
@@ -405,7 +405,7 @@ impl Environment {
     }
 
     fn stack_trace(&self) {
-        let stack_range = self.threads[self.current_thread].stack.clone();
+        let stack_range = self.threads[self.current_thread].stack.clone().unwrap();
         eprintln!(
             " 0. {:#x} (PC)",
             self.cpu.pc_with_thumb_bit().addr_with_thumb_bit()
@@ -454,7 +454,7 @@ impl Environment {
             in_start_routine: true,
             in_host_function: false,
             context: Some(cpu::CpuContext::new()),
-            stack: stack_alloc.to_bits()..=(stack_high_addr - 1),
+            stack: Some(stack_alloc.to_bits()..=(stack_high_addr - 1)),
         });
         let new_thread_id = self.threads.len() - 1;
 
@@ -567,6 +567,10 @@ impl Environment {
                                     self.current_thread
                                 );
                                 self.threads[self.current_thread].active = false;
+                                let stack = self.threads[self.current_thread].stack.take().unwrap();
+                                let stack: mem::MutVoidPtr = mem::Ptr::from_bits(*stack.start());
+                                log_dbg!("Freeing thread {} stack {:?}", self.current_thread, stack);
+                                self.mem.free(stack);
                                 break;
                             } else {
                                 panic!("Unexpected return-to-host!");

@@ -7,6 +7,7 @@
 pub mod ctype;
 pub mod cxxabi;
 pub mod errno;
+pub mod keymgr;
 pub mod mach_thread_info;
 pub mod mach_time;
 pub mod math;
@@ -19,6 +20,7 @@ pub mod time;
 /// Container for state of various child modules
 #[derive(Default)]
 pub struct State {
+    keymgr: keymgr::State,
     pthread: pthread::State,
     stdio: stdio::State,
     stdlib: stdlib::State,

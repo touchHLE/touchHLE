@@ -10,6 +10,7 @@ use crate::libc;
 pub const FUNCTION_LISTS: &[super::FunctionExports] = &[
     libc::ctype::FUNCTIONS,
     libc::cxxabi::FUNCTIONS,
+    libc::keymgr::FUNCTIONS,
     libc::mach_thread_info::FUNCTIONS,
     libc::mach_time::FUNCTIONS,
     libc::math::FUNCTIONS,

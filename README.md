@@ -80,7 +80,7 @@ Please run `cargo fmt` and `cargo clippy` on your changes before committing. For
 
 touchHLE © 2023 hikari\_no\_yume and other contributors.
 
-License TBD for the source code of touchHLE itself (not its dependencies).
+The source code of touchHLE itself (not its dependencies) is licensed under the Mozilla Public License, version 2.0.
 
 Due to license compatibility concerns, binaries are under the GNU General Public License version 3 or later.
 

@@ -1,3 +1,8 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
 //! Our implementations of various things that Apple's libSystem would provide.
 //! On other platforms these are part of the "libc", so let's call it that.
 //!

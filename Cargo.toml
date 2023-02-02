@@ -1,13 +1,20 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
 [workspace]
 
 [workspace.package]
 version = "0.1.0"
 edition = "2021"
+license = "MPL-2.0"
+authors = ["hikari_no_yume <hikari@noyu.me>", "Contributors to touchHLE"]
 
 [package]
 name = "touchHLE"
 version = { workspace = true }
 edition = { workspace = true }
+license = { workspace = true }
+authors = { workspace = true }
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

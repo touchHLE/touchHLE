@@ -1,3 +1,8 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
 /// Prints a log message unconditionally. Use this for errors or warnings.
 ///
 /// The message is prefixed with the module path, so it is clear where it comes

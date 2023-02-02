@@ -98,7 +98,7 @@ We stand on the shoulders of giants. Thank you to:
 * The [Rust project](https://www.rust-lang.org/) generally.
 * The various people out there who've documented the iPhone OS platform, officially or otherwise. Much of this documentation is linked to within this codebase!
 * The Free Software Foundation, for making libgcc and libstdc++ copyleft and therefore saving this project from ABI hell.
-* The [National Security Agency of the United States of America](https://en.wikipedia.org/wiki/Edward_Snowden), for [Ghidra](https://ghidra-sre.org/).
+* The National Security Agency of the United States of America, for [Ghidra](https://ghidra-sre.org/).
 * Many friends who took an interest in the project and gave suggestions and encouragement.
 * Developers of early iPhone OS apps. What treasures you created!
 * Apple, and NeXT before them, for creating such fantastic platforms.

@@ -14,9 +14,9 @@ Only use touchHLE to emulate software you legally own.
 
 ## Platform support
 
-touchHLE has been tested on x64 Windows and x64 macOS. It probably works on x64 Linux too but this hasn't been tested. AArch64 (including Apple Silicon) has not been tested.
+touchHLE has been tested and is to be considered supported on x64 Windows and x64 macOS. It may be possible to build it on Linux and on some AArch64 systems (at least one person has succeeded), but we make no guarantees right now.
 
-32-bit and big-endian host platforms are probably never going to be supported.
+Architectures other than x64 and AArch64 are completely unsupported, and this is unlikely to change.
 
 It would be desirable to eventually support Android. That is probably not too much work.
 

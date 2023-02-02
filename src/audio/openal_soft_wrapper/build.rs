@@ -24,6 +24,7 @@ fn main() {
     let openal_soft_out = build.build();
 
     link_search(&openal_soft_out.join("lib"));
+    link_search(&openal_soft_out.join("lib64")); // some Linux systems
     // see also src/audio/openal.rs
     link_lib(if cfg!(target_os = "windows") {
         "OpenAL32"

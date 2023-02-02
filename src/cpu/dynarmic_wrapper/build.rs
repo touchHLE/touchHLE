@@ -58,6 +58,7 @@ fn main() {
     let dynarmic_out = build.build();
 
     link_search(&dynarmic_out.join("lib"));
+    link_search(&dynarmic_out.join("lib64")); // some Linux systems
     link_lib("dynarmic");
     link_search(
         &dynarmic_out
@@ -75,6 +76,7 @@ fn main() {
             .join(build_type_windows()),
     );
     link_lib("mcl");
+    #[cfg(target_arch = "x86_64")]
     link_search(
         &dynarmic_out
             .join("build/externals/zydis")

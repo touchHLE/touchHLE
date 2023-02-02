@@ -10,6 +10,8 @@ The goal of this project is to run games from the early days of iOS. Only iPhone
 
 This project is not affiliated with or endorsed by Apple Inc in any way. iPhone, iPhone OS, iOS, iPod, iPod touch and iPad may be trademarks of Apple Inc in the United States or other countries.
 
+Only use touchHLE to emulate software you legally own.
+
 ## Platform support
 
 touchHLE has been tested on x64 Windows and x64 macOS. It probably works on x64 Linux too but this hasn't been tested. AArch64 (including Apple Silicon) has not been tested.

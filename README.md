@@ -43,6 +43,20 @@ TBD
 
 No other apps are known to work right now. This will surely improve in future. :)
 
+# Usage
+
+First obtain touchHLE, either a [binary release](https://github.com/hikari-no-yume/touchHLE/release) or by building it yourself (see the next section).
+
+You'll then need an app that you can run. See the “App support” section above. Note that the app binary must be decrypted to be usable. Also note that you can't directly use `.ipa` files right now, you'll need to unzip it (this may be easier if you rename it to end in `.zip` first) and get the `.app` bundle out of it.
+
+There's no graphical user interface right now, so you'll usually need to use the command line to run touchHLE. For first-time users on Windows:
+
+1. Move the `.app` bundle to the same folder as `touchHLE.exe`.
+2. Hold the Shift key and Right-click on the empty space in the folder window.
+3. Click “Open with PowerShell”.
+4. You can then type `.\touchHLE.exe "YourAppNameHere.app"` and press enter.
+5. You may want to type `.\touchHLE.exe` to see the available options for things like game controllers.
+
 # Building
 
 You need [git](https://git-scm.com/), [the Rust toolchain](https://www.rust-lang.org/tools/install), and your platform's standard C and C++ compilers.

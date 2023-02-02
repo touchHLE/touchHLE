@@ -32,6 +32,7 @@ TBD
     - Logo, title, menu, ranking, settings and credits screens
     - Main Game, Instant Game (Shuffle Play) and Practice game modes
     - Save game persistence (settings, unlocks, records)
+    - Continuing a previous game after closing and reopening the app
     - The tutorial (in the versions that have it)
   - Consistent full fps (30fps) in release builds even on a fairly underpowered laptop (2017 Retina MacBook, passively cooled!)
   - Special enhancement: can be run with increased internal resolution via the `--scale-hack=` option. Resolutions up to circa 4K have been tested. No noticeable performance impact at small scales (2×, 3×).

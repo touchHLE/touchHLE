@@ -41,6 +41,9 @@ mod window;
 
 use std::path::PathBuf;
 
+/// Current version. See `build.rs` for how this is generated.
+const VERSION: &str = include_str!(concat!(env!("OUT_DIR"), "/version.txt"));
+
 const USAGE: &str = "\
 Usage:
     touchHLE path/to/some.app
@@ -131,6 +134,9 @@ pub struct Options {
 }
 
 fn main() -> Result<(), String> {
+    println!("touchHLE {}", VERSION);
+    println!();
+
     fn parse_degrees(arg: &str, name: &str) -> Result<f32, String> {
         let arg: f32 = arg
             .parse()
@@ -299,7 +305,7 @@ impl Environment {
             .and_then(|bytes| image::Image::from_bytes(&bytes).ok());
 
         let window = window::Window::new(
-            &format!("{} (touchHLE)", bundle.display_name()),
+            &format!("{} (touchHLE {})", bundle.display_name(), VERSION),
             icon,
             launch_image,
             &options,

@@ -6,12 +6,34 @@
 use cargo_license::{get_dependencies_from_cargo_lock, GetDependenciesOpt};
 use std::fmt::Write;
 use std::path::{Path, PathBuf};
+use std::process::Command;
 
 fn rerun_if_changed(path: &Path) {
     println!("cargo:rerun-if-changed={}", path.to_str().unwrap());
 }
 
 pub fn main() {
+    let out_dir = PathBuf::from(std::env::var("OUT_DIR").unwrap());
+    let package_root = Path::new(env!("CARGO_MANIFEST_DIR"));
+
+    // Try to get the version using `git describe`, otherwise fall back to the
+    // Cargo.toml version. This is used in main.rs
+
+    let version = Command::new("git").arg("describe").arg("--always").output();
+    let version = if version.is_ok() && version.as_ref().unwrap().status.success() {
+        rerun_if_changed(&package_root.join(".git/HEAD"));
+        format!(
+            "{} (git)",
+            std::str::from_utf8(&version.unwrap().stdout)
+                .unwrap()
+                .trim_end()
+        )
+    } else {
+        rerun_if_changed(&package_root.join("Cargo.toml"));
+        format!("v{}", std::env::var("CARGO_PKG_VERSION").unwrap())
+    };
+    std::fs::write(out_dir.join("version.txt"), version).unwrap();
+
     // Generate a list of dependencies with license and author information.
     // This is used in license.rs
 
@@ -52,10 +74,8 @@ pub fn main() {
         writeln!(&mut deps_string).unwrap();
     }
 
-    let out_dir = PathBuf::from(std::env::var("OUT_DIR").unwrap());
     std::fs::write(out_dir.join("rust_dependencies.txt"), deps_string).unwrap();
 
-    let package_root = Path::new(env!("CARGO_MANIFEST_DIR"));
     rerun_if_changed(&package_root.join("Cargo.lock"));
 
     // Summarise the licensing of Dynarmic

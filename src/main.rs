@@ -569,7 +569,11 @@ impl Environment {
                                 self.threads[self.current_thread].active = false;
                                 let stack = self.threads[self.current_thread].stack.take().unwrap();
                                 let stack: mem::MutVoidPtr = mem::Ptr::from_bits(*stack.start());
-                                log_dbg!("Freeing thread {} stack {:?}", self.current_thread, stack);
+                                log_dbg!(
+                                    "Freeing thread {} stack {:?}",
+                                    self.current_thread,
+                                    stack
+                                );
                                 self.mem.free(stack);
                                 break;
                             } else {

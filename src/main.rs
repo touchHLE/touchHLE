@@ -134,7 +134,7 @@ pub struct Options {
 }
 
 fn main() -> Result<(), String> {
-    println!("touchHLE {}", VERSION);
+    println!("touchHLE {} — https://touchhle.org/", VERSION);
     println!();
 
     fn parse_degrees(arg: &str, name: &str) -> Result<f32, String> {

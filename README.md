@@ -6,6 +6,8 @@ As an HLE, touchHLE is radically different from a low-level emulator (LLE) like 
 
 The goal of this project is to run games from the early days of iOS. Only iPhone/iPod touch apps for iPhone OS 2.x have been tested so far. Modern/64-bit iOS app support is explicitly a non-goal, and support for apps that aren't games is unlikely to be prioritized due to the complexity. On the other hand, it's likely that we'll attempt to support apps for some newer 32-bit versions (especially 3.x and 4.x) and the iPad in future. iPhone OS 1.x support might be attempted also.
 
+Visit our homepage! <https://touchhle.org/>
+
 ## Important disclaimer
 
 This project is not affiliated with or endorsed by Apple Inc in any way. iPhone, iPhone OS, iOS, iPod, iPod touch and iPad may be trademarks of Apple Inc in the United States or other countries.
@@ -29,6 +31,8 @@ Real development started in December 2022, and this is so far [a single person](
 Currently, the supported functionality is not much more than what the single supported app uses. The code tries to be reasonably complete where it can, though.
 
 ## App support
+
+For pretty screenshots and video, [check out the home page!](https://touchhle.org/)
 
 - Super Monkey Ball (2008, App Store launch title), tested versions 1.0, 1.02, 1.3 (1.3 is the most heavily tested)
   - Fully playable, everything works. Among other things:

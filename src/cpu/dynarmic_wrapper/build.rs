@@ -77,12 +77,14 @@ fn main() {
     );
     link_lib("mcl");
     #[cfg(target_arch = "x86_64")]
-    link_search(
-        &dynarmic_out
-            .join("build/externals/zydis")
-            .join(build_type_windows()),
-    );
-    link_lib("Zydis");
+    {
+        link_search(
+            &dynarmic_out
+                .join("build/externals/zydis")
+                .join(build_type_windows()),
+        );
+        link_lib("Zydis");
+    }
     // rerun-if-changed seems to not work if pointed to a directory :(
     //rerun_if_changed(&workspace_root.join("vendor/dynarmic"));
 

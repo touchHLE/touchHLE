@@ -16,7 +16,7 @@ Only use touchHLE to emulate software you legally own.
 
 ## Platform support
 
-touchHLE has been tested and is to be considered supported on x64 Windows and x64 macOS. It may be possible to build it on Linux and on some AArch64 systems (at least one person has succeeded), but we make no guarantees right now.
+touchHLE has been tested and is to be considered supported on x64 Windows and x64 macOS. It may be possible to build it on Linux and on some AArch64 systems (at least one person has succeeded), but we make no guarantees right now. If you're an Apple Silicon Mac user: don't worry, the x64 macOS build reportedly works under Rosetta.
 
 Architectures other than x64 and AArch64 are completely unsupported, and this is unlikely to change.
 

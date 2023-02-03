@@ -22,7 +22,12 @@ Architectures other than x64 and AArch64 are completely unsupported, and this is
 
 It would be desirable to eventually support Android. That is probably not too much work.
 
-Since the current targets are desktop operating systems, touch input is simulated via mouse input or the right analog stick on a game controller (tap/hold by pressing the stick or shoulder button), and accelerometer input (rotation only) is simulated via the left analog stick on a game controller. **Real accelerometer support coming soon, but not in the first release.**
+Input methods:
+
+- For simulated touch input, there are two options:
+  - Mouse/trackpad input (tap/hold/drag by pressing the left mouse button)
+  - Virtual cursor using the right analog stick on a game controller (tap/hold/drag by pressing the stick or the right shoulder button)
+- **For simulated accelerometer input (tilt controls), a game controller is currently required.** Real accelerometer support will come soon, but it's not in the first release.
 
 ## Development status
 
@@ -51,7 +56,7 @@ No other apps are known to work right now. This will surely improve in future. :
 
 # Usage
 
-First obtain touchHLE, either a [binary release](https://github.com/hikari-no-yume/touchHLE/release) or by building it yourself (see the next section).
+First obtain touchHLE, either a [binary release](https://github.com/hikari-no-yume/touchHLE/releases) or by building it yourself (see the next section).
 
 You'll then need an app that you can run. See the “App support” section above. Note that the app binary must be decrypted to be usable. Also note that you can't directly use `.ipa` files right now, you'll need to unzip it (this may be easier if you rename it to end in `.zip` first) and get the `.app` bundle out of it.
 
@@ -103,6 +108,7 @@ We stand on the shoulders of giants. Thank you to:
 * The authors of and contributors to the many libraries used by this project: [dynarmic](https://github.com/merryhime/dynarmic), [rust-macho](https://github.com/flier/rust-macho), [SDL](https://libsdl.org/), [rust-sdl2](https://github.com/Rust-SDL2/rust-sdl2), [stb\_image](https://github.com/nothings/stb), [openal-soft](https://github.com/kcat/openal-soft), [hound](https://github.com/ruuda/hound), [caf](https://github.com/rustaudio/caf), [RustType](https://gitlab.redox-os.org/redox-os/rusttype), [the Liberation fonts](https://github.com/liberationfonts/liberation-fonts), [the Noto CJK fonts](https://github.com/googlefonts/noto-cjk), [rust-plist](https://github.com/ebarnard/rust-plist), [gl-rs](https://github.com/brendanzab/gl-rs), [cargo-license](https://github.com/onur/cargo-license), [cc-rs](https://github.com/rust-lang/cc-rs), [cmake-rs](https://github.com/rust-lang/cmake-rs), and the Rust standard library.
 * The [Rust project](https://www.rust-lang.org/) generally.
 * The various people out there who've documented the iPhone OS platform, officially or otherwise. Much of this documentation is linked to within this codebase!
+* The iOS hacking/jailbreaking community.
 * The Free Software Foundation, for making libgcc and libstdc++ copyleft and therefore saving this project from ABI hell.
 * The National Security Agency of the United States of America, for [Ghidra](https://ghidra-sre.org/).
 * Many friends who took an interest in the project and gave suggestions and encouragement.

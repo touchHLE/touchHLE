@@ -46,6 +46,8 @@ fn main() {
     let workspace_root = package_root.join("../../..");
 
     let mut build = cmake::Config::new(workspace_root.join("vendor/dynarmic"));
+    build.define("DYNARMIC_WARNINGS_AS_ERRORS", "OFF");
+    build.define("DYNARMIC_TESTS", "OFF");
     // This is Windows-specific because on macOS or Linux, you can grab
     // Boost with your package manager.
     if cfg!(target_os = "windows") {

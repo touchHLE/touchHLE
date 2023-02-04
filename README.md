@@ -82,6 +82,11 @@ There is one special external dependency, Boost:
 Then you just need to run `cargo run --release` (for a release build) or `cargo run` (for a debug build) to build and run touchHLE. On an underpowered, passively-cooled, 2-core laptop (2017 Retina MacBook), a clean release build takes a bit less than 9 minutes.
 
 The `touchHLE_dylibs` and `touchHLE_fonts` directories contain files that the resulting binary will need at runtime, so you'll need to copy them if you want to distribute the result. You also should include the license files.
+# Similar projects
+- [https://systems.cs.columbia.edu/projects/cycada/](Cycada), a kernel level iOS compatibility layer (iOS 5.1.1, with iOS 6 support partially) for Android worked on roughly from 2014 to 2017. It was never released due to closed source changes, however it can be reproduced via the papers with enough effort, see [http://jeremya.com/files/pub/2015/02/andrus-thesis.pdf](here) for the paper, we will pay you if you manage to create this in it's entirety.
+- [https://github.com/TrungNguyen1909/qemu-t8030](QEMU-T8030), an iPhone 11 partially implemented in QEMU, boots but with no screen. [https://github.com/TrungNguyen1909/qemu-t8030/discussions/79](he will work on newer iPhone models after)
+- [https://github.com/ipasimulator/ipasim](ipasim), basically almost the same as this but a lot worse, it can only run simple apps and is only available as a Windows UWP app, and is not maintained at all.
+See https://github.com/shonumi/gbe-plus/issues/137 for more
 
 # Contributing
 

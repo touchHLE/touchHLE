@@ -11,4 +11,6 @@ YOU *WILL* BE BANNED IF YOU IGNORE THIS WARNING.
 
 Also, please bear in mind that there are infinitely many apps that do not work in touchHLE right now, so please don't open issues about apps that aren't in the supported list, unless you've got it partially working (e.g. loaded up to the menu but the main game doesn't work). The fact that an app's splash screen (Default.png) shows up doesn't mean it's partially working.
 
+If you haven't yet, please also read the CONTRIBUTING.md file.
+
 -->

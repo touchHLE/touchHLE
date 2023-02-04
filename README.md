@@ -70,26 +70,9 @@ There's no graphical user interface right now, so you'll usually need to use the
 
 Currently language detection doesn't work on Windows. To change the language preference reported to the app, you can type `SET LANG=` followed by an ISO 639-1 language code, then press Enter, before running the app. Some common language codes are: `en` (English), `de` (Deutsch), `es` (español), `fr` (français), `it` (italiano) and `ja` (日本語). Bear in mind that it's the app itself that determines which languages are supported, not the emulator.
 
-# Building
+# Building and contributing
 
-You need [git](https://git-scm.com/), [the Rust toolchain](https://www.rust-lang.org/tools/install), and your platform's standard C and C++ compilers.
-
-First check out the git repo with `git clone`. Also make sure you get the submodules (`git submodule update --init` should be enough).
-
-There is one special external dependency, Boost:
-
-* On Windows, download it from <https://www.boost.org/users/download/> and extract it to `vendor/boost`.
-* On other OSes, install Boost from your package manager. If you are on macOS and using [Homebrew](https://brew.sh/): `brew install boost`.
-
-Then you just need to run `cargo run --release` (for a release build) or `cargo run` (for a debug build) to build and run touchHLE. On an underpowered, passively-cooled, 2-core laptop (2017 Retina MacBook), a clean release build takes a bit less than 9 minutes.
-
-The `touchHLE_dylibs` and `touchHLE_fonts` directories contain files that the resulting binary will need at runtime, so you'll need to copy them if you want to distribute the result. You also should include the license files.
-
-# Contributing
-
-Please run `cargo fmt` and `cargo clippy` on your changes before committing. For the handful of C and C++ files, please use `clang-format -i` to format them.
-
-If you're going to open a pull request with non-trivial changes, please talk to us first so we can figure out if we're likely to accept them. It would be a shame if your effort had to be wasted.
+Please see the BUILDING.md and CONTRIBUTING.md files in the git repo.
 
 # License
 

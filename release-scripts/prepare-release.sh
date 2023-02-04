@@ -1,9 +1,15 @@
 #!/bin/sh
 set -e
 mkdir new_release
+
 cp -r ../touchHLE_dylibs new_release/
-mv new_release/touchHLE_dylibs/README.md new_release/touchHLE_dylibs/README.txt
+pandoc -s new_release/touchHLE_dylibs/README.md -o new_release/touchHLE_dylibs/README.html
+rm new_release/touchHLE_dylibs/README.md
+
 cp -r ../touchHLE_fonts new_release/
-mv new_release/touchHLE_fonts/README.md new_release/touchHLE_fonts/README.txt
-cp ../README.md new_release/README.txt
+pandoc -s new_release/touchHLE_fonts/README.md -o new_release/touchHLE_fonts/README.html
+rm new_release/touchHLE_fonts/README.md
+
+pandoc -s ../README.md -o new_release/README.html
+
 cp -r gpl-3.0.txt new_release/COPYING

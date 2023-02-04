@@ -68,6 +68,8 @@ There's no graphical user interface right now, so you'll usually need to use the
 4. You can then type `.\touchHLE.exe "YourAppNameHere.app"` and press enter.
 5. You may want to type `.\touchHLE.exe` to see the available options for things like game controllers.
 
+Currently language detection doesn't work on Windows. To change the language preference reported to the app, you can type `SET LANG=` followed by an ISO 639-1 language code, then press Enter, before running the app. Some common language codes are: `en` (English), `de` (Deutsch), `es` (español), `fr` (français), `it` (italiano) and `ja` (日本語). Bear in mind that it's the app itself that determines which languages are supported, not the emulator.
+
 # Building
 
 You need [git](https://git-scm.com/), [the Rust toolchain](https://www.rust-lang.org/tools/install), and your platform's standard C and C++ compilers.

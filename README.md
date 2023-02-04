@@ -12,7 +12,7 @@ Visit our homepage! <https://touchhle.org/>
 
 This project is not affiliated with or endorsed by Apple Inc in any way. iPhone, iPhone OS, iOS, iPod, iPod touch and iPad may be trademarks of Apple Inc in the United States or other countries.
 
-Only use touchHLE to emulate software you legally own.
+We reccomend you to only use touchHLE to emulate software you legally own or is and always was free.
 
 ## Platform support
 

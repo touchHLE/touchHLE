@@ -11,11 +11,10 @@
 //!   * [Anatomy of an iOS Application Bundle](https://developer.apple.com/library/archive/documentation/CoreFoundation/Conceptual/CFBundles/BundleTypes/BundleTypes.html)
 //! * [Bundle Resources](https://developer.apple.com/documentation/bundleresources?language=objc)
 
-use crate::fs::{Fs, GuestPath, GuestPathBuf};
+use crate::fs::{BundleData, Fs, GuestPath, GuestPathBuf};
 use plist::dictionary::Dictionary;
 use plist::Value;
 use std::io::Cursor;
-use std::path::PathBuf;
 
 #[derive(Debug)]
 pub struct Bundle {
@@ -25,32 +24,21 @@ pub struct Bundle {
 
 impl Bundle {
     pub fn new_bundle_and_fs_from_host_path(
-        host_path: PathBuf,
-    ) -> Result<(Bundle, Fs), &'static str> {
-        if !host_path.is_dir() {
-            return Err("Bundle path is not a directory");
-        }
-
-        let plist_path = host_path.join("Info.plist");
-
-        if !plist_path.is_file() {
-            return Err("Bundle does not contain an Info.plist file");
-        }
-
-        let plist_bytes =
-            std::fs::read(plist_path).map_err(|_| "Could not read Info.plist file")?;
+        mut bundle_data: BundleData,
+    ) -> Result<(Bundle, Fs), String> {
+        let plist_bytes = bundle_data.read_plist()?;
 
         let plist = Value::from_reader(Cursor::new(plist_bytes))
-            .map_err(|_| "Could not deserialize plist data")?;
+            .map_err(|_| "Could not deserialize plist data".to_string())?;
 
         let plist = plist
             .into_dictionary()
-            .ok_or("plist root value is not a dictionary")?;
+            .ok_or_else(|| "plist root value is not a dictionary".to_string())?;
 
         let bundle_name = plist["CFBundleName"].as_string().unwrap();
         let bundle_id = plist["CFBundleIdentifier"].as_string().unwrap();
 
-        let (fs, guest_path) = Fs::new(&host_path, format!("{}.app", bundle_name), bundle_id);
+        let (fs, guest_path) = Fs::new(bundle_data, format!("{bundle_name}.app"), bundle_id);
 
         let bundle = Bundle {
             path: guest_path,

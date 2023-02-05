@@ -28,7 +28,7 @@ struct FILE {
 unsafe impl SafeRead for FILE {}
 
 struct FileHostObject {
-    file: std::fs::File,
+    file: crate::fs::GuestFile,
 }
 
 fn fopen(env: &mut Environment, filename: ConstPtr<u8>, mode: ConstPtr<u8>) -> MutPtr<FILE> {

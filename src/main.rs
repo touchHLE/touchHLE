@@ -282,10 +282,12 @@ impl Environment {
     fn new(bundle_path: PathBuf, options: Options) -> Result<Environment, String> {
         let startup_time = std::time::Instant::now();
 
-        let (bundle, fs) = match bundle::Bundle::new_bundle_and_fs_from_host_path(bundle_path) {
+        let bundle_data = fs::BundleData::open_any(&bundle_path)
+            .map_err(|e| format!("Could not open app bundle: {e}"))?;
+        let (bundle, fs) = match bundle::Bundle::new_bundle_and_fs_from_host_path(bundle_data) {
             Ok(bundle) => bundle,
             Err(err) => {
-                return Err(format!("Application bundle error: {}. Check that the path is to a .app directory. If this is a .ipa file, you need to extract it as a ZIP file to get the .app directory.", err));
+                return Err(format!("Application bundle error: {err}. Check that the path is to an .app directory or an .ipa file."));
             }
         };
 

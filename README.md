@@ -58,14 +58,14 @@ No other apps are known to work right now. This will surely improve in future. :
 
 First obtain touchHLE, either a [binary release](https://github.com/hikari-no-yume/touchHLE/releases) or by building it yourself (see the next section).
 
-You'll then need an app that you can run. See the “App support” section above. Note that the app binary must be decrypted to be usable. Also note that you can't directly use `.ipa` files right now, you'll need to unzip it (this may be easier if you rename it to end in `.zip` first) and get the `.app` bundle out of it.
+You'll then need an app that you can run. See the “App support” section above. Note that the app binary must be decrypted to be usable.
 
 There's no graphical user interface right now, so you'll usually need to use the command line to run touchHLE. For first-time users on Windows:
 
-1. Move the `.app` bundle to the same folder as `touchHLE.exe`.
+1. Move the `.ipa` file or `.app` bundle to the same folder as `touchHLE.exe`.
 2. Hold the Shift key and Right-click on the empty space in the folder window.
 3. Click “Open with PowerShell”.
-4. You can then type `.\touchHLE.exe "YourAppNameHere.app"` and press enter.
+4. You can then type `.\touchHLE.exe "YourAppNameHere.ipa"` (or `.app` as appropriate) and press enter.
 5. You may want to type `.\touchHLE.exe` to see the available options for things like game controllers.
 
 Currently language detection doesn't work on Windows. To change the language preference reported to the app, you can type `SET LANG=` followed by an ISO 639-1 language code, then press Enter, before running the app. Some common language codes are: `en` (English), `de` (Deutsch), `es` (español), `fr` (français), `it` (italiano) and `ja` (日本語). Bear in mind that it's the app itself that determines which languages are supported, not the emulator.

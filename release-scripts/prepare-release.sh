@@ -12,4 +12,6 @@ rm new_release/touchHLE_fonts/README.md
 
 pandoc -s ../README.md -o new_release/README.html
 
+pandoc -s ../CHANGELOG.md -o new_release/CHANGELOG.html
+
 cp -r gpl-3.0.txt new_release/COPYING

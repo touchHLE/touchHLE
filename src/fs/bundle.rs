@@ -69,7 +69,7 @@ pub enum BundleData {
     Zip {
         zip: ZipArchive<std::fs::File>,
         /// Path to the app bundle inside the zip file.
-        /// It should be "Payload/<app name>.app" (no trailing slash!).
+        /// It should be `"Payload/<app name>.app"` (no trailing slash!).
         bundle_path: String,
     },
 }

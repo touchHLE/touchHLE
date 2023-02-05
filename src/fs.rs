@@ -12,10 +12,12 @@
 //! for creating new files in existing directories, no nodes can be created,
 //! deleted, renamed or moved.
 //!
-//! All files in the guest filesystem have a corresponding file in the host
-//! filesystem. Accessing a file requires traversing the guest filesystem's
-//! directory structure to find out the host path, but after that is done, the
-//! host file is accessed directly; there is no virtualization of file I/O.
+//! All files in the guest filesystem must have a corresponding file in the host
+//! filesystem, or a corresponding file inside a `.ipa` file (ZIP archive) in
+//! the host filesystem. Accessing a file requires traversing the guest
+//! filesystem's directory structure to find out the host path, or ZIP file
+//! member. After that point, the underlying file is accessed directly; there is
+//! no virtualization of file I/O.
 //!
 //! Directories only need a corresponding directory in the host filesystem if
 //! they are writeable (i.e. if new files can be created in them).

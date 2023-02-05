@@ -33,6 +33,7 @@ pub const FUNCTION_LISTS: &[super::FunctionExports] = &[
     crate::objc::FUNCTIONS,
     audio_toolbox::audio_file::FUNCTIONS,
     audio_toolbox::audio_queue::FUNCTIONS,
+    audio_toolbox::audio_session::FUNCTIONS,
     core_foundation::cf_bundle::FUNCTIONS,
     core_foundation::cf_run_loop::FUNCTIONS,
     core_foundation::cf_type::FUNCTIONS,

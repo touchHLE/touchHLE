@@ -82,6 +82,19 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
                     res.extend_from_slice(format!("{}", int).as_bytes());
                 }
             }
+            b'f' => {
+                let float: f64 = args.next(env);
+                // TODO: avoid copy?
+                if pad_width > 0 {
+                    if pad_char == '0' {
+                        res.extend_from_slice(format!("{:01$}", float, pad_width).as_bytes());
+                    } else {
+                        res.extend_from_slice(format!("{:1$}", float, pad_width).as_bytes());
+                    }
+                } else {
+                    res.extend_from_slice(format!("{}", float).as_bytes());
+                }
+            }
             // TODO: more specifiers
             _ => unimplemented!("Format character '{}'", specifier as char),
         }

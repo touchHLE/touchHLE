@@ -8,6 +8,8 @@ The goal of this project is to run games from the early days of iOS. Only iPhone
 
 Visit our homepage! <https://touchhle.org/>
 
+If you're curious about the history and motivation behind the project, you might want to read [the original announcement](https://hikari.noyu.me/blog/2023-02-06-touchhle-anouncement-thread-tech-games-me-and-passion-projects.html).
+
 ## Important disclaimer
 
 This project is not affiliated with or endorsed by Apple Inc in any way. iPhone, iPhone OS, iOS, iPod, iPod touch and iPad may be trademarks of Apple Inc in the United States or other countries.

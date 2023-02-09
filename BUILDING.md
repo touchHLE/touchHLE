@@ -2,8 +2,6 @@
 
 You need [git](https://git-scm.com/), [the Rust toolchain](https://www.rust-lang.org/tools/install), and your platform's standard C and C++ compilers.
 
-* On Windows, notice that you must run the Rust toolchain installer from a terminal instead of double clicking it.
-
 First check out the git repo with `git clone`. Also make sure you get the submodules (`git submodule update --init` should be enough).
 
 There is one special external dependency, Boost:

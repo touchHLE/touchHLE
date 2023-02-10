@@ -6,7 +6,7 @@ Please be kind and respectful to others.
 
 It's especially important to value and respect others' time and energy: don't demand or expect anything to happen on any particular timescale, or even for anyone to do anything at all. We're all volunteers here, doing things for the love of it, and if you force us to spend a lot of time on _you_, it's going to slowly chip away at our passion and enthusiasm.
 
-**⚠️ Do not link to pirated content. “Abandonware” is also pirated content.**<br>
+**⚠️ Do not link to pirated content. “Abandonware” is also pirated content, including FREE apps unless the developer has accepted permission to use it, or it is a FOSS iPhoneOS app.**<br>
 **⚠️ Do not ask about how to obtain pirated content.**<br>
 **⚠️ Do not talk about using pirated content.**<br>
 **⚠️ You _will_ be banned if you ignore this warning.**<br>

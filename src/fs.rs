@@ -137,6 +137,8 @@ impl GuestPath {
 
     /// Splits the path into a parent path and a file name.
     pub fn parent_and_file_name(&self) -> Option<(&GuestPath, &str)> {
+        // TODO
+        assert!(!self.as_str().ends_with('/'));
         // FIXME: this should do the same resolution as `std::path::file_name()`
         let (parent_name, file_name) = self.as_str().rsplit_once('/')?;
         Some((GuestPath::new(parent_name), file_name))

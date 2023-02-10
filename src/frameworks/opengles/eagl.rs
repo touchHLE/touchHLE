@@ -113,13 +113,18 @@ pub const CLASSES: ClassExports = objc_classes! {
     let format_rgb565 = get_static_str(env, kEAGLColorFormatRGB565);
 
     let format: id = msg![env; props objectForKey:format_key];
-    let internalformat = if msg![env; format isEqualTo:format_rgba8] {
-        gles11::RGBA8_OES
-    } else if msg![env; format isEqualTo:format_rgb565] {
-        gles11::RGB565_OES
-    } else { // default/fallback
-        gles11::RGBA8_OES
-    };
+    // Theoretically this should map formats like:
+    // - kColorFormatRGBA8 => RGBA8_OES
+    // - kColorFormatRGB565 => RGB565_OES
+    // However, the specification of EXT_framebuffer_object allows the
+    // implementation to arbitrarily restrict which formats can be rendered to,
+    // and it seems like RGB565 isn't supported, at least on a machine with
+    // Intel HD Graphics 615 running macOS Monterey. I don't think RGBA8 is
+    // guaranteed either, but it at least seems to work.
+    if !msg![env; format isEqualTo:format_rgba8] && !msg![env; format isEqualTo:format_rgb565] {
+        log!("[renderbufferStorage:{:?} fromDrawable:{:?}] Warning: unhandled format {:?}, using RGBA8", target, drawable, format);
+    }
+    let internalformat = gles11::RGBA8_OES;
 
     // FIXME: get width and height from the layer!
     let (width, height) = env.window.size_unrotated_scalehacked();

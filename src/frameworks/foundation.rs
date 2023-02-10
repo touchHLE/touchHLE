@@ -22,6 +22,7 @@ pub mod ns_fast_enumeration;
 pub mod ns_file_manager;
 pub mod ns_keyed_unarchiver;
 pub mod ns_locale;
+pub mod ns_log;
 pub mod ns_null;
 pub mod ns_object;
 pub mod ns_process_info;

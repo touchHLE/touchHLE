@@ -26,6 +26,8 @@ pub const NSUTF8StringEncoding: NSUInteger = 4;
 pub const NSUnicodeStringEncoding: NSUInteger = 10;
 pub const NSUTF16StringEncoding: NSUInteger = NSUnicodeStringEncoding;
 
+pub const NSMaximumStringLength: NSUInteger = (i32::MAX - 1) as _;
+
 #[derive(Default)]
 pub struct State {
     static_str_pool: HashMap<&'static str, id>,
@@ -291,6 +293,20 @@ pub const CLASSES: ClassExports = objc_classes! {
     }
 
     true
+}
+- (())getCString:(MutPtr<u8>)buffer {
+    // This is a deprecated method nobody should use, but unfortunately, it is
+    // used. The encoding it should use is [NSString defaultCStringEncoding]
+    // but I don't want to figure out what that is on all platforms, and the use
+    // I've seen of this method was on ASCII strings, so let's just hardcode
+    // UTF-8 and hope that works.
+
+    // Prevent slice out-of-range error
+    let length = (u32::MAX - buffer.to_bits()).min(NSMaximumStringLength);
+    let res: bool = msg![env; this getCString:buffer
+                                    maxLength:length
+                                     encoding:NSUTF8StringEncoding];
+    assert!(res);
 }
 
 - (id)componentsSeparatedByString:(id)separator { // NSString*

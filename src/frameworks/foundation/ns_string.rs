@@ -436,7 +436,8 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 - (id)stringByDeletingLastPathComponent {
     let string = to_rust_string(env, this); // TODO: avoid copying
-    let parent = GuestPath::new(&string).parent().unwrap_or(GuestPath::new(&string));
+    let path = GuestPath::new(&string);
+    let parent = path.parent().unwrap_or(path);
     let new_string = from_rust_string(env, String::from(parent.as_str()));
     autorelease(env, new_string);
     new_string

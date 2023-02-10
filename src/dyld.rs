@@ -30,6 +30,7 @@ use crate::mach_o::MachO;
 use crate::mem::{ConstVoidPtr, GuestUSize, Mem, MutPtr, Ptr};
 use crate::objc::ObjC;
 use crate::Environment;
+use std::collections::HashMap;
 
 type HostFunction = &'static dyn CallFromGuest;
 
@@ -269,6 +270,7 @@ impl Dyld {
     /// `bin` is the binary to link non-lazy symbols for, `bins` is the set of
     /// binaries symbols may be looked up in.
     fn do_non_lazy_linking(&mut self, bin: &MachO, bins: &[MachO], mem: &mut Mem, objc: &mut ObjC) {
+        let mut unhandled_relocations: HashMap<&str, Vec<u32>> = HashMap::new();
         for &(ptr_ptr, ref name) in &bin.external_relocations {
             let ptr = if let Some(name) = name.strip_prefix("_OBJC_CLASS_$_") {
                 objc.link_class(name, /* is_metaclass: */ false, mem)
@@ -278,15 +280,24 @@ impl Dyld {
                 ns_string::handle_constant_string(mem, objc, Ptr::from_bits(ptr_ptr))
             } else {
                 // TODO: look up symbol, write pointer
-                log!(
-                    "Warning: unhandled external relocation {:?} at {:#x} in \"{}\"",
-                    name,
-                    ptr_ptr,
-                    bin.name
-                );
+                unhandled_relocations.entry(name).or_default().push(ptr_ptr);
                 continue;
             };
             mem.write(Ptr::from_bits(ptr_ptr), ptr)
+        }
+        // Collecting unhandled relocations for the same symbol onto one line
+        // makes the log output much less spammy.
+        for (name, addrs) in unhandled_relocations {
+            log!(
+                "Warning: unhandled external relocation {:?} in {:?} at {}",
+                name,
+                bin.name,
+                addrs
+                    .into_iter()
+                    .map(|addr| format!("{:#x}", addr))
+                    .collect::<Vec<String>>()
+                    .join(", "),
+            );
         }
 
         let Some(ptrs) = bin.get_section("__nl_symbol_ptr") else {

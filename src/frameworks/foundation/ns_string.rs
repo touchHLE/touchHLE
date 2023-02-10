@@ -418,6 +418,14 @@ pub const CLASSES: ClassExports = objc_classes! {
     autorelease(env, result_ns_string)
 }
 
+- (id)stringByDeletingLastPathComponent {
+    let string = to_rust_string(env, this); // TODO: avoid copying
+    let parent = GuestPath::new(&string).parent().unwrap_or(GuestPath::new(&string));
+    let new_string = from_rust_string(env, String::from(parent.as_str()));
+    autorelease(env, new_string);
+    new_string
+}
+
 - (id)stringByAppendingPathComponent:(id)component { // NSString*
     // TODO: avoid copying
     let combined = GuestPath::new(&to_rust_string(env, this))

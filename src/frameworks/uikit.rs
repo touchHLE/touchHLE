@@ -28,6 +28,7 @@ pub mod ui_window;
 pub struct State {
     ui_accelerometer: ui_accelerometer::State,
     ui_application: ui_application::State,
+    ui_device: ui_device::State,
     ui_font: ui_font::State,
     ui_graphics: ui_graphics::State,
     ui_screen: ui_screen::State,

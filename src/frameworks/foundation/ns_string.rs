@@ -591,7 +591,7 @@ pub fn handle_constant_string(mem: &mut Mem, objc: &mut ObjC, constant_str: id) 
         bytes,
         length,
     } = mem.read(constant_str.cast());
-    assert!(flags == 0x7C8); // no idea what this means
+    assert!(flags == 0x7C8); // see: https://lists.llvm.org/pipermail/cfe-dev/2008-August/002518.html
 
     // All the strings I've seen are ASCII, so this might be wrong.
     let decoded = std::str::from_utf8(mem.bytes_at(bytes, length)).unwrap();

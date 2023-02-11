@@ -673,6 +673,9 @@ impl GLES for GLES1OnGL2 {
         );
         gl21::TexParameterf(target, pname, param);
     }
+    unsafe fn TexEnvi(&mut self, target: GLenum, pname: GLenum, param: GLint) {
+        gl21::TexEnvi(target, pname, param);
+    }
     unsafe fn TexImage2D(
         &mut self,
         target: GLenum,

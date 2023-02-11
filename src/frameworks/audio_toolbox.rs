@@ -7,6 +7,7 @@
 
 pub mod audio_file;
 pub mod audio_queue;
+pub mod audio_session;
 
 #[derive(Default)]
 pub struct State {

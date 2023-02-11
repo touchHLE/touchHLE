@@ -16,10 +16,34 @@
 
 use super::ns_string::to_rust_string;
 use super::NSUInteger;
+use crate::dyld::{export_c_func, FunctionExports};
 use crate::mem::MutVoidPtr;
 use crate::objc::{
-    id, msg, msg_class, msg_send, objc_classes, Class, ClassExports, ObjC, TrivialHostObject,
+    id, msg, msg_class, msg_send, objc_classes, Class, ClassExports, ObjC, TrivialHostObject, SEL,
 };
+use crate::Environment;
+
+pub(super) fn NSClassFromString(
+    env: &mut Environment,
+    _class_name: id, // NSString
+) -> Class {
+    // TODO: actually implement this
+    println!("Warning: NSClassFromString not implemented, app will crash.");
+    return msg_class![env; NSObject alloc];
+}
+
+pub(super) fn NSLog(
+    _env: &mut Environment,
+    _string: id, // NSString
+) {
+    // TODO: actually implement this
+    println!("Warning: NSLog not implemented, the app is logging something and we can't see it.");
+}
+
+pub const FUNCTIONS: FunctionExports = &[
+    export_c_func!(NSClassFromString(_)),
+    export_c_func!(NSLog(_)),
+];
 
 pub const CLASSES: ClassExports = objc_classes! {
 
@@ -98,6 +122,11 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 - (bool)isEqual:(id)other {
     this == other
+}
+
+- (bool)respondsToSelector:(SEL)_selector { // SEL
+    // TODO: actually implement this
+    true
 }
 
 // Helper for NSCopying

@@ -161,6 +161,20 @@ pub(super) fn UIApplicationMain(
         let _: () = msg![env; pool drain];
     }
 
+    // Call layoutSubviews on all views in the view hierarchy.
+    // See https://medium.com/geekculture/uiview-lifecycle-part-5-faa2d44511c9
+    let views = env.framework_state.uikit.ui_view.views.clone();
+    for view in views {
+        () = msg![env; view layoutSubviews];
+    }
+
+    // Send applicationDidBecomeActive now that the application is ready to become active.
+    {
+        let pool: id = msg_class![env; NSAutoreleasePool new];
+        () = msg![env; delegate applicationDidBecomeActive:ui_application];
+        let _: () = msg![env; pool drain];
+    }
+
     // FIXME: There are more messages we should send.
     // TODO: Send UIApplicationDidFinishLaunchingNotification?
 

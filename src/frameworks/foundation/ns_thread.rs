@@ -13,6 +13,11 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 @implementation NSThread: NSObject
 
++ (f64)threadPriority {
+    log!("TODO: [NSThread threadPriority] (not implemented yet)");
+    1.0
+}
+
 + (bool)setThreadPriority:(f64)priority {
     log!("TODO: [NSThread setThreadPriority:{:?}] (ignored)", priority);
     true

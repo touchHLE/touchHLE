@@ -89,6 +89,9 @@ fn glGetIntegerv(env: &mut Environment, pname: GLenum, params: MutPtr<GLint>) {
         unsafe { gles.GetIntegerv(pname, params) };
     });
 }
+fn glHint(env: &mut Environment, target: GLenum, mode: GLenum) {
+    with_ctx_and_mem(env, |gles, _mem| unsafe { gles.Hint(target, mode) })
+}
 
 // Other state manipulation
 fn glAlphaFunc(env: &mut Environment, func: GLenum, ref_: GLclampf) {
@@ -600,6 +603,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(glEnableClientState(_)),
     export_c_func!(glDisableClientState(_)),
     export_c_func!(glGetIntegerv(_, _)),
+    export_c_func!(glHint(_, _)),
     // Other state manipulation
     export_c_func!(glAlphaFunc(_, _)),
     export_c_func!(glAlphaFuncx(_, _)),

@@ -26,6 +26,7 @@ pub trait GLES {
     unsafe fn EnableClientState(&mut self, array: GLenum);
     unsafe fn DisableClientState(&mut self, array: GLenum);
     unsafe fn GetIntegerv(&mut self, pname: GLenum, params: *mut GLint);
+    unsafe fn Hint(&mut self, target: GLenum, mode: GLenum);
 
     // Other state manipulation
     unsafe fn AlphaFunc(&mut self, func: GLenum, ref_: GLclampf);

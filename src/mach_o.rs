@@ -20,7 +20,7 @@
 
 use crate::fs::{Fs, GuestPath};
 use crate::mem::{Mem, Ptr};
-use mach_object::{DyLib, LoadCommand, MachCommand, OFile, Symbol, SymbolIter};
+use mach_object::{DyLib, LoadCommand, MachCommand, OFile, Symbol, SymbolIter, ThreadState};
 use std::collections::HashMap;
 use std::io::{Cursor, Seek, SeekFrom};
 
@@ -38,6 +38,8 @@ pub struct MachO {
     /// List of addresses and names of external relocations for the dynamic
     /// linker to resolve.
     pub external_relocations: Vec<(u32, String)>,
+    /// Thread state to initialize with (LC_UNIXTHREAD)
+    pub thread_state: ThreadState,
 }
 
 #[derive(Debug)]
@@ -212,6 +214,7 @@ impl MachO {
         let mut exported_symbols = HashMap::new();
         let mut indirect_undef_symbols: Vec<Option<String>> = Vec::new();
         let mut external_relocations: Vec<(u32, String)> = Vec::new();
+        let mut thread_state: Option<ThreadState> = None;
 
         for MachCommand(command, _size) in commands {
             match command {
@@ -372,6 +375,9 @@ impl MachO {
                 LoadCommand::DyldInfo { .. } => {
                     log!("Warning! DyldInfo is not handled.");
                 }
+                LoadCommand::UnixThread { state, .. } => {
+                    thread_state = Some(state);
+                }
                 _ => (),
             }
         }
@@ -420,6 +426,7 @@ impl MachO {
             sections,
             exported_symbols,
             external_relocations,
+            thread_state: thread_state.unwrap(),
         })
     }
 

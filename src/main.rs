@@ -340,84 +340,86 @@ impl Environment {
             };
         }
 
-        let entry_point_addr = *executable.exported_symbols.get("start").ok_or_else(|| {
-            "Mach-O file has no 'start' symbol, perhaps it is not an executable?".to_string()
-        })?;
-        let entry_point_addr = abi::GuestFunction::from_addr_with_thumb_bit(entry_point_addr);
+        if let mach_object::ThreadState::Arm { __pc, .. } = executable.thread_state {
+                
+            let entry_point_addr = abi::GuestFunction::from_addr_with_thumb_bit(__pc);
 
-        println!("Address of start function: {:?}", entry_point_addr);
+            println!("Address of entry point function: {:?}", entry_point_addr);
 
-        let mut bins = dylibs;
-        bins.insert(0, executable);
+            let mut bins = dylibs;
+            bins.insert(0, executable);
 
-        let mut objc = objc::ObjC::new();
+            let mut objc = objc::ObjC::new();
 
-        let mut dyld = dyld::Dyld::new();
-        dyld.do_initial_linking(&bins, &mut mem, &mut objc);
+            let mut dyld = dyld::Dyld::new();
+            dyld.do_initial_linking(&bins, &mut mem, &mut objc);
 
-        for &breakpoint in &options.breakpoints {
-            dyld.set_breakpoint(&mut mem, breakpoint);
-        }
-
-        let cpu = cpu::Cpu::new();
-
-        let main_thread = Thread {
-            active: true,
-            in_start_routine: false, // main thread never terminates
-            in_host_function: false,
-            context: None,
-            stack: Some(mem::Mem::MAIN_THREAD_STACK_LOW_END..=0u32.wrapping_sub(1)),
-        };
-
-        let mut env = Environment {
-            startup_time,
-            bundle,
-            fs,
-            window,
-            mem,
-            bins,
-            objc,
-            dyld,
-            cpu,
-            current_thread: 0,
-            threads: vec![main_thread],
-            libc_state: Default::default(),
-            framework_state: Default::default(),
-            options,
-        };
-
-        dyld::Dyld::do_late_linking(&mut env);
-
-        {
-            let bin_path = env.bundle.executable_path();
-            let bin_path_apple_key = format!("executable_path={}", bin_path.as_str());
-
-            let argv = &[bin_path.as_str()];
-            let envp = &[];
-            let apple = &[bin_path_apple_key.as_str()];
-            stack::prep_stack_for_start(&mut env.mem, &mut env.cpu, argv, envp, apple);
-        }
-
-        println!("CPU emulation begins now.");
-
-        env.cpu.set_cpsr(cpu::Cpu::CPSR_USER_MODE);
-
-        // FIXME: call library static initializers too
-        if let Some(mod_init_func) = env.bins[0].get_section("__mod_init_func") {
-            log_dbg!("Calling static initializers for {:?}", env.bins[0].name);
-            assert!(mod_init_func.size % 4 == 0);
-            let base: mem::ConstPtr<abi::GuestFunction> = mem::Ptr::from_bits(mod_init_func.addr);
-            let count = mod_init_func.size / 4;
-            for i in 0..count {
-                let func = env.mem.read(base + i);
-                func.call(&mut env);
+            for &breakpoint in &options.breakpoints {
+                dyld.set_breakpoint(&mut mem, breakpoint);
             }
-            log_dbg!("Static initialization done");
+
+            let cpu = cpu::Cpu::new();
+
+            let main_thread = Thread {
+                active: true,
+                in_start_routine: false, // main thread never terminates
+                in_host_function: false,
+                context: None,
+                stack: Some(mem::Mem::MAIN_THREAD_STACK_LOW_END..=0u32.wrapping_sub(1)),
+            };
+
+            let mut env = Environment {
+                startup_time,
+                bundle,
+                fs,
+                window,
+                mem,
+                bins,
+                objc,
+                dyld,
+                cpu,
+                current_thread: 0,
+                threads: vec![main_thread],
+                libc_state: Default::default(),
+                framework_state: Default::default(),
+                options,
+            };
+
+            dyld::Dyld::do_late_linking(&mut env);
+
+            {
+                let bin_path = env.bundle.executable_path();
+                let bin_path_apple_key = format!("executable_path={}", bin_path.as_str());
+
+                let argv = &[bin_path.as_str()];
+                let envp = &[];
+                let apple = &[bin_path_apple_key.as_str()];
+                stack::prep_stack_for_start(&mut env.mem, &mut env.cpu, argv, envp, apple);
+            }
+
+            println!("CPU emulation begins now.");
+
+            env.cpu.set_cpsr(cpu::Cpu::CPSR_USER_MODE);
+
+            // FIXME: call library static initializers too
+            if let Some(mod_init_func) = env.bins[0].get_section("__mod_init_func") {
+                log_dbg!("Calling static initializers for {:?}", env.bins[0].name);
+                assert!(mod_init_func.size % 4 == 0);
+                let base: mem::ConstPtr<abi::GuestFunction> = mem::Ptr::from_bits(mod_init_func.addr);
+                let count = mod_init_func.size / 4;
+                for i in 0..count {
+                    let func = env.mem.read(base + i);
+                    func.call(&mut env);
+                }
+                log_dbg!("Static initialization done");
+            }
+                
+            env.cpu.branch(entry_point_addr);
+
+            return Ok(env)
         }
 
-        env.cpu.branch(entry_point_addr);
-
-        Ok(env)
+        Err("Unable to start".to_string())
     }
 
     fn stack_trace(&self) {

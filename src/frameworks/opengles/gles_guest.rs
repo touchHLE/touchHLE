@@ -82,7 +82,7 @@ fn glGetIntegerv(env: &mut Environment, pname: GLenum, params: MutPtr<GLint>) {
         // This function family can return a huge number of things.
         // TODO: support more possible values.
         let param_count = match pname {
-            gles11::MATRIX_MODE | gles11::TEXTURE_BINDING_2D => 1,
+            gles11::MATRIX_MODE | gles11::MAX_TEXTURE_SIZE | gles11::TEXTURE_BINDING_2D => 1,
             _ => unimplemented!("pname value {:#x}", pname),
         };
         let params = mem.ptr_at_mut(params, param_count);

@@ -360,6 +360,7 @@ impl GLES for GLES1OnGL2 {
             gl21::ARRAY_BUFFER_BINDING,
             gl21::ELEMENT_ARRAY_BUFFER_BINDING,
             gl21::MATRIX_MODE,
+            gl21::MAX_TEXTURE_SIZE,
             gl21::TEXTURE_BINDING_2D
         ]
         .contains(&pname));

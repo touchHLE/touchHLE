@@ -327,6 +327,9 @@ impl MachO {
                             Some(Symbol::Undefined { name: Some(n), .. }) => Some(String::from(n)),
                             // apparently used in libraries?
                             Some(Symbol::Prebound { name: Some(n), .. }) => Some(String::from(n)),
+                            // apparently used within libstdc++ for linking to
+                            // itself, e.g. to "__Znwm". might be a PIC thing
+                            Some(Symbol::Defined { name: Some(n), .. }) => Some(String::from(n)),
                             _ => None,
                         })
                     }

@@ -27,6 +27,9 @@ struct FILE {
 }
 unsafe impl SafeRead for FILE {}
 
+// TODO: Rewrite this to be layered on top of the POSIX I/O implementation, so
+// that we can implement things like fdopen() in future.
+
 struct FileHostObject {
     file: crate::fs::GuestFile,
 }

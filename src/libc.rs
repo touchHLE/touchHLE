@@ -17,6 +17,7 @@ pub mod keymgr;
 pub mod mach_thread_info;
 pub mod mach_time;
 pub mod math;
+pub mod posix_io;
 pub mod pthread;
 pub mod stdio;
 pub mod stdlib;
@@ -27,6 +28,7 @@ pub mod time;
 #[derive(Default)]
 pub struct State {
     keymgr: keymgr::State,
+    posix_io: posix_io::State,
     pthread: pthread::State,
     stdio: stdio::State,
     stdlib: stdlib::State,

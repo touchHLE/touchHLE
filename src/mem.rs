@@ -347,6 +347,15 @@ impl Mem {
         unsafe { ptr.write_unaligned(value) }
     }
 
+    /// C-style `memmove`.
+    pub fn memmove(&mut self, dest: MutVoidPtr, src: ConstVoidPtr, size: GuestUSize) {
+        let src = src.to_bits() as usize;
+        let dest = dest.to_bits() as usize;
+        let size = size as usize;
+        self.bytes_mut()
+            .copy_within(src..src.checked_add(size).unwrap(), dest)
+    }
+
     /// Allocate `size` bytes.
     pub fn alloc(&mut self, size: GuestUSize) -> MutVoidPtr {
         let ptr = Ptr::from_bits(self.allocator.alloc(size));

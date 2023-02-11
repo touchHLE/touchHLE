@@ -26,10 +26,7 @@ fn memcpy(
     src: ConstVoidPtr,
     size: GuestUSize,
 ) -> MutVoidPtr {
-    for i in 0..size {
-        env.mem
-            .write(dest.cast::<u8>() + i, env.mem.read(src.cast::<u8>() + i));
-    }
+    env.mem.memmove(dest, src, size);
     dest
 }
 
@@ -39,21 +36,7 @@ fn memmove(
     src: ConstVoidPtr,
     size: GuestUSize,
 ) -> MutVoidPtr {
-    match src.to_bits().cmp(&dest.to_bits()) {
-        Ordering::Equal => (),
-        Ordering::Less => {
-            for i in (0..size).rev() {
-                env.mem
-                    .write(dest.cast::<u8>() + i, env.mem.read(src.cast::<u8>() + i));
-            }
-        }
-        Ordering::Greater => {
-            for i in 0..size {
-                env.mem
-                    .write(dest.cast::<u8>() + i, env.mem.read(src.cast::<u8>() + i));
-            }
-        }
-    }
+    env.mem.memmove(dest, src, size);
     dest
 }
 

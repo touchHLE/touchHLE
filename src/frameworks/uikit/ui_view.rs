@@ -101,6 +101,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 
     env.framework_state.uikit.ui_view.views.push(this);
 
+
     this
 }
 
@@ -112,6 +113,10 @@ pub const CLASSES: ClassExports = objc_classes! {
 // TODO: setExclusiveTouch
 - (())setExclusiveTouch:(bool)_enabled {
     // TODO: set exclusive touch
+}
+
+- (())layoutSubviews {
+    // On iOS 5.1 and earlier, the default implementation of this method does nothing.
 }
 
 - (())dealloc {

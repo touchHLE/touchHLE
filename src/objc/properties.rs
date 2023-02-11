@@ -15,8 +15,9 @@
 //! See also: [crate::frameworks::foundation::ns_object].
 
 use super::{id, msg, nil, release, retain, SEL};
-use crate::mem::{GuestISize, MutPtr, MutVoidPtr, Ptr};
+use crate::mem::{ConstVoidPtr, GuestISize, GuestUSize, MutPtr, MutVoidPtr, Ptr};
 use crate::Environment;
+use std::cmp::Ordering;
 
 /// Undocumented function (see link above) apparently used by auto-generated
 /// methods for properties to set an ivar and handle reference counting, copying
@@ -60,5 +61,35 @@ pub(super) fn objc_setProperty(
 
     if old != nil {
         release(env, old);
+    }
+}
+
+// note: https://opensource.apple.com/source/objc4/objc4-723/runtime/objc-accessors.mm.auto.html
+//       says that hasStrong is unused.
+pub(super) fn objc_copyStruct(
+    env: &mut Environment,
+    dest: MutVoidPtr,
+    src: ConstVoidPtr,
+    size: GuestUSize,
+    atomic: bool,
+    _hasStrong: bool,
+) {
+    // TODO: implement atomic support
+    assert!(!atomic);
+    // Right now this is a clone of memmove.
+    match src.to_bits().cmp(&dest.to_bits()) {
+        Ordering::Equal => (),
+        Ordering::Less => {
+            for i in (0..size).rev() {
+                env.mem
+                    .write(dest.cast::<u8>() + i, env.mem.read(src.cast::<u8>() + i));
+            }
+        }
+        Ordering::Greater => {
+            for i in 0..size {
+                env.mem
+                    .write(dest.cast::<u8>() + i, env.mem.read(src.cast::<u8>() + i));
+            }
+        }
     }
 }

@@ -10,6 +10,7 @@ use crate::dyld::{export_c_func, FunctionExports};
 use crate::mem::{ConstPtr, MutPtr, MutVoidPtr, SafeRead};
 use crate::{Environment, ThreadID};
 use std::collections::HashMap;
+use std::time::Duration;
 
 #[derive(Default)]
 pub struct State {
@@ -173,6 +174,12 @@ fn pthread_mach_thread_np(env: &mut Environment, thread: pthread_t) -> mach_port
     host_object.thread_id.try_into().unwrap()
 }
 
+// POSIX usleep
+fn usleep(_env: &mut Environment, useconds: u32) {
+    let duration = Duration::from_micros(u64::from(useconds));
+    std::thread::sleep(duration);
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(pthread_attr_init(_)),
     export_c_func!(pthread_attr_setdetachstate(_, _)),
@@ -180,4 +187,5 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(pthread_create(_, _, _, _)),
     export_c_func!(pthread_self()),
     export_c_func!(pthread_mach_thread_np(_)),
+    export_c_func!(usleep(_)),
 ];

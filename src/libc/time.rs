@@ -6,7 +6,7 @@
 //! `time.h`
 
 use crate::dyld::{export_c_func, FunctionExports};
-use crate::mem::MutPtr;
+use crate::mem::{MutPtr, SafeRead};
 use crate::Environment;
 use std::time::SystemTime;
 
@@ -17,6 +17,20 @@ pub struct State {
 
 #[allow(non_camel_case_types)]
 type time_t = i32;
+
+#[repr(C, packed)]
+struct timeval {
+    tv_sec: time_t,
+    tv_usec: u32,
+}
+unsafe impl SafeRead for timeval {}
+
+#[repr(C, packed)]
+struct timezone {
+    tz_minuteswest: i32,
+    tz_dsttime: i32,
+}
+unsafe impl SafeRead for timezone {}
 
 fn time(env: &mut Environment, out: MutPtr<time_t>) -> time_t {
     let time64 = SystemTime::now()
@@ -34,4 +48,16 @@ fn time(env: &mut Environment, out: MutPtr<time_t>) -> time_t {
     time
 }
 
-pub const FUNCTIONS: FunctionExports = &[export_c_func!(time(_))];
+fn gettimeofday(
+    _env: &mut Environment,
+    _timeval: MutPtr<timeval>,
+    _timezone: MutPtr<timezone>,
+) -> i32 {
+    // TODO: actually implement this
+    return 0;
+}
+
+pub const FUNCTIONS: FunctionExports = &[
+    export_c_func!(time(_)),
+    export_c_func!(gettimeofday(_, _)),
+];

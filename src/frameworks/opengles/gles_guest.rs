@@ -596,6 +596,20 @@ fn glCheckFramebufferStatusOES(env: &mut Environment, target: GLenum) -> GLenum 
         gles.CheckFramebufferStatusOES(target)
     })
 }
+fn glDeleteFramebuffersOES(env: &mut Environment, n: GLsizei, framebuffers: MutPtr<GLuint>) {
+    with_ctx_and_mem(env, |gles, mem| {
+        let n_usize: GuestUSize = n.try_into().unwrap();
+        let framebuffers = mem.ptr_at_mut(framebuffers, n_usize);
+        unsafe { gles.DeleteFramebuffersOES(n, framebuffers) }
+    })
+}
+fn glDeleteRenderbuffersOES(env: &mut Environment, n: GLsizei, renderbuffers: MutPtr<GLuint>) {
+    with_ctx_and_mem(env, |gles, mem| {
+        let n_usize: GuestUSize = n.try_into().unwrap();
+        let renderbuffers = mem.ptr_at_mut(renderbuffers, n_usize);
+        unsafe { gles.DeleteRenderbuffersOES(n, renderbuffers) }
+    })
+}
 
 pub const FUNCTIONS: FunctionExports = &[
     // Generic state manipulation
@@ -675,4 +689,6 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(glFramebufferRenderbufferOES(_, _, _, _)),
     export_c_func!(glGetRenderbufferParameterivOES(_, _, _)),
     export_c_func!(glCheckFramebufferStatusOES(_)),
+    export_c_func!(glDeleteFramebuffersOES(_, _)),
+    export_c_func!(glDeleteRenderbuffersOES(_, _)),
 ];

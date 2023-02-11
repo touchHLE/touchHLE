@@ -887,4 +887,10 @@ impl GLES for GLES1OnGL2 {
     unsafe fn CheckFramebufferStatusOES(&mut self, target: GLenum) -> GLenum {
         gl21::CheckFramebufferStatusEXT(target)
     }
+    unsafe fn DeleteFramebuffersOES(&mut self, n: GLsizei, framebuffers: *mut GLuint) {
+        gl21::DeleteFramebuffersEXT(n, framebuffers)
+    }
+    unsafe fn DeleteRenderbuffersOES(&mut self, n: GLsizei, renderbuffers: *mut GLuint) {
+        gl21::DeleteRenderbuffersEXT(n, renderbuffers)
+    }
 }

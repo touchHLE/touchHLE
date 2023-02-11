@@ -202,4 +202,6 @@ pub trait GLES {
         params: *mut GLint,
     );
     unsafe fn CheckFramebufferStatusOES(&mut self, target: GLenum) -> GLenum;
+    unsafe fn DeleteFramebuffersOES(&mut self, n: GLsizei, framebuffers: *mut GLuint);
+    unsafe fn DeleteRenderbuffersOES(&mut self, n: GLsizei, renderbuffers: *mut GLuint);
 }

@@ -94,6 +94,31 @@ fn strcmp(env: &mut Environment, a: ConstPtr<u8>, b: ConstPtr<u8>) -> i32 {
     }
 }
 
+fn strncmp(env: &mut Environment, a: ConstPtr<u8>, b: ConstPtr<u8>, n: GuestUSize) -> i32 {
+    if n == 0 {
+        return 0;
+    }
+
+    let mut offset = 0;
+    loop {
+        let char_a = env.mem.read(a + offset);
+        let char_b = env.mem.read(b + offset);
+        offset += 1;
+
+        match char_a.cmp(&char_b) {
+            Ordering::Less => return -1,
+            Ordering::Greater => return 1,
+            Ordering::Equal => {
+                if offset == n || char_a == b'\0' {
+                    return 0;
+                } else {
+                    continue;
+                }
+            }
+        }
+    }
+}
+
 fn strtok(env: &mut Environment, s: MutPtr<u8>, sep: ConstPtr<u8>) -> MutPtr<u8> {
     let s = if s.is_null() {
         let state = env.libc_state.string.strtok.unwrap();
@@ -169,6 +194,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(strcat(_, _)),
     export_c_func!(strdup(_)),
     export_c_func!(strcmp(_, _)),
+    export_c_func!(strncmp(_, _, _)),
     export_c_func!(strtok(_, _)),
     export_c_func!(strstr(_, _)),
 ];

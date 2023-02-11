@@ -39,6 +39,7 @@ use classes::{ClassHostObject, UnimplementedClass, CLASS_LISTS};
 use messages::{objc_msgSend, objc_msgSendSuper2, objc_msgSend_stret};
 use methods::method_list_t;
 use objects::{objc_object, HostObjectEntry};
+use properties::objc_copyStruct;
 use properties::objc_setProperty;
 
 /// Main type holding Objective-C runtime state.
@@ -72,4 +73,5 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(objc_msgSend_stret(_, _, _)),
     export_c_func!(objc_msgSendSuper2(_, _)),
     export_c_func!(objc_setProperty(_, _, _, _, _, _)),
+    export_c_func!(objc_copyStruct(_, _, _, _, _)),
 ];

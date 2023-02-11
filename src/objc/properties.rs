@@ -15,7 +15,7 @@
 //! See also: [crate::frameworks::foundation::ns_object].
 
 use super::{id, msg, nil, release, retain, SEL};
-use crate::mem::{GuestISize, MutPtr, MutVoidPtr, Ptr};
+use crate::mem::{ConstVoidPtr, GuestISize, GuestUSize, MutPtr, MutVoidPtr, Ptr};
 use crate::Environment;
 
 /// Undocumented function (see link above) apparently used by auto-generated
@@ -61,4 +61,19 @@ pub(super) fn objc_setProperty(
     if old != nil {
         release(env, old);
     }
+}
+
+// note: https://opensource.apple.com/source/objc4/objc4-723/runtime/objc-accessors.mm.auto.html
+//       says that hasStrong is unused.
+pub(super) fn objc_copyStruct(
+    env: &mut Environment,
+    dest: MutVoidPtr,
+    src: ConstVoidPtr,
+    size: GuestUSize,
+    atomic: bool,
+    _hasStrong: bool,
+) {
+    // TODO: implement atomic support
+    assert!(!atomic);
+    env.mem.memmove(dest, src, size);
 }

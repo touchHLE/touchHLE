@@ -145,6 +145,32 @@ pub(super) const LIGHT_PARAMS: &[(GLenum, u8)] = &[
     (gl21::QUADRATIC_ATTENUATION, 1),
 ];
 
+/// List of `glTexEnv` parameters for the `GL_TEXTURE_ENV` target shared by
+/// OpenGL ES 1.1 and OpenGL 2.1, together with a boolean indicating whether
+/// they are integer/enum (true) or float/fixed-point (false), and the number of
+/// values they take.
+pub(super) const TEX_ENV_PARAMS: &[(GLenum, bool, u8)] = &[
+    (gl21::TEXTURE_ENV_MODE, true, 1),
+    (gl21::COORD_REPLACE, true, 1),
+    (gl21::COMBINE_RGB, true, 1),
+    (gl21::COMBINE_ALPHA, true, 1),
+    (gl21::SRC0_RGB, true, 1),
+    (gl21::SRC1_RGB, true, 1),
+    (gl21::SRC2_RGB, true, 1),
+    (gl21::SRC0_ALPHA, true, 1),
+    (gl21::SRC1_ALPHA, true, 1),
+    (gl21::SRC2_ALPHA, true, 1),
+    (gl21::OPERAND0_RGB, true, 1),
+    (gl21::OPERAND1_RGB, true, 1),
+    (gl21::OPERAND2_RGB, true, 1),
+    (gl21::OPERAND0_ALPHA, true, 1),
+    (gl21::OPERAND1_ALPHA, true, 1),
+    (gl21::OPERAND2_ALPHA, true, 1),
+    (gl21::TEXTURE_ENV_COLOR, false, 4),
+    (gl21::RGB_SCALE, false, 1),
+    (gl21::ALPHA_SCALE, false, 1),
+];
+
 pub struct GLES1OnGL2 {
     gl_ctx: GLContext,
     pointer_is_fixed_point: [bool; ARRAYS.len()],
@@ -723,6 +749,67 @@ impl GLES for GLES1OnGL2 {
             type_,
             pixels,
         )
+    }
+    unsafe fn TexEnvf(&mut self, target: GLenum, pname: GLenum, param: GLfloat) {
+        // TODO: GL_POINT_SPRITE_OES
+        assert!(target == gl21::TEXTURE_ENV);
+        assert!(TEX_ENV_PARAMS
+            .iter()
+            .any(|&(pname2, _, pcount)| pname == pname2 && pcount == 1));
+        gl21::TexEnvf(target, pname, param);
+    }
+    unsafe fn TexEnvx(&mut self, target: GLenum, pname: GLenum, param: GLfixed) {
+        // TODO: GL_POINT_SPRITE_OES
+        assert!(target == gl21::TEXTURE_ENV);
+        let &(_, is_integer, _) = TEX_ENV_PARAMS
+            .iter()
+            .find(|&&(pname2, _, pcount)| pname == pname2 && pcount == 1)
+            .unwrap();
+        // The conversion behaviour for fixed-point to integer is special.
+        if is_integer {
+            gl21::TexEnvi(target, pname, param);
+        } else {
+            gl21::TexEnvf(target, pname, fixed_to_float(param));
+        }
+    }
+    unsafe fn TexEnvi(&mut self, target: GLenum, pname: GLenum, param: GLint) {
+        // TODO: GL_POINT_SPRITE_OES
+        assert!(target == gl21::TEXTURE_ENV);
+        assert!(TEX_ENV_PARAMS
+            .iter()
+            .any(|&(pname2, _, pcount)| pname == pname2 && pcount == 1));
+        gl21::TexEnvi(target, pname, param);
+    }
+    unsafe fn TexEnvfv(&mut self, target: GLenum, pname: GLenum, params: *const GLfloat) {
+        // TODO: GL_POINT_SPRITE_OES
+        assert!(target == gl21::TEXTURE_ENV);
+        assert!(TEX_ENV_PARAMS.iter().any(|&(pname2, _, _)| pname == pname2));
+        gl21::TexEnvfv(target, pname, params);
+    }
+    unsafe fn TexEnvxv(&mut self, target: GLenum, pname: GLenum, params: *const GLfixed) {
+        // TODO: GL_POINT_SPRITE_OES
+        assert!(target == gl21::TEXTURE_ENV);
+        let &(_, is_integer, pcount) = TEX_ENV_PARAMS
+            .iter()
+            .find(|&&(pname2, _, _)| pname == pname2)
+            .unwrap();
+        // The conversion behaviour for fixed-point to integer is special.
+        if is_integer {
+            gl21::TexEnviv(target, pname, params.cast());
+        } else {
+            let mut params_float = [0.0; 4];
+            #[allow(clippy::needless_range_loop)]
+            for i in 0..(pcount as usize) {
+                params_float[i] = fixed_to_float(params.add(i).read())
+            }
+            gl21::TexEnvfv(target, pname, params_float.as_ptr());
+        }
+    }
+    unsafe fn TexEnviv(&mut self, target: GLenum, pname: GLenum, params: *const GLint) {
+        // TODO: GL_POINT_SPRITE_OES
+        assert!(target == gl21::TEXTURE_ENV);
+        assert!(TEX_ENV_PARAMS.iter().any(|&(pname2, _, _)| pname == pname2));
+        gl21::TexEnviv(target, pname, params);
     }
 
     // Matrix stack operations

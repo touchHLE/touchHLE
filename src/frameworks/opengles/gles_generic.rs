@@ -123,6 +123,12 @@ pub trait GLES {
         type_: GLenum,
         pixels: *const GLvoid,
     );
+    unsafe fn TexEnvf(&mut self, target: GLenum, pname: GLenum, param: GLfloat);
+    unsafe fn TexEnvx(&mut self, target: GLenum, pname: GLenum, param: GLfixed);
+    unsafe fn TexEnvi(&mut self, target: GLenum, pname: GLenum, param: GLint);
+    unsafe fn TexEnvfv(&mut self, target: GLenum, pname: GLenum, params: *const GLfloat);
+    unsafe fn TexEnvxv(&mut self, target: GLenum, pname: GLenum, params: *const GLfixed);
+    unsafe fn TexEnviv(&mut self, target: GLenum, pname: GLenum, params: *const GLint);
 
     // Matrix stack operations
     unsafe fn MatrixMode(&mut self, mode: GLenum);

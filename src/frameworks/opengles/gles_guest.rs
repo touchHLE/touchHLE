@@ -523,6 +523,57 @@ fn glTexImage2D(
         )
     })
 }
+fn glTexEnvf(env: &mut Environment, target: GLenum, pname: GLenum, param: GLfloat) {
+    with_ctx_and_mem(env, |gles, _mem| unsafe {
+        gles.TexEnvf(target, pname, param)
+    })
+}
+fn glTexEnvx(env: &mut Environment, target: GLenum, pname: GLenum, param: GLfixed) {
+    with_ctx_and_mem(env, |gles, _mem| unsafe {
+        gles.TexEnvx(target, pname, param)
+    })
+}
+fn glTexEnvi(env: &mut Environment, target: GLenum, pname: GLenum, param: GLint) {
+    with_ctx_and_mem(env, |gles, _mem| unsafe {
+        gles.TexEnvi(target, pname, param)
+    })
+}
+fn glTexEnvfv(env: &mut Environment, target: GLenum, pname: GLenum, params: ConstPtr<GLfloat>) {
+    // TODO: GL_POINT_SPRITE_OES
+    assert!(target == gles11::TEXTURE_ENV);
+    let &(_, _, pcount) = super::gles1_on_gl2::TEX_ENV_PARAMS
+        .iter()
+        .find(|&&(pname2, _, _)| pname == pname2)
+        .unwrap();
+    with_ctx_and_mem(env, |gles, mem| {
+        let params = mem.ptr_at(params, pcount.into());
+        unsafe { gles.TexEnvfv(target, pname, params) }
+    })
+}
+fn glTexEnvxv(env: &mut Environment, target: GLenum, pname: GLenum, params: ConstPtr<GLfixed>) {
+    // TODO: GL_POINT_SPRITE_OES
+    assert!(target == gles11::TEXTURE_ENV);
+    let &(_, _, pcount) = super::gles1_on_gl2::TEX_ENV_PARAMS
+        .iter()
+        .find(|&&(pname2, _, _)| pname == pname2)
+        .unwrap();
+    with_ctx_and_mem(env, |gles, mem| {
+        let params = mem.ptr_at(params, pcount.into());
+        unsafe { gles.TexEnvxv(target, pname, params) }
+    })
+}
+fn glTexEnviv(env: &mut Environment, target: GLenum, pname: GLenum, params: ConstPtr<GLint>) {
+    // TODO: GL_POINT_SPRITE_OES
+    assert!(target == gles11::TEXTURE_ENV);
+    let &(_, _, pcount) = super::gles1_on_gl2::TEX_ENV_PARAMS
+        .iter()
+        .find(|&&(pname2, _, _)| pname == pname2)
+        .unwrap();
+    with_ctx_and_mem(env, |gles, mem| {
+        let params = mem.ptr_at(params, pcount.into());
+        unsafe { gles.TexEnviv(target, pname, params) }
+    })
+}
 
 // OES_framebuffer_object
 fn glGenFramebuffersOES(env: &mut Environment, n: GLsizei, framebuffers: MutPtr<GLuint>) {
@@ -664,6 +715,12 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(glBindTexture(_, _)),
     export_c_func!(glTexParameteri(_, _, _)),
     export_c_func!(glTexImage2D(_, _, _, _, _, _, _, _, _)),
+    export_c_func!(glTexEnvf(_, _, _)),
+    export_c_func!(glTexEnvx(_, _, _)),
+    export_c_func!(glTexEnvi(_, _, _)),
+    export_c_func!(glTexEnvfv(_, _, _)),
+    export_c_func!(glTexEnvxv(_, _, _)),
+    export_c_func!(glTexEnviv(_, _, _)),
     // OES_framebuffer_object
     export_c_func!(glGenFramebuffersOES(_, _)),
     export_c_func!(glGenRenderbuffersOES(_, _)),

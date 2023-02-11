@@ -23,6 +23,7 @@ use std::collections::HashMap;
 use std::string::FromUtf16Error;
 
 pub type NSStringEncoding = NSUInteger;
+pub const NSASCIIStringEncoding: NSUInteger = 1;
 pub const NSUTF8StringEncoding: NSUInteger = 4;
 pub const NSUnicodeStringEncoding: NSUInteger = 10;
 pub const NSUTF16StringEncoding: NSUInteger = NSUnicodeStringEncoding;
@@ -281,7 +282,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (bool)getCString:(MutPtr<u8>)buffer
          maxLength:(NSUInteger)buffer_size
           encoding:(NSStringEncoding)encoding {
-    assert!(encoding == NSUTF8StringEncoding); // TODO: other encodings
+    assert!(encoding == NSUTF8StringEncoding || encoding == NSASCIIStringEncoding); // TODO: other encodings
 
     let src = to_rust_string(env, this);
     let dest = env.mem.bytes_at_mut(buffer, buffer_size);

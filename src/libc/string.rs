@@ -111,6 +111,75 @@ fn strcmp(env: &mut Environment, a: ConstPtr<u8>, b: ConstPtr<u8>) -> i32 {
     }
 }
 
+fn strncmp(env: &mut Environment, a: ConstPtr<u8>, b: ConstPtr<u8>, n: GuestUSize) -> i32 {
+    if n == 0 {
+        return 0;
+    }
+
+    let mut offset = 0;
+    loop {
+        let char_a = env.mem.read(a + offset);
+        let char_b = env.mem.read(b + offset);
+        offset += 1;
+
+        match char_a.cmp(&char_b) {
+            Ordering::Less => return -1,
+            Ordering::Greater => return 1,
+            Ordering::Equal => {
+                if offset == n || char_a == b'\0' {
+                    return 0;
+                } else {
+                    continue;
+                }
+            }
+        }
+    }
+}
+
+// reference: https://opensource.apple.com/source/tcl/tcl-10/tcl/compat/strstr.c.auto.html
+fn strstr(env: &mut Environment, string: ConstPtr<u8>, substring: ConstPtr<u8>) -> ConstPtr<u8> {
+    let char_substring = env.mem.read(substring);
+
+    if char_substring == 0 {
+        return string;
+    }
+
+    let mut offset = 0;
+    loop {
+        // Try to find the first matching character.
+
+        let char_string = env.mem.read(string + offset);
+
+        if char_string == 0 {
+            // We reached the end of the string, and no match was found.
+            return Ptr::null(); // NULL
+        }
+
+        if char_string == char_substring {
+            // We found a match - let's compare the rest of the substring to see if it matches too.
+
+            let mut inner_offset = 1;
+
+            loop {
+                let char_substring_inner = env.mem.read(substring + inner_offset);
+                let char_string_inner = env.mem.read(string + offset + inner_offset);
+
+                if char_substring == 0 {
+                    // The substring is found in the string.
+                    return string + offset;
+                }
+                if char_string_inner != char_substring_inner {
+                    break;
+                }
+
+                inner_offset += 1;
+            }
+        }
+
+        offset += 1;
+    }
+}
+
 fn strtok(env: &mut Environment, s: MutPtr<u8>, sep: ConstPtr<u8>) -> MutPtr<u8> {
     let s = if s.is_null() {
         let state = env.libc_state.string.strtok.unwrap();
@@ -165,5 +234,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(strcat(_, _)),
     export_c_func!(strdup(_)),
     export_c_func!(strcmp(_, _)),
+    export_c_func!(strncmp(_, _, _)),
+    export_c_func!(strstr(_, _)),
     export_c_func!(strtok(_, _)),
 ];

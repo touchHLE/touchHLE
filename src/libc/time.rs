@@ -57,7 +57,5 @@ fn gettimeofday(
     return 0;
 }
 
-pub const FUNCTIONS: FunctionExports = &[
-    export_c_func!(time(_)),
-    export_c_func!(gettimeofday(_, _)),
-];
+pub const FUNCTIONS: FunctionExports =
+    &[export_c_func!(time(_)), export_c_func!(gettimeofday(_, _))];

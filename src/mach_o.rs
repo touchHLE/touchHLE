@@ -20,7 +20,7 @@
 
 use crate::fs::{Fs, GuestPath};
 use crate::mem::{Mem, Ptr};
-use mach_object::{DyLib, LoadCommand, MachCommand, OFile, Symbol, SymbolIter};
+use mach_object::{DyLib, LoadCommand, MachCommand, OFile, Symbol, SymbolIter, ThreadState};
 use std::collections::HashMap;
 use std::io::{Cursor, Seek, SeekFrom};
 
@@ -38,6 +38,8 @@ pub struct MachO {
     /// List of addresses and names of external relocations for the dynamic
     /// linker to resolve.
     pub external_relocations: Vec<(u32, String)>,
+    /// Address/program counter value for the entry point.
+    pub entry_point_pc: Option<u32>,
 }
 
 #[derive(Debug)]
@@ -212,6 +214,7 @@ impl MachO {
         let mut exported_symbols = HashMap::new();
         let mut indirect_undef_symbols: Vec<Option<String>> = Vec::new();
         let mut external_relocations: Vec<(u32, String)> = Vec::new();
+        let mut entry_point_pc: Option<u32> = None;
 
         for MachCommand(command, _size) in commands {
             match command {
@@ -367,6 +370,20 @@ impl MachO {
                 LoadCommand::LoadDyLib(DyLib { name, .. }) => {
                     dynamic_libraries.push(String::from(&*name));
                 }
+                LoadCommand::UnixThread { state, .. } => {
+                    let ThreadState::Arm {
+                        __r: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                        __sp: 0,
+                        __lr: 0,
+                        __pc: pc,
+                        __cpsr: 0,
+                    } = state else {
+                        panic!("Unexpected initial thread state in {:?}: {:?}", name, state);
+                    };
+                    // There should only be a single initial thread state.
+                    assert!(entry_point_pc.is_none());
+                    entry_point_pc = Some(pc);
+                }
                 // LoadCommand::DyldInfo is apparently a newer thing that 2008
                 // games don't have. Ignore for now? Unsure if/when iOS got it.
                 LoadCommand::DyldInfo { .. } => {
@@ -420,6 +437,7 @@ impl MachO {
             sections,
             exported_symbols,
             external_relocations,
+            entry_point_pc,
         })
     }
 

@@ -340,12 +340,13 @@ impl Environment {
             };
         }
 
-        let entry_point_addr = *executable.exported_symbols.get("start").ok_or_else(|| {
-            "Mach-O file has no 'start' symbol, perhaps it is not an executable?".to_string()
+        let entry_point_addr = executable.entry_point_pc.ok_or_else(|| {
+            "Mach-O file does not specify an entry point PC, perhaps it is not an executable?"
+                .to_string()
         })?;
         let entry_point_addr = abi::GuestFunction::from_addr_with_thumb_bit(entry_point_addr);
 
-        println!("Address of start function: {:?}", entry_point_addr);
+        log_dbg!("Address of start function: {:?}", entry_point_addr);
 
         let mut bins = dylibs;
         bins.insert(0, executable);

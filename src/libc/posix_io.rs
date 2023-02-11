@@ -10,7 +10,7 @@ use crate::dyld::{export_c_func, FunctionExports};
 use crate::fs::{GuestFile, GuestOpenOptions, GuestPath};
 use crate::mem::{ConstPtr, GuestISize, GuestUSize, MutVoidPtr};
 use crate::Environment;
-use std::io::Read;
+use std::io::{Read, Seek, SeekFrom};
 
 #[derive(Default)]
 pub struct State {
@@ -178,6 +178,33 @@ fn read(
     }
 }
 
+#[allow(non_camel_case_types)]
+type off_t = i64;
+const SEEK_SET: i32 = 0;
+const SEEK_CUR: i32 = 1;
+const SEEK_END: i32 = 2;
+fn lseek(env: &mut Environment, fd: FileDescriptor, offset: off_t, whence: i32) -> off_t {
+    // TODO: error handling for unknown fd?
+    let file = env.libc_state.posix_io.file_for_fd(fd).unwrap();
+
+    let from = match whence {
+        // not sure whether offset is treated as signed or unsigned when using
+        // SEEK_SET, so `.try_into()` seems safer.
+        SEEK_SET => SeekFrom::Start(offset.try_into().unwrap()),
+        SEEK_CUR => SeekFrom::Current(offset),
+        SEEK_END => SeekFrom::End(offset),
+        _ => panic!("Unsupported \"whence\" parameter to seek(): {}", whence),
+    };
+
+    let res = match file.file.seek(from) {
+        Ok(new_offset) => new_offset.try_into().unwrap(),
+        // TODO: set errno
+        Err(_) => -1,
+    };
+    log_dbg!("fseek({:?}, {:#x}, {}) => {}", fd, offset, whence, res);
+    res
+}
+
 fn close(env: &mut Environment, fd: FileDescriptor) -> i32 {
     // TODO: error handling for unknown fd?
     let file = env.libc_state.posix_io.files[fd_to_file_idx(fd)]
@@ -201,5 +228,6 @@ fn close(env: &mut Environment, fd: FileDescriptor) -> i32 {
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(open(_, _, _)),
     export_c_func!(read(_, _, _)),
+    export_c_func!(lseek(_, _, _)),
     export_c_func!(close(_)),
 ];

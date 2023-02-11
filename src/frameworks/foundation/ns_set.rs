@@ -5,6 +5,7 @@
  */
 //! The `NSSet` class cluster, including `NSMutableSet` and `NSCountedSet`.
 
+use super::ns_array;
 use super::ns_dictionary::DictionaryHostObject;
 use super::ns_fast_enumeration::NSFastEnumerationState;
 use super::NSUInteger;
@@ -83,6 +84,19 @@ pub const CLASSES: ClassExports = objc_classes! {
 // TODO: more init methods, etc
 
 // TODO: accessors
+
+- (id)anyObject {
+    let object_or_none = env.objc.borrow_mut::<SetHostObject>(this).dict.iter_keys().next();
+    match object_or_none {
+        Some(object) => object,
+        None => nil
+    }
+}
+
+- (id)allObjects {
+    let objects = env.objc.borrow_mut::<SetHostObject>(this).dict.iter_keys().collect();
+    ns_array::from_vec(env, objects)
+}
 
 // NSFastEnumeration implementation
 - (NSUInteger)countByEnumeratingWithState:(MutPtr<NSFastEnumerationState>)state

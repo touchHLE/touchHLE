@@ -408,8 +408,16 @@ impl GLES for GLES1OnGL2 {
         .contains(&dfactor));
         gl21::BlendFunc(sfactor, dfactor);
     }
+    unsafe fn CullFace(&mut self, mode: GLenum) {
+        assert!([gl21::FRONT, gl21::BACK, gl21::FRONT_AND_BACK].contains(&mode));
+        gl21::CullFace(mode);
+    }
     unsafe fn DepthMask(&mut self, flag: GLboolean) {
         gl21::DepthMask(flag)
+    }
+    unsafe fn FrontFace(&mut self, mode: GLenum) {
+        assert!(mode == gl21::CW || mode == gl21::CCW);
+        gl21::FrontFace(mode);
     }
     unsafe fn ShadeModel(&mut self, mode: GLenum) {
         assert!(mode == gl21::FLAT || mode == gl21::SMOOTH);

@@ -32,7 +32,9 @@ pub trait GLES {
     unsafe fn AlphaFunc(&mut self, func: GLenum, ref_: GLclampf);
     unsafe fn AlphaFuncx(&mut self, func: GLenum, ref_: GLclampx);
     unsafe fn BlendFunc(&mut self, sfactor: GLenum, dfactor: GLenum);
+    unsafe fn CullFace(&mut self, mode: GLenum);
     unsafe fn DepthMask(&mut self, flag: GLboolean);
+    unsafe fn FrontFace(&mut self, mode: GLenum);
     unsafe fn ShadeModel(&mut self, mode: GLenum);
     unsafe fn Scissor(&mut self, x: GLint, y: GLint, width: GLsizei, height: GLsizei);
     unsafe fn Viewport(&mut self, x: GLint, y: GLint, width: GLsizei, height: GLsizei);

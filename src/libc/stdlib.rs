@@ -157,7 +157,7 @@ fn getenv(env: &mut Environment, name: ConstPtr<u8>) -> MutPtr<u8> {
         name,
         name_cstr,
         value,
-        std::str::from_utf8(env.mem.cstr_at(value)),
+        env.mem.cstr_at_utf8(value),
     );
     // Caller should not modify the result
     value
@@ -176,7 +176,7 @@ fn setenv(env: &mut Environment, name: ConstPtr<u8>, value: ConstPtr<u8>, overwr
     log_dbg!(
         "Stored new value {:?} ({:?}) for environment variable {:?}",
         value,
-        std::str::from_utf8(env.mem.cstr_at(value)),
+        env.mem.cstr_at_utf8(value),
         std::str::from_utf8(name_cstr),
     );
     0 // success

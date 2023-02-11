@@ -51,7 +51,7 @@ impl GuestArg for SEL {
 impl SEL {
     pub fn as_str(self, mem: &Mem) -> &str {
         // selectors are probably always UTF-8 but this hasn't been verified
-        mem.cstr_at_utf8(self.0)
+        mem.cstr_at_utf8(self.0).unwrap()
     }
 }
 
@@ -84,7 +84,7 @@ impl ObjC {
     /// Register a selector from the application binary. Must be a
     /// static-lifetime constant string.
     pub(super) fn register_bin_selector(&mut self, sel_cstr: ConstPtr<u8>, mem: &Mem) -> SEL {
-        let sel_str = mem.cstr_at_utf8(sel_cstr);
+        let sel_str = mem.cstr_at_utf8(sel_cstr).unwrap();
 
         if let Some(existing_sel) = self.lookup_selector(sel_str) {
             existing_sel

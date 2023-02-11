@@ -392,10 +392,12 @@ impl Mem {
         self.bytes_at(ptr, len)
     }
 
-    /// Get a C string (null-terminated) as a string slice, panicking if it is
-    /// not UTF-8. The null terminator is not included in the slice.
-    pub fn cstr_at_utf8<const MUT: bool>(&self, ptr: Ptr<u8, MUT>) -> &str {
-        std::str::from_utf8(self.cstr_at(ptr)).unwrap()
+    /// Get a C string (null-terminated) as a string slice, if it is valid
+    /// UTF-8, otherwise returning a byte slice. The null terminator is not
+    /// included in the slice.
+    pub fn cstr_at_utf8<const MUT: bool>(&self, ptr: Ptr<u8, MUT>) -> Result<&str, &[u8]> {
+        let bytes = self.cstr_at(ptr);
+        std::str::from_utf8(bytes).map_err(|_| bytes)
     }
 
     /// Permanently mark a region of address space as being unusable to the

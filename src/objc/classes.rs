@@ -347,7 +347,7 @@ impl ClassHostObject {
             ..
         } = mem.read(data);
 
-        let name = mem.cstr_at_utf8(name).to_string();
+        let name = mem.cstr_at_utf8(name).unwrap().to_string();
 
         let mut host_object = ClassHostObject {
             name,
@@ -529,7 +529,7 @@ impl ObjC {
             let cat_ptr = mem.read(base + i);
             let data = mem.read(cat_ptr);
 
-            let name = mem.cstr_at_utf8(data.name);
+            let name = mem.cstr_at_utf8(data.name).unwrap();
             let class = data.class;
 
             // TODO: call ClassHostObject::add_methods_from_bin, though the

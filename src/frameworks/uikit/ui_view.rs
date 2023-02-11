@@ -104,6 +104,11 @@ pub const CLASSES: ClassExports = objc_classes! {
     this
 }
 
+// TODO: setMultipleTouchEnabled
+- (())setMultipleTouchEnabled:(bool)_enabled {
+    // TODO: enable multitouch
+}
+
 - (())dealloc {
     let &mut UIViewHostObject { layer, .. } = env.objc.borrow_mut(this);
     release(env, layer);

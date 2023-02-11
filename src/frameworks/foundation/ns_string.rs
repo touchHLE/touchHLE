@@ -14,7 +14,8 @@ use crate::frameworks::uikit::ui_font::{
 use crate::fs::GuestPath;
 use crate::mem::{ConstPtr, Mem, MutPtr, MutVoidPtr, SafeRead};
 use crate::objc::{
-    autorelease, id, msg, msg_class, objc_classes, retain, Class, ClassExports, HostObject, ObjC,
+    autorelease, id, msg, msg_class, nil, objc_classes, retain, Class, ClassExports, HostObject,
+    ObjC,
 };
 use crate::Environment;
 use std::borrow::Cow;
@@ -432,6 +433,28 @@ pub const CLASSES: ClassExports = objc_classes! {
     let result_ns_string = msg_class![env; _touchHLE_NSString alloc];
     *env.objc.borrow_mut(result_ns_string) = StringHostObject::Utf16(result);
     autorelease(env, result_ns_string)
+}
+
+- (id)stringByAppendingString:(id)other { // NSString*
+    assert!(other != nil); // TODO: raise exception
+
+    // TODO: ideally, don't convert to UTF-16 here
+    let this_len: NSUInteger = msg![env; this length];
+    let other_len: NSUInteger = msg![env; other length];
+    let mut new_utf16 = Vec::with_capacity((this_len + other_len) as usize);
+    for_each_code_unit(env, this, |_idx, c| {
+        new_utf16.push(c);
+    });
+    for_each_code_unit(env, other, |_idx, c| {
+        new_utf16.push(c);
+    });
+
+    // TODO: For a foreign subclass of NSString, do we have to return that
+    // subclass? The signature implies this isn't the case and it's probably not
+    // worth the effort, but it's an interesting question.
+    let class = env.objc.get_known_class("_touchHLE_NSString", &mut env.mem);
+    let host_object = Box::new(StringHostObject::Utf16(new_utf16));
+    env.objc.alloc_object(class, host_object, &mut env.mem)
 }
 
 - (id)stringByDeletingLastPathComponent {

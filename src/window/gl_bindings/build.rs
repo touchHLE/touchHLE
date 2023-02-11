@@ -21,7 +21,11 @@ fn main() {
         (2, 1),
         Profile::Compatibility,
         Fallbacks::None,
-        ["GL_EXT_framebuffer_object", "GL_EXT_framebuffer_blit"],
+        [
+            "GL_EXT_framebuffer_object",
+            "GL_EXT_framebuffer_blit",
+            "GL_EXT_texture_filter_anisotropic",
+        ],
     )
     .write_bindings(GlobalGenerator, &mut file)
     .unwrap();
@@ -32,7 +36,11 @@ fn main() {
         (1, 1),
         Profile::Core,
         Fallbacks::None,
-        ["GL_OES_framebuffer_object", "GL_OES_rgb8_rgba8"],
+        [
+            "GL_OES_framebuffer_object",
+            "GL_OES_rgb8_rgba8",
+            "GL_EXT_texture_filter_anisotropic",
+        ],
     )
     .write_bindings(GlobalGenerator, &mut file)
     .unwrap();

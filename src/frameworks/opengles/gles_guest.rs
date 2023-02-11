@@ -476,6 +476,11 @@ fn glTexParameteri(env: &mut Environment, target: GLenum, pname: GLenum, param: 
         gles.TexParameteri(target, pname, param)
     })
 }
+fn glTexParameterf(env: &mut Environment, target: GLenum, pname: GLenum, param: GLfloat) {
+    with_ctx_and_mem(env, |gles, _mem| unsafe {
+        gles.TexParameterf(target, pname, param)
+    })
+}
 fn glTexImage2D(
     env: &mut Environment,
     target: GLenum,
@@ -659,6 +664,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(glDeleteTextures(_, _)),
     export_c_func!(glBindTexture(_, _)),
     export_c_func!(glTexParameteri(_, _, _)),
+    export_c_func!(glTexParameterf(_, _, _)),
     export_c_func!(glTexImage2D(_, _, _, _, _, _, _, _, _)),
     // OES_framebuffer_object
     export_c_func!(glGenFramebuffersOES(_, _)),

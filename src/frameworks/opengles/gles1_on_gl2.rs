@@ -665,6 +665,14 @@ impl GLES for GLES1OnGL2 {
         );
         gl21::TexParameteri(target, pname, param);
     }
+    unsafe fn TexParameterf(&mut self, target: GLenum, pname: GLenum, param: GLfloat) {
+        assert!(target == gl21::TEXTURE_2D);
+        assert!(
+            pname == gl21::TEXTURE_MAX_ANISOTROPY_EXT
+                || pname == gl21::MAX_TEXTURE_MAX_ANISOTROPY_EXT
+        );
+        gl21::TexParameterf(target, pname, param);
+    }
     unsafe fn TexImage2D(
         &mut self,
         target: GLenum,

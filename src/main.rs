@@ -341,7 +341,6 @@ impl Environment {
         }
 
         if let mach_object::ThreadState::Arm { __pc, .. } = executable.thread_state {
-                
             let entry_point_addr = abi::GuestFunction::from_addr_with_thumb_bit(__pc);
 
             println!("Address of entry point function: {:?}", entry_point_addr);
@@ -405,7 +404,8 @@ impl Environment {
             if let Some(mod_init_func) = env.bins[0].get_section("__mod_init_func") {
                 log_dbg!("Calling static initializers for {:?}", env.bins[0].name);
                 assert!(mod_init_func.size % 4 == 0);
-                let base: mem::ConstPtr<abi::GuestFunction> = mem::Ptr::from_bits(mod_init_func.addr);
+                let base: mem::ConstPtr<abi::GuestFunction> =
+                    mem::Ptr::from_bits(mod_init_func.addr);
                 let count = mod_init_func.size / 4;
                 for i in 0..count {
                     let func = env.mem.read(base + i);
@@ -413,10 +413,10 @@ impl Environment {
                 }
                 log_dbg!("Static initialization done");
             }
-                
+
             env.cpu.branch(entry_point_addr);
 
-            return Ok(env)
+            return Ok(env);
         }
 
         Err("Unable to start".to_string())

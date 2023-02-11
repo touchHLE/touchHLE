@@ -6,6 +6,7 @@
 //! The `NSString` class cluster, including `NSMutableString`.
 
 use super::ns_array;
+use super::NSInteger;
 use super::NSUInteger;
 use crate::frameworks::core_graphics::{CGRect, CGSize};
 use crate::frameworks::uikit::ui_font::{
@@ -22,6 +23,7 @@ use std::collections::HashMap;
 use std::string::FromUtf16Error;
 
 pub type NSStringEncoding = NSUInteger;
+pub const NSASCIIStringEncoding: NSUInteger = 1;
 pub const NSUTF8StringEncoding: NSUInteger = 4;
 pub const NSUnicodeStringEncoding: NSUInteger = 10;
 pub const NSUTF16StringEncoding: NSUInteger = NSUnicodeStringEncoding;
@@ -269,6 +271,12 @@ pub const CLASSES: ClassExports = objc_classes! {
     to_rust_string(env, this) == to_rust_string(env, other)
 }
 
+- (NSInteger)compare:(id)_string options:(NSUInteger)_options { // NSString*, NSStringCompareOptions, returns NSComparisonResult
+    // TODO: actually implement this
+    // NSOrderedAscending = -1, NSOrderedSame = 0, NSOrderedDescending = 1
+    return 0; // always returning NSOrderedSame
+}
+
 // NSCopying implementation
 - (id)copyWithZone:(MutVoidPtr)_zone {
     // TODO: override this once we have NSMutableString!
@@ -278,7 +286,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (bool)getCString:(MutPtr<u8>)buffer
          maxLength:(NSUInteger)buffer_size
           encoding:(NSStringEncoding)encoding {
-    assert!(encoding == NSUTF8StringEncoding); // TODO: other encodings
+    assert!(encoding == NSUTF8StringEncoding || encoding == NSASCIIStringEncoding); // TODO: other encodings
 
     let src = to_rust_string(env, this);
     let dest = env.mem.bytes_at_mut(buffer, buffer_size);

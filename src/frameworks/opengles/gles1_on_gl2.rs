@@ -171,6 +171,20 @@ pub(super) const TEX_ENV_PARAMS: &[(GLenum, bool, u8)] = &[
     (gl21::ALPHA_SCALE, false, 1),
 ];
 
+/// List of integer `glTexParameter` parameters.
+const TEX_PARAMS_INT: &[GLenum] = &[
+    gl21::TEXTURE_MIN_FILTER,
+    gl21::TEXTURE_MAG_FILTER,
+    gl21::TEXTURE_WRAP_S,
+    gl21::TEXTURE_WRAP_T,
+    gl21::GENERATE_MIPMAP,
+];
+/// List of float/fixed-point `glTexParameter` parameters.
+const TEX_PARAMS_FLOAT: &[GLenum] = &[
+    gl21::TEXTURE_MAX_ANISOTROPY_EXT,
+    gl21::MAX_TEXTURE_MAX_ANISOTROPY_EXT,
+];
+
 pub struct GLES1OnGL2 {
     gl_ctx: GLContext,
     pointer_is_fixed_point: [bool; ARRAYS.len()],
@@ -702,22 +716,23 @@ impl GLES for GLES1OnGL2 {
     }
     unsafe fn TexParameteri(&mut self, target: GLenum, pname: GLenum, param: GLint) {
         assert!(target == gl21::TEXTURE_2D);
-        assert!(
-            pname == gl21::TEXTURE_MIN_FILTER
-                || pname == gl21::TEXTURE_MAG_FILTER
-                || pname == gl21::TEXTURE_WRAP_S
-                || pname == gl21::TEXTURE_WRAP_T
-                || pname == gl21::GENERATE_MIPMAP
-        );
+        assert!(TEX_PARAMS_INT.contains(&pname) || TEX_PARAMS_FLOAT.contains(&pname));
         gl21::TexParameteri(target, pname, param);
     }
     unsafe fn TexParameterf(&mut self, target: GLenum, pname: GLenum, param: GLfloat) {
         assert!(target == gl21::TEXTURE_2D);
-        assert!(
-            pname == gl21::TEXTURE_MAX_ANISOTROPY_EXT
-                || pname == gl21::MAX_TEXTURE_MAX_ANISOTROPY_EXT
-        );
+        assert!(TEX_PARAMS_INT.contains(&pname) || TEX_PARAMS_FLOAT.contains(&pname));
         gl21::TexParameterf(target, pname, param);
+    }
+    unsafe fn TexParameterx(&mut self, target: GLenum, pname: GLenum, param: GLfixed) {
+        assert!(target == gl21::TEXTURE_2D);
+        // The conversion behaviour for fixed-point to integer is special.
+        if TEX_PARAMS_INT.contains(&pname) {
+            gl21::TexParameteri(target, pname, param);
+        } else {
+            assert!(TEX_PARAMS_FLOAT.contains(&pname));
+            gl21::TexParameterf(target, pname, fixed_to_float(param));
+        }
     }
     unsafe fn TexImage2D(
         &mut self,

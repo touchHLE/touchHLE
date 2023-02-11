@@ -139,6 +139,27 @@ fn strtok(env: &mut Environment, s: MutPtr<u8>, sep: ConstPtr<u8>) -> MutPtr<u8>
     token_start
 }
 
+fn strstr(env: &mut Environment, string: ConstPtr<u8>, substring: ConstPtr<u8>) -> ConstPtr<u8> {
+    let mut offset = 0;
+    loop {
+        let mut inner_offset = 0;
+        loop {
+            let char_string = env.mem.read(string + offset + inner_offset);
+            let char_substring = env.mem.read(substring + inner_offset);
+            if char_substring == b'\0' {
+                return string + offset;
+            } else if char_string == b'\0' {
+                return Ptr::null();
+            } else if char_string != char_substring {
+                break;
+            } else {
+                inner_offset += 1;
+            }
+        }
+        offset += 1;
+    }
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(memset(_, _, _)),
     export_c_func!(memcpy(_, _, _)),
@@ -149,4 +170,5 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(strdup(_)),
     export_c_func!(strcmp(_, _)),
     export_c_func!(strtok(_, _)),
+    export_c_func!(strstr(_, _)),
 ];

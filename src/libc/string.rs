@@ -84,7 +84,7 @@ fn strcat(env: &mut Environment, dest: MutPtr<u8>, src: ConstPtr<u8>) -> MutPtr<
     dest
 }
 
-fn strdup(env: &mut Environment, src: ConstPtr<u8>) -> MutPtr<u8> {
+pub(super) fn strdup(env: &mut Environment, src: ConstPtr<u8>) -> MutPtr<u8> {
     let len = strlen(env, src);
     let new = env.mem.alloc(len + 1).cast();
     strcpy(env, new, src)

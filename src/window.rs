@@ -32,12 +32,14 @@ use std::num::NonZeroU32;
 pub enum DeviceOrientation {
     Portrait,
     LandscapeLeft,
+    LandscapeRight,
 }
 fn size_for_orientation(orientation: DeviceOrientation, scale_hack: NonZeroU32) -> (u32, u32) {
     let scale_hack = scale_hack.get();
     match orientation {
         DeviceOrientation::Portrait => (320 * scale_hack, 480 * scale_hack),
         DeviceOrientation::LandscapeLeft => (480 * scale_hack, 320 * scale_hack),
+        DeviceOrientation::LandscapeRight => (480 * scale_hack, 320 * scale_hack),
     }
 }
 
@@ -506,6 +508,7 @@ impl Window {
         match self.device_orientation {
             DeviceOrientation::Portrait => Matrix::identity(),
             DeviceOrientation::LandscapeLeft => Matrix::z_rotation(-FRAC_PI_2),
+            DeviceOrientation::LandscapeRight => Matrix::z_rotation(FRAC_PI_2),
         }
     }
 
@@ -515,6 +518,7 @@ impl Window {
         match self.device_orientation {
             DeviceOrientation::Portrait => Matrix::identity(),
             DeviceOrientation::LandscapeLeft => Matrix::z_rotation(FRAC_PI_2),
+            DeviceOrientation::LandscapeRight => Matrix::z_rotation(-FRAC_PI_2),
         }
     }
 

@@ -19,7 +19,7 @@ use crate::frameworks::core_audio_types::{
     kAudioFormatFlagIsPacked, kAudioFormatLinearPCM, AudioStreamBasicDescription,
 };
 use crate::frameworks::core_foundation::cf_run_loop::{
-    kCFRunLoopCommonModes, CFRunLoopMode, CFRunLoopRef,
+    kCFRunLoopCommonModes, CFRunLoopGetMain, CFRunLoopMode, CFRunLoopRef,
 };
 use crate::frameworks::foundation::ns_run_loop;
 use crate::frameworks::foundation::ns_string::get_static_str;
@@ -138,8 +138,6 @@ fn AudioQueueNewOutput(
 ) -> OSStatus {
     // reserved
     assert!(in_flags == 0);
-    // NULL not implemented
-    assert!(!in_callback_run_loop.is_null());
     // NULL is a synonym of kCFRunLoopCommonModes here
     assert!(
         in_callback_run_loop_mode.is_null() || {
@@ -147,6 +145,15 @@ fn AudioQueueNewOutput(
             msg![env; in_callback_run_loop_mode isEqualTo:common_modes]
         }
     );
+
+    let in_callback_run_loop = if in_callback_run_loop.is_null() {
+        // FIXME: According to the documentation, "one of the audio queue's
+        // internal threads" should be used if you don't specify a run loop.
+        // We should have an "internal thread" instead of using the main thread.
+        CFRunLoopGetMain(env)
+    } else {
+        in_callback_run_loop
+    };
 
     let format = env.mem.read(in_format);
 

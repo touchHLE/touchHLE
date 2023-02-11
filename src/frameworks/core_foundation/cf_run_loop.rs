@@ -19,7 +19,7 @@ fn CFRunLoopGetCurrent(env: &mut Environment) -> CFRunLoopRef {
     msg_class![env; NSRunLoop currentRunLoop]
 }
 
-fn CFRunLoopGetMain(env: &mut Environment) -> CFRunLoopRef {
+pub fn CFRunLoopGetMain(env: &mut Environment) -> CFRunLoopRef {
     msg_class![env; NSRunLoop mainRunLoop]
 }
 

@@ -435,6 +435,21 @@ pub const CLASSES: ClassExports = objc_classes! {
     new_string
 }
 
+- (id)lastPathComponent { // NSString*
+    let self_as_rust_string = &to_rust_string(env, this);
+    if self_as_rust_string == "/" {
+        let new_string = from_rust_string(env, "/".to_string());
+        autorelease(env, new_string);
+        new_string
+    } else {
+        let path = GuestPath::new(self_as_rust_string);
+        let file_name = path.file_name().unwrap_or("");
+        let new_string = from_rust_string(env, String::from(file_name));
+        autorelease(env, new_string);
+        new_string
+    }
+}
+
 - (ConstPtr<u8>)UTF8String {
     // TODO: avoid copying
     let string = to_rust_string(env, this);

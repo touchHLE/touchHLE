@@ -56,6 +56,18 @@ General options:
         Display copyright, authorship and license information.
 
 View options:
+    --landscape-left
+    --landscape-right
+        Changes the orientation the virtual device will have at startup.
+        The default is portrait.
+
+        --landscape-left means rotate 90° counterclockwise from portrait.
+        --landscape-right means rotate 90° clockwise from portrait.
+
+        Usually apps that require landscape mode will tell touchHLE about this,
+        and it will automatically rotate the window, but some apps neglect to
+        do this. These options may be useful in that case.
+
     --scale-hack=...
         Set a scaling factor for the window. touchHLE will attempt to run the
         app with an increased internal resolution. This is a hack and there's
@@ -124,6 +136,7 @@ Debugging options:
 ";
 
 pub struct Options {
+    initial_orientation: window::DeviceOrientation,
     scale_hack: std::num::NonZeroU32,
     deadzone: f32,
     x_tilt_range: f32,
@@ -151,6 +164,7 @@ fn main() -> Result<(), String> {
     let _ = args.next().unwrap(); // skip argv[0]
 
     let mut options = Options {
+        initial_orientation: window::DeviceOrientation::Portrait,
         scale_hack: std::num::NonZeroU32::new(1).unwrap(),
         deadzone: 0.1,
         x_tilt_range: 60.0,
@@ -170,6 +184,10 @@ fn main() -> Result<(), String> {
             return Ok(());
         } else if bundle_path.is_none() {
             bundle_path = Some(PathBuf::from(arg));
+        } else if arg == "--landscape-left" {
+            options.initial_orientation = window::DeviceOrientation::LandscapeLeft;
+        } else if arg == "--landscape-right" {
+            options.initial_orientation = window::DeviceOrientation::LandscapeRight;
         } else if let Some(value) = arg.strip_prefix("--scale-hack=") {
             options.scale_hack = value
                 .parse()

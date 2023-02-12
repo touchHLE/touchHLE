@@ -68,7 +68,7 @@ There's no graphical user interface right now, so you'll usually need to use the
 2. Hold the Shift key and Right-click on the empty space in the folder window.
 3. Click “Open with PowerShell”.
 4. You can then type `.\touchHLE.exe "YourAppNameHere.ipa"` (or `.app` as appropriate) and press enter.
-5. You may want to type `.\touchHLE.exe` to see the available options for things like game controllers.
+5. You may want to type `.\touchHLE.exe --help` to see the available options for things like game controllers. You can use options by adding a space after the app name (outside the quotes) and then writing the option's name. Options must be separated by spaces.
 
 Currently language detection doesn't work on Windows. To change the language preference reported to the app, you can type `SET LANG=` followed by an ISO 639-1 language code, then press Enter, before running the app. Some common language codes are: `en` (English), `de` (Deutsch), `es` (español), `fr` (français), `it` (italiano) and `ja` (日本語). Bear in mind that it's the app itself that determines which languages are supported, not the emulator.
 

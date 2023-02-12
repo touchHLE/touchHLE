@@ -104,7 +104,7 @@ impl Window {
 
         // TODO: some apps specify their orientation in Info.plist, we could use
         // that here.
-        let device_orientation = DeviceOrientation::Portrait;
+        let device_orientation = options.initial_orientation;
 
         let (width, height) = size_for_orientation(device_orientation, scale_hack);
         let mut window = video_ctx
@@ -145,7 +145,7 @@ impl Window {
             viewport_y_offset: 0,
             scale_hack,
             splash_image_and_gl_ctx,
-            device_orientation: DeviceOrientation::Portrait,
+            device_orientation,
             app_gl_ctx_no_longer_current: false,
             controller_ctx,
             controllers: Vec::new(),

@@ -8,9 +8,9 @@
 //! This lets us put files and directories where the guest app expects them to
 //! be, without constraining the layout of the host filesystem.
 //!
-//! Currently the filesystem layout is frozen at the point of creation. Except
-//! for creating new files in existing directories, no nodes can be created,
-//! deleted, renamed or moved.
+//! Most of the filesystem is frozen at the point of creation and can't be
+//! modified. The exception is the writeable parts of the app's sandboxed home
+//! directory (`Documents` etc).
 //!
 //! All files in the guest filesystem must have a corresponding file in the host
 //! filesystem, or a corresponding file inside a `.ipa` file (ZIP archive) in

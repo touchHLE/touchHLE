@@ -111,6 +111,12 @@ fn glCullFace(env: &mut Environment, mode: GLenum) {
 fn glDepthMask(env: &mut Environment, flag: GLboolean) {
     with_ctx_and_mem(env, |gles, _mem| unsafe { gles.DepthMask(flag) })
 }
+fn glDepthRangef(env: &mut Environment, near: GLclampf, far: GLclampf) {
+    with_ctx_and_mem(env, |gles, _mem| unsafe { gles.DepthRangef(near, far) })
+}
+fn glDepthRangex(env: &mut Environment, near: GLclampx, far: GLclampx) {
+    with_ctx_and_mem(env, |gles, _mem| unsafe { gles.DepthRangex(near, far) })
+}
 fn glFrontFace(env: &mut Environment, mode: GLenum) {
     with_ctx_and_mem(env, |gles, _mem| unsafe { gles.FrontFace(mode) })
 }
@@ -691,6 +697,8 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(glBlendFunc(_, _)),
     export_c_func!(glCullFace(_)),
     export_c_func!(glDepthMask(_)),
+    export_c_func!(glDepthRangef(_, _)),
+    export_c_func!(glDepthRangex(_, _)),
     export_c_func!(glFrontFace(_)),
     export_c_func!(glShadeModel(_)),
     export_c_func!(glScissor(_, _, _, _)),

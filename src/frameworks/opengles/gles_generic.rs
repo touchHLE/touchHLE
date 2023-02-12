@@ -34,6 +34,8 @@ pub trait GLES {
     unsafe fn BlendFunc(&mut self, sfactor: GLenum, dfactor: GLenum);
     unsafe fn CullFace(&mut self, mode: GLenum);
     unsafe fn DepthMask(&mut self, flag: GLboolean);
+    unsafe fn DepthRangef(&mut self, near: GLclampf, far: GLclampf);
+    unsafe fn DepthRangex(&mut self, near: GLclampx, far: GLclampx);
     unsafe fn FrontFace(&mut self, mode: GLenum);
     unsafe fn ShadeModel(&mut self, mode: GLenum);
     unsafe fn Scissor(&mut self, x: GLint, y: GLint, width: GLsizei, height: GLsizei);

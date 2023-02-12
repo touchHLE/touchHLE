@@ -434,6 +434,12 @@ impl GLES for GLES1OnGL2 {
         assert!(mode == gl21::CW || mode == gl21::CCW);
         gl21::FrontFace(mode);
     }
+    unsafe fn DepthRangef(&mut self, near: GLclampf, far: GLclampf) {
+        gl21::DepthRange(near.into(), far.into())
+    }
+    unsafe fn DepthRangex(&mut self, near: GLclampx, far: GLclampx) {
+        gl21::DepthRange(fixed_to_float(near).into(), fixed_to_float(far).into())
+    }
     unsafe fn ShadeModel(&mut self, mode: GLenum) {
         assert!(mode == gl21::FLAT || mode == gl21::SMOOTH);
         gl21::ShadeModel(mode);

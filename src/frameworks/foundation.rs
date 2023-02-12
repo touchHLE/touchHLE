@@ -23,6 +23,8 @@ pub mod ns_file_manager;
 pub mod ns_keyed_unarchiver;
 pub mod ns_locale;
 pub mod ns_log;
+pub mod ns_notification;
+pub mod ns_notification_center;
 pub mod ns_null;
 pub mod ns_object;
 pub mod ns_process_info;
@@ -39,6 +41,7 @@ pub struct State {
     ns_autorelease_pool: ns_autorelease_pool::State,
     ns_bundle: ns_bundle::State,
     ns_locale: ns_locale::State,
+    ns_notification_center: ns_notification_center::State,
     ns_null: ns_null::State,
     ns_run_loop: ns_run_loop::State,
     ns_string: ns_string::State,

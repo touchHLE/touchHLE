@@ -6,7 +6,7 @@
 //! Separate module just for the class lists, since this will probably be a
 //! very long and frequently-updated list.
 
-use crate::frameworks::{core_animation, core_graphics, foundation, opengles, uikit};
+use crate::frameworks::{core_animation, core_graphics, foundation, media_player, opengles, uikit};
 
 /// All the lists of classes that the runtime should search through.
 pub const CLASS_LISTS: &[super::ClassExports] = &[
@@ -23,6 +23,8 @@ pub const CLASS_LISTS: &[super::ClassExports] = &[
     foundation::ns_dictionary::CLASSES,
     foundation::ns_keyed_unarchiver::CLASSES,
     foundation::ns_locale::CLASSES,
+    foundation::ns_notification::CLASSES,
+    foundation::ns_notification_center::CLASSES,
     foundation::ns_null::CLASSES,
     foundation::ns_object::CLASSES,
     foundation::ns_process_info::CLASSES,
@@ -33,6 +35,7 @@ pub const CLASS_LISTS: &[super::ClassExports] = &[
     foundation::ns_timer::CLASSES,
     foundation::ns_url::CLASSES,
     foundation::ns_value::CLASSES,
+    media_player::movie_player::CLASSES,
     opengles::eagl::CLASSES,
     uikit::ui_accelerometer::CLASSES,
     uikit::ui_application::CLASSES,

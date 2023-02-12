@@ -27,6 +27,7 @@ pub mod core_foundation;
 pub mod core_graphics;
 pub mod foundation;
 pub mod mac_types;
+pub mod media_player;
 pub mod openal;
 pub mod opengles;
 pub mod uikit;
@@ -36,6 +37,7 @@ pub mod uikit;
 pub struct State {
     audio_toolbox: audio_toolbox::State,
     foundation: foundation::State,
+    media_player: media_player::State,
     openal: openal::State,
     opengles: opengles::State,
     uikit: uikit::State,

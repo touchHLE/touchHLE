@@ -14,7 +14,7 @@ use crate::frameworks::audio_toolbox::audio_queue::{handle_audio_queue, AudioQue
 use crate::frameworks::core_foundation::cf_run_loop::{
     kCFRunLoopCommonModes, kCFRunLoopDefaultMode, CFRunLoopRef,
 };
-use crate::frameworks::uikit;
+use crate::frameworks::{media_player, uikit};
 use crate::objc::{id, msg, objc_classes, release, retain, ClassExports, HostObject};
 use crate::Environment;
 use std::time::Duration;
@@ -183,6 +183,8 @@ fn run_run_loop(env: &mut Environment, run_loop: id) {
         for audio_queue in audio_queues_tmp.drain(..) {
             handle_audio_queue(env, audio_queue);
         }
+
+        media_player::handle_players(env);
 
         // This is a hack, but it saves a lot of CPU usage, as much as 75%!
         // 5ms is an arbitrary but apparently effective value. If it's too small

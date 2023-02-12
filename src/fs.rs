@@ -637,4 +637,52 @@ impl Fs {
         );
         Ok(GuestFile::from_host_file(file))
     }
+
+    /// Like [std::fs::create_dir] but for the guest filesystem.
+    pub fn create_dir<P: AsRef<GuestPath>>(&mut self, path: P) -> Result<(), ()> {
+        let path = path.as_ref();
+
+        let (parent_node, new_dir_name) = self.lookup_parent_node(path).ok_or(())?;
+
+        // Parent directory is not a directory
+        let FsNode::Directory {
+            children,
+            writeable: dir_host_path,
+        } = parent_node else {
+            return Err(());
+        };
+
+        // There's already a file/directory with this name
+        if children.contains_key(&new_dir_name) {
+            return Err(());
+        }
+
+        let Some(dir_host_path) = dir_host_path else {
+            log!("Warning: attempt to create directory at path {:?}, but parent directory is read-only", path);
+            return Err(());
+        };
+
+        for c in new_dir_name.chars() {
+            if std::path::is_separator(c) {
+                panic!("Attempt to create directory at path {:?}, but directory name contains path separator character {:?}!", path, c);
+            }
+        }
+
+        let host_path = dir_host_path.join(&new_dir_name);
+
+        handle_open_err(std::fs::create_dir(&host_path), &host_path);
+        log_dbg!(
+            "Created directory at path {:?} (host path: {:?})",
+            path,
+            host_path
+        );
+        children.insert(
+            new_dir_name,
+            FsNode::Directory {
+                children: HashMap::new(),
+                writeable: Some(host_path),
+            },
+        );
+        Ok(())
+    }
 }

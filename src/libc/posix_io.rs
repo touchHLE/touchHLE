@@ -5,6 +5,8 @@
  */
 //! POSIX I/O functions (`fcntl.h`, parts of `unistd.h`, etc)
 
+pub mod stat;
+
 use crate::abi::VAList;
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::fs::{GuestFile, GuestOpenOptions, GuestPath};

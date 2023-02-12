@@ -67,7 +67,6 @@ const O_TRUNC: OpenFlag = 0x400;
 const O_EXCL: OpenFlag = 0x800;
 
 fn open(env: &mut Environment, path: ConstPtr<u8>, flags: i32, _args: VAList) -> FileDescriptor {
-    assert!([O_RDONLY, O_WRONLY, O_RDWR].contains(&(flags & O_ACCMODE)));
     // TODO: support more flags, this list is not complete
     assert!(
         flags & !(O_ACCMODE | O_NONBLOCK | O_APPEND | O_NOFOLLOW | O_CREAT | O_TRUNC | O_EXCL) == 0
@@ -81,12 +80,12 @@ fn open(env: &mut Environment, path: ConstPtr<u8>, flags: i32, _args: VAList) ->
     // TODO: respect the mode (in the variadic arguments) when creating a file
     // Note: NONBLOCK flag is ignored, assumption is all file I/O is fast
     let mut options = GuestOpenOptions::new();
-    if (flags & (O_RDONLY | O_RDWR)) != 0 {
-        options.read();
-    }
-    if (flags & (O_WRONLY | O_RDWR)) != 0 {
-        options.write();
-    }
+    match flags & O_ACCMODE {
+        O_RDONLY => options.read(),
+        O_WRONLY => options.write(),
+        O_RDWR => options.read().write(),
+        _ => panic!(),
+    };
     if (flags & O_APPEND) != 0 {
         options.append();
     }

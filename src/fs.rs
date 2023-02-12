@@ -254,6 +254,7 @@ fn resolve_path<'a>(path: &'a GuestPath, relative_to: Option<&'a GuestPath>) -> 
 
 /// Like [std::fs::OpenOptions] but for the guest filesystem.
 /// TODO: `create_new`.
+#[derive(Debug)]
 pub struct GuestOpenOptions {
     read: bool,
     write: bool,

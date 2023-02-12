@@ -318,6 +318,15 @@ fn decode_buffer(
             (al::AL_FORMAT_MONO16, format.sample_rate as ALsizei, out_pcm)
         }
         kAudioFormatLinearPCM => {
+            // The end of the data might be misaligned (this happens in Crash
+            // Bandicoot Nitro Kart 3D somehow).
+            let misaligned_by = data_slice.len() % (format.bytes_per_frame as usize);
+            let data_slice = if misaligned_by != 0 {
+                &data_slice[..data_slice.len() - misaligned_by]
+            } else {
+                data_slice
+            };
+
             let f = match (format.channels_per_frame, format.bits_per_channel) {
                 (1, 8) => al::AL_FORMAT_MONO8,
                 (1, 16) => al::AL_FORMAT_MONO16,

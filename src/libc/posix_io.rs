@@ -10,9 +10,9 @@ pub mod stat;
 use crate::abi::VAList;
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::fs::{GuestFile, GuestOpenOptions, GuestPath};
-use crate::mem::{ConstPtr, GuestISize, GuestUSize, MutVoidPtr};
+use crate::mem::{ConstPtr, ConstVoidPtr, GuestISize, GuestUSize, MutVoidPtr};
 use crate::Environment;
-use std::io::{Read, Seek, SeekFrom};
+use std::io::{Read, Seek, SeekFrom, Write};
 
 #[derive(Default)]
 pub struct State {
@@ -144,7 +144,6 @@ fn read(
     let file = env.libc_state.posix_io.file_for_fd(fd).unwrap();
 
     let buffer_slice = env.mem.bytes_at_mut(buffer.cast(), size);
-    // TODO: handle errors
     match file.file.read(buffer_slice) {
         Ok(bytes_read) => {
             if bytes_read < buffer_slice.len() {
@@ -170,6 +169,51 @@ fn read(
             // TODO: set errno
             log!(
                 "Warning: read({:?}, {:?}, {:#x}) encountered error {:?}, returning -1",
+                fd,
+                buffer,
+                size,
+                e,
+            );
+            -1
+        }
+    }
+}
+
+fn write(
+    env: &mut Environment,
+    fd: FileDescriptor,
+    buffer: ConstVoidPtr,
+    size: GuestUSize,
+) -> GuestISize {
+    // TODO: error handling for unknown fd?
+    let file = env.libc_state.posix_io.file_for_fd(fd).unwrap();
+
+    let buffer_slice = env.mem.bytes_at(buffer.cast(), size);
+    match file.file.write(buffer_slice) {
+        Ok(bytes_written) => {
+            if bytes_written < buffer_slice.len() {
+                log!(
+                    "Warning: write({:?}, {:?}, {:#x}) wrote only {:#x} bytes",
+                    fd,
+                    buffer,
+                    size,
+                    bytes_written,
+                );
+            } else {
+                log_dbg!(
+                    "write({:?}, {:?}, {:#x}) => {:#x}",
+                    fd,
+                    buffer,
+                    size,
+                    bytes_written,
+                );
+            }
+            bytes_written.try_into().unwrap()
+        }
+        Err(e) => {
+            // TODO: set errno
+            log!(
+                "Warning: write({:?}, {:?}, {:#x}) encountered error {:?}, returning -1",
                 fd,
                 buffer,
                 size,
@@ -230,6 +274,7 @@ fn close(env: &mut Environment, fd: FileDescriptor) -> i32 {
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(open(_, _, _)),
     export_c_func!(read(_, _, _)),
+    export_c_func!(write(_, _, _)),
     export_c_func!(lseek(_, _, _)),
     export_c_func!(close(_)),
 ];

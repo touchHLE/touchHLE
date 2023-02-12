@@ -5,10 +5,12 @@
  */
 //! POSIX `sys/stat.h`
 
+use super::{off_t, FileDescriptor};
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::fs::GuestPath;
-use crate::mem::ConstPtr;
+use crate::mem::{ConstPtr, MutVoidPtr};
 use crate::Environment;
+use std::io::{Seek, SeekFrom};
 
 #[allow(non_camel_case_types)]
 type mode_t = u16;
@@ -35,4 +37,24 @@ fn mkdir(env: &mut Environment, path: ConstPtr<u8>, mode: mode_t) -> i32 {
     }
 }
 
-pub const FUNCTIONS: FunctionExports = &[export_c_func!(mkdir(_, _))];
+fn fstat(env: &mut Environment, fd: FileDescriptor, buf: MutVoidPtr) -> i32 {
+    // TODO: error handling for unknown fd?
+    let file = env.libc_state.posix_io.file_for_fd(fd).unwrap();
+
+    log!("Warning: fstat() call, this function is mostly unimplemented");
+    // FIXME: This implementation is highly incomplete. fstat() returns a huge
+    // struct with many kinds of data in it. This code is assuming the caller
+    // only wants the file size.
+    let st_size_ptr = (buf + 0x3c).cast::<off_t>();
+
+    // TODO: Use the stream_len() method if that ever gets stabilized.
+    let old_pos = file.file.stream_position().unwrap();
+    let full_size = file.file.seek(SeekFrom::End(0)).unwrap();
+    file.file.seek(SeekFrom::Start(old_pos)).unwrap();
+
+    env.mem.write(st_size_ptr, full_size.try_into().unwrap());
+
+    0 // success
+}
+
+pub const FUNCTIONS: FunctionExports = &[export_c_func!(mkdir(_, _)), export_c_func!(fstat(_, _))];

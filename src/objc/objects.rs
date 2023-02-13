@@ -239,7 +239,18 @@ impl super::ObjC {
             host_object,
             refcount,
         } = self.objects.remove(&object).unwrap();
-        assert!(refcount.is_none());
+
+        if let Some(refcount) = refcount {
+            // This is a serious bug if it ever happens in host code.
+            // Well-behaved apps should also never do this, but Crash Bandicoot
+            // Nitro Kart 3D is not a well-behaved app.
+            log!(
+                "Warning: {:?} was deallocated with non-zero reference count: {:?}",
+                object,
+                refcount
+            );
+        }
+
         std::mem::drop(host_object);
 
         mem.free(object.cast());

@@ -10,6 +10,7 @@
 //! will probably take a lot of shortcuts.
 
 use crate::Environment;
+use std::time::Instant;
 
 pub mod ui_accelerometer;
 pub mod ui_application;
@@ -37,7 +38,10 @@ pub struct State {
 }
 
 /// For use by `NSRunLoop`: handles any events that have queued up.
-pub fn handle_events(env: &mut Environment) {
+///
+/// Returns the next time this function must be called, if any, e.g. the next
+/// time an accelerometer input is due.
+pub fn handle_events(env: &mut Environment) -> Option<Instant> {
     use crate::window::Event;
 
     loop {
@@ -56,5 +60,5 @@ pub fn handle_events(env: &mut Environment) {
         }
     }
 
-    ui_accelerometer::handle_accelerometer(env);
+    ui_accelerometer::handle_accelerometer(env)
 }

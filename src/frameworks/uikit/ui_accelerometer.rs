@@ -117,11 +117,13 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 /// For use by `NSRunLoop` via [super::handle_events]: check if an accelerometer
 /// update is due and send one if appropriate.
-pub(super) fn handle_accelerometer(env: &mut Environment) {
+///
+/// Returns the time an accelerometer update is due, if any.
+pub(super) fn handle_accelerometer(env: &mut Environment) -> Option<Instant> {
     let state = &mut env.framework_state.uikit.ui_accelerometer;
 
     let Some(delegate) = state.delegate else {
-        return;
+        return None;
     };
 
     // TODO: use some reasonable default value
@@ -129,9 +131,9 @@ pub(super) fn handle_accelerometer(env: &mut Environment) {
     let rust_interval = Duration::from_secs_f64(ns_interval);
 
     let now = Instant::now();
-    if let Some(due_by) = state.due_by {
+    let new_due_by = if let Some(due_by) = state.due_by {
         if due_by > now {
-            return;
+            return Some(due_by);
         }
 
         // See NSTimer implementation for a discussion of what this does.
@@ -146,10 +148,11 @@ pub(super) fn handle_accelerometer(env: &mut Environment) {
             log!("Warning: Accelerometer is lagging. It is overdue by {}s and has missed {} interval(s)!", overdue_by.as_secs_f64(), advance_by - 1);
         }
         let advance_by = rust_interval.checked_mul(advance_by).unwrap();
-        state.due_by = Some(due_by.checked_add(advance_by).unwrap());
+        Some(due_by.checked_add(advance_by).unwrap())
     } else {
-        state.due_by = Some(now.checked_add(rust_interval).unwrap());
-    }
+        Some(now.checked_add(rust_interval).unwrap())
+    };
+    state.due_by = new_due_by;
 
     // UIKit creates and drains autorelease pools when handling events.
     let pool: id = msg_class![env; NSAutoreleasePool new];
@@ -177,4 +180,6 @@ pub(super) fn handle_accelerometer(env: &mut Environment) {
                                    didAccelerate:acceleration];
 
     release(env, pool);
+
+    new_due_by
 }

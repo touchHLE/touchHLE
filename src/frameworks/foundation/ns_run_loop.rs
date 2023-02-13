@@ -17,7 +17,7 @@ use crate::frameworks::core_foundation::cf_run_loop::{
 use crate::frameworks::{media_player, uikit};
 use crate::objc::{id, msg, objc_classes, release, retain, ClassExports, HostObject};
 use crate::Environment;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 /// `NSString*`
 pub type NSRunLoopMode = id;
@@ -161,16 +161,26 @@ fn run_run_loop(env: &mut Environment, run_loop: id) {
     let mut timers_tmp = Vec::new();
     let mut audio_queues_tmp = Vec::new();
 
+    fn limit_sleep_time(current: &mut Option<Instant>, new: Option<Instant>) {
+        if let Some(new) = new {
+            *current = Some(current.map_or(new, |i| i.min(new)));
+        }
+    }
+
     loop {
+        let mut sleep_until = None;
+
         env.window.poll_for_events(&env.options);
 
-        uikit::handle_events(env);
+        let next_due = uikit::handle_events(env);
+        limit_sleep_time(&mut sleep_until, next_due);
 
         assert!(timers_tmp.is_empty());
         timers_tmp.extend_from_slice(&env.objc.borrow::<NSRunLoopHostObject>(run_loop).timers);
 
         for timer in timers_tmp.drain(..) {
-            ns_timer::handle_timer(env, timer);
+            let next_due = ns_timer::handle_timer(env, timer);
+            limit_sleep_time(&mut sleep_until, next_due);
         }
 
         assert!(audio_queues_tmp.is_empty());
@@ -186,13 +196,25 @@ fn run_run_loop(env: &mut Environment, run_loop: id) {
 
         media_player::handle_players(env);
 
-        // This is a hack, but it saves a lot of CPU usage, as much as 75%!
-        // 5ms is an arbitrary but apparently effective value. If it's too small
-        // there won't be much benefit, and if it's too large there'll be too
-        // much lag.
-        // TODO: Try to calculate how much time remains until the next event
-        // and sleep only that much.
+        // Unfortunately, touchHLE has to poll for certain things repeatedly;
+        // it can't just wait until the next event appears.
+        //
+        // For optimal responsiveness we could poll as often as possible, but
+        // this results in 100% usage of a CPU core and excessive energy use.
+        // On the other hand, for optimal energy use we could always sleep until
+        // the next scheduled event (e.g. the next timer), but this would lead
+        // to late handling of unscheduled events (e.g. a finger movement) and
+        // events that are scheduled but we can't get the time for currently
+        // (audio queue buffer exhaustion).
+        //
+        // The compromise used here is that we will wait for a 60th of a second,
+        // or until the next scheduled event, whichever is sooner. iPhone OS
+        // apps can't do more than 60fps so this should be fine.
+        //
         // FIXME: Run the app's other threads if they are active.
-        std::thread::sleep(Duration::from_millis(5));
+        let limit = Duration::from_millis(1000 / 60);
+        std::thread::sleep(
+            sleep_until.map_or(limit, |i| i.duration_since(Instant::now()).min(limit)),
+        );
     }
 }

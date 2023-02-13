@@ -222,6 +222,23 @@ fn puts(env: &mut Environment, s: ConstPtr<u8>) -> i32 {
     0
 }
 
+fn remove(env: &mut Environment, path: ConstPtr<u8>) -> i32 {
+    match env
+        .fs
+        .remove(GuestPath::new(&env.mem.cstr_at_utf8(path).unwrap()))
+    {
+        Ok(()) => {
+            log_dbg!("remove({:?}) => 0", path);
+            0
+        }
+        Err(_) => {
+            // TODO: set errno
+            log!("Warning: remove({:?}) failed, returning -1", path);
+            -1
+        }
+    }
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(fopen(_, _)),
     export_c_func!(fread(_, _, _, _)),
@@ -230,4 +247,5 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(ftell(_)),
     export_c_func!(fclose(_)),
     export_c_func!(puts(_)),
+    export_c_func!(remove(_)),
 ];

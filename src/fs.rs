@@ -639,6 +639,81 @@ impl Fs {
         Ok(GuestFile::from_host_file(file))
     }
 
+    /// Removes a file or a directory. If the node is a directory, it must be
+    /// empty.
+    pub fn remove<P: AsRef<GuestPath>>(&mut self, path: P) -> Result<(), ()> {
+        let path = path.as_ref();
+
+        let (parent_node, node_name) = self.lookup_parent_node(path).ok_or(())?;
+
+        // Parent directory is not a directory
+        let FsNode::Directory {
+            children,
+            writeable: dir_writeable,
+        } = parent_node else {
+            return Err(());
+        };
+
+        if !dir_writeable.is_some() {
+            log!("Warning: attempt to delete file or directroy at path {:?}, but parent directory is read-only", path);
+            return Err(());
+        };
+
+        let Some(node) = children.get(&node_name) else {
+            // There is no file/directory with this name
+            return Err(());
+        };
+
+        match node {
+            FsNode::HostFile {
+                host_path,
+                writeable,
+            } => {
+                // Read-only files can't be removed. (This is probably not
+                // correct, but it is safer for now.)
+                if !writeable {
+                    return Err(());
+                }
+
+                handle_open_err(std::fs::remove_file(host_path), host_path);
+                log_dbg!(
+                    "Deleted file at path {:?} (host path: {:?})",
+                    path,
+                    host_path
+                );
+            }
+            FsNode::Directory {
+                children,
+                writeable,
+            } => {
+                // Directory is not empty
+                if !children.is_empty() {
+                    return Err(());
+                }
+                // Read-only directories can't be removed. (This is probably not
+                // correct, but it is safer for now.)
+                let Some(host_path) = writeable else {
+                    return Err(());
+                };
+
+                handle_open_err(std::fs::remove_dir(host_path), host_path);
+                log_dbg!(
+                    "Deleted directory at path {:?} (host path: {:?})",
+                    path,
+                    host_path
+                );
+            }
+            FsNode::IpaBundleFile { .. } => {
+                // Read-only
+                return Err(());
+            }
+        }
+
+        children.remove(&node_name).unwrap();
+
+        Ok(())
+    }
+
     /// Like [std::fs::create_dir] but for the guest filesystem.
     pub fn create_dir<P: AsRef<GuestPath>>(&mut self, path: P) -> Result<(), ()> {
         let path = path.as_ref();

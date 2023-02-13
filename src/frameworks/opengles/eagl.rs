@@ -64,6 +64,9 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.alloc_object(this, host_object, &mut env.mem)
 }
 
++ (id)currentContext {
+    env.framework_state.opengles.current_ctx_for_thread(env.current_thread).unwrap_or(nil)
+}
 + (bool)setCurrentContext:(id)context { // EAGLContext*
     retain(env, context);
 

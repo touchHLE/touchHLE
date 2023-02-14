@@ -632,12 +632,26 @@ pub fn handle_constant_string(mem: &mut Mem, objc: &mut ObjC, constant_str: id) 
         bytes,
         length,
     } = mem.read(constant_str.cast());
-    assert!(flags == 0x7C8); // see: https://lists.llvm.org/pipermail/cfe-dev/2008-August/002518.html
 
-    // All the strings I've seen are ASCII, so this might be wrong.
-    let decoded = std::str::from_utf8(mem.bytes_at(bytes, length)).unwrap();
+    // Constant CFStrings should (probably) only ever have flags 0x7c8 and 0x7d0
+    // See https://lists.llvm.org/pipermail/cfe-dev/2008-August/002518.html
+    let host_object = if flags == 0x7C8 {
+        // ASCII
+        let decoded = std::str::from_utf8(mem.bytes_at(bytes, length)).unwrap();
 
-    let host_object = StringHostObject::Utf8(Cow::Owned(String::from(decoded)));
+        StringHostObject::Utf8(Cow::Owned(String::from(decoded)))
+    } else if flags == 0x7D0 {
+        // UTF16 (length is in code units, not bytes)
+        let decoded = mem
+            .bytes_at(bytes, length * 2)
+            .chunks(2)
+            .map(|chunk| u16::from_le_bytes(chunk.try_into().unwrap()))
+            .collect();
+
+        StringHostObject::Utf16(decoded)
+    } else {
+        panic!("Bad CFTypeID for constant string: {:#x}", flags);
+    };
 
     objc.register_static_object(constant_str, Box::new(host_object));
 

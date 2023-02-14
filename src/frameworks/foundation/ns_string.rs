@@ -650,7 +650,7 @@ pub fn handle_constant_string(mem: &mut Mem, objc: &mut ObjC, constant_str: id) 
 
         StringHostObject::Utf16(decoded)
     } else {
-        panic!("Bad CFTypeID for constant string");
+        panic!("Bad CFTypeID for constant string: {:#x}", flags);
     };
 
     objc.register_static_object(constant_str, Box::new(host_object));

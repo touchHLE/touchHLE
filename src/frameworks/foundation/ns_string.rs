@@ -609,8 +609,8 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 @end
 
-// Specialised subclass for static-lifetime strings from the guest app binary.
-@implementation _touchHLE_NSString_CFConstantString: _touchHLE_NSString_Static
+// Specialised subclasses for static-lifetime strings from the guest app binary.
+@implementation _touchHLE_NSString_CFConstantString_UTF8: _touchHLE_NSString_Static
 
 - (ConstPtr<u8>)UTF8String {
     let cfstringStruct { bytes, .. } = env.mem.read(this.cast());
@@ -618,6 +618,9 @@ pub const CLASSES: ClassExports = objc_classes! {
     bytes
 }
 
+@end
+
+@implementation _touchHLE_NSString_CFConstantString_UTF16: _touchHLE_NSString_Static
 @end
 
 };
@@ -635,11 +638,14 @@ pub fn handle_constant_string(mem: &mut Mem, objc: &mut ObjC, constant_str: id) 
 
     // Constant CFStrings should (probably) only ever have flags 0x7c8 and 0x7d0
     // See https://lists.llvm.org/pipermail/cfe-dev/2008-August/002518.html
-    let host_object = if flags == 0x7C8 {
+    let (host_object, class_name) = if flags == 0x7C8 {
         // ASCII
         let decoded = std::str::from_utf8(mem.bytes_at(bytes, length)).unwrap();
 
-        StringHostObject::Utf8(Cow::Owned(String::from(decoded)))
+        (
+            StringHostObject::Utf8(Cow::Owned(String::from(decoded))),
+            "_touchHLE_NSString_CFConstantString_UTF8",
+        )
     } else if flags == 0x7D0 {
         // UTF16 (length is in code units, not bytes)
         let decoded = mem
@@ -648,14 +654,17 @@ pub fn handle_constant_string(mem: &mut Mem, objc: &mut ObjC, constant_str: id) 
             .map(|chunk| u16::from_le_bytes(chunk.try_into().unwrap()))
             .collect();
 
-        StringHostObject::Utf16(decoded)
+        (
+            StringHostObject::Utf16(decoded),
+            "_touchHLE_NSString_CFConstantString_UTF16",
+        )
     } else {
         panic!("Bad CFTypeID for constant string: {:#x}", flags);
     };
 
     objc.register_static_object(constant_str, Box::new(host_object));
 
-    objc.get_known_class("_touchHLE_NSString_CFConstantString", mem)
+    objc.get_known_class(class_name, mem)
 }
 
 /// Shortcut for host code: get an NSString corresponding to a `&'static str`,

@@ -133,6 +133,10 @@ Debugging options:
         e.g. 'T0xF00' or 'TF00'.
 
         To set multiple breakpoints, use several '--breakpoint=' arguments.
+
+    --disable-direct-memory-access
+        Force dynarmic to always access guest memory via the memory access
+        callbacks, rather than using the fast direct access path (page tables).
 ";
 
 pub struct Options {
@@ -144,6 +148,7 @@ pub struct Options {
     x_tilt_offset: f32,
     y_tilt_offset: f32,
     breakpoints: Vec<u32>,
+    direct_memory_access: bool,
 }
 
 fn main() -> Result<(), String> {
@@ -172,6 +177,7 @@ fn main() -> Result<(), String> {
         x_tilt_offset: 0.0,
         y_tilt_offset: 0.0,
         breakpoints: Vec::new(),
+        direct_memory_access: true,
     };
 
     let mut bundle_path: Option<PathBuf> = None;
@@ -211,6 +217,8 @@ fn main() -> Result<(), String> {
             options
                 .breakpoints
                 .push(if is_thumb { addr | 0x1 } else { addr });
+        } else if arg == "--disable-direct-memory-access" {
+            options.direct_memory_access = false;
         } else {
             eprintln!("{}", USAGE);
             return Err(format!("Unexpected argument: {:?}", arg));
@@ -378,7 +386,10 @@ impl Environment {
             dyld.set_breakpoint(&mut mem, breakpoint);
         }
 
-        let cpu = cpu::Cpu::new();
+        let cpu = cpu::Cpu::new(match options.direct_memory_access {
+            true => Some(&mut mem),
+            false => None,
+        });
 
         let main_thread = Thread {
             active: true,

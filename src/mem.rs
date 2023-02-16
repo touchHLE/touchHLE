@@ -204,6 +204,10 @@ pub struct Mem {
     ///
     /// One advantage of `[u8; 1 << 32]` over `[u8]` is that it might help rustc
     /// optimize away bounds checks for `memory.bytes[ptr_32bit as usize]`.
+    ///
+    /// Note that unless direct memory access is disabled, the CPU emulation
+    /// (dynarmic) accesses memory via this pointer directly except when a page
+    /// fault occurs.
     bytes: *mut Bytes,
 
     allocator: allocator::Allocator,
@@ -224,6 +228,10 @@ impl Mem {
     ///
     /// We don't have full memory protection, but we can check accesses in that
     /// range.
+    ///
+    /// Note that there is also code in `src/cpu/dynarmic_wrapper/lib.cpp` which
+    /// makes assumptions about the size of the null page, and it can't see this
+    /// constant.
     pub const NULL_PAGE_SIZE: VAddr = 0x1000;
 
     /// [According to Apple](https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/Multithreading/CreatingThreads/CreatingThreads.html)
@@ -247,6 +255,16 @@ impl Mem {
         let allocator = allocator::Allocator::new();
 
         Mem { bytes, allocator }
+    }
+
+    /// Get a pointer to the full 4GiB of memory. This is only for use when
+    /// setting up the CPU, never call this otherwise.
+    ///
+    /// Safety: You must ensure that this pointer does not outlive the instance
+    /// of [Mem]. You must not use it while a `&mut` is held on some region of
+    /// guest memory.
+    pub unsafe fn direct_memory_access_ptr(&mut self) -> *mut std::ffi::c_void {
+        self.bytes.cast()
     }
 
     fn bytes(&self) -> &Bytes {

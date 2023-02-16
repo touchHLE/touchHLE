@@ -93,6 +93,9 @@ extern "C" fn touchHLE_cpu_write_u64(mem: *mut touchHLE_Mem, addr: VAddr, value:
 
 pub struct Cpu {
     dynarmic_wrapper: *mut touchHLE_DynarmicWrapper,
+    /// Copy of the direct memory access pointer used to check it has not
+    /// changed. If this is null, direct memory access is not in use.
+    direct_memory_access_ptr: *const std::ffi::c_void,
 }
 
 impl Drop for Cpu {
@@ -142,9 +145,24 @@ impl Cpu {
     /// When this bit is set in CPSR, the CPU is in user mode.
     pub const CPSR_USER_MODE: u32 = 0x00000010;
 
-    pub fn new() -> Cpu {
-        let dynarmic_wrapper = unsafe { touchHLE_DynarmicWrapper_new() };
-        Cpu { dynarmic_wrapper }
+    /// Construct a new CPU instance. If a mutable reference to a [Mem] instance
+    /// is provided, direct memory access is enabled, and the CPU instance
+    /// becomes bound to that [Mem] instance (subsequent calls must use the same
+    /// one).
+    pub fn new(direct_memory_access: Option<&mut Mem>) -> Cpu {
+        // Safety: the direct memory access pointer will be retained directly by
+        // the dynarmic wrapper and indirectly by cached JIT code, so we must
+        // ensure we only execute the CPU while holding a &mut on the Mem object
+        // to which that pointer belongs.
+        let direct_memory_access_ptr = direct_memory_access
+            .map_or(std::ptr::null_mut(), |mem| unsafe {
+                mem.direct_memory_access_ptr()
+            });
+        let dynarmic_wrapper = unsafe { touchHLE_DynarmicWrapper_new(direct_memory_access_ptr) };
+        Cpu {
+            dynarmic_wrapper,
+            direct_memory_access_ptr,
+        }
     }
 
     pub fn regs(&self) -> &[u32; 16] {
@@ -236,6 +254,11 @@ impl Cpu {
     /// of ticks). Check the return value!
     #[must_use]
     pub fn run(&mut self, mem: &mut Mem, ticks: &mut u64) -> CpuState {
+        // See ::new() for why this is done.
+        if !self.direct_memory_access_ptr.is_null() {
+            assert!(self.direct_memory_access_ptr == unsafe { mem.direct_memory_access_ptr() });
+        }
+
         let res = unsafe {
             touchHLE_DynarmicWrapper_run(
                 self.dynarmic_wrapper,

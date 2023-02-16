@@ -131,13 +131,28 @@ private:
 class DynarmicWrapper {
   Environment env;
   std::unique_ptr<Dynarmic::A32::Jit> cpu;
+  std::array<std::uint8_t *, Dynarmic::A32::UserConfig::NUM_PAGE_TABLE_ENTRIES>
+      page_table;
 
 public:
-  DynarmicWrapper() {
+  DynarmicWrapper(void *direct_memory_access_ptr) {
     Dynarmic::A32::UserConfig user_config;
     user_config.callbacks = &env;
     // TODO: only do this in debug builds? it's probably expensive
     user_config.check_halt_on_memory_access = true;
+    if (direct_memory_access_ptr) {
+      // Allow fast accesses to all pages other than the null page, which will
+      // fall back to a memory callback, which will then abort execution.
+      // TODO: Eventually we should use dynarmic's true fastmem mode, but that
+      // requires using mmap/mprotect/etc on the host OS so we can still catch
+      // null pointer accesses.
+      page_table.fill((std::uint8_t *)direct_memory_access_ptr);
+      // Note that the null page size is also defined in src/mem.rs.
+      static_assert(1 << Dynarmic::A32::UserConfig::PAGE_BITS == 0x1000);
+      page_table[0] = nullptr;
+      user_config.page_table = &page_table;
+      user_config.absolute_offset_page_table = true;
+    }
     cpu = std::make_unique<Dynarmic::A32::Jit>(user_config);
     env.cpu = cpu.get();
   }
@@ -181,8 +196,8 @@ public:
 
 extern "C" {
 
-DynarmicWrapper *touchHLE_DynarmicWrapper_new() {
-  return new DynarmicWrapper();
+DynarmicWrapper *touchHLE_DynarmicWrapper_new(void *direct_memory_access_ptr) {
+  return new DynarmicWrapper(direct_memory_access_ptr);
 }
 void touchHLE_DynarmicWrapper_delete(DynarmicWrapper *cpu) { delete cpu; }
 

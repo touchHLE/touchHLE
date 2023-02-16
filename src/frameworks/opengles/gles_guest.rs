@@ -124,31 +124,21 @@ fn glShadeModel(env: &mut Environment, mode: GLenum) {
     with_ctx_and_mem(env, |gles, _mem| unsafe { gles.ShadeModel(mode) })
 }
 fn glScissor(env: &mut Environment, x: GLint, y: GLint, width: GLsizei, height: GLsizei) {
-    // apply scale hack
-    let (width, height) = if x == 0
-        && y == 0
-        && (width as u32, height as u32) == env.window.size_unrotated_unscaled()
-    {
-        let (width, height) = env.window.size_unrotated_scalehacked();
-        (width as GLsizei, height as GLsizei)
-    } else {
-        (width, height)
-    };
+    // apply scale hack: assume framebuffer's size is larger than the app thinks
+    // and scale scissor appropriately
+    let factor = env.options.scale_hack.get() as GLsizei;
+    let (x, y) = (x * factor, y * factor);
+    let (width, height) = (width * factor, height * factor);
     with_ctx_and_mem(env, |gles, _mem| unsafe {
         gles.Scissor(x, y, width, height)
     })
 }
 fn glViewport(env: &mut Environment, x: GLint, y: GLint, width: GLsizei, height: GLsizei) {
-    // apply scale hack
-    let (width, height) = if x == 0
-        && y == 0
-        && (width as u32, height as u32) == env.window.size_unrotated_unscaled()
-    {
-        let (width, height) = env.window.size_unrotated_scalehacked();
-        (width as GLsizei, height as GLsizei)
-    } else {
-        (width, height)
-    };
+    // apply scale hack: assume framebuffer's size is larger than the app thinks
+    // and scale viewport appropriately
+    let factor = env.options.scale_hack.get() as GLsizei;
+    let (x, y) = (x * factor, y * factor);
+    let (width, height) = (width * factor, height * factor);
     with_ctx_and_mem(env, |gles, _mem| unsafe {
         gles.Viewport(x, y, width, height)
     })
@@ -629,13 +619,9 @@ fn glRenderbufferStorageOES(
     width: GLsizei,
     height: GLsizei,
 ) {
-    // apply scale hack
-    let (width, height) = if (width as u32, height as u32) == env.window.size_unrotated_unscaled() {
-        let (width, height) = env.window.size_unrotated_scalehacked();
-        (width as GLsizei, height as GLsizei)
-    } else {
-        (width, height)
-    };
+    // apply scale hack: give the app a larger framebuffer than it asked for
+    let factor = env.options.scale_hack.get() as GLsizei;
+    let (width, height) = (width * factor, height * factor);
     with_ctx_and_mem(env, |gles, _mem| unsafe {
         gles.RenderbufferStorageOES(target, internalformat, width, height)
     })
@@ -657,9 +643,15 @@ fn glGetRenderbufferParameterivOES(
     pname: GLenum,
     params: MutPtr<GLint>,
 ) {
+    let factor = env.options.scale_hack.get() as GLint;
     with_ctx_and_mem(env, |gles, mem| {
         let params = mem.ptr_at_mut(params, 1);
-        unsafe { gles.GetRenderbufferParameterivOES(target, pname, params) }
+        unsafe { gles.GetRenderbufferParameterivOES(target, pname, params) };
+        // apply scale hack: scale down the reported size of the framebuffer,
+        // assuming the framebuffer's true size is larger than it should be
+        if pname == gles11::RENDERBUFFER_WIDTH_OES || pname == gles11::RENDERBUFFER_HEIGHT_OES {
+            unsafe { params.write_unaligned(params.read_unaligned() / factor) }
+        }
     })
 }
 fn glCheckFramebufferStatusOES(env: &mut Environment, target: GLenum) -> GLenum {

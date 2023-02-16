@@ -190,7 +190,7 @@ pub(super) fn handle_timer(env: &mut Environment, timer: id) -> Option<Instant> 
         assert!(advance_by == (advance_by as u32) as f64);
         let advance_by = advance_by as u32;
         if advance_by > 1 {
-            log!("Warning: Timer {:?} is lagging. It is overdue by {}s and has missed {} interval(s)!", timer, overdue_by.as_secs_f64(), advance_by - 1);
+            log_dbg!("Warning: Timer {:?} is lagging. It is overdue by {}s and has missed {} interval(s)!", timer, overdue_by.as_secs_f64(), advance_by - 1);
         }
         let advance_by = rust_interval.checked_mul(advance_by).unwrap();
         Some(due_by.checked_add(advance_by).unwrap())

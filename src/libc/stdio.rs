@@ -49,7 +49,7 @@ fn fopen(env: &mut Environment, filename: ConstPtr<u8>, mode: ConstPtr<u8>) -> M
         other => panic!("Unexpected fopen() mode {:?}", other),
     };
 
-    match env.fs.open_with_options(
+    let res = match env.fs.open_with_options(
         GuestPath::new(&env.mem.cstr_at_utf8(filename).unwrap()),
         options,
     ) {
@@ -57,19 +57,15 @@ fn fopen(env: &mut Environment, filename: ConstPtr<u8>, mode: ConstPtr<u8>) -> M
             let host_object = FileHostObject { file };
             let file_ptr = env.mem.alloc_and_write(FILE { _filler: 0 });
             env.libc_state.stdio.files.insert(file_ptr, host_object);
-            log_dbg!("fopen({:?}, {:?}) => {:?}", filename, mode, file_ptr);
             file_ptr
         }
         Err(()) => {
             // TODO: set errno
-            log!(
-                "Warning: fopen({:?}, {:?}) failed, returning NULL",
-                filename,
-                mode
-            );
             Ptr::null()
         }
-    }
+    };
+    log_dbg!("fopen({:?}, {:?}) => {:?}", filename, mode, res);
+    res
 }
 
 fn fread(

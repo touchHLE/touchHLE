@@ -96,7 +96,7 @@ fn open(env: &mut Environment, path: ConstPtr<u8>, flags: i32, _args: VAList) ->
         options.truncate();
     }
 
-    match env.fs.open_with_options(
+    let res = match env.fs.open_with_options(
         GuestPath::new(&env.mem.cstr_at_utf8(path).unwrap()),
         options,
     ) {
@@ -117,20 +117,15 @@ fn open(env: &mut Environment, path: ConstPtr<u8>, flags: i32, _args: VAList) ->
                 env.libc_state.posix_io.files.push(Some(host_object));
                 idx
             };
-            let fd = file_idx_to_fd(idx);
-            log_dbg!("open({:?}, {:#x}) => {:?}", path, flags, fd);
-            fd
+            file_idx_to_fd(idx)
         }
         Err(()) => {
             // TODO: set errno
-            log!(
-                "Warning: open({:?}, {:#x}) failed, returning -1",
-                path,
-                flags,
-            );
             -1
         }
-    }
+    };
+    log_dbg!("open({:?}, {:#x}) => {:?}", path, flags, res);
+    res
 }
 
 fn read(

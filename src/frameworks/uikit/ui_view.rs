@@ -67,7 +67,26 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.get_known_class("CALayer", &mut env.mem)
 }
 
-// TODO: initWithFrame:, accessors, etc
+- (id)initWithFrame:(CGRect)frame { // CGRect
+    let host_object: &mut UIViewHostObject = env.objc.borrow_mut(this);
+    host_object.bounds = frame;
+    host_object.center = CGPoint { x: frame.size.width / 2.0, y: frame.size.height / 2.0 };
+
+    log_dbg!(
+        "[(UIView*){:?} initWithFrame:{:?}]",
+        this,
+        frame,
+    );
+
+    let layer = host_object.layer;
+    () = msg![env; layer setDelegate:this];
+
+    env.framework_state.uikit.ui_view.views.push(this);
+
+    this
+}
+
+// TODO: accessors
 
 // NSCoding implementation
 - (id)initWithCoder:(id)coder {
@@ -107,6 +126,12 @@ pub const CLASSES: ClassExports = objc_classes! {
 // TODO: setMultipleTouchEnabled
 - (())setMultipleTouchEnabled:(bool)_enabled {
     // TODO: enable multitouch
+}
+
+- (())addSubview:(id)view { // UIView *
+    () = msg![env; view layoutSubviews];
+    // TODO: keep a list of subviews somewhere
+    () = msg![env; this layoutSubviews];
 }
 
 - (())layoutSubviews {

@@ -182,6 +182,11 @@ fn setenv(env: &mut Environment, name: ConstPtr<u8>, value: ConstPtr<u8>, overwr
     0 // success
 }
 
+fn exit(_env: &mut Environment, exit_code: i32) {
+    println!("App called exit(), exiting.");
+    std::process::exit(exit_code);
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(malloc(_)),
     export_c_func!(calloc(_, _)),
@@ -195,4 +200,5 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(random()),
     export_c_func!(getenv(_)),
     export_c_func!(setenv(_, _, _)),
+    export_c_func!(exit(_)),
 ];

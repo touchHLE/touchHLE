@@ -16,7 +16,7 @@ Changes are categorised as follows:
 Compatibility:
 
 - API support improvements:
-  - Various small contributions. (@hikari-no-yume, @nitinseshadri, @LennyKappa)
+  - Various small contributions. (@hikari-no-yume, @nitinseshadri, @LennyKappa, @RealSupremium)
   - Basic POSIX file I/O is now supported. Previously only standard C file I/O was supported. (@hikari-no-yume)
   - Very basic use of Audio Session Services is now supported. (@nitinseshadri)
   - Very basic use of `MPMoviePlayerController` is now supported. No actual video playback is implemented. (@hikari-no-yume)

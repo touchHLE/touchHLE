@@ -91,7 +91,12 @@ pub struct Window {
     virtual_cursor_last: Option<(f32, f32, bool, bool)>,
 }
 impl Window {
-    pub fn new(title: &str, icon: Image, launch_image: Option<Image>, options: &Options) -> Window {
+    pub fn new(
+        title: &str,
+        icon: Option<Image>,
+        launch_image: Option<Image>,
+        options: &Options,
+    ) -> Window {
         let sdl_ctx = sdl2::init().unwrap();
         let video_ctx = sdl_ctx.video().unwrap();
 
@@ -114,7 +119,9 @@ impl Window {
             .build()
             .unwrap();
 
-        window.set_icon(surface_from_image(&icon));
+        if let Some(icon) = icon {
+            window.set_icon(surface_from_image(&icon));
+        }
 
         let event_pump = sdl_ctx.event_pump().unwrap();
 

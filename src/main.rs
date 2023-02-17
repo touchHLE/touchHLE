@@ -319,9 +319,13 @@ impl Environment {
 
         let icon = fs
             .read(bundle.icon_path())
-            .map_err(|_| "Could not read icon file".to_string())?;
-        let icon = image::Image::from_bytes(&icon)
-            .map_err(|_| "Could not parse icon image".to_string())?;
+            .map_err(|_| "Could not read icon file")
+            .and_then(|bytes| {
+                image::Image::from_bytes(&bytes).map_err(|_| "Could not parse icon image")
+            });
+        if let Err(e) = icon {
+            log!("Warning: {}", e);
+        }
 
         let launch_image = fs
             .read(bundle.launch_image_path())
@@ -330,7 +334,7 @@ impl Environment {
 
         let window = window::Window::new(
             &format!("{} (touchHLE {})", bundle.display_name(), VERSION),
-            icon,
+            icon.ok(),
             launch_image,
             &options,
         );

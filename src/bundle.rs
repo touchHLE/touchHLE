@@ -77,7 +77,17 @@ impl Bundle {
 
     pub fn icon_path(&self) -> GuestPathBuf {
         if let Some(filename) = self.plist.get("CFBundleIconFile") {
-            self.path.join(filename.as_string().unwrap())
+            if filename
+                .as_string()
+                .unwrap()
+                .to_lowercase()
+                .ends_with(".png")
+            {
+                self.path.join(filename.as_string().unwrap())
+            } else {
+                let filename_with_extension = format!("{}.png", filename.as_string().unwrap());
+                self.path.join(filename_with_extension)
+            }
         } else {
             self.path.join("Icon.png")
         }

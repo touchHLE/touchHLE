@@ -98,6 +98,17 @@ fn get_pixels<'a>(data: &CGBitmapContextData, mem: &'a mut Mem) -> &'a mut [u8] 
     mem.bytes_at_mut(data.data.cast(), pixel_data_size)
 }
 
+/// Approximate implementation of sRGB gamma encoding.
+fn gamma_encode(intensity: f32) -> f32 {
+    // TODO: This doesn't implement the linear section near zero.
+    intensity.powf(1.0 / 2.2)
+}
+/// Approximate implementation of sRGB gamma decoding.
+fn gamma_decode(intensity: f32) -> f32 {
+    // TODO: This doesn't implement the linear section near zero.
+    intensity.powf(2.2)
+}
+
 fn put_pixel(
     data: &CGBitmapContextData,
     pixels: &mut [u8],
@@ -116,33 +127,27 @@ fn put_pixel(
     let first_component_idx = (y * data.bytes_per_row + x * pixel_size) as usize;
 
     let (r, g, b, a) = pixel;
+    // Blending like this must be done in linear RGB, so this must come before
+    // gamma encoding.
+    let (r, g, b) = match data.alpha_info {
+        kCGImageAlphaPremultipliedLast | kCGImageAlphaPremultipliedFirst => (r * a, g * a, b * a),
+        _ => (r, g, b),
+    };
+    // Alpha is always linear.
+    let (r, g, b) = (gamma_encode(r), gamma_encode(g), gamma_encode(b));
     match data.alpha_info {
         kCGImageAlphaNone => {
             pixels[first_component_idx] = (r * 255.0) as u8;
             pixels[first_component_idx + 1] = (g * 255.0) as u8;
             pixels[first_component_idx + 2] = (b * 255.0) as u8;
         }
-        kCGImageAlphaPremultipliedLast => {
-            let (r, g, b) = (r * a, g * a, b * a);
+        kCGImageAlphaPremultipliedLast | kCGImageAlphaLast => {
             pixels[first_component_idx] = (r * 255.0) as u8;
             pixels[first_component_idx + 1] = (g * 255.0) as u8;
             pixels[first_component_idx + 2] = (b * 255.0) as u8;
             pixels[first_component_idx + 3] = (a * 255.0) as u8;
         }
-        kCGImageAlphaPremultipliedFirst => {
-            let (r, g, b) = (r * a, g * a, b * a);
-            pixels[first_component_idx] = (a * 255.0) as u8;
-            pixels[first_component_idx + 1] = (r * 255.0) as u8;
-            pixels[first_component_idx + 2] = (g * 255.0) as u8;
-            pixels[first_component_idx + 3] = (b * 255.0) as u8;
-        }
-        kCGImageAlphaLast => {
-            pixels[first_component_idx] = (r * 255.0) as u8;
-            pixels[first_component_idx + 1] = (g * 255.0) as u8;
-            pixels[first_component_idx + 2] = (b * 255.0) as u8;
-            pixels[first_component_idx + 3] = (a * 255.0) as u8;
-        }
-        kCGImageAlphaFirst => {
+        kCGImageAlphaPremultipliedFirst | kCGImageAlphaFirst => {
             pixels[first_component_idx] = (a * 255.0) as u8;
             pixels[first_component_idx + 1] = (r * 255.0) as u8;
             pixels[first_component_idx + 2] = (g * 255.0) as u8;
@@ -200,10 +205,17 @@ impl CGBitmapContextDrawer<'_> {
     pub fn height(&self) -> GuestUSize {
         self.bitmap_info.height
     }
+    /// Get the current fill color. The returned color is linear RGB, not sRGB!
     pub fn rgb_fill_color(&self) -> (CGFloat, CGFloat, CGFloat, CGFloat) {
-        self.rgb_fill_color
+        (
+            gamma_decode(self.rgb_fill_color.0),
+            gamma_decode(self.rgb_fill_color.1),
+            gamma_decode(self.rgb_fill_color.2),
+            gamma_decode(self.rgb_fill_color.3),
+        )
     }
-
+    /// Set the pixel at `coords` to `color`. `color` must be linear RGB, not
+    /// sRGB!
     pub fn put_pixel(&mut self, coords: (i32, i32), color: (CGFloat, CGFloat, CGFloat, CGFloat)) {
         put_pixel(&self.bitmap_info, self.pixels, coords, color)
     }

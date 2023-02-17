@@ -11,6 +11,7 @@ Names preceded by an @ are GitHub usernames.
 - The code that limits CPU use has reworked in an attempt to more effectively balance responsiveness and energy efficiency. Frame pacing should be more consistent and slowdowns should be less frequent. No obvious impact on energy use has been observed. (@hikari-no-yume)
 - The emulated CPU can now access memory via a more direct, faster path. This can dramatically improve performance and reduce CPU/energy use, in some cases by as much as 25%. (@hikari-no-yume)
 - Some of the more spammy warning messages have been removed or condensed. (@hikari-no-yume)
+- Fixed missing gamma encoding/decoding when rendering text. This was making the text in _Super Monkey Ball_'s options menu look pretty ugly. (@hikari-no-yume)
 
 ## v0.1.0
 

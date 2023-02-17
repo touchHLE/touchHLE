@@ -170,8 +170,15 @@ pub const CLASSES: ClassExports = objc_classes! {
 /// return [nib instantiateWithOwner:[UIApplication sharedApplication]
 ///                     optionsOrNil:nil];
 /// ```
-pub fn load_main_nib_file(env: &mut Environment, _ui_application: id) {
-    let path = env.bundle.main_nib_file_path();
+/// Returns true if the main nib file was loaded, false if not.
+pub fn load_main_nib_file(env: &mut Environment, _ui_application: id) -> bool {
+    let path = match env.bundle.main_nib_file_path() {
+        Some(path) => path,
+        None => {
+            // The application doesn't have a main nib file.
+            return false;
+        }
+    };
 
     let data = env.fs.read(path).unwrap();
 
@@ -198,4 +205,6 @@ pub fn load_main_nib_file(env: &mut Environment, _ui_application: id) {
     }
 
     release(env, unarchiver);
+
+    return true;
 }

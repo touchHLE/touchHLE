@@ -128,7 +128,8 @@ pub(super) fn UIApplicationMain(
     principal_class_name: id, // NSString*
     delegate_class_name: id,  // NSString*
 ) {
-    if principal_class_name != nil || delegate_class_name != nil {
+    if principal_class_name != nil {
+        // Generally, applications should not subclass UIApplication.
         unimplemented!()
     }
 
@@ -146,7 +147,20 @@ pub(super) fn UIApplicationMain(
         // The delegate must have been created by this point.
         // While notionally UIApplication does not retain its delegate (see
         // `setDelegate:` above), we do have to retain this first one.
-        let delegate: id = msg![env; ui_application delegate];
+        let delegate: id = {
+            if delegate_class_name == nil {
+                msg![env; ui_application delegate]
+            } else {
+                let delegate_class_name_as_rust_string =
+                    ns_string::to_rust_string(env, delegate_class_name);
+                let delegate_class = env
+                    .objc
+                    .get_known_class(&delegate_class_name_as_rust_string, &mut env.mem);
+                let delegate_object = msg![env; delegate_class new];
+                () = msg![env; ui_application setDelegate:delegate_object];
+                delegate_object
+            }
+        };
         assert!(delegate != nil); // should have been set by now
         retain(env, delegate);
 

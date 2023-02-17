@@ -188,8 +188,6 @@ fn main() -> Result<(), String> {
         } else if arg == "--copyright" {
             licenses::print();
             return Ok(());
-        } else if bundle_path.is_none() {
-            bundle_path = Some(PathBuf::from(arg));
         } else if arg == "--landscape-left" {
             options.initial_orientation = window::DeviceOrientation::LandscapeLeft;
         } else if arg == "--landscape-right" {
@@ -219,6 +217,8 @@ fn main() -> Result<(), String> {
                 .push(if is_thumb { addr | 0x1 } else { addr });
         } else if arg == "--disable-direct-memory-access" {
             options.direct_memory_access = false;
+        } else if bundle_path.is_none() {
+            bundle_path = Some(PathBuf::from(arg));
         } else {
             eprintln!("{}", USAGE);
             return Err(format!("Unexpected argument: {:?}", arg));

@@ -31,6 +31,7 @@ Usability:
 
 - `.ipa` files can now be opened directly, you don't need to extract the `.app` first. (@DCNick3)
 - New command-line options `--landscape-left` and `--landscape-right` let you change the initial orientation of the device. (@hikari-no-yume)
+- The app bundle or `.ipa` file no longer has to be the first command-line argument. (@hikari-no-yume)
 
 Other:
 

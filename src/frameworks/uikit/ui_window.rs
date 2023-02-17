@@ -15,6 +15,10 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 // TODO
 
+- (())makeKeyAndVisible {
+  // TODO: implement support for hidden/non-key UIWindow objects
+}
+
 @end
 
 };

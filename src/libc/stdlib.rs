@@ -182,6 +182,13 @@ fn setenv(env: &mut Environment, name: ConstPtr<u8>, value: ConstPtr<u8>, overwr
     0 // success
 }
 
+// Apple explicitly says to not call the exit() function. Some apps do it anyway.
+// See https://developer.apple.com/library/archive/qa/qa1561/_index.html
+fn exit(_env: &mut Environment, code: i32) {
+    println!("Application exited with code {}.", code);
+    std::process::exit(code);
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(malloc(_)),
     export_c_func!(calloc(_, _)),
@@ -195,4 +202,5 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(random()),
     export_c_func!(getenv(_)),
     export_c_func!(setenv(_, _, _)),
+    export_c_func!(exit(_)),
 ];

@@ -11,7 +11,7 @@ Changes are categorised as follows:
 * Usability: changes to features of the emulator unrelated to the above, e.g. new input methods.
 * Other: when none of the above seem to fit.
 
-## NEXT
+## v0.1.1
 
 Compatibility:
 
@@ -20,6 +20,7 @@ Compatibility:
   - Basic POSIX file I/O is now supported. Previously only standard C file I/O was supported. (@hikari-no-yume)
   - Very basic use of Audio Session Services is now supported. (@nitinseshadri)
   - Very basic use of `MPMoviePlayerController` is now supported. No actual video playback is implemented. (@hikari-no-yume)
+- New supported app: Crash Bandicoot Nitro Kart 3D (version 1.0 only).
 
 Quality and performance:
 

@@ -4,7 +4,7 @@
 
 As an HLE, touchHLE is radically different from a low-level emulator (LLE) like QEMU. The only code the [emulated CPU](https://github.com/merryhime/dynarmic) executes is the app binary and [a handful of libraries](touchHLE_dylibs/); touchHLE takes the place of iPhone OS and provides its own implementations of the system frameworks (Foundation, UIKit, OpenGL ES, OpenAL, etc).
 
-The goal of this project is to run games from the early days of iOS. Only iPhone/iPod touch apps for iPhone OS 2.x have been tested so far. Modern/64-bit iOS app support is explicitly a non-goal, and support for apps that aren't games is unlikely to be prioritized due to the complexity. On the other hand, it's likely that we'll attempt to support apps for some newer 32-bit versions (especially 3.x and 4.x) and the iPad in future. iPhone OS 1.x support might be attempted also.
+The goal of this project is to run games from the early days of iOS. Only iPhone/iPod touch apps for iPhone OS 2.x have been tested so far. Modern/64-bit iOS app support is explicitly a non-goal, and support for apps that aren't games is unlikely to be prioritized due to the complexity. On the other hand, it's likely that we'll attempt to support apps for some newer 32-bit versions (especially 3.x and 4.x) and the iPad in future. iPhone OS 1.x support might be attempted also. Currently [only two apps are supported](APP_SUPPORT.md). The list will surely grow with time. :)
 
 Visit our homepage! <https://touchhle.org/>
 
@@ -12,13 +12,15 @@ If you're curious about the history and motivation behind the project, you might
 
 ## Important disclaimer
 
-This project is not affiliated with or endorsed by Apple Inc in any way. iPhone, iPhone OS, iOS, iPod, iPod touch and iPad may be trademarks of Apple Inc in the United States or other countries.
+This project is not affiliated with or endorsed by Apple Inc in any way. iPhone, iOS, iPod, iPod touch and iPad are trademarks of Apple Inc in the United States and other countries.
 
 Only use touchHLE to emulate software you legally own.
 
 ## Platform support
 
 touchHLE has been tested and is to be considered supported on x64 Windows and x64 macOS. It may be possible to build it on Linux and on some AArch64 systems (at least one person has succeeded), but we make no guarantees right now. If you're an Apple Silicon Mac user: don't worry, the x64 macOS build reportedly works under Rosetta.
+
+**Known issue on macOS: memory leak of approximately 0.2MB/second (30fps games) or 0.4MB/second (60fps games).** All obvious potential culprits in the emulator itself have been ruled out, so it might be a problem in macOS itself, SDL2, or some other dependency. Thankfully this is slow enough that it shouldn't be a problem for most play sessions, but you may want to keep an eye on it.
 
 Architectures other than x64 and AArch64 are completely unsupported, and this is unlikely to change.
 
@@ -29,32 +31,13 @@ Input methods:
 - For simulated touch input, there are two options:
   - Mouse/trackpad input (tap/hold/drag by pressing the left mouse button)
   - Virtual cursor using the right analog stick on a game controller (tap/hold/drag by pressing the stick or the right shoulder button)
-- **For simulated accelerometer input (tilt controls), a game controller with a left analog stick is currently required.** Real accelerometer support will come soon, but it's not in the first release.
+- **For simulated accelerometer input (tilt controls), a game controller with a left analog stick is currently required.** Real accelerometer support will come soon, but it's not in the first releases.
 
 ## Development status
 
-Real development started in December 2022, and this is so far [a single person](https://hikari.noyu.me/)'s full-time passion project. There's only a single release so far and no promises can be made about the future. Please be patient.
+Real development started in December 2022, and this is so far [a single person](https://hikari.noyu.me/)'s full-time passion project. There's only been a handful of releases so far and no promises can be made about the future. Please be patient.
 
 Currently, the supported functionality is not much more than what the single supported app uses. The code tries to be reasonably complete where it can, though.
-
-## App support
-
-For pretty screenshots and video, [check out the home page!](https://touchhle.org/)
-
-- Super Monkey Ball (2008, App Store launch title), tested versions 1.0, 1.02, 1.3 (1.3 is the most heavily tested)
-  - Fully playable, everything works. Among other things:
-    - Sound effects and music
-    - Logo, title, menu, ranking, settings and credits screens
-    - Main Game, Instant Game (Shuffle Play) and Practice game modes
-    - Save game persistence (settings, unlocks, records)
-    - Continuing a previous game after closing and reopening the app
-    - The tutorial (in the versions that have it)
-  - Consistent full fps (30fps) in release builds even on a fairly underpowered laptop (2017 Retina MacBook, passively cooled!)
-  - Special enhancement: can be run with increased internal resolution via the `--scale-hack=` option. Resolutions up to circa 4K have been tested. No noticeable performance impact at small scales (2×, 3×).
-  - Recommended game controller settings: `--y-tilt-offset=24`
-  - Known issue: memory leak of approximately 0.2MB/second on macOS. All obvious issues in the emulator itself have been ruled out, so it might be a problem in macOS itself, SDL2, or some other dependency. Thankfully this is slow enough that it shouldn't be a problem for most play sessions.
-
-No other apps are known to work right now. This will surely improve in future. :)
 
 # Usage
 

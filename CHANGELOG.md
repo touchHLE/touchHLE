@@ -11,6 +11,12 @@ Changes are categorised as follows:
 * Usability: changes to features of the emulator unrelated to the above, e.g. new input methods.
 * Other: when none of the above seem to fit.
 
+## NEXT
+
+Other:
+
+- The version of dynarmic used by touchHLE has been updated. This will fix build issues for some people. (@hikari-no-yume)
+
 ## v0.1.1
 
 Compatibility:

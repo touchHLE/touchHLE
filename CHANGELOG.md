@@ -13,6 +13,10 @@ Changes are categorised as follows:
 
 ## NEXT
 
+Usability:
+
+- The virtual cursor controlled by the right analog stick now uses a larger portion of the analog stick's range. (@hikari-no-yume)
+
 Other:
 
 - The version of dynarmic used by touchHLE has been updated. This will fix build issues for some people. (@hikari-no-yume)

@@ -335,26 +335,20 @@ impl Window {
         let visible = pressed || x != 0.0 || y != 0.0;
 
         // Though the analog stick output fits within a square, its actual range
-        // is usually a circle enclosed by the square. So we need to cut out
-        // a square within that circle.
-        let (x, y) = {
-            let limit = std::f32::consts::FRAC_PI_4.sin();
-            let x_abs = x.abs().min(limit) / limit;
-            let y_abs = y.abs().min(limit) / limit;
-            (x_abs.copysign(x), y_abs.copysign(y))
-        };
-
-        // Aspect ratio handling: cut the square down to a rectangle
-        // TODO: It would be better to directly cut out a rectangle from the
-        // circle.
+        // is usually a circle enclosed by the square. So we need to cut out the
+        // rectangular shape of the screen from that circle within the square.
         let (width, height) = self.size_in_current_orientation();
         let (width, height) = (width as f32, height as f32);
+
         let (x, y) = {
-            let (x_abs, y_abs) = if width < height {
-                (x.abs().min(width / height) / (width / height), y.abs())
-            } else {
-                (x.abs(), y.abs().min(height / width) / (height / width))
-            };
+            // Use Pythagoras's theorem to find the largest size the rectangle
+            // can have within the circle.
+            let ratio = width / height;
+            let rect_height = (ratio * ratio + 1.0).powf(-0.5);
+            let rect_width = ratio * rect_height;
+
+            let x_abs = x.abs().min(rect_width) / rect_width;
+            let y_abs = y.abs().min(rect_height) / rect_height;
             (x_abs.copysign(x), y_abs.copysign(y))
         };
 

@@ -1,5 +1,5 @@
 # Code-level (HLE)
-- 'ipasim' (2017) is a high level emulator written in C++ that uses Microsoft's winObjC to recompile 64-bit iOS apps into apps in live. It doesn't support much apps except for really basic ones. It was more focused on apps then games. [Source code](https://github.com/ipasimulator/ipasim) 
+- `ipasim` (2017) is a high level emulator written in C++ that uses Microsoft's winObjC to recompile 64-bit iOS apps into apps in live. It doesn't support much apps except for really basic ones. It was more focused on apps then games. [Source code](https://github.com/ipasimulator/ipasim) 
 
 # Middle-level or other
 

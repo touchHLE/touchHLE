@@ -38,8 +38,6 @@ impl Bundle {
         let mut bundle_name = "";
         if plist.contains_key("CFBundleName"){
             bundle_name = plist["CFBundleName"].as_string().unwrap();
-        }else if plist.contains_key("CFBundleDisplayName"){
-            bundle_name = plist["CFBundleDisplayName"].as_string().unwrap();
         }
         let bundle_id = plist["CFBundleIdentifier"].as_string().unwrap();
 

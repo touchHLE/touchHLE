@@ -35,7 +35,12 @@ impl Bundle {
             .into_dictionary()
             .ok_or_else(|| "plist root value is not a dictionary".to_string())?;
 
-        let bundle_name = plist["CFBundleName"].as_string().unwrap();
+        let mut bundle_name = "";
+        if plist.contains_key("CFBundleName"){
+            bundle_name = plist["CFBundleName"].as_string().unwrap();
+        }else if plist.contains_key("CFBundleDisplayName"){
+            bundle_name = plist["CFBundleDisplayName"].as_string().unwrap();
+        }
         let bundle_id = plist["CFBundleIdentifier"].as_string().unwrap();
 
         let (fs, guest_path) = Fs::new(bundle_data, format!("{bundle_name}.app"), bundle_id);

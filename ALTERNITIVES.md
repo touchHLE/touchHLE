@@ -3,7 +3,8 @@
 
 
 # Middle-level or other
-
+-
+- **macOS 11+** (2020-present) on Apple Silicon architexures, which are are not virtualisable yet can run iOS apps, altough you need a few workarounds to sideload some apps. Emulation is basically perfect. [Website](http://apple.com/macos)
 # Device-level (emulation)
 
 # Scams

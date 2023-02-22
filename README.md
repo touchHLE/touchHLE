@@ -63,6 +63,10 @@ If the emulator crashes almost immediately while running a game **listed as supp
 
 Please see the BUILDING.md and CONTRIBUTING.md files in the git repo.
 
+# Alternatives
+
+Please see ALTERNITIVES.md
+
 # License
 
 touchHLE © 2023 hikari\_no\_yume and other contributors.

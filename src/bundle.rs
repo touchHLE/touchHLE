@@ -36,7 +36,7 @@ impl Bundle {
             .ok_or_else(|| "plist root value is not a dictionary".to_string())?;
 
         let mut bundle_name = "";
-        if plist.contains_key("CFBundleName"){
+        if plist.contains_key("CFBundleName") {
             bundle_name = plist["CFBundleName"].as_string().unwrap();
         }
         let bundle_id = plist["CFBundleIdentifier"].as_string().unwrap();

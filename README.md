@@ -43,7 +43,7 @@ Currently, the supported functionality is not much more than what the single sup
 
 First obtain touchHLE, either a [binary release](https://github.com/hikari-no-yume/touchHLE/releases) or by building it yourself (see the next section).
 
-You'll then need an app that you can run. See the “App support” section above. Note that the app binary must be decrypted to be usable.
+You'll then need an app that you can run. See [here](APP_SUPPORT.md). Note that the app binary must be decrypted to be usable.
 
 There's no graphical user interface right now, so you'll usually need to use the command line to run touchHLE. For first-time users on Windows:
 

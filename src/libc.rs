@@ -23,6 +23,7 @@ pub mod stdio;
 pub mod stdlib;
 pub mod string;
 pub mod time;
+pub mod wchar;
 
 /// Container for state of various child modules
 #[derive(Default)]
@@ -34,4 +35,5 @@ pub struct State {
     stdlib: stdlib::State,
     string: string::State,
     time: time::State,
+    wchar: wchar::State,
 }

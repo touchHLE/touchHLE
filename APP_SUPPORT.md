@@ -8,7 +8,7 @@ Performance is tested with release builds of touchHLE on a 2017 Retina MacBook, 
 
 Only the following apps are known to work right now.
 
-- Crash Bandicoot Nitro Kart 3D (2008, App Store day-two title), **version 1.0 only** (in-game version number: 0.7.5). Version 1.7.7 (in-game: 1.0.1) is currently broken.
+- Crash Bandicoot Nitro Kart 3D (2008, App Store day-two title), **version 1.0 only** (in-game version number: 0.7.5 or 0.7.6). Version 1.7.7 (in-game: 1.0.1) is currently broken.
   - The intro video that plays before the title screen is skipped.
   - Otherwise fully playable, everything works. Among other things:
     - Sound effects and music

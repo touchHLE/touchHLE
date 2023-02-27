@@ -28,7 +28,7 @@ use crate::cpu::Cpu;
 use crate::frameworks::foundation::ns_string;
 use crate::mach_o::MachO;
 use crate::mem::{ConstVoidPtr, GuestUSize, Mem, MutPtr, Ptr};
-use crate::objc::ObjC;
+use crate::objc::{nil, ObjC};
 use crate::Environment;
 use std::collections::HashMap;
 
@@ -207,6 +207,8 @@ impl Dyld {
 
         objc.register_bin_classes(&bins[0], mem);
         objc.register_bin_categories(&bins[0], mem);
+
+        ns_string::register_constant_strings(&bins[0], mem, objc);
     }
 
     /// Set up lazy-linking stubs for a loaded binary.
@@ -277,7 +279,8 @@ impl Dyld {
             } else if let Some(name) = name.strip_prefix("_OBJC_METACLASS_$_") {
                 objc.link_class(name, /* is_metaclass: */ true, mem)
             } else if name == "___CFConstantStringClassReference" {
-                ns_string::handle_constant_string(mem, objc, Ptr::from_bits(ptr_ptr))
+                // See ns_string::register_constant_strings
+                nil
             } else {
                 // TODO: look up symbol, write pointer
                 unhandled_relocations.entry(name).or_default().push(ptr_ptr);

@@ -12,7 +12,8 @@ use crate::frameworks::uikit::ui_font::{
     self, UILineBreakMode, UILineBreakModeWordWrap, UITextAlignment, UITextAlignmentLeft,
 };
 use crate::fs::GuestPath;
-use crate::mem::{ConstPtr, Mem, MutPtr, MutVoidPtr, SafeRead};
+use crate::mach_o::MachO;
+use crate::mem::{guest_size_of, ConstPtr, Mem, MutPtr, MutVoidPtr, Ptr, SafeRead};
 use crate::objc::{
     autorelease, id, msg, msg_class, nil, objc_classes, retain, Class, ClassExports, HostObject,
     ObjC,
@@ -625,46 +626,55 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 };
 
-/// For use by [crate::dyld]: Handle a static string found in the app binary
-/// (`isa` = `___CFConstantStringClassReference`). Set up the correct host
-/// object and return the `isa` to be written.
-pub fn handle_constant_string(mem: &mut Mem, objc: &mut ObjC, constant_str: id) -> Class {
-    let cfstringStruct {
-        _isa,
-        flags,
-        bytes,
-        length,
-    } = mem.read(constant_str.cast());
+/// For use by [crate::dyld]: Handle static strings listed in the app binary.
+/// Sets up host objects and updates `isa` fields
+/// (`___CFConstantStringClassReference` is ignored by our dyld).
+pub fn register_constant_strings(bin: &MachO, mem: &mut Mem, objc: &mut ObjC) {
+    let Some(cfstrings) = bin.get_section("__cfstring") else { return; };
 
-    // Constant CFStrings should (probably) only ever have flags 0x7c8 and 0x7d0
-    // See https://lists.llvm.org/pipermail/cfe-dev/2008-August/002518.html
-    let (host_object, class_name) = if flags == 0x7C8 {
-        // ASCII
-        let decoded = std::str::from_utf8(mem.bytes_at(bytes, length)).unwrap();
+    assert!(cfstrings.size % guest_size_of::<cfstringStruct>() == 0);
+    let base: ConstPtr<cfstringStruct> = Ptr::from_bits(cfstrings.addr);
+    for i in 0..(cfstrings.size / guest_size_of::<cfstringStruct>()) {
+        let cfstr_ptr = base + i;
+        let cfstringStruct {
+            _isa,
+            flags,
+            bytes,
+            length,
+        } = mem.read(cfstr_ptr);
 
-        (
-            StringHostObject::Utf8(Cow::Owned(String::from(decoded))),
-            "_touchHLE_NSString_CFConstantString_UTF8",
-        )
-    } else if flags == 0x7D0 {
-        // UTF16 (length is in code units, not bytes)
-        let decoded = mem
-            .bytes_at(bytes, length * 2)
-            .chunks(2)
-            .map(|chunk| u16::from_le_bytes(chunk.try_into().unwrap()))
-            .collect();
+        // Constant CFStrings should (probably) only ever have flags 0x7c8 and
+        // 0x7d0.
+        // See https://lists.llvm.org/pipermail/cfe-dev/2008-August/002518.html
+        let (host_object, class_name) = if flags == 0x7C8 {
+            // ASCII
+            let decoded = std::str::from_utf8(mem.bytes_at(bytes, length)).unwrap();
 
-        (
-            StringHostObject::Utf16(decoded),
-            "_touchHLE_NSString_CFConstantString_UTF16",
-        )
-    } else {
-        panic!("Bad CFTypeID for constant string: {:#x}", flags);
-    };
+            (
+                StringHostObject::Utf8(Cow::Owned(String::from(decoded))),
+                "_touchHLE_NSString_CFConstantString_UTF8",
+            )
+        } else if flags == 0x7D0 {
+            // UTF16 (length is in code units, not bytes)
+            let decoded = mem
+                .bytes_at(bytes, length * 2)
+                .chunks(2)
+                .map(|chunk| u16::from_le_bytes(chunk.try_into().unwrap()))
+                .collect();
 
-    objc.register_static_object(constant_str, Box::new(host_object));
+            (
+                StringHostObject::Utf16(decoded),
+                "_touchHLE_NSString_CFConstantString_UTF16",
+            )
+        } else {
+            panic!("Bad CFTypeID for constant string: {:#x}", flags);
+        };
 
-    objc.get_known_class(class_name, mem)
+        objc.register_static_object(cfstr_ptr.cast().cast_mut(), Box::new(host_object));
+
+        let new_isa = objc.get_known_class(class_name, mem);
+        mem.write(cfstr_ptr.cast().cast_mut(), new_isa);
+    }
 }
 
 /// Shortcut for host code: get an NSString corresponding to a `&'static str`,

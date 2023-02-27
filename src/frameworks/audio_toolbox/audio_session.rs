@@ -60,16 +60,16 @@ fn AudioSessionGetProperty(
 }
 
 fn AudioSessionSetProperty(
-    env: &mut Environment,
+    _env: &mut Environment,
     in_ID: AudioSessionPropertyID,
-    in_data_size: MutPtr<u32>,
+    in_data_size: u32,
     _in_data: ConstVoidPtr,
 ) -> OSStatus {
     let required_size: GuestUSize = match in_ID {
         kAudioSessionProperty_AudioCategory => guest_size_of::<u32>(),
         _ => unimplemented!("Unimplemented property ID: {}", debug_fourcc(in_ID)),
     };
-    if env.mem.read(in_data_size) != required_size {
+    if in_data_size != required_size {
         log!("Warning: AudioSessionGetProperty() failed");
         return kAudioSessionBadPropertySizeError;
     }

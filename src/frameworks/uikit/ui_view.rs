@@ -67,7 +67,37 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.get_known_class("CALayer", &mut env.mem)
 }
 
-// TODO: initWithFrame:, accessors, etc
+// TODO: accessors etc
+
+- (id)initWithFrame:(CGRect)frame {
+    let center = CGPoint {
+        x: frame.origin.x + frame.size.width / 2.0,
+        y: frame.origin.y + frame.size.height / 2.0,
+    };
+    let bounds = CGRect {
+        origin: CGPoint { x: 0.0, y: 0.0 },
+        size: frame.size,
+    };
+
+    let host_object: &mut UIViewHostObject = env.objc.borrow_mut(this);
+    host_object.bounds = bounds;
+    host_object.center = center;
+
+    log_dbg!(
+        "[(UIView*){:?} initWithFrame:{:?}] => bounds {:?}, center {:?}",
+        this,
+        frame,
+        bounds,
+        center,
+    );
+
+    let layer = host_object.layer;
+    () = msg![env; layer setDelegate:this];
+
+    env.framework_state.uikit.ui_view.views.push(this);
+
+    this
+}
 
 // NSCoding implementation
 - (id)initWithCoder:(id)coder {

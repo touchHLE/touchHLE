@@ -83,13 +83,12 @@ impl Bundle {
         }
     }
 
-    pub fn main_nib_file_path(&self) -> GuestPathBuf {
-        // FIXME: There might not be a main nib file, or it might be localised
-        // and have multiple paths. This method should definitely be removed
-        // eventually.
-        self.path.join(format!(
-            "{}.nib",
-            self.plist["NSMainNibFile"].as_string().unwrap(),
-        ))
+    pub fn main_nib_file_path(&self) -> Option<GuestPathBuf> {
+        self.plist.get("NSMainNibFile").map(|filename| {
+            let filename = filename.as_string().unwrap();
+            // FIXME: There main nib file might be localized and have multiple
+            // paths. This method should definitely be removed eventually.
+            self.path.join(format!("{}.nib", filename))
+        })
     }
 }

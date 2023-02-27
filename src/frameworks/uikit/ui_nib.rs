@@ -171,9 +171,16 @@ pub const CLASSES: ClassExports = objc_classes! {
 ///                     optionsOrNil:nil];
 /// ```
 pub fn load_main_nib_file(env: &mut Environment, _ui_application: id) {
-    let path = env.bundle.main_nib_file_path();
+    let Some(path) = env.bundle.main_nib_file_path() else {
+        return;
+    };
 
-    let data = env.fs.read(path).unwrap();
+    let Ok(data) = env.fs.read(path) else {
+        // Apparently it's permitted to specify the nib file key in the
+        // Info.plist, yet not have it point to a valid nib file?!
+        log!("Warning: couldn't load main nib file");
+        return;
+    };
 
     let unarchiver = msg_class![env; NSKeyedUnarchiver alloc];
     ns_keyed_unarchiver::init_for_reading_with_data(env, unarchiver, &data);

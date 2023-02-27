@@ -31,6 +31,7 @@ pub const FUNCTION_LISTS: &[super::FunctionExports] = &[
     libc::stdlib::FUNCTIONS,
     libc::string::FUNCTIONS,
     libc::time::FUNCTIONS,
+    libc::wchar::FUNCTIONS,
     crate::objc::FUNCTIONS,
     audio_toolbox::audio_file::FUNCTIONS,
     audio_toolbox::audio_queue::FUNCTIONS,

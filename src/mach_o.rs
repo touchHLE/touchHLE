@@ -18,9 +18,12 @@
 //! - `/usr/include/mach-o/reloc.h` in the macOS SDK was the reference for the format of relocation entries.
 //! - The [source code of the mach_object crate](https://docs.rs/mach_object/latest/src/mach_object/commands.rs.html) has useful comments that don't show up in the generated documentation, e.g. around `DySymTab`.
 
+use crate::abi::GuestFunction;
 use crate::fs::{Fs, GuestPath};
 use crate::mem::{Mem, Ptr};
-use mach_object::{DyLib, LoadCommand, MachCommand, OFile, Symbol, SymbolIter, ThreadState};
+use mach_object::{
+    DyLib, LoadCommand, MachCommand, OFile, Symbol, SymbolIter, ThreadState, N_ARM_THUMB_DEF,
+};
 use std::collections::HashMap;
 use std::io::{Cursor, Seek, SeekFrom};
 
@@ -33,7 +36,8 @@ pub struct MachO {
     /// Metadata related to sections.
     pub sections: Vec<Section>,
     /// Symbols exported by the binary. This is a hashmap so the dynamic linker
-    /// can look things up quickly.
+    /// can look things up quickly. Thumb function symbols always have the Thumb
+    /// bit set.
     pub exported_symbols: HashMap<String, u32>,
     /// List of addresses and names of external relocations for the dynamic
     /// linker to resolve.
@@ -292,10 +296,16 @@ impl MachO {
                                 name: Some(name),
                                 external: true,
                                 entry,
+                                desc,
                                 ..
                             } = symbol
                             {
                                 let entry: u32 = entry.try_into().unwrap();
+                                let entry = if desc & N_ARM_THUMB_DEF != 0 {
+                                    entry | GuestFunction::THUMB_BIT
+                                } else {
+                                    entry
+                                };
                                 exported_symbols.insert(name.to_string(), entry);
                             };
                         }

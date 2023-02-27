@@ -5,9 +5,11 @@
  */
 //! `NSBundle`.
 
-use super::ns_string::from_rust_string;
+use super::ns_string;
 use crate::bundle::Bundle;
-use crate::objc::{id, msg, msg_class, objc_classes, release, ClassExports, HostObject};
+use crate::objc::{
+    autorelease, id, msg, msg_class, nil, objc_classes, release, ClassExports, HostObject,
+};
 
 #[derive(Default)]
 pub struct State {
@@ -36,7 +38,7 @@ pub const CLASSES: ClassExports = objc_classes! {
         bundle
     } else {
         let bundle_path = env.bundle.bundle_path().as_str().to_string();
-        let bundle_path = from_rust_string(env, bundle_path);
+        let bundle_path = ns_string::from_rust_string(env, bundle_path);
         let host_object = NSBundleHostObject {
             _bundle: None,
             bundle_path,
@@ -84,6 +86,29 @@ pub const CLASSES: ClassExports = objc_classes! {
     // This seems to be the same as the bundle path. The iPhone OS bundle
     // structure is a lot flatter than the macOS one.
     msg![env; this bundleURL]
+}
+
+- (id)pathForResource:(id)name // NSString*
+               ofType:(id)extension { // NSString*
+    assert!(name != nil); // TODO
+
+    let name: id = if extension != nil {
+        msg![env; name stringByAppendingPathExtension:extension]
+    } else {
+        name
+    };
+
+    let base_path: id = msg![env; this resourcePath];
+    // FIXME: localized resource handling?
+    // FIXME: return nil if path does not exist
+    msg![env; base_path stringByAppendingPathComponent:name]
+}
+- (id)URLForResource:(id)name // NSString*
+       withExtension:(id)extension { // NSString *
+   let path_string: id = msg![env; this pathForResource:name ofType:extension];
+   let path_url: id = msg_class![env; NSURL alloc];
+   let path_url: id = msg![env; path_url initFileURLWithPath:path_string];
+   autorelease(env, path_url)
 }
 
 // TODO: constructors, more accessors

@@ -13,6 +13,11 @@ Changes are categorised as follows:
 
 ## NEXT
 
+Compatibility:
+
+- API support improvements:
+  - Various small contributions. (@hikari-no-yume, @nitinseshadri)
+
 Usability:
 
 - The virtual cursor controlled by the right analog stick now uses a larger portion of the analog stick's range. (@hikari-no-yume)

@@ -88,7 +88,9 @@ fn objc_msgSend_inner(env: &mut Environment, receiver: id, selector: SEL, super2
             if let Some(imp) = methods.get(&selector) {
                 match imp {
                     IMP::Host(host_imp) => host_imp.call_from_guest(env),
-                    IMP::Guest(guest_imp) => guest_imp.call(env),
+                    // We can't create a new stack frame, because that would
+                    // interfere with pass-through of stack arguments.
+                    IMP::Guest(guest_imp) => guest_imp.call_without_pushing_stack_frame(env),
                 }
                 return;
             } else {

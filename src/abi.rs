@@ -53,6 +53,7 @@ impl GuestFunction {
     }
 
     /// Execute the guest function and return to the host when it is done.
+    /// A new stack frame will be created for the duration of the call.
     ///
     /// For a host-to-guest call to work, several pieces need to work in
     /// concert:
@@ -65,13 +66,16 @@ impl GuestFunction {
     ///   * sets the program counter (PC) and Thumb flag to match the function
     ///     to be called;
     ///   * sets the link register (LR) to point to a special routine for
-    ///     returning to the host; and
+    ///     returning to the host;
+    ///   * pushes a new stack frame (this is optional, but makes stack traces
+    ///     clearer, cf. [Self::call_without_pushing_stack_frame]); and
     ///   * resumes CPU emulation.
     /// * The emulated function eventually returns to the caller by jumping to
     ///   the address in the link register, which should be the special routine.
     /// * The CPU emulation recognises the special routine and returns back to
     ///   this method.
-    /// * This method restores the original PC, Thumb flag and LR.
+    /// * This method restores the original PC, Thumb flag and LR, and pops the
+    ///   stack frame.
     /// * The return values are extracted from registers or the stack, if
     ///   appropriate. This is not handled by this method. This might be done
     ///   via [CallFromHost].
@@ -110,6 +114,33 @@ impl GuestFunction {
 
         log_dbg!("End call to guest function {:?}", self);
     }
+
+    /// Like [Self::call], but doesn't push a new guest stack frame. This is not
+    /// a true tail call: PC and LR are still preserved.
+    ///
+    /// This is only needed in special applications where having a new stack
+    /// frame would be troublesome, e.g. a tail call with stack argument
+    /// pass-through.
+    pub fn call_without_pushing_stack_frame(self, env: &mut Environment) {
+        log_dbg!(
+            "Begin call to guest function {:?} (no new stack frame)",
+            self
+        );
+
+        let (old_pc, old_lr) = env
+            .cpu
+            .branch_with_link(self, env.dyld.return_to_host_routine());
+
+        env.run_call();
+
+        env.cpu.branch(old_pc);
+        env.cpu.regs_mut()[Cpu::LR] = old_lr.addr_with_thumb_bit();
+
+        log_dbg!(
+            "End call to guest function {:?} (no stack frame popped)",
+            self
+        );
+    }
 }
 
 /// This trait represents a host function that can be called from guest code.
@@ -132,7 +163,8 @@ impl GuestFunction {
 /// [function pointers][fn] with compatible argument and return types. Only
 /// unusual cases should need to provide their own implementation.
 ///
-/// See also [GuestFunction::call].
+/// See also [GuestFunction::call] and
+/// [GuestFunction::call_without_pushing_stack_frame].
 pub trait CallFromGuest {
     fn call_from_guest(&self, env: &mut Environment);
 }

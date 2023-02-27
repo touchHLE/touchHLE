@@ -143,6 +143,15 @@ pub const CLASSES: ClassExports = objc_classes! {
     // On iOS 5.1 and earlier, the default implementation of this method does nothing.
 }
 
+- (())addSubview:(id)view {
+    // FIXME: there should be an actual hierarchy that retains the view
+    log!("TODO: [(UIView*){:?} addSubview:{:?}]", this, view);
+    // FIXME: These should be called systematically using setNeedsLayout: and
+    //        layoutIfNeeded.
+    let _: () = msg![env; this layoutSubviews];
+    let _: () = msg![env; view layoutSubviews];
+}
+
 - (())dealloc {
     let &mut UIViewHostObject { layer, .. } = env.objc.borrow_mut(this);
     release(env, layer);

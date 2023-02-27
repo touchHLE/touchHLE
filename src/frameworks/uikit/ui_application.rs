@@ -128,10 +128,6 @@ pub(super) fn UIApplicationMain(
     principal_class_name: id, // NSString*
     delegate_class_name: id,  // NSString*
 ) {
-    if principal_class_name != nil || delegate_class_name != nil {
-        unimplemented!()
-    }
-
     // UIKit creates and drains autorelease pools when handling events.
     // It's not clear what granularity this should happen with, but this
     // granularity has already caught several bugs. :)
@@ -139,13 +135,29 @@ pub(super) fn UIApplicationMain(
     let (ui_application, delegate) = {
         let pool: id = msg_class![env; NSAutoreleasePool new];
 
-        let ui_application: id = msg_class![env; UIApplication new];
+        let principal_class = if principal_class_name != nil {
+            let name = ns_string::to_rust_string(env, principal_class_name);
+            env.objc.get_known_class(&name, &mut env.mem)
+        } else {
+            env.objc.get_known_class("UIApplication", &mut env.mem)
+        };
+        let ui_application: id = msg![env; principal_class new];
+
+        // If the delegate's name is specified, we instantiate it directly here.
+        // Otherwise, the delegate will be part of the main nib file.
+        if delegate_class_name != nil {
+            let name = ns_string::to_rust_string(env, delegate_class_name);
+            let class = env.objc.get_known_class(&name, &mut env.mem);
+            let delegate: id = msg![env; class new];
+            let _: () = msg![env; ui_application setDelegate:delegate];
+        }
 
         load_main_nib_file(env, ui_application);
 
         // The delegate must have been created by this point.
         // While notionally UIApplication does not retain its delegate (see
-        // `setDelegate:` above), we do have to retain this first one.
+        // `setDelegate:`'s definition above), we do hold a reference to it, and
+        // we must ensure it doesn't die when the autorelease pool is drained.
         let delegate: id = msg![env; ui_application delegate];
         assert!(delegate != nil); // should have been set by now
         retain(env, delegate);

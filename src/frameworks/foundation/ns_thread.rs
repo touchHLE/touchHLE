@@ -5,7 +5,7 @@
  */
 //! `NSThread`.
 
-use crate::objc::{objc_classes, ClassExports};
+use crate::objc::{id, objc_classes, ClassExports};
 
 pub const CLASSES: ClassExports = objc_classes! {
 
@@ -21,6 +21,13 @@ pub const CLASSES: ClassExports = objc_classes! {
 + (bool)setThreadPriority:(f64)priority {
     log!("TODO: [NSThread setThreadPriority:{:?}] (ignored)", priority);
     true
+}
+
++ (id)currentThread {
+    // Simple hack to make the `setThreadPriority:` work as an instance method
+    // (it's both a class and an instance method). Must be replaced if we ever
+    // need to support other methods.
+    this
 }
 
 // TODO: construction etc

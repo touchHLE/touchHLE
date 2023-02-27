@@ -160,6 +160,19 @@ fn alGetError(_env: &mut Environment) -> i32 {
     res
 }
 
+fn alListenerf(_env: &mut Environment, param: ALenum, value: ALfloat) {
+    unsafe { al::alListenerf(param, value) };
+}
+fn alListener3f(
+    _env: &mut Environment,
+    param: ALenum,
+    value1: ALfloat,
+    value2: ALfloat,
+    value3: ALfloat,
+) {
+    unsafe { al::alListener3f(param, value1, value2, value3) };
+}
+
 fn alGenSources(env: &mut Environment, n: ALsizei, sources: MutPtr<ALuint>) {
     let n_usize: GuestUSize = n.try_into().unwrap();
     let sources = env.mem.ptr_at_mut(sources, n_usize);
@@ -297,6 +310,8 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(alcMakeContextCurrent(_)),
     export_c_func!(alcGetProcAddress(_, _)),
     export_c_func!(alGetError()),
+    export_c_func!(alListenerf(_, _)),
+    export_c_func!(alListener3f(_, _, _, _)),
     export_c_func!(alGenSources(_, _)),
     export_c_func!(alDeleteSources(_, _)),
     export_c_func!(alGetSourcef(_, _, _)),

@@ -105,6 +105,9 @@ pub const AL_FORMAT_STEREO16: ALenum = 0x1103;
 extern "C" {
     pub fn alGetError() -> ALenum;
 
+    pub fn alListenerf(param: ALenum, value: ALfloat);
+    pub fn alListener3f(param: ALenum, value1: ALfloat, value2: ALfloat, value3: ALfloat);
+
     pub fn alGenSources(n: ALsizei, sources: *mut ALuint);
     pub fn alDeleteSources(n: ALsizei, sources: *const ALuint);
 

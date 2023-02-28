@@ -14,6 +14,7 @@ use std::time::Instant;
 
 pub mod ui_accelerometer;
 pub mod ui_application;
+pub mod ui_color;
 pub mod ui_device;
 pub mod ui_event;
 pub mod ui_font;
@@ -30,6 +31,7 @@ pub mod ui_window;
 pub struct State {
     ui_accelerometer: ui_accelerometer::State,
     ui_application: ui_application::State,
+    ui_color: ui_color::State,
     ui_device: ui_device::State,
     ui_font: ui_font::State,
     ui_graphics: ui_graphics::State,

@@ -2,13 +2,20 @@
 
 For pretty screenshots and video, [check out the home page!](https://touchhle.org/)
 
+Pay attention to the **supported versions**. We can't be sure every version of an app will work, just the ones that we have tested. Unless otherwise noted, version numbers for apps come from the `CFBundleVersion` key in the app's `Info.plist` file. The names in “quotes” are the app name as displayed on the home screen (`CFBundleDisplayName`).
+
 _Scale hack supported_ means an app is compatible with the `--scale-hack=` option, which enables it to run with increased internal resolution. Assume that at least 2× and 3× scales work with no noticeable performance impact. Some apps have been tested at scales as high as 4K.
 
 Performance is tested with release builds of touchHLE on a 2017 Retina MacBook, which is a fairly underpowered (passively cooled!) dual-core laptop. Your computer is probably faster.
 
 Only the following apps are known to work right now.
 
-- Crash Bandicoot Nitro Kart 3D (2008, App Store day-two title), **version 1.0 only** (in-game version number: 0.7.5 or 0.7.6). Version 1.7.7 (in-game: 1.0.1) is currently broken.
+- Crash Bandicoot Nitro Kart 3D (2008, App Store day-two title)
+  - Working versions:
+    - “CBNK3D” 1.0 (in-game version number: 0.7.5)
+    - “Crash Kart” 1.0 (in-game version number: 0.7.6)
+  - **Broken versions:**
+    - “Crash Kart” 1.7.7 (in-game version number: 1.0.1)
   - The intro video that plays before the title screen is skipped.
   - Otherwise fully playable, everything works. Among other things:
     - Sound effects and music
@@ -19,7 +26,12 @@ Only the following apps are known to work right now.
   - Consistent full fps (60fps)
   - Scale hack supported
   - Recommended settings: `--landscape-left` (app does not auto-rotate)
-- Super Monkey Ball (2008, App Store launch title), tested versions 1.0, 1.02, 1.3 (1.3 is the most heavily tested)
+- Super Monkey Ball (2008, App Store launch title)
+  - Working versions:
+    - “Monkey Ball” 1.0
+    - “Monkey Ball” 1.02
+    - “Monkey Ball” 1.3 (this is the most heavily tested version)
+    - “SMB Lite” 1.0
   - Fully playable, everything works. Among other things:
     - Sound effects and music
     - Logo, title, menu, ranking, settings and credits screens

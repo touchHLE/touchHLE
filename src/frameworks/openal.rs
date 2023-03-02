@@ -204,7 +204,8 @@ fn alGetSourcei(env: &mut Environment, source: ALuint, param: ALenum, value: Mut
     // If we pretend AL_BUFFERS_PROCESSED was used, everything works.
     // TODO: Test on iPhone OS and figure out why Super Monkey Ball works there.
     // This might be hiding some bug in touchHLE.
-    if param == al::AL_BUFFERS_QUEUED && env.bundle.bundle_identifier() == "com.ooi.supermonkeyball"
+    if param == al::AL_BUFFERS_QUEUED
+        && ["com.ooi.supermonkeyball", "smblite"].contains(&env.bundle.bundle_identifier())
     {
         log!("Applying game-specific hack for Super Monkey Ball: treating alGetSourcei(_, AL_BUFFERS_QUEUED, _) as alGetSourcei(_, AL_BUFFERS_PROCESSED, _)");
         unsafe {

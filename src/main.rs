@@ -55,6 +55,9 @@ General options:
     --copyright
         Display copyright, authorship and license information.
 
+    --info
+        Print basic information about the app bundle without running the app.
+
 View options:
     --landscape-left
     --landscape-right
@@ -180,6 +183,8 @@ fn main() -> Result<(), String> {
         direct_memory_access: true,
     };
 
+    let mut just_info = false;
+
     let mut bundle_path: Option<PathBuf> = None;
     for arg in args {
         if arg == "--help" {
@@ -188,6 +193,8 @@ fn main() -> Result<(), String> {
         } else if arg == "--copyright" {
             licenses::print();
             return Ok(());
+        } else if arg == "--info" {
+            just_info = true;
         } else if arg == "--landscape-left" {
             options.initial_orientation = window::DeviceOrientation::LandscapeLeft;
         } else if arg == "--landscape-right" {
@@ -238,7 +245,27 @@ fn main() -> Result<(), String> {
         log!("Warning: The bundle path has a trailing quotation mark! This often happens accidentally on Windows when tab-completing, because '\\\"' gets interpreted by Rust in the wrong way. Did you meant to write {:?}?", fixed);
     }
 
-    let mut env = Environment::new(bundle_path, options)?;
+    let bundle_data = fs::BundleData::open_any(&bundle_path)
+        .map_err(|e| format!("Could not open app bundle: {e}"))?;
+    let (bundle, fs) = match bundle::Bundle::new_bundle_and_fs_from_host_path(bundle_data) {
+        Ok(bundle) => bundle,
+        Err(err) => {
+            return Err(format!("Application bundle error: {err}. Check that the path is to an .app directory or an .ipa file."));
+        }
+    };
+
+    println!("App bundle info:");
+    println!("- Display name: {}", bundle.display_name());
+    println!("- Version: {}", bundle.bundle_version());
+    println!("- Identifier: {}", bundle.bundle_identifier());
+    println!("- Internal name: {}.app", bundle.canonical_bundle_name());
+    println!();
+
+    if just_info {
+        return Ok(());
+    }
+
+    let mut env = Environment::new(bundle, fs, options)?;
     env.run();
     Ok(())
 }
@@ -305,17 +332,8 @@ pub struct Environment {
 
 impl Environment {
     /// Loads the binary and sets up the emulator.
-    fn new(bundle_path: PathBuf, options: Options) -> Result<Environment, String> {
+    fn new(bundle: bundle::Bundle, fs: fs::Fs, options: Options) -> Result<Environment, String> {
         let startup_time = std::time::Instant::now();
-
-        let bundle_data = fs::BundleData::open_any(&bundle_path)
-            .map_err(|e| format!("Could not open app bundle: {e}"))?;
-        let (bundle, fs) = match bundle::Bundle::new_bundle_and_fs_from_host_path(bundle_data) {
-            Ok(bundle) => bundle,
-            Err(err) => {
-                return Err(format!("Application bundle error: {err}. Check that the path is to an .app directory or an .ipa file."));
-            }
-        };
 
         let icon = fs
             .read(bundle.icon_path())

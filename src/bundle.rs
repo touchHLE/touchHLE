@@ -56,6 +56,14 @@ impl Bundle {
         self.plist["CFBundleIdentifier"].as_string().unwrap()
     }
 
+    pub fn bundle_version(&self) -> &str {
+        self.plist["CFBundleVersion"].as_string().unwrap()
+    }
+
+    pub fn canonical_bundle_name(&self) -> &str {
+        self.plist["CFBundleName"].as_string().unwrap()
+    }
+
     pub fn display_name(&self) -> &str {
         self.plist["CFBundleDisplayName"].as_string().unwrap()
     }

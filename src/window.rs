@@ -20,7 +20,7 @@ pub use gl::{gl21compat, gl32core, gles11, GLContext, GLVersion};
 pub use matrix::Matrix;
 
 use crate::image::Image;
-use crate::Options;
+use crate::options::Options;
 use sdl2::mouse::MouseButton;
 use sdl2::pixels::PixelFormatEnum;
 use sdl2::surface::Surface;

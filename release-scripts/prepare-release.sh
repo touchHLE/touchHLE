@@ -19,3 +19,6 @@ pandoc -s ../APP_SUPPORT.md -o new_release/APP_SUPPORT.html
 pandoc -s ../CHANGELOG.md -o new_release/CHANGELOG.html
 
 cp -r gpl-3.0.txt new_release/COPYING
+
+cp ../touchHLE_default_options.txt new_release/
+cp ../touchHLE_options.txt new_release/

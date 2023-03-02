@@ -22,6 +22,9 @@ Usability:
 
 - The virtual cursor controlled by the right analog stick now uses a larger portion of the analog stick's range. (@hikari-no-yume)
 - Basic information about the app bundle, such as its name and version number, is now output when running an app. There is also a new command-line option, `--info`, which lets you get this information without running the app. (@hikari-no-yume)
+- Options can now be loaded from files. (@hikari-no-yume)
+  - The recommended options for supported apps are now applied automatically. See the new `touchHLE_default_options.txt` file.
+  - You can put your own options in the new `touchHLE_options.txt` file.
 
 Other:
 

@@ -69,7 +69,7 @@ fn main() -> Result<(), String> {
 
     let mut bundle_path: Option<PathBuf> = None;
     let mut just_info = false;
-    let mut options = options::Options::default();
+    let mut option_args = Vec::new();
 
     for arg in args {
         if arg == "--help" {
@@ -81,8 +81,11 @@ fn main() -> Result<(), String> {
             return Ok(());
         } else if arg == "--info" {
             just_info = true;
-        } else if options.parse_argument(&arg)? {
-            // this space left intentionally blank
+        // Parse an option but discard the value, to test whether it's valid.
+        // We don't want to apply it immediately, because then options loaded
+        // from a file would take precedence over options from the command line.
+        } else if options::Options::default().parse_argument(&arg)? {
+            option_args.push(arg);
         } else if bundle_path.is_none() {
             bundle_path = Some(PathBuf::from(arg));
         } else {
@@ -114,15 +117,53 @@ fn main() -> Result<(), String> {
         }
     };
 
+    let app_id = bundle.bundle_identifier();
+
     println!("App bundle info:");
     println!("- Display name: {}", bundle.display_name());
     println!("- Version: {}", bundle.bundle_version());
-    println!("- Identifier: {}", bundle.bundle_identifier());
+    println!("- Identifier: {}", app_id);
     println!("- Internal name: {}.app", bundle.canonical_bundle_name());
     println!();
 
     if just_info {
         return Ok(());
+    }
+
+    let mut options = options::Options::default();
+
+    // Apply options from files
+    for filename in [options::DEFAULTS_FILENAME, options::USER_FILENAME] {
+        match options::get_options_from_file(filename, app_id) {
+            Ok(Some(options_string)) => {
+                println!(
+                    "Using options from {} for this app: {}",
+                    filename, options_string
+                );
+                for option_arg in options_string.split_ascii_whitespace() {
+                    match options.parse_argument(option_arg) {
+                        Ok(true) => (),
+                        Ok(false) => return Err(format!("Unknown option {:?}", option_arg)),
+                        Err(err) => {
+                            return Err(format!("Invalid option {:?}: {}", option_arg, err))
+                        }
+                    }
+                }
+            }
+            Ok(None) => {
+                println!("No options found for this app in {}", filename);
+            }
+            Err(e) => {
+                eprintln!("Warning: {}", e);
+            }
+        }
+    }
+    println!();
+
+    // Apply command-line options
+    for option_arg in option_args {
+        let parse_result = options.parse_argument(&option_arg);
+        assert!(parse_result == Ok(true));
     }
 
     let mut env = Environment::new(bundle, fs, options)?;

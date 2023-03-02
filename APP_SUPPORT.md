@@ -25,7 +25,6 @@ Performance is tested with release builds of touchHLE on a 2017 Retina MacBook, 
     - Continuing a previous game after closing and reopening the app
   - Consistent full fps (60fps)
   - Scale hack supported
-  - Recommended settings: `--landscape-left` (app does not auto-rotate)
 - Super Monkey Ball (2008, App Store launch title)
   - Working versions:
     - “Monkey Ball” 1.0
@@ -41,4 +40,3 @@ Performance is tested with release builds of touchHLE on a 2017 Retina MacBook, 
     - The tutorial (in the versions that have it)
   - Consistent full fps (30fps)
   - Scale hack supported
-  - Recommended game controller settings: `--y-tilt-offset=24`

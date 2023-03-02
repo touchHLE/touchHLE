@@ -6,6 +6,8 @@
 //! Parsing and management of user-configurable options, e.g. for input methods.
 
 use crate::window::DeviceOrientation;
+use std::fs::File;
+use std::io::{BufRead, BufReader};
 use std::num::NonZeroU32;
 
 pub const DOCUMENTATION: &str = "\
@@ -124,7 +126,7 @@ impl Default for Options {
 
 impl Options {
     /// Parse the command-line argument syntax for an option. Returns `Ok(true)`
-    /// if the option was valid and has been applied, and `Ok(false)` if the
+    /// if the option was valid and has been applied, or `Ok(false)` if the
     /// option was not recognized.
     pub fn parse_argument(&mut self, arg: &str) -> Result<bool, String> {
         fn parse_degrees(arg: &str, name: &str) -> Result<f32, String> {
@@ -170,4 +172,59 @@ impl Options {
         };
         Ok(true)
     }
+}
+
+/// Name of the file containing touchHLE's default options for various apps.
+pub const DEFAULTS_FILENAME: &str = "touchHLE_default_options.txt";
+/// Name of the file intended for the user's own options.
+pub const USER_FILENAME: &str = "touchHLE_options.txt";
+
+/// Try to get app-specific options from a file.
+///
+/// Returns [Ok] if there is no error when reading the file, otherwise [Err].
+/// The [Ok] value is a [Some] with the options if they could be found, or
+/// [None] if no options were found for this app.
+pub fn get_options_from_file(filename: &str, app_id: &str) -> Result<Option<String>, String> {
+    let file = File::open(filename).map_err(|e| format!("Could not open {}: {}", filename, e))?;
+
+    let file = BufReader::new(file);
+    for (line_no, line) in BufRead::lines(file).enumerate() {
+        // Line numbering usually starts from 1
+        let line_no = line_no + 1;
+
+        let line = line.map_err(|e| {
+            format!(
+                "Error while reading line {} of {}: {}",
+                line_no, filename, e
+            )
+        })?;
+
+        // # for single-line comments
+        let line = if let Some((rest, _)) = line.split_once('#') {
+            rest
+        } else {
+            &line
+        };
+
+        // Empty/all-comment lines ignored
+        let line = line.trim();
+        if line.is_empty() {
+            continue;
+        }
+
+        let (line_app_id, line_options) = line.split_once(':').ok_or_else(|| format!("Line {} of {} is not a comment and is missing a colon (:) to separate the app ID from the options", line_no, filename))?;
+        let line_app_id = line_app_id.trim();
+
+        if line_app_id != app_id {
+            continue;
+        }
+
+        let line_options = line_options.trim();
+        if line_options.is_empty() {
+            return Ok(None);
+        } else {
+            return Ok(Some(line_options.to_string()));
+        }
+    }
+    Ok(None)
 }

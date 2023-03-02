@@ -1,14 +1,14 @@
 # Apps supported by touchHLE
 
+This is a list of apps known to work in touchHLE right now.
+
 For pretty screenshots and video, [check out the home page!](https://touchhle.org/)
 
-Pay attention to the **supported versions**. We can't be sure every version of an app will work, just the ones that we have tested. Unless otherwise noted, version numbers for apps come from the `CFBundleVersion` key in the app's `Info.plist` file. The names in “quotes” are the app name as displayed on the home screen (`CFBundleDisplayName`).
+Pay attention to the **supported versions**. Versions that haven't been tested might not work. For each listed version, the name in “quotes” is the display name (i.e. the name you'd see on the home screen), and the number is the bundle version number. If you're not sure which version of an app you have, you can look at the `App bundle info:` output when you run it in touchHLE.
 
 _Scale hack supported_ means an app is compatible with the `--scale-hack=` option, which enables it to run with increased internal resolution. Assume that at least 2× and 3× scales work with no noticeable performance impact. Some apps have been tested at scales as high as 4K.
 
 Performance is tested with release builds of touchHLE on a 2017 Retina MacBook, which is a fairly underpowered (passively cooled!) dual-core laptop. Your computer is probably faster.
-
-Only the following apps are known to work right now.
 
 - Crash Bandicoot Nitro Kart 3D (2008, App Store day-two title)
   - Working versions:

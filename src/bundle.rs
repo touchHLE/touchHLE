@@ -68,6 +68,12 @@ impl Bundle {
         self.plist["CFBundleDisplayName"].as_string().unwrap()
     }
 
+    pub fn minimum_os_version(&self) -> Option<&str> {
+        self.plist
+            .get("MinimumOSVersion")
+            .map(|v| v.as_string().unwrap())
+    }
+
     pub fn executable_path(&self) -> GuestPathBuf {
         // FIXME: Is this key optional? All iPhone apps seem to have it.
         self.path

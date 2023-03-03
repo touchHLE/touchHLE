@@ -118,13 +118,26 @@ fn main() -> Result<(), String> {
     };
 
     let app_id = bundle.bundle_identifier();
+    let minimum_os_version = bundle.minimum_os_version();
 
     println!("App bundle info:");
     println!("- Display name: {}", bundle.display_name());
     println!("- Version: {}", bundle.bundle_version());
     println!("- Identifier: {}", app_id);
     println!("- Internal name: {}.app", bundle.canonical_bundle_name());
+    println!(
+        "- Minimum OS version: {}",
+        minimum_os_version.unwrap_or("(not specified)")
+    );
     println!();
+
+    if let Some(version) = minimum_os_version {
+        let (major, _minor_etc) = version.split_once('.').unwrap();
+        let major: u32 = major.parse().unwrap();
+        if major > 2 {
+            eprintln!("Warning: app requires OS version {}. Only iPhone OS 2 apps are currently supported.", version);
+        }
+    }
 
     if just_info {
         return Ok(());

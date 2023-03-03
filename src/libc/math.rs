@@ -8,16 +8,7 @@
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::Environment;
 
-// Exponential functions
-// FIXME: These should theoretically set errno, though it's unlikely apps
-// actually check it.
-// TODO: implement the rest
-fn sqrt(_env: &mut Environment, arg: f64) -> f64 {
-    arg.sqrt()
-}
-fn sqrtf(_env: &mut Environment, arg: f32) -> f32 {
-    arg.sqrt()
-}
+// The sections in this file are organized to match the C standard.
 
 // Trigonometric functions
 
@@ -111,10 +102,65 @@ fn atanhf(_env: &mut Environment, arg: f32) -> f32 {
     arg.atanh()
 }
 
+// Exponential and logarithmic functions
+// FIXME: These should theoretically set errno, though it's unlikely apps
+// actually check it.
+// TODO: implement the rest
+fn log(_env: &mut Environment, arg: f64) -> f64 {
+    arg.ln()
+}
+fn logf(_env: &mut Environment, arg: f32) -> f32 {
+    arg.ln()
+}
+fn log1p(_env: &mut Environment, arg: f64) -> f64 {
+    arg.ln_1p()
+}
+fn log1pf(_env: &mut Environment, arg: f32) -> f32 {
+    arg.ln_1p()
+}
+fn log2(_env: &mut Environment, arg: f64) -> f64 {
+    arg.log2()
+}
+fn log2f(_env: &mut Environment, arg: f32) -> f32 {
+    arg.log2()
+}
+fn log10(_env: &mut Environment, arg: f64) -> f64 {
+    arg.log10()
+}
+fn log10f(_env: &mut Environment, arg: f32) -> f32 {
+    arg.log10()
+}
+fn exp(_env: &mut Environment, arg: f64) -> f64 {
+    arg.exp()
+}
+fn expf(_env: &mut Environment, arg: f32) -> f32 {
+    arg.exp()
+}
+fn expm1(_env: &mut Environment, arg: f64) -> f64 {
+    arg.exp_m1()
+}
+fn expm1f(_env: &mut Environment, arg: f32) -> f32 {
+    arg.exp_m1()
+}
+fn exp2(_env: &mut Environment, arg: f64) -> f64 {
+    arg.exp2()
+}
+fn exp2f(_env: &mut Environment, arg: f32) -> f32 {
+    arg.exp2()
+}
+
+// Power functions
+// FIXME: These should theoretically set errno, though it's unlikely apps
+// actually check it.
+// TODO: implement the rest
+fn sqrt(_env: &mut Environment, arg: f64) -> f64 {
+    arg.sqrt()
+}
+fn sqrtf(_env: &mut Environment, arg: f32) -> f32 {
+    arg.sqrt()
+}
+
 pub const FUNCTIONS: FunctionExports = &[
-    // Exponential functions
-    export_c_func!(sqrt(_)),
-    export_c_func!(sqrtf(_)),
     // Trigonometric functions
     export_c_func!(sin(_)),
     export_c_func!(sinf(_)),
@@ -143,4 +189,22 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(acoshf(_)),
     export_c_func!(atanh(_)),
     export_c_func!(atanhf(_)),
+    // Exponential and logarithmic functions
+    export_c_func!(log(_)),
+    export_c_func!(logf(_)),
+    export_c_func!(log1p(_)),
+    export_c_func!(log1pf(_)),
+    export_c_func!(log2(_)),
+    export_c_func!(log2f(_)),
+    export_c_func!(log10(_)),
+    export_c_func!(log10f(_)),
+    export_c_func!(exp(_)),
+    export_c_func!(expf(_)),
+    export_c_func!(expm1(_)),
+    export_c_func!(expm1f(_)),
+    export_c_func!(exp2(_)),
+    export_c_func!(exp2f(_)),
+    // Power functions
+    export_c_func!(sqrt(_)),
+    export_c_func!(sqrtf(_)),
 ];

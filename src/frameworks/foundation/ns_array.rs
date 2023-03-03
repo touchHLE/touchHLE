@@ -42,6 +42,31 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 @end
 
+// NSMutableArray is an abstract class. A subclass must provide everything
+// NSArray provides, plus:
+// - (void)insertObject:(id)object atIndex:(NSUInteger)index;
+// - (void)removeObjectAtIndex:(NSUInteger)index;
+// - (void)addObject:(id)object;
+// - (void)removeLastObject
+// - (void)replaceObjectAtIndex:(NSUInteger)index withObject:(id)object;
+// Note that it inherits from NSArray, so we must ensure we override any default
+// methods that would be inappropriate for mutability.
+@implementation NSMutableArray: NSArray
+
++ (id)allocWithZone:(MutVoidPtr)zone {
+    // NSArray might be subclassed by something which needs allocWithZone:
+    // to have the normal behaviour. Unimplemented: call superclass alloc then.
+    assert!(this == env.objc.get_known_class("NSMutableArray", &mut env.mem));
+    msg_class![env; _touchHLE_NSMutableArray allocWithZone:zone]
+}
+
+// NSCopying implementation
+- (id)copyWithZone:(MutVoidPtr)_zone {
+    todo!(); // TODO: this should produce an immutable copy
+}
+
+@end
+
 // Our private subclass that is the single implementation of NSArray for the
 // time being.
 @implementation _touchHLE_NSArray: NSArray
@@ -88,6 +113,42 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 // TODO: more init methods, etc
+
+- (NSUInteger)count {
+    env.objc.borrow::<ArrayHostObject>(this).array.len().try_into().unwrap()
+}
+- (id)objectAtIndex:(NSUInteger)index {
+    // TODO: throw real exception rather than panic if out-of-bounds?
+    env.objc.borrow::<ArrayHostObject>(this).array[index as usize]
+}
+
+@end
+
+// Our private subclass that is the single implementation of NSMutableArray for // the time being.
+@implementation _touchHLE_NSMutableArray: NSMutableArray
+
++ (id)allocWithZone:(MutVoidPtr)_zone {
+    let host_object = Box::new(ArrayHostObject {
+        array: Vec::new(),
+    });
+    env.objc.alloc_object(this, host_object, &mut env.mem)
+}
+
+- (())dealloc {
+    let host_object: &mut ArrayHostObject = env.objc.borrow_mut(this);
+    let array = std::mem::take(&mut host_object.array);
+
+    for object in array {
+        release(env, object);
+    }
+
+    // FIXME: this should do a super-call instead
+    env.objc.dealloc_object(this, &mut env.mem)
+}
+
+
+// TODO: init methods etc
+// TODO: mutation methods
 
 - (NSUInteger)count {
     env.objc.borrow::<ArrayHostObject>(this).array.len().try_into().unwrap()

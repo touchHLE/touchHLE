@@ -43,6 +43,7 @@ pub const CLASS_LISTS: &[super::ClassExports] = &[
     uikit::ui_device::CLASSES,
     uikit::ui_event::CLASSES,
     uikit::ui_font::CLASSES,
+    uikit::ui_image::CLASSES,
     uikit::ui_nib::CLASSES,
     uikit::ui_responder::CLASSES,
     uikit::ui_screen::CLASSES,

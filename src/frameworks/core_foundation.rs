@@ -17,6 +17,7 @@
 //! - Apple's [Memory Management Programming Guide for Core Foundation](https://developer.apple.com/library/archive/documentation/CoreFoundation/Conceptual/CFMemoryMgmt/CFMemoryMgmt.html)
 
 pub mod cf_allocator;
+pub mod cf_array;
 pub mod cf_bundle;
 pub mod cf_run_loop;
 pub mod cf_string;

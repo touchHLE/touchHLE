@@ -5,8 +5,8 @@
  */
 //! `CFArray` and `CFMutableArray`.
 //!
-//! This is toll-free bridged to `CFURL` in Apple's implementation. Here it is
-//! the same type.
+//! These are toll-free bridged to `NSArray` and `NSMutableArray` in Apple's
+//! implementation. Here they are the same types.
 
 use super::cf_allocator::{kCFAllocatorDefault, CFAllocatorRef};
 use super::CFIndex;

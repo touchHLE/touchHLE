@@ -5,7 +5,7 @@
  */
 //! `CFURL`.
 //!
-//! This is toll-free bridged to `CFURL` in Apple's implementation. Here it is
+//! This is toll-free bridged to `NSURL` in Apple's implementation. Here it is
 //! the same type.
 
 use super::cf_allocator::{kCFAllocatorDefault, CFAllocatorRef};

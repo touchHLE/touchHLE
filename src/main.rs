@@ -255,11 +255,12 @@ impl Environment {
 
         let icon = fs
             .read(bundle.icon_path())
-            .map_err(|_| "Could not read icon file")
+            .map_err(|_| "Could not read icon file".to_string())
             .and_then(|bytes| {
-                image::Image::from_bytes(&bytes).map_err(|_| "Could not parse icon image")
+                image::Image::from_bytes(&bytes)
+                    .map_err(|e| format!("Could not parse icon image: {}", e))
             });
-        if let Err(e) = icon {
+        if let Err(ref e) = icon {
             log!("Warning: {}", e);
         }
 

@@ -10,7 +10,7 @@
 // This also allows items in the crate to have non-snake-case names.
 #![allow(non_snake_case)]
 
-use std::ffi::{c_int, c_uchar, c_void};
+use std::ffi::{c_char, c_int, c_uchar, c_void};
 
 // See build.rs, lib.c and ../../../vendor/stb/stb_image.h
 extern "C" {
@@ -25,4 +25,5 @@ extern "C" {
         desired_channels: c_int,
     ) -> *mut c_uchar;
     pub fn stbi_image_free(retval_from_stbi_load: *mut c_void);
+    pub fn stbi_failure_reason() -> *const c_char;
 }

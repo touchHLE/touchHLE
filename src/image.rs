@@ -8,7 +8,7 @@
 //! Implemented as a wrapper around the C library stb_image, since it supports
 //! "CgBI" PNG files (an Apple proprietary extension used in iPhone OS apps).
 
-use std::ffi::{c_int, c_uchar};
+use std::ffi::{c_int, c_uchar, CStr};
 
 use touchHLE_stb_image_wrapper::*;
 
@@ -18,8 +18,8 @@ pub struct Image {
 }
 
 impl Image {
-    pub fn from_bytes(bytes: &[u8]) -> Result<Image, ()> {
-        let len: c_int = bytes.len().try_into().map_err(|_| ())?;
+    pub fn from_bytes(bytes: &[u8]) -> Result<Image, String> {
+        let len: c_int = bytes.len().try_into().unwrap();
 
         let mut x: c_int = 0;
         let mut y: c_int = 0;
@@ -38,7 +38,8 @@ impl Image {
             )
         };
         if pixels.is_null() {
-            return Err(());
+            let reason = unsafe { CStr::from_ptr(stbi_failure_reason()) };
+            return Err(reason.to_str().unwrap().to_string());
         }
 
         let width: u32 = x.try_into().unwrap();

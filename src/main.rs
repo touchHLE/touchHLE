@@ -359,9 +359,20 @@ impl Environment {
 
         env.cpu.set_cpsr(cpu::Cpu::CPSR_USER_MODE);
 
-        // FIXME: call library static initializers too
-        if let Some(mod_init_func) = env.bins[0].get_section("__mod_init_func") {
-            log_dbg!("Calling static initializers for {:?}", env.bins[0].name);
+        // Static initializers for libraries must be run before the initializer
+        // in the app binary.
+        // TODO: once we support more libraries, replace this hard-coded order
+        //       with e.g. a topological sort.
+        assert!(env.bins.len() <= 3);
+        for bin_idx in [1, 2, 0] {
+            let Some(bin) = env.bins.get(bin_idx) else {
+                continue;
+            };
+            let Some(mod_init_func) = bin.get_section("__mod_init_func") else {
+                continue;
+            };
+
+            log_dbg!("Calling static initializers for {:?}", bin.name);
             assert!(mod_init_func.size % 4 == 0);
             let base: mem::ConstPtr<abi::GuestFunction> = mem::Ptr::from_bits(mod_init_func.addr);
             let count = mod_init_func.size / 4;

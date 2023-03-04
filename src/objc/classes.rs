@@ -97,8 +97,8 @@ unsafe impl SafeRead for class_rw_t {}
 struct category_t {
     name: ConstPtr<u8>,
     class: Class,
-    _instance_methods: ConstPtr<method_list_t>,
-    _class_methods: ConstPtr<method_list_t>,
+    instance_methods: ConstPtr<method_list_t>,
+    class_methods: ConstPtr<method_list_t>,
     _protocols: ConstVoidPtr,     // protocol list (TODO)
     _property_list: ConstVoidPtr, // property list (TODO)
 }
@@ -531,15 +531,49 @@ impl ObjC {
 
             let name = mem.cstr_at_utf8(data.name).unwrap();
             let class = data.class;
+            let metaclass = Self::read_isa(class, mem);
 
-            // TODO: call ClassHostObject::add_methods_from_bin, though the
-            // double-borrow of ObjC will need to be fixed somehow.
-            log!(
-                "TODO: apply guest app category \"{}\" {:?} to class {:?}",
-                name,
-                cat_ptr,
-                class
-            );
+            for (class, methods) in [
+                (class, data.instance_methods),
+                (metaclass, data.class_methods),
+            ] {
+                if methods.is_null() {
+                    continue;
+                }
+
+                // Horrible workaround to avoid double-borrowing self:
+                // temporarily replace the class object.
+                let mut host_obj = std::mem::replace(
+                    self.borrow_mut::<ClassHostObject>(class),
+                    ClassHostObject {
+                        name: Default::default(),
+                        is_metaclass: Default::default(),
+                        superclass: nil,
+                        methods: Default::default(),
+                        _instance_start: Default::default(),
+                        instance_size: Default::default(),
+                    },
+                );
+                log_dbg!(
+                    "Adding {} methods from guest app category \"{}\" {:?} to {} \"{}\" {:?}",
+                    if host_obj.is_metaclass {
+                        "class"
+                    } else {
+                        "instance"
+                    },
+                    name,
+                    cat_ptr,
+                    if host_obj.is_metaclass {
+                        "metaclass"
+                    } else {
+                        "class"
+                    },
+                    host_obj.name,
+                    class,
+                );
+                host_obj.add_methods_from_bin(methods, mem, self);
+                *self.borrow_mut::<ClassHostObject>(class) = host_obj;
+            }
         }
     }
 

@@ -159,7 +159,6 @@ pub const CLASSES: ClassExports = objc_classes! {
         env.framework_state.uikit.ui_view.views.iter().position(|&v| v == this).unwrap()
     );
 
-    // FIXME: this should do a super-call instead
     env.objc.dealloc_object(this, &mut env.mem);
 }
 

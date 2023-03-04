@@ -130,7 +130,6 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (())dealloc {
     std::mem::take(env.objc.borrow_mut::<DictionaryHostObject>(this)).release(env);
 
-    // FIXME: this should do a super-call instead
     env.objc.dealloc_object(this, &mut env.mem)
 }
 

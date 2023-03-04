@@ -53,7 +53,6 @@ pub const CLASSES: ClassExports = objc_classes! {
         release(env, object);
     }
 
-    // FIXME: this should do a super-call instead
     env.objc.dealloc_object(this, &mut env.mem)
 }
 

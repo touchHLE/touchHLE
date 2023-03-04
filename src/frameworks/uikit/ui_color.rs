@@ -6,8 +6,10 @@
 //! `UIColor`.
 
 use crate::frameworks::core_graphics::CGFloat;
-use crate::mem::{MutPtr, MutVoidPtr};
-use crate::objc::{autorelease, id, msg, msg_class, objc_classes, ClassExports, HostObject, SEL};
+use crate::mem::MutPtr;
+use crate::objc::{
+    autorelease, id, msg, msg_class, objc_classes, ClassExports, HostObject, NSZonePtr, SEL,
+};
 use crate::Environment;
 use std::collections::HashMap;
 
@@ -49,7 +51,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 @implementation UIColor: NSObject
 
-+ (id)allocWithZone:(MutVoidPtr)_zone {
++ (id)allocWithZone:(NSZonePtr)_zone {
     let host_object = Box::new(UIColorHostObject {
         rgba: (0.0, 0.0, 0.0, 0.0),
     });

@@ -42,6 +42,12 @@ use objects::{objc_object, HostObjectEntry};
 use properties::objc_copyStruct;
 use properties::objc_setProperty;
 
+/// Typedef for `NSZone *`. This is a [fossil type] found in the signature of
+/// `allocWithZone:` and similar methods. Its value is always ignored.
+///
+/// [fossil type]: https://en.wiktionary.org/wiki/fossil_word
+pub type NSZonePtr = crate::mem::MutVoidPtr;
+
 /// Main type holding Objective-C runtime state.
 pub struct ObjC {
     /// Known selectors (interned method name strings).

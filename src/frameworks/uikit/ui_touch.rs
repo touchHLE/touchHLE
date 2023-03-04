@@ -8,9 +8,9 @@
 use super::ui_view::UIViewHostObject;
 use crate::frameworks::core_graphics::{CGFloat, CGPoint};
 use crate::frameworks::foundation::{NSTimeInterval, NSUInteger};
-use crate::mem::MutVoidPtr;
 use crate::objc::{
     autorelease, id, msg, msg_class, nil, objc_classes, release, retain, ClassExports, HostObject,
+    NSZonePtr,
 };
 use crate::window::Event;
 use crate::Environment;
@@ -35,7 +35,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 @implementation UITouch: NSObject
 
-+ (id)allocWithZone:(MutVoidPtr)_zone {
++ (id)allocWithZone:(NSZonePtr)_zone {
     let host_object = Box::new(UITouchHostObject {
         view: nil,
         location: CGPoint { x: 0.0, y: 0.0 },

@@ -5,9 +5,8 @@
  */
 //! `NSNotification`.
 
-use crate::mem::MutVoidPtr;
 use crate::objc::{
-    autorelease, id, msg, nil, objc_classes, release, retain, ClassExports, HostObject,
+    autorelease, id, msg, nil, objc_classes, release, retain, ClassExports, HostObject, NSZonePtr,
 };
 
 /// `NSString*`
@@ -26,7 +25,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 @implementation NSNotification: NSObject
 
-+ (id)allocWithZone:(MutVoidPtr)_zone {
++ (id)allocWithZone:(NSZonePtr)_zone {
     let host_object = Box::new(NSNotificationHostObject {
         name: nil,
         object: nil,

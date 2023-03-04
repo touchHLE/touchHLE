@@ -6,9 +6,8 @@
 //! The `NSCharacterSet` class cluster, including `NSMutableCharacterSet`.
 
 use super::ns_string;
-use crate::mem::MutVoidPtr;
 use crate::objc::{
-    autorelease, id, msg, msg_class, objc_classes, retain, ClassExports, HostObject,
+    autorelease, id, msg, msg_class, objc_classes, retain, ClassExports, HostObject, NSZonePtr,
 };
 use std::collections::HashSet;
 
@@ -28,7 +27,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 // For the time being, that will always be _touchHLE_NSCharacterSet.
 @implementation NSCharacterSet: NSObject
 
-+ (id)allocWithZone:(MutVoidPtr)zone {
++ (id)allocWithZone:(NSZonePtr)zone {
     // NSCharacterSet might be subclassed by something which needs
     // allocWithZone: to have the normal behaviour. Unimplemented: call
     // superclass alloc then.
@@ -50,7 +49,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 // NSCopying implementation
-- (id)copyWithZone:(MutVoidPtr)_zone {
+- (id)copyWithZone:(NSZonePtr)_zone {
     // TODO: override this once we have NSMutableCharacterSet!
     retain(env, this)
 }
@@ -61,7 +60,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 // time being.
 @implementation _touchHLE_NSCharacterSet: NSCharacterSet
 
-+ (id)allocWithZone:(MutVoidPtr)_zone {
++ (id)allocWithZone:(NSZonePtr)_zone {
     let host_object = Box::new(CharacterSetHostObject {
         set: HashSet::new(),
     });

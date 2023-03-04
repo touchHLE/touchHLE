@@ -6,8 +6,9 @@
 //! The `NSArray` class cluster, including `NSMutableArray`.
 
 use super::{ns_keyed_unarchiver, NSUInteger};
-use crate::mem::MutVoidPtr;
-use crate::objc::{id, msg_class, objc_classes, release, retain, ClassExports, HostObject};
+use crate::objc::{
+    id, msg_class, objc_classes, release, retain, ClassExports, HostObject, NSZonePtr,
+};
 use crate::Environment;
 
 /// Belongs to _touchHLE_NSArray
@@ -27,7 +28,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 // For the time being, that will always be _touchHLE_NSArray.
 @implementation NSArray: NSObject
 
-+ (id)allocWithZone:(MutVoidPtr)zone {
++ (id)allocWithZone:(NSZonePtr)zone {
     // NSArray might be subclassed by something which needs allocWithZone:
     // to have the normal behaviour. Unimplemented: call superclass alloc then.
     assert!(this == env.objc.get_known_class("NSArray", &mut env.mem));
@@ -35,7 +36,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 // NSCopying implementation
-- (id)copyWithZone:(MutVoidPtr)_zone {
+- (id)copyWithZone:(NSZonePtr)_zone {
     // TODO: override this once we have NSMutableArray!
     retain(env, this)
 }
@@ -53,7 +54,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 // methods that would be inappropriate for mutability.
 @implementation NSMutableArray: NSArray
 
-+ (id)allocWithZone:(MutVoidPtr)zone {
++ (id)allocWithZone:(NSZonePtr)zone {
     // NSArray might be subclassed by something which needs allocWithZone:
     // to have the normal behaviour. Unimplemented: call superclass alloc then.
     assert!(this == env.objc.get_known_class("NSMutableArray", &mut env.mem));
@@ -61,7 +62,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 // NSCopying implementation
-- (id)copyWithZone:(MutVoidPtr)_zone {
+- (id)copyWithZone:(NSZonePtr)_zone {
     todo!(); // TODO: this should produce an immutable copy
 }
 
@@ -71,7 +72,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 // time being.
 @implementation _touchHLE_NSArray: NSArray
 
-+ (id)allocWithZone:(MutVoidPtr)_zone {
++ (id)allocWithZone:(NSZonePtr)_zone {
     let host_object = Box::new(ArrayHostObject {
         array: Vec::new(),
     });
@@ -127,7 +128,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 // Our private subclass that is the single implementation of NSMutableArray for // the time being.
 @implementation _touchHLE_NSMutableArray: NSMutableArray
 
-+ (id)allocWithZone:(MutVoidPtr)_zone {
++ (id)allocWithZone:(NSZonePtr)_zone {
     let host_object = Box::new(ArrayHostObject {
         array: Vec::new(),
     });

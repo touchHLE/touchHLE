@@ -18,7 +18,8 @@ use super::ns_string::to_rust_string;
 use super::NSUInteger;
 use crate::mem::MutVoidPtr;
 use crate::objc::{
-    id, msg, msg_class, msg_send, objc_classes, Class, ClassExports, ObjC, TrivialHostObject,
+    id, msg, msg_class, msg_send, objc_classes, Class, ClassExports, NSZonePtr, ObjC,
+    TrivialHostObject,
 };
 
 pub const CLASSES: ClassExports = objc_classes! {
@@ -30,7 +31,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 + (id)alloc {
     msg![env; this allocWithZone:(MutVoidPtr::null())]
 }
-+ (id)allocWithZone:(MutVoidPtr)_zone { // struct _NSZone*
++ (id)allocWithZone:(NSZonePtr)_zone { // struct _NSZone*
     log_dbg!("[{:?} allocWithZone:]", this);
     env.objc.alloc_object(this, Box::new(TrivialHostObject), &mut env.mem)
 }

@@ -7,7 +7,9 @@
 
 use super::NSUInteger;
 use crate::mem::{ConstVoidPtr, MutVoidPtr, Ptr};
-use crate::objc::{autorelease, id, msg, objc_classes, retain, ClassExports, HostObject};
+use crate::objc::{
+    autorelease, id, msg, objc_classes, retain, ClassExports, HostObject, NSZonePtr,
+};
 
 struct NSDataHostObject {
     bytes: MutVoidPtr,
@@ -22,7 +24,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 // NSData doesn't seem to be an abstract class?
 @implementation NSData: NSObject
 
-+ (id)allocWithZone:(MutVoidPtr)_zone {
++ (id)allocWithZone:(NSZonePtr)_zone {
     let host_object = Box::new(NSDataHostObject {
         bytes: Ptr::null(),
         length: 0,
@@ -55,7 +57,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 // NSCopying implementation
-- (id)copyWithZone:(MutVoidPtr)_zone {
+- (id)copyWithZone:(NSZonePtr)_zone {
     retain(env, this)
 }
 

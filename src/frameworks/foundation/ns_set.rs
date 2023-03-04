@@ -9,9 +9,9 @@ use super::ns_array;
 use super::ns_dictionary::DictionaryHostObject;
 use super::ns_fast_enumeration::NSFastEnumerationState;
 use super::NSUInteger;
-use crate::mem::{MutPtr, MutVoidPtr};
+use crate::mem::MutPtr;
 use crate::objc::{
-    autorelease, id, msg, msg_class, nil, objc_classes, retain, ClassExports, HostObject,
+    autorelease, id, msg, msg_class, nil, objc_classes, retain, ClassExports, HostObject, NSZonePtr,
 };
 
 /// Belongs to _touchHLE_NSSet
@@ -32,7 +32,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 // For the time being, that will always be _touchHLE_NSSet.
 @implementation NSSet: NSObject
 
-+ (id)allocWithZone:(MutVoidPtr)zone {
++ (id)allocWithZone:(NSZonePtr)zone {
     // NSSet might be subclassed by something which needs allocWithZone:
     // to have the normal behaviour. Unimplemented: call superclass alloc then.
     assert!(this == env.objc.get_known_class("NSSet", &mut env.mem));
@@ -47,7 +47,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 // NSCopying implementation
-- (id)copyWithZone:(MutVoidPtr)_zone {
+- (id)copyWithZone:(NSZonePtr)_zone {
     // TODO: override this once we have NSMutableSet!
     retain(env, this)
 }
@@ -58,7 +58,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 // time being.
 @implementation _touchHLE_NSSet: NSSet
 
-+ (id)allocWithZone:(MutVoidPtr)_zone {
++ (id)allocWithZone:(NSZonePtr)_zone {
     let host_object = Box::new(SetHostObject {
         dict: Default::default(),
     });

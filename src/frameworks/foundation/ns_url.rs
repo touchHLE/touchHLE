@@ -8,9 +8,9 @@
 use super::ns_string::{to_rust_string, NSUTF8StringEncoding};
 use super::NSUInteger;
 use crate::fs::GuestPath;
-use crate::mem::{MutPtr, MutVoidPtr};
+use crate::mem::MutPtr;
 use crate::objc::{
-    autorelease, id, msg, nil, objc_classes, release, retain, ClassExports, HostObject,
+    autorelease, id, msg, nil, objc_classes, release, retain, ClassExports, HostObject, NSZonePtr,
 };
 use crate::Environment;
 use std::borrow::Cow;
@@ -34,7 +34,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 @implementation NSURL: NSObject
 
-+ (id)allocWithZone:(MutVoidPtr)_zone {
++ (id)allocWithZone:(NSZonePtr)_zone {
     let host_object = NSURLHostObject::FileURL { ns_string: nil };
     env.objc.alloc_object(this, Box::new(host_object), &mut env.mem)
 }
@@ -54,7 +54,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 // NSCopying implementation
-- (id)copyWithZone:(MutVoidPtr)_zone {
+- (id)copyWithZone:(NSZonePtr)_zone {
     retain(env, this)
 }
 

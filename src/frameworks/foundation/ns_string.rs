@@ -13,10 +13,10 @@ use crate::frameworks::uikit::ui_font::{
 };
 use crate::fs::GuestPath;
 use crate::mach_o::MachO;
-use crate::mem::{guest_size_of, ConstPtr, Mem, MutPtr, MutVoidPtr, Ptr, SafeRead};
+use crate::mem::{guest_size_of, ConstPtr, Mem, MutPtr, Ptr, SafeRead};
 use crate::objc::{
     autorelease, id, msg, msg_class, nil, objc_classes, retain, Class, ClassExports, HostObject,
-    ObjC,
+    NSZonePtr, ObjC,
 };
 use crate::Environment;
 use std::borrow::Cow;
@@ -187,7 +187,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 // For the time being, that will always be _touchHLE_NSString.
 @implementation NSString: NSObject
 
-+ (id)allocWithZone:(MutVoidPtr)zone {
++ (id)allocWithZone:(NSZonePtr)zone {
     // NSString might be subclassed by something which needs allocWithZone:
     // to have the normal behaviour. Unimplemented: call superclass alloc then.
     assert!(this == env.objc.get_known_class("NSString", &mut env.mem));
@@ -275,7 +275,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 // NSCopying implementation
-- (id)copyWithZone:(MutVoidPtr)_zone {
+- (id)copyWithZone:(NSZonePtr)_zone {
     // TODO: override this once we have NSMutableString!
     retain(env, this)
 }
@@ -552,7 +552,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 // time being.
 @implementation _touchHLE_NSString: NSString
 
-+ (id)allocWithZone:(MutVoidPtr)_zone {
++ (id)allocWithZone:(NSZonePtr)_zone {
     let host_object = Box::new(StringHostObject::Utf8(Cow::Borrowed("")));
     env.objc.alloc_object(this, host_object, &mut env.mem)
 }
@@ -611,7 +611,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 // See `get_static_str`.
 @implementation _touchHLE_NSString_Static: _touchHLE_NSString
 
-+ (id)allocWithZone:(MutVoidPtr)_zone {
++ (id)allocWithZone:(NSZonePtr)_zone {
     let host_object = Box::new(StringHostObject::Utf8(Cow::Borrowed("")));
     env.objc.alloc_static_object(this, host_object, &mut env.mem)
 }

@@ -9,8 +9,10 @@ use super::ui_device::*;
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::frameworks::foundation::ns_string;
 use crate::frameworks::uikit::ui_nib::load_main_nib_file;
-use crate::mem::{MutPtr, MutVoidPtr};
-use crate::objc::{id, msg, msg_class, nil, objc_classes, retain, ClassExports, HostObject};
+use crate::mem::MutPtr;
+use crate::objc::{
+    id, msg, msg_class, nil, objc_classes, retain, ClassExports, HostObject, NSZonePtr,
+};
 use crate::window::DeviceOrientation;
 use crate::Environment;
 
@@ -34,7 +36,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 @implementation UIApplication: UIResponder
 
 // This should only be called by UIApplicationMain
-+ (id)allocWithZone:(MutVoidPtr)_zone {
++ (id)allocWithZone:(NSZonePtr)_zone {
     let host_object = Box::new(UIApplicationHostObject {
         delegate: nil,
     });

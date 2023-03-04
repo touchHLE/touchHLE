@@ -7,9 +7,10 @@
 
 use super::ns_notification::NSNotificationName;
 use super::ns_string;
-use crate::mem::MutVoidPtr;
+
 use crate::objc::{
-    id, msg, msg_class, msg_send, nil, objc_classes, release, retain, ClassExports, HostObject, SEL,
+    id, msg, msg_class, msg_send, nil, objc_classes, release, retain, ClassExports, HostObject,
+    NSZonePtr, SEL,
 };
 use std::borrow::Cow;
 use std::collections::HashMap;
@@ -37,7 +38,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 @implementation NSNotificationCenter: NSObject
 
-+ (id)allocWithZone:(MutVoidPtr)_zone {
++ (id)allocWithZone:(NSZonePtr)_zone {
     let host_object = Box::new(NSNotificationCenterHostObject {
         observers: HashMap::new(),
     });

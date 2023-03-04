@@ -9,8 +9,9 @@ use crate::frameworks::core_graphics::cg_image::{self, CGImageRef, CGImageReleas
 use crate::frameworks::foundation::{ns_string, NSInteger};
 use crate::fs::GuestPath;
 use crate::image::Image;
-use crate::mem::MutVoidPtr;
-use crate::objc::{autorelease, id, msg, msg_class, nil, objc_classes, ClassExports, HostObject};
+use crate::objc::{
+    autorelease, id, msg, msg_class, nil, objc_classes, ClassExports, HostObject, NSZonePtr,
+};
 
 struct UIImageHostObject {
     cg_image: CGImageRef,
@@ -23,7 +24,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 @implementation UIImage: NSObject
 
-+ (id)allocWithZone:(MutVoidPtr)_zone {
++ (id)allocWithZone:(NSZonePtr)_zone {
     let host_object = Box::new(UIImageHostObject { cg_image: nil });
     env.objc.alloc_object(this, host_object, &mut env.mem)
 }

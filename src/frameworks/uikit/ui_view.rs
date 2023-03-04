@@ -7,8 +7,7 @@
 
 use crate::frameworks::core_graphics::{CGPoint, CGRect, CGSize};
 use crate::frameworks::foundation::ns_string::{get_static_str, to_rust_string};
-use crate::mem::MutVoidPtr;
-use crate::objc::{id, msg, objc_classes, release, Class, ClassExports, HostObject};
+use crate::objc::{id, msg, objc_classes, release, Class, ClassExports, HostObject, NSZonePtr};
 
 #[derive(Default)]
 pub struct State {
@@ -48,7 +47,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 @implementation UIView: UIResponder
 
-+ (id)allocWithZone:(MutVoidPtr)_zone {
++ (id)allocWithZone:(NSZonePtr)_zone {
     let layer_class: Class = msg![env; this layerClass];
     let layer: id = msg![env; layer_class layer];
 

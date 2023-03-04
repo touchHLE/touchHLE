@@ -12,8 +12,9 @@
 //! - Apple's [Archives and Serializations Programming Guide](https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/Archiving/Articles/archives.html)
 
 use super::ns_string::{from_rust_string, to_rust_string};
-use crate::mem::MutVoidPtr;
-use crate::objc::{autorelease, id, msg, objc_classes, release, retain, ClassExports, HostObject};
+use crate::objc::{
+    autorelease, id, msg, objc_classes, release, retain, ClassExports, HostObject, NSZonePtr,
+};
 use crate::Environment;
 use plist::{Dictionary, Uid, Value};
 use std::io::Cursor;
@@ -32,7 +33,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 @implementation NSKeyedUnarchiver: NSCoder
 
-+ (id)allocWithZone:(MutVoidPtr)_zone { // struct _NSZone*
++ (id)allocWithZone:(NSZonePtr)_zone { // struct _NSZone*
     let unarchiver = Box::new(NSKeyedUnarchiverHostObject {
         plist: Dictionary::new(),
         current_key: None,

@@ -9,10 +9,9 @@
 //! - [Apple's documentation for UIAcceleration](https://developer.apple.com/documentation/uikit/uiacceleration) has a really nice diagram of how the accelerometer axes relate to an iPhone.
 
 use crate::frameworks::foundation::NSTimeInterval;
-use crate::mem::MutVoidPtr;
 use crate::objc::{
     autorelease, id, msg, msg_class, nil, objc_classes, release, ClassExports, HostObject,
-    TrivialHostObject,
+    NSZonePtr, TrivialHostObject,
 };
 use crate::Environment;
 use std::time::{Duration, Instant};
@@ -88,7 +87,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 @implementation UIAcceleration: NSObject
 
-+ (id)allocWithZone:(MutVoidPtr)_zone {
++ (id)allocWithZone:(NSZonePtr)_zone {
     let host_object = Box::new(UIAccelerationHostObject {
         x: 0.0,
         y: 0.0,

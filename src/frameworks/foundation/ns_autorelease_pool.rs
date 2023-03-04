@@ -5,8 +5,7 @@
  */
 //! `NSAutoreleasePool`.
 
-use crate::mem::MutVoidPtr;
-use crate::objc::{id, msg, objc_classes, release, ClassExports, HostObject};
+use crate::objc::{id, msg, objc_classes, release, ClassExports, HostObject, NSZonePtr};
 use crate::Environment;
 
 #[derive(Default)]
@@ -31,7 +30,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 @implementation NSAutoreleasePool: NSObject
 
-+ (id)allocWithZone:(MutVoidPtr)_zone {
++ (id)allocWithZone:(NSZonePtr)_zone {
     let host_object = Box::new(NSAutoreleasePoolHostObject {
         objects: Vec::new(),
     });

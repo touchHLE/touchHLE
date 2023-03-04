@@ -5,14 +5,15 @@
  */
 //! `UIImage`.
 
-use crate::frameworks::foundation::ns_string;
+use crate::frameworks::core_graphics::cg_image::{self, CGImageRef, CGImageRelease};
+use crate::frameworks::foundation::{ns_string, NSInteger};
 use crate::fs::GuestPath;
 use crate::image::Image;
 use crate::mem::MutVoidPtr;
 use crate::objc::{autorelease, id, msg, msg_class, nil, objc_classes, ClassExports, HostObject};
 
 struct UIImageHostObject {
-    image: Option<Image>,
+    cg_image: CGImageRef,
 }
 impl HostObject for UIImageHostObject {}
 
@@ -23,7 +24,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 @implementation UIImage: NSObject
 
 + (id)allocWithZone:(MutVoidPtr)_zone {
-    let host_object = Box::new(UIImageHostObject { image: None });
+    let host_object = Box::new(UIImageHostObject { cg_image: nil });
     env.objc.alloc_object(this, host_object, &mut env.mem)
 }
 
@@ -40,6 +41,13 @@ pub const CLASSES: ClassExports = objc_classes! {
     autorelease(env, new)
 }
 
+- (())dealloc {
+    let &UIImageHostObject { cg_image } = env.objc.borrow(this);
+    CGImageRelease(env, cg_image);
+
+    env.objc.dealloc_object(this, &mut env.mem)
+}
+
 - (id)initWithContentsOfFile:(id)path { // NSString*
     let path = ns_string::to_rust_string(env, path); // TODO: avoid copy
     // TODO: Real error handling. For now, most errors are likely to be caused
@@ -47,12 +55,23 @@ pub const CLASSES: ClassExports = objc_classes! {
     //       load a missing or broken file, so panicking is most useful.
     let bytes = env.fs.read(GuestPath::new(&path)).unwrap();
     let image = Image::from_bytes(&bytes).unwrap();
-    env.objc.borrow_mut::<UIImageHostObject>(this).image = Some(image);
+    let cg_image = cg_image::from_image(env, image);
+    env.objc.borrow_mut::<UIImageHostObject>(this).cg_image = cg_image;
     this
 }
 
 // TODO: more init methods
-// TODO: accessors
+// TODO: more accessors
+
+- (CGImageRef)CGImage {
+    env.objc.borrow::<UIImageHostObject>(this).cg_image
+}
+
+// TODO: should have UIImageOrientation type
+- (NSInteger)imageOrientation {
+    // FIXME: load image orientation info from file?
+    0 // UIImageOrientationUp
+}
 
 @end
 

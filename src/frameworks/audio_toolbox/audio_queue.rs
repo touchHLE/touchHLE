@@ -265,6 +265,39 @@ fn AudioQueueEnqueueBuffer(
     0 // success
 }
 
+fn AudioQueueAddPropertyListener(
+    _env: &mut Environment,
+    in_aq: AudioQueueRef,
+    in_id: u32,             // TODO: should be AudioQueuePropertyID
+    in_proc: GuestFunction, // TODO: should be AudioQueuePropertyListenerProc
+    in_user_data: MutVoidPtr,
+) -> OSStatus {
+    log!(
+        "TODO: AudioQueueAddPropertyListener({:?}, {:?}, {:?}, {:?})",
+        in_aq,
+        in_id,
+        in_proc,
+        in_user_data
+    );
+    0 // success
+}
+fn AudioQueueRemovePropertyListener(
+    _env: &mut Environment,
+    in_aq: AudioQueueRef,
+    in_id: u32,             // TODO: should be AudioQueuePropertyID
+    in_proc: GuestFunction, // TODO: should be AudioQueuePropertyListenerProc
+    in_user_data: MutVoidPtr,
+) -> OSStatus {
+    log!(
+        "TODO: AudioQueueRemovePropertyListener({:?}, {:?}, {:?}, {:?})",
+        in_aq,
+        in_id,
+        in_proc,
+        in_user_data
+    );
+    0 // success
+}
+
 /// Check if the format of an audio queue is one we currently support.
 /// If not, we should skip trying to play it rather than crash.
 fn is_supported_audio_format(format: &AudioStreamBasicDescription) -> bool {
@@ -626,6 +659,8 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(AudioQueueSetParameter(_, _, _)),
     export_c_func!(AudioQueueAllocateBuffer(_, _, _)),
     export_c_func!(AudioQueueEnqueueBuffer(_, _, _, _)),
+    export_c_func!(AudioQueueAddPropertyListener(_, _, _, _)),
+    export_c_func!(AudioQueueRemovePropertyListener(_, _, _, _)),
     export_c_func!(AudioQueuePrime(_, _, _)),
     export_c_func!(AudioQueueStart(_, _)),
     export_c_func!(AudioQueueStop(_, _)),

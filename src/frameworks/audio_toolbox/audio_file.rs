@@ -43,6 +43,7 @@ type AudioFileID = MutPtr<OpaqueAudioFileID>;
 
 const kAudioFileFileNotFoundError: OSStatus = -43;
 const kAudioFileBadPropertySizeError: OSStatus = fourcc(b"!siz") as _;
+const kAudioFileUnsupportedProperty: OSStatus = fourcc(b"pty?") as _;
 
 type AudioFilePermissions = i8;
 const kAudioFileReadPermission: AudioFilePermissions = 1;
@@ -56,6 +57,8 @@ const kAudioFilePropertyDataFormat: AudioFilePropertyID = fourcc(b"dfmt");
 const kAudioFilePropertyAudioDataByteCount: AudioFilePropertyID = fourcc(b"bcnt");
 const kAudioFilePropertyAudioDataPacketCount: AudioFilePropertyID = fourcc(b"pcnt");
 const kAudioFilePropertyPacketSizeUpperBound: AudioFilePropertyID = fourcc(b"pkub");
+const kAudioFilePropertyMagicCookieData: AudioFilePropertyID = fourcc(b"mgic");
+const kAudioFilePropertyChannelLayout: AudioFilePropertyID = fourcc(b"cmap");
 
 fn AudioFileOpenURL(
     env: &mut Environment,
@@ -110,8 +113,26 @@ fn AudioFileGetPropertyInfo(
     out_data_size: MutPtr<u32>,
     is_writable: MutPtr<u32>,
 ) -> OSStatus {
-    env.mem.write(out_data_size, property_size(in_property_id));
-    env.mem.write(is_writable, 0); // TODO: probably not always correct
+    if in_property_id == kAudioFilePropertyMagicCookieData
+        || in_property_id == kAudioFilePropertyChannelLayout
+    {
+        // Our currently supported formats probably don't use these properties.
+        // Not sure if this is correct, but it skips some code we don't want to
+        // run in Touch & Go.
+        if !out_data_size.is_null() {
+            env.mem.write(out_data_size, 0);
+        }
+        if !is_writable.is_null() {
+            env.mem.write(is_writable, 0);
+        }
+        return kAudioFileUnsupportedProperty;
+    }
+    if !out_data_size.is_null() {
+        env.mem.write(out_data_size, property_size(in_property_id));
+    }
+    if !is_writable.is_null() {
+        env.mem.write(is_writable, 0); // TODO: probably not always correct
+    }
     0 // success
 }
 

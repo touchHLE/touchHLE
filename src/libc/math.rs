@@ -10,10 +10,11 @@ use crate::Environment;
 
 // The sections in this file are organized to match the C standard.
 
+// FIXME: Many functions in this file should theoretically set errno or affect
+//        the floating-point environment. We're hoping apps won't rely on that.
+
 // Trigonometric functions
 
-// FIXME: These should theoretically set errno, though it's unlikely apps
-// actually check it.
 // TODO: These should also have `long double` variants, which can probably just
 // alias the `double` ones.
 
@@ -103,8 +104,6 @@ fn atanhf(_env: &mut Environment, arg: f32) -> f32 {
 }
 
 // Exponential and logarithmic functions
-// FIXME: These should theoretically set errno, though it's unlikely apps
-// actually check it.
 // TODO: implement the rest
 fn log(_env: &mut Environment, arg: f64) -> f64 {
     arg.ln()
@@ -150,14 +149,39 @@ fn exp2f(_env: &mut Environment, arg: f32) -> f32 {
 }
 
 // Power functions
-// FIXME: These should theoretically set errno, though it's unlikely apps
-// actually check it.
 // TODO: implement the rest
 fn sqrt(_env: &mut Environment, arg: f64) -> f64 {
     arg.sqrt()
 }
 fn sqrtf(_env: &mut Environment, arg: f32) -> f32 {
     arg.sqrt()
+}
+
+// Nearest integer functions
+// TODO: implement the rest
+fn ceil(_env: &mut Environment, arg: f64) -> f64 {
+    arg.ceil()
+}
+fn ceilf(_env: &mut Environment, arg: f32) -> f32 {
+    arg.ceil()
+}
+fn floor(_env: &mut Environment, arg: f64) -> f64 {
+    arg.floor()
+}
+fn floorf(_env: &mut Environment, arg: f32) -> f32 {
+    arg.floor()
+}
+fn round(_env: &mut Environment, arg: f64) -> f64 {
+    arg.round()
+}
+fn roundf(_env: &mut Environment, arg: f32) -> f32 {
+    arg.round()
+}
+fn trunc(_env: &mut Environment, arg: f64) -> f64 {
+    arg.trunc()
+}
+fn truncf(_env: &mut Environment, arg: f32) -> f32 {
+    arg.trunc()
 }
 
 pub const FUNCTIONS: FunctionExports = &[
@@ -207,4 +231,13 @@ pub const FUNCTIONS: FunctionExports = &[
     // Power functions
     export_c_func!(sqrt(_)),
     export_c_func!(sqrtf(_)),
+    // Nearest integer functions
+    export_c_func!(ceil(_)),
+    export_c_func!(ceilf(_)),
+    export_c_func!(floor(_)),
+    export_c_func!(floorf(_)),
+    export_c_func!(round(_)),
+    export_c_func!(roundf(_)),
+    export_c_func!(trunc(_)),
+    export_c_func!(truncf(_)),
 ];

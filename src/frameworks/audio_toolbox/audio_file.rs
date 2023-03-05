@@ -93,6 +93,28 @@ fn AudioFileOpenURL(
     0 // success
 }
 
+fn property_size(property_id: AudioFilePropertyID) -> GuestUSize {
+    match property_id {
+        kAudioFilePropertyDataFormat => guest_size_of::<AudioStreamBasicDescription>(),
+        kAudioFilePropertyAudioDataByteCount => guest_size_of::<u64>(),
+        kAudioFilePropertyAudioDataPacketCount => guest_size_of::<u64>(),
+        kAudioFilePropertyPacketSizeUpperBound => guest_size_of::<u32>(),
+        _ => unimplemented!("Unimplemented property ID: {}", debug_fourcc(property_id)),
+    }
+}
+
+fn AudioFileGetPropertyInfo(
+    env: &mut Environment,
+    _in_audio_file: AudioFileID,
+    in_property_id: AudioFilePropertyID,
+    out_data_size: MutPtr<u32>,
+    is_writable: MutPtr<u32>,
+) -> OSStatus {
+    env.mem.write(out_data_size, property_size(in_property_id));
+    env.mem.write(is_writable, 0); // TODO: probably not always correct
+    0 // success
+}
+
 fn AudioFileGetProperty(
     env: &mut Environment,
     in_audio_file: AudioFileID,
@@ -100,16 +122,7 @@ fn AudioFileGetProperty(
     io_data_size: MutPtr<u32>,
     out_property_data: MutVoidPtr,
 ) -> OSStatus {
-    let required_size: GuestUSize = match in_property_id {
-        kAudioFilePropertyDataFormat => guest_size_of::<AudioStreamBasicDescription>(),
-        kAudioFilePropertyAudioDataByteCount => guest_size_of::<u64>(),
-        kAudioFilePropertyAudioDataPacketCount => guest_size_of::<u64>(),
-        kAudioFilePropertyPacketSizeUpperBound => guest_size_of::<u32>(),
-        _ => unimplemented!(
-            "Unimplemented property ID: {}",
-            debug_fourcc(in_property_id)
-        ),
-    };
+    let required_size = property_size(in_property_id);
     if env.mem.read(io_data_size) != required_size {
         log!("Warning: AudioFileGetProperty() failed");
         return kAudioFileBadPropertySizeError;
@@ -274,6 +287,7 @@ fn AudioFileClose(env: &mut Environment, in_audio_file: AudioFileID) -> OSStatus
 
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(AudioFileOpenURL(_, _, _, _)),
+    export_c_func!(AudioFileGetPropertyInfo(_, _, _, _)),
     export_c_func!(AudioFileGetProperty(_, _, _, _)),
     export_c_func!(AudioFileReadBytes(_, _, _, _, _)),
     export_c_func!(AudioFileReadPackets(_, _, _, _, _, _, _)),

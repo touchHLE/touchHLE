@@ -151,6 +151,10 @@ pub const CLASSES: ClassExports = objc_classes! {
     let _: () = msg![env; view layoutSubviews];
 }
 
+- (())bringSubviewToFront:(id)view {
+    log!("TODO: [(UIView*){:?} bringSubviewToFront:{:?}", this, view);
+}
+
 - (())dealloc {
     let &mut UIViewHostObject { layer, .. } = env.objc.borrow_mut(this);
     release(env, layer);

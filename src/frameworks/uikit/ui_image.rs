@@ -11,7 +11,8 @@ use crate::frameworks::foundation::{ns_string, NSInteger};
 use crate::fs::GuestPath;
 use crate::image::Image;
 use crate::objc::{
-    autorelease, id, msg, msg_class, nil, objc_classes, ClassExports, HostObject, NSZonePtr,
+    autorelease, id, msg, msg_class, nil, objc_classes, release, ClassExports, HostObject,
+    NSZonePtr,
 };
 
 struct UIImageHostObject {
@@ -52,10 +53,14 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 - (id)initWithContentsOfFile:(id)path { // NSString*
     let path = ns_string::to_rust_string(env, path); // TODO: avoid copy
+    let Ok(bytes) = env.fs.read(GuestPath::new(&path)) else {
+        log!("Warning: couldn't read image file at {:?}, returning nil", path);
+        release(env, this);
+        return nil;
+    };
     // TODO: Real error handling. For now, most errors are likely to be caused
     //       by a functionality gap in touchHLE, not the app actually trying to
-    //       load a missing or broken file, so panicking is most useful.
-    let bytes = env.fs.read(GuestPath::new(&path)).unwrap();
+    //       load a broken file, so panicking is most useful.
     let image = Image::from_bytes(&bytes).unwrap();
     let cg_image = cg_image::from_image(env, image);
     env.objc.borrow_mut::<UIImageHostObject>(this).cg_image = cg_image;

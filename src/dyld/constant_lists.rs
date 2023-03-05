@@ -14,6 +14,7 @@ pub const CONSTANT_LISTS: &[super::ConstantExports] = &[
     libc::ctype::CONSTANTS,
     core_foundation::cf_allocator::CONSTANTS,
     core_foundation::cf_run_loop::CONSTANTS,
+    core_graphics::cg_affine_transform::CONSTANTS,
     core_graphics::cg_color_space::CONSTANTS,
     foundation::ns_run_loop::CONSTANTS,
     media_player::movie_player::CONSTANTS,

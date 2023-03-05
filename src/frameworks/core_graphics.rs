@@ -5,6 +5,7 @@
  */
 //! The Core Graphics framework.
 
+pub mod cg_affine_transform;
 pub mod cg_bitmap_context;
 pub mod cg_color_space;
 pub mod cg_context;

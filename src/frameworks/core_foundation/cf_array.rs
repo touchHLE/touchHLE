@@ -11,8 +11,9 @@
 use super::cf_allocator::{kCFAllocatorDefault, CFAllocatorRef};
 use super::CFIndex;
 use crate::dyld::{export_c_func, FunctionExports};
+use crate::frameworks::foundation::NSUInteger;
 use crate::mem::ConstVoidPtr;
-use crate::objc::msg_class;
+use crate::objc::{msg, msg_class};
 use crate::Environment;
 
 #[allow(dead_code)]
@@ -32,4 +33,12 @@ fn CFArrayCreateMutable(
     msg_class![env; NSMutableArray new]
 }
 
-pub const FUNCTIONS: FunctionExports = &[export_c_func!(CFArrayCreateMutable(_, _, _))];
+fn CFArrayGetCount(env: &mut Environment, array: CFArrayRef) -> CFIndex {
+    let count: NSUInteger = msg![env; array count];
+    count.try_into().unwrap()
+}
+
+pub const FUNCTIONS: FunctionExports = &[
+    export_c_func!(CFArrayCreateMutable(_, _, _)),
+    export_c_func!(CFArrayGetCount(_)),
+];

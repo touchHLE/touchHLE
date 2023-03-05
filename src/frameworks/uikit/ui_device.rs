@@ -47,6 +47,13 @@ pub const CLASSES: ClassExports = objc_classes! {
     }
 }
 
+- (())beginGeneratingDeviceOrientationNotifications {
+    log!("TODO: beginGeneratingDeviceOrientationNotifications");
+}
+- (())endGeneratingDeviceOrientationNotifications {
+    log!("TODO: endGeneratingDeviceOrientationNotifications");
+}
+
 // NSString
 - (id)systemVersion {
     ns_string::get_static_str(env, "2.0")

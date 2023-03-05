@@ -211,7 +211,7 @@ impl CGBitmapContextDrawer<'_> {
             gamma_decode(self.rgb_fill_color.0),
             gamma_decode(self.rgb_fill_color.1),
             gamma_decode(self.rgb_fill_color.2),
-            gamma_decode(self.rgb_fill_color.3),
+            self.rgb_fill_color.3, // alpha is always linear
         )
     }
     /// Set the pixel at `coords` to `color`. `color` must be linear RGB, not

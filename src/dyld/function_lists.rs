@@ -42,6 +42,7 @@ pub const FUNCTION_LISTS: &[super::FunctionExports] = &[
     core_foundation::cf_run_loop::FUNCTIONS,
     core_foundation::cf_type::FUNCTIONS,
     core_foundation::cf_url::FUNCTIONS,
+    core_graphics::cg_affine_transform::FUNCTIONS,
     core_graphics::cg_bitmap_context::FUNCTIONS,
     core_graphics::cg_color_space::FUNCTIONS,
     core_graphics::cg_context::FUNCTIONS,

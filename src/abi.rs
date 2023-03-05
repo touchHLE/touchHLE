@@ -317,7 +317,9 @@ fn read_next_arg<T: GuestArg>(reg_offset: &mut usize, regs: &[u32], mem: &Mem) -
     // After the fourth register is used, the arguments go on the stack.
     // In some cases the argument is split over both registers and the stack.
 
-    let mut fake_regs = [0u32; 4]; // Rust doesn't allow [0u32; Trait::T] alas.
+    // Rust doesn't allow [0u32; Trait::T] alas, so we need to set some
+    // arbitrary limit. 16 is high enough for everything right now.
+    let mut fake_regs = [0u32; 16];
     let fake_regs = &mut fake_regs[0..T::REG_COUNT];
 
     for fake_reg in fake_regs.iter_mut() {

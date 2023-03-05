@@ -5,8 +5,8 @@
  */
 //! `CGContext.h`
 
-use super::cg_bitmap_context;
-use super::{CGFloat, CGRect};
+use super::cg_image::CGImageRef;
+use super::{cg_bitmap_context, CGFloat, CGRect};
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::frameworks::core_foundation::{CFRelease, CFRetain, CFTypeRef};
 use crate::objc::{objc_classes, ClassExports, HostObject};
@@ -75,6 +75,15 @@ fn CGContextTranslateCTM(_env: &mut Environment, _context: CGContextRef, tx: CGF
     assert!(tx == 0.0 && ty == 0.0); // TODO: support translation
 }
 
+fn CGContextDrawImage(
+    env: &mut Environment,
+    context: CGContextRef,
+    rect: CGRect,
+    image: CGImageRef,
+) {
+    cg_bitmap_context::draw_image(env, context, rect, image);
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGContextRetain(_)),
     export_c_func!(CGContextRelease(_)),
@@ -82,4 +91,5 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGContextFillRect(_, _)),
     export_c_func!(CGContextClearRect(_, _)),
     export_c_func!(CGContextTranslateCTM(_, _, _)),
+    export_c_func!(CGContextDrawImage(_, _, _)),
 ];

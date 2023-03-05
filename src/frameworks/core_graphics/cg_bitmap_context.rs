@@ -8,13 +8,14 @@
 use super::cg_color_space::{kCGColorSpaceGenericRGB, CGColorSpaceHostObject, CGColorSpaceRef};
 use super::cg_context::{CGContextHostObject, CGContextRef, CGContextSubclass};
 use super::cg_image::{
-    kCGBitmapAlphaInfoMask, kCGBitmapByteOrderMask, kCGImageAlphaFirst, kCGImageAlphaLast,
+    self, kCGBitmapAlphaInfoMask, kCGBitmapByteOrderMask, kCGImageAlphaFirst, kCGImageAlphaLast,
     kCGImageAlphaNone, kCGImageAlphaNoneSkipFirst, kCGImageAlphaNoneSkipLast, kCGImageAlphaOnly,
     kCGImageAlphaPremultipliedFirst, kCGImageAlphaPremultipliedLast, kCGImageByteOrder32Big,
-    kCGImageByteOrderDefault, CGBitmapInfo, CGImageAlphaInfo,
+    kCGImageByteOrderDefault, CGBitmapInfo, CGImageAlphaInfo, CGImageRef,
 };
 use super::{CGFloat, CGRect};
 use crate::dyld::{export_c_func, FunctionExports};
+use crate::image::{gamma_decode, gamma_encode};
 use crate::mem::{GuestUSize, Mem, MutVoidPtr};
 use crate::objc::ObjC;
 use crate::Environment;
@@ -106,17 +107,6 @@ fn bytes_per_pixel(data: &CGBitmapContextData) -> GuestUSize {
 fn get_pixels<'a>(data: &CGBitmapContextData, mem: &'a mut Mem) -> &'a mut [u8] {
     let pixel_data_size = data.height.checked_mul(data.bytes_per_row).unwrap();
     mem.bytes_at_mut(data.data.cast(), pixel_data_size)
-}
-
-/// Approximate implementation of sRGB gamma encoding.
-fn gamma_encode(intensity: f32) -> f32 {
-    // TODO: This doesn't implement the linear section near zero.
-    intensity.powf(1.0 / 2.2)
-}
-/// Approximate implementation of sRGB gamma decoding.
-fn gamma_decode(intensity: f32) -> f32 {
-    // TODO: This doesn't implement the linear section near zero.
-    intensity.powf(2.2)
 }
 
 fn put_pixel(
@@ -252,6 +242,45 @@ pub(super) fn fill_rect(env: &mut Environment, context: CGContextRef, rect: CGRe
             drawer.put_pixel((x as _, y as _), color)
         }
     }
+}
+
+/// Implementation of `CGContextDrawImage` for `CGBitmapContext`.
+pub(super) fn draw_image(
+    env: &mut Environment,
+    context: CGContextRef,
+    rect: CGRect,
+    image: CGImageRef,
+) {
+    let image = cg_image::borrow_image(&env.objc, image);
+
+    // let _ = std::fs::write(format!("image-{:?}.data", image.dimensions()), image.pixels());
+
+    let mut drawer = CGBitmapContextDrawer::new(&env.objc, &mut env.mem, context);
+
+    // let _ = std::fs::write(format!("bitmap-{:?}-before.data", (drawer.width(), drawer.height())), &drawer.pixels);
+
+    // TODO: correct anti-aliasing
+    let x_start = (rect.origin.x.round() as GuestUSize).min(0);
+    let y_start = (rect.origin.y.round() as GuestUSize).min(0);
+    let x_end = ((rect.origin.x + rect.size.width).round() as GuestUSize).max(drawer.width());
+    let y_end = ((rect.origin.y + rect.size.height).round() as GuestUSize).max(drawer.height());
+
+    let (image_width, image_height) = image.dimensions();
+    let (image_width, image_height) = (image_width as f32, image_height as f32);
+
+    // TODO: non-nearest-neighbour filtering? (what does CG actually do?)
+    for y in y_start..y_end {
+        for x in x_start..x_end {
+            let texel_x = image_width * (x as f32 / (x_end - x_start) as f32);
+            let texel_y = image_height * (y as f32 / (y_end - y_start) as f32);
+            let (texel_x, texel_y) = (texel_x as i32, texel_y as i32);
+            if let Some(color) = image.get_pixel((texel_x, texel_y)) {
+                drawer.put_pixel((x as _, y as _), color)
+            }
+        }
+    }
+
+    // let _ = std::fs::write(format!("bitmap-{:?}-after.data", (drawer.width(), drawer.height())), &drawer.pixels);
 }
 
 pub const FUNCTIONS: FunctionExports =

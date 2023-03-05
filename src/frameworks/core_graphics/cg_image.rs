@@ -11,7 +11,7 @@ use crate::frameworks::core_foundation::{CFRelease, CFRetain, CFTypeRef};
 use crate::frameworks::foundation::ns_string;
 use crate::image::Image;
 use crate::mem::GuestUSize;
-use crate::objc::{objc_classes, ClassExports, HostObject};
+use crate::objc::{objc_classes, ClassExports, HostObject, ObjC};
 use crate::Environment;
 
 pub type CGImageAlphaInfo = u32;
@@ -80,6 +80,12 @@ pub fn from_image(env: &mut Environment, image: Image) -> CGImageRef {
     let host_obj = Box::new(CGImageHostObject { image });
     let class = env.objc.get_known_class("_touchHLE_CGImage", &mut env.mem);
     env.objc.alloc_object(class, host_obj, &mut env.mem)
+}
+
+/// Shortcut for use by `CGBitmapContext` etc: borrow the [Image] from a
+/// `CGImage` instance.
+pub fn borrow_image(objc: &ObjC, image: CGImageRef) -> &Image {
+    &objc.borrow::<CGImageHostObject>(image).image
 }
 
 fn CGImageGetAlphaInfo(_env: &mut Environment, _image: CGImageRef) -> CGImageAlphaInfo {

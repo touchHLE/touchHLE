@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
-//! Image decoding. Currently only supports PNG.
+//! Image decoding. Currently only supports PNG files (treated as 8-bit sRGB).
 //!
 //! Implemented as a wrapper around the C library stb_image, since it supports
 //! "CgBI" PNG files (an Apple proprietary extension used in iPhone OS apps).
@@ -24,6 +24,8 @@ impl Image {
         let mut x: c_int = 0;
         let mut y: c_int = 0;
         let mut _channels_in_file: c_int = 0;
+
+        // TODO: we're currently assuming this is sRGB, can we check somehow?
 
         let pixels = unsafe {
             stbi_convert_iphone_png_to_rgb(1);
@@ -55,7 +57,7 @@ impl Image {
         self.dimensions
     }
 
-    /// Get image data as bytes (8 bits per channel RGBA)
+    /// Get image data as bytes (8 bits per channel sRGB RGBA)
     pub fn pixels(&self) -> &[u8] {
         unsafe {
             std::slice::from_raw_parts(
@@ -64,10 +66,43 @@ impl Image {
             )
         }
     }
+
+    /// Get value of a pixel as linear RGBA (not sRGB!).
+    ///
+    /// Returns [None] if `at` is out-of-bounds.
+    pub fn get_pixel(&self, at: (i32, i32)) -> Option<(f32, f32, f32, f32)> {
+        let (x, y) = at;
+        let (x_usize, y_usize) = (x as usize, y as usize);
+        let (width, height) = self.dimensions;
+        let (width, height) = (width as usize, height as usize);
+        if x >= 0 && x_usize < width && y >= 0 && y_usize < height {
+            let rgba = &self.pixels()[y_usize * width * 4 + x_usize * 4..][..4];
+            let [r, g, b, a]: [u8; 4] = rgba.try_into().unwrap();
+            Some((
+                gamma_decode(r as f32 / 255.0),
+                gamma_decode(g as f32 / 255.0),
+                gamma_decode(b as f32 / 255.0),
+                a as f32 / 255.0, // alpha is linear
+            ))
+        } else {
+            None
+        }
+    }
 }
 
 impl Drop for Image {
     fn drop(&mut self) {
         unsafe { stbi_image_free(self.pixels.cast()) }
     }
+}
+
+/// Approximate implementation of sRGB gamma encoding.
+pub fn gamma_encode(intensity: f32) -> f32 {
+    // TODO: This doesn't implement the linear section near zero.
+    intensity.powf(1.0 / 2.2)
+}
+/// Approximate implementation of sRGB gamma decoding.
+pub fn gamma_decode(intensity: f32) -> f32 {
+    // TODO: This doesn't implement the linear section near zero.
+    intensity.powf(2.2)
 }

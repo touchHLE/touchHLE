@@ -6,6 +6,7 @@
 //! `UIImage`.
 
 use crate::frameworks::core_graphics::cg_image::{self, CGImageRef, CGImageRelease};
+use crate::frameworks::core_graphics::CGSize;
 use crate::frameworks::foundation::{ns_string, NSInteger};
 use crate::fs::GuestPath;
 use crate::image::Image;
@@ -72,6 +73,15 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (NSInteger)imageOrientation {
     // FIXME: load image orientation info from file?
     0 // UIImageOrientationUp
+}
+
+- (CGSize)size {
+    let image = env.objc.borrow::<UIImageHostObject>(this).cg_image;
+    let (width, height) = cg_image::borrow_image(&env.objc, image).dimensions();
+    CGSize {
+        width: width as _,
+        height: height as _,
+    }
 }
 
 @end

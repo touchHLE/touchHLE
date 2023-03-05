@@ -231,8 +231,9 @@ impl CGBitmapContextDrawer<'_> {
     }
 }
 
-/// Implementation of `CGContextFillRect` for `CGBitmapContext`.
-pub(super) fn fill_rect(env: &mut Environment, context: CGContextRef, rect: CGRect) {
+/// Implementation of `CGContextFillRect` (`clear` == [false]) and
+/// `CGContextClearRect` (`clear` == [true]) for `CGBitmapContext`.
+pub(super) fn fill_rect(env: &mut Environment, context: CGContextRef, rect: CGRect, clear: bool) {
     let mut drawer = CGBitmapContextDrawer::new(&env.objc, &mut env.mem, context);
 
     // TODO: correct anti-aliasing
@@ -241,7 +242,11 @@ pub(super) fn fill_rect(env: &mut Environment, context: CGContextRef, rect: CGRe
     let x_end = ((rect.origin.x + rect.size.width).round() as GuestUSize).max(drawer.width());
     let y_end = ((rect.origin.y + rect.size.height).round() as GuestUSize).max(drawer.height());
 
-    let color = drawer.rgb_fill_color();
+    let color = if clear {
+        (0.0, 0.0, 0.0, 0.0)
+    } else {
+        drawer.rgb_fill_color()
+    };
     for y in y_start..y_end {
         for x in x_start..x_end {
             drawer.put_pixel((x as _, y as _), color)

@@ -64,7 +64,11 @@ fn CGContextSetRGBFillColor(
 }
 
 fn CGContextFillRect(env: &mut Environment, context: CGContextRef, rect: CGRect) {
-    cg_bitmap_context::fill_rect(env, context, rect);
+    cg_bitmap_context::fill_rect(env, context, rect, /* clear: */ false);
+}
+
+fn CGContextClearRect(env: &mut Environment, context: CGContextRef, rect: CGRect) {
+    cg_bitmap_context::fill_rect(env, context, rect, /* clear: */ true);
 }
 
 pub const FUNCTIONS: FunctionExports = &[
@@ -72,4 +76,5 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGContextRelease(_)),
     export_c_func!(CGContextSetRGBFillColor(_, _, _, _, _)),
     export_c_func!(CGContextFillRect(_, _)),
+    export_c_func!(CGContextClearRect(_, _)),
 ];

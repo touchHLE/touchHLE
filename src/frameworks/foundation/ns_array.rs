@@ -163,6 +163,11 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.borrow_mut::<ArrayHostObject>(this).array.push(object);
 }
 
+- (())removeObjectAtIndex:(NSUInteger)index {
+    let object = env.objc.borrow_mut::<ArrayHostObject>(this).array.remove(index as usize);
+    release(env, object)
+}
+
 @end
 
 // Special variant for use by CFArray with NULL callbacks: objects aren't
@@ -175,6 +180,10 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 - (())addObject:(id)object {
     env.objc.borrow_mut::<ArrayHostObject>(this).array.push(object);
+}
+
+- (())removeObjectAtIndex:(NSUInteger)index {
+    env.objc.borrow_mut::<ArrayHostObject>(this).array.remove(index as usize);
 }
 
 @end

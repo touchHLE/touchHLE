@@ -38,13 +38,26 @@ fn CFArrayGetCount(env: &mut Environment, array: CFArrayRef) -> CFIndex {
     count.try_into().unwrap()
 }
 
-fn CFArrayAppendValue(env: &mut Environment, array: CFArrayRef, value: ConstVoidPtr) {
+fn CFArrayGetValueAtIndex(env: &mut Environment, array: CFArrayRef, idx: CFIndex) -> ConstVoidPtr {
+    let idx: NSUInteger = idx.try_into().unwrap();
+    let value: id = msg![env; array objectAtIndex:idx];
+    value.cast().cast_const()
+}
+
+fn CFArrayAppendValue(env: &mut Environment, array: CFMutableArrayRef, value: ConstVoidPtr) {
     let value: id = value.cast().cast_mut();
     msg![env; array addObject:value]
+}
+
+fn CFArrayRemoveValueAtIndex(env: &mut Environment, array: CFMutableArrayRef, idx: CFIndex) {
+    let idx: NSUInteger = idx.try_into().unwrap();
+    msg![env; array removeObjectAtIndex:idx]
 }
 
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CFArrayCreateMutable(_, _, _)),
     export_c_func!(CFArrayGetCount(_)),
+    export_c_func!(CFArrayGetValueAtIndex(_, _)),
     export_c_func!(CFArrayAppendValue(_, _)),
+    export_c_func!(CFArrayRemoveValueAtIndex(_, _)),
 ];

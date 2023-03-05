@@ -208,10 +208,14 @@ pub fn draw_in_rect(
         _ => unimplemented!(),
     };
 
+    let translation = drawer.translation();
     font.draw(
         host_object.size,
         text,
-        (rect.origin.x + origin_x_offset, rect.origin.y),
+        (
+            translation.0 + rect.origin.x + origin_x_offset,
+            translation.1 + rect.origin.y,
+        ),
         Some((rect.size.width, convert_line_break_mode(line_break_mode))),
         alignment,
         |(x, y), coverage| {

@@ -61,6 +61,7 @@ fn CGBitmapContextCreate(
         }),
         // TODO: is this the correct default?
         rgb_fill_color: (0.0, 0.0, 0.0, 0.0),
+        translation: (0.0, 0.0),
     };
     let isa = env
         .objc
@@ -177,6 +178,7 @@ fn put_pixel(
 pub struct CGBitmapContextDrawer<'a> {
     bitmap_info: CGBitmapContextData,
     rgb_fill_color: (CGFloat, CGFloat, CGFloat, CGFloat),
+    translation: (CGFloat, CGFloat),
     pixels: &'a mut [u8],
 }
 impl CGBitmapContextDrawer<'_> {
@@ -188,6 +190,7 @@ impl CGBitmapContextDrawer<'_> {
         let &CGContextHostObject {
             subclass: CGContextSubclass::CGBitmapContext(bitmap_info),
             rgb_fill_color,
+            translation,
         } = objc.borrow(context);
 
         let pixels = get_pixels(&bitmap_info, mem);
@@ -195,6 +198,7 @@ impl CGBitmapContextDrawer<'_> {
         CGBitmapContextDrawer {
             bitmap_info,
             rgb_fill_color,
+            translation,
             pixels,
         }
     }
@@ -204,6 +208,9 @@ impl CGBitmapContextDrawer<'_> {
     }
     pub fn height(&self) -> GuestUSize {
         self.bitmap_info.height
+    }
+    pub fn translation(&self) -> (CGFloat, CGFloat) {
+        self.translation
     }
     /// Get the current fill color. The returned color is linear RGB, not sRGB!
     pub fn rgb_fill_color(&self) -> (CGFloat, CGFloat, CGFloat, CGFloat) {
@@ -215,7 +222,7 @@ impl CGBitmapContextDrawer<'_> {
         )
     }
     /// Set the pixel at `coords` to `color`. `color` must be linear RGB, not
-    /// sRGB!
+    /// sRGB! Note that `coords` are absolute: you must do translation yourself.
     pub fn put_pixel(&mut self, coords: (i32, i32), color: (CGFloat, CGFloat, CGFloat, CGFloat)) {
         put_pixel(&self.bitmap_info, self.pixels, coords, color)
     }
@@ -227,10 +234,12 @@ pub(super) fn fill_rect(env: &mut Environment, context: CGContextRef, rect: CGRe
     let mut drawer = CGBitmapContextDrawer::new(&env.objc, &mut env.mem, context);
 
     // TODO: correct anti-aliasing
-    let x_start = (rect.origin.x.round() as GuestUSize).min(0);
-    let y_start = (rect.origin.y.round() as GuestUSize).min(0);
-    let x_end = ((rect.origin.x + rect.size.width).round() as GuestUSize).max(drawer.width());
-    let y_end = ((rect.origin.y + rect.size.height).round() as GuestUSize).max(drawer.height());
+    let translation = drawer.translation();
+    let origin = (translation.0 + rect.origin.x, translation.1 + rect.origin.y);
+    let x_start = (origin.0.round() as GuestUSize).min(0);
+    let y_start = (origin.1.round() as GuestUSize).min(0);
+    let x_end = ((origin.0 + rect.size.width).round() as GuestUSize).max(drawer.width());
+    let y_end = ((origin.1 + rect.size.height).round() as GuestUSize).max(drawer.height());
 
     let color = if clear {
         (0.0, 0.0, 0.0, 0.0)
@@ -253,17 +262,19 @@ pub(super) fn draw_image(
 ) {
     let image = cg_image::borrow_image(&env.objc, image);
 
-    // let _ = std::fs::write(format!("image-{:?}.data", image.dimensions()), image.pixels());
-
     let mut drawer = CGBitmapContextDrawer::new(&env.objc, &mut env.mem, context);
+
+    // let _ = std::fs::write(format!("image-{:?}.data", image.dimensions()), image.pixels());
 
     // let _ = std::fs::write(format!("bitmap-{:?}-before.data", (drawer.width(), drawer.height())), &drawer.pixels);
 
     // TODO: correct anti-aliasing
-    let x_start = (rect.origin.x.round() as GuestUSize).min(0);
-    let y_start = (rect.origin.y.round() as GuestUSize).min(0);
-    let x_end = ((rect.origin.x + rect.size.width).round() as GuestUSize).max(drawer.width());
-    let y_end = ((rect.origin.y + rect.size.height).round() as GuestUSize).max(drawer.height());
+    let translation = drawer.translation();
+    let origin = (translation.0 + rect.origin.x, translation.1 + rect.origin.y);
+    let x_start = (origin.1.round() as GuestUSize).min(0);
+    let y_start = (origin.0.round() as GuestUSize).min(0);
+    let x_end = ((origin.0 + rect.size.width).round() as GuestUSize).max(drawer.width());
+    let y_end = ((origin.1 + rect.size.height).round() as GuestUSize).max(drawer.height());
 
     let (image_width, image_height) = image.dimensions();
     let (image_width, image_height) = (image_width as f32, image_height as f32);

@@ -27,6 +27,8 @@ pub const CLASSES: ClassExports = objc_classes! {
 pub(super) struct CGContextHostObject {
     pub(super) subclass: CGContextSubclass,
     pub(super) rgb_fill_color: (CGFloat, CGFloat, CGFloat, CGFloat),
+    /// Current translation. TODO: replace this with a transformation matrix.
+    pub(super) translation: (CGFloat, CGFloat),
 }
 impl HostObject for CGContextHostObject {}
 
@@ -71,8 +73,10 @@ fn CGContextClearRect(env: &mut Environment, context: CGContextRef, rect: CGRect
     cg_bitmap_context::fill_rect(env, context, rect, /* clear: */ true);
 }
 
-fn CGContextTranslateCTM(_env: &mut Environment, _context: CGContextRef, tx: CGFloat, ty: CGFloat) {
-    assert!(tx == 0.0 && ty == 0.0); // TODO: support translation
+fn CGContextTranslateCTM(env: &mut Environment, context: CGContextRef, tx: CGFloat, ty: CGFloat) {
+    let context = env.objc.borrow_mut::<CGContextHostObject>(context);
+    context.translation.0 += tx;
+    context.translation.1 += ty;
 }
 
 fn CGContextDrawImage(

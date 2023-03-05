@@ -13,7 +13,7 @@ use super::CFIndex;
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::frameworks::foundation::NSUInteger;
 use crate::mem::ConstVoidPtr;
-use crate::objc::{msg, msg_class};
+use crate::objc::{id, msg, msg_class};
 use crate::Environment;
 
 #[allow(dead_code)]
@@ -28,9 +28,9 @@ fn CFArrayCreateMutable(
 ) -> CFMutableArrayRef {
     assert!(allocator == kCFAllocatorDefault); // unimplemented
     assert!(capacity == 0); // TODO: fixed capacity support
-    assert!(callbacks.is_null()); // TODO
+    assert!(callbacks.is_null()); // TODO: support retaining etc
 
-    msg_class![env; NSMutableArray new]
+    msg_class![env; _touchHLE_NSMutableArray_non_retaining new]
 }
 
 fn CFArrayGetCount(env: &mut Environment, array: CFArrayRef) -> CFIndex {
@@ -38,7 +38,13 @@ fn CFArrayGetCount(env: &mut Environment, array: CFArrayRef) -> CFIndex {
     count.try_into().unwrap()
 }
 
+fn CFArrayAppendValue(env: &mut Environment, array: CFArrayRef, value: ConstVoidPtr) {
+    let value: id = value.cast().cast_mut();
+    msg![env; array addObject:value]
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CFArrayCreateMutable(_, _, _)),
     export_c_func!(CFArrayGetCount(_)),
+    export_c_func!(CFArrayAppendValue(_, _)),
 ];

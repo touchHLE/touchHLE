@@ -147,7 +147,6 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 
 // TODO: init methods etc
-// TODO: mutation methods
 
 - (NSUInteger)count {
     env.objc.borrow::<ArrayHostObject>(this).array.len().try_into().unwrap()
@@ -155,6 +154,27 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (id)objectAtIndex:(NSUInteger)index {
     // TODO: throw real exception rather than panic if out-of-bounds?
     env.objc.borrow::<ArrayHostObject>(this).array[index as usize]
+}
+
+// TODO: more mutation methods
+
+- (())addObject:(id)object {
+    retain(env, object);
+    env.objc.borrow_mut::<ArrayHostObject>(this).array.push(object);
+}
+
+@end
+
+// Special variant for use by CFArray with NULL callbacks: objects aren't
+// necessarily Objective-C objects and won't be retained/released.
+@implementation _touchHLE_NSMutableArray_non_retaining: _touchHLE_NSMutableArray
+
+- (())dealloc {
+    env.objc.dealloc_object(this, &mut env.mem)
+}
+
+- (())addObject:(id)object {
+    env.objc.borrow_mut::<ArrayHostObject>(this).array.push(object);
 }
 
 @end

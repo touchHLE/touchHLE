@@ -24,6 +24,22 @@ pub const kCGImageAlphaNoneSkipLast: CGImageAlphaInfo = 5;
 pub const kCGImageAlphaNoneSkipFirst: CGImageAlphaInfo = 6;
 pub const kCGImageAlphaOnly: CGImageAlphaInfo = 7;
 
+pub type CGImageByteOrderInfo = u32;
+pub const kCGImageByteOrderMask: CGImageByteOrderInfo = 0x7000;
+pub const kCGImageByteOrderDefault: CGImageByteOrderInfo = 0 << 12;
+#[allow(dead_code)]
+pub const kCGImageByteOrder16Little: CGImageByteOrderInfo = 1 << 12;
+#[allow(dead_code)]
+pub const kCGImageByteOrder32Little: CGImageByteOrderInfo = 2 << 12;
+#[allow(dead_code)]
+pub const kCGImageByteOrder16Big: CGImageByteOrderInfo = 3 << 12;
+pub const kCGImageByteOrder32Big: CGImageByteOrderInfo = 4 << 12;
+
+pub type CGBitmapInfo = u32;
+pub const kCGBitmapAlphaInfoMask: CGBitmapInfo = 0x1F; // huh, it's not 0x7?
+pub const kCGBitmapByteOrderMask: CGBitmapInfo = kCGImageByteOrderMask;
+// TODO: other stuff in this enum (for now, always assert the rest is 0)
+
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);

@@ -8,9 +8,10 @@
 use super::cg_color_space::{kCGColorSpaceGenericRGB, CGColorSpaceHostObject, CGColorSpaceRef};
 use super::cg_context::{CGContextHostObject, CGContextRef, CGContextSubclass};
 use super::cg_image::{
-    kCGImageAlphaFirst, kCGImageAlphaLast, kCGImageAlphaNone, kCGImageAlphaNoneSkipFirst,
-    kCGImageAlphaNoneSkipLast, kCGImageAlphaOnly, kCGImageAlphaPremultipliedFirst,
-    kCGImageAlphaPremultipliedLast, CGImageAlphaInfo,
+    kCGBitmapAlphaInfoMask, kCGBitmapByteOrderMask, kCGImageAlphaFirst, kCGImageAlphaLast,
+    kCGImageAlphaNone, kCGImageAlphaNoneSkipFirst, kCGImageAlphaNoneSkipLast, kCGImageAlphaOnly,
+    kCGImageAlphaPremultipliedFirst, kCGImageAlphaPremultipliedLast, kCGImageByteOrder32Big,
+    kCGImageByteOrderDefault, CGBitmapInfo, CGImageAlphaInfo,
 };
 use super::{CGFloat, CGRect};
 use crate::dyld::{export_c_func, FunctionExports};
@@ -67,8 +68,17 @@ fn CGBitmapContextCreate(
         .alloc_object(isa, Box::new(host_object), &mut env.mem)
 }
 
-fn components_for_rgb(alpha_info: CGImageAlphaInfo) -> Result<GuestUSize, ()> {
-    match alpha_info {
+fn components_for_rgb(bitmap_info: CGBitmapInfo) -> Result<GuestUSize, ()> {
+    let byte_order = bitmap_info & kCGBitmapByteOrderMask;
+    if byte_order != kCGImageByteOrderDefault && byte_order != kCGImageByteOrder32Big {
+        return Err(()); // TODO: handle other byte orders
+    }
+
+    let alpha_info = bitmap_info & kCGBitmapAlphaInfoMask;
+    if (alpha_info | byte_order) != bitmap_info {
+        return Err(()); // TODO: handle other cases (float)
+    }
+    match alpha_info & kCGBitmapAlphaInfoMask {
         kCGImageAlphaNone => Ok(3), // RGB
         kCGImageAlphaPremultipliedLast
         | kCGImageAlphaPremultipliedFirst

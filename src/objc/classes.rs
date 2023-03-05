@@ -59,6 +59,16 @@ pub(super) struct UnimplementedClass {
 }
 impl HostObject for UnimplementedClass {}
 
+/// Substitute object for classes and metaclasses from the guest app that we do
+/// not want to support (see [substitute_classes]).
+///
+/// Messages sent to this class will behave as if messaging [nil].
+pub(super) struct FakeClass {
+    pub(super) name: String,
+    pub(super) is_metaclass: bool,
+}
+impl HostObject for FakeClass {}
+
 /// The layout of a class in an app binary.
 ///
 /// The name, field names and field layout are based on what Ghidra outputs.
@@ -368,6 +378,57 @@ impl ClassHostObject {
     // See methods.rs for binary method parsing
 }
 
+/// Decide whether a certain class/metaclass pair from the guest app should use
+/// fake class host objects and return the substitutions if so.
+///
+/// This function is called when registering classes from the guest app. It
+/// detects certain problematic classes that are, for example, too complex for
+/// touchHLE to currently support, but which can be easily replaced with simple
+/// fakes.
+fn substitute_classes(
+    mem: &Mem,
+    class: Class,
+    metaclass: Class,
+) -> Option<(Box<FakeClass>, Box<FakeClass>)> {
+    let class_t { data, .. } = mem.read(class.cast());
+    let class_rw_t { name, .. } = mem.read(data);
+    let name = mem.cstr_at_utf8(name).unwrap();
+
+    // Currently the only thing we try to substitute: classes that seem to be
+    // from the AdMob SDK. This is a third-party advertising SDK. Naturally it
+    // makes a lot of use of UIKit in ways we don't support yet, so it's easier
+    // to skip this. This isn't "ad blocking" because ads no longer work on real
+    // devices anyway :)
+    if !name.starts_with("AdMob") {
+        return None;
+    }
+
+    {
+        let class_t { data, .. } = mem.read(metaclass.cast());
+        let class_rw_t {
+            name: metaclass_name,
+            ..
+        } = mem.read(data);
+        let metaclass_name = mem.cstr_at_utf8(metaclass_name).unwrap();
+        assert!(name == metaclass_name);
+    }
+
+    log!(
+        "Note: substituting fake class for {} to improve compatibility",
+        name
+    );
+
+    let class_host_object = Box::new(FakeClass {
+        name: name.to_string(),
+        is_metaclass: false,
+    });
+    let metaclass_host_object = Box::new(FakeClass {
+        name: name.to_string(),
+        is_metaclass: true,
+    });
+    Some((class_host_object, metaclass_host_object))
+}
+
 impl ObjC {
     fn get_class(&self, name: &str, is_metaclass: bool, mem: &Mem) -> Option<Class> {
         let class = self.classes.get(name).copied()?;
@@ -501,18 +562,30 @@ impl ObjC {
             let class = mem.read(base + i);
             let metaclass = Self::read_isa(class, mem);
 
-            let class_host_object = Box::new(ClassHostObject::from_bin(
-                class, /* is_metaclass: */ false, mem, self,
-            ));
-            let metaclass_host_object = Box::new(ClassHostObject::from_bin(
-                metaclass, /* is_metaclass: */ true, mem, self,
-            ));
+            let name = if let Some(fakes) = substitute_classes(mem, class, metaclass) {
+                let (class_host_object, metaclass_host_object) = fakes;
 
-            assert!(class_host_object.name == metaclass_host_object.name);
-            let name = class_host_object.name.clone();
+                assert!(class_host_object.name == metaclass_host_object.name);
+                let name = class_host_object.name.clone();
 
-            self.register_static_object(class, class_host_object);
-            self.register_static_object(metaclass, metaclass_host_object);
+                self.register_static_object(class, class_host_object);
+                self.register_static_object(metaclass, metaclass_host_object);
+                name
+            } else {
+                let class_host_object = Box::new(ClassHostObject::from_bin(
+                    class, /* is_metaclass: */ false, mem, self,
+                ));
+                let metaclass_host_object = Box::new(ClassHostObject::from_bin(
+                    metaclass, /* is_metaclass: */ true, mem, self,
+                ));
+
+                assert!(class_host_object.name == metaclass_host_object.name);
+                let name = class_host_object.name.clone();
+
+                self.register_static_object(class, class_host_object);
+                self.register_static_object(metaclass, metaclass_host_object);
+                name
+            };
 
             self.classes.insert(name.to_string(), class);
         }
@@ -538,6 +611,15 @@ impl ObjC {
                 (metaclass, data.class_methods),
             ] {
                 if methods.is_null() {
+                    continue;
+                }
+
+                if self
+                    .get_host_object(class)
+                    .unwrap()
+                    .as_any()
+                    .is::<FakeClass>()
+                {
                     continue;
                 }
 

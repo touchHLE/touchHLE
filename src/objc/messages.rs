@@ -35,7 +35,7 @@ fn objc_msgSend_inner(env: &mut Environment, receiver: id, selector: SEL, super2
         log_dbg!("[nil {}]", selector.as_str(&env.mem));
         env.cpu.regs_mut()[0..2].fill(0);
         return;
-    } // TODO: nil handling
+    }
 
     let orig_class = super2.unwrap_or_else(|| ObjC::read_isa(receiver, &env.mem));
     assert!(orig_class != nil);
@@ -108,6 +108,20 @@ fn objc_msgSend_inner(env: &mut Environment, receiver: id, selector: SEL, super2
                 if is_metaclass { "class" } else { "instance" },
                 selector.as_str(&env.mem),
             );
+        } else if let Some(&super::FakeClass {
+            ref name,
+            is_metaclass,
+        }) = host_object.as_any().downcast_ref()
+        {
+            log!(
+                "Call to faked class \"{}\" ({:?}) {} method \"{}\". Behaving as if message was sent to nil.",
+                name,
+                class,
+                if is_metaclass { "class" } else { "instance" },
+                selector.as_str(&env.mem),
+            );
+            env.cpu.regs_mut()[0..2].fill(0);
+            return;
         } else {
             panic!(
                 "Item {:?} in superclass chain of object {:?}'s class {:?} has an unexpected host object type.",

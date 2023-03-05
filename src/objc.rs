@@ -35,7 +35,7 @@ pub use methods::{GuestIMP, HostIMP, IMP};
 pub use objects::{id, nil, AnyHostObject, HostObject, TrivialHostObject};
 pub use selectors::{selector, SEL};
 
-use classes::{ClassHostObject, UnimplementedClass, CLASS_LISTS};
+use classes::{ClassHostObject, FakeClass, UnimplementedClass, CLASS_LISTS};
 use messages::{objc_msgSend, objc_msgSendSuper2, objc_msgSend_stret};
 use methods::method_list_t;
 use objects::{objc_object, HostObjectEntry};

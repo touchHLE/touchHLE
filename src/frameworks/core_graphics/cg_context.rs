@@ -71,10 +71,15 @@ fn CGContextClearRect(env: &mut Environment, context: CGContextRef, rect: CGRect
     cg_bitmap_context::fill_rect(env, context, rect, /* clear: */ true);
 }
 
+fn CGContextTranslateCTM(_env: &mut Environment, _context: CGContextRef, tx: CGFloat, ty: CGFloat) {
+    assert!(tx == 0.0 && ty == 0.0); // TODO: support translation
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGContextRetain(_)),
     export_c_func!(CGContextRelease(_)),
     export_c_func!(CGContextSetRGBFillColor(_, _, _, _, _)),
     export_c_func!(CGContextFillRect(_, _)),
     export_c_func!(CGContextClearRect(_, _)),
+    export_c_func!(CGContextTranslateCTM(_, _, _)),
 ];

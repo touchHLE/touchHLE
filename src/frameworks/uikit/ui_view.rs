@@ -170,6 +170,14 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.borrow_mut::<UIViewHostObject>(this).layer
 }
 
+- (CGRect)bounds {
+    env.objc.borrow::<UIViewHostObject>(this).bounds
+}
+
+- (CGPoint)center {
+    env.objc.borrow::<UIViewHostObject>(this).center
+}
+
 @end
 
 };

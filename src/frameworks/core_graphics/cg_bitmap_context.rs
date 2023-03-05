@@ -56,7 +56,7 @@ fn CGBitmapContextCreate(
             bits_per_component,
             bytes_per_row,
             color_space: kCGColorSpaceGenericRGB,
-            alpha_info: bitmap_info,
+            alpha_info: bitmap_info & kCGBitmapAlphaInfoMask,
         }),
         // TODO: is this the correct default?
         rgb_fill_color: (0.0, 0.0, 0.0, 0.0),

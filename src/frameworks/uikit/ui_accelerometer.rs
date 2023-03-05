@@ -80,6 +80,9 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.framework_state.uikit.ui_accelerometer.update_interval.unwrap()
 }
 - (())setUpdateInterval:(NSTimeInterval)interval {
+    // The system can limit this value, and must (some apps pass 0 and this can
+    // cause a division-by-zero. 60Hz has been chosen here to match 60fps.
+    let interval = interval.max(1.0 / 60.0);
     env.framework_state.uikit.ui_accelerometer.update_interval = Some(interval);
 }
 

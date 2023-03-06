@@ -152,7 +152,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (())bringSubviewToFront:(id)view {
-    log!("TODO: [(UIView*){:?} bringSubviewToFront:{:?}", this, view);
+    log_dbg!("TODO: [(UIView*){:?} bringSubviewToFront:{:?}]", this, view);
 }
 
 - (())dealloc {

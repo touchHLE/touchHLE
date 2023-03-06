@@ -67,6 +67,27 @@ fn strcat(env: &mut Environment, dest: MutPtr<u8>, src: ConstPtr<u8>) -> MutPtr<
     dest
 }
 
+fn strncpy(
+    env: &mut Environment,
+    dest: MutPtr<u8>,
+    src: ConstPtr<u8>,
+    size: GuestUSize,
+) -> MutPtr<u8> {
+    let mut end = false;
+    for i in 0..size {
+        if !end {
+            let c = env.mem.read(src + i);
+            if c == b'\0' {
+                end = true;
+            }
+            env.mem.write(dest + i, c);
+        } else {
+            env.mem.write(dest + i, b'\0');
+        }
+    }
+    dest
+}
+
 pub(super) fn strdup(env: &mut Environment, src: ConstPtr<u8>) -> MutPtr<u8> {
     let len = strlen(env, src);
     let new = env.mem.alloc(len + 1).cast();
@@ -192,6 +213,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(strlen(_)),
     export_c_func!(strcpy(_, _)),
     export_c_func!(strcat(_, _)),
+    export_c_func!(strncpy(_, _, _)),
     export_c_func!(strdup(_)),
     export_c_func!(strcmp(_, _)),
     export_c_func!(strncmp(_, _, _)),

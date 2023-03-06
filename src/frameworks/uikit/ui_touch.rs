@@ -170,7 +170,6 @@ pub fn handle_event(env: &mut Environment, event: Event) {
             retain(env, new_touch);
 
             let touches: id = msg_class![env; NSSet setWithObject:new_touch];
-            // TODO: populate event object (not all apps care about it)
             let event = ui_event::new_event(env, touches, view);
             autorelease(env, event);
 
@@ -207,8 +206,7 @@ pub fn handle_event(env: &mut Environment, event: Event) {
             let pool: id = msg_class![env; NSAutoreleasePool new];
 
             let touches: id = msg_class![env; NSSet setWithObject:touch];
-            // TODO: populate event object (not all apps care about it)
-            let event: id = msg_class![env; UIEvent new];
+            let event = ui_event::new_event(env, touches, view);
             autorelease(env, event);
 
             log_dbg!(
@@ -244,8 +242,7 @@ pub fn handle_event(env: &mut Environment, event: Event) {
             let pool: id = msg_class![env; NSAutoreleasePool new];
 
             let touches: id = msg_class![env; NSSet setWithObject:touch];
-            // TODO: populate event object (not all apps care about it)
-            let event: id = msg_class![env; UIEvent new];
+            let event = ui_event::new_event(env, touches, view);
             autorelease(env, event);
 
             env.framework_state.uikit.ui_touch.current_touch = None;

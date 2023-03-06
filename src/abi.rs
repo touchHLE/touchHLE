@@ -246,17 +246,28 @@ macro_rules! impl_CallFromHost {
                 env: &mut Environment,
                 args: ($($P,)*),
             ) -> R {
-                assert!(R::SIZE_IN_MEM.is_none()); // pointer return TODO
+                let mut reg_offset = 0;
                 let regs = env.cpu.regs_mut();
+                let retval_ptr = R::SIZE_IN_MEM.map(|size| {
+                    regs[Cpu::SP] -= size;
+                    let ptr: ConstVoidPtr = Ptr::from_bits(regs[Cpu::SP]);
+                    write_next_arg(&mut reg_offset, regs, &mut env.mem, ptr);
+                    ptr
+                });
                 let old_sp = extend_stack_for_args(
                     0 $(+ <$P as GuestArg>::REG_COUNT)*,
                     regs,
                 );
-                let mut reg_offset = 0;
                 $(write_next_arg::<$P>(&mut reg_offset, regs, &mut env.mem, args.$p);)*
                 self.call_from_guest(env);
-                env.cpu.regs_mut()[Cpu::SP] = old_sp;
-                <R as GuestRet>::from_regs(env.cpu.regs())
+                let regs = env.cpu.regs_mut(); // reborrow
+                regs[Cpu::SP] = old_sp;
+                if let Some(retval_ptr) = retval_ptr {
+                    regs[Cpu::SP] += R::SIZE_IN_MEM.unwrap();
+                    <R as GuestRet>::from_mem(retval_ptr, &env.mem)
+                } else {
+                    <R as GuestRet>::from_regs(regs)
+                }
             }
         }
 

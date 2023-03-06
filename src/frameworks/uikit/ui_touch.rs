@@ -5,6 +5,7 @@
  */
 //! `UITouch`.
 
+use super::ui_event;
 use super::ui_view::UIViewHostObject;
 use crate::frameworks::core_graphics::{CGFloat, CGPoint};
 use crate::frameworks::foundation::{NSTimeInterval, NSUInteger};
@@ -56,6 +57,7 @@ pub const CLASSES: ClassExports = objc_classes! {
         location
     } else {
         // FIXME, see below
+        // Note: also change touchesForView: on UIEvent
         resolve_point_in_view(env, that_view, location).unwrap()
     }
 }
@@ -76,7 +78,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 };
 
-fn resolve_point_in_view(env: &mut Environment, view: id, point: CGPoint) -> Option<CGPoint> {
+pub fn resolve_point_in_view(env: &mut Environment, view: id, point: CGPoint) -> Option<CGPoint> {
     let (expected_width, expected_height) = env.window.size_unrotated_unscaled();
     let expected_width = expected_width as CGFloat;
     let expected_height = expected_height as CGFloat;
@@ -169,7 +171,7 @@ pub fn handle_event(env: &mut Environment, event: Event) {
 
             let touches: id = msg_class![env; NSSet setWithObject:new_touch];
             // TODO: populate event object (not all apps care about it)
-            let event: id = msg_class![env; UIEvent new];
+            let event = ui_event::new_event(env, touches, view);
             autorelease(env, event);
 
             log_dbg!(

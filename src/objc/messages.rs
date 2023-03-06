@@ -12,7 +12,7 @@
 //! - Peter Steinberger's [Calling Super at Runtime in Swift](https://steipete.com/posts/calling-super-at-runtime/) explains `objc_msgSendSuper2`
 
 use super::{id, nil, Class, ObjC, IMP, SEL};
-use crate::abi::CallFromHost;
+use crate::abi::{CallFromHost, GuestRet};
 use crate::mem::{ConstPtr, MutVoidPtr, SafeRead};
 use crate::Environment;
 
@@ -198,8 +198,14 @@ pub(super) fn objc_msgSendSuper2(
 pub fn msg_send<R, P>(env: &mut Environment, args: P) -> R
 where
     fn(&mut Environment, id, SEL): CallFromHost<R, P>,
+    fn(&mut Environment, MutVoidPtr, id, SEL): CallFromHost<R, P>,
+    R: GuestRet,
 {
-    (objc_msgSend as fn(&mut Environment, id, SEL)).call_from_host(env, args)
+    if R::SIZE_IN_MEM.is_some() {
+        (objc_msgSend_stret as fn(&mut Environment, MutVoidPtr, id, SEL)).call_from_host(env, args)
+    } else {
+        (objc_msgSend as fn(&mut Environment, id, SEL)).call_from_host(env, args)
+    }
 }
 
 /// Macro for sending a message which imitates the Objective-C messaging syntax.

@@ -18,6 +18,10 @@ Compatibility:
 - API support improvements:
   - Various small contributions. (@hikari-no-yume, @nitinseshadri)
 
+Quality:
+
+- The version of stb\_image used by touchHLE has been updated. The new version includes a fix for a bug that caused many launch images (splash screens) and icons to fail to load. Thank you to @nothings and @rygorous who [helped to diagnose and fix this issue](https://github.com/nothings/stb/issues/1456).
+
 Usability:
 
 - The virtual cursor controlled by the right analog stick now uses a larger portion of the analog stick's range. (@hikari-no-yume)

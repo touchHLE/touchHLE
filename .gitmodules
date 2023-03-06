@@ -1,6 +1,7 @@
 [submodule "stb"]
 	path = vendor/stb
 	url = https://github.com/nothings/stb.git
+	branch = dev
 [submodule "dynarmic"]
 	path = vendor/dynarmic
 	url = https://github.com/merryhime/dynarmic.git

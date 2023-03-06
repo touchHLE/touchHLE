@@ -26,6 +26,8 @@ struct UITouchHostObject {
     view: id,
     /// Relative to screen
     location: CGPoint,
+    /// Relative to screen
+    previous_location: CGPoint,
     timestamp: NSTimeInterval,
 }
 impl HostObject for UITouchHostObject {}
@@ -40,6 +42,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     let host_object = Box::new(UITouchHostObject {
         view: nil,
         location: CGPoint { x: 0.0, y: 0.0 },
+        previous_location: CGPoint { x: 0.0, y: 0.0 },
         timestamp: 0.0,
     });
     env.objc.alloc_object(this, host_object, &mut env.mem)
@@ -59,6 +62,16 @@ pub const CLASSES: ClassExports = objc_classes! {
         // FIXME, see below
         // Note: also change touchesForView: on UIEvent
         resolve_point_in_view(env, that_view, location).unwrap()
+    }
+}
+- (CGPoint)previousLocationInView:(id)that_view { // UIView*
+    let &UITouchHostObject { previous_location, .. } = env.objc.borrow(this);
+    if that_view == nil {
+        previous_location
+    } else {
+        // FIXME, see below
+        // Note: also change touchesForView: on UIEvent
+        resolve_point_in_view(env, that_view, previous_location).unwrap()
     }
 }
 
@@ -162,6 +175,7 @@ pub fn handle_event(env: &mut Environment, event: Event) {
             *env.objc.borrow_mut(new_touch) = UITouchHostObject {
                 view,
                 location,
+                previous_location: location,
                 timestamp,
             };
             autorelease(env, new_touch);
@@ -200,6 +214,7 @@ pub fn handle_event(env: &mut Environment, event: Event) {
 
             let view = env.objc.borrow::<UITouchHostObject>(touch).view;
             let host_object = env.objc.borrow_mut::<UITouchHostObject>(touch);
+            host_object.previous_location = host_object.location;
             host_object.location = location;
             host_object.timestamp = timestamp;
 
@@ -236,6 +251,7 @@ pub fn handle_event(env: &mut Environment, event: Event) {
 
             let view = env.objc.borrow::<UITouchHostObject>(touch).view;
             let host_object = env.objc.borrow_mut::<UITouchHostObject>(touch);
+            host_object.previous_location = host_object.location;
             host_object.location = location;
             host_object.timestamp = timestamp;
 

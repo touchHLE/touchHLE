@@ -194,30 +194,7 @@ fn alGetSourcef(env: &mut Environment, source: ALuint, param: ALenum, value: Mut
     unsafe { al::alGetSourcef(source, param, env.mem.ptr_at_mut(value, 1)) };
 }
 fn alGetSourcei(env: &mut Environment, source: ALuint, param: ALenum, value: MutPtr<ALint>) {
-    // Game-specific hack: Super Monkey Ball has some code like:
-    //
-    //    alGetSourcei(source, AL_BUFFERS_QUEUED, &n);
-    //    alSourceUnqueueBuffers(source, n, &buffers);
-    //
-    // This is apparently incorrect code. OpenAL Soft produces an error and
-    // Super Monkey Ball's audio is partly broken after that point.
-    // If we pretend AL_BUFFERS_PROCESSED was used, everything works.
-    // TODO: Test on iPhone OS and figure out why Super Monkey Ball works there.
-    // This might be hiding some bug in touchHLE.
-    if param == al::AL_BUFFERS_QUEUED
-        && ["com.ooi.supermonkeyball", "smblite"].contains(&env.bundle.bundle_identifier())
-    {
-        log!("Applying game-specific hack for Super Monkey Ball: treating alGetSourcei(_, AL_BUFFERS_QUEUED, _) as alGetSourcei(_, AL_BUFFERS_PROCESSED, _)");
-        unsafe {
-            al::alGetSourcei(
-                source,
-                al::AL_BUFFERS_PROCESSED,
-                env.mem.ptr_at_mut(value, 1),
-            )
-        };
-    } else {
-        unsafe { al::alGetSourcei(source, param, env.mem.ptr_at_mut(value, 1)) };
-    }
+    unsafe { al::alGetSourcei(source, param, env.mem.ptr_at_mut(value, 1)) };
 }
 
 fn alSourcePlay(_env: &mut Environment, source: ALuint) {
@@ -243,6 +220,33 @@ fn alSourceUnqueueBuffers(
     nb: ALsizei,
     buffers: MutPtr<ALuint>,
 ) {
+    // Apple's sample code for a looping sound effect contains a function called
+    // SoundEngineEffect::ClearSourceBuffers() that has the following pattern:
+    //
+    //    alGetSourcei(source, AL_BUFFERS_QUEUED, &n);
+    //    alSourceUnqueueBuffers(source, n, &buffers);
+    //
+    // Unfortunately, this is incorrect code in some circumstances: unqueueing
+    // buffers while they are playing is not permitted by the OpenAL spec! Maybe
+    // it worked with Apple's OpenAL implementation for some reason, but OpenAL
+    // Soft does not tolerate this, so many apps that used this sample code
+    // (e.g. Super Monkey Ball) run into an unexpected OpenAL error.
+    //
+    // Limiting the number dequeued seems to be an effective workaround for the
+    // apps that have been tested. That sample code isn't interested in actually
+    // using the returned buffer IDs, so it's no problem that we write too few.
+    let buffers_processed = {
+        let mut val = 0;
+        unsafe { al::alGetSourcei(source, al::AL_BUFFERS_PROCESSED, &mut val) };
+        val
+    };
+    let nb = if buffers_processed < nb {
+        log_dbg!("Applying workaround for Apple sample code bug: ignoring unqueueing of {}/{} processed buffers from source {}", nb, buffers_processed, source);
+        buffers_processed
+    } else {
+        nb
+    };
+
     let nb_usize: GuestUSize = nb.try_into().unwrap();
     let buffers = env.mem.ptr_at_mut(buffers, nb_usize);
     unsafe { al::alSourceUnqueueBuffers(source, nb, buffers) }

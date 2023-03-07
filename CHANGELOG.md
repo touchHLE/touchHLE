@@ -41,7 +41,7 @@ Other:
 
 - The version of dynarmic used by touchHLE has been updated. This will fix build issues for some people. (@hikari-no-yume)
 
-## v0.1.1
+## v0.1.1 (2023-02-18)
 
 Compatibility:
 
@@ -68,6 +68,6 @@ Other:
 
 - Some of the more spammy warning messages have been removed or condensed. (@hikari-no-yume)
 
-## v0.1.0
+## v0.1.0 (2023-02-02)
 
 First release.

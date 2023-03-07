@@ -236,10 +236,14 @@ pub(super) fn fill_rect(env: &mut Environment, context: CGContextRef, rect: CGRe
     // TODO: correct anti-aliasing
     let translation = drawer.translation();
     let origin = (translation.0 + rect.origin.x, translation.1 + rect.origin.y);
-    let x_start = (origin.0.round() as GuestUSize).min(0);
-    let y_start = (origin.1.round() as GuestUSize).min(0);
-    let x_end = ((origin.0 + rect.size.width).round() as GuestUSize).max(drawer.width());
-    let y_end = ((origin.1 + rect.size.height).round() as GuestUSize).max(drawer.height());
+    let x_start = origin.0.round().max(0.0) as GuestUSize;
+    let y_start = origin.1.round().max(0.0) as GuestUSize;
+    let x_end = (origin.0 + rect.size.width)
+        .round()
+        .min(drawer.width() as f32) as GuestUSize;
+    let y_end = (origin.1 + rect.size.height)
+        .round()
+        .min(drawer.height() as f32) as GuestUSize;
 
     let color = if clear {
         (0.0, 0.0, 0.0, 0.0)
@@ -271,22 +275,30 @@ pub(super) fn draw_image(
     // TODO: correct anti-aliasing
     let translation = drawer.translation();
     let origin = (translation.0 + rect.origin.x, translation.1 + rect.origin.y);
-    let x_start = (origin.1.round() as GuestUSize).min(0);
-    let y_start = (origin.0.round() as GuestUSize).min(0);
-    let x_end = ((origin.0 + rect.size.width).round() as GuestUSize).max(drawer.width());
-    let y_end = ((origin.1 + rect.size.height).round() as GuestUSize).max(drawer.height());
+    let x_start = origin.0.round() as i32;
+    let y_start = origin.1.round() as i32;
+    let x_end = (origin.0 + rect.size.width).round() as i32;
+    let y_end = (origin.1 + rect.size.height).round() as i32;
+    let dest_width = x_end - x_start;
+    let dest_height = y_end - y_start;
 
     let (image_width, image_height) = image.dimensions();
-    let (image_width, image_height) = (image_width as f32, image_height as f32);
 
     // TODO: non-nearest-neighbour filtering? (what does CG actually do?)
     for y in y_start..y_end {
         for x in x_start..x_end {
-            let texel_x = image_width * (x as f32 / (x_end - x_start) as f32);
-            let texel_y = image_height * (y as f32 / (y_end - y_start) as f32);
-            let (texel_x, texel_y) = (texel_x as i32, texel_y as i32);
+            // Note: this clamping needs to be done here, not above, so that
+            // the image will be clipped correctly if it overhangs the canvas.
+            if x < 0 || y < 0 || x as u32 >= drawer.width() || y as u32 >= drawer.height() {
+                continue;
+            }
+
+            let texel_x = (0.5 + (x - x_start) as f32) / dest_width as f32;
+            let texel_y = (0.5 + (y - y_start) as f32) / dest_height as f32;
+            let texel_x = (image_width as f32 * texel_x) as i32;
+            let texel_y = (image_height as f32 * texel_y) as i32;
             if let Some(color) = image.get_pixel((texel_x, texel_y)) {
-                drawer.put_pixel((x as _, y as _), color)
+                drawer.put_pixel((x, y), color)
             }
         }
     }

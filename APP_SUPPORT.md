@@ -41,16 +41,16 @@ Performance is tested with release builds of touchHLE on a 2017 Retina MacBook, 
   - Consistent full fps (30fps)
   - Scale hack supported
 - Touch & Go (2009, The Game Creators)
- - Working version:
-   - “Touch & Go LITE” 1.2
- - **Broken version**:
-   - “App Pack 1” 1.0 (several games bundled into one app, doesn't work yet)
- - _Unknown_:
-   - Nobody has tested the standalone, full (paid) version of the game. If you bought it back in the day, please get in touch with @hikari-no-yume.
- - Fully playable, everything works. Among other things:
-   - Sound effects and music
-   - Menu screens
-   - All the levels in the LITE version
-   - High score persistence
- - Consistent full fps (60fps)
- - Scale hack supported
+  - Working version:
+    - “Touch & Go LITE” 1.2
+  - **Broken version**:
+    - “App Pack 1” 1.0 (several games bundled into one app, doesn't work yet)
+  - _Unknown_:
+    - Nobody has tested the standalone, full (paid) version of the game. If you bought it back in the day, please get in touch with @hikari-no-yume.
+  - Fully playable, everything works. Among other things:
+    - Sound effects and music
+    - Menu screens
+    - All the levels in the LITE version
+    - High score persistence
+  - Consistent full fps (60fps)
+  - Scale hack supported

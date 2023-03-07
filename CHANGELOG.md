@@ -21,7 +21,7 @@ Compatibility:
 
 Quality:
 
-- The version of stb\_image used by touchHLE has been updated. The new version includes a fix for a bug that caused many launch images (splash screens) and icons to fail to load. Thank you to @nothings and @rygorous who [helped to diagnose and fix this issue](https://github.com/nothings/stb/issues/1456).
+- The version of stb\_image used by touchHLE has been updated. The new version includes a fix for a bug that caused many launch images (splash screens) and icons to fail to load. Thank you to @nothings and @rygorous who diagnosed and fixed this.
 
 Usability:
 

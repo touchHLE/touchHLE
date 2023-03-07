@@ -17,6 +17,7 @@ Compatibility:
 
 - API support improvements:
   - Various small contributions. (@hikari-no-yume, @nitinseshadri)
+  - Some key parts of `UIImage` and `CGImage` used by Apple's `Texture2D` sample code are now implemented. Loading textures from PNG files in this way should now work. (@hikari-no-yume)
 
 Quality:
 

@@ -17,7 +17,8 @@ Compatibility:
 
 - API support improvements:
   - Various small contributions. (@hikari-no-yume, @nitinseshadri)
-  - Some key parts of `UIImage` and `CGImage` used by Apple's `Texture2D` sample code are now implemented. Loading textures from PNG files in this way should now work. (@hikari-no-yume)
+  - Some key parts of `UIImage`, `CGImage` and `CGBitmapContext` used by Apple's `Texture2D` sample code are now implemented. Loading textures from PNG files in this way should now work. (@hikari-no-yume)
+- New supported app: Super Monkey Ball Lite.
 
 Quality:
 
@@ -27,6 +28,7 @@ Usability:
 
 - The virtual cursor controlled by the right analog stick now uses a larger portion of the analog stick's range. (@hikari-no-yume)
 - Basic information about the app bundle, such as its name and version number, is now output when running an app. There is also a new command-line option, `--info`, which lets you get this information without running the app. (@hikari-no-yume)
+- You are now warned if you try to run an app that requires a newer iPhone OS version. (@hikari-no-yume)
 - Options can now be loaded from files. (@hikari-no-yume)
   - The recommended options for supported apps are now applied automatically. See the new `touchHLE_default_options.txt` file.
   - You can put your own options in the new `touchHLE_options.txt` file.

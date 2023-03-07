@@ -614,12 +614,8 @@ impl ObjC {
                     continue;
                 }
 
-                if self
-                    .get_host_object(class)
-                    .unwrap()
-                    .as_any()
-                    .is::<FakeClass>()
-                {
+                let any = self.get_host_object(class).unwrap().as_any();
+                if any.is::<FakeClass>() || any.is::<UnimplementedClass>() {
                     continue;
                 }
 

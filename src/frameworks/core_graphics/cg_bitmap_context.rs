@@ -124,6 +124,11 @@ fn put_pixel(
     if x >= data.width || y >= data.height {
         return;
     }
+
+    // CG's co-ordinate system puts the origin in the bottom-left corner, but it
+    // *seems* like the rows are nonetheless in top-to-bottom order?
+    let y = data.height - 1 - y;
+
     let pixel_size = bytes_per_pixel(data);
     let first_component_idx = (y * data.bytes_per_row + x * pixel_size) as usize;
 
@@ -268,9 +273,9 @@ pub(super) fn draw_image(
 
     let mut drawer = CGBitmapContextDrawer::new(&env.objc, &mut env.mem, context);
 
-    // let _ = std::fs::write(format!("image-{:?}.data", image.dimensions()), image.pixels());
+    // let _ = std::fs::write(format!("image-{:?}-{:?}.data", (image as *const _ as *const ()), image.dimensions()), image.pixels());
 
-    // let _ = std::fs::write(format!("bitmap-{:?}-before.data", (drawer.width(), drawer.height())), &drawer.pixels);
+    // let _ = std::fs::write(format!("bitmap-{:?}-{:?}-before.data", (image as *const _ as *const ()), (drawer.width(), drawer.height())), &drawer.pixels);
 
     // TODO: correct anti-aliasing
     let translation = drawer.translation();
@@ -296,14 +301,15 @@ pub(super) fn draw_image(
             let texel_x = (0.5 + (x - x_start) as f32) / dest_width as f32;
             let texel_y = (0.5 + (y - y_start) as f32) / dest_height as f32;
             let texel_x = (image_width as f32 * texel_x) as i32;
-            let texel_y = (image_height as f32 * texel_y) as i32;
+            // Image is in top-to-bottom order, but the bitmap is bottom-to-top
+            let texel_y = (image_height as f32 * (1.0 - texel_y)) as i32;
             if let Some(color) = image.get_pixel((texel_x, texel_y)) {
                 drawer.put_pixel((x, y), color)
             }
         }
     }
 
-    // let _ = std::fs::write(format!("bitmap-{:?}-after.data", (drawer.width(), drawer.height())), &drawer.pixels);
+    // let _ = std::fs::write(format!("bitmap-{:?}-{:?}-after.data", (image as *const _ as *const ()), (drawer.width(), drawer.height())), &drawer.pixels);
 }
 
 pub const FUNCTIONS: FunctionExports =

@@ -57,7 +57,8 @@ impl Image {
         self.dimensions
     }
 
-    /// Get image data as bytes (8 bits per channel sRGB RGBA)
+    /// Get image data as bytes (8 bits per channel sRGB RGBA). Rows are in
+    /// top-to-bottom order.
     pub fn pixels(&self) -> &[u8] {
         unsafe {
             std::slice::from_raw_parts(
@@ -67,7 +68,8 @@ impl Image {
         }
     }
 
-    /// Get value of a pixel as linear RGBA (not sRGB!).
+    /// Get value of a pixel as linear RGBA (not sRGB!). 0 on the y axis is the
+    /// top of the image.
     ///
     /// Returns [None] if `at` is out-of-bounds.
     pub fn get_pixel(&self, at: (i32, i32)) -> Option<(f32, f32, f32, f32)> {

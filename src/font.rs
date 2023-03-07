@@ -194,7 +194,8 @@ impl Font {
     }
 
     /// Draw text. Calls the provided callback for each pixel, providing the
-    /// coverage (a value between 0.0 and 1.0).
+    /// coverage (a value between 0.0 and 1.0). Assumes y starts at the
+    /// bottom-left corner and points upwards.
     pub fn draw<F: FnMut((i32, i32), f32)>(
         &self,
         font_size: f32,
@@ -204,12 +205,13 @@ impl Font {
         alignment: TextAlignment,
         mut put_pixel: F,
     ) {
+        // TODO: This code has gone through a rather traumatic series of y sign
+        //       flips and might benefit from refactoring for clarity?
+
         let lines = self.break_lines(font_size, text, wrap);
 
+        let mut line_y = self.font.v_metrics(scale(font_size)).ascent;
         let (line_height, line_gap) = self.line_height_and_gap(font_size);
-        let mut line_y = line_height * ((lines.len() - 1) as f32)
-            + line_gap * (lines.len().saturating_sub(2) as f32)
-            - self.font.v_metrics(scale(font_size)).descent;
 
         for (line_width, line_text) in lines {
             let line_x_offset = match alignment {
@@ -232,13 +234,13 @@ impl Font {
                 // FIXME: blending
                 let glyph_height = glyph_bounds.height();
                 let x_offset = glyph_bounds.min.x;
-                let y_offset = ((origin.1 + line_y).round() as i32) - glyph_bounds.max.y;
+                let y_offset = ((origin.1 + line_y).round() as i32) + glyph_bounds.max.y;
                 glyph.draw(|x, y, coverage| {
                     let (x, y) = (x as i32, y as i32);
-                    put_pixel((x_offset + x, y_offset + (glyph_height - y)), coverage)
+                    put_pixel((x_offset + x, y_offset - (glyph_height - y)), coverage)
                 });
             }
-            line_y -= line_height + line_gap;
+            line_y += line_height + line_gap;
         }
     }
 }

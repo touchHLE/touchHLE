@@ -6,8 +6,8 @@
 //! Audio file decoding and OpenAL bindings.
 //!
 //! The audio file decoding support is an abstraction over various libraries
-//! (currently [caf] and [hound]), usage of which should be confined to this
-//! module.
+//! (currently [caf], [hound], and dr_mp3), usage of which should be confined to
+//! this module.
 //!
 //! Resources:
 //! - [Apple Core Audio Format Specification 1.0](https://developer.apple.com/library/archive/documentation/MusicAudio/Reference/CAFSpec/CAF_intro/CAF_intro.html)
@@ -16,6 +16,7 @@ mod ima4;
 
 pub use ima4::decode_ima4;
 pub use touchHLE_openal_soft_wrapper as openal;
+use touchHLE_dr_mp3_wrapper as dr_mp3;
 
 use crate::fs::{Fs, GuestPath};
 use std::io::Cursor;
@@ -46,6 +47,7 @@ pub struct AudioFile(AudioFileInner);
 enum AudioFileInner {
     Wave(hound::WavReader<Cursor<Vec<u8>>>),
     Caf(caf::CafPacketReader<Cursor<Vec<u8>>>),
+    Mp3(dr_mp3::Mp3DecodedToPcm),
 }
 
 impl AudioFile {
@@ -66,6 +68,12 @@ impl AudioFile {
         } else if caf::CafPacketReader::new(Cursor::new(&bytes), vec![]).is_ok() {
             let reader = caf::CafPacketReader::new(Cursor::new(bytes), vec![]).unwrap();
             Ok(AudioFile(AudioFileInner::Caf(reader)))
+        // TODO: Real MP3 container handling. Currently we are immediately
+        // decoding the entire file to PCM and acting as if it's a PCM file,
+        // simply because because this is easier. Full MP3 support would require
+        // a lot of changes in Audio Toolbox.
+        } else if let Ok(pcm) = dr_mp3::decode_mp3_to_pcm(&bytes) {
+            Ok(AudioFile(AudioFileInner::Mp3(pcm)))
         } else {
             // We may eventually want to return an error here, this is just more
             // useful currently.
@@ -142,6 +150,18 @@ impl AudioFile {
                     bits_per_channel,
                 }
             }
+            AudioFileInner::Mp3(dr_mp3::Mp3DecodedToPcm{
+                sample_rate,
+                channels,
+                ..
+            }) => AudioDescription {
+                sample_rate: f64::from(sample_rate),
+                format: AudioFormat::LinearPcm { is_float: false, is_little_endian: true },
+                bytes_per_packet: channels * 2,
+                frames_per_packet: 1,
+                channels_per_frame: channels,
+                bits_per_channel: 16,
+            }
         }
     }
 
@@ -169,12 +189,15 @@ impl AudioFile {
                 // variable size not implemented
                 u64::from(self.packet_size_fixed()) * self.packet_count()
             }
+            AudioFileInner::Mp3(dr_mp3::Mp3DecodedToPcm { ref bytes, .. }) => {
+                bytes.len() as u64
+            }
         }
     }
 
     pub fn packet_count(&self) -> u64 {
         match self.0 {
-            AudioFileInner::Wave(_) => {
+            AudioFileInner::Wave(_) | AudioFileInner::Mp3(dr_mp3::Mp3DecodedToPcm { .. }) => {
                 // never variable-size
                 self.byte_count() / u64::from(self.packet_size_fixed())
             }
@@ -251,6 +274,13 @@ impl AudioFile {
                     i += 1;
                 }
                 Ok(byte_offset)
+            }
+            AudioFileInner::Mp3(dr_mp3::Mp3DecodedToPcm { ref bytes, .. }) => {
+                let bytes = bytes.get(offset as usize..).ok_or(())?;
+                let bytes_to_read = buffer.len().min(bytes.len());
+                let bytes = &bytes[..bytes_to_read];
+                buffer[..bytes_to_read].copy_from_slice(bytes);
+                Ok(bytes_to_read)
             }
         }
     }

@@ -18,6 +18,7 @@ Compatibility:
 - API support improvements:
   - Various small contributions. (@hikari-no-yume, @nitinseshadri)
   - Some key parts of `UIImage`, `CGImage` and `CGBitmapContext` used by Apple's `Texture2D` sample code are now implemented. Loading textures from PNG files in this way should now work. (@hikari-no-yume)
+  - MP3 is now a supported audio file format in Audio Toolbox. This is done in a fairly hacky way so it might not work for some apps. (@hikari-no-yume)
 - New supported app: Super Monkey Ball Lite.
 
 Quality:

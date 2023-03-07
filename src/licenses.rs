@@ -116,6 +116,14 @@ which is available either as Public Domain or under the terms of the MIT
 license.
 ";
 
+const DR_MP3: &str = "
+touchHLE, and therefore this executable, incorporates the library dr_mp3,
+which is available either under The Unlicense (which is a public domain
+dedication) or under the terms of the MIT license. dr_mp3 is in turn derived
+from the library minimp3, which is licensed under the Creative Commons CC0 1.0
+Universal Public Domain Dedication.
+";
+
 pub fn divider() {
     println!("---");
 }
@@ -142,4 +150,6 @@ pub fn print() {
     println!("{}", OPENAL_SOFT);
     divider();
     println!("{}", STB_IMAGE);
+    divider();
+    println!("{}", DR_MP3);
 }

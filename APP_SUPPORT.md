@@ -10,7 +10,7 @@ _Scale hack supported_ means an app is compatible with the `--scale-hack=` optio
 
 Performance is tested with release builds of touchHLE on a 2017 Retina MacBook, which is a fairly underpowered (passively cooled!) dual-core laptop. Your computer is probably faster.
 
-- Crash Bandicoot Nitro Kart 3D (2008, App Store day-two title)
+- Crash Bandicoot Nitro Kart 3D (2008, Vivendi/Polarbit, App Store day-two title)
   - Working versions:
     - “CBNK3D” 1.0 (in-game version number: 0.7.5)
     - “Crash Kart” 1.0 (in-game version number: 0.7.6)
@@ -25,7 +25,7 @@ Performance is tested with release builds of touchHLE on a 2017 Retina MacBook, 
     - Continuing a previous game after closing and reopening the app
   - Consistent full fps (60fps)
   - Scale hack supported
-- Super Monkey Ball (2008, App Store launch title)
+- Super Monkey Ball (2008, SEGA/Other Ocean Interactive, App Store launch title)
   - Working versions:
     - “Monkey Ball” 1.0
     - “Monkey Ball” 1.02
@@ -40,3 +40,17 @@ Performance is tested with release builds of touchHLE on a 2017 Retina MacBook, 
     - The tutorial (in the versions that have it)
   - Consistent full fps (30fps)
   - Scale hack supported
+- Touch & Go (2009, The Game Creators)
+ - Working version:
+   - “Touch & Go LITE” 1.2
+ - **Broken version**:
+   - “App Pack 1” 1.0 (several games bundled into one app, doesn't work yet)
+ - _Unknown_:
+   - Nobody has tested the standalone, full (paid) version of the game. If you bought it back in the day, please get in touch with @hikari-no-yume.
+ - Fully playable, everything works. Among other things:
+   - Sound effects and music
+   - Menu screens
+   - All the levels in the LITE version
+   - High score persistence
+ - Consistent full fps (60fps)
+ - Scale hack supported

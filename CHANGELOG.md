@@ -32,6 +32,7 @@ Usability:
 - Options can now be loaded from files. (@hikari-no-yume)
   - The recommended options for supported apps are now applied automatically. See the new `touchHLE_default_options.txt` file.
   - You can put your own options in the new `touchHLE_options.txt` file.
+  - If you're a Windows user, this means that dragging and dropping an app onto the `touchHLE.exe` is now all you need to do to run an app.
 
 Other:
 

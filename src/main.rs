@@ -97,6 +97,7 @@ fn main() -> Result<(), String> {
 
     let Some(bundle_path) = bundle_path else {
         eprintln!("{}", USAGE);
+        eprintln!("{}", options::DOCUMENTATION);
         return Err("Path to bundle must be specified".to_string());
     };
 

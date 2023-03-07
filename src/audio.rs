@@ -15,8 +15,8 @@
 mod ima4;
 
 pub use ima4::decode_ima4;
-pub use touchHLE_openal_soft_wrapper as openal;
 use touchHLE_dr_mp3_wrapper as dr_mp3;
+pub use touchHLE_openal_soft_wrapper as openal;
 
 use crate::fs::{Fs, GuestPath};
 use std::io::Cursor;
@@ -150,18 +150,21 @@ impl AudioFile {
                     bits_per_channel,
                 }
             }
-            AudioFileInner::Mp3(dr_mp3::Mp3DecodedToPcm{
+            AudioFileInner::Mp3(dr_mp3::Mp3DecodedToPcm {
                 sample_rate,
                 channels,
                 ..
             }) => AudioDescription {
                 sample_rate: f64::from(sample_rate),
-                format: AudioFormat::LinearPcm { is_float: false, is_little_endian: true },
+                format: AudioFormat::LinearPcm {
+                    is_float: false,
+                    is_little_endian: true,
+                },
                 bytes_per_packet: channels * 2,
                 frames_per_packet: 1,
                 channels_per_frame: channels,
                 bits_per_channel: 16,
-            }
+            },
         }
     }
 
@@ -189,9 +192,7 @@ impl AudioFile {
                 // variable size not implemented
                 u64::from(self.packet_size_fixed()) * self.packet_count()
             }
-            AudioFileInner::Mp3(dr_mp3::Mp3DecodedToPcm { ref bytes, .. }) => {
-                bytes.len() as u64
-            }
+            AudioFileInner::Mp3(dr_mp3::Mp3DecodedToPcm { ref bytes, .. }) => bytes.len() as u64,
         }
     }
 

@@ -47,17 +47,24 @@ pub const CLASSES: ClassExports = objc_classes! {
     }
 }
 
-- (())beginGeneratingDeviceOrientationNotifications {
-    log!("TODO: beginGeneratingDeviceOrientationNotifications");
-}
-- (())endGeneratingDeviceOrientationNotifications {
-    log!("TODO: endGeneratingDeviceOrientationNotifications");
-}
-
 // NSString
 - (id)systemVersion {
     ns_string::get_static_str(env, "2.0")
 }
+
+- (id)systemName {
+    ns_string::get_static_str(env, "iPhoneOS")
+}
+
+- (id)UI_USER_INTERFACE_IDIOM {
+    ns_string::get_static_str(env, "UIUserInterfaceIdiom.phone")
+}
+
+- (id)systemName {
+    ns_string::get_static_str(env, "iPhoneOS")
+}
+
+
 
 - (bool)isMultitaskingSupported {
     false

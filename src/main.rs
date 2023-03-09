@@ -125,7 +125,11 @@ fn main() -> Result<(), String> {
     println!("- Display name: {}", bundle.display_name());
     println!("- Version: {}", bundle.bundle_version());
     println!("- Identifier: {}", app_id);
-    println!("- Internal name: {}.app", bundle.canonical_bundle_name());
+    if let Some(canonical_name) = bundle.canonical_bundle_name() {
+        println!("- Internal name (canonical): {}.app", canonical_name);
+    } else {
+        println!("- Internal name (from FS): {}.app", bundle.bundle_name());
+    }
     println!(
         "- Minimum OS version: {}",
         minimum_os_version.unwrap_or("(not specified)")

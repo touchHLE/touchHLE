@@ -35,10 +35,17 @@ impl Bundle {
             .into_dictionary()
             .ok_or_else(|| "plist root value is not a dictionary".to_string())?;
 
-        let bundle_name = plist["CFBundleName"].as_string().unwrap();
+        let bundle_name = format!(
+            "{}.app",
+            if let Some(canonical) = plist.get("CFBundleName") {
+                canonical.as_string().unwrap()
+            } else {
+                bundle_data.bundle_name()
+            }
+        );
         let bundle_id = plist["CFBundleIdentifier"].as_string().unwrap();
 
-        let (fs, guest_path) = Fs::new(bundle_data, format!("{bundle_name}.app"), bundle_id);
+        let (fs, guest_path) = Fs::new(bundle_data, bundle_name, bundle_id);
 
         let bundle = Bundle {
             path: guest_path,
@@ -60,8 +67,17 @@ impl Bundle {
         self.plist["CFBundleVersion"].as_string().unwrap()
     }
 
-    pub fn canonical_bundle_name(&self) -> &str {
-        self.plist["CFBundleName"].as_string().unwrap()
+    /// Canonical name for the bundle according to Info.plist
+    pub fn canonical_bundle_name(&self) -> Option<&str> {
+        self.plist
+            .get("CFBundleName")
+            .map(|name| name.as_string().unwrap())
+    }
+
+    /// Name for the bundle, either the canonical name or, if there isn't one,
+    /// the name this bundle has in the filesystem.
+    pub fn bundle_name(&self) -> &str {
+        self.path.file_name().unwrap().strip_suffix(".app").unwrap()
     }
 
     pub fn display_name(&self) -> &str {

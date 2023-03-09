@@ -170,6 +170,14 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.borrow_mut::<UIViewHostObject>(this).layer
 }
 
+- (bool)opaque {
+    true
+}
+- (())setOpaque:(bool)opaque {
+    // TODO: transparency is meaningless right now
+    assert!(opaque);
+}
+
 // FIXME: should these pass through from CALayer, vice-versa, or neither?
 // (See similar comment in ca_layer.rs)
 - (CGRect)bounds {

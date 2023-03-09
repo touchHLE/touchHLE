@@ -170,10 +170,11 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.borrow_mut::<UIViewHostObject>(this).layer
 }
 
+// FIXME: should these pass through from CALayer, vice-versa, or neither?
+// (See similar comment in ca_layer.rs)
 - (CGRect)bounds {
     env.objc.borrow::<UIViewHostObject>(this).bounds
 }
-
 - (CGPoint)center {
     env.objc.borrow::<UIViewHostObject>(this).center
 }

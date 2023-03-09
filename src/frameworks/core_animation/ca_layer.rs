@@ -5,6 +5,7 @@
  */
 //! `CALayer`.
 
+use crate::frameworks::core_graphics::{CGPoint, CGRect};
 use crate::objc::{id, msg, nil, objc_classes, release, ClassExports, HostObject};
 
 pub(super) struct CALayerHostObject {
@@ -55,6 +56,20 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 - (())setOpaque:(bool)opaque {
     env.objc.borrow_mut::<CALayerHostObject>(this).opaque = opaque;
+}
+
+// FIXME: should these pass through from UIView, vice-versa, or neither?
+// (See similar comment in ui_view.rs)
+- (CGRect)bounds {
+    let view: id = msg![env; this delegate];
+    msg![env; view bounds]
+}
+- (CGPoint)position {
+    let view: id = msg![env; this delegate];
+    msg![env; view center]
+}
+- (CGPoint)anchorPoint {
+    CGPoint { x: 0.5, y: 0.5 }
 }
 
 // TODO

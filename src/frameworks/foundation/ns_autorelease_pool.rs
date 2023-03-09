@@ -38,8 +38,11 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 + (())addObject:(id)obj {
-    let current_pool = State::get(env).pool_stack.last().copied().unwrap();
-    msg![env; current_pool addObject:obj]
+    if let Some(current_pool) = State::get(env).pool_stack.last().copied() {
+        msg![env; current_pool addObject:obj]
+    } else {
+        log_dbg!("Warning: no active NSAutoreleasePool, leaking {:?}", obj);
+    }
 }
 
 - (id)init {

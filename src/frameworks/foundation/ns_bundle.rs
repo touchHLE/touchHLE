@@ -5,7 +5,7 @@
  */
 //! `NSBundle`.
 
-use super::ns_string;
+use super::{NSUInteger, ns_string};
 use crate::bundle::Bundle;
 use crate::objc::{
     autorelease, id, msg, msg_class, nil, objc_classes, release, ClassExports, HostObject,
@@ -89,7 +89,12 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (id)pathForResource:(id)name // NSString*
-               ofType:(id)extension { // NSString*
+               ofType:(id)extension // NSString*
+          inDirectory:(id)directory { // NSString*
+    assert!(directory == nil || {
+        let length: NSUInteger = msg![env; directory length];
+        length == 0
+    }); // TODO
     assert!(name != nil); // TODO
 
     let name: id = if extension != nil {
@@ -102,6 +107,10 @@ pub const CLASSES: ClassExports = objc_classes! {
     // FIXME: localized resource handling?
     // FIXME: return nil if path does not exist
     msg![env; base_path stringByAppendingPathComponent:name]
+}
+- (id)pathForResource:(id)name // NSString*
+               ofType:(id)extension { // NSString*
+    msg![env; this pathForResource:name ofType:extension inDirectory:nil]
 }
 - (id)URLForResource:(id)name // NSString*
        withExtension:(id)extension { // NSString *

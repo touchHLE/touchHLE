@@ -359,8 +359,10 @@ impl GLES for GLES1OnGL2 {
         assert!([
             gl21::ARRAY_BUFFER_BINDING,
             gl21::ELEMENT_ARRAY_BUFFER_BINDING,
+            gl21::FRAMEBUFFER_BINDING_EXT,
             gl21::MATRIX_MODE,
             gl21::MAX_TEXTURE_SIZE,
+            gl21::RENDERBUFFER_BINDING_EXT,
             gl21::TEXTURE_BINDING_2D
         ]
         .contains(&pname));

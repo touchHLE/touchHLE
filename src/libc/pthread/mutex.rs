@@ -7,7 +7,7 @@
 
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::libc::errno::{EDEADLK, EPERM};
-use crate::mem::{ConstPtr, MutPtr, SafeRead};
+use crate::mem::{ConstPtr, MutPtr, Ptr, SafeRead};
 use crate::{Environment, ThreadID};
 use std::collections::HashMap;
 use std::num::NonZeroU32;
@@ -54,6 +54,8 @@ struct MutexHostObject {
 const MAGIC_MUTEXATTR: u32 = u32::from_be_bytes(*b"MuAt");
 /// Arbitrarily-chosen magic number for `pthread_mutex_t` (not Apple's).
 const MAGIC_MUTEX: u32 = u32::from_be_bytes(*b"MUTX");
+/// Magic number used by `PTHREAD_MUTEX_INITIALIZER`. This is part of the ABI!
+const MAGIC_MUTEX_STATIC: u32 = 0x32AAABA7;
 
 /// Custom typedef for readability (the C API just uses `int`)
 type MutexType = i32;
@@ -133,8 +135,27 @@ fn pthread_mutex_init(
     0 // success
 }
 
+fn check_or_register_mutex(env: &mut Environment, mutex: MutPtr<pthread_mutex_t>) {
+    let magic: u32 = env.mem.read(mutex.cast());
+    // This is a statically-initialized mutex, we need to register it, and
+    // change the magic number in the process.
+    if magic == MAGIC_MUTEX_STATIC {
+        log_dbg!(
+            "Detected statically-initialized mutex at {:?}, registering.",
+            mutex
+        );
+        pthread_mutex_init(env, mutex, Ptr::null());
+    } else {
+        // We should actually return an error if the magic number doesn't match,
+        // but this almost certainly indicates a memory corruption, so panicking
+        // is more useful.
+        assert_eq!(magic, MAGIC_MUTEX);
+    }
+}
+
 fn pthread_mutex_lock(env: &mut Environment, mutex: MutPtr<pthread_mutex_t>) -> i32 {
-    check_magic!(env, mutex, MAGIC_MUTEX);
+    check_or_register_mutex(env, mutex);
+
     let current_thread = env.current_thread;
     let host_object: &mut _ = State::get(env).mutexes.get_mut(&mutex).unwrap();
 
@@ -180,7 +201,8 @@ fn pthread_mutex_lock(env: &mut Environment, mutex: MutPtr<pthread_mutex_t>) -> 
 }
 
 fn pthread_mutex_unlock(env: &mut Environment, mutex: MutPtr<pthread_mutex_t>) -> i32 {
-    check_magic!(env, mutex, MAGIC_MUTEX);
+    check_or_register_mutex(env, mutex);
+
     let current_thread = env.current_thread;
     let host_object: &mut _ = State::get(env).mutexes.get_mut(&mutex).unwrap();
 

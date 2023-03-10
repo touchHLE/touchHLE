@@ -76,6 +76,14 @@ fn wmemchr(
 ) -> ConstPtr<wchar_t> {
     GenericChar::<wchar_t>::memchr(env, string, c, size)
 }
+fn wmemcmp(
+    env: &mut Environment,
+    a: ConstPtr<wchar_t>,
+    b: ConstPtr<wchar_t>,
+    size: GuestUSize,
+) -> i32 {
+    GenericChar::<wchar_t>::memcmp(env, a, b, size)
+}
 fn wcslen(env: &mut Environment, s: ConstPtr<wchar_t>) -> GuestUSize {
     GenericChar::<wchar_t>::strlen(env, s)
 }
@@ -123,6 +131,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(wmemcpy(_, _, _)),
     export_c_func!(wmemmove(_, _, _)),
     export_c_func!(wmemchr(_, _, _)),
+    export_c_func!(wmemcmp(_, _, _)),
     export_c_func!(wcslen(_)),
     export_c_func!(wcscpy(_, _)),
     export_c_func!(wcscat(_, _)),

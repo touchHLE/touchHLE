@@ -85,6 +85,9 @@ fn memmove(
 fn memchr(env: &mut Environment, string: ConstVoidPtr, c: i32, size: GuestUSize) -> ConstVoidPtr {
     GenericChar::<u8>::memchr(env, string.cast(), c as u8, size).cast()
 }
+fn memcmp(env: &mut Environment, a: ConstVoidPtr, b: ConstVoidPtr, size: GuestUSize) -> i32 {
+    GenericChar::<u8>::memcmp(env, a.cast(), b.cast(), size)
+}
 fn strlen(env: &mut Environment, s: ConstPtr<u8>) -> GuestUSize {
     GenericChar::<u8>::strlen(env, s)
 }
@@ -122,6 +125,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(memcpy(_, _, _)),
     export_c_func!(memmove(_, _, _)),
     export_c_func!(memchr(_, _, _)),
+    export_c_func!(memcmp(_, _, _)),
     export_c_func!(strlen(_)),
     export_c_func!(strcpy(_, _)),
     export_c_func!(strcat(_, _)),

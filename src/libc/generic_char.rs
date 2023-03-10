@@ -55,6 +55,31 @@ impl<T: Copy + Default + Eq + Ord + SafeRead> GenericChar<T> {
         dest
     }
 
+    pub(super) fn memcmp(
+        env: &mut Environment,
+        a: ConstPtr<T>,
+        b: ConstPtr<T>,
+        n: GuestUSize,
+    ) -> i32 {
+        let mut offset = 0;
+        while offset < n {
+            let char_a = env.mem.read(a + offset);
+            let char_b = env.mem.read(b + offset);
+            offset += 1;
+
+            // TODO: While the C standard only requires this value to be
+            // non-zero and have the right sign, the man pages for iOS say this
+            // value should have a magnitude corresponding to the difference
+            // between the first differing bytes. Maybe some app relies on that?
+            match char_a.cmp(&char_b) {
+                Ordering::Less => return -1,
+                Ordering::Greater => return 1,
+                Ordering::Equal => continue,
+            }
+        }
+        0
+    }
+
     pub(super) fn memchr(
         env: &mut Environment,
         string: ConstPtr<T>,

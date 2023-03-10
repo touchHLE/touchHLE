@@ -6,9 +6,14 @@
 //! `wchar.h`
 
 use crate::dyld::{export_c_func, FunctionExports};
+use crate::mem::{ConstPtr, GuestUSize, MutPtr};
 use crate::Environment;
 
-// See also ctype.rs and its definition of wchar_t.
+use super::generic_char::GenericChar;
+
+#[allow(non_camel_case_types)]
+pub type wchar_t = i32; // not sure if this signedness is correct
+
 #[allow(non_camel_case_types)]
 type wint_t = i32;
 
@@ -37,4 +42,93 @@ fn wctob(_env: &mut Environment, c: wint_t) -> i32 {
     }
 }
 
-pub const FUNCTIONS: FunctionExports = &[export_c_func!(btowc(_)), export_c_func!(wctob(_))];
+// Functions shared with string.rs
+
+fn wmemset(
+    env: &mut Environment,
+    dest: MutPtr<wchar_t>,
+    ch: wchar_t,
+    count: GuestUSize,
+) -> MutPtr<wchar_t> {
+    GenericChar::<wchar_t>::memset(env, dest, ch, count)
+}
+fn wmemcpy(
+    env: &mut Environment,
+    dest: MutPtr<wchar_t>,
+    src: ConstPtr<wchar_t>,
+    size: GuestUSize,
+) -> MutPtr<wchar_t> {
+    GenericChar::<wchar_t>::memcpy(env, dest, src, size)
+}
+fn wmemmove(
+    env: &mut Environment,
+    dest: MutPtr<wchar_t>,
+    src: ConstPtr<wchar_t>,
+    size: GuestUSize,
+) -> MutPtr<wchar_t> {
+    GenericChar::<wchar_t>::memmove(env, dest, src, size)
+}
+fn wmemchr(
+    env: &mut Environment,
+    string: ConstPtr<wchar_t>,
+    c: wchar_t,
+    size: GuestUSize,
+) -> ConstPtr<wchar_t> {
+    GenericChar::<wchar_t>::memchr(env, string, c, size)
+}
+fn wcslen(env: &mut Environment, s: ConstPtr<wchar_t>) -> GuestUSize {
+    GenericChar::<wchar_t>::strlen(env, s)
+}
+fn wcscpy(env: &mut Environment, dest: MutPtr<wchar_t>, src: ConstPtr<wchar_t>) -> MutPtr<wchar_t> {
+    GenericChar::<wchar_t>::strcpy(env, dest, src)
+}
+fn wcscat(env: &mut Environment, dest: MutPtr<wchar_t>, src: ConstPtr<wchar_t>) -> MutPtr<wchar_t> {
+    GenericChar::<wchar_t>::strcat(env, dest, src)
+}
+fn wcsncpy(
+    env: &mut Environment,
+    dest: MutPtr<wchar_t>,
+    src: ConstPtr<wchar_t>,
+    size: GuestUSize,
+) -> MutPtr<wchar_t> {
+    GenericChar::<wchar_t>::strncpy(env, dest, src, size)
+}
+fn wcsdup(env: &mut Environment, src: ConstPtr<wchar_t>) -> MutPtr<wchar_t> {
+    GenericChar::<wchar_t>::strdup(env, src)
+}
+fn wcscmp(env: &mut Environment, a: ConstPtr<wchar_t>, b: ConstPtr<wchar_t>) -> i32 {
+    GenericChar::<wchar_t>::strcmp(env, a, b)
+}
+fn wcsncmp(
+    env: &mut Environment,
+    a: ConstPtr<wchar_t>,
+    b: ConstPtr<wchar_t>,
+    n: GuestUSize,
+) -> i32 {
+    GenericChar::<wchar_t>::strncmp(env, a, b, n)
+}
+fn wcsstr(
+    env: &mut Environment,
+    wcsing: ConstPtr<wchar_t>,
+    subwcsing: ConstPtr<wchar_t>,
+) -> ConstPtr<wchar_t> {
+    GenericChar::<wchar_t>::strstr(env, wcsing, subwcsing)
+}
+
+pub const FUNCTIONS: FunctionExports = &[
+    export_c_func!(btowc(_)),
+    export_c_func!(wctob(_)),
+    // Functions shared with string.rs
+    export_c_func!(wmemset(_, _, _)),
+    export_c_func!(wmemcpy(_, _, _)),
+    export_c_func!(wmemmove(_, _, _)),
+    export_c_func!(wmemchr(_, _, _)),
+    export_c_func!(wcslen(_)),
+    export_c_func!(wcscpy(_, _)),
+    export_c_func!(wcscat(_, _)),
+    export_c_func!(wcsncpy(_, _, _)),
+    export_c_func!(wcsdup(_)),
+    export_c_func!(wcscmp(_, _)),
+    export_c_func!(wcsncmp(_, _, _)),
+    export_c_func!(wcsstr(_, _)),
+];

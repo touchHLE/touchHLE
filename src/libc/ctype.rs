@@ -5,6 +5,7 @@
  */
 //! `ctype.h`
 
+use super::wchar::wchar_t;
 use crate::abi::GuestFunction;
 use crate::dyld::{export_c_func, ConstantExports, FunctionExports, HostConstant};
 use crate::mem::{ConstVoidPtr, Mem, MutVoidPtr, Ptr, SafeRead};
@@ -27,8 +28,6 @@ fn __toupper(_env: &mut Environment, c: i32) -> i32 {
     }
 }
 
-#[allow(non_camel_case_types)]
-type wchar_t = i32; // not sure if this signedness is correct
 #[allow(non_camel_case_types)]
 type darwin_rune_t = wchar_t;
 

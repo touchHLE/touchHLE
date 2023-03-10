@@ -9,6 +9,8 @@
 //! Useful resources:
 //! - Apple's [iOS Manual Pages](https://developer.apple.com/library/archive/documentation/System/Conceptual/ManPages_iPhoneOS/) (contains what would be `man` pages if iOS had a command line)
 
+mod generic_char;
+
 pub mod ctype;
 pub mod cxxabi;
 pub mod dlfcn;

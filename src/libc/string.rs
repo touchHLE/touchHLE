@@ -40,6 +40,20 @@ fn memmove(
     dest
 }
 
+fn memchr(env: &mut Environment, string: ConstVoidPtr, c: i32, size: GuestUSize) -> ConstVoidPtr {
+    let string = string.cast::<u8>();
+    let c = c as u8;
+    match env
+        .mem
+        .bytes_at(string, size)
+        .iter()
+        .position(|&c2| c2 == c)
+    {
+        Some(pos) => (string + GuestUSize::try_from(pos).unwrap()).cast(),
+        None => Ptr::null(),
+    }
+}
+
 fn strlen(env: &mut Environment, s: ConstPtr<u8>) -> GuestUSize {
     env.mem.cstr_at(s).len().try_into().unwrap()
 }
@@ -210,6 +224,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(memset(_, _, _)),
     export_c_func!(memcpy(_, _, _)),
     export_c_func!(memmove(_, _, _)),
+    export_c_func!(memchr(_, _, _)),
     export_c_func!(strlen(_)),
     export_c_func!(strcpy(_, _)),
     export_c_func!(strcat(_, _)),

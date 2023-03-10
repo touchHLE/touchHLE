@@ -61,7 +61,7 @@ fn strtok(env: &mut Environment, s: MutPtr<u8>, sep: ConstPtr<u8>) -> MutPtr<u8>
     token_start
 }
 
-// Functions shared with whar.rs
+// Functions shared with wchar.rs
 
 fn memset(env: &mut Environment, dest: MutVoidPtr, ch: i32, count: GuestUSize) -> MutVoidPtr {
     GenericChar::<u8>::memset(env, dest.cast(), ch as u8, count).cast()

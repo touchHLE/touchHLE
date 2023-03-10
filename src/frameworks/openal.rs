@@ -160,6 +160,10 @@ fn alGetError(_env: &mut Environment) -> i32 {
     res
 }
 
+fn alDistanceModel(_env: &mut Environment, value: ALenum) {
+    unsafe { al::alDistanceModel(value) };
+}
+
 fn alListenerf(_env: &mut Environment, param: ALenum, value: ALfloat) {
     unsafe { al::alListenerf(param, value) };
 }
@@ -315,6 +319,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(alcMakeContextCurrent(_)),
     export_c_func!(alcGetProcAddress(_, _)),
     export_c_func!(alGetError()),
+    export_c_func!(alDistanceModel(_)),
     export_c_func!(alListenerf(_, _)),
     export_c_func!(alListener3f(_, _, _, _)),
     export_c_func!(alGenSources(_, _)),

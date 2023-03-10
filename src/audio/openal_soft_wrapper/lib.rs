@@ -105,6 +105,8 @@ pub const AL_FORMAT_STEREO16: ALenum = 0x1103;
 extern "C" {
     pub fn alGetError() -> ALenum;
 
+    pub fn alDistanceModel(value: ALenum);
+
     pub fn alListenerf(param: ALenum, value: ALfloat);
     pub fn alListener3f(param: ALenum, value1: ALfloat, value2: ALfloat, value3: ALfloat);
 

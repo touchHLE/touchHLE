@@ -23,6 +23,7 @@ pub mod cf_run_loop;
 pub mod cf_string;
 pub mod cf_type;
 pub mod cf_url;
+pub mod time;
 
 pub use cf_type::{CFRelease, CFRetain, CFTypeRef};
 

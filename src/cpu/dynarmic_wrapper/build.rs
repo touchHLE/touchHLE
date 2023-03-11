@@ -57,6 +57,7 @@ fn main() {
         }
         build.define("Boost_INCLUDE_DIR", boost_path);
     }
+    build.define("Boost_INCLUDE_DIR", "/opt/homebrew/Cellar/boost/1.81.0_1/include");
     let dynarmic_out = build.build();
 
     link_search(&dynarmic_out.join("lib"));

@@ -18,6 +18,10 @@ license = { workspace = true }
 authors = { workspace = true }
 homepage = { workspace = true }
 
+[lib]
+#name="na_mainloop"
+crate_type=["cdylib"]
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [workspace.dependencies]
@@ -35,13 +39,18 @@ rusttype = "0.9.3"
 # sdl2 crates pinned at 0.35.1 because static linking seems to be broken for
 # 0.35.2 on macOS (build errors about undefined symbols for
 # _CHHapticDynamicParameterIDHapticIntensityControl etc)
-sdl2 = { version = "=0.35.1", features = ["bundled", "static-link"] }
-sdl2-sys = "=0.35.1"
+sdl2 = { git = "https://github.com/ciciplusplus/rust-sdl2.git", rev = "c66ca16e42bc6655a9e6eb1c7b0ec41b17c52419", features = ["bundled", "static-link"] }
+# sdl2-sys = "=0.35.1"
 touchHLE_dr_mp3_wrapper = { path = "src/audio/dr_mp3_wrapper" }
 touchHLE_dynarmic_wrapper = { path = "src/cpu/dynarmic_wrapper" }
 touchHLE_gl_bindings = { path = "src/window/gl_bindings" }
 touchHLE_openal_soft_wrapper = { path = "src/audio/openal_soft_wrapper" }
 touchHLE_stb_image_wrapper = { path = "src/image/stb_image_wrapper" }
+
+[target.'cfg(target_os = "android")'.dependencies]
+log = "0.4"
+android_logger = "0.11.0"
+android-activity = { version = "0.4", features = [ "native-activity" ] }
 
 [build-dependencies]
 cargo-license = "0.5.1"

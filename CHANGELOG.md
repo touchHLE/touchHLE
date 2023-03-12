@@ -11,6 +11,8 @@ Changes are categorised as follows:
 * Usability: changes to features of the emulator unrelated to the above, e.g. new input methods.
 * Other: when none of the above seem to fit.
 
+If an app is added to the supported list after the relevant version has already been released, its entry in the changelog will be followed by the date it was added \[in square brackets\].
+
 ## v0.1.2 (2023-03-07)
 
 Compatibility:
@@ -21,6 +23,7 @@ Compatibility:
   - MP3 is now a supported audio file format in Audio Toolbox. This is done in a fairly hacky way so it might not work for some apps. (@hikari-no-yume)
 - New supported apps:
   - Touch & Go LITE
+  - Touch & Go \[2023-03-12\]
   - Super Monkey Ball Lite (full version was already supported)
 
 Quality:

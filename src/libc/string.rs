@@ -117,6 +117,12 @@ fn strncmp(env: &mut Environment, a: ConstPtr<u8>, b: ConstPtr<u8>, n: GuestUSiz
 fn strstr(env: &mut Environment, string: ConstPtr<u8>, substring: ConstPtr<u8>) -> ConstPtr<u8> {
     GenericChar::<u8>::strstr(env, string, substring)
 }
+fn strchr(env: &mut Environment, path: ConstPtr<u8>, c: u8) -> ConstPtr<u8> {
+    GenericChar::<u8>::strchr(env, path, c)
+}
+fn strrchr(env: &mut Environment, path: ConstPtr<u8>, c: u8) -> ConstPtr<u8> {
+    GenericChar::<u8>::strrchr(env, path, c)
+}
 
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(strtok(_, _)),
@@ -134,4 +140,6 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(strcmp(_, _)),
     export_c_func!(strncmp(_, _, _)),
     export_c_func!(strstr(_, _)),
+    export_c_func!(strchr(_, _)),
+    export_c_func!(strrchr(_, _)),
 ];

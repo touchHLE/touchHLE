@@ -522,6 +522,15 @@ impl Fs {
         Ok(result)
     }
 
+    /// Like [std::fs::write] but for the guest filesystem.
+    pub fn write<P: AsRef<GuestPath>>(&mut self, path: P, data: &[u8]) -> Result<(), ()> {
+        let mut options = GuestOpenOptions::new();
+        options.write();
+        self.open_with_options(path, options)?
+            .write_all(data)
+            .map_err(|_| ())
+    }
+
     /// Like [File::open] but for the guest filesystem.
     #[allow(dead_code)]
     pub fn open<P: AsRef<GuestPath>>(&self, path: P) -> Result<GuestFile, ()> {

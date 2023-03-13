@@ -64,7 +64,7 @@ fn fopen(env: &mut Environment, filename: ConstPtr<u8>, mode: ConstPtr<u8>) -> M
             Ptr::null()
         }
     };
-    println!("fopen({:?}, {:?}) => {:?}", env.mem.cstr_at_utf8(filename), env.mem.cstr_at_utf8(mode), res);
+    log_dbg!("fopen({:?}, {:?}) => {:?}", env.mem.cstr_at_utf8(filename), env.mem.cstr_at_utf8(mode), res);
     res
 }
 

@@ -64,7 +64,7 @@ fn fopen(env: &mut Environment, filename: ConstPtr<u8>, mode: ConstPtr<u8>) -> M
             Ptr::null()
         }
     };
-    log_dbg!("fopen({:?}, {:?}) => {:?}", filename, mode, res);
+    println!("fopen({:?}, {:?}) => {:?}", env.mem.cstr_at_utf8(filename), env.mem.cstr_at_utf8(mode), res);
     res
 }
 
@@ -108,6 +108,17 @@ fn fread(
         );
     };
     items_read
+}
+
+fn fgetc(
+    env: &mut Environment,
+    file_ptr: MutPtr<FILE>,
+) -> i32 {
+    let file = env.libc_state.stdio.files.get_mut(&file_ptr).unwrap();
+    let mut buffer = [0u8; 1];
+    let bytes_read = file.file.read(&mut buffer).unwrap_or(0);
+    log_dbg!("fgetc({:?}) => {:#x}", file_ptr, buffer[0]);
+    (if bytes_read < buffer.len() { EOF } else { buffer[0].into() }) as i32
 }
 
 fn fwrite(
@@ -238,6 +249,7 @@ fn remove(env: &mut Environment, path: ConstPtr<u8>) -> i32 {
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(fopen(_, _)),
     export_c_func!(fread(_, _, _, _)),
+    export_c_func!(fgetc(_)),
     export_c_func!(fwrite(_, _, _, _)),
     export_c_func!(fseek(_, _, _)),
     export_c_func!(ftell(_)),

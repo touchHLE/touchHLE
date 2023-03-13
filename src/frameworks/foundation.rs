@@ -35,6 +35,7 @@ pub mod ns_thread;
 pub mod ns_timer;
 pub mod ns_url;
 pub mod ns_value;
+pub mod ns_class;
 
 #[derive(Default)]
 pub struct State {

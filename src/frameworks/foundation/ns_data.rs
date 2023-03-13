@@ -6,9 +6,11 @@
 //! `NSData` and `NSMutableData`.
 
 use super::NSUInteger;
+use super::ns_string::to_rust_string;
+use crate::fs::GuestPath;
 use crate::mem::{ConstVoidPtr, MutVoidPtr, Ptr};
 use crate::objc::{
-    autorelease, id, msg, objc_classes, retain, ClassExports, HostObject, NSZonePtr,
+    autorelease, id, msg, objc_classes, retain, ClassExports, HostObject, NSZonePtr, nil, release,
 };
 
 struct NSDataHostObject {
@@ -39,6 +41,13 @@ pub const CLASSES: ClassExports = objc_classes! {
     autorelease(env, new)
 }
 
++ (id)dataWithBytes:(MutVoidPtr)bytes
+                   length:(NSUInteger)length {
+    let new: id = msg![env; this alloc];
+    let new: id = msg![env; new initWithBytes:bytes length:length];
+    autorelease(env, new)
+}
+
 - (id)initWithBytesNoCopy:(MutVoidPtr)bytes
                    length:(NSUInteger)length {
     let host_object = env.objc.borrow_mut::<NSDataHostObject>(this);
@@ -46,6 +55,45 @@ pub const CLASSES: ClassExports = objc_classes! {
     host_object.bytes = bytes;
     host_object.length = length;
     this
+}
+
+- (id)initWithBytes:(MutVoidPtr)bytes
+                   length:(NSUInteger)length {
+    let host_object = env.objc.borrow_mut::<NSDataHostObject>(this);
+    assert!(host_object.bytes.is_null() && host_object.length == 0);
+    let alloc = env.mem.alloc(length);
+    env.mem.memmove(alloc, bytes.cast_const(), length);
+    host_object.bytes = alloc;
+    host_object.length = length;
+    this
+}
+
+- (id)initWithContentsOfFile:(id)path {
+    let path = to_rust_string(env, path);
+    log!("NSData::initWithContentsOfFile: {:?}", path);
+    let Ok(bytes) = env.fs.read(GuestPath::new(&path)) else {
+        release(env, this);
+        return nil;
+    };
+    let size = bytes.len().try_into().unwrap();
+    let alloc = env.mem.alloc(size);
+    let slice = env.mem.bytes_at_mut(alloc.cast(), size);
+    slice.copy_from_slice(&bytes);
+
+    let host_object = env.objc.borrow_mut::<NSDataHostObject>(this);
+    host_object.bytes = alloc;
+    host_object.length = size;
+    this
+}
+
+// FIXME: writes should be atomic
+- (bool)writeToFile:(id) path // NSString*
+        atomically:(bool) use_aux_file {
+    let file = to_rust_string(env, path);
+    log!("NSData::writeToFile:atomically: {:?}", file);
+    let host_object = env.objc.borrow::<NSDataHostObject>(this);
+    let slice = env.mem.bytes_at(host_object.bytes.cast(), host_object.length);
+    env.fs.write(GuestPath::new(&file), slice).is_ok()
 }
 
 - (())dealloc {

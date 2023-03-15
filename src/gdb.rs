@@ -139,7 +139,7 @@ impl GdbServer {
                 } else {
                     // The debugger previously requested stepping and no errors
                     // occurred.
-                    self.send_packet("S00"); // no signal
+                    self.send_packet("S05"); // SIGTRAP
                 }
             }
             // GDB uses an undefined instruction for software breakpoints, and

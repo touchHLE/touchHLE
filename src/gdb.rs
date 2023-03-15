@@ -167,15 +167,6 @@ impl GdbServer {
                     assert!(stop_reason.is_none());
                     self.send_packet("S00"); // no signal
                 }
-                // Sets thread to be used for subsequent operations
-                b'H' => {
-                    let _op = p.as_bytes()[1];
-                    let thread_id = &p[2..];
-                    // All threads, any thread or first thread
-                    // FIXME: Actually respect this.
-                    assert!(thread_id == "-1" || thread_id == "0" || thread_id == "1");
-                    self.send_packet("OK");
-                }
                 // Read registers
                 b'g' => {
                     let mut packet = String::with_capacity(16 * 4 * 2);
@@ -269,26 +260,10 @@ impl GdbServer {
                     panic!("Debugger requested kill.");
                 }
                 _ => {
-                    // Supported feature query
-                    if p.starts_with("qSupported:") {
-                        self.send_packet("QThreadEvents+");
-                    // First packet in a thread info query
-                    } else if p == "qfThreadInfo" {
-                        // FIXME: Report the full list of threads.
-                        // Single thread with ID 1
-                        self.send_packet("m1");
-                    // Subsequent packet in a thread info query
-                    } else if p == "qsThreadInfo" {
-                        // No more threads
-                        self.send_packet("l");
                     // Query whether we're attaching to an existing or new process
-                    } else if p == "qAttached" {
+                    if p == "qAttached" {
                         // New process
                         self.send_packet("0");
-                    // Query current thread ID
-                    } else if p == "qC" {
-                        // Thread with ID 1
-                        self.send_packet("QC1");
                     } else {
                         log_dbg!("Unhandled packet.");
                         // Tell GDB we don't understand this packet.

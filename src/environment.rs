@@ -403,15 +403,18 @@ impl Environment {
     /// connected. Returns [true] if the CPU should step and then resume
     /// debugging, or [false] if it should resume normal execution.
     fn debug_cpu_error(&mut self, error: cpu::CpuError) -> bool {
-        // Rewind the PC so that it's at the instruction where the error
-        // occurred, rather than the next instruction. This is necessary for
-        // GDB to detect its software breakpoints, and nice in general.
-        let instruction_len = if (self.cpu.cpsr() & cpu::Cpu::CPSR_THUMB) != 0 {
-            2
-        } else {
-            4
-        };
-        self.cpu.regs_mut()[cpu::Cpu::PC] -= instruction_len;
+        if matches!(error, cpu::CpuError::UndefinedInstruction) {
+            // Rewind the PC so that it's at the instruction where the error
+            // occurred, rather than the next instruction. This is necessary for
+            // GDB to detect its software breakpoints. For some reason this
+            // isn't correct for memory errors however.
+            let instruction_len = if (self.cpu.cpsr() & cpu::Cpu::CPSR_THUMB) != 0 {
+                2
+            } else {
+                4
+            };
+            self.cpu.regs_mut()[cpu::Cpu::PC] -= instruction_len;
+        }
 
         if self.gdb_server.is_none() {
             panic!("Error during CPU execution: {:?}", error);

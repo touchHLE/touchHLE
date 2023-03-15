@@ -83,7 +83,7 @@ impl GdbServer {
             // Assumption: packet will never be longer than the maximum buffer
             // size, so if the buffer's full and we don't find a terminator, the
             // data must be invalid or we've parsed it wrong.
-            assert!(buffer.len() == self.reader.capacity());
+            assert!(buffer.len() != self.reader.capacity());
             log_dbg!("No packet end yet");
             return None;
         };

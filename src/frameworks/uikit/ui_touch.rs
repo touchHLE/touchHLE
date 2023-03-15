@@ -133,11 +133,11 @@ fn find_view_for_touch(env: &mut Environment, point: CGPoint) -> Option<id> {
             continue;
         }
 
-        log_dbg!("Picked view {:?} for touch event", view);
+        logg_dbg!("Picked view {:?} for touch event", view);
         return Some(view);
     }
 
-    log!("Warning: touch event ignored, can't find appropriate view (FIXME)");
+    logg!("Warning: touch event ignored, can't find appropriate view (FIXME)");
     None
 }
 
@@ -146,11 +146,11 @@ pub fn handle_event(env: &mut Environment, event: Event) {
     match event {
         Event::TouchDown(coords) => {
             if env.framework_state.uikit.ui_touch.current_touch.is_some() {
-                log!("Warning: New touch initiated but current touch did not end yet, treating as movement.");
+                logg!("Warning: New touch initiated but current touch did not end yet, treating as movement.");
                 return handle_event(env, Event::TouchMove(coords));
             }
 
-            log_dbg!("Touch down: {:?}", coords);
+            logg_dbg!("Touch down: {:?}", coords);
 
             let location = CGPoint {
                 x: coords.0,
@@ -187,7 +187,7 @@ pub fn handle_event(env: &mut Environment, event: Event) {
             let event = ui_event::new_event(env, touches, view);
             autorelease(env, event);
 
-            log_dbg!(
+            logg_dbg!(
                 "Sending [{:?} touchesBegan:{:?} withEvent:{:?}]",
                 view,
                 touches,
@@ -199,11 +199,11 @@ pub fn handle_event(env: &mut Environment, event: Event) {
         }
         Event::TouchMove(coords) => {
             let Some(touch) = env.framework_state.uikit.ui_touch.current_touch else {
-                log!("Warning: Touch move event received but no current touch, ignoring.");
+                logg!("Warning: Touch move event received but no current touch, ignoring.");
                 return;
             };
 
-            log_dbg!("Touch move: {:?}", coords);
+            logg_dbg!("Touch move: {:?}", coords);
 
             let location = CGPoint {
                 x: coords.0,
@@ -224,7 +224,7 @@ pub fn handle_event(env: &mut Environment, event: Event) {
             let event = ui_event::new_event(env, touches, view);
             autorelease(env, event);
 
-            log_dbg!(
+            logg_dbg!(
                 "Sending [{:?} touchesMoved:{:?} withEvent:{:?}]",
                 view,
                 touches,
@@ -236,11 +236,11 @@ pub fn handle_event(env: &mut Environment, event: Event) {
         }
         Event::TouchUp(coords) => {
             let Some(touch) = env.framework_state.uikit.ui_touch.current_touch else {
-                log!("Warning: Touch up event received but no current touch, ignoring.");
+                logg!("Warning: Touch up event received but no current touch, ignoring.");
                 return;
             };
 
-            log_dbg!("Touch up: {:?}", coords);
+            logg_dbg!("Touch up: {:?}", coords);
 
             let location = CGPoint {
                 x: coords.0,
@@ -264,7 +264,7 @@ pub fn handle_event(env: &mut Environment, event: Event) {
             env.framework_state.uikit.ui_touch.current_touch = None;
             release(env, touch); // only owner now should be the NSSet
 
-            log_dbg!(
+            logg_dbg!(
                 "Sending [{:?} touchesEnded:{:?} withEvent:{:?}]",
                 view,
                 touches,

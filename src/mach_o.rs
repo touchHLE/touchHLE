@@ -180,7 +180,7 @@ impl MachO {
         into_mem: &mut Mem,
         name: String,
     ) -> Result<MachO, &'static str> {
-        log_dbg!("Reading {:?}", name);
+        logg_dbg!("Reading {:?}", name);
 
         let mut cursor = Cursor::new(bytes);
 
@@ -248,7 +248,7 @@ impl MachO {
                         }
                         "__TEXT" | "__DATA" => true,
                         _ => {
-                            log!("Warning: Unexpected segment name: {}", segname);
+                            logg!("Warning: Unexpected segment name: {}", segname);
                             true
                         }
                     };
@@ -400,7 +400,7 @@ impl MachO {
                 // LoadCommand::DyldInfo is apparently a newer thing that 2008
                 // games don't have. Ignore for now? Unsure if/when iOS got it.
                 LoadCommand::DyldInfo { .. } => {
-                    log!("Warning! DyldInfo is not handled.");
+                    logg!("Warning! DyldInfo is not handled.");
                 }
                 _ => (),
             }
@@ -415,7 +415,7 @@ impl MachO {
                 let addr: u32 = section.addr.try_into().unwrap();
                 let size: u32 = section.size.try_into().unwrap();
 
-                log_dbg!("Section: {:?} {:#x} ({:#x} bytes)", name, addr, size);
+                logg_dbg!("Section: {:?} {:#x} ({:#x} bytes)", name, addr, size);
 
                 let dyld_indirect_symbol_info = match &*name {
                     "__picsymbolstub4" => Some(16),

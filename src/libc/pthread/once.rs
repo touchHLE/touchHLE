@@ -32,7 +32,7 @@ fn pthread_once(
     assert!(magic == MAGIC_ONCE);
     match init {
         0 => {
-            log_dbg!(
+            logg_dbg!(
                 "pthread_once_t at {:?} hasn't been run yet, running init routine {:?}",
                 once_control,
                 init_routine
@@ -43,10 +43,10 @@ fn pthread_once(
             };
             env.mem.write(once_control, new_once);
             init_routine.call(env);
-            log_dbg!("Init routine {:?} done", init_routine);
+            logg_dbg!("Init routine {:?} done", init_routine);
         }
         0xFFFFFFFF => {
-            log_dbg!(
+            logg_dbg!(
                 "pthread_once_t at {:?} has already been run, doing nothing",
                 once_control
             );

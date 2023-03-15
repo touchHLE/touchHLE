@@ -402,7 +402,7 @@ impl Fs {
 
         let bundle_guest_path = home_directory.join(&bundle_dir_name);
 
-        let documents_host_path = Path::new("touchHLE_sandbox")
+        let documents_host_path = Path::new("/data/data/org.libsdl.app/files/touchHLE_sandbox")
             .join(bundle_id)
             .join("Documents");
         if let Err(e) = std::fs::create_dir_all(&documents_host_path) {
@@ -413,7 +413,7 @@ impl Fs {
         }
 
         // Some Free Software libraries are bundled with touchHLE.
-        let dylibs_host_path = Path::new("touchHLE_dylibs");
+        let dylibs_host_path = Path::new("/data/data/org.libsdl.app/files/touchHLE_dylibs");
         let usr_lib = FsNode::dir()
             .with_child(
                 "libgcc_s.1.dylib",
@@ -454,7 +454,7 @@ impl Fs {
             )
             .with_child("usr", FsNode::dir().with_child("lib", usr_lib));
 
-        log_dbg!("Initial filesystem layout: {:#?}", root);
+        logg_dbg!("Initial filesystem layout: {:#?}", root);
 
         (
             Fs {
@@ -567,7 +567,7 @@ impl Fs {
                     writeable,
                 } => {
                     if !writeable && (append || write) {
-                        log!("Warning: attempt to write to read-only file {:?}", path);
+                        logg!("Warning: attempt to write to read-only file {:?}", path);
                         return Err(());
                     }
                     let file = handle_open_err(
@@ -584,7 +584,7 @@ impl Fs {
                 }
                 FsNode::IpaBundleFile { file } => {
                     if write || append || truncate {
-                        log!("Warning: attempt to write to read-only file {:?}", path);
+                        logg!("Warning: attempt to write to read-only file {:?}", path);
                         return Err(());
                     }
                     return Ok(GuestFile::from_ipa_file(file));
@@ -602,7 +602,7 @@ impl Fs {
         }
 
         let Some(dir_host_path) = dir_host_path else {
-            log!("Warning: attempt to create file at path {:?}, but directory is read-only", path);
+            logg!("Warning: attempt to create file at path {:?}, but directory is read-only", path);
             return Err(());
         };
 
@@ -624,7 +624,7 @@ impl Fs {
                 .open(&host_path),
             &host_path,
         );
-        log_dbg!(
+        logg_dbg!(
             "Created file at path {:?} (host path: {:?})",
             path,
             host_path
@@ -655,7 +655,7 @@ impl Fs {
         };
 
         if !dir_writeable.is_some() {
-            log!("Warning: attempt to delete file or directroy at path {:?}, but parent directory is read-only", path);
+            logg!("Warning: attempt to delete file or directroy at path {:?}, but parent directory is read-only", path);
             return Err(());
         };
 
@@ -676,7 +676,7 @@ impl Fs {
                 }
 
                 handle_open_err(std::fs::remove_file(host_path), host_path);
-                log_dbg!(
+                logg_dbg!(
                     "Deleted file at path {:?} (host path: {:?})",
                     path,
                     host_path
@@ -697,7 +697,7 @@ impl Fs {
                 };
 
                 handle_open_err(std::fs::remove_dir(host_path), host_path);
-                log_dbg!(
+                logg_dbg!(
                     "Deleted directory at path {:?} (host path: {:?})",
                     path,
                     host_path
@@ -734,7 +734,7 @@ impl Fs {
         }
 
         let Some(dir_host_path) = dir_host_path else {
-            log!("Warning: attempt to create directory at path {:?}, but parent directory is read-only", path);
+            logg!("Warning: attempt to create directory at path {:?}, but parent directory is read-only", path);
             return Err(());
         };
 
@@ -747,7 +747,7 @@ impl Fs {
         let host_path = dir_host_path.join(&new_dir_name);
 
         handle_open_err(std::fs::create_dir(&host_path), &host_path);
-        log_dbg!(
+        logg_dbg!(
             "Created directory at path {:?} (host path: {:?})",
             path,
             host_path

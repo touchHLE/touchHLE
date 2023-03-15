@@ -40,7 +40,7 @@ fn atexit(
 ) -> i32 {
     // TODO: when this is implemented, make sure it's properly compatible with
     // __cxa_atexit.
-    log!("TODO: atexit({:?}) (unimplemented)", func);
+    logg!("TODO: atexit({:?}) (unimplemented)", func);
     0 // success
 }
 
@@ -152,7 +152,7 @@ fn getenv(env: &mut Environment, name: ConstPtr<u8>) -> MutPtr<u8> {
     let Some(&value) = env.libc_state.stdlib.env.get(name_cstr) else {
         panic!("getenv() for {:?} ({:?}) unhandled", name, std::str::from_utf8(name_cstr));
     };
-    log_dbg!(
+    logg_dbg!(
         "getenv({:?} ({:?})) => {:?} ({:?})",
         name,
         name_cstr,
@@ -173,7 +173,7 @@ fn setenv(env: &mut Environment, name: ConstPtr<u8>, value: ConstPtr<u8>, overwr
     let value = super::string::strdup(env, value);
     let name_cstr = env.mem.cstr_at(name); // reborrow
     env.libc_state.stdlib.env.insert(name_cstr.to_vec(), value);
-    log_dbg!(
+    logg_dbg!(
         "Stored new value {:?} ({:?}) for environment variable {:?}",
         value,
         env.mem.cstr_at_utf8(value),

@@ -95,4 +95,6 @@ pub fn main() {
     assert!(dynarmic_legal.contains(dynarmic_license_oneline));
     let dynarmic_summary = dynarmic_legal.replace(dynarmic_license_oneline, &dynarmic_license);
     std::fs::write(out_dir.join("dynarmic_license.txt"), dynarmic_summary).unwrap();
+
+    println!("cargo:rustc-link-arg=-lOpenSLES");
 }

@@ -244,7 +244,7 @@ impl super::ObjC {
             // This is a serious bug if it ever happens in host code.
             // Well-behaved apps should also never do this, but Crash Bandicoot
             // Nitro Kart 3D is not a well-behaved app.
-            log!(
+            logg!(
                 "Warning: {:?} was deallocated with non-zero reference count: {:?}",
                 object,
                 refcount

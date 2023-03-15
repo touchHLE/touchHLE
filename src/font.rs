@@ -60,19 +60,19 @@ impl Font {
     }
 
     pub fn sans_regular() -> Font {
-        Self::from_file("touchHLE_fonts/LiberationSans-Regular.ttf")
+        Self::from_file("/data/data/org.libsdl.app/files/touchHLE_fonts/LiberationSans-Regular.ttf")
     }
     pub fn sans_bold() -> Font {
-        Self::from_file("touchHLE_fonts/LiberationSans-Bold.ttf")
+        Self::from_file("/data/data/org.libsdl.app/files/touchHLE_fonts/LiberationSans-Bold.ttf")
     }
     pub fn sans_italic() -> Font {
-        Self::from_file("touchHLE_fonts/LiberationSans-Italic.ttf")
+        Self::from_file("/data/data/org.libsdl.app/files/touchHLE_fonts/LiberationSans-Italic.ttf")
     }
     pub fn sans_regular_ja() -> Font {
-        Self::from_file("touchHLE_fonts/NotoSansJP-Regular.otf")
+        Self::from_file("/data/data/org.libsdl.app/files/touchHLE_fonts/NotoSansJP-Regular.otf")
     }
     pub fn sans_bold_ja() -> Font {
-        Self::from_file("touchHLE_fonts/NotoSansJP-Bold.otf")
+        Self::from_file("/data/data/org.libsdl.app/files/touchHLE_fonts/NotoSansJP-Bold.otf")
     }
 
     fn line_height_and_gap(&self, font_size: f32) -> (f32, f32) {

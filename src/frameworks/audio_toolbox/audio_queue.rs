@@ -44,7 +44,7 @@ impl State {
             assert!(!device.is_null());
             let context = unsafe { al::alcCreateContext(device, std::ptr::null()) };
             assert!(!context.is_null());
-            log_dbg!(
+            logg_dbg!(
                 "New internal OpenAL device ({:?}) and context ({:?})",
                 device,
                 context
@@ -179,10 +179,10 @@ fn AudioQueueNewOutput(
     ns_run_loop::add_audio_queue(env, in_callback_run_loop, aq_ref);
 
     if !is_supported_audio_format(&format) {
-        log_dbg!("Warning: Audio queue {:?} will be ignored because its format is not yet supported: {:#?}", aq_ref, format);
+        logg_dbg!("Warning: Audio queue {:?} will be ignored because its format is not yet supported: {:#?}", aq_ref, format);
     }
 
-    log_dbg!(
+    logg_dbg!(
         "AudioQueueNewOutput() for format {:#?}, new audio queue handle: {:?}",
         format,
         aq_ref,
@@ -260,7 +260,7 @@ fn AudioQueueEnqueueBuffer(
     assert!(host_object.buffers.contains(&in_buffer));
 
     host_object.buffer_queue.push_back(in_buffer);
-    log_dbg!("New buffer enqueued: {:?}", in_buffer);
+    logg_dbg!("New buffer enqueued: {:?}", in_buffer);
 
     0 // success
 }
@@ -272,7 +272,7 @@ fn AudioQueueAddPropertyListener(
     in_proc: GuestFunction, // TODO: should be AudioQueuePropertyListenerProc
     in_user_data: MutVoidPtr,
 ) -> OSStatus {
-    log!(
+    logg!(
         "TODO: AudioQueueAddPropertyListener({:?}, {:?}, {:?}, {:?})",
         in_aq,
         in_id,
@@ -288,7 +288,7 @@ fn AudioQueueRemovePropertyListener(
     in_proc: GuestFunction, // TODO: should be AudioQueuePropertyListenerProc
     in_user_data: MutVoidPtr,
 ) -> OSStatus {
-    log!(
+    logg!(
         "TODO: AudioQueueRemovePropertyListener({:?}, {:?}, {:?}, {:?})",
         in_aq,
         in_id,
@@ -426,7 +426,7 @@ fn prime_audio_queue(
         let next_buffer_ref = host_object.buffer_queue[next_buffer_idx];
         let next_buffer = env.mem.read(next_buffer_ref);
 
-        log_dbg!(
+        logg_dbg!(
             "Decoding buffer {:?} for queue {:?}",
             next_buffer_ref,
             in_aq
@@ -516,7 +516,7 @@ pub fn handle_audio_queue(env: &mut Environment, in_aq: AudioQueueRef) {
     } = host_object;
 
     for buffer_ref in buffers_to_reuse.drain(..) {
-        log_dbg!(
+        logg_dbg!(
             "Recyling buffer {:?} for queue {:?}. Calling callback {:?} with user data {:?}.",
             buffer_ref,
             in_aq,
@@ -543,7 +543,7 @@ pub fn handle_audio_queue(env: &mut Environment, in_aq: AudioQueueRef) {
             // handling.
             if al_source_state == al::AL_STOPPED {
                 al::alSourcePlay(al_source);
-                log_dbg!("Restarted OpenAL source for queue {:?}", in_aq);
+                logg_dbg!("Restarted OpenAL source for queue {:?}", in_aq);
             }
         }
     }
@@ -592,7 +592,7 @@ fn AudioQueueStop(env: &mut Environment, in_aq: AudioQueueRef, in_immediate: boo
 
     // This happens in Super Monkey Ball. TODO: figure out why.
     let Some(mut host_object) = state.audio_queues.get_mut(&in_aq) else {
-        log!("Tolerating stopping of unknown audio queue {:?}", in_aq);
+        logg!("Tolerating stopping of unknown audio queue {:?}", in_aq);
         return 0; // success
     };
     host_object.is_running = false;
@@ -614,11 +614,11 @@ fn AudioQueueDispose(env: &mut Environment, in_aq: AudioQueueRef, in_immediate: 
 
     // This happens in Super Monkey Ball. TODO: figure out why.
     let Some(mut host_object) = state.audio_queues.remove(&in_aq) else {
-        log!("Tolerating disposal of unknown audio queue {:?}", in_aq);
+        logg!("Tolerating disposal of unknown audio queue {:?}", in_aq);
         return 0; // success
     };
 
-    log_dbg!("Disposing of audio queue {:?}", in_aq);
+    logg_dbg!("Disposing of audio queue {:?}", in_aq);
 
     env.mem.free(in_aq.cast());
 

@@ -147,7 +147,7 @@ pub(super) fn handle_accelerometer(env: &mut Environment) -> Option<Instant> {
         assert!(advance_by == (advance_by as u32) as f64);
         let advance_by = advance_by as u32;
         if advance_by > 1 {
-            log_dbg!("Warning: Accelerometer is lagging. It is overdue by {}s and has missed {} interval(s)!", overdue_by.as_secs_f64(), advance_by - 1);
+            logg_dbg!("Warning: Accelerometer is lagging. It is overdue by {}s and has missed {} interval(s)!", overdue_by.as_secs_f64(), advance_by - 1);
         }
         let advance_by = rust_interval.checked_mul(advance_by).unwrap();
         Some(due_by.checked_add(advance_by).unwrap())
@@ -172,7 +172,7 @@ pub(super) fn handle_accelerometer(env: &mut Environment) -> Option<Instant> {
 
     let accelerometer: id = msg_class![env; UIAccelerometer sharedAccelerometer];
 
-    log_dbg!(
+    logg_dbg!(
         "Sending [{:?} accelerometer:{:?} didAccelerate:{:?}]",
         delegate,
         accelerometer,

@@ -229,7 +229,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     // calls. This is a heuristic though and won't always be optimal.
     let (utf16, did_convert) = host_object.convert_to_utf16_inplace();
     if did_convert {
-        log_dbg!("[{:?} length]: converted string to UTF-16", this);
+        logg_dbg!("[{:?} length]: converted string to UTF-16", this);
     }
 
     utf16.len().try_into().unwrap()
@@ -244,7 +244,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     // always be optimal.
     let (utf16, did_convert) = host_object.convert_to_utf16_inplace();
     if did_convert {
-        log_dbg!("[{:?} characterAtIndex:{:?}]: converted string to UTF-16", this, index);
+        logg_dbg!("[{:?} characterAtIndex:{:?}]: converted string to UTF-16", this, index);
     }
 
     // TODO: raise exception instead of panicking?

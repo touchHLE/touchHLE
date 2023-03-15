@@ -22,12 +22,12 @@ fn mkdir(env: &mut Environment, path: ConstPtr<u8>, mode: mode_t) -> i32 {
         .create_dir(GuestPath::new(&env.mem.cstr_at_utf8(path).unwrap()))
     {
         Ok(()) => {
-            log_dbg!("mkdir({:?}, {:#x}) => 0", path, mode);
+            logg_dbg!("mkdir({:?}, {:#x}) => 0", path, mode);
             0
         }
         Err(()) => {
             // TODO: set errno
-            log!(
+            logg!(
                 "Warning: mkdir({:?}, {:#x}) failed, returning -1",
                 path,
                 mode,
@@ -41,7 +41,7 @@ fn fstat(env: &mut Environment, fd: FileDescriptor, buf: MutVoidPtr) -> i32 {
     // TODO: error handling for unknown fd?
     let file = env.libc_state.posix_io.file_for_fd(fd).unwrap();
 
-    log!("Warning: fstat() call, this function is mostly unimplemented");
+    logg!("Warning: fstat() call, this function is mostly unimplemented");
     // FIXME: This implementation is highly incomplete. fstat() returns a huge
     // struct with many kinds of data in it. This code is assuming the caller
     // only wants the file size.

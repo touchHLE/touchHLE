@@ -286,7 +286,7 @@ impl Dyld {
         // Collecting unhandled relocations for the same symbol onto one line
         // makes the log output much less spammy.
         for (name, addrs) in unhandled_relocations {
-            log!(
+            logg!(
                 "Warning: unhandled external relocation {:?} in {:?} at {}",
                 name,
                 bin.name,
@@ -328,7 +328,7 @@ impl Dyld {
                 continue;
             }
 
-            log!(
+            logg!(
                 "Warning: unhandled non-lazy symbol {:?} at {:?} in \"{}\"",
                 symbol,
                 ptr_ptr,
@@ -461,7 +461,7 @@ impl Dyld {
                 };
                 mem.write(la_symbol_ptr, addr);
 
-                log_dbg!("Linked {:?} as {:#x} at {:?}", symbol, addr, la_symbol_ptr);
+                logg_dbg!("Linked {:?} as {:#x} at {:?}", symbol, addr, la_symbol_ptr);
 
                 // Tell the caller it needs to restart execution at svc_pc.
                 return None;

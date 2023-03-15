@@ -21,7 +21,7 @@ fn __cxa_atexit(
 ) -> i32 {
     // TODO: when this is implemented, make sure it's properly compatible with
     // C atexit.
-    log!(
+    logg!(
         "TODO: __cxa_atexit({:?}, {:?}, {:?}) (unimplemented)",
         func,
         p,
@@ -31,7 +31,7 @@ fn __cxa_atexit(
 }
 
 fn __cxa_finalize(_env: &mut Environment, d: MutVoidPtr) {
-    log!("TODO: __cxa_finalize({:?}) (unimplemented)", d);
+    logg!("TODO: __cxa_finalize({:?}) (unimplemented)", d);
 }
 
 pub const FUNCTIONS: FunctionExports = &[

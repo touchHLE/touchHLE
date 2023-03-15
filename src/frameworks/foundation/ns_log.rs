@@ -16,7 +16,7 @@ fn NSLog(
     // TODO: avoid copy
     let format_string = ns_string::to_rust_string(env, format);
 
-    log_dbg!("NSLog({:?} ({:?}), ...)", format, format_string);
+    logg_dbg!("NSLog({:?} ({:?}), ...)", format, format_string);
 
     let res = printf_inner::<true, _>(
         env,

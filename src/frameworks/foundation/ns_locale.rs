@@ -39,11 +39,11 @@ pub const CLASSES: ClassExports = objc_classes! {
                            .map(|(a, _b)| a)
                            .unwrap_or(&lang)
                            .to_string();
-            log!("The app requested your preferred languages. {:?} will reported based on your LANG environment variable.", lang);
+            logg!("The app requested your preferred languages. {:?} will reported based on your LANG environment variable.", lang);
             lang
         } else {
             let lang = "en".to_string();
-            log!("The app requested your preferred language. No LANG environment variable was found, so {:?} (English) will be reported.", lang);
+            logg!("The app requested your preferred language. No LANG environment variable was found, so {:?} (English) will be reported.", lang);
             lang
         };
         let lang_ns_string = ns_string::from_rust_string(env, lang);

@@ -93,7 +93,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     // TODO: handle other modes
     assert!(msg![env; mode isEqualToString:default_mode]);
 
-    log_dbg!("Adding timer {:?} to run loop {:?}", timer, this);
+    logg_dbg!("Adding timer {:?} to run loop {:?}", timer, this);
 
     retain(env, timer);
 
@@ -154,7 +154,7 @@ pub(super) fn remove_timer(env: &mut Environment, run_loop: id, timer: id) {
 }
 
 fn run_run_loop(env: &mut Environment, run_loop: id) {
-    log_dbg!("Entering run loop {:?} (indefinitely)", run_loop);
+    logg_dbg!("Entering run loop {:?} (indefinitely)", run_loop);
 
     // Temporary vectors used to track things without needing a reference to the
     // environment or to lock the object. Re-used each iteration for efficiency.

@@ -112,11 +112,11 @@ pub struct Options {
 impl Default for Options {
     fn default() -> Self {
         Options {
-            initial_orientation: DeviceOrientation::Portrait,
-            scale_hack: NonZeroU32::new(1).unwrap(),
+            initial_orientation: DeviceOrientation::LandscapeLeft,
+            scale_hack: NonZeroU32::new(3).unwrap(),
             deadzone: 0.1,
-            x_tilt_range: 60.0,
-            y_tilt_range: 60.0,
+            x_tilt_range: 0.0,
+            y_tilt_range: 0.0,
             x_tilt_offset: 0.0,
             y_tilt_offset: 0.0,
             direct_memory_access: true,

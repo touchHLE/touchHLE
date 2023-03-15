@@ -48,10 +48,10 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (())beginGeneratingDeviceOrientationNotifications {
-    log!("TODO: beginGeneratingDeviceOrientationNotifications");
+    logg!("TODO: beginGeneratingDeviceOrientationNotifications");
 }
 - (())endGeneratingDeviceOrientationNotifications {
-    log!("TODO: endGeneratingDeviceOrientationNotifications");
+    logg!("TODO: endGeneratingDeviceOrientationNotifications");
 }
 
 // NSString

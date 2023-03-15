@@ -72,7 +72,7 @@ impl GdbServer {
         if buffer[0] == b'+' {
             // This is just an acknowledgment
             self.reader.consume(1);
-            log_dbg!("Got ACK");
+            logg_dbg!("Got ACK");
             return None;
         }
 
@@ -84,14 +84,14 @@ impl GdbServer {
             // size, so if the buffer's full and we don't find a terminator, the
             // data must be invalid or we've parsed it wrong.
             assert!(buffer.len() != self.reader.capacity());
-            log_dbg!("No packet end yet");
+            logg_dbg!("No packet end yet");
             return None;
         };
 
         let body = &buffer[1..body_end];
 
         let checksum1 = buffer.get((body_end + 1)..(body_end + 3))?;
-        log_dbg!("Have full packet");
+        logg_dbg!("Have full packet");
 
         let checksum1 = std::str::from_utf8(checksum1).unwrap();
         let checksum1 = u8::from_str_radix(checksum1, 16).unwrap();
@@ -101,7 +101,7 @@ impl GdbServer {
         let body = String::from_utf8(body.to_vec()).unwrap();
         self.reader.consume(body_end + 3);
 
-        log_dbg!("Got packet: {:?}", body);
+        logg_dbg!("Got packet: {:?}", body);
 
         // Send acknowledgment
         self.reader
@@ -115,7 +115,7 @@ impl GdbServer {
     fn send_packet(&mut self, body: &str) {
         let checksum = body.bytes().fold(0u8, |a, b| a.wrapping_add(b));
         write!(self.reader.get_mut(), "${}#{:02x}", body, checksum).unwrap();
-        log_dbg!("Sent packet: {:?}", body);
+        logg_dbg!("Sent packet: {:?}", body);
     }
 
     /// Communciates with the debugger, returning only once it requests
@@ -271,7 +271,7 @@ impl GdbServer {
                         // New process
                         self.send_packet("0");
                     } else {
-                        log_dbg!("Unhandled packet.");
+                        logg_dbg!("Unhandled packet.");
                         // Tell GDB we don't understand this packet.
                         // In some cases this causes convenient fallbacks:
                         // Since we don't support 'Z', GDB will implement

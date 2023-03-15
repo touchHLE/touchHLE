@@ -140,7 +140,7 @@ fn check_or_register_mutex(env: &mut Environment, mutex: MutPtr<pthread_mutex_t>
     // This is a statically-initialized mutex, we need to register it, and
     // change the magic number in the process.
     if magic == MAGIC_MUTEX_STATIC {
-        log_dbg!(
+        logg_dbg!(
             "Detected statically-initialized mutex at {:?}, registering.",
             mutex
         );
@@ -160,7 +160,7 @@ fn pthread_mutex_lock(env: &mut Environment, mutex: MutPtr<pthread_mutex_t>) -> 
     let host_object: &mut _ = State::get(env).mutexes.get_mut(&mutex).unwrap();
 
     let Some((locking_thread, lock_count)) = host_object.locked else {
-        log_dbg!("Locked mutex {:?} for thread {}.", mutex, current_thread);
+        logg_dbg!("Locked mutex {:?} for thread {}.", mutex, current_thread);
         host_object.locked = Some((current_thread, NonZeroU32::new(1).unwrap()));
         return 0; // success
     };
@@ -175,11 +175,11 @@ fn pthread_mutex_lock(env: &mut Environment, mutex: MutPtr<pthread_mutex_t>) -> 
                 );
             }
             PTHREAD_MUTEX_ERRORCHECK => {
-                log_dbg!("Attempted to lock error-checking mutex {:?} for thread {}, already locked by same thread! Returning EDEADLK.", mutex, current_thread);
+                logg_dbg!("Attempted to lock error-checking mutex {:?} for thread {}, already locked by same thread! Returning EDEADLK.", mutex, current_thread);
                 return EDEADLK;
             }
             PTHREAD_MUTEX_RECURSIVE => {
-                log_dbg!(
+                logg_dbg!(
                     "Increasing lock level on recursive mutex {:?}, currently locked by thread {}.",
                     mutex,
                     locking_thread,
@@ -216,7 +216,7 @@ fn pthread_mutex_unlock(env: &mut Environment, mutex: MutPtr<pthread_mutex_t>) -
                 );
             },
             PTHREAD_MUTEX_ERRORCHECK | PTHREAD_MUTEX_RECURSIVE => {
-                log_dbg!(
+                logg_dbg!(
                     "Attempted to unlock error-checking or recursive mutex {:?} for thread {}, already unlocked! Returning EPERM.",
                     mutex, current_thread,
                 );
@@ -236,7 +236,7 @@ fn pthread_mutex_unlock(env: &mut Environment, mutex: MutPtr<pthread_mutex_t>) -
                 );
             }
             PTHREAD_MUTEX_ERRORCHECK | PTHREAD_MUTEX_RECURSIVE => {
-                log_dbg!(
+                logg_dbg!(
                     "Attempted to unlock error-checking or recursive mutex {:?} for thread {}, lobkced by different thread {}! Returning EPERM.",
                     mutex, current_thread, locking_thread,
                 );
@@ -247,11 +247,11 @@ fn pthread_mutex_unlock(env: &mut Environment, mutex: MutPtr<pthread_mutex_t>) -
     }
 
     if lock_count.get() == 1 {
-        log_dbg!("Unlocked mutex {:?} for thread {}.", mutex, current_thread);
+        logg_dbg!("Unlocked mutex {:?} for thread {}.", mutex, current_thread);
         host_object.locked = None;
     } else {
         assert!(host_object.type_ == PTHREAD_MUTEX_RECURSIVE);
-        log_dbg!(
+        logg_dbg!(
             "Decreasing lock level on recursive mutex {:?}, currently locked by thread {}.",
             mutex,
             locking_thread

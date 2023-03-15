@@ -402,7 +402,7 @@ impl Mem {
     /// Allocate `size` bytes.
     pub fn alloc(&mut self, size: GuestUSize) -> MutVoidPtr {
         let ptr = Ptr::from_bits(self.allocator.alloc(size));
-        log_dbg!("Allocated {:?} ({:#x} bytes)", ptr, size);
+        logg_dbg!("Allocated {:?} ({:#x} bytes)", ptr, size);
         ptr
     }
 
@@ -410,7 +410,7 @@ impl Mem {
     pub fn free(&mut self, ptr: MutVoidPtr) {
         let size = self.allocator.free(ptr.to_bits());
         self.bytes_at_mut(ptr.cast(), size).fill(0);
-        log_dbg!("Freed {:?} ({:#x} bytes)", ptr, size);
+        logg_dbg!("Freed {:?} ({:#x} bytes)", ptr, size);
     }
 
     /// Allocate memory large enough for a value of type `T` and write the value

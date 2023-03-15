@@ -44,7 +44,7 @@ fn AudioSessionGetProperty(
         _ => unimplemented!("Unimplemented property ID: {}", debug_fourcc(in_ID)),
     };
     if env.mem.read(io_data_size) != required_size {
-        log!("Warning: AudioSessionGetProperty() failed");
+        logg!("Warning: AudioSessionGetProperty() failed");
         return kAudioSessionBadPropertySizeError;
     }
 
@@ -70,7 +70,7 @@ fn AudioSessionSetProperty(
         _ => unimplemented!("Unimplemented property ID: {}", debug_fourcc(in_ID)),
     };
     if in_data_size != required_size {
-        log!("Warning: AudioSessionGetProperty() failed");
+        logg!("Warning: AudioSessionGetProperty() failed");
         return kAudioSessionBadPropertySizeError;
     }
 

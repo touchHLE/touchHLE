@@ -41,14 +41,14 @@ pub const CLASSES: ClassExports = objc_classes! {
     if let Some(current_pool) = State::get(env).pool_stack.last().copied() {
         msg![env; current_pool addObject:obj]
     } else {
-        log_dbg!("Warning: no active NSAutoreleasePool, leaking {:?}", obj);
+        logg_dbg!("Warning: no active NSAutoreleasePool, leaking {:?}", obj);
     }
 }
 
 - (id)init {
     assert!(env.current_thread == 0); // TODO: per-thread stacks
     State::get(env).pool_stack.push(this);
-    log_dbg!("New pool: {:?}", this);
+    logg_dbg!("New pool: {:?}", this);
     this
 }
 
@@ -70,7 +70,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (())dealloc {
-    log_dbg!("Draining pool: {:?}", this);
+    logg_dbg!("Draining pool: {:?}", this);
     let pop_res = State::get(env).pool_stack.pop();
     assert!(pop_res == Some(this));
     let host_obj: &mut NSAutoreleasePoolHostObject = env.objc.borrow_mut(this);

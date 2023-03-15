@@ -7,23 +7,24 @@
 ///
 /// The message is prefixed with the module path, so it is clear where it comes
 /// from.
-macro_rules! log {
+macro_rules! logg {
     ($($arg:tt)+) => {
-        eprintln!("{}: {}", module_path!(), format_args!($($arg)+));
+        let msg = format!("{}: {}", module_path!(), format_args!($($arg)+));
+        sdl2::log::log(&msg.to_string());
     }
 }
 
 /// Like [log], but prints the message only if debugging is enabled for the
 /// module where it is used. This can be used for verbose things only needed
 /// when debugging.
-macro_rules! log_dbg {
+macro_rules! logg_dbg {
     ($($arg:tt)+) => {
-        if $crate::log::ENABLED_MODULES.contains(&module_path!()) {
-            log!($($arg)*);
+        if $crate::logg::ENABLED_MODULES.contains(&module_path!()) {
+            logg!($($arg)*);
         }
     }
 }
 
-/// Put modules to enable [log_dbg] for here, e.g. "touchHLE::mem" to see when
+/// Put modules to enable [logg_dbg] for here, e.g. "touchHLE::mem" to see when
 /// memory is allocated and freed.
 pub const ENABLED_MODULES: &[&str] = &[];

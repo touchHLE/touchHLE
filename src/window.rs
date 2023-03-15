@@ -16,7 +16,7 @@
 mod gl;
 mod matrix;
 
-pub use gl::{gl21compat, gl32core, gles11, GLContext, GLVersion};
+pub use gl::{gl21compat, gl32core, gles11, gles31, GLContext, GLVersion};
 pub use matrix::Matrix;
 
 use crate::image::Image;
@@ -100,6 +100,10 @@ impl Window {
         let sdl_ctx = sdl2::init().unwrap();
         let video_ctx = sdl_ctx.video().unwrap();
 
+        let attr = video_ctx.gl_attr();
+        attr.set_context_version(1, 1);
+        attr.set_context_profile(sdl2::video::GLProfile::GLES);
+
         // SDL2 disables the screen saver by default, but iPhone OS enables
         // the idle timer that triggers sleep by default, so we turn it back on
         // here, and then the app can disable it if it wants to.
@@ -119,24 +123,30 @@ impl Window {
             .build()
             .unwrap();
 
+        let gl_attr = video_ctx.gl_attr();
+        assert_eq!(gl_attr.context_profile(), sdl2::video::GLProfile::GLES);
+        assert_eq!(gl_attr.context_version(), (1, 1));
+
         if let Some(icon) = icon {
             window.set_icon(surface_from_image(&icon));
         }
 
         let event_pump = sdl_ctx.event_pump().unwrap();
 
-        let splash_image_and_gl_ctx = if let Some(launch_image) = launch_image {
-            // Splash screen must be drawn with OpenGL (or not drawn at all)
-            // because otherwise we can't later use OpenGL in the same window.
-            // We are not required to use the same OpenGL version as for other
-            // contexts in this window, so let's use something relatively modern
-            // and compatible. OpenGL 3.2 is the baseline version of OpenGL
-            // available on macOS.
-            let gl_ctx = gl::create_gl_context(&video_ctx, &window, GLVersion::GL32Core);
-            Some((launch_image, gl_ctx))
-        } else {
-            None
-        };
+        let splash_image_and_gl_ctx = None;
+        // if let Some(launch_image) = launch_image {
+        //     // Splash screen must be drawn with OpenGL (or not drawn at all)
+        //     // because otherwise we can't later use OpenGL in the same window.
+        //     // We are not required to use the same OpenGL version as for other
+        //     // contexts in this window, so let's use something relatively modern
+        //     // and compatible. OpenGL 3.2 is the baseline version of OpenGL
+        //     // available on macOS.
+        //     let gl_ctx = gl::create_gl_context(&video_ctx, &window, GLVersion::GLES31);
+        //     //panic!();
+        //     Some((launch_image, gl_ctx))
+        // } else {
+        //     None
+        // };
 
         let controller_ctx = sdl_ctx.game_controller().unwrap();
 
@@ -248,10 +258,10 @@ impl Window {
 
     fn controller_added(&mut self, joystick_idx: u32) {
         let Ok(controller) = self.controller_ctx.open(joystick_idx) else {
-            log!("Warning: A new controller was connected, but it couldn't be accessed!");
+            logg!("Warning: A new controller was connected, but it couldn't be accessed!");
             return;
         };
-        log!(
+        logg!(
             "New controller connected: {}. Left stick = device tilt. Right stick = touch input (press the stick or shoulder button to tap/hold).",
             controller.name()
         );
@@ -262,14 +272,14 @@ impl Window {
             return;
         };
         let controller = self.controllers.remove(idx);
-        log!("Warning: Controller disconnected: {}", controller.name());
+        logg!("Warning: Controller disconnected: {}", controller.name());
     }
     pub fn print_accelerometer_notice(&self) {
-        log!("This app uses the accelerometer.");
+        logg!("This app uses the accelerometer.");
         if self.controllers.is_empty() {
-            log!("Connect a controller to get accelerometer simulation.");
+            logg!("Connect a controller to get accelerometer simulation.");
         } else {
-            log!("Your connected controller's left analog stick will be used for accelerometer simulation.");
+            logg!("Your connected controller's left analog stick will be used for accelerometer simulation.");
         }
     }
 

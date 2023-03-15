@@ -22,7 +22,7 @@ macro_rules! check_magic {
     ($env:ident, $object:ident, $expected:ident) => {
         let actual = $env.mem.read($object.cast::<u32>());
         if actual != $expected {
-            log!("Warning: failed magic number check for pthread object at {:?}: expected {:#x}, got {:#x}", $object, $expected, actual);
+            logg!("Warning: failed magic number check for pthread object at {:?}: expected {:#x}, got {:#x}", $object, $expected, actual);
             return $crate::libc::errno::EINVAL;
         }
     }

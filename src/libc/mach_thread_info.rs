@@ -142,7 +142,7 @@ fn thread_policy_set(
     policy_info: thread_policy_t,
     count: mach_msg_type_number_t,
 ) -> kern_return_t {
-    log!(
+    logg!(
         "TODO: thread_policy_set({}, {}, {:?}, {}) (ignored)",
         thread,
         flavor,

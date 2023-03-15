@@ -32,7 +32,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     msg![env; this allocWithZone:(MutVoidPtr::null())]
 }
 + (id)allocWithZone:(NSZonePtr)_zone { // struct _NSZone*
-    log_dbg!("[{:?} allocWithZone:]", this);
+    logg_dbg!("[{:?} allocWithZone:]", this);
     env.objc.alloc_object(this, Box::new(TrivialHostObject), &mut env.mem)
 }
 
@@ -62,12 +62,12 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 
 - (id)retain {
-    log_dbg!("[{:?} retain]", this);
+    logg_dbg!("[{:?} retain]", this);
     env.objc.increment_refcount(this);
     this
 }
 - (())release {
-    log_dbg!("[{:?} release]", this);
+    logg_dbg!("[{:?} release]", this);
     if env.objc.decrement_refcount(this) {
         () = msg![env; this dealloc];
     }
@@ -78,7 +78,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (())dealloc {
-    log_dbg!("[{:?} dealloc]", this);
+    logg_dbg!("[{:?} dealloc]", this);
     env.objc.dealloc_object(this, &mut env.mem)
 }
 

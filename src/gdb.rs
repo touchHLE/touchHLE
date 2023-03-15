@@ -152,7 +152,7 @@ impl GdbServer {
             }
         }
 
-        loop {
+        let do_step = loop {
             let Some(p) = self.read_packet() else {
                 continue;
             };
@@ -244,16 +244,22 @@ impl GdbServer {
                         }
                     }
                 }
-                // Continue or continue with signal (signal ignored for now)
-                b'c' | b'C' => {
-                    eprintln!("Debugger requested continue, resuming execution.");
-                    return false;
+                // Continue or Step
+                b'c' | b's' => {
+                    let addr = &p[1..];
+                    if !addr.is_empty() {
+                        todo!("TODO: Resume at {}", addr);
+                    }
+                    break p.as_bytes()[0] == b's';
                 }
-                b's' | b'S' => {
-                    eprintln!(
-                        "Debugger requested step, resuming execution for one instruction only."
-                    );
-                    return true;
+                // "Continue with signal" or "Step with signal".
+                // Presumably "with" means "ignoring"?
+                b'C' | b'S' => {
+                    // Signal is just ignored for now (TODO?)
+                    if let Some((_signal, addr)) = p[1..].split_once(';') {
+                        todo!("TODO: Resume at {}", addr);
+                    }
+                    break p.as_bytes()[0] == b'S';
                 }
                 // Kill
                 b'k' => {
@@ -274,6 +280,13 @@ impl GdbServer {
                     }
                 }
             }
+        };
+
+        if do_step {
+            eprintln!("Debugger requested step, resuming execution for one instruction only.");
+        } else {
+            eprintln!("Debugger requested continue, resuming execution.");
         }
+        do_step
     }
 }

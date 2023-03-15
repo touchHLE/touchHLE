@@ -31,7 +31,7 @@ You can make GDB connect immediately if you prefer: `gdb -ex 'set arch armv6' -e
 
 When GDB first connects, CPU execution is paused and none of the guest app's code has been run yet. While execution is paused, touchHLE allows GDB to:
 
-* Read registers
+* Read and write registers
 * Read and write memory
 * Resume execution, either indefinitely or for a single instruction
 * Kill the emulated app (this just makes touchHLE crash)

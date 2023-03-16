@@ -490,9 +490,8 @@ checksum = "ef703b7cb59335eae2eb93ceb664c0eb7ea6bf567079d843e09420219668e072"
 
 [[package]]
 name = "sdl2"
-version = "0.35.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f035f8e87735fa3a8437292be49fe6056450f7cbb13c230b4bcd1bdd7279421f"
+version = "0.35.2"
+source = "git+https://github.com/hikari-no-yume/rust-sdl2.git?branch=update-bundled-SDL2#571085aee601daffc51d543441c983409088fce2"
 dependencies = [
  "bitflags",
  "lazy_static",
@@ -502,9 +501,8 @@ dependencies = [
 
 [[package]]
 name = "sdl2-sys"
-version = "0.35.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "94cb479353c0603785c834e2307440d83d196bf255f204f7f6741358de8d6a2f"
+version = "0.35.2"
+source = "git+https://github.com/hikari-no-yume/rust-sdl2.git?branch=update-bundled-SDL2#571085aee601daffc51d543441c983409088fce2"
 dependencies = [
  "cfg-if",
  "cmake",
@@ -654,7 +652,6 @@ dependencies = [
  "plist",
  "rusttype",
  "sdl2",
- "sdl2-sys",
  "touchHLE_dr_mp3_wrapper",
  "touchHLE_dynarmic_wrapper",
  "touchHLE_gl_bindings",

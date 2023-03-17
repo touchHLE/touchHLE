@@ -15,3 +15,5 @@
 .cxx
 local.properties
 *.so
+
+android/app/build

@@ -9,7 +9,7 @@ SDL_PATH := ../SDL
 LOCAL_C_INCLUDES := $(LOCAL_PATH)/$(SDL_PATH)/include
 
 # Add your application source files here...
-LOCAL_SRC_FILES := YourSourceHere.c
+#LOCAL_SRC_FILES := YourSourceHere.c
 
 LOCAL_SHARED_LIBRARIES := SDL2
 

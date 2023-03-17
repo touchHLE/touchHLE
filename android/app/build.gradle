@@ -8,10 +8,11 @@ else {
 }
 
 android {
+    ndkVersion "25.2.9519653"
     compileSdkVersion 31
     defaultConfig {
         if (buildAsApplication) {
-            applicationId "org.libsdl.app"
+            applicationId "org.touch.hle"
         }
         minSdkVersion 16
         targetSdkVersion 31
@@ -20,7 +21,8 @@ android {
         externalNativeBuild {
             ndkBuild {
                 arguments "APP_PLATFORM=android-16"
-                abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
+                // abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
+                abiFilters 'arm64-v8a'
             }
             // cmake {
             //     arguments "-DANDROID_APP_PLATFORM=android-16", "-DANDROID_STL=c++_static"
@@ -62,7 +64,7 @@ android {
             variant.outputs.each { output ->
                 def outputFile = output.outputFile
                 if (outputFile != null && outputFile.name.endsWith(".aar")) {
-                    def fileName = "org.libsdl.app.aar";
+                    def fileName = "org.touch.hle.aar";
                     output.outputFile = new File(outputFile.parent, fileName);
                 }
             }

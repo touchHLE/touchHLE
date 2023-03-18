@@ -6,11 +6,12 @@
 //! `CGImage.h`
 
 use super::cg_color_space::{kCGColorSpaceGenericRGB, CGColorSpaceCreateWithName, CGColorSpaceRef};
+use super::cg_data::{CGDataProviderRef, CGDataProviderHostObject};
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::frameworks::core_foundation::{CFRelease, CFRetain, CFTypeRef};
 use crate::frameworks::foundation::ns_string;
 use crate::image::Image;
-use crate::mem::GuestUSize;
+use crate::mem::{GuestUSize, Ptr, ConstPtr};
 use crate::objc::{objc_classes, ClassExports, HostObject, ObjC};
 use crate::Environment;
 
@@ -61,6 +62,31 @@ impl HostObject for CGImageHostObject {}
 //       to create this type.
 
 pub type CGImageRef = CFTypeRef;
+
+pub fn CGImageCreateWithPNGDataProvider(
+    env: &mut Environment,
+    source: CGDataProviderRef,
+    decode: ConstPtr<f32>,
+    _should_interpolate: bool,
+    _intent: CFTypeRef,
+) -> CGImageRef {
+
+    assert!(decode.is_null());
+
+    let host_object = &env.objc.borrow::<CGDataProviderHostObject>(source);
+    let ptr: ConstPtr<u8> = Ptr::from_bits(host_object.data.to_bits());
+
+    let image = Image::from_bytes(&env.mem.bytes_at(ptr, host_object.size)).unwrap();
+    let host_obj = Box::new(CGImageHostObject {
+        image: image,
+    });
+
+    println!("CGImageCreateWithPNGDataProvider: {:?}", ptr);
+
+    let class = env.objc.get_known_class("_touchHLE_CGImage", &mut env.mem);
+    env.objc.alloc_object(class, host_obj, &mut env.mem)
+}
+
 pub fn CGImageRelease(env: &mut Environment, c: CGImageRef) {
     if !c.is_null() {
         CFRelease(env, c);
@@ -121,6 +147,7 @@ fn CGImageGetHeight(env: &mut Environment, image: CGImageRef) -> GuestUSize {
 }
 
 pub const FUNCTIONS: FunctionExports = &[
+    export_c_func!(CGImageCreateWithPNGDataProvider(_, _, _, _)),
     export_c_func!(CGImageRelease(_)),
     export_c_func!(CGImageRetain(_)),
     export_c_func!(CGImageGetAlphaInfo(_)),

@@ -11,6 +11,7 @@ pub mod cg_color_space;
 pub mod cg_context;
 mod cg_geometry;
 pub mod cg_image;
+pub mod cg_data;
 
 pub type CGFloat = f32;
 

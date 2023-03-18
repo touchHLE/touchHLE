@@ -88,7 +88,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 // FIXME: writes should be atomic
 - (bool)writeToFile:(id) path // NSString*
-        atomically:(bool) use_aux_file {
+         atomically:(bool) _use_aux_file {
     let file = to_rust_string(env, path);
     log!("NSData::writeToFile:atomically: {:?}", file);
     let host_object = env.objc.borrow::<NSDataHostObject>(this);

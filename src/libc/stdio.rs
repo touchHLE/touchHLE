@@ -76,20 +76,15 @@ fn fgetc(
     let FILE { fd } = env.mem.read(file_ptr);
     let buffer = env.mem.alloc(1);
 
-    match posix_io::lseek(env, fd, 1, posix_io::SEEK_CUR) {
+    match posix_io::read(env, fd, buffer, 1) {
         -1 => EOF,
-        _cur_pos => {
-            match posix_io::read(env, fd, buffer, 1) {
-                -1 => EOF,
-                bytes_read => {
-                    let bytes_read: GuestUSize = bytes_read.try_into().unwrap();
-                    if bytes_read < 1 {
-                        EOF
-                    } else {
-                        let buf: MutPtr<i32> = buffer.cast();
-                        env.mem.read(buf)
-                    }
-                }
+        bytes_read => {
+            let bytes_read: GuestUSize = bytes_read.try_into().unwrap();
+            if bytes_read < 1 {
+                EOF
+            } else {
+                let buf: MutPtr<i32> = buffer.cast();
+                env.mem.read(buf)
             }
         }
     }

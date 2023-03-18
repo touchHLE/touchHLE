@@ -217,6 +217,13 @@ pub const CLASSES: ClassExports = objc_classes! {
     autorelease(env, new)
 }
 
++ (id)stringWithUTF8String:(ConstPtr<u8>)c_string {
+    let new: id = msg![env; this alloc];
+    let new: id = msg![env; new initWithUTF8String:c_string];
+    log!("[NSString stringWithUTF8String]: {:?} -> {:?}", env.mem.cstr_at_utf8(c_string).unwrap(), new);
+    autorelease(env, new)
+}
+
 // These are the two methods that have to be overridden by subclasses, so these
 // implementations don't have to care about foreign subclasses.
 - (NSUInteger)length {
@@ -603,6 +610,10 @@ pub const CLASSES: ClassExports = objc_classes! {
     *env.objc.borrow_mut(this) = host_object;
 
     this
+}
+
+- (id)initWithUTF8String:(ConstPtr<u8>)c_string {
+    msg![env; this initWithCString:c_string encoding:NSUTF8StringEncoding]
 }
 
 @end

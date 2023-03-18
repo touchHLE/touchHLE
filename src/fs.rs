@@ -402,7 +402,7 @@ impl Fs {
 
         let bundle_guest_path = home_directory.join(&bundle_dir_name);
 
-        let documents_host_path = Path::new("/data/data/org.libsdl.app/files/touchHLE_sandbox")
+        let documents_host_path = Path::new("/data/data/org.touch.hle/files/touchHLE_sandbox")
             .join(bundle_id)
             .join("Documents");
         if let Err(e) = std::fs::create_dir_all(&documents_host_path) {
@@ -413,7 +413,7 @@ impl Fs {
         }
 
         // Some Free Software libraries are bundled with touchHLE.
-        let dylibs_host_path = Path::new("/data/data/org.libsdl.app/files/touchHLE_dylibs");
+        let dylibs_host_path = Path::new("/data/data/org.touch.hle/files/touchHLE_dylibs");
         let usr_lib = FsNode::dir()
             .with_child(
                 "libgcc_s.1.dylib",

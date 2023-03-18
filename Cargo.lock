@@ -559,6 +559,7 @@ version = "0.35.2"
 source = "git+https://github.com/ciciplusplus/rust-sdl2.git?rev=c66ca16e42bc6655a9e6eb1c7b0ec41b17c52419#c66ca16e42bc6655a9e6eb1c7b0ec41b17c52419"
 dependencies = [
  "cfg-if",
+ "cmake",
  "libc",
  "version-compare",
 ]

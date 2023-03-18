@@ -123,7 +123,7 @@ fn _main() -> Result<(), String> {
         }
     }
 
-    bundle_path = Some(PathBuf::from("/data/data/org.libsdl.app/files/Super Monkey Ball  v1.02 .ipa"));
+    bundle_path = Some(PathBuf::from("/data/data/org.touch.hle/files/Super Monkey Ball  v1.02 .ipa"));
 
     let Some(bundle_path) = bundle_path else {
         eprintln!("{}", USAGE);

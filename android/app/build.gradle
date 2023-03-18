@@ -6,6 +6,7 @@ if (buildAsApplication) {
 else {
     apply plugin: 'com.android.library'
 }
+apply plugin: "com.github.willir.rust.cargo-ndk-android"
 
 android {
     ndkVersion "25.2.9519653"
@@ -33,14 +34,24 @@ android {
     }
     buildTypes {
         release {
+            signingConfig signingConfigs.debug
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+        debug {
+            minifyEnabled false
+            packagingOptions {
+                doNotStrip '**/*.so'
+            }
+            debuggable true
+            jniDebuggable true
         }
     }
     applicationVariants.all { variant ->
         tasks["merge${variant.name.capitalize()}Assets"]
             .dependsOn("externalNativeBuild${variant.name.capitalize()}")
     }
+
     if (!project.hasProperty('EXCLUDE_NATIVE_LIBS')) {
         sourceSets.main {
             jniLibs.srcDir 'libs'
@@ -70,6 +81,13 @@ android {
             }
         }
     }
+}
+
+cargoNdk {
+    targets = ["arm64"]
+    module = ".."
+    // workaround for https://stackoverflow.com/a/70546745/2241008
+    extraCargoEnv = ["ANDROID_NDK": android.ndkDirectory]
 }
 
 dependencies {

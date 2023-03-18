@@ -51,20 +51,20 @@ fn alcOpenDevice(env: &mut Environment, devicename: ConstPtr<u8>) -> MutPtr<Gues
 
     let res = unsafe { al::alcOpenDevice(std::ptr::null()) };
     if res.is_null() {
-        logg_dbg!("alcOpenDevice(NULL) returned NULL");
+        log_dbg!("alcOpenDevice(NULL) returned NULL");
         return Ptr::null();
     }
 
     let guest_res = env.mem.alloc_and_write(GuestALCdevice { _filler: 0 });
     State::get(env).devices.insert(guest_res, res);
-    logg_dbg!("alcOpenDevice(NULL) => {:?} (host: {:?})", guest_res, res,);
+    log_dbg!("alcOpenDevice(NULL) => {:?} (host: {:?})", guest_res, res,);
     guest_res
 }
 fn alcCloseDevice(env: &mut Environment, device: MutPtr<GuestALCdevice>) -> bool {
     let host_device = State::get(env).devices.remove(&device).unwrap();
     env.mem.free(device.cast());
     let res = unsafe { al::alcCloseDevice(host_device) };
-    logg_dbg!("alcCloseDevice({:?}) => {:?}", device, res,);
+    log_dbg!("alcCloseDevice({:?}) => {:?}", device, res,);
     res != al::ALC_FALSE
 }
 
@@ -72,7 +72,7 @@ fn alcGetError(env: &mut Environment, device: MutPtr<GuestALCdevice>) -> i32 {
     let &host_device = State::get(env).devices.get(&device).unwrap();
 
     let res = unsafe { al::alcGetError(host_device) };
-    logg_dbg!("alcGetError({:?}) => {:#x}", host_device, res);
+    log_dbg!("alcGetError({:?}) => {:#x}", host_device, res);
     res
 }
 
@@ -87,13 +87,13 @@ fn alcCreateContext(
 
     let res = unsafe { al::alcCreateContext(host_device, std::ptr::null()) };
     if res.is_null() {
-        logg_dbg!("alcCreateContext({:?}, NULL) returned NULL", device);
+        log_dbg!("alcCreateContext({:?}, NULL) returned NULL", device);
         return Ptr::null();
     }
 
     let guest_res = env.mem.alloc_and_write(GuestALCcontext { _filler: 0 });
     State::get(env).contexts.insert(guest_res, res);
-    logg_dbg!(
+    log_dbg!(
         "alcCreateContext({:?}, NULL) => {:?} (host: {:?})",
         device,
         guest_res,
@@ -105,7 +105,7 @@ fn alcDestroyContext(env: &mut Environment, context: MutPtr<GuestALCcontext>) {
     let host_context = State::get(env).contexts.remove(&context).unwrap();
     env.mem.free(context.cast());
     unsafe { al::alcDestroyContext(host_context) };
-    logg_dbg!("alcDestroyContext({:?})", context);
+    log_dbg!("alcDestroyContext({:?})", context);
 }
 
 fn alcMakeContextCurrent(env: &mut Environment, context: MutPtr<GuestALCcontext>) -> bool {
@@ -115,7 +115,7 @@ fn alcMakeContextCurrent(env: &mut Environment, context: MutPtr<GuestALCcontext>
         State::get(env).contexts.get(&context).copied().unwrap()
     };
     let res = unsafe { al::alcMakeContextCurrent(host_context) };
-    logg_dbg!("alcMakeContextCurrent({:?}) => {:?}", context, res);
+    log_dbg!("alcMakeContextCurrent({:?}) => {:?}", context, res);
     res != al::ALC_FALSE
 }
 
@@ -151,12 +151,12 @@ fn alGetError(_env: &mut Environment) -> i32 {
     // Soft returns an error in this case, and the game skips the rest of its
     // audio initialization.
     if unsafe { al::alcGetCurrentContext() }.is_null() {
-        logg!("alGetError() called with no current context. Ignoring and returning AL_NO_ERROR for compatibility with Super Monkey Ball.");
+        log!("alGetError() called with no current context. Ignoring and returning AL_NO_ERROR for compatibility with Super Monkey Ball.");
         return al::AL_NO_ERROR;
     }
 
     let res = unsafe { al::alGetError() };
-    logg_dbg!("alGetError() => {:#x}", res);
+    log_dbg!("alGetError() => {:#x}", res);
     res
 }
 
@@ -245,7 +245,7 @@ fn alSourceUnqueueBuffers(
         val
     };
     let nb = if buffers_processed < nb {
-        logg_dbg!("Applying workaround for Apple sample code bug: ignoring unqueueing of {}/{} processed buffers from source {}", nb, buffers_processed, source);
+        log_dbg!("Applying workaround for Apple sample code bug: ignoring unqueueing of {}/{} processed buffers from source {}", nb, buffers_processed, source);
         buffers_processed
     } else {
         nb
@@ -305,7 +305,7 @@ fn alBufferDataStatic(
 
 // Apple-specific extension to OpenAL
 fn alcMacOSXMixerOutputRate(_env: &mut Environment, value: ALdouble) {
-    logg!("App wants to set mixer output sample rate to {} Hz", value);
+    log!("App wants to set mixer output sample rate to {} Hz", value);
 }
 
 // TODO: more functions

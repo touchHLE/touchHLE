@@ -61,7 +61,7 @@ pub const CLASSES: ClassExports = objc_classes! {
         release(env, this);
         msg_class![env; UIApplication sharedApplication]
     } else {
-        logg!("TODO: UIProxyObject replacement for {}, instance {:?} left unreplaced", id, this);
+        log!("TODO: UIProxyObject replacement for {}, instance {:?} left unreplaced", id, this);
         this
     }
 }
@@ -178,7 +178,7 @@ pub fn load_main_nib_file(env: &mut Environment, _ui_application: id) {
     let Ok(data) = env.fs.read(path) else {
         // Apparently it's permitted to specify the nib file key in the
         // Info.plist, yet not have it point to a valid nib file?!
-        logg!("Warning: couldn't load main nib file");
+        log!("Warning: couldn't load main nib file");
         return;
     };
 

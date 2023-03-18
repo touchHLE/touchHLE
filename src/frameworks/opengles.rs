@@ -62,7 +62,7 @@ fn sync_context<'a>(
 
     if window.is_app_gl_ctx_no_longer_current() || state.current_ctx_thread != Some(current_thread)
     {
-        logg_dbg!(
+        log_dbg!(
             "Restoring guest app OpenGL context for thread {}.",
             current_thread
         );

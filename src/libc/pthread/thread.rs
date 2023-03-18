@@ -125,7 +125,7 @@ fn pthread_create(
         },
     );
 
-    logg_dbg!("pthread_create({:?}, {:?}, {:?}, {:?}) => 0 (success), created new pthread_t {:?} (thread ID: {})", thread, attr, start_routine, user_data, opaque, thread_id);
+    log_dbg!("pthread_create({:?}, {:?}, {:?}, {:?}) => 0 (success), created new pthread_t {:?} (thread ID: {})", thread, attr, start_routine, user_data, opaque, thread_id);
 
     0 // success
 }
@@ -150,7 +150,7 @@ fn pthread_self(env: &mut Environment) -> pthread_t {
                 _attr: DEFAULT_ATTR,
             },
         );
-        logg_dbg!(
+        log_dbg!(
             "pthread_self: created pthread object {:?} for main thread",
             opaque
         );

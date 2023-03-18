@@ -21,7 +21,7 @@
 #![allow(non_snake_case)]
 
 #[macro_use]
-mod logg;
+mod log;
 mod abi;
 mod audio;
 mod bundle;
@@ -114,7 +114,7 @@ fn main() -> Result<(), String> {
     // get interpreted as escaping a double quotation mark?
     #[cfg(windows)]
     if let Some(fixed) = bundle_path.to_str().and_then(|s| s.strip_suffix('"')) {
-        logg!("Warning: The bundle path has a trailing quotation mark! This often happens accidentally on Windows when tab-completing, because '\\\"' gets interpreted by Rust in the wrong way. Did you meant to write {:?}?", fixed);
+        log!("Warning: The bundle path has a trailing quotation mark! This often happens accidentally on Windows when tab-completing, because '\\\"' gets interpreted by Rust in the wrong way. Did you meant to write {:?}?", fixed);
     }
 
     let bundle_data = fs::BundleData::open_any(&bundle_path)

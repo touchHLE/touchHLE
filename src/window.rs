@@ -258,10 +258,10 @@ impl Window {
 
     fn controller_added(&mut self, joystick_idx: u32) {
         let Ok(controller) = self.controller_ctx.open(joystick_idx) else {
-            logg!("Warning: A new controller was connected, but it couldn't be accessed!");
+            log!("Warning: A new controller was connected, but it couldn't be accessed!");
             return;
         };
-        logg!(
+        log!(
             "New controller connected: {}. Left stick = device tilt. Right stick = touch input (press the stick or shoulder button to tap/hold).",
             controller.name()
         );
@@ -272,14 +272,14 @@ impl Window {
             return;
         };
         let controller = self.controllers.remove(idx);
-        logg!("Warning: Controller disconnected: {}", controller.name());
+        log!("Warning: Controller disconnected: {}", controller.name());
     }
     pub fn print_accelerometer_notice(&self) {
-        logg!("This app uses the accelerometer.");
+        log!("This app uses the accelerometer.");
         if self.controllers.is_empty() {
-            logg!("Connect a controller to get accelerometer simulation.");
+            log!("Connect a controller to get accelerometer simulation.");
         } else {
-            logg!("Your connected controller's left analog stick will be used for accelerometer simulation.");
+            log!("Your connected controller's left analog stick will be used for accelerometer simulation.");
         }
     }
 

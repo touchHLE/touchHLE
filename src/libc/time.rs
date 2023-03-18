@@ -28,7 +28,7 @@ fn time(env: &mut Environment, out: MutPtr<time_t>) -> time_t {
     let time = time64 as time_t;
     if !env.libc_state.time.y2k38_warned && time64 != time as u64 {
         env.libc_state.time.y2k38_warned = true;
-        logg!("Warning: system clock is beyond Y2K38 and might confuse the app");
+        log!("Warning: system clock is beyond Y2K38 and might confuse the app");
     }
     if !out.is_null() {
         env.mem.write(out, time);
@@ -68,7 +68,7 @@ fn gettimeofday(
     let tv_sec = time_s_64 as time_t;
     if !env.libc_state.time.y2k38_warned && time_s_64 != tv_sec as u64 {
         env.libc_state.time.y2k38_warned = true;
-        logg!("Warning: system clock is beyond Y2K38 and might confuse the app");
+        log!("Warning: system clock is beyond Y2K38 and might confuse the app");
     }
     let tv_usec: suseconds_t = time.subsec_micros().try_into().unwrap();
 

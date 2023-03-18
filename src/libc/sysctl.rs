@@ -18,7 +18,7 @@ fn sysctl(
     newp: MutVoidPtr,
     newlen: GuestUSize,
 ) -> i32 {
-    logg!(
+    log!(
         "TODO: sysctl({:?}, {:#x}, {:?}, {:?}, {:?}, {:x})",
         name,
         name_len,

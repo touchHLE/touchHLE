@@ -100,13 +100,13 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
         }
     }
 
-    logg_dbg!("=> {:?}", std::str::from_utf8(&res));
+    log_dbg!("=> {:?}", std::str::from_utf8(&res));
 
     res
 }
 
 fn sprintf(env: &mut Environment, dest: MutPtr<u8>, format: ConstPtr<u8>, args: VAList) -> i32 {
-    logg_dbg!(
+    log_dbg!(
         "sprintf({:?}, {:?} ({:?}), ...)",
         dest,
         format,
@@ -126,7 +126,7 @@ fn sprintf(env: &mut Environment, dest: MutPtr<u8>, format: ConstPtr<u8>, args: 
 }
 
 fn printf(env: &mut Environment, format: ConstPtr<u8>, args: VAList) -> i32 {
-    logg_dbg!(
+    log_dbg!(
         "printf({:?} ({:?}), ...)",
         format,
         env.mem.cstr_at_utf8(format)

@@ -40,7 +40,7 @@ fn panic_on_gl_errors(gles: &mut dyn GLES) {
             break;
         }
         did_error = true;
-        logg!("glGetError() => {:#x}", err);
+        log!("glGetError() => {:#x}", err);
     }
     if did_error {
         panic!();
@@ -52,7 +52,7 @@ fn glGetError(env: &mut Environment) -> GLenum {
     with_ctx_and_mem(env, |gles, _mem| {
         let err = unsafe { gles.GetError() };
         if err != 0 {
-            logg!("Warning: glGetError() returned {:#x}", err);
+            log!("Warning: glGetError() returned {:#x}", err);
         }
         err
     })

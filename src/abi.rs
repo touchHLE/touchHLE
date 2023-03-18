@@ -83,7 +83,7 @@ impl GuestFunction {
     /// See also [CallFromGuest] and [CallFromHost]. The latter is implemented
     /// for [GuestFunction] using this method.
     pub fn call(self, env: &mut Environment) {
-        logg_dbg!("Begin call to guest function {:?}", self);
+        log_dbg!("Begin call to guest function {:?}", self);
 
         let (old_pc, old_lr) = env
             .cpu
@@ -112,7 +112,7 @@ impl GuestFunction {
         regs[Cpu::SP] = old_sp;
         regs[FRAME_POINTER] = old_fp;
 
-        logg_dbg!("End call to guest function {:?}", self);
+        log_dbg!("End call to guest function {:?}", self);
     }
 
     /// Like [Self::call], but doesn't push a new guest stack frame. This is not
@@ -122,7 +122,7 @@ impl GuestFunction {
     /// frame would be troublesome, e.g. a tail call with stack argument
     /// pass-through.
     pub fn call_without_pushing_stack_frame(self, env: &mut Environment) {
-        logg_dbg!(
+        log_dbg!(
             "Begin call to guest function {:?} (no new stack frame)",
             self
         );
@@ -136,7 +136,7 @@ impl GuestFunction {
         env.cpu.branch(old_pc);
         env.cpu.regs_mut()[Cpu::LR] = old_lr.addr_with_thumb_bit();
 
-        logg_dbg!(
+        log_dbg!(
             "End call to guest function {:?} (no stack frame popped)",
             self
         );

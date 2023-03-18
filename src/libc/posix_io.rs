@@ -124,7 +124,7 @@ fn open(env: &mut Environment, path: ConstPtr<u8>, flags: i32, _args: VAList) ->
             -1
         }
     };
-    logg_dbg!("open({:?}, {:#x}) => {:?}", path, flags, res);
+    log_dbg!("open({:?}, {:#x}) => {:?}", path, flags, res);
     res
 }
 
@@ -141,7 +141,7 @@ fn read(
     match file.file.read(buffer_slice) {
         Ok(bytes_read) => {
             if bytes_read < buffer_slice.len() {
-                logg!(
+                log!(
                     "Warning: read({:?}, {:?}, {:#x}) read only {:#x} bytes",
                     fd,
                     buffer,
@@ -149,7 +149,7 @@ fn read(
                     bytes_read,
                 );
             } else {
-                logg_dbg!(
+                log_dbg!(
                     "read({:?}, {:?}, {:#x}) => {:#x}",
                     fd,
                     buffer,
@@ -161,7 +161,7 @@ fn read(
         }
         Err(e) => {
             // TODO: set errno
-            logg!(
+            log!(
                 "Warning: read({:?}, {:?}, {:#x}) encountered error {:?}, returning -1",
                 fd,
                 buffer,
@@ -186,7 +186,7 @@ fn write(
     match file.file.write(buffer_slice) {
         Ok(bytes_written) => {
             if bytes_written < buffer_slice.len() {
-                logg!(
+                log!(
                     "Warning: write({:?}, {:?}, {:#x}) wrote only {:#x} bytes",
                     fd,
                     buffer,
@@ -194,7 +194,7 @@ fn write(
                     bytes_written,
                 );
             } else {
-                logg_dbg!(
+                log_dbg!(
                     "write({:?}, {:?}, {:#x}) => {:#x}",
                     fd,
                     buffer,
@@ -206,7 +206,7 @@ fn write(
         }
         Err(e) => {
             // TODO: set errno
-            logg!(
+            log!(
                 "Warning: write({:?}, {:?}, {:#x}) encountered error {:?}, returning -1",
                 fd,
                 buffer,
@@ -241,7 +241,7 @@ fn lseek(env: &mut Environment, fd: FileDescriptor, offset: off_t, whence: i32) 
         // TODO: set errno
         Err(_) => -1,
     };
-    logg_dbg!("fseek({:?}, {:#x}, {}) => {}", fd, offset, whence, res);
+    log_dbg!("fseek({:?}, {:#x}, {}) => {}", fd, offset, whence, res);
     res
 }
 
@@ -254,12 +254,12 @@ fn close(env: &mut Environment, fd: FileDescriptor) -> i32 {
     // of scope. The return value is about whether flushing succeeds.
     match file.file.sync_all() {
         Ok(()) => {
-            logg_dbg!("close({:?}) => 0", fd);
+            log_dbg!("close({:?}) => 0", fd);
             0
         }
         Err(_) => {
             // TODO: set errno
-            logg!("Warning: close({:?}) failed, returning -1", fd);
+            log!("Warning: close({:?}) failed, returning -1", fd);
             -1
         }
     }

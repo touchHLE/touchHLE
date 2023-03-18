@@ -64,7 +64,7 @@ fn fopen(env: &mut Environment, filename: ConstPtr<u8>, mode: ConstPtr<u8>) -> M
             Ptr::null()
         }
     };
-    logg_dbg!("fopen({:?}, {:?}) => {:?}", filename, mode, res);
+    log_dbg!("fopen({:?}, {:?}) => {:?}", filename, mode, res);
     res
 }
 
@@ -88,7 +88,7 @@ fn fread(
         .unwrap();
     if bytes_read < buffer_slice.len() {
         // TODO: set errno
-        logg!(
+        log!(
             "Warning: fread({:?}, {:#x}, {:#x}, {:?}) read only {:#x} of requested {:#x} bytes",
             buffer,
             item_size,
@@ -98,7 +98,7 @@ fn fread(
             bytes_read
         );
     } else {
-        logg_dbg!(
+        log_dbg!(
             "fread({:?}, {:#x}, {:#x}, {:?}) => {:#x}",
             buffer,
             item_size,
@@ -127,7 +127,7 @@ fn fwrite(
         .unwrap();
     if bytes_written < buffer_slice.len() {
         // TODO: set errno
-        logg!(
+        log!(
             "Warning: fwrite({:?}, {:#x}, {:#x}, {:?}) wrote only {:#x} of requested {:#x} bytes",
             buffer,
             item_size,
@@ -137,7 +137,7 @@ fn fwrite(
             bytes_written
         );
     } else {
-        logg_dbg!(
+        log_dbg!(
             "fwrite({:?}, {:#x}, {:#x}, {:?}) => {:#x}",
             buffer,
             item_size,
@@ -169,7 +169,7 @@ fn fseek(env: &mut Environment, file_ptr: MutPtr<FILE>, offset: i32, whence: i32
         // TODO: set errno
         Err(_) => -1,
     };
-    logg_dbg!(
+    log_dbg!(
         "fseek({:?}, {:#x}, {}) => {}",
         file_ptr,
         offset,
@@ -188,7 +188,7 @@ fn ftell(env: &mut Environment, file_ptr: MutPtr<FILE>) -> i32 {
         // TODO: set errno
         Err(_) => -1,
     };
-    logg_dbg!("ftell({:?}) => {:?}", file_ptr, res);
+    log_dbg!("ftell({:?}) => {:?}", file_ptr, res);
     res
 }
 
@@ -199,12 +199,12 @@ fn fclose(env: &mut Environment, file_ptr: MutPtr<FILE>) -> i32 {
     // of scope. The return value is about whether flushing succeeds.
     match file.file.sync_all() {
         Ok(()) => {
-            logg_dbg!("fclose({:?}) => 0", file_ptr);
+            log_dbg!("fclose({:?}) => 0", file_ptr);
             0
         }
         Err(_) => {
             // TODO: set errno
-            logg!("Warning: fclose({:?}) failed, returning EOF", file_ptr);
+            log!("Warning: fclose({:?}) failed, returning EOF", file_ptr);
             EOF
         }
     }
@@ -224,12 +224,12 @@ fn remove(env: &mut Environment, path: ConstPtr<u8>) -> i32 {
         .remove(GuestPath::new(&env.mem.cstr_at_utf8(path).unwrap()))
     {
         Ok(()) => {
-            logg_dbg!("remove({:?}) => 0", path);
+            log_dbg!("remove({:?}) => 0", path);
             0
         }
         Err(_) => {
             // TODO: set errno
-            logg!("Warning: remove({:?}) failed, returning -1", path);
+            log!("Warning: remove({:?}) failed, returning -1", path);
             -1
         }
     }

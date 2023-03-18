@@ -125,7 +125,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     // Intel HD Graphics 615 running macOS Monterey. I don't think RGBA8 is
     // guaranteed either, but it at least seems to work.
     if !msg![env; format isEqualTo:format_rgba8] && !msg![env; format isEqualTo:format_rgb565] {
-        logg!("[renderbufferStorage:{:?} fromDrawable:{:?}] Warning: unhandled format {:?}, using RGBA8", target, drawable, format);
+        log!("[renderbufferStorage:{:?} fromDrawable:{:?}] Warning: unhandled format {:?}, using RGBA8", target, drawable, format);
     }
     let internalformat = gles11::RGBA8_OES;
 

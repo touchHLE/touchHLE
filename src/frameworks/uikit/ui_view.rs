@@ -82,7 +82,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     host_object.bounds = bounds;
     host_object.center = center;
 
-    logg_dbg!(
+    log_dbg!(
         "[(UIView*){:?} initWithFrame:{:?}] => bounds {:?}, center {:?}",
         this,
         frame,
@@ -117,7 +117,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     host_object.bounds = bounds;
     host_object.center = center;
 
-    logg_dbg!(
+    log_dbg!(
         "[(UIView*){:?} initWithCoder:{:?}] => bounds {:?}, center {:?}",
         this,
         coder,
@@ -144,7 +144,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 - (())addSubview:(id)view {
     // FIXME: there should be an actual hierarchy that retains the view
-    logg!("TODO: [(UIView*){:?} addSubview:{:?}]", this, view);
+    log!("TODO: [(UIView*){:?} addSubview:{:?}]", this, view);
     // FIXME: These should be called systematically using setNeedsLayout: and
     //        layoutIfNeeded.
     let _: () = msg![env; this layoutSubviews];
@@ -152,7 +152,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (())bringSubviewToFront:(id)view {
-    logg_dbg!("TODO: [(UIView*){:?} bringSubviewToFront:{:?}]", this, view);
+    log_dbg!("TODO: [(UIView*){:?} bringSubviewToFront:{:?}]", this, view);
 }
 
 - (())dealloc {

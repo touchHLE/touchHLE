@@ -21,7 +21,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 - (())touchesBegan:(id)touches // NSSet* of UITouch*
          withEvent:(id)event { // UIEvent*
-    logg_dbg!(
+    log_dbg!(
         "[{:?} touchesBegan:{:?} withEvent:{:?}] (probably unhandled)",
         this,
         touches,
@@ -31,7 +31,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 - (())touchesMoved:(id)touches // NSSet* of UITouch*
          withEvent:(id)event { // UIEvent*
-    logg_dbg!(
+    log_dbg!(
         "[{:?} touchesMoved:{:?} withEvent:{:?}] (probably unhandled)",
         this,
         touches,
@@ -41,7 +41,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 - (())touchesEnded:(id)touches // NSSet* of UITouch*
          withEvent:(id)event { // UIEvent*
-    logg_dbg!(
+    log_dbg!(
         "[{:?} touchesEnded:{:?} withEvent:{:?}] (probably unhandled)",
         this,
         touches,

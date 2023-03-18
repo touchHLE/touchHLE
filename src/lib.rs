@@ -21,7 +21,7 @@
 #![allow(non_snake_case)]
 
 #[macro_use]
-mod logg;
+mod log;
 mod abi;
 mod audio;
 mod bundle;
@@ -51,18 +51,9 @@ use environment::{Environment, ThreadID};
 use std::path::PathBuf;
 use std::ffi::{c_int, c_char};
 
-use log::LevelFilter;
-use android_logger::{Config, LogId};
-
 #[cfg(target_os = "android")]
 #[no_mangle]
 pub extern fn SDL_main(_argc: c_int, _argv: *const *const c_char) -> c_int {
-    sdl2::log::log("HERE");
-
-    android_logger::init_once(Config::default()
-        .with_max_level(LevelFilter::Trace)
-        .with_log_buffer(LogId::System));
-
     match _main() {
         Ok(_) => sdl2::log::log("touchHLE finished"),
         Err(e) => sdl2::log::log(&format!("touchHLE errored: {e:?}").to_string()),
@@ -136,7 +127,7 @@ fn _main() -> Result<(), String> {
     // get interpreted as escaping a double quotation mark?
     #[cfg(windows)]
     if let Some(fixed) = bundle_path.to_str().and_then(|s| s.strip_suffix('"')) {
-        logg!("Warning: The bundle path has a trailing quotation mark! This often happens accidentally on Windows when tab-completing, because '\\\"' gets interpreted by Rust in the wrong way. Did you meant to write {:?}?", fixed);
+        log!("Warning: The bundle path has a trailing quotation mark! This often happens accidentally on Windows when tab-completing, because '\\\"' gets interpreted by Rust in the wrong way. Did you meant to write {:?}?", fixed);
     }
 
     let bundle_data = fs::BundleData::open_any(&bundle_path)

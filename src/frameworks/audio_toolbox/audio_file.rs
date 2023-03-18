@@ -74,7 +74,7 @@ fn AudioFileOpenURL(
 
     let path = to_rust_path(env, in_file_ref);
     let Ok(audio_file) = audio::AudioFile::open_for_reading(path, &env.fs) else {
-        logg!("Warning: AudioFileOpenURL() for path {:?} failed", in_file_ref);
+        log!("Warning: AudioFileOpenURL() for path {:?} failed", in_file_ref);
         return kAudioFileFileNotFoundError;
     };
 
@@ -87,7 +87,7 @@ fn AudioFileOpenURL(
 
     env.mem.write(out_audio_file, guest_audio_file);
 
-    logg_dbg!(
+    log_dbg!(
         "AudioFileOpenURL() opened path {:?}, new audio file handle: {:?}",
         in_file_ref,
         guest_audio_file
@@ -145,7 +145,7 @@ fn AudioFileGetProperty(
 ) -> OSStatus {
     let required_size = property_size(in_property_id);
     if env.mem.read(io_data_size) != required_size {
-        logg!("Warning: AudioFileGetProperty() failed");
+        log!("Warning: AudioFileGetProperty() failed");
         return kAudioFileBadPropertySizeError;
     }
 
@@ -299,7 +299,7 @@ fn AudioFileClose(env: &mut Environment, in_audio_file: AudioFileID) -> OSStatus
         .remove(&in_audio_file)
         .unwrap();
     env.mem.free(in_audio_file.cast());
-    logg_dbg!(
+    log_dbg!(
         "AudioFileClose() destroyed audio file handle: {:?}",
         in_audio_file
     );

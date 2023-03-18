@@ -38,7 +38,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 // TODO: actual playback
 
 - (id)initWithContentURL:(id)url { // NSURL*
-    logg!(
+    log!(
         "TODO: [(MPMoviePlayerController*){:?} initWithContentURL:{:?} ({:?})]",
         this,
         url,
@@ -53,7 +53,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 // MPMediaPlayback implementation
 - (())play {
-    logg!("TODO: [(MPMoviePlayerController*){:?} play]", this);
+    log!("TODO: [(MPMoviePlayerController*){:?} play]", this);
     assert!(env.framework_state.media_player.movie_player.active_player.is_none());
     // Movie player is retained by the runtime until it is stopped
     retain(env, this);
@@ -66,7 +66,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (())stop {
-    logg!("TODO: [(MPMoviePlayerController*){:?} stop]", this);
+    log!("TODO: [(MPMoviePlayerController*){:?} stop]", this);
     assert!(this == env.framework_state.media_player.movie_player.active_player.take().unwrap());
     release(env, this);
 }

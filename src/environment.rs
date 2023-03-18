@@ -106,7 +106,7 @@ impl Environment {
                     .map_err(|e| format!("Could not parse icon image: {}", e))
             });
         if let Err(ref e) = icon {
-            logg!("Warning: {}", e);
+            log!("Warning: {}", e);
         }
 
         let launch_image_path = bundle.launch_image_path();
@@ -119,7 +119,7 @@ impl Environment {
                         .map_err(|e| format!("Could not parse launch image: {}", e))
                 });
             if let Err(ref e) = res {
-                logg!("Warning: {}", e);
+                log!("Warning: {}", e);
             };
             res.ok()
         } else {
@@ -155,7 +155,7 @@ impl Environment {
                 // System frameworks will have host implementations.
                 // TODO: warn about unimplemented frameworks?
                 if !dylib.starts_with("/System/Library/Frameworks/") {
-                    logg!(
+                    log!(
                         "Warning: app binary depends on unexpected dylib \"{}\"",
                         dylib
                     );
@@ -170,7 +170,7 @@ impl Environment {
         })?;
         let entry_point_addr = abi::GuestFunction::from_addr_with_thumb_bit(entry_point_addr);
 
-        logg_dbg!("Address of start function: {:?}", entry_point_addr);
+        log_dbg!("Address of start function: {:?}", entry_point_addr);
 
         let mut bins = dylibs;
         bins.insert(0, executable);
@@ -260,7 +260,7 @@ impl Environment {
                 continue;
             };
 
-            logg_dbg!("Calling static initializers for {:?}", bin.name);
+            log_dbg!("Calling static initializers for {:?}", bin.name);
             assert!(mod_init_func.size % 4 == 0);
             let base: mem::ConstPtr<abi::GuestFunction> = mem::Ptr::from_bits(mod_init_func.addr);
             let count = mod_init_func.size / 4;
@@ -268,7 +268,7 @@ impl Environment {
                 let func = env.mem.read(base + i);
                 func.call(&mut env);
             }
-            logg_dbg!("Static initialization done");
+            log_dbg!("Static initialization done");
         }
 
         env.cpu.branch(entry_point_addr);
@@ -338,7 +338,7 @@ impl Environment {
         });
         let new_thread_id = self.threads.len() - 1;
 
-        logg_dbg!("Created new thread {} with stack {:#x}–{:#x}, will execute function {:?} with data {:?}", new_thread_id, stack_alloc.to_bits(), (stack_high_addr - 1), start_routine, user_data);
+        log_dbg!("Created new thread {} with stack {:#x}–{:#x}, will execute function {:?} with data {:?}", new_thread_id, stack_alloc.to_bits(), (stack_high_addr - 1), start_routine, user_data);
 
         let old_thread = self.current_thread;
 
@@ -385,7 +385,7 @@ impl Environment {
     fn switch_thread(&mut self, new_thread: ThreadID) {
         assert!(new_thread != self.current_thread);
 
-        logg_dbg!(
+        log_dbg!(
             "Switching thread: {} => {}",
             self.current_thread,
             new_thread
@@ -459,14 +459,14 @@ impl Environment {
                         // Secondary thread finished starting
                         // TODO: Having two meanings for this SVC is
                         // dangerous, use a different SVC for this case.
-                        logg_dbg!(
+                        log_dbg!(
                             "Thread {} finished start routine and became inactive",
                             self.current_thread
                         );
                         self.threads[self.current_thread].active = false;
                         let stack = self.threads[self.current_thread].stack.take().unwrap();
                         let stack: mem::MutVoidPtr = mem::Ptr::from_bits(*stack.start());
-                        logg_dbg!("Freeing thread {} stack {:?}", self.current_thread, stack);
+                        log_dbg!("Freeing thread {} stack {:?}", self.current_thread, stack);
                         self.mem.free(stack);
                         return ThreadNextAction::Yield;
                     } else {

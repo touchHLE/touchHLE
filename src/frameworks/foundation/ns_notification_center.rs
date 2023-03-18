@@ -73,7 +73,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     // Usually a static string, so no real copy will happen
     let name = ns_string::to_rust_string(env, name);
 
-    logg_dbg!(
+    log_dbg!(
         "[(NSNotificationCenter*){:?} addObserver:{:?} selector:{:?} name:{:?} object:{:?}",
         this,
         observer,
@@ -102,7 +102,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     // Usually a static string, so no real copy will happen
     let name = ns_string::to_rust_string(env, name);
 
-    logg_dbg!(
+    log_dbg!(
         "[(NSNotificationCenter*){:?} removeObserver:{:?} name:{:?} object:{:?}",
         this,
         observer,
@@ -135,7 +135,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (())postNotification:(id)notification {
-    logg_dbg!(
+    log_dbg!(
         "[(NSNotificationCenter*){:?} postNotification:{:?}]",
         this,
         notification,
@@ -147,7 +147,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 
     let notification_poster: id = msg![env; notification object];
 
-    logg_dbg!("Notification is a {:?} posted by {:?}", name, notification_poster);
+    log_dbg!("Notification is a {:?} posted by {:?}", name, notification_poster);
 
     let host_obj = env.objc.borrow_mut::<NSNotificationCenterHostObject>(this);
     let Some(observers) = host_obj.observers.get(&name).cloned() else {
@@ -160,7 +160,7 @@ pub const CLASSES: ClassExports = objc_classes! {
             continue;
         }
 
-        logg_dbg!(
+        log_dbg!(
             "Notification {:?} observed, sending {:?} message to {:?}",
             notification,
             selector.as_str(&env.mem),

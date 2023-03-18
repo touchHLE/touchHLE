@@ -413,7 +413,7 @@ fn substitute_classes(
         assert!(name == metaclass_name);
     }
 
-    logg!(
+    log!(
         "Note: substituting fake class for {} to improve compatibility",
         name
     );
@@ -632,7 +632,7 @@ impl ObjC {
                         instance_size: Default::default(),
                     },
                 );
-                logg_dbg!(
+                log_dbg!(
                     "Adding {} methods from guest app category \"{}\" {:?} to {} \"{}\" {:?}",
                     if host_obj.is_metaclass {
                         "class"

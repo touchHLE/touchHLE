@@ -15,6 +15,7 @@
 
 use rusttype::{Point, Rect, Scale};
 use std::cmp;
+use std::env;
 
 pub struct Font {
     font: rusttype::Font<'static>,
@@ -48,7 +49,9 @@ fn scale(font_size: f32) -> Scale {
 
 impl Font {
     fn from_file(path: &str) -> Font {
-        let Ok(bytes) = std::fs::read(path) else {
+        let prefix = if env::consts::OS == "android" { "/data/data/org.touch.hle/files/" } else { "" };
+
+        let Ok(bytes) = std::fs::read(prefix.to_owned() + path) else {
             panic!("Couldn't read bundled font file {:?}. Perhaps the directory is missing?", path);
         };
 
@@ -60,19 +63,19 @@ impl Font {
     }
 
     pub fn sans_regular() -> Font {
-        Self::from_file("/data/data/org.touch.hle/files/touchHLE_fonts/LiberationSans-Regular.ttf")
+        Self::from_file("touchHLE_fonts/LiberationSans-Regular.ttf")
     }
     pub fn sans_bold() -> Font {
-        Self::from_file("/data/data/org.touch.hle/files/touchHLE_fonts/LiberationSans-Bold.ttf")
+        Self::from_file("touchHLE_fonts/LiberationSans-Bold.ttf")
     }
     pub fn sans_italic() -> Font {
-        Self::from_file("/data/data/org.touch.hle/files/touchHLE_fonts/LiberationSans-Italic.ttf")
+        Self::from_file("touchHLE_fonts/LiberationSans-Italic.ttf")
     }
     pub fn sans_regular_ja() -> Font {
-        Self::from_file("/data/data/org.touch.hle/files/touchHLE_fonts/NotoSansJP-Regular.otf")
+        Self::from_file("touchHLE_fonts/NotoSansJP-Regular.otf")
     }
     pub fn sans_bold_ja() -> Font {
-        Self::from_file("/data/data/org.touch.hle/files/touchHLE_fonts/NotoSansJP-Bold.otf")
+        Self::from_file("touchHLE_fonts/NotoSansJP-Bold.otf")
     }
 
     fn line_height_and_gap(&self, font_size: f32) -> (f32, f32) {

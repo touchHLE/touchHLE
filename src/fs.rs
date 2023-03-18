@@ -31,6 +31,7 @@ use std::collections::HashMap;
 use std::fs::File;
 use std::io::{Read, Seek, Write};
 use std::path::{Path, PathBuf};
+use std::env;
 
 #[derive(Debug)]
 enum FsNode {
@@ -402,7 +403,9 @@ impl Fs {
 
         let bundle_guest_path = home_directory.join(&bundle_dir_name);
 
-        let documents_host_path = Path::new("/data/data/org.touch.hle/files/touchHLE_sandbox")
+        let prefix = if env::consts::OS == "android" { "/data/data/org.touch.hle/files/" } else { "" };
+
+        let documents_host_path = Path::new(prefix).join("touchHLE_sandbox")
             .join(bundle_id)
             .join("Documents");
         if let Err(e) = std::fs::create_dir_all(&documents_host_path) {
@@ -413,7 +416,7 @@ impl Fs {
         }
 
         // Some Free Software libraries are bundled with touchHLE.
-        let dylibs_host_path = Path::new("/data/data/org.touch.hle/files/touchHLE_dylibs");
+        let dylibs_host_path = Path::new(prefix).join("touchHLE_dylibs");
         let usr_lib = FsNode::dir()
             .with_child(
                 "libgcc_s.1.dylib",

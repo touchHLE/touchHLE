@@ -7,6 +7,7 @@ use cargo_license::{get_dependencies_from_cargo_lock, GetDependenciesOpt};
 use std::fmt::Write;
 use std::path::{Path, PathBuf};
 use std::process::Command;
+use std::env;
 
 fn rerun_if_changed(path: &Path) {
     println!("cargo:rerun-if-changed={}", path.to_str().unwrap());
@@ -96,5 +97,8 @@ pub fn main() {
     let dynarmic_summary = dynarmic_legal.replace(dynarmic_license_oneline, &dynarmic_license);
     std::fs::write(out_dir.join("dynarmic_license.txt"), dynarmic_summary).unwrap();
 
-    println!("cargo:rustc-link-arg=-lOpenSLES");
+    let os = env::var("CARGO_CFG_TARGET_OS").expect("CARGO_CFG_TARGET_OS was not set");
+    if os.eq_ignore_ascii_case("android") {
+        println!("cargo:rustc-link-arg=-lOpenSLES");
+    }
 }

@@ -426,6 +426,12 @@ impl Dyld {
 
             cpu.invalidate_cache_range(stub_function_ptr.to_bits(), 4);
 
+            log_dbg!(
+                "Linked {} at {:?} to host implementation",
+                symbol,
+                stub_function_ptr
+            );
+
             // Return the host function so that we can call it now that we're
             // done.
             return Some(f);
@@ -461,7 +467,14 @@ impl Dyld {
                 };
                 mem.write(la_symbol_ptr, addr);
 
-                log_dbg!("Linked {:?} as {:#x} at {:?}", symbol, addr, la_symbol_ptr);
+                log_dbg!(
+                    "Linked {} at {:?}/{:?} to {:#x} from {}",
+                    symbol,
+                    stub_function_ptr,
+                    la_symbol_ptr,
+                    addr,
+                    dylib.name
+                );
 
                 // Tell the caller it needs to restart execution at svc_pc.
                 return None;

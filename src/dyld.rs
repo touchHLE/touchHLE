@@ -463,7 +463,7 @@ impl Dyld {
                     // The PIC (position-independent code) stub uses a
                     // PC-relative offset rather than an absolute address.
                     let offset = mem.read(stub_function_ptr + instruction_count);
-                    Ptr::from_bits(stub_function_ptr.to_bits() + offset + 8)
+                    Ptr::from_bits(stub_function_ptr.to_bits() + offset + 12)
                 };
                 mem.write(la_symbol_ptr, addr);
 

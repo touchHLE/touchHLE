@@ -16,7 +16,7 @@
 mod gl;
 mod matrix;
 
-pub use gl::{gl21compat, gl32core, gles11, gles31, GLContext, GLVersion};
+pub use gl::{gl21compat, gl32core, gles11, GLContext, GLVersion};
 pub use matrix::Matrix;
 
 use crate::image::Image;
@@ -27,6 +27,7 @@ use sdl2::surface::Surface;
 use std::collections::VecDeque;
 use std::f32::consts::FRAC_PI_2;
 use std::num::NonZeroU32;
+use std::env;
 
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub enum DeviceOrientation {
@@ -133,20 +134,22 @@ impl Window {
 
         let event_pump = sdl_ctx.event_pump().unwrap();
 
-        let splash_image_and_gl_ctx = None;
-        // if let Some(launch_image) = launch_image {
-        //     // Splash screen must be drawn with OpenGL (or not drawn at all)
-        //     // because otherwise we can't later use OpenGL in the same window.
-        //     // We are not required to use the same OpenGL version as for other
-        //     // contexts in this window, so let's use something relatively modern
-        //     // and compatible. OpenGL 3.2 is the baseline version of OpenGL
-        //     // available on macOS.
-        //     let gl_ctx = gl::create_gl_context(&video_ctx, &window, GLVersion::GLES31);
-        //     //panic!();
-        //     Some((launch_image, gl_ctx))
-        // } else {
-        //     None
-        // };
+        let splash_image_and_gl_ctx = if let Some(launch_image) = launch_image {
+            if env::consts::OS != "android" {
+                // Splash screen must be drawn with OpenGL (or not drawn at all)
+                // because otherwise we can't later use OpenGL in the same window.
+                // We are not required to use the same OpenGL version as for other
+                // contexts in this window, so let's use something relatively modern
+                // and compatible. OpenGL 3.2 is the baseline version of OpenGL
+                // available on macOS.
+                let gl_ctx = gl::create_gl_context(&video_ctx, &window, GLVersion::GL32Core);
+                Some((launch_image, gl_ctx))
+            } else {
+                None
+            }
+        } else {
+            None
+        };
 
         let controller_ctx = sdl_ctx.game_controller().unwrap();
 

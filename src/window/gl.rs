@@ -9,14 +9,14 @@ use super::Matrix;
 use crate::image::Image;
 use sdl2::video::GLProfile;
 
-pub use touchHLE_gl_bindings::{gl21compat, gl32core, gles11, gles31};
+pub use touchHLE_gl_bindings::{gl21compat, gl32core, gles11};
 
 pub enum GLVersion {
     /// OpenGL ES 1.1
     #[allow(dead_code)]
     GLES11,
-    GLES31,
     /// OpenGL 2.1 compatibility profile
+    #[allow(dead_code)]
     GL21Compat,
     /// OpenGL 3.2 core profile
     GL32Core,
@@ -36,11 +36,6 @@ pub fn create_gl_context(
     match version {
         GLVersion::GLES11 => {
             attr.set_context_version(1, 1);
-            attr.set_context_profile(GLProfile::GLES);
-            //attr.set_context_flags().debug().set();
-        }
-        GLVersion::GLES31 => {
-            attr.set_context_version(3, 1);
             attr.set_context_profile(GLProfile::GLES);
         }
         GLVersion::GL21Compat => {
@@ -66,7 +61,6 @@ pub fn make_gl_context_current(
     window.gl_make_current(&gl_ctx.gl_ctx).unwrap();
     match gl_ctx.version {
         GLVersion::GLES11 => gles11::load_with(|s| video_ctx.gl_get_proc_address(s) as *const _),
-        GLVersion::GLES31 => gles31::load_with(|s| video_ctx.gl_get_proc_address(s) as *const _),
         GLVersion::GL21Compat => {
             gl21compat::load_with(|s| video_ctx.gl_get_proc_address(s) as *const _)
         }
@@ -92,7 +86,7 @@ pub unsafe fn display_image(
     let src_pixels = image.pixels();
     let (width, height) = image.dimensions();
 
-    use gles31 as gl;
+    use gl32core as gl;
 
     let mut texture = 0;
     gl::GenTextures(1, &mut texture);

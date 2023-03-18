@@ -34,7 +34,6 @@ pub struct State {
     keymgr: keymgr::State,
     posix_io: posix_io::State,
     pthread: pthread::State,
-    stdio: stdio::State,
     stdlib: stdlib::State,
     string: string::State,
     time: time::State,

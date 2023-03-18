@@ -39,7 +39,7 @@ rusttype = "0.9.3"
 # sdl2 crates pinned at 0.35.1 because static linking seems to be broken for
 # 0.35.2 on macOS (build errors about undefined symbols for
 # _CHHapticDynamicParameterIDHapticIntensityControl etc)
-sdl2 = { git = "https://github.com/ciciplusplus/rust-sdl2.git", rev = "c66ca16e42bc6655a9e6eb1c7b0ec41b17c52419", features = ["bundled"] }
+sdl2 = { git = "https://github.com/ciciplusplus/rust-sdl2.git", rev = "3a98a093ebcef157b054d7a24d4f3bea2568760d", features = ["bundled"] }
 # sdl2-sys = "=0.35.1"
 touchHLE_dr_mp3_wrapper = { path = "src/audio/dr_mp3_wrapper" }
 touchHLE_dynarmic_wrapper = { path = "src/cpu/dynarmic_wrapper" }

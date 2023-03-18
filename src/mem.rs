@@ -284,6 +284,31 @@ impl Mem {
         )
     }
 
+    /// Special version of [Self::bytes_at] that returns [None] rather than
+    /// panicking on failure. Only for use by [crate::gdb::GdbServer].
+    pub fn get_bytes_fallible(&self, addr: ConstVoidPtr, count: GuestUSize) -> Option<&[u8]> {
+        if addr.to_bits() < Self::NULL_PAGE_SIZE {
+            return None;
+        }
+        self.bytes()
+            .get(addr.to_bits() as usize..)?
+            .get(..count as usize)
+    }
+    /// Special version of [Self::bytes_at_mut] that returns [None] rather than
+    /// panicking on failure. Only for use by [crate::gdb::GdbServer].
+    pub fn get_bytes_fallible_mut(
+        &mut self,
+        addr: ConstVoidPtr,
+        count: GuestUSize,
+    ) -> Option<&mut [u8]> {
+        if addr.to_bits() < Self::NULL_PAGE_SIZE {
+            return None;
+        }
+        self.bytes_mut()
+            .get_mut(addr.to_bits() as usize..)?
+            .get_mut(..count as usize)
+    }
+
     /// Get a slice for reading `count` bytes. This is the basic primitive for
     /// safe read-only memory access.
     pub fn bytes_at<const MUT: bool>(&self, ptr: Ptr<u8, MUT>, count: GuestUSize) -> &[u8] {

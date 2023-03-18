@@ -13,6 +13,13 @@ Changes are categorised as follows:
 
 If an app is added to the supported list after the relevant version has already been released, its entry in the changelog will be followed by the date it was added \[in square brackets\].
 
+## NEXT
+
+Other:
+
+- touchHLE now has a primitive implementation of the GDB Remote Serial Protocol. GDB can connect to touchHLE over TCP and set software breakpoints, inspect memory and registers, step or continue execution, etc. This replaces the old `--breakpoint=` option, which is now removed. (@hikari-no-yume)
+- The version of SDL2 used by touchHLE has been updated to 2.26.4. (@hikari-no-yume)
+
 ## v0.1.2 (2023-03-07)
 
 Compatibility:

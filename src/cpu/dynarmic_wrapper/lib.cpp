@@ -28,6 +28,7 @@ bool touchHLE_cpu_write_u64(touchHLE_Mem *mem, VAddr addr, std::uint64_t value);
 }
 
 const auto HaltReasonSvc = Dynarmic::HaltReason::UserDefined1;
+const auto HaltReasonUndefinedInstruction = Dynarmic::HaltReason::UserDefined2;
 
 class Environment final : public Dynarmic::A32::UserCallbacks {
 public:
@@ -112,6 +113,8 @@ private:
     // MemoryReadCode returned nullopt
     if (exception == Dynarmic::A32::Exception::NoExecuteFault) {
       cpu->HaltExecution(Dynarmic::HaltReason::MemoryAbort);
+    } else if (exception == Dynarmic::A32::Exception::UndefinedInstruction) {
+      cpu->HaltExecution(HaltReasonUndefinedInstruction);
     } else {
       std::fprintf(stderr, "ExceptionRaised: unexpected exception %u at %x\n",
                    unsigned(exception), pc);
@@ -173,15 +176,22 @@ public:
     *(Dynarmic::A32::Context *)context = tmp;
   }
 
-  std::int32_t run(touchHLE_Mem *mem, std::uint64_t *ticks) {
+  std::int32_t run_or_step(touchHLE_Mem *mem, std::uint64_t *ticks) {
     env.mem = mem;
-    env.ticks_remaining = *ticks;
-    Dynarmic::HaltReason hr = cpu->Run();
+    Dynarmic::HaltReason hr;
+    if (ticks) {
+      env.ticks_remaining = *ticks;
+      hr = cpu->Run();
+    } else {
+      hr = cpu->Step();
+    }
     std::int32_t res;
-    if (!hr) {
+    if ((!hr && ticks) || (hr == Dynarmic::HaltReason::Step && !ticks)) {
       res = -1;
     } else if (Dynarmic::Has(hr, Dynarmic::HaltReason::MemoryAbort)) {
       res = -2;
+    } else if (Dynarmic::Has(hr, HaltReasonUndefinedInstruction)) {
+      res = -3;
     } else if (Dynarmic::Has(hr, HaltReasonSvc)) {
       res = std::int32_t(env.halting_svc);
     } else {
@@ -189,7 +199,9 @@ public:
       abort();
     }
     env.mem = nullptr;
-    *ticks = env.ticks_remaining;
+    if (ticks) {
+      *ticks = env.ticks_remaining;
+    }
     return res;
   }
 };
@@ -228,10 +240,10 @@ void touchHLE_DynarmicWrapper_invalidate_cache_range(DynarmicWrapper *cpu,
   cpu->invalidate_cache_range(start, size);
 }
 
-std::int32_t touchHLE_DynarmicWrapper_run(DynarmicWrapper *cpu,
-                                          touchHLE_Mem *mem,
-                                          std::uint64_t *ticks) {
-  return cpu->run(mem, ticks);
+std::int32_t touchHLE_DynarmicWrapper_run_or_step(DynarmicWrapper *cpu,
+                                                  touchHLE_Mem *mem,
+                                                  std::uint64_t *ticks) {
+  return cpu->run_or_step(mem, ticks);
 }
 
 void *touchHLE_DynarmicWrapper_Context_new() {

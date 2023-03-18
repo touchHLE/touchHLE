@@ -5,67 +5,45 @@
  */
 //! `stdio.h`
 
+use super::posix_io::{self, O_APPEND, O_CREAT, O_RDONLY, O_RDWR, O_TRUNC, O_WRONLY};
 use crate::dyld::{export_c_func, FunctionExports};
-use crate::fs::{GuestOpenOptions, GuestPath};
+use crate::fs::GuestPath;
 use crate::mem::{ConstPtr, ConstVoidPtr, GuestUSize, MutPtr, MutVoidPtr, Ptr, SafeRead};
 use crate::Environment;
-use std::collections::HashMap;
-use std::io::{Read, Seek, SeekFrom, Write};
+use std::io::Write;
+
+// Standard C functions
 
 pub mod printf;
-
-#[derive(Default)]
-pub struct State {
-    files: HashMap<MutPtr<FILE>, FileHostObject>,
-}
 
 const EOF: i32 = -1;
 
 #[allow(clippy::upper_case_acronyms)]
+/// C `FILE` struct. This is an opaque type in C, so the definition here is our
+/// own.
 struct FILE {
-    _filler: u8,
+    fd: posix_io::FileDescriptor,
 }
 unsafe impl SafeRead for FILE {}
 
-// TODO: Rewrite this to be layered on top of the POSIX I/O implementation, so
-// that we can implement things like fdopen() in future.
-
-struct FileHostObject {
-    file: crate::fs::GuestFile,
-}
-
 fn fopen(env: &mut Environment, filename: ConstPtr<u8>, mode: ConstPtr<u8>) -> MutPtr<FILE> {
-    let mut options = GuestOpenOptions::new();
     // all valid modes are UTF-8
-    match env.mem.cstr_at_utf8(mode).unwrap() {
-        "r" | "rb" => options.read(),
-        "r+" | "rb+" | "r+b" => options.read().append(),
-        "w" | "wb" => options.write().create().truncate(),
-        "w+" | "wb+" | "w+b" => options.write().create().truncate().read(),
-        "a" | "ab" => options.append().create(),
-        "a+" | "ab+" | "a+b" => options.append().create().read(),
+    let flags = match env.mem.cstr_at_utf8(mode).unwrap() {
+        "r" | "rb" => O_RDONLY,
+        "r+" | "rb+" | "r+b" => O_RDWR | O_APPEND,
+        "w" | "wb" => O_WRONLY | O_CREAT | O_TRUNC,
+        "w+" | "wb+" | "w+b" => O_RDWR | O_CREAT | O_TRUNC,
+        "a" | "ab" => O_WRONLY | O_APPEND | O_CREAT,
+        "a+" | "ab+" | "a+b" => O_RDWR | O_APPEND | O_CREAT,
         // Modern C adds 'x' but that's not in the documentation so presumably
         // iPhone OS did not have it.
         other => panic!("Unexpected fopen() mode {:?}", other),
     };
 
-    let res = match env.fs.open_with_options(
-        GuestPath::new(&env.mem.cstr_at_utf8(filename).unwrap()),
-        options,
-    ) {
-        Ok(file) => {
-            let host_object = FileHostObject { file };
-            let file_ptr = env.mem.alloc_and_write(FILE { _filler: 0 });
-            env.libc_state.stdio.files.insert(file_ptr, host_object);
-            file_ptr
-        }
-        Err(()) => {
-            // TODO: set errno
-            Ptr::null()
-        }
-    };
-    log_dbg!("fopen({:?}, {:?}) => {:?}", env.mem.cstr_at_utf8(filename), env.mem.cstr_at_utf8(mode), res);
-    res
+    match posix_io::open_direct(env, filename, flags) {
+        -1 => Ptr::null(),
+        fd => env.mem.alloc_and_write(FILE { fd }),
+    }
 }
 
 fn fread(
@@ -75,50 +53,46 @@ fn fread(
     n_items: GuestUSize,
     file_ptr: MutPtr<FILE>,
 ) -> GuestUSize {
-    let file = env.libc_state.stdio.files.get_mut(&file_ptr).unwrap();
+    let FILE { fd } = env.mem.read(file_ptr);
+
+    // Yes, the item_size/n_items split doesn't mean anything. The C standard
+    // really does expect you to just multiply and divide like this, with no
+    // attempt being made to ensure a whole number are read or written!
     let total_size = item_size.checked_mul(n_items).unwrap();
-    let buffer_slice = env.mem.bytes_at_mut(buffer.cast(), total_size);
-    // This does actually have exactly the behaviour that the C standard allows
-    // and most implementations provide. There's no requirement that partial
-    // objects should not be written to the buffer, and perhaps some app will
-    // rely on that. The file position also does not need to be rewound!
-    let bytes_read = file.file.read(buffer_slice).unwrap_or(0);
-    let items_read: GuestUSize = (bytes_read / usize::try_from(item_size).unwrap())
-        .try_into()
-        .unwrap();
-    if bytes_read < buffer_slice.len() {
-        // TODO: set errno
-        log!(
-            "Warning: fread({:?}, {:#x}, {:#x}, {:?}) read only {:#x} of requested {:#x} bytes",
-            buffer,
-            item_size,
-            n_items,
-            file_ptr,
-            total_size,
-            bytes_read
-        );
-    } else {
-        log_dbg!(
-            "fread({:?}, {:#x}, {:#x}, {:?}) => {:#x}",
-            buffer,
-            item_size,
-            n_items,
-            file_ptr,
-            items_read
-        );
-    };
-    items_read
+    match posix_io::read(env, fd, buffer, total_size) {
+        // TODO: ferror() support.
+        -1 => 0,
+        bytes_read => {
+            let bytes_read: GuestUSize = bytes_read.try_into().unwrap();
+            bytes_read / item_size
+        }
+    }
 }
 
 fn fgetc(
     env: &mut Environment,
     file_ptr: MutPtr<FILE>,
 ) -> i32 {
-    let file = env.libc_state.stdio.files.get_mut(&file_ptr).unwrap();
-    let mut buffer = [0u8; 1];
-    let bytes_read = file.file.read(&mut buffer).unwrap_or(0);
-    log_dbg!("fgetc({:?}) => {:#x}", file_ptr, buffer[0]);
-    (if bytes_read < buffer.len() { EOF } else { buffer[0].into() }) as i32
+    let FILE { fd } = env.mem.read(file_ptr);
+    let buffer = env.mem.alloc(1);
+
+    match posix_io::lseek(env, fd, 1, posix_io::SEEK_CUR) {
+        -1 => EOF,
+        _cur_pos => {
+            match posix_io::read(env, fd, buffer, 1) {
+                -1 => EOF,
+                bytes_read => {
+                    let bytes_read: GuestUSize = bytes_read.try_into().unwrap();
+                    if bytes_read < 1 {
+                        EOF
+                    } else {
+                        let buf: MutPtr<i32> = buffer.cast();
+                        env.mem.read(buf)
+                    }
+                }
+            }
+        }
+    }
 }
 
 fn fwrite(
@@ -128,96 +102,52 @@ fn fwrite(
     n_items: GuestUSize,
     file_ptr: MutPtr<FILE>,
 ) -> GuestUSize {
-    let file = env.libc_state.stdio.files.get_mut(&file_ptr).unwrap();
+    let FILE { fd } = env.mem.read(file_ptr);
+
+    // The comment about the item_size/n_items split in fread() applies here too
     let total_size = item_size.checked_mul(n_items).unwrap();
-    let buffer_slice = env.mem.bytes_at(buffer.cast(), total_size);
-    // Remarks in fread() apply here too.
-    let bytes_written = file.file.write(buffer_slice).unwrap_or(0);
-    let items_written: GuestUSize = (bytes_written / usize::try_from(item_size).unwrap())
-        .try_into()
-        .unwrap();
-    if bytes_written < buffer_slice.len() {
-        // TODO: set errno
-        log!(
-            "Warning: fwrite({:?}, {:#x}, {:#x}, {:?}) wrote only {:#x} of requested {:#x} bytes",
-            buffer,
-            item_size,
-            n_items,
-            file_ptr,
-            total_size,
-            bytes_written
-        );
-    } else {
-        log_dbg!(
-            "fwrite({:?}, {:#x}, {:#x}, {:?}) => {:#x}",
-            buffer,
-            item_size,
-            n_items,
-            file_ptr,
-            items_written
-        );
-    };
-    items_written
+    match posix_io::write(env, fd, buffer, total_size) {
+        // TODO: ferror() support.
+        -1 => 0,
+        bytes_written => {
+            let bytes_written: GuestUSize = bytes_written.try_into().unwrap();
+            bytes_written / item_size
+        }
+    }
 }
 
-const SEEK_SET: i32 = 0;
-const SEEK_CUR: i32 = 1;
-const SEEK_END: i32 = 2;
+const SEEK_SET: i32 = posix_io::SEEK_SET;
+const SEEK_CUR: i32 = posix_io::SEEK_CUR;
+const SEEK_END: i32 = posix_io::SEEK_END;
 fn fseek(env: &mut Environment, file_ptr: MutPtr<FILE>, offset: i32, whence: i32) -> i32 {
-    let file = env.libc_state.stdio.files.get_mut(&file_ptr).unwrap();
+    let FILE { fd } = env.mem.read(file_ptr);
 
-    let from = match whence {
-        // not sure whether offset is treated as signed or unsigned when using
-        // SEEK_SET, so `.try_into()` seems safer.
-        SEEK_SET => SeekFrom::Start(offset.try_into().unwrap()),
-        SEEK_CUR => SeekFrom::Current(offset.into()),
-        SEEK_END => SeekFrom::End(offset.into()),
-        _ => panic!("Unsupported \"whence\" parameter to fseek(): {}", whence),
-    };
-
-    let res = match file.file.seek(from) {
-        Ok(_) => 0,
-        // TODO: set errno
-        Err(_) => -1,
-    };
-    log_dbg!(
-        "fseek({:?}, {:#x}, {}) => {}",
-        file_ptr,
-        offset,
-        whence,
-        res
-    );
-    res
+    assert!([SEEK_SET, SEEK_CUR, SEEK_END].contains(&whence));
+    match posix_io::lseek(env, fd, offset.into(), whence) {
+        -1 => -1,
+        _cur_pos => 0,
+    }
 }
 
 fn ftell(env: &mut Environment, file_ptr: MutPtr<FILE>) -> i32 {
-    let file = env.libc_state.stdio.files.get_mut(&file_ptr).unwrap();
+    let FILE { fd } = env.mem.read(file_ptr);
 
-    let res = match file.file.stream_position() {
+    match posix_io::lseek(env, fd, 0, posix_io::SEEK_CUR) {
+        -1 => -1,
         // TODO: What's the correct behaviour if the position is beyond 2GiB?
-        Ok(pos) => pos.try_into().unwrap(),
-        // TODO: set errno
-        Err(_) => -1,
-    };
-    log_dbg!("ftell({:?}) => {:?}", file_ptr, res);
-    res
+        cur_pos => cur_pos.try_into().unwrap(),
+    }
 }
 
 fn fclose(env: &mut Environment, file_ptr: MutPtr<FILE>) -> i32 {
-    let file = env.libc_state.stdio.files.remove(&file_ptr).unwrap();
+    let FILE { fd } = env.mem.read(file_ptr);
 
-    // The actual closing of the file happens implicitly when `file` falls out
-    // of scope. The return value is about whether flushing succeeds.
-    match file.file.sync_all() {
-        Ok(()) => {
-            log_dbg!("fclose({:?}) => 0", file_ptr);
-            0
-        }
-        Err(_) => {
-            // TODO: set errno
-            log!("Warning: fclose({:?}) failed, returning EOF", file_ptr);
-            EOF
-        }
+    env.mem.free(file_ptr.cast());
+
+    match posix_io::close(env, fd) {
+        0 => 0,
+        -1 => EOF,
+        _ => unreachable!(),
     }
 }
 
@@ -246,7 +176,15 @@ fn remove(env: &mut Environment, path: ConstPtr<u8>) -> i32 {
     }
 }
 
+// POSIX-specific functions
+
+fn fileno(env: &mut Environment, file_ptr: MutPtr<FILE>) -> posix_io::FileDescriptor {
+    let FILE { fd } = env.mem.read(file_ptr);
+    fd
+}
+
 pub const FUNCTIONS: FunctionExports = &[
+    // Standard C functions
     export_c_func!(fopen(_, _)),
     export_c_func!(fread(_, _, _, _)),
     export_c_func!(fgetc(_)),
@@ -256,4 +194,6 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(fclose(_)),
     export_c_func!(puts(_)),
     export_c_func!(remove(_)),
+    // POSIX-specific functions
+    export_c_func!(fileno(_)),
 ];

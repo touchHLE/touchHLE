@@ -8,6 +8,7 @@
 use crate::window::DeviceOrientation;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
+use std::net::{SocketAddr, ToSocketAddrs};
 use std::num::NonZeroU32;
 
 pub const DOCUMENTATION: &str = "\
@@ -78,21 +79,21 @@ Game controller options:
         symbol. It may be negative.
 
 Debugging options:
-    --breakpoint=...
-        This option sets a primitive breakpoint at a provided memory address.
-        The target instruction will be overwritten shortly after the binary is
-        loaded, and executing the instruction will cause touchHLE to panic.
-
-        The address is hexadecimal and can have an optional '0x' prefix.
-        If the target instruction is a Thumb instruction, either the lowest bit
-        of the address must be set, or the address should be prefixed with 'T',
-        e.g. 'T0xF00' or 'TF00'.
-
-        To set multiple breakpoints, use several '--breakpoint=' arguments.
-
     --disable-direct-memory-access
         Force dynarmic to always access guest memory via the memory access
         callbacks, rather than using the fast direct access path (page tables).
+
+    --gdb=...
+        Starts touchHLE in debugging mode, listening for GDB remote serial
+        protocol connections over TCP on the specified host and port.
+
+        You can then connect to touchHLE with GDB and make use of its features
+        to inspect memory and registers, set up software breakpoints, and
+        continue or step execution.
+
+        The host and port should be separated by a colon. The host can be a
+        host name or an IP address. IPv6 addresses should be enclosed in square
+        brackets, e.g. --gdb=[::1]:9001 for IPv6 loopback device port 9001.
 ";
 
 /// Struct containing all user-configurable options.
@@ -104,8 +105,8 @@ pub struct Options {
     pub y_tilt_range: f32,
     pub x_tilt_offset: f32,
     pub y_tilt_offset: f32,
-    pub breakpoints: Vec<u32>,
     pub direct_memory_access: bool,
+    pub gdb_listen_addrs: Option<Vec<SocketAddr>>,
 }
 
 impl Default for Options {
@@ -118,8 +119,8 @@ impl Default for Options {
             y_tilt_range: 60.0,
             x_tilt_offset: 0.0,
             y_tilt_offset: 0.0,
-            breakpoints: Vec::new(),
             direct_memory_access: true,
+            gdb_listen_addrs: None,
         }
     }
 }
@@ -157,16 +158,15 @@ impl Options {
             self.x_tilt_offset = parse_degrees(value, "X tilt offset")?;
         } else if let Some(value) = arg.strip_prefix("--y-tilt-offset=") {
             self.y_tilt_offset = parse_degrees(value, "Y tilt offset")?;
-        } else if let Some(addr) = arg.strip_prefix("--breakpoint=") {
-            let is_thumb = addr.starts_with('T');
-            let addr = addr.strip_prefix('T').unwrap_or(addr);
-            let addr = addr.strip_prefix("0x").unwrap_or(addr);
-            let addr = u32::from_str_radix(addr, 16)
-                .map_err(|_| "Incorrect breakpoint syntax".to_string())?;
-            self.breakpoints
-                .push(if is_thumb { addr | 0x1 } else { addr });
         } else if arg == "--disable-direct-memory-access" {
             self.direct_memory_access = false;
+        } else if let Some(address) = arg.strip_prefix("--gdb=") {
+            let addrs = address
+                .to_socket_addrs()
+                .map_err(|e| format!("Could not resolve GDB server listen address: {}", e))?
+                .collect();
+            println!("{:?}", addrs);
+            self.gdb_listen_addrs = Some(addrs);
         } else {
             return Ok(false);
         };

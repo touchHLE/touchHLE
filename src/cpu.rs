@@ -124,10 +124,22 @@ impl Drop for CpuContext {
 /// Why CPU execution ended.
 #[derive(Debug)]
 pub enum CpuState {
-    /// Execution halted due to using up all remaining ticks.
+    /// Execution halted due to using up all remaining ticks (normal execution)
+    /// or after the single instruction was executed (step execution).
     Normal,
     /// SVC instruction encountered.
     Svc(u32),
+    /// An error was encountered.
+    Error(CpuError),
+}
+
+/// A reason that can cause CPU execution to be interrupted.
+#[derive(Debug)]
+pub enum CpuError {
+    /// Memory error during execution (probably a null page access).
+    MemoryError,
+    /// Undefined instruction (perhaps from a GDB software breakpoint).
+    UndefinedInstruction,
 }
 
 impl Cpu {
@@ -247,33 +259,34 @@ impl Cpu {
         }
     }
 
-    /// Start CPU execution, with an abstract time limit in "ticks". This will
-    /// return either because the CPU ran out of time (in which case
-    /// `*ticks == 0`) or because something else happened which requires
-    /// attention from the host (in which case `*ticks` is the remaining number
-    /// of ticks). Check the return value!
+    /// Start CPU execution.
+    ///
+    /// If `ticks` is [Some], it is used as an abstract time limit. The value
+    /// will be reduced proportionately with the amount of ticks expended.
+    ///
+    /// If `ticks` is [None], the CPU executes only a single instruction. This
+    /// is also known as "stepping".
+    ///
+    /// This will return either because the CPU ran out of time, or because
+    /// something else happened which requires attention from the host.
     #[must_use]
-    pub fn run(&mut self, mem: &mut Mem, ticks: &mut u64) -> CpuState {
+    pub fn run_or_step(&mut self, mem: &mut Mem, ticks: Option<&mut u64>) -> CpuState {
         // See ::new() for why this is done.
         if !self.direct_memory_access_ptr.is_null() {
             assert!(self.direct_memory_access_ptr == unsafe { mem.direct_memory_access_ptr() });
         }
 
         let res = unsafe {
-            touchHLE_DynarmicWrapper_run(
+            touchHLE_DynarmicWrapper_run_or_step(
                 self.dynarmic_wrapper,
                 mem as *mut Mem as *mut touchHLE_Mem,
                 ticks,
             )
         };
         match res {
-            -1 => {
-                assert!(*ticks == 0);
-                CpuState::Normal
-            }
-            -2 => {
-                panic!("Memory error during CPU execution!");
-            }
+            -1 => CpuState::Normal,
+            -2 => CpuState::Error(CpuError::MemoryError),
+            -3 => CpuState::Error(CpuError::UndefinedInstruction),
             _ if res < -2 => panic!("Unexpected CPU execution result"),
             svc => CpuState::Svc(svc as u32),
         }

@@ -43,10 +43,10 @@ extern "C" {
         start: VAddr,
         size: u32,
     );
-    pub fn touchHLE_DynarmicWrapper_run(
+    pub fn touchHLE_DynarmicWrapper_run_or_step(
         cpu: *mut touchHLE_DynarmicWrapper,
         mem: *mut touchHLE_Mem,
-        ticks: *mut u64,
+        ticks: Option<&mut u64>,
     ) -> i32;
 
     pub fn touchHLE_DynarmicWrapper_Context_new() -> *mut Dynarmic_A32_Context;

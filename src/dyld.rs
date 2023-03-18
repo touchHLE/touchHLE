@@ -131,9 +131,6 @@ fn encode_a32_svc(imm: u32) -> u32 {
     assert!(imm & 0xff000000 == 0);
     imm | 0xef000000
 }
-fn encode_t32_svc(imm: u8) -> u16 {
-    u16::from(imm) | 0xdf00
-}
 fn encode_a32_ret() -> u32 {
     0xe12fff1e
 }
@@ -152,11 +149,9 @@ impl Dyld {
     const SVC_LAZY_LINK: u32 = 0;
     /// We reserve this SVC ID for the special return-to-host routine.
     pub const SVC_RETURN_TO_HOST: u32 = 1;
-    /// We reserve this SVC ID for breakpoints.
-    const SVC_BREAKPOINT: u32 = 2;
     /// The range of SVC IDs `SVC_LINKED_FUNCTIONS_BASE..` is used to reference
     /// [Self::linked_host_functions] entries.
-    const SVC_LINKED_FUNCTIONS_BASE: u32 = Self::SVC_BREAKPOINT + 1;
+    const SVC_LINKED_FUNCTIONS_BASE: u32 = Self::SVC_RETURN_TO_HOST + 1;
 
     const SYMBOL_STUB_INSTRUCTIONS: [u32; 2] = [0xe59fc000, 0xe59cf000];
     const PIC_SYMBOL_STUB_INSTRUCTIONS: [u32; 3] = [0xe59fc004, 0xe08fc00c, 0xe59cf000];
@@ -382,7 +377,6 @@ impl Dyld {
         match svc {
             Self::SVC_LAZY_LINK => self.do_lazy_link(bins, mem, cpu, svc_pc),
             Self::SVC_RETURN_TO_HOST => unreachable!(), // don't handle here
-            Self::SVC_BREAKPOINT => panic!("Breakpoint"),
             Self::SVC_LINKED_FUNCTIONS_BASE.. => {
                 let f = self
                     .linked_host_functions
@@ -432,6 +426,12 @@ impl Dyld {
 
             cpu.invalidate_cache_range(stub_function_ptr.to_bits(), 4);
 
+            log_dbg!(
+                "Linked {} at {:?} to host implementation",
+                symbol,
+                stub_function_ptr
+            );
+
             // Return the host function so that we can call it now that we're
             // done.
             return Some(f);
@@ -463,11 +463,18 @@ impl Dyld {
                     // The PIC (position-independent code) stub uses a
                     // PC-relative offset rather than an absolute address.
                     let offset = mem.read(stub_function_ptr + instruction_count);
-                    Ptr::from_bits(stub_function_ptr.to_bits() + offset + 8)
+                    Ptr::from_bits(stub_function_ptr.to_bits() + offset + 12)
                 };
                 mem.write(la_symbol_ptr, addr);
 
-                log_dbg!("Linked {:?} as {:#x} at {:?}", symbol, addr, la_symbol_ptr);
+                log_dbg!(
+                    "Linked {} at {:?}/{:?} to {:#x} from {}",
+                    symbol,
+                    stub_function_ptr,
+                    la_symbol_ptr,
+                    addr,
+                    dylib.name
+                );
 
                 // Tell the caller it needs to restart execution at svc_pc.
                 return None;
@@ -509,25 +516,5 @@ impl Dyld {
         Ok(GuestFunction::from_addr_with_thumb_bit(
             function_ptr.to_bits(),
         ))
-    }
-
-    /// Sets a primitive breakpoint at an instruction address by overwriting it
-    /// with a special SVC. The address must have the Thumb bit set if needed.
-    ///
-    /// This should be called after initial linking so the instructions don't
-    /// get overwritten by that. **Do not call this after CPU execution has
-    /// begun**, it does not clear the instruction cache!
-    pub fn set_breakpoint(&mut self, mem: &mut Mem, at: u32) {
-        let at = GuestFunction::from_addr_with_thumb_bit(at);
-        if at.is_thumb() {
-            let ptr: MutPtr<u16> = Ptr::from_bits(at.addr_without_thumb_bit());
-            mem.write(
-                ptr,
-                encode_t32_svc(Self::SVC_BREAKPOINT.try_into().unwrap()),
-            );
-        } else {
-            let ptr: MutPtr<u32> = Ptr::from_bits(at.addr_without_thumb_bit());
-            mem.write(ptr, encode_a32_svc(Self::SVC_BREAKPOINT));
-        }
     }
 }

@@ -43,7 +43,7 @@ fn fd_to_file_idx(fd: FileDescriptor) -> usize {
 }
 
 /// File descriptor type. This alias is for readability, POSIX just uses `int`.
-type FileDescriptor = i32;
+pub type FileDescriptor = i32;
 #[allow(dead_code)]
 const STDIN_FILENO: FileDescriptor = 0;
 #[allow(dead_code)]
@@ -53,20 +53,26 @@ const NORMAL_FILENO_BASE: FileDescriptor = STDERR_FILENO + 1;
 
 /// Flags bitfield for `open`. This alias is for readability, POSIX just uses
 /// `int`.
-type OpenFlag = i32;
-const O_RDONLY: OpenFlag = 0x0;
-const O_WRONLY: OpenFlag = 0x1;
-const O_RDWR: OpenFlag = 0x2;
-const O_ACCMODE: OpenFlag = O_RDWR | O_WRONLY | O_RDONLY;
+pub type OpenFlag = i32;
+pub const O_RDONLY: OpenFlag = 0x0;
+pub const O_WRONLY: OpenFlag = 0x1;
+pub const O_RDWR: OpenFlag = 0x2;
+pub const O_ACCMODE: OpenFlag = O_RDWR | O_WRONLY | O_RDONLY;
 
-const O_NONBLOCK: OpenFlag = 0x4;
-const O_APPEND: OpenFlag = 0x8;
-const O_NOFOLLOW: OpenFlag = 0x100;
-const O_CREAT: OpenFlag = 0x200;
-const O_TRUNC: OpenFlag = 0x400;
-const O_EXCL: OpenFlag = 0x800;
+pub const O_NONBLOCK: OpenFlag = 0x4;
+pub const O_APPEND: OpenFlag = 0x8;
+pub const O_NOFOLLOW: OpenFlag = 0x100;
+pub const O_CREAT: OpenFlag = 0x200;
+pub const O_TRUNC: OpenFlag = 0x400;
+pub const O_EXCL: OpenFlag = 0x800;
 
 fn open(env: &mut Environment, path: ConstPtr<u8>, flags: i32, _args: VAList) -> FileDescriptor {
+    // TODO: parse variadic arguments and pass them on (file creation mode)
+    self::open_direct(env, path, flags)
+}
+
+/// Special extension for host code: [open] without the [VAList].
+pub fn open_direct(env: &mut Environment, path: ConstPtr<u8>, flags: i32) -> FileDescriptor {
     // TODO: support more flags, this list is not complete
     assert!(
         flags & !(O_ACCMODE | O_NONBLOCK | O_APPEND | O_NOFOLLOW | O_CREAT | O_TRUNC | O_EXCL) == 0
@@ -128,7 +134,7 @@ fn open(env: &mut Environment, path: ConstPtr<u8>, flags: i32, _args: VAList) ->
     res
 }
 
-fn read(
+pub fn read(
     env: &mut Environment,
     fd: FileDescriptor,
     buffer: MutVoidPtr,
@@ -173,7 +179,7 @@ fn read(
     }
 }
 
-fn write(
+pub fn write(
     env: &mut Environment,
     fd: FileDescriptor,
     buffer: ConstVoidPtr,
@@ -219,11 +225,11 @@ fn write(
 }
 
 #[allow(non_camel_case_types)]
-type off_t = i64;
-const SEEK_SET: i32 = 0;
-const SEEK_CUR: i32 = 1;
-const SEEK_END: i32 = 2;
-fn lseek(env: &mut Environment, fd: FileDescriptor, offset: off_t, whence: i32) -> off_t {
+pub type off_t = i64;
+pub const SEEK_SET: i32 = 0;
+pub const SEEK_CUR: i32 = 1;
+pub const SEEK_END: i32 = 2;
+pub fn lseek(env: &mut Environment, fd: FileDescriptor, offset: off_t, whence: i32) -> off_t {
     // TODO: error handling for unknown fd?
     let file = env.libc_state.posix_io.file_for_fd(fd).unwrap();
 
@@ -241,11 +247,11 @@ fn lseek(env: &mut Environment, fd: FileDescriptor, offset: off_t, whence: i32) 
         // TODO: set errno
         Err(_) => -1,
     };
-    log_dbg!("fseek({:?}, {:#x}, {}) => {}", fd, offset, whence, res);
+    log_dbg!("lseek({:?}, {:#x}, {}) => {}", fd, offset, whence, res);
     res
 }
 
-fn close(env: &mut Environment, fd: FileDescriptor) -> i32 {
+pub fn close(env: &mut Environment, fd: FileDescriptor) -> i32 {
     // TODO: error handling for unknown fd?
     let file = env.libc_state.posix_io.files[fd_to_file_idx(fd)]
         .take()

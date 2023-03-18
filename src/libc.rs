@@ -21,6 +21,7 @@ pub mod mach_time;
 pub mod math;
 pub mod posix_io;
 pub mod pthread;
+pub mod setjmp;
 pub mod stdio;
 pub mod stdlib;
 pub mod string;
@@ -34,7 +35,6 @@ pub struct State {
     keymgr: keymgr::State,
     posix_io: posix_io::State,
     pthread: pthread::State,
-    stdio: stdio::State,
     stdlib: stdlib::State,
     string: string::State,
     time: time::State,

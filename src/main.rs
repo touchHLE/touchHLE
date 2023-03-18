@@ -31,6 +31,7 @@ mod environment;
 mod font;
 mod frameworks;
 mod fs;
+mod gdb;
 mod image;
 mod libc;
 mod licenses;

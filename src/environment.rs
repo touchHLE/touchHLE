@@ -9,8 +9,10 @@
 //! via the re-exports one level up.
 
 use crate::{
-    abi, bundle, cpu, dyld, frameworks, fs, image, libc, mach_o, mem, objc, options, stack, window,
+    abi, bundle, cpu, dyld, frameworks, fs, gdb, image, libc, mach_o, mem, objc, options, stack,
+    window,
 };
+use std::net::TcpListener;
 use std::time::Instant;
 
 /// Index into the [Vec] of threads. Thread 0 is always the main thread.
@@ -72,6 +74,19 @@ pub struct Environment {
     pub libc_state: libc::State,
     pub framework_state: frameworks::State,
     pub options: options::Options,
+    gdb_server: Option<gdb::GdbServer>,
+}
+
+/// What to do next when executing this thread.
+enum ThreadNextAction {
+    /// Continue CPU emulation.
+    Continue,
+    /// Yield to another thread.
+    Yield,
+    /// Return to host.
+    ReturnToHost,
+    /// Debug the current CPU error.
+    DebugCpuError(cpu::CpuError),
 }
 
 impl Environment {
@@ -165,10 +180,6 @@ impl Environment {
         let mut dyld = dyld::Dyld::new();
         dyld.do_initial_linking(&bins, &mut mem, &mut objc);
 
-        for &breakpoint in &options.breakpoints {
-            dyld.set_breakpoint(&mut mem, breakpoint);
-        }
-
         let cpu = cpu::Cpu::new(match options.direct_memory_access {
             true => Some(&mut mem),
             false => None,
@@ -197,6 +208,7 @@ impl Environment {
             libc_state: Default::default(),
             framework_state: Default::default(),
             options,
+            gdb_server: None,
         };
 
         dyld::Dyld::do_late_linking(&mut env);
@@ -211,9 +223,29 @@ impl Environment {
             stack::prep_stack_for_start(&mut env.mem, &mut env.cpu, argv, envp, apple);
         }
 
-        println!("CPU emulation begins now.");
-
         env.cpu.set_cpsr(cpu::Cpu::CPSR_USER_MODE);
+
+        if let Some(addrs) = env.options.gdb_listen_addrs.take() {
+            let listener = TcpListener::bind(addrs.as_slice())
+                .map_err(|e| format!("Could not bind to {:?}: {}", addrs, e))?;
+            println!(
+                "Waiting for debugger connection on {}...",
+                addrs
+                    .into_iter()
+                    .map(|a| format!("{}", a))
+                    .collect::<Vec<String>>()
+                    .join(", ")
+            );
+            let (client, client_addr) = listener
+                .accept()
+                .map_err(|e| format!("Could not accept connection: {}", e))?;
+            println!("Debugger client connected on {}.", client_addr);
+            let mut gdb_server = gdb::GdbServer::new(client);
+            gdb_server.wait_for_debugger(None, &mut env.cpu, &mut env.mem);
+            env.gdb_server = Some(gdb_server);
+        }
+
+        println!("CPU emulation begins now.");
 
         // Static initializers for libraries must be run before the initializer
         // in the app binary.
@@ -245,6 +277,14 @@ impl Environment {
     }
 
     fn stack_trace(&self) {
+        if self.current_thread == 0 {
+            eprintln!("Attempting to produce stack trace for main thread:");
+        } else {
+            eprintln!(
+                "Attempting to produce stack trace for thread {}:",
+                self.current_thread
+            );
+        }
         let stack_range = self.threads[self.current_thread].stack.clone().unwrap();
         eprintln!(
             " 0. {:#x} (PC)",
@@ -325,14 +365,6 @@ impl Environment {
         if let Err(e) = res {
             eprintln!("Register state immediately after panic:");
             self.cpu.dump_regs();
-            if self.current_thread == 0 {
-                eprintln!("Attempting to produce stack trace for main thread:");
-            } else {
-                eprintln!(
-                    "Attempting to produce stack trace for thread {}:",
-                    self.current_thread
-                );
-            }
             self.stack_trace();
             std::panic::resume_unwind(e);
         }
@@ -366,6 +398,99 @@ impl Environment {
         self.current_thread = new_thread;
     }
 
+    #[cold]
+    /// Let the debugger handle a CPU error, or panic if there's no debugger
+    /// connected. Returns [true] if the CPU should step and then resume
+    /// debugging, or [false] if it should resume normal execution.
+    fn debug_cpu_error(&mut self, error: cpu::CpuError) -> bool {
+        if matches!(error, cpu::CpuError::UndefinedInstruction) {
+            // Rewind the PC so that it's at the instruction where the error
+            // occurred, rather than the next instruction. This is necessary for
+            // GDB to detect its software breakpoints. For some reason this
+            // isn't correct for memory errors however.
+            let instruction_len = if (self.cpu.cpsr() & cpu::Cpu::CPSR_THUMB) != 0 {
+                2
+            } else {
+                4
+            };
+            self.cpu.regs_mut()[cpu::Cpu::PC] -= instruction_len;
+        }
+
+        if self.gdb_server.is_none() {
+            panic!("Error during CPU execution: {:?}", error);
+        }
+
+        eprintln!("Debuggable error during CPU execution: {:?}.", error);
+        // GDB doesn't seem to manage to produce a useful stack trace, so
+        // let's print our own.
+        self.stack_trace();
+        self.gdb_server.as_mut().unwrap().wait_for_debugger(
+            Some(error),
+            &mut self.cpu,
+            &mut self.mem,
+        )
+    }
+
+    #[inline(always)]
+    /// Respond to the new CPU state (do nothing, execute an SVC or enter
+    /// debugging) and decide what to do next.
+    fn handle_cpu_state(
+        &mut self,
+        state: cpu::CpuState,
+        initial_thread: ThreadID,
+        root: bool,
+    ) -> ThreadNextAction {
+        match state {
+            cpu::CpuState::Normal => ThreadNextAction::Continue,
+            cpu::CpuState::Svc(svc) => {
+                // the program counter is pointing at the
+                // instruction after the SVC, but we want the
+                // address of the SVC itself
+                let svc_pc = self.cpu.regs()[cpu::Cpu::PC] - 4;
+                if svc == dyld::Dyld::SVC_RETURN_TO_HOST {
+                    assert!(svc_pc == self.dyld.return_to_host_routine().addr_without_thumb_bit());
+                    assert!(!root);
+                    // FIXME/TODO: How do we handle a return-to-host on
+                    // the wrong thread? Defer it somehow?
+                    if !root && self.current_thread == initial_thread {
+                        // Normal return from host-to-guest call
+                        return ThreadNextAction::ReturnToHost;
+                    } else if self.threads[self.current_thread].in_start_routine {
+                        // Secondary thread finished starting
+                        // TODO: Having two meanings for this SVC is
+                        // dangerous, use a different SVC for this case.
+                        log_dbg!(
+                            "Thread {} finished start routine and became inactive",
+                            self.current_thread
+                        );
+                        self.threads[self.current_thread].active = false;
+                        let stack = self.threads[self.current_thread].stack.take().unwrap();
+                        let stack: mem::MutVoidPtr = mem::Ptr::from_bits(*stack.start());
+                        log_dbg!("Freeing thread {} stack {:?}", self.current_thread, stack);
+                        self.mem.free(stack);
+                        return ThreadNextAction::Yield;
+                    } else {
+                        panic!("Unexpected return-to-host!");
+                    }
+                }
+
+                if let Some(f) =
+                    self.dyld
+                        .get_svc_handler(&self.bins, &mut self.mem, &mut self.cpu, svc_pc, svc)
+                {
+                    let was_in_host_function = self.threads[self.current_thread].in_host_function;
+                    self.threads[self.current_thread].in_host_function = true;
+                    f.call_from_guest(self);
+                    self.threads[self.current_thread].in_host_function = was_in_host_function;
+                } else {
+                    self.cpu.regs_mut()[cpu::Cpu::PC] = svc_pc;
+                }
+                ThreadNextAction::Continue
+            }
+            cpu::CpuState::Error(e) => ThreadNextAction::DebugCpuError(e),
+        }
+    }
+
     fn run_inner(&mut self, root: bool) {
         let initial_thread = self.current_thread;
         assert!(self.threads[initial_thread].active);
@@ -379,64 +504,30 @@ impl Environment {
             self.window.poll_for_events(&self.options);
 
             let mut ticks = 100_000;
+            let mut step_and_debug = false;
             while ticks > 0 {
-                match self.cpu.run(&mut self.mem, &mut ticks) {
-                    cpu::CpuState::Normal => (),
-                    cpu::CpuState::Svc(svc) => {
-                        // the program counter is pointing at the
-                        // instruction after the SVC, but we want the
-                        // address of the SVC itself
-                        let svc_pc = self.cpu.regs()[cpu::Cpu::PC] - 4;
-                        if svc == dyld::Dyld::SVC_RETURN_TO_HOST {
-                            assert!(
-                                svc_pc
-                                    == self.dyld.return_to_host_routine().addr_without_thumb_bit()
+                let state = self.cpu.run_or_step(
+                    &mut self.mem,
+                    if step_and_debug {
+                        None
+                    } else {
+                        Some(&mut ticks)
+                    },
+                );
+                match self.handle_cpu_state(state, initial_thread, root) {
+                    ThreadNextAction::Continue => {
+                        if step_and_debug {
+                            step_and_debug = self.gdb_server.as_mut().unwrap().wait_for_debugger(
+                                None,
+                                &mut self.cpu,
+                                &mut self.mem,
                             );
-                            assert!(!root);
-                            // FIXME/TODO: How do we handle a return-to-host on
-                            // the wrong thread? Defer it somehow?
-                            if !root && self.current_thread == initial_thread {
-                                // Normal return from host-to-guest call
-                                return;
-                            } else if self.threads[self.current_thread].in_start_routine {
-                                // Secondary thread finished starting
-                                // TODO: Having two meanings for this SVC is
-                                // dangerous, use a different SVC for this case.
-                                log_dbg!(
-                                    "Thread {} finished start routine and became inactive",
-                                    self.current_thread
-                                );
-                                self.threads[self.current_thread].active = false;
-                                let stack = self.threads[self.current_thread].stack.take().unwrap();
-                                let stack: mem::MutVoidPtr = mem::Ptr::from_bits(*stack.start());
-                                log_dbg!(
-                                    "Freeing thread {} stack {:?}",
-                                    self.current_thread,
-                                    stack
-                                );
-                                self.mem.free(stack);
-                                break;
-                            } else {
-                                panic!("Unexpected return-to-host!");
-                            }
                         }
-
-                        if let Some(f) = self.dyld.get_svc_handler(
-                            &self.bins,
-                            &mut self.mem,
-                            &mut self.cpu,
-                            svc_pc,
-                            svc,
-                        ) {
-                            let was_in_host_function =
-                                self.threads[self.current_thread].in_host_function;
-                            self.threads[self.current_thread].in_host_function = true;
-                            f.call_from_guest(self);
-                            self.threads[self.current_thread].in_host_function =
-                                was_in_host_function;
-                        } else {
-                            self.cpu.regs_mut()[cpu::Cpu::PC] = svc_pc;
-                        }
+                    }
+                    ThreadNextAction::Yield => break,
+                    ThreadNextAction::ReturnToHost => return,
+                    ThreadNextAction::DebugCpuError(e) => {
+                        step_and_debug = self.debug_cpu_error(e);
                     }
                 }
             }

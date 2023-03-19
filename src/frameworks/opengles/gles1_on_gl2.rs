@@ -19,8 +19,8 @@
 //! It is therefore a convenient target for our implementation.
 
 use super::GLES;
-use crate::window::gles11 as gl21;
-use crate::window::gles11::types::*;
+use crate::window::gl21compat as gl21;
+use crate::window::gl21compat::types::*;
 use crate::window::gles11;
 use crate::window::{GLContext, GLVersion, Window};
 
@@ -151,7 +151,7 @@ pub(super) const LIGHT_PARAMS: &[(GLenum, u8)] = &[
 /// values they take.
 pub(super) const TEX_ENV_PARAMS: &[(GLenum, bool, u8)] = &[
     (gl21::TEXTURE_ENV_MODE, true, 1),
-    //(gl21::COORD_REPLACE, true, 1),
+    (gl21::COORD_REPLACE, true, 1),
     (gl21::COMBINE_RGB, true, 1),
     (gl21::COMBINE_ALPHA, true, 1),
     (gl21::SRC0_RGB, true, 1),
@@ -323,7 +323,7 @@ impl GLES1OnGL2 {
 impl GLES for GLES1OnGL2 {
     fn new(window: &mut Window) -> Self {
         Self {
-            gl_ctx: window.create_gl_context(GLVersion::GLES11),
+            gl_ctx: window.create_gl_context(GLVersion::GL21Compat),
             pointer_is_fixed_point: [false; ARRAYS.len()],
             fixed_point_translation_buffers: [Vec::new(), Vec::new(), Vec::new(), Vec::new()],
         }
@@ -359,13 +359,13 @@ impl GLES for GLES1OnGL2 {
         assert!([
             gl21::ARRAY_BUFFER_BINDING,
             gl21::ELEMENT_ARRAY_BUFFER_BINDING,
-            gl21::FRAMEBUFFER_BINDING_OES,
+            gl21::FRAMEBUFFER_BINDING_EXT,
             gl21::MATRIX_MODE,
             gl21::MAX_TEXTURE_SIZE,
-            gl21::RENDERBUFFER_BINDING_OES,
+            gl21::RENDERBUFFER_BINDING_EXT,
             gl21::TEXTURE_BINDING_2D
         ]
-        .contains(&pname));
+            .contains(&pname));
         gl21::GetIntegerv(pname, params);
     }
     unsafe fn Hint(&mut self, target: GLenum, mode: GLenum) {
@@ -376,7 +376,7 @@ impl GLES for GLES1OnGL2 {
             gl21::PERSPECTIVE_CORRECTION_HINT,
             gl21::POINT_SMOOTH_HINT
         ]
-        .contains(&target));
+            .contains(&target));
         assert!([gl21::FASTEST, gl21::NICEST, gl21::DONT_CARE].contains(&mode));
         gl21::Hint(target, mode);
     }
@@ -393,7 +393,7 @@ impl GLES for GLES1OnGL2 {
             gl21::GEQUAL,
             gl21::ALWAYS
         ]
-        .contains(&func));
+            .contains(&func));
         gl21::AlphaFunc(func, ref_)
     }
     unsafe fn AlphaFuncx(&mut self, func: GLenum, ref_: GLclampx) {
@@ -411,7 +411,7 @@ impl GLES for GLES1OnGL2 {
             gl21::ONE_MINUS_DST_ALPHA,
             gl21::SRC_ALPHA_SATURATE
         ]
-        .contains(&sfactor));
+            .contains(&sfactor));
         assert!([
             gl21::ZERO,
             gl21::ONE,
@@ -422,7 +422,7 @@ impl GLES for GLES1OnGL2 {
             gl21::DST_ALPHA,
             gl21::ONE_MINUS_DST_ALPHA
         ]
-        .contains(&dfactor));
+            .contains(&dfactor));
         gl21::BlendFunc(sfactor, dfactor);
     }
     unsafe fn CullFace(&mut self, mode: GLenum) {
@@ -437,10 +437,10 @@ impl GLES for GLES1OnGL2 {
         gl21::FrontFace(mode);
     }
     unsafe fn DepthRangef(&mut self, near: GLclampf, far: GLclampf) {
-        gl21::DepthRangef(near.into(), far.into())
+        gl21::DepthRange(near.into(), far.into())
     }
     unsafe fn DepthRangex(&mut self, near: GLclampx, far: GLclampx) {
-        gl21::DepthRangex(near.into(), far.into())
+        gl21::DepthRange(fixed_to_float(near).into(), fixed_to_float(far).into())
     }
     unsafe fn ShadeModel(&mut self, mode: GLenum) {
         assert!(mode == gl21::FLAT || mode == gl21::SMOOTH);
@@ -585,7 +585,7 @@ impl GLES for GLES1OnGL2 {
             gl21::TRIANGLE_FAN,
             gl21::TRIANGLES
         ]
-        .contains(&mode));
+            .contains(&mode));
 
         let state_backup = self.translate_fixed_point_arrays(first, count);
 
@@ -609,7 +609,7 @@ impl GLES for GLES1OnGL2 {
             gl21::TRIANGLE_FAN,
             gl21::TRIANGLES
         ]
-        .contains(&mode));
+            .contains(&mode));
         assert!(type_ == gl21::UNSIGNED_BYTE || type_ == gl21::UNSIGNED_SHORT);
 
         let state_backup = if self.pointer_is_fixed_point.iter().any(|&is_fixed| is_fixed) {
@@ -703,10 +703,10 @@ impl GLES for GLES1OnGL2 {
         )
     }
     unsafe fn ClearDepthf(&mut self, depth: GLclampf) {
-        gl21::ClearDepthf(depth.into())
+        gl21::ClearDepth(depth.into())
     }
     unsafe fn ClearDepthx(&mut self, depth: GLclampx) {
-        gl21::ClearDepthx(depth)
+        self.ClearDepthf(fixed_to_float(depth))
     }
     unsafe fn ClearStencil(&mut self, s: GLint) {
         gl21::ClearStencil(s)
@@ -889,7 +889,7 @@ impl GLES for GLES1OnGL2 {
         near: GLfloat,
         far: GLfloat,
     ) {
-        gl21::Orthof(
+        gl21::Ortho(
             left.into(),
             right.into(),
             bottom.into(),
@@ -907,13 +907,13 @@ impl GLES for GLES1OnGL2 {
         near: GLfixed,
         far: GLfixed,
     ) {
-        gl21::Orthox(
-            left.into(),
-            right.into(),
-            bottom.into(),
-            top.into(),
-            near.into(),
-            far.into(),
+        gl21::Ortho(
+            fixed_to_float(left).into(),
+            fixed_to_float(right).into(),
+            fixed_to_float(bottom).into(),
+            fixed_to_float(top).into(),
+            fixed_to_float(near).into(),
+            fixed_to_float(far).into(),
         );
     }
     unsafe fn Frustumf(
@@ -925,7 +925,7 @@ impl GLES for GLES1OnGL2 {
         near: GLfloat,
         far: GLfloat,
     ) {
-        gl21::Frustumf(
+        gl21::Frustum(
             left.into(),
             right.into(),
             bottom.into(),
@@ -943,13 +943,13 @@ impl GLES for GLES1OnGL2 {
         near: GLfixed,
         far: GLfixed,
     ) {
-        gl21::Frustumx(
-            left.into(),
-            right.into(),
-            bottom.into(),
-            top.into(),
-            near.into(),
-            far.into(),
+        gl21::Frustum(
+            fixed_to_float(left).into(),
+            fixed_to_float(right).into(),
+            fixed_to_float(bottom).into(),
+            fixed_to_float(top).into(),
+            fixed_to_float(near).into(),
+            fixed_to_float(far).into(),
         );
     }
     unsafe fn Rotatef(&mut self, angle: GLfloat, x: GLfloat, y: GLfloat, z: GLfloat) {
@@ -978,16 +978,16 @@ impl GLES for GLES1OnGL2 {
 
     // OES_framebuffer_object -> EXT_framebuffer_object
     unsafe fn GenFramebuffersOES(&mut self, n: GLsizei, framebuffers: *mut GLuint) {
-        gl21::GenFramebuffersOES(n, framebuffers)
+        gl21::GenFramebuffersEXT(n, framebuffers)
     }
     unsafe fn GenRenderbuffersOES(&mut self, n: GLsizei, renderbuffers: *mut GLuint) {
-        gl21::GenRenderbuffersOES(n, renderbuffers)
+        gl21::GenRenderbuffersEXT(n, renderbuffers)
     }
     unsafe fn BindFramebufferOES(&mut self, target: GLenum, framebuffer: GLuint) {
-        gl21::BindFramebufferOES(target, framebuffer)
+        gl21::BindFramebufferEXT(target, framebuffer)
     }
     unsafe fn BindRenderbufferOES(&mut self, target: GLenum, renderbuffer: GLuint) {
-        gl21::BindRenderbufferOES(target, renderbuffer)
+        gl21::BindRenderbufferEXT(target, renderbuffer)
     }
     unsafe fn RenderbufferStorageOES(
         &mut self,
@@ -996,7 +996,7 @@ impl GLES for GLES1OnGL2 {
         width: GLsizei,
         height: GLsizei,
     ) {
-        gl21::RenderbufferStorageOES(target, internalformat, width, height)
+        gl21::RenderbufferStorageEXT(target, internalformat, width, height)
     }
     unsafe fn FramebufferRenderbufferOES(
         &mut self,
@@ -1005,7 +1005,7 @@ impl GLES for GLES1OnGL2 {
         renderbuffertarget: GLenum,
         renderbuffer: GLuint,
     ) {
-        gl21::FramebufferRenderbufferOES(target, attachment, renderbuffertarget, renderbuffer)
+        gl21::FramebufferRenderbufferEXT(target, attachment, renderbuffertarget, renderbuffer)
     }
     unsafe fn GetRenderbufferParameterivOES(
         &mut self,
@@ -1013,15 +1013,15 @@ impl GLES for GLES1OnGL2 {
         pname: GLenum,
         params: *mut GLint,
     ) {
-        gl21::GetRenderbufferParameterivOES(target, pname, params)
+        gl21::GetRenderbufferParameterivEXT(target, pname, params)
     }
     unsafe fn CheckFramebufferStatusOES(&mut self, target: GLenum) -> GLenum {
-        gl21::CheckFramebufferStatusOES(target)
+        gl21::CheckFramebufferStatusEXT(target)
     }
     unsafe fn DeleteFramebuffersOES(&mut self, n: GLsizei, framebuffers: *mut GLuint) {
-        gl21::DeleteFramebuffersOES(n, framebuffers)
+        gl21::DeleteFramebuffersEXT(n, framebuffers)
     }
     unsafe fn DeleteRenderbuffersOES(&mut self, n: GLsizei, renderbuffers: *mut GLuint) {
-        gl21::DeleteRenderbuffersOES(n, renderbuffers)
+        gl21::DeleteRenderbuffersEXT(n, renderbuffers)
     }
 }

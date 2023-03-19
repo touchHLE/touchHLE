@@ -31,8 +31,13 @@ pub mod eagl;
 mod gles1_on_gl2;
 mod gles_generic;
 mod gles_guest;
+mod gles1_native;
 
+#[cfg(not(target_os = "android"))]
 use gles1_on_gl2::GLES1OnGL2;
+#[cfg(target_os = "android")]
+use gles1_native::GLES1Native;
+
 use gles_generic::GLES;
 pub use gles_guest::FUNCTIONS;
 

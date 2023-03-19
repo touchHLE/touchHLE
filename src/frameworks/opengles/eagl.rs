@@ -5,7 +5,13 @@
  */
 //! EAGL.
 
-use super::{GLES1OnGL2, GLES};
+use super::GLES;
+
+#[cfg(not(target_os = "android"))]
+use super::GLES1OnGL2;
+#[cfg(target_os = "android")]
+use super::GLES1Native;
+
 use crate::dyld::{ConstantExports, HostConstant};
 use crate::frameworks::foundation::ns_string::get_static_str;
 use crate::frameworks::foundation::NSUInteger;
@@ -96,7 +102,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (id)initWithAPI:(EAGLRenderingAPI)api {
     assert!(api == kEAGLRenderingAPIOpenGLES1);
 
-    let gles1_ctx = Box::new(GLES1OnGL2::new(&mut env.window));
+    let gles1_ctx = Box::new(gles1_impl(env));
 
     *env.objc.borrow_mut(this) = EAGLContextHostObject {
         gles_ctx: Some(gles1_ctx),
@@ -159,6 +165,15 @@ pub const CLASSES: ClassExports = objc_classes! {
 @end
 
 };
+
+#[cfg(not(target_os = "android"))]
+fn gles1_impl(env: &mut Environment) -> GLES1OnGL2 {
+    GLES1OnGL2::new(&mut env.window)
+}
+#[cfg(target_os = "android")]
+fn gles1_impl(env: &mut Environment) -> GLES1Native {
+    GLES1Native::new(&mut env.window)
+}
 
 /// Copies the renderbuffer provided by the app to the window's framebuffer,
 /// rotated if necessary, and presents that framebuffer.

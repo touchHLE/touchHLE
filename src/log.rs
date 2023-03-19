@@ -9,8 +9,12 @@
 /// from.
 macro_rules! log {
     ($($arg:tt)+) => {
-        let msg = format!("{}: {}", module_path!(), format_args!($($arg)+));
-        sdl2::log::log(&msg.to_string());
+        if std::env::consts::OS != "android" {
+            eprintln!("{}: {}", module_path!(), format_args!($($arg)+));
+        } else {
+            let msg = format!("{}: {}", module_path!(), format_args!($($arg)+));
+            sdl2::log::log(&msg.to_string());
+        }
     }
 }
 

@@ -101,9 +101,13 @@ impl Window {
         let sdl_ctx = sdl2::init().unwrap();
         let video_ctx = sdl_ctx.video().unwrap();
 
-        let attr = video_ctx.gl_attr();
-        attr.set_context_version(1, 1);
-        attr.set_context_profile(sdl2::video::GLProfile::GLES);
+        if env::consts::OS == "android" {
+            // It's important to set context version BEFORE window creation
+            // ref. https://wiki.libsdl.org/SDL2/SDL_GLattr
+            let attr = video_ctx.gl_attr();
+            attr.set_context_version(1, 1);
+            attr.set_context_profile(sdl2::video::GLProfile::GLES);
+        }
 
         // SDL2 disables the screen saver by default, but iPhone OS enables
         // the idle timer that triggers sleep by default, so we turn it back on
@@ -124,9 +128,12 @@ impl Window {
             .build()
             .unwrap();
 
-        let gl_attr = video_ctx.gl_attr();
-        assert_eq!(gl_attr.context_profile(), sdl2::video::GLProfile::GLES);
-        assert_eq!(gl_attr.context_version(), (1, 1));
+        if env::consts::OS == "android" {
+            // Sanity check
+            let gl_attr = video_ctx.gl_attr();
+            debug_assert_eq!(gl_attr.context_profile(), sdl2::video::GLProfile::GLES);
+            debug_assert_eq!(gl_attr.context_version(), (1, 1));
+        }
 
         if let Some(icon) = icon {
             window.set_icon(surface_from_image(&icon));

@@ -50,17 +50,6 @@ impl GLES for GLES1Native {
 
     // Other state manipulation
     unsafe fn AlphaFunc(&mut self, func: GLenum, ref_: GLclampf) {
-        assert!([
-            gl11::NEVER,
-            gl11::LESS,
-            gl11::EQUAL,
-            gl11::LEQUAL,
-            gl11::GREATER,
-            gl11::NOTEQUAL,
-            gl11::GEQUAL,
-            gl11::ALWAYS
-        ]
-            .contains(&func));
         gl11::AlphaFunc(func, ref_)
     }
     unsafe fn AlphaFuncx(&mut self, func: GLenum, ref_: GLclampx) {

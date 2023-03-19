@@ -141,7 +141,6 @@ pub const CLASSES: ClassExports = objc_classes! {
     // Unclear from documentation if this method requires an appropriate context
     // to already be active, but that seems to be the case in practice?
     let gles = super::sync_context(&mut env.framework_state.opengles, &mut env.objc, &mut env.window, env.current_thread);
-    //panic!();
     unsafe {
         gles.RenderbufferStorageOES(target, internalformat, width.try_into().unwrap(), height.try_into().unwrap())
     }
@@ -177,6 +176,7 @@ fn gles1_impl(env: &mut Environment) -> GLES1Native {
 
 /// Copies the renderbuffer provided by the app to the window's framebuffer,
 /// rotated if necessary, and presents that framebuffer.
+#[cfg(not(target_os = "android"))]
 unsafe fn present_renderbuffer(env: &mut Environment) {
     // Renderbuffers can't be directly read from, but GL_EXT_framebuffer_blit
     // provides a way to blit between framebuffers, which may have renderbuffers
@@ -185,6 +185,197 @@ unsafe fn present_renderbuffer(env: &mut Environment) {
     //
     // GL_EXT_framebuffer_blit can't do rotation, so we will have to blit to a
     // framebuffer with a texture attached, then draw a textured quad.
+    use crate::window::gl21compat as gl;
+    use crate::window::gl21compat::types::*;
+
+    let mut renderbuffer: GLuint = 0;
+    let mut width: GLint = 0;
+    let mut height: GLint = 0;
+    gl::GetIntegerv(
+        gl::RENDERBUFFER_BINDING_EXT,
+        &mut renderbuffer as *mut _ as *mut _,
+    );
+    gl::GetRenderbufferParameterivEXT(gl::RENDERBUFFER_EXT, gl::RENDERBUFFER_WIDTH_EXT, &mut width);
+    gl::GetRenderbufferParameterivEXT(
+        gl::RENDERBUFFER_EXT,
+        gl::RENDERBUFFER_HEIGHT_EXT,
+        &mut height,
+    );
+
+    // To avoid confusing the guest app, we need to be able to undo any
+    // state changes we make.
+    let mut old_draw_framebuffer: GLuint = 0;
+    let mut old_read_framebuffer: GLuint = 0;
+    let mut old_texture_2d: GLuint = 0;
+    gl::GetIntegerv(
+        gl::DRAW_FRAMEBUFFER_BINDING_EXT,
+        &mut old_draw_framebuffer as *mut _ as *mut _,
+    );
+    gl::GetIntegerv(
+        gl::READ_FRAMEBUFFER_BINDING_EXT,
+        &mut old_read_framebuffer as *mut _ as *mut _,
+    );
+    gl::GetIntegerv(
+        gl::TEXTURE_BINDING_2D,
+        &mut old_texture_2d as *mut _ as *mut _,
+    );
+
+    // Create a texture that we can copy the renderbuffer to
+    let mut texture: GLuint = 0;
+    gl::GenTextures(1, &mut texture);
+    gl::BindTexture(gl::TEXTURE_2D, texture);
+    gl::TexImage2D(
+        gl::TEXTURE_2D,
+        0,
+        gl::RGBA as _,
+        width,
+        height,
+        0,
+        gl::RGBA,
+        gl::UNSIGNED_BYTE,
+        std::ptr::null(),
+    );
+    // texture will not have any mip levels so we must ensure filter does
+    // not use them, else rendering will fail
+    gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::LINEAR as _);
+
+    // Create a framebuffer we can use to write to the texture
+    let mut dst_framebuffer = 0;
+    gl::GenFramebuffersEXT(1, &mut dst_framebuffer);
+    gl::BindFramebufferEXT(gl::DRAW_FRAMEBUFFER_EXT, dst_framebuffer);
+    gl::FramebufferTexture2DEXT(
+        gl::DRAW_FRAMEBUFFER_EXT,
+        gl::COLOR_ATTACHMENT0_EXT,
+        gl::TEXTURE_2D,
+        texture,
+        0,
+    );
+
+    // Create a framebuffer we can use to read from the renderbuffer
+    let mut src_framebuffer = 0;
+    gl::GenFramebuffersEXT(1, &mut src_framebuffer);
+    gl::BindFramebufferEXT(gl::READ_FRAMEBUFFER_EXT, src_framebuffer);
+    gl::FramebufferRenderbufferEXT(
+        gl::READ_FRAMEBUFFER_EXT,
+        gl::COLOR_ATTACHMENT0_EXT,
+        gl::RENDERBUFFER_EXT,
+        renderbuffer,
+    );
+
+    // Blit!
+    gl::BlitFramebufferEXT(
+        0,
+        0,
+        width,
+        height,
+        0,
+        0,
+        width,
+        height,
+        gl::COLOR_BUFFER_BIT,
+        gl::LINEAR,
+    );
+
+    // Clean up the framebuffer objects since we no longer need them.
+    // This also sets the framebuffer bindings back to zero, so rendering
+    // will go to the default framebuffer (the window).
+    gl::DeleteFramebuffersEXT(2, [dst_framebuffer, src_framebuffer].as_ptr());
+
+    // There are a huge number of pieces of state that can affect rendering.
+    // Backing up and then clearing all of it is the easiest way to ensure
+    // that drawing the quad works.
+    gl::PushClientAttrib(gl::CLIENT_ALL_ATTRIB_BITS);
+    for array in super::gles1_on_gl2::ARRAYS {
+        gl::DisableClientState(array.name);
+    }
+    gl::PushAttrib(gl::ALL_ATTRIB_BITS);
+    for &cap in super::gles1_on_gl2::CAPABILITIES {
+        gl::Disable(cap);
+    }
+    let mut old_matrix_mode: GLenum = 0;
+    gl::GetIntegerv(gl::MATRIX_MODE, &mut old_matrix_mode as *mut _ as *mut _);
+    for mode in [gl::MODELVIEW, gl::PROJECTION, gl::TEXTURE] {
+        gl::MatrixMode(mode);
+        gl::PushMatrix();
+        gl::LoadIdentity();
+    }
+    let mut old_array_buffer: GLuint = 0;
+    gl::GetIntegerv(
+        gl::ARRAY_BUFFER_BINDING,
+        &mut old_array_buffer as *mut _ as *mut _,
+    );
+
+    // Draw the quad
+    let viewport_size = env.window.size_in_current_orientation();
+    gl::Viewport(0, 0, viewport_size.0 as _, viewport_size.1 as _);
+    gl::ClearColor(0.0, 0.0, 0.0, 1.0);
+    gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT | gl::STENCIL_BUFFER_BIT);
+    gl::BindBuffer(gl::ARRAY_BUFFER, 0);
+    let vertices: [f32; 12] = [
+        -1.0, -1.0, -1.0, 1.0, 1.0, -1.0, 1.0, -1.0, -1.0, 1.0, 1.0, 1.0,
+    ];
+    gl::EnableClientState(gl::VERTEX_ARRAY);
+    gl::VertexPointer(2, gl::FLOAT, 0, vertices.as_ptr() as *const GLvoid);
+    let tex_coords: [f32; 12] = [0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0];
+    gl::EnableClientState(gl::TEXTURE_COORD_ARRAY);
+    gl::TexCoordPointer(2, gl::FLOAT, 0, tex_coords.as_ptr() as *const GLvoid);
+    let matrix = Matrix::<4>::from(&env.window.output_rotation_matrix());
+    gl::MatrixMode(gl::TEXTURE);
+    gl::LoadMatrixf(matrix.columns().as_ptr() as *const _);
+    gl::Enable(gl::TEXTURE_2D);
+    gl::DrawArrays(gl::TRIANGLES, 0, 6);
+
+    // Display virtual cursor
+    if let Some((x, y, pressed)) = env.window.virtual_cursor_visible_at() {
+        gl::DisableClientState(gl::TEXTURE_COORD_ARRAY);
+        gl::Disable(gl::TEXTURE_2D);
+
+        gl::Enable(gl::BLEND);
+        gl::BlendFunc(gl::ONE, gl::ONE_MINUS_SRC_ALPHA);
+        gl::Color4f(0.0, 0.0, 0.0, if pressed { 2.0 / 3.0 } else { 1.0 / 3.0 });
+
+        let radius = 10.0;
+
+        let mut vertices = vertices;
+        for i in (0..vertices.len()).step_by(2) {
+            vertices[i] = (vertices[i] * radius + x) / (viewport_size.0 as f32 / 2.0) - 1.0;
+            vertices[i + 1] = 1.0 - (vertices[i + 1] * radius + y) / (viewport_size.1 as f32 / 2.0);
+        }
+        gl::VertexPointer(2, gl::FLOAT, 0, vertices.as_ptr() as *const GLvoid);
+        gl::DrawArrays(gl::TRIANGLES, 0, 6);
+    }
+
+    // Clean up the texture
+    gl::DeleteTextures(1, &texture);
+
+    // Restore all the state saved before rendering
+    gl::BindBuffer(gl::ARRAY_BUFFER, old_array_buffer);
+    for mode in [gl::MODELVIEW, gl::PROJECTION, gl::TEXTURE] {
+        gl::MatrixMode(mode);
+        gl::PopMatrix();
+    }
+    gl::MatrixMode(old_matrix_mode);
+    gl::PopAttrib();
+    gl::PopClientAttrib();
+
+    // SDL2's documentation warns 0 should be bound to the draw framebuffer
+    // when swapping the window, so this is the perfect moment.
+    env.window.swap_window();
+
+    // Restore the other bindings
+    gl::BindTexture(gl::TEXTURE_2D, old_texture_2d);
+    gl::BindFramebufferEXT(gl::DRAW_FRAMEBUFFER_EXT, old_draw_framebuffer);
+    gl::BindFramebufferEXT(gl::READ_FRAMEBUFFER_EXT, old_read_framebuffer);
+
+    //{ let err = gl::GetError(); if err != 0 { panic!("{:#x}", err); } }
+}
+
+/// Variant of present_renderbuffer but for Android
+/// Instead of blitting between framebuffers, we use CopyTexImage2D to copy renderbuffers to a texture
+/// TODO: refactor common parts with present_renderbuffer
+#[cfg(target_os = "android")]
+unsafe fn present_renderbuffer(env: &mut Environment) {
+
     use crate::window::gles11 as gl;
     use crate::window::gles11::types::*;
 
@@ -234,20 +425,6 @@ unsafe fn present_renderbuffer(env: &mut Environment) {
     // not use them, else rendering will fail
     gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::LINEAR as _);
 
-    // Create a framebuffer we can use to write to the texture
-    // let mut dst_framebuffer = 0;
-    // gl::GenFramebuffersOES(1, &mut dst_framebuffer);
-    // gl::BindFramebufferOES(gl::FRAMEBUFFER_OES, dst_framebuffer);
-    // gl::FramebufferTexture2DOES(
-    //     gl::FRAMEBUFFER_OES,
-    //     gl::COLOR_ATTACHMENT0_OES,
-    //     gl::TEXTURE_2D,
-    //     texture,
-    //     0,
-    // );
-
-   // assert_eq!(gl::CheckFramebufferStatusOES(gl::FRAMEBUFFER_OES), gl::FRAMEBUFFER_COMPLETE_OES);
-
     // Create a framebuffer we can use to read from the renderbuffer
     let mut src_framebuffer = 0;
     gl::GenFramebuffersOES(1, &mut src_framebuffer);
@@ -259,28 +436,14 @@ unsafe fn present_renderbuffer(env: &mut Environment) {
         renderbuffer,
     );
 
-    assert_eq!(gl::CheckFramebufferStatusOES(gl::FRAMEBUFFER_OES), gl::FRAMEBUFFER_COMPLETE_OES);
+    debug_assert_eq!(gl::CheckFramebufferStatusOES(gl::FRAMEBUFFER_OES), gl::FRAMEBUFFER_COMPLETE_OES);
 
     gl::CopyTexImage2D(gl::TEXTURE_2D, 0, gl::RGBA, 0, 0, width, height, 0);
-
-    // // Blit!
-    // gl::BlitFramebufferEXT(
-    //     0,
-    //     0,
-    //     width,
-    //     height,
-    //     0,
-    //     0,
-    //     width,
-    //     height,
-    //     gl::COLOR_BUFFER_BIT,
-    //     gl::LINEAR,
-    // );
 
     // Clean up the framebuffer objects since we no longer need them.
     // This also sets the framebuffer bindings back to zero, so rendering
     // will go to the default framebuffer (the window).
-    gl::DeleteFramebuffersOES(2, [/*dst_framebuffer,*/ src_framebuffer].as_ptr());
+    gl::DeleteFramebuffersOES(1, [src_framebuffer].as_ptr());
 
     // There are a huge number of pieces of state that can affect rendering.
     // Backing up and then clearing all of it is the easiest way to ensure

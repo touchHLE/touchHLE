@@ -15,6 +15,11 @@ If an app is added to the supported list after the relevant version has already 
 
 ## NEXT
 
+Compatibility:
+
+- API support improvements:
+  - Various small contributions. (@hikari-no-yume, @KiritoDv)
+
 Other:
 
 - touchHLE now has a primitive implementation of the GDB Remote Serial Protocol. GDB can connect to touchHLE over TCP and set software breakpoints, inspect memory and registers, step or continue execution, etc. This replaces the old `--breakpoint=` option, which is now removed. (@hikari-no-yume)

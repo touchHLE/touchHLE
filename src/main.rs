@@ -20,8 +20,6 @@
 // This also allows items in the crate to have non-snake-case names.
 #![allow(non_snake_case)]
 
-use touchHLE;
-
 fn main() -> Result<(), String> {
     println!("touchHLE {} — https://touchhle.org/", touchHLE::VERSION);
     println!();

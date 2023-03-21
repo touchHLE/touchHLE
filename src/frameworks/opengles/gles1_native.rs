@@ -68,10 +68,10 @@ impl GLES for GLES1Native {
         gl11::FrontFace(mode)
     }
     unsafe fn DepthRangef(&mut self, near: GLclampf, far: GLclampf) {
-        gl11::DepthRangef(near.into(), far.into())
+        gl11::DepthRangef(near, far)
     }
     unsafe fn DepthRangex(&mut self, near: GLclampx, far: GLclampx) {
-        gl11::DepthRangex(near.into(), far.into())
+        gl11::DepthRangex(near, far)
     }
     unsafe fn ShadeModel(&mut self, mode: GLenum) {
         gl11::ShadeModel(mode);
@@ -286,14 +286,7 @@ impl GLES for GLES1Native {
         near: GLfloat,
         far: GLfloat,
     ) {
-        gl11::Orthof(
-            left.into(),
-            right.into(),
-            bottom.into(),
-            top.into(),
-            near.into(),
-            far.into(),
-        )
+        gl11::Orthof(left, right, bottom, top, near, far)
     }
     unsafe fn Orthox(
         &mut self,
@@ -304,14 +297,7 @@ impl GLES for GLES1Native {
         near: GLfixed,
         far: GLfixed,
     ) {
-        gl11::Orthox(
-            left.into(),
-            right.into(),
-            bottom.into(),
-            top.into(),
-            near.into(),
-            far.into(),
-        )
+        gl11::Orthox(left, right, bottom, top, near, far)
     }
     unsafe fn Frustumf(
         &mut self,
@@ -322,14 +308,7 @@ impl GLES for GLES1Native {
         near: GLfloat,
         far: GLfloat,
     ) {
-        gl11::Frustumf(
-            left.into(),
-            right.into(),
-            bottom.into(),
-            top.into(),
-            near.into(),
-            far.into(),
-        )
+        gl11::Frustumf(left, right, bottom, top, near, far)
     }
     unsafe fn Frustumx(
         &mut self,
@@ -340,14 +319,7 @@ impl GLES for GLES1Native {
         near: GLfixed,
         far: GLfixed,
     ) {
-        gl11::Frustumx(
-            left.into(),
-            right.into(),
-            bottom.into(),
-            top.into(),
-            near.into(),
-            far.into(),
-        )
+        gl11::Frustumx(left, right, bottom, top, near, far)
     }
     unsafe fn Rotatef(&mut self, angle: GLfloat, x: GLfloat, y: GLfloat, z: GLfloat) {
         gl11::Rotatef(angle, x, y, z)

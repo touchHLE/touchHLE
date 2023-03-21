@@ -110,6 +110,23 @@ pub struct Options {
 }
 
 impl Default for Options {
+    #[cfg(not(target_os = "android"))]
+    fn default() -> Self {
+        Options {
+            initial_orientation: DeviceOrientation::Portrait,
+            scale_hack: NonZeroU32::new(1).unwrap(),
+            deadzone: 0.1,
+            x_tilt_range: 60.0,
+            y_tilt_range: 60.0,
+            x_tilt_offset: 0.0,
+            y_tilt_offset: 0.0,
+            direct_memory_access: true,
+            gdb_listen_addrs: None,
+        }
+    }
+    #[cfg(target_os = "android")]
+    // Those are a bit arbitrary to "look good" for SMB on Pixel 3a
+    // TODO: properly calculate scale, position and orientation for mobile devices
     fn default() -> Self {
         Options {
             initial_orientation: DeviceOrientation::LandscapeLeft,

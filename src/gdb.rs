@@ -167,7 +167,7 @@ impl GdbServer {
                     assert!(stop_reason.is_none());
                     self.send_packet("S00"); // no signal
                 }
-                // Read registers
+                // Read general registers
                 b'g' => {
                     let mut packet = String::with_capacity(16 * 4 * 2);
                     for reg in cpu.regs() {
@@ -177,6 +177,21 @@ impl GdbServer {
                         write!(packet, "{:08x}", reg).unwrap();
                     }
                     self.send_packet(&packet);
+                }
+                // Write general registers
+                b'G' => {
+                    let data = &p[1..];
+                    let regs = cpu.regs_mut();
+                    assert!(data.len() == regs.len() * 4 * 2);
+                    for (i, reg) in regs.iter_mut().enumerate() {
+                        let word = &data[i * 4 * 2..][..4 * 2];
+                        let word = u32::from_str_radix(word, 16).unwrap();
+                        // Rust decodes in big-endian, but GDB supplies
+                        // little-endian.
+                        let word = u32::from_le_bytes(word.to_be_bytes());
+                        *reg = word;
+                    }
+                    self.send_packet("OK");
                 }
                 // Read single register by number
                 b'p' => {
@@ -199,7 +214,26 @@ impl GdbServer {
                         self.send_packet("E00");
                     }
                 }
-                // TODO: Support writing registers
+                // Write single register by number
+                b'P' => {
+                    let (num, word) = p[1..].split_once('=').unwrap();
+                    let num = usize::from_str_radix(num, 16).unwrap();
+                    let word = u32::from_str_radix(word, 16).unwrap();
+                    // Rust decodes in big-endian, but GDB supplies
+                    // little-endian.
+                    let word = u32::from_le_bytes(word.to_be_bytes());
+                    if num < 16 {
+                        cpu.regs_mut()[num] = word;
+                        self.send_packet("OK");
+                    } else if num == 25 {
+                        cpu.set_cpsr(word);
+                        self.send_packet("OK");
+                    // TODO: FPSCR, VFP registers
+                    } else {
+                        // Error 0
+                        self.send_packet("E00");
+                    }
+                }
                 // Read memory
                 b'm' => {
                     let (addr, length) = p[1..].split_once(',').unwrap();

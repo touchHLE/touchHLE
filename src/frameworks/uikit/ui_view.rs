@@ -189,4 +189,31 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 @end
 
+@implementation UIAlertView: UIView
+- (id)initWithTitle:(id)title
+                      message:(id)message
+                     delegate:(id)delegate
+            cancelButtonTitle:(id)cancelButtonTitle
+            otherButtonTitles:(id)otherButtonTitles {
+
+    log!("TODO: [(UIAlertView*){:?} initWithTitle:{:?} message:{:?} delegate:{:?} cancelButtonTitle:{:?} otherButtonTitles:{:?}]", this, title, message, delegate, cancelButtonTitle, otherButtonTitles);
+
+    let msg = to_rust_string(env, message);
+    let title = to_rust_string(env, title);
+
+    log!("UIAlertView: title: {:?}, message: {:?}", title, msg);
+
+    let host_object: &mut UIViewHostObject = env.objc.borrow_mut(this);
+    let layer = host_object.layer;
+    () = msg![env; layer setDelegate:this];
+
+    env.framework_state.uikit.ui_view.views.push(this);
+
+    this
+}
+- (())show {
+    log!("TODO: [(UIAlertView*){:?} show]", this);
+}
+@end
+
 };

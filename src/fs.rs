@@ -236,6 +236,8 @@ fn apply_path_component<'a>(components: &mut Vec<&'a str>, component: &'a str) {
 /// current directory. It must be an absolute path. It is optional if `path`
 /// is absolute.
 fn resolve_path<'a>(path: &'a GuestPath, relative_to: Option<&'a GuestPath>) -> Vec<&'a str> {
+    log_dbg!("Resolving {:?} relative to {:?}", path, relative_to);
+
     let mut components = Vec::new();
 
     if !path.as_str().starts_with('/') {
@@ -249,6 +251,8 @@ fn resolve_path<'a>(path: &'a GuestPath, relative_to: Option<&'a GuestPath>) -> 
     for component in path.as_str().split('/') {
         apply_path_component(&mut components, component);
     }
+
+    log_dbg!("=> {:?}", components);
 
     components
 }
@@ -526,6 +530,15 @@ impl Fs {
         let mut result = Vec::new();
         file.read_to_end(&mut result).map_err(|_| ())?;
         Ok(result)
+    }
+
+    /// Like [std::fs::write] but for the guest filesystem.
+    pub fn write<P: AsRef<GuestPath>>(&mut self, path: P, data: &[u8]) -> Result<(), ()> {
+        let mut options = GuestOpenOptions::new();
+        options.write().create().truncate();
+        self.open_with_options(path, options)?
+            .write_all(data)
+            .map_err(|_| ())
     }
 
     /// Like [File::open] but for the guest filesystem.

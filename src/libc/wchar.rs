@@ -122,6 +122,12 @@ fn wcsstr(
 ) -> ConstPtr<wchar_t> {
     GenericChar::<wchar_t>::strstr(env, wcsing, subwcsing)
 }
+fn wcschr(env: &mut Environment, wcsing: ConstPtr<wchar_t>, wchar: wchar_t) -> ConstPtr<wchar_t> {
+    GenericChar::<wchar_t>::strchr(env, wcsing, wchar)
+}
+fn wcsrchr(env: &mut Environment, wcsing: ConstPtr<wchar_t>, wchar: wchar_t) -> ConstPtr<wchar_t> {
+    GenericChar::<wchar_t>::strrchr(env, wcsing, wchar)
+}
 
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(btowc(_)),
@@ -140,4 +146,6 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(wcscmp(_, _)),
     export_c_func!(wcsncmp(_, _, _)),
     export_c_func!(wcsstr(_, _)),
+    export_c_func!(wcschr(_, _)),
+    export_c_func!(wcsrchr(_, _)),
 ];

@@ -145,24 +145,24 @@ pub(super) fn UIApplicationMain(
         };
         let ui_application: id = msg![env; principal_class new];
 
-        // If the delegate's name is specified, we instantiate it directly here.
-        // Otherwise, the delegate will be part of the main nib file.
-        if delegate_class_name != nil {
+        load_main_nib_file(env, ui_application);
+
+        let delegate: id = msg![env; ui_application delegate];
+        let delegate = if delegate != nil {
+            // The delegate was created while loading the nib file.
+            // Retain it so it doesn't get deallocated when the autorelease pool
+            // is drained. (See discussion in `setDelegate:`.)
+            retain(env, delegate)
+        } else {
+            // We have to construct the delegate.
+            assert!(delegate_class_name != nil);
             let name = ns_string::to_rust_string(env, delegate_class_name);
             let class = env.objc.get_known_class(&name, &mut env.mem);
             let delegate: id = msg![env; class new];
             let _: () = msg![env; ui_application setDelegate:delegate];
-        }
-
-        load_main_nib_file(env, ui_application);
-
-        // The delegate must have been created by this point.
-        // While notionally UIApplication does not retain its delegate (see
-        // `setDelegate:`'s definition above), we do hold a reference to it, and
-        // we must ensure it doesn't die when the autorelease pool is drained.
-        let delegate: id = msg![env; ui_application delegate];
-        assert!(delegate != nil); // should have been set by now
-        retain(env, delegate);
+            delegate
+        };
+        assert!(delegate != nil);
 
         let _: () = msg![env; pool drain];
 

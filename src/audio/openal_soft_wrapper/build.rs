@@ -4,6 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 use std::path::Path;
+use std::env;
 
 /*fn rerun_if_changed(path: &Path) {
     println!("cargo:rerun-if-changed={}", path.to_str().unwrap());
@@ -14,6 +15,9 @@ fn link_search(path: &Path) {
 fn link_lib(lib: &str) {
     println!("cargo:rustc-link-lib=static={}", lib);
 }
+fn link_framework(framework: &str) {
+    println!("cargo:rustc-link-lib=framework={}", framework);
+}
 
 fn main() {
     let package_root = Path::new(env!("CARGO_MANIFEST_DIR"));
@@ -22,6 +26,14 @@ fn main() {
     let mut build = cmake::Config::new(workspace_root.join("vendor/openal-soft"));
     build.define("LIBTYPE", "STATIC");
     let openal_soft_out = build.build();
+
+    // Some dependencies of OpenAL Soft.
+    let os = env::var("CARGO_CFG_TARGET_OS").expect("CARGO_CFG_TARGET_OS was not set");
+    if os.eq_ignore_ascii_case("macos") {
+        link_framework("AudioToolbox");
+        link_framework("CoreAudio");
+        link_framework("CoreFoundation");
+    }
 
     link_search(&openal_soft_out.join("lib"));
     // some Linux systems

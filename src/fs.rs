@@ -403,6 +403,8 @@ impl Fs {
 
         let bundle_guest_path = home_directory.join(&bundle_dir_name);
 
+        // TODO: instead of path hardcoding, we should use https://wiki.libsdl.org/SDL2/SDL_AndroidGetInternalStoragePath
+        // but... it's not exposed via rust-sdl2 :(
         let prefix = if env::consts::OS == "android" { "/data/data/org.touch.hle/files/" } else { "" };
 
         let documents_host_path = Path::new(prefix).join("touchHLE_sandbox")

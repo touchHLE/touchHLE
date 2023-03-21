@@ -25,9 +25,9 @@ use sdl2::mouse::MouseButton;
 use sdl2::pixels::PixelFormatEnum;
 use sdl2::surface::Surface;
 use std::collections::VecDeque;
+use std::env;
 use std::f32::consts::FRAC_PI_2;
 use std::num::NonZeroU32;
-use std::env;
 
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub enum DeviceOrientation {

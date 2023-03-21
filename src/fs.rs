@@ -28,10 +28,10 @@ pub use bundle::BundleData;
 
 use crate::fs::bundle::{IpaFile, IpaFileRef};
 use std::collections::HashMap;
+use std::env;
 use std::fs::File;
 use std::io::{Read, Seek, Write};
 use std::path::{Path, PathBuf};
-use std::env;
 
 #[derive(Debug)]
 enum FsNode {
@@ -405,9 +405,14 @@ impl Fs {
 
         // TODO: instead of path hardcoding, we should use https://wiki.libsdl.org/SDL2/SDL_AndroidGetInternalStoragePath
         // but... it's not exposed via rust-sdl2 :(
-        let prefix = if env::consts::OS == "android" { "/data/data/org.touch.hle/files/" } else { "" };
+        let prefix = if env::consts::OS == "android" {
+            "/data/data/org.touch.hle/files/"
+        } else {
+            ""
+        };
 
-        let documents_host_path = Path::new(prefix).join("touchHLE_sandbox")
+        let documents_host_path = Path::new(prefix)
+            .join("touchHLE_sandbox")
             .join(bundle_id)
             .join("Documents");
         if let Err(e) = std::fs::create_dir_all(&documents_host_path) {

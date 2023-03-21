@@ -4,10 +4,10 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 use cargo_license::{get_dependencies_from_cargo_lock, GetDependenciesOpt};
+use std::env;
 use std::fmt::Write;
 use std::path::{Path, PathBuf};
 use std::process::Command;
-use std::env;
 
 fn rerun_if_changed(path: &Path) {
     println!("cargo:rerun-if-changed={}", path.to_str().unwrap());

@@ -3,8 +3,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
-use std::path::Path;
 use std::env;
+use std::path::Path;
 
 fn rerun_if_changed(path: &Path) {
     println!("cargo:rerun-if-changed={}", path.to_str().unwrap());
@@ -61,7 +61,10 @@ fn main() {
     let os = env::var("CARGO_CFG_TARGET_OS").expect("CARGO_CFG_TARGET_OS was not set");
     if cfg!(target_os = "macos") && os.eq_ignore_ascii_case("android") {
         // TODO: how to set version independent path?
-        build.define("Boost_INCLUDE_DIR", "/opt/homebrew/Cellar/boost/1.81.0_1/include");
+        build.define(
+            "Boost_INCLUDE_DIR",
+            "/opt/homebrew/Cellar/boost/1.81.0_1/include",
+        );
     }
     let dynarmic_out = build.build();
 

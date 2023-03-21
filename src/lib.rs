@@ -41,16 +41,16 @@ mod window;
 // via re-exports.
 use environment::{Environment, ThreadID};
 
-use std::path::PathBuf;
 #[cfg(target_os = "android")]
-use std::ffi::{c_int, c_char};
+use std::ffi::{c_char, c_int};
+use std::path::PathBuf;
 
 /// Current version. See `build.rs` for how this is generated.
 pub const VERSION: &str = include_str!(concat!(env!("OUT_DIR"), "/version.txt"));
 
 #[cfg(target_os = "android")]
 #[no_mangle]
-pub extern fn SDL_main(_argc: c_int, _argv: *const *const c_char) -> c_int {
+pub extern "C" fn SDL_main(_argc: c_int, _argv: *const *const c_char) -> c_int {
     sdl2::log::log(&format!("touchHLE Android {VERSION} — https://touchhle.org/").to_string());
     sdl2::log::log("");
 

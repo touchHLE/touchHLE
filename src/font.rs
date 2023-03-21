@@ -49,7 +49,11 @@ fn scale(font_size: f32) -> Scale {
 
 impl Font {
     fn from_file(path: &str) -> Font {
-        let prefix = if env::consts::OS == "android" { "/data/data/org.touch.hle/files/" } else { "" };
+        let prefix = if env::consts::OS == "android" {
+            "/data/data/org.touch.hle/files/"
+        } else {
+            ""
+        };
 
         let Ok(bytes) = std::fs::read(prefix.to_owned() + path) else {
             panic!("Couldn't read bundled font file {:?}. Perhaps the directory is missing?", path);

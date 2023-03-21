@@ -117,31 +117,67 @@ impl GLES for GLES1Native {
     }
 
     // Pointers
-    unsafe fn ColorPointer(&mut self, size: GLint, type_: GLenum, stride: GLsizei, pointer: *const GLvoid) {
+    unsafe fn ColorPointer(
+        &mut self,
+        size: GLint,
+        type_: GLenum,
+        stride: GLsizei,
+        pointer: *const GLvoid,
+    ) {
         gl11::ColorPointer(size, type_, stride, pointer)
     }
     unsafe fn NormalPointer(&mut self, type_: GLenum, stride: GLsizei, pointer: *const GLvoid) {
         gl11::NormalPointer(type_, stride, pointer)
     }
-    unsafe fn TexCoordPointer(&mut self, size: GLint, type_: GLenum, stride: GLsizei, pointer: *const GLvoid) {
+    unsafe fn TexCoordPointer(
+        &mut self,
+        size: GLint,
+        type_: GLenum,
+        stride: GLsizei,
+        pointer: *const GLvoid,
+    ) {
         gl11::TexCoordPointer(size, type_, stride, pointer)
     }
-    unsafe fn VertexPointer(&mut self, size: GLint, type_: GLenum, stride: GLsizei, pointer: *const GLvoid) {
+    unsafe fn VertexPointer(
+        &mut self,
+        size: GLint,
+        type_: GLenum,
+        stride: GLsizei,
+        pointer: *const GLvoid,
+    ) {
         gl11::VertexPointer(size, type_, stride, pointer)
     }
     unsafe fn DrawArrays(&mut self, mode: GLenum, first: GLint, count: GLsizei) {
         gl11::DrawArrays(mode, first, count)
     }
-    unsafe fn DrawElements(&mut self, mode: GLenum, count: GLsizei, type_: GLenum, indices: *const GLvoid) {
+    unsafe fn DrawElements(
+        &mut self,
+        mode: GLenum,
+        count: GLsizei,
+        type_: GLenum,
+        indices: *const GLvoid,
+    ) {
         gl11::DrawElements(mode, count, type_, indices)
     }
     unsafe fn Clear(&mut self, mask: GLbitfield) {
         gl11::Clear(mask)
     }
-    unsafe fn ClearColor(&mut self, red: GLclampf, green: GLclampf, blue: GLclampf, alpha: GLclampf) {
+    unsafe fn ClearColor(
+        &mut self,
+        red: GLclampf,
+        green: GLclampf,
+        blue: GLclampf,
+        alpha: GLclampf,
+    ) {
         gl11::ClearColor(red, green, blue, alpha)
     }
-    unsafe fn ClearColorx(&mut self, red: GLclampx, green: GLclampx, blue: GLclampx, alpha: GLclampx) {
+    unsafe fn ClearColorx(
+        &mut self,
+        red: GLclampx,
+        green: GLclampx,
+        blue: GLclampx,
+        alpha: GLclampx,
+    ) {
         gl11::ClearColorx(red, green, blue, alpha)
     }
     unsafe fn ClearDepthf(&mut self, depth: GLclampf) {

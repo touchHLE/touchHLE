@@ -7,10 +7,10 @@
 
 use super::GLES;
 
-#[cfg(not(target_os = "android"))]
-use super::GLES1OnGL2;
 #[cfg(target_os = "android")]
 use super::GLES1Native;
+#[cfg(not(target_os = "android"))]
+use super::GLES1OnGL2;
 
 use crate::dyld::{ConstantExports, HostConstant};
 use crate::frameworks::foundation::ns_string::get_static_str;
@@ -375,7 +375,6 @@ unsafe fn present_renderbuffer(env: &mut Environment) {
 /// TODO: refactor common parts with present_renderbuffer
 #[cfg(target_os = "android")]
 unsafe fn present_renderbuffer(env: &mut Environment) {
-
     use crate::window::gles11 as gl;
     use crate::window::gles11::types::*;
 
@@ -436,7 +435,10 @@ unsafe fn present_renderbuffer(env: &mut Environment) {
         renderbuffer,
     );
 
-    debug_assert_eq!(gl::CheckFramebufferStatusOES(gl::FRAMEBUFFER_OES), gl::FRAMEBUFFER_COMPLETE_OES);
+    debug_assert_eq!(
+        gl::CheckFramebufferStatusOES(gl::FRAMEBUFFER_OES),
+        gl::FRAMEBUFFER_COMPLETE_OES
+    );
 
     gl::CopyTexImage2D(gl::TEXTURE_2D, 0, gl::RGBA, 0, 0, width, height, 0);
 

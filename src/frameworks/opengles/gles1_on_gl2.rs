@@ -365,7 +365,7 @@ impl GLES for GLES1OnGL2 {
             gl21::RENDERBUFFER_BINDING_EXT,
             gl21::TEXTURE_BINDING_2D
         ]
-            .contains(&pname));
+        .contains(&pname));
         gl21::GetIntegerv(pname, params);
     }
     unsafe fn Hint(&mut self, target: GLenum, mode: GLenum) {
@@ -376,7 +376,7 @@ impl GLES for GLES1OnGL2 {
             gl21::PERSPECTIVE_CORRECTION_HINT,
             gl21::POINT_SMOOTH_HINT
         ]
-            .contains(&target));
+        .contains(&target));
         assert!([gl21::FASTEST, gl21::NICEST, gl21::DONT_CARE].contains(&mode));
         gl21::Hint(target, mode);
     }
@@ -393,7 +393,7 @@ impl GLES for GLES1OnGL2 {
             gl21::GEQUAL,
             gl21::ALWAYS
         ]
-            .contains(&func));
+        .contains(&func));
         gl21::AlphaFunc(func, ref_)
     }
     unsafe fn AlphaFuncx(&mut self, func: GLenum, ref_: GLclampx) {
@@ -411,7 +411,7 @@ impl GLES for GLES1OnGL2 {
             gl21::ONE_MINUS_DST_ALPHA,
             gl21::SRC_ALPHA_SATURATE
         ]
-            .contains(&sfactor));
+        .contains(&sfactor));
         assert!([
             gl21::ZERO,
             gl21::ONE,
@@ -422,7 +422,7 @@ impl GLES for GLES1OnGL2 {
             gl21::DST_ALPHA,
             gl21::ONE_MINUS_DST_ALPHA
         ]
-            .contains(&dfactor));
+        .contains(&dfactor));
         gl21::BlendFunc(sfactor, dfactor);
     }
     unsafe fn CullFace(&mut self, mode: GLenum) {
@@ -585,7 +585,7 @@ impl GLES for GLES1OnGL2 {
             gl21::TRIANGLE_FAN,
             gl21::TRIANGLES
         ]
-            .contains(&mode));
+        .contains(&mode));
 
         let state_backup = self.translate_fixed_point_arrays(first, count);
 
@@ -609,7 +609,7 @@ impl GLES for GLES1OnGL2 {
             gl21::TRIANGLE_FAN,
             gl21::TRIANGLES
         ]
-            .contains(&mode));
+        .contains(&mode));
         assert!(type_ == gl21::UNSIGNED_BYTE || type_ == gl21::UNSIGNED_SHORT);
 
         let state_backup = if self.pointer_is_fixed_point.iter().any(|&is_fixed| is_fixed) {

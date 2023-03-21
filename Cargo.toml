@@ -19,8 +19,8 @@ authors = { workspace = true }
 homepage = { workspace = true }
 
 [lib]
-name="touchHLE"
-crate_type=["cdylib"]
+# https://users.rust-lang.org/t/making-both-binary-and-cdylib-from-one-package/29105
+crate_type = ["cdylib", "rlib"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

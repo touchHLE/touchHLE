@@ -5,16 +5,9 @@
  */
 //! touchHLE is a high-level emulator (HLE) for iPhone OS applications.
 //!
-//! In various places, the terms "guest" and "host" are used to distinguish
-//! between the emulated application (the "guest") and the emulator itself (the
-//! "host"), and more generally, their different environments.
-//! For example:
-//! - The guest is a 32-bit application, so a "guest pointer" is 32 bits.
-//! - The host is a 64-bit application, so a "host pointer" is 64 bits.
-//! - The guest can only directly access "guest memory".
-//! - The host can access both "guest memory" and "host memory".
-//! - A "guest function" is emulated Arm code, usually from the app binary.
-//! - A "host function" is a Rust function that is part of this emulator.
+//! This is a library part which is shared with main.
+//! Currently, it's used for Android.
+//! SDL_main is an entry point for Android (SDLActivity is calling it after the initialization)
 
 // Allow the crate to have a non-snake-case name (touchHLE).
 // This also allows items in the crate to have non-snake-case names.
@@ -49,20 +42,25 @@ mod window;
 use environment::{Environment, ThreadID};
 
 use std::path::PathBuf;
+#[cfg(target_os = "android")]
 use std::ffi::{c_int, c_char};
+
+/// Current version. See `build.rs` for how this is generated.
+pub const VERSION: &str = include_str!(concat!(env!("OUT_DIR"), "/version.txt"));
 
 #[cfg(target_os = "android")]
 #[no_mangle]
 pub extern fn SDL_main(_argc: c_int, _argv: *const *const c_char) -> c_int {
-    match _main() {
+    sdl2::log::log(&format!("touchHLE Android {VERSION} — https://touchhle.org/").to_string());
+    sdl2::log::log("");
+
+    let args = vec!["/data/data/org.touch.hle/files/Super Monkey Ball  v1.02 .ipa".to_string()];
+    match _main(args) {
         Ok(_) => sdl2::log::log("touchHLE finished"),
         Err(e) => sdl2::log::log(&format!("touchHLE errored: {e:?}").to_string()),
     }
     return 0;
 }
-
-/// Current version. See `build.rs` for how this is generated.
-const VERSION: &str = include_str!(concat!(env!("OUT_DIR"), "/version.txt"));
 
 const USAGE: &str = "\
 Usage:
@@ -79,13 +77,15 @@ General options:
         Print basic information about the app bundle without running the app.
 ";
 
-fn _main() -> Result<(), String> {
-    println!("touchHLE {} — https://touchhle.org/", VERSION);
-    println!();
-
-    let mut args = std::env::args();
-    //let _ = args.next().unwrap(); // skip argv[0]
-
+/// This is a common main function between lib and bin versions
+///
+/// # Arguments
+///
+/// * `args`: A vec of string arguments
+///
+/// returns: Result<(), String>
+///
+pub fn _main(args: Vec<String>) -> Result<(), String> {
     let mut bundle_path: Option<PathBuf> = None;
     let mut just_info = false;
     let mut option_args = Vec::new();
@@ -113,8 +113,6 @@ fn _main() -> Result<(), String> {
             return Err(format!("Unexpected argument: {:?}", arg));
         }
     }
-
-    bundle_path = Some(PathBuf::from("/data/data/org.touch.hle/files/Super Monkey Ball  v1.02 .ipa"));
 
     let Some(bundle_path) = bundle_path else {
         eprintln!("{}", USAGE);

@@ -6,7 +6,9 @@
 //! The `NSString` class cluster, including `NSMutableString`.
 
 use super::ns_array;
-use super::NSUInteger;
+use super::{
+    NSComparisonResult, NSOrderedAscending, NSOrderedDescending, NSOrderedSame, NSUInteger,
+};
 use crate::frameworks::core_graphics::{CGRect, CGSize};
 use crate::frameworks::uikit::ui_font::{
     self, UILineBreakMode, UILineBreakModeWordWrap, UITextAlignment, UITextAlignmentLeft,
@@ -272,6 +274,18 @@ pub const CLASSES: ClassExports = objc_classes! {
     }
     // TODO: avoid copying
     to_rust_string(env, this) == to_rust_string(env, other)
+}
+
+- (NSComparisonResult)compare:(id)other { // NSString*
+    // TODO: support foreign subclasses (perhaps via a helper function that
+    // copies the string first)
+    let a_iter = env.objc.borrow::<StringHostObject>(this).iter_code_units();
+    let b_iter = env.objc.borrow::<StringHostObject>(other).iter_code_units();
+    match a_iter.cmp(b_iter) {
+        std::cmp::Ordering::Less => NSOrderedAscending,
+        std::cmp::Ordering::Equal => NSOrderedSame,
+        std::cmp::Ordering::Greater => NSOrderedDescending,
+    }
 }
 
 // NSCopying implementation

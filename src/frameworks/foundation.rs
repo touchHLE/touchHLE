@@ -52,6 +52,11 @@ pub struct State {
 pub type NSInteger = i32;
 pub type NSUInteger = u32;
 
+pub type NSComparisonResult = NSInteger;
+pub const NSOrderedAscending: NSComparisonResult = -1;
+pub const NSOrderedSame: NSComparisonResult = 0;
+pub const NSOrderedDescending: NSComparisonResult = 1;
+
 /// Number of seconds.
 pub type NSTimeInterval = f64;
 

@@ -104,6 +104,9 @@ impl super::ObjC {
         refcount: Option<NonZeroU32>,
     ) -> id {
         let guest_object = objc_object { isa };
+        // FIXME: Apparently some classes have an instance size of 0?
+        //        Figure out what that actually means and remove this hack.
+        let instance_size = instance_size.max(guest_size_of::<objc_object>());
         assert!(instance_size >= guest_size_of::<objc_object>());
 
         let ptr: MutPtr<objc_object> = mem.alloc(instance_size).cast();

@@ -196,6 +196,12 @@ pub const CLASSES: ClassExports = objc_classes! {
     msg_class![env; _touchHLE_NSString allocWithZone:zone]
 }
 
++ (id)stringWithUTF8String:(ConstPtr<u8>)utf8_string {
+    let new: id = msg![env; this alloc];
+    let new: id = msg![env; new initWithUTF8String:utf8_string];
+    autorelease(env, new)
+}
+
 + (id)stringWithCString:(ConstPtr<u8>)c_string {
     let new: id = msg![env; this alloc];
     let new: id = msg![env; new initWithCString:c_string];
@@ -585,6 +591,10 @@ pub const CLASSES: ClassExports = objc_classes! {
     *env.objc.borrow_mut(this) = host_object;
 
     this
+}
+
+- (id)initWithUTF8String:(ConstPtr<u8>)utf8_string {
+    msg![env; this initWithCString:utf8_string encoding:NSUTF8StringEncoding]
 }
 
 - (id)initWithCString:(ConstPtr<u8>)c_string {

@@ -429,6 +429,20 @@ impl GLES for GLES1OnGL2 {
         assert!([gl21::FRONT, gl21::BACK, gl21::FRONT_AND_BACK].contains(&mode));
         gl21::CullFace(mode);
     }
+    unsafe fn DepthFunc(&mut self, func: GLenum) {
+        assert!([
+            gl21::NEVER,
+            gl21::LESS,
+            gl21::EQUAL,
+            gl21::LEQUAL,
+            gl21::GREATER,
+            gl21::NOTEQUAL,
+            gl21::GEQUAL,
+            gl21::ALWAYS
+        ]
+        .contains(&func));
+        gl21::DepthFunc(func)
+    }
     unsafe fn DepthMask(&mut self, flag: GLboolean) {
         gl21::DepthMask(flag)
     }

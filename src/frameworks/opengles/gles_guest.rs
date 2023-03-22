@@ -112,6 +112,9 @@ fn glBlendFunc(env: &mut Environment, sfactor: GLenum, dfactor: GLenum) {
 fn glCullFace(env: &mut Environment, mode: GLenum) {
     with_ctx_and_mem(env, |gles, _mem| unsafe { gles.CullFace(mode) })
 }
+fn glDepthFunc(env: &mut Environment, func: GLenum) {
+    with_ctx_and_mem(env, |gles, _mem| unsafe { gles.DepthFunc(func) })
+}
 fn glDepthMask(env: &mut Environment, flag: GLboolean) {
     with_ctx_and_mem(env, |gles, _mem| unsafe { gles.DepthMask(flag) })
 }
@@ -707,6 +710,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(glAlphaFuncx(_, _)),
     export_c_func!(glBlendFunc(_, _)),
     export_c_func!(glCullFace(_)),
+    export_c_func!(glDepthFunc(_)),
     export_c_func!(glDepthMask(_)),
     export_c_func!(glDepthRangef(_, _)),
     export_c_func!(glDepthRangex(_, _)),

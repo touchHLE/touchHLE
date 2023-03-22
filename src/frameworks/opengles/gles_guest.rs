@@ -644,6 +644,18 @@ fn glFramebufferRenderbufferOES(
         gles.FramebufferRenderbufferOES(target, attachment, renderbuffertarget, renderbuffer)
     })
 }
+fn glFramebufferTexture2DOES(
+    env: &mut Environment,
+    target: GLenum,
+    attachment: GLenum,
+    textarget: GLenum,
+    texture: GLuint,
+    level: i32,
+) {
+    with_ctx_and_mem(env, |gles, _mem| unsafe {
+        gles.FramebufferTexture2DOES(target, attachment, textarget, texture, level)
+    })
+}
 fn glGetRenderbufferParameterivOES(
     env: &mut Environment,
     target: GLenum,
@@ -769,6 +781,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(glBindRenderbufferOES(_, _)),
     export_c_func!(glRenderbufferStorageOES(_, _, _, _)),
     export_c_func!(glFramebufferRenderbufferOES(_, _, _, _)),
+    export_c_func!(glFramebufferTexture2DOES(_, _, _, _, _)),
     export_c_func!(glGetRenderbufferParameterivOES(_, _, _)),
     export_c_func!(glCheckFramebufferStatusOES(_)),
     export_c_func!(glDeleteFramebuffersOES(_, _)),

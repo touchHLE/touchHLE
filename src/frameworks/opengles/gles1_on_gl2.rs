@@ -1007,6 +1007,16 @@ impl GLES for GLES1OnGL2 {
     ) {
         gl21::FramebufferRenderbufferEXT(target, attachment, renderbuffertarget, renderbuffer)
     }
+    unsafe fn FramebufferTexture2DOES(
+        &mut self,
+        target: GLenum,
+        attachment: GLenum,
+        textarget: GLenum,
+        texture: GLuint,
+        level: i32,
+    ) {
+        gl21::FramebufferTexture2DEXT(target, attachment, textarget, texture, level)
+    }
     unsafe fn GetRenderbufferParameterivOES(
         &mut self,
         target: GLenum,

@@ -112,6 +112,7 @@ pub trait GLES {
     unsafe fn ClearStencil(&mut self, s: GLint);
 
     // Textures
+    unsafe fn PixelStorei(&mut self, pname: GLenum, param: GLint);
     unsafe fn GenTextures(&mut self, n: GLsizei, textures: *mut GLuint);
     unsafe fn DeleteTextures(&mut self, n: GLsizei, textures: *const GLuint);
     unsafe fn BindTexture(&mut self, target: GLenum, texture: GLuint);

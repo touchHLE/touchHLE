@@ -727,6 +727,11 @@ impl GLES for GLES1OnGL2 {
     }
 
     // Textures
+    unsafe fn PixelStorei(&mut self, pname: GLenum, param: GLint) {
+        assert!(pname == gl21::PACK_ALIGNMENT || pname == gl21::UNPACK_ALIGNMENT);
+        assert!(param == 1 || param == 2 || param == 4 || param == 8);
+        gl21::PixelStorei(pname, param)
+    }
     unsafe fn GenTextures(&mut self, n: GLsizei, textures: *mut GLuint) {
         gl21::GenTextures(n, textures)
     }

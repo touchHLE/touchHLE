@@ -497,6 +497,22 @@ pub const CLASSES: ClassExports = objc_classes! {
     new_string
 }
 
+- (id)stringByDeletingPathExtension {
+    let string = to_rust_string(env, this); // TODO: avoid copying
+    let (res, _) = path_algorithms::split_path_extension(&string);
+    let new_string = from_rust_string(env, String::from(res));
+    autorelease(env, new_string);
+    new_string
+}
+
+- (id)pathExtension {
+    let string = to_rust_string(env, this); // TODO: avoid copying
+    let (_, res) = path_algorithms::split_path_extension(&string);
+    let new_string = from_rust_string(env, String::from(res));
+    autorelease(env, new_string);
+    new_string
+}
+
 - (id)stringByAppendingPathComponent:(id)component { // NSString*
     // TODO: avoid copying
     // FIXME: check if Rust join() matches NSString (it probably doesn't)

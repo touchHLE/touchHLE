@@ -12,7 +12,12 @@ fn link_search(path: &Path) {
     println!("cargo:rustc-link-search=native={}", path.to_str().unwrap());
 }
 fn link_lib(lib: &str) {
-    println!("cargo:rustc-link-lib=static={}", lib);
+    // Default to static linking
+    if cfg!(feature = "dynamic") {
+        println!("cargo:rustc-link-lib=dylib={}", lib);
+    } else {
+        println!("cargo:rustc-link-lib=static={}", lib);
+    }
 }
 
 // See https://github.com/rust-lang/cc-rs/issues/565
@@ -57,6 +62,7 @@ fn main() {
         }
         build.define("Boost_INCLUDE_DIR", boost_path);
     }
+    // dynarmic can't be dynamically linked
     let dynarmic_out = build.build();
 
     link_search(&dynarmic_out.join("lib"));
@@ -67,11 +73,16 @@ fn main() {
             .join("build/externals/fmt")
             .join(build_type_windows()),
     );
-    link_lib(if cfg!(debug_assertions) {
-        "fmtd"
+    // fmtd isn't on Linux
+    if !cfg!(target_os = "linux") {
+        link_lib(if cfg!(debug_assertions) {
+            "fmtd"
+        } else {
+            "fmt"
+        });
     } else {
-        "fmt"
-    });
+        println!("cargo:rustc-link-lib=dylib=fmt");
+    }
     link_search(
         &dynarmic_out
             .join("build/externals/mcl/src")

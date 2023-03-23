@@ -12,8 +12,14 @@ fn link_search(path: &Path) {
     println!("cargo:rustc-link-search=native={}", path.to_str().unwrap());
 }
 fn link_lib(lib: &str) {
-    println!("cargo:rustc-link-lib=static={}", lib);
+    // Default to static linking
+    if cfg!(feature = "dynamic") {
+        println!("cargo:rustc-link-lib=dylib={}", lib);
+    } else {
+        println!("cargo:rustc-link-lib=static={}", lib);
+    }
 }
+
 fn link_framework(framework: &str) {
     println!("cargo:rustc-link-lib=framework={}", framework);
 }
@@ -23,7 +29,11 @@ fn main() {
     let workspace_root = package_root.join("../../..");
 
     let mut build = cmake::Config::new(workspace_root.join("vendor/openal-soft"));
-    build.define("LIBTYPE", "STATIC");
+    if cfg!(feature = "dynamic") {
+        build.define("LIBTYPE", "DYNAMIC");
+    } else {
+        build.define("LIBTYPE", "STATIC");
+    }
     let openal_soft_out = build.build();
 
     // Some dependencies of OpenAL Soft.
@@ -42,6 +52,11 @@ fn main() {
     } else {
         "openal"
     });
+
+    if cfg!(target_os = "linux") {
+        // OpenAL on Linux depends on sndio, needs to be dynamically linked
+        println!("cargo:rustc-link-lib=dylib=sndio");
+    }
     // rerun-if-changed seems to not work if pointed to a directory :(
     //rerun_if_changed(&workspace_root.join("vendor/openal-soft"));
 }

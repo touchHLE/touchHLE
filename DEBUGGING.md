@@ -48,3 +48,9 @@ GDB provides various services on top of this, for example:
 * `continue` resumes execution indefinitely
 
 touchHLE only communicates with GDB while execution is paused. Beyond being paused when you initially connect, it is also paused when certain CPU errors occur, or after stepping (resuming execution for a single instruction). Breakpoints are a useful way to force execution to pause at convenient locations.
+
+## Graphics debugging
+
+[apitrace](https://apitrace.github.io/) is invaluable for figuring out OpenGL-related issues.
+
+Outside the OpenGL realm, sometimes the most effective solution is dumping image data to a file. You can use Rust's `std::fs::write` for this. If you're a GIMP user, you might want to use it to open raw RGBA8 image data (easiest if the filename ends in `.data`), though there are probably better tools.

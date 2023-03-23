@@ -5,6 +5,8 @@
  */
 //! The `NSString` class cluster, including `NSMutableString`.
 
+mod path_algorithms;
+
 use super::ns_array;
 use super::{
     NSComparisonResult, NSOrderedAscending, NSOrderedDescending, NSOrderedSame, NSUInteger,
@@ -481,9 +483,16 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 - (id)stringByDeletingLastPathComponent {
     let string = to_rust_string(env, this); // TODO: avoid copying
-    let path = GuestPath::new(&string);
-    let parent = path.parent().unwrap_or(path);
-    let new_string = from_rust_string(env, String::from(parent.as_str()));
+    let (res, _) = path_algorithms::split_last_path_component(&string);
+    let new_string = from_rust_string(env, String::from(res));
+    autorelease(env, new_string);
+    new_string
+}
+
+- (id)lastPathComponent {
+    let string = to_rust_string(env, this); // TODO: avoid copying
+    let (_, res) = path_algorithms::split_last_path_component(&string);
+    let new_string = from_rust_string(env, String::from(res));
     autorelease(env, new_string);
     new_string
 }

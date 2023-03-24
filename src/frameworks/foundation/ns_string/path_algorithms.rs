@@ -42,6 +42,37 @@ pub fn split_last_path_component(path: &str) -> (&str, &str) {
     }
 }
 
+/// Returns the `pathComponents` values for a string. Note that this behaves
+/// differently to `lastPathComponent`/`stringByDeletingLastPathComponent`.
+pub fn split_path_components(path: &str) -> Vec<&str> {
+    let mut components = Vec::new();
+
+    let path = if let Some(path) = path.strip_prefix('/') {
+        components.push("/");
+        path
+    } else {
+        path
+    };
+    let (path, trailing_slash) = if let Some(path) = path.strip_suffix('/') {
+        (path, true)
+    } else {
+        (path, false)
+    };
+
+    for component in path.split('/') {
+        if component.is_empty() {
+            continue;
+        }
+        components.push(component);
+    }
+
+    if trailing_slash {
+        components.push("/");
+    }
+
+    components
+}
+
 /// Returns a tuple with the `stringByDeletingPathExtension` and
 /// `pathExtension` values for a string, in that order.
 pub fn split_path_extension(path: &str) -> (&str, &str) {
@@ -82,6 +113,28 @@ mod tests {
         assert_eq!(last_path_component("/a/"), "a");
         assert_eq!(last_path_component("a//////"), "a");
         assert_eq!(last_path_component("/"), "/");
+    }
+
+    #[test]
+    fn test_split_path_components() {
+        use super::split_path_components;
+
+        assert_eq!(&split_path_components("a/b"), &["a", "b"]);
+        assert_eq!(&split_path_components("/a/b"), &["/", "a", "b"]);
+        assert_eq!(&split_path_components("a/b/"), &["a", "b", "/"]);
+
+        assert_eq!(&split_path_components("a///b"), &["a", "b"]);
+        assert_eq!(&split_path_components("///a/b"), &["/", "a", "b"]);
+        assert_eq!(&split_path_components("a/b///"), &["a", "b", "/"]);
+
+        assert!(split_path_components("").is_empty());
+
+        assert_eq!(&split_path_components("/"), &["/"]);
+
+        // Weird edge-case discovered when testing macOS's implementation.
+        // Bug compatibility?
+        assert_eq!(&split_path_components("//"), &["/", "/"]);
+        assert_eq!(&split_path_components("///"), &["/", "/"]);
     }
 
     #[test]

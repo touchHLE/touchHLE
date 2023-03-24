@@ -497,6 +497,16 @@ pub const CLASSES: ClassExports = objc_classes! {
     new_string
 }
 
+- (id)pathComponents {
+    let string = to_rust_string(env, this); // TODO: avoid copying
+    let vec = path_algorithms::split_path_components(&string);
+    let vec = vec.iter().map(|component| {
+        from_rust_string(env, component.to_string())
+    }).collect();
+    let array = ns_array::from_vec(env, vec);
+    autorelease(env, array)
+}
+
 - (id)stringByDeletingPathExtension {
     let string = to_rust_string(env, this); // TODO: avoid copying
     let (res, _) = path_algorithms::split_path_extension(&string);

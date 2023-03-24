@@ -486,16 +486,14 @@ pub const CLASSES: ClassExports = objc_classes! {
     let string = to_rust_string(env, this); // TODO: avoid copying
     let (res, _) = path_algorithms::split_last_path_component(&string);
     let new_string = from_rust_string(env, String::from(res));
-    autorelease(env, new_string);
-    new_string
+    autorelease(env, new_string)
 }
 
 - (id)lastPathComponent {
     let string = to_rust_string(env, this); // TODO: avoid copying
     let (_, res) = path_algorithms::split_last_path_component(&string);
     let new_string = from_rust_string(env, String::from(res));
-    autorelease(env, new_string);
-    new_string
+    autorelease(env, new_string)
 }
 
 - (id)pathComponents {
@@ -512,16 +510,14 @@ pub const CLASSES: ClassExports = objc_classes! {
     let string = to_rust_string(env, this); // TODO: avoid copying
     let (res, _) = path_algorithms::split_path_extension(&string);
     let new_string = from_rust_string(env, String::from(res));
-    autorelease(env, new_string);
-    new_string
+    autorelease(env, new_string)
 }
 
 - (id)pathExtension {
     let string = to_rust_string(env, this); // TODO: avoid copying
     let (_, res) = path_algorithms::split_path_extension(&string);
     let new_string = from_rust_string(env, String::from(res));
-    autorelease(env, new_string);
-    new_string
+    autorelease(env, new_string)
 }
 
 - (id)stringByAppendingPathComponent:(id)component { // NSString*
@@ -530,8 +526,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     let combined = GuestPath::new(&to_rust_string(env, this))
         .join(to_rust_string(env, component));
     let new_string = from_rust_string(env, String::from(combined));
-    autorelease(env, new_string);
-    new_string
+    autorelease(env, new_string)
 }
 
 - (id)stringByAppendingPathExtension:(id)extension { // NSString*

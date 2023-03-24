@@ -371,7 +371,8 @@ pub const CLASSES: ClassExports = objc_classes! {
         let host_object = Box::new(StringHostObject::Utf16(utf16));
         env.objc.alloc_object(class, host_object, &mut env.mem)
     }).collect();
-    ns_array::from_vec(env, component_ns_strings)
+    let array = ns_array::from_vec(env, component_ns_strings);
+    autorelease(env, array)
 }
 
 - (id)stringByTrimmingCharactersInSet:(id)set { // NSCharacterSet*

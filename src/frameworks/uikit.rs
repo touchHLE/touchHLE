@@ -21,6 +21,7 @@ pub mod ui_event;
 pub mod ui_font;
 pub mod ui_graphics;
 pub mod ui_image;
+pub mod ui_image_picker_controller;
 pub mod ui_nib;
 pub mod ui_responder;
 pub mod ui_screen;

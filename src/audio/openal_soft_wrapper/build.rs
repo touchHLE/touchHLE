@@ -25,27 +25,24 @@ fn link_framework(framework: &str) {
 }
 
 fn main() {
-    let package_root = Path::new(env!("CARGO_MANIFEST_DIR"));
-    let workspace_root = package_root.join("../../..");
+    if !cfg!(feature = "dynamic") {
+        let package_root = Path::new(env!("CARGO_MANIFEST_DIR"));
+        let workspace_root = package_root.join("../../..");
 
-    let mut build = cmake::Config::new(workspace_root.join("vendor/openal-soft"));
-    if cfg!(feature = "dynamic") {
-        build.define("LIBTYPE", "DYNAMIC");
-    } else {
+        let mut build = cmake::Config::new(workspace_root.join("vendor/openal-soft"));
         build.define("LIBTYPE", "STATIC");
-    }
-    let openal_soft_out = build.build();
+        let openal_soft_out = build.build();
 
+        link_search(&openal_soft_out.join("lib"));
+        // some Linux systems
+        link_search(&openal_soft_out.join("lib64"));
+    }
     // Some dependencies of OpenAL Soft.
     if cfg!(target_os = "macos") {
         link_framework("AudioToolbox");
         link_framework("CoreAudio");
         link_framework("CoreFoundation");
     }
-
-    link_search(&openal_soft_out.join("lib"));
-    // some Linux systems
-    link_search(&openal_soft_out.join("lib64"));
     // see also src/audio/openal.rs
     link_lib(if cfg!(target_os = "windows") {
         "OpenAL32"

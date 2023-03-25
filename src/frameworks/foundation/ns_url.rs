@@ -82,10 +82,16 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (id)path {
-    let &NSURLHostObject::FileURL { ns_string } = env.objc.borrow(this) else {
-        unimplemented!(); // TODO
-    };
-    ns_string
+    match *env.objc.borrow(this) {
+        NSURLHostObject::FileURL { ns_string } => ns_string,
+        NSURLHostObject::OtherURL { ns_string } => {
+            // TODO: Support full URLs, not only ones that are just a path.
+            // FIXME: This should do unescaping.
+            // TODO: Avoid copy.
+            assert!(to_rust_string(env, ns_string).starts_with('/'));
+            ns_string
+        },
+    }
 }
 
 - (id)absoluteURL {

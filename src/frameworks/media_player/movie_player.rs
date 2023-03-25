@@ -9,25 +9,46 @@ use crate::dyld::{ConstantExports, HostConstant};
 use crate::frameworks::foundation::{ns_string, ns_url, NSInteger};
 use crate::objc::{id, msg, msg_class, objc_classes, release, retain, ClassExports};
 use crate::Environment;
+use std::collections::VecDeque;
 
 #[derive(Default)]
 pub struct State {
     active_player: Option<id>,
-    finish_notification_pending: bool,
+    /// Various apps (e.g. Crash Bandicoot Nitro Kart 3D and Spore Origins)
+    /// create or start a player and await some kind of notification, but can't
+    /// handle it if that notification happens immediately. This queue lets us
+    /// delay such notifications until the app next returns to the run loop,
+    /// which seems to be late enough.
+    pending_notifications: VecDeque<(&'static str, id)>,
+}
+impl State {
+    fn get(env: &mut Environment) -> &mut Self {
+        &mut env.framework_state.media_player.movie_player
+    }
 }
 
 type MPMovieScalingMode = NSInteger;
 
-// Value might not be correct, but as this is a linked symbol constant, it
+// Values might not be correct, but as these are linked symbol constants, it
 // shouldn't matter.
 pub const MPMoviePlayerPlaybackDidFinishNotification: &str =
     "MPMoviePlayerPlaybackDidFinishNotification";
+/// Apparently an undocumented, private API. Spore Origins uses it.
+pub const MPMoviePlayerContentPreloadDidFinishNotification: &str =
+    "MPMoviePlayerContentPreloadDidFinishNotification";
+// TODO: More notifications?
 
 /// `NSNotificationName` values.
-pub const CONSTANTS: ConstantExports = &[(
-    "_MPMoviePlayerPlaybackDidFinishNotification",
-    HostConstant::NSString(MPMoviePlayerPlaybackDidFinishNotification),
-)];
+pub const CONSTANTS: ConstantExports = &[
+    (
+        "_MPMoviePlayerPlaybackDidFinishNotification",
+        HostConstant::NSString(MPMoviePlayerPlaybackDidFinishNotification),
+    ),
+    (
+        "_MPMoviePlayerContentPreloadDidFinishNotification",
+        HostConstant::NSString(MPMoviePlayerContentPreloadDidFinishNotification),
+    ),
+];
 
 pub const CLASSES: ClassExports = objc_classes! {
 
@@ -44,11 +65,22 @@ pub const CLASSES: ClassExports = objc_classes! {
         url,
         ns_url::to_rust_path(env, url),
     );
+
+    // Act as if loading immediately completed (Spore Origins waits for this).
+    State::get(env).pending_notifications.push_back(
+        (MPMoviePlayerContentPreloadDidFinishNotification, this)
+    );
+
     this
 }
 
 - (())setScalingMode:(MPMovieScalingMode)_mode {
     // TODO
+}
+
+// Apparently an undocumented, private API, but Spore Origins uses it.
+- (())setMovieControlMode:(NSInteger)_mode {
+    // As this is undocumented, let's just ignore it.
 }
 
 // MPMediaPlayback implementation
@@ -58,11 +90,11 @@ pub const CLASSES: ClassExports = objc_classes! {
     // Movie player is retained by the runtime until it is stopped
     retain(env, this);
     env.framework_state.media_player.movie_player.active_player = Some(this);
-    // Act as if playback immediately completed.
-    // This is delayed until the next NSRunLoop iteration because it seems that
-    // apps (at least Crash Bandicoot Nitro Kart 3D) won't behave correctly if
-    // the notification gets posted before this method returns.
-    env.framework_state.media_player.movie_player.finish_notification_pending = true;
+
+    // Act as if playback immediately completed (various apps wait for this).
+    State::get(env).pending_notifications.push_back(
+        (MPMoviePlayerPlaybackDidFinishNotification, this)
+    );
 }
 
 - (())stop {
@@ -78,28 +110,11 @@ pub const CLASSES: ClassExports = objc_classes! {
 /// For use by `NSRunLoop` via [super::handle_players]: check movie players'
 /// status, send notifications if necessary.
 pub(super) fn handle_players(env: &mut Environment) {
-    if !env
-        .framework_state
-        .media_player
-        .movie_player
-        .finish_notification_pending
-    {
-        return;
+    while let Some(notif) = State::get(env).pending_notifications.pop_front() {
+        let (name, object) = notif;
+        let name = ns_string::get_static_str(env, name);
+        let center: id = msg_class![env; NSNotificationCenter defaultCenter];
+        // TODO: should there be some user info attached?
+        let _: () = msg![env; center postNotificationName:name object:object];
     }
-    env.framework_state
-        .media_player
-        .movie_player
-        .finish_notification_pending = false;
-
-    let player = env
-        .framework_state
-        .media_player
-        .movie_player
-        .active_player
-        .unwrap();
-    let name = ns_string::get_static_str(env, MPMoviePlayerPlaybackDidFinishNotification);
-    let center: id = msg_class![env; NSNotificationCenter defaultCenter];
-    // TODO: should there be some user info attached?
-    let _: () = msg![env; center postNotificationName:name object:player];
-    // TODO: do we need to send some other notifications too?
 }

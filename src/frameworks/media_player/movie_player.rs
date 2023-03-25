@@ -80,7 +80,19 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 // Apparently an undocumented, private API, but Spore Origins uses it.
 - (())setMovieControlMode:(NSInteger)_mode {
-    // As this is undocumented, let's just ignore it.
+    // Game-specific hack :(
+    // Spore Origins subscribes to the playback finished notification 0.2s after
+    // starting playback, so it misses the notification we send. When it
+    // subscribes, it also calls this method, so this is an opportunity to send
+    // the notification again.
+    if env.bundle.bundle_identifier().starts_with("com.ea.spore") {
+        log!("Applying game-specific hack for Spore Origins: sending MPMoviePlayerPlaybackDidFinishNotification again.");
+        State::get(env).pending_notifications.push_back(
+            (MPMoviePlayerPlaybackDidFinishNotification, this)
+        );
+    }
+    // As this is undocumented and we don't have real video playback yet, let's
+    // ignore it otherwise.
 }
 
 // MPMediaPlayback implementation

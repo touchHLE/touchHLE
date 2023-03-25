@@ -119,10 +119,11 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 -(())invalidate {
-    // Remove the timer from the run loop.
-    env.objc.borrow_mut::<NSTimerHostObject>(this).due_by = None;
-    let run_loop: id = msg_class![env; NSRunLoop currentRunLoop];
-    ns_run_loop::remove_timer(env, run_loop, this);
+    // Timer might already be invalid, don't try to remove it twice.
+    if env.objc.borrow_mut::<NSTimerHostObject>(this).due_by.take().is_some() {
+        let run_loop: id = msg_class![env; NSRunLoop currentRunLoop];
+        ns_run_loop::remove_timer(env, run_loop, this);
+    }
 }
 
 // TODO: more constructors

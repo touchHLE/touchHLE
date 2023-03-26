@@ -20,6 +20,10 @@ Compatibility:
 - API support improvements:
   - Various small contributions. (@hikari-no-yume, @KiritoDv)
 
+Quality:
+
+- Overlapping characters in text now render correctly. (@Xertes0)
+
 Other:
 
 - touchHLE now has a primitive implementation of the GDB Remote Serial Protocol. GDB can connect to touchHLE over TCP and set software breakpoints, inspect memory and registers, step or continue execution, etc. This replaces the old `--breakpoint=` option, which is now removed. (@hikari-no-yume)

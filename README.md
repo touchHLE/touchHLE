@@ -18,7 +18,7 @@ Only use touchHLE to emulate software you legally own.
 
 ## Platform support
 
-touchHLE has been tested and is to be considered supported on x64 Windows and x64 macOS. It may be possible to build it on Linux and on some AArch64 systems (at least one person has succeeded), but we make no guarantees right now. If you're an Apple Silicon Mac user: don't worry, the x64 macOS build reportedly works under Rosetta.
+touchHLE has been tested and is to be considered supported on x64 Windows and x64 macOS. It is possible to build it on some Linux and AArch64 systems, but this isn't a promise and we don't provide binary releases for those platforms. If you're an Apple Silicon Mac user: don't worry, the x64 macOS build reportedly works under Rosetta.
 
 **Known issue on macOS: memory leak of approximately 0.2MB/second (30fps games) or 0.4MB/second (60fps games).** All obvious potential culprits in the emulator itself have been ruled out, so it might be a problem in macOS itself, SDL2, or some other dependency. Thankfully this is slow enough that it shouldn't be a problem for most play sessions, but you may want to keep an eye on it.
 

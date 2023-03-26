@@ -48,6 +48,7 @@ fn main() {
     let mut build = cmake::Config::new(workspace_root.join("vendor/dynarmic"));
     build.define("DYNARMIC_WARNINGS_AS_ERRORS", "OFF");
     build.define("DYNARMIC_TESTS", "OFF");
+    build.define("DYNARMIC_USE_BUNDLED_EXTERNALS", "ON");
     // This is Windows-specific because on macOS or Linux, you can grab
     // Boost with your package manager.
     if cfg!(target_os = "windows") {
@@ -57,6 +58,7 @@ fn main() {
         }
         build.define("Boost_INCLUDE_DIR", boost_path);
     }
+    // dynarmic can't be dynamically linked
     let dynarmic_out = build.build();
 
     link_search(&dynarmic_out.join("lib"));

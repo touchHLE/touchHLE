@@ -14,3 +14,6 @@ path = "lib.rs"
 
 [build-dependencies]
 cmake = { workspace = true }
+
+[features]
+static = []

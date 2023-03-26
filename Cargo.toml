@@ -18,6 +18,10 @@ license = { workspace = true }
 authors = { workspace = true }
 homepage = { workspace = true }
 
+[features]
+default = ["static"]
+static = ["sdl2/bundled", "sdl2/static-link", "touchHLE_openal_soft_wrapper/static"]
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [workspace.dependencies]
@@ -36,7 +40,7 @@ rusttype = "0.9.3"
 # which is old enough that its bundled SDL2 version is missing various nice
 # things, and doesn't build on macOS.
 # This is a temporary fork to get a newer SDL2 version.
-sdl2 = { git = "https://github.com/hikari-no-yume/rust-sdl2.git", branch = "update-bundled-SDL2", features = ["bundled", "static-link"] }
+sdl2 = { git = "https://github.com/hikari-no-yume/rust-sdl2.git", branch = "update-bundled-SDL2", features = ["use-pkgconfig"] }
 touchHLE_dr_mp3_wrapper = { path = "src/audio/dr_mp3_wrapper" }
 touchHLE_dynarmic_wrapper = { path = "src/cpu/dynarmic_wrapper" }
 touchHLE_gl_bindings = { path = "src/window/gl_bindings" }

@@ -12,30 +12,42 @@ fn link_search(path: &Path) {
     println!("cargo:rustc-link-search=native={}", path.to_str().unwrap());
 }
 fn link_lib(lib: &str) {
-    println!("cargo:rustc-link-lib=static={}", lib);
+    if cfg!(feature = "static") {
+        println!("cargo:rustc-link-lib=static={}", lib);
+    } else {
+        println!("cargo:rustc-link-lib=dylib={}", lib);
+    }
 }
+
 fn link_framework(framework: &str) {
     println!("cargo:rustc-link-lib=framework={}", framework);
 }
 
 fn main() {
-    let package_root = Path::new(env!("CARGO_MANIFEST_DIR"));
-    let workspace_root = package_root.join("../../..");
+    if cfg!(feature = "static") {
+        let package_root = Path::new(env!("CARGO_MANIFEST_DIR"));
+        let workspace_root = package_root.join("../../..");
 
-    let mut build = cmake::Config::new(workspace_root.join("vendor/openal-soft"));
-    build.define("LIBTYPE", "STATIC");
-    let openal_soft_out = build.build();
+        let mut build = cmake::Config::new(workspace_root.join("vendor/openal-soft"));
+        build.define("LIBTYPE", "STATIC");
+        let openal_soft_out = build.build();
 
-    // Some dependencies of OpenAL Soft.
-    if cfg!(target_os = "macos") {
-        link_framework("AudioToolbox");
-        link_framework("CoreAudio");
-        link_framework("CoreFoundation");
+        link_search(&openal_soft_out.join("lib"));
+        // some Linux systems
+        link_search(&openal_soft_out.join("lib64"));
+
+        if cfg!(target_os = "linux") {
+            // OpenAL on Linux depends on sndio, needs to be dynamically linked
+            println!("cargo:rustc-link-lib=dylib=sndio");
+        }
+        // Some dependencies of OpenAL Soft.
+        if cfg!(target_os = "macos") {
+            link_framework("AudioToolbox");
+            link_framework("CoreAudio");
+            link_framework("CoreFoundation");
+        }
     }
 
-    link_search(&openal_soft_out.join("lib"));
-    // some Linux systems
-    link_search(&openal_soft_out.join("lib64"));
     // see also src/audio/openal.rs
     link_lib(if cfg!(target_os = "windows") {
         "OpenAL32"

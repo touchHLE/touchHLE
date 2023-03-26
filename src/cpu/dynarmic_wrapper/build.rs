@@ -12,11 +12,10 @@ fn link_search(path: &Path) {
     println!("cargo:rustc-link-search=native={}", path.to_str().unwrap());
 }
 fn link_lib(lib: &str) {
-    // Default to static linking
-    if cfg!(feature = "dynamic") {
-        println!("cargo:rustc-link-lib=dylib={}", lib);
-    } else {
+    if cfg!(feature = "static") {
         println!("cargo:rustc-link-lib=static={}", lib);
+    } else {
+        println!("cargo:rustc-link-lib=dylib={}", lib);
     }
 }
 

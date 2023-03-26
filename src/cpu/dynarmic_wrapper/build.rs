@@ -52,6 +52,7 @@ fn main() {
     let mut build = cmake::Config::new(workspace_root.join("vendor/dynarmic"));
     build.define("DYNARMIC_WARNINGS_AS_ERRORS", "OFF");
     build.define("DYNARMIC_TESTS", "OFF");
+    build.define("DYNARMIC_USE_BUNDLED_EXTERNALS", "ON");
     // This is Windows-specific because on macOS or Linux, you can grab
     // Boost with your package manager.
     if cfg!(target_os = "windows") {
@@ -72,16 +73,11 @@ fn main() {
             .join("build/externals/fmt")
             .join(build_type_windows()),
     );
-    // fmtd isn't on Linux
-    if !cfg!(target_os = "linux") {
-        link_lib(if cfg!(debug_assertions) {
-            "fmtd"
-        } else {
-            "fmt"
-        });
+    link_lib(if cfg!(debug_assertions) {
+        "fmtd"
     } else {
-        println!("cargo:rustc-link-lib=dylib=fmt");
-    }
+        "fmt"
+    });
     link_search(
         &dynarmic_out
             .join("build/externals/mcl/src")

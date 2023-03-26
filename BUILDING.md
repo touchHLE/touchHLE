@@ -10,7 +10,8 @@ There is one special external dependency, Boost:
 * On other OSes, install Boost from your package manager. If you are on macOS and using [Homebrew](https://brew.sh/): `brew install boost`.
 
 Then you just need to run `cargo run --release` (for a release build) or `cargo run` (for a debug build) to build and run touchHLE. On an underpowered, passively-cooled, 2-core laptop (2017 Retina MacBook), a clean release build takes a bit less than 9 minutes.
-* To compile with dynamically linked libraries, append `--no-default-features` to the end of the cargo build command.
+
+touchHLE can also be dynamically linked (which means instead of using the bundled dependencies, it will use the dependencies provided by your system). To build a dynamically linked version of touchHLE, you will need to have the SDL2 and OpenAL shared libraries installed, and then you can append `--no-default-features` (this flag is passed in to disable static linking, which is the default) to the end of the cargo build command.
 
 The `touchHLE_dylibs` and `touchHLE_fonts` directories contain files that the resulting binary will need at runtime, so you'll need to copy them if you want to distribute the result. You also should include the license files.
 

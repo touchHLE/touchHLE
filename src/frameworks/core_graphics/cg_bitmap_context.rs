@@ -110,6 +110,92 @@ fn get_pixels<'a>(data: &CGBitmapContextData, mem: &'a mut Mem) -> &'a mut [u8] 
     mem.bytes_at_mut(data.data.cast(), pixel_data_size)
 }
 
+fn blend_alpha(bg: f32, fg: f32) -> f32 {
+    // Alpha is blended the same way in
+    // premultiplied and straight representation.
+    fg + bg * (1.0 - fg)
+}
+
+/// Blends two RGBA non gamma-encoded values, with straight alpha.
+fn blend_straight(bg: (f32, f32, f32, f32), fg: (f32, f32, f32, f32)) -> (f32, f32, f32, f32) {
+    if fg.3 == 0.0 {
+        // If fg.3 == 0.0 we attempt to blend fully transparent color.
+        bg
+    } else {
+        let new_a = blend_alpha(bg.3, fg.3); // Can't be 0 if fg.3 != 0
+        (
+            (fg.0 * fg.3 + bg.0 * bg.3 * (1.0 - fg.3)) / new_a,
+            (fg.1 * fg.3 + bg.1 * bg.3 * (1.0 - fg.3)) / new_a,
+            (fg.2 * fg.3 + bg.2 * bg.3 * (1.0 - fg.3)) / new_a,
+            new_a,
+        )
+    }
+}
+
+/// Blends two RGBA non gamma-encoded values, with premultiplied alpha.
+fn blend_premultiplied(bg: (f32, f32, f32, f32), fg: (f32, f32, f32, f32)) -> (f32, f32, f32, f32) {
+    (
+        fg.0 + bg.0 * (1.0 - fg.3),
+        fg.1 + bg.1 * (1.0 - fg.3),
+        fg.2 + bg.2 * (1.0 - fg.3),
+        blend_alpha(bg.3, fg.3),
+    )
+}
+
+/// Get gamma-decoded RGBA value.
+fn get_pixel(
+    data: &CGBitmapContextData,
+    pixels: &mut [u8],
+    first_component_idx: usize,
+) -> (f32, f32, f32, f32) {
+    let pixel = match data.alpha_info {
+        kCGImageAlphaNone => (
+            pixels[first_component_idx] as f32 / 255.0,
+            pixels[first_component_idx + 1] as f32 / 255.0,
+            pixels[first_component_idx + 2] as f32 / 255.0,
+            1.0,
+        ),
+        kCGImageAlphaPremultipliedLast | kCGImageAlphaLast => (
+            pixels[first_component_idx] as f32 / 255.0,
+            pixels[first_component_idx + 1] as f32 / 255.0,
+            pixels[first_component_idx + 2] as f32 / 255.0,
+            pixels[first_component_idx + 3] as f32 / 255.0,
+        ),
+        kCGImageAlphaPremultipliedFirst | kCGImageAlphaFirst => (
+            pixels[first_component_idx + 1] as f32 / 255.0,
+            pixels[first_component_idx + 2] as f32 / 255.0,
+            pixels[first_component_idx + 3] as f32 / 255.0,
+            pixels[first_component_idx] as f32 / 255.0,
+        ),
+        kCGImageAlphaNoneSkipLast => (
+            pixels[first_component_idx] as f32 / 255.0,
+            pixels[first_component_idx + 1] as f32 / 255.0,
+            pixels[first_component_idx + 2] as f32 / 255.0,
+            1.0,
+        ),
+        kCGImageAlphaNoneSkipFirst => (
+            pixels[first_component_idx + 1] as f32 / 255.0,
+            pixels[first_component_idx + 2] as f32 / 255.0,
+            pixels[first_component_idx + 3] as f32 / 255.0,
+            1.0,
+        ),
+        kCGImageAlphaOnly => (
+            pixels[first_component_idx] as f32 / 255.0,
+            pixels[first_component_idx] as f32 / 255.0,
+            pixels[first_component_idx] as f32 / 255.0,
+            pixels[first_component_idx] as f32 / 255.0,
+        ),
+        _ => unreachable!(), // checked by bytes_per_pixel
+    };
+
+    (
+        gamma_decode(pixel.0),
+        gamma_decode(pixel.1),
+        gamma_decode(pixel.2),
+        pixel.3,
+    )
+}
+
 fn put_pixel(
     data: &CGBitmapContextData,
     pixels: &mut [u8],
@@ -132,13 +218,19 @@ fn put_pixel(
     let pixel_size = bytes_per_pixel(data);
     let first_component_idx = (y * data.bytes_per_row + x * pixel_size) as usize;
 
-    let (r, g, b, a) = pixel;
+    let bg_pixel = get_pixel(data, pixels, first_component_idx);
+
     // Blending like this must be done in linear RGB, so this must come before
     // gamma encoding.
-    let (r, g, b) = match data.alpha_info {
-        kCGImageAlphaPremultipliedLast | kCGImageAlphaPremultipliedFirst => (r * a, g * a, b * a),
-        _ => (r, g, b),
+    let (r, g, b, a) = match data.alpha_info {
+        kCGImageAlphaLast | kCGImageAlphaFirst => blend_straight(bg_pixel, pixel),
+        kCGImageAlphaPremultipliedLast | kCGImageAlphaPremultipliedFirst => {
+            blend_premultiplied(bg_pixel, pixel)
+        }
+        kCGImageAlphaOnly => (pixel.0, pixel.1, pixel.2, blend_alpha(bg_pixel.3, pixel.3)),
+        _ => pixel,
     };
+
     // Alpha is always linear.
     let (r, g, b) = (gamma_encode(r), gamma_encode(g), gamma_encode(b));
     match data.alpha_info {

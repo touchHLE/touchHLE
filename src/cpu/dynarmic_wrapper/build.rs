@@ -12,11 +12,7 @@ fn link_search(path: &Path) {
     println!("cargo:rustc-link-search=native={}", path.to_str().unwrap());
 }
 fn link_lib(lib: &str) {
-    if cfg!(feature = "static") {
-        println!("cargo:rustc-link-lib=static={}", lib);
-    } else {
-        println!("cargo:rustc-link-lib=dylib={}", lib);
-    }
+    println!("cargo:rustc-link-lib=static={}", lib);
 }
 
 // See https://github.com/rust-lang/cc-rs/issues/565

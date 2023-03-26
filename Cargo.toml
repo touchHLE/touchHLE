@@ -20,7 +20,7 @@ homepage = { workspace = true }
 
 [features]
 default = ["static"]
-static = ["sdl2/bundled", "sdl2/static-link", "touchHLE_openal_soft_wrapper/static", "touchHLE_dynarmic_wrapper/static"]
+static = ["sdl2/bundled", "sdl2/static-link", "touchHLE_openal_soft_wrapper/static"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

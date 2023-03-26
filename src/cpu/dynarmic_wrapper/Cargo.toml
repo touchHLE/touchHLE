@@ -17,4 +17,3 @@ cc = { workspace = true }
 cmake = { workspace = true }
 
 [features]
-static = []

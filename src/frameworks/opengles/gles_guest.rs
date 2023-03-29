@@ -163,22 +163,16 @@ fn glLightx(env: &mut Environment, light: GLenum, pname: GLenum, param: GLfixed)
     })
 }
 fn glLightfv(env: &mut Environment, light: GLenum, pname: GLenum, params: ConstPtr<GLfloat>) {
-    let &(_, pcount) = super::gles1_on_gl2::LIGHT_PARAMS
-        .iter()
-        .find(|&&(pname2, _)| pname == pname2)
-        .unwrap();
+    let count = super::gles1_on_gl2::LIGHT_PARAMS.get_component_count(pname);
     with_ctx_and_mem(env, |gles, mem| {
-        let params = mem.ptr_at(params, pcount.into());
+        let params = mem.ptr_at(params, count.into());
         unsafe { gles.Lightfv(light, pname, params) }
     })
 }
 fn glLightxv(env: &mut Environment, light: GLenum, pname: GLenum, params: ConstPtr<GLfixed>) {
-    let &(_, pcount) = super::gles1_on_gl2::LIGHT_PARAMS
-        .iter()
-        .find(|&&(pname2, _)| pname == pname2)
-        .unwrap();
+    let count = super::gles1_on_gl2::LIGHT_PARAMS.get_component_count(pname);
     with_ctx_and_mem(env, |gles, mem| {
-        let params = mem.ptr_at(params, pcount.into());
+        let params = mem.ptr_at(params, count.into());
         unsafe { gles.Lightxv(light, pname, params) }
     })
 }
@@ -566,36 +560,27 @@ fn glTexEnvi(env: &mut Environment, target: GLenum, pname: GLenum, param: GLint)
 fn glTexEnvfv(env: &mut Environment, target: GLenum, pname: GLenum, params: ConstPtr<GLfloat>) {
     // TODO: GL_POINT_SPRITE_OES
     assert!(target == gles11::TEXTURE_ENV);
-    let &(_, _, pcount) = super::gles1_on_gl2::TEX_ENV_PARAMS
-        .iter()
-        .find(|&&(pname2, _, _)| pname == pname2)
-        .unwrap();
+    let count = super::gles1_on_gl2::TEX_ENV_PARAMS.get_component_count(pname);
     with_ctx_and_mem(env, |gles, mem| {
-        let params = mem.ptr_at(params, pcount.into());
+        let params = mem.ptr_at(params, count.into());
         unsafe { gles.TexEnvfv(target, pname, params) }
     })
 }
 fn glTexEnvxv(env: &mut Environment, target: GLenum, pname: GLenum, params: ConstPtr<GLfixed>) {
     // TODO: GL_POINT_SPRITE_OES
     assert!(target == gles11::TEXTURE_ENV);
-    let &(_, _, pcount) = super::gles1_on_gl2::TEX_ENV_PARAMS
-        .iter()
-        .find(|&&(pname2, _, _)| pname == pname2)
-        .unwrap();
+    let count = super::gles1_on_gl2::TEX_ENV_PARAMS.get_component_count(pname);
     with_ctx_and_mem(env, |gles, mem| {
-        let params = mem.ptr_at(params, pcount.into());
+        let params = mem.ptr_at(params, count.into());
         unsafe { gles.TexEnvxv(target, pname, params) }
     })
 }
 fn glTexEnviv(env: &mut Environment, target: GLenum, pname: GLenum, params: ConstPtr<GLint>) {
     // TODO: GL_POINT_SPRITE_OES
     assert!(target == gles11::TEXTURE_ENV);
-    let &(_, _, pcount) = super::gles1_on_gl2::TEX_ENV_PARAMS
-        .iter()
-        .find(|&&(pname2, _, _)| pname == pname2)
-        .unwrap();
+    let count = super::gles1_on_gl2::TEX_ENV_PARAMS.get_component_count(pname);
     with_ctx_and_mem(env, |gles, mem| {
-        let params = mem.ptr_at(params, pcount.into());
+        let params = mem.ptr_at(params, count.into());
         unsafe { gles.TexEnviv(target, pname, params) }
     })
 }

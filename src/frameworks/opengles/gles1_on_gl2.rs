@@ -18,6 +18,7 @@
 //! on macOS. It's also a version supported on various other OSes.
 //! It is therefore a convenient target for our implementation.
 
+use super::util::{ParamTable, ParamType};
 use super::GLES;
 use crate::window::gl21compat as gl21;
 use crate::window::gl21compat::types::*;
@@ -130,46 +131,43 @@ pub(super) const ARRAYS: &[ArrayInfo] = &[
     },
 ];
 
-/// List of `glLightfv`/`glLightxv` parameters shared by OpenGL ES 1.1 and
-/// OpenGL 2.1, together with the number of float/fixed-point values they take.
-pub(super) const LIGHT_PARAMS: &[(GLenum, u8)] = &[
-    (gl21::AMBIENT, 4),
-    (gl21::DIFFUSE, 4),
-    (gl21::SPECULAR, 4),
-    (gl21::POSITION, 4),
-    (gl21::SPOT_CUTOFF, 1),
-    (gl21::SPOT_DIRECTION, 3),
-    (gl21::SPOT_EXPONENT, 1),
-    (gl21::CONSTANT_ATTENUATION, 1),
-    (gl21::LINEAR_ATTENUATION, 1),
-    (gl21::QUADRATIC_ATTENUATION, 1),
-];
+/// Table of `glLight` parameters shared by OpenGL ES 1.1 and OpenGL 2.1.
+pub(super) const LIGHT_PARAMS: ParamTable = ParamTable(&[
+    (gl21::AMBIENT, ParamType::Float, 4),
+    (gl21::DIFFUSE, ParamType::Float, 4),
+    (gl21::SPECULAR, ParamType::Float, 4),
+    (gl21::POSITION, ParamType::Float, 4),
+    (gl21::SPOT_CUTOFF, ParamType::Float, 1),
+    (gl21::SPOT_DIRECTION, ParamType::Float, 3),
+    (gl21::SPOT_EXPONENT, ParamType::Float, 1),
+    (gl21::CONSTANT_ATTENUATION, ParamType::Float, 1),
+    (gl21::LINEAR_ATTENUATION, ParamType::Float, 1),
+    (gl21::QUADRATIC_ATTENUATION, ParamType::Float, 1),
+]);
 
-/// List of `glTexEnv` parameters for the `GL_TEXTURE_ENV` target shared by
-/// OpenGL ES 1.1 and OpenGL 2.1, together with a boolean indicating whether
-/// they are integer/enum (true) or float/fixed-point (false), and the number of
-/// values they take.
-pub(super) const TEX_ENV_PARAMS: &[(GLenum, bool, u8)] = &[
-    (gl21::TEXTURE_ENV_MODE, true, 1),
-    (gl21::COORD_REPLACE, true, 1),
-    (gl21::COMBINE_RGB, true, 1),
-    (gl21::COMBINE_ALPHA, true, 1),
-    (gl21::SRC0_RGB, true, 1),
-    (gl21::SRC1_RGB, true, 1),
-    (gl21::SRC2_RGB, true, 1),
-    (gl21::SRC0_ALPHA, true, 1),
-    (gl21::SRC1_ALPHA, true, 1),
-    (gl21::SRC2_ALPHA, true, 1),
-    (gl21::OPERAND0_RGB, true, 1),
-    (gl21::OPERAND1_RGB, true, 1),
-    (gl21::OPERAND2_RGB, true, 1),
-    (gl21::OPERAND0_ALPHA, true, 1),
-    (gl21::OPERAND1_ALPHA, true, 1),
-    (gl21::OPERAND2_ALPHA, true, 1),
-    (gl21::TEXTURE_ENV_COLOR, false, 4),
-    (gl21::RGB_SCALE, false, 1),
-    (gl21::ALPHA_SCALE, false, 1),
-];
+/// Table of `glTexEnv` parameters for the `GL_TEXTURE_ENV` target shared by
+/// OpenGL ES 1.1 and OpenGL 2.1.
+pub(super) const TEX_ENV_PARAMS: ParamTable = ParamTable(&[
+    (gl21::TEXTURE_ENV_MODE, ParamType::Int, 1),
+    (gl21::COORD_REPLACE, ParamType::Int, 1),
+    (gl21::COMBINE_RGB, ParamType::Int, 1),
+    (gl21::COMBINE_ALPHA, ParamType::Int, 1),
+    (gl21::SRC0_RGB, ParamType::Int, 1),
+    (gl21::SRC1_RGB, ParamType::Int, 1),
+    (gl21::SRC2_RGB, ParamType::Int, 1),
+    (gl21::SRC0_ALPHA, ParamType::Int, 1),
+    (gl21::SRC1_ALPHA, ParamType::Int, 1),
+    (gl21::SRC2_ALPHA, ParamType::Int, 1),
+    (gl21::OPERAND0_RGB, ParamType::Int, 1),
+    (gl21::OPERAND1_RGB, ParamType::Int, 1),
+    (gl21::OPERAND2_RGB, ParamType::Int, 1),
+    (gl21::OPERAND0_ALPHA, ParamType::Int, 1),
+    (gl21::OPERAND1_ALPHA, ParamType::Int, 1),
+    (gl21::OPERAND2_ALPHA, ParamType::Int, 1),
+    (gl21::TEXTURE_ENV_COLOR, ParamType::Float, 4),
+    (gl21::RGB_SCALE, ParamType::Float, 1),
+    (gl21::ALPHA_SCALE, ParamType::Float, 1),
+]);
 
 /// List of integer `glTexParameter` parameters.
 const TEX_PARAMS_INT: &[GLenum] = &[
@@ -469,26 +467,22 @@ impl GLES for GLES1OnGL2 {
 
     // Lighting
     unsafe fn Lightf(&mut self, light: GLenum, pname: GLenum, param: GLfloat) {
-        assert!(LIGHT_PARAMS
-            .iter()
-            .any(|&(pname2, pcount)| pname == pname2 && pcount == 1));
+        LIGHT_PARAMS.assert_component_count(pname, 1);
         gl21::Lightf(light, pname, param);
     }
     unsafe fn Lightx(&mut self, light: GLenum, pname: GLenum, param: GLfixed) {
         self.Lightf(light, pname, fixed_to_float(param));
     }
     unsafe fn Lightfv(&mut self, light: GLenum, pname: GLenum, params: *const GLfloat) {
-        assert!(LIGHT_PARAMS.iter().any(|&(pname2, _)| pname == pname2));
+        LIGHT_PARAMS.assert_known_param(pname);
         gl21::Lightfv(light, pname, params);
     }
     unsafe fn Lightxv(&mut self, light: GLenum, pname: GLenum, params: *const GLfixed) {
+        let (type_, count) = LIGHT_PARAMS.get_type_info(pname);
+        assert!(type_ == ParamType::Float);
         let mut params_float = [0.0; 4];
-        let &(_, pcount) = LIGHT_PARAMS
-            .iter()
-            .find(|&&(pname2, _)| pname == pname2)
-            .unwrap();
         #[allow(clippy::needless_range_loop)]
-        for i in 0..(pcount as usize) {
+        for i in 0..(count as usize) {
             params_float[i] = fixed_to_float(params.add(i).read())
         }
         gl21::Lightfv(light, pname, params_float.as_ptr());
@@ -812,62 +806,55 @@ impl GLES for GLES1OnGL2 {
     unsafe fn TexEnvf(&mut self, target: GLenum, pname: GLenum, param: GLfloat) {
         // TODO: GL_POINT_SPRITE_OES
         assert!(target == gl21::TEXTURE_ENV);
-        assert!(TEX_ENV_PARAMS
-            .iter()
-            .any(|&(pname2, _, pcount)| pname == pname2 && pcount == 1));
+        TEX_ENV_PARAMS.assert_component_count(pname, 1);
         gl21::TexEnvf(target, pname, param);
     }
     unsafe fn TexEnvx(&mut self, target: GLenum, pname: GLenum, param: GLfixed) {
         // TODO: GL_POINT_SPRITE_OES
         assert!(target == gl21::TEXTURE_ENV);
-        let &(_, is_integer, _) = TEX_ENV_PARAMS
-            .iter()
-            .find(|&&(pname2, _, pcount)| pname == pname2 && pcount == 1)
-            .unwrap();
+        let (type_, count) = TEX_ENV_PARAMS.get_type_info(pname);
+        assert!(count == 1);
         // The conversion behaviour for fixed-point to integer is special.
-        if is_integer {
-            gl21::TexEnvi(target, pname, param);
-        } else {
-            gl21::TexEnvf(target, pname, fixed_to_float(param));
+        match type_ {
+            ParamType::Int => gl21::TexEnvi(target, pname, param),
+            ParamType::Float => gl21::TexEnvf(target, pname, fixed_to_float(param)),
+            _ => unreachable!(),
         }
     }
     unsafe fn TexEnvi(&mut self, target: GLenum, pname: GLenum, param: GLint) {
         // TODO: GL_POINT_SPRITE_OES
         assert!(target == gl21::TEXTURE_ENV);
-        assert!(TEX_ENV_PARAMS
-            .iter()
-            .any(|&(pname2, _, pcount)| pname == pname2 && pcount == 1));
+        TEX_ENV_PARAMS.assert_component_count(pname, 1);
         gl21::TexEnvi(target, pname, param);
     }
     unsafe fn TexEnvfv(&mut self, target: GLenum, pname: GLenum, params: *const GLfloat) {
         // TODO: GL_POINT_SPRITE_OES
         assert!(target == gl21::TEXTURE_ENV);
-        assert!(TEX_ENV_PARAMS.iter().any(|&(pname2, _, _)| pname == pname2));
+        TEX_ENV_PARAMS.assert_known_param(pname);
         gl21::TexEnvfv(target, pname, params);
     }
     unsafe fn TexEnvxv(&mut self, target: GLenum, pname: GLenum, params: *const GLfixed) {
         // TODO: GL_POINT_SPRITE_OES
         assert!(target == gl21::TEXTURE_ENV);
-        let &(_, is_integer, pcount) = TEX_ENV_PARAMS
-            .iter()
-            .find(|&&(pname2, _, _)| pname == pname2)
-            .unwrap();
+        let (type_, count) = TEX_ENV_PARAMS.get_type_info(pname);
         // The conversion behaviour for fixed-point to integer is special.
-        if is_integer {
-            gl21::TexEnviv(target, pname, params.cast());
-        } else {
-            let mut params_float = [0.0; 4];
-            #[allow(clippy::needless_range_loop)]
-            for i in 0..(pcount as usize) {
-                params_float[i] = fixed_to_float(params.add(i).read())
+        match type_ {
+            ParamType::Int => gl21::TexEnviv(target, pname, params.cast()),
+            ParamType::Float => {
+                let mut params_float = [0.0; 4];
+                #[allow(clippy::needless_range_loop)]
+                for i in 0..(count as usize) {
+                    params_float[i] = fixed_to_float(params.add(i).read())
+                }
+                gl21::TexEnvfv(target, pname, params_float.as_ptr());
             }
-            gl21::TexEnvfv(target, pname, params_float.as_ptr());
+            _ => unreachable!(),
         }
     }
     unsafe fn TexEnviv(&mut self, target: GLenum, pname: GLenum, params: *const GLint) {
         // TODO: GL_POINT_SPRITE_OES
         assert!(target == gl21::TEXTURE_ENV);
-        assert!(TEX_ENV_PARAMS.iter().any(|&(pname2, _, _)| pname == pname2));
+        TEX_ENV_PARAMS.assert_known_param(pname);
         gl21::TexEnviv(target, pname, params);
     }
 

@@ -31,6 +31,7 @@ pub mod eagl;
 mod gles1_on_gl2;
 mod gles_generic;
 mod gles_guest;
+mod util;
 
 use gles1_on_gl2::GLES1OnGL2;
 use gles_generic::GLES;

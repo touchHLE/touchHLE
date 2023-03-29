@@ -36,12 +36,6 @@ impl ParamTable {
         }
     }
 
-    /// Look up the component count for a parameter. Panics if the name is not
-    /// recognized.
-    pub fn get_component_count(&self, pname: GLenum) -> u8 {
-        self.get_type_info(pname).1
-    }
-
     /// Assert that a parameter name is recognized.
     pub fn assert_known_param(&self, pname: GLenum) {
         self.get_type_info(pname);
@@ -50,7 +44,7 @@ impl ParamTable {
     /// Assert that a parameter name is recognized and that the parameter has a
     /// particular component count.
     pub fn assert_component_count(&self, pname: GLenum, provided_count: u8) {
-        let actual_count = self.get_component_count(pname);
+        let (_type, actual_count) = self.get_type_info(pname);
         if actual_count != provided_count {
             panic!(
                 "Parameter {:#x} has component count {}, {} given.",

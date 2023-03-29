@@ -132,7 +132,7 @@ pub(super) const ARRAYS: &[ArrayInfo] = &[
 ];
 
 /// Table of `glLight` parameters shared by OpenGL ES 1.1 and OpenGL 2.1.
-pub(super) const LIGHT_PARAMS: ParamTable = ParamTable(&[
+const LIGHT_PARAMS: ParamTable = ParamTable(&[
     (gl21::AMBIENT, ParamType::Float, 4),
     (gl21::DIFFUSE, ParamType::Float, 4),
     (gl21::SPECULAR, ParamType::Float, 4),
@@ -147,7 +147,7 @@ pub(super) const LIGHT_PARAMS: ParamTable = ParamTable(&[
 
 /// Table of `glTexEnv` parameters for the `GL_TEXTURE_ENV` target shared by
 /// OpenGL ES 1.1 and OpenGL 2.1.
-pub(super) const TEX_ENV_PARAMS: ParamTable = ParamTable(&[
+const TEX_ENV_PARAMS: ParamTable = ParamTable(&[
     (gl21::TEXTURE_ENV_MODE, ParamType::Int, 1),
     (gl21::COORD_REPLACE, ParamType::Int, 1),
     (gl21::COMBINE_RGB, ParamType::Int, 1),

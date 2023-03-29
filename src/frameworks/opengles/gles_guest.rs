@@ -4,6 +4,13 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 //! Wrapper functions exposing OpenGL ES to the guest.
+//!
+//! This code is intentionally somewhat lax with calculating array sizes when
+//! obtainining a pointer with [Mem::ptr_at]. For large chunks of data, e.g. the
+//! `pixels` parameter of `glTexImage2D`, it's worth being precise, but for
+//! `glFoofv(pname, param)` where `param` is a pointer to one to four `GLfloat`s
+//! depending on the value of `pname`, using the upper bound (4 in this case)
+//! every time is never going to cause a problem in practice.
 
 use super::GLES;
 use crate::dyld::{export_c_func, FunctionExports};
@@ -79,17 +86,7 @@ fn glDisableClientState(env: &mut Environment, array: GLenum) {
 }
 fn glGetIntegerv(env: &mut Environment, pname: GLenum, params: MutPtr<GLint>) {
     with_ctx_and_mem(env, |gles, mem| {
-        // This function family can return a huge number of things.
-        // TODO: support more possible values.
-        let param_count = match pname {
-            gles11::FRAMEBUFFER_BINDING_OES
-            | gles11::MATRIX_MODE
-            | gles11::MAX_TEXTURE_SIZE
-            | gles11::RENDERBUFFER_BINDING_OES
-            | gles11::TEXTURE_BINDING_2D => 1,
-            _ => unimplemented!("pname value {:#x}", pname),
-        };
-        let params = mem.ptr_at_mut(params, param_count);
+        let params = mem.ptr_at_mut(params, 16 /* upper bound */);
         unsafe { gles.GetIntegerv(pname, params) };
     });
 }
@@ -163,16 +160,14 @@ fn glLightx(env: &mut Environment, light: GLenum, pname: GLenum, param: GLfixed)
     })
 }
 fn glLightfv(env: &mut Environment, light: GLenum, pname: GLenum, params: ConstPtr<GLfloat>) {
-    let count = super::gles1_on_gl2::LIGHT_PARAMS.get_component_count(pname);
     with_ctx_and_mem(env, |gles, mem| {
-        let params = mem.ptr_at(params, count.into());
+        let params = mem.ptr_at(params, 4 /* upper bound */);
         unsafe { gles.Lightfv(light, pname, params) }
     })
 }
 fn glLightxv(env: &mut Environment, light: GLenum, pname: GLenum, params: ConstPtr<GLfixed>) {
-    let count = super::gles1_on_gl2::LIGHT_PARAMS.get_component_count(pname);
     with_ctx_and_mem(env, |gles, mem| {
-        let params = mem.ptr_at(params, count.into());
+        let params = mem.ptr_at(params, 4 /* upper bound */);
         unsafe { gles.Lightxv(light, pname, params) }
     })
 }
@@ -560,27 +555,24 @@ fn glTexEnvi(env: &mut Environment, target: GLenum, pname: GLenum, param: GLint)
 fn glTexEnvfv(env: &mut Environment, target: GLenum, pname: GLenum, params: ConstPtr<GLfloat>) {
     // TODO: GL_POINT_SPRITE_OES
     assert!(target == gles11::TEXTURE_ENV);
-    let count = super::gles1_on_gl2::TEX_ENV_PARAMS.get_component_count(pname);
     with_ctx_and_mem(env, |gles, mem| {
-        let params = mem.ptr_at(params, count.into());
+        let params = mem.ptr_at(params, 4 /* upper bound */);
         unsafe { gles.TexEnvfv(target, pname, params) }
     })
 }
 fn glTexEnvxv(env: &mut Environment, target: GLenum, pname: GLenum, params: ConstPtr<GLfixed>) {
     // TODO: GL_POINT_SPRITE_OES
     assert!(target == gles11::TEXTURE_ENV);
-    let count = super::gles1_on_gl2::TEX_ENV_PARAMS.get_component_count(pname);
     with_ctx_and_mem(env, |gles, mem| {
-        let params = mem.ptr_at(params, count.into());
+        let params = mem.ptr_at(params, 4 /* upper bound */);
         unsafe { gles.TexEnvxv(target, pname, params) }
     })
 }
 fn glTexEnviv(env: &mut Environment, target: GLenum, pname: GLenum, params: ConstPtr<GLint>) {
     // TODO: GL_POINT_SPRITE_OES
     assert!(target == gles11::TEXTURE_ENV);
-    let count = super::gles1_on_gl2::TEX_ENV_PARAMS.get_component_count(pname);
     with_ctx_and_mem(env, |gles, mem| {
-        let params = mem.ptr_at(params, count.into());
+        let params = mem.ptr_at(params, 4 /* upper bound */);
         unsafe { gles.TexEnviv(target, pname, params) }
     })
 }

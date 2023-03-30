@@ -32,6 +32,8 @@ pub const NSASCIIStringEncoding: NSUInteger = 1;
 pub const NSUTF8StringEncoding: NSUInteger = 4;
 pub const NSUnicodeStringEncoding: NSUInteger = 10;
 pub const NSUTF16StringEncoding: NSUInteger = NSUnicodeStringEncoding;
+pub const NSUTF16BigEndianStringEncoding: NSUInteger = 0x90000100;
+pub const NSUTF16LittleEndianStringEncoding: NSUInteger = 0x94000100;
 
 /// Encodings that C strings (null-terminated byte strings) can use.
 const C_STRING_FRIENDLY_ENCODINGS: &[NSStringEncoding] =
@@ -82,15 +84,22 @@ impl StringHostObject {
                 let string = String::from_utf8(bytes.into_owned()).unwrap();
                 StringHostObject::Utf8(Cow::Owned(string))
             }
-            NSUTF16StringEncoding => {
+            NSUTF16StringEncoding
+            | NSUTF16BigEndianStringEncoding
+            | NSUTF16LittleEndianStringEncoding => {
                 assert!(bytes.len() % 2 == 0);
 
-                let is_big_endian = match &bytes[0..2] {
-                    [0xFE, 0xFF] => true,
-                    [0xFF, 0xFE] => false,
-                    // TODO: what does NSUnicodeStringEncoding mean if no BOM is
-                    // present?
-                    _ => unimplemented!("Default endianness"),
+                let is_big_endian = match encoding {
+                    NSUTF16BigEndianStringEncoding => true,
+                    NSUTF16LittleEndianStringEncoding => false,
+                    NSUTF16StringEncoding => match &bytes[0..2] {
+                        [0xFE, 0xFF] => true,
+                        [0xFF, 0xFE] => false,
+                        // TODO: what does NSUnicodeStringEncoding mean if no
+                        // BOM is present?
+                        _ => unimplemented!("Default endianness"),
+                    },
+                    _ => unreachable!(),
                 };
                 // TODO: Should the BOM be stripped? Always/sometimes/never?
 

@@ -760,6 +760,9 @@ impl GLES for GLES1OnGL2 {
     unsafe fn DeleteTextures(&mut self, n: GLsizei, textures: *const GLuint) {
         gl21::DeleteTextures(n, textures)
     }
+    unsafe fn ActiveTexture(&mut self, texture: GLenum) {
+        gl21::ActiveTexture(texture)
+    }
     unsafe fn BindTexture(&mut self, target: GLenum, texture: GLuint) {
         assert!(target == gl21::TEXTURE_2D);
         gl21::BindTexture(target, texture)

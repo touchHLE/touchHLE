@@ -119,6 +119,7 @@ pub trait GLES {
     unsafe fn PixelStorei(&mut self, pname: GLenum, param: GLint);
     unsafe fn GenTextures(&mut self, n: GLsizei, textures: *mut GLuint);
     unsafe fn DeleteTextures(&mut self, n: GLsizei, textures: *const GLuint);
+    unsafe fn ActiveTexture(&mut self, texture: GLenum);
     unsafe fn BindTexture(&mut self, target: GLenum, texture: GLuint);
     unsafe fn TexParameteri(&mut self, target: GLenum, pname: GLenum, param: GLint);
     unsafe fn TexParameterf(&mut self, target: GLenum, pname: GLenum, param: GLfloat);

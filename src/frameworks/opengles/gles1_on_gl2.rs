@@ -18,24 +18,12 @@
 //! on macOS. It's also a version supported on various other OSes.
 //! It is therefore a convenient target for our implementation.
 
-use super::util::{ParamTable, ParamType};
+use super::util::{fixed_to_float, matrix_fixed_to_float, ParamTable, ParamType};
 use super::GLES;
 use crate::window::gl21compat as gl21;
 use crate::window::gl21compat::types::*;
 use crate::window::gles11;
 use crate::window::{GLContext, GLVersion, Window};
-
-fn fixed_to_float(fixed: gles11::types::GLfixed) -> GLfloat {
-    ((fixed as f64) / ((1 << 16) as f64)) as f32
-}
-
-unsafe fn matrix_fixed_to_float(m: *const gles11::types::GLfixed) -> [GLfloat; 16] {
-    let mut matrix = [0f32; 16];
-    for (i, cell) in matrix.iter_mut().enumerate() {
-        *cell = fixed_to_float(*m.add(i));
-    }
-    matrix
-}
 
 /// List of capabilities shared by OpenGL ES 1.1 and OpenGL 2.1.
 ///
@@ -471,21 +459,24 @@ impl GLES for GLES1OnGL2 {
         gl21::Lightf(light, pname, param);
     }
     unsafe fn Lightx(&mut self, light: GLenum, pname: GLenum, param: GLfixed) {
-        self.Lightf(light, pname, fixed_to_float(param));
+        LIGHT_PARAMS.setx(
+            |param| gl21::Lightf(light, pname, param),
+            |param| gl21::Lighti(light, pname, param),
+            pname,
+            param,
+        )
     }
     unsafe fn Lightfv(&mut self, light: GLenum, pname: GLenum, params: *const GLfloat) {
         LIGHT_PARAMS.assert_known_param(pname);
         gl21::Lightfv(light, pname, params);
     }
     unsafe fn Lightxv(&mut self, light: GLenum, pname: GLenum, params: *const GLfixed) {
-        let (type_, count) = LIGHT_PARAMS.get_type_info(pname);
-        assert!(type_ == ParamType::Float);
-        let mut params_float = [0.0; 4];
-        #[allow(clippy::needless_range_loop)]
-        for i in 0..(count as usize) {
-            params_float[i] = fixed_to_float(params.add(i).read())
-        }
-        gl21::Lightfv(light, pname, params_float.as_ptr());
+        LIGHT_PARAMS.setxv(
+            |params| gl21::Lightfv(light, pname, params),
+            |params| gl21::Lightiv(light, pname, params),
+            pname,
+            params,
+        )
     }
 
     // Buffers
@@ -812,14 +803,12 @@ impl GLES for GLES1OnGL2 {
     unsafe fn TexEnvx(&mut self, target: GLenum, pname: GLenum, param: GLfixed) {
         // TODO: GL_POINT_SPRITE_OES
         assert!(target == gl21::TEXTURE_ENV);
-        let (type_, count) = TEX_ENV_PARAMS.get_type_info(pname);
-        assert!(count == 1);
-        // The conversion behaviour for fixed-point to integer is special.
-        match type_ {
-            ParamType::Int => gl21::TexEnvi(target, pname, param),
-            ParamType::Float => gl21::TexEnvf(target, pname, fixed_to_float(param)),
-            _ => unreachable!(),
-        }
+        TEX_ENV_PARAMS.setx(
+            |param| gl21::TexEnvf(target, pname, param),
+            |param| gl21::TexEnvi(target, pname, param),
+            pname,
+            param,
+        )
     }
     unsafe fn TexEnvi(&mut self, target: GLenum, pname: GLenum, param: GLint) {
         // TODO: GL_POINT_SPRITE_OES
@@ -836,20 +825,12 @@ impl GLES for GLES1OnGL2 {
     unsafe fn TexEnvxv(&mut self, target: GLenum, pname: GLenum, params: *const GLfixed) {
         // TODO: GL_POINT_SPRITE_OES
         assert!(target == gl21::TEXTURE_ENV);
-        let (type_, count) = TEX_ENV_PARAMS.get_type_info(pname);
-        // The conversion behaviour for fixed-point to integer is special.
-        match type_ {
-            ParamType::Int => gl21::TexEnviv(target, pname, params.cast()),
-            ParamType::Float => {
-                let mut params_float = [0.0; 4];
-                #[allow(clippy::needless_range_loop)]
-                for i in 0..(count as usize) {
-                    params_float[i] = fixed_to_float(params.add(i).read())
-                }
-                gl21::TexEnvfv(target, pname, params_float.as_ptr());
-            }
-            _ => unreachable!(),
-        }
+        TEX_ENV_PARAMS.setxv(
+            |params| gl21::TexEnvfv(target, pname, params),
+            |params| gl21::TexEnviv(target, pname, params),
+            pname,
+            params,
+        )
     }
     unsafe fn TexEnviv(&mut self, target: GLenum, pname: GLenum, params: *const GLint) {
         // TODO: GL_POINT_SPRITE_OES

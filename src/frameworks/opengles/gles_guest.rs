@@ -148,7 +148,7 @@ fn glViewport(env: &mut Environment, x: GLint, y: GLint, width: GLsizei, height:
     })
 }
 
-// Lighting
+// Lighting and materials
 fn glLightf(env: &mut Environment, light: GLenum, pname: GLenum, param: GLfloat) {
     with_ctx_and_mem(env, |gles, _mem| unsafe {
         gles.Lightf(light, pname, param)
@@ -169,6 +169,28 @@ fn glLightxv(env: &mut Environment, light: GLenum, pname: GLenum, params: ConstP
     with_ctx_and_mem(env, |gles, mem| {
         let params = mem.ptr_at(params, 4 /* upper bound */);
         unsafe { gles.Lightxv(light, pname, params) }
+    })
+}
+fn glMaterialf(env: &mut Environment, face: GLenum, pname: GLenum, param: GLfloat) {
+    with_ctx_and_mem(env, |gles, _mem| unsafe {
+        gles.Materialf(face, pname, param)
+    })
+}
+fn glMaterialx(env: &mut Environment, face: GLenum, pname: GLenum, param: GLfixed) {
+    with_ctx_and_mem(env, |gles, _mem| unsafe {
+        gles.Materialx(face, pname, param)
+    })
+}
+fn glMaterialfv(env: &mut Environment, face: GLenum, pname: GLenum, params: ConstPtr<GLfloat>) {
+    with_ctx_and_mem(env, |gles, mem| {
+        let params = mem.ptr_at(params, 4 /* upper bound */);
+        unsafe { gles.Materialfv(face, pname, params) }
+    })
+}
+fn glMaterialxv(env: &mut Environment, face: GLenum, pname: GLenum, params: ConstPtr<GLfixed>) {
+    with_ctx_and_mem(env, |gles, mem| {
+        let params = mem.ptr_at(params, 4 /* upper bound */);
+        unsafe { gles.Materialxv(face, pname, params) }
     })
 }
 
@@ -698,11 +720,15 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(glShadeModel(_)),
     export_c_func!(glScissor(_, _, _, _)),
     export_c_func!(glViewport(_, _, _, _)),
-    // Lighting
+    // Lighting and materials
     export_c_func!(glLightf(_, _, _)),
     export_c_func!(glLightx(_, _, _)),
     export_c_func!(glLightfv(_, _, _)),
     export_c_func!(glLightxv(_, _, _)),
+    export_c_func!(glMaterialf(_, _, _)),
+    export_c_func!(glMaterialx(_, _, _)),
+    export_c_func!(glMaterialfv(_, _, _)),
+    export_c_func!(glMaterialxv(_, _, _)),
     // Buffers
     export_c_func!(glGenBuffers(_, _)),
     export_c_func!(glDeleteBuffers(_, _)),

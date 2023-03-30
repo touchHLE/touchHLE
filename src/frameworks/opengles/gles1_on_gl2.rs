@@ -133,6 +133,18 @@ const LIGHT_PARAMS: ParamTable = ParamTable(&[
     (gl21::QUADRATIC_ATTENUATION, ParamType::Float, 1),
 ]);
 
+/// Table of `glMaterial` parameters shared by OpenGL ES 1.1 and OpenGL 2.1.
+const MATERIAL_PARAMS: ParamTable = ParamTable(&[
+    (gl21::AMBIENT, ParamType::Float, 4),
+    (gl21::DIFFUSE, ParamType::Float, 4),
+    (gl21::SPECULAR, ParamType::Float, 4),
+    (gl21::EMISSION, ParamType::Float, 4),
+    (gl21::SHININESS, ParamType::Float, 1),
+    // Not a true parameter: it's equivalent to calling glMaterial twice, once
+    // for GL_AMBIENT and once for GL_DIFFUSE.
+    (gl21::AMBIENT_AND_DIFFUSE, ParamType::Float, 4),
+]);
+
 /// Table of `glTexEnv` parameters for the `GL_TEXTURE_ENV` target shared by
 /// OpenGL ES 1.1 and OpenGL 2.1.
 const TEX_ENV_PARAMS: ParamTable = ParamTable(&[
@@ -450,7 +462,7 @@ impl GLES for GLES1OnGL2 {
         gl21::Viewport(x, y, width, height)
     }
 
-    // Lighting
+    // Lighting and materials
     unsafe fn Lightf(&mut self, light: GLenum, pname: GLenum, param: GLfloat) {
         LIGHT_PARAMS.assert_component_count(pname, 1);
         gl21::Lightf(light, pname, param);
@@ -471,6 +483,34 @@ impl GLES for GLES1OnGL2 {
         LIGHT_PARAMS.setxv(
             |params| gl21::Lightfv(light, pname, params),
             |params| gl21::Lightiv(light, pname, params),
+            pname,
+            params,
+        )
+    }
+    unsafe fn Materialf(&mut self, face: GLenum, pname: GLenum, param: GLfloat) {
+        assert!(face == gl21::FRONT_AND_BACK);
+        MATERIAL_PARAMS.assert_component_count(pname, 1);
+        gl21::Materialf(face, pname, param);
+    }
+    unsafe fn Materialx(&mut self, face: GLenum, pname: GLenum, param: GLfixed) {
+        assert!(face == gl21::FRONT_AND_BACK);
+        MATERIAL_PARAMS.setx(
+            |param| gl21::Materialf(face, pname, param),
+            |_| unreachable!(), // no integer parameters exist
+            pname,
+            param,
+        )
+    }
+    unsafe fn Materialfv(&mut self, face: GLenum, pname: GLenum, params: *const GLfloat) {
+        assert!(face == gl21::FRONT_AND_BACK);
+        MATERIAL_PARAMS.assert_known_param(pname);
+        gl21::Materialfv(face, pname, params);
+    }
+    unsafe fn Materialxv(&mut self, face: GLenum, pname: GLenum, params: *const GLfixed) {
+        assert!(face == gl21::FRONT_AND_BACK);
+        MATERIAL_PARAMS.setxv(
+            |params| gl21::Materialfv(face, pname, params),
+            |_| unreachable!(), // no integer parameters exist
             pname,
             params,
         )

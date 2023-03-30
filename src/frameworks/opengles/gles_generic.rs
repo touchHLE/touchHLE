@@ -42,11 +42,15 @@ pub trait GLES {
     unsafe fn Scissor(&mut self, x: GLint, y: GLint, width: GLsizei, height: GLsizei);
     unsafe fn Viewport(&mut self, x: GLint, y: GLint, width: GLsizei, height: GLsizei);
 
-    // Lighting
+    // Lighting and materials
     unsafe fn Lightf(&mut self, light: GLenum, pname: GLenum, param: GLfloat);
     unsafe fn Lightx(&mut self, light: GLenum, pname: GLenum, param: GLfixed);
     unsafe fn Lightfv(&mut self, light: GLenum, pname: GLenum, params: *const GLfloat);
     unsafe fn Lightxv(&mut self, light: GLenum, pname: GLenum, params: *const GLfixed);
+    unsafe fn Materialf(&mut self, face: GLenum, pname: GLenum, param: GLfloat);
+    unsafe fn Materialx(&mut self, face: GLenum, pname: GLenum, param: GLfixed);
+    unsafe fn Materialfv(&mut self, face: GLenum, pname: GLenum, params: *const GLfloat);
+    unsafe fn Materialxv(&mut self, face: GLenum, pname: GLenum, params: *const GLfixed);
 
     // Buffers
     unsafe fn GenBuffers(&mut self, n: GLsizei, buffers: *mut GLuint);

@@ -119,6 +119,151 @@ pub(super) const ARRAYS: &[ArrayInfo] = &[
     },
 ];
 
+/// Table of `glGet` parameters shared by OpenGL ES 1.1 and OpenGL 2.1.
+const GET_PARAMS: ParamTable = ParamTable(&[
+    (gl21::ACTIVE_TEXTURE, ParamType::Int, 1),
+    (gl21::ALIASED_POINT_SIZE_RANGE, ParamType::Float, 2),
+    (gl21::ALIASED_LINE_WIDTH_RANGE, ParamType::Float, 2),
+    (gl21::ALPHA_BITS, ParamType::Int, 1),
+    (gl21::ALPHA_TEST, ParamType::Boolean, 1),
+    (gl21::ALPHA_TEST_FUNC, ParamType::Int, 1),
+    // TODO: ALPHA_TEST_REF (has special type conversion behavior)
+    (gl21::ARRAY_BUFFER_BINDING, ParamType::Int, 1),
+    (gl21::BLEND, ParamType::Boolean, 1),
+    (gl21::BLEND_DST, ParamType::Int, 1),
+    (gl21::BLEND_SRC, ParamType::Int, 1),
+    (gl21::BLUE_BITS, ParamType::Int, 1),
+    (gl21::CLIENT_ACTIVE_TEXTURE, ParamType::Int, 1),
+    // TODO: arbitrary number of clip planes?
+    (gl21::CLIP_PLANE0, ParamType::Boolean, 1),
+    (gl21::COLOR_ARRAY, ParamType::Boolean, 1),
+    (gl21::COLOR_ARRAY_BUFFER_BINDING, ParamType::Int, 1),
+    (gl21::COLOR_ARRAY_SIZE, ParamType::Int, 1),
+    (gl21::COLOR_ARRAY_STRIDE, ParamType::Int, 1),
+    (gl21::COLOR_ARRAY_TYPE, ParamType::Int, 1),
+    // TODO: COLOR_CLEAR_VALUE (has special type conversion behavior)
+    (gl21::COLOR_LOGIC_OP, ParamType::Boolean, 1),
+    (gl21::COLOR_MATERIAL, ParamType::Boolean, 1),
+    (gl21::COLOR_WRITEMASK, ParamType::Boolean, 4),
+    // TODO: COMPRESSED_TEXTURE_FORMATS (need to support PVRTC etc)
+    (gl21::CULL_FACE, ParamType::Boolean, 1),
+    (gl21::CULL_FACE_MODE, ParamType::Int, 1),
+    // TODO: CURRENT_COLOR (has special type conversion behavior)
+    // TODO: CURRENT_NORMAL (has special type conversion behavior)
+    (gl21::CURRENT_TEXTURE_COORDS, ParamType::Float, 4),
+    (gl21::DEPTH_BITS, ParamType::Int, 1),
+    // TODO: DEPTH_CLEAR_VALUE (has special type conversion behavior)
+    (gl21::DEPTH_FUNC, ParamType::Int, 1),
+    // TODO: DEPTH_RANGE (has special type conversion behavior)
+    (gl21::DEPTH_TEST, ParamType::Boolean, 1),
+    (gl21::DEPTH_WRITEMASK, ParamType::Boolean, 1),
+    (gl21::ELEMENT_ARRAY_BUFFER_BINDING, ParamType::Int, 1),
+    (gl21::FOG, ParamType::Boolean, 1),
+    // TODO: FOG_COLOR (has special type conversion behavior)
+    // TODO: FOG_DENSITY, FOG_END, FOG_START (not sure what type these have)
+    (gl21::FOG_HINT, ParamType::Int, 1),
+    (gl21::FOG_MODE, ParamType::Int, 1),
+    (gl21::FRONT_FACE, ParamType::Int, 1),
+    (gl21::GREEN_BITS, ParamType::Int, 1),
+    // TODO: IMPLEMENTATION_COLOR_READ_FORMAT_OES? (not shared)
+    // TODO: IMPLEMENTATION_COLOR_READ_TYPE_OES? (not shared)
+    // TODO: LIGHT_MODEL_AMBIENT (has special type conversion behavior)
+    (gl21::LIGHT_MODEL_TWO_SIDE, ParamType::Boolean, 1),
+    // TODO: arbitrary number of lights?
+    (gl21::LIGHT0, ParamType::Boolean, 1),
+    (gl21::LIGHT1, ParamType::Boolean, 1),
+    (gl21::LIGHT2, ParamType::Boolean, 1),
+    (gl21::LIGHT3, ParamType::Boolean, 1),
+    (gl21::LIGHT4, ParamType::Boolean, 1),
+    (gl21::LIGHT5, ParamType::Boolean, 1),
+    (gl21::LIGHT6, ParamType::Boolean, 1),
+    (gl21::LIGHT7, ParamType::Boolean, 1),
+    (gl21::LIGHTING, ParamType::Boolean, 1),
+    (gl21::LINE_SMOOTH, ParamType::Boolean, 1),
+    (gl21::LINE_SMOOTH_HINT, ParamType::Int, 1),
+    (gl21::LINE_WIDTH, ParamType::Float, 1),
+    (gl21::LOGIC_OP_MODE, ParamType::Int, 1),
+    (gl21::MATRIX_MODE, ParamType::Int, 1),
+    (gl21::MAX_CLIP_PLANES, ParamType::Int, 1),
+    (gl21::MAX_LIGHTS, ParamType::Int, 1),
+    (gl21::MAX_MODELVIEW_STACK_DEPTH, ParamType::Int, 1),
+    (gl21::MAX_PROJECTION_STACK_DEPTH, ParamType::Int, 1),
+    (gl21::MAX_TEXTURE_SIZE, ParamType::Int, 1),
+    (gl21::MAX_TEXTURE_STACK_DEPTH, ParamType::Int, 1),
+    (gl21::MAX_TEXTURE_UNITS, ParamType::Int, 1),
+    (gl21::MAX_VIEWPORT_DIMS, ParamType::Int, 1),
+    (gl21::MODELVIEW_MATRIX, ParamType::Float, 16),
+    (gl21::MODELVIEW_STACK_DEPTH, ParamType::Int, 1),
+    (gl21::MULTISAMPLE, ParamType::Boolean, 1),
+    (gl21::NORMAL_ARRAY, ParamType::Boolean, 1),
+    (gl21::NORMAL_ARRAY_BUFFER_BINDING, ParamType::Int, 1),
+    (gl21::NORMAL_ARRAY_STRIDE, ParamType::Int, 1),
+    (gl21::NORMAL_ARRAY_TYPE, ParamType::Int, 1),
+    (gl21::NORMALIZE, ParamType::Boolean, 1),
+    // TODO: NUM_COMPRESSED_TEXTURE_FORMATS (need to support PVRTC etc)
+    (gl21::PACK_ALIGNMENT, ParamType::Int, 1),
+    (gl21::PERSPECTIVE_CORRECTION_HINT, ParamType::Int, 1),
+    (gl21::POINT_DISTANCE_ATTENUATION, ParamType::Float, 3),
+    (gl21::POINT_FADE_THRESHOLD_SIZE, ParamType::Float, 1),
+    (gl21::POINT_SIZE, ParamType::Float, 1),
+    // TODO: POINT_SIZE_ARRAY_OES etc? (not shared)
+    (gl21::POINT_SIZE_MAX, ParamType::Float, 1),
+    (gl21::POINT_SIZE_MIN, ParamType::Float, 1),
+    (gl21::POINT_SIZE_RANGE, ParamType::Float, 2),
+    (gl21::POINT_SMOOTH, ParamType::Boolean, 2),
+    (gl21::POINT_SMOOTH_HINT, ParamType::Int, 2),
+    (gl21::POLYGON_OFFSET_FACTOR, ParamType::Float, 1),
+    (gl21::POLYGON_OFFSET_FILL, ParamType::Boolean, 1),
+    (gl21::POLYGON_OFFSET_UNITS, ParamType::Float, 1),
+    (gl21::PROJECTION_MATRIX, ParamType::Float, 16),
+    (gl21::PROJECTION_STACK_DEPTH, ParamType::Int, 1),
+    (gl21::RED_BITS, ParamType::Int, 1),
+    (gl21::RESCALE_NORMAL, ParamType::Boolean, 1),
+    // TODO: SAMPLE_ALPHA_TO_COVERAGE? (not shared)
+    // TODO: SAMPLE_ALPHA_TO_ONE? (not shared)
+    (gl21::SAMPLE_ALPHA_TO_ONE, ParamType::Boolean, 1),
+    (gl21::SAMPLE_BUFFERS, ParamType::Int, 1),
+    // TODO: SAMPLE_COVERAGE? (not shared)
+    (gl21::SAMPLE_COVERAGE_INVERT, ParamType::Boolean, 1),
+    (gl21::SAMPLE_COVERAGE_VALUE, ParamType::Float, 1),
+    (gl21::SAMPLES, ParamType::Int, 1),
+    (gl21::SCISSOR_BOX, ParamType::Int, 4),
+    (gl21::SCISSOR_TEST, ParamType::Boolean, 1),
+    (gl21::SHADE_MODEL, ParamType::Int, 1),
+    (gl21::SMOOTH_LINE_WIDTH_RANGE, ParamType::Float, 2),
+    (gl21::SMOOTH_POINT_SIZE_RANGE, ParamType::Float, 2),
+    (gl21::STENCIL_BITS, ParamType::Int, 1),
+    (gl21::STENCIL_CLEAR_VALUE, ParamType::Int, 1),
+    (gl21::STENCIL_FAIL, ParamType::Int, 1),
+    (gl21::STENCIL_FUNC, ParamType::Int, 1),
+    (gl21::STENCIL_PASS_DEPTH_FAIL, ParamType::Int, 1),
+    (gl21::STENCIL_PASS_DEPTH_PASS, ParamType::Int, 1),
+    (gl21::STENCIL_REF, ParamType::Int, 1),
+    (gl21::STENCIL_TEST, ParamType::Boolean, 1),
+    (gl21::STENCIL_VALUE_MASK, ParamType::Int, 1),
+    (gl21::STENCIL_WRITEMASK, ParamType::Int, 1),
+    (gl21::SUBPIXEL_BITS, ParamType::Int, 1),
+    (gl21::TEXTURE_2D, ParamType::Boolean, 1),
+    (gl21::TEXTURE_BINDING_2D, ParamType::Int, 1),
+    (gl21::TEXTURE_COORD_ARRAY, ParamType::Boolean, 1),
+    (gl21::TEXTURE_COORD_ARRAY_BUFFER_BINDING, ParamType::Int, 1),
+    (gl21::TEXTURE_COORD_ARRAY_SIZE, ParamType::Int, 1),
+    (gl21::TEXTURE_COORD_ARRAY_STRIDE, ParamType::Int, 1),
+    (gl21::TEXTURE_COORD_ARRAY_TYPE, ParamType::Int, 1),
+    (gl21::TEXTURE_MATRIX, ParamType::Float, 16),
+    (gl21::TEXTURE_STACK_DEPTH, ParamType::Int, 1),
+    (gl21::UNPACK_ALIGNMENT, ParamType::Int, 1),
+    (gl21::VIEWPORT, ParamType::Int, 4),
+    (gl21::VERTEX_ARRAY, ParamType::Boolean, 1),
+    (gl21::VERTEX_ARRAY_BUFFER_BINDING, ParamType::Int, 1),
+    (gl21::VERTEX_ARRAY_SIZE, ParamType::Int, 1),
+    (gl21::VERTEX_ARRAY_STRIDE, ParamType::Int, 1),
+    (gl21::VERTEX_ARRAY_TYPE, ParamType::Int, 1),
+    // OES_framebuffer_object -> EXT_framebuffer_object
+    (gl21::FRAMEBUFFER_BINDING_EXT, ParamType::Int, 1),
+    (gl21::RENDERBUFFER_BINDING_EXT, ParamType::Int, 1),
+]);
+
 /// Table of `glLight` parameters shared by OpenGL ES 1.1 and OpenGL 2.1.
 const LIGHT_PARAMS: ParamTable = ParamTable(&[
     (gl21::AMBIENT, ParamType::Float, 4),
@@ -348,19 +493,23 @@ impl GLES for GLES1OnGL2 {
         assert!(ARRAYS.iter().any(|&ArrayInfo { name, .. }| name == array));
         gl21::DisableClientState(array);
     }
+    unsafe fn GetBooleanv(&mut self, pname: GLenum, params: *mut GLboolean) {
+        let (type_, _count) = GET_PARAMS.get_type_info(pname);
+        // TODO: type conversion
+        assert!(type_ == ParamType::Boolean);
+        gl21::GetBooleanv(pname, params);
+    }
+    // TODO: GetFixedv
+    unsafe fn GetFloatv(&mut self, pname: GLenum, params: *mut GLfloat) {
+        let (type_, _count) = GET_PARAMS.get_type_info(pname);
+        // TODO: type conversion
+        assert!(type_ == ParamType::Float);
+        gl21::GetFloatv(pname, params);
+    }
     unsafe fn GetIntegerv(&mut self, pname: GLenum, params: *mut GLint) {
-        // This function family can return a huge number of things.
-        // TODO: support more possible values.
-        assert!([
-            gl21::ARRAY_BUFFER_BINDING,
-            gl21::ELEMENT_ARRAY_BUFFER_BINDING,
-            gl21::FRAMEBUFFER_BINDING_EXT,
-            gl21::MATRIX_MODE,
-            gl21::MAX_TEXTURE_SIZE,
-            gl21::RENDERBUFFER_BINDING_EXT,
-            gl21::TEXTURE_BINDING_2D
-        ]
-        .contains(&pname));
+        let (type_, _count) = GET_PARAMS.get_type_info(pname);
+        // TODO: type conversion
+        assert!(type_ == ParamType::Int);
         gl21::GetIntegerv(pname, params);
     }
     unsafe fn Hint(&mut self, target: GLenum, mode: GLenum) {

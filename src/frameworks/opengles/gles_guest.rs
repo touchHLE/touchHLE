@@ -84,6 +84,18 @@ fn glDisableClientState(env: &mut Environment, array: GLenum) {
         unsafe { gles.DisableClientState(array) };
     });
 }
+fn glGetBooleanv(env: &mut Environment, pname: GLenum, params: MutPtr<GLboolean>) {
+    with_ctx_and_mem(env, |gles, mem| {
+        let params = mem.ptr_at_mut(params, 16 /* upper bound */);
+        unsafe { gles.GetBooleanv(pname, params) };
+    });
+}
+fn glGetFloatv(env: &mut Environment, pname: GLenum, params: MutPtr<GLfloat>) {
+    with_ctx_and_mem(env, |gles, mem| {
+        let params = mem.ptr_at_mut(params, 16 /* upper bound */);
+        unsafe { gles.GetFloatv(pname, params) };
+    });
+}
 fn glGetIntegerv(env: &mut Environment, pname: GLenum, params: MutPtr<GLint>) {
     with_ctx_and_mem(env, |gles, mem| {
         let params = mem.ptr_at_mut(params, 16 /* upper bound */);
@@ -708,6 +720,8 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(glDisable(_)),
     export_c_func!(glEnableClientState(_)),
     export_c_func!(glDisableClientState(_)),
+    export_c_func!(glGetBooleanv(_, _)),
+    export_c_func!(glGetFloatv(_, _)),
     export_c_func!(glGetIntegerv(_, _)),
     export_c_func!(glHint(_, _)),
     // Other state manipulation

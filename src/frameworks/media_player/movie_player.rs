@@ -98,6 +98,9 @@ pub const CLASSES: ClassExports = objc_classes! {
 // MPMediaPlayback implementation
 - (())play {
     log!("TODO: [(MPMoviePlayerController*){:?} play]", this);
+    if let Some(old) = env.framework_state.media_player.movie_player.active_player {
+        let _: () = msg![env; old stop];
+    }
     assert!(env.framework_state.media_player.movie_player.active_player.is_none());
     // Movie player is retained by the runtime until it is stopped
     retain(env, this);

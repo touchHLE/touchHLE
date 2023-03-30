@@ -157,6 +157,12 @@ pub const CLASSES: ClassExports = objc_classes! {
     log_dbg!("TODO: [(UIView*){:?} bringSubviewToFront:{:?}]", this, view);
 }
 
+- (())removeFromSuperview {
+    // FIXME: this should actually remove the view from some hierarchy and
+    //        release it
+    log!("TODO: [(UIView*){:?} removeFromSuperview]", this);
+}
+
 - (())dealloc {
     let &mut UIViewHostObject { layer, .. } = env.objc.borrow_mut(this);
     release(env, layer);

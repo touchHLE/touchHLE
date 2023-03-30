@@ -184,6 +184,15 @@ fn truncf(_env: &mut Environment, arg: f32) -> f32 {
     arg.trunc()
 }
 
+// Remainder functions
+// TODO: implement the rest
+fn fmod(_env: &mut Environment, arg1: f64, arg2: f64) -> f64 {
+    arg1 % arg2
+}
+fn fmodf(_env: &mut Environment, arg1: f32, arg2: f32) -> f32 {
+    arg1 % arg2
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     // Trigonometric functions
     export_c_func!(sin(_)),
@@ -240,4 +249,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(roundf(_)),
     export_c_func!(trunc(_)),
     export_c_func!(truncf(_)),
+    // Remainder functions
+    export_c_func!(fmod(_, _)),
+    export_c_func!(fmodf(_, _)),
 ];

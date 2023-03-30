@@ -33,6 +33,10 @@ pub const NSUTF8StringEncoding: NSUInteger = 4;
 pub const NSUnicodeStringEncoding: NSUInteger = 10;
 pub const NSUTF16StringEncoding: NSUInteger = NSUnicodeStringEncoding;
 
+/// Encodings that C strings (null-terminated byte strings) can use.
+const C_STRING_FRIENDLY_ENCODINGS: &[NSStringEncoding] =
+    &[NSASCIIStringEncoding, NSUTF8StringEncoding];
+
 pub const NSMaximumStringLength: NSUInteger = (i32::MAX - 1) as _;
 
 #[derive(Default)]
@@ -102,7 +106,7 @@ impl StringHostObject {
                         .collect()
                 })
             }
-            _ => panic!("Unimplemented encoding: {}", encoding),
+            _ => panic!("Unimplemented encoding: {:#x}", encoding),
         }
     }
     fn to_utf8(&self) -> Result<Cow<'static, str>, FromUtf16Error> {
@@ -613,8 +617,6 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (id)initWithBytes:(ConstPtr<u8>)bytes
              length:(NSUInteger)len
            encoding:(NSStringEncoding)encoding {
-    assert!(encoding == NSUTF8StringEncoding); // TODO: other encodings
-
     // TODO: error handling
     let slice = env.mem.bytes_at(bytes, len);
     let host_object = StringHostObject::decode(Cow::Borrowed(slice), encoding);
@@ -639,7 +641,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 - (id)initWithCString:(ConstPtr<u8>)c_string
              encoding:(NSStringEncoding)encoding {
-    assert!(encoding != NSUTF16StringEncoding);
+    assert!(C_STRING_FRIENDLY_ENCODINGS.contains(&encoding));
     let len: NSUInteger = env.mem.cstr_at(c_string).len().try_into().unwrap();
     msg![env; this initWithBytes:c_string length:len encoding:encoding]
 }

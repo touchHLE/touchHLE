@@ -8,12 +8,10 @@
 .gradle
 /local.properties
 .idea/
-.DS_Store
 /build
 /captures
 .externalNativeBuild
 .cxx
 local.properties
-*.so
-
+android/app/src/main/jniLibs
 android/app/build

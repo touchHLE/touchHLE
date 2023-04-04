@@ -380,7 +380,7 @@ pub fn files_prefix() -> &'static str {
     // we should use https://wiki.libsdl.org/SDL2/SDL_AndroidGetInternalStoragePath
     // but... it's not exposed via rust-sdl2 :(
     if env::consts::OS == "android" {
-        "/data/data/org.touch.hle/files/"
+        "/data/data/org.touchhle.android/files/"
     } else {
         ""
     }

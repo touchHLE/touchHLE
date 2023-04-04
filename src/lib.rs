@@ -55,7 +55,7 @@ pub extern "C" fn SDL_main(_argc: c_int, _argv: *const *const c_char) -> c_int {
     sdl2::log::log("");
 
     // TODO: properly parametrize path to the app
-    let args = vec!["/data/data/org.touch.hle/files/Super Monkey Ball  v1.02 .ipa".to_string()];
+    let args = vec!["/data/data/org.touchhle.android/files/Super Monkey Ball  v1.02 .ipa".to_string()];
     match _main(args) {
         Ok(_) => sdl2::log::log("touchHLE finished"),
         Err(e) => sdl2::log::log(&format!("touchHLE errored: {e:?}").to_string()),

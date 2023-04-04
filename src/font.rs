@@ -15,7 +15,7 @@
 
 use rusttype::{Point, Rect, Scale};
 use std::cmp;
-use std::env;
+use crate::fs::files_prefix;
 
 pub struct Font {
     font: rusttype::Font<'static>,
@@ -49,12 +49,7 @@ fn scale(font_size: f32) -> Scale {
 
 impl Font {
     fn from_file(path: &str) -> Font {
-        let prefix = if env::consts::OS == "android" {
-            "/data/data/org.touch.hle/files/"
-        } else {
-            ""
-        };
-
+        let prefix = files_prefix();
         let Ok(bytes) = std::fs::read(prefix.to_owned() + path) else {
             panic!("Couldn't read bundled font file {:?}. Perhaps the directory is missing?", path);
         };

@@ -49,22 +49,17 @@ fn main() {
     let mut build = cmake::Config::new(workspace_root.join("vendor/dynarmic"));
     build.define("DYNARMIC_WARNINGS_AS_ERRORS", "OFF");
     build.define("DYNARMIC_TESTS", "OFF");
-    // This is Windows-specific because on macOS or Linux, you can grab
+    // This is Windows-specific (and Android-specific) because on macOS or Linux, you can grab
     // Boost with your package manager.
-    if cfg!(target_os = "windows") {
+    let os = env::var("CARGO_CFG_TARGET_OS").expect("CARGO_CFG_TARGET_OS was not set");
+    if cfg!(target_os = "windows")
+        || (cfg!(target_os = "macos") && os.eq_ignore_ascii_case("android"))
+    {
         let boost_path = workspace_root.join("vendor/boost");
         if !boost_path.is_dir() {
             panic!("Could not find Boost. Download it from https://www.boost.org/users/download/ and put it at vendor/boost");
         }
         build.define("Boost_INCLUDE_DIR", boost_path);
-    }
-    let os = env::var("CARGO_CFG_TARGET_OS").expect("CARGO_CFG_TARGET_OS was not set");
-    if cfg!(target_os = "macos") && os.eq_ignore_ascii_case("android") {
-        // TODO: how to set version independent path?
-        build.define(
-            "Boost_INCLUDE_DIR",
-            "/opt/homebrew/Cellar/boost/1.81.0_1/include",
-        );
     }
     let dynarmic_out = build.build();
 

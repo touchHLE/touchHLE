@@ -52,9 +52,7 @@ fn main() {
     // This is Windows-specific (and Android-specific) because on macOS or Linux, you can grab
     // Boost with your package manager.
     let os = env::var("CARGO_CFG_TARGET_OS").expect("CARGO_CFG_TARGET_OS was not set");
-    if cfg!(target_os = "windows")
-        || (cfg!(target_os = "macos") && os.eq_ignore_ascii_case("android"))
-    {
+    if os.eq_ignore_ascii_case("windows") || os.eq_ignore_ascii_case("android") {
         let boost_path = workspace_root.join("vendor/boost");
         if !boost_path.is_dir() {
             panic!("Could not find Boost. Download it from https://www.boost.org/users/download/ and put it at vendor/boost");

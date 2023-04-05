@@ -33,7 +33,7 @@ mod gles1_on_gl2;
 mod gles_generic;
 mod gles_guest;
 
-#[allow(unused_imports)]
+#[cfg(target_os = "android")]
 use gles1_native::GLES1Native;
 #[cfg(not(target_os = "android"))]
 use gles1_on_gl2::GLES1OnGL2;

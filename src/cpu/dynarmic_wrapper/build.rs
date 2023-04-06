@@ -9,6 +9,9 @@ use std::path::Path;
 fn rerun_if_changed(path: &Path) {
     println!("cargo:rerun-if-changed={}", path.to_str().unwrap());
 }
+fn link_arg(arg: &str) {
+    println!("cargo:rustc-link-arg={}", arg);
+}
 fn link_search(path: &Path) {
     println!("cargo:rustc-link-search=native={}", path.to_str().unwrap());
 }
@@ -68,6 +71,32 @@ fn main() {
     }
     let dynarmic_out = build.build();
 
+    if os.eq_ignore_ascii_case("android") {
+        // Work around weird issue with the NDK where there are missing
+        // references to compiler-rt/libgcc symbols.
+        // Translated from: https://github.com/termux/termux-packages/issues/8029#issuecomment-1369150244
+        let mut cc_command = cc::Build::new().get_compiler().to_command();
+        let libclang_rt_path = cc_command
+            .arg("-print-libgcc-file-name")
+            .output()
+            .unwrap()
+            .stdout;
+        let libclang_rt_path: &Path = std::str::from_utf8(&libclang_rt_path).unwrap().as_ref();
+        link_search(libclang_rt_path.parent().unwrap());
+        link_lib(
+            libclang_rt_path
+                .file_name()
+                .unwrap()
+                .to_str()
+                .unwrap()
+                .trim()
+                .strip_prefix("lib")
+                .unwrap()
+                .strip_suffix(".a")
+                .unwrap(),
+        );
+    }
+
     link_search(&dynarmic_out.join("lib"));
     link_search(&dynarmic_out.join("lib64")); // some Linux systems
     link_lib("dynarmic");
@@ -96,6 +125,7 @@ fn main() {
         );
         link_lib("Zydis");
     }
+
     // rerun-if-changed seems to not work if pointed to a directory :(
     //rerun_if_changed(&workspace_root.join("vendor/dynarmic"));
 

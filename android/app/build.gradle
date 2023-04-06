@@ -23,7 +23,7 @@ android {
             ndkBuild {
                 arguments "APP_PLATFORM=android-16"
                 // abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
-                abiFilters 'arm64-v8a'
+                abiFilters 'arm64-v8a', 'x86_64'
             }
         }
     }
@@ -76,7 +76,7 @@ android {
 }
 
 cargoNdk {
-    targets = ["arm64"]
+    targets = ["arm64", "x86_64"]
     module = ".."
     extraCargoEnv = ["ANDROID_NDK": android.ndkDirectory, "ANDROID_NDK_HOME": android.ndkDirectory]
 }

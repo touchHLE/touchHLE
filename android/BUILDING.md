@@ -7,7 +7,6 @@
 
 # Notes
 
-- only `arm64-v8a` variant is supported for a moment
 - build was tested on macOS 12.6 with Android Studio 2022.1.1 Patch 2 and NDK version 25.2.9519653
 
 # Setup
@@ -16,6 +15,7 @@ we use `cargo ndk` to build for android, so it should be installed first
 
 ```
 rustup target add aarch64-linux-android
+rustup target add x86_64-linux-android
 cargo install cargo-ndk
 ```
 

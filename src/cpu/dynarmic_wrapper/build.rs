@@ -59,6 +59,13 @@ fn main() {
         }
         build.define("Boost_INCLUDE_DIR", boost_path);
     }
+    // Prevent CMake from using macOS-only linker commands when cross-compiling
+    // for Android.
+    // https://stackoverflow.com/questions/69697715/cross-compiling-c-program-for-android-on-mac-failed-using-ndks-clang
+    if os.eq_ignore_ascii_case("android") {
+        build.define("CMAKE_SYSTEM_NAME", "Linux");
+        build.define("ANDROID", "ON");
+    }
     let dynarmic_out = build.build();
 
     link_search(&dynarmic_out.join("lib"));
@@ -80,8 +87,8 @@ fn main() {
             .join(build_type_windows()),
     );
     link_lib("mcl");
-    #[cfg(target_arch = "x86_64")]
-    {
+    let arch = env::var("CARGO_CFG_TARGET_ARCH").expect("CARGO_CFG_TARGET_ARCH was not set");
+    if arch.eq_ignore_ascii_case("x86_64") {
         link_search(
             &dynarmic_out
                 .join("build/externals/zydis")

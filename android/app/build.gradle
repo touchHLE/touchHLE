@@ -78,7 +78,7 @@ android {
 cargoNdk {
     targets = ["arm64"]
     module = ".."
-    extraCargoEnv = ["ANDROID_NDK": android.ndkDirectory]
+    extraCargoEnv = ["ANDROID_NDK": android.ndkDirectory, "ANDROID_NDK_HOME": android.ndkDirectory]
 }
 
 dependencies {

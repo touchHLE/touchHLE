@@ -13,8 +13,10 @@ use crate::Environment;
 
 /// Usually a FourCC.
 type AudioServicesPropertyID = u32;
+type SystemSoundID = u32;
 
 const kAudioServicesUnsupportedPropertyError: OSStatus = fourcc(b"pty?") as _;
+const kSystemSoundID_Vibrate: SystemSoundID = 0x00000FFF;
 
 fn AudioServicesGetProperty(
     _env: &mut Environment,
@@ -33,4 +35,13 @@ fn AudioServicesGetProperty(
     }
 }
 
-pub const FUNCTIONS: FunctionExports = &[export_c_func!(AudioServicesGetProperty(_, _, _, _, _))];
+fn AudioServicesPlaySystemSound(_env: &mut Environment, in_system_sound_id: SystemSoundID) {
+    assert_eq!(in_system_sound_id, kSystemSoundID_Vibrate);
+    log!("TODO: vibration (AudioServicesPlaySystemSound)");
+    // TODO: implement other system sounds
+}
+
+pub const FUNCTIONS: FunctionExports = &[
+    export_c_func!(AudioServicesGetProperty(_, _, _, _, _)),
+    export_c_func!(AudioServicesPlaySystemSound(_)),
+];

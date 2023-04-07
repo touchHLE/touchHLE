@@ -9,9 +9,6 @@ use std::path::Path;
 fn rerun_if_changed(path: &Path) {
     println!("cargo:rerun-if-changed={}", path.to_str().unwrap());
 }
-fn link_arg(arg: &str) {
-    println!("cargo:rustc-link-arg={}", arg);
-}
 fn link_search(path: &Path) {
     println!("cargo:rustc-link-search=native={}", path.to_str().unwrap());
 }

@@ -88,6 +88,8 @@ pub struct Window {
     app_gl_ctx_no_longer_current: bool,
     controller_ctx: sdl2::GameControllerSubsystem,
     controllers: Vec<sdl2::controller::GameController>,
+    _sensor_ctx: sdl2::SensorSubsystem,
+    accelerometer: Option<sdl2::sensor::Sensor>,
     virtual_cursor_last: Option<(f32, f32, bool, bool)>,
 }
 impl Window {
@@ -99,6 +101,13 @@ impl Window {
     ) -> Window {
         let sdl_ctx = sdl2::init().unwrap();
         let video_ctx = sdl_ctx.video().unwrap();
+
+        // The "hidapi" feature of rust-sdl2 is enabled so that sdl2::sensor
+        // is available, but we don't want to enable SDL's HIDAPI controller
+        // drivers because they cause duplicated controllers on macOS
+        // (https://github.com/libsdl-org/SDL/issues/7479). Once that's fixed,
+        // remove this (https://github.com/hikari-no-yume/touchHLE/issues/85).
+        sdl2::hint::set("SDL_JOYSTICK_HIDAPI", "0");
 
         // SDL2 disables the screen saver by default, but iPhone OS enables
         // the idle timer that triggers sleep by default, so we turn it back on
@@ -140,6 +149,20 @@ impl Window {
 
         let controller_ctx = sdl_ctx.game_controller().unwrap();
 
+        let sensor_ctx = sdl_ctx.sensor().unwrap();
+        let mut accelerometer: Option<sdl2::sensor::Sensor> = None;
+        if let Ok(num_sensors) = sensor_ctx.num_sensors() {
+            for sensor_idx in 0..num_sensors {
+                if let Ok(sensor) = sensor_ctx.open(sensor_idx) {
+                    if sensor.sensor_type() == sdl2::sensor::SensorType::Accelerometer {
+                        log!("Accelerometer detected: {}.", sensor.name());
+                        accelerometer = Some(sensor);
+                        break;
+                    }
+                }
+            }
+        }
+
         let mut window = Window {
             _sdl_ctx: sdl_ctx,
             video_ctx,
@@ -156,6 +179,8 @@ impl Window {
             app_gl_ctx_no_longer_current: false,
             controller_ctx,
             controllers: Vec::new(),
+            _sensor_ctx: sensor_ctx,
+            accelerometer,
             virtual_cursor_last: None,
         };
         if window.splash_image_and_gl_ctx.is_some() {
@@ -266,16 +291,38 @@ impl Window {
     }
     pub fn print_accelerometer_notice(&self) {
         log!("This app uses the accelerometer.");
-        if self.controllers.is_empty() {
-            log!("Connect a controller to get accelerometer simulation.");
-        } else {
+        if !self.controllers.is_empty() {
             log!("Your connected controller's left analog stick will be used for accelerometer simulation.");
+            if self.accelerometer.is_some() {
+                log!("Disconnect the controller if you want to use your device's accelerometer.");
+            }
+        } else if self.accelerometer.is_some() {
+            log!("Your device's accelerometer will be used for accelerometer simulation.");
+            log!("Connect a controller if you would prefer to use an analog stick.");
+        } else if self.controllers.is_empty() {
+            log!("Connect a controller to get accelerometer simulation.");
         }
     }
 
-    /// Get the real (TODO) or simulated accelerometer output.
+    /// Get the real or simulated accelerometer output.
     /// See also [crate::frameworks::uikit::ui_accelerometer].
     pub fn get_acceleration(&self, options: &Options) -> (f32, f32, f32) {
+        if self.controllers.is_empty() {
+            if let Some(ref accelerometer) = self.accelerometer {
+                let data = accelerometer.get_data().unwrap();
+                let sdl2::sensor::SensorData::Accel(data) = data else { panic!(); };
+                let [x, y, z] = data;
+                // UIAcceleration reports acceleration towards gravity, but SDL2
+                // reports acceleration away from gravity.
+                let (x, y, z) = (-x, -y, -z);
+                // UIAcceleration reports acceleration in units of g-force, but SDL2
+                // reports acceleration in units of m/s^2.
+                let gravity: f32 = 9.80665; // SDL_STANDARD_GRAVITY
+                let (x, y, z) = (x / gravity, y / gravity, z / gravity);
+                return (x, y, z);
+            }
+        }
+
         // Get left analog stick input. The range is [-1, 1] on each axis.
         let (x, y, _) = self.get_controller_stick(options, true);
 

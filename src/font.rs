@@ -13,9 +13,9 @@
 //! switch to something like cosmic-text in future, but that has a _lot_ more
 //! dependencies.
 
+use crate::fs::files_prefix;
 use rusttype::{Point, Rect, Scale};
 use std::cmp;
-use crate::fs::files_prefix;
 
 pub struct Font {
     font: rusttype::Font<'static>,

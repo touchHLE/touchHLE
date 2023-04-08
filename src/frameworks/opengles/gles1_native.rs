@@ -41,6 +41,12 @@ impl GLES for GLES1Native {
     unsafe fn DisableClientState(&mut self, array: GLenum) {
         gl11::DisableClientState(array);
     }
+    unsafe fn GetBooleanv(&mut self, pname: GLenum, params: *mut GLboolean) {
+        gl11::GetBooleanv(pname, params);
+    }
+    unsafe fn GetFloatv(&mut self, pname: GLenum, params: *mut GLfloat) {
+        gl11::GetFloatv(pname, params);
+    }
     unsafe fn GetIntegerv(&mut self, pname: GLenum, params: *mut GLint) {
         gl11::GetIntegerv(pname, params);
     }
@@ -60,6 +66,9 @@ impl GLES for GLES1Native {
     }
     unsafe fn CullFace(&mut self, mode: GLenum) {
         gl11::CullFace(mode)
+    }
+    unsafe fn DepthFunc(&mut self, func: GLenum) {
+        gl11::DepthFunc(func)
     }
     unsafe fn DepthMask(&mut self, flag: GLboolean) {
         gl11::DepthMask(flag)
@@ -83,7 +92,7 @@ impl GLES for GLES1Native {
         gl11::Viewport(x, y, width, height)
     }
 
-    // Lighting
+    // Lighting and materials
     unsafe fn Lightf(&mut self, light: GLenum, pname: GLenum, param: GLfloat) {
         gl11::Lightf(light, pname, param);
     }
@@ -95,6 +104,18 @@ impl GLES for GLES1Native {
     }
     unsafe fn Lightxv(&mut self, light: GLenum, pname: GLenum, params: *const GLfixed) {
         gl11::Lightxv(light, pname, params);
+    }
+    unsafe fn Materialf(&mut self, face: GLenum, pname: GLenum, param: GLfloat) {
+        gl11::Materialf(face, pname, param);
+    }
+    unsafe fn Materialx(&mut self, face: GLenum, pname: GLenum, param: GLfixed) {
+        gl11::Materialx(face, pname, param);
+    }
+    unsafe fn Materialfv(&mut self, face: GLenum, pname: GLenum, params: *const GLfloat) {
+        gl11::Materialfv(face, pname, params);
+    }
+    unsafe fn Materialxv(&mut self, face: GLenum, pname: GLenum, params: *const GLfixed) {
+        gl11::Materialxv(face, pname, params);
     }
 
     // Buffers
@@ -191,11 +212,17 @@ impl GLES for GLES1Native {
     }
 
     // Textures
+    unsafe fn PixelStorei(&mut self, pname: GLenum, param: GLint) {
+        gl11::PixelStorei(pname, param)
+    }
     unsafe fn GenTextures(&mut self, n: GLsizei, textures: *mut GLuint) {
         gl11::GenTextures(n, textures)
     }
     unsafe fn DeleteTextures(&mut self, n: GLsizei, textures: *const GLuint) {
         gl11::DeleteTextures(n, textures)
+    }
+    unsafe fn ActiveTexture(&mut self, texture: GLenum) {
+        gl11::ActiveTexture(texture)
     }
     unsafe fn BindTexture(&mut self, target: GLenum, texture: GLuint) {
         gl11::BindTexture(target, texture)
@@ -370,6 +397,16 @@ impl GLES for GLES1Native {
         renderbuffer: GLuint,
     ) {
         gl11::FramebufferRenderbufferOES(target, attachment, renderbuffertarget, renderbuffer)
+    }
+    unsafe fn FramebufferTexture2DOES(
+        &mut self,
+        target: GLenum,
+        attachment: GLenum,
+        textarget: GLenum,
+        texture: GLuint,
+        level: i32,
+    ) {
+        gl11::FramebufferTexture2DOES(target, attachment, textarget, texture, level)
     }
     unsafe fn GetRenderbufferParameterivOES(
         &mut self,

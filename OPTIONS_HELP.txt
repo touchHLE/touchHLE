@@ -1,0 +1,82 @@
+View options:
+    --landscape-left
+    --landscape-right
+        Changes the orientation the virtual device will have at startup.
+        The default is portrait.
+
+        --landscape-left means rotate 90° counterclockwise from portrait.
+        --landscape-right means rotate 90° clockwise from portrait.
+
+        Usually apps that require landscape mode will tell touchHLE about this,
+        and it will automatically rotate the window, but some apps neglect to
+        do this. These options may be useful in that case.
+
+    --scale-hack=...
+        Set a scaling factor for the window. touchHLE will attempt to run the
+        app with an increased internal resolution. This is a hack and there's
+        no guarantee it will work correctly for all apps.
+
+        The default is no scale hack, which is equivalent to a value of 1 (i.e.
+        a scale of 1×).
+
+        This is a natural number that is at least 1.
+
+Game controller options:
+    --deadzone=...
+        Configures the size of the \"dead zone\" for analog stick inputs.
+
+        The default value is 0.1, which means that 10% of the stick's range on
+        the X and Y axes around the center position will be collapsed into a
+        single point, so that movements in that range are ignored.
+
+        This is a floating-point (decimal) number between 0 and 1.
+
+    --x-tilt-range=...
+    --y-tilt-range=...
+        Set the simulated rotation range of the device on its X or Y axis.
+
+        By default, an analog stick's axis is mapped to a rotation range of 60°
+        (30° in either direction). If you wanted a range of 90° on the X axis,
+        you could use --x-tilt-range=90.
+
+        Note that the device's X axis is mapped to the analog stick's Y axis
+        and vice-versa, because tilting the device to the left means rotating
+        it on its Y axis, and so on.
+
+        This is a floating-point (decimal) number of degrees, without a degree
+        symbol. It may be negative.
+
+    --x-tilt-offset=...
+    --y-tilt-offset=...
+        Offset the simulated angle of the device on its X or Y axis.
+
+        By default, the device is simulated as being level with the ground when
+        the stick is in the center/neutral position. This option is intended for
+        games that use a different angle relative to the ground as their neutral
+        position. For example, if a game expects you to hold the device in a
+        landscape orientation, with a 45° angle to the ground, you might use
+        --y-tilt-offset=45.
+
+        Note that the device's X axis is mapped to the analog stick's Y axis
+        and vice-versa, because tilting the device to the left means rotating
+        it on its Y axis, and so on.
+
+        This is a floating-point (decimal) number of degrees, without a degree
+        symbol. It may be negative.
+
+Debugging options:
+    --disable-direct-memory-access
+        Force dynarmic to always access guest memory via the memory access
+        callbacks, rather than using the fast direct access path (page tables).
+
+    --gdb=...
+        Starts touchHLE in debugging mode, listening for GDB remote serial
+        protocol connections over TCP on the specified host and port.
+
+        You can then connect to touchHLE with GDB and make use of its features
+        to inspect memory and registers, set up software breakpoints, and
+        continue or step execution.
+
+        The host and port should be separated by a colon. The host can be a
+        host name or an IP address. IPv6 addresses should be enclosed in square
+        brackets, e.g. --gdb=[::1]:9001 for IPv6 loopback device port 9001.

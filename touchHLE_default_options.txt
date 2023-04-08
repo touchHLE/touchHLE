@@ -14,7 +14,8 @@
 # line per app. A line should consist of the identifier for an app, followed by
 # a colon (:), followed by the options to apply. To find out an app's
 # identifier, you can run it in touchHLE and look at the “App bundle info”
-# output. To get a list of possible options, run touchHLE with the --help flag.
+# output. To get a list of possible options, see OPTIONS_HELP.txt or run
+# touchHLE with the --help flag.
 #
 # Text on a line following a hash sign (#) is treated as a comment and ignored.
 # Empty lines are also ignored.

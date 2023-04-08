@@ -50,10 +50,7 @@ You'll then need an app that you can run (check [the list of supported apps](APP
 There's no graphical user interface right now. If you're a Windows user and unfamiliar with the command line, these instructions may be helpful:
 
 * The easiest and fastest thing to do is to drag and drop the app's `.ipa` file or `.app` folder onto `touchHLE.exe`.
-* To configure the options, edit the `touchHLE_options.txt` file. To get a list of options:
-  1. Hold the Shift key and right-click on the empty space in the folder window.
-  2. Click “Open with PowerShell”.
-  3. Type `.\touchHLE.exe --help` and press Enter.
+* To configure the options, edit the `touchHLE_options.txt` file. To get a list of options, look in the `OPTIONS_HELP.txt` file.
 * You can also run apps directly from the command line:
   1. Move the `.ipa` file or `.app` bundle to the same folder as `touchHLE.exe`.
   2. Hold the Shift key and right-click on the empty space in the folder window.

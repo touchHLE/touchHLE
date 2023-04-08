@@ -233,7 +233,6 @@ impl Font {
                     continue;
                 };
                 // y needs to be flipped to point up
-                // FIXME: blending
                 let glyph_height = glyph_bounds.height();
                 let x_offset = glyph_bounds.min.x;
                 let y_offset = ((origin.1 + line_y).round() as i32) + glyph_bounds.max.y;

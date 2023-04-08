@@ -5,9 +5,11 @@
  */
 //! `UIView`.
 
-use crate::frameworks::core_graphics::{CGPoint, CGRect, CGSize};
+use crate::frameworks::core_graphics::{CGFloat, CGPoint, CGRect, CGSize};
 use crate::frameworks::foundation::ns_string::{get_static_str, to_rust_string};
-use crate::objc::{id, msg, objc_classes, release, Class, ClassExports, HostObject, NSZonePtr};
+use crate::objc::{
+    id, msg, nil, objc_classes, release, Class, ClassExports, HostObject, NSZonePtr,
+};
 
 #[derive(Default)]
 pub struct State {
@@ -155,6 +157,12 @@ pub const CLASSES: ClassExports = objc_classes! {
     log_dbg!("TODO: [(UIView*){:?} bringSubviewToFront:{:?}]", this, view);
 }
 
+- (())removeFromSuperview {
+    // FIXME: this should actually remove the view from some hierarchy and
+    //        release it
+    log!("TODO: [(UIView*){:?} removeFromSuperview]", this);
+}
+
 - (())dealloc {
     let &mut UIViewHostObject { layer, .. } = env.objc.borrow_mut(this);
     release(env, layer);
@@ -174,8 +182,22 @@ pub const CLASSES: ClassExports = objc_classes! {
     true
 }
 - (())setOpaque:(bool)opaque {
-    // TODO: transparency is meaningless right now
+    // TODO: implement this once views are actually rendered
     assert!(opaque);
+}
+
+- (CGFloat)alpha {
+    1.0
+}
+- (())setAlpha:(CGFloat)_alpha {
+    // TODO: implement this once views are actually rendered
+}
+
+- (id)backgroundColor {
+    nil // this is the actual default (equivalent to transparency)
+}
+- (())setBackgroundColor:(id)_color { // UIColor*
+    // TODO: implement this once views are actually rendered
 }
 
 // FIXME: should these pass through from CALayer, vice-versa, or neither?

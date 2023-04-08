@@ -18,23 +18,12 @@
 //! on macOS. It's also a version supported on various other OSes.
 //! It is therefore a convenient target for our implementation.
 
+use super::util::{fixed_to_float, matrix_fixed_to_float, ParamTable, ParamType};
 use super::GLES;
 use crate::window::gl21compat as gl21;
 use crate::window::gl21compat::types::*;
 use crate::window::gles11;
 use crate::window::{GLContext, GLVersion, Window};
-
-fn fixed_to_float(fixed: gles11::types::GLfixed) -> GLfloat {
-    ((fixed as f64) / ((1 << 16) as f64)) as f32
-}
-
-unsafe fn matrix_fixed_to_float(m: *const gles11::types::GLfixed) -> [GLfloat; 16] {
-    let mut matrix = [0f32; 16];
-    for (i, cell) in matrix.iter_mut().enumerate() {
-        *cell = fixed_to_float(*m.add(i));
-    }
-    matrix
-}
 
 /// List of capabilities shared by OpenGL ES 1.1 and OpenGL 2.1.
 ///
@@ -130,60 +119,211 @@ pub(super) const ARRAYS: &[ArrayInfo] = &[
     },
 ];
 
-/// List of `glLightfv`/`glLightxv` parameters shared by OpenGL ES 1.1 and
-/// OpenGL 2.1, together with the number of float/fixed-point values they take.
-pub(super) const LIGHT_PARAMS: &[(GLenum, u8)] = &[
-    (gl21::AMBIENT, 4),
-    (gl21::DIFFUSE, 4),
-    (gl21::SPECULAR, 4),
-    (gl21::POSITION, 4),
-    (gl21::SPOT_CUTOFF, 1),
-    (gl21::SPOT_DIRECTION, 3),
-    (gl21::SPOT_EXPONENT, 1),
-    (gl21::CONSTANT_ATTENUATION, 1),
-    (gl21::LINEAR_ATTENUATION, 1),
-    (gl21::QUADRATIC_ATTENUATION, 1),
-];
+/// Table of `glGet` parameters shared by OpenGL ES 1.1 and OpenGL 2.1.
+const GET_PARAMS: ParamTable = ParamTable(&[
+    (gl21::ACTIVE_TEXTURE, ParamType::Int, 1),
+    (gl21::ALIASED_POINT_SIZE_RANGE, ParamType::Float, 2),
+    (gl21::ALIASED_LINE_WIDTH_RANGE, ParamType::Float, 2),
+    (gl21::ALPHA_BITS, ParamType::Int, 1),
+    (gl21::ALPHA_TEST, ParamType::Boolean, 1),
+    (gl21::ALPHA_TEST_FUNC, ParamType::Int, 1),
+    // TODO: ALPHA_TEST_REF (has special type conversion behavior)
+    (gl21::ARRAY_BUFFER_BINDING, ParamType::Int, 1),
+    (gl21::BLEND, ParamType::Boolean, 1),
+    (gl21::BLEND_DST, ParamType::Int, 1),
+    (gl21::BLEND_SRC, ParamType::Int, 1),
+    (gl21::BLUE_BITS, ParamType::Int, 1),
+    (gl21::CLIENT_ACTIVE_TEXTURE, ParamType::Int, 1),
+    // TODO: arbitrary number of clip planes?
+    (gl21::CLIP_PLANE0, ParamType::Boolean, 1),
+    (gl21::COLOR_ARRAY, ParamType::Boolean, 1),
+    (gl21::COLOR_ARRAY_BUFFER_BINDING, ParamType::Int, 1),
+    (gl21::COLOR_ARRAY_SIZE, ParamType::Int, 1),
+    (gl21::COLOR_ARRAY_STRIDE, ParamType::Int, 1),
+    (gl21::COLOR_ARRAY_TYPE, ParamType::Int, 1),
+    // TODO: COLOR_CLEAR_VALUE (has special type conversion behavior)
+    (gl21::COLOR_LOGIC_OP, ParamType::Boolean, 1),
+    (gl21::COLOR_MATERIAL, ParamType::Boolean, 1),
+    (gl21::COLOR_WRITEMASK, ParamType::Boolean, 4),
+    // TODO: COMPRESSED_TEXTURE_FORMATS (need to support PVRTC etc)
+    (gl21::CULL_FACE, ParamType::Boolean, 1),
+    (gl21::CULL_FACE_MODE, ParamType::Int, 1),
+    // TODO: CURRENT_COLOR (has special type conversion behavior)
+    // TODO: CURRENT_NORMAL (has special type conversion behavior)
+    (gl21::CURRENT_TEXTURE_COORDS, ParamType::Float, 4),
+    (gl21::DEPTH_BITS, ParamType::Int, 1),
+    // TODO: DEPTH_CLEAR_VALUE (has special type conversion behavior)
+    (gl21::DEPTH_FUNC, ParamType::Int, 1),
+    // TODO: DEPTH_RANGE (has special type conversion behavior)
+    (gl21::DEPTH_TEST, ParamType::Boolean, 1),
+    (gl21::DEPTH_WRITEMASK, ParamType::Boolean, 1),
+    (gl21::ELEMENT_ARRAY_BUFFER_BINDING, ParamType::Int, 1),
+    (gl21::FOG, ParamType::Boolean, 1),
+    // TODO: FOG_COLOR (has special type conversion behavior)
+    // TODO: FOG_DENSITY, FOG_END, FOG_START (not sure what type these have)
+    (gl21::FOG_HINT, ParamType::Int, 1),
+    (gl21::FOG_MODE, ParamType::Int, 1),
+    (gl21::FRONT_FACE, ParamType::Int, 1),
+    (gl21::GREEN_BITS, ParamType::Int, 1),
+    // TODO: IMPLEMENTATION_COLOR_READ_FORMAT_OES? (not shared)
+    // TODO: IMPLEMENTATION_COLOR_READ_TYPE_OES? (not shared)
+    // TODO: LIGHT_MODEL_AMBIENT (has special type conversion behavior)
+    (gl21::LIGHT_MODEL_TWO_SIDE, ParamType::Boolean, 1),
+    // TODO: arbitrary number of lights?
+    (gl21::LIGHT0, ParamType::Boolean, 1),
+    (gl21::LIGHT1, ParamType::Boolean, 1),
+    (gl21::LIGHT2, ParamType::Boolean, 1),
+    (gl21::LIGHT3, ParamType::Boolean, 1),
+    (gl21::LIGHT4, ParamType::Boolean, 1),
+    (gl21::LIGHT5, ParamType::Boolean, 1),
+    (gl21::LIGHT6, ParamType::Boolean, 1),
+    (gl21::LIGHT7, ParamType::Boolean, 1),
+    (gl21::LIGHTING, ParamType::Boolean, 1),
+    (gl21::LINE_SMOOTH, ParamType::Boolean, 1),
+    (gl21::LINE_SMOOTH_HINT, ParamType::Int, 1),
+    (gl21::LINE_WIDTH, ParamType::Float, 1),
+    (gl21::LOGIC_OP_MODE, ParamType::Int, 1),
+    (gl21::MATRIX_MODE, ParamType::Int, 1),
+    (gl21::MAX_CLIP_PLANES, ParamType::Int, 1),
+    (gl21::MAX_LIGHTS, ParamType::Int, 1),
+    (gl21::MAX_MODELVIEW_STACK_DEPTH, ParamType::Int, 1),
+    (gl21::MAX_PROJECTION_STACK_DEPTH, ParamType::Int, 1),
+    (gl21::MAX_TEXTURE_SIZE, ParamType::Int, 1),
+    (gl21::MAX_TEXTURE_STACK_DEPTH, ParamType::Int, 1),
+    (gl21::MAX_TEXTURE_UNITS, ParamType::Int, 1),
+    (gl21::MAX_VIEWPORT_DIMS, ParamType::Int, 1),
+    (gl21::MODELVIEW_MATRIX, ParamType::Float, 16),
+    (gl21::MODELVIEW_STACK_DEPTH, ParamType::Int, 1),
+    (gl21::MULTISAMPLE, ParamType::Boolean, 1),
+    (gl21::NORMAL_ARRAY, ParamType::Boolean, 1),
+    (gl21::NORMAL_ARRAY_BUFFER_BINDING, ParamType::Int, 1),
+    (gl21::NORMAL_ARRAY_STRIDE, ParamType::Int, 1),
+    (gl21::NORMAL_ARRAY_TYPE, ParamType::Int, 1),
+    (gl21::NORMALIZE, ParamType::Boolean, 1),
+    // TODO: NUM_COMPRESSED_TEXTURE_FORMATS (need to support PVRTC etc)
+    (gl21::PACK_ALIGNMENT, ParamType::Int, 1),
+    (gl21::PERSPECTIVE_CORRECTION_HINT, ParamType::Int, 1),
+    (gl21::POINT_DISTANCE_ATTENUATION, ParamType::Float, 3),
+    (gl21::POINT_FADE_THRESHOLD_SIZE, ParamType::Float, 1),
+    (gl21::POINT_SIZE, ParamType::Float, 1),
+    // TODO: POINT_SIZE_ARRAY_OES etc? (not shared)
+    (gl21::POINT_SIZE_MAX, ParamType::Float, 1),
+    (gl21::POINT_SIZE_MIN, ParamType::Float, 1),
+    (gl21::POINT_SIZE_RANGE, ParamType::Float, 2),
+    (gl21::POINT_SMOOTH, ParamType::Boolean, 2),
+    (gl21::POINT_SMOOTH_HINT, ParamType::Int, 2),
+    (gl21::POLYGON_OFFSET_FACTOR, ParamType::Float, 1),
+    (gl21::POLYGON_OFFSET_FILL, ParamType::Boolean, 1),
+    (gl21::POLYGON_OFFSET_UNITS, ParamType::Float, 1),
+    (gl21::PROJECTION_MATRIX, ParamType::Float, 16),
+    (gl21::PROJECTION_STACK_DEPTH, ParamType::Int, 1),
+    (gl21::RED_BITS, ParamType::Int, 1),
+    (gl21::RESCALE_NORMAL, ParamType::Boolean, 1),
+    // TODO: SAMPLE_ALPHA_TO_COVERAGE? (not shared)
+    // TODO: SAMPLE_ALPHA_TO_ONE? (not shared)
+    (gl21::SAMPLE_ALPHA_TO_ONE, ParamType::Boolean, 1),
+    (gl21::SAMPLE_BUFFERS, ParamType::Int, 1),
+    // TODO: SAMPLE_COVERAGE? (not shared)
+    (gl21::SAMPLE_COVERAGE_INVERT, ParamType::Boolean, 1),
+    (gl21::SAMPLE_COVERAGE_VALUE, ParamType::Float, 1),
+    (gl21::SAMPLES, ParamType::Int, 1),
+    (gl21::SCISSOR_BOX, ParamType::Int, 4),
+    (gl21::SCISSOR_TEST, ParamType::Boolean, 1),
+    (gl21::SHADE_MODEL, ParamType::Int, 1),
+    (gl21::SMOOTH_LINE_WIDTH_RANGE, ParamType::Float, 2),
+    (gl21::SMOOTH_POINT_SIZE_RANGE, ParamType::Float, 2),
+    (gl21::STENCIL_BITS, ParamType::Int, 1),
+    (gl21::STENCIL_CLEAR_VALUE, ParamType::Int, 1),
+    (gl21::STENCIL_FAIL, ParamType::Int, 1),
+    (gl21::STENCIL_FUNC, ParamType::Int, 1),
+    (gl21::STENCIL_PASS_DEPTH_FAIL, ParamType::Int, 1),
+    (gl21::STENCIL_PASS_DEPTH_PASS, ParamType::Int, 1),
+    (gl21::STENCIL_REF, ParamType::Int, 1),
+    (gl21::STENCIL_TEST, ParamType::Boolean, 1),
+    (gl21::STENCIL_VALUE_MASK, ParamType::Int, 1),
+    (gl21::STENCIL_WRITEMASK, ParamType::Int, 1),
+    (gl21::SUBPIXEL_BITS, ParamType::Int, 1),
+    (gl21::TEXTURE_2D, ParamType::Boolean, 1),
+    (gl21::TEXTURE_BINDING_2D, ParamType::Int, 1),
+    (gl21::TEXTURE_COORD_ARRAY, ParamType::Boolean, 1),
+    (gl21::TEXTURE_COORD_ARRAY_BUFFER_BINDING, ParamType::Int, 1),
+    (gl21::TEXTURE_COORD_ARRAY_SIZE, ParamType::Int, 1),
+    (gl21::TEXTURE_COORD_ARRAY_STRIDE, ParamType::Int, 1),
+    (gl21::TEXTURE_COORD_ARRAY_TYPE, ParamType::Int, 1),
+    (gl21::TEXTURE_MATRIX, ParamType::Float, 16),
+    (gl21::TEXTURE_STACK_DEPTH, ParamType::Int, 1),
+    (gl21::UNPACK_ALIGNMENT, ParamType::Int, 1),
+    (gl21::VIEWPORT, ParamType::Int, 4),
+    (gl21::VERTEX_ARRAY, ParamType::Boolean, 1),
+    (gl21::VERTEX_ARRAY_BUFFER_BINDING, ParamType::Int, 1),
+    (gl21::VERTEX_ARRAY_SIZE, ParamType::Int, 1),
+    (gl21::VERTEX_ARRAY_STRIDE, ParamType::Int, 1),
+    (gl21::VERTEX_ARRAY_TYPE, ParamType::Int, 1),
+    // OES_framebuffer_object -> EXT_framebuffer_object
+    (gl21::FRAMEBUFFER_BINDING_EXT, ParamType::Int, 1),
+    (gl21::RENDERBUFFER_BINDING_EXT, ParamType::Int, 1),
+]);
 
-/// List of `glTexEnv` parameters for the `GL_TEXTURE_ENV` target shared by
-/// OpenGL ES 1.1 and OpenGL 2.1, together with a boolean indicating whether
-/// they are integer/enum (true) or float/fixed-point (false), and the number of
-/// values they take.
-pub(super) const TEX_ENV_PARAMS: &[(GLenum, bool, u8)] = &[
-    (gl21::TEXTURE_ENV_MODE, true, 1),
-    (gl21::COORD_REPLACE, true, 1),
-    (gl21::COMBINE_RGB, true, 1),
-    (gl21::COMBINE_ALPHA, true, 1),
-    (gl21::SRC0_RGB, true, 1),
-    (gl21::SRC1_RGB, true, 1),
-    (gl21::SRC2_RGB, true, 1),
-    (gl21::SRC0_ALPHA, true, 1),
-    (gl21::SRC1_ALPHA, true, 1),
-    (gl21::SRC2_ALPHA, true, 1),
-    (gl21::OPERAND0_RGB, true, 1),
-    (gl21::OPERAND1_RGB, true, 1),
-    (gl21::OPERAND2_RGB, true, 1),
-    (gl21::OPERAND0_ALPHA, true, 1),
-    (gl21::OPERAND1_ALPHA, true, 1),
-    (gl21::OPERAND2_ALPHA, true, 1),
-    (gl21::TEXTURE_ENV_COLOR, false, 4),
-    (gl21::RGB_SCALE, false, 1),
-    (gl21::ALPHA_SCALE, false, 1),
-];
+/// Table of `glLight` parameters shared by OpenGL ES 1.1 and OpenGL 2.1.
+const LIGHT_PARAMS: ParamTable = ParamTable(&[
+    (gl21::AMBIENT, ParamType::Float, 4),
+    (gl21::DIFFUSE, ParamType::Float, 4),
+    (gl21::SPECULAR, ParamType::Float, 4),
+    (gl21::POSITION, ParamType::Float, 4),
+    (gl21::SPOT_CUTOFF, ParamType::Float, 1),
+    (gl21::SPOT_DIRECTION, ParamType::Float, 3),
+    (gl21::SPOT_EXPONENT, ParamType::Float, 1),
+    (gl21::CONSTANT_ATTENUATION, ParamType::Float, 1),
+    (gl21::LINEAR_ATTENUATION, ParamType::Float, 1),
+    (gl21::QUADRATIC_ATTENUATION, ParamType::Float, 1),
+]);
 
-/// List of integer `glTexParameter` parameters.
-const TEX_PARAMS_INT: &[GLenum] = &[
-    gl21::TEXTURE_MIN_FILTER,
-    gl21::TEXTURE_MAG_FILTER,
-    gl21::TEXTURE_WRAP_S,
-    gl21::TEXTURE_WRAP_T,
-    gl21::GENERATE_MIPMAP,
-];
-/// List of float/fixed-point `glTexParameter` parameters.
-const TEX_PARAMS_FLOAT: &[GLenum] = &[
-    gl21::TEXTURE_MAX_ANISOTROPY_EXT,
-    gl21::MAX_TEXTURE_MAX_ANISOTROPY_EXT,
-];
+/// Table of `glMaterial` parameters shared by OpenGL ES 1.1 and OpenGL 2.1.
+const MATERIAL_PARAMS: ParamTable = ParamTable(&[
+    (gl21::AMBIENT, ParamType::Float, 4),
+    (gl21::DIFFUSE, ParamType::Float, 4),
+    (gl21::SPECULAR, ParamType::Float, 4),
+    (gl21::EMISSION, ParamType::Float, 4),
+    (gl21::SHININESS, ParamType::Float, 1),
+    // Not a true parameter: it's equivalent to calling glMaterial twice, once
+    // for GL_AMBIENT and once for GL_DIFFUSE.
+    (gl21::AMBIENT_AND_DIFFUSE, ParamType::Float, 4),
+]);
+
+/// Table of `glTexEnv` parameters for the `GL_TEXTURE_ENV` target shared by
+/// OpenGL ES 1.1 and OpenGL 2.1.
+const TEX_ENV_PARAMS: ParamTable = ParamTable(&[
+    (gl21::TEXTURE_ENV_MODE, ParamType::Int, 1),
+    (gl21::COORD_REPLACE, ParamType::Int, 1),
+    (gl21::COMBINE_RGB, ParamType::Int, 1),
+    (gl21::COMBINE_ALPHA, ParamType::Int, 1),
+    (gl21::SRC0_RGB, ParamType::Int, 1),
+    (gl21::SRC1_RGB, ParamType::Int, 1),
+    (gl21::SRC2_RGB, ParamType::Int, 1),
+    (gl21::SRC0_ALPHA, ParamType::Int, 1),
+    (gl21::SRC1_ALPHA, ParamType::Int, 1),
+    (gl21::SRC2_ALPHA, ParamType::Int, 1),
+    (gl21::OPERAND0_RGB, ParamType::Int, 1),
+    (gl21::OPERAND1_RGB, ParamType::Int, 1),
+    (gl21::OPERAND2_RGB, ParamType::Int, 1),
+    (gl21::OPERAND0_ALPHA, ParamType::Int, 1),
+    (gl21::OPERAND1_ALPHA, ParamType::Int, 1),
+    (gl21::OPERAND2_ALPHA, ParamType::Int, 1),
+    (gl21::TEXTURE_ENV_COLOR, ParamType::Float, 4),
+    (gl21::RGB_SCALE, ParamType::Float, 1),
+    (gl21::ALPHA_SCALE, ParamType::Float, 1),
+]);
+
+/// Table of `glTexParameter` parameters.
+const TEX_PARAMS: ParamTable = ParamTable(&[
+    (gl21::TEXTURE_MIN_FILTER, ParamType::Int, 1),
+    (gl21::TEXTURE_MAG_FILTER, ParamType::Int, 1),
+    (gl21::TEXTURE_WRAP_S, ParamType::Int, 1),
+    (gl21::TEXTURE_WRAP_T, ParamType::Int, 1),
+    (gl21::GENERATE_MIPMAP, ParamType::Int, 1),
+    (gl21::TEXTURE_MAX_ANISOTROPY_EXT, ParamType::Float, 1),
+    (gl21::MAX_TEXTURE_MAX_ANISOTROPY_EXT, ParamType::Float, 1),
+]);
 
 pub struct GLES1OnGL2 {
     gl_ctx: GLContext,
@@ -353,19 +493,23 @@ impl GLES for GLES1OnGL2 {
         assert!(ARRAYS.iter().any(|&ArrayInfo { name, .. }| name == array));
         gl21::DisableClientState(array);
     }
+    unsafe fn GetBooleanv(&mut self, pname: GLenum, params: *mut GLboolean) {
+        let (type_, _count) = GET_PARAMS.get_type_info(pname);
+        // TODO: type conversion
+        assert!(type_ == ParamType::Boolean);
+        gl21::GetBooleanv(pname, params);
+    }
+    // TODO: GetFixedv
+    unsafe fn GetFloatv(&mut self, pname: GLenum, params: *mut GLfloat) {
+        let (type_, _count) = GET_PARAMS.get_type_info(pname);
+        // TODO: type conversion
+        assert!(type_ == ParamType::Float);
+        gl21::GetFloatv(pname, params);
+    }
     unsafe fn GetIntegerv(&mut self, pname: GLenum, params: *mut GLint) {
-        // This function family can return a huge number of things.
-        // TODO: support more possible values.
-        assert!([
-            gl21::ARRAY_BUFFER_BINDING,
-            gl21::ELEMENT_ARRAY_BUFFER_BINDING,
-            gl21::FRAMEBUFFER_BINDING_EXT,
-            gl21::MATRIX_MODE,
-            gl21::MAX_TEXTURE_SIZE,
-            gl21::RENDERBUFFER_BINDING_EXT,
-            gl21::TEXTURE_BINDING_2D
-        ]
-        .contains(&pname));
+        let (type_, _count) = GET_PARAMS.get_type_info(pname);
+        // TODO: type conversion
+        assert!(type_ == ParamType::Int);
         gl21::GetIntegerv(pname, params);
     }
     unsafe fn Hint(&mut self, target: GLenum, mode: GLenum) {
@@ -429,6 +573,20 @@ impl GLES for GLES1OnGL2 {
         assert!([gl21::FRONT, gl21::BACK, gl21::FRONT_AND_BACK].contains(&mode));
         gl21::CullFace(mode);
     }
+    unsafe fn DepthFunc(&mut self, func: GLenum) {
+        assert!([
+            gl21::NEVER,
+            gl21::LESS,
+            gl21::EQUAL,
+            gl21::LEQUAL,
+            gl21::GREATER,
+            gl21::NOTEQUAL,
+            gl21::GEQUAL,
+            gl21::ALWAYS
+        ]
+        .contains(&func));
+        gl21::DepthFunc(func)
+    }
     unsafe fn DepthMask(&mut self, flag: GLboolean) {
         gl21::DepthMask(flag)
     }
@@ -453,31 +611,58 @@ impl GLES for GLES1OnGL2 {
         gl21::Viewport(x, y, width, height)
     }
 
-    // Lighting
+    // Lighting and materials
     unsafe fn Lightf(&mut self, light: GLenum, pname: GLenum, param: GLfloat) {
-        assert!(LIGHT_PARAMS
-            .iter()
-            .any(|&(pname2, pcount)| pname == pname2 && pcount == 1));
+        LIGHT_PARAMS.assert_component_count(pname, 1);
         gl21::Lightf(light, pname, param);
     }
     unsafe fn Lightx(&mut self, light: GLenum, pname: GLenum, param: GLfixed) {
-        self.Lightf(light, pname, fixed_to_float(param));
+        LIGHT_PARAMS.setx(
+            |param| gl21::Lightf(light, pname, param),
+            |param| gl21::Lighti(light, pname, param),
+            pname,
+            param,
+        )
     }
     unsafe fn Lightfv(&mut self, light: GLenum, pname: GLenum, params: *const GLfloat) {
-        assert!(LIGHT_PARAMS.iter().any(|&(pname2, _)| pname == pname2));
+        LIGHT_PARAMS.assert_known_param(pname);
         gl21::Lightfv(light, pname, params);
     }
     unsafe fn Lightxv(&mut self, light: GLenum, pname: GLenum, params: *const GLfixed) {
-        let mut params_float = [0.0; 4];
-        let &(_, pcount) = LIGHT_PARAMS
-            .iter()
-            .find(|&&(pname2, _)| pname == pname2)
-            .unwrap();
-        #[allow(clippy::needless_range_loop)]
-        for i in 0..(pcount as usize) {
-            params_float[i] = fixed_to_float(params.add(i).read())
-        }
-        gl21::Lightfv(light, pname, params_float.as_ptr());
+        LIGHT_PARAMS.setxv(
+            |params| gl21::Lightfv(light, pname, params),
+            |params| gl21::Lightiv(light, pname, params),
+            pname,
+            params,
+        )
+    }
+    unsafe fn Materialf(&mut self, face: GLenum, pname: GLenum, param: GLfloat) {
+        assert!(face == gl21::FRONT_AND_BACK);
+        MATERIAL_PARAMS.assert_component_count(pname, 1);
+        gl21::Materialf(face, pname, param);
+    }
+    unsafe fn Materialx(&mut self, face: GLenum, pname: GLenum, param: GLfixed) {
+        assert!(face == gl21::FRONT_AND_BACK);
+        MATERIAL_PARAMS.setx(
+            |param| gl21::Materialf(face, pname, param),
+            |_| unreachable!(), // no integer parameters exist
+            pname,
+            param,
+        )
+    }
+    unsafe fn Materialfv(&mut self, face: GLenum, pname: GLenum, params: *const GLfloat) {
+        assert!(face == gl21::FRONT_AND_BACK);
+        MATERIAL_PARAMS.assert_known_param(pname);
+        gl21::Materialfv(face, pname, params);
+    }
+    unsafe fn Materialxv(&mut self, face: GLenum, pname: GLenum, params: *const GLfixed) {
+        assert!(face == gl21::FRONT_AND_BACK);
+        MATERIAL_PARAMS.setxv(
+            |params| gl21::Materialfv(face, pname, params),
+            |_| unreachable!(), // no integer parameters exist
+            pname,
+            params,
+        )
     }
 
     // Buffers
@@ -713,11 +898,19 @@ impl GLES for GLES1OnGL2 {
     }
 
     // Textures
+    unsafe fn PixelStorei(&mut self, pname: GLenum, param: GLint) {
+        assert!(pname == gl21::PACK_ALIGNMENT || pname == gl21::UNPACK_ALIGNMENT);
+        assert!(param == 1 || param == 2 || param == 4 || param == 8);
+        gl21::PixelStorei(pname, param)
+    }
     unsafe fn GenTextures(&mut self, n: GLsizei, textures: *mut GLuint) {
         gl21::GenTextures(n, textures)
     }
     unsafe fn DeleteTextures(&mut self, n: GLsizei, textures: *const GLuint) {
         gl21::DeleteTextures(n, textures)
+    }
+    unsafe fn ActiveTexture(&mut self, texture: GLenum) {
+        gl21::ActiveTexture(texture)
     }
     unsafe fn BindTexture(&mut self, target: GLenum, texture: GLuint) {
         assert!(target == gl21::TEXTURE_2D);
@@ -725,23 +918,22 @@ impl GLES for GLES1OnGL2 {
     }
     unsafe fn TexParameteri(&mut self, target: GLenum, pname: GLenum, param: GLint) {
         assert!(target == gl21::TEXTURE_2D);
-        assert!(TEX_PARAMS_INT.contains(&pname) || TEX_PARAMS_FLOAT.contains(&pname));
+        TEX_PARAMS.assert_known_param(pname);
         gl21::TexParameteri(target, pname, param);
     }
     unsafe fn TexParameterf(&mut self, target: GLenum, pname: GLenum, param: GLfloat) {
         assert!(target == gl21::TEXTURE_2D);
-        assert!(TEX_PARAMS_INT.contains(&pname) || TEX_PARAMS_FLOAT.contains(&pname));
+        TEX_PARAMS.assert_known_param(pname);
         gl21::TexParameterf(target, pname, param);
     }
     unsafe fn TexParameterx(&mut self, target: GLenum, pname: GLenum, param: GLfixed) {
         assert!(target == gl21::TEXTURE_2D);
-        // The conversion behaviour for fixed-point to integer is special.
-        if TEX_PARAMS_INT.contains(&pname) {
-            gl21::TexParameteri(target, pname, param);
-        } else {
-            assert!(TEX_PARAMS_FLOAT.contains(&pname));
-            gl21::TexParameterf(target, pname, fixed_to_float(param));
-        }
+        TEX_PARAMS.setx(
+            |param| gl21::TexParameterf(target, pname, param),
+            |param| gl21::TexParameteri(target, pname, param),
+            pname,
+            param,
+        )
     }
     unsafe fn TexImage2D(
         &mut self,
@@ -793,62 +985,45 @@ impl GLES for GLES1OnGL2 {
     unsafe fn TexEnvf(&mut self, target: GLenum, pname: GLenum, param: GLfloat) {
         // TODO: GL_POINT_SPRITE_OES
         assert!(target == gl21::TEXTURE_ENV);
-        assert!(TEX_ENV_PARAMS
-            .iter()
-            .any(|&(pname2, _, pcount)| pname == pname2 && pcount == 1));
+        TEX_ENV_PARAMS.assert_component_count(pname, 1);
         gl21::TexEnvf(target, pname, param);
     }
     unsafe fn TexEnvx(&mut self, target: GLenum, pname: GLenum, param: GLfixed) {
         // TODO: GL_POINT_SPRITE_OES
         assert!(target == gl21::TEXTURE_ENV);
-        let &(_, is_integer, _) = TEX_ENV_PARAMS
-            .iter()
-            .find(|&&(pname2, _, pcount)| pname == pname2 && pcount == 1)
-            .unwrap();
-        // The conversion behaviour for fixed-point to integer is special.
-        if is_integer {
-            gl21::TexEnvi(target, pname, param);
-        } else {
-            gl21::TexEnvf(target, pname, fixed_to_float(param));
-        }
+        TEX_ENV_PARAMS.setx(
+            |param| gl21::TexEnvf(target, pname, param),
+            |param| gl21::TexEnvi(target, pname, param),
+            pname,
+            param,
+        )
     }
     unsafe fn TexEnvi(&mut self, target: GLenum, pname: GLenum, param: GLint) {
         // TODO: GL_POINT_SPRITE_OES
         assert!(target == gl21::TEXTURE_ENV);
-        assert!(TEX_ENV_PARAMS
-            .iter()
-            .any(|&(pname2, _, pcount)| pname == pname2 && pcount == 1));
+        TEX_ENV_PARAMS.assert_component_count(pname, 1);
         gl21::TexEnvi(target, pname, param);
     }
     unsafe fn TexEnvfv(&mut self, target: GLenum, pname: GLenum, params: *const GLfloat) {
         // TODO: GL_POINT_SPRITE_OES
         assert!(target == gl21::TEXTURE_ENV);
-        assert!(TEX_ENV_PARAMS.iter().any(|&(pname2, _, _)| pname == pname2));
+        TEX_ENV_PARAMS.assert_known_param(pname);
         gl21::TexEnvfv(target, pname, params);
     }
     unsafe fn TexEnvxv(&mut self, target: GLenum, pname: GLenum, params: *const GLfixed) {
         // TODO: GL_POINT_SPRITE_OES
         assert!(target == gl21::TEXTURE_ENV);
-        let &(_, is_integer, pcount) = TEX_ENV_PARAMS
-            .iter()
-            .find(|&&(pname2, _, _)| pname == pname2)
-            .unwrap();
-        // The conversion behaviour for fixed-point to integer is special.
-        if is_integer {
-            gl21::TexEnviv(target, pname, params.cast());
-        } else {
-            let mut params_float = [0.0; 4];
-            #[allow(clippy::needless_range_loop)]
-            for i in 0..(pcount as usize) {
-                params_float[i] = fixed_to_float(params.add(i).read())
-            }
-            gl21::TexEnvfv(target, pname, params_float.as_ptr());
-        }
+        TEX_ENV_PARAMS.setxv(
+            |params| gl21::TexEnvfv(target, pname, params),
+            |params| gl21::TexEnviv(target, pname, params),
+            pname,
+            params,
+        )
     }
     unsafe fn TexEnviv(&mut self, target: GLenum, pname: GLenum, params: *const GLint) {
         // TODO: GL_POINT_SPRITE_OES
         assert!(target == gl21::TEXTURE_ENV);
-        assert!(TEX_ENV_PARAMS.iter().any(|&(pname2, _, _)| pname == pname2));
+        TEX_ENV_PARAMS.assert_known_param(pname);
         gl21::TexEnviv(target, pname, params);
     }
 
@@ -1006,6 +1181,16 @@ impl GLES for GLES1OnGL2 {
         renderbuffer: GLuint,
     ) {
         gl21::FramebufferRenderbufferEXT(target, attachment, renderbuffertarget, renderbuffer)
+    }
+    unsafe fn FramebufferTexture2DOES(
+        &mut self,
+        target: GLenum,
+        attachment: GLenum,
+        textarget: GLenum,
+        texture: GLuint,
+        level: i32,
+    ) {
+        gl21::FramebufferTexture2DEXT(target, attachment, textarget, texture, level)
     }
     unsafe fn GetRenderbufferParameterivOES(
         &mut self,

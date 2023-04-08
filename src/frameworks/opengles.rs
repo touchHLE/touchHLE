@@ -32,6 +32,7 @@ mod gles1_native;
 mod gles1_on_gl2;
 mod gles_generic;
 mod gles_guest;
+mod util;
 
 #[cfg(target_os = "android")]
 use gles1_native::GLES1Native;

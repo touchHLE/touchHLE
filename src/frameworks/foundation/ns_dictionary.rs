@@ -170,3 +170,19 @@ pub const CLASSES: ClassExports = objc_classes! {
 @end
 
 };
+
+/// Direct constructor for use by host code, similar to
+/// `[[NSDictionary alloc] initWithObjectsAndKeys:]` but without variadics and
+/// with a more intuitive argument order. Unlike [super::ns_array::from_vec],
+/// this **does** copy and retain!
+pub fn dict_from_keys_and_objects(env: &mut Environment, keys_and_objects: &[(id, id)]) -> id {
+    let dict: id = msg_class![env; NSDictionary alloc];
+
+    let mut host_object = <DictionaryHostObject as Default>::default();
+    for &(key, object) in keys_and_objects {
+        host_object.insert(env, key, object, /* copy_key: */ true);
+    }
+    *env.objc.borrow_mut(dict) = host_object;
+
+    dict
+}

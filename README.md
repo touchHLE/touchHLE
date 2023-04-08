@@ -18,7 +18,7 @@ Only use touchHLE to emulate software you legally own.
 
 ## Platform support
 
-touchHLE has been tested and is to be considered supported on x64 Windows and x64 macOS. It may be possible to build it on Linux and on some AArch64 systems (at least one person has succeeded), but we make no guarantees right now. If you're an Apple Silicon Mac user: don't worry, the x64 macOS build reportedly works under Rosetta.
+touchHLE has been tested and is to be considered supported on x64 Windows and x64 macOS. It is possible to build it on some Linux and AArch64 systems, but this isn't a promise and we don't provide binary releases for those platforms. If you're an Apple Silicon Mac user: don't worry, the x64 macOS build reportedly works under Rosetta.
 
 **Known issue on macOS: memory leak of approximately 0.2MB/second (30fps games) or 0.4MB/second (60fps games).** All obvious potential culprits in the emulator itself have been ruled out, so it might be a problem in macOS itself, SDL2, or some other dependency. Thankfully this is slow enough that it shouldn't be a problem for most play sessions, but you may want to keep an eye on it.
 
@@ -31,7 +31,9 @@ Input methods:
 - For simulated touch input, there are two options:
   - Mouse/trackpad input (tap/hold/drag by pressing the left mouse button)
   - Virtual cursor using the right analog stick on a game controller (tap/hold/drag by pressing the stick or the right shoulder button)
-- **For simulated accelerometer input (tilt controls), a game controller with a left analog stick is currently required.** Real accelerometer support will come soon, but it's not in the first releases.
+- For simulated acceleremeter input, there are two options:
+  - Tilt control simulation using the left analog stick of a game controller
+  - Real accelerometer input, if you are using a phone, tablet or some other device with a built-in accelerometer (TODO: support game controllers with accelerometers)
 
 ## Development status
 
@@ -66,7 +68,7 @@ If the emulator crashes almost immediately while running a game **listed as supp
 
 # Building and contributing
 
-Please see the BUILDING.md and CONTRIBUTING.md files in the git repo.
+Please see the BUILDING.md, DEBUGGING.md and CONTRIBUTING.md files in the git repo.
 
 # License
 

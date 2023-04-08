@@ -69,8 +69,14 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
                 assert!(pad_char == ' ' && pad_width == 0); // TODO
                 res.extend_from_slice(env.mem.cstr_at(c_string));
             }
-            b'd' | b'i' => {
-                let int: i32 = args.next(env);
+            b'd' | b'i' | b'u' => {
+                let int: i64 = if specifier == b'u' {
+                    let uint: u32 = args.next(env);
+                    uint.into()
+                } else {
+                    let int: i32 = args.next(env);
+                    int.into()
+                };
                 // TODO: avoid copy?
                 if pad_width > 0 {
                     if pad_char == '0' {

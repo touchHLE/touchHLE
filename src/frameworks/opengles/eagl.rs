@@ -304,6 +304,7 @@ unsafe fn present_renderbuffer(env: &mut Environment) {
         gl::ARRAY_BUFFER_BINDING,
         &mut old_array_buffer as *mut _ as *mut _,
     );
+    gl::Color4f(1.0, 1.0, 1.0, 1.0);
 
     // Draw the quad
     let viewport_size = env.window.size_in_current_orientation();

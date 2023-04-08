@@ -34,6 +34,7 @@ pub mod ns_string;
 pub mod ns_thread;
 pub mod ns_timer;
 pub mod ns_url;
+pub mod ns_user_defaults;
 pub mod ns_value;
 
 #[derive(Default)]
@@ -45,10 +46,16 @@ pub struct State {
     ns_null: ns_null::State,
     ns_run_loop: ns_run_loop::State,
     ns_string: ns_string::State,
+    ns_user_defaults: ns_user_defaults::State,
 }
 
 pub type NSInteger = i32;
 pub type NSUInteger = u32;
+
+pub type NSComparisonResult = NSInteger;
+pub const NSOrderedAscending: NSComparisonResult = -1;
+pub const NSOrderedSame: NSComparisonResult = 0;
+pub const NSOrderedDescending: NSComparisonResult = 1;
 
 /// Number of seconds.
 pub type NSTimeInterval = f64;

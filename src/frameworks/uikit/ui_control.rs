@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
-//! `UIViewController`.
+//! `UIControl`.
 
 use crate::objc::{objc_classes, ClassExports};
 
@@ -11,12 +11,9 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);
 
-@implementation UIViewController: UIResponder
-
-- (())setEditing:(bool)editing {
-    log!("TODO: [(UIViewController*){:?} setEditing:{}]", this, editing); // TODO
-}
-
+// abstract class
+@implementation UIControl: UIView
+// TODO
 @end
 
 };

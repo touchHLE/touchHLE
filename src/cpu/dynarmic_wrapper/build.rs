@@ -49,6 +49,7 @@ fn main() {
     let mut build = cmake::Config::new(workspace_root.join("vendor/dynarmic"));
     build.define("DYNARMIC_WARNINGS_AS_ERRORS", "OFF");
     build.define("DYNARMIC_TESTS", "OFF");
+    build.define("DYNARMIC_USE_BUNDLED_EXTERNALS", "ON");
     // This is Windows-specific (and Android-specific) because on macOS or Linux, you can grab
     // Boost with your package manager.
     let os = env::var("CARGO_CFG_TARGET_OS").expect("CARGO_CFG_TARGET_OS was not set");
@@ -66,6 +67,7 @@ fn main() {
         build.define("CMAKE_SYSTEM_NAME", "Linux");
         build.define("ANDROID", "ON");
     }
+    // dynarmic can't be dynamically linked
     let dynarmic_out = build.build();
 
     if os.eq_ignore_ascii_case("android") {

@@ -124,7 +124,7 @@ pub fn search_lists<T>(
         .iter()
         .flat_map(|&n| n)
         .find(|&(sym, _)| *sym == symbol)
-        .map(|&(_, ref f)| f)
+        .map(|(_, f)| f)
 }
 
 fn encode_a32_svc(imm: u32) -> u32 {

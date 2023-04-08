@@ -25,16 +25,7 @@ jobs:
     - uses: actions/upload-artifact@v3
       with:
         name: touchHLE_macOS_x86_64
-        path: |
-          touchHLE_dylibs/
-          touchHLE_fonts/
-          APP_SUPPORT.md
-          CHANGELOG.md
-          LICENSE
-          README.md
-          touchHLE
-          touchHLE_default_options.txt
-          touchHLE_options.txt
+        path: touchHLE
 
   build-win:
 
@@ -53,13 +44,4 @@ jobs:
     - uses: actions/upload-artifact@v3
       with:
         name: touchHLE_Windows_x86_64
-        path: |
-          touchHLE_dylibs/
-          touchHLE_fonts/
-          APP_SUPPORT.md
-          CHANGELOG.md
-          LICENSE
-          README.md
-          touchHLE.exe
-          touchHLE_default_options.txt
-          touchHLE_options.txt
+        path: touchHLE.exe

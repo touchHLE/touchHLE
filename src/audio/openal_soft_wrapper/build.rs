@@ -31,6 +31,13 @@ fn main() {
 
         let mut build = cmake::Config::new(workspace_root.join("vendor/openal-soft"));
         build.define("LIBTYPE", "STATIC");
+
+        // Don't build extras, we don't need them and they can encounter issues
+        // when cross-compiling.
+        build.define("ALSOFT_UTILS", "OFF");
+        build.define("ALSOFT_NO_CONFIG_UTIL", "ON");
+        build.define("ALSOFT_EXAMPLES", "OFF");
+
         let openal_soft_out = build.build();
 
         link_search(&openal_soft_out.join("lib"));

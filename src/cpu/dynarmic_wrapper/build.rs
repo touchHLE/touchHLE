@@ -46,6 +46,7 @@ fn main() {
     let workspace_root = package_root.join("../../..");
 
     let mut build = cmake::Config::new(workspace_root.join("vendor/dynarmic"));
+    build.define("DYNARMIC_FRONTENDS", "A32"); // We don't need 64-bit
     build.define("DYNARMIC_WARNINGS_AS_ERRORS", "OFF");
     build.define("DYNARMIC_TESTS", "OFF");
     build.define("DYNARMIC_USE_BUNDLED_EXTERNALS", "ON");

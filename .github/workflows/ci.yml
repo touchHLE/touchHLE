@@ -1,0 +1,49 @@
+name: ci
+
+on:
+  push:
+    branches:
+      - trunk
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: macos-latest
+    steps:
+      - name: Install MacOS Boost
+        if: matrix.os == 'macos-latest'
+        run: brew install boost
+      - uses: actions/checkout@v3
+        with:
+          submodules: true
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+      - uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          args: --all -- --check
+      #- uses: actions-rs/cargo@v1
+      #  with:
+      #    command: clippy
+      #    args: --all --tests --all-features
+  release_build:
+    needs: lint
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [macos-latest]
+    steps:
+      - name: Install MacOS Boost
+        if: matrix.os == 'macos-latest'
+        run: brew install boost
+      - uses: actions/checkout@v3
+        with:
+          submodules: true
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+      - uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release

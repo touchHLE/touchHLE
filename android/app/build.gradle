@@ -23,7 +23,14 @@ android {
             ndkBuild {
                 arguments "APP_PLATFORM=android-16"
                 // abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
-                abiFilters 'arm64-v8a', 'x86_64'
+                // Only 'arm64-v8a' and 'x86_64' are supported by dynarmic
+                // and hence touchHLE. The 'x86_64' build works, but the main
+                // use for that would be the emulator in Android Studio, and
+                // its OpenGL ES implementations don't seem to work properly
+                // with touchHLE, so we disable it to reduce build time and
+                // avoid shipping stuff we haven't meaningfully tested.
+                // Make sure this matches the cargoNdk targets below.
+                abiFilters 'arm64-v8a'
             }
         }
     }
@@ -76,7 +83,8 @@ android {
 }
 
 cargoNdk {
-    targets = ["arm64", "x86_64"]
+    // Make sure this matches the android abiFilters above.
+    targets = ["arm64"]
     module = ".."
     extraCargoEnv = ["ANDROID_NDK": android.ndkDirectory, "ANDROID_NDK_HOME": android.ndkDirectory]
     // The default feature, "static", makes us use static linking for SDL2 and OpenAL Soft.

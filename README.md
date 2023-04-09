@@ -4,7 +4,14 @@
 
 As an HLE, touchHLE is radically different from a low-level emulator (LLE) like QEMU. The only code the [emulated CPU](https://github.com/merryhime/dynarmic) executes is the app binary and [a handful of libraries](touchHLE_dylibs/); touchHLE takes the place of iPhone OS and provides its own implementations of the system frameworks (Foundation, UIKit, OpenGL ES, OpenAL, etc).
 
-The goal of this project is to run games from the early days of iOS. Only iPhone/iPod touch apps for iPhone OS 2.x have been tested so far. Modern/64-bit iOS app support is explicitly a non-goal, and support for apps that aren't games is unlikely to be prioritized due to the complexity. On the other hand, it's likely that we'll attempt to support apps for some newer 32-bit versions (especially 3.x and 4.x) and the iPad in future. iPhone OS 1.x support might be attempted also. Currently [only three apps are supported](APP_SUPPORT.md). The list will surely grow with time. :)
+The goal of this project is to run games from the early days of iOS:
+
+* Currently: iPhone and iPod touch apps for iPhone OS 2.x. [Three of these are known to work](APP_SUPPORT.md), and of course we are trying to make that list longer. :)
+* Next: iPhone OS 3.0 support.
+* Longer term: iPhone OS 3.1, iPad apps (iPhone OS 3.2), iOS 4.x, …
+* Never: 64-bit iOS.
+
+Support for apps that aren't games isn't a priority: it's more complex and less fun.
 
 Visit our homepage! <https://touchhle.org/>
 
@@ -18,13 +25,15 @@ Only use touchHLE to emulate software you legally own.
 
 ## Platform support
 
-touchHLE has been tested and is to be considered supported on x64 Windows and x64 macOS. It is possible to build it on some Linux and AArch64 systems, but this isn't a promise and we don't provide binary releases for those platforms. If you're an Apple Silicon Mac user: don't worry, the x64 macOS build reportedly works under Rosetta.
+* Officially supported: x64 Windows and x64 macOS.
+  * These are the platforms with binary releases.
+  * If you're an Apple Silicon Mac user, the x64 build reportedly works in Rosetta.
+* Probably works, but you must build it yourself: AArch64 macOS, x64 Linux, AArch64 Linux.
+* Never?: other architectures.
 
-**Known issue on macOS: memory leak of approximately 0.2MB/second (30fps games) or 0.4MB/second (60fps games).** All obvious potential culprits in the emulator itself have been ruled out, so it might be a problem in macOS itself, SDL2, or some other dependency. Thankfully this is slow enough that it shouldn't be a problem for most play sessions, but you may want to keep an eye on it.
+**Known issue on macOS: memory leak of approximately 0.2MB/second (30fps games) or 0.4MB/second (60fps games).** Despite best efforts, this hasn't been figured out. Thankfully this is slow enough that it shouldn't be a problem for most play sessions.
 
-Architectures other than x64 and AArch64 are completely unsupported, and this is unlikely to change.
-
-It would be desirable to eventually support Android. That is probably not too much work.
+Android support is planned.
 
 Input methods:
 

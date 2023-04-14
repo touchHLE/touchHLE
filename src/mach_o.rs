@@ -23,6 +23,7 @@ use crate::fs::{Fs, GuestPath};
 use crate::mem::{Mem, Ptr};
 use mach_object::{
     DyLib, LoadCommand, MachCommand, OFile, Symbol, SymbolIter, ThreadState, N_ARM_THUMB_DEF,
+    S_LAZY_SYMBOL_POINTERS, S_MOD_INIT_FUNC_POINTERS, S_NON_LAZY_SYMBOL_POINTERS, S_SYMBOL_STUBS,
 };
 use std::collections::HashMap;
 use std::io::{Cursor, Seek, SeekFrom};
@@ -54,19 +55,54 @@ pub struct Section {
     pub addr: u32,
     /// Section size in bytes.
     pub size: u32,
+    /// What type of section is this?
+    pub type_: SectionType,
     /// Information specific to special dynamic linker sections, if this is one.
     pub dyld_indirect_symbol_info: Option<DyldIndirectSymbolInfo>,
 }
 
+/// Various kinds of sections. We're only interested in the ones used by the
+/// dynamic linker for now (see also [DyldIndirectSymbolInfo]).
+#[derive(Debug, PartialEq, Eq)]
+pub enum SectionType {
+    /// Normal section, or some section type we don't care about.
+    Normal,
+    /// Symbol stub section, usually called `__symbol_stub4` or
+    /// `__picsymbolstub4`.
+    SymbolStubs,
+    /// Lazy symbol pointer section, usually called `__la_symbol_ptr`.
+    LazySymbolPointers,
+    /// Non-lazy symbol pointer section, usually called `__nl_symbol_ptr`.
+    NonLazySymbolPointers,
+    /// Initialization function pointer section, usually called
+    /// `__mod_init_func`.
+    ModInitFuncPointers,
+}
+
 /// Information relevant to certain special sections which contain a series of
 /// pointers or stub functions for indirectly referencing dynamically-linked
-/// symbols.
+/// symbols (see also [SectionType]).
 #[derive(Debug)]
 pub struct DyldIndirectSymbolInfo {
     /// The size in bytes of an entry (pointer or stub function) in the section.
     pub entry_size: u32,
     /// A list of symbol names corresponding to the entries.
     pub indirect_undef_symbols: Vec<Option<String>>,
+}
+
+/// Helper trait that makes [MachO::get_section] work. Yes, this is overkill. :)
+pub trait SectionPredicate {
+    fn test(&self, section: &Section) -> bool;
+}
+impl SectionPredicate for &str {
+    fn test(&self, section: &Section) -> bool {
+        section.name == *self
+    }
+}
+impl SectionPredicate for SectionType {
+    fn test(&self, section: &Section) -> bool {
+        section.type_ == *self
+    }
 }
 
 fn get_sym_by_idx<'a>(
@@ -414,22 +450,28 @@ impl MachO {
                 let name = section.sectname.clone();
                 let addr: u32 = section.addr.try_into().unwrap();
                 let size: u32 = section.size.try_into().unwrap();
+                let type_ = section.flags.sect_type();
 
                 log_dbg!(
                     "Section: {:?} {:#x} ({:#x} bytes), type {}",
                     name,
                     addr,
                     size,
-                    section.flags.sect_type(),
+                    type_,
                 );
 
-                let dyld_indirect_symbol_info = match &*name {
-                    "__picsymbolstub4" => Some(16),
-                    "__symbol_stub4" => Some(12),
-                    "__nl_symbol_ptr" | "__la_symbol_ptr" => Some(4),
-                    _ => None,
-                }
-                .map(|entry_size| {
+                use SectionType as ST;
+                let (type_, dyld_entry_size) = match type_ {
+                    S_MOD_INIT_FUNC_POINTERS => (ST::ModInitFuncPointers, None),
+                    // Symbol stub sections have a variable size depending on
+                    // whether PIC is in use.
+                    S_SYMBOL_STUBS => (ST::SymbolStubs, Some(section.reserved2)),
+                    // 4 bytes per pointer
+                    S_LAZY_SYMBOL_POINTERS => (ST::LazySymbolPointers, Some(4)),
+                    S_NON_LAZY_SYMBOL_POINTERS => (ST::NonLazySymbolPointers, Some(4)),
+                    _ => (ST::Normal, None),
+                };
+                let dyld_indirect_symbol_info = dyld_entry_size.map(|entry_size| {
                     let indirect_start = section.reserved1 as usize;
                     assert!(size % entry_size == 0);
                     let indirect_count = (size / entry_size) as usize;
@@ -445,6 +487,7 @@ impl MachO {
                     name,
                     addr,
                     size,
+                    type_,
                     dyld_indirect_symbol_info,
                 }
             })
@@ -477,7 +520,8 @@ impl MachO {
         )
     }
 
-    pub fn get_section(&self, name: &str) -> Option<&Section> {
-        self.sections.iter().find(|s| s.name == name)
+    /// Get a section by its name (`&str`) or type ([SectionType]).
+    pub fn get_section<P: SectionPredicate>(&self, by: P) -> Option<&Section> {
+        self.sections.iter().find(|section| by.test(section))
     }
 }

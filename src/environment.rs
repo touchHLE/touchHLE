@@ -256,14 +256,14 @@ impl Environment {
             let Some(bin) = env.bins.get(bin_idx) else {
                 continue;
             };
-            let Some(mod_init_func) = bin.get_section("__mod_init_func") else {
+            let Some(section) = bin.get_section(mach_o::SectionType::ModInitFuncPointers) else {
                 continue;
             };
 
             log_dbg!("Calling static initializers for {:?}", bin.name);
-            assert!(mod_init_func.size % 4 == 0);
-            let base: mem::ConstPtr<abi::GuestFunction> = mem::Ptr::from_bits(mod_init_func.addr);
-            let count = mod_init_func.size / 4;
+            assert!(section.size % 4 == 0);
+            let base: mem::ConstPtr<abi::GuestFunction> = mem::Ptr::from_bits(section.addr);
+            let count = section.size / 4;
             for i in 0..count {
                 let func = env.mem.read(base + i);
                 func.call(&mut env);

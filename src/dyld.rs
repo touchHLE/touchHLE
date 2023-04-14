@@ -26,7 +26,7 @@ mod function_lists;
 use crate::abi::{CallFromGuest, GuestFunction};
 use crate::cpu::Cpu;
 use crate::frameworks::foundation::ns_string;
-use crate::mach_o::MachO;
+use crate::mach_o::{MachO, SectionType};
 use crate::mem::{ConstVoidPtr, GuestUSize, Mem, MutPtr, Ptr};
 use crate::objc::{nil, ObjC};
 use crate::Environment;
@@ -219,7 +219,7 @@ impl Dyld {
     /// These stubs already exist in the binary, but they need to be rewritten
     /// so that they will invoke our dynamic linker.
     fn setup_lazy_linking(&self, bin: &MachO, mem: &mut Mem) {
-        let Some(stubs) = bin.get_section("__symbol_stub4").or_else(|| bin.get_section("__picsymbolstub4")) else {
+        let Some(stubs) = bin.get_section(SectionType::SymbolStubs) else {
             return;
         };
 
@@ -230,7 +230,7 @@ impl Dyld {
         let expected_instructions = match entry_size {
             12 => Self::SYMBOL_STUB_INSTRUCTIONS.as_slice(),
             16 => Self::PIC_SYMBOL_STUB_INSTRUCTIONS.as_slice(),
-            _ => unreachable!(),
+            _ => unimplemented!(),
         };
 
         assert!(stubs.size % entry_size == 0);
@@ -298,7 +298,7 @@ impl Dyld {
             );
         }
 
-        let Some(ptrs) = bin.get_section("__nl_symbol_ptr") else {
+        let Some(ptrs) = bin.get_section(SectionType::NonLazySymbolPointers) else {
             return;
         };
         let info = ptrs.dyld_indirect_symbol_info.as_ref().unwrap();
@@ -398,10 +398,7 @@ impl Dyld {
     ) -> Option<HostFunction> {
         let stubs = bins
             .iter()
-            .flat_map(|bin| {
-                bin.get_section("__symbol_stub4")
-                    .or_else(|| bin.get_section("__picsymbolstub4"))
-            })
+            .flat_map(|bin| bin.get_section(SectionType::SymbolStubs))
             .find(|stubs| (stubs.addr..(stubs.addr + stubs.size)).contains(&svc_pc))
             .unwrap();
 

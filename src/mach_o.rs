@@ -415,7 +415,13 @@ impl MachO {
                 let addr: u32 = section.addr.try_into().unwrap();
                 let size: u32 = section.size.try_into().unwrap();
 
-                log_dbg!("Section: {:?} {:#x} ({:#x} bytes)", name, addr, size);
+                log_dbg!(
+                    "Section: {:?} {:#x} ({:#x} bytes), type {}",
+                    name,
+                    addr,
+                    size,
+                    section.flags.sect_type(),
+                );
 
                 let dyld_indirect_symbol_info = match &*name {
                     "__picsymbolstub4" => Some(16),

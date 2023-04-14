@@ -1,7 +1,7 @@
 use std::env;
 use std::env::current_dir;
-use std::process::Command;
 use std::io::Write;
+use std::process::Command;
 
 // adapted from `assert_cmd` crate
 fn target_dir() -> std::path::PathBuf {
@@ -19,14 +19,15 @@ fn target_dir() -> std::path::PathBuf {
 
 // https://stackoverflow.com/a/35907071/2241008
 fn find_subsequence(haystack: &[u8], needle: &[u8]) -> Option<usize> {
-    haystack.windows(needle.len()).position(|window| window == needle)
+    haystack
+        .windows(needle.len())
+        .position(|window| window == needle)
 }
 
 #[test]
 fn run_test_app() -> Result<(), Box<dyn std::error::Error>> {
     let binary_name = "touchHLE";
-    let binary_path = target_dir()
-        .join(format!("{}{}", binary_name, env::consts::EXE_SUFFIX));
+    let binary_path = target_dir().join(format!("{}{}", binary_name, env::consts::EXE_SUFFIX));
 
     let mut cmd = Command::new(binary_path);
 
@@ -34,7 +35,8 @@ fn run_test_app() -> Result<(), Box<dyn std::error::Error>> {
     test_app_path.push("tests");
     test_app_path.push("TestApp.app");
 
-    let output = cmd.arg(test_app_path)
+    let output = cmd
+        .arg(test_app_path)
         .output()
         .expect("failed to execute process");
 
@@ -45,7 +47,8 @@ fn run_test_app() -> Result<(), Box<dyn std::error::Error>> {
     // sanity check: check that emulation actually happened
     assert_ne!(
         find_subsequence(output.stdout.as_slice(), b"CPU emulation begins now."),
-        None);
+        None
+    );
 
     Ok(())
 }

@@ -192,9 +192,9 @@ fn qsort(
     base: MutPtr<u8>,
     nitems: u32,
     size: u32,
-    compar: GuestFunction // int (*compar)(const void *, const void*))
+    compar: GuestFunction, // int (*compar)(const void *, const void*))
 ) {
-    qsort_rec(env, base, nitems, size, compar, 0, nitems-1);
+    qsort_rec(env, base, nitems, size, compar, 0, nitems - 1);
 }
 
 fn qsort_rec(
@@ -204,22 +204,22 @@ fn qsort_rec(
     size: u32,
     compar: GuestFunction,
     low: u32,
-    hi: u32
+    hi: u32,
 ) {
     if low >= hi {
         return;
     }
     // TODO: use median selection
     let pivot = low;
-    let mut separator = low+1;
-    for i in low+1..=hi {
+    let mut separator = low + 1;
+    for i in low + 1..=hi {
         if compare(env, base, size, compar, i, pivot) < 0 {
             swap_slices(env, base, nitems, size, i, separator);
             separator += 1;
         }
     }
-    swap_slices(env, base, nitems, size, pivot, separator-1);
-    qsort_rec(env, base, nitems, size, compar, low, separator-2);
+    swap_slices(env, base, nitems, size, pivot, separator - 1);
+    qsort_rec(env, base, nitems, size, compar, low, separator - 2);
     qsort_rec(env, base, nitems, size, compar, separator, hi);
 }
 
@@ -229,21 +229,14 @@ fn compare(
     size: u32,
     compar: GuestFunction,
     i: u32,
-    j: u32
+    j: u32,
 ) -> i32 {
     let i_ptr = base + i * size;
     let j_ptr = base + j * size;
     compar.call_from_host(env, (i_ptr.cast_const(), j_ptr.cast_const()))
 }
 
-fn swap_slices(
-    env: &mut Environment,
-    base: MutPtr<u8>,
-    nitems: u32,
-    size: u32,
-    i: u32,
-    j: u32
-) {
+fn swap_slices(env: &mut Environment, base: MutPtr<u8>, nitems: u32, size: u32, i: u32, j: u32) {
     if i > j {
         swap_slices(env, base, nitems, size, j, i);
         return;

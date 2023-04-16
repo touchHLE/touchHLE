@@ -13,7 +13,7 @@ use crate::{
     window,
 };
 use std::net::TcpListener;
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
 /// Index into the [Vec] of threads. Thread 0 is always the main thread.
 pub type ThreadID = usize;
@@ -22,6 +22,8 @@ pub type ThreadID = usize;
 pub struct Thread {
     /// Once a thread finishes, this is set to false.
     pub active: bool,
+    /// If this is not [None], the thread is sleeping until the specified time.
+    sleeping_until: Option<Instant>,
     /// Set to [true] when a thread is running its startup routine (i.e. the
     /// function pointer passed to `pthread_create`). When it returns to the
     /// host, it should become inactive.
@@ -187,6 +189,7 @@ impl Environment {
 
         let main_thread = Thread {
             active: true,
+            sleeping_until: None,
             in_start_routine: false, // main thread never terminates
             in_host_function: false,
             context: None,
@@ -331,6 +334,7 @@ impl Environment {
 
         self.threads.push(Thread {
             active: true,
+            sleeping_until: None,
             in_start_routine: true,
             in_host_function: false,
             context: Some(cpu::CpuContext::new()),
@@ -354,6 +358,21 @@ impl Environment {
         self.switch_thread(old_thread);
 
         new_thread_id
+    }
+
+    /// Put the current thread to sleep for some duration.
+    /// Note that this only take effect once returning to [Self::run] or
+    /// [Self::run_call], so do this just before a host function returns.
+    pub fn sleep(&mut self, duration: Duration) {
+        assert!(self.threads[self.current_thread].sleeping_until.is_none());
+
+        log_dbg!(
+            "Thread {} is going to sleep for {:?}.",
+            self.current_thread,
+            duration
+        );
+        let until = Instant::now().checked_add(duration).unwrap();
+        self.threads[self.current_thread].sleeping_until = Some(until);
     }
 
     /// Run the emulator. This is the main loop and won't return until app exit.
@@ -482,10 +501,17 @@ impl Environment {
                     self.threads[self.current_thread].in_host_function = true;
                     f.call_from_guest(self);
                     self.threads[self.current_thread].in_host_function = was_in_host_function;
+                    // Host function might have put the thread to sleep.
+                    if self.threads[self.current_thread].sleeping_until.is_some() {
+                        log_dbg!("Yielding: thread {} is asleep.", self.current_thread);
+                        ThreadNextAction::Yield
+                    } else {
+                        ThreadNextAction::Continue
+                    }
                 } else {
                     self.cpu.regs_mut()[cpu::Cpu::PC] = svc_pc;
+                    ThreadNextAction::Continue
                 }
-                ThreadNextAction::Continue
             }
             cpu::CpuState::Error(e) => ThreadNextAction::DebugCpuError(e),
         }
@@ -532,22 +558,55 @@ impl Environment {
                 }
             }
 
-            // Find next thread to execute
-            let mut next = self.current_thread;
             loop {
-                next = (next + 1) % self.threads.len();
-                // Back where we started: couldn't find a suitable new
-                // thread.
-                if next == self.current_thread {
-                    assert!(self.threads[self.current_thread].active);
+                // Try to find a new thread to execute, starting with the thread
+                // following the one currently executing.
+                let mut suitable_thread: Option<ThreadID> = None;
+                let mut next_awakening: Option<Instant> = None;
+                for i in 0..self.threads.len() {
+                    let i = (self.current_thread + 1 + i) % self.threads.len();
+                    let candidate = &mut self.threads[i];
+
+                    if !candidate.active || candidate.in_host_function {
+                        continue;
+                    }
+
+                    if let Some(sleeping_until) = candidate.sleeping_until {
+                        if sleeping_until <= Instant::now() {
+                            log_dbg!("Thread {} finished sleeping.", i);
+                            candidate.sleeping_until = None;
+                        } else {
+                            next_awakening = match next_awakening {
+                                None => Some(sleeping_until),
+                                Some(other) => Some(other.min(sleeping_until)),
+                            };
+                            continue;
+                        }
+                    }
+
+                    suitable_thread = Some(i);
                     break;
                 }
-                if !self.threads[next].active || self.threads[next].in_host_function {
+
+                // There's a suitable thread we can switch to immediately.
+                if let Some(suitable_thread) = suitable_thread {
+                    if suitable_thread != self.current_thread {
+                        self.switch_thread(suitable_thread);
+                    }
+                    break;
+                // All suitable threads are asleep. Sleep until one of them
+                // wakes up.
+                } else if let Some(next_awakening) = next_awakening {
+                    let duration = next_awakening.duration_since(Instant::now());
+                    log_dbg!("All threads asleep, sleeping for {:?}.", duration);
+                    std::thread::sleep(duration);
+                    // Try again, there should be some thread awake now (or
+                    // there will be soon, since timing is approximate).
                     continue;
+                } else {
+                    // This should never happen!
+                    panic!("No active threads?!");
                 }
-                // Candidate found, switch to it.
-                self.switch_thread(next);
-                break;
             }
         }
     }

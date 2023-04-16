@@ -48,6 +48,7 @@ pub const CLASS_LISTS: &[super::ClassExports] = &[
     uikit::ui_font::CLASSES,
     uikit::ui_image::CLASSES,
     uikit::ui_image_picker_controller::CLASSES,
+    uikit::ui_image_view::CLASSES,
     uikit::ui_nib::CLASSES,
     uikit::ui_responder::CLASSES,
     uikit::ui_screen::CLASSES,

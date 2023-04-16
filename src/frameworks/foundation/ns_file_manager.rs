@@ -33,5 +33,13 @@ fn NSSearchPathForDirectoriesInDomains(
     autorelease(env, dir_list)
 }
 
-pub const FUNCTIONS: FunctionExports =
-    &[export_c_func!(NSSearchPathForDirectoriesInDomains(_, _, _))];
+fn NSHomeDirectory(env: &mut Environment) -> id {
+    let dir = env.fs.home_directory();
+    let dir = ns_string::from_rust_string(env, String::from(dir.as_str()));
+    autorelease(env, dir)
+}
+
+pub const FUNCTIONS: FunctionExports = &[
+    export_c_func!(NSHomeDirectory()),
+    export_c_func!(NSSearchPathForDirectoriesInDomains(_, _, _)),
+];

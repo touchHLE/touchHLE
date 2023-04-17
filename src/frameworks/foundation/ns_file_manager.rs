@@ -7,7 +7,7 @@
 
 use super::{ns_array, ns_string, NSUInteger};
 use crate::dyld::{export_c_func, FunctionExports};
-use crate::objc::{autorelease, id};
+use crate::objc::{autorelease, id, msg, objc_classes, ClassExports};
 use crate::Environment;
 
 type NSSearchPathDirectory = NSUInteger;
@@ -43,3 +43,28 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(NSHomeDirectory()),
     export_c_func!(NSSearchPathForDirectoriesInDomains(_, _, _)),
 ];
+
+#[derive(Default)]
+pub struct State {
+    default_manager: Option<id>,
+}
+
+pub const CLASSES: ClassExports = objc_classes! {
+
+(env, this, _cmd);
+
+@implementation NSFileManager: NSObject
+
++ (id)defaultManager {
+    if let Some(existing) = env.framework_state.foundation.ns_file_manager.default_manager {
+        existing
+    } else {
+        let new: id = msg![env; this new];
+        env.framework_state.foundation.ns_file_manager.default_manager = Some(new);
+        autorelease(env, new)
+    }
+}
+
+@end
+
+};

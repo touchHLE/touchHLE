@@ -95,7 +95,13 @@ pub const CLASSES: ClassExports = objc_classes! {
     let file = to_rust_string(env, path);
     log_dbg!("[(NSData*){:?} writeToFile:{:?} atomically:_]", this, file);
     let host_object = env.objc.borrow::<NSDataHostObject>(this);
-    let slice = env.mem.bytes_at(host_object.bytes.cast(), host_object.length);
+    // Mem::bytes_at() panics when the pointer is NULL, but NSData's pointer can
+    // be NULL if the length is 0.
+    let slice = if host_object.length == 0 {
+        &[]
+    } else {
+        env.mem.bytes_at(host_object.bytes.cast(), host_object.length)
+    };
     env.fs.write(GuestPath::new(&file), slice).is_ok()
 }
 

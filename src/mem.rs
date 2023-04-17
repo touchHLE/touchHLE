@@ -311,12 +311,12 @@ impl Mem {
 
     /// Get a slice for reading `count` bytes. This is the basic primitive for
     /// safe read-only memory access.
+    ///
+    /// This will panic when `ptr` is within the null page, even if `count` is
+    /// 0. This may be inconvenient in some cases, but it makes the behavior
+    /// when deriving a pointer from the slice consistent (though you should use
+    /// [Self::ptr_at] for that).
     pub fn bytes_at<const MUT: bool>(&self, ptr: Ptr<u8, MUT>, count: GuestUSize) -> &[u8] {
-        // Allow null pointer for zero-length slices. It would be annoying not
-        // to (consider e.g. [[NSData new] bytes] is NULL).
-        if count == 0 {
-            return &[];
-        }
         if ptr.to_bits() < Self::NULL_PAGE_SIZE {
             Self::null_check_fail(ptr.to_bits(), count)
         }
@@ -324,12 +324,12 @@ impl Mem {
     }
     /// Get a slice for reading or writing `count` bytes. This is the basic
     /// primitive for safe read-write memory access.
+    ///
+    /// This will panic when `ptr` is within the null page, even if `count` is
+    /// 0. This may be inconvenient in some cases, but it makes the behavior
+    /// when deriving a pointer from the slice consistent (though you should use
+    /// [Self::ptr_at_mut] for that).
     pub fn bytes_at_mut(&mut self, ptr: MutPtr<u8>, count: GuestUSize) -> &mut [u8] {
-        // Allow null pointer for zero-length slices. It would be annoying not
-        // to (consider e.g. [[NSData new] bytes] is NULL).
-        if count == 0 {
-            return &mut [];
-        }
         if ptr.to_bits() < Self::NULL_PAGE_SIZE {
             Self::null_check_fail(ptr.to_bits(), count)
         }

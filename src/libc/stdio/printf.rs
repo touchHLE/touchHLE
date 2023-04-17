@@ -77,28 +77,26 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
                     let int: i32 = args.next(env);
                     int.into()
                 };
-                // TODO: avoid copy?
                 if pad_width > 0 {
                     if pad_char == '0' {
-                        res.extend_from_slice(format!("{:01$}", int, pad_width).as_bytes());
+                        write!(&mut res, "{:01$}", int, pad_width).unwrap();
                     } else {
-                        res.extend_from_slice(format!("{:1$}", int, pad_width).as_bytes());
+                        write!(&mut res, "{:1$}", int, pad_width).unwrap();
                     }
                 } else {
-                    res.extend_from_slice(format!("{}", int).as_bytes());
+                    write!(&mut res, "{}", int).unwrap();
                 }
             }
             b'f' => {
                 let float: f64 = args.next(env);
-                // TODO: avoid copy?
                 if pad_width > 0 {
                     if pad_char == '0' {
-                        res.extend_from_slice(format!("{:01$}", float, pad_width).as_bytes());
+                        write!(&mut res, "{:01$}", float, pad_width).unwrap();
                     } else {
-                        res.extend_from_slice(format!("{:1$}", float, pad_width).as_bytes());
+                        write!(&mut res, "{:1$}", float, pad_width).unwrap();
                     }
                 } else {
-                    res.extend_from_slice(format!("{}", float).as_bytes());
+                    write!(&mut res, "{}", float).unwrap();
                 }
             }
             // TODO: more specifiers

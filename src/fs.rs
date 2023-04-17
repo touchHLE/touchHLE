@@ -506,6 +506,11 @@ impl Fs {
         Some((parent, final_component.to_string()))
     }
 
+    /// Like [Path::exists] but for the guest filesystem.
+    pub fn exists(&self, path: &GuestPath) -> bool {
+        self.lookup_node(path).is_some()
+    }
+
     /// Like [Path::is_file] but for the guest filesystem.
     pub fn is_file(&self, path: &GuestPath) -> bool {
         matches!(

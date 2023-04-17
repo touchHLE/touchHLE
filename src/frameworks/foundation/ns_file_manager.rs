@@ -7,6 +7,7 @@
 
 use super::{ns_array, ns_string, NSUInteger};
 use crate::dyld::{export_c_func, FunctionExports};
+use crate::fs::GuestPath;
 use crate::objc::{autorelease, id, msg, objc_classes, ClassExports};
 use crate::Environment;
 
@@ -63,6 +64,15 @@ pub const CLASSES: ClassExports = objc_classes! {
         env.framework_state.foundation.ns_file_manager.default_manager = Some(new);
         autorelease(env, new)
     }
+}
+
+- (bool)fileExistsAtPath:(id)path { // NSString*
+    let path = ns_string::to_rust_string(env, path); // TODO: avoid copy
+    // fileExistsAtPath: will return true for directories, hence Fs::exists()
+    // rather than Fs::is_file() is appropriate.
+    let res = env.fs.exists(GuestPath::new(&path));
+    log_dbg!("fileExistsAtPath:{:?} => {}", path, res);
+    res
 }
 
 @end

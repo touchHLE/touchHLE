@@ -8,7 +8,7 @@
 use super::{ns_array, ns_string, NSUInteger};
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::fs::GuestPath;
-use crate::objc::{autorelease, id, msg, objc_classes, ClassExports};
+use crate::objc::{autorelease, id, msg, msg_class, nil, objc_classes, release, ClassExports};
 use crate::Environment;
 
 type NSSearchPathDirectory = NSUInteger;
@@ -73,6 +73,28 @@ pub const CLASSES: ClassExports = objc_classes! {
     let res = env.fs.exists(GuestPath::new(&path));
     log_dbg!("fileExistsAtPath:{:?} => {}", path, res);
     res
+}
+
+- (bool)createFileAtPath:(id)path // NSString*
+                contents:(id)data // NSData*
+              attributes:(id)attributes { // NSDictionary*
+    assert!(attributes == nil); // TODO
+
+    let path_str = ns_string::to_rust_string(env, path); // TODO: avoid copy
+    // createFileAtPath: returns true if there's already a file at a given path.
+    // If there's a directory, that's an error, though.
+    if env.fs.is_file(GuestPath::new(&path_str)) {
+        return true;
+    }
+
+    if data == nil {
+        let empty: id = msg_class![env; NSData new];
+        let res: bool = msg![env; empty writeToFile:path atomically:false];
+        release(env, empty);
+        res
+    } else {
+        msg![env; data writeToFile:path atomically:false]
+    }
 }
 
 @end

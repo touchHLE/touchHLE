@@ -39,9 +39,17 @@ jobs:
         fetch-depth: 0 # touchHLE's git-describe versioning needs tag history
     - name: Get Submodules
       run: git submodule update --init
-    - name: Download Boost
+    - name: Try to get cached copy of Boost
+      id: cache-boost
+      uses: actions/cache@v3
+      with:
+        path: vendor\boost
+        key: boost_1_81_0
+    - if: ${{ steps.cache-boost.outputs.cache-hit != 'true' }}
+      name: Download Boost
       run: curl -L -o boost_1_81_0.7z "https://boostorg.jfrog.io/artifactory/main/release/1.81.0/source/boost_1_81_0.7z"
-    - name: Extract Boost
+    - if: ${{ steps.cache-boost.outputs.cache-hit != 'true' }}
+      name: Extract Boost
       run: 7z -ovendor x boost_1_81_0.7z && ren vendor\boost_1_81_0 boost
     - name: Build
       run: cargo build --release && move target/release/touchHLE.exe .

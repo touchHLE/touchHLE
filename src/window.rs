@@ -126,10 +126,6 @@ impl Window {
             let window = video_ctx
                 .window(title, width, height)
                 .fullscreen_desktop()
-                // high-DPI-aware mode isn't used for windowed mode because
-                // it might give a non-integer scaling factor or require
-                // shrinking the content, but that's no problem for fullscreen
-                .allow_highdpi()
                 .opengl()
                 .build()
                 .unwrap();

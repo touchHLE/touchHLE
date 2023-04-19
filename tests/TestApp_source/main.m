@@ -14,11 +14,30 @@ for Mac OS X v10.5
 
 int int_compar(const void *a, const void *b) { return *(int *)a - *(int *)b; }
 
+int sort_and_check(int nel, int *arr, int *expected_arr) {
+  qsort(arr, nel, sizeof(int), &int_compar);
+  return memcmp(arr, expected_arr, nel * sizeof(int));
+}
+
 int test_qsort() {
-  int arr[] = {1, -1, 2, 1024, 4};
-  qsort(arr, sizeof(arr) / sizeof(int), sizeof(int), *int_compar);
-  int expected_arr[] = {-1, 1, 2, 4, 1024};
-  return memcmp(arr, expected_arr, sizeof(expected_arr));
+  // empty
+  int res = sort_and_check(0, (int[]){}, (int[]){});
+  if (res != 0)
+    return -1;
+  // one element
+  res = sort_and_check(1, (int[]){42}, (int[]){42});
+  if (res != 0)
+    return -1;
+  // even size
+  res = sort_and_check(4, (int[]){4, 3, 2, 1}, (int[]){1, 2, 3, 4});
+  if (res != 0)
+    return -1;
+  // odd size
+  res =
+      sort_and_check(5, (int[]){1, -1, 2, 1024, 4}, (int[]){-1, 1, 2, 4, 1024});
+  if (res != 0)
+    return -1;
+  return 0;
 }
 
 int main(int argc, char *argv[]) {

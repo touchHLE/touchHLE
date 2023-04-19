@@ -170,7 +170,7 @@ macro_rules! _objc_method {
             #[allow(unused_variables)]
             $_cmd: $crate::objc::SEL,
             $($arg: $ty,)*
-            $(mut $va_arg: $va_type,)?
+            $(#[allow(unused_mut)] mut $va_arg: $va_type,)?
         | -> $retty {$block}) as fn(
             &mut $crate::Environment,
             $crate::objc::id,

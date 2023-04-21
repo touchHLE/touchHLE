@@ -7,7 +7,7 @@
 
 pub mod stat;
 
-use crate::abi::VAList;
+use crate::abi::DotDotDot;
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::fs::{GuestFile, GuestOpenOptions, GuestPath};
 use crate::mem::{ConstPtr, ConstVoidPtr, GuestISize, GuestUSize, MutVoidPtr};
@@ -66,12 +66,12 @@ pub const O_CREAT: OpenFlag = 0x200;
 pub const O_TRUNC: OpenFlag = 0x400;
 pub const O_EXCL: OpenFlag = 0x800;
 
-fn open(env: &mut Environment, path: ConstPtr<u8>, flags: i32, _args: VAList) -> FileDescriptor {
+fn open(env: &mut Environment, path: ConstPtr<u8>, flags: i32, _args: DotDotDot) -> FileDescriptor {
     // TODO: parse variadic arguments and pass them on (file creation mode)
     self::open_direct(env, path, flags)
 }
 
-/// Special extension for host code: [open] without the [VAList].
+/// Special extension for host code: [open] without the [DotDotDot].
 pub fn open_direct(env: &mut Environment, path: ConstPtr<u8>, flags: i32) -> FileDescriptor {
     // TODO: support more flags, this list is not complete
     assert!(

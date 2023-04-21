@@ -179,10 +179,10 @@ macro_rules! impl_CallFromGuest {
                 let mut reg_offset = 0;
                 let regs = env.cpu.regs();
                 let retval_ptr = R::SIZE_IN_MEM.map(|_| {
-                    read_next_arg(&mut reg_offset, regs, &env.mem)
+                    read_next_arg(&mut reg_offset, regs, Ptr::from_bits(regs[Cpu::SP]), &env.mem)
                 });
                 let args: ($($P,)*) = {
-                    ($(read_next_arg::<$P>(&mut reg_offset, regs, &env.mem),)*)
+                    ($(read_next_arg::<$P>(&mut reg_offset, regs, Ptr::from_bits(regs[Cpu::SP]), &env.mem),)*)
                 };
                 log_dbg!("CallFromGuest {:?}", args);
                 let retval = self(env, $(args.$p),*);
@@ -194,7 +194,7 @@ macro_rules! impl_CallFromGuest {
                 }
             }
         }
-        impl<R, $($P),*> CallFromGuest for fn(&mut Environment, $($P,)* VAList) -> R
+        impl<R, $($P),*> CallFromGuest for fn(&mut Environment, $($P,)* DotDotDot) -> R
             where R: GuestRet, $($P: GuestArg,)* {
             // ignore warnings for the zero-argument case
             #[allow(unused_variables, unused_mut, clippy::unused_unit)]
@@ -202,12 +202,15 @@ macro_rules! impl_CallFromGuest {
                 let mut reg_offset = 0;
                 let regs = env.cpu.regs();
                 let retval_ptr = R::SIZE_IN_MEM.map(|_| {
-                    read_next_arg(&mut reg_offset, regs, &env.mem)
+                    read_next_arg(&mut reg_offset, regs, Ptr::from_bits(regs[Cpu::SP]), &env.mem)
                 });
                 let args: ($($P,)*) = {
-                    ($(read_next_arg::<$P>(&mut reg_offset, regs, &env.mem),)*)
+                    ($(read_next_arg::<$P>(&mut reg_offset, regs, Ptr::from_bits(regs[Cpu::SP]), &env.mem),)*)
                 };
-                let va_list = VAList { reg_offset };
+                let va_list = DotDotDot(VaList {
+                    reg_offset,
+                    stack_pointer: Ptr::from_bits(regs[Cpu::SP])
+                });
                 log_dbg!("CallFromGuest {:?}, ...{:?}", args, va_list);
                 let retval = self(env, $(args.$p,)* va_list);
                 log_dbg!("CallFromGuest => {:?}", retval);
@@ -328,7 +331,12 @@ pub trait GuestArg: std::fmt::Debug + Sized {
 
 /// Read a single argument from registers or the stack. Call this for each
 /// argument in order.
-fn read_next_arg<T: GuestArg>(reg_offset: &mut usize, regs: &[u32], mem: &Mem) -> T {
+fn read_next_arg<T: GuestArg>(
+    reg_offset: &mut usize,
+    regs: &[u32],
+    stack_ptr: ConstPtr<u32>,
+    mem: &Mem,
+) -> T {
     // After the fourth register is used, the arguments go on the stack.
     // In some cases the argument is split over both registers and the stack.
 
@@ -341,7 +349,6 @@ fn read_next_arg<T: GuestArg>(reg_offset: &mut usize, regs: &[u32], mem: &Mem) -
         if *reg_offset < 4 {
             *fake_reg = regs[*reg_offset];
         } else {
-            let stack_ptr: ConstPtr<u32> = Ptr::from_bits(regs[Cpu::SP]);
             *fake_reg = mem.read(stack_ptr + (*reg_offset - 4).try_into().unwrap());
         }
         *reg_offset += 1;
@@ -395,17 +402,31 @@ pub fn write_next_arg<T: GuestArg>(
     }
 }
 
-/// Calling convention translation for a variable arguments list (like C
-/// `va_list`).
+/// Represents variable arguments in a [CallFromGuest] function signature,
+/// like C `...`, e.g. in the signature of `printf()`. See also [VaList].
 #[derive(Debug)]
-pub struct VAList {
-    reg_offset: usize,
+pub struct DotDotDot(VaList);
+impl DotDotDot {
+    pub fn start(&self) -> VaList {
+        self.0
+    }
 }
-impl VAList {
+
+/// Calling convention translation for a variable arguments list (like C
+/// `va_list`). When used as a function argument, this is equivalent to
+/// passing a `va_list` struct as an argument, e.g. `vprintf()`.
+/// See also [DotDotDot].
+#[derive(Copy, Clone, Debug)]
+pub struct VaList {
+    reg_offset: usize,
+    stack_pointer: ConstVoidPtr,
+}
+impl VaList {
     /// Get the next argument, like C's `va_arg()`. Be careful as the type may
     /// be inferred from the call-site if you don't specify it explicitly.
     pub fn next<T: GuestArg>(&mut self, env: &mut Environment) -> T {
-        read_next_arg(&mut self.reg_offset, env.cpu.regs_mut(), &env.mem)
+        let sp_reg = self.stack_pointer.cast();
+        read_next_arg(&mut self.reg_offset, env.cpu.regs_mut(), sp_reg, &env.mem)
     }
 }
 
@@ -478,6 +499,20 @@ impl GuestArg for GuestFunction {
     }
     fn to_regs(self, regs: &mut [u32]) {
         <ConstVoidPtr as GuestArg>::to_regs(self.0, regs)
+    }
+}
+
+impl GuestArg for VaList {
+    const REG_COUNT: usize = <ConstVoidPtr as GuestArg>::REG_COUNT;
+    fn from_regs(regs: &[u32]) -> Self {
+        // `reg_offset` initialized to 4 as we want to use `stack_pointer` when calling [read_next_arg]
+        VaList {
+            reg_offset: 4,
+            stack_pointer: <ConstVoidPtr as GuestArg>::from_regs(regs),
+        }
+    }
+    fn to_regs(self, _regs: &mut [u32]) {
+        todo!()
     }
 }
 

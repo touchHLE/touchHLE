@@ -60,25 +60,40 @@ int test_vsnprintf() {
   return res;
 }
 
+int test_sscanf() {
+  int a, b;
+  sscanf("1.23", "%d.%d", &a, &b);
+  return (a == 1 && b == 23) ? 0 : -1;
+}
+
+#define FUNC_DEF(func)                                                         \
+  { &func, #func }
+struct {
+  int (*func)();
+  const char *name;
+} test_func_array[] = {
+    FUNC_DEF(test_qsort),
+    FUNC_DEF(test_vsnprintf),
+    FUNC_DEF(test_sscanf),
+};
+
 int main(int argc, char *argv[]) {
   int tests_run = 0;
   int tests_passed = 0;
-  printf("test_qsort: ");
-  tests_run++;
-  if (test_qsort() == 0) {
-    printf("OK\n");
-    tests_passed++;
-  } else {
-    printf("FAIL\n");
+
+  int n = sizeof(test_func_array) / sizeof(test_func_array[0]);
+  int i;
+  for (i = 0; i < n; i++) {
+    printf("%s: ", test_func_array[i].name);
+    tests_run++;
+    if (test_func_array[i].func() == 0) {
+      printf("OK\n");
+      tests_passed++;
+    } else {
+      printf("FAIL\n");
+    }
   }
-  printf("test_vsnprintf: ");
-  tests_run++;
-  if (test_vsnprintf() == 0) {
-    printf("OK\n");
-    tests_passed++;
-  } else {
-    printf("FAIL\n");
-  }
+
   printf("Passed %d out of %d tests\n", tests_passed, tests_run);
   return tests_run == tests_passed ? 0 : 1;
 }

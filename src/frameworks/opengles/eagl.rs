@@ -307,8 +307,13 @@ unsafe fn present_renderbuffer(env: &mut Environment) {
     gl::Color4f(1.0, 1.0, 1.0, 1.0);
 
     // Draw the quad
-    let viewport_size = env.window.size_in_current_orientation();
-    gl::Viewport(0, 0, viewport_size.0 as _, viewport_size.1 as _);
+    let viewport = env.window.viewport();
+    gl::Viewport(
+        viewport.0 as _,
+        viewport.1 as _,
+        viewport.2 as _,
+        viewport.3 as _,
+    );
     gl::ClearColor(0.0, 0.0, 0.0, 1.0);
     gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT | gl::STENCIL_BUFFER_BIT);
     gl::BindBuffer(gl::ARRAY_BUFFER, 0);
@@ -328,6 +333,10 @@ unsafe fn present_renderbuffer(env: &mut Environment) {
 
     // Display virtual cursor
     if let Some((x, y, pressed)) = env.window.virtual_cursor_visible_at() {
+        let (vx, vy, vw, vh) = viewport;
+        let x = x - vx as f32;
+        let y = y - vy as f32;
+
         gl::DisableClientState(gl::TEXTURE_COORD_ARRAY);
         gl::Disable(gl::TEXTURE_2D);
 
@@ -339,8 +348,8 @@ unsafe fn present_renderbuffer(env: &mut Environment) {
 
         let mut vertices = vertices;
         for i in (0..vertices.len()).step_by(2) {
-            vertices[i] = (vertices[i] * radius + x) / (viewport_size.0 as f32 / 2.0) - 1.0;
-            vertices[i + 1] = 1.0 - (vertices[i + 1] * radius + y) / (viewport_size.1 as f32 / 2.0);
+            vertices[i] = (vertices[i] * radius + x) / (vw as f32 / 2.0) - 1.0;
+            vertices[i + 1] = 1.0 - (vertices[i + 1] * radius + y) / (vh as f32 / 2.0);
         }
         gl::VertexPointer(2, gl::FLOAT, 0, vertices.as_ptr() as *const GLvoid);
         gl::DrawArrays(gl::TRIANGLES, 0, 6);

@@ -27,6 +27,7 @@ pub mod stdlib;
 pub mod string;
 pub mod sysctl;
 pub mod time;
+pub mod unistd;
 pub mod wchar;
 
 /// Container for state of various child modules

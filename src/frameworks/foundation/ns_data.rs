@@ -48,6 +48,9 @@ pub const CLASSES: ClassExports = objc_classes! {
     autorelease(env, new)
 }
 
+// Calling the standard `init` is also allowed, in which case we just get data
+// of size 0.
+
 - (id)initWithBytesNoCopy:(MutVoidPtr)bytes
                    length:(NSUInteger)length {
     let host_object = env.objc.borrow_mut::<NSDataHostObject>(this);
@@ -58,7 +61,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (id)initWithBytes:(MutVoidPtr)bytes
-                   length:(NSUInteger)length {
+              length:(NSUInteger)length {
     let host_object = env.objc.borrow_mut::<NSDataHostObject>(this);
     assert!(host_object.bytes.is_null() && host_object.length == 0);
     let alloc = env.mem.alloc(length);
@@ -70,7 +73,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 - (id)initWithContentsOfFile:(id)path {
     let path = to_rust_string(env, path);
-    log!("NSData::initWithContentsOfFile: {:?}", path);
+    log_dbg!("[(NSData*){:?} initWithContentsOfFile:{:?}]", this, path);
     let Ok(bytes) = env.fs.read(GuestPath::new(&path)) else {
         release(env, this);
         return nil;
@@ -90,9 +93,15 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (bool)writeToFile:(id)path // NSString*
          atomically:(bool)_use_aux_file {
     let file = to_rust_string(env, path);
-    log!("NSData::writeToFile:atomically: {:?}", file);
+    log_dbg!("[(NSData*){:?} writeToFile:{:?} atomically:_]", this, file);
     let host_object = env.objc.borrow::<NSDataHostObject>(this);
-    let slice = env.mem.bytes_at(host_object.bytes.cast(), host_object.length);
+    // Mem::bytes_at() panics when the pointer is NULL, but NSData's pointer can
+    // be NULL if the length is 0.
+    let slice = if host_object.length == 0 {
+        &[]
+    } else {
+        env.mem.bytes_at(host_object.bytes.cast(), host_object.length)
+    };
     env.fs.write(GuestPath::new(&file), slice).is_ok()
 }
 

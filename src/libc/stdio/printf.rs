@@ -3,11 +3,13 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
-//! `printf` function family. The implementation is also used by `NSLog`.
+//! `printf` function family. The implementation is also used by `NSLog` etc.
 
 use crate::abi::VAList;
 use crate::dyld::{export_c_func, FunctionExports};
+use crate::frameworks::foundation::ns_string;
 use crate::mem::{ConstPtr, GuestUSize, Mem, MutPtr};
+use crate::objc::{id, msg};
 use crate::Environment;
 use std::io::Write;
 
@@ -77,29 +79,36 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
                     let int: i32 = args.next(env);
                     int.into()
                 };
-                // TODO: avoid copy?
                 if pad_width > 0 {
                     if pad_char == '0' {
-                        res.extend_from_slice(format!("{:01$}", int, pad_width).as_bytes());
+                        write!(&mut res, "{:01$}", int, pad_width).unwrap();
                     } else {
-                        res.extend_from_slice(format!("{:1$}", int, pad_width).as_bytes());
+                        write!(&mut res, "{:1$}", int, pad_width).unwrap();
                     }
                 } else {
-                    res.extend_from_slice(format!("{}", int).as_bytes());
+                    write!(&mut res, "{}", int).unwrap();
                 }
             }
             b'f' => {
                 let float: f64 = args.next(env);
-                // TODO: avoid copy?
                 if pad_width > 0 {
                     if pad_char == '0' {
-                        res.extend_from_slice(format!("{:01$}", float, pad_width).as_bytes());
+                        write!(&mut res, "{:01$}", float, pad_width).unwrap();
                     } else {
-                        res.extend_from_slice(format!("{:1$}", float, pad_width).as_bytes());
+                        write!(&mut res, "{:1$}", float, pad_width).unwrap();
                     }
                 } else {
-                    res.extend_from_slice(format!("{}", float).as_bytes());
+                    write!(&mut res, "{}", float).unwrap();
                 }
+            }
+            b'@' if NS_LOG => {
+                let object: id = args.next(env);
+                // TODO: use localized description if available?
+                let description: id = msg![env; object description];
+                // TODO: avoid copy
+                // TODO: what if the description isn't valid UTF-16?
+                let description = ns_string::to_rust_string(env, description);
+                write!(&mut res, "{}", description).unwrap();
             }
             // TODO: more specifiers
             _ => unimplemented!("Format character '{}'", specifier as char),

@@ -41,6 +41,7 @@ pub mod ns_value;
 pub struct State {
     ns_autorelease_pool: ns_autorelease_pool::State,
     ns_bundle: ns_bundle::State,
+    ns_file_manager: ns_file_manager::State,
     ns_locale: ns_locale::State,
     ns_notification_center: ns_notification_center::State,
     ns_null: ns_null::State,

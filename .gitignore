@@ -2,6 +2,13 @@
 /vendor/boost
 /touchHLE_sandbox
 
+# Xcode (integration testing app)
+
+*.pbxuser
+!default.pbxuser
+*.mode1v3
+!default.mode1v3
+
 # Android
 
 *.iml

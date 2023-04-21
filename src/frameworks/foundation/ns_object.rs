@@ -101,6 +101,12 @@ pub const CLASSES: ClassExports = objc_classes! {
     this == other
 }
 
+// TODO: description and debugDescription (both the instance and class method).
+// This is not hard to add, but before adding a fallback implementation of it,
+// we should make sure all the Foundation classes' overrides of it are there,
+// to prevent weird behavior.
+// TODO: localized description methods also? (not sure if NSObject has them)
+
 // Helper for NSCopying
 - (id)copy {
     msg![env; this copyWithZone:(MutVoidPtr::null())]

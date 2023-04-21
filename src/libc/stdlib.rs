@@ -11,6 +11,8 @@ use crate::mem::{ConstPtr, GuestUSize, MutPtr, MutVoidPtr};
 use crate::Environment;
 use std::collections::HashMap;
 
+pub mod qsort;
+
 #[derive(Default)]
 pub struct State {
     rand: u32,

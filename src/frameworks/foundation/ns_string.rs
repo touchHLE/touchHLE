@@ -297,6 +297,11 @@ pub const CLASSES: ClassExports = objc_classes! {
     utf16[index as usize]
 }
 
+- (id)description {
+    this
+}
+// TODO: debugDescription, localized description (is that a thing for NSString?)
+
 - (NSUInteger)hash {
     // TODO: avoid copying
     super::hash_helper(&to_rust_string(env, this))

@@ -3,11 +3,13 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
-//! `printf` function family. The implementation is also used by `NSLog`.
+//! `printf` function family. The implementation is also used by `NSLog` etc.
 
 use crate::abi::VAList;
 use crate::dyld::{export_c_func, FunctionExports};
+use crate::frameworks::foundation::ns_string;
 use crate::mem::{ConstPtr, GuestUSize, Mem, MutPtr};
+use crate::objc::{id, msg};
 use crate::Environment;
 use std::io::Write;
 
@@ -98,6 +100,15 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
                 } else {
                     write!(&mut res, "{}", float).unwrap();
                 }
+            }
+            b'@' if NS_LOG => {
+                let object: id = args.next(env);
+                // TODO: use localized description if available?
+                let description: id = msg![env; object description];
+                // TODO: avoid copy
+                // TODO: what if the description isn't valid UTF-16?
+                let description = ns_string::to_rust_string(env, description);
+                write!(&mut res, "{}", description).unwrap();
             }
             // TODO: more specifiers
             _ => unimplemented!("Format character '{}'", specifier as char),

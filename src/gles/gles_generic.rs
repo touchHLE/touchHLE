@@ -51,6 +51,7 @@ pub trait GLES {
     unsafe fn GetIntegerv(&mut self, pname: GLenum, params: *mut GLint);
     unsafe fn GetPointerv(&mut self, pname: GLenum, params: *mut *const GLvoid);
     unsafe fn Hint(&mut self, target: GLenum, mode: GLenum);
+    unsafe fn GetString(&mut self, name: GLenum) -> *const GLubyte;
 
     // Other state manipulation
     unsafe fn AlphaFunc(&mut self, func: GLenum, ref_: GLclampf);
@@ -288,4 +289,5 @@ pub trait GLES {
     unsafe fn CheckFramebufferStatusOES(&mut self, target: GLenum) -> GLenum;
     unsafe fn DeleteFramebuffersOES(&mut self, n: GLsizei, framebuffers: *const GLuint);
     unsafe fn DeleteRenderbuffersOES(&mut self, n: GLsizei, renderbuffers: *const GLuint);
+    unsafe fn GenerateMipmapOES(&mut self, target: GLenum);
 }

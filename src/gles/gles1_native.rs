@@ -89,6 +89,9 @@ impl GLES for GLES1Native {
     unsafe fn Hint(&mut self, target: GLenum, mode: GLenum) {
         gles11::Hint(target, mode)
     }
+    unsafe fn GetString(&mut self, name: GLenum) -> *const GLubyte {
+        gles11::GetString(name)
+    }
 
     // Other state manipulation
     unsafe fn AlphaFunc(&mut self, func: GLenum, ref_: GLclampf) {
@@ -545,5 +548,8 @@ impl GLES for GLES1Native {
     }
     unsafe fn DeleteRenderbuffersOES(&mut self, n: GLsizei, renderbuffers: *const GLuint) {
         gles11::DeleteRenderbuffersOES(n, renderbuffers)
+    }
+    unsafe fn GenerateMipmapOES(&mut self, target: GLenum) {
+        gles11::GenerateMipmapOES(target)
     }
 }

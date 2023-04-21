@@ -616,6 +616,9 @@ impl GLES for GLES1OnGL2 {
         assert!([gl21::FASTEST, gl21::NICEST, gl21::DONT_CARE].contains(&mode));
         gl21::Hint(target, mode);
     }
+    unsafe fn GetString(&mut self, name: GLenum) -> *const GLubyte {
+        gl21::GetString(name)
+    }
 
     // Other state manipulation
     unsafe fn AlphaFunc(&mut self, func: GLenum, ref_: GLclampf) {
@@ -1508,5 +1511,8 @@ impl GLES for GLES1OnGL2 {
     }
     unsafe fn DeleteRenderbuffersOES(&mut self, n: GLsizei, renderbuffers: *const GLuint) {
         gl21::DeleteRenderbuffersEXT(n, renderbuffers)
+    }
+    unsafe fn GenerateMipmapOES(&mut self, target: GLenum) {
+        gl21::GenerateMipmapEXT(target)
     }
 }

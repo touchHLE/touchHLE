@@ -19,6 +19,8 @@ use crate::gles::GLES;
 use crate::mem::{ConstPtr, ConstVoidPtr, GuestUSize, Mem, MutPtr};
 use crate::Environment;
 
+use core::ffi::CStr;
+
 fn with_ctx_and_mem<T, U>(env: &mut Environment, f: T) -> U
 where
     T: FnOnce(&mut dyn GLES, &mut Mem) -> U,
@@ -109,6 +111,13 @@ fn glGetIntegerv(env: &mut Environment, pname: GLenum, params: MutPtr<GLint>) {
 }
 fn glHint(env: &mut Environment, target: GLenum, mode: GLenum) {
     with_ctx_and_mem(env, |gles, _mem| unsafe { gles.Hint(target, mode) })
+}
+fn glGetString(env: &mut Environment, name: GLenum) -> ConstPtr<GLubyte> {
+    // TODO: override some strings like `GL_VERSION` to match a real iOS device
+    with_ctx_and_mem(env, |gles, mem| {
+        let cstr = unsafe { CStr::from_ptr(gles.GetString(name).cast()) };
+        mem.alloc_and_write_cstr(cstr.to_bytes()).cast_const()
+    })
 }
 
 // Other state manipulation
@@ -689,6 +698,9 @@ fn glTexEnviv(env: &mut Environment, target: GLenum, pname: GLenum, params: Cons
         unsafe { gles.TexEnviv(target, pname, params) }
     })
 }
+fn glGenerateMipmapOES(env: &mut Environment, target: GLenum) {
+    with_ctx_and_mem(env, |gles, _mem| unsafe { gles.GenerateMipmapOES(target) })
+}
 
 // OES_framebuffer_object
 fn glGenFramebuffersOES(env: &mut Environment, n: GLsizei, framebuffers: MutPtr<GLuint>) {
@@ -801,6 +813,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(glGetFloatv(_, _)),
     export_c_func!(glGetIntegerv(_, _)),
     export_c_func!(glHint(_, _)),
+    export_c_func!(glGetString(_)),
     // Other state manipulation
     export_c_func!(glAlphaFunc(_, _)),
     export_c_func!(glAlphaFuncx(_, _)),
@@ -887,6 +900,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(glTexEnvfv(_, _, _)),
     export_c_func!(glTexEnvxv(_, _, _)),
     export_c_func!(glTexEnviv(_, _, _)),
+    export_c_func!(glGenerateMipmapOES(_)),
     // OES_framebuffer_object
     export_c_func!(glGenFramebuffersOES(_, _)),
     export_c_func!(glGenRenderbuffersOES(_, _)),

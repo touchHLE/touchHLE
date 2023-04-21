@@ -89,6 +89,9 @@ impl GLES for GLES1Native {
     unsafe fn Hint(&mut self, target: GLenum, mode: GLenum) {
         gles11::Hint(target, mode)
     }
+    unsafe fn GetString(&mut self, name: GLenum) -> *const GLubyte {
+        gles11::GetString(name)
+    }
 
     // Other state manipulation
     unsafe fn AlphaFunc(&mut self, func: GLenum, ref_: GLclampf) {
@@ -398,6 +401,9 @@ impl GLES for GLES1Native {
     }
     unsafe fn TexEnviv(&mut self, target: GLenum, pname: GLenum, params: *const GLint) {
         gles11::TexEnviv(target, pname, params)
+    }
+    unsafe fn GenerateMipmapOES(&mut self, target: GLenum) {
+        gles11::GenerateMipmapOES(target)
     }
 
     // Matrix stack operations

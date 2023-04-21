@@ -51,6 +51,7 @@ pub trait GLES {
     unsafe fn GetIntegerv(&mut self, pname: GLenum, params: *mut GLint);
     unsafe fn GetPointerv(&mut self, pname: GLenum, params: *mut *const GLvoid);
     unsafe fn Hint(&mut self, target: GLenum, mode: GLenum);
+    unsafe fn GetString(&mut self, name: GLenum) -> *const GLubyte;
 
     // Other state manipulation
     unsafe fn AlphaFunc(&mut self, func: GLenum, ref_: GLclampf);
@@ -199,6 +200,7 @@ pub trait GLES {
     unsafe fn TexEnvfv(&mut self, target: GLenum, pname: GLenum, params: *const GLfloat);
     unsafe fn TexEnvxv(&mut self, target: GLenum, pname: GLenum, params: *const GLfixed);
     unsafe fn TexEnviv(&mut self, target: GLenum, pname: GLenum, params: *const GLint);
+    unsafe fn GenerateMipmapOES(&mut self, target: GLenum);
 
     // Matrix stack operations
     unsafe fn MatrixMode(&mut self, mode: GLenum);

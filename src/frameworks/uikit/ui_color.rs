@@ -67,8 +67,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     autorelease(env, new)
 }
 
-+ (id)colorWithWhite:(CGFloat)w
-             alpha:(CGFloat)a {
++ (id)colorWithWhite:(CGFloat)w alpha:(CGFloat)a {
     let new: id = msg![env; this alloc];
     let new: id = msg![env; new initWithWhite: w alpha: a];
     autorelease(env, new)

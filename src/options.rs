@@ -16,6 +16,7 @@ pub const DOCUMENTATION: &str =
 
 /// Struct containing all user-configurable options.
 pub struct Options {
+    pub fullscreen: bool,
     pub initial_orientation: DeviceOrientation,
     pub scale_hack: NonZeroU32,
     pub deadzone: f32,
@@ -30,6 +31,7 @@ pub struct Options {
 impl Default for Options {
     fn default() -> Self {
         Options {
+            fullscreen: false,
             initial_orientation: DeviceOrientation::Portrait,
             scale_hack: NonZeroU32::new(1).unwrap(),
             deadzone: 0.1,
@@ -58,7 +60,9 @@ impl Options {
             Ok(arg)
         }
 
-        if arg == "--landscape-left" {
+        if arg == "--fullscreen" {
+            self.fullscreen = true;
+        } else if arg == "--landscape-left" {
             self.initial_orientation = DeviceOrientation::LandscapeLeft;
         } else if arg == "--landscape-right" {
             self.initial_orientation = DeviceOrientation::LandscapeRight;

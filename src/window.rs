@@ -82,6 +82,7 @@ pub struct Window {
     max_height: u32,
     #[cfg(target_os = "macos")]
     viewport_y_offset: u32,
+    fullscreen: bool,
     scale_hack: NonZeroU32,
     splash_image_and_gl_ctx: Option<(Image, GLContext)>,
     device_orientation: DeviceOrientation,
@@ -115,18 +116,30 @@ impl Window {
         video_ctx.enable_screen_saver();
 
         let scale_hack = options.scale_hack;
-
         // TODO: some apps specify their orientation in Info.plist, we could use
         // that here.
         let device_orientation = options.initial_orientation;
+        let fullscreen = options.fullscreen;
 
-        let (width, height) = size_for_orientation(device_orientation, scale_hack);
-        let mut window = video_ctx
-            .window(title, width, height)
-            .position_centered()
-            .opengl()
-            .build()
-            .unwrap();
+        let mut window = if fullscreen {
+            let (width, height) = video_ctx.display_bounds(0).unwrap().size();
+            let window = video_ctx
+                .window(title, width, height)
+                .fullscreen_desktop()
+                .opengl()
+                .build()
+                .unwrap();
+            window
+        } else {
+            let (width, height) = size_for_orientation(device_orientation, scale_hack);
+            let window = video_ctx
+                .window(title, width, height)
+                .position_centered()
+                .opengl()
+                .build()
+                .unwrap();
+            window
+        };
 
         if let Some(icon) = icon {
             window.set_icon(surface_from_image(&icon));
@@ -163,6 +176,9 @@ impl Window {
             }
         }
 
+        #[cfg(target_os = "macos")]
+        let max_height = window.size().1;
+
         let mut window = Window {
             _sdl_ctx: sdl_ctx,
             video_ctx,
@@ -170,9 +186,10 @@ impl Window {
             event_pump,
             event_queue: VecDeque::new(),
             #[cfg(target_os = "macos")]
-            max_height: height,
+            max_height,
             #[cfg(target_os = "macos")]
             viewport_y_offset: 0,
+            fullscreen,
             scale_hack,
             splash_image_and_gl_ctx,
             device_orientation,
@@ -195,10 +212,10 @@ impl Window {
     /// since we often need to defer actually handling them.
     pub fn poll_for_events(&mut self, options: &Options) {
         fn transform_input_coords(window: &Window, (in_x, in_y): (f32, f32)) -> (f32, f32) {
-            let (in_w, in_h) = window.size_in_current_orientation();
+            let (vx, vy, vw, vh) = window.viewport();
             // normalize to unit square centred on origin
-            let x = in_x / in_w as f32 - 0.5;
-            let y = in_y / in_h as f32 - 0.5;
+            let x = (in_x - vx as f32) / vw as f32 - 0.5;
+            let y = (in_y - vy as f32) / vh as f32 - 0.5;
             // rotate
             let matrix = window.input_rotation_matrix();
             let [x, y] = matrix.transform([x, y]);
@@ -384,13 +401,13 @@ impl Window {
         // Though the analog stick output fits within a square, its actual range
         // is usually a circle enclosed by the square. So we need to cut out the
         // rectangular shape of the screen from that circle within the square.
-        let (width, height) = self.size_in_current_orientation();
-        let (width, height) = (width as f32, height as f32);
+        let (vx, vy, vw, vh) = self.viewport();
+        let (vx, vy, vw, vh) = (vx as f32, vy as f32, vw as f32, vh as f32);
 
         let (x, y) = {
             // Use Pythagoras's theorem to find the largest size the rectangle
             // can have within the circle.
-            let ratio = width / height;
+            let ratio = vw / vh;
             let rect_height = (ratio * ratio + 1.0).powf(-0.5);
             let rect_width = ratio * rect_height;
 
@@ -399,9 +416,9 @@ impl Window {
             (x_abs.copysign(x), y_abs.copysign(y))
         };
 
-        // Convert to window co-ordinates
-        let x = (x / 2.0 + 0.5) * width;
-        let y = (y / 2.0 + 0.5) * height;
+        // Convert to on-screen window co-ordinates
+        let x = (x / 2.0 + 0.5) * vw + vx;
+        let y = (y / 2.0 + 0.5) * vh + vy;
 
         (x, y, pressed, visible)
     }
@@ -471,8 +488,9 @@ impl Window {
         };
 
         let matrix = self.output_rotation_matrix();
-        let viewport_size = self.size_in_current_orientation();
-        let viewport_offset = (0, self.viewport_y_offset());
+        let (vx, vy, vw, vh) = self.viewport();
+        let viewport_offset = (vx, vy + self.viewport_y_offset());
+        let viewport_size = (vw, vh);
 
         self.app_gl_ctx_no_longer_current = true;
 
@@ -500,22 +518,26 @@ impl Window {
             return;
         }
 
-        let (width, height) = size_for_orientation(new_orientation, self.scale_hack);
+        // In full-screen mode, the window does not rotate, just the content.
+        if !self.fullscreen {
+            let (width, height) = size_for_orientation(new_orientation, self.scale_hack);
 
-        // macOS quirk: when resizing the window, the new framebuffer's size is
-        // apparently max(new_size, old_size) in each dimension, but the
-        // viewport is positioned wrong on the y axis for some reason, so we
-        // need to apply an offset.
-        // Recreating the OpenGL context was an alternative workaround, but that
-        // apparently stops other OpenGL contexts drawing to the framebuffer!
-        #[cfg(target_os = "macos")]
-        {
-            let (_old_width, old_height) = self.window.size();
-            self.max_height = self.max_height.max(old_height).max(height);
-            self.viewport_y_offset = self.max_height - height;
+            // macOS quirk: when resizing the window, the new framebuffer's size
+            // is apparently max(new_size, old_size) in each dimension, but the
+            // viewport is positioned wrong on the y axis for some reason, so we
+            // need to apply an offset.
+            // Recreating the OpenGL context was an alternative workaround, but
+            // that apparently stops other OpenGL contexts drawing to the
+            // framebuffer!
+            #[cfg(target_os = "macos")]
+            {
+                let (_old_width, old_height) = self.window.size();
+                self.max_height = self.max_height.max(old_height).max(height);
+                self.viewport_y_offset = self.max_height - height;
+            }
+
+            self.window.set_size(width, height).unwrap();
         }
-
-        self.window.set_size(width, height).unwrap();
 
         self.device_orientation = new_orientation;
 
@@ -524,24 +546,56 @@ impl Window {
         }
     }
 
-    /// Get the size in pixels of the window with the aspect ratio reflecting
-    /// rotation (see [Self::rotate_device]). This also has the scale hack
-    /// applied.
-    pub fn size_in_current_orientation(&self) -> (u32, u32) {
-        size_for_orientation(self.device_orientation, self.scale_hack)
-    }
-
     /// Get the size in pixels of the window without rotation or scaling.
+    ///
+    /// The aspect ratio, scale and orientation reflect the guest app's view of
+    /// the world.
     pub fn size_unrotated_unscaled(&self) -> (u32, u32) {
         size_for_orientation(DeviceOrientation::Portrait, NonZeroU32::new(1).unwrap())
     }
 
     /// Get the size in pixels of the window without rotation but with the
-    /// scale hack.
+    /// scale hack. Scaling caused by fullscreen mode is not included.
+    ///
+    /// Only the aspect ratio and orientation reflect the guest app's view of
+    /// the world.
     pub fn size_unrotated_scalehacked(&self) -> (u32, u32) {
         size_for_orientation(DeviceOrientation::Portrait, self.scale_hack)
     }
 
+    /// Get the region of the on-screen window (x, y, width, height) used to
+    /// display the app content.
+    ///
+    /// The aspect ratio of this region always reflects the guest app's view of
+    /// the world, but the scale and orientation might not.
+    pub fn viewport(&self) -> (u32, u32, u32, u32) {
+        let (app_width, app_height) =
+            size_for_orientation(self.device_orientation, self.scale_hack);
+        if !self.fullscreen {
+            return (0, 0, app_width, app_height);
+        }
+
+        let (screen_width, screen_height) = self.window.drawable_size();
+
+        let app_aspect = app_width as f32 / app_height as f32;
+        let screen_aspect = screen_width as f32 / screen_height as f32;
+        let (scaled_width, scaled_height) = if app_aspect < screen_aspect {
+            (
+                (screen_height as f32 * app_aspect).round() as u32,
+                screen_height,
+            )
+        } else {
+            (
+                screen_width,
+                (screen_width as f32 / app_aspect).round() as u32,
+            )
+        };
+        let x = (screen_width - scaled_width) / 2;
+        let y = (screen_height - scaled_height) / 2;
+        (x, y, scaled_width, scaled_height)
+    }
+
+    /// Special offset to add to y co-ordinates, only when drawing to screen.
     pub fn viewport_y_offset(&self) -> u32 {
         #[cfg(target_os = "macos")]
         return self.viewport_y_offset;

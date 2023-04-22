@@ -240,6 +240,29 @@ pub const CLASSES: ClassExports = objc_classes! {
     autorelease(env, new)
 }
 
++ (id)stringWithFormat:(id)format, // NSString*
+                       ...args {
+    // TODO: avoid copy
+    let format_string = to_rust_string(env, format);
+
+    log_dbg!("[NSString stringWithFormat:{:?} ({:?}), ...]", format, format_string);
+
+    let res = crate::libc::stdio::printf::printf_inner::<true, _>(
+        env,
+        |_, idx| {
+            if idx as usize == format_string.len() {
+                b'\0'
+            } else {
+                format_string.as_bytes()[idx as usize]
+            }
+        },
+        args,
+    );
+    // TODO: what if it's not valid UTF-8?
+    let res = from_rust_string(env, String::from_utf8(res).unwrap());
+    autorelease(env, res)
+}
+
 // These are the two methods that have to be overridden by subclasses, so these
 // implementations don't have to care about foreign subclasses.
 - (NSUInteger)length {
@@ -273,6 +296,11 @@ pub const CLASSES: ClassExports = objc_classes! {
     // TODO: raise exception instead of panicking?
     utf16[index as usize]
 }
+
+- (id)description {
+    this
+}
+// TODO: debugDescription, localized description (is that a thing for NSString?)
 
 - (NSUInteger)hash {
     // TODO: avoid copying

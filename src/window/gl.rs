@@ -75,6 +75,10 @@ pub unsafe fn display_image(
     viewport_size: (u32, u32),
     rotation: &Matrix<2>,
 ) {
+    // The viewport might not cover the whole framebuffer, but clearing will.
+    gl::ClearColor(0.0, 0.0, 0.0, 0.0);
+    gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT | gl::STENCIL_BUFFER_BIT);
+
     gl::Viewport(
         viewport_offset.0.try_into().unwrap(),
         viewport_offset.1.try_into().unwrap(),
@@ -103,8 +107,8 @@ pub unsafe fn display_image(
         gl::UNSIGNED_BYTE,
         src_pixels.as_ptr() as *const _,
     );
-    gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::NEAREST as _);
-    gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::NEAREST as _);
+    gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::LINEAR as _);
+    gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::LINEAR as _);
     gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_S, gl::CLAMP_TO_EDGE as _);
     gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_T, gl::CLAMP_TO_EDGE as _);
 

@@ -67,6 +67,12 @@ pub const CLASSES: ClassExports = objc_classes! {
     autorelease(env, new)
 }
 
++ (id)colorWithWhite:(CGFloat)w alpha:(CGFloat)a {
+    let new: id = msg![env; this alloc];
+    let new: id = msg![env; new initWithWhite: w alpha: a];
+    autorelease(env, new)
+}
+
 + (id)clearColor    { get_standard_color(env, _cmd, 0.0, 0.0, 0.0, 0.0) }
 + (id)blackColor    { get_standard_color(env, _cmd, 0.0, 0.0, 0.0, 1.0) }
 + (id)whiteColor    { get_standard_color(env, _cmd, 1.0, 1.0, 1.0, 1.0) }
@@ -90,6 +96,15 @@ pub const CLASSES: ClassExports = objc_classes! {
 + (id)yellowColor   { get_standard_color(env, _cmd, 1.0, 1.0, 0.0, 1.0) }
 
 // TODO: more initializers, set methods, more accessors
+
+- (id)initWithWhite:(CGFloat)w alpha:(CGFloat)a {        
+    let w = w.clamp(0.0, 1.0);
+    let a = a.clamp(0.0, 1.0);
+
+    env.objc.borrow_mut::<UIColorHostObject>(this).rgba = (w, w, w, a);
+
+    this
+}
 
 - (id)initWithRed:(CGFloat)r
             green:(CGFloat)g

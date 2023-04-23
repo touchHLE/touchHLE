@@ -97,7 +97,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 // TODO: more initializers, set methods, more accessors
 
-- (id)initWithWhite:(CGFloat)w alpha:(CGFloat)a {        
+- (id)initWithWhite:(CGFloat)w alpha:(CGFloat)a {
     let w = w.clamp(0.0, 1.0);
     let a = a.clamp(0.0, 1.0);
 

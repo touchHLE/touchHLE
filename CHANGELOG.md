@@ -18,7 +18,7 @@ If an app is added to the supported list after the relevant version has already 
 Compatibility:
 
 - API support improvements:
-  - Various small contributions. (@hikari-no-yume, @KiritoDv)
+  - Various small contributions. (@hikari-no-yume, @KiritoDv, @ciciplusplus, @TylerJaacks)
 
 Quality:
 

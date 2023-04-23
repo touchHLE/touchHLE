@@ -98,10 +98,10 @@ pub const CLASSES: ClassExports = objc_classes! {
 // TODO: more initializers, set methods, more accessors
 
 - (id)initWithWhite:(CGFloat)w alpha:(CGFloat)a {        
-    let _w = w.clamp(0.0, 1.0);
-    let _a = a.clamp(0.0, 1.0);
+    let w = w.clamp(0.0, 1.0);
+    let a = a.clamp(0.0, 1.0);
 
-    env.objc.borrow_mut::<UIColorHostObject>(this).rgba = (_w, _w, _w, _a);
+    env.objc.borrow_mut::<UIColorHostObject>(this).rgba = (w, w, w, a);
 
     this
 }

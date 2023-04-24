@@ -50,7 +50,7 @@ Beware that iPhone OS apps often contain a mix of Thumb functions and normal Arm
 * When no symbols are available, GDB will assume an address is Arm code by default. You can use `set arm fallback-mode` to change this assumption.
 * When full symbols are available, GDB seems to assume symbols are for Arm functions even when they aren't. You can use `set arm force-mode` to override this.
 
-Setting an Arm breakpoint in Thumb code usually works, so you usually don't need to worry about this unless you want to disassemble something.
+GDB seems to understand the convention of setting the lower bit of the address to 1 to indicate a Thumb function, and in any case setting an Arm breakpoint in Thumb code (not vice-versa) usually works, so you usually only need to worry about this when disassembling things.
 
 touchHLE only communicates with GDB while execution is paused. Beyond being paused when you initially connect, it is also paused when certain CPU errors occur, or after stepping (resuming execution for a single instruction). Breakpoints are a useful way to force execution to pause at convenient locations.
 

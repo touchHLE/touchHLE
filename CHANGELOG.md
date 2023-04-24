@@ -35,6 +35,7 @@ Other:
 - touchHLE now has a primitive implementation of the GDB Remote Serial Protocol. GDB can connect to touchHLE over TCP and set software breakpoints, inspect memory and registers, step or continue execution, etc. This replaces the old `--breakpoint=` option, which is now removed. (@hikari-no-yume)
 - The version of SDL2 used by touchHLE has been updated to 2.26.4. (@hikari-no-yume)
 - Building on common Linux systems should now work without problems, and you can use dynamic linking for SDL2 and OpenAL if you prefer. Note that we are not providing release binaries. (@GeffDev)
+- The `bkpt` instruction is now handled, so GDB's Thumb breakpoints now work. (@hikari-no-yume)
 
 ## v0.1.2 (2023-03-07)
 

@@ -142,9 +142,11 @@ impl GdbServer {
                     self.send_packet("S05"); // SIGTRAP
                 }
             }
-            // GDB uses an undefined instruction for software breakpoints, and
-            // apparently expects SIGTRAP instead of SIGILL.
-            Some(CpuError::UndefinedInstruction) => {
+            // GDB uses an undefined instruction for software breakpoints in
+            // normal Arm code, and the BKPT instruction in Thumb code.
+            // It apparently expects SIGTRAP instead of SIGILL even in the
+            // former case.
+            Some(CpuError::UndefinedInstruction) | Some(CpuError::Breakpoint) => {
                 self.send_packet("S05"); // SIGTRAP
             }
             Some(CpuError::MemoryError) => {

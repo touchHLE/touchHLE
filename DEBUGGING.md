@@ -25,9 +25,10 @@ The basic set of steps is:
 * Start touchHLE in debugging mode: `touchHLE --gdb=localhost:9001 'Some App.app'`.
 * In a separate terminal window, start GDB: `gdb 'Some App.app/SomeApp'`. (You can omit the executable path, but this leaves GDB with no debug symbol info, [which is a worse experience](https://sourceware.org/bugzilla/show_bug.cgi?id=30234).) Then, inside GDB:
   * `set arch armv6`
+  *`set osabi none`
   * `target remote localhost:9001`
 
-You can make GDB connect immediately if you prefer: `gdb -ex 'set arch armv6' -ex 'target remote localhost:9001'`.
+You can make GDB connect immediately if you prefer: `gdb -ex 'set arch armv6' -ex 'set osabi none' -ex 'target remote localhost:9001'`.
 
 When GDB first connects, CPU execution is paused and none of the guest app's code has been run yet. While execution is paused, touchHLE allows GDB to:
 

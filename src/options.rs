@@ -87,7 +87,6 @@ impl Options {
                 .to_socket_addrs()
                 .map_err(|e| format!("Could not resolve GDB server listen address: {}", e))?
                 .collect();
-            println!("{:?}", addrs);
             self.gdb_listen_addrs = Some(addrs);
         } else {
             return Ok(false);

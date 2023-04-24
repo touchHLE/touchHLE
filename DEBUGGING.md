@@ -23,7 +23,7 @@ You'll need a version of GDB that supports ARMv6. On macOS, the Homebrew package
 The basic set of steps is:
 
 * Start touchHLE in debugging mode: `touchHLE --gdb=localhost:9001 'Some App.app'`.
-* In a separate terminal window, start GDB: `gdb 'Some App.app/SomeApp'`. (You can omit the executable path, but this leaves GDB with no debug symbol info, [which is a worse experience](https://sourceware.org/bugzilla/show_bug.cgi?id=30234).) Then, inside GDB:
+* In a separate terminal window, start GDB: `gdb 'Some App.app/SomeApp'`. (You can omit the executable path, but this leaves GDB with no debug symbol info, [which may be a worse experience](https://sourceware.org/bugzilla/show_bug.cgi?id=30234).) Then, inside GDB:
   * `set arch armv6`
   * `target remote localhost:9001`
 
@@ -46,6 +46,13 @@ GDB provides various services on top of this, for example:
 * `kill` will make touchHLE crash
 * `step` resumes execution for a single instruction
 * `continue` resumes execution indefinitely
+
+Beware that iPhone OS apps often contain a mix of Thumb functions and normal Arm functions. GDB usually won't know which kind of function it's dealing with:
+
+* When no symbols are available, GDB will assume an address is Arm code by default. You can use `set arm fallback-mode` to change this assumption.
+* When full symbols are available, GDB seems to assume symbols are for Arm functions even when they aren't. You can use `set arm force-mode` to override this.
+
+Setting an Arm breakpoint in Thumb code usually works, so you usually don't need to worry about this unless you want to disassemble something.
 
 touchHLE only communicates with GDB while execution is paused. Beyond being paused when you initially connect, it is also paused when certain CPU errors occur, or after stepping (resuming execution for a single instruction). Breakpoints are a useful way to force execution to pause at convenient locations.
 

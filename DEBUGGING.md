@@ -23,11 +23,9 @@ You'll need a version of GDB that supports ARMv6. On macOS, the Homebrew package
 The basic set of steps is:
 
 * Start touchHLE in debugging mode: `touchHLE --gdb=localhost:9001 'Some App.app'`.
-* In a separate terminal window, start GDB: `gdb 'Some App.app/SomeApp'`. (You can omit the executable path, but this leaves GDB with no debug symbol info, [which may be a worse experience](https://sourceware.org/bugzilla/show_bug.cgi?id=30234).) Then, inside GDB:
-  * `set arch armv6`
-  * `target remote localhost:9001`
+* In a separate terminal window, start GDB: `gdb 'Some App.app/SomeApp'`. (You can omit the executable path, but this leaves GDB with no debug symbol info, [which may be a worse experience](https://sourceware.org/bugzilla/show_bug.cgi?id=30234).) Then, inside GDB, run `target remote localhost:9001` to connect to touchHLE.
 
-You can make GDB connect immediately if you prefer: `gdb -ex 'set arch armv6' -ex 'target remote localhost:9001'`.
+If you prefer for GDB to connect immediately: `gdb 'Some App.app/SomeApp' -ex 'target remote localhost:9001'`.
 
 When GDB first connects, CPU execution is paused and none of the guest app's code has been run yet. While execution is paused, touchHLE allows GDB to:
 

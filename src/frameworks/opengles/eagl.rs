@@ -162,15 +162,17 @@ pub const CLASSES: ClassExports = objc_classes! {
 /// Copies the renderbuffer provided by the app to the window's framebuffer,
 /// rotated if necessary, and presents that framebuffer.
 unsafe fn present_renderbuffer(env: &mut Environment) {
-    // Renderbuffers can't be directly read from, but GL_EXT_framebuffer_blit
-    // provides a way to blit between framebuffers, which may have renderbuffers
-    // attached to them. Since OpenGL ES 1.1 doesn't have that extension, we
-    // have to bypass the API abstraction layer here.
-    //
-    // GL_EXT_framebuffer_blit can't do rotation, so we will have to blit to a
-    // framebuffer with a texture attached, then draw a textured quad.
+    // We are currently bypassing the OpenGL ES 1.1 abstraction layer, because
+    // OpenGL ES 1.1 doesn't have the state attribute stack functions.
+    // TODO: Replace these with alternatives and use the abstraction layer.
     use crate::window::gl21compat as gl;
     use crate::window::gl21compat::types::*;
+
+    // We can't directly copy the content of the renderbuffer to the default
+    // framebuffer (the window), but if we attach it to a framebuffer object, we
+    // can use glCopyTexImage2D() to copy it to a texture, which we can then
+    // draw to the default framebuffer via a textured quad, which can be
+    // rotated, scaled or letterboxed as appropriate.
 
     let mut renderbuffer: GLuint = 0;
     let mut width: GLint = 0;
@@ -188,82 +190,50 @@ unsafe fn present_renderbuffer(env: &mut Environment) {
 
     // To avoid confusing the guest app, we need to be able to undo any
     // state changes we make.
-    let mut old_draw_framebuffer: GLuint = 0;
-    let mut old_read_framebuffer: GLuint = 0;
+    let mut old_framebuffer: GLuint = 0;
     let mut old_texture_2d: GLuint = 0;
     gl::GetIntegerv(
-        gl::DRAW_FRAMEBUFFER_BINDING_EXT,
-        &mut old_draw_framebuffer as *mut _ as *mut _,
-    );
-    gl::GetIntegerv(
-        gl::READ_FRAMEBUFFER_BINDING_EXT,
-        &mut old_read_framebuffer as *mut _ as *mut _,
+        gl::FRAMEBUFFER_BINDING_EXT,
+        &mut old_framebuffer as *mut _ as *mut _,
     );
     gl::GetIntegerv(
         gl::TEXTURE_BINDING_2D,
         &mut old_texture_2d as *mut _ as *mut _,
     );
 
-    // Create a texture that we can copy the renderbuffer to
-    let mut texture: GLuint = 0;
-    gl::GenTextures(1, &mut texture);
-    gl::BindTexture(gl::TEXTURE_2D, texture);
-    gl::TexImage2D(
-        gl::TEXTURE_2D,
-        0,
-        gl::RGBA as _,
-        width,
-        height,
-        0,
-        gl::RGBA,
-        gl::UNSIGNED_BYTE,
-        std::ptr::null(),
-    );
-    // texture will not have any mip levels so we must ensure filter does
-    // not use them, else rendering will fail
-    gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::LINEAR as _);
-
-    // Create a framebuffer we can use to write to the texture
-    let mut dst_framebuffer = 0;
-    gl::GenFramebuffersEXT(1, &mut dst_framebuffer);
-    gl::BindFramebufferEXT(gl::DRAW_FRAMEBUFFER_EXT, dst_framebuffer);
-    gl::FramebufferTexture2DEXT(
-        gl::DRAW_FRAMEBUFFER_EXT,
-        gl::COLOR_ATTACHMENT0_EXT,
-        gl::TEXTURE_2D,
-        texture,
-        0,
-    );
-
     // Create a framebuffer we can use to read from the renderbuffer
     let mut src_framebuffer = 0;
     gl::GenFramebuffersEXT(1, &mut src_framebuffer);
-    gl::BindFramebufferEXT(gl::READ_FRAMEBUFFER_EXT, src_framebuffer);
+    gl::BindFramebufferEXT(gl::FRAMEBUFFER_EXT, src_framebuffer);
     gl::FramebufferRenderbufferEXT(
-        gl::READ_FRAMEBUFFER_EXT,
+        gl::FRAMEBUFFER_EXT,
         gl::COLOR_ATTACHMENT0_EXT,
         gl::RENDERBUFFER_EXT,
         renderbuffer,
     );
 
-    // Blit!
-    gl::BlitFramebufferEXT(
+    // Create a texture with a copy of the pixels in the framebuffer
+    let mut texture: GLuint = 0;
+    gl::GenTextures(1, &mut texture);
+    gl::BindTexture(gl::TEXTURE_2D, texture);
+    gl::CopyTexImage2D(
+        gl::TEXTURE_2D,
+        0,
+        gl::RGB as _,
         0,
         0,
         width,
         height,
         0,
-        0,
-        width,
-        height,
-        gl::COLOR_BUFFER_BIT,
-        gl::LINEAR,
     );
+    // The texture will not have any mip levels so we must ensure the filter
+    // does not use them, else rendering will fail.
+    gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::LINEAR as _);
 
-    // Clean up the framebuffer objects since we no longer need them.
+    // Clean up the framebuffer object since we no longer need it.
     // This also sets the framebuffer bindings back to zero, so rendering
     // will go to the default framebuffer (the window).
-    gl::DeleteFramebuffersEXT(2, [dst_framebuffer, src_framebuffer].as_ptr());
+    gl::DeleteFramebuffersEXT(1, &src_framebuffer);
 
     // There are a huge number of pieces of state that can affect rendering.
     // Backing up and then clearing all of it is the easiest way to ensure
@@ -358,8 +328,7 @@ unsafe fn present_renderbuffer(env: &mut Environment) {
 
     // Restore the other bindings
     gl::BindTexture(gl::TEXTURE_2D, old_texture_2d);
-    gl::BindFramebufferEXT(gl::DRAW_FRAMEBUFFER_EXT, old_draw_framebuffer);
-    gl::BindFramebufferEXT(gl::READ_FRAMEBUFFER_EXT, old_read_framebuffer);
+    gl::BindFramebufferEXT(gl::FRAMEBUFFER_EXT, old_framebuffer);
 
     //{ let err = gl::GetError(); if err != 0 { panic!("{:#x}", err); } }
 }

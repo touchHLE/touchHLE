@@ -138,6 +138,17 @@ pub trait GLES {
         type_: GLenum,
         pixels: *const GLvoid,
     );
+    unsafe fn CopyTexImage2D(
+        &mut self,
+        target: GLenum,
+        level: GLint,
+        internalformat: GLenum,
+        x: GLint,
+        y: GLint,
+        width: GLsizei,
+        height: GLsizei,
+        border: GLint,
+    );
     unsafe fn TexEnvf(&mut self, target: GLenum, pname: GLenum, param: GLfloat);
     unsafe fn TexEnvx(&mut self, target: GLenum, pname: GLenum, param: GLfixed);
     unsafe fn TexEnvi(&mut self, target: GLenum, pname: GLenum, param: GLint);
@@ -231,6 +242,6 @@ pub trait GLES {
         params: *mut GLint,
     );
     unsafe fn CheckFramebufferStatusOES(&mut self, target: GLenum) -> GLenum;
-    unsafe fn DeleteFramebuffersOES(&mut self, n: GLsizei, framebuffers: *mut GLuint);
-    unsafe fn DeleteRenderbuffersOES(&mut self, n: GLsizei, renderbuffers: *mut GLuint);
+    unsafe fn DeleteFramebuffersOES(&mut self, n: GLsizei, framebuffers: *const GLuint);
+    unsafe fn DeleteRenderbuffersOES(&mut self, n: GLsizei, renderbuffers: *const GLuint);
 }

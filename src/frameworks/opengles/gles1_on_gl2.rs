@@ -982,6 +982,29 @@ impl GLES for GLES1OnGL2 {
             pixels,
         )
     }
+    unsafe fn CopyTexImage2D(
+        &mut self,
+        target: GLenum,
+        level: GLint,
+        internalformat: GLenum,
+        x: GLint,
+        y: GLint,
+        width: GLsizei,
+        height: GLsizei,
+        border: GLint,
+    ) {
+        assert!(target == gl21::TEXTURE_2D);
+        assert!(level >= 0);
+        assert!(
+            internalformat as GLenum == gl21::ALPHA
+                || internalformat as GLenum == gl21::RGB
+                || internalformat as GLenum == gl21::RGBA
+                || internalformat as GLenum == gl21::LUMINANCE
+                || internalformat as GLenum == gl21::LUMINANCE_ALPHA
+        );
+        assert!(border == 0);
+        gl21::CopyTexImage2D(target, level, internalformat, x, y, width, height, border)
+    }
     unsafe fn TexEnvf(&mut self, target: GLenum, pname: GLenum, param: GLfloat) {
         // TODO: GL_POINT_SPRITE_OES
         assert!(target == gl21::TEXTURE_ENV);
@@ -1203,10 +1226,10 @@ impl GLES for GLES1OnGL2 {
     unsafe fn CheckFramebufferStatusOES(&mut self, target: GLenum) -> GLenum {
         gl21::CheckFramebufferStatusEXT(target)
     }
-    unsafe fn DeleteFramebuffersOES(&mut self, n: GLsizei, framebuffers: *mut GLuint) {
+    unsafe fn DeleteFramebuffersOES(&mut self, n: GLsizei, framebuffers: *const GLuint) {
         gl21::DeleteFramebuffersEXT(n, framebuffers)
     }
-    unsafe fn DeleteRenderbuffersOES(&mut self, n: GLsizei, renderbuffers: *mut GLuint) {
+    unsafe fn DeleteRenderbuffersOES(&mut self, n: GLsizei, renderbuffers: *const GLuint) {
         gl21::DeleteRenderbuffersEXT(n, renderbuffers)
     }
 }

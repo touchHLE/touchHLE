@@ -141,14 +141,14 @@ const GET_PARAMS: ParamTable = ParamTable(&[
     (gl21::COLOR_ARRAY_SIZE, ParamType::Int, 1),
     (gl21::COLOR_ARRAY_STRIDE, ParamType::Int, 1),
     (gl21::COLOR_ARRAY_TYPE, ParamType::Int, 1),
-    // TODO: COLOR_CLEAR_VALUE (has special type conversion behavior)
+    (gl21::COLOR_CLEAR_VALUE, ParamType::FloatSpecial, 4), // TODO correct type
     (gl21::COLOR_LOGIC_OP, ParamType::Boolean, 1),
     (gl21::COLOR_MATERIAL, ParamType::Boolean, 1),
     (gl21::COLOR_WRITEMASK, ParamType::Boolean, 4),
     // TODO: COMPRESSED_TEXTURE_FORMATS (need to support PVRTC etc)
     (gl21::CULL_FACE, ParamType::Boolean, 1),
     (gl21::CULL_FACE_MODE, ParamType::Int, 1),
-    // TODO: CURRENT_COLOR (has special type conversion behavior)
+    (gl21::CURRENT_COLOR, ParamType::FloatSpecial, 4), // TODO correct type
     // TODO: CURRENT_NORMAL (has special type conversion behavior)
     (gl21::CURRENT_TEXTURE_COORDS, ParamType::Float, 4),
     (gl21::DEPTH_BITS, ParamType::Int, 1),
@@ -157,6 +157,7 @@ const GET_PARAMS: ParamTable = ParamTable(&[
     // TODO: DEPTH_RANGE (has special type conversion behavior)
     (gl21::DEPTH_TEST, ParamType::Boolean, 1),
     (gl21::DEPTH_WRITEMASK, ParamType::Boolean, 1),
+    (gl21::DITHER, ParamType::Boolean, 1),
     (gl21::ELEMENT_ARRAY_BUFFER_BINDING, ParamType::Int, 1),
     (gl21::FOG, ParamType::Boolean, 1),
     // TODO: FOG_COLOR (has special type conversion behavior)
@@ -219,11 +220,10 @@ const GET_PARAMS: ParamTable = ParamTable(&[
     (gl21::PROJECTION_STACK_DEPTH, ParamType::Int, 1),
     (gl21::RED_BITS, ParamType::Int, 1),
     (gl21::RESCALE_NORMAL, ParamType::Boolean, 1),
-    // TODO: SAMPLE_ALPHA_TO_COVERAGE? (not shared)
-    // TODO: SAMPLE_ALPHA_TO_ONE? (not shared)
+    (gl21::SAMPLE_ALPHA_TO_COVERAGE, ParamType::Boolean, 1),
     (gl21::SAMPLE_ALPHA_TO_ONE, ParamType::Boolean, 1),
     (gl21::SAMPLE_BUFFERS, ParamType::Int, 1),
-    // TODO: SAMPLE_COVERAGE? (not shared)
+    (gl21::SAMPLE_COVERAGE, ParamType::Boolean, 1),
     (gl21::SAMPLE_COVERAGE_INVERT, ParamType::Boolean, 1),
     (gl21::SAMPLE_COVERAGE_VALUE, ParamType::Float, 1),
     (gl21::SAMPLES, ParamType::Int, 1),
@@ -503,7 +503,7 @@ impl GLES for GLES1OnGL2 {
     unsafe fn GetFloatv(&mut self, pname: GLenum, params: *mut GLfloat) {
         let (type_, _count) = GET_PARAMS.get_type_info(pname);
         // TODO: type conversion
-        assert!(type_ == ParamType::Float);
+        assert!(type_ == ParamType::Float || type_ == ParamType::FloatSpecial);
         gl21::GetFloatv(pname, params);
     }
     unsafe fn GetIntegerv(&mut self, pname: GLenum, params: *mut GLint) {
@@ -511,6 +511,15 @@ impl GLES for GLES1OnGL2 {
         // TODO: type conversion
         assert!(type_ == ParamType::Int);
         gl21::GetIntegerv(pname, params);
+    }
+    unsafe fn GetPointerv(&mut self, pname: GLenum, params: *mut *const GLvoid) {
+        assert!(ARRAYS
+            .iter()
+            .any(|&ArrayInfo { pointer, .. }| pname == pointer));
+        // The second argument to glGetPointerv must be a mutable pointer,
+        // but gl_generator generates the wrong signature by mistake, see
+        // https://github.com/brendanzab/gl-rs/issues/541
+        gl21::GetPointerv(pname, params as *mut _ as *const _);
     }
     unsafe fn Hint(&mut self, target: GLenum, mode: GLenum) {
         assert!([

@@ -31,8 +31,6 @@ Only use touchHLE to emulate software you legally own.
 * Probably works, but you must build it yourself: AArch64 macOS, x64 Linux, AArch64 Linux.
 * Never?: other architectures.
 
-**Known issue on macOS: memory leak of approximately 0.2MB/second (30fps games) or 0.4MB/second (60fps games).** Despite best efforts, this hasn't been figured out. Thankfully this is slow enough that it shouldn't be a problem for most play sessions.
-
 Android support is planned.
 
 Input methods:

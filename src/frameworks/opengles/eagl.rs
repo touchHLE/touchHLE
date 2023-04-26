@@ -216,16 +216,7 @@ unsafe fn present_renderbuffer(env: &mut Environment) {
     let mut texture: GLuint = 0;
     gl::GenTextures(1, &mut texture);
     gl::BindTexture(gl::TEXTURE_2D, texture);
-    gl::CopyTexImage2D(
-        gl::TEXTURE_2D,
-        0,
-        gl::RGB as _,
-        0,
-        0,
-        width,
-        height,
-        0,
-    );
+    gl::CopyTexImage2D(gl::TEXTURE_2D, 0, gl::RGB as _, 0, 0, width, height, 0);
     // The texture will not have any mip levels so we must ensure the filter
     // does not use them, else rendering will fail.
     gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::LINEAR as _);

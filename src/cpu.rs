@@ -140,6 +140,8 @@ pub enum CpuError {
     MemoryError,
     /// Undefined instruction (perhaps from a GDB software breakpoint).
     UndefinedInstruction,
+    /// Breakpoint (`bkpt` instruction).
+    Breakpoint,
 }
 
 impl Cpu {
@@ -287,7 +289,8 @@ impl Cpu {
             -1 => CpuState::Normal,
             -2 => CpuState::Error(CpuError::MemoryError),
             -3 => CpuState::Error(CpuError::UndefinedInstruction),
-            _ if res < -2 => panic!("Unexpected CPU execution result"),
+            -4 => CpuState::Error(CpuError::Breakpoint),
+            _ if res < -4 => panic!("Unexpected CPU execution result"),
             svc => CpuState::Svc(svc as u32),
         }
     }

@@ -574,6 +574,21 @@ fn glTexImage2D(
         )
     })
 }
+fn glCopyTexImage2D(
+    env: &mut Environment,
+    target: GLenum,
+    level: GLint,
+    internalformat: GLenum,
+    x: GLint,
+    y: GLint,
+    width: GLsizei,
+    height: GLsizei,
+    border: GLint,
+) {
+    with_ctx_and_mem(env, |gles, _mem| unsafe {
+        gles.CopyTexImage2D(target, level, internalformat, x, y, width, height, border)
+    })
+}
 fn glTexEnvf(env: &mut Environment, target: GLenum, pname: GLenum, param: GLfloat) {
     with_ctx_and_mem(env, |gles, _mem| unsafe {
         gles.TexEnvf(target, pname, param)
@@ -698,17 +713,17 @@ fn glCheckFramebufferStatusOES(env: &mut Environment, target: GLenum) -> GLenum 
         gles.CheckFramebufferStatusOES(target)
     })
 }
-fn glDeleteFramebuffersOES(env: &mut Environment, n: GLsizei, framebuffers: MutPtr<GLuint>) {
+fn glDeleteFramebuffersOES(env: &mut Environment, n: GLsizei, framebuffers: ConstPtr<GLuint>) {
     with_ctx_and_mem(env, |gles, mem| {
         let n_usize: GuestUSize = n.try_into().unwrap();
-        let framebuffers = mem.ptr_at_mut(framebuffers, n_usize);
+        let framebuffers = mem.ptr_at(framebuffers, n_usize);
         unsafe { gles.DeleteFramebuffersOES(n, framebuffers) }
     })
 }
-fn glDeleteRenderbuffersOES(env: &mut Environment, n: GLsizei, renderbuffers: MutPtr<GLuint>) {
+fn glDeleteRenderbuffersOES(env: &mut Environment, n: GLsizei, renderbuffers: ConstPtr<GLuint>) {
     with_ctx_and_mem(env, |gles, mem| {
         let n_usize: GuestUSize = n.try_into().unwrap();
-        let renderbuffers = mem.ptr_at_mut(renderbuffers, n_usize);
+        let renderbuffers = mem.ptr_at(renderbuffers, n_usize);
         unsafe { gles.DeleteRenderbuffersOES(n, renderbuffers) }
     })
 }
@@ -797,6 +812,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(glTexParameterf(_, _, _)),
     export_c_func!(glTexParameterx(_, _, _)),
     export_c_func!(glTexImage2D(_, _, _, _, _, _, _, _, _)),
+    export_c_func!(glCopyTexImage2D(_, _, _, _, _, _, _, _)),
     export_c_func!(glTexEnvf(_, _, _)),
     export_c_func!(glTexEnvx(_, _, _)),
     export_c_func!(glTexEnvi(_, _, _)),

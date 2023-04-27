@@ -12,12 +12,31 @@
 use crate::window::gles11::types::*;
 
 /// Trait representing an OpenGL ES implementation and context.
+///
+/// # Safety
+/// It is the caller's responsibility to make the context active before using
+/// any of the `unsafe` methods of this trait.
 #[allow(clippy::upper_case_acronyms)]
 pub trait GLES {
-    fn new(window: &mut crate::window::Window) -> Self
+    /// Get a human-friendly description of this implementation.
+    fn description() -> &'static str
     where
         Self: Sized;
+
+    /// Construct a new context. This might fail if the host OS doesn't have a
+    /// compatible driver, for example.
+    #[allow(clippy::new_ret_no_self)]
+    fn new(window: &mut crate::window::Window) -> Result<Self, String>
+    where
+        Self: Sized;
+
+    /// Make this context (and any underlying context) the active OpenGL
+    /// context.
     fn make_current(&self, window: &mut crate::window::Window);
+
+    /// Get some string describing the underlying driver. For OpenGL this is
+    /// `GL_VENDOR`, `GL_RENDERER` and `GL_VERSION`.
+    unsafe fn driver_description(&self) -> String;
 
     // Generic state manipulation
     unsafe fn GetError(&mut self) -> GLenum;
@@ -28,6 +47,7 @@ pub trait GLES {
     unsafe fn GetBooleanv(&mut self, pname: GLenum, params: *mut GLboolean);
     unsafe fn GetFloatv(&mut self, pname: GLenum, params: *mut GLfloat);
     unsafe fn GetIntegerv(&mut self, pname: GLenum, params: *mut GLint);
+    unsafe fn GetPointerv(&mut self, pname: GLenum, params: *mut *const GLvoid);
     unsafe fn Hint(&mut self, target: GLenum, mode: GLenum);
 
     // Other state manipulation
@@ -138,6 +158,17 @@ pub trait GLES {
         type_: GLenum,
         pixels: *const GLvoid,
     );
+    unsafe fn CopyTexImage2D(
+        &mut self,
+        target: GLenum,
+        level: GLint,
+        internalformat: GLenum,
+        x: GLint,
+        y: GLint,
+        width: GLsizei,
+        height: GLsizei,
+        border: GLint,
+    );
     unsafe fn TexEnvf(&mut self, target: GLenum, pname: GLenum, param: GLfloat);
     unsafe fn TexEnvx(&mut self, target: GLenum, pname: GLenum, param: GLfixed);
     unsafe fn TexEnvi(&mut self, target: GLenum, pname: GLenum, param: GLint);
@@ -231,6 +262,6 @@ pub trait GLES {
         params: *mut GLint,
     );
     unsafe fn CheckFramebufferStatusOES(&mut self, target: GLenum) -> GLenum;
-    unsafe fn DeleteFramebuffersOES(&mut self, n: GLsizei, framebuffers: *mut GLuint);
-    unsafe fn DeleteRenderbuffersOES(&mut self, n: GLsizei, renderbuffers: *mut GLuint);
+    unsafe fn DeleteFramebuffersOES(&mut self, n: GLsizei, framebuffers: *const GLuint);
+    unsafe fn DeleteRenderbuffersOES(&mut self, n: GLsizei, renderbuffers: *const GLuint);
 }

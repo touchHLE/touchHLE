@@ -72,6 +72,17 @@ Game controller options:
         This is a floating-point (decimal) number of degrees, without a degree
         symbol. It may be negative.
 
+Graphics driver options:
+    --gles1=...
+        Force touchHLE to use a particular OpenGL ES 1.1 implementation.
+        This may be useful for troubleshooting graphics driver issues.
+
+        --gles1=gles1_on_gl2 will use touchHLE's GLES1-on-GL2 layer.
+        --gles1=gles1_native will use native OpenGL ES 1.1.
+
+        When this option isn't in use, touchHLE will try each in order and use
+        the first one that works.
+
 Debugging options:
     --disable-direct-memory-access
         Force dynarmic to always access guest memory via the memory access

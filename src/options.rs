@@ -5,6 +5,7 @@
  */
 //! Parsing and management of user-configurable options, e.g. for input methods.
 
+use crate::frameworks::opengles::GLESImplementation;
 use crate::window::DeviceOrientation;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
@@ -24,6 +25,7 @@ pub struct Options {
     pub y_tilt_range: f32,
     pub x_tilt_offset: f32,
     pub y_tilt_offset: f32,
+    pub gles1_implementation: Option<GLESImplementation>,
     pub direct_memory_access: bool,
     pub gdb_listen_addrs: Option<Vec<SocketAddr>>,
 }
@@ -40,6 +42,7 @@ impl Default for Options {
             y_tilt_range: 60.0,
             x_tilt_offset: 0.0,
             y_tilt_offset: 0.0,
+            gles1_implementation: None,
             direct_memory_access: true,
             gdb_listen_addrs: None,
         }
@@ -49,6 +52,7 @@ impl Default for Options {
     // TODO: properly calculate scale, position and orientation for mobile devices
     fn default() -> Self {
         Options {
+            fullscreen: false,
             initial_orientation: DeviceOrientation::LandscapeLeft,
             scale_hack: NonZeroU32::new(3).unwrap(),
             deadzone: 0.1,
@@ -56,6 +60,7 @@ impl Default for Options {
             y_tilt_range: 60.0,
             x_tilt_offset: 0.0,
             y_tilt_offset: 24.0,
+            gles1_implementation: None,
             direct_memory_access: true,
             gdb_listen_addrs: None,
         }
@@ -97,6 +102,11 @@ impl Options {
             self.x_tilt_offset = parse_degrees(value, "X tilt offset")?;
         } else if let Some(value) = arg.strip_prefix("--y-tilt-offset=") {
             self.y_tilt_offset = parse_degrees(value, "Y tilt offset")?;
+        } else if let Some(value) = arg.strip_prefix("--gles1=") {
+            self.gles1_implementation = Some(
+                GLESImplementation::from_short_name(value)
+                    .map_err(|_| "Unrecognized --gles1= value".to_string())?,
+            );
         } else if arg == "--disable-direct-memory-access" {
             self.direct_memory_access = false;
         } else if let Some(address) = arg.strip_prefix("--gdb=") {
@@ -104,7 +114,6 @@ impl Options {
                 .to_socket_addrs()
                 .map_err(|e| format!("Could not resolve GDB server listen address: {}", e))?
                 .collect();
-            println!("{:?}", addrs);
             self.gdb_listen_addrs = Some(addrs);
         } else {
             return Ok(false);

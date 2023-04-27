@@ -29,6 +29,7 @@ bool touchHLE_cpu_write_u64(touchHLE_Mem *mem, VAddr addr, std::uint64_t value);
 
 const auto HaltReasonSvc = Dynarmic::HaltReason::UserDefined1;
 const auto HaltReasonUndefinedInstruction = Dynarmic::HaltReason::UserDefined2;
+const auto HaltReasonBreakpoint = Dynarmic::HaltReason::UserDefined3;
 
 class Environment final : public Dynarmic::A32::UserCallbacks {
 public:
@@ -115,6 +116,8 @@ private:
       cpu->HaltExecution(Dynarmic::HaltReason::MemoryAbort);
     } else if (exception == Dynarmic::A32::Exception::UndefinedInstruction) {
       cpu->HaltExecution(HaltReasonUndefinedInstruction);
+    } else if (exception == Dynarmic::A32::Exception::Breakpoint) {
+      cpu->HaltExecution(HaltReasonBreakpoint);
     } else {
       std::fprintf(stderr, "ExceptionRaised: unexpected exception %u at %x\n",
                    unsigned(exception), pc);
@@ -192,6 +195,8 @@ public:
       res = -2;
     } else if (Dynarmic::Has(hr, HaltReasonUndefinedInstruction)) {
       res = -3;
+    } else if (Dynarmic::Has(hr, HaltReasonBreakpoint)) {
+      res = -4;
     } else if (Dynarmic::Has(hr, HaltReasonSvc)) {
       res = std::int32_t(env.halting_svc);
     } else {

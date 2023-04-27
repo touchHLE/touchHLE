@@ -5,20 +5,13 @@
  */
 //! EAGL.
 
-use super::GLES;
-
-#[cfg(target_os = "android")]
-use super::GLES1Native;
-#[cfg(not(target_os = "android"))]
-use super::GLES1OnGL2;
-
+use super::{GLESImplementation, GLES};
 use crate::dyld::{ConstantExports, HostConstant};
 use crate::frameworks::foundation::ns_string::get_static_str;
 use crate::frameworks::foundation::NSUInteger;
 use crate::objc::{id, msg, nil, objc_classes, release, retain, ClassExports, HostObject};
 use crate::window::gles11;
-use crate::window::Matrix;
-use crate::Environment; // for constants
+use crate::window::{Matrix, Window};
 
 // These are used by the EAGLDrawable protocol implemented by CAEAGLayer.
 // Since these have the ABI of constant symbols rather than literal constants,
@@ -102,7 +95,36 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (id)initWithAPI:(EAGLRenderingAPI)api {
     assert!(api == kEAGLRenderingAPIOpenGLES1);
 
-    let gles1_ctx = Box::new(gles1_impl(env));
+    log!("Creating an OpenGL ES 1.1 context:");
+    let list = if let Some(ref preference) = env.options.gles1_implementation {
+        std::slice::from_ref(preference)
+    } else {
+        GLESImplementation::GLES1_IMPLEMENTATIONS
+    };
+    let mut gles1_ctx = None;
+    for implementation in list {
+        log!("Trying: {}", implementation.description());
+        match implementation.construct(&mut env.window) {
+            Ok(ctx) => {
+                log!("=> Success!");
+                gles1_ctx = Some(ctx);
+                break;
+            },
+            Err(err) => {
+                log!("=> Failed: {}.", err);
+            }
+        }
+    }
+    let gles1_ctx = gles1_ctx.expect("Couldn't create OpenGL ES 1.1 context!");
+
+    // Make the context current so we can get driver info from it.
+    // initWithAPI: is not supposed to make the new context current (the app
+    // must call setCurrentContext: for that), so we need to hide this from the
+    // app. Setting current_ctx_thread to None should cause sync_context to
+    // switch back to the right context if the app makes an OpenGL ES call.
+    gles1_ctx.make_current(&mut env.window);
+    env.framework_state.opengles.current_ctx_thread = None;
+    log!("Driver info: {}", unsafe { gles1_ctx.driver_description() });
 
     *env.objc.borrow_mut(this) = EAGLContextHostObject {
         gles_ctx: Some(gles1_ctx),
@@ -153,9 +175,9 @@ pub const CLASSES: ClassExports = objc_classes! {
 
     // Unclear from documentation if this method requires an appropriate context
     // to already be active, but that seems to be the case in practice?
-    super::sync_context(&mut env.framework_state.opengles, &mut env.objc, &mut env.window, env.current_thread);
+    let gles = super::sync_context(&mut env.framework_state.opengles, &mut env.objc, &mut env.window, env.current_thread);
     unsafe {
-        present_renderbuffer(env);
+        present_renderbuffer(gles, &mut env.window);
     }
 
     true
@@ -165,184 +187,195 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 };
 
-#[cfg(not(target_os = "android"))]
-fn gles1_impl(env: &mut Environment) -> GLES1OnGL2 {
-    GLES1OnGL2::new(&mut env.window)
-}
-#[cfg(target_os = "android")]
-fn gles1_impl(env: &mut Environment) -> GLES1Native {
-    GLES1Native::new(&mut env.window)
-}
-
 /// Copies the renderbuffer provided by the app to the window's framebuffer,
 /// rotated if necessary, and presents that framebuffer.
-#[cfg(not(target_os = "android"))]
-unsafe fn present_renderbuffer(env: &mut Environment) {
-    // Renderbuffers can't be directly read from, but GL_EXT_framebuffer_blit
-    // provides a way to blit between framebuffers, which may have renderbuffers
-    // attached to them. Since OpenGL ES 1.1 doesn't have that extension, we
-    // have to bypass the API abstraction layer here.
-    //
-    // GL_EXT_framebuffer_blit can't do rotation, so we will have to blit to a
-    // framebuffer with a texture attached, then draw a textured quad.
-    use crate::window::gl21compat as gl;
-    use crate::window::gl21compat::types::*;
+unsafe fn present_renderbuffer(gles: &mut dyn GLES, window: &mut Window) {
+    use gles11::types::*;
 
-    let mut renderbuffer: GLuint = 0;
+    // These helper functions make the state backup code easier to read, but
+    // more importantly, they make it free of mutable variables that wouldn't
+    // get caught by Rust's unused variable warnings, which are useful to check
+    // we actually restore the stuff we back up.
+
+    unsafe fn get_ptr(gles: &mut dyn GLES, pname: GLenum) -> *const GLvoid {
+        let mut ptr = std::ptr::null();
+        gles.GetPointerv(pname, &mut ptr);
+        ptr
+    }
+    // Safety: caller's responsibility to use appropriate N.
+    unsafe fn get_ints<const N: usize>(gles: &mut dyn GLES, pname: GLenum) -> [GLint; N] {
+        let mut res = [0; N];
+        gles.GetIntegerv(pname, res.as_mut_ptr());
+        res
+    }
+    // Safety: caller's responsibility to only use this for scalars.
+    unsafe fn get_int(gles: &mut dyn GLES, pname: GLenum) -> GLint {
+        get_ints::<1>(gles, pname)[0]
+    }
+    // Safety: caller's responsibility to use appropriate N.
+    unsafe fn get_floats<const N: usize>(gles: &mut dyn GLES, pname: GLenum) -> [GLfloat; N] {
+        let mut res = [0.0; N];
+        gles.GetFloatv(pname, res.as_mut_ptr());
+        res
+    }
+
+    // We can't directly copy the content of the renderbuffer to the default
+    // framebuffer (the window), but if we attach it to a framebuffer object, we
+    // can use glCopyTexImage2D() to copy it to a texture, which we can then
+    // draw to the default framebuffer via a textured quad, which can be
+    // rotated, scaled or letterboxed as appropriate.
+
+    let renderbuffer: GLuint = get_int(gles, gles11::RENDERBUFFER_BINDING_OES) as _;
     let mut width: GLint = 0;
     let mut height: GLint = 0;
-    gl::GetIntegerv(
-        gl::RENDERBUFFER_BINDING_EXT,
-        &mut renderbuffer as *mut _ as *mut _,
+    gles.GetRenderbufferParameterivOES(
+        gles11::RENDERBUFFER_OES,
+        gles11::RENDERBUFFER_WIDTH_OES,
+        &mut width,
     );
-    gl::GetRenderbufferParameterivEXT(gl::RENDERBUFFER_EXT, gl::RENDERBUFFER_WIDTH_EXT, &mut width);
-    gl::GetRenderbufferParameterivEXT(
-        gl::RENDERBUFFER_EXT,
-        gl::RENDERBUFFER_HEIGHT_EXT,
+    gles.GetRenderbufferParameterivOES(
+        gles11::RENDERBUFFER_OES,
+        gles11::RENDERBUFFER_HEIGHT_OES,
         &mut height,
     );
 
     // To avoid confusing the guest app, we need to be able to undo any
     // state changes we make.
-    let mut old_draw_framebuffer: GLuint = 0;
-    let mut old_read_framebuffer: GLuint = 0;
-    let mut old_texture_2d: GLuint = 0;
-    gl::GetIntegerv(
-        gl::DRAW_FRAMEBUFFER_BINDING_EXT,
-        &mut old_draw_framebuffer as *mut _ as *mut _,
-    );
-    gl::GetIntegerv(
-        gl::READ_FRAMEBUFFER_BINDING_EXT,
-        &mut old_read_framebuffer as *mut _ as *mut _,
-    );
-    gl::GetIntegerv(
-        gl::TEXTURE_BINDING_2D,
-        &mut old_texture_2d as *mut _ as *mut _,
-    );
-
-    // Create a texture that we can copy the renderbuffer to
-    let mut texture: GLuint = 0;
-    gl::GenTextures(1, &mut texture);
-    gl::BindTexture(gl::TEXTURE_2D, texture);
-    gl::TexImage2D(
-        gl::TEXTURE_2D,
-        0,
-        gl::RGBA as _,
-        width,
-        height,
-        0,
-        gl::RGBA,
-        gl::UNSIGNED_BYTE,
-        std::ptr::null(),
-    );
-    // texture will not have any mip levels so we must ensure filter does
-    // not use them, else rendering will fail
-    gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::LINEAR as _);
-
-    // Create a framebuffer we can use to write to the texture
-    let mut dst_framebuffer = 0;
-    gl::GenFramebuffersEXT(1, &mut dst_framebuffer);
-    gl::BindFramebufferEXT(gl::DRAW_FRAMEBUFFER_EXT, dst_framebuffer);
-    gl::FramebufferTexture2DEXT(
-        gl::DRAW_FRAMEBUFFER_EXT,
-        gl::COLOR_ATTACHMENT0_EXT,
-        gl::TEXTURE_2D,
-        texture,
-        0,
-    );
+    let old_framebuffer: GLuint = get_int(gles, gles11::FRAMEBUFFER_BINDING_OES) as _;
+    let old_texture_2d: GLuint = get_int(gles, gles11::TEXTURE_BINDING_2D) as _;
 
     // Create a framebuffer we can use to read from the renderbuffer
     let mut src_framebuffer = 0;
-    gl::GenFramebuffersEXT(1, &mut src_framebuffer);
-    gl::BindFramebufferEXT(gl::READ_FRAMEBUFFER_EXT, src_framebuffer);
-    gl::FramebufferRenderbufferEXT(
-        gl::READ_FRAMEBUFFER_EXT,
-        gl::COLOR_ATTACHMENT0_EXT,
-        gl::RENDERBUFFER_EXT,
+    gles.GenFramebuffersOES(1, &mut src_framebuffer);
+    gles.BindFramebufferOES(gles11::FRAMEBUFFER_OES, src_framebuffer);
+    gles.FramebufferRenderbufferOES(
+        gles11::FRAMEBUFFER_OES,
+        gles11::COLOR_ATTACHMENT0_OES,
+        gles11::RENDERBUFFER_OES,
         renderbuffer,
     );
 
-    // Blit!
-    gl::BlitFramebufferEXT(
+    // Create a texture with a copy of the pixels in the framebuffer
+    let mut texture: GLuint = 0;
+    gles.GenTextures(1, &mut texture);
+    gles.BindTexture(gles11::TEXTURE_2D, texture);
+    gles.CopyTexImage2D(
+        gles11::TEXTURE_2D,
+        0,
+        gles11::RGB as _,
         0,
         0,
         width,
         height,
         0,
-        0,
-        width,
-        height,
-        gl::COLOR_BUFFER_BIT,
-        gl::LINEAR,
+    );
+    // The texture will not have any mip levels so we must ensure the filter
+    // does not use them, else rendering will fail.
+    gles.TexParameteri(
+        gles11::TEXTURE_2D,
+        gles11::TEXTURE_MIN_FILTER,
+        gles11::LINEAR as _,
     );
 
-    // Clean up the framebuffer objects since we no longer need them.
+    // Clean up the framebuffer object since we no longer need it.
     // This also sets the framebuffer bindings back to zero, so rendering
     // will go to the default framebuffer (the window).
-    gl::DeleteFramebuffersEXT(2, [dst_framebuffer, src_framebuffer].as_ptr());
+    gles.DeleteFramebuffersOES(1, &src_framebuffer);
 
-    // There are a huge number of pieces of state that can affect rendering.
-    // Backing up and then clearing all of it is the easiest way to ensure
-    // that drawing the quad works.
-    gl::PushClientAttrib(gl::CLIENT_ALL_ATTRIB_BITS);
-    for array in super::gles1_on_gl2::ARRAYS {
-        gl::DisableClientState(array.name);
+    // Reset various things that could affect the quad or virtual cursor we're
+    // going to draw. Back up the old state while doing so, so it can be
+    // restored later. The app's subsequent drawing will be messed up if we
+    // don't restore it.
+    let old_arrays = {
+        let mut old_arrays = [gles11::FALSE; super::gles1_on_gl2::ARRAYS.len()];
+        for (is_enabled, info) in old_arrays
+            .iter_mut()
+            .zip(super::gles1_on_gl2::ARRAYS.iter())
+        {
+            gles.GetBooleanv(info.name, is_enabled);
+            gles.DisableClientState(info.name);
+        }
+        old_arrays
+    };
+    let old_capabilities = {
+        let mut old_capabilities = [gles11::FALSE; super::gles1_on_gl2::CAPABILITIES.len()];
+        for (is_enabled, &name) in old_capabilities
+            .iter_mut()
+            .zip(super::gles1_on_gl2::CAPABILITIES.iter())
+        {
+            gles.GetBooleanv(name, is_enabled);
+            gles.Disable(name);
+        }
+        old_capabilities
+    };
+    let old_matrix_mode: GLenum = get_int(gles, gles11::MATRIX_MODE) as _;
+    for mode in [gles11::MODELVIEW, gles11::PROJECTION, gles11::TEXTURE] {
+        gles.MatrixMode(mode);
+        gles.PushMatrix();
+        gles.LoadIdentity();
     }
-    gl::PushAttrib(gl::ALL_ATTRIB_BITS);
-    for &cap in super::gles1_on_gl2::CAPABILITIES {
-        gl::Disable(cap);
-    }
-    let mut old_matrix_mode: GLenum = 0;
-    gl::GetIntegerv(gl::MATRIX_MODE, &mut old_matrix_mode as *mut _ as *mut _);
-    for mode in [gl::MODELVIEW, gl::PROJECTION, gl::TEXTURE] {
-        gl::MatrixMode(mode);
-        gl::PushMatrix();
-        gl::LoadIdentity();
-    }
-    let mut old_array_buffer: GLuint = 0;
-    gl::GetIntegerv(
-        gl::ARRAY_BUFFER_BINDING,
-        &mut old_array_buffer as *mut _ as *mut _,
-    );
-    gl::Color4f(1.0, 1.0, 1.0, 1.0);
+    let old_color: [GLfloat; 4] = get_floats(gles, gles11::CURRENT_COLOR);
+    gles.Color4f(1.0, 1.0, 1.0, 1.0);
+
+    // Back up other things that will be modified while drawing.
+    let old_viewport: (GLint, GLint, GLsizei, GLsizei) = {
+        let [x, y, width, height] = get_ints(gles, gles11::VIEWPORT);
+        (x, y, width as _, height as _)
+    };
+    let old_clear_color: [GLfloat; 4] = get_floats(gles, gles11::COLOR_CLEAR_VALUE);
+    let old_array_buffer: GLuint = get_int(gles, gles11::ARRAY_BUFFER_BINDING) as _;
+    let old_vertex_array_binding: GLuint = get_int(gles, gles11::VERTEX_ARRAY_BUFFER_BINDING) as _;
+    let old_vertex_array_size: GLint = get_int(gles, gles11::VERTEX_ARRAY_SIZE);
+    let old_vertex_array_type: GLenum = get_int(gles, gles11::VERTEX_ARRAY_TYPE) as _;
+    let old_vertex_array_stride: GLsizei = get_int(gles, gles11::VERTEX_ARRAY_STRIDE) as _;
+    let old_vertex_array_pointer = get_ptr(gles, gles11::VERTEX_ARRAY_POINTER);
+    let old_tex_coord_array_binding: GLuint =
+        get_int(gles, gles11::TEXTURE_COORD_ARRAY_BUFFER_BINDING) as _;
+    let old_tex_coord_array_size: GLint = get_int(gles, gles11::TEXTURE_COORD_ARRAY_SIZE);
+    let old_tex_coord_array_type: GLenum = get_int(gles, gles11::TEXTURE_COORD_ARRAY_TYPE) as _;
+    let old_tex_coord_array_stride: GLsizei =
+        get_int(gles, gles11::TEXTURE_COORD_ARRAY_STRIDE) as _;
+    let old_tex_coord_array_pointer = get_ptr(gles, gles11::TEXTURE_COORD_ARRAY_POINTER);
+    let old_blend_sfactor: GLenum = get_int(gles, gles11::BLEND_SRC) as _;
+    let old_blend_dfactor: GLenum = get_int(gles, gles11::BLEND_DST) as _;
 
     // Draw the quad
-    let viewport = env.window.viewport();
-    gl::Viewport(
+    let viewport = window.viewport();
+    gles.Viewport(
         viewport.0 as _,
         viewport.1 as _,
         viewport.2 as _,
         viewport.3 as _,
     );
-    gl::ClearColor(0.0, 0.0, 0.0, 1.0);
-    gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT | gl::STENCIL_BUFFER_BIT);
-    gl::BindBuffer(gl::ARRAY_BUFFER, 0);
+    gles.ClearColor(0.0, 0.0, 0.0, 1.0);
+    gles.Clear(gles11::COLOR_BUFFER_BIT | gles11::DEPTH_BUFFER_BIT | gles11::STENCIL_BUFFER_BIT);
+    gles.BindBuffer(gles11::ARRAY_BUFFER, 0);
     let vertices: [f32; 12] = [
         -1.0, -1.0, -1.0, 1.0, 1.0, -1.0, 1.0, -1.0, -1.0, 1.0, 1.0, 1.0,
     ];
-    gl::EnableClientState(gl::VERTEX_ARRAY);
-    gl::VertexPointer(2, gl::FLOAT, 0, vertices.as_ptr() as *const GLvoid);
+    gles.EnableClientState(gles11::VERTEX_ARRAY);
+    gles.VertexPointer(2, gles11::FLOAT, 0, vertices.as_ptr() as *const GLvoid);
     let tex_coords: [f32; 12] = [0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0];
-    gl::EnableClientState(gl::TEXTURE_COORD_ARRAY);
-    gl::TexCoordPointer(2, gl::FLOAT, 0, tex_coords.as_ptr() as *const GLvoid);
-    let matrix = Matrix::<4>::from(&env.window.output_rotation_matrix());
-    gl::MatrixMode(gl::TEXTURE);
-    gl::LoadMatrixf(matrix.columns().as_ptr() as *const _);
-    gl::Enable(gl::TEXTURE_2D);
-    gl::DrawArrays(gl::TRIANGLES, 0, 6);
+    gles.EnableClientState(gles11::TEXTURE_COORD_ARRAY);
+    gles.TexCoordPointer(2, gles11::FLOAT, 0, tex_coords.as_ptr() as *const GLvoid);
+    let matrix = Matrix::<4>::from(&window.output_rotation_matrix());
+    gles.MatrixMode(gles11::TEXTURE);
+    gles.LoadMatrixf(matrix.columns().as_ptr() as *const _);
+    gles.Enable(gles11::TEXTURE_2D);
+    gles.DrawArrays(gles11::TRIANGLES, 0, 6);
 
     // Display virtual cursor
-    if let Some((x, y, pressed)) = env.window.virtual_cursor_visible_at() {
+    if let Some((x, y, pressed)) = window.virtual_cursor_visible_at() {
         let (vx, vy, vw, vh) = viewport;
         let x = x - vx as f32;
         let y = y - vy as f32;
 
-        gl::DisableClientState(gl::TEXTURE_COORD_ARRAY);
-        gl::Disable(gl::TEXTURE_2D);
+        gles.DisableClientState(gles11::TEXTURE_COORD_ARRAY);
+        gles.Disable(gles11::TEXTURE_2D);
 
-        gl::Enable(gl::BLEND);
-        gl::BlendFunc(gl::ONE, gl::ONE_MINUS_SRC_ALPHA);
-        gl::Color4f(0.0, 0.0, 0.0, if pressed { 2.0 / 3.0 } else { 1.0 / 3.0 });
+        gles.Enable(gles11::BLEND);
+        gles.BlendFunc(gles11::ONE, gles11::ONE_MINUS_SRC_ALPHA);
+        gles.Color4f(0.0, 0.0, 0.0, if pressed { 2.0 / 3.0 } else { 1.0 / 3.0 });
 
         let radius = 10.0;
 
@@ -351,196 +384,75 @@ unsafe fn present_renderbuffer(env: &mut Environment) {
             vertices[i] = (vertices[i] * radius + x) / (vw as f32 / 2.0) - 1.0;
             vertices[i + 1] = 1.0 - (vertices[i + 1] * radius + y) / (vh as f32 / 2.0);
         }
-        gl::VertexPointer(2, gl::FLOAT, 0, vertices.as_ptr() as *const GLvoid);
-        gl::DrawArrays(gl::TRIANGLES, 0, 6);
+        gles.VertexPointer(2, gles11::FLOAT, 0, vertices.as_ptr() as *const GLvoid);
+        gles.DrawArrays(gles11::TRIANGLES, 0, 6);
     }
 
     // Clean up the texture
-    gl::DeleteTextures(1, &texture);
+    gles.DeleteTextures(1, &texture);
 
     // Restore all the state saved before rendering
-    gl::BindBuffer(gl::ARRAY_BUFFER, old_array_buffer);
-    for mode in [gl::MODELVIEW, gl::PROJECTION, gl::TEXTURE] {
-        gl::MatrixMode(mode);
-        gl::PopMatrix();
-    }
-    gl::MatrixMode(old_matrix_mode);
-    gl::PopAttrib();
-    gl::PopClientAttrib();
-
-    // SDL2's documentation warns 0 should be bound to the draw framebuffer
-    // when swapping the window, so this is the perfect moment.
-    env.window.swap_window();
-
-    // Restore the other bindings
-    gl::BindTexture(gl::TEXTURE_2D, old_texture_2d);
-    gl::BindFramebufferEXT(gl::DRAW_FRAMEBUFFER_EXT, old_draw_framebuffer);
-    gl::BindFramebufferEXT(gl::READ_FRAMEBUFFER_EXT, old_read_framebuffer);
-
-    //{ let err = gl::GetError(); if err != 0 { panic!("{:#x}", err); } }
-}
-
-/// Variant of present_renderbuffer but for Android
-/// Instead of blitting between framebuffers, we use CopyTexImage2D to copy renderbuffers to a texture
-/// TODO: refactor common parts with present_renderbuffer
-#[cfg(target_os = "android")]
-unsafe fn present_renderbuffer(env: &mut Environment) {
-    use crate::window::gles11 as gl;
-    use crate::window::gles11::types::*;
-
-    let mut renderbuffer: GLuint = 0;
-    let mut width: GLint = 0;
-    let mut height: GLint = 0;
-    gl::GetIntegerv(
-        gl::RENDERBUFFER_BINDING_OES,
-        &mut renderbuffer as *mut _ as *mut _,
-    );
-    gl::GetRenderbufferParameterivOES(gl::RENDERBUFFER_OES, gl::RENDERBUFFER_WIDTH_OES, &mut width);
-    gl::GetRenderbufferParameterivOES(
-        gl::RENDERBUFFER_OES,
-        gl::RENDERBUFFER_HEIGHT_OES,
-        &mut height,
-    );
-
-    // To avoid confusing the guest app, we need to be able to undo any
-    // state changes we make.
-    let mut old_framebuffer: GLuint = 0;
-    let mut old_texture_2d: GLuint = 0;
-    gl::GetIntegerv(
-        gl::FRAMEBUFFER_BINDING_OES,
-        &mut old_framebuffer as *mut _ as *mut _,
-    );
-    gl::GetIntegerv(
-        gl::TEXTURE_BINDING_2D,
-        &mut old_texture_2d as *mut _ as *mut _,
-    );
-
-    // Create a texture that we can copy the renderbuffer to
-    let mut texture: GLuint = 0;
-    gl::GenTextures(1, &mut texture);
-    gl::BindTexture(gl::TEXTURE_2D, texture);
-    gl::TexImage2D(
-        gl::TEXTURE_2D,
-        0,
-        gl::RGBA as _,
-        width,
-        height,
-        0,
-        gl::RGBA,
-        gl::UNSIGNED_BYTE,
-        std::ptr::null(),
-    );
-    // texture will not have any mip levels so we must ensure filter does
-    // not use them, else rendering will fail
-    gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::LINEAR as _);
-
-    // Create a framebuffer we can use to read from the renderbuffer
-    let mut src_framebuffer = 0;
-    gl::GenFramebuffersOES(1, &mut src_framebuffer);
-    gl::BindFramebufferOES(gl::FRAMEBUFFER_OES, src_framebuffer);
-    gl::FramebufferRenderbufferOES(
-        gl::FRAMEBUFFER_OES,
-        gl::COLOR_ATTACHMENT0_OES,
-        gl::RENDERBUFFER_OES,
-        renderbuffer,
-    );
-
-    debug_assert_eq!(
-        gl::CheckFramebufferStatusOES(gl::FRAMEBUFFER_OES),
-        gl::FRAMEBUFFER_COMPLETE_OES
-    );
-
-    gl::CopyTexImage2D(gl::TEXTURE_2D, 0, gl::RGBA, 0, 0, width, height, 0);
-
-    // Clean up the framebuffer objects since we no longer need them.
-    // This also sets the framebuffer bindings back to zero, so rendering
-    // will go to the default framebuffer (the window).
-    gl::DeleteFramebuffersOES(1, [src_framebuffer].as_ptr());
-
-    // There are a huge number of pieces of state that can affect rendering.
-    // Backing up and then clearing all of it is the easiest way to ensure
-    // that drawing the quad works.
-    //gl::PushClientAttrib(gl::CLIENT_ALL_ATTRIB_BITS);
-    for array in super::gles1_on_gl2::ARRAYS {
-        gl::DisableClientState(array.name);
-    }
-    //gl::PushAttrib(gl::ALL_ATTRIB_BITS);
-    for &cap in super::gles1_on_gl2::CAPABILITIES {
-        gl::Disable(cap);
-    }
-    let mut old_matrix_mode: GLenum = 0;
-    gl::GetIntegerv(gl::MATRIX_MODE, &mut old_matrix_mode as *mut _ as *mut _);
-    for mode in [gl::MODELVIEW, gl::PROJECTION, gl::TEXTURE] {
-        gl::MatrixMode(mode);
-        gl::PushMatrix();
-        gl::LoadIdentity();
-    }
-    let mut old_array_buffer: GLuint = 0;
-    gl::GetIntegerv(
-        gl::ARRAY_BUFFER_BINDING,
-        &mut old_array_buffer as *mut _ as *mut _,
-    );
-
-    // Draw the quad
-    let viewport_size = env.window.size_in_current_orientation();
-    gl::Viewport(0, 0, viewport_size.0 as _, viewport_size.1 as _);
-    gl::ClearColor(0.0, 0.0, 0.0, 1.0);
-    gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT | gl::STENCIL_BUFFER_BIT);
-    gl::BindBuffer(gl::ARRAY_BUFFER, 0);
-    let vertices: [f32; 12] = [
-        -1.0, -1.0, -1.0, 1.0, 1.0, -1.0, 1.0, -1.0, -1.0, 1.0, 1.0, 1.0,
-    ];
-    gl::EnableClientState(gl::VERTEX_ARRAY);
-    gl::VertexPointer(2, gl::FLOAT, 0, vertices.as_ptr() as *const GLvoid);
-    let tex_coords: [f32; 12] = [0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0];
-    gl::EnableClientState(gl::TEXTURE_COORD_ARRAY);
-    gl::TexCoordPointer(2, gl::FLOAT, 0, tex_coords.as_ptr() as *const GLvoid);
-    let matrix = Matrix::<4>::from(&env.window.output_rotation_matrix());
-    gl::MatrixMode(gl::TEXTURE);
-    gl::LoadMatrixf(matrix.columns().as_ptr() as *const _);
-    gl::Enable(gl::TEXTURE_2D);
-    gl::DrawArrays(gl::TRIANGLES, 0, 6);
-
-    // Display virtual cursor
-    if let Some((x, y, pressed)) = env.window.virtual_cursor_visible_at() {
-        gl::DisableClientState(gl::TEXTURE_COORD_ARRAY);
-        gl::Disable(gl::TEXTURE_2D);
-
-        gl::Enable(gl::BLEND);
-        gl::BlendFunc(gl::ONE, gl::ONE_MINUS_SRC_ALPHA);
-        gl::Color4f(0.5, 0.5, 0.5, if pressed { 2.0 / 3.0 } else { 1.0 / 3.0 });
-
-        let radius = 10.0;
-
-        let mut vertices = vertices;
-        for i in (0..vertices.len()).step_by(2) {
-            vertices[i] = (vertices[i] * radius + x) / (viewport_size.0 as f32 / 2.0) - 1.0;
-            vertices[i + 1] = 1.0 - (vertices[i + 1] * radius + y) / (viewport_size.1 as f32 / 2.0);
+    for (&is_enabled, info) in old_arrays.iter().zip(super::gles1_on_gl2::ARRAYS.iter()) {
+        match is_enabled {
+            gles11::TRUE => gles.EnableClientState(info.name),
+            gles11::FALSE => gles.DisableClientState(info.name),
+            _ => unreachable!(),
         }
-        gl::VertexPointer(2, gl::FLOAT, 0, vertices.as_ptr() as *const GLvoid);
-        gl::DrawArrays(gl::TRIANGLES, 0, 6);
     }
-
-    // Clean up the texture
-    gl::DeleteTextures(1, &texture);
-
-    // Restore all the state saved before rendering
-    gl::BindBuffer(gl::ARRAY_BUFFER, old_array_buffer);
-    for mode in [gl::MODELVIEW, gl::PROJECTION, gl::TEXTURE] {
-        gl::MatrixMode(mode);
-        gl::PopMatrix();
+    for (&is_enabled, &name) in old_capabilities
+        .iter()
+        .zip(super::gles1_on_gl2::CAPABILITIES.iter())
+    {
+        match is_enabled {
+            gles11::TRUE => gles.Enable(name),
+            gles11::FALSE => gles.Disable(name),
+            _ => unreachable!(),
+        }
     }
-    gl::MatrixMode(old_matrix_mode);
-    //gl::PopAttrib();
-    //gl::PopClientAttrib();
+    gles.MatrixMode(old_matrix_mode);
+    for mode in [gles11::MODELVIEW, gles11::PROJECTION, gles11::TEXTURE] {
+        gles.MatrixMode(mode);
+        gles.PopMatrix();
+    }
+    gles.Color4f(old_color[0], old_color[1], old_color[2], old_color[3]);
+    gles.Viewport(
+        old_viewport.0,
+        old_viewport.1,
+        old_viewport.2,
+        old_viewport.3,
+    );
+    gles.ClearColor(
+        old_clear_color[0],
+        old_clear_color[1],
+        old_clear_color[2],
+        old_clear_color[3],
+    );
+    // GL_ARRAY_BUFFER is implicitly used by the Pointer functions but is also
+    // an independent binding.
+    gles.BindBuffer(gles11::ARRAY_BUFFER, old_vertex_array_binding);
+    gles.VertexPointer(
+        old_vertex_array_size,
+        old_vertex_array_type,
+        old_vertex_array_stride,
+        old_vertex_array_pointer,
+    );
+    gles.BindBuffer(gles11::ARRAY_BUFFER, old_tex_coord_array_binding);
+    gles.TexCoordPointer(
+        old_tex_coord_array_size,
+        old_tex_coord_array_type,
+        old_tex_coord_array_stride,
+        old_tex_coord_array_pointer,
+    );
+    gles.BindBuffer(gles11::ARRAY_BUFFER, old_array_buffer);
+    gles.BlendFunc(old_blend_sfactor, old_blend_dfactor);
 
     // SDL2's documentation warns 0 should be bound to the draw framebuffer
     // when swapping the window, so this is the perfect moment.
-    env.window.swap_window();
+    window.swap_window();
 
     // Restore the other bindings
-    gl::BindTexture(gl::TEXTURE_2D, old_texture_2d);
-    gl::BindFramebufferOES(gl::FRAMEBUFFER_OES, old_framebuffer);
+    gles.BindTexture(gles11::TEXTURE_2D, old_texture_2d);
+    gles.BindFramebufferOES(gles11::FRAMEBUFFER_OES, old_framebuffer);
 
-    //{ let err = gl::GetError(); if err != 0 { panic!("{:#x}", err); } }
+    //{ let err = gl21::GetError(); if err != 0 { panic!("{:#x}", err); } }
 }

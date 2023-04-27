@@ -23,7 +23,6 @@ fn main() {
         Fallbacks::None,
         [
             "GL_EXT_framebuffer_object",
-            "GL_EXT_framebuffer_blit",
             "GL_EXT_texture_filter_anisotropic",
         ],
     )

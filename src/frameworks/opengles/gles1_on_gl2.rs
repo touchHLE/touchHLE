@@ -24,6 +24,7 @@ use crate::window::gl21compat as gl21;
 use crate::window::gl21compat::types::*;
 use crate::window::gles11;
 use crate::window::{GLContext, GLVersion, Window};
+use std::ffi::CStr;
 
 /// List of capabilities shared by OpenGL ES 1.1 and OpenGL 2.1.
 ///
@@ -141,14 +142,14 @@ const GET_PARAMS: ParamTable = ParamTable(&[
     (gl21::COLOR_ARRAY_SIZE, ParamType::Int, 1),
     (gl21::COLOR_ARRAY_STRIDE, ParamType::Int, 1),
     (gl21::COLOR_ARRAY_TYPE, ParamType::Int, 1),
-    // TODO: COLOR_CLEAR_VALUE (has special type conversion behavior)
+    (gl21::COLOR_CLEAR_VALUE, ParamType::FloatSpecial, 4), // TODO correct type
     (gl21::COLOR_LOGIC_OP, ParamType::Boolean, 1),
     (gl21::COLOR_MATERIAL, ParamType::Boolean, 1),
     (gl21::COLOR_WRITEMASK, ParamType::Boolean, 4),
     // TODO: COMPRESSED_TEXTURE_FORMATS (need to support PVRTC etc)
     (gl21::CULL_FACE, ParamType::Boolean, 1),
     (gl21::CULL_FACE_MODE, ParamType::Int, 1),
-    // TODO: CURRENT_COLOR (has special type conversion behavior)
+    (gl21::CURRENT_COLOR, ParamType::FloatSpecial, 4), // TODO correct type
     // TODO: CURRENT_NORMAL (has special type conversion behavior)
     (gl21::CURRENT_TEXTURE_COORDS, ParamType::Float, 4),
     (gl21::DEPTH_BITS, ParamType::Int, 1),
@@ -157,6 +158,7 @@ const GET_PARAMS: ParamTable = ParamTable(&[
     // TODO: DEPTH_RANGE (has special type conversion behavior)
     (gl21::DEPTH_TEST, ParamType::Boolean, 1),
     (gl21::DEPTH_WRITEMASK, ParamType::Boolean, 1),
+    (gl21::DITHER, ParamType::Boolean, 1),
     (gl21::ELEMENT_ARRAY_BUFFER_BINDING, ParamType::Int, 1),
     (gl21::FOG, ParamType::Boolean, 1),
     // TODO: FOG_COLOR (has special type conversion behavior)
@@ -219,11 +221,10 @@ const GET_PARAMS: ParamTable = ParamTable(&[
     (gl21::PROJECTION_STACK_DEPTH, ParamType::Int, 1),
     (gl21::RED_BITS, ParamType::Int, 1),
     (gl21::RESCALE_NORMAL, ParamType::Boolean, 1),
-    // TODO: SAMPLE_ALPHA_TO_COVERAGE? (not shared)
-    // TODO: SAMPLE_ALPHA_TO_ONE? (not shared)
+    (gl21::SAMPLE_ALPHA_TO_COVERAGE, ParamType::Boolean, 1),
     (gl21::SAMPLE_ALPHA_TO_ONE, ParamType::Boolean, 1),
     (gl21::SAMPLE_BUFFERS, ParamType::Int, 1),
-    // TODO: SAMPLE_COVERAGE? (not shared)
+    (gl21::SAMPLE_COVERAGE, ParamType::Boolean, 1),
     (gl21::SAMPLE_COVERAGE_INVERT, ParamType::Boolean, 1),
     (gl21::SAMPLE_COVERAGE_VALUE, ParamType::Float, 1),
     (gl21::SAMPLES, ParamType::Int, 1),
@@ -461,16 +462,33 @@ impl GLES1OnGL2 {
     }
 }
 impl GLES for GLES1OnGL2 {
-    fn new(window: &mut Window) -> Self {
-        Self {
-            gl_ctx: window.create_gl_context(GLVersion::GL21Compat),
+    fn description() -> &'static str {
+        "OpenGL ES 1.1 via touchHLE GLES1-on-GL2 layer"
+    }
+
+    fn new(window: &mut Window) -> Result<Self, String> {
+        Ok(Self {
+            gl_ctx: window.create_gl_context(GLVersion::GL21Compat)?,
             pointer_is_fixed_point: [false; ARRAYS.len()],
             fixed_point_translation_buffers: [Vec::new(), Vec::new(), Vec::new(), Vec::new()],
-        }
+        })
     }
 
     fn make_current(&self, window: &mut Window) {
         window.make_gl_context_current(&self.gl_ctx);
+    }
+
+    unsafe fn driver_description(&self) -> String {
+        let version = CStr::from_ptr(gl21::GetString(gl21::VERSION) as *const _);
+        let vendor = CStr::from_ptr(gl21::GetString(gl21::VENDOR) as *const _);
+        let renderer = CStr::from_ptr(gl21::GetString(gl21::RENDERER) as *const _);
+        // OpenGL's version string is just a number, so let's contextualize it.
+        format!(
+            "OpenGL {} / {} / {}",
+            version.to_string_lossy(),
+            vendor.to_string_lossy(),
+            renderer.to_string_lossy()
+        )
     }
 
     // Generic state manipulation
@@ -503,7 +521,7 @@ impl GLES for GLES1OnGL2 {
     unsafe fn GetFloatv(&mut self, pname: GLenum, params: *mut GLfloat) {
         let (type_, _count) = GET_PARAMS.get_type_info(pname);
         // TODO: type conversion
-        assert!(type_ == ParamType::Float);
+        assert!(type_ == ParamType::Float || type_ == ParamType::FloatSpecial);
         gl21::GetFloatv(pname, params);
     }
     unsafe fn GetIntegerv(&mut self, pname: GLenum, params: *mut GLint) {
@@ -511,6 +529,15 @@ impl GLES for GLES1OnGL2 {
         // TODO: type conversion
         assert!(type_ == ParamType::Int);
         gl21::GetIntegerv(pname, params);
+    }
+    unsafe fn GetPointerv(&mut self, pname: GLenum, params: *mut *const GLvoid) {
+        assert!(ARRAYS
+            .iter()
+            .any(|&ArrayInfo { pointer, .. }| pname == pointer));
+        // The second argument to glGetPointerv must be a mutable pointer,
+        // but gl_generator generates the wrong signature by mistake, see
+        // https://github.com/brendanzab/gl-rs/issues/541
+        gl21::GetPointerv(pname, params as *mut _ as *const _);
     }
     unsafe fn Hint(&mut self, target: GLenum, mode: GLenum) {
         assert!([
@@ -982,6 +1009,29 @@ impl GLES for GLES1OnGL2 {
             pixels,
         )
     }
+    unsafe fn CopyTexImage2D(
+        &mut self,
+        target: GLenum,
+        level: GLint,
+        internalformat: GLenum,
+        x: GLint,
+        y: GLint,
+        width: GLsizei,
+        height: GLsizei,
+        border: GLint,
+    ) {
+        assert!(target == gl21::TEXTURE_2D);
+        assert!(level >= 0);
+        assert!(
+            internalformat as GLenum == gl21::ALPHA
+                || internalformat as GLenum == gl21::RGB
+                || internalformat as GLenum == gl21::RGBA
+                || internalformat as GLenum == gl21::LUMINANCE
+                || internalformat as GLenum == gl21::LUMINANCE_ALPHA
+        );
+        assert!(border == 0);
+        gl21::CopyTexImage2D(target, level, internalformat, x, y, width, height, border)
+    }
     unsafe fn TexEnvf(&mut self, target: GLenum, pname: GLenum, param: GLfloat) {
         // TODO: GL_POINT_SPRITE_OES
         assert!(target == gl21::TEXTURE_ENV);
@@ -1203,10 +1253,10 @@ impl GLES for GLES1OnGL2 {
     unsafe fn CheckFramebufferStatusOES(&mut self, target: GLenum) -> GLenum {
         gl21::CheckFramebufferStatusEXT(target)
     }
-    unsafe fn DeleteFramebuffersOES(&mut self, n: GLsizei, framebuffers: *mut GLuint) {
+    unsafe fn DeleteFramebuffersOES(&mut self, n: GLsizei, framebuffers: *const GLuint) {
         gl21::DeleteFramebuffersEXT(n, framebuffers)
     }
-    unsafe fn DeleteRenderbuffersOES(&mut self, n: GLsizei, renderbuffers: *mut GLuint) {
+    unsafe fn DeleteRenderbuffersOES(&mut self, n: GLsizei, renderbuffers: *const GLuint) {
         gl21::DeleteRenderbuffersEXT(n, renderbuffers)
     }
 }

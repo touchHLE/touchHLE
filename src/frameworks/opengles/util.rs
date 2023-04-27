@@ -33,6 +33,11 @@ pub enum ParamType {
     Float,
     /// `GLint`
     Int,
+    /// Placeholder type for things like colors which are floating-point
+    /// but don't have the usual conversion behavior to/from integers etc.
+    /// [ParamTable] will accept it for floating-point inputs only.
+    /// TODO: Remove this and add proper types for colors etc.
+    FloatSpecial,
     /// Hack to achieve `#[non_exhaustive]`-like behavior within this crate,
     /// since more types might be added in future
     _NonExhaustive,
@@ -90,6 +95,7 @@ impl ParamTable {
         // values when converting to integer. :(
         match type_ {
             ParamType::Float => setf(fixed_to_float(param)),
+            ParamType::FloatSpecial => todo!(),
             _ => seti(param),
         }
     }
@@ -120,6 +126,7 @@ impl ParamTable {
                 }
                 setfv(params_float.as_ptr())
             }
+            ParamType::FloatSpecial => todo!(),
             _ => setiv(params),
         }
     }

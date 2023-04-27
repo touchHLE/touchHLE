@@ -422,7 +422,9 @@ impl Environment {
     /// connected. Returns [true] if the CPU should step and then resume
     /// debugging, or [false] if it should resume normal execution.
     fn debug_cpu_error(&mut self, error: cpu::CpuError) -> bool {
-        if matches!(error, cpu::CpuError::UndefinedInstruction) {
+        if matches!(error, cpu::CpuError::UndefinedInstruction)
+            || matches!(error, cpu::CpuError::Breakpoint)
+        {
             // Rewind the PC so that it's at the instruction where the error
             // occurred, rather than the next instruction. This is necessary for
             // GDB to detect its software breakpoints. For some reason this

@@ -19,6 +19,14 @@ use std::io::{BufRead, BufReader, ErrorKind, Read, Write};
 use std::net::TcpStream;
 use std::time::Duration;
 
+/// GDB target description XML.
+const TARGET_XML: &str = r##"
+<target version="1.0">
+    <architecture>armv6</architecture>
+    <osabi>Darwin</osabi>
+</target>
+"##;
+
 /// GDB Remote Serial Protocol handler, implementing a server.
 pub struct GdbServer {
     reader: BufReader<TcpStream>,
@@ -142,9 +150,11 @@ impl GdbServer {
                     self.send_packet("S05"); // SIGTRAP
                 }
             }
-            // GDB uses an undefined instruction for software breakpoints, and
-            // apparently expects SIGTRAP instead of SIGILL.
-            Some(CpuError::UndefinedInstruction) => {
+            // GDB uses an undefined instruction for software breakpoints in
+            // normal Arm code, and the BKPT instruction in Thumb code.
+            // It apparently expects SIGTRAP instead of SIGILL even in the
+            // former case.
+            Some(CpuError::UndefinedInstruction) | Some(CpuError::Breakpoint) => {
                 self.send_packet("S05"); // SIGTRAP
             }
             Some(CpuError::MemoryError) => {
@@ -304,6 +314,38 @@ impl GdbServer {
                     if p == "qAttached" {
                         // New process
                         self.send_packet("0");
+                    // Query for supported features
+                    } else if p == "qSupported" || p.starts_with("qSupported:") {
+                        // Tell GDB we can send it an XML target description.
+                        self.send_packet("qXfer:features:read+");
+                    // Read XML target description
+                    } else if let Some(params) = p.strip_prefix("qXfer:features:read:") {
+                        let (annex, params) = params.split_once(':').unwrap();
+                        let (offset, length) = params.split_once(',').unwrap();
+                        let offset = usize::from_str_radix(offset, 16).unwrap();
+                        let length = usize::from_str_radix(length, 16).unwrap();
+                        let bytes = TARGET_XML.as_bytes();
+                        if annex == "target.xml" && offset <= bytes.len() {
+                            let bytes = &bytes[offset..];
+                            let length_read = length.min(bytes.len());
+                            let mut packet = String::with_capacity(1 + length_read);
+                            if length_read < length {
+                                // Read data, more remains
+                                packet.push('l');
+                            } else {
+                                // Read data, none left
+                                packet.push('m');
+                            }
+                            // This packet uses the modern style of binary
+                            // data where most bytes are unescaped.
+                            // We happen to know none of the bytes in the XML
+                            // need escaping, and that they're all ASCII.
+                            packet.push_str(std::str::from_utf8(&bytes[..length_read]).unwrap());
+                            self.send_packet(&packet);
+                        } else {
+                            // Unsupported annex or invalid offset
+                            self.send_packet("E00");
+                        }
                     } else {
                         log_dbg!("Unhandled packet.");
                         // Tell GDB we don't understand this packet.

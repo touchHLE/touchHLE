@@ -1,3 +1,19 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+//! Handling of `@synchronized` blocks (`objc_sync_enter/exit`).
+//!
+//! `@synchronized` blocks are sections of code that, for a given object, only allow one thread inside any `@synchronized` block with that object. 
+//! These are internally implemented with the `objc_sync_enter` and `objc_sync_exit` functions.
+//!
+//! Resources:
+//! - [Section about `@synchronized` in *The Objective-C Programming
+//! Language*](https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/ObjectiveC/Chapters/ocThreading.html#//apple_ref/doc/uid/TP30001163-CH19-SW1)
+//! - [Source code for
+//! `objc_sync_enter/exit`](https://opensource.apple.com/source/objc4/objc4-551.1/runtime/Accessors.subproj/objc-accessors.mm.auto.html),
+//! otherwise undocumented.
 use std::num::NonZeroU32;
 
 use crate::environment::Environment;

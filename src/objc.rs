@@ -30,6 +30,7 @@ mod methods;
 mod objects;
 mod properties;
 mod selectors;
+mod synchronization;
 
 pub use classes::{objc_classes, Class, ClassExports, ClassTemplate};
 pub use messages::{autorelease, msg, msg_class, msg_send, release, retain};
@@ -43,8 +44,8 @@ use methods::method_list_t;
 use objects::{objc_object, HostObjectEntry};
 use properties::objc_copyStruct;
 use properties::objc_setProperty;
-use properties::objc_sync_enter;
-use properties::objc_sync_exit;
+use synchronization::objc_sync_enter;
+use synchronization::objc_sync_exit;
 
 /// Typedef for `NSZone *`. This is a [fossil type] found in the signature of
 /// `allocWithZone:` and similar methods. Its value is always ignored.

@@ -19,8 +19,10 @@
 //! categories and dynamic class editing).
 
 use crate::dyld::{export_c_func, FunctionExports};
+use crate::environment::ThreadID;
 
 use std::collections::HashMap;
+use std::num::NonZeroU32;
 
 mod classes;
 mod messages;
@@ -41,6 +43,8 @@ use methods::method_list_t;
 use objects::{objc_object, HostObjectEntry};
 use properties::objc_copyStruct;
 use properties::objc_setProperty;
+use properties::objc_sync_enter;
+use properties::objc_sync_exit;
 
 /// Typedef for `NSZone *`. This is a [fossil type] found in the signature of
 /// `allocWithZone:` and similar methods. Its value is always ignored.
@@ -62,6 +66,12 @@ pub struct ObjC {
     ///
     /// Look at the `isa` to get the metaclass for a class.
     classes: HashMap<String, Class>,
+
+    /// Locked objects.
+    ///
+    /// Objects in here are locked by @synchronized blocks. An object can be relocked by the same
+    /// thread, and is evicted when the lock count hits zero (has exited all @synchronized blocks).
+    sync_state: HashMap<id, (ThreadID, NonZeroU32)>,
 }
 
 impl ObjC {
@@ -70,6 +80,7 @@ impl ObjC {
             selectors: HashMap::new(),
             objects: HashMap::new(),
             classes: HashMap::new(),
+            sync_state: HashMap::new(),
         }
     }
 }
@@ -80,4 +91,6 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(objc_msgSendSuper2(_, _)),
     export_c_func!(objc_setProperty(_, _, _, _, _, _)),
     export_c_func!(objc_copyStruct(_, _, _, _, _)),
+    export_c_func!(objc_sync_enter(_)),
+    export_c_func!(objc_sync_exit(_)),
 ];

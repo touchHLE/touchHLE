@@ -39,7 +39,7 @@ Other:
   - When possible, touchHLE will now use a native OpenGL ES 1.1 driver rather than translating to OpenGL 2.1. This is configurable with the new `--gles1=` option. (@hikari-no-yume)
   - The code for presenting rendered frames to the screen has been rewritten for compatibility with OpenGL ES 1.1. (@hikari-no-yume)
 
-  Theoretically, neither of these changes should affect how touchHLE behaves for ordinary users in supported apps, but graphics drivers are inscrutable beasts, so it's hard to be certain. For example, the first change unexpectedly fixed the mysterious macOS-only memory leak! macOS users should no longer see touchHLE's memory usage constantly increase by up to 0.4MB per second.
+  Theoretically, neither of these changes should affect how touchHLE behaves for ordinary users in supported apps, but graphics drivers are inscrutable beasts, so it's hard to be certain. For example, the second change unexpectedly fixed the mysterious macOS-only memory leak! macOS users should no longer see touchHLE's memory usage constantly increase by up to 0.4MB per second.
 
 ## v0.1.2 (2023-03-07)
 

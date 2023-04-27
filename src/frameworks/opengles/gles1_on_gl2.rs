@@ -24,6 +24,7 @@ use crate::window::gl21compat as gl21;
 use crate::window::gl21compat::types::*;
 use crate::window::gles11;
 use crate::window::{GLContext, GLVersion, Window};
+use std::ffi::CStr;
 
 /// List of capabilities shared by OpenGL ES 1.1 and OpenGL 2.1.
 ///
@@ -461,16 +462,33 @@ impl GLES1OnGL2 {
     }
 }
 impl GLES for GLES1OnGL2 {
-    fn new(window: &mut Window) -> Self {
-        Self {
-            gl_ctx: window.create_gl_context(GLVersion::GL21Compat),
+    fn description() -> &'static str {
+        "OpenGL ES 1.1 via touchHLE GLES1-on-GL2 layer"
+    }
+
+    fn new(window: &mut Window) -> Result<Self, String> {
+        Ok(Self {
+            gl_ctx: window.create_gl_context(GLVersion::GL21Compat)?,
             pointer_is_fixed_point: [false; ARRAYS.len()],
             fixed_point_translation_buffers: [Vec::new(), Vec::new(), Vec::new(), Vec::new()],
-        }
+        })
     }
 
     fn make_current(&self, window: &mut Window) {
         window.make_gl_context_current(&self.gl_ctx);
+    }
+
+    unsafe fn driver_description(&self) -> String {
+        let version = CStr::from_ptr(gl21::GetString(gl21::VERSION) as *const _);
+        let vendor = CStr::from_ptr(gl21::GetString(gl21::VENDOR) as *const _);
+        let renderer = CStr::from_ptr(gl21::GetString(gl21::RENDERER) as *const _);
+        // OpenGL's version string is just a number, so let's contextualize it.
+        format!(
+            "OpenGL {} / {} / {}",
+            version.to_string_lossy(),
+            vendor.to_string_lossy(),
+            renderer.to_string_lossy()
+        )
     }
 
     // Generic state manipulation

@@ -13,7 +13,6 @@ pub use touchHLE_gl_bindings::{gl21compat, gl32core, gles11};
 
 pub enum GLVersion {
     /// OpenGL ES 1.1
-    #[allow(dead_code)]
     GLES11,
     /// OpenGL 2.1 compatibility profile
     GL21Compat,
@@ -30,7 +29,7 @@ pub fn create_gl_context(
     video_ctx: &sdl2::VideoSubsystem,
     window: &sdl2::video::Window,
     version: GLVersion,
-) -> GLContext {
+) -> Result<GLContext, String> {
     let attr = video_ctx.gl_attr();
     match version {
         GLVersion::GLES11 => {
@@ -47,9 +46,9 @@ pub fn create_gl_context(
         }
     }
 
-    let gl_ctx = window.gl_create_context().unwrap();
+    let gl_ctx = window.gl_create_context()?;
 
-    GLContext { gl_ctx, version }
+    Ok(GLContext { gl_ctx, version })
 }
 
 pub fn make_gl_context_current(

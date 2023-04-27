@@ -10,10 +10,10 @@
 //! - `gles_generic` provides an abstraction over OpenGL ES implementations.
 //! - `gles_guest` wraps `guest_generic` to expose OpenGL ES to the guest app.
 //! - Various child modules provide implementations:
+//!   - `gles1_native` passes through native OpenGL ES 1.1.
 //!   - `gles1_on_gl2` provides an implementation of OpenGL ES 1.1 using OpenGL
 //!     2.1 compatibility profile.
-//!   - There are are no others currently, but an obvious future target is
-//!     exposing real OpenGL ES 1.1 provided by Android.
+//!   - There might be more in future.
 //!
 //! Useful resources for OpenGL ES 1.1:
 //! - [Reference pages](https://registry.khronos.org/OpenGL-Refpages/es1.1/xhtml/)
@@ -28,14 +28,55 @@
 //!   - [EXT_framebuffer_object](https://registry.khronos.org/OpenGL/extensions/EXT/EXT_framebuffer_object.txt)
 
 pub mod eagl;
+mod gles1_native;
 mod gles1_on_gl2;
 mod gles_generic;
 mod gles_guest;
 mod util;
 
+use gles1_native::GLES1Native;
 use gles1_on_gl2::GLES1OnGL2;
 use gles_generic::GLES;
 pub use gles_guest::FUNCTIONS;
+
+/// Labels for [GLES] implementations and an abstraction for constructing them.
+#[derive(Copy, Clone)]
+pub enum GLESImplementation {
+    /// [GLES1Native].
+    GLES1Native,
+    /// [GLES1OnGL2].
+    GLES1OnGL2,
+}
+impl GLESImplementation {
+    /// List of OpenGL ES 1.1 implementations in order of preference.
+    pub const GLES1_IMPLEMENTATIONS: &[Self] = &[Self::GLES1Native, Self::GLES1OnGL2];
+    /// Convert from short name used for command-line arguments. Returns [Err]
+    /// if name is not recognized..
+    pub fn from_short_name(name: &str) -> Result<Self, ()> {
+        match name {
+            "gles1_on_gl2" => Ok(Self::GLES1OnGL2),
+            "gles1_native" => Ok(Self::GLES1Native),
+            _ => Err(()),
+        }
+    }
+    /// See [GLES::description].
+    pub fn description(self) -> &'static str {
+        match self {
+            Self::GLES1Native => GLES1Native::description(),
+            Self::GLES1OnGL2 => GLES1OnGL2::description(),
+        }
+    }
+    /// See [GLES::new].
+    pub fn construct(self, window: &mut crate::window::Window) -> Result<Box<dyn GLES>, String> {
+        fn boxer<T: GLES + 'static>(ctx: T) -> Box<dyn GLES> {
+            Box::new(ctx)
+        }
+        match self {
+            Self::GLES1Native => GLES1Native::new(window).map(boxer),
+            Self::GLES1OnGL2 => GLES1OnGL2::new(window).map(boxer),
+        }
+    }
+}
 
 #[derive(Default)]
 pub struct State {

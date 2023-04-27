@@ -5,7 +5,7 @@
  */
 //! EAGL.
 
-use super::{GLES1OnGL2, GLES};
+use super::{GLESImplementation, GLES};
 use crate::dyld::{ConstantExports, HostConstant};
 use crate::frameworks::foundation::ns_string::get_static_str;
 use crate::frameworks::foundation::NSUInteger;
@@ -95,7 +95,36 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (id)initWithAPI:(EAGLRenderingAPI)api {
     assert!(api == kEAGLRenderingAPIOpenGLES1);
 
-    let gles1_ctx = Box::new(GLES1OnGL2::new(&mut env.window));
+    log!("Creating an OpenGL ES 1.1 context:");
+    let list = if let Some(ref preference) = env.options.gles1_implementation {
+        std::slice::from_ref(preference)
+    } else {
+        GLESImplementation::GLES1_IMPLEMENTATIONS
+    };
+    let mut gles1_ctx = None;
+    for implementation in list {
+        log!("Trying: {}", implementation.description());
+        match implementation.construct(&mut env.window) {
+            Ok(ctx) => {
+                log!("=> Success!");
+                gles1_ctx = Some(ctx);
+                break;
+            },
+            Err(err) => {
+                log!("=> Failed: {}.", err);
+            }
+        }
+    }
+    let gles1_ctx = gles1_ctx.expect("Couldn't create OpenGL ES 1.1 context!");
+
+    // Make the context current so we can get driver info from it.
+    // initWithAPI: is not supposed to make the new context current (the app
+    // must call setCurrentContext: for that), so we need to hide this from the
+    // app. Setting current_ctx_thread to None should cause sync_context to
+    // switch back to the right context if the app makes an OpenGL ES call.
+    gles1_ctx.make_current(&mut env.window);
+    env.framework_state.opengles.current_ctx_thread = None;
+    log!("Driver info: {}", unsafe { gles1_ctx.driver_description() });
 
     *env.objc.borrow_mut(this) = EAGLContextHostObject {
         gles_ctx: Some(gles1_ctx),

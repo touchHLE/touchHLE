@@ -12,12 +12,31 @@
 use crate::window::gles11::types::*;
 
 /// Trait representing an OpenGL ES implementation and context.
+///
+/// # Safety
+/// It is the caller's responsibility to make the context active before using
+/// any of the `unsafe` methods of this trait.
 #[allow(clippy::upper_case_acronyms)]
 pub trait GLES {
-    fn new(window: &mut crate::window::Window) -> Self
+    /// Get a human-friendly description of this implementation.
+    fn description() -> &'static str
     where
         Self: Sized;
+
+    /// Construct a new context. This might fail if the host OS doesn't have a
+    /// compatible driver, for example.
+    #[allow(clippy::new_ret_no_self)]
+    fn new(window: &mut crate::window::Window) -> Result<Self, String>
+    where
+        Self: Sized;
+
+    /// Make this context (and any underlying context) the active OpenGL
+    /// context.
     fn make_current(&self, window: &mut crate::window::Window);
+
+    /// Get some string describing the underlying driver. For OpenGL this is
+    /// `GL_VENDOR`, `GL_RENDERER` and `GL_VERSION`.
+    unsafe fn driver_description(&self) -> String;
 
     // Generic state manipulation
     unsafe fn GetError(&mut self) -> GLenum;

@@ -154,8 +154,13 @@ impl Window {
             // contexts in this window, so let's use something relatively modern
             // and compatible. OpenGL 3.2 is the baseline version of OpenGL
             // available on macOS.
-            let gl_ctx = gl::create_gl_context(&video_ctx, &window, GLVersion::GL32Core);
-            Some((launch_image, gl_ctx))
+            match gl::create_gl_context(&video_ctx, &window, GLVersion::GL32Core) {
+                Ok(gl_ctx) => Some((launch_image, gl_ctx)),
+                Err(err) => {
+                    log!("Couldn't create OpenGL context for splash image: {}", err);
+                    None
+                }
+            }
         } else {
             None
         };
@@ -463,7 +468,7 @@ impl Window {
         (x, y, pressed)
     }
 
-    pub fn create_gl_context(&mut self, version: GLVersion) -> GLContext {
+    pub fn create_gl_context(&mut self, version: GLVersion) -> Result<GLContext, String> {
         gl::create_gl_context(&self.video_ctx, &self.window, version)
     }
 

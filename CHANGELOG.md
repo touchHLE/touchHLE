@@ -35,7 +35,11 @@ Other:
 - touchHLE now has a primitive implementation of the GDB Remote Serial Protocol. GDB can connect to touchHLE over TCP and set software breakpoints, inspect memory and registers, step or continue execution, etc. This replaces the old `--breakpoint=` option, which is now removed. (@hikari-no-yume)
 - The version of SDL2 used by touchHLE has been updated to 2.26.4. (@hikari-no-yume)
 - Building on common Linux systems should now work without problems, and you can use dynamic linking for SDL2 and OpenAL if you prefer. Note that we are not providing release binaries. (@GeffDev)
-- The OpenGL code for presenting rendered frames to the screen has been substantially rewritten. Theoretically, this shouldn't cause any changes visible to ordinary users, but graphics drivers are inscrutable beasts. For example, this has apparently fixed the mysterious macOS-only memory leak! macOS users should no longer see touchHLE's memory usage constantly increase by up to 0.4MB per second. (@hikari-no-yume)
+- Some major changes have been made to how touchHLE interacts with graphics drivers:
+  - When possible, touchHLE will now use a native OpenGL ES 1.1 driver rather than translating to OpenGL 2.1. This is configurable with the new `--gles1=` option. (@hikari-no-yume)
+  - The code for presenting rendered frames to the screen has been rewritten for compatibility with OpenGL ES 1.1. (@hikari-no-yume)
+
+  Theoretically, neither of these changes should affect how touchHLE behaves for ordinary users in supported apps, but graphics drivers are inscrutable beasts, so it's hard to be certain. For example, the first change unexpectedly fixed the mysterious macOS-only memory leak! macOS users should no longer see touchHLE's memory usage constantly increase by up to 0.4MB per second.
 
 ## v0.1.2 (2023-03-07)
 

@@ -652,6 +652,7 @@ dependencies = [
  "plist",
  "rusttype",
  "sdl2",
+ "sdl2-sys",
  "touchHLE_dr_mp3_wrapper",
  "touchHLE_dynarmic_wrapper",
  "touchHLE_gl_bindings",

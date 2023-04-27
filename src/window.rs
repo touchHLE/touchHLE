@@ -43,6 +43,33 @@ fn size_for_orientation(orientation: DeviceOrientation, scale_hack: NonZeroU32) 
         DeviceOrientation::LandscapeRight => (480 * scale_hack, 320 * scale_hack),
     }
 }
+fn rotate_fullscreen_size(orientation: DeviceOrientation, screen_size: (u32, u32)) -> (u32, u32) {
+    let (short_side, long_side) = if screen_size.0 < screen_size.1 {
+        (screen_size.0, screen_size.1)
+    } else {
+        (screen_size.1, screen_size.0)
+    };
+    match orientation {
+        DeviceOrientation::Portrait => (short_side, long_side),
+        DeviceOrientation::LandscapeLeft | DeviceOrientation::LandscapeRight => {
+            (long_side, short_side)
+        }
+    }
+}
+/// Tell SDL2 what orientation we want. Only useful on Android.
+fn set_sdl2_orientation(orientation: DeviceOrientation) {
+    // Despite the name, this hint works on Android too.
+    sdl2::hint::set(
+        "SDL_IOS_ORIENTATIONS",
+        match orientation {
+            DeviceOrientation::Portrait => "Portrait",
+            // The inversion is deliberate. These probably correspond to iPhone OS
+            // content orientations?
+            DeviceOrientation::LandscapeLeft => "LandscapeRight",
+            DeviceOrientation::LandscapeRight => "LandscapeLeft",
+        },
+    );
+}
 
 #[derive(Debug)]
 pub enum Event {
@@ -83,6 +110,8 @@ pub struct Window {
     max_height: u32,
     #[cfg(target_os = "macos")]
     viewport_y_offset: u32,
+    /// Copy of `fullscreen` on [Options]. Note that this is meaningless when
+    /// [Self::rotatable_fullscreen] returns [true].
     fullscreen: bool,
     scale_hack: NonZeroU32,
     splash_image_and_gl_ctx: Option<(Image, GLContext)>,
@@ -95,6 +124,13 @@ pub struct Window {
     virtual_cursor_last: Option<(f32, f32, bool, bool)>,
 }
 impl Window {
+    /// Returns [true] if touchHLE is running on a device where we should always
+    /// display fullscreen, but SDL2 will let us control the orientation, i.e.
+    /// Android devices.
+    fn rotatable_fullscreen() -> bool {
+        env::consts::OS == "android"
+    }
+
     pub fn new(
         title: &str,
         icon: Option<Image>,
@@ -130,7 +166,19 @@ impl Window {
         let device_orientation = options.initial_orientation;
         let fullscreen = options.fullscreen;
 
-        let mut window = if fullscreen {
+        let mut window = if Self::rotatable_fullscreen() {
+            // Without this, SDL will force fullscreen mode to be portrait.
+            set_sdl2_orientation(device_orientation);
+            let screen_size = video_ctx.display_bounds(0).unwrap().size();
+            let (width, height) = rotate_fullscreen_size(device_orientation, screen_size);
+            let window = video_ctx
+                .window(title, width, height)
+                .fullscreen()
+                .opengl()
+                .build()
+                .unwrap();
+            window
+        } else if fullscreen {
             let (width, height) = video_ctx.display_bounds(0).unwrap().size();
             let window = video_ctx
                 .window(title, width, height)
@@ -539,9 +587,13 @@ impl Window {
             return;
         }
 
-        // In full-screen mode, the window does not rotate, just the content.
-        if !self.fullscreen {
-            let (width, height) = size_for_orientation(new_orientation, self.scale_hack);
+        if !self.fullscreen && !Self::rotatable_fullscreen() {
+            let (width, height) = if Self::rotatable_fullscreen() {
+                set_sdl2_orientation(new_orientation);
+                rotate_fullscreen_size(new_orientation, self.window.size())
+            } else {
+                size_for_orientation(new_orientation, self.scale_hack)
+            };
 
             // macOS quirk: when resizing the window, the new framebuffer's size
             // is apparently max(new_size, old_size) in each dimension, but the
@@ -558,6 +610,27 @@ impl Window {
             }
 
             self.window.set_size(width, height).unwrap();
+        }
+
+        if Self::rotatable_fullscreen() {
+            set_sdl2_orientation(new_orientation);
+            // Hack: from reading SDL2's source code, it seems that SDL2 will
+            // only re-do the orientation when changing whether a window is
+            // "resizeable" (can be rotated). You can't set the resizeable state
+            // on a fullscreen window, so it must be temporarily stop being
+            // fulscreen.
+            // Apparently, doing this does result in resizing the window.
+            self.window
+                .set_fullscreen(sdl2::video::FullscreenType::Off)
+                .unwrap();
+            unsafe {
+                let window_raw = self.window.raw();
+                sdl2_sys::SDL_SetWindowResizable(window_raw, sdl2_sys::SDL_bool::SDL_FALSE);
+                sdl2_sys::SDL_SetWindowResizable(window_raw, sdl2_sys::SDL_bool::SDL_TRUE);
+            }
+            self.window
+                .set_fullscreen(sdl2::video::FullscreenType::True)
+                .unwrap();
         }
 
         self.device_orientation = new_orientation;
@@ -592,7 +665,7 @@ impl Window {
     pub fn viewport(&self) -> (u32, u32, u32, u32) {
         let (app_width, app_height) =
             size_for_orientation(self.device_orientation, self.scale_hack);
-        if !self.fullscreen {
+        if !self.fullscreen && !Self::rotatable_fullscreen() {
             return (0, 0, app_width, app_height);
         }
 

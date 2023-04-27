@@ -47,6 +47,7 @@ rusttype = "0.9.3"
 # The HIDAPI feature is enabled because rust-sdl2 hides the SDL2 sensor features
 # behind this, but the actual HIDAPI is not used by touchHLE (see window.rs).
 sdl2 = { git = "https://github.com/ciciplusplus/rust-sdl2.git", rev = "a5900b4acd55facebb75cfcd6ca5691543111487", features = ["bundled", "hidapi"] }
+sdl2-sys = { git = "https://github.com/ciciplusplus/rust-sdl2.git", rev = "a5900b4acd55facebb75cfcd6ca5691543111487" }
 touchHLE_dr_mp3_wrapper = { path = "src/audio/dr_mp3_wrapper" }
 touchHLE_dynarmic_wrapper = { path = "src/cpu/dynarmic_wrapper" }
 touchHLE_gl_bindings = { path = "src/window/gl_bindings" }

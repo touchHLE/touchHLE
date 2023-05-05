@@ -135,7 +135,7 @@ impl GdbServer {
         cpu: &mut Cpu,
         mem: &mut Mem,
     ) -> bool {
-        eprintln!("Waiting for debugger to continue.");
+        echo!("Waiting for debugger to continue.");
 
         // Send reply to continue/step packet that gdb sent earlier, so it knows
         // why execution was stopped.
@@ -359,9 +359,9 @@ impl GdbServer {
         };
 
         if do_step {
-            eprintln!("Debugger requested step, resuming execution for one instruction only.");
+            echo!("Debugger requested step, resuming execution for one instruction only.");
         } else {
-            eprintln!("Debugger requested continue, resuming execution.");
+            echo!("Debugger requested continue, resuming execution.");
         }
         do_step
     }

@@ -231,7 +231,7 @@ impl Environment {
         if let Some(addrs) = env.options.gdb_listen_addrs.take() {
             let listener = TcpListener::bind(addrs.as_slice())
                 .map_err(|e| format!("Could not bind to {:?}: {}", addrs, e))?;
-            println!(
+            echo!(
                 "Waiting for debugger connection on {}...",
                 addrs
                     .into_iter()
@@ -242,13 +242,13 @@ impl Environment {
             let (client, client_addr) = listener
                 .accept()
                 .map_err(|e| format!("Could not accept connection: {}", e))?;
-            println!("Debugger client connected on {}.", client_addr);
+            echo!("Debugger client connected on {}.", client_addr);
             let mut gdb_server = gdb::GdbServer::new(client);
             gdb_server.wait_for_debugger(None, &mut env.cpu, &mut env.mem);
             env.gdb_server = Some(gdb_server);
         }
 
-        println!("CPU emulation begins now.");
+        echo!("CPU emulation begins now.");
 
         // Static initializers for libraries must be run before the initializer
         // in the app binary.
@@ -281,15 +281,15 @@ impl Environment {
 
     fn stack_trace(&self) {
         if self.current_thread == 0 {
-            eprintln!("Attempting to produce stack trace for main thread:");
+            echo!("Attempting to produce stack trace for main thread:");
         } else {
-            eprintln!(
+            echo!(
                 "Attempting to produce stack trace for thread {}:",
                 self.current_thread
             );
         }
         let stack_range = self.threads[self.current_thread].stack.clone().unwrap();
-        eprintln!(
+        echo!(
             " 0. {:#x} (PC)",
             self.cpu.pc_with_thumb_bit().addr_with_thumb_bit()
         );
@@ -297,23 +297,23 @@ impl Environment {
         let mut lr = regs[cpu::Cpu::LR];
         let return_to_host_routine_addr = self.dyld.return_to_host_routine().addr_with_thumb_bit();
         if lr == return_to_host_routine_addr {
-            eprintln!(" 1. [host function] (LR)");
+            echo!(" 1. [host function] (LR)");
         } else {
-            eprintln!(" 1. {:#x} (LR)", lr);
+            echo!(" 1. {:#x} (LR)", lr);
         }
         let mut i = 2;
         let mut fp: mem::ConstPtr<u8> = mem::Ptr::from_bits(regs[abi::FRAME_POINTER]);
         loop {
             if !stack_range.contains(&fp.to_bits()) {
-                eprintln!("Next FP ({:?}) is outside the stack.", fp);
+                echo!("Next FP ({:?}) is outside the stack.", fp);
                 break;
             }
             lr = self.mem.read((fp + 4).cast());
             fp = self.mem.read(fp.cast());
             if lr == return_to_host_routine_addr {
-                eprintln!("{:2}. [host function]", i);
+                echo!("{:2}. [host function]", i);
             } else {
-                eprintln!("{:2}. {:#x}", i, lr);
+                echo!("{:2}. {:#x}", i, lr);
             }
             i += 1;
         }
@@ -382,7 +382,7 @@ impl Environment {
         // the emulator will crash anyway, maybe this is okay.
         let res = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| self.run_inner(true)));
         if let Err(e) = res {
-            eprintln!("Register state immediately after panic:");
+            echo!("Register state immediately after panic:");
             self.cpu.dump_regs();
             self.stack_trace();
             std::panic::resume_unwind(e);
@@ -441,7 +441,7 @@ impl Environment {
             panic!("Error during CPU execution: {:?}", error);
         }
 
-        eprintln!("Debuggable error during CPU execution: {:?}.", error);
+        echo!("Debuggable error during CPU execution: {:?}.", error);
         // GDB doesn't seem to manage to produce a useful stack trace, so
         // let's print our own.
         self.stack_trace();

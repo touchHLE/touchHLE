@@ -22,6 +22,10 @@ homepage = { workspace = true }
 # https://users.rust-lang.org/t/making-both-binary-and-cdylib-from-one-package/29105
 crate_type = ["cdylib", "rlib"]
 
+[[bin]]
+name = "touchHLE"
+path = "src/bin.rs"
+
 [features]
 default = ["static"]
 static = ["sdl2/bundled", "sdl2/static-link", "touchHLE_openal_soft_wrapper/static"]

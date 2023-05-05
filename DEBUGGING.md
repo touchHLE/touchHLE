@@ -18,7 +18,9 @@ touchHLE will print the basic registers (r0-r13, SP, LR, PC) and a basic stack t
 
 For more complex cases, you can use the `--gdb=` command-line argument to start touchHLE in debugging mode, where it will provide a GDB Remote Serial Protocol server. You can then connect to touchHLE with GDB. (In theory LLDB also should work, but it doesn't.)
 
-You'll need a version of GDB that supports ARMv6. On macOS, the Homebrew package for `gdb` is multi-architecture. If you're on Ubuntu, you might need the `gdb-multiarch` package (this hasn't been tested).
+A quick word of warning: this will not be the GDB experience you may be used to when writing C/C++ code and compiling it in debug mode. The GDB support was added to help with debugging apps for which we don't have symbols, let alone DWARF info or source code. GDB when connected to touchHLE will not know about local variables or even stack frames! You'll need to know instruction addresses and register numbers. As such, having the binary open in a tool like Ghidra while debugging is practically mandatory.
+
+Anyway, you'll need a version of GDB that supports ARMv6. On macOS, the Homebrew package for `gdb` is multi-architecture. If you're on Ubuntu, you might need the `gdb-multiarch` package (this hasn't been tested).
 
 The basic set of steps is:
 

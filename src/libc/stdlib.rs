@@ -185,7 +185,7 @@ fn setenv(env: &mut Environment, name: ConstPtr<u8>, value: ConstPtr<u8>, overwr
 }
 
 fn exit(_env: &mut Environment, exit_code: i32) {
-    println!("App called exit(), exiting.");
+    echo!("App called exit(), exiting.");
     std::process::exit(exit_code);
 }
 

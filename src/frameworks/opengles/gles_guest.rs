@@ -47,7 +47,7 @@ fn panic_on_gl_errors(gles: &mut dyn GLES) {
             break;
         }
         did_error = true;
-        log!("glGetError() => {:#x}", err);
+        echo!("glGetError() => {:#x}", err);
     }
     if did_error {
         panic!();

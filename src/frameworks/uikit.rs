@@ -59,7 +59,7 @@ pub fn handle_events(env: &mut Environment) -> Option<Instant> {
 
         match event {
             Event::Quit => {
-                println!("User requested quit, exiting.");
+                echo!("User requested quit, exiting.");
                 ui_application::exit(env);
             }
             Event::TouchDown(..) | Event::TouchMove(..) | Event::TouchUp(..) => {

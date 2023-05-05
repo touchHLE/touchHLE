@@ -5,13 +5,25 @@
  */
 //! touchHLE is a high-level emulator (HLE) for iPhone OS applications.
 //!
-//! This is a library part which is shared with main.
-//! Currently, it's used for Android.
-//! SDL_main is an entry point for Android (SDLActivity is calling it after the initialization)
+//! In various places, the terms "guest" and "host" are used to distinguish
+//! between the emulated application (the "guest") and the emulator itself (the
+//! "host"), and more generally, their different environments.
+//! For example:
+//! - The guest is a 32-bit application, so a "guest pointer" is 32 bits.
+//! - The host is a 64-bit application, so a "host pointer" is 64 bits.
+//! - The guest can only directly access "guest memory".
+//! - The host can access both "guest memory" and "host memory".
+//! - A "guest function" is emulated Arm code, usually from the app binary.
+//! - A "host function" is a Rust function that is part of this emulator.
 
 // Allow the crate to have a non-snake-case name (touchHLE).
 // This also allows items in the crate to have non-snake-case names.
 #![allow(non_snake_case)]
+// The documentation for this crate is intended to include private items.
+// rustdoc complains about some public macros that link to private items, but
+// we're forced to make those macros public by the weird macro scoping rules,
+// so this warning is unhelpful.
+#![allow(rustdoc::private_intra_doc_links)]
 
 #[macro_use]
 mod log;
@@ -41,24 +53,27 @@ mod window;
 // via re-exports.
 use environment::{Environment, ThreadID};
 
-#[cfg(target_os = "android")]
-use std::ffi::{c_char, c_int};
 use std::path::PathBuf;
 
 /// Current version. See `build.rs` for how this is generated.
-pub const VERSION: &str = include_str!(concat!(env!("OUT_DIR"), "/version.txt"));
+const VERSION: &str = include_str!(concat!(env!("OUT_DIR"), "/version.txt"));
 
+/// This is the true entry point on Android (SDLActivity calls it after
+/// initialization). On other platforms the true entry point is in src/bin.rs.
 #[cfg(target_os = "android")]
 #[no_mangle]
-pub extern "C" fn SDL_main(_argc: c_int, _argv: *const *const c_char) -> c_int {
-    sdl2::log::log(&format!("touchHLE Android {VERSION} — https://touchhle.org/").to_string());
-    sdl2::log::log("");
-
+pub extern "C" fn SDL_main(
+    _argc: std::ffi::c_int,
+    _argv: *const *const std::ffi::c_char,
+) -> std::ffi::c_int {
     // TODO: properly parametrize path to the app
-    let args = vec!["/data/data/org.touchhle.android/files/Super Monkey Ball  v1.02 .ipa".to_string()];
-    match _main(args) {
-        Ok(_) => sdl2::log::log("touchHLE finished"),
-        Err(e) => sdl2::log::log(&format!("touchHLE errored: {e:?}").to_string()),
+    let args = vec![
+        "".to_string(),
+        "/data/data/org.touchhle.android/files/Super Monkey Ball  v1.02 .ipa".to_string(),
+    ];
+    match main(args.into_iter()) {
+        Ok(_) => echo!("touchHLE finished"),
+        Err(e) => echo!("touchHLE errored: {e:?}"),
     }
     return 0;
 }
@@ -78,23 +93,20 @@ General options:
         Print basic information about the app bundle without running the app.
 ";
 
-/// This is a common main function between lib and bin versions
-///
-/// # Arguments
-///
-/// * `args`: A vec of string arguments
-///
-/// returns: Result<(), String>
-///
-pub fn _main(args: Vec<String>) -> Result<(), String> {
+pub fn main<T: Iterator<Item = String>>(mut args: T) -> Result<(), String> {
+    echo!("touchHLE {} — https://touchhle.org/", VERSION);
+    echo!();
+
+    let _ = args.next().unwrap(); // skip argv[0]
+
     let mut bundle_path: Option<PathBuf> = None;
     let mut just_info = false;
     let mut option_args = Vec::new();
 
     for arg in args {
         if arg == "--help" {
-            println!("{}", USAGE);
-            println!("{}", options::DOCUMENTATION);
+            echo!("{}", USAGE);
+            echo!("{}", options::DOCUMENTATION);
             return Ok(());
         } else if arg == "--copyright" {
             licenses::print();
@@ -109,15 +121,15 @@ pub fn _main(args: Vec<String>) -> Result<(), String> {
         } else if bundle_path.is_none() {
             bundle_path = Some(PathBuf::from(arg));
         } else {
-            eprintln!("{}", USAGE);
-            eprintln!("{}", options::DOCUMENTATION);
+            echo!("{}", USAGE);
+            echo!("{}", options::DOCUMENTATION);
             return Err(format!("Unexpected argument: {:?}", arg));
         }
     }
 
     let Some(bundle_path) = bundle_path else {
-        eprintln!("{}", USAGE);
-        eprintln!("{}", options::DOCUMENTATION);
+        echo!("{}", USAGE);
+        echo!("{}", options::DOCUMENTATION);
         return Err("Path to bundle must be specified".to_string());
     };
 
@@ -141,26 +153,26 @@ pub fn _main(args: Vec<String>) -> Result<(), String> {
     let app_id = bundle.bundle_identifier();
     let minimum_os_version = bundle.minimum_os_version();
 
-    println!("App bundle info:");
-    println!("- Display name: {}", bundle.display_name());
-    println!("- Version: {}", bundle.bundle_version());
-    println!("- Identifier: {}", app_id);
+    echo!("App bundle info:");
+    echo!("- Display name: {}", bundle.display_name());
+    echo!("- Version: {}", bundle.bundle_version());
+    echo!("- Identifier: {}", app_id);
     if let Some(canonical_name) = bundle.canonical_bundle_name() {
-        println!("- Internal name (canonical): {}.app", canonical_name);
+        echo!("- Internal name (canonical): {}.app", canonical_name);
     } else {
-        println!("- Internal name (from FS): {}.app", bundle.bundle_name());
+        echo!("- Internal name (from FS): {}.app", bundle.bundle_name());
     }
-    println!(
+    echo!(
         "- Minimum OS version: {}",
         minimum_os_version.unwrap_or("(not specified)")
     );
-    println!();
+    echo!();
 
     if let Some(version) = minimum_os_version {
         let (major, _minor_etc) = version.split_once('.').unwrap();
         let major: u32 = major.parse().unwrap();
         if major > 2 {
-            eprintln!("Warning: app requires OS version {}. Only iPhone OS 2 apps are currently supported.", version);
+            echo!("Warning: app requires OS version {}. Only iPhone OS 2 apps are currently supported.", version);
         }
     }
 
@@ -174,9 +186,10 @@ pub fn _main(args: Vec<String>) -> Result<(), String> {
     for filename in [options::DEFAULTS_FILENAME, options::USER_FILENAME] {
         match options::get_options_from_file(filename, app_id) {
             Ok(Some(options_string)) => {
-                println!(
+                echo!(
                     "Using options from {} for this app: {}",
-                    filename, options_string
+                    filename,
+                    options_string
                 );
                 for option_arg in options_string.split_ascii_whitespace() {
                     match options.parse_argument(option_arg) {
@@ -189,14 +202,14 @@ pub fn _main(args: Vec<String>) -> Result<(), String> {
                 }
             }
             Ok(None) => {
-                println!("No options found for this app in {}", filename);
+                echo!("No options found for this app in {}", filename);
             }
             Err(e) => {
-                eprintln!("Warning: {}", e);
+                echo!("Warning: {}", e);
             }
         }
     }
-    println!();
+    echo!();
 
     // Apply command-line options
     for option_arg in option_args {

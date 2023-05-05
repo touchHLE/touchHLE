@@ -19,6 +19,11 @@
 // Allow the crate to have a non-snake-case name (touchHLE).
 // This also allows items in the crate to have non-snake-case names.
 #![allow(non_snake_case)]
+// The documentation for this crate is intended to include private items.
+// rustdoc complains about some public macros that link to private items, but
+// we're forced to make those macros public by the weird macro scoping rules,
+// so this warning is unhelpful.
+#![allow(rustdoc::private_intra_doc_links)]
 
 #[macro_use]
 mod log;
@@ -68,11 +73,10 @@ General options:
         Print basic information about the app bundle without running the app.
 ";
 
-fn main() -> Result<(), String> {
+pub fn main<T: Iterator<Item = String>>(mut args: T) -> Result<(), String> {
     println!("touchHLE {} — https://touchhle.org/", VERSION);
     println!();
 
-    let mut args = std::env::args();
     let _ = args.next().unwrap(); // skip argv[0]
 
     let mut bundle_path: Option<PathBuf> = None;

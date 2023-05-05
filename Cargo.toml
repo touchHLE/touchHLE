@@ -18,6 +18,10 @@ license = { workspace = true }
 authors = { workspace = true }
 homepage = { workspace = true }
 
+[[bin]]
+name = "touchHLE"
+path = "src/bin.rs"
+
 [features]
 default = ["static"]
 static = ["sdl2/bundled", "sdl2/static-link", "touchHLE_openal_soft_wrapper/static"]

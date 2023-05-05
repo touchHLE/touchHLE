@@ -53,6 +53,7 @@ mod window;
 // via re-exports.
 use environment::{Environment, ThreadID};
 
+use std::ffi::OsStr;
 use std::path::PathBuf;
 
 /// Current version. See `build.rs` for how this is generated.
@@ -82,7 +83,9 @@ const USAGE: &str = "\
 Usage:
     touchHLE path/to/some.app
 
-General options:
+If no app path or special option is specified, a GUI app picker is displayed.
+
+Special options:
     --help
         Display this help text.
 
@@ -93,8 +96,99 @@ General options:
         Print basic information about the app bundle without running the app.
 ";
 
+fn app_picker(title: &str) -> Result<PathBuf, String> {
+    const APPS_DIR: &str = "touchHLE_apps";
+
+    fn enumerate_apps() -> Result<Vec<PathBuf>, std::io::Error> {
+        let mut app_paths = Vec::new();
+        for app in std::fs::read_dir(APPS_DIR)? {
+            let app_path = app?.path();
+            if app_path.extension() != Some(OsStr::new("app"))
+                && app_path.extension() != Some(OsStr::new("ipa"))
+            {
+                continue;
+            }
+            if app_path.to_str().is_none() {
+                continue;
+            }
+            app_paths.push(app_path);
+        }
+        Ok(app_paths)
+    }
+
+    let app_paths: Result<Vec<PathBuf>, String> = if !std::path::Path::new(APPS_DIR).is_dir() {
+        Err(format!("The {} directory couldn't be found. Check you're running touchHLE from the right directory.", APPS_DIR))
+    } else {
+        enumerate_apps().map_err(|err| {
+            format!(
+                "Couldn't get list of apps in the {} directory: {}.",
+                APPS_DIR, err
+            )
+        })
+    };
+
+    let is_error = app_paths.is_err();
+    let (app_paths, mut message): (&[PathBuf], String) = match app_paths {
+        Ok(ref paths) => (
+            paths,
+            if !paths.is_empty() {
+                "Select an app:".to_string()
+            } else {
+                format!("No apps were found in the {} directory.", APPS_DIR)
+            },
+        ),
+        Err(err) => (&[], err),
+    };
+
+    let mut app_buttons: Vec<(i32, &str)> = app_paths
+        .iter()
+        .enumerate()
+        .map(|(idx, path)| {
+            let name = path.file_name().unwrap().to_str().unwrap();
+            (
+                idx.try_into().unwrap(),
+                if cfg!(target_os = "windows") {
+                    // On Windows, the buttons are too small to display a full
+                    // app name, so it's more practical to use a short symbol
+                    // and put the full name in the message.
+                    // TODO: hopefully we'll have a better app picker before we
+                    // have more than twenty supported apps? ^^;
+                    let symbols = [
+                        "(1)", "(2)", "(3)", "(4)", "(5)", "(6)", "(7)", "(8)", "(9)", "(10)",
+                        "(11)", "(12)", "(13)", "(14)", "(15)", "(16)", "(17)", "(18)", "(19)",
+                        "(20)",
+                    ];
+                    let symbol = symbols[idx % symbols.len()];
+                    use std::fmt::Write;
+                    write!(message, "\n{} {}", symbol, name).unwrap();
+                    symbol
+                } else {
+                    name
+                },
+            )
+        })
+        .chain([(-1, "Exit")])
+        .collect();
+    // On Windows, the buttons are laid out from right to left, but users
+    // will presumably expect the opposite. Do in-place reverse so the order
+    // of lines in the message isn't affected.
+    if cfg!(target_os = "windows") {
+        app_buttons.reverse();
+    }
+
+    loop {
+        match window::show_message_with_options(title, &message, is_error, &app_buttons) {
+            Some(app_idx @ 0..) => return Ok(app_paths[app_idx as usize].clone()),
+            None | Some(-1) => return Err("No app was selected".to_string()),
+            _ => unreachable!(),
+        }
+    }
+}
+
 pub fn main<T: Iterator<Item = String>>(mut args: T) -> Result<(), String> {
-    echo!("touchHLE {} — https://touchhle.org/", VERSION);
+    let long_title = format!("touchHLE {} — https://touchhle.org/", VERSION);
+
+    echo!("{}", long_title);
     echo!();
 
     let _ = args.next().unwrap(); // skip argv[0]
@@ -127,10 +221,13 @@ pub fn main<T: Iterator<Item = String>>(mut args: T) -> Result<(), String> {
         }
     }
 
-    let Some(bundle_path) = bundle_path else {
-        echo!("{}", USAGE);
-        echo!("{}", options::DOCUMENTATION);
-        return Err("Path to bundle must be specified".to_string());
+    let bundle_path = if let Some(bundle_path) = bundle_path {
+        bundle_path
+    } else {
+        echo!(
+            "No app specified, opening app picker. Use the --help flag to see command-line usage."
+        );
+        app_picker(&long_title)?
     };
 
     // When PowerShell does tab-completion on a directory, for some reason it

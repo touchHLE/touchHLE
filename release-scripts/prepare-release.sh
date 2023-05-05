@@ -10,6 +10,9 @@ cp -r ../touchHLE_fonts new_release/
 pandoc -s new_release/touchHLE_fonts/README.md -o new_release/touchHLE_fonts/README.html
 rm new_release/touchHLE_fonts/README.md
 
+mkdir new_release/touchHLE_apps/
+cp ../touchHLE_apps/README.txt new_release/touchHLE_apps/
+
 sed -e 's#](APP_SUPPORT.md)#](APP_SUPPORT.html)#g' ../README.md > README-html.md
 pandoc -s README-html.md -o new_release/README.html
 rm README-html.md

@@ -54,15 +54,29 @@ First obtain touchHLE, either a [binary release](https://github.com/hikari-no-yu
 
 You'll then need an app that you can run (check [the list of supported apps](APP_SUPPORT.md)). Note that the app binary must be decrypted to be usable.
 
-There's no graphical user interface right now. If you're a Windows user and unfamiliar with the command line, these instructions may be helpful:
+There's a few ways you can run an app in touchHLE.
 
-* The easiest and fastest thing to do is to drag and drop the app's `.ipa` file or `.app` folder onto `touchHLE.exe`.
-* To configure the options, edit the `touchHLE_options.txt` file. To get a list of options, look in the `OPTIONS_HELP.txt` file.
-* You can also run apps directly from the command line:
-  1. Move the `.ipa` file or `.app` bundle to the same folder as `touchHLE.exe`.
-  2. Hold the Shift key and right-click on the empty space in the folder window.
-  3. Click “Open with PowerShell”.
-  4. Type `.\touchHLE.exe "YourAppNameHere.ipa"` (or `.app` as appropriate) and press Enter. If you want to specify options, add a space after the app name (outside the quotes) and then type the options, separated by spaces.
+## Graphical user interface
+
+If you'd prefer not to use the command line:
+
+* You can put an app's `.ipa` file or `.app` bundle in the `touchHLE_apps` directory, then when you run touchHLE (on Windows: double-click on `touchHLE.exe`) you can select the app from the app picker.
+* On Windows, you can also directly drag and drop an app's `.ipa` file or `.app` bundle onto `touchHLE.exe`.
+
+To configure the options, you can then edit the `touchHLE_options.txt` file. To get a list of options, look in the `OPTIONS_HELP.txt` file.
+
+## Command-line user interface
+
+You can see the command-line usage by passing the `--help` flag.
+
+If you're a Windows user and unfamiliar with the command line, these instructions may help you get started:
+
+1. Move the `.ipa` file or `.app` bundle to the same folder as `touchHLE.exe`.
+2. Hold the Shift key and right-click on the empty space in the folder window.
+3. Click “Open with PowerShell”.
+4. Type `.\touchHLE.exe "YourAppNameHere.ipa"` (or `.app` as appropriate) and press Enter. If you want to specify options, add a space after the app name (outside the quotes) and then type the options, separated by spaces.
+
+## Other stuff
 
 Currently language detection doesn't work on Windows. To change the language preference reported to the app, you can type `SET LANG=` followed by an ISO 639-1 language code, then press Enter, before running the app in the command line. Some common language codes are: `en` (English), `de` (Deutsch), `es` (español), `fr` (français), `it` (italiano) and `ja` (日本語). Bear in mind that it's the app itself that determines which languages are supported, not the emulator.
 

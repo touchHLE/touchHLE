@@ -1,6 +1,8 @@
 /target
 /vendor/boost
 /touchHLE_sandbox
+/touchHLE_apps/*.ipa
+/touchHLE_apps/*.app
 
 # Xcode (integration testing app)
 

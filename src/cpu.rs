@@ -195,18 +195,21 @@ impl Cpu {
     pub fn dump_regs(&self) {
         let regs = self.regs();
         for row in 0..4 {
+            use std::fmt::Write;
+            let mut line = String::new();
             for col in 0..4 {
                 let reg_idx = row * 4 + col;
                 match reg_idx {
-                    Self::SP => eprint!("\t SP: "),
-                    Self::LR => eprint!("\t LR: "),
-                    Self::PC => eprint!("\t PC: "),
-                    _ if reg_idx <= 9 => eprint!("\t R{}: ", reg_idx),
-                    _ => eprint!("\tR{}: ", reg_idx),
-                };
-                eprint!("{:#010x}", regs[reg_idx]);
+                    Self::SP => write!(&mut line, "\t SP: "),
+                    Self::LR => write!(&mut line, "\t LR: "),
+                    Self::PC => write!(&mut line, "\t PC: "),
+                    _ if reg_idx <= 9 => write!(&mut line, "\t R{}: ", reg_idx),
+                    _ => write!(&mut line, "\tR{}: ", reg_idx),
+                }
+                .unwrap();
+                write!(&mut line, "{:#010x}", regs[reg_idx]).unwrap();
             }
-            eprintln!();
+            echo!("{}", line);
         }
     }
 

@@ -125,31 +125,31 @@ Universal Public Domain Dedication.
 ";
 
 pub fn divider() {
-    println!("---");
+    echo!("---");
 }
 
 pub fn print() {
-    println!("{}", MAIN_CAVEAT);
+    echo!("{}", MAIN_CAVEAT);
     divider();
-    println!("{}", MAIN_COPYRIGHT);
+    echo!("{}", MAIN_COPYRIGHT);
     divider();
-    println!("{}", MAIN_LICENSE);
+    echo!("{}", MAIN_LICENSE);
     divider();
-    println!("{}", RUST_DESCRIPTION);
-    println!("{}", RUST_DEPENDENCIES);
+    echo!("{}", RUST_DESCRIPTION);
+    echo!("{}", RUST_DEPENDENCIES);
     divider();
-    println!("{}", DYNARMIC_DESCRIPTION);
-    println!("{}", DYNARMIC_LICENSE);
+    echo!("{}", DYNARMIC_DESCRIPTION);
+    echo!("{}", DYNARMIC_LICENSE);
     divider();
-    println!("{}", DYNARMIC_BOOST_DESCRIPTION);
-    println!("{}", DYNARMIC_BOOST_LICENSE);
+    echo!("{}", DYNARMIC_BOOST_DESCRIPTION);
+    echo!("{}", DYNARMIC_BOOST_LICENSE);
     divider();
-    println!("{}", SDL2_DESCRIPTION);
-    println!("{}", SDL2_LICENSE);
+    echo!("{}", SDL2_DESCRIPTION);
+    echo!("{}", SDL2_LICENSE);
     divider();
-    println!("{}", OPENAL_SOFT);
+    echo!("{}", OPENAL_SOFT);
     divider();
-    println!("{}", STB_IMAGE);
+    echo!("{}", STB_IMAGE);
     divider();
-    println!("{}", DR_MP3);
+    echo!("{}", DR_MP3);
 }

@@ -3,13 +3,24 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
+
+/// Print a message (with implicit newline). This should be used for all
+/// touchHLE output that isn't coming from the app itself.
+///
+/// Prefer use [log] or [log_dbg] for errors and warnings during emulation.
+macro_rules! echo {
+    ($($arg:tt)*) => {
+        eprintln!($($arg)*);
+    }
+}
+
 /// Prints a log message unconditionally. Use this for errors or warnings.
 ///
 /// The message is prefixed with the module path, so it is clear where it comes
 /// from.
 macro_rules! log {
     ($($arg:tt)+) => {
-        eprintln!("{}: {}", module_path!(), format_args!($($arg)+));
+        echo!("{}: {}", module_path!(), format_args!($($arg)+));
     }
 }
 

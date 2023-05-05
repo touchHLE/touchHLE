@@ -74,8 +74,8 @@ General options:
 ";
 
 pub fn main<T: Iterator<Item = String>>(mut args: T) -> Result<(), String> {
-    println!("touchHLE {} — https://touchhle.org/", VERSION);
-    println!();
+    echo!("touchHLE {} — https://touchhle.org/", VERSION);
+    echo!();
 
     let _ = args.next().unwrap(); // skip argv[0]
 
@@ -85,8 +85,8 @@ pub fn main<T: Iterator<Item = String>>(mut args: T) -> Result<(), String> {
 
     for arg in args {
         if arg == "--help" {
-            println!("{}", USAGE);
-            println!("{}", options::DOCUMENTATION);
+            echo!("{}", USAGE);
+            echo!("{}", options::DOCUMENTATION);
             return Ok(());
         } else if arg == "--copyright" {
             licenses::print();
@@ -101,15 +101,15 @@ pub fn main<T: Iterator<Item = String>>(mut args: T) -> Result<(), String> {
         } else if bundle_path.is_none() {
             bundle_path = Some(PathBuf::from(arg));
         } else {
-            eprintln!("{}", USAGE);
-            eprintln!("{}", options::DOCUMENTATION);
+            echo!("{}", USAGE);
+            echo!("{}", options::DOCUMENTATION);
             return Err(format!("Unexpected argument: {:?}", arg));
         }
     }
 
     let Some(bundle_path) = bundle_path else {
-        eprintln!("{}", USAGE);
-        eprintln!("{}", options::DOCUMENTATION);
+        echo!("{}", USAGE);
+        echo!("{}", options::DOCUMENTATION);
         return Err("Path to bundle must be specified".to_string());
     };
 
@@ -133,26 +133,26 @@ pub fn main<T: Iterator<Item = String>>(mut args: T) -> Result<(), String> {
     let app_id = bundle.bundle_identifier();
     let minimum_os_version = bundle.minimum_os_version();
 
-    println!("App bundle info:");
-    println!("- Display name: {}", bundle.display_name());
-    println!("- Version: {}", bundle.bundle_version());
-    println!("- Identifier: {}", app_id);
+    echo!("App bundle info:");
+    echo!("- Display name: {}", bundle.display_name());
+    echo!("- Version: {}", bundle.bundle_version());
+    echo!("- Identifier: {}", app_id);
     if let Some(canonical_name) = bundle.canonical_bundle_name() {
-        println!("- Internal name (canonical): {}.app", canonical_name);
+        echo!("- Internal name (canonical): {}.app", canonical_name);
     } else {
-        println!("- Internal name (from FS): {}.app", bundle.bundle_name());
+        echo!("- Internal name (from FS): {}.app", bundle.bundle_name());
     }
-    println!(
+    echo!(
         "- Minimum OS version: {}",
         minimum_os_version.unwrap_or("(not specified)")
     );
-    println!();
+    echo!();
 
     if let Some(version) = minimum_os_version {
         let (major, _minor_etc) = version.split_once('.').unwrap();
         let major: u32 = major.parse().unwrap();
         if major > 2 {
-            eprintln!("Warning: app requires OS version {}. Only iPhone OS 2 apps are currently supported.", version);
+            echo!("Warning: app requires OS version {}. Only iPhone OS 2 apps are currently supported.", version);
         }
     }
 
@@ -166,9 +166,10 @@ pub fn main<T: Iterator<Item = String>>(mut args: T) -> Result<(), String> {
     for filename in [options::DEFAULTS_FILENAME, options::USER_FILENAME] {
         match options::get_options_from_file(filename, app_id) {
             Ok(Some(options_string)) => {
-                println!(
+                echo!(
                     "Using options from {} for this app: {}",
-                    filename, options_string
+                    filename,
+                    options_string
                 );
                 for option_arg in options_string.split_ascii_whitespace() {
                     match options.parse_argument(option_arg) {
@@ -181,14 +182,14 @@ pub fn main<T: Iterator<Item = String>>(mut args: T) -> Result<(), String> {
                 }
             }
             Ok(None) => {
-                println!("No options found for this app in {}", filename);
+                echo!("No options found for this app in {}", filename);
             }
             Err(e) => {
-                eprintln!("Warning: {}", e);
+                echo!("Warning: {}", e);
             }
         }
     }
-    println!();
+    echo!();
 
     // Apply command-line options
     for option_arg in option_args {

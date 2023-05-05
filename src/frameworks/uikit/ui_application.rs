@@ -115,7 +115,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     // when a URL is opened, e.g. Super Monkey Ball keeps opening the URL every
     // frame! Super Monkey Ball also doesn't check whether opening failed, so
     // it's probably best to always exit.
-    println!("App opened URL {:?}, exiting.", url_string);
+    echo!("App opened URL {:?}, exiting.", url_string);
     exit(env);
     true
 }

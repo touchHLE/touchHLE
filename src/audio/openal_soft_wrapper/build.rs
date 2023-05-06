@@ -50,6 +50,9 @@ fn main() {
             // OpenAL on Linux depends on sndio, needs to be dynamically linked
             println!("cargo:rustc-link-lib=dylib=sndio");
         }
+        if os.eq_ignore_ascii_case("android") {
+            println!("cargo:rustc-link-lib=dylib=OpenSLES");
+        }
         if os.eq_ignore_ascii_case("macos") {
             link_framework("AudioToolbox");
             link_framework("CoreAudio");

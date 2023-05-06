@@ -96,9 +96,4 @@ pub fn main() {
     assert!(dynarmic_legal.contains(dynarmic_license_oneline));
     let dynarmic_summary = dynarmic_legal.replace(dynarmic_license_oneline, &dynarmic_license);
     std::fs::write(out_dir.join("dynarmic_license.txt"), dynarmic_summary).unwrap();
-
-    let os = env::var("CARGO_CFG_TARGET_OS").expect("CARGO_CFG_TARGET_OS was not set");
-    if os.eq_ignore_ascii_case("android") {
-        println!("cargo:rustc-link-arg=-lOpenSLES");
-    }
 }

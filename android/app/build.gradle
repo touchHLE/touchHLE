@@ -56,7 +56,7 @@ android {
 
     if (!project.hasProperty('EXCLUDE_NATIVE_LIBS')) {
         sourceSets.main {
-            jniLibs.srcDir 'libs'
+            jniLibs.srcDir "${projectDir}/jniLibs"
         }
         externalNativeBuild {
             ndkBuild {
@@ -86,6 +86,7 @@ cargoNdk {
     // Make sure this matches the android abiFilters above.
     targets = ["arm64"]
     module = ".."
+    librariesNames = ["libtouchHLE.so", "libSDL2.so"]
     extraCargoEnv = ["ANDROID_NDK": android.ndkDirectory, "ANDROID_NDK_HOME": android.ndkDirectory]
     // The default feature, "static", makes us use static linking for SDL2 and OpenAL Soft.
     // For Android, we need dynamic linking for SDL2, but static linking for OpenAL Soft.

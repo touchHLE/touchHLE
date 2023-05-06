@@ -39,6 +39,7 @@ android {
             signingConfig signingConfigs.debug
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            debuggable true // allow use of ADB to manage files, etc
         }
         debug {
             minifyEnabled false

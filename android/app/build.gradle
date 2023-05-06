@@ -15,13 +15,13 @@ android {
         if (buildAsApplication) {
             applicationId "org.touchhle.android"
         }
-        minSdkVersion 16
+        minSdkVersion 21 // first version with AArch64
         targetSdkVersion 31
         versionCode 1
         versionName "1.0"
         externalNativeBuild {
             ndkBuild {
-                arguments "APP_PLATFORM=android-16"
+                arguments "APP_PLATFORM=android-21"
                 // abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
                 // Only 'arm64-v8a' and 'x86_64' are supported by dynarmic
                 // and hence touchHLE. The 'x86_64' build works, but the main

@@ -11,3 +11,7 @@
 [submodule "vendor/dr_libs"]
 	path = vendor/dr_libs
 	url = https://github.com/mackron/dr_libs.git
+[submodule "vendor/SDL"]
+	path = vendor/SDL
+	url = https://github.com/libsdl-org/SDL.git
+	branch = 07d0f51fa292895443f563f0cbde4cb3802d87fa

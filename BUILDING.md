@@ -1,5 +1,7 @@
 # Building touchHLE
 
+The following build directions are for desktop platforms. On Android, you will also need to read `android/BUILDING.md`.
+
 You need [git](https://git-scm.com/), [the Rust toolchain](https://www.rust-lang.org/tools/install), and your platform's standard C and C++ compilers.
 
 First check out the git repo with `git clone`. Also make sure you get the submodules (`git submodule update --init` should be enough).

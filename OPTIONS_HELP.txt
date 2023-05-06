@@ -1,7 +1,7 @@
 View options:
     --fullscreen
         Display the app in full screen. The default is to display in a window
-        instead.
+        instead, except on Android which always uses full screen.
 
         The app's output will be scaled to fit your screen. This is independent         of the internal resolution, so if the scale hack (see below) is not also
         in use, the result may be a bit blurry. An internal resolution larger

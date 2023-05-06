@@ -24,6 +24,10 @@ Quality:
 
 - Overlapping characters in text now render correctly. (@Xertes0)
 
+New platform support:
+
+- touchHLE is now available for Android. Only AArch64 devices are supported. (@ciciplusplus, @hikari-no-yume)
+
 Usability:
 
 - touchHLE now supports real accelerometer input on devices with a built-in accelerometer, such as phones and tablets. This is only used if no game controller is connected. (@hikari-no-yume)

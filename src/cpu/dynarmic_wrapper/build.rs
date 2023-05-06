@@ -3,6 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
+use std::env;
 use std::path::Path;
 
 fn rerun_if_changed(path: &Path) {
@@ -50,17 +51,51 @@ fn main() {
     build.define("DYNARMIC_WARNINGS_AS_ERRORS", "OFF");
     build.define("DYNARMIC_TESTS", "OFF");
     build.define("DYNARMIC_USE_BUNDLED_EXTERNALS", "ON");
-    // This is Windows-specific because on macOS or Linux, you can grab
-    // Boost with your package manager.
-    if cfg!(target_os = "windows") {
+    // This is Windows- and Android-specific because on macOS or Linux, you can
+    // easily get Boost with a package manager.
+    let os = env::var("CARGO_CFG_TARGET_OS").expect("CARGO_CFG_TARGET_OS was not set");
+    if os.eq_ignore_ascii_case("windows") || os.eq_ignore_ascii_case("android") {
         let boost_path = workspace_root.join("vendor/boost");
         if !boost_path.is_dir() {
             panic!("Could not find Boost. Download it from https://www.boost.org/users/download/ and put it at vendor/boost");
         }
         build.define("Boost_INCLUDE_DIR", boost_path);
     }
+    // Prevent CMake from using macOS-only linker commands when cross-compiling
+    // for Android.
+    // https://stackoverflow.com/questions/69697715/cross-compiling-c-program-for-android-on-mac-failed-using-ndks-clang
+    if os.eq_ignore_ascii_case("android") {
+        build.define("CMAKE_SYSTEM_NAME", "Linux");
+        build.define("ANDROID", "ON");
+    }
     // dynarmic can't be dynamically linked
     let dynarmic_out = build.build();
+
+    if os.eq_ignore_ascii_case("android") {
+        // Work around weird issue with the NDK where there are missing
+        // references to compiler-rt/libgcc symbols.
+        // Translated from: https://github.com/termux/termux-packages/issues/8029#issuecomment-1369150244
+        let mut cc_command = cc::Build::new().get_compiler().to_command();
+        let libclang_rt_path = cc_command
+            .arg("-print-libgcc-file-name")
+            .output()
+            .unwrap()
+            .stdout;
+        let libclang_rt_path: &Path = std::str::from_utf8(&libclang_rt_path).unwrap().as_ref();
+        link_search(libclang_rt_path.parent().unwrap());
+        link_lib(
+            libclang_rt_path
+                .file_name()
+                .unwrap()
+                .to_str()
+                .unwrap()
+                .trim()
+                .strip_prefix("lib")
+                .unwrap()
+                .strip_suffix(".a")
+                .unwrap(),
+        );
+    }
 
     link_search(&dynarmic_out.join("lib"));
     link_search(&dynarmic_out.join("lib64")); // some Linux systems
@@ -81,8 +116,8 @@ fn main() {
             .join(build_type_windows()),
     );
     link_lib("mcl");
-    #[cfg(target_arch = "x86_64")]
-    {
+    let arch = env::var("CARGO_CFG_TARGET_ARCH").expect("CARGO_CFG_TARGET_ARCH was not set");
+    if arch.eq_ignore_ascii_case("x86_64") {
         link_search(
             &dynarmic_out
                 .join("build/externals/zydis")
@@ -90,6 +125,7 @@ fn main() {
         );
         link_lib("Zydis");
     }
+
     // rerun-if-changed seems to not work if pointed to a directory :(
     //rerun_if_changed(&workspace_root.join("vendor/dynarmic"));
 

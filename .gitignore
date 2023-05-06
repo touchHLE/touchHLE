@@ -10,3 +10,17 @@
 !default.pbxuser
 *.mode1v3
 !default.mode1v3
+
+# Android
+
+*.iml
+.gradle
+/local.properties
+.idea/
+/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+android/app/src/main/jniLibs
+android/app/build

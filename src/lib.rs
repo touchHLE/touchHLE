@@ -59,6 +59,22 @@ use std::path::PathBuf;
 /// Current version. See `build.rs` for how this is generated.
 const VERSION: &str = include_str!(concat!(env!("OUT_DIR"), "/version.txt"));
 
+/// This is the true entry point on Android (SDLActivity calls it after
+/// initialization). On other platforms the true entry point is in src/bin.rs.
+#[cfg(target_os = "android")]
+#[no_mangle]
+pub extern "C" fn SDL_main(
+    _argc: std::ffi::c_int,
+    _argv: *const *const std::ffi::c_char,
+) -> std::ffi::c_int {
+    // Empty args: brings up app picker.
+    match main([String::new()].into_iter()) {
+        Ok(_) => echo!("touchHLE finished"),
+        Err(e) => echo!("touchHLE errored: {e:?}"),
+    }
+    return 0;
+}
+
 const USAGE: &str = "\
 Usage:
     touchHLE path/to/some.app
@@ -77,11 +93,11 @@ Special options:
 ";
 
 fn app_picker(title: &str) -> Result<PathBuf, String> {
-    const APPS_DIR: &str = "touchHLE_apps";
+    let apps_dir = format!("{}{}", fs::files_prefix(), "touchHLE_apps");
 
-    fn enumerate_apps() -> Result<Vec<PathBuf>, std::io::Error> {
+    fn enumerate_apps(apps_dir: &str) -> Result<Vec<PathBuf>, std::io::Error> {
         let mut app_paths = Vec::new();
-        for app in std::fs::read_dir(APPS_DIR)? {
+        for app in std::fs::read_dir(apps_dir)? {
             let app_path = app?.path();
             if app_path.extension() != Some(OsStr::new("app"))
                 && app_path.extension() != Some(OsStr::new("ipa"))
@@ -96,13 +112,13 @@ fn app_picker(title: &str) -> Result<PathBuf, String> {
         Ok(app_paths)
     }
 
-    let app_paths: Result<Vec<PathBuf>, String> = if !std::path::Path::new(APPS_DIR).is_dir() {
-        Err(format!("The {} directory couldn't be found. Check you're running touchHLE from the right directory.", APPS_DIR))
+    let app_paths: Result<Vec<PathBuf>, String> = if !std::path::Path::new(&apps_dir).is_dir() {
+        Err(format!("The {} directory couldn't be found. Check you're running touchHLE from the right directory.", apps_dir))
     } else {
-        enumerate_apps().map_err(|err| {
+        enumerate_apps(&apps_dir).map_err(|err| {
             format!(
                 "Couldn't get list of apps in the {} directory: {}.",
-                APPS_DIR, err
+                apps_dir, err
             )
         })
     };
@@ -114,7 +130,7 @@ fn app_picker(title: &str) -> Result<PathBuf, String> {
             if !paths.is_empty() {
                 "Select an app:".to_string()
             } else {
-                format!("No apps were found in the {} directory.", APPS_DIR)
+                format!("No apps were found in the {} directory.", apps_dir)
             },
         ),
         Err(err) => (&[], err),
@@ -127,10 +143,12 @@ fn app_picker(title: &str) -> Result<PathBuf, String> {
             let name = path.file_name().unwrap().to_str().unwrap();
             (
                 idx.try_into().unwrap(),
-                if cfg!(target_os = "windows") {
-                    // On Windows, the buttons are too small to display a full
-                    // app name, so it's more practical to use a short symbol
-                    // and put the full name in the message.
+                // On Windows, the buttons are too small to display a full app
+                // name, so it's more practical to use a short symbol and put
+                // the full name in the message.
+                // As for Android, there's not enough horizontal space for
+                // multiple buttons if we don't do this.
+                if cfg!(target_os = "windows") || cfg!(target_os = "android") {
                     // TODO: hopefully we'll have a better app picker before we
                     // have more than twenty supported apps? ^^;
                     let symbols = [

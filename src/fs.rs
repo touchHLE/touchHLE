@@ -28,6 +28,7 @@ pub use bundle::BundleData;
 
 use crate::fs::bundle::{IpaFile, IpaFileRef};
 use std::collections::HashMap;
+use std::env;
 use std::fs::File;
 use std::io::{Read, Seek, Write};
 use std::path::{Path, PathBuf};
@@ -372,6 +373,19 @@ impl Seek for GuestFile {
     }
 }
 
+/// This function returns platform specific prefix for `files` location like fonts or dylibs
+/// This is an empty string, unless we're on Android.
+pub fn files_prefix() -> &'static str {
+    // TODO: instead of path hardcoding,
+    // we should use https://wiki.libsdl.org/SDL2/SDL_AndroidGetInternalStoragePath
+    // but... it's not exposed via rust-sdl2 :(
+    if env::consts::OS == "android" {
+        "/data/data/org.touchhle.android/files/"
+    } else {
+        ""
+    }
+}
+
 /// The type that owns the guest filesystem and provides accessors for it.
 #[derive(Debug)]
 pub struct Fs {
@@ -406,7 +420,9 @@ impl Fs {
 
         let bundle_guest_path = home_directory.join(&bundle_dir_name);
 
-        let documents_host_path = Path::new("touchHLE_sandbox")
+        let prefix = files_prefix();
+        let documents_host_path = Path::new(prefix)
+            .join("touchHLE_sandbox")
             .join(bundle_id)
             .join("Documents");
         if let Err(e) = std::fs::create_dir_all(&documents_host_path) {
@@ -417,7 +433,7 @@ impl Fs {
         }
 
         // Some Free Software libraries are bundled with touchHLE.
-        let dylibs_host_path = Path::new("touchHLE_dylibs");
+        let dylibs_host_path = Path::new(prefix).join("touchHLE_dylibs");
         let usr_lib = FsNode::dir()
             .with_child(
                 "libgcc_s.1.dylib",

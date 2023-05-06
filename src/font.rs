@@ -13,6 +13,7 @@
 //! switch to something like cosmic-text in future, but that has a _lot_ more
 //! dependencies.
 
+use crate::fs::files_prefix;
 use rusttype::{Point, Rect, Scale};
 use std::cmp;
 
@@ -48,7 +49,8 @@ fn scale(font_size: f32) -> Scale {
 
 impl Font {
     fn from_file(path: &str) -> Font {
-        let Ok(bytes) = std::fs::read(path) else {
+        let prefix = files_prefix();
+        let Ok(bytes) = std::fs::read(prefix.to_owned() + path) else {
             panic!("Couldn't read bundled font file {:?}. Perhaps the directory is missing?", path);
         };
 

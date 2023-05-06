@@ -2,8 +2,9 @@
 
 - Make sure you can build and run touchHLE desktop version first
 - Obtain Android SDK/NDK:
-	- Either by installing Android Studio https://developer.android.com/ (recommended)
-	- Or using "Command line tools only" https://developer.android.com/studio/index.html#command-line-tools-only
+  - Either by installing Android Studio https://developer.android.com/ (recommended)
+  - Or using "Command line tools only" https://developer.android.com/studio/index.html#command-line-tools-only
+    - You might also need to install Gradle (suggested version: 7.3)
 
 # Notes
 
@@ -25,14 +26,14 @@ cargo install cargo-ndk
 
 Open/import `android` project folder, click on build, then run
 
-## With Gradlew in command line
+## With Gradle in command line
 
 ```
 export ANDROID_NDK_HOME="path/to/ndk"
 export ANDROID_SDK_HOME="path/to/sdk"
 
-./gradlew build
-./gradlew installDebug
+gradle build
+gradle installDebug
 ```
 
 # Troubleshooting

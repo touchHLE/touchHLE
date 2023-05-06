@@ -6,12 +6,11 @@
  * Parts of this file are derived from SDL 2's Android project template, which
  * has a different license. Please see vendor/SDL/LICENSE.txt for details.
  */
-def buildAsLibrary = project.hasProperty('BUILD_AS_LIBRARY');
+def buildAsLibrary = project.hasProperty('BUILD_AS_LIBRARY')
 def buildAsApplication = !buildAsLibrary
 if (buildAsApplication) {
     apply plugin: 'com.android.application'
-}
-else {
+} else {
     apply plugin: 'com.android.library'
 }
 apply plugin: "com.github.willir.rust.cargo-ndk-android"
@@ -60,7 +59,7 @@ android {
     }
     applicationVariants.all { variant ->
         tasks["merge${variant.name.capitalize()}Assets"]
-            .dependsOn("externalNativeBuild${variant.name.capitalize()}")
+                .dependsOn("externalNativeBuild${variant.name.capitalize()}")
     }
 
     if (!project.hasProperty('EXCLUDE_NATIVE_LIBS')) {
@@ -72,19 +71,19 @@ android {
                 path 'jni/Android.mk'
             }
         }
-       
     }
+
     lintOptions {
         abortOnError false
     }
-    
+
     if (buildAsLibrary) {
         libraryVariants.all { variant ->
             variant.outputs.each { output ->
                 def outputFile = output.outputFile
                 if (outputFile != null && outputFile.name.endsWith(".aar")) {
-                    def fileName = "org.touchhle.android.aar";
-                    output.outputFile = new File(outputFile.parent, fileName);
+                    def fileName = "org.touchhle.android.aar"
+                    output.outputFile = new File(outputFile.parent, fileName)
                 }
             }
         }

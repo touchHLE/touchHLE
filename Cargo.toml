@@ -44,16 +44,14 @@ mach_object = "0.1.17"
 plist = "1.3.1"
 zip = { version = "0.6.4", default-features = false, features = ["deflate"] }
 rusttype = "0.9.3"
-# The latest release for the rust-sdl2 crate at the time of writing is 0.35.2,
-# which is old enough that its bundled SDL2 version is missing various nice
-# things, and doesn't build on macOS.
-# This is a temporary fork to get a newer SDL2 version.
+# We currently use a fork of rust-sdl2 because we need a fix for Android builds
+# that's not upstream yet.
 # The HIDAPI feature is enabled because rust-sdl2 hides the SDL2 sensor features
 # behind this, but the actual HIDAPI is not used by touchHLE (see window.rs).
 # Note that the submodule in vendor/SDL2/ must use exactly the same revision of
 # SDL2 that rust-sdl2 uses, so that the Android JNI interface matches.
-sdl2 = { git = "https://github.com/ciciplusplus/rust-sdl2.git", rev = "a5900b4acd55facebb75cfcd6ca5691543111487", features = ["bundled", "hidapi"] }
-sdl2-sys = { git = "https://github.com/ciciplusplus/rust-sdl2.git", rev = "a5900b4acd55facebb75cfcd6ca5691543111487" }
+sdl2 = { git = "https://github.com/hikari-no-yume/rust-sdl2.git", tag = "touchHLE-2", features = ["bundled", "hidapi"] }
+sdl2-sys = { git = "https://github.com/hikari-no-yume/rust-sdl2.git", tag = "touchHLE-2" }
 touchHLE_dr_mp3_wrapper = { path = "src/audio/dr_mp3_wrapper" }
 touchHLE_dynarmic_wrapper = { path = "src/cpu/dynarmic_wrapper" }
 touchHLE_gl_bindings = { path = "src/window/gl_bindings" }

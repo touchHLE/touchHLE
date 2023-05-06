@@ -4,7 +4,6 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 use cargo_license::{get_dependencies_from_cargo_lock, GetDependenciesOpt};
-use std::env;
 use std::fmt::Write;
 use std::path::{Path, PathBuf};
 use std::process::Command;

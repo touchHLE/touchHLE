@@ -51,8 +51,8 @@ fn main() {
     build.define("DYNARMIC_WARNINGS_AS_ERRORS", "OFF");
     build.define("DYNARMIC_TESTS", "OFF");
     build.define("DYNARMIC_USE_BUNDLED_EXTERNALS", "ON");
-    // This is Windows-specific (and Android-specific) because on macOS or Linux, you can grab
-    // Boost with your package manager.
+    // This is Windows- and Android-specific because on macOS or Linux, you can
+    // easily get Boost with a package manager.
     let os = env::var("CARGO_CFG_TARGET_OS").expect("CARGO_CFG_TARGET_OS was not set");
     if os.eq_ignore_ascii_case("windows") || os.eq_ignore_ascii_case("android") {
         let boost_path = workspace_root.join("vendor/boost");

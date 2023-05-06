@@ -16,7 +16,6 @@ we use `cargo ndk` to build for android, so it should be installed first
 
 ```
 rustup target add aarch64-linux-android
-rustup target add x86_64-linux-android
 cargo install cargo-ndk
 ```
 

@@ -338,7 +338,7 @@ impl Window {
             use sdl2::event::Event as E;
             self.event_queue.push_back(match event {
                 E::Quit { .. } => Event::Quit,
-                // TODO: support for real touch inputs and multi-touch
+                // TODO: support for multi-touch
                 E::MouseButtonDown {
                     x,
                     y,
@@ -619,8 +619,8 @@ impl Window {
     /// Consider the emulated device to be rotated to a particular orientation.
     ///
     /// On a PC or laptop, this will make the window be rotated so the app
-    /// content appears upright. On a mobile device (TODO), this will do
-    /// nothing because the user can physically rotate the screen.
+    /// content appears upright. On a mobile device, this might do something
+    /// else, because the user can physically rotate the screen.
     pub fn rotate_device(&mut self, new_orientation: DeviceOrientation) {
         if new_orientation == self.device_orientation {
             return;

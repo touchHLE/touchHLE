@@ -25,19 +25,18 @@ Only use touchHLE to emulate software you legally own.
 
 ## Platform support
 
-* Officially supported: x64 Windows and x64 macOS.
-  * These are the platforms with binary releases.
+* Officially supported: x64 Windows, x64 macOS and AArch64 Android.
+  * These are the platforms with binary releases. (Android support is not in a release yet. It's coming soon, please wait!)
   * If you're an Apple Silicon Mac user, the x64 build reportedly works in Rosetta.
 * Probably works, but you must build it yourself: AArch64 macOS, x64 Linux, AArch64 Linux.
 * Never?: other architectures.
 
-Android support is planned.
-
 Input methods:
 
-- For simulated touch input, there are two options:
+- For simulated touch input, there are three options:
   - Mouse/trackpad input (tap/hold/drag by pressing the left mouse button)
   - Virtual cursor using the right analog stick on a game controller (tap/hold/drag by pressing the stick or the right shoulder button)
+  - Real touch input, if you're on a device that has a touch screen
 - For simulated acceleremeter input, there are two options:
   - Tilt control simulation using the left analog stick of a game controller
   - Real accelerometer input, if you are using a phone, tablet or some other device with a built-in accelerometer (TODO: support game controllers with accelerometers)
@@ -55,6 +54,8 @@ First obtain touchHLE, either a [binary release](https://github.com/hikari-no-yu
 You'll then need an app that you can run (check [the list of supported apps](APP_SUPPORT.md)). Note that the app binary must be decrypted to be usable.
 
 There's a few ways you can run an app in touchHLE.
+
+(TODO: Android usage directions.)
 
 ## Graphical user interface
 
@@ -105,7 +106,7 @@ Please note that different licensing terms apply to the bundled dynamic librarie
 We stand on the shoulders of giants. Thank you to:
 
 * Everyone who has contributed to the project or supported it financially.
-* The authors of and contributors to the many libraries used by this project: [dynarmic](https://github.com/merryhime/dynarmic), [rust-macho](https://github.com/flier/rust-macho), [SDL](https://libsdl.org/), [rust-sdl2](https://github.com/Rust-SDL2/rust-sdl2), [stb\_image](https://github.com/nothings/stb), [openal-soft](https://github.com/kcat/openal-soft), [hound](https://github.com/ruuda/hound), [caf](https://github.com/rustaudio/caf), [dr\_mp3](https://github.com/mackron/dr_libs), [RustType](https://gitlab.redox-os.org/redox-os/rusttype), [the Liberation fonts](https://github.com/liberationfonts/liberation-fonts), [the Noto CJK fonts](https://github.com/googlefonts/noto-cjk), [rust-plist](https://github.com/ebarnard/rust-plist), [gl-rs](https://github.com/brendanzab/gl-rs), [cargo-license](https://github.com/onur/cargo-license), [cc-rs](https://github.com/rust-lang/cc-rs), [cmake-rs](https://github.com/rust-lang/cmake-rs), and the Rust standard library.
+* The authors of and contributors to the many libraries used by this project: [dynarmic](https://github.com/merryhime/dynarmic), [rust-macho](https://github.com/flier/rust-macho), [SDL](https://libsdl.org/), [rust-sdl2](https://github.com/Rust-SDL2/rust-sdl2), [stb\_image](https://github.com/nothings/stb), [openal-soft](https://github.com/kcat/openal-soft), [hound](https://github.com/ruuda/hound), [caf](https://github.com/rustaudio/caf), [dr\_mp3](https://github.com/mackron/dr_libs), [RustType](https://gitlab.redox-os.org/redox-os/rusttype), [the Liberation fonts](https://github.com/liberationfonts/liberation-fonts), [the Noto CJK fonts](https://github.com/googlefonts/noto-cjk), [rust-plist](https://github.com/ebarnard/rust-plist), [gl-rs](https://github.com/brendanzab/gl-rs), [cargo-license](https://github.com/onur/cargo-license), [cc-rs](https://github.com/rust-lang/cc-rs), [cmake-rs](https://github.com/rust-lang/cmake-rs), [cargo-ndk](https://github.com/bbqsrc/cargo-ndk), [cargo-ndk-android-gradle](https://github.com/willir/cargo-ndk-android-gradle), and the Rust standard library.
 * The [Rust project](https://www.rust-lang.org/) generally.
 * The various people out there who've documented the iPhone OS platform, officially or otherwise. Much of this documentation is linked to within this codebase!
 * The iOS hacking/jailbreaking community.

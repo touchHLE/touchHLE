@@ -1,6 +1,6 @@
 # touchHLE: high-level emulator for iPhone OS apps
 
-**touchHLE** is a high-level emulator (HLE) for iPhone OS apps. It runs on modern desktop operating systems, and is written in Rust.
+**touchHLE** is a high-level emulator (HLE) for iPhone OS apps. It runs on modern desktop operating systems and Android, and is written in Rust.
 
 As an HLE, touchHLE is radically different from a low-level emulator (LLE) like QEMU. The only code the [emulated CPU](https://github.com/merryhime/dynarmic) executes is the app binary and [a handful of libraries](touchHLE_dylibs/); touchHLE takes the place of iPhone OS and provides its own implementations of the system frameworks (Foundation, UIKit, OpenGL ES, OpenAL, etc).
 

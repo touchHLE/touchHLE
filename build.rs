@@ -22,6 +22,7 @@ pub fn main() {
     let version = Command::new("git").arg("describe").arg("--always").output();
     let version = if version.is_ok() && version.as_ref().unwrap().status.success() {
         rerun_if_changed(&package_root.join(".git/HEAD"));
+        rerun_if_changed(&package_root.join(".git/refs"));
         format!(
             "{} (git)",
             std::str::from_utf8(&version.unwrap().stdout)

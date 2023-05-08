@@ -58,7 +58,6 @@ fn CFStringCreateWithCString(
     encoding: CFStringEncoding,
 ) -> CFStringRef {
     assert!(allocator == kCFAllocatorDefault); // unimplemented
-    println!("{:?}", env.mem.cstr_at_utf8(c_string));
     let encoding = CFStringConvertEncodingToNSStringEncoding(env, encoding);
     let ns_string: id = msg_class![env; NSString alloc];
     msg![env; ns_string initWithCString:c_string encoding:encoding]

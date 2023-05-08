@@ -38,7 +38,7 @@ There is one special external dependency, Boost:
 
 ### Android
 
-All the general prerequisites apply for Android, and we recommend trying to build for another OS first, then move onto Android later.
+All the general prerequisites apply for Android, and we recommend trying to build for another OS first.
 
 You need three additional things for Android:
 

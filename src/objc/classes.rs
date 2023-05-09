@@ -440,7 +440,7 @@ impl ObjC {
     }
 
     fn find_template(name: &str) -> Option<&'static ClassTemplate> {
-        crate::dyld::search_lists(CLASS_LISTS, name)
+        crate::dyld::search_lists(CLASS_LISTS, name).map(|&(_name, ref template)| template)
     }
 
     /// For use by [crate::dyld]: get the class or metaclass referenced by an

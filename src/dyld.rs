@@ -119,12 +119,11 @@ pub type ConstantExports = &'static [(&'static str, HostConstant)];
 pub fn search_lists<T>(
     lists: &'static [&'static [(&'static str, T)]],
     symbol: &str,
-) -> Option<&'static T> {
+) -> Option<&'static (&'static str, T)> {
     lists
         .iter()
         .flat_map(|&n| n)
         .find(|&(sym, _)| *sym == symbol)
-        .map(|(_, f)| f)
 }
 
 fn encode_a32_svc(imm: u32) -> u32 {
@@ -139,7 +138,11 @@ fn encode_a32_trap() -> u32 {
 }
 
 pub struct Dyld {
-    linked_host_functions: Vec<HostFunction>,
+    /// List of host functions that have been "linked" and had SVCs assigned.
+    ///
+    /// The `&'static str` part here is purely for debugging and could be
+    /// removed in release builds if it's ever necessary.
+    linked_host_functions: Vec<(&'static str, HostFunction)>,
     return_to_host_routine: Option<GuestFunction>,
     constants_to_link_later: Vec<(MutPtr<ConstVoidPtr>, &'static HostConstant)>,
 }
@@ -321,7 +324,7 @@ impl Dyld {
                 }
             }
 
-            if let Some(template) = search_lists(constant_lists::CONSTANT_LISTS, symbol) {
+            if let Some((_, template)) = search_lists(constant_lists::CONSTANT_LISTS, symbol) {
                 // Delay linking of constant until we have a `&mut Environment`,
                 // that makes it much easier to build NSString objects etc.
                 self.constants_to_link_later.push((ptr_ptr, template));
@@ -381,9 +384,10 @@ impl Dyld {
                 let f = self
                     .linked_host_functions
                     .get((svc - Self::SVC_LINKED_FUNCTIONS_BASE) as usize);
-                let Some(&f) = f else {
+                let Some(&(symbol, f)) = f else {
                     panic!("Unexpected SVC #{} at {:#x}", svc, svc_pc);
                 };
+                log_dbg!("Call to host function, already linked: {}", symbol);
                 Some(f)
             }
         }
@@ -410,11 +414,11 @@ impl Dyld {
 
         let symbol = info.indirect_undef_symbols[idx].as_deref().unwrap();
 
-        if let Some(&f) = search_lists(function_lists::FUNCTION_LISTS, symbol) {
+        if let Some(&(symbol, f)) = search_lists(function_lists::FUNCTION_LISTS, symbol) {
             // Allocate an SVC ID for this host function
             let idx: u32 = self.linked_host_functions.len().try_into().unwrap();
             let svc = idx + Self::SVC_LINKED_FUNCTIONS_BASE;
-            self.linked_host_functions.push(f);
+            self.linked_host_functions.push((symbol, f));
 
             // Rewrite stub function to call this host function
             let stub_function_ptr: MutPtr<u32> = Ptr::from_bits(svc_pc);
@@ -494,12 +498,12 @@ impl Dyld {
         cpu: &mut Cpu,
         symbol: &str,
     ) -> Result<GuestFunction, ()> {
-        let &f = search_lists(function_lists::FUNCTION_LISTS, symbol).ok_or(())?;
+        let &(symbol, f) = search_lists(function_lists::FUNCTION_LISTS, symbol).ok_or(())?;
 
         // Allocate an SVC ID for this host function
         let idx: u32 = self.linked_host_functions.len().try_into().unwrap();
         let svc = idx + Self::SVC_LINKED_FUNCTIONS_BASE;
-        self.linked_host_functions.push(f);
+        self.linked_host_functions.push((symbol, f));
 
         // Create guest function to call this host function
         let function_ptr = mem.alloc(8);

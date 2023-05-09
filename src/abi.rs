@@ -184,7 +184,9 @@ macro_rules! impl_CallFromGuest {
                 let args: ($($P,)*) = {
                     ($(read_next_arg::<$P>(&mut reg_offset, regs, &env.mem),)*)
                 };
+                log_dbg!("CallFromGuest {:?}", args);
                 let retval = self(env, $(args.$p),*);
+                log_dbg!("CallFromGuest => {:?}", retval);
                 if let Some(retval_ptr) = retval_ptr {
                     retval.to_mem(retval_ptr, &mut env.mem);
                 } else {
@@ -206,7 +208,9 @@ macro_rules! impl_CallFromGuest {
                     ($(read_next_arg::<$P>(&mut reg_offset, regs, &env.mem),)*)
                 };
                 let va_list = VAList { reg_offset };
+                log_dbg!("CallFromGuest {:?}, ...{:?}", args, va_list);
                 let retval = self(env, $(args.$p,)* va_list);
+                log_dbg!("CallFromGuest => {:?}", retval);
                 if let Some(retval_ptr) = retval_ptr {
                     retval.to_mem(retval_ptr, &mut env.mem);
                 } else {
@@ -309,7 +313,7 @@ impl_CallFromHost!(0 => P0, 1 => P1, 2 => P2, 3 => P3, 4 => P4, 5 => P5, 6 => P6
 impl_CallFromHost!(0 => P0, 1 => P1, 2 => P2, 3 => P3, 4 => P4, 5 => P5, 6 => P6, 7 => P7, 8 => P8);
 
 /// Calling convention translation for a function argument type.
-pub trait GuestArg: Sized {
+pub trait GuestArg: std::fmt::Debug + Sized {
     /// How many registers does this argument type consume?
     const REG_COUNT: usize;
 
@@ -393,6 +397,7 @@ pub fn write_next_arg<T: GuestArg>(
 
 /// Calling convention translation for a variable arguments list (like C
 /// `va_list`).
+#[derive(Debug)]
 pub struct VAList {
     reg_offset: usize,
 }
@@ -509,7 +514,7 @@ impl GuestArg for f64 {
 // usually behave the same? Are there exceptions? Do we merge the types?
 
 /// Calling convention translation for a function return type.
-pub trait GuestRet: Sized {
+pub trait GuestRet: std::fmt::Debug + Sized {
     /// If this is `None`, then the return value is passed directly in
     /// registers and the `to_regs` and `from_regs` methods should be used.
     /// If this is `Some(size)`, then the return value is of `size` bytes and is

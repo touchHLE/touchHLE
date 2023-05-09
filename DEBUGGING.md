@@ -6,6 +6,11 @@ See also `BUILDING.md`.
 
 `src/log.rs` provides two logging macros, `log!()` and `log_dbg!()`. The former always prints a log message, whereas the latter only prints a message if the containing module is listed in `ENABLED_MODULES` in the same file.
 
+Some modules you might want to enable:
+
+* The combination of `touchHLE::abi` and `touchHLE::dyld` gives you a trace of almost all guest-to-host calls, among other things
+* `touchHLE::mem` logs memory allocations and deallocations
+
 ## Debugging crashes in host code
 
 The `RUST_BACKTRACE=1` environment variable is always helpful. You'll probably want a debug (not `--release`) build of touchHLE to get the best output.

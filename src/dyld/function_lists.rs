@@ -56,6 +56,7 @@ pub const FUNCTION_LISTS: &[super::FunctionExports] = &[
     core_graphics::cg_data::FUNCTIONS,
     foundation::ns_file_manager::FUNCTIONS,
     foundation::ns_log::FUNCTIONS,
+    foundation::ns_class::FUNCTIONS,
     openal::FUNCTIONS,
     opengles::FUNCTIONS,
     uikit::ui_application::FUNCTIONS,

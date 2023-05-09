@@ -33,3 +33,6 @@ smblite: --landscape-left --y-tilt-offset=24
 
 # Crash Bandicoot Nitro Kart 3D
 com.vgmobile.cnk2: --landscape-left
+
+# Mystery Mania
+com.ea.mysterymania.inc: --landscape-left

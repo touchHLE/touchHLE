@@ -124,7 +124,9 @@ pub const CLASSES: ClassExports = objc_classes! {
        withExtension:(id)extension { // NSString *
    msg![env; this URLForResource:name withExtension:extension subdirectory:nil]
 }
-
+- (id)infoDictionary {
+    nil
+}
 // TODO: constructors, more accessors
 
 @end

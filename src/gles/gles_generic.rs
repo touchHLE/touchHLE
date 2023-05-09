@@ -206,6 +206,18 @@ pub trait GLES {
         image_size: GLsizei,
         data: *const GLvoid,
     );
+    unsafe fn TexSubImage2D(
+        &mut self,
+        target: GLenum,
+        level: GLint,
+        xoffset: GLint,
+        yoffset: GLint,
+        width: GLsizei,
+        height: GLsizei,
+        format: GLenum,
+        type_: GLenum,
+        pixels: *const GLvoid,
+    );
     unsafe fn CopyTexImage2D(
         &mut self,
         target: GLenum,
@@ -332,4 +344,12 @@ pub trait GLES {
     );
     unsafe fn Color4ub(&mut self, red: GLubyte, green: GLubyte, blue: GLubyte, alpha: GLubyte);
     unsafe fn GenerateMipmapOES(&mut self, target: GLenum);
+    unsafe fn BufferData(
+        &mut self,
+        target: GLenum,
+        n: GLsizeiptr,
+        data: *const GLvoid,
+        usage: GLenum,
+    );
+    unsafe fn Color4ub(&mut self, red: GLubyte, green: GLubyte, blue: GLubyte, alpha: GLubyte);
 }

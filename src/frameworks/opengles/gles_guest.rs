@@ -696,6 +696,46 @@ fn glCompressedTexImage2D(
         )
     })
 }
+fn glTexSubImage2D(
+    env: &mut Environment,
+    target: GLenum,
+    level: GLint,
+    xoffset: GLint,
+    yoffset: GLint,
+    width: GLsizei,
+    height: GLsizei,
+    format: GLenum,
+    type_: GLenum,
+    pixels: ConstVoidPtr,
+) {
+    with_ctx_and_mem(env, |gles, mem| unsafe {
+        let bytes_per_pixel: GuestUSize = match type_ {
+            gles11::UNSIGNED_BYTE => match format {
+                gles11::ALPHA | gles11::LUMINANCE => 1,
+                gles11::LUMINANCE_ALPHA => 2,
+                gles11::RGB => 3,
+                gles11::RGBA => 4,
+                _ => panic!("Unexpected format {:#x}", format),
+            },
+            gles11::UNSIGNED_SHORT_5_6_5
+            | gles11::UNSIGNED_SHORT_4_4_4_4
+            | gles11::UNSIGNED_SHORT_5_5_5_1 => 2,
+            _ => panic!("Unexpected type {:#x}", type_),
+        };
+        let pixel_count: GuestUSize = width.checked_mul(height).unwrap().try_into().unwrap();
+        // This is approximate, it doesn't account for alignment.
+        let pixels = if pixels.is_null() {
+            std::ptr::null()
+        } else {
+            mem.ptr_at(pixels.cast::<u8>(), pixel_count * bytes_per_pixel)
+                .cast::<GLvoid>()
+        };
+
+        gles.TexSubImage2D(
+            target, level, xoffset, yoffset, width, height, format, type_, pixels,
+        )
+    })
+}
 fn glCopyTexImage2D(
     env: &mut Environment,
     target: GLenum,
@@ -982,6 +1022,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(glTexImage2D(_, _, _, _, _, _, _, _, _)),
     export_c_func!(glTexSubImage2D(_, _, _, _, _, _, _, _, _)),
     export_c_func!(glCompressedTexImage2D(_, _, _, _, _, _, _, _)),
+    export_c_func!(glTexSubImage2D(_, _, _, _, _, _, _, _, _)),
     export_c_func!(glCopyTexImage2D(_, _, _, _, _, _, _, _)),
     export_c_func!(glCopyTexSubImage2D(_, _, _, _, _, _, _, _)),
     export_c_func!(glTexEnvf(_, _, _)),

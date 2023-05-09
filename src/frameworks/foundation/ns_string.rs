@@ -352,9 +352,13 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (bool)getCString:(MutPtr<u8>)buffer
          maxLength:(NSUInteger)buffer_size
           encoding:(NSStringEncoding)encoding {
-    assert!(encoding == NSUTF8StringEncoding || encoding == NSASCIIStringEncoding); // TODO: other encodings
+    // TODO: other encodings
+    assert!(encoding == NSUTF8StringEncoding || encoding == NSASCIIStringEncoding);
 
     let src = to_rust_string(env, this);
+    if encoding == NSASCIIStringEncoding {
+        assert!(src.as_bytes().iter().all(|byte| byte.is_ascii()));
+    }
     let dest = env.mem.bytes_at_mut(buffer, buffer_size);
     if dest.len() < src.as_bytes().len() + 1 { // include null terminator
         return false;
@@ -420,6 +424,24 @@ pub const CLASSES: ClassExports = objc_classes! {
     }).collect();
     let array = ns_array::from_vec(env, component_ns_strings);
     autorelease(env, array)
+}
+
+- (ConstPtr<u8>)cStringUsingEncoding:(NSStringEncoding)encoding {
+    // TODO: other encodings
+    assert!(encoding == NSUTF8StringEncoding || encoding == NSASCIIStringEncoding);
+    // FIXME: validate ASCII
+    msg![env; this UTF8String]
+}
+
+- (ConstPtr<u8>)UTF8String {
+    // TODO: avoid copying
+    let string = to_rust_string(env, this);
+    let c_string = env.mem.alloc_and_write_cstr(string.as_bytes()).cast_const();
+    let length: NSUInteger = (string.len() + 1).try_into().unwrap();
+    // NSData will handle releasing the string (it is autoreleased)
+    let _: id = msg_class![env; NSData dataWithBytesNoCopy:c_string
+                                                    length:length];
+    c_string
 }
 
 - (id)stringByTrimmingCharactersInSet:(id)set { // NSCharacterSet*
@@ -585,17 +607,6 @@ pub const CLASSES: ClassExports = objc_classes! {
 
     let new_string = from_rust_string(env, combined);
     autorelease(env, new_string)
-}
-
-- (ConstPtr<u8>)UTF8String {
-    // TODO: avoid copying
-    let string = to_rust_string(env, this);
-    let c_string = env.mem.alloc_and_write_cstr(string.as_bytes()).cast_const();
-    let length: NSUInteger = (string.len() + 1).try_into().unwrap();
-    // NSData will handle releasing the string (it is autoreleased)
-    let _: id = msg_class![env; NSData dataWithBytesNoCopy:c_string
-                                                    length:length];
-    c_string
 }
 
 // These come from a category in UIKit (UIStringDrawing).

@@ -635,6 +635,21 @@ fn glCopyTexImage2D(
         gles.CopyTexImage2D(target, level, internalformat, x, y, width, height, border)
     })
 }
+fn glCopyTexSubImage2D(
+    env: &mut Environment,
+    target: GLenum,
+    level: GLint,
+    xoffset: GLint,
+    yoffset: GLint,
+    x: GLint,
+    y: GLint,
+    width: GLsizei,
+    height: GLsizei,
+) {
+    with_ctx_and_mem(env, |gles, _mem| unsafe {
+        gles.CopyTexSubImage2D(target, level, xoffset, yoffset, x, y, width, height)
+    })
+}
 fn glTexEnvf(env: &mut Environment, target: GLenum, pname: GLenum, param: GLfloat) {
     with_ctx_and_mem(env, |gles, _mem| unsafe {
         gles.TexEnvf(target, pname, param)
@@ -881,6 +896,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(glTexImage2D(_, _, _, _, _, _, _, _, _)),
     export_c_func!(glTexSubImage2D(_, _, _, _, _, _, _, _, _)),
     export_c_func!(glCopyTexImage2D(_, _, _, _, _, _, _, _)),
+    export_c_func!(glCopyTexSubImage2D(_, _, _, _, _, _, _, _)),
     export_c_func!(glTexEnvf(_, _, _)),
     export_c_func!(glTexEnvx(_, _, _)),
     export_c_func!(glTexEnvi(_, _, _)),

@@ -13,6 +13,7 @@ pub const CLASS_LISTS: &[super::ClassExports] = &[
     core_animation::ca_eagl_layer::CLASSES,
     core_animation::ca_layer::CLASSES,
     core_graphics::cg_color_space::CLASSES,
+    core_graphics::cg_data::CLASSES,
     core_graphics::cg_context::CLASSES,
     core_graphics::cg_image::CLASSES,
     foundation::ns_array::CLASSES,

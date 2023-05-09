@@ -69,6 +69,24 @@ fn fread(
     }
 }
 
+fn fgetc(env: &mut Environment, file_ptr: MutPtr<FILE>) -> i32 {
+    let FILE { fd } = env.mem.read(file_ptr);
+    let buffer = env.mem.alloc(1);
+
+    match posix_io::read(env, fd, buffer, 1) {
+        -1 => EOF,
+        bytes_read => {
+            let bytes_read: GuestUSize = bytes_read.try_into().unwrap();
+            if bytes_read < 1 {
+                EOF
+            } else {
+                let buf: MutPtr<i32> = buffer.cast();
+                env.mem.read(buf)
+            }
+        }
+    }
+}
+
 fn fwrite(
     env: &mut Environment,
     buffer: ConstVoidPtr,
@@ -161,6 +179,7 @@ pub const FUNCTIONS: FunctionExports = &[
     // Standard C functions
     export_c_func!(fopen(_, _)),
     export_c_func!(fread(_, _, _, _)),
+    export_c_func!(fgetc(_)),
     export_c_func!(fwrite(_, _, _, _)),
     export_c_func!(fseek(_, _, _)),
     export_c_func!(ftell(_)),

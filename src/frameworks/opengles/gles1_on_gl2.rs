@@ -962,6 +962,10 @@ impl GLES for GLES1OnGL2 {
             param,
         )
     }
+    unsafe fn TexParameteriv(&mut self, target: GLenum, pname: GLenum, params: *const GLint) {
+        assert!(target == gl21::TEXTURE_2D);
+        gl21::TexParameteriv(target, pname, params);
+    }
     unsafe fn TexImage2D(
         &mut self,
         target: GLenum,
@@ -1007,6 +1011,37 @@ impl GLES for GLES1OnGL2 {
             format,
             type_,
             pixels,
+        )
+    }
+    unsafe fn TexSubImage2D(
+        &mut self,
+        target: gles11::types::GLenum,
+        level: gles11::types::GLint,
+        xoffset: gles11::types::GLint,
+        yoffset: gles11::types::GLint,
+        width: gles11::types::GLsizei,
+        height: gles11::types::GLsizei,
+        format: gles11::types::GLenum,
+        type_: gles11::types::GLenum,
+        pixels: *const gles11::types::GLvoid,
+    ) {
+        assert!(target == gl21::TEXTURE_2D);
+        assert!(level >= 0);
+        assert!(
+            format == gl21::ALPHA
+                || format == gl21::RGB
+                || format == gl21::RGBA
+                || format == gl21::LUMINANCE
+                || format == gl21::LUMINANCE_ALPHA
+        );
+        assert!(
+            type_ == gl21::UNSIGNED_BYTE
+                || type_ == gl21::UNSIGNED_SHORT_5_6_5
+                || type_ == gl21::UNSIGNED_SHORT_4_4_4_4
+                || type_ == gl21::UNSIGNED_SHORT_5_5_5_1
+        );
+        gl21::TexSubImage2D(
+            target, level, xoffset, yoffset, width, height, format, type_, pixels,
         )
     }
     unsafe fn CopyTexImage2D(
@@ -1258,5 +1293,17 @@ impl GLES for GLES1OnGL2 {
     }
     unsafe fn DeleteRenderbuffersOES(&mut self, n: GLsizei, renderbuffers: *const GLuint) {
         gl21::DeleteRenderbuffersEXT(n, renderbuffers)
+    }
+    unsafe fn BufferData(
+        &mut self,
+        target: GLenum,
+        size: GLsizeiptr,
+        data: *const GLvoid,
+        usage: GLenum,
+    ) {
+        gl21::BufferData(target, size, data, usage)
+    }
+    unsafe fn Color4ub(&mut self, red: GLubyte, green: GLubyte, blue: GLubyte, alpha: GLubyte) {
+        gl21::Color4ub(red, green, blue, alpha)
     }
 }

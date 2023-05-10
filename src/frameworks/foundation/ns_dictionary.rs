@@ -6,7 +6,7 @@
 //! The `NSDictionary` class cluster, including `NSMutableDictionary`.
 
 use super::NSUInteger;
-use crate::mem::{ConstPtr, GuestUSize, MutVoidPtr};
+
 use crate::objc::{
     autorelease, id, msg, msg_class, nil, objc_classes, release, retain, ClassExports, HostObject,
     NSZonePtr,

@@ -39,6 +39,7 @@ fn main() {
             "GL_OES_framebuffer_object",
             "GL_OES_rgb8_rgba8",
             "GL_EXT_texture_filter_anisotropic",
+            "GL_IMG_texture_compression_pvrtc",
         ],
     )
     .write_bindings(GlobalGenerator, &mut file)

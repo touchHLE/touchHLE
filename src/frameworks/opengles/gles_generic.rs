@@ -158,6 +158,17 @@ pub trait GLES {
         type_: GLenum,
         pixels: *const GLvoid,
     );
+    unsafe fn CompressedTexImage2D(
+        &mut self,
+        target: GLenum,
+        level: GLint,
+        internalformat: GLenum,
+        width: GLsizei,
+        height: GLsizei,
+        border: GLint,
+        image_size: GLsizei,
+        data: *const GLvoid,
+    );
     unsafe fn CopyTexImage2D(
         &mut self,
         target: GLenum,

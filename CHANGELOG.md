@@ -19,6 +19,7 @@ Compatibility:
 
 - API support improvements:
   - Various small contributions. (@hikari-no-yume, @KiritoDv, @ciciplusplus, @TylerJaacks)
+  - PVRTC texture compression is now supported. (@hikari-no-yume)
 
 Quality:
 

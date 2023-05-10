@@ -5,7 +5,9 @@
  */
 //! Shared utilities.
 
-use crate::window::gles11::types::{GLenum, GLfixed, GLfloat, GLint};
+use super::GLES;
+use crate::window::gles11; // constants only
+use crate::window::gles11::types::{GLenum, GLfixed, GLfloat, GLint, GLsizei};
 
 /// Convert a fixed-point scalar to a floating-point scalar.
 ///
@@ -130,4 +132,48 @@ impl ParamTable {
             _ => setiv(params),
         }
     }
+}
+
+/// Helper for implementing `glCompressedTexImage2D`: if `internalformat` is
+/// one of the `IMG_texture_compression_pvrtc` formats, decode it and call
+/// `glTexImage2D`. Returns `true` if this is done.
+///
+/// Note that this panics rather than create GL errors for invalid use (TODO?)
+pub fn try_decode_pvrtc(
+    gles: &mut dyn GLES,
+    target: GLenum,
+    level: GLint,
+    internalformat: GLenum,
+    width: GLsizei,
+    height: GLsizei,
+    border: GLint,
+    pvrtc_data: &[u8],
+) -> bool {
+    let is_2bit = match internalformat {
+        gles11::COMPRESSED_RGB_PVRTC_4BPPV1_IMG | gles11::COMPRESSED_RGBA_PVRTC_4BPPV1_IMG => false,
+        gles11::COMPRESSED_RGB_PVRTC_2BPPV1_IMG | gles11::COMPRESSED_RGBA_PVRTC_2BPPV1_IMG => true,
+        _ => return false,
+    };
+
+    assert!(border == 0);
+    let pixels = crate::image::decode_pvrtc(
+        pvrtc_data,
+        is_2bit,
+        width.try_into().unwrap(),
+        height.try_into().unwrap(),
+    );
+    unsafe {
+        gles.TexImage2D(
+            target,
+            level,
+            gles11::RGBA as _,
+            width,
+            height,
+            border,
+            gles11::RGBA,
+            gles11::UNSIGNED_BYTE,
+            pixels.as_ptr() as *const _,
+        )
+    };
+    true
 }

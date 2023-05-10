@@ -116,6 +116,16 @@ which is available either as Public Domain or under the terms of the MIT
 license.
 ";
 
+const PVRTD_DESCRIPTION: &str = "
+touchHLE, and therefore this executable, incorporates PVRTC decompression code
+from the PowerVR SDK, which is available under the following license:
+";
+
+const PVRTD_LICENSE: &str = include_str!(concat!(
+    env!("CARGO_MANIFEST_DIR"),
+    "/vendor/PVRTDecompress/LICENSE.md"
+));
+
 const DR_MP3: &str = "
 touchHLE, and therefore this executable, incorporates the library dr_mp3,
 which is available either under The Unlicense (which is a public domain
@@ -150,6 +160,9 @@ pub fn print() {
     echo!("{}", OPENAL_SOFT);
     divider();
     echo!("{}", STB_IMAGE);
+    divider();
+    echo!("{}", PVRTD_DESCRIPTION);
+    echo!("{}", PVRTD_LICENSE.trim_end());
     divider();
     echo!("{}", DR_MP3);
 }

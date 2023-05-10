@@ -574,6 +574,33 @@ fn glTexImage2D(
         )
     })
 }
+fn glCompressedTexImage2D(
+    env: &mut Environment,
+    target: GLenum,
+    level: GLint,
+    internalformat: GLenum,
+    width: GLsizei,
+    height: GLsizei,
+    border: GLint,
+    image_size: GLsizei,
+    data: ConstVoidPtr,
+) {
+    with_ctx_and_mem(env, |gles, mem| unsafe {
+        let data = mem
+            .ptr_at(data.cast::<u8>(), image_size.try_into().unwrap())
+            .cast();
+        gles.CompressedTexImage2D(
+            target,
+            level,
+            internalformat,
+            width,
+            height,
+            border,
+            image_size,
+            data,
+        )
+    })
+}
 fn glCopyTexImage2D(
     env: &mut Environment,
     target: GLenum,
@@ -812,6 +839,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(glTexParameterf(_, _, _)),
     export_c_func!(glTexParameterx(_, _, _)),
     export_c_func!(glTexImage2D(_, _, _, _, _, _, _, _, _)),
+    export_c_func!(glCompressedTexImage2D(_, _, _, _, _, _, _, _)),
     export_c_func!(glCopyTexImage2D(_, _, _, _, _, _, _, _)),
     export_c_func!(glTexEnvf(_, _, _)),
     export_c_func!(glTexEnvx(_, _, _)),

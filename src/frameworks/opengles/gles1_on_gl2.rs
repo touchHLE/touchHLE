@@ -18,7 +18,7 @@
 //! on macOS. It's also a version supported on various other OSes.
 //! It is therefore a convenient target for our implementation.
 
-use super::util::{fixed_to_float, matrix_fixed_to_float, ParamTable, ParamType};
+use super::util::{fixed_to_float, matrix_fixed_to_float, try_decode_pvrtc, ParamTable, ParamType};
 use super::GLES;
 use crate::window::gl21compat as gl21;
 use crate::window::gl21compat::types::*;
@@ -1008,6 +1008,34 @@ impl GLES for GLES1OnGL2 {
             type_,
             pixels,
         )
+    }
+    unsafe fn CompressedTexImage2D(
+        &mut self,
+        target: GLenum,
+        level: GLint,
+        internalformat: GLenum,
+        width: GLsizei,
+        height: GLsizei,
+        border: GLint,
+        image_size: GLsizei,
+        data: *const GLvoid,
+    ) {
+        let data = unsafe { std::slice::from_raw_parts(data.cast::<u8>(), image_size as usize) };
+        // IMG_texture_compression_pvrtc (only on Imagination/Apple GPUs)
+        // TODO: It would be more efficient to use hardware decoding where
+        // available (I just don't have a suitable device to try this on)
+        if !try_decode_pvrtc(
+            self,
+            target,
+            level,
+            internalformat,
+            width,
+            height,
+            border,
+            data,
+        ) {
+            unimplemented!("CompressedTexImage2D internalformat: {:#x}", internalformat);
+        }
     }
     unsafe fn CopyTexImage2D(
         &mut self,

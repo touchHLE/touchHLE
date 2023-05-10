@@ -6,8 +6,10 @@
 //! Functions under `Objective-C Runtime Utilities`, just `NSStringFromClass` right now.
 
 use crate::{
+    dyld::FunctionExports,
     environment::Environment,
-    objc::{id, nil, class_getName}, msg_class,
+    export_c_func, msg_class,
+    objc::{class_getName, id, nil},
 };
 
 pub(super) fn NSStringFromClass(env: &mut Environment, class: id) -> id {
@@ -17,3 +19,5 @@ pub(super) fn NSStringFromClass(env: &mut Environment, class: id) -> id {
     let class_name = class_getName(env, class);
     msg_class![env; NSString stringWithUTF8String:class_name] //Already autoreleased
 }
+
+pub const FUNCTIONS: FunctionExports = &[export_c_func!(NSStringFromClass(_))];

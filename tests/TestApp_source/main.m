@@ -8,6 +8,7 @@ This is a main file for the TestApp which is used for integration testing.
 This code supposed to be compiled with iPhone SDK and Xcode 3.1 Developer Tools
 for Mac OS X v10.5
 */
+#include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -66,6 +67,8 @@ int test_sscanf() {
   return (a == 1 && b == 23) ? 0 : -1;
 }
 
+int test_errno() { return (errno == 0) ? 0 : -1; }
+
 #define FUNC_DEF(func)                                                         \
   { &func, #func }
 struct {
@@ -75,6 +78,7 @@ struct {
     FUNC_DEF(test_qsort),
     FUNC_DEF(test_vsnprintf),
     FUNC_DEF(test_sscanf),
+    FUNC_DEF(test_errno),
 };
 
 int main(int argc, char *argv[]) {

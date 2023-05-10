@@ -180,6 +180,16 @@ pub(super) fn UIApplicationMain(
     {
         let pool: id = msg_class![env; NSAutoreleasePool new];
         let delegate: id = msg![env; ui_application delegate];
+        // IOS 3+ apps usually use application:didFinishLaunchingWithOptions:, and it
+        // seems to be prioritized over applicationDidFinishLaunching:.
+        if let Some(launch_with_options) = env.objc.lookup_selector("application:didFinishLaunchingWithOptions:") {
+            if msg![env; delegate respondToSelector:launch_with_options] {
+                let empty_dict: id = msg_class![env; NSDictionary dictionary];
+                () = msg![env; delegate application:ui_application didFinishLaunchingWithOptions:empty_dict];
+                let _: () = msg![env; pool drain];
+                return;
+            }
+        }
         () = msg![env; delegate applicationDidFinishLaunching:ui_application];
         let _: () = msg![env; pool drain];
     }

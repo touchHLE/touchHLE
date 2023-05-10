@@ -10,6 +10,7 @@ use crate::dyld::{export_c_func, FunctionExports};
 use crate::fs::GuestPath;
 use crate::mem::{ConstPtr, ConstVoidPtr, GuestUSize, MutPtr, MutVoidPtr, Ptr, SafeRead};
 use crate::Environment;
+use core::slice;
 use std::io::Write;
 
 // Standard C functions
@@ -133,6 +134,12 @@ fn puts(env: &mut Environment, s: ConstPtr<u8>) -> i32 {
     0
 }
 
+fn putchar(env: &mut Environment, c: u8) -> i32 {
+
+    let _ = std::io::stdout().write(slice::from_ref(&c));
+    0
+}
+
 fn remove(env: &mut Environment, path: ConstPtr<u8>) -> i32 {
     match env
         .fs
@@ -166,6 +173,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(ftell(_)),
     export_c_func!(fclose(_)),
     export_c_func!(puts(_)),
+    export_c_func!(putchar(_)),
     export_c_func!(remove(_)),
     // POSIX-specific functions
     export_c_func!(fileno(_)),

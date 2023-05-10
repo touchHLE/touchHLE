@@ -13,6 +13,8 @@ use crate::objc::{id, msg};
 use crate::Environment;
 use std::io::Write;
 
+const INTEGER_SPECIFIERS: [u8; 6] = [b'd', b'i', b'o', b'u', b'x', b'X'];
+
 /// String formatting implementation for `printf` and `NSLog` function families.
 ///
 /// `NS_LOG` is [true] for the `NSLog` format string type, or [false] for the
@@ -41,12 +43,18 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
             continue;
         }
 
-        let pad_char = if get_format_char(&env.mem, format_char_idx) == b'0' {
+        let mut pad_char = if get_format_char(&env.mem, format_char_idx) == b'0' {
             format_char_idx += 1;
             '0'
         } else {
             ' '
         };
+        let mut has_precision = false;
+        if get_format_char(&env.mem, format_char_idx) == b'.' {
+            has_precision = true;
+            format_char_idx += 1;
+            pad_char = '0';
+        }
         let pad_width = {
             let mut pad_width = 0;
             while let c @ b'0'..=b'9' = get_format_char(&env.mem, format_char_idx) {
@@ -63,6 +71,10 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
         if specifier == b'%' {
             res.push(b'%');
             continue;
+        }
+
+        if has_precision {
+            assert!(INTEGER_SPECIFIERS.contains(&specifier))
         }
 
         match specifier {

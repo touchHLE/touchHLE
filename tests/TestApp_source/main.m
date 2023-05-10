@@ -54,8 +54,8 @@ char *str_format(const char *format, ...) {
 }
 
 int test_vsnprintf() {
-  char *str = str_format("%s %x", "test", 2042);
-  int res = strcmp(str, "test 7fa");
+  char *str = str_format("%s %x %.3d", "test", 2042, 5);
+  int res = strcmp(str, "test 7fa 005");
   free(str);
   return res;
 }

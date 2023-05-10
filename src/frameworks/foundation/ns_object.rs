@@ -19,7 +19,7 @@ use super::NSUInteger;
 use crate::mem::MutVoidPtr;
 use crate::objc::{
     id, msg, msg_class, msg_send, objc_classes, Class, ClassExports, NSZonePtr, ObjC,
-    TrivialHostObject,
+    TrivialHostObject, SEL,
 };
 
 pub const CLASSES: ClassExports = objc_classes! {
@@ -142,6 +142,11 @@ pub const CLASSES: ClassExports = objc_classes! {
     }
 
     unimplemented!("TODO: object {:?} does not have simple setter method for {}, use fallback", this, key);
+}
+
+- (bool)respondsToSelector:(SEL)selector {
+    let class = msg![env; this class];
+    env.objc.class_has_method(class, selector)
 }
 
 @end

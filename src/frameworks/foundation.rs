@@ -35,6 +35,7 @@ pub mod ns_thread;
 pub mod ns_timer;
 pub mod ns_url;
 pub mod ns_user_defaults;
+pub mod ns_util;
 pub mod ns_value;
 
 #[derive(Default)]

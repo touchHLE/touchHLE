@@ -29,7 +29,7 @@ mod objects;
 mod properties;
 mod selectors;
 
-pub use classes::{objc_classes, Class, ClassExports, ClassTemplate};
+pub use classes::{objc_classes, Class, ClassExports, ClassTemplate, class_getName};
 pub use messages::{autorelease, msg, msg_class, msg_send, release, retain};
 pub use methods::{GuestIMP, HostIMP, IMP};
 pub use objects::{id, nil, AnyHostObject, HostObject, TrivialHostObject};
@@ -80,4 +80,5 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(objc_msgSendSuper2(_, _)),
     export_c_func!(objc_setProperty(_, _, _, _, _, _)),
     export_c_func!(objc_copyStruct(_, _, _, _, _)),
+    export_c_func!(class_getName(_)),
 ];

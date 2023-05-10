@@ -16,6 +16,7 @@ pub(super) use class_lists::CLASS_LISTS;
 use super::{
     id, method_list_t, nil, objc_object, AnyHostObject, HostIMP, HostObject, ObjC, IMP, SEL,
 };
+use crate::environment::Environment;
 use crate::mach_o::MachO;
 use crate::mem::{guest_size_of, ConstPtr, ConstVoidPtr, GuestUSize, Mem, Ptr, SafeRead};
 use std::collections::HashMap;
@@ -674,4 +675,11 @@ impl ObjC {
             }
         }
     }
+}
+
+pub fn class_getName(env: &mut Environment, class: id) -> ConstPtr<u8> {
+    let class_ptr: ConstPtr<class_t> = ConstPtr::from_bits(class.to_bits());
+    let class_data: class_t = env.mem.read(class_ptr);
+    let class_name: ConstPtr<u8> = env.mem.read(class_data.data).name;
+    class_name
 }

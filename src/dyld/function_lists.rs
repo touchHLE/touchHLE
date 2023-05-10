@@ -16,6 +16,7 @@ pub const FUNCTION_LISTS: &[super::FunctionExports] = &[
     libc::ctype::FUNCTIONS,
     libc::cxxabi::FUNCTIONS,
     libc::dlfcn::FUNCTIONS,
+    libc::errno::FUNCTIONS,
     libc::keymgr::FUNCTIONS,
     libc::mach_thread_info::FUNCTIONS,
     libc::mach_time::FUNCTIONS,

@@ -46,7 +46,7 @@ fn run_test_app() -> Result<(), Box<dyn std::error::Error>> {
     assert!(output.status.success());
     // sanity check: check that emulation actually happened
     assert_ne!(
-        find_subsequence(output.stdout.as_slice(), b"CPU emulation begins now."),
+        find_subsequence(output.stderr.as_slice(), b"CPU emulation begins now."),
         None
     );
 

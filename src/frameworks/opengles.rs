@@ -31,6 +31,7 @@
 //! Useful resources for both:
 //! - Extensions:
 //!   - [EXT_texture_filter_anisotropic](https://registry.khronos.org/OpenGL/extensions/EXT/EXT_texture_filter_anisotropic.txt)
+//!   - [EXT_texture_lod_bias](https://registry.khronos.org/OpenGL/extensions/EXT/EXT_texture_lod_bias.txt)
 
 pub mod eagl;
 mod gles1_native;

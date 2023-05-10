@@ -263,6 +263,8 @@ const GET_PARAMS: ParamTable = ParamTable(&[
     // OES_framebuffer_object -> EXT_framebuffer_object
     (gl21::FRAMEBUFFER_BINDING_EXT, ParamType::Int, 1),
     (gl21::RENDERBUFFER_BINDING_EXT, ParamType::Int, 1),
+    // EXT_texture_lod_bias
+    (gl21::MAX_TEXTURE_LOD_BIAS_EXT, ParamType::Float, 1),
 ]);
 
 /// Table of `glLight` parameters shared by OpenGL ES 1.1 and OpenGL 2.1.
@@ -1062,47 +1064,92 @@ impl GLES for GLES1OnGL2 {
     }
     unsafe fn TexEnvf(&mut self, target: GLenum, pname: GLenum, param: GLfloat) {
         // TODO: GL_POINT_SPRITE_OES
-        assert!(target == gl21::TEXTURE_ENV);
-        TEX_ENV_PARAMS.assert_component_count(pname, 1);
-        gl21::TexEnvf(target, pname, param);
+        match target {
+            gl21::TEXTURE_ENV => {
+                TEX_ENV_PARAMS.assert_component_count(pname, 1);
+                gl21::TexEnvf(target, pname, param)
+            }
+            gl21::TEXTURE_FILTER_CONTROL_EXT => {
+                assert!(pname == gl21::TEXTURE_LOD_BIAS_EXT);
+                gl21::TexEnvf(target, pname, param)
+            }
+            _ => unimplemented!(),
+        }
     }
     unsafe fn TexEnvx(&mut self, target: GLenum, pname: GLenum, param: GLfixed) {
         // TODO: GL_POINT_SPRITE_OES
-        assert!(target == gl21::TEXTURE_ENV);
-        TEX_ENV_PARAMS.setx(
-            |param| gl21::TexEnvf(target, pname, param),
-            |param| gl21::TexEnvi(target, pname, param),
-            pname,
-            param,
-        )
+        match target {
+            gl21::TEXTURE_ENV => TEX_ENV_PARAMS.setx(
+                |param| gl21::TexEnvf(target, pname, param),
+                |param| gl21::TexEnvi(target, pname, param),
+                pname,
+                param,
+            ),
+            gl21::TEXTURE_FILTER_CONTROL_EXT => {
+                assert!(pname == gl21::TEXTURE_LOD_BIAS_EXT);
+                gl21::TexEnvf(target, pname, fixed_to_float(param))
+            }
+            _ => unimplemented!(),
+        }
     }
     unsafe fn TexEnvi(&mut self, target: GLenum, pname: GLenum, param: GLint) {
         // TODO: GL_POINT_SPRITE_OES
-        assert!(target == gl21::TEXTURE_ENV);
-        TEX_ENV_PARAMS.assert_component_count(pname, 1);
-        gl21::TexEnvi(target, pname, param);
+        match target {
+            gl21::TEXTURE_ENV => {
+                TEX_ENV_PARAMS.assert_component_count(pname, 1);
+                gl21::TexEnvi(target, pname, param)
+            }
+            gl21::TEXTURE_FILTER_CONTROL_EXT => {
+                assert!(pname == gl21::TEXTURE_LOD_BIAS_EXT);
+                gl21::TexEnvi(target, pname, param)
+            }
+            _ => unimplemented!(),
+        }
     }
     unsafe fn TexEnvfv(&mut self, target: GLenum, pname: GLenum, params: *const GLfloat) {
         // TODO: GL_POINT_SPRITE_OES
-        assert!(target == gl21::TEXTURE_ENV);
-        TEX_ENV_PARAMS.assert_known_param(pname);
-        gl21::TexEnvfv(target, pname, params);
+        match target {
+            gl21::TEXTURE_ENV => {
+                TEX_ENV_PARAMS.assert_known_param(pname);
+                gl21::TexEnvfv(target, pname, params)
+            }
+            gl21::TEXTURE_FILTER_CONTROL_EXT => {
+                assert!(pname == gl21::TEXTURE_LOD_BIAS_EXT);
+                gl21::TexEnvfv(target, pname, params)
+            }
+            _ => unimplemented!(),
+        }
     }
     unsafe fn TexEnvxv(&mut self, target: GLenum, pname: GLenum, params: *const GLfixed) {
         // TODO: GL_POINT_SPRITE_OES
-        assert!(target == gl21::TEXTURE_ENV);
-        TEX_ENV_PARAMS.setxv(
-            |params| gl21::TexEnvfv(target, pname, params),
-            |params| gl21::TexEnviv(target, pname, params),
-            pname,
-            params,
-        )
+        match target {
+            gl21::TEXTURE_ENV => TEX_ENV_PARAMS.setxv(
+                |params| gl21::TexEnvfv(target, pname, params),
+                |params| gl21::TexEnviv(target, pname, params),
+                pname,
+                params,
+            ),
+            gl21::TEXTURE_FILTER_CONTROL_EXT => {
+                assert!(pname == gl21::TEXTURE_LOD_BIAS_EXT);
+                let param = fixed_to_float(params.read());
+                gl21::TexEnvfv(target, pname, &param)
+            }
+            _ => unimplemented!(),
+        }
     }
     unsafe fn TexEnviv(&mut self, target: GLenum, pname: GLenum, params: *const GLint) {
         // TODO: GL_POINT_SPRITE_OES
-        assert!(target == gl21::TEXTURE_ENV);
-        TEX_ENV_PARAMS.assert_known_param(pname);
-        gl21::TexEnviv(target, pname, params);
+        match target {
+            gl21::TEXTURE_ENV => {
+                TEX_ENV_PARAMS.assert_known_param(pname);
+                gl21::TexEnviv(target, pname, params)
+            }
+            gl21::TEXTURE_FILTER_CONTROL_EXT => {
+                assert!(pname == gl21::TEXTURE_LOD_BIAS_EXT);
+                gl21::TexEnviv(target, pname, params)
+            }
+            _ => unimplemented!(),
+        }
     }
 
     // Matrix stack operations

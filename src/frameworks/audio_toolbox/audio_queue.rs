@@ -249,13 +249,14 @@ fn AudioQueueEnqueueBuffer(
     env: &mut Environment,
     in_aq: AudioQueueRef,
     in_buffer: AudioQueueBufferRef,
-    in_num_packet_descs: u32,
-    in_packet_descs: MutVoidPtr,
+    _in_num_packet_descs: u32,
+    _in_packet_descs: MutVoidPtr,
 ) -> OSStatus {
     return_if_null!(in_aq);
 
-    // variable packet size unimplemented
-    assert!(in_num_packet_descs == 0 && in_packet_descs.is_null());
+    // Variable packet size unimplemented (no formats supported that need it).
+    // We don't assert the count is 0 because we might get a useless one even
+    // for formats that don't need it.
 
     let host_object = State::get(&mut env.framework_state)
         .audio_queues

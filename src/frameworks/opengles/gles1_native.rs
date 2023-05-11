@@ -12,7 +12,7 @@
 //! In such cases, we should reject vendor-specific things unless we've made
 //! sure we can emulate them on all host platforms for touchHLE.
 
-use super::util::try_decode_pvrtc;
+use super::util::{try_decode_pvrtc, PalettedTextureFormat};
 use super::GLES;
 use crate::window::gles11;
 use crate::window::gles11::types::*;
@@ -312,7 +312,7 @@ impl GLES for GLES1Native {
         // IMG_texture_compression_pvrtc (only on Imagination/Apple GPUs)
         // TODO: It would be more efficient to use hardware decoding where
         // available (I just don't have a suitable device to try this on)
-        if !try_decode_pvrtc(
+        if try_decode_pvrtc(
             self,
             target,
             level,
@@ -322,8 +322,26 @@ impl GLES for GLES1Native {
             border,
             data,
         ) {
+            log_dbg!("Decoded PVRTC");
+            return;
+        }
+
+        // OES_compressed_paletted_texture is in the common profile of OpenGL ES
+        // 1.1, so we can reasonably assume it's supported.
+        if PalettedTextureFormat::get_info(internalformat).is_none() {
             unimplemented!("CompressedTexImage2D internalformat: {:#x}", internalformat);
         }
+        log_dbg!("Directly supported texture format: {:#x}", internalformat);
+        gles11::CompressedTexImage2D(
+            target,
+            level,
+            internalformat,
+            width,
+            height,
+            border,
+            image_size,
+            data.as_ptr() as *const _,
+        );
     }
     unsafe fn CopyTexImage2D(
         &mut self,

@@ -18,7 +18,10 @@
 //! on macOS. It's also a version supported on various other OSes.
 //! It is therefore a convenient target for our implementation.
 
-use super::util::{fixed_to_float, matrix_fixed_to_float, try_decode_pvrtc, ParamTable, ParamType};
+use super::util::{
+    fixed_to_float, matrix_fixed_to_float, try_decode_pvrtc, PalettedTextureFormat, ParamTable,
+    ParamType,
+};
 use super::GLES;
 use crate::window::gl21compat as gl21;
 use crate::window::gl21compat::types::*;
@@ -1026,7 +1029,7 @@ impl GLES for GLES1OnGL2 {
         // IMG_texture_compression_pvrtc (only on Imagination/Apple GPUs)
         // TODO: It would be more efficient to use hardware decoding where
         // available (I just don't have a suitable device to try this on)
-        if !try_decode_pvrtc(
+        if try_decode_pvrtc(
             self,
             target,
             level,
@@ -1036,6 +1039,75 @@ impl GLES for GLES1OnGL2 {
             border,
             data,
         ) {
+            log_dbg!("Decoded PVRTC");
+        // OES_compressed_paletted_texture is only in OpenGL ES, so we'll need
+        // to decompress those formats.
+        } else if let Some(PalettedTextureFormat {
+            index_is_nibble,
+            palette_entry_format,
+            palette_entry_type,
+        }) = PalettedTextureFormat::get_info(internalformat)
+        {
+            // This should be invalid use? (TODO)
+            assert!(border == 0);
+
+            let palette_entry_size = match palette_entry_type {
+                gl21::UNSIGNED_BYTE => match palette_entry_format {
+                    gl21::RGB => 3,
+                    gl21::RGBA => 4,
+                    _ => unreachable!(),
+                },
+                gl21::UNSIGNED_SHORT_5_6_5
+                | gl21::UNSIGNED_SHORT_4_4_4_4
+                | gl21::UNSIGNED_SHORT_5_5_5_1 => 2,
+                _ => unreachable!(),
+            };
+            let palette_entry_count = match index_is_nibble {
+                true => 16,
+                false => 256,
+            };
+            let palette_size = palette_entry_size * palette_entry_count;
+
+            let index_count = width as usize * height as usize;
+            let (index_word_size, index_word_count) = match index_is_nibble {
+                true => (1, (index_count + 1) / 2),
+                false => (4, (index_count + 3) / 4),
+            };
+            let indices_size = index_word_size * index_word_count;
+
+            // TODO: support multiple miplevels in one image
+            assert!(level == 0);
+            assert_eq!(data.len(), palette_size + indices_size);
+            let (palette, indices) = data.split_at(palette_size);
+
+            let mut decoded = Vec::<u8>::with_capacity(palette_entry_size * index_count);
+            for i in 0..index_count {
+                let index = if index_is_nibble {
+                    (indices[i / 2] >> ((1 - (i % 2)) * 4)) & 0xf
+                } else {
+                    // I'm really unsure if this is correct. This is what the
+                    // OpenGL ES 1.1 spec says, but the extension spec (which it
+                    // supposedly incorporates) says the opposite?!
+                    indices[i / 4..][3 - (i % 4)]
+                } as usize;
+                let palette_entry = &palette[index * palette_entry_size..][..palette_entry_size];
+                decoded.extend_from_slice(palette_entry);
+            }
+            assert!(decoded.len() == palette_entry_size * index_count);
+
+            log_dbg!("Decoded paletted texture");
+            gl21::TexImage2D(
+                target,
+                level,
+                palette_entry_format as _,
+                width,
+                height,
+                border,
+                palette_entry_format,
+                palette_entry_type,
+                decoded.as_ptr() as *const _,
+            )
+        } else {
             unimplemented!("CompressedTexImage2D internalformat: {:#x}", internalformat);
         }
     }

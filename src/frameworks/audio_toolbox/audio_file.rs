@@ -7,6 +7,7 @@
 
 use crate::audio; // Keep this module namespaced to avoid confusion
 use crate::dyld::{export_c_func, FunctionExports};
+use crate::frameworks::carbon_core::OSStatus;
 use crate::frameworks::core_audio_types::{
     debug_fourcc, fourcc, kAudioFormatAppleIMA4, kAudioFormatFlagIsBigEndian,
     kAudioFormatFlagIsFloat, kAudioFormatFlagIsPacked, kAudioFormatFlagIsSignedInteger,
@@ -14,7 +15,6 @@ use crate::frameworks::core_audio_types::{
 };
 use crate::frameworks::core_foundation::cf_url::CFURLRef;
 use crate::frameworks::foundation::ns_url::to_rust_path;
-use crate::frameworks::mac_types::OSStatus;
 use crate::mem::{guest_size_of, GuestUSize, MutPtr, MutVoidPtr, SafeRead};
 use crate::Environment;
 use std::collections::HashMap;
@@ -67,6 +67,8 @@ fn AudioFileOpenURL(
     in_file_type_hint: AudioFileTypeID,
     out_audio_file: MutPtr<AudioFileID>,
 ) -> OSStatus {
+    return_if_null!(in_file_ref);
+
     assert!(in_permissions == kAudioFileReadPermission); // writing TODO
                                                          // The hint is optional and is supposed to only be used for certain file
                                                          // formats that can't be uniquely identified, which we don't support so far.
@@ -108,11 +110,13 @@ fn property_size(property_id: AudioFilePropertyID) -> GuestUSize {
 
 fn AudioFileGetPropertyInfo(
     env: &mut Environment,
-    _in_audio_file: AudioFileID,
+    in_audio_file: AudioFileID,
     in_property_id: AudioFilePropertyID,
     out_data_size: MutPtr<u32>,
     is_writable: MutPtr<u32>,
 ) -> OSStatus {
+    return_if_null!(in_audio_file);
+
     if in_property_id == kAudioFilePropertyMagicCookieData
         || in_property_id == kAudioFilePropertyChannelLayout
     {
@@ -143,6 +147,8 @@ fn AudioFileGetProperty(
     io_data_size: MutPtr<u32>,
     out_property_data: MutVoidPtr,
 ) -> OSStatus {
+    return_if_null!(in_audio_file);
+
     let required_size = property_size(in_property_id);
     if env.mem.read(io_data_size) != required_size {
         log!("Warning: AudioFileGetProperty() failed");
@@ -231,6 +237,8 @@ fn AudioFileReadBytes(
     io_num_bytes: MutPtr<u32>,
     out_buffer: MutVoidPtr,
 ) -> OSStatus {
+    return_if_null!(in_audio_file);
+
     let host_object = State::get(&mut env.framework_state)
         .audio_files
         .get_mut(&in_audio_file)
@@ -259,6 +267,8 @@ fn AudioFileReadPackets(
     io_num_packets: MutPtr<u32>,
     out_buffer: MutVoidPtr,
 ) -> OSStatus {
+    return_if_null!(in_audio_file);
+
     // Variable-size packets are not implemented currently. When they are,
     // this parameter should be a `MutPtr<AudioStreamPacketDescription>`.
     assert!(out_packet_descriptions.is_null());
@@ -294,6 +304,8 @@ fn AudioFileReadPackets(
 }
 
 fn AudioFileClose(env: &mut Environment, in_audio_file: AudioFileID) -> OSStatus {
+    return_if_null!(in_audio_file);
+
     let _host_object = State::get(&mut env.framework_state)
         .audio_files
         .remove(&in_audio_file)

@@ -14,6 +14,7 @@ use crate::audio::openal as al;
 use crate::audio::openal::al_types::*;
 use crate::audio::openal::alc_types::*;
 use crate::dyld::{export_c_func, FunctionExports};
+use crate::frameworks::carbon_core::OSStatus;
 use crate::frameworks::core_audio_types::{
     kAudioFormatAppleIMA4, kAudioFormatFlagIsBigEndian, kAudioFormatFlagIsFloat,
     kAudioFormatFlagIsPacked, kAudioFormatLinearPCM, AudioStreamBasicDescription,
@@ -23,7 +24,6 @@ use crate::frameworks::core_foundation::cf_run_loop::{
 };
 use crate::frameworks::foundation::ns_run_loop;
 use crate::frameworks::foundation::ns_string::get_static_str;
-use crate::frameworks::mac_types::OSStatus;
 use crate::mem::{ConstPtr, ConstVoidPtr, GuestUSize, Mem, MutPtr, MutVoidPtr, Ptr, SafeRead};
 use crate::objc::msg;
 use crate::Environment;
@@ -197,6 +197,8 @@ fn AudioQueueSetParameter(
     in_param_id: AudioQueueParameterID,
     in_value: AudioQueueParameterValue,
 ) -> OSStatus {
+    return_if_null!(in_aq);
+
     assert!(in_param_id == kAudioQueueParam_Volume); // others unimplemented
 
     let state = State::get(&mut env.framework_state);
@@ -220,6 +222,8 @@ fn AudioQueueAllocateBuffer(
     in_buffer_byte_size: GuestUSize,
     out_buffer: MutPtr<AudioQueueBufferRef>,
 ) -> OSStatus {
+    return_if_null!(in_aq);
+
     let host_object = State::get(&mut env.framework_state)
         .audio_queues
         .get_mut(&in_aq)
@@ -248,6 +252,8 @@ fn AudioQueueEnqueueBuffer(
     in_num_packet_descs: u32,
     in_packet_descs: MutVoidPtr,
 ) -> OSStatus {
+    return_if_null!(in_aq);
+
     // variable packet size unimplemented
     assert!(in_num_packet_descs == 0 && in_packet_descs.is_null());
 
@@ -272,6 +278,8 @@ fn AudioQueueAddPropertyListener(
     in_proc: GuestFunction, // TODO: should be AudioQueuePropertyListenerProc
     in_user_data: MutVoidPtr,
 ) -> OSStatus {
+    return_if_null!(in_aq);
+
     log!(
         "TODO: AudioQueueAddPropertyListener({:?}, {:?}, {:?}, {:?})",
         in_aq,
@@ -288,6 +296,8 @@ fn AudioQueueRemovePropertyListener(
     in_proc: GuestFunction, // TODO: should be AudioQueuePropertyListenerProc
     in_user_data: MutVoidPtr,
 ) -> OSStatus {
+    return_if_null!(in_aq);
+
     log!(
         "TODO: AudioQueueRemovePropertyListener({:?}, {:?}, {:?}, {:?})",
         in_aq,
@@ -555,6 +565,8 @@ fn AudioQueuePrime(
     _in_number_of_frames_to_prepare: u32,
     out_number_of_frames_prepared: MutPtr<u32>,
 ) -> OSStatus {
+    return_if_null!(in_aq);
+
     assert!(out_number_of_frames_prepared.is_null()); // TODO
     let _context_manager = prime_audio_queue(env, in_aq, None);
     0 // success
@@ -565,6 +577,8 @@ fn AudioQueueStart(
     in_aq: AudioQueueRef,
     in_device_start_time: ConstVoidPtr, // should be `const AudioTimeStamp*`
 ) -> OSStatus {
+    return_if_null!(in_aq);
+
     assert!(in_device_start_time.is_null()); // TODO
 
     let _context_manager = prime_audio_queue(env, in_aq, None);
@@ -586,15 +600,13 @@ fn AudioQueueStart(
 }
 
 fn AudioQueueStop(env: &mut Environment, in_aq: AudioQueueRef, in_immediate: bool) -> OSStatus {
+    return_if_null!(in_aq);
+
     let state = State::get(&mut env.framework_state);
 
     let _context_manager = state.make_al_context_current();
 
-    // This happens in Super Monkey Ball. TODO: figure out why.
-    let Some(mut host_object) = state.audio_queues.get_mut(&in_aq) else {
-        log!("Tolerating stopping of unknown audio queue {:?}", in_aq);
-        return 0; // success
-    };
+    let host_object = state.audio_queues.get_mut(&in_aq).unwrap();
     host_object.is_running = false;
 
     if in_immediate {
@@ -608,16 +620,13 @@ fn AudioQueueStop(env: &mut Environment, in_aq: AudioQueueRef, in_immediate: boo
 }
 
 fn AudioQueueDispose(env: &mut Environment, in_aq: AudioQueueRef, in_immediate: bool) -> OSStatus {
+    return_if_null!(in_aq);
+
     assert!(in_immediate); // TODO
 
     let state = State::get(&mut env.framework_state);
 
-    // This happens in Super Monkey Ball. TODO: figure out why.
-    let Some(mut host_object) = state.audio_queues.remove(&in_aq) else {
-        log!("Tolerating disposal of unknown audio queue {:?}", in_aq);
-        return 0; // success
-    };
-
+    let mut host_object = state.audio_queues.remove(&in_aq).unwrap();
     log_dbg!("Disposing of audio queue {:?}", in_aq);
 
     env.mem.free(in_aq.cast());

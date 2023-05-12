@@ -66,6 +66,11 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
         }
 
         match specifier {
+            b'c' => {
+                let c: u8 = args.next(env);
+                assert!(pad_char == ' ' && pad_width == 0); // TODO
+                res.push(c);
+            }
             b's' => {
                 let c_string: ConstPtr<u8> = args.next(env);
                 assert!(pad_char == ' ' && pad_width == 0); // TODO

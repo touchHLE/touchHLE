@@ -5,9 +5,9 @@
  */
 //! `stdlib.h`
 
-use crate::abi::GuestFunction;
+use crate::abi::{CallFromHost, GuestFunction};
 use crate::dyld::{export_c_func, FunctionExports};
-use crate::mem::{ConstPtr, GuestUSize, MutPtr, MutVoidPtr};
+use crate::mem::{ConstPtr, ConstVoidPtr, GuestUSize, MutPtr, MutVoidPtr, Ptr};
 use crate::Environment;
 use std::collections::HashMap;
 
@@ -189,6 +189,41 @@ fn exit(_env: &mut Environment, exit_code: i32) {
     std::process::exit(exit_code);
 }
 
+fn bsearch(
+    env: &mut Environment,
+    key: ConstVoidPtr,
+    items: ConstVoidPtr,
+    item_count: GuestUSize,
+    item_size: GuestUSize,
+    compare_callback: GuestFunction, // (*int)(const void*, const void*)
+) -> ConstVoidPtr {
+    log_dbg!(
+        "binary search for {:?} in {} items of size {:#x} starting at {:?}",
+        key,
+        item_count,
+        item_size,
+        items
+    );
+    let mut low = 0;
+    let mut len = item_count;
+    while len > 0 {
+        let half_len = len / 2;
+        let item: ConstVoidPtr = (items.cast::<u8>() + item_size * (low + half_len)).cast();
+        let cmp_result: i32 = compare_callback.call_from_host(env, (item, key));
+        (low, len) = match cmp_result.signum() {
+            0 => {
+                log_dbg!("=> {:?}", item);
+                return item;
+            }
+            -1 => (low + half_len + 1, len - half_len - 1),
+            1 => (low, half_len),
+            _ => unreachable!(),
+        }
+    }
+    log_dbg!("=> NULL (not found)");
+    Ptr::null()
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(malloc(_)),
     export_c_func!(calloc(_, _)),
@@ -203,4 +238,5 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(getenv(_)),
     export_c_func!(setenv(_, _, _)),
     export_c_func!(exit(_)),
+    export_c_func!(bsearch(_, _, _, _, _)),
 ];

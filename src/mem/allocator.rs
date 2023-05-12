@@ -190,6 +190,15 @@ impl Allocator {
         }
     }
 
+    /// This is used for realloc
+    pub fn find_allocated_size(&mut self, base: VAddr) -> GuestUSize {
+        let Some(idx) = self.used_chunks.iter().position(|chunk| chunk.base == base) else {
+            panic!("Can't find {:#x}, unknown allocation!", base);
+        };
+        let chunk = self.used_chunks.get(idx).unwrap();
+        chunk.size.get()
+    }
+
     /// Returns the size of the freed chunk so it can be zeroed if desired
     #[must_use]
     pub fn free(&mut self, base: VAddr) -> GuestUSize {

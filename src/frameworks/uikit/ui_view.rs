@@ -124,6 +124,10 @@ pub const CLASSES: ClassExports = objc_classes! {
     this
 }
 
+- (())setUserInteractionEnabled:(bool)_enabled {
+    // TODO: enable user interaction
+}
+
 // TODO: setMultipleTouchEnabled
 - (())setMultipleTouchEnabled:(bool)_enabled {
     // TODO: enable multitouch

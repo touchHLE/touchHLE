@@ -600,6 +600,23 @@ fn AudioQueueStart(
     0 // success
 }
 
+fn AudioQueuePause(env: &mut Environment, in_aq: AudioQueueRef) -> OSStatus {
+    return_if_null!(in_aq);
+
+    let state = State::get(&mut env.framework_state);
+
+    let _context_manager = state.make_al_context_current();
+
+    let host_object = state.audio_queues.get_mut(&in_aq).unwrap();
+    host_object.is_running = false;
+    if let Some(al_source) = host_object.al_source {
+        unsafe { al::alSourcePause(al_source) };
+        assert!(unsafe { al::alGetError() } == 0);
+    }
+
+    0 // success
+}
+
 fn AudioQueueStop(env: &mut Environment, in_aq: AudioQueueRef, in_immediate: bool) -> OSStatus {
     return_if_null!(in_aq);
 
@@ -673,6 +690,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(AudioQueueRemovePropertyListener(_, _, _, _)),
     export_c_func!(AudioQueuePrime(_, _, _)),
     export_c_func!(AudioQueueStart(_, _)),
+    export_c_func!(AudioQueuePause(_)),
     export_c_func!(AudioQueueStop(_, _)),
     export_c_func!(AudioQueueDispose(_, _)),
 ];

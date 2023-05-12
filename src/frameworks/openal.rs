@@ -204,6 +204,9 @@ fn alGetSourcei(env: &mut Environment, source: ALuint, param: ALenum, value: Mut
 fn alSourcePlay(_env: &mut Environment, source: ALuint) {
     unsafe { al::alSourcePlay(source) };
 }
+fn alSourcePause(_env: &mut Environment, source: ALuint) {
+    unsafe { al::alSourcePause(source) };
+}
 fn alSourceStop(_env: &mut Environment, source: ALuint) {
     unsafe { al::alSourceStop(source) };
 }
@@ -329,6 +332,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(alSourcef(_, _, _)),
     export_c_func!(alSourcei(_, _, _)),
     export_c_func!(alSourcePlay(_)),
+    export_c_func!(alSourcePause(_)),
     export_c_func!(alSourceStop(_)),
     export_c_func!(alSourceQueueBuffers(_, _, _)),
     export_c_func!(alSourceUnqueueBuffers(_, _, _)),

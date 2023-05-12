@@ -319,8 +319,18 @@ impl Window {
     /// to be unresponsive. Note that events are not returned by this function,
     /// since we often need to defer actually handling them.
     pub fn poll_for_events(&mut self, options: &Options) {
-        fn transform_input_coords(window: &Window, (in_x, in_y): (f32, f32)) -> (f32, f32) {
-            let (vx, vy, vw, vh) = window.viewport();
+        fn transform_input_coords(
+            window: &Window,
+            (in_x, in_y): (f32, f32),
+            independent_of_viewport: bool,
+        ) -> (f32, f32) {
+            let (vx, vy, vw, vh) = if independent_of_viewport {
+                let (width, height) =
+                    size_for_orientation(window.device_orientation, NonZeroU32::new(1).unwrap());
+                (0, 0, width, height)
+            } else {
+                window.viewport()
+            };
             // normalize to unit square centred on origin
             let x = (in_x - vx as f32) / vw as f32 - 0.5;
             let y = (in_y - vy as f32) / vh as f32 - 0.5;
@@ -333,7 +343,17 @@ impl Window {
             let out_y = (y + 0.5) * out_h as f32;
             (out_x, out_y)
         }
+        fn translate_button(button: sdl2::controller::Button) -> Option<crate::options::Button> {
+            match button {
+                sdl2::controller::Button::A => Some(crate::options::Button::A),
+                sdl2::controller::Button::B => Some(crate::options::Button::B),
+                sdl2::controller::Button::X => Some(crate::options::Button::X),
+                sdl2::controller::Button::Y => Some(crate::options::Button::Y),
+                _ => None,
+            }
+        }
 
+        let mut controller_updated = false;
         while let Some(event) = self.event_pump.poll_event() {
             use sdl2::event::Event as E;
             self.event_queue.push_back(match event {
@@ -344,18 +364,18 @@ impl Window {
                     y,
                     mouse_btn: MouseButton::Left,
                     ..
-                } => Event::TouchDown(transform_input_coords(self, (x as f32, y as f32))),
+                } => Event::TouchDown(transform_input_coords(self, (x as f32, y as f32), false)),
                 E::MouseMotion {
                     x, y, mousestate, ..
                 } if mousestate.left() => {
-                    Event::TouchMove(transform_input_coords(self, (x as f32, y as f32)))
+                    Event::TouchMove(transform_input_coords(self, (x as f32, y as f32), false))
                 }
                 E::MouseButtonUp {
                     x,
                     y,
                     mouse_btn: MouseButton::Left,
                     ..
-                } => Event::TouchUp(transform_input_coords(self, (x as f32, y as f32))),
+                } => Event::TouchUp(transform_input_coords(self, (x as f32, y as f32), false)),
                 E::ControllerDeviceAdded { which, .. } => {
                     self.controller_added(which);
                     continue;
@@ -364,30 +384,51 @@ impl Window {
                     self.controller_removed(which);
                     continue;
                 }
-                // Virtual cursor handling only. Accelerometer handling uses
-                // polling.
-                E::ControllerButtonUp { .. }
-                | E::ControllerButtonDown { .. }
-                | E::ControllerAxisMotion { .. } => {
-                    let (new_x, new_y, new_pressed, visible) = self.get_virtual_cursor(options);
-                    let (old_x, old_y, old_pressed, _) =
-                        self.virtual_cursor_last.unwrap_or_default();
-                    self.virtual_cursor_last = Some((new_x, new_y, new_pressed, visible));
-                    match (old_pressed, new_pressed) {
-                        (false, true) => {
-                            Event::TouchDown(transform_input_coords(self, (new_x, new_y)))
+                // Note that accelerometer simulation with analog sticks is
+                // handled with polling, rather than being event-based.
+                E::ControllerButtonUp { button, .. } | E::ControllerButtonDown { button, .. } => {
+                    controller_updated = true;
+                    let Some(button) = translate_button(button) else {
+                        continue;
+                    };
+                    let Some(&(x, y)) = options.button_to_touch.get(&button) else {
+                        continue;
+                    };
+                    match event {
+                        E::ControllerButtonUp { .. } => {
+                            Event::TouchUp(transform_input_coords(self, (x, y), true))
                         }
-                        (true, false) => {
-                            Event::TouchUp(transform_input_coords(self, (new_x, new_y)))
+                        E::ControllerButtonDown { .. } => {
+                            Event::TouchDown(transform_input_coords(self, (x, y), true))
                         }
-                        _ if (new_x, new_y) != (old_x, old_y) && new_pressed => {
-                            Event::TouchMove(transform_input_coords(self, (new_x, new_y)))
-                        }
-                        _ => continue,
+                        _ => unreachable!(),
                     }
+                }
+                E::ControllerAxisMotion { .. } => {
+                    controller_updated = true;
+                    continue;
                 }
                 _ => continue,
             })
+        }
+
+        if controller_updated {
+            let (new_x, new_y, new_pressed, visible) = self.get_virtual_cursor(options);
+            let (old_x, old_y, old_pressed, _) = self.virtual_cursor_last.unwrap_or_default();
+            self.virtual_cursor_last = Some((new_x, new_y, new_pressed, visible));
+            self.event_queue
+                .push_back(match (old_pressed, new_pressed) {
+                    (false, true) => {
+                        Event::TouchDown(transform_input_coords(self, (new_x, new_y), false))
+                    }
+                    (true, false) => {
+                        Event::TouchUp(transform_input_coords(self, (new_x, new_y), false))
+                    }
+                    _ if (new_x, new_y) != (old_x, old_y) && new_pressed => {
+                        Event::TouchMove(transform_input_coords(self, (new_x, new_y), false))
+                    }
+                    _ => return,
+                });
         }
     }
 

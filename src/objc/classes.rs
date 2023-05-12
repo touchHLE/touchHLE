@@ -402,11 +402,11 @@ fn substitute_classes(
     let name = mem.cstr_at_utf8(name).unwrap();
 
     // Currently the only thing we try to substitute: classes that seem to be
-    // from the AdMob SDK. This is a third-party advertising SDK. Naturally it
+    // from various third-party advertising SDKs. Naturally it
     // makes a lot of use of UIKit in ways we don't support yet, so it's easier
     // to skip this. This isn't "ad blocking" because ads no longer work on real
     // devices anyway :)
-    if !name.starts_with("AdMob") {
+    if !(name.starts_with("AdMob") || name.starts_with("AltAds") || name.starts_with("Mobclix")) {
         return None;
     }
 

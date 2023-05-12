@@ -61,6 +61,9 @@ impl GLES for GLES1Native {
     unsafe fn Disable(&mut self, cap: GLenum) {
         gles11::Disable(cap)
     }
+    unsafe fn ClientActiveTexture(&mut self, texture: GLenum) {
+        gles11::ClientActiveTexture(texture);
+    }
     unsafe fn EnableClientState(&mut self, array: GLenum) {
         gles11::EnableClientState(array)
     }

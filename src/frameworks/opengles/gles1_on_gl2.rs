@@ -27,6 +27,7 @@ use crate::window::gl21compat as gl21;
 use crate::window::gl21compat::types::*;
 use crate::window::gles11;
 use crate::window::{GLContext, GLVersion, Window};
+use std::collections::HashSet;
 use std::ffi::CStr;
 
 /// List of capabilities shared by OpenGL ES 1.1 and OpenGL 2.1.
@@ -345,6 +346,7 @@ const TEX_PARAMS: ParamTable = ParamTable(&[
 pub struct GLES1OnGL2 {
     gl_ctx: GLContext,
     pointer_is_fixed_point: [bool; ARRAYS.len()],
+    fixed_point_texture_units: HashSet<GLenum>,
     fixed_point_translation_buffers: [Vec<GLfloat>; ARRAYS.len()],
 }
 impl GLES1OnGL2 {
@@ -364,6 +366,31 @@ impl GLES1OnGL2 {
             if !self.pointer_is_fixed_point[i] {
                 continue;
             }
+
+            // There is one texture co-ordinates pointer per texture unit.
+            let old_client_active_texture = if array_info.name == gl21::TEXTURE_COORD_ARRAY {
+                // Is the texture unit involved in this draw call fixed-point?
+                // If not, we don't need to do anything.
+                let mut active_texture: GLenum = 0;
+                gl21::GetIntegerv(
+                    gl21::ACTIVE_TEXTURE,
+                    &mut active_texture as *mut _ as *mut _,
+                );
+                if !self.fixed_point_texture_units.contains(&active_texture) {
+                    continue;
+                }
+
+                // Make sure our glTexCoordPointer call will affect that unit.
+                let mut old_client_active_texture: GLenum = 0;
+                gl21::GetIntegerv(
+                    gl21::CLIENT_ACTIVE_TEXTURE,
+                    &mut old_client_active_texture as *mut _ as *mut _,
+                );
+                gl21::ClientActiveTexture(active_texture);
+                Some(old_client_active_texture)
+            } else {
+                None
+            };
 
             let mut is_active = gl21::FALSE;
             gl21::GetBooleanv(array_info.name, &mut is_active);
@@ -445,6 +472,10 @@ impl GLES1OnGL2 {
                 gl21::VERTEX_ARRAY => gl21::VertexPointer(size, gl21::FLOAT, 0, buffer_ptr),
                 _ => unreachable!(),
             }
+
+            if let Some(old_client_active_texture) = old_client_active_texture {
+                gl21::ClientActiveTexture(old_client_active_texture);
+            }
         }
         backups
     }
@@ -467,7 +498,20 @@ impl GLES1OnGL2 {
                     gl21::NormalPointer(gl21::FLOAT, stride, pointer)
                 }
                 gl21::TEXTURE_COORD_ARRAY => {
-                    gl21::TexCoordPointer(size.unwrap(), gl21::FLOAT, stride, pointer)
+                    let mut active_texture: GLenum = 0;
+                    gl21::GetIntegerv(
+                        gl21::ACTIVE_TEXTURE,
+                        &mut active_texture as *mut _ as *mut _,
+                    );
+                    assert!(self.fixed_point_texture_units.contains(&active_texture));
+                    let mut old_client_active_texture: GLenum = 0;
+                    gl21::GetIntegerv(
+                        gl21::CLIENT_ACTIVE_TEXTURE,
+                        &mut old_client_active_texture as *mut _ as *mut _,
+                    );
+                    gl21::ClientActiveTexture(active_texture);
+                    gl21::TexCoordPointer(size.unwrap(), gl21::FLOAT, stride, pointer);
+                    gl21::ClientActiveTexture(old_client_active_texture)
                 }
                 gl21::VERTEX_ARRAY => {
                     gl21::VertexPointer(size.unwrap(), gl21::FLOAT, stride, pointer)
@@ -486,6 +530,7 @@ impl GLES for GLES1OnGL2 {
         Ok(Self {
             gl_ctx: window.create_gl_context(GLVersion::GL21Compat)?,
             pointer_is_fixed_point: [false; ARRAYS.len()],
+            fixed_point_texture_units: HashSet::new(),
             fixed_point_translation_buffers: [Vec::new(), Vec::new(), Vec::new(), Vec::new()],
         })
     }
@@ -518,6 +563,9 @@ impl GLES for GLES1OnGL2 {
     unsafe fn Disable(&mut self, cap: GLenum) {
         assert!(CAPABILITIES.contains(&cap));
         gl21::Disable(cap);
+    }
+    unsafe fn ClientActiveTexture(&mut self, texture: GLenum) {
+        gl21::ClientActiveTexture(texture);
     }
     unsafe fn EnableClientState(&mut self, array: GLenum) {
         assert!(ARRAYS.iter().any(|&ArrayInfo { name, .. }| name == array));
@@ -804,13 +852,21 @@ impl GLES for GLES1OnGL2 {
         pointer: *const GLvoid,
     ) {
         assert!(size == 2 || size == 3 || size == 4);
+        let mut active_texture: GLenum = 0;
+        gl21::GetIntegerv(
+            gl21::CLIENT_ACTIVE_TEXTURE,
+            &mut active_texture as *mut _ as *mut _,
+        );
         if type_ == gles11::FIXED {
-            // Translation deferred until draw call
+            // Translation deferred until draw call.
+            // There is one texture co-ordinates pointer per texture unit.
+            self.fixed_point_texture_units.insert(active_texture);
             self.pointer_is_fixed_point[2] = true;
             gl21::TexCoordPointer(size, gl21::FLOAT, stride, pointer)
         } else {
             // TODO: byte
             assert!(type_ == gl21::SHORT || type_ == gl21::FLOAT);
+            self.fixed_point_texture_units.remove(&active_texture);
             self.pointer_is_fixed_point[2] = false;
             gl21::TexCoordPointer(size, type_, stride, pointer)
         }

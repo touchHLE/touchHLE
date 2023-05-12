@@ -69,16 +69,23 @@ int test_sscanf() {
 
 int test_errno() { return (errno == 0) ? 0 : -1; }
 
+int test_realloc() {
+  void *ptr = realloc(NULL, 32);
+  memmove(ptr, "abcd", 4);
+  ptr = realloc(ptr, 64);
+  int res = memcmp(ptr, "abcd", 4);
+  free(ptr);
+  return res == 0 ? 0 : -1;
+}
+
 #define FUNC_DEF(func)                                                         \
   { &func, #func }
 struct {
   int (*func)();
   const char *name;
 } test_func_array[] = {
-    FUNC_DEF(test_qsort),
-    FUNC_DEF(test_vsnprintf),
-    FUNC_DEF(test_sscanf),
-    FUNC_DEF(test_errno),
+    FUNC_DEF(test_qsort), FUNC_DEF(test_vsnprintf), FUNC_DEF(test_sscanf),
+    FUNC_DEF(test_errno), FUNC_DEF(test_realloc),
 };
 
 int main(int argc, char *argv[]) {

@@ -95,9 +95,10 @@ impl ParamTable {
         // Yes, the OpenGL standard lets you mismatch types. Yes, it requires
         // an implicit conversion. Yes, it requires no scaling of fixed-point
         // values when converting to integer. :(
+        // On the other hand, fixed-to-float/float-to-fixed conversion is always
+        // the same even for the weird float-ish values.
         match type_ {
-            ParamType::Float => setf(fixed_to_float(param)),
-            ParamType::FloatSpecial => todo!(),
+            ParamType::Float | ParamType::FloatSpecial => setf(fixed_to_float(param)),
             _ => seti(param),
         }
     }
@@ -120,7 +121,9 @@ impl ParamTable {
         let (type_, count) = self.get_type_info(pname);
         // Yes, the OpenGL standard is like this (see above).
         match type_ {
-            ParamType::Float => {
+            // Fixed-to-float/float-to-fixed conversion is always the same even
+            // for the weird float-ish values.
+            ParamType::Float | ParamType::FloatSpecial => {
                 let mut params_float = [0.0; 16]; // probably the max?
                 let params_float = &mut params_float[..usize::from(count)];
                 for (i, param_float) in params_float.iter_mut().enumerate() {
@@ -128,7 +131,6 @@ impl ParamTable {
                 }
                 setfv(params_float.as_ptr())
             }
-            ParamType::FloatSpecial => todo!(),
             _ => setiv(params),
         }
     }

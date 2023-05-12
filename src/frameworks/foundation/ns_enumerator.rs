@@ -6,10 +6,10 @@
 //! `NSEnumerator` and helpers for the `NSFastEnumeration` protocol.
 //!
 //! The protocol is just:
-//! ```
+//! ```objc
 //! - (NSUInteger)countByEnumeratingWithState:(NSFastEnumerationState*)state
 //!                                   objects:(id)stackbuf
-//!                                     count:(NSUInteger)len
+//!                                     count:(NSUInteger)len;
 //! ```
 //!
 //! Resources:

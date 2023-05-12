@@ -184,7 +184,7 @@ macro_rules! _objc_method {
 /// Macro for creating a list of [ClassTemplate]s (i.e. [ClassExports]).
 /// It imitates the Objective-C class definition syntax.
 ///
-/// ```rust
+/// ```ignore
 /// pub const CLASSES: ClassExports = objc_classes! {
 /// (env, this, _cmd); // Specify names of HostIMP implicit parameters.
 ///                    // The second one should be `self` to match Objective-C,
@@ -210,7 +210,7 @@ macro_rules! _objc_method {
 ///
 /// will desugar to approximately:
 ///
-/// ```rust
+/// ```ignore
 /// pub const CLASSES: ClassExports = &[
 ///     ("MyClass", ClassTemplate {
 ///         name: "MyClass",

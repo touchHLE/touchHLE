@@ -601,7 +601,13 @@ impl GLES for GLES1OnGL2 {
         .contains(&dfactor));
         gl21::BlendFunc(sfactor, dfactor);
     }
-    unsafe fn ColorMask(&mut self, red: GLboolean, green: GLboolean, blue: GLboolean, alpha: GLboolean) {
+    unsafe fn ColorMask(
+        &mut self,
+        red: GLboolean,
+        green: GLboolean,
+        blue: GLboolean,
+        alpha: GLboolean,
+    ) {
         gl21::ColorMask(red, green, blue, alpha)
     }
     unsafe fn CullFace(&mut self, mode: GLenum) {

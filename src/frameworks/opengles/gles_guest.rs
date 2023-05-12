@@ -118,7 +118,13 @@ fn glBlendFunc(env: &mut Environment, sfactor: GLenum, dfactor: GLenum) {
         gles.BlendFunc(sfactor, dfactor)
     })
 }
-fn glColorMask(env: &mut Environment, red: GLboolean, green: GLboolean, blue: GLboolean, alpha: GLboolean) {
+fn glColorMask(
+    env: &mut Environment,
+    red: GLboolean,
+    green: GLboolean,
+    blue: GLboolean,
+    alpha: GLboolean,
+) {
     with_ctx_and_mem(env, |gles, _mem| unsafe {
         gles.ColorMask(red, green, blue, alpha)
     })

@@ -867,7 +867,9 @@ impl GLES for GLES1OnGL2 {
             // TODO: byte
             assert!(type_ == gl21::SHORT || type_ == gl21::FLOAT);
             self.fixed_point_texture_units.remove(&active_texture);
-            self.pointer_is_fixed_point[2] = false;
+            if self.fixed_point_texture_units.is_empty() {
+                self.pointer_is_fixed_point[2] = false;
+            }
             gl21::TexCoordPointer(size, type_, stride, pointer)
         }
     }

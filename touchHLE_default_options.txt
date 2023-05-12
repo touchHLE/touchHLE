@@ -26,6 +26,7 @@
 #   a few seconds during startup.
 # - The scale hack is not exactly faithful to the original experience, and there
 #   is no scale factor that works for everyone, so it shouldn't be used here.
+# - Using --button-to-touch= is a convenience, not a necessity.
 
 # Super Monkey Ball and Super Monkey Ball Lite
 com.ooi.supermonkeyball: --landscape-left --y-tilt-offset=24
@@ -36,3 +37,7 @@ com.vgmobile.cnk2: --landscape-left
 
 # Mystery Mania
 com.ea.mysterymania.inc: --landscape-left
+
+# Fastlane Street Racing
+# A = accelerate, B = brake
+com.atodab.actane: --landscape-left --button-to-touch=A,430,300 --button-to-touch=B,30,300

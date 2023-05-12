@@ -87,9 +87,10 @@ Game controller options:
         For example, --button-to-touch=A,470,310 will make the A button simulate
         tapping in the bottom-right corner of the screen, for a landscape game.
 
-        This is not used by default. There is however a virtual cursor that is
-        controlled by the right analog stick (tap/hold by pressing the stick or
-        right shoulder button).
+        Except where specified in touchHLE_default_options.txt, this is not used
+        by default. There is however a virtual cursor that is controlled by the
+        right analog stick (tap/hold by pressing the stick or right shoulder
+        button).
 
 Graphics driver options:
     --gles1=...

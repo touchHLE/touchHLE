@@ -209,14 +209,15 @@ fn bsearch(
     while len > 0 {
         let half_len = len / 2;
         let item: ConstVoidPtr = (items.cast::<u8>() + item_size * (low + half_len)).cast();
-        let cmp_result: i32 = compare_callback.call_from_host(env, (item, key));
+        // key must be first argument
+        let cmp_result: i32 = compare_callback.call_from_host(env, (key, item));
         (low, len) = match cmp_result.signum() {
             0 => {
                 log_dbg!("=> {:?}", item);
                 return item;
             }
-            -1 => (low + half_len + 1, len - half_len - 1),
-            1 => (low, half_len),
+            1 => (low + half_len + 1, len - half_len - 1),
+            -1 => (low, half_len),
             _ => unreachable!(),
         }
     }

@@ -72,6 +72,10 @@ pub trait GLES {
     unsafe fn Viewport(&mut self, x: GLint, y: GLint, width: GLsizei, height: GLsizei);
 
     // Lighting and materials
+    unsafe fn Fogf(&mut self, pname: GLenum, param: GLfloat);
+    unsafe fn Fogx(&mut self, pname: GLenum, param: GLfixed);
+    unsafe fn Fogfv(&mut self, pname: GLenum, params: *const GLfloat);
+    unsafe fn Fogxv(&mut self, pname: GLenum, params: *const GLfixed);
     unsafe fn Lightf(&mut self, light: GLenum, pname: GLenum, param: GLfloat);
     unsafe fn Lightx(&mut self, light: GLenum, pname: GLenum, param: GLfixed);
     unsafe fn Lightfv(&mut self, light: GLenum, pname: GLenum, params: *const GLfloat);

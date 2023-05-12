@@ -270,6 +270,17 @@ const GET_PARAMS: ParamTable = ParamTable(&[
     (gl21::MAX_TEXTURE_LOD_BIAS_EXT, ParamType::Float, 1),
 ]);
 
+/// Table of `glFog` parameters shared by OpenGL ES 1.1 and OpenGL 2.1.
+const FOG_PARAMS: ParamTable = ParamTable(&[
+    // Despite only having f, fv, x and xv setters in OpenGL ES 1.1, this is
+    // an integer! (You're meant to use the x/xv setter.)
+    (gl21::FOG_MODE, ParamType::Int, 1),
+    (gl21::FOG_DENSITY, ParamType::Float, 1),
+    (gl21::FOG_START, ParamType::Float, 1),
+    (gl21::FOG_END, ParamType::Float, 1),
+    (gl21::FOG_COLOR, ParamType::FloatSpecial, 4), // TODO correct type
+]);
+
 /// Table of `glLight` parameters shared by OpenGL ES 1.1 and OpenGL 2.1.
 const LIGHT_PARAMS: ParamTable = ParamTable(&[
     (gl21::AMBIENT, ParamType::Float, 4),
@@ -653,6 +664,30 @@ impl GLES for GLES1OnGL2 {
     }
 
     // Lighting and materials
+    unsafe fn Fogf(&mut self, pname: GLenum, param: GLfloat) {
+        FOG_PARAMS.assert_component_count(pname, 1);
+        gl21::Fogf(pname, param);
+    }
+    unsafe fn Fogx(&mut self, pname: GLenum, param: GLfixed) {
+        FOG_PARAMS.setx(
+            |param| gl21::Fogf(pname, param),
+            |param| gl21::Fogi(pname, param),
+            pname,
+            param,
+        )
+    }
+    unsafe fn Fogfv(&mut self, pname: GLenum, params: *const GLfloat) {
+        FOG_PARAMS.assert_known_param(pname);
+        gl21::Fogfv(pname, params);
+    }
+    unsafe fn Fogxv(&mut self, pname: GLenum, params: *const GLfixed) {
+        FOG_PARAMS.setxv(
+            |params| gl21::Fogfv(pname, params),
+            |params| gl21::Fogiv(pname, params),
+            pname,
+            params,
+        )
+    }
     unsafe fn Lightf(&mut self, light: GLenum, pname: GLenum, param: GLfloat) {
         LIGHT_PARAMS.assert_component_count(pname, 1);
         gl21::Lightf(light, pname, param);

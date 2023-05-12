@@ -134,6 +134,18 @@ impl GLES for GLES1Native {
     }
 
     // Lighting and materials
+    unsafe fn Fogf(&mut self, pname: GLenum, param: GLfloat) {
+        gles11::Fogf(pname, param)
+    }
+    unsafe fn Fogx(&mut self, pname: GLenum, param: GLfixed) {
+        gles11::Fogx(pname, param)
+    }
+    unsafe fn Fogfv(&mut self, pname: GLenum, params: *const GLfloat) {
+        gles11::Fogfv(pname, params)
+    }
+    unsafe fn Fogxv(&mut self, pname: GLenum, params: *const GLfixed) {
+        gles11::Fogxv(pname, params)
+    }
     unsafe fn Lightf(&mut self, light: GLenum, pname: GLenum, param: GLfloat) {
         gles11::Lightf(light, pname, param)
     }

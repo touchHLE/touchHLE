@@ -172,6 +172,24 @@ fn glViewport(env: &mut Environment, x: GLint, y: GLint, width: GLsizei, height:
 }
 
 // Lighting and materials
+fn glFogf(env: &mut Environment, pname: GLenum, param: GLfloat) {
+    with_ctx_and_mem(env, |gles, _mem| unsafe { gles.Fogf(pname, param) })
+}
+fn glFogx(env: &mut Environment, pname: GLenum, param: GLfixed) {
+    with_ctx_and_mem(env, |gles, _mem| unsafe { gles.Fogx(pname, param) })
+}
+fn glFogfv(env: &mut Environment, pname: GLenum, params: ConstPtr<GLfloat>) {
+    with_ctx_and_mem(env, |gles, mem| {
+        let params = mem.ptr_at(params, 4 /* upper bound */);
+        unsafe { gles.Fogfv(pname, params) }
+    })
+}
+fn glFogxv(env: &mut Environment, pname: GLenum, params: ConstPtr<GLfixed>) {
+    with_ctx_and_mem(env, |gles, mem| {
+        let params = mem.ptr_at(params, 4 /* upper bound */);
+        unsafe { gles.Fogxv(pname, params) }
+    })
+}
 fn glLightf(env: &mut Environment, light: GLenum, pname: GLenum, param: GLfloat) {
     with_ctx_and_mem(env, |gles, _mem| unsafe {
         gles.Lightf(light, pname, param)
@@ -792,6 +810,10 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(glScissor(_, _, _, _)),
     export_c_func!(glViewport(_, _, _, _)),
     // Lighting and materials
+    export_c_func!(glFogf(_, _)),
+    export_c_func!(glFogx(_, _)),
+    export_c_func!(glFogfv(_, _)),
+    export_c_func!(glFogxv(_, _)),
     export_c_func!(glLightf(_, _, _)),
     export_c_func!(glLightx(_, _, _)),
     export_c_func!(glLightfv(_, _, _)),

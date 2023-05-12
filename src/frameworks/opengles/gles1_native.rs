@@ -96,6 +96,9 @@ impl GLES for GLES1Native {
     unsafe fn BlendFunc(&mut self, sfactor: GLenum, dfactor: GLenum) {
         gles11::BlendFunc(sfactor, dfactor)
     }
+    unsafe fn ColorMask(&mut self, red: GLboolean, green: GLboolean, blue: GLboolean, alpha: GLboolean) {
+        gles11::ColorMask(red, green, blue, alpha)
+    }
     unsafe fn CullFace(&mut self, mode: GLenum) {
         gles11::CullFace(mode)
     }

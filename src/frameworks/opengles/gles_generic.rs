@@ -54,6 +54,7 @@ pub trait GLES {
     unsafe fn AlphaFunc(&mut self, func: GLenum, ref_: GLclampf);
     unsafe fn AlphaFuncx(&mut self, func: GLenum, ref_: GLclampx);
     unsafe fn BlendFunc(&mut self, sfactor: GLenum, dfactor: GLenum);
+    unsafe fn ColorMask(&mut self, red: GLboolean, green: GLboolean, blue: GLboolean, alpha: GLboolean);
     unsafe fn CullFace(&mut self, mode: GLenum);
     unsafe fn DepthFunc(&mut self, func: GLenum);
     unsafe fn DepthMask(&mut self, flag: GLboolean);

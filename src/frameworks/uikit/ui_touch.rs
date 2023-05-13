@@ -7,13 +7,18 @@
 
 use super::ui_event;
 use crate::frameworks::core_graphics::{CGFloat, CGPoint, CGRect};
-use crate::frameworks::foundation::{NSTimeInterval, NSUInteger};
+use crate::frameworks::foundation::{NSInteger, NSTimeInterval, NSUInteger};
 use crate::objc::{
     autorelease, id, msg, msg_class, nil, objc_classes, release, retain, ClassExports, HostObject,
     NSZonePtr,
 };
 use crate::window::Event;
 use crate::Environment;
+
+pub type UITouchPhase = NSInteger;
+pub const UITouchPhaseBegan: UITouchPhase = 0;
+pub const UITouchPhaseMoved: UITouchPhase = 1;
+pub const UITouchPhaseEnded: UITouchPhase = 3;
 
 #[derive(Default)]
 pub struct State {
@@ -28,6 +33,7 @@ struct UITouchHostObject {
     /// Relative to screen
     previous_location: CGPoint,
     timestamp: NSTimeInterval,
+    phase: UITouchPhase,
 }
 impl HostObject for UITouchHostObject {}
 
@@ -43,6 +49,7 @@ pub const CLASSES: ClassExports = objc_classes! {
         location: CGPoint { x: 0.0, y: 0.0 },
         previous_location: CGPoint { x: 0.0, y: 0.0 },
         timestamp: 0.0,
+        phase: UITouchPhaseBegan,
     });
     env.objc.alloc_object(this, host_object, &mut env.mem)
 }
@@ -84,6 +91,10 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 - (NSUInteger)tapCount {
     1 // TODO: support double-taps etc
+}
+
+- (UITouchPhase)phase {
+    env.objc.borrow::<UITouchHostObject>(this).phase
 }
 
 @end
@@ -177,6 +188,7 @@ pub fn handle_event(env: &mut Environment, event: Event) {
                 location,
                 previous_location: location,
                 timestamp,
+                phase: UITouchPhaseBegan,
             };
             autorelease(env, new_touch);
 
@@ -217,6 +229,7 @@ pub fn handle_event(env: &mut Environment, event: Event) {
             host_object.previous_location = host_object.location;
             host_object.location = location;
             host_object.timestamp = timestamp;
+            host_object.phase = UITouchPhaseMoved;
 
             let pool: id = msg_class![env; NSAutoreleasePool new];
 
@@ -254,6 +267,7 @@ pub fn handle_event(env: &mut Environment, event: Event) {
             host_object.previous_location = host_object.location;
             host_object.location = location;
             host_object.timestamp = timestamp;
+            host_object.phase = UITouchPhaseEnded;
 
             let pool: id = msg_class![env; NSAutoreleasePool new];
 

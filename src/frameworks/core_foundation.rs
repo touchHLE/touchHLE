@@ -19,12 +19,42 @@
 pub mod cf_allocator;
 pub mod cf_array;
 pub mod cf_bundle;
+pub mod cf_data;
 pub mod cf_run_loop;
 pub mod cf_string;
 pub mod cf_type;
 pub mod cf_url;
 pub mod time;
 
+pub use cf_data::CFDataRef;
 pub use cf_type::{CFRelease, CFRetain, CFTypeRef};
 
 pub type CFIndex = i32;
+
+use crate::abi::GuestArg;
+use crate::impl_GuestRet_for_large_struct;
+use crate::mem::SafeRead;
+
+#[derive(Copy, Clone, Debug)]
+#[repr(C, packed)]
+pub struct CFRange {
+    pub location: CFIndex,
+    pub length: CFIndex,
+}
+
+unsafe impl SafeRead for CFRange {}
+impl_GuestRet_for_large_struct!(CFRange);
+impl GuestArg for CFRange {
+    const REG_COUNT: usize = 2;
+
+    fn from_regs(regs: &[u32]) -> Self {
+        CFRange {
+            location: GuestArg::from_regs(&regs[0..1]),
+            length: GuestArg::from_regs(&regs[1..2]),
+        }
+    }
+    fn to_regs(self, regs: &mut [u32]) {
+        self.location.to_regs(&mut regs[0..1]);
+        self.length.to_regs(&mut regs[1..2]);
+    }
+}

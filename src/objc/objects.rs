@@ -20,7 +20,8 @@
 //!
 //! See also: [crate::frameworks::foundation::ns_object].
 
-use super::{Class, ClassHostObject};
+use super::{Class, ClassHostObject, ObjC};
+use crate::environment::Environment;
 use crate::mem::{guest_size_of, GuestUSize, Mem, MutPtr, Ptr, SafeRead};
 use std::any::Any;
 use std::num::NonZeroU32;
@@ -258,4 +259,31 @@ impl super::ObjC {
 
         mem.free(object.cast());
     }
+}
+
+/// Checks if an instance of the provided class responds to a selector (has a method in it's class
+/// chain) with the given name.
+///
+/// Note that this only checks instances of the class, not the class itself.
+/// This means that class methods of the provided class are not checked, only instance methods.
+pub fn instances_respond_to_selector(
+    env: &mut Environment,
+    isa: Class,
+    selector_name: &str,
+) -> bool {
+    if let Some(sel) = env.objc.lookup_selector(selector_name) {
+        if env.objc.class_has_method(isa, sel) {
+            return true;
+        }
+    }
+    false
+}
+/// Checks if an instance of the provided object responds to a selector (has a method in it's class
+/// chain) with the given name.
+///
+/// Note that this checks methods of the provided instance/class itself, and not any of it's instances
+/// (if it is a class). Passing in a class will check for class methods, but not instance methods.
+pub fn responds_to_selector(env: &mut Environment, obj: id, selector_name: &str) -> bool {
+    let isa = ObjC::read_isa(obj, &env.mem);
+    instances_respond_to_selector(env, isa, selector_name)
 }

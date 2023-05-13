@@ -11,7 +11,8 @@ use crate::frameworks::foundation::ns_string;
 use crate::frameworks::uikit::ui_nib::load_main_nib_file;
 use crate::mem::MutPtr;
 use crate::objc::{
-    id, msg, msg_class, nil, objc_classes, release, retain, ClassExports, HostObject, NSZonePtr,
+    id, msg, msg_class, nil, objc_classes, release, responds_to_selector, retain, ClassExports,
+    HostObject, NSZonePtr,
 };
 use crate::window::DeviceOrientation;
 use crate::Environment;
@@ -182,19 +183,13 @@ pub(super) fn UIApplicationMain(
         let delegate: id = msg![env; ui_application delegate];
         // IOS 3+ apps usually use application:didFinishLaunchingWithOptions:, and it
         // seems to be prioritized over applicationDidFinishLaunching:.
-        match env
-            .objc
-            .lookup_selector("application:didFinishLaunchingWithOptions:")
-        {
-            Some(launch_with_options) if msg![env; delegate respondsToSelector:launch_with_options] =>
-            {
-                let empty_dict: id = msg_class![env; NSDictionary dictionary];
-                () = msg![env; delegate application:ui_application didFinishLaunchingWithOptions:empty_dict];
-            }
-            _ => {
-                () = msg![env; delegate applicationDidFinishLaunching:ui_application];
-            }
+        if responds_to_selector(env, delegate, "application:didFinishLaunchingWithOptions:") {
+            let empty_dict: id = msg_class![env; NSDictionary dictionary];
+            () = msg![env; delegate application:ui_application didFinishLaunchingWithOptions:empty_dict];
+        } else {
+            () = msg![env; delegate applicationDidFinishLaunching:ui_application];
         }
+
         let _: () = msg![env; pool drain];
     }
 

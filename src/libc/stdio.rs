@@ -135,7 +135,6 @@ fn puts(env: &mut Environment, s: ConstPtr<u8>) -> i32 {
 }
 
 fn putchar(_env: &mut Environment, c: u8) -> i32 {
-
     let _ = std::io::stdout().write(slice::from_ref(&c));
     0
 }

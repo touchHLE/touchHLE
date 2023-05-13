@@ -8,16 +8,17 @@
 use crate::{
     dyld::FunctionExports,
     environment::Environment,
-    export_c_func, msg_class,
-    objc::{class_getName, id, nil},
+    export_c_func,
+    frameworks::foundation::ns_string,
+    objc::{class_getName_inner, id, nil},
 };
 
 pub(super) fn NSStringFromClass(env: &mut Environment, class: id) -> id {
     if class == nil {
         return nil;
     }
-    let class_name = class_getName(env, class);
-    msg_class![env; NSString stringWithUTF8String:class_name] //Already autoreleased
+    let class_string = class_getName_inner(&mut env.objc, class).to_string();
+    ns_string::from_rust_string(env, class_string)
 }
 
 pub const FUNCTIONS: FunctionExports = &[export_c_func!(NSStringFromClass(_))];

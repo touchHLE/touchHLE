@@ -677,9 +677,28 @@ impl ObjC {
     }
 }
 
-pub fn class_getName(env: &mut Environment, class: id) -> ConstPtr<u8> {
-    let class_ptr: ConstPtr<class_t> = ConstPtr::from_bits(class.to_bits());
-    let class_data: class_t = env.mem.read(class_ptr);
-    let class_name: ConstPtr<u8> = env.mem.read(class_data.data).name;
-    class_name
+pub fn class_getName(env: &mut Environment, class: Class) -> ConstPtr<u8> {
+    let class_name = class_getName_inner(&mut env.objc, class);
+    env.mem
+        .alloc_and_write_cstr(class_name.as_bytes())
+        .cast_const()
+}
+
+/// Internal method that gets class name as a &str.
+pub fn class_getName_inner(objc: &mut ObjC, class: Class) -> &str {
+    if class == nil {
+        "nil"
+    } else if let Some(host_object) = objc.get_host_object(class).map(|obj| obj.as_any()) {
+        if let Some(ClassHostObject { ref name, .. }) = host_object.downcast_ref() {
+            name
+        } else if let Some(UnimplementedClass { ref name, .. }) = host_object.downcast_ref() {
+            name
+        } else if let Some(FakeClass { ref name, .. }) = host_object.downcast_ref() {
+            name
+        } else {
+            panic!("class_getName called on non-class object!");
+        }
+    } else {
+        panic!("class_getName called on non-object!");
+    }
 }

@@ -249,8 +249,9 @@ fn sscanf(env: &mut Environment, src: ConstPtr<u8>, format: ConstPtr<u8>, args: 
         }
         if c != b'%' {
             let cc = env.mem.read(src_ptr);
-            // TODO: handle mismatch with function fail and return
-            assert_eq!(c, cc);
+            if c != cc {
+                return matched_args - 1;
+            }
             src_ptr += 1;
             continue;
         }

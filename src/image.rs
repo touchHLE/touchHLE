@@ -44,6 +44,19 @@ impl Image {
             return Err(reason.to_str().unwrap().to_string());
         }
 
+        // Premultiply pixels
+        let pixels = unsafe {
+            let pixels = std::slice::from_raw_parts_mut(pixels, len as usize);
+            for pixel in pixels.chunks_exact_mut(4) {
+                let [r, g, b, a]: [u8; 4] = pixel.try_into().unwrap();
+                let a = a as f32 / 255.0;
+                pixel[0] = (r as f32 * a).round() as u8;
+                pixel[1] = (g as f32 * a).round() as u8;
+                pixel[2] = (b as f32 * a).round() as u8;
+            }
+            pixels.as_mut_ptr()
+        };
+
         let width: u32 = x.try_into().unwrap();
         let height: u32 = y.try_into().unwrap();
 

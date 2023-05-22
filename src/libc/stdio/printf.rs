@@ -110,6 +110,18 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
                 let description = ns_string::to_rust_string(env, description);
                 write!(&mut res, "{}", description).unwrap();
             }
+            b'x' => {
+                let uint: u32 = args.next(env);
+                if pad_width > 0 {
+                    if pad_char == '0' {
+                        write!(&mut res, "{:01$x}", uint, pad_width).unwrap();
+                    } else {
+                        write!(&mut res, "{:1$x}", uint, pad_width).unwrap();
+                    }
+                } else {
+                    write!(&mut res, "{:x}", uint).unwrap();
+                }
+            }
             // TODO: more specifiers
             _ => unimplemented!("Format character '{}'", specifier as char),
         }
@@ -118,6 +130,30 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
     log_dbg!("=> {:?}", std::str::from_utf8(&res));
 
     res
+}
+
+fn vsnprintf(env: &mut Environment, dest: MutPtr<u8>, n: GuestUSize, format: ConstPtr<u8>, args: VAList) -> i32 {
+    log_dbg!(
+        "vsnprintf({:?}, {:?} ({:?}), ...)",
+        dest,
+        format,
+        env.mem.cstr_at_utf8(format)
+    );
+
+    println!("vsnprintf({:?}, {:?} ({:?}), ..., [{:?}])", dest, format, env.mem.cstr_at_utf8(format), args);
+
+    let res = printf_inner::<false, _>(env, |mem, idx| mem.read(format + idx), args);
+
+    let dest_slice = env
+        .mem
+        .bytes_at_mut(dest, (res.len() + 1).try_into().unwrap());
+    for (i, &byte) in res.iter().chain(b"\0".iter()).enumerate() {
+        dest_slice[i] = byte;
+    }
+
+    println!("=> {:?}", std::str::from_utf8(&res));
+
+    res.len().try_into().unwrap()
 }
 
 fn sprintf(env: &mut Environment, dest: MutPtr<u8>, format: ConstPtr<u8>, args: VAList) -> i32 {
@@ -156,6 +192,7 @@ fn printf(env: &mut Environment, format: ConstPtr<u8>, args: VAList) -> i32 {
 // TODO: more printf variants
 
 pub const FUNCTIONS: FunctionExports = &[
+    export_c_func!(vsnprintf(_, _, _, _)),
     export_c_func!(sprintf(_, _, _)),
     export_c_func!(printf(_, _)),
 ];

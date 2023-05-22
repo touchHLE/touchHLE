@@ -7,6 +7,7 @@
 
 use crate::frameworks::opengles::GLESImplementation;
 use crate::window::DeviceOrientation;
+use std::collections::HashMap;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::net::{SocketAddr, ToSocketAddrs};
@@ -14,6 +15,15 @@ use std::num::NonZeroU32;
 
 pub const DOCUMENTATION: &str =
     include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/OPTIONS_HELP.txt"));
+
+/// Game controller button for `--button-to-touch=` option.
+#[derive(Hash, PartialEq, Eq)]
+pub enum Button {
+    A,
+    B,
+    X,
+    Y,
+}
 
 /// Struct containing all user-configurable options.
 pub struct Options {
@@ -25,6 +35,7 @@ pub struct Options {
     pub y_tilt_range: f32,
     pub x_tilt_offset: f32,
     pub y_tilt_offset: f32,
+    pub button_to_touch: HashMap<Button, (f32, f32)>,
     pub gles1_implementation: Option<GLESImplementation>,
     pub direct_memory_access: bool,
     pub gdb_listen_addrs: Option<Vec<SocketAddr>>,
@@ -41,6 +52,7 @@ impl Default for Options {
             y_tilt_range: 60.0,
             x_tilt_offset: 0.0,
             y_tilt_offset: 0.0,
+            button_to_touch: HashMap::new(),
             gles1_implementation: None,
             direct_memory_access: true,
             gdb_listen_addrs: None,
@@ -83,6 +95,27 @@ impl Options {
             self.x_tilt_offset = parse_degrees(value, "X tilt offset")?;
         } else if let Some(value) = arg.strip_prefix("--y-tilt-offset=") {
             self.y_tilt_offset = parse_degrees(value, "Y tilt offset")?;
+        } else if let Some(values) = arg.strip_prefix("--button-to-touch=") {
+            let (button, coords) = values
+                .split_once(',')
+                .ok_or_else(|| "--button-to-touch= requires three values".to_string())?;
+            let (x, y) = coords
+                .split_once(',')
+                .ok_or_else(|| "--button-to-touch= requires three values".to_string())?;
+            let button = match button {
+                "A" => Ok(Button::A),
+                "B" => Ok(Button::B),
+                "X" => Ok(Button::X),
+                "Y" => Ok(Button::Y),
+                _ => Err("Invalid button for --button-to-touch=".to_string()),
+            }?;
+            let x: f32 = x
+                .parse()
+                .map_err(|_| "Invalid X co-ordinate for --button-to-touch=".to_string())?;
+            let y: f32 = y
+                .parse()
+                .map_err(|_| "Invalid Y co-ordinate for --button-to-touch=".to_string())?;
+            self.button_to_touch.insert(button, (x, y));
         } else if let Some(value) = arg.strip_prefix("--gles1=") {
             self.gles1_implementation = Some(
                 GLESImplementation::from_short_name(value)

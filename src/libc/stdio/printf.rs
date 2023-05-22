@@ -5,7 +5,7 @@
  */
 //! `printf` function family. The implementation is also used by `NSLog` etc.
 
-use crate::abi::VAList;
+use crate::abi::{DotDotDot, VaList};
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::frameworks::foundation::ns_string;
 use crate::mem::{ConstPtr, GuestUSize, Mem, MutPtr};
@@ -23,7 +23,7 @@ use std::io::Write;
 pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
     env: &mut Environment,
     get_format_char: F,
-    mut args: VAList,
+    mut args: VaList,
 ) -> Vec<u8> {
     let mut res = Vec::<u8>::new();
 
@@ -66,6 +66,11 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
         }
 
         match specifier {
+            b'c' => {
+                let c: u8 = args.next(env);
+                assert!(pad_char == ' ' && pad_width == 0); // TODO
+                res.push(c);
+            }
             b's' => {
                 let c_string: ConstPtr<u8> = args.next(env);
                 assert!(pad_char == ' ' && pad_width == 0); // TODO
@@ -132,17 +137,44 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
     res
 }
 
-fn vsnprintf(env: &mut Environment, dest: MutPtr<u8>, n: GuestUSize, format: ConstPtr<u8>, args: VAList) -> i32 {
+fn vsnprintf(
+    env: &mut Environment,
+    dest: MutPtr<u8>,
+    n: GuestUSize,
+    format: ConstPtr<u8>,
+    arg: VaList,
+) -> i32 {
     log_dbg!(
-        "vsnprintf({:?}, {:?} ({:?}), ...)",
+        "vsnprintf({:?} {:?} {:?})",
         dest,
         format,
         env.mem.cstr_at_utf8(format)
     );
 
-    println!("vsnprintf({:?}, {:?} ({:?}), ..., [{:?}])", dest, format, env.mem.cstr_at_utf8(format), args);
+    let res = printf_inner::<false, _>(env, |mem, idx| mem.read(format + idx), arg);
+    let middle = if ((n - 1) as usize) < res.len() {
+        &res[..(n - 1) as usize]
+    } else {
+        &res[..]
+    };
 
-    let res = printf_inner::<false, _>(env, |mem, idx| mem.read(format + idx), args);
+    let dest_slice = env.mem.bytes_at_mut(dest, n);
+    for (i, &byte) in middle.iter().chain(b"\0".iter()).enumerate() {
+        dest_slice[i] = byte;
+    }
+
+    res.len().try_into().unwrap()
+}
+
+fn vsprintf(env: &mut Environment, dest: MutPtr<u8>, format: ConstPtr<u8>, arg: VaList) -> i32 {
+    log_dbg!(
+        "vsprintf({:?}, {:?} ({:?}), ...)",
+        dest,
+        format,
+        env.mem.cstr_at_utf8(format)
+    );
+
+    let res = printf_inner::<false, _>(env, |mem, idx| mem.read(format + idx), arg);
 
     let dest_slice = env
         .mem
@@ -151,12 +183,10 @@ fn vsnprintf(env: &mut Environment, dest: MutPtr<u8>, n: GuestUSize, format: Con
         dest_slice[i] = byte;
     }
 
-    println!("=> {:?}", std::str::from_utf8(&res));
-
     res.len().try_into().unwrap()
 }
 
-fn sprintf(env: &mut Environment, dest: MutPtr<u8>, format: ConstPtr<u8>, args: VAList) -> i32 {
+fn sprintf(env: &mut Environment, dest: MutPtr<u8>, format: ConstPtr<u8>, args: DotDotDot) -> i32 {
     log_dbg!(
         "sprintf({:?}, {:?} ({:?}), ...)",
         dest,
@@ -164,7 +194,7 @@ fn sprintf(env: &mut Environment, dest: MutPtr<u8>, format: ConstPtr<u8>, args: 
         env.mem.cstr_at_utf8(format)
     );
 
-    let res = printf_inner::<false, _>(env, |mem, idx| mem.read(format + idx), args);
+    let res = printf_inner::<false, _>(env, |mem, idx| mem.read(format + idx), args.start());
 
     let dest_slice = env
         .mem
@@ -176,14 +206,14 @@ fn sprintf(env: &mut Environment, dest: MutPtr<u8>, format: ConstPtr<u8>, args: 
     res.len().try_into().unwrap()
 }
 
-fn printf(env: &mut Environment, format: ConstPtr<u8>, args: VAList) -> i32 {
+fn printf(env: &mut Environment, format: ConstPtr<u8>, args: DotDotDot) -> i32 {
     log_dbg!(
         "printf({:?} ({:?}), ...)",
         format,
         env.mem.cstr_at_utf8(format)
     );
 
-    let res = printf_inner::<false, _>(env, |mem, idx| mem.read(format + idx), args);
+    let res = printf_inner::<false, _>(env, |mem, idx| mem.read(format + idx), args.start());
     // TODO: I/O error handling
     let _ = std::io::stdout().write_all(&res);
     res.len().try_into().unwrap()
@@ -193,6 +223,7 @@ fn printf(env: &mut Environment, format: ConstPtr<u8>, args: VAList) -> i32 {
 
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(vsnprintf(_, _, _, _)),
+    export_c_func!(vsprintf(_, _, _)),
     export_c_func!(sprintf(_, _, _)),
     export_c_func!(printf(_, _)),
 ];

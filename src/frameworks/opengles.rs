@@ -20,12 +20,19 @@
 //! - [Specification](https://registry.khronos.org/OpenGL/specs/es/1.1/es_full_spec_1.1.pdf)
 //! - Extensions:
 //!   - [OES_framebuffer_object](https://registry.khronos.org/OpenGL/extensions/OES/OES_framebuffer_object.txt)
+//!   - [IMG_texture_compression_pvrtc](https://registry.khronos.org/OpenGL/extensions/IMG/IMG_texture_compression_pvrtc.txt)
+//!   - [OES_compressed_paletted_texture](https://registry.khronos.org/OpenGL/extensions/OES/OES_compressed_paletted_texture.txt) (also incorporated into the main spec)
 //!
 //! Useful resources for OpenGL 2.1:
 //! - [Reference pages](https://registry.khronos.org/OpenGL-Refpages/gl2.1/)
 //! - [Specification](https://registry.khronos.org/OpenGL/specs/gl/glspec21.pdf)
 //! - Extensions:
 //!   - [EXT_framebuffer_object](https://registry.khronos.org/OpenGL/extensions/EXT/EXT_framebuffer_object.txt)
+//!
+//! Useful resources for both:
+//! - Extensions:
+//!   - [EXT_texture_filter_anisotropic](https://registry.khronos.org/OpenGL/extensions/EXT/EXT_texture_filter_anisotropic.txt)
+//!   - [EXT_texture_lod_bias](https://registry.khronos.org/OpenGL/extensions/EXT/EXT_texture_lod_bias.txt)
 
 pub mod eagl;
 mod gles1_native;

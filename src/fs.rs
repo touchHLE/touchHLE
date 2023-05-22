@@ -535,6 +535,54 @@ impl Fs {
         )
     }
 
+    #[allow(dead_code)]
+    /// Get an iterator over the names of files/directories in a directory.
+    pub fn enumerate<P: AsRef<GuestPath>>(
+        &self,
+        path: P,
+    ) -> Result<impl Iterator<Item = &str>, ()> {
+        let Some(FsNode::Directory { children, .. }) = self.lookup_node(path.as_ref()) else {
+            return Err(());
+        };
+        Ok(children.keys().map(|name| name.as_str()))
+    }
+
+    /// Recursively list the paths of files/directories in a directory.
+    /// The base path (`path`) is not included in the returned paths.
+    pub fn enumerate_recursive<P: AsRef<GuestPath>>(
+        &self,
+        path: P,
+    ) -> Result<Vec<GuestPathBuf>, ()> {
+        let Some(FsNode::Directory { children, .. }) = self.lookup_node(path.as_ref()) else {
+            return Err(());
+        };
+
+        let mut paths = Vec::new();
+        let mut component_stack: Vec<&str> = Vec::new();
+        let mut iterator_stack = vec![children.iter()];
+
+        loop {
+            let current_iterator = iterator_stack.last_mut().unwrap();
+            if let Some((next_component, next_node)) = current_iterator.next() {
+                component_stack.push(next_component);
+                paths.push(GuestPathBuf::from(component_stack.join("/")));
+                if let FsNode::Directory { children, .. } = next_node {
+                    iterator_stack.push(children.iter());
+                } else {
+                    component_stack.pop();
+                }
+            } else {
+                iterator_stack.pop();
+                if component_stack.pop().is_none() {
+                    break;
+                }
+            }
+        }
+        assert!(component_stack.is_empty() && iterator_stack.is_empty());
+
+        Ok(paths)
+    }
+
     /// Like [std::fs::read] but for the guest filesystem.
     pub fn read<P: AsRef<GuestPath>>(&self, path: P) -> Result<Vec<u8>, ()> {
         let mut file = self.open(path.as_ref())?;

@@ -1,7 +1,7 @@
 //! `NSLog()`, `NSLogv()`
 
 use super::ns_string;
-use crate::abi::VAList;
+use crate::abi::DotDotDot;
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::libc::stdio::printf::printf_inner;
 use crate::objc::id;
@@ -11,7 +11,7 @@ use std::io::Write;
 fn NSLog(
     env: &mut Environment,
     format: id, // NSString
-    args: VAList,
+    args: DotDotDot,
 ) {
     // TODO: avoid copy
     let format_string = ns_string::to_rust_string(env, format);
@@ -27,7 +27,7 @@ fn NSLog(
                 format_string.as_bytes()[idx as usize]
             }
         },
-        args,
+        args.start(),
     );
     // TODO: The real NSLog also includes a process name, thread ID and
     // timestamp. Maybe we should add our own prefix.

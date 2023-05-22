@@ -19,6 +19,7 @@ Compatibility:
 
 - API support improvements:
   - Various small contributions. (@hikari-no-yume, @KiritoDv, @ciciplusplus, @TylerJaacks)
+  - PVRTC and paletted texture compression is now supported. (@hikari-no-yume)
 
 Quality:
 
@@ -45,6 +46,7 @@ Other:
   - The code for presenting rendered frames to the screen has been rewritten for compatibility with OpenGL ES 1.1. (@hikari-no-yume)
 
   Theoretically, neither of these changes should affect how touchHLE behaves for ordinary users in supported apps, but graphics drivers are inscrutable beasts, so it's hard to be certain. For example, the second change unexpectedly fixed the mysterious macOS-only memory leak! macOS users should no longer see touchHLE's memory usage constantly increase by up to 0.4MB per second.
+- The new `--button-to-touch=` option lets you map a button on your game controller to a point on the touch screen. (@hikari-no-yume)
 
 ## v0.1.2 (2023-03-07)
 

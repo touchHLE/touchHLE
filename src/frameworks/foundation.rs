@@ -19,7 +19,7 @@ pub mod ns_class;
 pub mod ns_coder;
 pub mod ns_data;
 pub mod ns_dictionary;
-pub mod ns_fast_enumeration;
+pub mod ns_enumerator;
 pub mod ns_file_manager;
 pub mod ns_keyed_unarchiver;
 pub mod ns_locale;

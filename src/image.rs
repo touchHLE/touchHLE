@@ -7,9 +7,14 @@
 //!
 //! Implemented as a wrapper around the C library stb_image, since it supports
 //! "CgBI" PNG files (an Apple proprietary extension used in iPhone OS apps).
+//!
+//! This module also exposes decompression for Imagination Technologies' PVRTC
+//! format, implementing as a wrapper around their decoder from the PowerVR
+//! SDK.
 
 use std::ffi::{c_int, c_uchar, CStr};
 
+use touchHLE_pvrt_decompress_wrapper::*;
 use touchHLE_stb_image_wrapper::*;
 
 pub struct Image {
@@ -120,4 +125,33 @@ pub fn gamma_encode(intensity: f32) -> f32 {
 pub fn gamma_decode(intensity: f32) -> f32 {
     // TODO: This doesn't implement the linear section near zero.
     intensity.powf(2.2)
+}
+
+/// Decodes Imagination Technologies' PVRTC texture compression format to
+/// RGBA (8 bits per channel).
+pub fn decode_pvrtc(pvrtc_data: &[u8], is_2bit: bool, width: u32, height: u32) -> Vec<u32> {
+    // This formula is from the IMG_texture_compression_pvrtc extension spec.
+    let expected_size = if is_2bit {
+        (width.max(16) as usize * height.max(8) as usize * 2 + 7) / 8
+    } else {
+        (width.max(8) as usize * height.max(8) as usize * 4 + 7) / 8
+    };
+    assert!(pvrtc_data.len() == expected_size);
+
+    let rgba8_word_count = width as usize * height as usize;
+    let mut rgba8_data = Vec::with_capacity(rgba8_word_count);
+    unsafe {
+        let consumed_size = touchHLE_decompress_pvrtc(
+            pvrtc_data.as_ptr() as *const _,
+            is_2bit,
+            width,
+            height,
+            // The interface says `uint8_t *` but the source seems to work with
+            // 32-bit words, so using Vec<u32> seems more appropriate.
+            rgba8_data.as_mut_ptr() as *mut u8,
+        );
+        assert_eq!(consumed_size as usize, expected_size);
+        rgba8_data.set_len(rgba8_word_count);
+    };
+    rgba8_data
 }

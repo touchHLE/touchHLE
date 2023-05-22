@@ -6,8 +6,8 @@
 //! `AudioServices.h` (Audio Services)
 
 use crate::dyld::{export_c_func, FunctionExports};
+use crate::frameworks::carbon_core::OSStatus;
 use crate::frameworks::core_audio_types::fourcc;
-use crate::frameworks::mac_types::OSStatus;
 use crate::mem::{MutPtr, MutVoidPtr};
 use crate::Environment;
 

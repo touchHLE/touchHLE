@@ -184,7 +184,7 @@ macro_rules! _objc_method {
 /// Macro for creating a list of [ClassTemplate]s (i.e. [ClassExports]).
 /// It imitates the Objective-C class definition syntax.
 ///
-/// ```rust
+/// ```ignore
 /// pub const CLASSES: ClassExports = objc_classes! {
 /// (env, this, _cmd); // Specify names of HostIMP implicit parameters.
 ///                    // The second one should be `self` to match Objective-C,
@@ -200,7 +200,7 @@ macro_rules! _objc_method {
 ///     // ...
 /// }
 ///
-/// - (id)barWithVaArgs:(u32)qux, ...va_args {
+/// - (id)barWithVaArgs:(u32)qux, ...dots {
 ///     // ...
 /// }
 ///
@@ -210,7 +210,7 @@ macro_rules! _objc_method {
 ///
 /// will desugar to approximately:
 ///
-/// ```rust
+/// ```ignore
 /// pub const CLASSES: ClassExports = &[
 ///     ("MyClass", ClassTemplate {
 ///         name: "MyClass",
@@ -224,9 +224,9 @@ macro_rules! _objc_method {
 ///             ("barWithQux:", &(|env: &mut Environment, this: id, _cmd: SEL, qux: u32| -> id {
 ///                 // ...
 ///             } as &fn(&mut Environment, id, SEL, u32) -> id)),
-///             ("barWithVaArgs:", &(|env: &mut Environment, this: id, _cmd: SEL, qux: u32, va_args: VAList| -> id {
+///             ("barWithVaArgs:", &(|env: &mut Environment, this: id, _cmd: SEL, qux: u32, va_args: DotDotDot| -> id {
 ///                 // ...
-///             } as &fn(&mut Environment, id, SEL, u32, VAList) -> id)),
+///             } as &fn(&mut Environment, id, SEL, u32, DotDotDot) -> id)),
 ///         ],
 ///     })
 /// ];
@@ -277,7 +277,7 @@ macro_rules! objc_classes {
                                     { $cm_block }
                                     $(, $cm_type1, $cm_arg1)?
                                     $(, $cm_typen, $cm_argn)*
-                                    $(, ...$cm_va_arg: $crate::abi::VAList)?
+                                    $(, ...$cm_va_arg: $crate::abi::DotDotDot)?
                                 )
                             )
                         ),*
@@ -298,7 +298,7 @@ macro_rules! objc_classes {
                                     { $im_block }
                                     $(, $im_type1, $im_arg1)?
                                     $(, $im_typen, $im_argn)*
-                                    $(, ...$im_va_arg: $crate::abi::VAList)?
+                                    $(, ...$im_va_arg: $crate::abi::DotDotDot)?
                                 )
                             )
                         ),*

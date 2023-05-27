@@ -360,9 +360,8 @@ impl Environment {
         new_thread_id
     }
 
-    /// Put the current thread to sleep for some duration.
-    /// Note that this only take effect once returning to [Self::run] or
-    /// [Self::run_call], so do this just before a host function returns.
+    /// Put the current thread to sleep for some duration, running other threads
+    /// in the meantime as appropriate.
     pub fn sleep(&mut self, duration: Duration) {
         assert!(self.threads[self.current_thread].sleeping_until.is_none());
 
@@ -373,6 +372,14 @@ impl Environment {
         );
         let until = Instant::now().checked_add(duration).unwrap();
         self.threads[self.current_thread].sleeping_until = Some(until);
+
+        let old_pc = self.cpu.pc_with_thumb_bit();
+        self.cpu.branch(self.dyld.return_to_host_routine());
+        // Since the current thread is asleep, this will only run other threads
+        // until it wakes up, at which point it signals return-to-host and
+        // control is returned to this function.
+        self.run_call();
+        self.cpu.branch(old_pc);
     }
 
     /// Run the emulator. This is the main loop and won't return until app exit.
@@ -503,13 +510,7 @@ impl Environment {
                     self.threads[self.current_thread].in_host_function = true;
                     f.call_from_guest(self);
                     self.threads[self.current_thread].in_host_function = was_in_host_function;
-                    // Host function might have put the thread to sleep.
-                    if self.threads[self.current_thread].sleeping_until.is_some() {
-                        log_dbg!("Yielding: thread {} is asleep.", self.current_thread);
-                        ThreadNextAction::Yield
-                    } else {
-                        ThreadNextAction::Continue
-                    }
+                    ThreadNextAction::Continue
                 } else {
                     self.cpu.regs_mut()[cpu::Cpu::PC] = svc_pc;
                     ThreadNextAction::Continue
@@ -531,7 +532,14 @@ impl Environment {
             // 100,000 ticks is an arbitrary number.
             self.window.poll_for_events(&self.options);
 
-            let mut ticks = 100_000;
+            let mut ticks = if self.threads[self.current_thread].sleeping_until.is_some() {
+                // The current thread might be asleep, in which case we want to
+                // immediately switch to another thread. This only happens when
+                // called from Self::sleep().
+                0
+            } else {
+                100_000
+            };
             let mut step_and_debug = false;
             while ticks > 0 {
                 let state = self.cpu.run_or_step(

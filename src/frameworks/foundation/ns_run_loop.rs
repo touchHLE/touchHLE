@@ -210,11 +210,7 @@ fn run_run_loop(env: &mut Environment, run_loop: id) {
         // The compromise used here is that we will wait for a 60th of a second,
         // or until the next scheduled event, whichever is sooner. iPhone OS
         // apps can't do more than 60fps so this should be fine.
-        //
-        // FIXME: Run the app's other threads if they are active.
         let limit = Duration::from_millis(1000 / 60);
-        std::thread::sleep(
-            sleep_until.map_or(limit, |i| i.duration_since(Instant::now()).min(limit)),
-        );
+        env.sleep(sleep_until.map_or(limit, |i| i.duration_since(Instant::now()).min(limit)));
     }
 }

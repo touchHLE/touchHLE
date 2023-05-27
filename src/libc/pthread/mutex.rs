@@ -59,6 +59,7 @@ pub type HostMutexId = u64;
 
 struct MutexHostObject {
     type_: MutexType,
+    waiting_count: u32,
     /// The `NonZeroU32` is the number of locks on this thread (if it's a
     /// recursive mutex).
     locked: Option<(ThreadID, NonZeroU32)>,
@@ -197,6 +198,7 @@ fn pthread_mutex_destroy(env: &mut Environment, mutex: MutPtr<pthread_mutex_t>) 
     host_mutex_destroy(env, mutex_id).err().unwrap_or(0)
 }
 
+/// Initializes a mutex and returns a handle to it. Similar to pthread_mutex_init, but for host code.
 pub fn host_mutex_init(env: &mut Environment, mutex_type: MutexType) -> HostMutexId {
     let state = State::get_mut(env);
     let mutex_id = state.mutex_count;
@@ -205,6 +207,7 @@ pub fn host_mutex_init(env: &mut Environment, mutex_type: MutexType) -> HostMute
         mutex_id,
         MutexHostObject {
             type_: mutex_type,
+            waiting_count: 0,
             locked: None,
         },
     );
@@ -216,6 +219,8 @@ pub fn host_mutex_init(env: &mut Environment, mutex_type: MutexType) -> HostMute
     mutex_id
 }
 
+/// Locks a mutex and returns the lock count or an error (as errno). Similar to
+/// pthread_mutex_lock, but for host code.
 pub fn host_mutex_lock(env: &mut Environment, mutex_id: HostMutexId) -> Result<u32, i32> {
     let current_thread = env.current_thread;
     let host_object: &mut _ = State::get_mut(env).mutexes.get_mut(&mutex_id).unwrap();
@@ -252,12 +257,18 @@ pub fn host_mutex_lock(env: &mut Environment, mutex_id: HostMutexId) -> Result<u
         }
     }
 
+    // Add to the waiting count, so that the mutex isn't destroyed. This is subtracted in
+    // [host_mutex_relock_unblocked].
+    host_object.waiting_count += 1;
+
     // Mutex is already locked, block thread until it isn't.
     env.block_on_mutex(mutex_id);
-    // Lock count is always 1 after a thread-blocking lock
+    // Lock count is always 1 after a thread-blocking lock.
     Ok(1)
 }
 
+/// Unlocks a mutex and returns the lock count or an error (as errno). Similar to
+/// pthread_mutex_unlock, but for host code.
 pub fn host_mutex_unlock(env: &mut Environment, mutex_id: HostMutexId) -> Result<u32, i32> {
     let current_thread = env.current_thread;
     let host_object: &mut _ = State::get_mut(env).mutexes.get_mut(&mutex_id).unwrap();
@@ -325,27 +336,40 @@ pub fn host_mutex_unlock(env: &mut Environment, mutex_id: HostMutexId) -> Result
     }
 }
 
+/// Destroys a mutex and returns an error on failure (as errno). Similar to
+/// pthread_mutex_destroy, but for host code. Note that the mutex is not destroyed on an Err return.
 pub fn host_mutex_destroy(env: &mut Environment, mutex_id: HostMutexId) -> Result<(), i32> {
     let state = State::get_mut(env);
     let host_object = state.mutexes.get_mut(&mutex_id).unwrap();
     if host_object.locked.is_some() {
-        log_dbg!("Attempted to destroy locked mutex, returning EBUSY!");
+        log_dbg!("Attempted to destroy currently locked mutex, returning EBUSY!");
+        return Err(EBUSY);
+    } else if host_object.waiting_count != 0 {
+        log_dbg!("Attempted to destroy mutex with waiting locks, returning EBUSY!");
         return Err(EBUSY);
     }
+    // TODO?: If we switch to a vec-based system, we should reuse destroyed ids if they are at the
+    // top of the stack.
     state.mutexes.remove(&mutex_id);
-    // If the mutex used the current highest id, it can be reclaimed.
-    if mutex_id + 1 == state.mutex_count {
-        state.mutex_count = state.mutex_count.checked_sub(1).unwrap();
-    }
     Ok(())
 }
 
-pub fn mutex_is_locked(env: &Environment, mutex_id: HostMutexId) -> bool {
+pub fn host_mutex_is_locked(env: &Environment, mutex_id: HostMutexId) -> bool {
     let state = State::get(env);
     state
         .mutexes
         .get(&mutex_id)
         .map_or(false, |host_obj| host_obj.locked.is_some())
+}
+
+/// Relock mutex that was just unblocked. This should probably only be used by the thread scheduler.
+pub fn host_mutex_relock_unblocked(env: &mut Environment, mutex_id: HostMutexId) {
+    host_mutex_lock(env, mutex_id).unwrap();
+    State::get_mut(env)
+        .mutexes
+        .get_mut(&mutex_id)
+        .unwrap()
+        .waiting_count -= 1;
 }
 
 pub const FUNCTIONS: FunctionExports = &[

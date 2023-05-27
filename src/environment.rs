@@ -8,7 +8,9 @@
 //! Unlike its siblings, this module should be considered private and only used
 //! via the re-exports one level up.
 
-use crate::libc::pthread::mutex::{host_mutex_lock, mutex_is_locked, HostMutexId};
+use crate::libc::pthread::mutex::{
+    host_mutex_is_locked, host_mutex_relock_unblocked, HostMutexId,
+};
 
 use crate::{
     abi, bundle, cpu, dyld, frameworks, fs, gdb, image, libc, mach_o, mem, objc, options, stack,
@@ -94,6 +96,7 @@ enum ThreadNextAction {
 }
 
 /// If/what a thread is blocked by.
+#[derive(Debug, Clone)]
 enum ThreadBlock {
     // Default state. (thread is not blocked)
     NotBlocked,
@@ -101,6 +104,8 @@ enum ThreadBlock {
     Sleeping(Instant),
     // Thread is waiting for a mutex to unlock.
     Mutex(HostMutexId),
+    // Deferred guest-to-host return
+    DeferredReturn,
 }
 
 impl Environment {
@@ -308,8 +313,12 @@ impl Environment {
         let regs = self.cpu.regs();
         let mut lr = regs[cpu::Cpu::LR];
         let return_to_host_routine_addr = self.dyld.return_to_host_routine().addr_with_thumb_bit();
+        let thread_exit_routine_addr = self.dyld.thread_exit_routine().addr_with_thumb_bit();
         if lr == return_to_host_routine_addr {
             echo!(" 1. [host function] (LR)");
+        } else if lr == thread_exit_routine_addr {
+            echo!(" 1. [thread exit] (LR)");
+            return;
         } else {
             echo!(" 1. {:#x} (LR)", lr);
         }
@@ -324,6 +333,8 @@ impl Environment {
             fp = self.mem.read(fp.cast());
             if lr == return_to_host_routine_addr {
                 echo!("{:2}. [host function]", i);
+            } else if lr == thread_exit_routine_addr {
+                echo!("{:2}. [thread exit]", i);
             } else {
                 echo!("{:2}. {:#x}", i, lr);
             }
@@ -366,7 +377,7 @@ impl Environment {
         self.cpu.regs_mut()[cpu::Cpu::SP] = stack_high_addr;
         self.cpu.regs_mut()[0] = user_data.to_bits();
         self.cpu
-            .branch_with_link(start_routine, self.dyld.return_to_host_routine());
+            .branch_with_link(start_routine, self.dyld.thread_exit_routine());
         self.switch_thread(old_thread);
 
         new_thread_id
@@ -427,8 +438,10 @@ impl Environment {
     /// the app to return control on the original thread!
     pub fn run_call(&mut self) {
         let was_in_host_function = self.threads[self.current_thread].in_host_function;
+        let old_thread = self.current_thread;
         self.threads[self.current_thread].in_host_function = false;
         self.run_inner(false);
+        assert!(self.current_thread == old_thread);
         self.threads[self.current_thread].in_host_function = was_in_host_function;
     }
 
@@ -499,51 +512,78 @@ impl Environment {
                 // instruction after the SVC, but we want the
                 // address of the SVC itself
                 let svc_pc = self.cpu.regs()[cpu::Cpu::PC] - 4;
-                if svc == dyld::Dyld::SVC_RETURN_TO_HOST {
-                    assert!(svc_pc == self.dyld.return_to_host_routine().addr_without_thumb_bit());
-                    assert!(!root || self.threads[self.current_thread].in_start_routine);
-                    // FIXME/TODO: How do we handle a return-to-host on
-                    // the wrong thread? Defer it somehow?
-                    if !root && self.current_thread == initial_thread {
-                        // Normal return from host-to-guest call
-                        return ThreadNextAction::ReturnToHost;
-                    } else if self.threads[self.current_thread].in_start_routine {
-                        // Secondary thread finished starting
-                        // TODO: Having two meanings for this SVC is
-                        // dangerous, use a different SVC for this case.
-                        log_dbg!(
-                            "Thread {} finished start routine and became inactive",
-                            self.current_thread
+                match svc {
+                    dyld::Dyld::SVC_THREAD_EXIT => {
+                        assert!(svc_pc == self.dyld.thread_exit_routine().addr_without_thumb_bit());
+                        if !self.threads[self.current_thread].in_start_routine {
+                            panic!("Non-exiting thread {} exited!", self.current_thread);
+                        } else {
+                            // Secondary thread finished starting.
+                            log_dbg!(
+                                "Thread {} finished start routine and became inactive, {}",
+                                self.current_thread,
+                                initial_thread
+                            );
+                            self.threads[self.current_thread].active = false;
+                            let stack = self.threads[self.current_thread].stack.take().unwrap();
+                            let stack: mem::MutVoidPtr = mem::Ptr::from_bits(*stack.start());
+                            log_dbg!("Freeing thread {} stack {:?}", self.current_thread, stack);
+                            self.mem.free(stack);
+                            ThreadNextAction::Yield
+                        }
+                    }
+                    dyld::Dyld::SVC_RETURN_TO_HOST => {
+                        assert!(
+                            svc_pc == self.dyld.return_to_host_routine().addr_without_thumb_bit()
                         );
-                        self.threads[self.current_thread].active = false;
-                        let stack = self.threads[self.current_thread].stack.take().unwrap();
-                        let stack: mem::MutVoidPtr = mem::Ptr::from_bits(*stack.start());
-                        log_dbg!("Freeing thread {} stack {:?}", self.current_thread, stack);
-                        self.mem.free(stack);
-                        return ThreadNextAction::Yield;
-                    } else {
-                        panic!("Unexpected return-to-host!");
+                        assert!(!root);
+                        if self.current_thread == initial_thread {
+                            log_dbg!(
+                                "Thread {} returned from host-to-guest call",
+                                self.current_thread
+                            );
+                            // Normal return from host-to-guest call.
+                            ThreadNextAction::ReturnToHost
+                        } else {
+                            // FIXME?: A drawback of the current thread model is that host-to-guest
+                            // calls affect the host call stack. This is a problem because
+                            log_dbg!("Thread {} returned from host-to-guest call but thread {} is top of call stack, deferring!",
+                                     self.current_thread,
+                                     initial_thread
+                            );
+                            self.threads[self.current_thread].blocked_by =
+                                ThreadBlock::DeferredReturn;
+                            ThreadNextAction::Yield
+                        }
                     }
-                }
-
-                if let Some(f) =
-                    self.dyld
-                        .get_svc_handler(&self.bins, &mut self.mem, &mut self.cpu, svc_pc, svc)
-                {
-                    let was_in_host_function = self.threads[self.current_thread].in_host_function;
-                    self.threads[self.current_thread].in_host_function = true;
-                    f.call_from_guest(self);
-                    self.threads[self.current_thread].in_host_function = was_in_host_function;
-                    // Host function might have put the thread to sleep.
-                    if let ThreadBlock::NotBlocked = self.threads[self.current_thread].blocked_by {
-                        ThreadNextAction::Continue
-                    } else {
-                        log_dbg!("Yielding: thread {} is blocked.", self.current_thread);
-                        ThreadNextAction::Yield
+                    dyld::Dyld::SVC_LAZY_LINK | dyld::Dyld::SVC_LINKED_FUNCTIONS_BASE.. => {
+                        if let Some(f) = self.dyld.get_svc_handler(
+                            &self.bins,
+                            &mut self.mem,
+                            &mut self.cpu,
+                            svc_pc,
+                            svc,
+                        ) {
+                            let was_in_host_function =
+                                self.threads[self.current_thread].in_host_function;
+                            self.threads[self.current_thread].in_host_function = true;
+                            f.call_from_guest(self);
+                            self.threads[self.current_thread].in_host_function =
+                                was_in_host_function;
+                            // Host function might have put the thread to sleep.
+                            if let ThreadBlock::NotBlocked =
+                                self.threads[self.current_thread].blocked_by
+                            {
+                                ThreadNextAction::Continue
+                            } else {
+                                log_dbg!("Yielding: thread {} is blocked.", self.current_thread);
+                                ThreadNextAction::Yield
+                            }
+                        } else {
+                            self.cpu.regs_mut()[cpu::Cpu::PC] = svc_pc;
+                            ThreadNextAction::Continue
+                        }
                     }
-                } else {
-                    self.cpu.regs_mut()[cpu::Cpu::PC] = svc_pc;
-                    ThreadNextAction::Continue
                 }
             }
             cpu::CpuState::Error(e) => ThreadNextAction::DebugCpuError(e),
@@ -597,6 +637,16 @@ impl Environment {
                 let mut suitable_thread: Option<ThreadID> = None;
                 let mut next_awakening: Option<Instant> = None;
                 let mut mutex_to_relock: Option<HostMutexId> = None;
+                let mut deferred_threads: Vec<usize> = Vec::new();
+                log_dbg!("Thread {} is initial", initial_thread);
+                let thread_blocks: Vec<_> = self
+                    .threads
+                    .iter()
+                    .map(|t| t.blocked_by.clone())
+                    .enumerate()
+                    .collect();
+                log_dbg!("ThreadBlocks: {:?}", thread_blocks);
+                log_dbg!("Call stack top: {}", initial_thread);
                 for i in 0..self.threads.len() {
                     let i = (self.current_thread + 1 + i) % self.threads.len();
                     let candidate = &mut self.threads[i];
@@ -604,7 +654,6 @@ impl Environment {
                     if !candidate.active || candidate.in_host_function {
                         continue;
                     }
-
                     match candidate.blocked_by {
                         ThreadBlock::Sleeping(sleeping_until) => {
                             if sleeping_until <= Instant::now() {
@@ -620,13 +669,28 @@ impl Environment {
                             }
                         }
                         ThreadBlock::Mutex(mutex_id) => {
-                            if !mutex_is_locked(self, mutex_id) {
+                            if !host_mutex_is_locked(self, mutex_id) {
                                 log_dbg!("Thread {} was unblocked due to mutex #{} unlocking, relocking mutex.", i, mutex_id);
                                 self.threads[i].blocked_by = ThreadBlock::NotBlocked;
                                 suitable_thread = Some(i);
                                 mutex_to_relock = Some(mutex_id);
                             } else {
                                 // Thread is still blocked, continue.
+                                continue;
+                            }
+                        }
+                        ThreadBlock::DeferredReturn => {
+                            if i == initial_thread {
+                                log_dbg!("Thread {} now able to return, returning", i);
+                                self.threads[i].blocked_by = ThreadBlock::NotBlocked;
+                                // Thread is now top of call stack, should return
+                                self.switch_thread(i);
+                                if !deferred_threads.is_empty() {
+                                    log_dbg!("Threads {:?} were deferred", deferred_threads);
+                                }
+                                return;
+                            } else {
+                                deferred_threads.push(i);
                                 continue;
                             }
                         }
@@ -638,13 +702,16 @@ impl Environment {
                     break;
                 }
 
+                if !deferred_threads.is_empty() {
+                    log_dbg!("Threads {:?} were deferred", deferred_threads);
+                }
                 // There's a suitable thread we can switch to immediately.
                 if let Some(suitable_thread) = suitable_thread {
                     if suitable_thread != self.current_thread {
                         self.switch_thread(suitable_thread);
                     }
                     if let Some(mutex_id) = mutex_to_relock {
-                        host_mutex_lock(self, mutex_id).unwrap();
+                        host_mutex_relock_unblocked(self, mutex_id);
                     }
                     break;
                 // All suitable threads are asleep. Sleep until one of them

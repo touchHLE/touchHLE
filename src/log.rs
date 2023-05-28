@@ -50,4 +50,4 @@ macro_rules! log_dbg {
 
 /// Put modules to enable [log_dbg] for here, e.g. "touchHLE::mem" to see when
 /// memory is allocated and freed.
-pub const ENABLED_MODULES: &[&str] = &["touchHLE::environment", "touchHLE::libc::pthread::mutex"];
+pub const ENABLED_MODULES: &[&str] = &[];

@@ -26,7 +26,8 @@ pub type ThreadID = usize;
 pub struct Thread {
     /// Once a thread finishes, this is set to false.
     pub active: bool,
-    /// If this is not [None], the thread is sleeping until the specified time.
+    /// If this is not [ThreadBlock::NotBlocked], the thread is not executing 
+    /// until a certain condition is fufilled.
     blocked_by: ThreadBlock,
     /// Set to [true] when a thread is running its startup routine (i.e. the
     /// function pointer passed to `pthread_create`). When it returns to the
@@ -104,7 +105,7 @@ enum ThreadBlock {
     Sleeping(Instant),
     // Thread is waiting for a mutex to unlock.
     Mutex(HostMutexId),
-    // Deferred guest-to-host return
+    // Deferred return for host-to-guest call   
     DeferredReturn,
 }
 
@@ -637,16 +638,6 @@ impl Environment {
                 let mut suitable_thread: Option<ThreadID> = None;
                 let mut next_awakening: Option<Instant> = None;
                 let mut mutex_to_relock: Option<HostMutexId> = None;
-                let mut deferred_threads: Vec<usize> = Vec::new();
-                log_dbg!("Thread {} is initial", initial_thread);
-                let thread_blocks: Vec<_> = self
-                    .threads
-                    .iter()
-                    .map(|t| t.blocked_by.clone())
-                    .enumerate()
-                    .collect();
-                log_dbg!("ThreadBlocks: {:?}", thread_blocks);
-                log_dbg!("Call stack top: {}", initial_thread);
                 for i in 0..self.threads.len() {
                     let i = (self.current_thread + 1 + i) % self.threads.len();
                     let candidate = &mut self.threads[i];
@@ -681,16 +672,12 @@ impl Environment {
                         }
                         ThreadBlock::DeferredReturn => {
                             if i == initial_thread {
-                                log_dbg!("Thread {} now able to return, returning", i);
+                                log_dbg!("Thread {} is now able to return, returning", i);
                                 self.threads[i].blocked_by = ThreadBlock::NotBlocked;
                                 // Thread is now top of call stack, should return
                                 self.switch_thread(i);
-                                if !deferred_threads.is_empty() {
-                                    log_dbg!("Threads {:?} were deferred", deferred_threads);
-                                }
                                 return;
                             } else {
-                                deferred_threads.push(i);
                                 continue;
                             }
                         }
@@ -702,9 +689,6 @@ impl Environment {
                     break;
                 }
 
-                if !deferred_threads.is_empty() {
-                    log_dbg!("Threads {:?} were deferred", deferred_threads);
-                }
                 // There's a suitable thread we can switch to immediately.
                 if let Some(suitable_thread) = suitable_thread {
                     if suitable_thread != self.current_thread {

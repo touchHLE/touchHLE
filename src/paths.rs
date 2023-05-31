@@ -17,6 +17,8 @@
 //! See also [crate::fs], which provides a virtual filesystem for the guest app
 //! and defines path types.
 
+use std::path::Path;
+
 /// Name of the directory containing ARMv6 dynamic libraries bundled with
 /// touchHLE.
 pub const DYLIBS_DIR: &str = "touchHLE_dylibs";
@@ -38,13 +40,30 @@ pub const USER_OPTIONS_FILE: &str = "touchHLE_options.txt";
 /// the `Documents` directory.
 pub const SANDBOX_DIR: &str = "touchHLE_sandbox";
 
-/// Get a platform-specific path prefix needed for accessing touchHLE's bundled
+/// Get a platform-specific base path needed for accessing touchHLE's bundled
 /// resources and other files. This is empty on platforms other than Android.
-pub fn files_prefix() -> &'static str {
-    // FIXME: use SDL_AndroidGetInternalStoragePath
-    if cfg!(target_os = "android") {
-        "/data/data/org.touchhle.android/files/"
-    } else {
-        ""
+pub fn base_path() -> &'static Path {
+    #[cfg(target_os = "android")]
+    unsafe {
+        // This is an exception to the rule that SDL2 should only be used
+        // directly from src/window.rs. This is just too distant from windowing
+        // to belong there.
+
+        // Android storage has evolved in a quite messy fashion. Both "internal
+        // storage" and "external storage" (aka the "SD card") are likely to be
+        // internal on a modern device, as absurd as that might sound. SDL2 has
+        // APIs to get paths for both. We use the "external storage" because
+        // it's more likely to be user-accessible.
+        extern "C" {
+            fn SDL_AndroidGetExternalStoragePath() -> *const std::ffi::c_char;
+        }
+        let path = SDL_AndroidGetExternalStoragePath();
+        if path.is_null() {
+            log!("Couldn't get Android external storage path!");
+            panic!();
+        }
+        Path::new(std::ffi::CStr::from_ptr(path).to_str().unwrap())
     }
+    #[cfg(not(target_os = "android"))]
+    Path::new("")
 }

@@ -409,8 +409,8 @@ impl Fs {
 
         let bundle_guest_path = home_directory.join(&bundle_dir_name);
 
-        let prefix = paths::files_prefix();
-        let documents_host_path = Path::new(prefix)
+        let resources_base_path = paths::base_path();
+        let documents_host_path = resources_base_path
             .join(paths::SANDBOX_DIR)
             .join(bundle_id)
             .join("Documents");
@@ -422,7 +422,7 @@ impl Fs {
         }
 
         // Some Free Software libraries are bundled with touchHLE.
-        let dylibs_host_path = Path::new(prefix).join(paths::DYLIBS_DIR);
+        let dylibs_host_path = resources_base_path.join(paths::DYLIBS_DIR);
         let usr_lib = FsNode::dir()
             .with_child(
                 "libgcc_s.1.dylib",

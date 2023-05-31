@@ -49,7 +49,7 @@ fn scale(font_size: f32) -> Scale {
 
 impl Font {
     fn from_file(path: &str) -> Font {
-        let path = format!("{}{}/{}", paths::files_prefix(), paths::FONTS_DIR, path);
+        let path = paths::base_path().join(paths::FONTS_DIR).join(path);
         let Ok(bytes) = std::fs::read(&path) else {
             panic!("Couldn't read bundled font file {:?}. Perhaps the directory is missing?", path);
         };

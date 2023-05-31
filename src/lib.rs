@@ -94,9 +94,9 @@ Special options:
 ";
 
 fn app_picker(title: &str) -> Result<PathBuf, String> {
-    let apps_dir = format!("{}{}", paths::files_prefix(), paths::APPS_DIR);
+    let apps_dir = paths::base_path().join(paths::APPS_DIR);
 
-    fn enumerate_apps(apps_dir: &str) -> Result<Vec<PathBuf>, std::io::Error> {
+    fn enumerate_apps(apps_dir: &std::path::Path) -> Result<Vec<PathBuf>, std::io::Error> {
         let mut app_paths = Vec::new();
         for app in std::fs::read_dir(apps_dir)? {
             let app_path = app?.path();
@@ -113,13 +113,14 @@ fn app_picker(title: &str) -> Result<PathBuf, String> {
         Ok(app_paths)
     }
 
-    let app_paths: Result<Vec<PathBuf>, String> = if !std::path::Path::new(&apps_dir).is_dir() {
-        Err(format!("The {} directory couldn't be found. Check you're running touchHLE from the right directory.", apps_dir))
+    let app_paths: Result<Vec<PathBuf>, String> = if !apps_dir.is_dir() {
+        Err(format!("The {} directory couldn't be found. Check you're running touchHLE from the right directory.", apps_dir.display()))
     } else {
         enumerate_apps(&apps_dir).map_err(|err| {
             format!(
                 "Couldn't get list of apps in the {} directory: {}.",
-                apps_dir, err
+                apps_dir.display(),
+                err
             )
         })
     };
@@ -131,7 +132,10 @@ fn app_picker(title: &str) -> Result<PathBuf, String> {
             if !paths.is_empty() {
                 "Select an app:".to_string()
             } else {
-                format!("No apps were found in the {} directory.", apps_dir)
+                format!(
+                    "No apps were found in the {} directory.",
+                    apps_dir.display()
+                )
             },
         ),
         Err(err) => (&[], err),
@@ -189,6 +193,13 @@ pub fn main<T: Iterator<Item = String>>(mut args: T) -> Result<(), String> {
 
     echo!("{}", long_title);
     echo!();
+
+    {
+        let base_path = paths::base_path().to_str().unwrap();
+        if !base_path.is_empty() {
+            log!("Base path for touchHLE files: {}", base_path);
+        }
+    }
 
     let _ = args.next().unwrap(); // skip argv[0]
 
@@ -280,12 +291,12 @@ pub fn main<T: Iterator<Item = String>>(mut args: T) -> Result<(), String> {
 
     // Apply options from files
     for path in [paths::DEFAULT_OPTIONS_FILE, paths::USER_OPTIONS_FILE] {
-        let path = format!("{}{}", paths::files_prefix(), path);
+        let path = paths::base_path().join(path);
         match options::get_options_from_file(&path, app_id) {
             Ok(Some(options_string)) => {
                 echo!(
                     "Using options from {} for this app: {}",
-                    path,
+                    path.display(),
                     options_string
                 );
                 for option_arg in options_string.split_ascii_whitespace() {
@@ -299,7 +310,7 @@ pub fn main<T: Iterator<Item = String>>(mut args: T) -> Result<(), String> {
                 }
             }
             Ok(None) => {
-                echo!("No options found for this app in {}", path);
+                echo!("No options found for this app in {}", path.display());
             }
             Err(e) => {
                 echo!("Warning: {}", e);

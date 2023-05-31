@@ -12,6 +12,7 @@ use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::net::{SocketAddr, ToSocketAddrs};
 use std::num::NonZeroU32;
+use std::path::Path;
 
 pub const DOCUMENTATION: &str =
     include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/OPTIONS_HELP.txt"));
@@ -141,8 +142,8 @@ impl Options {
 /// Returns [Ok] if there is no error when reading the file, otherwise [Err].
 /// The [Ok] value is a [Some] with the options if they could be found, or
 /// [None] if no options were found for this app.
-pub fn get_options_from_file(filename: &str, app_id: &str) -> Result<Option<String>, String> {
-    let file = File::open(filename).map_err(|e| format!("Could not open {}: {}", filename, e))?;
+pub fn get_options_from_file(path: &Path, app_id: &str) -> Result<Option<String>, String> {
+    let file = File::open(path).map_err(|e| format!("Could not open {}: {}", path.display(), e))?;
 
     let file = BufReader::new(file);
     for (line_no, line) in BufRead::lines(file).enumerate() {
@@ -152,7 +153,9 @@ pub fn get_options_from_file(filename: &str, app_id: &str) -> Result<Option<Stri
         let line = line.map_err(|e| {
             format!(
                 "Error while reading line {} of {}: {}",
-                line_no, filename, e
+                line_no,
+                path.display(),
+                e
             )
         })?;
 
@@ -169,7 +172,7 @@ pub fn get_options_from_file(filename: &str, app_id: &str) -> Result<Option<Stri
             continue;
         }
 
-        let (line_app_id, line_options) = line.split_once(':').ok_or_else(|| format!("Line {} of {} is not a comment and is missing a colon (:) to separate the app ID from the options", line_no, filename))?;
+        let (line_app_id, line_options) = line.split_once(':').ok_or_else(|| format!("Line {} of {} is not a comment and is missing a colon (:) to separate the app ID from the options", line_no, path.display()))?;
         let line_app_id = line_app_id.trim();
 
         if line_app_id != app_id {

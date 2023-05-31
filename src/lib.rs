@@ -94,7 +94,7 @@ Special options:
 ";
 
 fn app_picker(title: &str) -> Result<PathBuf, String> {
-    let apps_dir = paths::base_path().join(paths::APPS_DIR);
+    let apps_dir = paths::user_data_base_path().join(paths::APPS_DIR);
 
     fn enumerate_apps(apps_dir: &std::path::Path) -> Result<Vec<PathBuf>, std::io::Error> {
         let mut app_paths = Vec::new();
@@ -195,7 +195,7 @@ pub fn main<T: Iterator<Item = String>>(mut args: T) -> Result<(), String> {
     echo!();
 
     {
-        let base_path = paths::base_path().to_str().unwrap();
+        let base_path = paths::user_data_base_path().to_str().unwrap();
         if !base_path.is_empty() {
             log!("Base path for touchHLE files: {}", base_path);
         }
@@ -290,13 +290,17 @@ pub fn main<T: Iterator<Item = String>>(mut args: T) -> Result<(), String> {
     let mut options = options::Options::default();
 
     // Apply options from files
-    for path in [paths::DEFAULT_OPTIONS_FILE, paths::USER_OPTIONS_FILE] {
-        let path = paths::base_path().join(path);
-        match options::get_options_from_file(&path, app_id) {
+    fn apply_options<F: std::io::Read, P: std::fmt::Display>(
+        file: F,
+        path: P,
+        options: &mut options::Options,
+        app_id: &str,
+    ) -> Result<(), String> {
+        match options::get_options_from_file(file, app_id) {
             Ok(Some(options_string)) => {
                 echo!(
                     "Using options from {} for this app: {}",
-                    path.display(),
+                    path,
                     options_string
                 );
                 for option_arg in options_string.split_ascii_whitespace() {
@@ -310,12 +314,27 @@ pub fn main<T: Iterator<Item = String>>(mut args: T) -> Result<(), String> {
                 }
             }
             Ok(None) => {
-                echo!("No options found for this app in {}", path.display());
+                echo!("No options found for this app in {}", path);
             }
             Err(e) => {
                 echo!("Warning: {}", e);
             }
         }
+        Ok(())
+    }
+    let default_options_path = paths::DEFAULT_OPTIONS_FILE;
+    match paths::ResourceFile::open(default_options_path) {
+        Ok(mut file) => apply_options(file.get(), default_options_path, &mut options, app_id)?,
+        Err(err) => echo!("Warning: Could not open {}: {}", default_options_path, err),
+    }
+    let user_options_path = paths::user_data_base_path().join(paths::USER_OPTIONS_FILE);
+    match std::fs::File::open(&user_options_path) {
+        Ok(file) => apply_options(file, user_options_path.display(), &mut options, app_id)?,
+        Err(err) => echo!(
+            "Warning: Could not open {}: {}",
+            user_options_path.display(),
+            err
+        ),
     }
     echo!();
 

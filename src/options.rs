@@ -8,11 +8,9 @@
 use crate::frameworks::opengles::GLESImplementation;
 use crate::window::DeviceOrientation;
 use std::collections::HashMap;
-use std::fs::File;
-use std::io::{BufRead, BufReader};
+use std::io::{BufRead, BufReader, Read};
 use std::net::{SocketAddr, ToSocketAddrs};
 use std::num::NonZeroU32;
-use std::path::Path;
 
 pub const DOCUMENTATION: &str =
     include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/OPTIONS_HELP.txt"));
@@ -142,22 +140,13 @@ impl Options {
 /// Returns [Ok] if there is no error when reading the file, otherwise [Err].
 /// The [Ok] value is a [Some] with the options if they could be found, or
 /// [None] if no options were found for this app.
-pub fn get_options_from_file(path: &Path, app_id: &str) -> Result<Option<String>, String> {
-    let file = File::open(path).map_err(|e| format!("Could not open {}: {}", path.display(), e))?;
-
+pub fn get_options_from_file<F: Read>(file: F, app_id: &str) -> Result<Option<String>, String> {
     let file = BufReader::new(file);
     for (line_no, line) in BufRead::lines(file).enumerate() {
         // Line numbering usually starts from 1
         let line_no = line_no + 1;
 
-        let line = line.map_err(|e| {
-            format!(
-                "Error while reading line {} of {}: {}",
-                line_no,
-                path.display(),
-                e
-            )
-        })?;
+        let line = line.map_err(|e| format!("Error while reading line {}: {}", line_no, e))?;
 
         // # for single-line comments
         let line = if let Some((rest, _)) = line.split_once('#') {
@@ -172,7 +161,7 @@ pub fn get_options_from_file(path: &Path, app_id: &str) -> Result<Option<String>
             continue;
         }
 
-        let (line_app_id, line_options) = line.split_once(':').ok_or_else(|| format!("Line {} of {} is not a comment and is missing a colon (:) to separate the app ID from the options", line_no, path.display()))?;
+        let (line_app_id, line_options) = line.split_once(':').ok_or_else(|| format!("Line {} is not a comment and is missing a colon (:) to separate the app ID from the options", line_no))?;
         let line_app_id = line_app_id.trim();
 
         if line_app_id != app_id {

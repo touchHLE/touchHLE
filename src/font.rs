@@ -16,6 +16,7 @@
 use crate::paths;
 use rusttype::{Point, Rect, Scale};
 use std::cmp;
+use std::io::Read;
 
 pub struct Font {
     font: rusttype::Font<'static>,
@@ -48,11 +49,17 @@ fn scale(font_size: f32) -> Scale {
 }
 
 impl Font {
-    fn from_file(path: &str) -> Font {
-        let path = paths::base_path().join(paths::FONTS_DIR).join(path);
-        let Ok(bytes) = std::fs::read(&path) else {
-            panic!("Couldn't read bundled font file {:?}. Perhaps the directory is missing?", path);
-        };
+    fn from_resource_file(filename: &str) -> Font {
+        let mut bytes = Vec::new();
+        let path = format!("{}/{}", paths::FONTS_DIR, filename);
+        if let Err(e) = paths::ResourceFile::open(&path)
+            .and_then(|mut f| f.get().read_to_end(&mut bytes).map_err(|e| e.to_string()))
+        {
+            panic!(
+                "Couldn't read bundled font file {:?}: {}. Perhaps the directory is missing?",
+                path, e
+            );
+        }
 
         let Some(font) = rusttype::Font::try_from_vec(bytes) else {
             panic!("Couldn't parse bundled font file {:?}. This probably means the file is corrupt. Try re-downloading it.", path);
@@ -62,19 +69,19 @@ impl Font {
     }
 
     pub fn sans_regular() -> Font {
-        Self::from_file("LiberationSans-Regular.ttf")
+        Self::from_resource_file("LiberationSans-Regular.ttf")
     }
     pub fn sans_bold() -> Font {
-        Self::from_file("LiberationSans-Bold.ttf")
+        Self::from_resource_file("LiberationSans-Bold.ttf")
     }
     pub fn sans_italic() -> Font {
-        Self::from_file("LiberationSans-Italic.ttf")
+        Self::from_resource_file("LiberationSans-Italic.ttf")
     }
     pub fn sans_regular_ja() -> Font {
-        Self::from_file("NotoSansJP-Regular.otf")
+        Self::from_resource_file("NotoSansJP-Regular.otf")
     }
     pub fn sans_bold_ja() -> Font {
-        Self::from_file("NotoSansJP-Bold.otf")
+        Self::from_resource_file("NotoSansJP-Bold.otf")
     }
 
     fn line_height_and_gap(&self, font_size: f32) -> (f32, f32) {

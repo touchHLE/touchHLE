@@ -44,6 +44,7 @@ mod mach_o;
 mod mem;
 mod objc;
 mod options;
+mod paths;
 mod stack;
 mod window;
 
@@ -93,7 +94,7 @@ Special options:
 ";
 
 fn app_picker(title: &str) -> Result<PathBuf, String> {
-    let apps_dir = format!("{}{}", fs::files_prefix(), "touchHLE_apps");
+    let apps_dir = format!("{}{}", paths::files_prefix(), paths::APPS_DIR);
 
     fn enumerate_apps(apps_dir: &str) -> Result<Vec<PathBuf>, std::io::Error> {
         let mut app_paths = Vec::new();
@@ -278,12 +279,13 @@ pub fn main<T: Iterator<Item = String>>(mut args: T) -> Result<(), String> {
     let mut options = options::Options::default();
 
     // Apply options from files
-    for filename in [options::DEFAULTS_FILENAME, options::USER_FILENAME] {
-        match options::get_options_from_file(filename, app_id) {
+    for path in [paths::DEFAULT_OPTIONS_FILE, paths::USER_OPTIONS_FILE] {
+        let path = format!("{}{}", paths::files_prefix(), path);
+        match options::get_options_from_file(&path, app_id) {
             Ok(Some(options_string)) => {
                 echo!(
                     "Using options from {} for this app: {}",
-                    filename,
+                    path,
                     options_string
                 );
                 for option_arg in options_string.split_ascii_whitespace() {
@@ -297,7 +299,7 @@ pub fn main<T: Iterator<Item = String>>(mut args: T) -> Result<(), String> {
                 }
             }
             Ok(None) => {
-                echo!("No options found for this app in {}", filename);
+                echo!("No options found for this app in {}", path);
             }
             Err(e) => {
                 echo!("Warning: {}", e);

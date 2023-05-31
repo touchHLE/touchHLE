@@ -136,11 +136,6 @@ impl Options {
     }
 }
 
-/// Name of the file containing touchHLE's default options for various apps.
-pub const DEFAULTS_FILENAME: &str = "touchHLE_default_options.txt";
-/// Name of the file intended for the user's own options.
-pub const USER_FILENAME: &str = "touchHLE_options.txt";
-
 /// Try to get app-specific options from a file.
 ///
 /// Returns [Ok] if there is no error when reading the file, otherwise [Err].

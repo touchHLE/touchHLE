@@ -34,8 +34,6 @@ pub const FONTS_DIR: &str = "touchHLE_fonts";
 /// Name of the file containing touchHLE's default options for various apps.
 pub const DEFAULT_OPTIONS_FILE: &str = "touchHLE_default_options.txt";
 
-/// Get a file handle of a platform-specific type for a resource bundled with
-/// touchHLE.
 /// Abstraction over a platform-specific type for accessing a resource bundled
 /// with touchHLE.
 pub struct ResourceFile {

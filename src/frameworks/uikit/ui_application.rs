@@ -216,13 +216,19 @@ pub(super) fn exit(env: &mut Environment) {
     let ui_application: id = msg_class![env; UIApplication sharedApplication];
     let delegate: id = msg![env; ui_application delegate];
 
-    // FIXME: There are more messages we should send.
+    // TODO: send notifications also
 
     {
         let pool: id = msg_class![env; NSAutoreleasePool new];
-        () = msg![env; delegate applicationWillTerminate:ui_application];
+        let _: () = msg![env; delegate applicationWillResignActive:ui_application];
         let _: () = msg![env; pool drain];
-    }
+    };
+
+    {
+        let pool: id = msg_class![env; NSAutoreleasePool new];
+        let _: () = msg![env; delegate applicationWillTerminate:ui_application];
+        let _: () = msg![env; pool drain];
+    };
 
     std::process::exit(0);
 }

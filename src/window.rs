@@ -73,7 +73,14 @@ fn set_sdl2_orientation(orientation: DeviceOrientation) {
 
 #[derive(Debug)]
 pub enum Event {
+    /// User requested quit.
     Quit,
+    /// OS has informed touchHLE it will soon become inactive.
+    /// (iOS `applicationWillResignActive:`, Android `onPause()`)
+    AppWillResignActive,
+    /// OS has informed touchHLE it will soon terminate.
+    /// (iOS `applicationWillTerminate:`, Android `onDestroy()`)
+    AppWillTerminate,
     TouchDown((f32, f32)),
     TouchMove((f32, f32)),
     TouchUp((f32, f32)),
@@ -145,6 +152,10 @@ pub struct Window {
     window: sdl2::video::Window,
     event_pump: sdl2::EventPump,
     event_queue: VecDeque<Event>,
+    /// Separate queue for extremely high-priority events (e.g. app about to
+    /// terminate).
+    high_priority_event: Option<Event>,
+    enable_event_polling: bool,
     #[cfg(target_os = "macos")]
     max_height: u32,
     #[cfg(target_os = "macos")]
@@ -192,6 +203,9 @@ impl Window {
             let attr = video_ctx.gl_attr();
             attr.set_context_version(1, 1);
             attr.set_context_profile(sdl2::video::GLProfile::GLES);
+
+            // Disable blocking of event loop when app is paused.
+            sdl2::hint::set("SDL_ANDROID_BLOCK_ON_PAUSE", "0");
         }
 
         // SDL2 disables the screen saver by default, but iPhone OS enables
@@ -293,6 +307,8 @@ impl Window {
             window,
             event_pump,
             event_queue: VecDeque::new(),
+            high_priority_event: None,
+            enable_event_polling: true,
             #[cfg(target_os = "macos")]
             max_height,
             #[cfg(target_os = "macos")]
@@ -354,7 +370,10 @@ impl Window {
         }
 
         let mut controller_updated = false;
-        while let Some(event) = self.event_pump.poll_event() {
+        while self.enable_event_polling {
+            let Some(event) = self.event_pump.poll_event() else {
+                break;
+            };
             use sdl2::event::Event as E;
             self.event_queue.push_back(match event {
                 E::Quit { .. } => Event::Quit,
@@ -408,6 +427,24 @@ impl Window {
                     controller_updated = true;
                     continue;
                 }
+                E::AppWillEnterBackground { .. } => {
+                    log!("Received app-will-resign-active event.");
+                    assert!(self.high_priority_event.is_none());
+                    self.high_priority_event = Some(Event::AppWillResignActive);
+                    // For some reason, if we don't pause event polling, we will
+                    // never finish handling the event.
+                    // TODO: Add a mechanism for re-enabling polling, if at some
+                    // point we support returning touchHLE to the foreground.
+                    self.enable_event_polling = false;
+                    continue;
+                }
+                E::AppTerminating { .. } => {
+                    log!("Received app-will-terminate event.");
+                    assert!(self.high_priority_event.is_none());
+                    self.high_priority_event = Some(Event::AppWillTerminate);
+                    self.enable_event_polling = false;
+                    continue;
+                }
                 _ => continue,
             })
         }
@@ -432,9 +469,12 @@ impl Window {
         }
     }
 
-    /// Pop an event from the queue (in FIFO order)
+    /// Pop an event from the queue (in FIFO order, except for high priority
+    /// events)
     pub fn pop_event(&mut self) -> Option<Event> {
-        self.event_queue.pop_front()
+        self.high_priority_event
+            .take()
+            .or_else(|| self.event_queue.pop_front())
     }
 
     fn controller_added(&mut self, joystick_idx: u32) {

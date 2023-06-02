@@ -8,10 +8,10 @@
 //! Unlike its siblings, this module should be considered private and only used
 //! via the re-exports one level up.
 
-use crate::libc::pthread::mutex::{
-    host_mutex_is_locked, host_mutex_relock_unblocked, HostMutexId,
-};
+use crate::abi::GuestRet;
+use crate::libc::pthread::mutex::{host_mutex_is_locked, host_mutex_relock_unblocked, HostMutexId};
 
+use crate::mem::{MutPtr, MutVoidPtr};
 use crate::{
     abi, bundle, cpu, dyld, frameworks, fs, gdb, image, libc, mach_o, mem, objc, options, stack,
     window,
@@ -26,13 +26,15 @@ pub type ThreadID = usize;
 pub struct Thread {
     /// Once a thread finishes, this is set to false.
     pub active: bool,
-    /// If this is not [ThreadBlock::NotBlocked], the thread is not executing 
+    /// If this is not [ThreadBlock::NotBlocked], the thread is not executing
     /// until a certain condition is fufilled.
     blocked_by: ThreadBlock,
     /// Set to [true] when a thread is running its startup routine (i.e. the
     /// function pointer passed to `pthread_create`). When it returns to the
     /// host, it should become inactive.
     in_start_routine: bool,
+    ///
+    return_value: Option<MutVoidPtr>,
     /// Set to [true] when a thread is currently waiting for a host function
     /// call to return.
     ///
@@ -105,7 +107,9 @@ enum ThreadBlock {
     Sleeping(Instant),
     // Thread is waiting for a mutex to unlock.
     Mutex(HostMutexId),
-    // Deferred return for host-to-guest call   
+    // Thread is waiting for another thread to finish (joining).
+    Joining(ThreadID, MutPtr<MutVoidPtr>),
+    // Deferred guest-to-host return
     DeferredReturn,
 }
 
@@ -208,6 +212,7 @@ impl Environment {
         let main_thread = Thread {
             active: true,
             blocked_by: ThreadBlock::NotBlocked,
+            return_value: None,
             in_start_routine: false, // main thread never terminates
             in_host_function: false,
             context: None,
@@ -359,6 +364,7 @@ impl Environment {
         self.threads.push(Thread {
             active: true,
             blocked_by: ThreadBlock::NotBlocked,
+            return_value: None,
             in_start_routine: true,
             in_host_function: false,
             context: Some(cpu::CpuContext::new()),
@@ -416,6 +422,19 @@ impl Environment {
             mutex_id
         );
         self.threads[self.current_thread].blocked_by = ThreadBlock::Mutex(mutex_id);
+    }
+
+    pub fn join_with_thread(&mut self, joinee_thread: ThreadID, ptr: MutPtr<MutVoidPtr>) {
+        assert!(matches!(
+            self.threads[self.current_thread].blocked_by,
+            ThreadBlock::NotBlocked
+        ));
+        log_dbg!(
+            "Thread {} waiting for thread {} to finish.",
+            self.current_thread,
+            joinee_thread
+        );
+        self.threads[self.current_thread].blocked_by = ThreadBlock::Joining(joinee_thread, ptr);
     }
 
     /// Run the emulator. This is the main loop and won't return until app exit.
@@ -525,8 +544,10 @@ impl Environment {
                                 self.current_thread,
                                 initial_thread
                             );
-                            self.threads[self.current_thread].active = false;
-                            let stack = self.threads[self.current_thread].stack.take().unwrap();
+                            let curr_thread = &mut self.threads[self.current_thread];
+                            curr_thread.return_value = Some(GuestRet::from_regs(self.cpu.regs()));
+                            curr_thread.active = false;
+                            let stack = curr_thread.stack.take().unwrap();
                             let stack: mem::MutVoidPtr = mem::Ptr::from_bits(*stack.start());
                             log_dbg!("Freeing thread {} stack {:?}", self.current_thread, stack);
                             self.mem.free(stack);
@@ -547,7 +568,10 @@ impl Environment {
                             ThreadNextAction::ReturnToHost
                         } else {
                             // FIXME?: A drawback of the current thread model is that host-to-guest
-                            // calls affect the host call stack. This is a problem because
+                            // calls affect the host call stack. This is a problem because it means
+                            // that threads have to return in the order they were called, which
+                            // means that threads that return while they aren't at the top of the
+                            // call stack have to wait until they can.
                             log_dbg!("Thread {} returned from host-to-guest call but thread {} is top of call stack, deferring!",
                                      self.current_thread,
                                      initial_thread
@@ -667,6 +691,21 @@ impl Environment {
                                 mutex_to_relock = Some(mutex_id);
                             } else {
                                 // Thread is still blocked, continue.
+                                continue;
+                            }
+                        }
+                        ThreadBlock::Joining(joinee_thread, ptr) => {
+                            if !self.threads[joinee_thread].active {
+                                log_dbg!(
+                                    "Thread {} joining with now finished thread {}.",
+                                    self.current_thread,
+                                    joinee_thread
+                                );
+                                self.mem
+                                    .write(ptr, self.threads[joinee_thread].return_value.unwrap());
+                                self.threads[i].blocked_by = ThreadBlock::NotBlocked;
+                                suitable_thread = Some(i);
+                            } else {
                                 continue;
                             }
                         }

@@ -33,7 +33,7 @@ pub struct Thread {
     /// function pointer passed to `pthread_create`). When it returns to the
     /// host, it should become inactive.
     in_start_routine: bool,
-    ///
+    /// After a secondary thread finishes, this is set to the returned value.
     return_value: Option<MutVoidPtr>,
     /// Set to [true] when a thread is currently waiting for a host function
     /// call to return.
@@ -341,6 +341,7 @@ impl Environment {
                 echo!("{:2}. [host function]", i);
             } else if lr == thread_exit_routine_addr {
                 echo!("{:2}. [thread exit]", i);
+                return;
             } else {
                 echo!("{:2}. {:#x}", i, lr);
             }
@@ -675,12 +676,12 @@ impl Environment {
                                 log_dbg!("Thread {} finished sleeping.", i);
                                 candidate.blocked_by = ThreadBlock::NotBlocked;
                                 suitable_thread = Some(i);
+                                break;
                             } else {
                                 next_awakening = match next_awakening {
                                     None => Some(sleeping_until),
                                     Some(other) => Some(other.min(sleeping_until)),
                                 };
-                                continue;
                             }
                         }
                         ThreadBlock::Mutex(mutex_id) => {
@@ -689,9 +690,7 @@ impl Environment {
                                 self.threads[i].blocked_by = ThreadBlock::NotBlocked;
                                 suitable_thread = Some(i);
                                 mutex_to_relock = Some(mutex_id);
-                            } else {
-                                // Thread is still blocked, continue.
-                                continue;
+                                break;
                             }
                         }
                         ThreadBlock::Joining(joinee_thread, ptr) => {
@@ -701,12 +700,16 @@ impl Environment {
                                     self.current_thread,
                                     joinee_thread
                                 );
-                                self.mem
-                                    .write(ptr, self.threads[joinee_thread].return_value.unwrap());
+                                // Write the return valiue, unless the pointer to write to is null.
+                                if !ptr.is_null() {
+                                    self.mem.write(
+                                        ptr,
+                                        self.threads[joinee_thread].return_value.unwrap(),
+                                    );
+                                }
                                 self.threads[i].blocked_by = ThreadBlock::NotBlocked;
                                 suitable_thread = Some(i);
-                            } else {
-                                continue;
+                                break;
                             }
                         }
                         ThreadBlock::DeferredReturn => {
@@ -716,8 +719,6 @@ impl Environment {
                                 // Thread is now top of call stack, should return
                                 self.switch_thread(i);
                                 return;
-                            } else {
-                                continue;
                             }
                         }
                         ThreadBlock::NotBlocked => {
@@ -725,7 +726,6 @@ impl Environment {
                             break;
                         }
                     }
-                    break;
                 }
 
                 // There's a suitable thread we can switch to immediately.
@@ -737,17 +737,18 @@ impl Environment {
                         host_mutex_relock_unblocked(self, mutex_id);
                     }
                     break;
-                // All suitable threads are asleep. Sleep until one of them
-                // wakes up.
+                // All suitable threads are blocked and at least one is asleep.
+                // Sleep until one of them wakes up.
                 } else if let Some(next_awakening) = next_awakening {
                     let duration = next_awakening.duration_since(Instant::now());
-                    log_dbg!("All threads asleep, sleeping for {:?}.", duration);
+                    log_dbg!("All threads blocked/asleep, sleeping for {:?}.", duration);
                     std::thread::sleep(duration);
                     // Try again, there should be some thread awake now (or
                     // there will be soon, since timing is approximate).
                     continue;
                 } else {
-                    // This should hopefully never happen!
+                    // This should hopefully not happen, but if a thread is blocked on another
+                    // thread waiting for a deferred return, it could. 
                     panic!("No active threads, program has deadlocked!");
                 }
             }

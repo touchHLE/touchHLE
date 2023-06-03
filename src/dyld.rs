@@ -137,6 +137,21 @@ fn encode_a32_trap() -> u32 {
     0xe7ffdefe
 }
 
+fn write_return_to_host_routine(mem: &mut Mem, svc: u32) -> GuestFunction {
+    let routine = [
+        encode_a32_svc(svc),
+        // When a return-to-host occurs, it's the host's responsibility
+        // to reset the PC to somewhere else. So something has gone
+        // wrong if this is executed.
+        encode_a32_trap(),
+    ];
+    let ptr: MutPtr<u32> = mem.alloc(4 * 2).cast();
+    mem.write(ptr + 0, routine[0]);
+    mem.write(ptr + 1, routine[1]);
+    let ptr = GuestFunction::from_addr_with_thumb_bit(ptr.to_bits());
+    assert!(!ptr.is_thumb());
+    ptr
+}
 pub struct Dyld {
     /// List of host functions that have been "linked" and had SVCs assigned.
     ///
@@ -183,37 +198,9 @@ impl Dyld {
     /// binaries.
     pub fn do_initial_linking(&mut self, bins: &[MachO], mem: &mut Mem, objc: &mut ObjC) {
         assert!(self.return_to_host_routine.is_none());
-        self.return_to_host_routine = {
-            let routine = [
-                encode_a32_svc(Self::SVC_RETURN_TO_HOST),
-                // When a return-to-host occurs, it's the host's responsibility
-                // to reset the PC to somewhere else. So something has gone
-                // wrong if this is executed.
-                encode_a32_trap(),
-            ];
-            let ptr: MutPtr<u32> = mem.alloc(4 * 2).cast();
-            mem.write(ptr + 0, routine[0]);
-            mem.write(ptr + 1, routine[1]);
-            let ptr = GuestFunction::from_addr_with_thumb_bit(ptr.to_bits());
-            assert!(!ptr.is_thumb());
-            Some(ptr)
-        };
         assert!(self.thread_exit_routine.is_none());
-        self.thread_exit_routine = {
-            let routine = [
-                encode_a32_svc(Self::SVC_THREAD_EXIT),
-                // When a return-to-host occurs, it's the host's responsibility
-                // to reset the PC to somewhere else. So something has gone
-                // wrong if this is executed.
-                encode_a32_trap(),
-            ];
-            let ptr: MutPtr<u32> = mem.alloc(4 * 2).cast();
-            mem.write(ptr + 0, routine[0]);
-            mem.write(ptr + 1, routine[1]);
-            let ptr = GuestFunction::from_addr_with_thumb_bit(ptr.to_bits());
-            assert!(!ptr.is_thumb());
-            Some(ptr)
-        };
+        self.return_to_host_routine = Some(write_return_to_host_routine(mem, Self::SVC_RETURN_TO_HOST));
+        self.thread_exit_routine = Some(write_return_to_host_routine(mem, Self::SVC_THREAD_EXIT));
 
         // Currently assuming only the app binary contains Objective-C things.
 

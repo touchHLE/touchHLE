@@ -175,7 +175,7 @@ fn pthread_join(env: &mut Environment, thread: pthread_t, retval: MutPtr<MutVoid
     let joinee_thread = State::get(env).threads.get_mut(&thread).unwrap().thread_id;
 
     // FIXME?: Blocking on the main thread is technically allowed, but effectively useless (as the
-    // main exiting means the whole application exits). It complicates some handling and is
+    // main thread exiting means the whole application exits). It complicates some handling and is
     // probably safe to ignore here.
     assert!(joinee_thread != 0);
 

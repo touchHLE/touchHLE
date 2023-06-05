@@ -67,15 +67,12 @@ pub const CLASSES: ClassExports = objc_classes! {
 
     () = msg![env; this setFrame:frame];
 
-    let bounds: CGRect = msg![env; this bounds];
-    let position: CGPoint = msg![env; this position];
-
     log_dbg!(
         "[(UIView*){:?} initWithFrame:{:?}] => bounds {:?}, center {:?}",
         this,
         frame,
-        bounds,
-        position,
+        { let bounds: CGRect = msg![env; this bounds]; bounds },
+        { let center: CGPoint = msg![env; this center]; center },
     );
 
     env.framework_state.uikit.ui_view.views.push(this);
@@ -160,9 +157,9 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.borrow_mut::<UIViewHostObject>(this).layer
 }
 
-- (bool)opaque {
+- (bool)isOpaque {
     let layer = env.objc.borrow::<UIViewHostObject>(this).layer;
-    msg![env; layer opaque]
+    msg![env; layer isOpaque]
 }
 - (())setOpaque:(bool)opaque {
     let layer = env.objc.borrow::<UIViewHostObject>(this).layer;

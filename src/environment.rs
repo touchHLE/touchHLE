@@ -398,8 +398,9 @@ impl Environment {
     }
 
     /// Put the current thread to sleep for some duration, running other threads
-    /// in the meantime as appropriate.
-    pub fn sleep(&mut self, duration: Duration) {
+    /// in the meantime as appropriate. Functions that call sleep right before they return should set
+    /// tail_call.
+    pub fn sleep(&mut self, duration: Duration, tail_call: bool) {
         assert!(matches!(
             self.threads[self.current_thread].blocked_by,
             ThreadBlock::NotBlocked
@@ -412,6 +413,17 @@ impl Environment {
         );
         let until = Instant::now().checked_add(duration).unwrap();
         self.threads[self.current_thread].blocked_by = ThreadBlock::Sleeping(until);
+        // For non tail-call sleeps (such as in NSRunLoop), we want to poll other threads but can't
+        // return until the sleep in completed, so we'll run in a seperate
+        if !tail_call {
+            let old_pc = self.cpu.pc_with_thumb_bit();
+            self.cpu.branch(self.dyld.return_to_host_routine());
+            // Since the current thread is asleep, this will only run other threads
+            // until it wakes up, at which point it signals return-to-host and
+            // control is returned to this function.
+            self.run_call();
+            self.cpu.branch(old_pc);
+        }
     }
 
     /// Block the current thread until the given mutex unlocks.

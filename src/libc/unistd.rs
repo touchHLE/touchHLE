@@ -13,7 +13,7 @@ use std::time::Duration;
 type useconds_t = u32;
 
 fn sleep(env: &mut Environment, seconds: u32) -> u32 {
-    env.sleep(Duration::from_secs(seconds.into()));
+    env.sleep(Duration::from_secs(seconds.into()), true);
     // sleep() returns the amount of time remaining that should have been slept,
     // but wasn't, if the thread was woken up early by a signal.
     // touchHLE never does that currently, so 0 is always correct here.
@@ -21,7 +21,7 @@ fn sleep(env: &mut Environment, seconds: u32) -> u32 {
 }
 
 fn usleep(env: &mut Environment, useconds: useconds_t) -> i32 {
-    env.sleep(Duration::from_micros(useconds.into()));
+    env.sleep(Duration::from_micros(useconds.into()), true);
     0 // success
 }
 

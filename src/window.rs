@@ -73,7 +73,14 @@ fn set_sdl2_orientation(orientation: DeviceOrientation) {
 
 #[derive(Debug)]
 pub enum Event {
+    /// User requested quit.
     Quit,
+    /// OS has informed touchHLE it will soon become inactive.
+    /// (iOS `applicationWillResignActive:`, Android `onPause()`)
+    AppWillResignActive,
+    /// OS has informed touchHLE it will soon terminate.
+    /// (iOS `applicationWillTerminate:`, Android `onDestroy()`)
+    AppWillTerminate,
     TouchDown((f32, f32)),
     TouchMove((f32, f32)),
     TouchUp((f32, f32)),
@@ -145,6 +152,10 @@ pub struct Window {
     window: sdl2::video::Window,
     event_pump: sdl2::EventPump,
     event_queue: VecDeque<Event>,
+    /// Separate queue for extremely high-priority events (e.g. app about to
+    /// terminate).
+    high_priority_event: Option<Event>,
+    enable_event_polling: bool,
     #[cfg(target_os = "macos")]
     max_height: u32,
     #[cfg(target_os = "macos")]
@@ -192,6 +203,9 @@ impl Window {
             let attr = video_ctx.gl_attr();
             attr.set_context_version(1, 1);
             attr.set_context_profile(sdl2::video::GLProfile::GLES);
+
+            // Disable blocking of event loop when app is paused.
+            sdl2::hint::set("SDL_ANDROID_BLOCK_ON_PAUSE", "0");
         }
 
         // SDL2 disables the screen saver by default, but iPhone OS enables
@@ -293,6 +307,8 @@ impl Window {
             window,
             event_pump,
             event_queue: VecDeque::new(),
+            high_priority_event: None,
+            enable_event_polling: true,
             #[cfg(target_os = "macos")]
             max_height,
             #[cfg(target_os = "macos")]
@@ -319,8 +335,18 @@ impl Window {
     /// to be unresponsive. Note that events are not returned by this function,
     /// since we often need to defer actually handling them.
     pub fn poll_for_events(&mut self, options: &Options) {
-        fn transform_input_coords(window: &Window, (in_x, in_y): (f32, f32)) -> (f32, f32) {
-            let (vx, vy, vw, vh) = window.viewport();
+        fn transform_input_coords(
+            window: &Window,
+            (in_x, in_y): (f32, f32),
+            independent_of_viewport: bool,
+        ) -> (f32, f32) {
+            let (vx, vy, vw, vh) = if independent_of_viewport {
+                let (width, height) =
+                    size_for_orientation(window.device_orientation, NonZeroU32::new(1).unwrap());
+                (0, 0, width, height)
+            } else {
+                window.viewport()
+            };
             // normalize to unit square centred on origin
             let x = (in_x - vx as f32) / vw as f32 - 0.5;
             let y = (in_y - vy as f32) / vh as f32 - 0.5;
@@ -333,8 +359,21 @@ impl Window {
             let out_y = (y + 0.5) * out_h as f32;
             (out_x, out_y)
         }
+        fn translate_button(button: sdl2::controller::Button) -> Option<crate::options::Button> {
+            match button {
+                sdl2::controller::Button::A => Some(crate::options::Button::A),
+                sdl2::controller::Button::B => Some(crate::options::Button::B),
+                sdl2::controller::Button::X => Some(crate::options::Button::X),
+                sdl2::controller::Button::Y => Some(crate::options::Button::Y),
+                _ => None,
+            }
+        }
 
-        while let Some(event) = self.event_pump.poll_event() {
+        let mut controller_updated = false;
+        while self.enable_event_polling {
+            let Some(event) = self.event_pump.poll_event() else {
+                break;
+            };
             use sdl2::event::Event as E;
             self.event_queue.push_back(match event {
                 E::Quit { .. } => Event::Quit,
@@ -344,18 +383,18 @@ impl Window {
                     y,
                     mouse_btn: MouseButton::Left,
                     ..
-                } => Event::TouchDown(transform_input_coords(self, (x as f32, y as f32))),
+                } => Event::TouchDown(transform_input_coords(self, (x as f32, y as f32), false)),
                 E::MouseMotion {
                     x, y, mousestate, ..
                 } if mousestate.left() => {
-                    Event::TouchMove(transform_input_coords(self, (x as f32, y as f32)))
+                    Event::TouchMove(transform_input_coords(self, (x as f32, y as f32), false))
                 }
                 E::MouseButtonUp {
                     x,
                     y,
                     mouse_btn: MouseButton::Left,
                     ..
-                } => Event::TouchUp(transform_input_coords(self, (x as f32, y as f32))),
+                } => Event::TouchUp(transform_input_coords(self, (x as f32, y as f32), false)),
                 E::ControllerDeviceAdded { which, .. } => {
                     self.controller_added(which);
                     continue;
@@ -364,36 +403,78 @@ impl Window {
                     self.controller_removed(which);
                     continue;
                 }
-                // Virtual cursor handling only. Accelerometer handling uses
-                // polling.
-                E::ControllerButtonUp { .. }
-                | E::ControllerButtonDown { .. }
-                | E::ControllerAxisMotion { .. } => {
-                    let (new_x, new_y, new_pressed, visible) = self.get_virtual_cursor(options);
-                    let (old_x, old_y, old_pressed, _) =
-                        self.virtual_cursor_last.unwrap_or_default();
-                    self.virtual_cursor_last = Some((new_x, new_y, new_pressed, visible));
-                    match (old_pressed, new_pressed) {
-                        (false, true) => {
-                            Event::TouchDown(transform_input_coords(self, (new_x, new_y)))
+                // Note that accelerometer simulation with analog sticks is
+                // handled with polling, rather than being event-based.
+                E::ControllerButtonUp { button, .. } | E::ControllerButtonDown { button, .. } => {
+                    controller_updated = true;
+                    let Some(button) = translate_button(button) else {
+                        continue;
+                    };
+                    let Some(&(x, y)) = options.button_to_touch.get(&button) else {
+                        continue;
+                    };
+                    match event {
+                        E::ControllerButtonUp { .. } => {
+                            Event::TouchUp(transform_input_coords(self, (x, y), true))
                         }
-                        (true, false) => {
-                            Event::TouchUp(transform_input_coords(self, (new_x, new_y)))
+                        E::ControllerButtonDown { .. } => {
+                            Event::TouchDown(transform_input_coords(self, (x, y), true))
                         }
-                        _ if (new_x, new_y) != (old_x, old_y) && new_pressed => {
-                            Event::TouchMove(transform_input_coords(self, (new_x, new_y)))
-                        }
-                        _ => continue,
+                        _ => unreachable!(),
                     }
+                }
+                E::ControllerAxisMotion { .. } => {
+                    controller_updated = true;
+                    continue;
+                }
+                E::AppWillEnterBackground { .. } => {
+                    log!("Received app-will-resign-active event.");
+                    assert!(self.high_priority_event.is_none());
+                    self.high_priority_event = Some(Event::AppWillResignActive);
+                    // For some reason, if we don't pause event polling, we will
+                    // never finish handling the event.
+                    // TODO: Add a mechanism for re-enabling polling, if at some
+                    // point we support returning touchHLE to the foreground.
+                    self.enable_event_polling = false;
+                    continue;
+                }
+                E::AppTerminating { .. } => {
+                    log!("Received app-will-terminate event.");
+                    assert!(self.high_priority_event.is_none());
+                    self.high_priority_event = Some(Event::AppWillTerminate);
+                    self.enable_event_polling = false;
+                    continue;
                 }
                 _ => continue,
             })
         }
+
+        if controller_updated {
+            let (new_x, new_y, new_pressed, visible) = self.get_virtual_cursor(options);
+            let (old_x, old_y, old_pressed, _) = self.virtual_cursor_last.unwrap_or_default();
+            self.virtual_cursor_last = Some((new_x, new_y, new_pressed, visible));
+            self.event_queue
+                .push_back(match (old_pressed, new_pressed) {
+                    (false, true) => {
+                        Event::TouchDown(transform_input_coords(self, (new_x, new_y), false))
+                    }
+                    (true, false) => {
+                        Event::TouchUp(transform_input_coords(self, (new_x, new_y), false))
+                    }
+                    _ if (new_x, new_y) != (old_x, old_y) && new_pressed => {
+                        Event::TouchMove(transform_input_coords(self, (new_x, new_y), false))
+                    }
+                    _ => return,
+                });
+        }
     }
 
-    /// Pop an event from the queue (in FIFO order)
+    /// Pop an event from the queue (in FIFO order, except for high priority
+    /// events)
     pub fn pop_event(&mut self) -> Option<Event> {
-        self.event_queue.pop_front()
+        self.high_priority_event
+            .take()
+            .or_else(|| self.event_queue.pop_front())
     }
 
     fn controller_added(&mut self, joystick_idx: u32) {

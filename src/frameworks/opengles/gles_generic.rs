@@ -42,6 +42,7 @@ pub trait GLES {
     unsafe fn GetError(&mut self) -> GLenum;
     unsafe fn Enable(&mut self, cap: GLenum);
     unsafe fn Disable(&mut self, cap: GLenum);
+    unsafe fn ClientActiveTexture(&mut self, texture: GLenum);
     unsafe fn EnableClientState(&mut self, array: GLenum);
     unsafe fn DisableClientState(&mut self, array: GLenum);
     unsafe fn GetBooleanv(&mut self, pname: GLenum, params: *mut GLboolean);
@@ -54,6 +55,13 @@ pub trait GLES {
     unsafe fn AlphaFunc(&mut self, func: GLenum, ref_: GLclampf);
     unsafe fn AlphaFuncx(&mut self, func: GLenum, ref_: GLclampx);
     unsafe fn BlendFunc(&mut self, sfactor: GLenum, dfactor: GLenum);
+    unsafe fn ColorMask(
+        &mut self,
+        red: GLboolean,
+        green: GLboolean,
+        blue: GLboolean,
+        alpha: GLboolean,
+    );
     unsafe fn CullFace(&mut self, mode: GLenum);
     unsafe fn DepthFunc(&mut self, func: GLenum);
     unsafe fn DepthMask(&mut self, flag: GLboolean);
@@ -65,6 +73,10 @@ pub trait GLES {
     unsafe fn Viewport(&mut self, x: GLint, y: GLint, width: GLsizei, height: GLsizei);
 
     // Lighting and materials
+    unsafe fn Fogf(&mut self, pname: GLenum, param: GLfloat);
+    unsafe fn Fogx(&mut self, pname: GLenum, param: GLfixed);
+    unsafe fn Fogfv(&mut self, pname: GLenum, params: *const GLfloat);
+    unsafe fn Fogxv(&mut self, pname: GLenum, params: *const GLfixed);
     unsafe fn Lightf(&mut self, light: GLenum, pname: GLenum, param: GLfloat);
     unsafe fn Lightx(&mut self, light: GLenum, pname: GLenum, param: GLfixed);
     unsafe fn Lightfv(&mut self, light: GLenum, pname: GLenum, params: *const GLfloat);
@@ -157,6 +169,17 @@ pub trait GLES {
         format: GLenum,
         type_: GLenum,
         pixels: *const GLvoid,
+    );
+    unsafe fn CompressedTexImage2D(
+        &mut self,
+        target: GLenum,
+        level: GLint,
+        internalformat: GLenum,
+        width: GLsizei,
+        height: GLsizei,
+        border: GLint,
+        image_size: GLsizei,
+        data: *const GLvoid,
     );
     unsafe fn CopyTexImage2D(
         &mut self,

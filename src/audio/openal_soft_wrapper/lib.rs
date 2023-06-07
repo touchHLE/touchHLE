@@ -119,6 +119,7 @@ extern "C" {
     pub fn alGetSourcei(source: ALuint, param: ALenum, value: *mut ALint);
 
     pub fn alSourcePlay(source: ALuint);
+    pub fn alSourcePause(source: ALuint);
     pub fn alSourceStop(source: ALuint);
 
     pub fn alSourceQueueBuffers(source: ALuint, nb: ALsizei, buffers: *const ALuint);

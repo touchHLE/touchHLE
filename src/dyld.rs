@@ -39,7 +39,7 @@ type HostFunction = &'static dyn CallFromGuest;
 /// Each module that wants to expose functions to guest code should export a
 /// constant using this type, e.g.:
 ///
-/// ```
+/// ```ignore
 /// pub const FUNCTIONS: FunctionExports = &[
 ///    ("_NSFoo", &/* ... */),
 ///    ("_NSBar", &/* ... */),
@@ -52,7 +52,7 @@ type HostFunction = &'static dyn CallFromGuest;
 ///
 /// For convenience, use [export_c_func]:
 ///
-/// ```
+/// ```ignore
 /// pub const FUNCTIONS: FunctionExports = &[
 ///     export_c_func!(NSFoo(_, _)),
 ///     export_c_func!(NSBar()),
@@ -64,13 +64,13 @@ pub type FunctionExports = &'static [(&'static str, HostFunction)];
 
 /// Macro for exporting a function with C-style name mangling. See [FunctionExports].
 ///
-/// ```rust
+/// ```ignore
 /// export_c_func!(NSFoo(_, _))
 /// ```
 ///
 /// will desugar to:
 ///
-/// ```rust
+/// ```ignore
 /// ("_NSFoo", &(NSFoo as (&mut Environment, _, _) -> _))
 /// ```
 ///
@@ -102,7 +102,7 @@ pub enum HostConstant {
 /// Each module that wants to expose functions to guest code should export a
 /// constant using this type, e.g.:
 ///
-/// ```
+/// ```ignore
 /// pub const CONSTANT: ConstantExports = &[
 ///    ("_kNSFooBar", HostConstant::NSString("NSFooBar")),
 ///    /* ... */
@@ -199,7 +199,8 @@ impl Dyld {
     pub fn do_initial_linking(&mut self, bins: &[MachO], mem: &mut Mem, objc: &mut ObjC) {
         assert!(self.return_to_host_routine.is_none());
         assert!(self.thread_exit_routine.is_none());
-        self.return_to_host_routine = Some(write_return_to_host_routine(mem, Self::SVC_RETURN_TO_HOST));
+        self.return_to_host_routine =
+            Some(write_return_to_host_routine(mem, Self::SVC_RETURN_TO_HOST));
         self.thread_exit_routine = Some(write_return_to_host_routine(mem, Self::SVC_THREAD_EXIT));
 
         // Currently assuming only the app binary contains Objective-C things.

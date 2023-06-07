@@ -3,11 +3,15 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
-//! `MacTypes.h`
-//!
-//! It's unclear if this belongs to some particular "framework", but it is
-//! definitely from Carbon.
+//! Some things from Carbon Core headers.
 
 /// Status code. At least in Audio Toolbox's use, this is usually a FourCC.
 /// 0 means success.
+///
+/// This is from `MacTypes.h`, which unusually isn't part of any framework!
 pub type OSStatus = i32;
+
+/// Status code meaning that a parameter supplied by the user was invalid.
+///
+/// One of many status codes from `MacErrors.h`, which is in Carbon Core.
+pub const paramErr: OSStatus = -50;

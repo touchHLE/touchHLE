@@ -8,6 +8,7 @@ This is a main file for the TestApp which is used for integration testing.
 This code supposed to be compiled with iPhone SDK and Xcode 3.1 Developer Tools
 for Mac OS X v10.5
 */
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -40,12 +41,39 @@ int test_qsort() {
   return 0;
 }
 
+char *str_format(const char *format, ...) {
+  char *str = malloc(256);
+  if (str == NULL) {
+    exit(EXIT_FAILURE);
+  }
+  va_list args;
+  va_start(args, format);
+  vsnprintf(str, 256, format, args);
+  va_end(args);
+  return str;
+}
+
+int test_vsnprintf() {
+  char *str = str_format("%s", "test");
+  int res = strcmp(str, "test");
+  free(str);
+  return res;
+}
+
 int main(int argc, char *argv[]) {
   int tests_run = 0;
   int tests_passed = 0;
   printf("test_qsort: ");
   tests_run++;
   if (test_qsort() == 0) {
+    printf("OK\n");
+    tests_passed++;
+  } else {
+    printf("FAIL\n");
+  }
+  printf("test_vsnprintf: ");
+  tests_run++;
+  if (test_vsnprintf() == 0) {
     printf("OK\n");
     tests_passed++;
   } else {

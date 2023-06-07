@@ -7,9 +7,9 @@
 
 use crate::abi::GuestFunction;
 use crate::dyld::{export_c_func, FunctionExports};
+use crate::frameworks::carbon_core::OSStatus;
 use crate::frameworks::core_audio_types::{debug_fourcc, fourcc};
 use crate::frameworks::core_foundation::cf_run_loop::{CFRunLoopMode, CFRunLoopRef};
-use crate::frameworks::mac_types::OSStatus;
 use crate::mem::{guest_size_of, ConstVoidPtr, GuestUSize, MutPtr, MutVoidPtr};
 use crate::Environment;
 

@@ -17,8 +17,6 @@ pub struct State {
 }
 
 pub(super) struct UIViewHostObject {
-    pub(super) bounds: CGRect,
-    pub(super) center: CGPoint,
     /// CALayer or subclass.
     layer: id,
 }
@@ -53,14 +51,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     let layer_class: Class = msg![env; this layerClass];
     let layer: id = msg![env; layer_class layer];
 
-    let host_object = Box::new(UIViewHostObject {
-        bounds: CGRect {
-            origin: CGPoint { x: 0.0, y: 0.0 },
-            size: CGSize { width: 0.0, height: 0.0 }
-        },
-        center: CGPoint { x: 0.0, y: 0.0 },
-        layer,
-    });
+    let host_object = Box::new(UIViewHostObject { layer });
     env.objc.alloc_object(this, host_object, &mut env.mem)
 }
 
@@ -71,29 +62,18 @@ pub const CLASSES: ClassExports = objc_classes! {
 // TODO: accessors etc
 
 - (id)initWithFrame:(CGRect)frame {
-    let center = CGPoint {
-        x: frame.origin.x + frame.size.width / 2.0,
-        y: frame.origin.y + frame.size.height / 2.0,
-    };
-    let bounds = CGRect {
-        origin: CGPoint { x: 0.0, y: 0.0 },
-        size: frame.size,
-    };
+    let layer = env.objc.borrow::<UIViewHostObject>(this).layer;
+    () = msg![env; layer setDelegate:this];
 
-    let host_object: &mut UIViewHostObject = env.objc.borrow_mut(this);
-    host_object.bounds = bounds;
-    host_object.center = center;
+    () = msg![env; this setFrame:frame];
 
     log_dbg!(
         "[(UIView*){:?} initWithFrame:{:?}] => bounds {:?}, center {:?}",
         this,
         frame,
-        bounds,
-        center,
+        { let bounds: CGRect = msg![env; this bounds]; bounds },
+        { let center: CGPoint = msg![env; this center]; center },
     );
-
-    let layer = host_object.layer;
-    () = msg![env; layer setDelegate:this];
 
     env.framework_state.uikit.ui_view.views.push(this);
 
@@ -115,10 +95,6 @@ pub const CLASSES: ClassExports = objc_classes! {
     let value = msg![env; coder decodeObjectForKey:key_ns_string];
     let center = parse_point(&to_rust_string(env, value)).unwrap();
 
-    let host_object: &mut UIViewHostObject = env.objc.borrow_mut(this);
-    host_object.bounds = bounds;
-    host_object.center = center;
-
     log_dbg!(
         "[(UIView*){:?} initWithCoder:{:?}] => bounds {:?}, center {:?}",
         this,
@@ -127,8 +103,11 @@ pub const CLASSES: ClassExports = objc_classes! {
         center
     );
 
-    let layer = host_object.layer;
+    let layer = env.objc.borrow::<UIViewHostObject>(this).layer;
     () = msg![env; layer setDelegate:this];
+
+    () = msg![env; this setBounds:bounds];
+    () = msg![env; this setCenter:center];
 
     env.framework_state.uikit.ui_view.views.push(this);
 
@@ -178,19 +157,22 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.borrow_mut::<UIViewHostObject>(this).layer
 }
 
-- (bool)opaque {
-    true
+- (bool)isOpaque {
+    let layer = env.objc.borrow::<UIViewHostObject>(this).layer;
+    msg![env; layer isOpaque]
 }
 - (())setOpaque:(bool)opaque {
-    // TODO: implement this once views are actually rendered
-    assert!(opaque);
+    let layer = env.objc.borrow::<UIViewHostObject>(this).layer;
+    msg![env; layer setOpaque:opaque]
 }
 
 - (CGFloat)alpha {
-    1.0
+    let layer = env.objc.borrow::<UIViewHostObject>(this).layer;
+    msg![env; layer opacity]
 }
-- (())setAlpha:(CGFloat)_alpha {
-    // TODO: implement this once views are actually rendered
+- (())setAlpha:(CGFloat)alpha {
+    let layer = env.objc.borrow::<UIViewHostObject>(this).layer;
+    msg![env; layer setOpacity:alpha]
 }
 
 - (id)backgroundColor {
@@ -200,13 +182,30 @@ pub const CLASSES: ClassExports = objc_classes! {
     // TODO: implement this once views are actually rendered
 }
 
-// FIXME: should these pass through from CALayer, vice-versa, or neither?
-// (See similar comment in ca_layer.rs)
 - (CGRect)bounds {
-    env.objc.borrow::<UIViewHostObject>(this).bounds
+    let layer = env.objc.borrow::<UIViewHostObject>(this).layer;
+    msg![env; layer bounds]
+}
+- (())setBounds:(CGRect)bounds {
+    let layer = env.objc.borrow::<UIViewHostObject>(this).layer;
+    msg![env; layer setBounds:bounds]
 }
 - (CGPoint)center {
-    env.objc.borrow::<UIViewHostObject>(this).center
+    // FIXME: what happens if [layer anchorPoint] isn't (0.5, 0.5)?
+    let layer = env.objc.borrow::<UIViewHostObject>(this).layer;
+    msg![env; layer position]
+}
+- (())setCenter:(CGRect)center {
+    let layer = env.objc.borrow::<UIViewHostObject>(this).layer;
+    msg![env; layer setPosition:center]
+}
+- (CGRect)frame {
+    let layer = env.objc.borrow::<UIViewHostObject>(this).layer;
+    msg![env; layer frame]
+}
+- (())setFrame:(CGRect)frame {
+    let layer = env.objc.borrow::<UIViewHostObject>(this).layer;
+    msg![env; layer setFrame:frame]
 }
 
 @end

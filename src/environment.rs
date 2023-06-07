@@ -63,6 +63,12 @@ pub struct Thread {
     stack: Option<std::ops::RangeInclusive<u32>>,
 }
 
+impl Thread {
+    fn is_blocked(&self) -> bool {
+        !matches!(self.blocked_by, ThreadBlock::NotBlocked)
+    }
+}
+
 /// The struct containing the entire emulator state. Methods are provided for
 /// execution and management of threads.
 pub struct Environment {
@@ -391,9 +397,8 @@ impl Environment {
         new_thread_id
     }
 
-    /// Put the current thread to sleep for some duration.
-    /// Note that this only take effect once returning to [Self::run] or
-    /// [Self::run_call], so do this just before a host function returns.
+    /// Put the current thread to sleep for some duration, running other threads
+    /// in the meantime as appropriate.
     pub fn sleep(&mut self, duration: Duration) {
         assert!(matches!(
             self.threads[self.current_thread].blocked_by,
@@ -628,7 +633,14 @@ impl Environment {
             // 100,000 ticks is an arbitrary number.
             self.window.poll_for_events(&self.options);
 
-            let mut ticks = 100_000;
+            let mut ticks = if self.threads[self.current_thread].is_blocked() {
+                // The current thread might be asleep, in which case we want to
+                // immediately switch to another thread. This only happens when
+                // called from Self::sleep().
+                0
+            } else {
+                100_000
+            };
             let mut step_and_debug = false;
             while ticks > 0 {
                 let state = self.cpu.run_or_step(
@@ -748,7 +760,7 @@ impl Environment {
                     continue;
                 } else {
                     // This should hopefully not happen, but if a thread is blocked on another
-                    // thread waiting for a deferred return, it could. 
+                    // thread waiting for a deferred return, it could.
                     panic!("No active threads, program has deadlocked!");
                 }
             }

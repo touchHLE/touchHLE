@@ -212,13 +212,13 @@ where
 /// See [msg_send] for the underlying implementation. Warning: all types are
 /// inferred from the call-site, be very sure you get them correct!
 ///
-/// ```rust
+/// ```ignore
 /// msg![env; foo setBar:bar withQux:qux];
 /// ```
 ///
 /// desugars to:
 ///
-/// ```rust
+/// ```ignore
 /// {
 ///     let sel = env.objc.lookup_selector("setFoo:withBar").unwrap();
 ///     msg_send(env, (foo, sel, bar, qux))
@@ -247,13 +247,13 @@ pub use crate::msg; // #[macro_export] is weird...
 /// Variant of [msg] for sending a message to a named class. Useful for calling
 /// class methods, especially `new`.
 ///
-/// ```rust
+/// ```ignore
 /// msg_class![env; SomeClass alloc]
 /// ```
 ///
 /// desugars to:
 ///
-/// ```rust
+/// ```ignore
 /// msg![env; (env.objc.get_known_class("SomeClass"), &mut env.mem) alloc]
 /// ```
 #[macro_export]

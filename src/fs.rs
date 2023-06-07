@@ -21,26 +21,37 @@
 //!
 //! Directories only need a corresponding directory in the host filesystem if
 //! they are writeable (i.e. if new files can be created in them).
+//!
+//! See also [crate::paths], which has paths for host files used by touchHLE.
 
 mod bundle;
 
 pub use bundle::BundleData;
 
 use crate::fs::bundle::{IpaFile, IpaFileRef};
+use crate::paths;
 use std::collections::HashMap;
-use std::env;
 use std::fs::File;
 use std::io::{Read, Seek, Write};
 use std::path::{Path, PathBuf};
 
+/// The actual location of a file outside the virtual filesystem, e.g. a host
+/// file path.
+#[derive(Debug)]
+enum FileLocation {
+    /// Path for a normal file. Can be read or written.
+    Path(PathBuf),
+    /// Reference to a file inside a `.ipa` file (ZIP archive). Read only.
+    IpaFileRef(IpaFileRef),
+    /// Name of a resource file bundled with touchHLE. Read only.
+    ResourceFilePath(String),
+}
+
 #[derive(Debug)]
 enum FsNode {
-    HostFile {
-        host_path: PathBuf,
+    File {
+        location: FileLocation,
         writeable: bool,
-    },
-    IpaBundleFile {
-        file: IpaFileRef,
     },
     Directory {
         children: HashMap<String, FsNode>,
@@ -68,8 +79,8 @@ impl FsNode {
             if kind.is_file() {
                 children.insert(
                     name,
-                    FsNode::HostFile {
-                        host_path,
+                    FsNode::File {
+                        location: FileLocation::Path(host_path),
                         writeable,
                     },
                 );
@@ -104,14 +115,17 @@ impl FsNode {
         assert!(children.insert(String::from(name), child).is_none());
         self
     }
-    fn host_file(host_path: PathBuf) -> Self {
-        FsNode::HostFile {
-            host_path,
+    fn bundle_zip_file(file_ref: IpaFileRef) -> Self {
+        FsNode::File {
+            location: FileLocation::IpaFileRef(file_ref),
             writeable: false,
         }
     }
-    fn bundle_zip_file(file: IpaFileRef) -> Self {
-        FsNode::IpaBundleFile { file }
+    fn resource_file(name: String) -> Self {
+        FsNode::File {
+            location: FileLocation::ResourceFilePath(name),
+            writeable: false,
+        }
     }
 }
 
@@ -304,7 +318,10 @@ impl GuestOpenOptions {
 /// information needed to tell if opening a file should succeed, so if opening
 /// the file nonetheless fails, there's either a bug or the user has done
 /// something wrong.
-fn handle_open_err<T>(open_result: std::io::Result<T>, host_path: &Path) -> T {
+fn handle_open_err<T, E: std::fmt::Display, P: std::fmt::Debug>(
+    open_result: Result<T, E>,
+    host_path: P,
+) -> T {
     match open_result {
         Ok(ok) => ok,
         Err(e) => panic!("Unexpected I/O failure when trying to access real path {:?}: {}. This might indicate that files needed by touchHLE are missing, or were moved while it was running.", host_path, e),
@@ -314,23 +331,28 @@ fn handle_open_err<T>(open_result: std::io::Result<T>, host_path: &Path) -> T {
 /// Like [File] but for the guest filesystem.
 #[derive(Debug)]
 pub enum GuestFile {
-    HostFile(File),
+    File(File),
     IpaBundleFile(IpaFile),
+    ResourceFile(paths::ResourceFile),
 }
 
 impl GuestFile {
     fn from_host_file(file: File) -> GuestFile {
-        GuestFile::HostFile(file)
+        GuestFile::File(file)
     }
 
     fn from_ipa_file(file: &IpaFileRef) -> GuestFile {
         GuestFile::IpaBundleFile(file.open())
     }
 
+    fn from_resource_file(file: paths::ResourceFile) -> GuestFile {
+        GuestFile::ResourceFile(file)
+    }
+
     pub fn sync_all(&self) -> std::io::Result<()> {
         match self {
-            GuestFile::HostFile(file) => file.sync_all(),
-            GuestFile::IpaBundleFile(_) => Ok(()),
+            GuestFile::File(file) => file.sync_all(),
+            GuestFile::IpaBundleFile(_) | GuestFile::ResourceFile(_) => Ok(()),
         }
     }
 }
@@ -338,8 +360,9 @@ impl GuestFile {
 impl Read for GuestFile {
     fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
         match self {
-            GuestFile::HostFile(file) => file.read(buf),
+            GuestFile::File(file) => file.read(buf),
             GuestFile::IpaBundleFile(file) => file.read(buf),
+            GuestFile::ResourceFile(file) => file.get().read(buf),
         }
     }
 }
@@ -347,8 +370,11 @@ impl Read for GuestFile {
 impl Write for GuestFile {
     fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
         match self {
-            GuestFile::HostFile(file) => file.write(buf),
+            GuestFile::File(file) => file.write(buf),
             GuestFile::IpaBundleFile(file) => {
+                panic!("Attempt to write to a read-only file: {:?}", file)
+            }
+            GuestFile::ResourceFile(file) => {
                 panic!("Attempt to write to a read-only file: {:?}", file)
             }
         }
@@ -356,8 +382,11 @@ impl Write for GuestFile {
 
     fn flush(&mut self) -> std::io::Result<()> {
         match self {
-            GuestFile::HostFile(file) => file.flush(),
+            GuestFile::File(file) => file.flush(),
             GuestFile::IpaBundleFile(file) => {
+                panic!("Attempt to flush a read-only file: {:?}", file)
+            }
+            GuestFile::ResourceFile(file) => {
                 panic!("Attempt to flush a read-only file: {:?}", file)
             }
         }
@@ -367,22 +396,10 @@ impl Write for GuestFile {
 impl Seek for GuestFile {
     fn seek(&mut self, pos: std::io::SeekFrom) -> std::io::Result<u64> {
         match self {
-            GuestFile::HostFile(file) => file.seek(pos),
+            GuestFile::File(file) => file.seek(pos),
             GuestFile::IpaBundleFile(file) => file.seek(pos),
+            GuestFile::ResourceFile(file) => file.get().seek(pos),
         }
-    }
-}
-
-/// This function returns platform specific prefix for `files` location like fonts or dylibs
-/// This is an empty string, unless we're on Android.
-pub fn files_prefix() -> &'static str {
-    // TODO: instead of path hardcoding,
-    // we should use https://wiki.libsdl.org/SDL2/SDL_AndroidGetInternalStoragePath
-    // but... it's not exposed via rust-sdl2 :(
-    if env::consts::OS == "android" {
-        "/data/data/org.touchhle.android/files/"
-    } else {
-        ""
     }
 }
 
@@ -420,9 +437,8 @@ impl Fs {
 
         let bundle_guest_path = home_directory.join(&bundle_dir_name);
 
-        let prefix = files_prefix();
-        let documents_host_path = Path::new(prefix)
-            .join("touchHLE_sandbox")
+        let documents_host_path = paths::user_data_base_path()
+            .join(paths::SANDBOX_DIR)
             .join(bundle_id)
             .join("Documents");
         if let Err(e) = std::fs::create_dir_all(&documents_host_path) {
@@ -433,20 +449,20 @@ impl Fs {
         }
 
         // Some Free Software libraries are bundled with touchHLE.
-        let dylibs_host_path = Path::new(prefix).join("touchHLE_dylibs");
+        use paths::DYLIBS_DIR;
         let usr_lib = FsNode::dir()
             .with_child(
                 "libgcc_s.1.dylib",
-                FsNode::host_file(dylibs_host_path.join("libgcc_s.1.dylib")),
+                FsNode::resource_file(format!("{}/libgcc_s.1.dylib", DYLIBS_DIR)),
             )
             .with_child(
                 // symlink
                 "libstdc++.6.dylib",
-                FsNode::host_file(dylibs_host_path.join("libstdc++.6.0.4.dylib")),
+                FsNode::resource_file(format!("{}/libstdc++.6.0.4.dylib", DYLIBS_DIR)),
             )
             .with_child(
                 "libstdc++.6.0.4.dylib",
-                FsNode::host_file(dylibs_host_path.join("libstdc++.6.0.4.dylib")),
+                FsNode::resource_file(format!("{}/libstdc++.6.0.4.dylib", DYLIBS_DIR)),
             );
 
         let root = FsNode::dir()
@@ -529,10 +545,55 @@ impl Fs {
 
     /// Like [Path::is_file] but for the guest filesystem.
     pub fn is_file(&self, path: &GuestPath) -> bool {
-        matches!(
-            self.lookup_node(path),
-            Some(FsNode::HostFile { .. } | FsNode::IpaBundleFile { .. })
-        )
+        matches!(self.lookup_node(path), Some(FsNode::File { .. }))
+    }
+
+    #[allow(dead_code)]
+    /// Get an iterator over the names of files/directories in a directory.
+    pub fn enumerate<P: AsRef<GuestPath>>(
+        &self,
+        path: P,
+    ) -> Result<impl Iterator<Item = &str>, ()> {
+        let Some(FsNode::Directory { children, .. }) = self.lookup_node(path.as_ref()) else {
+            return Err(());
+        };
+        Ok(children.keys().map(|name| name.as_str()))
+    }
+
+    /// Recursively list the paths of files/directories in a directory.
+    /// The base path (`path`) is not included in the returned paths.
+    pub fn enumerate_recursive<P: AsRef<GuestPath>>(
+        &self,
+        path: P,
+    ) -> Result<Vec<GuestPathBuf>, ()> {
+        let Some(FsNode::Directory { children, .. }) = self.lookup_node(path.as_ref()) else {
+            return Err(());
+        };
+
+        let mut paths = Vec::new();
+        let mut component_stack: Vec<&str> = Vec::new();
+        let mut iterator_stack = vec![children.iter()];
+
+        loop {
+            let current_iterator = iterator_stack.last_mut().unwrap();
+            if let Some((next_component, next_node)) = current_iterator.next() {
+                component_stack.push(next_component);
+                paths.push(GuestPathBuf::from(component_stack.join("/")));
+                if let FsNode::Directory { children, .. } = next_node {
+                    iterator_stack.push(children.iter());
+                } else {
+                    component_stack.pop();
+                }
+            } else {
+                iterator_stack.pop();
+                if component_stack.pop().is_none() {
+                    break;
+                }
+            }
+        }
+        assert!(component_stack.is_empty() && iterator_stack.is_empty());
+
+        Ok(paths)
     }
 
     /// Like [std::fs::read] but for the guest filesystem.
@@ -558,11 +619,17 @@ impl Fs {
         // it would be nice to delegate to self.open_with_options, but currently it wants a mutable reference to self
         let node = self.lookup_node(path.as_ref()).ok_or(())?;
         match node {
-            FsNode::HostFile { host_path, .. } => {
-                let host_file = handle_open_err(File::open(host_path), host_path);
-                Ok(GuestFile::from_host_file(host_file))
-            }
-            FsNode::IpaBundleFile { file } => Ok(GuestFile::from_ipa_file(file)),
+            FsNode::File { location, .. } => match location {
+                FileLocation::Path(host_path) => {
+                    let host_file = handle_open_err(File::open(host_path), host_path);
+                    Ok(GuestFile::from_host_file(host_file))
+                }
+                FileLocation::IpaFileRef(file) => Ok(GuestFile::from_ipa_file(file)),
+                FileLocation::ResourceFilePath(name) => {
+                    let resource_file = handle_open_err(paths::ResourceFile::open(name), name);
+                    Ok(GuestFile::from_resource_file(resource_file))
+                }
+            },
             FsNode::Directory { .. } => Err(()),
         }
     }
@@ -596,32 +663,39 @@ impl Fs {
 
         if let Some(existing_file) = children.get(&new_filename) {
             match existing_file {
-                FsNode::HostFile {
-                    host_path,
+                &FsNode::File {
+                    ref location,
                     writeable,
                 } => {
                     if !writeable && (append || write) {
                         log!("Warning: attempt to write to read-only file {:?}", path);
                         return Err(());
                     }
-                    let file = handle_open_err(
-                        File::options()
-                            .read(read)
-                            .write(write)
-                            .append(append)
-                            .create(false)
-                            .truncate(truncate)
-                            .open(host_path),
-                        host_path,
-                    );
-                    return Ok(GuestFile::from_host_file(file));
-                }
-                FsNode::IpaBundleFile { file } => {
-                    if write || append || truncate {
-                        log!("Warning: attempt to write to read-only file {:?}", path);
-                        return Err(());
+                    match location {
+                        FileLocation::Path(host_path) => {
+                            let file = handle_open_err(
+                                File::options()
+                                    .read(read)
+                                    .write(write)
+                                    .append(append)
+                                    .create(false)
+                                    .truncate(truncate)
+                                    .open(host_path),
+                                host_path,
+                            );
+                            return Ok(GuestFile::File(file));
+                        }
+                        FileLocation::IpaFileRef(file) => {
+                            assert!(!(writeable || append || write));
+                            return Ok(GuestFile::from_ipa_file(file));
+                        }
+                        FileLocation::ResourceFilePath(name) => {
+                            assert!(!(writeable || append || write));
+                            let resource_file =
+                                handle_open_err(paths::ResourceFile::open(name), name);
+                            return Ok(GuestFile::from_resource_file(resource_file));
+                        }
                     }
-                    return Ok(GuestFile::from_ipa_file(file));
                 }
                 FsNode::Directory { .. } => {
                     return Err(());
@@ -665,12 +739,12 @@ impl Fs {
         );
         children.insert(
             new_filename,
-            FsNode::HostFile {
-                host_path,
+            FsNode::File {
+                location: FileLocation::Path(host_path),
                 writeable: true,
             },
         );
-        Ok(GuestFile::from_host_file(file))
+        Ok(GuestFile::File(file))
     }
 
     /// Removes a file or a directory. If the node is a directory, it must be
@@ -699,8 +773,8 @@ impl Fs {
         };
 
         match node {
-            FsNode::HostFile {
-                host_path,
+            FsNode::File {
+                location,
                 writeable,
             } => {
                 // Read-only files can't be removed. (This is probably not
@@ -708,6 +782,11 @@ impl Fs {
                 if !writeable {
                     return Err(());
                 }
+
+                let host_path = match location {
+                    FileLocation::Path(host_path) => host_path,
+                    FileLocation::IpaFileRef(_) | FileLocation::ResourceFilePath(_) => panic!(),
+                };
 
                 handle_open_err(std::fs::remove_file(host_path), host_path);
                 log_dbg!(
@@ -736,10 +815,6 @@ impl Fs {
                     path,
                     host_path
                 );
-            }
-            FsNode::IpaBundleFile { .. } => {
-                // Read-only
-                return Err(());
             }
         }
 

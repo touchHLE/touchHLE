@@ -6,8 +6,7 @@
 //! `UITouch`.
 
 use super::ui_event;
-use super::ui_view::UIViewHostObject;
-use crate::frameworks::core_graphics::{CGFloat, CGPoint};
+use crate::frameworks::core_graphics::{CGFloat, CGPoint, CGRect};
 use crate::frameworks::foundation::{NSTimeInterval, NSUInteger};
 use crate::objc::{
     autorelease, id, msg, msg_class, nil, objc_classes, release, retain, ClassExports, HostObject,
@@ -96,7 +95,8 @@ pub fn resolve_point_in_view(env: &mut Environment, view: id, point: CGPoint) ->
     let expected_width = expected_width as CGFloat;
     let expected_height = expected_height as CGFloat;
 
-    let &UIViewHostObject { bounds, center, .. } = env.objc.borrow(view);
+    let bounds: CGRect = msg![env; view bounds];
+    let center: CGPoint = msg![env; view center];
 
     if bounds.size.width != expected_width || bounds.size.height != expected_height {
         return None;

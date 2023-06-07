@@ -133,7 +133,8 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.dealloc_object(this, &mut env.mem)
 }
 
-- (id)initWithObjectsAndKeys:(id)first_object, ...va_args {
+- (id)initWithObjectsAndKeys:(id)first_object, ...dots {
+    let mut va_args = dots.start();
     let first_key: id = va_args.next(env);
     assert!(first_key != nil); // TODO: raise proper exception
 

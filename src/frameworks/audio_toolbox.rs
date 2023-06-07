@@ -5,6 +5,22 @@
  */
 //! The Audio Toolbox framework.
 
+/// Macro for checking if an argument is null and returning `paramErr` if so.
+/// This seems to be what the real Audio Toolbox does, and some apps rely on it.
+macro_rules! return_if_null {
+    ($param:ident) => {
+        if $param.is_null() {
+            log_dbg!(
+                "Got NULL parameter {}, returning paramErr in {} on line {}",
+                stringify!($param),
+                file!(),
+                line!()
+            );
+            return crate::frameworks::carbon_core::paramErr;
+        }
+    };
+}
+
 pub mod audio_file;
 pub mod audio_queue;
 pub mod audio_services;

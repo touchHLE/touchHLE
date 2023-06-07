@@ -5,13 +5,17 @@
  */
 //! `CALayer`.
 
-use crate::frameworks::core_graphics::{CGPoint, CGRect};
+use crate::frameworks::core_graphics::{CGPoint, CGRect, CGSize};
 use crate::objc::{id, msg, nil, objc_classes, release, ClassExports, HostObject};
 
 pub(super) struct CALayerHostObject {
     /// Possibly nil, usually a UIView. This is a weak reference.
     delegate: id,
+    bounds: CGRect,
+    position: CGPoint,
+    anchor_point: CGPoint,
     opaque: bool,
+    opacity: f32,
     /// For CAEAGLLayer only
     pub(super) drawable_properties: id,
 }
@@ -26,7 +30,14 @@ pub const CLASSES: ClassExports = objc_classes! {
 + (id)alloc {
     let host_object = Box::new(CALayerHostObject {
         delegate: nil,
+        bounds: CGRect {
+            origin: CGPoint { x: 0.0, y: 0.0 },
+            size: CGSize { width: 0.0, height: 0.0 }
+        },
+        position: CGPoint { x: 0.0, y: 0.0 },
+        anchor_point: CGPoint { x: 0.5, y: 0.5 },
         opaque: false,
+        opacity: 1.0,
         drawable_properties: nil,
     });
     env.objc.alloc_object(this, host_object, &mut env.mem)
@@ -51,6 +62,57 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.borrow_mut::<CALayerHostObject>(this).delegate = delegate;
 }
 
+- (CGRect)bounds {
+    env.objc.borrow::<CALayerHostObject>(this).bounds
+}
+- (())setBounds:(CGRect)bounds {
+    env.objc.borrow_mut::<CALayerHostObject>(this).bounds = bounds;
+}
+- (CGPoint)position {
+    env.objc.borrow::<CALayerHostObject>(this).position
+}
+- (())setPosition:(CGPoint)position {
+    env.objc.borrow_mut::<CALayerHostObject>(this).position = position;
+}
+- (CGPoint)anchorPoint {
+    env.objc.borrow::<CALayerHostObject>(this).anchor_point
+}
+- (())setAnchorPoint:(CGPoint)anchor_point {
+    env.objc.borrow_mut::<CALayerHostObject>(this).anchor_point = anchor_point;
+}
+
+- (CGRect)frame {
+    let &CALayerHostObject {
+        bounds,
+        position,
+        anchor_point,
+        ..
+    } = env.objc.borrow(this);
+    CGRect {
+        origin: CGPoint {
+            x: position.x - bounds.size.width * anchor_point.x,
+            y: position.y - bounds.size.height * anchor_point.y,
+        },
+        size: bounds.size,
+    }
+}
+- (())setFrame:(CGRect)frame {
+    let CALayerHostObject {
+        bounds,
+        position,
+        anchor_point,
+        ..
+    } = env.objc.borrow_mut(this);
+    *position = CGPoint {
+        x: frame.origin.x + frame.size.width * anchor_point.x,
+        y: frame.origin.y + frame.size.height * anchor_point.y,
+    };
+    *bounds = CGRect {
+        origin: CGPoint { x: 0.0, y: 0.0 },
+        size: frame.size,
+    };
+}
+
 - (bool)isOpaque {
     env.objc.borrow::<CALayerHostObject>(this).opaque
 }
@@ -58,18 +120,11 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.borrow_mut::<CALayerHostObject>(this).opaque = opaque;
 }
 
-// FIXME: should these pass through from UIView, vice-versa, or neither?
-// (See similar comment in ui_view.rs)
-- (CGRect)bounds {
-    let view: id = msg![env; this delegate];
-    msg![env; view bounds]
+- (f32)opacity {
+    env.objc.borrow::<CALayerHostObject>(this).opacity
 }
-- (CGPoint)position {
-    let view: id = msg![env; this delegate];
-    msg![env; view center]
-}
-- (CGPoint)anchorPoint {
-    CGPoint { x: 0.5, y: 0.5 }
+- (())setOpacity:(f32)opacity {
+    env.objc.borrow_mut::<CALayerHostObject>(this).opacity = opacity;
 }
 
 // TODO

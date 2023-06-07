@@ -7,8 +7,10 @@
 
 use super::{ns_array, ns_string, NSUInteger};
 use crate::dyld::{export_c_func, FunctionExports};
-use crate::fs::GuestPath;
-use crate::objc::{autorelease, id, msg, msg_class, nil, objc_classes, release, ClassExports};
+use crate::fs::{GuestPath, GuestPathBuf};
+use crate::objc::{
+    autorelease, id, msg, msg_class, nil, objc_classes, release, ClassExports, HostObject,
+};
 use crate::Environment;
 
 type NSSearchPathDirectory = NSUInteger;
@@ -49,6 +51,11 @@ pub const FUNCTIONS: FunctionExports = &[
 pub struct State {
     default_manager: Option<id>,
 }
+
+struct NSDirectoryEnumeratorHostObject {
+    iterator: std::vec::IntoIter<GuestPathBuf>,
+}
+impl HostObject for NSDirectoryEnumeratorHostObject {}
 
 pub const CLASSES: ClassExports = objc_classes! {
 
@@ -95,6 +102,28 @@ pub const CLASSES: ClassExports = objc_classes! {
     } else {
         msg![env; data writeToFile:path atomically:false]
     }
+}
+
+- (id)enumeratorAtPath:(id)path { // NSString*
+    let path = ns_string::to_rust_string(env, path); // TODO: avoid copy
+    let Ok(paths) = env.fs.enumerate_recursive(GuestPath::new(&path)) else {
+        return nil;
+    };
+    let host_object = Box::new(NSDirectoryEnumeratorHostObject {
+        iterator: paths.into_iter(),
+    });
+    let class = env.objc.get_known_class("NSDirectoryEnumerator", &mut env.mem);
+    let enumerator = env.objc.alloc_object(class, host_object, &mut env.mem);
+    autorelease(env, enumerator)
+}
+
+@end
+
+@implementation NSDirectoryEnumerator: NSEnumerator
+
+- (id)nextObject {
+    let host_obj = env.objc.borrow_mut::<NSDirectoryEnumeratorHostObject>(this);
+    host_obj.iterator.next().map_or(nil, |s| ns_string::from_rust_string(env, String::from(s)))
 }
 
 @end

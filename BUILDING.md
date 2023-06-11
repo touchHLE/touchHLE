@@ -59,6 +59,17 @@ With the prerequisites installed, `cargo run --release` (for a release build) or
 
 touchHLE can also be dynamically linked (which means instead of using the bundled dependencies, it will use the dependencies provided by your system). To build a dynamically linked version of touchHLE, you will need to have the SDL2 and OpenAL shared libraries installed, and then you can append `--no-default-features` (this flag is passed in to disable static linking, which is the default) to the end of the cargo build command. For macOS users: Apple's OpenAL.framework is not supported, only OpenAL Soft, and you need to add it to the linker path yourself.
 
+### Ubuntu 22.04
+
+On ubuntu 22.04 you can get error about -lsndio
+
+Fix:
+
+```
+sudo apt install libsdl2-dev
+```
+
+
 ### Android
 
 #### With Android Studio

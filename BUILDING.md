@@ -61,7 +61,7 @@ touchHLE can also be dynamically linked (which means instead of using the bundle
 
 ### Ubuntu 22.04
 
-On ubuntu 22.04 you can get error about -lsndio
+On Ubuntu 22.04 you can get error about -lsndio
 
 Fix:
 

@@ -12,6 +12,10 @@
 //! - Apple's [Archives and Serializations Programming Guide](https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/Archiving/Articles/archives.html)
 
 use super::ns_string::{from_rust_string, to_rust_string};
+use crate::frameworks::core_graphics::{CGPoint, CGRect, CGSize};
+use crate::frameworks::uikit::ui_geometry::{
+    CGPointFromString, CGRectFromString, CGSizeFromString,
+};
 use crate::objc::{
     autorelease, id, msg, objc_classes, release, retain, ClassExports, HostObject, NSZonePtr,
 };
@@ -84,6 +88,20 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 // TODO: add more decode methods
+
+// These come from a category in UIKit's UIGeometry.h
+- (CGPoint)decodeCGPointForKey:(id)key { // NSString*
+    let string: id = msg![env; this decodeObjectForKey:key];
+    CGPointFromString(env, string)
+}
+- (CGSize)decodeCGSizeForKey:(id)key { // NSString*
+    let string: id = msg![env; this decodeObjectForKey:key];
+    CGSizeFromString(env, string)
+}
+- (CGRect)decodeCGRectForKey:(id)key { // NSString*
+    let string: id = msg![env; this decodeObjectForKey:key];
+    CGRectFromString(env, string)
+}
 
 @end
 

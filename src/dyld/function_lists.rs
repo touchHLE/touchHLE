@@ -58,5 +58,6 @@ pub const FUNCTION_LISTS: &[super::FunctionExports] = &[
     openal::FUNCTIONS,
     opengles::FUNCTIONS,
     uikit::ui_application::FUNCTIONS,
+    uikit::ui_geometry::FUNCTIONS,
     uikit::ui_graphics::FUNCTIONS,
 ];

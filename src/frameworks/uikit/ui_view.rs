@@ -7,8 +7,9 @@
 
 use crate::frameworks::core_graphics::{CGFloat, CGPoint, CGRect};
 use crate::frameworks::foundation::ns_string::{get_static_str, to_rust_string};
+use crate::frameworks::foundation::NSUInteger;
 use crate::objc::{
-    id, msg, nil, objc_classes, release, Class, ClassExports, HostObject, NSZonePtr,
+    id, msg, nil, objc_classes, release, retain, Class, ClassExports, HostObject, NSZonePtr,
 };
 
 #[derive(Default)]
@@ -16,9 +17,14 @@ pub struct State {
     pub(super) views: Vec<id>,
 }
 
+#[derive(Default)]
 pub(super) struct UIViewHostObject {
     /// CALayer or subclass.
     layer: id,
+    /// Subviews in back-to-front order. These are strong references.
+    subviews: Vec<id>,
+    /// The superview. This is a weak reference.
+    superview: id,
 }
 impl HostObject for UIViewHostObject {}
 
@@ -29,7 +35,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 @implementation UIView: UIResponder
 
 + (id)allocWithZone:(NSZonePtr)_zone {
-    let host_object = Box::new(UIViewHostObject { layer: nil });
+    let host_object = Box::<UIViewHostObject>::default();
     env.objc.alloc_object(this, host_object, &mut env.mem)
 }
 
@@ -83,16 +89,26 @@ pub const CLASSES: ClassExports = objc_classes! {
     let key_ns_string = get_static_str(env, "UICenter");
     let center: CGPoint = msg![env; coder decodeCGPointForKey:key_ns_string];
 
+    let key_ns_string = get_static_str(env, "UISubviews");
+    let subviews: id = msg![env; coder decodeObjectForKey:key_ns_string];
+    let subview_count: NSUInteger = msg![env; subviews count];
+
     log_dbg!(
-        "[(UIView*){:?} initWithCoder:{:?}] => bounds {}, center {}",
+        "[(UIView*){:?} initWithCoder:{:?}] => bounds {}, center {}, {} subviews",
         this,
         coder,
         bounds,
-        center
+        center,
+        subview_count,
     );
 
     () = msg![env; this setBounds:bounds];
     () = msg![env; this setCenter:center];
+
+    for i in 0..subview_count {
+        let subview: id = msg![env; subviews objectAtIndex:i];
+        () = msg![env; this addSubview:subview];
+    }
 
     this
 }
@@ -106,28 +122,57 @@ pub const CLASSES: ClassExports = objc_classes! {
     // On iOS 5.1 and earlier, the default implementation of this method does nothing.
 }
 
+- (id)superview {
+    env.objc.borrow::<UIViewHostObject>(this).superview
+}
+// TODO: subviews accessor
+
 - (())addSubview:(id)view {
-    // FIXME: there should be an actual hierarchy that retains the view
-    log!("TODO: [(UIView*){:?} addSubview:{:?}]", this, view);
-    // FIXME: These should be called systematically using setNeedsLayout: and
-    //        layoutIfNeeded.
-    let _: () = msg![env; this layoutSubviews];
-    let _: () = msg![env; view layoutSubviews];
+    if env.objc.borrow::<UIViewHostObject>(view).superview == this {
+        () = msg![env; this bringSubviewToFront:view];
+    } else {
+        retain(env, view);
+        () = msg![env; view removeFromSuperview];
+        env.objc.borrow_mut::<UIViewHostObject>(view).superview = this;
+        env.objc.borrow_mut::<UIViewHostObject>(this).subviews.push(view);
+    }
 }
 
-- (())bringSubviewToFront:(id)view {
-    log_dbg!("TODO: [(UIView*){:?} bringSubviewToFront:{:?}]", this, view);
+- (())bringSubviewToFront:(id)subview {
+    let UIViewHostObject { ref mut subviews, .. } = env.objc.borrow_mut(this);
+    let idx = subviews.iter().position(|&subview2| subview2 == subview).unwrap();
+    let subview2 = subviews.remove(idx);
+    assert!(subview2 == subview);
+    subviews.push(subview);
 }
 
 - (())removeFromSuperview {
-    // FIXME: this should actually remove the view from some hierarchy and
-    //        release it
-    log!("TODO: [(UIView*){:?} removeFromSuperview]", this);
+    let UIViewHostObject { ref mut superview, .. } = env.objc.borrow_mut(this);
+    let superview = std::mem::take(superview);
+    if superview == nil {
+        return;
+    }
+
+    let UIViewHostObject { ref mut subviews, .. } = env.objc.borrow_mut(superview);
+    let idx = subviews.iter().position(|&subview| subview == this).unwrap();
+    let subview = subviews.remove(idx);
+    assert!(subview == this);
+    release(env, this);
 }
 
 - (())dealloc {
-    let &mut UIViewHostObject { layer, .. } = env.objc.borrow_mut(this);
+    let UIViewHostObject {
+        layer,
+        superview,
+        subviews,
+    } = std::mem::take(env.objc.borrow_mut(this));
+
     release(env, layer);
+    assert!(superview == nil);
+    for subview in subviews {
+        env.objc.borrow_mut::<UIViewHostObject>(subview).superview = nil;
+        release(env, subview);
+    }
 
     env.framework_state.uikit.ui_view.views.swap_remove(
         env.framework_state.uikit.ui_view.views.iter().position(|&v| v == this).unwrap()

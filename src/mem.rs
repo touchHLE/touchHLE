@@ -105,6 +105,12 @@ impl<T> MutPtr<T> {
     }
 }
 
+impl<T, const MUT: bool> Default for Ptr<T, MUT> {
+    fn default() -> Self {
+        Self::null()
+    }
+}
+
 impl<T, const MUT: bool> std::fmt::Debug for Ptr<T, MUT> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:#x}", self.to_bits())

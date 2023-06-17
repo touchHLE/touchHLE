@@ -17,7 +17,7 @@ use crate::frameworks::uikit::ui_geometry::{
     CGPointFromString, CGRectFromString, CGSizeFromString,
 };
 use crate::objc::{
-    autorelease, id, msg, objc_classes, release, retain, ClassExports, HostObject, NSZonePtr,
+    autorelease, id, msg, nil, objc_classes, release, retain, ClassExports, HostObject, NSZonePtr,
 };
 use crate::Environment;
 use plist::{Dictionary, Uid, Value};
@@ -79,7 +79,10 @@ pub const CLASSES: ClassExports = objc_classes! {
             &host_obj.plist["$top"]
         }
     }.as_dictionary().unwrap();
-    let next_uid = scope[&key].as_uid().copied().unwrap();
+    let Some(next_uid) = scope.get(&key) else {
+        return nil;
+    };
+    let next_uid = next_uid.as_uid().copied().unwrap();
     let object = unarchive_key(env, this, next_uid);
 
     // on behalf of the caller

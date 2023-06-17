@@ -6,11 +6,15 @@
 //! `CALayer`.
 
 use crate::frameworks::core_graphics::{CGPoint, CGRect, CGSize};
-use crate::objc::{id, msg, nil, objc_classes, release, ClassExports, HostObject};
+use crate::objc::{id, msg, nil, objc_classes, release, retain, ClassExports, HostObject};
 
 pub(super) struct CALayerHostObject {
     /// Possibly nil, usually a UIView. This is a weak reference.
     delegate: id,
+    /// Sublayers in back-to-front order. These are strong references.
+    sublayers: Vec<id>,
+    /// The superlayer. This is a weak reference.
+    superlayer: id,
     bounds: CGRect,
     position: CGPoint,
     anchor_point: CGPoint,
@@ -30,6 +34,8 @@ pub const CLASSES: ClassExports = objc_classes! {
 + (id)alloc {
     let host_object = Box::new(CALayerHostObject {
         delegate: nil,
+        sublayers: Vec::new(),
+        superlayer: nil,
         bounds: CGRect {
             origin: CGPoint { x: 0.0, y: 0.0 },
             size: CGSize { width: 0.0, height: 0.0 }
@@ -49,9 +55,22 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (())dealloc {
-    let &CALayerHostObject { drawable_properties, .. } = env.objc.borrow(this);
+    let &mut CALayerHostObject {
+        drawable_properties,
+        superlayer,
+        ref mut sublayers,
+        ..
+    } = env.objc.borrow_mut(this);
+    let sublayers = std::mem::take(sublayers);
+
     if drawable_properties != nil {
         release(env, drawable_properties);
+    }
+
+    assert!(superlayer == nil);
+    for sublayer in sublayers {
+        env.objc.borrow_mut::<CALayerHostObject>(sublayer).superlayer = nil;
+        release(env, sublayer);
     }
 }
 
@@ -60,6 +79,36 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 - (())setDelegate:(id)delegate {
     env.objc.borrow_mut::<CALayerHostObject>(this).delegate = delegate;
+}
+
+- (id)superlayer {
+    env.objc.borrow::<CALayerHostObject>(this).superlayer
+}
+// TODO: sublayers accessors
+
+- (())addSublayer:(id)layer {
+    if env.objc.borrow::<CALayerHostObject>(layer).superlayer == this {
+        () = msg![env; this bringSublayerToFront:layer];
+    } else {
+        retain(env, layer);
+        () = msg![env; layer removeFromSuperlayer];
+        env.objc.borrow_mut::<CALayerHostObject>(layer).superlayer = this;
+        env.objc.borrow_mut::<CALayerHostObject>(this).sublayers.push(layer);
+    }
+}
+
+- (())removeFromSuperlayer {
+    let CALayerHostObject { ref mut superlayer, .. } = env.objc.borrow_mut(this);
+    let superlayer = std::mem::take(superlayer);
+    if superlayer == nil {
+        return;
+    }
+
+    let CALayerHostObject { ref mut sublayers, .. } = env.objc.borrow_mut(superlayer);
+    let idx = sublayers.iter().position(|&sublayer| sublayer == this).unwrap();
+    let sublayer = sublayers.remove(idx);
+    assert!(sublayer == this);
+    release(env, this);
 }
 
 - (CGRect)bounds {
@@ -127,7 +176,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.borrow_mut::<CALayerHostObject>(this).opacity = opacity;
 }
 
-// TODO
+// TODO: more
 
 @end
 

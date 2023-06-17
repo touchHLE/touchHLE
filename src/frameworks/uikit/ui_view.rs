@@ -133,25 +133,46 @@ pub const CLASSES: ClassExports = objc_classes! {
     } else {
         retain(env, view);
         () = msg![env; view removeFromSuperview];
-        env.objc.borrow_mut::<UIViewHostObject>(view).superview = this;
-        env.objc.borrow_mut::<UIViewHostObject>(this).subviews.push(view);
+        let subview_obj = env.objc.borrow_mut::<UIViewHostObject>(view);
+        subview_obj.superview = this;
+        let subview_layer = subview_obj.layer;
+        let this_obj = env.objc.borrow_mut::<UIViewHostObject>(this);
+        this_obj.subviews.push(view);
+        let this_layer = this_obj.layer;
+        () = msg![env; this_layer addSublayer:subview_layer];
     }
 }
 
 - (())bringSubviewToFront:(id)subview {
-    let UIViewHostObject { ref mut subviews, .. } = env.objc.borrow_mut(this);
+    let &mut UIViewHostObject {
+        ref mut subviews,
+        layer,
+        superview,
+    } = env.objc.borrow_mut(this);
+
     let idx = subviews.iter().position(|&subview2| subview2 == subview).unwrap();
     let subview2 = subviews.remove(idx);
     assert!(subview2 == subview);
     subviews.push(subview);
+
+    if superview != nil {
+        () = msg![env; layer removeFromSuperlayer];
+        let superlayer = env.objc.borrow::<UIViewHostObject>(superview).layer;
+        () = msg![env; superlayer addSublayer:layer];
+    }
 }
 
 - (())removeFromSuperview {
-    let UIViewHostObject { ref mut superview, .. } = env.objc.borrow_mut(this);
+    let &mut UIViewHostObject {
+        ref mut superview,
+        layer: this_layer,
+        ..
+    } = env.objc.borrow_mut(this);
     let superview = std::mem::take(superview);
     if superview == nil {
         return;
     }
+    () = msg![env; this_layer removeFromSuperlayer];
 
     let UIViewHostObject { ref mut subviews, .. } = env.objc.borrow_mut(superview);
     let idx = subviews.iter().position(|&subview| subview == this).unwrap();

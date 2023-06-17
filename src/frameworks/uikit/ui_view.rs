@@ -29,10 +29,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 @implementation UIView: UIResponder
 
 + (id)allocWithZone:(NSZonePtr)_zone {
-    let layer_class: Class = msg![env; this layerClass];
-    let layer: id = msg![env; layer_class layer];
-
-    let host_object = Box::new(UIViewHostObject { layer });
+    let host_object = Box::new(UIViewHostObject { layer: nil });
     env.objc.alloc_object(this, host_object, &mut env.mem)
 }
 
@@ -42,9 +39,24 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 // TODO: accessors etc
 
-- (id)initWithFrame:(CGRect)frame {
-    let layer = env.objc.borrow::<UIViewHostObject>(this).layer;
+- (id)init {
+    let view_class: Class = msg![env; this class];
+    let layer_class: Class = msg![env; view_class layerClass];
+    let layer: id = msg![env; layer_class layer];
+
+    // CALayer is not opaque by default, but UIView is
     () = msg![env; layer setDelegate:this];
+    () = msg![env; layer setOpaque:true];
+
+    env.objc.borrow_mut::<UIViewHostObject>(this).layer = layer;
+
+    env.framework_state.uikit.ui_view.views.push(this);
+
+    this
+}
+
+- (id)initWithFrame:(CGRect)frame {
+    let this: id = msg![env; this init];
 
     () = msg![env; this setFrame:frame];
 
@@ -56,13 +68,13 @@ pub const CLASSES: ClassExports = objc_classes! {
         { let center: CGPoint = msg![env; this center]; center },
     );
 
-    env.framework_state.uikit.ui_view.views.push(this);
-
     this
 }
 
 // NSCoding implementation
 - (id)initWithCoder:(id)coder {
+    let this: id = msg![env; this init];
+
     // TODO: decode the various other UIView properties
 
     let key_ns_string = get_static_str(env, "UIBounds");
@@ -79,13 +91,8 @@ pub const CLASSES: ClassExports = objc_classes! {
         center
     );
 
-    let layer = env.objc.borrow::<UIViewHostObject>(this).layer;
-    () = msg![env; layer setDelegate:this];
-
     () = msg![env; this setBounds:bounds];
     () = msg![env; this setCenter:center];
-
-    env.framework_state.uikit.ui_view.views.push(this);
 
     this
 }

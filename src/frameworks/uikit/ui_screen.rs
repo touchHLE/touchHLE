@@ -6,7 +6,7 @@
 //! `UIScreen`.
 
 use crate::frameworks::core_graphics::{CGPoint, CGRect, CGSize};
-use crate::objc::{id, objc_classes, ClassExports, TrivialHostObject};
+use crate::objc::{id, msg, objc_classes, ClassExports, TrivialHostObject};
 
 #[derive(Default)]
 pub struct State {
@@ -40,12 +40,22 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 // TODO: more accessors
 
-- (CGRect) bounds {
+- (CGRect)bounds {
     // TODO: once rotation is supported, this must change with the rotation!
     CGRect {
         origin: CGPoint { x: 0.0, y: 0.0 },
         size: CGSize { width: 320.0, height: 480.0 },
     }
+}
+
+- (CGRect)applicationFrame {
+    let mut bounds: CGRect = msg![env; this bounds];
+    const STATUS_BAR_HEIGHT: f32 = 20.0;
+    if !env.framework_state.uikit.ui_application.status_bar_hidden {
+        bounds.origin.y += STATUS_BAR_HEIGHT;
+        bounds.size.height -= STATUS_BAR_HEIGHT;
+    }
+    bounds
 }
 
 @end

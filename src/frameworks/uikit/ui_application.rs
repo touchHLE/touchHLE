@@ -20,6 +20,7 @@ use crate::Environment;
 pub struct State {
     /// [UIApplication sharedApplication]
     shared_application: Option<id>,
+    pub(super) status_bar_hidden: bool,
 }
 
 struct UIApplicationHostObject {
@@ -75,8 +76,8 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 // TODO: statusBarHidden getter
-- (())setStatusBarHidden:(bool)_hidden {
-    // TODO: store this somewhere
+- (())setStatusBarHidden:(bool)hidden {
+    env.framework_state.uikit.ui_application.status_bar_hidden = hidden;
 }
 - (())setStatusBarHidden:(bool)hidden
                 animated:(bool)_animated {

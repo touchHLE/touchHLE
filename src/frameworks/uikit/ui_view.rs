@@ -147,7 +147,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     let &mut UIViewHostObject {
         ref mut subviews,
         layer,
-        superview,
+        ..
     } = env.objc.borrow_mut(this);
 
     let idx = subviews.iter().position(|&subview2| subview2 == subview).unwrap();
@@ -155,11 +155,9 @@ pub const CLASSES: ClassExports = objc_classes! {
     assert!(subview2 == subview);
     subviews.push(subview);
 
-    if superview != nil {
-        () = msg![env; layer removeFromSuperlayer];
-        let superlayer = env.objc.borrow::<UIViewHostObject>(superview).layer;
-        () = msg![env; superlayer addSublayer:layer];
-    }
+    let subview_layer = env.objc.borrow::<UIViewHostObject>(subview).layer;
+    () = msg![env; subview_layer removeFromSuperlayer];
+    () = msg![env; layer addSublayer:subview_layer];
 }
 
 - (())removeFromSuperview {

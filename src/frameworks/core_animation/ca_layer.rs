@@ -20,6 +20,7 @@ pub(super) struct CALayerHostObject {
     anchor_point: CGPoint,
     opaque: bool,
     opacity: f32,
+    background_color: id,
     /// For CAEAGLLayer only
     pub(super) drawable_properties: id,
 }
@@ -44,6 +45,7 @@ pub const CLASSES: ClassExports = objc_classes! {
         anchor_point: CGPoint { x: 0.5, y: 0.5 },
         opaque: false,
         opacity: 1.0,
+        background_color: nil, // transparency
         drawable_properties: nil,
     });
     env.objc.alloc_object(this, host_object, &mut env.mem)
@@ -174,6 +176,14 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 - (())setOpacity:(f32)opacity {
     env.objc.borrow_mut::<CALayerHostObject>(this).opacity = opacity;
+}
+
+// See remarks in ui_view.rs about the type of this property
+- (id)backgroundColor {
+    env.objc.borrow::<CALayerHostObject>(this).background_color
+}
+- (())setBackgroundColor:(id)color {
+    env.objc.borrow_mut::<CALayerHostObject>(this).background_color = color;
 }
 
 // TODO: more

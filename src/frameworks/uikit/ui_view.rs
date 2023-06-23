@@ -222,11 +222,17 @@ pub const CLASSES: ClassExports = objc_classes! {
     msg![env; layer setOpacity:alpha]
 }
 
+// FIXME: CALayer's backgroundColor should be a CGColorRef, which is supposedly
+// a separate type from UIColor. For now we have not implemented it and treat
+// them as the same type (and it seems like UIKit itself maybe did this once),
+// but eventually we'll have to do this properly.
 - (id)backgroundColor {
-    nil // this is the actual default (equivalent to transparency)
+    let layer = env.objc.borrow::<UIViewHostObject>(this).layer;
+    msg![env; layer backgroundColor]
 }
-- (())setBackgroundColor:(id)_color { // UIColor*
-    // TODO: implement this once views are actually rendered
+- (())setBackgroundColor:(id)color { // UIColor*
+    let layer = env.objc.borrow::<UIViewHostObject>(this).layer;
+    msg![env; layer setBackgroundColor:color]
 }
 
 - (CGRect)bounds {

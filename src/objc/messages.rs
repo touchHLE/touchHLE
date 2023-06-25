@@ -212,7 +212,6 @@ where
 
 /// [msg_send] but for super-calls (calls [objc_msgSendSuper2]). You probably
 /// want to use [msg_super] rather than calling this directly.
-#[allow(dead_code)]
 pub fn msg_send_super2<R, P>(env: &mut Environment, args: P) -> R
 where
     fn(&mut Environment, ConstPtr<objc_super>, SEL): CallFromHost<R, P>,

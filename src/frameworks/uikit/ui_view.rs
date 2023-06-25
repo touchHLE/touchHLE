@@ -14,6 +14,7 @@ use crate::objc::{
 
 #[derive(Default)]
 pub struct State {
+    /// List of views for internal purposes. Non-retaining!
     pub(super) views: Vec<id>,
 }
 

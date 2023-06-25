@@ -44,6 +44,7 @@ pub struct State {
     ui_screen: ui_screen::State,
     ui_touch: ui_touch::State,
     ui_view: ui_view::State,
+    ui_window: ui_window::State,
 }
 
 /// For use by `NSRunLoop`: handles any events that have queued up.

@@ -89,21 +89,26 @@ pub const CLASSES: ClassExports = objc_classes! {
     let key_ns_string = get_static_str(env, "UICenter");
     let center: CGPoint = msg![env; coder decodeCGPointForKey:key_ns_string];
 
+    let key_ns_string = get_static_str(env, "UIOpaque");
+    let opaque: bool = msg![env; coder decodeBoolForKey:key_ns_string];
+
     let key_ns_string = get_static_str(env, "UISubviews");
     let subviews: id = msg![env; coder decodeObjectForKey:key_ns_string];
     let subview_count: NSUInteger = msg![env; subviews count];
 
     log_dbg!(
-        "[(UIView*){:?} initWithCoder:{:?}] => bounds {}, center {}, {} subviews",
+        "[(UIView*){:?} initWithCoder:{:?}] => bounds {}, center {}, opaque {}, {} subviews",
         this,
         coder,
         bounds,
         center,
+        opaque,
         subview_count,
     );
 
     () = msg![env; this setBounds:bounds];
     () = msg![env; this setCenter:center];
+    () = msg![env; this setOpaque:opaque];
 
     for i in 0..subview_count {
         let subview: id = msg![env; subviews objectAtIndex:i];

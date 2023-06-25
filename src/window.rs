@@ -16,9 +16,10 @@
 mod gl;
 mod matrix;
 
-pub use gl::{gl21compat, gl32core, gles11, GLContext, GLVersion};
+pub use gl::{gl21compat, gles11, GLContext, GLVersion};
 pub use matrix::Matrix;
 
+use crate::frameworks::opengles::GLES;
 use crate::image::Image;
 use crate::options::Options;
 use sdl2::mouse::MouseButton;
@@ -164,7 +165,7 @@ pub struct Window {
     /// [Self::rotatable_fullscreen] returns [true].
     fullscreen: bool,
     scale_hack: NonZeroU32,
-    splash_image_and_gl_ctx: Option<(Image, GLContext)>,
+    splash_image_and_gl_ctx: Option<(Image, Box<dyn GLES>)>,
     device_orientation: DeviceOrientation,
     app_gl_ctx_no_longer_current: bool,
     controller_ctx: sdl2::GameControllerSubsystem,
@@ -264,24 +265,6 @@ impl Window {
 
         let event_pump = sdl_ctx.event_pump().unwrap();
 
-        let splash_image_and_gl_ctx = if let Some(launch_image) = launch_image {
-            // Splash screen must be drawn with OpenGL (or not drawn at all)
-            // because otherwise we can't later use OpenGL in the same window.
-            // We are not required to use the same OpenGL version as for other
-            // contexts in this window, so let's use something relatively modern
-            // and compatible. OpenGL 3.2 is the baseline version of OpenGL
-            // available on macOS.
-            match gl::create_gl_context(&video_ctx, &window, GLVersion::GL32Core) {
-                Ok(gl_ctx) => Some((launch_image, gl_ctx)),
-                Err(err) => {
-                    log!("Couldn't create OpenGL context for splash image: {}", err);
-                    None
-                }
-            }
-        } else {
-            None
-        };
-
         let controller_ctx = sdl_ctx.game_controller().unwrap();
 
         let sensor_ctx = sdl_ctx.sensor().unwrap();
@@ -315,7 +298,7 @@ impl Window {
             viewport_y_offset: 0,
             fullscreen,
             scale_hack,
-            splash_image_and_gl_ctx,
+            splash_image_and_gl_ctx: None,
             device_orientation,
             app_gl_ctx_no_longer_current: false,
             controller_ctx,
@@ -324,9 +307,21 @@ impl Window {
             accelerometer,
             virtual_cursor_last: None,
         };
-        if window.splash_image_and_gl_ctx.is_some() {
+
+        if let Some(launch_image) = launch_image {
+            // Splash screen must be drawn with OpenGL (or not drawn at all)
+            // because otherwise we can't later use OpenGL in the same window.
+            // On Android, we have to specify the OpenGL ES version before
+            // creating the window, so we have to use the same version for both
+            // drawing the splash screen and the app's own rendering.
+            let gl_ctx = crate::frameworks::opengles::eagl::create_gles1_ctx(&mut window, options);
+            gl_ctx.make_current(&window);
+            log!("Driver info: {}", unsafe { gl_ctx.driver_description() });
+
+            window.splash_image_and_gl_ctx = Some((launch_image, gl_ctx));
             window.display_splash();
         }
+
         window
     }
 
@@ -656,7 +651,7 @@ impl Window {
         gl::create_gl_context(&self.video_ctx, &self.window, version)
     }
 
-    pub fn make_gl_context_current(&mut self, gl_ctx: &GLContext) {
+    pub fn make_gl_context_current(&self, gl_ctx: &GLContext) {
         gl::make_gl_context_current(&self.video_ctx, &self.window, gl_ctx);
     }
 
@@ -672,19 +667,61 @@ impl Window {
     }
 
     fn display_splash(&mut self) {
-        let Some((image, gl_ctx)) = &self.splash_image_and_gl_ctx else {
+        let Some((_, gl_ctx)) = &self.splash_image_and_gl_ctx else {
             panic!();
         };
 
-        let matrix = self.output_rotation_matrix();
+        // OpenGL ES expects bottom-to-top row order for image data, but our
+        // image data will be top-to-bottom. A reflection transform compensates.
+        let matrix = self.output_rotation_matrix().multiply(&Matrix::y_flip());
         let (vx, vy, vw, vh) = self.viewport();
-        let viewport_offset = (vx, vy + self.viewport_y_offset());
-        let viewport_size = (vw, vh);
+        let viewport = (vx, vy + self.viewport_y_offset(), vw, vh);
 
         self.app_gl_ctx_no_longer_current = true;
+        gl_ctx.make_current(self);
 
-        gl::make_gl_context_current(&self.video_ctx, &self.window, gl_ctx);
-        unsafe { gl::display_image(image, viewport_offset, viewport_size, &matrix) };
+        // re-bind mutably
+        let Some((image, gl_ctx)) = &mut self.splash_image_and_gl_ctx else {
+            panic!();
+        };
+
+        unsafe {
+            let mut texture = 0;
+            gl_ctx.GenTextures(1, &mut texture);
+            gl_ctx.BindTexture(gles11::TEXTURE_2D, texture);
+            let (width, height) = image.dimensions();
+            gl_ctx.TexImage2D(
+                gles11::TEXTURE_2D,
+                0,
+                gles11::RGBA as _,
+                width as _,
+                height as _,
+                0,
+                gles11::RGBA,
+                gles11::UNSIGNED_BYTE,
+                image.pixels().as_ptr() as *const _,
+            );
+            gl_ctx.TexParameteri(
+                gles11::TEXTURE_2D,
+                gles11::TEXTURE_MIN_FILTER,
+                gles11::LINEAR as _,
+            );
+            gl_ctx.TexParameteri(
+                gles11::TEXTURE_2D,
+                gles11::TEXTURE_MAG_FILTER,
+                gles11::LINEAR as _,
+            );
+
+            crate::frameworks::opengles::eagl::draw_fullscreen_texture(
+                &mut **gl_ctx,
+                viewport,
+                matrix,
+                /* virtual_cursor_visible_at: */ None,
+            );
+
+            gl_ctx.DeleteTextures(1, &texture);
+        };
+
         self.window.gl_swap_window();
 
         // hold onto GL context so the image doesn't disappear, and hold
@@ -693,7 +730,7 @@ impl Window {
 
     /// Swap front-buffer and back-buffer so the result of OpenGL rendering is
     /// presented.
-    pub fn swap_window(&mut self) {
+    pub fn swap_window(&self) {
         self.window.gl_swap_window();
     }
 

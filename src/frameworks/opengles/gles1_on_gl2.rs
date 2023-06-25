@@ -535,7 +535,7 @@ impl GLES for GLES1OnGL2 {
         })
     }
 
-    fn make_current(&self, window: &mut Window) {
+    fn make_current(&self, window: &Window) {
         window.make_gl_context_current(&self.gl_ctx);
     }
 

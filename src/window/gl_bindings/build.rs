@@ -10,11 +10,6 @@ use std::path::PathBuf;
 fn main() {
     let out_dir = PathBuf::from(std::env::var("OUT_DIR").unwrap());
 
-    let mut file = File::create(out_dir.join("gl32core.rs")).unwrap();
-    Registry::new(Api::Gl, (3, 2), Profile::Core, Fallbacks::None, [])
-        .write_bindings(GlobalGenerator, &mut file)
-        .unwrap();
-
     let mut file = File::create(out_dir.join("gl21compat.rs")).unwrap();
     Registry::new(
         Api::Gl,

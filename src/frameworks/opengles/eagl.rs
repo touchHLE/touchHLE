@@ -10,6 +10,7 @@ use crate::dyld::{ConstantExports, HostConstant};
 use crate::frameworks::foundation::ns_string::get_static_str;
 use crate::frameworks::foundation::NSUInteger;
 use crate::objc::{id, msg, nil, objc_classes, release, retain, ClassExports, HostObject};
+use crate::options::Options;
 use crate::window::gles11;
 use crate::window::{Matrix, Window};
 
@@ -84,7 +85,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 
     if context != nil {
         let host_obj = env.objc.borrow_mut::<EAGLContextHostObject>(context);
-        host_obj.gles_ctx.as_mut().unwrap().make_current(&mut env.window);
+        host_obj.gles_ctx.as_mut().unwrap().make_current(&env.window);
         *current_ctx = Some(context);
         env.framework_state.opengles.current_ctx_thread = Some(env.current_thread);
     }
@@ -95,34 +96,14 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (id)initWithAPI:(EAGLRenderingAPI)api {
     assert!(api == kEAGLRenderingAPIOpenGLES1);
 
-    log!("Creating an OpenGL ES 1.1 context:");
-    let list = if let Some(ref preference) = env.options.gles1_implementation {
-        std::slice::from_ref(preference)
-    } else {
-        GLESImplementation::GLES1_IMPLEMENTATIONS
-    };
-    let mut gles1_ctx = None;
-    for implementation in list {
-        log!("Trying: {}", implementation.description());
-        match implementation.construct(&mut env.window) {
-            Ok(ctx) => {
-                log!("=> Success!");
-                gles1_ctx = Some(ctx);
-                break;
-            },
-            Err(err) => {
-                log!("=> Failed: {}.", err);
-            }
-        }
-    }
-    let gles1_ctx = gles1_ctx.expect("Couldn't create OpenGL ES 1.1 context!");
+    let gles1_ctx = create_gles1_ctx(&mut env.window, &env.options);
 
     // Make the context current so we can get driver info from it.
     // initWithAPI: is not supposed to make the new context current (the app
     // must call setCurrentContext: for that), so we need to hide this from the
     // app. Setting current_ctx_thread to None should cause sync_context to
     // switch back to the right context if the app makes an OpenGL ES call.
-    gles1_ctx.make_current(&mut env.window);
+    gles1_ctx.make_current(&env.window);
     env.framework_state.opengles.current_ctx_thread = None;
     log!("Driver info: {}", unsafe { gles1_ctx.driver_description() });
 
@@ -187,8 +168,103 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 };
 
-/// Copies the renderbuffer provided by the app to the window's framebuffer,
-/// rotated if necessary, and presents that framebuffer.
+/// Try to create an OpenGL ES 1.1 context using the configured strategies,
+/// panicking on failure.
+pub fn create_gles1_ctx(window: &mut Window, options: &Options) -> Box<dyn GLES> {
+    log!("Creating an OpenGL ES 1.1 context:");
+    let list = if let Some(ref preference) = options.gles1_implementation {
+        std::slice::from_ref(preference)
+    } else {
+        GLESImplementation::GLES1_IMPLEMENTATIONS
+    };
+    let mut gles1_ctx = None;
+    for implementation in list {
+        log!("Trying: {}", implementation.description());
+        match implementation.construct(window) {
+            Ok(ctx) => {
+                log!("=> Success!");
+                gles1_ctx = Some(ctx);
+                break;
+            }
+            Err(err) => {
+                log!("=> Failed: {}.", err);
+            }
+        }
+    }
+    gles1_ctx.expect("Couldn't create OpenGL ES 1.1 context!")
+}
+
+/// Present the texture bound to `GL_TEXTURE_2D` (which should be either the
+/// app's splash screen or rendering output) by drawing it on the window. It may
+/// be rotated or letterboxed as necessary. The virtual cursor is also displayed
+/// if it is currently visible. Unlike [present_renderbuffer], no care is taken
+/// to avoid disturbing OpenGL ES state, and the front and back buffers are not
+/// swapped.
+///
+/// The provided context must be current.
+pub unsafe fn draw_fullscreen_texture(
+    gles: &mut dyn GLES,
+    viewport: (u32, u32, u32, u32),
+    output_rotation_matrix: Matrix<2>,
+    virtual_cursor_visible_at: Option<(f32, f32, bool)>,
+) {
+    use gles11::types::*;
+
+    // Draw the quad
+    gles.Viewport(
+        viewport.0 as _,
+        viewport.1 as _,
+        viewport.2 as _,
+        viewport.3 as _,
+    );
+    gles.ClearColor(0.0, 0.0, 0.0, 1.0);
+    gles.Clear(gles11::COLOR_BUFFER_BIT | gles11::DEPTH_BUFFER_BIT | gles11::STENCIL_BUFFER_BIT);
+    gles.BindBuffer(gles11::ARRAY_BUFFER, 0);
+    let vertices: [f32; 12] = [
+        -1.0, -1.0, -1.0, 1.0, 1.0, -1.0, 1.0, -1.0, -1.0, 1.0, 1.0, 1.0,
+    ];
+    gles.EnableClientState(gles11::VERTEX_ARRAY);
+    gles.VertexPointer(2, gles11::FLOAT, 0, vertices.as_ptr() as *const GLvoid);
+    let tex_coords: [f32; 12] = [0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0];
+    gles.EnableClientState(gles11::TEXTURE_COORD_ARRAY);
+    gles.TexCoordPointer(2, gles11::FLOAT, 0, tex_coords.as_ptr() as *const GLvoid);
+    let matrix = Matrix::<4>::from(&output_rotation_matrix);
+    gles.MatrixMode(gles11::TEXTURE);
+    gles.LoadMatrixf(matrix.columns().as_ptr() as *const _);
+    gles.Enable(gles11::TEXTURE_2D);
+    gles.DrawArrays(gles11::TRIANGLES, 0, 6);
+
+    // Display virtual cursor
+    if let Some((x, y, pressed)) = virtual_cursor_visible_at {
+        let (vx, vy, vw, vh) = viewport;
+        let x = x - vx as f32;
+        let y = y - vy as f32;
+
+        gles.DisableClientState(gles11::TEXTURE_COORD_ARRAY);
+        gles.Disable(gles11::TEXTURE_2D);
+
+        gles.Enable(gles11::BLEND);
+        gles.BlendFunc(gles11::ONE, gles11::ONE_MINUS_SRC_ALPHA);
+        gles.Color4f(0.0, 0.0, 0.0, if pressed { 2.0 / 3.0 } else { 1.0 / 3.0 });
+
+        let radius = 10.0;
+
+        let mut vertices = vertices;
+        for i in (0..vertices.len()).step_by(2) {
+            vertices[i] = (vertices[i] * radius + x) / (vw as f32 / 2.0) - 1.0;
+            vertices[i + 1] = 1.0 - (vertices[i + 1] * radius + y) / (vh as f32 / 2.0);
+        }
+        gles.VertexPointer(2, gles11::FLOAT, 0, vertices.as_ptr() as *const GLvoid);
+        gles.DrawArrays(gles11::TRIANGLES, 0, 6);
+    }
+}
+
+/// Copies the renderbuffer bound to `GL_RENDERBUFFER_BINDING_OES` (which should
+/// be provided by the app) to a texture and presents it with [draw_fullscreen_texture],
+/// trying to avoid noticeably modifying OpenGL ES state while doing so. The
+/// front and back buffers are then swapped.
+///
+/// The provided context must be current.
 unsafe fn present_renderbuffer(gles: &mut dyn GLES, window: &mut Window) {
     use gles11::types::*;
 
@@ -340,53 +416,12 @@ unsafe fn present_renderbuffer(gles: &mut dyn GLES, window: &mut Window) {
     let old_blend_dfactor: GLenum = get_int(gles, gles11::BLEND_DST) as _;
 
     // Draw the quad
-    let viewport = window.viewport();
-    gles.Viewport(
-        viewport.0 as _,
-        viewport.1 as _,
-        viewport.2 as _,
-        viewport.3 as _,
+    draw_fullscreen_texture(
+        gles,
+        window.viewport(),
+        window.output_rotation_matrix(),
+        window.virtual_cursor_visible_at(),
     );
-    gles.ClearColor(0.0, 0.0, 0.0, 1.0);
-    gles.Clear(gles11::COLOR_BUFFER_BIT | gles11::DEPTH_BUFFER_BIT | gles11::STENCIL_BUFFER_BIT);
-    gles.BindBuffer(gles11::ARRAY_BUFFER, 0);
-    let vertices: [f32; 12] = [
-        -1.0, -1.0, -1.0, 1.0, 1.0, -1.0, 1.0, -1.0, -1.0, 1.0, 1.0, 1.0,
-    ];
-    gles.EnableClientState(gles11::VERTEX_ARRAY);
-    gles.VertexPointer(2, gles11::FLOAT, 0, vertices.as_ptr() as *const GLvoid);
-    let tex_coords: [f32; 12] = [0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0];
-    gles.EnableClientState(gles11::TEXTURE_COORD_ARRAY);
-    gles.TexCoordPointer(2, gles11::FLOAT, 0, tex_coords.as_ptr() as *const GLvoid);
-    let matrix = Matrix::<4>::from(&window.output_rotation_matrix());
-    gles.MatrixMode(gles11::TEXTURE);
-    gles.LoadMatrixf(matrix.columns().as_ptr() as *const _);
-    gles.Enable(gles11::TEXTURE_2D);
-    gles.DrawArrays(gles11::TRIANGLES, 0, 6);
-
-    // Display virtual cursor
-    if let Some((x, y, pressed)) = window.virtual_cursor_visible_at() {
-        let (vx, vy, vw, vh) = viewport;
-        let x = x - vx as f32;
-        let y = y - vy as f32;
-
-        gles.DisableClientState(gles11::TEXTURE_COORD_ARRAY);
-        gles.Disable(gles11::TEXTURE_2D);
-
-        gles.Enable(gles11::BLEND);
-        gles.BlendFunc(gles11::ONE, gles11::ONE_MINUS_SRC_ALPHA);
-        gles.Color4f(0.0, 0.0, 0.0, if pressed { 2.0 / 3.0 } else { 1.0 / 3.0 });
-
-        let radius = 10.0;
-
-        let mut vertices = vertices;
-        for i in (0..vertices.len()).step_by(2) {
-            vertices[i] = (vertices[i] * radius + x) / (vw as f32 / 2.0) - 1.0;
-            vertices[i + 1] = 1.0 - (vertices[i + 1] * radius + y) / (vh as f32 / 2.0);
-        }
-        gles.VertexPointer(2, gles11::FLOAT, 0, vertices.as_ptr() as *const GLvoid);
-        gles.DrawArrays(gles11::TRIANGLES, 0, 6);
-    }
 
     // Clean up the texture
     gles.DeleteTextures(1, &texture);

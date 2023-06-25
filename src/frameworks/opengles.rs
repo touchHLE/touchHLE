@@ -43,7 +43,7 @@ mod util;
 
 use gles1_native::GLES1Native;
 use gles1_on_gl2::GLES1OnGL2;
-use gles_generic::GLES;
+pub use gles_generic::GLES;
 pub use gles_guest::FUNCTIONS;
 
 /// Labels for [GLES] implementations and an abstraction for constructing them.

@@ -32,7 +32,7 @@ pub trait GLES {
 
     /// Make this context (and any underlying context) the active OpenGL
     /// context.
-    fn make_current(&self, window: &mut crate::window::Window);
+    fn make_current(&self, window: &crate::window::Window);
 
     /// Get some string describing the underlying driver. For OpenGL this is
     /// `GL_VENDOR`, `GL_RENDERER` and `GL_VERSION`.

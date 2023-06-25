@@ -68,18 +68,15 @@ pub const CLASSES: ClassExports = objc_classes! {
 // They are all from the NSCoder abstract class and they return default values
 // if the key is unknown.
 
+- (bool)decodeBoolForKey:(id)key { // NSString *
+    get_value_to_decode_for_key(env, this, key).map_or(
+        false,
+        |value| value.as_boolean().unwrap()
+    )
+}
+
 - (id)decodeObjectForKey:(id)key { // NSString*
-    let key = to_rust_string(env, key); // TODO: avoid copying string
-    let host_obj = borrow_host_obj(env, this);
-    let scope = match host_obj.current_key {
-        Some(current_uid) => {
-            &host_obj.plist["$objects"].as_array().unwrap()[current_uid.get() as usize]
-        },
-        None => {
-            &host_obj.plist["$top"]
-        }
-    }.as_dictionary().unwrap();
-    let Some(next_uid) = scope.get(&key) else {
+    let Some(next_uid) = get_value_to_decode_for_key(env, this, key) else {
         return nil;
     };
     let next_uid = next_uid.as_uid().copied().unwrap();
@@ -112,6 +109,20 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 fn borrow_host_obj(env: &mut Environment, unarchiver: id) -> &mut NSKeyedUnarchiverHostObject {
     env.objc.borrow_mut(unarchiver)
+}
+
+fn get_value_to_decode_for_key(env: &mut Environment, unarchiver: id, key: id) -> Option<&Value> {
+    let key = to_rust_string(env, key); // TODO: avoid copying string
+    let host_obj = borrow_host_obj(env, unarchiver);
+    let scope = match host_obj.current_key {
+        Some(current_uid) => {
+            &host_obj.plist["$objects"].as_array().unwrap()[current_uid.get() as usize]
+        }
+        None => &host_obj.plist["$top"],
+    }
+    .as_dictionary()
+    .unwrap();
+    scope.get(&key)
 }
 
 /// Shortcut for use by [crate::frameworks::uikit::ui_nib::load_main_nib_file].

@@ -18,6 +18,7 @@ pub(super) struct CALayerHostObject {
     bounds: CGRect,
     position: CGPoint,
     anchor_point: CGPoint,
+    hidden: bool,
     opaque: bool,
     opacity: f32,
     background_color: id,
@@ -43,6 +44,7 @@ pub const CLASSES: ClassExports = objc_classes! {
         },
         position: CGPoint { x: 0.0, y: 0.0 },
         anchor_point: CGPoint { x: 0.5, y: 0.5 },
+        hidden: false,
         opaque: false,
         opacity: 1.0,
         background_color: nil, // transparency
@@ -162,6 +164,13 @@ pub const CLASSES: ClassExports = objc_classes! {
         origin: CGPoint { x: 0.0, y: 0.0 },
         size: frame.size,
     };
+}
+
+- (bool)isHidden {
+    env.objc.borrow::<CALayerHostObject>(this).hidden
+}
+- (())setHidden:(bool)hidden {
+    env.objc.borrow_mut::<CALayerHostObject>(this).hidden = hidden;
 }
 
 - (bool)isOpaque {

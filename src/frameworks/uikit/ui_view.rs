@@ -89,6 +89,9 @@ pub const CLASSES: ClassExports = objc_classes! {
     let key_ns_string = get_static_str(env, "UICenter");
     let center: CGPoint = msg![env; coder decodeCGPointForKey:key_ns_string];
 
+    let key_ns_string = get_static_str(env, "UIHidden");
+    let hidden: bool = msg![env; coder decodeBoolForKey:key_ns_string];
+
     let key_ns_string = get_static_str(env, "UIOpaque");
     let opaque: bool = msg![env; coder decodeBoolForKey:key_ns_string];
 
@@ -97,17 +100,19 @@ pub const CLASSES: ClassExports = objc_classes! {
     let subview_count: NSUInteger = msg![env; subviews count];
 
     log_dbg!(
-        "[(UIView*){:?} initWithCoder:{:?}] => bounds {}, center {}, opaque {}, {} subviews",
+        "[(UIView*){:?} initWithCoder:{:?}] => bounds {}, center {}, hidden {}, opaque {}, {} subviews",
         this,
         coder,
         bounds,
         center,
+        hidden,
         opaque,
         subview_count,
     );
 
     () = msg![env; this setBounds:bounds];
     () = msg![env; this setCenter:center];
+    () = msg![env; this setHidden:hidden];
     () = msg![env; this setOpaque:opaque];
 
     for i in 0..subview_count {
@@ -207,6 +212,15 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 - (id)layer {
     env.objc.borrow_mut::<UIViewHostObject>(this).layer
+}
+
+- (bool)isHidden {
+    let layer = env.objc.borrow::<UIViewHostObject>(this).layer;
+    msg![env; layer isHidden]
+}
+- (())setHidden:(bool)hidden {
+    let layer = env.objc.borrow::<UIViewHostObject>(this).layer;
+    msg![env; layer setHidden:hidden]
 }
 
 - (bool)isOpaque {

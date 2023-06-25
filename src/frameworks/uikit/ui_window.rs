@@ -5,7 +5,7 @@
  */
 //! `UIWindow`.
 
-use crate::objc::{objc_classes, ClassExports};
+use crate::objc::{msg, objc_classes, ClassExports};
 
 pub const CLASSES: ClassExports = objc_classes! {
 
@@ -16,7 +16,10 @@ pub const CLASSES: ClassExports = objc_classes! {
 // TODO
 
 - (())makeKeyAndVisible {
-  // TODO: implement support for hidden/non-key UIWindow objects
+    // TODO: Set the "key" window once it's relevant. We don't currently have
+    // send any non-touch events to windows, so there's no meaning in it yet.
+
+    msg![env; this setHidden:false]
 }
 
 @end

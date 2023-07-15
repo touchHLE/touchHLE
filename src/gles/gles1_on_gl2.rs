@@ -18,14 +18,14 @@
 //! on macOS. It's also a version supported on various other OSes.
 //! It is therefore a convenient target for our implementation.
 
+use super::gl21compat_raw as gl21;
+use super::gl21compat_raw::types::*;
+use super::gles11_raw as gles11; // constants only
 use super::util::{
     fixed_to_float, matrix_fixed_to_float, try_decode_pvrtc, PalettedTextureFormat, ParamTable,
     ParamType,
 };
 use super::GLES;
-use crate::window::gl21compat as gl21;
-use crate::window::gl21compat::types::*;
-use crate::window::gles11;
 use crate::window::{GLContext, GLVersion, Window};
 use std::collections::HashSet;
 use std::ffi::CStr;
@@ -536,7 +536,8 @@ impl GLES for GLES1OnGL2 {
     }
 
     fn make_current(&self, window: &Window) {
-        window.make_gl_context_current(&self.gl_ctx);
+        unsafe { window.make_gl_context_current(&self.gl_ctx) };
+        gl21::load_with(|s| window.gl_get_proc_address(s))
     }
 
     unsafe fn driver_description(&self) -> String {

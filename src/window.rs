@@ -4,7 +4,6 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 //! Abstraction of window setup, OpenGL context creation and event handling.
-//! Also provides OpenGL bindings.
 //!
 //! Implemented using the sdl2 crate (a Rust wrapper for SDL2). All usage of
 //! SDL should be confined to this module.
@@ -12,10 +11,6 @@
 //! There is currently no separation of concerns between a single window and
 //! window system interaction in general, because it is assumed only one window
 //! will be needed for the runtime of the app.
-
-mod gl;
-
-pub use gl::{gl21compat, gles11};
 
 use crate::gles::present::present_frame;
 use crate::gles::{create_gles1_ctx, GLES};
@@ -94,10 +89,7 @@ pub enum GLVersion {
     GL21Compat,
 }
 
-pub struct GLContext {
-    gl_ctx: sdl2::video::GLContext,
-    version: GLVersion,
-}
+pub struct GLContext(sdl2::video::GLContext);
 
 fn surface_from_image(image: &Image) -> Surface {
     let src_pixels = image.pixels();
@@ -674,19 +666,17 @@ impl Window {
 
         let gl_ctx = self.window.gl_create_context()?;
 
-        Ok(GLContext { gl_ctx, version })
+        Ok(GLContext(gl_ctx))
     }
 
-    pub fn make_gl_context_current(&self, gl_ctx: &GLContext) {
-        self.window.gl_make_current(&gl_ctx.gl_ctx).unwrap();
-        match gl_ctx.version {
-            GLVersion::GLES11 => {
-                gles11::load_with(|s| self.video_ctx.gl_get_proc_address(s) as *const _)
-            }
-            GLVersion::GL21Compat => {
-                gl21compat::load_with(|s| self.video_ctx.gl_get_proc_address(s) as *const _)
-            }
-        }
+    pub fn gl_get_proc_address(&self, procname: &str) -> *const std::ffi::c_void {
+        // For some reason, rust-sdl2 uses *const (), but () is not meant to be
+        // used for void pointees (just void results), so let's fix that.
+        self.video_ctx.gl_get_proc_address(procname) as *const _
+    }
+
+    pub unsafe fn make_gl_context_current(&self, gl_ctx: &GLContext) {
+        self.window.gl_make_current(&gl_ctx.0).unwrap();
     }
 
     /// Retrieve and reset the flag that indicates if the current OpenGL context
@@ -718,6 +708,8 @@ impl Window {
         let Some((image, gl_ctx)) = &mut self.splash_image_and_gl_ctx else {
             panic!();
         };
+
+        use crate::gles::gles11_raw as gles11; // constants only
 
         unsafe {
             let mut texture = 0;

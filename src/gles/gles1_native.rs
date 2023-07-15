@@ -12,10 +12,10 @@
 //! In such cases, we should reject vendor-specific things unless we've made
 //! sure we can emulate them on all host platforms for touchHLE.
 
+use super::gles11_raw as gles11;
+use super::gles11_raw::types::*;
 use super::util::{try_decode_pvrtc, PalettedTextureFormat};
 use super::GLES;
-use crate::window::gles11;
-use crate::window::gles11::types::*;
 use crate::window::{GLContext, GLVersion, Window};
 use std::ffi::CStr;
 
@@ -34,7 +34,8 @@ impl GLES for GLES1Native {
     }
 
     fn make_current(&self, window: &Window) {
-        window.make_gl_context_current(&self.gl_ctx);
+        unsafe { window.make_gl_context_current(&self.gl_ctx) };
+        gles11::load_with(|s| window.gl_get_proc_address(s))
     }
 
     unsafe fn driver_description(&self) -> String {

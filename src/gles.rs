@@ -25,6 +25,11 @@
 //!   - [gles1_on_gl2] provides an implementation of OpenGL ES 1.1 using OpenGL
 //!     2.1 compatibility profile.
 //!   - There might be more in future.
+//! - [gles11_raw] provides raw bindings for OpenGL ES 1.1 generated from the
+//!   Khronos API headers. **The function bindings are only for use within this
+//!   module.** The constants and types can be used outside it, however.
+//!   - [gl21compat_raw] is the same thing, but for OpenGL 2.1 compatibility
+//!     profile, which can't be used outside this module at all.
 //! - [present] provides utilities for presenting frames to the window using an
 //!   abstract OpenGL ES implementation.
 //!
@@ -56,6 +61,9 @@ pub mod gles1_on_gl2;
 mod gles_generic;
 pub mod present;
 mod util;
+
+use touchHLE_gl_bindings::gl21compat as gl21compat_raw;
+pub use touchHLE_gl_bindings::gles11 as gles11_raw;
 
 use gles1_native::GLES1Native;
 use gles1_on_gl2::GLES1OnGL2;

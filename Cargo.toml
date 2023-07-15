@@ -54,7 +54,7 @@ sdl2 = { git = "https://github.com/hikari-no-yume/rust-sdl2.git", tag = "touchHL
 sdl2-sys = { git = "https://github.com/hikari-no-yume/rust-sdl2.git", tag = "touchHLE-2" }
 touchHLE_dr_mp3_wrapper = { path = "src/audio/dr_mp3_wrapper" }
 touchHLE_dynarmic_wrapper = { path = "src/cpu/dynarmic_wrapper" }
-touchHLE_gl_bindings = { path = "src/window/gl_bindings" }
+touchHLE_gl_bindings = { path = "src/gles/gl_bindings" }
 touchHLE_openal_soft_wrapper = { path = "src/audio/openal_soft_wrapper" }
 touchHLE_pvrt_decompress_wrapper = { path = "src/image/pvrt_decompress_wrapper" }
 touchHLE_stb_image_wrapper = { path = "src/image/stb_image_wrapper" }

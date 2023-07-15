@@ -7,9 +7,9 @@
 //!
 //! Unfortunately this does not provide the types and constants, so the correct
 //! usage is to import `GLES` and `types` from this module, but get the
-//! constants from [crate::window::gles11].
+//! constants from [super::gles11_raw].
 
-use crate::window::gles11::types::*;
+use super::gles11_raw::types::*;
 
 /// Trait representing an OpenGL ES implementation and context.
 ///

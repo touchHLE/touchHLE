@@ -8,10 +8,11 @@
 use crate::dyld::{ConstantExports, HostConstant};
 use crate::frameworks::foundation::ns_string::get_static_str;
 use crate::frameworks::foundation::NSUInteger;
+use crate::gles::gles11_raw as gles11;
 use crate::gles::present::present_frame;
 use crate::gles::{create_gles1_ctx, gles1_on_gl2, GLES};
 use crate::objc::{id, msg, nil, objc_classes, release, retain, ClassExports, HostObject};
-use crate::window::{gles11, Window};
+use crate::window::Window; // constants and types only
 
 // These are used by the EAGLDrawable protocol implemented by CAEAGLayer.
 // Since these have the ABI of constant symbols rather than literal constants,

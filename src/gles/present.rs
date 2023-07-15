@@ -6,9 +6,9 @@
 //! Utilities for presenting frames to the window using an abstract OpenGL ES
 //! implementation.
 
+use super::gles11_raw as gles11; // constants and types only
 use super::GLES;
 use crate::matrix::Matrix;
-use crate::window::gles11;
 
 /// Present the the latest frame (e.g. the app's splash screen or rendering
 /// output), provided as a texture bound to `GL_TEXTURE_2D`, by drawing it on

@@ -13,10 +13,10 @@
 //! every time is never going to cause a problem in practice.
 
 use crate::dyld::{export_c_func, FunctionExports};
+use crate::gles::gles11_raw as gles11; // constants only
+use crate::gles::gles11_raw::types::*;
 use crate::gles::GLES;
 use crate::mem::{ConstPtr, ConstVoidPtr, GuestUSize, Mem, MutPtr};
-use crate::window::gles11;
-use crate::window::gles11::types::*;
 use crate::Environment;
 
 fn with_ctx_and_mem<T, U>(env: &mut Environment, f: T) -> U

@@ -30,7 +30,6 @@ jobs:
         path: touchHLE
 
   build-win:
-    continue-on-error: true # currently failing for unknown reasons (#130)
 
     runs-on: windows-latest
 

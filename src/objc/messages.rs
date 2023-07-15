@@ -157,7 +157,7 @@ pub(super) fn objc_msgSend_stret(
 
 #[repr(C, packed)]
 /// A pointer to this struct replaces the normal receiver parameter for
-/// `objc_msgSendSuper2` and [msg_send_super].
+/// `objc_msgSendSuper2` and [msg_send_super2].
 pub struct objc_super {
     pub receiver: id,
     /// If this is used with `objc_msgSendSuper` (not implemented here, TODO),

@@ -14,14 +14,13 @@
 //! will be needed for the runtime of the app.
 
 mod gl;
-mod matrix;
 
 pub use gl::{gl21compat, gles11};
-pub use matrix::Matrix;
 
 use crate::gles::present::present_frame;
 use crate::gles::{create_gles1_ctx, GLES};
 use crate::image::Image;
+use crate::matrix::Matrix;
 use crate::options::Options;
 use sdl2::mouse::MouseButton;
 use sdl2::pixels::PixelFormatEnum;

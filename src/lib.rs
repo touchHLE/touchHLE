@@ -42,6 +42,7 @@ mod image;
 mod libc;
 mod licenses;
 mod mach_o;
+mod matrix;
 mod mem;
 mod objc;
 mod options;

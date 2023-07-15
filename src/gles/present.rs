@@ -7,7 +7,8 @@
 //! implementation.
 
 use super::GLES;
-use crate::window::{gles11, Matrix};
+use crate::matrix::Matrix;
+use crate::window::gles11;
 
 /// Present the the latest frame (e.g. the app's splash screen or rendering
 /// output), provided as a texture bound to `GL_TEXTURE_2D`, by drawing it on

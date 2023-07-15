@@ -16,7 +16,7 @@
 mod gl;
 mod matrix;
 
-pub use gl::{gl21compat, gles11, GLContext, GLVersion};
+pub use gl::{gl21compat, gles11};
 pub use matrix::Matrix;
 
 use crate::gles::present::present_frame;
@@ -86,6 +86,18 @@ pub enum Event {
     TouchDown((f32, f32)),
     TouchMove((f32, f32)),
     TouchUp((f32, f32)),
+}
+
+pub enum GLVersion {
+    /// OpenGL ES 1.1
+    GLES11,
+    /// OpenGL 2.1 compatibility profile
+    GL21Compat,
+}
+
+pub struct GLContext {
+    gl_ctx: sdl2::video::GLContext,
+    version: GLVersion,
 }
 
 fn surface_from_image(image: &Image) -> Surface {
@@ -648,12 +660,34 @@ impl Window {
         (x, y, pressed)
     }
 
-    pub fn create_gl_context(&mut self, version: GLVersion) -> Result<GLContext, String> {
-        gl::create_gl_context(&self.video_ctx, &self.window, version)
+    pub fn create_gl_context(&self, version: GLVersion) -> Result<GLContext, String> {
+        let attr = self.video_ctx.gl_attr();
+        match version {
+            GLVersion::GLES11 => {
+                attr.set_context_version(1, 1);
+                attr.set_context_profile(sdl2::video::GLProfile::GLES);
+            }
+            GLVersion::GL21Compat => {
+                attr.set_context_version(2, 1);
+                attr.set_context_profile(sdl2::video::GLProfile::Compatibility);
+            }
+        }
+
+        let gl_ctx = self.window.gl_create_context()?;
+
+        Ok(GLContext { gl_ctx, version })
     }
 
     pub fn make_gl_context_current(&self, gl_ctx: &GLContext) {
-        gl::make_gl_context_current(&self.video_ctx, &self.window, gl_ctx);
+        self.window.gl_make_current(&gl_ctx.gl_ctx).unwrap();
+        match gl_ctx.version {
+            GLVersion::GLES11 => {
+                gles11::load_with(|s| self.video_ctx.gl_get_proc_address(s) as *const _)
+            }
+            GLVersion::GL21Compat => {
+                gl21compat::load_with(|s| self.video_ctx.gl_get_proc_address(s) as *const _)
+            }
+        }
     }
 
     /// Retrieve and reset the flag that indicates if the current OpenGL context

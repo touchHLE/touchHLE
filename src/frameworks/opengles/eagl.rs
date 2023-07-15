@@ -5,14 +5,13 @@
  */
 //! EAGL.
 
-use super::{GLESImplementation, GLES};
 use crate::dyld::{ConstantExports, HostConstant};
 use crate::frameworks::foundation::ns_string::get_static_str;
 use crate::frameworks::foundation::NSUInteger;
+use crate::gles::present::present_frame;
+use crate::gles::{create_gles1_ctx, gles1_on_gl2, GLES};
 use crate::objc::{id, msg, nil, objc_classes, release, retain, ClassExports, HostObject};
-use crate::options::Options;
-use crate::window::gles11;
-use crate::window::{Matrix, Window};
+use crate::window::{gles11, Window};
 
 // These are used by the EAGLDrawable protocol implemented by CAEAGLayer.
 // Since these have the ABI of constant symbols rather than literal constants,
@@ -168,99 +167,8 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 };
 
-/// Try to create an OpenGL ES 1.1 context using the configured strategies,
-/// panicking on failure.
-pub fn create_gles1_ctx(window: &mut Window, options: &Options) -> Box<dyn GLES> {
-    log!("Creating an OpenGL ES 1.1 context:");
-    let list = if let Some(ref preference) = options.gles1_implementation {
-        std::slice::from_ref(preference)
-    } else {
-        GLESImplementation::GLES1_IMPLEMENTATIONS
-    };
-    let mut gles1_ctx = None;
-    for implementation in list {
-        log!("Trying: {}", implementation.description());
-        match implementation.construct(window) {
-            Ok(ctx) => {
-                log!("=> Success!");
-                gles1_ctx = Some(ctx);
-                break;
-            }
-            Err(err) => {
-                log!("=> Failed: {}.", err);
-            }
-        }
-    }
-    gles1_ctx.expect("Couldn't create OpenGL ES 1.1 context!")
-}
-
-/// Present the texture bound to `GL_TEXTURE_2D` (which should be either the
-/// app's splash screen or rendering output) by drawing it on the window. It may
-/// be rotated or letterboxed as necessary. The virtual cursor is also displayed
-/// if it is currently visible. Unlike [present_renderbuffer], no care is taken
-/// to avoid disturbing OpenGL ES state, and the front and back buffers are not
-/// swapped.
-///
-/// The provided context must be current.
-pub unsafe fn draw_fullscreen_texture(
-    gles: &mut dyn GLES,
-    viewport: (u32, u32, u32, u32),
-    output_rotation_matrix: Matrix<2>,
-    virtual_cursor_visible_at: Option<(f32, f32, bool)>,
-) {
-    use gles11::types::*;
-
-    // Draw the quad
-    gles.Viewport(
-        viewport.0 as _,
-        viewport.1 as _,
-        viewport.2 as _,
-        viewport.3 as _,
-    );
-    gles.ClearColor(0.0, 0.0, 0.0, 1.0);
-    gles.Clear(gles11::COLOR_BUFFER_BIT | gles11::DEPTH_BUFFER_BIT | gles11::STENCIL_BUFFER_BIT);
-    gles.BindBuffer(gles11::ARRAY_BUFFER, 0);
-    let vertices: [f32; 12] = [
-        -1.0, -1.0, -1.0, 1.0, 1.0, -1.0, 1.0, -1.0, -1.0, 1.0, 1.0, 1.0,
-    ];
-    gles.EnableClientState(gles11::VERTEX_ARRAY);
-    gles.VertexPointer(2, gles11::FLOAT, 0, vertices.as_ptr() as *const GLvoid);
-    let tex_coords: [f32; 12] = [0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0];
-    gles.EnableClientState(gles11::TEXTURE_COORD_ARRAY);
-    gles.TexCoordPointer(2, gles11::FLOAT, 0, tex_coords.as_ptr() as *const GLvoid);
-    let matrix = Matrix::<4>::from(&output_rotation_matrix);
-    gles.MatrixMode(gles11::TEXTURE);
-    gles.LoadMatrixf(matrix.columns().as_ptr() as *const _);
-    gles.Enable(gles11::TEXTURE_2D);
-    gles.DrawArrays(gles11::TRIANGLES, 0, 6);
-
-    // Display virtual cursor
-    if let Some((x, y, pressed)) = virtual_cursor_visible_at {
-        let (vx, vy, vw, vh) = viewport;
-        let x = x - vx as f32;
-        let y = y - vy as f32;
-
-        gles.DisableClientState(gles11::TEXTURE_COORD_ARRAY);
-        gles.Disable(gles11::TEXTURE_2D);
-
-        gles.Enable(gles11::BLEND);
-        gles.BlendFunc(gles11::ONE, gles11::ONE_MINUS_SRC_ALPHA);
-        gles.Color4f(0.0, 0.0, 0.0, if pressed { 2.0 / 3.0 } else { 1.0 / 3.0 });
-
-        let radius = 10.0;
-
-        let mut vertices = vertices;
-        for i in (0..vertices.len()).step_by(2) {
-            vertices[i] = (vertices[i] * radius + x) / (vw as f32 / 2.0) - 1.0;
-            vertices[i + 1] = 1.0 - (vertices[i + 1] * radius + y) / (vh as f32 / 2.0);
-        }
-        gles.VertexPointer(2, gles11::FLOAT, 0, vertices.as_ptr() as *const GLvoid);
-        gles.DrawArrays(gles11::TRIANGLES, 0, 6);
-    }
-}
-
 /// Copies the renderbuffer bound to `GL_RENDERBUFFER_BINDING_OES` (which should
-/// be provided by the app) to a texture and presents it with [draw_fullscreen_texture],
+/// be provided by the app) to a texture and presents it with [present_frame],
 /// trying to avoid noticeably modifying OpenGL ES state while doing so. The
 /// front and back buffers are then swapped.
 ///
@@ -363,21 +271,18 @@ unsafe fn present_renderbuffer(gles: &mut dyn GLES, window: &mut Window) {
     // restored later. The app's subsequent drawing will be messed up if we
     // don't restore it.
     let old_arrays = {
-        let mut old_arrays = [gles11::FALSE; super::gles1_on_gl2::ARRAYS.len()];
-        for (is_enabled, info) in old_arrays
-            .iter_mut()
-            .zip(super::gles1_on_gl2::ARRAYS.iter())
-        {
+        let mut old_arrays = [gles11::FALSE; gles1_on_gl2::ARRAYS.len()];
+        for (is_enabled, info) in old_arrays.iter_mut().zip(gles1_on_gl2::ARRAYS.iter()) {
             gles.GetBooleanv(info.name, is_enabled);
             gles.DisableClientState(info.name);
         }
         old_arrays
     };
     let old_capabilities = {
-        let mut old_capabilities = [gles11::FALSE; super::gles1_on_gl2::CAPABILITIES.len()];
+        let mut old_capabilities = [gles11::FALSE; gles1_on_gl2::CAPABILITIES.len()];
         for (is_enabled, &name) in old_capabilities
             .iter_mut()
-            .zip(super::gles1_on_gl2::CAPABILITIES.iter())
+            .zip(gles1_on_gl2::CAPABILITIES.iter())
         {
             gles.GetBooleanv(name, is_enabled);
             gles.Disable(name);
@@ -416,7 +321,7 @@ unsafe fn present_renderbuffer(gles: &mut dyn GLES, window: &mut Window) {
     let old_blend_dfactor: GLenum = get_int(gles, gles11::BLEND_DST) as _;
 
     // Draw the quad
-    draw_fullscreen_texture(
+    present_frame(
         gles,
         window.viewport(),
         window.output_rotation_matrix(),
@@ -427,7 +332,7 @@ unsafe fn present_renderbuffer(gles: &mut dyn GLES, window: &mut Window) {
     gles.DeleteTextures(1, &texture);
 
     // Restore all the state saved before rendering
-    for (&is_enabled, info) in old_arrays.iter().zip(super::gles1_on_gl2::ARRAYS.iter()) {
+    for (&is_enabled, info) in old_arrays.iter().zip(gles1_on_gl2::ARRAYS.iter()) {
         match is_enabled {
             gles11::TRUE => gles.EnableClientState(info.name),
             gles11::FALSE => gles.DisableClientState(info.name),
@@ -436,7 +341,7 @@ unsafe fn present_renderbuffer(gles: &mut dyn GLES, window: &mut Window) {
     }
     for (&is_enabled, &name) in old_capabilities
         .iter()
-        .zip(super::gles1_on_gl2::CAPABILITIES.iter())
+        .zip(gles1_on_gl2::CAPABILITIES.iter())
     {
         match is_enabled {
             gles11::TRUE => gles.Enable(name),

@@ -5,7 +5,7 @@
  */
 //! Parsing and management of user-configurable options, e.g. for input methods.
 
-use crate::frameworks::opengles::GLESImplementation;
+use crate::gles::GLESImplementation;
 use crate::window::DeviceOrientation;
 use std::collections::HashMap;
 use std::io::{BufRead, BufReader, Read};

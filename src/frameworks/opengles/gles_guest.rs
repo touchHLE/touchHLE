@@ -12,8 +12,8 @@
 //! depending on the value of `pname`, using the upper bound (4 in this case)
 //! every time is never going to cause a problem in practice.
 
-use super::GLES;
 use crate::dyld::{export_c_func, FunctionExports};
+use crate::gles::GLES;
 use crate::mem::{ConstPtr, ConstVoidPtr, GuestUSize, Mem, MutPtr};
 use crate::window::gles11;
 use crate::window::gles11::types::*;

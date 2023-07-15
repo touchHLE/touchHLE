@@ -19,7 +19,8 @@ mod matrix;
 pub use gl::{gl21compat, gles11, GLContext, GLVersion};
 pub use matrix::Matrix;
 
-use crate::frameworks::opengles::GLES;
+use crate::gles::present::present_frame;
+use crate::gles::{create_gles1_ctx, GLES};
 use crate::image::Image;
 use crate::options::Options;
 use sdl2::mouse::MouseButton;
@@ -314,7 +315,7 @@ impl Window {
             // On Android, we have to specify the OpenGL ES version before
             // creating the window, so we have to use the same version for both
             // drawing the splash screen and the app's own rendering.
-            let gl_ctx = crate::frameworks::opengles::eagl::create_gles1_ctx(&mut window, options);
+            let gl_ctx = create_gles1_ctx(&mut window, options);
             gl_ctx.make_current(&window);
             log!("Driver info: {}", unsafe { gl_ctx.driver_description() });
 
@@ -712,7 +713,7 @@ impl Window {
                 gles11::LINEAR as _,
             );
 
-            crate::frameworks::opengles::eagl::draw_fullscreen_texture(
+            present_frame(
                 &mut **gl_ctx,
                 viewport,
                 matrix,

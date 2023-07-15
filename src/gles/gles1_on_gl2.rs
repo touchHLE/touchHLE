@@ -37,7 +37,7 @@ use std::ffi::CStr;
 /// just providing the minimum.
 ///
 /// TODO: GL_POINT_SPRITE_OES?
-pub(super) const CAPABILITIES: &[GLenum] = &[
+pub const CAPABILITIES: &[GLenum] = &[
     gl21::ALPHA_TEST,
     gl21::BLEND,
     gl21::COLOR_LOGIC_OP,
@@ -70,10 +70,10 @@ pub(super) const CAPABILITIES: &[GLenum] = &[
     gl21::TEXTURE_2D,
 ];
 
-pub(super) struct ArrayInfo {
+pub struct ArrayInfo {
     /// Enum used by `glEnableClientState`, `glDisableClientState` and
     /// `glGetBoolean`.
-    pub(super) name: GLenum,
+    pub name: GLenum,
     /// Buffer binding enum for `glGetInteger`.
     buffer_binding: GLenum,
     /// Size enum for `glGetInteger`.
@@ -93,7 +93,7 @@ struct ArrayStateBackup {
 /// List of arrays shared by OpenGL ES 1.1 and OpenGL 2.1.
 ///
 /// TODO: GL_POINT_SIZE_ARRAY_OES?
-pub(super) const ARRAYS: &[ArrayInfo] = &[
+pub const ARRAYS: &[ArrayInfo] = &[
     ArrayInfo {
         name: gl21::COLOR_ARRAY,
         buffer_binding: gl21::COLOR_ARRAY_BUFFER_BINDING,

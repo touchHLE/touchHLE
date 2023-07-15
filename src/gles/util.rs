@@ -141,6 +141,7 @@ impl ParamTable {
 /// `glTexImage2D`. Returns `true` if this is done.
 ///
 /// Note that this panics rather than create GL errors for invalid use (TODO?)
+#[allow(clippy::too_many_arguments)]
 pub fn try_decode_pvrtc(
     gles: &mut dyn GLES,
     target: GLenum,

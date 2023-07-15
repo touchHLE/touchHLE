@@ -17,6 +17,7 @@ use super::gles11_raw::types::*;
 /// It is the caller's responsibility to make the context active before using
 /// any of the `unsafe` methods of this trait.
 #[allow(clippy::upper_case_acronyms)]
+#[allow(clippy::too_many_arguments)] // not our fault :(
 pub trait GLES {
     /// Get a human-friendly description of this implementation.
     fn description() -> &'static str

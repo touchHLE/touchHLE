@@ -10,7 +10,15 @@ _Scale hack supported_ means an app is compatible with the `--scale-hack=` optio
 
 Performance is tested with release builds of touchHLE on a 2017 Retina MacBook, which is a fairly underpowered (passively cooled!) dual-core laptop. Your computer is probably faster.
 
-- Crash Bandicoot Nitro Kart 3D (2008, Vivendi/Polarbit, App Store day-two title)
+Please click to expand the details for the app you are interested in.
+
+<!-- Be careful when updating this: GitHub and Pandoc diverge in what
+     indentation they want for the <details> and <summary> when combined with
+     lists. -->
+
+- <details>
+  <summary>Crash Bandicoot Nitro Kart 3D (2008, Vivendi/Polarbit, App Store day-two title)</summary>
+
   - Working versions:
     - “CBNK3D” 1.0 (in-game version number: 0.7.5)
     - “Crash Kart” 1.0 (in-game version number: 0.7.6)
@@ -25,7 +33,9 @@ Performance is tested with release builds of touchHLE on a 2017 Retina MacBook, 
     - Continuing a previous game after closing and reopening the app
   - Consistent full fps (60fps)
   - Scale hack supported
-- Super Monkey Ball (2008, SEGA/Other Ocean Interactive, App Store launch title)
+  </details>
+- <details><summary>Super Monkey Ball (2008, SEGA/Other Ocean Interactive, App Store launch title)</summary>
+
   - Working versions:
     - “Monkey Ball” 1.0
     - “Monkey Ball” 1.02
@@ -40,7 +50,9 @@ Performance is tested with release builds of touchHLE on a 2017 Retina MacBook, 
     - The tutorial (in the versions that have it)
   - Consistent full fps (30fps)
   - Scale hack supported
-- Touch & Go (2009, The Game Creators)
+  </details>
+- <details><summary>Touch & Go (2009, The Game Creators)</summary>
+
   - Working versions:
     - “Touch & Go” 1.1
     - “Touch & Go LITE” 1.2
@@ -53,7 +65,9 @@ Performance is tested with release builds of touchHLE on a 2017 Retina MacBook, 
     - High score persistence
   - Consistent full fps (60fps)
   - Scale hack supported
-- Wolfenstein 3D (2009, id Software)
+  </details>
+- <details><summary>Wolfenstein 3D (2009, id Software)</summary>
+
   - Working versions:
     - 1.0 from the official open source release
   - **Broken versions:**
@@ -62,3 +76,4 @@ Performance is tested with release builds of touchHLE on a 2017 Retina MacBook, 
     - The game freezes for a very long time during loading and when picking up items
     - Multi-touch is not supported yet, so you can't move and shoot at the same time
   - Not a touchHLE bug: random flashing colors in-game are caused by [a bug in the app itself](https://www.youtube.com/watch?v=omViNgUqF8c&t=8m15s)
+  </details>

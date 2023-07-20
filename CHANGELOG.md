@@ -20,6 +20,8 @@ Compatibility:
 - API support improvements:
   - Various small contributions. (@hikari-no-yume, @KiritoDv, @ciciplusplus, @TylerJaacks)
   - PVRTC and paletted texture compression is now supported. (@hikari-no-yume)
+- New supported apps:
+  - [Wolfenstein 3D](https://www.youtube.com/watch?v=omViNgUqF8c) (@ciciplusplus; version 1.0 only)
 
 Quality:
 

@@ -53,3 +53,12 @@ Performance is tested with release builds of touchHLE on a 2017 Retina MacBook, 
     - High score persistence
   - Consistent full fps (60fps)
   - Scale hack supported
+- Wolfenstein 3D (2009, id Software)
+  - Working versions:
+    - 1.0 from the official open source release
+  - **Broken versions:**
+    - 1.1 from the official open source release and later
+  - Playable with some caveats:
+    - The game freezes for a very long time during loading and when picking up items
+    - Multi-touch is not supported yet, so you can't move and shoot at the same time
+  - Not a touchHLE bug: random flashing colors in-game are caused by [a bug in the app itself](https://www.youtube.com/watch?v=omViNgUqF8c&t=8m15s)

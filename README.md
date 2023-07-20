@@ -6,7 +6,7 @@ As an HLE, touchHLE is radically different from a low-level emulator (LLE) like 
 
 The goal of this project is to run games from the early days of iOS:
 
-* Currently: iPhone and iPod touch apps for iPhone OS 2.x. [Three of these are known to work](APP_SUPPORT.md), and of course we are trying to make that list longer. :)
+* Currently: iPhone and iPod touch apps for iPhone OS 2.x. [A few of these are known to work](APP_SUPPORT.md), and of course we are trying to make the list longer. :)
 * Next: iPhone OS 3.0 support.
 * Longer term: iPhone OS 3.1, iPad apps (iPhone OS 3.2), iOS 4.x, …
 * Never: 64-bit iOS.

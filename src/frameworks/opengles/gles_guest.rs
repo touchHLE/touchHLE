@@ -113,10 +113,14 @@ fn glHint(env: &mut Environment, target: GLenum, mode: GLenum) {
     with_ctx_and_mem(env, |gles, _mem| unsafe { gles.Hint(target, mode) })
 }
 fn glGetString(env: &mut Environment, name: GLenum) -> ConstPtr<GLubyte> {
-    // TODO: override some strings like `GL_VERSION` to match a real iOS device
     with_ctx_and_mem(env, |gles, mem| {
-        let cstr = unsafe { CStr::from_ptr(gles.GetString(name).cast()) };
-        mem.alloc_and_write_cstr(cstr.to_bytes()).cast_const()
+        let s = unsafe { CStr::from_ptr(gles.GetString(name).cast()) };
+        log!(
+            "TODO: glGetString({}) does not match real device and leaks memory",
+            name,
+        );
+        log_dbg!("glGetString({}) => {:?}", name, s);
+        mem.alloc_and_write_cstr(s.to_bytes()).cast_const()
     })
 }
 

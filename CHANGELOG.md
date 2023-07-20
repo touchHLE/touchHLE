@@ -23,9 +23,10 @@ Compatibility:
 - New supported apps:
   - [Wolfenstein 3D](https://www.youtube.com/watch?v=omViNgUqF8c) (@ciciplusplus; version 1.0 only)
 
-Quality:
+Quality and performance:
 
 - Overlapping characters in text now render correctly. (@Xertes0)
+- touchHLE now avoids polling for events more often than 120Hz. Previously, it would sometimes poll many times more often than that, which could be very bad for performance. This change improves performance in basically all apps, though the effects on the existing supported apps are fairly subtle. (@hikari-no-yume)
 
 New platform support:
 

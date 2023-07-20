@@ -526,12 +526,10 @@ impl Environment {
         assert!(self.threads[initial_thread].context.is_none());
 
         loop {
-            // We need to poll for events occasionally during CPU execution so
-            // that the host OS doesn't consider touchHLE unresponsive.
-            // This is not free so we should avoid doing it too often.
-            // 100,000 ticks is an arbitrary number.
-            self.window.poll_for_events(&self.options);
-
+            // 100,000 ticks is an arbitrary number. It needs to be reasonably
+            // large so we aren't jumping in and out of dynarmic or trying to
+            // poll for events too often. At the same time, very large values
+            // are bad for responsiveness.
             let mut ticks = if self.threads[self.current_thread].sleeping_until.is_some() {
                 // The current thread might be asleep, in which case we want to
                 // immediately switch to another thread. This only happens when
@@ -567,6 +565,14 @@ impl Environment {
                     }
                 }
             }
+
+            // To maintain responsiveness when moving the window and so on, we
+            // need to poll for events occasionally, even if the app isn't
+            // actively processing them.
+            // Polling for events can be quite expensive, so we shouldn't do
+            // this until after we've done some amount of work on the guest
+            // thread, lest every single callback call pay this cost.
+            self.window.poll_for_events(&self.options);
 
             loop {
                 // Try to find a new thread to execute, starting with the thread

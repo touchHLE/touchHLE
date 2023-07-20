@@ -24,6 +24,7 @@ use std::collections::VecDeque;
 use std::env;
 use std::f32::consts::FRAC_PI_2;
 use std::num::NonZeroU32;
+use std::time::{Duration, Instant};
 
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub enum DeviceOrientation {
@@ -157,6 +158,7 @@ pub struct Window {
     window: sdl2::video::Window,
     event_pump: sdl2::EventPump,
     event_queue: VecDeque<Event>,
+    last_polled: Instant,
     /// Separate queue for extremely high-priority events (e.g. app about to
     /// terminate).
     high_priority_event: Option<Event>,
@@ -294,6 +296,7 @@ impl Window {
             window,
             event_pump,
             event_queue: VecDeque::new(),
+            last_polled: Instant::now() - Duration::from_secs(1),
             high_priority_event: None,
             enable_event_polling: true,
             #[cfg(target_os = "macos")]
@@ -333,7 +336,17 @@ impl Window {
     /// (60Hz is probably fine) so that the host OS doesn't consider touchHLE
     /// to be unresponsive. Note that events are not returned by this function,
     /// since we often need to defer actually handling them.
+    ///
+    /// Since polling can be quite expensive, this function will skip it if it
+    /// was called too recently.
     pub fn poll_for_events(&mut self, options: &Options) {
+        let now = Instant::now();
+        // poll roughly twice per frame to try to avoid missing frames sometimes
+        if now.duration_since(self.last_polled) < Duration::from_secs_f64(1.0 / 120.0) {
+            return;
+        }
+        self.last_polled = now;
+
         fn transform_input_coords(
             window: &Window,
             (in_x, in_y): (f32, f32),

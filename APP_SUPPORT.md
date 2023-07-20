@@ -72,12 +72,12 @@ Please click to expand the details for the app you are interested in.
     - 1.0 from the official open source release
   - **Broken versions:**
     - 1.1 from the official open source release and later
-  - Playable:
+  - Multi-touch is not supported yet, so you can't move and shoot at the same time
+  - Not a touchHLE bug: random flashing colors in-game are caused by [a bug in the app itself](https://www.youtube.com/watch?v=omViNgUqF8c&t=8m15s)
+  - Otherwise seemingly fully playable:
      - At least the first level :)
-     - Seems to run smoothly
      - Sound effects and music work
      - Saving works
-     - Multi-touch is not supported yet, so you can't move and shoot at the same time
-  - Not a touchHLE bug: random flashing colors in-game are caused by [a bug in the app itself](https://www.youtube.com/watch?v=omViNgUqF8c&t=8m15s)
+  - Consistent full fps (60fps)
   - Scale hack supported
   </details>

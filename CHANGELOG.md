@@ -2,7 +2,7 @@
 
 This will list notable changes from release to release, and credit the people who contributed them. This mainly covers changes that are visible to end users, so please look at the commit history if you want to know all the details.
 
-Names preceded by an @ are GitHub usernames.
+Names preceded by an @ are GitHub usernames. Credits for new app support indicate someone who put a lot of effort into getting that app working, but compatibility is always a cumulative collaborative effort.
 
 Changes are categorised as follows:
 
@@ -58,9 +58,9 @@ Compatibility:
   - Some key parts of `UIImage`, `CGImage` and `CGBitmapContext` used by Apple's `Texture2D` sample code are now implemented. Loading textures from PNG files in this way should now work. (@hikari-no-yume)
   - MP3 is now a supported audio file format in Audio Toolbox. This is done in a fairly hacky way so it might not work for some apps. (@hikari-no-yume)
 - New supported apps:
-  - Touch & Go LITE
-  - Touch & Go \[2023-03-12\]
-  - Super Monkey Ball Lite (full version was already supported)
+  - Touch & Go LITE (@hikari-no-yume)
+  - Touch & Go \[2023-03-12\] (@hikari-no-yume)
+  - Super Monkey Ball Lite (@hikari-no-yume; full version was already supported)
 
 Quality:
 
@@ -89,7 +89,7 @@ Compatibility:
   - Basic POSIX file I/O is now supported. Previously only standard C file I/O was supported. (@hikari-no-yume)
   - Very basic use of Audio Session Services is now supported. (@nitinseshadri)
   - Very basic use of `MPMoviePlayerController` is now supported. No actual video playback is implemented. (@hikari-no-yume)
-- New supported app: Crash Bandicoot Nitro Kart 3D (version 1.0 only).
+- New supported app: Crash Bandicoot Nitro Kart 3D (@hikari-no-yume; version 1.0 only).
 
 Quality and performance:
 

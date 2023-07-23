@@ -5,13 +5,11 @@
  */
 //! Functions under `Objective-C Runtime Utilities`, just `NSStringFromClass` right now.
 
-use crate::{
-    dyld::FunctionExports,
-    environment::Environment,
-    export_c_func,
-    frameworks::foundation::ns_string,
-    objc::{class_getName_inner, id, nil},
-};
+use crate::dyld::FunctionExports;
+use crate::environment::Environment;
+use crate::export_c_func;
+use crate::frameworks::foundation::ns_string;
+use crate::objc::{class_getName_inner, id, nil};
 
 pub(super) fn NSStringFromClass(env: &mut Environment, class: id) -> id {
     if class == nil {

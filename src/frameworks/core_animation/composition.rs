@@ -38,13 +38,13 @@ pub fn recomposite_if_necessary(env: &mut Environment) -> Option<Instant> {
     // TODO: can there be windows smaller than the screen? If so we need to draw
     //       all of them.
     let Some(&top_window) = env.framework_state.uikit.ui_window.visible_windows.last() else {
-        log!("No visible window, skipping composition");
+        log_dbg!("No visible window, skipping composition");
         return None;
     };
 
     if find_fullscreen_eagl_layer(env) != nil {
         // No composition done, EAGLContext will present directly.
-        log!("Using CAEAGLLayer fast path, skipping composition");
+        log_dbg!("Using CAEAGLLayer fast path, skipping composition");
         return None;
     }
 
@@ -57,13 +57,13 @@ pub fn recomposite_if_necessary(env: &mut Environment) -> Option<Instant> {
         .recomposite_next
     {
         if recomposite_next > now {
-            log!("Not recompositing yet, wait {:?}", recomposite_next - now);
+            log_dbg!("Not recompositing yet, wait {:?}", recomposite_next - now);
             return Some(recomposite_next);
         }
 
         // See NSTimer implementation for a discussion of what this does.
         let overdue_by = now.duration_since(recomposite_next);
-        log!("Recompositing, overdue by {:?}", overdue_by);
+        log_dbg!("Recompositing, overdue by {:?}", overdue_by);
         // TODO: Use `.div_duration_f64()` once that is stabilized.
         let advance_by = (overdue_by.as_secs_f64() / interval).max(1.0).ceil();
         assert!(advance_by == (advance_by as u32) as f64);

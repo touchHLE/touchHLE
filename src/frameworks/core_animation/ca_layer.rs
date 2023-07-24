@@ -12,18 +12,24 @@ pub(super) struct CALayerHostObject {
     /// Possibly nil, usually a UIView. This is a weak reference.
     delegate: id,
     /// Sublayers in back-to-front order. These are strong references.
-    sublayers: Vec<id>,
+    pub(super) sublayers: Vec<id>,
     /// The superlayer. This is a weak reference.
     superlayer: id,
-    bounds: CGRect,
-    position: CGPoint,
-    anchor_point: CGPoint,
-    hidden: bool,
-    opaque: bool,
-    opacity: f32,
-    background_color: id,
+    pub(super) bounds: CGRect,
+    pub(super) position: CGPoint,
+    pub(super) anchor_point: CGPoint,
+    pub(super) hidden: bool,
+    pub(super) opaque: bool,
+    pub(super) opacity: f32,
+    pub(super) background_color: id,
     /// For CAEAGLLayer only
     pub(super) drawable_properties: id,
+    /// For CAEAGLLayer only (internal state for compositor)
+    pub(super) presented_pixels: Option<(Vec<u8>, u32, u32)>,
+    /// For CAEAGLLayer only (internal state for compositor)
+    pub(super) gles_texture: Option<crate::gles::gles11_raw::types::GLuint>,
+    /// For CAEAGLLayer only (internal state for compositor)
+    pub(super) gles_texture_is_up_to_date: bool,
 }
 impl HostObject for CALayerHostObject {}
 
@@ -49,6 +55,9 @@ pub const CLASSES: ClassExports = objc_classes! {
         opacity: 1.0,
         background_color: nil, // transparency
         drawable_properties: nil,
+        presented_pixels: None,
+        gles_texture: None,
+        gles_texture_is_up_to_date: false,
     });
     env.objc.alloc_object(this, host_object, &mut env.mem)
 }

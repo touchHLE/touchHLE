@@ -36,6 +36,7 @@ pub mod uikit;
 #[derive(Default)]
 pub struct State {
     audio_toolbox: audio_toolbox::State,
+    core_animation: core_animation::State,
     foundation: foundation::State,
     media_player: media_player::State,
     openal: openal::State,

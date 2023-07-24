@@ -16,7 +16,7 @@ fn parse_tuple(s: &str) -> Result<(f32, f32), ()> {
     Ok((a.parse().map_err(|_| ())?, b.parse().map_err(|_| ())?))
 }
 
-#[derive(Copy, Clone, Debug, Default)]
+#[derive(Copy, Clone, Debug, Default, PartialEq)]
 #[repr(C, packed)]
 pub struct CGPoint {
     pub x: CGFloat,
@@ -53,7 +53,7 @@ impl std::fmt::Display for CGPoint {
     }
 }
 
-#[derive(Copy, Clone, Debug, Default)]
+#[derive(Copy, Clone, Debug, Default, PartialEq)]
 #[repr(C, packed)]
 pub struct CGSize {
     pub width: CGFloat,
@@ -93,7 +93,7 @@ impl std::fmt::Display for CGSize {
     }
 }
 
-#[derive(Copy, Clone, Debug, Default)]
+#[derive(Copy, Clone, Debug, Default, PartialEq)]
 #[repr(C, packed)]
 pub struct CGRect {
     pub origin: CGPoint,

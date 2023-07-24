@@ -10,7 +10,9 @@ use crate::objc::{id, msg, msg_super, objc_classes, ClassExports};
 #[derive(Default)]
 pub struct State {
     /// List of visible windows for internal purposes. Non-retaining!
-    pub(super) visible_windows: Vec<id>,
+    ///
+    /// This is public because Core Animation also uses it.
+    pub visible_windows: Vec<id>,
 }
 
 pub const CLASSES: ClassExports = objc_classes! {

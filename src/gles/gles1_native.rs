@@ -280,6 +280,18 @@ impl GLES for GLES1Native {
     unsafe fn PixelStorei(&mut self, pname: GLenum, param: GLint) {
         gles11::PixelStorei(pname, param)
     }
+    unsafe fn ReadPixels(
+        &mut self,
+        x: GLint,
+        y: GLint,
+        width: GLsizei,
+        height: GLsizei,
+        format: GLenum,
+        type_: GLenum,
+        pixels: *mut GLvoid,
+    ) {
+        gles11::ReadPixels(x, y, width, height, format, type_, pixels)
+    }
     unsafe fn GenTextures(&mut self, n: GLsizei, textures: *mut GLuint) {
         gles11::GenTextures(n, textures)
     }

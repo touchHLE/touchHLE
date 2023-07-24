@@ -153,6 +153,16 @@ pub trait GLES {
 
     // Textures
     unsafe fn PixelStorei(&mut self, pname: GLenum, param: GLint);
+    unsafe fn ReadPixels(
+        &mut self,
+        x: GLint,
+        y: GLint,
+        width: GLsizei,
+        height: GLsizei,
+        format: GLenum,
+        type_: GLenum,
+        pixels: *mut GLvoid,
+    );
     unsafe fn GenTextures(&mut self, n: GLsizei, textures: *mut GLuint);
     unsafe fn DeleteTextures(&mut self, n: GLsizei, textures: *const GLuint);
     unsafe fn ActiveTexture(&mut self, texture: GLenum);

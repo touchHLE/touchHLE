@@ -52,6 +52,8 @@ pub unsafe fn present_frame(
     gles.LoadMatrixf(matrix.columns().as_ptr() as *const _);
     gles.Enable(gles11::TEXTURE_2D);
     gles.DrawArrays(gles11::TRIANGLES, 0, 6);
+    // clean this up so we don't need to worry about it in e.g. Core Animation
+    gles.LoadIdentity();
 
     // Display virtual cursor
     if let Some((x, y, pressed)) = virtual_cursor_visible_at {

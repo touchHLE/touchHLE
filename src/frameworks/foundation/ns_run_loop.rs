@@ -14,7 +14,7 @@ use crate::frameworks::audio_toolbox::audio_queue::{handle_audio_queue, AudioQue
 use crate::frameworks::core_foundation::cf_run_loop::{
     kCFRunLoopCommonModes, kCFRunLoopDefaultMode, CFRunLoopRef,
 };
-use crate::frameworks::{media_player, uikit};
+use crate::frameworks::{core_animation, media_player, uikit};
 use crate::objc::{id, msg, objc_classes, release, retain, ClassExports, HostObject};
 use crate::Environment;
 use std::time::{Duration, Instant};
@@ -173,6 +173,9 @@ fn run_run_loop(env: &mut Environment, run_loop: id) {
         env.window.poll_for_events(&env.options);
 
         let next_due = uikit::handle_events(env);
+        limit_sleep_time(&mut sleep_until, next_due);
+
+        let next_due = core_animation::recomposite_if_necessary(env);
         limit_sleep_time(&mut sleep_until, next_due);
 
         assert!(timers_tmp.is_empty());

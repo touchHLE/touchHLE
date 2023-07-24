@@ -171,7 +171,8 @@ pub struct Window {
     /// [Self::rotatable_fullscreen] returns [true].
     fullscreen: bool,
     scale_hack: NonZeroU32,
-    splash_image_and_gl_ctx: Option<(Image, Box<dyn GLES>)>,
+    internal_gl_ctx: Option<Box<dyn GLES>>,
+    splash_image: Option<Image>,
     device_orientation: DeviceOrientation,
     app_gl_ctx_no_longer_current: bool,
     controller_ctx: sdl2::GameControllerSubsystem,
@@ -305,7 +306,8 @@ impl Window {
             viewport_y_offset: 0,
             fullscreen,
             scale_hack,
-            splash_image_and_gl_ctx: None,
+            internal_gl_ctx: None,
+            splash_image: launch_image,
             device_orientation,
             app_gl_ctx_no_longer_current: false,
             controller_ctx,
@@ -315,17 +317,16 @@ impl Window {
             virtual_cursor_last: None,
         };
 
-        if let Some(launch_image) = launch_image {
-            // Splash screen must be drawn with OpenGL (or not drawn at all)
-            // because otherwise we can't later use OpenGL in the same window.
-            // On Android, we have to specify the OpenGL ES version before
-            // creating the window, so we have to use the same version for both
-            // drawing the splash screen and the app's own rendering.
-            let gl_ctx = create_gles1_ctx(&mut window, options);
-            gl_ctx.make_current(&window);
-            log!("Driver info: {}", unsafe { gl_ctx.driver_description() });
+        // Set up OpenGL ES context used for splash screen and app UI rendering
+        // (see src/frameworks/core_animation/composition.rs). OpenGL ES is used
+        // because SDL2 won't let us use more than one graphics API in the same
+        // window, and we also need OpenGL ES for the app's own rendering.
+        let gl_ctx = create_gles1_ctx(&mut window, options);
+        gl_ctx.make_current(&window);
+        log!("Driver info: {}", unsafe { gl_ctx.driver_description() });
+        window.internal_gl_ctx = Some(gl_ctx);
 
-            window.splash_image_and_gl_ctx = Some((launch_image, gl_ctx));
+        if window.splash_image.is_some() {
             window.display_splash();
         }
 
@@ -703,10 +704,21 @@ impl Window {
         value
     }
 
+    /// Make the internal OpenGL ES context (for splash screen and UI rendering)
+    /// current.
+    pub fn make_internal_gl_ctx_current(&mut self) {
+        self.app_gl_ctx_no_longer_current = true;
+        self.internal_gl_ctx.as_ref().unwrap().make_current(self);
+    }
+
+    /// Get the internal OpenGL ES context (for splash screen and UI rendering).
+    /// This does not ensure the context is current.
+    pub fn get_internal_gl_ctx(&mut self) -> &mut dyn GLES {
+        self.internal_gl_ctx.as_deref_mut().unwrap()
+    }
+
     fn display_splash(&mut self) {
-        let Some((_, gl_ctx)) = &self.splash_image_and_gl_ctx else {
-            panic!();
-        };
+        assert!(self.splash_image.is_some());
 
         // OpenGL ES expects bottom-to-top row order for image data, but our
         // image data will be top-to-bottom. A reflection transform compensates.
@@ -714,13 +726,10 @@ impl Window {
         let (vx, vy, vw, vh) = self.viewport();
         let viewport = (vx, vy + self.viewport_y_offset(), vw, vh);
 
-        self.app_gl_ctx_no_longer_current = true;
-        gl_ctx.make_current(self);
+        self.make_internal_gl_ctx_current();
 
-        // re-bind mutably
-        let Some((image, gl_ctx)) = &mut self.splash_image_and_gl_ctx else {
-            panic!();
-        };
+        let image = self.splash_image.as_ref().unwrap();
+        let gl_ctx = self.internal_gl_ctx.as_deref_mut().unwrap();
 
         use crate::gles::gles11_raw as gles11; // constants only
 
@@ -752,10 +761,7 @@ impl Window {
             );
 
             present_frame(
-                &mut **gl_ctx,
-                viewport,
-                matrix,
-                /* virtual_cursor_visible_at: */ None,
+                gl_ctx, viewport, matrix, /* virtual_cursor_visible_at: */ None,
             );
 
             gl_ctx.DeleteTextures(1, &texture);
@@ -831,7 +837,7 @@ impl Window {
 
         self.device_orientation = new_orientation;
 
-        if self.splash_image_and_gl_ctx.is_some() {
+        if self.splash_image.is_some() {
             self.display_splash();
         }
     }

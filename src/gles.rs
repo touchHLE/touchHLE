@@ -14,7 +14,7 @@
 //!   rotation and scaling.
 //! - Drawing touchHLE's virtual cursor.
 //! - Drawing the app's splash screen.
-//! - Drawing the app's UI, if it uses Core Animation or UIKit. (TODO)
+//! - Compositing the app's Core Animation layers (usually for UIKit views).
 //!
 //! touchHLE's OpenGL ES implementation consists of a series of layers. This
 //! module contains the layers that aren't specific to a particular use:

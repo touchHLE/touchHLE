@@ -1041,6 +1041,18 @@ impl GLES for GLES1OnGL2 {
         assert!(param == 1 || param == 2 || param == 4 || param == 8);
         gl21::PixelStorei(pname, param)
     }
+    unsafe fn ReadPixels(
+        &mut self,
+        x: GLint,
+        y: GLint,
+        width: GLsizei,
+        height: GLsizei,
+        format: GLenum,
+        type_: GLenum,
+        pixels: *mut GLvoid,
+    ) {
+        gl21::ReadPixels(x, y, width, height, format, type_, pixels)
+    }
     unsafe fn GenTextures(&mut self, n: GLsizei, textures: *mut GLuint) {
         gl21::GenTextures(n, textures)
     }

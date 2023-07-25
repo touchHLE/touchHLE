@@ -19,7 +19,11 @@ fn CFDataGetLength(env: &mut Environment, data: CFDataRef) -> CFIndex {
     // TODO: actually support general CFDataRef :p
     assert_cgimage(env, data);
 
-    borrow_image(&env.objc, data).len().try_into().unwrap()
+    borrow_image(&env.objc, data)
+        .pixels()
+        .len()
+        .try_into()
+        .unwrap()
 }
 
 fn CFDataGetBytes(env: &mut Environment, data: CFDataRef, range: CFRange, buffer: MutPtr<u8>) {

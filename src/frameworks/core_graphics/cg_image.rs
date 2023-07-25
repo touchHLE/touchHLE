@@ -91,9 +91,8 @@ pub fn borrow_image(objc: &ObjC, image: CGImageRef) -> &Image {
 
 fn CGImageGetAlphaInfo(_env: &mut Environment, _image: CGImageRef) -> CGImageAlphaInfo {
     // our Image type always returns un-premultiplied RGBA
-    // TODO: check if this is faithful to e.g. the real UIImage; it probably
-    // uses premultiplied BGRA, considering the design of the CgBI format
-    kCGImageAlphaLast
+    // (which is probably what the real UIImage does, considering CgBI's design)
+    kCGImageAlphaPremultipliedLast
 }
 
 fn CGImageGetColorSpace(env: &mut Environment, _image: CGImageRef) -> CGColorSpaceRef {

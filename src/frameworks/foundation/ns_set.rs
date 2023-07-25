@@ -7,7 +7,7 @@
 
 use super::ns_array;
 use super::ns_dictionary::DictionaryHostObject;
-use super::ns_fast_enumeration::NSFastEnumerationState;
+use super::ns_enumerator::NSFastEnumerationState;
 use super::NSUInteger;
 use crate::mem::MutPtr;
 use crate::objc::{

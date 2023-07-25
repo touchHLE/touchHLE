@@ -164,6 +164,11 @@ fn pthread_self(env: &mut Environment) -> pthread_t {
     ptr
 }
 
+fn pthread_setcanceltype(_env: &mut Environment, _type: i32, _oldtype: MutPtr<i32>) -> i32 {
+    // TODO
+    0
+}
+
 type mach_port_t = u32;
 
 /// Undocumented Darwin function that returns a `mach_port_t`, which in practice
@@ -179,5 +184,6 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(pthread_attr_destroy(_)),
     export_c_func!(pthread_create(_, _, _, _)),
     export_c_func!(pthread_self()),
+    export_c_func!(pthread_setcanceltype(_, _)),
     export_c_func!(pthread_mach_thread_np(_)),
 ];

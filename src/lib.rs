@@ -37,13 +37,16 @@ mod font;
 mod frameworks;
 mod fs;
 mod gdb;
+mod gles;
 mod image;
 mod libc;
 mod licenses;
 mod mach_o;
+mod matrix;
 mod mem;
 mod objc;
 mod options;
+mod paths;
 mod stack;
 mod window;
 
@@ -67,6 +70,23 @@ pub extern "C" fn SDL_main(
     _argc: std::ffi::c_int,
     _argv: *const *const std::ffi::c_char,
 ) -> std::ffi::c_int {
+    // Rust's default panic handler prints to stderr, but on Android that just
+    // gets discarded, so we set a custom hook to make debugging easier.
+    std::panic::set_hook(Box::new(|info| {
+        let payload = if let Some(s) = info.payload().downcast_ref::<&str>() {
+            s
+        } else if let Some(s) = info.payload().downcast_ref::<String>() {
+            &s
+        } else {
+            "(non-string payload)"
+        };
+        if let Some(location) = info.location() {
+            echo!("Panic at {}: {}", location, payload);
+        } else {
+            echo!("Panic: {}", payload);
+        }
+    }));
+
     // Empty args: brings up app picker.
     match main([String::new()].into_iter()) {
         Ok(_) => echo!("touchHLE finished"),
@@ -93,9 +113,9 @@ Special options:
 ";
 
 fn app_picker(title: &str) -> Result<PathBuf, String> {
-    let apps_dir = format!("{}{}", fs::files_prefix(), "touchHLE_apps");
+    let apps_dir = paths::user_data_base_path().join(paths::APPS_DIR);
 
-    fn enumerate_apps(apps_dir: &str) -> Result<Vec<PathBuf>, std::io::Error> {
+    fn enumerate_apps(apps_dir: &std::path::Path) -> Result<Vec<PathBuf>, std::io::Error> {
         let mut app_paths = Vec::new();
         for app in std::fs::read_dir(apps_dir)? {
             let app_path = app?.path();
@@ -112,13 +132,14 @@ fn app_picker(title: &str) -> Result<PathBuf, String> {
         Ok(app_paths)
     }
 
-    let app_paths: Result<Vec<PathBuf>, String> = if !std::path::Path::new(&apps_dir).is_dir() {
-        Err(format!("The {} directory couldn't be found. Check you're running touchHLE from the right directory.", apps_dir))
+    let app_paths: Result<Vec<PathBuf>, String> = if !apps_dir.is_dir() {
+        Err(format!("The {} directory couldn't be found. Check you're running touchHLE from the right directory.", apps_dir.display()))
     } else {
         enumerate_apps(&apps_dir).map_err(|err| {
             format!(
                 "Couldn't get list of apps in the {} directory: {}.",
-                apps_dir, err
+                apps_dir.display(),
+                err
             )
         })
     };
@@ -130,7 +151,10 @@ fn app_picker(title: &str) -> Result<PathBuf, String> {
             if !paths.is_empty() {
                 "Select an app:".to_string()
             } else {
-                format!("No apps were found in the {} directory.", apps_dir)
+                format!(
+                    "No apps were found in the {} directory.",
+                    apps_dir.display()
+                )
             },
         ),
         Err(err) => (&[], err),
@@ -188,6 +212,13 @@ pub fn main<T: Iterator<Item = String>>(mut args: T) -> Result<(), String> {
 
     echo!("{}", long_title);
     echo!();
+
+    {
+        let base_path = paths::user_data_base_path().to_str().unwrap();
+        if !base_path.is_empty() {
+            log!("Base path for touchHLE files: {}", base_path);
+        }
+    }
 
     let _ = args.next().unwrap(); // skip argv[0]
 
@@ -278,12 +309,17 @@ pub fn main<T: Iterator<Item = String>>(mut args: T) -> Result<(), String> {
     let mut options = options::Options::default();
 
     // Apply options from files
-    for filename in [options::DEFAULTS_FILENAME, options::USER_FILENAME] {
-        match options::get_options_from_file(filename, app_id) {
+    fn apply_options<F: std::io::Read, P: std::fmt::Display>(
+        file: F,
+        path: P,
+        options: &mut options::Options,
+        app_id: &str,
+    ) -> Result<(), String> {
+        match options::get_options_from_file(file, app_id) {
             Ok(Some(options_string)) => {
                 echo!(
                     "Using options from {} for this app: {}",
-                    filename,
+                    path,
                     options_string
                 );
                 for option_arg in options_string.split_ascii_whitespace() {
@@ -297,12 +333,27 @@ pub fn main<T: Iterator<Item = String>>(mut args: T) -> Result<(), String> {
                 }
             }
             Ok(None) => {
-                echo!("No options found for this app in {}", filename);
+                echo!("No options found for this app in {}", path);
             }
             Err(e) => {
                 echo!("Warning: {}", e);
             }
         }
+        Ok(())
+    }
+    let default_options_path = paths::DEFAULT_OPTIONS_FILE;
+    match paths::ResourceFile::open(default_options_path) {
+        Ok(mut file) => apply_options(file.get(), default_options_path, &mut options, app_id)?,
+        Err(err) => echo!("Warning: Could not open {}: {}", default_options_path, err),
+    }
+    let user_options_path = paths::user_data_base_path().join(paths::USER_OPTIONS_FILE);
+    match std::fs::File::open(&user_options_path) {
+        Ok(file) => apply_options(file, user_options_path.display(), &mut options, app_id)?,
+        Err(err) => echo!(
+            "Warning: Could not open {}: {}",
+            user_options_path.display(),
+            err
+        ),
     }
     echo!();
 

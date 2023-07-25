@@ -657,6 +657,7 @@ dependencies = [
  "touchHLE_dynarmic_wrapper",
  "touchHLE_gl_bindings",
  "touchHLE_openal_soft_wrapper",
+ "touchHLE_pvrt_decompress_wrapper",
  "touchHLE_stb_image_wrapper",
  "zip",
 ]
@@ -688,6 +689,13 @@ name = "touchHLE_openal_soft_wrapper"
 version = "0.1.2"
 dependencies = [
  "cmake",
+]
+
+[[package]]
+name = "touchHLE_pvrt_decompress_wrapper"
+version = "0.1.2"
+dependencies = [
+ "cc",
 ]
 
 [[package]]

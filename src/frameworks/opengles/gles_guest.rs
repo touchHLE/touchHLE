@@ -12,12 +12,14 @@
 //! depending on the value of `pname`, using the upper bound (4 in this case)
 //! every time is never going to cause a problem in practice.
 
-use super::GLES;
 use crate::dyld::{export_c_func, FunctionExports};
+use crate::gles::gles11_raw as gles11; // constants only
+use crate::gles::gles11_raw::types::*;
+use crate::gles::GLES;
 use crate::mem::{ConstPtr, ConstVoidPtr, GuestUSize, Mem, MutPtr};
-use crate::window::gles11;
-use crate::window::gles11::types::*;
 use crate::Environment;
+
+use core::ffi::CStr;
 
 fn with_ctx_and_mem<T, U>(env: &mut Environment, f: T) -> U
 where
@@ -74,6 +76,11 @@ fn glDisable(env: &mut Environment, cap: GLenum) {
         unsafe { gles.Disable(cap) };
     });
 }
+fn glClientActiveTexture(env: &mut Environment, texture: GLenum) {
+    with_ctx_and_mem(env, |gles, _mem| unsafe {
+        gles.ClientActiveTexture(texture)
+    })
+}
 fn glEnableClientState(env: &mut Environment, array: GLenum) {
     with_ctx_and_mem(env, |gles, _mem| {
         unsafe { gles.EnableClientState(array) };
@@ -105,6 +112,17 @@ fn glGetIntegerv(env: &mut Environment, pname: GLenum, params: MutPtr<GLint>) {
 fn glHint(env: &mut Environment, target: GLenum, mode: GLenum) {
     with_ctx_and_mem(env, |gles, _mem| unsafe { gles.Hint(target, mode) })
 }
+fn glGetString(env: &mut Environment, name: GLenum) -> ConstPtr<GLubyte> {
+    with_ctx_and_mem(env, |gles, mem| {
+        let s = unsafe { CStr::from_ptr(gles.GetString(name).cast()) };
+        log!(
+            "TODO: glGetString({}) does not match real device and leaks memory",
+            name,
+        );
+        log_dbg!("glGetString({}) => {:?}", name, s);
+        mem.alloc_and_write_cstr(s.to_bytes()).cast_const()
+    })
+}
 
 // Other state manipulation
 fn glAlphaFunc(env: &mut Environment, func: GLenum, ref_: GLclampf) {
@@ -116,6 +134,17 @@ fn glAlphaFuncx(env: &mut Environment, func: GLenum, ref_: GLclampx) {
 fn glBlendFunc(env: &mut Environment, sfactor: GLenum, dfactor: GLenum) {
     with_ctx_and_mem(env, |gles, _mem| unsafe {
         gles.BlendFunc(sfactor, dfactor)
+    })
+}
+fn glColorMask(
+    env: &mut Environment,
+    red: GLboolean,
+    green: GLboolean,
+    blue: GLboolean,
+    alpha: GLboolean,
+) {
+    with_ctx_and_mem(env, |gles, _mem| unsafe {
+        gles.ColorMask(red, green, blue, alpha)
     })
 }
 fn glCullFace(env: &mut Environment, mode: GLenum) {
@@ -161,6 +190,24 @@ fn glViewport(env: &mut Environment, x: GLint, y: GLint, width: GLsizei, height:
 }
 
 // Lighting and materials
+fn glFogf(env: &mut Environment, pname: GLenum, param: GLfloat) {
+    with_ctx_and_mem(env, |gles, _mem| unsafe { gles.Fogf(pname, param) })
+}
+fn glFogx(env: &mut Environment, pname: GLenum, param: GLfixed) {
+    with_ctx_and_mem(env, |gles, _mem| unsafe { gles.Fogx(pname, param) })
+}
+fn glFogfv(env: &mut Environment, pname: GLenum, params: ConstPtr<GLfloat>) {
+    with_ctx_and_mem(env, |gles, mem| {
+        let params = mem.ptr_at(params, 4 /* upper bound */);
+        unsafe { gles.Fogfv(pname, params) }
+    })
+}
+fn glFogxv(env: &mut Environment, pname: GLenum, params: ConstPtr<GLfixed>) {
+    with_ctx_and_mem(env, |gles, mem| {
+        let params = mem.ptr_at(params, 4 /* upper bound */);
+        unsafe { gles.Fogxv(pname, params) }
+    })
+}
 fn glLightf(env: &mut Environment, light: GLenum, pname: GLenum, param: GLfloat) {
     with_ctx_and_mem(env, |gles, _mem| unsafe {
         gles.Lightf(light, pname, param)
@@ -574,6 +621,33 @@ fn glTexImage2D(
         )
     })
 }
+fn glCompressedTexImage2D(
+    env: &mut Environment,
+    target: GLenum,
+    level: GLint,
+    internalformat: GLenum,
+    width: GLsizei,
+    height: GLsizei,
+    border: GLint,
+    image_size: GLsizei,
+    data: ConstVoidPtr,
+) {
+    with_ctx_and_mem(env, |gles, mem| unsafe {
+        let data = mem
+            .ptr_at(data.cast::<u8>(), image_size.try_into().unwrap())
+            .cast();
+        gles.CompressedTexImage2D(
+            target,
+            level,
+            internalformat,
+            width,
+            height,
+            border,
+            image_size,
+            data,
+        )
+    })
+}
 fn glCopyTexImage2D(
     env: &mut Environment,
     target: GLenum,
@@ -727,22 +801,28 @@ fn glDeleteRenderbuffersOES(env: &mut Environment, n: GLsizei, renderbuffers: Co
         unsafe { gles.DeleteRenderbuffersOES(n, renderbuffers) }
     })
 }
+fn glGenerateMipmapOES(env: &mut Environment, target: GLenum) {
+    with_ctx_and_mem(env, |gles, _mem| unsafe { gles.GenerateMipmapOES(target) })
+}
 
 pub const FUNCTIONS: FunctionExports = &[
     // Generic state manipulation
     export_c_func!(glGetError()),
     export_c_func!(glEnable(_)),
     export_c_func!(glDisable(_)),
+    export_c_func!(glClientActiveTexture(_)),
     export_c_func!(glEnableClientState(_)),
     export_c_func!(glDisableClientState(_)),
     export_c_func!(glGetBooleanv(_, _)),
     export_c_func!(glGetFloatv(_, _)),
     export_c_func!(glGetIntegerv(_, _)),
     export_c_func!(glHint(_, _)),
+    export_c_func!(glGetString(_)),
     // Other state manipulation
     export_c_func!(glAlphaFunc(_, _)),
     export_c_func!(glAlphaFuncx(_, _)),
     export_c_func!(glBlendFunc(_, _)),
+    export_c_func!(glColorMask(_, _, _, _)),
     export_c_func!(glCullFace(_)),
     export_c_func!(glDepthFunc(_)),
     export_c_func!(glDepthMask(_)),
@@ -753,6 +833,10 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(glScissor(_, _, _, _)),
     export_c_func!(glViewport(_, _, _, _)),
     // Lighting and materials
+    export_c_func!(glFogf(_, _)),
+    export_c_func!(glFogx(_, _)),
+    export_c_func!(glFogfv(_, _)),
+    export_c_func!(glFogxv(_, _)),
     export_c_func!(glLightf(_, _, _)),
     export_c_func!(glLightx(_, _, _)),
     export_c_func!(glLightfv(_, _, _)),
@@ -812,6 +896,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(glTexParameterf(_, _, _)),
     export_c_func!(glTexParameterx(_, _, _)),
     export_c_func!(glTexImage2D(_, _, _, _, _, _, _, _, _)),
+    export_c_func!(glCompressedTexImage2D(_, _, _, _, _, _, _, _)),
     export_c_func!(glCopyTexImage2D(_, _, _, _, _, _, _, _)),
     export_c_func!(glTexEnvf(_, _, _)),
     export_c_func!(glTexEnvx(_, _, _)),
@@ -831,4 +916,5 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(glCheckFramebufferStatusOES(_)),
     export_c_func!(glDeleteFramebuffersOES(_, _)),
     export_c_func!(glDeleteRenderbuffersOES(_, _)),
+    export_c_func!(glGenerateMipmapOES(_)),
 ];

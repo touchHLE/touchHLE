@@ -10,11 +10,6 @@ use std::path::PathBuf;
 fn main() {
     let out_dir = PathBuf::from(std::env::var("OUT_DIR").unwrap());
 
-    let mut file = File::create(out_dir.join("gl32core.rs")).unwrap();
-    Registry::new(Api::Gl, (3, 2), Profile::Core, Fallbacks::None, [])
-        .write_bindings(GlobalGenerator, &mut file)
-        .unwrap();
-
     let mut file = File::create(out_dir.join("gl21compat.rs")).unwrap();
     Registry::new(
         Api::Gl,
@@ -24,6 +19,7 @@ fn main() {
         [
             "GL_EXT_framebuffer_object",
             "GL_EXT_texture_filter_anisotropic",
+            "GL_EXT_texture_lod_bias",
         ],
     )
     .write_bindings(GlobalGenerator, &mut file)
@@ -39,6 +35,10 @@ fn main() {
             "GL_OES_framebuffer_object",
             "GL_OES_rgb8_rgba8",
             "GL_EXT_texture_filter_anisotropic",
+            "GL_IMG_texture_compression_pvrtc",
+            "GL_EXT_texture_lod_bias",
+            // Part of the OpenGL ES 1.1 common profile.
+            "GL_OES_compressed_paletted_texture",
         ],
     )
     .write_bindings(GlobalGenerator, &mut file)

@@ -9,7 +9,7 @@
 //! - [Apple's documentation of `class_addMethod`](https://developer.apple.com/documentation/objectivec/1418901-class_addmethod?language=objc)
 
 use super::{id, nil, Class, ClassHostObject, ObjC, SEL};
-use crate::abi::{CallFromGuest, GuestArg, GuestFunction, GuestRet, VAList};
+use crate::abi::{CallFromGuest, DotDotDot, GuestArg, GuestFunction, GuestRet};
 use crate::mem::{guest_size_of, ConstPtr, GuestUSize, Mem, Ptr, SafeRead};
 use crate::Environment;
 
@@ -36,7 +36,7 @@ where
     P1: GuestArg,
 {
 }
-impl<R, P1> HostIMP for fn(&mut Environment, id, SEL, P1, VAList) -> R
+impl<R, P1> HostIMP for fn(&mut Environment, id, SEL, P1, DotDotDot) -> R
 where
     R: GuestRet,
     P1: GuestArg,
@@ -49,7 +49,7 @@ where
     P2: GuestArg,
 {
 }
-impl<R, P1, P2> HostIMP for fn(&mut Environment, id, SEL, P1, P2, VAList) -> R
+impl<R, P1, P2> HostIMP for fn(&mut Environment, id, SEL, P1, P2, DotDotDot) -> R
 where
     R: GuestRet,
     P1: GuestArg,
@@ -64,7 +64,7 @@ where
     P3: GuestArg,
 {
 }
-impl<R, P1, P2, P3> HostIMP for fn(&mut Environment, id, SEL, P1, P2, P3, VAList) -> R
+impl<R, P1, P2, P3> HostIMP for fn(&mut Environment, id, SEL, P1, P2, P3, DotDotDot) -> R
 where
     R: GuestRet,
     P1: GuestArg,
@@ -81,7 +81,7 @@ where
     P4: GuestArg,
 {
 }
-impl<R, P1, P2, P3, P4> HostIMP for fn(&mut Environment, id, SEL, P1, P2, P3, P4, VAList) -> R
+impl<R, P1, P2, P3, P4> HostIMP for fn(&mut Environment, id, SEL, P1, P2, P3, P4, DotDotDot) -> R
 where
     R: GuestRet,
     P1: GuestArg,
@@ -101,7 +101,7 @@ where
 {
 }
 impl<R, P1, P2, P3, P4, P5> HostIMP
-    for fn(&mut Environment, id, SEL, P1, P2, P3, P4, P5, VAList) -> R
+    for fn(&mut Environment, id, SEL, P1, P2, P3, P4, P5, DotDotDot) -> R
 where
     R: GuestRet,
     P1: GuestArg,

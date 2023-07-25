@@ -8,6 +8,7 @@
 use super::posix_io::{self, O_APPEND, O_CREAT, O_RDONLY, O_RDWR, O_TRUNC, O_WRONLY};
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::fs::GuestPath;
+use crate::libc::string::strlen;
 use crate::mem::{ConstPtr, ConstVoidPtr, GuestUSize, MutPtr, MutVoidPtr, Ptr, SafeRead};
 use crate::Environment;
 use std::io::Write;
@@ -67,6 +68,32 @@ fn fread(
             bytes_read / item_size
         }
     }
+}
+
+fn fgetc(env: &mut Environment, file_ptr: MutPtr<FILE>) -> i32 {
+    let FILE { fd } = env.mem.read(file_ptr);
+    let buffer = env.mem.alloc(1);
+
+    match posix_io::read(env, fd, buffer, 1) {
+        -1 => EOF,
+        bytes_read => {
+            let bytes_read: GuestUSize = bytes_read.try_into().unwrap();
+            if bytes_read < 1 {
+                EOF
+            } else {
+                let buf: MutPtr<i32> = buffer.cast();
+                env.mem.read(buf)
+            }
+        }
+    }
+}
+
+fn fputs(env: &mut Environment, str: ConstPtr<u8>, stream: MutPtr<FILE>) -> i32 {
+    // TODO: this function doesn't set errno or return EOF yet
+    let str_len = strlen(env, str);
+    fwrite(env, str.cast(), str_len, 1, stream)
+        .try_into()
+        .unwrap()
 }
 
 fn fwrite(
@@ -166,6 +193,8 @@ pub const FUNCTIONS: FunctionExports = &[
     // Standard C functions
     export_c_func!(fopen(_, _)),
     export_c_func!(fread(_, _, _, _)),
+    export_c_func!(fgetc(_)),
+    export_c_func!(fputs(_, _)),
     export_c_func!(fwrite(_, _, _, _)),
     export_c_func!(fseek(_, _, _)),
     export_c_func!(ftell(_)),

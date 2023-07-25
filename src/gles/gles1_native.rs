@@ -4,10 +4,18 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 //! Passthrough for a native OpenGL ES 1.1 driver.
+//!
+//! Unlike for the GLES1-on-GL2 driver, there's almost no validation of
+//! arguments here, because we assume the driver is complete and the app uses it
+//! correctly. The exception is where we expect an extension could be used that
+//! the driver might not support (e.g. vendor-specific texture compression).
+//! In such cases, we should reject vendor-specific things unless we've made
+//! sure we can emulate them on all host platforms for touchHLE.
 
+use super::gles11_raw as gles11;
+use super::gles11_raw::types::*;
+use super::util::{try_decode_pvrtc, PalettedTextureFormat};
 use super::GLES;
-use crate::window::gles11;
-use crate::window::gles11::types::*;
 use crate::window::{GLContext, GLVersion, Window};
 use std::ffi::CStr;
 
@@ -25,8 +33,9 @@ impl GLES for GLES1Native {
         })
     }
 
-    fn make_current(&self, window: &mut Window) {
-        window.make_gl_context_current(&self.gl_ctx);
+    fn make_current(&self, window: &Window) {
+        unsafe { window.make_gl_context_current(&self.gl_ctx) };
+        gles11::load_with(|s| window.gl_get_proc_address(s))
     }
 
     unsafe fn driver_description(&self) -> String {
@@ -53,6 +62,9 @@ impl GLES for GLES1Native {
     unsafe fn Disable(&mut self, cap: GLenum) {
         gles11::Disable(cap)
     }
+    unsafe fn ClientActiveTexture(&mut self, texture: GLenum) {
+        gles11::ClientActiveTexture(texture);
+    }
     unsafe fn EnableClientState(&mut self, array: GLenum) {
         gles11::EnableClientState(array)
     }
@@ -77,6 +89,9 @@ impl GLES for GLES1Native {
     unsafe fn Hint(&mut self, target: GLenum, mode: GLenum) {
         gles11::Hint(target, mode)
     }
+    unsafe fn GetString(&mut self, name: GLenum) -> *const GLubyte {
+        gles11::GetString(name)
+    }
 
     // Other state manipulation
     unsafe fn AlphaFunc(&mut self, func: GLenum, ref_: GLclampf) {
@@ -87,6 +102,15 @@ impl GLES for GLES1Native {
     }
     unsafe fn BlendFunc(&mut self, sfactor: GLenum, dfactor: GLenum) {
         gles11::BlendFunc(sfactor, dfactor)
+    }
+    unsafe fn ColorMask(
+        &mut self,
+        red: GLboolean,
+        green: GLboolean,
+        blue: GLboolean,
+        alpha: GLboolean,
+    ) {
+        gles11::ColorMask(red, green, blue, alpha)
     }
     unsafe fn CullFace(&mut self, mode: GLenum) {
         gles11::CullFace(mode)
@@ -117,6 +141,18 @@ impl GLES for GLES1Native {
     }
 
     // Lighting and materials
+    unsafe fn Fogf(&mut self, pname: GLenum, param: GLfloat) {
+        gles11::Fogf(pname, param)
+    }
+    unsafe fn Fogx(&mut self, pname: GLenum, param: GLfixed) {
+        gles11::Fogx(pname, param)
+    }
+    unsafe fn Fogfv(&mut self, pname: GLenum, params: *const GLfloat) {
+        gles11::Fogfv(pname, params)
+    }
+    unsafe fn Fogxv(&mut self, pname: GLenum, params: *const GLfixed) {
+        gles11::Fogxv(pname, params)
+    }
     unsafe fn Lightf(&mut self, light: GLenum, pname: GLenum, param: GLfloat) {
         gles11::Lightf(light, pname, param)
     }
@@ -244,6 +280,18 @@ impl GLES for GLES1Native {
     unsafe fn PixelStorei(&mut self, pname: GLenum, param: GLint) {
         gles11::PixelStorei(pname, param)
     }
+    unsafe fn ReadPixels(
+        &mut self,
+        x: GLint,
+        y: GLint,
+        width: GLsizei,
+        height: GLsizei,
+        format: GLenum,
+        type_: GLenum,
+        pixels: *mut GLvoid,
+    ) {
+        gles11::ReadPixels(x, y, width, height, format, type_, pixels)
+    }
     unsafe fn GenTextures(&mut self, n: GLsizei, textures: *mut GLuint) {
         gles11::GenTextures(n, textures)
     }
@@ -288,6 +336,52 @@ impl GLES for GLES1Native {
             type_,
             pixels,
         )
+    }
+    unsafe fn CompressedTexImage2D(
+        &mut self,
+        target: GLenum,
+        level: GLint,
+        internalformat: GLenum,
+        width: GLsizei,
+        height: GLsizei,
+        border: GLint,
+        image_size: GLsizei,
+        data: *const GLvoid,
+    ) {
+        let data = unsafe { std::slice::from_raw_parts(data.cast::<u8>(), image_size as usize) };
+        // IMG_texture_compression_pvrtc (only on Imagination/Apple GPUs)
+        // TODO: It would be more efficient to use hardware decoding where
+        // available (I just don't have a suitable device to try this on)
+        if try_decode_pvrtc(
+            self,
+            target,
+            level,
+            internalformat,
+            width,
+            height,
+            border,
+            data,
+        ) {
+            log_dbg!("Decoded PVRTC");
+            return;
+        }
+
+        // OES_compressed_paletted_texture is in the common profile of OpenGL ES
+        // 1.1, so we can reasonably assume it's supported.
+        if PalettedTextureFormat::get_info(internalformat).is_none() {
+            unimplemented!("CompressedTexImage2D internalformat: {:#x}", internalformat);
+        }
+        log_dbg!("Directly supported texture format: {:#x}", internalformat);
+        gles11::CompressedTexImage2D(
+            target,
+            level,
+            internalformat,
+            width,
+            height,
+            border,
+            image_size,
+            data.as_ptr() as *const _,
+        );
     }
     unsafe fn CopyTexImage2D(
         &mut self,
@@ -466,5 +560,8 @@ impl GLES for GLES1Native {
     }
     unsafe fn DeleteRenderbuffersOES(&mut self, n: GLsizei, renderbuffers: *const GLuint) {
         gles11::DeleteRenderbuffersOES(n, renderbuffers)
+    }
+    unsafe fn GenerateMipmapOES(&mut self, target: GLenum) {
+        gles11::GenerateMipmapOES(target)
     }
 }

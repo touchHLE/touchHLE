@@ -5,15 +5,24 @@
  */
 //! Parsing and management of user-configurable options, e.g. for input methods.
 
-use crate::frameworks::opengles::GLESImplementation;
+use crate::gles::GLESImplementation;
 use crate::window::DeviceOrientation;
-use std::fs::File;
-use std::io::{BufRead, BufReader};
+use std::collections::HashMap;
+use std::io::{BufRead, BufReader, Read};
 use std::net::{SocketAddr, ToSocketAddrs};
 use std::num::NonZeroU32;
 
 pub const DOCUMENTATION: &str =
     include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/OPTIONS_HELP.txt"));
+
+/// Game controller button for `--button-to-touch=` option.
+#[derive(Hash, PartialEq, Eq)]
+pub enum Button {
+    A,
+    B,
+    X,
+    Y,
+}
 
 /// Struct containing all user-configurable options.
 pub struct Options {
@@ -25,6 +34,7 @@ pub struct Options {
     pub y_tilt_range: f32,
     pub x_tilt_offset: f32,
     pub y_tilt_offset: f32,
+    pub button_to_touch: HashMap<Button, (f32, f32)>,
     pub gles1_implementation: Option<GLESImplementation>,
     pub direct_memory_access: bool,
     pub gdb_listen_addrs: Option<Vec<SocketAddr>>,
@@ -41,6 +51,7 @@ impl Default for Options {
             y_tilt_range: 60.0,
             x_tilt_offset: 0.0,
             y_tilt_offset: 0.0,
+            button_to_touch: HashMap::new(),
             gles1_implementation: None,
             direct_memory_access: true,
             gdb_listen_addrs: None,
@@ -83,6 +94,27 @@ impl Options {
             self.x_tilt_offset = parse_degrees(value, "X tilt offset")?;
         } else if let Some(value) = arg.strip_prefix("--y-tilt-offset=") {
             self.y_tilt_offset = parse_degrees(value, "Y tilt offset")?;
+        } else if let Some(values) = arg.strip_prefix("--button-to-touch=") {
+            let (button, coords) = values
+                .split_once(',')
+                .ok_or_else(|| "--button-to-touch= requires three values".to_string())?;
+            let (x, y) = coords
+                .split_once(',')
+                .ok_or_else(|| "--button-to-touch= requires three values".to_string())?;
+            let button = match button {
+                "A" => Ok(Button::A),
+                "B" => Ok(Button::B),
+                "X" => Ok(Button::X),
+                "Y" => Ok(Button::Y),
+                _ => Err("Invalid button for --button-to-touch=".to_string()),
+            }?;
+            let x: f32 = x
+                .parse()
+                .map_err(|_| "Invalid X co-ordinate for --button-to-touch=".to_string())?;
+            let y: f32 = y
+                .parse()
+                .map_err(|_| "Invalid Y co-ordinate for --button-to-touch=".to_string())?;
+            self.button_to_touch.insert(button, (x, y));
         } else if let Some(value) = arg.strip_prefix("--gles1=") {
             self.gles1_implementation = Some(
                 GLESImplementation::from_short_name(value)
@@ -103,30 +135,18 @@ impl Options {
     }
 }
 
-/// Name of the file containing touchHLE's default options for various apps.
-pub const DEFAULTS_FILENAME: &str = "touchHLE_default_options.txt";
-/// Name of the file intended for the user's own options.
-pub const USER_FILENAME: &str = "touchHLE_options.txt";
-
 /// Try to get app-specific options from a file.
 ///
 /// Returns [Ok] if there is no error when reading the file, otherwise [Err].
 /// The [Ok] value is a [Some] with the options if they could be found, or
 /// [None] if no options were found for this app.
-pub fn get_options_from_file(filename: &str, app_id: &str) -> Result<Option<String>, String> {
-    let file = File::open(filename).map_err(|e| format!("Could not open {}: {}", filename, e))?;
-
+pub fn get_options_from_file<F: Read>(file: F, app_id: &str) -> Result<Option<String>, String> {
     let file = BufReader::new(file);
     for (line_no, line) in BufRead::lines(file).enumerate() {
         // Line numbering usually starts from 1
         let line_no = line_no + 1;
 
-        let line = line.map_err(|e| {
-            format!(
-                "Error while reading line {} of {}: {}",
-                line_no, filename, e
-            )
-        })?;
+        let line = line.map_err(|e| format!("Error while reading line {}: {}", line_no, e))?;
 
         // # for single-line comments
         let line = if let Some((rest, _)) = line.split_once('#') {
@@ -141,7 +161,7 @@ pub fn get_options_from_file(filename: &str, app_id: &str) -> Result<Option<Stri
             continue;
         }
 
-        let (line_app_id, line_options) = line.split_once(':').ok_or_else(|| format!("Line {} of {} is not a comment and is missing a colon (:) to separate the app ID from the options", line_no, filename))?;
+        let (line_app_id, line_options) = line.split_once(':').ok_or_else(|| format!("Line {} is not a comment and is missing a colon (:) to separate the app ID from the options", line_no))?;
         let line_app_id = line_app_id.trim();
 
         if line_app_id != app_id {

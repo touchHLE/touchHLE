@@ -185,7 +185,7 @@ macro_rules! _objc_method {
 /// Macro for creating a list of [ClassTemplate]s (i.e. [ClassExports]).
 /// It imitates the Objective-C class definition syntax.
 ///
-/// ```rust
+/// ```ignore
 /// pub const CLASSES: ClassExports = objc_classes! {
 /// (env, this, _cmd); // Specify names of HostIMP implicit parameters.
 ///                    // The second one should be `self` to match Objective-C,
@@ -201,7 +201,7 @@ macro_rules! _objc_method {
 ///     // ...
 /// }
 ///
-/// - (id)barWithVaArgs:(u32)qux, ...va_args {
+/// - (id)barWithVaArgs:(u32)qux, ...dots {
 ///     // ...
 /// }
 ///
@@ -211,7 +211,7 @@ macro_rules! _objc_method {
 ///
 /// will desugar to approximately:
 ///
-/// ```rust
+/// ```ignore
 /// pub const CLASSES: ClassExports = &[
 ///     ("MyClass", ClassTemplate {
 ///         name: "MyClass",
@@ -225,9 +225,9 @@ macro_rules! _objc_method {
 ///             ("barWithQux:", &(|env: &mut Environment, this: id, _cmd: SEL, qux: u32| -> id {
 ///                 // ...
 ///             } as &fn(&mut Environment, id, SEL, u32) -> id)),
-///             ("barWithVaArgs:", &(|env: &mut Environment, this: id, _cmd: SEL, qux: u32, va_args: VAList| -> id {
+///             ("barWithVaArgs:", &(|env: &mut Environment, this: id, _cmd: SEL, qux: u32, va_args: DotDotDot| -> id {
 ///                 // ...
-///             } as &fn(&mut Environment, id, SEL, u32, VAList) -> id)),
+///             } as &fn(&mut Environment, id, SEL, u32, DotDotDot) -> id)),
 ///         ],
 ///     })
 /// ];
@@ -258,9 +258,16 @@ macro_rules! objc_classes {
         )+
     } => {
         &[
-            $(
-                (stringify!($class_name), $crate::objc::ClassTemplate {
-                    name: stringify!($class_name),
+            $({
+                // This constant is for `msg_super!`, which needs to know which
+                // class it is has been written within (not the same as the
+                // runtime type of `this`, which could be a subclass). This is
+                // a constant instead of a let binding because that escapes
+                // Rust's macro hygiene.
+                const _OBJC_CURRENT_CLASS: &str = stringify!($class_name);
+
+                (_OBJC_CURRENT_CLASS, $crate::objc::ClassTemplate {
+                    name: _OBJC_CURRENT_CLASS,
                     superclass: $crate::_objc_superclass!($(: $superclass_name)?),
                     class_methods: &[
                         $(
@@ -278,7 +285,7 @@ macro_rules! objc_classes {
                                     { $cm_block }
                                     $(, $cm_type1, $cm_arg1)?
                                     $(, $cm_typen, $cm_argn)*
-                                    $(, ...$cm_va_arg: $crate::abi::VAList)?
+                                    $(, ...$cm_va_arg: $crate::abi::DotDotDot)?
                                 )
                             )
                         ),*
@@ -299,13 +306,13 @@ macro_rules! objc_classes {
                                     { $im_block }
                                     $(, $im_type1, $im_arg1)?
                                     $(, $im_typen, $im_argn)*
-                                    $(, ...$im_va_arg: $crate::abi::VAList)?
+                                    $(, ...$im_va_arg: $crate::abi::DotDotDot)?
                                 )
                             )
                         ),*
                     ],
                 })
-            ),+
+            }),+
         ]
     }
 }
@@ -396,11 +403,11 @@ fn substitute_classes(
     let name = mem.cstr_at_utf8(name).unwrap();
 
     // Currently the only thing we try to substitute: classes that seem to be
-    // from the AdMob SDK. This is a third-party advertising SDK. Naturally it
+    // from various third-party advertising SDKs. Naturally it
     // makes a lot of use of UIKit in ways we don't support yet, so it's easier
     // to skip this. This isn't "ad blocking" because ads no longer work on real
     // devices anyway :)
-    if !name.starts_with("AdMob") {
+    if !(name.starts_with("AdMob") || name.starts_with("AltAds") || name.starts_with("Mobclix")) {
         return None;
     }
 

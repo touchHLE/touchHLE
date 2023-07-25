@@ -88,7 +88,7 @@ fn memchr(env: &mut Environment, string: ConstVoidPtr, c: i32, size: GuestUSize)
 fn memcmp(env: &mut Environment, a: ConstVoidPtr, b: ConstVoidPtr, size: GuestUSize) -> i32 {
     GenericChar::<u8>::memcmp(env, a.cast(), b.cast(), size)
 }
-fn strlen(env: &mut Environment, s: ConstPtr<u8>) -> GuestUSize {
+pub(super) fn strlen(env: &mut Environment, s: ConstPtr<u8>) -> GuestUSize {
     GenericChar::<u8>::strlen(env, s)
 }
 fn strcpy(env: &mut Environment, dest: MutPtr<u8>, src: ConstPtr<u8>) -> MutPtr<u8> {

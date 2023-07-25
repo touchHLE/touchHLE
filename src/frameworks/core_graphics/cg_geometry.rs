@@ -4,12 +4,19 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 //! `CGGeometry.h` (`CGPoint`, `CGSize`, `CGRect`, etc)
+//!
+//! See also [crate::frameworks::uikit::ui_geometry].
 
 use super::CGFloat;
 use crate::abi::{impl_GuestRet_for_large_struct, GuestArg};
 use crate::mem::SafeRead;
 
-#[derive(Copy, Clone, Debug)]
+fn parse_tuple(s: &str) -> Result<(f32, f32), ()> {
+    let (a, b) = s.split_once(", ").ok_or(())?;
+    Ok((a.parse().map_err(|_| ())?, b.parse().map_err(|_| ())?))
+}
+
+#[derive(Copy, Clone, Debug, Default, PartialEq)]
 #[repr(C, packed)]
 pub struct CGPoint {
     pub x: CGFloat,
@@ -31,8 +38,22 @@ impl GuestArg for CGPoint {
         self.y.to_regs(&mut regs[1..2]);
     }
 }
+impl std::str::FromStr for CGPoint {
+    type Err = ();
+    fn from_str(s: &str) -> Result<CGPoint, ()> {
+        let s = s.strip_prefix('{').ok_or(())?.strip_suffix('}').ok_or(())?;
+        let (x, y) = parse_tuple(s)?;
+        Ok(CGPoint { x, y })
+    }
+}
+impl std::fmt::Display for CGPoint {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
+        let &CGPoint { x, y } = self;
+        write!(f, "{{{}, {}}}", x, y)
+    }
+}
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Default, PartialEq)]
 #[repr(C, packed)]
 pub struct CGSize {
     pub width: CGFloat,
@@ -54,8 +75,25 @@ impl GuestArg for CGSize {
         self.height.to_regs(&mut regs[1..2]);
     }
 }
+impl std::str::FromStr for CGSize {
+    type Err = ();
+    fn from_str(s: &str) -> Result<CGSize, ()> {
+        let s = s.strip_prefix('{').ok_or(())?.strip_suffix('}').ok_or(())?;
+        let (w, h) = parse_tuple(s)?;
+        Ok(CGSize {
+            width: w,
+            height: h,
+        })
+    }
+}
+impl std::fmt::Display for CGSize {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
+        let &CGSize { width, height } = self;
+        write!(f, "{{{}, {}}}", width, height)
+    }
+}
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Default, PartialEq)]
 #[repr(C, packed)]
 pub struct CGRect {
     pub origin: CGPoint,
@@ -75,5 +113,28 @@ impl GuestArg for CGRect {
     fn to_regs(self, regs: &mut [u32]) {
         self.origin.to_regs(&mut regs[0..2]);
         self.size.to_regs(&mut regs[2..4]);
+    }
+}
+impl std::str::FromStr for CGRect {
+    type Err = ();
+    fn from_str(s: &str) -> Result<CGRect, ()> {
+        let s = s
+            .strip_prefix("{{")
+            .ok_or(())?
+            .strip_suffix("}}")
+            .ok_or(())?;
+        let (a, b) = s.split_once("}, {").ok_or(())?;
+        let (x, y) = parse_tuple(a)?;
+        let (width, height) = parse_tuple(b)?;
+        Ok(CGRect {
+            origin: CGPoint { x, y },
+            size: CGSize { width, height },
+        })
+    }
+}
+impl std::fmt::Display for CGRect {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
+        let &CGRect { origin, size } = self;
+        write!(f, "{{{}, {}}}", origin, size)
     }
 }

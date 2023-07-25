@@ -262,7 +262,7 @@ pub const CLASSES: ClassExports = objc_classes! {
                 format_string.as_bytes()[idx as usize]
             }
         },
-        args,
+        args.start(),
     );
     // TODO: what if it's not valid UTF-8?
     let res = from_rust_string(env, String::from_utf8(res).unwrap());

@@ -7,9 +7,14 @@
 //!
 //! Implemented as a wrapper around the C library stb_image, since it supports
 //! "CgBI" PNG files (an Apple proprietary extension used in iPhone OS apps).
+//!
+//! This module also exposes decompression for Imagination Technologies' PVRTC
+//! format, implementing as a wrapper around their decoder from the PowerVR
+//! SDK.
 
 use std::ffi::{c_int, c_uchar, CStr};
 
+use touchHLE_pvrt_decompress_wrapper::*;
 use touchHLE_stb_image_wrapper::*;
 
 pub struct Image {
@@ -28,6 +33,13 @@ impl Image {
         // TODO: we're currently assuming this is sRGB, can we check somehow?
 
         let pixels = unsafe {
+            // stb_image's support for CgBI images is a bit incomplete:
+            // - If we don't ask it to "convert to RGB" for us, it will load
+            //   CgBI PNGs in BGR and normal PNGs as RGB, with no way to
+            //   distinguish them!
+            // - If we don't ask it to "unpremultiply" for us, it won't do the
+            //   RGB conversion.
+            // So this is the only correct way to use it. :(
             stbi_convert_iphone_png_to_rgb(1);
             stbi_set_unpremultiply_on_load(1);
             stbi_load_from_memory(
@@ -47,6 +59,20 @@ impl Image {
         let width: u32 = x.try_into().unwrap();
         let height: u32 = y.try_into().unwrap();
 
+        // (Un-un-)premultiply pixels to match iPhone OS's image loading.
+        {
+            let len = width as usize * height as usize * 4;
+            let pixels = unsafe { std::slice::from_raw_parts_mut(pixels, len) };
+            let mut i = 0;
+            while i < pixels.len() {
+                let a = pixels[i + 3] as f32 / 255.0;
+                pixels[i] = (pixels[i] as f32 * a) as u8;
+                pixels[i + 1] = (pixels[i + 1] as f32 * a) as u8;
+                pixels[i + 2] = (pixels[i + 2] as f32 * a) as u8;
+                i += 4;
+            }
+        }
+
         Ok(Image {
             pixels,
             dimensions: (width, height),
@@ -57,8 +83,8 @@ impl Image {
         self.dimensions
     }
 
-    /// Get image data as bytes (8 bits per channel sRGB RGBA). Rows are in
-    /// top-to-bottom order.
+    /// Get image data as bytes (8 bits per channel sRGB RGBA with premultiplied
+    /// alpha). Rows are in top-to-bottom order.
     pub fn pixels(&self) -> &[u8] {
         unsafe {
             std::slice::from_raw_parts(
@@ -68,8 +94,8 @@ impl Image {
         }
     }
 
-    /// Get value of a pixel as linear RGBA (not sRGB!). 0 on the y axis is the
-    /// top of the image.
+    /// Get value of a pixel as linear RGBA (not sRGB!) with premultiplied
+    /// alpha. 0 on the y axis is the top of the image.
     ///
     /// Returns [None] if `at` is out-of-bounds.
     pub fn get_pixel(&self, at: (i32, i32)) -> Option<(f32, f32, f32, f32)> {
@@ -107,4 +133,33 @@ pub fn gamma_encode(intensity: f32) -> f32 {
 pub fn gamma_decode(intensity: f32) -> f32 {
     // TODO: This doesn't implement the linear section near zero.
     intensity.powf(2.2)
+}
+
+/// Decodes Imagination Technologies' PVRTC texture compression format to
+/// RGBA (8 bits per channel).
+pub fn decode_pvrtc(pvrtc_data: &[u8], is_2bit: bool, width: u32, height: u32) -> Vec<u32> {
+    // This formula is from the IMG_texture_compression_pvrtc extension spec.
+    let expected_size = if is_2bit {
+        (width.max(16) as usize * height.max(8) as usize * 2 + 7) / 8
+    } else {
+        (width.max(8) as usize * height.max(8) as usize * 4 + 7) / 8
+    };
+    assert!(pvrtc_data.len() == expected_size);
+
+    let rgba8_word_count = width as usize * height as usize;
+    let mut rgba8_data = Vec::with_capacity(rgba8_word_count);
+    unsafe {
+        let consumed_size = touchHLE_decompress_pvrtc(
+            pvrtc_data.as_ptr() as *const _,
+            is_2bit,
+            width,
+            height,
+            // The interface says `uint8_t *` but the source seems to work with
+            // 32-bit words, so using Vec<u32> seems more appropriate.
+            rgba8_data.as_mut_ptr() as *mut u8,
+        );
+        assert_eq!(consumed_size as usize, expected_size);
+        rgba8_data.set_len(rgba8_word_count);
+    };
+    rgba8_data
 }

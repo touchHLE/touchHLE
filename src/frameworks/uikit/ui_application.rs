@@ -20,6 +20,7 @@ use crate::Environment;
 pub struct State {
     /// [UIApplication sharedApplication]
     shared_application: Option<id>,
+    pub(super) status_bar_hidden: bool,
 }
 
 struct UIApplicationHostObject {
@@ -75,8 +76,8 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 // TODO: statusBarHidden getter
-- (())setStatusBarHidden:(bool)_hidden {
-    // TODO: store this somewhere
+- (())setStatusBarHidden:(bool)hidden {
+    env.framework_state.uikit.ui_application.status_bar_hidden = hidden;
 }
 - (())setStatusBarHidden:(bool)hidden
                 animated:(bool)_animated {
@@ -228,13 +229,19 @@ pub(super) fn exit(env: &mut Environment) {
     let ui_application: id = msg_class![env; UIApplication sharedApplication];
     let delegate: id = msg![env; ui_application delegate];
 
-    // FIXME: There are more messages we should send.
+    // TODO: send notifications also
 
     {
         let pool: id = msg_class![env; NSAutoreleasePool new];
-        () = msg![env; delegate applicationWillTerminate:ui_application];
+        let _: () = msg![env; delegate applicationWillResignActive:ui_application];
         let _: () = msg![env; pool drain];
-    }
+    };
+
+    {
+        let pool: id = msg_class![env; NSAutoreleasePool new];
+        let _: () = msg![env; delegate applicationWillTerminate:ui_application];
+        let _: () = msg![env; pool drain];
+    };
 
     std::process::exit(0);
 }

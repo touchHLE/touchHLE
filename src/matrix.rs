@@ -59,6 +59,10 @@ impl<const N: usize> Matrix<N> {
 }
 
 impl Matrix<2> {
+    pub fn y_flip() -> Matrix<2> {
+        Matrix([[1.0, 0.0], [0.0, -1.0]])
+    }
+
     pub fn z_rotation(angle: f32) -> Matrix<2> {
         Matrix([[angle.cos(), angle.sin()], [-angle.sin(), angle.cos()]])
     }

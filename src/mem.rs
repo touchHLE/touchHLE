@@ -105,6 +105,12 @@ impl<T> MutPtr<T> {
     }
 }
 
+impl<T, const MUT: bool> Default for Ptr<T, MUT> {
+    fn default() -> Self {
+        Self::null()
+    }
+}
+
 impl<T, const MUT: bool> std::fmt::Debug for Ptr<T, MUT> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:#x}", self.to_bits())
@@ -414,6 +420,19 @@ impl Mem {
         let ptr = Ptr::from_bits(self.allocator.alloc(size));
         log_dbg!("Allocated {:?} ({:#x} bytes)", ptr, size);
         ptr
+    }
+
+    pub fn realloc(&mut self, old_ptr: MutVoidPtr, size: GuestUSize) -> MutVoidPtr {
+        // TODO: for a moment we always assume that we do not have enough size to realloc inplace
+        let old_size = self.allocator.find_allocated_size(old_ptr.to_bits());
+        if old_size == size {
+            return old_ptr;
+        }
+        assert!(size > old_size);
+        let new_ptr = self.alloc(size);
+        self.memmove(new_ptr, old_ptr.cast_const(), old_size);
+        self.free(old_ptr);
+        new_ptr
     }
 
     /// Free an allocation made with one of the `alloc` methods on this type.

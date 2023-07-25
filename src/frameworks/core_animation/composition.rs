@@ -244,6 +244,7 @@ unsafe fn composite_layer_recursive(
         return;
     }
 
+    let opacity = opacity * host_obj.opacity;
     let bounds = host_obj.bounds;
     let absolute_frame = {
         let position = host_obj.position;
@@ -357,7 +358,6 @@ unsafe fn composite_layer_recursive(
     }
 
     // avoid holding mutable borrow while recursing
-    let layer_opacity = host_obj.opacity;
     let sublayers = std::mem::take(&mut host_obj.sublayers);
     for &child_layer in &sublayers {
         composite_layer_recursive(
@@ -371,7 +371,7 @@ unsafe fn composite_layer_recursive(
             },
             // TODO: clipping goes here (when masksToBounds is implemented)
             clip_to,
-            /* opacity: */ opacity * layer_opacity,
+            opacity,
             scale_hack,
             fb_height,
         )

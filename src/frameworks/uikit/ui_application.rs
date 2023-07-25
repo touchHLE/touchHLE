@@ -190,7 +190,11 @@ pub(super) fn UIApplicationMain(
         ) {
             let empty_dict: id = msg_class![env; NSDictionary dictionary];
             () = msg![env; delegate application:ui_application didFinishLaunchingWithOptions:empty_dict];
-        } else {
+        } else if env.objc.object_has_method_named(
+            &env.mem,
+            delegate,
+            "applicationDidFinishLaunching:",
+        ) {
             () = msg![env; delegate applicationDidFinishLaunching:ui_application];
         }
 
@@ -208,7 +212,12 @@ pub(super) fn UIApplicationMain(
     {
         let pool: id = msg_class![env; NSAutoreleasePool new];
         let delegate: id = msg![env; ui_application delegate];
-        () = msg![env; delegate applicationDidBecomeActive:ui_application];
+        if env
+            .objc
+            .object_has_method_named(&env.mem, delegate, "applicationDidBecomeActive:")
+        {
+            () = msg![env; delegate applicationDidBecomeActive:ui_application];
+        }
         let _: () = msg![env; pool drain];
     }
 
@@ -227,19 +236,30 @@ pub(super) fn UIApplicationMain(
 /// Tell the app it's about to quit and then exit.
 pub(super) fn exit(env: &mut Environment) {
     let ui_application: id = msg_class![env; UIApplication sharedApplication];
-    let delegate: id = msg![env; ui_application delegate];
 
     // TODO: send notifications also
 
     {
         let pool: id = msg_class![env; NSAutoreleasePool new];
-        let _: () = msg![env; delegate applicationWillResignActive:ui_application];
+        let delegate: id = msg![env; ui_application delegate];
+        if env
+            .objc
+            .object_has_method_named(&env.mem, delegate, "applicationWillResignActive:")
+        {
+            () = msg![env; delegate applicationWillResignActive:ui_application];
+        }
         let _: () = msg![env; pool drain];
     };
 
     {
         let pool: id = msg_class![env; NSAutoreleasePool new];
-        let _: () = msg![env; delegate applicationWillTerminate:ui_application];
+        let delegate: id = msg![env; ui_application delegate];
+        if env
+            .objc
+            .object_has_method_named(&env.mem, delegate, "applicationWillTerminate:")
+        {
+            () = msg![env; delegate applicationWillTerminate:ui_application];
+        }
         let _: () = msg![env; pool drain];
     };
 

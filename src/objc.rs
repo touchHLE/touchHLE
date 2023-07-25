@@ -30,7 +30,7 @@ mod properties;
 mod selectors;
 
 pub use classes::{
-    class_getName, class_getName_inner, objc_classes, Class, ClassExports, ClassTemplate,
+    class_getName, objc_classes, Class, ClassExports, ClassTemplate,
 };
 pub use messages::{autorelease, msg, msg_class, msg_send, release, retain};
 pub use methods::{GuestIMP, HostIMP, IMP};

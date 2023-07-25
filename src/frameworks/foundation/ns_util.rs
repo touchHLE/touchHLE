@@ -9,13 +9,13 @@ use crate::dyld::FunctionExports;
 use crate::environment::Environment;
 use crate::export_c_func;
 use crate::frameworks::foundation::ns_string;
-use crate::objc::{class_getName_inner, id, nil};
+use crate::objc::{id, nil};
 
 pub(super) fn NSStringFromClass(env: &mut Environment, class: id) -> id {
     if class == nil {
         return nil;
     }
-    let class_string = class_getName_inner(&mut env.objc, class).to_string();
+    let class_string = env.objc.get_class_name(class).to_string();
     ns_string::from_rust_string(env, class_string)
 }
 

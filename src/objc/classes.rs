@@ -16,9 +16,9 @@ pub(super) use class_lists::CLASS_LISTS;
 use super::{
     id, method_list_t, nil, objc_object, AnyHostObject, HostIMP, HostObject, ObjC, IMP, SEL,
 };
-use crate::environment::Environment;
 use crate::mach_o::MachO;
 use crate::mem::{guest_size_of, ConstPtr, ConstVoidPtr, GuestUSize, Mem, Ptr, SafeRead};
+use crate::Environment;
 use std::collections::HashMap;
 
 /// Generic pointer to an Objective-C class or metaclass.
@@ -675,30 +675,29 @@ impl ObjC {
             }
         }
     }
+    /// Gets the name of the given class.
+    pub fn get_class_name(&mut self, class: Class) -> &str {
+        if class == nil {
+            "nil"
+        } else if let Some(host_object) = self.get_host_object(class).map(|obj| obj.as_any()) {
+            if let Some(ClassHostObject { ref name, .. }) = host_object.downcast_ref() {
+                name
+            } else if let Some(UnimplementedClass { ref name, .. }) = host_object.downcast_ref() {
+                name
+            } else if let Some(FakeClass { ref name, .. }) = host_object.downcast_ref() {
+                name
+            } else {
+                panic!("class_getName called on non-class object!");
+            }
+        } else {
+            panic!("class_getName called on non-object!");
+        }
+    }
 }
 
 pub fn class_getName(env: &mut Environment, class: Class) -> ConstPtr<u8> {
-    let class_name = class_getName_inner(&mut env.objc, class);
+    let class_name = env.objc.get_class_name(class);
     env.mem
         .alloc_and_write_cstr(class_name.as_bytes())
         .cast_const()
-}
-
-/// Internal method that gets class name as a &str.
-pub fn class_getName_inner(objc: &mut ObjC, class: Class) -> &str {
-    if class == nil {
-        "nil"
-    } else if let Some(host_object) = objc.get_host_object(class).map(|obj| obj.as_any()) {
-        if let Some(ClassHostObject { ref name, .. }) = host_object.downcast_ref() {
-            name
-        } else if let Some(UnimplementedClass { ref name, .. }) = host_object.downcast_ref() {
-            name
-        } else if let Some(FakeClass { ref name, .. }) = host_object.downcast_ref() {
-            name
-        } else {
-            panic!("class_getName called on non-class object!");
-        }
-    } else {
-        panic!("class_getName called on non-object!");
-    }
 }

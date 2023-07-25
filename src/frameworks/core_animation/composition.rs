@@ -374,8 +374,8 @@ fn clip_rects(a_clip: CGRect, b_clip: CGRect) -> CGRect {
 
     let b_x1 = b_clip.origin.x;
     let b_y1 = b_clip.origin.y;
-    let b_x2 = b_x1 + a_clip.size.width;
-    let b_y2 = b_y1 + a_clip.size.height;
+    let b_x2 = b_x1 + b_clip.size.width;
+    let b_y2 = b_y1 + b_clip.size.height;
 
     let x1 = b_x1.max(a_x1);
     let y1 = b_y1.max(a_y1);

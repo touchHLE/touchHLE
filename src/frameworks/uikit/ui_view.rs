@@ -19,6 +19,17 @@ pub struct State {
 }
 
 #[derive(Default)]
+pub(super) enum UIViewSubclass {
+    #[default]
+    /// Plain `UIView*`, or some subclass that doesn't need extra data.
+    UIView,
+    UIImageView {
+        /// `UIImage*`
+        image: id,
+    },
+}
+
+#[derive(Default)]
 pub(super) struct UIViewHostObject {
     /// CALayer or subclass.
     layer: id,
@@ -26,6 +37,8 @@ pub(super) struct UIViewHostObject {
     subviews: Vec<id>,
     /// The superview. This is a weak reference.
     superview: id,
+    /// Subclass-specific data
+    pub(super) subclass: UIViewSubclass,
 }
 impl HostObject for UIViewHostObject {}
 
@@ -199,7 +212,12 @@ pub const CLASSES: ClassExports = objc_classes! {
         layer,
         superview,
         subviews,
+        subclass,
     } = std::mem::take(env.objc.borrow_mut(this));
+
+    // This assert forces subclasses to clean up their data in their dealloc
+    // implementation :)
+    assert!(matches!(subclass, UIViewSubclass::UIView));
 
     release(env, layer);
     assert!(superview == nil);

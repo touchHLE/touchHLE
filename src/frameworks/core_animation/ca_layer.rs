@@ -22,13 +22,15 @@ pub(super) struct CALayerHostObject {
     pub(super) opaque: bool,
     pub(super) opacity: f32,
     pub(super) background_color: id,
+    /// `CGImageRef*`
+    pub(super) contents: id,
     /// For CAEAGLLayer only
     pub(super) drawable_properties: id,
     /// For CAEAGLLayer only (internal state for compositor)
     pub(super) presented_pixels: Option<(Vec<u8>, u32, u32)>,
-    /// For CAEAGLLayer only (internal state for compositor)
+    /// Internal state for compositor
     pub(super) gles_texture: Option<crate::gles::gles11_raw::types::GLuint>,
-    /// For CAEAGLLayer only (internal state for compositor)
+    /// Internal state for compositor
     pub(super) gles_texture_is_up_to_date: bool,
 }
 impl HostObject for CALayerHostObject {}
@@ -54,6 +56,7 @@ pub const CLASSES: ClassExports = objc_classes! {
         opaque: false,
         opacity: 1.0,
         background_color: nil, // transparency
+        contents: nil,
         drawable_properties: nil,
         presented_pixels: None,
         gles_texture: None,
@@ -70,6 +73,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (())dealloc {
     let &mut CALayerHostObject {
         drawable_properties,
+        contents,
         superlayer,
         ref mut sublayers,
         ..
@@ -78,6 +82,10 @@ pub const CLASSES: ClassExports = objc_classes! {
 
     if drawable_properties != nil {
         release(env, drawable_properties);
+    }
+
+    if contents != nil {
+        release(env, contents);
     }
 
     assert!(superlayer == nil);
@@ -202,6 +210,18 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 - (())setBackgroundColor:(id)color {
     env.objc.borrow_mut::<CALayerHostObject>(this).background_color = color;
+}
+
+// CGImageRef*
+- (id)contents {
+    env.objc.borrow::<CALayerHostObject>(this).contents
+}
+- (())setContents:(id)new_contents {
+    let host_obj = env.objc.borrow_mut::<CALayerHostObject>(this);
+    host_obj.gles_texture_is_up_to_date = false;
+    let old_contents = std::mem::replace(&mut host_obj.contents, new_contents);
+    retain(env, new_contents);
+    release(env, old_contents);
 }
 
 // TODO: more

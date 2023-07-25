@@ -11,7 +11,7 @@
 
 use super::ca_eagl_layer::find_fullscreen_eagl_layer;
 use super::ca_layer::CALayerHostObject;
-use crate::frameworks::core_graphics::{CGFloat, CGPoint, CGRect, CGSize};
+use crate::frameworks::core_graphics::{cg_image, CGFloat, CGPoint, CGRect, CGSize};
 use crate::frameworks::uikit::ui_color;
 use crate::gles::gles11_raw as gles11; // constants only
 use crate::gles::gles11_raw::types::*;
@@ -270,8 +270,10 @@ unsafe fn composite_layer_recursive(
     // re-borrow mutably
     let host_obj = objc.borrow_mut::<CALayerHostObject>(layer);
 
-    // Draw CAEAGLLayer pixels (if the slow path is in use), if any
-    if let Some((ref mut pixels, width, height)) = host_obj.presented_pixels {
+    let need_texture = host_obj.presented_pixels.is_some() || host_obj.contents != nil;
+    let need_update = need_texture && !host_obj.gles_texture_is_up_to_date;
+
+    if need_texture {
         if let Some(texture) = host_obj.gles_texture {
             gles.BindTexture(gles11::TEXTURE_2D, texture);
         } else {
@@ -281,8 +283,11 @@ unsafe fn composite_layer_recursive(
             gles.BindTexture(gles11::TEXTURE_2D, texture);
             host_obj.gles_texture = Some(texture);
         }
+    }
 
-        if !host_obj.gles_texture_is_up_to_date {
+    // Update texture with CAEAGLLayer pixels (slow path), if any
+    if need_update {
+        if let Some((ref mut pixels, width, height)) = host_obj.presented_pixels {
             // The pixels are always RGBA, but if the layer is opaque then the
             // alpha channel is meant to be ignored. glTexImage2D() has no
             // option to ignore it, so let's manually set them to 255.
@@ -294,30 +299,31 @@ unsafe fn composite_layer_recursive(
                 }
             }
 
-            gles.TexImage2D(
-                gles11::TEXTURE_2D,
-                0,
-                gles11::RGBA as _,
-                width as _,
-                height as _,
-                0,
-                gles11::RGBA,
-                gles11::UNSIGNED_BYTE,
-                pixels.as_ptr() as *const _,
-            );
-            gles.TexParameteri(
-                gles11::TEXTURE_2D,
-                gles11::TEXTURE_MIN_FILTER,
-                gles11::LINEAR as _,
-            );
-            gles.TexParameteri(
-                gles11::TEXTURE_2D,
-                gles11::TEXTURE_MAG_FILTER,
-                gles11::LINEAR as _,
-            );
-            host_obj.gles_texture_is_up_to_date = true;
+            upload_rgba8_pixels(gles, pixels, (width, height));
         }
+    }
 
+    // re-borrow immutably
+    let host_obj = objc.borrow::<CALayerHostObject>(layer);
+
+    // Update texture with CGImageRef pixels, if any
+    if need_update && host_obj.contents != nil {
+        let image = cg_image::borrow_image(objc, host_obj.contents);
+
+        // No special handling for opacity is needed here: the alpha channel
+        // on an image is meaningful and won't be ignored.
+        upload_rgba8_pixels(gles, image.pixels(), image.dimensions());
+    }
+
+    // re-borrow mutably
+    let host_obj = objc.borrow_mut::<CALayerHostObject>(layer);
+
+    if need_update {
+        host_obj.gles_texture_is_up_to_date = true;
+    }
+
+    // Draw texture, if any
+    if need_texture {
         gles.Color4f(opacity, opacity, opacity, opacity);
         if opacity == 1.0 && host_obj.opaque {
             gles.Disable(gles11::BLEND);
@@ -336,7 +342,14 @@ unsafe fn composite_layer_recursive(
         ];
         gles.EnableClientState(gles11::VERTEX_ARRAY);
         gles.VertexPointer(2, gles11::FLOAT, 0, vertices.as_ptr() as *const GLvoid);
-        let tex_coords: [f32; 12] = [0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0];
+
+        // Normal images will have top-to-bottom row order, but OpenGL ES
+        // expects bottom-to-top, so flip the UVs in that case.
+        let tex_coords: [f32; 12] = if host_obj.contents != nil {
+            [0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0]
+        } else {
+            [0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0]
+        };
         gles.EnableClientState(gles11::TEXTURE_COORD_ARRAY);
         gles.TexCoordPointer(2, gles11::FLOAT, 0, tex_coords.as_ptr() as *const GLvoid);
         gles.Enable(gles11::TEXTURE_2D);
@@ -364,6 +377,30 @@ unsafe fn composite_layer_recursive(
         )
     }
     objc.borrow_mut::<CALayerHostObject>(layer).sublayers = sublayers;
+}
+
+unsafe fn upload_rgba8_pixels(gles: &mut dyn GLES, pixels: &[u8], dimensions: (u32, u32)) {
+    gles.TexImage2D(
+        gles11::TEXTURE_2D,
+        0,
+        gles11::RGBA as _,
+        dimensions.0 as _,
+        dimensions.1 as _,
+        0,
+        gles11::RGBA,
+        gles11::UNSIGNED_BYTE,
+        pixels.as_ptr() as *const _,
+    );
+    gles.TexParameteri(
+        gles11::TEXTURE_2D,
+        gles11::TEXTURE_MIN_FILTER,
+        gles11::LINEAR as _,
+    );
+    gles.TexParameteri(
+        gles11::TEXTURE_2D,
+        gles11::TEXTURE_MAG_FILTER,
+        gles11::LINEAR as _,
+    );
 }
 
 fn clip_rects(a_clip: CGRect, b_clip: CGRect) -> CGRect {

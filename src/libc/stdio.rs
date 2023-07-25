@@ -10,7 +10,6 @@ use crate::dyld::{export_c_func, FunctionExports};
 use crate::fs::GuestPath;
 use crate::mem::{ConstPtr, ConstVoidPtr, GuestUSize, MutPtr, MutVoidPtr, Ptr, SafeRead};
 use crate::Environment;
-use core::slice;
 use std::io::Write;
 
 // Standard C functions
@@ -135,7 +134,7 @@ fn puts(env: &mut Environment, s: ConstPtr<u8>) -> i32 {
 }
 
 fn putchar(_env: &mut Environment, c: u8) -> i32 {
-    let _ = std::io::stdout().write(slice::from_ref(&c));
+    let _ = std::io::stdout().write(std::slice::from_ref(&c));
     0
 }
 

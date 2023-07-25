@@ -29,15 +29,10 @@ mod objects;
 mod properties;
 mod selectors;
 
-pub use classes::{
-    class_getName, objc_classes, Class, ClassExports, ClassTemplate,
-};
+pub use classes::{class_getName, objc_classes, Class, ClassExports, ClassTemplate};
 pub use messages::{autorelease, msg, msg_class, msg_send, release, retain};
 pub use methods::{GuestIMP, HostIMP, IMP};
-pub use objects::{
-    id, instances_respond_to_selector, nil, responds_to_selector, AnyHostObject, HostObject,
-    TrivialHostObject,
-};
+pub use objects::{id, nil, AnyHostObject, HostObject, TrivialHostObject};
 pub use selectors::{selector, SEL};
 
 use classes::{ClassHostObject, FakeClass, UnimplementedClass, CLASS_LISTS};

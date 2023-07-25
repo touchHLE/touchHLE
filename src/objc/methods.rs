@@ -171,7 +171,8 @@ impl ClassHostObject {
 }
 
 impl ObjC {
-    /// For use by NSObject's getter/setter search methods.
+    /// Checks if the provided class has a method in it's class chain (that is to say, objects of
+    /// the given class respond to a selector).
     pub fn class_has_method(&self, class: Class, sel: SEL) -> bool {
         let mut class = class;
         loop {
@@ -187,6 +188,30 @@ impl ObjC {
             } else {
                 class = superclass;
             }
+        }
+    }
+
+    /// Same as [Self::class_has_method], but using a named selector (rather than a pointer).
+    #[allow(dead_code)]
+    pub fn class_has_method_named(&self, class: Class, sel_name: &str) -> bool {
+        if let Some(sel) = self.lookup_selector(sel_name) {
+            self.class_has_method(class, sel)
+        } else {
+            false
+        }
+    }
+
+    /// Checks if a given object has a method (responds to a selector).
+    pub fn object_has_method(&self, mem: &Mem, obj: id, sel: SEL) -> bool {
+        self.class_has_method(ObjC::read_isa(obj, mem), sel)
+    }
+
+    /// Same as [Self::object_has_method], but using a named selector (rather than a pointer).
+    pub fn object_has_method_named(&self, mem: &Mem, obj: id, sel_name: &str) -> bool {
+        if let Some(sel) = self.lookup_selector(sel_name) {
+            self.object_has_method(mem, obj, sel)
+        } else {
+            false
         }
     }
 }

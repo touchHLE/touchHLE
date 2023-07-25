@@ -90,8 +90,9 @@ pub fn borrow_image(objc: &ObjC, image: CGImageRef) -> &Image {
 }
 
 fn CGImageGetAlphaInfo(_env: &mut Environment, _image: CGImageRef) -> CGImageAlphaInfo {
-    // our Image type always returns un-premultiplied RGBA
-    // (which is probably what the real UIImage does, considering CgBI's design)
+    // our Image type always returns premultiplied RGBA
+    // (the premultiplied part must match what the real UIImage does, but
+    // considering CgBI's design, maybe the order doesn't?)
     kCGImageAlphaPremultipliedLast
 }
 

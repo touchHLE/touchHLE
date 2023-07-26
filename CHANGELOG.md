@@ -18,7 +18,7 @@ If an app is added to the supported list after the relevant version has already 
 Compatibility:
 
 - API support improvements:
-  - Various small contributions. (@hikari-no-yume, @KiritoDv, @ciciplusplus, @TylerJaacks)
+  - Various small contributions. (@hikari-no-yume, @KiritoDv, @ciciplusplus, @TylerJaacks, @LennyKappa)
   - PVRTC and paletted texture compression is now supported. (@hikari-no-yume)
 - New supported apps:
   - [Wolfenstein 3D](https://www.youtube.com/watch?v=omViNgUqF8c) (@ciciplusplus; version 1.0 only)

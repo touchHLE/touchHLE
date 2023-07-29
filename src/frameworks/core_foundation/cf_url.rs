@@ -11,7 +11,7 @@
 use super::cf_allocator::{kCFAllocatorDefault, CFAllocatorRef};
 use super::CFIndex;
 use crate::dyld::{export_c_func, FunctionExports};
-use crate::frameworks::foundation::ns_string::NSUTF8StringEncoding;
+use crate::frameworks::foundation::ns_string::{to_rust_string, NSUTF8StringEncoding};
 use crate::frameworks::foundation::NSUInteger;
 use crate::mem::{ConstPtr, MutPtr};
 use crate::objc::{id, msg, msg_class};
@@ -26,7 +26,14 @@ pub fn CFURLGetFileSystemRepresentation(
     buffer: MutPtr<u8>,
     buffer_size: CFIndex,
 ) -> bool {
-    assert!(!resolve_against_base); // unimplemented
+    if resolve_against_base {
+        // this function usually called to resolve resources from the main bundle
+        // thus, the url should already be an absolute path name
+        // TODO: use absoluteURL instead once implemented
+        let path = msg![env; url path];
+        // TODO: avoid copy
+        assert!(to_rust_string(env, path).starts_with('/'));
+    }
     let buffer_size: NSUInteger = buffer_size.try_into().unwrap();
 
     msg![env; url getFileSystemRepresentation:buffer

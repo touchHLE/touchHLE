@@ -25,6 +25,7 @@ use crate::objc::{
 use crate::Environment;
 use std::borrow::Cow;
 use std::collections::HashMap;
+use std::iter::Peekable;
 use std::string::FromUtf16Error;
 
 pub type NSStringEncoding = NSUInteger;
@@ -34,6 +35,10 @@ pub const NSUnicodeStringEncoding: NSUInteger = 10;
 pub const NSUTF16StringEncoding: NSUInteger = NSUnicodeStringEncoding;
 pub const NSUTF16BigEndianStringEncoding: NSUInteger = 0x90000100;
 pub const NSUTF16LittleEndianStringEncoding: NSUInteger = 0x94000100;
+
+pub type NSStringCompareOptions = NSUInteger;
+pub const NSLiteralSearch: NSUInteger = 2;
+pub const NSNumericSearch: NSUInteger = 64;
 
 /// Encodings that C strings (null-terminated byte strings) can use.
 const C_STRING_FRIENDLY_ENCODINGS: &[NSStringEncoding] =
@@ -199,6 +204,14 @@ impl<'a> CodeUnitIterator<'a> {
     }
 }
 
+fn from_rust_ordering(ordering: std::cmp::Ordering) -> NSComparisonResult {
+    match ordering {
+        std::cmp::Ordering::Less => NSOrderedAscending,
+        std::cmp::Ordering::Equal => NSOrderedSame,
+        std::cmp::Ordering::Greater => NSOrderedDescending,
+    }
+}
+
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);
@@ -332,14 +345,57 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (NSComparisonResult)compare:(id)other { // NSString*
+    msg![env; this compare:other options:NSLiteralSearch]
+}
+
+- (NSComparisonResult)compare:(id)other options:(NSStringCompareOptions)mask { // NSString*
+    fn ascii_number(iter: &mut Peekable<CodeUnitIterator>, leftmost_digit: char) -> u32 {
+        let mut num = leftmost_digit.to_digit(10).unwrap();
+        while let Some(a_digit_char) = iter.next_if(
+            |&x| char::from_u32(x as u32).map_or(false, |y| y.is_ascii_digit())
+        ) {
+            num = num * 10 + char::from_u32(a_digit_char as u32).unwrap().to_digit(10).unwrap();
+        }
+        num
+    }
+
     // TODO: support foreign subclasses (perhaps via a helper function that
     // copies the string first)
-    let a_iter = env.objc.borrow::<StringHostObject>(this).iter_code_units();
-    let b_iter = env.objc.borrow::<StringHostObject>(other).iter_code_units();
-    match a_iter.cmp(b_iter) {
-        std::cmp::Ordering::Less => NSOrderedAscending,
-        std::cmp::Ordering::Equal => NSOrderedSame,
-        std::cmp::Ordering::Greater => NSOrderedDescending,
+    let mut a_iter = env.objc.borrow::<StringHostObject>(this).iter_code_units().peekable();
+    let mut b_iter = env.objc.borrow::<StringHostObject>(other).iter_code_units().peekable();
+    // TODO: OR'ing of compare options
+    match mask {
+        NSLiteralSearch => {
+            from_rust_ordering(a_iter.cmp(b_iter))
+        },
+        NSNumericSearch => {
+            loop {
+                let a_next = a_iter.next();
+                let b_next = b_iter.next();
+                let (Some(a_unit), Some(b_unit)) = (a_next, b_next) else {
+                    return from_rust_ordering(a_next.cmp(&b_next));
+                };
+                let (Some(a_c), Some(b_c)) = (char::from_u32(a_unit as u32), char::from_u32(b_unit as u32)) else {
+                    panic!("Invalid chars in the strings!");
+                };
+
+                if a_c.is_ascii_digit() && b_c.is_ascii_digit() {
+                    let a_int = ascii_number(&mut a_iter, a_c);
+                    let b_int = ascii_number(&mut b_iter, b_c);
+
+                    let numeric_order = a_int.cmp(&b_int);
+                    if numeric_order != std::cmp::Ordering::Equal {
+                        return from_rust_ordering(numeric_order);
+                    }
+                } else {
+                    let char_order = a_c.cmp(&b_c);
+                    if char_order != std::cmp::Ordering::Equal {
+                        return from_rust_ordering(char_order);
+                    }
+                }
+            }
+        },
+        _ => unimplemented!("Other masks"),
     }
 }
 

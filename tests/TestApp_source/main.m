@@ -14,6 +14,8 @@ for Mac OS X v10.5
 #include <stdlib.h>
 #include <string.h>
 
+#include <Foundation/Foundation.h>
+
 int int_compar(const void *a, const void *b) { return *(int *)a - *(int *)b; }
 
 int sort_and_check(int nel, int *arr, int *expected_arr) {
@@ -84,6 +86,26 @@ int test_realloc() {
   return res == 0 ? 0 : -1;
 }
 
+int test_NSString_compare() {
+  if ([@"abcd" compare:@"abcd"] != NSOrderedSame)
+    return -1;
+  if ([@"abcd" compare:@"ABCD"] != NSOrderedDescending)
+    return -1;
+  if ([@"Name2.txt" compare:@"Name7.txt"
+                    options:NSNumericSearch] != NSOrderedAscending)
+    return -1;
+  if ([@"Name7.txt" compare:@"Name25.txt"
+                    options:NSNumericSearch] != NSOrderedAscending)
+    return -1;
+  if ([@"abc" compare:@"123" options:NSNumericSearch] != NSOrderedDescending)
+    return -1;
+  if ([@"abc" compare:@"abc123" options:NSNumericSearch] != NSOrderedAscending)
+    return -1;
+  if ([@"abc123" compare:@"abc123" options:NSNumericSearch] != NSOrderedSame)
+    return -1;
+  return 0;
+}
+
 #define FUNC_DEF(func)                                                         \
   { &func, #func }
 struct {
@@ -91,7 +113,7 @@ struct {
   const char *name;
 } test_func_array[] = {
     FUNC_DEF(test_qsort), FUNC_DEF(test_vsnprintf), FUNC_DEF(test_sscanf),
-    FUNC_DEF(test_errno), FUNC_DEF(test_realloc),
+    FUNC_DEF(test_errno), FUNC_DEF(test_realloc), FUNC_DEF(test_NSString_compare),
 };
 
 int main(int argc, char *argv[]) {

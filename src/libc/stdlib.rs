@@ -27,6 +27,10 @@ fn malloc(env: &mut Environment, size: GuestUSize) -> MutVoidPtr {
 }
 
 fn calloc(env: &mut Environment, count: GuestUSize, size: GuestUSize) -> MutVoidPtr {
+    if size == 1 && count == 0 {
+        log!("Warning: calloc is called with size 1 and count 0");
+        return MutVoidPtr::null();
+    }
     assert!(size != 0 && count != 0);
     let total = size.checked_mul(count).unwrap();
     env.mem.alloc(total)

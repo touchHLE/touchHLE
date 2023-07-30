@@ -8,6 +8,7 @@
 use super::{ns_array, ns_string, NSUInteger};
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::fs::{GuestPath, GuestPathBuf};
+use crate::mem::MutPtr;
 use crate::objc::{
     autorelease, id, msg, msg_class, nil, objc_classes, release, ClassExports, HostObject,
 };
@@ -89,6 +90,22 @@ pub const CLASSES: ClassExports = objc_classes! {
     res
 }
 
+- (bool)fileExistsAtPath:(id)path // NSString*
+             isDirectory:(MutPtr<u8>)isDirectory { // iOS BOOL is actually a char
+    // TODO: mutualize with fileExistsAtPath:
+    let path = ns_string::to_rust_string(env, path); // TODO: avoid copy
+    let guest_path = GuestPath::new(&path);
+    let res_exists = env.fs.exists(guest_path);
+    if !isDirectory.is_null() {
+        let res_is_dir = !env.fs.is_file(guest_path);
+        env.mem.write(isDirectory, if res_is_dir { 1 } else { 0 });
+        log_dbg!("fileExistsAtPath:{:?} isDirectory:{:?} => {}", path, res_is_dir, res_exists);
+    } else {
+        log_dbg!("fileExistsAtPath:{:?} isDirectory:NULL => {}", path, res_exists);
+    }
+    res_exists
+}
+
 - (bool)createFileAtPath:(id)path // NSString*
                 contents:(id)data // NSData*
               attributes:(id)attributes { // NSDictionary*
@@ -122,6 +139,22 @@ pub const CLASSES: ClassExports = objc_classes! {
     let class = env.objc.get_known_class("NSDirectoryEnumerator", &mut env.mem);
     let enumerator = env.objc.alloc_object(class, host_object, &mut env.mem);
     autorelease(env, enumerator)
+}
+
+- (id)directoryContentsAtPath:(id)path /* NSString* */ { // NSArray*
+    let path = ns_string::to_rust_string(env, path); // TODO: avoid copy
+    let Ok(paths) = env.fs.enumerate(GuestPath::new(&path)) else {
+        return nil;
+    };
+    let paths: Vec<GuestPathBuf> = paths
+        .map(|path| GuestPathBuf::from(GuestPath::new(path)))
+        .collect();
+    log_dbg!("directoryContentsAtPath {}: {:?}", path, paths);
+    let path_strings = paths
+        .iter()
+        .map(|name| ns_string::from_rust_string(env, name.as_str().to_string()))
+        .collect();
+    ns_array::from_vec(env, path_strings)
 }
 
 @end

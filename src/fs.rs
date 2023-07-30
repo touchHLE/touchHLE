@@ -607,7 +607,6 @@ impl Fs {
         matches!(self.lookup_node(path), Some(FsNode::Directory { .. }))
     }
 
-    #[allow(dead_code)]
     /// Get an iterator over the names of files/directories in a directory.
     pub fn enumerate<P: AsRef<GuestPath>>(
         &self,

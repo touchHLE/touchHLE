@@ -22,7 +22,7 @@ pub struct State {
 
 #[allow(non_camel_case_types)]
 /// Time in seconds since UNIX epoch (1970-01-01 00:00:00)
-type time_t = i32;
+pub type time_t = i32;
 
 fn time(env: &mut Environment, out: MutPtr<time_t>) -> time_t {
     let time64 = SystemTime::now()
@@ -44,19 +44,19 @@ fn time(env: &mut Environment, out: MutPtr<time_t>) -> time_t {
 #[repr(C, packed)]
 #[derive(Copy, Clone, Debug)]
 /// `struct tm`, fields count from 0 unless marked otherwise
-struct tm {
+pub struct tm {
     /// second of the minute
-    tm_sec: i32,
+    pub tm_sec: i32,
     /// minute of the hour
-    tm_min: i32,
+    pub tm_min: i32,
     /// hour of the day (24-hour)
-    tm_hour: i32,
+    pub tm_hour: i32,
     /// day of the month (**from 1**)
-    tm_mday: i32,
+    pub tm_mday: i32,
     /// month of the year
-    tm_mon: i32,
+    pub tm_mon: i32,
     /// year with 1900 subtracted from it
-    tm_year: i32,
+    pub tm_year: i32,
     /// day of the week (where Sunday is the first day)
     tm_wday: i32,
     /// day of the year
@@ -116,7 +116,7 @@ const fn calc_month_to_day(leap_year: bool) -> [i32; 12] {
     }
     table
 }
-fn timestamp_to_calendar_date(timestamp: time_t) -> tm {
+pub fn timestamp_to_calendar_date(timestamp: time_t) -> tm {
     let seconds_since_unix_epoch: i32 = timestamp;
 
     // The easy bit: seconds, minutes, hours and days don't vary in length in

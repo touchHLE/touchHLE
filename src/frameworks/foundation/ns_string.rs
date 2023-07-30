@@ -792,6 +792,12 @@ pub const CLASSES: ClassExports = objc_classes! {
     this
 }
 
+- (id)initWithString:(id)aString { // NSString*
+    // TODO: use other method for copying?
+    let tmp: ConstPtr<u8> = msg![env; aString UTF8String];
+    msg![env; this initWithUTF8String:tmp]
+}
+
 @end
 
 // Specialised subclass for static-lifetime strings.

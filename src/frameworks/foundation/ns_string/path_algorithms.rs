@@ -14,7 +14,7 @@
 //! are a useful reference for figuring out how the algorithm should work, and
 //! as a source of inspiration for test cases.
 
-fn trim_trailing_slashes(path: &str) -> &str {
+pub fn trim_trailing_slashes(path: &str) -> &str {
     let without_trailing_slashes = path.trim_end_matches('/');
     if without_trailing_slashes.is_empty() && path.starts_with('/') {
         "/"

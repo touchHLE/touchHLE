@@ -29,6 +29,7 @@ impl State {
 
 struct PosixFileHostObject {
     file: GuestFile,
+    reached_eof: bool,
 }
 
 // TODO: stdin/stdout/stderr handling somehow
@@ -107,7 +108,10 @@ pub fn open_direct(env: &mut Environment, path: ConstPtr<u8>, flags: i32) -> Fil
         options,
     ) {
         Ok(file) => {
-            let host_object = PosixFileHostObject { file };
+            let host_object = PosixFileHostObject {
+                file,
+                reached_eof: false,
+            };
 
             let idx = if let Some(free_idx) = env
                 .libc_state
@@ -146,6 +150,10 @@ pub fn read(
     let buffer_slice = env.mem.bytes_at_mut(buffer.cast(), size);
     match file.file.read(buffer_slice) {
         Ok(bytes_read) => {
+            if bytes_read == 0 && size != 0 {
+                // need to set EOF
+                file.reached_eof = true;
+            }
             if bytes_read < buffer_slice.len() {
                 log!(
                     "Warning: read({:?}, {:?}, {:#x}) read only {:#x} bytes",
@@ -176,6 +184,15 @@ pub fn read(
             );
             -1
         }
+    }
+}
+
+pub fn eof(env: &mut Environment, fd: FileDescriptor) -> i32 {
+    let file = env.libc_state.posix_io.file_for_fd(fd).unwrap();
+    if file.reached_eof {
+        1
+    } else {
+        0
     }
 }
 
@@ -243,7 +260,13 @@ pub fn lseek(env: &mut Environment, fd: FileDescriptor, offset: off_t, whence: i
     };
 
     let res = match file.file.seek(from) {
-        Ok(new_offset) => new_offset.try_into().unwrap(),
+        Ok(new_offset) => {
+            // "A successful call to the fseek() function clears
+            // the end-of-file indicator for the stream..."
+            file.reached_eof = false;
+
+            new_offset.try_into().unwrap()
+        }
         // TODO: set errno
         Err(_) => -1,
     };

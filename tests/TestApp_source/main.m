@@ -14,6 +14,7 @@ for Mac OS X v10.5
 #include <stdlib.h>
 #include <string.h>
 
+#include <CoreFoundation/CoreFoundation.h>
 #include <Foundation/Foundation.h>
 
 int int_compar(const void *a, const void *b) { return *(int *)a - *(int *)b; }
@@ -106,14 +107,43 @@ int test_NSString_compare() {
   return 0;
 }
 
+int test_chdir() {
+  CFBundleRef mainBundle = CFBundleGetMainBundle();
+  CFURLRef resourceURL = CFBundleCopyResourcesDirectoryURL(mainBundle);
+  char path[256];
+  bool res =
+      CFURLGetFileSystemRepresentation(resourceURL, TRUE, (UInt8 *)path, 256);
+  CFRelease(resourceURL);
+  if (!res) {
+    return -1;
+  }
+  // absolute path
+  if (chdir(path) != 0) {
+    return -1;
+  }
+  // relative path
+  if (chdir("uwu_folder") != 0) {
+    return -1;
+  }
+  FILE *file;
+  file = fopen("waffle.txt", "r");
+  if (file) {
+    fclose(file);
+    return 0;
+  }
+  return -1;
+}
+
 #define FUNC_DEF(func)                                                         \
   { &func, #func }
 struct {
   int (*func)();
   const char *name;
 } test_func_array[] = {
-    FUNC_DEF(test_qsort), FUNC_DEF(test_vsnprintf), FUNC_DEF(test_sscanf),
-    FUNC_DEF(test_errno), FUNC_DEF(test_realloc), FUNC_DEF(test_NSString_compare),
+    FUNC_DEF(test_qsort),   FUNC_DEF(test_vsnprintf),
+    FUNC_DEF(test_sscanf),  FUNC_DEF(test_errno),
+    FUNC_DEF(test_realloc), FUNC_DEF(test_NSString_compare),
+    FUNC_DEF(test_chdir),
 };
 
 int main(int argc, char *argv[]) {

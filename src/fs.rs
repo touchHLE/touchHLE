@@ -507,6 +507,16 @@ impl Fs {
         &self.home_directory
     }
 
+    pub fn change_current_directory(&mut self, path: &str) -> Result<(), ()> {
+        let resolved = resolve_path(GuestPath::new(&path), Some(&self.current_directory));
+        self.current_directory = GuestPathBuf::from("/".to_owned() + &resolved.join("/"));
+        if self.exists(&self.current_directory) {
+            Ok(())
+        } else {
+            Err(())
+        }
+    }
+
     /// Get the node at a given path, if it exists.
     fn lookup_node(&self, path: &GuestPath) -> Option<&FsNode> {
         let mut node = &self.root;

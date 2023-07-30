@@ -63,6 +63,12 @@ pub const CLASSES: ClassExports = objc_classes! {
     ns_string::get_static_str(env, "2.0")
 }
 
+- (id)uniqueIdentifier {
+    // Aspen Simulator returns (null) here
+    // TODO: what should be a correct value?
+    ns_string::get_static_str(env, "touchHLEdevice")
+}
+
 - (bool)isMultitaskingSupported {
     false
 }

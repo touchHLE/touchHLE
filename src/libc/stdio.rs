@@ -5,7 +5,7 @@
  */
 //! `stdio.h`
 
-use super::posix_io::{self, O_APPEND, O_CREAT, O_RDONLY, O_RDWR, O_TRUNC, O_WRONLY};
+use super::posix_io::{self, off_t, O_APPEND, O_CREAT, O_RDONLY, O_RDWR, O_TRUNC, O_WRONLY};
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::fs::GuestPath;
 use crate::libc::string::strlen;
@@ -26,6 +26,9 @@ struct FILE {
     fd: posix_io::FileDescriptor,
 }
 unsafe impl SafeRead for FILE {}
+
+#[allow(non_camel_case_types)]
+type fpos_t = off_t;
 
 fn fopen(env: &mut Environment, filename: ConstPtr<u8>, mode: ConstPtr<u8>) -> MutPtr<FILE> {
     // all valid modes are UTF-8
@@ -152,6 +155,28 @@ fn fclose(env: &mut Environment, file_ptr: MutPtr<FILE>) -> i32 {
     }
 }
 
+fn fsetpos(env: &mut Environment, file_ptr: MutPtr<FILE>, pos: ConstPtr<fpos_t>) -> i32 {
+    let FILE { fd } = env.mem.read(file_ptr);
+
+    let res = posix_io::lseek(env, fd, env.mem.read(pos), SEEK_SET);
+    if res == -1 {
+        -1
+    } else {
+        0
+    }
+}
+
+fn fgetpos(env: &mut Environment, file_ptr: MutPtr<FILE>, pos: MutPtr<fpos_t>) -> i32 {
+    let FILE { fd } = env.mem.read(file_ptr);
+
+    let res = posix_io::lseek(env, fd, 0, posix_io::SEEK_CUR);
+    if res == -1 {
+        return -1;
+    }
+    env.mem.write(pos, res);
+    0
+}
+
 fn feof(env: &mut Environment, file_ptr: MutPtr<FILE>) -> i32 {
     let FILE { fd } = env.mem.read(file_ptr);
     posix_io::eof(env, fd)
@@ -203,6 +228,8 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(fwrite(_, _, _, _)),
     export_c_func!(fseek(_, _, _)),
     export_c_func!(ftell(_)),
+    export_c_func!(fsetpos(_, _)),
+    export_c_func!(fgetpos(_, _)),
     export_c_func!(feof(_)),
     export_c_func!(fclose(_)),
     export_c_func!(puts(_)),

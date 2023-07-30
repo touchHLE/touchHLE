@@ -152,6 +152,11 @@ fn fclose(env: &mut Environment, file_ptr: MutPtr<FILE>) -> i32 {
     }
 }
 
+fn feof(env: &mut Environment, file_ptr: MutPtr<FILE>) -> i32 {
+    let FILE { fd } = env.mem.read(file_ptr);
+    posix_io::eof(env, fd)
+}
+
 fn puts(env: &mut Environment, s: ConstPtr<u8>) -> i32 {
     let _ = std::io::stdout().write_all(env.mem.cstr_at(s));
     let _ = std::io::stdout().write_all(b"\n");
@@ -198,6 +203,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(fwrite(_, _, _, _)),
     export_c_func!(fseek(_, _, _)),
     export_c_func!(ftell(_)),
+    export_c_func!(feof(_)),
     export_c_func!(fclose(_)),
     export_c_func!(puts(_)),
     export_c_func!(putchar(_)),

@@ -157,6 +157,41 @@ int test_chdir() {
   return -1;
 }
 
+int test_eof() {
+  CFBundleRef mainBundle = CFBundleGetMainBundle();
+  CFURLRef fileURL =
+      CFBundleCopyResourceURL(mainBundle, (CFStringRef) @"waffle.txt", NULL,
+                              (CFStringRef) @"uwu_folder");
+  char path[256];
+  bool res =
+      CFURLGetFileSystemRepresentation(fileURL, TRUE, (UInt8 *)path, 256);
+  CFRelease(fileURL);
+  if (!res)
+    return -1;
+
+  FILE *file;
+  int c, i;
+  char buf[8];
+
+  file = fopen(path, "r");
+  if (file == NULL)
+    return -1;
+
+  i = 0;
+  while (true) {
+    c = fgetc(file);
+    if (feof(file)) {
+      break;
+    }
+    buf[i] = c;
+    i++;
+  }
+  buf[i] = '\0';
+  fclose(file);
+
+  return strcmp(buf, "WAFFLE\n");
+}
+
 #define FUNC_DEF(func)                                                         \
   { &func, #func }
 struct {
@@ -167,6 +202,7 @@ struct {
     FUNC_DEF(test_sscanf),  FUNC_DEF(test_errno),
     FUNC_DEF(test_realloc), FUNC_DEF(test_NSString_compare),
     FUNC_DEF(test_chdir),   FUNC_DEF(test_NSFileManager),
+    FUNC_DEF(test_eof),
 };
 
 int main(int argc, char *argv[]) {

@@ -9,6 +9,7 @@
 use crate::mem::{guest_size_of, ConstPtr, GuestUSize, MutPtr, Ptr, SafeRead};
 use crate::Environment;
 use std::cmp::Ordering;
+use std::fmt::Debug;
 
 /// This type is never actually constructed, it just enables us to move all the
 /// bounds on `T` to the `impl` block.
@@ -16,7 +17,7 @@ pub(super) struct GenericChar<T> {
     _spooky: std::marker::PhantomData<T>,
 }
 
-impl<T: Copy + Default + Eq + Ord + SafeRead> GenericChar<T> {
+impl<T: Copy + Default + Eq + Ord + SafeRead + Debug> GenericChar<T> {
     fn null() -> T {
         Default::default()
     }

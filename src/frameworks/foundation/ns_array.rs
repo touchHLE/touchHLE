@@ -7,9 +7,15 @@
 
 use super::{ns_keyed_unarchiver, NSUInteger};
 use crate::objc::{
-    id, msg_class, objc_classes, release, retain, ClassExports, HostObject, NSZonePtr,
+    autorelease, id, msg_class, nil, objc_classes, release, retain, ClassExports, HostObject,
+    NSZonePtr,
 };
 use crate::Environment;
+
+struct ObjectEnumeratorHostObject {
+    iterator: std::vec::IntoIter<id>,
+}
+impl HostObject for ObjectEnumeratorHostObject {}
 
 /// Belongs to _touchHLE_NSArray
 struct ArrayHostObject {
@@ -112,6 +118,17 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.dealloc_object(this, &mut env.mem)
 }
 
+- (id)objectEnumerator { // NSEnumerator*
+    let array_host_object: &mut ArrayHostObject = env.objc.borrow_mut(this);
+    let vec = array_host_object.array.to_vec();
+    let host_object = Box::new(ObjectEnumeratorHostObject {
+        iterator: vec.into_iter(),
+    });
+    let class = env.objc.get_known_class("ObjectEnumerator", &mut env.mem);
+    let enumerator = env.objc.alloc_object(class, host_object, &mut env.mem);
+    autorelease(env, enumerator)
+}
+
 // TODO: more init methods, etc
 
 - (NSUInteger)count {
@@ -120,6 +137,15 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (id)objectAtIndex:(NSUInteger)index {
     // TODO: throw real exception rather than panic if out-of-bounds?
     env.objc.borrow::<ArrayHostObject>(this).array[index as usize]
+}
+
+@end
+
+@implementation ObjectEnumerator: NSEnumerator
+
+- (id)nextObject {
+    let host_obj = env.objc.borrow_mut::<ObjectEnumeratorHostObject>(this);
+    host_obj.iterator.next().map_or(nil, |o| o)
 }
 
 @end

@@ -70,10 +70,11 @@ pub(super) fn objc_copyStruct(
     dest: MutVoidPtr,
     src: ConstVoidPtr,
     size: GuestUSize,
-    atomic: bool,
+    _atomic: bool,
     _hasStrong: bool,
 ) {
+    // It's safe to ignore atomic as we never switch thread unless we call back into guest code
+    // and we're not doing that here, just calling memmove
     // TODO: implement atomic support
-    assert!(!atomic);
     env.mem.memmove(dest, src, size);
 }

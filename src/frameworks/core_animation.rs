@@ -10,3 +10,11 @@
 
 pub mod ca_eagl_layer;
 pub mod ca_layer;
+
+mod composition;
+pub use composition::recomposite_if_necessary;
+
+#[derive(Default)]
+pub struct State {
+    composition: composition::State,
+}

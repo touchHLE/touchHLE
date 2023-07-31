@@ -5,9 +5,9 @@
  */
 //! Shared utilities.
 
+use super::gles11_raw as gles11; // constants only
+use super::gles11_raw::types::{GLenum, GLfixed, GLfloat, GLint, GLsizei};
 use super::GLES;
-use crate::window::gles11; // constants only
-use crate::window::gles11::types::{GLenum, GLfixed, GLfloat, GLint, GLsizei};
 
 /// Convert a fixed-point scalar to a floating-point scalar.
 ///
@@ -141,6 +141,7 @@ impl ParamTable {
 /// `glTexImage2D`. Returns `true` if this is done.
 ///
 /// Note that this panics rather than create GL errors for invalid use (TODO?)
+#[allow(clippy::too_many_arguments)]
 pub fn try_decode_pvrtc(
     gles: &mut dyn GLES,
     target: GLenum,

@@ -12,6 +12,7 @@ use crate::mem::{ConstVoidPtr, MutVoidPtr, Ptr};
 use crate::objc::{
     autorelease, id, msg, nil, objc_classes, release, retain, ClassExports, HostObject, NSZonePtr,
 };
+use crate::Environment;
 
 struct NSDataHostObject {
     bytes: MutVoidPtr,
@@ -128,3 +129,10 @@ pub const CLASSES: ClassExports = objc_classes! {
 @end
 
 };
+
+pub fn to_rust_slice(env: &mut Environment, data: id) -> &[u8] {
+    let borrowed_data = env.objc.borrow::<NSDataHostObject>(data);
+    assert!(!borrowed_data.bytes.is_null() && borrowed_data.length != 0);
+    env.mem
+        .bytes_at(borrowed_data.bytes.cast(), borrowed_data.length)
+}

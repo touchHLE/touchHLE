@@ -156,13 +156,15 @@ pub(super) fn objc_msgSend_stret(
 }
 
 #[repr(C, packed)]
-pub(super) struct objc_super {
-    receiver: id,
+/// A pointer to this struct replaces the normal receiver parameter for
+/// `objc_msgSendSuper2` and [msg_send_super2].
+pub struct objc_super {
+    pub receiver: id,
     /// If this is used with `objc_msgSendSuper` (not implemented here, TODO),
     /// this is a pointer to the superclass to look up the method on.
     /// If this is used with `objc_msgSendSuper2`, this is a pointer to a class
     /// and the superclass will be looked up from it.
-    class: Class,
+    pub class: Class,
 }
 unsafe impl SafeRead for objc_super {}
 
@@ -208,6 +210,22 @@ where
     }
 }
 
+/// [msg_send] but for super-calls (calls [objc_msgSendSuper2]). You probably
+/// want to use [msg_super] rather than calling this directly.
+pub fn msg_send_super2<R, P>(env: &mut Environment, args: P) -> R
+where
+    fn(&mut Environment, ConstPtr<objc_super>, SEL): CallFromHost<R, P>,
+    fn(&mut Environment, MutVoidPtr, ConstPtr<objc_super>, SEL): CallFromHost<R, P>,
+    R: GuestRet,
+{
+    if R::SIZE_IN_MEM.is_some() {
+        todo!() // no stret yet
+    } else {
+        (objc_msgSendSuper2 as fn(&mut Environment, ConstPtr<objc_super>, SEL))
+            .call_from_host(env, args)
+    }
+}
+
 /// Macro for sending a message which imitates the Objective-C messaging syntax.
 /// See [msg_send] for the underlying implementation. Warning: all types are
 /// inferred from the call-site, be very sure you get them correct!
@@ -243,6 +261,63 @@ macro_rules! msg {
     }
 }
 pub use crate::msg; // #[macro_export] is weird...
+
+/// Variant of [msg] for super-calls.
+///
+/// Unlike the other variants, this macro can only be used within
+/// [crate::objc::objc_classes], because it relies on that macro defining a
+/// constant containing the name of the current class.
+///
+/// ```ignore
+/// msg_super![env; this init]
+/// ```
+///
+/// desugars to something like this, if the current class is `SomeClass`:
+///
+/// ```ignore
+/// {
+///     let super_arg_ptr = push_to_stack(env, objc_super {
+///         receiver: this,
+///         class: env.objc.get_known_class("SomeClass", &mut env.mem),
+///     });
+///     let sel = env.objc.lookup_selector("init").unwrap();
+///     let res = msg_send_super2(env, (super_arg_ptr, sel));
+///     pop_from_stack::<objc_super>(env);
+///     res
+/// }
+/// ```
+#[macro_export]
+macro_rules! msg_super {
+    [$env:expr; $receiver:tt $name:ident $(: $arg1:tt)?
+                             $($namen:ident: $argn:tt)*] => {
+        {
+            let class = $env.objc.get_known_class(
+                _OBJC_CURRENT_CLASS,
+                &mut $env.mem
+            );
+            let sel = $crate::objc::selector!($($arg1;)? $name $(, $namen)*);
+            let sel = $env.objc.lookup_selector(sel)
+                .expect("Unknown selector");
+
+            let sp = &mut $env.cpu.regs_mut()[$crate::cpu::Cpu::SP];
+            let old_sp = *sp;
+            *sp -= $crate::mem::guest_size_of::<$crate::objc::objc_super>();
+            let super_ptr = $crate::mem::Ptr::from_bits(*sp);
+            $env.mem.write(super_ptr, $crate::objc::objc_super {
+                receiver: $receiver,
+                class,
+            });
+
+            let args = (super_ptr, sel, $($arg1,)? $($argn),*);
+            let res = $crate::objc::msg_send_super2($env, args);
+
+            $env.cpu.regs_mut()[$crate::cpu::Cpu::SP] = old_sp;
+
+            res
+        }
+    }
+}
+pub use crate::msg_super; // #[macro_export] is weird...
 
 /// Variant of [msg] for sending a message to a named class. Useful for calling
 /// class methods, especially `new`.

@@ -12,8 +12,12 @@
 //! - Apple's [Archives and Serializations Programming Guide](https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/Archiving/Articles/archives.html)
 
 use super::ns_string::{from_rust_string, to_rust_string};
+use crate::frameworks::core_graphics::{CGPoint, CGRect, CGSize};
+use crate::frameworks::uikit::ui_geometry::{
+    CGPointFromString, CGRectFromString, CGSizeFromString,
+};
 use crate::objc::{
-    autorelease, id, msg, objc_classes, release, retain, ClassExports, HostObject, NSZonePtr,
+    autorelease, id, msg, nil, objc_classes, release, retain, ClassExports, HostObject, NSZonePtr,
 };
 use crate::Environment;
 use plist::{Dictionary, Uid, Value};
@@ -64,18 +68,18 @@ pub const CLASSES: ClassExports = objc_classes! {
 // They are all from the NSCoder abstract class and they return default values
 // if the key is unknown.
 
+- (bool)decodeBoolForKey:(id)key { // NSString *
+    get_value_to_decode_for_key(env, this, key).map_or(
+        false,
+        |value| value.as_boolean().unwrap()
+    )
+}
+
 - (id)decodeObjectForKey:(id)key { // NSString*
-    let key = to_rust_string(env, key); // TODO: avoid copying string
-    let host_obj = borrow_host_obj(env, this);
-    let scope = match host_obj.current_key {
-        Some(current_uid) => {
-            &host_obj.plist["$objects"].as_array().unwrap()[current_uid.get() as usize]
-        },
-        None => {
-            &host_obj.plist["$top"]
-        }
-    }.as_dictionary().unwrap();
-    let next_uid = scope[&key].as_uid().copied().unwrap();
+    let Some(next_uid) = get_value_to_decode_for_key(env, this, key) else {
+        return nil;
+    };
+    let next_uid = next_uid.as_uid().copied().unwrap();
     let object = unarchive_key(env, this, next_uid);
 
     // on behalf of the caller
@@ -85,12 +89,40 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 // TODO: add more decode methods
 
+// These come from a category in UIKit's UIGeometry.h
+- (CGPoint)decodeCGPointForKey:(id)key { // NSString*
+    let string: id = msg![env; this decodeObjectForKey:key];
+    CGPointFromString(env, string)
+}
+- (CGSize)decodeCGSizeForKey:(id)key { // NSString*
+    let string: id = msg![env; this decodeObjectForKey:key];
+    CGSizeFromString(env, string)
+}
+- (CGRect)decodeCGRectForKey:(id)key { // NSString*
+    let string: id = msg![env; this decodeObjectForKey:key];
+    CGRectFromString(env, string)
+}
+
 @end
 
 };
 
 fn borrow_host_obj(env: &mut Environment, unarchiver: id) -> &mut NSKeyedUnarchiverHostObject {
     env.objc.borrow_mut(unarchiver)
+}
+
+fn get_value_to_decode_for_key(env: &mut Environment, unarchiver: id, key: id) -> Option<&Value> {
+    let key = to_rust_string(env, key); // TODO: avoid copying string
+    let host_obj = borrow_host_obj(env, unarchiver);
+    let scope = match host_obj.current_key {
+        Some(current_uid) => {
+            &host_obj.plist["$objects"].as_array().unwrap()[current_uid.get() as usize]
+        }
+        None => &host_obj.plist["$top"],
+    }
+    .as_dictionary()
+    .unwrap();
+    scope.get(&key)
 }
 
 /// Shortcut for use by [crate::frameworks::uikit::ui_nib::load_main_nib_file].

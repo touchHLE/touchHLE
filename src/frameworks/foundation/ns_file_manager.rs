@@ -14,6 +14,7 @@ use crate::objc::{
 use crate::Environment;
 
 type NSSearchPathDirectory = NSUInteger;
+const NSApplicationDirectory: NSSearchPathDirectory = 1;
 const NSDocumentDirectory: NSSearchPathDirectory = 9;
 
 type NSSearchPathDomainMask = NSUInteger;
@@ -26,11 +27,17 @@ fn NSSearchPathForDirectoriesInDomains(
     expand_tilde: bool,
 ) -> id {
     // TODO: other cases not implemented
-    assert!(directory == NSDocumentDirectory);
     assert!(domain_mask == NSUserDomainMask);
     assert!(expand_tilde);
 
-    let dir = env.fs.home_directory().join("Documents");
+    let dir = match directory {
+        // This might not actually be correct. I haven't bothered to test it
+        // because I can't think of a good reason an iPhone OS app would have to
+        // request this; Wolfenstein 3D requests it but never uses it.
+        NSApplicationDirectory => GuestPath::new("/User/Applications").to_owned(),
+        NSDocumentDirectory => env.fs.home_directory().join("Documents"),
+        _ => todo!("NSSearchPathDirectory {}", directory),
+    };
     let dir = ns_string::from_rust_string(env, String::from(dir));
     let dir_list = ns_array::from_vec(env, vec![dir]);
     autorelease(env, dir_list)

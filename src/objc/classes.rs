@@ -257,9 +257,16 @@ macro_rules! objc_classes {
         )+
     } => {
         &[
-            $(
-                (stringify!($class_name), $crate::objc::ClassTemplate {
-                    name: stringify!($class_name),
+            $({
+                // This constant is for `msg_super!`, which needs to know which
+                // class it is has been written within (not the same as the
+                // runtime type of `this`, which could be a subclass). This is
+                // a constant instead of a let binding because that escapes
+                // Rust's macro hygiene.
+                const _OBJC_CURRENT_CLASS: &str = stringify!($class_name);
+
+                (_OBJC_CURRENT_CLASS, $crate::objc::ClassTemplate {
+                    name: _OBJC_CURRENT_CLASS,
                     superclass: $crate::_objc_superclass!($(: $superclass_name)?),
                     class_methods: &[
                         $(
@@ -304,7 +311,7 @@ macro_rules! objc_classes {
                         ),*
                     ],
                 })
-            ),+
+            }),+
         ]
     }
 }
@@ -395,11 +402,11 @@ fn substitute_classes(
     let name = mem.cstr_at_utf8(name).unwrap();
 
     // Currently the only thing we try to substitute: classes that seem to be
-    // from the AdMob SDK. This is a third-party advertising SDK. Naturally it
+    // from various third-party advertising SDKs. Naturally it
     // makes a lot of use of UIKit in ways we don't support yet, so it's easier
     // to skip this. This isn't "ad blocking" because ads no longer work on real
     // devices anyway :)
-    if !name.starts_with("AdMob") {
+    if !(name.starts_with("AdMob") || name.starts_with("AltAds") || name.starts_with("Mobclix")) {
         return None;
     }
 

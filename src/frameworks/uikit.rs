@@ -19,6 +19,7 @@ pub mod ui_control;
 pub mod ui_device;
 pub mod ui_event;
 pub mod ui_font;
+pub mod ui_geometry;
 pub mod ui_graphics;
 pub mod ui_image;
 pub mod ui_image_picker_controller;
@@ -43,6 +44,7 @@ pub struct State {
     ui_screen: ui_screen::State,
     ui_touch: ui_touch::State,
     ui_view: ui_view::State,
+    pub ui_window: ui_window::State,
 }
 
 /// For use by `NSRunLoop`: handles any events that have queued up.

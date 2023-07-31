@@ -8,7 +8,7 @@
 use crate::frameworks::core_graphics::CGFloat;
 use crate::mem::MutPtr;
 use crate::objc::{
-    autorelease, id, msg, msg_class, objc_classes, ClassExports, HostObject, NSZonePtr, SEL,
+    autorelease, id, msg, msg_class, objc_classes, ClassExports, HostObject, NSZonePtr, ObjC, SEL,
 };
 use crate::Environment;
 use std::collections::HashMap;
@@ -129,3 +129,9 @@ pub const CLASSES: ClassExports = objc_classes! {
 @end
 
 };
+
+/// Shortcut for use in Core Animation's compositor: get the RGBA triple for a
+/// `UIColor*`.
+pub fn get_rgba(objc: &ObjC, ui_color: id) -> (CGFloat, CGFloat, CGFloat, CGFloat) {
+    objc.borrow::<UIColorHostObject>(ui_color).rgba
+}

@@ -12,12 +12,14 @@
 //! depending on the value of `pname`, using the upper bound (4 in this case)
 //! every time is never going to cause a problem in practice.
 
-use super::GLES;
 use crate::dyld::{export_c_func, FunctionExports};
+use crate::gles::gles11_raw as gles11; // constants only
+use crate::gles::gles11_raw::types::*;
+use crate::gles::GLES;
 use crate::mem::{ConstPtr, ConstVoidPtr, GuestUSize, Mem, MutPtr};
-use crate::window::gles11;
-use crate::window::gles11::types::*;
 use crate::Environment;
+
+use core::ffi::CStr;
 
 fn with_ctx_and_mem<T, U>(env: &mut Environment, f: T) -> U
 where
@@ -109,6 +111,17 @@ fn glGetIntegerv(env: &mut Environment, pname: GLenum, params: MutPtr<GLint>) {
 }
 fn glHint(env: &mut Environment, target: GLenum, mode: GLenum) {
     with_ctx_and_mem(env, |gles, _mem| unsafe { gles.Hint(target, mode) })
+}
+fn glGetString(env: &mut Environment, name: GLenum) -> ConstPtr<GLubyte> {
+    with_ctx_and_mem(env, |gles, mem| {
+        let s = unsafe { CStr::from_ptr(gles.GetString(name).cast()) };
+        log!(
+            "TODO: glGetString({}) does not match real device and leaks memory",
+            name,
+        );
+        log_dbg!("glGetString({}) => {:?}", name, s);
+        mem.alloc_and_write_cstr(s.to_bytes()).cast_const()
+    })
 }
 
 // Other state manipulation
@@ -788,6 +801,9 @@ fn glDeleteRenderbuffersOES(env: &mut Environment, n: GLsizei, renderbuffers: Co
         unsafe { gles.DeleteRenderbuffersOES(n, renderbuffers) }
     })
 }
+fn glGenerateMipmapOES(env: &mut Environment, target: GLenum) {
+    with_ctx_and_mem(env, |gles, _mem| unsafe { gles.GenerateMipmapOES(target) })
+}
 
 pub const FUNCTIONS: FunctionExports = &[
     // Generic state manipulation
@@ -801,6 +817,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(glGetFloatv(_, _)),
     export_c_func!(glGetIntegerv(_, _)),
     export_c_func!(glHint(_, _)),
+    export_c_func!(glGetString(_)),
     // Other state manipulation
     export_c_func!(glAlphaFunc(_, _)),
     export_c_func!(glAlphaFuncx(_, _)),
@@ -899,4 +916,5 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(glCheckFramebufferStatusOES(_)),
     export_c_func!(glDeleteFramebuffersOES(_, _)),
     export_c_func!(glDeleteRenderbuffersOES(_, _)),
+    export_c_func!(glGenerateMipmapOES(_)),
 ];

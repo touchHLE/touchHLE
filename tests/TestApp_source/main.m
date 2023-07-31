@@ -8,6 +8,7 @@ This is a main file for the TestApp which is used for integration testing.
 This code supposed to be compiled with iPhone SDK and Xcode 3.1 Developer Tools
 for Mac OS X v10.5
 */
+#include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -54,31 +55,62 @@ char *str_format(const char *format, ...) {
 }
 
 int test_vsnprintf() {
-  char *str = str_format("%s", "test");
-  int res = strcmp(str, "test");
+  char *str = str_format("%s %x %.3d", "test", 2042, 5);
+  int res = strcmp(str, "test 7fa 005");
   free(str);
   return res;
 }
 
+int test_sscanf() {
+  int a, b;
+  int matched = sscanf("1.23", "%d.%d", &a, &b);
+  if (!(matched == 2 && a == 1 && b == 23))
+    return -1;
+  matched = sscanf("abc111.42", "abc%d.%d", &a, &b);
+  if (!(matched == 2 && a == 111 && b == 42))
+    return -1;
+  matched = sscanf("abc", "%d.%d", &a, &b);
+  return (matched == 0) ? 0 : -1;
+}
+
+int test_errno() { return (errno == 0) ? 0 : -1; }
+
+int test_realloc() {
+  void *ptr = realloc(NULL, 32);
+  memmove(ptr, "abcd", 4);
+  ptr = realloc(ptr, 64);
+  int res = memcmp(ptr, "abcd", 4);
+  free(ptr);
+  return res == 0 ? 0 : -1;
+}
+
+#define FUNC_DEF(func)                                                         \
+  { &func, #func }
+struct {
+  int (*func)();
+  const char *name;
+} test_func_array[] = {
+    FUNC_DEF(test_qsort), FUNC_DEF(test_vsnprintf), FUNC_DEF(test_sscanf),
+    FUNC_DEF(test_errno), FUNC_DEF(test_realloc),
+};
+
 int main(int argc, char *argv[]) {
   int tests_run = 0;
   int tests_passed = 0;
-  printf("test_qsort: ");
-  tests_run++;
-  if (test_qsort() == 0) {
-    printf("OK\n");
-    tests_passed++;
-  } else {
-    printf("FAIL\n");
+
+  int n = sizeof(test_func_array) / sizeof(test_func_array[0]);
+  int i;
+  for (i = 0; i < n; i++) {
+    printf("%s: ", test_func_array[i].name);
+    tests_run++;
+    if (test_func_array[i].func() == 0) {
+      printf("OK\n");
+      tests_passed++;
+    } else {
+      printf("FAIL\n");
+    }
   }
-  printf("test_vsnprintf: ");
-  tests_run++;
-  if (test_vsnprintf() == 0) {
-    printf("OK\n");
-    tests_passed++;
-  } else {
-    printf("FAIL\n");
-  }
+
   printf("Passed %d out of %d tests\n", tests_passed, tests_run);
   return tests_run == tests_passed ? 0 : 1;
 }

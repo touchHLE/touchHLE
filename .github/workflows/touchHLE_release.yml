@@ -22,6 +22,8 @@ jobs:
       run: git submodule update --init
     - name: Install Boost
       run: brew install boost
+    - name: Test
+      run: cargo test
     - name: Build
       run: cargo build --release && mv target/release/touchHLE .
     - uses: actions/upload-artifact@v3
@@ -51,6 +53,8 @@ jobs:
     - if: ${{ steps.cache-boost.outputs.cache-hit != 'true' }}
       name: Extract Boost
       run: 7z -ovendor x boost_1_81_0.7z && ren vendor\boost_1_81_0 boost
+    - name: Test
+      run: cargo test -- --skip run_test_app
     - name: Build
       run: cargo build --release && move target/release/touchHLE.exe .
     - uses: actions/upload-artifact@v3

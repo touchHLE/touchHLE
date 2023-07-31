@@ -11,10 +11,6 @@
 #![allow(non_snake_case)]
 
 #[allow(warnings)]
-pub mod gl32core {
-    include!(concat!(env!("OUT_DIR"), "/gl32core.rs"));
-}
-#[allow(warnings)]
 pub mod gl21compat {
     include!(concat!(env!("OUT_DIR"), "/gl21compat.rs"));
 }

@@ -5,41 +5,42 @@
  */
 //! `UIView`.
 
-use crate::frameworks::core_graphics::{CGFloat, CGPoint, CGRect, CGSize};
+use crate::frameworks::core_graphics::{CGFloat, CGPoint, CGRect};
 use crate::frameworks::foundation::ns_string::{get_static_str, to_rust_string};
+use crate::frameworks::foundation::NSUInteger;
 use crate::objc::{
-    id, msg, nil, objc_classes, release, Class, ClassExports, HostObject, NSZonePtr,
+    id, msg, nil, objc_classes, release, retain, Class, ClassExports, HostObject, NSZonePtr,
 };
 
 #[derive(Default)]
 pub struct State {
+    /// List of views for internal purposes. Non-retaining!
     pub(super) views: Vec<id>,
 }
 
+#[derive(Default)]
+pub(super) enum UIViewSubclass {
+    #[default]
+    /// Plain `UIView*`, or some subclass that doesn't need extra data.
+    UIView,
+    UIImageView {
+        /// `UIImage*`
+        image: id,
+    },
+}
+
+#[derive(Default)]
 pub(super) struct UIViewHostObject {
     /// CALayer or subclass.
     layer: id,
+    /// Subviews in back-to-front order. These are strong references.
+    subviews: Vec<id>,
+    /// The superview. This is a weak reference.
+    superview: id,
+    /// Subclass-specific data
+    pub(super) subclass: UIViewSubclass,
 }
 impl HostObject for UIViewHostObject {}
-
-fn parse_tuple(string: &str) -> Option<(f32, f32)> {
-    let (a, b) = string.split_once(", ")?;
-    Some((a.parse().ok()?, b.parse().ok()?))
-}
-fn parse_point(string: &str) -> Option<CGPoint> {
-    let (x, y) = parse_tuple(string.strip_prefix('{')?.strip_suffix('}')?)?;
-    Some(CGPoint { x, y })
-}
-fn parse_rect(string: &str) -> Option<CGRect> {
-    let string = string.strip_prefix("{{")?.strip_suffix("}}")?;
-    let (a, b) = string.split_once("}, {")?;
-    let (x, y) = parse_tuple(a)?;
-    let (width, height) = parse_tuple(b)?;
-    Some(CGRect {
-        origin: CGPoint { x, y },
-        size: CGSize { width, height },
-    })
-}
 
 pub const CLASSES: ClassExports = objc_classes! {
 
@@ -48,10 +49,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 @implementation UIView: UIResponder
 
 + (id)allocWithZone:(NSZonePtr)_zone {
-    let layer_class: Class = msg![env; this layerClass];
-    let layer: id = msg![env; layer_class layer];
-
-    let host_object = Box::new(UIViewHostObject { layer });
+    let host_object = Box::<UIViewHostObject>::default();
     env.objc.alloc_object(this, host_object, &mut env.mem)
 }
 
@@ -61,9 +59,24 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 // TODO: accessors etc
 
-- (id)initWithFrame:(CGRect)frame {
-    let layer = env.objc.borrow::<UIViewHostObject>(this).layer;
+- (id)init {
+    let view_class: Class = msg![env; this class];
+    let layer_class: Class = msg![env; view_class layerClass];
+    let layer: id = msg![env; layer_class layer];
+
+    // CALayer is not opaque by default, but UIView is
     () = msg![env; layer setDelegate:this];
+    () = msg![env; layer setOpaque:true];
+
+    env.objc.borrow_mut::<UIViewHostObject>(this).layer = layer;
+
+    env.framework_state.uikit.ui_view.views.push(this);
+
+    this
+}
+
+- (id)initWithFrame:(CGRect)frame {
+    let this: id = msg![env; this init];
 
     () = msg![env; this setFrame:frame];
 
@@ -75,43 +88,57 @@ pub const CLASSES: ClassExports = objc_classes! {
         { let center: CGPoint = msg![env; this center]; center },
     );
 
-    env.framework_state.uikit.ui_view.views.push(this);
-
     this
 }
 
 // NSCoding implementation
 - (id)initWithCoder:(id)coder {
-    // TODO: there's a category on NSCoder for decoding CGRect and CGPoint, we
-    //       should implement and use that
-    // TODO: avoid copying strings
+    let this: id = msg![env; this init];
+
     // TODO: decode the various other UIView properties
 
     let key_ns_string = get_static_str(env, "UIBounds");
-    let value = msg![env; coder decodeObjectForKey:key_ns_string];
-    let bounds = parse_rect(&to_rust_string(env, value)).unwrap();
+    let bounds: CGRect = msg![env; coder decodeCGRectForKey:key_ns_string];
 
     let key_ns_string = get_static_str(env, "UICenter");
-    let value = msg![env; coder decodeObjectForKey:key_ns_string];
-    let center = parse_point(&to_rust_string(env, value)).unwrap();
+    let center: CGPoint = msg![env; coder decodeCGPointForKey:key_ns_string];
+
+    let key_ns_string = get_static_str(env, "UIHidden");
+    let hidden: bool = msg![env; coder decodeBoolForKey:key_ns_string];
+
+    let key_ns_string = get_static_str(env, "UIOpaque");
+    let opaque: bool = msg![env; coder decodeBoolForKey:key_ns_string];
+
+    let key_ns_string = get_static_str(env, "UISubviews");
+    let subviews: id = msg![env; coder decodeObjectForKey:key_ns_string];
+    let subview_count: NSUInteger = msg![env; subviews count];
 
     log_dbg!(
-        "[(UIView*){:?} initWithCoder:{:?}] => bounds {:?}, center {:?}",
+        "[(UIView*){:?} initWithCoder:{:?}] => bounds {}, center {}, hidden {}, opaque {}, {} subviews",
         this,
         coder,
         bounds,
-        center
+        center,
+        hidden,
+        opaque,
+        subview_count,
     );
-
-    let layer = env.objc.borrow::<UIViewHostObject>(this).layer;
-    () = msg![env; layer setDelegate:this];
 
     () = msg![env; this setBounds:bounds];
     () = msg![env; this setCenter:center];
+    () = msg![env; this setHidden:hidden];
+    () = msg![env; this setOpaque:opaque];
 
-    env.framework_state.uikit.ui_view.views.push(this);
+    for i in 0..subview_count {
+        let subview: id = msg![env; subviews objectAtIndex:i];
+        () = msg![env; this addSubview:subview];
+    }
 
     this
+}
+
+- (())setUserInteractionEnabled:(bool)_enabled {
+    // TODO: enable user interaction
 }
 
 // TODO: setMultipleTouchEnabled
@@ -123,28 +150,81 @@ pub const CLASSES: ClassExports = objc_classes! {
     // On iOS 5.1 and earlier, the default implementation of this method does nothing.
 }
 
+- (id)superview {
+    env.objc.borrow::<UIViewHostObject>(this).superview
+}
+// TODO: subviews accessor
+
 - (())addSubview:(id)view {
-    // FIXME: there should be an actual hierarchy that retains the view
-    log!("TODO: [(UIView*){:?} addSubview:{:?}]", this, view);
-    // FIXME: These should be called systematically using setNeedsLayout: and
-    //        layoutIfNeeded.
-    let _: () = msg![env; this layoutSubviews];
-    let _: () = msg![env; view layoutSubviews];
+    if env.objc.borrow::<UIViewHostObject>(view).superview == this {
+        () = msg![env; this bringSubviewToFront:view];
+    } else {
+        retain(env, view);
+        () = msg![env; view removeFromSuperview];
+        let subview_obj = env.objc.borrow_mut::<UIViewHostObject>(view);
+        subview_obj.superview = this;
+        let subview_layer = subview_obj.layer;
+        let this_obj = env.objc.borrow_mut::<UIViewHostObject>(this);
+        this_obj.subviews.push(view);
+        let this_layer = this_obj.layer;
+        () = msg![env; this_layer addSublayer:subview_layer];
+    }
 }
 
-- (())bringSubviewToFront:(id)view {
-    log_dbg!("TODO: [(UIView*){:?} bringSubviewToFront:{:?}]", this, view);
+- (())bringSubviewToFront:(id)subview {
+    let &mut UIViewHostObject {
+        ref mut subviews,
+        layer,
+        ..
+    } = env.objc.borrow_mut(this);
+
+    let idx = subviews.iter().position(|&subview2| subview2 == subview).unwrap();
+    let subview2 = subviews.remove(idx);
+    assert!(subview2 == subview);
+    subviews.push(subview);
+
+    let subview_layer = env.objc.borrow::<UIViewHostObject>(subview).layer;
+    () = msg![env; subview_layer removeFromSuperlayer];
+    () = msg![env; layer addSublayer:subview_layer];
 }
 
 - (())removeFromSuperview {
-    // FIXME: this should actually remove the view from some hierarchy and
-    //        release it
-    log!("TODO: [(UIView*){:?} removeFromSuperview]", this);
+    let &mut UIViewHostObject {
+        ref mut superview,
+        layer: this_layer,
+        ..
+    } = env.objc.borrow_mut(this);
+    let superview = std::mem::take(superview);
+    if superview == nil {
+        return;
+    }
+    () = msg![env; this_layer removeFromSuperlayer];
+
+    let UIViewHostObject { ref mut subviews, .. } = env.objc.borrow_mut(superview);
+    let idx = subviews.iter().position(|&subview| subview == this).unwrap();
+    let subview = subviews.remove(idx);
+    assert!(subview == this);
+    release(env, this);
 }
 
 - (())dealloc {
-    let &mut UIViewHostObject { layer, .. } = env.objc.borrow_mut(this);
+    let UIViewHostObject {
+        layer,
+        superview,
+        subviews,
+        subclass,
+    } = std::mem::take(env.objc.borrow_mut(this));
+
+    // This assert forces subclasses to clean up their data in their dealloc
+    // implementation :)
+    assert!(matches!(subclass, UIViewSubclass::UIView));
+
     release(env, layer);
+    assert!(superview == nil);
+    for subview in subviews {
+        env.objc.borrow_mut::<UIViewHostObject>(subview).superview = nil;
+        release(env, subview);
+    }
 
     env.framework_state.uikit.ui_view.views.swap_remove(
         env.framework_state.uikit.ui_view.views.iter().position(|&v| v == this).unwrap()
@@ -155,6 +235,15 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 - (id)layer {
     env.objc.borrow_mut::<UIViewHostObject>(this).layer
+}
+
+- (bool)isHidden {
+    let layer = env.objc.borrow::<UIViewHostObject>(this).layer;
+    msg![env; layer isHidden]
+}
+- (())setHidden:(bool)hidden {
+    let layer = env.objc.borrow::<UIViewHostObject>(this).layer;
+    msg![env; layer setHidden:hidden]
 }
 
 - (bool)isOpaque {
@@ -175,11 +264,17 @@ pub const CLASSES: ClassExports = objc_classes! {
     msg![env; layer setOpacity:alpha]
 }
 
+// FIXME: CALayer's backgroundColor should be a CGColorRef, which is supposedly
+// a separate type from UIColor. For now we have not implemented it and treat
+// them as the same type (and it seems like UIKit itself maybe did this once),
+// but eventually we'll have to do this properly.
 - (id)backgroundColor {
-    nil // this is the actual default (equivalent to transparency)
+    let layer = env.objc.borrow::<UIViewHostObject>(this).layer;
+    msg![env; layer backgroundColor]
 }
-- (())setBackgroundColor:(id)_color { // UIColor*
-    // TODO: implement this once views are actually rendered
+- (())setBackgroundColor:(id)color { // UIColor*
+    let layer = env.objc.borrow::<UIViewHostObject>(this).layer;
+    msg![env; layer setBackgroundColor:color]
 }
 
 - (CGRect)bounds {

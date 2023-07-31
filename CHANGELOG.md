@@ -2,7 +2,7 @@
 
 This will list notable changes from release to release, and credit the people who contributed them. This mainly covers changes that are visible to end users, so please look at the commit history if you want to know all the details.
 
-Names preceded by an @ are GitHub usernames.
+Names preceded by an @ are GitHub usernames. Credits for new app support indicate someone who put a lot of effort into getting that app working, but compatibility is always a cumulative collaborative effort.
 
 Changes are categorised as follows:
 
@@ -18,12 +18,15 @@ If an app is added to the supported list after the relevant version has already 
 Compatibility:
 
 - API support improvements:
-  - Various small contributions. (@hikari-no-yume, @KiritoDv, @ciciplusplus, @TylerJaacks)
+  - Various small contributions. (@hikari-no-yume, @KiritoDv, @ciciplusplus, @TylerJaacks, @LennyKappa)
   - PVRTC and paletted texture compression is now supported. (@hikari-no-yume)
+- New supported apps:
+  - [Wolfenstein 3D](https://www.youtube.com/watch?v=omViNgUqF8c) (@ciciplusplus; version 1.0 only)
 
-Quality:
+Quality and performance:
 
 - Overlapping characters in text now render correctly. (@Xertes0)
+- touchHLE now avoids polling for events more often than 120Hz. Previously, it would sometimes poll many times more often than that, which could be very bad for performance. This change improves performance in basically all apps, though the effects on the existing supported apps are fairly subtle. (@hikari-no-yume)
 
 New platform support:
 
@@ -44,8 +47,9 @@ Other:
 - Some major changes have been made to how touchHLE interacts with graphics drivers:
   - When possible, touchHLE will now use a native OpenGL ES 1.1 driver rather than translating to OpenGL 2.1. This is configurable with the new `--gles1=` option. (@hikari-no-yume)
   - The code for presenting rendered frames to the screen has been rewritten for compatibility with OpenGL ES 1.1. (@hikari-no-yume)
+  - The splash screen is now drawn with OpenGL ES 1.1, either natively or via translation to OpenGL 2.1, rather than with OpenGL 3.2. (@hikari-no-yume)
 
-  Theoretically, neither of these changes should affect how touchHLE behaves for ordinary users in supported apps, but graphics drivers are inscrutable beasts, so it's hard to be certain. For example, the second change unexpectedly fixed the mysterious macOS-only memory leak! macOS users should no longer see touchHLE's memory usage constantly increase by up to 0.4MB per second.
+  Theoretically, none of these changes should affect how touchHLE behaves for ordinary users in supported apps, but graphics drivers are inscrutable beasts, so it's hard to be certain. For example, the second change unexpectedly fixed the mysterious macOS-only memory leak! macOS users should no longer see touchHLE's memory usage constantly increase by up to 0.4MB per second.
 - The new `--button-to-touch=` option lets you map a button on your game controller to a point on the touch screen. (@hikari-no-yume)
 
 ## v0.1.2 (2023-03-07)
@@ -57,9 +61,9 @@ Compatibility:
   - Some key parts of `UIImage`, `CGImage` and `CGBitmapContext` used by Apple's `Texture2D` sample code are now implemented. Loading textures from PNG files in this way should now work. (@hikari-no-yume)
   - MP3 is now a supported audio file format in Audio Toolbox. This is done in a fairly hacky way so it might not work for some apps. (@hikari-no-yume)
 - New supported apps:
-  - Touch & Go LITE
-  - Touch & Go \[2023-03-12\]
-  - Super Monkey Ball Lite (full version was already supported)
+  - Touch & Go LITE (@hikari-no-yume)
+  - Touch & Go \[2023-03-12\] (@hikari-no-yume)
+  - Super Monkey Ball Lite (@hikari-no-yume; full version was already supported)
 
 Quality:
 
@@ -88,7 +92,7 @@ Compatibility:
   - Basic POSIX file I/O is now supported. Previously only standard C file I/O was supported. (@hikari-no-yume)
   - Very basic use of Audio Session Services is now supported. (@nitinseshadri)
   - Very basic use of `MPMoviePlayerController` is now supported. No actual video playback is implemented. (@hikari-no-yume)
-- New supported app: Crash Bandicoot Nitro Kart 3D (version 1.0 only).
+- New supported app: Crash Bandicoot Nitro Kart 3D (@hikari-no-yume; version 1.0 only).
 
 Quality and performance:
 

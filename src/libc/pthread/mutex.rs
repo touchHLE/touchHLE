@@ -3,32 +3,17 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
-//! Mutexes.
+//! Guest mutex interface.
+//!
+//! See [crate::environment::mutex] for the internal implementation.
 
 use crate::dyld::{export_c_func, FunctionExports};
-use crate::libc::errno::{EBUSY, EDEADLK, EPERM};
+use crate::environment::mutex::{
+    host_mutex_destroy, host_mutex_init, host_mutex_lock, host_mutex_unlock, MutexType,
+    PTHREAD_MUTEX_DEFAULT,
+};
 use crate::mem::{ConstPtr, MutPtr, Ptr, SafeRead};
-use crate::{Environment, ThreadID};
-use std::collections::HashMap;
-use std::num::NonZeroU32;
-
-#[derive(Default)]
-pub struct State {
-    // TODO?: Maybe this should be a Vec instead? It would be bad if there were many mutexes over
-    // the lifetime of an application, but it would perform better.
-    // Maybe it could also be a fixed size allocator? (although that seems a little overkill)
-    mutexes: HashMap<HostMutexId, MutexHostObject>,
-    // Hopefully there will never be more than 2^64 mutexes in an applications lifetime :P
-    mutex_count: u64,
-}
-impl State {
-    fn get_mut(env: &mut Environment) -> &mut Self {
-        &mut env.libc_state.pthread.mutex
-    }
-    fn get(env: &Environment) -> &Self {
-        &env.libc_state.pthread.mutex
-    }
-}
+use crate::Environment;
 
 /// Apple's implementation is a 4-byte magic number followed by an 8-byte opaque
 /// region. We only have to match the size theirs has.
@@ -57,27 +42,12 @@ unsafe impl SafeRead for pthread_mutex_t {}
 /// Used in host_mutex_* functions, which are mostly similar to pthread iterfaces.
 pub type HostMutexId = u64;
 
-struct MutexHostObject {
-    type_: MutexType,
-    waiting_count: u32,
-    /// The `NonZeroU32` is the number of locks on this thread (if it's a
-    /// recursive mutex).
-    locked: Option<(ThreadID, NonZeroU32)>,
-}
-
 /// Arbitrarily-chosen magic number for `pthread_mutexattr_t` (not Apple's).
 const MAGIC_MUTEXATTR: u32 = u32::from_be_bytes(*b"MuAt");
 /// Arbitrarily-chosen magic number for `pthread_mutex_t` (not Apple's).
 const MAGIC_MUTEX: u32 = u32::from_be_bytes(*b"MUTX");
 /// Magic number used by `PTHREAD_MUTEX_INITIALIZER`. This is part of the ABI!
 const MAGIC_MUTEX_STATIC: u32 = 0x32AAABA7;
-
-/// Custom typedef for readability (the C API just uses `int`)
-type MutexType = i32;
-pub const PTHREAD_MUTEX_NORMAL: MutexType = 0;
-pub const PTHREAD_MUTEX_ERRORCHECK: MutexType = 1;
-pub const PTHREAD_MUTEX_RECURSIVE: MutexType = 2;
-const PTHREAD_MUTEX_DEFAULT: MutexType = PTHREAD_MUTEX_NORMAL;
 
 fn pthread_mutexattr_init(env: &mut Environment, attr: MutPtr<pthread_mutexattr_t>) -> i32 {
     env.mem.write(
@@ -93,14 +63,10 @@ fn pthread_mutexattr_init(env: &mut Environment, attr: MutPtr<pthread_mutexattr_
 fn pthread_mutexattr_settype(
     env: &mut Environment,
     attr: MutPtr<pthread_mutexattr_t>,
-    type_: MutexType,
+    type_: i32,
 ) -> i32 {
+    let type_ = type_.try_into().unwrap();
     check_magic!(env, attr, MAGIC_MUTEXATTR);
-    assert!(
-        type_ == PTHREAD_MUTEX_NORMAL
-            || type_ == PTHREAD_MUTEX_ERRORCHECK
-            || type_ == PTHREAD_MUTEX_RECURSIVE
-    ); // should be EINVAL
     let mut attr_copy = env.mem.read(attr);
     attr_copy.type_ = type_;
     env.mem.write(attr, attr_copy);
@@ -112,7 +78,7 @@ fn pthread_mutexattr_destroy(env: &mut Environment, attr: MutPtr<pthread_mutexat
         attr,
         pthread_mutexattr_t {
             magic: 0,
-            type_: 0,
+            type_: PTHREAD_MUTEX_DEFAULT,
             _unused: 0,
         },
     );
@@ -127,11 +93,7 @@ fn pthread_mutex_init(
     let type_ = if !attr.is_null() {
         check_magic!(env, attr, MAGIC_MUTEXATTR);
         let pthread_mutexattr_t { type_, .. } = env.mem.read(attr);
-        assert!(
-            type_ == PTHREAD_MUTEX_NORMAL
-                || type_ == PTHREAD_MUTEX_ERRORCHECK
-                || type_ == PTHREAD_MUTEX_RECURSIVE
-        );
+        let type_ = type_.try_into().unwrap();
         type_
     } else {
         PTHREAD_MUTEX_DEFAULT
@@ -196,180 +158,6 @@ fn pthread_mutex_destroy(env: &mut Environment, mutex: MutPtr<pthread_mutex_t>) 
         },
     );
     host_mutex_destroy(env, mutex_id).err().unwrap_or(0)
-}
-
-/// Initializes a mutex and returns a handle to it. Similar to pthread_mutex_init, but for host code.
-pub fn host_mutex_init(env: &mut Environment, mutex_type: MutexType) -> HostMutexId {
-    let state = State::get_mut(env);
-    let mutex_id = state.mutex_count;
-    state.mutex_count = state.mutex_count.checked_add(1).unwrap();
-    state.mutexes.insert(
-        mutex_id,
-        MutexHostObject {
-            type_: mutex_type,
-            waiting_count: 0,
-            locked: None,
-        },
-    );
-    log_dbg!(
-        "Created mutex #{}, type {:?}",
-        state.mutex_count,
-        mutex_type
-    );
-    mutex_id
-}
-
-/// Locks a mutex and returns the lock count or an error (as errno). Similar to
-/// pthread_mutex_lock, but for host code.
-pub fn host_mutex_lock(env: &mut Environment, mutex_id: HostMutexId) -> Result<u32, i32> {
-    let current_thread = env.current_thread;
-    let host_object: &mut _ = State::get_mut(env).mutexes.get_mut(&mutex_id).unwrap();
-
-    let Some((locking_thread, lock_count)) = host_object.locked else {
-        log_dbg!("Locked mutex #{} for thread {}.", mutex_id, current_thread);
-        host_object.locked = Some((current_thread, NonZeroU32::new(1).unwrap()));
-        return Ok(1);
-    };
-
-    if locking_thread == current_thread {
-        match host_object.type_ {
-            PTHREAD_MUTEX_NORMAL => {
-                // This case would be a deadlock, we may as well panic.
-                panic!(
-                    "Attempted to lock non-error-checking mutex #{} for thread {}, already locked by same thread!",
-                    mutex_id, current_thread,
-                );
-            }
-            PTHREAD_MUTEX_ERRORCHECK => {
-                log_dbg!("Attempted to lock error-checking mutex #{} for thread {}, already locked by same thread! Returning EDEADLK.", mutex_id, current_thread);
-                return Err(EDEADLK);
-            }
-            PTHREAD_MUTEX_RECURSIVE => {
-                log_dbg!(
-                    "Increasing lock level on recursive mutex #{}, currently locked by thread {}.",
-                    mutex_id,
-                    locking_thread,
-                );
-                host_object.locked = Some((locking_thread, lock_count.checked_add(1).unwrap()));
-                return Ok(lock_count.get() + 1);
-            }
-            _ => unreachable!(),
-        }
-    }
-
-    // Add to the waiting count, so that the mutex isn't destroyed. This is subtracted in
-    // [host_mutex_relock_unblocked].
-    host_object.waiting_count += 1;
-
-    // Mutex is already locked, block thread until it isn't.
-    env.block_on_mutex(mutex_id);
-    // Lock count is always 1 after a thread-blocking lock.
-    Ok(1)
-}
-
-/// Unlocks a mutex and returns the lock count or an error (as errno). Similar to
-/// pthread_mutex_unlock, but for host code.
-pub fn host_mutex_unlock(env: &mut Environment, mutex_id: HostMutexId) -> Result<u32, i32> {
-    let current_thread = env.current_thread;
-    let host_object: &mut _ = State::get_mut(env).mutexes.get_mut(&mutex_id).unwrap();
-
-    let Some((locking_thread, lock_count)) = host_object.locked else {
-        match host_object.type_ {
-            PTHREAD_MUTEX_NORMAL => {
-                // This case is undefined, we may as well panic.
-                panic!(
-                    "Attempted to unlock non-error-checking mutex #{} for thread {}, already unlocked!",
-                    mutex_id, current_thread,
-                );
-            },
-            PTHREAD_MUTEX_ERRORCHECK | PTHREAD_MUTEX_RECURSIVE => {
-                log_dbg!(
-                    "Attempted to unlock error-checking or recursive mutex #{} for thread {}, already unlocked! Returning EPERM.",
-                    mutex_id, current_thread,
-                );
-                return Err(EPERM);
-            },
-            _ => unreachable!(),
-        }
-    };
-
-    if locking_thread != current_thread {
-        match host_object.type_ {
-            PTHREAD_MUTEX_NORMAL => {
-                // This case is undefined, we may as well panic.
-                panic!(
-                    "Attempted to unlock non-error-checking mutex #{} for thread {}, locked by different thread {}!",
-                    mutex_id, current_thread, locking_thread,
-                );
-            }
-            PTHREAD_MUTEX_ERRORCHECK | PTHREAD_MUTEX_RECURSIVE => {
-                log_dbg!(
-                    "Attempted to unlock error-checking or recursive mutex #{} for thread {}, locked by different thread {}! Returning EPERM.",
-                    mutex_id, current_thread, locking_thread,
-                );
-                return Err(EPERM);
-            }
-            _ => unreachable!(),
-        }
-    }
-
-    if lock_count.get() == 1 {
-        log_dbg!(
-            "Unlocked mutex #{} for thread {}.",
-            mutex_id,
-            current_thread
-        );
-        host_object.locked = None;
-        Ok(0)
-    } else {
-        assert!(host_object.type_ == PTHREAD_MUTEX_RECURSIVE);
-        log_dbg!(
-            "Decreasing lock level on recursive mutex #{}, currently locked by thread {}.",
-            mutex_id,
-            locking_thread
-        );
-        host_object.locked = Some((
-            locking_thread,
-            NonZeroU32::new(lock_count.get() - 1).unwrap(),
-        ));
-        Ok(lock_count.get() - 1)
-    }
-}
-
-/// Destroys a mutex and returns an error on failure (as errno). Similar to
-/// pthread_mutex_destroy, but for host code. Note that the mutex is not destroyed on an Err return.
-pub fn host_mutex_destroy(env: &mut Environment, mutex_id: HostMutexId) -> Result<(), i32> {
-    let state = State::get_mut(env);
-    let host_object = state.mutexes.get_mut(&mutex_id).unwrap();
-    if host_object.locked.is_some() {
-        log_dbg!("Attempted to destroy currently locked mutex, returning EBUSY!");
-        return Err(EBUSY);
-    } else if host_object.waiting_count != 0 {
-        log_dbg!("Attempted to destroy mutex with waiting locks, returning EBUSY!");
-        return Err(EBUSY);
-    }
-    // TODO?: If we switch to a vec-based system, we should reuse destroyed ids if they are at the
-    // top of the stack.
-    state.mutexes.remove(&mutex_id);
-    Ok(())
-}
-
-pub fn host_mutex_is_locked(env: &Environment, mutex_id: HostMutexId) -> bool {
-    let state = State::get(env);
-    state
-        .mutexes
-        .get(&mutex_id)
-        .map_or(false, |host_obj| host_obj.locked.is_some())
-}
-
-/// Relock mutex that was just unblocked. This should probably only be used by the thread scheduler.
-pub fn host_mutex_relock_unblocked(env: &mut Environment, mutex_id: HostMutexId) {
-    host_mutex_lock(env, mutex_id).unwrap();
-    State::get_mut(env)
-        .mutexes
-        .get_mut(&mutex_id)
-        .unwrap()
-        .waiting_count -= 1;
 }
 
 pub const FUNCTIONS: FunctionExports = &[

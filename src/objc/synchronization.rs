@@ -14,13 +14,11 @@
 //! - [Source code for
 //! `objc_sync_enter/exit`](https://opensource.apple.com/source/objc4/objc4-551.1/runtime/Accessors.subproj/objc-accessors.mm.auto.html),
 //! otherwise undocumented.
-use crate::{
-    environment::Environment,
-    libc::pthread::mutex::{
-        host_mutex_destroy, host_mutex_init, host_mutex_lock, host_mutex_unlock,
-        PTHREAD_MUTEX_RECURSIVE,
-    },
+use crate::environment::mutex::{
+    host_mutex_destroy, host_mutex_init, host_mutex_lock, host_mutex_unlock,
+    MutexType,
 };
+use crate::Environment;
 
 use super::id;
 
@@ -36,7 +34,7 @@ pub(super) fn objc_sync_enter(env: &mut Environment, obj: id) -> u32 {
         );
         host_mutex_lock(env, *mutex_id).unwrap();
     } else {
-        let mutex_id = host_mutex_init(env, PTHREAD_MUTEX_RECURSIVE);
+        let mutex_id = host_mutex_init(env, MutexType::PTHREAD_MUTEX_RECURSIVE);
         log_dbg!(
             "Entry of {:#x} to objc_sync_enter, using mutex #{}",
             obj.to_bits(),

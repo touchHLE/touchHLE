@@ -8,9 +8,12 @@
 //! Unlike its siblings, this module should be considered private and only used
 //! via the re-exports one level up.
 
-use crate::abi::GuestRet;
-use crate::libc::pthread::mutex::{host_mutex_is_locked, host_mutex_relock_unblocked, HostMutexId};
+pub mod mutex;
 
+use crate::abi::GuestRet;
+
+use crate::environment::mutex::{host_mutex_is_locked, host_mutex_relock_unblocked};
+use crate::libc::pthread::mutex::HostMutexId;
 use crate::mem::{MutPtr, MutVoidPtr};
 use crate::{
     abi, bundle, cpu, dyld, frameworks, fs, gdb, image, libc, mach_o, mem, objc, options, stack,
@@ -18,6 +21,8 @@ use crate::{
 };
 use std::net::TcpListener;
 use std::time::{Duration, Instant};
+
+use self::mutex::MutexState;
 
 /// Index into the [Vec] of threads. Thread 0 is always the main thread.
 pub type ThreadID = usize;
@@ -88,6 +93,7 @@ pub struct Environment {
     pub threads: Vec<Thread>,
     pub libc_state: libc::State,
     pub framework_state: frameworks::State,
+    pub mutex_state: MutexState,
     pub options: options::Options,
     gdb_server: Option<gdb::GdbServer>,
 }
@@ -238,6 +244,7 @@ impl Environment {
             current_thread: 0,
             threads: vec![main_thread],
             libc_state: Default::default(),
+            mutex_state: Default::default(),
             framework_state: Default::default(),
             options,
             gdb_server: None,
@@ -398,8 +405,8 @@ impl Environment {
     }
 
     /// Put the current thread to sleep for some duration, running other threads
-    /// in the meantime as appropriate. Functions that call sleep right before they return should set
-    /// tail_call.
+    /// in the meantime as appropriate. Functions that call sleep right before they return back to the main run loop ([Environment::run])
+    /// should set tail_call.
     pub fn sleep(&mut self, duration: Duration, tail_call: bool) {
         assert!(matches!(
             self.threads[self.current_thread].blocked_by,
@@ -414,7 +421,8 @@ impl Environment {
         let until = Instant::now().checked_add(duration).unwrap();
         self.threads[self.current_thread].blocked_by = ThreadBlock::Sleeping(until);
         // For non tail-call sleeps (such as in NSRunLoop), we want to poll other threads but can't
-        // return until the sleep in completed, so we'll run in a seperate
+        // return back to the run loop, since it would go through the calling function.
+        // As such, we have to call into the run loop instead.
         if !tail_call {
             let old_pc = self.cpu.pc_with_thumb_bit();
             self.cpu.branch(self.dyld.return_to_host_routine());
@@ -724,7 +732,7 @@ impl Environment {
                                     self.current_thread,
                                     joinee_thread
                                 );
-                                // Write the return valiue, unless the pointer to write to is null.
+                                // Write the return value, unless the pointer to write to is null.
                                 if !ptr.is_null() {
                                     self.mem.write(
                                         ptr,

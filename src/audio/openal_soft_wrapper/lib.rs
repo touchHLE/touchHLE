@@ -58,6 +58,8 @@ extern "C" {
     pub fn alcMakeContextCurrent(context: *mut ALCcontext) -> ALCboolean;
     pub fn alcGetCurrentContext() -> *mut ALCcontext;
 
+    pub fn alcSuspendContext(context: *mut ALCcontext);
+
     pub fn alcGetError(device: *mut ALCdevice) -> ALCenum;
 }
 
@@ -110,6 +112,7 @@ extern "C" {
     pub fn alListenerf(param: ALenum, value: ALfloat);
     pub fn alListenerfv(param: ALenum, values: *const ALfloat);
     pub fn alListener3f(param: ALenum, value1: ALfloat, value2: ALfloat, value3: ALfloat);
+    pub fn alGetListenerf(param: ALenum, value: *mut ALfloat);
 
     pub fn alGenSources(n: ALsizei, sources: *mut ALuint);
     pub fn alDeleteSources(n: ALsizei, sources: *const ALuint);

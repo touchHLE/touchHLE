@@ -119,6 +119,11 @@ fn alcMakeContextCurrent(env: &mut Environment, context: MutPtr<GuestALCcontext>
     res != al::ALC_FALSE
 }
 
+fn alcSuspendContext(env: &mut Environment, context: MutPtr<GuestALCcontext>) {
+    let host_context = State::get(env).contexts.get(&context).copied().unwrap();
+    unsafe { al::alcSuspendContext(host_context) };
+}
+
 fn alcGetProcAddress(
     env: &mut Environment,
     _device: ConstPtr<GuestALCdevice>,
@@ -175,6 +180,9 @@ fn alListener3f(
     value3: ALfloat,
 ) {
     unsafe { al::alListener3f(param, value1, value2, value3) };
+}
+fn alGetListenerf(env: &mut Environment, param: ALenum, value: MutPtr<ALfloat>) {
+    unsafe { al::alGetListenerf(param, env.mem.ptr_at_mut(value, 1)) };
 }
 
 fn alGenSources(env: &mut Environment, n: ALsizei, sources: MutPtr<ALuint>) {
@@ -388,9 +396,6 @@ fn alcIsExtensionPresent(
 fn alcProcessContext(_env: &mut Environment, _context: MutPtr<GuestALCcontext>) {
     todo!();
 }
-fn alcSuspendContext(_env: &mut Environment, _context: MutPtr<GuestALCcontext>) {
-    todo!();
-}
 fn alIsBuffer(_env: &mut Environment, _buffer: ALuint) -> ALboolean {
     todo!();
 }
@@ -446,9 +451,6 @@ fn alIsEnabled(_env: &mut Environment, _capability: ALenum) -> ALboolean {
     todo!();
 }
 fn alListeneri(_env: &mut Environment, _param: ALenum, _value: ALint) {
-    todo!();
-}
-fn alGetListenerf(_env: &mut Environment, _param: ALenum, _value: MutPtr<ALfloat>) {
     todo!();
 }
 fn alGetListener3f(

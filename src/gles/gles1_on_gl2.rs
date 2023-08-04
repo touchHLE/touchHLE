@@ -1203,10 +1203,7 @@ impl GLES for GLES1OnGL2 {
                 let index = if index_is_nibble {
                     (indices[i / 2] >> ((1 - (i % 2)) * 4)) & 0xf
                 } else {
-                    // I'm really unsure if this is correct. This is what the
-                    // OpenGL ES 1.1 spec says, but the extension spec (which it
-                    // supposedly incorporates) says the opposite?!
-                    indices[i / 4..][3 - (i % 4)]
+                    indices[i]
                 } as usize;
                 let palette_entry = &palette[index * palette_entry_size..][..palette_entry_size];
                 decoded.extend_from_slice(palette_entry);

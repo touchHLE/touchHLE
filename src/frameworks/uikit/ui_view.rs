@@ -5,12 +5,13 @@
  */
 //! `UIView`.
 
+pub mod ui_alert_view;
 pub mod ui_control;
 pub mod ui_image_view;
 pub mod ui_window;
 
 use crate::frameworks::core_graphics::{CGFloat, CGPoint, CGRect};
-use crate::frameworks::foundation::ns_string::{get_static_str, to_rust_string};
+use crate::frameworks::foundation::ns_string::get_static_str;
 use crate::frameworks::foundation::NSUInteger;
 use crate::objc::{
     id, msg, nil, objc_classes, release, retain, Class, ClassExports, HostObject, NSZonePtr,
@@ -308,33 +309,6 @@ pub const CLASSES: ClassExports = objc_classes! {
     msg![env; layer setFrame:frame]
 }
 
-@end
-
-@implementation UIAlertView: UIView
-- (id)initWithTitle:(id)title
-                      message:(id)message
-                     delegate:(id)delegate
-            cancelButtonTitle:(id)cancelButtonTitle
-            otherButtonTitles:(id)otherButtonTitles {
-
-    log!("TODO: [(UIAlertView*){:?} initWithTitle:{:?} message:{:?} delegate:{:?} cancelButtonTitle:{:?} otherButtonTitles:{:?}]", this, title, message, delegate, cancelButtonTitle, otherButtonTitles);
-
-    let msg = to_rust_string(env, message);
-    let title = to_rust_string(env, title);
-
-    log!("UIAlertView: title: {:?}, message: {:?}", title, msg);
-
-    let host_object: &mut UIViewHostObject = env.objc.borrow_mut(this);
-    let layer = host_object.layer;
-    () = msg![env; layer setDelegate:this];
-
-    env.framework_state.uikit.ui_view.views.push(this);
-
-    this
-}
-- (())show {
-    log!("TODO: [(UIAlertView*){:?} show]", this);
-}
 @end
 
 };

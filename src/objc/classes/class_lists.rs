@@ -54,6 +54,7 @@ pub const CLASS_LISTS: &[super::ClassExports] = &[
     uikit::ui_screen::CLASSES,
     uikit::ui_touch::CLASSES,
     uikit::ui_view::CLASSES,
+    uikit::ui_view::ui_alert_view::CLASSES,
     uikit::ui_view::ui_control::CLASSES,
     uikit::ui_view::ui_control::ui_text_field::CLASSES,
     uikit::ui_view::ui_image_view::CLASSES,

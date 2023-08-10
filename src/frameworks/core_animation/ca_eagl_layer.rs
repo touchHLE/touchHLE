@@ -48,7 +48,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 pub fn find_fullscreen_eagl_layer(env: &mut Environment) -> id {
     // Assumes the last window in the list is the one on top.
     // TODO: this is not correct once we support zPosition.
-    let Some(&top_window) = env.framework_state.uikit.ui_window.visible_windows.last() else {
+    let Some(&top_window) = env.framework_state.uikit.ui_view.ui_window.visible_windows.last() else {
         return nil;
     };
 

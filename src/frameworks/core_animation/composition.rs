@@ -37,7 +37,7 @@ pub fn recomposite_if_necessary(env: &mut Environment) -> Option<Instant> {
     // TODO: this is not correct once we support zPosition.
     // TODO: can there be windows smaller than the screen? If so we need to draw
     //       all of them.
-    let Some(&top_window) = env.framework_state.uikit.ui_window.visible_windows.last() else {
+    let Some(&top_window) = env.framework_state.uikit.ui_view.ui_window.visible_windows.last() else {
         log_dbg!("No visible window, skipping composition");
         return None;
     };

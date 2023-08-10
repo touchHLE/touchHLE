@@ -5,6 +5,8 @@
  */
 //! `UIControl`.
 
+pub mod ui_text_field;
+
 use crate::objc::{objc_classes, ClassExports};
 
 pub const CLASSES: ClassExports = objc_classes! {

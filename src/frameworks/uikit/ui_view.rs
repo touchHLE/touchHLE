@@ -5,6 +5,10 @@
  */
 //! `UIView`.
 
+pub mod ui_control;
+pub mod ui_image_view;
+pub mod ui_window;
+
 use crate::frameworks::core_graphics::{CGFloat, CGPoint, CGRect};
 use crate::frameworks::foundation::ns_string::{get_static_str, to_rust_string};
 use crate::frameworks::foundation::NSUInteger;
@@ -16,6 +20,7 @@ use crate::objc::{
 pub struct State {
     /// List of views for internal purposes. Non-retaining!
     pub(super) views: Vec<id>,
+    pub ui_window: ui_window::State,
 }
 
 #[derive(Default)]
@@ -38,7 +43,7 @@ pub(super) struct UIViewHostObject {
     /// The superview. This is a weak reference.
     superview: id,
     /// Subclass-specific data
-    pub(super) subclass: UIViewSubclass,
+    subclass: UIViewSubclass,
 }
 impl HostObject for UIViewHostObject {}
 

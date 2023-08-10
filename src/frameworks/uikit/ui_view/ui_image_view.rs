@@ -5,7 +5,7 @@
  */
 //! `UIImageView`.
 
-use super::ui_view::{UIViewHostObject, UIViewSubclass};
+use super::{UIViewHostObject, UIViewSubclass};
 use crate::frameworks::core_graphics::cg_image::CGImageRef;
 use crate::frameworks::core_graphics::{CGPoint, CGRect, CGSize};
 use crate::objc::{id, msg, msg_super, nil, objc_classes, release, retain, ClassExports};

@@ -10,6 +10,8 @@ pub mod ui_control;
 pub mod ui_image_view;
 pub mod ui_window;
 
+use super::ui_graphics::{UIGraphicsPopContext, UIGraphicsPushContext};
+use crate::frameworks::core_graphics::cg_context::{CGContextClearRect, CGContextRef};
 use crate::frameworks::core_graphics::{CGFloat, CGPoint, CGRect};
 use crate::frameworks::foundation::ns_string::get_static_str;
 use crate::frameworks::foundation::NSUInteger;
@@ -43,6 +45,7 @@ pub(super) struct UIViewHostObject {
     subviews: Vec<id>,
     /// The superview. This is a weak reference.
     superview: id,
+    clears_context_before_drawing: bool,
     /// Subclass-specific data
     subclass: UIViewSubclass,
 }
@@ -55,7 +58,13 @@ pub const CLASSES: ClassExports = objc_classes! {
 @implementation UIView: UIResponder
 
 + (id)allocWithZone:(NSZonePtr)_zone {
-    let host_object = Box::<UIViewHostObject>::default();
+    let host_object = Box::new(UIViewHostObject {
+        layer: nil,
+        subviews: Vec::new(),
+        superview: nil,
+        clears_context_before_drawing: true,
+        subclass: UIViewSubclass::UIView,
+    });
     env.objc.alloc_object(this, host_object, &mut env.mem)
 }
 
@@ -218,6 +227,7 @@ pub const CLASSES: ClassExports = objc_classes! {
         layer,
         superview,
         subviews,
+        clears_context_before_drawing: _,
         subclass,
     } = std::mem::take(env.objc.borrow_mut(this));
 
@@ -283,6 +293,12 @@ pub const CLASSES: ClassExports = objc_classes! {
     msg![env; layer setBackgroundColor:color]
 }
 
+// TODO: support setNeedsDisplayInRect:
+- (())setNeedsDisplay {
+    let layer = env.objc.borrow::<UIViewHostObject>(this).layer;
+    msg![env; layer setNeedsDisplay]
+}
+
 - (CGRect)bounds {
     let layer = env.objc.borrow::<UIViewHostObject>(this).layer;
     msg![env; layer bounds]
@@ -307,6 +323,31 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (())setFrame:(CGRect)frame {
     let layer = env.objc.borrow::<UIViewHostObject>(this).layer;
     msg![env; layer setFrame:frame]
+}
+
+- (bool)clearsContextBeforeDrawing {
+    env.objc.borrow::<UIViewHostObject>(this).clears_context_before_drawing
+}
+- (())setClearsContextBeforeDrawing:(bool)v {
+    env.objc.borrow_mut::<UIViewHostObject>(this).clears_context_before_drawing = v;
+}
+
+// Drawing stuff that views should override
+- (())drawRect:(CGRect)_rect {
+    // default implementation does nothing
+}
+
+// CALayerDelegate implementation
+- (())drawLayer:(id)layer // CALayer*
+      inContext:(CGContextRef)context {
+    let mut bounds: CGRect = msg![env; layer bounds];
+    bounds.origin = CGPoint { x: 0.0, y: 0.0 }; // FIXME: not tested
+    if env.objc.borrow::<UIViewHostObject>(this).clears_context_before_drawing {
+        CGContextClearRect(env, context, bounds);
+    }
+    UIGraphicsPushContext(env, context);
+    () = msg![env; this drawRect:bounds];
+    UIGraphicsPopContext(env);
 }
 
 @end

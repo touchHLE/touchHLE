@@ -51,6 +51,14 @@ pub const CLASSES: ClassExports = objc_classes! {
     this
 }
 
+- (id)image {
+    let host_obj = env.objc.borrow_mut::<UIViewHostObject>(this);
+    let &UIViewSubclass::UIImageView { image } = &host_obj.subclass else {
+        panic!();
+    };
+    image
+}
+
 - (())setImage:(id)new_image { // UIImage*
     let host_obj = env.objc.borrow_mut::<UIViewHostObject>(this);
     let UIViewSubclass::UIImageView { ref mut image } = host_obj.subclass else {
@@ -60,10 +68,19 @@ pub const CLASSES: ClassExports = objc_classes! {
     retain(env, new_image);
     release(env, old_image);
 
-    // TODO: maybe this should be done in `displayLayer:` once we implement that
-    // (or whatever its UIKit equivalent is)?
-    let cg_image: CGImageRef = msg![env; new_image CGImage];
     let layer: id = msg![env; this layer];
+    () = msg![env; layer setNeedsDisplay];
+}
+
+// Normally a UIKit view is drawn into a CGContextRef by drawRect:, which is
+// presumably called from drawLayer:inContext:. But for UIImageView, this would
+// be wasteful, we can tell Core Animation to display the image directly rather
+// than copying it to a (CGBitmapContext). If displayLayer: is defined, then
+// drawLayer:inContext: doesn't get called, so I assume this is what the real
+// UIKit does?
+- (())displayLayer:(id)layer {
+    let image: id = msg![env; this image];
+    let cg_image: CGImageRef = msg![env; image CGImage];
     () = msg![env; layer setContents:cg_image];
 }
 

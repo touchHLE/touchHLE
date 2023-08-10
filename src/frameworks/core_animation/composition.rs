@@ -11,12 +11,15 @@
 
 use super::ca_eagl_layer::find_fullscreen_eagl_layer;
 use super::ca_layer::CALayerHostObject;
-use crate::frameworks::core_graphics::{cg_image, CGFloat, CGPoint, CGRect, CGSize};
+use crate::frameworks::core_graphics::{
+    cg_bitmap_context, cg_image, CGFloat, CGPoint, CGRect, CGSize,
+};
 use crate::frameworks::uikit::ui_color;
 use crate::gles::gles11_raw as gles11; // constants only
 use crate::gles::gles11_raw::types::*;
 use crate::gles::present::present_frame;
 use crate::gles::GLES;
+use crate::mem::Mem;
 use crate::objc::{id, msg, msg_class, nil, ObjC};
 use crate::Environment;
 use std::time::{Duration, Instant};
@@ -83,6 +86,11 @@ pub fn recomposite_if_necessary(env: &mut Environment) -> Option<Instant> {
         .composition
         .recomposite_next = new_recomposite_next;
 
+    let root_layer: id = msg![env; top_window layer];
+
+    // Ensure layer bitmaps are up to date.
+    display_layers(env, root_layer);
+
     let screen_bounds: CGRect = {
         let screen: id = msg_class![env; UIScreen mainScreen];
         msg![env; screen bounds]
@@ -99,7 +107,6 @@ pub fn recomposite_if_necessary(env: &mut Environment) -> Option<Instant> {
     // TODO: draw status bar if it's not hidden
 
     // Initial state for layer tree traversal (see composite_layer_recursive)
-    let layer: id = msg![env; top_window layer];
     let origin = CGPoint { x: 0.0, y: 0.0 };
     let clip_to = CGRect {
         origin,
@@ -188,7 +195,8 @@ pub fn recomposite_if_necessary(env: &mut Environment) -> Option<Instant> {
         composite_layer_recursive(
             gles,
             &mut env.objc,
-            layer,
+            &env.mem,
+            root_layer,
             origin,
             clip_to,
             opacity,
@@ -223,10 +231,37 @@ pub fn recomposite_if_necessary(env: &mut Environment) -> Option<Instant> {
     new_recomposite_next
 }
 
+/// Call `displayIfNeeded` on all relevant layers in the tree, so their bitmaps
+/// are up to date before compositing.
+fn display_layers(env: &mut Environment, root_layer: id) {
+    // Tell layers to redraw themselves if needed.
+
+    fn traverse(objc: &ObjC, layer: id, layers_needing_display: &mut Vec<id>) {
+        let host_obj = objc.borrow::<CALayerHostObject>(layer);
+        if host_obj.hidden {
+            return;
+        }
+        if host_obj.needs_display {
+            layers_needing_display.push(layer);
+        }
+        for &layer in &host_obj.sublayers {
+            traverse(objc, layer, layers_needing_display);
+        }
+    }
+
+    let mut layers_needing_display = Vec::new();
+    traverse(&env.objc, root_layer, &mut layers_needing_display);
+
+    for layer in layers_needing_display {
+        () = msg![env; layer displayIfNeeded];
+    }
+}
+
 /// Traverses the layer tree and draws each layer.
 unsafe fn composite_layer_recursive(
     gles: &mut dyn GLES,
     objc: &mut ObjC,
+    mem: &Mem,
     layer: id,
     origin: CGPoint,
     clip_to: CGRect,
@@ -271,7 +306,9 @@ unsafe fn composite_layer_recursive(
     // re-borrow mutably
     let host_obj = objc.borrow_mut::<CALayerHostObject>(layer);
 
-    let need_texture = host_obj.presented_pixels.is_some() || host_obj.contents != nil;
+    let need_texture = host_obj.presented_pixels.is_some()
+        || host_obj.contents != nil
+        || host_obj.cg_context.is_some();
     let need_update = need_texture && !host_obj.gles_texture_is_up_to_date;
 
     if need_texture {
@@ -307,13 +344,22 @@ unsafe fn composite_layer_recursive(
     // re-borrow immutably
     let host_obj = objc.borrow::<CALayerHostObject>(layer);
 
-    // Update texture with CGImageRef pixels, if any
-    if need_update && host_obj.contents != nil {
-        let image = cg_image::borrow_image(objc, host_obj.contents);
+    // Update texture with CGImageRef or CGContextRef pixels, if any
+    if need_update {
+        if host_obj.contents != nil {
+            let image = cg_image::borrow_image(objc, host_obj.contents);
 
-        // No special handling for opacity is needed here: the alpha channel
-        // on an image is meaningful and won't be ignored.
-        upload_rgba8_pixels(gles, image.pixels(), image.dimensions());
+            // No special handling for opacity is needed here: the alpha channel
+            // on an image is meaningful and won't be ignored.
+            upload_rgba8_pixels(gles, image.pixels(), image.dimensions());
+        } else if let Some(cg_context) = host_obj.cg_context {
+            // Make sure this is in sync with the code in ca_layer.rs that
+            // sets up the context!
+            let (width, height, data) = cg_bitmap_context::get_data(objc, cg_context);
+            let size = width * height * 4;
+            let pixels = mem.bytes_at(data.cast(), size);
+            upload_rgba8_pixels(gles, pixels, (width, height));
+        }
     }
 
     // re-borrow mutably
@@ -326,7 +372,7 @@ unsafe fn composite_layer_recursive(
     // Draw texture, if any
     if need_texture {
         gles.Color4f(opacity, opacity, opacity, opacity);
-        if opacity == 1.0 && host_obj.opaque {
+        if opacity == 1.0 && host_obj.opaque && host_obj.background_color == nil {
             gles.Disable(gles11::BLEND);
         } else {
             gles.Enable(gles11::BLEND);
@@ -363,6 +409,7 @@ unsafe fn composite_layer_recursive(
         composite_layer_recursive(
             gles,
             objc,
+            mem,
             child_layer,
             /* origin: */
             CGPoint {

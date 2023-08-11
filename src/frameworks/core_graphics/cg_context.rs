@@ -62,7 +62,7 @@ pub fn CGContextRetain(env: &mut Environment, c: CGContextRef) -> CGContextRef {
     }
 }
 
-fn CGContextSetRGBFillColor(
+pub fn CGContextSetRGBFillColor(
     env: &mut Environment,
     context: CGContextRef,
     red: CGFloat,

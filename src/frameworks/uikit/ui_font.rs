@@ -8,7 +8,7 @@
 use super::ui_graphics::UIGraphicsGetCurrentContext;
 use crate::font::{Font, TextAlignment, WrapMode};
 use crate::frameworks::core_graphics::cg_bitmap_context::CGBitmapContextDrawer;
-use crate::frameworks::core_graphics::{CGFloat, CGRect, CGSize};
+use crate::frameworks::core_graphics::{CGFloat, CGPoint, CGRect, CGSize};
 use crate::frameworks::foundation::NSInteger;
 use crate::objc::{autorelease, id, objc_classes, ClassExports, HostObject};
 use crate::Environment;
@@ -46,7 +46,6 @@ pub const UILineBreakModeCharacterWrap: UILineBreakMode = 1;
 pub const UILineBreakModeClip: UILineBreakMode = 2;
 #[allow(dead_code)]
 pub const UILineBreakModeHeadTruncation: UILineBreakMode = 3;
-#[allow(dead_code)]
 pub const UILineBreakModeTailTruncation: UILineBreakMode = 4;
 #[allow(dead_code)]
 pub const UILineBreakModeMiddleTruncation: UILineBreakMode = 5;
@@ -111,6 +110,9 @@ fn convert_line_break_mode(ui_mode: UILineBreakMode) -> WrapMode {
     match ui_mode {
         UILineBreakModeWordWrap => WrapMode::Word,
         UILineBreakModeCharacterWrap => WrapMode::Char,
+        // TODO: support this properly; fake support is so that UILabel works,
+        // which has this as its default line break mode
+        UILineBreakModeTailTruncation => WrapMode::Word,
         _ => unimplemented!("TODO: line break mode {}", ui_mode),
     }
 }
@@ -172,6 +174,50 @@ pub fn size_with_font(
     let wrap = constrained.map(|(size, ui_mode)| (size.width, convert_line_break_mode(ui_mode)));
 
     let (width, height) = font.calculate_text_size(host_object.size, text, wrap);
+
+    CGSize { width, height }
+}
+
+/// Called by the `drawAtPoint:` method family on `NSString`.
+pub fn draw_at_point(
+    env: &mut Environment,
+    font: id,
+    text: &str,
+    point: CGPoint,
+    width_and_line_break_mode: Option<(CGFloat, UILineBreakMode)>,
+) -> CGSize {
+    let context = UIGraphicsGetCurrentContext(env);
+
+    let host_object = env.objc.borrow::<UIFontHostObject>(font);
+
+    let font = get_font(
+        &mut env.framework_state.uikit.ui_font,
+        host_object.kind,
+        text,
+    );
+
+    let width_and_line_break_mode =
+        width_and_line_break_mode.map(|(width, ui_mode)| (width, convert_line_break_mode(ui_mode)));
+    let (width, height) =
+        font.calculate_text_size(host_object.size, text, width_and_line_break_mode);
+
+    let mut drawer = CGBitmapContextDrawer::new(&env.objc, &mut env.mem, context);
+
+    let fill_color = drawer.rgb_fill_color();
+
+    let translation = drawer.translation();
+    font.draw(
+        host_object.size,
+        text,
+        (translation.0 + point.x, translation.1 + point.y),
+        width_and_line_break_mode,
+        TextAlignment::Left,
+        |(x, y), coverage| {
+            let (r, g, b, a) = fill_color;
+            let (r, g, b, a) = (r * coverage, g * coverage, b * coverage, a * coverage);
+            drawer.put_pixel((x, y), (r, g, b, a));
+        },
+    );
 
     CGSize { width, height }
 }

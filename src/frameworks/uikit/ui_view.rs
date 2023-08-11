@@ -8,6 +8,7 @@
 pub mod ui_alert_view;
 pub mod ui_control;
 pub mod ui_image_view;
+pub mod ui_label;
 pub mod ui_window;
 
 use super::ui_graphics::{UIGraphicsPopContext, UIGraphicsPushContext};
@@ -26,6 +27,7 @@ pub struct State {
     pub ui_window: ui_window::State,
 }
 
+#[allow(clippy::enum_variant_names)]
 #[derive(Default)]
 pub(super) enum UIViewSubclass {
     #[default]
@@ -35,6 +37,7 @@ pub(super) enum UIViewSubclass {
         /// `UIImage*`
         image: id,
     },
+    UILabel(ui_label::UILabelData),
 }
 
 #[derive(Default)]

@@ -295,13 +295,21 @@ unsafe fn composite_layer_recursive(
     let absolute_frame_clipped = clip_rects(clip_to, absolute_frame);
 
     // Draw background color, if any
-    if host_obj.background_color != nil {
+    let have_background = if host_obj.background_color == nil {
+        false
+    } else {
         let (r, g, b, a) = ui_color::get_rgba(objc, host_obj.background_color);
-        gles.ClearColor(r * opacity, g * opacity, b * opacity, a * opacity);
-        let (x, y, w, h) = gl_rect_from_cg_rect(absolute_frame_clipped, scale_hack, fb_height);
-        gles.Scissor(x, y, w, h);
-        gles.Clear(gles11::COLOR_BUFFER_BIT);
-    }
+        // TODO: fully support alpha transparency for backgrounds
+        if a == 0.0 {
+            false
+        } else {
+            gles.ClearColor(r * opacity, g * opacity, b * opacity, a * opacity);
+            let (x, y, w, h) = gl_rect_from_cg_rect(absolute_frame_clipped, scale_hack, fb_height);
+            gles.Scissor(x, y, w, h);
+            gles.Clear(gles11::COLOR_BUFFER_BIT);
+            true
+        }
+    };
 
     // re-borrow mutably
     let host_obj = objc.borrow_mut::<CALayerHostObject>(layer);
@@ -372,7 +380,7 @@ unsafe fn composite_layer_recursive(
     // Draw texture, if any
     if need_texture {
         gles.Color4f(opacity, opacity, opacity, opacity);
-        if opacity == 1.0 && host_obj.opaque && host_obj.background_color == nil {
+        if opacity == 1.0 && host_obj.opaque && !have_background {
             gles.Disable(gles11::BLEND);
         } else {
             gles.Enable(gles11::BLEND);

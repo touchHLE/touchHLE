@@ -11,7 +11,7 @@ use super::ns_array;
 use super::{
     NSComparisonResult, NSOrderedAscending, NSOrderedDescending, NSOrderedSame, NSUInteger,
 };
-use crate::frameworks::core_graphics::{CGRect, CGSize};
+use crate::frameworks::core_graphics::{CGFloat, CGPoint, CGRect, CGSize};
 use crate::frameworks::uikit::ui_font::{
     self, UILineBreakMode, UILineBreakModeWordWrap, UITextAlignment, UITextAlignmentLeft,
 };
@@ -629,6 +629,22 @@ pub const CLASSES: ClassExports = objc_classes! {
     // TODO: avoid copy
     let text = to_rust_string(env, this);
     ui_font::size_with_font(env, font, &text, Some((size, line_break_mode)))
+}
+
+- (CGSize)drawAtPoint:(CGPoint)point
+             withFont:(id)font { // UIFont*
+    // TODO: avoid copy
+    let text = to_rust_string(env, this);
+    ui_font::draw_at_point(env, font, &text, point, None)
+}
+
+- (CGSize)drawAtPoint:(CGPoint)point
+             forWidth:(CGFloat)width
+             withFont:(id)font // UIFont*
+        lineBreakMode:(UILineBreakMode)line_break_mode {
+    // TODO: avoid copy
+    let text = to_rust_string(env, this);
+    ui_font::draw_at_point(env, font, &text, point, Some((width, line_break_mode)))
 }
 
 - (CGSize)drawInRect:(CGRect)rect

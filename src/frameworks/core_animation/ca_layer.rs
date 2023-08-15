@@ -5,6 +5,7 @@
  */
 //! `CALayer`.
 
+use crate::frameworks::core_foundation::{CFRelease, CFRetain};
 use crate::frameworks::core_graphics::cg_bitmap_context::{
     CGBitmapContextCreate, CGBitmapContextGetHeight, CGBitmapContextGetWidth,
 };
@@ -89,6 +90,7 @@ pub const CLASSES: ClassExports = objc_classes! {
         drawable_properties,
         contents,
         superlayer,
+        background_color,
         cg_context,
         ref mut sublayers,
         ..
@@ -101,6 +103,10 @@ pub const CLASSES: ClassExports = objc_classes! {
 
     if contents != nil {
         release(env, contents);
+    }
+
+    if background_color != nil {
+        CFRelease(env, background_color);
     }
 
     if let Some(cg_context) = cg_context {
@@ -229,8 +235,16 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (id)backgroundColor {
     env.objc.borrow::<CALayerHostObject>(this).background_color
 }
-- (())setBackgroundColor:(id)color {
-    env.objc.borrow_mut::<CALayerHostObject>(this).background_color = color;
+- (())setBackgroundColor:(id)new_color {
+    env.objc.borrow_mut::<CALayerHostObject>(this).background_color = new_color;
+    let host_obj = env.objc.borrow_mut::<CALayerHostObject>(this);
+    let old_color = std::mem::replace(&mut host_obj.background_color, new_color);
+    if new_color != nil {
+        CFRetain(env, new_color); // CFRetain doesn't like nil
+    }
+    if old_color != nil {
+        CFRelease(env, old_color); // CFRelease doesn't like nil
+    }
 }
 
 - (bool)needsDisplay {

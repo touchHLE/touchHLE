@@ -112,6 +112,8 @@ pub const CLASSES: ClassExports = objc_classes! {
         env.objc.borrow_mut::<CALayerHostObject>(sublayer).superlayer = nil;
         release(env, sublayer);
     }
+
+    env.objc.dealloc_object(this, &mut env.mem)
 }
 
 - (id)delegate {

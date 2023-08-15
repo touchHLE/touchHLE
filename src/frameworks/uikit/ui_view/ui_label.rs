@@ -83,12 +83,12 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (id)text {
     UILabelData::borrow_mut(&mut env.objc, this).text
 }
-- (())setText:(id)new_text { // UIString*
+- (())setText:(id)new_text { // NSString*
+    let new_text: id = msg![env; new_text copy];
     let old_text = std::mem::replace(
         &mut UILabelData::borrow_mut(&mut env.objc, this).text,
         new_text
     );
-    retain(env, new_text);
     release(env, old_text);
 
     () = msg![env; this setNeedsDisplay];

@@ -214,4 +214,36 @@ impl ObjC {
             false
         }
     }
+
+    /// Checks if a class overrides a method provided by its superclass.
+    ///
+    /// This looks through a superclass chain looking for the selector, stopping
+    /// when the superclass is hit (and panicking if it never is). It does not
+    /// check whether the selector is actually a method on the superclass.
+    pub fn class_overrides_method_of_superclass(
+        &self,
+        class: Class,
+        sel: SEL,
+        superclass: Class,
+    ) -> bool {
+        let mut class = class;
+        loop {
+            if class == superclass {
+                return false;
+            }
+
+            let &ClassHostObject {
+                superclass,
+                ref methods,
+                ..
+            } = self.borrow(class);
+            if methods.contains_key(&sel) {
+                return true;
+            } else if superclass == nil {
+                panic!();
+            } else {
+                class = superclass;
+            }
+        }
+    }
 }

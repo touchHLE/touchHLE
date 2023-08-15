@@ -16,7 +16,7 @@ use crate::frameworks::core_graphics::cg_image::{
 };
 use crate::frameworks::core_graphics::{CGPoint, CGRect, CGSize};
 use crate::mem::{GuestUSize, Ptr};
-use crate::objc::{id, msg, nil, objc_classes, release, retain, ClassExports, HostObject};
+use crate::objc::{id, msg, nil, objc_classes, release, retain, ClassExports, HostObject, ObjC};
 
 pub(super) struct CALayerHostObject {
     /// Possibly nil, usually a UIView. This is a weak reference.
@@ -268,13 +268,43 @@ pub const CLASSES: ClassExports = objc_classes! {
         return;
     }
 
+    let delegate_class = ObjC::read_isa(delegate, &env.mem);
+
     // According to the Core Animation Programming Guide, a layer delegate must
     // provide either displayLayer: or drawLayer:inContext:, and the former is
     // called if both are defined.
 
-    if env.objc.object_has_method_named(&env.mem, delegate, "displayLayer:") {
+    if env.objc.class_has_method_named(delegate_class, "displayLayer:") {
         () = msg![env; delegate displayLayer:this];
         return;
+    }
+
+    // UIView has a method called drawRect: that subclasses override if they
+    // need custom drawing. touchHLE's UIView (a CALayerDelegate) provides
+    // an implementation of drawLayer:inContext: that calls drawRect:.
+    // This maintains a clean separation of UIView and CALayer, but it also
+    // means that CALayer has no idea which views actually need custom drawing,
+    // because they all have the inherited drawLayer:inContext: method.
+    // To avoid wasting space and time on unnecessary bitmaps, let's pierce the
+    // veil.
+    // (TODO: somehow do this optimization in UIView rather than CALayer.
+    // Apparently Apple do it that way: https://stackoverflow.com/q/4979192)
+    let ui_view_class = env.objc.get_known_class("UIView", &mut env.mem);
+    if env.objc.class_is_subclass_of(delegate_class, ui_view_class) {
+        let draw_rect_sel = env.objc.lookup_selector("drawRect:").unwrap();
+        let draw_layer_sel = env.objc.lookup_selector("drawLayer:inContext:").unwrap();
+        if !env.objc.class_overrides_method_of_superclass(
+            delegate_class,
+            draw_rect_sel,
+            ui_view_class
+        ) && !env.objc.class_overrides_method_of_superclass(
+            delegate_class,
+            draw_layer_sel,
+            ui_view_class
+        ) {
+            log_dbg!("Skipped render! {:?} does not override UIView's drawRect: or drawLayer:inContext: methods.", delegate_class);
+            return;
+        }
     }
 
     let &mut CALayerHostObject {

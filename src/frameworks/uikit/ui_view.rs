@@ -38,6 +38,7 @@ pub(super) enum UIViewSubclass {
         image: id,
     },
     UILabel(ui_label::UILabelData),
+    UIControl(ui_control::UIControlData),
 }
 
 #[derive(Default)]

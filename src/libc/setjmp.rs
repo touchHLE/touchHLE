@@ -19,11 +19,12 @@ use crate::dyld::{export_c_func, FunctionExports};
 use crate::Environment;
 
 /// The signature of this is incomplete because it's a stub (see module docs).
-fn setjmp(env: &mut Environment) {
+fn setjmp(env: &mut Environment) -> i32 {
     log_dbg!(
         "TODO: setjmp() at {:#x}",
         env.cpu.regs()[crate::cpu::Cpu::LR]
     );
+    0 // no longjmp() was performed
 }
 
 pub const FUNCTIONS: FunctionExports = &[export_c_func!(setjmp())];

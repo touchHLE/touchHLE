@@ -138,12 +138,6 @@ impl<T: HostObject> AnyHostObject for T {
     fn as_any_mut<'a>(&'a mut self) -> &'a mut (dyn Any + 'static) {
         self
     }
-    /*fn as_superclass<'a>(&'a self) -> Option<&'a (dyn AnyHostObject + 'static)> {
-        <T as HostObject>::as_superclass(self)
-    }
-    fn as_superclass_mut<'a>(&'a mut self) -> Option<&'a (dyn mut AnyHostObject + 'static)> {
-        <T as HostObject>::as_superclass_mut(self)
-    }*/
 }
 
 /// Empty host object used by `[NSObject alloc]`.

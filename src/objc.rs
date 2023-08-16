@@ -34,7 +34,9 @@ pub use messages::{
     autorelease, msg, msg_class, msg_send, msg_send_super2, msg_super, objc_super, release, retain,
 };
 pub use methods::{GuestIMP, HostIMP, IMP};
-pub use objects::{id, nil, AnyHostObject, HostObject, TrivialHostObject};
+pub use objects::{
+    id, impl_HostObject_with_superclass, nil, AnyHostObject, HostObject, TrivialHostObject,
+};
 pub use selectors::{selector, SEL};
 
 use classes::{ClassHostObject, FakeClass, UnimplementedClass, CLASS_LISTS};

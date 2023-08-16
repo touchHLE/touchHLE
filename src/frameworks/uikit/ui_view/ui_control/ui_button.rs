@@ -5,13 +5,13 @@
  */
 //! `UIButton`.
 
-use super::super::{UIViewHostObject, UIViewSubclass};
-use super::{UIControlState, UIControlStateNormal, UIControlSubclass};
+use super::{UIControlState, UIControlStateNormal};
 use crate::frameworks::core_graphics::CGRect;
 use crate::frameworks::foundation::NSInteger;
 use crate::frameworks::uikit::ui_font::UITextAlignmentCenter;
 use crate::objc::{
-    autorelease, id, msg, msg_class, msg_super, objc_classes, release, ClassExports, ObjC,
+    autorelease, id, impl_HostObject_with_superclass, msg, msg_class, msg_super, nil, objc_classes,
+    release, ClassExports, NSZonePtr,
 };
 
 type UIButtonType = NSInteger;
@@ -26,21 +26,20 @@ const UIButtonTypeInfoDark: UIButtonType = 4;
 #[allow(dead_code)]
 const UIButtonTypeContactAdd: UIButtonType = 5;
 
-pub struct UIButtonData {
+pub struct UIButtonHostObject {
+    superclass: super::UIControlHostObject,
     type_: UIButtonType,
     /// `UILabel*`
     title_label: id,
 }
-impl UIButtonData {
-    fn borrow_mut(objc: &mut ObjC, ui_button: id) -> &mut Self {
-        let host_obj = objc.borrow_mut::<UIViewHostObject>(ui_button);
-        let UIViewSubclass::UIControl(ref mut data) = host_obj.subclass else {
-            panic!();
-        };
-        let UIControlSubclass::UIButton(ref mut data) = data.subclass else {
-            panic!();
-        };
-        data
+impl_HostObject_with_superclass!(UIButtonHostObject);
+impl Default for UIButtonHostObject {
+    fn default() -> Self {
+        UIButtonHostObject {
+            superclass: Default::default(),
+            type_: UIButtonTypeCustom,
+            title_label: nil,
+        }
     }
 }
 
@@ -49,6 +48,11 @@ pub const CLASSES: ClassExports = objc_classes! {
 (env, this, _cmd);
 
 @implementation UIButton: UIControl
+
++ (id)allocWithZone:(NSZonePtr)_zone {
+    let host_object = Box::<UIButtonHostObject>::default();
+    env.objc.alloc_object(this, host_object, &mut env.mem)
+}
 
 + (id)buttonWithType:(UIButtonType)type_ {
     let button: id = msg![env; this new];
@@ -84,14 +88,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     () = msg![env; title_label setBackgroundColor:bg_color];
     () = msg![env; title_label setTextAlignment:UITextAlignmentCenter];
 
-    let host_obj = env.objc.borrow_mut::<UIViewHostObject>(this);
-    let UIViewSubclass::UIControl(ref mut data) = host_obj.subclass else {
-        panic!();
-    };
-    data.subclass = UIControlSubclass::UIButton(UIButtonData {
-        type_: UIButtonTypeCustom,
-        title_label,
-    });
+    env.objc.borrow_mut::<UIButtonHostObject>(this).title_label = title_label;
 
     () = msg![env; this addSubview:title_label];
 
@@ -99,33 +96,27 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (())dealloc {
-    let host_obj = env.objc.borrow_mut::<UIViewHostObject>(this);
-    let UIViewSubclass::UIControl(ref mut data) = host_obj.subclass else {
-        panic!();
-    };
-    let UIControlSubclass::UIButton(data) = std::mem::take(&mut data.subclass) else {
-        panic!();
-    };
-    let UIButtonData {
+    let &UIButtonHostObject {
+        superclass: _,
         type_: _,
-        title_label,
-    } = data;
+        title_label
+    } = env.objc.borrow(this);
     release(env, title_label);
     msg_super![env; this dealloc]
 }
 
 - (())layoutSubviews {
-    let label = UIButtonData::borrow_mut(&mut env.objc, this).title_label;
+    let label = env.objc.borrow_mut::<UIButtonHostObject>(this).title_label;
     let bounds: CGRect = msg![env; this bounds];
     () = msg![env; label setFrame:bounds];
 }
 
 - (UIButtonType)buttonType {
-    UIButtonData::borrow_mut(&mut env.objc, this).type_
+    env.objc.borrow_mut::<UIButtonHostObject>(this).type_
 }
 
 - (id)titleLabel {
-    UIButtonData::borrow_mut(&mut env.objc, this).title_label
+    env.objc.borrow_mut::<UIButtonHostObject>(this).title_label
 }
 
 - (())setTitle:(id)title // NSString*

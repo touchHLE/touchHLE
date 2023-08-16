@@ -5,10 +5,20 @@
  */
 //! `UIImageView`.
 
-use super::{UIViewHostObject, UIViewSubclass};
 use crate::frameworks::core_graphics::cg_image::CGImageRef;
 use crate::frameworks::core_graphics::{CGPoint, CGRect, CGSize};
-use crate::objc::{id, msg, msg_super, nil, objc_classes, release, retain, ClassExports};
+use crate::objc::{
+    id, impl_HostObject_with_superclass, msg, msg_super, objc_classes, release, retain,
+    ClassExports, NSZonePtr,
+};
+
+#[derive(Default)]
+struct UIImageViewHostObject {
+    superclass: super::UIViewHostObject,
+    /// `UIImage*`
+    image: id,
+}
+impl_HostObject_with_superclass!(UIImageViewHostObject);
 
 pub const CLASSES: ClassExports = objc_classes! {
 
@@ -16,24 +26,24 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 @implementation UIImageView: UIView
 
++ (id)allocWithZone:(NSZonePtr)_zone {
+    let host_object = Box::<UIImageViewHostObject>::default();
+    env.objc.alloc_object(this, host_object, &mut env.mem)
+}
+
 - (id)init {
     let this: id = msg_super![env; this init];
     // Not sure if UIImageView does this unconditionally, or only for images
     // with alpha channels.
     () = msg![env; this setOpaque:false];
-    let host_obj = env.objc.borrow_mut::<UIViewHostObject>(this);
-    host_obj.subclass = UIViewSubclass::UIImageView {
-        image: nil
-    };
     this
 }
 
 - (())dealloc {
-    let host_obj = env.objc.borrow_mut::<UIViewHostObject>(this);
-    let subclass = std::mem::take(&mut host_obj.subclass);
-    let UIViewSubclass::UIImageView { image } = subclass else {
-        panic!();
-    };
+    let &UIImageViewHostObject {
+        superclass: _,
+        image,
+    } = env.objc.borrow(this);
     release(env, image);
     msg_super![env; this dealloc]
 }
@@ -52,19 +62,12 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (id)image {
-    let host_obj = env.objc.borrow_mut::<UIViewHostObject>(this);
-    let &UIViewSubclass::UIImageView { image } = &host_obj.subclass else {
-        panic!();
-    };
-    image
+    env.objc.borrow::<UIImageViewHostObject>(this).image
 }
 
 - (())setImage:(id)new_image { // UIImage*
-    let host_obj = env.objc.borrow_mut::<UIViewHostObject>(this);
-    let UIViewSubclass::UIImageView { ref mut image } = host_obj.subclass else {
-        panic!();
-    };
-    let old_image = std::mem::replace(image, new_image);
+    let host_obj = env.objc.borrow_mut::<UIImageViewHostObject>(this);
+    let old_image = std::mem::replace(&mut host_obj.image, new_image);
     retain(env, new_image);
     release(env, old_image);
 

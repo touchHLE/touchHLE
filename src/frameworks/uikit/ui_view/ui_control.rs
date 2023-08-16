@@ -8,21 +8,10 @@
 pub mod ui_button;
 pub mod ui_text_field;
 
-use super::{UIViewHostObject, UIViewSubclass};
 use crate::frameworks::foundation::NSUInteger;
-use crate::objc::{id, msg_super, objc_classes, ClassExports};
+use crate::objc::{objc_classes, ClassExports};
 
-pub struct UIControlData {
-    subclass: UIControlSubclass,
-}
-
-#[derive(Default)]
-pub(super) enum UIControlSubclass {
-    #[default]
-    /// Subclass that doesn't need extra data.
-    UIControl,
-    UIButton(ui_button::UIButtonData),
-}
+type UIControlHostObject = super::UIViewHostObject;
 
 type UIControlState = NSUInteger;
 const UIControlStateNormal: UIControlState = 0;
@@ -41,27 +30,6 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 // abstract class
 @implementation UIControl: UIView
-
-- (id)init {
-    let this: id = msg_super![env; this init];
-    let host_obj = env.objc.borrow_mut::<UIViewHostObject>(this);
-    host_obj.subclass = UIViewSubclass::UIControl(UIControlData {
-        subclass: UIControlSubclass::UIControl,
-    });
-    this
-}
-
-- (())dealloc {
-    let host_obj = env.objc.borrow_mut::<UIViewHostObject>(this);
-    let subclass = std::mem::take(&mut host_obj.subclass);
-    let UIViewSubclass::UIControl(data) = subclass else {
-        panic!();
-    };
-    // This assert forces subclasses to clean up their data in their dealloc
-    // implementation :)
-    assert!(matches!(data.subclass, UIControlSubclass::UIControl));
-    msg_super![env; this dealloc]
-}
 
 // TODO: state, triggers, etc
 

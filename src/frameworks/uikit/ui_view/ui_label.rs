@@ -5,7 +5,6 @@
  */
 //! `UILabel`.
 
-use super::{UIViewHostObject, UIViewSubclass};
 use crate::frameworks::core_graphics::cg_context::CGContextSetRGBFillColor;
 use crate::frameworks::core_graphics::{CGFloat, CGPoint, CGRect, CGSize};
 use crate::frameworks::foundation::NSInteger;
@@ -16,10 +15,12 @@ use crate::frameworks::uikit::ui_font::{
 };
 use crate::frameworks::uikit::ui_graphics::UIGraphicsGetCurrentContext;
 use crate::objc::{
-    id, msg, msg_class, msg_super, nil, objc_classes, release, retain, ClassExports, ObjC,
+    id, impl_HostObject_with_superclass, msg, msg_class, msg_super, nil, objc_classes, release,
+    retain, ClassExports, NSZonePtr,
 };
 
-pub struct UILabelData {
+pub struct UILabelHostObject {
+    superclass: super::UIViewHostObject,
     /// `NSString*`
     text: id,
     /// `UIFont*`
@@ -30,13 +31,18 @@ pub struct UILabelData {
     line_break_mode: UILineBreakMode,
     number_of_lines: NSInteger,
 }
-impl UILabelData {
-    fn borrow_mut(objc: &mut ObjC, ui_label: id) -> &mut Self {
-        let host_obj = objc.borrow_mut::<UIViewHostObject>(ui_label);
-        let UIViewSubclass::UILabel(ref mut data) = host_obj.subclass else {
-            panic!();
-        };
-        data
+impl_HostObject_with_superclass!(UILabelHostObject);
+impl Default for UILabelHostObject {
+    fn default() -> Self {
+        UILabelHostObject {
+            superclass: Default::default(),
+            text: nil,
+            font: nil,
+            text_color: nil,
+            text_alignment: UITextAlignmentLeft,
+            line_break_mode: UILineBreakModeTailTruncation,
+            number_of_lines: 1,
+        }
     }
 }
 
@@ -46,17 +52,13 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 @implementation UILabel: UIView
 
++ (id)allocWithZone:(NSZonePtr)_zone {
+    let host_object = Box::<UILabelHostObject>::default();
+    env.objc.alloc_object(this, host_object, &mut env.mem)
+}
+
 - (id)init {
     let this: id = msg_super![env; this init];
-    let host_obj = env.objc.borrow_mut::<UIViewHostObject>(this);
-    host_obj.subclass = UIViewSubclass::UILabel(UILabelData {
-        text: nil,
-        font: nil,
-        text_color: nil,
-        text_alignment: UITextAlignmentLeft,
-        line_break_mode: UILineBreakModeTailTruncation,
-        number_of_lines: 1,
-    });
     // These aren't redundant, the setters fetch the real defaults.
     () = msg![env; this setFont:nil];
     () = msg![env; this setTextColor:nil];
@@ -67,26 +69,30 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (())dealloc {
-    let host_obj = env.objc.borrow_mut::<UIViewHostObject>(this);
-    let subclass = std::mem::take(&mut host_obj.subclass);
-    let UIViewSubclass::UILabel(data) = subclass else {
-        panic!();
-    };
-    release(env, data.text);
-    release(env, data.font);
-    release(env, data.text_color);
+    let &UILabelHostObject {
+        superclass: _,
+        text,
+        font,
+        text_color,
+        text_alignment: _,
+        line_break_mode: _,
+        number_of_lines: _,
+    } = env.objc.borrow(this);
+    release(env, text);
+    release(env, font);
+    release(env, text_color);
     msg_super![env; this dealloc]
 }
 
 // TODO: initWithCoder:
 
 - (id)text {
-    UILabelData::borrow_mut(&mut env.objc, this).text
+    env.objc.borrow::<UILabelHostObject>(this).text
 }
 - (())setText:(id)new_text { // NSString*
     let new_text: id = msg![env; new_text copy];
     let old_text = std::mem::replace(
-        &mut UILabelData::borrow_mut(&mut env.objc, this).text,
+        &mut env.objc.borrow_mut::<UILabelHostObject>(this).text,
         new_text
     );
     release(env, old_text);
@@ -95,7 +101,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (id)font {
-    UILabelData::borrow_mut(&mut env.objc, this).font
+    env.objc.borrow::<UILabelHostObject>(this).font
 }
 - (())setFont:(id)new_font { // UIFont*
     let new_font: id = if new_font == nil {
@@ -107,7 +113,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     };
 
     let old_font = std::mem::replace(
-        &mut UILabelData::borrow_mut(&mut env.objc, this).font,
+        &mut env.objc.borrow_mut::<UILabelHostObject>(this).font,
         new_font
     );
     retain(env, new_font);
@@ -117,7 +123,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (id)textColor {
-    UILabelData::borrow_mut(&mut env.objc, this).text_color
+    env.objc.borrow::<UILabelHostObject>(this).text_color
 }
 - (())setTextColor:(id)new_text_color { // UIFont*
     let new_text_color: id = if new_text_color == nil {
@@ -127,7 +133,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     };
 
     let old_text_color = std::mem::replace(
-        &mut UILabelData::borrow_mut(&mut env.objc, this).text_color,
+        &mut env.objc.borrow_mut::<UILabelHostObject>(this).text_color,
         new_text_color
     );
     retain(env, new_text_color);
@@ -154,26 +160,26 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (UITextAlignment)textAlignment {
-    UILabelData::borrow_mut(&mut env.objc, this).text_alignment
+    env.objc.borrow::<UILabelHostObject>(this).text_alignment
 }
 - (())setTextAlignment:(UITextAlignment)text_alignment { // UIFont*
-    UILabelData::borrow_mut(&mut env.objc, this).text_alignment = text_alignment;
+    env.objc.borrow_mut::<UILabelHostObject>(this).text_alignment = text_alignment;
     () = msg![env; this setNeedsDisplay];
 }
 
 - (UILineBreakMode)lineBreakMode {
-    UILabelData::borrow_mut(&mut env.objc, this).line_break_mode
+    env.objc.borrow::<UILabelHostObject>(this).line_break_mode
 }
 - (())setLineBreakMode:(UILineBreakMode)line_break_mode { // UIFont*
-    UILabelData::borrow_mut(&mut env.objc, this).line_break_mode = line_break_mode;
+    env.objc.borrow_mut::<UILabelHostObject>(this).line_break_mode = line_break_mode;
     () = msg![env; this setNeedsDisplay];
 }
 
 - (NSInteger)numberOfLines {
-    UILabelData::borrow_mut(&mut env.objc, this).number_of_lines
+    env.objc.borrow::<UILabelHostObject>(this).number_of_lines
 }
 - (())setNumberOfLines:(NSInteger)number {
-    UILabelData::borrow_mut(&mut env.objc, this).number_of_lines = number;
+    env.objc.borrow_mut::<UILabelHostObject>(this).number_of_lines = number;
     if number != 0 && number != 1 {
         log!("TODO: UILabel numberOfLines > 1 (label {:?})", this);
     }
@@ -184,17 +190,15 @@ pub const CLASSES: ClassExports = objc_classes! {
     let bounds: CGRect = msg![env; this bounds];
     let context = UIGraphicsGetCurrentContext(env);
 
-    let host_obj = env.objc.borrow_mut::<UIViewHostObject>(this);
-    let &UIViewSubclass::UILabel(UILabelData {
+    let &mut UILabelHostObject {
+        superclass: _,
         text,
         font,
         text_color,
         text_alignment,
         line_break_mode,
         number_of_lines,
-    }) = &host_obj.subclass else {
-        panic!();
-    };
+    } = env.objc.borrow_mut(this);
 
     let (r, g, b, a) = ui_color::get_rgba(&env.objc, text_color);
     CGContextSetRGBFillColor(env, context, r, g, b, a);

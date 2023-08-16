@@ -27,21 +27,6 @@ pub struct State {
     pub ui_window: ui_window::State,
 }
 
-#[allow(clippy::enum_variant_names)]
-#[derive(Default)]
-pub(super) enum UIViewSubclass {
-    #[default]
-    /// Plain `UIView*`, or some subclass that doesn't need extra data.
-    UIView,
-    UIImageView {
-        /// `UIImage*`
-        image: id,
-    },
-    UILabel(ui_label::UILabelData),
-    UIControl(ui_control::UIControlData),
-}
-
-#[derive(Default)]
 pub(super) struct UIViewHostObject {
     /// CALayer or subclass.
     layer: id,
@@ -50,10 +35,20 @@ pub(super) struct UIViewHostObject {
     /// The superview. This is a weak reference.
     superview: id,
     clears_context_before_drawing: bool,
-    /// Subclass-specific data
-    subclass: UIViewSubclass,
 }
 impl HostObject for UIViewHostObject {}
+impl Default for UIViewHostObject {
+    fn default() -> UIViewHostObject {
+        // The Default trait is implemented so subclasses will get the same
+        // defaults.
+        UIViewHostObject {
+            layer: nil,
+            subviews: Vec::new(),
+            superview: nil,
+            clears_context_before_drawing: true,
+        }
+    }
+}
 
 pub const CLASSES: ClassExports = objc_classes! {
 
@@ -62,13 +57,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 @implementation UIView: UIResponder
 
 + (id)allocWithZone:(NSZonePtr)_zone {
-    let host_object = Box::new(UIViewHostObject {
-        layer: nil,
-        subviews: Vec::new(),
-        superview: nil,
-        clears_context_before_drawing: true,
-        subclass: UIViewSubclass::UIView,
-    });
+    let host_object = Box::<UIViewHostObject>::default();
     env.objc.alloc_object(this, host_object, &mut env.mem)
 }
 
@@ -232,12 +221,7 @@ pub const CLASSES: ClassExports = objc_classes! {
         superview,
         subviews,
         clears_context_before_drawing: _,
-        subclass,
     } = std::mem::take(env.objc.borrow_mut(this));
-
-    // This assert forces subclasses to clean up their data in their dealloc
-    // implementation :)
-    assert!(matches!(subclass, UIViewSubclass::UIView));
 
     release(env, layer);
     assert!(superview == nil);

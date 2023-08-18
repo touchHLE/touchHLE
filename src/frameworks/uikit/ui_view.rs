@@ -359,7 +359,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     }
     // TODO: avoid copy somehow?
     let subviews = env.objc.borrow::<UIViewHostObject>(this).subviews.clone();
-    for subview in subviews {
+    for subview in subviews.into_iter().rev() { // later views are on top
         let hidden: bool = msg![env; subview isHidden];
         let alpha: CGFloat = msg![env; subview alpha];
         let interactible: bool = msg![env; this isUserInteractionEnabled];
@@ -372,7 +372,8 @@ pub const CLASSES: ClassExports = objc_classes! {
             x: point.x - frame.origin.x + bounds.origin.x,
             y: point.y - frame.origin.y + bounds.origin.y,
         };
-        if msg![env; subview pointInside:point withEvent:event] {
+        let subview: id = msg![env; subview hitTest:point withEvent:event];
+        if subview != nil {
             return subview;
         }
     }

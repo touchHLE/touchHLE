@@ -84,7 +84,12 @@ pub fn CGContextClearRect(env: &mut Environment, context: CGContextRef, rect: CG
     cg_bitmap_context::fill_rect(env, context, rect, /* clear: */ true);
 }
 
-fn CGContextTranslateCTM(env: &mut Environment, context: CGContextRef, tx: CGFloat, ty: CGFloat) {
+pub fn CGContextTranslateCTM(
+    env: &mut Environment,
+    context: CGContextRef,
+    tx: CGFloat,
+    ty: CGFloat,
+) {
     let context = env.objc.borrow_mut::<CGContextHostObject>(context);
     context.translation.0 += tx;
     context.translation.1 += ty;

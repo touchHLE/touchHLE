@@ -10,7 +10,9 @@ use crate::frameworks::core_graphics::cg_bitmap_context::{
     CGBitmapContextCreate, CGBitmapContextGetHeight, CGBitmapContextGetWidth,
 };
 use crate::frameworks::core_graphics::cg_color_space::CGColorSpaceCreateDeviceRGB;
-use crate::frameworks::core_graphics::cg_context::{CGContextRef, CGContextRelease};
+use crate::frameworks::core_graphics::cg_context::{
+    CGContextRef, CGContextRelease, CGContextTranslateCTM,
+};
 use crate::frameworks::core_graphics::cg_image::{
     kCGImageAlphaPremultipliedLast, kCGImageByteOrder32Big,
 };
@@ -310,7 +312,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     let &mut CALayerHostObject {
         cg_context,
         ref mut gles_texture_is_up_to_date,
-        bounds: CGRect { size, .. },
+        bounds: CGRect { origin, size },
         ..
     } = env.objc.borrow_mut(this);
 
@@ -353,7 +355,9 @@ pub const CLASSES: ClassExports = objc_classes! {
         cg_context.unwrap()
     };
 
+    CGContextTranslateCTM(env, cg_context, -origin.x, -origin.y);
     () = msg![env; delegate drawLayer:this inContext:cg_context];
+    CGContextTranslateCTM(env, cg_context, origin.x, origin.y);
 }
 
 // CGImageRef*

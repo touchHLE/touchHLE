@@ -132,7 +132,7 @@ pub fn open_direct(env: &mut Environment, path: ConstPtr<u8>, flags: i32) -> Fil
             -1
         }
     };
-    log_dbg!("open({:?} ({:?}), {:#x}) => {:?}", path, path_string, flags, res);
+    log_dbg!("open({:?} {:?}, {:#x}) => {:?}", path, path_string, flags, res);
     res
 }
 

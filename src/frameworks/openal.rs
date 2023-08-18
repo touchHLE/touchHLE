@@ -23,6 +23,7 @@ use std::collections::HashMap;
 pub struct State {
     devices: HashMap<MutPtr<GuestALCdevice>, *mut ALCdevice>,
     contexts: HashMap<MutPtr<GuestALCcontext>, *mut ALCcontext>,
+    current_context: MutPtr<GuestALCcontext>
 }
 impl State {
     fn get(env: &mut Environment) -> &mut Self {
@@ -176,6 +177,15 @@ fn alListener3f(
 ) {
     unsafe { al::alListener3f(param, value1, value2, value3) };
 }
+fn alListener3i(
+    _env: &mut Environment,
+    param: ALenum,
+    value1: ALint,
+    value2: ALint,
+    value3: ALint,
+) {
+    unsafe { al::alListener3i(param, value1, value2, value3) };
+}
 
 fn alGenSources(env: &mut Environment, n: ALsizei, sources: MutPtr<ALuint>) {
     let n_usize: GuestUSize = n.try_into().unwrap();
@@ -193,6 +203,9 @@ fn alSourcef(_env: &mut Environment, source: ALuint, param: ALenum, value: ALflo
 }
 fn alSourcei(_env: &mut Environment, source: ALuint, param: ALenum, value: ALint) {
     unsafe { al::alSourcei(source, param, value) };
+}
+fn alSource3i(_env: &mut Environment, source: ALuint, param: ALenum, v1: ALint, v2: ALint, v3: ALint) {
+    unsafe { al::alSource3i(source, param, v1, v2, v3) };
 }
 fn alGetSourcef(env: &mut Environment, source: ALuint, param: ALenum, value: MutPtr<ALfloat>) {
     unsafe { al::alGetSourcef(source, param, env.mem.ptr_at_mut(value, 1)) };
@@ -352,8 +365,8 @@ fn alcGetContextsDevice(
 ) -> MutPtr<GuestALCdevice> {
     todo!();
 }
-fn alcGetCurrentContext(_env: &mut Environment) -> MutPtr<GuestALCcontext> {
-    todo!();
+fn alcGetCurrentContext(env: &mut Environment) -> MutPtr<GuestALCcontext> {
+    State::get(env).current_context
 }
 fn alcGetEnumValue(
     _env: &mut Environment,
@@ -525,12 +538,14 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(alDistanceModel(_)),
     export_c_func!(alListenerf(_, _)),
     export_c_func!(alListener3f(_, _, _, _)),
+    export_c_func!(alListener3i(_, _, _, _)),
     export_c_func!(alGenSources(_, _)),
     export_c_func!(alDeleteSources(_, _)),
     export_c_func!(alGetSourcef(_, _, _)),
     export_c_func!(alGetSourcei(_, _, _)),
     export_c_func!(alSourcef(_, _, _)),
     export_c_func!(alSourcei(_, _, _)),
+    export_c_func!(alSource3i(_, _, _, _, _)),
     export_c_func!(alSourcePlay(_)),
     export_c_func!(alSourcePause(_)),
     export_c_func!(alSourceStop(_)),

@@ -817,6 +817,9 @@ impl GLES for GLES1OnGL2 {
             fixed_to_float(alpha),
         )
     }
+    unsafe fn Color4ub(&mut self, red: GLubyte, green: GLubyte, blue: GLubyte, alpha: GLubyte) {
+        gl21::Color4ub(red, green, blue, alpha)
+    }
 
     // Pointers
     unsafe fn ColorPointer(

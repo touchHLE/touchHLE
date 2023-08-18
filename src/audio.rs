@@ -97,7 +97,7 @@ impl AudioFile {
                 // and floating-point 32-bit linear PCM. We should expose all of
                 // these eventually, but we should only expose formats we've
                 // tested.
-                assert!(bits_per_sample == 16);
+                assert!(matches!(bits_per_sample, 8 | 16 | 24 | 32));
                 assert!(sample_format == hound::SampleFormat::Int);
 
                 AudioDescription {
@@ -109,7 +109,7 @@ impl AudioFile {
                     bytes_per_packet: u32::from(channels) * 2,
                     frames_per_packet: 1,
                     channels_per_frame: channels.into(),
-                    bits_per_channel: 16,
+                    bits_per_channel: 16, // TODO: Different values for different bits_per_sample
                 }
             }
             AudioFileInner::Caf(ref caf_reader) => {

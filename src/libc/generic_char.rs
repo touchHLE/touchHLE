@@ -9,6 +9,7 @@
 use crate::mem::{guest_size_of, ConstPtr, GuestUSize, MutPtr, Ptr, SafeRead};
 use crate::Environment;
 use std::cmp::Ordering;
+use std::ops::Add;
 
 /// This type is never actually constructed, it just enables us to move all the
 /// bounds on `T` to the `impl` block.
@@ -201,6 +202,26 @@ impl<T: Copy + Default + Eq + Ord + SafeRead> GenericChar<T> {
                 }
             }
         }
+    }
+
+    pub(super) fn strncat(
+        env: &mut Environment,
+        s1: ConstPtr<T>,
+        s2: ConstPtr<T>,
+        n: GuestUSize,
+    ) -> ConstPtr<T> {
+        let len1 = Self::strlen(env,s1);
+        let len2 = Self::strlen(env,s2);
+        
+        let lenToAdd = if len2 < n {
+            len2
+        } else {
+            n
+        };
+
+        Self::strncpy(env,s1.add(len1).cast_mut(), s2, lenToAdd);
+        env.mem.write(s1.add(len1+lenToAdd).cast_mut(), Self::null());
+        return s1;
     }
 
     pub(super) fn strstr(

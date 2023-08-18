@@ -5,7 +5,10 @@
  */
 //! `stdio.h`
 
+use sdl2::libc::{STDOUT_FILENO, STDERR_FILENO};
+
 use super::posix_io::{self, O_APPEND, O_CREAT, O_RDONLY, O_RDWR, O_TRUNC, O_WRONLY};
+use crate::abi::DotDotDot;
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::fs::GuestPath;
 use crate::libc::string::strlen;
@@ -105,14 +108,34 @@ fn fwrite(
 ) -> GuestUSize {
     let FILE { fd } = env.mem.read(file_ptr);
 
-    // The comment about the item_size/n_items split in fread() applies here too
     let total_size = item_size.checked_mul(n_items).unwrap();
-    match posix_io::write(env, fd, buffer, total_size) {
-        // TODO: ferror() support.
-        -1 => 0,
-        bytes_written => {
-            let bytes_written: GuestUSize = bytes_written.try_into().unwrap();
-            bytes_written / item_size
+
+    // TODO: Refactor, use traits instead of this hack
+    match fd {
+        STDOUT_FILENO => {
+            let buffer_slice = env.mem.bytes_at(buffer.cast(), total_size);
+            match std::io::stdout().write(buffer_slice) {
+                Ok(bytes_written) => (bytes_written/(item_size as usize)) as GuestUSize,
+                Err(_err) => 0,
+            }
+        },
+        STDERR_FILENO => {
+            let buffer_slice = env.mem.bytes_at(buffer.cast(), total_size);
+            match std::io::stderr().write(buffer_slice) {
+                Ok(bytes_written) => (bytes_written/(item_size as usize)) as GuestUSize,
+                Err(_err) => 0,
+            }
+        },
+        _ =>  {
+            // The comment about the item_size/n_items split in fread() applies here too
+            match posix_io::write(env, fd, buffer, total_size) {
+                // TODO: ferror() support.
+                -1 => 0,
+                bytes_written => {
+                    let bytes_written: GuestUSize = bytes_written.try_into().unwrap();
+                    bytes_written / item_size
+                }
+            }
         }
     }
 }
@@ -150,6 +173,11 @@ fn fclose(env: &mut Environment, file_ptr: MutPtr<FILE>) -> i32 {
         -1 => EOF,
         _ => unreachable!(),
     }
+}
+
+fn fprintf(env: &mut Environment, file_ptr: MutPtr<FILE>, format: ConstPtr<u8>, _args: DotDotDot) -> i32 {
+    // TODO: parse variadic arguments and pass them on (file creation mode)
+    fputs(env, format, file_ptr)
 }
 
 fn puts(env: &mut Environment, s: ConstPtr<u8>) -> i32 {
@@ -199,6 +227,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(fseek(_, _, _)),
     export_c_func!(ftell(_)),
     export_c_func!(fclose(_)),
+    export_c_func!(fprintf(_, _, _)),
     export_c_func!(puts(_)),
     export_c_func!(putchar(_)),
     export_c_func!(remove(_)),

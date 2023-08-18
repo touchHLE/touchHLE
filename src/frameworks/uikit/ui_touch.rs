@@ -123,33 +123,34 @@ pub fn resolve_point_in_view(env: &mut Environment, view: id, point: CGPoint) ->
 }
 
 fn find_view_for_touch(env: &mut Environment, point: CGPoint) -> Option<id> {
-    // FIXME: This is a massive hack that is only going to work for apps that
-    // have a single view which handles all touch inputs. We should eventually
-    // implement the proper responder chain.
+    // Assumes the last window in the list is the one on top.
+    // TODO: this is not correct once we support zPosition.
+    // TODO: can there be windows smaller than the screen? If so we need to
+    //       hit test all of them.
+    let Some(&top_window) = env.framework_state.uikit.ui_view.ui_window.visible_windows.last() else {
+        log_dbg!("No visible window, touch event ignored");
+        return None;
+    };
 
-    let ui_window_class = env.objc.get_known_class("UIWindow", &mut env.mem);
-    // TODO: Can we avoid copying this somehow?
-    let views = env.framework_state.uikit.ui_view.views.clone();
-    for view in views {
-        // There's no reason a UIWindow can't handle touch events, this is just
-        // a hack specific to apps which don't do that.
-        if msg![env; view isKindOfClass:ui_window_class] {
-            continue;
-        }
+    // FIXME: event should be provided here!
+    let view: id = msg![env; top_window hitTest:point withEvent:nil];
 
-        // FIXME: This is an even bigger hack, it is assuming there is a single
-        // view with the same size as the screen, and can't account for
-        // the view hierarchy's effects on the co-ordinate system!
-        if resolve_point_in_view(env, view, point).is_none() {
-            continue;
-        }
-
-        log_dbg!("Picked view {:?} for touch event", view);
-        return Some(view);
+    if view == nil {
+        return None;
     }
 
-    log!("Warning: touch event ignored, can't find appropriate view (FIXME)");
-    None
+    // FIXME: This is a hack, it is assuming there is a single
+    // view with the same size as the screen, and can't account for
+    // the view hierarchy's effects on the co-ordinate system!
+    if resolve_point_in_view(env, view, point).is_none() {
+        log!(
+            "Warning: touch event ignored, non-full-screen view {:?} (FIXME)",
+            view
+        );
+        return None;
+    }
+
+    Some(view)
 }
 
 /// [super::handle_events] will forward touch events to this function.

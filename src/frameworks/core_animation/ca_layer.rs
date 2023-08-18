@@ -372,6 +372,14 @@ pub const CLASSES: ClassExports = objc_classes! {
     release(env, old_contents);
 }
 
+- (bool)containsPoint:(CGPoint)point {
+    let bounds: CGRect = msg![env; this bounds];
+    let x_range = bounds.origin.x..(bounds.origin.x + bounds.size.width);
+    let y_range = bounds.origin.y..(bounds.origin.y + bounds.size.height);
+    let CGPoint {x, y} = point;
+    x_range.contains(&x) && y_range.contains(&y)
+}
+
 // TODO: more
 
 @end

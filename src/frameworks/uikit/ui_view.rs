@@ -35,6 +35,7 @@ pub(super) struct UIViewHostObject {
     /// The superview. This is a weak reference.
     superview: id,
     clears_context_before_drawing: bool,
+    user_interaction_enabled: bool,
 }
 impl HostObject for UIViewHostObject {}
 impl Default for UIViewHostObject {
@@ -46,6 +47,7 @@ impl Default for UIViewHostObject {
             subviews: Vec::new(),
             superview: nil,
             clears_context_before_drawing: true,
+            user_interaction_enabled: true,
         }
     }
 }
@@ -145,8 +147,11 @@ pub const CLASSES: ClassExports = objc_classes! {
     this
 }
 
-- (())setUserInteractionEnabled:(bool)_enabled {
-    // TODO: enable user interaction
+- (bool)isUserInteractionEnabled {
+    env.objc.borrow::<UIViewHostObject>(this).user_interaction_enabled
+}
+- (())setUserInteractionEnabled:(bool)enabled {
+    env.objc.borrow_mut::<UIViewHostObject>(this).user_interaction_enabled = enabled;
 }
 
 // TODO: setMultipleTouchEnabled
@@ -221,6 +226,7 @@ pub const CLASSES: ClassExports = objc_classes! {
         superview,
         subviews,
         clears_context_before_drawing: _,
+        user_interaction_enabled: _,
     } = std::mem::take(env.objc.borrow_mut(this));
 
     release(env, layer);
@@ -336,6 +342,41 @@ pub const CLASSES: ClassExports = objc_classes! {
     UIGraphicsPushContext(env, context);
     () = msg![env; this drawRect:bounds];
     UIGraphicsPopContext(env);
+}
+
+// Event handling
+
+- (id)pointInside:(CGPoint)point
+        withEvent:(id)_event { // UIEvent* (possibly nil)
+    let layer = env.objc.borrow::<UIViewHostObject>(this).layer;
+    msg![env; layer containsPoint:point]
+}
+
+- (id)hitTest:(CGPoint)point
+    withEvent:(id)event { // UIEvent* (possibly nil)
+    if !msg![env; this pointInside:point withEvent:event] {
+        return nil;
+    }
+    // TODO: avoid copy somehow?
+    let subviews = env.objc.borrow::<UIViewHostObject>(this).subviews.clone();
+    for subview in subviews {
+        let hidden: bool = msg![env; subview isHidden];
+        let alpha: CGFloat = msg![env; subview alpha];
+        let interactible: bool = msg![env; this isUserInteractionEnabled];
+        if hidden || alpha < 0.01 || !interactible {
+           continue;
+        }
+        let frame: CGRect = msg![env; subview frame];
+        let bounds: CGRect = msg![env; subview bounds];
+        let point = CGPoint {
+            x: point.x - frame.origin.x + bounds.origin.x,
+            y: point.y - frame.origin.y + bounds.origin.y,
+        };
+        if msg![env; subview pointInside:point withEvent:event] {
+            return subview;
+        }
+    }
+    this
 }
 
 @end

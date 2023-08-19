@@ -421,8 +421,8 @@ unsafe fn composite_layer_recursive(
             child_layer,
             /* origin: */
             CGPoint {
-                x: absolute_frame.origin.x + bounds.origin.x,
-                y: absolute_frame.origin.y + bounds.origin.y,
+                x: absolute_frame.origin.x - bounds.origin.x,
+                y: absolute_frame.origin.y - bounds.origin.y,
             },
             // TODO: clipping goes here (when masksToBounds is implemented)
             clip_to,

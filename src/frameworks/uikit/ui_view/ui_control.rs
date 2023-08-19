@@ -4,15 +4,30 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 //! `UIControl`.
+//!
+//! Useful resources:
+//! - The [Target-Action section](https://developer.apple.com/library/archive/documentation/General/Conceptual/CocoaEncyclopedia/Target-Action/Target-Action.html) of Apple's "Concepts in Objective-C Programming".
 
 pub mod ui_button;
 pub mod ui_text_field;
 
 use crate::frameworks::foundation::NSUInteger;
 use crate::objc::{
-    id, impl_HostObject_with_superclass, msg, msg_super, nil, objc_classes, release, retain,
-    ClassExports, NSZonePtr,
+    id, impl_HostObject_with_superclass, msg, msg_send, msg_super, nil, objc_classes, release,
+    retain, ClassExports, NSZonePtr, SEL,
 };
+use crate::frameworks::core_graphics::CGPoint;
+use crate::Environment;
+
+// TODO: There are many members of this enum missing.
+type UIControlEvents = NSUInteger;
+const UIControlEventTouchDown: UIControlEvents = 1 << 0;
+const UIControlEventTouchDragInside: UIControlEvents = 1 << 2;
+const UIControlEventTouchDragOutside: UIControlEvents = 1 << 3;
+const UIControlEventTouchDragEnter: UIControlEvents = 1 << 4;
+const UIControlEventTouchDragExit: UIControlEvents = 1 << 5;
+const UIControlEventTouchUpInside: UIControlEvents = 1 << 6;
+const UIControlEventTouchUpOutside: UIControlEvents = 1 << 7;
 
 struct UIControlHostObject {
     superclass: super::UIViewHostObject,
@@ -22,6 +37,8 @@ struct UIControlHostObject {
     /// `UITouch*` of the touch currently being tracked, [nil] if none
     tracked_touch: id,
     tracking: bool,
+    /// See `addTarget:action:forControlEvents:`. The target is a weak reference!
+    action_targets: Vec<(id, SEL, UIControlEvents)>,
 }
 impl_HostObject_with_superclass!(UIControlHostObject);
 impl Default for UIControlHostObject {
@@ -33,6 +50,7 @@ impl Default for UIControlHostObject {
             highlighted: false,
             tracked_touch: nil,
             tracking: false,
+            action_targets: Vec::new(),
         }
     }
 }
@@ -44,6 +62,28 @@ const UIControlStateDisabled: UIControlState = 1 << 1;
 const UIControlStateSelected: UIControlState = 1 << 2;
 #[allow(dead_code)]
 const UIControlStateFocused: UIControlState = 1 << 3;
+
+fn send_actions(env: &mut Environment, this: id, event: id, control_event: UIControlEvents) {
+    log_dbg!(
+        "Control event {:?} in control {:?} for event {:?}",
+        control_event,
+        this,
+        event,
+    );
+
+    let UIControlHostObject { action_targets, .. } = env.objc.borrow(this);
+    let action_targets: Vec<_> = action_targets
+        .iter()
+        .filter(|&(_target, _action, for_control_events)| (for_control_events & control_event) != 0)
+        .map(|&(target, action, _for_control_events)| (target, action))
+        .collect();
+
+    for (target, action) in action_targets {
+        assert!(target != nil); // TODO
+
+        () = msg![env; this sendAction:action to:target forEvent:event];
+    }
+}
 
 pub const CLASSES: ClassExports = objc_classes! {
 
@@ -64,6 +104,7 @@ pub const CLASSES: ClassExports = objc_classes! {
         selected: _,
         highlighted: _,
         tracking: _,
+        action_targets: _, // targets are weak references, nothing to do
         tracked_touch,
     } = std::mem::take(env.objc.borrow_mut(this));
 
@@ -74,12 +115,10 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 - (UIControlState)state {
     let &UIControlHostObject {
-        superclass: _,
-        tracking: _,
-        tracked_touch: _,
         highlighted,
         enabled,
         selected,
+        ..
     } = env.objc.borrow(this);
     // TODO: focussed
     let mut state = 0; // aka UIControlStateNormal
@@ -144,9 +183,6 @@ pub const CLASSES: ClassExports = objc_classes! {
         return;
     }
 
-    // TODO: It seems like UIControl can also handle touch events that don't
-    // begin within this control, but in fact elsewhere. How do we handle those?
-
     // UIControl's documentation implies that only one touch is ever tracked
     // at once.
     let touch: id = msg![env; touches anyObject];
@@ -164,6 +200,9 @@ pub const CLASSES: ClassExports = objc_classes! {
     }
     // Not sure if this is the right place to set this.
     () = msg![env; this setHighlighted:true];
+
+    // TODO: unclear if this is meant to be affected by tracking
+    send_actions(env, this, event, UIControlEventTouchDown);
 }
 - (())touchesMoved:(id)touches // NSSet* of UITouch*
          withEvent:(id)event { // UIEvent*
@@ -182,6 +221,19 @@ pub const CLASSES: ClassExports = objc_classes! {
         env.objc.borrow_mut::<UIControlHostObject>(this).tracking = false;
         () = msg![env; this setHighlighted:false];
     }
+
+    let old_pos: CGPoint = msg![env; touch previousLocationInView:this];
+    let new_pos: CGPoint = msg![env; touch locationInView:this];
+    let was_inside = msg![env; this pointInside:old_pos withEvent:event];
+    let is_inside = msg![env; this pointInside:new_pos withEvent:event];
+
+    // TODO: unclear if this is meant to be affected by tracking
+    send_actions(env, this, event, match (was_inside, is_inside) {
+        (true, true) => UIControlEventTouchDragInside,
+        (false, false) => UIControlEventTouchDragOutside,
+        (false, true) => UIControlEventTouchDragEnter,
+        (true, false) => UIControlEventTouchDragExit,
+    });
 }
 - (())touchesEnded:(id)touches // NSSet* of UITouch*
          withEvent:(id)event { // UIEvent*
@@ -194,9 +246,87 @@ pub const CLASSES: ClassExports = objc_classes! {
     release(env, tracked_touch);
     env.objc.borrow_mut::<UIControlHostObject>(this).tracked_touch = nil;
     () = msg![env; this setHighlighted:false];
+
+    let new_pos: CGPoint = msg![env; touch locationInView:this];
+    let is_inside = msg![env; this pointInside:new_pos withEvent:event];
+
+    // TODO: unclear if this is meant to be affected by tracking
+    send_actions(env, this, event, match is_inside {
+        true => UIControlEventTouchUpInside,
+        false => UIControlEventTouchUpOutside,
+    });
 }
 
-// TODO: triggers/targets/actions
+- (())addTarget:(id)target
+         action:(SEL)action
+forControlEvents:(UIControlEvents)events {
+    if target == nil {
+        // TODO: when the target is nil, the responder chain is searched for
+        // a suitable target
+        log!(
+            "TODO: [{:?} addTarget:nil action:{:?} forControlEvents:{:?}] (ignored)",
+            target,
+            action,
+            events,
+        );
+        return;
+    }
+    // The target is a *weak* reference!
+
+    // The selector must be for a method with zero to two arguments
+    let sel_str = action.as_str(&env.mem);
+    let colon_count = sel_str.bytes().filter(|&b| b == b':').count();
+    assert!([0, 1, 2].contains(&colon_count));
+
+    env.objc.borrow_mut::<UIControlHostObject>(this).action_targets.push((target, action, events));
+}
+
+- (())sendAction:(SEL)action
+              to:(id)target
+        forEvent:(id)event { // UIEvent*
+    assert!(target != nil); // TODO
+
+    let sel_str = action.as_str(&env.mem);
+    let colon_count = sel_str.bytes().filter(|&b| b == b':').count();
+    match colon_count {
+        // - (IBAction)action;
+        0 => {
+            log_dbg!(
+                "Sending {:?} ({:?}) message to {:?} (no args)",
+                action,
+                sel_str,
+                target
+            );
+            () = msg_send(env, (target, action));
+        }
+        // - (IBAction)action:(id)sender;
+        1 => {
+            log_dbg!(
+                "Sending {:?} ({:?}) message to {:?} (one arg: {:?})",
+                action,
+                sel_str,
+                target,
+                this
+            );
+            () = msg_send(env, (target, action, this));
+        }
+        // - (IBAction)action:(id)sender forEvent:(UIEvent*)event;
+        2 => {
+            log_dbg!(
+                "Sending {:?} ({:?}) message to {:?} (two args: {:?}, {:?})",
+                action,
+                sel_str,
+                target,
+                this,
+                event
+            );
+            () = msg_send(env, (target, action, this, event));
+        }
+        _ => panic!(),
+    };
+}
+
+// TODO: more triggers/targets/actions stuff
 
 @end
 

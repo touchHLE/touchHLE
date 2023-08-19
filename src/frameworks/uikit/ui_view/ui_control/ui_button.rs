@@ -6,7 +6,7 @@
 //! `UIButton`.
 
 use super::{UIControlState, UIControlStateNormal};
-use crate::frameworks::core_graphics::CGRect;
+use crate::frameworks::core_graphics::{CGPoint, CGRect};
 use crate::frameworks::foundation::NSInteger;
 use crate::frameworks::uikit::ui_font::UITextAlignmentCenter;
 use crate::objc::{
@@ -205,7 +205,17 @@ pub const CLASSES: ClassExports = objc_classes! {
     update(env, this);
 }
 
-// TODO: images, touch input, etc
+// TODO: images, actions, etc
+
+- (id)hitTest:(CGPoint)point
+    withEvent:(id)event { // UIEvent* (possibly nil)
+    // Hide subviews from hit testing so event goes straight to this control
+    if msg![env; this pointInside:point withEvent:event] {
+        this
+    } else {
+        nil
+    }
+}
 
 @end
 

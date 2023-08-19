@@ -9,13 +9,19 @@ pub mod ui_button;
 pub mod ui_text_field;
 
 use crate::frameworks::foundation::NSUInteger;
-use crate::objc::{id, impl_HostObject_with_superclass, objc_classes, ClassExports, NSZonePtr};
+use crate::objc::{
+    id, impl_HostObject_with_superclass, msg, msg_super, nil, objc_classes, release, retain,
+    ClassExports, NSZonePtr,
+};
 
 struct UIControlHostObject {
     superclass: super::UIViewHostObject,
     enabled: bool,
     selected: bool,
     highlighted: bool,
+    /// `UITouch*` of the touch currently being tracked, [nil] if none
+    tracked_touch: id,
+    tracking: bool,
 }
 impl_HostObject_with_superclass!(UIControlHostObject);
 impl Default for UIControlHostObject {
@@ -25,6 +31,8 @@ impl Default for UIControlHostObject {
             enabled: true,
             selected: false,
             highlighted: false,
+            tracked_touch: nil,
+            tracking: false,
         }
     }
 }
@@ -49,11 +57,26 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.alloc_object(this, host_object, &mut env.mem)
 }
 
-// TODO: state, triggers, etc
+- (())dealloc {
+    let UIControlHostObject {
+        superclass: _,
+        enabled: _,
+        selected: _,
+        highlighted: _,
+        tracking: _,
+        tracked_touch,
+    } = std::mem::take(env.objc.borrow_mut(this));
+
+    release(env, tracked_touch);
+
+    msg_super![env; this dealloc]
+}
 
 - (UIControlState)state {
     let &UIControlHostObject {
         superclass: _,
+        tracking: _,
+        tracked_touch: _,
         highlighted,
         enabled,
         selected,
@@ -92,6 +115,88 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (())setHighlighted:(bool)highlighted {
     env.objc.borrow_mut::<UIControlHostObject>(this).highlighted = highlighted;
 }
+
+- (bool)tracking {
+    env.objc.borrow::<UIControlHostObject>(this).tracking
+}
+
+- (bool)beginTrackingWithTouch:(id)_touch // UITouch*
+                     withEvent:(id)_event { // UIEvent*
+    // default implementation, subclasses can override this
+    true
+}
+- (bool)continueTrackingWithTouch:(id)_touch // UITouch*
+                        withEvent:(id)_event { // UIEvent*
+    // default implementation, subclasses can override this
+    true
+}
+- (())endTrackingWithTouch:(id)_touch // UITouch*
+                  withEvent:(id)_event { // UIEvent*
+    // default implementation, subclasses can override this, must call super
+    // (for some reason, the docs say this default implementation updates the
+    // tracking property? why here?)
+    env.objc.borrow_mut::<UIControlHostObject>(this).tracking = false;
+}
+
+- (())touchesBegan:(id)touches // NSSet* of UITouch*
+         withEvent:(id)event { // UIEvent*
+    if !msg![env; this isEnabled] {
+        return;
+    }
+
+    // TODO: It seems like UIControl can also handle touch events that don't
+    // begin within this control, but in fact elsewhere. How do we handle those?
+
+    // UIControl's documentation implies that only one touch is ever tracked
+    // at once.
+    let touch: id = msg![env; touches anyObject];
+    if !msg![env; this beginTrackingWithTouch:touch withEvent:event] {
+        return;
+    }
+
+    retain(env, touch);
+    let host_obj = env.objc.borrow_mut::<UIControlHostObject>(this);
+    host_obj.tracking = true;
+    let old_touch = std::mem::replace(&mut host_obj.tracked_touch, touch);
+    release(env, old_touch);
+    if old_touch != nil {
+        log!("Got new touch {:?} but old touch {:?} has not yet ended!", touch, old_touch);
+    }
+    // Not sure if this is the right place to set this.
+    () = msg![env; this setHighlighted:true];
+}
+- (())touchesMoved:(id)touches // NSSet* of UITouch*
+         withEvent:(id)event { // UIEvent*
+    if !msg![env; this isEnabled] {
+        return;
+    }
+
+    let touch: id = msg![env; touches anyObject];
+    let tracked_touch = env.objc.borrow::<UIControlHostObject>(this).tracked_touch;
+    if tracked_touch != touch {
+        return;
+    }
+    if !msg![env; this continueTrackingWithTouch:touch withEvent:event] {
+        release(env, tracked_touch);
+        env.objc.borrow_mut::<UIControlHostObject>(this).tracked_touch = nil;
+        env.objc.borrow_mut::<UIControlHostObject>(this).tracking = false;
+        () = msg![env; this setHighlighted:false];
+    }
+}
+- (())touchesEnded:(id)touches // NSSet* of UITouch*
+         withEvent:(id)event { // UIEvent*
+    let touch: id = msg![env; touches anyObject];
+    let tracked_touch = env.objc.borrow::<UIControlHostObject>(this).tracked_touch;
+    if tracked_touch != touch {
+        return;
+    }
+    () = msg![env; this endTrackingWithTouch:touch withEvent:event];
+    release(env, tracked_touch);
+    env.objc.borrow_mut::<UIControlHostObject>(this).tracked_touch = nil;
+    () = msg![env; this setHighlighted:false];
+}
+
+// TODO: triggers/targets/actions
 
 @end
 

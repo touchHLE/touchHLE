@@ -19,6 +19,7 @@ use crate::frameworks::core_graphics::cg_image::{
 use crate::frameworks::core_graphics::{CGPoint, CGRect, CGSize};
 use crate::mem::{GuestUSize, Ptr};
 use crate::objc::{id, msg, nil, objc_classes, release, retain, ClassExports, HostObject, ObjC};
+use std::collections::HashMap;
 
 pub(super) struct CALayerHostObject {
     /// Possibly nil, usually a UIView. This is a weak reference.
@@ -378,6 +379,91 @@ pub const CLASSES: ClassExports = objc_classes! {
     let y_range = bounds.origin.y..(bounds.origin.y + bounds.size.height);
     let CGPoint {x, y} = point;
     x_range.contains(&x) && y_range.contains(&y)
+}
+
+- (CGPoint)convertPoint:(CGPoint)point
+              fromLayer:(id)other { // CALayer*
+    assert!(other != nil); // TODO
+
+    if this == other {
+        return point;
+    }
+
+    // The two layers must have a common ancestor. Let's try to find it.
+    // The idea is to walk up each layer's superlayer chain, one at a time,
+    // alternating between layers until we find a match.
+
+    // Maps of layer pointers to origins in that layer's co-ordinate space.
+    let mut this_map = HashMap::from([(this, CGPoint { x: 0.0, y: 0.0 })]);
+    let mut other_map = HashMap::from([(other, CGPoint { x: 0.0, y: 0.0 })]);
+    // Current iteration state.
+    let mut this_superlayer = this;
+    let mut this_origin = CGPoint { x: 0.0, y: 0.0 };
+    let mut other_superlayer = other;
+    let mut other_origin = CGPoint { x: 0.0, y: 0.0 };
+    let (common_ancestor, this_origin, other_origin) = loop {
+        if this_superlayer != nil {
+            let next: id = msg![env; this_superlayer superlayer];
+            if next == nil {
+                this_superlayer = nil;
+            } else {
+                let bounds: CGRect = msg![env; this_superlayer bounds];
+                let frame: CGRect = msg![env; this_superlayer frame];
+                let next_origin = CGPoint {
+                    x: this_origin.x + frame.origin.x - bounds.origin.x,
+                    y: this_origin.y + frame.origin.y - bounds.origin.y,
+                };
+                if let Some(&other_origin) = other_map.get(&next) {
+                    break (next, next_origin, other_origin);
+                }
+                this_map.insert(next, next_origin);
+                this_superlayer = next;
+                this_origin = next_origin;
+            }
+        }
+
+        if other_superlayer != nil {
+            let next: id = msg![env; other_superlayer superlayer];
+            if next == nil {
+                other_superlayer = nil;
+            } else {
+                let bounds: CGRect = msg![env; other_superlayer bounds];
+                let frame: CGRect = msg![env; other_superlayer frame];
+                let next_origin = CGPoint {
+                    x: other_origin.x + frame.origin.x - bounds.origin.x,
+                    y: other_origin.y + frame.origin.y - bounds.origin.y,
+                };
+                if let Some(&this_origin) = this_map.get(&next) {
+                    break (next, this_origin, next_origin);
+                }
+                other_map.insert(next, next_origin);
+                other_superlayer = next;
+                other_origin = next_origin;
+            }
+        }
+
+        assert!(
+            this_superlayer != nil || other_superlayer != nil,
+            "Layers have no common ancestor!"
+        );
+    };
+
+    log_dbg!("{:?} and {:?}'s common ancestor: {:?}", this, other, common_ancestor);
+    log_dbg!("{:?}'s origin in common ancestor: {:?}", this, this_origin);
+    log_dbg!("{:?}'s origin in common ancestor: {:?}", other, other_origin);
+    let res = CGPoint {
+        x: point.x + other_origin.x - this_origin.x,
+        y: point.y + other_origin.y - this_origin.y,
+    };
+    log_dbg!("Converted {:?} from {:?} to {:?}: {:?}", point, other, this, res);
+    res
+}
+
+- (CGPoint)convertPoint:(CGPoint)point
+                toLayer:(id)other { // CALayer*
+    assert!(other != nil); // TODO
+
+    msg![env; other convertPoint:point fromLayer:this]
 }
 
 // TODO: more

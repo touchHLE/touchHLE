@@ -5,17 +5,19 @@
  */
 //! `UIEvent`.
 
+use super::ui_touch::UITouchHostObject;
 use crate::frameworks::core_graphics::CGPoint;
 use crate::objc::{
-    id, msg, msg_class, nil, objc_classes, release, retain, ClassExports, HostObject, NSZonePtr,
+    autorelease, id, msg, msg_class, nil, objc_classes, release, retain, ClassExports, HostObject,
+    NSZonePtr,
 };
 use crate::Environment;
 
-struct UIEventHostObject {
+pub(super) struct UIEventHostObject {
     /// `NSSet<UITouch*>*`
     touches: id,
     /// `UIView*`
-    view: id,
+    pub(super) view: id,
 }
 impl HostObject for UIEventHostObject {}
 
@@ -42,11 +44,16 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (id)touchesForView:(id)view {
     let &UIEventHostObject { touches, .. } = env.objc.borrow(this);
     // TODO: broken for multi-touch
-    // FIXME: this will be wrong sometimes. locationInView: currently panics
-    // if it would be, at least.
     let touch: id = msg![env; touches anyObject];
-    let _: CGPoint = msg![env; touch locationInView:view];
-    touches
+    let &UITouchHostObject { original_location, window, .. } = env.objc.borrow(touch);
+    // FIXME: handle non-zero-origin windows
+    let location_in_view: CGPoint = msg![env; window convertPoint:original_location toView:view];
+    if msg![env; view pointInside:location_in_view withEvent:this] {
+        msg_class![env; NSSet setWithObject:touch]
+    } else {
+        let empty_set: id = msg_class![env; NSSet new];
+        autorelease(env, empty_set)
+    }
 }
 
 - (id)allTouches {

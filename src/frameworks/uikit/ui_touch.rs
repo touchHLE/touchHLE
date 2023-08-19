@@ -6,7 +6,8 @@
 //! `UITouch`.
 
 use super::ui_event;
-use crate::frameworks::core_graphics::{CGFloat, CGPoint, CGRect};
+use super::ui_event::UIEventHostObject;
+use crate::frameworks::core_graphics::{CGPoint, CGRect};
 use crate::frameworks::foundation::{NSInteger, NSTimeInterval, NSUInteger};
 use crate::objc::{
     autorelease, id, msg, msg_class, nil, objc_classes, release, retain, ClassExports, HostObject,
@@ -25,13 +26,18 @@ pub struct State {
     current_touch: Option<id>,
 }
 
-struct UITouchHostObject {
+pub(super) struct UITouchHostObject {
     /// Strong reference to the `UIView`
     view: id,
-    /// Relative to screen
+    /// Strong reference to the `UIWindow`, used as a reference for co-ordinate
+    /// space conversion
+    pub(super) window: id,
+    /// Relative to the screen
     location: CGPoint,
-    /// Relative to screen
+    /// Relative to the screen
     previous_location: CGPoint,
+    /// Relative to the screen, used for `touchesForView:`
+    pub(super) original_location: CGPoint,
     timestamp: NSTimeInterval,
     phase: UITouchPhase,
 }
@@ -46,8 +52,10 @@ pub const CLASSES: ClassExports = objc_classes! {
 + (id)allocWithZone:(NSZonePtr)_zone {
     let host_object = Box::new(UITouchHostObject {
         view: nil,
+        window: nil,
         location: CGPoint { x: 0.0, y: 0.0 },
         previous_location: CGPoint { x: 0.0, y: 0.0 },
+        original_location: CGPoint { x: 0.0, y: 0.0 },
         timestamp: 0.0,
         phase: UITouchPhaseBegan,
     });
@@ -55,29 +63,26 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (())dealloc {
-    let &mut UITouchHostObject { view, .. } = env.objc.borrow_mut(this);
+    let &mut UITouchHostObject { view, window, .. } = env.objc.borrow_mut(this);
     release(env, view);
+    release(env, window);
     env.objc.dealloc_object(this, &mut env.mem)
 }
 
 - (CGPoint)locationInView:(id)that_view { // UIView*
-    let &UITouchHostObject { location, .. } = env.objc.borrow(this);
+    let &UITouchHostObject { location, window, .. } = env.objc.borrow(this);
     if that_view == nil {
-        location
+        location // TODO: this should use convertPoint:fromView: too
     } else {
-        // FIXME, see below
-        // Note: also change touchesForView: on UIEvent
-        resolve_point_in_view(env, that_view, location).unwrap()
+        msg![env; that_view convertPoint:location fromView:window]
     }
 }
 - (CGPoint)previousLocationInView:(id)that_view { // UIView*
-    let &UITouchHostObject { previous_location, .. } = env.objc.borrow(this);
+    let &UITouchHostObject { previous_location, window, .. } = env.objc.borrow(this);
     if that_view == nil {
-        previous_location
+        previous_location // TODO: this should use convertPoint:fromView: too
     } else {
-        // FIXME, see below
-        // Note: also change touchesForView: on UIEvent
-        resolve_point_in_view(env, that_view, previous_location).unwrap()
+        msg![env; that_view convertPoint:previous_location fromView:window]
     }
 }
 
@@ -101,58 +106,6 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 };
 
-pub fn resolve_point_in_view(env: &mut Environment, view: id, point: CGPoint) -> Option<CGPoint> {
-    let (expected_width, expected_height) = env.window.size_unrotated_unscaled();
-    let expected_width = expected_width as CGFloat;
-    let expected_height = expected_height as CGFloat;
-
-    let bounds: CGRect = msg![env; view bounds];
-    let center: CGPoint = msg![env; view center];
-
-    if bounds.size.width != expected_width || bounds.size.height != expected_height {
-        return None;
-    }
-    if center.x != expected_width / 2.0 || center.y != expected_height / 2.0 {
-        return None;
-    }
-
-    Some(CGPoint {
-        x: point.x - bounds.origin.x,
-        y: point.y - bounds.origin.y,
-    })
-}
-
-fn find_view_for_touch(env: &mut Environment, point: CGPoint) -> Option<id> {
-    // Assumes the last window in the list is the one on top.
-    // TODO: this is not correct once we support zPosition.
-    // TODO: can there be windows smaller than the screen? If so we need to
-    //       hit test all of them.
-    let Some(&top_window) = env.framework_state.uikit.ui_view.ui_window.visible_windows.last() else {
-        log_dbg!("No visible window, touch event ignored");
-        return None;
-    };
-
-    // FIXME: event should be provided here!
-    let view: id = msg![env; top_window hitTest:point withEvent:nil];
-
-    if view == nil {
-        return None;
-    }
-
-    // FIXME: This is a hack, it is assuming there is a single
-    // view with the same size as the screen, and can't account for
-    // the view hierarchy's effects on the co-ordinate system!
-    if resolve_point_in_view(env, view, point).is_none() {
-        log!(
-            "Warning: touch event ignored, non-full-screen view {:?} (FIXME)",
-            view
-        );
-        return None;
-    }
-
-    Some(view)
-}
-
 /// [super::handle_events] will forward touch events to this function.
 pub fn handle_event(env: &mut Environment, event: Event) {
     match event {
@@ -169,10 +122,6 @@ pub fn handle_event(env: &mut Environment, event: Event) {
                 y: coords.1,
             };
 
-            let Some(view) = find_view_for_touch(env, location) else {
-                return;
-            };
-
             // UIKit creates and drains autorelease pools when handling events.
             let pool: id = msg_class![env; NSAutoreleasePool new];
 
@@ -182,23 +131,69 @@ pub fn handle_event(env: &mut Environment, event: Event) {
             // event was dispatched. Maybe we'll need to fix this eventually.
             let timestamp: NSTimeInterval = msg_class![env; NSProcessInfo systemUptime];
 
+            // TODO: is this the correct state of the UITouch and UIEvent during
+            //       hit testing?
+
             let new_touch: id = msg_class![env; UITouch alloc];
-            retain(env, view);
             *env.objc.borrow_mut(new_touch) = UITouchHostObject {
-                view,
+                view: nil,
+                window: nil,
                 location,
                 previous_location: location,
+                original_location: location,
                 timestamp,
                 phase: UITouchPhaseBegan,
             };
             autorelease(env, new_touch);
 
+            let touches: id = msg_class![env; NSSet setWithObject:new_touch];
+            let event = ui_event::new_event(env, touches, nil);
+            autorelease(env, event);
+
+            // FIXME: handle non-fullscreen windows in hit testing and
+            //        co-ordinate space translation.
+
+            // Assumes the last window in the list is the one on top.
+            // TODO: this is not correct once we support zPosition.
+            let Some(&top_window) = env.framework_state.uikit.ui_view.ui_window.visible_windows.last() else {
+                log!("No visible window, touch event ignored");
+                return;
+            };
+
+            let view: id = msg![env; top_window hitTest:location withEvent:event];
+            if view == nil {
+                log!(
+                    "Couldn't find a view for touch at {:?} in window {:?}, discarding",
+                    location,
+                    top_window,
+                );
+                return;
+            } else {
+                log_dbg!(
+                    "Found view {:?} with frame {:?} for touch at {:?} in window {:?}",
+                    view,
+                    {
+                        let f: CGRect = msg![env; view frame];
+                        f
+                    },
+                    location,
+                    top_window,
+                );
+            }
+
+            retain(env, view);
+            retain(env, top_window);
+            {
+                let new_touch = env.objc.borrow_mut::<UITouchHostObject>(new_touch);
+                new_touch.view = view;
+                new_touch.window = top_window;
+            }
+
+            retain(env, view);
+            env.objc.borrow_mut::<UIEventHostObject>(event).view = view;
+
             env.framework_state.uikit.ui_touch.current_touch = Some(new_touch);
             retain(env, new_touch);
-
-            let touches: id = msg_class![env; NSSet setWithObject:new_touch];
-            let event = ui_event::new_event(env, touches, view);
-            autorelease(env, event);
 
             log_dbg!(
                 "Sending [{:?} touchesBegan:{:?} withEvent:{:?}]",

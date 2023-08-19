@@ -15,8 +15,7 @@
 //! `objc_sync_enter/exit`](https://opensource.apple.com/source/objc4/objc4-551.1/runtime/Accessors.subproj/objc-accessors.mm.auto.html),
 //! otherwise undocumented.
 use crate::environment::mutex::{
-    host_mutex_destroy, host_mutex_init, host_mutex_lock, host_mutex_unlock,
-    MutexType,
+    host_mutex_destroy, host_mutex_init, host_mutex_lock, host_mutex_unlock, MutexType,
 };
 use crate::Environment;
 

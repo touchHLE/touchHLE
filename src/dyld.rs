@@ -166,7 +166,7 @@ pub struct Dyld {
 impl Dyld {
     /// We reserve this SVC ID for invoking the lazy linker.
     pub const SVC_LAZY_LINK: u32 = 0;
-    /// We reserve this SVC ID as the return for function entry.
+    /// We reserve this SVC ID as the entry and exit routine for spawned threads.
     pub const SVC_THREAD_EXIT: u32 = 1;
     /// We reserve this SVC ID for the special return-to-host routine.
     pub const SVC_RETURN_TO_HOST: u32 = 2;

@@ -9,8 +9,7 @@
 
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::environment::mutex::{
-    host_mutex_destroy, host_mutex_init, host_mutex_lock, host_mutex_unlock, MutexType,
-    PTHREAD_MUTEX_DEFAULT,
+    host_mutex_destroy, host_mutex_init, host_mutex_lock, host_mutex_unlock, PTHREAD_MUTEX_DEFAULT,
 };
 use crate::mem::{ConstPtr, MutPtr, Ptr, SafeRead};
 use crate::Environment;
@@ -21,7 +20,7 @@ use crate::Environment;
 struct pthread_mutexattr_t {
     /// Magic number (must be [MAGIC_MUTEXATTR])
     magic: u32,
-    type_: MutexType,
+    type_: i32,
     /// This should eventually be a bitfield with the other attributes.
     _unused: u32,
 }
@@ -54,7 +53,7 @@ fn pthread_mutexattr_init(env: &mut Environment, attr: MutPtr<pthread_mutexattr_
         attr,
         pthread_mutexattr_t {
             magic: MAGIC_MUTEXATTR,
-            type_: PTHREAD_MUTEX_DEFAULT,
+            type_: PTHREAD_MUTEX_DEFAULT as i32,
             _unused: 0,
         },
     );
@@ -65,7 +64,7 @@ fn pthread_mutexattr_settype(
     attr: MutPtr<pthread_mutexattr_t>,
     type_: i32,
 ) -> i32 {
-    let type_ = type_.try_into().unwrap();
+    let type_ = type_;
     check_magic!(env, attr, MAGIC_MUTEXATTR);
     let mut attr_copy = env.mem.read(attr);
     attr_copy.type_ = type_;
@@ -78,7 +77,7 @@ fn pthread_mutexattr_destroy(env: &mut Environment, attr: MutPtr<pthread_mutexat
         attr,
         pthread_mutexattr_t {
             magic: 0,
-            type_: PTHREAD_MUTEX_DEFAULT,
+            type_: PTHREAD_MUTEX_DEFAULT as i32,
             _unused: 0,
         },
     );
@@ -93,8 +92,7 @@ fn pthread_mutex_init(
     let type_ = if !attr.is_null() {
         check_magic!(env, attr, MAGIC_MUTEXATTR);
         let pthread_mutexattr_t { type_, .. } = env.mem.read(attr);
-        let type_ = type_.try_into().unwrap();
-        type_
+        type_.try_into().unwrap()
     } else {
         PTHREAD_MUTEX_DEFAULT
     };

@@ -436,7 +436,8 @@ impl Environment {
 
     /// Block the current thread until the given mutex unlocks.
     /// Other threads also blocking on this mutex may get access first.
-    /// Also note that like [Self::sleep], this only takes effect after the host function returns.
+    /// Also note that like [Self::sleep], this only takes effect after the host function returns
+    /// to the main run loop ([Environment::run]).
     pub fn block_on_mutex(&mut self, mutex_id: HostMutexId) {
         assert!(matches!(
             self.threads[self.current_thread].blocked_by,
@@ -450,6 +451,12 @@ impl Environment {
         self.threads[self.current_thread].blocked_by = ThreadBlock::Mutex(mutex_id);
     }
 
+    /// Blocks the current thread until the thread given finishes, writing it's return value to ptr
+    /// (if non-null).
+    /// Note that there are no protections against joining with a deattached thread, joining a thread with itself,
+    /// or deadlocking joins. Callers should ensure these do not occur!
+    /// Also note that like [Self::sleep], this only takes effect after the host function returns
+    /// to the main run loop ([Environment::run]).
     pub fn join_with_thread(&mut self, joinee_thread: ThreadID, ptr: MutPtr<MutVoidPtr>) {
         assert!(matches!(
             self.threads[self.current_thread].blocked_by,

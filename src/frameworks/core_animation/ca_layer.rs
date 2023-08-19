@@ -239,7 +239,6 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.borrow::<CALayerHostObject>(this).background_color
 }
 - (())setBackgroundColor:(id)new_color {
-    env.objc.borrow_mut::<CALayerHostObject>(this).background_color = new_color;
     let host_obj = env.objc.borrow_mut::<CALayerHostObject>(this);
     let old_color = std::mem::replace(&mut host_obj.background_color, new_color);
     if new_color != nil {

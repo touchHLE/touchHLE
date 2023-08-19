@@ -9,7 +9,7 @@ pub mod ui_button;
 pub mod ui_text_field;
 
 use crate::frameworks::foundation::NSUInteger;
-use crate::objc::{objc_classes, ClassExports, impl_HostObject_with_superclass, id, NSZonePtr};
+use crate::objc::{id, impl_HostObject_with_superclass, objc_classes, ClassExports, NSZonePtr};
 
 struct UIControlHostObject {
     superclass: super::UIViewHostObject,

@@ -12,6 +12,7 @@ use crate::Environment;
 
 pub const EPERM: i32 = 1;
 pub const EDEADLK: i32 = 11;
+pub const EBUSY: i32 = 16;
 pub const EINVAL: i32 = 22;
 
 #[derive(Default)]

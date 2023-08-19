@@ -36,6 +36,5 @@ pub mod thread;
 #[derive(Default)]
 pub struct State {
     key: key::State,
-    mutex: mutex::State,
     thread: thread::State,
 }

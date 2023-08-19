@@ -19,6 +19,7 @@
 //! categories and dynamic class editing).
 
 use crate::dyld::{export_c_func, FunctionExports};
+use crate::libc::pthread::mutex::HostMutexId;
 
 use std::collections::HashMap;
 
@@ -28,6 +29,7 @@ mod methods;
 mod objects;
 mod properties;
 mod selectors;
+mod synchronization;
 
 pub use classes::{objc_classes, Class, ClassExports, ClassTemplate};
 pub use messages::{
@@ -45,6 +47,7 @@ use methods::method_list_t;
 use objects::{objc_object, HostObjectEntry};
 use properties::objc_copyStruct;
 use properties::objc_setProperty;
+use synchronization::{objc_sync_enter, objc_sync_exit};
 
 /// Typedef for `NSZone *`. This is a [fossil type] found in the signature of
 /// `allocWithZone:` and similar methods. Its value is always ignored.
@@ -66,6 +69,9 @@ pub struct ObjC {
     ///
     /// Look at the `isa` to get the metaclass for a class.
     classes: HashMap<String, Class>,
+
+    /// Mutexes used in @synchronized blocks (objc_sync_enter/exit).
+    sync_mutexes: HashMap<id, HostMutexId>,
 }
 
 impl ObjC {
@@ -74,6 +80,7 @@ impl ObjC {
             selectors: HashMap::new(),
             objects: HashMap::new(),
             classes: HashMap::new(),
+            sync_mutexes: HashMap::new(),
         }
     }
 }
@@ -84,4 +91,6 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(objc_msgSendSuper2(_, _)),
     export_c_func!(objc_setProperty(_, _, _, _, _, _)),
     export_c_func!(objc_copyStruct(_, _, _, _, _)),
+    export_c_func!(objc_sync_enter(_)),
+    export_c_func!(objc_sync_exit(_)),
 ];

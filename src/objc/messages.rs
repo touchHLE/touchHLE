@@ -329,7 +329,7 @@ pub use crate::msg_super; // #[macro_export] is weird...
 /// desugars to:
 ///
 /// ```ignore
-/// msg![env; (env.objc.get_known_class("SomeClass"), &mut env.mem) alloc]
+/// msg![env; (env.objc.get_known_class("SomeClass", &mut env.mem)) alloc]
 /// ```
 #[macro_export]
 macro_rules! msg_class {

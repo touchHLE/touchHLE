@@ -14,6 +14,7 @@
 
 mod ima4;
 
+use hound::Sample;
 pub use ima4::decode_ima4;
 use touchHLE_dr_mp3_wrapper as dr_mp3;
 pub use touchHLE_openal_soft_wrapper as openal;
@@ -97,7 +98,7 @@ impl AudioFile {
                 // and floating-point 32-bit linear PCM. We should expose all of
                 // these eventually, but we should only expose formats we've
                 // tested.
-                assert!(matches!(bits_per_sample, 8 | 16 | 24 | 32));
+                assert!(matches!(bits_per_sample, 8 | 16));
                 assert!(sample_format == hound::SampleFormat::Int);
 
                 AudioDescription {
@@ -106,10 +107,10 @@ impl AudioFile {
                         is_float: false,
                         is_little_endian: true,
                     },
-                    bytes_per_packet: u32::from(channels) * 2,
+                    bytes_per_packet: u32::from(channels * bits_per_sample/8),
                     frames_per_packet: 1,
                     channels_per_frame: channels.into(),
-                    bits_per_channel: 16, // TODO: Different values for different bits_per_sample
+                    bits_per_channel: bits_per_sample as u32,
                 }
             }
             AudioFileInner::Caf(ref caf_reader) => {
@@ -240,12 +241,15 @@ impl AudioFile {
                     .seek((offset / bytes_per_sample).try_into().unwrap())
                     .map_err(|_| ())?;
 
-                assert!(bytes_per_sample == 2);
                 let mut byte_offset = 0;
                 for sample in wave_reader.samples().take(sample_count) {
                     let sample: i16 = sample.map_err(|_| ())?;
-                    buffer[byte_offset..][..2].copy_from_slice(&sample.to_le_bytes());
-                    byte_offset += 2;
+                    match bytes_per_sample {
+                        1 => buffer[byte_offset] = (sample+128) as u8,
+                        2 => buffer[byte_offset..][..2].copy_from_slice(&sample.to_le_bytes()),
+                        _ => todo!()
+                    }
+                    byte_offset += bytes_per_sample as usize;
                 }
                 Ok(byte_offset)
             }

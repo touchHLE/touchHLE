@@ -9,7 +9,6 @@ use crate::abi::{CallFromHost, GuestFunction};
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::mem::{ConstPtr, ConstVoidPtr, GuestUSize, MutPtr, MutVoidPtr, Ptr};
 use crate::Environment;
-use crate::objc::nil;
 use std::collections::HashMap;
 
 pub mod qsort;

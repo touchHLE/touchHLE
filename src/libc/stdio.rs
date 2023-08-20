@@ -8,13 +8,11 @@
 use sdl2::libc::{STDOUT_FILENO, STDERR_FILENO};
 
 use super::posix_io::{self, O_APPEND, O_CREAT, O_RDONLY, O_RDWR, O_TRUNC, O_WRONLY};
-use crate::abi::DotDotDot;
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::fs::GuestPath;
 use crate::libc::string::strlen;
 use crate::mem::{ConstPtr, ConstVoidPtr, GuestUSize, MutPtr, MutVoidPtr, Ptr, SafeRead};
 use crate::Environment;
-use crate::objc::nil;
 use std::io::Write;
 
 // Standard C functions
@@ -176,11 +174,6 @@ fn fclose(env: &mut Environment, file_ptr: MutPtr<FILE>) -> i32 {
     }
 }
 
-fn fprintf(env: &mut Environment, file_ptr: MutPtr<FILE>, format: ConstPtr<u8>, _args: DotDotDot) -> i32 {
-    // TODO: parse variadic arguments and pass them on (file creation mode)
-    fputs(env, format, file_ptr)
-}
-
 fn puts(env: &mut Environment, s: ConstPtr<u8>) -> i32 {
     let _ = std::io::stdout().write_all(env.mem.cstr_at(s));
     let _ = std::io::stdout().write_all(b"\n");
@@ -234,7 +227,6 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(fseek(_, _, _)),
     export_c_func!(ftell(_)),
     export_c_func!(fclose(_)),
-    export_c_func!(fprintf(_, _, _)),
     export_c_func!(puts(_)),
     export_c_func!(putchar(_)),
     export_c_func!(remove(_)),

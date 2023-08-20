@@ -25,8 +25,6 @@ use crate::objc::{
 use crate::Environment;
 use std::borrow::Cow;
 use std::collections::HashMap;
-use std::fs;
-use std::path::Path;
 use std::string::FromUtf16Error;
 
 pub type NSStringEncoding = NSUInteger;

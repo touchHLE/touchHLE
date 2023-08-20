@@ -11,7 +11,7 @@ use sdl2::libc::{STDIN_FILENO, STDOUT_FILENO, STDERR_FILENO};
 use super::wchar::wchar_t;
 use crate::abi::GuestFunction;
 use crate::dyld::{export_c_func, ConstantExports, FunctionExports, HostConstant};
-use crate::mem::{ConstVoidPtr, Mem, MutVoidPtr, Ptr, SafeRead, guest_size_of};
+use crate::mem::{ConstVoidPtr, Mem, MutVoidPtr, Ptr, SafeRead};
 use crate::Environment;
 
 /// Called by inlined `tolower()` on Darwin

@@ -179,7 +179,8 @@ fn AudioFileGetProperty(
                     let is_packed = (bits_per_channel * channels_per_frame * frames_per_packet)
                         == (bytes_per_packet * 8);
                     let format_flags = (u32::from(is_float) * kAudioFormatFlagIsFloat)
-                        | (u32::from(!is_float) * kAudioFormatFlagIsSignedInteger)
+                        | (u32::from((!is_float) && matches!(bits_per_channel, 16 | 24))
+                            * kAudioFormatFlagIsSignedInteger)
                         | (u32::from(is_packed) * kAudioFormatFlagIsPacked)
                         | (u32::from(!is_little_endian) * kAudioFormatFlagIsBigEndian);
                     AudioStreamBasicDescription {

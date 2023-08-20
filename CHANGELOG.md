@@ -41,6 +41,7 @@ Usability:
 - The options help text is now available as a file (`OPTIONS_HELP.txt`), so you don't have to use the command line to get a list of options. (@hikari-no-yume)
 - The new `--fullscreen` option lets you display an app in fullscreen rather than in a window. This is independent of the internal resolution/scale hack and supports both upscaling and downscaling. (@hikari-no-yume)
 - If you run touchHLE without specifying an app, it will now display a simple graphical app picker. (@hikari-no-yume)
+- The new `--button-to-touch=` option lets you map a button on your game controller to a point on the touch screen. (@hikari-no-yume)
 
 Other:
 
@@ -53,7 +54,6 @@ Other:
   - The splash screen is now drawn with OpenGL ES 1.1, either natively or via translation to OpenGL 2.1, rather than with OpenGL 3.2. (@hikari-no-yume)
 
   Theoretically, none of these changes should affect how touchHLE behaves for ordinary users in supported apps, but graphics drivers are inscrutable and frequently buggy beasts, so it's hard to be certain. As if to demonstrate this, these changes somehow fixed the mysterious macOS-only memory leak.
-- The new `--button-to-touch=` option lets you map a button on your game controller to a point on the touch screen. (@hikari-no-yume)
 
 ## v0.1.2 (2023-03-07)
 

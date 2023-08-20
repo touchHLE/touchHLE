@@ -193,6 +193,21 @@ fn fmodf(_env: &mut Environment, arg1: f32, arg2: f32) -> f32 {
     arg1 % arg2
 }
 
+// Maximum, minimum and positive difference functions
+// TODO: implement fdim
+fn fmax(_env: &mut Environment, arg1: f64, arg2: f64) -> f64 {
+    arg1.max(arg2)
+}
+fn fmaxf(_env: &mut Environment, arg1: f32, arg2: f32) -> f32 {
+    arg1.max(arg2)
+}
+fn fmin(_env: &mut Environment, arg1: f64, arg2: f64) -> f64 {
+    arg1.min(arg2)
+}
+fn fminf(_env: &mut Environment, arg1: f32, arg2: f32) -> f32 {
+    arg1.min(arg2)
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     // Trigonometric functions
     export_c_func!(sin(_)),
@@ -252,4 +267,9 @@ pub const FUNCTIONS: FunctionExports = &[
     // Remainder functions
     export_c_func!(fmod(_, _)),
     export_c_func!(fmodf(_, _)),
+    // Maximum, minimum and positive difference functions
+    export_c_func!(fmax(_, _)),
+    export_c_func!(fmaxf(_, _)),
+    export_c_func!(fmin(_, _)),
+    export_c_func!(fminf(_, _)),
 ];

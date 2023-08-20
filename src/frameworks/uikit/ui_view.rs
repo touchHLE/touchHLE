@@ -4,6 +4,9 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 //! `UIView`.
+//!
+//! Useful resources:
+//! - Apple's [View Programming Guide for iOS](https://developer.apple.com/library/archive/documentation/WindowsViews/Conceptual/ViewPG_iPhoneOS/Introduction/Introduction.html)
 
 pub mod ui_alert_view;
 pub mod ui_control;
@@ -386,6 +389,24 @@ pub const CLASSES: ClassExports = objc_classes! {
         }
     }
     this
+}
+
+// Co-ordinate space conversion
+
+- (CGPoint)convertPoint:(CGPoint)point
+               fromView:(id)other { // UIView*
+    assert!(other != nil); // TODO
+    let this_layer = env.objc.borrow::<UIViewHostObject>(this).layer;
+    let other_layer = env.objc.borrow::<UIViewHostObject>(other).layer;
+    msg![env; this_layer convertPoint:point fromLayer:other_layer]
+}
+
+- (CGPoint)convertPoint:(CGPoint)point
+                 toView:(id)other { // UIView*
+    assert!(other != nil); // TODO
+    let this_layer = env.objc.borrow::<UIViewHostObject>(this).layer;
+    let other_layer = env.objc.borrow::<UIViewHostObject>(other).layer;
+    msg![env; this_layer convertPoint:point toLayer:other_layer]
 }
 
 @end

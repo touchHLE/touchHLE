@@ -9,12 +9,12 @@
 
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::mem::{MutPtr, MutVoidPtr, Ptr};
-use crate::{Environment, ThreadID};
+use crate::{Environment, ThreadId};
 use std::collections::hash_map::{Entry, HashMap};
 
 #[derive(Default)]
 pub struct State {
-    processwide_ptrs: HashMap<i32, (MutVoidPtr, Option<ThreadID>)>,
+    processwide_ptrs: HashMap<i32, (MutVoidPtr, Option<ThreadId>)>,
 }
 
 fn get_and_lock_processwide_ptr_inner(env: &mut Environment, key: i32) -> Result<MutVoidPtr, i32> {

@@ -55,7 +55,7 @@ mod window;
 // probably shouldn't be, but they need a new home (TODO).
 // Unlike its siblings, this module should be considered private and only used
 // via re-exports.
-use environment::{Environment, MutexId, MutexType, ThreadID, PTHREAD_MUTEX_DEFAULT};
+use environment::{Environment, MutexId, MutexType, ThreadId, PTHREAD_MUTEX_DEFAULT};
 
 use std::ffi::OsStr;
 use std::path::PathBuf;

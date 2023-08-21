@@ -22,7 +22,7 @@ use std::time::{Duration, Instant};
 pub use mutex::{MutexId, MutexType, PTHREAD_MUTEX_DEFAULT};
 
 /// Index into the [Vec] of threads. Thread 0 is always the main thread.
-pub type ThreadID = usize;
+pub type ThreadId = usize;
 
 /// Bookkeeping for a thread.
 pub struct Thread {
@@ -86,7 +86,7 @@ pub struct Environment {
     pub objc: objc::ObjC,
     pub dyld: dyld::Dyld,
     pub cpu: cpu::Cpu,
-    pub current_thread: ThreadID,
+    pub current_thread: ThreadId,
     pub threads: Vec<Thread>,
     pub libc_state: libc::State,
     pub framework_state: frameworks::State,
@@ -117,7 +117,7 @@ enum ThreadBlock {
     // Thread is waiting for a mutex to unlock.
     Mutex(MutexId),
     // Thread is waiting for another thread to finish (joining).
-    Joining(ThreadID, MutPtr<MutVoidPtr>),
+    Joining(ThreadId, MutPtr<MutVoidPtr>),
     // Deferred guest-to-host return
     DeferredReturn,
 }
@@ -366,7 +366,7 @@ impl Environment {
         &mut self,
         start_routine: abi::GuestFunction,
         user_data: mem::MutVoidPtr,
-    ) -> ThreadID {
+    ) -> ThreadId {
         let stack_size = mem::Mem::SECONDARY_THREAD_STACK_SIZE;
         let stack_alloc = self.mem.alloc(stack_size);
         let stack_high_addr = stack_alloc.to_bits() + stack_size;
@@ -460,7 +460,7 @@ impl Environment {
     ///
     /// Also note that like [Self::sleep], this only takes effect after the host
     /// function returns to the main run loop ([Environment::run]).
-    pub fn join_with_thread(&mut self, joinee_thread: ThreadID, ptr: MutPtr<MutVoidPtr>) {
+    pub fn join_with_thread(&mut self, joinee_thread: ThreadId, ptr: MutPtr<MutVoidPtr>) {
         assert!(matches!(
             self.threads[self.current_thread].blocked_by,
             ThreadBlock::NotBlocked
@@ -501,7 +501,7 @@ impl Environment {
         self.threads[self.current_thread].in_host_function = was_in_host_function;
     }
 
-    fn switch_thread(&mut self, new_thread: ThreadID) {
+    fn switch_thread(&mut self, new_thread: ThreadId) {
         assert!(new_thread != self.current_thread);
 
         log_dbg!(
@@ -558,7 +558,7 @@ impl Environment {
     fn handle_cpu_state(
         &mut self,
         state: cpu::CpuState,
-        initial_thread: ThreadID,
+        initial_thread: ThreadId,
         root: bool,
     ) -> ThreadNextAction {
         match state {
@@ -708,7 +708,7 @@ impl Environment {
             loop {
                 // Try to find a new thread to execute, starting with the thread
                 // following the one currently executing.
-                let mut suitable_thread: Option<ThreadID> = None;
+                let mut suitable_thread: Option<ThreadId> = None;
                 let mut next_awakening: Option<Instant> = None;
                 let mut mutex_to_relock: Option<MutexId> = None;
                 for i in 0..self.threads.len() {

@@ -17,13 +17,13 @@ pub const EINVAL: i32 = 22;
 
 #[derive(Default)]
 pub struct State {
-    errnos: std::collections::HashMap<crate::ThreadID, MutPtr<i32>>,
+    errnos: std::collections::HashMap<crate::ThreadId, MutPtr<i32>>,
 }
 impl State {
     fn errno_for_thread(
         &mut self,
         mem: &mut crate::mem::Mem,
-        thread: crate::ThreadID,
+        thread: crate::ThreadId,
     ) -> MutPtr<i32> {
         *self.errnos.entry(thread).or_insert_with(|| {
             log!(

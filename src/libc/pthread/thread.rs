@@ -9,7 +9,7 @@ use crate::abi::GuestFunction;
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::libc::errno::{EDEADLK, EINVAL};
 use crate::mem::{ConstPtr, MutPtr, MutVoidPtr, SafeRead};
-use crate::{Environment, ThreadID};
+use crate::{Environment, ThreadId};
 use std::collections::HashMap;
 
 #[derive(Default)]
@@ -53,8 +53,8 @@ unsafe impl SafeRead for OpaqueThread {}
 type pthread_t = MutPtr<OpaqueThread>;
 
 struct ThreadHostObject {
-    thread_id: ThreadID,
-    joined_by: Option<ThreadID>,
+    thread_id: ThreadId,
+    joined_by: Option<ThreadId>,
     _attr: pthread_attr_t,
 }
 

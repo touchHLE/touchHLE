@@ -8,7 +8,7 @@
 use std::collections::HashMap;
 use std::num::NonZeroU32;
 
-use super::{Environment, ThreadID};
+use super::{Environment, ThreadId};
 use crate::libc::errno::{EBUSY, EDEADLK, EPERM};
 
 /// Stores and manages mutexes. Note that all the methods for locking and
@@ -35,7 +35,7 @@ struct Mutex {
     waiting_count: u32,
     /// The `NonZeroU32` is the number of locks on this thread (if it's a
     /// recursive mutex).
-    locked: Option<(ThreadID, NonZeroU32)>,
+    locked: Option<(ThreadId, NonZeroU32)>,
 }
 
 #[repr(i32)]

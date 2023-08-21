@@ -58,6 +58,9 @@ fn build_test_app(tests_dir: &Path, test_app_path: &Path) -> Result<(), Box<dyn 
         .args(["-target", "armv6-apple-ios2"])
         // We don't have a libc to link against, don't try
         .arg("-nostdlib")
+        // If enabled, the stack protection causes a null pointer crash in some
+        // functions. This is probably because ___stack_chk_guard isn't linked.
+        .arg("-fno-stack-protector")
         // Pass four args to the linker:
         // `-e _main` sets the mangled C main() function as the entry point
         // (normally the libc provides an entry point calling main(), but we

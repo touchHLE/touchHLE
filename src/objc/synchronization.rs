@@ -5,15 +5,14 @@
  */
 //! Handling of `@synchronized` blocks (`objc_sync_enter/exit`).
 //!
-//! `@synchronized` blocks are sections of code that, for a given object, only allow one thread inside any `@synchronized` block with that object.
-//! These are internally implemented with the `objc_sync_enter` and `objc_sync_exit` functions.
+//! `@synchronized` blocks are sections of code that, for a given object, only
+//! allow one thread inside any `@synchronized` block with that object.
+//! These are internally implemented with the `objc_sync_enter` and
+//! `objc_sync_exit` functions.
 //!
 //! Resources:
-//! - [Section about `@synchronized` in *The Objective-C Programming
-//! Language*](https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/ObjectiveC/Chapters/ocThreading.html#//apple_ref/doc/uid/TP30001163-CH19-SW1)
-//! - [Source code for
-//! `objc_sync_enter/exit`](https://opensource.apple.com/source/objc4/objc4-551.1/runtime/Accessors.subproj/objc-accessors.mm.auto.html),
-//! otherwise undocumented.
+//! - [Section about `@synchronized` in *The Objective-C Programming Language*](https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/ObjectiveC/Chapters/ocThreading.html#//apple_ref/doc/uid/TP30001163-CH19-SW1)
+//! - [Source code for `objc_sync_enter/exit`](https://opensource.apple.com/source/objc4/objc4-551.1/runtime/Accessors.subproj/objc-accessors.mm.auto.html), otherwise undocumented.
 use crate::environment::mutex::{
     host_mutex_destroy, host_mutex_init, host_mutex_lock, host_mutex_unlock, MutexType,
 };
@@ -24,7 +23,7 @@ use super::id;
 /// Backing function of @synchronized block entry.
 /// This function is entirely undocumented, with
 /// [source code provided](https://opensource.apple.com/source/objc4/objc4-551.1/runtime/objc-sync.h.auto.html).
-pub(super) fn objc_sync_enter(env: &mut Environment, obj: id) -> u32 {
+pub(super) fn objc_sync_enter(env: &mut Environment, obj: id) -> i32 {
     if let Some(mutex_id) = env.objc.sync_mutexes.get(&obj) {
         log_dbg!(
             "Reentry of {:#x} to objc_sync_enter, using mutex #{}",
@@ -42,13 +41,13 @@ pub(super) fn objc_sync_enter(env: &mut Environment, obj: id) -> u32 {
         host_mutex_lock(env, mutex_id).unwrap();
         env.objc.sync_mutexes.insert(obj, mutex_id);
     }
-    0u32 // OK
+    0 // OK
 }
 
 /// Backing function of @synchronized block exit.
 /// This function is entirely undocumented, with
 /// [source code provided](https://opensource.apple.com/source/objc4/objc4-551.1/runtime/objc-sync.h.auto.html).
-pub(super) fn objc_sync_exit(env: &mut Environment, obj: id) -> u32 {
+pub(super) fn objc_sync_exit(env: &mut Environment, obj: id) -> i32 {
     match env.objc.sync_mutexes.get(&obj).cloned() {
         Some(mutex_id) => {
             match host_mutex_unlock(env, mutex_id) {
@@ -99,5 +98,5 @@ pub(super) fn objc_sync_exit(env: &mut Environment, obj: id) -> u32 {
         }
     }
 
-    0u32 // OK
+    0 // OK
 }

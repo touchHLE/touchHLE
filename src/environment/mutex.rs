@@ -9,16 +9,17 @@ use std::collections::HashMap;
 use std::num::NonZeroU32;
 
 use crate::libc::errno::{EBUSY, EDEADLK, EPERM};
-use crate::libc::pthread::mutex::HostMutexId;
 use crate::{Environment, ThreadID};
 
 #[derive(Default)]
 pub struct MutexState {
-    // TODO?: Maybe this should be a Vec instead? It would be bad if there were many mutexes over
-    // the lifetime of an application, but it would perform better.
-    // Maybe it could also be a fixed size allocator? (although that seems a little overkill)
+    // TODO?: Maybe this should be a Vec instead? It would be bad if there were
+    // many mutexes over the lifetime of an application, but it would perform
+    // better. Maybe it could also be a fixed size allocator? (although that
+    // seems a little overkill)
     mutexes: HashMap<HostMutexId, MutexHostObject>,
-    // Hopefully there will never be more than 2^64 mutexes in an applications lifetime :P
+    // Hopefully there will never be more than 2^64 mutexes in an application's
+    // lifetime :P
     mutex_count: u64,
 }
 impl MutexState {
@@ -29,6 +30,10 @@ impl MutexState {
         &env.mutex_state
     }
 }
+
+/// Unique identifier for mutexes, used for mutexes held by host objects and
+/// guest pthread mutexes.
+pub type HostMutexId = u64;
 
 struct MutexHostObject {
     type_: MutexType,
@@ -61,7 +66,8 @@ impl TryFrom<i32> for MutexType {
 }
 pub const PTHREAD_MUTEX_DEFAULT: MutexType = MutexType::PTHREAD_MUTEX_NORMAL;
 
-/// Initializes a mutex and returns a handle to it. Similar to pthread_mutex_init, but for host code.
+/// Initializes a mutex and returns a handle to it. Similar to
+/// `pthread_mutex_init`, but for host code.
 pub fn host_mutex_init(env: &mut Environment, mutex_type: MutexType) -> HostMutexId {
     let state = MutexState::get_mut(env);
     let mutex_id = state.mutex_count;
@@ -84,9 +90,9 @@ pub fn host_mutex_init(env: &mut Environment, mutex_type: MutexType) -> HostMute
 
 /// Locks a mutex and returns the lock count or an error (as errno). Similar to
 /// pthread_mutex_lock, but for host code.
-/// NOTE: This only takes effect _after_ the calling function returns to the host run loop
-/// ([crate::Environment::run]). As such, this should only be called right before a function
-/// returns (to the host run loop).
+/// NOTE: This only takes effect _after_ the calling function returns to the
+/// host run loop ([crate::Environment::run]). As such, this should only be
+/// called right before a function returns (to the host run loop).
 pub fn host_mutex_lock(env: &mut Environment, mutex_id: HostMutexId) -> Result<u32, i32> {
     let current_thread = env.current_thread;
     let host_object: &mut _ = MutexState::get_mut(env).mutexes.get_mut(&mutex_id).unwrap();
@@ -122,8 +128,8 @@ pub fn host_mutex_lock(env: &mut Environment, mutex_id: HostMutexId) -> Result<u
         }
     }
 
-    // Add to the waiting count, so that the mutex isn't destroyed. This is subtracted in
-    // [host_mutex_relock_unblocked].
+    // Add to the waiting count, so that the mutex isn't destroyed. This is
+    // subtracted in [host_mutex_relock_unblocked].
     host_object.waiting_count += 1;
 
     // Mutex is already locked, block thread until it isn't.
@@ -132,8 +138,8 @@ pub fn host_mutex_lock(env: &mut Environment, mutex_id: HostMutexId) -> Result<u
     Ok(1)
 }
 
-/// Unlocks a mutex and returns the lock count or an error (as errno). Similar to
-/// pthread_mutex_unlock, but for host code.
+/// Unlocks a mutex and returns the lock count or an error (as errno). Similar
+/// to `pthread_mutex_unlock`, but for host code.
 pub fn host_mutex_unlock(env: &mut Environment, mutex_id: HostMutexId) -> Result<u32, i32> {
     let current_thread = env.current_thread;
     let host_object: &mut _ = MutexState::get_mut(env).mutexes.get_mut(&mutex_id).unwrap();
@@ -200,7 +206,8 @@ pub fn host_mutex_unlock(env: &mut Environment, mutex_id: HostMutexId) -> Result
 }
 
 /// Destroys a mutex and returns an error on failure (as errno). Similar to
-/// pthread_mutex_destroy, but for host code. Note that the mutex is not destroyed on an Err return.
+/// `pthread_mutex_destroy`, but for host code. Note that the mutex is not
+/// destroyed on an Err return.
 pub fn host_mutex_destroy(env: &mut Environment, mutex_id: HostMutexId) -> Result<(), i32> {
     let state = MutexState::get_mut(env);
     let host_object = state.mutexes.get_mut(&mutex_id).unwrap();
@@ -211,8 +218,8 @@ pub fn host_mutex_destroy(env: &mut Environment, mutex_id: HostMutexId) -> Resul
         log_dbg!("Attempted to destroy mutex with waiting locks, returning EBUSY!");
         return Err(EBUSY);
     }
-    // TODO?: If we switch to a vec-based system, we should reuse destroyed ids if they are at the
-    // top of the stack.
+    // TODO?: If we switch to a vec-based system, we should reuse destroyed ids
+    // if they are at the top of the stack.
     state.mutexes.remove(&mutex_id);
     Ok(())
 }

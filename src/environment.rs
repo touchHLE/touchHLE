@@ -11,9 +11,7 @@
 pub mod mutex;
 
 use crate::abi::GuestRet;
-
-use crate::environment::mutex::{host_mutex_is_locked, host_mutex_relock_unblocked};
-use crate::libc::pthread::mutex::HostMutexId;
+use crate::environment::mutex::{host_mutex_is_locked, host_mutex_relock_unblocked, HostMutexId};
 use crate::mem::{MutPtr, MutVoidPtr};
 use crate::{
     abi, bundle, cpu, dyld, frameworks, fs, gdb, image, libc, mach_o, mem, objc, options, stack,
@@ -405,8 +403,9 @@ impl Environment {
     }
 
     /// Put the current thread to sleep for some duration, running other threads
-    /// in the meantime as appropriate. Functions that call sleep right before they return back to the main run loop ([Environment::run])
-    /// should set tail_call.
+    /// in the meantime as appropriate. Functions that call sleep right before
+    /// they return back to the main run loop ([Environment::run]) should set
+    /// `tail_call`.
     pub fn sleep(&mut self, duration: Duration, tail_call: bool) {
         assert!(matches!(
             self.threads[self.current_thread].blocked_by,
@@ -420,24 +419,26 @@ impl Environment {
         );
         let until = Instant::now().checked_add(duration).unwrap();
         self.threads[self.current_thread].blocked_by = ThreadBlock::Sleeping(until);
-        // For non tail-call sleeps (such as in NSRunLoop), we want to poll other threads but can't
-        // return back to the run loop, since it would go through the calling function.
-        // As such, we have to call into the run loop instead.
+        // For non tail-call sleeps (such as in NSRunLoop), we want to poll
+        // other threads but can't return back to the run loop, since it would
+        // go through the calling function. As such, we have to call into the
+        // run loop instead.
         if !tail_call {
             let old_pc = self.cpu.pc_with_thumb_bit();
             self.cpu.branch(self.dyld.return_to_host_routine());
-            // Since the current thread is asleep, this will only run other threads
-            // until it wakes up, at which point it signals return-to-host and
-            // control is returned to this function.
+            // Since the current thread is asleep, this will only run other
+            // threads until it wakes up, at which point it signals
+            // return-to-host and control is returned to this function.
             self.run_call();
             self.cpu.branch(old_pc);
         }
     }
 
     /// Block the current thread until the given mutex unlocks.
+    ///
     /// Other threads also blocking on this mutex may get access first.
-    /// Also note that like [Self::sleep], this only takes effect after the host function returns
-    /// to the main run loop ([Environment::run]).
+    /// Also note that like [Self::sleep], this only takes effect after the host
+    /// function returns to the main run loop ([Environment::run]).
     pub fn block_on_mutex(&mut self, mutex_id: HostMutexId) {
         assert!(matches!(
             self.threads[self.current_thread].blocked_by,
@@ -451,12 +452,15 @@ impl Environment {
         self.threads[self.current_thread].blocked_by = ThreadBlock::Mutex(mutex_id);
     }
 
-    /// Blocks the current thread until the thread given finishes, writing it's return value to ptr
-    /// (if non-null).
-    /// Note that there are no protections against joining with a deattached thread, joining a thread with itself,
-    /// or deadlocking joins. Callers should ensure these do not occur!
-    /// Also note that like [Self::sleep], this only takes effect after the host function returns
-    /// to the main run loop ([Environment::run]).
+    /// Blocks the current thread until the thread given finishes, writing its
+    /// return value to ptr (if non-null).
+    ///
+    /// Note that there are no protections against joining with a detached
+    /// thread, joining a thread with itself, or deadlocking joins. Callers
+    /// should ensure these do not occur!
+    ///
+    /// Also note that like [Self::sleep], this only takes effect after the host
+    /// function returns to the main run loop ([Environment::run]).
     pub fn join_with_thread(&mut self, joinee_thread: ThreadID, ptr: MutPtr<MutVoidPtr>) {
         assert!(matches!(
             self.threads[self.current_thread].blocked_by,
@@ -792,8 +796,9 @@ impl Environment {
                     // there will be soon, since timing is approximate).
                     continue;
                 } else {
-                    // This should hopefully not happen, but if a thread is blocked on another
-                    // thread waiting for a deferred return, it could.
+                    // This should hopefully not happen, but if a thread is
+                    // blocked on another thread waiting for a deferred return,
+                    // it could.
                     panic!("No active threads, program has deadlocked!");
                 }
             }

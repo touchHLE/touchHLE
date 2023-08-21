@@ -9,7 +9,8 @@
 
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::environment::mutex::{
-    host_mutex_destroy, host_mutex_init, host_mutex_lock, host_mutex_unlock, PTHREAD_MUTEX_DEFAULT,
+    host_mutex_destroy, host_mutex_init, host_mutex_lock, host_mutex_unlock, HostMutexId,
+    PTHREAD_MUTEX_DEFAULT,
 };
 use crate::mem::{ConstPtr, MutPtr, Ptr, SafeRead};
 use crate::Environment;
@@ -36,10 +37,6 @@ struct pthread_mutex_t {
     mutex_id: HostMutexId,
 }
 unsafe impl SafeRead for pthread_mutex_t {}
-
-/// Unique identifier for mutexes, used for mutexes held by host objects and guest pthread mutexes.
-/// Used in host_mutex_* functions, which are mostly similar to pthread iterfaces.
-pub type HostMutexId = u64;
 
 /// Arbitrarily-chosen magic number for `pthread_mutexattr_t` (not Apple's).
 const MAGIC_MUTEXATTR: u32 = u32::from_be_bytes(*b"MuAt");

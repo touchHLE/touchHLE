@@ -246,6 +246,7 @@ impl MachO {
         // TODO: Check cpusubtype (should be some flavour of ARMv6/ARMv7)
 
         // Info used while parsing file
+        let mut text_segment_base: Option<u32> = None;
         let mut all_sections = Vec::new();
         let mut sym_tab_info: Option<(u32, u32, u32, u32)> = None;
 
@@ -282,7 +283,12 @@ impl MachO {
                             assert!(filesize == 0);
                             false
                         }
-                        "__TEXT" | "__DATA" => true,
+                        "__TEXT" => {
+                            assert!(text_segment_base.is_none());
+                            text_segment_base = Some(vmaddr);
+                            true
+                        }
+                        "__DATA" => true,
                         _ => {
                             log!("Warning: Unexpected segment name: {}", segname);
                             true
@@ -419,6 +425,7 @@ impl MachO {
                 LoadCommand::LoadDyLib(DyLib { name, .. }) => {
                     dynamic_libraries.push(String::from(&*name));
                 }
+                // Old-style entry point PC command
                 LoadCommand::UnixThread { state, .. } => {
                     let ThreadState::Arm {
                         __r: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -432,6 +439,20 @@ impl MachO {
                     // There should only be a single initial thread state.
                     assert!(entry_point_pc.is_none());
                     entry_point_pc = Some(pc);
+                }
+                // New-style entry point PC command
+                LoadCommand::EntryPoint {
+                    entryoff,
+                    stacksize,
+                } => {
+                    if stacksize != 0 {
+                        log!("TODO: stack size of {:#x} bytes requested", stacksize);
+                    }
+                    // There should only be a single entry point.
+                    // (Presumably an executable won't use both commands?)
+                    assert!(entry_point_pc.is_none());
+                    let entryoff: u32 = entryoff.try_into().unwrap();
+                    entry_point_pc = Some(text_segment_base.unwrap() + entryoff);
                 }
                 // LoadCommand::DyldInfo is apparently a newer thing that 2008
                 // games don't have. Ignore for now? Unsure if/when iOS got it.

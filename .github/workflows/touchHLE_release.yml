@@ -22,6 +22,18 @@ jobs:
       run: git submodule update --init
     - name: Install Boost
       run: brew install boost
+    - name: Try to get cached copy of LLVM
+      id: cache-llvm
+      uses: actions/cache@v3
+      with:
+        path: tests/llvm
+        key: llvm_12_0_0_macOS_x64
+    - if: ${{ steps.cache-llvm.outputs.cache-hit != 'true' }}
+      name: Download LLVM
+      run: curl -L -O "https://github.com/llvm/llvm-project/releases/download/llvmorg-12.0.0/clang+llvm-12.0.0-x86_64-apple-darwin.tar.xz"
+    - if: ${{ steps.cache-llvm.outputs.cache-hit != 'true' }}
+      name: Extract LLVM
+      run: tar -xf clang+llvm-12.0.0-x86_64-apple-darwin.tar.xz && mkdir tests/llvm && mv clang+llvm-12.0.0-x86_64-apple-darwin/* tests/llvm
     - name: Test
       run: cargo test
     - name: Build
@@ -30,6 +42,10 @@ jobs:
       with:
         name: touchHLE_macOS_x86_64
         path: touchHLE
+    - uses: actions/upload-artifact@v3
+      with:
+        name: TestApp
+        path: tests/TestApp.app
 
   build-win:
 

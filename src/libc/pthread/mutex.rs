@@ -8,12 +8,8 @@
 //! See [crate::environment::mutex] for the internal implementation.
 
 use crate::dyld::{export_c_func, FunctionExports};
-use crate::environment::mutex::{
-    host_mutex_destroy, host_mutex_init, host_mutex_lock, host_mutex_unlock, HostMutexId,
-    PTHREAD_MUTEX_DEFAULT,
-};
 use crate::mem::{ConstPtr, MutPtr, Ptr, SafeRead};
-use crate::Environment;
+use crate::{Environment, MutexId, PTHREAD_MUTEX_DEFAULT};
 
 /// Apple's implementation is a 4-byte magic number followed by an 8-byte opaque
 /// region. We only have to match the size theirs has.
@@ -34,7 +30,7 @@ struct pthread_mutex_t {
     /// Magic number (must be [MAGIC_MUTEX])
     magic: u32,
     /// Unique mutex identifier, used in matching the mutex to it's host object.
-    mutex_id: HostMutexId,
+    mutex_id: MutexId,
 }
 unsafe impl SafeRead for pthread_mutex_t {}
 
@@ -93,7 +89,7 @@ fn pthread_mutex_init(
     } else {
         PTHREAD_MUTEX_DEFAULT
     };
-    let mutex_id = host_mutex_init(env, type_);
+    let mutex_id = env.mutex_state.init_mutex(type_);
     log_dbg!(
         "Mutex #{} created from pthread_mutex_init ({:#x})",
         mutex_id,
@@ -131,15 +127,13 @@ fn check_or_register_mutex(env: &mut Environment, mutex: MutPtr<pthread_mutex_t>
 fn pthread_mutex_lock(env: &mut Environment, mutex: MutPtr<pthread_mutex_t>) -> i32 {
     let mutex_data = env.mem.read(mutex);
     check_or_register_mutex(env, mutex);
-    host_mutex_lock(env, mutex_data.mutex_id).err().unwrap_or(0)
+    env.lock_mutex(mutex_data.mutex_id).err().unwrap_or(0)
 }
 
 fn pthread_mutex_unlock(env: &mut Environment, mutex: MutPtr<pthread_mutex_t>) -> i32 {
     let mutex_data = env.mem.read(mutex);
     check_or_register_mutex(env, mutex);
-    host_mutex_unlock(env, mutex_data.mutex_id)
-        .err()
-        .unwrap_or(0)
+    env.unlock_mutex(mutex_data.mutex_id).err().unwrap_or(0)
 }
 
 fn pthread_mutex_destroy(env: &mut Environment, mutex: MutPtr<pthread_mutex_t>) -> i32 {
@@ -152,7 +146,7 @@ fn pthread_mutex_destroy(env: &mut Environment, mutex: MutPtr<pthread_mutex_t>) 
             mutex_id: 0xFFFFFFFFFFFFFFFF,
         },
     );
-    host_mutex_destroy(env, mutex_id).err().unwrap_or(0)
+    env.mutex_state.destroy_mutex(mutex_id).err().unwrap_or(0)
 }
 
 pub const FUNCTIONS: FunctionExports = &[

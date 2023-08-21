@@ -8,10 +8,9 @@
 //! Unlike its siblings, this module should be considered private and only used
 //! via the re-exports one level up.
 
-pub mod mutex;
+mod mutex;
 
 use crate::abi::GuestRet;
-use crate::environment::mutex::{host_mutex_is_locked, host_mutex_relock_unblocked, HostMutexId};
 use crate::mem::{MutPtr, MutVoidPtr};
 use crate::{
     abi, bundle, cpu, dyld, frameworks, fs, gdb, image, libc, mach_o, mem, objc, options, stack,
@@ -20,7 +19,7 @@ use crate::{
 use std::net::TcpListener;
 use std::time::{Duration, Instant};
 
-use self::mutex::MutexState;
+pub use mutex::{MutexId, MutexType, PTHREAD_MUTEX_DEFAULT};
 
 /// Index into the [Vec] of threads. Thread 0 is always the main thread.
 pub type ThreadID = usize;
@@ -91,7 +90,7 @@ pub struct Environment {
     pub threads: Vec<Thread>,
     pub libc_state: libc::State,
     pub framework_state: frameworks::State,
-    pub mutex_state: MutexState,
+    pub mutex_state: mutex::MutexState,
     pub options: options::Options,
     gdb_server: Option<gdb::GdbServer>,
 }
@@ -116,7 +115,7 @@ enum ThreadBlock {
     // Thread is sleeping. (until Instant)
     Sleeping(Instant),
     // Thread is waiting for a mutex to unlock.
-    Mutex(HostMutexId),
+    Mutex(MutexId),
     // Thread is waiting for another thread to finish (joining).
     Joining(ThreadID, MutPtr<MutVoidPtr>),
     // Deferred guest-to-host return
@@ -439,7 +438,7 @@ impl Environment {
     /// Other threads also blocking on this mutex may get access first.
     /// Also note that like [Self::sleep], this only takes effect after the host
     /// function returns to the main run loop ([Environment::run]).
-    pub fn block_on_mutex(&mut self, mutex_id: HostMutexId) {
+    pub fn block_on_mutex(&mut self, mutex_id: MutexId) {
         assert!(matches!(
             self.threads[self.current_thread].blocked_by,
             ThreadBlock::NotBlocked
@@ -711,7 +710,7 @@ impl Environment {
                 // following the one currently executing.
                 let mut suitable_thread: Option<ThreadID> = None;
                 let mut next_awakening: Option<Instant> = None;
-                let mut mutex_to_relock: Option<HostMutexId> = None;
+                let mut mutex_to_relock: Option<MutexId> = None;
                 for i in 0..self.threads.len() {
                     let i = (self.current_thread + 1 + i) % self.threads.len();
                     let candidate = &mut self.threads[i];
@@ -734,7 +733,7 @@ impl Environment {
                             }
                         }
                         ThreadBlock::Mutex(mutex_id) => {
-                            if !host_mutex_is_locked(self, mutex_id) {
+                            if !self.mutex_state.mutex_is_locked(mutex_id) {
                                 log_dbg!("Thread {} was unblocked due to mutex #{} unlocking, relocking mutex.", i, mutex_id);
                                 self.threads[i].blocked_by = ThreadBlock::NotBlocked;
                                 suitable_thread = Some(i);
@@ -783,7 +782,7 @@ impl Environment {
                         self.switch_thread(suitable_thread);
                     }
                     if let Some(mutex_id) = mutex_to_relock {
-                        host_mutex_relock_unblocked(self, mutex_id);
+                        self.relock_unblocked_mutex(mutex_id);
                     }
                     break;
                 // All suitable threads are blocked and at least one is asleep.

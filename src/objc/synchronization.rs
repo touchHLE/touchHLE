@@ -13,10 +13,7 @@
 //! Resources:
 //! - [Section about `@synchronized` in *The Objective-C Programming Language*](https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/ObjectiveC/Chapters/ocThreading.html#//apple_ref/doc/uid/TP30001163-CH19-SW1)
 //! - [Source code for `objc_sync_enter/exit`](https://opensource.apple.com/source/objc4/objc4-551.1/runtime/Accessors.subproj/objc-accessors.mm.auto.html), otherwise undocumented.
-use crate::environment::mutex::{
-    host_mutex_destroy, host_mutex_init, host_mutex_lock, host_mutex_unlock, MutexType,
-};
-use crate::Environment;
+use crate::{Environment, MutexType};
 
 use super::id;
 
@@ -30,15 +27,17 @@ pub(super) fn objc_sync_enter(env: &mut Environment, obj: id) -> i32 {
             obj.to_bits(),
             mutex_id
         );
-        host_mutex_lock(env, *mutex_id).unwrap();
+        env.lock_mutex(*mutex_id).unwrap();
     } else {
-        let mutex_id = host_mutex_init(env, MutexType::PTHREAD_MUTEX_RECURSIVE);
+        let mutex_id = env
+            .mutex_state
+            .init_mutex(MutexType::PTHREAD_MUTEX_RECURSIVE);
         log_dbg!(
             "Entry of {:#x} to objc_sync_enter, using mutex #{}",
             obj.to_bits(),
             mutex_id
         );
-        host_mutex_lock(env, mutex_id).unwrap();
+        env.lock_mutex(mutex_id).unwrap();
         env.objc.sync_mutexes.insert(obj, mutex_id);
     }
     0 // OK
@@ -50,11 +49,11 @@ pub(super) fn objc_sync_enter(env: &mut Environment, obj: id) -> i32 {
 pub(super) fn objc_sync_exit(env: &mut Environment, obj: id) -> i32 {
     match env.objc.sync_mutexes.get(&obj).cloned() {
         Some(mutex_id) => {
-            match host_mutex_unlock(env, mutex_id) {
+            match env.unlock_mutex(mutex_id) {
                 Ok(lock_count) => {
                     if lock_count == 0 {
                         // Try to destroy mutex:
-                        if host_mutex_destroy(env, mutex_id).is_ok() {
+                        if env.mutex_state.destroy_mutex(mutex_id).is_ok() {
                             // If the mutex wasn't destroyed (Err), it means there's another mutex
                             // still locked, so we can't destroy the id->mutex mapping yet.
                             log_dbg!(

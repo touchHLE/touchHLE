@@ -19,7 +19,7 @@
 //! categories and dynamic class editing).
 
 use crate::dyld::{export_c_func, FunctionExports};
-use crate::environment::mutex::HostMutexId;
+use crate::MutexId;
 use std::collections::HashMap;
 
 mod classes;
@@ -70,7 +70,7 @@ pub struct ObjC {
     classes: HashMap<String, Class>,
 
     /// Mutexes used in @synchronized blocks (objc_sync_enter/exit).
-    sync_mutexes: HashMap<id, HostMutexId>,
+    sync_mutexes: HashMap<id, MutexId>,
 }
 
 impl ObjC {

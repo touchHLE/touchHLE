@@ -5,6 +5,7 @@
  */
 //! `ctype.h`
 
+use super::posix_io::{STDERR_FILENO, STDIN_FILENO, STDOUT_FILENO};
 use super::wchar::wchar_t;
 use crate::abi::GuestFunction;
 use crate::dyld::{export_c_func, ConstantExports, FunctionExports, HostConstant};
@@ -140,10 +141,33 @@ fn get_default_rune_locale(mem: &mut Mem) -> ConstVoidPtr {
     .cast_const()
 }
 
-pub const CONSTANTS: ConstantExports = &[(
-    "__DefaultRuneLocale",
-    HostConstant::Custom(get_default_rune_locale),
-)];
+pub const CONSTANTS: ConstantExports = &[
+    (
+        "__DefaultRuneLocale",
+        HostConstant::Custom(get_default_rune_locale),
+    ),
+    (
+        "___stdinp",
+        HostConstant::Custom(|mem: &mut Mem| -> ConstVoidPtr {
+            let ptr = mem.alloc_and_write::<i32>(STDIN_FILENO);
+            mem.alloc_and_write(ptr).cast().cast_const()
+        }),
+    ),
+    (
+        "___stdoutp",
+        HostConstant::Custom(|mem: &mut Mem| -> ConstVoidPtr {
+            let ptr = mem.alloc_and_write::<i32>(STDOUT_FILENO);
+            mem.alloc_and_write(ptr).cast().cast_const()
+        }),
+    ),
+    (
+        "___stderrp",
+        HostConstant::Custom(|mem: &mut Mem| -> ConstVoidPtr {
+            let ptr = mem.alloc_and_write::<i32>(STDERR_FILENO);
+            mem.alloc_and_write(ptr).cast().cast_const()
+        }),
+    ),
+];
 
 pub const FUNCTIONS: FunctionExports =
     &[export_c_func!(__tolower(_)), export_c_func!(__toupper(_))];

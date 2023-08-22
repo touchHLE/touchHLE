@@ -186,6 +186,13 @@ pub const CLASSES: ClassExports = objc_classes! {
 // TODO: subviews accessor
 
 - (())addSubview:(id)view {
+    log_dbg!("[(UIView*){:?} addSubview:{:?}] => ()", this, view);
+
+    if view == nil {
+        log_dbg!("Tolerating [(UIView*){:?} addSubview:nil]", this);
+        return;
+    }
+
     if env.objc.borrow::<UIViewHostObject>(view).superview == this {
         () = msg![env; this bringSubviewToFront:view];
     } else {

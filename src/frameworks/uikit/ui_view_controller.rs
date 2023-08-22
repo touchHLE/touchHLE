@@ -5,7 +5,10 @@
  */
 //! `UIViewController`.
 
-use crate::objc::{id, nil, objc_classes, release, retain, ClassExports, HostObject, NSZonePtr};
+use crate::{
+    frameworks::foundation::ns_string::get_static_str,
+    objc::{id, msg, objc_classes, release, retain, ClassExports, HostObject, NSZonePtr},
+};
 
 #[derive(Default)]
 struct UIViewControllerHostObject {
@@ -41,6 +44,15 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (id)view {
     let view = env.objc.borrow_mut::<UIViewControllerHostObject>(this).view;
     view
+}
+
+- (id)initWithCoder:(id)coder {
+    let key_ns_string = get_static_str(env, "UIView");
+    let view: id = msg![env; coder decodeObjectForKey:key_ns_string];
+
+    () = msg![env; this setView:view];
+
+    this
 }
 
 - (())setEditing:(bool)editing {

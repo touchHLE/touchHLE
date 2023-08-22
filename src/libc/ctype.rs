@@ -6,8 +6,7 @@
 //! `ctype.h`
 
 
-use sdl2::libc::{STDIN_FILENO, STDOUT_FILENO, STDERR_FILENO};
-
+use super::posix_io::{STDIN_FILENO, STDOUT_FILENO, STDERR_FILENO};
 use super::wchar::wchar_t;
 use crate::abi::GuestFunction;
 use crate::dyld::{export_c_func, ConstantExports, FunctionExports, HostConstant};

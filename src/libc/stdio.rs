@@ -5,9 +5,7 @@
  */
 //! `stdio.h`
 
-use sdl2::libc::{STDOUT_FILENO, STDERR_FILENO};
-
-use super::posix_io::{self, O_APPEND, O_CREAT, O_RDONLY, O_RDWR, O_TRUNC, O_WRONLY};
+use super::posix_io::{self, O_APPEND, O_CREAT, O_RDONLY, O_RDWR, O_TRUNC, O_WRONLY, STDOUT_FILENO, STDERR_FILENO};
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::fs::GuestPath;
 use crate::libc::string::strlen;

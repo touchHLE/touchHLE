@@ -44,11 +44,9 @@ fn fd_to_file_idx(fd: FileDescriptor) -> usize {
 
 /// File descriptor type. This alias is for readability, POSIX just uses `int`.
 pub type FileDescriptor = i32;
-#[allow(dead_code)]
-const STDIN_FILENO: FileDescriptor = 0;
-#[allow(dead_code)]
-const STDOUT_FILENO: FileDescriptor = 1;
-const STDERR_FILENO: FileDescriptor = 2;
+pub const STDIN_FILENO: FileDescriptor = 0;
+pub const STDOUT_FILENO: FileDescriptor = 1;
+pub const STDERR_FILENO: FileDescriptor = 2;
 const NORMAL_FILENO_BASE: FileDescriptor = STDERR_FILENO + 1;
 
 /// Flags bitfield for `open`. This alias is for readability, POSIX just uses

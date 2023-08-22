@@ -6,6 +6,7 @@
 //! `UIViewController`.
 
 use crate::frameworks::foundation::ns_string::get_static_str;
+use crate::msg_class;
 use crate::objc::{
     id, msg, nil, objc_classes, release, retain, ClassExports, HostObject, NSZonePtr,
 };
@@ -44,6 +45,12 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.dealloc_object(this, &mut env.mem);
 }
 
+- (())loadView {
+    // TODO: Check if the UIViewController has an associated nib file and load the view from there instead if it does
+    let view: id = msg_class![env; UIView alloc];
+    let view: id = msg![env; view init];
+    () = msg![env; this setView: view];
+}
 - (())setView:(id)new_view { // UIView*
     let host_obj = env.objc.borrow_mut::<UIViewControllerHostObject>(this);
     let old_view = std::mem::replace(&mut host_obj.view, new_view);
@@ -52,7 +59,9 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 - (id)view {
     let view = env.objc.borrow_mut::<UIViewControllerHostObject>(this).view;
-    assert!(view != nil); // TODO: call loadView if nil
+    if view == nil {
+        () = msg![env; this loadView];
+    }
     view
 }
 

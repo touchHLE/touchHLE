@@ -17,6 +17,7 @@ pub mod ns_bundle;
 pub mod ns_character_set;
 pub mod ns_coder;
 pub mod ns_data;
+pub mod ns_date;
 pub mod ns_dictionary;
 pub mod ns_enumerator;
 pub mod ns_file_manager;

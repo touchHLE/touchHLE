@@ -219,18 +219,24 @@ fn putchar(_env: &mut Environment, c: u8) -> i32 {
 }
 
 fn remove(env: &mut Environment, path: ConstPtr<u8>) -> i32 {
-    match env
-        .fs
-        .remove(GuestPath::new(&env.mem.cstr_at_utf8(path).unwrap()))
-    {
-        Ok(()) => {
-            log_dbg!("remove({:?}) => 0", path);
-            0
-        }
-        Err(_) => {
-            // TODO: set errno
-            log!("Warning: remove({:?}) failed, returning -1", path);
-            -1
+    if Ptr::is_null(path) {
+        // TODO: set errno
+        log!("remove({:?}) => -1, attempted to remove null", path);
+        -1
+    } else {
+        match env
+            .fs
+            .remove(GuestPath::new(&env.mem.cstr_at_utf8(path).unwrap()))
+        {
+            Ok(()) => {
+                log_dbg!("remove({:?}) => 0", path);
+                0
+            }
+            Err(_) => {
+                // TODO: set errno
+                log!("Warning: remove({:?}) failed, returning -1", path);
+                -1
+            }
         }
     }
 }

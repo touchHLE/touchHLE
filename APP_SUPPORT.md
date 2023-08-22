@@ -81,3 +81,43 @@ Please click to expand the details for the app you are interested in.
   - Consistent full fps (60fps)
   - Scale hack supported
   </details>
+  - <details><summary>Touch & Go (2009, The Game Creators)</summary>
+
+  - Working versions:
+    - “Touch & Go” 1.1
+    - “Touch & Go LITE” 1.2
+  - **Broken version**:
+    - “App Pack 1” 1.0 (several games bundled into one app, doesn't work yet)
+  - Fully playable, everything works. Among other things:
+    - Sound effects and music
+    - Menu screens
+    - All the levels in the LITE version
+    - High score persistence
+  - Consistent full fps (60fps)
+  - Scale hack supported
+  </details>
+- <details><summary>Doom 2 RPG (2009, id Software)</summary>
+
+  - Working versions:
+    - "Doom2rpg" 1.0
+  - Fully playable as far as it's been tested:
+     - Sound effects and music work
+     - Saving works
+     - The minigames work
+  - Consistent full fps (60fps)
+  - Scale hack supported
+  </details>
+- <details><summary>Wolfenstein RPG (2009, id Software)</summary>
+
+  - Working versions:
+    - "Wolf...RPG" 1.0.2
+    - "Wolf...RPG" 1.1.0
+    - "Wolf...RPG" 1.1.1
+  - Fully playable as far as it's been tested:
+     - Sound effects and music work
+     - Saving works
+     - The minigames work
+  - Consistent full fps (60fps)
+  - Scale hack supported
+  - There seems to be a small graphical issue where some triangles don't render correctly when upclose with an sprite
+  </details>

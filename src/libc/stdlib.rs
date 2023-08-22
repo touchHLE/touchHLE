@@ -155,6 +155,10 @@ fn random(env: &mut Environment) -> i32 {
     (env.libc_state.stdlib.random as i32) & RAND_MAX
 }
 
+fn arc4random(_env: &mut Environment) -> u32 {
+    unsafe { sdl2::libc::arc4random() }
+}
+
 fn getenv(env: &mut Environment, name: ConstPtr<u8>) -> MutPtr<u8> {
     let name_cstr = env.mem.cstr_at(name);
     // TODO: Provide all the system environment variables an app might expect to
@@ -247,6 +251,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(rand()),
     export_c_func!(srandom(_)),
     export_c_func!(random()),
+    export_c_func!(arc4random()),
     export_c_func!(getenv(_)),
     export_c_func!(setenv(_, _, _)),
     export_c_func!(exit(_)),

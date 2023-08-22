@@ -226,7 +226,12 @@ fn printf(env: &mut Environment, format: ConstPtr<u8>, args: DotDotDot) -> i32 {
     res.len().try_into().unwrap()
 }
 
-fn fprintf(env: &mut Environment, file_ptr: MutPtr<FILE>, format: ConstPtr<u8>, args: DotDotDot) -> i32 {
+fn fprintf(
+    env: &mut Environment,
+    file_ptr: MutPtr<FILE>,
+    format: ConstPtr<u8>,
+    args: DotDotDot,
+) -> i32 {
     log_dbg!(
         "fprintf({:?} ({:?}), ...)",
         format,

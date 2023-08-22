@@ -5,8 +5,7 @@
  */
 //! `ctype.h`
 
-
-use super::posix_io::{STDIN_FILENO, STDOUT_FILENO, STDERR_FILENO};
+use super::posix_io::{STDERR_FILENO, STDIN_FILENO, STDOUT_FILENO};
 use super::wchar::wchar_t;
 use crate::abi::GuestFunction;
 use crate::dyld::{export_c_func, ConstantExports, FunctionExports, HostConstant};
@@ -149,25 +148,25 @@ pub const CONSTANTS: ConstantExports = &[
     ),
     (
         "___stdinp",
-        HostConstant::Custom(|mem: &mut Mem| -> ConstVoidPtr { 
+        HostConstant::Custom(|mem: &mut Mem| -> ConstVoidPtr {
             let ptr = mem.alloc_and_write::<i32>(STDIN_FILENO);
-            mem.alloc_and_write(ptr).cast().cast_const() 
+            mem.alloc_and_write(ptr).cast().cast_const()
         }),
     ),
     (
         "___stdoutp",
-        HostConstant::Custom(|mem: &mut Mem| -> ConstVoidPtr { 
+        HostConstant::Custom(|mem: &mut Mem| -> ConstVoidPtr {
             let ptr = mem.alloc_and_write::<i32>(STDOUT_FILENO);
-            mem.alloc_and_write(ptr).cast().cast_const() 
+            mem.alloc_and_write(ptr).cast().cast_const()
         }),
     ),
     (
         "___stderrp",
-        HostConstant::Custom(|mem: &mut Mem| -> ConstVoidPtr { 
+        HostConstant::Custom(|mem: &mut Mem| -> ConstVoidPtr {
             let ptr = mem.alloc_and_write::<i32>(STDERR_FILENO);
-            mem.alloc_and_write(ptr).cast().cast_const() 
+            mem.alloc_and_write(ptr).cast().cast_const()
         }),
-    )
+    ),
 ];
 
 pub const FUNCTIONS: FunctionExports =

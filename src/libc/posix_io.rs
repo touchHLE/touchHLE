@@ -74,7 +74,16 @@ fn open(env: &mut Environment, path: ConstPtr<u8>, flags: i32, _args: DotDotDot)
 pub fn open_direct(env: &mut Environment, path: ConstPtr<u8>, flags: i32) -> FileDescriptor {
     // TODO: support more flags, this list is not complete
     assert!(
-        flags & !(O_ACCMODE | O_NONBLOCK | O_APPEND | O_SHLOCK | O_NOFOLLOW | O_CREAT | O_TRUNC | O_EXCL) == 0
+        flags
+            & !(O_ACCMODE
+                | O_NONBLOCK
+                | O_APPEND
+                | O_SHLOCK
+                | O_NOFOLLOW
+                | O_CREAT
+                | O_TRUNC
+                | O_EXCL)
+            == 0
     );
     // TODO: symlinks don't exist in the FS yet, so we can't "not follow" them.
     // (Should we just ignore this?)
@@ -102,10 +111,10 @@ pub fn open_direct(env: &mut Environment, path: ConstPtr<u8>, flags: i32) -> Fil
     }
 
     let path_string = env.mem.cstr_at_utf8(path).unwrap();
-    let res = match env.fs.open_with_options(
-        GuestPath::new(&path_string),
-        options,
-    ) {
+    let res = match env
+        .fs
+        .open_with_options(GuestPath::new(&path_string), options)
+    {
         Ok(file) => {
             let host_object = PosixFileHostObject { file };
 
@@ -130,7 +139,13 @@ pub fn open_direct(env: &mut Environment, path: ConstPtr<u8>, flags: i32) -> Fil
             -1
         }
     };
-    log_dbg!("open({:?} {:?}, {:#x}) => {:?}", path, path_string, flags, res);
+    log_dbg!(
+        "open({:?} {:?}, {:#x}) => {:?}",
+        path,
+        path_string,
+        flags,
+        res
+    );
     res
 }
 
@@ -254,34 +269,33 @@ pub fn lseek(env: &mut Environment, fd: FileDescriptor, offset: off_t, whence: i
 pub fn close(env: &mut Environment, fd: FileDescriptor) -> i32 {
     // TODO: error handling for unknown fd?
     if fd < 0 || matches!(fd, STDOUT_FILENO | STDERR_FILENO) {
-        return 0
+        return 0;
     }
 
     log_dbg!("close({:?}) => ...", fd);
 
-    match env.libc_state.posix_io.files[fd_to_file_idx(fd)]
-        .take() {
-            Some(file) => {
-                // The actual closing of the file happens implicitly when `file` falls out
-                // of scope. The return value is about whether flushing succeeds.
-                match file.file.sync_all() {
-                    Ok(()) => {
-                        log_dbg!("close({:?}) => 0", fd);
-                        0
-                    }
-                    Err(_) => {
-                        // TODO: set errno
-                        log!("Warning: close({:?}) failed, returning -1", fd);
-                        -1
-                    }
+    match env.libc_state.posix_io.files[fd_to_file_idx(fd)].take() {
+        Some(file) => {
+            // The actual closing of the file happens implicitly when `file` falls out
+            // of scope. The return value is about whether flushing succeeds.
+            match file.file.sync_all() {
+                Ok(()) => {
+                    log_dbg!("close({:?}) => 0", fd);
+                    0
                 }
-            },
-            None => {
-                // TODO: set errno
-                log!("Warning: close({:?}) failed, returning -1", fd);
-                -1
+                Err(_) => {
+                    // TODO: set errno
+                    log!("Warning: close({:?}) failed, returning -1", fd);
+                    -1
+                }
             }
         }
+        None => {
+            // TODO: set errno
+            log!("Warning: close({:?}) failed, returning -1", fd);
+            -1
+        }
+    }
 }
 
 pub const FUNCTIONS: FunctionExports = &[

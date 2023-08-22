@@ -300,7 +300,10 @@ impl Dyld {
                 // from libstdcxx
                 mem.write(Ptr::from_bits(ptr_ptr), 0x30073914);
                 continue;
-            } else if matches!(name.as_str(), "___CFConstantStringClassReference" | "__objc_empty_vtable" | "__objc_empty_cache")  {
+            } else if matches!(
+                name.as_str(),
+                "___CFConstantStringClassReference" | "__objc_empty_vtable" | "__objc_empty_cache"
+            ) {
                 // See ns_string::register_constant_strings
                 nil
             } else {

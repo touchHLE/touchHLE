@@ -7,11 +7,11 @@
 
 use std::time::Instant;
 
-use crate::objc::{id, objc_classes, ClassExports, HostObject, autorelease};
 use super::NSTimeInterval;
+use crate::objc::{autorelease, id, objc_classes, ClassExports, HostObject};
 
 struct NSDateHostObject {
-    instant: Instant
+    instant: Instant,
 }
 impl HostObject for NSDateHostObject {}
 

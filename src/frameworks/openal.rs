@@ -23,7 +23,7 @@ use std::collections::HashMap;
 pub struct State {
     devices: HashMap<MutPtr<GuestALCdevice>, *mut ALCdevice>,
     contexts: HashMap<MutPtr<GuestALCcontext>, *mut ALCcontext>,
-    current_context: MutPtr<GuestALCcontext>
+    current_context: MutPtr<GuestALCcontext>,
 }
 impl State {
     fn get(env: &mut Environment) -> &mut Self {
@@ -204,7 +204,14 @@ fn alSourcef(_env: &mut Environment, source: ALuint, param: ALenum, value: ALflo
 fn alSourcei(_env: &mut Environment, source: ALuint, param: ALenum, value: ALint) {
     unsafe { al::alSourcei(source, param, value) };
 }
-fn alSource3i(_env: &mut Environment, source: ALuint, param: ALenum, v1: ALint, v2: ALint, v3: ALint) {
+fn alSource3i(
+    _env: &mut Environment,
+    source: ALuint,
+    param: ALenum,
+    v1: ALint,
+    v2: ALint,
+    v3: ALint,
+) {
     unsafe { al::alSource3i(source, param, v1, v2, v3) };
 }
 fn alGetSourcef(env: &mut Environment, source: ALuint, param: ALenum, value: MutPtr<ALfloat>) {

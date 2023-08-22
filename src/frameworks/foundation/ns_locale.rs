@@ -19,6 +19,23 @@ impl State {
     }
 }
 
+pub fn get_preferred_language_from_environment() -> String {
+    if let Ok(lang) = std::env::var("LANG") {
+        // turn e.g. "sv_SE.UTF-8" into just "sv"
+        let lang = lang
+            .split_once(['_', '.'])
+            .map(|(a, _b)| a)
+            .unwrap_or(&lang)
+            .to_string();
+        log!("The app requested your preferred languages. {:?} will reported based on your LANG environment variable.", lang);
+        lang
+    } else {
+        let lang = "en".to_string();
+        log!("The app requested your preferred language. No LANG environment variable was found, so {:?} (English) will be reported.", lang);
+        lang
+    }
+}
+
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);
@@ -33,19 +50,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     if let Some(existing) = State::get(env).preferred_languages {
         existing
     } else {
-        let lang = if let Ok(lang) = std::env::var("LANG") {
-            // turn e.g. "sv_SE.UTF-8" into just "sv"
-            let lang = lang.split_once(['_', '.'])
-                           .map(|(a, _b)| a)
-                           .unwrap_or(&lang)
-                           .to_string();
-            log!("The app requested your preferred languages. {:?} will reported based on your LANG environment variable.", lang);
-            lang
-        } else {
-            let lang = "en".to_string();
-            log!("The app requested your preferred language. No LANG environment variable was found, so {:?} (English) will be reported.", lang);
-            lang
-        };
+        let lang = get_preferred_language_from_environment();
         let lang_ns_string = ns_string::from_rust_string(env, lang);
         let new = ns_array::from_vec(env, vec![lang_ns_string]);
         State::get(env).preferred_languages = Some(new);

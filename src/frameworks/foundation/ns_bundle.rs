@@ -7,6 +7,9 @@
 
 use super::ns_string;
 use crate::bundle::Bundle;
+use crate::frameworks::core_foundation::cf_bundle::{
+    CFBundleCopyBundleLocalizations, CFBundleCopyPreferredLocalizationsFromArray,
+};
 use crate::objc::{
     autorelease, id, msg, msg_class, nil, objc_classes, release, ClassExports, HostObject,
 };
@@ -33,10 +36,10 @@ pub struct State {
     main_bundle: Option<id>,
 }
 
-struct NSBundleHostObject {
+pub struct NSBundleHostObject {
     /// If this is [None], this is the main bundle's NSBundle instance and the
     /// [Bundle] is stored in [crate::Environment], not here.
-    _bundle: Option<Bundle>,
+    pub bundle: Option<Bundle>,
     /// NSString with bundle path.
     bundle_path: id,
     /// NSURL with bundle path. [None] if not created yet.
@@ -59,7 +62,7 @@ pub const CLASSES: ClassExports = objc_classes! {
         let bundle_path = env.bundle.bundle_path().as_str().to_string();
         let bundle_path = ns_string::from_rust_string(env, bundle_path);
         let host_object = NSBundleHostObject {
-            _bundle: None,
+            bundle: None,
             bundle_path,
             bundle_url: None,
             info_dictionary: None,
@@ -74,9 +77,14 @@ pub const CLASSES: ClassExports = objc_classes! {
    }
 }
 
++ (id)preferredLocalizationsFromArray:(id)localizations_array { // NSArray<NSString *> *
+    let preferredLocalizations = CFBundleCopyPreferredLocalizationsFromArray(env, localizations_array);
+    autorelease(env, preferredLocalizations)
+}
+
 - (())dealloc {
     let &NSBundleHostObject {
-        _bundle: _,
+        bundle: _,
         bundle_path: _, // FIXME?
         bundle_url,
         info_dictionary,
@@ -186,6 +194,11 @@ pub const CLASSES: ClassExports = objc_classes! {
     let dict: id = msg![env; dict initWithContentsOfFile:plist_path];
     env.objc.borrow_mut::<NSBundleHostObject>(this).info_dictionary = Some(dict);
     dict
+}
+
+- (id)localizations {
+    let localizations = CFBundleCopyBundleLocalizations(env, this);
+    autorelease(env, localizations)
 }
 
 // TODO: constructors, more accessors

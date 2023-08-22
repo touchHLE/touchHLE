@@ -23,6 +23,7 @@ use std::collections::HashMap;
 pub struct State {
     devices: HashMap<MutPtr<GuestALCdevice>, *mut ALCdevice>,
     contexts: HashMap<MutPtr<GuestALCcontext>, *mut ALCcontext>,
+    current_context: MutPtr<GuestALCcontext>,
 }
 impl State {
     fn get(env: &mut Environment) -> &mut Self {
@@ -224,7 +225,6 @@ fn alListeneri(_env: &mut Environment, param: ALenum, value: ALint) {
 }
 fn alListener3i(
     _env: &mut Environment,
-
     param: ALenum,
     value1: ALint,
     value2: ALint,
@@ -326,7 +326,6 @@ fn alSourceiv(env: &mut Environment, source: ALuint, param: ALenum, values: Cons
     let values = env.mem.ptr_at(values, 3); // upper bound
     unsafe { al::alSourceiv(source, param, values) };
 }
-
 fn alGetSourcef(env: &mut Environment, source: ALuint, param: ALenum, value: MutPtr<ALfloat>) {
     unsafe { al::alGetSourcef(source, param, env.mem.ptr_at_mut(value, 1)) };
 }
@@ -522,6 +521,15 @@ fn alDopplerVelocity(env: &mut Environment, value: ALfloat) {
 // Note: For some reasons Wolf3d registers many OpenAl functions, but actually uses only few ones.
 // To workaround this, we just provide stubs
 
+fn alcGetContextsDevice(
+    _env: &mut Environment,
+    _context: MutPtr<GuestALCcontext>,
+) -> MutPtr<GuestALCdevice> {
+    todo!();
+}
+fn alcGetCurrentContext(env: &mut Environment) -> MutPtr<GuestALCcontext> {
+    State::get(env).current_context
+}
 fn alcGetEnumValue(
     _env: &mut Environment,
     _device: MutPtr<GuestALCdevice>,

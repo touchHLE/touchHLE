@@ -444,6 +444,13 @@ pub const CLASSES: ClassExports = objc_classes! {
     c_string
 }
 
+- (id)stringByStandardizingPath {
+    let path = to_rust_string(env, this);
+    let standardized_path = path; // TODO: Standardization
+    let res = from_rust_string(env, standardized_path.to_string());
+    autorelease(env, res)
+}
+
 - (id)stringByTrimmingCharactersInSet:(id)set { // NSCharacterSet*
     let initial_length: NSUInteger = msg![env; this length];
 

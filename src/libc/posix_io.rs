@@ -292,9 +292,12 @@ pub fn lseek(env: &mut Environment, fd: FileDescriptor, offset: off_t, whence: i
 
 pub fn close(env: &mut Environment, fd: FileDescriptor) -> i32 {
     // TODO: error handling for unknown fd?
-    let file = env.libc_state.posix_io.files[fd_to_file_idx(fd)]
-        .take()
-        .unwrap();
+    if fd < 0 || matches!(fd, STDOUT_FILENO | STDERR_FILENO) {
+        return 0;
+    }
+
+    match env.libc_state.posix_io.files[fd_to_file_idx(fd)].take() {
+        Some(file) => {
             // The actual closing of the file happens implicitly when `file` falls out
             // of scope. The return value is about whether flushing succeeds.
             match file.file.sync_all() {
@@ -309,6 +312,13 @@ pub fn close(env: &mut Environment, fd: FileDescriptor) -> i32 {
                 }
             }
         }
+        None => {
+            // TODO: set errno
+            log!("Warning: close({:?}) failed, returning -1", fd);
+            -1
+        }
+    }
+}
 
 fn getcwd(env: &mut Environment, buf_ptr: MutPtr<u8>, buf_size: GuestUSize) -> MutPtr<u8> {
     let working_directory = env.fs.working_directory();

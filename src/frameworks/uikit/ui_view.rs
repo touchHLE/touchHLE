@@ -186,18 +186,21 @@ pub const CLASSES: ClassExports = objc_classes! {
 // TODO: subviews accessor
 
 - (())addSubview:(id)view {
-    if env.objc.borrow::<UIViewHostObject>(view).superview == this {
-        () = msg![env; this bringSubviewToFront:view];
-    } else {
-        retain(env, view);
-        () = msg![env; view removeFromSuperview];
-        let subview_obj = env.objc.borrow_mut::<UIViewHostObject>(view);
-        subview_obj.superview = this;
-        let subview_layer = subview_obj.layer;
-        let this_obj = env.objc.borrow_mut::<UIViewHostObject>(this);
-        this_obj.subviews.push(view);
-        let this_layer = this_obj.layer;
-        () = msg![env; this_layer addSublayer:subview_layer];
+    log_dbg!("[(UIView*){:?} addSubview:{:?}] => ()", this, view);
+    if view != nil {
+        if env.objc.borrow::<UIViewHostObject>(view).superview == this {
+            () = msg![env; this bringSubviewToFront:view];
+        } else {
+            retain(env, view);
+            () = msg![env; view removeFromSuperview];
+            let subview_obj = env.objc.borrow_mut::<UIViewHostObject>(view);
+            subview_obj.superview = this;
+            let subview_layer = subview_obj.layer;
+            let this_obj = env.objc.borrow_mut::<UIViewHostObject>(this);
+            this_obj.subviews.push(view);
+            let this_layer = this_obj.layer;
+            () = msg![env; this_layer addSublayer:subview_layer];
+        }
     }
 }
 

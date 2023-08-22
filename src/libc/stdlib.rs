@@ -41,7 +41,9 @@ fn realloc(env: &mut Environment, ptr: MutVoidPtr, size: GuestUSize) -> MutVoidP
 }
 
 fn free(env: &mut Environment, ptr: MutVoidPtr) {
-    env.mem.free(ptr);
+    if !Ptr::is_null(ptr) {
+        env.mem.free(ptr);
+    }
 }
 
 fn atexit(

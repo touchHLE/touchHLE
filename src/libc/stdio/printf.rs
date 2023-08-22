@@ -46,19 +46,15 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
             continue;
         }
 
-        let mut pad_char = if get_format_char(&env.mem, format_char_idx) == b'0' {
+        let flags = get_format_char(&env.mem, format_char_idx);
+        let mut pad_char = if flags == b'0' {
             format_char_idx += 1;
             '0'
         } else {
             ' '
         };
-        let mut has_precision = false;
-        if get_format_char(&env.mem, format_char_idx) == b'.' {
-            has_precision = true;
-            format_char_idx += 1;
-            pad_char = '0';
-        }
-        let pad_width = {
+
+        let mut pad_width = {
             let mut pad_width = 0;
             while let c @ b'0'..=b'9' = get_format_char(&env.mem, format_char_idx) {
                 pad_width = pad_width * 10 + (c - b'0') as usize;
@@ -66,6 +62,28 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
             }
             pad_width
         };
+
+        let mut has_precision = false;
+        let mut precision = None;
+        if get_format_char(&env.mem, format_char_idx) == b'.' {
+            has_precision = true;
+            pad_char = '0';
+            format_char_idx += 1;
+            precision = {
+                let mut is_precision_specified = false;
+                let mut precision = 0;
+                while let c @ b'0'..=b'9' = get_format_char(&env.mem, format_char_idx) {
+                    is_precision_specified = true;
+                    precision = precision * 10 + (c - b'0') as usize;
+                    format_char_idx += 1;
+                }
+                if is_precision_specified {
+                    Some(precision)
+                } else {
+                    None
+                }
+            };
+        }
 
         let specifier = get_format_char(&env.mem, format_char_idx);
         format_char_idx += 1;
@@ -115,6 +133,10 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
                     let int: i32 = args.next(env);
                     int.into()
                 };
+                if precision.is_some_and(|precision_value| precision_value > pad_width) {
+                    pad_width = precision.unwrap();
+                    pad_char = '0';
+                }
                 if pad_width > 0 {
                     if pad_char == '0' {
                         write!(&mut res, "{:01$}", int, pad_width).unwrap();
@@ -127,14 +149,15 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
             }
             b'f' => {
                 let float: f64 = args.next(env);
+                let precision_value = precision.unwrap_or(6);
                 if pad_width > 0 {
                     if pad_char == '0' {
-                        write!(&mut res, "{:01$}", float, pad_width).unwrap();
+                        write!(&mut res, "{:01$.2$}", float, pad_width, precision_value).unwrap();
                     } else {
-                        write!(&mut res, "{:1$}", float, pad_width).unwrap();
+                        write!(&mut res, "{:1$.2$}", float, pad_width, precision_value).unwrap();
                     }
                 } else {
-                    write!(&mut res, "{}", float).unwrap();
+                    write!(&mut res, "{:.1$}", float, precision_value).unwrap();
                 }
             }
             b'@' if NS_LOG => {
@@ -155,7 +178,11 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
                 res.extend_from_slice(format!("{:?}", ptr).as_bytes());
             }
             // TODO: more specifiers
-            _ => unimplemented!("Format character '{}'", specifier as char),
+            _ => unimplemented!(
+                "Format character '{}'. Formatted up to index {}",
+                specifier as char,
+                format_char_idx
+            ),
         }
     }
 

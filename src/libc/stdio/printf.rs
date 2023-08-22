@@ -50,13 +50,13 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
         let mut pad_char = if flags == b'0' {
             format_char_idx += 1;
             '0'
-        } else if flags >= b'1' && flags <= b'9' {
+        } else if (b'1'..=b'9').contains(&flags) {
             format_char_idx += 1;
             ' '
         } else {
             ' '
         };
-        
+
         let mut has_precision = false;
         if get_format_char(&env.mem, format_char_idx) == b'.' {
             has_precision = true;

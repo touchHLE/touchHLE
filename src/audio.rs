@@ -14,7 +14,6 @@
 
 mod ima4;
 
-use hound::Sample;
 pub use ima4::decode_ima4;
 use touchHLE_dr_mp3_wrapper as dr_mp3;
 pub use touchHLE_openal_soft_wrapper as openal;

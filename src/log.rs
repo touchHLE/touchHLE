@@ -50,4 +50,4 @@ macro_rules! echo {
 
 /// Put modules to enable [log_dbg] for here, e.g. "touchHLE::mem" to see when
 /// memory is allocated and freed.
-pub const ENABLED_MODULES: &[&str] = &["touchHLE::frameworks::foundation", "touchHLE::libc::posix_io", "touchHLE::libc::stdio", "touchHLE::frameworks::uikit::ui_view", "touchHLE::audio", "touchHLE::frameworks::audio_toolbox::audio_queue", "touchHLE::frameworks::audio_toolbox::audio_file", "touchHLE::frameworks::core_audio_types"];
+pub const ENABLED_MODULES: &[&str] = &[];

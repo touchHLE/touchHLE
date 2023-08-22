@@ -155,9 +155,8 @@ fn random(env: &mut Environment) -> i32 {
     (env.libc_state.stdlib.random as i32) & RAND_MAX
 }
 
-fn arc4random(env: &mut Environment) -> u32 {
-    // TODO: Actually implement the arc4 cypher
-    prng(env.libc_state.stdlib.random)
+fn arc4random(_env: &mut Environment) -> u32 {
+    unsafe { sdl2::libc::arc4random() }
 }
 
 fn getenv(env: &mut Environment, name: ConstPtr<u8>) -> MutPtr<u8> {

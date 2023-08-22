@@ -46,18 +46,13 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
             continue;
         }
 
-        let mut pad_char = if get_format_char(&env.mem, format_char_idx) == b'0' {
+        let pad_char = if get_format_char(&env.mem, format_char_idx) == b'0' {
             format_char_idx += 1;
             '0'
         } else {
             ' '
         };
-        let mut has_precision = false;
-        if get_format_char(&env.mem, format_char_idx) == b'.' {
-            has_precision = true;
-            format_char_idx += 1;
-            pad_char = '0';
-        }
+
         let pad_width = {
             let mut pad_width = 0;
             while let c @ b'0'..=b'9' = get_format_char(&env.mem, format_char_idx) {
@@ -65,6 +60,18 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
                 format_char_idx += 1;
             }
             pad_width
+        };
+
+        let precision = if get_format_char(&env.mem, format_char_idx) == b'.' {
+            format_char_idx += 1;
+            let mut precision = 0;
+            while let c @ b'0'..=b'9' = get_format_char(&env.mem, format_char_idx) {
+                precision = precision * 10 + (c - b'0') as usize;
+                format_char_idx += 1;
+            }
+            Some(precision)
+        } else {
+            None
         };
 
         let specifier = get_format_char(&env.mem, format_char_idx);
@@ -76,7 +83,7 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
             continue;
         }
 
-        if has_precision {
+        if precision.is_some() {
             assert!(
                 INTEGER_SPECIFIERS.contains(&specifier) || FLOAT_SPECIFIERS.contains(&specifier)
             )
@@ -115,26 +122,34 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
                     let int: i32 = args.next(env);
                     int.into()
                 };
+
+                let int_with_precision = if precision.is_some_and(|value| value > 0) {
+                    format!("{:01$}", int, precision.unwrap())
+                } else {
+                    format!("{}", int)
+                };
+
                 if pad_width > 0 {
-                    if pad_char == '0' {
-                        write!(&mut res, "{:01$}", int, pad_width).unwrap();
+                    if pad_char == '0' && precision.is_none() {
+                        write!(&mut res, "{:0>1$}", int_with_precision, pad_width).unwrap();
                     } else {
-                        write!(&mut res, "{:1$}", int, pad_width).unwrap();
+                        write!(&mut res, "{:>1$}", int_with_precision, pad_width).unwrap();
                     }
                 } else {
-                    write!(&mut res, "{}", int).unwrap();
+                    res.extend_from_slice(int_with_precision.as_bytes());
                 }
             }
             b'f' => {
                 let float: f64 = args.next(env);
+                let precision_value = precision.unwrap_or(6);
                 if pad_width > 0 {
                     if pad_char == '0' {
-                        write!(&mut res, "{:01$}", float, pad_width).unwrap();
+                        write!(&mut res, "{:01$.2$}", float, pad_width, precision_value).unwrap();
                     } else {
-                        write!(&mut res, "{:1$}", float, pad_width).unwrap();
+                        write!(&mut res, "{:1$.2$}", float, pad_width, precision_value).unwrap();
                     }
                 } else {
-                    write!(&mut res, "{}", float).unwrap();
+                    write!(&mut res, "{:.1$}", float, precision_value).unwrap();
                 }
             }
             b'@' if NS_LOG => {
@@ -155,7 +170,11 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
                 res.extend_from_slice(format!("{:?}", ptr).as_bytes());
             }
             // TODO: more specifiers
-            _ => unimplemented!("Format character '{}'", specifier as char),
+            _ => unimplemented!(
+                "Format character '{}'. Formatted up to index {}",
+                specifier as char,
+                format_char_idx
+            ),
         }
     }
 

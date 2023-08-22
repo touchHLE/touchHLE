@@ -309,6 +309,11 @@ fn glColor4x(env: &mut Environment, red: GLfixed, green: GLfixed, blue: GLfixed,
         gles.Color4x(red, green, blue, alpha)
     })
 }
+fn glColor4ub(env: &mut Environment, red: GLubyte, green: GLubyte, blue: GLubyte, alpha: GLubyte) {
+    with_ctx_and_mem(env, |gles, _mem| unsafe {
+        gles.Color4ub(red, green, blue, alpha)
+    })
+}
 
 // Pointers
 

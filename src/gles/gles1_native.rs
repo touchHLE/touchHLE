@@ -207,6 +207,9 @@ impl GLES for GLES1Native {
     unsafe fn Color4x(&mut self, red: GLfixed, green: GLfixed, blue: GLfixed, alpha: GLfixed) {
         gles11::Color4x(red, green, blue, alpha)
     }
+    unsafe fn Color4ub(&mut self, red: GLubyte, green: GLubyte, blue: GLubyte, alpha: GLubyte) {
+        gles11::Color4ub(red, green, blue, alpha)
+    }
 
     // Pointers
     unsafe fn ColorPointer(

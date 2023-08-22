@@ -7,6 +7,9 @@
 
 use super::ns_string;
 use crate::bundle::Bundle;
+use crate::frameworks::core_foundation::cf_bundle::{
+    CFBundleCopyBundleLocalizations, CFBundleCopyPreferredLocalizationsFromArray,
+};
 use crate::objc::{
     autorelease, id, msg, msg_class, nil, objc_classes, release, ClassExports, HostObject,
 };
@@ -16,10 +19,10 @@ pub struct State {
     main_bundle: Option<id>,
 }
 
-struct NSBundleHostObject {
+pub struct NSBundleHostObject {
     /// If this is [None], this is the main bundle's NSBundle instance and the
     /// [Bundle] is stored in [crate::Environment], not here.
-    _bundle: Option<Bundle>,
+    pub _bundle: Option<Bundle>,
     /// NSString with bundle path.
     bundle_path: id,
     /// NSURL with bundle path. [None] if not created yet.
@@ -55,6 +58,11 @@ pub const CLASSES: ClassExports = objc_classes! {
         env.framework_state.foundation.ns_bundle.main_bundle = Some(new);
         new
    }
+}
+
++ (id)preferredLocalizationsFromArray:(id) localizationsArray { // NSArray<NSString *> *
+    let preferredLocalizations = CFBundleCopyPreferredLocalizationsFromArray(env, localizationsArray);
+    autorelease(env, preferredLocalizations)
 }
 
 - (())dealloc {
@@ -152,6 +160,11 @@ pub const CLASSES: ClassExports = objc_classes! {
     let dict: id = msg![env; dict initWithContentsOfFile:plist_path];
     env.objc.borrow_mut::<NSBundleHostObject>(this).info_dictionary = Some(dict);
     dict
+}
+
+- (id)localizations {
+    let localizations = CFBundleCopyBundleLocalizations(env, this);
+    autorelease(env, localizations)
 }
 
 // TODO: constructors, more accessors

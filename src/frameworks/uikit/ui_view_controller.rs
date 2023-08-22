@@ -5,7 +5,8 @@
  */
 //! `UIViewController`.
 
-use crate::objc::{id, nil, objc_classes, release, retain, ClassExports, HostObject, NSZonePtr};
+use crate::frameworks::foundation::ns_string::get_static_str;
+use crate::objc::{id, msg, objc_classes, release, retain, ClassExports, HostObject, NSZonePtr};
 
 #[derive(Default)]
 struct UIViewControllerHostObject {
@@ -22,6 +23,15 @@ pub const CLASSES: ClassExports = objc_classes! {
 + (id)allocWithZone:(NSZonePtr)_zone {
     let host_object = Box::<UIViewControllerHostObject>::default();
     env.objc.alloc_object(this, host_object, &mut env.mem)
+}
+
+- (id)initWithCoder:(id)coder {
+    let key_ns_string = get_static_str(env, "UIView");
+    let view: id = msg![env; coder decodeObjectForKey:key_ns_string];
+
+    () = msg![env; this setView:view];
+
+    this
 }
 
 - (())dealloc {

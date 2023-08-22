@@ -76,6 +76,10 @@ impl Bundle {
         self.plist["CFBundleVersion"].as_string().unwrap()
     }
 
+    pub fn bundle_localizations(&self) -> &Vec<Value> {
+        self.plist["CFBundleLocalizations"].as_array().unwrap()
+    }
+
     /// Canonical name for the bundle according to Info.plist
     pub fn canonical_bundle_name(&self) -> Option<&str> {
         self.plist

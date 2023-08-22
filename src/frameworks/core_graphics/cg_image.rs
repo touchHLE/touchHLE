@@ -9,7 +9,6 @@ use super::cg_color_space::{kCGColorSpaceGenericRGB, CGColorSpaceCreateWithName,
 use super::cg_data::{CGDataProviderHostObject, CGDataProviderRef};
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::frameworks::core_foundation::{CFRelease, CFRetain, CFTypeRef};
-use crate::frameworks::core_graphics::cg_data_provider::CGDataProviderRef;
 use crate::frameworks::foundation::ns_string;
 use crate::image::Image;
 use crate::mem::{ConstPtr, GuestUSize, Ptr};

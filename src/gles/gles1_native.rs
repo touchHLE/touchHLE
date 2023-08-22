@@ -604,6 +604,7 @@ impl GLES for GLES1Native {
     }
     unsafe fn Color4ub(&mut self, red: GLubyte, green: GLubyte, blue: GLubyte, alpha: GLubyte) {
         gles11::Color4ub(red, green, blue, alpha)
+    }
     unsafe fn GenerateMipmapOES(&mut self, target: GLenum) {
         gles11::GenerateMipmapOES(target)
     }

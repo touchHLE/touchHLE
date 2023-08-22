@@ -1582,6 +1582,7 @@ impl GLES for GLES1OnGL2 {
     }
     unsafe fn Color4ub(&mut self, red: GLubyte, green: GLubyte, blue: GLubyte, alpha: GLubyte) {
         gl21::Color4ub(red, green, blue, alpha)
+    }
     unsafe fn GenerateMipmapOES(&mut self, target: GLenum) {
         gl21::GenerateMipmapEXT(target)
     }

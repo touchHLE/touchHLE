@@ -87,7 +87,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 // TODO: statusBarOrientation getter
 - (())setStatusBarOrientation:(UIInterfaceOrientation)orientation {
-    env.window.rotate_device(match orientation {
+    env.window_mut().rotate_device(match orientation {
         UIDeviceOrientationPortrait => DeviceOrientation::Portrait,
         UIDeviceOrientationLandscapeLeft => DeviceOrientation::LandscapeLeft,
         UIDeviceOrientationLandscapeRight => DeviceOrientation::LandscapeRight,
@@ -101,10 +101,10 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (bool)idleTimerDisabled {
-    !env.window.is_screen_saver_enabled()
+    !env.window().is_screen_saver_enabled()
 }
 - (())setIdleTimerDisabled:(bool)disabled {
-    env.window.set_screen_saver_enabled(!disabled);
+    env.window_mut().set_screen_saver_enabled(!disabled);
 }
 
 - (bool)openURL:(id)url { // NSURL

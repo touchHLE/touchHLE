@@ -102,6 +102,9 @@ fn run_test_app() -> Result<(), Box<dyn Error>> {
 
     let output = cmd
         .arg(test_app_path)
+        // headless mode avoids a distracting window briefly appearing during
+        // testing, and works in CI.
+        .arg("--headless")
         .output()
         .expect("failed to execute touchHLE process");
 

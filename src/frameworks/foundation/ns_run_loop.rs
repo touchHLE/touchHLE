@@ -170,7 +170,10 @@ fn run_run_loop(env: &mut Environment, run_loop: id) {
     loop {
         let mut sleep_until = None;
 
-        env.window.poll_for_events(&env.options);
+        env.window
+            .as_mut()
+            .expect("NSRunLoop not supported in headless mode")
+            .poll_for_events(&env.options);
 
         let next_due = uikit::handle_events(env);
         limit_sleep_time(&mut sleep_until, next_due);

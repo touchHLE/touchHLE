@@ -86,6 +86,7 @@ Usability:
 Other:
 
 - The version of dynarmic used by touchHLE has been updated. This will fix build issues for some people. (@hikari-no-yume)
+- The new `--headless` option lets you run touchHLE with no graphical output and no input whatsoever. This is only useful for command-line apps. (@hikari-no-yume)
 
 ## v0.1.1 (2023-02-18)
 

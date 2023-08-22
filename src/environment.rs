@@ -78,7 +78,8 @@ pub struct Environment {
     pub startup_time: Instant,
     pub bundle: bundle::Bundle,
     pub fs: fs::Fs,
-    pub window: window::Window,
+    /// The window is only absent when running in headless mode.
+    pub window: Option<window::Window>,
     pub mem: mem::Mem,
     /// Loaded binaries. Index `0` is always the app binary, other entries are
     /// dynamic libraries.
@@ -131,40 +132,44 @@ impl Environment {
     ) -> Result<Environment, String> {
         let startup_time = Instant::now();
 
-        let icon = fs
-            .read(bundle.icon_path())
-            .map_err(|_| "Could not read icon file".to_string())
-            .and_then(|bytes| {
-                image::Image::from_bytes(&bytes)
-                    .map_err(|e| format!("Could not parse icon image: {}", e))
-            });
-        if let Err(ref e) = icon {
-            log!("Warning: {}", e);
-        }
-
-        let launch_image_path = bundle.launch_image_path();
-        let launch_image = if fs.is_file(&launch_image_path) {
-            let res = fs
-                .read(launch_image_path)
-                .map_err(|_| "Could not read launch image file".to_string())
+        let window = if options.headless {
+            None
+        } else {
+            let icon = fs
+                .read(bundle.icon_path())
+                .map_err(|_| "Could not read icon file".to_string())
                 .and_then(|bytes| {
                     image::Image::from_bytes(&bytes)
-                        .map_err(|e| format!("Could not parse launch image: {}", e))
+                        .map_err(|e| format!("Could not parse icon image: {}", e))
                 });
-            if let Err(ref e) = res {
+            if let Err(ref e) = icon {
                 log!("Warning: {}", e);
-            };
-            res.ok()
-        } else {
-            None
-        };
+            }
 
-        let window = window::Window::new(
-            &format!("{} (touchHLE {})", bundle.display_name(), super::VERSION),
-            icon.ok(),
-            launch_image,
-            &options,
-        );
+            let launch_image_path = bundle.launch_image_path();
+            let launch_image = if fs.is_file(&launch_image_path) {
+                let res = fs
+                    .read(launch_image_path)
+                    .map_err(|_| "Could not read launch image file".to_string())
+                    .and_then(|bytes| {
+                        image::Image::from_bytes(&bytes)
+                            .map_err(|e| format!("Could not parse launch image: {}", e))
+                    });
+                if let Err(ref e) = res {
+                    log!("Warning: {}", e);
+                };
+                res.ok()
+            } else {
+                None
+            };
+
+            Some(window::Window::new(
+                &format!("{} (touchHLE {})", bundle.display_name(), super::VERSION),
+                icon.ok(),
+                launch_image,
+                &options,
+            ))
+        };
 
         let mut mem = mem::Mem::new();
 
@@ -310,6 +315,22 @@ impl Environment {
         env.cpu.branch(entry_point_addr);
 
         Ok(env)
+    }
+
+    /// Get a shared reference to the window. Panics if touchHLE is running in
+    /// headless mode.
+    pub fn window(&self) -> &window::Window {
+        self.window.as_ref().expect(
+            "Tried to do something that needs a window, but touchHLE is running in headless mode!",
+        )
+    }
+
+    /// Get a mutable reference to the window. Panics if touchHLE is running
+    /// in headless mode.
+    pub fn window_mut(&mut self) -> &mut window::Window {
+        self.window.as_mut().expect(
+            "Tried to do something that needs a window, but touchHLE is running in headless mode!",
+        )
     }
 
     fn stack_trace(&self) {
@@ -703,7 +724,9 @@ impl Environment {
             // Polling for events can be quite expensive, so we shouldn't do
             // this until after we've done some amount of work on the guest
             // thread, lest every single callback call pay this cost.
-            self.window.poll_for_events(&self.options);
+            if let Some(ref mut window) = self.window {
+                window.poll_for_events(&self.options);
+            }
 
             loop {
                 // Try to find a new thread to execute, starting with the thread

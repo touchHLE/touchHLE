@@ -50,7 +50,8 @@ pub fn handle_events(env: &mut Environment) -> Option<Instant> {
     use crate::window::Event;
 
     loop {
-        let Some(event) = env.window.pop_event() else {
+        // NSRunLoop will never call this function in headless mode.
+        let Some(event) = env.window.as_mut().unwrap().pop_event() else {
             break;
         };
 

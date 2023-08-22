@@ -6,7 +6,7 @@
 //! `time.h` (C) and `sys/time.h` (POSIX)
 
 use crate::dyld::{export_c_func, FunctionExports};
-use crate::mem::{guest_size_of, ConstPtr, MutPtr, MutVoidPtr, Ptr, SafeRead};
+use crate::mem::{guest_size_of, ConstPtr, MutPtr, Ptr, SafeRead};
 use crate::Environment;
 use std::time::SystemTime;
 
@@ -268,12 +268,28 @@ struct timeval {
 }
 unsafe impl SafeRead for timeval {}
 
+#[allow(non_camel_case_types)]
+#[repr(C, packed)]
+struct timezone {
+    tz_minuteswest: i32,
+    tz_dsttime: i32,
+}
+unsafe impl SafeRead for timezone {}
+
 fn gettimeofday(
     env: &mut Environment,
     timeval_ptr: MutPtr<timeval>,
-    timezone_ptr: MutVoidPtr, // deprecated, always NULL
+    timezone_ptr: MutPtr<timezone>,
 ) -> i32 {
-    assert!(timezone_ptr.is_null());
+    if !timezone_ptr.is_null() {
+        env.mem.write(
+            timezone_ptr,
+            timezone {
+                tz_minuteswest: 0,
+                tz_dsttime: 0,
+            },
+        );
+    }
 
     if timeval_ptr.is_null() {
         return 0; // success

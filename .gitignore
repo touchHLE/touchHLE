@@ -1,6 +1,7 @@
 /target
 /vendor/boost
 /touchHLE_sandbox
+/touchHLE_apps/*
 /touchHLE_apps/*.ipa
 /touchHLE_apps/*.app
 
@@ -10,6 +11,8 @@
 !default.pbxuser
 *.mode1v3
 !default.mode1v3
+
+tests/TestApp_source/build
 
 # Android
 

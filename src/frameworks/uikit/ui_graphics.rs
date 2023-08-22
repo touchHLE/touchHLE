@@ -17,7 +17,7 @@ pub(super) struct State {
     pub(super) context_stack: Vec<CGContextRef>,
 }
 
-fn UIGraphicsPushContext(env: &mut Environment, context: CGContextRef) {
+pub(super) fn UIGraphicsPushContext(env: &mut Environment, context: CGContextRef) {
     CGContextRetain(env, context);
     env.framework_state
         .uikit
@@ -25,7 +25,7 @@ fn UIGraphicsPushContext(env: &mut Environment, context: CGContextRef) {
         .context_stack
         .push(context);
 }
-fn UIGraphicsPopContext(env: &mut Environment) {
+pub(super) fn UIGraphicsPopContext(env: &mut Environment) {
     let context = env.framework_state.uikit.ui_graphics.context_stack.pop();
     CGContextRelease(env, context.unwrap());
 }

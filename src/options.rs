@@ -5,11 +5,10 @@
  */
 //! Parsing and management of user-configurable options, e.g. for input methods.
 
-use crate::frameworks::opengles::GLESImplementation;
+use crate::gles::GLESImplementation;
 use crate::window::DeviceOrientation;
 use std::collections::HashMap;
-use std::fs::File;
-use std::io::{BufRead, BufReader};
+use std::io::{BufRead, BufReader, Read};
 use std::net::{SocketAddr, ToSocketAddrs};
 use std::num::NonZeroU32;
 
@@ -39,6 +38,7 @@ pub struct Options {
     pub gles1_implementation: Option<GLESImplementation>,
     pub direct_memory_access: bool,
     pub gdb_listen_addrs: Option<Vec<SocketAddr>>,
+    pub headless: bool,
 }
 
 impl Default for Options {
@@ -56,6 +56,7 @@ impl Default for Options {
             gles1_implementation: None,
             direct_memory_access: true,
             gdb_listen_addrs: None,
+            headless: false,
         }
     }
 }
@@ -129,6 +130,8 @@ impl Options {
                 .map_err(|e| format!("Could not resolve GDB server listen address: {}", e))?
                 .collect();
             self.gdb_listen_addrs = Some(addrs);
+        } else if arg == "--headless" {
+            self.headless = true;
         } else {
             return Ok(false);
         };
@@ -136,30 +139,18 @@ impl Options {
     }
 }
 
-/// Name of the file containing touchHLE's default options for various apps.
-pub const DEFAULTS_FILENAME: &str = "touchHLE_default_options.txt";
-/// Name of the file intended for the user's own options.
-pub const USER_FILENAME: &str = "touchHLE_options.txt";
-
 /// Try to get app-specific options from a file.
 ///
 /// Returns [Ok] if there is no error when reading the file, otherwise [Err].
 /// The [Ok] value is a [Some] with the options if they could be found, or
 /// [None] if no options were found for this app.
-pub fn get_options_from_file(filename: &str, app_id: &str) -> Result<Option<String>, String> {
-    let file = File::open(filename).map_err(|e| format!("Could not open {}: {}", filename, e))?;
-
+pub fn get_options_from_file<F: Read>(file: F, app_id: &str) -> Result<Option<String>, String> {
     let file = BufReader::new(file);
     for (line_no, line) in BufRead::lines(file).enumerate() {
         // Line numbering usually starts from 1
         let line_no = line_no + 1;
 
-        let line = line.map_err(|e| {
-            format!(
-                "Error while reading line {} of {}: {}",
-                line_no, filename, e
-            )
-        })?;
+        let line = line.map_err(|e| format!("Error while reading line {}: {}", line_no, e))?;
 
         // # for single-line comments
         let line = if let Some((rest, _)) = line.split_once('#') {
@@ -174,7 +165,7 @@ pub fn get_options_from_file(filename: &str, app_id: &str) -> Result<Option<Stri
             continue;
         }
 
-        let (line_app_id, line_options) = line.split_once(':').ok_or_else(|| format!("Line {} of {} is not a comment and is missing a colon (:) to separate the app ID from the options", line_no, filename))?;
+        let (line_app_id, line_options) = line.split_once(':').ok_or_else(|| format!("Line {} is not a comment and is missing a colon (:) to separate the app ID from the options", line_no))?;
         let line_app_id = line_app_id.trim();
 
         if line_app_id != app_id {

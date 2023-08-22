@@ -20,6 +20,17 @@ pub const CLASSES: ClassExports = objc_classes! {
 // are just Objective-C types, so we need a class for it, but its name is not
 // visible anywhere.
 @implementation _touchHLE_CGContext: NSObject
+
+- (())dealloc {
+    let host_obj = env.objc.borrow::<CGContextHostObject>(this);
+    let CGContextSubclass::CGBitmapContext(bitmap_data) = host_obj.subclass;
+    if bitmap_data.data_is_owned {
+        env.mem.free(bitmap_data.data);
+    }
+
+    env.objc.dealloc_object(this, &mut env.mem)
+}
+
 @end
 
 };
@@ -51,7 +62,7 @@ pub fn CGContextRetain(env: &mut Environment, c: CGContextRef) -> CGContextRef {
     }
 }
 
-fn CGContextSetRGBFillColor(
+pub fn CGContextSetRGBFillColor(
     env: &mut Environment,
     context: CGContextRef,
     red: CGFloat,
@@ -69,11 +80,16 @@ fn CGContextFillRect(env: &mut Environment, context: CGContextRef, rect: CGRect)
     cg_bitmap_context::fill_rect(env, context, rect, /* clear: */ false);
 }
 
-fn CGContextClearRect(env: &mut Environment, context: CGContextRef, rect: CGRect) {
+pub fn CGContextClearRect(env: &mut Environment, context: CGContextRef, rect: CGRect) {
     cg_bitmap_context::fill_rect(env, context, rect, /* clear: */ true);
 }
 
-fn CGContextTranslateCTM(env: &mut Environment, context: CGContextRef, tx: CGFloat, ty: CGFloat) {
+pub fn CGContextTranslateCTM(
+    env: &mut Environment,
+    context: CGContextRef,
+    tx: CGFloat,
+    ty: CGFloat,
+) {
     let context = env.objc.borrow_mut::<CGContextHostObject>(context);
     context.translation.0 += tx;
     context.translation.1 += ty;

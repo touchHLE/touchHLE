@@ -100,6 +100,12 @@ pub const CLASSES: ClassExports = objc_classes! {
     msg_class![env; _touchHLE_NSDictionary allocWithZone:zone]
 }
 
++ (id)dictionary {
+    let new_dict: id = msg![env; this alloc];
+    let new_dict: id = msg![env; new_dict init];
+    autorelease(env, new_dict)
+}
+
 + (id)dictionaryWithObjectsAndKeys:(id)first_object /*, ...*/ {
     // This passes on the va_args by creative abuse of untyped function calls.
     // I should be ashamed, and you should be careful.
@@ -107,6 +113,11 @@ pub const CLASSES: ClassExports = objc_classes! {
     let new_dict: id = msg![env; new_dict initWithObjectsAndKeys:first_object];
     autorelease(env, new_dict)
 }
+
+- (id)init {
+    todo!("TODO: Implement [dictionary init] for custom subclasses")
+}
+
 
 // NSCopying implementation
 - (id)copyWithZone:(NSZonePtr)_zone {
@@ -153,6 +164,11 @@ pub const CLASSES: ClassExports = objc_classes! {
 
     *env.objc.borrow_mut(this) = host_object;
 
+    this
+}
+
+- (id)init {
+    *env.objc.borrow_mut(this) = <DictionaryHostObject as Default>::default();
     this
 }
 

@@ -9,6 +9,7 @@ use super::cg_color_space::{kCGColorSpaceGenericRGB, CGColorSpaceCreateWithName,
 use super::cg_data::{CGDataProviderHostObject, CGDataProviderRef};
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::frameworks::core_foundation::{CFRelease, CFRetain, CFTypeRef};
+use crate::frameworks::core_graphics::cg_data_provider::CGDataProviderRef;
 use crate::frameworks::foundation::ns_string;
 use crate::image::Image;
 use crate::mem::{ConstPtr, GuestUSize, Ptr};
@@ -110,10 +111,10 @@ pub fn borrow_image(objc: &ObjC, image: CGImageRef) -> &Image {
 }
 
 fn CGImageGetAlphaInfo(_env: &mut Environment, _image: CGImageRef) -> CGImageAlphaInfo {
-    // our Image type always returns un-premultiplied RGBA
-    // TODO: check if this is faithful to e.g. the real UIImage; it probably
-    // uses premultiplied BGRA, considering the design of the CgBI format
-    kCGImageAlphaLast
+    // our Image type always returns premultiplied RGBA
+    // (the premultiplied part must match what the real UIImage does, but
+    // considering CgBI's design, maybe the order doesn't?)
+    kCGImageAlphaPremultipliedLast
 }
 
 fn CGImageGetColorSpace(env: &mut Environment, _image: CGImageRef) -> CGColorSpaceRef {
@@ -141,6 +142,13 @@ fn CGImageGetHeight(env: &mut Environment, image: CGImageRef) -> GuestUSize {
     height
 }
 
+fn CGImageGetDataProvider(_env: &mut Environment, image: CGImageRef) -> CGDataProviderRef {
+    // This is a hack which basically substitutes a provider with an original image.
+    // Check `cf_data.rs` and `cg_data_provider.rs` for more info.
+    // TODO: implement proper provider
+    image
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGImageCreateWithPNGDataProvider(_, _, _, _)),
     export_c_func!(CGImageRelease(_)),
@@ -149,4 +157,5 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGImageGetColorSpace(_)),
     export_c_func!(CGImageGetWidth(_)),
     export_c_func!(CGImageGetHeight(_)),
+    export_c_func!(CGImageGetDataProvider(_)),
 ];

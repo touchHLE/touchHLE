@@ -71,7 +71,7 @@ pub const CLASSES: ClassExports = objc_classes! {
         env.framework_state.uikit.ui_accelerometer.delegate = None;
     } else {
         env.framework_state.uikit.ui_accelerometer.delegate = Some(delegate);
-        env.window.print_accelerometer_notice();
+        env.window().print_accelerometer_notice();
     }
 }
 
@@ -159,7 +159,7 @@ pub(super) fn handle_accelerometer(env: &mut Environment) -> Option<Instant> {
     // UIKit creates and drains autorelease pools when handling events.
     let pool: id = msg_class![env; NSAutoreleasePool new];
 
-    let (x, y, z) = env.window.get_acceleration(&env.options);
+    let (x, y, z) = env.window().get_acceleration(&env.options);
     let timestamp: NSTimeInterval = msg_class![env; NSProcessInfo systemUptime];
     let acceleration: id = msg_class![env; UIAcceleration alloc];
     *env.objc.borrow_mut(acceleration) = UIAccelerationHostObject {

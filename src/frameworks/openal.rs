@@ -15,7 +15,7 @@ use crate::audio::openal as al;
 use crate::audio::openal::al_types::*;
 use crate::audio::openal::alc_types::*;
 use crate::dyld::{export_c_func, FunctionExports};
-use crate::mem::{ConstPtr, ConstVoidPtr, GuestUSize, MutPtr, Ptr, SafeWrite};
+use crate::mem::{ConstPtr, ConstVoidPtr, GuestUSize, MutPtr, MutVoidPtr, Ptr, SafeWrite};
 use crate::Environment;
 use std::collections::HashMap;
 
@@ -311,7 +311,207 @@ fn alcMacOSXMixerOutputRate(_env: &mut Environment, value: ALdouble) {
     log!("App wants to set mixer output sample rate to {} Hz", value);
 }
 
+fn alListenerfv(env: &mut Environment, param: ALenum, values: ConstPtr<ALfloat>) {
+    // we assume that at least 1 parameter should be passed
+    let values = env.mem.ptr_at(values, 1);
+    unsafe { al::alListenerfv(param, values) };
+}
+
+fn alDopplerFactor(_env: &mut Environment, value: ALfloat) {
+    unsafe { al::alDopplerFactor(value) };
+}
+
+fn alDopplerVelocity(env: &mut Environment, value: ALfloat) {
+    // Apparently wolf3d sets doppler velocity to zero, but this results in muting all of the audio
+    // with Open AL 1.1 soft implementation!
+    // Check "A note for OpenAL library implementors regarding OpenAL 1.0" from OpenAL 1.1 specs for more info
+    let bundle_id = env.bundle.bundle_identifier();
+    if bundle_id.starts_with("com.zodttd.wolf3d") || bundle_id.starts_with("com.idsoftware.wolf3d")
+    {
+        log_dbg!("Applying game-specific hack for Wolf3D-iOS: ignoring 0.0 doppler velocity.");
+        assert_eq!(value, 0.0);
+        return;
+    }
+    unsafe { al::alDopplerVelocity(value) };
+}
+
+fn alSourcefv(env: &mut Environment, source: ALuint, param: ALenum, values: ConstPtr<ALfloat>) {
+    // we assume that at least 1 parameter should be passed
+    let values = env.mem.ptr_at(values, 1);
+    unsafe { al::alSourcefv(source, param, values) };
+}
+
 // TODO: more functions
+
+// Note: For some reasons Wolf3d registers many OpenAl functions, but actually uses only few ones.
+// To workaround this, we just provide stubs
+
+fn alcGetContextsDevice(
+    _env: &mut Environment,
+    _context: MutPtr<GuestALCcontext>,
+) -> MutPtr<GuestALCdevice> {
+    todo!();
+}
+fn alcGetCurrentContext(_env: &mut Environment) -> MutPtr<GuestALCcontext> {
+    todo!();
+}
+fn alcGetEnumValue(
+    _env: &mut Environment,
+    _device: MutPtr<GuestALCdevice>,
+    _enumName: ConstPtr<u8>,
+) -> ALenum {
+    todo!();
+}
+fn alcGetIntegerv(
+    _env: &mut Environment,
+    _device: MutPtr<GuestALCdevice>,
+    _param: ALenum,
+    _size: ALCsizei,
+    _values: MutPtr<ALCint>,
+) {
+    todo!();
+}
+fn alcGetString(
+    _env: &mut Environment,
+    _device: MutPtr<GuestALCdevice>,
+    _param: ALenum,
+) -> ConstPtr<u8> {
+    todo!();
+}
+fn alcIsExtensionPresent(
+    _env: &mut Environment,
+    _device: MutPtr<GuestALCdevice>,
+    _extName: ConstPtr<u8>,
+) -> ALCboolean {
+    0
+}
+fn alcProcessContext(_env: &mut Environment, _context: MutPtr<GuestALCcontext>) {
+    todo!();
+}
+fn alcSuspendContext(_env: &mut Environment, _context: MutPtr<GuestALCcontext>) {
+    todo!();
+}
+fn alIsBuffer(_env: &mut Environment, _buffer: ALuint) -> ALboolean {
+    todo!();
+}
+fn alGetBufferf(_env: &mut Environment, _buffer: ALuint, _param: ALenum, _value: MutPtr<ALfloat>) {
+    todo!();
+}
+fn alGetBufferi(_env: &mut Environment, _buffer: ALuint, _param: ALenum, _value: MutPtr<ALint>) {
+    todo!();
+}
+fn alEnable(_env: &mut Environment, _capability: ALenum) {
+    todo!();
+}
+fn alDisable(_env: &mut Environment, _capability: ALenum) {
+    todo!();
+}
+fn alGetBoolean(_env: &mut Environment, _param: ALenum) -> ALboolean {
+    todo!();
+}
+fn alGetBooleanv(_env: &mut Environment, _param: ALenum, _values: MutPtr<ALboolean>) {
+    todo!();
+}
+fn alGetDouble(_env: &mut Environment, _param: ALenum) -> ALdouble {
+    todo!();
+}
+fn alGetDoublev(_env: &mut Environment, _param: ALenum, _values: MutPtr<ALdouble>) {
+    todo!();
+}
+fn alGetFloat(_env: &mut Environment, _param: ALenum) -> ALfloat {
+    todo!();
+}
+fn alGetFloatv(_env: &mut Environment, _param: ALenum, _values: MutPtr<ALfloat>) {
+    todo!();
+}
+fn alGetInteger(_env: &mut Environment, _param: ALenum) -> ALint {
+    todo!();
+}
+fn alGetIntegerv(_env: &mut Environment, _param: ALenum, _values: MutPtr<ALint>) {
+    todo!();
+}
+fn alGetEnumValue(_env: &mut Environment, _enumName: ConstPtr<u8>) -> ALenum {
+    todo!();
+}
+fn alGetProcAddress(_env: &mut Environment, _funcName: ConstPtr<u8>) -> MutVoidPtr {
+    todo!();
+}
+fn alGetString(_env: &mut Environment, _param: ALenum) -> ConstPtr<u8> {
+    todo!();
+}
+fn alIsExtensionPresent(_env: &mut Environment, _extName: ConstPtr<u8>) -> ALboolean {
+    todo!();
+}
+fn alIsEnabled(_env: &mut Environment, _capability: ALenum) -> ALboolean {
+    todo!();
+}
+fn alListeneri(_env: &mut Environment, _param: ALenum, _value: ALint) {
+    todo!();
+}
+fn alGetListenerf(_env: &mut Environment, _param: ALenum, _value: MutPtr<ALfloat>) {
+    todo!();
+}
+fn alGetListener3f(
+    _env: &mut Environment,
+    _param: ALenum,
+    _value1: MutPtr<ALfloat>,
+    _value2: MutPtr<ALfloat>,
+    _value3: MutPtr<ALfloat>,
+) {
+    todo!();
+}
+fn alGetListenerfv(_env: &mut Environment, _param: ALenum, _values: MutPtr<ALfloat>) {
+    todo!();
+}
+fn alGetListeneri(_env: &mut Environment, _param: ALenum, _value: MutPtr<ALint>) {
+    todo!();
+}
+fn alIsSource(_env: &mut Environment, _source: ALuint) -> ALboolean {
+    todo!();
+}
+fn alSource3f(
+    _env: &mut Environment,
+    _source: ALuint,
+    _param: ALenum,
+    _value1: ALfloat,
+    _value2: ALfloat,
+    _value3: ALfloat,
+) {
+    todo!();
+}
+fn alGetSource3f(
+    _env: &mut Environment,
+    _source: ALuint,
+    _param: ALenum,
+    _value1: MutPtr<ALfloat>,
+    _value2: MutPtr<ALfloat>,
+    _value3: MutPtr<ALfloat>,
+) {
+    todo!();
+}
+fn alGetSourcefv(
+    _env: &mut Environment,
+    _source: ALuint,
+    _param: ALenum,
+    _values: MutPtr<ALfloat>,
+) {
+    todo!();
+}
+fn alSourcePlayv(_env: &mut Environment, _nsources: ALsizei, _sources: ConstPtr<ALuint>) {
+    todo!();
+}
+fn alSourcePausev(_env: &mut Environment, _nsources: ALsizei, _sources: ConstPtr<ALuint>) {
+    todo!();
+}
+fn alSourceStopv(_env: &mut Environment, _nsources: ALsizei, _sources: ConstPtr<ALuint>) {
+    todo!();
+}
+fn alSourceRewind(_env: &mut Environment, _source: ALuint) {
+    todo!();
+}
+fn alSourceRewindv(_env: &mut Environment, _nsources: ALsizei, _sources: ConstPtr<ALuint>) {
+    todo!();
+}
 
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(alcOpenDevice(_)),
@@ -341,4 +541,49 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(alBufferData(_, _, _, _, _)),
     export_c_func!(alBufferDataStatic(_, _, _, _, _)),
     export_c_func!(alcMacOSXMixerOutputRate(_)),
+    export_c_func!(alcGetContextsDevice(_)),
+    export_c_func!(alcGetCurrentContext()),
+    export_c_func!(alcGetEnumValue(_, _)),
+    export_c_func!(alcGetIntegerv(_, _, _, _)),
+    export_c_func!(alcGetString(_, _)),
+    export_c_func!(alcIsExtensionPresent(_, _)),
+    export_c_func!(alcProcessContext(_)),
+    export_c_func!(alcSuspendContext(_)),
+    export_c_func!(alIsBuffer(_)),
+    export_c_func!(alGetBufferf(_, _, _)),
+    export_c_func!(alGetBufferi(_, _, _)),
+    export_c_func!(alEnable(_)),
+    export_c_func!(alDisable(_)),
+    export_c_func!(alDopplerFactor(_)),
+    export_c_func!(alDopplerVelocity(_)),
+    export_c_func!(alGetBoolean(_)),
+    export_c_func!(alGetBooleanv(_, _)),
+    export_c_func!(alGetDouble(_)),
+    export_c_func!(alGetDoublev(_, _)),
+    export_c_func!(alGetFloat(_)),
+    export_c_func!(alGetFloatv(_, _)),
+    export_c_func!(alGetInteger(_)),
+    export_c_func!(alGetIntegerv(_, _)),
+    export_c_func!(alGetEnumValue(_)),
+    export_c_func!(alGetProcAddress(_)),
+    export_c_func!(alGetString(_)),
+    export_c_func!(alIsExtensionPresent(_)),
+    export_c_func!(alIsEnabled(_)),
+    export_c_func!(alListenerfv(_, _)),
+    export_c_func!(alListeneri(_, _)),
+    export_c_func!(alGetListenerf(_, _)),
+    export_c_func!(alGetListener3f(_, _, _, _)),
+    export_c_func!(alGetListenerfv(_, _)),
+    export_c_func!(alGetListeneri(_, _)),
+    export_c_func!(alIsSource(_)),
+    export_c_func!(alSourcefv(_, _, _)),
+    export_c_func!(alSource3f(_, _, _, _, _)),
+    export_c_func!(alGetSource3f(_, _, _, _, _)),
+    export_c_func!(alGetSourcefv(_, _, _)),
+    export_c_func!(alSourcePlayv(_, _)),
+    export_c_func!(alSourcePause(_)),
+    export_c_func!(alSourcePausev(_, _)),
+    export_c_func!(alSourceStopv(_, _)),
+    export_c_func!(alSourceRewind(_)),
+    export_c_func!(alSourceRewindv(_, _)),
 ];

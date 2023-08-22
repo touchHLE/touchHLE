@@ -4,7 +4,6 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 //! Abstraction of window setup, OpenGL context creation and event handling.
-//! Also provides OpenGL bindings.
 //!
 //! Implemented using the sdl2 crate (a Rust wrapper for SDL2). All usage of
 //! SDL should be confined to this module.
@@ -13,13 +12,10 @@
 //! window system interaction in general, because it is assumed only one window
 //! will be needed for the runtime of the app.
 
-mod gl;
-mod matrix;
-
-pub use gl::{gl21compat, gl32core, gles11, GLContext, GLVersion};
-pub use matrix::Matrix;
-
+use crate::gles::present::present_frame;
+use crate::gles::{create_gles1_ctx, GLES};
 use crate::image::Image;
+use crate::matrix::Matrix;
 use crate::options::Options;
 use sdl2::mouse::MouseButton;
 use sdl2::pixels::PixelFormatEnum;
@@ -28,6 +24,7 @@ use std::collections::VecDeque;
 use std::env;
 use std::f32::consts::FRAC_PI_2;
 use std::num::NonZeroU32;
+use std::time::{Duration, Instant};
 
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub enum DeviceOrientation {
@@ -73,11 +70,27 @@ fn set_sdl2_orientation(orientation: DeviceOrientation) {
 
 #[derive(Debug)]
 pub enum Event {
+    /// User requested quit.
     Quit,
+    /// OS has informed touchHLE it will soon become inactive.
+    /// (iOS `applicationWillResignActive:`, Android `onPause()`)
+    AppWillResignActive,
+    /// OS has informed touchHLE it will soon terminate.
+    /// (iOS `applicationWillTerminate:`, Android `onDestroy()`)
+    AppWillTerminate,
     TouchDown((f32, f32)),
     TouchMove((f32, f32)),
     TouchUp((f32, f32)),
 }
+
+pub enum GLVersion {
+    /// OpenGL ES 1.1
+    GLES11,
+    /// OpenGL 2.1 compatibility profile
+    GL21Compat,
+}
+
+pub struct GLContext(sdl2::video::GLContext);
 
 fn surface_from_image(image: &Image) -> Surface {
     let src_pixels = image.pixels();
@@ -145,6 +158,11 @@ pub struct Window {
     window: sdl2::video::Window,
     event_pump: sdl2::EventPump,
     event_queue: VecDeque<Event>,
+    last_polled: Instant,
+    /// Separate queue for extremely high-priority events (e.g. app about to
+    /// terminate).
+    high_priority_event: Option<Event>,
+    enable_event_polling: bool,
     #[cfg(target_os = "macos")]
     max_height: u32,
     #[cfg(target_os = "macos")]
@@ -153,7 +171,8 @@ pub struct Window {
     /// [Self::rotatable_fullscreen] returns [true].
     fullscreen: bool,
     scale_hack: NonZeroU32,
-    splash_image_and_gl_ctx: Option<(Image, GLContext)>,
+    internal_gl_ctx: Option<Box<dyn GLES>>,
+    splash_image: Option<Image>,
     device_orientation: DeviceOrientation,
     app_gl_ctx_no_longer_current: bool,
     controller_ctx: sdl2::GameControllerSubsystem,
@@ -192,6 +211,9 @@ impl Window {
             let attr = video_ctx.gl_attr();
             attr.set_context_version(1, 1);
             attr.set_context_profile(sdl2::video::GLProfile::GLES);
+
+            // Disable blocking of event loop when app is paused.
+            sdl2::hint::set("SDL_ANDROID_BLOCK_ON_PAUSE", "0");
         }
 
         // SDL2 disables the screen saver by default, but iPhone OS enables
@@ -250,24 +272,6 @@ impl Window {
 
         let event_pump = sdl_ctx.event_pump().unwrap();
 
-        let splash_image_and_gl_ctx = if let Some(launch_image) = launch_image {
-            // Splash screen must be drawn with OpenGL (or not drawn at all)
-            // because otherwise we can't later use OpenGL in the same window.
-            // We are not required to use the same OpenGL version as for other
-            // contexts in this window, so let's use something relatively modern
-            // and compatible. OpenGL 3.2 is the baseline version of OpenGL
-            // available on macOS.
-            match gl::create_gl_context(&video_ctx, &window, GLVersion::GL32Core) {
-                Ok(gl_ctx) => Some((launch_image, gl_ctx)),
-                Err(err) => {
-                    log!("Couldn't create OpenGL context for splash image: {}", err);
-                    None
-                }
-            }
-        } else {
-            None
-        };
-
         let controller_ctx = sdl_ctx.game_controller().unwrap();
 
         let sensor_ctx = sdl_ctx.sensor().unwrap();
@@ -293,13 +297,17 @@ impl Window {
             window,
             event_pump,
             event_queue: VecDeque::new(),
+            last_polled: Instant::now() - Duration::from_secs(1),
+            high_priority_event: None,
+            enable_event_polling: true,
             #[cfg(target_os = "macos")]
             max_height,
             #[cfg(target_os = "macos")]
             viewport_y_offset: 0,
             fullscreen,
             scale_hack,
-            splash_image_and_gl_ctx,
+            internal_gl_ctx: None,
+            splash_image: launch_image,
             device_orientation,
             app_gl_ctx_no_longer_current: false,
             controller_ctx,
@@ -308,9 +316,20 @@ impl Window {
             accelerometer,
             virtual_cursor_last: None,
         };
-        if window.splash_image_and_gl_ctx.is_some() {
+
+        // Set up OpenGL ES context used for splash screen and app UI rendering
+        // (see src/frameworks/core_animation/composition.rs). OpenGL ES is used
+        // because SDL2 won't let us use more than one graphics API in the same
+        // window, and we also need OpenGL ES for the app's own rendering.
+        let gl_ctx = create_gles1_ctx(&mut window, options);
+        gl_ctx.make_current(&window);
+        log!("Driver info: {}", unsafe { gl_ctx.driver_description() });
+        window.internal_gl_ctx = Some(gl_ctx);
+
+        if window.splash_image.is_some() {
             window.display_splash();
         }
+
         window
     }
 
@@ -318,7 +337,17 @@ impl Window {
     /// (60Hz is probably fine) so that the host OS doesn't consider touchHLE
     /// to be unresponsive. Note that events are not returned by this function,
     /// since we often need to defer actually handling them.
+    ///
+    /// Since polling can be quite expensive, this function will skip it if it
+    /// was called too recently.
     pub fn poll_for_events(&mut self, options: &Options) {
+        let now = Instant::now();
+        // poll roughly twice per frame to try to avoid missing frames sometimes
+        if now.duration_since(self.last_polled) < Duration::from_secs_f64(1.0 / 120.0) {
+            return;
+        }
+        self.last_polled = now;
+
         fn transform_input_coords(
             window: &Window,
             (in_x, in_y): (f32, f32),
@@ -354,7 +383,10 @@ impl Window {
         }
 
         let mut controller_updated = false;
-        while let Some(event) = self.event_pump.poll_event() {
+        while self.enable_event_polling {
+            let Some(event) = self.event_pump.poll_event() else {
+                break;
+            };
             use sdl2::event::Event as E;
             self.event_queue.push_back(match event {
                 E::Quit { .. } => Event::Quit,
@@ -408,6 +440,24 @@ impl Window {
                     controller_updated = true;
                     continue;
                 }
+                E::AppWillEnterBackground { .. } => {
+                    log!("Received app-will-resign-active event.");
+                    assert!(self.high_priority_event.is_none());
+                    self.high_priority_event = Some(Event::AppWillResignActive);
+                    // For some reason, if we don't pause event polling, we will
+                    // never finish handling the event.
+                    // TODO: Add a mechanism for re-enabling polling, if at some
+                    // point we support returning touchHLE to the foreground.
+                    self.enable_event_polling = false;
+                    continue;
+                }
+                E::AppTerminating { .. } => {
+                    log!("Received app-will-terminate event.");
+                    assert!(self.high_priority_event.is_none());
+                    self.high_priority_event = Some(Event::AppWillTerminate);
+                    self.enable_event_polling = false;
+                    continue;
+                }
                 _ => continue,
             })
         }
@@ -432,9 +482,12 @@ impl Window {
         }
     }
 
-    /// Pop an event from the queue (in FIFO order)
+    /// Pop an event from the queue (in FIFO order, except for high priority
+    /// events)
     pub fn pop_event(&mut self) -> Option<Event> {
-        self.event_queue.pop_front()
+        self.high_priority_event
+            .take()
+            .or_else(|| self.event_queue.pop_front())
     }
 
     fn controller_added(&mut self, joystick_idx: u32) {
@@ -612,12 +665,32 @@ impl Window {
         (x, y, pressed)
     }
 
-    pub fn create_gl_context(&mut self, version: GLVersion) -> Result<GLContext, String> {
-        gl::create_gl_context(&self.video_ctx, &self.window, version)
+    pub fn create_gl_context(&self, version: GLVersion) -> Result<GLContext, String> {
+        let attr = self.video_ctx.gl_attr();
+        match version {
+            GLVersion::GLES11 => {
+                attr.set_context_version(1, 1);
+                attr.set_context_profile(sdl2::video::GLProfile::GLES);
+            }
+            GLVersion::GL21Compat => {
+                attr.set_context_version(2, 1);
+                attr.set_context_profile(sdl2::video::GLProfile::Compatibility);
+            }
+        }
+
+        let gl_ctx = self.window.gl_create_context()?;
+
+        Ok(GLContext(gl_ctx))
     }
 
-    pub fn make_gl_context_current(&mut self, gl_ctx: &GLContext) {
-        gl::make_gl_context_current(&self.video_ctx, &self.window, gl_ctx);
+    pub fn gl_get_proc_address(&self, procname: &str) -> *const std::ffi::c_void {
+        // For some reason, rust-sdl2 uses *const (), but () is not meant to be
+        // used for void pointees (just void results), so let's fix that.
+        self.video_ctx.gl_get_proc_address(procname) as *const _
+    }
+
+    pub unsafe fn make_gl_context_current(&self, gl_ctx: &GLContext) {
+        self.window.gl_make_current(&gl_ctx.0).unwrap();
     }
 
     /// Retrieve and reset the flag that indicates if the current OpenGL context
@@ -631,20 +704,69 @@ impl Window {
         value
     }
 
+    /// Make the internal OpenGL ES context (for splash screen and UI rendering)
+    /// current.
+    pub fn make_internal_gl_ctx_current(&mut self) {
+        self.app_gl_ctx_no_longer_current = true;
+        self.internal_gl_ctx.as_ref().unwrap().make_current(self);
+    }
+
+    /// Get the internal OpenGL ES context (for splash screen and UI rendering).
+    /// This does not ensure the context is current.
+    pub fn get_internal_gl_ctx(&mut self) -> &mut dyn GLES {
+        self.internal_gl_ctx.as_deref_mut().unwrap()
+    }
+
     fn display_splash(&mut self) {
-        let Some((image, gl_ctx)) = &self.splash_image_and_gl_ctx else {
-            panic!();
+        assert!(self.splash_image.is_some());
+
+        // OpenGL ES expects bottom-to-top row order for image data, but our
+        // image data will be top-to-bottom. A reflection transform compensates.
+        let matrix = self.output_rotation_matrix().multiply(&Matrix::y_flip());
+        let (vx, vy, vw, vh) = self.viewport();
+        let viewport = (vx, vy + self.viewport_y_offset(), vw, vh);
+
+        self.make_internal_gl_ctx_current();
+
+        let image = self.splash_image.as_ref().unwrap();
+        let gl_ctx = self.internal_gl_ctx.as_deref_mut().unwrap();
+
+        use crate::gles::gles11_raw as gles11; // constants only
+
+        unsafe {
+            let mut texture = 0;
+            gl_ctx.GenTextures(1, &mut texture);
+            gl_ctx.BindTexture(gles11::TEXTURE_2D, texture);
+            let (width, height) = image.dimensions();
+            gl_ctx.TexImage2D(
+                gles11::TEXTURE_2D,
+                0,
+                gles11::RGBA as _,
+                width as _,
+                height as _,
+                0,
+                gles11::RGBA,
+                gles11::UNSIGNED_BYTE,
+                image.pixels().as_ptr() as *const _,
+            );
+            gl_ctx.TexParameteri(
+                gles11::TEXTURE_2D,
+                gles11::TEXTURE_MIN_FILTER,
+                gles11::LINEAR as _,
+            );
+            gl_ctx.TexParameteri(
+                gles11::TEXTURE_2D,
+                gles11::TEXTURE_MAG_FILTER,
+                gles11::LINEAR as _,
+            );
+
+            present_frame(
+                gl_ctx, viewport, matrix, /* virtual_cursor_visible_at: */ None,
+            );
+
+            gl_ctx.DeleteTextures(1, &texture);
         };
 
-        let matrix = self.output_rotation_matrix();
-        let (vx, vy, vw, vh) = self.viewport();
-        let viewport_offset = (vx, vy + self.viewport_y_offset());
-        let viewport_size = (vw, vh);
-
-        self.app_gl_ctx_no_longer_current = true;
-
-        gl::make_gl_context_current(&self.video_ctx, &self.window, gl_ctx);
-        unsafe { gl::display_image(image, viewport_offset, viewport_size, &matrix) };
         self.window.gl_swap_window();
 
         // hold onto GL context so the image doesn't disappear, and hold
@@ -653,7 +775,7 @@ impl Window {
 
     /// Swap front-buffer and back-buffer so the result of OpenGL rendering is
     /// presented.
-    pub fn swap_window(&mut self) {
+    pub fn swap_window(&self) {
         self.window.gl_swap_window();
     }
 
@@ -715,7 +837,7 @@ impl Window {
 
         self.device_orientation = new_orientation;
 
-        if self.splash_image_and_gl_ctx.is_some() {
+        if self.splash_image.is_some() {
             self.display_splash();
         }
     }

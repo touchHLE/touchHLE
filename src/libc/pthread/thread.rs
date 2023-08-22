@@ -7,8 +7,9 @@
 
 use crate::abi::GuestFunction;
 use crate::dyld::{export_c_func, FunctionExports};
+use crate::libc::errno::{EDEADLK, EINVAL};
 use crate::mem::{ConstPtr, MutPtr, MutVoidPtr, SafeRead};
-use crate::{Environment, ThreadID};
+use crate::{Environment, ThreadId};
 use std::collections::HashMap;
 
 #[derive(Default)]
@@ -52,7 +53,8 @@ unsafe impl SafeRead for OpaqueThread {}
 type pthread_t = MutPtr<OpaqueThread>;
 
 struct ThreadHostObject {
-    thread_id: ThreadID,
+    thread_id: ThreadId,
+    joined_by: Option<ThreadId>,
     _attr: pthread_attr_t,
 }
 
@@ -121,6 +123,7 @@ fn pthread_create(
         opaque,
         ThreadHostObject {
             thread_id,
+            joined_by: None,
             _attr: attr,
         },
     );
@@ -147,6 +150,7 @@ fn pthread_self(env: &mut Environment) -> pthread_t {
             opaque,
             ThreadHostObject {
                 thread_id: 0,
+                joined_by: None,
                 _attr: DEFAULT_ATTR,
             },
         );
@@ -164,6 +168,51 @@ fn pthread_self(env: &mut Environment) -> pthread_t {
     ptr
 }
 
+fn pthread_join(env: &mut Environment, thread: pthread_t, retval: MutPtr<MutVoidPtr>) -> i32 {
+    let current_thread = env.current_thread;
+    let curr_pthread_t = pthread_self(env);
+    // The joinee is the thread that is being waited on.
+    let joinee_thread = State::get(env).threads.get_mut(&thread).unwrap().thread_id;
+
+    // FIXME?: Blocking on the main thread is technically allowed, but effectively useless (as the
+    // main thread exiting means the whole application exits). It complicates some handling and is
+    // probably safe to ignore here.
+    assert!(joinee_thread != 0);
+
+    // Can't join thread with itself!
+    if joinee_thread == current_thread {
+        log_dbg!("Thread attempted join with self, returning EDEADLK!");
+        return EDEADLK;
+    }
+
+    // Check that the current thread is not being waited on by the joinee, to prevent deadlocks.
+    // This only prevents 2-long cycles (matching aspen simulator), which is to say:
+    //             joining                            joining              joining
+    // [Thread 1] --------> [Thread 2]    [Thread 1] --------> [Thread 2] --------> [Thread 3]
+    //     ^                    |             ^                                         |
+    //     |       joining      |             |                 joining                 |
+    //     '--------------------'             '-----------------------------------------'
+    //       This is prevented,                             but this is not.
+    let host_obj_curr = State::get(env).threads.get(&curr_pthread_t).unwrap();
+    if let Some(thread) = host_obj_curr.joined_by {
+        if thread == joinee_thread {
+            log_dbg!("Thread attempted deadlocking join, returning EDEADLK!");
+            return EDEADLK;
+        }
+    }
+
+    // Deattached threads cannot be joined with.
+    let host_obj_joinee = State::get(env).threads.get_mut(&thread).unwrap();
+    if host_obj_joinee._attr.detachstate == PTHREAD_CREATE_DETACHED {
+        log_dbg!("Thread attempted join with deattached thread, returning EINVAL!");
+        return EINVAL;
+    }
+
+    host_obj_joinee.joined_by = Some(current_thread);
+    // The executor will write the return value (void*) to *retval after the join occurs.
+    env.join_with_thread(joinee_thread, retval);
+    0
+}
 fn pthread_setcanceltype(_env: &mut Environment, _type: i32, _oldtype: MutPtr<i32>) -> i32 {
     // TODO
     0
@@ -184,6 +233,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(pthread_attr_destroy(_)),
     export_c_func!(pthread_create(_, _, _, _)),
     export_c_func!(pthread_self()),
+    export_c_func!(pthread_join(_, _)),
     export_c_func!(pthread_setcanceltype(_, _)),
     export_c_func!(pthread_mach_thread_np(_)),
 ];

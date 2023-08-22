@@ -10,7 +10,8 @@ pub mod cg_bitmap_context;
 pub mod cg_color_space;
 pub mod cg_context;
 pub mod cg_data;
-mod cg_geometry;
+pub mod cg_data_provider;
+pub mod cg_geometry;
 pub mod cg_image;
 
 pub type CGFloat = f32;

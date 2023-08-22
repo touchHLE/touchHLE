@@ -18,14 +18,14 @@
 //! on macOS. It's also a version supported on various other OSes.
 //! It is therefore a convenient target for our implementation.
 
+use super::gl21compat_raw as gl21;
+use super::gl21compat_raw::types::*;
+use super::gles11_raw as gles11; // constants only
 use super::util::{
     fixed_to_float, matrix_fixed_to_float, try_decode_pvrtc, PalettedTextureFormat, ParamTable,
     ParamType,
 };
 use super::GLES;
-use crate::window::gl21compat as gl21;
-use crate::window::gl21compat::types::*;
-use crate::window::gles11;
 use crate::window::{GLContext, GLVersion, Window};
 use std::collections::HashSet;
 use std::ffi::CStr;
@@ -37,7 +37,7 @@ use std::ffi::CStr;
 /// just providing the minimum.
 ///
 /// TODO: GL_POINT_SPRITE_OES?
-pub(super) const CAPABILITIES: &[GLenum] = &[
+pub const CAPABILITIES: &[GLenum] = &[
     gl21::ALPHA_TEST,
     gl21::BLEND,
     gl21::COLOR_LOGIC_OP,
@@ -70,10 +70,10 @@ pub(super) const CAPABILITIES: &[GLenum] = &[
     gl21::TEXTURE_2D,
 ];
 
-pub(super) struct ArrayInfo {
+pub struct ArrayInfo {
     /// Enum used by `glEnableClientState`, `glDisableClientState` and
     /// `glGetBoolean`.
-    pub(super) name: GLenum,
+    pub name: GLenum,
     /// Buffer binding enum for `glGetInteger`.
     buffer_binding: GLenum,
     /// Size enum for `glGetInteger`.
@@ -93,7 +93,7 @@ struct ArrayStateBackup {
 /// List of arrays shared by OpenGL ES 1.1 and OpenGL 2.1.
 ///
 /// TODO: GL_POINT_SIZE_ARRAY_OES?
-pub(super) const ARRAYS: &[ArrayInfo] = &[
+pub const ARRAYS: &[ArrayInfo] = &[
     ArrayInfo {
         name: gl21::COLOR_ARRAY,
         buffer_binding: gl21::COLOR_ARRAY_BUFFER_BINDING,
@@ -535,8 +535,9 @@ impl GLES for GLES1OnGL2 {
         })
     }
 
-    fn make_current(&self, window: &mut Window) {
-        window.make_gl_context_current(&self.gl_ctx);
+    fn make_current(&self, window: &Window) {
+        unsafe { window.make_gl_context_current(&self.gl_ctx) };
+        gl21::load_with(|s| window.gl_get_proc_address(s))
     }
 
     unsafe fn driver_description(&self) -> String {
@@ -614,6 +615,9 @@ impl GLES for GLES1OnGL2 {
         .contains(&target));
         assert!([gl21::FASTEST, gl21::NICEST, gl21::DONT_CARE].contains(&mode));
         gl21::Hint(target, mode);
+    }
+    unsafe fn GetString(&mut self, name: GLenum) -> *const GLubyte {
+        gl21::GetString(name)
     }
 
     // Other state manipulation
@@ -1037,6 +1041,18 @@ impl GLES for GLES1OnGL2 {
         assert!(param == 1 || param == 2 || param == 4 || param == 8);
         gl21::PixelStorei(pname, param)
     }
+    unsafe fn ReadPixels(
+        &mut self,
+        x: GLint,
+        y: GLint,
+        width: GLsizei,
+        height: GLsizei,
+        format: GLenum,
+        type_: GLenum,
+        pixels: *mut GLvoid,
+    ) {
+        gl21::ReadPixels(x, y, width, height, format, type_, pixels)
+    }
     unsafe fn GenTextures(&mut self, n: GLsizei, textures: *mut GLuint) {
         gl21::GenTextures(n, textures)
     }
@@ -1222,10 +1238,7 @@ impl GLES for GLES1OnGL2 {
                 let index = if index_is_nibble {
                     (indices[i / 2] >> ((1 - (i % 2)) * 4)) & 0xf
                 } else {
-                    // I'm really unsure if this is correct. This is what the
-                    // OpenGL ES 1.1 spec says, but the extension spec (which it
-                    // supposedly incorporates) says the opposite?!
-                    indices[i / 4..][3 - (i % 4)]
+                    indices[i]
                 } as usize;
                 let palette_entry = &palette[index * palette_entry_size..][..palette_entry_size];
                 decoded.extend_from_slice(palette_entry);
@@ -1569,5 +1582,7 @@ impl GLES for GLES1OnGL2 {
     }
     unsafe fn Color4ub(&mut self, red: GLubyte, green: GLubyte, blue: GLubyte, alpha: GLubyte) {
         gl21::Color4ub(red, green, blue, alpha)
+    unsafe fn GenerateMipmapOES(&mut self, target: GLenum) {
+        gl21::GenerateMipmapEXT(target)
     }
 }

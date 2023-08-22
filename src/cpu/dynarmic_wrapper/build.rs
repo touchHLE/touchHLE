@@ -16,20 +16,6 @@ fn link_lib(lib: &str) {
     println!("cargo:rustc-link-lib=static={}", lib);
 }
 
-// See https://github.com/rust-lang/cc-rs/issues/565
-trait CPPVersion {
-    fn cpp_version(&mut self, version: &str) -> &mut Self;
-}
-impl CPPVersion for cc::Build {
-    fn cpp_version(&mut self, version: &str) -> &mut Self {
-        if self.get_compiler().is_like_msvc() {
-            self.flag(&format!("/std:{}", version))
-        } else {
-            self.flag(&format!("-std={}", version))
-        }
-    }
-}
-
 fn build_type_windows() -> &'static str {
     if cfg!(target_os = "windows") {
         if cfg!(debug_assertions) {
@@ -132,7 +118,7 @@ fn main() {
     cc::Build::new()
         .file(package_root.join("lib.cpp"))
         .cpp(true)
-        .cpp_version("c++17")
+        .std("c++17")
         .include(dynarmic_out.join("include"))
         .compile("dynarmic_wrapper");
     rerun_if_changed(&package_root.join("lib.cpp"));

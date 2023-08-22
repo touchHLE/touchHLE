@@ -13,6 +13,8 @@ use crate::objc::{id, msg};
 use crate::Environment;
 use std::io::Write;
 
+const INTEGER_SPECIFIERS: [u8; 6] = [b'd', b'i', b'o', b'u', b'x', b'X'];
+
 /// String formatting implementation for `printf` and `NSLog` function families.
 ///
 /// `NS_LOG` is [true] for the `NSLog` format string type, or [false] for the
@@ -41,12 +43,18 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
             continue;
         }
 
-        let pad_char = if get_format_char(&env.mem, format_char_idx) == b'0' {
+        let mut pad_char = if get_format_char(&env.mem, format_char_idx) == b'0' {
             format_char_idx += 1;
             '0'
         } else {
             ' '
         };
+        let mut has_precision = false;
+        if get_format_char(&env.mem, format_char_idx) == b'.' {
+            has_precision = true;
+            format_char_idx += 1;
+            pad_char = '0';
+        }
         let pad_width = {
             let mut pad_width = 0;
             while let c @ b'0'..=b'9' = get_format_char(&env.mem, format_char_idx) {
@@ -63,6 +71,10 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
         if specifier == b'%' {
             res.push(b'%');
             continue;
+        }
+
+        if has_precision {
+            assert!(INTEGER_SPECIFIERS.contains(&specifier))
         }
 
         match specifier {
@@ -116,16 +128,8 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
                 write!(&mut res, "{}", description).unwrap();
             }
             b'x' => {
-                let uint: u32 = args.next(env);
-                if pad_width > 0 {
-                    if pad_char == '0' {
-                        write!(&mut res, "{:01$x}", uint, pad_width).unwrap();
-                    } else {
-                        write!(&mut res, "{:1$x}", uint, pad_width).unwrap();
-                    }
-                } else {
-                    write!(&mut res, "{:x}", uint).unwrap();
-                }
+                let int: i32 = args.next(env);
+                res.extend_from_slice(format!("{:x}", int).as_bytes());
             }
             // TODO: more specifiers
             _ => unimplemented!("Format character '{}'", specifier as char),
@@ -221,7 +225,62 @@ fn printf(env: &mut Environment, format: ConstPtr<u8>, args: DotDotDot) -> i32 {
 
 // TODO: more printf variants
 
+fn sscanf(env: &mut Environment, src: ConstPtr<u8>, format: ConstPtr<u8>, args: DotDotDot) -> i32 {
+    log_dbg!(
+        "sscanf({:?}, {:?} ({:?}), ...)",
+        src,
+        format,
+        env.mem.cstr_at_utf8(format)
+    );
+
+    let mut args = args.start();
+
+    let mut src_ptr = src.cast_mut();
+    let mut format_char_idx = 0;
+
+    let mut matched_args = 0;
+
+    loop {
+        let c = env.mem.read(format + format_char_idx);
+        format_char_idx += 1;
+
+        if c == b'\0' {
+            break;
+        }
+        if c != b'%' {
+            let cc = env.mem.read(src_ptr);
+            if c != cc {
+                return matched_args - 1;
+            }
+            src_ptr += 1;
+            continue;
+        }
+
+        let specifier = env.mem.read(format + format_char_idx);
+        format_char_idx += 1;
+
+        match specifier {
+            b'd' => {
+                let mut val: i32 = 0;
+                while let c @ b'0'..=b'9' = env.mem.read(src_ptr) {
+                    val = val * 10 + (c - b'0') as i32;
+                    src_ptr += 1;
+                }
+                let c_int_ptr: ConstPtr<i32> = args.next(env);
+                env.mem.write(c_int_ptr.cast_mut(), val);
+            }
+            // TODO: more specifiers
+            _ => unimplemented!("Format character '{}'", specifier as char),
+        }
+
+        matched_args += 1;
+    }
+
+    matched_args
+}
+
 pub const FUNCTIONS: FunctionExports = &[
+    export_c_func!(sscanf(_, _, _)),
     export_c_func!(vsnprintf(_, _, _, _)),
     export_c_func!(vsprintf(_, _, _)),
     export_c_func!(sprintf(_, _, _)),

@@ -204,5 +204,14 @@ pub fn load_main_nib_file(env: &mut Environment, _ui_application: id) {
         () = msg![env; conn connect];
     }
 
+    // Make visible windows visible
+    let visibles_key = get_static_str(env, "UINibVisibleWindowsKey");
+    let visibles: id = msg![env; unarchiver decodeObjectForKey:visibles_key];
+    let visibles_count: NSUInteger = msg![env; visibles count];
+    for i in 0..visibles_count {
+        let visible: id = msg![env; visibles objectAtIndex:i];
+        () = msg![env; visible setHidden:false];
+    }
+
     release(env, unarchiver);
 }

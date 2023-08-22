@@ -22,7 +22,8 @@ use crate::Environment;
 
 #[derive(Copy, Clone)]
 pub(super) struct CGBitmapContextData {
-    data: MutVoidPtr,
+    pub(super) data: MutVoidPtr,
+    pub(super) data_is_owned: bool,
     width: GuestUSize,
     height: GuestUSize,
     bits_per_component: GuestUSize,
@@ -31,7 +32,7 @@ pub(super) struct CGBitmapContextData {
     alpha_info: CGImageAlphaInfo,
 }
 
-fn CGBitmapContextCreate(
+pub fn CGBitmapContextCreate(
     env: &mut Environment,
     data: MutVoidPtr,
     width: GuestUSize,
@@ -41,17 +42,32 @@ fn CGBitmapContextCreate(
     color_space: CGColorSpaceRef,
     bitmap_info: u32,
 ) -> CGContextRef {
-    assert!(!data.is_null()); // TODO: support memory allocation
     assert!(bits_per_component == 8); // TODO: support other bit depths
-    assert!(components_for_rgb(bitmap_info).is_ok());
 
     let color_space = env.objc.borrow::<CGColorSpaceHostObject>(color_space).name;
     // TODO: support other color spaces
     assert!(color_space == kCGColorSpaceGenericRGB);
 
+    let component_count = components_for_rgb(bitmap_info).unwrap();
+
+    let (data, data_is_owned, bytes_per_row) = if data.is_null() {
+        let bytes_per_row = if bytes_per_row == 0 {
+            width.checked_mul(component_count).unwrap()
+        } else {
+            bytes_per_row
+        };
+        let total_size = bytes_per_row.checked_mul(height).unwrap();
+        let data = env.mem.alloc(total_size);
+        (data, true, bytes_per_row)
+    } else {
+        assert!(bytes_per_row != 0);
+        (data, false, bytes_per_row)
+    };
+
     let host_object = CGContextHostObject {
         subclass: CGContextSubclass::CGBitmapContext(CGBitmapContextData {
             data,
+            data_is_owned,
             width,
             height,
             bits_per_component,
@@ -68,6 +84,24 @@ fn CGBitmapContextCreate(
         .get_known_class("_touchHLE_CGContext", &mut env.mem);
     env.objc
         .alloc_object(isa, Box::new(host_object), &mut env.mem)
+}
+
+fn CGBitmapContextGetData(env: &mut Environment, context: CGContextRef) -> MutVoidPtr {
+    let host_obj = env.objc.borrow::<CGContextHostObject>(context);
+    let CGContextSubclass::CGBitmapContext(bitmap_data) = host_obj.subclass;
+    bitmap_data.data
+}
+
+pub fn CGBitmapContextGetWidth(env: &mut Environment, context: CGContextRef) -> GuestUSize {
+    let host_obj = env.objc.borrow::<CGContextHostObject>(context);
+    let CGContextSubclass::CGBitmapContext(bitmap_data) = host_obj.subclass;
+    bitmap_data.width
+}
+
+pub fn CGBitmapContextGetHeight(env: &mut Environment, context: CGContextRef) -> GuestUSize {
+    let host_obj = env.objc.borrow::<CGContextHostObject>(context);
+    let CGContextSubclass::CGBitmapContext(bitmap_data) = host_obj.subclass;
+    bitmap_data.height
 }
 
 fn components_for_rgb(bitmap_info: CGBitmapInfo) -> Result<GuestUSize, ()> {
@@ -309,12 +343,20 @@ impl CGBitmapContextDrawer<'_> {
     pub fn translation(&self) -> (CGFloat, CGFloat) {
         self.translation
     }
-    /// Get the current fill color. The returned color is linear RGB, not sRGB!
+    /// Get the current fill color. The returned color is linear RGB, not sRGB.
+    /// It has premultiplied alpha if the context does.
     pub fn rgb_fill_color(&self) -> (CGFloat, CGFloat, CGFloat, CGFloat) {
+        let multiply_by = match self.bitmap_info.alpha_info {
+            kCGImageAlphaPremultipliedLast | kCGImageAlphaPremultipliedFirst => {
+                self.rgb_fill_color.3
+            }
+            _ => 1.0,
+        };
+        // Multiplying before decoding matches the Simulator's output.
         (
-            gamma_decode(self.rgb_fill_color.0),
-            gamma_decode(self.rgb_fill_color.1),
-            gamma_decode(self.rgb_fill_color.2),
+            gamma_decode(self.rgb_fill_color.0 * multiply_by),
+            gamma_decode(self.rgb_fill_color.1 * multiply_by),
+            gamma_decode(self.rgb_fill_color.2 * multiply_by),
             self.rgb_fill_color.3, // alpha is always linear
         )
     }
@@ -395,6 +437,7 @@ pub(super) fn draw_image(
             let texel_x = (image_width as f32 * texel_x) as i32;
             // Image is in top-to-bottom order, but the bitmap is bottom-to-top
             let texel_y = (image_height as f32 * (1.0 - texel_y)) as i32;
+            // FIXME: might need alpha format conversion here
             if let Some(color) = image.get_pixel((texel_x, texel_y)) {
                 drawer.put_pixel((x, y), color)
             }
@@ -404,5 +447,18 @@ pub(super) fn draw_image(
     // let _ = std::fs::write(format!("bitmap-{:?}-{:?}-after.data", (image as *const _ as *const ()), (drawer.width(), drawer.height())), &drawer.pixels);
 }
 
-pub const FUNCTIONS: FunctionExports =
-    &[export_c_func!(CGBitmapContextCreate(_, _, _, _, _, _, _))];
+/// Shortcut for [crate::frameworks::core_animation::composition]. This is a
+/// workaround for not having a `&mut Environment` that should eventually be
+/// removed somehow (TODO).
+pub fn get_data(objc: &ObjC, context: CGContextRef) -> (GuestUSize, GuestUSize, MutVoidPtr) {
+    let host_obj = objc.borrow::<CGContextHostObject>(context);
+    let CGContextSubclass::CGBitmapContext(bitmap_data) = host_obj.subclass;
+    (bitmap_data.width, bitmap_data.height, bitmap_data.data)
+}
+
+pub const FUNCTIONS: FunctionExports = &[
+    export_c_func!(CGBitmapContextCreate(_, _, _, _, _, _, _)),
+    export_c_func!(CGBitmapContextGetData(_)),
+    export_c_func!(CGBitmapContextGetWidth(_)),
+    export_c_func!(CGBitmapContextGetHeight(_)),
+];

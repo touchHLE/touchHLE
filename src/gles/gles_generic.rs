@@ -7,9 +7,9 @@
 //!
 //! Unfortunately this does not provide the types and constants, so the correct
 //! usage is to import `GLES` and `types` from this module, but get the
-//! constants from [crate::window::gles11].
+//! constants from [super::gles11_raw].
 
-use crate::window::gles11::types::*;
+use super::gles11_raw::types::*;
 
 /// Trait representing an OpenGL ES implementation and context.
 ///
@@ -17,6 +17,7 @@ use crate::window::gles11::types::*;
 /// It is the caller's responsibility to make the context active before using
 /// any of the `unsafe` methods of this trait.
 #[allow(clippy::upper_case_acronyms)]
+#[allow(clippy::too_many_arguments)] // not our fault :(
 pub trait GLES {
     /// Get a human-friendly description of this implementation.
     fn description() -> &'static str
@@ -32,7 +33,7 @@ pub trait GLES {
 
     /// Make this context (and any underlying context) the active OpenGL
     /// context.
-    fn make_current(&self, window: &mut crate::window::Window);
+    fn make_current(&self, window: &crate::window::Window);
 
     /// Get some string describing the underlying driver. For OpenGL this is
     /// `GL_VENDOR`, `GL_RENDERER` and `GL_VERSION`.
@@ -50,6 +51,7 @@ pub trait GLES {
     unsafe fn GetIntegerv(&mut self, pname: GLenum, params: *mut GLint);
     unsafe fn GetPointerv(&mut self, pname: GLenum, params: *mut *const GLvoid);
     unsafe fn Hint(&mut self, target: GLenum, mode: GLenum);
+    unsafe fn GetString(&mut self, name: GLenum) -> *const GLubyte;
 
     // Other state manipulation
     unsafe fn AlphaFunc(&mut self, func: GLenum, ref_: GLclampf);
@@ -151,6 +153,16 @@ pub trait GLES {
 
     // Textures
     unsafe fn PixelStorei(&mut self, pname: GLenum, param: GLint);
+    unsafe fn ReadPixels(
+        &mut self,
+        x: GLint,
+        y: GLint,
+        width: GLsizei,
+        height: GLsizei,
+        format: GLenum,
+        type_: GLenum,
+        pixels: *mut GLvoid,
+    );
     unsafe fn GenTextures(&mut self, n: GLsizei, textures: *mut GLuint);
     unsafe fn DeleteTextures(&mut self, n: GLsizei, textures: *const GLuint);
     unsafe fn ActiveTexture(&mut self, texture: GLenum);
@@ -319,4 +331,5 @@ pub trait GLES {
         usage: GLenum,
     );
     unsafe fn Color4ub(&mut self, red: GLubyte, green: GLubyte, blue: GLubyte, alpha: GLubyte);
+    unsafe fn GenerateMipmapOES(&mut self, target: GLenum);
 }

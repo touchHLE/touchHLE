@@ -12,10 +12,10 @@
 //! In such cases, we should reject vendor-specific things unless we've made
 //! sure we can emulate them on all host platforms for touchHLE.
 
+use super::gles11_raw as gles11;
+use super::gles11_raw::types::*;
 use super::util::{try_decode_pvrtc, PalettedTextureFormat};
 use super::GLES;
-use crate::window::gles11;
-use crate::window::gles11::types::*;
 use crate::window::{GLContext, GLVersion, Window};
 use std::ffi::CStr;
 
@@ -33,8 +33,9 @@ impl GLES for GLES1Native {
         })
     }
 
-    fn make_current(&self, window: &mut Window) {
-        window.make_gl_context_current(&self.gl_ctx);
+    fn make_current(&self, window: &Window) {
+        unsafe { window.make_gl_context_current(&self.gl_ctx) };
+        gles11::load_with(|s| window.gl_get_proc_address(s))
     }
 
     unsafe fn driver_description(&self) -> String {
@@ -87,6 +88,9 @@ impl GLES for GLES1Native {
     }
     unsafe fn Hint(&mut self, target: GLenum, mode: GLenum) {
         gles11::Hint(target, mode)
+    }
+    unsafe fn GetString(&mut self, name: GLenum) -> *const GLubyte {
+        gles11::GetString(name)
     }
 
     // Other state manipulation
@@ -275,6 +279,18 @@ impl GLES for GLES1Native {
     // Textures
     unsafe fn PixelStorei(&mut self, pname: GLenum, param: GLint) {
         gles11::PixelStorei(pname, param)
+    }
+    unsafe fn ReadPixels(
+        &mut self,
+        x: GLint,
+        y: GLint,
+        width: GLsizei,
+        height: GLsizei,
+        format: GLenum,
+        type_: GLenum,
+        pixels: *mut GLvoid,
+    ) {
+        gles11::ReadPixels(x, y, width, height, format, type_, pixels)
     }
     unsafe fn GenTextures(&mut self, n: GLsizei, textures: *mut GLuint) {
         gles11::GenTextures(n, textures)
@@ -588,5 +604,7 @@ impl GLES for GLES1Native {
     }
     unsafe fn Color4ub(&mut self, red: GLubyte, green: GLubyte, blue: GLubyte, alpha: GLubyte) {
         gles11::Color4ub(red, green, blue, alpha)
+    unsafe fn GenerateMipmapOES(&mut self, target: GLenum) {
+        gles11::GenerateMipmapOES(target)
     }
 }

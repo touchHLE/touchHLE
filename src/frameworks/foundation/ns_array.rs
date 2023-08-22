@@ -134,6 +134,15 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.alloc_object(this, host_object, &mut env.mem)
 }
 
+// NSCoding implementation
+- (id)initWithCoder:(id)coder {
+    let objects = ns_keyed_unarchiver::decode_current_array(env, coder);
+    let host_object: &mut ArrayHostObject = env.objc.borrow_mut(this);
+    assert!(host_object.array.is_empty());
+    host_object.array = objects; // objects are already retained
+    this
+}
+
 - (())dealloc {
     let host_object: &mut ArrayHostObject = env.objc.borrow_mut(this);
     let array = std::mem::take(&mut host_object.array);

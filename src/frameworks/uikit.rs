@@ -15,22 +15,19 @@ use std::time::Instant;
 pub mod ui_accelerometer;
 pub mod ui_application;
 pub mod ui_color;
-pub mod ui_control;
 pub mod ui_device;
 pub mod ui_event;
 pub mod ui_font;
+pub mod ui_geometry;
 pub mod ui_graphics;
 pub mod ui_image;
 pub mod ui_image_picker_controller;
-pub mod ui_image_view;
 pub mod ui_nib;
 pub mod ui_responder;
 pub mod ui_screen;
-pub mod ui_text_field;
 pub mod ui_touch;
 pub mod ui_view;
 pub mod ui_view_controller;
-pub mod ui_window;
 
 #[derive(Default)]
 pub struct State {
@@ -42,7 +39,7 @@ pub struct State {
     ui_graphics: ui_graphics::State,
     ui_screen: ui_screen::State,
     ui_touch: ui_touch::State,
-    ui_view: ui_view::State,
+    pub ui_view: ui_view::State,
 }
 
 /// For use by `NSRunLoop`: handles any events that have queued up.
@@ -53,7 +50,8 @@ pub fn handle_events(env: &mut Environment) -> Option<Instant> {
     use crate::window::Event;
 
     loop {
-        let Some(event) = env.window.pop_event() else {
+        // NSRunLoop will never call this function in headless mode.
+        let Some(event) = env.window.as_mut().unwrap().pop_event() else {
             break;
         };
 
@@ -64,6 +62,29 @@ pub fn handle_events(env: &mut Environment) -> Option<Instant> {
             }
             Event::TouchDown(..) | Event::TouchMove(..) | Event::TouchUp(..) => {
                 ui_touch::handle_event(env, event)
+            }
+            Event::AppWillResignActive => {
+                // Getting this event means touchHLE is becoming inactive, e.g.
+                // due to switching apps. The obvious way to handle this would
+                // be to just send `applicationWillResignActive:` to the
+                // UIApplicationDelegate. However:
+                // - touchHLE's event loop can't handle an inactive app well
+                //   right now. For example, audio isn't paused.
+                // - touchHLE's event loop can't handle the subsequent
+                //   termination of an app right now: it doesn't manage to send
+                //   the `applicationWillTerminate:` message in time. This can
+                //   mean loss of data!
+                // Therefore, for the moment we will simulate the early iOS
+                // behavior where switching app usually resulted in termination.
+                // We can usually handle this in time, so there won't be data
+                // loss, nor problems with background resource usage or audio.
+                // TODO: Handle this better.
+                log!("Handling app-will-resign-active event: exiting.");
+                ui_application::exit(env);
+            }
+            Event::AppWillTerminate => {
+                log!("Handling app-will-terminate event.");
+                ui_application::exit(env);
             }
         }
     }

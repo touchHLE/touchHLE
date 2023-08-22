@@ -65,14 +65,69 @@ pub(super) struct HostObjectEntry {
 }
 
 /// Type for host objects.
-pub trait HostObject: Any + 'static {}
+pub trait HostObject: Any + 'static {
+    /// Upcast to the superclass's host object type, if any.
+    ///
+    /// In order to support inheritance, a class's host object may extend its
+    /// superclass's host object. For the superclass to be able to access its
+    /// data without being aware of the subclass, it needs to be able to upcast
+    /// a host object.
+    ///
+    /// When trying to downcast from [AnyHostObject] to some type fails, you
+    /// should upcast and try again, repeatedly if necessary. This ensures that
+    /// if the object actually belongs to a subclass of the target type, the
+    /// downcast will eventually succeed. If [None] is returned by this method,
+    /// there are no more superclasses' host objects in the chain.
+    fn as_superclass<'a>(&'a self) -> Option<&'a (dyn AnyHostObject + 'static)> {
+        None
+    }
+    /// Same as [HostObject::as_superclass], but for a mutable reference.
+    fn as_superclass_mut<'a>(&'a mut self) -> Option<&'a mut (dyn AnyHostObject + 'static)> {
+        None
+    }
+}
+
+/// Convenience macro for implementing [HostObject] where the host object type
+/// extends some superclass's host object type. The superclass's host object
+/// must be in a struct member named `superclass`.
+///
+/// Example usage, if `Bar` extends `Foo`:
+///
+/// ```ignore
+/// struct BarHostObject {
+///     superclass: FooHostObject,
+///     some_extra_data: id,
+/// }
+/// impl_HostObject_with_superclass!(BarHostObject);
+/// ```
+///
+/// If the superclass doesn't have a meaningful host object (e.g. `NSObject`
+/// uses [TrivialHostObject]), `impl HostObject for FooHostObject {}` suffices.
+#[macro_export]
+macro_rules! impl_HostObject_with_superclass {
+    ( $ty:ty ) => {
+        impl $crate::objc::HostObject for $ty {
+            fn as_superclass<'a>(
+                &'a self,
+            ) -> Option<&'a (dyn $crate::objc::AnyHostObject + 'static)> {
+                Some(&self.superclass)
+            }
+            fn as_superclass_mut<'a>(
+                &'a mut self,
+            ) -> Option<&'a mut (dyn $crate::objc::AnyHostObject + 'static)> {
+                Some(&mut self.superclass)
+            }
+        }
+    };
+}
+pub use crate::impl_HostObject_with_superclass; // #[macro_export] is weird...
 
 /// Trait wrapping [HostObject] with a blanket implementation to make
 /// downcasting work. Don't implement it yourself.
 ///
 /// This is a workaround for it not being possible to directly cast
 /// `&'a dyn HostObject` to `&'a dyn Any`.
-pub trait AnyHostObject {
+pub trait AnyHostObject: HostObject {
     fn as_any<'a>(&'a self) -> &'a (dyn Any + 'static);
     fn as_any_mut<'a>(&'a mut self) -> &'a mut (dyn Any + 'static);
 }
@@ -182,19 +237,42 @@ impl super::ObjC {
         self.objects.get(&object).map(|entry| &*entry.host_object)
     }
 
-    #[allow(dead_code)]
     /// Get a reference to a host object and downcast it. Panics if there is
     /// no such object, or if downcasting fails.
     pub fn borrow<T: AnyHostObject + 'static>(&self, object: id) -> &T {
-        let entry = self.objects.get(&object).unwrap();
-        entry.host_object.as_any().downcast_ref().unwrap()
+        let mut host_object: &(dyn AnyHostObject + 'static) =
+            &*self.objects.get(&object).unwrap().host_object;
+        loop {
+            if let Some(res) = host_object.as_any().downcast_ref() {
+                return res;
+            } else if let Some(next) = host_object.as_superclass() {
+                host_object = next;
+            } else {
+                panic!();
+            }
+        }
     }
 
     /// Get a reference to a host object and downcast it. Panics if there is
     /// no such object, or if downcasting fails.
     pub fn borrow_mut<T: AnyHostObject + 'static>(&mut self, object: id) -> &mut T {
-        let entry = self.objects.get_mut(&object).unwrap();
-        entry.host_object.as_any_mut().downcast_mut().unwrap()
+        // Rust's borrow checker struggles with loops like this which descend
+        // through a data structure with a mutable borrow. The unsafe code is
+        // used to bypass the borrow checker.
+        type Aho = dyn AnyHostObject + 'static;
+        let mut host_object: &mut Aho = &mut *self.objects.get_mut(&object).unwrap().host_object;
+        loop {
+            if let Some(res) = unsafe { &mut *(host_object as *mut Aho) }
+                .as_any_mut()
+                .downcast_mut()
+            {
+                return res;
+            } else if let Some(next) = host_object.as_superclass_mut() {
+                host_object = next;
+            } else {
+                panic!();
+            }
+        }
     }
 
     /// Increase the refcount of a reference-counted object. Do not call this

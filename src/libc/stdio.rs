@@ -8,6 +8,7 @@
 use super::posix_io::{self, O_APPEND, O_CREAT, O_RDONLY, O_RDWR, O_TRUNC, O_WRONLY};
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::fs::GuestPath;
+use crate::libc::string::strlen;
 use crate::mem::{ConstPtr, ConstVoidPtr, GuestUSize, MutPtr, MutVoidPtr, Ptr, SafeRead};
 use crate::Environment;
 use std::io::Write;
@@ -87,6 +88,14 @@ fn fgetc(env: &mut Environment, file_ptr: MutPtr<FILE>) -> i32 {
     }
 }
 
+fn fputs(env: &mut Environment, str: ConstPtr<u8>, stream: MutPtr<FILE>) -> i32 {
+    // TODO: this function doesn't set errno or return EOF yet
+    let str_len = strlen(env, str);
+    fwrite(env, str.cast(), str_len, 1, stream)
+        .try_into()
+        .unwrap()
+}
+
 fn fwrite(
     env: &mut Environment,
     buffer: ConstVoidPtr,
@@ -151,6 +160,11 @@ fn puts(env: &mut Environment, s: ConstPtr<u8>) -> i32 {
     0
 }
 
+fn putchar(_env: &mut Environment, c: u8) -> i32 {
+    let _ = std::io::stdout().write(std::slice::from_ref(&c));
+    0
+}
+
 fn remove(env: &mut Environment, path: ConstPtr<u8>) -> i32 {
     match env
         .fs
@@ -180,11 +194,13 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(fopen(_, _)),
     export_c_func!(fread(_, _, _, _)),
     export_c_func!(fgetc(_)),
+    export_c_func!(fputs(_, _)),
     export_c_func!(fwrite(_, _, _, _)),
     export_c_func!(fseek(_, _, _)),
     export_c_func!(ftell(_)),
     export_c_func!(fclose(_)),
     export_c_func!(puts(_)),
+    export_c_func!(putchar(_)),
     export_c_func!(remove(_)),
     // POSIX-specific functions
     export_c_func!(fileno(_)),

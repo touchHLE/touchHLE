@@ -19,7 +19,7 @@
 //! categories and dynamic class editing).
 
 use crate::dyld::{export_c_func, FunctionExports};
-
+use crate::MutexId;
 use std::collections::HashMap;
 
 mod classes;
@@ -28,11 +28,16 @@ mod methods;
 mod objects;
 mod properties;
 mod selectors;
+mod synchronization;
 
 pub use classes::{objc_classes, Class, ClassExports, ClassTemplate};
-pub use messages::{autorelease, msg, msg_class, msg_send, release, retain};
+pub use messages::{
+    autorelease, msg, msg_class, msg_send, msg_send_super2, msg_super, objc_super, release, retain,
+};
 pub use methods::{GuestIMP, HostIMP, IMP};
-pub use objects::{id, nil, AnyHostObject, HostObject, TrivialHostObject};
+pub use objects::{
+    id, impl_HostObject_with_superclass, nil, AnyHostObject, HostObject, TrivialHostObject,
+};
 pub use selectors::{selector, SEL};
 
 use classes::{ClassHostObject, FakeClass, UnimplementedClass, CLASS_LISTS};
@@ -41,6 +46,7 @@ use methods::method_list_t;
 use objects::{objc_object, HostObjectEntry};
 use properties::objc_copyStruct;
 use properties::objc_setProperty;
+use synchronization::{objc_sync_enter, objc_sync_exit};
 
 /// Typedef for `NSZone *`. This is a [fossil type] found in the signature of
 /// `allocWithZone:` and similar methods. Its value is always ignored.
@@ -62,6 +68,9 @@ pub struct ObjC {
     ///
     /// Look at the `isa` to get the metaclass for a class.
     classes: HashMap<String, Class>,
+
+    /// Mutexes used in @synchronized blocks (objc_sync_enter/exit).
+    sync_mutexes: HashMap<id, MutexId>,
 }
 
 impl ObjC {
@@ -70,6 +79,7 @@ impl ObjC {
             selectors: HashMap::new(),
             objects: HashMap::new(),
             classes: HashMap::new(),
+            sync_mutexes: HashMap::new(),
         }
     }
 }
@@ -80,4 +90,6 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(objc_msgSendSuper2(_, _)),
     export_c_func!(objc_setProperty(_, _, _, _, _, _)),
     export_c_func!(objc_copyStruct(_, _, _, _, _)),
+    export_c_func!(objc_sync_enter(_)),
+    export_c_func!(objc_sync_exit(_)),
 ];

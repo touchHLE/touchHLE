@@ -5,13 +5,20 @@
  */
 //! EAGL.
 
-use super::{GLESImplementation, GLES};
 use crate::dyld::{ConstantExports, HostConstant};
+use crate::frameworks::core_animation::ca_eagl_layer::{
+    find_fullscreen_eagl_layer, get_pixels_vec_for_presenting, present_pixels,
+};
 use crate::frameworks::foundation::ns_string::get_static_str;
 use crate::frameworks::foundation::NSUInteger;
+use crate::gles::gles11_raw as gles11; // constants only
+use crate::gles::gles11_raw::types::*;
+use crate::gles::present::present_frame;
+use crate::gles::{create_gles1_ctx, gles1_on_gl2, GLES};
 use crate::objc::{id, msg, nil, objc_classes, release, retain, ClassExports, HostObject};
-use crate::window::gles11;
-use crate::window::{Matrix, Window};
+use crate::window::Window;
+use std::collections::HashMap;
+use std::time::Instant;
 
 // These are used by the EAGLDrawable protocol implemented by CAEAGLayer.
 // Since these have the ABI of constant symbols rather than literal constants,
@@ -49,6 +56,9 @@ const kEAGLRenderingAPIOpenGLES3: EAGLRenderingAPI = 3;
 
 pub(super) struct EAGLContextHostObject {
     pub(super) gles_ctx: Option<Box<dyn GLES>>,
+    /// Mapping of OpenGL ES renderbuffer names to `EAGLDrawable` instances
+    /// (always `CAEAGLLayer*`). Retains the instance so it won't dangle.
+    renderbuffer_drawable_bindings: HashMap<GLuint, id>,
 }
 impl HostObject for EAGLContextHostObject {}
 
@@ -59,7 +69,10 @@ pub const CLASSES: ClassExports = objc_classes! {
 @implementation EAGLContext: NSObject
 
 + (id)alloc {
-    let host_object = Box::new(EAGLContextHostObject { gles_ctx: None });
+    let host_object = Box::new(EAGLContextHostObject {
+        gles_ctx: None,
+        renderbuffer_drawable_bindings: HashMap::new(),
+    });
     env.objc.alloc_object(this, host_object, &mut env.mem)
 }
 
@@ -70,7 +83,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     retain(env, context);
 
     // Clear flag value, we're changing context anyway.
-    let _ = env.window.is_app_gl_ctx_no_longer_current();
+    let _ = env.window_mut().is_app_gl_ctx_no_longer_current();
 
     let current_ctx = env.framework_state.opengles.current_ctx_for_thread(env.current_thread);
 
@@ -84,7 +97,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 
     if context != nil {
         let host_obj = env.objc.borrow_mut::<EAGLContextHostObject>(context);
-        host_obj.gles_ctx.as_mut().unwrap().make_current(&mut env.window);
+        host_obj.gles_ctx.as_mut().unwrap().make_current(env.window.as_ref().unwrap());
         *current_ctx = Some(context);
         env.framework_state.opengles.current_ctx_thread = Some(env.current_thread);
     }
@@ -95,46 +108,36 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (id)initWithAPI:(EAGLRenderingAPI)api {
     assert!(api == kEAGLRenderingAPIOpenGLES1);
 
-    log!("Creating an OpenGL ES 1.1 context:");
-    let list = if let Some(ref preference) = env.options.gles1_implementation {
-        std::slice::from_ref(preference)
-    } else {
-        GLESImplementation::GLES1_IMPLEMENTATIONS
-    };
-    let mut gles1_ctx = None;
-    for implementation in list {
-        log!("Trying: {}", implementation.description());
-        match implementation.construct(&mut env.window) {
-            Ok(ctx) => {
-                log!("=> Success!");
-                gles1_ctx = Some(ctx);
-                break;
-            },
-            Err(err) => {
-                log!("=> Failed: {}.", err);
-            }
-        }
-    }
-    let gles1_ctx = gles1_ctx.expect("Couldn't create OpenGL ES 1.1 context!");
+    let window = env.window.as_mut().expect("OpenGL ES is not supported in headless mode");
+    let gles1_ctx = create_gles1_ctx(window, &env.options);
 
     // Make the context current so we can get driver info from it.
     // initWithAPI: is not supposed to make the new context current (the app
     // must call setCurrentContext: for that), so we need to hide this from the
     // app. Setting current_ctx_thread to None should cause sync_context to
     // switch back to the right context if the app makes an OpenGL ES call.
-    gles1_ctx.make_current(&mut env.window);
+    gles1_ctx.make_current(window);
     env.framework_state.opengles.current_ctx_thread = None;
     log!("Driver info: {}", unsafe { gles1_ctx.driver_description() });
 
-    *env.objc.borrow_mut(this) = EAGLContextHostObject {
-        gles_ctx: Some(gles1_ctx),
-    };
+    env.objc.borrow_mut::<EAGLContextHostObject>(this).gles_ctx = Some(gles1_ctx);
 
     this
 }
 
+- (())dealloc {
+    let host_obj = env.objc.borrow_mut::<EAGLContextHostObject>(this);
+    let bindings = std::mem::take(&mut host_obj.renderbuffer_drawable_bindings);
+    for (_renderbuffer, drawable) in bindings {
+        release(env, drawable);
+    }
+    env.objc.dealloc_object(this, &mut env.mem);
+}
+
 - (bool)renderbufferStorage:(NSUInteger)target
                fromDrawable:(id)drawable { // EAGLDrawable (always CAEAGLayer*)
+    assert!(drawable != nil); // TODO: handle unbinding
+
     assert!(target == gles11::RENDERBUFFER_OES);
 
     let props: id = msg![env; drawable drawableProperties];
@@ -157,14 +160,28 @@ pub const CLASSES: ClassExports = objc_classes! {
     }
     let internalformat = gles11::RGBA8_OES;
 
+    let window = env.window.as_mut().expect("OpenGL ES is not supported in headless mode");
+
     // FIXME: get width and height from the layer!
-    let (width, height) = env.window.size_unrotated_scalehacked();
+    let (width, height) = window.size_unrotated_scalehacked();
 
     // Unclear from documentation if this method requires an appropriate context
     // to already be active, but that seems to be the case in practice?
-    let gles = super::sync_context(&mut env.framework_state.opengles, &mut env.objc, &mut env.window, env.current_thread);
-    unsafe {
-        gles.RenderbufferStorageOES(target, internalformat, width.try_into().unwrap(), height.try_into().unwrap())
+    let gles = super::sync_context(&mut env.framework_state.opengles, &mut env.objc, window, env.current_thread);
+    let renderbuffer: GLuint = unsafe {
+        gles.RenderbufferStorageOES(target, internalformat, width.try_into().unwrap(), height.try_into().unwrap());
+        let mut renderbuffer = 0;
+        gles.GetIntegerv(gles11::RENDERBUFFER_BINDING_OES, &mut renderbuffer);
+        renderbuffer as _
+    };
+
+    retain(env, drawable);
+    let host_obj = env.objc.borrow_mut::<EAGLContextHostObject>(this);
+    if let Some(old_drawable) = host_obj.renderbuffer_drawable_bindings.insert(
+        renderbuffer,
+        drawable
+    ) {
+        release(env, old_drawable);
     }
 
     true
@@ -173,11 +190,71 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (bool)presentRenderbuffer:(NSUInteger)target {
     assert!(target == gles11::RENDERBUFFER_OES);
 
-    // Unclear from documentation if this method requires an appropriate context
-    // to already be active, but that seems to be the case in practice?
-    let gles = super::sync_context(&mut env.framework_state.opengles, &mut env.objc, &mut env.window, env.current_thread);
-    unsafe {
-        present_renderbuffer(gles, &mut env.window);
+    let fullscreen_layer = find_fullscreen_eagl_layer(env);
+
+    // Unclear from documentation if this method requires the context to be
+    // current, but it would be weird if it didn't?
+    let window = env.window.as_mut().expect("OpenGL ES is not supported in headless mode");
+    let gles = super::sync_context(&mut env.framework_state.opengles, &mut env.objc, window, env.current_thread);
+
+    let renderbuffer: GLuint = unsafe {
+        let mut renderbuffer = 0;
+        gles.GetIntegerv(gles11::RENDERBUFFER_BINDING_OES, &mut renderbuffer);
+        renderbuffer as _
+    };
+
+    let &drawable = env
+        .objc
+        .borrow::<EAGLContextHostObject>(this)
+        .renderbuffer_drawable_bindings
+        .get(&renderbuffer)
+        .expect("Can't present a renderbuffer not bound to a drawable!");
+
+    // We're presenting to the opaque CAEAGLLayer that covers the screen.
+    // We can use the fast path where we skip composition and present directly.
+    if drawable == fullscreen_layer {
+        log_dbg!(
+            "Layer {:?} is the fullscreen layer, presenting renderbuffer {:?} directly (fast path).",
+            drawable,
+            renderbuffer,
+        );
+        // re-borrow
+        let gles = super::sync_context(&mut env.framework_state.opengles, &mut env.objc, env.window.as_mut().unwrap(), env.current_thread);
+        unsafe {
+            present_renderbuffer(gles, env.window.as_mut().unwrap());
+        }
+    } else {
+        if fullscreen_layer != nil {
+            // If there's a single layer that covers the screen, and this isn't
+            // it, there's no point in presenting the output because it won't be
+            // seen. Using a noisy log because it's a weird scenario and might
+            // indicate a bug.
+            log!(
+                "Layer {:?} is not the fullscreen layer {:?}, skipping presentation of renderbuffer {:?}!",
+                drawable,
+                fullscreen_layer,
+                renderbuffer,
+            );
+            return true;
+        }
+
+        // The very slow and inefficient path: not only does glReadPixels()
+        // block the thread until rendering finishes, but the result has to be
+        // copied back to system RAM, and then will have to be copied to VRAM
+        // again during composition. find_fullscreen_eagl_layer() exists to
+        // avoid this.
+        log_dbg!(
+            "There is no fullscreen layer, presenting renderbuffer {:?} to layer {:?} by copying to RAM (slow path).",
+            renderbuffer,
+            drawable,
+        );
+        let pixels_vec = get_pixels_vec_for_presenting(env, drawable);
+        // re-borrow
+        let gles = super::sync_context(&mut env.framework_state.opengles, &mut env.objc, env.window.as_mut().unwrap(), env.current_thread);
+        let (pixels_vec, width, height) = unsafe {
+            read_renderbuffer(gles, pixels_vec)
+        };
+        present_pixels(env, drawable, pixels_vec, width, height);
     }
 
     true
@@ -187,45 +264,33 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 };
 
-/// Copies the renderbuffer provided by the app to the window's framebuffer,
-/// rotated if necessary, and presents that framebuffer.
-unsafe fn present_renderbuffer(gles: &mut dyn GLES, window: &mut Window) {
-    use gles11::types::*;
+// These helper functions make the state backup code easier to read, but
+// more importantly, they make it free of mutable variables that wouldn't
+// get caught by Rust's unused variable warnings, which are useful to check
+// we actually restore the stuff we back up.
 
-    // These helper functions make the state backup code easier to read, but
-    // more importantly, they make it free of mutable variables that wouldn't
-    // get caught by Rust's unused variable warnings, which are useful to check
-    // we actually restore the stuff we back up.
-
-    unsafe fn get_ptr(gles: &mut dyn GLES, pname: GLenum) -> *const GLvoid {
-        let mut ptr = std::ptr::null();
-        gles.GetPointerv(pname, &mut ptr);
-        ptr
-    }
-    // Safety: caller's responsibility to use appropriate N.
-    unsafe fn get_ints<const N: usize>(gles: &mut dyn GLES, pname: GLenum) -> [GLint; N] {
-        let mut res = [0; N];
-        gles.GetIntegerv(pname, res.as_mut_ptr());
-        res
-    }
-    // Safety: caller's responsibility to only use this for scalars.
-    unsafe fn get_int(gles: &mut dyn GLES, pname: GLenum) -> GLint {
-        get_ints::<1>(gles, pname)[0]
-    }
-    // Safety: caller's responsibility to use appropriate N.
-    unsafe fn get_floats<const N: usize>(gles: &mut dyn GLES, pname: GLenum) -> [GLfloat; N] {
-        let mut res = [0.0; N];
-        gles.GetFloatv(pname, res.as_mut_ptr());
-        res
-    }
-
-    // We can't directly copy the content of the renderbuffer to the default
-    // framebuffer (the window), but if we attach it to a framebuffer object, we
-    // can use glCopyTexImage2D() to copy it to a texture, which we can then
-    // draw to the default framebuffer via a textured quad, which can be
-    // rotated, scaled or letterboxed as appropriate.
-
-    let renderbuffer: GLuint = get_int(gles, gles11::RENDERBUFFER_BINDING_OES) as _;
+unsafe fn get_ptr(gles: &mut dyn GLES, pname: GLenum) -> *const GLvoid {
+    let mut ptr = std::ptr::null();
+    gles.GetPointerv(pname, &mut ptr);
+    ptr
+}
+// Safety: caller's responsibility to use appropriate N.
+unsafe fn get_ints<const N: usize>(gles: &mut dyn GLES, pname: GLenum) -> [GLint; N] {
+    let mut res = [0; N];
+    gles.GetIntegerv(pname, res.as_mut_ptr());
+    res
+}
+// Safety: caller's responsibility to only use this for scalars.
+unsafe fn get_int(gles: &mut dyn GLES, pname: GLenum) -> GLint {
+    get_ints::<1>(gles, pname)[0]
+}
+// Safety: caller's responsibility to use appropriate N.
+unsafe fn get_floats<const N: usize>(gles: &mut dyn GLES, pname: GLenum) -> [GLfloat; N] {
+    let mut res = [0.0; N];
+    gles.GetFloatv(pname, res.as_mut_ptr());
+    res
+}
+unsafe fn get_renderbuffer_size(gles: &mut dyn GLES) -> (GLsizei, GLsizei) {
     let mut width: GLint = 0;
     let mut height: GLint = 0;
     gles.GetRenderbufferParameterivOES(
@@ -238,6 +303,89 @@ unsafe fn present_renderbuffer(gles: &mut dyn GLES, window: &mut Window) {
         gles11::RENDERBUFFER_HEIGHT_OES,
         &mut height,
     );
+    (width, height)
+}
+
+/// Copies the pixels in a renderbuffer bound to `GL_RENDERBUFFER_BINDING_OES`
+/// (which should be provided by the app) to a provided [Vec], trying to avoid
+/// noticeably modifying OpenGL ES state while doing so.
+///
+/// This uses `glReadPixels()`, with all the associated performance risks. Any
+/// existing content in the [Vec] will bereplaced. The format is RGBA8.
+/// The returned values are the [Vec], the width and height.
+///
+/// The provided context must be current.
+unsafe fn read_renderbuffer(gles: &mut dyn GLES, mut pixel_buffer: Vec<u8>) -> (Vec<u8>, u32, u32) {
+    let renderbuffer: GLuint = get_int(gles, gles11::RENDERBUFFER_BINDING_OES) as _;
+    let (width, height) = get_renderbuffer_size(gles);
+    let width_u32: u32 = width.try_into().unwrap();
+    let height_u32: u32 = height.try_into().unwrap();
+
+    // To avoid confusing the guest app, we need to be able to undo any
+    // state changes we make.
+    let old_framebuffer: GLuint = get_int(gles, gles11::FRAMEBUFFER_BINDING_OES) as _;
+
+    // Create a framebuffer we can use to read from the renderbuffer
+    let mut src_framebuffer = 0;
+    gles.GenFramebuffersOES(1, &mut src_framebuffer);
+    gles.BindFramebufferOES(gles11::FRAMEBUFFER_OES, src_framebuffer);
+    gles.FramebufferRenderbufferOES(
+        gles11::FRAMEBUFFER_OES,
+        gles11::COLOR_ATTACHMENT0_OES,
+        gles11::RENDERBUFFER_OES,
+        renderbuffer,
+    );
+
+    // Read the pixels
+    let size = (width_u32 as usize)
+        .checked_mul(height_u32 as usize)
+        .unwrap()
+        .checked_mul(4)
+        .unwrap();
+    pixel_buffer.clear();
+    pixel_buffer.reserve_exact(size);
+    let before = Instant::now();
+    gles.ReadPixels(
+        0,
+        0,
+        width,
+        height,
+        gles11::RGBA,
+        gles11::UNSIGNED_BYTE,
+        pixel_buffer.as_mut_ptr() as *mut _,
+    );
+    log_dbg!(
+        "glReadPixels(0, 0, {}, {}, …) took {:?}",
+        width,
+        height,
+        Instant::now().saturating_duration_since(before)
+    );
+    pixel_buffer.set_len(size);
+
+    // Clean up the framebuffer object since we no longer need it.
+    gles.DeleteFramebuffersOES(1, &src_framebuffer);
+
+    // Restore the framebuffer binding
+    gles.BindFramebufferOES(gles11::FRAMEBUFFER_OES, old_framebuffer);
+
+    (pixel_buffer, width_u32, height_u32)
+}
+
+/// Copies the pixels in a renderbuffer bound to `GL_RENDERBUFFER_BINDING_OES`
+/// (which should be provided by the app) to a texture and presents it with
+/// [present_frame], trying to avoid noticeably modifying OpenGL ES state while
+/// doing so. The front and back buffers are then swapped.
+///
+/// The provided context must be current.
+unsafe fn present_renderbuffer(gles: &mut dyn GLES, window: &mut Window) {
+    // We can't directly copy the content of the renderbuffer to the default
+    // framebuffer (the window), but if we attach it to a framebuffer object, we
+    // can use glCopyTexImage2D() to copy it to a texture, which we can then
+    // draw to the default framebuffer via a textured quad, which can be
+    // rotated, scaled or letterboxed as appropriate.
+
+    let renderbuffer: GLuint = get_int(gles, gles11::RENDERBUFFER_BINDING_OES) as _;
+    let (width, height) = get_renderbuffer_size(gles);
 
     // To avoid confusing the guest app, we need to be able to undo any
     // state changes we make.
@@ -287,21 +435,18 @@ unsafe fn present_renderbuffer(gles: &mut dyn GLES, window: &mut Window) {
     // restored later. The app's subsequent drawing will be messed up if we
     // don't restore it.
     let old_arrays = {
-        let mut old_arrays = [gles11::FALSE; super::gles1_on_gl2::ARRAYS.len()];
-        for (is_enabled, info) in old_arrays
-            .iter_mut()
-            .zip(super::gles1_on_gl2::ARRAYS.iter())
-        {
+        let mut old_arrays = [gles11::FALSE; gles1_on_gl2::ARRAYS.len()];
+        for (is_enabled, info) in old_arrays.iter_mut().zip(gles1_on_gl2::ARRAYS.iter()) {
             gles.GetBooleanv(info.name, is_enabled);
             gles.DisableClientState(info.name);
         }
         old_arrays
     };
     let old_capabilities = {
-        let mut old_capabilities = [gles11::FALSE; super::gles1_on_gl2::CAPABILITIES.len()];
+        let mut old_capabilities = [gles11::FALSE; gles1_on_gl2::CAPABILITIES.len()];
         for (is_enabled, &name) in old_capabilities
             .iter_mut()
-            .zip(super::gles1_on_gl2::CAPABILITIES.iter())
+            .zip(gles1_on_gl2::CAPABILITIES.iter())
         {
             gles.GetBooleanv(name, is_enabled);
             gles.Disable(name);
@@ -340,59 +485,18 @@ unsafe fn present_renderbuffer(gles: &mut dyn GLES, window: &mut Window) {
     let old_blend_dfactor: GLenum = get_int(gles, gles11::BLEND_DST) as _;
 
     // Draw the quad
-    let viewport = window.viewport();
-    gles.Viewport(
-        viewport.0 as _,
-        viewport.1 as _,
-        viewport.2 as _,
-        viewport.3 as _,
+    present_frame(
+        gles,
+        window.viewport(),
+        window.output_rotation_matrix(),
+        window.virtual_cursor_visible_at(),
     );
-    gles.ClearColor(0.0, 0.0, 0.0, 1.0);
-    gles.Clear(gles11::COLOR_BUFFER_BIT | gles11::DEPTH_BUFFER_BIT | gles11::STENCIL_BUFFER_BIT);
-    gles.BindBuffer(gles11::ARRAY_BUFFER, 0);
-    let vertices: [f32; 12] = [
-        -1.0, -1.0, -1.0, 1.0, 1.0, -1.0, 1.0, -1.0, -1.0, 1.0, 1.0, 1.0,
-    ];
-    gles.EnableClientState(gles11::VERTEX_ARRAY);
-    gles.VertexPointer(2, gles11::FLOAT, 0, vertices.as_ptr() as *const GLvoid);
-    let tex_coords: [f32; 12] = [0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0];
-    gles.EnableClientState(gles11::TEXTURE_COORD_ARRAY);
-    gles.TexCoordPointer(2, gles11::FLOAT, 0, tex_coords.as_ptr() as *const GLvoid);
-    let matrix = Matrix::<4>::from(&window.output_rotation_matrix());
-    gles.MatrixMode(gles11::TEXTURE);
-    gles.LoadMatrixf(matrix.columns().as_ptr() as *const _);
-    gles.Enable(gles11::TEXTURE_2D);
-    gles.DrawArrays(gles11::TRIANGLES, 0, 6);
-
-    // Display virtual cursor
-    if let Some((x, y, pressed)) = window.virtual_cursor_visible_at() {
-        let (vx, vy, vw, vh) = viewport;
-        let x = x - vx as f32;
-        let y = y - vy as f32;
-
-        gles.DisableClientState(gles11::TEXTURE_COORD_ARRAY);
-        gles.Disable(gles11::TEXTURE_2D);
-
-        gles.Enable(gles11::BLEND);
-        gles.BlendFunc(gles11::ONE, gles11::ONE_MINUS_SRC_ALPHA);
-        gles.Color4f(0.0, 0.0, 0.0, if pressed { 2.0 / 3.0 } else { 1.0 / 3.0 });
-
-        let radius = 10.0;
-
-        let mut vertices = vertices;
-        for i in (0..vertices.len()).step_by(2) {
-            vertices[i] = (vertices[i] * radius + x) / (vw as f32 / 2.0) - 1.0;
-            vertices[i + 1] = 1.0 - (vertices[i + 1] * radius + y) / (vh as f32 / 2.0);
-        }
-        gles.VertexPointer(2, gles11::FLOAT, 0, vertices.as_ptr() as *const GLvoid);
-        gles.DrawArrays(gles11::TRIANGLES, 0, 6);
-    }
 
     // Clean up the texture
     gles.DeleteTextures(1, &texture);
 
     // Restore all the state saved before rendering
-    for (&is_enabled, info) in old_arrays.iter().zip(super::gles1_on_gl2::ARRAYS.iter()) {
+    for (&is_enabled, info) in old_arrays.iter().zip(gles1_on_gl2::ARRAYS.iter()) {
         match is_enabled {
             gles11::TRUE => gles.EnableClientState(info.name),
             gles11::FALSE => gles.DisableClientState(info.name),
@@ -401,7 +505,7 @@ unsafe fn present_renderbuffer(gles: &mut dyn GLES, window: &mut Window) {
     }
     for (&is_enabled, &name) in old_capabilities
         .iter()
-        .zip(super::gles1_on_gl2::CAPABILITIES.iter())
+        .zip(gles1_on_gl2::CAPABILITIES.iter())
     {
         match is_enabled {
             gles11::TRUE => gles.Enable(name),

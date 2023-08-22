@@ -346,6 +346,11 @@ pub const CLASSES: ClassExports = objc_classes! {
     msg![env; layer setFrame:frame]
 }
 
+// Is this correct? The panic message complained about not finding EAGLView setContentMode
+- (())setContentMode:(id)content_mode {
+    log!["TODO: [UIView {:?} setContentMode:{:?} => ()", this, content_mode ];
+}
+
 - (bool)clearsContextBeforeDrawing {
     env.objc.borrow::<UIViewHostObject>(this).clears_context_before_drawing
 }

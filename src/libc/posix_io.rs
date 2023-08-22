@@ -60,10 +60,16 @@ pub const O_ACCMODE: OpenFlag = O_RDWR | O_WRONLY | O_RDONLY;
 
 pub const O_NONBLOCK: OpenFlag = 0x4;
 pub const O_APPEND: OpenFlag = 0x8;
+pub const O_SHLOCK: OpenFlag = 0x10;
 pub const O_NOFOLLOW: OpenFlag = 0x100;
 pub const O_CREAT: OpenFlag = 0x200;
 pub const O_TRUNC: OpenFlag = 0x400;
 pub const O_EXCL: OpenFlag = 0x800;
+
+pub const LOCK_SH: OpenFlag = 1;
+pub const LOCK_EX: OpenFlag = 2;
+pub const LOCK_NB: OpenFlag = 4;
+pub const LOCK_UN: OpenFlag = 8;
 
 fn open(env: &mut Environment, path: ConstPtr<u8>, flags: i32, _args: DotDotDot) -> FileDescriptor {
     // TODO: parse variadic arguments and pass them on (file creation mode)
@@ -74,7 +80,16 @@ fn open(env: &mut Environment, path: ConstPtr<u8>, flags: i32, _args: DotDotDot)
 pub fn open_direct(env: &mut Environment, path: ConstPtr<u8>, flags: i32) -> FileDescriptor {
     // TODO: support more flags, this list is not complete
     assert!(
-        flags & !(O_ACCMODE | O_NONBLOCK | O_APPEND | O_NOFOLLOW | O_CREAT | O_TRUNC | O_EXCL) == 0
+        flags
+            & !(O_ACCMODE
+                | O_NONBLOCK
+                | O_APPEND
+                | O_SHLOCK
+                | O_NOFOLLOW
+                | O_CREAT
+                | O_TRUNC
+                | O_EXCL)
+            == 0
     );
     // TODO: symlinks don't exist in the FS yet, so we can't "not follow" them.
     // (Should we just ignore this?)
@@ -101,10 +116,11 @@ pub fn open_direct(env: &mut Environment, path: ConstPtr<u8>, flags: i32) -> Fil
         options.truncate();
     }
 
-    let res = match env.fs.open_with_options(
-        GuestPath::new(&env.mem.cstr_at_utf8(path).unwrap()),
-        options,
-    ) {
+    let path_string = env.mem.cstr_at_utf8(path).unwrap().to_owned();
+    let res = match env
+        .fs
+        .open_with_options(GuestPath::new(&path_string), options)
+    {
         Ok(file) => {
             let host_object = PosixFileHostObject {
                 file,
@@ -132,7 +148,17 @@ pub fn open_direct(env: &mut Environment, path: ConstPtr<u8>, flags: i32) -> Fil
             -1
         }
     };
-    log_dbg!("open({:?}, {:#x}) => {:?}", path, flags, res);
+    if res != -1 && (flags & O_SHLOCK) != 0 {
+        // TODO: Handle possible errors
+        flock(env, res, LOCK_SH);
+    }
+    log_dbg!(
+        "open({:?} {:?}, {:#x}) => {:?}",
+        path,
+        path_string,
+        flags,
+        res
+    );
     res
 }
 
@@ -363,6 +389,11 @@ fn chdir(env: &mut Environment, path_ptr: ConstPtr<u8>) -> i32 {
 }
 // TODO: fchdir(), once open() on a directory is supported.
 
+fn flock(_env: &mut Environment, fd: FileDescriptor, operation: OpenFlag) -> i32 {
+    log!("TODO: flock({:?}, {:?})", fd, operation);
+    0
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(open(_, _, _)),
     export_c_func!(read(_, _, _)),
@@ -372,4 +403,5 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(getcwd(_, _)),
     export_c_func!(getcwd(_, _)),
     export_c_func!(chdir(_)),
+    export_c_func!(flock(_, _)),
 ];

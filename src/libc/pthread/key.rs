@@ -8,7 +8,7 @@
 use crate::abi::GuestFunction;
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::mem::{ConstVoidPtr, MutPtr, MutVoidPtr, Ptr};
-use crate::{Environment, ThreadID};
+use crate::{Environment, ThreadId};
 use std::collections::HashMap;
 
 #[derive(Default)]
@@ -16,7 +16,7 @@ pub struct State {
     /// The `pthread_key_t` value, with 1 subtracted, is the index into this
     /// vector. The tuple contains the map of thread-specific data pointers plus
     /// the destructor pointer.
-    keys: Vec<(HashMap<ThreadID, MutVoidPtr>, GuestFunction)>,
+    keys: Vec<(HashMap<ThreadId, MutVoidPtr>, GuestFunction)>,
 }
 
 fn get_state(env: &mut Environment) -> &mut State {

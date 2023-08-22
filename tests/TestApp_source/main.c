@@ -3,16 +3,50 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
-/*
-This is a main file for the TestApp which is used for integration testing.
-This code supposed to be compiled with iPhone SDK and Xcode 3.1 Developer Tools
-for Mac OS X v10.5
-*/
-#include <errno.h>
-#include <stdarg.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+
+// This is a main file for the TestApp which is used for integration testing.
+// See also tests/README.md and tests/integration.rs for the details of how it
+// is compiled and run.
+
+// === Declarations ===
+
+// We don't have any system headers for iPhone OS, so we must declare everything
+// ourselves rather than #include'ing.
+
+// <stddef.h>
+#define NULL ((void*)0)
+typedef unsigned long size_t;
+
+// <errno.h>
+int *__error(void);
+#define errno (*__error())
+
+// <stdarg.h>
+typedef __builtin_va_list va_list;
+#define va_start(a, b) __builtin_va_start(a, b)
+#define va_arg(a, b) __builtin_va_arg(a, b)
+#define va_end(a) __builtin_va_end(a)
+
+// <stdio.h>
+int sscanf(const char *, const char *, ...);
+int printf(const char *, ...);
+int vsnprintf(char *, size_t, const char *, va_list);
+
+// <stdlib.h>
+#define EXIT_SUCCESS 0
+#define EXIT_FAILURE 1
+void exit(int);
+void free(void *);
+void *malloc(size_t);
+void qsort(void *, size_t, size_t, int (*)(const void *, const void *));
+void *realloc(void *, size_t);
+
+// <string.h>
+int memcmp(const void *, const void *, size_t);
+void *memmove(void *, const void *, size_t);
+int strcmp(const char *, const char *);
+
+// === Main code ===
 
 int int_compar(const void *a, const void *b) { return *(int *)a - *(int *)b; }
 
@@ -90,11 +124,17 @@ struct {
   int (*func)();
   const char *name;
 } test_func_array[] = {
+    // TODO: re-enable qsort. It currently crashes for some reason.
     FUNC_DEF(test_qsort), FUNC_DEF(test_vsnprintf), FUNC_DEF(test_sscanf),
     FUNC_DEF(test_errno), FUNC_DEF(test_realloc),
 };
 
-int main(int argc, char *argv[]) {
+// Because no libc is linked into this executable, there is no libc entry point
+// to call main. Instead, integration.rs tells Clang to set the _main symbol
+// as the entry point. (It has to be _main because a C compiler will throw
+// away stuff not called by main().) Since this is the true entry point, there's
+// no argc or argv and we must call exit() ourselves.
+int main() {
   int tests_run = 0;
   int tests_passed = 0;
 
@@ -112,5 +152,5 @@ int main(int argc, char *argv[]) {
   }
 
   printf("Passed %d out of %d tests\n", tests_passed, tests_run);
-  return tests_run == tests_passed ? 0 : 1;
+  exit(tests_run == tests_passed ? 0 : 1);
 }

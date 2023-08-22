@@ -50,11 +50,12 @@ mod paths;
 mod stack;
 mod window;
 
-// These are very frequently used and used to be in this module, so they are
-// re-exported to avoid having to update lots of imports.
+// Environment is used very frequently used and used to be in this module, so
+// it is re-exported to avoid having to update lots of imports. The other things
+// probably shouldn't be, but they need a new home (TODO).
 // Unlike its siblings, this module should be considered private and only used
 // via re-exports.
-use environment::{Environment, ThreadID};
+use environment::{Environment, MutexId, MutexType, ThreadId, PTHREAD_MUTEX_DEFAULT};
 
 use std::ffi::OsStr;
 use std::path::PathBuf;

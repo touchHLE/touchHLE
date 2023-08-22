@@ -99,9 +99,9 @@ pub fn recomposite_if_necessary(env: &mut Environment) -> Option<Instant> {
     let fb_width = screen_bounds.size.width as u32 * scale_hack;
     let fb_height = screen_bounds.size.height as u32 * scale_hack;
     let present_frame_args = (
-        env.window.viewport(),
-        env.window.output_rotation_matrix(),
-        env.window.virtual_cursor_visible_at(),
+        env.window().viewport(),
+        env.window().output_rotation_matrix(),
+        env.window().virtual_cursor_visible_at(),
     );
 
     // TODO: draw status bar if it's not hidden
@@ -114,8 +114,9 @@ pub fn recomposite_if_necessary(env: &mut Environment) -> Option<Instant> {
     };
     let opacity = 1.0;
 
-    env.window.make_internal_gl_ctx_current();
-    let gles = env.window.get_internal_gl_ctx();
+    let window = env.window.as_mut().unwrap();
+    window.make_internal_gl_ctx_current();
+    let gles = window.get_internal_gl_ctx();
 
     // Set up GL objects needed for render-to-texture. We could draw directly
     // to the screen instead, but this way we can reuse the code for scaling and
@@ -226,7 +227,7 @@ pub fn recomposite_if_necessary(env: &mut Environment) -> Option<Instant> {
             present_frame_args.2,
         );
     }
-    env.window.swap_window();
+    env.window().swap_window();
 
     new_recomposite_next
 }

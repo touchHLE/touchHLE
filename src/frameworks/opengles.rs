@@ -17,12 +17,12 @@ pub use gles_guest::FUNCTIONS;
 #[derive(Default)]
 pub struct State {
     /// Current EAGLContext for each thread
-    current_ctxs: std::collections::HashMap<crate::ThreadID, Option<crate::objc::id>>,
+    current_ctxs: std::collections::HashMap<crate::ThreadId, Option<crate::objc::id>>,
     /// Which thread's EAGLContext is currently active
-    current_ctx_thread: Option<crate::ThreadID>,
+    current_ctx_thread: Option<crate::ThreadId>,
 }
 impl State {
-    fn current_ctx_for_thread(&mut self, thread: crate::ThreadID) -> &mut Option<crate::objc::id> {
+    fn current_ctx_for_thread(&mut self, thread: crate::ThreadId) -> &mut Option<crate::objc::id> {
         self.current_ctxs.entry(thread).or_insert(None);
         self.current_ctxs.get_mut(&thread).unwrap()
     }
@@ -32,7 +32,7 @@ fn sync_context<'a>(
     state: &mut State,
     objc: &'a mut crate::objc::ObjC,
     window: &mut crate::window::Window,
-    current_thread: crate::ThreadID,
+    current_thread: crate::ThreadId,
 ) -> &'a mut dyn crate::gles::GLES {
     let current_ctx = state.current_ctx_for_thread(current_thread);
     let host_obj = objc.borrow_mut::<eagl::EAGLContextHostObject>(current_ctx.unwrap());

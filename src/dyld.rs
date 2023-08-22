@@ -137,6 +137,21 @@ fn encode_a32_trap() -> u32 {
     0xe7ffdefe
 }
 
+fn write_return_to_host_routine(mem: &mut Mem, svc: u32) -> GuestFunction {
+    let routine = [
+        encode_a32_svc(svc),
+        // When a return-to-host occurs, it's the host's responsibility
+        // to reset the PC to somewhere else. So something has gone
+        // wrong if this is executed.
+        encode_a32_trap(),
+    ];
+    let ptr: MutPtr<u32> = mem.alloc(4 * 2).cast();
+    mem.write(ptr + 0, routine[0]);
+    mem.write(ptr + 1, routine[1]);
+    let ptr = GuestFunction::from_addr_with_thumb_bit(ptr.to_bits());
+    assert!(!ptr.is_thumb());
+    ptr
+}
 pub struct Dyld {
     /// List of host functions that have been "linked" and had SVCs assigned.
     ///
@@ -144,17 +159,20 @@ pub struct Dyld {
     /// removed in release builds if it's ever necessary.
     linked_host_functions: Vec<(&'static str, HostFunction)>,
     return_to_host_routine: Option<GuestFunction>,
+    thread_exit_routine: Option<GuestFunction>,
     constants_to_link_later: Vec<(MutPtr<ConstVoidPtr>, &'static HostConstant)>,
 }
 
 impl Dyld {
     /// We reserve this SVC ID for invoking the lazy linker.
-    const SVC_LAZY_LINK: u32 = 0;
+    pub const SVC_LAZY_LINK: u32 = 0;
+    /// We reserve this SVC ID for the exit routine for spawned threads.
+    pub const SVC_THREAD_EXIT: u32 = 1;
     /// We reserve this SVC ID for the special return-to-host routine.
-    pub const SVC_RETURN_TO_HOST: u32 = 1;
+    pub const SVC_RETURN_TO_HOST: u32 = 2;
     /// The range of SVC IDs `SVC_LINKED_FUNCTIONS_BASE..` is used to reference
     /// [Self::linked_host_functions] entries.
-    const SVC_LINKED_FUNCTIONS_BASE: u32 = Self::SVC_RETURN_TO_HOST + 1;
+    pub const SVC_LINKED_FUNCTIONS_BASE: u32 = Self::SVC_RETURN_TO_HOST + 1;
 
     const SYMBOL_STUB_INSTRUCTIONS: [u32; 2] = [0xe59fc000, 0xe59cf000];
     const PIC_SYMBOL_STUB_INSTRUCTIONS: [u32; 3] = [0xe59fc004, 0xe08fc00c, 0xe59cf000];
@@ -163,6 +181,7 @@ impl Dyld {
         Dyld {
             linked_host_functions: Vec::new(),
             return_to_host_routine: None,
+            thread_exit_routine: None,
             constants_to_link_later: Vec::new(),
         }
     }
@@ -171,25 +190,18 @@ impl Dyld {
         self.return_to_host_routine.unwrap()
     }
 
+    pub fn thread_exit_routine(&self) -> GuestFunction {
+        self.thread_exit_routine.unwrap()
+    }
+
     /// Do linking-related tasks that need doing right after loading the
     /// binaries.
     pub fn do_initial_linking(&mut self, bins: &[MachO], mem: &mut Mem, objc: &mut ObjC) {
         assert!(self.return_to_host_routine.is_none());
-        self.return_to_host_routine = {
-            let routine = [
-                encode_a32_svc(Self::SVC_RETURN_TO_HOST),
-                // When a return-to-host occurs, it's the host's responsibility
-                // to reset the PC to somewhere else. So something has gone
-                // wrong if this is executed.
-                encode_a32_trap(),
-            ];
-            let ptr: MutPtr<u32> = mem.alloc(4 * 2).cast();
-            mem.write(ptr + 0, routine[0]);
-            mem.write(ptr + 1, routine[1]);
-            let ptr = GuestFunction::from_addr_with_thumb_bit(ptr.to_bits());
-            assert!(!ptr.is_thumb());
-            Some(ptr)
-        };
+        assert!(self.thread_exit_routine.is_none());
+        self.return_to_host_routine =
+            Some(write_return_to_host_routine(mem, Self::SVC_RETURN_TO_HOST));
+        self.thread_exit_routine = Some(write_return_to_host_routine(mem, Self::SVC_THREAD_EXIT));
 
         // Currently assuming only the app binary contains Objective-C things.
 
@@ -391,7 +403,7 @@ impl Dyld {
     ) -> Option<HostFunction> {
         match svc {
             Self::SVC_LAZY_LINK => self.do_lazy_link(bins, mem, cpu, svc_pc),
-            Self::SVC_RETURN_TO_HOST => unreachable!(), // don't handle here
+            Self::SVC_THREAD_EXIT | Self::SVC_RETURN_TO_HOST => unreachable!(), // don't handle here
             Self::SVC_LINKED_FUNCTIONS_BASE.. => {
                 let f = self
                     .linked_host_functions

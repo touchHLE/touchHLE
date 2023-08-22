@@ -21,6 +21,7 @@ Compatibility:
   - Various small contributions. (@hikari-no-yume, @KiritoDv, @ciciplusplus, @TylerJaacks, @LennyKappa)
   - PVRTC and paletted texture compression is now supported. (@hikari-no-yume)
   - Some key pieces of UIKit and Core Animation are now implemented: layer and view hierarchy, layer and view drawing, layer compositing, touch input hit testing, `UIImageView`, `UILabel`, `UIControl`, and `UIButton`. Previously, touchHLE could only support apps that draw everything with OpenGL ES, which is only common for games. This lays the groundwork for supporting games that rely on UIKit, and possibly some non-game apps. (@hikari-no-yume)
+  - Threads can now sleep, join other threads, and block on mutexes. (@LennyKappa, @hikari-no-yume)
 
 - New supported apps:
   - [Wolfenstein 3D](https://www.youtube.com/watch?v=omViNgUqF8c) (@ciciplusplus; version 1.0 only)
@@ -85,6 +86,7 @@ Usability:
 Other:
 
 - The version of dynarmic used by touchHLE has been updated. This will fix build issues for some people. (@hikari-no-yume)
+- The new `--headless` option lets you run touchHLE with no graphical output and no input whatsoever. This is only useful for command-line apps. (@hikari-no-yume)
 
 ## v0.1.1 (2023-02-18)
 

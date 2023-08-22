@@ -170,7 +170,10 @@ fn run_run_loop(env: &mut Environment, run_loop: id) {
     loop {
         let mut sleep_until = None;
 
-        env.window.poll_for_events(&env.options);
+        env.window
+            .as_mut()
+            .expect("NSRunLoop not supported in headless mode")
+            .poll_for_events(&env.options);
 
         let next_due = uikit::handle_events(env);
         limit_sleep_time(&mut sleep_until, next_due);
@@ -214,6 +217,9 @@ fn run_run_loop(env: &mut Environment, run_loop: id) {
         // or until the next scheduled event, whichever is sooner. iPhone OS
         // apps can't do more than 60fps so this should be fine.
         let limit = Duration::from_millis(1000 / 60);
-        env.sleep(sleep_until.map_or(limit, |i| i.duration_since(Instant::now()).min(limit)));
+        env.sleep(
+            sleep_until.map_or(limit, |i| i.duration_since(Instant::now()).min(limit)),
+            false,
+        );
     }
 }

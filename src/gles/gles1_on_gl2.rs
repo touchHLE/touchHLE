@@ -678,29 +678,36 @@ impl GLES for GLES1OnGL2 {
         self.AlphaFunc(func, fixed_to_float(ref_))
     }
     unsafe fn BlendFunc(&mut self, sfactor: GLenum, dfactor: GLenum) {
-        assert!([
+        let common_factors = [
             gl21::ZERO,
             gl21::ONE,
-            gl21::DST_COLOR,
-            gl21::ONE_MINUS_DST_COLOR,
             gl21::SRC_ALPHA,
             gl21::ONE_MINUS_SRC_ALPHA,
             gl21::DST_ALPHA,
             gl21::ONE_MINUS_DST_ALPHA,
-            gl21::SRC_ALPHA_SATURATE
-        ]
-        .contains(&sfactor));
-        assert!([
-            gl21::ZERO,
-            gl21::ONE,
-            gl21::SRC_COLOR,
-            gl21::ONE_MINUS_SRC_COLOR,
-            gl21::SRC_ALPHA,
-            gl21::ONE_MINUS_SRC_ALPHA,
-            gl21::DST_ALPHA,
-            gl21::ONE_MINUS_DST_ALPHA
-        ]
-        .contains(&dfactor));
+        ];
+        let sfactors = [
+            gl21::DST_COLOR,
+            gl21::ONE_MINUS_DST_COLOR,
+            gl21::SRC_ALPHA_SATURATE,
+        ];
+        let dfactors = [gl21::SRC_COLOR, gl21::ONE_MINUS_SRC_COLOR];
+        assert!(
+            common_factors.contains(&sfactor)
+                || sfactors.contains(&sfactor)
+                || dfactors.contains(&sfactor)
+        );
+        assert!(
+            common_factors.contains(&dfactor)
+                || sfactors.contains(&dfactor)
+                || dfactors.contains(&dfactor)
+        );
+        if sfactors.contains(&dfactor) {
+            log_dbg!("Tolerating sfactor {:#x} in dfactor argument", dfactor);
+        }
+        if dfactors.contains(&sfactor) {
+            log_dbg!("Tolerating dfactor {:#x} in sfactor argument", sfactor);
+        }
         gl21::BlendFunc(sfactor, dfactor);
     }
     unsafe fn ColorMask(

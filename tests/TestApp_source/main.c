@@ -96,9 +96,32 @@ char *str_format(const char *format, ...) {
 }
 
 int test_vsnprintf() {
-  char *str = str_format("%s %x %.3d %s", "test", 2042, 5, NULL);
-  int res = strcmp(str, "test 7fa 005 (null)");
+  int res = 0;
+  char *str;
+
+  // Test %s
+  str = str_format("%s|%8s|%08s", "test", "test", "test");
+  res += strcmp(str, "test|    test|0000test");
   free(str);
+  // Test %s NULL
+  str = str_format("%s|%8s|%08s", NULL, NULL, NULL);
+  res += strcmp(str, "(null)|  (null)|00(null)|");
+  free(str);
+  // Test %x
+  str = str_format("%x", 2042);
+  res += strcmp(str, "7fa");
+  free(str);
+  // Test %d
+  str = str_format("%d|%3d|%03d|%.d|%3.d|%.3d|%3.3d|%03.3d", 5, 5, 5, 5, 5, 5,
+                   5, 5);
+  res += strcmp(str, "5|  5|005|5|  5|005|005|005");
+  free(str);
+  // Test %f
+  str = str_format("%f|%3f|%03f|%.f|%3.f|%.3f|%3.3f|%03.3f", 10.12345, 10.12345,
+                   10.12345, 10.12345, 10.12345, 10.12345, 10.12345, 10.12345);
+  res += strcmp(str, "10.123450|10.123450|10.123450|10| 10|10.123|10.123|10.123");
+  free(str);
+
   return res;
 }
 

@@ -115,6 +115,14 @@ fn wcsncmp(
 ) -> i32 {
     GenericChar::<wchar_t>::strncmp(env, a, b, n)
 }
+fn wcsncat(
+    env: &mut Environment,
+    s1: MutPtr<wchar_t>,
+    s2: ConstPtr<wchar_t>,
+    n: GuestUSize,
+) -> MutPtr<wchar_t> {
+    GenericChar::<wchar_t>::strncat(env, s1, s2, n)
+}
 fn wcsstr(
     env: &mut Environment,
     wcsing: ConstPtr<wchar_t>,
@@ -145,6 +153,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(wcsdup(_)),
     export_c_func!(wcscmp(_, _)),
     export_c_func!(wcsncmp(_, _, _)),
+    export_c_func!(wcsncat(_, _, _)),
     export_c_func!(wcsstr(_, _)),
     export_c_func!(wcschr(_, _)),
     export_c_func!(wcsrchr(_, _)),

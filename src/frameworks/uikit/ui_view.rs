@@ -350,6 +350,10 @@ pub const CLASSES: ClassExports = objc_classes! {
     msg![env; layer setFrame:frame]
 }
 
+- (())setContentMode:(id)content_mode {
+    log!("TODO: [UIView {:?} setContentMode:{:?} => ()", this, content_mode);
+}
+
 - (bool)clearsContextBeforeDrawing {
     env.objc.borrow::<UIViewHostObject>(this).clears_context_before_drawing
 }

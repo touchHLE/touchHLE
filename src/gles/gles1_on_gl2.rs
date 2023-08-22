@@ -656,7 +656,8 @@ impl GLES for GLES1OnGL2 {
             gl21::ONE_MINUS_SRC_ALPHA,
             gl21::DST_ALPHA,
             gl21::ONE_MINUS_DST_ALPHA,
-            gl21::SRC_ALPHA_SATURATE
+            gl21::SRC_ALPHA_SATURATE,
+            gl21::SRC_COLOR
         ]
         .contains(&sfactor));
         assert!([
@@ -667,7 +668,8 @@ impl GLES for GLES1OnGL2 {
             gl21::SRC_ALPHA,
             gl21::ONE_MINUS_SRC_ALPHA,
             gl21::DST_ALPHA,
-            gl21::ONE_MINUS_DST_ALPHA
+            gl21::ONE_MINUS_DST_ALPHA,
+            gl21::DST_COLOR
         ]
         .contains(&dfactor));
         gl21::BlendFunc(sfactor, dfactor);

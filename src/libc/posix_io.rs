@@ -44,11 +44,9 @@ fn fd_to_file_idx(fd: FileDescriptor) -> usize {
 
 /// File descriptor type. This alias is for readability, POSIX just uses `int`.
 pub type FileDescriptor = i32;
-#[allow(dead_code)]
-const STDIN_FILENO: FileDescriptor = 0;
-#[allow(dead_code)]
-const STDOUT_FILENO: FileDescriptor = 1;
-const STDERR_FILENO: FileDescriptor = 2;
+pub const STDIN_FILENO: FileDescriptor = 0;
+pub const STDOUT_FILENO: FileDescriptor = 1;
+pub const STDERR_FILENO: FileDescriptor = 2;
 const NORMAL_FILENO_BASE: FileDescriptor = STDERR_FILENO + 1;
 
 /// Flags bitfield for `open`. This alias is for readability, POSIX just uses
@@ -270,9 +268,14 @@ pub fn lseek(env: &mut Environment, fd: FileDescriptor, offset: off_t, whence: i
 
 pub fn close(env: &mut Environment, fd: FileDescriptor) -> i32 {
     // TODO: error handling for unknown fd?
-    let file = env.libc_state.posix_io.files[fd_to_file_idx(fd)]
-        .take()
-        .unwrap();
+    if fd < 0 || matches!(fd, STDOUT_FILENO | STDERR_FILENO) {
+        return 0;
+    }
+
+    log_dbg!("close({:?}) => ...", fd);
+
+    match env.libc_state.posix_io.files[fd_to_file_idx(fd)].take() {
+        Some(file) => {
             // The actual closing of the file happens implicitly when `file` falls out
             // of scope. The return value is about whether flushing succeeds.
             match file.file.sync_all() {
@@ -287,6 +290,13 @@ pub fn close(env: &mut Environment, fd: FileDescriptor) -> i32 {
                 }
             }
         }
+        None => {
+            // TODO: set errno
+            log!("Warning: close({:?}) failed, returning -1", fd);
+            -1
+        }
+    }
+}
 
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(open(_, _, _)),

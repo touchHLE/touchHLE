@@ -5,7 +5,7 @@
  */
 //! `UIImage`.
 
-use crate::frameworks::core_graphics::cg_image::{self, CGImageRef, CGImageRelease};
+use crate::frameworks::core_graphics::cg_image::{self, CGImageRef, CGImageRelease, CGImageRetain};
 use crate::frameworks::core_graphics::CGSize;
 use crate::frameworks::foundation::{ns_data, ns_string, NSInteger};
 use crate::fs::GuestPath;
@@ -29,6 +29,12 @@ pub const CLASSES: ClassExports = objc_classes! {
 + (id)allocWithZone:(NSZonePtr)_zone {
     let host_object = Box::new(UIImageHostObject { cg_image: nil });
     env.objc.alloc_object(this, host_object, &mut env.mem)
+}
+
++ (id)imageWithCGImage:(CGImageRef)cg_image {
+    let new: id = msg![env; this alloc];
+    let new: id = msg![env; new initWithCGImage:cg_image];
+    autorelease(env, new)
 }
 
 + (id)imageNamed:(id)name { // NSString*
@@ -59,6 +65,12 @@ pub const CLASSES: ClassExports = objc_classes! {
     CGImageRelease(env, cg_image);
 
     env.objc.dealloc_object(this, &mut env.mem)
+}
+
+- (id)initWithCGImage:(CGImageRef)cg_image {
+    CGImageRetain(env, cg_image);
+    env.objc.borrow_mut::<UIImageHostObject>(this).cg_image = cg_image;
+    this
 }
 
 - (id)initWithContentsOfFile:(id)path { // NSString*

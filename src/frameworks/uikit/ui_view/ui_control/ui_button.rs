@@ -33,10 +33,14 @@ pub struct UIButtonHostObject {
     type_: UIButtonType,
     /// `UILabel*`
     title_label: id,
+    /// `UIImageView*`
+    image_view: id,
     /// Values are `UIString*`
     titles_for_states: HashMap<UIControlState, id>,
     /// Values are `UIColor*`
     title_colors_for_states: HashMap<UIControlState, id>,
+    /// Values are `UIImage*`
+    images_for_states: HashMap<UIControlState, id>,
 }
 impl_HostObject_with_superclass!(UIButtonHostObject);
 impl Default for UIButtonHostObject {
@@ -45,8 +49,10 @@ impl Default for UIButtonHostObject {
             superclass: Default::default(),
             type_: UIButtonTypeCustom,
             title_label: nil,
+            image_view: nil,
             titles_for_states: HashMap::new(),
             title_colors_for_states: HashMap::new(),
+            images_for_states: HashMap::new(),
         }
     }
 }
@@ -57,6 +63,10 @@ fn update(env: &mut Environment, this: id) {
     () = msg![env; title_label setText:title];
     let title_color: id = msg![env; this currentTitleColor];
     () = msg![env; title_label setTextColor:title_color];
+
+    let image_view: id = msg![env; this imageView];
+    let image: id = msg![env; this currentImage];
+    () = msg![env; image_view setImage:image];
 }
 
 pub const CLASSES: ClassExports = objc_classes! {
@@ -77,6 +87,7 @@ pub const CLASSES: ClassExports = objc_classes! {
         UIButtonTypeRoundedRect => {
             let bg_color: id = msg_class![env; UIColor whiteColor];
             // TODO: set blue background image in highlighted state
+            // TODO: image highlighting?
             () = msg![env; button setBackgroundColor:bg_color];
             // On the real iPhone OS, this is a semi-dark, desaturated blue.
             // Should we match it?
@@ -105,12 +116,17 @@ pub const CLASSES: ClassExports = objc_classes! {
 
     let text_color: id = msg_class![env; UIColor whiteColor];
 
+    let image_view: id = msg_class![env; UIImageView new];
+
     let host_obj = env.objc.borrow_mut::<UIButtonHostObject>(this);
     host_obj.title_label = title_label;
+    host_obj.image_view = image_view;
     host_obj.titles_for_states.insert(UIControlStateNormal, nil);
     host_obj.title_colors_for_states.insert(UIControlStateNormal, text_color);
+    host_obj.images_for_states.insert(UIControlStateNormal, nil);
 
     () = msg![env; this addSubview:title_label];
+    () = msg![env; this addSubview:image_view];
 
     update(env, this);
 
@@ -122,16 +138,22 @@ pub const CLASSES: ClassExports = objc_classes! {
         superclass: _,
         type_: _,
         title_label,
+        image_view,
         titles_for_states,
         title_colors_for_states,
+        images_for_states,
     } = std::mem::take(env.objc.borrow_mut(this));
 
     release(env, title_label);
+    release(env, image_view);
     for (_state, title) in titles_for_states {
         release(env, title);
     }
     for (_state, color) in title_colors_for_states {
         release(env, color);
+    }
+    for (_state, image) in images_for_states {
+        release(env, image);
     }
 
     msg_super![env; this dealloc]
@@ -141,6 +163,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     let label = env.objc.borrow_mut::<UIButtonHostObject>(this).title_label;
     let bounds: CGRect = msg![env; this bounds];
     () = msg![env; label setFrame:bounds];
+    // TODO: layout for image
 }
 
 - (UIButtonType)buttonType {
@@ -149,6 +172,10 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 - (id)titleLabel {
     env.objc.borrow_mut::<UIButtonHostObject>(this).title_label
+}
+
+- (id)imageView {
+    env.objc.borrow_mut::<UIButtonHostObject>(this).image_view
 }
 
 - (())setEnabled:(bool)enabled {
@@ -205,7 +232,27 @@ pub const CLASSES: ClassExports = objc_classes! {
     update(env, this);
 }
 
-// TODO: images, actions, etc
+- (id)currentImage {
+    let state: UIControlState = msg![env; this state];
+    msg![env; this imageForState:state]
+}
+- (id)imageForState:(UIControlState)state {
+    let host_obj = env.objc.borrow::<UIButtonHostObject>(this);
+    host_obj.images_for_states.get(&state).or_else(|| {
+        host_obj.images_for_states.get(&UIControlStateNormal)
+    }).copied().unwrap()
+}
+- (())setImage:(id)image // UIImage*
+      forState:(UIControlState)state {
+    retain(env, image);
+    let host_obj = env.objc.borrow_mut::<UIButtonHostObject>(this);
+    if let Some(old) = host_obj.images_for_states.insert(state, image) {
+        release(env, old);
+    }
+    update(env, this);
+}
+
+// TODO: background images, actions, etc
 
 - (id)hitTest:(CGPoint)point
     withEvent:(id)event { // UIEvent* (possibly nil)

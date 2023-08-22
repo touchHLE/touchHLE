@@ -40,7 +40,6 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 - (id)view {
     let view = env.objc.borrow_mut::<UIViewControllerHostObject>(this).view;
-    assert!(view != nil); // TODO: call loadView if nil
     view
 }
 

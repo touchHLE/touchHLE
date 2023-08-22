@@ -16,10 +16,10 @@ pub struct State {
     main_bundle: Option<id>,
 }
 
-struct NSBundleHostObject {
+pub struct NSBundleHostObject {
     /// If this is [None], this is the main bundle's NSBundle instance and the
     /// [Bundle] is stored in [crate::Environment], not here.
-    _bundle: Option<Bundle>,
+    pub _bundle: Option<Bundle>,
     /// NSString with bundle path.
     bundle_path: id,
     /// NSURL with bundle path. [None] if not created yet.

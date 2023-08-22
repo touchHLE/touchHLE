@@ -402,22 +402,6 @@ impl GLES for GLES1Native {
             data.as_ptr() as *const _,
         );
     }
-    unsafe fn TexSubImage2D(
-        &mut self,
-        target: gles11::types::GLenum,
-        level: gles11::types::GLint,
-        xoffset: gles11::types::GLint,
-        yoffset: gles11::types::GLint,
-        width: gles11::types::GLsizei,
-        height: gles11::types::GLsizei,
-        format: gles11::types::GLenum,
-        type_: gles11::types::GLenum,
-        pixels: *const gles11::types::GLvoid,
-    ) {
-        gles11::TexSubImage2D(
-            target, level, xoffset, yoffset, width, height, format, type_, pixels,
-        )
-    }
     unsafe fn CopyTexImage2D(
         &mut self,
         target: GLenum,
@@ -623,17 +607,5 @@ impl GLES for GLES1Native {
     }
     unsafe fn GenerateMipmapOES(&mut self, target: GLenum) {
         gles11::GenerateMipmapOES(target)
-    }
-    unsafe fn BufferData(
-        &mut self,
-        target: GLenum,
-        size: GLsizeiptr,
-        data: *const GLvoid,
-        usage: GLenum,
-    ) {
-        gles11::BufferData(target, size, data, usage)
-    }
-    unsafe fn Color4ub(&mut self, red: GLubyte, green: GLubyte, blue: GLubyte, alpha: GLubyte) {
-        gles11::Color4ub(red, green, blue, alpha)
     }
 }

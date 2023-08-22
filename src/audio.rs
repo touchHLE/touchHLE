@@ -14,7 +14,6 @@
 
 mod ima4;
 
-use hound::Sample;
 pub use ima4::decode_ima4;
 use touchHLE_dr_mp3_wrapper as dr_mp3;
 pub use touchHLE_openal_soft_wrapper as openal;
@@ -107,7 +106,7 @@ impl AudioFile {
                         is_float: false,
                         is_little_endian: true,
                     },
-                    bytes_per_packet: u32::from(channels * bits_per_sample/8),
+                    bytes_per_packet: u32::from(channels * bits_per_sample / 8),
                     frames_per_packet: 1,
                     channels_per_frame: channels.into(),
                     bits_per_channel: bits_per_sample as u32,
@@ -245,9 +244,9 @@ impl AudioFile {
                 for sample in wave_reader.samples().take(sample_count) {
                     let sample: i16 = sample.map_err(|_| ())?;
                     match bytes_per_sample {
-                        1 => buffer[byte_offset] = (sample+128) as u8,
+                        1 => buffer[byte_offset] = (sample + 128) as u8,
                         2 => buffer[byte_offset..][..2].copy_from_slice(&sample.to_le_bytes()),
-                        _ => todo!()
+                        _ => todo!(),
                     }
                     byte_offset += bytes_per_sample as usize;
                 }

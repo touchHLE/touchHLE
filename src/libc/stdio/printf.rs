@@ -16,7 +16,7 @@ use std::io::Write;
 
 use super::FILE;
 
-const INTEGER_SPECIFIERS: [u8; 6] = [b'd', b'i', b'o', b'u', b'x', b'X'];
+const INTEGER_SPECIFIERS: [u8; 7] = [b'd', b'i', b'o', b'u', b'f', b'x', b'X'];
 
 /// String formatting implementation for `printf` and `NSLog` function families.
 ///
@@ -46,12 +46,17 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
             continue;
         }
 
-        let mut pad_char = if get_format_char(&env.mem, format_char_idx) == b'0' {
+        let flags = get_format_char(&env.mem, format_char_idx);
+        let mut pad_char = if flags == b'0' {
             format_char_idx += 1;
             '0'
+        } else if flags >= b'1' && flags <= b'9' {
+            format_char_idx += 1;
+            ' '
         } else {
             ' '
         };
+        
         let mut has_precision = false;
         if get_format_char(&env.mem, format_char_idx) == b'.' {
             has_precision = true;

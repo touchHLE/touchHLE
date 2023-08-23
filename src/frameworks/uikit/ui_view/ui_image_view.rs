@@ -31,8 +31,8 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.alloc_object(this, host_object, &mut env.mem)
 }
 
-- (id)init {
-    let this: id = msg_super![env; this init];
+- (id)initWithFrame:(CGRect)frame {
+    let this: id = msg_super![env; this initWithFrame:frame];
     // Not sure if UIImageView does this unconditionally, or only for images
     // with alpha channels.
     () = msg![env; this setOpaque:false];
@@ -56,8 +56,11 @@ pub const CLASSES: ClassExports = objc_classes! {
         origin: CGPoint { x: 0.0, y: 0.0 },
         size
     };
-    let this = msg![env; this initWithFrame:frame];
+    let this = msg_super![env; this initWithFrame:frame];
     () = msg![env; this setImage:image];
+    // Not sure if UIImageView does this unconditionally, or only for images
+    // with alpha channels.
+    () = msg![env; this setOpaque:false];
     this
 }
 

@@ -22,6 +22,7 @@ use crate::frameworks::foundation::NSUInteger;
 use crate::objc::{
     id, msg, nil, objc_classes, release, retain, Class, ClassExports, HostObject, NSZonePtr,
 };
+use crate::Environment;
 
 #[derive(Default)]
 pub struct State {
@@ -55,6 +56,27 @@ impl Default for UIViewHostObject {
     }
 }
 
+/// Shared parts of `initWithCoder:` and `initWithFrame:`. These can't call
+/// `init`: the subclass may have overridden `init` and will not expect to be
+/// called here.
+///
+/// Do not call this in subclasses of `UIView`.
+fn init_common(env: &mut Environment, this: id) -> id {
+    let view_class: Class = msg![env; this class];
+    let layer_class: Class = msg![env; view_class layerClass];
+    let layer: id = msg![env; layer_class layer];
+
+    // CALayer is not opaque by default, but UIView is
+    () = msg![env; layer setDelegate:this];
+    () = msg![env; layer setOpaque:true];
+
+    env.objc.borrow_mut::<UIViewHostObject>(this).layer = layer;
+
+    env.framework_state.uikit.ui_view.views.push(this);
+
+    this
+}
+
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);
@@ -72,24 +94,16 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 // TODO: accessors etc
 
+// initWithCoder: and initWithFrame: are basically UIView's designated
+// initializers. init is not, it's a shortcut for the latter.
+// Subclasses need to override both.
+
 - (id)init {
-    let view_class: Class = msg![env; this class];
-    let layer_class: Class = msg![env; view_class layerClass];
-    let layer: id = msg![env; layer_class layer];
-
-    // CALayer is not opaque by default, but UIView is
-    () = msg![env; layer setDelegate:this];
-    () = msg![env; layer setOpaque:true];
-
-    env.objc.borrow_mut::<UIViewHostObject>(this).layer = layer;
-
-    env.framework_state.uikit.ui_view.views.push(this);
-
-    this
+    msg![env; this initWithFrame:(<CGRect as Default>::default())]
 }
 
 - (id)initWithFrame:(CGRect)frame {
-    let this: id = msg![env; this init];
+    let this = init_common(env, this);
 
     () = msg![env; this setFrame:frame];
 
@@ -106,7 +120,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 // NSCoding implementation
 - (id)initWithCoder:(id)coder {
-    let this: id = msg![env; this init];
+    let this = init_common(env, this);
 
     // TODO: decode the various other UIView properties
 

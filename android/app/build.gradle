@@ -98,7 +98,7 @@ cargoNdk {
     extraCargoEnv = ["ANDROID_NDK": android.ndkDirectory, "ANDROID_NDK_HOME": android.ndkDirectory]
     // The default feature, "static", makes us use static linking for SDL2 and OpenAL Soft.
     // For Android, we need dynamic linking for SDL2, but static linking for OpenAL Soft.
-    extraCargoBuildArguments = ["--lib", "--no-default-features", "--features", "touchHLE_openal_soft_wrapper/static"]
+    extraCargoBuildArguments = ["--lib", "--no-default-features", "--features", "touchHLE_openal_soft_wrapper/static,sdl2/bundled"]
 }
 
 dependencies {

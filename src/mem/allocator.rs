@@ -12,8 +12,8 @@ use std::num::NonZeroU32;
 /// more convenient representation.
 #[derive(PartialEq, Eq, Copy, Clone)]
 pub struct Chunk {
-    base: VAddr,
-    size: NonZeroU32,
+    pub(super) base: VAddr,
+    pub(super) size: NonZeroU32,
 }
 
 impl Chunk {
@@ -222,5 +222,11 @@ impl Allocator {
             self.unused_chunks.push(chunk);
         }
         size
+    }
+
+    pub(super) fn reset_and_drain_used_chunks(&mut self) -> Vec<Chunk> {
+        let chunks = std::mem::take(&mut self.used_chunks);
+        *self = Allocator::new();
+        chunks
     }
 }

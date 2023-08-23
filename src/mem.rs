@@ -253,6 +253,7 @@ impl Mem {
     /// iPhone OS secondary thread stack size.
     pub const SECONDARY_THREAD_STACK_SIZE: GuestUSize = 512 * 1024;
 
+    /// Create a fresh instance of guest memory.
     pub fn new() -> Mem {
         // This will hopefully get the host OS to lazily allocate the memory.
         let layout = std::alloc::Layout::new::<Bytes>();
@@ -261,6 +262,23 @@ impl Mem {
         let allocator = allocator::Allocator::new();
 
         Mem { bytes, allocator }
+    }
+
+    /// Take an existing instance of [Mem], but free and zero all the
+    /// allocations so it's "like new".
+    ///
+    /// Note that, since there is no protection against writing outside an
+    /// allocation, there might be stray bytes preserved in the result.
+    pub fn refurbish(mut mem: Mem) -> Mem {
+        let Mem {
+            bytes: _,
+            ref mut allocator,
+        } = mem;
+        let used_chunks = allocator.reset_and_drain_used_chunks();
+        for allocator::Chunk { base, size } in used_chunks {
+            mem.bytes_mut()[base as usize..][..size.get() as usize].fill(0);
+        }
+        mem
     }
 
     /// Get a pointer to the full 4GiB of memory. This is only for use when

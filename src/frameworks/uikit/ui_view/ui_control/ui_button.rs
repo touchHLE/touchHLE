@@ -17,8 +17,8 @@ use crate::Environment;
 use std::collections::HashMap;
 
 type UIButtonType = NSInteger;
-const UIButtonTypeCustom: UIButtonType = 0;
-const UIButtonTypeRoundedRect: UIButtonType = 1;
+pub const UIButtonTypeCustom: UIButtonType = 0;
+pub const UIButtonTypeRoundedRect: UIButtonType = 1;
 #[allow(dead_code)]
 const UIButtonTypeDetailDisclosure: UIButtonType = 2;
 #[allow(dead_code)]

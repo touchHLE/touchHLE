@@ -41,7 +41,7 @@ Usability:
 - touchHLE now supports real accelerometer input on devices with a built-in accelerometer, such as phones and tablets. This is only used if no game controller is connected. (@hikari-no-yume)
 - The options help text is now available as a file (`OPTIONS_HELP.txt`), so you don't have to use the command line to get a list of options. (@hikari-no-yume)
 - The new `--fullscreen` option lets you display an app in fullscreen rather than in a window. This is independent of the internal resolution/scale hack and supports both upscaling and downscaling. (@hikari-no-yume)
-- If you run touchHLE without specifying an app, it will now display a simple graphical app picker. (@hikari-no-yume)
+- touchHLE now has a built-in app picker with a pretty icon grid. Specifying an app on the command-line bypasses it. (@hikari-no-yume)
 - The new `--button-to-touch=` option lets you map a button on your game controller to a point on the touch screen. (@hikari-no-yume)
 
 Other:

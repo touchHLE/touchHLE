@@ -113,45 +113,6 @@ fn surface_from_image(image: &Image) -> Surface {
     surface
 }
 
-/// Display a message box with custom buttons. Each button has an associated
-/// ID, and the ID of the clicked button (if any) will be returned.
-pub fn show_message_with_options(
-    title: &str,
-    message: &str,
-    is_error: bool,
-    options: &[(i32, &str)],
-) -> Option<i32> {
-    use sdl2::messagebox::{
-        show_message_box, ButtonData, ClickedButton, MessageBoxButtonFlag, MessageBoxFlag,
-    };
-
-    let buttons: Vec<_> = options
-        .iter()
-        .map(|&(button_id, text)| ButtonData {
-            flags: MessageBoxButtonFlag::NOTHING,
-            button_id,
-            text,
-        })
-        .collect();
-    let clicked_button = show_message_box(
-        if is_error {
-            MessageBoxFlag::ERROR
-        } else {
-            MessageBoxFlag::INFORMATION
-        },
-        &buttons,
-        title,
-        message,
-        None,
-        None,
-    )
-    .unwrap();
-    match clicked_button {
-        ClickedButton::CloseButton => None,
-        ClickedButton::CustomButton(data) => Some(data.button_id),
-    }
-}
-
 pub struct Window {
     _sdl_ctx: sdl2::Sdl,
     video_ctx: sdl2::VideoSubsystem,

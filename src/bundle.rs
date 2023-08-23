@@ -12,6 +12,7 @@
 //! * [Bundle Resources](https://developer.apple.com/documentation/bundleresources?language=objc)
 
 use crate::fs::{BundleData, Fs, GuestPath, GuestPathBuf};
+use crate::image::Image;
 use plist::dictionary::Dictionary;
 use plist::Value;
 use std::io::Cursor;
@@ -53,6 +54,14 @@ impl Bundle {
         };
 
         Ok((bundle, fs))
+    }
+
+    /// Create a fake bundle (see [crate::Environment::new_without_app]).
+    pub fn new_fake_bundle() -> Bundle {
+        Bundle {
+            path: GuestPathBuf::from(String::new()),
+            plist: Dictionary::new(),
+        }
     }
 
     pub fn bundle_path(&self) -> &GuestPath {
@@ -105,7 +114,7 @@ impl Bundle {
         }
     }
 
-    pub fn icon_path(&self) -> GuestPathBuf {
+    fn icon_path(&self) -> GuestPathBuf {
         if let Some(filename) = self.plist.get("CFBundleIconFile") {
             if filename
                 .as_string()
@@ -121,6 +130,14 @@ impl Bundle {
         } else {
             self.path.join("Icon.png")
         }
+    }
+
+    pub fn load_icon(&self, fs: &Fs) -> Result<Image, String> {
+        fs.read(self.icon_path())
+            .map_err(|_| "Could not read icon file".to_string())
+            .and_then(|bytes| {
+                Image::from_bytes(&bytes).map_err(|e| format!("Could not parse icon image: {}", e))
+            })
     }
 
     pub fn main_nib_file_path(&self) -> Option<GuestPathBuf> {

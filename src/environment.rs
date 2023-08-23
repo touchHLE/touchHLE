@@ -125,23 +125,36 @@ enum ThreadBlock {
 
 impl Environment {
     /// Loads the binary and sets up the emulator.
+    ///
+    /// `env_for_salvage` can be used to provide an existing environment (in
+    /// practice, the app picker's, created with [Environment::new_without_app])
+    /// that is to be destroyed. Certain components may be salvaged from the
+    /// old environment, but their states will be reset, so the result should be
+    /// "like new". This option exists because touchHLE on Android would crash
+    /// when allocating a second [mem::Mem] instance.
     pub fn new(
         bundle: bundle::Bundle,
         fs: fs::Fs,
         options: options::Options,
+        env_for_salvage: Option<Environment>,
     ) -> Result<Environment, String> {
         let startup_time = Instant::now();
+
+        // Extract things to salvage from the old environment, and then drop it.
+        // This needs to be done before creating a new window, because SDL2 only
+        // allows one window at once.
+        let mem_for_salvage = if let Some(env_for_salvage) = env_for_salvage {
+            let Environment { mem, .. } = env_for_salvage;
+            // Everything other than the memory is now dropped.
+            Some(mem)
+        } else {
+            None
+        };
 
         let window = if options.headless {
             None
         } else {
-            let icon = fs
-                .read(bundle.icon_path())
-                .map_err(|_| "Could not read icon file".to_string())
-                .and_then(|bytes| {
-                    image::Image::from_bytes(&bytes)
-                        .map_err(|e| format!("Could not parse icon image: {}", e))
-                });
+            let icon = bundle.load_icon(&fs);
             if let Err(ref e) = icon {
                 log!("Warning: {}", e);
             }
@@ -171,7 +184,11 @@ impl Environment {
             ))
         };
 
-        let mut mem = mem::Mem::new();
+        let mut mem = if let Some(mem) = mem_for_salvage {
+            mem::Mem::refurbish(mem)
+        } else {
+            mem::Mem::new()
+        };
 
         let executable = mach_o::MachO::load_from_file(bundle.executable_path(), &fs, &mut mem)
             .map_err(|e| format!("Could not load executable: {}", e))?;
@@ -313,6 +330,93 @@ impl Environment {
         }
 
         env.cpu.branch(entry_point_addr);
+
+        Ok(env)
+    }
+
+    /// Set up the emulator environment without loading an app binary.
+    ///
+    /// This is a special mode that only exists to support the app picker, which
+    /// uses the emulated environment to draw its UI and process input. Filling
+    /// some of the fields with fake data is a hack, but it means the frameworks
+    /// do not need to be aware of the app picker's peculiarities, so it is
+    /// cleaner than the alternative!
+    pub fn new_without_app(options: options::Options) -> Result<Environment, String> {
+        let bundle = bundle::Bundle::new_fake_bundle();
+        let fs = fs::Fs::new_fake_fs();
+
+        let startup_time = Instant::now();
+
+        let icon = None;
+        let launch_image = None;
+
+        assert!(!options.headless);
+        let window = Some(window::Window::new(
+            &format!("touchHLE {}", super::VERSION),
+            icon,
+            launch_image,
+            &options,
+        ));
+
+        let mut mem = mem::Mem::new();
+
+        let bins = Vec::new();
+
+        let mut objc = objc::ObjC::new();
+
+        let mut dyld = dyld::Dyld::new();
+        dyld.do_initial_linking_with_no_bins(&mut mem, &mut objc);
+
+        let cpu = cpu::Cpu::new(match options.direct_memory_access {
+            true => Some(&mut mem),
+            false => None,
+        });
+
+        let main_thread = Thread {
+            active: true,
+            blocked_by: ThreadBlock::NotBlocked,
+            return_value: None,
+            in_start_routine: false, // main thread never terminates
+            in_host_function: false,
+            context: None,
+            stack: Some(mem::Mem::MAIN_THREAD_STACK_LOW_END..=0u32.wrapping_sub(1)),
+        };
+
+        let mut env = Environment {
+            startup_time,
+            bundle,
+            fs,
+            window,
+            mem,
+            bins,
+            objc,
+            dyld,
+            cpu,
+            current_thread: 0,
+            threads: vec![main_thread],
+            libc_state: Default::default(),
+            mutex_state: Default::default(),
+            framework_state: Default::default(),
+            options,
+            gdb_server: None,
+        };
+
+        // Dyld::do_late_linking() would be called here, but it doesn't do
+        // anything relevant here, so it's skipped.
+
+        {
+            let argv = &[];
+            let envp = &[];
+            let apple = &[];
+            stack::prep_stack_for_start(&mut env.mem, &mut env.cpu, argv, envp, apple);
+        }
+
+        env.cpu.set_cpsr(cpu::Cpu::CPSR_USER_MODE);
+
+        // GDB server setup would be done here, but there's no need for it.
+
+        // "CPU emulation begins now" would happen here, but there's nothing
+        // to emulate. :)
 
         Ok(env)
     }

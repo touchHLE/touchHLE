@@ -26,7 +26,7 @@ const UIControlEventTouchDragInside: UIControlEvents = 1 << 2;
 const UIControlEventTouchDragOutside: UIControlEvents = 1 << 3;
 const UIControlEventTouchDragEnter: UIControlEvents = 1 << 4;
 const UIControlEventTouchDragExit: UIControlEvents = 1 << 5;
-const UIControlEventTouchUpInside: UIControlEvents = 1 << 6;
+pub const UIControlEventTouchUpInside: UIControlEvents = 1 << 6;
 const UIControlEventTouchUpOutside: UIControlEvents = 1 << 7;
 
 struct UIControlHostObject {
@@ -56,7 +56,7 @@ impl Default for UIControlHostObject {
 }
 
 type UIControlState = NSUInteger;
-const UIControlStateNormal: UIControlState = 0;
+pub const UIControlStateNormal: UIControlState = 0;
 const UIControlStateHighlighted: UIControlState = 1 << 0;
 const UIControlStateDisabled: UIControlState = 1 << 1;
 const UIControlStateSelected: UIControlState = 1 << 2;

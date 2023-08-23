@@ -502,6 +502,15 @@ impl Fs {
         )
     }
 
+    /// Create a fake filesystem (see [crate::Environment::new_without_app]).
+    pub fn new_fake_fs() -> Fs {
+        Fs {
+            root: FsNode::dir(),
+            current_directory: GuestPathBuf::from(String::new()),
+            home_directory: GuestPathBuf::from(String::new()),
+        }
+    }
+
     /// Get the absolute path of the guest app's (sandboxed) home directory.
     pub fn home_directory(&self) -> &GuestPath {
         &self.home_directory

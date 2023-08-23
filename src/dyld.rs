@@ -221,6 +221,18 @@ impl Dyld {
         ns_string::register_constant_strings(&bins[0], mem, objc);
     }
 
+    /// [Self::do_initial_linking] but for when this is the app picker's special
+    /// environment with no binary (see [crate::Environment::new_without_app]).
+    pub fn do_initial_linking_with_no_bins(&mut self, mem: &mut Mem, objc: &mut ObjC) {
+        assert!(self.return_to_host_routine.is_none());
+        assert!(self.thread_exit_routine.is_none());
+        self.return_to_host_routine =
+            Some(write_return_to_host_routine(mem, Self::SVC_RETURN_TO_HOST));
+        self.thread_exit_routine = Some(write_return_to_host_routine(mem, Self::SVC_THREAD_EXIT));
+
+        objc.register_host_selectors(mem);
+    }
+
     /// Set up lazy-linking stubs for a loaded binary.
     ///
     /// Dynamic linking of functions on iPhone OS usually happens "lazily",

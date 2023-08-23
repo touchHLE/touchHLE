@@ -104,7 +104,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (())run {
-    run_run_loop(env, this);
+    run_run_loop(env, this, /* single_iteration: */ false);
 }
 // TODO: other run methods
 
@@ -153,8 +153,19 @@ pub(super) fn remove_timer(env: &mut Environment, run_loop: id, timer: id) {
     }
 }
 
-fn run_run_loop(env: &mut Environment, run_loop: id) {
-    log_dbg!("Entering run loop {:?} (indefinitely)", run_loop);
+/// Run the run loop for just a single iteration. This is a special mode just
+/// for the app picker, since we don't have `runMode:beforeDate:` or
+/// `runUntilDate:` yet. (TODO: implement those to replace this.)
+pub fn run_run_loop_single_iteration(env: &mut Environment, run_loop: id) {
+    run_run_loop(env, run_loop, /* single_iteration: */ true)
+}
+
+fn run_run_loop(env: &mut Environment, run_loop: id, single_iteration: bool) {
+    if single_iteration {
+        log_dbg!("Entering run loop {:?} (single iteration)", run_loop);
+    } else {
+        log_dbg!("Entering run loop {:?} (indefinitely)", run_loop);
+    }
 
     // Temporary vectors used to track things without needing a reference to the
     // environment or to lock the object. Re-used each iteration for efficiency.
@@ -221,5 +232,9 @@ fn run_run_loop(env: &mut Environment, run_loop: id) {
             sleep_until.map_or(limit, |i| i.duration_since(Instant::now()).min(limit)),
             false,
         );
+
+        if single_iteration {
+            break;
+        }
     }
 }

@@ -37,6 +37,7 @@ fn main() {
             "GL_EXT_texture_filter_anisotropic",
             "GL_IMG_texture_compression_pvrtc",
             "GL_EXT_texture_lod_bias",
+            "GL_OES_draw_texture",
             // Part of the OpenGL ES 1.1 common profile.
             "GL_OES_compressed_paletted_texture",
         ],

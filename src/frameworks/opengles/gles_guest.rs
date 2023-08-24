@@ -591,21 +591,38 @@ fn glBindTexture(env: &mut Environment, target: GLenum, texture: GLuint) {
     })
 }
 fn glTexParameteri(env: &mut Environment, target: GLenum, pname: GLenum, param: GLint) {
+    // So long as we haven't implemented glDrawTexOES yet, we can just ignore
+    // this parameter, because it doesn't do anything for normal texture use.
+    if pname == gles11::TEXTURE_CROP_RECT_OES {
+        return;
+    }
     with_ctx_and_mem(env, |gles, _mem| unsafe {
         gles.TexParameteri(target, pname, param)
     })
 }
 fn glTexParameterf(env: &mut Environment, target: GLenum, pname: GLenum, param: GLfloat) {
+    // See above.
+    if pname == gles11::TEXTURE_CROP_RECT_OES {
+        return;
+    }
     with_ctx_and_mem(env, |gles, _mem| unsafe {
         gles.TexParameterf(target, pname, param)
     })
 }
 fn glTexParameterx(env: &mut Environment, target: GLenum, pname: GLenum, param: GLfixed) {
+    // See above.
+    if pname == gles11::TEXTURE_CROP_RECT_OES {
+        return;
+    }
     with_ctx_and_mem(env, |gles, _mem| unsafe {
         gles.TexParameterx(target, pname, param)
     })
 }
 fn glTexParameteriv(env: &mut Environment, target: GLenum, pname: GLenum, params: ConstPtr<GLint>) {
+    // See above.
+    if pname == gles11::TEXTURE_CROP_RECT_OES {
+        return;
+    }
     with_ctx_and_mem(env, |gles, mem| unsafe {
         let params = mem.ptr_at(params, 1 /* upper bound */);
         gles.TexParameteriv(target, pname, params)
@@ -617,6 +634,10 @@ fn glTexParameterfv(
     pname: GLenum,
     params: ConstPtr<GLfloat>,
 ) {
+    // See above.
+    if pname == gles11::TEXTURE_CROP_RECT_OES {
+        return;
+    }
     with_ctx_and_mem(env, |gles, mem| unsafe {
         let params = mem.ptr_at(params, 1 /* upper bound */);
         gles.TexParameterfv(target, pname, params)
@@ -628,6 +649,10 @@ fn glTexParameterxv(
     pname: GLenum,
     params: ConstPtr<GLfixed>,
 ) {
+    // See above.
+    if pname == gles11::TEXTURE_CROP_RECT_OES {
+        return;
+    }
     with_ctx_and_mem(env, |gles, mem| unsafe {
         let params = mem.ptr_at(params, 1 /* upper bound */);
         gles.TexParameterxv(target, pname, params)

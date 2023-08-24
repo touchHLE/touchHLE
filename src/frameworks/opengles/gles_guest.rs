@@ -658,6 +658,23 @@ fn glTexParameterxv(
         gles.TexParameterxv(target, pname, params)
     })
 }
+fn image_size_estimate(pixel_count: GuestUSize, format: GLenum, type_: GLenum) -> GuestUSize {
+    let bytes_per_pixel: GuestUSize = match type_ {
+        gles11::UNSIGNED_BYTE => match format {
+            gles11::ALPHA | gles11::LUMINANCE => 1,
+            gles11::LUMINANCE_ALPHA => 2,
+            gles11::RGB => 3,
+            gles11::RGBA => 4,
+            _ => panic!("Unexpected format {:#x}", format),
+        },
+        gles11::UNSIGNED_SHORT_5_6_5
+        | gles11::UNSIGNED_SHORT_4_4_4_4
+        | gles11::UNSIGNED_SHORT_5_5_5_1 => 2,
+        _ => panic!("Unexpected type {:#x}", type_),
+    };
+    // This is approximate, it doesn't account for alignment.
+    pixel_count.checked_mul(bytes_per_pixel).unwrap()
+}
 fn glTexImage2D(
     env: &mut Environment,
     target: GLenum,
@@ -674,23 +691,9 @@ fn glTexImage2D(
         let pixels = if pixels.is_null() {
             std::ptr::null()
         } else {
-            let bytes_per_pixel: GuestUSize = match type_ {
-                gles11::UNSIGNED_BYTE => match format {
-                    gles11::ALPHA | gles11::LUMINANCE => 1,
-                    gles11::LUMINANCE_ALPHA => 2,
-                    gles11::RGB => 3,
-                    gles11::RGBA => 4,
-                    _ => panic!("Unexpected format {:#x}", format),
-                },
-                gles11::UNSIGNED_SHORT_5_6_5
-                | gles11::UNSIGNED_SHORT_4_4_4_4
-                | gles11::UNSIGNED_SHORT_5_5_5_1 => 2,
-                _ => panic!("Unexpected type {:#x}", type_),
-            };
             let pixel_count: GuestUSize = width.checked_mul(height).unwrap().try_into().unwrap();
-            // This is approximate, it doesn't account for alignment.
-            mem.ptr_at(pixels.cast::<u8>(), pixel_count * bytes_per_pixel)
-                .cast::<GLvoid>()
+            let size = image_size_estimate(pixel_count, format, type_);
+            mem.ptr_at(pixels.cast::<u8>(), size).cast::<GLvoid>()
         };
         gles.TexImage2D(
             target,
@@ -718,30 +721,11 @@ fn glTexSubImage2D(
     pixels: ConstVoidPtr,
 ) {
     with_ctx_and_mem(env, |gles, mem| unsafe {
-        let bytes_per_pixel: GuestUSize = match type_ {
-            gles11::UNSIGNED_BYTE => match format {
-                gles11::ALPHA | gles11::LUMINANCE => 1,
-                gles11::LUMINANCE_ALPHA => 2,
-                gles11::RGB => 3,
-                gles11::RGBA => 4,
-                _ => panic!("Unexpected format {:#x}", format),
-            },
-            gles11::UNSIGNED_SHORT_5_6_5
-            | gles11::UNSIGNED_SHORT_4_4_4_4
-            | gles11::UNSIGNED_SHORT_5_5_5_1 => 2,
-            _ => panic!("Unexpected type {:#x}", type_),
-        };
         let pixel_count: GuestUSize = width.checked_mul(height).unwrap().try_into().unwrap();
-        // This is approximate, it doesn't account for alignment.
-        let pixels = if pixels.is_null() {
-            std::ptr::null()
-        } else {
-            mem.ptr_at(pixels.cast::<u8>(), pixel_count * bytes_per_pixel)
-                .cast::<GLvoid>()
-        };
-
+        let size = image_size_estimate(pixel_count, format, type_);
+        let pixels = mem.ptr_at(pixels.cast::<u8>(), size).cast::<GLvoid>();
         gles.TexSubImage2D(
-            target, level, xoffset, yoffset, width, height, format, type_, pixels
+            target, level, xoffset, yoffset, width, height, format, type_, pixels,
         )
     })
 }

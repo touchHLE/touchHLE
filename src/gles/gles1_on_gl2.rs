@@ -1164,6 +1164,37 @@ impl GLES for GLES1OnGL2 {
             pixels,
         )
     }
+    unsafe fn TexSubImage2D(
+        &mut self,
+        target: GLenum,
+        level: GLint,
+        xoffset: GLint,
+        yoffset: GLint,
+        width: GLsizei,
+        height: GLsizei,
+        format: GLenum,
+        type_: GLenum,
+        pixels: *const GLvoid,
+    ) {
+        assert!(target == gl21::TEXTURE_2D);
+        assert!(level >= 0);
+        assert!(
+            format == gl21::ALPHA
+                || format == gl21::RGB
+                || format == gl21::RGBA
+                || format == gl21::LUMINANCE
+                || format == gl21::LUMINANCE_ALPHA
+        );
+        assert!(
+            type_ == gl21::UNSIGNED_BYTE
+                || type_ == gl21::UNSIGNED_SHORT_5_6_5
+                || type_ == gl21::UNSIGNED_SHORT_4_4_4_4
+                || type_ == gl21::UNSIGNED_SHORT_5_5_5_1
+        );
+        gl21::TexSubImage2D(
+            target, level, xoffset, yoffset, width, height, format, type_, pixels,
+        )
+    }
     unsafe fn CompressedTexImage2D(
         &mut self,
         target: GLenum,
@@ -1257,37 +1288,6 @@ impl GLES for GLES1OnGL2 {
         } else {
             unimplemented!("CompressedTexImage2D internalformat: {:#x}", internalformat);
         }
-    }
-    unsafe fn TexSubImage2D(
-        &mut self,
-        target: gles11::types::GLenum,
-        level: gles11::types::GLint,
-        xoffset: gles11::types::GLint,
-        yoffset: gles11::types::GLint,
-        width: gles11::types::GLsizei,
-        height: gles11::types::GLsizei,
-        format: gles11::types::GLenum,
-        type_: gles11::types::GLenum,
-        pixels: *const gles11::types::GLvoid,
-    ) {
-        assert!(target == gl21::TEXTURE_2D);
-        assert!(level >= 0);
-        assert!(
-            format == gl21::ALPHA
-                || format == gl21::RGB
-                || format == gl21::RGBA
-                || format == gl21::LUMINANCE
-                || format == gl21::LUMINANCE_ALPHA
-        );
-        assert!(
-            type_ == gl21::UNSIGNED_BYTE
-                || type_ == gl21::UNSIGNED_SHORT_5_6_5
-                || type_ == gl21::UNSIGNED_SHORT_4_4_4_4
-                || type_ == gl21::UNSIGNED_SHORT_5_5_5_1
-        );
-        gl21::TexSubImage2D(
-            target, level, xoffset, yoffset, width, height, format, type_, pixels,
-        )
     }
     unsafe fn CopyTexImage2D(
         &mut self,

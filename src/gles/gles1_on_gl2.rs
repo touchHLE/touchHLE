@@ -1164,6 +1164,37 @@ impl GLES for GLES1OnGL2 {
             pixels,
         )
     }
+    unsafe fn TexSubImage2D(
+        &mut self,
+        target: GLenum,
+        level: GLint,
+        xoffset: GLint,
+        yoffset: GLint,
+        width: GLsizei,
+        height: GLsizei,
+        format: GLenum,
+        type_: GLenum,
+        pixels: *const GLvoid,
+    ) {
+        assert!(target == gl21::TEXTURE_2D);
+        assert!(level >= 0);
+        assert!(
+            format == gl21::ALPHA
+                || format == gl21::RGB
+                || format == gl21::RGBA
+                || format == gl21::LUMINANCE
+                || format == gl21::LUMINANCE_ALPHA
+        );
+        assert!(
+            type_ == gl21::UNSIGNED_BYTE
+                || type_ == gl21::UNSIGNED_SHORT_5_6_5
+                || type_ == gl21::UNSIGNED_SHORT_4_4_4_4
+                || type_ == gl21::UNSIGNED_SHORT_5_5_5_1
+        );
+        gl21::TexSubImage2D(
+            target, level, xoffset, yoffset, width, height, format, type_, pixels,
+        )
+    }
     unsafe fn CompressedTexImage2D(
         &mut self,
         target: GLenum,

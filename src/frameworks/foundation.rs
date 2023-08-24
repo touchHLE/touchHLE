@@ -29,6 +29,7 @@ pub mod ns_notification_center;
 pub mod ns_null;
 pub mod ns_object;
 pub mod ns_process_info;
+pub mod ns_property_list_serialization;
 pub mod ns_run_loop;
 pub mod ns_set;
 pub mod ns_string;

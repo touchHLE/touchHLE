@@ -24,6 +24,8 @@ struct NSBundleHostObject {
     bundle_path: id,
     /// NSURL with bundle path. [None] if not created yet.
     bundle_url: Option<id>,
+    /// `NSDictionary*` for the `Info.plist` content. [None] if not created yet.
+    info_dictionary: Option<id>,
 }
 impl HostObject for NSBundleHostObject {}
 
@@ -43,6 +45,7 @@ pub const CLASSES: ClassExports = objc_classes! {
             _bundle: None,
             bundle_path,
             bundle_url: None,
+            info_dictionary: None,
         };
         let new = env.objc.alloc_object(
             this,
@@ -55,9 +58,17 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (())dealloc {
-    let &NSBundleHostObject { bundle_url, .. } = env.objc.borrow(this);
+    let &NSBundleHostObject {
+        _bundle: _,
+        bundle_path: _, // FIXME?
+        bundle_url,
+        info_dictionary,
+    } = env.objc.borrow(this);
     if let Some(bundle_url) = bundle_url {
         release(env, bundle_url);
+    }
+    if let Some(info_dictionary) = info_dictionary {
+        release(env, info_dictionary);
     }
     env.objc.dealloc_object(this, &mut env.mem)
 }
@@ -124,9 +135,25 @@ pub const CLASSES: ClassExports = objc_classes! {
        withExtension:(id)extension { // NSString *
    msg![env; this URLForResource:name withExtension:extension subdirectory:nil]
 }
+
 - (id)infoDictionary {
-    nil
+    let &NSBundleHostObject {
+        bundle_path,
+        info_dictionary,
+        ..
+    } = env.objc.borrow(this);
+    if let Some(dict) = info_dictionary {
+        return dict;
+    }
+
+    let plist_path = ns_string::get_static_str(env, "Info.plist");
+    let plist_path: id = msg![env; bundle_path stringByAppendingPathComponent:plist_path];
+    let dict: id = msg_class![env; NSDictionary alloc];
+    let dict: id = msg![env; dict initWithContentsOfFile:plist_path];
+    env.objc.borrow_mut::<NSBundleHostObject>(this).info_dictionary = Some(dict);
+    dict
 }
+
 // TODO: constructors, more accessors
 
 @end

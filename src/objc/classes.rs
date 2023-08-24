@@ -681,4 +681,17 @@ impl ObjC {
             }
         }
     }
+
+    pub fn get_class_name(&self, class: Class) -> &str {
+        let host_object = self.get_host_object(class).unwrap();
+        if let Some(ClassHostObject { name, .. }) = host_object.as_any().downcast_ref() {
+            name
+        } else if let Some(UnimplementedClass { name, .. }) = host_object.as_any().downcast_ref() {
+            name
+        } else if let Some(FakeClass { name, .. }) = host_object.as_any().downcast_ref() {
+            name
+        } else {
+            panic!();
+        }
+    }
 }

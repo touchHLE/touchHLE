@@ -27,6 +27,9 @@ fn NSStringFromClass(env: &mut Environment, class: Class) -> id {
 }
 
 fn NSClassFromString(env: &mut Environment, string: id) -> Class {
+    if string == nil {
+        return nil;
+    }
     // TODO: avoid copy?
     let string = ns_string::to_rust_string(env, string);
 

@@ -326,6 +326,15 @@ impl GLES for GLES1Native {
     unsafe fn TexParameterx(&mut self, target: GLenum, pname: GLenum, param: GLfixed) {
         gles11::TexParameterx(target, pname, param)
     }
+    unsafe fn TexParameteriv(&mut self, target: GLenum, pname: GLenum, params: *const GLint) {
+        gles11::TexParameteriv(target, pname, params)
+    }
+    unsafe fn TexParameterfv(&mut self, target: GLenum, pname: GLenum, params: *const GLfloat) {
+        gles11::TexParameterfv(target, pname, params)
+    }
+    unsafe fn TexParameterxv(&mut self, target: GLenum, pname: GLenum, params: *const GLfixed) {
+        gles11::TexParameterxv(target, pname, params)
+    }
     unsafe fn TexImage2D(
         &mut self,
         target: GLenum,

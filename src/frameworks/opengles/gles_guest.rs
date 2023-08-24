@@ -605,6 +605,34 @@ fn glTexParameterx(env: &mut Environment, target: GLenum, pname: GLenum, param: 
         gles.TexParameterx(target, pname, param)
     })
 }
+fn glTexParameteriv(env: &mut Environment, target: GLenum, pname: GLenum, params: ConstPtr<GLint>) {
+    with_ctx_and_mem(env, |gles, mem| unsafe {
+        let params = mem.ptr_at(params, 1 /* upper bound */);
+        gles.TexParameteriv(target, pname, params)
+    })
+}
+fn glTexParameterfv(
+    env: &mut Environment,
+    target: GLenum,
+    pname: GLenum,
+    params: ConstPtr<GLfloat>,
+) {
+    with_ctx_and_mem(env, |gles, mem| unsafe {
+        let params = mem.ptr_at(params, 1 /* upper bound */);
+        gles.TexParameterfv(target, pname, params)
+    })
+}
+fn glTexParameterxv(
+    env: &mut Environment,
+    target: GLenum,
+    pname: GLenum,
+    params: ConstPtr<GLfixed>,
+) {
+    with_ctx_and_mem(env, |gles, mem| unsafe {
+        let params = mem.ptr_at(params, 1 /* upper bound */);
+        gles.TexParameterxv(target, pname, params)
+    })
+}
 fn glTexImage2D(
     env: &mut Environment,
     target: GLenum,
@@ -928,6 +956,9 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(glTexParameteri(_, _, _)),
     export_c_func!(glTexParameterf(_, _, _)),
     export_c_func!(glTexParameterx(_, _, _)),
+    export_c_func!(glTexParameteriv(_, _, _)),
+    export_c_func!(glTexParameterfv(_, _, _)),
+    export_c_func!(glTexParameterxv(_, _, _)),
     export_c_func!(glTexImage2D(_, _, _, _, _, _, _, _, _)),
     export_c_func!(glCompressedTexImage2D(_, _, _, _, _, _, _, _)),
     export_c_func!(glCopyTexImage2D(_, _, _, _, _, _, _, _)),

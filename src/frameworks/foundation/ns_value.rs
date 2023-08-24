@@ -13,6 +13,9 @@ use crate::objc::{
 
 enum NSNumberHostObject {
     Bool(bool),
+    UnsignedLongLong(u64),
+    LongLong(i64),
+    Double(f64),
 }
 impl HostObject for NSNumberHostObject {}
 
@@ -47,17 +50,56 @@ pub const CLASSES: ClassExports = objc_classes! {
     autorelease(env, new)
 }
 
-// TODO: types other than booleans
++ (id)numberWithDouble:(f64)value {
+    // TODO: for greater efficiency we could return a static-lifetime value
+
+    let new: id = msg![env; this alloc];
+    let new: id = msg![env; new initWithDouble:value];
+    autorelease(env, new)
+}
+
++ (id)numberWithLongLong:(i64)value {
+    // TODO: for greater efficiency we could return a static-lifetime value
+
+    let new: id = msg![env; this alloc];
+    let new: id = msg![env; new initWithLongLong:value];
+    autorelease(env, new)
+}
+
++ (id)numberWithUnsignedLongLong:(u64)value {
+    // TODO: for greater efficiency we could return a static-lifetime value
+
+    let new: id = msg![env; this alloc];
+    let new: id = msg![env; new initWithUnsignedLongLong:value];
+    autorelease(env, new)
+}
+
+// TODO: types other than booleans and long longs
 
 - (id)initWithBool:(bool)value {
-    *env.objc.borrow_mut::<NSNumberHostObject>(this) = NSNumberHostObject::Bool(
-        value,
-    );
+    *env.objc.borrow_mut(this) = NSNumberHostObject::Bool(value);
+    this
+}
+
+- (id)initWithDouble:(f64)value {
+    *env.objc.borrow_mut(this) = NSNumberHostObject::Double(value);
+    this
+}
+
+- (id)initWithLongLong:(i64)value {
+    *env.objc.borrow_mut(this) = NSNumberHostObject::LongLong(value);
+    this
+}
+
+- (id)initWithUnsignedLongLong:(u64)value {
+    *env.objc.borrow_mut(this) = NSNumberHostObject::UnsignedLongLong(value);
     this
 }
 
 - (NSUInteger)hash {
-    let &NSNumberHostObject::Bool(value) = env.objc.borrow(this);
+    let &NSNumberHostObject::Bool(value) = env.objc.borrow(this) else {
+        todo!();
+    };
     super::hash_helper(&value)
 }
 - (bool)isEqualTo:(id)other {
@@ -68,8 +110,12 @@ pub const CLASSES: ClassExports = objc_classes! {
     if !msg![env; other isKindOfClass:class] {
         return false;
     }
-    let &NSNumberHostObject::Bool(a) = env.objc.borrow(this);
-    let &NSNumberHostObject::Bool(b) = env.objc.borrow(other);
+    let &NSNumberHostObject::Bool(a) = env.objc.borrow(this) else {
+        todo!();
+    };
+    let &NSNumberHostObject::Bool(b) = env.objc.borrow(other) else {
+        todo!();
+    };
     a == b
 }
 

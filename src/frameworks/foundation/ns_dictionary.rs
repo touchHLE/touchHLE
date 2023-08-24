@@ -5,7 +5,9 @@
  */
 //! The `NSDictionary` class cluster, including `NSMutableDictionary`.
 
-use super::NSUInteger;
+use super::ns_property_list_serialization::deserialize_plist_from_file;
+use super::{ns_string, ns_url, NSUInteger};
+use crate::fs::GuestPath;
 use crate::objc::{
     autorelease, id, msg, msg_class, nil, objc_classes, release, retain, ClassExports, HostObject,
     NSZonePtr,
@@ -114,10 +116,41 @@ pub const CLASSES: ClassExports = objc_classes! {
     autorelease(env, new_dict)
 }
 
+// These probably comes from some category related to plists.
++ (id)dictionaryWithContentsOfFile:(id)path { // NSString*
+    let path = ns_string::to_rust_string(env, path);
+    let res = deserialize_plist_from_file(
+        env,
+        GuestPath::new(&path),
+        /* array_expected: */ false,
+    );
+    autorelease(env, res)
+}
++ (id)dictionaryWithContentsOfURL:(id)url { // NSURL*
+    let path = ns_url::to_rust_path(env, url);
+    let res = deserialize_plist_from_file(env, &path, /* array_expected: */ false);
+    autorelease(env, res)
+}
+
 - (id)init {
     todo!("TODO: Implement [dictionary init] for custom subclasses")
 }
 
+// These probably comes from some category related to plists.
+- (id)initWithContentsOfFile:(id)path { // NSString*
+    release(env, this);
+    let path = ns_string::to_rust_string(env, path);
+    deserialize_plist_from_file(
+        env,
+        GuestPath::new(&path),
+        /* array_expected: */ false,
+    )
+}
+- (id)initWithContentsOfURL:(id)url { // NSURL*
+    release(env, this);
+    let path = ns_url::to_rust_path(env, url);
+    deserialize_plist_from_file(env, &path, /* array_expected: */ false)
+}
 
 // NSCopying implementation
 - (id)copyWithZone:(NSZonePtr)_zone {

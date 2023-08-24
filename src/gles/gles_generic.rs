@@ -179,6 +179,8 @@ pub trait GLES {
     unsafe fn TexParameterf(&mut self, target: GLenum, pname: GLenum, param: GLfloat);
     unsafe fn TexParameterx(&mut self, target: GLenum, pname: GLenum, param: GLfixed);
     unsafe fn TexParameteriv(&mut self, target: GLenum, pname: GLenum, params: *const GLint);
+    unsafe fn TexParameterfv(&mut self, target: GLenum, pname: GLenum, params: *const GLfloat);
+    unsafe fn TexParameterxv(&mut self, target: GLenum, pname: GLenum, params: *const GLfixed);
     unsafe fn TexImage2D(
         &mut self,
         target: GLenum,
@@ -331,13 +333,5 @@ pub trait GLES {
     unsafe fn CheckFramebufferStatusOES(&mut self, target: GLenum) -> GLenum;
     unsafe fn DeleteFramebuffersOES(&mut self, n: GLsizei, framebuffers: *const GLuint);
     unsafe fn DeleteRenderbuffersOES(&mut self, n: GLsizei, renderbuffers: *const GLuint);
-    unsafe fn BufferData(
-        &mut self,
-        target: GLenum,
-        n: GLsizeiptr,
-        data: *const GLvoid,
-        usage: GLenum,
-    );
-    unsafe fn Color4ub(&mut self, red: GLubyte, green: GLubyte, blue: GLubyte, alpha: GLubyte);
     unsafe fn GenerateMipmapOES(&mut self, target: GLenum);
 }

@@ -1100,7 +1100,22 @@ impl GLES for GLES1OnGL2 {
     }
     unsafe fn TexParameteriv(&mut self, target: GLenum, pname: GLenum, params: *const GLint) {
         assert!(target == gl21::TEXTURE_2D);
+        TEX_PARAMS.assert_known_param(pname);
         gl21::TexParameteriv(target, pname, params);
+    }
+    unsafe fn TexParameterfv(&mut self, target: GLenum, pname: GLenum, params: *const GLfloat) {
+        assert!(target == gl21::TEXTURE_2D);
+        TEX_PARAMS.assert_known_param(pname);
+        gl21::TexParameterfv(target, pname, params);
+    }
+    unsafe fn TexParameterxv(&mut self, target: GLenum, pname: GLenum, params: *const GLfixed) {
+        assert!(target == gl21::TEXTURE_2D);
+        TEX_PARAMS.setxv(
+            |params| gl21::TexParameterfv(target, pname, params),
+            |params| gl21::TexParameteriv(target, pname, params),
+            pname,
+            params,
+        )
     }
     unsafe fn TexImage2D(
         &mut self,
@@ -1586,17 +1601,5 @@ impl GLES for GLES1OnGL2 {
     }
     unsafe fn GenerateMipmapOES(&mut self, target: GLenum) {
         gl21::GenerateMipmapEXT(target)
-    }
-    unsafe fn BufferData(
-        &mut self,
-        target: GLenum,
-        size: GLsizeiptr,
-        data: *const GLvoid,
-        usage: GLenum,
-    ) {
-        gl21::BufferData(target, size, data, usage)
-    }
-    unsafe fn Color4ub(&mut self, red: GLubyte, green: GLubyte, blue: GLubyte, alpha: GLubyte) {
-        gl21::Color4ub(red, green, blue, alpha)
     }
 }

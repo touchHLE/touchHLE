@@ -327,7 +327,13 @@ impl GLES for GLES1Native {
         gles11::TexParameterx(target, pname, param)
     }
     unsafe fn TexParameteriv(&mut self, target: GLenum, pname: GLenum, params: *const GLint) {
-        gles11::TexParameteriv(target, pname, params);
+        gles11::TexParameteriv(target, pname, params)
+    }
+    unsafe fn TexParameterfv(&mut self, target: GLenum, pname: GLenum, params: *const GLfloat) {
+        gles11::TexParameterfv(target, pname, params)
+    }
+    unsafe fn TexParameterxv(&mut self, target: GLenum, pname: GLenum, params: *const GLfixed) {
+        gles11::TexParameterxv(target, pname, params)
     }
     unsafe fn TexImage2D(
         &mut self,
@@ -605,18 +611,6 @@ impl GLES for GLES1Native {
     }
     unsafe fn DeleteRenderbuffersOES(&mut self, n: GLsizei, renderbuffers: *const GLuint) {
         gles11::DeleteRenderbuffersOES(n, renderbuffers)
-    }
-    unsafe fn BufferData(
-        &mut self,
-        target: GLenum,
-        size: GLsizeiptr,
-        data: *const GLvoid,
-        usage: GLenum,
-    ) {
-        gles11::BufferData(target, size, data, usage)
-    }
-    unsafe fn Color4ub(&mut self, red: GLubyte, green: GLubyte, blue: GLubyte, alpha: GLubyte) {
-        gles11::Color4ub(red, green, blue, alpha)
     }
     unsafe fn GenerateMipmapOES(&mut self, target: GLenum) {
         gles11::GenerateMipmapOES(target)

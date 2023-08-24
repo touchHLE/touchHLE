@@ -607,8 +607,30 @@ fn glTexParameterx(env: &mut Environment, target: GLenum, pname: GLenum, param: 
 }
 fn glTexParameteriv(env: &mut Environment, target: GLenum, pname: GLenum, params: ConstPtr<GLint>) {
     with_ctx_and_mem(env, |gles, mem| unsafe {
-        let params = mem.ptr_at(params, 1);
+        let params = mem.ptr_at(params, 1 /* upper bound */);
         gles.TexParameteriv(target, pname, params)
+    })
+}
+fn glTexParameterfv(
+    env: &mut Environment,
+    target: GLenum,
+    pname: GLenum,
+    params: ConstPtr<GLfloat>,
+) {
+    with_ctx_and_mem(env, |gles, mem| unsafe {
+        let params = mem.ptr_at(params, 1 /* upper bound */);
+        gles.TexParameterfv(target, pname, params)
+    })
+}
+fn glTexParameterxv(
+    env: &mut Environment,
+    target: GLenum,
+    pname: GLenum,
+    params: ConstPtr<GLfixed>,
+) {
+    with_ctx_and_mem(env, |gles, mem| unsafe {
+        let params = mem.ptr_at(params, 1 /* upper bound */);
+        gles.TexParameterxv(target, pname, params)
     })
 }
 fn glTexImage2D(
@@ -758,24 +780,6 @@ fn glCopyTexSubImage2D(
 fn glTexEnvf(env: &mut Environment, target: GLenum, pname: GLenum, param: GLfloat) {
     with_ctx_and_mem(env, |gles, _mem| unsafe {
         gles.TexEnvf(target, pname, param)
-    })
-}
-fn glBufferData(
-    env: &mut Environment,
-    target: GLenum,
-    n: GLsizei,
-    data: ConstVoidPtr,
-    usage: GLenum,
-) {
-    with_ctx_and_mem(env, |gles, mem| {
-        let data_ptr = mem.ptr_at(data.cast::<u8>(), 0).cast::<GLvoid>();
-        let n_usize: GLsizeiptr = n.try_into().unwrap();
-        unsafe { gles.BufferData(target, n_usize, data_ptr, usage) }
-    })
-}
-fn glColor4ub(env: &mut Environment, red: GLubyte, green: GLubyte, blue: GLubyte, alpha: GLubyte) {
-    with_ctx_and_mem(env, |gles, _mem| unsafe {
-        gles.Color4ub(red, green, blue, alpha)
     })
 }
 fn glTexEnvx(env: &mut Environment, target: GLenum, pname: GLenum, param: GLfixed) {
@@ -1008,6 +1012,8 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(glTexParameterf(_, _, _)),
     export_c_func!(glTexParameterx(_, _, _)),
     export_c_func!(glTexParameteriv(_, _, _)),
+    export_c_func!(glTexParameterfv(_, _, _)),
+    export_c_func!(glTexParameterxv(_, _, _)),
     export_c_func!(glTexImage2D(_, _, _, _, _, _, _, _, _)),
     export_c_func!(glTexSubImage2D(_, _, _, _, _, _, _, _, _)),
     export_c_func!(glCompressedTexImage2D(_, _, _, _, _, _, _, _)),

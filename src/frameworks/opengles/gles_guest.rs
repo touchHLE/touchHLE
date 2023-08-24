@@ -14,12 +14,19 @@
 
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::gles::gles11_raw as gles11; // constants only
-use crate::gles::gles11_raw::types::*;
 use crate::gles::GLES;
-use crate::mem::{ConstPtr, ConstVoidPtr, GuestUSize, Mem, MutPtr};
+use crate::mem::{ConstPtr, ConstVoidPtr, GuestISize, GuestUSize, Mem, MutPtr};
 use crate::Environment;
-
 use core::ffi::CStr;
+
+// These types are the same size in guest code (32-bit) and host code (64-bit).
+use crate::gles::gles11_raw::types::{
+    GLbitfield, GLboolean, GLclampf, GLclampx, GLenum, GLfixed, GLfloat, GLint, GLsizei, GLubyte,
+    GLuint, GLvoid,
+};
+// These types have different sizes, so some care is needed.
+use crate::gles::gles11_raw::types::GLsizeiptr as HostGLsizeiptr;
+type GuestGLsizeiptr = GuestISize;
 
 fn with_ctx_and_mem<T, U>(env: &mut Environment, f: T) -> U
 where
@@ -272,6 +279,23 @@ fn glDeleteBuffers(env: &mut Environment, n: GLsizei, buffers: ConstPtr<GLuint>)
 }
 fn glBindBuffer(env: &mut Environment, target: GLenum, buffer: GLuint) {
     with_ctx_and_mem(env, |gles, _mem| unsafe { gles.BindBuffer(target, buffer) })
+}
+fn glBufferData(
+    env: &mut Environment,
+    target: GLenum,
+    size: GuestGLsizeiptr,
+    data: ConstPtr<GLvoid>,
+    usage: GLenum,
+) {
+    with_ctx_and_mem(env, |gles, mem| unsafe {
+        let data = if data.is_null() {
+            std::ptr::null()
+        } else {
+            mem.ptr_at(data.cast::<u8>(), size.try_into().unwrap())
+                .cast()
+        };
+        gles.BufferData(target, size as HostGLsizeiptr, data, usage)
+    })
 }
 
 // Non-pointers
@@ -851,6 +875,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(glGenBuffers(_, _)),
     export_c_func!(glDeleteBuffers(_, _)),
     export_c_func!(glBindBuffer(_, _)),
+    export_c_func!(glBufferData(_, _, _, _)),
     // Non-pointers
     export_c_func!(glColor4f(_, _, _, _)),
     export_c_func!(glColor4x(_, _, _, _)),

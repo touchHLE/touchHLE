@@ -44,8 +44,8 @@ use classes::{ClassHostObject, FakeClass, UnimplementedClass, CLASS_LISTS};
 use messages::{objc_msgSend, objc_msgSendSuper2, objc_msgSend_stret};
 use methods::method_list_t;
 use objects::{objc_object, HostObjectEntry};
-use properties::objc_copyStruct;
-use properties::objc_setProperty;
+use properties::{objc_copyStruct, objc_setProperty};
+use selectors::sel_registerName;
 use synchronization::{objc_sync_enter, objc_sync_exit};
 
 /// Typedef for `NSZone *`. This is a [fossil type] found in the signature of
@@ -92,4 +92,5 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(objc_copyStruct(_, _, _, _, _)),
     export_c_func!(objc_sync_enter(_)),
     export_c_func!(objc_sync_exit(_)),
+    export_c_func!(sel_registerName(_)),
 ];

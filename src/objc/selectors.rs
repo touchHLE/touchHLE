@@ -15,9 +15,10 @@
 //! - Apple's [The Objective-C Programming Language](https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/ObjectiveC/Chapters/ocSelectors.html)
 
 use super::ObjC;
-use crate::abi::GuestArg;
+use crate::abi::{GuestArg, GuestRet};
 use crate::mach_o::MachO;
 use crate::mem::{ConstPtr, Mem, MutPtr, Ptr};
+use crate::Environment;
 
 /// Create a string literal for a selector from Objective-C message syntax
 /// components. Useful for [super::objc_classes] and for [super::msg].
@@ -44,7 +45,15 @@ impl GuestArg for SEL {
         SEL(<ConstPtr<u8> as GuestArg>::from_regs(regs))
     }
     fn to_regs(self, regs: &mut [u32]) {
-        self.0.to_regs(regs)
+        <ConstPtr<u8> as GuestArg>::to_regs(self.0, regs)
+    }
+}
+impl GuestRet for SEL {
+    fn from_regs(regs: &[u32]) -> Self {
+        SEL(<ConstPtr<u8> as GuestRet>::from_regs(regs))
+    }
+    fn to_regs(self, regs: &mut [u32]) {
+        <ConstPtr<u8> as GuestRet>::to_regs(self.0, regs)
     }
 }
 
@@ -58,6 +67,20 @@ impl SEL {
 impl ObjC {
     pub fn lookup_selector(&self, name: &str) -> Option<SEL> {
         self.selectors.get(name).copied()
+    }
+
+    /// Register a selector using a Rust [String]. Despite the name there is no
+    /// inherent "host" quality of the resulting selector, but because this
+    /// function will allocate a new C string, this function is not the most
+    /// efficient route if there's already a constant string in the app binary.
+    pub fn register_host_selector(&mut self, name: String, mem: &mut Mem) -> SEL {
+        if let Some(existing) = self.lookup_selector(&name) {
+            return existing;
+        }
+
+        let sel = SEL(mem.alloc_and_write_cstr(name.as_bytes()).cast_const());
+        self.selectors.insert(name, sel);
+        sel
     }
 
     /// Register and deduplicate all the selectors of host classes.
@@ -110,4 +133,16 @@ impl ObjC {
             mem.write(selref, sel.0);
         }
     }
+}
+
+/// Standard Objective-C runtime function for selector registration.
+pub(super) fn sel_registerName(env: &mut Environment, name: ConstPtr<u8>) -> SEL {
+    let name = env.mem.cstr_at_utf8(name).unwrap();
+
+    if let Some(existing) = env.objc.lookup_selector(name) {
+        return existing;
+    }
+
+    let name = name.to_string();
+    env.objc.register_host_selector(name, &mut env.mem)
 }

@@ -6,13 +6,14 @@
 //! `CGImage.h`
 
 use super::cg_color_space::{kCGColorSpaceGenericRGB, CGColorSpaceCreateWithName, CGColorSpaceRef};
-use super::cg_data::{CGDataProviderHostObject, CGDataProviderRef};
+use super::cg_data_provider::{CGDataProviderHostObject, CGDataProviderRef};
+use super::CGFloat;
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::frameworks::core_foundation::{CFRelease, CFRetain, CFTypeRef};
 use crate::frameworks::foundation::ns_string;
 use crate::image::Image;
 use crate::mem::{ConstPtr, GuestUSize, Ptr};
-use crate::objc::{objc_classes, ClassExports, HostObject, ObjC};
+use crate::objc::{nil, objc_classes, ClassExports, HostObject, ObjC};
 use crate::Environment;
 
 pub type CGImageAlphaInfo = u32;
@@ -57,9 +58,6 @@ struct CGImageHostObject {
     image: Image,
 }
 impl HostObject for CGImageHostObject {}
-
-// TODO: CGImageCreate family. Currently the accessor on UIImage is the only way
-//       to create this type.
 
 pub type CGImageRef = CFTypeRef;
 
@@ -109,6 +107,8 @@ pub fn borrow_image(objc: &ObjC, image: CGImageRef) -> &Image {
     &objc.borrow::<CGImageHostObject>(image).image
 }
 
+// TODO: More create methods.
+
 fn CGImageGetAlphaInfo(_env: &mut Environment, _image: CGImageRef) -> CGImageAlphaInfo {
     // our Image type always returns premultiplied RGBA
     // (the premultiplied part must match what the real UIImage does, but
@@ -152,6 +152,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGImageCreateWithPNGDataProvider(_, _, _, _)),
     export_c_func!(CGImageRelease(_)),
     export_c_func!(CGImageRetain(_)),
+    export_c_func!(CGImageCreateWithPNGDataProvider(_, _, _, _)),
     export_c_func!(CGImageGetAlphaInfo(_)),
     export_c_func!(CGImageGetColorSpace(_)),
     export_c_func!(CGImageGetWidth(_)),

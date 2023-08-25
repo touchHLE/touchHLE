@@ -26,7 +26,6 @@ pub mod cf_type;
 pub mod cf_url;
 pub mod time;
 
-pub use cf_data::CFDataRef;
 pub use cf_type::{CFRelease, CFRetain, CFTypeRef};
 
 pub type CFIndex = i32;

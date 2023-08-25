@@ -6,9 +6,9 @@
 //! `NSData` and `NSMutableData`.
 
 use super::ns_string::to_rust_string;
-use super::NSUInteger;
+use super::{NSRange, NSUInteger};
 use crate::fs::GuestPath;
-use crate::mem::{ConstVoidPtr, MutVoidPtr, Ptr};
+use crate::mem::{ConstVoidPtr, MutPtr, MutVoidPtr, Ptr};
 use crate::objc::{
     autorelease, id, msg, nil, objc_classes, release, retain, ClassExports, HostObject, NSZonePtr,
 };
@@ -124,6 +124,20 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 - (NSUInteger)length {
     env.objc.borrow::<NSDataHostObject>(this).length
+}
+
+- (())getBytes:(MutPtr<u8>)buffer range:(NSRange)range {
+    if range.length == 0 {
+        return;
+    }
+    let &NSDataHostObject { bytes, length, .. } = env.objc.borrow(this);
+    // TODO: throw NSRangeException if out-of-range instead of panic?
+    assert!(range.location < length && range.location + range.length <= length);
+    env.mem.memmove(
+        buffer.cast(),
+        bytes.cast_const() + range.location,
+        range.length,
+    );
 }
 
 @end

@@ -123,6 +123,7 @@ impl<T, const MUT: bool> std::ops::Add<GuestUSize> for Ptr<T, MUT> {
 
     fn add(self, other: GuestUSize) -> Self {
         let size: GuestUSize = guest_size_of::<T>();
+        assert_ne!(size, 0);
         Self::from_bits(
             self.to_bits()
                 .checked_add(other.checked_mul(size).unwrap())
@@ -140,6 +141,7 @@ impl<T, const MUT: bool> std::ops::Sub<GuestUSize> for Ptr<T, MUT> {
 
     fn sub(self, other: GuestUSize) -> Self {
         let size: GuestUSize = guest_size_of::<T>();
+        assert_ne!(size, 0);
         Self::from_bits(
             self.to_bits()
                 .checked_sub(other.checked_mul(size).unwrap())

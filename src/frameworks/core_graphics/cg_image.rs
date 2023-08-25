@@ -6,13 +6,14 @@
 //! `CGImage.h`
 
 use super::cg_color_space::{kCGColorSpaceGenericRGB, CGColorSpaceCreateWithName, CGColorSpaceRef};
+use super::cg_data_provider::{CGDataProviderHostObject, CGDataProviderRef};
+use super::CGFloat;
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::frameworks::core_foundation::{CFRelease, CFRetain, CFTypeRef};
-use crate::frameworks::core_graphics::cg_data_provider::CGDataProviderRef;
 use crate::frameworks::foundation::ns_string;
 use crate::image::Image;
-use crate::mem::GuestUSize;
-use crate::objc::{objc_classes, ClassExports, HostObject, ObjC};
+use crate::mem::{ConstPtr, GuestUSize};
+use crate::objc::{nil, objc_classes, ClassExports, HostObject, ObjC};
 use crate::Environment;
 
 pub type CGImageAlphaInfo = u32;
@@ -58,9 +59,6 @@ struct CGImageHostObject {
 }
 impl HostObject for CGImageHostObject {}
 
-// TODO: CGImageCreate family. Currently the accessor on UIImage is the only way
-//       to create this type.
-
 pub type CGImageRef = CFTypeRef;
 pub fn CGImageRelease(env: &mut Environment, c: CGImageRef) {
     if !c.is_null() {
@@ -87,6 +85,27 @@ pub fn from_image(env: &mut Environment, image: Image) -> CGImageRef {
 /// `CGImage` instance.
 pub fn borrow_image(objc: &ObjC, image: CGImageRef) -> &Image {
     &objc.borrow::<CGImageHostObject>(image).image
+}
+
+// TODO: More create methods.
+
+fn CGImageCreateWithPNGDataProvider(
+    env: &mut Environment,
+    source: CGDataProviderRef,
+    decode: ConstPtr<CGFloat>,
+    _should_interpolate: bool, // TODO
+    _intent: i32,              // TODO (should be CGColorRenderingIntent)
+) -> CGImageRef {
+    assert!(decode.is_null()); // TODO
+
+    let &CGDataProviderHostObject { data, size, .. } = env.objc.borrow(source);
+
+    let Ok(image) = Image::from_bytes(env.mem.bytes_at(data.cast(), size)) else {
+        // Docs don't say what happens on failure, but this would make sense.
+        return nil;
+    };
+
+    from_image(env, image)
 }
 
 fn CGImageGetAlphaInfo(_env: &mut Environment, _image: CGImageRef) -> CGImageAlphaInfo {
@@ -131,6 +150,7 @@ fn CGImageGetDataProvider(_env: &mut Environment, image: CGImageRef) -> CGDataPr
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGImageRelease(_)),
     export_c_func!(CGImageRetain(_)),
+    export_c_func!(CGImageCreateWithPNGDataProvider(_, _, _, _)),
     export_c_func!(CGImageGetAlphaInfo(_)),
     export_c_func!(CGImageGetColorSpace(_)),
     export_c_func!(CGImageGetWidth(_)),

@@ -125,27 +125,22 @@ impl Font {
                     let mut word_start = 0;
 
                     loop {
-                        if let Some(i) = line[word_start..].find(|c: char| c.is_whitespace()) {
-                            let word_end = word_start + i;
-                            // Include any additional whitespace in the word,
-                            // so that the next word begins with non-whitespace.
-                            if let Some(i) = line[word_end..].find(|c: char| !c.is_whitespace()) {
-                                wrap_points.push(word_end + i);
-                                word_start = word_end + i;
-                            } else {
-                                wrap_points.push(line.len());
-                                break;
-                            }
-                        } else {
-                            wrap_points.push(line.len());
+                        let Some(i) = line[word_start..].find(|c: char| c.is_whitespace()) else {
                             break;
-                        }
+                        };
+                        let word_end = word_start + i;
+                        // Include any additional whitespace in the word,
+                        // so that the next word begins with non-whitespace.
+                        let Some(i) = line[word_end..].find(|c: char| !c.is_whitespace()) else {
+                            break;
+                        };
+                        wrap_points.push(word_end + i);
+                        word_start = word_end + i;
                     }
                 }
                 WrapMode::Char => {
-                    let mut char_end = 1.min(line.len());
-
-                    while char_end <= line.len() {
+                    let mut char_end = 1;
+                    while char_end < line.len() {
                         if line.is_char_boundary(char_end) {
                             wrap_points.push(char_end);
                         }
@@ -153,6 +148,7 @@ impl Font {
                     }
                 }
             };
+            wrap_points.push(line.len());
 
             let mut next_wrap_point_idx = 0;
             let mut line_start = 0;
@@ -169,12 +165,35 @@ impl Font {
                     });
                 let wrap_point_idx = match wrap_search_result {
                     Ok(i) => next_wrap_point_idx + i,
-                    Err(i) => (next_wrap_point_idx + i).wrapping_sub(1),
+                    Err(i @ 1..) => next_wrap_point_idx + (i - 1),
+                    _ => {
+                        // The span between the current wrap point and the next
+                        // wrap point is wider than the wrap width. In practice,
+                        // this means a word too big to fit on-screen.
+                        if matches!(wrap_mode, WrapMode::Word) {
+                            // Try to break the word.
+                            let word_end = wrap_points[next_wrap_point_idx];
+                            let word = &line[line_start..word_end];
+                            let broken_words = self.break_lines(
+                                font_size,
+                                word,
+                                Some((wrap_width, WrapMode::Char)),
+                            );
+                            lines.extend(broken_words);
+                            next_wrap_point_idx += 1;
+                            line_start = word_end;
+                            continue;
+                        }
+                        // It can't be helped: truncate.
+                        next_wrap_point_idx
+                    }
                 };
-
                 let line_end = wrap_points[wrap_point_idx];
                 let line = &line[line_start..line_end];
-                lines.push((self.calculate_line_width(font_size, line), line));
+                lines.push((
+                    self.calculate_line_width(font_size, line).min(wrap_width),
+                    line,
+                ));
 
                 next_wrap_point_idx = wrap_point_idx + 1;
                 line_start = line_end;
@@ -244,6 +263,12 @@ impl Font {
                 let x_offset = glyph_bounds.min.x;
                 let y_offset = ((origin.1 + line_y).round() as i32) + glyph_bounds.max.y;
                 glyph.draw(|x, y, coverage| {
+                    // TODO: Do we need to clip y also?
+                    if let Some((wrap_width, _)) = wrap {
+                        if x as f32 > origin.0 + wrap_width {
+                            return;
+                        }
+                    }
                     let (x, y) = (x as i32, y as i32);
                     put_pixel((x_offset + x, y_offset - (glyph_height - y)), coverage)
                 });

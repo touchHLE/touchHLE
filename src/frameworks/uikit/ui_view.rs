@@ -202,6 +202,13 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (())bringSubviewToFront:(id)subview {
+    if subview == nil {
+        // This happens in Touch & Go LITE. It's probably due to the ad classes
+        // being replaced with fakes.
+        log_dbg!("Tolerating [{:?} bringSubviewToFront:nil]", this);
+        return;
+    }
+
     let &mut UIViewHostObject {
         ref mut subviews,
         layer,

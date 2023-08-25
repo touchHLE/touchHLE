@@ -17,6 +17,7 @@ pub mod qsort;
 pub struct State {
     rand: u32,
     random: u32,
+    arc4random: u32,
     env: HashMap<Vec<u8>, MutPtr<u8>>,
 }
 
@@ -157,8 +158,9 @@ fn random(env: &mut Environment) -> i32 {
     (env.libc_state.stdlib.random as i32) & RAND_MAX
 }
 
-fn arc4random(_env: &mut Environment) -> u32 {
-    unsafe { sdl2::libc::arc4random() }
+fn arc4random(env: &mut Environment) -> u32 {
+    env.libc_state.stdlib.arc4random = prng(env.libc_state.stdlib.arc4random);
+    env.libc_state.stdlib.arc4random
 }
 
 fn getenv(env: &mut Environment, name: ConstPtr<u8>) -> MutPtr<u8> {

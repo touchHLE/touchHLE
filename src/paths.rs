@@ -104,3 +104,57 @@ pub fn user_data_base_path() -> &'static Path {
     #[cfg(not(target_os = "android"))]
     Path::new("")
 }
+
+/// Only meaningful on Android: create the user data directory if it doesn't
+/// exist, and populate it with templates or README files. (On other platforms
+/// these are simply bundled with touchHLE in a ZIP file.)
+pub fn prepopulate_user_data_dir() {
+    if std::env::consts::OS != "android" {
+        return;
+    }
+
+    let apps_dir = user_data_base_path().join(APPS_DIR);
+    if !apps_dir.is_dir() {
+        match std::fs::create_dir(&apps_dir) {
+            Ok(()) => {
+                log!("Created: {}", apps_dir.display());
+            }
+            Err(e) => {
+                log!("Warning: Couldn't create {}: {}", apps_dir.display(), e);
+            }
+        }
+    }
+
+    let apps_dir_readme = apps_dir.join("README.txt");
+    if !apps_dir_readme.is_file() {
+        let content = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/touchHLE_apps/README.txt"
+        ));
+        match std::fs::write(&apps_dir_readme, content) {
+            Ok(()) => {
+                log!("Created: {}", apps_dir_readme.display());
+            }
+            Err(e) => {
+                log!(
+                    "Warning: Couldn't create {}: {}",
+                    apps_dir_readme.display(),
+                    e
+                );
+            }
+        }
+    }
+
+    let user_options = user_data_base_path().join(USER_OPTIONS_FILE);
+    if !user_options.is_file() {
+        let content = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/touchHLE_options.txt"));
+        match std::fs::write(&user_options, content) {
+            Ok(()) => {
+                log!("Created: {}", user_options.display());
+            }
+            Err(e) => {
+                log!("Warning: Couldn't create {}: {}", user_options.display(), e);
+            }
+        }
+    }
+}

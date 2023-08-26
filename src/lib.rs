@@ -122,6 +122,7 @@ pub fn main<T: Iterator<Item = String>>(mut args: T) -> Result<(), String> {
         if !base_path.is_empty() {
             log!("Base path for touchHLE files: {}", base_path);
         }
+        paths::prepopulate_user_data_dir();
     }
 
     let _ = args.next().unwrap(); // skip argv[0]

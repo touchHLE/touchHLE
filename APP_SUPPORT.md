@@ -34,6 +34,20 @@ Please click to expand the details for the app you are interested in.
   - Consistent full fps (60fps)
   - Scale hack supported
   </details>
+- <details>
+  <summary>Mystery Mania (2009, Electronic Arts)</summary>
+
+  - Working versions
+    - “Mystery Mania” 1.1.0
+  - **Broken versions:**
+    - “Mystery Mania” 1.1.26
+  - touchHLE will crash if you open the music player or tap “More EA Games”.
+  - Not fully tested, but the first few puzzles are fully playable:
+    - Sound effects and music
+    - Save game persistence
+  - Consistent full fps (30fps)
+  - **Scale hack unsupported**
+  </details>
 - <details><summary>Super Monkey Ball (2008, SEGA/Other Ocean Interactive, App Store launch title)</summary>
 
   - Working versions:

@@ -363,7 +363,7 @@ impl Dyld {
             );
         }
 
-        // FIXME: there's probably internal relocations to deal with too.
+        // FIXME: check for internal relocations?
     }
 
     /// Do linking that can only be done once there is a full [Environment].

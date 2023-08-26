@@ -22,11 +22,17 @@ use crate::abi::GuestFunction;
 use crate::fs::{Fs, GuestPath};
 use crate::mem::{Mem, Ptr};
 use mach_object::{
-    DyLib, LoadCommand, MachCommand, OFile, Symbol, SymbolIter, ThreadState, N_ARM_THUMB_DEF,
-    S_LAZY_SYMBOL_POINTERS, S_MOD_INIT_FUNC_POINTERS, S_NON_LAZY_SYMBOL_POINTERS, S_SYMBOL_STUBS,
+    vm_prot_t, DyLib, LoadCommand, MachCommand, OFile, Symbol, SymbolIter, ThreadState,
+    N_ARM_THUMB_DEF, S_LAZY_SYMBOL_POINTERS, S_MOD_INIT_FUNC_POINTERS, S_NON_LAZY_SYMBOL_POINTERS,
+    S_SYMBOL_STUBS,
 };
 use std::collections::HashMap;
 use std::io::{Cursor, Seek, SeekFrom};
+
+const VM_PROT_READ: vm_prot_t = 1;
+const VM_PROT_WRITE: vm_prot_t = 2;
+#[allow(dead_code)]
+const VM_PROT_EXECUTE: vm_prot_t = 4;
 
 #[derive(Debug)]
 pub struct MachO {
@@ -245,7 +251,11 @@ impl MachO {
         }
         // TODO: Check cpusubtype (should be some flavour of ARMv6/ARMv7)
 
+        let split_segs = (header.flags & mach_object::MH_SPLIT_SEGS) != 0;
+
         // Info used while parsing file
+        let mut first_segment_base: Option<u32> = None;
+        let mut first_read_write_segment_base: Option<u32> = None;
         let mut text_segment_base: Option<u32> = None;
         let mut all_sections = Vec::new();
         let mut sym_tab_info: Option<(u32, u32, u32, u32)> = None;
@@ -265,12 +275,23 @@ impl MachO {
                     vmsize,
                     fileoff,
                     filesize,
+                    initprot,
                     sections,
                     ..
                 } => {
                     let vmaddr: u32 = vmaddr.try_into().unwrap();
                     let vmsize: u32 = vmsize.try_into().unwrap();
                     let filesize: u32 = filesize.try_into().unwrap();
+
+                    if first_segment_base.is_none() {
+                        first_segment_base = Some(vmaddr);
+                    }
+                    if first_read_write_segment_base.is_none()
+                        && (initprot & VM_PROT_READ) != 0
+                        && (initprot & VM_PROT_WRITE) != 0
+                    {
+                        first_read_write_segment_base = Some(vmaddr);
+                    }
 
                     let load_me = match &*segname {
                         // Special linker data section, not meant to be loaded.
@@ -382,7 +403,8 @@ impl MachO {
                             // apparently used within libstdc++ for linking to
                             // itself, e.g. to "__Znwm". might be a PIC thing
                             Some(Symbol::Defined { name: Some(n), .. }) => Some(String::from(n)),
-                            _ => None,
+                            None => None,
+                            _ => panic!("Unexpected symbol kind {:?}", sym),
                         })
                     }
 
@@ -398,6 +420,11 @@ impl MachO {
                         } = reloc else {
                             panic!("Unhandled extrel: {:?}", reloc)
                         };
+                        let addr = if split_segs {
+                            addr + first_read_write_segment_base.unwrap()
+                        } else {
+                            addr + first_segment_base.unwrap()
+                        };
 
                         let mut cursor = cursor.clone();
                         let sym = get_sym_by_idx(
@@ -407,12 +434,28 @@ impl MachO {
                             is_64bit,
                             &mut cursor,
                         );
-                        // TODO: Figure out to do with the Symbol::Defined
-                        // entries
-                        let Some(Symbol::Undefined { name: Some(n), .. }) = sym else {
-                            continue;
+                        match sym {
+                            Some(Symbol::Undefined { name: Some(n), .. }) => {
+                                external_relocations.push((addr, String::from(n)));
+                            }
+                            Some(Symbol::Defined { entry, desc, .. }) => {
+                                // Apparently these are used for internal
+                                // (intra-binary) relocations, despite being
+                                // in the external section?
+                                //
+                                // Resolve them immediately, there is no value
+                                // in passing these on to Dyld.
+                                let addr = Ptr::from_bits(addr);
+                                let entry = entry as u32;
+                                let entry = if desc & N_ARM_THUMB_DEF != 0 {
+                                    entry | GuestFunction::THUMB_BIT
+                                } else {
+                                    entry
+                                };
+                                into_mem.write(addr, entry);
+                            }
+                            _ => panic!("Unexpected symbol kind {:?}", sym),
                         };
-                        external_relocations.push((addr, String::from(n)));
                     }
                 }
                 LoadCommand::EncryptionInfo { id, .. } => {

@@ -48,7 +48,8 @@ Please click to expand the details for the app you are interested in.
   - Consistent full fps (30fps)
   - **Scale hack unsupported**
   </details>
-- <details><summary>Super Monkey Ball (2008, SEGA/Other Ocean Interactive, App Store launch title)</summary>
+- <details>
+  <summary>Super Monkey Ball (2008, SEGA/Other Ocean Interactive, App Store launch title)</summary>
 
   - Working versions:
     - “Monkey Ball” 1.0
@@ -65,7 +66,8 @@ Please click to expand the details for the app you are interested in.
   - Consistent full fps (30fps)
   - Scale hack supported
   </details>
-- <details><summary>Touch & Go (2009, The Game Creators)</summary>
+- <details>
+  <summary>Touch & Go (2009, The Game Creators)</summary>
 
   - Working versions:
     - “Touch & Go” 1.1
@@ -80,7 +82,8 @@ Please click to expand the details for the app you are interested in.
   - Consistent full fps (60fps)
   - Scale hack supported
   </details>
-- <details><summary>Wolfenstein 3D (2009, id Software)</summary>
+- <details>
+  <summary>Wolfenstein 3D (2009, id Software)</summary>
 
   - Working versions:
     - 1.0 from the official open source release

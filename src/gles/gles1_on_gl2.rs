@@ -169,6 +169,8 @@ const GET_PARAMS: ParamTable = ParamTable(&[
     // TODO: FOG_DENSITY, FOG_END, FOG_START (not sure what type these have)
     (gl21::FOG_HINT, ParamType::Int, 1),
     (gl21::FOG_MODE, ParamType::Int, 1),
+    (gl21::FOG_START, ParamType::Float, 1),
+    (gl21::FOG_END, ParamType::Float, 1),
     (gl21::FRONT_FACE, ParamType::Int, 1),
     (gl21::GREEN_BITS, ParamType::Int, 1),
     // TODO: IMPLEMENTATION_COLOR_READ_FORMAT_OES? (not shared)
@@ -518,6 +520,35 @@ impl GLES1OnGL2 {
                 }
                 _ => unreachable!(),
             }
+        }
+    }
+
+    /// If fog is enabled, check if the values for start and end distances
+    /// are equal, or start distance is greater than end distance.
+    /// Apple platforms (even modern Mac OS) seem to handle that gracefully,
+    /// however, both Windows and Android have issues in those cases.
+    /// This workaround is required so Doom 2 RPG renders correctly.
+    /// It prevents divisions by zero in levels where fog is used and both values are set to 10000.
+    unsafe fn clamp_fog_state_values(&mut self) -> Option<(f32, f32)> {
+        let mut fogEnabled: GLboolean = 0;
+        self.GetBooleanv(gl21::FOG, &mut fogEnabled);
+        if fogEnabled != 0 {
+            let mut fogStart: GLfloat = 0.0;
+            let mut fogEnd: GLfloat = 0.0;
+            self.GetFloatv(gl21::FOG_START, &mut fogStart);
+            self.GetFloatv(gl21::FOG_END, &mut fogEnd);
+            if fogStart == fogEnd {
+                let newFogStart = fogEnd - 0.001;
+                self.Fogf(gl21::FOG_START, newFogStart);
+                return Some((fogStart, fogEnd));
+            }
+        }
+        None
+    }
+    unsafe fn restore_fog_state_values(&mut self, from_backup: Option<(f32, f32)>) {
+        if let Some((fogStart, fogEnd)) = from_backup {
+            self.Fogf(gl21::FOG_START, fogStart);
+            self.Fogf(gl21::FOG_END, fogEnd);
         }
     }
 }
@@ -928,11 +959,13 @@ impl GLES for GLES1OnGL2 {
         ]
         .contains(&mode));
 
-        let state_backup = self.translate_fixed_point_arrays(first, count);
+        let fog_state_backup = self.clamp_fog_state_values();
+        let fixed_point_arrays_state_backup = self.translate_fixed_point_arrays(first, count);
 
         gl21::DrawArrays(mode, first, count);
 
-        self.restore_fixed_point_arrays(state_backup);
+        self.restore_fog_state_values(fog_state_backup);
+        self.restore_fixed_point_arrays(fixed_point_arrays_state_backup);
     }
     unsafe fn DrawElements(
         &mut self,
@@ -953,62 +986,65 @@ impl GLES for GLES1OnGL2 {
         .contains(&mode));
         assert!(type_ == gl21::UNSIGNED_BYTE || type_ == gl21::UNSIGNED_SHORT);
 
-        let state_backup = if self.pointer_is_fixed_point.iter().any(|&is_fixed| is_fixed) {
-            // Scan the index buffer to find the range of data that may need
-            // fixed-point translation.
-            // TODO: Would it be more efficient to turn this into a non-indexed
-            // draw-call instead?
+        let fog_state_backup = self.clamp_fog_state_values();
+        let fixed_point_arrays_state_backup =
+            if self.pointer_is_fixed_point.iter().any(|&is_fixed| is_fixed) {
+                // Scan the index buffer to find the range of data that may need
+                // fixed-point translation.
+                // TODO: Would it be more efficient to turn this into a non-indexed
+                // draw-call instead?
 
-            let mut index_buffer_binding = 0;
-            gl21::GetIntegerv(
-                gl21::ELEMENT_ARRAY_BUFFER_BINDING,
-                &mut index_buffer_binding,
-            );
-            // TODO: handling of bound index array buffers
-            assert!(index_buffer_binding == 0);
+                let mut index_buffer_binding = 0;
+                gl21::GetIntegerv(
+                    gl21::ELEMENT_ARRAY_BUFFER_BINDING,
+                    &mut index_buffer_binding,
+                );
+                // TODO: handling of bound index array buffers
+                assert!(index_buffer_binding == 0);
 
-            let mut first = usize::MAX;
-            let mut last = usize::MIN;
-            assert!(count >= 0);
-            match type_ {
-                gl21::UNSIGNED_BYTE => {
-                    let indices_ptr: *const GLubyte = indices.cast();
-                    for i in 0..(count as usize) {
-                        let index = indices_ptr.add(i).read_unaligned();
-                        first = first.min(index as usize);
-                        last = last.max(index as usize);
+                let mut first = usize::MAX;
+                let mut last = usize::MIN;
+                assert!(count >= 0);
+                match type_ {
+                    gl21::UNSIGNED_BYTE => {
+                        let indices_ptr: *const GLubyte = indices.cast();
+                        for i in 0..(count as usize) {
+                            let index = indices_ptr.add(i).read_unaligned();
+                            first = first.min(index as usize);
+                            last = last.max(index as usize);
+                        }
                     }
-                }
-                gl21::UNSIGNED_SHORT => {
-                    let indices_ptr: *const GLushort = indices.cast();
-                    for i in 0..(count as usize) {
-                        let index = indices_ptr.add(i).read_unaligned();
-                        first = first.min(index as usize);
-                        last = last.max(index as usize);
+                    gl21::UNSIGNED_SHORT => {
+                        let indices_ptr: *const GLushort = indices.cast();
+                        for i in 0..(count as usize) {
+                            let index = indices_ptr.add(i).read_unaligned();
+                            first = first.min(index as usize);
+                            last = last.max(index as usize);
+                        }
                     }
+                    _ => unreachable!(),
                 }
-                _ => unreachable!(),
-            }
 
-            let (first, count) = if first == usize::MAX && last == usize::MIN {
-                assert!(count == 0);
-                (0, 0)
+                let (first, count) = if first == usize::MAX && last == usize::MIN {
+                    assert!(count == 0);
+                    (0, 0)
+                } else {
+                    (
+                        first.try_into().unwrap(),
+                        (last + 1 - first).try_into().unwrap(),
+                    )
+                };
+
+                Some(self.translate_fixed_point_arrays(first, count))
             } else {
-                (
-                    first.try_into().unwrap(),
-                    (last + 1 - first).try_into().unwrap(),
-                )
+                None
             };
-
-            Some(self.translate_fixed_point_arrays(first, count))
-        } else {
-            None
-        };
 
         gl21::DrawElements(mode, count, type_, indices);
 
-        if let Some(state_backup) = state_backup {
-            self.restore_fixed_point_arrays(state_backup);
+        self.restore_fog_state_values(fog_state_backup);
+        if let Some(fixed_point_arrays_state_backup) = fixed_point_arrays_state_backup {
+            self.restore_fixed_point_arrays(fixed_point_arrays_state_backup);
         }
     }
 

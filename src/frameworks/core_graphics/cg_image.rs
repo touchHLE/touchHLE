@@ -6,14 +6,14 @@
 //! `CGImage.h`
 
 use super::cg_color_space::{kCGColorSpaceGenericRGB, CGColorSpaceCreateWithName, CGColorSpaceRef};
-use super::cg_data_provider::{CGDataProviderHostObject, CGDataProviderRef};
-use super::CGFloat;
+use super::cg_data_provider::{self, CGDataProviderRef};
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::frameworks::core_foundation::{CFRelease, CFRetain, CFTypeRef};
+use crate::frameworks::core_graphics::cg_data::CGDataProviderHostObject;
 use crate::frameworks::foundation::ns_string;
 use crate::image::Image;
 use crate::mem::{ConstPtr, GuestUSize, Ptr};
-use crate::objc::{nil, objc_classes, ClassExports, HostObject, ObjC};
+use crate::objc::{objc_classes, ClassExports, HostObject, ObjC};
 use crate::Environment;
 
 pub type CGImageAlphaInfo = u32;
@@ -141,11 +141,8 @@ fn CGImageGetHeight(env: &mut Environment, image: CGImageRef) -> GuestUSize {
     height
 }
 
-fn CGImageGetDataProvider(_env: &mut Environment, image: CGImageRef) -> CGDataProviderRef {
-    // This is a hack which basically substitutes a provider with an original image.
-    // See CGDataProviderCopyData() implementation.
-    // TODO: implement proper provider
-    image
+fn CGImageGetDataProvider(env: &mut Environment, image: CGImageRef) -> CGDataProviderRef {
+    cg_data_provider::from_cg_image(env, image)
 }
 
 pub const FUNCTIONS: FunctionExports = &[

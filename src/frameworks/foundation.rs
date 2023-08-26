@@ -56,6 +56,7 @@ pub struct State {
 pub type NSInteger = i32;
 pub type NSUInteger = u32;
 
+#[allow(unaligned_references)]
 #[derive(Debug)]
 #[repr(C, packed)]
 pub struct NSRange {

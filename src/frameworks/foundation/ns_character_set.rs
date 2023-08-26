@@ -5,7 +5,7 @@
  */
 //! The `NSCharacterSet` class cluster, including `NSMutableCharacterSet`.
 
-use super::ns_string;
+use super::{ns_string, unichar};
 use crate::objc::{
     autorelease, id, msg, msg_class, objc_classes, retain, ClassExports, HostObject, NSZonePtr,
 };
@@ -13,7 +13,7 @@ use std::collections::HashSet;
 
 /// Belongs to _touchHLE_NSCharacterSet
 struct CharacterSetHostObject {
-    set: HashSet<u16>,
+    set: HashSet<unichar>,
 }
 impl HostObject for CharacterSetHostObject {}
 
@@ -69,7 +69,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 // TODO: initWithCoder:
 
-- (bool)characterIsMember:(u16)code_unit {
+- (bool)characterIsMember:(unichar)code_unit {
     env.objc.borrow::<CharacterSetHostObject>(this).set.contains(&code_unit)
 }
 

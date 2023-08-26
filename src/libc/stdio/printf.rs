@@ -7,7 +7,7 @@
 
 use crate::abi::{DotDotDot, VaList};
 use crate::dyld::{export_c_func, FunctionExports};
-use crate::frameworks::foundation::ns_string;
+use crate::frameworks::foundation::{ns_string, unichar};
 use crate::mem::{ConstPtr, GuestUSize, Mem, MutPtr};
 use crate::objc::{id, msg};
 use crate::Environment;
@@ -82,6 +82,16 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
                 let c: u8 = args.next(env);
                 assert!(pad_char == ' ' && pad_width == 0); // TODO
                 res.push(c);
+            }
+            // Apple extension? Seemingly works in both NSLog and printf.
+            b'C' => {
+                let c: unichar = args.next(env);
+                // TODO
+                assert!(pad_char == ' ' && pad_width == 0);
+                // This will panic if it's a surrogate! This isn't good if
+                // targeting UTF-16 ([NSString stringWithFormat:] etc).
+                let c = char::from_u32(c.into()).unwrap();
+                write!(&mut res, "{}", c).unwrap();
             }
             b's' => {
                 let c_string: ConstPtr<u8> = args.next(env);

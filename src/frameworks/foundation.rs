@@ -86,6 +86,10 @@ pub const NSOrderedDescending: NSComparisonResult = 1;
 /// Number of seconds.
 pub type NSTimeInterval = f64;
 
+/// UTF-16 code unit.
+#[allow(non_camel_case_types)]
+pub type unichar = u16;
+
 /// Utility to help with implementing the `hash` method, which various classes
 /// in Foundation have to do.
 fn hash_helper<T: std::hash::Hash>(hashable: &T) -> NSUInteger {

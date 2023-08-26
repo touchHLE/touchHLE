@@ -20,6 +20,7 @@ pub mod cf_allocator;
 pub mod cf_array;
 pub mod cf_bundle;
 pub mod cf_data;
+pub mod cf_dictionary;
 pub mod cf_run_loop;
 pub mod cf_string;
 pub mod cf_type;

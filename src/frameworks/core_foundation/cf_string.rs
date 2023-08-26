@@ -9,6 +9,8 @@
 //! is the same type.
 
 use super::cf_allocator::{kCFAllocatorDefault, CFAllocatorRef};
+use super::cf_dictionary::CFDictionaryRef;
+use crate::abi::{DotDotDot, VaList};
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::frameworks::foundation::ns_string;
 use crate::mem::ConstPtr;
@@ -63,8 +65,33 @@ fn CFStringCreateWithCString(
     msg![env; ns_string initWithCString:c_string encoding:encoding]
 }
 
+fn CFStringCreateWithFormat(
+    env: &mut Environment,
+    allocator: CFAllocatorRef,
+    format_options: CFDictionaryRef,
+    format: CFStringRef,
+    args: DotDotDot,
+) -> CFStringRef {
+    CFStringCreateWithFormatAndArguments(env, allocator, format_options, format, args.start())
+}
+
+fn CFStringCreateWithFormatAndArguments(
+    env: &mut Environment,
+    allocator: CFAllocatorRef,
+    // Apple's own docs say these are unimplemented!
+    _format_options: CFDictionaryRef,
+    format: CFStringRef,
+    args: VaList,
+) -> CFStringRef {
+    assert!(allocator == kCFAllocatorDefault); // unimplemented
+    let res = ns_string::with_format(env, format, args);
+    ns_string::from_rust_string(env, res)
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CFStringConvertEncodingToNSStringEncoding(_)),
     export_c_func!(CFStringConvertNSStringEncodingToEncoding(_)),
     export_c_func!(CFStringCreateWithCString(_, _, _)),
+    export_c_func!(CFStringCreateWithFormat(_, _, _, _)),
+    export_c_func!(CFStringCreateWithFormatAndArguments(_, _, _, _)),
 ];

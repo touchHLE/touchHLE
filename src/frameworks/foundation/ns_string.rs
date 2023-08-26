@@ -11,6 +11,7 @@ use super::ns_array;
 use super::{
     NSComparisonResult, NSOrderedAscending, NSOrderedDescending, NSOrderedSame, NSUInteger,
 };
+use crate::abi::VaList;
 use crate::frameworks::core_graphics::{CGFloat, CGPoint, CGRect, CGSize};
 use crate::frameworks::uikit::ui_font::{
     self, UILineBreakMode, UILineBreakModeWordWrap, UITextAlignment, UITextAlignmentLeft,
@@ -199,6 +200,28 @@ impl<'a> CodeUnitIterator<'a> {
     }
 }
 
+/// Helper for formatting methods. They can't call eachother currently due to
+/// full vararg passthrough being missing.
+pub fn with_format(env: &mut Environment, format: id, args: VaList) -> String {
+    let format_string = to_rust_string(env, format);
+
+    log_dbg!("Formatting {:?} ({:?})", format, format_string);
+
+    let res = crate::libc::stdio::printf::printf_inner::<true, _>(
+        env,
+        |_, idx| {
+            if idx as usize == format_string.len() {
+                b'\0'
+            } else {
+                format_string.as_bytes()[idx as usize]
+            }
+        },
+        args,
+    );
+    // TODO: what if it's not valid UTF-8?
+    String::from_utf8(res).unwrap()
+}
+
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);
@@ -248,24 +271,8 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 + (id)stringWithFormat:(id)format, // NSString*
                        ...args {
-    // TODO: avoid copy
-    let format_string = to_rust_string(env, format);
-
-    log_dbg!("[NSString stringWithFormat:{:?} ({:?}), ...]", format, format_string);
-
-    let res = crate::libc::stdio::printf::printf_inner::<true, _>(
-        env,
-        |_, idx| {
-            if idx as usize == format_string.len() {
-                b'\0'
-            } else {
-                format_string.as_bytes()[idx as usize]
-            }
-        },
-        args.start(),
-    );
-    // TODO: what if it's not valid UTF-8?
-    let res = from_rust_string(env, String::from_utf8(res).unwrap());
+    let res = with_format(env, format, args.start());
+    let res = from_rust_string(env, res);
     autorelease(env, res)
 }
 
@@ -683,6 +690,20 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 // TODO: more init methods
+
+- (id)initWithFormat:(id)format, // NSString*
+                     ...args {
+    let res = with_format(env, format, args.start());
+    *env.objc.borrow_mut(this) = StringHostObject::Utf8(res.into());
+    this
+}
+
+- (id)initWithFormat:(id)format // NSString*
+           arguments:(VaList)args {
+    let res = with_format(env, format, args);
+    *env.objc.borrow_mut(this) = StringHostObject::Utf8(res.into());
+    this
+}
 
 - (id)initWithBytes:(ConstPtr<u8>)bytes
              length:(NSUInteger)len

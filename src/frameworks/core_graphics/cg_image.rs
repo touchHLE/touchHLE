@@ -7,12 +7,12 @@
 
 use super::cg_color_space::{kCGColorSpaceGenericRGB, CGColorSpaceCreateWithName, CGColorSpaceRef};
 use super::cg_data_provider::{self, CGDataProviderRef};
+use super::CGFloat;
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::frameworks::core_foundation::{CFRelease, CFRetain, CFTypeRef};
-use crate::frameworks::core_graphics::cg_data::CGDataProviderHostObject;
 use crate::frameworks::foundation::ns_string;
 use crate::image::Image;
-use crate::mem::{ConstPtr, GuestUSize, Ptr};
+use crate::mem::{ConstPtr, GuestUSize};
 use crate::objc::{autorelease, nil, objc_classes, ClassExports, HostObject, ObjC};
 use crate::Environment;
 
@@ -60,26 +60,6 @@ struct CGImageHostObject {
 impl HostObject for CGImageHostObject {}
 
 pub type CGImageRef = CFTypeRef;
-
-pub fn CGImageCreateWithPNGDataProvider(
-    env: &mut Environment,
-    source: CGDataProviderRef,
-    decode: ConstPtr<f32>,
-    _should_interpolate: bool,
-    _intent: CFTypeRef,
-) -> CGImageRef {
-    assert!(decode.is_null());
-
-    let host_object = &env.objc.borrow::<CGDataProviderHostObject>(source);
-    let ptr: ConstPtr<u8> = Ptr::from_bits(host_object.data.to_bits());
-
-    let image = Image::from_bytes(env.mem.bytes_at(ptr, host_object.size)).unwrap();
-    let host_obj = Box::new(CGImageHostObject { image });
-
-    let class = env.objc.get_known_class("_touchHLE_CGImage", &mut env.mem);
-    env.objc.alloc_object(class, host_obj, &mut env.mem)
-}
-
 pub fn CGImageRelease(env: &mut Environment, c: CGImageRef) {
     if !c.is_null() {
         CFRelease(env, c);
@@ -108,6 +88,24 @@ pub fn borrow_image(objc: &ObjC, image: CGImageRef) -> &Image {
 }
 
 // TODO: More create methods.
+
+fn CGImageCreateWithPNGDataProvider(
+    env: &mut Environment,
+    source: CGDataProviderRef,
+    decode: ConstPtr<CGFloat>,
+    _should_interpolate: bool, // TODO
+    _intent: i32,              // TODO (should be CGColorRenderingIntent)
+) -> CGImageRef {
+    assert!(decode.is_null()); // TODO
+
+    let bytes = cg_data_provider::borrow_bytes(env, source);
+    let Ok(image) = Image::from_bytes(bytes) else {
+        // Docs don't say what happens on failure, but this would make sense.
+        return nil;
+    };
+
+    from_image(env, image)
+}
 
 fn CGImageGetAlphaInfo(_env: &mut Environment, _image: CGImageRef) -> CGImageAlphaInfo {
     // our Image type always returns premultiplied RGBA
@@ -154,7 +152,6 @@ fn CGImageGetDataProvider(env: &mut Environment, image: CGImageRef) -> CGDataPro
 }
 
 pub const FUNCTIONS: FunctionExports = &[
-    export_c_func!(CGImageCreateWithPNGDataProvider(_, _, _, _)),
     export_c_func!(CGImageRelease(_)),
     export_c_func!(CGImageRetain(_)),
     export_c_func!(CGImageCreateWithPNGDataProvider(_, _, _, _)),

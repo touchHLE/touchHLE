@@ -227,6 +227,17 @@ pub trait GLES {
         height: GLsizei,
         border: GLint,
     );
+    unsafe fn CopyTexSubImage2D(
+        &mut self,
+        target: GLenum,
+        level: GLint,
+        xoffset: GLint,
+        yoffset: GLint,
+        x: GLint,
+        y: GLint,
+        width: GLsizei,
+        height: GLsizei,
+    );
     unsafe fn TexEnvf(&mut self, target: GLenum, pname: GLenum, param: GLfloat);
     unsafe fn TexEnvx(&mut self, target: GLenum, pname: GLenum, param: GLfixed);
     unsafe fn TexEnvi(&mut self, target: GLenum, pname: GLenum, param: GLint);

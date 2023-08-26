@@ -1312,6 +1312,21 @@ impl GLES for GLES1OnGL2 {
         assert!(border == 0);
         gl21::CopyTexImage2D(target, level, internalformat, x, y, width, height, border)
     }
+    unsafe fn CopyTexSubImage2D(
+        &mut self,
+        target: GLenum,
+        level: GLint,
+        xoffset: GLint,
+        yoffset: GLint,
+        x: GLint,
+        y: GLint,
+        width: GLsizei,
+        height: GLsizei,
+    ) {
+        assert!(target == gl21::TEXTURE_2D);
+        assert!(level >= 0);
+        gl21::CopyTexSubImage2D(target, level, xoffset, yoffset, x, y, width, height)
+    }
     unsafe fn TexEnvf(&mut self, target: GLenum, pname: GLenum, param: GLfloat) {
         // TODO: GL_POINT_SPRITE_OES
         match target {

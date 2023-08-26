@@ -434,6 +434,19 @@ impl GLES for GLES1Native {
     ) {
         gles11::CopyTexImage2D(target, level, internalformat, x, y, width, height, border)
     }
+    unsafe fn CopyTexSubImage2D(
+        &mut self,
+        target: GLenum,
+        level: GLint,
+        xoffset: GLint,
+        yoffset: GLint,
+        x: GLint,
+        y: GLint,
+        width: GLsizei,
+        height: GLsizei,
+    ) {
+        gles11::CopyTexSubImage2D(target, level, xoffset, yoffset, x, y, width, height)
+    }
     unsafe fn TexEnvf(&mut self, target: GLenum, pname: GLenum, param: GLfloat) {
         gles11::TexEnvf(target, pname, param)
     }

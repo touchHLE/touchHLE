@@ -13,7 +13,7 @@ use crate::frameworks::core_foundation::{CFRelease, CFRetain, CFTypeRef};
 use crate::frameworks::foundation::ns_string;
 use crate::image::Image;
 use crate::mem::{ConstPtr, GuestUSize};
-use crate::objc::{nil, objc_classes, ClassExports, HostObject, ObjC};
+use crate::objc::{autorelease, nil, objc_classes, ClassExports, HostObject, ObjC};
 use crate::Environment;
 
 pub type CGImageAlphaInfo = u32;
@@ -140,7 +140,15 @@ fn CGImageGetHeight(env: &mut Environment, image: CGImageRef) -> GuestUSize {
 }
 
 fn CGImageGetDataProvider(env: &mut Environment, image: CGImageRef) -> CGDataProviderRef {
-    cg_data_provider::from_cg_image(env, image)
+    // CGImageGetDataProvider() seems to be intended to return the underlying
+    // data provider that is retained by the CGImage. That's not how CGImage is
+    // implemented here though, so instead we make a data provider that
+    // retains the CGImage: exactly the opposite approach!
+    let cg_data_provider = cg_data_provider::from_cg_image(env, image);
+    // CGImageGetDataProvider() isn't meant to return a new object, so the
+    // caller won't free this. The CGImage can't retain the CGDataProvider
+    // without causing a cycle, so let's autorelease it instead.
+    autorelease(env, cg_data_provider)
 }
 
 pub const FUNCTIONS: FunctionExports = &[

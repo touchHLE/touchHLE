@@ -150,6 +150,12 @@ fn exp2f(_env: &mut Environment, arg: f32) -> f32 {
 
 // Power functions
 // TODO: implement the rest
+fn pow(_env: &mut Environment, arg1: f64, arg2: f64) -> f64 {
+    arg1.powf(arg2)
+}
+fn powf(_env: &mut Environment, arg1: f32, arg2: f32) -> f32 {
+    arg1.powf(arg2)
+}
 fn sqrt(_env: &mut Environment, arg: f64) -> f64 {
     arg.sqrt()
 }
@@ -253,6 +259,8 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(exp2(_)),
     export_c_func!(exp2f(_)),
     // Power functions
+    export_c_func!(pow(_, _)),
+    export_c_func!(powf(_, _)),
     export_c_func!(sqrt(_)),
     export_c_func!(sqrtf(_)),
     // Nearest integer functions

@@ -5,10 +5,12 @@
  */
 //! `CGDataProvider.h`
 
+use super::cg_image::{self, CGImageRef, CGImageRelease, CGImageRetain};
 use crate::abi::{CallFromHost, GuestFunction};
 use crate::dyld::FunctionExports;
 use crate::export_c_func;
-use crate::frameworks::core_foundation::cf_data::CFDataRef;
+use crate::frameworks::core_foundation::cf_allocator::kCFAllocatorDefault;
+use crate::frameworks::core_foundation::cf_data::{CFDataCreate, CFDataRef};
 use crate::frameworks::core_foundation::{CFRelease, CFRetain, CFTypeRef};
 use crate::frameworks::foundation::NSUInteger;
 use crate::mem::{ConstVoidPtr, GuestUSize, MutVoidPtr};
@@ -20,12 +22,21 @@ pub type CGDataProviderRef = CFTypeRef;
 /// `(*void)(void *info, const void *data, size_t size)`
 type CGDataProviderReleaseDataCallback = GuestFunction;
 
-pub(super) struct CGDataProviderHostObject {
-    pub(super) data: ConstVoidPtr,
-    pub(super) size: GuestUSize,
-    /// User-provided pointer passed to release callback.
-    info: MutVoidPtr,
-    release_callback: CGDataProviderReleaseDataCallback,
+// A CGDataProvider is supposed to be a collection of callbacks used for
+// accessing data, but at least for now, we instead only support some specific
+// use-cases.
+
+enum CGDataProviderHostObject {
+    DataWithSize {
+        data: ConstVoidPtr,
+        size: GuestUSize,
+        /// User-provided pointer passed to release callback.
+        info: MutVoidPtr,
+        release_callback: CGDataProviderReleaseDataCallback,
+    },
+    // TODO: Maybe we should store image data in guest memory so we don't
+    // need a special variant for this.
+    CGImage(CGImageRef),
 }
 impl HostObject for CGDataProviderHostObject {}
 
@@ -39,24 +50,26 @@ pub const CLASSES: ClassExports = objc_classes! {
 @implementation _touchHLE_CGDataProvider: NSObject
 
 - (())dealloc {
-    let &CGDataProviderHostObject {
-        info,
-        data,
-        size,
-        release_callback,
-    } = env.objc.borrow(this);
-
-    if release_callback.addr_with_thumb_bit() != 0 {
-        let args: (MutVoidPtr, ConstVoidPtr, GuestUSize) = (info, data, size);
-        log_dbg!(
-            "Freeing {:?}, calling release callback {:?} with {:?}",
-            this,
+    match *env.objc.borrow(this) {
+        CGDataProviderHostObject::DataWithSize {
+            info,
+            data,
+            size,
             release_callback,
-            args,
-        );
-        () = release_callback.call_from_host(env, args);
+        } => {
+            if release_callback.addr_with_thumb_bit() != 0 {
+                let args: (MutVoidPtr, ConstVoidPtr, GuestUSize) = (info, data, size);
+                log_dbg!(
+                    "Freeing {:?}, calling release callback {:?} with {:?}",
+                    this,
+                    release_callback,
+                    args,
+                );
+                () = release_callback.call_from_host(env, args);
+            }
+        },
+        CGDataProviderHostObject::CGImage(cg_image) => CGImageRelease(env, cg_image),
     }
-
     env.objc.dealloc_object(this, &mut env.mem)
 }
 
@@ -89,7 +102,7 @@ fn CGDataProviderCreateWithData(
         .get_known_class("_touchHLE_CGDataProvider", &mut env.mem);
     env.objc.alloc_object(
         class,
-        Box::new(CGDataProviderHostObject {
+        Box::new(CGDataProviderHostObject::DataWithSize {
             info,
             data,
             size,
@@ -99,23 +112,54 @@ fn CGDataProviderCreateWithData(
     )
 }
 
+/// This is for use by [super::CGImage::CGImageGetDataProvider].
+pub(super) fn from_cg_image(env: &mut Environment, cg_image: CGImageRef) -> CGDataProviderRef {
+    CGImageRetain(env, cg_image);
+    let class = env
+        .objc
+        .get_known_class("_touchHLE_CGDataProvider", &mut env.mem);
+    env.objc.alloc_object(
+        class,
+        Box::new(CGDataProviderHostObject::CGImage(cg_image)),
+        &mut env.mem,
+    )
+}
+
+/// Generic interface for host code.
+pub(super) fn borrow_bytes(env: &Environment, provider: CGDataProviderRef) -> &[u8] {
+    match *env.objc.borrow(provider) {
+        CGDataProviderHostObject::DataWithSize { data, size, .. } => {
+            env.mem.bytes_at(data.cast(), size)
+        }
+        CGDataProviderHostObject::CGImage(cg_image) => {
+            cg_image::borrow_image(&env.objc, cg_image).pixels()
+        }
+    }
+}
+
 fn CGDataProviderCopyData(env: &mut Environment, provider: CGDataProviderRef) -> CFDataRef {
-    // Hack: CGDataProviderRef is assumed to actually be a CGImageRef.
-    // See CGImageGetDataProvider() implementation.
-    let bytes =
-        crate::frameworks::core_graphics::cg_image::borrow_image(&env.objc, provider).pixels();
+    match *env.objc.borrow(provider) {
+        CGDataProviderHostObject::DataWithSize { data, size, .. } => CFDataCreate(
+            env,
+            kCFAllocatorDefault,
+            data.cast(),
+            size.try_into().unwrap(),
+        ),
+        CGDataProviderHostObject::CGImage(cg_image) => {
+            let bytes = cg_image::borrow_image(&env.objc, cg_image).pixels();
 
-    let len: NSUInteger = bytes.len().try_into().unwrap();
-    let alloc = env.mem.alloc(len);
-    env.mem
-        .bytes_at_mut(alloc.cast(), len)
-        .copy_from_slice(bytes);
+            let len: NSUInteger = bytes.len().try_into().unwrap();
+            let alloc = env.mem.alloc(len);
+            env.mem
+                .bytes_at_mut(alloc.cast(), len)
+                .copy_from_slice(bytes);
 
-    // TODO: it would be cleaner to use CFDataCreateWithBytesNoCopy, but that's
-    // a bit more tricky.
-    let ns_data: id = msg_class![env; NSData alloc];
-    let ns_data: id = msg![env; ns_data initWithBytesNoCopy:alloc length:len];
-    ns_data
+            // TODO: it would be cleaner to use CFDataCreateWithBytesNoCopy, but
+            // that's a bit more tricky.
+            let ns_data: id = msg_class![env; NSData alloc];
+            msg![env; ns_data initWithBytesNoCopy:alloc length:len]
+        }
+    }
 }
 
 pub const FUNCTIONS: FunctionExports = &[

@@ -8,15 +8,29 @@
 //! These are toll-free bridged to `NSData` and `NSMutableData` in Apple's
 //! implementation. Here they are the same types.
 
+use super::cf_allocator::{kCFAllocatorDefault, CFAllocatorRef};
 use super::{CFIndex, CFRange};
 use crate::dyld::FunctionExports;
 use crate::export_c_func;
 use crate::frameworks::foundation::{NSRange, NSUInteger};
 use crate::mem::{ConstPtr, ConstVoidPtr, MutPtr};
-use crate::objc::msg;
+use crate::objc::{id, msg, msg_class};
 use crate::Environment;
 
 pub type CFDataRef = super::CFTypeRef;
+
+pub fn CFDataCreate(
+    env: &mut Environment,
+    allocator: CFAllocatorRef,
+    bytes: ConstPtr<u8>,
+    length: CFIndex,
+) -> CFDataRef {
+    assert!(allocator == kCFAllocatorDefault); // unimplemented
+    let bytes: ConstVoidPtr = bytes.cast();
+    let length: NSUInteger = length.try_into().unwrap();
+    let new: id = msg_class![env; NSData alloc];
+    msg![env; new dataWithBytes:bytes length:length]
+}
 
 fn CFDataGetLength(env: &mut Environment, data: CFDataRef) -> CFIndex {
     let len: NSUInteger = msg![env; data length];
@@ -37,6 +51,7 @@ fn CFDataGetBytes(env: &mut Environment, data: CFDataRef, range: CFRange, buffer
 }
 
 pub const FUNCTIONS: FunctionExports = &[
+    export_c_func!(CFDataCreate(_, _, _)),
     export_c_func!(CFDataGetLength(_)),
     export_c_func!(CFDataGetBytePtr(_)),
     export_c_func!(CFDataGetBytes(_, _, _)),

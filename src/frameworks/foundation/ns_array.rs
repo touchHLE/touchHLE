@@ -158,7 +158,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     let host_object = Box::new(ObjectEnumeratorHostObject {
         iterator: vec.into_iter(),
     });
-    let class = env.objc.get_known_class("ObjectEnumerator", &mut env.mem);
+    let class = env.objc.get_known_class("_touchHLE_NSArray_ObjectEnumerator", &mut env.mem);
     let enumerator = env.objc.alloc_object(class, host_object, &mut env.mem);
     autorelease(env, enumerator)
 }
@@ -175,7 +175,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 @end
 
-@implementation ObjectEnumerator: NSEnumerator
+@implementation _touchHLE_NSArray_ObjectEnumerator: NSEnumerator
 
 - (id)nextObject {
     let host_obj = env.objc.borrow_mut::<ObjectEnumeratorHostObject>(this);

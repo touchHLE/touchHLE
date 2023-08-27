@@ -187,7 +187,8 @@ pub fn read(
     }
 }
 
-pub fn eof(env: &mut Environment, fd: FileDescriptor) -> i32 {
+/// Helper for C `feof()`.
+pub(super) fn eof(env: &mut Environment, fd: FileDescriptor) -> i32 {
     let file = env.libc_state.posix_io.file_for_fd(fd).unwrap();
     if file.reached_eof {
         1

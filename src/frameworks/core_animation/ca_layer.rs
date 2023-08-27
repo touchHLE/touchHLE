@@ -11,7 +11,7 @@ use crate::frameworks::core_graphics::cg_bitmap_context::{
 };
 use crate::frameworks::core_graphics::cg_color_space::CGColorSpaceCreateDeviceRGB;
 use crate::frameworks::core_graphics::cg_context::{
-    CGContextRef, CGContextRelease, CGContextTranslateCTM,
+    CGContextClearRect, CGContextRef, CGContextRelease, CGContextTranslateCTM,
 };
 use crate::frameworks::core_graphics::cg_image::{
     kCGImageAlphaPremultipliedLast, kCGImageByteOrder32Big,
@@ -355,6 +355,8 @@ pub const CLASSES: ClassExports = objc_classes! {
     };
 
     CGContextTranslateCTM(env, cg_context, -origin.x, -origin.y);
+    // TODO: move clearing to UIKit (clearsContextBeforeDrawing)?
+    CGContextClearRect(env, cg_context, CGRect { origin, size });
     () = msg![env; delegate drawLayer:this inContext:cg_context];
     CGContextTranslateCTM(env, cg_context, origin.x, origin.y);
 }

@@ -191,6 +191,24 @@ fn AudioQueueNewOutput(
     0 // success
 }
 
+fn AudioQueueGetParameter(
+    env: &mut Environment,
+    in_aq: AudioQueueRef,
+    in_param_id: AudioQueueParameterID,
+    out_value: MutPtr<AudioQueueParameterValue>,
+) -> OSStatus {
+    return_if_null!(in_aq);
+
+    assert!(in_param_id == kAudioQueueParam_Volume); // others unimplemented
+
+    let state = State::get(&mut env.framework_state);
+    let host_object = state.audio_queues.get_mut(&in_aq).unwrap();
+
+    env.mem.write(out_value, host_object.volume);
+
+    0 // success
+}
+
 fn AudioQueueSetParameter(
     env: &mut Environment,
     in_aq: AudioQueueRef,
@@ -683,6 +701,7 @@ fn AudioQueueDispose(env: &mut Environment, in_aq: AudioQueueRef, in_immediate: 
 
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(AudioQueueNewOutput(_, _, _, _, _, _, _)),
+    export_c_func!(AudioQueueGetParameter(_, _, _)),
     export_c_func!(AudioQueueSetParameter(_, _, _)),
     export_c_func!(AudioQueueAllocateBuffer(_, _, _)),
     export_c_func!(AudioQueueEnqueueBuffer(_, _, _, _)),

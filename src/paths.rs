@@ -47,7 +47,6 @@ impl ResourceFile {
         Ok(Self {
             // On Android, these resources are included as "assets" within the
             // APK. We access them via SDL2's wrapper of Android's assets API.
-            // TODO: Make the license information accessible to the user!
             #[cfg(target_os = "android")]
             file: sdl2::rwops::RWops::from_file(path, "r")?,
             // On other OSes, resources are ordinary files in the current
@@ -65,6 +64,10 @@ impl std::fmt::Debug for ResourceFile {
         write!(f, "ResourceFile")
     }
 }
+
+/// Whether various resources are in user-accessible files. If they aren't,
+/// touchHLE has to be able to display their license terms.
+pub const RESOURCES_ARE_EXTERNAL_FILES: bool = cfg!(not(target_os = "android"));
 
 /// Name of the directory where the user can put apps if they want them to
 /// appear in the app picker.

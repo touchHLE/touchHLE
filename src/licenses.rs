@@ -9,14 +9,6 @@ const MAIN_COPYRIGHT: &str = "
 touchHLE © 2023 hikari_no_yume and other contributors.
 ";
 
-const MAIN_CAVEAT: &str = "
-The following authorship, copyright and license information relates to this
-touchHLE executable. Please note that different licensing terms apply to source
-files and to the bundled dynamic libraries (in touchHLE_dylibs/) and fonts (in
-touchHLE_fonts/). Please consult the respective files/directories for more
-information.
-";
-
 const MAIN_LICENSE: &str = "
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -134,35 +126,136 @@ from the library minimp3, which is licensed under the Creative Commons CC0 1.0
 Universal Public Domain Dedication.
 ";
 
-pub fn divider() {
-    echo!("---");
+// When resource files are bundled with touchHLE in such a way that the user can
+// read their license files directly, use this caveat.
+
+const EXTERNAL_FILES_CAVEAT: &str = "
+The following authorship, copyright and license information relates to this
+touchHLE executable. Please note that different licensing terms apply to source
+files and to the bundled dynamic libraries (in touchHLE_dylibs/) and fonts (in
+touchHLE_fonts/). Please consult the respective files/directories for more
+information.
+";
+
+// When resource files are bundled with touchHLE in such a way that only
+// touchHLE can read the license file, use these notices.
+
+// Apple is mentioned because the GPLv2 allows repeating the original source
+// code offer when non-commercially redistributing binaries.
+const INTERNAL_DYLIBS_DESCRIPTION: &str = "
+This distribution of touchHLE includes binaries for the libgcc and libstdc++
+libraries from the Free Software Foundation, as originally distributed by Apple:
+";
+
+const INTERNAL_LIBERATION_FONTS_DESCRIPTION: &str = "
+This distribution of touchHLE includes Liberation Sans fonts, available under
+the following license:
+";
+
+const INTERNAL_NOTO_FONTS_DESCRIPTION: &str = "
+This distribution of touchHLE includes Noto Sans CJK fonts, available under the
+following license:
+";
+
+fn read_bundled_file(path: &str) -> String {
+    use std::io::Read;
+    let mut res = String::new();
+    crate::paths::ResourceFile::open(path)
+        .unwrap()
+        .get()
+        .read_to_string(&mut res)
+        .unwrap();
+    res
 }
 
-pub fn print() {
-    echo!("{}", MAIN_CAVEAT);
-    divider();
-    echo!("{}", MAIN_COPYRIGHT);
-    divider();
-    echo!("{}", MAIN_LICENSE);
-    divider();
-    echo!("{}", RUST_DESCRIPTION);
-    echo!("{}", RUST_DEPENDENCIES);
-    divider();
-    echo!("{}", DYNARMIC_DESCRIPTION);
-    echo!("{}", DYNARMIC_LICENSE);
-    divider();
-    echo!("{}", DYNARMIC_BOOST_DESCRIPTION);
-    echo!("{}", DYNARMIC_BOOST_LICENSE);
-    divider();
-    echo!("{}", SDL2_DESCRIPTION);
-    echo!("{}", SDL2_LICENSE);
-    divider();
-    echo!("{}", OPENAL_SOFT);
-    divider();
-    echo!("{}", STB_IMAGE);
-    divider();
-    echo!("{}", PVRTD_DESCRIPTION);
-    echo!("{}", PVRTD_LICENSE.trim_end());
-    divider();
-    echo!("{}", DR_MP3);
+fn divider(out: &mut String) -> Result<(), std::fmt::Error> {
+    use std::fmt::Write;
+    writeln!(out, "---")
+}
+
+fn print(out: &mut String, resources_are_external_files: bool) -> Result<(), std::fmt::Error> {
+    use std::fmt::Write;
+    if resources_are_external_files {
+        writeln!(out, "{}", EXTERNAL_FILES_CAVEAT)?;
+        divider(out)?;
+    }
+    writeln!(out, "{}", MAIN_COPYRIGHT)?;
+    divider(out)?;
+    writeln!(out, "{}", MAIN_LICENSE)?;
+    divider(out)?;
+    writeln!(out, "{}", RUST_DESCRIPTION)?;
+    writeln!(out, "{}", RUST_DEPENDENCIES)?;
+    divider(out)?;
+    writeln!(out, "{}", DYNARMIC_DESCRIPTION)?;
+    writeln!(out, "{}", DYNARMIC_LICENSE)?;
+    divider(out)?;
+    writeln!(out, "{}", DYNARMIC_BOOST_DESCRIPTION)?;
+    writeln!(out, "{}", DYNARMIC_BOOST_LICENSE)?;
+    divider(out)?;
+    writeln!(out, "{}", SDL2_DESCRIPTION)?;
+    writeln!(out, "{}", SDL2_LICENSE)?;
+    divider(out)?;
+    writeln!(out, "{}", OPENAL_SOFT)?;
+    divider(out)?;
+    writeln!(out, "{}", STB_IMAGE)?;
+    divider(out)?;
+    writeln!(out, "{}", PVRTD_DESCRIPTION)?;
+    writeln!(out, "{}", PVRTD_LICENSE.trim_end())?;
+    divider(out)?;
+    writeln!(out, "{}", DR_MP3)?;
+    if !resources_are_external_files {
+        divider(out)?;
+        writeln!(out, "{}", INTERNAL_DYLIBS_DESCRIPTION)?;
+        writeln!(
+            out,
+            "{}.",
+            read_bundled_file(&format!("{}/README.md", crate::paths::DYLIBS_DIR))
+                // Skip preamble
+                .split_once("## Original Apple license acknowledgements")
+                .unwrap()
+                .1
+                // Don't include the whole GPL
+                .split_once("; a copy of the GPL is included below.")
+                .unwrap()
+                .0
+                // Remove one level of Markdown quoting
+                .replace("\n> ", "\n")
+                .trim_start()
+        )?;
+        divider(out)?;
+        writeln!(out, "{}", INTERNAL_LIBERATION_FONTS_DESCRIPTION)?;
+        writeln!(
+            out,
+            "{}",
+            read_bundled_file(&format!("{}/LICENSE.liberation", crate::paths::FONTS_DIR))
+        )?;
+        divider(out)?;
+        writeln!(out, "{}", INTERNAL_NOTO_FONTS_DESCRIPTION)?;
+        writeln!(
+            out,
+            "{}",
+            read_bundled_file(&format!("{}/LICENSE.noto", crate::paths::FONTS_DIR))
+        )?;
+    }
+    Ok(())
+}
+
+pub fn get_text() -> String {
+    let mut string = String::new();
+    print(&mut string, crate::paths::RESOURCES_ARE_EXTERNAL_FILES).unwrap();
+    string
+}
+
+#[cfg(test)]
+#[test]
+fn test_external_files_license_text() {
+    // The code above makes assumptions about the content of external files that
+    // aren't checked at build time, and the runtime check only happens when you
+    // view the license text on Android! This seems likely to silently break,
+    // so it's a good candidate for a unit test.
+    print(
+        &mut String::new(),
+        /* resources_are_external_files: */ true,
+    )
+    .unwrap();
 }

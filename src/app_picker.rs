@@ -1,4 +1,7 @@
 //! App picker GUI.
+//!
+//! This also includes a license text viewer. The license text viewer is needed
+//! on Android, where the command-line way to view license text doesn't exist.
 
 use crate::bundle::Bundle;
 use crate::frameworks::core_graphics::{cg_image, CGFloat, CGPoint, CGRect, CGSize};
@@ -13,7 +16,7 @@ use crate::frameworks::uikit::ui_view::ui_control::{
 };
 use crate::fs::BundleData;
 use crate::image::Image;
-use crate::objc::{id, msg, msg_class, nil, objc_classes, ClassExports, HostObject};
+use crate::objc::{id, msg, msg_class, nil, objc_classes, release, ClassExports, HostObject};
 use crate::options::Options;
 use crate::paths;
 use crate::Environment;
@@ -104,6 +107,10 @@ fn enumerate_apps(apps_dir: &Path) -> Result<Vec<AppInfo>, std::io::Error> {
 #[derive(Default)]
 struct AppPickerDelegateHostObject {
     app_tapped: id,
+    copyright_show: bool,
+    copyright_hide: bool,
+    copyright_prev: bool,
+    copyright_next: bool,
 }
 impl HostObject for AppPickerDelegateHostObject {}
 
@@ -122,6 +129,19 @@ pub const CLASSES: ClassExports = objc_classes! {
     // used within the app picker, so it can't be abused. :)
     let host_obj = env.objc.borrow_mut::<AppPickerDelegateHostObject>(this);
     host_obj.app_tapped = sender;
+}
+
+- (())copyrightInfoShow {
+    env.objc.borrow_mut::<AppPickerDelegateHostObject>(this).copyright_show = true;
+}
+- (())copyrightInfoHide {
+    env.objc.borrow_mut::<AppPickerDelegateHostObject>(this).copyright_hide = true;
+}
+- (())copyrightInfoPrevPage {
+    env.objc.borrow_mut::<AppPickerDelegateHostObject>(this).copyright_prev = true;
+}
+- (())copyrightInfoNextPage {
+    env.objc.borrow_mut::<AppPickerDelegateHostObject>(this).copyright_next = true;
 }
 
 - (())visitWebsite {
@@ -145,8 +165,8 @@ fn show_app_picker_gui(
     let mut environment = Environment::new_without_app(options)?;
     let env = &mut environment;
 
-    // Note that no objects are ever released in this code, because they don't
-    // need to be: the entire Environment is thrown away at the end.
+    // Note that objects are generally not released in this code, because they
+    // don't need to be: the entire Environment is thrown away at the end.
 
     // Bypassing UIApplicationMain!
     let ui_application: id = msg_class![env; UIApplication new];
@@ -203,10 +223,18 @@ fn show_app_picker_gui(
         env,
         delegate,
         main_view,
-        app_frame,
+        app_frame.size,
         divider,
-        &[("Visit touchHLE.org", "visitWebsite")],
+        &[
+            ("Copyright info", "copyrightInfoShow"),
+            ("touchHLE.org", "visitWebsite"),
+        ],
+        None,
     );
+
+    let copyright_info_text = crate::licenses::get_text();
+    let mut copyright_info_stuff = setup_copyright_info(env, delegate, main_view, app_frame);
+    let mut copyright_info_page_idx = 0;
 
     let main_run_loop: id = msg_class![env; NSRunLoop mainRunLoop];
     // If an app is picked, this loop returns. If the user quits touchHLE, the
@@ -219,6 +247,36 @@ fn show_app_picker_gui(
             echo!("Picked: {}", app_path.display());
             // Return the environment so some parts of it can be salvaged.
             return Ok((app_path, environment));
+        }
+        if std::mem::take(&mut host_obj.copyright_show) {
+            copyright_info_page_idx = 0;
+            change_copyright_page(
+                env,
+                &mut copyright_info_stuff,
+                &copyright_info_text,
+                copyright_info_page_idx,
+            );
+            () = msg![env; (copyright_info_stuff.main_view) setHidden:false];
+        } else if std::mem::take(&mut host_obj.copyright_hide) {
+            () = msg![env; (copyright_info_stuff.main_view) setHidden:true];
+        } else if std::mem::take(&mut host_obj.copyright_prev) && copyright_info_page_idx != 0 {
+            copyright_info_page_idx -= 1;
+            change_copyright_page(
+                env,
+                &mut copyright_info_stuff,
+                &copyright_info_text,
+                copyright_info_page_idx,
+            );
+        } else if std::mem::take(&mut host_obj.copyright_next)
+            && Some(copyright_info_page_idx) != copyright_info_stuff.last_page_idx
+        {
+            copyright_info_page_idx += 1;
+            change_copyright_page(
+                env,
+                &mut copyright_info_stuff,
+                &copyright_info_text,
+                copyright_info_page_idx,
+            );
         }
     }
 }
@@ -328,38 +386,244 @@ fn make_icon_grid(
 fn make_button_row(
     env: &mut Environment,
     delegate: id,
-    main_view: id,
-    app_frame: CGRect,
+    super_view: id,
+    super_view_size: CGSize,
     divider: CGFloat,
     buttons: &[(&'static str, &'static str)],
-) {
-    let buttons_row_center = (app_frame.size.height + divider) / 2.0;
+    font_size: Option<CGFloat>,
+) -> Vec<id> {
+    let buttons_row_center = (super_view_size.height + divider) / 2.0;
+    let margin = 10.0;
 
-    // TODO: more buttons
-    let &[(title_text, selector)] = buttons else {
-        unreachable!();
-    };
-
-    let button: id = msg_class![env; UIButton buttonWithType:UIButtonTypeRoundedRect];
     let button_size = CGSize {
-        width: app_frame.size.width - 20.0,
+        width: (super_view_size.width - margin) / (buttons.len() as CGFloat) - margin,
         height: 30.0,
     };
-    let button_frame = CGRect {
+    let mut button_frame = CGRect {
         origin: CGPoint {
-            x: (app_frame.size.width - button_size.width) / 2.0,
+            x: margin,
             y: buttons_row_center - button_size.height / 2.0,
         },
         size: button_size,
     };
-    let text = ns_string::get_static_str(env, title_text);
-    () = msg![env; button setTitle:text forState:UIControlStateNormal];
-    () = msg![env; button setFrame:button_frame];
-    // FIXME: manually calling layoutSubviews shouldn't be needed
-    () = msg![env; button layoutSubviews];
-    let selector = env.objc.lookup_selector(selector).unwrap();
-    () = msg![env; button addTarget:delegate
-                             action:selector
-                   forControlEvents:UIControlEventTouchUpInside];
-    () = msg![env; main_view addSubview:button];
+
+    let mut ui_buttons = Vec::new();
+    for (title_text, selector) in buttons {
+        let button: id = msg_class![env; UIButton buttonWithType:UIButtonTypeRoundedRect];
+        let text = ns_string::get_static_str(env, title_text);
+        () = msg![env; button setTitle:text forState:UIControlStateNormal];
+        () = msg![env; button setFrame:button_frame];
+        // FIXME: manually calling layoutSubviews shouldn't be needed?
+        () = msg![env; button layoutSubviews];
+
+        if let Some(font_size) = font_size {
+            let label: id = msg![env; button titleLabel];
+            let font: id = msg_class![env; UIFont systemFontOfSize:font_size];
+            () = msg![env; label setFont:font];
+        }
+
+        let selector = env.objc.lookup_selector(selector).unwrap();
+        () = msg![env; button addTarget:delegate
+                                 action:selector
+                       forControlEvents:UIControlEventTouchUpInside];
+        () = msg![env; super_view addSubview:button];
+
+        button_frame.origin.x += button_size.width + margin;
+        ui_buttons.push(button);
+    }
+    ui_buttons
+}
+
+struct CopyrightInfoStuff {
+    main_view: id,
+    text_frame: CGRect,
+    text_label: id,
+    font: id,
+    pages: Vec<(std::ops::Range<usize>, CGFloat)>,
+    last_page_idx: Option<usize>,
+    prev_page_button: id,
+    next_page_button: id,
+}
+
+fn setup_copyright_info(
+    env: &mut Environment,
+    delegate: id,
+    super_view: id,
+    app_frame: CGRect,
+) -> CopyrightInfoStuff {
+    let main_frame = CGRect {
+        origin: CGPoint { x: 0.0, y: 0.0 },
+        size: app_frame.size,
+    };
+
+    let divider = main_frame.size.height - 40.0;
+
+    // Container for all the other stuff
+
+    let main_view: id = msg_class![env; UIView alloc];
+    let main_view: id = msg![env; main_view initWithFrame:main_frame];
+    // TODO: Isn't white the default?
+    let bg_color: id = msg_class![env; UIColor whiteColor];
+    () = msg![env; main_view setBackgroundColor:bg_color];
+    // This main_view is hidden until the copyright info button is tapped.
+    () = msg![env; main_view setHidden:true];
+    () = msg![env; super_view addSubview:main_view];
+
+    // UILabel that will display part of the copyright text
+
+    let padding = 10.0;
+    let text_frame = CGRect {
+        origin: CGPoint {
+            x: padding,
+            y: padding,
+        },
+        size: CGSize {
+            width: app_frame.size.width - padding * 2.0,
+            height: divider - padding * 2.0,
+        },
+    };
+
+    let text_label: id = msg_class![env; UILabel alloc];
+    let text_label: id = msg![env; text_label initWithFrame:text_frame];
+    () = msg![env; text_label setNumberOfLines:0]; // unlimited
+    let text_color: id = msg_class![env; UIColor blackColor];
+    () = msg![env; text_label setTextColor:text_color];
+    let bg_color: id = msg_class![env; UIColor clearColor];
+    () = msg![env; text_label setBackgroundColor:bg_color];
+    let font_size: CGFloat = 16.0;
+    let font: id = msg_class![env; UIFont systemFontOfSize:font_size];
+    () = msg![env; text_label setFont:font];
+    () = msg![env; main_view addSubview:text_label];
+
+    // Navigation
+
+    let buttons = make_button_row(
+        env,
+        delegate,
+        main_view,
+        main_frame.size,
+        divider,
+        &[
+            ("↑", "copyrightInfoPrevPage"),
+            ("↓", "copyrightInfoNextPage"),
+            ("×", "copyrightInfoHide"),
+        ],
+        Some(30.0),
+    );
+
+    CopyrightInfoStuff {
+        main_view,
+        text_frame,
+        text_label,
+        font,
+        pages: Vec::new(),
+        last_page_idx: None,
+        prev_page_button: buttons[0],
+        next_page_button: buttons[1],
+    }
+}
+
+fn change_copyright_page(
+    env: &mut Environment,
+    copyright_info_stuff: &mut CopyrightInfoStuff,
+    copyright_info_text: &str,
+    page_idx: usize,
+) {
+    // TODO: Eventually this should be ripped out and replaced with a scrolling
+    // UITextView, once that's implemented.
+
+    let &mut CopyrightInfoStuff {
+        text_frame,
+        text_label,
+        font,
+        ref mut pages,
+        ref mut last_page_idx,
+        prev_page_button,
+        next_page_button,
+        ..
+    } = copyright_info_stuff;
+
+    // Lazily lay out pages of text as needed.
+
+    if page_idx == pages.len() {
+        let mut page_start = pages.last().map_or(0, |page| page.0.end);
+        while copyright_info_text[page_start..].starts_with([' ', '\n', '\r']) {
+            page_start += 1;
+        }
+        let mut page_height = 0.0;
+        let page_end = loop {
+            let mut line_start = page_start;
+            while line_start < copyright_info_text.len() {
+                let is_first_line = line_start == page_start;
+
+                let line_end = if let Some(i) = copyright_info_text[line_start..].find('\n') {
+                    line_start + i + 1
+                } else {
+                    copyright_info_text.len()
+                };
+
+                let line = &copyright_info_text[line_start..line_end];
+
+                // Force pagination before headings (in Dynarmic's license text)
+                if !is_first_line && line.starts_with("###") {
+                    break;
+                }
+
+                let line_temp = ns_string::from_rust_string(env, line.to_string());
+                let line_size: CGSize = msg![env; line_temp sizeWithFont:font
+                                                       constrainedToSize:(text_frame.size)];
+                // Avoid accumulation of old line strings.
+                release(env, line_temp);
+
+                if page_height + line_size.height > text_frame.size.height {
+                    break;
+                }
+
+                page_height += line_size.height;
+                line_start = line_end;
+
+                // Force pagination after dividers
+                if !is_first_line && line.starts_with("---") {
+                    break;
+                }
+            }
+            let page_end = line_start;
+            assert!(page_start != page_end);
+
+            // Avoid entirely blank pages
+            if copyright_info_text[page_start..page_end].trim() == "" {
+                page_start = page_end;
+            } else {
+                break page_end;
+            }
+        };
+        assert!(page_start != page_end);
+        pages.push((page_start..page_end, page_height));
+        if page_end == copyright_info_text.len() {
+            *last_page_idx = Some(page_idx);
+        }
+    }
+
+    // Actually display the page
+
+    let (page, page_height) = pages[page_idx].clone();
+    let page = &copyright_info_text[page];
+
+    let page: id = ns_string::from_rust_string(env, page.to_string());
+    () = msg![env; text_label setText:page];
+    // Avoid accumulation of old page strings.
+    release(env, page);
+
+    // UILabel always vertically centers text. Work around that by resizing it.
+    let label_frame = CGRect {
+        origin: text_frame.origin,
+        size: CGSize {
+            width: text_frame.size.width,
+            height: page_height,
+        },
+    };
+    () = msg![env; text_label setFrame:label_frame];
+
+    () = msg![env; prev_page_button setHidden:(page_idx == 0)];
+    () = msg![env; next_page_button setHidden:(Some(page_idx) == *last_page_idx)];
 }

@@ -19,7 +19,7 @@ These are impractical to reimplement, but they are Free Software.
 
 > **Free Software Foundation** ( libgcc, libstdc++ )
 > 
-> Copyright &copy; 1988-2007 Free Software Foundation, Inc. (FSF).
+> Copyright © 1988-2007 Free Software Foundation, Inc. (FSF).
 > 
 > Parts of this software include the libgcc and libstdc++ libraries owned by the FSF. You may obtain a complete machine-readable copy of the source code for the FSF software under the terms of GNU General Public License (GPL) with libgcc exception and GPL plus libstdc++ exception, without charge except for the cost of media, shipping, and handling, upon written request to Apple. The FSF software is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GPL for more details; a copy of the GPL is included below.
 > 

@@ -137,7 +137,7 @@ pub fn main<T: Iterator<Item = String>>(mut args: T) -> Result<(), String> {
             echo!("{}", options::DOCUMENTATION);
             return Ok(());
         } else if arg == "--copyright" {
-            licenses::print();
+            echo!("{}", licenses::get_text());
             return Ok(());
         } else if arg == "--info" {
             just_info = true;

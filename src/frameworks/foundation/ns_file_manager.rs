@@ -76,7 +76,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     } else {
         let new: id = msg![env; this new];
         env.framework_state.foundation.ns_file_manager.default_manager = Some(new);
-        autorelease(env, new)
+        new
     }
 }
 

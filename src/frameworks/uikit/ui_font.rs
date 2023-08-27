@@ -215,7 +215,7 @@ pub fn draw_at_point(
         |(x, y), coverage| {
             let (r, g, b, a) = fill_color;
             let (r, g, b, a) = (r * coverage, g * coverage, b * coverage, a * coverage);
-            drawer.put_pixel((x, y), (r, g, b, a));
+            drawer.put_pixel((x, y), (r, g, b, a), /* blend: */ true);
         },
     );
 
@@ -267,7 +267,7 @@ pub fn draw_in_rect(
         |(x, y), coverage| {
             let (r, g, b, a) = fill_color;
             let (r, g, b, a) = (r * coverage, g * coverage, b * coverage, a * coverage);
-            drawer.put_pixel((x, y), (r, g, b, a));
+            drawer.put_pixel((x, y), (r, g, b, a), /* blend: */ true);
         },
     );
 

@@ -235,6 +235,7 @@ fn put_pixel(
     pixels: &mut [u8],
     coords: (i32, i32),
     pixel: (CGFloat, CGFloat, CGFloat, CGFloat),
+    blend: bool,
 ) {
     let (x, y) = coords;
     if x < 0 || y < 0 {
@@ -256,13 +257,17 @@ fn put_pixel(
 
     // Blending like this must be done in linear RGB, so this must come before
     // gamma encoding.
-    let (r, g, b, a) = match data.alpha_info {
-        kCGImageAlphaLast | kCGImageAlphaFirst => blend_straight(bg_pixel, pixel),
-        kCGImageAlphaPremultipliedLast | kCGImageAlphaPremultipliedFirst => {
-            blend_premultiplied(bg_pixel, pixel)
+    let (r, g, b, a) = if blend {
+        match data.alpha_info {
+            kCGImageAlphaLast | kCGImageAlphaFirst => blend_straight(bg_pixel, pixel),
+            kCGImageAlphaPremultipliedLast | kCGImageAlphaPremultipliedFirst => {
+                blend_premultiplied(bg_pixel, pixel)
+            }
+            kCGImageAlphaOnly => (pixel.0, pixel.1, pixel.2, blend_alpha(bg_pixel.3, pixel.3)),
+            _ => pixel,
         }
-        kCGImageAlphaOnly => (pixel.0, pixel.1, pixel.2, blend_alpha(bg_pixel.3, pixel.3)),
-        _ => pixel,
+    } else {
+        pixel
     };
 
     // Alpha is always linear.
@@ -362,8 +367,13 @@ impl CGBitmapContextDrawer<'_> {
     }
     /// Set the pixel at `coords` to `color`. `color` must be linear RGB, not
     /// sRGB! Note that `coords` are absolute: you must do translation yourself.
-    pub fn put_pixel(&mut self, coords: (i32, i32), color: (CGFloat, CGFloat, CGFloat, CGFloat)) {
-        put_pixel(&self.bitmap_info, self.pixels, coords, color)
+    pub fn put_pixel(
+        &mut self,
+        coords: (i32, i32),
+        color: (CGFloat, CGFloat, CGFloat, CGFloat),
+        blend: bool,
+    ) {
+        put_pixel(&self.bitmap_info, self.pixels, coords, color, blend)
     }
 }
 
@@ -391,7 +401,7 @@ pub(super) fn fill_rect(env: &mut Environment, context: CGContextRef, rect: CGRe
     };
     for y in y_start..y_end {
         for x in x_start..x_end {
-            drawer.put_pixel((x as _, y as _), color)
+            drawer.put_pixel((x as _, y as _), color, /* blend: */ !clear)
         }
     }
 }
@@ -439,7 +449,7 @@ pub(super) fn draw_image(
             let texel_y = (image_height as f32 * (1.0 - texel_y)) as i32;
             // FIXME: might need alpha format conversion here
             if let Some(color) = image.get_pixel((texel_x, texel_y)) {
-                drawer.put_pixel((x, y), color)
+                drawer.put_pixel((x, y), color, /* blend: */ true)
             }
         }
     }

@@ -322,19 +322,18 @@ pub const CLASSES: ClassExports = objc_classes! {
     let int_width = size.width.round() as GuestUSize;
     let int_height = size.height.round() as GuestUSize;
 
-    let need_new_context = if let Some(cg_context) = cg_context {
-        if CGBitmapContextGetWidth(env, cg_context) == int_width &&
-           CGBitmapContextGetHeight(env, cg_context) == int_height {
-            true
-        } else {
-            CGContextRelease(env, cg_context);
-            false
-        }
-    } else {
-        true
-    };
-
+    let need_new_context = cg_context.map_or(
+        true,
+        |existing| (
+            CGBitmapContextGetWidth(env, existing) != int_width ||
+            CGBitmapContextGetHeight(env, existing) != int_height
+        )
+    );
     let cg_context = if need_new_context {
+        if let Some(old_context) = cg_context {
+            CGContextRelease(env, old_context);
+        }
+
         // Make sure this is in sync with the code in composition.rs that
         // uploads the texture!
         // TODO: is this the right color space?

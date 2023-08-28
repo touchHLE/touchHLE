@@ -109,8 +109,28 @@ extern "C" {
     pub fn alDistanceModel(value: ALenum);
 
     pub fn alListenerf(param: ALenum, value: ALfloat);
-    pub fn alListenerfv(param: ALenum, values: *const ALfloat);
     pub fn alListener3f(param: ALenum, value1: ALfloat, value2: ALfloat, value3: ALfloat);
+    pub fn alListenerfv(param: ALenum, values: *const ALfloat);
+    pub fn alListeneri(param: ALenum, value: ALint);
+    pub fn alListener3i(param: ALenum, value1: ALint, value2: ALint, value3: ALint);
+    pub fn alListeneriv(param: ALenum, values: *const ALint);
+
+    pub fn alGetListenerf(param: ALenum, value: *mut ALfloat);
+    pub fn alGetListener3f(
+        param: ALenum,
+        value1: *mut ALfloat,
+        value2: *mut ALfloat,
+        value3: *mut ALfloat,
+    );
+    pub fn alGetListenerfv(param: ALenum, values: *mut ALfloat);
+    pub fn alGetListeneri(param: ALenum, value: *mut ALint);
+    pub fn alGetListener3i(
+        param: ALenum,
+        value1: *mut ALint,
+        value2: *mut ALint,
+        value3: *mut ALint,
+    );
+    pub fn alGetListeneriv(param: ALenum, values: *mut ALint);
 
     pub fn alGenSources(n: ALsizei, sources: *mut ALuint);
     pub fn alDeleteSources(n: ALsizei, sources: *const ALuint);

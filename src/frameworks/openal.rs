@@ -195,14 +195,80 @@ fn alDistanceModel(_env: &mut Environment, value: ALenum) {
 fn alListenerf(_env: &mut Environment, param: ALenum, value: ALfloat) {
     unsafe { al::alListenerf(param, value) };
 }
+fn alListenerfv(env: &mut Environment, param: ALenum, values: ConstPtr<ALfloat>) {
+    // we assume that at least 1 parameter should be passed
+    let values = env.mem.ptr_at(values, 1);
+    unsafe { al::alListenerfv(param, values) };
+}
 fn alListener3f(
     _env: &mut Environment,
+
     param: ALenum,
     value1: ALfloat,
     value2: ALfloat,
     value3: ALfloat,
 ) {
     unsafe { al::alListener3f(param, value1, value2, value3) };
+}
+fn alListeneri(_env: &mut Environment, param: ALenum, value: ALint) {
+    unsafe { al::alListeneri(param, value) };
+}
+fn alListener3i(
+    _env: &mut Environment,
+
+    param: ALenum,
+    value1: ALint,
+    value2: ALint,
+    value3: ALint,
+) {
+    unsafe { al::alListener3i(param, value1, value2, value3) };
+}
+fn alListeneriv(env: &mut Environment, param: ALenum, values: ConstPtr<ALint>) {
+    let values = env.mem.ptr_at(values, 3); // upper bound
+    unsafe { al::alListeneriv(param, values) };
+}
+
+fn alGetListenerf(env: &mut Environment, param: ALenum, value: MutPtr<ALfloat>) {
+    unsafe { al::alGetListenerf(param, env.mem.ptr_at_mut(value, 1)) };
+}
+fn alGetListener3f(
+    env: &mut Environment,
+
+    param: ALenum,
+    value1: MutPtr<ALfloat>,
+    value2: MutPtr<ALfloat>,
+    value3: MutPtr<ALfloat>,
+) {
+    let mut values = [0.0; 3];
+    unsafe { al::alGetListener3f(param, &mut values[0], &mut values[1], &mut values[2]) };
+    env.mem.write(value1, values[0]);
+    env.mem.write(value2, values[1]);
+    env.mem.write(value3, values[2]);
+}
+fn alGetListenerfv(env: &mut Environment, param: ALenum, values: MutPtr<ALfloat>) {
+    let values = env.mem.ptr_at_mut(values, 3); // upper bound
+    unsafe { al::alGetListenerfv(param, values) };
+}
+fn alGetListeneri(env: &mut Environment, param: ALenum, value: MutPtr<ALint>) {
+    unsafe { al::alGetListeneri(param, env.mem.ptr_at_mut(value, 1)) };
+}
+fn alGetListener3i(
+    env: &mut Environment,
+
+    param: ALenum,
+    value1: MutPtr<ALint>,
+    value2: MutPtr<ALint>,
+    value3: MutPtr<ALint>,
+) {
+    let mut values = [0; 3];
+    unsafe { al::alGetListener3i(param, &mut values[0], &mut values[1], &mut values[2]) };
+    env.mem.write(value1, values[0]);
+    env.mem.write(value2, values[1]);
+    env.mem.write(value3, values[2]);
+}
+fn alGetListeneriv(env: &mut Environment, param: ALenum, values: MutPtr<ALint>) {
+    let values = env.mem.ptr_at_mut(values, 3); // upper bound
+    unsafe { al::alGetListeneriv(param, values) };
 }
 
 fn alGenSources(env: &mut Environment, n: ALsizei, sources: MutPtr<ALuint>) {
@@ -421,12 +487,6 @@ fn alcMacOSXMixerOutputRate(_env: &mut Environment, value: ALdouble) {
     log!("App wants to set mixer output sample rate to {} Hz", value);
 }
 
-fn alListenerfv(env: &mut Environment, param: ALenum, values: ConstPtr<ALfloat>) {
-    // we assume that at least 1 parameter should be passed
-    let values = env.mem.ptr_at(values, 1);
-    unsafe { al::alListenerfv(param, values) };
-}
-
 fn alDopplerFactor(_env: &mut Environment, value: ALfloat) {
     unsafe { al::alDopplerFactor(value) };
 }
@@ -540,27 +600,6 @@ fn alIsExtensionPresent(_env: &mut Environment, _extName: ConstPtr<u8>) -> ALboo
 fn alIsEnabled(_env: &mut Environment, _capability: ALenum) -> ALboolean {
     todo!();
 }
-fn alListeneri(_env: &mut Environment, _param: ALenum, _value: ALint) {
-    todo!();
-}
-fn alGetListenerf(_env: &mut Environment, _param: ALenum, _value: MutPtr<ALfloat>) {
-    todo!();
-}
-fn alGetListener3f(
-    _env: &mut Environment,
-    _param: ALenum,
-    _value1: MutPtr<ALfloat>,
-    _value2: MutPtr<ALfloat>,
-    _value3: MutPtr<ALfloat>,
-) {
-    todo!();
-}
-fn alGetListenerfv(_env: &mut Environment, _param: ALenum, _values: MutPtr<ALfloat>) {
-    todo!();
-}
-fn alGetListeneri(_env: &mut Environment, _param: ALenum, _value: MutPtr<ALint>) {
-    todo!();
-}
 fn alIsSource(_env: &mut Environment, _source: ALuint) -> ALboolean {
     todo!();
 }
@@ -592,6 +631,16 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(alDistanceModel(_)),
     export_c_func!(alListenerf(_, _)),
     export_c_func!(alListener3f(_, _, _, _)),
+    export_c_func!(alListenerfv(_, _)),
+    export_c_func!(alListeneri(_, _)),
+    export_c_func!(alListener3i(_, _, _, _)),
+    export_c_func!(alListeneriv(_, _)),
+    export_c_func!(alGetListenerf(_, _)),
+    export_c_func!(alGetListener3f(_, _, _, _)),
+    export_c_func!(alGetListenerfv(_, _)),
+    export_c_func!(alGetListeneri(_, _)),
+    export_c_func!(alGetListener3i(_, _, _, _)),
+    export_c_func!(alGetListeneriv(_, _)),
     export_c_func!(alGenSources(_, _)),
     export_c_func!(alDeleteSources(_, _)),
     export_c_func!(alSourcef(_, _, _)),

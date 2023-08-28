@@ -433,7 +433,7 @@ impl Fs {
         const FAKE_UUID: &str = "00000000-0000-0000-0000-000000000000";
 
         let home_directory = GuestPathBuf::from(format!("/User/Applications/{}", FAKE_UUID));
-        let current_directory = home_directory.clone();
+        let current_directory = GuestPathBuf::from("/".to_string());
 
         let bundle_guest_path = home_directory.join(&bundle_dir_name);
 

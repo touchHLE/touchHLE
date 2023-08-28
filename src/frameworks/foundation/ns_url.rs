@@ -45,6 +45,19 @@ pub const CLASSES: ClassExports = objc_classes! {
     autorelease(env, new)
 }
 
++ (id)fileURLWithPath:(id)path { // NSString*
+    let new: id = msg![env; this alloc];
+    let new: id = msg![env; new initFileURLWithPath:path];
+    autorelease(env, new)
+}
+
++ (id)fileURLWithPath:(id)path // NSString*
+          isDirectory:(bool)is_dir {
+    let new: id = msg![env; this alloc];
+    let new: id = msg![env; new initFileURLWithPath:path isDirectory:is_dir];
+    autorelease(env, new)
+}
+
 - (())dealloc {
     match *env.objc.borrow(this) {
         NSURLHostObject::FileURL { ns_string } => release(env, ns_string),

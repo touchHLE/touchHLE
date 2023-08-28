@@ -119,6 +119,20 @@ fn alcMakeContextCurrent(env: &mut Environment, context: MutPtr<GuestALCcontext>
     res != al::ALC_FALSE
 }
 
+fn alcGetCurrentContext(env: &mut Environment) -> MutPtr<GuestALCcontext> {
+    let host_context = unsafe { al::alcGetCurrentContext() };
+    if host_context.is_null() {
+        Ptr::null()
+    } else {
+        *State::get(env)
+            .contexts
+            .iter()
+            .find(|(&_guest, &host)| host == host_context)
+            .unwrap()
+            .0
+    }
+}
+
 fn alcGetProcAddress(
     env: &mut Environment,
     _device: ConstPtr<GuestALCdevice>,
@@ -350,9 +364,6 @@ fn alcGetContextsDevice(
     _env: &mut Environment,
     _context: MutPtr<GuestALCcontext>,
 ) -> MutPtr<GuestALCdevice> {
-    todo!();
-}
-fn alcGetCurrentContext(_env: &mut Environment) -> MutPtr<GuestALCcontext> {
     todo!();
 }
 fn alcGetEnumValue(

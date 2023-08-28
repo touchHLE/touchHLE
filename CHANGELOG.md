@@ -24,6 +24,7 @@ Compatibility:
   - Threads can now sleep, join other threads, and block on mutexes. (@LennyKappa, @hikari-no-yume)
 
 - New supported apps:
+  - Fastlane Street Racing (@hikari-no-yume)
   - Mystery Mania (@KiritoDv)
   - [Wolfenstein 3D](https://www.youtube.com/watch?v=omViNgUqF8c) (@ciciplusplus; version 1.0 only)
 

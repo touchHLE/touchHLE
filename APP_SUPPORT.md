@@ -35,9 +35,24 @@ Please click to expand the details for the app you are interested in.
   - Scale hack supported
   </details>
 - <details>
+  <summary>Fastlane Street Racing (2008, Atod AB)</summary>
+
+  - Working versions:
+    - “Fastlane” 2.0 (in-game version number: 1.20.0)
+  - Known issue: the reflective lighting effect on the cars only seems to appear on Android. This is probably an issue with touchHLE's GLES1-on-GL2 compatibility layer, which isn't needed on Android.
+  - Otherwise fully playable, everything works. Among other things:
+    - Sound effects and music
+    - All game modes
+    - Saving and playing back replays
+    - Save game persistence (settings, unlocks, records)
+  - High fps (between 50 and 60) most of the time, but with some hitching, especially in loading tunnels
+  - Scale hack supported
+  - touchHLE provides default controller button mappings (A = accelerate, B = break)
+  </details>
+- <details>
   <summary>Mystery Mania (2009, Electronic Arts)</summary>
 
-  - Working versions
+  - Working versions:
     - “Mystery Mania” 1.1.0
   - **Broken versions:**
     - “Mystery Mania” 1.1.26

@@ -25,4 +25,22 @@ fn usleep(env: &mut Environment, useconds: useconds_t) -> i32 {
     0 // success
 }
 
-pub const FUNCTIONS: FunctionExports = &[export_c_func!(sleep(_)), export_c_func!(usleep(_))];
+#[allow(non_camel_case_types)]
+type pid_t = i32;
+
+fn getpid(_env: &mut Environment) -> pid_t {
+    // Not a real value, since touchHLE only simulates a single process.
+    // PID 0 would be init, which is a bit unrealistic, so let's go with 1.
+    1
+}
+fn getppid(_env: &mut Environment) -> pid_t {
+    // Included just for completeness. Surely no app ever calls this.
+    0
+}
+
+pub const FUNCTIONS: FunctionExports = &[
+    export_c_func!(sleep(_)),
+    export_c_func!(usleep(_)),
+    export_c_func!(getpid()),
+    export_c_func!(getppid()),
+];

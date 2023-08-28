@@ -133,6 +133,20 @@ fn alcGetCurrentContext(env: &mut Environment) -> MutPtr<GuestALCcontext> {
     }
 }
 
+fn alcGetContextsDevice(
+    env: &mut Environment,
+    context: MutPtr<GuestALCcontext>,
+) -> MutPtr<GuestALCdevice> {
+    let host_context = State::get(env).contexts.get(&context).copied().unwrap();
+    let host_device = unsafe { al::alcGetContextsDevice(host_context) };
+    *State::get(env)
+        .devices
+        .iter()
+        .find(|(&_guest, &host)| host == host_device)
+        .unwrap()
+        .0
+}
+
 fn alcGetProcAddress(
     env: &mut Environment,
     _device: ConstPtr<GuestALCdevice>,
@@ -360,12 +374,6 @@ fn alSourcefv(env: &mut Environment, source: ALuint, param: ALenum, values: Cons
 // Note: For some reasons Wolf3d registers many OpenAl functions, but actually uses only few ones.
 // To workaround this, we just provide stubs
 
-fn alcGetContextsDevice(
-    _env: &mut Environment,
-    _context: MutPtr<GuestALCcontext>,
-) -> MutPtr<GuestALCdevice> {
-    todo!();
-}
 fn alcGetEnumValue(
     _env: &mut Environment,
     _device: MutPtr<GuestALCdevice>,

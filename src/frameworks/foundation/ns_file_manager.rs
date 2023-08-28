@@ -34,7 +34,7 @@ fn NSSearchPathForDirectoriesInDomains(
         // This might not actually be correct. I haven't bothered to test it
         // because I can't think of a good reason an iPhone OS app would have to
         // request this; Wolfenstein 3D requests it but never uses it.
-        NSApplicationDirectory => GuestPath::new("/User/Applications").to_owned(),
+        NSApplicationDirectory => GuestPath::new(crate::fs::APPLICATIONS).to_owned(),
         NSDocumentDirectory => env.fs.home_directory().join("Documents"),
         _ => todo!("NSSearchPathDirectory {}", directory),
     };

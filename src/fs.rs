@@ -129,11 +129,20 @@ impl FsNode {
     }
 }
 
+// Put well-known paths in the guest filesystem here.
+
+/// Path of the applications directory in the guest filesystem.
+pub const APPLICATIONS: &GuestPath = GuestPath::new_const("/var/mobile/Applications");
+
 /// Like [Path] but for the virtual filesystem.
 #[repr(transparent)]
 #[derive(Debug)]
 pub struct GuestPath(str);
 impl GuestPath {
+    const fn new_const(s: &str) -> &GuestPath {
+        unsafe { &*(s as *const str as *const GuestPath) }
+    }
+
     pub fn new<S: AsRef<str> + ?Sized>(s: &S) -> &GuestPath {
         unsafe { &*(s.as_ref() as *const str as *const GuestPath) }
     }
@@ -432,7 +441,7 @@ impl Fs {
     ) -> (Fs, GuestPathBuf) {
         const FAKE_UUID: &str = "00000000-0000-0000-0000-000000000000";
 
-        let home_directory = GuestPathBuf::from(format!("/User/Applications/{}", FAKE_UUID));
+        let home_directory = APPLICATIONS.join(FAKE_UUID);
         let current_directory = GuestPathBuf::from("/".to_string());
 
         let bundle_guest_path = home_directory.join(&bundle_dir_name);
@@ -467,24 +476,27 @@ impl Fs {
 
         let root = FsNode::dir()
             .with_child(
-                "User",
+                "var",
                 FsNode::dir().with_child(
-                    "Applications",
+                    "mobile",
                     FsNode::dir().with_child(
-                        FAKE_UUID,
-                        FsNode::Directory {
-                            children: HashMap::from([
-                                (bundle_dir_name, app_bundle.into_fs_node()),
-                                (
-                                    "Documents".to_string(),
-                                    FsNode::from_host_dir(
-                                        &documents_host_path,
-                                        /* writeable: */ true,
+                        "Applications",
+                        FsNode::dir().with_child(
+                            FAKE_UUID,
+                            FsNode::Directory {
+                                children: HashMap::from([
+                                    (bundle_dir_name, app_bundle.into_fs_node()),
+                                    (
+                                        "Documents".to_string(),
+                                        FsNode::from_host_dir(
+                                            &documents_host_path,
+                                            /* writeable: */ true,
+                                        ),
                                     ),
-                                ),
-                            ]),
-                            writeable: None,
-                        },
+                                ]),
+                                writeable: None,
+                            },
+                        ),
                     ),
                 ),
             )
@@ -492,14 +504,13 @@ impl Fs {
 
         log_dbg!("Initial filesystem layout: {:#?}", root);
 
-        (
-            Fs {
-                root,
-                current_directory,
-                home_directory,
-            },
-            bundle_guest_path,
-        )
+        let fs = Fs {
+            root,
+            current_directory,
+            home_directory,
+        };
+        assert!(fs.lookup_node(&bundle_guest_path).is_some());
+        (fs, bundle_guest_path)
     }
 
     /// Create a fake filesystem (see [crate::Environment::new_without_app]).

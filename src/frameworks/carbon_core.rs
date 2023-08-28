@@ -11,6 +11,11 @@
 /// This is from `MacTypes.h`, which unusually isn't part of any framework!
 pub type OSStatus = i32;
 
+/// End-of-file status code.
+///
+/// One of many status codes from `MacErrors.h`, which is in Carbon Core.
+pub const eofErr: OSStatus = -39;
+
 /// Status code meaning that a parameter supplied by the user was invalid.
 ///
 /// One of many status codes from `MacErrors.h`, which is in Carbon Core.

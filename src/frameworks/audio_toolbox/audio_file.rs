@@ -7,7 +7,7 @@
 
 use crate::audio; // Keep this module namespaced to avoid confusion
 use crate::dyld::{export_c_func, FunctionExports};
-use crate::frameworks::carbon_core::OSStatus;
+use crate::frameworks::carbon_core::{eofErr, OSStatus};
 use crate::frameworks::core_audio_types::{
     debug_fourcc, fourcc, kAudioFormatAppleIMA4, kAudioFormatFlagIsBigEndian,
     kAudioFormatFlagIsFloat, kAudioFormatFlagIsPacked, kAudioFormatFlagIsSignedInteger,
@@ -251,10 +251,13 @@ fn AudioFileReadBytes(
         .audio_file
         .read_bytes(in_starting_byte.try_into().unwrap(), buffer_slice)
         .unwrap(); // TODO: handle seek error?
-    assert!((bytes_read as u64) == (bytes_to_read as u64)); // TODO: return eofErr
     env.mem.write(io_num_bytes, bytes_read.try_into().unwrap());
 
-    0 // success
+    if bytes_read < bytes_to_read as usize {
+        eofErr
+    } else {
+        0 // success
+    }
 }
 
 fn AudioFileReadPackets(

@@ -54,7 +54,7 @@ pub fn decode_mp3_to_pcm(data: &[u8]) -> Result<Mp3DecodedToPcm, ()> {
     let bytes = unsafe {
         std::slice::from_raw_parts(
             samples_ptr as *const _,
-            std::mem::size_of::<i16>() * (frame_count as usize),
+            std::mem::size_of::<i16>() * (frame_count as usize) * (channels as usize),
         )
     }
     .to_vec();

@@ -219,14 +219,96 @@ fn alDeleteSources(env: &mut Environment, n: ALsizei, sources: ConstPtr<ALuint>)
 fn alSourcef(_env: &mut Environment, source: ALuint, param: ALenum, value: ALfloat) {
     unsafe { al::alSourcef(source, param, value) };
 }
+fn alSourcefv(env: &mut Environment, source: ALuint, param: ALenum, values: ConstPtr<ALfloat>) {
+    // we assume that at least 1 parameter should be passed
+    let values = env.mem.ptr_at(values, 1);
+    unsafe { al::alSourcefv(source, param, values) };
+}
+fn alSource3f(
+    _env: &mut Environment,
+    source: ALuint,
+    param: ALenum,
+    value1: ALfloat,
+    value2: ALfloat,
+    value3: ALfloat,
+) {
+    unsafe { al::alSource3f(source, param, value1, value2, value3) };
+}
 fn alSourcei(_env: &mut Environment, source: ALuint, param: ALenum, value: ALint) {
     unsafe { al::alSourcei(source, param, value) };
 }
+fn alSource3i(
+    _env: &mut Environment,
+    source: ALuint,
+    param: ALenum,
+    value1: ALint,
+    value2: ALint,
+    value3: ALint,
+) {
+    unsafe { al::alSource3i(source, param, value1, value2, value3) };
+}
+fn alSourceiv(env: &mut Environment, source: ALuint, param: ALenum, values: ConstPtr<ALint>) {
+    let values = env.mem.ptr_at(values, 3); // upper bound
+    unsafe { al::alSourceiv(source, param, values) };
+}
+
 fn alGetSourcef(env: &mut Environment, source: ALuint, param: ALenum, value: MutPtr<ALfloat>) {
     unsafe { al::alGetSourcef(source, param, env.mem.ptr_at_mut(value, 1)) };
 }
+fn alGetSource3f(
+    env: &mut Environment,
+    source: ALuint,
+    param: ALenum,
+    value1: MutPtr<ALfloat>,
+    value2: MutPtr<ALfloat>,
+    value3: MutPtr<ALfloat>,
+) {
+    let mut values = [0.0; 3];
+    unsafe {
+        al::alGetSource3f(
+            source,
+            param,
+            &mut values[0],
+            &mut values[1],
+            &mut values[2],
+        )
+    };
+    env.mem.write(value1, values[0]);
+    env.mem.write(value2, values[1]);
+    env.mem.write(value3, values[2]);
+}
+fn alGetSourcefv(env: &mut Environment, source: ALuint, param: ALenum, values: MutPtr<ALfloat>) {
+    let values = env.mem.ptr_at_mut(values, 3); // upper bound
+    unsafe { al::alGetSourcefv(source, param, values) };
+}
 fn alGetSourcei(env: &mut Environment, source: ALuint, param: ALenum, value: MutPtr<ALint>) {
     unsafe { al::alGetSourcei(source, param, env.mem.ptr_at_mut(value, 1)) };
+}
+fn alGetSource3i(
+    env: &mut Environment,
+    source: ALuint,
+    param: ALenum,
+    value1: MutPtr<ALint>,
+    value2: MutPtr<ALint>,
+    value3: MutPtr<ALint>,
+) {
+    let mut values = [0; 3];
+    unsafe {
+        al::alGetSource3i(
+            source,
+            param,
+            &mut values[0],
+            &mut values[1],
+            &mut values[2],
+        )
+    };
+    env.mem.write(value1, values[0]);
+    env.mem.write(value2, values[1]);
+    env.mem.write(value3, values[2]);
+}
+fn alGetSourceiv(env: &mut Environment, source: ALuint, param: ALenum, values: MutPtr<ALint>) {
+    let values = env.mem.ptr_at_mut(values, 3); // upper bound
+    unsafe { al::alGetSourceiv(source, param, values) };
 }
 
 fn alSourcePlay(_env: &mut Environment, source: ALuint) {
@@ -363,12 +445,6 @@ fn alDopplerVelocity(env: &mut Environment, value: ALfloat) {
     unsafe { al::alDopplerVelocity(value) };
 }
 
-fn alSourcefv(env: &mut Environment, source: ALuint, param: ALenum, values: ConstPtr<ALfloat>) {
-    // we assume that at least 1 parameter should be passed
-    let values = env.mem.ptr_at(values, 1);
-    unsafe { al::alSourcefv(source, param, values) };
-}
-
 // TODO: more functions
 
 // Note: For some reasons Wolf3d registers many OpenAl functions, but actually uses only few ones.
@@ -488,34 +564,6 @@ fn alGetListeneri(_env: &mut Environment, _param: ALenum, _value: MutPtr<ALint>)
 fn alIsSource(_env: &mut Environment, _source: ALuint) -> ALboolean {
     todo!();
 }
-fn alSource3f(
-    _env: &mut Environment,
-    _source: ALuint,
-    _param: ALenum,
-    _value1: ALfloat,
-    _value2: ALfloat,
-    _value3: ALfloat,
-) {
-    todo!();
-}
-fn alGetSource3f(
-    _env: &mut Environment,
-    _source: ALuint,
-    _param: ALenum,
-    _value1: MutPtr<ALfloat>,
-    _value2: MutPtr<ALfloat>,
-    _value3: MutPtr<ALfloat>,
-) {
-    todo!();
-}
-fn alGetSourcefv(
-    _env: &mut Environment,
-    _source: ALuint,
-    _param: ALenum,
-    _values: MutPtr<ALfloat>,
-) {
-    todo!();
-}
 fn alSourcePlayv(_env: &mut Environment, _nsources: ALsizei, _sources: ConstPtr<ALuint>) {
     todo!();
 }
@@ -546,10 +594,18 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(alListener3f(_, _, _, _)),
     export_c_func!(alGenSources(_, _)),
     export_c_func!(alDeleteSources(_, _)),
-    export_c_func!(alGetSourcef(_, _, _)),
-    export_c_func!(alGetSourcei(_, _, _)),
     export_c_func!(alSourcef(_, _, _)),
+    export_c_func!(alSource3f(_, _, _, _, _)),
+    export_c_func!(alSourcefv(_, _, _)),
     export_c_func!(alSourcei(_, _, _)),
+    export_c_func!(alSource3i(_, _, _, _, _)),
+    export_c_func!(alSourceiv(_, _, _)),
+    export_c_func!(alGetSourcef(_, _, _)),
+    export_c_func!(alGetSource3f(_, _, _, _, _)),
+    export_c_func!(alGetSourcefv(_, _, _)),
+    export_c_func!(alGetSourcei(_, _, _)),
+    export_c_func!(alGetSource3i(_, _, _, _, _)),
+    export_c_func!(alGetSourceiv(_, _, _)),
     export_c_func!(alSourcePlay(_)),
     export_c_func!(alSourcePause(_)),
     export_c_func!(alSourceStop(_)),
@@ -595,10 +651,6 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(alGetListenerfv(_, _)),
     export_c_func!(alGetListeneri(_, _)),
     export_c_func!(alIsSource(_)),
-    export_c_func!(alSourcefv(_, _, _)),
-    export_c_func!(alSource3f(_, _, _, _, _)),
-    export_c_func!(alGetSource3f(_, _, _, _, _)),
-    export_c_func!(alGetSourcefv(_, _, _)),
     export_c_func!(alSourcePlayv(_, _)),
     export_c_func!(alSourcePause(_)),
     export_c_func!(alSourcePausev(_, _)),

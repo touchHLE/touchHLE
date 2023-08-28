@@ -116,10 +116,36 @@ extern "C" {
     pub fn alDeleteSources(n: ALsizei, sources: *const ALuint);
 
     pub fn alSourcef(source: ALuint, param: ALenum, value: ALfloat);
-    pub fn alSourcei(source: ALuint, param: ALenum, value: ALint);
+    pub fn alSource3f(
+        source: ALuint,
+        param: ALenum,
+        value1: ALfloat,
+        value2: ALfloat,
+        value3: ALfloat,
+    );
     pub fn alSourcefv(source: ALuint, param: ALenum, values: *const ALfloat);
+    pub fn alSourcei(source: ALuint, param: ALenum, value: ALint);
+    pub fn alSource3i(source: ALuint, param: ALenum, value1: ALint, value2: ALint, value3: ALint);
+    pub fn alSourceiv(source: ALuint, param: ALenum, values: *const ALint);
+
     pub fn alGetSourcef(source: ALuint, param: ALenum, value: *mut ALfloat);
+    pub fn alGetSource3f(
+        source: ALuint,
+        param: ALenum,
+        value1: *mut ALfloat,
+        value2: *mut ALfloat,
+        value3: *mut ALfloat,
+    );
+    pub fn alGetSourcefv(source: ALuint, param: ALenum, values: *mut ALfloat);
     pub fn alGetSourcei(source: ALuint, param: ALenum, value: *mut ALint);
+    pub fn alGetSource3i(
+        source: ALuint,
+        param: ALenum,
+        value1: *mut ALint,
+        value2: *mut ALint,
+        value3: *mut ALint,
+    );
+    pub fn alGetSourceiv(source: ALuint, param: ALenum, values: *mut ALint);
 
     pub fn alSourcePlay(source: ALuint);
     pub fn alSourcePause(source: ALuint);

@@ -132,12 +132,20 @@ impl Bundle {
         }
     }
 
+    /// Load icon and round off its corners for display.
     pub fn load_icon(&self, fs: &Fs) -> Result<Image, String> {
-        fs.read(self.icon_path())
-            .map_err(|_| "Could not read icon file".to_string())
-            .and_then(|bytes| {
-                Image::from_bytes(&bytes).map_err(|e| format!("Could not parse icon image: {}", e))
-            })
+        let bytes = fs
+            .read(self.icon_path())
+            .map_err(|_| "Could not read icon file".to_string())?;
+        let mut image =
+            Image::from_bytes(&bytes).map_err(|e| format!("Could not parse icon image: {}", e))?;
+        // iPhone OS icons are 57px by 57px and the OS always applies a
+        // 10px radius rounded corner (see e.g. documentation of
+        // UIPrerenderedIcon). If the icon is larger for some reason,
+        // let's scale to match.
+        let corner_radius = (10.0 / 57.0) * (image.dimensions().0 as f32);
+        image.round_corners(corner_radius);
+        Ok(image)
     }
 
     pub fn main_nib_file_path(&self) -> Option<GuestPathBuf> {

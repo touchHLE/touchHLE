@@ -94,6 +94,15 @@ impl Image {
         }
     }
 
+    fn pixels_mut(&mut self) -> &mut [u8] {
+        unsafe {
+            std::slice::from_raw_parts_mut(
+                self.pixels,
+                self.dimensions.0 as usize * self.dimensions.1 as usize * 4,
+            )
+        }
+    }
+
     /// Get value of a pixel as linear RGBA (not sRGB!) with premultiplied
     /// alpha. 0 on the y axis is the top of the image.
     ///
@@ -114,6 +123,34 @@ impl Image {
             ))
         } else {
             None
+        }
+    }
+
+    // TODO: Eventually this should be in Core Animation instead?
+    /// Modify the image to mask it with anti-aliased rounded corners.
+    pub fn round_corners(&mut self, radius: f32) {
+        let (width, height) = self.dimensions();
+        let right_corners_begin = width as f32 - 1.0 - radius;
+        let bottom_corners_begin = height as f32 - 1.0 - radius;
+        for y in 0..height {
+            for x in 0..width {
+                let corner_x = (radius - x as f32).max(x as f32 - right_corners_begin);
+                let corner_y = (radius - y as f32).max(y as f32 - bottom_corners_begin);
+                let opacity = if corner_x > 0.0 && corner_y > 0.0 {
+                    let distance = (corner_x * corner_x + corner_y * corner_y).sqrt();
+                    // Bad approximation of the pixel coverage of a filled arc.
+                    let distance = (distance - radius).max(0.0).min(1.0);
+                    let area = distance * distance;
+                    1.0 - area
+                } else {
+                    1.0
+                };
+                let rgba =
+                    &mut self.pixels_mut()[y as usize * width as usize * 4 + x as usize * 4..][..4];
+                for channel in rgba.iter_mut() {
+                    *channel = (*channel as f32 * opacity) as u8;
+                }
+            }
         }
     }
 }

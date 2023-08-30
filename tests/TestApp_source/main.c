@@ -185,7 +185,6 @@ struct {
   int (*func)();
   const char *name;
 } test_func_array[] = {
-    // TODO: re-enable qsort. It currently crashes for some reason.
     FUNC_DEF(test_qsort), FUNC_DEF(test_vsnprintf), FUNC_DEF(test_sscanf),
     FUNC_DEF(test_errno), FUNC_DEF(test_realloc),   FUNC_DEF(test_getcwd_chdir),
 };

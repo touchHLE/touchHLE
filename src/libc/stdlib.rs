@@ -20,20 +20,20 @@ pub struct State {
     env: HashMap<Vec<u8>, MutPtr<u8>>,
 }
 
+// Sizes of zero are implementation-defined. macOS will happily give you back
+// an allocation for any of these, so presumably iPhone OS does too.
+// (touchHLE's allocator will round up allocations to at least 16 bytes.)
+
 fn malloc(env: &mut Environment, size: GuestUSize) -> MutVoidPtr {
-    // size == 0 is an implementation-defined case. macOS will give you an
-    // allocation so presumably iPhone OS does too.
-    env.mem.alloc(size.max(1))
+    env.mem.alloc(size)
 }
 
 fn calloc(env: &mut Environment, count: GuestUSize, size: GuestUSize) -> MutVoidPtr {
-    assert!(size != 0 && count != 0);
     let total = size.checked_mul(count).unwrap();
     env.mem.alloc(total)
 }
 
 fn realloc(env: &mut Environment, ptr: MutVoidPtr, size: GuestUSize) -> MutVoidPtr {
-    assert_ne!(size, 0);
     if ptr.is_null() {
         return malloc(env, size);
     }

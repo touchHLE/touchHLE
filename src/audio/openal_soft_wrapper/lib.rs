@@ -55,6 +55,9 @@ extern "C" {
     pub fn alcCreateContext(device: *mut ALCdevice, attrlist: *const ALCint) -> *mut ALCcontext;
     pub fn alcDestroyContext(context: *mut ALCcontext);
 
+    pub fn alcProcessContext(context: *mut ALCcontext);
+    pub fn alcSuspendContext(context: *mut ALCcontext);
+
     pub fn alcMakeContextCurrent(context: *mut ALCcontext) -> ALCboolean;
     pub fn alcGetCurrentContext() -> *mut ALCcontext;
     pub fn alcGetContextsDevice(context: *mut ALCcontext) -> *mut ALCdevice;

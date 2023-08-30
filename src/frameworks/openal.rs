@@ -108,6 +108,15 @@ fn alcDestroyContext(env: &mut Environment, context: MutPtr<GuestALCcontext>) {
     log_dbg!("alcDestroyContext({:?})", context);
 }
 
+fn alcProcessContext(env: &mut Environment, context: MutPtr<GuestALCcontext>) {
+    let host_context = State::get(env).contexts.get(&context).copied().unwrap();
+    unsafe { al::alcProcessContext(host_context) }
+}
+fn alcSuspendContext(env: &mut Environment, context: MutPtr<GuestALCcontext>) {
+    let host_context = State::get(env).contexts.get(&context).copied().unwrap();
+    unsafe { al::alcSuspendContext(host_context) }
+}
+
 fn alcMakeContextCurrent(env: &mut Environment, context: MutPtr<GuestALCcontext>) -> bool {
     let host_context = if context.is_null() {
         std::ptr::null_mut()
@@ -540,12 +549,6 @@ fn alcIsExtensionPresent(
 ) -> ALCboolean {
     0
 }
-fn alcProcessContext(_env: &mut Environment, _context: MutPtr<GuestALCcontext>) {
-    todo!();
-}
-fn alcSuspendContext(_env: &mut Environment, _context: MutPtr<GuestALCcontext>) {
-    todo!();
-}
 fn alIsBuffer(_env: &mut Environment, _buffer: ALuint) -> ALboolean {
     todo!();
 }
@@ -625,6 +628,8 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(alcGetError(_)),
     export_c_func!(alcCreateContext(_, _)),
     export_c_func!(alcDestroyContext(_)),
+    export_c_func!(alcProcessContext(_)),
+    export_c_func!(alcSuspendContext(_)),
     export_c_func!(alcMakeContextCurrent(_)),
     export_c_func!(alcGetProcAddress(_, _)),
     export_c_func!(alGetError()),
@@ -671,8 +676,6 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(alcGetIntegerv(_, _, _, _)),
     export_c_func!(alcGetString(_, _)),
     export_c_func!(alcIsExtensionPresent(_, _)),
-    export_c_func!(alcProcessContext(_)),
-    export_c_func!(alcSuspendContext(_)),
     export_c_func!(alIsBuffer(_)),
     export_c_func!(alGetBufferf(_, _, _)),
     export_c_func!(alGetBufferi(_, _, _)),

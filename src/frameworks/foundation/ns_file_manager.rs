@@ -91,14 +91,14 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (bool)fileExistsAtPath:(id)path // NSString*
-             isDirectory:(MutPtr<u8>)isDirectory { // iOS BOOL is actually a char
+             isDirectory:(MutPtr<bool>)is_dir {
     // TODO: mutualize with fileExistsAtPath:
     let path = ns_string::to_rust_string(env, path); // TODO: avoid copy
     let guest_path = GuestPath::new(&path);
     let res_exists = env.fs.exists(guest_path);
-    if !isDirectory.is_null() {
+    if !is_dir.is_null() {
         let res_is_dir = !env.fs.is_file(guest_path);
-        env.mem.write(isDirectory, if res_is_dir { 1 } else { 0 });
+        env.mem.write(is_dir, res_is_dir);
         log_dbg!("fileExistsAtPath:{:?} isDirectory:{:?} => {}", path, res_is_dir, res_exists);
     } else {
         log_dbg!("fileExistsAtPath:{:?} isDirectory:NULL => {}", path, res_exists);
@@ -154,7 +154,8 @@ pub const CLASSES: ClassExports = objc_classes! {
         .iter()
         .map(|name| ns_string::from_rust_string(env, name.as_str().to_string()))
         .collect();
-    ns_array::from_vec(env, path_strings)
+    let res = ns_array::from_vec(env, path_strings);
+    autorelease(env, res)
 }
 
 @end

@@ -164,6 +164,8 @@ impl<T, const MUT: bool> std::ops::SubAssign<GuestUSize> for Ptr<T, MUT> {
 /// which is notoriously unsafe in Rust. Only types for which all possible bit
 /// patterns are legal (e.g. integers) should have this trait.
 pub unsafe trait SafeRead: Sized {}
+// bool is one byte in size and has 0 as false, 1 as true in both Rust and ObjC
+unsafe impl SafeRead for bool {}
 unsafe impl SafeRead for i8 {}
 unsafe impl SafeRead for u8 {}
 unsafe impl SafeRead for i16 {}

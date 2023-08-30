@@ -27,6 +27,7 @@ Compatibility:
   - Fastlane Street Racing (@hikari-no-yume)
   - Mystery Mania (@KiritoDv)
   - [Wolfenstein 3D](https://www.youtube.com/watch?v=omViNgUqF8c) (@ciciplusplus; version 1.0 only)
+  - Many old apps by Donut Games (@ciciplusplus)
 
 Quality and performance:
 

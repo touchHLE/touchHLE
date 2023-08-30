@@ -98,6 +98,11 @@ Please click to expand the details for the app you are interested in.
   - Scale hack supported
   </details>
 - <details>
+  <summary>_Various_ (Donut Games)</summary>
+
+  - iPhone OS 2.x versions of many old titles by this developer seem to work. (But all of these still available for modern iOS and Android, and in some cases Windows.)
+  </details>
+- <details>
   <summary>Wolfenstein 3D (2009, id Software)</summary>
 
   - Working versions:

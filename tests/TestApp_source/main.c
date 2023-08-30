@@ -14,7 +14,7 @@
 // ourselves rather than #include'ing.
 
 // <stddef.h>
-#define NULL ((void*)0)
+#define NULL ((void *)0)
 typedef unsigned long size_t;
 
 // <errno.h>

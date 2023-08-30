@@ -253,6 +253,12 @@ pub const CLASSES: ClassExports = objc_classes! {
     msg_class![env; _touchHLE_NSString allocWithZone:zone]
 }
 
++ (id)stringWithString:(id)string { // NSString*
+    let new: id = msg![env; this alloc];
+    let new: id = msg![env; new initWithString:string];
+    autorelease(env, new)
+}
+
 + (id)stringWithUTF8String:(ConstPtr<u8>)utf8_string {
     let new: id = msg![env; this alloc];
     let new: id = msg![env; new initWithUTF8String:utf8_string];
@@ -790,6 +796,14 @@ pub const CLASSES: ClassExports = objc_classes! {
 
     *env.objc.borrow_mut(this) = host_object;
 
+    this
+}
+
+- (id)initWithString:(id)string { // NSString *
+    // TODO: optimize for more common cases (or maybe just call copy?)
+    let mut code_units = Vec::new();
+    for_each_code_unit(env, string, |_, c| code_units.push(c));
+    *env.objc.borrow_mut(this) = StringHostObject::Utf16(code_units);
     this
 }
 

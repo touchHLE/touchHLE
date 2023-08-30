@@ -10,7 +10,7 @@ pub mod stat;
 use crate::abi::DotDotDot;
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::fs::{GuestFile, GuestOpenOptions, GuestPath};
-use crate::mem::{ConstPtr, ConstVoidPtr, GuestISize, GuestUSize, MutVoidPtr};
+use crate::mem::{ConstPtr, ConstVoidPtr, GuestISize, GuestUSize, MutPtr, MutVoidPtr, Ptr};
 use crate::Environment;
 use std::io::{Read, Seek, SeekFrom, Write};
 
@@ -295,10 +295,61 @@ pub fn close(env: &mut Environment, fd: FileDescriptor) -> i32 {
     }
 }
 
+pub fn getcwd(env: &mut Environment, buf_ptr: MutPtr<u8>, buf_size: GuestUSize) -> MutPtr<u8> {
+    let working_directory = env.fs.working_directory();
+    if !env.fs.is_dir(working_directory) {
+        // TODO: set errno to ENOENT
+        log!(
+            "Warning: getcwd({:?}, {:#x}) failed, returning NULL",
+            buf_ptr,
+            buf_size
+        );
+        return Ptr::null();
+    }
+
+    let working_directory = env.fs.working_directory().as_str().as_bytes();
+
+    if buf_ptr.is_null() {
+        // The buffer size argument is presumably ignored in this mode.
+        // This mode is an extension, which might explain the strange API.
+        let res = env.mem.alloc_and_write_cstr(working_directory);
+        log_dbg!("getcwd(NULL, _) => {:?} ({:?})", res, working_directory);
+        return res;
+    }
+
+    // Includes space for null terminator
+    let res_size: GuestUSize = u32::try_from(working_directory.len()).unwrap() + 1;
+
+    if buf_size < res_size {
+        // TODO: set errno to EINVAL or ERANGE as appropriate
+        log!(
+            "Warning: getcwd({:?}, {:#x}) failed, returning NULL",
+            buf_ptr,
+            buf_size
+        );
+        return Ptr::null();
+    }
+
+    let buf = env.mem.bytes_at_mut(buf_ptr, res_size);
+    buf[..(res_size - 1) as usize].copy_from_slice(working_directory);
+    buf[(res_size - 1) as usize] = b'\0';
+
+    log_dbg!(
+        "getcwd({:?}, {:#x}) => {:?}, wrote {:?} ({:#x} bytes)",
+        buf_ptr,
+        buf_size,
+        buf_ptr,
+        working_directory,
+        res_size
+    );
+    buf_ptr
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(open(_, _, _)),
     export_c_func!(read(_, _, _)),
     export_c_func!(write(_, _, _)),
     export_c_func!(lseek(_, _, _)),
     export_c_func!(close(_)),
+    export_c_func!(getcwd(_, _)),
 ];

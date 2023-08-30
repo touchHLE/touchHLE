@@ -46,6 +46,9 @@ int memcmp(const void *, const void *, size_t);
 void *memmove(void *, const void *, size_t);
 int strcmp(const char *, const char *);
 
+// <unistd.h>
+char *getcwd(char *, size_t);
+
 // === Main code ===
 
 int int_compar(const void *a, const void *b) { return *(int *)a - *(int *)b; }
@@ -118,6 +121,14 @@ int test_realloc() {
   return res == 0 ? 0 : -1;
 }
 
+int test_getcwd() {
+  char buf[256];
+  char *buf2 = getcwd(buf, sizeof buf);
+  if (!buf2 || buf2 != buf || strcmp("/", buf))
+    return -1;
+  return 0;
+}
+
 #define FUNC_DEF(func)                                                         \
   { &func, #func }
 struct {
@@ -126,7 +137,7 @@ struct {
 } test_func_array[] = {
     // TODO: re-enable qsort. It currently crashes for some reason.
     FUNC_DEF(test_qsort), FUNC_DEF(test_vsnprintf), FUNC_DEF(test_sscanf),
-    FUNC_DEF(test_errno), FUNC_DEF(test_realloc),
+    FUNC_DEF(test_errno), FUNC_DEF(test_realloc),   FUNC_DEF(test_getcwd),
 };
 
 // Because no libc is linked into this executable, there is no libc entry point

@@ -416,7 +416,7 @@ impl Seek for GuestFile {
 #[derive(Debug)]
 pub struct Fs {
     root: FsNode,
-    current_directory: GuestPathBuf,
+    working_directory: GuestPathBuf,
     home_directory: GuestPathBuf,
 }
 impl Fs {
@@ -442,7 +442,7 @@ impl Fs {
         const FAKE_UUID: &str = "00000000-0000-0000-0000-000000000000";
 
         let home_directory = APPLICATIONS.join(FAKE_UUID);
-        let current_directory = GuestPathBuf::from("/".to_string());
+        let working_directory = GuestPathBuf::from("/".to_string());
 
         let bundle_guest_path = home_directory.join(&bundle_dir_name);
 
@@ -506,7 +506,7 @@ impl Fs {
 
         let fs = Fs {
             root,
-            current_directory,
+            working_directory,
             home_directory,
         };
         assert!(fs.lookup_node(&bundle_guest_path).is_some());
@@ -517,7 +517,7 @@ impl Fs {
     pub fn new_fake_fs() -> Fs {
         Fs {
             root: FsNode::dir(),
-            current_directory: GuestPathBuf::from(String::new()),
+            working_directory: GuestPathBuf::from(String::new()),
             home_directory: GuestPathBuf::from(String::new()),
         }
     }
@@ -527,10 +527,16 @@ impl Fs {
         &self.home_directory
     }
 
+    /// Get the absolute path of the current working directory. The resulting
+    /// path may be invalid if the directory was moved or deleted.
+    pub fn working_directory(&self) -> &GuestPath {
+        &self.working_directory
+    }
+
     /// Get the node at a given path, if it exists.
     fn lookup_node(&self, path: &GuestPath) -> Option<&FsNode> {
         let mut node = &self.root;
-        for component in resolve_path(path, Some(&self.current_directory)) {
+        for component in resolve_path(path, Some(&self.working_directory)) {
             let FsNode::Directory { children, writeable: _ } = node else {
                 return None;
             };
@@ -544,7 +550,7 @@ impl Fs {
     /// [Self::lookup_node] useful when writing to a file, where it might not
     /// exist yet (but its parent directory does).
     fn lookup_parent_node(&mut self, path: &GuestPath) -> Option<(&mut FsNode, String)> {
-        let components = resolve_path(path, Some(&self.current_directory));
+        let components = resolve_path(path, Some(&self.working_directory));
         let (&final_component, parent_components) = components.split_last()?;
 
         let mut parent = &mut self.root;
@@ -566,6 +572,11 @@ impl Fs {
     /// Like [Path::is_file] but for the guest filesystem.
     pub fn is_file(&self, path: &GuestPath) -> bool {
         matches!(self.lookup_node(path), Some(FsNode::File { .. }))
+    }
+
+    /// Like [Path::is_dir] but for the guest dirsystem.
+    pub fn is_dir(&self, path: &GuestPath) -> bool {
+        matches!(self.lookup_node(path), Some(FsNode::Directory { .. }))
     }
 
     #[allow(dead_code)]

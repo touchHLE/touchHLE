@@ -10,9 +10,15 @@ use crate::frameworks::core_foundation::CFTypeRef;
 use crate::frameworks::foundation::NSTimeInterval;
 use crate::libc::time::{time_t, timestamp_to_calendar_date};
 use crate::mem::SafeRead;
-use crate::objc::{msg_class, nil};
+use crate::objc::nil;
 use crate::{impl_GuestRet_for_large_struct, Environment};
-use std::time::SystemTime;
+use std::ops::Add;
+use std::time::{Duration, SystemTime};
+
+/// The absolute reference date is 1 Jan 2001 00:00:00 GMT
+fn apple_epoch() -> SystemTime {
+    SystemTime::UNIX_EPOCH.add(Duration::from_secs(978_307_200))
+}
 
 pub type CFTimeInterval = NSTimeInterval;
 type CFAbsoluteTime = CFTimeInterval;
@@ -30,10 +36,13 @@ pub struct CFGregorianDate {
 unsafe impl SafeRead for CFGregorianDate {}
 impl_GuestRet_for_large_struct!(CFGregorianDate);
 
-fn CFAbsoluteTimeGetCurrent(env: &mut Environment) -> CFAbsoluteTime {
-    // TODO: This should use "Jan 1 2001 00:00:00 GMT" as an absolute reference instead
-    let time: NSTimeInterval = msg_class![env; NSProcessInfo systemUptime];
-    time
+/// Absolute time is measured in seconds relative to the absolute reference date of Jan 1 2001
+/// 00:00:00 GMT.
+fn CFAbsoluteTimeGetCurrent(_env: &mut Environment) -> CFAbsoluteTime {
+    SystemTime::now()
+        .duration_since(apple_epoch())
+        .unwrap()
+        .as_secs_f64()
 }
 
 type CFTimeZoneRef = CFTypeRef;
@@ -45,14 +54,12 @@ fn CFTimeZoneCopySystem(_env: &mut Environment) -> CFTimeZoneRef {
 
 fn CFAbsoluteTimeGetGregorianDate(
     _env: &mut Environment,
-    _at: CFAbsoluteTime,
+    at: CFAbsoluteTime,
     tz: CFTimeZoneRef,
 ) -> CFGregorianDate {
     assert!(tz.is_null());
-    log!(
-        "TODO: CFAbsoluteTimeGetGregorianDate ignoring passed absolute time, using SystemTime::now"
-    );
-    let time64 = SystemTime::now()
+    let time64 = apple_epoch()
+        .add(Duration::from_secs_f64(at))
         .duration_since(SystemTime::UNIX_EPOCH)
         .unwrap()
         .as_secs();

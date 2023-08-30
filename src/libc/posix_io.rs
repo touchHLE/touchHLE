@@ -295,7 +295,7 @@ pub fn close(env: &mut Environment, fd: FileDescriptor) -> i32 {
     }
 }
 
-pub fn getcwd(env: &mut Environment, buf_ptr: MutPtr<u8>, buf_size: GuestUSize) -> MutPtr<u8> {
+fn getcwd(env: &mut Environment, buf_ptr: MutPtr<u8>, buf_size: GuestUSize) -> MutPtr<u8> {
     let working_directory = env.fs.working_directory();
     if !env.fs.is_dir(working_directory) {
         // TODO: set errno to ENOENT
@@ -345,6 +345,26 @@ pub fn getcwd(env: &mut Environment, buf_ptr: MutPtr<u8>, buf_size: GuestUSize) 
     buf_ptr
 }
 
+fn chdir(env: &mut Environment, path_ptr: ConstPtr<u8>) -> i32 {
+    let path = GuestPath::new(env.mem.cstr_at_utf8(path_ptr).unwrap());
+    match env.fs.change_working_directory(path) {
+        Ok(new) => {
+            log_dbg!(
+                "chdir({:?}) => 0, new working directory: {:?}",
+                path_ptr,
+                new,
+            );
+            0
+        }
+        Err(()) => {
+            log!("Warning: chdir({:?}) failed, could not change working directory to {:?}, returning -1", path_ptr, path);
+            // TODO: set errno
+            -1
+        }
+    }
+}
+// TODO: fchdir(), once open() on a directory is supported.
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(open(_, _, _)),
     export_c_func!(read(_, _, _)),
@@ -352,4 +372,6 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(lseek(_, _, _)),
     export_c_func!(close(_)),
     export_c_func!(getcwd(_, _)),
+    export_c_func!(getcwd(_, _)),
+    export_c_func!(chdir(_)),
 ];

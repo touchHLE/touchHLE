@@ -28,6 +28,9 @@ typedef __builtin_va_list va_list;
 #define va_end(a) __builtin_va_end(a)
 
 // <stdio.h>
+typedef struct FILE FILE;
+FILE *fopen(const char *, const char *);
+int fclose(FILE *);
 int sscanf(const char *, const char *, ...);
 int printf(const char *, ...);
 int vsnprintf(char *, size_t, const char *, va_list);
@@ -47,6 +50,7 @@ void *memmove(void *, const void *, size_t);
 int strcmp(const char *, const char *);
 
 // <unistd.h>
+int chdir(const char *);
 char *getcwd(char *, size_t);
 
 // === Main code ===
@@ -121,11 +125,57 @@ int test_realloc() {
   return res == 0 ? 0 : -1;
 }
 
-int test_getcwd() {
+int test_getcwd_chdir() {
   char buf[256];
   char *buf2 = getcwd(buf, sizeof buf);
   if (!buf2 || buf2 != buf || strcmp("/", buf))
     return -1;
+
+  if (!chdir("does_not_exist") || !chdir("/does/not/exist"))
+    return -1;
+
+  if (chdir("/var/"))
+    return -1;
+
+  if (chdir("mobile/Applications"))
+    return -1;
+
+  char *buf3 = getcwd(NULL, 0);
+  if (!buf3 || strcmp("/var/mobile/Applications", buf3))
+    return -1;
+  free(buf3);
+
+  char *buf5 = getcwd(buf, 4); // too small
+  if (buf5)
+    return -1;
+
+  if (chdir(".."))
+    return -1;
+
+  char *buf6 = getcwd(buf, sizeof buf);
+  if (!buf6 || buf6 != buf || strcmp("/var/mobile", buf6))
+    return -1;
+
+  FILE *fake_file = fopen("TestApp", "r"); // doesn't exist in this directory
+  if (fake_file) {
+    fclose(fake_file);
+    return -1;
+  }
+
+  if (chdir("Applications/00000000-0000-0000-0000-000000000000/TestApp.app"))
+    return -1;
+
+  if (!chdir("TestApp")) // isn't a directory
+    return -1;
+
+  FILE *real_file = fopen("TestApp", "r");
+  if (!real_file)
+    return -1;
+  fclose(real_file);
+
+  if (chdir("/"))
+    return -1;
+
   return 0;
 }
 
@@ -137,7 +187,7 @@ struct {
 } test_func_array[] = {
     // TODO: re-enable qsort. It currently crashes for some reason.
     FUNC_DEF(test_qsort), FUNC_DEF(test_vsnprintf), FUNC_DEF(test_sscanf),
-    FUNC_DEF(test_errno), FUNC_DEF(test_realloc),   FUNC_DEF(test_getcwd),
+    FUNC_DEF(test_errno), FUNC_DEF(test_realloc),   FUNC_DEF(test_getcwd_chdir),
 };
 
 // Because no libc is linked into this executable, there is no libc entry point

@@ -533,16 +533,44 @@ impl Fs {
         &self.working_directory
     }
 
-    /// Get the node at a given path, if it exists.
-    fn lookup_node(&self, path: &GuestPath) -> Option<&FsNode> {
+    /// Attempts to change the working directory.
+    pub fn change_working_directory(&mut self, new_path: &GuestPath) -> Result<&GuestPath, ()> {
+        let resolved = resolve_path(new_path, Some(&self.working_directory));
+        if !matches!(
+            self.lookup_node_inner(&resolved),
+            Some(FsNode::Directory { .. })
+        ) {
+            return Err(());
+        }
+        let new_path = if resolved.is_empty() {
+            String::from("/")
+        } else {
+            let mut new_path = String::with_capacity(resolved.iter().map(|c| c.len() + 1).sum());
+            for component in resolved {
+                new_path.push('/');
+                new_path.push_str(component);
+            }
+            new_path
+        };
+        self.working_directory = GuestPathBuf::from(new_path);
+        Ok(&self.working_directory)
+    }
+
+    /// [Self::lookup_node] with a pre-resolved path.
+    fn lookup_node_inner(&self, resolved_path_components: &[&str]) -> Option<&FsNode> {
         let mut node = &self.root;
-        for component in resolve_path(path, Some(&self.working_directory)) {
+        for component in resolved_path_components {
             let FsNode::Directory { children, writeable: _ } = node else {
                 return None;
             };
-            node = children.get(component)?
+            node = children.get(*component)?
         }
         Some(node)
+    }
+
+    /// Get the node at a given path, if it exists.
+    fn lookup_node(&self, path: &GuestPath) -> Option<&FsNode> {
+        self.lookup_node_inner(&resolve_path(path, Some(&self.working_directory)))
     }
 
     /// Get the parent of the node at a given path, if it exists, and return it

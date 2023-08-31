@@ -40,6 +40,8 @@ pub(super) struct CGContextHostObject {
     pub(super) rgb_fill_color: (CGFloat, CGFloat, CGFloat, CGFloat),
     /// Current translation. TODO: replace this with a transformation matrix.
     pub(super) translation: (CGFloat, CGFloat),
+    /// Current scale. TODO: replace this with a transformation matrix.
+    pub(super) scale: (CGFloat, CGFloat),
 }
 impl HostObject for CGContextHostObject {}
 
@@ -95,6 +97,16 @@ pub fn CGContextTranslateCTM(
     context.translation.1 += ty;
 }
 
+fn CGContextScaleCTM(env: &mut Environment, context: CGContextRef, sx: CGFloat, sy: CGFloat) {
+    // Apart from trivial identity case, we currently support only case of sx = 1.0, sy = -1.0,
+    // which is used for text rendering in KataDama
+    assert_eq!(sx, 1.0);
+    assert_eq!(sy.abs(), 1.0);
+    let context = env.objc.borrow_mut::<CGContextHostObject>(context);
+    context.scale.0 = sx;
+    context.scale.1 = sy;
+}
+
 fn CGContextDrawImage(
     env: &mut Environment,
     context: CGContextRef,
@@ -111,5 +123,6 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGContextFillRect(_, _)),
     export_c_func!(CGContextClearRect(_, _)),
     export_c_func!(CGContextTranslateCTM(_, _, _)),
+    export_c_func!(CGContextScaleCTM(_, _, _)),
     export_c_func!(CGContextDrawImage(_, _, _)),
 ];

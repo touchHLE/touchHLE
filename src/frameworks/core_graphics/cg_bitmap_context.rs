@@ -5,7 +5,9 @@
  */
 //! `CGBitmapContext.h`
 
-use super::cg_color_space::{kCGColorSpaceGenericRGB, CGColorSpaceHostObject, CGColorSpaceRef};
+use super::cg_color_space::{
+    kCGColorSpaceGenericGray, kCGColorSpaceGenericRGB, CGColorSpaceHostObject, CGColorSpaceRef,
+};
 use super::cg_context::{CGContextHostObject, CGContextRef, CGContextSubclass};
 use super::cg_image::{
     self, kCGBitmapAlphaInfoMask, kCGBitmapByteOrderMask, kCGImageAlphaFirst, kCGImageAlphaLast,
@@ -45,10 +47,12 @@ pub fn CGBitmapContextCreate(
     assert!(bits_per_component == 8); // TODO: support other bit depths
 
     let color_space = env.objc.borrow::<CGColorSpaceHostObject>(color_space).name;
-    // TODO: support other color spaces
-    assert!(color_space == kCGColorSpaceGenericRGB);
 
-    let component_count = components_for_rgb(bitmap_info).unwrap();
+    let component_count = match color_space {
+        kCGColorSpaceGenericRGB => components_for_rgb(bitmap_info).unwrap(),
+        kCGColorSpaceGenericGray => components_for_gray(bitmap_info).unwrap(),
+        _ => unimplemented!("support other color spaces"),
+    };
 
     let (data, data_is_owned, bytes_per_row) = if data.is_null() {
         let bytes_per_row = if bytes_per_row == 0 {
@@ -72,7 +76,7 @@ pub fn CGBitmapContextCreate(
             height,
             bits_per_component,
             bytes_per_row,
-            color_space: kCGColorSpaceGenericRGB,
+            color_space,
             alpha_info: bitmap_info & kCGBitmapAlphaInfoMask,
         }),
         // TODO: is this the correct default?
@@ -128,6 +132,29 @@ fn components_for_rgb(bitmap_info: CGBitmapInfo) -> Result<GuestUSize, ()> {
     }
 }
 
+fn components_for_gray(bitmap_info: CGBitmapInfo) -> Result<GuestUSize, ()> {
+    let byte_order = bitmap_info & kCGBitmapByteOrderMask;
+    if byte_order != kCGImageByteOrderDefault && byte_order != kCGImageByteOrder32Big {
+        return Err(()); // TODO: handle other byte orders
+    }
+
+    let alpha_info = bitmap_info & kCGBitmapAlphaInfoMask;
+    if (alpha_info | byte_order) != bitmap_info {
+        return Err(()); // TODO: handle other cases (float)
+    }
+    match alpha_info & kCGBitmapAlphaInfoMask {
+        kCGImageAlphaNone => Ok(1), // gray
+        kCGImageAlphaPremultipliedLast
+        | kCGImageAlphaPremultipliedFirst
+        | kCGImageAlphaLast
+        | kCGImageAlphaFirst
+        | kCGImageAlphaNoneSkipLast
+        | kCGImageAlphaNoneSkipFirst => Ok(2), // gray + alpha
+        kCGImageAlphaOnly => Ok(1), // A
+        _ => Err(()),               // unknown values
+    }
+}
+
 fn bytes_per_pixel(data: &CGBitmapContextData) -> GuestUSize {
     let &CGBitmapContextData {
         bits_per_component,
@@ -136,8 +163,11 @@ fn bytes_per_pixel(data: &CGBitmapContextData) -> GuestUSize {
         ..
     } = data;
     assert!(bits_per_component == 8);
-    assert!(color_space == kCGColorSpaceGenericRGB);
-    components_for_rgb(alpha_info).unwrap()
+    match color_space {
+        kCGColorSpaceGenericRGB => components_for_rgb(alpha_info).unwrap(),
+        kCGColorSpaceGenericGray => components_for_gray(alpha_info).unwrap(),
+        _ => unimplemented!("support other color spaces"),
+    }
 }
 
 fn get_pixels<'a>(data: &CGBitmapContextData, mem: &'a mut Mem) -> &'a mut [u8] {

@@ -252,7 +252,7 @@ mod collections {
 }
 use collections::{ChunkMap, SizeBucketedChunkMap};
 
-/// Tracks which memory is in use and (TODO:) makes allocations from it.
+/// Tracks which memory is in use and makes allocations from it.
 #[derive(Debug)]
 pub struct Allocator {
     used_chunks: ChunkMap,
@@ -307,8 +307,6 @@ impl Allocator {
     }
 
     pub fn alloc(&mut self, size: GuestUSize) -> VAddr {
-        // TODO: use a better allocation strategy, probably using buckets.
-
         let size = size.max(MIN_CHUNK_SIZE);
         let size = if size % MIN_CHUNK_SIZE != 0 {
             size + MIN_CHUNK_SIZE - (size % MIN_CHUNK_SIZE)

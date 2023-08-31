@@ -267,7 +267,7 @@ impl AudioFile {
 
                 let mut i = 0;
                 let mut byte_offset = 0;
-                while i < packet_count {
+                while i < packet_count && caf_reader.next_packet_size().is_some() {
                     caf_reader
                         .read_packet_into(&mut buffer[byte_offset..][..packet_size])
                         .map_err(|_| ())?;

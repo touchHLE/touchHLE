@@ -55,11 +55,28 @@ You'll then need an app that you can run (check [the list of supported apps](APP
 
 There's a few ways you can run an app in touchHLE.
 
-(TODO: Android usage directions.)
+## Special Android notes
+
+Windows, Mac and Linux users can skip this section.
+
+On Android, only the graphical user interface (app picker) is available.
+
+Currently, most users will have to use ADB in order to load apps onto their device. If you're unfamiliar with ADB, the following is probably the easiest method:
+
+- First, make sure you have installed touchHLE on your Android device, and opened it at least one time. You should see a screen telling you the touchHLE\_apps directory is empty.
+- Visit <https://yume-chan.github.io/ya-webadb/> in Google Chrome or another browser with WebUSB, then:
+  - Connect your Android device over USB.
+  - “Connect” to the device in the web interface.
+  - Go to “File Manager” and then navigate to “sdcard” > “Android” > “data” > “org.touchhle.android” > “files” > “touchHLE\_apps”.
+  - Click “Upload” and select a “.ipa” file.
+  - “Disconnect” from the device in the web interface.
+  - Disconnect your Android device.
+
+By making use of the “Download” and “Delete” buttons you can also, for example, edit the options or back up your game saves.
+
+This will be made easier in a future release!
 
 ## Graphical user interface
-
-If you'd prefer not to use the command line:
 
 * You can put an app's `.ipa` file or `.app` bundle in the `touchHLE_apps` directory, then when you run touchHLE (on Windows: double-click on `touchHLE.exe`) you can select the app from the app picker.
 * On Windows, you can also directly drag and drop an app's `.ipa` file or `.app` bundle onto `touchHLE.exe`.
@@ -67,6 +84,8 @@ If you'd prefer not to use the command line:
 To configure the options, you can then edit the `touchHLE_options.txt` file. To get a list of options, look in the `OPTIONS_HELP.txt` file.
 
 ## Command-line user interface
+
+**This section does not apply on Android.**
 
 You can see the command-line usage by passing the `--help` flag.
 

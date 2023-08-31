@@ -190,6 +190,18 @@ fn pixel_offsets(data: &CGBitmapContextData) -> (usize, usize, usize, Option<usi
                 _ => unreachable!(), // checked by bytes_per_pixel
             }
         }
+        kCGColorSpaceGenericGray => {
+            // TODO: this is probably isn't doing RGB to grayscale conversion properly
+            match data.alpha_info {
+                kCGImageAlphaNone => (0, 0, 0, None),
+                kCGImageAlphaPremultipliedLast | kCGImageAlphaLast => (0, 0, 0, Some(1)),
+                kCGImageAlphaPremultipliedFirst | kCGImageAlphaFirst => (1, 1, 1, Some(0)),
+                kCGImageAlphaNoneSkipLast => (0, 0, 0, None),
+                kCGImageAlphaNoneSkipFirst => (1, 1, 1, None),
+                kCGImageAlphaOnly => (0, 0, 0, Some(0)),
+                _ => unreachable!(), // checked by bytes_per_pixel
+            }
+        }
         _ => unimplemented!(),
     }
 }

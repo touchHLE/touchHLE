@@ -33,7 +33,7 @@ Please click to expand the details for the app you are interested in.
     - All game modes
     - Save game persistence (settings, unlocks, records)
     - Continuing a previous game after closing and reopening the app
-  - Consistent full fps (60fps)
+  - Consistent full framerate (60fps)
   - Scale hack supported
   - Default button mappings
   </details>
@@ -48,7 +48,8 @@ Please click to expand the details for the app you are interested in.
     - All game modes
     - Saving and playing back replays
     - Save game persistence (settings, unlocks, records)
-  - High fps (between 50 and 60) most of the time, but with some hitching, especially in loading tunnels
+  - High framerate, but with some frames dropped in loading tunnels
+    - Known issue: touchHLE doesn't yet implement vsync or frame capping, so Fastlane often vastly exceeds 60fps, which is quite wasteful (see: <https://github.com/hikari-no-yume/touchHLE/issues/143>)
   - Scale hack supported
   - Default button mappings
   </details>
@@ -63,7 +64,7 @@ Please click to expand the details for the app you are interested in.
   - Not fully tested, but the first few puzzles are fully playable:
     - Sound effects and music
     - Save game persistence
-  - Consistent full fps (30fps)
+  - Consistent full framerate (30fps)
   - **Scale hack unsupported**
   </details>
 - <details>
@@ -81,7 +82,7 @@ Please click to expand the details for the app you are interested in.
     - Save game persistence (settings, unlocks, records)
     - Continuing a previous game after closing and reopening the app
     - The tutorial (in the versions that have it)
-  - Consistent full fps (30fps)
+  - Consistent full framerate (30fps)
   - Scale hack supported
   - Default button mappings
   </details>
@@ -98,7 +99,7 @@ Please click to expand the details for the app you are interested in.
     - Menu screens
     - All the levels in the LITE version
     - High score persistence
-  - Consistent full fps (60fps)
+  - Consistent full framerate (60fps)
   - Scale hack supported
   </details>
 - <details>
@@ -119,6 +120,6 @@ Please click to expand the details for the app you are interested in.
      - At least the first level :)
      - Sound effects and music work
      - Saving works
-  - Consistent full fps (60fps)
+  - Consistent full framerate (60fps)
   - Scale hack supported
   </details>

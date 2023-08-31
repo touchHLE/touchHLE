@@ -26,14 +26,17 @@
 #   a few seconds during startup.
 # - The scale hack is not exactly faithful to the original experience, and there
 #   is no scale factor that works for everyone, so it shouldn't be used here.
-# - Using --button-to-touch= is a convenience, not a necessity.
+# - Use --button-to-touch= for convenience if it's a game playable with the
+#   accelerometer and has touch targets in predictable locations.
 
 # Super Monkey Ball and Super Monkey Ball Lite
-com.ooi.supermonkeyball: --landscape-left --y-tilt-offset=24
-smblite: --landscape-left --y-tilt-offset=24
+# B = speed up level intro, X = pause
+com.ooi.supermonkeyball: --landscape-left --y-tilt-offset=24 --button-to-touch=B,470,160 --button-to-touch=X,240,10
+smblite: --landscape-left --y-tilt-offset=24 --button-to-touch=B,470,160 --button-to-touch=X,240,10
 
 # Crash Bandicoot Nitro Kart 3D
-com.vgmobile.cnk2: --landscape-left
+# A = jump/drift, B = brake, X = pause, Y = use item
+com.vgmobile.cnk2: --landscape-left --button-to-touch=A,240,160 --button-to-touch=B,240,310 --button-to-touch=X,10,310 --button-to-touch=Y,470,310
 
 # Mystery Mania
 com.ea.mysterymania.inc: --landscape-left

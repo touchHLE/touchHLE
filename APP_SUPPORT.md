@@ -8,6 +8,8 @@ Pay attention to the **supported versions**. Versions that haven't been tested m
 
 _Scale hack supported_ means an app is compatible with the `--scale-hack=` option, which enables it to run with increased internal resolution. Assume that at least 2× and 3× scales work with no noticeable performance impact. Some apps have been tested at scales as high as 4K.
 
+_Default button mappings_ means that touchHLE has pre-configured button mappings for the app, making it more convenient to use on a game controller. See [touchHLE_default_options.txt](touchHLE_default_options.txt) for details.
+
 Performance is tested with release builds of touchHLE on a 2017 Retina MacBook, which is a fairly underpowered (passively cooled!) dual-core laptop. Your computer is probably faster.
 
 Please click to expand the details for the app you are interested in.
@@ -33,6 +35,7 @@ Please click to expand the details for the app you are interested in.
     - Continuing a previous game after closing and reopening the app
   - Consistent full fps (60fps)
   - Scale hack supported
+  - Default button mappings
   </details>
 - <details>
   <summary>Fastlane Street Racing (2008, Atod AB)</summary>
@@ -47,7 +50,7 @@ Please click to expand the details for the app you are interested in.
     - Save game persistence (settings, unlocks, records)
   - High fps (between 50 and 60) most of the time, but with some hitching, especially in loading tunnels
   - Scale hack supported
-  - touchHLE provides default controller button mappings (A = accelerate, B = break)
+  - Default button mappings
   </details>
 - <details>
   <summary>Mystery Mania (2009, Electronic Arts)</summary>
@@ -80,6 +83,7 @@ Please click to expand the details for the app you are interested in.
     - The tutorial (in the versions that have it)
   - Consistent full fps (30fps)
   - Scale hack supported
+  - Default button mappings
   </details>
 - <details>
   <summary>Touch & Go (2009, The Game Creators)</summary>

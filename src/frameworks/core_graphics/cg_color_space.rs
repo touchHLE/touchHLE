@@ -62,6 +62,19 @@ pub fn CGColorSpaceCreateDeviceRGB(env: &mut Environment) -> CGColorSpaceRef {
     )
 }
 
+fn CGColorSpaceCreateDeviceGray(env: &mut Environment) -> CGColorSpaceRef {
+    let isa = env
+        .objc
+        .get_known_class("_touchHLE_CGColorSpace", &mut env.mem);
+    env.objc.alloc_object(
+        isa,
+        Box::new(CGColorSpaceHostObject {
+            name: kCGColorSpaceGenericGray,
+        }),
+        &mut env.mem,
+    )
+}
+
 pub fn CGColorSpaceRelease(env: &mut Environment, cs: CGColorSpaceRef) {
     if !cs.is_null() {
         CFRelease(env, cs);
@@ -76,6 +89,7 @@ pub fn CGColorSpaceRetain(env: &mut Environment, cs: CGColorSpaceRef) -> CGColor
 }
 
 pub const kCGColorSpaceGenericRGB: &str = "kCGColorSpaceGenericRGB";
+pub const kCGColorSpaceGenericGray: &str = "kCGColorSpaceGenericGray";
 
 pub const CONSTANTS: ConstantExports = &[(
     "_kCGColorSpaceGenericRGB",
@@ -85,6 +99,7 @@ pub const CONSTANTS: ConstantExports = &[(
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGColorSpaceCreateWithName(_)),
     export_c_func!(CGColorSpaceCreateDeviceRGB()),
+    export_c_func!(CGColorSpaceCreateDeviceGray()),
     export_c_func!(CGColorSpaceRetain(_)),
     export_c_func!(CGColorSpaceRelease(_)),
 ];

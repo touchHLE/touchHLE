@@ -60,6 +60,7 @@ Please click to expand the details for the app you are interested in.
     - “Mystery Mania” 1.1.0
   - **Broken versions:**
     - “Mystery Mania” 1.1.26
+  - **Known issue: Depending on your system language, you may get stuck at the language selection screen the first time you run the game.** But the second time you run it, you will get to the main menu, and the game is playable.
   - touchHLE will crash if you open the music player or tap “More EA Games”.
   - Not fully tested, but the first few puzzles are fully playable:
     - Sound effects and music

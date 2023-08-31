@@ -13,7 +13,7 @@ Changes are categorised as follows:
 
 If an app is added to the supported list after the relevant version has already been released, its entry in the changelog will be followed by the date it was added \[in square brackets\].
 
-## NEXT
+## v0.2.0 (2023-08-31)
 
 Compatibility:
 
@@ -45,9 +45,9 @@ Usability:
 - touchHLE now supports real accelerometer input on devices with a built-in accelerometer, such as phones and tablets. This is only used if no game controller is connected. (@hikari-no-yume)
 - The options help text is now available as a file (`OPTIONS_HELP.txt`), so you don't have to use the command line to get a list of options. (@hikari-no-yume)
 - The new `--fullscreen` option lets you display an app in fullscreen rather than in a window. This is independent of the internal resolution/scale hack and supports both upscaling and downscaling. (@hikari-no-yume)
-- touchHLE now has a built-in app picker with a pretty icon grid. Specifying an app on the command-line bypasses it. (@hikari-no-yume)
+- touchHLE now has a built-in app picker with a pretty icon grid. Specifying an app on the command line bypasses it. (@hikari-no-yume)
 - The new `--button-to-touch=` option lets you map a button on your game controller to a point on the touch screen. touchHLE also now includes default button mappings for some games. (@hikari-no-yume)
-- The new `--print-fps` option lets you monitor an touchHLE's framerate from the console. (@hikari-no-yume)
+- The new `--print-fps` option lets you monitor the framerate from the console. (@hikari-no-yume)
 
 Other:
 

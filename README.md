@@ -21,12 +21,12 @@ If you're curious about the history and motivation behind the project, you might
 
 This project is not affiliated with or endorsed by Apple Inc in any way. iPhone, iOS, iPod, iPod touch and iPad are trademarks of Apple Inc in the United States and other countries.
 
-Only use touchHLE to emulate software you legally own.
+Only use touchHLE to emulate software you have obtained legally.
 
 ## Platform support
 
 * Officially supported: x64 Windows, x64 macOS and AArch64 Android.
-  * These are the platforms with binary releases. (Android support is not in a release yet. It's coming soon, please wait!)
+  * These are the platforms with binary releases.
   * If you're an Apple Silicon Mac user, the x64 build reportedly works in Rosetta.
 * Probably works, but you must build it yourself: AArch64 macOS, x64 Linux, AArch64 Linux.
 * Never?: other architectures.
@@ -116,7 +116,7 @@ The source code of touchHLE itself (not its dependencies) is licensed under the 
 
 Due to license compatibility concerns, binaries are under the GNU General Public License version 3 or later.
 
-For a best effort listing of all licenses of dependencies, build touchHLE and pass the `--copyright` flag when running it.
+For a best effort listing of all licenses of dependencies, build touchHLE and pass the `--copyright` flag when running it, or click the “Copyright info” button in the app picker.
 
 Please note that different licensing terms apply to the bundled dynamic libraries (in `touchHLE_dylibs/`) and fonts (in `touchHLE_fonts/`). Please consult the respective directories for more information.
 

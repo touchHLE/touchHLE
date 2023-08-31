@@ -39,6 +39,7 @@ pub struct Options {
     pub direct_memory_access: bool,
     pub gdb_listen_addrs: Option<Vec<SocketAddr>>,
     pub headless: bool,
+    pub print_fps: bool,
 }
 
 impl Default for Options {
@@ -57,6 +58,7 @@ impl Default for Options {
             direct_memory_access: true,
             gdb_listen_addrs: None,
             headless: false,
+            print_fps: false,
         }
     }
 }
@@ -132,6 +134,8 @@ impl Options {
             self.gdb_listen_addrs = Some(addrs);
         } else if arg == "--headless" {
             self.headless = true;
+        } else if arg == "--print-fps" {
+            self.print_fps = true;
         } else {
             return Ok(false);
         };

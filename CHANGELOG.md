@@ -47,6 +47,7 @@ Usability:
 - The new `--fullscreen` option lets you display an app in fullscreen rather than in a window. This is independent of the internal resolution/scale hack and supports both upscaling and downscaling. (@hikari-no-yume)
 - touchHLE now has a built-in app picker with a pretty icon grid. Specifying an app on the command-line bypasses it. (@hikari-no-yume)
 - The new `--button-to-touch=` option lets you map a button on your game controller to a point on the touch screen. touchHLE also now includes default button mappings for some games. (@hikari-no-yume)
+- The new `--print-fps` option lets you monitor an touchHLE's framerate from the console. (@hikari-no-yume)
 
 Other:
 

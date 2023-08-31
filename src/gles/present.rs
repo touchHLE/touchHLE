@@ -9,6 +9,34 @@
 use super::gles11_raw as gles11; // constants and types only
 use super::GLES;
 use crate::matrix::Matrix;
+use std::time::{Duration, Instant};
+
+pub struct FpsCounter {
+    time: std::time::Instant,
+    frames: u32,
+}
+impl FpsCounter {
+    pub fn start() -> Self {
+        FpsCounter {
+            time: Instant::now(),
+            frames: 0,
+        }
+    }
+
+    pub fn count_frame(&mut self, label: std::fmt::Arguments<'_>) {
+        self.frames += 1;
+        let now = Instant::now();
+        let duration = now - self.time;
+        if duration >= Duration::from_secs(1) {
+            self.time = now;
+            echo!(
+                "touchHLE: {} FPS: {:.2}",
+                label,
+                std::mem::take(&mut self.frames) as f32 / duration.as_secs_f32()
+            );
+        }
+    }
+}
 
 /// Present the the latest frame (e.g. the app's splash screen or rendering
 /// output), provided as a texture bound to `GL_TEXTURE_2D`, by drawing it on

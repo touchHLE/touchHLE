@@ -17,7 +17,7 @@ use crate::frameworks::core_graphics::{
 use crate::frameworks::uikit::ui_color;
 use crate::gles::gles11_raw as gles11; // constants only
 use crate::gles::gles11_raw::types::*;
-use crate::gles::present::present_frame;
+use crate::gles::present::{present_frame, FpsCounter};
 use crate::gles::GLES;
 use crate::mem::Mem;
 use crate::objc::{id, msg, msg_class, nil, ObjC};
@@ -28,6 +28,7 @@ use std::time::{Duration, Instant};
 pub(super) struct State {
     texture_framebuffer: Option<(GLuint, GLuint)>,
     recomposite_next: Option<Instant>,
+    fps_counter: Option<FpsCounter>,
 }
 
 /// For use by `NSRunLoop`: call this 60 times per second. Composites the app's
@@ -49,6 +50,15 @@ pub fn recomposite_if_necessary(env: &mut Environment) -> Option<Instant> {
         // No composition done, EAGLContext will present directly.
         log_dbg!("Using CAEAGLLayer fast path, skipping composition");
         return None;
+    }
+
+    if env.options.print_fps {
+        env.framework_state
+            .core_animation
+            .composition
+            .fps_counter
+            .get_or_insert_with(FpsCounter::start)
+            .count_frame(format_args!("Core Animation compositor"));
     }
 
     let now = Instant::now();

@@ -13,7 +13,7 @@ use crate::frameworks::foundation::ns_string::get_static_str;
 use crate::frameworks::foundation::NSUInteger;
 use crate::gles::gles11_raw as gles11; // constants only
 use crate::gles::gles11_raw::types::*;
-use crate::gles::present::present_frame;
+use crate::gles::present::{present_frame, FpsCounter};
 use crate::gles::{create_gles1_ctx, gles1_on_gl2, GLES};
 use crate::objc::{id, msg, nil, objc_classes, release, retain, ClassExports, HostObject};
 use crate::window::Window;
@@ -59,6 +59,7 @@ pub(super) struct EAGLContextHostObject {
     /// Mapping of OpenGL ES renderbuffer names to `EAGLDrawable` instances
     /// (always `CAEAGLLayer*`). Retains the instance so it won't dangle.
     renderbuffer_drawable_bindings: HashMap<GLuint, id>,
+    fps_counter: Option<FpsCounter>,
 }
 impl HostObject for EAGLContextHostObject {}
 
@@ -72,6 +73,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     let host_object = Box::new(EAGLContextHostObject {
         gles_ctx: None,
         renderbuffer_drawable_bindings: HashMap::new(),
+        fps_counter: None,
     });
     env.objc.alloc_object(this, host_object, &mut env.mem)
 }
@@ -189,6 +191,15 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 - (bool)presentRenderbuffer:(NSUInteger)target {
     assert!(target == gles11::RENDERBUFFER_OES);
+
+    if env.options.print_fps {
+        env
+            .objc
+            .borrow_mut::<EAGLContextHostObject>(this)
+            .fps_counter
+            .get_or_insert_with(FpsCounter::start)
+            .count_frame(format_args!("EAGLContext {:?}", this));
+    }
 
     let fullscreen_layer = find_fullscreen_eagl_layer(env);
 

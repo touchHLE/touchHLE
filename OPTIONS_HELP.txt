@@ -124,3 +124,6 @@ Other options:
     --headless
         Run in headless mode. touchHLE will not create a window, so there will
         be no graphical output and no input. Only useful for command-line apps.
+
+    --print-fps
+        Logs the current framerate (FPS) to the console once per second.

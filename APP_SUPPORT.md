@@ -42,7 +42,7 @@ Please click to expand the details for the app you are interested in.
 
   - Working versions:
     - “Fastlane” 2.0 (in-game version number: 1.20.0)
-  - Known issue: the reflective lighting effect on the cars only seems to appear on Android. This is probably an issue with touchHLE's GLES1-on-GL2 compatibility layer, which isn't needed on Android.
+  - Known issue: the specular lighting effect on the cars only seems to appear on Android. This is probably an issue with touchHLE's GLES1-on-GL2 compatibility layer, which isn't needed on Android.
   - Otherwise fully playable, everything works. Among other things:
     - Sound effects and music
     - All game modes

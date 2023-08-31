@@ -47,3 +47,6 @@ com.atodab.actane: --landscape-left --button-to-touch=A,430,300 --button-to-touc
 
 # Wolfenstein 3D
 com.idsoftware.wolf3d: --landscape-right
+
+# KataDama (I love Katamari)
+com.namconetworks.katamari: --landscape-left

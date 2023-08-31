@@ -303,6 +303,10 @@ impl Dyld {
             } else if name == "___CFConstantStringClassReference" {
                 // See ns_string::register_constant_strings
                 nil
+            } else if name == "__ZTIi" {
+                // from libstdcxx, int type info
+                mem.write(Ptr::from_bits(ptr_ptr), 0x3800f834);
+                continue;
             } else {
                 // TODO: look up symbol, write pointer
                 unhandled_relocations.entry(name).or_default().push(ptr_ptr);

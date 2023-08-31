@@ -61,7 +61,7 @@ Windows, Mac and Linux users can skip this section.
 
 On Android, only the graphical user interface (app picker) is available.
 
-Currently, most users will have to use ADB in order to load apps onto their device. If you're unfamiliar with ADB, the following is probably the easiest method:
+On some Android devices, you may be able to use the “Files” app to put apps in the `touchHLE_apps` directory. However, the most reliable method is to use ADB. If you're unfamiliar with ADB, try these steps:
 
 - First, make sure you have installed touchHLE on your Android device, and opened it at least one time. You should see a screen telling you the touchHLE\_apps directory is empty.
 - Visit <https://yume-chan.github.io/ya-webadb/> in Google Chrome or another browser with WebUSB, then:

@@ -616,6 +616,9 @@ impl GLES for GLES1OnGL2 {
         assert!([gl21::FASTEST, gl21::NICEST, gl21::DONT_CARE].contains(&mode));
         gl21::Hint(target, mode);
     }
+    unsafe fn Flush(&mut self) {
+        gl21::Flush();
+    }
     unsafe fn GetString(&mut self, name: GLenum) -> *const GLubyte {
         gl21::GetString(name)
     }

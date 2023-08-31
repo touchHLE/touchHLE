@@ -226,7 +226,6 @@ mod collections {
 
             let bucket = Self::bucket_for(size);
             if let Some(alloc) = self.allocate_in_bucket(size, bucket) {
-                //log!("Found in smallest bucket for {:#x}", size);
                 return Some(alloc);
             }
 
@@ -238,7 +237,6 @@ mod collections {
                 .position(|bucket| !bucket.is_empty())?
                 + bucket
                 + 1;
-            //log!("Found in smallest bucket for {:#x}", size);
             self.allocate_in_bucket(size, bucket)
         }
 

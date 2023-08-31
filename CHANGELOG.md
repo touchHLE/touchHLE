@@ -32,8 +32,9 @@ Compatibility:
 Quality and performance:
 
 - Overlapping characters in text now render correctly. (@Xertes0)
-- touchHLE now avoids polling for events more often than 120Hz. Previously, it would sometimes poll many times more often than that, which could be very bad for performance. This change improves performance in basically all apps, though the effects on the existing supported apps are fairly subtle. (@hikari-no-yume)
+- touchHLE now avoids polling for events more often than 120Hz. Previously, it would sometimes poll many times more often than that, which could be very bad for performance. This change improves performance in basically all apps, though the effects on the supported apps from previous releases are fairly subtle. (@hikari-no-yume)
 - The macOS-only memory leak of up to 0.4MB/s seems to have been fixed! (@hikari-no-yume)
+- The memory allocator is a lot faster now. (@hikari-no-yume)
 
 New platform support:
 

@@ -16,8 +16,9 @@ use crate::audio::openal::alc_types::*;
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::frameworks::carbon_core::OSStatus;
 use crate::frameworks::core_audio_types::{
-    kAudioFormatAppleIMA4, kAudioFormatFlagIsBigEndian, kAudioFormatFlagIsFloat,
-    kAudioFormatFlagIsPacked, kAudioFormatLinearPCM, AudioStreamBasicDescription,
+    debug_fourcc, fourcc, kAudioFormatAppleIMA4, kAudioFormatFlagIsBigEndian,
+    kAudioFormatFlagIsFloat, kAudioFormatFlagIsPacked, kAudioFormatLinearPCM,
+    AudioStreamBasicDescription,
 };
 use crate::frameworks::core_foundation::cf_run_loop::{
     kCFRunLoopCommonModes, CFRunLoopGetMain, CFRunLoopMode, CFRunLoopRef,
@@ -92,6 +93,8 @@ struct AudioQueueHostObject {
     is_running: bool,
     al_source: Option<ALuint>,
     al_unused_buffers: Vec<ALuint>,
+    aq_is_running_proc: Option<AudioQueuePropertyListenerProc>,
+    aq_is_running_user_data: Option<MutVoidPtr>,
 }
 
 #[repr(C, packed)]
@@ -125,6 +128,12 @@ type AudioQueueParameterID = u32;
 const kAudioQueueParam_Volume: AudioQueueParameterID = 1;
 
 type AudioQueueParameterValue = f32;
+
+pub type AudioQueuePropertyID = u32;
+pub const kAudioQueueProperty_IsRunning: AudioQueuePropertyID = fourcc(b"aqrn");
+
+/// (*void)(void *in_user_data, AudioQueueRef in_aq, AudioQueuePropertyID in_id)
+type AudioQueuePropertyListenerProc = GuestFunction;
 
 fn AudioQueueNewOutput(
     env: &mut Environment,
@@ -168,6 +177,8 @@ fn AudioQueueNewOutput(
         is_running: false,
         al_source: None,
         al_unused_buffers: Vec::new(),
+        aq_is_running_proc: None,
+        aq_is_running_user_data: None,
     };
 
     let aq_ref = env.mem.alloc_and_write(OpaqueAudioQueue { _filler: 0 });
@@ -291,39 +302,59 @@ fn AudioQueueEnqueueBuffer(
 }
 
 fn AudioQueueAddPropertyListener(
-    _env: &mut Environment,
+    env: &mut Environment,
     in_aq: AudioQueueRef,
-    in_id: u32,             // TODO: should be AudioQueuePropertyID
-    in_proc: GuestFunction, // TODO: should be AudioQueuePropertyListenerProc
+    in_id: AudioQueuePropertyID,
+    in_proc: AudioQueuePropertyListenerProc,
     in_user_data: MutVoidPtr,
 ) -> OSStatus {
     return_if_null!(in_aq);
 
-    log!(
-        "TODO: AudioQueueAddPropertyListener({:?}, {:?}, {:?}, {:?})",
-        in_aq,
-        in_id,
-        in_proc,
-        in_user_data
-    );
+    if in_id == kAudioQueueProperty_IsRunning {
+        let host_object = State::get(&mut env.framework_state)
+            .audio_queues
+            .get_mut(&in_aq)
+            .unwrap();
+
+        host_object.aq_is_running_proc = Some(in_proc);
+        host_object.aq_is_running_user_data = Some(in_user_data);
+    } else {
+        log!(
+            "TODO: AudioQueueAddPropertyListener({:?}, {}, {:?}, {:?})",
+            in_aq,
+            debug_fourcc(in_id),
+            in_proc,
+            in_user_data
+        );
+    }
     0 // success
 }
 fn AudioQueueRemovePropertyListener(
-    _env: &mut Environment,
+    env: &mut Environment,
     in_aq: AudioQueueRef,
-    in_id: u32,             // TODO: should be AudioQueuePropertyID
-    in_proc: GuestFunction, // TODO: should be AudioQueuePropertyListenerProc
+    in_id: AudioQueuePropertyID,
+    in_proc: AudioQueuePropertyListenerProc,
     in_user_data: MutVoidPtr,
 ) -> OSStatus {
     return_if_null!(in_aq);
 
-    log!(
-        "TODO: AudioQueueRemovePropertyListener({:?}, {:?}, {:?}, {:?})",
-        in_aq,
-        in_id,
-        in_proc,
-        in_user_data
-    );
+    if in_id == kAudioQueueProperty_IsRunning {
+        let host_object = State::get(&mut env.framework_state)
+            .audio_queues
+            .get_mut(&in_aq)
+            .unwrap();
+
+        host_object.aq_is_running_proc = None;
+        host_object.aq_is_running_user_data = None;
+    } else {
+        log!(
+            "TODO: AudioQueueRemovePropertyListener({:?}, {}, {:?}, {:?})",
+            in_aq,
+            debug_fourcc(in_id),
+            in_proc,
+            in_user_data
+        );
+    }
     0 // success
 }
 
@@ -613,6 +644,21 @@ fn AudioQueueStart(
         let al_source = host_object.al_source.unwrap();
         unsafe { al::alSourcePlay(al_source) };
         assert!(unsafe { al::alGetError() } == 0);
+    } else {
+        log!(
+            "AudioQueueStart: Unsupported format {}",
+            debug_fourcc(host_object.format.format_id)
+        );
+    }
+
+    if let (Some(in_proc), Some(in_user_data)) = (
+        host_object.aq_is_running_proc,
+        host_object.aq_is_running_user_data,
+    ) {
+        <GuestFunction as CallFromHost<(), (MutVoidPtr, Ptr<OpaqueAudioQueue, true>, u32)>>::
+        call_from_host(
+            &in_proc, env, (in_user_data, in_aq, kAudioQueueProperty_IsRunning)
+        );
     }
 
     0 // success

@@ -734,6 +734,13 @@ fn AudioQueueStop(env: &mut Environment, in_aq: AudioQueueRef, in_immediate: boo
     0 // success
 }
 
+fn AudioQueueReset(env: &mut Environment, in_aq: AudioQueueRef) -> OSStatus {
+    // TODO: flush any queued buffers
+    // TODO: unify with AudioQueueStop
+    AudioQueueStop(env, in_aq, true);
+    AudioQueueStart(env, in_aq, ConstPtr::null())
+}
+
 fn AudioQueueFreeBuffer(
     env: &mut Environment,
     in_aq: AudioQueueRef,
@@ -819,6 +826,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(AudioQueueStart(_, _)),
     export_c_func!(AudioQueuePause(_)),
     export_c_func!(AudioQueueStop(_, _)),
+    export_c_func!(AudioQueueReset(_)),
     export_c_func!(AudioQueueFreeBuffer(_, _)),
     export_c_func!(AudioQueueDispose(_, _)),
 ];

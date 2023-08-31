@@ -121,6 +121,9 @@ fn glGetIntegerv(env: &mut Environment, pname: GLenum, params: MutPtr<GLint>) {
 fn glHint(env: &mut Environment, target: GLenum, mode: GLenum) {
     with_ctx_and_mem(env, |gles, _mem| unsafe { gles.Hint(target, mode) })
 }
+fn glFlush(env: &mut Environment) {
+    with_ctx_and_mem(env, |gles, _mem| unsafe { gles.Flush() })
+}
 fn glGetString(env: &mut Environment, name: GLenum) -> ConstPtr<GLubyte> {
     with_ctx_and_mem(env, |gles, mem| {
         let s = unsafe { CStr::from_ptr(gles.GetString(name).cast()) };
@@ -940,6 +943,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(glGetFloatv(_, _)),
     export_c_func!(glGetIntegerv(_, _)),
     export_c_func!(glHint(_, _)),
+    export_c_func!(glFlush()),
     export_c_func!(glGetString(_)),
     // Other state manipulation
     export_c_func!(glAlphaFunc(_, _)),

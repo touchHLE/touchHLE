@@ -89,6 +89,9 @@ impl GLES for GLES1Native {
     unsafe fn Hint(&mut self, target: GLenum, mode: GLenum) {
         gles11::Hint(target, mode)
     }
+    unsafe fn Flush(&mut self) {
+        gles11::Flush()
+    }
     unsafe fn GetString(&mut self, name: GLenum) -> *const GLubyte {
         gles11::GetString(name)
     }

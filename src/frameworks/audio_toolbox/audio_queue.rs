@@ -369,10 +369,7 @@ fn is_supported_audio_format(format: &AudioStreamBasicDescription) -> bool {
         ..
     } = format;
     match format_id {
-        kAudioFormatAppleIMA4 => {
-            // TODO: stereo (requires interleaving)
-            channels_per_frame == 1
-        }
+        kAudioFormatAppleIMA4 => (channels_per_frame == 1) || (channels_per_frame == 2),
         kAudioFormatLinearPCM => {
             // TODO: support more PCM formats
             (channels_per_frame == 1 || channels_per_frame == 2)
@@ -400,15 +397,37 @@ fn decode_buffer(
         kAudioFormatAppleIMA4 => {
             assert!(data_slice.len() % 34 == 0);
             let mut out_pcm = Vec::<u8>::with_capacity((data_slice.len() / 34) * 64 * 2);
+            let packets = data_slice.chunks(34);
 
-            for packet in data_slice.chunks(34) {
-                let pcm_packet: [i16; 64] = decode_ima4(packet.try_into().unwrap());
-                let pcm_bytes: &[u8] =
-                    unsafe { std::slice::from_raw_parts(pcm_packet.as_ptr() as *const u8, 128) };
-                out_pcm.extend_from_slice(pcm_bytes);
+            if format.channels_per_frame == 1 {
+                for packet in packets {
+                    let pcm_packet: [i16; 64] = decode_ima4(packet.try_into().unwrap());
+                    let pcm_bytes: &[u8] = unsafe {
+                        std::slice::from_raw_parts(pcm_packet.as_ptr() as *const u8, 128)
+                    };
+                    out_pcm.extend_from_slice(pcm_bytes);
+                }
+
+                (al::AL_FORMAT_MONO16, format.sample_rate as ALsizei, out_pcm)
+            } else {
+                let mut peekable_packets = packets.peekable();
+                while peekable_packets.peek().is_some() {
+                    let left = peekable_packets.next().unwrap();
+                    let left_pcm_packet: [i16; 64] = decode_ima4(left.try_into().unwrap());
+                    let right = peekable_packets.next().unwrap();
+                    let right_pcm_packet: [i16; 64] = decode_ima4(right.try_into().unwrap());
+                    for (l, r) in left_pcm_packet.iter().zip(right_pcm_packet.iter()) {
+                        out_pcm.extend_from_slice(&l.to_le_bytes());
+                        out_pcm.extend_from_slice(&r.to_le_bytes());
+                    }
+                }
+
+                (
+                    al::AL_FORMAT_STEREO16,
+                    format.sample_rate as ALsizei,
+                    out_pcm,
+                )
             }
-
-            (al::AL_FORMAT_MONO16, format.sample_rate as ALsizei, out_pcm)
         }
         kAudioFormatLinearPCM => {
             // The end of the data might be misaligned (this happens in Crash

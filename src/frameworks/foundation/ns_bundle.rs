@@ -119,7 +119,27 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 - (id)pathForResource:(id)name // NSString*
                ofType:(id)extension { // NSString*
-    msg![env; this pathForResource:name ofType:extension inDirectory:nil]
+    // TODO: move all of this to pathForResource:ofType:inDirectory: ?
+    // not clear from docs if it is the case
+    let path = msg![env; this pathForResource:name ofType:extension inDirectory:nil];
+    let file_manager: id = msg_class![env; NSFileManager defaultManager];
+    let file_exists: bool = msg![env; file_manager fileExistsAtPath:path];
+    if file_exists {
+        return path;
+    }
+    let mut l_path: id = msg![env; this resourcePath];
+    // TODO: other localizations
+    let lproj: id = ns_string::get_static_str(env, "English.lproj");
+    l_path = msg![env; l_path stringByAppendingPathComponent:lproj];
+    l_path = msg![env; l_path stringByAppendingPathComponent:name];
+    if extension != nil {
+        l_path = msg![env; l_path stringByAppendingPathExtension:extension];
+    }
+    let l_file_exists: bool = msg![env; file_manager fileExistsAtPath:l_path];
+    if l_file_exists {
+        return l_path;
+    }
+    nil
 }
 - (id)URLForResource:(id)name // NSString*
        withExtension:(id)extension // NSString *

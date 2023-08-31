@@ -207,51 +207,41 @@ fn blend_premultiplied(bg: (f32, f32, f32, f32), fg: (f32, f32, f32, f32)) -> (f
     )
 }
 
+/// per component offsets (r, g, b, a)
+fn pixel_offsets(data: &CGBitmapContextData) -> (usize, usize, usize, Option<usize>) {
+    match data.color_space {
+        kCGColorSpaceGenericRGB => {
+            match data.alpha_info {
+                kCGImageAlphaNone => (0, 1, 2, None),
+                kCGImageAlphaPremultipliedLast | kCGImageAlphaLast => (0, 1, 2, Some(3)),
+                kCGImageAlphaPremultipliedFirst | kCGImageAlphaFirst => (1, 2, 3, Some(0)),
+                kCGImageAlphaNoneSkipLast => (0, 1, 2, None),
+                kCGImageAlphaNoneSkipFirst => (1, 2, 3, None),
+                kCGImageAlphaOnly => (0, 0, 0, Some(0)),
+                _ => unreachable!(), // checked by bytes_per_pixel
+            }
+        }
+        _ => unimplemented!(),
+    }
+}
+
 /// Get gamma-decoded RGBA value.
 fn get_pixel(
     data: &CGBitmapContextData,
     pixels: &mut [u8],
     first_component_idx: usize,
 ) -> (f32, f32, f32, f32) {
-    let pixel = match data.alpha_info {
-        kCGImageAlphaNone => (
-            pixels[first_component_idx] as f32 / 255.0,
-            pixels[first_component_idx + 1] as f32 / 255.0,
-            pixels[first_component_idx + 2] as f32 / 255.0,
-            1.0,
-        ),
-        kCGImageAlphaPremultipliedLast | kCGImageAlphaLast => (
-            pixels[first_component_idx] as f32 / 255.0,
-            pixels[first_component_idx + 1] as f32 / 255.0,
-            pixels[first_component_idx + 2] as f32 / 255.0,
-            pixels[first_component_idx + 3] as f32 / 255.0,
-        ),
-        kCGImageAlphaPremultipliedFirst | kCGImageAlphaFirst => (
-            pixels[first_component_idx + 1] as f32 / 255.0,
-            pixels[first_component_idx + 2] as f32 / 255.0,
-            pixels[first_component_idx + 3] as f32 / 255.0,
-            pixels[first_component_idx] as f32 / 255.0,
-        ),
-        kCGImageAlphaNoneSkipLast => (
-            pixels[first_component_idx] as f32 / 255.0,
-            pixels[first_component_idx + 1] as f32 / 255.0,
-            pixels[first_component_idx + 2] as f32 / 255.0,
-            1.0,
-        ),
-        kCGImageAlphaNoneSkipFirst => (
-            pixels[first_component_idx + 1] as f32 / 255.0,
-            pixels[first_component_idx + 2] as f32 / 255.0,
-            pixels[first_component_idx + 3] as f32 / 255.0,
-            1.0,
-        ),
-        kCGImageAlphaOnly => (
-            pixels[first_component_idx] as f32 / 255.0,
-            pixels[first_component_idx] as f32 / 255.0,
-            pixels[first_component_idx] as f32 / 255.0,
-            pixels[first_component_idx] as f32 / 255.0,
-        ),
-        _ => unreachable!(), // checked by bytes_per_pixel
-    };
+    let pixel_offset = pixel_offsets(data);
+    let pixel = (
+        pixels[first_component_idx + pixel_offset.0] as f32 / 255.0,
+        pixels[first_component_idx + pixel_offset.1] as f32 / 255.0,
+        pixels[first_component_idx + pixel_offset.2] as f32 / 255.0,
+        if let Some(alpha_offest) = pixel_offset.3 {
+            pixels[first_component_idx + alpha_offest] as f32 / 255.0
+        } else {
+            1.0
+        },
+    );
 
     (
         gamma_decode(pixel.0),
@@ -303,40 +293,19 @@ fn put_pixel(
 
     // Alpha is always linear.
     let (r, g, b) = (gamma_encode(r), gamma_encode(g), gamma_encode(b));
+    let pixel_offset = pixel_offsets(data);
     match data.alpha_info {
-        kCGImageAlphaNone => {
-            pixels[first_component_idx] = (r * 255.0) as u8;
-            pixels[first_component_idx + 1] = (g * 255.0) as u8;
-            pixels[first_component_idx + 2] = (b * 255.0) as u8;
-        }
-        kCGImageAlphaPremultipliedLast | kCGImageAlphaLast => {
-            pixels[first_component_idx] = (r * 255.0) as u8;
-            pixels[first_component_idx + 1] = (g * 255.0) as u8;
-            pixels[first_component_idx + 2] = (b * 255.0) as u8;
-            pixels[first_component_idx + 3] = (a * 255.0) as u8;
-        }
-        kCGImageAlphaPremultipliedFirst | kCGImageAlphaFirst => {
-            pixels[first_component_idx] = (a * 255.0) as u8;
-            pixels[first_component_idx + 1] = (r * 255.0) as u8;
-            pixels[first_component_idx + 2] = (g * 255.0) as u8;
-            pixels[first_component_idx + 3] = (b * 255.0) as u8;
-        }
-        kCGImageAlphaNoneSkipLast => {
-            pixels[first_component_idx] = (r * 255.0) as u8;
-            pixels[first_component_idx + 1] = (g * 255.0) as u8;
-            pixels[first_component_idx + 2] = (b * 255.0) as u8;
-            // alpha component skipped
-        }
-        kCGImageAlphaNoneSkipFirst => {
-            // alpha component skipped
-            pixels[first_component_idx + 1] = (r * 255.0) as u8;
-            pixels[first_component_idx + 2] = (g * 255.0) as u8;
-            pixels[first_component_idx + 3] = (b * 255.0) as u8;
-        }
         kCGImageAlphaOnly => {
             pixels[first_component_idx] = (a * 255.0) as u8;
         }
-        _ => unreachable!(), // checked by bytes_per_pixel
+        _ => {
+            pixels[first_component_idx + pixel_offset.0] = (r * 255.0) as u8;
+            pixels[first_component_idx + pixel_offset.1] = (g * 255.0) as u8;
+            pixels[first_component_idx + pixel_offset.2] = (b * 255.0) as u8;
+            if let Some(alpha_offset) = pixel_offset.3 {
+                pixels[first_component_idx + alpha_offset] = (a * 255.0) as u8;
+            }
+        }
     }
 }
 

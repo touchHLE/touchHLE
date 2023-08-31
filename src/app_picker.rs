@@ -7,7 +7,7 @@ use crate::bundle::Bundle;
 use crate::frameworks::core_graphics::{cg_image, CGFloat, CGPoint, CGRect, CGSize};
 use crate::frameworks::foundation::ns_run_loop::run_run_loop_single_iteration;
 use crate::frameworks::foundation::ns_string;
-use crate::frameworks::uikit::ui_font::UITextAlignmentCenter;
+use crate::frameworks::uikit::ui_font::{UITextAlignmentCenter, UITextAlignmentRight};
 use crate::frameworks::uikit::ui_view::ui_control::ui_button::{
     UIButtonTypeCustom, UIButtonTypeRoundedRect,
 };
@@ -190,6 +190,33 @@ fn show_app_picker_gui(
     let main_view: id = msg_class![env; UIView alloc];
     let main_view: id = msg![env; main_view initWithFrame:app_frame];
     () = msg![env; window addSubview:main_view];
+
+    // Version label
+    {
+        let label_frame = CGRect {
+            origin: CGPoint {
+                x: 0.0,
+                y: app_frame.size.height - 20.0,
+            },
+            size: CGSize {
+                width: app_frame.size.width - 5.0,
+                height: 15.0,
+            },
+        };
+        let label: id = msg_class![env; UILabel alloc];
+        let label: id = msg![env; label initWithFrame:label_frame];
+        let text = ns_string::from_rust_string(env, format!("touchHLE {}", crate::VERSION));
+        () = msg![env; label setText:text];
+        () = msg![env; label setTextAlignment:UITextAlignmentRight];
+        let font_size: CGFloat = 12.0;
+        let font: id = msg_class![env; UIFont systemFontOfSize:font_size];
+        () = msg![env; label setFont:font];
+        let text_color: id = msg_class![env; UIColor lightGrayColor];
+        () = msg![env; label setTextColor:text_color];
+        let bg_color: id = msg_class![env; UIColor clearColor];
+        () = msg![env; label setBackgroundColor:bg_color];
+        () = msg![env; main_view addSubview:label];
+    }
 
     let divider = app_frame.size.height - 100.0;
 

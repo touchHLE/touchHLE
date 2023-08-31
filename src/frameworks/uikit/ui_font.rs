@@ -163,6 +163,13 @@ pub fn size_with_font(
     text: &str,
     constrained: Option<(CGSize, UILineBreakMode)>,
 ) -> CGSize {
+    if text == " " {
+        // ' ' will return 0 size, which is wrong
+        // thus, we choose another similar char to calculate the size
+        // (choice of '-' is made a bit arbitrary, just to look good on the screen)
+        return size_with_font(env, font, "-", constrained);
+    }
+
     let host_object = env.objc.borrow::<UIFontHostObject>(font);
 
     let font = get_font(

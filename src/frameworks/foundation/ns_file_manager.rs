@@ -128,6 +128,20 @@ pub const CLASSES: ClassExports = objc_classes! {
     }
 }
 
+- (bool)removeItemAtPath:(id)path // NSString*
+                   error:(MutPtr<id>)error { // NSError**
+    let path = ns_string::to_rust_string(env, path); // TODO: avoid copy
+    match env.fs.remove(GuestPath::new(&path)) {
+        Ok(()) => true,
+        Err(()) => {
+            if !error.is_null() {
+                todo!(); // TODO: create an NSError if requested
+            }
+            false
+        }
+    }
+}
+
 - (id)enumeratorAtPath:(id)path { // NSString*
     let path = ns_string::to_rust_string(env, path); // TODO: avoid copy
     let Ok(paths) = env.fs.enumerate_recursive(GuestPath::new(&path)) else {

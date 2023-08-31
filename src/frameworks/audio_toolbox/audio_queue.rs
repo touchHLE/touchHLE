@@ -135,6 +135,8 @@ pub const kAudioQueueProperty_IsRunning: AudioQueuePropertyID = fourcc(b"aqrn");
 /// (*void)(void *in_user_data, AudioQueueRef in_aq, AudioQueuePropertyID in_id)
 type AudioQueuePropertyListenerProc = GuestFunction;
 
+const kAudioQueueErr_InvalidBuffer: OSStatus = -66687;
+
 fn AudioQueueNewOutput(
     env: &mut Environment,
     in_format: ConstPtr<AudioStreamBasicDescription>,
@@ -292,8 +294,9 @@ fn AudioQueueEnqueueBuffer(
         .get_mut(&in_aq)
         .unwrap();
 
-    // TODO: Return error if buffer doesn't belong to audio queue
-    assert!(host_object.buffers.contains(&in_buffer));
+    if !host_object.buffers.contains(&in_buffer) {
+        return kAudioQueueErr_InvalidBuffer;
+    }
 
     host_object.buffer_queue.push_back(in_buffer);
     log_dbg!("New buffer enqueued: {:?}", in_buffer);
@@ -732,6 +735,39 @@ fn AudioQueueReset(env: &mut Environment, in_aq: AudioQueueRef) -> OSStatus {
     AudioQueueStart(env, in_aq, ConstPtr::null())
 }
 
+fn AudioQueueFreeBuffer(
+    env: &mut Environment,
+    in_aq: AudioQueueRef,
+    in_buffer: AudioQueueBufferRef,
+) -> OSStatus {
+    return_if_null!(in_aq);
+
+    let host_object = State::get(&mut env.framework_state)
+        .audio_queues
+        .get_mut(&in_aq)
+        .unwrap();
+
+    if !host_object.buffers.contains(&in_buffer) {
+        return kAudioQueueErr_InvalidBuffer;
+    }
+
+    // TODO: what about buffer_queue?
+    let index = host_object
+        .buffers
+        .iter()
+        .position(|x| x == &in_buffer)
+        .unwrap();
+    host_object.buffers.remove(index);
+
+    log_dbg!("Freeing buffer: {:?}", in_buffer);
+
+    let buffer = env.mem.read(in_buffer);
+    env.mem.free(buffer.audio_data);
+    env.mem.free(in_buffer.cast());
+
+    0 // success
+}
+
 fn AudioQueueDispose(env: &mut Environment, in_aq: AudioQueueRef, in_immediate: bool) -> OSStatus {
     return_if_null!(in_aq);
 
@@ -789,5 +825,6 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(AudioQueuePause(_)),
     export_c_func!(AudioQueueStop(_, _)),
     export_c_func!(AudioQueueReset(_)),
+    export_c_func!(AudioQueueFreeBuffer(_, _)),
     export_c_func!(AudioQueueDispose(_, _)),
 ];

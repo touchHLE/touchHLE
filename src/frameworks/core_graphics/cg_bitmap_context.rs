@@ -78,6 +78,7 @@ pub fn CGBitmapContextCreate(
         // TODO: is this the correct default?
         rgb_fill_color: (0.0, 0.0, 0.0, 0.0),
         translation: (0.0, 0.0),
+        scale: (1.0, 1.0),
     };
     let isa = env
         .objc
@@ -315,6 +316,7 @@ pub struct CGBitmapContextDrawer<'a> {
     bitmap_info: CGBitmapContextData,
     rgb_fill_color: (CGFloat, CGFloat, CGFloat, CGFloat),
     translation: (CGFloat, CGFloat),
+    scale: (CGFloat, CGFloat),
     pixels: &'a mut [u8],
 }
 impl CGBitmapContextDrawer<'_> {
@@ -327,6 +329,7 @@ impl CGBitmapContextDrawer<'_> {
             subclass: CGContextSubclass::CGBitmapContext(bitmap_info),
             rgb_fill_color,
             translation,
+            scale,
         } = objc.borrow(context);
 
         let pixels = get_pixels(&bitmap_info, mem);
@@ -335,6 +338,7 @@ impl CGBitmapContextDrawer<'_> {
             bitmap_info,
             rgb_fill_color,
             translation,
+            scale,
             pixels,
         }
     }
@@ -347,6 +351,9 @@ impl CGBitmapContextDrawer<'_> {
     }
     pub fn translation(&self) -> (CGFloat, CGFloat) {
         self.translation
+    }
+    pub fn scale(&self) -> (CGFloat, CGFloat) {
+        self.scale
     }
     /// Get the current fill color. The returned color is linear RGB, not sRGB.
     /// It has premultiplied alpha if the context does.

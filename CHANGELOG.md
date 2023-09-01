@@ -34,6 +34,7 @@ Quality and performance:
 - Overlapping characters in text now render correctly. (@Xertes0)
 - touchHLE now avoids polling for events more often than 120Hz. Previously, it would sometimes poll many times more often than that, which could be very bad for performance. This change improves performance in basically all apps, though the effects on the supported apps from previous releases are fairly subtle. (@hikari-no-yume)
 - The macOS-only memory leak of up to 0.4MB/s seems to have been fixed! (@hikari-no-yume)
+- App icons are now displayed with rounded corners, even if the PNG file contains a square image. This is more accurate to what iPhone OS does. (@hikari-no-yume)
 - The memory allocator is a lot faster now. (@hikari-no-yume)
 
 New platform support:
@@ -60,6 +61,7 @@ Other:
   - The splash screen is now drawn with OpenGL ES 1.1, either natively or via translation to OpenGL 2.1, rather than with OpenGL 3.2. (@hikari-no-yume)
 
   Theoretically, none of these changes should affect how touchHLE behaves for ordinary users in supported apps, but graphics drivers are inscrutable and frequently buggy beasts, so it's hard to be certain. As if to demonstrate this, these changes somehow fixed the mysterious macOS-only memory leak.
+- The new `--headless` option lets you run touchHLE with no graphical output and no input whatsoever. This is only useful for command-line apps. (@hikari-no-yume)
 
 ## v0.1.2 (2023-03-07)
 
@@ -77,7 +79,6 @@ Compatibility:
 Quality:
 
 - The version of stb\_image used by touchHLE has been updated. The new version includes a fix for a bug that caused many launch images (splash screens) and icons to fail to load. Thank you to @nothings and @rygorous who diagnosed and fixed this.
-- App icons are now displayed with rounded corners, even if the PNG file contains a square image. This is more accurate to what iPhone OS does. (@hikari-no-yume)
 
 Usability:
 
@@ -92,7 +93,6 @@ Usability:
 Other:
 
 - The version of dynarmic used by touchHLE has been updated. This will fix build issues for some people. (@hikari-no-yume)
-- The new `--headless` option lets you run touchHLE with no graphical output and no input whatsoever. This is only useful for command-line apps. (@hikari-no-yume)
 
 ## v0.1.1 (2023-02-18)
 

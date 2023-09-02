@@ -8,6 +8,7 @@
 //! Useful resources:
 //! - Apple's [View Programming Guide for iOS](https://developer.apple.com/library/archive/documentation/WindowsViews/Conceptual/ViewPG_iPhoneOS/Introduction/Introduction.html)
 
+pub mod ui_activity_indicator_view;
 pub mod ui_alert_view;
 pub mod ui_control;
 pub mod ui_image_view;
@@ -18,7 +19,9 @@ use super::ui_graphics::{UIGraphicsPopContext, UIGraphicsPushContext};
 use crate::frameworks::core_graphics::cg_context::{CGContextClearRect, CGContextRef};
 use crate::frameworks::core_graphics::{CGFloat, CGPoint, CGRect};
 use crate::frameworks::foundation::ns_string::get_static_str;
+use crate::frameworks::foundation::ns_string::to_rust_string;
 use crate::frameworks::foundation::NSUInteger;
+use crate::mem::ConstVoidPtr;
 use crate::objc::{
     id, msg, nil, objc_classes, release, retain, Class, ClassExports, HostObject, NSZonePtr,
 };
@@ -40,6 +43,8 @@ pub(super) struct UIViewHostObject {
     superview: id,
     clears_context_before_drawing: bool,
     user_interaction_enabled: bool,
+    clips_to_bounds: bool, // TODO: Handle this property
+    transform: id,         // CGAffineTransform* TODO: Handle this property
 }
 impl HostObject for UIViewHostObject {}
 impl Default for UIViewHostObject {
@@ -52,6 +57,8 @@ impl Default for UIViewHostObject {
             superview: nil,
             clears_context_before_drawing: true,
             user_interaction_enabled: true,
+            clips_to_bounds: false,
+            transform: nil, // TODO: Set CGAffineTransformIdentity as default value? Alloc/obtain pointer to it somehow
         }
     }
 }
@@ -90,6 +97,16 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 + (Class)layerClass {
     env.objc.get_known_class("CALayer", &mut env.mem)
+}
+
++ (())beginAnimations:(id)animationID // NSString*
+              context:(ConstVoidPtr)context {
+    log!("TODO: [UIView beginAnimations:{:?} {:?} context:{:?}]", to_rust_string(env, animationID), animationID, context);
+}
+
++ (())commitAnimations {
+    log!("TODO: [UIView commitAnimations]");
+    // Thank you apple for having this API So i don't actually have to implement animations for the end result to happen
 }
 
 // TODO: accessors etc
@@ -169,6 +186,12 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 - (())setUserInteractionEnabled:(bool)enabled {
     env.objc.borrow_mut::<UIViewHostObject>(this).user_interaction_enabled = enabled;
+}
+- (bool)isClipsToBounds {
+    env.objc.borrow::<UIViewHostObject>(this).clips_to_bounds
+}
+- (())setClipsToBounds:(bool)clips_to_bounds {
+    env.objc.borrow_mut::<UIViewHostObject>(this).clips_to_bounds = clips_to_bounds;
 }
 
 // TODO: setMultipleTouchEnabled
@@ -256,6 +279,8 @@ pub const CLASSES: ClassExports = objc_classes! {
         subviews,
         clears_context_before_drawing: _,
         user_interaction_enabled: _,
+        clips_to_bounds: _,
+        transform: _,
     } = std::mem::take(env.objc.borrow_mut(this));
 
     release(env, layer);
@@ -353,6 +378,13 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 - (())setClearsContextBeforeDrawing:(bool)v {
     env.objc.borrow_mut::<UIViewHostObject>(this).clears_context_before_drawing = v;
+}
+
+- (id)transform {
+    env.objc.borrow::<UIViewHostObject>(this).transform
+}
+- (())setTransform:(id)transform {
+    env.objc.borrow_mut::<UIViewHostObject>(this).transform = transform;
 }
 
 // Drawing stuff that views should override

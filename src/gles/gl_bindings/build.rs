@@ -41,6 +41,7 @@ fn main() {
             "GL_EXT_texture_lod_bias",
             "GL_EXT_texture_format_BGRA8888",
             "GL_OES_draw_texture",
+            "GL_OES_mapbuffer",
             // Part of the OpenGL ES 1.1 common profile.
             "GL_OES_compressed_paletted_texture",
             "GL_OES_matrix_palette",

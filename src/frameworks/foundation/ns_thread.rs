@@ -8,10 +8,14 @@
 use std::collections::HashSet;
 use std::time::Duration;
 
+use crate::dyld::FunctionExports;
 use crate::environment::Environment;
+use crate::frameworks::core_foundation::CFTypeRef;
 use crate::frameworks::foundation::NSTimeInterval;
-use crate::libc::pthread::thread::{_get_thread_id, pthread_t};
-use crate::objc::{id, nil, objc_classes, ClassExports, HostObject, SEL};
+use crate::libc::pthread::thread::{_get_thread_id, pthread_create, pthread_t};
+use crate::mem::{guest_size_of, ConstPtr, MutPtr};
+use crate::objc::{id, msg_send, nil, objc_classes, Class, ClassExports, HostObject, SEL};
+use crate::{export_c_func, msg, msg_class};
 
 #[derive(Default)]
 pub struct State {
@@ -85,7 +89,27 @@ object:(id)object {
     this
 }
 
-// TODO: construction etc
+- (())start {
+    let symb = "__ns_thread_invocation";
+    let gf = env
+        .dyld
+        .create_proc_address(&mut env.mem, &mut env.cpu, symb)
+        .unwrap_or_else(|_| panic!("create_proc_address failed {}", symb));
+
+    let thread_ptr: MutPtr<pthread_t> = env.mem.alloc(guest_size_of::<pthread_t>()).cast();
+    pthread_create(env, thread_ptr, ConstPtr::null(), gf, this.cast());
+    let thread = env.mem.read(thread_ptr);
+    let thread_dictionary = msg_class![env; NSDictionary alloc];
+    // TODO: Store the thread's default NSConnection and NSAssertionHandler instances
+    // https://developer.apple.com/documentation/foundation/nsthread/1411433-threaddictionary
+
+    let host_object = env.objc.borrow_mut::<NSThreadHostObject>(this);
+    host_object.thread = Some(thread);
+    host_object.thread_dictionary = thread_dictionary;
+
+    log_dbg!("[(NSThread*){:?} start] Started new thread with pthread {:?} and ThreadId {:?}", this, thread, _get_thread_id(env, thread));
+}
+
 - (id)threadDictionary {
     env.objc.borrow::<NSThreadHostObject>(this).thread_dictionary
 }
@@ -113,3 +137,20 @@ object:(id)object {
 @end
 
 };
+
+type NSThreadRef = CFTypeRef;
+
+pub fn _ns_thread_invocation(env: &mut Environment, ns_thread_obj: NSThreadRef) {
+    let class: Class = msg![env; ns_thread_obj class];
+    assert_eq!(class, env.objc.get_known_class("NSThread", &mut env.mem));
+
+    let &NSThreadHostObject {
+        target,
+        selector,
+        object,
+        ..
+    } = env.objc.borrow(ns_thread_obj);
+    () = msg_send(env, (target, selector.unwrap(), object));
+}
+
+pub const FUNCTIONS: FunctionExports = &[export_c_func!(_ns_thread_invocation(_))];

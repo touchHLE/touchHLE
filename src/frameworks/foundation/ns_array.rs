@@ -5,9 +5,11 @@
  */
 //! The `NSArray` class cluster, including `NSMutableArray`.
 
+use super::ns_enumerator::{fast_enumeration_helper, NSFastEnumerationState};
 use super::ns_property_list_serialization::deserialize_plist_from_file;
 use super::{ns_keyed_unarchiver, ns_string, ns_url, NSUInteger};
 use crate::fs::GuestPath;
+use crate::mem::MutPtr;
 use crate::objc::{
     autorelease, id, msg, msg_class, nil, objc_classes, release, retain, ClassExports, HostObject,
     NSZonePtr,
@@ -184,6 +186,14 @@ pub const CLASSES: ClassExports = objc_classes! {
     let class = env.objc.get_known_class("_touchHLE_NSArray_ObjectEnumerator", &mut env.mem);
     let enumerator = env.objc.alloc_object(class, host_object, &mut env.mem);
     autorelease(env, enumerator)
+}
+
+// NSFastEnumeration implementation
+- (NSUInteger)countByEnumeratingWithState:(MutPtr<NSFastEnumerationState>)state
+                                  objects:(MutPtr<id>)stackbuf
+                                    count:(NSUInteger)len {
+    let mut iterator = env.objc.borrow_mut::<ArrayHostObject>(this).array.iter().map(|i| *i);
+    fast_enumeration_helper(&mut env.mem, this, &mut iterator, state, stackbuf, len)
 }
 
 // TODO: more init methods, etc

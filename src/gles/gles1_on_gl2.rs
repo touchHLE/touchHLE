@@ -68,6 +68,7 @@ pub const CAPABILITIES: &[GLenum] = &[
     gl21::SCISSOR_TEST,
     gl21::STENCIL_TEST,
     gl21::TEXTURE_2D,
+    gl21::POINT_SPRITE,
 ];
 
 pub struct ArrayInfo {
@@ -220,6 +221,7 @@ const GET_PARAMS: ParamTable = ParamTable(&[
     (gl21::POINT_SIZE_RANGE, ParamType::Float, 2),
     (gl21::POINT_SMOOTH, ParamType::Boolean, 2),
     (gl21::POINT_SMOOTH_HINT, ParamType::Int, 2),
+    (gl21::POINT_SPRITE, ParamType::Boolean, 1),
     (gl21::POLYGON_OFFSET_FACTOR, ParamType::Float, 1),
     (gl21::POLYGON_OFFSET_FILL, ParamType::Boolean, 1),
     (gl21::POLYGON_OFFSET_UNITS, ParamType::Float, 1),
@@ -1473,7 +1475,8 @@ impl GLES for GLES1OnGL2 {
                 assert!(pname == gl21::TEXTURE_LOD_BIAS_EXT);
                 gl21::TexEnvf(target, pname, param)
             }
-            _ => unimplemented!(),
+            gl21::POINT_SPRITE => gl21::TexEnvf(target, pname, param),
+            _ => unimplemented!("TexEnvf target {}", target.to_string()),
         }
     }
     unsafe fn TexEnvx(&mut self, target: GLenum, pname: GLenum, param: GLfixed) {

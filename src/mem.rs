@@ -349,7 +349,7 @@ impl Mem {
     /// when deriving a pointer from the slice consistent (though you should use
     /// [Self::ptr_at] for that).
     pub fn bytes_at<const MUT: bool>(&self, ptr: Ptr<u8, MUT>, count: GuestUSize) -> &[u8] {
-        if ptr.to_bits() < Self::NULL_PAGE_SIZE {
+        if ptr.to_bits() < Self::NULL_PAGE_SIZE && count > 0 {
             Self::null_check_fail(ptr.to_bits(), count)
         }
         &self.bytes()[ptr.to_bits() as usize..][..count as usize]

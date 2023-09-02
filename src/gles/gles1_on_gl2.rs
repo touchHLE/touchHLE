@@ -35,8 +35,6 @@ use std::ffi::CStr;
 /// Note: There can be arbitrarily many lights or clip planes, depending on
 /// implementation limits. We might eventually need to check those rather than
 /// just providing the minimum.
-///
-/// TODO: GL_POINT_SPRITE_OES?
 pub const CAPABILITIES: &[GLenum] = &[
     gl21::ALPHA_TEST,
     gl21::BLEND,
@@ -68,6 +66,8 @@ pub const CAPABILITIES: &[GLenum] = &[
     gl21::SCISSOR_TEST,
     gl21::STENCIL_TEST,
     gl21::TEXTURE_2D,
+    // Same as POINT_SPRITE_OES from the GLES extension
+    gl21::POINT_SPRITE,
 ];
 
 pub struct ArrayInfo {
@@ -220,6 +220,7 @@ const GET_PARAMS: ParamTable = ParamTable(&[
     (gl21::POINT_SIZE_RANGE, ParamType::Float, 2),
     (gl21::POINT_SMOOTH, ParamType::Boolean, 2),
     (gl21::POINT_SMOOTH_HINT, ParamType::Int, 2),
+    (gl21::POINT_SPRITE, ParamType::Boolean, 1),
     (gl21::POLYGON_OFFSET_FACTOR, ParamType::Float, 1),
     (gl21::POLYGON_OFFSET_FILL, ParamType::Boolean, 1),
     (gl21::POLYGON_OFFSET_UNITS, ParamType::Float, 1),
@@ -1459,7 +1460,6 @@ impl GLES for GLES1OnGL2 {
         gl21::CopyTexSubImage2D(target, level, xoffset, yoffset, x, y, width, height)
     }
     unsafe fn TexEnvf(&mut self, target: GLenum, pname: GLenum, param: GLfloat) {
-        // TODO: GL_POINT_SPRITE_OES
         match target {
             gl21::TEXTURE_ENV => {
                 TEX_ENV_PARAMS.assert_component_count(pname, 1);
@@ -1469,11 +1469,14 @@ impl GLES for GLES1OnGL2 {
                 assert!(pname == gl21::TEXTURE_LOD_BIAS_EXT);
                 gl21::TexEnvf(target, pname, param)
             }
-            _ => unimplemented!(),
+            gl21::POINT_SPRITE => {
+                assert!(pname == gl21::COORD_REPLACE);
+                gl21::TexEnvf(target, pname, param)
+            }
+            _ => unimplemented!("TexEnvf target {}", target.to_string()),
         }
     }
     unsafe fn TexEnvx(&mut self, target: GLenum, pname: GLenum, param: GLfixed) {
-        // TODO: GL_POINT_SPRITE_OES
         match target {
             gl21::TEXTURE_ENV => TEX_ENV_PARAMS.setx(
                 |param| gl21::TexEnvf(target, pname, param),
@@ -1485,11 +1488,14 @@ impl GLES for GLES1OnGL2 {
                 assert!(pname == gl21::TEXTURE_LOD_BIAS_EXT);
                 gl21::TexEnvf(target, pname, fixed_to_float(param))
             }
+            gl21::POINT_SPRITE => {
+                assert!(pname == gl21::COORD_REPLACE);
+                gl21::TexEnvf(target, pname, fixed_to_float(param))
+            }
             _ => unimplemented!(),
         }
     }
     unsafe fn TexEnvi(&mut self, target: GLenum, pname: GLenum, param: GLint) {
-        // TODO: GL_POINT_SPRITE_OES
         match target {
             gl21::TEXTURE_ENV => {
                 TEX_ENV_PARAMS.assert_component_count(pname, 1);
@@ -1499,11 +1505,14 @@ impl GLES for GLES1OnGL2 {
                 assert!(pname == gl21::TEXTURE_LOD_BIAS_EXT);
                 gl21::TexEnvi(target, pname, param)
             }
+            gl21::POINT_SPRITE => {
+                assert!(pname == gl21::COORD_REPLACE);
+                gl21::TexEnvi(target, pname, param)
+            }
             _ => unimplemented!(),
         }
     }
     unsafe fn TexEnvfv(&mut self, target: GLenum, pname: GLenum, params: *const GLfloat) {
-        // TODO: GL_POINT_SPRITE_OES
         match target {
             gl21::TEXTURE_ENV => {
                 TEX_ENV_PARAMS.assert_known_param(pname);
@@ -1513,11 +1522,14 @@ impl GLES for GLES1OnGL2 {
                 assert!(pname == gl21::TEXTURE_LOD_BIAS_EXT);
                 gl21::TexEnvfv(target, pname, params)
             }
+            gl21::POINT_SPRITE => {
+                assert!(pname == gl21::COORD_REPLACE);
+                gl21::TexEnvfv(target, pname, params)
+            }
             _ => unimplemented!(),
         }
     }
     unsafe fn TexEnvxv(&mut self, target: GLenum, pname: GLenum, params: *const GLfixed) {
-        // TODO: GL_POINT_SPRITE_OES
         match target {
             gl21::TEXTURE_ENV => TEX_ENV_PARAMS.setxv(
                 |params| gl21::TexEnvfv(target, pname, params),
@@ -1530,11 +1542,15 @@ impl GLES for GLES1OnGL2 {
                 let param = fixed_to_float(params.read());
                 gl21::TexEnvfv(target, pname, &param)
             }
+            gl21::POINT_SPRITE => {
+                assert!(pname == gl21::COORD_REPLACE);
+                let param = fixed_to_float(params.read());
+                gl21::TexEnvfv(target, pname, &param)
+            }
             _ => unimplemented!(),
         }
     }
     unsafe fn TexEnviv(&mut self, target: GLenum, pname: GLenum, params: *const GLint) {
-        // TODO: GL_POINT_SPRITE_OES
         match target {
             gl21::TEXTURE_ENV => {
                 TEX_ENV_PARAMS.assert_known_param(pname);
@@ -1542,6 +1558,10 @@ impl GLES for GLES1OnGL2 {
             }
             gl21::TEXTURE_FILTER_CONTROL_EXT => {
                 assert!(pname == gl21::TEXTURE_LOD_BIAS_EXT);
+                gl21::TexEnviv(target, pname, params)
+            }
+            gl21::POINT_SPRITE => {
+                assert!(pname == gl21::COORD_REPLACE);
                 gl21::TexEnviv(target, pname, params)
             }
             _ => unimplemented!(),

@@ -791,6 +791,16 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 @end
 
+@implementation NSMutableString: _touchHLE_NSString
+
+- (())appendFormat:(id) format, // NSString*
+                   ...args {
+    let res = with_format(env, format, args.start());
+    *env.objc.borrow_mut(this) = StringHostObject::Utf8(format!("{}{}",to_rust_string(env, this), res).into());
+}
+
+@end
+
 // Our private subclass that is the single implementation of NSString for the
 // time being.
 @implementation _touchHLE_NSString: NSString

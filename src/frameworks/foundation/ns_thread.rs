@@ -17,6 +17,17 @@ use crate::mem::{guest_size_of, ConstPtr, MutPtr};
 use crate::objc::{id, msg_send, nil, objc_classes, Class, ClassExports, HostObject, SEL};
 use crate::{export_c_func, msg, msg_class};
 
+#[derive(Default)]
+pub struct State {
+    /// `NSThread*`
+    ns_threads: HashSet<id>,
+}
+impl State {
+    fn get(env: &mut Environment) -> &mut State {
+        &mut env.framework_state.foundation.ns_threads
+    }
+}
+
 struct NSThreadHostObject {
     thread: Option<pthread_t>,
     target: id,

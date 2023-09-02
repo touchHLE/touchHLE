@@ -13,18 +13,20 @@ use crate::libc::pthread::thread::{
     PTHREAD_CREATE_DETACHED,
 };
 use crate::mem::{guest_size_of, MutPtr};
-use crate::msg;
 use crate::objc::{
     id, msg_send, nil, objc_classes, release, retain, Class, ClassExports, HostObject, NSZonePtr,
     SEL,
 };
 use crate::Environment;
+use crate::{msg, msg_class};
 use std::time::Duration;
 
 struct NSThreadHostObject {
     target: id,
     selector: Option<SEL>,
     object: id,
+    /// `NSMutableDictionary*`
+    thread_dictionary: id,
 }
 impl HostObject for NSThreadHostObject {}
 
@@ -39,6 +41,7 @@ pub const CLASSES: ClassExports = objc_classes! {
         target: nil,
         selector: None,
         object: nil,
+        thread_dictionary: nil,
     });
     env.objc.alloc_object(this, host_object, &mut env.mem)
 }
@@ -72,6 +75,7 @@ pub const CLASSES: ClassExports = objc_classes! {
         target,
         selector: Some(selector),
         object,
+        thread_dictionary: nil,
     });
     let this = env.objc.alloc_object(this, host_object, &mut env.mem);
     retain(env, this);
@@ -97,6 +101,27 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 // TODO: construction etc
+- (id)threadDictionary {
+    // Initialize lazily in case the thread is started with pthread_create
+    let thread_dictionary = env.objc.borrow::<NSThreadHostObject>(this).thread_dictionary;
+    if thread_dictionary == nil {
+        let thread_dictionary = msg_class![env; NSMutableDictionary new];
+        // TODO: Store the thread's default NSConnection
+        // and NSAssertionHandler instances
+        // https://developer.apple.com/documentation/foundation/nsthread/1411433-threaddictionary
+        env.objc.borrow_mut::<NSThreadHostObject>(this).thread_dictionary = thread_dictionary;
+        thread_dictionary
+    } else {
+        thread_dictionary
+    }
+}
+
+- (())dealloc {
+    log_dbg!("[(NSThread*){:?} dealloc]", this);
+    let host_object = env.objc.borrow::<NSThreadHostObject>(this);
+    release(env, host_object.thread_dictionary);
+    env.objc.dealloc_object(this, &mut env.mem)
+}
 
 @end
 
@@ -116,6 +141,7 @@ pub fn _touchHLE_NSThreadInvocationHelper(env: &mut Environment, ns_thread_obj: 
         target,
         selector,
         object,
+        thread_dictionary: _,
     } = env.objc.borrow(ns_thread_obj);
     () = msg_send(env, (target, selector.unwrap(), object));
 

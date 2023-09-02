@@ -146,6 +146,14 @@ impl GLES for GLES1Native {
         gles11::Viewport(x, y, width, height)
     }
 
+    // Points
+    unsafe fn PointSize(&mut self, size: GLfloat) {
+        gles11::PointSize(size)
+    }
+    unsafe fn PointParameterfv(&mut self, pname: GLenum, params: *const GLfloat) {
+        gles11::PointParameterfv(pname, params)
+    }
+
     // Lighting and materials
     unsafe fn Fogf(&mut self, pname: GLenum, param: GLfloat) {
         gles11::Fogf(pname, param)

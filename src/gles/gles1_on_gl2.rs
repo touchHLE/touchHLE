@@ -766,6 +766,14 @@ impl GLES for GLES1OnGL2 {
         gl21::Viewport(x, y, width, height)
     }
 
+    // Points
+    unsafe fn PointSize(&mut self, size: GLfloat) {
+        gl21::PointSize(size)
+    }
+    unsafe fn PointParameterfv(&mut self, pname: GLenum, params: *const GLfloat) {
+        gl21::PointParameterfv(pname, params)
+    }
+
     // Lighting and materials
     unsafe fn Fogf(&mut self, pname: GLenum, param: GLfloat) {
         FOG_PARAMS.assert_component_count(pname, 1);

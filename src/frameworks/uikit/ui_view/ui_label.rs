@@ -200,7 +200,16 @@ pub const CLASSES: ClassExports = objc_classes! {
         number_of_lines,
     } = env.objc.borrow_mut(this);
 
-    let (r, g, b, a) = ui_color::get_rgba(&env.objc, text_color);
+    // The default value for this property is the system’s labelColor color,
+    // which adapts dynamically to Dark Mode changes.
+    // Setting this property to nil causes it to be reset to the default value.
+    // For more information, see UI element colors.
+    // https://developer.apple.com/documentation/uikit/uilabel/1620531-textcolor?language=objc
+    let (r, g, b, a): (CGFloat, CGFloat, CGFloat, CGFloat) = if text_color.is_null() {
+        (0.0, 0.0, 0.0, 1.0) // TODO: Don't hardcode default values
+    } else {
+        ui_color::get_rgba(&env.objc, text_color)
+    };
     CGContextSetRGBFillColor(env, context, r, g, b, a);
 
     // TODO: handle line counts other than 0 and 1 properly. 0 = unlimited

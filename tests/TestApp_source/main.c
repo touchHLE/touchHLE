@@ -91,6 +91,16 @@ int sem_trywait(sem_t *);
 int sem_unlink(const char *);
 int sem_wait(sem_t *);
 
+// <locale.h>
+#define LC_ALL 0
+#define LC_COLLATE 1
+#define LC_CTYPE 2
+#define LC_MONETARY 3
+#define LC_NUMERIC 4
+#define LC_TIME 5
+#define LC_MESSAGES 6
+char *setlocale(int category, const char *locale);
+
 // === Main code ===
 
 int int_compar(const void *a, const void *b) { return *(int *)a - *(int *)b; }
@@ -557,20 +567,42 @@ int test_strlcpy() {
   return 0;
 }
 
+int test_setlocale() {
+  char *locale;
+
+  // Test getting default locale
+  locale = setlocale(LC_ALL, NULL);
+  if (strcmp(locale, "C") != 0) {
+    return 1;
+  }
+
+  // Test setting a locale category
+  locale = setlocale(LC_NUMERIC, "es_ES");
+  if (strcmp(locale, "es_ES") != 0) {
+    return 2;
+  }
+
+  // Test if other categories are unaffected
+  locale = setlocale(LC_TIME, NULL);
+  if (strcmp(locale, "C") != 0) {
+    return 3;
+  }
+
+  return 0;
+}
+
 #define FUNC_DEF(func)                                                         \
   { &func, #func }
 struct {
   int (*func)();
   const char *name;
-} test_func_array[] = {
-    FUNC_DEF(test_qsort),   FUNC_DEF(test_vsnprintf),
-    FUNC_DEF(test_sscanf),  FUNC_DEF(test_errno),
-    FUNC_DEF(test_realloc), FUNC_DEF(test_atof),
-    FUNC_DEF(test_strtof),  FUNC_DEF(test_getcwd_chdir),
-    FUNC_DEF(test_sem),     FUNC_DEF(test_CGAffineTransform),
-    FUNC_DEF(test_strncpy), FUNC_DEF(test_strncat),
-    FUNC_DEF(test_strlcpy),
-};
+} test_func_array[] = {FUNC_DEF(test_qsort),   FUNC_DEF(test_vsnprintf),
+                       FUNC_DEF(test_sscanf),  FUNC_DEF(test_errno),
+                       FUNC_DEF(test_realloc), FUNC_DEF(test_atof),
+                       FUNC_DEF(test_strtof),  FUNC_DEF(test_getcwd_chdir),
+                       FUNC_DEF(test_sem),     FUNC_DEF(test_CGAffineTransform),
+                       FUNC_DEF(test_strncpy), FUNC_DEF(test_strncat),
+                       FUNC_DEF(test_strlcpy), FUNC_DEF(test_setlocale)};
 
 // Because no libc is linked into this executable, there is no libc entry point
 // to call main. Instead, integration.rs tells Clang to set the _main symbol

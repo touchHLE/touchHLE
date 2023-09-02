@@ -15,8 +15,10 @@
 //! Resources:
 //! - The GCC documentation's [Fast Enumeration Protocol section](https://gcc.gnu.org/onlinedocs/gcc/Fast-enumeration-protocol.html)
 
-use crate::mem::{MutPtr, MutVoidPtr, SafeRead};
+use crate::mem::{Mem, MutPtr, MutVoidPtr, SafeRead};
 use crate::objc::{id, objc_classes, ClassExports};
+
+use super::NSUInteger;
 
 #[repr(C, packed)]
 pub struct NSFastEnumerationState {
@@ -38,3 +40,45 @@ pub const CLASSES: ClassExports = objc_classes! {
 @end
 
 };
+
+pub fn fast_enumeration_helper(
+    mem: &mut Mem,
+    this: id,
+    iterator: &mut impl Iterator<Item = id>,
+    state: MutPtr<NSFastEnumerationState>,
+    stackbuf: MutPtr<id>,
+    len: NSUInteger,
+) -> NSUInteger {
+    let NSFastEnumerationState {
+        state: start_index, ..
+    } = mem.read(state);
+
+    if start_index >= 1 {
+        // FIXME: linear time complexity
+        _ = iterator.nth((start_index - 1).try_into().unwrap());
+    }
+
+    let mut batch_count = 0;
+    while batch_count < len {
+        if let Some(object) = iterator.next() {
+            mem.write(stackbuf + batch_count, object);
+            batch_count += 1;
+        } else {
+            break;
+        }
+    }
+    mem.write(
+        state,
+        NSFastEnumerationState {
+            state: start_index + batch_count,
+            items_ptr: stackbuf,
+            // can be anything as long as it's dereferenceable and the same
+            // each iteration
+            // Note: stackbuf can be different each time, it's better to return
+            // self pointer
+            mutations_ptr: this.cast(),
+            extra: Default::default(),
+        },
+    );
+    batch_count
+}

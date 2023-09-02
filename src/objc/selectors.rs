@@ -37,7 +37,7 @@ pub use crate::selector; // #[macro_export] is weird...
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 #[repr(transparent)]
 #[allow(clippy::upper_case_acronyms)] // silly clippit, this isn't an acronym!
-pub struct SEL(ConstPtr<u8>);
+pub struct SEL(pub ConstPtr<u8>);
 
 impl GuestArg for SEL {
     const REG_COUNT: usize = <ConstPtr<u8> as GuestArg>::REG_COUNT;

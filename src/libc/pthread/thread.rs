@@ -27,7 +27,7 @@ impl State {
 /// opaque region. We only have to match the size theirs has.
 #[derive(Copy, Clone, Debug)]
 #[repr(C, packed)]
-struct pthread_attr_t {
+pub struct pthread_attr_t {
     /// Magic number (must be [MAGIC_ATTR])
     magic: u32,
     detachstate: i32,
@@ -44,15 +44,15 @@ const DEFAULT_ATTR: pthread_attr_t = pthread_attr_t {
 /// Apple's implementation is a 4-byte magic number followed by a massive
 /// (>4KiB) opaque region. We will store the actual data on the host instead.
 #[repr(C, packed)]
-struct OpaqueThread {
+pub struct OpaqueThread {
     /// Magic number (must be [MAGIC_THREAD])
     magic: u32,
 }
 unsafe impl SafeRead for OpaqueThread {}
 
-type pthread_t = MutPtr<OpaqueThread>;
+pub type pthread_t = MutPtr<OpaqueThread>;
 
-struct ThreadHostObject {
+pub struct ThreadHostObject {
     thread_id: ThreadId,
     joined_by: Option<ThreadId>,
     _attr: pthread_attr_t,
@@ -97,7 +97,7 @@ fn pthread_attr_destroy(env: &mut Environment, attr: MutPtr<pthread_attr_t>) -> 
     0 // success
 }
 
-fn pthread_create(
+pub fn pthread_create(
     env: &mut Environment,
     thread: MutPtr<pthread_t>,
     attr: ConstPtr<pthread_attr_t>,

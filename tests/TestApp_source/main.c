@@ -49,6 +49,8 @@ void free(void *);
 void *malloc(size_t);
 void qsort(void *, size_t, size_t, int (*)(const void *, const void *));
 void *realloc(void *, size_t);
+double atof(const char *);
+float strtof(const char *, char **);
 
 // <string.h>
 void *memset(void *, int, size_t);
@@ -185,6 +187,148 @@ int test_realloc() {
   int res = memcmp(ptr, "abcd", 4);
   free(ptr);
   return res == 0 ? 0 : -1;
+}
+
+int test_atof() {
+  if (atof("1") != 1)
+    return -1;
+  if (atof("-1") != -1)
+    return -2;
+  if (atof("01") != 1)
+    return -3;
+  if (atof("-01") != -1)
+    return -4;
+  if (atof("10") != 10)
+    return -5;
+  if (atof("-10") != -10)
+    return -6;
+  if (atof("010") != 10)
+    return -7;
+  if (atof("-010") != -10)
+    return -8;
+  if (atof("1.0") != 1)
+    return -9;
+  if (atof("-1.0") != -1)
+    return -10;
+  if (atof("01.0") != 1)
+    return -11;
+  if (atof("-01.0") != -1)
+    return -12;
+  if (atof("10.0") != 10)
+    return -13;
+  if (atof("-10.0") != -10)
+    return -14;
+  if (atof("010.0") != 10)
+    return -15;
+  if (atof("-010.0") != -10)
+    return -16;
+  if (atof("1.5") != 1.5)
+    return -17;
+  if (atof("-1.5") != -1.5)
+    return -18;
+  if (atof("01.5") != 1.5)
+    return -19;
+  if (atof("-01.5") != -1.5)
+    return -20;
+  if (atof("10.5") != 10.5)
+    return -21;
+  if (atof("-10.5") != -10.5)
+    return -22;
+  if (atof("010.5") != 10.5)
+    return -23;
+  if (atof("-010.5") != -10.5)
+    return -24;
+  if (atof("  +123.456e7with text right after") != 1234560000)
+    return -25;
+  if (atof("Text before a number 123.456") != 0)
+    return -26;
+  return 0;
+}
+
+int test_strtof() {
+  char *text = "1";
+  char *endptr;
+  if (strtof(text, &endptr) != 1.0 || endptr != text + 1)
+    return -1;
+  text = "-1";
+  if (strtof(text, &endptr) != -1.0 || endptr != text + 2)
+    return -2;
+  text = "01";
+  if (strtof(text, &endptr) != 1.0 || endptr != text + 2)
+    return -3;
+  text = "-01";
+  if (strtof(text, &endptr) != -1.0 || endptr != text + 3)
+    return -4;
+  text = "10";
+  if (strtof(text, &endptr) != 10.0 || endptr != text + 2)
+    return -5;
+  text = "-10";
+  if (strtof(text, &endptr) != -10.0 || endptr != text + 3)
+    return -6;
+  text = "010";
+  if (strtof(text, &endptr) != 10.0 || endptr != text + 3)
+    return -7;
+  text = "-010";
+  if (strtof(text, &endptr) != -10.0 || endptr != text + 4)
+    return -8;
+  text = "1.0";
+  if (strtof(text, &endptr) != 1.0 || endptr != text + 3)
+    return -9;
+  text = "-1.0";
+  if (strtof(text, &endptr) != -1.0 || endptr != text + 4)
+    return -10;
+  text = "01.0";
+  if (strtof(text, &endptr) != 1.0 || endptr != text + 4)
+    return -11;
+  text = "-01.0";
+  if (strtof(text, &endptr) != -1.0 || endptr != text + 5)
+    return -12;
+  text = "10.0";
+  if (strtof(text, &endptr) != 10.0 || endptr != text + 4)
+    return -13;
+  text = "-10.0";
+  if (strtof(text, &endptr) != -10.0 || endptr != text + 5)
+    return -14;
+  text = "010.0";
+  if (strtof(text, &endptr) != 10.0 || endptr != text + 5)
+    return -15;
+  text = "-010.0";
+  if (strtof(text, &endptr) != -10.0 || endptr != text + 6)
+    return -16;
+  text = "1.5";
+  if (strtof(text, &endptr) != 1.5 || endptr != text + 3)
+    return -17;
+  text = "-1.5";
+  if (strtof(text, &endptr) != -1.5 || endptr != text + 4)
+    return -18;
+  text = "01.5";
+  if (strtof(text, &endptr) != 1.5 || endptr != text + 4)
+    return -19;
+  text = "-01.5";
+  if (strtof(text, &endptr) != -1.5 || endptr != text + 5)
+    return -20;
+  text = "10.5";
+  if (strtof(text, &endptr) != 10.5 || endptr != text + 4)
+    return -21;
+  text = "-10.5";
+  if (strtof(text, &endptr) != -10.5 || endptr != text + 5)
+    return -22;
+  text = "010.5";
+  if (strtof(text, &endptr) != 10.5 || endptr != text + 5)
+    return -23;
+  text = "-010.5";
+  if (strtof(text, &endptr) != -10.5 || endptr != text + 6)
+    return -24;
+  text = "  +123.456e7with text right after";
+  if (strtof(text, &endptr) != 1234560000.0 || endptr != text + 12)
+    return -25;
+  text = "Text before a number 123.456";
+  if (strtof(text, &endptr) != 0.0 || endptr != text + 0)
+    return -26;
+  text = "1.5";
+  if (strtof(text, NULL) != 1.5)
+    return -27;
+  return 0;
 }
 
 int test_getcwd_chdir() {
@@ -345,7 +489,8 @@ struct {
 } test_func_array[] = {
     FUNC_DEF(test_qsort),   FUNC_DEF(test_vsnprintf),
     FUNC_DEF(test_sscanf),  FUNC_DEF(test_errno),
-    FUNC_DEF(test_realloc), FUNC_DEF(test_getcwd_chdir),
+    FUNC_DEF(test_realloc), FUNC_DEF(test_atof),
+    FUNC_DEF(test_strtof),  FUNC_DEF(test_getcwd_chdir),
     FUNC_DEF(test_sem),     FUNC_DEF(test_CGAffineTransform),
     FUNC_DEF(test_strncpy), FUNC_DEF(test_strncat),
 };

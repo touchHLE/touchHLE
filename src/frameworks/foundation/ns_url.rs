@@ -94,6 +94,10 @@ pub const CLASSES: ClassExports = objc_classes! {
     this
 }
 
+- (id)description {
+    msg![env; this path]
+}
+
 - (id)path {
     match *env.objc.borrow(this) {
         NSURLHostObject::FileURL { ns_string } => ns_string,

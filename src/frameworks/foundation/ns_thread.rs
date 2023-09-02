@@ -22,6 +22,8 @@ struct NSThreadHostObject {
     target: id,
     selector: Option<SEL>,
     object: id,
+    /// `NSDictionary*`
+    thread_dictionary: id,
 }
 impl HostObject for NSThreadHostObject {}
 
@@ -33,7 +35,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 + (id)alloc {
     log_dbg!("[NSThread alloc]");
-    let host_object = NSThreadHostObject { thread: None, target: nil, selector: None, object: nil };
+    let host_object = NSThreadHostObject { thread: None, target: nil, selector: None, object: nil, thread_dictionary: nil };
     let guest_object = env.objc.alloc_object(this, Box::new(host_object), &mut env.mem);
     State::get(env).ns_threads.insert(guest_object);
     guest_object
@@ -68,6 +70,10 @@ object:(id)object {
     this
 }
 
+- (id)threadDictionary {
+    env.objc.borrow::<NSThreadHostObject>(this).thread_dictionary
+}
+
 - (f64)threadPriority {
     log!("TODO: [(NSThread*){:?} threadPriority] (not implemented yet)", this);
     1.0
@@ -82,6 +88,9 @@ object:(id)object {
     log_dbg!("[(NSThread*){:?} dealloc]", this);
     State::get(env).ns_threads.remove(&this);
     let host_object = env.objc.borrow::<NSThreadHostObject>(this);
+    if !host_object.thread_dictionary.is_null() {
+        env.mem.free(host_object.thread_dictionary.cast());
+    }
     env.objc.dealloc_object(this, &mut env.mem)
 }
 

@@ -63,8 +63,17 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 + (id)currentThread {
-    this
+    log_dbg!("[NSThread currentThread] (env.current_thread == {:?})",env.current_thread);
+    // TODO: Don't clone
+    *State::get(env).ns_threads.clone().iter().find(|ns_thread| {
+        let host_object = env.objc.borrow::<NSThreadHostObject>(**ns_thread);
+        match host_object.thread {
+            Some(thread) => _get_thread_id(env, thread).unwrap() == env.current_thread,
+            None => false
+        }
+    }).unwrap()
 }
+
 + (())sleepForTimeInterval:(NSTimeInterval)ti {
     log_dbg!("[NSThread sleepForTimeInterval:{:?}]", ti);
     env.sleep(Duration::from_secs_f64(ti), false);

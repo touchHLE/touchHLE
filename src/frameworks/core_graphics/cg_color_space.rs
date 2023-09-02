@@ -24,6 +24,19 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 };
 
+#[allow(non_camel_case_types, dead_code)]
+pub enum CGColorSpaceModel {
+    kCGColorSpaceModelUnknown = -1,
+    kCGColorSpaceModelMonochrome = 0,
+    kCGColorSpaceModelRGB = 1,
+    kCGColorSpaceModelCMYK = 2,
+    kCGColorSpaceModelLab = 3,
+    kCGColorSpaceModelDeviceN = 4,
+    kCGColorSpaceModelIndexed = 5,
+    kCGColorSpaceModelPattern = 6,
+    kCGColorSpaceModelXYZ = 7,
+}
+
 pub(super) struct CGColorSpaceHostObject {
     pub(super) name: &'static str,
 }
@@ -75,6 +88,11 @@ pub fn CGColorSpaceRetain(env: &mut Environment, cs: CGColorSpaceRef) -> CGColor
     }
 }
 
+pub fn CGColorSpaceGetModel(_env: &mut Environment, cs: CGColorSpaceRef) -> i32 {
+    log!("TODO: CGColorSpaceGetModel({:?})", cs);
+    CGColorSpaceModel::kCGColorSpaceModelUnknown as i32
+}
+
 pub const kCGColorSpaceGenericRGB: &str = "kCGColorSpaceGenericRGB";
 
 pub const CONSTANTS: ConstantExports = &[(
@@ -87,4 +105,5 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGColorSpaceCreateDeviceRGB()),
     export_c_func!(CGColorSpaceRetain(_)),
     export_c_func!(CGColorSpaceRelease(_)),
+    export_c_func!(CGColorSpaceGetModel(_)),
 ];

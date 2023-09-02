@@ -222,6 +222,14 @@ fn strchr(env: &mut Environment, path: ConstPtr<u8>, c: u8) -> ConstPtr<u8> {
 fn strrchr(env: &mut Environment, path: ConstPtr<u8>, c: u8) -> ConstPtr<u8> {
     GenericChar::<u8>::strrchr(env, path, c)
 }
+fn strlcpy(
+    env: &mut Environment,
+    dst: MutPtr<u8>,
+    src: ConstPtr<u8>,
+    size: GuestUSize,
+) -> GuestUSize {
+    GenericChar::<u8>::strlcpy(env, dst, src, size)
+}
 
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(strtok(_, _)),
@@ -248,4 +256,5 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(strstr(_, _)),
     export_c_func!(strchr(_, _)),
     export_c_func!(strrchr(_, _)),
+    export_c_func!(strlcpy(_, _, _)),
 ];

@@ -288,4 +288,28 @@ impl<T: Copy + Default + Eq + Ord + SafeRead + Debug> GenericChar<T> {
             }
         }
     }
+
+    pub(super) fn strlcpy(
+        env: &mut Environment,
+        dst: MutPtr<T>,
+        src: ConstPtr<T>,
+        size: GuestUSize,
+    ) -> GuestUSize {
+        let mut i = 0;
+        loop {
+            let c = env.mem.read(src + i);
+
+            if i < size - 1 {
+                env.mem.write(dst + i, c);
+            } else if i == size - 1 {
+                env.mem.write(dst + i, Self::null());
+            }
+
+            if c == Self::null() {
+                break;
+            }
+            i += 1;
+        }
+        i
+    }
 }

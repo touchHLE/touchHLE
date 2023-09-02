@@ -9,8 +9,8 @@ use super::NSTimeInterval;
 use crate::dyld::HostFunction;
 use crate::frameworks::core_foundation::CFTypeRef;
 use crate::libc::pthread::thread::{
-    pthread_attr_init, pthread_attr_setdetachstate, pthread_attr_t, pthread_create, pthread_t,
-    PTHREAD_CREATE_DETACHED,
+    _get_thread_by_id, _get_thread_id, pthread_attr_init, pthread_attr_setdetachstate,
+    pthread_attr_t, pthread_create, pthread_t, PTHREAD_CREATE_DETACHED,
 };
 use crate::mem::{guest_size_of, MutPtr};
 use crate::objc::{
@@ -19,9 +19,22 @@ use crate::objc::{
 };
 use crate::Environment;
 use crate::{msg, msg_class};
+use std::collections::HashSet;
 use std::time::Duration;
 
+#[derive(Default)]
+pub struct State {
+    /// `NSThread*`
+    ns_threads: HashSet<id>,
+}
+impl State {
+    fn get(env: &mut Environment) -> &mut State {
+        &mut env.framework_state.foundation.ns_threads
+    }
+}
+
 struct NSThreadHostObject {
+    thread: Option<pthread_t>,
     target: id,
     selector: Option<SEL>,
     object: id,
@@ -38,6 +51,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 + (id)allocWithZone:(NSZonePtr)_zone {
     let host_object = Box::new(NSThreadHostObject {
+        thread: None,
         target: nil,
         selector: None,
         object: nil,
@@ -47,20 +61,30 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 + (f64)threadPriority {
-    log!("TODO: [NSThread threadPriority] (not implemented yet)");
-    1.0
+    let current_thread = msg_class![env; NSThread currentThread];
+    msg![env; current_thread threadPriority]
 }
 
 + (bool)setThreadPriority:(f64)priority {
-    log!("TODO: [NSThread setThreadPriority:{:?}] (ignored)", priority);
-    true
+    let current_thread = msg_class![env; NSThread currentThread];
+    msg![env; current_thread setThreadPriority:priority]
 }
 
 + (id)currentThread {
-    // Simple hack to make the `setThreadPriority:` work as an instance method
-    // (it's both a class and an instance method). Must be replaced if we ever
-    // need to support other methods.
-    this
+    log_dbg!("[NSThread currentThread] (env.current_thread == {:?})",env.current_thread);
+    State::get(env).ns_threads.clone().iter().find(|ns_thread| {
+        let host_object = env.objc.borrow::<NSThreadHostObject>(**ns_thread);
+        match host_object.thread {
+            Some(thread) => _get_thread_id(env, thread).unwrap() == env.current_thread,
+            None => false
+        }
+    }).copied().unwrap_or_else(|| {
+        // Handles the case the thread was created with pthread_create but has
+        // no corresponding NSThread instance yet.
+        let current_ns_thread = msg_class![env; NSThread alloc];
+        env.objc.borrow_mut::<NSThreadHostObject>(current_ns_thread).thread = _get_thread_by_id(env, env.current_thread);
+        current_ns_thread
+    })
 }
 
 + (())sleepForTimeInterval:(NSTimeInterval)ti {
@@ -72,6 +96,7 @@ pub const CLASSES: ClassExports = objc_classes! {
                        toTarget:(id)target
                      withObject:(id)object {
     let host_object = Box::new(NSThreadHostObject {
+        thread: None,
         target,
         selector: Some(selector),
         object,
@@ -123,6 +148,16 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.dealloc_object(this, &mut env.mem)
 }
 
+- (f64)threadPriority {
+    log!("TODO: [(NSThread*){:?} threadPriority] (not implemented yet)", this);
+    1.0
+}
+
+- (bool)setThreadPriority:(f64)priority {
+    log!("TODO: [(NSThread*){:?} setThreadPriority:{:?}] (ignored)", this, priority);
+    true
+}
+
 @end
 
 };
@@ -138,6 +173,7 @@ pub fn _touchHLE_NSThreadInvocationHelper(env: &mut Environment, ns_thread_obj: 
     assert_eq!(class, env.objc.get_known_class("NSThread", &mut env.mem));
 
     let &NSThreadHostObject {
+        thread: _,
         target,
         selector,
         object,

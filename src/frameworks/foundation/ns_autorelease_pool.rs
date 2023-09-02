@@ -7,10 +7,11 @@
 
 use crate::objc::{id, msg, objc_classes, release, ClassExports, HostObject, NSZonePtr};
 use crate::Environment;
+use std::collections::HashMap;
 
 #[derive(Default)]
 pub struct State {
-    pool_stack: Vec<id>,
+    pool_stacks: HashMap<crate::ThreadId, Vec<id>>,
 }
 impl State {
     fn get(env: &mut Environment) -> &mut Self {
@@ -38,7 +39,11 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 + (())addObject:(id)obj {
-    if let Some(current_pool) = State::get(env).pool_stack.last().copied() {
+    let current_thread = env.current_thread;
+    let pool_stack = State::get(env).pool_stacks
+        .entry(current_thread)
+        .or_insert_with(Vec::new);
+    if let Some(current_pool) = pool_stack.last().copied() {
         msg![env; current_pool addObject:obj]
     } else {
         log_dbg!("Warning: no active NSAutoreleasePool, leaking {:?}", obj);
@@ -46,8 +51,11 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (id)init {
-    assert!(env.current_thread == 0); // TODO: per-thread stacks
-    State::get(env).pool_stack.push(this);
+    let current_thread = env.current_thread;
+    let pool_stack = State::get(env).pool_stacks
+        .entry(current_thread)
+        .or_insert_with(Vec::new);
+    pool_stack.push(this);
     log_dbg!("New pool: {:?}", this);
     this
 }
@@ -71,7 +79,9 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 - (())dealloc {
     log_dbg!("Draining pool: {:?}", this);
-    let pop_res = State::get(env).pool_stack.pop();
+    let current_thread = env.current_thread;
+    let pool_stack = State::get(env).pool_stacks.get_mut(&current_thread).unwrap();
+    let pop_res = pool_stack.pop();
     assert!(pop_res == Some(this));
     let host_obj: &mut NSAutoreleasePoolHostObject = env.objc.borrow_mut(this);
     let objects = std::mem::take(&mut host_obj.objects);

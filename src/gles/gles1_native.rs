@@ -245,6 +245,12 @@ impl GLES for GLES1Native {
     unsafe fn Color4ub(&mut self, red: GLubyte, green: GLubyte, blue: GLubyte, alpha: GLubyte) {
         gles11::Color4ub(red, green, blue, alpha)
     }
+    unsafe fn Normal3f(&mut self, nx: GLfloat, ny: GLfloat, nz: GLfloat) {
+        gles11::Normal3f(nx, ny, nz)
+    }
+    unsafe fn Normal3x(&mut self, nx: GLfixed, ny: GLfixed, nz: GLfixed) {
+        gles11::Normal3x(nx, ny, nz)
+    }
 
     // Pointers
     unsafe fn ColorPointer(

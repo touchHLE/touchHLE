@@ -910,6 +910,12 @@ impl GLES for GLES1OnGL2 {
     unsafe fn Color4ub(&mut self, red: GLubyte, green: GLubyte, blue: GLubyte, alpha: GLubyte) {
         gl21::Color4ub(red, green, blue, alpha)
     }
+    unsafe fn Normal3f(&mut self, nx: GLfloat, ny: GLfloat, nz: GLfloat) {
+        gl21::Normal3f(nx, ny, nz)
+    }
+    unsafe fn Normal3x(&mut self, nx: GLfixed, ny: GLfixed, nz: GLfixed) {
+        gl21::Normal3f(fixed_to_float(nx), fixed_to_float(ny), fixed_to_float(nz))
+    }
 
     // Pointers
     unsafe fn ColorPointer(

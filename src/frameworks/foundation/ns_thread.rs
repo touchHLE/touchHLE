@@ -121,6 +121,15 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 // TODO: construction etc
+- (f64)threadPriority {
+    log!("TODO: [(NSThread*){:?} threadPriority] (not implemented yet)", this);
+    1.0
+}
+
+- (bool)setThreadPriority:(f64)priority {
+    log!("TODO: [(NSThread*){:?} setThreadPriority:{:?}] (ignored)", this, priority);
+    true
+}
 
 @end
 

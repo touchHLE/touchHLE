@@ -71,10 +71,15 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 + (id)currentThread {
-    // Simple hack to make the `setThreadPriority:` work as an instance method
-    // (it's both a class and an instance method). Must be replaced if we ever
-    // need to support other methods.
-    this
+    log_dbg!("[NSThread currentThread] (env.current_thread == {:?})",env.current_thread);
+    // TODO: Don't clone
+    *State::get(env).ns_threads.clone().iter().find(|ns_thread| {
+        let host_object = env.objc.borrow::<NSThreadHostObject>(**ns_thread);
+        match host_object.thread {
+            Some(thread) => _get_thread_id(env, thread).unwrap() == env.current_thread,
+            None => false
+        }
+    }).unwrap()
 }
 
 + (())sleepForTimeInterval:(NSTimeInterval)ti {

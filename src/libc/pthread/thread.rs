@@ -241,3 +241,18 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(pthread_setcanceltype(_, _)),
     export_c_func!(pthread_mach_thread_np(_)),
 ];
+
+pub fn _get_thread_id(env: &mut Environment, pthread: pthread_t) -> Option<ThreadId> {
+    State::get(env)
+        .threads
+        .get(&pthread)
+        .map(|thread| thread.thread_id)
+}
+
+pub fn _get_thread_by_id(env: &mut Environment, thread_id: ThreadId) -> Option<pthread_t> {
+    State::get(env)
+        .threads
+        .iter()
+        .find(|pair| pair.1.thread_id == thread_id)
+        .map(|pair| *pair.0)
+}

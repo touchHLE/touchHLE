@@ -360,4 +360,7 @@ pub trait GLES {
     unsafe fn DeleteFramebuffersOES(&mut self, n: GLsizei, framebuffers: *const GLuint);
     unsafe fn DeleteRenderbuffersOES(&mut self, n: GLsizei, renderbuffers: *const GLuint);
     unsafe fn GenerateMipmapOES(&mut self, target: GLenum);
+    unsafe fn GetBufferParameteriv(&mut self, target: GLenum, pname: GLenum, params: *mut GLint);
+    unsafe fn MapBufferOES(&mut self, target: GLenum, access: GLenum) -> *mut GLvoid;
+    unsafe fn UnmapBufferOES(&mut self, target: GLenum) -> GLboolean;
 }

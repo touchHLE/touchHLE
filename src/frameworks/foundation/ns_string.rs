@@ -791,6 +791,26 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 @end
 
+// NSMutableString is an abstract class. A subclass must provide:
+// - (NSUInteger)length;
+// - (unichar)characterAtIndex:(NSUInteger)index;
+// We can pick whichever subclass we want for the various alloc methods.
+// For the time being, that will always be _touchHLE_NSMutableString.
+@implementation NSMutableString: NSString
+
++ (id)allocWithZone:(NSZonePtr)zone {
+    assert!(this == env.objc.get_known_class("NSMutableString", &mut env.mem));
+    msg_class![env; _touchHLE_NSMutableString allocWithZone:zone]
+}
+
+- (())appendFormat:(id) format, // NSString*
+                   ...args {
+    let res = with_format(env, format, args.start());
+    *env.objc.borrow_mut(this) = StringHostObject::Utf8(format!("{}{}",to_rust_string(env, this), res).into());
+}
+
+@end
+
 // Our private subclass that is the single implementation of NSString for the
 // time being.
 @implementation _touchHLE_NSString: NSString
@@ -907,6 +927,15 @@ pub const CLASSES: ClassExports = objc_classes! {
 @end
 
 @implementation _touchHLE_NSString_CFConstantString_UTF16: _touchHLE_NSString_Static
+@end
+
+@implementation _touchHLE_NSMutableString: NSMutableString
+
++ (id)allocWithZone:(NSZonePtr)_zone {
+    let host_object = Box::new(StringHostObject::Utf8(Cow::Borrowed("")));
+    env.objc.alloc_object(this, host_object, &mut env.mem)
+}
+
 @end
 
 };

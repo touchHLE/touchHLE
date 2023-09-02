@@ -12,7 +12,7 @@ use crate::objc::{
     autorelease, id, msg_class, nil, objc_classes, release, retain, ClassExports, HostObject,
     NSZonePtr, msg,
 };
-use crate::Environment;
+use crate::{msg, Environment};
 
 struct ObjectEnumeratorHostObject {
     iterator: std::vec::IntoIter<id>,
@@ -57,6 +57,19 @@ pub const CLASSES: ClassExports = objc_classes! {
     let path = ns_url::to_rust_path(env, url);
     let res = deserialize_plist_from_file(env, &path, /* array_expected: */ true);
     autorelease(env, res)
+}
++ (id)arrayWithObjects:(id)firstObj, ...args {
+    let array: id = msg_class![env; _touchHLE_NSMutableArray_non_retaining alloc];
+    () = msg![env; array addObject:firstObj];
+    let mut varargs = args.start();
+    loop {
+        let next_arg: id = varargs.next(env);
+        if next_arg.is_null() {
+            break;
+        }
+        () = msg![env; array addObject:next_arg];
+    }
+    array
 }
 
 // These probably comes from some category related to plists.

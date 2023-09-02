@@ -254,8 +254,34 @@ fn glLineWidth(env: &mut Environment, val: GLfloat) {
 fn glLineWidthx(env: &mut Environment, val: GLfixed) {
     with_ctx_and_mem(env, |gles, _mem| unsafe { gles.LineWidthx(val) })
 }
+// Points
 fn glPointSize(env: &mut Environment, size: GLfloat) {
     with_ctx_and_mem(env, |gles, _mem| unsafe { gles.PointSize(size) })
+}
+fn glPointSizex(env: &mut Environment, size: GLfixed) {
+    with_ctx_and_mem(env, |gles, _mem| unsafe { gles.PointSizex(size) })
+}
+fn glPointParameterf(env: &mut Environment, pname: GLenum, param: GLfloat) {
+    with_ctx_and_mem(env, |gles, _mem| unsafe {
+        gles.PointParameterf(pname, param)
+    })
+}
+fn glPointParameterx(env: &mut Environment, pname: GLenum, param: GLfixed) {
+    with_ctx_and_mem(env, |gles, _mem| unsafe {
+        gles.PointParameterx(pname, param)
+    })
+}
+fn glPointParameterfv(env: &mut Environment, pname: GLenum, params: ConstPtr<GLfloat>) {
+    with_ctx_and_mem(env, |gles, mem| {
+        let params = mem.ptr_at(params, 4 /* upper bound */);
+        unsafe { gles.PointParameterfv(pname, params) }
+    })
+}
+fn glPointParameterxv(env: &mut Environment, pname: GLenum, params: ConstPtr<GLfixed>) {
+    with_ctx_and_mem(env, |gles, mem| {
+        let params = mem.ptr_at(params, 4 /* upper bound */);
+        unsafe { gles.PointParameterxv(pname, params) }
+    })
 }
 
 // Lighting and materials
@@ -1134,7 +1160,13 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(glViewport(_, _, _, _)),
     export_c_func!(glLineWidth(_)),
     export_c_func!(glLineWidthx(_)),
+    // Points
     export_c_func!(glPointSize(_)),
+    export_c_func!(glPointSizex(_)),
+    export_c_func!(glPointParameterf(_, _)),
+    export_c_func!(glPointParameterx(_, _)),
+    export_c_func!(glPointParameterfv(_, _)),
+    export_c_func!(glPointParameterxv(_, _)),
     // Lighting and materials
     export_c_func!(glFogf(_, _)),
     export_c_func!(glFogx(_, _)),

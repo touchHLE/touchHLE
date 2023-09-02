@@ -377,6 +377,12 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (())setUserInteractionEnabled:(bool)enabled {
     env.objc.borrow_mut::<UIViewHostObject>(this).user_interaction_enabled = enabled;
 }
+- (bool)isClipsToBounds {
+    false
+}
+- (())setClipsToBounds:(bool)clips_to_bounds {
+    log!("TODO: [(UIView*){:?} setClipsToBounds:{}]", this, clips_to_bounds);
+}
 
 - (bool)isMultipleTouchEnabled {
     env.objc.borrow::<UIViewHostObject>(this).multiple_touch_enabled

@@ -161,6 +161,26 @@ impl GLES for GLES1Native {
         gles11::LineWidthx(val)
     }
 
+    // Points
+    unsafe fn PointSize(&mut self, size: GLfloat) {
+        gles11::PointSize(size)
+    }
+    unsafe fn PointSizex(&mut self, size: GLfixed) {
+        gles11::PointSizex(size)
+    }
+    unsafe fn PointParameterf(&mut self, pname: GLenum, param: GLfloat) {
+        gles11::PointParameterf(pname, param)
+    }
+    unsafe fn PointParameterx(&mut self, pname: GLenum, param: GLfixed) {
+        gles11::PointParameterx(pname, param)
+    }
+    unsafe fn PointParameterfv(&mut self, pname: GLenum, params: *const GLfloat) {
+        gles11::PointParameterfv(pname, params)
+    }
+    unsafe fn PointParameterxv(&mut self, pname: GLenum, params: *const GLfixed) {
+        gles11::PointParameterxv(pname, params)
+    }
+
     // Lighting and materials
     unsafe fn Fogf(&mut self, pname: GLenum, param: GLfloat) {
         gles11::Fogf(pname, param)

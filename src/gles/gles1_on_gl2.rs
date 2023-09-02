@@ -273,6 +273,14 @@ const GET_PARAMS: ParamTable = ParamTable(&[
     (gl21::MAX_TEXTURE_LOD_BIAS_EXT, ParamType::Float, 1),
 ]);
 
+const POINT_PARAMS: ParamTable = ParamTable(&[
+    (gl21::POINT_SIZE_MIN, ParamType::Float, 1),
+    (gl21::POINT_SIZE_MAX, ParamType::Float, 1),
+    (gl21::POINT_DISTANCE_ATTENUATION, ParamType::Float, 3),
+    (gl21::POINT_FADE_THRESHOLD_SIZE, ParamType::Float, 1),
+    (gl21::POINT_SMOOTH, ParamType::Boolean, 1),
+]);
+
 /// Table of `glFog` parameters shared by OpenGL ES 1.1 and OpenGL 2.1.
 const FOG_PARAMS: ParamTable = ParamTable(&[
     // Despite only having f, fv, x and xv setters in OpenGL ES 1.1, this is
@@ -790,6 +798,36 @@ impl GLES for GLES1OnGL2 {
     }
     unsafe fn LineWidthx(&mut self, val: GLfixed) {
         gl21::LineWidth(fixed_to_float(val))
+    }
+
+    // Points
+    unsafe fn PointSize(&mut self, size: GLfloat) {
+        gl21::PointSize(size)
+    }
+    unsafe fn PointSizex(&mut self, size: GLfixed) {
+        gl21::PointSize(fixed_to_float(size))
+    }
+    unsafe fn PointParameterf(&mut self, pname: GLenum, param: GLfloat) {
+        gl21::PointParameterf(pname, param)
+    }
+    unsafe fn PointParameterx(&mut self, pname: GLenum, param: GLfixed) {
+        POINT_PARAMS.setx(
+            |param| gl21::PointParameterf(pname, param),
+            |_| unreachable!(), // no integer parameters exist
+            pname,
+            param,
+        );
+    }
+    unsafe fn PointParameterfv(&mut self, pname: GLenum, params: *const GLfloat) {
+        gl21::PointParameterfv(pname, params)
+    }
+    unsafe fn PointParameterxv(&mut self, pname: GLenum, params: *const GLfixed) {
+        POINT_PARAMS.setxv(
+            |params| gl21::PointParameterfv(pname, params),
+            |_| unreachable!(), // no integer parameters exist
+            pname,
+            params,
+        );
     }
 
     // Lighting and materials

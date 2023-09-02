@@ -81,6 +81,14 @@ pub trait GLES {
     unsafe fn LineWidth(&mut self, val: GLfloat);
     unsafe fn LineWidthx(&mut self, val: GLfixed);
 
+    // Points
+    unsafe fn PointSize(&mut self, size: GLfloat);
+    unsafe fn PointSizex(&mut self, size: GLfixed);
+    unsafe fn PointParameterf(&mut self, pname: GLenum, param: GLfloat);
+    unsafe fn PointParameterx(&mut self, pname: GLenum, param: GLfixed);
+    unsafe fn PointParameterfv(&mut self, pname: GLenum, params: *const GLfloat);
+    unsafe fn PointParameterxv(&mut self, pname: GLenum, params: *const GLfixed);
+
     // Lighting and materials
     unsafe fn Fogf(&mut self, pname: GLenum, param: GLfloat);
     unsafe fn Fogx(&mut self, pname: GLenum, param: GLfixed);

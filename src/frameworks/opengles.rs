@@ -12,9 +12,10 @@
 pub mod eagl;
 mod gles_guest;
 
-use crate::mem::ConstPtr;
 pub use gles_guest::FUNCTIONS;
 use touchHLE_gl_bindings::gles11::types::GLenum;
+
+use crate::mem::ConstPtr;
 
 #[derive(Default)]
 pub struct State {

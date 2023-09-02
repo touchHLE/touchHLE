@@ -38,6 +38,7 @@ fn main() {
             "GL_IMG_texture_compression_pvrtc",
             "GL_EXT_texture_lod_bias",
             "GL_OES_draw_texture",
+            "GL_OES_mapbuffer",
             // Part of the OpenGL ES 1.1 common profile.
             "GL_OES_compressed_paletted_texture",
         ],

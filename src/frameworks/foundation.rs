@@ -25,6 +25,7 @@ pub mod ns_exception;
 pub mod ns_file_manager;
 pub mod ns_keyed_unarchiver;
 pub mod ns_locale;
+pub mod ns_lock;
 pub mod ns_log;
 pub mod ns_notification;
 pub mod ns_notification_center;

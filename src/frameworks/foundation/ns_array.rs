@@ -94,7 +94,6 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 // NSCopying implementation
 - (id)copyWithZone:(NSZonePtr)_zone {
-    // TODO: override this once we have NSMutableArray!
     retain(env, this)
 }
 

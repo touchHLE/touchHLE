@@ -109,7 +109,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (bool)createFileAtPath:(id)path // NSString*
                 contents:(id)data // NSData*
               attributes:(id)attributes { // NSDictionary*
-    assert!(attributes == nil); // TODO
+    //assert!(attributes == nil); // TODO
 
     let path_str = ns_string::to_rust_string(env, path); // TODO: avoid copy
     // createFileAtPath: returns true if there's already a file at a given path.

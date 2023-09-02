@@ -85,6 +85,16 @@ fn CFRunLoopAddTimer(
     () = msg![env; rl addTimer:timer forMode:mode];
 }
 
+fn CFRunLoopTimerInvalidate(env: &mut Environment, timer: CFRunLoopTimerRef) {
+    let timer_class: Class = msg![env; timer class];
+    assert_eq!(
+        timer_class,
+        env.objc.get_known_class("NSTimer", &mut env.mem)
+    );
+
+    () = msg![env; timer invalidate];
+}
+
 pub const kCFRunLoopCommonModes: &str = "kCFRunLoopCommonModes";
 pub const kCFRunLoopDefaultMode: &str = "kCFRunLoopDefaultMode";
 
@@ -104,4 +114,5 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CFRunLoopGetMain()),
     export_c_func!(CFRunLoopTimerCreate(_, _, _, _, _, _, _)),
     export_c_func!(CFRunLoopAddTimer(_, _, _)),
+    export_c_func!(CFRunLoopTimerInvalidate(_)),
 ];

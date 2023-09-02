@@ -248,6 +248,9 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.dealloc_object(this, &mut env.mem)
 }
 
+- (id)initWithCapacity:(NSUInteger)_capacity {
+    this
+}
 
 // TODO: init methods etc
 

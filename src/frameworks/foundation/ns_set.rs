@@ -123,6 +123,10 @@ pub const CLASSES: ClassExports = objc_classes! {
     ns_array::from_vec(env, objects)
 }
 
+- (NSUInteger)count {
+    env.objc.borrow::<SetHostObject>(this).dict.count
+}
+
 // NSFastEnumeration implementation
 - (NSUInteger)countByEnumeratingWithState:(MutPtr<NSFastEnumerationState>)state
                                   objects:(MutPtr<id>)stackbuf

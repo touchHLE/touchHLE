@@ -34,6 +34,11 @@ pub const CONSTANTS: ConstantExports = &[
         "_NSDefaultRunLoopMode",
         HostConstant::NSString(NSDefaultRunLoopMode),
     ),
+    ("_NSFileType", HostConstant::NSString("NSFileType")),
+    (
+        "_NSFileTypeRegular",
+        HostConstant::NSString("NSFileTypeRegular"),
+    ),
 ];
 
 #[derive(Default)]

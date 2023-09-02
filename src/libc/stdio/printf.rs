@@ -102,10 +102,13 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
                     res.extend_from_slice("(null)".as_bytes());
                 }
             }
-            b'd' | b'i' | b'u' => {
+            b'd' | b'i' | b'u' | b'l' => {
                 let int: i64 = if specifier == b'u' {
                     let uint: u32 = args.next(env);
                     uint.into()
+                } else if specifier == b'l' {
+                    let long: i64 = args.next(env);
+                    long
                 } else {
                     let int: i32 = args.next(env);
                     int.into()

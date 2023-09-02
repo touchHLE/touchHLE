@@ -191,10 +191,8 @@ pub const CLASSES: ClassExports = objc_classes! {
 // TODO: subviews accessor
 
 - (())addSubview:(id)view {
-    log_dbg!("[(UIView*){:?} addSubview:{:?}] => ()", this, view);
-
     if view == nil {
-        log_dbg!("Tolerating [(UIView*){:?} addSubview:nil]", this);
+        log_dbg!("Tolerating [(UIVIew*){:?} addSubview:nil]", this);
         return;
     }
 

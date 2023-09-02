@@ -10,6 +10,7 @@ use crate::dyld::{export_c_func, FunctionExports};
 use crate::mem::{ConstPtr, ConstVoidPtr, GuestUSize, MutPtr, MutVoidPtr, Ptr};
 use crate::Environment;
 use std::collections::HashMap;
+use std::str::FromStr;
 
 pub mod qsort;
 
@@ -97,36 +98,7 @@ fn atol(env: &mut Environment, s: ConstPtr<u8>) -> i32 {
 }
 
 fn atof(env: &mut Environment, s: ConstPtr<u8>) -> f64 {
-    // atof() is similar to atoi().
-    // FIXME: no C99 hexfloat, INF, NAN support
-    let start = skip_whitespace(env, s);
-    let mut len = 0;
-    let maybe_sign = env.mem.read(start + len);
-    if maybe_sign == b'+' || maybe_sign == b'-' || maybe_sign.is_ascii_digit() {
-        len += 1;
-    }
-    while env.mem.read(start + len).is_ascii_digit() {
-        len += 1;
-    }
-    if env.mem.read(start + len) == b'.' {
-        len += 1;
-        while env.mem.read(start + len).is_ascii_digit() {
-            len += 1;
-        }
-    }
-    if env.mem.read(start + len).to_ascii_lowercase() == b'e' {
-        len += 1;
-        let maybe_sign = env.mem.read(start + len);
-        if maybe_sign == b'+' || maybe_sign == b'-' || maybe_sign.is_ascii_digit() {
-            len += 1;
-        }
-        while env.mem.read(start + len).is_ascii_digit() {
-            len += 1;
-        }
-    }
-
-    let s = std::str::from_utf8(env.mem.bytes_at(start, len)).unwrap();
-    s.parse().unwrap_or(0.0)
+    atof_inner(env, s).map_or(0.0, |tuple| tuple.0)
 }
 
 fn prng(state: u32) -> u32 {
@@ -251,6 +223,14 @@ fn bsearch(
     Ptr::null()
 }
 
+fn strtof(env: &mut Environment, nptr: ConstPtr<u8>, endptr: MutPtr<ConstPtr<u8>>) -> f32 {
+    let (number, length) = atof_inner(env, nptr).unwrap_or((0.0, 0));
+    if !endptr.is_null() {
+        env.mem.write(endptr, nptr + length);
+    }
+    number as f32
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(malloc(_)),
     export_c_func!(calloc(_, _)),
@@ -269,4 +249,40 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(setenv(_, _, _)),
     export_c_func!(exit(_)),
     export_c_func!(bsearch(_, _, _, _, _)),
+    export_c_func!(strtof(_, _)),
 ];
+
+/// Returns a tuple containing the parsed number and the length of the number in the string
+fn atof_inner(env: &mut Environment, s: ConstPtr<u8>) -> Result<(f64, u32), <f64 as FromStr>::Err> {
+    // atof() is similar to atoi().
+    // FIXME: no C99 hexfloat, INF, NAN support
+    let start = skip_whitespace(env, s);
+    let whitespace_len = Ptr::to_bits(start) - Ptr::to_bits(s);
+    let mut len = 0;
+    let maybe_sign = env.mem.read(start + len);
+    if maybe_sign == b'+' || maybe_sign == b'-' || maybe_sign.is_ascii_digit() {
+        len += 1;
+    }
+    while env.mem.read(start + len).is_ascii_digit() {
+        len += 1;
+    }
+    if env.mem.read(start + len) == b'.' {
+        len += 1;
+        while env.mem.read(start + len).is_ascii_digit() {
+            len += 1;
+        }
+    }
+    if env.mem.read(start + len).to_ascii_lowercase() == b'e' {
+        len += 1;
+        let maybe_sign = env.mem.read(start + len);
+        if maybe_sign == b'+' || maybe_sign == b'-' || maybe_sign.is_ascii_digit() {
+            len += 1;
+        }
+        while env.mem.read(start + len).is_ascii_digit() {
+            len += 1;
+        }
+    }
+
+    let s = std::str::from_utf8(env.mem.bytes_at(start, len)).unwrap();
+    s.parse().map(|result| (result, whitespace_len + len))
+}

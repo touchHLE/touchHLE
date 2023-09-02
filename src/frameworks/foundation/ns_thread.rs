@@ -10,8 +10,8 @@ use std::time::Duration;
 
 use crate::environment::Environment;
 use crate::frameworks::foundation::NSTimeInterval;
-use crate::libc::pthread::thread::pthread_t;
-use crate::objc::{id, objc_classes, ClassExports, HostObject, SEL};
+use crate::libc::pthread::thread::{_get_thread_id, pthread_t};
+use crate::objc::{id, nil, objc_classes, ClassExports, HostObject, SEL};
 
 #[derive(Default)]
 pub struct State {
@@ -40,6 +40,14 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 @implementation NSThread: NSObject
 
++ (id)alloc {
+    log_dbg!("[NSThread alloc]");
+    let host_object = NSThreadHostObject { thread: None, target: nil, selector: None, object: nil, thread_dictionary: nil };
+    let guest_object = env.objc.alloc_object(this, Box::new(host_object), &mut env.mem);
+    State::get(env).ns_threads.insert(guest_object);
+    guest_object
+}
+
 + (f64)threadPriority {
     log!("TODO: [NSThread threadPriority] (not implemented yet)");
     1.0
@@ -67,6 +75,16 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.sleep(Duration::from_secs_f64(ti), /* tail_call: */ true);
 }
 
+- (id)initWithTarget:(id)target
+selector:(SEL)selector
+object:(id)object {
+    let host_object: &mut NSThreadHostObject = env.objc.borrow_mut(this);
+    host_object.target = target;
+    host_object.selector = Some(selector);
+    host_object.object = object;
+    this
+}
+
 // TODO: construction etc
 - (f64)threadPriority {
     log!("TODO: [(NSThread*){:?} threadPriority] (not implemented yet)", this);
@@ -76,6 +94,13 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (bool)setThreadPriority:(f64)priority {
     log!("TODO: [(NSThread*){:?} setThreadPriority:{:?}] (ignored)", this, priority);
     true
+}
+
+- (())dealloc {
+    log_dbg!("[(NSThread*){:?} dealloc]", this);
+    State::get(env).ns_threads.remove(&this);
+    let _host_object = env.objc.borrow::<NSThreadHostObject>(this);
+    env.objc.dealloc_object(this, &mut env.mem)
 }
 
 @end

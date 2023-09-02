@@ -15,14 +15,30 @@ use crate::fs::GuestPathBuf;
 use crate::objc::{
     id, msg, msg_class, nil, objc_classes, release, retain, ClassExports, HostObject,
 };
-use crate::Environment;
+use crate::{impl_HostObject_with_superclass, msg_super, Environment};
 
-struct UIRuntimeOutletConnectionHostObject {
+struct UIRuntimeConnectionHostObject {
     destination: id,
     label: id,
     source: id,
 }
-impl HostObject for UIRuntimeOutletConnectionHostObject {}
+impl HostObject for UIRuntimeConnectionHostObject {}
+impl Default for UIRuntimeConnectionHostObject {
+    fn default() -> Self {
+        UIRuntimeConnectionHostObject {
+            destination: nil,
+            label: nil,
+            source: nil,
+        }
+    }
+}
+
+#[derive(Default)]
+struct UIRuntimeEventConnectionHostObject {
+    superclass: UIRuntimeConnectionHostObject,
+    eventMask: i32,
+}
+impl_HostObject_with_superclass!(UIRuntimeEventConnectionHostObject);
 
 pub const CLASSES: ClassExports = objc_classes! {
 
@@ -102,14 +118,10 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 // Another undocumented type used by nib files. This one's purpose seems to be
 // to connect outlets once all the objects are deserialized.
-@implementation UIRuntimeOutletConnection: NSObject
+@implementation UIRuntimeConnection: NSObject
 
 + (id)alloc {
-    let host_object = Box::new(UIRuntimeOutletConnectionHostObject {
-        destination: nil,
-        label: nil,
-        source: nil,
-    });
+    let host_object = Box::<UIRuntimeConnectionHostObject>::default();
     env.objc.alloc_object(this, host_object, &mut env.mem)
 }
 
@@ -128,7 +140,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     retain(env, destination);
     retain(env, source);
     retain(env, label);
-    let host_obj = env.objc.borrow_mut::<UIRuntimeOutletConnectionHostObject>(this);
+    let host_obj = env.objc.borrow_mut::<UIRuntimeConnectionHostObject>(this);
     host_obj.destination = destination;
     host_obj.label = label;
     host_obj.source = source;
@@ -136,18 +148,8 @@ pub const CLASSES: ClassExports = objc_classes! {
     this
 }
 
-- (())connect {
-    let &UIRuntimeOutletConnectionHostObject {
-        destination,
-        label,
-        source
-    } = env.objc.borrow(this);
-
-    () = msg![env; source setValue:destination forKey:label];
-}
-
 - (())dealloc {
-    let &UIRuntimeOutletConnectionHostObject {
+    let &UIRuntimeConnectionHostObject {
         destination,
         label,
         source
@@ -160,6 +162,51 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 @end
+
+@implementation UIRuntimeEventConnection: UIRuntimeConnection
+
++ (id)alloc {
+    let host_object = Box::<UIRuntimeEventConnectionHostObject>::default();
+    env.objc.alloc_object(this, host_object, &mut env.mem)
+}
+
+- (())connect {
+    log!("TODO: [(UIRuntimeEventConnection*) {:?} connect]", this);
+}
+
+// NSCoding implementation
+- (id)initWithCoder:(id)coder {
+    let this: id = msg_super![env; this initWithCoder: coder];
+
+    let event_mask_key = get_static_str(env, "UIEventMask");
+    let event_mask: i32 = msg![env; coder decodeIntForKey: event_mask_key];
+
+    let host_obj = env.objc.borrow_mut::<UIRuntimeEventConnectionHostObject>(this);
+    host_obj.eventMask = event_mask;
+
+    this
+}
+
+- (())dealloc {
+    env.objc.dealloc_object(this, &mut env.mem)
+}
+
+@end
+
+@implementation UIRuntimeOutletConnection: UIRuntimeConnection
+
+- (())connect {
+    let &UIRuntimeConnectionHostObject {
+        destination,
+        label,
+        source
+    } = env.objc.borrow(this);
+
+    () = msg![env; source setValue:destination forKey:label];
+}
+
+@end
+
 
 };
 

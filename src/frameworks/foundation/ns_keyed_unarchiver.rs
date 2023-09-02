@@ -75,6 +75,13 @@ pub const CLASSES: ClassExports = objc_classes! {
     )
 }
 
+- (i32)decodeIntForKey:(id)key { // NSString *
+    get_value_to_decode_for_key(env, this, key).map_or(
+        0,
+        |value| value.as_signed_integer().unwrap()
+    ) as i32 // TODO: Check bounds, raise NSRangeException if it doesn't fit
+}
+
 - (id)decodeObjectForKey:(id)key { // NSString*
     let Some(next_uid) = get_value_to_decode_for_key(env, this, key) else {
         return nil;

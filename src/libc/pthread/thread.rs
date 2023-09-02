@@ -44,13 +44,13 @@ const DEFAULT_ATTR: pthread_attr_t = pthread_attr_t {
 /// Apple's implementation is a 4-byte magic number followed by a massive
 /// (>4KiB) opaque region. We will store the actual data on the host instead.
 #[repr(C, packed)]
-struct OpaqueThread {
+pub struct OpaqueThread {
     /// Magic number (must be [MAGIC_THREAD])
     magic: u32,
 }
 unsafe impl SafeRead for OpaqueThread {}
 
-type pthread_t = MutPtr<OpaqueThread>;
+pub type pthread_t = MutPtr<OpaqueThread>;
 
 struct ThreadHostObject {
     thread_id: ThreadId,

@@ -5,9 +5,11 @@
  */
 //! The `NSArray` class cluster, including `NSMutableArray`.
 
+use super::ns_enumerator::NSFastEnumerationState;
 use super::ns_property_list_serialization::deserialize_plist_from_file;
 use super::{ns_keyed_unarchiver, ns_string, ns_url, NSUInteger};
 use crate::fs::GuestPath;
+use crate::mem::MutPtr;
 use crate::objc::{
     autorelease, id, msg, msg_class, nil, objc_classes, release, retain, ClassExports, HostObject,
     NSZonePtr,
@@ -101,6 +103,38 @@ pub const CLASSES: ClassExports = objc_classes! {
         return nil;
     }
     msg![env; this objectAtIndex: (size - 1)]
+}
+
+// NSFastEnumeration implementation
+- (NSUInteger)countByEnumeratingWithState:(MutPtr<NSFastEnumerationState>)state
+                                  objects:(MutPtr<id>)stackbuf
+                                    count:(NSUInteger)len {
+    // TODO: Use mutations_ptr. This implementation will only be safe for arrays that don't mutate
+    // This was used as reference since the official docs are very vague about the purpose of this method
+    // https://www.cocoawithlove.com/2008/05/implementing-countbyenumeratingwithstat.html
+    let host_object = env.objc.borrow_mut::<ArrayHostObject>(this);
+    let current_state: NSFastEnumerationState = env.mem.read(state);
+
+    let mut batch_count: NSUInteger = 0;
+    while batch_count < len {
+        match host_object.array.get((current_state.state+batch_count) as usize) {
+            Some(element) => {
+                env.mem.write(stackbuf+batch_count, *element);
+                batch_count+=1;
+            },
+            None => break
+        };
+    }
+
+    env.mem.write(state, NSFastEnumerationState {
+        state: current_state.state+batch_count,
+        items_ptr: stackbuf,
+        // can be anything as long as it's dereferenceable and the same
+        // each iteration
+        mutations_ptr: this.cast(),
+        extra: Default::default(),
+    });
+    batch_count
 }
 
 @end

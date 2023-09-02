@@ -223,11 +223,19 @@ pub fn load_main_nib_file(env: &mut Environment, _ui_application: id) {
         return;
     };
 
+    let loaded_nib = load_nib_file(env, path);
+
+    if let Some(unarchiver) = loaded_nib {
+        release(env, unarchiver);
+    }
+}
+
+pub fn load_nib_file(env: &mut Environment, path: GuestPathBuf) -> Option<id> {
     let Ok(data) = env.fs.read(path) else {
         // Apparently it's permitted to specify the nib file key in the
         // Info.plist, yet not have it point to a valid nib file?!
-        log!("Warning: couldn't load main nib file");
-        return;
+        log!("Warning: couldn't load nib file");
+        return None;
     };
 
     let unarchiver = msg_class![env; NSKeyedUnarchiver alloc];
@@ -261,5 +269,5 @@ pub fn load_main_nib_file(env: &mut Environment, _ui_application: id) {
         () = msg![env; visible setHidden:false];
     }
 
-    release(env, unarchiver);
+    Some(unarchiver)
 }

@@ -251,6 +251,69 @@ fn bsearch(
     Ptr::null()
 }
 
+fn strtof(env: &mut Environment, nptr: ConstPtr<u8>, endptr: MutPtr<u8>) -> f32 {
+    let mut number: f32 = 0.0;
+    let mut cursor = nptr;
+    let mut char_at_cursor: u8;
+
+    // Optional sign
+    char_at_cursor = env.mem.read(cursor);
+    let sign = match char_at_cursor {
+        b'-' => {
+            cursor += 1;
+            -1.0
+        }
+        b'+' => {
+            cursor += 1;
+            1.0
+        }
+        _ => 1.0,
+    };
+
+    // TODO: Handle hex numbers (0x prefix)
+    if env.mem.read(cursor) == b'0' && matches!(env.mem.read(cursor + 1), b'x' | b'X') {
+        panic!("TODO: strtof - Handle hex numbers (0x prefix)");
+    }
+
+    // Significand
+    let mut parsing_decimal_part = false;
+    let mut decimal_part_accumulator = 0.1;
+    loop {
+        char_at_cursor = env.mem.read(cursor);
+        cursor += 1;
+        if char_at_cursor.is_ascii_digit() {
+            if !parsing_decimal_part {
+                number *= 10.0;
+                number += f32::from(char_at_cursor - b'0');
+            } else {
+                number += f32::from(char_at_cursor - b'0') * decimal_part_accumulator;
+                decimal_part_accumulator *= 0.1;
+            }
+        } else if char_at_cursor == b'.' {
+            parsing_decimal_part = true;
+        } else {
+            break;
+        }
+    }
+
+    // TODO: Handle exponent
+
+    // Write end character
+    if !endptr.is_null() {
+        env.mem.write(endptr, char_at_cursor);
+    }
+
+    number *= sign;
+    log_dbg!(
+        "strtof({:?} ({:?}), {:?}) -> {}",
+        std::str::from_utf8(env.mem.cstr_at(nptr)),
+        nptr,
+        endptr,
+        number
+    );
+    number
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(malloc(_)),
     export_c_func!(calloc(_, _)),
@@ -269,4 +332,5 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(setenv(_, _, _)),
     export_c_func!(exit(_)),
     export_c_func!(bsearch(_, _, _, _, _)),
+    export_c_func!(strtof(_, _)),
 ];

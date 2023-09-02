@@ -9,11 +9,11 @@ use super::CGFloat;
 use crate::abi::GuestArg;
 use crate::dyld::{export_c_func, ConstantExports, FunctionExports, HostConstant};
 use crate::mem::SafeRead;
-use crate::Environment;
+use crate::{impl_GuestRet_for_large_struct, Environment};
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 #[repr(C, packed)]
-/// 3-by-3 matrix type where the columns are `[a, c, tx]`, `[b, d, ty]`,
+/// 3-by-3 matrix type where the rows are `[a, c, tx]`, `[b, d, ty]`,
 /// `[0, 0, 1]`.
 pub struct CGAffineTransform {
     pub a: CGFloat,
@@ -38,14 +38,15 @@ impl GuestArg for CGAffineTransform {
         }
     }
     fn to_regs(self, regs: &mut [u32]) {
-        self.a.to_regs(&mut regs[0..1]);
-        self.b.to_regs(&mut regs[1..2]);
-        self.c.to_regs(&mut regs[2..3]);
-        self.d.to_regs(&mut regs[3..4]);
-        self.tx.to_regs(&mut regs[4..5]);
-        self.ty.to_regs(&mut regs[5..6]);
+        GuestArg::to_regs(self.a, &mut regs[0..1]);
+        GuestArg::to_regs(self.b, &mut regs[1..2]);
+        GuestArg::to_regs(self.c, &mut regs[2..3]);
+        GuestArg::to_regs(self.d, &mut regs[3..4]);
+        GuestArg::to_regs(self.tx, &mut regs[4..5]);
+        GuestArg::to_regs(self.ty, &mut regs[5..6]);
     }
 }
+impl_GuestRet_for_large_struct!(CGAffineTransform);
 
 #[rustfmt::skip]
 pub const CGAffineTransformIdentity: CGAffineTransform = CGAffineTransform {
@@ -67,4 +68,19 @@ fn CGAffineTransformIsIdentity(_env: &mut Environment, transform: CGAffineTransf
     transform == CGAffineTransformIdentity
 }
 
-pub const FUNCTIONS: FunctionExports = &[export_c_func!(CGAffineTransformIsIdentity(_))];
+fn CGAffineTransformMakeRotation(_env: &mut Environment, angle: CGFloat) -> CGAffineTransform {
+    CGAffineTransform {
+        a: f32::cos(angle),
+        c: f32::sin(angle),
+        tx: 0.0,
+        b: -f32::sin(angle),
+        d: f32::cos(angle),
+        ty: 0.0,
+        // 0.0,                    0.0,                     1.0,
+    }
+}
+
+pub const FUNCTIONS: FunctionExports = &[
+    export_c_func!(CGAffineTransformIsIdentity(_)),
+    export_c_func!(CGAffineTransformMakeRotation(_)),
+];

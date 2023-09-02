@@ -6,7 +6,9 @@
 //! Separate module just for the class lists, since this will probably be a
 //! very long and frequently-updated list.
 
-use crate::frameworks::{core_animation, core_graphics, foundation, media_player, opengles, uikit};
+use crate::frameworks::{
+    avfaudio, core_animation, core_graphics, foundation, media_player, opengles, uikit,
+};
 
 /// All the lists of classes that the runtime should search through.
 pub const CLASS_LISTS: &[super::ClassExports] = &[
@@ -68,4 +70,5 @@ pub const CLASS_LISTS: &[super::ClassExports] = &[
     uikit::ui_view::ui_label::CLASSES,
     uikit::ui_view::ui_window::CLASSES,
     uikit::ui_view_controller::CLASSES,
+    avfaudio::av_audio_player::CLASSES,
 ];

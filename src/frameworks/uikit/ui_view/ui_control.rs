@@ -9,6 +9,10 @@
 //! - The [Target-Action section](https://developer.apple.com/library/archive/documentation/General/Conceptual/CocoaEncyclopedia/Target-Action/Target-Action.html) of Apple's "Concepts in Objective-C Programming".
 
 pub mod ui_button;
+pub mod ui_rounded_rect_button;
+pub mod ui_segment;
+pub mod ui_segmented_control;
+pub mod ui_slider;
 pub mod ui_text_field;
 
 use crate::frameworks::core_graphics::CGPoint;

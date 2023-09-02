@@ -15,7 +15,7 @@ use crate::{Environment, MutexId, PTHREAD_MUTEX_DEFAULT};
 /// Apple's implementation is a 4-byte magic number followed by an 8-byte opaque
 /// region. We only have to match the size theirs has.
 #[repr(C, packed)]
-struct pthread_mutexattr_t {
+pub struct pthread_mutexattr_t {
     /// Magic number (must be [MAGIC_MUTEXATTR])
     magic: u32,
     type_: i32,
@@ -28,7 +28,7 @@ unsafe impl SafeRead for pthread_mutexattr_t {}
 /// region. We will store the actual data on the host, determined by a mutex
 /// identifier.
 #[repr(C, packed)]
-struct pthread_mutex_t {
+pub struct pthread_mutex_t {
     /// Magic number (must be [MAGIC_MUTEX])
     magic: u32,
     /// Unique mutex identifier, used in matching the mutex to it's host object.
@@ -78,7 +78,7 @@ fn pthread_mutexattr_destroy(env: &mut Environment, attr: MutPtr<pthread_mutexat
     0 // success
 }
 
-fn pthread_mutex_init(
+pub fn pthread_mutex_init(
     env: &mut Environment,
     mutex: MutPtr<pthread_mutex_t>,
     attr: ConstPtr<pthread_mutexattr_t>,
@@ -125,19 +125,19 @@ fn check_or_register_mutex(env: &mut Environment, mutex: MutPtr<pthread_mutex_t>
     }
 }
 
-fn pthread_mutex_lock(env: &mut Environment, mutex: MutPtr<pthread_mutex_t>) -> i32 {
+pub fn pthread_mutex_lock(env: &mut Environment, mutex: MutPtr<pthread_mutex_t>) -> i32 {
     check_or_register_mutex(env, mutex);
     let mutex_data = env.mem.read(mutex);
     env.lock_mutex(mutex_data.mutex_id).err().unwrap_or(0)
 }
 
-fn pthread_mutex_unlock(env: &mut Environment, mutex: MutPtr<pthread_mutex_t>) -> i32 {
+pub fn pthread_mutex_unlock(env: &mut Environment, mutex: MutPtr<pthread_mutex_t>) -> i32 {
     check_or_register_mutex(env, mutex);
     let mutex_data = env.mem.read(mutex);
     env.unlock_mutex(mutex_data.mutex_id).err().unwrap_or(0)
 }
 
-fn pthread_mutex_destroy(env: &mut Environment, mutex: MutPtr<pthread_mutex_t>) -> i32 {
+pub fn pthread_mutex_destroy(env: &mut Environment, mutex: MutPtr<pthread_mutex_t>) -> i32 {
     check_or_register_mutex(env, mutex);
     let mutex_id = env.mem.read(mutex).mutex_id;
     env.mem.write(

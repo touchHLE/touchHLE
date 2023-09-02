@@ -339,6 +339,12 @@ fn glColor4ub(env: &mut Environment, red: GLubyte, green: GLubyte, blue: GLubyte
         gles.Color4ub(red, green, blue, alpha)
     })
 }
+fn glNormal3f(env: &mut Environment, nx: GLfloat, ny: GLfloat, nz: GLfloat) {
+    with_ctx_and_mem(env, |gles, _mem| unsafe { gles.Normal3f(nx, ny, nz) })
+}
+fn glNormal3x(env: &mut Environment, nx: GLfixed, ny: GLfixed, nz: GLfixed) {
+    with_ctx_and_mem(env, |gles, _mem| unsafe { gles.Normal3x(nx, ny, nz) })
+}
 
 // Pointers
 
@@ -1010,6 +1016,8 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(glColor4f(_, _, _, _)),
     export_c_func!(glColor4x(_, _, _, _)),
     export_c_func!(glColor4ub(_, _, _, _)),
+    export_c_func!(glNormal3f(_, _, _)),
+    export_c_func!(glNormal3x(_, _, _)),
     // Pointers
     export_c_func!(glColorPointer(_, _, _, _)),
     export_c_func!(glNormalPointer(_, _, _)),

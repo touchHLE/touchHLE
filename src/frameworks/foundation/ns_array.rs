@@ -58,6 +58,21 @@ pub const CLASSES: ClassExports = objc_classes! {
     let res = deserialize_plist_from_file(env, &path, /* array_expected: */ true);
     autorelease(env, res)
 }
++ (id)arrayWithObjects:(id)firstObj, ...args {
+    retain(env, firstObj);
+    let mut objects = vec![firstObj];
+    let mut varargs = args.start();
+    loop {
+        let next_arg: id = varargs.next(env);
+        if next_arg.is_null() {
+            break;
+        }
+        retain(env, next_arg);
+        objects.push(next_arg);
+    }
+    let array = from_vec(env, objects);
+    autorelease(env, array)
+}
 
 // These probably comes from some category related to plists.
 - (id)initWithContentsOfFile:(id)path { // NSString*

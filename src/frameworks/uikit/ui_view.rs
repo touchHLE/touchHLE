@@ -15,11 +15,14 @@ pub mod ui_label;
 pub mod ui_window;
 
 use super::ui_graphics::{UIGraphicsPopContext, UIGraphicsPushContext};
-use crate::frameworks::core_graphics::cg_affine_transform::CGAffineTransform;
+use crate::frameworks::core_graphics::cg_affine_transform::{
+    CGAffineTransform, CGAffineTransformIdentity,
+};
 use crate::frameworks::core_graphics::cg_context::{CGContextClearRect, CGContextRef};
 use crate::frameworks::core_graphics::{CGFloat, CGPoint, CGRect};
-use crate::frameworks::foundation::ns_string::get_static_str;
+use crate::frameworks::foundation::ns_string::{get_static_str, to_rust_string};
 use crate::frameworks::foundation::{ns_array, NSInteger, NSUInteger};
+use crate::mem::ConstVoidPtr;
 use crate::objc::{
     autorelease, id, msg, nil, objc_classes, release, retain, Class, ClassExports, HostObject,
     NSZonePtr,
@@ -43,6 +46,8 @@ pub(super) struct UIViewHostObject {
     clears_context_before_drawing: bool,
     user_interaction_enabled: bool,
     multiple_touch_enabled: bool,
+    clips_to_bounds: bool,        // TODO: Handle this property
+    transform: CGAffineTransform, // TODO: Handle this property
 }
 impl HostObject for UIViewHostObject {}
 impl Default for UIViewHostObject {
@@ -56,6 +61,8 @@ impl Default for UIViewHostObject {
             clears_context_before_drawing: true,
             user_interaction_enabled: true,
             multiple_touch_enabled: false,
+            clips_to_bounds: false,
+            transform: CGAffineTransformIdentity,
         }
     }
 }
@@ -94,6 +101,16 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 + (Class)layerClass {
     env.objc.get_known_class("CALayer", &mut env.mem)
+}
+
++ (())beginAnimations:(id)animationID // NSString*
+              context:(ConstVoidPtr)context {
+    log!("TODO: [UIView beginAnimations:{:?} {:?} context:{:?}]", to_rust_string(env, animationID), animationID, context);
+}
+
++ (())commitAnimations {
+    log!("TODO: [UIView commitAnimations]");
+    // Thank you apple for having this API So i don't actually have to implement animations for the end result to happen
 }
 
 // TODO: accessors etc
@@ -173,6 +190,12 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 - (())setUserInteractionEnabled:(bool)enabled {
     env.objc.borrow_mut::<UIViewHostObject>(this).user_interaction_enabled = enabled;
+}
+- (bool)isClipsToBounds {
+    env.objc.borrow::<UIViewHostObject>(this).clips_to_bounds
+}
+- (())setClipsToBounds:(bool)clips_to_bounds {
+    env.objc.borrow_mut::<UIViewHostObject>(this).clips_to_bounds = clips_to_bounds;
 }
 
 - (bool)isMultipleTouchEnabled {
@@ -272,6 +295,8 @@ pub const CLASSES: ClassExports = objc_classes! {
         clears_context_before_drawing: _,
         user_interaction_enabled: _,
         multiple_touch_enabled: _,
+        clips_to_bounds: _,
+        transform: _,
     } = std::mem::take(env.objc.borrow_mut(this));
 
     release(env, layer);
@@ -364,10 +389,6 @@ pub const CLASSES: ClassExports = objc_classes! {
     msg![env; layer setFrame:frame]
 }
 
-- (())setTransform:(CGAffineTransform)transform {
-    log!("TODO: [{:?} setTransform:{:?}]", this, transform);
-}
-
 - (())setContentMode:(NSInteger)content_mode { // should be UIViewContentMode
     log!("TODO: [UIView {:?} setContentMode:{:?}] => ()", this, content_mode);
 }
@@ -377,6 +398,13 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 - (())setClearsContextBeforeDrawing:(bool)v {
     env.objc.borrow_mut::<UIViewHostObject>(this).clears_context_before_drawing = v;
+}
+
+- (CGAffineTransform)transform {
+    env.objc.borrow::<UIViewHostObject>(this).transform
+}
+- (())setTransform:(CGAffineTransform)transform {
+    env.objc.borrow_mut::<UIViewHostObject>(this).transform = transform;
 }
 
 // Drawing stuff that views should override

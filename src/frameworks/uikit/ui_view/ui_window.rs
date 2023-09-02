@@ -6,6 +6,7 @@
 //! `UIWindow`.
 
 use crate::frameworks::core_graphics::CGRect;
+use crate::frameworks::uikit::ui_view::CGFloat;
 use crate::objc::{id, msg, msg_super, objc_classes, ClassExports};
 
 #[derive(Default)]
@@ -95,6 +96,10 @@ pub const CLASSES: ClassExports = objc_classes! {
     // send any non-touch events to windows, so there's no meaning in it yet.
 
     msg![env; this setHidden:false]
+}
+
+-(())setWindowLevel:(CGFloat)_level {
+
 }
 
 @end

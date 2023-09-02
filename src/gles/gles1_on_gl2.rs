@@ -1749,4 +1749,8 @@ impl GLES for GLES1OnGL2 {
     unsafe fn GenerateMipmapOES(&mut self, target: GLenum) {
         gl21::GenerateMipmapEXT(target)
     }
+
+    unsafe fn IsTexture(&mut self, texture: GLuint) -> GLboolean {
+        gl21::IsTexture(texture)
+    }
 }

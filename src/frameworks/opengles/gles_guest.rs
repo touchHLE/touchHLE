@@ -1102,6 +1102,10 @@ fn glGenerateMipmapOES(env: &mut Environment, target: GLenum) {
     with_ctx_and_mem(env, |gles, _mem| unsafe { gles.GenerateMipmapOES(target) })
 }
 
+fn glIsTexture(env: &mut Environment, texture: GLuint) -> GLboolean {
+    with_ctx_and_mem(env, |gles, _mem| unsafe { gles.IsTexture(texture) })
+}
+
 /// If fog is enabled, check if the values for start and end distances
 /// are equal. Apple platforms (even modern Mac OS) seem to handle that
 /// gracefully, however, both Windows and Android have issues in those cases.
@@ -1270,4 +1274,5 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(glDeleteFramebuffersOES(_, _)),
     export_c_func!(glDeleteRenderbuffersOES(_, _)),
     export_c_func!(glGenerateMipmapOES(_)),
+    export_c_func!(glIsTexture(_)),
 ];

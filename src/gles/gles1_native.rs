@@ -689,4 +689,8 @@ impl GLES for GLES1Native {
     unsafe fn GenerateMipmapOES(&mut self, target: GLenum) {
         gles11::GenerateMipmapOES(target)
     }
+
+    unsafe fn IsTexture(&mut self, texture: GLuint) -> GLboolean {
+        gles11::IsTexture(texture)
+    }
 }

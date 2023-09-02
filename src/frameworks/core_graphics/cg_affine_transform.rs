@@ -83,14 +83,24 @@ pub const CGAffineTransformIdentity: CGAffineTransform = CGAffineTransform {
     // 0.0, 0.0, 1.0,
 };
 
-pub const CONSTANTS: ConstantExports = &[(
-    "_CGAffineTransformIdentity",
-    HostConstant::Custom(|mem| {
-        mem.alloc_and_write(CGAffineTransformIdentity)
-            .cast()
-            .cast_const()
-    }),
-)];
+pub const CONSTANTS: ConstantExports = &[
+    (
+        "_CGAffineTransformIdentity",
+        HostConstant::Custom(|mem| {
+            mem.alloc_and_write(CGAffineTransformIdentity)
+                .cast()
+                .cast_const()
+        }),
+    ),
+    (
+        "_UIWindowLevelNormal",
+        HostConstant::Custom(|mem| mem.alloc_and_write(0.0 as CGFloat).cast().cast_const()),
+    ),
+    (
+        "_UIWindowLevelAlert",
+        HostConstant::Custom(|mem| mem.alloc_and_write(1.0 as CGFloat).cast().cast_const()),
+    ),
+];
 
 // The CGAffineTransform* functions are implemented as wrappers around these
 // methods so that host code has the option of calling them without needing to

@@ -15,6 +15,7 @@ use crate::dyld::{export_c_func, FunctionExports};
 use crate::objc::id;
 use crate::Environment;
 
+pub(crate) mod fake_cftimer_target;
 pub mod ns_array;
 pub mod ns_autorelease_pool;
 pub mod ns_bundle;

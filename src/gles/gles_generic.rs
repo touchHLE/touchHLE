@@ -360,4 +360,6 @@ pub trait GLES {
     unsafe fn DeleteFramebuffersOES(&mut self, n: GLsizei, framebuffers: *const GLuint);
     unsafe fn DeleteRenderbuffersOES(&mut self, n: GLsizei, renderbuffers: *const GLuint);
     unsafe fn GenerateMipmapOES(&mut self, target: GLenum);
+
+    unsafe fn IsTexture(&mut self, texture: GLuint) -> GLboolean;
 }

@@ -13,6 +13,7 @@
 
 use super::ns_string::{from_rust_string, to_rust_string};
 use crate::frameworks::core_graphics::{CGPoint, CGRect, CGSize};
+use crate::frameworks::foundation::NSInteger;
 use crate::frameworks::uikit::ui_geometry::{
     CGPointFromString, CGRectFromString, CGSizeFromString,
 };
@@ -72,6 +73,52 @@ pub const CLASSES: ClassExports = objc_classes! {
     get_value_to_decode_for_key(env, this, key).map_or(
         false,
         |value| value.as_boolean().unwrap()
+    )
+}
+
+- (f64)decodeDoubleForKey:(id)key { // NSString *
+    get_value_to_decode_for_key(env, this, key).map_or(
+        0.0,
+        |value| value.as_real().unwrap()
+    )
+}
+
+- (f32)decodeFloatForKey:(id)key { // NSString *
+    // TODO: Check bounds, raise NSRangeException if it doesn't fit
+    get_value_to_decode_for_key(env, this, key).map_or(
+        0.0,
+        |value| value.as_real().unwrap()
+    ) as f32
+}
+
+- (NSInteger)decodeIntegerForKey:(id)key { // NSString *
+    // TODO: Check bounds, raise NSRangeException if it doesn't fit
+    get_value_to_decode_for_key(env, this, key).map_or(
+        0,
+        |value| value.as_signed_integer().unwrap()
+    ).try_into().unwrap()
+}
+
+- (i32)decodeIntForKey:(id)key { // NSString *
+    // TODO: Check bounds, raise NSRangeException if it doesn't fit
+    get_value_to_decode_for_key(env, this, key).map_or(
+        0,
+        |value| value.as_signed_integer().unwrap()
+    ).try_into().unwrap()
+}
+
+- (i32)decodeInt32ForKey:(id)key { // NSString *
+    // TODO: Check bounds, raise NSRangeException if it doesn't fit
+    get_value_to_decode_for_key(env, this, key).map_or(
+        0,
+        |value| value.as_signed_integer().unwrap()
+    ).try_into().unwrap()
+}
+
+- (i64)decodeInt64ForKey:(id)key { // NSString *
+    get_value_to_decode_for_key(env, this, key).map_or(
+        0,
+        |value| value.as_signed_integer().unwrap()
     )
 }
 

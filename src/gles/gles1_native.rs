@@ -225,6 +225,15 @@ impl GLES for GLES1Native {
         assert!(target == gles11::ARRAY_BUFFER || target == gles11::ELEMENT_ARRAY_BUFFER);
         gles11::BufferData(target, size, data, usage)
     }
+    unsafe fn BufferSubData(
+        &mut self,
+        target: GLenum,
+        offset: GLintptr,
+        size: GLsizeiptr,
+        data: *const GLvoid,
+    ) {
+        gles11::BufferSubData(target, offset, size, data)
+    }
 
     unsafe fn BufferSubData(
         &mut self,

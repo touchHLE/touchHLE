@@ -336,6 +336,23 @@ fn glBufferData(
         gles.BufferData(target, size as HostGLsizeiptr, data, usage)
     })
 }
+fn glBufferSubData(
+    env: &mut Environment,
+    target: GLenum,
+    offset: GuestGLintptr,
+    size: GuestGLsizeiptr,
+    data: ConstPtr<GLvoid>,
+) {
+    with_ctx_and_mem(env, |gles, mem| unsafe {
+        let data = if data.is_null() {
+            std::ptr::null()
+        } else {
+            mem.ptr_at(data.cast::<u8>(), size.try_into().unwrap())
+                .cast()
+        };
+        gles.BufferSubData(target, offset as HostGLintptr, size as HostGLsizeiptr, data)
+    })
+}
 
 fn glBufferSubData(
     env: &mut Environment,

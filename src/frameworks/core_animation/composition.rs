@@ -318,7 +318,7 @@ unsafe fn composite_layer_recursive(
     } else {
         let (r, g, b, a) = ui_color::get_rgba(objc, host_obj.background_color);
         // TODO: fully support alpha transparency for backgrounds
-        if a == 0.0 {
+        if a == 0.0 || opacity == 0.0 {
             false
         } else {
             gles.ClearColor(r * opacity, g * opacity, b * opacity, a * opacity);

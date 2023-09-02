@@ -5,9 +5,34 @@
  */
 //! `NSThread`.
 
-use crate::frameworks::foundation::NSTimeInterval;
-use crate::objc::{id, objc_classes, ClassExports};
+use std::collections::HashSet;
 use std::time::Duration;
+
+use crate::environment::Environment;
+use crate::frameworks::foundation::NSTimeInterval;
+use crate::libc::pthread::thread::pthread_t;
+use crate::objc::{id, objc_classes, ClassExports, HostObject, SEL};
+
+#[derive(Default)]
+pub struct State {
+    /// `NSThread*`
+    ns_threads: HashSet<id>,
+}
+impl State {
+    fn get(env: &mut Environment) -> &mut State {
+        &mut env.framework_state.foundation.ns_threads
+    }
+}
+
+struct NSThreadHostObject {
+    thread: Option<pthread_t>,
+    target: id,
+    selector: Option<SEL>,
+    object: id,
+    /// `NSDictionary*`
+    thread_dictionary: id,
+}
+impl HostObject for NSThreadHostObject {}
 
 pub const CLASSES: ClassExports = objc_classes! {
 

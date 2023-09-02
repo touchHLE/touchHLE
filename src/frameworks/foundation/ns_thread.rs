@@ -19,12 +19,27 @@ use crate::objc::{
     SEL,
 };
 use crate::Environment;
+use std::collections::HashSet;
 use std::time::Duration;
 
+#[derive(Default)]
+pub struct State {
+    /// `NSThread*`
+    ns_threads: HashSet<id>,
+}
+impl State {
+    fn get(env: &mut Environment) -> &mut State {
+        &mut env.framework_state.foundation.ns_threads
+    }
+}
+
 struct NSThreadHostObject {
+    thread: Option<pthread_t>,
     target: id,
     selector: Option<SEL>,
     object: id,
+    /// `NSDictionary*`
+    thread_dictionary: id,
 }
 impl HostObject for NSThreadHostObject {}
 
@@ -36,9 +51,11 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 + (id)allocWithZone:(NSZonePtr)_zone {
     let host_object = Box::new(NSThreadHostObject {
+        thread: None,
         target: nil,
         selector: None,
         object: nil,
+        thread_dictionary: nil,
     });
     env.objc.alloc_object(this, host_object, &mut env.mem)
 }
@@ -69,9 +86,11 @@ pub const CLASSES: ClassExports = objc_classes! {
                        toTarget:(id)target
                      withObject:(id)object {
     let host_object = Box::new(NSThreadHostObject {
+        thread: None,
         target,
         selector: Some(selector),
         object,
+        thread_dictionary: nil,
     });
     let this = env.objc.alloc_object(this, host_object, &mut env.mem);
     retain(env, this);
@@ -113,9 +132,11 @@ pub fn _touchHLE_NSThreadInvocationHelper(env: &mut Environment, ns_thread_obj: 
     assert_eq!(class, env.objc.get_known_class("NSThread", &mut env.mem));
 
     let &NSThreadHostObject {
+        thread: _,
         target,
         selector,
         object,
+        thread_dictionary: _,
     } = env.objc.borrow(ns_thread_obj);
     () = msg_send(env, (target, selector.unwrap(), object));
 

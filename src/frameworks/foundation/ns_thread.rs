@@ -52,6 +52,12 @@ pub const CLASSES: ClassExports = objc_classes! {
 + (id)currentThread {
     this
 }
++ (())sleepForTimeInterval:(NSTimeInterval)ti {
+    log_dbg!("[NSThread sleepForTimeInterval:{:?}]", ti);
+    env.sleep(Duration::from_secs_f64(ti), false);
+}
+
+
 - (id)initWithTarget:(id)target
 selector:(SEL)selector
 object:(id)object {

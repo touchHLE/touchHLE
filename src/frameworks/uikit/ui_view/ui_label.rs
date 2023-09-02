@@ -57,6 +57,18 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.alloc_object(this, host_object, &mut env.mem)
 }
 
+- (id)initWithCoder:(id)coder {
+    let this: id = msg_super![env; this initWithCoder: coder];
+    // Use default values by calling the setters
+    // TODO: Decode the actual property values from the coder
+    () = msg![env; this setFont:nil];
+    () = msg![env; this setTextColor:nil];
+    () = msg![env; this setBackgroundColor:nil];
+    // Built-in views don't have user-controlled opaqueness.
+    () = msg_super![env; this setOpaque:false];
+    this
+}
+
 - (id)initWithFrame:(CGRect)frame {
     let this: id = msg_super![env; this initWithFrame:frame];
     // These aren't redundant, the setters fetch the real defaults.

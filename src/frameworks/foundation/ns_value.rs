@@ -6,6 +6,7 @@
 //! The `NSValue` class cluster, including `NSNumber`.
 
 use super::NSUInteger;
+use crate::frameworks::foundation::ns_string::from_rust_string;
 use crate::objc::{
     autorelease, id, msg, msg_class, objc_classes, retain, Class, ClassExports, HostObject,
     NSZonePtr,
@@ -110,6 +111,15 @@ pub const CLASSES: ClassExports = objc_classes! {
     this
 }
 
+- (id)description {
+    match env.objc.borrow(this) {
+        NSNumberHostObject::Bool(value) => from_rust_string(env, (*value as i32).to_string()),
+        NSNumberHostObject::UnsignedLongLong(value) => from_rust_string(env, value.to_string()),
+        NSNumberHostObject::LongLong(value) => from_rust_string(env, value.to_string()),
+        NSNumberHostObject::Float(value) => from_rust_string(env, value.to_string()),
+        NSNumberHostObject::Double(value) => from_rust_string(env, value.to_string())
+    }
+}
 - (NSUInteger)hash {
     let &NSNumberHostObject::Bool(value) = env.objc.borrow(this) else {
         todo!();

@@ -49,15 +49,12 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 @implementation NSThread: NSObject
 
-+ (id)allocWithZone:(NSZonePtr)_zone {
-    let host_object = Box::new(NSThreadHostObject {
-        thread: None,
-        target: nil,
-        selector: None,
-        object: nil,
-        thread_dictionary: nil,
-    });
-    env.objc.alloc_object(this, host_object, &mut env.mem)
++ (id)allocWithZone:(NSZonePtr)zone {
+    log_dbg!("[NSThread allocWithZone:{:?}]", zone);
+    let host_object = NSThreadHostObject { thread: None, target: nil, selector: None, object: nil, thread_dictionary: nil };
+    let guest_object = env.objc.alloc_object(this, Box::new(host_object), &mut env.mem);
+    State::get(env).ns_threads.insert(guest_object);
+    guest_object
 }
 
 + (f64)threadPriority {
@@ -125,6 +122,16 @@ pub const CLASSES: ClassExports = objc_classes! {
     // TODO: post NSWillBecomeMultiThreadedNotification
 }
 
+- (id)initWithTarget:(id)target
+selector:(SEL)selector
+object:(id)object {
+    let host_object: &mut NSThreadHostObject = env.objc.borrow_mut(this);
+    host_object.target = target;
+    host_object.selector = Some(selector);
+    host_object.object = object;
+    this
+}
+
 // TODO: construction etc
 - (id)threadDictionary {
     // Initialize lazily in case the thread is started with pthread_create
@@ -156,6 +163,13 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (bool)setThreadPriority:(f64)priority {
     log!("TODO: [(NSThread*){:?} setThreadPriority:{:?}] (ignored)", this, priority);
     true
+}
+
+- (())dealloc {
+    log_dbg!("[(NSThread*){:?} dealloc]", this);
+    State::get(env).ns_threads.remove(&this);
+    let _host_object = env.objc.borrow::<NSThreadHostObject>(this);
+    env.objc.dealloc_object(this, &mut env.mem)
 }
 
 @end

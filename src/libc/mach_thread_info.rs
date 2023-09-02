@@ -152,7 +152,12 @@ fn thread_policy_set(
     KERN_SUCCESS
 }
 
+fn mach_host_self(_env: &mut Environment) -> i32 {
+    0
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(thread_info(_, _, _, _)),
     export_c_func!(thread_policy_set(_, _, _, _)),
+    export_c_func!(mach_host_self()),
 ];

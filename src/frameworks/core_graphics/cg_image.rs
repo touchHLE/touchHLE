@@ -148,6 +148,15 @@ fn CGImageGetBitsPerPixel(_env: &mut Environment, _image: CGImageRef) -> GuestUS
     32
 }
 
+fn CGImageGetBytesPerRow(env: &mut Environment, image: CGImageRef) -> GuestUSize {
+    let (width, _height) = env
+        .objc
+        .borrow::<CGImageHostObject>(image)
+        .image
+        .dimensions();
+    width * 4
+}
+
 fn CGImageGetDataProvider(env: &mut Environment, image: CGImageRef) -> CGDataProviderRef {
     // CGImageGetDataProvider() seems to be intended to return the underlying
     // data provider that is retained by the CGImage. That's not how CGImage is
@@ -173,6 +182,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGImageGetWidth(_)),
     export_c_func!(CGImageGetHeight(_)),
     export_c_func!(CGImageGetBitsPerPixel(_)),
+    export_c_func!(CGImageGetBytesPerRow(_)),
     export_c_func!(CGImageGetDataProvider(_)),
     export_c_func!(CGImageGetBitsPerComponent(_)),
 ];

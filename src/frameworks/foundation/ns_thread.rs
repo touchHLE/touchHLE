@@ -12,7 +12,7 @@ use crate::libc::pthread::thread::{
     _get_thread_id, pthread_attr_init, pthread_attr_setdetachstate, pthread_attr_t, pthread_create,
     pthread_t, PTHREAD_CREATE_DETACHED,
 };
-use crate::mem::{guest_size_of, MutPtr};
+use crate::mem::{guest_size_of, ConstPtr, MutPtr};
 use crate::objc::{
     id, msg_send, nil, objc_classes, release, retain, Class, ClassExports, HostObject, NSZonePtr,
     SEL,
@@ -127,7 +127,28 @@ object:(id)object {
     this
 }
 
-// TODO: construction etc
+- (())start {
+    let symb = "__touchHLE_NSThreadInvocationHelper";
+    let hf: HostFunction = &(_touchHLE_NSThreadInvocationHelper as fn(&mut Environment, _) -> _);
+    let gf = env
+        .dyld
+        .create_guest_function(&mut env.mem, symb, hf);
+
+    let thread_ptr: MutPtr<pthread_t> = env.mem.alloc(guest_size_of::<pthread_t>()).cast();
+    pthread_create(env, thread_ptr, ConstPtr::null(), gf, this.cast());
+    let thread = env.mem.read(thread_ptr);
+    let thread_dictionary = msg_class![env; NSDictionary alloc];
+    // TODO: Store the thread's default NSConnection
+    // and NSAssertionHandler instances
+    // https://developer.apple.com/documentation/foundation/nsthread/1411433-threaddictionary
+
+    let host_object = env.objc.borrow_mut::<NSThreadHostObject>(this);
+    host_object.thread = Some(thread);
+    host_object.thread_dictionary = thread_dictionary;
+
+    log_dbg!("[(NSThread*){:?} start] Started new thread with pthread {:?} and ThreadId {:?}", this, thread, _get_thread_id(env, thread));
+}
+
 - (id)threadDictionary {
     env.objc.borrow::<NSThreadHostObject>(this).thread_dictionary
 }

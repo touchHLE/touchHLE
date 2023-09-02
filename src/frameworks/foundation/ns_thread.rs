@@ -22,11 +22,27 @@ pub const CLASSES: ClassExports = objc_classes! {
     log!("TODO: [NSThread setThreadPriority:{:?}] (ignored)", priority);
     true
 }
-
+  
 + (id)currentThread {
     // Simple hack to make the `setThreadPriority:` work as an instance method
     // (it's both a class and an instance method). Must be replaced if we ever
     // need to support other methods.
+    this
+}
+
+
++ (())sleepForTimeInterval:(NSTimeInterval)ti {
+    log_dbg!("[NSThread sleepForTimeInterval:{:?}]", ti);
+    env.sleep(Duration::from_secs_f64(ti), /* tail_call: */ true);
+}
+
+- (id)initWithTarget:(id)target
+selector:(SEL)selector
+object:(id)object {
+    let host_object: &mut NSThreadHostObject = env.objc.borrow_mut(this);
+    host_object.target = target;
+    host_object.selector = Some(selector);
+    host_object.object = object;
     this
 }
 

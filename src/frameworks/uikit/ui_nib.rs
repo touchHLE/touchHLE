@@ -11,6 +11,7 @@
 
 use crate::frameworks::foundation::ns_string::{get_static_str, to_rust_string};
 use crate::frameworks::foundation::{ns_string, NSUInteger};
+use crate::fs::GuestPathBuf;
 use crate::objc::{
     id, msg, msg_class, nil, objc_classes, release, retain, ClassExports, HostObject,
 };
@@ -163,6 +164,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 };
 
 /// Shortcut for use by [super::ui_application::UIApplicationMain].
+/// Calls [load_nib_file] underneath.
 ///
 /// In terms of the proper API, it should behave something like:
 /// ```objc
@@ -175,14 +177,26 @@ pub fn load_main_nib_file(env: &mut Environment, _ui_application: id) {
         return;
     };
 
+    let loaded_nib = load_nib_file(env, path);
+
+    if let Ok(unarchiver) = loaded_nib {
+        release(env, unarchiver);
+    }
+}
+
+/// Takes a [GuestPathBuf] where a nib file is located and deserializes it.
+/// Returns an empty [Err] if the file couldn't be loaded or an [Ok] wrapping
+/// an NSKeyedUnarchiver.
+/// The unarchiver should later be manually [release]d
+pub fn load_nib_file(env: &mut Environment, path: GuestPathBuf) -> Result<id, ()> {
     let path = ns_string::from_rust_string(env, path.as_str().to_string());
     assert!(msg![env; path isAbsolutePath]);
     let ns_data: id = msg_class![env; NSData dataWithContentsOfFile:path];
     if ns_data == nil {
         // Apparently it's permitted to specify the nib file key in the
         // Info.plist, yet not have it point to a valid nib file?!
-        log!("Warning: couldn't load main nib file");
-        return;
+        log!("Warning: couldn't load nib file {:?}", path);
+        return Err(());
     };
 
     let unarchiver = msg_class![env; NSKeyedUnarchiver alloc];
@@ -216,5 +230,5 @@ pub fn load_main_nib_file(env: &mut Environment, _ui_application: id) {
         () = msg![env; visible setHidden:false];
     }
 
-    release(env, unarchiver);
+    Ok(unarchiver)
 }

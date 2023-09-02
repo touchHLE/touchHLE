@@ -655,6 +655,9 @@ pub const CLASSES: ClassExports = objc_classes! {
     msg![env; layer setHidden:hidden]
 }
 
+- (bool)isClipsToBounds {
+    false
+}
 - (())setClipsToBounds:(bool)clips {
     todo_objc_setter!(this, clips);
 }

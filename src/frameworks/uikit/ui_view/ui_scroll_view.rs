@@ -94,6 +94,12 @@ pub const CLASSES: ClassExports = objc_classes! {
     todo_objc_setter!(this, style);
 }
 
+- (bool)isClipsToBounds {
+    // TODO: Remove once clips to bounds is implemented properly
+    // and use "true" as the default value.
+    true
+}
+
 - (())touchesMoved:(id)touches // NSSet* of UITouch*
          withEvent:(id)_event { // UIEvent*
     let scroll_enabled: bool = msg![env; this scrollEnabled];

@@ -11,6 +11,7 @@
 
 mod generic_char;
 
+pub mod clocale;
 pub mod ctype;
 pub mod cxxabi;
 pub mod dlfcn;
@@ -45,4 +46,5 @@ pub struct State {
     string: string::State,
     time: time::State,
     errno: errno::State,
+    clocale: clocale::State,
 }

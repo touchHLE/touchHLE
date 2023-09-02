@@ -27,7 +27,7 @@ impl State {
 /// opaque region. We only have to match the size theirs has.
 #[derive(Copy, Clone, Debug)]
 #[repr(C, packed)]
-struct pthread_attr_t {
+pub struct pthread_attr_t {
     /// Magic number (must be [MAGIC_ATTR])
     magic: u32,
     detachstate: i32,
@@ -52,7 +52,7 @@ unsafe impl SafeRead for OpaqueThread {}
 
 pub type pthread_t = MutPtr<OpaqueThread>;
 
-struct ThreadHostObject {
+pub struct ThreadHostObject {
     thread_id: ThreadId,
     joined_by: Option<ThreadId>,
     _attr: pthread_attr_t,
@@ -97,7 +97,7 @@ fn pthread_attr_destroy(env: &mut Environment, attr: MutPtr<pthread_attr_t>) -> 
     0 // success
 }
 
-fn pthread_create(
+pub fn pthread_create(
     env: &mut Environment,
     thread: MutPtr<pthread_t>,
     attr: ConstPtr<pthread_attr_t>,

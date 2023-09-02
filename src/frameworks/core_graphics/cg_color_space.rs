@@ -24,6 +24,26 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 };
 
+pub type CGColorSpaceModel = i32;
+#[allow(non_camel_case_types, dead_code)]
+pub const kCGColorSpaceModelUnknown: CGColorSpaceModel = -1;
+#[allow(non_camel_case_types)]
+pub const kCGColorSpaceModelMonochrome: CGColorSpaceModel = 0;
+#[allow(non_camel_case_types)]
+pub const kCGColorSpaceModelRGB: CGColorSpaceModel = 1;
+#[allow(non_camel_case_types, dead_code)]
+pub const kCGColorSpaceModelCMYK: CGColorSpaceModel = 2;
+#[allow(non_camel_case_types, dead_code)]
+pub const kCGColorSpaceModelLab: CGColorSpaceModel = 3;
+#[allow(non_camel_case_types, dead_code)]
+pub const kCGColorSpaceModelDeviceN: CGColorSpaceModel = 4;
+#[allow(non_camel_case_types, dead_code)]
+pub const kCGColorSpaceModelIndexed: CGColorSpaceModel = 5;
+#[allow(non_camel_case_types, dead_code)]
+pub const kCGColorSpaceModelPattern: CGColorSpaceModel = 6;
+#[allow(non_camel_case_types, dead_code)]
+pub const kCGColorSpaceModelXYZ: CGColorSpaceModel = 7;
+
 pub(super) struct CGColorSpaceHostObject {
     pub(super) name: &'static str,
 }
@@ -89,6 +109,15 @@ pub fn CGColorSpaceRetain(env: &mut Environment, cs: CGColorSpaceRef) -> CGColor
     }
 }
 
+pub fn CGColorSpaceGetModel(env: &mut Environment, cs: CGColorSpaceRef) -> CGColorSpaceModel {
+    let host_object = env.objc.borrow::<CGColorSpaceHostObject>(cs);
+    match host_object.name {
+        kCGColorSpaceGenericGray => kCGColorSpaceModelMonochrome,
+        kCGColorSpaceGenericRGB => kCGColorSpaceModelRGB,
+        _ => unimplemented!(),
+    }
+}
+
 pub const kCGColorSpaceGenericRGB: &str = "kCGColorSpaceGenericRGB";
 pub const kCGColorSpaceGenericGray: &str = "kCGColorSpaceGenericGray";
 
@@ -109,4 +138,5 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGColorSpaceCreateDeviceGray()),
     export_c_func!(CGColorSpaceRetain(_)),
     export_c_func!(CGColorSpaceRelease(_)),
+    export_c_func!(CGColorSpaceGetModel(_)),
 ];

@@ -7,13 +7,12 @@
 
 use super::ns_array;
 use super::ns_dictionary::DictionaryHostObject;
-use super::ns_enumerator::NSFastEnumerationState;
+use super::ns_enumerator::{fast_enumeration_helper, NSFastEnumerationState};
 use super::NSUInteger;
 use crate::mem::MutPtr;
 use crate::objc::{
     autorelease, id, msg, msg_class, nil, objc_classes, retain, ClassExports, HostObject, NSZonePtr,
 };
-use crate::Environment;
 
 /// Belongs to _touchHLE_NSSet
 #[derive(Debug, Default)]
@@ -128,7 +127,8 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (NSUInteger)countByEnumeratingWithState:(MutPtr<NSFastEnumerationState>)state
                                   objects:(MutPtr<id>)stackbuf
                                     count:(NSUInteger)len {
-    fast_enumeration_helper(env, this, state, stackbuf, len)
+    let mut iterator = env.objc.borrow::<SetHostObject>(this).dict.iter_keys();
+    fast_enumeration_helper(&mut env.mem, this, &mut iterator, state, stackbuf, len)
 }
 
 @end
@@ -183,7 +183,8 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (NSUInteger)countByEnumeratingWithState:(MutPtr<NSFastEnumerationState>)state
                                   objects:(MutPtr<id>)stackbuf
                                     count:(NSUInteger)len {
-    fast_enumeration_helper(env, this, state, stackbuf, len)
+    let mut iterator = env.objc.borrow::<SetHostObject>(this).dict.iter_keys();
+    fast_enumeration_helper(&mut env.mem, this, &mut iterator, state, stackbuf, len)
 }
 
 // TODO: more mutation methods
@@ -198,51 +199,3 @@ pub const CLASSES: ClassExports = objc_classes! {
 @end
 
 };
-
-fn fast_enumeration_helper(
-    env: &mut Environment,
-    set: id,
-    state: MutPtr<NSFastEnumerationState>,
-    stackbuf: MutPtr<id>,
-    len: NSUInteger,
-) -> NSUInteger {
-    let host_object = env.objc.borrow::<SetHostObject>(set);
-
-    if host_object.dict.count == 0 {
-        return 0;
-    }
-
-    let NSFastEnumerationState {
-        state: start_index, ..
-    } = env.mem.read(state);
-
-    let mut set_iter = host_object.dict.iter_keys();
-    if start_index >= 1 {
-        // FIXME: linear time complexity
-        _ = set_iter.nth((start_index - 1).try_into().unwrap());
-    }
-
-    let mut batch_count = 0;
-    while batch_count < len {
-        if let Some(object) = set_iter.next() {
-            env.mem.write(stackbuf + batch_count, object);
-            batch_count += 1;
-        } else {
-            break;
-        }
-    }
-    env.mem.write(
-        state,
-        NSFastEnumerationState {
-            state: start_index + batch_count,
-            items_ptr: stackbuf,
-            // can be anything as long as it's dereferenceable and the same
-            // each iteration
-            // Note: stackbuf can be different each time, it's better to return
-            // self pointer
-            mutations_ptr: set.cast(),
-            extra: Default::default(),
-        },
-    );
-    batch_count
-}

@@ -56,7 +56,7 @@ unsafe impl SafeRead for OpaqueThread {}
 #[allow(non_camel_case_types)]
 pub type pthread_t = MutPtr<OpaqueThread>;
 
-struct ThreadHostObject {
+pub struct ThreadHostObject {
     thread_id: ThreadId,
     joined_by: Option<ThreadId>,
     _attr: pthread_attr_t,

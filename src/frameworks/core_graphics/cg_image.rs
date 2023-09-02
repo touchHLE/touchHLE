@@ -144,6 +144,10 @@ fn CGImageGetHeight(env: &mut Environment, image: CGImageRef) -> GuestUSize {
         .dimensions();
     height
 }
+fn CGImageGetBitsPerPixel(_env: &mut Environment, image: CGImageRef) -> GuestUSize {
+    log!("TODO: CGImageGetBitsPerPixel({:?})", image);
+    24 // Since we're assuming sRGB
+}
 
 fn CGImageGetDataProvider(env: &mut Environment, image: CGImageRef) -> CGDataProviderRef {
     // CGImageGetDataProvider() seems to be intended to return the underlying
@@ -169,6 +173,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGImageGetColorSpace(_)),
     export_c_func!(CGImageGetWidth(_)),
     export_c_func!(CGImageGetHeight(_)),
+    export_c_func!(CGImageGetBitsPerPixel(_)),
     export_c_func!(CGImageGetDataProvider(_)),
     export_c_func!(CGImageGetBitsPerComponent(_)),
 ];

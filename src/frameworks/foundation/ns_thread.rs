@@ -9,16 +9,16 @@ use super::NSTimeInterval;
 use crate::dyld::HostFunction;
 use crate::frameworks::core_foundation::CFTypeRef;
 use crate::libc::pthread::thread::{
-    pthread_attr_init, pthread_attr_setdetachstate, pthread_attr_t, pthread_create, pthread_t,
-    PTHREAD_CREATE_DETACHED,
+    _get_thread_id, pthread_attr_init, pthread_attr_setdetachstate, pthread_attr_t, pthread_create,
+    pthread_t, PTHREAD_CREATE_DETACHED,
 };
 use crate::mem::{guest_size_of, MutPtr};
-use crate::msg;
 use crate::objc::{
     id, msg_send, nil, objc_classes, release, retain, Class, ClassExports, HostObject, NSZonePtr,
     SEL,
 };
 use crate::Environment;
+use crate::{msg, msg_class};
 use std::collections::HashSet;
 use std::time::Duration;
 
@@ -50,14 +50,14 @@ pub const CLASSES: ClassExports = objc_classes! {
 @implementation NSThread: NSObject
 
 + (id)allocWithZone:(NSZonePtr)_zone {
-    let host_object = Box::new(NSThreadHostObject {
-        thread: None,
-        target: nil,
-        selector: None,
-        object: nil,
-        thread_dictionary: nil,
-    });
-    env.objc.alloc_object(this, host_object, &mut env.mem)
+    msg_class![env; NSThread alloc]
+}
++ (id)alloc {
+    log_dbg!("[NSThread alloc]");
+    let host_object = NSThreadHostObject { thread: None, target: nil, selector: None, object: nil, thread_dictionary: nil };
+    let guest_object = env.objc.alloc_object(this, Box::new(host_object), &mut env.mem);
+    State::get(env).ns_threads.insert(guest_object);
+    guest_object
 }
 
 + (f64)threadPriority {
@@ -120,6 +120,16 @@ pub const CLASSES: ClassExports = objc_classes! {
     // TODO: post NSWillBecomeMultiThreadedNotification
 }
 
+- (id)initWithTarget:(id)target
+selector:(SEL)selector
+object:(id)object {
+    let host_object: &mut NSThreadHostObject = env.objc.borrow_mut(this);
+    host_object.target = target;
+    host_object.selector = Some(selector);
+    host_object.object = object;
+    this
+}
+
 // TODO: construction etc
 - (f64)threadPriority {
     log!("TODO: [(NSThread*){:?} threadPriority] (not implemented yet)", this);
@@ -129,6 +139,13 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (bool)setThreadPriority:(f64)priority {
     log!("TODO: [(NSThread*){:?} setThreadPriority:{:?}] (ignored)", this, priority);
     true
+}
+
+- (())dealloc {
+    log_dbg!("[(NSThread*){:?} dealloc]", this);
+    State::get(env).ns_threads.remove(&this);
+    let _host_object = env.objc.borrow::<NSThreadHostObject>(this);
+    env.objc.dealloc_object(this, &mut env.mem)
 }
 
 @end

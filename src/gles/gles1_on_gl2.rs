@@ -893,6 +893,9 @@ impl GLES for GLES1OnGL2 {
     unsafe fn Color4ub(&mut self, red: GLubyte, green: GLubyte, blue: GLubyte, alpha: GLubyte) {
         gl21::Color4ub(red, green, blue, alpha)
     }
+    unsafe fn Normal3f(&mut self, nx: GLfloat, ny: GLfloat, nz: GLfloat) {
+        gl21::Normal3f(nx, ny, nz)
+    }
 
     // Pointers
     unsafe fn ColorPointer(

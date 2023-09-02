@@ -180,14 +180,15 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (())layoutSubviews {
-    let label = env.objc.borrow_mut::<UIButtonHostObject>(this).title_label;
-    let background_image_view = env.objc.borrow_mut::<UIButtonHostObject>(this).background_image_view;
+    let host_object = env.objc.borrow_mut::<UIButtonHostObject>(this);
+    let title_label = host_object.title_label;
+    let background_image_view = host_object.background_image_view;
+    let image_view = host_object.image_view;
     let bounds: CGRect = msg![env; this bounds];
 
+    () = msg![env; title_label setFrame:bounds];
     () = msg![env; background_image_view setFrame:bounds];
-    () = msg![env; label setFrame:bounds];
-    // TODO: layout for image
-
+    () = msg![env; image_view setFrame:bounds];
 }
 
 - (UIButtonType)buttonType {

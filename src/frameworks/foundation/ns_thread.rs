@@ -133,6 +133,16 @@ object:(id)object {
 }
 
 // TODO: construction etc
+- (id)threadDictionary {
+    // Initialize lazily in case the thread is started with pthread_create
+    let thread_dictionary = env.objc.borrow::<NSThreadHostObject>(this).thread_dictionary;
+    if thread_dictionary.is_null() {
+        let thread_dictionary = msg_class![env; NSDictionary alloc];
+        msg![env; thread_dictionary init]
+    } else {
+        thread_dictionary
+    }
+}
 
 - (f64)threadPriority {
     log!("TODO: [(NSThread*){:?} threadPriority] (not implemented yet)", this);
@@ -147,7 +157,10 @@ object:(id)object {
 - (())dealloc {
     log_dbg!("[(NSThread*){:?} dealloc]", this);
     State::get(env).ns_threads.remove(&this);
-    let _host_object = env.objc.borrow::<NSThreadHostObject>(this);
+    let host_object = env.objc.borrow::<NSThreadHostObject>(this);
+    if !host_object.thread_dictionary.is_null() {
+        env.mem.free(host_object.thread_dictionary.cast());
+    }
     env.objc.dealloc_object(this, &mut env.mem)
 }
 

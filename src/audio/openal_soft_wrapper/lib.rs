@@ -93,6 +93,10 @@ use al_types::*;
 
 pub const AL_NO_ERROR: ALenum = 0;
 
+pub const AL_LOOPING: ALenum = 0x1007;
+pub const AL_BUFFER: ALenum = 0x1009;
+
+pub const AL_GAIN: ALenum = 0x100A;
 pub const AL_MAX_GAIN: ALenum = 0x100E;
 
 pub const AL_SOURCE_STATE: ALenum = 0x1010;

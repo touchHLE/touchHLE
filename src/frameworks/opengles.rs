@@ -12,9 +12,12 @@
 pub mod eagl;
 mod gles_guest;
 
-use crate::mem::ConstPtr;
+use std::ffi::c_void;
+
 pub use gles_guest::FUNCTIONS;
-use touchHLE_gl_bindings::gles11::types::GLenum;
+use touchHLE_gl_bindings::gles11::types::{GLenum, GLvoid};
+
+use crate::mem::{ConstPtr, MutPtr};
 
 #[derive(Default)]
 pub struct State {
@@ -23,6 +26,7 @@ pub struct State {
     /// Which thread's EAGLContext is currently active
     current_ctx_thread: Option<crate::ThreadId>,
     strings_cache: std::collections::HashMap<GLenum, ConstPtr<u8>>,
+    mapped_buffers: std::collections::HashMap<GLenum, (MutPtr<GLvoid>, *mut c_void)>,
 }
 impl State {
     fn current_ctx_for_thread(&mut self, thread: crate::ThreadId) -> &mut Option<crate::objc::id> {

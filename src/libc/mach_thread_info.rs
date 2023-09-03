@@ -156,8 +156,21 @@ fn mach_host_self(_env: &mut Environment) -> i32 {
     0
 }
 
+// TODO: types
+fn host_statistics(env: &mut Environment, host_priv: i32, flavor: i32,
+                   host_info: MutPtr<i32>, host_info_count: MutPtr<i32>) -> i32 {
+    assert_eq!(host_priv, 0);
+    assert_eq!(flavor, 2);
+    // free memory
+    // TODO: count used chunks in bytes and write here
+    env.mem.write(host_info, 380_818);
+    env.mem.write(host_info_count, 1);
+    0
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(thread_info(_, _, _, _)),
     export_c_func!(thread_policy_set(_, _, _, _)),
     export_c_func!(mach_host_self()),
+    export_c_func!(host_statistics(_, _, _, _)),
 ];

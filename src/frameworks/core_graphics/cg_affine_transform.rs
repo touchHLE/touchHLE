@@ -100,6 +100,10 @@ pub const CONSTANTS: ConstantExports = &[
         "_UIWindowLevelAlert",
         HostConstant::Custom(|mem| mem.alloc_and_write(1.0 as CGFloat).cast().cast_const()),
     ),
+    (
+        "_vm_page_size",
+        HostConstant::Custom(|mem| mem.alloc_and_write(4096).cast().cast_const()),
+    ),
 ];
 
 // The CGAffineTransform* functions are implemented as wrappers around these

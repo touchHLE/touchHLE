@@ -330,7 +330,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     let layer = env.objc.borrow::<UIViewHostObject>(this).layer;
     msg![env; layer position]
 }
-- (())setCenter:(CGRect)center {
+- (())setCenter:(CGPoint)center {
     let layer = env.objc.borrow::<UIViewHostObject>(this).layer;
     msg![env; layer setPosition:center]
 }

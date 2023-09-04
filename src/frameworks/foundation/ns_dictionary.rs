@@ -9,8 +9,8 @@ use super::ns_property_list_serialization::deserialize_plist_from_file;
 use super::{ns_string, ns_url, NSUInteger};
 use crate::fs::GuestPath;
 use crate::objc::{
-    autorelease, id, msg, msg_class, nil, objc_classes, release, retain, ClassExports, HostObject,
-    NSZonePtr,
+    autorelease, id, msg, msg_class, msg_unchecked, nil, objc_classes, release, retain,
+    ClassExports, HostObject, NSZonePtr,
 };
 use crate::Environment;
 use std::collections::HashMap;
@@ -112,7 +112,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     // This passes on the va_args by creative abuse of untyped function calls.
     // I should be ashamed, and you should be careful.
     let new_dict: id = msg![env; this alloc];
-    let new_dict: id = msg![env; new_dict initWithObjectsAndKeys:first_object];
+    let new_dict: id = msg_unchecked![env; new_dict initWithObjectsAndKeys:first_object];
     autorelease(env, new_dict)
 }
 

@@ -18,10 +18,10 @@ use crate::frameworks::uikit::ui_font::{
 };
 use crate::fs::GuestPath;
 use crate::mach_o::MachO;
-use crate::mem::{guest_size_of, ConstPtr, Mem, MutPtr, Ptr, SafeRead};
+use crate::mem::{guest_size_of, ConstPtr, Mem, MutPtr, MutVoidPtr, Ptr, SafeRead};
 use crate::objc::{
-    autorelease, id, msg, msg_class, nil, objc_classes, retain, Class, ClassExports, HostObject,
-    NSZonePtr, ObjC,
+    autorelease, id, msg, msg_class, msg_class_unchecked, nil, objc_classes, retain, Class,
+    ClassExports, HostObject, NSZonePtr, ObjC,
 };
 use crate::Environment;
 use std::borrow::Cow;
@@ -505,12 +505,12 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (ConstPtr<u8>)UTF8String {
     // TODO: avoid copying
     let string = to_rust_string(env, this);
-    let c_string = env.mem.alloc_and_write_cstr(string.as_bytes()).cast_const();
+    let c_string = env.mem.alloc_and_write_cstr(string.as_bytes());
     let length: NSUInteger = (string.len() + 1).try_into().unwrap();
     // NSData will handle releasing the string (it is autoreleased)
-    let _: id = msg_class![env; NSData dataWithBytesNoCopy:c_string
+    let _: id = msg_class![env; NSData dataWithBytesNoCopy:(c_string.cast_void())
                                                     length:length];
-    c_string
+    c_string.cast_const()
 }
 
 - (id)stringByTrimmingCharactersInSet:(id)set { // NSCharacterSet*
@@ -933,7 +933,12 @@ pub fn get_static_str(env: &mut Environment, from: &'static str) -> id {
     if let Some(&existing) = State::get(env).static_str_pool.get(from) {
         existing
     } else {
-        let new = msg_class![env; _touchHLE_NSString_Static alloc];
+        // Since this gets called during late linking (before the cpu is properly set
+        // up), we can't have it use the stack for debug info. [NSObject alloc:] calls
+        // [this allocWithZone:] internally, so it would also have to be unchecked. Calling
+        // allocWithZone: directly avoids this.
+        let new =
+            msg_class_unchecked![env; _touchHLE_NSString_Static allocWithZone:(MutVoidPtr::null())];
         *env.objc.borrow_mut(new) = StringHostObject::Utf8(Cow::Borrowed(from));
         State::get(env).static_str_pool.insert(from, new);
         new

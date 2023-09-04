@@ -55,7 +55,7 @@ pub struct State {
 pub type NSInteger = i32;
 pub type NSUInteger = u32;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 #[repr(C, packed)]
 pub struct NSRange {
     pub location: NSUInteger,

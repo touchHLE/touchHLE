@@ -11,6 +11,10 @@
 //! - Mike Ash's [objc_msgSend's New Prototype](https://www.mikeash.com/pyblog/objc_msgsends-new-prototype.html)
 //! - Peter Steinberger's [Calling Super at Runtime in Swift](https://steipete.com/posts/calling-super-at-runtime/) explains `objc_msgSendSuper2`
 
+use std::any::{Any, TypeId};
+use std::collections::hash_map::DefaultHasher;
+use std::hash::{Hash, Hasher};
+
 use super::{id, nil, Class, ObjC, IMP, SEL};
 use crate::abi::{CallFromHost, GuestRet};
 use crate::mem::{ConstPtr, MutVoidPtr, SafeRead};
@@ -23,13 +27,22 @@ use crate::Environment;
 /// variant may have additional arguments to be forwarded (or rather, left
 /// untouched) by `objc_msgSend` when it tail-calls the method implementation it
 /// looks up. This is invisible to the Rust type system; we're relying on
-/// [crate::abi::CallFromGuest] here.
+/// [crate::abi::CallFromGuest] here. To provide (limited) typechecking support,
+/// messages that are called by host functions and received by host classes can have
+/// their parameters checked at runtime, which is done transparently through the [msg]
+/// macro (and friends).
 ///
 /// Similarly, the return value of `objc_msgSend` is whatever value is returned
 /// by the method implementation. We are relying on CallFromGuest not
 /// overwriting it.
 #[allow(non_snake_case)]
-fn objc_msgSend_inner(env: &mut Environment, receiver: id, selector: SEL, super2: Option<Class>) {
+fn objc_msgSend_inner(
+    env: &mut Environment,
+    receiver: id,
+    selector: SEL,
+    super2: Option<Class>,
+    type_id: Option<u64>,
+) {
     if receiver == nil {
         // https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/ObjectiveC/Chapters/ocObjectsClasses.html#//apple_ref/doc/uid/TP30001163-CH11-SW7
         log_dbg!("[nil {}]", selector.as_str(&env.mem));
@@ -87,9 +100,14 @@ fn objc_msgSend_inner(env: &mut Environment, receiver: id, selector: SEL, super2
 
             if let Some(imp) = methods.get(&selector) {
                 match imp {
-                    IMP::Host(host_imp) => host_imp.call_from_guest(env),
+                    IMP::Host(host_imp) => {
+                        debug_assert!(type_id.map_or(true, |tid| tid == host_imp.args_type_id()));
+                        host_imp.call_from_guest(env)
+                    }
                     // We can't create a new stack frame, because that would
                     // interfere with pass-through of stack arguments.
+                    // TODO: method_t stores types for guest IMPs, so it should (theoretically) be
+                    // possible to typecheck host -> guest calls.
                     IMP::Guest(guest_imp) => guest_imp.call_without_pushing_stack_frame(env),
                 }
                 return;
@@ -134,7 +152,42 @@ fn objc_msgSend_inner(env: &mut Environment, receiver: id, selector: SEL, super2
 /// Standard variant of `objc_msgSend`. See [objc_msgSend_inner].
 #[allow(non_snake_case)]
 pub(super) fn objc_msgSend(env: &mut Environment, receiver: id, selector: SEL) {
-    objc_msgSend_inner(env, receiver, selector, /* super2: */ None)
+    objc_msgSend_inner(env, receiver, selector, /* super2: */ None, None)
+}
+
+#[repr(C, packed)]
+/// A pointer to this struct replaces the normal receiver parameter for
+/// `objc_msgSend(stret)_debug` and [msg_send] when debug assertions are on.
+pub struct objc_debug {
+    pub receiver: id,
+    /// Type info for arguments (not including the reciever and selector).
+    pub type_id: u64,
+}
+
+unsafe impl SafeRead for objc_debug {}
+
+/// Non-standard variant of `objc_msgSend` for host code that checks passed types
+/// at runtime. See [objc_msgSend_inner].
+///
+/// The ABI here is similar to [objc_msgSendSuper2], with a struct passed in to
+/// avoid disturbing the arguments to the message.
+#[allow(non_snake_case)]
+pub(super) fn objc_msgSend_debug(
+    env: &mut Environment,
+    debug_ptr: ConstPtr<objc_debug>,
+    selector: SEL,
+) {
+    let objc_debug { receiver, type_id } = env.mem.read(debug_ptr);
+
+    crate::abi::write_next_arg(&mut 0, env.cpu.regs_mut(), &mut env.mem, receiver);
+
+    objc_msgSend_inner(
+        env,
+        receiver,
+        selector,
+        /* super2: */ None,
+        Some(type_id),
+    )
 }
 
 /// Variant of `objc_msgSend` for methods that return a struct via a pointer.
@@ -152,7 +205,29 @@ pub(super) fn objc_msgSend_stret(
     receiver: id,
     selector: SEL,
 ) {
-    objc_msgSend_inner(env, receiver, selector, /* super2: */ None)
+    objc_msgSend_inner(env, receiver, selector, /* super2: */ None, None)
+}
+
+/// Variant of [objc_msgSend_stret] for host calls that checks passed types (at runtime).
+/// See [objc_msgSend_debug] and [objc_msgSend_inner].
+#[allow(non_snake_case)]
+pub(super) fn objc_msgSend_stret_debug(
+    env: &mut Environment,
+    _stret: MutVoidPtr,
+    debug_ptr: ConstPtr<objc_debug>,
+    selector: SEL,
+) {
+    let objc_debug { receiver, type_id } = env.mem.read(debug_ptr);
+
+    crate::abi::write_next_arg(&mut 1, env.cpu.regs_mut(), &mut env.mem, receiver);
+
+    objc_msgSend_inner(
+        env,
+        receiver,
+        selector,
+        /* super2: */ None,
+        Some(type_id),
+    )
 }
 
 #[repr(C, packed)]
@@ -186,7 +261,50 @@ pub(super) fn objc_msgSendSuper2(
     // Rewrite first argument to match the normal ABI.
     crate::abi::write_next_arg(&mut 0, env.cpu.regs_mut(), &mut env.mem, receiver);
 
-    objc_msgSend_inner(env, receiver, selector, /* super2: */ Some(class))
+    objc_msgSend_inner(
+        env,
+        receiver,
+        selector,
+        /* super2: */ Some(class),
+        None,
+    )
+}
+
+#[repr(C, packed)]
+/// Variant of [objc_super] that enables typechecking from host calls.
+/// A pointer to this struct replaces the normal receiver parameter for
+/// `objc_msgSendSuper2_debug` and [msg_send_super2_debug].
+pub struct objc_super_debug {
+    pub receiver: id,
+    pub class: Class,
+    pub typecheck_id: u64,
+}
+unsafe impl SafeRead for objc_super_debug {}
+
+/// Variant of [objc_msgSendSuper2] for host calls that checks passed types (at runtime).
+/// See [objc_msgSend_debug] and [objc_msgSend_inner].
+#[allow(non_snake_case)]
+pub(super) fn objc_msgSendSuper2_debug(
+    env: &mut Environment,
+    super_ptr: ConstPtr<objc_super_debug>,
+    selector: SEL,
+) {
+    let objc_super_debug {
+        receiver,
+        class,
+        typecheck_id,
+    } = env.mem.read(super_ptr);
+
+    // Rewrite first argument to match the normal ABI.
+    crate::abi::write_next_arg(&mut 0, env.cpu.regs_mut(), &mut env.mem, receiver);
+
+    objc_msgSend_inner(
+        env,
+        receiver,
+        selector,
+        /* super2: */ Some(class),
+        Some(typecheck_id),
+    )
 }
 
 /// Wrapper around [objc_msgSend] which, together with [msg], makes it easy to
@@ -194,9 +312,6 @@ pub(super) fn objc_msgSendSuper2(
 /// call-site, be very sure you get them correct!
 ///
 /// TODO: Ideally we can constrain the first two args to be `id` and `SEL`?
-///
-/// TODO: Could we pass along dynamic type information to `objc_msgSend` so it
-/// can do runtime type-checking? Perhaps only in debug builds.
 pub fn msg_send<R, P>(env: &mut Environment, args: P) -> R
 where
     fn(&mut Environment, id, SEL): CallFromHost<R, P>,
@@ -207,6 +322,23 @@ where
         (objc_msgSend_stret as fn(&mut Environment, MutVoidPtr, id, SEL)).call_from_host(env, args)
     } else {
         (objc_msgSend as fn(&mut Environment, id, SEL)).call_from_host(env, args)
+    }
+}
+
+/// Debug variant of [msg_send] that passes type info to be checked. You probably want to
+/// use [msg] rather than calling this directly.
+pub fn msg_send_debug<R, P>(env: &mut Environment, args: P) -> R
+where
+    fn(&mut Environment, ConstPtr<objc_debug>, SEL): CallFromHost<R, P>,
+    fn(&mut Environment, MutVoidPtr, ConstPtr<objc_debug>, SEL): CallFromHost<R, P>,
+    R: GuestRet,
+{
+    if R::SIZE_IN_MEM.is_some() {
+        (objc_msgSend_stret_debug as fn(&mut Environment, MutVoidPtr, ConstPtr<objc_debug>, SEL))
+            .call_from_host(env, args)
+    } else {
+        (objc_msgSend_debug as fn(&mut Environment, ConstPtr<objc_debug>, SEL))
+            .call_from_host(env, args)
     }
 }
 
@@ -226,9 +358,27 @@ where
     }
 }
 
+/// Debug variant of [msg_send] that passes type info to be checked. You probably
+/// want to use [msg_super] rather than calling this directly.
+pub fn msg_send_super2_debug<R, P>(env: &mut Environment, args: P) -> R
+where
+    fn(&mut Environment, ConstPtr<objc_super_debug>, SEL): CallFromHost<R, P>,
+    fn(&mut Environment, MutVoidPtr, ConstPtr<objc_super_debug>, SEL): CallFromHost<R, P>,
+    R: GuestRet,
+{
+    if R::SIZE_IN_MEM.is_some() {
+        todo!() // no stret yet
+    } else {
+        (objc_msgSendSuper2_debug as fn(&mut Environment, ConstPtr<objc_super_debug>, SEL))
+            .call_from_host(env, args)
+    }
+}
+
 /// Macro for sending a message which imitates the Objective-C messaging syntax.
-/// See [msg_send] for the underlying implementation. Warning: all types are
-/// inferred from the call-site, be very sure you get them correct!
+/// See [msg_send] for the underlying implementation. Warning: Types are only
+/// checked at runtime, when the message is actually called, and only in builds with
+/// debug assertions enabled.
+///
 ///
 /// ```ignore
 /// msg![env; foo setBar:bar withQux:qux];
@@ -250,6 +400,46 @@ where
 #[macro_export]
 macro_rules! msg {
     [$env:expr; $receiver:tt $name:ident $(: $arg1:tt)?
+                             $($namen:ident: $argn:tt)* $(,$va_argn:ident)*] => {
+        {
+            let sel = $crate::objc::selector!($($arg1;)? $name $(, $namen)*);
+            let sel = $env.objc.lookup_selector(sel)
+                .expect("Unknown selector");
+            if cfg!(debug_assertions)
+            {
+                let type_id = $crate::objc::generate_type_id(($($arg1.clone(),)? $($argn.clone(),)*));
+
+                let sp = &mut $env.cpu.regs_mut()[$crate::cpu::Cpu::SP];
+                let old_sp = *sp;
+                *sp -= $crate::mem::guest_size_of::<$crate::objc::objc_debug>();
+                let debug_ptr = $crate::mem::Ptr::from_bits(*sp);
+                $env.mem.write(debug_ptr, $crate::objc::objc_debug {
+                    receiver: $receiver,
+                    type_id,
+                });
+
+                let args = (debug_ptr, sel, $($arg1,)? $($argn),*);
+                let res = $crate::objc::msg_send_debug($env, args);
+
+                $env.cpu.regs_mut()[$crate::cpu::Cpu::SP] = old_sp;
+
+                res
+            } else {
+                let args = ($receiver, sel, $($arg1,)? $($argn),*);
+                $crate::objc::msg_send($env, args)
+            }
+        }
+    }
+}
+pub use crate::msg; // #[macro_export] is weird...
+
+/// Variant of [msg] that does not perform typechecking.
+///
+/// You might need this if you're intentionally mistyping arguments, or if you
+/// can't allocate on the stack.
+#[macro_export]
+macro_rules! msg_unchecked {
+    [$env:expr; $receiver:tt $name:ident $(: $arg1:tt)?
                              $($namen:ident: $argn:tt)*] => {
         {
             let sel = $crate::objc::selector!($($arg1;)? $name $(, $namen)*);
@@ -260,7 +450,7 @@ macro_rules! msg {
         }
     }
 }
-pub use crate::msg; // #[macro_export] is weird...
+pub use crate::msg_unchecked;
 
 /// Variant of [msg] for super-calls.
 ///
@@ -298,7 +488,62 @@ macro_rules! msg_super {
             let sel = $crate::objc::selector!($($arg1;)? $name $(, $namen)*);
             let sel = $env.objc.lookup_selector(sel)
                 .expect("Unknown selector");
+            if cfg!(debug_assertions)
+            {
+                let sp = &mut $env.cpu.regs_mut()[$crate::cpu::Cpu::SP];
+                let old_sp = *sp;
+                *sp -= $crate::mem::guest_size_of::<$crate::objc::objc_super_debug>();
+                let super_ptr = $crate::mem::Ptr::from_bits(*sp);
+                let typecheck_id = $crate::objc::generate_type_id(($($arg1,)? $($argn,)*));
+                $env.mem.write(super_ptr, $crate::objc::objc_super_debug {
+                    receiver: $receiver,
+                    class,
+                    typecheck_id,
+                });
 
+                let args = (super_ptr, sel, $($arg1,)? $($argn),*);
+                let res = $crate::objc::msg_send_super2_debug($env, args);
+
+                $env.cpu.regs_mut()[$crate::cpu::Cpu::SP] = old_sp;
+
+                res
+            } else {
+                let sp = &mut $env.cpu.regs_mut()[$crate::cpu::Cpu::SP];
+                let old_sp = *sp;
+                *sp -= $crate::mem::guest_size_of::<$crate::objc::objc_super>();
+                let super_ptr = $crate::mem::Ptr::from_bits(*sp);
+                $env.mem.write(super_ptr, $crate::objc::objc_super {
+                    receiver: $receiver,
+                    class,
+                });
+
+                let args = (super_ptr, sel, $($arg1,)? $($argn),*);
+                let res = $crate::objc::msg_send_super2($env, args);
+
+                $env.cpu.regs_mut()[$crate::cpu::Cpu::SP] = old_sp;
+
+                res
+            }
+        }
+    }
+}
+pub use crate::msg_super; // #[macro_export] is weird...
+
+/// Variant of [msg_super] that skips debug type checking.
+///
+/// See [msg_unchecked] for why you might need this.
+#[macro_export]
+macro_rules! msg_super_unchecked {
+    [$env:expr; $receiver:tt $name:ident $(: $arg1:tt)?
+                             $($namen:ident: $argn:tt)*] => {
+        {
+            let class = $env.objc.get_known_class(
+                _OBJC_CURRENT_CLASS,
+                &mut $env.mem
+            );
+            let sel = $crate::objc::selector!($($arg1;)? $name $(, $namen)*);
+            let sel = $env.objc.lookup_selector(sel)
+                .expect("Unknown selector");
             let sp = &mut $env.cpu.regs_mut()[$crate::cpu::Cpu::SP];
             let old_sp = *sp;
             *sp -= $crate::mem::guest_size_of::<$crate::objc::objc_super>();
@@ -317,7 +562,7 @@ macro_rules! msg_super {
         }
     }
 }
-pub use crate::msg_super; // #[macro_export] is weird...
+pub use crate::msg_super_unchecked; // #[macro_export] is weird...
 
 /// Variant of [msg] for sending a message to a named class. Useful for calling
 /// class methods, especially `new`.
@@ -347,6 +592,25 @@ macro_rules! msg_class {
 }
 pub use crate::msg_class; // #[macro_export] is weird...
 
+/// Variant of [msg_class] that skips debug type checking.
+///
+/// See [msg_unchecked] for why you might need this.
+#[macro_export]
+macro_rules! msg_class_unchecked {
+    [$env:expr; $receiver_class:ident $name:ident $(: $arg1:tt)?
+                                      $($namen:ident: $argn:tt)*] => {
+        {
+            let class = $env.objc.get_known_class(
+                stringify!($receiver_class),
+                &mut $env.mem
+            );
+            $crate::objc::msg_unchecked![$env; class $name $(: $arg1)?
+                                           $($namen: $argn)*]
+        }
+    }
+}
+pub use crate::msg_class_unchecked; // #[macro_export] is weird...
+
 /// Shorthand for `let _: id = msg![env; object retain];`
 pub fn retain(env: &mut Environment, object: id) -> id {
     if object == nil {
@@ -372,4 +636,17 @@ pub fn autorelease(env: &mut Environment, object: id) -> id {
         return nil;
     }
     msg![env; object autorelease]
+}
+
+/// Utility function to generate type ids used in debug type checking.
+pub fn generate_type_id<T>(_arg: T) -> u64
+where
+    T: Any,
+{
+    // Since we can't pass the TypeId across ABI boundaries, we need to hash it.
+    // Instead, we can hash the TypeId and pass that across.
+    let tid = TypeId::of::<T>();
+    let mut hasher = DefaultHasher::new();
+    tid.hash(&mut hasher);
+    hasher.finish()
 }

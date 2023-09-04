@@ -91,6 +91,10 @@ impl<T, const MUT: bool> Ptr<T, MUT> {
     pub fn is_null(self) -> bool {
         self.to_bits() == 0
     }
+
+    pub fn cast_void(self) -> Ptr<std::ffi::c_void, MUT> {
+        self.cast::<std::ffi::c_void>()
+    }
 }
 
 impl<T> ConstPtr<T> {

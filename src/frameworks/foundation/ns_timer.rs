@@ -79,7 +79,7 @@ pub const CLASSES: ClassExports = objc_classes! {
                             selector:(SEL)selector
                             userInfo:(id)user_info
                              repeats:(bool)repeats {
-    let timer = msg![env; this timerWithTimeInterval:interval
+    let timer: id = msg![env; this timerWithTimeInterval:interval
                                               target:target
                                             selector:selector
                                             userInfo:user_info

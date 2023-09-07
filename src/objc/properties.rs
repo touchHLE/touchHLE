@@ -19,7 +19,7 @@ use crate::mem::{
     SafeRead,
 };
 use crate::objc::classes::ClassHostObject;
-use crate::objc::{id, msg, nil, release, retain, ObjC, SEL};
+use crate::objc::{id, msg, nil, release, retain, Class, ObjC, SEL};
 use crate::Environment;
 
 /// The layout of a property list in an app binary.
@@ -99,6 +99,26 @@ impl ObjC {
                 class = superclass;
             }
         }
+    }
+
+    pub fn debug_all_class_ivars_as_strings(&self, class: Class) -> Vec<String> {
+        let mut class = class;
+        let mut selector_strings = Vec::new();
+        loop {
+            let &ClassHostObject {
+                superclass,
+                ref ivars,
+                ..
+            } = self.borrow(class);
+            let mut class_ivars_strings = ivars.keys().cloned().collect();
+            selector_strings.append(&mut class_ivars_strings);
+            if superclass == nil {
+                break;
+            } else {
+                class = superclass;
+            }
+        }
+        selector_strings
     }
 }
 

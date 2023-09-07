@@ -219,4 +219,27 @@ impl ObjC {
             }
         }
     }
+
+    pub fn debug_all_class_selectors_as_strings(&self, mem: &Mem, class: Class) -> Vec<String> {
+        let mut class = class;
+        let mut selector_strings = Vec::new();
+        loop {
+            let &ClassHostObject {
+                superclass,
+                ref methods,
+                ..
+            } = self.borrow(class);
+            let mut class_selector_strings = methods
+                .keys()
+                .map(|sel| sel.as_str(mem).to_string())
+                .collect();
+            selector_strings.append(&mut class_selector_strings);
+            if superclass == nil {
+                break;
+            } else {
+                class = superclass;
+            }
+        }
+        selector_strings
+    }
 }

@@ -14,7 +14,7 @@
 //!
 //! See also: [crate::frameworks::foundation::ns_object].
 
-use super::{id, msg, nil, release, retain, ClassHostObject, ObjC, SEL};
+use super::{id, msg, nil, release, retain, Class, ClassHostObject, ObjC, SEL};
 use crate::mem::{
     guest_size_of, ConstPtr, ConstVoidPtr, GuestISize, GuestUSize, Mem, MutPtr, MutVoidPtr, Ptr,
     SafeRead,
@@ -75,7 +75,6 @@ impl ObjC {
     /// Checks if the object's class has an ivar in its class chain with the
     /// provided name and returns the pointer to the object's ivar, if any,
     /// or None if the object's class doesn't have an ivar with that name.
-    #[allow(unused)]
     pub fn object_lookup_ivar(
         &self,
         mem: &Mem,
@@ -99,6 +98,26 @@ impl ObjC {
                 class = superclass;
             }
         }
+    }
+
+    pub fn debug_all_class_ivars_as_strings(&self, class: Class) -> Vec<String> {
+        let mut class = class;
+        let mut selector_strings = Vec::new();
+        loop {
+            let &ClassHostObject {
+                superclass,
+                ref ivars,
+                ..
+            } = self.borrow(class);
+            let mut class_ivars_strings = ivars.keys().cloned().collect();
+            selector_strings.append(&mut class_ivars_strings);
+            if superclass == nil {
+                break;
+            } else {
+                class = superclass;
+            }
+        }
+        selector_strings
     }
 }
 

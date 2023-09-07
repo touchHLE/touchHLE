@@ -78,6 +78,7 @@ fn objc_msgSend_inner(env: &mut Environment, receiver: id, selector: SEL, super2
         if let Some(&super::ClassHostObject {
             superclass,
             ref methods,
+            ref ivars,
             ..
         }) = host_object.as_any().downcast_ref()
         {
@@ -118,6 +119,14 @@ Type mismatch when sending message {} to {:?}!
                     // interfere with pass-through of stack arguments.
                     IMP::Guest(guest_imp) => guest_imp.call_without_pushing_stack_frame(env),
                 }
+                return;
+            } else if let Some(ivar_offset_ptr) = ivars.get(&selector) {
+                let ivar_offset = env.mem.read(*ivar_offset_ptr);
+                // TODO: Use host_object's _instance_start property?
+                let ivar_ptr = MutVoidPtr::from_bits(receiver.to_bits() + ivar_offset);
+                let value = env.cpu.regs()[0];
+                env.mem.write(ivar_ptr.cast(), value);
+                env.cpu.regs_mut()[0..2].fill(0); // TODO: Verify if this is necessary
                 return;
             } else {
                 class = superclass;

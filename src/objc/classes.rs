@@ -13,6 +13,7 @@
 mod class_lists;
 pub(super) use class_lists::CLASS_LISTS;
 
+use super::methods::ivar_list_t;
 use super::{
     id, method_list_t, nil, objc_object, AnyHostObject, HostIMP, HostObject, ObjC, IMP, SEL,
 };
@@ -38,6 +39,7 @@ pub(super) struct ClassHostObject {
     pub(super) is_metaclass: bool,
     pub(super) superclass: Class,
     pub(super) methods: HashMap<SEL, IMP>,
+    pub(super) ivars: HashMap<SEL, ConstPtr<GuestUSize>>,
     /// Offset into the allocated memory for the object where the ivars of
     /// instances of this class or metaclass (respectively: normal objects or
     /// classes) should live. This is always >= the value in the superclass.
@@ -94,7 +96,7 @@ struct class_rw_t {
     name: ConstPtr<u8>,
     base_methods: ConstPtr<method_list_t>,
     _base_protocols: ConstVoidPtr, // protocol list (TODO)
-    _ivars: ConstVoidPtr,          // ivar list (TODO)
+    ivars: ConstPtr<ivar_list_t>,
     _weak_ivar_layout: u32,
     _base_properties: ConstVoidPtr, // property list (TODO)
 }
@@ -360,6 +362,7 @@ impl ClassHostObject {
             // maybe this should be 0 for NSObject? does it matter?
             _instance_start: size,
             instance_size: size,
+            ivars: HashMap::default(),
         }
     }
 
@@ -372,6 +375,7 @@ impl ClassHostObject {
             instance_size,
             name,
             base_methods,
+            ivars,
             ..
         } = mem.read(data);
 
@@ -384,10 +388,15 @@ impl ClassHostObject {
             methods: HashMap::new(),
             _instance_start: instance_start,
             instance_size,
+            ivars: HashMap::new(),
         };
 
         if !base_methods.is_null() {
             host_object.add_methods_from_bin(base_methods, mem, objc);
+        }
+
+        if !ivars.is_null() {
+            host_object.add_ivars_from_bin(ivars, mem, objc);
         }
 
         host_object
@@ -657,6 +666,7 @@ impl ObjC {
                         methods: Default::default(),
                         _instance_start: Default::default(),
                         instance_size: Default::default(),
+                        ivars: Default::default(),
                     },
                 );
                 log_dbg!(

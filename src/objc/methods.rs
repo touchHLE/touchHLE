@@ -12,7 +12,7 @@ use super::{
     id, nil, objc_super, Class, ClassHostObject, MsgSendSignature, MsgSendSuperSignature, ObjC, SEL,
 };
 use crate::abi::{CallFromGuest, DotDotDot, GuestArg, GuestFunction, GuestRet};
-use crate::mem::{guest_size_of, ConstPtr, GuestUSize, Mem, Ptr, SafeRead};
+use crate::mem::{guest_size_of, ConstPtr, GuestUSize, Mem, MutPtr, MutVoidPtr, Ptr, SafeRead};
 use crate::Environment;
 use std::any::TypeId;
 
@@ -108,6 +108,30 @@ struct method_t {
 }
 unsafe impl SafeRead for method_t {}
 
+/// The layout of a property list in an app binary.
+///
+/// The name, field names and field layout are based on what Ghidra outputs.
+#[repr(C, packed)]
+pub(super) struct ivar_list_t {
+    entsize: GuestUSize,
+    count: GuestUSize,
+    // entries follow the struct
+}
+unsafe impl SafeRead for ivar_list_t {}
+
+/// The layout of a property in an app binary.
+///
+/// The name, field names and field layout are based on what Ghidra outputs.
+#[repr(C, packed)]
+struct ivar_t {
+    offset: ConstPtr<GuestUSize>,
+    name: ConstPtr<u8>,
+    type_: ConstPtr<u8>,
+    alignment: u32,
+    size: u32,
+}
+unsafe impl SafeRead for ivar_t {}
+
 impl ClassHostObject {
     // See classes.rs for host method parsing
 
@@ -137,6 +161,46 @@ impl ClassHostObject {
             // We must deduplicate it like any other.
             let sel = objc.register_bin_selector(name, mem);
             self.methods.insert(sel, IMP::Guest(imp));
+        }
+    }
+
+    pub(super) fn add_ivars_from_bin(
+        &mut self,
+        ivar_list_ptr: ConstPtr<ivar_list_t>,
+        mem: &Mem,
+        objc: &mut ObjC,
+    ) {
+        // Ensure the superclass hasn't "grown into" the subclass.
+        // TODO: Shift offsets if the superclass has "grown into" the subclass
+        // pointers (https://alwaysprocessing.blog/2023/03/12/objc-ivar-abi)
+        if self.superclass != nil {
+            let &ClassHostObject {
+                instance_start: superclass_instance_start,
+                ..
+            } = objc.borrow(self.superclass);
+            assert!(self.instance_start >= superclass_instance_start);
+        }
+
+        let ivar_list_t { entsize, count } = mem.read(ivar_list_ptr);
+        assert!(entsize >= guest_size_of::<ivar_t>());
+
+        let ivars_base_ptr: ConstPtr<ivar_t> = (ivar_list_ptr + 1).cast();
+
+        for i in 0..count {
+            let ivar_ptr: ConstPtr<ivar_t> = Ptr::from_bits(ivars_base_ptr.to_bits() + i * entsize);
+
+            // TODO: support type strings
+            let ivar_t {
+                offset,
+                name,
+                type_: _,
+                // TODO: Use these values when shifting offsets
+                alignment: _,
+                size: _,
+            } = mem.read(ivar_ptr);
+
+            let name_string = mem.cstr_at_utf8(name).unwrap().into();
+            self.ivars.insert(name_string, offset);
         }
     }
 }
@@ -214,6 +278,33 @@ impl ObjC {
                 return true;
             } else if superclass == nil {
                 panic!();
+            } else {
+                class = superclass;
+            }
+        }
+    }
+
+    /// Checks if the provided class has an ivar in it's class chain.
+    pub fn object_lookup_ivar(
+        &self,
+        mem: &Mem,
+        obj: id,
+        name: &String,
+    ) -> Option<MutPtr<GuestUSize>> {
+        let mut class = ObjC::read_isa(obj, mem);
+        loop {
+            let &ClassHostObject {
+                superclass,
+                ref ivars,
+                ..
+            } = self.borrow(class);
+            if let Some(ivar_offset_ptr) = ivars.get(name) {
+                let ivar_offset = mem.read(*ivar_offset_ptr);
+                // TODO: Use host_object's _instance_start property?
+                let ivar_ptr = MutVoidPtr::from_bits(obj.to_bits() + ivar_offset);
+                return Some(ivar_ptr.cast());
+            } else if superclass == nil {
+                return None;
             } else {
                 class = superclass;
             }

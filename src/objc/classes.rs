@@ -14,7 +14,8 @@ mod class_lists;
 pub(super) use class_lists::CLASS_LISTS;
 
 use super::{
-    id, method_list_t, nil, objc_object, AnyHostObject, HostIMP, HostObject, ObjC, IMP, SEL,
+    id, method_list_t, methods::ivar_list_t, nil, objc_object, AnyHostObject, HostIMP, HostObject,
+    ObjC, IMP, SEL,
 };
 use crate::mach_o::MachO;
 use crate::mem::{guest_size_of, ConstPtr, ConstVoidPtr, GuestUSize, Mem, Ptr, SafeRead};
@@ -38,10 +39,11 @@ pub(super) struct ClassHostObject {
     pub(super) is_metaclass: bool,
     pub(super) superclass: Class,
     pub(super) methods: HashMap<SEL, IMP>,
+    pub(super) ivars: HashMap<String, ConstPtr<GuestUSize>>,
     /// Offset into the allocated memory for the object where the ivars of
     /// instances of this class or metaclass (respectively: normal objects or
     /// classes) should live. This is always >= the value in the superclass.
-    pub(super) _instance_start: GuestUSize,
+    pub(super) instance_start: GuestUSize,
     /// Size of the allocated memory for instances of this class or metaclass.
     /// This is always >= the value in the superclass.
     pub(super) instance_size: GuestUSize,
@@ -96,7 +98,7 @@ struct class_rw_t {
     name: ConstPtr<u8>,
     base_methods: ConstPtr<method_list_t>,
     _base_protocols: ConstVoidPtr, // protocol list (TODO)
-    _ivars: ConstVoidPtr,          // ivar list (TODO)
+    ivars: ConstPtr<ivar_list_t>,
     _weak_ivar_layout: u32,
     _base_properties: ConstVoidPtr, // property list (TODO)
 }
@@ -360,8 +362,9 @@ impl ClassHostObject {
                 }),
             ),
             // maybe this should be 0 for NSObject? does it matter?
-            _instance_start: size,
+            instance_start: size,
             instance_size: size,
+            ivars: HashMap::default(),
         }
     }
 
@@ -374,6 +377,7 @@ impl ClassHostObject {
             instance_size,
             name,
             base_methods,
+            ivars,
             ..
         } = mem.read(data);
 
@@ -384,12 +388,17 @@ impl ClassHostObject {
             is_metaclass,
             superclass,
             methods: HashMap::new(),
-            _instance_start: instance_start,
+            instance_start,
             instance_size,
+            ivars: HashMap::new(),
         };
 
         if !base_methods.is_null() {
             host_object.add_methods_from_bin(base_methods, mem, objc);
+        }
+
+        if !ivars.is_null() {
+            host_object.add_ivars_from_bin(ivars, mem);
         }
 
         host_object
@@ -616,6 +625,44 @@ impl ObjC {
 
             self.classes.insert(name.to_string(), class);
         }
+
+        // Second pass to ensure no superclass has "grown into" any of its
+        // subclasses.
+        // TODO: Shift offsets in the subclasses where it happens
+        // (https://alwaysprocessing.blog/2023/03/12/objc-ivar-abi)
+        for (_name, class) in self.classes.iter() {
+            let class_host_object = self
+                .get_host_object(*class)
+                .unwrap()
+                .as_any()
+                .downcast_ref();
+            if let Some(ClassHostObject {
+                superclass,
+                instance_start,
+                ivars,
+                ..
+            }) = class_host_object
+            {
+                if ivars.is_empty() {
+                    continue;
+                }
+
+                if *superclass != nil {
+                    let superclass_host_object = self
+                        .get_host_object(*superclass)
+                        .unwrap()
+                        .as_any()
+                        .downcast_ref();
+                    if let Some(ClassHostObject {
+                        instance_start: superclass_instance_start,
+                        ..
+                    }) = superclass_host_object
+                    {
+                        assert!(instance_start >= superclass_instance_start);
+                    }
+                }
+            };
+        }
     }
 
     /// For use by [crate::dyld]: register all the categories from the
@@ -657,8 +704,9 @@ impl ObjC {
                         is_metaclass: Default::default(),
                         superclass: nil,
                         methods: Default::default(),
-                        _instance_start: Default::default(),
+                        instance_start: Default::default(),
                         instance_size: Default::default(),
+                        ivars: Default::default(),
                     },
                 );
                 log_dbg!(

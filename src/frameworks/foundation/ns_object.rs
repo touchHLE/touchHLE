@@ -18,7 +18,7 @@ use super::ns_string::to_rust_string;
 use super::NSUInteger;
 use crate::mem::MutVoidPtr;
 use crate::objc::{
-    id, msg, msg_class, msg_send, objc_classes, Class, ClassExports, NSZonePtr, ObjC,
+    id, msg, msg_class, msg_send, nil, objc_classes, retain, Class, ClassExports, NSZonePtr, ObjC,
     TrivialHostObject, SEL,
 };
 
@@ -58,6 +58,10 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 + (bool)instancesRespondToSelector:(SEL)selector {
     env.objc.class_has_method(this, selector)
+}
+
++ (bool)accessInstanceVariablesDirectly {
+    true
 }
 
 - (id)init {
@@ -122,34 +126,81 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 // NSKeyValueCoding
+// https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/KeyValueCoding/SearchImplementation.html
 - (())setValue:(id)value
        forKey:(id)key { // NSString*
-    let key = to_rust_string(env, key); // TODO: avoid copy?
-    assert!(key.is_ascii()); // TODO: do we have to handle non-ASCII keys?
+    let key_string = to_rust_string(env, key); // TODO: avoid copy?
+    assert!(key_string.is_ascii()); // TODO: do we have to handle non-ASCII keys?
+    let camel_case_key_string = format!("{}{}", key_string.as_bytes()[0].to_ascii_uppercase() as char, &key_string[1..]);
 
     let class = msg![env; this class];
 
-    if let Some(sel) = env.objc.lookup_selector(&format!(
-        "set{}{}:",
-        key.as_bytes()[0].to_ascii_uppercase() as char,
-        &key[1..],
-    )) {
+    // TODO: If value is nil, the target ivar/method argument type must be
+    // checked. If it's int/float, invoke setNilValueForKey
+    assert!(value != nil);
+
+    // TODO: If value is a NSNumber or NSValue, it must be unwrapped
+    let value_class = msg![env; value class];
+    let ns_number_class = env.objc.get_known_class("NSNumber", &mut env.mem);
+    let ns_value_class = env.objc.get_known_class("NSValue", &mut env.mem);
+    assert!(!env.objc.class_is_subclass_of(value_class, ns_number_class) && !env.objc.class_is_subclass_of(value_class, ns_value_class));
+
+    // Look for the first accessor named set<Key>: or _set<Key>, in that order.
+    // If found, invoke it with the input value (or unwrapped value, as needed)
+    // and finish.
+    if let Some(sel) = env.objc.lookup_selector(&format!("set{}:", camel_case_key_string)) {
         if env.objc.class_has_method(class, sel) {
-            return msg_send(env, (this, sel, value));
+            () = msg_send(env, (this, sel, value));
+            return;
         }
     }
 
-    if let Some(sel) = env.objc.lookup_selector(&format!(
-        "_set{}{}:",
-        key.as_bytes()[0].to_ascii_uppercase() as char,
-        &key[1..],
-    )) {
+    if let Some(sel) = env.objc.lookup_selector(&format!("_set{}:", camel_case_key_string)) {
         if env.objc.class_has_method(class, sel) {
-            return msg_send(env, (this, sel, value));
+            () = msg_send(env, (this, sel, value));
+            return;
         }
     }
 
-    unimplemented!("TODO: object {:?} does not have simple setter method for {}, use fallback", this, key);
+    // If no simple accessor is found, and if the class method
+    // accessInstanceVariablesDirectly returns YES, look for an instance
+    // variable with a name like _<key>, _is<Key>, <key>, or is<Key>,
+    // in that order.
+    // If found, set the variable directly with the input value
+    // (or unwrapped value) and finish.
+    let sel = env.objc.lookup_selector("accessInstanceVariablesDirectly").unwrap();
+    let accessInstanceVariablesDirectly = msg_send(env, (class, sel));
+    if accessInstanceVariablesDirectly {
+        if let Some(ivar_ptr) = env.objc.object_lookup_ivar(&env.mem, this, &format!("_{}", key_string))
+            .or_else(|| env.objc.object_lookup_ivar(&env.mem, this, &format!("_is{}:", camel_case_key_string)))
+            .or_else(|| env.objc.object_lookup_ivar(&env.mem, this, &format!("{}", key_string)))
+            .or_else(|| env.objc.object_lookup_ivar(&env.mem, this, &format!("is{}:", camel_case_key_string))
+        ) {
+            retain(env, value);
+            env.mem.write(ivar_ptr.cast(), value);
+            return;
+        }
+    }
+
+    // Upon finding no accessor or instance variable,
+    // invoke setValue:forUndefinedKey:.
+    // This raises an exception by default, but a subclass of NSObject
+    // may provide key-specific behavior.
+    let sel = env.objc.lookup_selector("setValue:forUndefinedKey:").unwrap();
+    () = msg_send(env, (this, sel, value, key));
+}
+
+- (())setValue:(id)_value
+forUndefinedKey:(id)key { // NSString*
+    // TODO: Raise NSUnknownKeyException
+    let class: Class = ObjC::read_isa(this, &env.mem);
+    let class_name_string = env.objc.get_class_name(class).to_owned(); // TODO: Avoid copying
+    let key_string = to_rust_string(env, key);
+    panic!("Object {:?} of class {:?} ({:?}) does not have a setter for {} ({:?})\
+        \nAvailable selectors: {}\nAvailable ivars: {}",
+        this, class_name_string, class, key_string, key,
+        env.objc.debug_all_class_selectors_as_strings(&env.mem, class).join(", "),
+        env.objc.debug_all_class_ivars_as_strings(class).join(", "));
 }
 
 - (bool)respondsToSelector:(SEL)selector {

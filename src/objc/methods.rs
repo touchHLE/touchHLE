@@ -302,4 +302,29 @@ impl ObjC {
     pub fn object_has_ivar(&self, mem: &Mem, obj: id, sel: SEL) -> bool {
         self.class_has_ivar(ObjC::read_isa(obj, mem), sel)
     }
+
+    pub fn all_class_selectors_as_strings(&self, mem: &Mem, class: Class) -> Vec<String> {
+        let mut class = class;
+        let mut selector_strings = Vec::new();
+        loop {
+            let &ClassHostObject {
+                superclass,
+                ref methods,
+                ref ivars,
+                ..
+            } = self.borrow(class);
+            let mut class_selector_strings = methods
+                .keys()
+                .chain(ivars.keys())
+                .map(|sel| sel.as_str(mem).to_string())
+                .collect();
+            selector_strings.append(&mut class_selector_strings);
+            if superclass == nil {
+                break;
+            } else {
+                class = superclass;
+            }
+        }
+        selector_strings
+    }
 }

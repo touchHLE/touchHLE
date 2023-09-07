@@ -46,7 +46,7 @@ use messages::{
 };
 use methods::method_list_t;
 use objects::{objc_object, HostObjectEntry};
-use properties::{objc_copyStruct, objc_getProperty, objc_setProperty};
+use properties::{ivar_list_t, objc_copyStruct, objc_getProperty, objc_setProperty};
 use selectors::sel_registerName;
 use synchronization::{objc_sync_enter, objc_sync_exit};
 

@@ -94,6 +94,30 @@ fn fgetc(env: &mut Environment, file_ptr: MutPtr<FILE>) -> i32 {
     }
 }
 
+fn fgets(
+    env: &mut Environment,
+    str: MutPtr<u8>,
+    size: GuestUSize,
+    stream: MutPtr<FILE>,
+) -> MutPtr<u8> {
+    let mut read = 0;
+    let mut tmp = str;
+    while read < size && fread(env, tmp.cast(), 1, 1, stream) != 0 {
+        tmp += 1;
+        read += 1;
+        if env.mem.read(tmp - 1) == b'\n' {
+            break;
+        }
+    }
+
+    if read == 0 {
+        return Ptr::null();
+    } else {
+        env.mem.write(tmp, b'\0');
+    }
+    str
+}
+
 fn fputs(env: &mut Environment, str: ConstPtr<u8>, stream: MutPtr<FILE>) -> i32 {
     // TODO: this function doesn't set errno or return EOF yet
     let str_len = strlen(env, str);
@@ -259,6 +283,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(fopen(_, _)),
     export_c_func!(fread(_, _, _, _)),
     export_c_func!(fgetc(_)),
+    export_c_func!(fgets(_, _, _)),
     export_c_func!(fputs(_, _)),
     export_c_func!(fwrite(_, _, _, _)),
     export_c_func!(fseek(_, _, _)),

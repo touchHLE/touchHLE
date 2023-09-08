@@ -30,6 +30,7 @@ pub const FUNCTION_LISTS: &[super::FunctionExports] = &[
     libc::pthread::mutex::FUNCTIONS,
     libc::pthread::once::FUNCTIONS,
     libc::pthread::thread::FUNCTIONS,
+    libc::semaphore::FUNCTIONS,
     libc::setjmp::FUNCTIONS,
     libc::stdio::FUNCTIONS,
     libc::stdio::printf::FUNCTIONS,

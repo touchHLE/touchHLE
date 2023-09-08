@@ -652,6 +652,9 @@ impl Window {
 
     pub unsafe fn make_gl_context_current(&self, gl_ctx: &GLContext) {
         self.window.gl_make_current(&gl_ctx.0).unwrap();
+        self.video_ctx
+            .gl_set_swap_interval(sdl2::video::SwapInterval::VSync)
+            .unwrap();
     }
 
     /// Retrieve and reset the flag that indicates if the current OpenGL context

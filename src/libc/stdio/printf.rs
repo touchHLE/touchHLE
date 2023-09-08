@@ -8,6 +8,7 @@
 use crate::abi::{DotDotDot, VaList};
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::frameworks::foundation::{ns_string, unichar};
+use crate::libc::posix_io::{STDERR_FILENO, STDOUT_FILENO};
 use crate::libc::stdio::FILE;
 use crate::mem::{ConstPtr, GuestUSize, Mem, MutPtr, MutVoidPtr};
 use crate::objc::{id, msg};
@@ -336,6 +337,16 @@ fn sscanf(env: &mut Environment, src: ConstPtr<u8>, format: ConstPtr<u8>, args: 
     matched_args
 }
 
+fn fprintf(
+    env: &mut Environment,
+    stream: MutPtr<FILE>,
+    format: ConstPtr<u8>,
+    args: DotDotDot,
+) -> i32 {
+    assert!([STDOUT_FILENO, STDERR_FILENO].contains(&env.mem.read(stream).fd));
+    printf(env, format, args)
+}
+
 fn setbuf(_env: &mut Environment, stream: MutPtr<FILE>, buf: ConstPtr<u8>) {
     assert!(buf.is_null());
     log!(
@@ -352,5 +363,6 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(vsprintf(_, _, _)),
     export_c_func!(sprintf(_, _, _)),
     export_c_func!(printf(_, _)),
+    export_c_func!(fprintf(_, _, _)),
     export_c_func!(setbuf(_, _)),
 ];

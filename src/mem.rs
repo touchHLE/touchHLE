@@ -80,7 +80,7 @@ impl<T, const MUT: bool> Ptr<T, MUT> {
     pub fn to_bits(self) -> VAddr {
         self.0
     }
-    pub fn from_bits(bits: VAddr) -> Self {
+    pub const fn from_bits(bits: VAddr) -> Self {
         Ptr(bits, std::marker::PhantomData)
     }
 

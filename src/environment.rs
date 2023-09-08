@@ -11,6 +11,7 @@
 mod mutex;
 
 use crate::abi::GuestRet;
+use crate::libc::semaphore::sem_t;
 use crate::mem::{MutPtr, MutVoidPtr};
 use crate::{
     abi, bundle, cpu, dyld, frameworks, fs, gdb, image, libc, mach_o, mem, objc, options, stack,
@@ -117,6 +118,8 @@ enum ThreadBlock {
     Sleeping(Instant),
     // Thread is waiting for a mutex to unlock.
     Mutex(MutexId),
+    // Thread is waiting on a semaphore.
+    Semaphore(MutPtr<sem_t>),
     // Thread is waiting for another thread to finish (joining).
     Joining(ThreadId, MutPtr<MutVoidPtr>),
     // Deferred guest-to-host return
@@ -576,6 +579,70 @@ impl Environment {
         self.threads[self.current_thread].blocked_by = ThreadBlock::Mutex(mutex_id);
     }
 
+    /// Locks a semaphore (decrements value of a semaphore and blocks if necessary)
+    ///
+    /// Also note that like [Self::sleep], this only takes effect after the host
+    /// function returns to the main run loop ([Environment::run]).
+    pub fn sem_decrement(&mut self, sem: MutPtr<sem_t>, wait_on_lock: bool) -> bool {
+        let host_sem_rc: &mut _ = self
+            .libc_state
+            .semaphore
+            .open_semaphores
+            .get_mut(&sem)
+            .unwrap();
+        let mut host_sem = (*host_sem_rc).borrow_mut();
+
+        host_sem.value -= 1;
+        log_dbg!(
+            "sem_decrement: semaphore {:?} is now {}",
+            sem,
+            host_sem.value
+        );
+
+        if !wait_on_lock {
+            return host_sem.value >= 0;
+        }
+
+        if host_sem.value < 0 {
+            assert!(matches!(
+                self.threads[self.current_thread].blocked_by,
+                ThreadBlock::NotBlocked
+            ));
+            log_dbg!(
+                "Thread {} is blocking on semaphore {:?}",
+                self.current_thread,
+                sem
+            );
+            host_sem.waiting.insert(self.current_thread);
+            self.threads[self.current_thread].blocked_by = ThreadBlock::Semaphore(sem);
+        }
+
+        true
+    }
+
+    /// Unlock a semaphore (increments value of a semaphore)
+    ///
+    /// Note: Actual thread awaking is done inside [Environment::run_inner] loop
+    ///
+    /// Also note that like [Self::sleep], this only takes effect after the host
+    /// function returns to the main run loop ([Environment::run]).
+    pub fn sem_increment(&mut self, sem: MutPtr<sem_t>) {
+        let host_sem_rc: &mut _ = self
+            .libc_state
+            .semaphore
+            .open_semaphores
+            .get_mut(&sem)
+            .unwrap();
+        let mut host_sem = (*host_sem_rc).borrow_mut();
+
+        host_sem.value += 1;
+        log_dbg!(
+            "sem_increment: semaphore {:?} is now {}",
+            sem,
+            host_sem.value
+        );
+    }
+
     /// Blocks the current thread until the thread given finishes, writing its
     /// return value to ptr (if non-null).
     ///
@@ -865,6 +932,27 @@ impl Environment {
                                 self.threads[i].blocked_by = ThreadBlock::NotBlocked;
                                 suitable_thread = Some(i);
                                 mutex_to_relock = Some(mutex_id);
+                                break;
+                            }
+                        }
+                        ThreadBlock::Semaphore(sem) => {
+                            let host_sem_rc: &mut _ = self
+                                .libc_state
+                                .semaphore
+                                .open_semaphores
+                                .get_mut(&sem)
+                                .unwrap();
+                            let host_sem = (*host_sem_rc).borrow();
+
+                            if host_sem.value >= 0 {
+                                log_dbg!(
+                                    "Thread {} has awaken on semaphore {:?} with value {}",
+                                    i,
+                                    sem,
+                                    host_sem.value
+                                );
+                                self.threads[i].blocked_by = ThreadBlock::NotBlocked;
+                                suitable_thread = Some(i);
                                 break;
                             }
                         }

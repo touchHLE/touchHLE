@@ -64,6 +64,19 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
             pad_width
         };
 
+        // TODO: unify with integer precision
+        let float_precision = {
+            let mut float_precision = 0;
+            if get_format_char(&env.mem, format_char_idx) == b'.' {
+                format_char_idx += 1;
+                while let c @ b'0'..=b'9' = get_format_char(&env.mem, format_char_idx) {
+                    float_precision = float_precision * 10 + (c - b'0') as usize;
+                    format_char_idx += 1;
+                }
+            }
+            float_precision
+        };
+
         let specifier = get_format_char(&env.mem, format_char_idx);
         format_char_idx += 1;
 
@@ -125,6 +138,8 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
                 if pad_width > 0 {
                     if pad_char == '0' {
                         write!(&mut res, "{:01$}", float, pad_width).unwrap();
+                    } else if float_precision > 0 {
+                        write!(&mut res, "{:1$.2$}", float, pad_width, float_precision).unwrap();
                     } else {
                         write!(&mut res, "{:1$}", float, pad_width).unwrap();
                     }

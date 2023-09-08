@@ -147,6 +147,40 @@ impl<T: Copy + Default + Eq + Ord + SafeRead + Debug> GenericChar<T> {
         dest
     }
 
+    pub(super) fn strsep(
+        env: &mut Environment,
+        stringp: MutPtr<MutPtr<T>>,
+        delim: ConstPtr<T>,
+    ) -> MutPtr<T> {
+        let orig = env.mem.read(stringp);
+        if orig.is_null() {
+            return Ptr::null();
+        }
+        let tmp = orig;
+        let mut i = 0;
+        loop {
+            let c = env.mem.read(tmp + i);
+            if c == Self::null() {
+                break;
+            }
+            let mut j = 0;
+            loop {
+                let cc = env.mem.read(delim + j);
+                if c == cc {
+                    env.mem.write(tmp + i, Self::null());
+                    env.mem.write(stringp, tmp + i + 1);
+                    return orig;
+                }
+                if cc == Self::null() {
+                    break;
+                }
+                j += 1;
+            }
+            i += 1;
+        }
+        orig
+    }
+
     pub(super) fn strdup(env: &mut Environment, src: ConstPtr<T>) -> MutPtr<T> {
         let len = Self::strlen(env, src);
         let new = env.mem.alloc((len + 1) * guest_size_of::<T>()).cast();

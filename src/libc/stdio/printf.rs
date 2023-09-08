@@ -8,6 +8,7 @@
 use crate::abi::{DotDotDot, VaList};
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::frameworks::foundation::{ns_string, unichar};
+use crate::libc::stdio::FILE;
 use crate::mem::{ConstPtr, GuestUSize, Mem, MutPtr, MutVoidPtr};
 use crate::objc::{id, msg};
 use crate::Environment;
@@ -335,6 +336,14 @@ fn sscanf(env: &mut Environment, src: ConstPtr<u8>, format: ConstPtr<u8>, args: 
     matched_args
 }
 
+fn setbuf(_env: &mut Environment, stream: MutPtr<FILE>, buf: ConstPtr<u8>) {
+    assert!(buf.is_null());
+    log!(
+        "Warning: ignoring a setbuf() for {:?} with NULL (unbuffered)",
+        stream
+    );
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(sscanf(_, _, _)),
     export_c_func!(snprintf(_, _, _, _)),
@@ -343,4 +352,5 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(vsprintf(_, _, _)),
     export_c_func!(sprintf(_, _, _)),
     export_c_func!(printf(_, _)),
+    export_c_func!(setbuf(_, _)),
 ];

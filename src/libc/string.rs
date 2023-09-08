@@ -8,6 +8,7 @@
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::mem::{ConstPtr, ConstVoidPtr, GuestUSize, MutPtr, MutVoidPtr, Ptr};
 use crate::Environment;
+use std::cmp::Ordering;
 
 use super::generic_char::GenericChar;
 
@@ -123,6 +124,63 @@ fn strcmp(env: &mut Environment, a: ConstPtr<u8>, b: ConstPtr<u8>) -> i32 {
 fn strncmp(env: &mut Environment, a: ConstPtr<u8>, b: ConstPtr<u8>, n: GuestUSize) -> i32 {
     GenericChar::<u8>::strncmp(env, a, b, n)
 }
+fn strcasecmp(env: &mut Environment, a: ConstPtr<u8>, b: ConstPtr<u8>) -> i32 {
+    // TODO: generalize to wide chars
+    fn caseless_strcmp(env: &mut Environment, a: ConstPtr<u8>, b: ConstPtr<u8>) -> i32 {
+        let mut offset = 0;
+        loop {
+            let char_a = env.mem.read(a + offset).to_ascii_lowercase();
+            let char_b = env.mem.read(b + offset).to_ascii_lowercase();
+            offset += 1;
+
+            match char_a.cmp(&char_b) {
+                Ordering::Less => return -1,
+                Ordering::Greater => return 1,
+                Ordering::Equal => {
+                    if char_a == u8::default() {
+                        return 0;
+                    } else {
+                        continue;
+                    }
+                }
+            }
+        }
+    }
+    caseless_strcmp(env, a, b)
+}
+fn strncasecmp(env: &mut Environment, a: ConstPtr<u8>, b: ConstPtr<u8>, n: GuestUSize) -> i32 {
+    // TODO: generalize to wide chars
+    fn caseless_strncmp(
+        env: &mut Environment,
+        a: ConstPtr<u8>,
+        b: ConstPtr<u8>,
+        n: GuestUSize,
+    ) -> i32 {
+        if n == 0 {
+            return 0;
+        }
+
+        let mut offset = 0;
+        loop {
+            let char_a = env.mem.read(a + offset).to_ascii_lowercase();
+            let char_b = env.mem.read(b + offset).to_ascii_lowercase();
+            offset += 1;
+
+            match char_a.cmp(&char_b) {
+                Ordering::Less => return -1,
+                Ordering::Greater => return 1,
+                Ordering::Equal => {
+                    if offset == n || char_a == u8::default() {
+                        return 0;
+                    } else {
+                        continue;
+                    }
+                }
+            }
+        }
+    }
+    caseless_strncmp(env, a, b, n)
+}
 fn strstr(env: &mut Environment, string: ConstPtr<u8>, substring: ConstPtr<u8>) -> ConstPtr<u8> {
     GenericChar::<u8>::strstr(env, string, substring)
 }
@@ -149,6 +207,8 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(strdup(_)),
     export_c_func!(strcmp(_, _)),
     export_c_func!(strncmp(_, _, _)),
+    export_c_func!(strcasecmp(_, _)),
+    export_c_func!(strncasecmp(_, _, _)),
     export_c_func!(strstr(_, _)),
     export_c_func!(strchr(_, _)),
     export_c_func!(strrchr(_, _)),

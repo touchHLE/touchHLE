@@ -215,6 +215,14 @@ fn remove(env: &mut Environment, path: ConstPtr<u8>) -> i32 {
     }
 }
 
+fn setbuf(_env: &mut Environment, stream: MutPtr<FILE>, buf: ConstPtr<u8>) {
+    assert!(buf.is_null());
+    log!(
+        "Warning: ignoring a setbuf() for {:?} with NULL (unbuffered)",
+        stream
+    );
+}
+
 // POSIX-specific functions
 
 fn fileno(env: &mut Environment, file_ptr: MutPtr<FILE>) -> posix_io::FileDescriptor {
@@ -262,6 +270,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(puts(_)),
     export_c_func!(putchar(_)),
     export_c_func!(remove(_)),
+    export_c_func!(setbuf(_, _)),
     // POSIX-specific functions
     export_c_func!(fileno(_)),
 ];

@@ -31,10 +31,12 @@ macro_rules! check_magic {
 pub mod key;
 pub mod mutex;
 pub mod once;
+pub mod semaphore;
 pub mod thread;
 
 #[derive(Default)]
 pub struct State {
     key: key::State,
+    pub semaphore: semaphore::State,
     thread: thread::State,
 }

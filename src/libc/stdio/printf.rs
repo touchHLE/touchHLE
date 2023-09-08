@@ -159,6 +159,29 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
     res
 }
 
+fn snprintf(
+    env: &mut Environment,
+    dest: MutPtr<u8>,
+    n: GuestUSize,
+    format: ConstPtr<u8>,
+    args: DotDotDot,
+) -> i32 {
+    vsnprintf(env, dest, n, format, args.start())
+}
+
+fn vprintf(env: &mut Environment, format: ConstPtr<u8>, arg: VaList) -> i32 {
+    log_dbg!(
+        "vprintf({:?} ({:?}), ...)",
+        format,
+        env.mem.cstr_at_utf8(format)
+    );
+
+    let res = printf_inner::<false, _>(env, |mem, idx| mem.read(format + idx), arg);
+    // TODO: I/O error handling
+    let _ = std::io::stdout().write_all(&res);
+    res.len().try_into().unwrap()
+}
+
 fn vsnprintf(
     env: &mut Environment,
     dest: MutPtr<u8>,
@@ -299,6 +322,8 @@ fn sscanf(env: &mut Environment, src: ConstPtr<u8>, format: ConstPtr<u8>, args: 
 
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(sscanf(_, _, _)),
+    export_c_func!(snprintf(_, _, _, _)),
+    export_c_func!(vprintf(_, _)),
     export_c_func!(vsnprintf(_, _, _, _)),
     export_c_func!(vsprintf(_, _, _)),
     export_c_func!(sprintf(_, _, _)),

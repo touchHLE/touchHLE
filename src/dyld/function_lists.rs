@@ -7,7 +7,7 @@
 //! very long and frequently-updated list.
 
 use crate::frameworks::{
-    audio_toolbox, core_foundation, core_graphics, foundation, openal, opengles, uikit,
+    audio_toolbox, core_foundation, core_graphics, dnssd, foundation, openal, opengles, uikit,
 };
 use crate::libc;
 
@@ -17,11 +17,13 @@ pub const FUNCTION_LISTS: &[super::FunctionExports] = &[
     libc::cxxabi::FUNCTIONS,
     libc::dlfcn::FUNCTIONS,
     libc::errno::FUNCTIONS,
+    libc::ifaddrs::FUNCTIONS,
     libc::keymgr::FUNCTIONS,
     libc::mach_thread_info::FUNCTIONS,
     libc::mach_time::FUNCTIONS,
     libc::math::FUNCTIONS,
     libc::mmap::FUNCTIONS,
+    libc::net::if_::FUNCTIONS,
     libc::posix_io::FUNCTIONS,
     libc::posix_io::stat::FUNCTIONS,
     libc::pthread::key::FUNCTIONS,
@@ -58,6 +60,7 @@ pub const FUNCTION_LISTS: &[super::FunctionExports] = &[
     core_graphics::cg_context::FUNCTIONS,
     core_graphics::cg_data_provider::FUNCTIONS,
     core_graphics::cg_image::FUNCTIONS,
+    dnssd::FUNCTIONS,
     foundation::ns_file_manager::FUNCTIONS,
     foundation::ns_log::FUNCTIONS,
     foundation::ns_objc_runtime::FUNCTIONS,

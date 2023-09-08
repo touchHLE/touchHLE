@@ -12,6 +12,7 @@ use crate::libc;
 /// All the lists of constants that the linker should search through.
 pub const CONSTANT_LISTS: &[super::ConstantExports] = &[
     libc::ctype::CONSTANTS,
+    libc::stdio::CONSTANTS,
     core_foundation::cf_allocator::CONSTANTS,
     core_foundation::cf_run_loop::CONSTANTS,
     core_graphics::cg_affine_transform::CONSTANTS,

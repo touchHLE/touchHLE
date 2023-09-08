@@ -5,11 +5,14 @@
  */
 //! `stdio.h`
 
-use super::posix_io::{self, off_t, O_APPEND, O_CREAT, O_RDONLY, O_RDWR, O_TRUNC, O_WRONLY};
-use crate::dyld::{export_c_func, FunctionExports};
+use super::posix_io::{
+    self, off_t, O_APPEND, O_CREAT, O_RDONLY, O_RDWR, O_TRUNC, O_WRONLY, STDERR_FILENO,
+    STDIN_FILENO, STDOUT_FILENO,
+};
+use crate::dyld::{export_c_func, ConstantExports, FunctionExports, HostConstant};
 use crate::fs::GuestPath;
 use crate::libc::string::strlen;
-use crate::mem::{ConstPtr, ConstVoidPtr, GuestUSize, MutPtr, MutVoidPtr, Ptr, SafeRead};
+use crate::mem::{ConstPtr, ConstVoidPtr, GuestUSize, Mem, MutPtr, MutVoidPtr, Ptr, SafeRead};
 use crate::Environment;
 use std::io::Write;
 
@@ -218,6 +221,30 @@ fn fileno(env: &mut Environment, file_ptr: MutPtr<FILE>) -> posix_io::FileDescri
     let FILE { fd } = env.mem.read(file_ptr);
     fd
 }
+
+pub const CONSTANTS: ConstantExports = &[
+    (
+        "___stdinp",
+        HostConstant::Custom(|mem: &mut Mem| -> ConstVoidPtr {
+            let ptr = mem.alloc_and_write(FILE { fd: STDIN_FILENO });
+            mem.alloc_and_write(ptr).cast().cast_const()
+        }),
+    ),
+    (
+        "___stdoutp",
+        HostConstant::Custom(|mem: &mut Mem| -> ConstVoidPtr {
+            let ptr = mem.alloc_and_write(FILE { fd: STDOUT_FILENO });
+            mem.alloc_and_write(ptr).cast().cast_const()
+        }),
+    ),
+    (
+        "___stderrp",
+        HostConstant::Custom(|mem: &mut Mem| -> ConstVoidPtr {
+            let ptr = mem.alloc_and_write(FILE { fd: STDERR_FILENO });
+            mem.alloc_and_write(ptr).cast().cast_const()
+        }),
+    ),
+];
 
 pub const FUNCTIONS: FunctionExports = &[
     // Standard C functions

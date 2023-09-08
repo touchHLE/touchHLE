@@ -395,6 +395,9 @@ fn alSourcePause(_env: &mut Environment, source: ALuint) {
 fn alSourceStop(_env: &mut Environment, source: ALuint) {
     unsafe { al::alSourceStop(source) };
 }
+fn alSourceRewind(_env: &mut Environment, source: ALuint) {
+    unsafe { al::alSourceRewind(source) };
+}
 
 fn alSourceQueueBuffers(
     env: &mut Environment,
@@ -615,9 +618,6 @@ fn alSourcePausev(_env: &mut Environment, _nsources: ALsizei, _sources: ConstPtr
 fn alSourceStopv(_env: &mut Environment, _nsources: ALsizei, _sources: ConstPtr<ALuint>) {
     todo!();
 }
-fn alSourceRewind(_env: &mut Environment, _source: ALuint) {
-    todo!();
-}
 fn alSourceRewindv(_env: &mut Environment, _nsources: ALsizei, _sources: ConstPtr<ALuint>) {
     todo!();
 }
@@ -663,6 +663,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(alSourcePlay(_)),
     export_c_func!(alSourcePause(_)),
     export_c_func!(alSourceStop(_)),
+    export_c_func!(alSourceRewind(_)),
     export_c_func!(alSourceQueueBuffers(_, _, _)),
     export_c_func!(alSourceUnqueueBuffers(_, _, _)),
     export_c_func!(alGenBuffers(_, _)),
@@ -707,6 +708,5 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(alSourcePause(_)),
     export_c_func!(alSourcePausev(_, _)),
     export_c_func!(alSourceStopv(_, _)),
-    export_c_func!(alSourceRewind(_)),
     export_c_func!(alSourceRewindv(_, _)),
 ];

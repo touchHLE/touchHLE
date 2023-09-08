@@ -395,6 +395,9 @@ fn alSourcePause(_env: &mut Environment, source: ALuint) {
 fn alSourceStop(_env: &mut Environment, source: ALuint) {
     unsafe { al::alSourceStop(source) };
 }
+fn alSourceRewind(_env: &mut Environment, source: ALuint) {
+    unsafe { al::alSourceRewind(source) };
+}
 
 fn alSourceQueueBuffers(
     env: &mut Environment,
@@ -613,9 +616,6 @@ fn alSourcePausev(_env: &mut Environment, _nsources: ALsizei, _sources: ConstPtr
     todo!();
 }
 fn alSourceStopv(_env: &mut Environment, _nsources: ALsizei, _sources: ConstPtr<ALuint>) {
-    todo!();
-}
-fn alSourceRewind(_env: &mut Environment, _source: ALuint) {
     todo!();
 }
 fn alSourceRewindv(_env: &mut Environment, _nsources: ALsizei, _sources: ConstPtr<ALuint>) {

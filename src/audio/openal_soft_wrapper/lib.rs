@@ -173,6 +173,7 @@ extern "C" {
     pub fn alSourcePlay(source: ALuint);
     pub fn alSourcePause(source: ALuint);
     pub fn alSourceStop(source: ALuint);
+    pub fn alSourceRewind(source: ALuint);
 
     pub fn alSourceQueueBuffers(source: ALuint, nb: ALsizei, buffers: *const ALuint);
     pub fn alSourceUnqueueBuffers(source: ALuint, nb: ALsizei, buffers: *mut ALuint);

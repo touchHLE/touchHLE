@@ -159,6 +159,9 @@ fn random(env: &mut Environment) -> i32 {
 
 fn getenv(env: &mut Environment, name: ConstPtr<u8>) -> MutPtr<u8> {
     let name_cstr = env.mem.cstr_at(name);
+    if b"DOOMSAVEDIR" == name_cstr {
+        return Ptr::null();
+    }
     // TODO: Provide all the system environment variables an app might expect to
     // find. Currently the only environment variables that can be found are
     // those put there by the app (Crash Bandicoot Nitro Kart 3D uses this).

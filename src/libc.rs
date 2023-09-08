@@ -24,6 +24,7 @@ pub mod mmap;
 pub mod net;
 pub mod posix_io;
 pub mod pthread;
+pub mod semaphore;
 pub mod setjmp;
 pub mod stdio;
 pub mod stdlib;
@@ -38,7 +39,8 @@ pub mod wchar;
 pub struct State {
     keymgr: keymgr::State,
     posix_io: posix_io::State,
-    pthread: pthread::State,
+    pub pthread: pthread::State,
+    pub semaphore: semaphore::State,
     stdlib: stdlib::State,
     string: string::State,
     time: time::State,

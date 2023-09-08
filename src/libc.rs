@@ -38,7 +38,7 @@ pub mod wchar;
 pub struct State {
     keymgr: keymgr::State,
     posix_io: posix_io::State,
-    pthread: pthread::State,
+    pub pthread: pthread::State,
     stdlib: stdlib::State,
     string: string::State,
     time: time::State,

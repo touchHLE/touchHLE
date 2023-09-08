@@ -13,7 +13,7 @@ use crate::Environment;
 use std::io::{Seek, SeekFrom};
 
 #[allow(non_camel_case_types)]
-type mode_t = u16;
+pub type mode_t = u16;
 
 fn mkdir(env: &mut Environment, path: ConstPtr<u8>, mode: mode_t) -> i32 {
     // TODO: respect the mode

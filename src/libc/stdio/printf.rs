@@ -8,7 +8,7 @@
 use crate::abi::{DotDotDot, VaList};
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::frameworks::foundation::{ns_string, unichar};
-use crate::mem::{ConstPtr, GuestUSize, Mem, MutPtr};
+use crate::mem::{ConstPtr, GuestUSize, Mem, MutPtr, MutVoidPtr};
 use crate::objc::{id, msg};
 use crate::Environment;
 use std::io::Write;
@@ -144,6 +144,10 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
             b'x' => {
                 let int: i32 = args.next(env);
                 res.extend_from_slice(format!("{:x}", int).as_bytes());
+            }
+            b'p' => {
+                let ptr: MutVoidPtr = args.next(env);
+                res.extend_from_slice(format!("{:?}", ptr).as_bytes());
             }
             // TODO: more specifiers
             _ => unimplemented!("Format character '{}'", specifier as char),

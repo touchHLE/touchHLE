@@ -41,6 +41,10 @@ fn realloc(env: &mut Environment, ptr: MutVoidPtr, size: GuestUSize) -> MutVoidP
 }
 
 fn free(env: &mut Environment, ptr: MutVoidPtr) {
+    if ptr.is_null() {
+        // "If ptr is a NULL pointer, no operation is performed."
+        return;
+    }
     env.mem.free(ptr);
 }
 

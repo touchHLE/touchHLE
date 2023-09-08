@@ -50,8 +50,34 @@ void *memmove(void *, const void *, size_t);
 int strcmp(const char *, const char *);
 
 // <unistd.h>
+typedef unsigned int __uint32_t;
+typedef __uint32_t useconds_t;
 int chdir(const char *);
 char *getcwd(char *, size_t);
+int usleep(useconds_t);
+
+// <fcntl.h>
+#define O_CREAT 0x00000200
+
+// <pthread.h>
+typedef struct opaque_pthread_t opaque_pthread_t;
+typedef struct opaque_pthread_t *__pthread_t;
+typedef __pthread_t pthread_t;
+typedef struct opaque_pthread_attr_t opaque_pthread_attr_t;
+typedef struct opaque_pthread_attr_t *__pthread_attr_t;
+typedef __pthread_attr_t pthread_attr_t;
+int pthread_create(pthread_t *, const pthread_attr_t *, void *(*)(void *),
+                   void *);
+
+// <semaphore.h>
+#define SEM_FAILED ((sem_t *)-1)
+typedef int sem_t;
+int sem_close(sem_t *);
+sem_t *sem_open(const char *, int, ...);
+int sem_post(sem_t *);
+int sem_trywait(sem_t *);
+int sem_unlink(const char *);
+int sem_wait(sem_t *);
 
 // === Main code ===
 
@@ -179,6 +205,42 @@ int test_getcwd_chdir() {
   return 0;
 }
 
+sem_t *semaphore;
+int shared_int = 0;
+
+void sem_thread_func() {
+  while (1) {
+    if (sem_trywait(semaphore) == -1) {
+      return;
+    }
+    shared_int = -1;
+    sem_post(semaphore);
+    usleep(100);
+  }
+}
+
+int test_sem() {
+  semaphore = sem_open("sem_test", O_CREAT, 0644, 1);
+  if (semaphore == SEM_FAILED) {
+    printf("Error opening semaphore\n");
+    return -1;
+  }
+
+  pthread_t *my_thread = (pthread_t *)malloc(sizeof(pthread_t));
+  pthread_create(my_thread, NULL, (void *)sem_thread_func, NULL);
+  usleep(200);
+
+  sem_wait(semaphore);
+
+  shared_int = 1;
+  usleep(200);
+
+  sem_unlink("sem_test");
+  sem_close(semaphore);
+
+  return shared_int == 1 ? 0 : -1;
+}
+
 #define FUNC_DEF(func)                                                         \
   { &func, #func }
 struct {
@@ -187,6 +249,7 @@ struct {
 } test_func_array[] = {
     FUNC_DEF(test_qsort), FUNC_DEF(test_vsnprintf), FUNC_DEF(test_sscanf),
     FUNC_DEF(test_errno), FUNC_DEF(test_realloc),   FUNC_DEF(test_getcwd_chdir),
+    FUNC_DEF(test_sem),
 };
 
 // Because no libc is linked into this executable, there is no libc entry point

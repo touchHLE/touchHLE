@@ -6,6 +6,7 @@
 //! Miscellaneous parts of `unistd.h`
 
 use crate::dyld::{export_c_func, FunctionExports};
+use crate::libc::posix_io::{FileDescriptor, STDERR_FILENO, STDIN_FILENO, STDOUT_FILENO};
 use crate::Environment;
 use std::time::Duration;
 
@@ -38,9 +39,18 @@ fn getppid(_env: &mut Environment) -> pid_t {
     0
 }
 
+fn isatty(_env: &mut Environment, fd: FileDescriptor) -> i32 {
+    if [STDIN_FILENO, STDOUT_FILENO, STDERR_FILENO].contains(&fd) {
+        1
+    } else {
+        0
+    }
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(sleep(_)),
     export_c_func!(usleep(_)),
     export_c_func!(getpid()),
     export_c_func!(getppid()),
+    export_c_func!(isatty(_)),
 ];

@@ -19,6 +19,7 @@ pub mod keymgr;
 pub mod mach_thread_info;
 pub mod mach_time;
 pub mod math;
+pub mod network;
 pub mod posix_io;
 pub mod pthread;
 pub mod setjmp;

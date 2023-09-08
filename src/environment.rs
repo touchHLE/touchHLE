@@ -19,6 +19,7 @@ use crate::{
 use std::net::TcpListener;
 use std::time::{Duration, Instant};
 
+use crate::libc::pthread::semaphore::sem_t;
 pub use mutex::{MutexId, MutexType, PTHREAD_MUTEX_DEFAULT};
 
 /// Index into the [Vec] of threads. Thread 0 is always the main thread.
@@ -30,7 +31,7 @@ pub struct Thread {
     pub active: bool,
     /// If this is not [ThreadBlock::NotBlocked], the thread is not executing
     /// until a certain condition is fufilled.
-    blocked_by: ThreadBlock,
+    pub blocked_by: ThreadBlock,
     /// Set to [true] when a thread is running its startup routine (i.e. the
     /// function pointer passed to `pthread_create`). When it returns to the
     /// host, it should become inactive.
@@ -110,7 +111,7 @@ enum ThreadNextAction {
 
 /// If/what a thread is blocked by.
 #[derive(Debug, Clone)]
-enum ThreadBlock {
+pub enum ThreadBlock {
     // Default state. (thread is not blocked)
     NotBlocked,
     // Thread is sleeping. (until Instant)
@@ -574,6 +575,58 @@ impl Environment {
             mutex_id
         );
         self.threads[self.current_thread].blocked_by = ThreadBlock::Mutex(mutex_id);
+    }
+
+    pub fn sleep_sem(&mut self, sem: MutPtr<sem_t>, wait_on_lock: bool) -> bool {
+        let host_sem: &mut _ = self
+            .libc_state
+            .pthread
+            .semaphore
+            .semaphores
+            .get_mut(&sem)
+            .unwrap();
+
+        host_sem.value -= 1;
+        log_dbg!("Sleep: Sem {:?} is now {}", sem, host_sem.value);
+
+        if !wait_on_lock {
+            return host_sem.value >= 0;
+        }
+
+        if host_sem.value < 0 {
+            assert!(matches!(
+                self.threads[self.current_thread].blocked_by,
+                ThreadBlock::NotBlocked
+            ));
+
+            host_sem.waiting.insert(self.current_thread);
+            self.sleep(Duration::from_secs(60 * 60 * 24), true); // 1 day
+        }
+
+        true
+    }
+
+    pub fn unsleep_sem(&mut self, sem: MutPtr<sem_t>) {
+        let host_sem: &mut _ = self
+            .libc_state
+            .pthread
+            .semaphore
+            .semaphores
+            .get_mut(&sem)
+            .unwrap();
+
+        host_sem.value += 1;
+        log_dbg!("Unsleep: Sem {:?} is now {}", sem, host_sem.value);
+
+        if host_sem.value >= 0 {
+            let set = &host_sem.waiting;
+            for thread_id in set {
+                let thread = &mut self.threads[*thread_id];
+                assert!(matches!(thread.blocked_by, ThreadBlock::Sleeping(_)));
+                thread.blocked_by = ThreadBlock::NotBlocked;
+            }
+            host_sem.waiting.clear();
+        }
     }
 
     /// Blocks the current thread until the thread given finishes, writing its

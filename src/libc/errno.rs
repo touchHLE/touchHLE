@@ -7,8 +7,9 @@
 
 use crate::dyld::FunctionExports;
 use crate::export_c_func;
-use crate::mem::MutPtr;
+use crate::mem::{ConstPtr, MutPtr};
 use crate::Environment;
+use std::io::Write;
 
 pub const EPERM: i32 = 1;
 pub const EDEADLK: i32 = 11;
@@ -41,4 +42,19 @@ fn __error(env: &mut Environment) -> MutPtr<i32> {
         .errno_for_thread(&mut env.mem, env.current_thread)
 }
 
-pub const FUNCTIONS: FunctionExports = &[export_c_func!(__error())];
+fn perror(env: &mut Environment, s: ConstPtr<u8>) {
+    // TODO: errno mapping
+    let errno_msg = "<TODO: errno>\n";
+    let msg = if !s.is_null() {
+        if let Ok(str) = env.mem.cstr_at_utf8(s) {
+            format!("{}: {}", str, errno_msg)
+        } else {
+            errno_msg.to_string()
+        }
+    } else {
+        errno_msg.to_string()
+    };
+    let _ = std::io::stderr().write_all(msg.as_bytes());
+}
+
+pub const FUNCTIONS: FunctionExports = &[export_c_func!(__error()), export_c_func!(perror(_))];

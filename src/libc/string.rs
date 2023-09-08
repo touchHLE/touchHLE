@@ -115,6 +115,36 @@ fn strncpy(
 ) -> MutPtr<u8> {
     GenericChar::<u8>::strncpy(env, dest, src, size)
 }
+fn strsep(env: &mut Environment, stringp: MutPtr<MutPtr<u8>>, delim: ConstPtr<u8>) -> MutPtr<u8> {
+    let orig = env.mem.read(stringp);
+    if orig.is_null() {
+        return Ptr::null();
+    }
+    let tmp = orig;
+    let mut i = 0;
+    loop {
+        let c = env.mem.read(tmp + i);
+        if c == b'\0' {
+            env.mem.write(stringp, Ptr::null());
+            break;
+        }
+        let mut j = 0;
+        loop {
+            let cc = env.mem.read(delim + j);
+            if c == cc {
+                env.mem.write(tmp + i, b'\0');
+                env.mem.write(stringp, tmp + i + 1);
+                return orig;
+            }
+            if cc == b'\0' {
+                break;
+            }
+            j += 1;
+        }
+        i += 1;
+    }
+    orig
+}
 pub(super) fn strdup(env: &mut Environment, src: ConstPtr<u8>) -> MutPtr<u8> {
     GenericChar::<u8>::strdup(env, src)
 }
@@ -193,6 +223,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(__strcpy_chk(_, _, _)),
     export_c_func!(strcat(_, _)),
     export_c_func!(strncpy(_, _, _)),
+    export_c_func!(strsep(_, _)),
     export_c_func!(strdup(_)),
     export_c_func!(strcmp(_, _)),
     export_c_func!(strncmp(_, _, _)),

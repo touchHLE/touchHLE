@@ -44,3 +44,6 @@ com.ea.mysterymania.inc: --landscape-left
 # Fastlane Street Racing
 # A = accelerate, B = brake
 com.atodab.actane: --landscape-left --button-to-touch=A,430,300 --button-to-touch=B,30,300
+
+# Wolfenstein 3D
+com.idsoftware.wolf3d: --landscape-right

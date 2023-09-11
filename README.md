@@ -78,10 +78,9 @@ This will be made easier in a future release!
 
 ## Graphical user interface
 
-* You can put an app's `.ipa` file or `.app` bundle in the `touchHLE_apps` directory, then when you run touchHLE (on Windows: double-click on `touchHLE.exe`) you can select the app from the app picker.
-* On Windows, you can also directly drag and drop an app's `.ipa` file or `.app` bundle onto `touchHLE.exe`.
+touchHLE has a built-in app picker. If you put your `.ipa` files and `.app` bundles in the `touchHLE_apps` directory, they will show up in the app picker when you run touchHLE.
 
-To configure the options, you can then edit the `touchHLE_options.txt` file. To get a list of options, look in the `OPTIONS_HELP.txt` file.
+To configure the options, you can edit the `touchHLE_options.txt` file. To get a list of options, look in the `OPTIONS_HELP.txt` file.
 
 ## Command-line user interface
 

@@ -189,11 +189,14 @@ pub(super) fn objc_msgSendSuper2(
     objc_msgSend_inner(env, receiver, selector, /* super2: */ Some(class))
 }
 
+/// Trait used to constrain the types of [msg_send]'s arguments so that the
+/// first two are always [id] and [SEL].
+/// See `impl_HostIMP` for implementations.
+pub trait MsgSendArgs {}
+
 /// Wrapper around [objc_msgSend] which, together with [msg], makes it easy to
 /// send messages in host code. Warning: all types are inferred from the
 /// call-site, be very sure you get them correct!
-///
-/// TODO: Ideally we can constrain the first two args to be `id` and `SEL`?
 ///
 /// TODO: Could we pass along dynamic type information to `objc_msgSend` so it
 /// can do runtime type-checking? Perhaps only in debug builds.
@@ -201,6 +204,7 @@ pub fn msg_send<R, P>(env: &mut Environment, args: P) -> R
 where
     fn(&mut Environment, id, SEL): CallFromHost<R, P>,
     fn(&mut Environment, MutVoidPtr, id, SEL): CallFromHost<R, P>,
+    P: MsgSendArgs,
     R: GuestRet,
 {
     if R::SIZE_IN_MEM.is_some() {
@@ -210,12 +214,18 @@ where
     }
 }
 
+/// Trait used to constrain the types of [msg_send_super]'s arguments so that
+/// the first two are always an [objc_super] pointer and [SEL].
+/// See `impl_HostIMP` for implementations.
+pub trait MsgSendSuperArgs {}
+
 /// [msg_send] but for super-calls (calls [objc_msgSendSuper2]). You probably
 /// want to use [msg_super] rather than calling this directly.
 pub fn msg_send_super2<R, P>(env: &mut Environment, args: P) -> R
 where
     fn(&mut Environment, ConstPtr<objc_super>, SEL): CallFromHost<R, P>,
     fn(&mut Environment, MutVoidPtr, ConstPtr<objc_super>, SEL): CallFromHost<R, P>,
+    P: MsgSendSuperArgs,
     R: GuestRet,
 {
     if R::SIZE_IN_MEM.is_some() {
@@ -308,7 +318,7 @@ macro_rules! msg_super {
                 class,
             });
 
-            let args = (super_ptr, sel, $($arg1,)? $($argn),*);
+            let args = (super_ptr.cast_const(), sel, $($arg1,)? $($argn),*);
             let res = $crate::objc::msg_send_super2($env, args);
 
             $env.cpu.regs_mut()[$crate::cpu::Cpu::SP] = old_sp;

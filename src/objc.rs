@@ -41,7 +41,9 @@ pub use objects::{
 pub use selectors::{selector, SEL};
 
 use classes::{ClassHostObject, FakeClass, UnimplementedClass, CLASS_LISTS};
-use messages::{objc_msgSend, objc_msgSendSuper2, objc_msgSend_stret};
+use messages::{
+    objc_msgSend, objc_msgSendSuper2, objc_msgSend_stret, MsgSendArgs, MsgSendSuperArgs,
+};
 use methods::method_list_t;
 use objects::{objc_object, HostObjectEntry};
 use properties::{objc_copyStruct, objc_setProperty};

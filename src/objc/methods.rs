@@ -9,11 +9,12 @@
 //! - [Apple's documentation of `class_addMethod`](https://developer.apple.com/documentation/objectivec/1418901-class_addmethod?language=objc)
 
 use super::{
-    id, nil, objc_super, Class, ClassHostObject, MsgSendArgs, MsgSendSuperArgs, ObjC, SEL,
+    id, nil, objc_super, Class, ClassHostObject, MsgSendSignature, MsgSendSuperSignature, ObjC, SEL,
 };
 use crate::abi::{CallFromGuest, DotDotDot, GuestArg, GuestFunction, GuestRet};
 use crate::mem::{guest_size_of, ConstPtr, GuestUSize, Mem, Ptr, SafeRead};
 use crate::Environment;
+use std::any::TypeId;
 
 /// Type for any function implementating a method.
 ///
@@ -29,36 +30,48 @@ pub enum IMP {
 }
 
 /// Type for any host function implementing a method (see also [IMP]).
-pub trait HostIMP: CallFromGuest {}
+pub trait HostIMP: CallFromGuest {
+    /// See [MsgSendSignature::type_info].
+    fn type_info(&self) -> (TypeId, &'static str);
+}
 
 macro_rules! impl_HostIMP {
     ( $($P:ident),* ) => {
         impl<R, $($P,)*> HostIMP for fn(&mut Environment, id, SEL, $($P,)*) -> R
         where
-            R: GuestRet,
-            $($P: GuestArg,)*
+            R: GuestRet + 'static,
+            $($P: GuestArg + 'static,)*
         {
+            fn type_info(&self) -> (TypeId, &'static str) {
+                <(R, (id, SEL, $($P,)*)) as MsgSendSignature>::type_info()
+            }
         }
         impl<R, $($P,)*> HostIMP for fn(&mut Environment, id, SEL, $($P,)* DotDotDot) -> R
         where
-            R: GuestRet,
-            $($P: GuestArg,)*
+            R: GuestRet + 'static,
+            $($P: GuestArg + 'static,)*
         {
+            fn type_info(&self) -> (TypeId, &'static str) {
+                todo!("host-to-host message calls with var-args"); // TODO
+            }
         }
 
         // Currently there is a one-to-one mapping between valid host IMP
         // parameters and valid host message send arguments, so the traits for
         // the latter are also implemented here for convenience.
 
-        impl<$($P,)*> MsgSendArgs for (id, SEL, $($P,)*)
+        impl<R, $($P,)*> MsgSendSignature for (R, (id, SEL, $($P,)*))
         where
-            $($P: GuestArg,)*
+            R: GuestRet + 'static,
+            $($P: GuestArg + 'static,)*
         {
         }
-        impl<$($P,)*> MsgSendSuperArgs for (ConstPtr<objc_super>, SEL, $($P,)*)
+        impl<R, $($P,)*> MsgSendSuperSignature for (R, (ConstPtr<objc_super>, SEL, $($P,)*))
         where
-            $($P: GuestArg,)*
+            R: GuestRet + 'static,
+            $($P: GuestArg + 'static,)*
         {
+            type WithoutSuper = (R, (id, SEL, $($P,)*));
         }
     }
 }

@@ -42,7 +42,7 @@ pub use selectors::{selector, SEL};
 
 use classes::{ClassHostObject, FakeClass, UnimplementedClass, CLASS_LISTS};
 use messages::{
-    objc_msgSend, objc_msgSendSuper2, objc_msgSend_stret, MsgSendArgs, MsgSendSuperArgs,
+    objc_msgSend, objc_msgSendSuper2, objc_msgSend_stret, MsgSendSignature, MsgSendSuperSignature,
 };
 use methods::method_list_t;
 use objects::{objc_object, HostObjectEntry};
@@ -73,6 +73,11 @@ pub struct ObjC {
 
     /// Mutexes used in @synchronized blocks (objc_sync_enter/exit).
     sync_mutexes: HashMap<id, MutexId>,
+
+    /// Temporary storage for optional type information when sending a message.
+    /// Type information isn't part of the `objc_msgSend` ABI, so an alternative
+    /// channel is needed.
+    message_type_info: Option<(std::any::TypeId, &'static str)>,
 }
 
 impl ObjC {
@@ -82,6 +87,7 @@ impl ObjC {
             objects: HashMap::new(),
             classes: HashMap::new(),
             sync_mutexes: HashMap::new(),
+            message_type_info: None,
         }
     }
 }

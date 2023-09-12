@@ -15,6 +15,7 @@ use super::{id, nil, Class, ObjC, IMP, SEL};
 use crate::abi::{CallFromHost, GuestRet};
 use crate::mem::{ConstPtr, MutVoidPtr, SafeRead};
 use crate::Environment;
+use std::any::TypeId;
 
 /// The core implementation of `objc_msgSend`, the main function of Objective-C.
 ///
@@ -30,6 +31,8 @@ use crate::Environment;
 /// overwriting it.
 #[allow(non_snake_case)]
 fn objc_msgSend_inner(env: &mut Environment, receiver: id, selector: SEL, super2: Option<Class>) {
+    let message_type_info = env.objc.message_type_info.take();
+
     if receiver == nil {
         // https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/ObjectiveC/Chapters/ocObjectsClasses.html#//apple_ref/doc/uid/TP30001163-CH11-SW7
         log_dbg!("[nil {}]", selector.as_str(&env.mem));
@@ -87,7 +90,30 @@ fn objc_msgSend_inner(env: &mut Environment, receiver: id, selector: SEL, super2
 
             if let Some(imp) = methods.get(&selector) {
                 match imp {
-                    IMP::Host(host_imp) => host_imp.call_from_guest(env),
+                    IMP::Host(host_imp) => {
+                        // TODO: do type checks when calling GuestIMPs too.
+                        // That requires using Objective-C type strings, rather
+                        // than Rust types, and should probably warn rather than
+                        // panicking, because apps might rely on type punning.
+                        if let Some((sent_type_id, sent_type_desc)) = message_type_info {
+                            let (expected_type_id, expected_type_desc) = host_imp.type_info();
+                            if sent_type_id != expected_type_id {
+                                panic!(
+                                    "\
+Type mismatch when sending message {} to {:?}!
+- Message has type: {:?} / {}
+- Method expects type: {:?} / {}",
+                                    selector.as_str(&env.mem),
+                                    receiver,
+                                    sent_type_id,
+                                    sent_type_desc,
+                                    expected_type_id,
+                                    expected_type_desc
+                                );
+                            }
+                        }
+                        host_imp.call_from_guest(env)
+                    }
                     // We can't create a new stack frame, because that would
                     // interfere with pass-through of stack arguments.
                     IMP::Guest(guest_imp) => guest_imp.call_without_pushing_stack_frame(env),
@@ -189,24 +215,39 @@ pub(super) fn objc_msgSendSuper2(
     objc_msgSend_inner(env, receiver, selector, /* super2: */ Some(class))
 }
 
-/// Trait used to constrain the types of [msg_send]'s arguments so that the
-/// first two are always [id] and [SEL].
-/// See `impl_HostIMP` for implementations.
-pub trait MsgSendArgs {}
+/// Trait that assists with type-checking of [msg_send]'s arguments.
+///
+/// - Statically constrains the types of [msg_send]'s arguments so that the
+///   first two are always [id] and [SEL].
+/// - Provides the type ID to enable dynamic type checking of subsequent
+///   arguments and the return type.
+///
+/// See `impl_HostIMP` for implementations. See also [MsgSendSuperSignature].
+pub trait MsgSendSignature: 'static {
+    /// Get the [TypeId] and a human-readable description for this signature.
+    fn type_info() -> (TypeId, &'static str) {
+        #[cfg(debug_assertions)]
+        let type_name = std::any::type_name::<Self>();
+        // Avoid wasting space on type names in release builds. At the time of
+        // writing this saves about 36KB.
+        #[cfg(not(debug_assertions))]
+        let type_name = "[description unavailable in release builds]";
+        (TypeId::of::<Self>(), type_name)
+    }
+}
 
 /// Wrapper around [objc_msgSend] which, together with [msg], makes it easy to
 /// send messages in host code. Warning: all types are inferred from the
-/// call-site, be very sure you get them correct!
-///
-/// TODO: Could we pass along dynamic type information to `objc_msgSend` so it
-/// can do runtime type-checking? Perhaps only in debug builds.
+/// call-site and they may not be checked, so be very sure you get them correct!
 pub fn msg_send<R, P>(env: &mut Environment, args: P) -> R
 where
     fn(&mut Environment, id, SEL): CallFromHost<R, P>,
     fn(&mut Environment, MutVoidPtr, id, SEL): CallFromHost<R, P>,
-    P: MsgSendArgs,
+    (R, P): MsgSendSignature,
     R: GuestRet,
 {
+    // Provide type info for dynamic type checking.
+    env.objc.message_type_info = Some(<(R, P) as MsgSendSignature>::type_info());
     if R::SIZE_IN_MEM.is_some() {
         (objc_msgSend_stret as fn(&mut Environment, MutVoidPtr, id, SEL)).call_from_host(env, args)
     } else {
@@ -214,10 +255,11 @@ where
     }
 }
 
-/// Trait used to constrain the types of [msg_send_super]'s arguments so that
-/// the first two are always an [objc_super] pointer and [SEL].
-/// See `impl_HostIMP` for implementations.
-pub trait MsgSendSuperArgs {}
+/// Counterpart of [MsgSendSignature] for [msg_send_super].
+pub trait MsgSendSuperSignature: 'static {
+    /// Signature with the [msg_send_super] pointer replaced by [id].
+    type WithoutSuper: MsgSendSignature;
+}
 
 /// [msg_send] but for super-calls (calls [objc_msgSendSuper2]). You probably
 /// want to use [msg_super] rather than calling this directly.
@@ -225,7 +267,7 @@ pub fn msg_send_super2<R, P>(env: &mut Environment, args: P) -> R
 where
     fn(&mut Environment, ConstPtr<objc_super>, SEL): CallFromHost<R, P>,
     fn(&mut Environment, MutVoidPtr, ConstPtr<objc_super>, SEL): CallFromHost<R, P>,
-    P: MsgSendSuperArgs,
+    (R, P): MsgSendSuperSignature,
     R: GuestRet,
 {
     if R::SIZE_IN_MEM.is_some() {
@@ -238,7 +280,8 @@ where
 
 /// Macro for sending a message which imitates the Objective-C messaging syntax.
 /// See [msg_send] for the underlying implementation. Warning: all types are
-/// inferred from the call-site, be very sure you get them correct!
+/// inferred from the call-site and they may not be checked, so be very sure you
+/// get them correct!
 ///
 /// ```ignore
 /// msg![env; foo setBar:bar withQux:qux];

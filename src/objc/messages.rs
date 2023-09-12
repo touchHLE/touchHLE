@@ -255,9 +255,9 @@ where
     }
 }
 
-/// Counterpart of [MsgSendSignature] for [msg_send_super].
+/// Counterpart of [MsgSendSignature] for [msg_send_super2].
 pub trait MsgSendSuperSignature: 'static {
-    /// Signature with the [msg_send_super] pointer replaced by [id].
+    /// Signature with the [objc_super] pointer replaced by [id].
     type WithoutSuper: MsgSendSignature;
 }
 

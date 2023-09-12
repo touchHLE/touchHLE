@@ -270,6 +270,8 @@ where
     (R, P): MsgSendSuperSignature,
     R: GuestRet,
 {
+    // Provide type info for dynamic type checking.
+    env.objc.message_type_info = Some(<(R, P) as MsgSendSuperSignature>::WithoutSuper::type_info());
     if R::SIZE_IN_MEM.is_some() {
         todo!() // no stret yet
     } else {

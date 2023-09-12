@@ -505,12 +505,12 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (ConstPtr<u8>)UTF8String {
     // TODO: avoid copying
     let string = to_rust_string(env, this);
-    let c_string = env.mem.alloc_and_write_cstr(string.as_bytes()).cast_const();
+    let c_string = env.mem.alloc_and_write_cstr(string.as_bytes());
     let length: NSUInteger = (string.len() + 1).try_into().unwrap();
     // NSData will handle releasing the string (it is autoreleased)
-    let _: id = msg_class![env; NSData dataWithBytesNoCopy:c_string
+    let _: id = msg_class![env; NSData dataWithBytesNoCopy:(c_string.cast_void())
                                                     length:length];
-    c_string
+    c_string.cast_const()
 }
 
 - (id)stringByTrimmingCharactersInSet:(id)set { // NSCharacterSet*

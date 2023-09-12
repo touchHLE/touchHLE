@@ -330,7 +330,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     let layer = env.objc.borrow::<UIViewHostObject>(this).layer;
     msg![env; layer position]
 }
-- (())setCenter:(CGRect)center {
+- (())setCenter:(CGPoint)center {
     let layer = env.objc.borrow::<UIViewHostObject>(this).layer;
     msg![env; layer setPosition:center]
 }
@@ -370,8 +370,8 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 // Event handling
 
-- (id)pointInside:(CGPoint)point
-        withEvent:(id)_event { // UIEvent* (possibly nil)
+- (bool)pointInside:(CGPoint)point
+          withEvent:(id)_event { // UIEvent* (possibly nil)
     let layer = env.objc.borrow::<UIViewHostObject>(this).layer;
     msg![env; layer containsPoint:point]
 }

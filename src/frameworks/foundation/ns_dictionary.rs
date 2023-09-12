@@ -7,6 +7,7 @@
 
 use super::ns_property_list_serialization::deserialize_plist_from_file;
 use super::{ns_string, ns_url, NSUInteger};
+use crate::abi::VaList;
 use crate::fs::GuestPath;
 use crate::objc::{
     autorelease, id, msg, msg_class, nil, objc_classes, release, retain, ClassExports, HostObject,
@@ -82,6 +83,35 @@ impl DictionaryHostObject {
     }
 }
 
+/// Helper to enable sharing `dictionaryWithObjectsAndKeys:` and
+/// `initWithObjectsAndKeys:`' implementations without vararg passthrough.
+pub fn init_with_objects_and_keys(
+    env: &mut Environment,
+    this: id,
+    first_object: id,
+    mut va_args: VaList,
+) -> id {
+    let first_key: id = va_args.next(env);
+    assert!(first_key != nil); // TODO: raise proper exception
+
+    let mut host_object = <DictionaryHostObject as Default>::default();
+    host_object.insert(env, first_key, first_object, /* copy_key: */ true);
+
+    loop {
+        let object: id = va_args.next(env);
+        if object == nil {
+            break;
+        }
+        let key: id = va_args.next(env);
+        assert!(key != nil); // TODO: raise proper exception
+        host_object.insert(env, key, object, /* copy_key: */ true);
+    }
+
+    *env.objc.borrow_mut(this) = host_object;
+
+    this
+}
+
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);
@@ -108,11 +138,9 @@ pub const CLASSES: ClassExports = objc_classes! {
     autorelease(env, new_dict)
 }
 
-+ (id)dictionaryWithObjectsAndKeys:(id)first_object /*, ...*/ {
-    // This passes on the va_args by creative abuse of untyped function calls.
-    // I should be ashamed, and you should be careful.
++ (id)dictionaryWithObjectsAndKeys:(id)first_object, ...dots {
     let new_dict: id = msg![env; this alloc];
-    let new_dict: id = msg![env; new_dict initWithObjectsAndKeys:first_object];
+    let new_dict = init_with_objects_and_keys(env, new_dict, first_object, dots.start());
     autorelease(env, new_dict)
 }
 
@@ -178,26 +206,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (id)initWithObjectsAndKeys:(id)first_object, ...dots {
-    let mut va_args = dots.start();
-    let first_key: id = va_args.next(env);
-    assert!(first_key != nil); // TODO: raise proper exception
-
-    let mut host_object = <DictionaryHostObject as Default>::default();
-    host_object.insert(env, first_key, first_object, /* copy_key: */ true);
-
-    loop {
-        let object: id = va_args.next(env);
-        if object == nil {
-            break;
-        }
-        let key: id = va_args.next(env);
-        assert!(key != nil); // TODO: raise proper exception
-        host_object.insert(env, key, object, /* copy_key: */ true);
-    }
-
-    *env.objc.borrow_mut(this) = host_object;
-
-    this
+    init_with_objects_and_keys(env, this, first_object, dots.start())
 }
 
 - (id)init {

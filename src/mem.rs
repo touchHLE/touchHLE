@@ -88,6 +88,10 @@ impl<T, const MUT: bool> Ptr<T, MUT> {
         Ptr::<U, MUT>::from_bits(self.to_bits())
     }
 
+    pub fn cast_void(self) -> Ptr<std::ffi::c_void, MUT> {
+        self.cast()
+    }
+
     pub fn is_null(self) -> bool {
         self.to_bits() == 0
     }

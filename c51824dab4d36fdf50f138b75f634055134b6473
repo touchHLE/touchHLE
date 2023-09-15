@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "09fea727_dde1bb15",
+        "filename": "src/libc/errno.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 47,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-09-15T18:01:21Z",
+      "side": 1,
+      "message": "The string is allowed to be null. It\u0027d be easy to support that, right?",
+      "revId": "c51824dab4d36fdf50f138b75f634055134b6473",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "81662d56_a43c2a78",
+        "filename": "src/libc/errno.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 48,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-09-15T18:01:21Z",
+      "side": 1,
+      "message": "I think `perror` includes a newline in the output, but this won\u0027t, so it\u0027ll get really messy.\n\nAs an aside, it would be nice if the output still looked `perror`-y even though we don\u0027t do `errno` yet. `perror(\"Can\u0027t create file\");` producing an output similar to  `fprintf(stderr, \"Can\u0027t create file: \u003cTODO: errno\u003e\\n\");` would be nice.",
+      "revId": "c51824dab4d36fdf50f138b75f634055134b6473",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4ea7d7d2_a4b21fb0",
+        "filename": "src/libc/stdlib.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 162,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-09-16T14:29:33Z",
+      "side": 1,
+      "message": "I figure we might end up having a bunch of these. What if you change the `panic!(\"` below to just `log!(\"Warning: ` (and return NULL)? Then we don\u0027t need any special cases.",
+      "revId": "53901828fe6c99cfa7fa392cefa7dd3211a541d0",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

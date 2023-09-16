@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "bd2d5e62_5aa46296",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 3
+      },
+      "lineNbr": 9,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-09-16T14:48:25Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "e68fbdfa_9e3837e5",
+      "revId": "7ee161bde6d9fe66b64f0878eec978aa05ea9b63",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "ddf6a687_3a5a087d",
@@ -31,6 +49,24 @@
       "writtenOn": "2023-09-16T14:36:48Z",
       "side": 1,
       "message": "We can drop these annotations now. :)",
+      "revId": "7ee161bde6d9fe66b64f0878eec978aa05ea9b63",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "e677337c_77886f52",
+        "filename": "src/libc/posix_io.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 48,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-09-16T14:48:25Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "ddf6a687_3a5a087d",
       "revId": "7ee161bde6d9fe66b64f0878eec978aa05ea9b63",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

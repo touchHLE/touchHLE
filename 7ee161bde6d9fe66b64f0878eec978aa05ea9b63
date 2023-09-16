@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e68fbdfa_9e3837e5",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 3
+      },
+      "lineNbr": 9,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-09-16T14:33:47Z",
+      "side": 1,
+      "message": "Might want to add `Co-authored-by: alborrajo \u003calvarolopezborr@gmail.com\u003e` (https://docs.github.com/en/pull-requests/committing-changes-to-your-project/creating-and-editing-commits/creating-a-commit-with-multiple-authors#creating-co-authored-commits-on-the-command-line) to preserve attribution of their work.",
+      "revId": "7ee161bde6d9fe66b64f0878eec978aa05ea9b63",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

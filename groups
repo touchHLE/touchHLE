@@ -1,4 +1,5 @@
-# UUID             	Group Name
+# UUID                 	Group Name
 #
-global:Change-Owner	Change Owner
-user:hikari-no-yume	user/hikari_no_yume (hikari-no-yume)
+global:Change-Owner    	Change Owner
+global:Registered-Users	Registered Users
+user:hikari-no-yume    	user/hikari_no_yume (hikari-no-yume)

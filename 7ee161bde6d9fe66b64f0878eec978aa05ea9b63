@@ -16,6 +16,23 @@
       "message": "Might want to add `Co-authored-by: alborrajo \u003calvarolopezborr@gmail.com\u003e` (https://docs.github.com/en/pull-requests/committing-changes-to-your-project/creating-and-editing-commits/creating-a-commit-with-multiple-authors#creating-co-authored-commits-on-the-command-line) to preserve attribution of their work.",
       "revId": "7ee161bde6d9fe66b64f0878eec978aa05ea9b63",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ddf6a687_3a5a087d",
+        "filename": "src/libc/posix_io.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 48,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-09-16T14:36:48Z",
+      "side": 1,
+      "message": "We can drop these annotations now. :)",
+      "revId": "7ee161bde6d9fe66b64f0878eec978aa05ea9b63",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

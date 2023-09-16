@@ -1,5 +1,4 @@
-# UUID                 	Group Name
+# UUID             	Group Name
 #
-global:Registered-Users	Registered Users
-user:ciciplusplus      	user/ciciplusplus (ciciplusplus)
-user:hikari-no-yume    	user/hikari_no_yume (hikari-no-yume)
+global:Change-Owner	Change Owner
+user:hikari-no-yume	user/hikari_no_yume (hikari-no-yume)

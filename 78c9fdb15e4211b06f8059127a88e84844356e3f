@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "42b53786_ac62c8f3",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-09-16T14:00:43Z",
+      "side": 1,
+      "message": "ciciplusplus had essentially the same change and it has been merged now, so this one can be abandoned I guess.",
+      "revId": "78c9fdb15e4211b06f8059127a88e84844356e3f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

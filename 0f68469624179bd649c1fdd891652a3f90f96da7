@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "2bd355b0_d7265ac3",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-09-16T06:06:07Z",
+      "side": 1,
+      "message": "OK, I\u0027m happy with this. Can you try giving it the \"Verified+1\" label yourself? (If you\u0027ve tested it.) I wanna know whether you\u0027ll be able to merge it yourself then.",
+      "revId": "0f68469624179bd649c1fdd891652a3f90f96da7",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

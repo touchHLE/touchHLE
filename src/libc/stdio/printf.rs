@@ -16,6 +16,7 @@ use crate::Environment;
 use std::io::Write;
 
 const INTEGER_SPECIFIERS: [u8; 6] = [b'd', b'i', b'o', b'u', b'x', b'X'];
+const FLOAT_SPECIFIERS: [u8; 1] = [b'f'];
 
 /// String formatting implementation for `printf` and `NSLog` function families.
 ///
@@ -76,7 +77,9 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
         }
 
         if has_precision {
-            assert!(INTEGER_SPECIFIERS.contains(&specifier))
+            assert!(
+                INTEGER_SPECIFIERS.contains(&specifier) || FLOAT_SPECIFIERS.contains(&specifier)
+            )
         }
 
         match specifier {

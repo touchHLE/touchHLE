@@ -34,6 +34,24 @@
       "parentUuid": "8962bdd7_10753dc4",
       "revId": "7b970df4d5191f876db5b25c740f493184c71c5d",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e4b8e509_5cb16352",
+        "filename": "src/libc/string.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 129,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-09-18T08:07:01Z",
+      "side": 1,
+      "message": "Ah okay. Well, there\u0027s nothing wrong with the nesting in theory, but in practice the nested function has exactly the same signature as the outer function, so it\u0027s kinda pointless right now. :p\n\nI would prefer if this is changed but I\u0027ll give you a +2 anyway.",
+      "parentUuid": "620bb6fc_af1ca97a",
+      "revId": "7b970df4d5191f876db5b25c740f493184c71c5d",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

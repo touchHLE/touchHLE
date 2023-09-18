@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d62a597b_76cf2efb",
+        "filename": "src/libc/generic_char.rs",
+        "patchSetId": 4
+      },
+      "lineNbr": 150,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-09-18T10:08:55Z",
+      "side": 1,
+      "message": "There\u0027s no wide variant of this function, so you could move this to `string.rs` if you want.",
+      "revId": "721be6c9a5b0f8ed7861e8990a0067e3b2b704a9",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "dee452cd_e618a427",
+        "filename": "src/libc/generic_char.rs",
+        "patchSetId": 4
+      },
+      "lineNbr": 164,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-09-18T10:08:55Z",
+      "side": 1,
+      "message": "If I understand https://developer.apple.com/library/archive/documentation/System/Conceptual/ManPages_iPhoneOS/man3/strsep.3.html correctly, NULL should be written to `stringp` in this case.",
+      "revId": "721be6c9a5b0f8ed7861e8990a0067e3b2b704a9",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

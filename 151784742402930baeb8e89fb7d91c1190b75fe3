@@ -16,6 +16,23 @@
       "message": "Could you try to re-organize these into files with names matching the relevant Unix headers? (The iOS manual pages are a good reference.) Obviously they\u0027re just stubs right now, but I expect touchHLE will have full networking support eventually.",
       "revId": "151784742402930baeb8e89fb7d91c1190b75fe3",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ef8d177c_5526a40d",
+        "filename": "src/libc/network.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 11,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-09-18T08:15:25Z",
+      "side": 1,
+      "message": "It would be good to add some `TODO` comments and also to explain what the return values mean.",
+      "revId": "151784742402930baeb8e89fb7d91c1190b75fe3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

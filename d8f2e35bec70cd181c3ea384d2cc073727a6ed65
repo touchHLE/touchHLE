@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "182c69dd_7c997b6d",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 5
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-09-18T11:06:22Z",
+      "side": 1,
+      "message": "I don\u0027t really want to add this, because it\u0027s dependent on the user\u0027s monitor refresh rate. Also, I\u0027m not sure if it\u0027ll work consistently across platforms.\n\nI have an open issue about it (https://github.com/hikari-no-yume/touchHLE/issues/143) because it also affects Fastlane. What I\u0027d like to do is add a non-vsync-based 60Hz frame limiter to `presentRenderbuffer:`. I\u0027m not sure how complicated the timing logic would need to be. If possible it\u0027d be good if it could synchronize with the timer for the compositor.\n\nIf you want to take a stab at it, be my guest. Otherwise, I\u0027ll probably get around to it at some point, because Fastlane really needs it.",
+      "revId": "d8f2e35bec70cd181c3ea384d2cc073727a6ed65",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

@@ -16,6 +16,24 @@
       "message": "Can you get rid of the double first line?",
       "revId": "0f30ff167542ddd773d2de6be122c8da17d68f95",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "7a2c6718_08a0e226",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 3
+      },
+      "lineNbr": 8,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-09-18T16:27:37Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "51f54a8a_d7fa5fbd",
+      "revId": "0f30ff167542ddd773d2de6be122c8da17d68f95",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

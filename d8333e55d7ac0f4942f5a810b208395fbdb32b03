@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "94f2c6a3_6749e9e0",
+        "filename": "src/frameworks/foundation/ns_date.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 35,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-09-18T19:23:29Z",
+      "side": 1,
+      "message": "according to https://developer.apple.com/documentation/foundation/nsdate/1410206-timeintervalsincedate?language\u003dobjc, anotherDate should not be nil.\nI suggest to panic if it\u0027s the case (though docs says that result is undefined)",
+      "revId": "d8333e55d7ac0f4942f5a810b208395fbdb32b03",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

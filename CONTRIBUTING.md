@@ -43,7 +43,7 @@ $ git push gerrit HEAD:refs/for/trunk
 
 Then go to GerritHub, make sure you didn't push anything you didn't intend to, and add `hikari_no_yume` as a reviewer.
 
-If you're submitting a large number of changes with a common theme (for example, they all improve compatibility with some app), it is recommended to _also_ create a GitHub pull request. This improves visibility and ensures your changes are tested by the GitHub CI. You can then the Gerrit reviews with a “topic” named like `touchHLE/pull/xxx` where xxx is the pull request number. (You can bulk-tag things by using the check-boxes on the GerritHub homepage.)
+If you're submitting a large number of changes with a common theme, e.g. improving compatibility with some app, it is recommended to _also_ create a GitHub pull request. This improves visibility and ensures your changes are tested by the GitHub CI. You can then tag the Gerrit reviews with a “topic” named like `touchHLE/pull/xxx` where xxx is the pull request number. You can bulk-tag things using the checkboxes on the GerritHub homepage.
 
 Please also see the following guidelines for what to do with code changes.
 

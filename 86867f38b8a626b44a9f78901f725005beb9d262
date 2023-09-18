@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "dc354819_b6cfc0f8",
+        "filename": "src/libc/stdio/printf.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 346,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-09-18T09:59:26Z",
+      "side": 1,
+      "message": "Can you make it respect stderr?",
+      "revId": "86867f38b8a626b44a9f78901f725005beb9d262",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

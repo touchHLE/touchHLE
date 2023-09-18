@@ -33,6 +33,24 @@
       "message": "please move it out of the section of stubs (\"move it up\")",
       "revId": "7ced9282195b2427d5f99ffb2d348d1f757b4724",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "c9a94cad_c3100120",
+        "filename": "src/frameworks/openal.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 530,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2023-09-18T19:05:44Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "d4d0f2e7_bbc97d40",
+      "revId": "7ced9282195b2427d5f99ffb2d348d1f757b4724",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

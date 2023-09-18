@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "abf9fbb3_b3c6d0de",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-09-18T13:14:02Z",
+      "side": 1,
+      "message": "Cici\u0027s version of this was merged in https://review.gerrithub.io/c/hikari-no-yume/touchHLE/+/1169032 so I suggest abandoning this.",
+      "revId": "5df8da21ddf28209afcfe4c9cca2dc8b086c4530",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

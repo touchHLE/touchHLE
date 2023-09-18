@@ -17,7 +17,7 @@ $ git clone https://github.com/hikari-no-yume/touchHLE.git
 $ cd touchHLE
 ```
 
-touchHLE uses Gerrit for code review. [The touchHLE repo on GerritHub](https://review.gerrithub.io/q/project:hikari-no-yume/touchHLE+status:open)) is where you can submit patches.
+touchHLE uses Gerrit for code review. [The touchHLE repo on GerritHub](https://review.gerrithub.io/q/project:hikari-no-yume/touchHLE+status:open) is where you can submit patches.
 
 Log into GerritHub with your GitHub account. You can then add GerritHub as a “remote” (replace `your-github-username-here` with your username):
 

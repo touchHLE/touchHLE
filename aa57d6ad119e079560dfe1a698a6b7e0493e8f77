@@ -1,6 +1,23 @@
 {
   "comments": [
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "500255f4_102c4492",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-09-18T16:43:33Z",
+      "side": 1,
+      "message": "Could you test whether these hardcoded relocations are still needed? My changes in e8aceef416e5ed9e19d99adc83793300f6bfdf33 might have fixed this.",
+      "revId": "aa57d6ad119e079560dfe1a698a6b7e0493e8f77",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "03da6cec_18b486f0",

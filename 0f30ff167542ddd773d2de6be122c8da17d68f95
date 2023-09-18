@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "51f54a8a_d7fa5fbd",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 3
+      },
+      "lineNbr": 8,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-09-18T08:12:02Z",
+      "side": 1,
+      "message": "Can you get rid of the double first line?",
+      "revId": "0f30ff167542ddd773d2de6be122c8da17d68f95",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

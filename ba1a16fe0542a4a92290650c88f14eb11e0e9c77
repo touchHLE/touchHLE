@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c6629577_b0d0f990",
+        "filename": "src/audio/openal_soft_wrapper/lib.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 142,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-09-18T18:33:22Z",
+      "side": 0,
+      "message": "why this was removed?",
+      "revId": "ba1a16fe0542a4a92290650c88f14eb11e0e9c77",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

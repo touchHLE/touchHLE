@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "6b546677_4b2422e3",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-09-18T18:33:22Z",
+      "side": 1,
+      "message": "it seems like there are some rebase issues with this commit, does it actually builds?",
+      "revId": "7ced9282195b2427d5f99ffb2d348d1f757b4724",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d4d0f2e7_bbc97d40",
+        "filename": "src/frameworks/openal.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 530,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-09-18T18:33:22Z",
+      "side": 1,
+      "message": "please move it out of the section of stubs (\"move it up\")",
+      "revId": "7ced9282195b2427d5f99ffb2d348d1f757b4724",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

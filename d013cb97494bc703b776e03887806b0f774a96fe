@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5e177f43_4d88e52f",
+        "filename": "src/libc/posix_io.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 299,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-09-18T18:39:34Z",
+      "side": 1,
+      "message": "this log seems redundant with other logs, do you really need it?",
+      "revId": "d013cb97494bc703b776e03887806b0f774a96fe",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

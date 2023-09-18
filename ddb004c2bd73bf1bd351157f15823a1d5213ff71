@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7bc2f589_d5f6c441",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 5
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-09-18T11:07:07Z",
+      "side": 1,
+      "message": "Can you squash this into the semaphore implementation commit?",
+      "revId": "ddb004c2bd73bf1bd351157f15823a1d5213ff71",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

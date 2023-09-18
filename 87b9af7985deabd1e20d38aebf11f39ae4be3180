@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "88845cf3_9db3e941",
+        "filename": "src/libc/stdio/printf.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 345,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-09-18T10:32:59Z",
+      "side": 1,
+      "message": "Looks fine, but this shouldn\u0027t be in `printf.rs`.",
+      "revId": "87b9af7985deabd1e20d38aebf11f39ae4be3180",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

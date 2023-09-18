@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "cb5d3b7e_cca3983c",
+        "filename": "src/libc/stdio.rs",
+        "patchSetId": 4
+      },
+      "lineNbr": 103,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-09-18T10:31:41Z",
+      "side": 1,
+      "message": "Uhh, why not just write the characters into memory directly with `env.mem.write`? Not only is it more efficient, but it\u0027d be easier for me to see if the code is correct. I believe that it\u0027s allowed for it to write stuff to memory even if an error occurs.",
+      "revId": "5dd5bba28e15224ee0628133c64ab53d232f6c10",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

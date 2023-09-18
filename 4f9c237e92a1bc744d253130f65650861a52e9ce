@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3e79081a_43c8d392",
+        "filename": "src/libc/unistd.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 44,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-09-18T10:10:56Z",
+      "side": 1,
+      "message": "I don\u0027t think we\u0027ll ever support other terminals, so you may as well generalise this: if it\u0027s stdout, stderr or stdin, return 1, otherwise return 0.",
+      "revId": "4f9c237e92a1bc744d253130f65650861a52e9ce",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

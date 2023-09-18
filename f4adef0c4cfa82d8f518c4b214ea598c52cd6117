@@ -16,6 +16,24 @@
       "message": "you should squash it with https://review.gerrithub.io/c/hikari-no-yume/touchHLE/+/1168653",
       "revId": "f4adef0c4cfa82d8f518c4b214ea598c52cd6117",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "4f4badb7_a00d44f4",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2023-09-18T19:06:42Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "de986772_daea4d92",
+      "revId": "f4adef0c4cfa82d8f518c4b214ea598c52cd6117",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

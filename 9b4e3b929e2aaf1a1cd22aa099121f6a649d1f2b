@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c59a0ad2_e692e851",
+        "filename": "src/libc/stdio/printf.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 67,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-09-18T09:56:11Z",
+      "side": 1,
+      "message": "Could you add an assert that this isn\u0027t used with integers, as a reminder to implement it?",
+      "revId": "9b4e3b929e2aaf1a1cd22aa099121f6a649d1f2b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "05de79ba_ef8988ca",
+        "filename": "src/libc/stdio/printf.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 142,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-09-18T09:56:11Z",
+      "side": 1,
+      "message": "What if there\u0027s zero-padding, or no padding? I think there might need to be several more branches in these nested `if`s, though I would suggest replacing them all with one big `match` on a tuple like `(pad_width, pad_char, float_precision)` to make it more manageable. Maybe it could also be simplified by always providing a pad width, so we don\u0027t need a branch for that.\n\n(If only we could directly construct a `std::fmt::Formatter`… alas it seems to be impossible 😢)",
+      "revId": "9b4e3b929e2aaf1a1cd22aa099121f6a649d1f2b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

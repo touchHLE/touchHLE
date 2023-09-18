@@ -16,6 +16,24 @@
       "message": "this log seems redundant with other logs, do you really need it?",
       "revId": "d013cb97494bc703b776e03887806b0f774a96fe",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d11cb7ce_b3aae728",
+        "filename": "src/libc/posix_io.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 299,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2023-09-18T19:23:26Z",
+      "side": 1,
+      "message": "Removed log, it was there for debugging purposes since it crashed before the rest of the function but its no longer needed",
+      "parentUuid": "5e177f43_4d88e52f",
+      "revId": "d013cb97494bc703b776e03887806b0f774a96fe",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

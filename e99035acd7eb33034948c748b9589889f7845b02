@@ -16,6 +16,24 @@
       "message": "why 128? (better to add some comment or use a named constant)",
       "revId": "e99035acd7eb33034948c748b9589889f7845b02",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c688553f_531695ec",
+        "filename": "src/audio.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 247,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2023-09-18T19:43:46Z",
+      "side": 1,
+      "message": "I\u0027ve added a comment explaining the reasoning",
+      "parentUuid": "bbc27218_b88584b5",
+      "revId": "e99035acd7eb33034948c748b9589889f7845b02",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

@@ -6,6 +6,47 @@ Please also read the [code of conduct](CODE_OF_CONDUCT.md).
 
 Please bear in mind that there are infinitely many apps that do not work in touchHLE right now, so please don't open issues about apps that aren't in [the supported list](APP_SUPPORT.md), unless you've got it partially working (e.g. loaded up to the menu but the main game doesn't work). The fact that an app's splash screen (Default.png) shows up doesn't mean it's partially working.
 
+## Source control and review
+
+### Setting up the repo
+
+touchHLE uses git source control. You can get the source code from GitHub like this:
+
+```
+$ git clone https://github.com/hikari-no-yume/touchHLE.git
+$ cd touchHLE
+```
+
+touchHLE uses Gerrit for code review. [The touchHLE repo on GerritHub](https://review.gerrithub.io/q/project:hikari-no-yume/touchHLE+status:open)) is where you can submit patches.
+
+Log into GerritHub with your GitHub account. You can then add GerritHub as a “remote” (replace `your-github-username-here` with your username):
+
+```
+$ git remote add gerrit "ssh://your-github-username-here@review.gerrithub.io:29418/hikari-no-yume/touchHLE"
+```
+
+Gerrit requires your commit messages to have a `Change-Id:` line in them. Gerrit provides a git hook that adds this line to your commit messages automatically. You can install it like this (Windows users may need to use git bash for this):
+
+```
+$ (f=`git rev-parse --git-dir`/hooks/commit-msg ; mkdir -p $(dirname $f) ; curl -Lo $f https://review.gerrithub.io/tools/hooks/commit-msg ; chmod +x $f)
+```
+
+### Submitting changes
+
+Make a local branch based on `trunk` with your changes. Try to avoid bundling unrelated changes in one commit. If you make a mistake in a commit that hasn't been merged yet, please fix it by modifying the original commit (e.g. using `git commit --amend --reset-author`), rather than by adding a separate commit.
+
+Once you're happy with your changes, you can push them for review on Gerrit with:
+
+```
+$ git push gerrit HEAD:refs/for/trunk
+```
+
+Then go to GerritHub, make sure you didn't push anything you didn't intend to, and add `hikari_no_yume` as a reviewer.
+
+If you're submitting a large number of changes with a common theme (for example, they all improve compatibility with some app), it is recommended to _also_ create a GitHub pull request. This improves visibility and ensures your changes are tested by the GitHub CI. You can then the Gerrit reviews with a “topic” named like `touchHLE/pull/xxx` where xxx is the pull request number. (You can bulk-tag things by using the check-boxes on the GerritHub homepage.)
+
+Please also see the following guidelines for what to do with code changes.
+
 ## Code contributions
 
 [BUILDING.md](BUILDING.md) and [DEBUGGING.md](DEBUGGING.md) might be helpful while you're working on a contribution.

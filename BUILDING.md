@@ -29,7 +29,7 @@ Of course, we aspire to have cross-compilation work cleanly for all platforms, b
 
 You need [git](https://git-scm.com/), [the Rust toolchain](https://www.rust-lang.org/tools/install), and your platform's standard C and C++ compilers.
 
-First check out the git repo with `git clone`. Also make sure you get the submodules (`git submodule update --init` should be enough).
+First check out the git repo with `git clone`. Also make sure you get the submodules (`git submodule update --init` should be enough). (**If you intend to make commits**, you please also read the “Setting up the repo” section of [the contributing guide](CONTRIBUTING.md).)
 
 There is one special external dependency, Boost:
 

@@ -130,6 +130,8 @@ We stand on the shoulders of giants. Thank you to:
 * The iOS hacking/jailbreaking community.
 * The Free Software Foundation, for making libgcc and libstdc++ copyleft and therefore saving this project from ABI hell.
 * The National Security Agency of the United States of America, for [Ghidra](https://ghidra-sre.org/).
+* [GerritForge](http://www.gerritforge.com/) for providing free Gerrit hosting to the general public, including us.
+* The many contributors to [Gerrit](https://www.gerritcodereview.com/).
 * Many friends who took an interest in the project and gave suggestions and encouragement.
 * Developers of early iPhone OS apps. What treasures you created!
 * Apple, and NeXT before them, for creating such fantastic platforms.

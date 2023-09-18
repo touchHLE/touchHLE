@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "03da6cec_18b486f0",
+        "filename": "src/dyld.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 305,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-09-18T16:36:11Z",
+      "side": 1,
+      "message": "Why \"__objc_empty_vtable\" | \"__objc_empty_cache\" are included here?",
+      "revId": "aa57d6ad119e079560dfe1a698a6b7e0493e8f77",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

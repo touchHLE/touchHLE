@@ -1,16 +1,6 @@
 # Contributing to touchHLE
 
-## General
-
-Please be kind and respectful to others.
-
-It's especially important to value and respect others' time and energy: don't demand or expect anything to happen on any particular timescale, or even for anyone to do anything at all. We're all volunteers here, doing things for the love of it, and if you force us to spend a lot of time on _you_, it's going to slowly chip away at our passion and enthusiasm.
-
-**⚠️ Do not link to pirated content. “Abandonware” is also pirated content.**<br>
-**⚠️ Do not link to illegal copies of applications that were released for free. These are also considered pirated content.**<br>
-**⚠️ Do not ask about how to obtain pirated content.**<br>
-**⚠️ Do not talk about using pirated content.**<br>
-**⚠️ You _will_ be banned if you ignore this warning.**<br>
+Please also read the [code of conduct](CODE_OF_CONDUCT.md).
 
 ## Issues
 
@@ -27,6 +17,8 @@ You should also run `cargo test`. [Building the integration tests requires downl
 If you're going to open a pull request with non-trivial changes, please talk to us first so we can figure out if we're likely to accept them. It would be a shame if your effort had to be wasted.
 
 ### Copyright and reverse engineering
+
+(Please also read the copyright rules in the code of conduct.)
 
 ⚠️ Be **very** careful about copyright. To put it simply: **don't contribute if you've seen code you shouldn't have seen, don't copy code that isn't yours to copy, and especially don't _secretly_ copy and pretend you didn't**. Any infringement of Apple or other copyrights could threaten the foundations of the project, and the livelihoods of current contributors. **If in doubt, don't do it**, but in particular:
 

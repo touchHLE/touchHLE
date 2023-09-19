@@ -70,6 +70,24 @@
       "parentUuid": "e4b8e509_5cb16352",
       "revId": "7b970df4d5191f876db5b25c740f493184c71c5d",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "317da7e7_3cf01cb5",
+        "filename": "src/libc/string.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 129,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-09-19T07:57:37Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "be43f101_20837d56",
+      "revId": "7b970df4d5191f876db5b25c740f493184c71c5d",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

@@ -8,6 +8,8 @@
 use crate::abi::{DotDotDot, VaList};
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::frameworks::foundation::{ns_string, unichar};
+use crate::libc::posix_io::{STDERR_FILENO, STDOUT_FILENO};
+use crate::libc::stdio::FILE;
 use crate::mem::{ConstPtr, GuestUSize, Mem, MutPtr, MutVoidPtr};
 use crate::objc::{id, msg};
 use crate::Environment;
@@ -335,6 +337,22 @@ fn sscanf(env: &mut Environment, src: ConstPtr<u8>, format: ConstPtr<u8>, args: 
     matched_args
 }
 
+fn fprintf(
+    env: &mut Environment,
+    stream: MutPtr<FILE>,
+    format: ConstPtr<u8>,
+    args: DotDotDot,
+) -> i32 {
+    let res = printf_inner::<false, _>(env, |mem, idx| mem.read(format + idx), args.start());
+    // TODO: I/O error handling
+    match env.mem.read(stream).fd {
+        STDOUT_FILENO => _ = std::io::stdout().write_all(&res),
+        STDERR_FILENO => _ = std::io::stderr().write_all(&res),
+        _ => unimplemented!(),
+    }
+    res.len().try_into().unwrap()
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(sscanf(_, _, _)),
     export_c_func!(snprintf(_, _, _, _)),
@@ -343,4 +361,5 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(vsprintf(_, _, _)),
     export_c_func!(sprintf(_, _, _)),
     export_c_func!(printf(_, _)),
+    export_c_func!(fprintf(_, _, _)),
 ];

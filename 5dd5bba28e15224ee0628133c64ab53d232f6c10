@@ -16,6 +16,24 @@
       "message": "Uhh, why not just write the characters into memory directly with `env.mem.write`? Not only is it more efficient, but it\u0027d be easier for me to see if the code is correct. I believe that it\u0027s allowed for it to write stuff to memory even if an error occurs.",
       "revId": "5dd5bba28e15224ee0628133c64ab53d232f6c10",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "c7564e37_8d712721",
+        "filename": "src/libc/stdio.rs",
+        "patchSetId": 4
+      },
+      "lineNbr": 103,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-09-19T07:49:00Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "cb5d3b7e_cca3983c",
+      "revId": "5dd5bba28e15224ee0628133c64ab53d232f6c10",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

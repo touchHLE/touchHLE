@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "58e2d8ee_2a371cec",
+        "filename": "src/frameworks/core_graphics/cg_bitmap_context.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 230,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-09-19T11:11:24Z",
+      "side": 1,
+      "message": "This looks good to me as a temporary solution, but could you add a TODO comment somewhere about the fact it probably isn\u0027t doing RGB to grayscale conversion properly? (I\u0027m assuming you can\u0027t be bothered to check how Apple do it, and neither can I. :p)",
+      "revId": "dfa895f743f0589287d47e04c4f9e5ce018e2089",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

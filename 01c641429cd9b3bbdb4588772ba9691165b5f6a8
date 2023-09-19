@@ -33,6 +33,24 @@
       "message": "Could you move this function up so that it\u0027s right after components_for_rgb? That way it\u0027s easier to check that they\u0027re consistent.",
       "revId": "01c641429cd9b3bbdb4588772ba9691165b5f6a8",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "10d07c2c_e88deb3e",
+        "filename": "src/frameworks/core_graphics/cg_bitmap_context.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 226,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-09-19T11:07:07Z",
+      "side": 1,
+      "message": "Though tbh I\u0027m pretty happy with this as-is so I\u0027ll leave it open to you to ignore me here.",
+      "parentUuid": "54c54828_9dd926e8",
+      "revId": "01c641429cd9b3bbdb4588772ba9691165b5f6a8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

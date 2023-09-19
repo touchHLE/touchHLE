@@ -16,6 +16,24 @@
       "message": "Can you squash this into the semaphore implementation commit?",
       "revId": "ddb004c2bd73bf1bd351157f15823a1d5213ff71",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "417da4da_6984146d",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 5
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-09-19T07:36:00Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "7bc2f589_d5f6c441",
+      "revId": "ddb004c2bd73bf1bd351157f15823a1d5213ff71",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

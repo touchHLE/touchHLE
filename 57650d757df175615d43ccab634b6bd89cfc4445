@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b0ba9979_9e64c7ea",
+        "filename": "src/libc/stdio.rs",
+        "patchSetId": 7
+      },
+      "lineNbr": 104,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-09-19T08:04:35Z",
+      "side": 1,
+      "message": "If you make that `str` parameter `mut` then you could increment it each iteration of the loop and not need a temporary character buffer. ;)",
+      "revId": "57650d757df175615d43ccab634b6bd89cfc4445",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "83866188_6278c64f",
+        "filename": "src/libc/stdio.rs",
+        "patchSetId": 7
+      },
+      "lineNbr": 108,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-09-19T08:04:35Z",
+      "side": 1,
+      "message": "fgets needs to stop reading if the last character read is a newline.",
+      "revId": "57650d757df175615d43ccab634b6bd89cfc4445",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

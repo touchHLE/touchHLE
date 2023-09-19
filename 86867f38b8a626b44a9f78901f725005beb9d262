@@ -16,6 +16,24 @@
       "message": "Can you make it respect stderr?",
       "revId": "86867f38b8a626b44a9f78901f725005beb9d262",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "e528ed9c_5fdff501",
+        "filename": "src/libc/stdio/printf.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 346,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-09-19T07:39:05Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "dc354819_b6cfc0f8",
+      "revId": "86867f38b8a626b44a9f78901f725005beb9d262",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

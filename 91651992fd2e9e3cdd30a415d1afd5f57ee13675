@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "00ca065f_79bcdd30",
+        "filename": "src/libc/stdio/printf.rs",
+        "patchSetId": 6
+      },
+      "lineNbr": 345,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-09-19T07:59:38Z",
+      "side": 1,
+      "message": "Oh uh, can you add a `log_dbg!` here like the other printf functions?",
+      "revId": "91651992fd2e9e3cdd30a415d1afd5f57ee13675",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

@@ -1,0 +1,44 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3556a48d_c55871cb",
+        "filename": "src/frameworks/core_graphics/cg_color_space.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 96,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-09-19T11:09:39Z",
+      "side": 1,
+      "message": "Can you expose the guest constant for completeness? (I\u0027m assuming this is a real one and not something you made up.)",
+      "revId": "8fd61749d58e7e8690d20dd390159ad973eb9e49",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "aec8fd4e_415dbc7a",
+        "filename": "src/frameworks/core_graphics/cg_context.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 87,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-09-19T11:09:39Z",
+      "side": 1,
+      "message": "Uhh where does this 0.5* come from? The docs say it supports the full black-to-white range.",
+      "range": {
+        "startLine": 87,
+        "startChar": 17,
+        "endLine": 87,
+        "endChar": 23
+      },
+      "revId": "8fd61749d58e7e8690d20dd390159ad973eb9e49",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

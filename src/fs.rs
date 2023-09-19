@@ -597,6 +597,24 @@ impl Fs {
         self.lookup_node(path).is_some()
     }
 
+    /// Returns access information about the file/directory at the path
+    /// (exists, read, write, execute)
+    pub fn access(&self, path: &GuestPath) -> (bool, bool, bool, bool) {
+        match self.lookup_node(path) {
+            None => (false, false, false, false),
+            Some(node) => match node {
+                FsNode::File {
+                    location: _,
+                    writeable,
+                } => (true, true, *writeable, false),
+                FsNode::Directory {
+                    children: _,
+                    writeable,
+                } => (true, true, writeable.is_some(), true),
+            },
+        }
+    }
+
     /// Like [Path::is_file] but for the guest filesystem.
     pub fn is_file(&self, path: &GuestPath) -> bool {
         matches!(self.lookup_node(path), Some(FsNode::File { .. }))

@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "717af7ea_5b0f0f19",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-09-19T10:56:35Z",
+      "side": 1,
+      "message": "This is a really nice refactoring! Cleaning this up was long-overdue but I couldn\u0027t think of a way to do it, so I\u0027m glad you thought of this. :D",
+      "revId": "01c641429cd9b3bbdb4588772ba9691165b5f6a8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

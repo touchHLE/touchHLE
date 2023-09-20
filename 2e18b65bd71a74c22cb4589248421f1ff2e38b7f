@@ -16,6 +16,24 @@
       "message": "I\u0027m reluctant to merge this because it\u0027s probably not correct in all cases. I actually started implementing the same thing locally but didn\u0027t finish it due to the same concern.\n\nMy concerns are:\n\n- How does it interact with translation? Presumably it can be flipped by the scale, but what order do they have to happen in for this to work?\n- Shouldn\u0027t it affect other drawing operations too? Are they all affected?\n- This is getting too complicated.\n\nI think this might be the point where we should just implement tranformation matrices already.\n\nI\u0027m willing to take a stab at this myself, if you want.",
       "revId": "2e18b65bd71a74c22cb4589248421f1ff2e38b7f",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f9b660f2_6a226a8e",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 4
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-09-20T21:58:43Z",
+      "side": 1,
+      "message": "I totally agree about the complication point. Regarding other ones, I did check that this doesn\u0027t introduce regression in text drawing for SMB. So, at least this patch is not making things worst and does support text drawing in KataDama.\n\nIf you can fix it with matrices, i think it would be great",
+      "parentUuid": "e114c232_28bb9ab7",
+      "revId": "2e18b65bd71a74c22cb4589248421f1ff2e38b7f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

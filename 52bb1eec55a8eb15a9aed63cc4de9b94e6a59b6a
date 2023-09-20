@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9e136233_aa0cf398",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 5
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-09-20T20:04:27Z",
+      "side": 1,
+      "message": "This hack is better than nothing, but if possible I\u0027d really prefer using the actual width of a space. (I know, it\u0027s probably my fault that \" \" doesn\u0027t return the proper width, sorry.)",
+      "revId": "52bb1eec55a8eb15a9aed63cc4de9b94e6a59b6a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

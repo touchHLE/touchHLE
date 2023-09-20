@@ -16,6 +16,24 @@
       "message": "Hmm… do we know why this needs to be hardcoded? It might just be another missing kind of symbol in `mach_o.rs`, one of those `_ \u003d\u003e` cases in the `match` statements.",
       "revId": "39822a6c485b67b7ee010e62da4ae0fe914ff387",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7a04cf74_f86d4f02",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 5
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-09-20T22:07:42Z",
+      "side": 1,
+      "message": "This is needed in order for libunwind to find a int type info then constructing an exception which couldn\u0027t be avoided.\n\ni posted here that is skipped in the mach_o https://discord.com/channels/1070753159246524436/1072075510131204147/1138593217483378708 for this app",
+      "parentUuid": "bac152b3_b7d57d0d",
+      "revId": "39822a6c485b67b7ee010e62da4ae0fe914ff387",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9caa4519_0d5b1fbb",
+        "filename": "src/libc/posix_io.rs",
+        "patchSetId": 7
+      },
+      "lineNbr": 298,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-09-20T20:30:07Z",
+      "side": 1,
+      "message": "why this change in indentation?",
+      "revId": "a8079a9cf2edb35a71f6d6bd83772b2cdf4ef96a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

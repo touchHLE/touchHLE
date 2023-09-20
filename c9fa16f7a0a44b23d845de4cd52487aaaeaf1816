@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "9d969ba5_8ae7d8c2",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-09-20T21:11:43Z",
+      "side": 1,
+      "message": "after introducing this implementation, you\u0027ll need to fix 2 bugs:\n\n1) crash in the app picker because of missing NSAutoreleasePool\n2) leak of pools on early returns of handle_event() uikit ui_touch method (https://discord.com/channels/1070753159246524436/1072075510131204147/1148671258012176534)\n\nboth are pretty straightforward to do but let me know if you need more guidance here",
+      "revId": "c9fa16f7a0a44b23d845de4cd52487aaaeaf1816",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

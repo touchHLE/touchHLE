@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "394ff0b0_6999307d",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-09-20T20:46:33Z",
+      "side": 1,
+      "message": "AFAIK \u0027l\u0027 is not a specifier but a length modifier, so this implementation is not correct\n\ndo you have an example of a format string which you try to handle?",
+      "revId": "5752cc4d18b68a7119169a57c54d7ad4d80523ac",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

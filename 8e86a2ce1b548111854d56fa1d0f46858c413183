@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "7853b28e_7e5a25e2",
+        "filename": "src/frameworks/audio_toolbox/audio_queue.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 750,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-09-20T19:41:25Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "a29b4c45_c4821d57",
+      "revId": "8e86a2ce1b548111854d56fa1d0f46858c413183",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "4fed8ab5_d2ced20a",
@@ -31,6 +49,24 @@
       "writtenOn": "2023-09-19T11:16:11Z",
       "side": 1,
       "message": "Uhh, if the buffer queue isn\u0027t handled, I probably don\u0027t want to merge this, because I\u0027d be worried about weird audio bugs caused by the queue desyncing. One lazy solution might be to assert whether the buffer is currently in the queue? If it isn\u0027t, then there\u0027s probably nothing that needs to be done?",
+      "revId": "8e86a2ce1b548111854d56fa1d0f46858c413183",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "78dcf8c7_ca1b98f7",
+        "filename": "src/frameworks/audio_toolbox/audio_queue.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 754,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-09-20T19:41:25Z",
+      "side": 1,
+      "message": "Added an assert",
+      "parentUuid": "4fed8ab5_d2ced20a",
       "revId": "8e86a2ce1b548111854d56fa1d0f46858c413183",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

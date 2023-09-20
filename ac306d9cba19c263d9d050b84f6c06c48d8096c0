@@ -16,6 +16,24 @@
       "message": "I don\u0027t like how many allocations are going on here. That\u0027s one vector per PCM frame 😱. The outer vector is a shame too, since it\u0027s not needed in the mono case.\n\nMaybe you could replace this with a for loop that does `out_pcm.extend_from_slice` with `.to_le_bytes()`. Alternatively, you could make an array on the stack, copy stuff into the array, and then extend using the array. The latter might be faster? *shrug*.\n\nBtw, it\u0027d also be neater if `.chunks(2)` was used for the stereo packet iteration, since this code is so iterator method heavy already.",
       "revId": "ac306d9cba19c263d9d050b84f6c06c48d8096c0",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "603e8dc7_0ba22574",
+        "filename": "src/frameworks/audio_toolbox/audio_queue.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 424,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-09-20T19:46:01Z",
+      "side": 1,
+      "message": "I reworked this part to not use additional vectors, please check.\n\nRegarding `.chunks(2)`, i haven\u0027t really figured out how to express \"chunks of chunks\" without collecting first, so i just use while loop and call next() twice inside",
+      "parentUuid": "4b006e1c_d38d98f1",
+      "revId": "ac306d9cba19c263d9d050b84f6c06c48d8096c0",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "176f1008_830986c0",
+        "filename": "src/frameworks/foundation/ns_thread.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 97,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-09-20T21:15:34Z",
+      "side": 1,
+      "message": "This is not so good to mix with proc_addresses. Refer to this discussion for more info https://discord.com/channels/1070753159246524436/1072075510131204147/1145801789925494784",
+      "revId": "62e9ccc37fa56c430b965cd605998d6159e26994",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "58e073f8_b38f1b65",
+        "filename": "src/frameworks/uikit/ui_view.rs",
+        "patchSetId": 7
+      },
+      "lineNbr": 349,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-09-20T20:22:57Z",
+      "side": 1,
+      "message": "i think you should remove this comment",
+      "revId": "993f45dba3768ba60c7a09c71ea43c243f6e1be1",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

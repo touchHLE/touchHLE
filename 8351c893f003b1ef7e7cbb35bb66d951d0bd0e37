@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "2ef1920b_aa9d9a12",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 7
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-09-20T20:36:10Z",
+      "side": 1,
+      "message": "it would be also nice to have a test in the TestApp",
+      "revId": "8351c893f003b1ef7e7cbb35bb66d951d0bd0e37",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "70ae23fe_ad75230a",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 4
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-09-20T19:55:40Z",
+      "side": 1,
+      "message": "I checked docs again https://developer.apple.com/documentation/audiotoolbox/1552629-audio_queue_property_ids/kaudioqueueproperty_isrunning?language\u003dobjc and \"A notification is sent when the associated audio queue starts or stops\", so i\u0027m calling now callback on AudioQueueStop too",
+      "revId": "a9ecb562e5e11866b538515ec86739ae8a8f1e34",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

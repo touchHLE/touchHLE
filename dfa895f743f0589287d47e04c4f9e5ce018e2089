@@ -34,6 +34,24 @@
       "parentUuid": "58e2d8ee_2a371cec",
       "revId": "dfa895f743f0589287d47e04c4f9e5ce018e2089",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "43ece6fd_e26bb9d3",
+        "filename": "src/frameworks/core_graphics/cg_bitmap_context.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 230,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-09-20T20:01:39Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "1f9e9147_80f68991",
+      "revId": "dfa895f743f0589287d47e04c4f9e5ce018e2089",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

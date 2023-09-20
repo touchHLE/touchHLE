@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "bac152b3_b7d57d0d",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 5
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-09-20T20:06:53Z",
+      "side": 1,
+      "message": "Hmm… do we know why this needs to be hardcoded? It might just be another missing kind of symbol in `mach_o.rs`, one of those `_ \u003d\u003e` cases in the `match` statements.",
+      "revId": "39822a6c485b67b7ee010e62da4ae0fe914ff387",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

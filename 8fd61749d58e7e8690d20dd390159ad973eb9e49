@@ -36,6 +36,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "68c19fe4_f57487c8",
+        "filename": "src/frameworks/core_graphics/cg_color_space.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 96,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-09-20T20:03:08Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "695c7c7e_17bf993e",
+      "revId": "8fd61749d58e7e8690d20dd390159ad973eb9e49",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "aec8fd4e_415dbc7a",
@@ -73,6 +91,30 @@
       "side": 1,
       "message": "My reasoning was that (0.5, 0.5, 0.5) corresponds to the gray color and pondering this by a coef i can simulate a gray color variations.\n\ni removed the 0.5 now",
       "parentUuid": "aec8fd4e_415dbc7a",
+      "range": {
+        "startLine": 87,
+        "startChar": 17,
+        "endLine": 87,
+        "endChar": 23
+      },
+      "revId": "8fd61749d58e7e8690d20dd390159ad973eb9e49",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "9bfed976_412961d9",
+        "filename": "src/frameworks/core_graphics/cg_context.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 87,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-09-20T20:03:08Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "a5c42160_1fa964bd",
       "range": {
         "startLine": 87,
         "startChar": 17,

@@ -34,6 +34,24 @@
       "parentUuid": "4b006e1c_d38d98f1",
       "revId": "ac306d9cba19c263d9d050b84f6c06c48d8096c0",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "6ea1bed4_96dcc468",
+        "filename": "src/frameworks/audio_toolbox/audio_queue.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 424,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-09-20T20:00:28Z",
+      "side": 1,
+      "message": "The new version looks better, thanks!",
+      "parentUuid": "603e8dc7_0ba22574",
+      "revId": "ac306d9cba19c263d9d050b84f6c06c48d8096c0",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

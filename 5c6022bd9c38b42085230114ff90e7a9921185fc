@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "320faf64_24c31873",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 7
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-09-20T20:26:18Z",
+      "side": 1,
+      "message": "you should also implement wcsncat to be complete (it\u0027s trivial to do as you already have generic version)",
+      "revId": "5c6022bd9c38b42085230114ff90e7a9921185fc",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "46de4547_992448a0",
+        "filename": "src/libc/generic_char.rs",
+        "patchSetId": 7
+      },
+      "lineNbr": 217,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-09-20T20:26:18Z",
+      "side": 1,
+      "message": "please use snake_case for local vars\n\nit\u0027s strange that fmt/clippy haven\u0027t complained about this",
+      "revId": "5c6022bd9c38b42085230114ff90e7a9921185fc",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

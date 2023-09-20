@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "19eada45_5a680e9f",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 7
+      },
+      "lineNbr": 688,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-09-20T20:16:33Z",
+      "side": 1,
+      "message": "this one is already implemented 😊\n\nbtw, does it really builds? (if yes, this is bad)",
+      "revId": "d11eb7f666cd900bb6206529e0edeca39829c18d",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

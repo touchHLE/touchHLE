@@ -54,10 +54,15 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
         };
 
         let pad_width = {
-            let mut pad_width = 0;
+            let mut pad_width: usize = 0;
+            if get_format_char(&env.mem, format_char_idx) == b'*' {
+                pad_width = args.next::<u32>(env) as usize;
+                format_char_idx += 1;
+            } else {
             while let c @ b'0'..=b'9' = get_format_char(&env.mem, format_char_idx) {
                 pad_width = pad_width * 10 + (c - b'0') as usize;
                 format_char_idx += 1;
+            }
             }
             pad_width
         };

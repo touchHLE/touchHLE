@@ -16,6 +16,24 @@
       "message": "you should also update the comment here then (but reading the comment i think that it will be undesirable change)",
       "revId": "e756df8d59750776905eb15fd9718a703b062836",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8e788397_71fc9419",
+        "filename": "src/mem.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 347,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-09-21T10:08:46Z",
+      "side": 1,
+      "message": "oops, I meant to set -1 review, not -1 verified",
+      "parentUuid": "67140ce5_2e4fa2b9",
+      "revId": "e756df8d59750776905eb15fd9718a703b062836",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

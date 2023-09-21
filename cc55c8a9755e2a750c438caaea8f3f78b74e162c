@@ -16,6 +16,24 @@
       "message": "euh? why in \u0027[]\u0027 and not \u0027()\u0027? is even work? 😊",
       "revId": "cc55c8a9755e2a750c438caaea8f3f78b74e162c",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "599e6258_9e2141bd",
+        "filename": "src/frameworks/uikit/ui_view.rs",
+        "patchSetId": 8
+      },
+      "lineNbr": 350,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2023-09-21T20:25:00Z",
+      "side": 1,
+      "message": "Works? Yes. Why? Sleep deprivation. Changed it to () so its consistent with all other log statements",
+      "parentUuid": "9217915b_13d29763",
+      "revId": "cc55c8a9755e2a750c438caaea8f3f78b74e162c",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

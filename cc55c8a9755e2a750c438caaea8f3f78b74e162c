@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9217915b_13d29763",
+        "filename": "src/frameworks/uikit/ui_view.rs",
+        "patchSetId": 8
+      },
+      "lineNbr": 350,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-09-21T18:29:04Z",
+      "side": 1,
+      "message": "euh? why in \u0027[]\u0027 and not \u0027()\u0027? is even work? 😊",
+      "revId": "cc55c8a9755e2a750c438caaea8f3f78b74e162c",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

@@ -34,6 +34,24 @@
       "parentUuid": "bbc27218_b88584b5",
       "revId": "e99035acd7eb33034948c748b9589889f7845b02",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "87e5264f_a985d4a2",
+        "filename": "src/audio.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 247,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2023-09-21T20:23:33Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "c688553f_531695ec",
+      "revId": "e99035acd7eb33034948c748b9589889f7845b02",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

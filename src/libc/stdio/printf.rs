@@ -18,7 +18,7 @@ use std::collections::HashSet;
 use std::io::Write;
 
 const INTEGER_SPECIFIERS: [u8; 6] = [b'd', b'i', b'o', b'u', b'x', b'X'];
-const FLOAT_SPECIFIERS: [u8; 1] = [b'f'];
+const FLOAT_SPECIFIERS: [u8; 3] = [b'f', b'e', b'g'];
 
 /// String formatting implementation for `printf` and `NSLog` function families.
 ///
@@ -104,6 +104,7 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
         }
 
         match specifier {
+            // Integer specifiers
             b'c' => {
                 // TODO: support length modifier
                 assert!(length_modifier.is_none());
@@ -161,22 +162,6 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
                     res.extend_from_slice(int_with_precision.as_bytes());
                 }
             }
-            b'f' => {
-                // TODO: support length modifier
-                assert!(length_modifier.is_none());
-                let float: f64 = args.next(env);
-                let precision_value = precision.unwrap_or(6);
-                if pad_width > 0 {
-                    let pad_width = pad_width as usize;
-                    if pad_char == '0' {
-                        write!(&mut res, "{:01$.2$}", float, pad_width, precision_value).unwrap();
-                    } else {
-                        write!(&mut res, "{:1$.2$}", float, pad_width, precision_value).unwrap();
-                    }
-                } else {
-                    write!(&mut res, "{:.1$}", float, precision_value).unwrap();
-                }
-            }
             b'@' if NS_LOG => {
                 assert!(length_modifier.is_none());
                 let object: id = args.next(env);
@@ -207,6 +192,136 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
                 assert!(length_modifier.is_none());
                 let ptr: MutVoidPtr = args.next(env);
                 res.extend_from_slice(format!("{:?}", ptr).as_bytes());
+            }
+            // Float specifiers
+            b'f' => {
+                let float: f64 = args.next(env);
+                let pad_width = pad_width as usize;
+                let precision = precision.unwrap_or(6);
+                if pad_char == '0' {
+                    res.extend_from_slice(
+                        format!("{:01$.2$}", float, pad_width, precision).as_bytes(),
+                    );
+                } else {
+                    res.extend_from_slice(
+                        format!("{:1$.2$}", float, pad_width, precision).as_bytes(),
+                    );
+                }
+            }
+            b'e' => {
+                let float: f64 = args.next(env);
+                let pad_width = pad_width as usize;
+                let precision = precision.unwrap_or(6);
+
+                let exponent = float.abs().log10().floor();
+                let mantissa = float.abs() / 10f64.powf(exponent);
+                let sign = if float.is_sign_negative() { "-" } else { "" };
+                if pad_char == '0' {
+                    let float_exp_notation =
+                        format!("{0:.1$}e{2:+03}", mantissa, precision, exponent);
+                    res.extend_from_slice(
+                        format!(
+                            "{0}{1:0>2$}",
+                            sign,
+                            float_exp_notation,
+                            pad_width.saturating_sub(sign.len())
+                        )
+                        .as_bytes(),
+                    );
+                } else {
+                    let float_exp_notation =
+                        format!("{0}{1:.2$}e{3:+03}", sign, mantissa, precision, exponent);
+                    res.extend_from_slice(
+                        format!("{0:>1$}", float_exp_notation, pad_width).as_bytes(),
+                    );
+                }
+            }
+            b'g' => {
+                let float: f64 = args.next(env);
+                let pad_width = pad_width as usize;
+
+                let sign = if float.is_sign_negative() { "-" } else { "" };
+
+                let formatted_f_without_padding_or_sign = {
+                    // Precision in %g means max number of decimal digits in
+                    // the mantissa. For that, we first calculate the length
+                    // of the integer part and then we substract it from
+                    // precision and use the result in the format! statement
+                    let float_trunc_len = (float.abs().trunc() as i32).to_string().len();
+                    // Format without padding
+                    if let Some(precision) = precision {
+                        format!(
+                            "{:.1$}",
+                            float.abs(),
+                            precision.saturating_sub(float_trunc_len)
+                        )
+                    } else {
+                        format!("{:.4}", float.abs())
+                    }
+                };
+                let formatted_f = {
+                    if pad_char == '0' {
+                        format!(
+                            "{}{:0>2$}",
+                            sign,
+                            formatted_f_without_padding_or_sign,
+                            pad_width - sign.len()
+                        )
+                    } else {
+                        let formatted_f_with_sign =
+                            format!("{}{}", sign, formatted_f_without_padding_or_sign);
+                        format!("{:>1$}", formatted_f_with_sign, pad_width)
+                    }
+                };
+
+                let formatted_e_without_padding_or_sign = {
+                    let exponent = float.abs().log10().floor();
+                    let mantissa = float.abs() / 10f64.powf(exponent);
+                    // Precision in %g means max number of decimal digits in
+                    // the mantissa. For that, we first calculate the length
+                    // of the mantissa's int part and then we substract it from
+                    // precision and use the result in the format! statement
+                    let mantissa_trunc_len = (mantissa.trunc() as i32).to_string().len();
+                    // Format without padding
+                    if let Some(precision) = precision {
+                        if precision > mantissa_trunc_len {
+                            format!(
+                                "{0:.1$}e{2:+03}",
+                                mantissa,
+                                precision - mantissa_trunc_len,
+                                exponent
+                            )
+                        } else {
+                            format!("{:.0}e{:+03}", mantissa, exponent)
+                        }
+                    } else {
+                        format!("{}e{:+03}", mantissa, exponent)
+                    }
+                };
+                let formatted_e = if pad_char == '0' {
+                    format!(
+                        "{0}{1:0>2$}",
+                        sign,
+                        formatted_e_without_padding_or_sign,
+                        pad_width.saturating_sub(sign.len())
+                    )
+                } else {
+                    let without_padding_with_sign =
+                        format!("{}{}", sign, formatted_e_without_padding_or_sign);
+                    format!("{0:>1$}", without_padding_with_sign, pad_width)
+                };
+
+                // Use shortest formatted string
+                let result = if formatted_e_without_padding_or_sign.len()
+                    < formatted_f_without_padding_or_sign.len()
+                    || precision.is_some_and(|x| x == 0)
+                {
+                    formatted_e
+                } else {
+                    formatted_f
+                };
+
+                res.extend_from_slice(result.as_bytes());
             }
             // TODO: more specifiers
             _ => unimplemented!(

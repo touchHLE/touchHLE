@@ -24,6 +24,15 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ";
 
+// See android/app/src/main/java/org/touchhle/android/DocumentsProvider.kt
+#[cfg(target_os = "android")]
+const SKYLINE: &str = "
+touchHLE for Android incorporates code originally from the Skyline emulator
+project, licensed under MPL-2.0:
+
+Copyright © 2022 Skyline Team and Contributors (https://github.com/skyline-emu/)
+";
+
 const RUST_DESCRIPTION: &str = "
 touchHLE, and therefore this executable, incorporates the following Rust
 libraries, which are copyright their respective authors and other contributors,
@@ -183,6 +192,11 @@ fn print(out: &mut String, resources_are_external_files: bool) -> Result<(), std
     divider(out)?;
     writeln!(out, "{}", MAIN_LICENSE)?;
     divider(out)?;
+    #[cfg(target_os = "android")]
+    {
+        writeln!(out, "{}", SKYLINE)?;
+        divider(out)?;
+    }
     writeln!(out, "{}", RUST_DESCRIPTION)?;
     writeln!(out, "{}", RUST_DEPENDENCIES)?;
     divider(out)?;

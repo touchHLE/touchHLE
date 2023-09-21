@@ -59,22 +59,13 @@ There's a few ways you can run an app in touchHLE.
 
 Windows, Mac and Linux users can skip this section.
 
-On Android, only the graphical user interface (app picker) is available.
+On Android, only the graphical user interface (app picker) is available. Therefore, you must put your “.ipa” files or “.app” bundles inside the “touchHLE\_apps” directory. Note that you can only do that once you have run touchHLE at least once.
 
-On some Android devices, you may be able to use the “Files” app to put apps in the `touchHLE_apps` directory. However, the most reliable method is to use ADB. If you're unfamiliar with ADB, try these steps:
+File management can be tricky on Android due to [restrictions introduced by Google in newer Android versions](https://developer.android.com/about/versions/11/privacy/storage#scoped-storage). One of these methods may work:
 
-- First, make sure you have installed touchHLE on your Android device, and opened it at least one time. You should see a screen telling you the touchHLE\_apps directory is empty.
-- Visit <https://yume-chan.github.io/ya-webadb/> in Google Chrome or another browser with WebUSB, then:
-  - Connect your Android device over USB.
-  - “Connect” to the device in the web interface.
-  - Go to “File Manager” and then navigate to “sdcard” > “Android” > “data” > “org.touchhle.android” > “files” > “touchHLE\_apps”.
-  - Click “Upload” and select a “.ipa” file.
-  - “Disconnect” from the device in the web interface.
-  - Disconnect your Android device.
-
-By making use of the “Download” and “Delete” buttons you can also, for example, edit the options or back up your game saves.
-
-This will be made easier in a future release!
+* (The following describes a new feature that is not in the current release.) If your device has some sort of file management app (often called “Files”), touchHLE should show up somewhere in the app as a location, alongside cloud storage services. There are some limitations on what kinds of operations are possible. The files in this location are stored on your device.
+* If you have an older version of Android, you may be able to directly access touchHLE's files by browsing to `/sdcard/Android/data/org.touchhle.android/files/touchHLE_apps`. Note that the `/sdcard` directory is usually not on the SD card.
+* You may be able to use ADB. If you're unfamiliar with ADB, try using <https://yume-chan.github.io/ya-webadb/> (in Google Chrome or another browser with WebUSB) with your device connected over USB. touchHLE's files can be found in “sdcard” > “Android” > “data” > “org.touchhle.android” > “files” > “touchHLE\_apps”.
 
 ## Graphical user interface
 
@@ -125,6 +116,7 @@ We stand on the shoulders of giants. Thank you to:
 
 * Everyone who has contributed to the project or supported it financially.
 * The authors of and contributors to the many libraries used by this project: [dynarmic](https://github.com/merryhime/dynarmic), [rust-macho](https://github.com/flier/rust-macho), [SDL](https://libsdl.org/), [rust-sdl2](https://github.com/Rust-SDL2/rust-sdl2), [stb\_image](https://github.com/nothings/stb), Imagination Technologies' [PVRTC decompressor](https://github.com/powervr-graphics/Native_SDK/blob/master/framework/PVRCore/texture/PVRTDecompress.cpp), [openal-soft](https://github.com/kcat/openal-soft), [hound](https://github.com/ruuda/hound), [caf](https://github.com/rustaudio/caf), [dr\_mp3](https://github.com/mackron/dr_libs), [RustType](https://gitlab.redox-os.org/redox-os/rusttype), [the Liberation fonts](https://github.com/liberationfonts/liberation-fonts), [the Noto CJK fonts](https://github.com/googlefonts/noto-cjk), [rust-plist](https://github.com/ebarnard/rust-plist), [gl-rs](https://github.com/brendanzab/gl-rs), [cargo-license](https://github.com/onur/cargo-license), [cc-rs](https://github.com/rust-lang/cc-rs), [cmake-rs](https://github.com/rust-lang/cmake-rs), [cargo-ndk](https://github.com/bbqsrc/cargo-ndk), [cargo-ndk-android-gradle](https://github.com/willir/cargo-ndk-android-gradle), and the Rust standard library.
+* The Skyline emulator project (RIP), for [writing the tedious boilerplate needed to replace file management on newer Android versions](https://github.com/skyline-emu/skyline/blob/dc20a615275f66bee20a4fd851ef0231daca4f14/app/src/main/java/emu/skyline/provider/DocumentsProvider.kt).
 * The [Rust project](https://www.rust-lang.org/) generally.
 * The various people out there who've documented the iPhone OS platform, officially or otherwise. Much of this documentation is linked to within this codebase!
 * The iOS hacking/jailbreaking community.

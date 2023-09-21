@@ -14,6 +14,7 @@ if (buildAsApplication) {
     apply plugin: 'com.android.library'
 }
 apply plugin: "com.github.willir.rust.cargo-ndk-android"
+apply plugin: 'org.jetbrains.kotlin.android'
 
 android {
     ndkVersion "25.2.9519653"

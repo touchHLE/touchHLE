@@ -33,6 +33,24 @@
       "message": "please use snake_case for local vars\n\nit\u0027s strange that fmt/clippy haven\u0027t complained about this",
       "revId": "5c6022bd9c38b42085230114ff90e7a9921185fc",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "dde3b1b2_4e12408d",
+        "filename": "src/libc/generic_char.rs",
+        "patchSetId": 7
+      },
+      "lineNbr": 217,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2023-09-21T20:26:13Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "46de4547_992448a0",
+      "revId": "5c6022bd9c38b42085230114ff90e7a9921185fc",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

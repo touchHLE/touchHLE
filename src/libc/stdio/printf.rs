@@ -53,10 +53,15 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
             ' '
         };
 
-        let pad_width = {
-            let mut pad_width = 0;
+        let pad_width = if get_format_char(&env.mem, format_char_idx) == b'*' {
+            let pad_width = args.next::<i32>(env);
+            assert!(pad_width >= 0); // TODO: Implement right-padding
+            format_char_idx += 1;
+            pad_width
+        } else {
+            let mut pad_width: i32 = 0;
             while let c @ b'0'..=b'9' = get_format_char(&env.mem, format_char_idx) {
-                pad_width = pad_width * 10 + (c - b'0') as usize;
+                pad_width = pad_width * 10 + (c - b'0') as i32;
                 format_char_idx += 1;
             }
             pad_width
@@ -144,6 +149,7 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
                 };
 
                 if pad_width > 0 {
+                    let pad_width = pad_width as usize;
                     if pad_char == '0' && precision.is_none() {
                         write!(&mut res, "{:0>1$}", int_with_precision, pad_width).unwrap();
                     } else {
@@ -159,6 +165,7 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
                 let float: f64 = args.next(env);
                 let precision_value = precision.unwrap_or(6);
                 if pad_width > 0 {
+                    let pad_width = pad_width as usize;
                     if pad_char == '0' {
                         write!(&mut res, "{:01$.2$}", float, pad_width, precision_value).unwrap();
                     } else {

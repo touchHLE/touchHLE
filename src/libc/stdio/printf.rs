@@ -16,7 +16,7 @@ use crate::Environment;
 use std::io::Write;
 
 const INTEGER_SPECIFIERS: [u8; 6] = [b'd', b'i', b'o', b'u', b'x', b'X'];
-const FLOAT_SPECIFIERS: [u8; 1] = [b'f'];
+const FLOAT_SPECIFIERS: [u8; 3] = [b'f', b'e', b'g'];
 
 /// String formatting implementation for `printf` and `NSLog` function families.
 ///
@@ -64,10 +64,10 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
                 pad_width = args.next::<u32>(env) as usize;
                 format_char_idx += 1;
             } else {
-            while let c @ b'0'..=b'9' = get_format_char(&env.mem, format_char_idx) {
-                pad_width = pad_width * 10 + (c - b'0') as usize;
-                format_char_idx += 1;
-            }
+                while let c @ b'0'..=b'9' = get_format_char(&env.mem, format_char_idx) {
+                    pad_width = pad_width * 10 + (c - b'0') as usize;
+                    format_char_idx += 1;
+                }
             }
             pad_width
         };
@@ -88,6 +88,7 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
         }
 
         match specifier {
+            // Integer specifiers
             b'c' => {
                 let c: u8 = args.next(env);
                 assert!(pad_char == ' ' && pad_width == 0); // TODO
@@ -130,18 +131,6 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
                     write!(&mut res, "{}", int).unwrap();
                 }
             }
-            b'f' => {
-                let float: f64 = args.next(env);
-                if pad_width > 0 {
-                    if pad_char == '0' {
-                        write!(&mut res, "{:01$}", float, pad_width).unwrap();
-                    } else {
-                        write!(&mut res, "{:1$}", float, pad_width).unwrap();
-                    }
-                } else {
-                    write!(&mut res, "{}", float).unwrap();
-                }
-            }
             b'@' if NS_LOG => {
                 let object: id = args.next(env);
                 // TODO: use localized description if available?
@@ -158,6 +147,49 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
             b'p' => {
                 let ptr: MutVoidPtr = args.next(env);
                 res.extend_from_slice(format!("{:?}", ptr).as_bytes());
+            }
+            // Float specifiers
+            b'f' | b'e' | b'g' => {
+                let float: f64 = args.next(env);
+
+                let mut formatted_f = String::new();
+                if matches!(specifier, b'f' | b'g') {
+                    if pad_width > 0 {
+                        if pad_char == '0' {
+                            formatted_f = format!("{:01$}", float, pad_width);
+                        } else {
+                            formatted_f = format!("{:1$}", float, pad_width);
+                        }
+                    } else {
+                        formatted_f = format!("{}", float);
+                    }
+                }
+
+                let mut formatted_e = String::new();
+                if matches!(specifier, b'e' | b'g') {
+                    if pad_width > 0 {
+                        if pad_char == '0' {
+                            formatted_e = format!("{:01$e}", float, pad_width);
+                        } else {
+                            formatted_e = format!("{:1$e}", float, pad_width);
+                        }
+                    } else {
+                        formatted_e = format!("{:e}", float);
+                    }
+                }
+
+                match specifier {
+                    b'f' => res.extend_from_slice(formatted_f.as_bytes()),
+                    b'e' => res.extend_from_slice(formatted_e.as_bytes()),
+                    b'g' => {
+                        if formatted_f.len() < formatted_e.len() {
+                            res.extend_from_slice(formatted_f.as_bytes())
+                        } else {
+                            res.extend_from_slice(formatted_e.as_bytes())
+                        }
+                    }
+                    _ => unreachable!(),
+                }
             }
             // TODO: more specifiers
             _ => unimplemented!("Format character '{}'", specifier as char),

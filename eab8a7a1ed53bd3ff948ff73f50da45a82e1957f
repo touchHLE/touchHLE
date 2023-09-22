@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b1019cd4_76504b02",
+        "filename": "src/libc/posix_io.rs",
+        "patchSetId": 9
+      },
+      "lineNbr": 63,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-09-22T19:43:24Z",
+      "side": 1,
+      "message": "what about implementing flock() stub and calling it with an appropriate param?\nthis way we have a least warning about an unimplemented locking",
+      "revId": "eab8a7a1ed53bd3ff948ff73f50da45a82e1957f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

@@ -524,11 +524,11 @@ unsafe fn present_renderbuffer(gles: &mut dyn GLES, window: &mut Window) {
             _ => unreachable!(),
         }
     }
-    gles.MatrixMode(old_matrix_mode);
     for mode in [gles11::MODELVIEW, gles11::PROJECTION, gles11::TEXTURE] {
         gles.MatrixMode(mode);
         gles.PopMatrix();
     }
+    gles.MatrixMode(old_matrix_mode);
     gles.Color4f(old_color[0], old_color[1], old_color[2], old_color[3]);
     gles.Viewport(
         old_viewport.0,

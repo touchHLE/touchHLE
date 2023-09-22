@@ -63,7 +63,7 @@ On Android, only the graphical user interface (app picker) is available. Therefo
 
 File management can be tricky on Android due to [restrictions introduced by Google in newer Android versions](https://developer.android.com/about/versions/11/privacy/storage#scoped-storage). One of these methods may work:
 
-* (The following describes a new feature that is not in the current release.) If your device has some sort of file management app (often called “Files”), touchHLE should show up somewhere in the app as a location, alongside cloud storage services. There are some limitations on what kinds of operations are possible. The files in this location are stored on your device.
+* (The following describes a new feature that is not in the current release.) If you tap the “Open file manager” button in touchHLE, this should open some sort of file manager. You might also be able to find touchHLE in your device's file manager app (often called “Files”), alongside cloud storage services. There are some limitations on what kinds of operations are possible. The files in this location are stored on your device.
 * If you have an older version of Android, you may be able to directly access touchHLE's files by browsing to `/sdcard/Android/data/org.touchhle.android/files/touchHLE_apps`. Note that the `/sdcard` directory is usually not on the SD card.
 * You may be able to use ADB. If you're unfamiliar with ADB, try using <https://yume-chan.github.io/ya-webadb/> (in Google Chrome or another browser with WebUSB) with your device connected over USB. touchHLE's files can be found in “sdcard” > “Android” > “data” > “org.touchhle.android” > “files” > “touchHLE\_apps”.
 

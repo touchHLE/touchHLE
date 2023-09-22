@@ -108,6 +108,25 @@ pub fn user_data_base_path() -> &'static Path {
     Path::new("")
 }
 
+/// Get a URI that can be used to open a file manager or similar for the path
+/// that [user_data_base_path] represents.
+pub fn url_for_opening_user_data_dir() -> Result<String, String> {
+    if std::env::consts::OS == "android" {
+        // See DocumentsProvider.kt and AndroidManifest.xml
+        Ok("content://org.touchhle.android.provider/root/root".to_string())
+    } else {
+        let path = user_data_base_path()
+            .join(".")
+            .canonicalize()
+            .map_err(|e| format!("Can't canonicalize path to user data directory: {}", e))?;
+        Ok(format!(
+            "file://{}",
+            path.to_str()
+                .ok_or_else(|| "User data directory path is not UTF-8".to_string())?
+        ))
+    }
+}
+
 /// Only meaningful on Android: create the user data directory if it doesn't
 /// exist, and populate it with templates or README files. (On other platforms
 /// these are simply bundled with touchHLE in a ZIP file.)

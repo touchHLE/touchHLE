@@ -144,6 +144,25 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.borrow_mut::<AppPickerDelegateHostObject>(this).copyright_next = true;
 }
 
+- (())openFileManager {
+    // Assert (see above).
+    let _ = env.objc.borrow_mut::<AppPickerDelegateHostObject>(this);
+
+    match paths::url_for_opening_user_data_dir() {
+        Ok(url) => {
+            // Our `openURL:` implementation is bypassed because it doesn't
+            // allow non-web URLs.
+            if let Err(e) = crate::window::open_url(&url) {
+                echo!("Couldn't open file manager at {:?}: {}", url, e);
+            } else {
+                echo!("Opened file manager at {:?}, exiting.", url);
+                std::process::exit(0);
+            }
+        },
+        Err(e) => echo!("Couldn't open file manager: {}", e),
+    }
+}
+
 - (())visitWebsite {
     // Assert (see above).
     let _ = env.objc.borrow_mut::<AppPickerDelegateHostObject>(this);
@@ -246,12 +265,23 @@ fn show_app_picker_gui(
         }
     }
 
+    let buttons_row_center = divider + (app_frame.size.height - divider) / 4.0;
+    let buttons_row2_center = divider + (app_frame.size.height - divider) / 1.6;
     make_button_row(
         env,
         delegate,
         main_view,
         app_frame.size,
-        divider,
+        buttons_row_center,
+        &[("Open file manager", "openFileManager")],
+        None,
+    );
+    make_button_row(
+        env,
+        delegate,
+        main_view,
+        app_frame.size,
+        buttons_row2_center,
         &[
             ("Copyright info", "copyrightInfoShow"),
             ("touchHLE.org", "visitWebsite"),
@@ -415,11 +445,10 @@ fn make_button_row(
     delegate: id,
     super_view: id,
     super_view_size: CGSize,
-    divider: CGFloat,
+    buttons_row_center: CGFloat,
     buttons: &[(&'static str, &'static str)],
     font_size: Option<CGFloat>,
 ) -> Vec<id> {
-    let buttons_row_center = (super_view_size.height + divider) / 2.0;
     let margin = 10.0;
 
     let button_size = CGSize {
@@ -524,12 +553,13 @@ fn setup_copyright_info(
 
     // Navigation
 
+    let buttons_row_center = (main_frame.size.height + divider) / 2.0;
     let buttons = make_button_row(
         env,
         delegate,
         main_view,
         main_frame.size,
-        divider,
+        buttons_row_center,
         &[
             ("↑", "copyrightInfoPrevPage"),
             ("↓", "copyrightInfoNextPage"),

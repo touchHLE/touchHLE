@@ -110,13 +110,16 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (bool)openURL:(id)url { // NSURL
     let ns_string = msg![env; url absoluteURL];
     let url_string = ns_string::to_rust_string(env, ns_string);
-    crate::window::open_url(&url_string);
+    if let Err(e) = crate::window::open_url(&url_string) {
+        echo!("App opened URL {:?} unsuccessfully ({}), exiting.", url_string, e);
+    } else {
+        echo!("App opened URL {:?}, exiting.", url_string);
+    }
 
     // iPhone OS doesn't really do multitasking, so the app expects to close
     // when a URL is opened, e.g. Super Monkey Ball keeps opening the URL every
     // frame! Super Monkey Ball also doesn't check whether opening failed, so
     // it's probably best to always exit.
-    echo!("App opened URL {:?}, exiting.", url_string);
     exit(env);
     true
 }

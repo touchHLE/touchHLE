@@ -892,6 +892,6 @@ impl Window {
     }
 }
 
-pub fn open_url(url: &str) {
-    let _ = sdl2::url::open_url(url);
+pub fn open_url(url: &str) -> Result<(), String> {
+    sdl2::url::open_url(url).map_err(|e| e.to_string())
 }

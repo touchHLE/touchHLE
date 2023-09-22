@@ -109,7 +109,11 @@ impl FsNode {
         }
     }
     fn with_child(mut self, name: &str, child: FsNode) -> Self {
-        let FsNode::Directory { ref mut children, writeable: _ } = self else {
+        let FsNode::Directory {
+            ref mut children,
+            writeable: _,
+        } = self
+        else {
             panic!();
         };
         assert!(children.insert(String::from(name), child).is_none());
@@ -560,7 +564,11 @@ impl Fs {
     fn lookup_node_inner(&self, resolved_path_components: &[&str]) -> Option<&FsNode> {
         let mut node = &self.root;
         for component in resolved_path_components {
-            let FsNode::Directory { children, writeable: _ } = node else {
+            let FsNode::Directory {
+                children,
+                writeable: _,
+            } = node
+            else {
                 return None;
             };
             node = children.get(*component)?
@@ -583,7 +591,11 @@ impl Fs {
 
         let mut parent = &mut self.root;
         for &component in parent_components {
-            let FsNode::Directory { children, writeable: _ } = parent else {
+            let FsNode::Directory {
+                children,
+                writeable: _,
+            } = parent
+            else {
                 return None;
             };
             parent = children.get_mut(component)?
@@ -713,7 +725,8 @@ impl Fs {
         let FsNode::Directory {
             children,
             writeable: dir_host_path,
-        } = parent_node else {
+        } = parent_node
+        else {
             return Err(());
         };
 
@@ -768,7 +781,10 @@ impl Fs {
         }
 
         let Some(dir_host_path) = dir_host_path else {
-            log!("Warning: attempt to create file at path {:?}, but directory is read-only", path);
+            log!(
+                "Warning: attempt to create file at path {:?}, but directory is read-only",
+                path
+            );
             return Err(());
         };
 
@@ -816,7 +832,8 @@ impl Fs {
         let FsNode::Directory {
             children,
             writeable: dir_writeable,
-        } = parent_node else {
+        } = parent_node
+        else {
             return Err(());
         };
 
@@ -891,7 +908,8 @@ impl Fs {
         let FsNode::Directory {
             children,
             writeable: dir_host_path,
-        } = parent_node else {
+        } = parent_node
+        else {
             return Err(());
         };
 

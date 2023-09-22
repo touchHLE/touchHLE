@@ -880,7 +880,9 @@ pub const CLASSES: ClassExports = objc_classes! {
 /// Sets up host objects and updates `isa` fields
 /// (`___CFConstantStringClassReference` is ignored by our dyld).
 pub fn register_constant_strings(bin: &MachO, mem: &mut Mem, objc: &mut ObjC) {
-    let Some(cfstrings) = bin.get_section("__cfstring") else { return; };
+    let Some(cfstrings) = bin.get_section("__cfstring") else {
+        return;
+    };
 
     assert!(cfstrings.size % guest_size_of::<cfstringStruct>() == 0);
     let base: ConstPtr<cfstringStruct> = Ptr::from_bits(cfstrings.addr);

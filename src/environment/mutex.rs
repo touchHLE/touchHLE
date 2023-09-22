@@ -180,14 +180,14 @@ impl Environment {
                         "Attempted to unlock non-error-checking mutex #{} for thread {}, already unlocked!",
                         mutex_id, current_thread,
                     );
-                },
+                }
                 MutexType::PTHREAD_MUTEX_ERRORCHECK | MutexType::PTHREAD_MUTEX_RECURSIVE => {
                     log_dbg!(
                         "Attempted to unlock error-checking or recursive mutex #{} for thread {}, already unlocked! Returning EPERM.",
                         mutex_id, current_thread,
                     );
                     return Err(EPERM);
-                },
+                }
             }
         };
 

@@ -155,7 +155,14 @@ pub fn handle_event(env: &mut Environment, event: Event) {
 
             // Assumes the last window in the list is the one on top.
             // TODO: this is not correct once we support zPosition.
-            let Some(&top_window) = env.framework_state.uikit.ui_view.ui_window.visible_windows.last() else {
+            let Some(&top_window) = env
+                .framework_state
+                .uikit
+                .ui_view
+                .ui_window
+                .visible_windows
+                .last()
+            else {
                 log!("No visible window, touch event ignored");
                 return;
             };

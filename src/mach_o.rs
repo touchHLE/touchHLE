@@ -417,7 +417,8 @@ impl MachO {
                             is_pc_relative: false,
                             size: 4,
                             type_: 0, // generic
-                        } = reloc else {
+                        } = reloc
+                        else {
                             panic!("Unhandled extrel: {:?}", reloc)
                         };
                         let addr = if split_segs {
@@ -476,7 +477,8 @@ impl MachO {
                         __lr: 0,
                         __pc: pc,
                         __cpsr: 0,
-                    } = state else {
+                    } = state
+                    else {
                         panic!("Unexpected initial thread state in {:?}: {:?}", name, state);
                     };
                     // There should only be a single initial thread state.

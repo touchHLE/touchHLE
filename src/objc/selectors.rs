@@ -121,7 +121,9 @@ impl ObjC {
     /// For use by [crate::dyld]: register and deduplicate all the selectors
     /// referenced in the application binary.
     pub fn register_bin_selectors(&mut self, bin: &MachO, mem: &mut Mem) {
-        let Some(selrefs) = bin.get_section("__objc_selrefs") else { return; };
+        let Some(selrefs) = bin.get_section("__objc_selrefs") else {
+            return;
+        };
 
         assert!(selrefs.size % 4 == 0);
         let base: MutPtr<ConstPtr<u8>> = Ptr::from_bits(selrefs.addr);

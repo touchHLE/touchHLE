@@ -234,7 +234,9 @@ impl AudioFile {
                 let sample_count = u64::try_from(buffer.len()).unwrap() / bytes_per_sample;
                 let sample_count: usize = sample_count.try_into().unwrap();
 
-                let AudioFileInner::Wave(ref mut wave_reader) = self.0 else { unreachable!() };
+                let AudioFileInner::Wave(ref mut wave_reader) = self.0 else {
+                    unreachable!()
+                };
 
                 wave_reader
                     .seek((offset / bytes_per_sample).try_into().unwrap())
@@ -257,7 +259,9 @@ impl AudioFile {
 
                 let packet_count = u64::try_from(buffer.len()).unwrap() / u64::from(packet_size);
 
-                let AudioFileInner::Caf(ref mut caf_reader) = self.0 else { unreachable!() };
+                let AudioFileInner::Caf(ref mut caf_reader) = self.0 else {
+                    unreachable!()
+                };
 
                 caf_reader
                     .seek_to_packet(usize::try_from(offset / u64::from(packet_size)).unwrap())

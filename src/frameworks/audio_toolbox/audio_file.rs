@@ -76,7 +76,10 @@ fn AudioFileOpenURL(
 
     let path = to_rust_path(env, in_file_ref);
     let Ok(audio_file) = audio::AudioFile::open_for_reading(path, &env.fs) else {
-        log!("Warning: AudioFileOpenURL() for path {:?} failed", in_file_ref);
+        log!(
+            "Warning: AudioFileOpenURL() for path {:?} failed",
+            in_file_ref
+        );
         return kAudioFileFileNotFoundError;
     };
 

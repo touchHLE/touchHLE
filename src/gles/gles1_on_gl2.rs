@@ -485,7 +485,12 @@ impl GLES1OnGL2 {
     ) {
         for (i, backup) in from_backup.into_iter().enumerate() {
             let array_info = &ARRAYS[i];
-            let Some(ArrayStateBackup { size, stride, pointer }) = backup else {
+            let Some(ArrayStateBackup {
+                size,
+                stride,
+                pointer,
+            }) = backup
+            else {
                 continue;
             };
 

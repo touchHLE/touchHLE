@@ -463,7 +463,11 @@ impl Window {
         self.controllers.push(controller);
     }
     fn controller_removed(&mut self, instance_id: u32) {
-        let Some(idx) = self.controllers.iter().position(|controller| controller.instance_id() == instance_id) else {
+        let Some(idx) = self
+            .controllers
+            .iter()
+            .position(|controller| controller.instance_id() == instance_id)
+        else {
             return;
         };
         let controller = self.controllers.remove(idx);
@@ -490,7 +494,9 @@ impl Window {
         if self.controllers.is_empty() {
             if let Some(ref accelerometer) = self.accelerometer {
                 let data = accelerometer.get_data().unwrap();
-                let sdl2::sensor::SensorData::Accel(data) = data else { panic!(); };
+                let sdl2::sensor::SensorData::Accel(data) = data else {
+                    panic!();
+                };
                 let [x, y, z] = data;
                 // UIAcceleration reports acceleration towards gravity, but SDL2
                 // reports acceleration away from gravity.

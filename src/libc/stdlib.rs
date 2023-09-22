@@ -163,7 +163,11 @@ fn getenv(env: &mut Environment, name: ConstPtr<u8>) -> MutPtr<u8> {
     // find. Currently the only environment variables that can be found are
     // those put there by the app (Crash Bandicoot Nitro Kart 3D uses this).
     let Some(&value) = env.libc_state.stdlib.env.get(name_cstr) else {
-        log!("Warning: getenv() for {:?} ({:?}) unhandled", name, std::str::from_utf8(name_cstr));
+        log!(
+            "Warning: getenv() for {:?} ({:?}) unhandled",
+            name,
+            std::str::from_utf8(name_cstr)
+        );
         return Ptr::null();
     };
     log_dbg!(

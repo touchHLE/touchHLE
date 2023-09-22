@@ -20,6 +20,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "144a0d00_46b6fdea",
+        "filename": "src/libc/unistd.rs",
+        "patchSetId": 4
+      },
+      "lineNbr": 56,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-09-22T17:10:12Z",
+      "side": 1,
+      "message": "Done (implicitly with a new Fs method)",
+      "parentUuid": "a541cf91_19509986",
+      "revId": "f01f758114423a539d8ff56175fa3d4e10b0e9b1",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "2c12041a_fa56c91d",
         "filename": "src/libc/unistd.rs",
         "patchSetId": 4
@@ -31,6 +49,24 @@
       "writtenOn": "2023-09-18T10:24:45Z",
       "side": 1,
       "message": "Hmm, this is quite limited. If you don\u0027t mind expanding it a little, I have a suggestion: you could add a method to `Fs` that tells you whether a file exists (via an `Option` I guess) and then whether it has r/w/x (via `bool`s I guess). Then for the moment, it would return r for everything, w for writeable files/directories, and x for directories only. This means this function can be complete already, and we can improve the fine-grained-ness of the permissions at the FS level later.",
+      "revId": "f01f758114423a539d8ff56175fa3d4e10b0e9b1",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "92a15ce9_281536f3",
+        "filename": "src/libc/unistd.rs",
+        "patchSetId": 4
+      },
+      "lineNbr": 65,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-09-22T17:10:12Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "2c12041a_fa56c91d",
       "revId": "f01f758114423a539d8ff56175fa3d4e10b0e9b1",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

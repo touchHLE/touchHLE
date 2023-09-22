@@ -16,6 +16,24 @@
       "message": "Oh uh, can you add a `log_dbg!` here like the other printf functions?",
       "revId": "91651992fd2e9e3cdd30a415d1afd5f57ee13675",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "83df61d4_e0d978f1",
+        "filename": "src/libc/stdio/printf.rs",
+        "patchSetId": 6
+      },
+      "lineNbr": 345,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-09-22T17:10:43Z",
+      "side": 1,
+      "message": "oopsie, done",
+      "parentUuid": "00ca065f_79bcdd30",
+      "revId": "91651992fd2e9e3cdd30a415d1afd5f57ee13675",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

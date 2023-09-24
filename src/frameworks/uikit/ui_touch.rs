@@ -112,7 +112,10 @@ pub fn handle_event(env: &mut Environment, event: Event) {
     match event {
         Event::TouchesDown(map) => {
             let finger_id = 0;
-            assert!(map.len() == 1 && map.contains_key(&finger_id));
+            if !map.contains_key(&finger_id) {
+                log!("TODO: TouchesDown handle other fingers");
+                return;
+            }
             let coords = map.get(&finger_id).unwrap();
 
             if env
@@ -229,7 +232,10 @@ pub fn handle_event(env: &mut Environment, event: Event) {
         }
         Event::TouchesMove(map) => {
             let finger_id = 0;
-            assert!(map.len() == 1 && map.contains_key(&finger_id));
+            if !map.contains_key(&finger_id) {
+                log!("TODO: TouchesMove handle other fingers");
+                return;
+            }
             let coords = map.get(&finger_id).unwrap();
 
             let Some(&touch) = env
@@ -277,7 +283,10 @@ pub fn handle_event(env: &mut Environment, event: Event) {
         }
         Event::TouchesUp(map) => {
             let finger_id = 0;
-            assert!(map.len() == 1 && map.contains_key(&finger_id));
+            if !map.contains_key(&finger_id) {
+                log!("TODO: TouchesUp handle other fingers");
+                return;
+            }
             let coords = map.get(&finger_id).unwrap();
 
             let Some(&touch) = env

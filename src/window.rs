@@ -69,7 +69,7 @@ fn set_sdl2_orientation(orientation: DeviceOrientation) {
 }
 
 pub type FingerId = i64;
-type Coords = (f32, f32);
+pub type Coords = (f32, f32);
 
 #[derive(Debug)]
 pub enum Event {

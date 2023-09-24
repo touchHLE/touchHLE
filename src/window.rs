@@ -179,6 +179,9 @@ impl Window {
 
             // Disable blocking of event loop when app is paused.
             sdl2::hint::set("SDL_ANDROID_BLOCK_ON_PAUSE", "0");
+
+            // Separate mouse and touch events
+            sdl2::hint::set("SDL_TOUCH_MOUSE_EVENTS", "0");
         }
 
         // SDL2 disables the screen saver by default, but iPhone OS enables
@@ -347,13 +350,34 @@ impl Window {
                 _ => None,
             }
         }
+        fn finger_absolute_coords(window: &Window, (x, y): (f32, f32)) -> (f32, f32) {
+            let (screen_width, screen_height) = window.window.drawable_size();
+            (screen_width as f32 * x, screen_height as f32 * y)
+        }
 
         let mut controller_updated = false;
+        // event_pump doesn't have a method to peek on events
+        // so, we keep track of an unconsumed one from a previous loop iteration
+        // FIXME: use peek_event() from even_subsystem
+        let mut previous_event: Option<sdl2::event::Event> = None;
         while self.enable_event_polling {
-            let Some(event) = self.event_pump.poll_event() else {
+            use sdl2::event::Event as E;
+            let event = if let Some(e) = previous_event.take() {
+                previous_event = None;
+                match e {
+                    E::Unknown { .. } => (),
+                    _ => log_dbg!("Consuming previous event: {:?}", e),
+                }
+                e
+            } else if let Some(e) = self.event_pump.poll_event() {
+                match e {
+                    E::Unknown { .. } => (),
+                    _ => log_dbg!("Consuming new event: {:?}", e),
+                }
+                e
+            } else {
                 break;
             };
-            use sdl2::event::Event as E;
             self.event_queue.push_back(match event {
                 E::Quit { .. } => Event::Quit,
                 // TODO: support for multi-touch
@@ -364,12 +388,14 @@ impl Window {
                     ..
                 } => {
                     let coords = transform_input_coords(self, (x as f32, y as f32), false);
+                    log_dbg!("MouseButtonDown x {}, y {}, coords {:?}", x, y, coords);
                     Event::TouchesDown(HashMap::from([(0, coords)]))
                 }
                 E::MouseMotion {
                     x, y, mousestate, ..
                 } if mousestate.left() => {
                     let coords = transform_input_coords(self, (x as f32, y as f32), false);
+                    log_dbg!("MouseMotion x {}, y {}, coords {:?}", x, y, coords);
                     Event::TouchesMove(HashMap::from([(0, coords)]))
                 }
                 E::MouseButtonUp {
@@ -379,6 +405,7 @@ impl Window {
                     ..
                 } => {
                     let coords = transform_input_coords(self, (x as f32, y as f32), false);
+                    log_dbg!("MouseButtonUp x {}, y {}, coords {:?}", x, y, coords);
                     Event::TouchesUp(HashMap::from([(0, coords)]))
                 }
                 E::ControllerDeviceAdded { which, .. } => {
@@ -432,6 +459,90 @@ impl Window {
                     self.high_priority_event = Some(Event::AppWillTerminate);
                     self.enable_event_polling = false;
                     continue;
+                }
+                E::FingerUp {
+                    timestamp,
+                    finger_id,
+                    x,
+                    y,
+                    ..
+                }
+                | E::FingerMotion {
+                    timestamp,
+                    finger_id,
+                    x,
+                    y,
+                    ..
+                }
+                | E::FingerDown {
+                    timestamp,
+                    finger_id,
+                    x,
+                    y,
+                    ..
+                } => {
+                    log_dbg!("Starting multi-touch for {:?}", event);
+                    // To implement multi-touch we accumulate here same touch events at the same
+                    // timestamp. This is consistent with UIKit API, but could be broken if events
+                    // come out of the order.
+                    // (in worst case we separate multi-touches in several ones)
+                    // TODO: handle out of order touches
+                    let curr_timestamp = timestamp;
+                    let abs_coords = finger_absolute_coords(self, (x, y));
+                    let coords = transform_input_coords(self, abs_coords, false);
+                    log_dbg!("Finger event x {}, y {}, coords {:?}", x, y, coords);
+                    let mut map = HashMap::from([(FingerId::Touch(finger_id), coords)]);
+                    while let Some(next) = self.event_pump.poll_event() {
+                        match next {
+                            E::Unknown { .. } => (),
+                            _ => log_dbg!("Next possible multi-touch event: {:?}", next),
+                        }
+                        match next {
+                            E::FingerUp {
+                                timestamp,
+                                finger_id,
+                                x,
+                                y,
+                                ..
+                            }
+                            | E::FingerMotion {
+                                timestamp,
+                                finger_id,
+                                x,
+                                y,
+                                ..
+                            }
+                            | E::FingerDown {
+                                timestamp,
+                                finger_id,
+                                x,
+                                y,
+                                ..
+                            } if timestamp == curr_timestamp && next.is_same_kind_as(&event) => {
+                                let abs_coords = finger_absolute_coords(self, (x, y));
+                                let coords = transform_input_coords(self, abs_coords, false);
+                                map.insert(finger_id, coords);
+                            }
+                            E::MultiGesture { timestamp, .. } if timestamp == curr_timestamp => {
+                                // TODO: handle gestures
+                                continue;
+                            }
+                            _ => {
+                                // event_pump doesn't have a method to peek on events
+                                // so, we keep track of an unconsumed one from a previous loop iteration
+                                assert!(previous_event.is_none());
+                                previous_event = Some(next);
+                                break;
+                            }
+                        }
+                    }
+                    log_dbg!("Finishing multi-touch for {:?} with {:?}", event, map);
+                    match event {
+                        E::FingerUp { .. } => Event::TouchesUp(map),
+                        E::FingerMotion { .. } => Event::TouchesMove(map),
+                        E::FingerDown { .. } => Event::TouchesDown(map),
+                        _ => unreachable!(),
+                    }
                 }
                 _ => continue,
             })

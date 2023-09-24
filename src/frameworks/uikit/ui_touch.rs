@@ -13,8 +13,9 @@ use crate::objc::{
     autorelease, id, msg, msg_class, nil, objc_classes, release, retain, ClassExports, HostObject,
     NSZonePtr,
 };
-use crate::window::Event;
+use crate::window::{Event, FingerId};
 use crate::Environment;
+use std::collections::HashMap;
 
 pub type UITouchPhase = NSInteger;
 pub const UITouchPhaseBegan: UITouchPhase = 0;
@@ -23,7 +24,7 @@ pub const UITouchPhaseEnded: UITouchPhase = 3;
 
 #[derive(Default)]
 pub struct State {
-    current_touch: Option<id>,
+    current_touches: HashMap<FingerId, id>,
 }
 
 pub(super) struct UITouchHostObject {
@@ -109,10 +110,20 @@ pub const CLASSES: ClassExports = objc_classes! {
 /// [super::handle_events] will forward touch events to this function.
 pub fn handle_event(env: &mut Environment, event: Event) {
     match event {
-        Event::TouchDown(coords) => {
-            if env.framework_state.uikit.ui_touch.current_touch.is_some() {
+        Event::TouchesDown(map) => {
+            let finger_id = 0;
+            assert!(map.len() == 1 && map.contains_key(&finger_id));
+            let coords = map.get(&finger_id).unwrap();
+
+            if env
+                .framework_state
+                .uikit
+                .ui_touch
+                .current_touches
+                .contains_key(&finger_id)
+            {
                 log!("Warning: New touch initiated but current touch did not end yet, treating as movement.");
-                return handle_event(env, Event::TouchMove(coords));
+                return handle_event(env, Event::TouchesMove(map));
             }
 
             log_dbg!("Touch down: {:?}", coords);
@@ -199,7 +210,11 @@ pub fn handle_event(env: &mut Environment, event: Event) {
             retain(env, view);
             env.objc.borrow_mut::<UIEventHostObject>(event).view = view;
 
-            env.framework_state.uikit.ui_touch.current_touch = Some(new_touch);
+            env.framework_state
+                .uikit
+                .ui_touch
+                .current_touches
+                .insert(finger_id, new_touch);
             retain(env, new_touch);
 
             log_dbg!(
@@ -212,8 +227,18 @@ pub fn handle_event(env: &mut Environment, event: Event) {
 
             release(env, pool);
         }
-        Event::TouchMove(coords) => {
-            let Some(touch) = env.framework_state.uikit.ui_touch.current_touch else {
+        Event::TouchesMove(map) => {
+            let finger_id = 0;
+            assert!(map.len() == 1 && map.contains_key(&finger_id));
+            let coords = map.get(&finger_id).unwrap();
+
+            let Some(&touch) = env
+                .framework_state
+                .uikit
+                .ui_touch
+                .current_touches
+                .get(&finger_id)
+            else {
                 log!("Warning: Touch move event received but no current touch, ignoring.");
                 return;
             };
@@ -250,8 +275,18 @@ pub fn handle_event(env: &mut Environment, event: Event) {
 
             release(env, pool);
         }
-        Event::TouchUp(coords) => {
-            let Some(touch) = env.framework_state.uikit.ui_touch.current_touch else {
+        Event::TouchesUp(map) => {
+            let finger_id = 0;
+            assert!(map.len() == 1 && map.contains_key(&finger_id));
+            let coords = map.get(&finger_id).unwrap();
+
+            let Some(&touch) = env
+                .framework_state
+                .uikit
+                .ui_touch
+                .current_touches
+                .get(&finger_id)
+            else {
                 log!("Warning: Touch up event received but no current touch, ignoring.");
                 return;
             };
@@ -278,7 +313,11 @@ pub fn handle_event(env: &mut Environment, event: Event) {
             let event = ui_event::new_event(env, touches, view);
             autorelease(env, event);
 
-            env.framework_state.uikit.ui_touch.current_touch = None;
+            env.framework_state
+                .uikit
+                .ui_touch
+                .current_touches
+                .remove(&finger_id);
             release(env, touch); // only owner now should be the NSSet
 
             log_dbg!(

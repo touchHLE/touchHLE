@@ -60,7 +60,7 @@ pub fn handle_events(env: &mut Environment) -> Option<Instant> {
                 echo!("User requested quit, exiting.");
                 ui_application::exit(env);
             }
-            Event::TouchDown(..) | Event::TouchMove(..) | Event::TouchUp(..) => {
+            Event::TouchesDown(..) | Event::TouchesMove(..) | Event::TouchesUp(..) => {
                 ui_touch::handle_event(env, event)
             }
             Event::AppWillResignActive => {

@@ -20,7 +20,7 @@ use crate::options::Options;
 use sdl2::mouse::MouseButton;
 use sdl2::pixels::PixelFormatEnum;
 use sdl2::surface::Surface;
-use std::collections::VecDeque;
+use std::collections::{HashMap, VecDeque};
 use std::env;
 use std::f32::consts::FRAC_PI_2;
 use std::num::NonZeroU32;
@@ -68,6 +68,9 @@ fn set_sdl2_orientation(orientation: DeviceOrientation) {
     );
 }
 
+pub type FingerId = i64;
+type Coords = (f32, f32);
+
 #[derive(Debug)]
 pub enum Event {
     /// User requested quit.
@@ -78,9 +81,9 @@ pub enum Event {
     /// OS has informed touchHLE it will soon terminate.
     /// (iOS `applicationWillTerminate:`, Android `onDestroy()`)
     AppWillTerminate,
-    TouchDown((f32, f32)),
-    TouchMove((f32, f32)),
-    TouchUp((f32, f32)),
+    TouchesDown(HashMap<FingerId, Coords>),
+    TouchesMove(HashMap<FingerId, Coords>),
+    TouchesUp(HashMap<FingerId, Coords>),
 }
 
 pub enum GLVersion {
@@ -357,18 +360,25 @@ impl Window {
                     y,
                     mouse_btn: MouseButton::Left,
                     ..
-                } => Event::TouchDown(transform_input_coords(self, (x as f32, y as f32), false)),
+                } => {
+                    let coords = transform_input_coords(self, (x as f32, y as f32), false);
+                    Event::TouchesDown(HashMap::from([(0, coords)]))
+                }
                 E::MouseMotion {
                     x, y, mousestate, ..
                 } if mousestate.left() => {
-                    Event::TouchMove(transform_input_coords(self, (x as f32, y as f32), false))
+                    let coords = transform_input_coords(self, (x as f32, y as f32), false);
+                    Event::TouchesMove(HashMap::from([(0, coords)]))
                 }
                 E::MouseButtonUp {
                     x,
                     y,
                     mouse_btn: MouseButton::Left,
                     ..
-                } => Event::TouchUp(transform_input_coords(self, (x as f32, y as f32), false)),
+                } => {
+                    let coords = transform_input_coords(self, (x as f32, y as f32), false);
+                    Event::TouchesUp(HashMap::from([(0, coords)]))
+                }
                 E::ControllerDeviceAdded { which, .. } => {
                     self.controller_added(which);
                     continue;
@@ -389,10 +399,12 @@ impl Window {
                     };
                     match event {
                         E::ControllerButtonUp { .. } => {
-                            Event::TouchUp(transform_input_coords(self, (x, y), true))
+                            let coords = transform_input_coords(self, (x, y), true);
+                            Event::TouchesUp(HashMap::from([(0, coords)]))
                         }
                         E::ControllerButtonDown { .. } => {
-                            Event::TouchDown(transform_input_coords(self, (x, y), true))
+                            let coords = transform_input_coords(self, (x, y), true);
+                            Event::TouchesDown(HashMap::from([(0, coords)]))
                         }
                         _ => unreachable!(),
                     }
@@ -430,13 +442,16 @@ impl Window {
             self.event_queue
                 .push_back(match (old_pressed, new_pressed) {
                     (false, true) => {
-                        Event::TouchDown(transform_input_coords(self, (new_x, new_y), false))
+                        let coords = transform_input_coords(self, (new_x, new_y), false);
+                        Event::TouchesDown(HashMap::from([(0, coords)]))
                     }
                     (true, false) => {
-                        Event::TouchUp(transform_input_coords(self, (new_x, new_y), false))
+                        let coords = transform_input_coords(self, (new_x, new_y), false);
+                        Event::TouchesUp(HashMap::from([(0, coords)]))
                     }
                     _ if (new_x, new_y) != (old_x, old_y) && new_pressed => {
-                        Event::TouchMove(transform_input_coords(self, (new_x, new_y), false))
+                        let coords = transform_input_coords(self, (new_x, new_y), false);
+                        Event::TouchesMove(HashMap::from([(0, coords)]))
                     }
                     _ => return,
                 });

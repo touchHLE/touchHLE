@@ -13,7 +13,7 @@ use crate::objc::{
     autorelease, id, msg, msg_class, nil, objc_classes, release, retain, ClassExports, HostObject,
     NSZonePtr,
 };
-use crate::window::{Event, FingerId};
+use crate::window::{Coords, Event, FingerId};
 use crate::Environment;
 use std::collections::HashMap;
 
@@ -110,235 +110,243 @@ pub const CLASSES: ClassExports = objc_classes! {
 /// [super::handle_events] will forward touch events to this function.
 pub fn handle_event(env: &mut Environment, event: Event) {
     match event {
-        Event::TouchesDown(map) => {
-            let finger_id = 0;
-            if !map.contains_key(&finger_id) {
-                log!("TODO: TouchesDown handle other fingers");
-                return;
-            }
-            let coords = map.get(&finger_id).unwrap();
-
-            if env
-                .framework_state
-                .uikit
-                .ui_touch
-                .current_touches
-                .contains_key(&finger_id)
-            {
-                log!("Warning: New touch initiated but current touch did not end yet, treating as movement.");
-                return handle_event(env, Event::TouchesMove(map));
-            }
-
-            log_dbg!("Touch down: {:?}", coords);
-
-            let location = CGPoint {
-                x: coords.0,
-                y: coords.1,
-            };
-
-            // UIKit creates and drains autorelease pools when handling events.
-            let pool: id = msg_class![env; NSAutoreleasePool new];
-
-            // Note: if the emulator is heavily lagging, this timestamp is going
-            // to be far off from the truth, since it should represent the
-            // time when the event actually happened, not the time when the
-            // event was dispatched. Maybe we'll need to fix this eventually.
-            let timestamp: NSTimeInterval = msg_class![env; NSProcessInfo systemUptime];
-
-            // TODO: is this the correct state of the UITouch and UIEvent during
-            //       hit testing?
-
-            let new_touch: id = msg_class![env; UITouch alloc];
-            *env.objc.borrow_mut(new_touch) = UITouchHostObject {
-                view: nil,
-                window: nil,
-                location,
-                previous_location: location,
-                original_location: location,
-                timestamp,
-                phase: UITouchPhaseBegan,
-            };
-            autorelease(env, new_touch);
-
-            let touches: id = msg_class![env; NSSet setWithObject:new_touch];
-            let event = ui_event::new_event(env, touches, nil);
-            autorelease(env, event);
-
-            // FIXME: handle non-fullscreen windows in hit testing and
-            //        co-ordinate space translation.
-
-            // Assumes the last window in the list is the one on top.
-            // TODO: this is not correct once we support zPosition.
-            let Some(&top_window) = env
-                .framework_state
-                .uikit
-                .ui_view
-                .ui_window
-                .visible_windows
-                .last()
-            else {
-                log!("No visible window, touch event ignored");
-                return;
-            };
-
-            let view: id = msg![env; top_window hitTest:location withEvent:event];
-            if view == nil {
-                log!(
-                    "Couldn't find a view for touch at {:?} in window {:?}, discarding",
-                    location,
-                    top_window,
-                );
-                return;
-            } else {
-                log_dbg!(
-                    "Found view {:?} with frame {:?} for touch at {:?} in window {:?}",
-                    view,
-                    {
-                        let f: CGRect = msg![env; view frame];
-                        f
-                    },
-                    location,
-                    top_window,
-                );
-            }
-
-            retain(env, view);
-            retain(env, top_window);
-            {
-                let new_touch = env.objc.borrow_mut::<UITouchHostObject>(new_touch);
-                new_touch.view = view;
-                new_touch.window = top_window;
-            }
-
-            retain(env, view);
-            env.objc.borrow_mut::<UIEventHostObject>(event).view = view;
-
-            env.framework_state
-                .uikit
-                .ui_touch
-                .current_touches
-                .insert(finger_id, new_touch);
-            retain(env, new_touch);
-
-            log_dbg!(
-                "Sending [{:?} touchesBegan:{:?} withEvent:{:?}]",
-                view,
-                touches,
-                event
-            );
-            let _: () = msg![env; view touchesBegan:touches withEvent:event];
-
-            release(env, pool);
-        }
-        Event::TouchesMove(map) => {
-            let finger_id = 0;
-            if !map.contains_key(&finger_id) {
-                log!("TODO: TouchesMove handle other fingers");
-                return;
-            }
-            let coords = map.get(&finger_id).unwrap();
-
-            let Some(&touch) = env
-                .framework_state
-                .uikit
-                .ui_touch
-                .current_touches
-                .get(&finger_id)
-            else {
-                log!("Warning: Touch move event received but no current touch, ignoring.");
-                return;
-            };
-
-            log_dbg!("Touch move: {:?}", coords);
-
-            let location = CGPoint {
-                x: coords.0,
-                y: coords.1,
-            };
-
-            let timestamp: NSTimeInterval = msg_class![env; NSProcessInfo systemUptime];
-
-            let view = env.objc.borrow::<UITouchHostObject>(touch).view;
-            let host_object = env.objc.borrow_mut::<UITouchHostObject>(touch);
-            host_object.previous_location = host_object.location;
-            host_object.location = location;
-            host_object.timestamp = timestamp;
-            host_object.phase = UITouchPhaseMoved;
-
-            let pool: id = msg_class![env; NSAutoreleasePool new];
-
-            let touches: id = msg_class![env; NSSet setWithObject:touch];
-            let event = ui_event::new_event(env, touches, view);
-            autorelease(env, event);
-
-            log_dbg!(
-                "Sending [{:?} touchesMoved:{:?} withEvent:{:?}]",
-                view,
-                touches,
-                event
-            );
-            let _: () = msg![env; view touchesMoved:touches withEvent:event];
-
-            release(env, pool);
-        }
-        Event::TouchesUp(map) => {
-            let finger_id = 0;
-            if !map.contains_key(&finger_id) {
-                log!("TODO: TouchesUp handle other fingers");
-                return;
-            }
-            let coords = map.get(&finger_id).unwrap();
-
-            let Some(&touch) = env
-                .framework_state
-                .uikit
-                .ui_touch
-                .current_touches
-                .get(&finger_id)
-            else {
-                log!("Warning: Touch up event received but no current touch, ignoring.");
-                return;
-            };
-
-            log_dbg!("Touch up: {:?}", coords);
-
-            let location = CGPoint {
-                x: coords.0,
-                y: coords.1,
-            };
-
-            let timestamp: NSTimeInterval = msg_class![env; NSProcessInfo systemUptime];
-
-            let view = env.objc.borrow::<UITouchHostObject>(touch).view;
-            let host_object = env.objc.borrow_mut::<UITouchHostObject>(touch);
-            host_object.previous_location = host_object.location;
-            host_object.location = location;
-            host_object.timestamp = timestamp;
-            host_object.phase = UITouchPhaseEnded;
-
-            let pool: id = msg_class![env; NSAutoreleasePool new];
-
-            let touches: id = msg_class![env; NSSet setWithObject:touch];
-            let event = ui_event::new_event(env, touches, view);
-            autorelease(env, event);
-
-            env.framework_state
-                .uikit
-                .ui_touch
-                .current_touches
-                .remove(&finger_id);
-            release(env, touch); // only owner now should be the NSSet
-
-            log_dbg!(
-                "Sending [{:?} touchesEnded:{:?} withEvent:{:?}]",
-                view,
-                touches,
-                event
-            );
-            let _: () = msg![env; view touchesEnded:touches withEvent:event];
-
-            release(env, pool);
-        }
+        Event::TouchesDown(map) => handle_touches_down(env, map),
+        Event::TouchesMove(map) => handle_touches_move(env, map),
+        Event::TouchesUp(map) => handle_touches_up(env, map),
         _ => unreachable!(),
     }
+}
+
+fn handle_touches_down(env: &mut Environment, map: HashMap<FingerId, Coords>) {
+    let finger_id = 0;
+    if !map.contains_key(&finger_id) {
+        log!("TODO: TouchesDown handle other fingers");
+        return;
+    }
+    let coords = map.get(&finger_id).unwrap();
+
+    if env
+        .framework_state
+        .uikit
+        .ui_touch
+        .current_touches
+        .contains_key(&finger_id)
+    {
+        log!(
+            "Warning: New touch initiated but current touch did not end yet, treating as movement."
+        );
+        return handle_event(env, Event::TouchesMove(map));
+    }
+
+    log_dbg!("Touch down: {:?}", coords);
+
+    let location = CGPoint {
+        x: coords.0,
+        y: coords.1,
+    };
+
+    // UIKit creates and drains autorelease pools when handling events.
+    let pool: id = msg_class![env; NSAutoreleasePool new];
+
+    // Note: if the emulator is heavily lagging, this timestamp is going
+    // to be far off from the truth, since it should represent the
+    // time when the event actually happened, not the time when the
+    // event was dispatched. Maybe we'll need to fix this eventually.
+    let timestamp: NSTimeInterval = msg_class![env; NSProcessInfo systemUptime];
+
+    // TODO: is this the correct state of the UITouch and UIEvent during
+    //       hit testing?
+
+    let new_touch: id = msg_class![env; UITouch alloc];
+    *env.objc.borrow_mut(new_touch) = UITouchHostObject {
+        view: nil,
+        window: nil,
+        location,
+        previous_location: location,
+        original_location: location,
+        timestamp,
+        phase: UITouchPhaseBegan,
+    };
+    autorelease(env, new_touch);
+
+    let touches: id = msg_class![env; NSSet setWithObject:new_touch];
+    let event = ui_event::new_event(env, touches, nil);
+    autorelease(env, event);
+
+    // FIXME: handle non-fullscreen windows in hit testing and
+    //        co-ordinate space translation.
+
+    // Assumes the last window in the list is the one on top.
+    // TODO: this is not correct once we support zPosition.
+    let Some(&top_window) = env
+        .framework_state
+        .uikit
+        .ui_view
+        .ui_window
+        .visible_windows
+        .last()
+    else {
+        log!("No visible window, touch event ignored");
+        return;
+    };
+
+    let view: id = msg![env; top_window hitTest:location withEvent:event];
+    if view == nil {
+        log!(
+            "Couldn't find a view for touch at {:?} in window {:?}, discarding",
+            location,
+            top_window,
+        );
+        return;
+    } else {
+        log_dbg!(
+            "Found view {:?} with frame {:?} for touch at {:?} in window {:?}",
+            view,
+            {
+                let f: CGRect = msg![env; view frame];
+                f
+            },
+            location,
+            top_window,
+        );
+    }
+
+    retain(env, view);
+    retain(env, top_window);
+    {
+        let new_touch = env.objc.borrow_mut::<UITouchHostObject>(new_touch);
+        new_touch.view = view;
+        new_touch.window = top_window;
+    }
+
+    retain(env, view);
+    env.objc.borrow_mut::<UIEventHostObject>(event).view = view;
+
+    env.framework_state
+        .uikit
+        .ui_touch
+        .current_touches
+        .insert(finger_id, new_touch);
+    retain(env, new_touch);
+
+    log_dbg!(
+        "Sending [{:?} touchesBegan:{:?} withEvent:{:?}]",
+        view,
+        touches,
+        event
+    );
+    let _: () = msg![env; view touchesBegan:touches withEvent:event];
+
+    release(env, pool);
+}
+
+fn handle_touches_move(env: &mut Environment, map: HashMap<FingerId, Coords>) {
+    let finger_id = 0;
+    if !map.contains_key(&finger_id) {
+        log!("TODO: TouchesMove handle other fingers");
+        return;
+    }
+    let coords = map.get(&finger_id).unwrap();
+
+    let Some(&touch) = env
+        .framework_state
+        .uikit
+        .ui_touch
+        .current_touches
+        .get(&finger_id)
+    else {
+        log!("Warning: Touch move event received but no current touch, ignoring.");
+        return;
+    };
+
+    log_dbg!("Touch move: {:?}", coords);
+
+    let location = CGPoint {
+        x: coords.0,
+        y: coords.1,
+    };
+
+    let timestamp: NSTimeInterval = msg_class![env; NSProcessInfo systemUptime];
+
+    let view = env.objc.borrow::<UITouchHostObject>(touch).view;
+    let host_object = env.objc.borrow_mut::<UITouchHostObject>(touch);
+    host_object.previous_location = host_object.location;
+    host_object.location = location;
+    host_object.timestamp = timestamp;
+    host_object.phase = UITouchPhaseMoved;
+
+    let pool: id = msg_class![env; NSAutoreleasePool new];
+
+    let touches: id = msg_class![env; NSSet setWithObject:touch];
+    let event = ui_event::new_event(env, touches, view);
+    autorelease(env, event);
+
+    log_dbg!(
+        "Sending [{:?} touchesMoved:{:?} withEvent:{:?}]",
+        view,
+        touches,
+        event
+    );
+    let _: () = msg![env; view touchesMoved:touches withEvent:event];
+
+    release(env, pool);
+}
+
+fn handle_touches_up(env: &mut Environment, map: HashMap<FingerId, Coords>) {
+    let finger_id = 0;
+    if !map.contains_key(&finger_id) {
+        log!("TODO: TouchesUp handle other fingers");
+        return;
+    }
+    let coords = map.get(&finger_id).unwrap();
+
+    let Some(&touch) = env
+        .framework_state
+        .uikit
+        .ui_touch
+        .current_touches
+        .get(&finger_id)
+    else {
+        log!("Warning: Touch up event received but no current touch, ignoring.");
+        return;
+    };
+
+    log_dbg!("Touch up: {:?}", coords);
+
+    let location = CGPoint {
+        x: coords.0,
+        y: coords.1,
+    };
+
+    let timestamp: NSTimeInterval = msg_class![env; NSProcessInfo systemUptime];
+
+    let view = env.objc.borrow::<UITouchHostObject>(touch).view;
+    let host_object = env.objc.borrow_mut::<UITouchHostObject>(touch);
+    host_object.previous_location = host_object.location;
+    host_object.location = location;
+    host_object.timestamp = timestamp;
+    host_object.phase = UITouchPhaseEnded;
+
+    let pool: id = msg_class![env; NSAutoreleasePool new];
+
+    let touches: id = msg_class![env; NSSet setWithObject:touch];
+    let event = ui_event::new_event(env, touches, view);
+    autorelease(env, event);
+
+    env.framework_state
+        .uikit
+        .ui_touch
+        .current_touches
+        .remove(&finger_id);
+    release(env, touch); // only owner now should be the NSSet
+
+    log_dbg!(
+        "Sending [{:?} touchesEnded:{:?} withEvent:{:?}]",
+        view,
+        touches,
+        event
+    );
+    let _: () = msg![env; view touchesEnded:touches withEvent:event];
+
+    release(env, pool);
 }

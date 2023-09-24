@@ -16,6 +16,24 @@
       "message": "it would be nice to extend existing tests of printfs in the TestApp",
       "revId": "c236dd2807ff0427db636bc4f5a3b66bc0a2b491",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "26c89fef_9e0f84e6",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 8
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2023-09-24T15:55:19Z",
+      "side": 1,
+      "message": "Expanding the existing TestApp printf tests helped me find out faults in my implementation. printf behavior should now be more correct",
+      "parentUuid": "fc7f4912_c611e98c",
+      "revId": "c236dd2807ff0427db636bc4f5a3b66bc0a2b491",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

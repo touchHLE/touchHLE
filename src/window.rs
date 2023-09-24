@@ -377,7 +377,6 @@ impl Window {
             };
             self.event_queue.push_back(match event {
                 E::Quit { .. } => Event::Quit,
-                // TODO: support for multi-touch
                 E::MouseButtonDown {
                     x,
                     y,

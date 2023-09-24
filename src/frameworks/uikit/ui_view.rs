@@ -40,6 +40,7 @@ pub(super) struct UIViewHostObject {
     superview: id,
     clears_context_before_drawing: bool,
     user_interaction_enabled: bool,
+    multiple_touch_enabled: bool,
 }
 impl HostObject for UIViewHostObject {}
 impl Default for UIViewHostObject {
@@ -52,6 +53,7 @@ impl Default for UIViewHostObject {
             superview: nil,
             clears_context_before_drawing: true,
             user_interaction_enabled: true,
+            multiple_touch_enabled: false,
         }
     }
 }
@@ -171,9 +173,11 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.borrow_mut::<UIViewHostObject>(this).user_interaction_enabled = enabled;
 }
 
-// TODO: setMultipleTouchEnabled
-- (())setMultipleTouchEnabled:(bool)_enabled {
-    // TODO: enable multitouch
+- (bool)isMultipleTouchEnabled {
+    env.objc.borrow::<UIViewHostObject>(this).multiple_touch_enabled
+}
+- (())setMultipleTouchEnabled:(bool)enabled {
+    env.objc.borrow_mut::<UIViewHostObject>(this).multiple_touch_enabled = enabled;
 }
 
 - (())layoutSubviews {
@@ -258,6 +262,7 @@ pub const CLASSES: ClassExports = objc_classes! {
         subviews,
         clears_context_before_drawing: _,
         user_interaction_enabled: _,
+        multiple_touch_enabled: _,
     } = std::mem::take(env.objc.borrow_mut(this));
 
     release(env, layer);

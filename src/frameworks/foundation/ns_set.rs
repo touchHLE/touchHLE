@@ -63,34 +63,35 @@ pub const CLASSES: ClassExports = objc_classes! {
         return 0;
     }
 
-    // TODO: handle size > 1
-    assert!(host_object.dict.count == 1);
-    assert!(len >= host_object.dict.count);
-
     let NSFastEnumerationState {
-        state: is_first_round,
+        state: start_index,
         ..
     } = env.mem.read(state);
 
-    match is_first_round {
-        0 => {
-            let object = host_object.dict.iter_keys().next().unwrap();
-            env.mem.write(stackbuf, object);
-            env.mem.write(state, NSFastEnumerationState {
-                state: 1,
-                items_ptr: stackbuf,
-                // can be anything as long as it's dereferenceable and the same
-                // each iteration
-                mutations_ptr: stackbuf.cast(),
-                extra: Default::default(),
-            });
-            1 // returned object count
-        },
-        1 => {
-            0 // end of iteration
-        },
-        _ => panic!(), // app failed to initialize the buffer?
+    let mut set_iter = host_object.dict.iter_keys();
+    if start_index >= 1 {
+       _ = set_iter.nth((start_index-1).try_into().unwrap());
     }
+
+    let mut batch_count = 0;
+    while batch_count < len {
+        if let Some(object) = set_iter.next() {
+            env.mem.write(stackbuf + batch_count, object);
+            batch_count += 1;
+        } else {
+            break;
+        }
+    }
+    env.mem.write(state, NSFastEnumerationState {
+        state: start_index + batch_count,
+        items_ptr: stackbuf,
+        // can be anything as long as it's dereferenceable and the same
+        // each iteration
+        // Note: stackbuf can be different each time, it's better to return self pointer
+        mutations_ptr: this.cast(),
+        extra: Default::default(),
+    });
+    batch_count
 }
 
 @end

@@ -96,7 +96,7 @@ If the emulator crashes almost immediately while running a game **listed as supp
 
 # Building and contributing
 
-Please see the BUILDING.md, DEBUGGING.md and CONTRIBUTING.md files in the git repo.
+Please see the [BUILDING](BUILDING.md), [DEBUGGING](DEBUGGING.md) and [CONTRIBUTING](CONTRIBUTING.md) files in the git repo.
 
 # License
 

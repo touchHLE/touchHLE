@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "39bceba2_741b9176",
+        "filename": "src/libc/posix_io.rs",
+        "patchSetId": 12
+      },
+      "lineNbr": 72,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-09-24T18:00:59Z",
+      "side": 1,
+      "message": "does it pass cargo fmt/clippy?\nit should be marked with unused or dead_code",
+      "revId": "fb10b280a1d0144d574755f877566946cd0c378a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

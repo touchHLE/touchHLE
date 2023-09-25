@@ -147,36 +147,34 @@ pub fn prepopulate_user_data_dir() {
         }
     }
 
+    fn create_file(path: &Path, content: &str) {
+        match std::fs::write(path, content) {
+            Ok(()) => {
+                log!("Created: {}", path.display());
+            }
+            Err(e) => {
+                log!("Warning: Couldn't create {}: {}", path.display(), e);
+            }
+        }
+    }
+
     let apps_dir_readme = apps_dir.join("README.txt");
     if !apps_dir_readme.is_file() {
         let content = include_str!(concat!(
             env!("CARGO_MANIFEST_DIR"),
             "/touchHLE_apps/README.txt"
         ));
-        match std::fs::write(&apps_dir_readme, content) {
-            Ok(()) => {
-                log!("Created: {}", apps_dir_readme.display());
-            }
-            Err(e) => {
-                log!(
-                    "Warning: Couldn't create {}: {}",
-                    apps_dir_readme.display(),
-                    e
-                );
-            }
-        }
+        create_file(&apps_dir_readme, content);
     }
 
     let user_options = user_data_base_path().join(USER_OPTIONS_FILE);
     if !user_options.is_file() {
         let content = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/touchHLE_options.txt"));
-        match std::fs::write(&user_options, content) {
-            Ok(()) => {
-                log!("Created: {}", user_options.display());
-            }
-            Err(e) => {
-                log!("Warning: Couldn't create {}: {}", user_options.display(), e);
-            }
-        }
+        create_file(&user_options, content);
+    }
+
+    let options_help = user_data_base_path().join("OPTIONS_HELP.txt");
+    if !options_help.is_file() {
+        create_file(&options_help, crate::options::OPTIONS_HELP);
     }
 }

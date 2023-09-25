@@ -134,7 +134,7 @@ pub fn main<T: Iterator<Item = String>>(mut args: T) -> Result<(), String> {
     for arg in args {
         if arg == "--help" {
             echo!("{}", USAGE);
-            echo!("{}", options::DOCUMENTATION);
+            echo!("{}", options::OPTIONS_HELP);
             return Ok(());
         } else if arg == "--copyright" {
             echo!("{}", licenses::get_text());
@@ -150,7 +150,7 @@ pub fn main<T: Iterator<Item = String>>(mut args: T) -> Result<(), String> {
             bundle_path = Some(PathBuf::from(arg));
         } else {
             echo!("{}", USAGE);
-            echo!("{}", options::DOCUMENTATION);
+            echo!("{}", options::OPTIONS_HELP);
             return Err(format!("Unexpected argument: {:?}", arg));
         }
     }

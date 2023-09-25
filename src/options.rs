@@ -12,7 +12,7 @@ use std::io::{BufRead, BufReader, Read};
 use std::net::{SocketAddr, ToSocketAddrs};
 use std::num::NonZeroU32;
 
-pub const DOCUMENTATION: &str =
+pub const OPTIONS_HELP: &str =
     include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/OPTIONS_HELP.txt"));
 
 /// Game controller button for `--button-to-touch=` option.

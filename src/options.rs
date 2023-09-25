@@ -16,7 +16,7 @@ pub const OPTIONS_HELP: &str =
     include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/OPTIONS_HELP.txt"));
 
 /// Game controller button for `--button-to-touch=` option.
-#[derive(Hash, PartialEq, Eq)]
+#[derive(Copy, Clone, Hash, PartialEq, Eq, Debug)]
 pub enum Button {
     A,
     B,

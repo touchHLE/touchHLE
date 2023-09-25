@@ -160,7 +160,7 @@ fn handle_touches_down(env: &mut Environment, map: HashMap<FingerId, Coords>) {
             return handle_touches_move(env, HashMap::from([(finger_id, coords)]));
         }
 
-        log_dbg!("Finger {} touch down: {:?}", finger_id, coords);
+        log_dbg!("Finger {:?} touch down: {:?}", finger_id, coords);
 
         let location = CGPoint {
             x: coords.0,
@@ -315,13 +315,13 @@ fn handle_touches_move(env: &mut Environment, map: HashMap<FingerId, Coords>) {
             .get(&finger_id)
         else {
             log!(
-                "Warning: Finger {} touch move event received but no current touch, ignoring.",
+                "Warning: Finger {:?} touch move event received but no current touch, ignoring.",
                 finger_id
             );
             continue;
         };
 
-        log_dbg!("Finger {} touch move: {:?}", finger_id, coords);
+        log_dbg!("Finger {:?} touch move: {:?}", finger_id, coords);
 
         let location = CGPoint {
             x: coords.0,
@@ -381,13 +381,13 @@ fn handle_touches_up(env: &mut Environment, map: HashMap<FingerId, Coords>) {
             .get(&finger_id)
         else {
             log!(
-                "Warning: Finger {} touch up event received but no current touch, ignoring.",
+                "Warning: Finger {:?} touch up event received but no current touch, ignoring.",
                 finger_id
             );
             continue;
         };
 
-        log_dbg!("Finger {} touch up: {:?}", finger_id, coords);
+        log_dbg!("Finger {:?} touch up: {:?}", finger_id, coords);
 
         let location = CGPoint {
             x: coords.0,

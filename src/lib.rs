@@ -71,6 +71,8 @@ pub extern "C" fn SDL_main(
     _argc: std::ffi::c_int,
     _argv: *const *const std::ffi::c_char,
 ) -> std::ffi::c_int {
+    unsafe { log::setup_log_file() };
+
     // Rust's default panic handler prints to stderr, but on Android that just
     // gets discarded, so we set a custom hook to make debugging easier.
     std::panic::set_hook(Box::new(|info| {

@@ -68,7 +68,13 @@ fn set_sdl2_orientation(orientation: DeviceOrientation) {
     );
 }
 
-pub type FingerId = i64;
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
+pub enum FingerId {
+    Mouse,
+    Touch(i64),
+    VirtualCursor,
+    ButtonToTouch(crate::options::Button),
+}
 pub type Coords = (f32, f32);
 
 #[derive(Debug)]
@@ -385,14 +391,14 @@ impl Window {
                 } => {
                     let coords = transform_input_coords(self, (x as f32, y as f32), false);
                     log_dbg!("MouseButtonDown x {}, y {}, coords {:?}", x, y, coords);
-                    Event::TouchesDown(HashMap::from([(0, coords)]))
+                    Event::TouchesDown(HashMap::from([(FingerId::Mouse, coords)]))
                 }
                 E::MouseMotion {
                     x, y, mousestate, ..
                 } if mousestate.left() => {
                     let coords = transform_input_coords(self, (x as f32, y as f32), false);
                     log_dbg!("MouseMotion x {}, y {}, coords {:?}", x, y, coords);
-                    Event::TouchesMove(HashMap::from([(0, coords)]))
+                    Event::TouchesMove(HashMap::from([(FingerId::Mouse, coords)]))
                 }
                 E::MouseButtonUp {
                     x,
@@ -402,7 +408,7 @@ impl Window {
                 } => {
                     let coords = transform_input_coords(self, (x as f32, y as f32), false);
                     log_dbg!("MouseButtonUp x {}, y {}, coords {:?}", x, y, coords);
-                    Event::TouchesUp(HashMap::from([(0, coords)]))
+                    Event::TouchesUp(HashMap::from([(FingerId::Mouse, coords)]))
                 }
                 E::ControllerDeviceAdded { which, .. } => {
                     self.controller_added(which);
@@ -425,11 +431,17 @@ impl Window {
                     match event {
                         E::ControllerButtonUp { .. } => {
                             let coords = transform_input_coords(self, (x, y), true);
-                            Event::TouchesUp(HashMap::from([(0, coords)]))
+                            Event::TouchesUp(HashMap::from([(
+                                FingerId::ButtonToTouch(button),
+                                coords,
+                            )]))
                         }
                         E::ControllerButtonDown { .. } => {
                             let coords = transform_input_coords(self, (x, y), true);
-                            Event::TouchesDown(HashMap::from([(0, coords)]))
+                            Event::TouchesDown(HashMap::from([(
+                                FingerId::ButtonToTouch(button),
+                                coords,
+                            )]))
                         }
                         _ => unreachable!(),
                     }
@@ -487,7 +499,7 @@ impl Window {
                     let abs_coords = finger_absolute_coords(self, (x, y));
                     let coords = transform_input_coords(self, abs_coords, false);
                     log_dbg!("Finger event x {}, y {}, coords {:?}", x, y, coords);
-                    let mut map = HashMap::from([(finger_id, coords)]);
+                    let mut map = HashMap::from([(FingerId::Touch(finger_id), coords)]);
                     loop {
                         let next = self.event_pump.poll_event();
                         if next.is_none() {
@@ -522,7 +534,7 @@ impl Window {
                             } if timestamp == curr_timestamp && next.is_same_kind_as(&event) => {
                                 let abs_coords = finger_absolute_coords(self, (x, y));
                                 let coords = transform_input_coords(self, abs_coords, false);
-                                map.insert(finger_id, coords);
+                                map.insert(FingerId::Touch(finger_id), coords);
                             }
                             E::MultiGesture { timestamp, .. } if timestamp == curr_timestamp => {
                                 // TODO: handle gestures
@@ -554,15 +566,15 @@ impl Window {
                 .push_back(match (old_pressed, new_pressed) {
                     (false, true) => {
                         let coords = transform_input_coords(self, (new_x, new_y), false);
-                        Event::TouchesDown(HashMap::from([(0, coords)]))
+                        Event::TouchesDown(HashMap::from([(FingerId::VirtualCursor, coords)]))
                     }
                     (true, false) => {
                         let coords = transform_input_coords(self, (new_x, new_y), false);
-                        Event::TouchesUp(HashMap::from([(0, coords)]))
+                        Event::TouchesUp(HashMap::from([(FingerId::VirtualCursor, coords)]))
                     }
                     _ if (new_x, new_y) != (old_x, old_y) && new_pressed => {
                         let coords = transform_input_coords(self, (new_x, new_y), false);
-                        Event::TouchesMove(HashMap::from([(0, coords)]))
+                        Event::TouchesMove(HashMap::from([(FingerId::VirtualCursor, coords)]))
                     }
                     _ => return,
                 });

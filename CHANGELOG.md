@@ -15,6 +15,11 @@ If an app is added to the supported list after the relevant version has already 
 
 ## NEXT
 
+Compatibility:
+
+- API support improvements:
+  - Various small contributions. (@hikari-no-yume, @ciciplusplus, @alborrajo)
+
 Usability:
 
 - The Android version of touchHLE now has a _documents provider_. Thanks to a mere three hundred lines of boilerplate code [originally written for the emulator Skyline](https://github.com/skyline-emu/skyline/blob/dc20a615275f66bee20a4fd851ef0231daca4f14/app/src/main/java/emu/skyline/provider/DocumentsProvider.kt) (RIP), it is now possible for you, as the owner of a device running a newer Android version, to move ~~files~~ _documents_ in and out of touchHLE's ~~directory~~ _location_ on your device with relative ease. For example, it is now possible to download an ~~.ipa file~~ _`application/octet-stream` document_ to the Downloads folder of your device, then, using an appropriate app, move this _document_ to the touchHLE _location_. Users of normal operating systems and [older versions of Android](https://developer.android.com/about/versions/11/privacy/storage#other-apps-data) continue to be able to access a superior version of the same functionality via a so-called “file manager”. (@hikari-no-yume)

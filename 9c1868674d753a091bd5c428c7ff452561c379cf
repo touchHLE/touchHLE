@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9e21f012_69c2a65e",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 14
+      },
+      "lineNbr": 7,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-09-28T19:58:26Z",
+      "side": 1,
+      "message": "This isn\u0027t a wrapper now, can you change the message to something like \"Implement arc4random\"?\n\nOtherwise, I\u0027m ready to +2.",
+      "revId": "9c1868674d753a091bd5c428c7ff452561c379cf",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

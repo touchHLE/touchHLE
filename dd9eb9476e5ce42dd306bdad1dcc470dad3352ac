@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "95b7f71d_24807c7e",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 9
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-09-28T19:48:06Z",
+      "side": 1,
+      "message": "Hmm, these aren\u0027t listed on https://registry.khronos.org/OpenGL-Refpages/es1.1/xhtml/ -- maybe it\u0027s from an extension?",
+      "revId": "dd9eb9476e5ce42dd306bdad1dcc470dad3352ac",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

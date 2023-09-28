@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "60b834da_42ed816c",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 8
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-09-28T20:19:15Z",
+      "side": 1,
+      "message": "Uhh, the CFBundle implementation is meant to call the corresponding NSBundle functions. That\u0027s a questionable design choice on my part and maybe something I should reverse later, so I won\u0027t make you change this, but can you add the relevant NSBundle methods that call these CFBundle functions? They\u0027ll probably need to use `autorelease`.",
+      "revId": "f35d4911c19813efeccd3e728433f64a5ff36034",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "478a476c_173a9ea9",
+        "filename": "src/bundle.rs",
+        "patchSetId": 8
+      },
+      "lineNbr": 79,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-09-28T20:19:15Z",
+      "side": 1,
+      "message": "It would be more idiomatic rust to return a `\u0026[Value]`.",
+      "revId": "f35d4911c19813efeccd3e728433f64a5ff36034",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4e1bfa65_1f28da22",
+        "filename": "src/frameworks/core_foundation/cf_bundle.rs",
+        "patchSetId": 8
+      },
+      "lineNbr": 53,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-09-28T20:19:15Z",
+      "side": 1,
+      "message": "It is probably much simpler to use `ns_array::from_vec`? You could use `map` and `collect` for maximum convenience. You\u0027d also avoid the memory leak here that way.",
+      "revId": "f35d4911c19813efeccd3e728433f64a5ff36034",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "61f29b6c_f717279e",
+        "filename": "src/gles/gles1_on_gl2.rs",
+        "patchSetId": 14
+      },
+      "lineNbr": 173,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-09-28T19:56:50Z",
+      "side": 1,
+      "message": "Can you make a separate commit for adding these parameters? Also:\n\n- Can you add `FOG_DENSITY` while you\u0027re at it?\n- Can you remove the `// TODO:` comment above?\n\nI checked the spec and these are at least clearly float parameters, so that\u0027s good.",
+      "revId": "f1d348884fbef5077bbeb3c04b7e5353683e9233",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0d68ec74_ecee1264",
+        "filename": "src/gles/gles1_on_gl2.rs",
+        "patchSetId": 14
+      },
+      "lineNbr": 544,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-09-28T19:56:50Z",
+      "side": 1,
+      "message": "Can you use `gl21::` calls directly for fog clamping and backup/restore? There\u0027s no particular value in going through the abstraction here.",
+      "revId": "f1d348884fbef5077bbeb3c04b7e5353683e9233",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

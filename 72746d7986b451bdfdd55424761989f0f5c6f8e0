@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "12c2f622_2be1ea4e",
+        "filename": "src/frameworks/foundation/ns_bundle.rs",
+        "patchSetId": 6
+      },
+      "lineNbr": 122,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-09-28T20:24:19Z",
+      "side": 1,
+      "message": "It\u0027s possible to test this on macOS btw. I think...",
+      "revId": "72746d7986b451bdfdd55424761989f0f5c6f8e0",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1ff01ecf_8fa5340f",
+        "filename": "src/frameworks/foundation/ns_bundle.rs",
+        "patchSetId": 6
+      },
+      "lineNbr": 132,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-09-28T20:24:19Z",
+      "side": 1,
+      "message": "touchHLE does currently support multiple languages in other places so it\u0027d be a shame if this was English-only. I guess we\u0027d need a list of language names though.",
+      "revId": "72746d7986b451bdfdd55424761989f0f5c6f8e0",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

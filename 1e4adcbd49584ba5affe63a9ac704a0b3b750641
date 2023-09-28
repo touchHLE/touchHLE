@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "24640e3d_84ce9577",
+        "filename": "src/frameworks/uikit/ui_view_controller.rs",
+        "patchSetId": 10
+      },
+      "lineNbr": 9,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-09-28T20:02:48Z",
+      "side": 1,
+      "message": "Please use a separate `use` line for this.",
+      "revId": "1e4adcbd49584ba5affe63a9ac704a0b3b750641",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6c562ab9_180339b0",
+        "filename": "src/frameworks/uikit/ui_view_controller.rs",
+        "patchSetId": 10
+      },
+      "lineNbr": 56,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-09-28T20:02:48Z",
+      "side": 1,
+      "message": "I would prefer if this is moved up to be near `dealloc` but it\u0027s no big deal.",
+      "revId": "1e4adcbd49584ba5affe63a9ac704a0b3b750641",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

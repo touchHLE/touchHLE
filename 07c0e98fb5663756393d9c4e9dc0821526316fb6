@@ -16,6 +16,24 @@
       "message": "Are you sure this is right? From reading https://en.cppreference.com/w/c/string/byte/strncat I don\u0027t think there is any bounds checking like this; it seems like the implementation should actually be very similar to strcat(), but it calls strncpy() instead of strcpy().",
       "revId": "07c0e98fb5663756393d9c4e9dc0821526316fb6",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "49dbbaa9_39e32737",
+        "filename": "src/libc/generic_char.rs",
+        "patchSetId": 12
+      },
+      "lineNbr": 217,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2023-09-28T21:15:56Z",
+      "side": 1,
+      "message": "When I implemented it I read that it had to be done to prevent it from copying the bytes after the null terminator. If that\u0027s not required I can just remove it, as i\u0027m sure it\u0027d work the same, even if it copies more data than required",
+      "parentUuid": "51f6aefd_17b79360",
+      "revId": "07c0e98fb5663756393d9c4e9dc0821526316fb6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

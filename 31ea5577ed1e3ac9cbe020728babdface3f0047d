@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b6b81d11_ddb5181d",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 9
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-09-28T20:11:05Z",
+      "side": 1,
+      "message": "I\u0027m not sure if you\u0027re meant to be able to pass `nil` to this function, but maybe we have to tolerate it due to the advertising SDK hack. Is that what\u0027s going on in WolfRPG?",
+      "revId": "31ea5577ed1e3ac9cbe020728babdface3f0047d",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "289b887a_7a773f07",
+        "filename": "src/frameworks/uikit/ui_view.rs",
+        "patchSetId": 9
+      },
+      "lineNbr": 190,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-09-28T20:11:05Z",
+      "side": 1,
+      "message": "Could you do an early return instead?",
+      "revId": "31ea5577ed1e3ac9cbe020728babdface3f0047d",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

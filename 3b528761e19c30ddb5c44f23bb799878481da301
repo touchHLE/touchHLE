@@ -1,0 +1,78 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "41c40355_c4ac3bc8",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 9
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-09-28T19:42:41Z",
+      "side": 1,
+      "message": "Thanks, this is much cleaner now!",
+      "revId": "3b528761e19c30ddb5c44f23bb799878481da301",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0d751d7d_3499464a",
+        "filename": "src/environment.rs",
+        "patchSetId": 9
+      },
+      "lineNbr": 582,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-09-28T19:42:41Z",
+      "side": 1,
+      "message": "Please add a documentation comment. This probably needs a remark about only calling this right before returning from a host function, like `sleep` and `join_with_thread`.",
+      "revId": "3b528761e19c30ddb5c44f23bb799878481da301",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7024e57f_9ce23d79",
+        "filename": "src/environment.rs",
+        "patchSetId": 9
+      },
+      "lineNbr": 587,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-09-28T19:42:41Z",
+      "side": 1,
+      "message": "Hmm, not sure how I feel about the semaphore state still being in the libc state, but I guess it\u0027s fine. A clean separation like the one for mutexes is probably not necessary, semaphores are much simpler. You can just Ack this comment unless you feel like changing it.",
+      "range": {
+        "startLine": 583,
+        "startChar": 0,
+        "endLine": 587,
+        "endChar": 23
+      },
+      "revId": "3b528761e19c30ddb5c44f23bb799878481da301",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9fb7cfc4_e13f2a15",
+        "filename": "src/libc/pthread/semaphore.rs",
+        "patchSetId": 9
+      },
+      "lineNbr": 73,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-09-28T19:42:41Z",
+      "side": 1,
+      "message": "Does the fact the name is ignored have any consequences? I am wondering the same thing about `sem_open` too.",
+      "revId": "3b528761e19c30ddb5c44f23bb799878481da301",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

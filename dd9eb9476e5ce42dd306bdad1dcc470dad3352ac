@@ -34,6 +34,24 @@
       "parentUuid": "95b7f71d_24807c7e",
       "revId": "dd9eb9476e5ce42dd306bdad1dcc470dad3352ac",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "23636721_23b3492e",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 9
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-09-29T13:54:00Z",
+      "side": 1,
+      "message": "I don\u0027t think that extension changes which factors are allowed in BlendFunc? I\u0027m confused.",
+      "parentUuid": "2858d770_8ff62e27",
+      "revId": "dd9eb9476e5ce42dd306bdad1dcc470dad3352ac",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

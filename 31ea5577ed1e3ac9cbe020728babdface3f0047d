@@ -20,6 +20,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "578c8e9f_03589f91",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 9
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2023-09-29T09:43:42Z",
+      "side": 1,
+      "message": "It\u0027s not whats happening. In WolfRPG it happens in applicationDidFinishLaunching. When messaging to its window property addSubview: with its gameViewController\u0027s view property as an argument. I\u0027m not sure why it\u0027s set to null but I had a hard time finding in the plist where gameViewController\u0027s view property was initialized.\nLooking back, this issue probably is the same one that caused https://review.gerrithub.io/c/hikari-no-yume/touchHLE/+/1169047",
+      "parentUuid": "b6b81d11_ddb5181d",
+      "revId": "31ea5577ed1e3ac9cbe020728babdface3f0047d",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "289b887a_7a773f07",
         "filename": "src/frameworks/uikit/ui_view.rs",
         "patchSetId": 9
@@ -31,6 +49,24 @@
       "writtenOn": "2023-09-28T20:11:05Z",
       "side": 1,
       "message": "Could you do an early return instead?",
+      "revId": "31ea5577ed1e3ac9cbe020728babdface3f0047d",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "fe7f31d0_5724b15f",
+        "filename": "src/frameworks/uikit/ui_view.rs",
+        "patchSetId": 9
+      },
+      "lineNbr": 190,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2023-09-29T09:43:42Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "289b887a_7a773f07",
       "revId": "31ea5577ed1e3ac9cbe020728babdface3f0047d",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

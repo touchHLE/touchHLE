@@ -20,6 +20,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "fd21baa7_cab6e59b",
+        "filename": "src/frameworks/foundation/ns_bundle.rs",
+        "patchSetId": 6
+      },
+      "lineNbr": 122,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-09-29T21:39:15Z",
+      "side": 1,
+      "message": "Reading one again doc and https://developer.apple.com/library/archive/documentation/CoreFoundation/Conceptual/CFBundles/AccessingaBundlesContents/AccessingaBundlesContents.html#//apple_ref/doc/uid/10000123i-CH104-SW7, I\u0027m convinced now that behaviour should be common across variants",
+      "parentUuid": "12c2f622_2be1ea4e",
+      "revId": "72746d7986b451bdfdd55424761989f0f5c6f8e0",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "1ff01ecf_8fa5340f",
         "filename": "src/frameworks/foundation/ns_bundle.rs",
         "patchSetId": 6
@@ -31,6 +49,24 @@
       "writtenOn": "2023-09-28T20:24:19Z",
       "side": 1,
       "message": "touchHLE does currently support multiple languages in other places so it\u0027d be a shame if this was English-only. I guess we\u0027d need a list of language names though.",
+      "revId": "72746d7986b451bdfdd55424761989f0f5c6f8e0",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5c4ea26a_48538fc9",
+        "filename": "src/frameworks/foundation/ns_bundle.rs",
+        "patchSetId": 6
+      },
+      "lineNbr": 132,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-09-29T21:39:15Z",
+      "side": 1,
+      "message": "Done\n\nFor list of languages i filled only 10 used by KataDama, which is already a good start. Otherwise, there is a fallback to English",
+      "parentUuid": "1ff01ecf_8fa5340f",
       "revId": "72746d7986b451bdfdd55424761989f0f5c6f8e0",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

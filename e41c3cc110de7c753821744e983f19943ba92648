@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6af0bc36_f21d277b",
+        "filename": "src/frameworks/core_foundation/cf_bundle.rs",
+        "patchSetId": 9
+      },
+      "lineNbr": 73,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-09-29T11:10:37Z",
+      "side": 1,
+      "message": "We already have preferred language info, if you look at the NSLocale implementation. Though I don\u0027t know if it\u0027s in the right format for bundles.",
+      "revId": "e41c3cc110de7c753821744e983f19943ba92648",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "97d6fe69_5344b853",
+        "filename": "src/frameworks/foundation/ns_bundle.rs",
+        "patchSetId": 9
+      },
+      "lineNbr": 25,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-09-29T11:10:37Z",
+      "side": 1,
+      "message": "The `_` prefix is because this was unused. Please remove it now that it\u0027s used.",
+      "revId": "e41c3cc110de7c753821744e983f19943ba92648",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

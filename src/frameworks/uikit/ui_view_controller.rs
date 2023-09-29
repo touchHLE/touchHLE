@@ -6,7 +6,7 @@
 //! `UIViewController`.
 
 use crate::frameworks::foundation::ns_string::get_static_str;
-use crate::objc::{id, msg, objc_classes, release, retain, ClassExports, HostObject, NSZonePtr};
+use crate::objc::{id, msg, objc_classes, release, retain, ClassExports, HostObject, NSZonePtr, nil};
 
 #[derive(Default)]
 struct UIViewControllerHostObject {

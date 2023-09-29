@@ -35,6 +35,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "261ce91a_b4185905",
+        "filename": "src/environment.rs",
+        "patchSetId": 9
+      },
+      "lineNbr": 582,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-09-29T17:56:22Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "0d751d7d_3499464a",
+      "revId": "3b528761e19c30ddb5c44f23bb799878481da301",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "7024e57f_9ce23d79",
@@ -58,6 +76,30 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "6577d70d_666d958e",
+        "filename": "src/environment.rs",
+        "patchSetId": 9
+      },
+      "lineNbr": 587,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-09-29T17:56:22Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "7024e57f_9ce23d79",
+      "range": {
+        "startLine": 583,
+        "startChar": 0,
+        "endLine": 587,
+        "endChar": 23
+      },
+      "revId": "3b528761e19c30ddb5c44f23bb799878481da301",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "9fb7cfc4_e13f2a15",
@@ -71,6 +113,24 @@
       "writtenOn": "2023-09-28T19:42:41Z",
       "side": 1,
       "message": "Does the fact the name is ignored have any consequences? I am wondering the same thing about `sem_open` too.",
+      "revId": "3b528761e19c30ddb5c44f23bb799878481da301",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d13b7933_b258dfdb",
+        "filename": "src/libc/pthread/semaphore.rs",
+        "patchSetId": 9
+      },
+      "lineNbr": 73,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-09-29T17:56:22Z",
+      "side": 1,
+      "message": "It is not a problem for DOOM as there is only one named semaphore, but, for example, repeated calls with a same name to sem_open should return same semaphore.\n\nI added some warning logs, please let know if it\u0027s enough",
+      "parentUuid": "9fb7cfc4_e13f2a15",
       "revId": "3b528761e19c30ddb5c44f23bb799878481da301",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

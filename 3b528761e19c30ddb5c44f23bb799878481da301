@@ -151,6 +151,24 @@
       "parentUuid": "d13b7933_b258dfdb",
       "revId": "3b528761e19c30ddb5c44f23bb799878481da301",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a74e24a4_5db361a0",
+        "filename": "src/libc/pthread/semaphore.rs",
+        "patchSetId": 9
+      },
+      "lineNbr": 73,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-09-29T21:43:24Z",
+      "side": 1,
+      "message": "Probably another state map from name to host object would do.\nThe issue is that i\u0027m not sure how to test it properly - for DOOM it\u0027s not needed and writing another set of integration tests feels like an overkill.",
+      "parentUuid": "1c9843ea_94c8cfa3",
+      "revId": "3b528761e19c30ddb5c44f23bb799878481da301",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

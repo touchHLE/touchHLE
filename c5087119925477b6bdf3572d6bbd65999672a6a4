@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "46f7aabe_26dd6ae7",
+        "filename": "src/libc/stdio.rs",
+        "patchSetId": 14
+      },
+      "lineNbr": 246,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2023-09-29T09:42:49Z",
+      "side": 1,
+      "message": "It\u0027s tolerated. I tested it with a small C program like this:\n\n```c\n#include \u003cstdio.h\u003e\n#include \u003cstdlib.h\u003e\n\nint main() {\n    printf(\"Eo\");\n    int result \u003d remove(NULL);\n    printf(\"Oe %d\", result);\n}\n```\n\noutput:\n```EoOe -1```",
+      "parentUuid": "2dc2596d_aa1ad102",
+      "revId": "c5087119925477b6bdf3572d6bbd65999672a6a4",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "180b6cac_fdfd7c83",
@@ -31,6 +49,24 @@
       "writtenOn": "2023-09-28T20:00:37Z",
       "side": 1,
       "message": "Btw you could use `return` to do an early return, so you wouldn\u0027t need to indent the rest of the function. But feel free to ignore me on this.",
+      "revId": "c5087119925477b6bdf3572d6bbd65999672a6a4",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "0cadb670_e721b383",
+        "filename": "src/libc/stdio.rs",
+        "patchSetId": 14
+      },
+      "lineNbr": 249,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2023-09-29T09:42:49Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "180b6cac_fdfd7c83",
       "revId": "c5087119925477b6bdf3572d6bbd65999672a6a4",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

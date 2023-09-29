@@ -142,6 +142,7 @@ impl<T: Copy + Default + Eq + Ord + SafeRead + Debug> GenericChar<T> {
                 env.mem.write(dest + i, c);
             } else {
                 env.mem.write(dest + i, Self::null());
+                break;
             }
         }
         dest

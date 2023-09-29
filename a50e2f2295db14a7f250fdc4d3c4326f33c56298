@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a7128d2e_8cfb99ce",
+        "filename": "src/libc/generic_char.rs",
+        "patchSetId": 15
+      },
+      "lineNbr": 209,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-09-29T13:47:56Z",
+      "side": 1,
+      "message": "This should be `MutPtr`, and so should the return type. The `cast_mut` is a symptom of this.",
+      "range": {
+        "startLine": 209,
+        "startChar": 12,
+        "endLine": 209,
+        "endChar": 23
+      },
+      "revId": "a50e2f2295db14a7f250fdc4d3c4326f33c56298",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

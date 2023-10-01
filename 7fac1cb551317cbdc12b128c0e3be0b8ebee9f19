@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "26568d88_47d1aeb5",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 12
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-10-01T20:56:29Z",
+      "side": 1,
+      "message": "@hikari_no_yume i lost +2 after a rebase, could you please re-approve?",
+      "revId": "7fac1cb551317cbdc12b128c0e3be0b8ebee9f19",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

@@ -166,9 +166,11 @@ const GET_PARAMS: ParamTable = ParamTable(&[
     (gl21::ELEMENT_ARRAY_BUFFER_BINDING, ParamType::Int, 1),
     (gl21::FOG, ParamType::Boolean, 1),
     // TODO: FOG_COLOR (has special type conversion behavior)
-    // TODO: FOG_DENSITY, FOG_END, FOG_START (not sure what type these have)
     (gl21::FOG_HINT, ParamType::Int, 1),
     (gl21::FOG_MODE, ParamType::Int, 1),
+    (gl21::FOG_DENSITY, ParamType::Float, 1),
+    (gl21::FOG_START, ParamType::Float, 1),
+    (gl21::FOG_END, ParamType::Float, 1),
     (gl21::FRONT_FACE, ParamType::Int, 1),
     (gl21::GREEN_BITS, ParamType::Int, 1),
     // TODO: IMPLEMENTATION_COLOR_READ_FORMAT_OES? (not shared)

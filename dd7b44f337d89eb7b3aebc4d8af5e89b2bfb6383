@@ -16,6 +16,24 @@
       "message": "I don\u0027t think this check should be removed without implementing the `loadView` behaviour. See:\n\n- https://developer.apple.com/documentation/uikit/uiviewcontroller/1621460-view?language\u003dobjc\n- https://developer.apple.com/documentation/uikit/uiviewcontroller/1621454-loadview?language\u003dobjc\n\nYou don\u0027t have to worry about the Nib file stuff.",
       "revId": "dd7b44f337d89eb7b3aebc4d8af5e89b2bfb6383",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "eedb8afd_403e14f9",
+        "filename": "src/frameworks/uikit/ui_view_controller.rs",
+        "patchSetId": 10
+      },
+      "lineNbr": 43,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2023-10-02T17:47:07Z",
+      "side": 0,
+      "message": "Done",
+      "parentUuid": "d5c36b99_65150922",
+      "revId": "dd7b44f337d89eb7b3aebc4d8af5e89b2bfb6383",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

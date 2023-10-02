@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "2d1d4e3d_cd30eb3d",
+        "filename": "src/frameworks/core_foundation/cf_bundle.rs",
+        "patchSetId": 9
+      },
+      "lineNbr": 73,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2023-10-02T18:29:48Z",
+      "side": 1,
+      "message": "Probably suboptimal, but it does work! Now Wolf 3D is in spanish :P",
+      "parentUuid": "6af0bc36_f21d277b",
+      "revId": "e41c3cc110de7c753821744e983f19943ba92648",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "97d6fe69_5344b853",
@@ -35,6 +53,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "3d429dab_3e59e7dc",
+        "filename": "src/frameworks/foundation/ns_bundle.rs",
+        "patchSetId": 9
+      },
+      "lineNbr": 25,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2023-10-02T18:29:48Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "97d6fe69_5344b853",
+      "revId": "e41c3cc110de7c753821744e983f19943ba92648",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "a5bbbdc6_445d10dd",
@@ -48,6 +84,30 @@
       "writtenOn": "2023-09-29T11:13:37Z",
       "side": 1,
       "message": "Nitpick: remove the space here.",
+      "range": {
+        "startLine": 63,
+        "startChar": 42,
+        "endLine": 63,
+        "endChar": 43
+      },
+      "revId": "e41c3cc110de7c753821744e983f19943ba92648",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "4e5d2979_2497e71a",
+        "filename": "src/frameworks/foundation/ns_bundle.rs",
+        "patchSetId": 9
+      },
+      "lineNbr": 63,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2023-10-02T18:29:48Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "a5bbbdc6_445d10dd",
       "range": {
         "startLine": 63,
         "startChar": 42,

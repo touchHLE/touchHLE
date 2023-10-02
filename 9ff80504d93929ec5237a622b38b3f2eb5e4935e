@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "542fe18a_3b13828e",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021974
+      },
+      "writtenOn": "2023-10-02T09:56:49Z",
+      "side": 1,
+      "message": "teeny-tiny one-char PR to fix a typo on README.md",
+      "revId": "9ff80504d93929ec5237a622b38b3f2eb5e4935e",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

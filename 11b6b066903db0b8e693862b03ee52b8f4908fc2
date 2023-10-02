@@ -1,0 +1,146 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8203b0e3_f57c09a4",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 14
+      },
+      "lineNbr": 7,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-10-02T22:20:19Z",
+      "side": 1,
+      "message": "Maybe change this to “thread blocking” now?",
+      "range": {
+        "startLine": 7,
+        "startChar": 27,
+        "endLine": 7,
+        "endChar": 42
+      },
+      "revId": "11b6b066903db0b8e693862b03ee52b8f4908fc2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f9a2e364_b80a7a30",
+        "filename": "src/dyld/function_lists.rs",
+        "patchSetId": 14
+      },
+      "lineNbr": 32,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-10-02T22:20:19Z",
+      "side": 1,
+      "message": "Hmm, this is actually completely separate from pthreads. You could move it up a level.",
+      "revId": "11b6b066903db0b8e693862b03ee52b8f4908fc2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "66ad6a9d_27ec8a2e",
+        "filename": "src/environment.rs",
+        "patchSetId": 14
+      },
+      "lineNbr": 21,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-10-02T22:20:19Z",
+      "side": 1,
+      "message": "Can you move this blank line down one, so all the private imports are grouped?",
+      "revId": "11b6b066903db0b8e693862b03ee52b8f4908fc2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7700b71f_cdea32a8",
+        "filename": "src/libc/pthread/semaphore.rs",
+        "patchSetId": 14
+      },
+      "lineNbr": 19,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-10-02T22:20:19Z",
+      "side": 1,
+      "message": "It\u0027s unlikely in practice, but you could use `Vec\u003cu8\u003e` instead, to support names that aren\u0027t valid UTF-8.",
+      "revId": "11b6b066903db0b8e693862b03ee52b8f4908fc2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d0816590_d3ea6f08",
+        "filename": "src/libc/pthread/semaphore.rs",
+        "patchSetId": 14
+      },
+      "lineNbr": 44,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-10-02T22:20:19Z",
+      "side": 1,
+      "message": "Can you support the other flags? There\u0027s only two other possibilities. Or at least the mode without the create flag, where it just errors if it doesn\u0027t already exist.",
+      "revId": "11b6b066903db0b8e693862b03ee52b8f4908fc2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "760d3b52_efe229d6",
+        "filename": "src/libc/pthread/semaphore.rs",
+        "patchSetId": 14
+      },
+      "lineNbr": 48,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-10-02T22:20:19Z",
+      "side": 1,
+      "message": "`if let Some(…) \u003d ….get(…) {` would avoid a double lookup.",
+      "revId": "11b6b066903db0b8e693862b03ee52b8f4908fc2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6b7c313a_52a1bce8",
+        "filename": "src/libc/pthread/semaphore.rs",
+        "patchSetId": 14
+      },
+      "lineNbr": 89,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-10-02T22:20:19Z",
+      "side": 1,
+      "message": "You could avoid this copy by bypassing State::get_mut.",
+      "revId": "11b6b066903db0b8e693862b03ee52b8f4908fc2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "428b6cb7_ef16d2e7",
+        "filename": "src/libc/pthread/semaphore.rs",
+        "patchSetId": 14
+      },
+      "lineNbr": 95,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-10-02T22:20:19Z",
+      "side": 1,
+      "message": "Unfortunately I think this might be wrong for named semaphores: you should be able to reopen the semaphore, unless it has been unlinked.\n\nI think you might want to change it so that the sem_t references a named semaphore rather than the other way around?",
+      "revId": "11b6b066903db0b8e693862b03ee52b8f4908fc2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

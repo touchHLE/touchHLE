@@ -36,6 +36,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "0cbecbb5_858af1d0",
+        "filename": "src/frameworks/foundation/ns_bundle.rs",
+        "patchSetId": 6
+      },
+      "lineNbr": 122,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-10-02T17:39:12Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "fd21baa7_cab6e59b",
+      "revId": "72746d7986b451bdfdd55424761989f0f5c6f8e0",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "1ff01ecf_8fa5340f",
@@ -67,6 +85,24 @@
       "side": 1,
       "message": "Done\n\nFor list of languages i filled only 10 used by KataDama, which is already a good start. Otherwise, there is a fallback to English",
       "parentUuid": "1ff01ecf_8fa5340f",
+      "revId": "72746d7986b451bdfdd55424761989f0f5c6f8e0",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "3a4ced94_c6e063c9",
+        "filename": "src/frameworks/foundation/ns_bundle.rs",
+        "patchSetId": 6
+      },
+      "lineNbr": 132,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-10-02T17:39:12Z",
+      "side": 1,
+      "message": "Thanks, that\u0027ll get us quite far. :)",
+      "parentUuid": "5c4ea26a_48538fc9",
       "revId": "72746d7986b451bdfdd55424761989f0f5c6f8e0",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

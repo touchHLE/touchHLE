@@ -37,7 +37,7 @@ Input methods:
   - Mouse/trackpad input (tap/hold/drag by pressing the left mouse button)
   - Virtual cursor using the right analog stick on a game controller (tap/hold/drag by pressing the stick or the right shoulder button)
   - Real touch input, if you're on a device that has a touch screen
-- For simulated acceleremeter input, there are two options:
+- For simulated accelerometer input, there are two options:
   - Tilt control simulation using the left analog stick of a game controller
   - Real accelerometer input, if you are using a phone, tablet or some other device with a built-in accelerometer (TODO: support game controllers with accelerometers)
 

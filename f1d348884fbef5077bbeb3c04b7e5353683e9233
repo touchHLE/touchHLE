@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "06ceb4bf_9694e34a",
+        "filename": "src/gles/gles1_on_gl2.rs",
+        "patchSetId": 14
+      },
+      "lineNbr": 173,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2023-10-02T17:14:46Z",
+      "side": 1,
+      "message": "Done in https://review.gerrithub.io/c/hikari-no-yume/touchHLE/+/1170199",
+      "parentUuid": "61f29b6c_f717279e",
+      "revId": "f1d348884fbef5077bbeb3c04b7e5353683e9233",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "0d68ec74_ecee1264",
@@ -31,6 +49,24 @@
       "writtenOn": "2023-09-28T19:56:50Z",
       "side": 1,
       "message": "Can you use `gl21::` calls directly for fog clamping and backup/restore? There\u0027s no particular value in going through the abstraction here.",
+      "revId": "f1d348884fbef5077bbeb3c04b7e5353683e9233",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "2f6aafe5_3414059f",
+        "filename": "src/gles/gles1_on_gl2.rs",
+        "patchSetId": 14
+      },
+      "lineNbr": 544,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2023-10-02T17:14:46Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "0d68ec74_ecee1264",
       "revId": "f1d348884fbef5077bbeb3c04b7e5353683e9233",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

@@ -38,6 +38,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "0544368b_45355bb1",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 9
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2023-10-02T17:47:52Z",
+      "side": 1,
+      "message": "After the newest patchset in said commit, the issue persists, so the problem must be unrelated",
+      "parentUuid": "578c8e9f_03589f91",
+      "revId": "31ea5577ed1e3ac9cbe020728babdface3f0047d",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "289b887a_7a773f07",
         "filename": "src/frameworks/uikit/ui_view.rs",
         "patchSetId": 9

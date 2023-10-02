@@ -169,6 +169,24 @@
       "parentUuid": "1c9843ea_94c8cfa3",
       "revId": "3b528761e19c30ddb5c44f23bb799878481da301",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fad07908_ba6d5900",
+        "filename": "src/libc/pthread/semaphore.rs",
+        "patchSetId": 9
+      },
+      "lineNbr": 73,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-10-02T17:35:25Z",
+      "side": 1,
+      "message": "Well, it\u0027s okay if it\u0027s not fully tested. I assume the names behaviour is not too complicated.",
+      "parentUuid": "a74e24a4_5db361a0",
+      "revId": "3b528761e19c30ddb5c44f23bb799878481da301",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

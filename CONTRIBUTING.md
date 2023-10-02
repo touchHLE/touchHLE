@@ -19,7 +19,17 @@ $ cd touchHLE
 
 touchHLE uses Gerrit for code review. [The touchHLE repo on GerritHub](https://review.gerrithub.io/q/project:hikari-no-yume/touchHLE+status:open) is where you can submit patches.
 
-Log into GerritHub with your GitHub account. You can then add GerritHub as a “remote” (replace `your-github-username-here` with your username):
+Log into GerritHub with your GitHub account. If you happen to have a Server Side Error, try again in a couple of hours as GerritHub server sometimes is a bit unstable.
+
+If it is your first time using Gerrit, you will need to set your public SSH key on [Gerrit settings page](https://review.gerrithub.io/settings/#SSHKeys), as well as make sure your email matches the email set on the settings page (i.e. if you use those GitHub noreply emails you will need to set your real email).
+
+After setting your key, make sure you can connect to Gerrithub with (replace `your-github-username-here` with your username):
+
+```
+$ ssh your-github-username-here@review.gerrithub.io -p 29418
+```
+
+You can then add GerritHub as a “remote” (again, replace `your-github-username-here` with your username):
 
 ```
 $ git remote add gerrit "ssh://your-github-username-here@review.gerrithub.io:29418/hikari-no-yume/touchHLE"
@@ -42,6 +52,8 @@ $ git push gerrit HEAD:refs/for/trunk
 ```
 
 Then go to GerritHub, make sure you didn't push anything you didn't intend to, and add `hikari_no_yume` as a reviewer.
+
+Finally, add a +1 on Verified when you are sure your change is not breaking anything unrelated.
 
 If you're submitting a large number of changes with a common theme, e.g. improving compatibility with some app, it is recommended to _also_ create a GitHub pull request. This improves visibility and ensures your changes are tested by the GitHub CI. You can then tag the Gerrit reviews with a “topic” named like `touchHLE/pull/xxx` where xxx is the pull request number. You can bulk-tag things using the checkboxes on the GerritHub homepage.
 

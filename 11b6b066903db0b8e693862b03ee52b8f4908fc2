@@ -24,6 +24,30 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "55e376c3_4c47ff6c",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 14
+      },
+      "lineNbr": 7,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-10-03T12:53:57Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "8203b0e3_f57c09a4",
+      "range": {
+        "startLine": 7,
+        "startChar": 27,
+        "endLine": 7,
+        "endChar": 42
+      },
+      "revId": "11b6b066903db0b8e693862b03ee52b8f4908fc2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "f9a2e364_b80a7a30",
@@ -37,6 +61,24 @@
       "writtenOn": "2023-10-02T22:20:19Z",
       "side": 1,
       "message": "Hmm, this is actually completely separate from pthreads. You could move it up a level.",
+      "revId": "11b6b066903db0b8e693862b03ee52b8f4908fc2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "952e666f_9098a614",
+        "filename": "src/dyld/function_lists.rs",
+        "patchSetId": 14
+      },
+      "lineNbr": 32,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-10-03T12:53:57Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "f9a2e364_b80a7a30",
       "revId": "11b6b066903db0b8e693862b03ee52b8f4908fc2",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
@@ -58,6 +100,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "b813f214_d15e0d15",
+        "filename": "src/environment.rs",
+        "patchSetId": 14
+      },
+      "lineNbr": 21,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-10-03T12:53:57Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "66ad6a9d_27ec8a2e",
+      "revId": "11b6b066903db0b8e693862b03ee52b8f4908fc2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "7700b71f_cdea32a8",
@@ -71,6 +131,24 @@
       "writtenOn": "2023-10-02T22:20:19Z",
       "side": 1,
       "message": "It\u0027s unlikely in practice, but you could use `Vec\u003cu8\u003e` instead, to support names that aren\u0027t valid UTF-8.",
+      "revId": "11b6b066903db0b8e693862b03ee52b8f4908fc2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "bea75fcc_4339404d",
+        "filename": "src/libc/pthread/semaphore.rs",
+        "patchSetId": 14
+      },
+      "lineNbr": 19,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-10-03T12:53:57Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "7700b71f_cdea32a8",
       "revId": "11b6b066903db0b8e693862b03ee52b8f4908fc2",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
@@ -92,6 +170,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "cab370cd_69429719",
+        "filename": "src/libc/pthread/semaphore.rs",
+        "patchSetId": 14
+      },
+      "lineNbr": 44,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-10-03T12:53:57Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "d0816590_d3ea6f08",
+      "revId": "11b6b066903db0b8e693862b03ee52b8f4908fc2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "760d3b52_efe229d6",
@@ -105,6 +201,24 @@
       "writtenOn": "2023-10-02T22:20:19Z",
       "side": 1,
       "message": "`if let Some(…) \u003d ….get(…) {` would avoid a double lookup.",
+      "revId": "11b6b066903db0b8e693862b03ee52b8f4908fc2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "16c9086a_a29cda7b",
+        "filename": "src/libc/pthread/semaphore.rs",
+        "patchSetId": 14
+      },
+      "lineNbr": 48,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-10-03T12:53:57Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "760d3b52_efe229d6",
       "revId": "11b6b066903db0b8e693862b03ee52b8f4908fc2",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
@@ -126,6 +240,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "4eb8ed79_c566439f",
+        "filename": "src/libc/pthread/semaphore.rs",
+        "patchSetId": 14
+      },
+      "lineNbr": 89,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-10-03T12:53:57Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "6b7c313a_52a1bce8",
+      "revId": "11b6b066903db0b8e693862b03ee52b8f4908fc2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "428b6cb7_ef16d2e7",
@@ -139,6 +271,24 @@
       "writtenOn": "2023-10-02T22:20:19Z",
       "side": 1,
       "message": "Unfortunately I think this might be wrong for named semaphores: you should be able to reopen the semaphore, unless it has been unlinked.\n\nI think you might want to change it so that the sem_t references a named semaphore rather than the other way around?",
+      "revId": "11b6b066903db0b8e693862b03ee52b8f4908fc2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3e1ed77d_0467ac1c",
+        "filename": "src/libc/pthread/semaphore.rs",
+        "patchSetId": 14
+      },
+      "lineNbr": 95,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-10-03T12:53:57Z",
+      "side": 1,
+      "message": "I\u0027m not sure i\u0027m getting it, what should be the correct behaviour here?\n\nOtherwise, i still need to have a map from name to sem_t as it needed for the sem_unlink()",
+      "parentUuid": "428b6cb7_ef16d2e7",
       "revId": "11b6b066903db0b8e693862b03ee52b8f4908fc2",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

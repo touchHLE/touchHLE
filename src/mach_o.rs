@@ -296,12 +296,11 @@ impl MachO {
                     let load_me = match &*segname {
                         // Special linker data section, not meant to be loaded.
                         "__LINKEDIT" => false,
-                        // Zero-page handling is hard-coded in memory.rs, so
-                        // check it's where we expect it to be.
+                        // Zero page needs to be handled seperately.
                         "__PAGEZERO" => {
                             assert!(vmaddr == 0);
-                            assert!(vmsize == Mem::NULL_PAGE_SIZE);
                             assert!(filesize == 0);
+                            into_mem.set_null_segment_size(vmsize);
                             false
                         }
                         "__TEXT" => {

@@ -141,7 +141,7 @@ class DynarmicWrapper {
       page_table;
 
 public:
-  DynarmicWrapper(void *direct_memory_access_ptr) {
+  DynarmicWrapper(void *direct_memory_access_ptr, size_t null_page_count) {
     Dynarmic::A32::UserConfig user_config;
     user_config.callbacks = &env;
     // TODO: only do this in debug builds? it's probably expensive
@@ -155,7 +155,14 @@ public:
       page_table.fill((std::uint8_t *)direct_memory_access_ptr);
       // Note that the null page size is also defined in src/mem.rs.
       static_assert(1 << Dynarmic::A32::UserConfig::PAGE_BITS == 0x1000);
-      page_table[0] = nullptr;
+
+      if (null_page_count > page_table.size()) {
+        printf("Too many null pages, %zu requested but maximum is %zu.", null_page_count, page_table.size());
+        abort();
+      }
+      for (int i = 0; i < null_page_count; i++){
+        page_table[i] = nullptr;
+      }
       user_config.page_table = &page_table;
       user_config.absolute_offset_page_table = true;
     }
@@ -213,8 +220,8 @@ public:
 
 extern "C" {
 
-DynarmicWrapper *touchHLE_DynarmicWrapper_new(void *direct_memory_access_ptr) {
-  return new DynarmicWrapper(direct_memory_access_ptr);
+DynarmicWrapper *touchHLE_DynarmicWrapper_new(void *direct_memory_access_ptr, size_t null_page_count) {
+  return new DynarmicWrapper(direct_memory_access_ptr, null_page_count);
 }
 void touchHLE_DynarmicWrapper_delete(DynarmicWrapper *cpu) { delete cpu; }
 

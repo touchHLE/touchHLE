@@ -291,6 +291,24 @@
       "parentUuid": "428b6cb7_ef16d2e7",
       "revId": "11b6b066903db0b8e693862b03ee52b8f4908fc2",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "dd1982b9_d57d345e",
+        "filename": "src/libc/pthread/semaphore.rs",
+        "patchSetId": 14
+      },
+      "lineNbr": 95,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-10-03T20:59:17Z",
+      "side": 1,
+      "message": "This is the current mapping:\n\n- sem_t* \u003d\u003e semaphore host object\n- semaphore name \u003d\u003e sem_t*\n\nYou can change it to this:\n\n- semaphore name \u003d\u003e semaphore host object\n- sem_t* \u003d\u003e semaphore name\n\nThe idea is that you can close a semaphore without destroying it, and then re-open it later. Only unlinking destroys it.",
+      "parentUuid": "3e1ed77d_0467ac1c",
+      "revId": "11b6b066903db0b8e693862b03ee52b8f4908fc2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

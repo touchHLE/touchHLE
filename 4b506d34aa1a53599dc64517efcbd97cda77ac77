@@ -1,0 +1,44 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5744b33a_abdc78c0",
+        "filename": "src/dyld/function_lists.rs",
+        "patchSetId": 16
+      },
+      "lineNbr": 32,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-10-03T20:59:17Z",
+      "side": 1,
+      "message": "Please remove the `crate::` prefix. Also, can you re-order this so the list is still alphabetical?",
+      "revId": "4b506d34aa1a53599dc64517efcbd97cda77ac77",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "207b565b_3d025e22",
+        "filename": "src/libc.rs",
+        "patchSetId": 16
+      },
+      "lineNbr": 42,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-10-03T20:59:17Z",
+      "side": 1,
+      "message": "You can remove the `pub` here now, right?",
+      "range": {
+        "startLine": 42,
+        "startChar": 4,
+        "endLine": 42,
+        "endChar": 8
+      },
+      "revId": "4b506d34aa1a53599dc64517efcbd97cda77ac77",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

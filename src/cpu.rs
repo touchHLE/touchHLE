@@ -164,6 +164,12 @@ impl Cpu {
     /// becomes bound to that [Mem] instance (subsequent calls must use the same
     /// one).
     pub fn new(direct_memory_access: Option<&mut Mem>) -> Cpu {
+        // Null page count is in pages rather than bytes. Mem ensures it is page aligned.
+        let null_page_count: usize = direct_memory_access
+            .as_ref()
+            .map_or(0, |mem| mem.null_segment_size() / 0x1000)
+            .try_into()
+            .unwrap();
         // Safety: the direct memory access pointer will be retained directly by
         // the dynarmic wrapper and indirectly by cached JIT code, so we must
         // ensure we only execute the CPU while holding a &mut on the Mem object
@@ -172,7 +178,8 @@ impl Cpu {
             .map_or(std::ptr::null_mut(), |mem| unsafe {
                 mem.direct_memory_access_ptr()
             });
-        let dynarmic_wrapper = unsafe { touchHLE_DynarmicWrapper_new(direct_memory_access_ptr) };
+        let dynarmic_wrapper =
+            unsafe { touchHLE_DynarmicWrapper_new(direct_memory_access_ptr, null_page_count) };
         Cpu {
             dynarmic_wrapper,
             direct_memory_access_ptr,

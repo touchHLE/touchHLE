@@ -28,6 +28,7 @@ type VAddr = u32;
 extern "C" {
     pub fn touchHLE_DynarmicWrapper_new(
         dynamic_memory_access_ptr: *mut std::ffi::c_void,
+        null_page_count: usize,
     ) -> *mut touchHLE_DynarmicWrapper;
     pub fn touchHLE_DynarmicWrapper_delete(cpu: *mut touchHLE_DynarmicWrapper);
     pub fn touchHLE_DynarmicWrapper_regs_const(cpu: *const touchHLE_DynarmicWrapper) -> *const u32;

@@ -224,6 +224,13 @@ pub struct Mem {
     /// fault occurs.
     bytes: *mut Bytes,
 
+    /// The size of the __PAGE_ZERO segment, where pointer accesses are trapped
+    /// to prevent null pointer derefrences.
+    ///
+    /// We don't have full memory protection, but we can check accesses in that
+    /// range.
+    null_segment_size: VAddr,
+
     allocator: allocator::Allocator,
 }
 
@@ -237,17 +244,6 @@ impl Drop for Mem {
 }
 
 impl Mem {
-    /// The first 4KiB of address space on iPhone OS is unused, so null pointer
-    /// accesses can be trapped.
-    ///
-    /// We don't have full memory protection, but we can check accesses in that
-    /// range.
-    ///
-    /// Note that there is also code in `src/cpu/dynarmic_wrapper/lib.cpp` which
-    /// makes assumptions about the size of the null page, and it can't see this
-    /// constant.
-    pub const NULL_PAGE_SIZE: VAddr = 0x1000;
-
     /// [According to Apple](https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/Multithreading/CreatingThreads/CreatingThreads.html)
     /// among others, the iPhone OS main thread stack size is 1MiB.
     pub const MAIN_THREAD_STACK_SIZE: GuestUSize = 1024 * 1024;
@@ -269,7 +265,11 @@ impl Mem {
 
         let allocator = allocator::Allocator::new();
 
-        Mem { bytes, allocator }
+        Mem {
+            bytes,
+            null_segment_size: 0,
+            allocator,
+        }
     }
 
     /// Take an existing instance of [Mem], but free and zero all the
@@ -280,13 +280,34 @@ impl Mem {
     pub fn refurbish(mut mem: Mem) -> Mem {
         let Mem {
             bytes: _,
+            null_segment_size: _,
             ref mut allocator,
         } = mem;
         let used_chunks = allocator.reset_and_drain_used_chunks();
         for allocator::Chunk { base, size } in used_chunks {
             mem.bytes_mut()[base as usize..][..size.get() as usize].fill(0);
         }
+        mem.null_segment_size = 0;
         mem
+    }
+
+    /// Sets up the null segment of the given size. There's no reason to call
+    /// this outside of binary loading, and it won't be respected even if you do.
+    /// The size must not have been set already, and must be page aligned.
+    pub fn set_null_segment_size(&mut self, new_null_segment_size: VAddr) {
+        // TODO?: Maybe this should be replaced with a per-page rwx/callback
+        // setting? Currently we don't properly follow segment protections, which
+        // means that applications can write into segments they shouldn't be.
+        // Adding that would fix that, along with removing this special case.
+        assert!(self.null_segment_size == 0);
+        assert!(new_null_segment_size % 0x1000 == 0);
+        self.allocator
+            .reserve(allocator::Chunk::new(0, new_null_segment_size));
+        self.null_segment_size = new_null_segment_size;
+    }
+
+    pub fn null_segment_size(&self) -> VAddr {
+        self.null_segment_size
     }
 
     /// Get a pointer to the full 4GiB of memory. This is only for use when
@@ -319,7 +340,7 @@ impl Mem {
     /// Special version of [Self::bytes_at] that returns [None] rather than
     /// panicking on failure. Only for use by [crate::gdb::GdbServer].
     pub fn get_bytes_fallible(&self, addr: ConstVoidPtr, count: GuestUSize) -> Option<&[u8]> {
-        if addr.to_bits() < Self::NULL_PAGE_SIZE {
+        if addr.to_bits() < self.null_segment_size {
             return None;
         }
         self.bytes()
@@ -333,7 +354,7 @@ impl Mem {
         addr: ConstVoidPtr,
         count: GuestUSize,
     ) -> Option<&mut [u8]> {
-        if addr.to_bits() < Self::NULL_PAGE_SIZE {
+        if addr.to_bits() < self.null_segment_size {
             return None;
         }
         self.bytes_mut()
@@ -349,7 +370,7 @@ impl Mem {
     /// when deriving a pointer from the slice consistent (though you should use
     /// [Self::ptr_at] for that).
     pub fn bytes_at<const MUT: bool>(&self, ptr: Ptr<u8, MUT>, count: GuestUSize) -> &[u8] {
-        if ptr.to_bits() < Self::NULL_PAGE_SIZE {
+        if ptr.to_bits() < self.null_segment_size {
             Self::null_check_fail(ptr.to_bits(), count)
         }
         &self.bytes()[ptr.to_bits() as usize..][..count as usize]
@@ -362,7 +383,7 @@ impl Mem {
     /// when deriving a pointer from the slice consistent (though you should use
     /// [Self::ptr_at_mut] for that).
     pub fn bytes_at_mut(&mut self, ptr: MutPtr<u8>, count: GuestUSize) -> &mut [u8] {
-        if ptr.to_bits() < Self::NULL_PAGE_SIZE {
+        if ptr.to_bits() < self.null_segment_size {
             Self::null_check_fail(ptr.to_bits(), count)
         }
         &mut self.bytes_mut()[ptr.to_bits() as usize..][..count as usize]

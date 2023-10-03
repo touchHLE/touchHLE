@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "42b7b389_6f2e9c7a",
+        "filename": "src/dyld/function_lists.rs",
+        "patchSetId": 16
+      },
+      "lineNbr": 32,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-10-03T22:34:43Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "5744b33a_abdc78c0",
+      "revId": "4b506d34aa1a53599dc64517efcbd97cda77ac77",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "207b565b_3d025e22",
@@ -31,6 +49,30 @@
       "writtenOn": "2023-10-03T20:59:17Z",
       "side": 1,
       "message": "You can remove the `pub` here now, right?",
+      "range": {
+        "startLine": 42,
+        "startChar": 4,
+        "endLine": 42,
+        "endChar": 8
+      },
+      "revId": "4b506d34aa1a53599dc64517efcbd97cda77ac77",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "188fc26e_322d2208",
+        "filename": "src/libc.rs",
+        "patchSetId": 16
+      },
+      "lineNbr": 42,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-10-03T22:34:43Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "207b565b_3d025e22",
       "range": {
         "startLine": 42,
         "startChar": 4,

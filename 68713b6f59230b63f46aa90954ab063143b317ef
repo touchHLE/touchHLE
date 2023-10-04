@@ -107,6 +107,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "25f3d580_6c5b0ef6",
+        "filename": "src/libc/semaphore.rs",
+        "patchSetId": 18
+      },
+      "lineNbr": 55,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-10-04T22:18:46Z",
+      "side": 1,
+      "message": "I\u0027m not sure how this solves the problem with freed guest semaphore after call to sem_open() after sem_close()",
+      "parentUuid": "fe2feac7_12d691bc",
+      "revId": "68713b6f59230b63f46aa90954ab063143b317ef",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "dc21ba72_2827a56e",
         "filename": "src/libc/semaphore.rs",
         "patchSetId": 18

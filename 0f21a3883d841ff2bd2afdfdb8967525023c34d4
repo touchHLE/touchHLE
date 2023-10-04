@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "536835f0_66b8be4d",
+        "filename": "src/libc/semaphore.rs",
+        "patchSetId": 19
+      },
+      "lineNbr": 64,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-10-04T22:16:22Z",
+      "side": 1,
+      "message": "It should error if O_CREAT isn\u0027t set, I think?",
+      "revId": "0f21a3883d841ff2bd2afdfdb8967525023c34d4",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

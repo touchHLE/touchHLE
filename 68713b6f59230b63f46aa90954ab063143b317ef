@@ -1,0 +1,89 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b9d682fa_9763b645",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 18
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-10-04T21:52:25Z",
+      "side": 1,
+      "message": "Thanks a lot, and sorry it\u0027s been so much work. I think these are the final things.",
+      "revId": "68713b6f59230b63f46aa90954ab063143b317ef",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4782c93a_2aae3a36",
+        "filename": "src/environment.rs",
+        "patchSetId": 18
+      },
+      "lineNbr": 34,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-10-04T21:52:25Z",
+      "side": 1,
+      "message": "Does this need to be pub now?",
+      "revId": "68713b6f59230b63f46aa90954ab063143b317ef",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4e3e6400_4b22a225",
+        "filename": "src/environment.rs",
+        "patchSetId": 18
+      },
+      "lineNbr": 114,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-10-04T21:52:25Z",
+      "side": 1,
+      "message": "Ditto",
+      "revId": "68713b6f59230b63f46aa90954ab063143b317ef",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fe2feac7_12d691bc",
+        "filename": "src/libc/semaphore.rs",
+        "patchSetId": 18
+      },
+      "lineNbr": 55,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-10-04T21:52:25Z",
+      "side": 1,
+      "message": "I think it can be solved neatly with something like this:\n\n    let host_sem_rc \u003d if let Some(existing) \u003d … {\n        … // (O_EXCL stuff here)\n        if let Some(existing_guest_sem) \u003d existing.borrow()… {\n            return existing_guest_sem;\n        }\n        existing.clone()\n    } else {\n        let new \u003d Rc::new(RefCell::new(…));\n        … // insert into named_semaphores here\n        new\n    };",
+      "revId": "68713b6f59230b63f46aa90954ab063143b317ef",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "dc21ba72_2827a56e",
+        "filename": "src/libc/semaphore.rs",
+        "patchSetId": 18
+      },
+      "lineNbr": 104,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-10-04T21:52:25Z",
+      "side": 1,
+      "message": "Change this to `remove`?",
+      "revId": "68713b6f59230b63f46aa90954ab063143b317ef",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

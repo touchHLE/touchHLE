@@ -16,6 +16,24 @@
       "message": "It should error if O_CREAT isn\u0027t set, I think?",
       "revId": "0f21a3883d841ff2bd2afdfdb8967525023c34d4",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "697d2d25_d4140b5c",
+        "filename": "src/libc/semaphore.rs",
+        "patchSetId": 19
+      },
+      "lineNbr": 64,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-10-04T22:21:27Z",
+      "side": 1,
+      "message": "Reading the man pages it seems like it doesn\u0027t make sense to call sem_open() without O_CREAT. I can add another assertion to check for that if needed",
+      "parentUuid": "536835f0_66b8be4d",
+      "revId": "0f21a3883d841ff2bd2afdfdb8967525023c34d4",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

@@ -35,7 +35,7 @@ jobs:
       name: Extract LLVM
       run: tar -xf clang+llvm-12.0.0-x86_64-apple-darwin.tar.xz && mkdir tests/llvm && mv clang+llvm-12.0.0-x86_64-apple-darwin/* tests/llvm
     - name: Test
-      run: cargo test
+      run: cargo test --test integration -- --include-ignored
     - name: Build
       run: cargo build --release && mv target/release/touchHLE .
     - uses: actions/upload-artifact@v3

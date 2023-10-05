@@ -26,36 +26,24 @@ fn find_subsequence(haystack: &[u8], needle: &[u8]) -> Option<usize> {
         .position(|window| window == needle)
 }
 
-fn build_test_app(tests_dir: &Path, test_app_path: &Path) -> Result<(), Box<dyn Error>> {
-    let clang_path = tests_dir
-        .join("llvm")
-        .join("bin")
-        .join(format!("clang{}", env::consts::EXE_SUFFIX));
-
-    if !clang_path.exists() {
-        panic!(
-            "Couldn't find Clang at {}. Please see {} for more details.",
-            clang_path.display(),
-            tests_dir.join("README.md").display()
-        );
-    }
-
-    let test_bin_path = test_app_path.join("TestApp");
+fn build_test_app(
+    tests_dir: &Path,
+    test_app_name: &str,
+    sources: &[&Path],
+    extra_compile_args: &[&str],
+) -> Result<(), Box<dyn Error>> {
+    let test_bin_path = tests_dir
+        .join(format!("{}.app", test_app_name))
+        .join(test_app_name);
 
     eprintln!("Building {} for iPhone OS 2...", test_bin_path.display());
 
-    let mut cmd = Command::new(clang_path);
-
-    let output = cmd
-        // Use upstream LLVM linker (not system linker)
-        .arg("-fuse-ld=lld")
-        // On macOS only, Clang tries to use flags that ld64.lld doesn't
-        // support. Perhaps it's confused and thinks it's invoking Apple's ld64?
-        // Telling it not to use newer flags like this seems to avoid this, but
-        // I suspect there may be a better fix.
-        .arg("-mlinker-version=0")
+    let output = Command::new("clang")
+        .args(extra_compile_args)
         // Target iPhone OS 2
         .args(["-target", "armv6-apple-ios2"])
+        // Don't search the deafult MacOS directories.
+        .arg("-Z")
         // We don't have a libc to link against, don't try
         .arg("-nostdlib")
         // If enabled, the stack protection causes a null pointer crash in some
@@ -69,11 +57,22 @@ fn build_test_app(tests_dir: &Path, test_app_path: &Path) -> Result<(), Box<dyn 
         // references, falling back to dynamic linking instead. This is needed
         // because we have no system libraries/frameworks for it to link to.
         .arg("-Wl,-e,_main,-undefined,dynamic_lookup")
-        // Input
-        .arg(tests_dir.join("TestApp_source").join("main.c"))
+        // Input files.
+        .args(sources.iter().map(|file| {
+            tests_dir
+                .join(format!("{}_source", test_app_name))
+                .join(file)
+        }))
+        // Needed for dyld_stub_binding_helper, which is normally provided
+        // in crt1.o but has to be added here.
+        .arg(
+            tests_dir
+                .join(format!("{}_source", test_app_name))
+                .join("crt1.c"),
+        )
         // Write the output to the bundle.
         .arg("-o")
-        .arg(&test_bin_path)
+        .arg(test_bin_path)
         .output()
         .expect("failed to execute Clang process");
 
@@ -87,13 +86,19 @@ fn build_test_app(tests_dir: &Path, test_app_path: &Path) -> Result<(), Box<dyn 
     Ok(())
 }
 
-#[test]
-fn run_test_app() -> Result<(), Box<dyn Error>> {
-    let tests_dir = current_dir()?.join("tests");
-
-    let test_app_path = tests_dir.join("TestApp.app");
-
-    build_test_app(&tests_dir, &test_app_path)?;
+// Note that source files are looked for in the path
+// "{tests_dir}/{test_app_name}_source"
+// and binaries are output as
+// "{tests_dir}/{test_app_name}.app/{test_app_name}".
+// You also need crt1.c in "{tests_dir}/{test_app_name}_source".
+fn run_test_app(
+    tests_dir: &Path,
+    test_app_name: &str,
+    sources: &[&Path],
+    extra_compile_args: &[&str],
+) -> Result<(), Box<dyn Error>> {
+    let test_app_path = tests_dir.join(format!("{}.app", test_app_name));
+    build_test_app(&tests_dir, &test_app_name, sources, extra_compile_args)?;
 
     let binary_name = "touchHLE";
     let binary_path = target_dir().join(format!("{}{}", binary_name, env::consts::EXE_SUFFIX));
@@ -119,4 +124,35 @@ fn run_test_app() -> Result<(), Box<dyn Error>> {
     );
 
     Ok(())
+}
+
+#[test]
+fn test_app() -> Result<(), Box<dyn Error>> {
+    // By default this uses the system linker, which is expected to ld for Mac
+    // OS. By setting TOUCHHLE_LINKER to point to a ported (Apple) ld, you can
+    // also build on linux (and potentially windows).
+    let linker_path = env::var("TOUCHHLE_LINKER").map_or("".to_owned(), |linker_path| {
+        format!("-fuse-ld={}", linker_path)
+    });
+
+    let libs_dir = "-L".to_owned() + current_dir()?.join("touchHLE_dylibs").to_str().unwrap();
+    let extra_compile_args = [
+        linker_path.as_str(),
+        // ARC is not available until IOS 5, so it can't be used.
+        "-fno-objc-arc",
+        "-fno-objc-arc-exceptions",
+        // For some reason, we need to manually patch in the
+        // libgcc_s dependency.
+        "-lgcc_s.1",
+        "-fobjc-link-runtime",
+        libs_dir.as_str(),
+        "-ObjC",
+    ];
+
+    let sources = ["main.m", "SyncTester.m"].map(|file| Path::new(file));
+
+    let tests_dir = current_dir()?.join("tests");
+
+    let test_app_name = "TestApp";
+    run_test_app(&tests_dir, &test_app_name, &sources, &extra_compile_args)
 }

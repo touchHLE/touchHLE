@@ -6,7 +6,7 @@
 
 // Tests related to CGAffineTransform.
 // These are in their own file so you can easily compile them separately and
-// run them on macOS, with a command like:
+// run them on macOS, with a command like: (comment/uncomment below as noted)
 //
 // cc tests/TestApp_source/CGAffineTransform.c -framework CoreGraphics
 // -DDEFINE_ME_WHEN_BUILDING_ON_MACOS -Dtest_CGAffineTransform=main && ./a.out;
@@ -14,54 +14,14 @@
 
 // === Declarations ===
 
-// <stdbool.h>
-typedef _Bool bool;
+// Comment this line to compile on MacOS
+#include "system_headers.h"
 
-// Stuff from various Core Graphics headers.
+// Uncomment this line to compile on MacOS
+// #ifndef __cplusplus
+// typedef _Bool bool;
+// #endif
 
-#ifdef DEFINE_ME_WHEN_BUILDING_ON_MACOS
-typedef double CGFloat; // 64-bit definition (not supported by touchHLE)
-#else
-typedef float CGFloat;
-#endif
-
-typedef struct {
-  CGFloat x, y;
-} CGPoint;
-bool CGPointEqualToPoint(CGPoint, CGPoint);
-typedef struct {
-  CGFloat width, height;
-} CGSize;
-bool CGSizeEqualToSize(CGSize, CGSize);
-typedef struct {
-  CGPoint origin;
-  CGSize size;
-} CGRect;
-bool CGRectEqualToRect(CGRect, CGRect);
-
-typedef struct {
-  CGFloat a, b, c, d, tx, ty;
-} CGAffineTransform;
-// extern const CGAffineTransform CGAffineTransformIdentity;
-bool CGAffineTransformIsIdentity(CGAffineTransform);
-bool CGAffineTransformEqualToTransform(CGAffineTransform, CGAffineTransform);
-CGAffineTransform CGAffineTransformMake(CGFloat, CGFloat, CGFloat, CGFloat,
-                                        CGFloat, CGFloat);
-CGAffineTransform CGAffineTransformMakeRotation(CGFloat);
-CGAffineTransform CGAffineTransformMakeScale(CGFloat, CGFloat);
-CGAffineTransform CGAffineTransformMakeTranslation(CGFloat, CGFloat);
-CGAffineTransform CGAffineTransformConcat(CGAffineTransform, CGAffineTransform);
-CGAffineTransform CGAffineTransformRotate(CGAffineTransform, CGFloat);
-CGAffineTransform CGAffineTransformScale(CGAffineTransform, CGFloat, CGFloat);
-CGAffineTransform CGAffineTransformTranslate(CGAffineTransform, CGFloat,
-                                             CGFloat);
-CGAffineTransform CGAffineTransformInvert(CGAffineTransform);
-CGPoint CGPointApplyAffineTransform(CGPoint, CGAffineTransform);
-CGSize CGSizeApplyAffineTransform(CGSize, CGAffineTransform);
-CGRect CGRectApplyAffineTransform(CGRect, CGAffineTransform);
-
-// Debugging code:
-int printf(const char *, ...);
 void dump_transform(CGAffineTransform t) {
   printf(".a: %f\n", t.a);
   printf(".b: %f\n", t.b);

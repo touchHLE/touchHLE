@@ -10,6 +10,23 @@ use crate::bundle::Bundle;
 use crate::objc::{
     autorelease, id, msg, msg_class, nil, objc_classes, release, ClassExports, HostObject,
 };
+use crate::Environment;
+
+// Should be ISO 639-1 (or ISO 639-2) compliant
+// TODO: complete this list or use some crate for mapping
+const LANG_ID_TO_LANG_PROJ: &[(&str, &str)] = &[
+    ("da", "Danish.lproj"),
+    ("nl", "Dutch.lproj"),
+    ("en", "English.lproj"),
+    ("fi", "Finnish.lproj"),
+    ("fr", "French.lproj"),
+    ("de", "German.lproj"),
+    ("it", "Italian.lproj"),
+    ("jp", "Japanese.lproj"),
+    ("no", "Norwegian.lproj"),
+    ("es", "Spanish.lproj"),
+    ("sv", "Swedish.lproj"),
+];
 
 #[derive(Default)]
 pub struct State {
@@ -104,18 +121,35 @@ pub const CLASSES: ClassExports = objc_classes! {
           inDirectory:(id)directory { // NSString*
     assert!(name != nil); // TODO
 
-    // FIXME: localized resource handling?
-    // FIXME: return nil if path does not exist
+    // TODO: cache result of lookups
 
-    let mut path: id = msg![env; this resourcePath];
-    if directory != nil {
-        path = msg![env; path stringByAppendingPathComponent:directory];
+    let path = path_for_resource_helper(env, this, name, nil, directory, extension);
+    if path != nil {
+        return path
     }
-    path = msg![env; path stringByAppendingPathComponent:name];
-    if extension != nil {
-        path = msg![env; path stringByAppendingPathExtension:extension];
+
+    // Get preferred languages
+    let langs: id = msg_class![env; NSLocale preferredLanguages];
+    // TODO: iterate over all
+    let lang: id = msg![env; langs objectAtIndex:0u32];
+    let lang_code = ns_string::to_rust_string(env, lang); // TODO: avoid copy
+    let lproj_name = match LANG_ID_TO_LANG_PROJ.iter().find(|&&(code, _)| code == lang_code) {
+        Some(&(_, name)) => name,
+        None => {
+            log!("TODO: {:?} is not mapped to a language name, fallback to English", lang_code);
+            "English.lproj"
+        }
+    };
+    let lproj: id = ns_string::get_static_str(env, lproj_name);
+    let localized_path = path_for_resource_helper(env, this, name, lproj, directory, extension);
+    if localized_path != nil {
+        return localized_path
     }
-    path
+
+    // As a last resort, fallback to English
+    // TODO: fallback to a development language (CFBundleDevelopmentRegion from Info.plist)
+    let lproj: id = ns_string::get_static_str(env, "English.lproj");
+    path_for_resource_helper(env, this, name, lproj, directory, extension)
 }
 - (id)pathForResource:(id)name // NSString*
                ofType:(id)extension { // NSString*
@@ -159,3 +193,30 @@ pub const CLASSES: ClassExports = objc_classes! {
 @end
 
 };
+
+fn path_for_resource_helper(
+    env: &mut Environment,
+    bundle: id,
+    name: id,
+    lproj: id,
+    directory: id,
+    extension: id,
+) -> id {
+    let mut path: id = msg![env; bundle resourcePath];
+    if lproj != nil {
+        path = msg![env; path stringByAppendingPathComponent:lproj];
+    }
+    if directory != nil {
+        path = msg![env; path stringByAppendingPathComponent:directory];
+    }
+    path = msg![env; path stringByAppendingPathComponent:name];
+    if extension != nil {
+        path = msg![env; path stringByAppendingPathExtension:extension];
+    }
+    let file_manager: id = msg_class![env; NSFileManager defaultManager];
+    let file_exists: bool = msg![env; file_manager fileExistsAtPath:path];
+    if file_exists {
+        return path;
+    }
+    nil
+}

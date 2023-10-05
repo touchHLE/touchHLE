@@ -204,6 +204,19 @@ impl<T: Copy + Default + Eq + Ord + SafeRead + Debug> GenericChar<T> {
         }
     }
 
+    pub(super) fn strncat(
+        env: &mut Environment,
+        s1: MutPtr<T>,
+        s2: ConstPtr<T>,
+        n: GuestUSize,
+    ) -> MutPtr<T> {
+        {
+            let s1 = s1 + Self::strlen(env, s1.cast_const());
+            Self::strncpy(env, s1, s2, n);
+        }
+        s1
+    }
+
     pub(super) fn strstr(
         env: &mut Environment,
         string: ConstPtr<T>,

@@ -52,6 +52,24 @@
       "parentUuid": "697d2d25_d4140b5c",
       "revId": "0f21a3883d841ff2bd2afdfdb8967525023c34d4",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "83df2b42_78b751e0",
+        "filename": "src/libc/semaphore.rs",
+        "patchSetId": 19
+      },
+      "lineNbr": 64,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-10-05T11:45:47Z",
+      "side": 1,
+      "message": "Ah sorry, missed that\nDone",
+      "parentUuid": "7c1f2e9e_166b64b1",
+      "revId": "0f21a3883d841ff2bd2afdfdb8967525023c34d4",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

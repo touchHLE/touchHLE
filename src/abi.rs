@@ -52,6 +52,10 @@ impl GuestFunction {
         self.0.to_bits() & !Self::THUMB_BIT
     }
 
+    pub fn to_ptr(self) -> ConstVoidPtr {
+        Ptr::from_bits(self.0.to_bits())
+    }
+
     /// Execute the guest function and return to the host when it is done.
     /// A new stack frame will be created for the duration of the call.
     ///

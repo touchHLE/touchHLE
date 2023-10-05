@@ -13,55 +13,14 @@
 // echo $?
 
 // === Declarations ===
-
-// <stdbool.h>
-typedef _Bool bool;
-
-// Stuff from various Core Graphics headers.
-
+#ifndef DEFINE_ME_WHEN_BUILDING_ON_MACOS
+#include "system_headers.h"
+#endif
 #ifdef DEFINE_ME_WHEN_BUILDING_ON_MACOS
-typedef double CGFloat; // 64-bit definition (not supported by touchHLE)
-#else
-typedef float CGFloat;
+#include <CoreGraphics/CoreGraphics.h>
+#include <stdbool.h>
 #endif
 
-typedef struct {
-  CGFloat x, y;
-} CGPoint;
-bool CGPointEqualToPoint(CGPoint, CGPoint);
-typedef struct {
-  CGFloat width, height;
-} CGSize;
-bool CGSizeEqualToSize(CGSize, CGSize);
-typedef struct {
-  CGPoint origin;
-  CGSize size;
-} CGRect;
-bool CGRectEqualToRect(CGRect, CGRect);
-
-typedef struct {
-  CGFloat a, b, c, d, tx, ty;
-} CGAffineTransform;
-// extern const CGAffineTransform CGAffineTransformIdentity;
-bool CGAffineTransformIsIdentity(CGAffineTransform);
-bool CGAffineTransformEqualToTransform(CGAffineTransform, CGAffineTransform);
-CGAffineTransform CGAffineTransformMake(CGFloat, CGFloat, CGFloat, CGFloat,
-                                        CGFloat, CGFloat);
-CGAffineTransform CGAffineTransformMakeRotation(CGFloat);
-CGAffineTransform CGAffineTransformMakeScale(CGFloat, CGFloat);
-CGAffineTransform CGAffineTransformMakeTranslation(CGFloat, CGFloat);
-CGAffineTransform CGAffineTransformConcat(CGAffineTransform, CGAffineTransform);
-CGAffineTransform CGAffineTransformRotate(CGAffineTransform, CGFloat);
-CGAffineTransform CGAffineTransformScale(CGAffineTransform, CGFloat, CGFloat);
-CGAffineTransform CGAffineTransformTranslate(CGAffineTransform, CGFloat,
-                                             CGFloat);
-CGAffineTransform CGAffineTransformInvert(CGAffineTransform);
-CGPoint CGPointApplyAffineTransform(CGPoint, CGAffineTransform);
-CGSize CGSizeApplyAffineTransform(CGSize, CGAffineTransform);
-CGRect CGRectApplyAffineTransform(CGRect, CGAffineTransform);
-
-// Debugging code:
-int printf(const char *, ...);
 void dump_transform(CGAffineTransform t) {
   printf(".a: %f\n", t.a);
   printf(".b: %f\n", t.b);

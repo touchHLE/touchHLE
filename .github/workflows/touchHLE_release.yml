@@ -26,23 +26,8 @@ jobs:
       run: git submodule update --init
     - name: Install Boost
       run: brew install boost
-    # This is the earliest point at which we can do linting: clippy will end up
-    # building dynarmic, which needs Boost, but we don't need LLVM until
-    # building tests.
     - name: Lint
       run: dev-scripts/lint.sh
-    - name: Try to get cached copy of LLVM
-      id: cache-llvm
-      uses: actions/cache@v3
-      with:
-        path: tests/llvm
-        key: llvm_12_0_0_macOS_x64
-    - if: ${{ steps.cache-llvm.outputs.cache-hit != 'true' }}
-      name: Download LLVM
-      run: curl -L -O "https://github.com/llvm/llvm-project/releases/download/llvmorg-12.0.0/clang+llvm-12.0.0-x86_64-apple-darwin.tar.xz"
-    - if: ${{ steps.cache-llvm.outputs.cache-hit != 'true' }}
-      name: Extract LLVM
-      run: tar -xf clang+llvm-12.0.0-x86_64-apple-darwin.tar.xz && mkdir tests/llvm && mv clang+llvm-12.0.0-x86_64-apple-darwin/* tests/llvm
     - name: Test
       run: cargo test
     - name: Build
@@ -136,26 +121,10 @@ jobs:
     - if: ${{ steps.cache-boost.outputs.cache-hit != 'true' }}
       name: Extract Boost
       run: 7z -ovendor x boost_1_81_0.7z && ren vendor\boost_1_81_0 boost
-    # This is the earliest point at which we can do linting: clippy will end up
-    # building dynarmic, which needs Boost, but we don't need LLVM until
-    # building tests.
+    # Most testing doesn't work on windows without cygwin.
+    # Clippy results can change on different platforms due to #[cfg(os)], so we still need to relint.
     - name: Lint
-      shell: bash # no command output without this
       run: dev-scripts/lint.sh
-    - name: Try to get cached copy of LLVM
-      id: cache-llvm
-      uses: actions/cache@v3
-      with:
-        path: tests/llvm
-        key: llvm_12_0_1_Windows_x64
-    - if: ${{ steps.cache-llvm.outputs.cache-hit != 'true' }}
-      name: Download LLVM
-      run: curl -L -O "https://github.com/llvm/llvm-project/releases/download/llvmorg-12.0.1/LLVM-12.0.1-win64.exe"
-    - if: ${{ steps.cache-llvm.outputs.cache-hit != 'true' }}
-      name: Extract LLVM
-      run: 7z -otests/llvm x LLVM-12.0.1-win64.exe
-    - name: Test
-      run: cargo test
     - name: Build
       run: cargo build --release && move target/release/touchHLE.exe .
     - uses: actions/upload-artifact@v3

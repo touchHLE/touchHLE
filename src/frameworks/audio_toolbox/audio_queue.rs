@@ -17,8 +17,7 @@ use crate::dyld::{export_c_func, FunctionExports};
 use crate::frameworks::carbon_core::OSStatus;
 use crate::frameworks::core_audio_types::{
     debug_fourcc, fourcc, kAudioFormatAppleIMA4, kAudioFormatFlagIsBigEndian,
-    kAudioFormatFlagIsFloat, kAudioFormatFlagIsPacked, kAudioFormatLinearPCM,
-    AudioStreamBasicDescription,
+    kAudioFormatFlagIsPacked, kAudioFormatLinearPCM, AudioStreamBasicDescription,
 };
 use crate::frameworks::core_foundation::cf_run_loop::{
     kCFRunLoopCommonModes, CFRunLoopGetMain, CFRunLoopMode, CFRunLoopRef,
@@ -442,10 +441,9 @@ fn is_supported_audio_format(format: &AudioStreamBasicDescription) -> bool {
         kAudioFormatLinearPCM => {
             // TODO: support more PCM formats
             (channels_per_frame == 1 || channels_per_frame == 2)
-                && (bits_per_channel == 8 || bits_per_channel == 16)
+                && (bits_per_channel == 8 || bits_per_channel == 16 || bits_per_channel == 32)
                 && (format_flags & kAudioFormatFlagIsPacked) != 0
                 && (format_flags & kAudioFormatFlagIsBigEndian) == 0
-                && (format_flags & kAudioFormatFlagIsFloat) == 0
         }
         _ => false,
     }
@@ -513,6 +511,7 @@ fn decode_buffer(
                 (1, 16) => al::AL_FORMAT_MONO16,
                 (2, 8) => al::AL_FORMAT_STEREO8,
                 (2, 16) => al::AL_FORMAT_STEREO16,
+                (2, 32) => al::AL_FORMAT_STEREO32F,
                 _ => unreachable!(),
             };
             (f, format.sample_rate as ALsizei, data_slice.to_owned())

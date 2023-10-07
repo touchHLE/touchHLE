@@ -109,6 +109,7 @@ pub const AL_FORMAT_MONO8: ALenum = 0x1100;
 pub const AL_FORMAT_MONO16: ALenum = 0x1101;
 pub const AL_FORMAT_STEREO8: ALenum = 0x1102;
 pub const AL_FORMAT_STEREO16: ALenum = 0x1103;
+pub const AL_FORMAT_STEREO32F: ALenum = 0x10011;
 
 extern "C" {
     pub fn alGetError() -> ALenum;

@@ -15,10 +15,12 @@
 mod ima4;
 
 pub use ima4::decode_ima4;
+use pcm_loader::{PcmLoader, PcmRAM, PcmRAMType, ResampleQuality};
 use touchHLE_dr_mp3_wrapper as dr_mp3;
 pub use touchHLE_openal_soft_wrapper as openal;
 
 use crate::fs::{Fs, GuestPath};
+use crate::mem::guest_size_of;
 use std::io::Cursor;
 
 #[derive(Debug)]
@@ -48,6 +50,7 @@ enum AudioFileInner {
     Wave(hound::WavReader<Cursor<Vec<u8>>>),
     Caf(caf::CafPacketReader<Cursor<Vec<u8>>>),
     Mp3(dr_mp3::Mp3DecodedToPcm),
+    PcmRAM(PcmRAM),
 }
 
 impl AudioFile {
@@ -75,11 +78,18 @@ impl AudioFile {
         } else if let Ok(pcm) = dr_mp3::decode_mp3_to_pcm(&bytes) {
             Ok(AudioFile(AudioFileInner::Mp3(pcm)))
         } else {
-            log!(
-                "Could not decode audio file at path {:?}, likely an unimplemented file format.",
-                path.as_ref()
-            );
-            Err(())
+            let mut pcm_loader = PcmLoader::new();
+            if let Ok(pcm_ram) =
+                pcm_loader.load_memory(Cursor::new(bytes), None, ResampleQuality::Linear, None)
+            {
+                Ok(AudioFile(AudioFileInner::PcmRAM(pcm_ram)))
+            } else {
+                log!(
+                    "Could not decode audio file at path {:?}, likely an unimplemented file format.",
+                    path.as_ref()
+                );
+                Err(())
+            }
         }
     }
 
@@ -164,6 +174,17 @@ impl AudioFile {
                 channels_per_frame: channels,
                 bits_per_channel: 16,
             },
+            AudioFileInner::PcmRAM(ref pcm_ram) => AudioDescription {
+                sample_rate: f64::from(pcm_ram.sample_rate()),
+                format: AudioFormat::LinearPcm {
+                    is_float: true,
+                    is_little_endian: true,
+                },
+                bytes_per_packet: pcm_ram.channels() as u32 * guest_size_of::<f32>(),
+                frames_per_packet: 1,
+                channels_per_frame: pcm_ram.channels() as u32,
+                bits_per_channel: 8 * guest_size_of::<f32>(),
+            },
         }
     }
 
@@ -192,12 +213,18 @@ impl AudioFile {
                 u64::from(self.packet_size_fixed()) * self.packet_count()
             }
             AudioFileInner::Mp3(dr_mp3::Mp3DecodedToPcm { ref bytes, .. }) => bytes.len() as u64,
+            AudioFileInner::PcmRAM(ref pcm_ram) => {
+                u64::from((pcm_ram.len_frames() * pcm_ram.channels()) as u32)
+                    * self.bytes_per_sample()
+            }
         }
     }
 
     pub fn packet_count(&self) -> u64 {
         match self.0 {
-            AudioFileInner::Wave(_) | AudioFileInner::Mp3(dr_mp3::Mp3DecodedToPcm { .. }) => {
+            AudioFileInner::Wave(_)
+            | AudioFileInner::Mp3(dr_mp3::Mp3DecodedToPcm { .. })
+            | AudioFileInner::PcmRAM(_) => {
                 // never variable-size
                 self.byte_count() / u64::from(self.packet_size_fixed())
             }
@@ -255,6 +282,49 @@ impl AudioFile {
                         _ => todo!(),
                     }
                     byte_offset += bytes_per_sample as usize;
+                }
+                Ok(byte_offset)
+            }
+            AudioFileInner::PcmRAM(_) => {
+                let bytes_per_sample = self.bytes_per_sample();
+                assert!(offset % bytes_per_sample == 0);
+                assert!(u64::try_from(buffer.len()).unwrap() % bytes_per_sample == 0);
+
+                let sample_count = u64::try_from(buffer.len()).unwrap() / bytes_per_sample;
+                let sample_count: usize = sample_count.try_into().unwrap();
+
+                let AudioFileInner::PcmRAM(ref mut pcm_ram) = self.0 else {
+                    unreachable!()
+                };
+                assert_eq!(pcm_ram.channels(), 2);
+
+                let PcmRAMType::F32(samples) = pcm_ram.get() else {
+                    unimplemented!()
+                };
+
+                let offset: usize = (offset / bytes_per_sample).try_into().unwrap();
+                let mut byte_offset = 0;
+                let f_size: usize = guest_size_of::<f32>() as usize;
+                assert_eq!(f_size, 4);
+                for i in 0..sample_count {
+                    let idx = (offset + i) / 2;
+                    if i % 2 == 0 {
+                        let left_samples = &samples[0];
+                        if left_samples.len() <= idx {
+                            break;
+                        }
+                        let left_sample: f32 = left_samples[idx];
+                        buffer[byte_offset..][..f_size].copy_from_slice(&left_sample.to_le_bytes());
+                    } else {
+                        let right_samples = &samples[1];
+                        if right_samples.len() <= idx {
+                            break;
+                        }
+                        let right_sample: f32 = right_samples[idx];
+                        buffer[byte_offset..][..f_size]
+                            .copy_from_slice(&right_sample.to_le_bytes());
+                    }
+                    byte_offset += f_size;
                 }
                 Ok(byte_offset)
             }

@@ -58,6 +58,7 @@ touchHLE_gl_bindings = { path = "src/gles/gl_bindings" }
 touchHLE_openal_soft_wrapper = { path = "src/audio/openal_soft_wrapper" }
 touchHLE_pvrt_decompress_wrapper = { path = "src/image/pvrt_decompress_wrapper" }
 touchHLE_stb_image_wrapper = { path = "src/image/stb_image_wrapper" }
+pcm-loader = { git = "https://github.com/ciciplusplus/pcm-loader", rev = "4fb733a61986dbb8d4e0fdaa6b9439126d15755b", features = ["aac", "adpcm", "alac", "flac", "isomp4", "mp3", "ogg", "pcm", "vorbis", "wav"] }
 
 [build-dependencies]
 cargo-license = "0.5.1"

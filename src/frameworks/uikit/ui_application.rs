@@ -131,6 +131,17 @@ pub const CLASSES: ClassExports = objc_classes! {
     true
 }
 
+// TODO: ignore touches
+-(())beginIgnoringInteractionEvents {
+    log!("TODO: ignoring beginIgnoringInteractionEvents");
+}
+- (bool)isIgnoringInteractionEvents {
+    false
+}
+-(())endIgnoringInteractionEvents {
+    log!("TODO: ignoring endIgnoringInteractionEvents");
+}
+
 - (id)windows {
     log!("TODO: UIApplication's windows getter is returning only visible windows");
     let visible_windows: Vec<id> = (*env

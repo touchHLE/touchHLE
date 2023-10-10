@@ -18,6 +18,7 @@ pub const CONSTANT_LISTS: &[super::ConstantExports] = &[
     core_graphics::cg_affine_transform::CONSTANTS,
     core_graphics::cg_color_space::CONSTANTS,
     core_graphics::cg_geometry::CONSTANTS,
+    foundation::ns_locale::CONSTANTS,
     foundation::ns_run_loop::CONSTANTS,
     media_player::movie_player::CONSTANTS,
     opengles::eagl::CONSTANTS,

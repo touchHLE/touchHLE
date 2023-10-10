@@ -6,13 +6,22 @@
 //! `NSLocale`.
 
 use super::{ns_array, ns_string};
-use crate::objc::{id, objc_classes, ClassExports};
+use crate::dyld::{ConstantExports, HostConstant};
+use crate::objc::{id, objc_classes, ClassExports, HostObject};
 use crate::options::Options;
 use crate::Environment;
 use std::ffi::CStr;
 
+const NSLocaleCountryCode: &str = "NSLocaleCountryCode";
+
+pub const CONSTANTS: ConstantExports = &[(
+    "_NSLocaleCountryCode",
+    HostConstant::NSString(NSLocaleCountryCode),
+)];
+
 #[derive(Default)]
 pub struct State {
+    current_locale: Option<id>,
     preferred_languages: Option<id>,
 }
 impl State {
@@ -65,6 +74,11 @@ fn get_preferred_languages(options: &Options) -> Vec<String> {
     }
 }
 
+struct NSLocalHostObject {
+    country_code: id,
+}
+impl HostObject for NSLocalHostObject {}
+
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);
@@ -87,7 +101,37 @@ pub const CLASSES: ClassExports = objc_classes! {
     }
 }
 
++ (id)currentLocale {
+    if let Some(locale) = State::get(env).current_locale {
+        locale
+    } else {
+        // TODO: guess country code from LANG ?
+        let country_code = ns_string::get_static_str(env, "US");
+        let host_object = NSLocalHostObject {
+            country_code
+        };
+        let new_locale = env.objc.alloc_object(
+            this,
+            Box::new(host_object),
+            &mut env.mem
+        );
+        State::get(env).current_locale = Some(new_locale);
+        new_locale
+    }
+}
+
 // TODO: constructors, more accessors
+
+- (id)objectForKey:(id)key {
+    let key_str: &str = &ns_string::to_rust_string(env, key);
+    match key_str {
+        NSLocaleCountryCode => {
+            let &NSLocalHostObject { country_code } = env.objc.borrow(this);
+            country_code
+        },
+        _ => unimplemented!()
+    }
+}
 
 @end
 

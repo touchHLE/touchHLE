@@ -8,7 +8,7 @@
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::mem::{guest_size_of, ConstPtr, MutPtr, Ptr, SafeRead};
 use crate::Environment;
-use std::time::SystemTime;
+use std::time::{Instant, SystemTime};
 
 #[derive(Default)]
 pub struct State {
@@ -23,6 +23,15 @@ pub struct State {
 #[allow(non_camel_case_types)]
 /// Time in seconds since UNIX epoch (1970-01-01 00:00:00)
 pub type time_t = i32;
+
+#[allow(non_camel_case_types)]
+type clock_t = u64;
+
+const CLOCKS_PER_SEC: clock_t = 1000000;
+
+fn clock(env: &mut Environment) -> clock_t {
+    Instant::now().duration_since(env.startup_time).as_secs() * CLOCKS_PER_SEC
+}
 
 fn time(env: &mut Environment, out: MutPtr<time_t>) -> time_t {
     let time64 = SystemTime::now()
@@ -313,6 +322,7 @@ fn gettimeofday(
 }
 
 pub const FUNCTIONS: FunctionExports = &[
+    export_c_func!(clock()),
     export_c_func!(time(_)),
     export_c_func!(gmtime_r(_, _)),
     export_c_func!(gmtime(_)),

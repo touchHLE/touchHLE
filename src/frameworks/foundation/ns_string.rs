@@ -843,6 +843,12 @@ pub const CLASSES: ClassExports = objc_classes! {
     this
 }
 
+- (bool)isAbsolutePath {
+    // TODO: avoid copy?
+    let path = to_rust_string(env, this);
+    path.starts_with('/')
+}
+
 @end
 
 // Specialised subclass for static-lifetime strings.

@@ -6,13 +6,22 @@
 //! `NSLocale`.
 
 use super::{ns_array, ns_string};
-use crate::objc::{id, objc_classes, ClassExports};
+use crate::dyld::{ConstantExports, HostConstant};
+use crate::objc::{id, objc_classes, ClassExports, HostObject};
 use crate::options::Options;
 use crate::Environment;
 use std::ffi::CStr;
 
+const NSLocaleCountryCode: &str = "NSLocaleCountryCode";
+
+pub const CONSTANTS: ConstantExports = &[(
+    "_NSLocaleCountryCode",
+    HostConstant::NSString(NSLocaleCountryCode),
+)];
+
 #[derive(Default)]
 pub struct State {
+    current_locale: Option<id>,
     preferred_languages: Option<id>,
 }
 impl State {
@@ -60,10 +69,48 @@ fn get_preferred_languages(options: &Options) -> Vec<String> {
         log!("The app requested your preferred languages. No information could be retrieved, so {:?} (English) will be reported.", lang);
         vec![lang]
     } else {
-        log!("The app requested your preferred languages. {:?} will reported based on your system language preferences.", languages);
+        log!("The app requested your preferred languages. {:?} will be reported based on your system language preferences.", languages);
         languages
     }
 }
+
+fn get_preferred_countries() -> Vec<String> {
+    // Unfortunately Rust-SDL2 doesn't provide a wrapper for this yet.
+    let countries = unsafe {
+        let mut countries = Vec::new();
+        let locales_raw = sdl2_sys::SDL_GetPreferredLocales();
+        if !locales_raw.is_null() {
+            for i in 0.. {
+                let sdl2_sys::SDL_Locale { language, country } = locales_raw.offset(i).read();
+                if language.is_null() && country.is_null() {
+                    // Terminator
+                    break;
+                }
+
+                // country can be NULL
+                if !country.is_null() {
+                    countries.push(CStr::from_ptr(country).to_str().unwrap().to_string());
+                }
+            }
+            sdl2_sys::SDL_free(locales_raw.cast());
+        }
+        countries
+    };
+
+    if countries.is_empty() {
+        let country = "US".to_string();
+        log!("The app requested your current locale. No country information could be retrieved, so {:?} will be reported.", country);
+        vec![country]
+    } else {
+        log!("The app requested your current locale. {:?} will be reported based on your system region settings.", countries);
+        countries
+    }
+}
+
+struct NSLocaleHostObject {
+    country_code: id,
+}
+impl HostObject for NSLocaleHostObject {}
 
 pub const CLASSES: ClassExports = objc_classes! {
 
@@ -87,7 +134,37 @@ pub const CLASSES: ClassExports = objc_classes! {
     }
 }
 
++ (id)currentLocale {
+    if let Some(locale) = State::get(env).current_locale {
+        locale
+    } else {
+        let countries = get_preferred_countries();
+        let country_code = ns_string::from_rust_string(env, countries[0].clone());
+        let host_object = NSLocaleHostObject {
+            country_code
+        };
+        let new_locale = env.objc.alloc_object(
+            this,
+            Box::new(host_object),
+            &mut env.mem
+        );
+        State::get(env).current_locale = Some(new_locale);
+        new_locale
+    }
+}
+
 // TODO: constructors, more accessors
+
+- (id)objectForKey:(id)key {
+    let key_str: &str = &ns_string::to_rust_string(env, key);
+    match key_str {
+        NSLocaleCountryCode => {
+            let &NSLocaleHostObject { country_code } = env.objc.borrow(this);
+            country_code
+        },
+        _ => unimplemented!()
+    }
+}
 
 @end
 

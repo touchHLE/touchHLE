@@ -124,6 +124,17 @@ pub const CLASSES: ClassExports = objc_classes! {
     true
 }
 
+// TODO: ignore touches
+-(())beginIgnoringInteractionEvents {
+    log!("TODO: ignoring beginIgnoringInteractionEvents");
+}
+- (bool)isIgnoringInteractionEvents {
+    false
+}
+-(())endIgnoringInteractionEvents {
+    log!("TODO: ignoring endIgnoringInteractionEvents");
+}
+
 @end
 
 };

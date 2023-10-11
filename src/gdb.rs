@@ -20,12 +20,12 @@ use std::net::TcpStream;
 use std::time::Duration;
 
 /// GDB target description XML.
-const TARGET_XML: &str = r##"
+const TARGET_XML: &str = r#"
 <target version="1.0">
     <architecture>armv6</architecture>
     <osabi>Darwin</osabi>
 </target>
-"##;
+"#;
 
 /// GDB Remote Serial Protocol handler, implementing a server.
 pub struct GdbServer {

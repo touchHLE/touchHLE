@@ -16,6 +16,40 @@
       "message": "good work!",
       "revId": "299120a31b4cdf5e613d9505157cda1ce4d397d5",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "78f9784b_a136cd51",
+        "filename": "src/libc/stdio/printf.rs",
+        "patchSetId": 23
+      },
+      "lineNbr": 70,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-10-11T14:43:20Z",
+      "side": 1,
+      "message": "I think this only applies for integers? cppreference.com says:\n\n\u003e 0: for integer and floating point number conversions, leading zeros are used to pad the field instead of space characters. For integer numbers it is ignored if the precision is explicitly specified. For other conversions using this flag results in undefined behavior. It is ignored if - flag is present.",
+      "revId": "299120a31b4cdf5e613d9505157cda1ce4d397d5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9c5510eb_83f17d06",
+        "filename": "src/libc/stdio/printf.rs",
+        "patchSetId": 23
+      },
+      "lineNbr": 83,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-10-11T14:43:20Z",
+      "side": 1,
+      "message": "Hmm, if there\u0027s a `.` but no digits, I think it just counts as zero, so you could simplify this. But I haven\u0027t tested that, I\u0027m just going by this from cppreference.com:\n\n\u003e `.` followed by integer number or `*`, or neither that specifies precision of the conversion. In the case when `*` is used, the precision is specified by an additional argument of type int, which appears before the argument to be converted, but after the argument supplying minimum field width if one is supplied. If the value of this argument is negative, it is ignored. If neither a number nor `*` is used, the precision is taken as zero. See the table below for exact effects of precision.",
+      "revId": "299120a31b4cdf5e613d9505157cda1ce4d397d5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

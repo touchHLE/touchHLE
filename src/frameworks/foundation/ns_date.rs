@@ -5,13 +5,14 @@
  */
 //! `NSDate`.
 
-use std::time::Instant;
-
 use super::NSTimeInterval;
+use crate::frameworks::core_foundation::time::apple_epoch;
 use crate::objc::{autorelease, id, objc_classes, ClassExports, HostObject};
 
+use std::time::SystemTime;
+
 struct NSDateHostObject {
-    instant: Instant,
+    instant: NSTimeInterval,
 }
 impl HostObject for NSDateHostObject {}
 
@@ -22,8 +23,14 @@ pub const CLASSES: ClassExports = objc_classes! {
 @implementation NSDate: NSObject
 
 + (id)date {
+    // "Date objects are immutable, representing an invariant time interval relative to an
+    // absolute reference date (00:00:00 UTC on 1 January 2001)."
+    let instant = SystemTime::now()
+        .duration_since(apple_epoch())
+        .unwrap()
+        .as_secs_f64();
     let host_object = Box::new(NSDateHostObject {
-        instant: Instant::now()
+        instant
     });
     let new = env.objc.alloc_object(this, host_object, &mut env.mem);
 
@@ -36,7 +43,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     assert!(!anotherDate.is_null());
     let host_object = env.objc.borrow::<NSDateHostObject>(this);
     let another_date_host_object = env.objc.borrow::<NSDateHostObject>(anotherDate);
-    let result = another_date_host_object.instant.duration_since(host_object.instant).as_secs_f64();
+    let result = another_date_host_object.instant - host_object.instant;
     log_dbg!("[(NSDate*){:?} timeIntervalSinceDate:{:?}]: result {} seconds", this, anotherDate, result);
     result
 }

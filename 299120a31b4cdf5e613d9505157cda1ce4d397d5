@@ -158,6 +158,24 @@
       "parentUuid": "a3063783_2debe157",
       "revId": "299120a31b4cdf5e613d9505157cda1ce4d397d5",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "710f45e4_94254df8",
+        "filename": "src/libc/stdio/printf.rs",
+        "patchSetId": 23
+      },
+      "lineNbr": 83,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-10-11T20:08:08Z",
+      "side": 1,
+      "message": "Yes but can\u0027t you remove the code that checks if there are digits after the dot? It\u0027s just zero in that case.",
+      "parentUuid": "785f83e4_e43ec571",
+      "revId": "299120a31b4cdf5e613d9505157cda1ce4d397d5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

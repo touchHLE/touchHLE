@@ -760,6 +760,26 @@ pub const CLASSES: ClassExports = objc_classes! {
     ui_font::draw_in_rect(env, font, &text, rect, line_break_mode, align)
 }
 
+- (bool)writeToFile:(id)path // NSString*
+         atomically:(bool)use_aux_file
+           encoding:(NSStringEncoding)encoding
+              error:(MutPtr<id>)error { // NSError**
+    assert!(encoding == NSUTF8StringEncoding || encoding == NSASCIIStringEncoding);
+
+    let string = to_rust_string(env, this);
+    let c_string = env.mem.alloc_and_write_cstr(string.as_bytes());
+    let length: NSUInteger = (string.len() + 1).try_into().unwrap();
+    // NSData will handle releasing the string (it is autoreleased)
+    let data: id = msg_class![env; NSData dataWithBytesNoCopy:(c_string.cast_void())
+                                                    length:length];
+
+    let success: bool = msg![env; data writeToFile:path atomically:use_aux_file];
+    if !success && !error.is_null() {
+        todo!(); // TODO: create an NSError if requested
+    }
+    success
+}
+
 @end
 
 // Our private subclass that is the single implementation of NSString for the

@@ -71,6 +71,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "923cb0fb_f8a9ca0b",
+        "filename": "src/libc/stdio/printf.rs",
+        "patchSetId": 23
+      },
+      "lineNbr": 70,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2023-10-11T20:04:58Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "2480094a_332ef209",
+      "revId": "299120a31b4cdf5e613d9505157cda1ce4d397d5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "9c5510eb_83f17d06",
@@ -120,6 +138,24 @@
       "side": 1,
       "message": "Yes, but a single `.` is not the same as default precision, it\u0027s the same as `.0`. That\u0027s both what cppreference seems to say and also what this test program does on my MacBook:\n\n    \n    $ cat printf-blank-precision.c \n    #include \u003cstdio.h\u003e\n    #include \u003cmath.h\u003e\n    \n    int main(void)\n    {\n    \tprintf(\"%f\\n\", 3.141592);\n    \tprintf(\"%.f\\n\", 3.141592);\n    \tprintf(\"%.0f\\n\", 3.141592);\n    \tprintf(\"%.6f\\n\", 3.141592);\n    }\n    $ cc printf-blank-precision.c -o printf-blank-precision\n    $ ./printf-blank-precision \n    3.141592\n    3\n    3\n    3.141592",
       "parentUuid": "60b28a88_100b0d2b",
+      "revId": "299120a31b4cdf5e613d9505157cda1ce4d397d5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "785f83e4_e43ec571",
+        "filename": "src/libc/stdio/printf.rs",
+        "patchSetId": 23
+      },
+      "lineNbr": 83,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2023-10-11T20:04:58Z",
+      "side": 1,
+      "message": "That\u0027s true and I have indeed missed some cases, however, it\u0027s still necessary to keep track of whether the precission has been specified (beyond the dot) since the behavior isn\u0027t exactly the same.",
+      "parentUuid": "a3063783_2debe157",
       "revId": "299120a31b4cdf5e613d9505157cda1ce4d397d5",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

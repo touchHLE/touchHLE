@@ -35,6 +35,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "f264fe0c_676602a1",
+        "filename": "src/libc/stdio/printf.rs",
+        "patchSetId": 23
+      },
+      "lineNbr": 70,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2023-10-11T16:38:13Z",
+      "side": 1,
+      "message": "Moved setting of pad_char when has_precision is true to the specifier blocks",
+      "parentUuid": "78f9784b_a136cd51",
+      "revId": "299120a31b4cdf5e613d9505157cda1ce4d397d5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "9c5510eb_83f17d06",
@@ -48,6 +66,24 @@
       "writtenOn": "2023-10-11T14:43:20Z",
       "side": 1,
       "message": "Hmm, if there\u0027s a `.` but no digits, I think it just counts as zero, so you could simplify this. But I haven\u0027t tested that, I\u0027m just going by this from cppreference.com:\n\n\u003e `.` followed by integer number or `*`, or neither that specifies precision of the conversion. In the case when `*` is used, the precision is specified by an additional argument of type int, which appears before the argument to be converted, but after the argument supplying minimum field width if one is supplied. If the value of this argument is negative, it is ignored. If neither a number nor `*` is used, the precision is taken as zero. See the table below for exact effects of precision.",
+      "revId": "299120a31b4cdf5e613d9505157cda1ce4d397d5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "60b28a88_100b0d2b",
+        "filename": "src/libc/stdio/printf.rs",
+        "patchSetId": 23
+      },
+      "lineNbr": 83,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2023-10-11T16:38:13Z",
+      "side": 1,
+      "message": "It behaves differently depending on the specifier. In integers its zero, but in floats it\u0027s 6, therefore, i set it as an Option and handle each case in the specifier part of the code.",
+      "parentUuid": "9c5510eb_83f17d06",
       "revId": "299120a31b4cdf5e613d9505157cda1ce4d397d5",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

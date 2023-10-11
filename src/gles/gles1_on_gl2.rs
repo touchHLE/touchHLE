@@ -597,6 +597,10 @@ impl GLES for GLES1OnGL2 {
         assert!(CAPABILITIES.contains(&cap));
         gl21::Enable(cap);
     }
+    unsafe fn IsEnabled(&mut self, cap: GLenum) -> GLboolean {
+        assert!(CAPABILITIES.contains(&cap));
+        gl21::IsEnabled(cap)
+    }
     unsafe fn Disable(&mut self, cap: GLenum) {
         assert!(CAPABILITIES.contains(&cap));
         gl21::Disable(cap);

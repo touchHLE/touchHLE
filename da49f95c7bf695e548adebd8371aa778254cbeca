@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ad6e3011_8046021f",
+        "filename": "src/libc/stdio/printf.rs",
+        "patchSetId": 26
+      },
+      "lineNbr": 67,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-10-11T20:13:04Z",
+      "side": 1,
+      "message": "Having two different variables is needlessly complicated, the precision can be just a single `Option\u003cusize\u003e`, i.e.:\n\n- `%f` \u003d\u003e None\n- `%.f` \u003d\u003e Some(0)\n- `%.3f` \u003d\u003e Some(3)\n\nAll checks for `has_precision` can be replaced by `precision.is_some()`. This code for reading the precision can be greatly simplified as well.",
+      "revId": "da49f95c7bf695e548adebd8371aa778254cbeca",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

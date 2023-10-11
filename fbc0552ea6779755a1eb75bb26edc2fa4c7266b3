@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "b0821a1e_00767a40",
+        "filename": "src/libc/stdio/printf.rs",
+        "patchSetId": 27
+      },
+      "lineNbr": 50,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2023-10-11T20:41:18Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "8685704a_e1e558f6",
+      "revId": "fbc0552ea6779755a1eb75bb26edc2fa4c7266b3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "60537268_3709a19f",
@@ -35,6 +53,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "739bf471_531ad3fe",
+        "filename": "src/libc/stdio/printf.rs",
+        "patchSetId": 27
+      },
+      "lineNbr": 66,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2023-10-11T20:41:18Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "60537268_3709a19f",
+      "revId": "fbc0552ea6779755a1eb75bb26edc2fa4c7266b3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "b449e3ed_0defff59",
@@ -48,6 +84,24 @@
       "writtenOn": "2023-10-11T20:29:08Z",
       "side": 1,
       "message": "This doesn\u0027t look right, won\u0027t it add unnecessary spaces? Was this needed for something? It could be moved to a separate commit maybe (I\u0027m more or less happy with the number stuff).",
+      "revId": "fbc0552ea6779755a1eb75bb26edc2fa4c7266b3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "dc5d5840_6dfeb3f0",
+        "filename": "src/libc/stdio/printf.rs",
+        "patchSetId": 27
+      },
+      "lineNbr": 114,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2023-10-11T20:41:18Z",
+      "side": 1,
+      "message": "You\u0027re right, it\u0027s wrong. It worries me that strcmp in the test somehow didn\u0027t catch it thought.\n\nI\u0027ll leave this change for now and maybe submit it later down the line when i get to seriously implement it.",
+      "parentUuid": "b449e3ed_0defff59",
       "revId": "fbc0552ea6779755a1eb75bb26edc2fa4c7266b3",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

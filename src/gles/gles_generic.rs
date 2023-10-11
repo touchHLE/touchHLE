@@ -42,6 +42,7 @@ pub trait GLES {
     // Generic state manipulation
     unsafe fn GetError(&mut self) -> GLenum;
     unsafe fn Enable(&mut self, cap: GLenum);
+    unsafe fn IsEnabled(&mut self, cap: GLenum) -> GLboolean;
     unsafe fn Disable(&mut self, cap: GLenum);
     unsafe fn ClientActiveTexture(&mut self, texture: GLenum);
     unsafe fn EnableClientState(&mut self, array: GLenum);

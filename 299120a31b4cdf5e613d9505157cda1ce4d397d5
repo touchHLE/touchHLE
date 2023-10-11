@@ -55,6 +55,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "2480094a_332ef209",
+        "filename": "src/libc/stdio/printf.rs",
+        "patchSetId": 23
+      },
+      "lineNbr": 70,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-10-11T19:01:28Z",
+      "side": 1,
+      "message": "Thanks, but can you remove it for `b\u0027f\u0027`? That looks like a mistake.",
+      "parentUuid": "f264fe0c_676602a1",
+      "revId": "299120a31b4cdf5e613d9505157cda1ce4d397d5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "9c5510eb_83f17d06",
         "filename": "src/libc/stdio/printf.rs",
         "patchSetId": 23

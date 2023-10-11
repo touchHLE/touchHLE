@@ -176,6 +176,24 @@
       "parentUuid": "785f83e4_e43ec571",
       "revId": "299120a31b4cdf5e613d9505157cda1ce4d397d5",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "9fa213a5_ea2a3d3c",
+        "filename": "src/libc/stdio/printf.rs",
+        "patchSetId": 23
+      },
+      "lineNbr": 83,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2023-10-11T20:19:31Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "710f45e4_94254df8",
+      "revId": "299120a31b4cdf5e613d9505157cda1ce4d397d5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

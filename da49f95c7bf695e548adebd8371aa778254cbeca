@@ -16,6 +16,24 @@
       "message": "Having two different variables is needlessly complicated, the precision can be just a single `Option\u003cusize\u003e`, i.e.:\n\n- `%f` \u003d\u003e None\n- `%.f` \u003d\u003e Some(0)\n- `%.3f` \u003d\u003e Some(3)\n\nAll checks for `has_precision` can be replaced by `precision.is_some()`. This code for reading the precision can be greatly simplified as well.",
       "revId": "da49f95c7bf695e548adebd8371aa778254cbeca",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "3046bb65_df0e81f0",
+        "filename": "src/libc/stdio/printf.rs",
+        "patchSetId": 26
+      },
+      "lineNbr": 67,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2023-10-11T20:19:31Z",
+      "side": 1,
+      "message": "Yes, you\u0027re right, sorry. I was under the impression that such cases were handled differently on integer specifiers than on float specifiers, but it turns out that wasn\u0027t the case",
+      "parentUuid": "ad6e3011_8046021f",
+      "revId": "da49f95c7bf695e548adebd8371aa778254cbeca",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

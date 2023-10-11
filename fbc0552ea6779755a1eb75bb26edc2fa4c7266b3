@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8685704a_e1e558f6",
+        "filename": "src/libc/stdio/printf.rs",
+        "patchSetId": 27
+      },
+      "lineNbr": 50,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-10-11T20:29:08Z",
+      "side": 1,
+      "message": "What\u0027s going on with this change, is it a relic of an earlier version? Can you revert it?",
+      "revId": "fbc0552ea6779755a1eb75bb26edc2fa4c7266b3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "60537268_3709a19f",
+        "filename": "src/libc/stdio/printf.rs",
+        "patchSetId": 27
+      },
+      "lineNbr": 66,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-10-11T20:29:08Z",
+      "side": 1,
+      "message": "Thanks for the earlier changes. Now that this has been simplified a bit, could you condense it a bit so it doesn\u0027t need the mutability? i.e.\n\n    let precision \u003d if get_format_char … {\n        format_char_idx +\u003d 1;\n        let mut precision \u003d 0;\n        while let c @ … {\n        }\n        Some(precision)\n    } else {\n        None\n    };",
+      "revId": "fbc0552ea6779755a1eb75bb26edc2fa4c7266b3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b449e3ed_0defff59",
+        "filename": "src/libc/stdio/printf.rs",
+        "patchSetId": 27
+      },
+      "lineNbr": 114,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-10-11T20:29:08Z",
+      "side": 1,
+      "message": "This doesn\u0027t look right, won\u0027t it add unnecessary spaces? Was this needed for something? It could be moved to a separate commit maybe (I\u0027m more or less happy with the number stuff).",
+      "revId": "fbc0552ea6779755a1eb75bb26edc2fa4c7266b3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

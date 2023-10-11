@@ -52,7 +52,7 @@ fn CFTimeZoneCopySystem(_env: &mut Environment) -> CFTimeZoneRef {
     nil
 }
 
-fn CFAbsoluteTimeGetGregorianDate(
+pub fn CFAbsoluteTimeGetGregorianDate(
     _env: &mut Environment,
     at: CFAbsoluteTime,
     tz: CFTimeZoneRef,

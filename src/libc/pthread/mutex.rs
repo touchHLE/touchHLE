@@ -57,7 +57,6 @@ fn pthread_mutexattr_settype(
     attr: MutPtr<pthread_mutexattr_t>,
     type_: i32,
 ) -> i32 {
-    let type_ = type_;
     check_magic!(env, attr, MAGIC_MUTEXATTR);
     let mut attr_copy = env.mem.read(attr);
     attr_copy.type_ = type_;

@@ -16,7 +16,7 @@ use std::ops::Add;
 use std::time::{Duration, SystemTime};
 
 /// The absolute reference date is 1 Jan 2001 00:00:00 GMT
-fn apple_epoch() -> SystemTime {
+pub fn apple_epoch() -> SystemTime {
     SystemTime::UNIX_EPOCH.add(Duration::from_secs(978_307_200))
 }
 
@@ -52,7 +52,7 @@ fn CFTimeZoneCopySystem(_env: &mut Environment) -> CFTimeZoneRef {
     nil
 }
 
-fn CFAbsoluteTimeGetGregorianDate(
+pub fn CFAbsoluteTimeGetGregorianDate(
     _env: &mut Environment,
     at: CFAbsoluteTime,
     tz: CFTimeZoneRef,

@@ -601,6 +601,10 @@ impl GLES for GLES1OnGL2 {
         }
         gl21::Enable(cap);
     }
+    unsafe fn IsEnabled(&mut self, cap: GLenum) -> GLboolean {
+        assert!(CAPABILITIES.contains(&cap));
+        gl21::IsEnabled(cap)
+    }
     unsafe fn Disable(&mut self, cap: GLenum) {
         if ARRAYS.iter().any(|&ArrayInfo { name, .. }| name == cap) {
             log_dbg!("Tolerating glDisable({:#x}) of client state", cap);

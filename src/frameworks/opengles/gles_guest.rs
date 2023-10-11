@@ -80,6 +80,11 @@ fn glEnable(env: &mut Environment, cap: GLenum) {
         unsafe { gles.Enable(cap) };
     });
 }
+fn glIsEnabled(env: &mut Environment, cap: GLenum) {
+    with_ctx_and_mem(env, |gles, _mem| {
+        unsafe { gles.IsEnabled(cap) };
+    });
+}
 fn glDisable(env: &mut Environment, cap: GLenum) {
     with_ctx_and_mem(env, |gles, _mem| {
         unsafe { gles.Disable(cap) };
@@ -935,6 +940,7 @@ pub const FUNCTIONS: FunctionExports = &[
     // Generic state manipulation
     export_c_func!(glGetError()),
     export_c_func!(glEnable(_)),
+    export_c_func!(glIsEnabled(_)),
     export_c_func!(glDisable(_)),
     export_c_func!(glClientActiveTexture(_)),
     export_c_func!(glEnableClientState(_)),

@@ -59,6 +59,9 @@ impl GLES for GLES1Native {
     unsafe fn Enable(&mut self, cap: GLenum) {
         gles11::Enable(cap)
     }
+    unsafe fn IsEnabled(&mut self, cap: GLenum) -> GLboolean {
+        gles11::IsEnabled(cap)
+    }
     unsafe fn Disable(&mut self, cap: GLenum) {
         gles11::Disable(cap)
     }

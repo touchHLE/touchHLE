@@ -205,6 +205,7 @@ fn show_app_picker_gui(
     // don't need to be: the entire Environment is thrown away at the end.
 
     // Bypassing UIApplicationMain!
+    let _: id = msg_class![env; NSAutoreleasePool new];
     let ui_application: id = msg_class![env; UIApplication new];
     let delegate = env
         .objc

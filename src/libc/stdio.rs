@@ -60,6 +60,10 @@ fn fread(
     n_items: GuestUSize,
     file_ptr: MutPtr<FILE>,
 ) -> GuestUSize {
+    if item_size == 0 {
+        return 0;
+    }
+
     let FILE { fd } = env.mem.read(file_ptr);
 
     // Yes, the item_size/n_items split doesn't mean anything. The C standard
@@ -133,6 +137,10 @@ fn fwrite(
     n_items: GuestUSize,
     file_ptr: MutPtr<FILE>,
 ) -> GuestUSize {
+    if item_size == 0 {
+        return 0;
+    }
+
     let FILE { fd } = env.mem.read(file_ptr);
 
     let total_size = item_size.checked_mul(n_items).unwrap();

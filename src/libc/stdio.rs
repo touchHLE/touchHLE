@@ -38,7 +38,7 @@ fn fopen(env: &mut Environment, filename: ConstPtr<u8>, mode: ConstPtr<u8>) -> M
     let flags = match env.mem.cstr_at_utf8(mode).unwrap() {
         "r" | "rb" => O_RDONLY,
         "r+" | "rb+" | "r+b" => O_RDWR | O_APPEND,
-        "w" | "wb" => O_WRONLY | O_CREAT | O_TRUNC,
+        "w" | "wb" | "wt" => O_WRONLY | O_CREAT | O_TRUNC,
         "w+" | "wb+" | "w+b" => O_RDWR | O_CREAT | O_TRUNC,
         "a" | "ab" => O_WRONLY | O_APPEND | O_CREAT,
         "a+" | "ab+" | "a+b" => O_RDWR | O_APPEND | O_CREAT,

@@ -19,7 +19,7 @@ use crate::libc::string::strcmp;
 use crate::mem::{ConstPtr, ConstVoidPtr, GuestUSize, MutPtr, MutVoidPtr, Ptr, SafeWrite};
 use crate::Environment;
 use std::collections::HashMap;
-use std::ffi::CStr;
+use std::ffi::{CStr, CString};
 use touchHLE_openal_soft_wrapper::ALC_DEVICE_SPECIFIER;
 
 #[derive(Default)]
@@ -220,6 +220,22 @@ fn alGetError(_env: &mut Environment) -> i32 {
 
 fn alDistanceModel(_env: &mut Environment, value: ALenum) {
     unsafe { al::alDistanceModel(value) };
+}
+
+fn alGetEnumValue(env: &mut Environment, enumName: ConstPtr<u8>) -> ALenum {
+    let s = env.mem.cstr_at_utf8(enumName).unwrap();
+    let ss = CString::new(s).unwrap();
+    let res = unsafe { al::alGetEnumValue(ss.as_ptr()) };
+    log_dbg!("alGetEnumValue({:?}) => {:?}", s, res);
+    res
+}
+
+fn alIsBuffer(_env: &mut Environment, buffer: ALuint) -> ALboolean {
+    unsafe { al::alIsBuffer(buffer) }
+}
+
+fn alIsSource(_env: &mut Environment, source: ALuint) -> ALboolean {
+    unsafe { al::alIsSource(source) }
 }
 
 fn alListenerf(_env: &mut Environment, param: ALenum, value: ALfloat) {
@@ -566,9 +582,6 @@ fn alcIsExtensionPresent(
 ) -> ALCboolean {
     0
 }
-fn alIsBuffer(_env: &mut Environment, _buffer: ALuint) -> ALboolean {
-    todo!();
-}
 fn alGetBufferf(_env: &mut Environment, _buffer: ALuint, _param: ALenum, _value: MutPtr<ALfloat>) {
     todo!();
 }
@@ -605,9 +618,6 @@ fn alGetInteger(_env: &mut Environment, _param: ALenum) -> ALint {
 fn alGetIntegerv(_env: &mut Environment, _param: ALenum, _values: MutPtr<ALint>) {
     todo!();
 }
-fn alGetEnumValue(_env: &mut Environment, _enumName: ConstPtr<u8>) -> ALenum {
-    todo!();
-}
 fn alGetProcAddress(_env: &mut Environment, _funcName: ConstPtr<u8>) -> MutVoidPtr {
     todo!();
 }
@@ -618,9 +628,6 @@ fn alIsExtensionPresent(_env: &mut Environment, _extName: ConstPtr<u8>) -> ALboo
     todo!();
 }
 fn alIsEnabled(_env: &mut Environment, _capability: ALenum) -> ALboolean {
-    todo!();
-}
-fn alIsSource(_env: &mut Environment, _source: ALuint) -> ALboolean {
     todo!();
 }
 fn alSourcePlayv(_env: &mut Environment, _nsources: ALsizei, _sources: ConstPtr<ALuint>) {

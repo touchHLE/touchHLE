@@ -107,12 +107,23 @@ pub const CLASSES: ClassExports = objc_classes! {
     }
 }
 
+- (id)absoluteString {
+    match *env.objc.borrow(this) {
+        NSURLHostObject::FileURL { ns_string } => ns_string,
+        NSURLHostObject::OtherURL { ns_string } => {
+            // TODO: full RFC 1808 resolution
+            assert!(to_rust_string(env, ns_string).starts_with("http"));
+            ns_string
+        },
+    }
+}
+
 - (id)absoluteURL {
     // FIXME: don't assume URL is already absolute
-    let &NSURLHostObject::OtherURL { ns_string } = env.objc.borrow(this) else {
+    let &NSURLHostObject::OtherURL { .. } = env.objc.borrow(this) else {
         unimplemented!(); // TODO
     };
-    ns_string
+    this
 }
 
 - (bool)getFileSystemRepresentation:(MutPtr<u8>)buffer

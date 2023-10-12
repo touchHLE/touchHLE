@@ -74,7 +74,11 @@ fn skip_whitespace(env: &mut Environment, s: ConstPtr<u8>) -> ConstPtr<u8> {
 }
 
 fn atoi(env: &mut Environment, s: ConstPtr<u8>) -> i32 {
-    // atoi() doesn't work with a null-terminated string, instead it stops
+    atol(env, s).try_into().unwrap()
+}
+
+fn atol(env: &mut Environment, s: ConstPtr<u8>) -> i64 {
+    // atoi()/atol() doesn't work with a null-terminated string, instead it stops
     // once it hits something that's not a digit, so we have to do some parsing
     // ourselves.
     let start = skip_whitespace(env, s);
@@ -254,6 +258,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(free(_)),
     export_c_func!(atexit(_)),
     export_c_func!(atoi(_)),
+    export_c_func!(atol(_)),
     export_c_func!(atof(_)),
     export_c_func!(srand(_)),
     export_c_func!(rand()),

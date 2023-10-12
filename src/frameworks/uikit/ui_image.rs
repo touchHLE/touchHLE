@@ -41,6 +41,10 @@ pub const CLASSES: ClassExports = objc_classes! {
     // TODO: figure out whether this is actually correct in all cases
     let bundle: id = msg_class![env; NSBundle mainBundle];
     let path: id = msg![env; bundle pathForResource:name ofType:nil];
+    if path == nil {
+        log!("Warning: [UIImage imageNamed:{:?}] => nil", ns_string::to_rust_string(env, name));
+        return nil;
+    }
     msg![env; this imageWithContentsOfFile:path]
 }
 

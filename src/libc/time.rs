@@ -8,7 +8,7 @@
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::mem::{guest_size_of, ConstPtr, MutPtr, Ptr, SafeRead};
 use crate::Environment;
-use std::time::{Instant, SystemTime};
+use std::time::{Duration, Instant, SystemTime};
 
 #[derive(Default)]
 pub struct State {
@@ -279,6 +279,14 @@ unsafe impl SafeRead for timeval {}
 
 #[allow(non_camel_case_types)]
 #[repr(C, packed)]
+struct timespec {
+    tv_sec: time_t,
+    tv_nsec: i32,
+}
+unsafe impl SafeRead for timespec {}
+
+#[allow(non_camel_case_types)]
+#[repr(C, packed)]
 struct timezone {
     tz_minuteswest: i32,
     tz_dsttime: i32,
@@ -321,6 +329,17 @@ fn gettimeofday(
     0 // success
 }
 
+fn nanosleep(env: &mut Environment, rqtp: ConstPtr<timespec>, rmtp: MutPtr<timespec>) -> i32 {
+    assert!(rmtp.is_null());
+    let t = env.mem.read(rqtp);
+    let tv_sec = t.tv_sec;
+    let tv_nsec = t.tv_nsec;
+    assert_eq!(tv_sec, 0);
+    log_dbg!("nanosleep {} {}", tv_sec, tv_nsec);
+    env.sleep(Duration::from_nanos(tv_nsec.try_into().unwrap()), true);
+    0 // success
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(clock()),
     export_c_func!(time(_)),
@@ -329,4 +348,5 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(localtime_r(_, _)),
     export_c_func!(localtime(_)),
     export_c_func!(gettimeofday(_, _)),
+    export_c_func!(nanosleep(_, _)),
 ];

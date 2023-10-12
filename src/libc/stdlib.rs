@@ -92,6 +92,10 @@ fn atoi(env: &mut Environment, s: ConstPtr<u8>) -> i32 {
     s.parse().unwrap_or(0)
 }
 
+fn atol(env: &mut Environment, s: ConstPtr<u8>) -> i32 {
+    atoi(env, s)
+}
+
 fn atof(env: &mut Environment, s: ConstPtr<u8>) -> f64 {
     // atof() is similar to atoi().
     // FIXME: no C99 hexfloat, INF, NAN support
@@ -254,6 +258,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(free(_)),
     export_c_func!(atexit(_)),
     export_c_func!(atoi(_)),
+    export_c_func!(atol(_)),
     export_c_func!(atof(_)),
     export_c_func!(srand(_)),
     export_c_func!(rand()),

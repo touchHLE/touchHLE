@@ -369,6 +369,26 @@ fn sscanf(env: &mut Environment, src: ConstPtr<u8>, format: ConstPtr<u8>, args: 
                 let c_int_ptr: ConstPtr<i32> = args.next(env);
                 env.mem.write(c_int_ptr.cast_mut(), val);
             }
+            b'h' => {
+                // signed short* or unsigned short*
+                let second_specifier = env.mem.read(format + format_char_idx);
+                format_char_idx += 1;
+                match second_specifier {
+                    b'i' => {
+                        // TODO: hexs and octals
+                        assert_ne!(env.mem.read(src_ptr), b'0');
+
+                        let mut val: i16 = 0;
+                        while let c @ b'0'..=b'9' = env.mem.read(src_ptr) {
+                            val = val * 10 + (c - b'0') as i16;
+                            src_ptr += 1;
+                        }
+                        let c_short_ptr: ConstPtr<i16> = args.next(env);
+                        env.mem.write(c_short_ptr.cast_mut(), val);
+                    }
+                    _ => unimplemented!(),
+                }
+            }
             b'[' => {
                 // TODO: support ranges like [0-9]
                 // [set] case

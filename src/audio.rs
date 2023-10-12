@@ -75,12 +75,11 @@ impl AudioFile {
         } else if let Ok(pcm) = dr_mp3::decode_mp3_to_pcm(&bytes) {
             Ok(AudioFile(AudioFileInner::Mp3(pcm)))
         } else {
-            // We may eventually want to return an error here, this is just more
-            // useful currently.
-            panic!(
+            log!(
                 "Could not decode audio file at path {:?}, likely an unimplemented file format.",
                 path.as_ref()
             );
+            Err(())
         }
     }
 

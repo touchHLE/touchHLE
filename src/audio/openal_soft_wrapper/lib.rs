@@ -115,6 +115,11 @@ extern "C" {
 
     pub fn alDistanceModel(value: ALenum);
 
+    pub fn alGetEnumValue(enumName: *const ALchar) -> ALenum;
+
+    pub fn alIsBuffer(buffer: ALuint) -> ALboolean;
+    pub fn alIsSource(source: ALuint) -> ALboolean;
+
     pub fn alListenerf(param: ALenum, value: ALfloat);
     pub fn alListener3f(param: ALenum, value1: ALfloat, value2: ALfloat, value3: ALfloat);
     pub fn alListenerfv(param: ALenum, values: *const ALfloat);

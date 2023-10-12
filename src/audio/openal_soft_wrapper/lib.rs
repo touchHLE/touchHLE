@@ -48,6 +48,8 @@ pub const ALC_FALSE: ALCboolean = 0;
 #[allow(dead_code)]
 pub const ALC_TRUE: ALCboolean = 1;
 
+pub const ALC_DEVICE_SPECIFIER: ALCenum = 0x1005;
+
 extern "C" {
     pub fn alcOpenDevice(devicename: *const ALCchar) -> *mut ALCdevice;
     pub fn alcCloseDevice(device: *mut ALCdevice) -> ALCboolean;
@@ -63,6 +65,8 @@ extern "C" {
     pub fn alcGetContextsDevice(context: *mut ALCcontext) -> *mut ALCdevice;
 
     pub fn alcGetError(device: *mut ALCdevice) -> ALCenum;
+
+    pub fn alcGetString(device: *mut ALCdevice, param: ALCenum) -> *const ALCchar;
 }
 
 // === al.h ===

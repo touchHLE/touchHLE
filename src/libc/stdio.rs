@@ -60,6 +60,17 @@ fn fread(
     n_items: GuestUSize,
     file_ptr: MutPtr<FILE>,
 ) -> GuestUSize {
+    if item_size == 0 {
+        log!(
+            "Warning: fread({:?}, {}, {}, {:?}) called with 0 item_size",
+            buffer,
+            item_size,
+            n_items,
+            file_ptr
+        );
+        return 0;
+    }
+
     let FILE { fd } = env.mem.read(file_ptr);
 
     // Yes, the item_size/n_items split doesn't mean anything. The C standard

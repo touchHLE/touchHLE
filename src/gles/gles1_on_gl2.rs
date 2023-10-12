@@ -594,11 +594,19 @@ impl GLES for GLES1OnGL2 {
         gl21::GetError()
     }
     unsafe fn Enable(&mut self, cap: GLenum) {
-        assert!(CAPABILITIES.contains(&cap));
+        if ARRAYS.iter().any(|&ArrayInfo { name, .. }| name == cap) {
+            log_dbg!("Tolerating glEnable({:#x}) of client state", cap);
+        } else {
+            assert!(CAPABILITIES.contains(&cap));
+        }
         gl21::Enable(cap);
     }
     unsafe fn Disable(&mut self, cap: GLenum) {
-        assert!(CAPABILITIES.contains(&cap));
+        if ARRAYS.iter().any(|&ArrayInfo { name, .. }| name == cap) {
+            log_dbg!("Tolerating glDisable({:#x}) of client state", cap);
+        } else {
+            assert!(CAPABILITIES.contains(&cap));
+        }
         gl21::Disable(cap);
     }
     unsafe fn ClientActiveTexture(&mut self, texture: GLenum) {

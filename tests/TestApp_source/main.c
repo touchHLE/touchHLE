@@ -168,6 +168,7 @@ int test_vsnprintf() {
 
 int test_sscanf() {
   int a, b;
+  short c;
   char str[4];
   int matched = sscanf("1.23", "%d.%d", &a, &b);
   if (!(matched == 2 && a == 1 && b == 23))
@@ -179,7 +180,12 @@ int test_sscanf() {
   if (matched != 0)
     return -1;
   matched = sscanf("abc,8", "%[^,],%d", str, &b);
-  return (matched == 2 && strcmp(str, "abc") == 0 && b == 8) ? 0 : -1;
+  if (!(matched == 2 && strcmp(str, "abc") == 0 && b == 8))
+    return -1;
+  matched = sscanf("9,10", "%hi,%i", &c, &a);
+  if (!(c == 9 && a == 10))
+    return -1;
+  return 0;
 }
 
 int test_errno() { return (errno == 0) ? 0 : -1; }

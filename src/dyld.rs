@@ -637,4 +637,37 @@ impl Dyld {
         self.non_lazy_host_functions.insert(symbol, function_ptr);
         Ok(function_ptr)
     }
+
+    /// Same as `create_proc_address`, but used for internal touchHLE needs.
+    /// For example, to create an invocation function for NSThread
+    /// implementation.
+    ///
+    /// The name must be the mangled symbol name. Returns [Err] if there's no
+    /// such function in a list of private functions.
+    pub fn create_private_proc_address(
+        &mut self,
+        mem: &mut Mem,
+        cpu: &mut Cpu,
+        symbol: &str,
+    ) -> Result<GuestFunction, ()> {
+        let &(symbol, f) = search_lists(function_lists::PRIVATE_FUNCTION_LISTS, symbol).ok_or(())?;
+
+        // Allocate an SVC ID for this host function
+        let idx: u32 = self.linked_host_functions.len().try_into().unwrap();
+        let svc = idx + Self::SVC_LINKED_FUNCTIONS_BASE;
+        self.linked_host_functions.push((symbol, f));
+
+        // Create guest function to call this host function
+        let function_ptr = mem.alloc(8);
+        let function_ptr: MutPtr<u32> = function_ptr.cast();
+        mem.write(function_ptr + 0, encode_a32_svc(svc));
+        mem.write(function_ptr + 1, encode_a32_ret());
+
+        // Just in case
+        cpu.invalidate_cache_range(function_ptr.to_bits(), 4);
+
+        Ok(GuestFunction::from_addr_with_thumb_bit(
+            function_ptr.to_bits(),
+        ))
+    }
 }

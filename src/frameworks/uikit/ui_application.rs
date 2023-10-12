@@ -115,7 +115,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (bool)openURL:(id)url { // NSURL
-    let ns_string = msg![env; url absoluteURL];
+    let ns_string = msg![env; url absoluteString];
     let url_string = ns_string::to_rust_string(env, ns_string);
     if let Err(e) = crate::window::open_url(&url_string) {
         echo!("App opened URL {:?} unsuccessfully ({}), exiting.", url_string, e);

@@ -25,7 +25,9 @@ use crate::frameworks::core_foundation::cf_run_loop::{
 };
 use crate::frameworks::foundation::ns_run_loop;
 use crate::frameworks::foundation::ns_string::get_static_str;
-use crate::mem::{ConstPtr, ConstVoidPtr, GuestUSize, Mem, MutPtr, MutVoidPtr, Ptr, SafeRead};
+use crate::mem::{
+    guest_size_of, ConstPtr, ConstVoidPtr, GuestUSize, Mem, MutPtr, MutVoidPtr, Ptr, SafeRead,
+};
 use crate::objc::msg;
 use crate::Environment;
 use std::collections::{HashMap, VecDeque};
@@ -136,6 +138,7 @@ pub const kAudioQueueProperty_IsRunning: AudioQueuePropertyID = fourcc(b"aqrn");
 type AudioQueuePropertyListenerProc = GuestFunction;
 
 const kAudioQueueErr_InvalidBuffer: OSStatus = -66687;
+const kAudioQueueErr_InvalidPropertySize: OSStatus = -66683;
 
 fn AudioQueueNewOutput(
     env: &mut Environment,
@@ -358,6 +361,56 @@ fn AudioQueueRemovePropertyListener(
             in_user_data
         );
     }
+    0 // success
+}
+
+fn property_size(property_id: AudioQueuePropertyID) -> GuestUSize {
+    match property_id {
+        kAudioQueueProperty_IsRunning => guest_size_of::<u32>(),
+        _ => unimplemented!("Unimplemented property ID: {}", debug_fourcc(property_id)),
+    }
+}
+
+fn AudioQueueGetPropertySize(
+    env: &mut Environment,
+    in_aq: AudioQueueRef,
+    in_property_id: AudioQueuePropertyID,
+    out_data_size: MutPtr<u32>,
+) -> OSStatus {
+    return_if_null!(in_aq);
+
+    env.mem.write(out_data_size, property_size(in_property_id));
+    0 // success
+}
+
+fn AudioQueueGetProperty(
+    env: &mut Environment,
+    in_aq: AudioQueueRef,
+    in_property_id: AudioQueuePropertyID,
+    out_property_data: MutVoidPtr,
+    io_data_size: MutPtr<u32>,
+) -> OSStatus {
+    return_if_null!(in_aq);
+
+    let required_size = property_size(in_property_id);
+    if env.mem.read(io_data_size) != required_size {
+        log!("Warning: AudioQueueGetProperty() failed");
+        return kAudioQueueErr_InvalidPropertySize;
+    }
+
+    let host_object = State::get(&mut env.framework_state)
+        .audio_queues
+        .get_mut(&in_aq)
+        .unwrap();
+
+    match in_property_id {
+        kAudioQueueProperty_IsRunning => {
+            let is_running: u32 = host_object.is_running.into();
+            env.mem.write(out_property_data.cast(), is_running);
+        }
+        _ => unreachable!(),
+    }
+
     0 // success
 }
 
@@ -815,6 +868,8 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(AudioQueueEnqueueBuffer(_, _, _, _)),
     export_c_func!(AudioQueueAddPropertyListener(_, _, _, _)),
     export_c_func!(AudioQueueRemovePropertyListener(_, _, _, _)),
+    export_c_func!(AudioQueueGetPropertySize(_, _, _)),
+    export_c_func!(AudioQueueGetProperty(_, _, _, _)),
     export_c_func!(AudioQueuePrime(_, _, _)),
     export_c_func!(AudioQueueStart(_, _)),
     export_c_func!(AudioQueuePause(_)),

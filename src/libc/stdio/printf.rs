@@ -13,6 +13,7 @@ use crate::libc::stdio::FILE;
 use crate::mem::{ConstPtr, GuestUSize, Mem, MutPtr, MutVoidPtr};
 use crate::objc::{id, msg};
 use crate::Environment;
+use std::collections::HashSet;
 use std::io::Write;
 
 const INTEGER_SPECIFIERS: [u8; 6] = [b'd', b'i', b'o', b'u', b'x', b'X'];
@@ -325,8 +326,9 @@ fn printf(env: &mut Environment, format: ConstPtr<u8>, args: DotDotDot) -> i32 {
 
 fn sscanf(env: &mut Environment, src: ConstPtr<u8>, format: ConstPtr<u8>, args: DotDotDot) -> i32 {
     log_dbg!(
-        "sscanf({:?}, {:?} ({:?}), ...)",
+        "sscanf({:?} ({:?}), {:?} ({:?}), ...)",
         src,
+        env.mem.cstr_at_utf8(src),
         format,
         env.mem.cstr_at_utf8(format)
     );
@@ -366,6 +368,38 @@ fn sscanf(env: &mut Environment, src: ConstPtr<u8>, format: ConstPtr<u8>, args: 
                 }
                 let c_int_ptr: ConstPtr<i32> = args.next(env);
                 env.mem.write(c_int_ptr.cast_mut(), val);
+            }
+            b'[' => {
+                // TODO: support ranges like [0-9]
+                // [set] case
+                let mut c = env.mem.read(format + format_char_idx);
+                format_char_idx += 1;
+                // TODO: only `not in the set` for a moment
+                assert_eq!(c, b'^');
+                // Build set
+                let mut set: HashSet<u8> = HashSet::new();
+                // TODO: set can contain ']' as well
+                c = env.mem.read(format + format_char_idx);
+                format_char_idx += 1;
+                while c != b']' {
+                    set.insert(c);
+                    c = env.mem.read(format + format_char_idx);
+                    format_char_idx += 1;
+                }
+                let mut dst_ptr: MutPtr<u8> = args.next(env);
+                // Consume `src` while chars are not in the set
+                let mut cc = env.mem.read(src_ptr);
+                src_ptr += 1;
+                // TODO: handle end of src string
+                while !set.contains(&cc) {
+                    env.mem.write(dst_ptr, cc);
+                    dst_ptr += 1;
+                    cc = env.mem.read(src_ptr);
+                    src_ptr += 1;
+                }
+                // we need to backtrack one position
+                src_ptr -= 1;
+                env.mem.write(dst_ptr, b'\0');
             }
             // TODO: more specifiers
             _ => unimplemented!("Format character '{}'", specifier as char),

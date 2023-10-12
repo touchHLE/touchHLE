@@ -72,6 +72,16 @@ pub const CLASSES: ClassExports = objc_classes! {
     this
 }
 
+- (id)initWithContentsOfURL:(id)url { // NSURL *
+    let path: id = msg![env; url absoluteString];
+    let path = to_rust_string(env, path);
+    // TODO: file URL case
+    assert!(path.starts_with("http"));
+    log!("TODO: ignoring [(NSData*){:?} initWithContentsOfURL:{:?}]", this, path);
+    // TODO: actually load data once we have proper network support
+    nil
+}
+
 - (id)initWithContentsOfFile:(id)path {
     let path = to_rust_string(env, path);
     log_dbg!("[(NSData*){:?} initWithContentsOfFile:{:?}]", this, path);

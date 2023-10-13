@@ -8,6 +8,12 @@
 // See also tests/README.md and tests/integration.rs for the details of how it
 // is compiled and run.
 
+// === Includes ===
+
+// For convenience, let's just include the other source files.
+
+#include "CGAffineTransform.c"
+
 // === Declarations ===
 
 // We don't have any system headers for iPhone OS, so we must declare everything
@@ -272,9 +278,10 @@ struct {
   int (*func)();
   const char *name;
 } test_func_array[] = {
-    FUNC_DEF(test_qsort), FUNC_DEF(test_vsnprintf), FUNC_DEF(test_sscanf),
-    FUNC_DEF(test_errno), FUNC_DEF(test_realloc),   FUNC_DEF(test_getcwd_chdir),
-    FUNC_DEF(test_sem),
+    FUNC_DEF(test_qsort),   FUNC_DEF(test_vsnprintf),
+    FUNC_DEF(test_sscanf),  FUNC_DEF(test_errno),
+    FUNC_DEF(test_realloc), FUNC_DEF(test_getcwd_chdir),
+    FUNC_DEF(test_sem),     FUNC_DEF(test_CGAffineTransform),
 };
 
 // Because no libc is linked into this executable, there is no libc entry point

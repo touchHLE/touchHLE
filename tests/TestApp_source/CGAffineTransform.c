@@ -33,6 +33,9 @@ bool CGAffineTransformIsIdentity(CGAffineTransform);
 bool CGAffineTransformEqualToTransform(CGAffineTransform, CGAffineTransform);
 CGAffineTransform CGAffineTransformMake(CGFloat, CGFloat, CGFloat, CGFloat,
                                         CGFloat, CGFloat);
+CGAffineTransform CGAffineTransformMakeRotation(CGFloat);
+CGAffineTransform CGAffineTransformMakeScale(CGFloat, CGFloat);
+CGAffineTransform CGAffineTransformMakeTranslation(CGFloat, CGFloat);
 
 // Debugging code:
 /*int printf(const char *, ...);
@@ -85,6 +88,24 @@ int test_CGAffineTransform(void) {
   success = success && CGAffineTransformEqualToTransform(
                            nonsense_from_make,
                            CGAffineTransformMake(1.0, 2.0, 3.0, 4.0, 5.0, 6.0));
+
+  success = success &&
+            CGAffineTransformIsIdentity(CGAffineTransformMakeRotation(0.0));
+  // Further testing rotation is tricky due to floating point imprecision and
+  // the fact CGAffineTransformMakeRotation() rotates in the
+  // _opposite direction_ on macOS for some reason, so it's not done here.
+
+  success = success &&
+            CGAffineTransformIsIdentity(CGAffineTransformMakeScale(1.0, 1.0));
+  success = success && CGAffineTransformEqualToTransform(
+                           CGAffineTransformMakeScale(2.0, 3.0),
+                           CGAffineTransformMake(2.0, 0.0, 0.0, 3.0, 0.0, 0.0));
+
+  success = success && CGAffineTransformIsIdentity(
+                           CGAffineTransformMakeTranslation(0.0, 0.0));
+  success = success && CGAffineTransformEqualToTransform(
+                           CGAffineTransformMakeTranslation(2.0, 3.0),
+                           CGAffineTransformMake(1.0, 0.0, 0.0, 1.0, 2.0, 3.0));
 
   return !success;
 }

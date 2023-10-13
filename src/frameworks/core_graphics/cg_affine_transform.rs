@@ -8,6 +8,7 @@
 use super::CGFloat;
 use crate::abi::{impl_GuestRet_for_large_struct, GuestArg};
 use crate::dyld::{export_c_func, ConstantExports, FunctionExports, HostConstant};
+use crate::matrix::Matrix;
 use crate::mem::SafeRead;
 use crate::Environment;
 
@@ -47,6 +48,33 @@ impl GuestArg for CGAffineTransform {
     }
 }
 impl_GuestRet_for_large_struct!(CGAffineTransform);
+
+// These conversions allow sharing code with the touchHLE Matrix type.
+impl TryFrom<Matrix<3>> for CGAffineTransform {
+    type Error = ();
+
+    fn try_from(value: Matrix<3>) -> Result<CGAffineTransform, ()> {
+        let columns = value.columns();
+        if columns[2] == [0.0, 0.0, 1.0] {
+            Ok(CGAffineTransform {
+                a: columns[0][0],
+                b: columns[1][0],
+                c: columns[0][1],
+                d: columns[1][1],
+                tx: columns[0][2],
+                ty: columns[1][2],
+            })
+        } else {
+            Err(())
+        }
+    }
+}
+impl From<CGAffineTransform> for Matrix<3> {
+    fn from(value: CGAffineTransform) -> Matrix<3> {
+        let CGAffineTransform { a, b, c, d, tx, ty } = value;
+        Matrix::<3>::from_columns([[a, c, tx], [b, d, ty], [0.0, 0.0, 1.0]])
+    }
+}
 
 #[rustfmt::skip]
 pub const CGAffineTransformIdentity: CGAffineTransform = CGAffineTransform {
@@ -88,8 +116,29 @@ fn CGAffineTransformMake(
     CGAffineTransform { a, b, c, d, tx, ty }
 }
 
+fn CGAffineTransformMakeRotation(_env: &mut Environment, angle: CGFloat) -> CGAffineTransform {
+    Matrix::<3>::from(&Matrix::<2>::z_rotation(angle))
+        .try_into()
+        .unwrap()
+}
+fn CGAffineTransformMakeScale(_env: &mut Environment, x: CGFloat, y: CGFloat) -> CGAffineTransform {
+    Matrix::<3>::from(&Matrix::<2>::scale_2d(x, y))
+        .try_into()
+        .unwrap()
+}
+fn CGAffineTransformMakeTranslation(
+    _env: &mut Environment,
+    x: CGFloat,
+    y: CGFloat,
+) -> CGAffineTransform {
+    Matrix::<3>::translate_2d(x, y).try_into().unwrap()
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGAffineTransformIsIdentity(_)),
     export_c_func!(CGAffineTransformEqualToTransform(_, _)),
     export_c_func!(CGAffineTransformMake(_, _, _, _, _, _)),
+    export_c_func!(CGAffineTransformMakeRotation(_)),
+    export_c_func!(CGAffineTransformMakeScale(_, _)),
+    export_c_func!(CGAffineTransformMakeTranslation(_, _)),
 ];

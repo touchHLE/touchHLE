@@ -23,6 +23,12 @@ impl<const N: usize> Matrix<N> {
         &self.0
     }
 
+    // This constructor is used instead of direct field access so there can be
+    // some flexibility with adjusting the representation.
+    pub fn from_columns(columns: [[f32; N]; N]) -> Self {
+        Matrix(columns)
+    }
+
     pub fn from<const M: usize>(other: &Matrix<M>) -> Self {
         let mut new = Self::identity();
         for i in 0..M {
@@ -66,6 +72,10 @@ impl Matrix<2> {
     pub fn z_rotation(angle: f32) -> Matrix<2> {
         Matrix([[angle.cos(), angle.sin()], [-angle.sin(), angle.cos()]])
     }
+
+    pub fn scale_2d(x: f32, y: f32) -> Matrix<2> {
+        Matrix([[x, 0.0], [0.0, y]])
+    }
 }
 impl Matrix<3> {
     pub fn x_rotation(angle: f32) -> Matrix<3> {
@@ -81,5 +91,9 @@ impl Matrix<3> {
             [0.0, 1.0, 0.0],
             [angle.sin(), 0.0, angle.cos()],
         ])
+    }
+
+    pub fn translate_2d(x: f32, y: f32) -> Matrix<3> {
+        Matrix([[1.0, 0.0, x], [0.0, 1.0, y], [0.0, 0.0, 1.0]])
     }
 }

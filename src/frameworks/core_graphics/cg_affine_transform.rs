@@ -6,7 +6,7 @@
 //! `CGAffineTransform.h`
 
 use super::CGFloat;
-use crate::abi::GuestArg;
+use crate::abi::{impl_GuestRet_for_large_struct, GuestArg};
 use crate::dyld::{export_c_func, ConstantExports, FunctionExports, HostConstant};
 use crate::mem::SafeRead;
 use crate::Environment;
@@ -46,6 +46,7 @@ impl GuestArg for CGAffineTransform {
         self.ty.to_regs(&mut regs[5..6]);
     }
 }
+impl_GuestRet_for_large_struct!(CGAffineTransform);
 
 #[rustfmt::skip]
 pub const CGAffineTransformIdentity: CGAffineTransform = CGAffineTransform {
@@ -75,7 +76,20 @@ fn CGAffineTransformEqualToTransform(
     a == b
 }
 
+fn CGAffineTransformMake(
+    _env: &mut Environment,
+    a: CGFloat,
+    b: CGFloat,
+    c: CGFloat,
+    d: CGFloat,
+    tx: CGFloat,
+    ty: CGFloat,
+) -> CGAffineTransform {
+    CGAffineTransform { a, b, c, d, tx, ty }
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGAffineTransformIsIdentity(_)),
     export_c_func!(CGAffineTransformEqualToTransform(_, _)),
+    export_c_func!(CGAffineTransformMake(_, _, _, _, _, _)),
 ];

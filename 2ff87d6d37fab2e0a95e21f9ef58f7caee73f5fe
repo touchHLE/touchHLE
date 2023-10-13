@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "c68e5ba4_f3a5d4d5",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-10-13T12:49:28Z",
+      "side": 1,
+      "message": "Verified by GitHub Actions",
+      "revId": "2ff87d6d37fab2e0a95e21f9ef58f7caee73f5fe",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

@@ -9,7 +9,9 @@
 
 use super::CGFloat;
 use crate::abi::{impl_GuestRet_for_large_struct, GuestArg};
+use crate::dyld::{export_c_func, FunctionExports};
 use crate::mem::SafeRead;
+use crate::Environment;
 
 fn parse_tuple(s: &str) -> Result<(f32, f32), ()> {
     let (a, b) = s.split_once(", ").ok_or(())?;
@@ -52,6 +54,10 @@ impl std::fmt::Display for CGPoint {
         write!(f, "{{{}, {}}}", x, y)
     }
 }
+// This function is rare because it is usually inlined.
+fn CGPointEqualToPoint(_env: &mut Environment, a: CGPoint, b: CGPoint) -> bool {
+    a == b
+}
 
 #[derive(Copy, Clone, Debug, Default, PartialEq)]
 #[repr(C, packed)]
@@ -91,6 +97,10 @@ impl std::fmt::Display for CGSize {
         let &CGSize { width, height } = self;
         write!(f, "{{{}, {}}}", width, height)
     }
+}
+// This function is rare because it is usually inlined.
+fn CGSizeEqualToSize(_env: &mut Environment, a: CGSize, b: CGSize) -> bool {
+    a == b
 }
 
 #[derive(Copy, Clone, Debug, Default, PartialEq)]
@@ -138,3 +148,8 @@ impl std::fmt::Display for CGRect {
         write!(f, "{{{}, {}}}", origin, size)
     }
 }
+
+pub const FUNCTIONS: FunctionExports = &[
+    export_c_func!(CGPointEqualToPoint(_, _)),
+    export_c_func!(CGSizeEqualToSize(_, _)),
+];

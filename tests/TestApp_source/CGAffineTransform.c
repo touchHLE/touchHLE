@@ -26,6 +26,17 @@ typedef float CGFloat;
 #endif
 
 typedef struct {
+  CGFloat x, y;
+} CGPoint;
+CGPoint CGPointMake(CGFloat, CGFloat);
+bool CGPointEqualToPoint(CGPoint, CGPoint);
+typedef struct {
+  CGFloat width, height;
+} CGSize;
+CGSize CGSizeMake(CGFloat, CGFloat);
+bool CGSizeEqualToSize(CGSize, CGSize);
+
+typedef struct {
   CGFloat a, b, c, d, tx, ty;
 } CGAffineTransform;
 // extern const CGAffineTransform CGAffineTransformIdentity;
@@ -41,6 +52,8 @@ CGAffineTransform CGAffineTransformRotate(CGAffineTransform, CGFloat);
 CGAffineTransform CGAffineTransformScale(CGAffineTransform, CGFloat, CGFloat);
 CGAffineTransform CGAffineTransformTranslate(CGAffineTransform, CGFloat,
                                              CGFloat);
+CGPoint CGPointApplyAffineTransform(CGPoint, CGAffineTransform);
+CGSize CGSizeApplyAffineTransform(CGSize, CGAffineTransform);
 
 // Debugging code:
 int printf(const char *, ...);
@@ -149,6 +162,12 @@ int test_CGAffineTransform(void) {
                            CGAffineTransformMakeTranslation(2.0, 3.0),
                            CGAffineTransformTranslate(identity_from_initializer,
                                                       2.0, 3.0));
+
+  success = success &&
+            CGPointEqualToPoint((CGPoint){-2.0, 6.0},
+                                CGPointApplyAffineTransform(
+                                    (CGPoint){2.0, 3.0},
+                                    CGAffineTransformMakeScale(-1.0, 2.0)));
 
   return !success;
 }

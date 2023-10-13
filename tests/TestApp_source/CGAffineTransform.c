@@ -33,6 +33,11 @@ typedef struct {
   CGFloat width, height;
 } CGSize;
 bool CGSizeEqualToSize(CGSize, CGSize);
+typedef struct {
+  CGPoint origin;
+  CGSize size;
+} CGRect;
+bool CGRectEqualToRect(CGRect, CGRect);
 
 typedef struct {
   CGFloat a, b, c, d, tx, ty;
@@ -52,6 +57,7 @@ CGAffineTransform CGAffineTransformTranslate(CGAffineTransform, CGFloat,
                                              CGFloat);
 CGPoint CGPointApplyAffineTransform(CGPoint, CGAffineTransform);
 CGSize CGSizeApplyAffineTransform(CGSize, CGAffineTransform);
+CGRect CGRectApplyAffineTransform(CGRect, CGAffineTransform);
 
 // Debugging code:
 int printf(const char *, ...);
@@ -172,6 +178,18 @@ int test_CGAffineTransform(void) {
                                    CGSizeApplyAffineTransform(
                                        (CGSize){2.0, 3.0},
                                        CGAffineTransformMakeScale(-1.0, 2.0)));
+
+  // Non-rectangle-preserving transforms are more complicated, not tested here.
+  success =
+      success && CGRectEqualToRect((CGRect){4.0, 6.0, 2.0, 4.0},
+                                   CGRectApplyAffineTransform(
+                                       (CGRect){2.0, 3.0, 1.0, 2.0},
+                                       CGAffineTransformMakeScale(2.0, 2.0)));
+  success =
+      success && CGRectEqualToRect((CGRect){-6.0, -10.0, 2.0, 4.0},
+                                   CGRectApplyAffineTransform(
+                                       (CGRect){2.0, 3.0, 1.0, 2.0},
+                                       CGAffineTransformMakeScale(-2.0, -2.0)));
 
   return !success;
 }

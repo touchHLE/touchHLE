@@ -148,8 +148,13 @@ impl std::fmt::Display for CGRect {
         write!(f, "{{{}, {}}}", origin, size)
     }
 }
+// This function is rare because it is usually inlined.
+fn CGRectEqualToRect(_env: &mut Environment, a: CGRect, b: CGRect) -> bool {
+    a == b
+}
 
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGPointEqualToPoint(_, _)),
     export_c_func!(CGSizeEqualToSize(_, _)),
+    export_c_func!(CGRectEqualToRect(_, _)),
 ];

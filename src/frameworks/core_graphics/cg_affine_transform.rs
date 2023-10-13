@@ -5,7 +5,7 @@
  */
 //! `CGAffineTransform.h`
 
-use super::{CGFloat, CGPoint, CGSize};
+use super::{CGFloat, CGPoint, CGRect, CGSize};
 use crate::abi::{impl_GuestRet_for_large_struct, GuestArg};
 use crate::dyld::{export_c_func, ConstantExports, FunctionExports, HostConstant};
 use crate::matrix::Matrix;
@@ -188,6 +188,47 @@ fn CGSizeApplyAffineTransform(
         Matrix::<3>::transform(&transform.into(), [rect.width, rect.height, 0.0]);
     CGSize { width, height }
 }
+fn CGRectApplyAffineTransform(
+    env: &mut Environment,
+    rect: CGRect,
+    transform: CGAffineTransform,
+) -> CGRect {
+    // Affine transforms applied to a rectangle don't necessarily return a
+    // rectangle (just a quadrilateral), so CGRectApplyAffineTransform
+    // essentially returns the bounding box of the points.
+
+    let corner1 = rect.origin;
+    let corner2 = CGPoint {
+        x: rect.origin.x + rect.size.width,
+        y: rect.origin.y,
+    };
+    let corner3 = CGPoint {
+        x: rect.origin.x,
+        y: rect.origin.y + rect.size.height,
+    };
+    let corner4 = CGPoint {
+        x: rect.origin.x + rect.size.width,
+        y: rect.origin.y + rect.size.height,
+    };
+
+    let point1 = CGPointApplyAffineTransform(env, corner1, transform);
+    let point2 = CGPointApplyAffineTransform(env, corner2, transform);
+    let point3 = CGPointApplyAffineTransform(env, corner3, transform);
+    let point4 = CGPointApplyAffineTransform(env, corner4, transform);
+
+    let x1 = point1.x.min(point2.x).min(point3.x).min(point4.x);
+    let x2 = point1.x.max(point2.x).max(point3.x).max(point4.x);
+    let y1 = point1.y.min(point2.y).min(point3.y).min(point4.y);
+    let y2 = point1.y.max(point2.y).max(point3.y).max(point4.y);
+
+    CGRect {
+        origin: CGPoint { x: x1, y: y1 },
+        size: CGSize {
+            width: x2 - x1,
+            height: y2 - y1,
+        },
+    }
+}
 
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGAffineTransformIsIdentity(_)),
@@ -202,4 +243,5 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGAffineTransformTranslate(_, _, _)),
     export_c_func!(CGPointApplyAffineTransform(_, _)),
     export_c_func!(CGSizeApplyAffineTransform(_, _)),
+    export_c_func!(CGRectApplyAffineTransform(_, _)),
 ];

@@ -36,9 +36,14 @@ CGAffineTransform CGAffineTransformMake(CGFloat, CGFloat, CGFloat, CGFloat,
 CGAffineTransform CGAffineTransformMakeRotation(CGFloat);
 CGAffineTransform CGAffineTransformMakeScale(CGFloat, CGFloat);
 CGAffineTransform CGAffineTransformMakeTranslation(CGFloat, CGFloat);
+CGAffineTransform CGAffineTransformConcat(CGAffineTransform, CGAffineTransform);
+CGAffineTransform CGAffineTransformRotate(CGAffineTransform, CGFloat);
+CGAffineTransform CGAffineTransformScale(CGAffineTransform, CGFloat, CGFloat);
+CGAffineTransform CGAffineTransformTranslate(CGAffineTransform, CGFloat,
+                                             CGFloat);
 
 // Debugging code:
-/*int printf(const char *, ...);
+int printf(const char *, ...);
 void dump_transform(CGAffineTransform t) {
   printf(".a: %f\n", t.a);
   printf(".b: %f\n", t.b);
@@ -46,7 +51,7 @@ void dump_transform(CGAffineTransform t) {
   printf(".d: %f\n", t.d);
   printf(".tx: %f\n", t.tx);
   printf(".ty: %f\n", t.ty);
-}*/
+}
 
 // === Main code ===
 
@@ -106,6 +111,44 @@ int test_CGAffineTransform(void) {
   success = success && CGAffineTransformEqualToTransform(
                            CGAffineTransformMakeTranslation(2.0, 3.0),
                            CGAffineTransformMake(1.0, 0.0, 0.0, 1.0, 2.0, 3.0));
+
+  success =
+      success && CGAffineTransformIsIdentity(CGAffineTransformConcat(
+                     identity_from_initializer, identity_from_initializer));
+  success = success &&
+            CGAffineTransformEqualToTransform(
+                CGAffineTransformConcat(identity_from_initializer, nonsense),
+                nonsense);
+  success = success &&
+            CGAffineTransformEqualToTransform(
+                CGAffineTransformConcat(nonsense, identity_from_initializer),
+                nonsense);
+  success =
+      success &&
+      CGAffineTransformEqualToTransform(
+          CGAffineTransformConcat(CGAffineTransformMakeTranslation(2.0, 0.0),
+                                  CGAffineTransformMakeTranslation(0.0, 3.0)),
+          CGAffineTransformMakeTranslation(2.0, 3.0));
+  success = success && CGAffineTransformEqualToTransform(
+                           CGAffineTransformConcat(
+                               CGAffineTransformMakeScale(-1.0, -1.0),
+                               CGAffineTransformConcat(
+                                   CGAffineTransformMakeTranslation(2.0, 3.0),
+                                   CGAffineTransformMakeScale(-1.0, -1.0))),
+                           CGAffineTransformMakeTranslation(-2.0, -3.0));
+
+  success =
+      success && CGAffineTransformEqualToTransform(
+                     CGAffineTransformMakeRotation(1.0),
+                     CGAffineTransformRotate(identity_from_initializer, 1.0));
+  success = success &&
+            CGAffineTransformEqualToTransform(
+                CGAffineTransformMakeScale(2.0, 3.0),
+                CGAffineTransformScale(identity_from_initializer, 2.0, 3.0));
+  success = success && CGAffineTransformEqualToTransform(
+                           CGAffineTransformMakeTranslation(2.0, 3.0),
+                           CGAffineTransformTranslate(identity_from_initializer,
+                                                      2.0, 3.0));
 
   return !success;
 }

@@ -134,6 +134,43 @@ fn CGAffineTransformMakeTranslation(
     Matrix::<3>::translate_2d(x, y).try_into().unwrap()
 }
 
+fn CGAffineTransformConcat(
+    _env: &mut Environment,
+    a: CGAffineTransform,
+    b: CGAffineTransform,
+) -> CGAffineTransform {
+    Matrix::<3>::multiply(&a.into(), &b.into())
+        .try_into()
+        .unwrap()
+}
+
+fn CGAffineTransformRotate(
+    env: &mut Environment,
+    existing: CGAffineTransform,
+    angle: CGFloat,
+) -> CGAffineTransform {
+    let t = CGAffineTransformMakeRotation(env, angle);
+    CGAffineTransformConcat(env, existing, t)
+}
+fn CGAffineTransformScale(
+    env: &mut Environment,
+    existing: CGAffineTransform,
+    x: CGFloat,
+    y: CGFloat,
+) -> CGAffineTransform {
+    let t = CGAffineTransformMakeScale(env, x, y);
+    CGAffineTransformConcat(env, existing, t)
+}
+fn CGAffineTransformTranslate(
+    env: &mut Environment,
+    existing: CGAffineTransform,
+    x: CGFloat,
+    y: CGFloat,
+) -> CGAffineTransform {
+    let t = CGAffineTransformMakeTranslation(env, x, y);
+    CGAffineTransformConcat(env, existing, t)
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGAffineTransformIsIdentity(_)),
     export_c_func!(CGAffineTransformEqualToTransform(_, _)),
@@ -141,4 +178,8 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGAffineTransformMakeRotation(_)),
     export_c_func!(CGAffineTransformMakeScale(_, _)),
     export_c_func!(CGAffineTransformMakeTranslation(_, _)),
+    export_c_func!(CGAffineTransformConcat(_, _)),
+    export_c_func!(CGAffineTransformRotate(_, _)),
+    export_c_func!(CGAffineTransformScale(_, _, _)),
+    export_c_func!(CGAffineTransformTranslate(_, _, _)),
 ];

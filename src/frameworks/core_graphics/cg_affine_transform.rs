@@ -5,7 +5,7 @@
  */
 //! `CGAffineTransform.h`
 
-use super::CGFloat;
+use super::{CGFloat, CGPoint, CGSize};
 use crate::abi::{impl_GuestRet_for_large_struct, GuestArg};
 use crate::dyld::{export_c_func, ConstantExports, FunctionExports, HostConstant};
 use crate::matrix::Matrix;
@@ -171,6 +171,24 @@ fn CGAffineTransformTranslate(
     CGAffineTransformConcat(env, existing, t)
 }
 
+fn CGPointApplyAffineTransform(
+    _env: &mut Environment,
+    point: CGPoint,
+    transform: CGAffineTransform,
+) -> CGPoint {
+    let [x, y, _z] = Matrix::<3>::transform(&transform.into(), [point.x, point.y, 0.0]);
+    CGPoint { x, y }
+}
+fn CGSizeApplyAffineTransform(
+    _env: &mut Environment,
+    rect: CGSize,
+    transform: CGAffineTransform,
+) -> CGSize {
+    let [width, height, _depth] =
+        Matrix::<3>::transform(&transform.into(), [rect.width, rect.height, 0.0]);
+    CGSize { width, height }
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGAffineTransformIsIdentity(_)),
     export_c_func!(CGAffineTransformEqualToTransform(_, _)),
@@ -182,4 +200,6 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGAffineTransformRotate(_, _)),
     export_c_func!(CGAffineTransformScale(_, _, _)),
     export_c_func!(CGAffineTransformTranslate(_, _, _)),
+    export_c_func!(CGPointApplyAffineTransform(_, _)),
+    export_c_func!(CGSizeApplyAffineTransform(_, _)),
 ];

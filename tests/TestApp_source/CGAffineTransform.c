@@ -30,6 +30,7 @@ typedef struct {
 } CGAffineTransform;
 // extern const CGAffineTransform CGAffineTransformIdentity;
 bool CGAffineTransformIsIdentity(CGAffineTransform);
+bool CGAffineTransformEqualToTransform(CGAffineTransform, CGAffineTransform);
 
 // Debugging code:
 /*int printf(const char *, ...);
@@ -62,6 +63,16 @@ int test_CGAffineTransform(void) {
       .ty = 0.0,
   };
   success = success && CGAffineTransformIsIdentity(identity_from_initializer);
+
+  CGAffineTransform nonsense = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0};
+  success = success && !CGAffineTransformEqualToTransform(
+                           identity_from_initializer, nonsense);
+  success = success && !CGAffineTransformEqualToTransform(
+                           nonsense, identity_from_initializer);
+  success = success && CGAffineTransformEqualToTransform(nonsense, nonsense);
+  success =
+      success && CGAffineTransformEqualToTransform(identity_from_initializer,
+                                                   identity_from_initializer);
 
   return !success;
 }

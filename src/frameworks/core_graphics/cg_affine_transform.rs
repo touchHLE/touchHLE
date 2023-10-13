@@ -67,4 +67,15 @@ fn CGAffineTransformIsIdentity(_env: &mut Environment, transform: CGAffineTransf
     transform == CGAffineTransformIdentity
 }
 
-pub const FUNCTIONS: FunctionExports = &[export_c_func!(CGAffineTransformIsIdentity(_))];
+fn CGAffineTransformEqualToTransform(
+    _env: &mut Environment,
+    a: CGAffineTransform,
+    b: CGAffineTransform,
+) -> bool {
+    a == b
+}
+
+pub const FUNCTIONS: FunctionExports = &[
+    export_c_func!(CGAffineTransformIsIdentity(_)),
+    export_c_func!(CGAffineTransformEqualToTransform(_, _)),
+];

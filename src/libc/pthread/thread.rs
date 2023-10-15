@@ -27,7 +27,7 @@ impl State {
 /// opaque region. We only have to match the size theirs has.
 #[derive(Copy, Clone, Debug)]
 #[repr(C, packed)]
-struct pthread_attr_t {
+pub struct pthread_attr_t {
     /// Magic number (must be [MAGIC_ATTR])
     magic: u32,
     detachstate: i32,
@@ -44,13 +44,13 @@ const DEFAULT_ATTR: pthread_attr_t = pthread_attr_t {
 /// Apple's implementation is a 4-byte magic number followed by a massive
 /// (>4KiB) opaque region. We will store the actual data on the host instead.
 #[repr(C, packed)]
-struct OpaqueThread {
+pub struct OpaqueThread {
     /// Magic number (must be [MAGIC_THREAD])
     magic: u32,
 }
 unsafe impl SafeRead for OpaqueThread {}
 
-type pthread_t = MutPtr<OpaqueThread>;
+pub type pthread_t = MutPtr<OpaqueThread>;
 
 struct ThreadHostObject {
     thread_id: ThreadId,
@@ -104,8 +104,20 @@ fn pthread_create(
     start_routine: GuestFunction, // (*void)(void *)
     user_data: MutVoidPtr,
 ) -> i32 {
-    let attr = if !attr.is_null() {
+    if !attr.is_null() {
         check_magic!(env, attr, MAGIC_ATTR);
+    }
+    pthread_create_inner(env, thread, attr, start_routine, user_data).0
+}
+
+pub fn pthread_create_inner(
+    env: &mut Environment,
+    thread: MutPtr<pthread_t>,
+    attr: ConstPtr<pthread_attr_t>,
+    start_routine: GuestFunction, // (*void)(void *)
+    user_data: MutVoidPtr,
+) -> (i32, usize) {
+    let attr = if !attr.is_null() {
         env.mem.read(attr)
     } else {
         DEFAULT_ATTR
@@ -116,7 +128,9 @@ fn pthread_create(
     let opaque = env.mem.alloc_and_write(OpaqueThread {
         magic: MAGIC_THREAD,
     });
-    env.mem.write(thread, opaque);
+    if !thread.is_null() {
+        env.mem.write(thread, opaque);
+    }
 
     assert!(!State::get(env).threads.contains_key(&opaque));
     State::get(env).threads.insert(
@@ -130,7 +144,7 @@ fn pthread_create(
 
     log_dbg!("pthread_create({:?}, {:?}, {:?}, {:?}) => 0 (success), created new pthread_t {:?} (thread ID: {})", thread, attr, start_routine, user_data, opaque, thread_id);
 
-    0 // success
+    (0, thread_id) // success
 }
 
 fn pthread_self(env: &mut Environment) -> pthread_t {

@@ -15,6 +15,7 @@ use crate::mem::{ConstPtr, ConstVoidPtr, GuestISize, GuestUSize, MutPtr, MutVoid
 use crate::Environment;
 use std::io::{Read, Seek, SeekFrom, Write};
 use std::rc::Rc;
+use crate::libc::stdio::remove;
 
 #[derive(Default)]
 pub struct State {
@@ -472,6 +473,9 @@ fn flock(_env: &mut Environment, fd: FileDescriptor, operation: FLockFlag) -> i3
     0
 }
 
+fn unlink(env: &mut Environment, path: ConstPtr<u8>) -> i32 {
+    remove(env, path)
+}
 
 fn fsync(env: &mut Environment, fd: FileDescriptor) -> i32 {
     let file = env.libc_state.posix_io.file_for_fd(fd).unwrap();
@@ -502,6 +506,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(chdir(_)),
     export_c_func!(flock(_, _)),
     export_c_func!(dup(_)),
+    export_c_func!(unlink(_)),
     export_c_func!(fsync(_)),
     export_c_func!(ftruncate(_, _))
 ];

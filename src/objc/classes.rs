@@ -19,6 +19,8 @@ use super::{
 use crate::mach_o::MachO;
 use crate::mem::{guest_size_of, ConstPtr, ConstVoidPtr, GuestUSize, Mem, Ptr, SafeRead};
 use std::collections::HashMap;
+use crate::environment::Environment;
+use crate::objc::protocols::protocol_list_t;
 
 /// Generic pointer to an Objective-C class or metaclass.
 ///
@@ -93,7 +95,7 @@ struct class_rw_t {
     _reserved: u32,
     name: ConstPtr<u8>,
     base_methods: ConstPtr<method_list_t>,
-    _base_protocols: ConstVoidPtr, // protocol list (TODO)
+    base_protocols: ConstPtr<protocol_list_t>, // protocol list (TODO)
     _ivars: ConstVoidPtr,          // ivar list (TODO)
     _weak_ivar_layout: u32,
     _base_properties: ConstVoidPtr, // property list (TODO)
@@ -698,4 +700,10 @@ impl ObjC {
             panic!();
         }
     }
+}
+
+pub fn class_conformsToProtocol(env: &mut Environment, cls: Class, proto: id) -> bool {
+    let host_object: &ClassHostObject = env.objc.borrow(cls);
+    log!("TODO: class_conformsToProtocol({:?}, {:?})", host_object.name, proto);
+    true
 }

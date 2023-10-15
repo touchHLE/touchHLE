@@ -243,7 +243,7 @@ fn putchar(_env: &mut Environment, c: u8) -> i32 {
     0
 }
 
-fn remove(env: &mut Environment, path: ConstPtr<u8>) -> i32 {
+pub fn remove(env: &mut Environment, path: ConstPtr<u8>) -> i32 {
     if Ptr::is_null(path) {
         // TODO: set errno
         log!("remove({:?}) => -1, attempted to remove null", path);

@@ -285,7 +285,6 @@ fn resolve_path<'a>(path: &'a GuestPath, relative_to: Option<&'a GuestPath>) -> 
 }
 
 /// Like [std::fs::OpenOptions] but for the guest filesystem.
-/// TODO: `create_new`.
 #[derive(Debug)]
 pub struct GuestOpenOptions {
     read: bool,
@@ -293,6 +292,7 @@ pub struct GuestOpenOptions {
     append: bool,
     create: bool,
     truncate: bool,
+    create_new: bool,
 }
 impl GuestOpenOptions {
     pub fn new() -> GuestOpenOptions {
@@ -302,6 +302,7 @@ impl GuestOpenOptions {
             append: false,
             create: false,
             truncate: false,
+            create_new: false,
         }
     }
     pub fn read(&mut self) -> &mut Self {
@@ -322,6 +323,10 @@ impl GuestOpenOptions {
     }
     pub fn truncate(&mut self) -> &mut Self {
         self.truncate = true;
+        self
+    }
+    pub fn create_new(&mut self) -> &mut Self {
+        self.create_new = true;
         self
     }
 }
@@ -758,6 +763,7 @@ impl Fs {
             append,
             create,
             truncate,
+            create_new,
         } = options;
         assert!((!truncate && !create) || write || append);
 
@@ -775,6 +781,9 @@ impl Fs {
         // Open an existing file if possible
 
         if let Some(existing_file) = children.get(&new_filename) {
+            if create_new {
+                return Err(());
+            }
             match existing_file {
                 &FsNode::File {
                     ref location,

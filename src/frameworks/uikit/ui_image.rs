@@ -56,11 +56,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 + (id)imageWithData:(id)data { // NSData*
     let new: id = msg![env; this alloc];
-    let slice = ns_data::to_rust_slice(env, data);
-    // TODO: refactor common parts
-    let image = Image::from_bytes(slice).unwrap();
-    let cg_image = cg_image::from_image(env, image);
-    env.objc.borrow_mut::<UIImageHostObject>(new).cg_image = cg_image;
+    let new: id = msg![env; new initWithData: data];
     autorelease(env, new)
 }
 
@@ -88,6 +84,15 @@ pub const CLASSES: ClassExports = objc_classes! {
     //       by a functionality gap in touchHLE, not the app actually trying to
     //       load a broken file, so panicking is most useful.
     let image = Image::from_bytes(&bytes).unwrap();
+    let cg_image = cg_image::from_image(env, image);
+    env.objc.borrow_mut::<UIImageHostObject>(this).cg_image = cg_image;
+    this
+}
+
+-(id)initWithData:(id)data {
+    let slice = ns_data::to_rust_slice(env, data);
+    // TODO: refactor common parts
+    let image = Image::from_bytes(slice).unwrap();
     let cg_image = cg_image::from_image(env, image);
     env.objc.borrow_mut::<UIImageHostObject>(this).cg_image = cg_image;
     this

@@ -27,10 +27,11 @@ mod messages;
 mod methods;
 mod objects;
 mod properties;
+mod protocols;
 mod selectors;
 mod synchronization;
 
-pub use classes::{objc_classes, Class, ClassExports, ClassTemplate};
+pub use classes::{objc_classes, Class, ClassExports, ClassTemplate, class_conformsToProtocol};
 pub use messages::{
     autorelease, msg, msg_class, msg_send, msg_send_super2, msg_super, objc_super, release, retain,
 };

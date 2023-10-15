@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5aef8106_6d7149a7",
+        "filename": "APP_SUPPORT.md",
+        "patchSetId": 29
+      },
+      "lineNbr": 127,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-10-15T13:38:53Z",
+      "side": 1,
+      "message": "this section is duplicated with line 91",
+      "revId": "a66dbb6161760ddc239a9543e62b6abca22897da",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

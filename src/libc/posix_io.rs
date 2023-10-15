@@ -10,6 +10,7 @@ pub mod stat;
 use crate::abi::DotDotDot;
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::fs::{GuestFile, GuestOpenOptions, GuestPath};
+use crate::libc::stdio::remove;
 use crate::mem::{ConstPtr, ConstVoidPtr, GuestISize, GuestUSize, MutPtr, MutVoidPtr, Ptr};
 use crate::Environment;
 use std::cell::{RefCell, RefMut};
@@ -476,6 +477,10 @@ fn flock(_env: &mut Environment, fd: FileDescriptor, operation: FLockFlag) -> i3
     0
 }
 
+fn unlink(env: &mut Environment, path: ConstPtr<u8>) -> i32 {
+    remove(env, path)
+}
+
 fn fsync(env: &mut Environment, fd: FileDescriptor) -> i32 {
     let file = env.libc_state.posix_io.file_for_fd(fd).unwrap();
     match file.file.sync_all() {
@@ -506,5 +511,6 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(flock(_, _)),
     export_c_func!(ftruncate(_, _)),
     export_c_func!(dup(_)),
+    export_c_func!(unlink(_)),
     export_c_func!(fsync(_)),
 ];

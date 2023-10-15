@@ -280,6 +280,19 @@ fn vsprintf(env: &mut Environment, dest: MutPtr<u8>, format: ConstPtr<u8>, arg: 
     res.len().try_into().unwrap()
 }
 
+fn swprintf(env: &mut Environment, dest: MutPtr<u32>, n: GuestUSize, format: ConstPtr<u32>, args: DotDotDot) -> i32 {
+    let res = printf_inner::<false, _>(env, |mem, idx| mem.read(format + idx) as u8, args.start());
+
+    for (i, &byte) in res.iter().chain(b"\0".iter()).enumerate() {
+        if i == n as usize {
+            break
+        }
+        env.mem.write(dest.add(i as GuestUSize), char::from(byte) as u32);
+    }
+
+    res.len().try_into().unwrap()
+}
+
 fn sprintf(env: &mut Environment, dest: MutPtr<u8>, format: ConstPtr<u8>, args: DotDotDot) -> i32 {
     log_dbg!(
         "sprintf({:?}, {:?} ({:?}), ...)",
@@ -401,4 +414,5 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(sprintf(_, _, _)),
     export_c_func!(printf(_, _)),
     export_c_func!(fprintf(_, _, _)),
+    export_c_func!(swprintf(_, _, _, _)),
 ];

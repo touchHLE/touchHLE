@@ -181,6 +181,21 @@ pub const CLASSES: ClassExports = objc_classes! {
     contents
 }
 
+- (bool)copyItemAtPath:(id)src // NSString*
+                toPath:(id)dst // NSString*
+                 error:(MutPtr<id>)_error { // NSError**
+    let src = ns_string::to_rust_string(env, src);
+    let dst = ns_string::to_rust_string(env, dst);
+    let data = match env.fs.read(GuestPath::new(src.as_ref())) {
+        Ok(d) => d,
+        Err(_) => todo!()
+    };
+    if env.fs.write(GuestPath::new(dst.as_ref()), &data).is_err() {
+        todo!();
+    }
+    true
+}
+
 @end
 
 @implementation NSDirectoryEnumerator: NSEnumerator

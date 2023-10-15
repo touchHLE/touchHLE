@@ -368,6 +368,17 @@ impl GuestFile {
             GuestFile::IpaBundleFile(_) | GuestFile::ResourceFile(_) => Ok(()),
         }
     }
+    pub fn set_len(&self, len: u64) -> std::io::Result<()> {
+        match self {
+            GuestFile::File(file) => file.set_len(len),
+            GuestFile::IpaBundleFile(file) => {
+                panic!("Attempt to resize a read-only file: {:?}", file)
+            }
+            GuestFile::ResourceFile(file) => {
+                panic!("Attempt to resize a read-only file: {:?}", file)
+            }
+        }
+    }
 }
 
 impl Read for GuestFile {

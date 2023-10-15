@@ -485,6 +485,9 @@ impl Mem {
         if old_size == size {
             return old_ptr;
         }
+        if size < old_size {
+            return old_ptr;
+        }
         assert!(size > old_size);
         let new_ptr = self.alloc(size);
         self.memmove(new_ptr, old_ptr.cast_const(), old_size);

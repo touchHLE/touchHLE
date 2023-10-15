@@ -75,7 +75,7 @@ impl MutexState {
                 locked: None,
             },
         );
-        log_dbg!("Created mutex #{}, type {:?}", self.mutex_count, mutex_type);
+        log_dbg!("Created mutex #{}, type {:?}", mutex_id, mutex_type);
         mutex_id
     }
 

@@ -14,6 +14,7 @@ use crate::mem::{ConstPtr, GuestUSize, Mem, MutPtr, MutVoidPtr};
 use crate::objc::{id, msg};
 use crate::Environment;
 use std::io::Write;
+use std::ops::Add;
 
 const INTEGER_SPECIFIERS: [u8; 6] = [b'd', b'i', b'o', b'u', b'x', b'X'];
 const FLOAT_SPECIFIERS: [u8; 1] = [b'f'];
@@ -74,6 +75,14 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
             None
         };
 
+        let len_mod = match get_format_char(&env.mem, format_char_idx) {
+            md @ (b'l' | b'h') => {
+                format_char_idx += 1;
+                md
+            }
+            _ => b'n', // _n_ormal
+        };
+
         let specifier = get_format_char(&env.mem, format_char_idx);
         format_char_idx += 1;
 
@@ -89,14 +98,14 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
             )
         }
 
-        match specifier {
-            b'c' => {
+        match (specifier, len_mod) {
+            (b'c', b'n') => {
                 let c: u8 = args.next(env);
                 assert!(pad_char == ' ' && pad_width == 0); // TODO
                 res.push(c);
             }
             // Apple extension? Seemingly works in both NSLog and printf.
-            b'C' => {
+            (b'C', b'n') => {
                 let c: unichar = args.next(env);
                 // TODO
                 assert!(pad_char == ' ' && pad_width == 0);
@@ -105,7 +114,7 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
                 let c = char::from_u32(c.into()).unwrap();
                 write!(&mut res, "{}", c).unwrap();
             }
-            b's' => {
+            (b's', b'n') => {
                 let c_string: ConstPtr<u8> = args.next(env);
                 assert!(pad_char == ' ' && pad_width == 0); // TODO
                 if !c_string.is_null() {
@@ -114,7 +123,22 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
                     res.extend_from_slice("(null)".as_bytes());
                 }
             }
-            b'd' | b'i' | b'u' => {
+            (b's', b'l') => {
+                let c_string: ConstPtr<u32> = args.next(env);
+                assert!(pad_char == ' ' && pad_width == 0); // TODO
+                if !c_string.is_null() {
+                    let mut buf = [0; 4];
+                    for wchar in env.mem.wcstr_at(c_string) {
+                        let c = char::from_u32(*wchar)
+                            .unwrap_or(char::REPLACEMENT_CHARACTER)
+                            .encode_utf8(&mut buf);
+                        res.extend_from_slice(c.as_bytes())
+                    }
+                } else {
+                    res.extend_from_slice("(null)".as_bytes());
+                }
+            }
+            (b'd' | b'i' | b'u', b'n') => {
                 let int: i64 = if specifier == b'u' {
                     let uint: u32 = args.next(env);
                     uint.into()
@@ -139,7 +163,7 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
                     res.extend_from_slice(int_with_precision.as_bytes());
                 }
             }
-            b'f' => {
+            (b'f', b'n') => {
                 let float: f64 = args.next(env);
                 let precision_value = precision.unwrap_or(6);
                 if pad_width > 0 {
@@ -152,7 +176,7 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
                     write!(&mut res, "{:.1$}", float, precision_value).unwrap();
                 }
             }
-            b'@' if NS_LOG => {
+            (b'@', b'n') if NS_LOG => {
                 let object: id = args.next(env);
                 // TODO: use localized description if available?
                 let description: id = msg![env; object description];
@@ -161,22 +185,23 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
                 let description = ns_string::to_rust_string(env, description);
                 write!(&mut res, "{}", description).unwrap();
             }
-            b'x' => {
+            (b'x', b'n') => {
                 let int: i32 = args.next(env);
                 res.extend_from_slice(format!("{:x}", int).as_bytes());
             }
-            b'X' => {
+            (b'X', b'n') => {
                 let int: i32 = args.next(env);
                 res.extend_from_slice(format!("{:X}", int).as_bytes());
             }
-            b'p' => {
+            (b'p', b'n') => {
                 let ptr: MutVoidPtr = args.next(env);
                 res.extend_from_slice(format!("{:?}", ptr).as_bytes());
             }
             // TODO: more specifiers
             _ => unimplemented!(
-                "Format character '{}'. Formatted up to index {}",
+                "Format character '{}', length '{}'. Formatted up to index {}",
                 specifier as char,
+                len_mod as char,
                 format_char_idx
             ),
         }

@@ -14,6 +14,8 @@
 //! Relevant Apple documentation:
 //! * [Memory Usage Performance Guidelines](https://developer.apple.com/library/archive/documentation/Performance/Conceptual/ManagingMemory/ManagingMemory.html)
 
+use std::slice;
+
 mod allocator;
 
 /// Equivalent of `usize` for guest memory.
@@ -504,6 +506,15 @@ impl Mem {
             len += 1;
         }
         self.bytes_at(ptr, len)
+    }
+    /// Get a wide C string (null-terminated) as a slice. The null terminator
+    /// is not included in the slice.
+    pub fn wcstr_at<const MUT: bool>(&self, ptr: Ptr<u32, MUT>) -> &[u32] {
+        let mut len = 0;
+        while self.read(ptr + len) != 0 {
+            len += 1;
+        }
+        unsafe { slice::from_raw_parts(self.ptr_at(ptr, len), len as usize) }
     }
 
     /// Get a C string (null-terminated) as a string slice, if it is valid

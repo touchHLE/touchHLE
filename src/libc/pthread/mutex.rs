@@ -126,14 +126,14 @@ fn check_or_register_mutex(env: &mut Environment, mutex: MutPtr<pthread_mutex_t>
 }
 
 fn pthread_mutex_lock(env: &mut Environment, mutex: MutPtr<pthread_mutex_t>) -> i32 {
-    let mutex_data = env.mem.read(mutex);
     check_or_register_mutex(env, mutex);
+    let mutex_data = env.mem.read(mutex);
     env.lock_mutex(mutex_data.mutex_id).err().unwrap_or(0)
 }
 
 fn pthread_mutex_unlock(env: &mut Environment, mutex: MutPtr<pthread_mutex_t>) -> i32 {
-    let mutex_data = env.mem.read(mutex);
     check_or_register_mutex(env, mutex);
+    let mutex_data = env.mem.read(mutex);
     env.unlock_mutex(mutex_data.mutex_id).err().unwrap_or(0)
 }
 

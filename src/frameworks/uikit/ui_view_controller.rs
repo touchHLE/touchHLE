@@ -11,7 +11,7 @@ use crate::objc::{
 };
 
 #[derive(Default)]
-struct UIViewControllerHostObject {
+pub struct UIViewControllerHostObject {
     view: id,
 }
 impl HostObject for UIViewControllerHostObject {}

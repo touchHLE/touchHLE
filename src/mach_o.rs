@@ -230,8 +230,14 @@ impl MachO {
 
         let (header, commands) = match file {
             OFile::MachFile { header, commands } => (header, commands),
-            OFile::FatFile { .. } => {
-                unimplemented!("Fat binary support is not implemented yet");
+            OFile::FatFile { files, .. } => {
+                for (arch, _) in files {
+                    if arch.cputype == mach_object::CPU_TYPE_ARM {
+                        let subslice = &bytes[arch.offset as usize..arch.offset as usize + arch.size as usize];
+                        return MachO::load_from_bytes(subslice, into_mem, name);
+                    }
+                }
+                return Err("No supported architecture in the fat binary");
             }
             OFile::ArFile { .. } | OFile::SymDef { .. } => {
                 return Err("Unexpected Mach-O file kind: not an executable");

@@ -101,6 +101,10 @@ pub fn open_direct(env: &mut Environment, path: ConstPtr<u8>, flags: i32) -> Fil
     // TODO: exclusive mode not implemented yet
     assert!(flags & O_EXCL == 0);
 
+    if path.is_null() {
+        return -1; // TODO: set errno to EFAULT
+    }
+
     // TODO: respect the mode (in the variadic arguments) when creating a file
     // Note: NONBLOCK flag is ignored, assumption is all file I/O is fast
     let mut options = GuestOpenOptions::new();

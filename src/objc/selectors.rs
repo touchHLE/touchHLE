@@ -65,6 +65,9 @@ impl SEL {
     pub fn is_null(self) -> bool {
         self.0.is_null()
     }
+    pub fn null() -> SEL {
+        SEL(ConstPtr::null())
+    }
 }
 
 impl ObjC {

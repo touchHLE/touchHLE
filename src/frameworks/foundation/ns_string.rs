@@ -670,9 +670,12 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (id)stringByAppendingPathExtension:(id)extension { // NSString*
     // FIXME: handle edge cases like trailing '/' (may differ from Rust!)
     let mut combined = to_rust_string(env, this).into_owned();
-    combined.push('.');
-    // TODO: avoid copying
-    combined.push_str(&to_rust_string(env, extension));
+    let ext = to_rust_string(env, extension);
+    if !ext.is_empty() {
+        combined.push('.');
+        // TODO: avoid copying
+        combined.push_str(&ext);
+    }
 
     let new_string = from_rust_string(env, combined);
     autorelease(env, new_string)

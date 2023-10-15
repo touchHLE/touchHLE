@@ -15,6 +15,12 @@ These are impractical to reimplement, but they are Free Software.
 * Binary origin: `/usr/lib/` of iPhone OS 2.2.1 for the iPod touch (2nd generation), build 5H11a
 * Source code: <https://github.com/apple-oss-distributions/libgcc/tree/libgcc-8.1>
 
+## `libsqlite3.0.8.6.dylib`
+
+* License: Public Domain
+* Binary origin: `/usr/lib/` of iPhone OS 2.2.1 for the iPod touch (2nd generation), build 5H11a
+* Source code: <https://github.com/sqlite/sqlite>
+
 ## Original Apple license acknowledgements
 
 > **Free Software Foundation** ( libgcc, libstdc++ )

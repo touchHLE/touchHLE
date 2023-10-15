@@ -16,6 +16,24 @@
       "message": "this section is duplicated with line 91",
       "revId": "a66dbb6161760ddc239a9543e62b6abca22897da",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3dd7b3f7_72fa57e0",
+        "filename": "APP_SUPPORT.md",
+        "patchSetId": 29
+      },
+      "lineNbr": 127,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2023-10-15T18:55:10Z",
+      "side": 1,
+      "message": "You\u0027re right, I don\u0027t know how i missed this. However, since there\u0027s a compatibility DB now i think this commit can be abandoned",
+      "parentUuid": "5aef8106_6d7149a7",
+      "revId": "a66dbb6161760ddc239a9543e62b6abca22897da",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

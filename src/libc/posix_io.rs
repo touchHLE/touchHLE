@@ -250,6 +250,34 @@ pub fn read(
     }
 }
 
+pub fn pread(
+    env: &mut Environment,
+    fd: FileDescriptor,
+    buffer: MutVoidPtr,
+    size: GuestUSize,
+    offset: off_t,
+) -> GuestISize {
+    let old = lseek(env, fd, 0, SEEK_CUR);
+    lseek(env, fd, offset, SEEK_SET);
+    let ret = read(env, fd, buffer, size);
+    lseek(env, fd, old, SEEK_SET);
+    ret
+}
+
+pub fn pwrite(
+    env: &mut Environment,
+    fd: FileDescriptor,
+    buffer: ConstVoidPtr,
+    size: GuestUSize,
+    offset: off_t,
+) -> GuestISize {
+    let old = lseek(env, fd, 0, SEEK_CUR);
+    lseek(env, fd, offset, SEEK_SET);
+    let ret = write(env, fd, buffer, size);
+    lseek(env, fd, old, SEEK_SET);
+    ret
+}
+
 /// Helper for C `feof()`.
 pub(super) fn eof(env: &mut Environment, fd: FileDescriptor) -> i32 {
     let file = env.libc_state.posix_io.file_for_fd(fd).unwrap();
@@ -459,7 +487,9 @@ fn ftruncate(env: &mut Environment, fd: FileDescriptor, len: off_t) -> i32 {
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(open(_, _, _)),
     export_c_func!(read(_, _, _)),
+    export_c_func!(pread(_, _, _, _)),
     export_c_func!(write(_, _, _)),
+    export_c_func!(pwrite(_, _, _, _)),
     export_c_func!(lseek(_, _, _)),
     export_c_func!(close(_)),
     export_c_func!(getcwd(_, _)),

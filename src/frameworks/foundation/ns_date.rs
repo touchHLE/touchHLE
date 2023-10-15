@@ -5,10 +5,10 @@
  */
 //! `NSDate`.
 
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
 use super::NSTimeInterval;
-use crate::objc::{autorelease, id, objc_classes, ClassExports, HostObject};
+use crate::objc::{autorelease, id, msg, objc_classes, ClassExports, HostObject, NSZonePtr};
 
 struct NSDateHostObject {
     instant: Instant,
@@ -21,15 +21,29 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 @implementation NSDate: NSObject
 
-+ (id)date {
++ (id)allocWithZone:(NSZonePtr)_zone {
     let host_object = Box::new(NSDateHostObject {
         instant: Instant::now()
     });
-    let new = env.objc.alloc_object(this, host_object, &mut env.mem);
+    env.objc.alloc_object(this, host_object, &mut env.mem)
+}
+
++ (id)date {
+    let new = msg![env; this alloc];
 
     log_dbg!("[(NSDate*){:?} date]: New date {:?}", this, new);
 
     autorelease(env, new)
+}
+
+- (id)init {
+    this
+}
+
+- (id)initWithTimeIntervalSinceNow:(NSTimeInterval)secs {
+    let host_object = env.objc.borrow_mut::<NSDateHostObject>(this);
+    host_object.instant = Instant::now() + Duration::from_secs_f64(secs);
+    this
 }
 
 - (NSTimeInterval)timeIntervalSinceDate:(id)anotherDate {

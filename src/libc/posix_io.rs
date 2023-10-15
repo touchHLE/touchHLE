@@ -11,7 +11,7 @@ use std::cell::{RefCell, RefMut};
 use crate::abi::DotDotDot;
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::fs::{GuestFile, GuestOpenOptions, GuestPath};
-use crate::mem::{ConstPtr, ConstVoidPtr, GuestISize, GuestUSize, MutPtr, MutVoidPtr, Ptr};
+use crate::mem::{ConstPtr, ConstVoidPtr, GuestISize, GuestUSize, MutPtr, MutVoidPtr, Ptr, SafeRead};
 use crate::Environment;
 use std::io::{Read, Seek, SeekFrom, Write};
 use std::rc::Rc;
@@ -78,6 +78,22 @@ pub const LOCK_EX: FLockFlag = 2;
 pub const LOCK_NB: FLockFlag = 4;
 #[allow(dead_code)]
 pub const LOCK_UN: FLockFlag = 8;
+
+pub const F_GETLK: i32 = 7;
+pub const F_SETLK: i32 = 8;
+pub const F_UNLCK: i16 = 2;
+
+#[repr(C, packed)]
+#[derive(Debug)]
+struct FLockInfo {
+    start: off_t,
+    len: off_t,
+    pid: i32,
+    type_: i16,
+    whence: i16
+}
+
+unsafe impl SafeRead for FLockInfo {}
 
 fn open(env: &mut Environment, path: ConstPtr<u8>, flags: i32, _args: DotDotDot) -> FileDescriptor {
     // TODO: parse variadic arguments and pass them on (file creation mode)
@@ -472,6 +488,25 @@ fn flock(_env: &mut Environment, fd: FileDescriptor, operation: FLockFlag) -> i3
     0
 }
 
+fn fcntl(env: &mut Environment, fd: FileDescriptor, operation: i32, args: DotDotDot) -> i32 {
+    match operation {
+        F_GETLK => {
+            let ptr = args.start().next::<MutPtr<FLockInfo>>(env);
+            let mut data = env.mem.read(ptr);
+            data.type_ = F_UNLCK;
+            env.mem.write(ptr, data);
+            0
+        },
+        F_SETLK => {
+            let ptr = args.start().next::<MutPtr<FLockInfo>>(env);
+            let data = env.mem.read(ptr);
+            log!("TODO: fcntl({:?}, {:?}, {:?})", fd, operation, data);
+            0
+        }
+        _ => unimplemented!("fcntl({}, {})", fd, operation)
+    }
+}
+
 fn unlink(env: &mut Environment, path: ConstPtr<u8>) -> i32 {
     remove(env, path)
 }
@@ -504,6 +539,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(getcwd(_, _)),
     export_c_func!(chdir(_)),
     export_c_func!(flock(_, _)),
+    export_c_func!(fcntl(_, _, _)),
     export_c_func!(dup(_)),
     export_c_func!(unlink(_)),
     export_c_func!(fsync(_)),

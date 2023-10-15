@@ -52,6 +52,24 @@
       "parentUuid": "2858d770_8ff62e27",
       "revId": "dd9eb9476e5ce42dd306bdad1dcc470dad3352ac",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ca692083_63693f8d",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 9
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-10-15T13:37:19Z",
+      "side": 1,
+      "message": "Is it possible that it\u0027s a mistake of the app, e.g. instead of calling BlendFunc(DST_COLOR, SRC_COLOR) it does BlendFunc(SRC_COLOR, DST_COLOR)?",
+      "parentUuid": "23636721_23b3492e",
+      "revId": "dd9eb9476e5ce42dd306bdad1dcc470dad3352ac",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

@@ -442,6 +442,14 @@ fn flock(_env: &mut Environment, fd: FileDescriptor, operation: FLockFlag) -> i3
     0
 }
 
+fn ftruncate(env: &mut Environment, fd: FileDescriptor, len: off_t) -> i32 {
+    let file = env.libc_state.posix_io.file_for_fd(fd).unwrap();
+    match file.file.set_len(len as u64) {
+        Ok(()) => 0,
+        Err(_) => -1 // TODO: set errno
+    }
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(open(_, _, _)),
     export_c_func!(read(_, _, _)),
@@ -453,4 +461,5 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(chdir(_)),
     export_c_func!(flock(_, _)),
     export_c_func!(dup(_)),
+    export_c_func!(ftruncate(_, _))
 ];

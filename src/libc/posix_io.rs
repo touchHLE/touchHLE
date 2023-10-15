@@ -12,18 +12,21 @@ use crate::dyld::{export_c_func, FunctionExports};
 use crate::fs::{GuestFile, GuestOpenOptions, GuestPath};
 use crate::mem::{ConstPtr, ConstVoidPtr, GuestISize, GuestUSize, MutPtr, MutVoidPtr, Ptr};
 use crate::Environment;
+use std::cell::{RefCell, RefMut};
 use std::io::{Read, Seek, SeekFrom, Write};
+use std::rc::Rc;
 
 #[derive(Default)]
 pub struct State {
     /// File descriptors _other than stdin, stdout, and stderr_
-    files: Vec<Option<PosixFileHostObject>>,
+    files: Vec<Option<Rc<RefCell<PosixFileHostObject>>>>,
 }
 impl State {
-    fn file_for_fd(&mut self, fd: FileDescriptor) -> Option<&mut PosixFileHostObject> {
+    fn file_for_fd(&mut self, fd: FileDescriptor) -> Option<RefMut<PosixFileHostObject>> {
         self.files
             .get_mut(fd_to_file_idx(fd))
             .and_then(|file_or_none| file_or_none.as_mut())
+            .map(|file| file.borrow_mut())
     }
 }
 
@@ -144,11 +147,14 @@ pub fn open_direct(env: &mut Environment, path: ConstPtr<u8>, flags: i32) -> Fil
                 .iter()
                 .position(|f| f.is_none())
             {
-                env.libc_state.posix_io.files[free_idx] = Some(host_object);
+                env.libc_state.posix_io.files[free_idx] = Some(Rc::new(RefCell::new(host_object)));
                 free_idx
             } else {
                 let idx = env.libc_state.posix_io.files.len();
-                env.libc_state.posix_io.files.push(Some(host_object));
+                env.libc_state
+                    .posix_io
+                    .files
+                    .push(Some(Rc::new(RefCell::new(host_object))));
                 idx
             };
             file_idx_to_fd(idx)
@@ -172,6 +178,28 @@ pub fn open_direct(env: &mut Environment, path: ConstPtr<u8>, flags: i32) -> Fil
     res
 }
 
+fn dup(env: &mut Environment, fd: FileDescriptor) -> FileDescriptor {
+    let Some(file) = env.libc_state.posix_io.files[fd_to_file_idx(fd)].as_ref() else {
+        return -1; // TODO: set errno
+    };
+
+    let idx = if let Some(free_idx) = env
+        .libc_state
+        .posix_io
+        .files
+        .iter()
+        .position(|f| f.is_none())
+    {
+        env.libc_state.posix_io.files[free_idx] = Some(file.clone());
+        free_idx
+    } else {
+        let idx = env.libc_state.posix_io.files.len();
+        env.libc_state.posix_io.files.push(Some(file.clone()));
+        idx
+    };
+    file_idx_to_fd(idx)
+}
+
 pub fn read(
     env: &mut Environment,
     fd: FileDescriptor,
@@ -179,7 +207,7 @@ pub fn read(
     size: GuestUSize,
 ) -> GuestISize {
     // TODO: error handling for unknown fd?
-    let file = env.libc_state.posix_io.file_for_fd(fd).unwrap();
+    let mut file = env.libc_state.posix_io.file_for_fd(fd).unwrap();
 
     let buffer_slice = env.mem.bytes_at_mut(buffer.cast(), size);
     match file.file.read(buffer_slice) {
@@ -238,7 +266,7 @@ pub fn write(
     size: GuestUSize,
 ) -> GuestISize {
     // TODO: error handling for unknown fd?
-    let file = env.libc_state.posix_io.file_for_fd(fd).unwrap();
+    let mut file = env.libc_state.posix_io.file_for_fd(fd).unwrap();
 
     let buffer_slice = env.mem.bytes_at(buffer.cast(), size);
     match file.file.write(buffer_slice) {
@@ -283,7 +311,7 @@ pub const SEEK_CUR: i32 = 1;
 pub const SEEK_END: i32 = 2;
 pub fn lseek(env: &mut Environment, fd: FileDescriptor, offset: off_t, whence: i32) -> off_t {
     // TODO: error handling for unknown fd?
-    let file = env.libc_state.posix_io.file_for_fd(fd).unwrap();
+    let mut file = env.libc_state.posix_io.file_for_fd(fd).unwrap();
 
     let from = match whence {
         // not sure whether offset is treated as signed or unsigned when using
@@ -320,15 +348,19 @@ pub fn close(env: &mut Environment, fd: FileDescriptor) -> i32 {
             // The actual closing of the file happens implicitly when `file`
             // falls out of scope. The return value is about whether flushing
             // succeeds.
-            match file.file.sync_all() {
-                Ok(()) => {
+            match Rc::into_inner(file).map(|f| f.into_inner().file.sync_all()) {
+                Some(Ok(())) => {
                     log_dbg!("close({:?}) => 0", fd);
                     0
                 }
-                Err(_) => {
+                Some(Err(_)) => {
                     // TODO: set errno
                     log!("Warning: close({:?}) failed, returning -1", fd);
                     -1
+                }
+                None => {
+                    log_dbg!("close({:?}) => 0, references remaining", fd);
+                    0
                 }
             }
         }
@@ -425,4 +457,5 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(getcwd(_, _)),
     export_c_func!(chdir(_)),
     export_c_func!(flock(_, _)),
+    export_c_func!(dup(_)),
 ];

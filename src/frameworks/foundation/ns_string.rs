@@ -789,6 +789,20 @@ pub const CLASSES: ClassExports = objc_classes! {
     success
 }
 
+- (f32)floatValue {
+    let st = to_rust_string(env, this);
+    let st = st.trim_start();
+    let mut cutoff = st.len();
+    for (i, c) in st.char_indices() {
+        if !c.is_ascii_digit() && c != '.' && c != '+' && c != '-' {
+            cutoff = i;
+            break;
+        }
+    }
+    // TODO: handle over/underflow properly
+    st[..cutoff].parse().unwrap_or(0.0)
+}
+
 @end
 
 // Our private subclass that is the single implementation of NSString for the

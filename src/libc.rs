@@ -17,6 +17,7 @@ pub mod dlfcn;
 pub mod errno;
 pub mod ifaddrs;
 pub mod keymgr;
+pub mod mach_host;
 pub mod mach_thread_info;
 pub mod mach_time;
 pub mod math;

@@ -10,7 +10,7 @@ use crate::dyld::{export_c_func, FunctionExports};
 use crate::frameworks::foundation::{ns_string, unichar};
 use crate::libc::posix_io::{STDERR_FILENO, STDOUT_FILENO};
 use crate::libc::stdio::FILE;
-use crate::mem::{ConstPtr, GuestUSize, Mem, MutPtr, MutVoidPtr};
+use crate::mem::{ConstPtr, ConstVoidPtr, GuestUSize, Mem, MutPtr, MutVoidPtr};
 use crate::objc::{id, msg};
 use crate::Environment;
 use std::io::Write;
@@ -121,12 +121,24 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
                 write!(&mut res, "{}", c).unwrap();
             }
             b's' => {
-                // TODO: support length modifier
-                assert!(length_modifier.is_none());
-                let c_string: ConstPtr<u8> = args.next(env);
+                let c_string: ConstVoidPtr = args.next(env);
                 assert!(pad_char == ' ' && pad_width == 0); // TODO
                 if !c_string.is_null() {
-                    res.extend_from_slice(env.mem.cstr_at(c_string));
+                    match length_modifier {
+                        None => {
+                            res.extend_from_slice(env.mem.cstr_at(c_string.cast()));
+                        }
+                        Some(b'l') => {
+                            let mut buf = [0; 4];
+                            for wchar in env.mem.wcstr_at(c_string.cast()) {
+                                let c = char::from_u32(*wchar)
+                                    .unwrap_or(char::REPLACEMENT_CHARACTER)
+                                    .encode_utf8(&mut buf);
+                                res.extend_from_slice(c.as_bytes())
+                            }
+                        }
+                        _ => unreachable!(),
+                    }
                 } else {
                     res.extend_from_slice("(null)".as_bytes());
                 }

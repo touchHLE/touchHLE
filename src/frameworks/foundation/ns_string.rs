@@ -769,6 +769,10 @@ pub const CLASSES: ClassExports = objc_classes! {
     ui_font::draw_in_rect(env, font, &text, rect, line_break_mode, align)
 }
 
+- (f32)floatValue {
+    to_rust_string(env, this).parse().unwrap_or(0.0)
+}
+
 @end
 
 // Our private subclass that is the single implementation of NSString for the

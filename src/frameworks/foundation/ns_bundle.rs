@@ -227,7 +227,7 @@ fn path_for_resource_helper(
         path = msg![env; path stringByAppendingPathComponent:directory];
     }
     path = msg![env; path stringByAppendingPathComponent:name];
-    if extension != nil {
+    if extension != nil && ns_string::to_rust_string(env, extension) != "" {
         path = msg![env; path stringByAppendingPathExtension:extension];
     }
     let file_manager: id = msg_class![env; NSFileManager defaultManager];

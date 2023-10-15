@@ -36,4 +36,12 @@ fn mmap(
     ptr
 }
 
-pub const FUNCTIONS: FunctionExports = &[export_c_func!(mmap(_, _, _, _, _, _))];
+fn munmap(_env: &mut Environment, addr: MutVoidPtr, len: GuestUSize) -> i32 {
+    log!("TODO: munmap({:?}, {:?}) (unimplemented)", addr, len);
+    0
+}
+
+pub const FUNCTIONS: FunctionExports = &[
+    export_c_func!(mmap(_, _, _, _, _, _)),
+    export_c_func!(munmap(_, _))
+];

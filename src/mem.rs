@@ -432,6 +432,12 @@ impl Mem {
         unsafe { ptr.write_unaligned(value) }
     }
 
+    /// C-style `memset`
+    pub fn memset(&mut self, dest: MutVoidPtr, value: u8, size: GuestUSize) {
+        let slice = self.bytes_at_mut(dest.cast(), size);
+        slice.fill(value);
+    }
+
     /// C-style `memmove`.
     pub fn memmove(&mut self, dest: MutVoidPtr, src: ConstVoidPtr, size: GuestUSize) {
         let src = src.to_bits() as usize;

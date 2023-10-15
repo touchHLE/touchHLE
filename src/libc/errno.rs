@@ -13,6 +13,8 @@ use std::io::Write;
 
 pub const EPERM: i32 = 1;
 pub const EDEADLK: i32 = 11;
+#[allow(dead_code)]
+pub const ENOMEM: i32 = 12;
 pub const EBUSY: i32 = 16;
 pub const EINVAL: i32 = 22;
 

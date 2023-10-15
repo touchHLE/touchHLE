@@ -217,6 +217,11 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 // TODO: init methods etc
 
+- (id)initWithCapacity:(NSUInteger)numItems {
+    env.objc.borrow_mut::<ArrayHostObject>(this).array.reserve(numItems as usize);
+    this
+}
+
 - (NSUInteger)count {
     env.objc.borrow::<ArrayHostObject>(this).array.len().try_into().unwrap()
 }

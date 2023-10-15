@@ -105,7 +105,8 @@ fn pthread_mutex_init(
     0 // success
 }
 
-fn check_or_register_mutex(env: &mut Environment, mutex: MutPtr<pthread_mutex_t>) {
+#[must_use]
+fn check_or_register_mutex(env: &mut Environment, mutex: MutPtr<pthread_mutex_t>) -> bool {
     let magic: u32 = env.mem.read(mutex.cast());
     // This is a statically-initialized mutex, we need to register it, and
     // change the magic number in the process.
@@ -115,28 +116,34 @@ fn check_or_register_mutex(env: &mut Environment, mutex: MutPtr<pthread_mutex_t>
             mutex
         );
         pthread_mutex_init(env, mutex, Ptr::null());
+        true
     } else {
         // We should actually return an error if the magic number doesn't match,
         // but this almost certainly indicates a memory corruption, so panicking
         // is more useful.
         assert_eq!(magic, MAGIC_MUTEX);
+        false
     }
 }
 
 fn pthread_mutex_lock(env: &mut Environment, mutex: MutPtr<pthread_mutex_t>) -> i32 {
-    let mutex_data = env.mem.read(mutex);
-    check_or_register_mutex(env, mutex);
+    let mut mutex_data = env.mem.read(mutex);
+    if check_or_register_mutex(env, mutex) {
+        mutex_data = env.mem.read(mutex);
+    }
     env.lock_mutex(mutex_data.mutex_id).err().unwrap_or(0)
 }
 
 fn pthread_mutex_unlock(env: &mut Environment, mutex: MutPtr<pthread_mutex_t>) -> i32 {
-    let mutex_data = env.mem.read(mutex);
-    check_or_register_mutex(env, mutex);
+    let mut mutex_data = env.mem.read(mutex);
+    if check_or_register_mutex(env, mutex) {
+        mutex_data = env.mem.read(mutex);
+    }
     env.unlock_mutex(mutex_data.mutex_id).err().unwrap_or(0)
 }
 
 fn pthread_mutex_destroy(env: &mut Environment, mutex: MutPtr<pthread_mutex_t>) -> i32 {
-    check_or_register_mutex(env, mutex);
+    _ = check_or_register_mutex(env, mutex);
     let mutex_id = env.mem.read(mutex).mutex_id;
     env.mem.write(
         mutex,

@@ -85,6 +85,14 @@ pub const CLASSES: ClassExports = objc_classes! {
     msg![env; this setStatusBarHidden:hidden]
 }
 
+- (UIInterfaceOrientation)statusBarOrientation {
+    match env.window().current_rotation() {
+        DeviceOrientation::Portrait => UIDeviceOrientationPortrait,
+        DeviceOrientation::LandscapeLeft => UIDeviceOrientationLandscapeLeft,
+        DeviceOrientation::LandscapeRight => UIDeviceOrientationLandscapeRight
+    }
+}
+
 // TODO: statusBarOrientation getter
 - (())setStatusBarOrientation:(UIInterfaceOrientation)orientation {
     env.window_mut().rotate_device(match orientation {

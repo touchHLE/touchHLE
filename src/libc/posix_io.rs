@@ -95,9 +95,6 @@ pub fn open_direct(env: &mut Environment, path: ConstPtr<u8>, flags: i32) -> Fil
                 | O_EXCL)
             == 0
     );
-    // TODO: symlinks don't exist in the FS yet, so we can't "not follow" them.
-    // (Should we just ignore this?)
-    assert!(flags & O_NOFOLLOW == 0);
     // TODO: exclusive mode not implemented yet
     assert!(flags & O_EXCL == 0);
 
@@ -121,6 +118,10 @@ pub fn open_direct(env: &mut Environment, path: ConstPtr<u8>, flags: i32) -> Fil
     }
 
     let path_string = env.mem.cstr_at_utf8(path).unwrap().to_owned();
+    // TODO: symlinks don't exist in the FS yet, so we can't "not follow" them.
+    if flags & O_NOFOLLOW != 0 {
+        log!("Ignoring O_NOFOLLOW when opening {:?}", path_string);
+    }
     let res = match env
         .fs
         .open_with_options(GuestPath::new(&path_string), options)

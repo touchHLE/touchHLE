@@ -5,13 +5,15 @@
  */
 //! `NSDate`.
 
-use std::time::{Duration, Instant};
+use std::time;
+use std::time::{Duration, SystemTime};
+use crate::environment::Environment;
 
 use super::NSTimeInterval;
 use crate::objc::{autorelease, id, objc_classes, msg, ClassExports, HostObject, NSZonePtr};
 
 struct NSDateHostObject {
-    instant: Instant,
+    instant: SystemTime,
 }
 impl HostObject for NSDateHostObject {}
 
@@ -23,7 +25,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 + (id)allocWithZone:(NSZonePtr)_zone {
     let host_object = Box::new(NSDateHostObject {
-        instant: Instant::now()
+        instant: SystemTime::now()
     });
     env.objc.alloc_object(this, host_object, &mut env.mem)
 }
@@ -42,7 +44,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 - (id)initWithTimeIntervalSinceNow:(NSTimeInterval)secs {
     let host_object = env.objc.borrow_mut::<NSDateHostObject>(this);
-    host_object.instant = Instant::now() + Duration::from_secs_f64(secs);
+    host_object.instant = SystemTime::now() + Duration::from_secs_f64(secs);
     this
 }
 
@@ -50,11 +52,21 @@ pub const CLASSES: ClassExports = objc_classes! {
     assert!(!anotherDate.is_null());
     let host_object = env.objc.borrow::<NSDateHostObject>(this);
     let another_date_host_object = env.objc.borrow::<NSDateHostObject>(anotherDate);
-    let result = another_date_host_object.instant.duration_since(host_object.instant).as_secs_f64();
+    let result = another_date_host_object.instant.duration_since(host_object.instant).unwrap().as_secs_f64();
     log_dbg!("[(NSDate*){:?} timeIntervalSinceDate:{:?}]: result {} seconds", this, anotherDate, result);
+    result
+}
+
+- (NSTimeInterval)timeIntervalSince1970 {
+    let host_object = env.objc.borrow::<NSDateHostObject>(this);
+    let result = host_object.instant.duration_since(time::UNIX_EPOCH).unwrap().as_secs_f64();
     result
 }
 
 @end
 
 };
+
+pub fn to_date(env: &mut Environment, date: id) -> SystemTime {
+    env.objc.borrow::<NSDateHostObject>(date).instant
+}

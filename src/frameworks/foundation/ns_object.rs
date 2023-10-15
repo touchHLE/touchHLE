@@ -18,8 +18,8 @@ use super::ns_string::to_rust_string;
 use super::{ns_run_loop, ns_thread, NSUInteger};
 use crate::mem::MutVoidPtr;
 use crate::objc::{
-    id, msg, msg_class, msg_send, objc_classes, Class, ClassExports, NSZonePtr, ObjC,
-    TrivialHostObject, SEL,
+    class_conformsToProtocol, id, msg, msg_class, msg_send, objc_classes, Class, ClassExports,
+    NSZonePtr, ObjC, TrivialHostObject, SEL,
 };
 
 pub const CLASSES: ClassExports = objc_classes! {
@@ -169,6 +169,11 @@ pub const CLASSES: ClassExports = objc_classes! {
            withObject:(id)o2 {
     assert!(!sel.is_null());
     msg_send(env, (this, sel, o1, o2))
+}
+
+- (bool)conformsToProtocol:(id)protocol {
+    let class = msg![env; this class];
+    class_conformsToProtocol(env, class, protocol)
 }
 
 - (())performSelector:(SEL)selector

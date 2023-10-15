@@ -8,16 +8,17 @@
 //! Resources:
 //! - Apple's [Threading Programming Guide](https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/Multithreading/Introduction/Introduction.html)
 
-use super::{ns_string, ns_timer};
+use std::mem;
+use super::{ns_string, ns_timer, ns_thread, ns_date};
 use crate::dyld::{ConstantExports, HostConstant};
 use crate::frameworks::audio_toolbox::audio_queue::{handle_audio_queue, AudioQueueRef};
 use crate::frameworks::core_foundation::cf_run_loop::{
     kCFRunLoopCommonModes, kCFRunLoopDefaultMode, CFRunLoopRef,
 };
 use crate::frameworks::{core_animation, media_player, uikit};
-use crate::objc::{id, msg, objc_classes, release, retain, ClassExports, HostObject};
-use crate::Environment;
-use std::time::{Duration, Instant};
+use crate::objc::{id, msg, objc_classes, release, retain, ClassExports, HostObject, NSZonePtr, SEL, msg_send};
+use crate::{Environment, msg_class};
+use std::time::{Duration, Instant, SystemTime};
 
 /// `NSString*`
 pub type NSRunLoopMode = id;
@@ -36,9 +37,10 @@ pub const CONSTANTS: ConstantExports = &[
     ),
 ];
 
-#[derive(Default)]
-pub struct State {
-    main_thread_run_loop: Option<id>,
+struct ScheduledInvocation {
+    selector: SEL,
+    target: id,
+    arg: id
 }
 
 struct NSRunLoopHostObject {
@@ -48,6 +50,8 @@ struct NSRunLoopHostObject {
     /// Strong references to `NSTimer*` in no particular order. Timers are owned
     /// by the run loop. The timer must remove itself when invalidated.
     timers: Vec<id>,
+    main_thread: bool,
+    scheduled_invocations: Vec<ScheduledInvocation>
 }
 impl HostObject for NSRunLoopHostObject {}
 
@@ -58,29 +62,32 @@ pub const CLASSES: ClassExports = objc_classes! {
 @implementation NSRunLoop: NSObject
 
 + (id)mainRunLoop {
-    if let Some(rl) = env.framework_state.foundation.ns_run_loop.main_thread_run_loop {
-        rl
-    } else {
-        let host_object = Box::new(NSRunLoopHostObject {
-            audio_queues: Vec::new(),
-            timers: Vec::new(),
-        });
-        let new = env.objc.alloc_static_object(this, host_object, &mut env.mem);
-        env.framework_state.foundation.ns_run_loop.main_thread_run_loop = Some(new);
-        new
-    }
+    let main_thread = msg_class![env; NSThread mainThread];
+    ns_thread::get_run_loop(env, main_thread)
 }
 
 + (id)currentRunLoop {
-    assert!(env.current_thread == 0);
-    msg![env; this mainRunLoop]
+    let thread = msg_class![env; NSThread currentThread];
+    ns_thread::get_run_loop(env, thread)
+}
+
++ (id)allocWithZone:(NSZonePtr)_zone {
+    let host_object = Box::new(NSRunLoopHostObject {
+        audio_queues: Vec::new(),
+        timers: Vec::new(),
+        main_thread: false,
+        scheduled_invocations: Vec::new()
+    });
+    env.objc.alloc_object(this, host_object, &mut env.mem)
 }
 
 // TODO: more accessors
 
-- (id) retain { this }
-- (()) release {}
-- (id) autorelease { this }
+// Private method to be called from NSThread
+-(())_setMainThread {
+    let host_object = env.objc.borrow_mut::<NSRunLoopHostObject>(this);
+    host_object.main_thread = true;
+}
 
 - (CFRunLoopRef)getCFRunLoop {
     // In our implementation these are the same type (they aren't in Apple's).
@@ -104,8 +111,14 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (())run {
-    run_run_loop(env, this, /* single_iteration: */ false);
+    run_run_loop(env, this, /* single_iteration: */ false, distant_future());
 }
+
+- (())runUntilDate:(id)date {
+    let instant = ns_date::to_date(env, date);
+    run_run_loop(env, this, /* single_iteration: */ false, instant);
+}
+
 // TODO: other run methods
 
 @end
@@ -157,10 +170,25 @@ pub(super) fn remove_timer(env: &mut Environment, run_loop: id, timer: id) {
 /// for the app picker, since we don't have `runMode:beforeDate:` or
 /// `runUntilDate:` yet. (TODO: implement those to replace this.)
 pub fn run_run_loop_single_iteration(env: &mut Environment, run_loop: id) {
-    run_run_loop(env, run_loop, /* single_iteration: */ true)
+    run_run_loop(env, run_loop, /* single_iteration: */ true, distant_future())
 }
 
-fn run_run_loop(env: &mut Environment, run_loop: id, single_iteration: bool) {
+pub fn schedule_invocation(
+    env: &mut Environment,
+    run_loop: id,
+    target: id,
+    selector: SEL,
+    arg: id) {
+    retain(env, target);
+    retain(env, arg);
+    env.objc.borrow_mut::<NSRunLoopHostObject>(run_loop).scheduled_invocations.push(ScheduledInvocation {
+        selector,
+        target,
+        arg,
+    })
+}
+
+fn run_run_loop(env: &mut Environment, run_loop: id, single_iteration: bool, until_date: SystemTime) {
     if single_iteration {
         log_dbg!("Entering run loop {:?} (single iteration)", run_loop);
     } else {
@@ -181,6 +209,7 @@ fn run_run_loop(env: &mut Environment, run_loop: id, single_iteration: bool) {
     loop {
         let mut sleep_until = None;
 
+        // TODO: Turn all of this into real event sources
         env.window
             .as_mut()
             .expect("NSRunLoop not supported in headless mode")
@@ -191,14 +220,6 @@ fn run_run_loop(env: &mut Environment, run_loop: id, single_iteration: bool) {
 
         let next_due = core_animation::recomposite_if_necessary(env);
         limit_sleep_time(&mut sleep_until, next_due);
-
-        assert!(timers_tmp.is_empty());
-        timers_tmp.extend_from_slice(&env.objc.borrow::<NSRunLoopHostObject>(run_loop).timers);
-
-        for timer in timers_tmp.drain(..) {
-            let next_due = ns_timer::handle_timer(env, timer);
-            limit_sleep_time(&mut sleep_until, next_due);
-        }
 
         assert!(audio_queues_tmp.is_empty());
         audio_queues_tmp.extend_from_slice(
@@ -212,6 +233,25 @@ fn run_run_loop(env: &mut Environment, run_loop: id, single_iteration: bool) {
         }
 
         media_player::handle_players(env);
+
+
+        assert!(timers_tmp.is_empty());
+        timers_tmp.extend_from_slice(&env.objc.borrow::<NSRunLoopHostObject>(run_loop).timers);
+
+        for timer in timers_tmp.drain(..) {
+            let next_due = ns_timer::handle_timer(env, timer);
+            limit_sleep_time(&mut sleep_until, next_due);
+        }
+
+        let mut invocations = Vec::new();
+        mem::swap(&mut invocations, &mut env.objc.borrow_mut::<NSRunLoopHostObject>(run_loop).scheduled_invocations);
+
+        for invocation in invocations.drain(..) {
+            () = msg_send(env, (invocation.target, invocation.selector, invocation.arg));
+            release(env, invocation.arg);
+            release(env, invocation.target);
+        }
+
 
         // Unfortunately, touchHLE has to poll for certain things repeatedly;
         // it can't just wait until the next event appears.
@@ -236,5 +276,12 @@ fn run_run_loop(env: &mut Environment, run_loop: id, single_iteration: bool) {
         if single_iteration {
             break;
         }
+        if SystemTime::now() > until_date {
+            break
+        }
     }
+}
+
+fn distant_future() -> SystemTime {
+    SystemTime::now() + Duration::from_secs(3600 * 24 * 365 * 10)
 }

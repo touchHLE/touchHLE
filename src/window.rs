@@ -1013,6 +1013,11 @@ impl Window {
         }
     }
 
+    /// Returns the current device orientation
+    pub fn current_rotation(&self) -> DeviceOrientation {
+        self.device_orientation
+    }
+
     /// Get the size in pixels of the window without rotation or scaling.
     ///
     /// The aspect ratio, scale and orientation reflect the guest app's view of

@@ -92,8 +92,92 @@ pub const CONSTANTS: ConstantExports = &[(
     }),
 )];
 
+// The CGAffineTransform* functions are implemented as wrappers around these
+// methods so that host code has the option of calling them without needing to
+// provide a &mut Environment and with more convenient syntax. Every method has
+// a straightforward mapping to a CGAffineTransform* function.
+impl CGAffineTransform {
+    pub fn is_identity(self) -> bool {
+        self == CGAffineTransformIdentity
+    }
+    pub fn make_rotation(angle: CGFloat) -> Self {
+        Matrix::<3>::from(&Matrix::<2>::z_rotation(angle))
+            .try_into()
+            .unwrap()
+    }
+    pub fn make_scale(x: CGFloat, y: CGFloat) -> Self {
+        Matrix::<3>::from(&Matrix::<2>::scale_2d(x, y))
+            .try_into()
+            .unwrap()
+    }
+    pub fn make_translation(x: CGFloat, y: CGFloat) -> Self {
+        Matrix::<3>::translate_2d(x, y).try_into().unwrap()
+    }
+    pub fn concat(self, other: Self) -> Self {
+        Matrix::<3>::multiply(&self.into(), &other.into())
+            .try_into()
+            .unwrap()
+    }
+    pub fn rotate(self, angle: CGFloat) -> Self {
+        self.concat(Self::make_rotation(angle))
+    }
+    pub fn scale(self, x: CGFloat, y: CGFloat) -> Self {
+        self.concat(Self::make_scale(x, y))
+    }
+    pub fn translate(self, x: CGFloat, y: CGFloat) -> Self {
+        self.concat(Self::make_translation(x, y))
+    }
+
+    pub fn apply_to_point(self, point: CGPoint) -> CGPoint {
+        let [x, y, _z] = Matrix::<3>::transform(&self.into(), [point.x, point.y, 0.0]);
+        CGPoint { x, y }
+    }
+    pub fn apply_to_size(self, size: CGSize) -> CGSize {
+        let [width, height, _depth] =
+            Matrix::<3>::transform(&self.into(), [size.width, size.height, 0.0]);
+        CGSize { width, height }
+    }
+    pub fn apply_to_rect(self, rect: CGRect) -> CGRect {
+        // Affine transforms applied to a rectangle don't necessarily return a
+        // rectangle (just a quadrilateral), so CGRectApplyAffineTransform
+        // essentially returns the bounding box of the points.
+
+        let corner1 = rect.origin;
+        let corner2 = CGPoint {
+            x: rect.origin.x + rect.size.width,
+            y: rect.origin.y,
+        };
+        let corner3 = CGPoint {
+            x: rect.origin.x,
+            y: rect.origin.y + rect.size.height,
+        };
+        let corner4 = CGPoint {
+            x: rect.origin.x + rect.size.width,
+            y: rect.origin.y + rect.size.height,
+        };
+
+        let point1 = self.apply_to_point(corner1);
+        let point2 = self.apply_to_point(corner2);
+        let point3 = self.apply_to_point(corner3);
+        let point4 = self.apply_to_point(corner4);
+
+        let x1 = point1.x.min(point2.x).min(point3.x).min(point4.x);
+        let x2 = point1.x.max(point2.x).max(point3.x).max(point4.x);
+        let y1 = point1.y.min(point2.y).min(point3.y).min(point4.y);
+        let y2 = point1.y.max(point2.y).max(point3.y).max(point4.y);
+
+        CGRect {
+            origin: CGPoint { x: x1, y: y1 },
+            size: CGSize {
+                width: x2 - x1,
+                height: y2 - y1,
+            },
+        }
+    }
+}
+
 fn CGAffineTransformIsIdentity(_env: &mut Environment, transform: CGAffineTransform) -> bool {
-    transform == CGAffineTransformIdentity
+    transform.is_identity()
 }
 
 fn CGAffineTransformEqualToTransform(
@@ -117,21 +201,17 @@ fn CGAffineTransformMake(
 }
 
 fn CGAffineTransformMakeRotation(_env: &mut Environment, angle: CGFloat) -> CGAffineTransform {
-    Matrix::<3>::from(&Matrix::<2>::z_rotation(angle))
-        .try_into()
-        .unwrap()
+    CGAffineTransform::make_rotation(angle)
 }
 fn CGAffineTransformMakeScale(_env: &mut Environment, x: CGFloat, y: CGFloat) -> CGAffineTransform {
-    Matrix::<3>::from(&Matrix::<2>::scale_2d(x, y))
-        .try_into()
-        .unwrap()
+    CGAffineTransform::make_scale(x, y)
 }
 fn CGAffineTransformMakeTranslation(
     _env: &mut Environment,
     x: CGFloat,
     y: CGFloat,
 ) -> CGAffineTransform {
-    Matrix::<3>::translate_2d(x, y).try_into().unwrap()
+    CGAffineTransform::make_translation(x, y)
 }
 
 fn CGAffineTransformConcat(
@@ -139,36 +219,31 @@ fn CGAffineTransformConcat(
     a: CGAffineTransform,
     b: CGAffineTransform,
 ) -> CGAffineTransform {
-    Matrix::<3>::multiply(&a.into(), &b.into())
-        .try_into()
-        .unwrap()
+    a.concat(b)
 }
 
-fn CGAffineTransformRotate(
-    env: &mut Environment,
+pub fn CGAffineTransformRotate(
+    _env: &mut Environment,
     existing: CGAffineTransform,
     angle: CGFloat,
 ) -> CGAffineTransform {
-    let t = CGAffineTransformMakeRotation(env, angle);
-    CGAffineTransformConcat(env, existing, t)
+    existing.rotate(angle)
 }
-fn CGAffineTransformScale(
-    env: &mut Environment,
+pub fn CGAffineTransformScale(
+    _env: &mut Environment,
     existing: CGAffineTransform,
     x: CGFloat,
     y: CGFloat,
 ) -> CGAffineTransform {
-    let t = CGAffineTransformMakeScale(env, x, y);
-    CGAffineTransformConcat(env, existing, t)
+    existing.scale(x, y)
 }
-fn CGAffineTransformTranslate(
-    env: &mut Environment,
+pub fn CGAffineTransformTranslate(
+    _env: &mut Environment,
     existing: CGAffineTransform,
     x: CGFloat,
     y: CGFloat,
 ) -> CGAffineTransform {
-    let t = CGAffineTransformMakeTranslation(env, x, y);
-    CGAffineTransformConcat(env, existing, t)
+    existing.translate(x, y)
 }
 
 fn CGPointApplyAffineTransform(
@@ -176,58 +251,21 @@ fn CGPointApplyAffineTransform(
     point: CGPoint,
     transform: CGAffineTransform,
 ) -> CGPoint {
-    let [x, y, _z] = Matrix::<3>::transform(&transform.into(), [point.x, point.y, 0.0]);
-    CGPoint { x, y }
+    transform.apply_to_point(point)
 }
 fn CGSizeApplyAffineTransform(
     _env: &mut Environment,
-    rect: CGSize,
+    size: CGSize,
     transform: CGAffineTransform,
 ) -> CGSize {
-    let [width, height, _depth] =
-        Matrix::<3>::transform(&transform.into(), [rect.width, rect.height, 0.0]);
-    CGSize { width, height }
+    transform.apply_to_size(size)
 }
-fn CGRectApplyAffineTransform(
-    env: &mut Environment,
+pub fn CGRectApplyAffineTransform(
+    _env: &mut Environment,
     rect: CGRect,
     transform: CGAffineTransform,
 ) -> CGRect {
-    // Affine transforms applied to a rectangle don't necessarily return a
-    // rectangle (just a quadrilateral), so CGRectApplyAffineTransform
-    // essentially returns the bounding box of the points.
-
-    let corner1 = rect.origin;
-    let corner2 = CGPoint {
-        x: rect.origin.x + rect.size.width,
-        y: rect.origin.y,
-    };
-    let corner3 = CGPoint {
-        x: rect.origin.x,
-        y: rect.origin.y + rect.size.height,
-    };
-    let corner4 = CGPoint {
-        x: rect.origin.x + rect.size.width,
-        y: rect.origin.y + rect.size.height,
-    };
-
-    let point1 = CGPointApplyAffineTransform(env, corner1, transform);
-    let point2 = CGPointApplyAffineTransform(env, corner2, transform);
-    let point3 = CGPointApplyAffineTransform(env, corner3, transform);
-    let point4 = CGPointApplyAffineTransform(env, corner4, transform);
-
-    let x1 = point1.x.min(point2.x).min(point3.x).min(point4.x);
-    let x2 = point1.x.max(point2.x).max(point3.x).max(point4.x);
-    let y1 = point1.y.min(point2.y).min(point3.y).min(point4.y);
-    let y2 = point1.y.max(point2.y).max(point3.y).max(point4.y);
-
-    CGRect {
-        origin: CGPoint { x: x1, y: y1 },
-        size: CGSize {
-            width: x2 - x1,
-            height: y2 - y1,
-        },
-    }
+    transform.apply_to_rect(rect)
 }
 
 pub const FUNCTIONS: FunctionExports = &[

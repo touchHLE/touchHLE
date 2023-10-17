@@ -137,6 +137,9 @@ fn encode_a32_ret() -> u32 {
 fn encode_a32_trap() -> u32 {
     0xe7ffdefe
 }
+fn encode_t32_ret() -> u16 {
+    0x4770
+}
 
 fn write_return_to_host_routine(mem: &mut Mem, svc: u32) -> GuestFunction {
     let routine = [
@@ -214,6 +217,7 @@ impl Dyld {
             // Must happen before `register_bin_classes`, else superclass
             // pointers will be wrong.
             self.do_non_lazy_linking(bin, bins, mem, objc);
+            self.stub_unimplemented_functions(bin, mem);
         }
 
         objc.register_bin_classes(&bins[0], mem);
@@ -417,6 +421,14 @@ impl Dyld {
         }
     }
 
+    fn stub_unimplemented_functions(&self, bin: &MachO, mem: &mut Mem) {
+        for symbol in ["__Z15iGMGSetupModulev", "__Z15iRegSetupModulev"] {
+            let Some(addr) = bin.debug_symbols.get(symbol) else {
+                continue;
+            };
+            mem.write(Ptr::from_bits(*addr), encode_t32_ret());
+        }
+    }
     /// Return a host function that can be called to handle an SVC instruction
     /// encountered during CPU emulation. If `None` is returned, the execution
     /// needs to resume at `svc_pc`.

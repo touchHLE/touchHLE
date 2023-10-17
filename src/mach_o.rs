@@ -51,6 +51,9 @@ pub struct MachO {
     pub external_relocations: Vec<(u32, String)>,
     /// Address/program counter value for the entry point.
     pub entry_point_pc: Option<u32>,
+    /// Used to detect and disable ad frameworks that require much more UIKit
+    /// than we currently have
+    pub debug_symbols: HashMap<String, u32>,
 }
 
 #[derive(Debug)]
@@ -306,6 +309,7 @@ impl MachO {
         // Info used for the result
         let mut dynamic_libraries = Vec::new();
         let mut exported_symbols = HashMap::new();
+        let mut debug_symbols = HashMap::new();
         let mut indirect_undef_symbols: Vec<Option<String>> = Vec::new();
         let mut external_relocations: Vec<(u32, String)> = Vec::new();
         let mut entry_point_pc: Option<u32> = None;
@@ -395,8 +399,9 @@ impl MachO {
                             is_64bit,
                         );
                         for symbol in symbols {
-                            if let Symbol::Debug { .. } = symbol {
-                                continue;
+                            if let Symbol::Debug { name, addr, .. } = symbol {
+                                let addr = addr as u32;
+                                debug_symbols.insert(name.unwrap_or_default().to_string(), addr);
                             }
                             if let Symbol::Defined {
                                 name: Some(name),
@@ -614,6 +619,7 @@ impl MachO {
             exported_symbols,
             external_relocations,
             entry_point_pc,
+            debug_symbols,
         })
     }
 

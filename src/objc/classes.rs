@@ -415,7 +415,7 @@ fn substitute_classes(
     // makes a lot of use of UIKit in ways we don't support yet, so it's easier
     // to skip this. This isn't "ad blocking" because ads no longer work on real
     // devices anyway :)
-    if !(name.starts_with("AdMob") || name.starts_with("AltAds") || name.starts_with("Mobclix")) {
+    if !(name.starts_with("AdMob") || name.starts_with("AltAds") || name.starts_with("Mobclix") || name == "UserRegViewController" || name == "GMGChocolateBarViewController") {
         return None;
     }
 

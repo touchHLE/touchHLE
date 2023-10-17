@@ -467,4 +467,6 @@ fn adopt_subview(env: &mut Environment, this: id, view: id) {
     let this_obj = env.objc.borrow_mut::<UIViewHostObject>(this);
     let this_layer = this_obj.layer;
     () = msg![env; this_layer addSublayer:subview_layer];
+    () = msg![env; this layoutSubviews];
+    () = msg![env; view layoutSubviews];
 }

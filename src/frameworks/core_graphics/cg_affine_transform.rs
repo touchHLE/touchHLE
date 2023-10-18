@@ -136,11 +136,13 @@ impl CGAffineTransform {
     }
 
     pub fn apply_to_point(self, point: CGPoint) -> CGPoint {
-        let [x, y, _z] = Matrix::<3>::transform(&self.into(), [point.x, point.y, 0.0]);
+        // z = 1 makes the translation (in homogenous co-ordinates) be applied
+        let [x, y, _] = Matrix::<3>::transform(&self.into(), [point.x, point.y, 1.0]);
         CGPoint { x, y }
     }
     pub fn apply_to_size(self, size: CGSize) -> CGSize {
-        let [width, height, _depth] =
+        // z = 0 makes the translation (in homogenous co-ordinates) be ignored
+        let [width, height, _] =
             Matrix::<3>::transform(&self.into(), [size.width, size.height, 0.0]);
         CGSize { width, height }
     }

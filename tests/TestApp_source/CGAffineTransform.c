@@ -194,12 +194,23 @@ int test_CGAffineTransform(void) {
                                 CGPointApplyAffineTransform(
                                     (CGPoint){2.0, 3.0},
                                     CGAffineTransformMakeScale(-1.0, 2.0)));
+  success = success && CGPointEqualToPoint(
+                           (CGPoint){-2.0, -3.0},
+                           CGPointApplyAffineTransform(
+                               (CGPoint){2.0, 3.0},
+                               CGAffineTransformMakeTranslation(-4.0, -6.0)));
 
   success =
       success && CGSizeEqualToSize((CGSize){-2.0, 6.0},
                                    CGSizeApplyAffineTransform(
                                        (CGSize){2.0, 3.0},
                                        CGAffineTransformMakeScale(-1.0, 2.0)));
+  // Translation does not affect size
+  success =
+      success && CGSizeEqualToSize((CGSize){2.0, 3.0},
+                                   CGSizeApplyAffineTransform(
+                                       (CGSize){2.0, 3.0},
+                                       CGAffineTransformMakeTranslation(2.0, 3.0)));
 
   // Non-rectangle-preserving transforms are more complicated, not tested here.
   success =

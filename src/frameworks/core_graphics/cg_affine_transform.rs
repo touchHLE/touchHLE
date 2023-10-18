@@ -127,6 +127,13 @@ impl CGAffineTransform {
     pub fn translate(self, x: CGFloat, y: CGFloat) -> Self {
         self.concat(Self::make_translation(x, y))
     }
+    pub fn invert(self) -> Self {
+        if let Some(inverse) = Matrix::<3>::from(&self.into()).inverse() {
+            inverse.try_into().unwrap()
+        } else {
+            self
+        }
+    }
 
     pub fn apply_to_point(self, point: CGPoint) -> CGPoint {
         let [x, y, _z] = Matrix::<3>::transform(&self.into(), [point.x, point.y, 0.0]);
@@ -245,6 +252,12 @@ pub fn CGAffineTransformTranslate(
 ) -> CGAffineTransform {
     existing.translate(x, y)
 }
+pub fn CGAffineTransformInvert(
+    _env: &mut Environment,
+    existing: CGAffineTransform,
+) -> CGAffineTransform {
+    existing.invert()
+}
 
 fn CGPointApplyAffineTransform(
     _env: &mut Environment,
@@ -279,6 +292,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGAffineTransformRotate(_, _)),
     export_c_func!(CGAffineTransformScale(_, _, _)),
     export_c_func!(CGAffineTransformTranslate(_, _, _)),
+    export_c_func!(CGAffineTransformInvert(_)),
     export_c_func!(CGPointApplyAffineTransform(_, _)),
     export_c_func!(CGSizeApplyAffineTransform(_, _)),
     export_c_func!(CGRectApplyAffineTransform(_, _)),

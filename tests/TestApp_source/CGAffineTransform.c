@@ -55,6 +55,7 @@ CGAffineTransform CGAffineTransformRotate(CGAffineTransform, CGFloat);
 CGAffineTransform CGAffineTransformScale(CGAffineTransform, CGFloat, CGFloat);
 CGAffineTransform CGAffineTransformTranslate(CGAffineTransform, CGFloat,
                                              CGFloat);
+CGAffineTransform CGAffineTransformInvert(CGAffineTransform);
 CGPoint CGPointApplyAffineTransform(CGPoint, CGAffineTransform);
 CGSize CGSizeApplyAffineTransform(CGSize, CGAffineTransform);
 CGRect CGRectApplyAffineTransform(CGRect, CGAffineTransform);
@@ -166,6 +167,27 @@ int test_CGAffineTransform(void) {
                            CGAffineTransformMakeTranslation(2.0, 3.0),
                            CGAffineTransformTranslate(identity_from_initializer,
                                                       2.0, 3.0));
+
+  success =
+      success && CGAffineTransformEqualToTransform(identity_from_initializer,
+                                                   identity_from_initializer);
+  {
+    // Non-invertible matrix (determinant is zero). CGAffineTransformInvert is
+    // specified as returning the input unchanged if it can't be inverted.
+    CGAffineTransform non_invertible = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+    success =
+        success && CGAffineTransformEqualToTransform(
+                       non_invertible, CGAffineTransformInvert(non_invertible));
+  }
+  success =
+      success &&
+      CGAffineTransformEqualToTransform(
+          CGAffineTransformInvert(CGAffineTransformMakeTranslation(2.0, 3.0)),
+          CGAffineTransformMakeTranslation(-2.0, -3.0));
+  success = success &&
+            CGAffineTransformEqualToTransform(
+                CGAffineTransformInvert(CGAffineTransformMakeScale(2.0, 4.0)),
+                CGAffineTransformMakeScale(0.5, 0.25));
 
   success = success &&
             CGPointEqualToPoint((CGPoint){-2.0, 6.0},

@@ -325,7 +325,7 @@ impl Window {
             let x = (in_x - vx as f32) / vw as f32 - 0.5;
             let y = (in_y - vy as f32) / vh as f32 - 0.5;
             // rotate
-            let matrix = window.input_rotation_matrix();
+            let matrix = window.rotation_matrix();
             let [x, y] = matrix.transform([x, y]);
             // back to pixels
             let (out_w, out_h) = window.size_unrotated_unscaled();
@@ -513,7 +513,7 @@ impl Window {
         let (x, y, _) = self.get_controller_stick(options, true);
 
         // Correct for window rotation
-        let [x, y] = self.input_rotation_matrix().transform([x, y]);
+        let [x, y] = self.rotation_matrix().transform([x, y]);
         let (x, y) = (x.clamp(-1.0, 1.0), y.clamp(-1.0, 1.0)); // just in case
 
         // Let's simulate tilting the device based on the analog stick inputs.
@@ -689,7 +689,7 @@ impl Window {
 
         // OpenGL ES expects bottom-to-top row order for image data, but our
         // image data will be top-to-bottom. A reflection transform compensates.
-        let matrix = self.output_rotation_matrix().multiply(&Matrix::y_flip());
+        let matrix = self.rotation_matrix().multiply(&Matrix::y_flip());
         let (vx, vy, vw, vh) = self.viewport();
         let viewport = (vx, vy + self.viewport_y_offset(), vw, vh);
 
@@ -867,23 +867,14 @@ impl Window {
     }
 
     /// Transformation matrix for texture co-ordinates when sampling the
-    /// framebuffer presented by the app. Rotates the framebuffer to match the
-    /// window. See [Self::rotate_device].
-    pub fn output_rotation_matrix(&self) -> Matrix<2> {
+    /// framebuffer presented by the app and for touch inputs received by the
+    /// window. Rotates from the window co-ordinate space to the app co-ordinate
+    /// space. See [Self::rotate_device].
+    pub fn rotation_matrix(&self) -> Matrix<2> {
         match self.device_orientation {
             DeviceOrientation::Portrait => Matrix::identity(),
             DeviceOrientation::LandscapeLeft => Matrix::z_rotation(-FRAC_PI_2),
             DeviceOrientation::LandscapeRight => Matrix::z_rotation(FRAC_PI_2),
-        }
-    }
-
-    /// Transformation matrix for touch inputs received by the window. Rotates
-    /// them to match the app. See [Self::rotate_device].
-    pub fn input_rotation_matrix(&self) -> Matrix<2> {
-        match self.device_orientation {
-            DeviceOrientation::Portrait => Matrix::identity(),
-            DeviceOrientation::LandscapeLeft => Matrix::z_rotation(FRAC_PI_2),
-            DeviceOrientation::LandscapeRight => Matrix::z_rotation(-FRAC_PI_2),
         }
     }
 

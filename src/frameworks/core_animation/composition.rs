@@ -117,7 +117,7 @@ pub fn recomposite_if_necessary(env: &mut Environment) -> Option<Instant> {
     let fb_height = screen_bounds.size.height as u32 * scale_hack;
     let present_frame_args = (
         env.window().viewport(),
-        env.window().output_rotation_matrix(),
+        env.window().rotation_matrix(),
         env.window().virtual_cursor_visible_at(),
     );
 

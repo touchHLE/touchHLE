@@ -499,7 +499,7 @@ unsafe fn present_renderbuffer(gles: &mut dyn GLES, window: &mut Window) {
     present_frame(
         gles,
         window.viewport(),
-        window.output_rotation_matrix(),
+        window.rotation_matrix(),
         window.virtual_cursor_visible_at(),
     );
 

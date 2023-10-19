@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "eacfdaab_5c43dea9",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 9
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-10-19T15:15:06Z",
+      "side": 1,
+      "message": "I think this is obsoleted by https://github.com/hikari-no-yume/touchHLE/commit/54503eaa669e79f74f980ddeb48c8ccd71db9a0e, can you verify?",
+      "revId": "49446b9fe536f0b948bcf3105a4bcfbc3e3847d0",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

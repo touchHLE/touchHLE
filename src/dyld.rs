@@ -296,7 +296,12 @@ impl Dyld {
     fn do_non_lazy_linking(&mut self, bin: &MachO, bins: &[MachO], mem: &mut Mem, objc: &mut ObjC) {
         let mut unhandled_relocations: HashMap<&str, Vec<u32>> = HashMap::new();
         for &(ptr_ptr, ref name) in &bin.external_relocations {
-            let ptr: ConstVoidPtr = if let Some(name) = name.strip_prefix("_OBJC_CLASS_$_") {
+            let ptr_ptr: MutPtr<ConstVoidPtr> = Ptr::from_bits(ptr_ptr);
+            // There will be an existing value at the address, which is an
+            // offset that should be applied to the external symbol's address.
+            // It is often 0, but not always.
+            let offset: u32 = mem.read(ptr_ptr).to_bits();
+            let target: ConstVoidPtr = if let Some(name) = name.strip_prefix("_OBJC_CLASS_$_") {
                 objc.link_class(name, /* is_metaclass: */ false, mem)
                     .cast()
                     .cast_const()
@@ -318,10 +323,18 @@ impl Dyld {
                 // Often used for C++ RTTI
                 Ptr::from_bits(external_addr)
             } else {
-                unhandled_relocations.entry(name).or_default().push(ptr_ptr);
+                unhandled_relocations
+                    .entry(name)
+                    .or_default()
+                    .push(ptr_ptr.to_bits());
                 continue;
             };
-            mem.write(Ptr::from_bits(ptr_ptr), ptr)
+            // wrapping_add() is used in case the offset is negative. I haven't
+            // seen it happen, but it would make sense if that is allowed.
+            mem.write(
+                ptr_ptr,
+                Ptr::from_bits(target.to_bits().wrapping_add(offset)),
+            )
         }
         // Collecting unhandled relocations for the same symbol onto one line
         // makes the log output much less spammy.

@@ -70,6 +70,24 @@
       "parentUuid": "37aaaa02_e0741c79",
       "revId": "163ee6891c206d52d5deff380ad7a63cf2ac352b",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9d3a3d44_ccae6cde",
+        "filename": "touchHLE_default_options.txt",
+        "patchSetId": 9
+      },
+      "lineNbr": 52,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-10-19T20:04:39Z",
+      "side": 1,
+      "message": "Actually the touchHLE default angle (with only --landscape-left in touchHLE_default_options.txt) seems playable to me, but maybe it can be tweaked. I\u0027m guessing you don\u0027t have easy access to a game controller? I can experiment myself if so.",
+      "parentUuid": "7b117321_d2a31dfc",
+      "revId": "163ee6891c206d52d5deff380ad7a63cf2ac352b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

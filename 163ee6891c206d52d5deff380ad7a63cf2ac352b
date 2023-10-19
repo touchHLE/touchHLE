@@ -16,6 +16,24 @@
       "message": "Hmm, in my testing it behaves a bit weirdly with the simulated accelerometer input. Maybe it needs a tilt angle adjustment like for Super Monkey Ball?",
       "revId": "163ee6891c206d52d5deff380ad7a63cf2ac352b",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "513739af_b5c09eb4",
+        "filename": "touchHLE_default_options.txt",
+        "patchSetId": 9
+      },
+      "lineNbr": 52,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-10-19T17:37:17Z",
+      "side": 1,
+      "message": "Actually that\u0027s probably my fault due to a change I made on trunk related to matrices, I\u0027ll get back to you on this.",
+      "parentUuid": "5826c4cb_cdd1c0d1",
+      "revId": "163ee6891c206d52d5deff380ad7a63cf2ac352b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

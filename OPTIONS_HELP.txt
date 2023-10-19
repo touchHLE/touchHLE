@@ -42,22 +42,29 @@ Game controller options:
 
     --x-tilt-range=...
     --y-tilt-range=...
-        Set the simulated rotation range of the device on its X or Y axis.
+        Set the simulated rotation range of the device axis mapped to the analog
+        stick X or Y axis.
+
+        Positive X on the analog stick is mapped to tilting the device rightward
+        and positive Y is mapped to tilting the device forward.
 
         By default, an analog stick's axis is mapped to a rotation range of 60°
         (30° in either direction). If you wanted a range of 90° on the X axis,
         you could use --x-tilt-range=90.
 
-        Note that the device's X axis is mapped to the analog stick's Y axis
-        and vice-versa, because tilting the device to the left means rotating
-        it on its Y axis, and so on.
+        For historical reasons, the device's X axis is mapped to the analog
+        stick's Y axis and vice versa, as if the device is held in landscape.
 
         This is a floating-point (decimal) number of degrees, without a degree
         symbol. It may be negative.
 
     --x-tilt-offset=...
     --y-tilt-offset=...
-        Offset the simulated angle of the device on its X or Y axis.
+        Offset the simulated angle of the device axis mapped to the analog stick
+        X or Y axis.
+
+        Positive X on the analog stick is mapped to tilting the device rightward
+        and positive Y is mapped to tilting the device forward.
 
         By default, the device is simulated as being level with the ground when
         the stick is in the center/neutral position. This option is intended for
@@ -65,10 +72,6 @@ Game controller options:
         position. For example, if a game expects you to hold the device in a
         landscape orientation, with a 45° angle to the ground, you might use
         --y-tilt-offset=45.
-
-        Note that the device's X axis is mapped to the analog stick's Y axis
-        and vice-versa, because tilting the device to the left means rotating
-        it on its Y axis, and so on.
 
         This is a floating-point (decimal) number of degrees, without a degree
         symbol. It may be negative.

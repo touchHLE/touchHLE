@@ -52,6 +52,17 @@ impl<const N: usize> Matrix<N> {
         Matrix(res)
     }
 
+    pub fn transpose(&self) -> Self {
+        let mut res = [[0f32; N]; N];
+        #[allow(clippy::needless_range_loop)]
+        for i in 0..N {
+            for j in 0..N {
+                res[j][i] = self.0[i][j];
+            }
+        }
+        Matrix(res)
+    }
+
     /// Transform a vector using the matrix.
     pub fn transform(&self, vector: [f32; N]) -> [f32; N] {
         let mut new = [0f32; N];

@@ -531,15 +531,18 @@ impl Window {
         let neutral_y = options.y_tilt_offset.to_radians();
         let x_rotation_range = options.x_tilt_range.to_radians() / 2.0;
         let y_rotation_range = options.y_tilt_range.to_radians() / 2.0;
-        // (x, y) are swapped and inverted because the controller Y axis usually
-        // corresponds to forward/backward movement, but rotating about the Y
-        // axis means tilting the device left/right, and gravity points in the
-        // opposite direction of the device's tilt.
+        // (x, y) are swapped because the controller Y axis usually corresponds
+        // to forward/backward movement, but rotating about the Y axis means
+        // tilting the device left/right.
+        // There used to be a bug in the matrix multiplication code that made it
+        // behave as if the matrix was transposed. This code was written before
+        // that was discovered, so it is probably incoherent. It might be worth
+        // rewriting it eventually (without changing how it behaves).
         let x_rotation = neutral_x - x_rotation_range * y;
         let y_rotation = neutral_y - y_rotation_range * x;
-
-        let matrix =
-            Matrix::<3>::y_rotation(y_rotation).multiply(&Matrix::<3>::x_rotation(x_rotation));
+        let matrix = Matrix::<3>::y_rotation(y_rotation)
+            .multiply(&Matrix::<3>::x_rotation(x_rotation))
+            .transpose();
         let [x, y, z] = matrix.transform(gravity);
 
         (x, y, z)

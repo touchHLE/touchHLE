@@ -114,7 +114,7 @@ impl CGAffineTransform {
         Matrix::<3>::translate_2d(x, y).try_into().unwrap()
     }
     pub fn concat(self, other: Self) -> Self {
-        Matrix::<3>::multiply(&self.into(), &other.into())
+        Matrix::<3>::multiply(&other.into(), &self.into())
             .try_into()
             .unwrap()
     }

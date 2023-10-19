@@ -189,6 +189,20 @@ int test_CGAffineTransform(void) {
                 CGAffineTransformInvert(CGAffineTransformMakeScale(2.0, 4.0)),
                 CGAffineTransformMakeScale(0.5, 0.25));
 
+  // Test the order of operands for matrix multiplication (non-commutative).
+  success =
+      success && CGAffineTransformEqualToTransform(
+                     CGAffineTransformConcat(
+                         CGAffineTransformMake(-1.0, 0.0, 0.0, -1.0, 0.0, 0.0),
+                         CGAffineTransformMake(1.0, 0.0, 0.0, 1.0, 2.0, 3.0)),
+                     CGAffineTransformMake(-1.0, 0.0, 0.0, -1.0, 2.0, 3.0));
+  success =
+      success && CGAffineTransformEqualToTransform(
+                     CGAffineTransformConcat(
+                         CGAffineTransformMake(1.0, 0.0, 0.0, 1.0, 2.0, 3.0),
+                         CGAffineTransformMake(-1.0, 0.0, 0.0, -1.0, 0.0, 0.0)),
+                     CGAffineTransformMake(-1.0, 0.0, 0.0, -1.0, -2.0, -3.0));
+
   // Test the order that the convenience functions' transforms are applied in
   // (Matrix multiplication is non-commutative.)
   success =

@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1b8194a0_d436f1a9",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-10-19T17:19:07Z",
+      "side": 1,
+      "message": "I\u0027m fairly confident in this patch, so I don\u0027t need you to review the code (though feedback is appreciated), but if you could test this in KataDama that\u0027d be great. The only things needed on top of trunk now seem to be this patch, the default options patch and the space width patch.",
+      "revId": "56eb4669444dd0112c75e43ae98ef3636ab367f3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

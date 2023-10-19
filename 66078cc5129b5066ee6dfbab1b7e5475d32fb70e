@@ -3,6 +3,23 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "53755475_b667f1eb",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 8
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-10-19T17:16:39Z",
+      "side": 1,
+      "message": "I\u0027ve done my own implementation here, which seems to work better in KataDama (no assertion failure due to attempting to free a buffer present in the queue): https://review.gerrithub.io/c/hikari-no-yume/touchHLE/+/1170947",
+      "revId": "66078cc5129b5066ee6dfbab1b7e5475d32fb70e",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "6b3fd4da_142eb4ac",
         "filename": "src/frameworks/audio_toolbox/audio_queue.rs",
         "patchSetId": 8

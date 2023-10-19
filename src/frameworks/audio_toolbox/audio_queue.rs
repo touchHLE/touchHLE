@@ -90,13 +90,22 @@ struct AudioQueueHostObject {
     /// the nth item in this queue must also be the nth item in the OpenAL
     /// queue, though the OpenAL queue may be shorter.
     buffer_queue: VecDeque<AudioQueueBufferRef>,
-    /// Tracks whether this audio queue has been started, so we can restart the
-    /// OpenAL source if it automatically stops due to running out of data.
-    is_running: bool,
+    is_running: AudioQueueIsRunning,
     al_source: Option<ALuint>,
     al_unused_buffers: Vec<ALuint>,
     aq_is_running_proc: Option<AudioQueuePropertyListenerProc>,
     aq_is_running_user_data: Option<MutVoidPtr>,
+}
+
+/// Track whether the audio queue is meant to be running, in order to handle
+/// OpenAL stop events caused by running out of data:
+/// - If it's running, the OpenAL source can be restarted.
+/// - If it's stopping asynchronously, the audio queue stop can be completed.
+#[derive(PartialEq, Eq, Clone, Copy)]
+enum AudioQueueIsRunning {
+    Running,
+    Stopping,
+    Stopped,
 }
 
 #[repr(C, packed)]
@@ -179,7 +188,7 @@ fn AudioQueueNewOutput(
         volume: 1.0,
         buffers: Vec::new(),
         buffer_queue: VecDeque::new(),
-        is_running: false,
+        is_running: AudioQueueIsRunning::Running,
         al_source: None,
         al_unused_buffers: Vec::new(),
         aq_is_running_proc: None,
@@ -405,7 +414,11 @@ fn AudioQueueGetProperty(
 
     match in_property_id {
         kAudioQueueProperty_IsRunning => {
-            let is_running: u32 = host_object.is_running.into();
+            let is_running: u32 = match host_object.is_running {
+                AudioQueueIsRunning::Running => 1,
+                AudioQueueIsRunning::Stopping => 1,
+                AudioQueueIsRunning::Stopped => 0,
+            };
             env.mem.write(out_property_data.cast(), is_running);
         }
         _ => unreachable!(),
@@ -666,7 +679,7 @@ pub fn handle_audio_queue(env: &mut Environment, in_aq: AudioQueueRef) {
 
     let _context_manager = prime_audio_queue(env, in_aq, Some(context_manager));
 
-    if is_running {
+    if is_running != AudioQueueIsRunning::Stopped {
         unsafe {
             let mut al_source_state = 0;
             al::alGetSourcei(al_source, al::AL_SOURCE_STATE, &mut al_source_state);
@@ -680,6 +693,24 @@ pub fn handle_audio_queue(env: &mut Environment, in_aq: AudioQueueRef) {
                 al::alSourcePlay(al_source);
                 log_dbg!("Restarted OpenAL source for queue {:?}", in_aq);
             }
+        }
+    }
+
+    if is_running == AudioQueueIsRunning::Stopping {
+        let mut al_source_state = 0;
+        unsafe {
+            al::alGetSourcei(al_source, al::AL_SOURCE_STATE, &mut al_source_state);
+            assert!(al::alGetError() == 0);
+        }
+
+        // If OpenAL still says the source is stopped, it must have run out of
+        // data, and therefore it's time to complete the "asynchronous stop".
+        if al_source_state == al::AL_STOPPED {
+            log_dbg!(
+                "OpenAL source stopped for queue {:?}, completing asynchronous stop.",
+                in_aq
+            );
+            finish_stopping_audio_queue(env, in_aq);
         }
     }
 }
@@ -730,7 +761,7 @@ fn AudioQueueStart(
         .get_mut(&in_aq)
         .unwrap();
 
-    host_object.is_running = true;
+    host_object.is_running = AudioQueueIsRunning::Running;
 
     if is_supported_audio_format(&host_object.format) {
         let al_source = host_object.al_source.unwrap();
@@ -756,7 +787,8 @@ fn AudioQueuePause(env: &mut Environment, in_aq: AudioQueueRef) -> OSStatus {
     let _context_manager = state.make_al_context_current();
 
     let host_object = state.audio_queues.get_mut(&in_aq).unwrap();
-    host_object.is_running = false;
+    // FIXME: is this correct? is it notifiable?
+    host_object.is_running = AudioQueueIsRunning::Stopped;
     if let Some(al_source) = host_object.al_source {
         unsafe { al::alSourcePause(al_source) };
         assert!(unsafe { al::alGetError() } == 0);
@@ -765,24 +797,84 @@ fn AudioQueuePause(env: &mut Environment, in_aq: AudioQueueRef) -> OSStatus {
     0 // success
 }
 
+fn finish_stopping_audio_queue(env: &mut Environment, in_aq: AudioQueueRef) {
+    // OpenAL stop is not done here because it would be redundant in the case
+    // of an asynchronous stop, where the audio queue stopping is triggered by
+    // the OpenAL queue stopping.
+    AudioQueueReset(env, in_aq);
+    State::get(&mut env.framework_state)
+        .audio_queues
+        .get_mut(&in_aq)
+        .unwrap()
+        .is_running = AudioQueueIsRunning::Stopped;
+    notify_aq_is_running(env, in_aq);
+}
+
 fn AudioQueueStop(env: &mut Environment, in_aq: AudioQueueRef, in_immediate: bool) -> OSStatus {
     return_if_null!(in_aq);
 
     let state = State::get(&mut env.framework_state);
 
-    let _context_manager = state.make_al_context_current();
-
-    let host_object = state.audio_queues.get_mut(&in_aq).unwrap();
-    host_object.is_running = false;
-
     if in_immediate {
+        log_dbg!("Performing immediate AudioQueueStop for {:?}.", in_aq);
+
+        let _context_manager = state.make_al_context_current();
+
+        let host_object = state.audio_queues.get_mut(&in_aq).unwrap();
         if let Some(al_source) = host_object.al_source {
             unsafe { al::alSourceStop(al_source) };
             assert!(unsafe { al::alGetError() } == 0);
+        };
+
+        finish_stopping_audio_queue(env, in_aq);
+    } else {
+        let host_object = state.audio_queues.get_mut(&in_aq).unwrap();
+        if host_object.is_running != AudioQueueIsRunning::Stopped {
+            log_dbg!("Starting asynchronous AudioQueueStop for {:?}.", in_aq);
+            host_object.is_running = AudioQueueIsRunning::Stopping;
+        } else {
+            log_dbg!(
+                "Ignoring asynchronous AudioQueueStop for {:?} (already stopped).",
+                in_aq
+            );
         }
     }
 
-    notify_aq_is_running(env, in_aq);
+    0 // success
+}
+
+fn AudioQueueReset(env: &mut Environment, in_aq: AudioQueueRef) -> OSStatus {
+    return_if_null!(in_aq);
+
+    let state = State::get(&mut env.framework_state);
+
+    log_dbg!("Resetting queue {:?}.", in_aq);
+
+    let _context_manager = state.make_al_context_current();
+
+    let host_object = state.audio_queues.get_mut(&in_aq).unwrap();
+
+    if let Some(al_source) = host_object.al_source {
+        unsafe {
+            let mut al_source_state = 0;
+            al::alGetSourcei(al_source, al::AL_SOURCE_STATE, &mut al_source_state);
+            assert!(al::alGetError() == 0);
+            if al_source_state != al::AL_STOPPED {
+                // If the source is not already stopped, it must be stopped in
+                // order to be able to clear its buffer queue. Note that the
+                // audio queue may still be considered "running".
+                al::alSourceStop(al_source);
+                assert!(al::alGetError() == 0);
+            }
+        }
+
+        unqueue_buffers(al_source, |al_buffer| {
+            host_object.al_unused_buffers.push(al_buffer);
+            host_object.buffer_queue.pop_front().unwrap();
+        });
+    }
+
+    host_object.buffer_queue.clear();
 
     0 // success
 }
@@ -874,6 +966,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(AudioQueueStart(_, _)),
     export_c_func!(AudioQueuePause(_)),
     export_c_func!(AudioQueueStop(_, _)),
+    export_c_func!(AudioQueueReset(_)),
     export_c_func!(AudioQueueFreeBuffer(_, _)),
     export_c_func!(AudioQueueDispose(_, _)),
 ];

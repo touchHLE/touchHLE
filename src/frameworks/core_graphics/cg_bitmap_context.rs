@@ -522,7 +522,7 @@ fn test_iter_transformed_pixels() {
     assert!(make_context(2, 2, CGAffineTransform::make_scale(0.5, 0.5))
         .iter_transformed_pixels(square_4x4_at_0_0)
         .eq(upright_square_2x2_at_0_0.clone().into_iter()));
-    assert!(make_context(2, 2, rotation_by_180deg.translate(-2.0, -2.0))
+    assert!(make_context(2, 2, rotation_by_180deg.translate(2.0, 2.0))
         .iter_transformed_pixels(square_2x2_at_0_0)
         .eq(inverted_square_2x2_at_0_0.clone().into_iter()));
 }

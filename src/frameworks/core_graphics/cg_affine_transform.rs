@@ -119,13 +119,13 @@ impl CGAffineTransform {
             .unwrap()
     }
     pub fn rotate(self, angle: CGFloat) -> Self {
-        self.concat(Self::make_rotation(angle))
+        Self::make_rotation(angle).concat(self)
     }
     pub fn scale(self, x: CGFloat, y: CGFloat) -> Self {
-        self.concat(Self::make_scale(x, y))
+        Self::make_scale(x, y).concat(self)
     }
     pub fn translate(self, x: CGFloat, y: CGFloat) -> Self {
-        self.concat(Self::make_translation(x, y))
+        Self::make_translation(x, y).concat(self)
     }
     pub fn invert(self) -> Self {
         if let Some(inverse) = Matrix::<3>::from(&self.into()).inverse() {

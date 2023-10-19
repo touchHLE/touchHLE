@@ -189,6 +189,51 @@ int test_CGAffineTransform(void) {
                 CGAffineTransformInvert(CGAffineTransformMakeScale(2.0, 4.0)),
                 CGAffineTransformMakeScale(0.5, 0.25));
 
+  // Test the order that the convenience functions' transforms are applied in
+  // (Matrix multiplication is non-commutative.)
+  success =
+      success &&
+      CGAffineTransformEqualToTransform(
+          CGAffineTransformConcat(CGAffineTransformMakeScale(-1.0, -1.0),
+                                  CGAffineTransformMakeTranslation(2.0, 3.0)),
+          CGAffineTransformScale(CGAffineTransformMakeTranslation(2.0, 3.0),
+                                 -1.0, -1.0));
+  success =
+      success &&
+      !CGAffineTransformEqualToTransform(
+          CGAffineTransformConcat(CGAffineTransformMakeTranslation(2.0, 3.0),
+                                  CGAffineTransformMakeScale(-1.0, -1.0)),
+          CGAffineTransformScale(CGAffineTransformMakeTranslation(2.0, 3.0),
+                                 -1.0, -1.0));
+  success =
+      success &&
+      CGAffineTransformEqualToTransform(
+          CGAffineTransformConcat(CGAffineTransformMakeTranslation(2.0, 3.0),
+                                  CGAffineTransformMakeScale(-1.0, -1.0)),
+          CGAffineTransformTranslate(CGAffineTransformMakeScale(-1.0, -1.0),
+                                     2.0, 3.0));
+  success =
+      success &&
+      !CGAffineTransformEqualToTransform(
+          CGAffineTransformConcat(CGAffineTransformMakeScale(-1.0, -1.0),
+                                  CGAffineTransformMakeTranslation(2.0, 3.0)),
+          CGAffineTransformTranslate(CGAffineTransformMakeScale(-1.0, -1.0),
+                                     2.0, 3.0));
+  // rotations are imprecise, use approximate comparison
+  // note that rotations don't care about application order, so both should work
+  success =
+      success &&
+      CGAffineTransformEqualToTransform(
+          CGAffineTransformConcat(CGAffineTransformMakeRotation(1.0),
+                                  CGAffineTransformMakeScale(-1.0, -1.0)),
+          CGAffineTransformRotate(CGAffineTransformMakeScale(-1.0, -1.0), 1.0));
+  success =
+      success &&
+      CGAffineTransformEqualToTransform(
+          CGAffineTransformConcat(CGAffineTransformMakeScale(-1.0, -1.0),
+                                  CGAffineTransformMakeRotation(1.0)),
+          CGAffineTransformRotate(CGAffineTransformMakeScale(-1.0, -1.0), 1.0));
+
   success = success &&
             CGPointEqualToPoint((CGPoint){-2.0, 6.0},
                                 CGPointApplyAffineTransform(
@@ -206,11 +251,11 @@ int test_CGAffineTransform(void) {
                                        (CGSize){2.0, 3.0},
                                        CGAffineTransformMakeScale(-1.0, 2.0)));
   // Translation does not affect size
-  success =
-      success && CGSizeEqualToSize((CGSize){2.0, 3.0},
-                                   CGSizeApplyAffineTransform(
-                                       (CGSize){2.0, 3.0},
-                                       CGAffineTransformMakeTranslation(2.0, 3.0)));
+  success = success &&
+            CGSizeEqualToSize((CGSize){2.0, 3.0},
+                              CGSizeApplyAffineTransform(
+                                  (CGSize){2.0, 3.0},
+                                  CGAffineTransformMakeTranslation(2.0, 3.0)));
 
   // Non-rectangle-preserving transforms are more complicated, not tested here.
   success =

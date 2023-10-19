@@ -296,15 +296,28 @@ impl Dyld {
     fn do_non_lazy_linking(&mut self, bin: &MachO, bins: &[MachO], mem: &mut Mem, objc: &mut ObjC) {
         let mut unhandled_relocations: HashMap<&str, Vec<u32>> = HashMap::new();
         for &(ptr_ptr, ref name) in &bin.external_relocations {
-            let ptr = if let Some(name) = name.strip_prefix("_OBJC_CLASS_$_") {
+            let ptr: ConstVoidPtr = if let Some(name) = name.strip_prefix("_OBJC_CLASS_$_") {
                 objc.link_class(name, /* is_metaclass: */ false, mem)
+                    .cast()
+                    .cast_const()
             } else if let Some(name) = name.strip_prefix("_OBJC_METACLASS_$_") {
                 objc.link_class(name, /* is_metaclass: */ true, mem)
+                    .cast()
+                    .cast_const()
             } else if name == "___CFConstantStringClassReference" {
                 // See ns_string::register_constant_strings
-                nil
+                nil.cast().cast_const()
+            } else if name == "__objc_empty_vtable" || name == "__objc_empty_cache" {
+                // Our Objective-C runtime doesn't use these
+                Ptr::null()
+            } else if let Some(&external_addr) = bins
+                .iter()
+                .flat_map(|other_bin| other_bin.exported_symbols.get(name))
+                .next()
+            {
+                // Often used for C++ RTTI
+                Ptr::from_bits(external_addr)
             } else {
-                // TODO: look up symbol, write pointer
                 unhandled_relocations.entry(name).or_default().push(ptr_ptr);
                 continue;
             };

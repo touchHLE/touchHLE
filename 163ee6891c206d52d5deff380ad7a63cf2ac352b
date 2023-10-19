@@ -52,6 +52,24 @@
       "parentUuid": "513739af_b5c09eb4",
       "revId": "163ee6891c206d52d5deff380ad7a63cf2ac352b",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "7b117321_d2a31dfc",
+        "filename": "touchHLE_default_options.txt",
+        "patchSetId": 9
+      },
+      "lineNbr": 52,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-10-19T20:02:48Z",
+      "side": 1,
+      "message": "I shall admit that I only tested on Android and initial angle could be wrong.\nDo you want me to keep the value from SMB settings?",
+      "parentUuid": "37aaaa02_e0741c79",
+      "revId": "163ee6891c206d52d5deff380ad7a63cf2ac352b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

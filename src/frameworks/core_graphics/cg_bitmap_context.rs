@@ -5,6 +5,7 @@
  */
 //! `CGBitmapContext.h`
 
+use super::cg_affine_transform::{CGAffineTransform, CGAffineTransformIdentity};
 use super::cg_color_space::{
     kCGColorSpaceGenericGray, kCGColorSpaceGenericRGB, CGColorSpaceHostObject, CGColorSpaceRef,
 };
@@ -15,7 +16,7 @@ use super::cg_image::{
     kCGImageAlphaPremultipliedFirst, kCGImageAlphaPremultipliedLast, kCGImageByteOrder32Big,
     kCGImageByteOrderDefault, CGBitmapInfo, CGImageAlphaInfo, CGImageRef,
 };
-use super::{CGFloat, CGRect};
+use super::{CGFloat, CGPoint, CGRect};
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::image::{gamma_decode, gamma_encode};
 use crate::mem::{GuestUSize, Mem, MutVoidPtr};
@@ -81,7 +82,7 @@ pub fn CGBitmapContextCreate(
         }),
         // TODO: is this the correct default?
         rgb_fill_color: (0.0, 0.0, 0.0, 0.0),
-        translation: (0.0, 0.0),
+        transform: CGAffineTransformIdentity,
     };
     let isa = env
         .objc
@@ -325,7 +326,7 @@ fn put_pixel(
 pub struct CGBitmapContextDrawer<'a> {
     bitmap_info: CGBitmapContextData,
     rgb_fill_color: (CGFloat, CGFloat, CGFloat, CGFloat),
-    translation: (CGFloat, CGFloat),
+    transform: CGAffineTransform,
     pixels: &'a mut [u8],
 }
 impl CGBitmapContextDrawer<'_> {
@@ -337,7 +338,7 @@ impl CGBitmapContextDrawer<'_> {
         let &CGContextHostObject {
             subclass: CGContextSubclass::CGBitmapContext(bitmap_info),
             rgb_fill_color,
-            translation,
+            transform,
         } = objc.borrow(context);
 
         let pixels = get_pixels(&bitmap_info, mem);
@@ -345,7 +346,7 @@ impl CGBitmapContextDrawer<'_> {
         CGBitmapContextDrawer {
             bitmap_info,
             rgb_fill_color,
-            translation,
+            transform,
             pixels,
         }
     }
@@ -355,9 +356,6 @@ impl CGBitmapContextDrawer<'_> {
     }
     pub fn height(&self) -> GuestUSize {
         self.bitmap_info.height
-    }
-    pub fn translation(&self) -> (CGFloat, CGFloat) {
-        self.translation
     }
     /// Get the current fill color. The returned color is linear RGB, not sRGB.
     /// It has premultiplied alpha if the context does.
@@ -377,7 +375,8 @@ impl CGBitmapContextDrawer<'_> {
         )
     }
     /// Set the pixel at `coords` to `color`. `color` must be linear RGB, not
-    /// sRGB! Note that `coords` are absolute: you must do translation yourself.
+    /// sRGB! Note that `coords` are absolute: you must do transformation
+    /// yourself.
     pub fn put_pixel(
         &mut self,
         coords: (i32, i32),
@@ -386,34 +385,160 @@ impl CGBitmapContextDrawer<'_> {
     ) {
         put_pixel(&self.bitmap_info, self.pixels, coords, color, blend)
     }
+
+    /// Takes a [CGRect] and applies the current transform to it, and iterates
+    /// over the transformed, clipped, absolute integer pixel co-ordinates in
+    /// raster order for the target bitmap while providing floating-point
+    /// co-ordinates from (0,0) to (1,1) as a reference for sampling e.g. a
+    /// texture.
+    pub fn iter_transformed_pixels(
+        &self,
+        untransformed_rect: CGRect,
+    ) -> impl Iterator<Item = ((i32, i32), (f32, f32))> {
+        let bounding_rect = self.transform.apply_to_rect(untransformed_rect);
+
+        let x_start = bounding_rect.origin.x.round().max(0.0) as GuestUSize;
+        let y_start = bounding_rect.origin.y.round().max(0.0) as GuestUSize;
+        let x_end = (bounding_rect.origin.x + bounding_rect.size.width)
+            .round()
+            .min(self.width() as f32) as GuestUSize;
+        let y_end = (bounding_rect.origin.y + bounding_rect.size.height)
+            .round()
+            .min(self.height() as f32) as GuestUSize;
+
+        let inverse_transform = self.transform.invert();
+
+        // TODO: Doing a matrix multiply per-pixel is not optimally efficient.
+        // A scanline rasterizer would be better, though we should probably use
+        // an existing library for this.
+        (y_start..y_end).flat_map(move |y| {
+            (x_start..x_end).flat_map(move |x| {
+                let untransformed = inverse_transform.apply_to_point(CGPoint {
+                    x: x as f32 + 0.5,
+                    y: y as f32 + 0.5,
+                });
+                let x_within =
+                    (untransformed.x - untransformed_rect.origin.x) / untransformed_rect.size.width;
+                let y_within = (untransformed.y - untransformed_rect.origin.y)
+                    / untransformed_rect.size.height;
+                if !(0.0..1.0).contains(&x_within) || !(0.0..1.0).contains(&y_within) {
+                    None
+                } else {
+                    Some(((x as i32, y as i32), (x_within, y_within)))
+                }
+            })
+        })
+    }
+}
+
+#[cfg(test)]
+#[test]
+fn test_iter_transformed_pixels() {
+    use super::CGSize;
+
+    fn make_context(
+        width: GuestUSize,
+        height: GuestUSize,
+        transform: CGAffineTransform,
+    ) -> CGBitmapContextDrawer<'static> {
+        CGBitmapContextDrawer {
+            bitmap_info: CGBitmapContextData {
+                data: crate::mem::Ptr::null(),
+                data_is_owned: false,
+                width,
+                height,
+                bits_per_component: 8,
+                bytes_per_row: 3 * width,
+                color_space: "kCGColorSpaceGenericRGB",
+                alpha_info: 0,
+            },
+            rgb_fill_color: (0.0, 0.0, 0.0, 0.0),
+            transform,
+            pixels: &mut [],
+        }
+    }
+
+    let square_2x2_at_0_0 = CGRect {
+        origin: CGPoint { x: 0.0, y: 0.0 },
+        size: CGSize {
+            width: 2.0,
+            height: 2.0,
+        },
+    };
+    let square_2x2_at_2_2 = CGRect {
+        origin: CGPoint { x: 2.0, y: 2.0 },
+        size: CGSize {
+            width: 2.0,
+            height: 2.0,
+        },
+    };
+    let square_4x4_at_0_0 = CGRect {
+        origin: CGPoint { x: 0.0, y: 0.0 },
+        size: CGSize {
+            width: 4.0,
+            height: 4.0,
+        },
+    };
+
+    let upright_square_2x2_at_0_0 = [
+        ((0, 0), (0.25, 0.25)),
+        ((1, 0), (0.75, 0.25)),
+        ((0, 1), (0.25, 0.75)),
+        ((1, 1), (0.75, 0.75)),
+    ];
+    let inverted_square_2x2_at_0_0 = [
+        ((0, 0), (0.75, 0.75)),
+        ((1, 0), (0.25, 0.75)),
+        ((0, 1), (0.75, 0.25)),
+        ((1, 1), (0.25, 0.25)),
+    ];
+    let corner_pixel_of_upright_square_2x2_at_1_1 = [((1, 1), (0.25, 0.25))];
+
+    // Constructed by hand so the results are precise
+    let rotation_by_180deg = CGAffineTransform {
+        a: -1.0,
+        c: 0.0,
+        b: 0.0,
+        d: -1.0,
+        tx: 0.0,
+        ty: 0.0,
+    };
+
+    assert!(make_context(2, 2, CGAffineTransformIdentity)
+        .iter_transformed_pixels(square_2x2_at_0_0)
+        .eq(upright_square_2x2_at_0_0.clone().into_iter()));
+    assert!(
+        make_context(2, 2, CGAffineTransform::make_translation(-2.0, -2.0))
+            .iter_transformed_pixels(square_2x2_at_2_2)
+            .eq(upright_square_2x2_at_0_0.clone().into_iter())
+    );
+    assert!(
+        make_context(2, 2, CGAffineTransform::make_translation(-1.0, -1.0))
+            .iter_transformed_pixels(square_2x2_at_2_2)
+            .eq(corner_pixel_of_upright_square_2x2_at_1_1
+                .clone()
+                .into_iter())
+    );
+    assert!(make_context(2, 2, CGAffineTransform::make_scale(0.5, 0.5))
+        .iter_transformed_pixels(square_4x4_at_0_0)
+        .eq(upright_square_2x2_at_0_0.clone().into_iter()));
+    assert!(make_context(2, 2, rotation_by_180deg.translate(-2.0, -2.0))
+        .iter_transformed_pixels(square_2x2_at_0_0)
+        .eq(inverted_square_2x2_at_0_0.clone().into_iter()));
 }
 
 /// Implementation of `CGContextFillRect` (`clear` == [false]) and
 /// `CGContextClearRect` (`clear` == [true]) for `CGBitmapContext`.
 pub(super) fn fill_rect(env: &mut Environment, context: CGContextRef, rect: CGRect, clear: bool) {
     let mut drawer = CGBitmapContextDrawer::new(&env.objc, &mut env.mem, context);
-
-    // TODO: correct anti-aliasing
-    let translation = drawer.translation();
-    let origin = (translation.0 + rect.origin.x, translation.1 + rect.origin.y);
-    let x_start = origin.0.round().max(0.0) as GuestUSize;
-    let y_start = origin.1.round().max(0.0) as GuestUSize;
-    let x_end = (origin.0 + rect.size.width)
-        .round()
-        .min(drawer.width() as f32) as GuestUSize;
-    let y_end = (origin.1 + rect.size.height)
-        .round()
-        .min(drawer.height() as f32) as GuestUSize;
-
     let color = if clear {
         (0.0, 0.0, 0.0, 0.0)
     } else {
         drawer.rgb_fill_color()
     };
-    for y in y_start..y_end {
-        for x in x_start..x_end {
-            drawer.put_pixel((x as _, y as _), color, /* blend: */ !clear)
-        }
+    // TODO: correct anti-aliasing
+    for ((x, y), _) in drawer.iter_transformed_pixels(rect) {
+        drawer.put_pixel((x, y), color, /* blend: */ !clear)
     }
 }
 
@@ -432,36 +557,17 @@ pub(super) fn draw_image(
 
     // let _ = std::fs::write(format!("bitmap-{:?}-{:?}-before.data", (image as *const _ as *const ()), (drawer.width(), drawer.height())), &drawer.pixels);
 
-    // TODO: correct anti-aliasing
-    let translation = drawer.translation();
-    let origin = (translation.0 + rect.origin.x, translation.1 + rect.origin.y);
-    let x_start = origin.0.round() as i32;
-    let y_start = origin.1.round() as i32;
-    let x_end = (origin.0 + rect.size.width).round() as i32;
-    let y_end = (origin.1 + rect.size.height).round() as i32;
-    let dest_width = x_end - x_start;
-    let dest_height = y_end - y_start;
-
     let (image_width, image_height) = image.dimensions();
 
     // TODO: non-nearest-neighbour filtering? (what does CG actually do?)
-    for y in y_start..y_end {
-        for x in x_start..x_end {
-            // Note: this clamping needs to be done here, not above, so that
-            // the image will be clipped correctly if it overhangs the canvas.
-            if x < 0 || y < 0 || x as u32 >= drawer.width() || y as u32 >= drawer.height() {
-                continue;
-            }
 
-            let texel_x = (0.5 + (x - x_start) as f32) / dest_width as f32;
-            let texel_y = (0.5 + (y - y_start) as f32) / dest_height as f32;
-            let texel_x = (image_width as f32 * texel_x) as i32;
-            // Image is in top-to-bottom order, but the bitmap is bottom-to-top
-            let texel_y = (image_height as f32 * (1.0 - texel_y)) as i32;
-            // FIXME: might need alpha format conversion here
-            if let Some(color) = image.get_pixel((texel_x, texel_y)) {
-                drawer.put_pixel((x, y), color, /* blend: */ true)
-            }
+    for ((x, y), (texel_x, texel_y)) in drawer.iter_transformed_pixels(rect) {
+        let texel_x = (image_width as f32 * texel_x) as i32;
+        // Image is in top-to-bottom order, but the bitmap is bottom-to-top
+        let texel_y = (image_height as f32 * (1.0 - texel_y)) as i32;
+        // FIXME: might need alpha format conversion here
+        if let Some(color) = image.get_pixel((texel_x, texel_y)) {
+            drawer.put_pixel((x, y), color, /* blend: */ true)
         }
     }
 

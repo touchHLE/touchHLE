@@ -5,6 +5,7 @@
  */
 //! `CGContext.h`
 
+use super::cg_affine_transform::CGAffineTransform;
 use super::cg_image::CGImageRef;
 use super::{cg_bitmap_context, CGFloat, CGRect};
 use crate::dyld::{export_c_func, FunctionExports};
@@ -38,8 +39,8 @@ pub const CLASSES: ClassExports = objc_classes! {
 pub(super) struct CGContextHostObject {
     pub(super) subclass: CGContextSubclass,
     pub(super) rgb_fill_color: (CGFloat, CGFloat, CGFloat, CGFloat),
-    /// Current translation. TODO: replace this with a transformation matrix.
-    pub(super) translation: (CGFloat, CGFloat),
+    /// Current transform.
+    pub(super) transform: CGAffineTransform,
 }
 impl HostObject for CGContextHostObject {}
 
@@ -96,15 +97,39 @@ pub fn CGContextClearRect(env: &mut Environment, context: CGContextRef, rect: CG
     cg_bitmap_context::fill_rect(env, context, rect, /* clear: */ true);
 }
 
+pub fn CGContextConcatCTM(
+    env: &mut Environment,
+    context: CGContextRef,
+    transform: CGAffineTransform,
+) {
+    log_dbg!("CGContextConcatCTM({:?})", transform);
+    let host_obj = env.objc.borrow_mut::<CGContextHostObject>(context);
+    host_obj.transform = transform.concat(host_obj.transform);
+}
+pub fn CGContextGetCTM(env: &mut Environment, context: CGContextRef) -> CGAffineTransform {
+    let res = env.objc.borrow::<CGContextHostObject>(context).transform;
+    log_dbg!("CGContextGetCTM() => {:?}", res);
+    res
+}
+pub fn CGContextRotateCTM(env: &mut Environment, context: CGContextRef, angle: CGFloat) {
+    log_dbg!("CGContextRotateCTM({:?})", angle);
+    let host_obj = env.objc.borrow_mut::<CGContextHostObject>(context);
+    host_obj.transform = host_obj.transform.rotate(angle);
+}
+pub fn CGContextScaleCTM(env: &mut Environment, context: CGContextRef, x: CGFloat, y: CGFloat) {
+    log_dbg!("CGContextScaleCTM({:?})", (x, y));
+    let host_obj = env.objc.borrow_mut::<CGContextHostObject>(context);
+    host_obj.transform = host_obj.transform.scale(x, y);
+}
 pub fn CGContextTranslateCTM(
     env: &mut Environment,
     context: CGContextRef,
     tx: CGFloat,
     ty: CGFloat,
 ) {
-    let context = env.objc.borrow_mut::<CGContextHostObject>(context);
-    context.translation.0 += tx;
-    context.translation.1 += ty;
+    log_dbg!("CGContextTranslateCTM({:?})", (tx, ty));
+    let host_obj = env.objc.borrow_mut::<CGContextHostObject>(context);
+    host_obj.transform = host_obj.transform.translate(tx, ty);
 }
 
 fn CGContextDrawImage(
@@ -123,6 +148,10 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGContextSetGrayFillColor(_, _, _)),
     export_c_func!(CGContextFillRect(_, _)),
     export_c_func!(CGContextClearRect(_, _)),
+    export_c_func!(CGContextConcatCTM(_, _)),
+    export_c_func!(CGContextGetCTM(_)),
+    export_c_func!(CGContextRotateCTM(_, _)),
+    export_c_func!(CGContextScaleCTM(_, _, _)),
     export_c_func!(CGContextTranslateCTM(_, _, _)),
     export_c_func!(CGContextDrawImage(_, _, _)),
 ];

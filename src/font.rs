@@ -48,6 +48,32 @@ fn scale(font_size: f32) -> Scale {
     Scale::uniform(font_size * 1.125)
 }
 
+/// Helper for [Font::draw], used for the `draw_glyph` callback.
+pub struct RasterGlyph<'a> {
+    origin: (f32, f32),
+    dimensions: (i32, i32),
+    pixels: &'a [f32],
+}
+impl RasterGlyph<'_> {
+    /// Get the x and y co-ordinates the glyph should be drawn at.
+    pub fn origin(&self) -> (f32, f32) {
+        self.origin
+    }
+    /// Get the dimensions, in pixels, of the glyph.
+    pub fn dimensions(&self) -> (i32, i32) {
+        self.dimensions
+    }
+    /// Get the coverage at the given co-ordinates within the glyph.
+    pub fn pixel_at(&self, coords: (i32, i32)) -> f32 {
+        let (width, height) = self.dimensions;
+        if (0..width).contains(&coords.0) && (0..height).contains(&coords.1) {
+            self.pixels[coords.1 as usize * width as usize + coords.0 as usize]
+        } else {
+            0.0 // safety in case of rounding errors
+        }
+    }
+}
+
 impl Font {
     fn from_resource_file(filename: &str) -> Font {
         let mut bytes = Vec::new();
@@ -222,17 +248,16 @@ impl Font {
         (width, height)
     }
 
-    /// Draw text. Calls the provided callback for each pixel, providing the
-    /// coverage (a value between 0.0 and 1.0). Assumes y starts at the
-    /// bottom-left corner and points upwards.
-    pub fn draw<F: FnMut((i32, i32), f32)>(
+    /// Draw text. Calls the provided callback for each glyph that is to be
+    /// drawn. Assumes y starts at the bottom-left corner and points upwards.
+    pub fn draw<F: FnMut(RasterGlyph)>(
         &self,
         font_size: f32,
         text: &str,
         origin: (f32, f32),
         wrap: Option<(f32, WrapMode)>,
         alignment: TextAlignment,
-        mut put_pixel: F,
+        mut draw_glyph: F,
     ) {
         // TODO: This code has gone through a rather traumatic series of y sign
         //       flips and might benefit from refactoring for clarity?
@@ -241,6 +266,18 @@ impl Font {
 
         let mut line_y = self.font.v_metrics(scale(font_size)).ascent;
         let (line_height, line_gap) = self.line_height_and_gap(font_size);
+
+        // RustType requires a "draw pixel" callback that will be called for
+        // each pixel in the glyph's bounding box, in left-to-right
+        // top-to-bottom order. This is unfortunately incompatible with
+        // touchHLE's code which needs to be able to sample the pixels in any
+        // order in order to support rotation. This is worked around by creating
+        // a temporary bitmap for the glyph, and then the caller of this
+        // function can provide a "draw glyph" callback that can do whatever it
+        // wants with this bitmap.
+        // TODO: Do we need to increase the font size when scale transforms are
+        //       used, to avoid blurry text?
+        let mut glyph_bitmap: Vec<f32> = Vec::new();
 
         for (line_width, line_text) in lines {
             let line_x_offset = match alignment {
@@ -263,16 +300,37 @@ impl Font {
                 let glyph_height = glyph_bounds.height();
                 let x_offset = glyph_bounds.min.x;
                 let y_offset = ((origin.1 + line_y).round() as i32) + glyph_bounds.max.y;
-                glyph.draw(|x, y, coverage| {
-                    // TODO: Do we need to clip y also?
-                    if let Some((wrap_width, _)) = wrap {
-                        if x as f32 > origin.0 + wrap_width {
-                            return;
-                        }
+
+                // TODO: Refactor this method to support y clipping too.
+                // It's not mandatory since the caller can do it, but it would
+                // be more efficient.
+                if let Some((wrap_width, _)) = wrap {
+                    if glyph_bounds.min.x as f32 > origin.0 + wrap_width {
+                        // Avoid wasting effort on glyphs that are entirely
+                        // clipped. Partial clipping is the responsibility of
+                        // the draw_glyph implementation.
+                        continue;
                     }
-                    let (x, y) = (x as i32, y as i32);
-                    put_pixel((x_offset + x, y_offset - (glyph_height - y)), coverage)
+                }
+
+                let glyph_bitmap_bounds = (
+                    glyph_bounds.width() as usize,
+                    glyph_bounds.height() as usize,
+                );
+                glyph_bitmap.clear();
+                glyph_bitmap.resize(glyph_bitmap_bounds.0 * glyph_bitmap_bounds.1, 0.0);
+
+                glyph.draw(|x, y, coverage| {
+                    glyph_bitmap[y as usize * glyph_bitmap_bounds.0 + x as usize] = coverage;
                 });
+
+                let raster_glyph = RasterGlyph {
+                    origin: (x_offset as f32, y_offset as f32 - glyph_height as f32),
+                    dimensions: (glyph_bitmap_bounds.0 as _, glyph_bitmap_bounds.1 as _),
+                    pixels: &glyph_bitmap,
+                };
+
+                draw_glyph(raster_glyph);
             }
             line_y += line_height + line_gap;
         }

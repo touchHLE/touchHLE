@@ -12,6 +12,7 @@ use crate::frameworks::core_graphics::{CGFloat, CGPoint, CGRect, CGSize};
 use crate::frameworks::foundation::NSInteger;
 use crate::objc::{autorelease, id, objc_classes, ClassExports, HostObject};
 use crate::Environment;
+use std::ops::Range;
 
 #[derive(Default)]
 pub(super) struct State {
@@ -178,6 +179,60 @@ pub fn size_with_font(
     CGSize { width, height }
 }
 
+#[inline(always)]
+fn draw_font_glyph(
+    drawer: &mut CGBitmapContextDrawer,
+    raster_glyph: crate::font::RasterGlyph,
+    fill_color: (f32, f32, f32, f32),
+    clip_x: Option<Range<f32>>,
+    clip_y: Option<Range<f32>>,
+) {
+    let mut glyph_rect = {
+        let (x, y) = raster_glyph.origin();
+        let (width, height) = raster_glyph.dimensions();
+        CGRect {
+            origin: CGPoint { x, y },
+            size: CGSize {
+                width: width as f32,
+                height: height as f32,
+            },
+        }
+    };
+    // The code in font.rs won't and can't clip glyphs hanging over the right
+    // and bottom sides of the rect, so it has to be done here. Bear in mind
+    // that this must not incorrectly affect the texture co-ordinates, otherwise
+    // the glyphs become squashed instead.
+    // Note that there isn't clipping for the other sides currently because it
+    // doesn't seem to be needed.
+    if let Some(clip_x) = clip_x {
+        if glyph_rect.origin.x >= clip_x.end {
+            return;
+        }
+        if glyph_rect.origin.x + glyph_rect.size.width > clip_x.end {
+            glyph_rect.size.width = clip_x.end - glyph_rect.origin.x;
+        }
+    }
+    if let Some(clip_y) = clip_y {
+        if glyph_rect.origin.y >= clip_y.end {
+            return;
+        }
+        if glyph_rect.origin.y + glyph_rect.size.height > clip_y.end {
+            glyph_rect.size.height = clip_y.end - glyph_rect.origin.y;
+        }
+    }
+
+    for ((x, y), (tex_x, tex_y)) in drawer.iter_transformed_pixels(glyph_rect) {
+        // TODO: bilinear sampling
+        let coverage = raster_glyph.pixel_at((
+            (tex_x * glyph_rect.size.width - 0.5).round() as i32,
+            (tex_y * glyph_rect.size.height - 0.5).round() as i32,
+        ));
+        let (r, g, b, a) = fill_color;
+        let (r, g, b, a) = (r * coverage, g * coverage, b * coverage, a * coverage);
+        drawer.put_pixel((x, y), (r, g, b, a), /* blend: */ true);
+    }
+}
+
 /// Called by the `drawAtPoint:` method family on `NSString`.
 pub fn draw_at_point(
     env: &mut Environment,
@@ -198,24 +253,27 @@ pub fn draw_at_point(
 
     let width_and_line_break_mode =
         width_and_line_break_mode.map(|(width, ui_mode)| (width, convert_line_break_mode(ui_mode)));
+    let clip_x = width_and_line_break_mode.map(|(width, _)| point.x..(point.x + width));
     let (width, height) =
         font.calculate_text_size(host_object.size, text, width_and_line_break_mode);
 
     let mut drawer = CGBitmapContextDrawer::new(&env.objc, &mut env.mem, context);
-
     let fill_color = drawer.rgb_fill_color();
 
-    let translation = drawer.translation();
     font.draw(
         host_object.size,
         text,
-        (translation.0 + point.x, translation.1 + point.y),
+        (point.x, point.y),
         width_and_line_break_mode,
         TextAlignment::Left,
-        |(x, y), coverage| {
-            let (r, g, b, a) = fill_color;
-            let (r, g, b, a) = (r * coverage, g * coverage, b * coverage, a * coverage);
-            drawer.put_pixel((x, y), (r, g, b, a), /* blend: */ true);
+        |raster_glyph| {
+            draw_font_glyph(
+                &mut drawer,
+                raster_glyph,
+                fill_color,
+                clip_x.clone(),
+                /* clip_y: */ None,
+            )
         },
     );
 
@@ -244,7 +302,6 @@ pub fn draw_in_rect(
     );
 
     let mut drawer = CGBitmapContextDrawer::new(&env.objc, &mut env.mem, context);
-
     let fill_color = drawer.rgb_fill_color();
 
     let (origin_x_offset, alignment) = match alignment {
@@ -254,20 +311,20 @@ pub fn draw_in_rect(
         _ => unimplemented!(),
     };
 
-    let translation = drawer.translation();
     font.draw(
         host_object.size,
         text,
-        (
-            translation.0 + rect.origin.x + origin_x_offset,
-            translation.1 + rect.origin.y,
-        ),
+        (rect.origin.x + origin_x_offset, rect.origin.y),
         Some((rect.size.width, convert_line_break_mode(line_break_mode))),
         alignment,
-        |(x, y), coverage| {
-            let (r, g, b, a) = fill_color;
-            let (r, g, b, a) = (r * coverage, g * coverage, b * coverage, a * coverage);
-            drawer.put_pixel((x, y), (r, g, b, a), /* blend: */ true);
+        |raster_glyph| {
+            draw_font_glyph(
+                &mut drawer,
+                raster_glyph,
+                fill_color,
+                /* clip_x: */ Some(rect.origin.x..(rect.origin.x + rect.size.width)),
+                /* clip_y: */ Some(rect.origin.y..(rect.origin.y + rect.size.height)),
+            )
         },
     );
 

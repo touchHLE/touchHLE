@@ -676,7 +676,8 @@ fn change_copyright_page(
         origin: text_frame.origin,
         size: CGSize {
             width: text_frame.size.width,
-            height: page_height,
+            // The page height is slightly off, a little padding is needed.
+            height: page_height + 10.0,
         },
     };
     () = msg![env; text_label setFrame:label_frame];

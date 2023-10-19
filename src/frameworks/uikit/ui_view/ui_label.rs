@@ -223,7 +223,12 @@ pub const CLASSES: ClassExports = objc_classes! {
             x: bounds.origin.x,
             y: bounds.origin.y + (bounds.size.height - calculated_size.height) / 2.0,
         },
-        size: bounds.size,
+        size: CGSize {
+            width: bounds.size.width,
+            // This is necessary for when the calculated size is actually larger
+            // than the bounds.
+            height: calculated_size.height,
+        },
     };
 
     let _size: CGSize = if single_line {

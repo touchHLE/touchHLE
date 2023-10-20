@@ -295,6 +295,16 @@ pub const CLASSES: ClassExports = objc_classes! {
     autorelease(env, res)
 }
 
++(id)pathWithComponents:(id)components {
+    let path = ns_array::to_vec(env, components).iter().map(|s| to_rust_string(env, *s)).fold(String::new(), |mut a, b| {
+        a.push('/');
+        a.push_str(b.as_ref());
+        a
+    });
+    let res = from_rust_string(env, path);
+    autorelease(env, res)
+}
+
 // These are the two methods that have to be overridden by subclasses, so these
 // implementations don't have to care about foreign subclasses.
 - (NSUInteger)length {

@@ -10,7 +10,7 @@ use super::{ns_keyed_unarchiver, ns_string, ns_url, NSUInteger};
 use crate::fs::GuestPath;
 use crate::objc::{
     autorelease, id, msg_class, nil, objc_classes, release, retain, ClassExports, HostObject,
-    NSZonePtr,
+    NSZonePtr, msg,
 };
 use crate::Environment;
 
@@ -79,6 +79,14 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (id)copyWithZone:(NSZonePtr)_zone {
     // TODO: override this once we have NSMutableArray!
     retain(env, this)
+}
+
+- (id)lastObject {
+    let size: NSUInteger = msg![env; this count];
+    if size == 0 {
+        return nil;
+    }
+    msg![env; this objectAtIndex: (size - 1)]
 }
 
 @end

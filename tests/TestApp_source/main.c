@@ -294,15 +294,16 @@ int main() {
   int tests_passed = 0;
 
   int n = sizeof(test_func_array) / sizeof(test_func_array[0]);
-  int i;
+  int i, latest_test_result;
   for (i = 0; i < n; i++) {
     printf("%s: ", test_func_array[i].name);
     tests_run++;
-    if (test_func_array[i].func() == 0) {
+    latest_test_result = test_func_array[i].func();
+    if (latest_test_result == 0) {
       printf("OK\n");
       tests_passed++;
     } else {
-      printf("FAIL\n");
+      printf("FAIL (%d)\n", latest_test_result);
     }
   }
 

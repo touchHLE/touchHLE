@@ -88,6 +88,24 @@
       "parentUuid": "7b117321_d2a31dfc",
       "revId": "163ee6891c206d52d5deff380ad7a63cf2ac352b",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "16fd94d0_d68ff757",
+        "filename": "touchHLE_default_options.txt",
+        "patchSetId": 9
+      },
+      "lineNbr": 52,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-10-20T16:00:27Z",
+      "side": 1,
+      "message": "Applying the same tilt offset as Super Monkey Ball makes it much easier to play.",
+      "parentUuid": "9d3a3d44_ccae6cde",
+      "revId": "163ee6891c206d52d5deff380ad7a63cf2ac352b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

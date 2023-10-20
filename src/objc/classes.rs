@@ -558,6 +558,11 @@ impl ObjC {
 
         let class = self.alloc_static_object(metaclass, class_host_object, mem);
 
+        if name == "NSObject" {
+            // NSObject's metaclass has its class as the superclass.
+            self.borrow_mut::<ClassHostObject>(metaclass).superclass = class;
+        }
+
         self.classes.insert(name.to_string(), class);
 
         if is_metaclass {

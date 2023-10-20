@@ -9,7 +9,7 @@ use super::ns_property_list_serialization::deserialize_plist_from_file;
 use super::{ns_keyed_unarchiver, ns_string, ns_url, NSUInteger};
 use crate::fs::GuestPath;
 use crate::objc::{
-    autorelease, id, msg_class, nil, objc_classes, release, retain, ClassExports, HostObject,
+    autorelease, id, msg_class, msg, nil, objc_classes, release, retain, ClassExports, HostObject,
     NSZonePtr,
 };
 use crate::Environment;
@@ -59,6 +59,12 @@ pub const CLASSES: ClassExports = objc_classes! {
     autorelease(env, res)
 }
 
++(id)arrayWithArray:(id)other {
+    let new = msg![env; this alloc];
+    let new = msg![env; new initWithArray: other];
+    autorelease(env, new)
+}
+
 // These probably comes from some category related to plists.
 - (id)initWithContentsOfFile:(id)path { // NSString*
     release(env, this);
@@ -79,6 +85,17 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (id)copyWithZone:(NSZonePtr)_zone {
     // TODO: override this once we have NSMutableArray!
     retain(env, this)
+}
+
+-(id)initWithArray:(id)other {
+    let size: NSUInteger = msg![env; other count];
+    let mut v = Vec::with_capacity(size as usize);
+    for i in 0..size {
+        let obj = msg![env; other objectAtIndex: i];
+        v.push(retain(env, obj));
+    }
+    env.objc.borrow_mut::<ArrayHostObject>(this).array = v;
+    this
 }
 
 @end

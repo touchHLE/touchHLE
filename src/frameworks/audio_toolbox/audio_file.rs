@@ -34,33 +34,33 @@ struct AudioFileHostObject {
 }
 
 #[repr(C, packed)]
-struct OpaqueAudioFileID {
+pub struct OpaqueAudioFileID {
     _filler: u8,
 }
 unsafe impl SafeRead for OpaqueAudioFileID {}
 
-type AudioFileID = MutPtr<OpaqueAudioFileID>;
+pub type AudioFileID = MutPtr<OpaqueAudioFileID>;
 
 const kAudioFileFileNotFoundError: OSStatus = -43;
 const kAudioFileBadPropertySizeError: OSStatus = fourcc(b"!siz") as _;
 const kAudioFileUnsupportedProperty: OSStatus = fourcc(b"pty?") as _;
 
 type AudioFilePermissions = i8;
-const kAudioFileReadPermission: AudioFilePermissions = 1;
+pub const kAudioFileReadPermission: AudioFilePermissions = 1;
 
 /// Usually a FourCC.
 type AudioFileTypeID = u32;
 
 /// Usually a FourCC.
 type AudioFilePropertyID = u32;
-const kAudioFilePropertyDataFormat: AudioFilePropertyID = fourcc(b"dfmt");
+pub const kAudioFilePropertyDataFormat: AudioFilePropertyID = fourcc(b"dfmt");
 const kAudioFilePropertyAudioDataByteCount: AudioFilePropertyID = fourcc(b"bcnt");
 const kAudioFilePropertyAudioDataPacketCount: AudioFilePropertyID = fourcc(b"pcnt");
-const kAudioFilePropertyPacketSizeUpperBound: AudioFilePropertyID = fourcc(b"pkub");
+pub const kAudioFilePropertyPacketSizeUpperBound: AudioFilePropertyID = fourcc(b"pkub");
 const kAudioFilePropertyMagicCookieData: AudioFilePropertyID = fourcc(b"mgic");
 const kAudioFilePropertyChannelLayout: AudioFilePropertyID = fourcc(b"cmap");
 
-fn AudioFileOpenURL(
+pub fn AudioFileOpenURL(
     env: &mut Environment,
     in_file_ref: CFURLRef,
     in_permissions: AudioFilePermissions,
@@ -144,7 +144,7 @@ fn AudioFileGetPropertyInfo(
     0 // success
 }
 
-fn AudioFileGetProperty(
+pub fn AudioFileGetProperty(
     env: &mut Environment,
     in_audio_file: AudioFileID,
     in_property_id: AudioFilePropertyID,
@@ -265,7 +265,7 @@ fn AudioFileReadBytes(
     }
 }
 
-fn AudioFileReadPackets(
+pub fn AudioFileReadPackets(
     env: &mut Environment,
     in_audio_file: AudioFileID,
     in_use_cache: bool,
@@ -311,7 +311,7 @@ fn AudioFileReadPackets(
     res
 }
 
-fn AudioFileClose(env: &mut Environment, in_audio_file: AudioFileID) -> OSStatus {
+pub fn AudioFileClose(env: &mut Environment, in_audio_file: AudioFileID) -> OSStatus {
     return_if_null!(in_audio_file);
 
     let _host_object = State::get(&mut env.framework_state)

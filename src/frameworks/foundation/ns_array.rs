@@ -310,6 +310,11 @@ pub const CLASSES: ClassExports = objc_classes! {
     release(env, object)
 }
 
+- (())removeLastObject {
+    let object = env.objc.borrow_mut::<ArrayHostObject>(this).array.pop().unwrap();
+    release(env, object)
+}
+
 @end
 
 // Special variant for use by CFArray with NULL callbacks: objects aren't

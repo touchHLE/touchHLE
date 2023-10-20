@@ -49,6 +49,12 @@ pub const CLASSES: ClassExports = objc_classes! {
     autorelease(env, new)
 }
 
++ (id)dataWithContentsOfFile:(id)path{
+    let new: id = msg![env; this alloc];
+    let new: id = msg![env; new initWithContentsOfFile: path];
+    autorelease(env, new)
+}
+
 // Calling the standard `init` is also allowed, in which case we just get data
 // of size 0.
 

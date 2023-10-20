@@ -286,3 +286,7 @@ pub fn from_vec(env: &mut Environment, objects: Vec<id>) -> id {
     env.objc.borrow_mut::<ArrayHostObject>(array).array = objects;
     array
 }
+
+pub fn to_vec(env: &mut Environment, array: id) -> Vec<id> {
+    env.objc.borrow::<ArrayHostObject>(array).array.clone()
+}

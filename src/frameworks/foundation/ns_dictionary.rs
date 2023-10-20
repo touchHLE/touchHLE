@@ -190,9 +190,26 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 @end
 
+@implementation NSMutableDictionary: NSDictionary
+
++ (id)allocWithZone:(NSZonePtr)zone {
+    // NSDictionary might be subclassed by something which needs allocWithZone:
+    // to have the normal behaviour. Unimplemented: call superclass alloc then.
+    assert!(this == env.objc.get_known_class("NSMutableDictionary", &mut env.mem));
+    msg_class![env; _touchHLE_NSDictionary allocWithZone:zone]
+}
+
++ (id)dictionaryWithCapacity:(NSUInteger)cap {
+    let new = msg![env; this alloc];
+    let new = msg![env; new initWithCapacity: cap];
+    autorelease(env, new)
+}
+
+@end
+
 // Our private subclass that is the single implementation of NSDictionary for
 // the time being.
-@implementation _touchHLE_NSDictionary: NSDictionary
+@implementation _touchHLE_NSDictionary: NSMutableDictionary
 
 + (id)allocWithZone:(NSZonePtr)_zone {
     let host_object = Box::<DictionaryHostObject>::default();
@@ -211,6 +228,11 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 - (id)init {
     *env.objc.borrow_mut(this) = <DictionaryHostObject as Default>::default();
+    this
+}
+
+- (id)initWithCapacity:(NSUInteger)cap {
+    env.objc.borrow_mut::<DictionaryHostObject>(this).map.reserve(cap as usize);
     this
 }
 

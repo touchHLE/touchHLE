@@ -101,6 +101,14 @@ pub const CLASSES: ClassExports = objc_classes! {
     this
 }
 
+-(id)lastObject {
+    let size: NSUInteger = msg![env; this count];
+    if size == 0 {
+        return nil;
+    }
+    msg![env; this objectAtIndex: (size - 1)]
+}
+
 @end
 
 // NSMutableArray is an abstract class. A subclass must provide everything

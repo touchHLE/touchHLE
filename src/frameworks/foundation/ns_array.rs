@@ -231,6 +231,16 @@ pub const CLASSES: ClassExports = objc_classes! {
     this_round
 }
 
+-(bool)containsObject:(id)needle {
+    let objs = env.objc.borrow::<ArrayHostObject>(this).array.clone();
+    for obj in objs {
+        if msg![env; needle isEqual: obj] {
+            return true;
+        }
+    }
+    false
+}
+
 @end
 
 @implementation _touchHLE_NSArray_ObjectEnumerator: NSEnumerator

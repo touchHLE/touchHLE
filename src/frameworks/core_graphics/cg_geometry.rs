@@ -9,7 +9,7 @@
 
 use super::CGFloat;
 use crate::abi::{impl_GuestRet_for_large_struct, GuestArg};
-use crate::dyld::{export_c_func, FunctionExports};
+use crate::dyld::{ConstantExports, export_c_func, FunctionExports, HostConstant};
 use crate::mem::SafeRead;
 use crate::Environment;
 
@@ -58,6 +58,8 @@ impl std::fmt::Display for CGPoint {
 fn CGPointEqualToPoint(_env: &mut Environment, a: CGPoint, b: CGPoint) -> bool {
     a == b
 }
+
+pub const CGPointZero: CGPoint = CGPoint {x: 0.0, y: 0.0};
 
 #[derive(Copy, Clone, Debug, Default, PartialEq)]
 #[repr(C, packed)]
@@ -153,8 +155,29 @@ fn CGRectEqualToRect(_env: &mut Environment, a: CGRect, b: CGRect) -> bool {
     a == b
 }
 
+pub const CGSizeZero: CGSize = CGSize {width: 0.0, height: 0.0};
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGPointEqualToPoint(_, _)),
     export_c_func!(CGSizeEqualToSize(_, _)),
     export_c_func!(CGRectEqualToRect(_, _)),
+];
+
+pub const CONSTANTS: ConstantExports = &[
+    (
+        "_CGSizeZero",
+        HostConstant::Custom(|mem| {
+            mem.alloc_and_write(CGSizeZero)
+                .cast()
+                .cast_const()
+        }),
+    ),
+    (
+        "_CGPointZero",
+        HostConstant::Custom(|mem| {
+            mem.alloc_and_write(CGPointZero)
+                .cast()
+                .cast_const()
+        }),
+    ),
 ];

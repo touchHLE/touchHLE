@@ -21,6 +21,7 @@
 #![allow(clippy::too_many_arguments)] // It's not our fault!
 
 pub mod audio_toolbox;
+pub mod av_audio;
 pub mod carbon_core;
 pub mod core_animation;
 pub mod core_audio_types;

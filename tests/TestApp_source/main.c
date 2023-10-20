@@ -56,6 +56,7 @@ int memcmp(const void *, const void *, size_t);
 void *memmove(void *, const void *, size_t);
 int strcmp(const char *, const char *);
 char *strncpy(char *, const char *, size_t);
+char *strncat(char *, const char *, size_t);
 
 // <unistd.h>
 typedef unsigned int __uint32_t;
@@ -300,6 +301,40 @@ int test_strncpy() {
   return 0;
 }
 
+int test_strncat() {
+  {
+    char uno[] = "uno\0zzzz";
+    char dos[] = "dos\0ZZZZ";
+
+    char expected[] = "unodos\0z";
+    char *new = strncat(uno, dos, 100);
+    if (new != uno || memcmp(new, expected, 8))
+      return 1;
+  }
+
+  {
+    char uno[] = "uno\0zzzz";
+    char dos[] = "dos\0ZZZZ";
+
+    char expected[] = "unod\0zzz";
+    char *new = strncat(uno, dos, 1);
+    if (new != uno || memcmp(new, expected, 8))
+      return 2;
+  }
+
+  {
+    char uno[] = "uno\0zzzz";
+    char dos[] = "dosZZZZZ";
+
+    char expected[] = "unodos\0z";
+    char *new = strncat(uno, dos, 3);
+    if (new != uno || memcmp(new, expected, 8))
+      return 3;
+  }
+
+  return 0;
+}
+
 #define FUNC_DEF(func)                                                         \
   { &func, #func }
 struct {
@@ -310,7 +345,7 @@ struct {
     FUNC_DEF(test_sscanf),  FUNC_DEF(test_errno),
     FUNC_DEF(test_realloc), FUNC_DEF(test_getcwd_chdir),
     FUNC_DEF(test_sem),     FUNC_DEF(test_CGAffineTransform),
-    FUNC_DEF(test_strncpy),
+    FUNC_DEF(test_strncpy), FUNC_DEF(test_strncat),
 };
 
 // Because no libc is linked into this executable, there is no libc entry point

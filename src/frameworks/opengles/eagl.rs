@@ -60,6 +60,7 @@ pub(super) struct EAGLContextHostObject {
     /// (always `CAEAGLLayer*`). Retains the instance so it won't dangle.
     renderbuffer_drawable_bindings: HashMap<GLuint, id>,
     fps_counter: Option<FpsCounter>,
+    api: EAGLRenderingAPI,
 }
 impl HostObject for EAGLContextHostObject {}
 
@@ -74,6 +75,7 @@ pub const CLASSES: ClassExports = objc_classes! {
         gles_ctx: None,
         renderbuffer_drawable_bindings: HashMap::new(),
         fps_counter: None,
+        api: kEAGLRenderingAPIOpenGLES1,
     });
     env.objc.alloc_object(this, host_object, &mut env.mem)
 }
@@ -122,7 +124,9 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.framework_state.opengles.current_ctx_thread = None;
     log!("Driver info: {}", unsafe { gles1_ctx.driver_description() });
 
-    env.objc.borrow_mut::<EAGLContextHostObject>(this).gles_ctx = Some(gles1_ctx);
+    let host = env.objc.borrow_mut::<EAGLContextHostObject>(this);
+    host.gles_ctx = Some(gles1_ctx);
+    host.api = api;
 
     this
 }
@@ -134,6 +138,10 @@ pub const CLASSES: ClassExports = objc_classes! {
         release(env, drawable);
     }
     env.objc.dealloc_object(this, &mut env.mem);
+}
+
+-(EAGLRenderingAPI)API {
+    env.objc.borrow::<EAGLContextHostObject>(this).api
 }
 
 - (bool)renderbufferStorage:(NSUInteger)target

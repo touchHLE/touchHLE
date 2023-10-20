@@ -117,10 +117,10 @@ unsafe impl SafeRead for OpaqueAudioQueue {}
 pub type AudioQueueRef = MutPtr<OpaqueAudioQueue>;
 
 #[repr(C, packed)]
-struct AudioQueueBuffer {
+pub struct AudioQueueBuffer {
     audio_data_bytes_capacity: u32,
-    audio_data: MutVoidPtr,
-    audio_data_byte_size: u32,
+    pub audio_data: MutVoidPtr,
+    pub audio_data_byte_size: u32,
     user_data: MutVoidPtr,
     _packet_description_capacity: u32,
     /// Should be a `MutPtr<AudioStreamPacketDescription>`, but that's not
@@ -130,13 +130,13 @@ struct AudioQueueBuffer {
 }
 unsafe impl SafeRead for AudioQueueBuffer {}
 
-type AudioQueueBufferRef = MutPtr<AudioQueueBuffer>;
+pub type AudioQueueBufferRef = MutPtr<AudioQueueBuffer>;
 
 /// (*void)(void *in_user_data, AudioQueueRef in_aq, AudioQueueBufferRef in_buf)
-type AudioQueueOutputCallback = GuestFunction;
+pub type AudioQueueOutputCallback = GuestFunction;
 
 type AudioQueueParameterID = u32;
-const kAudioQueueParam_Volume: AudioQueueParameterID = 1;
+pub const kAudioQueueParam_Volume: AudioQueueParameterID = 1;
 
 type AudioQueueParameterValue = f32;
 
@@ -149,7 +149,7 @@ type AudioQueuePropertyListenerProc = GuestFunction;
 const kAudioQueueErr_InvalidBuffer: OSStatus = -66687;
 const kAudioQueueErr_InvalidPropertySize: OSStatus = -66683;
 
-fn AudioQueueNewOutput(
+pub fn AudioQueueNewOutput(
     env: &mut Environment,
     in_format: ConstPtr<AudioStreamBasicDescription>,
     in_callback_proc: AudioQueueOutputCallback,
@@ -234,7 +234,7 @@ fn AudioQueueGetParameter(
     0 // success
 }
 
-fn AudioQueueSetParameter(
+pub fn AudioQueueSetParameter(
     env: &mut Environment,
     in_aq: AudioQueueRef,
     in_param_id: AudioQueueParameterID,
@@ -259,7 +259,7 @@ fn AudioQueueSetParameter(
     0 // success
 }
 
-fn AudioQueueAllocateBuffer(
+pub fn AudioQueueAllocateBuffer(
     env: &mut Environment,
     in_aq: AudioQueueRef,
     in_buffer_byte_size: GuestUSize,
@@ -288,7 +288,7 @@ fn AudioQueueAllocateBuffer(
     0 // success
 }
 
-fn AudioQueueEnqueueBuffer(
+pub fn AudioQueueEnqueueBuffer(
     env: &mut Environment,
     in_aq: AudioQueueRef,
     in_buffer: AudioQueueBufferRef,
@@ -745,7 +745,7 @@ fn notify_aq_is_running(env: &mut Environment, in_aq: AudioQueueRef) {
     }
 }
 
-fn AudioQueueStart(
+pub fn AudioQueueStart(
     env: &mut Environment,
     in_aq: AudioQueueRef,
     in_device_start_time: ConstVoidPtr, // should be `const AudioTimeStamp*`
@@ -779,7 +779,7 @@ fn AudioQueueStart(
     0 // success
 }
 
-fn AudioQueuePause(env: &mut Environment, in_aq: AudioQueueRef) -> OSStatus {
+pub fn AudioQueuePause(env: &mut Environment, in_aq: AudioQueueRef) -> OSStatus {
     return_if_null!(in_aq);
 
     let state = State::get(&mut env.framework_state);
@@ -810,7 +810,7 @@ fn finish_stopping_audio_queue(env: &mut Environment, in_aq: AudioQueueRef) {
     notify_aq_is_running(env, in_aq);
 }
 
-fn AudioQueueStop(env: &mut Environment, in_aq: AudioQueueRef, in_immediate: bool) -> OSStatus {
+pub fn AudioQueueStop(env: &mut Environment, in_aq: AudioQueueRef, in_immediate: bool) -> OSStatus {
     return_if_null!(in_aq);
 
     let state = State::get(&mut env.framework_state);
@@ -908,7 +908,11 @@ fn AudioQueueFreeBuffer(
     }
 }
 
-fn AudioQueueDispose(env: &mut Environment, in_aq: AudioQueueRef, in_immediate: bool) -> OSStatus {
+pub fn AudioQueueDispose(
+    env: &mut Environment,
+    in_aq: AudioQueueRef,
+    in_immediate: bool,
+) -> OSStatus {
     return_if_null!(in_aq);
 
     assert!(in_immediate); // TODO

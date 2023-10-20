@@ -776,6 +776,10 @@ pub const CLASSES: ClassExports = objc_classes! {
     to_rust_string(env, this).parse().unwrap_or(0.0)
 }
 
+-(i32)intValue {
+    to_rust_string(env, this).parse().unwrap_or(0)
+}
+
 -(NSRange)rangeOfString:(id)other {
     let haystack = to_rust_string(env, this);
     let needle = to_rust_string(env, other);

@@ -6,6 +6,7 @@
 //! Separate module just for the function lists, since this will probably be a
 //! very long and frequently-updated list.
 
+use crate::frameworks::av_audio::av_audio_player;
 use crate::frameworks::foundation::ns_thread;
 use crate::frameworks::{
     audio_toolbox, core_foundation, core_graphics, dnssd, foundation, openal, opengles, uikit,
@@ -74,4 +75,7 @@ pub const FUNCTION_LISTS: &[super::FunctionExports] = &[
 ];
 
 /// Lists of functions which are only used internally by touchHLE
-pub const PRIVATE_FUNCTION_LISTS: &[super::FunctionExports] = &[ns_thread::PRIVATE_FUNCTIONS];
+pub const PRIVATE_FUNCTION_LISTS: &[super::FunctionExports] = &[
+    av_audio_player::PRIVATE_FUNCTIONS,
+    ns_thread::PRIVATE_FUNCTIONS,
+];

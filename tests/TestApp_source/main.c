@@ -51,9 +51,11 @@ void qsort(void *, size_t, size_t, int (*)(const void *, const void *));
 void *realloc(void *, size_t);
 
 // <string.h>
+void *memset(void *, int, size_t);
 int memcmp(const void *, const void *, size_t);
 void *memmove(void *, const void *, size_t);
 int strcmp(const char *, const char *);
+char *strncpy(char *, const char *, size_t);
 
 // <unistd.h>
 typedef unsigned int __uint32_t;
@@ -272,6 +274,38 @@ int test_sem() {
   return shared_int == 1 ? 0 : -1;
 }
 
+int test_strncpy() {
+  char *src = "test\0abcd";
+  char dst[10];
+  char *retval;
+
+  memset(dst, 127, 10);
+  retval = strncpy(dst, src, 5);
+  if (retval != dst || retval[0] != 't' || retval[1] != 'e' ||
+      retval[2] != 's' || retval[3] != 't' || retval[4] != 0 ||
+      retval[5] != 127 || retval[6] != 127 || retval[7] != 127 ||
+      retval[8] != 127 || retval[9] != 127)
+    return 1;
+
+  memset(dst, 127, 10);
+  retval = strncpy(dst, src, 2);
+  if (retval != dst || retval[0] != 't' || retval[1] != 'e' ||
+      retval[2] != 127 || retval[3] != 127 || retval[4] != 127 ||
+      retval[5] != 127 || retval[6] != 127 || retval[7] != 127 ||
+      retval[8] != 127 || retval[9] != 127)
+    return 2;
+
+  memset(dst, 127, 10);
+  retval = strncpy(dst, src, 10);
+  if (retval != dst || retval[0] != 't' || retval[1] != 'e' ||
+      retval[2] != 's' || retval[3] != 't' || retval[4] != 0 ||
+      retval[5] != 0 || retval[6] != 0 || retval[7] != 0 || retval[8] != 0 ||
+      retval[9] != 0)
+    return 3;
+
+  return 0;
+}
+
 #define FUNC_DEF(func)                                                         \
   { &func, #func }
 struct {
@@ -282,6 +316,7 @@ struct {
     FUNC_DEF(test_sscanf),  FUNC_DEF(test_errno),
     FUNC_DEF(test_realloc), FUNC_DEF(test_getcwd_chdir),
     FUNC_DEF(test_sem),     FUNC_DEF(test_CGAffineTransform),
+    FUNC_DEF(test_strncpy),
 };
 
 // Because no libc is linked into this executable, there is no libc entry point

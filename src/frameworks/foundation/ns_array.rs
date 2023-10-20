@@ -5,13 +5,16 @@
  */
 //! The `NSArray` class cluster, including `NSMutableArray`.
 
+use std::cmp::min;
+use std::ops::Add;
 use super::ns_property_list_serialization::deserialize_plist_from_file;
-use super::{ns_keyed_unarchiver, ns_string, ns_url, NSUInteger};
+use super::{ns_keyed_unarchiver, ns_string, ns_url, NSUInteger, ns_enumerator::NSFastEnumerationState};
 use crate::fs::GuestPath;
 use crate::objc::{
     autorelease, id, msg_class, msg, nil, objc_classes, release, retain, ClassExports, HostObject,
     NSZonePtr,
 };
+use crate::mem::MutPtr;
 use crate::Environment;
 
 struct ObjectEnumeratorHostObject {
@@ -188,6 +191,36 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (id)objectAtIndex:(NSUInteger)index {
     // TODO: throw real exception rather than panic if out-of-bounds?
     env.objc.borrow::<ArrayHostObject>(this).array[index as usize]
+}
+
+- (NSUInteger)countByEnumeratingWithState:(MutPtr<NSFastEnumerationState>)state
+                                  objects:(MutPtr<id>)stackbuf
+                                    count:(NSUInteger)len {
+    let host_object = env.objc.borrow::<ArrayHostObject>(this);
+
+    if host_object.array.len() == 0 {
+        return 0;
+    }
+
+    let NSFastEnumerationState {
+        state: cur_idx,
+        ..
+    } = env.mem.read(state);
+
+    let this_round = min(host_object.array.len() as u32 - cur_idx, len);
+    if cur_idx == 0 {
+        env.mem.write(state, NSFastEnumerationState {
+            state: 0,
+            items_ptr: stackbuf,
+            mutations_ptr: stackbuf.cast(),
+            extra: Default::default(),
+        });
+    }
+    env.mem.write(state.cast(), (cur_idx + this_round) as NSUInteger);
+    for i in 0..this_round {
+        env.mem.write(stackbuf.add(i), host_object.array[(cur_idx + i) as usize]);
+    }
+    this_round
 }
 
 @end

@@ -14,8 +14,7 @@
 //! dependencies.
 
 use crate::paths;
-use rusttype::{Point, Rect, Scale};
-use std::cmp;
+use rusttype::{Point, Scale};
 use std::io::Read;
 
 pub struct Font {
@@ -28,17 +27,10 @@ pub enum TextAlignment {
     Right,
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, Eq)]
 pub enum WrapMode {
     Word,
     Char,
-}
-
-fn update_bounds(text_bounds: &mut Rect<i32>, glyph_bounds: &Rect<i32>) {
-    text_bounds.min.x = cmp::min(text_bounds.min.x, glyph_bounds.min.x);
-    text_bounds.min.y = cmp::min(text_bounds.min.y, glyph_bounds.min.y);
-    text_bounds.max.x = cmp::max(text_bounds.max.x, glyph_bounds.max.x);
-    text_bounds.max.y = cmp::max(text_bounds.max.y, glyph_bounds.max.y);
 }
 
 fn scale(font_size: f32) -> Scale {
@@ -117,16 +109,30 @@ impl Font {
 
     /// Calculate the width of a line. This does not handle newlines!
     fn calculate_line_width(&self, font_size: f32, line: &str) -> f32 {
-        let mut line_bounds: Rect<i32> = Default::default();
+        let mut line_x_min: f32 = 0.0;
+        let mut line_x_max: f32 = 0.0;
 
         for glyph in self.font.layout(line, scale(font_size), Default::default()) {
-            let Some(glyph_bounds) = glyph.pixel_bounding_box() else {
-                continue;
-            };
-            update_bounds(&mut line_bounds, &glyph_bounds);
+            let position = glyph.position();
+            let h_metrics = glyph.unpositioned().h_metrics();
+
+            // This method used to use pixel_bounding_box() for metrics, but
+            // now uses h_metrics() in order to support whitespace characters.
+            // This definition of character width was chosen because it gave
+            // similar results to the old implementation, not because it's
+            // optimal; maybe it could be improved.
+            let glyph_x_min = position.x.min(position.x + h_metrics.left_side_bearing);
+            let glyph_x_max = position.x + h_metrics.advance_width;
+
+            line_x_min = line_x_min.min(glyph_x_min);
+            line_x_min = line_x_min.min(glyph_x_max);
+            line_x_max = line_x_max.max(glyph_x_min);
+            line_x_max = line_x_max.max(glyph_x_max);
         }
 
-        line_bounds.width() as f32
+        // This rounding is also to emulate pixel_bounding_box(), same caveat
+        // applies.
+        line_x_max.ceil() - line_x_min.floor()
     }
 
     /// Break text into lines with known widths.
@@ -143,6 +149,8 @@ impl Font {
                 lines.push((self.calculate_line_width(font_size, line), line));
                 continue;
             };
+
+            let unwrapped_line = line;
 
             // Find points at which the line could be wrapped
             let mut wrap_points = Vec::new();
@@ -179,6 +187,16 @@ impl Font {
             let mut next_wrap_point_idx = 0;
             let mut line_start = 0;
 
+            fn trim_wrapped_line(wrap_mode: WrapMode, line: &str) -> &str {
+                // Spaces before a word wrap point are ignored for
+                // wrapping purposes.
+                if wrap_mode == WrapMode::Word {
+                    line.trim_end()
+                } else {
+                    line
+                }
+            }
+
             while next_wrap_point_idx < wrap_points.len() {
                 // Find optimal line wrapping by binary search.
                 // `binary_search_by` returns Err when there's no exactly
@@ -186,7 +204,8 @@ impl Font {
                 let wrap_search_result =
                     wrap_points[next_wrap_point_idx..].binary_search_by(|&wrap_point| {
                         let line = &line[line_start..wrap_point];
-                        let line_width = self.calculate_line_width(font_size, line);
+                        let line_width = self
+                            .calculate_line_width(font_size, trim_wrapped_line(wrap_mode, line));
                         line_width.partial_cmp(&wrap_width).unwrap()
                     });
                 let wrap_point_idx = match wrap_search_result {
@@ -216,9 +235,18 @@ impl Font {
                 };
                 let line_end = wrap_points[wrap_point_idx];
                 let line = &line[line_start..line_end];
+
+                let trimmed_line = if line_end != unwrapped_line.len() {
+                    // Whitespace at the end of a line must only be ignored if
+                    // that line break came from word wrapping.
+                    trim_wrapped_line(wrap_mode, line)
+                } else {
+                    line
+                };
+
                 lines.push((
-                    self.calculate_line_width(font_size, line).min(wrap_width),
-                    line,
+                    self.calculate_line_width(font_size, trimmed_line),
+                    trimmed_line,
                 ));
 
                 next_wrap_point_idx = wrap_point_idx + 1;

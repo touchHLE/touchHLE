@@ -51,9 +51,11 @@ void qsort(void *, size_t, size_t, int (*)(const void *, const void *));
 void *realloc(void *, size_t);
 
 // <string.h>
+void *memset(void *, int, size_t);
 int memcmp(const void *, const void *, size_t);
 void *memmove(void *, const void *, size_t);
 int strcmp(const char *, const char *);
+char *strncpy(char *, const char *, size_t);
 
 // <unistd.h>
 typedef unsigned int __uint32_t;
@@ -272,6 +274,32 @@ int test_sem() {
   return shared_int == 1 ? 0 : -1;
 }
 
+int test_strncpy() {
+  char *src = "test\0abcd";
+  char dst[10];
+  char *retval;
+
+  char expected1[] = "test\x00\x7F\x7F\x7F\x7F\x7F";
+  memset(dst, 0x7F, 10);
+  retval = strncpy(dst, src, 5);
+  if (retval != dst || memcmp(retval, expected1, 10))
+    return 1;
+
+  char expected2[] = "te\x7F\x7F\x7F\x7F\x7F\x7F\x7F\x7F";
+  memset(dst, 0x7F, 10);
+  retval = strncpy(dst, src, 2);
+  if (retval != dst || memcmp(retval, expected2, 10))
+    return 2;
+
+  char expected3[] = "test\x00\x00\x00\x00\x00\x00";
+  memset(dst, 0x7F, 10);
+  retval = strncpy(dst, src, 10);
+  if (retval != dst || memcmp(retval, expected3, 10))
+    return 3;
+
+  return 0;
+}
+
 #define FUNC_DEF(func)                                                         \
   { &func, #func }
 struct {
@@ -282,6 +310,7 @@ struct {
     FUNC_DEF(test_sscanf),  FUNC_DEF(test_errno),
     FUNC_DEF(test_realloc), FUNC_DEF(test_getcwd_chdir),
     FUNC_DEF(test_sem),     FUNC_DEF(test_CGAffineTransform),
+    FUNC_DEF(test_strncpy),
 };
 
 // Because no libc is linked into this executable, there is no libc entry point

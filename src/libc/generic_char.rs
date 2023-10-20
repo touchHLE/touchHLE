@@ -212,7 +212,13 @@ impl<T: Copy + Default + Eq + Ord + SafeRead + Debug> GenericChar<T> {
     ) -> MutPtr<T> {
         {
             let s1 = s1 + Self::strlen(env, s1.cast_const());
-            Self::strncpy(env, s1, s2, n);
+            for i in 0..n {
+                let c = env.mem.read(s2 + i);
+                env.mem.write(s1 + i, c);
+                if c == Self::null() {
+                    break;
+                }
+            }
         }
         s1
     }

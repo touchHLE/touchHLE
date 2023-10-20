@@ -56,6 +56,7 @@ int memcmp(const void *, const void *, size_t);
 void *memmove(void *, const void *, size_t);
 int strcmp(const char *, const char *);
 char *strncpy(char *, const char *, size_t);
+char *strncat(char *, const char *, size_t);
 
 // <unistd.h>
 typedef unsigned int __uint32_t;
@@ -306,6 +307,19 @@ int test_strncpy() {
   return 0;
 }
 
+int test_strncat() {
+  char uno[9] = "uno\0zzzz";
+  char dos[9] = "dos\0ZZZZ";
+
+  char *new = strncat(uno, dos, 8);
+  if (new != uno || new[0] != 'u' || new[1] != 'n' || new[2] != 'o' ||
+      new[3] != 'd' || new[4] != 'o' || new[5] != 's' || new[6] != 0 ||
+      new[7] != 'z')
+    return 1;
+
+  return 0;
+}
+
 #define FUNC_DEF(func)                                                         \
   { &func, #func }
 struct {
@@ -316,7 +330,7 @@ struct {
     FUNC_DEF(test_sscanf),  FUNC_DEF(test_errno),
     FUNC_DEF(test_realloc), FUNC_DEF(test_getcwd_chdir),
     FUNC_DEF(test_sem),     FUNC_DEF(test_CGAffineTransform),
-    FUNC_DEF(test_strncpy),
+    FUNC_DEF(test_strncpy), FUNC_DEF(test_strncat),
 };
 
 // Because no libc is linked into this executable, there is no libc entry point

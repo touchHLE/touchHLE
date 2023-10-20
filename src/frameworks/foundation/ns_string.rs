@@ -28,6 +28,8 @@ use std::borrow::Cow;
 use std::collections::HashMap;
 use std::iter::Peekable;
 use std::string::FromUtf16Error;
+use crate::frameworks::core_foundation::CFIndex;
+use crate::frameworks::foundation::ns_range::{NSNotFound, NSRange};
 
 pub type NSStringEncoding = NSUInteger;
 pub const NSASCIIStringEncoding: NSUInteger = 1;
@@ -777,6 +779,14 @@ pub const CLASSES: ClassExports = objc_classes! {
     to_rust_string(env, this).parse().unwrap_or(0.0)
 }
 
+-(NSRange)rangeOfString:(id)other {
+    let haystack = to_rust_string(env, this);
+    let needle = to_rust_string(env, other);
+    match haystack.find(needle.as_ref()) {
+        Some(start) => NSRange{location: start as CFIndex, length: needle.len() as CFIndex},
+        None => NSRange{location: NSNotFound as CFIndex, length: 0}
+    }
+}
 @end
 
 // Our private subclass that is the single implementation of NSString for the

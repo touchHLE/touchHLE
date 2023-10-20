@@ -298,11 +298,12 @@ int main() {
   for (i = 0; i < n; i++) {
     printf("%s: ", test_func_array[i].name);
     tests_run++;
-    if (test_func_array[i].func() == 0) {
+    int latest_test_result = test_func_array[i].func();
+    if (latest_test_result == 0) {
       printf("OK\n");
       tests_passed++;
     } else {
-      printf("FAIL\n");
+      printf("FAIL (%d)\n", latest_test_result);
     }
   }
 

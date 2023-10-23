@@ -62,9 +62,10 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 +(ConstVoidPtr)instanceMethodForSelector:(SEL)selector {
-    match ObjC::lookup_method_imp(env, this, selector) {
-        IMP::Guest(g) => ConstVoidPtr::from_bits(g.addr_with_thumb_bit()),
-        _ => todo!()
+    match ObjC::lookup_method(env, this, selector).map(|x| x.imp) {
+        Some(IMP::Guest(g)) => ConstVoidPtr::from_bits(g.addr_with_thumb_bit()),
+        Some(_) => todo!(),
+        None => panic!("Unable to lookup method {:?} in class {:?}", selector.as_str(&env.mem), this)
     }
 }
 
@@ -167,6 +168,27 @@ pub const CLASSES: ClassExports = objc_classes! {
     unimplemented!("TODO: object {:?} does not have simple setter method for {}, use fallback", this, key);
 }
 
+- (id)valueForKey:(id)key {
+    let key = to_rust_string(env, key);
+
+    let class = msg![env; this class];
+
+    if let Some(sel) = env.objc.lookup_selector(key.as_ref()) {
+        if let Some(mt) = ObjC::lookup_method(env, class, sel) {
+            return match mt.type_[0] {
+                b'@' => msg_send(env, (this, sel)),
+                b'i' => {
+                    let ret: i32 = msg_send(env, (this, sel));
+                    msg_class![env; NSNumber numberWithInt: ret]
+                },
+                t => todo!("Unsupported type: {}", t as char)
+            }
+        }
+    }
+
+    unimplemented!("TODO: object {:?} does not have simple getter method for {}, use fallback", this, key);
+}
+
 - (bool)respondsToSelector:(SEL)selector {
     let class = msg![env; this class];
     env.objc.class_has_method(class, selector)
@@ -174,9 +196,10 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 - (ConstVoidPtr)methodForSelector:(SEL)selector {
     let isa = ObjC::read_isa(this, &mut env.mem);
-    match ObjC::lookup_method_imp(env, isa, selector) {
-        IMP::Guest(g) => ConstVoidPtr::from_bits(g.addr_with_thumb_bit()),
-        _ => todo!()
+    match ObjC::lookup_method(env, isa, selector).map(|x| x.imp) {
+        Some(IMP::Guest(g)) => ConstVoidPtr::from_bits(g.addr_with_thumb_bit()),
+        Some(_) => todo!(),
+        None => panic!("Unable to lookup method {:?} in class {:?}", selector.as_str(&env.mem), isa)
     }
 }
 

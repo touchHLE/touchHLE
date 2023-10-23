@@ -145,6 +145,12 @@ impl GLES for GLES1Native {
     unsafe fn Viewport(&mut self, x: GLint, y: GLint, width: GLsizei, height: GLsizei) {
         gles11::Viewport(x, y, width, height)
     }
+    unsafe fn LineWidth(&mut self, val: GLfloat) {
+        gles11::LineWidth(val)
+    }
+    unsafe fn LineWidthx(&mut self, val: GLfixed) {
+        gles11::LineWidthx(val)
+    }
 
     // Lighting and materials
     unsafe fn Fogf(&mut self, pname: GLenum, param: GLfloat) {

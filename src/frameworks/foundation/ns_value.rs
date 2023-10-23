@@ -5,12 +5,15 @@
  */
 //! The `NSValue` class cluster, including `NSNumber`.
 
-use super::NSUInteger;
+use super::{
+    NSComparisonResult, NSOrderedAscending, NSOrderedDescending, NSOrderedSame, NSUInteger,
+};
 use crate::mem::ConstPtr;
 use crate::objc::{
     autorelease, id, msg, msg_class, objc_classes, retain, Class, ClassExports, HostObject,
     NSZonePtr,
 };
+use std::cmp::Ordering;
 
 enum NSNumberHostObject {
     Bool(bool),
@@ -192,6 +195,47 @@ pub const CLASSES: ClassExports = objc_classes! {
     let _: id = msg_class![env; NSData dataWithBytesNoCopy:(c_string.cast_void())
                                                     length:length];
     c_string.cast_const()
+}
+
+- (NSComparisonResult)compare:(id)other {
+    match *env.objc.borrow::<NSNumberHostObject>(this) {
+        NSNumberHostObject::Bool(v) => {
+            let other_v: bool = msg![env; other boolValue];
+            if !v && other_v {
+                NSOrderedAscending
+            } else if v == other_v {
+                NSOrderedSame
+            } else {
+                NSOrderedDescending
+            }
+        }
+        NSNumberHostObject::UnsignedLongLong(v) => {
+            let other_v: u64 = msg![env; other unsignedLongLongValue];
+            match v.cmp(&other_v) {
+                Ordering::Less => NSOrderedAscending,
+                Ordering::Equal => NSOrderedSame,
+                Ordering::Greater => NSOrderedDescending
+            }
+        },
+        NSNumberHostObject::LongLong(v) => {
+            let other_v: i64 = msg![env; other longLongValue];
+            match v.cmp(&other_v) {
+                Ordering::Less => NSOrderedAscending,
+                Ordering::Equal => NSOrderedSame,
+                Ordering::Greater => NSOrderedDescending
+            }
+        },
+        NSNumberHostObject::Double(v) => {
+            let other_v: f64 = msg![env; other doubleValue];
+            if v < other_v {
+                NSOrderedAscending
+            } else if v == other_v {
+                NSOrderedSame
+            } else {
+                NSOrderedDescending
+            }
+        },
+    }
 }
 
 // TODO: accessors etc

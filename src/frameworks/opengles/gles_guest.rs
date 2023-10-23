@@ -206,6 +206,13 @@ fn glViewport(env: &mut Environment, x: GLint, y: GLint, width: GLsizei, height:
     })
 }
 
+fn glLineWidth(env: &mut Environment, val: GLfloat) {
+    with_ctx_and_mem(env, |gles, _mem| unsafe { gles.LineWidth(val) })
+}
+fn glLineWidthx(env: &mut Environment, val: GLfixed) {
+    with_ctx_and_mem(env, |gles, _mem| unsafe { gles.LineWidthx(val) })
+}
+
 // Lighting and materials
 fn glFogf(env: &mut Environment, pname: GLenum, param: GLfloat) {
     with_ctx_and_mem(env, |gles, _mem| unsafe { gles.Fogf(pname, param) })
@@ -967,6 +974,8 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(glShadeModel(_)),
     export_c_func!(glScissor(_, _, _, _)),
     export_c_func!(glViewport(_, _, _, _)),
+    export_c_func!(glLineWidth(_)),
+    export_c_func!(glLineWidthx(_)),
     // Lighting and materials
     export_c_func!(glFogf(_, _)),
     export_c_func!(glFogx(_, _)),

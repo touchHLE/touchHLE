@@ -75,6 +75,8 @@ pub trait GLES {
     unsafe fn ShadeModel(&mut self, mode: GLenum);
     unsafe fn Scissor(&mut self, x: GLint, y: GLint, width: GLsizei, height: GLsizei);
     unsafe fn Viewport(&mut self, x: GLint, y: GLint, width: GLsizei, height: GLsizei);
+    unsafe fn LineWidth(&mut self, val: GLfloat);
+    unsafe fn LineWidthx(&mut self, val: GLfixed);
 
     // Lighting and materials
     unsafe fn Fogf(&mut self, pname: GLenum, param: GLfloat);

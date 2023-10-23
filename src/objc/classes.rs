@@ -20,6 +20,7 @@ use crate::mach_o::MachO;
 use crate::mem::{guest_size_of, ConstPtr, ConstVoidPtr, GuestUSize, Mem, Ptr, SafeRead};
 use std::collections::{HashMap, HashSet};
 use crate::environment::Environment;
+use crate::objc::methods::Method;
 use crate::objc::protocols::{collect_protocols_from_bin, protocol_list_t, protocol_t};
 
 /// Generic pointer to an Objective-C class or metaclass.
@@ -39,7 +40,7 @@ pub(super) struct ClassHostObject {
     pub(super) name: String,
     pub(super) is_metaclass: bool,
     pub(super) superclass: Class,
-    pub(super) methods: HashMap<SEL, IMP>,
+    pub(super) methods: HashMap<SEL, Method>,
     pub(super) protocols: HashSet<ConstPtr<protocol_t>>,
     /// Offset into the allocated memory for the object where the ivars of
     /// instances of this class or metaclass (respectively: normal objects or
@@ -346,7 +347,11 @@ impl ClassHostObject {
                     // The selector should already have been registered by
                     // [ObjC::register_host_selectors], so we can panic
                     // if it hasn't been.
-                    (objc.selectors[name], IMP::Host(host_imp))
+                    let method = Method {
+                        imp: IMP::Host(host_imp),
+                        type_: Vec::new(), //TODO: real objc signature
+                    };
+                    (objc.selectors[name], method)
                 }),
             ),
             protocols: HashSet::new(),

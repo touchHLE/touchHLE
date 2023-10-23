@@ -16,6 +16,24 @@
       "message": "I imagine this could be quite spammy. How bad is it for the id Software games? If it\u0027s happening every frame, please change it to a `log_dbg!` instead.\n\nAlso I think hex format with `{:#x}` is better for OpenGL enum values.",
       "revId": "3bdc18b794843e833c89603261e0dab3c17395b1",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "a8f90a0d_959d1630",
+        "filename": "src/gles/gles1_on_gl2.rs",
+        "patchSetId": 16
+      },
+      "lineNbr": 706,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2023-10-23T18:38:41Z",
+      "side": 1,
+      "message": "It\u0027s true its spammed once every frame where the function is used. In Wolf RPG it\u0027s not that bad as it only happens (as far as i\u0027ve seen) in the explosion effects of the intro. I\u0027m changing it anyways in case other games use it more frequently",
+      "parentUuid": "bf9b09a3_725d5b49",
+      "revId": "3bdc18b794843e833c89603261e0dab3c17395b1",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

@@ -105,6 +105,11 @@ fn CGSizeEqualToSize(_env: &mut Environment, a: CGSize, b: CGSize) -> bool {
     a == b
 }
 
+pub const CGSizeZero: CGSize = CGSize {
+    width: 0.0,
+    height: 0.0,
+};
+
 #[derive(Copy, Clone, Debug, Default, PartialEq)]
 #[repr(C, packed)]
 pub struct CGRect {
@@ -155,9 +160,9 @@ fn CGRectEqualToRect(_env: &mut Environment, a: CGRect, b: CGRect) -> bool {
     a == b
 }
 
-pub const CGSizeZero: CGSize = CGSize {
-    width: 0.0,
-    height: 0.0,
+pub const CGRectZero: CGRect = CGRect {
+    origin: CGPointZero,
+    size: CGSizeZero,
 };
 
 pub const FUNCTIONS: FunctionExports = &[
@@ -174,5 +179,9 @@ pub const CONSTANTS: ConstantExports = &[
     (
         "_CGPointZero",
         HostConstant::Custom(|mem| mem.alloc_and_write(CGPointZero).cast().cast_const()),
+    ),
+    (
+        "_CGRectZero",
+        HostConstant::Custom(|mem| mem.alloc_and_write(CGRectZero).cast().cast_const()),
     ),
 ];

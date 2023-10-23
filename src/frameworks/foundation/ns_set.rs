@@ -9,6 +9,7 @@ use super::ns_array;
 use super::ns_dictionary::DictionaryHostObject;
 use super::ns_enumerator::NSFastEnumerationState;
 use super::NSUInteger;
+use crate::frameworks::foundation::ns_array::to_vec;
 use crate::mem::MutPtr;
 use crate::objc::{
     autorelease, id, msg, msg_class, nil, objc_classes, retain, ClassExports, HostObject, NSZonePtr,
@@ -67,19 +68,22 @@ pub const CLASSES: ClassExports = objc_classes! {
     // NSSet might be subclassed by something which needs allocWithZone:
     // to have the normal behaviour. Unimplemented: call superclass alloc then.
     assert!(this == env.objc.get_known_class("NSMutableSet", &mut env.mem));
-    msg_class![env; _touchHLE_NSMutableSet allocWithZone:zone]
+    msg_class![env; _touchHLE_NSSet allocWithZone:zone]
 }
 
 // NSCopying implementation
 - (id)copyWithZone:(NSZonePtr)_zone {
-    todo!(); // TODO: this should produce an immutable copy
+    let objs: id = msg![env; this allObjects];
+    let class = msg![env; this class];
+    let new = msg![env; class alloc];
+    msg![env; new initWithArray: objs]
 }
 
 @end
 
 // Our private subclass that is the single implementation of NSSet for the
 // time being.
-@implementation _touchHLE_NSSet: NSSet
+@implementation _touchHLE_NSSet: NSMutableSet
 
 + (id)allocWithZone:(NSZonePtr)_zone {
     let host_object = Box::new(SetHostObject {
@@ -93,6 +97,20 @@ pub const CLASSES: ClassExports = objc_classes! {
 
     let mut dict = <DictionaryHostObject as Default>::default();
     dict.insert(env, object, null, /* copy_key: */ false);
+
+    env.objc.borrow_mut::<SetHostObject>(this).dict = dict;
+
+    this
+}
+
+- (id)initWithArray:(id)array {
+    let null: id = msg_class![env; NSNull null];
+
+    let mut dict = <DictionaryHostObject as Default>::default();
+    let objects = to_vec(env, array);
+    for object in objects {
+        dict.insert(env, object, null, /* copy_key: */ false);
+    }
 
     env.objc.borrow_mut::<SetHostObject>(this).dict = dict;
 
@@ -121,7 +139,28 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 - (id)allObjects {
     let objects = env.objc.borrow_mut::<SetHostObject>(this).dict.iter_keys().collect();
-    ns_array::from_vec(env, objects)
+    let array = ns_array::from_vec(env, objects);
+    autorelease(env, array)
+}
+
+- (bool)containsObject:(id)object {
+    let host_obj = std::mem::take(env.objc.borrow_mut::<SetHostObject>(this));
+    let res = host_obj.dict.lookup(env, object);
+    *env.objc.borrow_mut(this) = host_obj;
+    res != nil
+}
+
+- (())addObject:(id)object {
+    let null: id = msg_class![env; NSNull null];
+    let mut host_obj = std::mem::take(env.objc.borrow_mut::<SetHostObject>(this));
+    host_obj.dict.insert(env, object, null, false);
+    *env.objc.borrow_mut(this) = host_obj;
+}
+
+- (())removeObject:(id)object {
+    let mut host_obj = std::mem::take(env.objc.borrow_mut::<SetHostObject>(this));
+    host_obj.dict.remove(env, object);
+    *env.objc.borrow_mut(this) = host_obj;
 }
 
 // NSFastEnumeration implementation
@@ -129,30 +168,6 @@ pub const CLASSES: ClassExports = objc_classes! {
                                   objects:(MutPtr<id>)stackbuf
                                     count:(NSUInteger)len {
     fast_enumeration_helper(env, this, state, stackbuf, len)
-}
-
-@end
-
-// Our private subclass that is the single implementation of NSMutableSet for
-// the time being.
-@implementation _touchHLE_NSMutableSet: NSMutableSet
-
-+ (id)allocWithZone:(NSZonePtr)_zone {
-    let host_object = Box::new(SetHostObject {
-        dict: Default::default(),
-    });
-    env.objc.alloc_object(this, host_object, &mut env.mem)
-}
-
-- (id)initWithObject:(id)object {
-    let null: id = msg_class![env; NSNull null];
-
-    let mut dict = <DictionaryHostObject as Default>::default();
-    dict.insert(env, object, null, /* copy_key: */ false);
-
-    env.objc.borrow_mut::<SetHostObject>(this).dict = dict;
-
-    this
 }
 
 - (())dealloc {
@@ -160,32 +175,12 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.dealloc_object(this, &mut env.mem)
 }
 
+- (id)initWithCapacity:(NSUInteger)cap {
+    env.objc.borrow_mut::<SetHostObject>(this).dict.map.reserve(cap as usize);
+    this
+}
+
 // TODO: init methods etc
-
-- (NSUInteger)count {
-    env.objc.borrow_mut::<SetHostObject>(this).dict.count
-}
-
-- (id)anyObject {
-    let object_or_none = env.objc.borrow_mut::<SetHostObject>(this).dict.iter_keys().next();
-    match object_or_none {
-        Some(object) => object,
-        None => nil
-    }
-}
-
-- (id)allObjects {
-    let objects = env.objc.borrow_mut::<SetHostObject>(this).dict.iter_keys().collect();
-    ns_array::from_vec(env, objects)
-}
-
-// NSFastEnumeration implementation
-- (NSUInteger)countByEnumeratingWithState:(MutPtr<NSFastEnumerationState>)state
-                                  objects:(MutPtr<id>)stackbuf
-                                    count:(NSUInteger)len {
-    fast_enumeration_helper(env, this, state, stackbuf, len)
-}
-
 // TODO: more mutation methods
 
 - (())addObject:(id)object {

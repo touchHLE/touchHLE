@@ -14,12 +14,13 @@
 //!
 //! See also: [crate::objc], especially the `objects` module.
 
+use crate::frameworks::foundation::ns_string::from_rust_string;
 use super::ns_string::to_rust_string;
 use super::{ns_run_loop, ns_thread, NSUInteger};
 use crate::mem::{ConstVoidPtr, MutVoidPtr};
 use crate::objc::{
     id, msg, msg_class, msg_send, objc_classes, Class, ClassExports, NSZonePtr, ObjC,
-    TrivialHostObject, SEL, class_conformsToProtocol, IMP
+    TrivialHostObject, SEL, class_conformsToProtocol, IMP, autorelease
 };
 
 pub const CLASSES: ClassExports = objc_classes! {
@@ -120,6 +121,14 @@ pub const CLASSES: ClassExports = objc_classes! {
 // we should make sure all the Foundation classes' overrides of it are there,
 // to prevent weird behavior.
 // TODO: localized description methods also? (not sure if NSObject has them)
+
+-(id)description {
+    let class = msg![env; this class];
+    let desc = from_rust_string(env, format!(
+        "<{}: {:#x}>", env.objc.get_class_name(class), this.to_bits()
+    ));
+    autorelease(env, desc)
+}
 
 // Helper for NSCopying
 - (id)copy {

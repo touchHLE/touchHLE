@@ -341,7 +341,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 /// `[[NSArray alloc] initWithObjects:count]` but without copying.
 /// The elements should already be "retained by" the `Vec`.
 pub fn from_vec(env: &mut Environment, objects: Vec<id>) -> id {
-    let array: id = msg_class![env; NSArray alloc];
+    let array: id = msg_class![env; NSMutableArray alloc];
     env.objc.borrow_mut::<ArrayHostObject>(array).array = objects;
     array
 }

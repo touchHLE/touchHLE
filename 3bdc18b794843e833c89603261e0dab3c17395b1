@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "bf9b09a3_725d5b49",
+        "filename": "src/gles/gles1_on_gl2.rs",
+        "patchSetId": 16
+      },
+      "lineNbr": 706,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-10-23T07:42:06Z",
+      "side": 1,
+      "message": "I imagine this could be quite spammy. How bad is it for the id Software games? If it\u0027s happening every frame, please change it to a `log_dbg!` instead.\n\nAlso I think hex format with `{:#x}` is better for OpenGL enum values.",
+      "revId": "3bdc18b794843e833c89603261e0dab3c17395b1",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

@@ -472,21 +472,30 @@ impl Fs {
 
         let bundle_guest_path = home_directory.join(&bundle_dir_name);
 
-        let documents_host_path = if !read_only_mode {
-            let path = paths::user_data_base_path()
+        let mut documents_host_path = None;
+        let mut tmp_host_path = None;
+        if !read_only_mode {
+            let base_path = paths::user_data_base_path()
                 .join(paths::SANDBOX_DIR)
-                .join(bundle_id)
+                .join(bundle_id);
+            let docs_path = base_path
                 .join("Documents");
-            if let Err(e) = std::fs::create_dir_all(&path) {
+            if let Err(e) = std::fs::create_dir_all(&docs_path) {
                 panic!(
                     "Could not create documents directory for app at {:?}: {:?}",
-                    path, e
+                    docs_path, e
                 );
             }
-            Some(path)
-        } else {
-            None
-        };
+            documents_host_path = Some(docs_path);
+            let temps_host_path = base_path.join("tmp");
+            if let Err(e) = std::fs::create_dir_all(&temps_host_path) {
+                panic!(
+                    "Could not create temporary directory for app at {:?}: {:?}",
+                    temps_host_path, e
+                );
+            }
+            tmp_host_path = Some(temps_host_path);
+        }
 
         // Some Free Software libraries are bundled with touchHLE.
         use paths::DYLIBS_DIR;
@@ -531,6 +540,12 @@ impl Fs {
             app_dir_children.insert(
                 "Documents".to_string(),
                 FsNode::from_host_dir(&documents_host_path, /* writeable: */ true),
+            );
+        }
+        if let Some(tmp_host_path) = tmp_host_path {
+            app_dir_children.insert(
+                "tmp".to_string(),
+                FsNode::from_host_dir(&tmp_host_path, /* writeable: */ true),
             );
         }
 

@@ -153,6 +153,23 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.class_has_method(class, selector)
 }
 
+- (id)performSelector:(SEL)sel {
+    assert!(sel != SEL::null());
+    msg_send(env, (this, sel))
+}
+
+- (id)performSelector:(SEL)sel
+           withObject:(id)o1 {
+    assert!(sel != SEL::null());
+    msg_send(env, (this, sel, o1))
+}
+
+- (id)performSelector:(SEL)sel
+           withObject:(id)o1
+           withObject:(id)o2 {
+    assert!(sel != SEL::null());
+    msg_send(env, (this, sel, o1, o2))
+}
 
 @end
 

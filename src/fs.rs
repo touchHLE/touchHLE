@@ -465,15 +465,21 @@ impl Fs {
         let working_directory = GuestPathBuf::from("/".to_string());
 
         let bundle_guest_path = home_directory.join(&bundle_dir_name);
-
-        let documents_host_path = paths::user_data_base_path()
+        let data_host_path = paths::user_data_base_path()
             .join(paths::SANDBOX_DIR)
-            .join(bundle_id)
-            .join("Documents");
+            .join(bundle_id);
+        let documents_host_path = data_host_path.join("Documents");
         if let Err(e) = std::fs::create_dir_all(&documents_host_path) {
             panic!(
                 "Could not create documents directory for app at {:?}: {:?}",
                 documents_host_path, e
+            );
+        }
+        let tmp_host_path = data_host_path.join("tmp");
+        if let Err(e) = std::fs::create_dir_all(&tmp_host_path) {
+            panic!(
+                "Could not create temporary directory for app at {:?}: {:?}",
+                tmp_host_path, e
             );
         }
 
@@ -531,6 +537,12 @@ impl Fs {
                                         FsNode::from_host_dir(
                                             &documents_host_path,
                                             /* writeable: */ true,
+                                        ),
+                                    ),
+                                    (
+                                        "tmp".to_string(),
+                                        FsNode::from_host_dir(
+                                            &tmp_host_path, true
                                         ),
                                     ),
                                 ]),

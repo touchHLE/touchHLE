@@ -109,6 +109,12 @@ struct method_t {
 }
 unsafe impl SafeRead for method_t {}
 
+#[derive(Clone)]
+pub struct Method {
+    pub type_: Vec<u8>,
+    pub imp: IMP,
+}
+
 impl ClassHostObject {
     // See classes.rs for host method parsing
 
@@ -130,14 +136,18 @@ impl ClassHostObject {
             // TODO: support type strings
             let method_t {
                 name,
-                types: _,
+                types,
                 imp,
             } = mem.read(method_ptr);
 
             // There is no guarantee this string is unique or known.
             // We must deduplicate it like any other.
             let sel = objc.register_bin_selector(name, mem);
-            self.methods.insert(sel, IMP::Guest(imp));
+            let m = Method {
+                imp: IMP::Guest(imp),
+                type_: mem.cstr_at(types).to_vec()
+            };
+            self.methods.insert(sel, m);
         }
     }
 }
@@ -218,7 +228,7 @@ impl ObjC {
             }
         }
     }
-    pub fn lookup_method_imp(env: &mut Environment, orig_class: Class, method: SEL) -> IMP {
+    pub fn lookup_method(env: &mut Environment, orig_class: Class, method: SEL) -> Option<Method> {
         let mut class = orig_class;
         while class != nil {
             let host_object = env.objc.get_host_object(class).unwrap();
@@ -229,16 +239,11 @@ impl ObjC {
             }) = host_object.as_any().downcast_ref() else {
                 panic!("Attempting to lookup method in something that is not a real class");
             };
-            if let Some(imp) = methods.get(&method) {
-                return imp.clone();
+            if let Some(m) = methods.get(&method) {
+                return Some(m.clone());
             }
             class = superclass;
         }
-        let class_host_object = env.objc.get_host_object(orig_class).unwrap();
-        let &ClassHostObject {
-            ref name,
-            ..
-        } = class_host_object.as_any().downcast_ref().unwrap();
-        panic!("Unable to lookup method {:?} in class {:?}", method.as_str(&env.mem), name)
+        None
     }
 }

@@ -8,6 +8,8 @@
 use super::ns_enumerator::{fast_enumeration_helper, NSFastEnumerationState};
 use super::ns_property_list_serialization::deserialize_plist_from_file;
 use super::{ns_keyed_unarchiver, ns_string, ns_url, NSUInteger};
+use crate::abi::DotDotDot;
+
 use crate::fs::GuestPath;
 use crate::mem::MutPtr;
 use crate::objc::{
@@ -60,20 +62,30 @@ pub const CLASSES: ClassExports = objc_classes! {
     let res = deserialize_plist_from_file(env, &path, /* array_expected: */ true);
     autorelease(env, res)
 }
-+ (id)arrayWithObjects:(id)firstObj, ...args {
-    retain(env, firstObj);
-    let mut objects = vec![firstObj];
-    let mut varargs = args.start();
-    loop {
-        let next_arg: id = varargs.next(env);
-        if next_arg.is_null() {
-            break;
-        }
-        retain(env, next_arg);
-        objects.push(next_arg);
-    }
-    let array = from_vec(env, objects);
-    autorelease(env, array)
+
++ (id)arrayWithArray:(id)other {
+    let new = msg![env; this alloc];
+    let new = msg![env; new initWithArray:other];
+    autorelease(env, new)
+}
+
++ (id)arrayWithObjects:(id)first, ...rest {
+    let new = msg_class![env; this alloc];
+    let new = init_with_object(env, new, first, rest);
+    autorelease(env, new)
+}
+
++ (id)array {
+    let new = msg![env; this alloc];
+    let new = msg![env; new init];
+    autorelease(env, new)
+}
+
++ (id)arrayWithObject:(id)obj {
+    let new = msg![env; this alloc];
+    retain(env, obj);
+    env.objc.borrow_mut::<ArrayHostObject>(new).array.push(obj);
+    autorelease(env, new)
 }
 
 // These probably comes from some category related to plists.
@@ -106,6 +118,27 @@ pub const CLASSES: ClassExports = objc_classes! {
     msg![env; this objectAtIndex: (size - 1)]
 }
 
+- (id)initWithArray:(id)other {
+    let size: NSUInteger = msg![env; other count];
+    let mut v = Vec::with_capacity(size as usize);
+    for i in 0..size {
+        let obj = msg![env; other objectAtIndex:i];
+        let obj = retain(env, obj);
+        v.push(obj);
+    }
+    env.objc.borrow_mut::<ArrayHostObject>(this).array = v;
+    this
+}
+
+- (id)initWithObjects:(id)first, ...rest {
+    init_with_object(env, this, first, rest)
+}
+
+- (id)mutableCopyWithZone:(NSZonePtr)_zone {
+    let new = msg_class![env; NSMutableArray alloc];
+    msg![env; new initWithArray:this]
+}
+
 @end
 
 // NSMutableArray is an abstract class. A subclass must provide everything
@@ -128,7 +161,8 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 // NSCopying implementation
 - (id)copyWithZone:(NSZonePtr)_zone {
-    todo!(); // TODO: this should produce an immutable copy
+    let new = msg_class![env; NSArray alloc];
+    msg![env; new initWithArray:this]
 }
 
 @end
@@ -309,5 +343,21 @@ pub const CLASSES: ClassExports = objc_classes! {
 pub fn from_vec(env: &mut Environment, objects: Vec<id>) -> id {
     let array: id = msg_class![env; NSArray alloc];
     env.objc.borrow_mut::<ArrayHostObject>(array).array = objects;
+    array
+}
+
+fn init_with_object(env: &mut Environment, array: id, first: id, rest: DotDotDot) -> id {
+    let mut va_args = rest.start();
+    retain(env, first);
+    let mut v = vec![first];
+    loop {
+        let obj = va_args.next(env);
+        if obj == nil {
+            break;
+        }
+        retain(env, obj);
+        v.push(obj);
+    }
+    env.objc.borrow_mut::<ArrayHostObject>(array).array = v;
     array
 }

@@ -135,6 +135,9 @@ pub const CLASSES: ClassExports = objc_classes! {
     msg![env; this copyWithZone:(MutVoidPtr::null())]
 }
 
+- (id)mutableCopy {
+    msg![env; this mutableCopyWithZone:(MutVoidPtr::null())]
+}
 
 // NSKeyValueCoding
 - (())setValue:(id)value

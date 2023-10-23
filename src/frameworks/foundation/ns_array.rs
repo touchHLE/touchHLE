@@ -9,8 +9,9 @@ use super::ns_property_list_serialization::deserialize_plist_from_file;
 use super::{
     ns_enumerator::NSFastEnumerationState, ns_keyed_unarchiver, ns_string, ns_url, NSUInteger,
 };
+use crate::abi::DotDotDot;
 use crate::fs::GuestPath;
-use crate::mem::MutPtr;
+use crate::mem::{MutPtr, MutVoidPtr};
 use crate::objc::{
     autorelease, id, msg, msg_class, nil, objc_classes, release, retain, ClassExports, HostObject,
     NSZonePtr,
@@ -63,25 +64,29 @@ pub const CLASSES: ClassExports = objc_classes! {
     let res = deserialize_plist_from_file(env, &path, /* array_expected: */ true);
     autorelease(env, res)
 }
-+ (id)arrayWithObjects:(id)firstObj, ...args {
-    retain(env, firstObj);
-    let mut objects = vec![firstObj];
-    let mut varargs = args.start();
-    loop {
-        let next_arg: id = varargs.next(env);
-        if next_arg.is_null() {
-            break;
-        }
-        retain(env, next_arg);
-        objects.push(next_arg);
-    }
-    let array = from_vec(env, objects);
-    autorelease(env, array)
-}
 
-+(id)arrayWithArray:(id)other {
++ (id)arrayWithArray:(id)other {
     let new = msg![env; this alloc];
     let new = msg![env; new initWithArray: other];
+    autorelease(env, new)
+}
+
++ (id)arrayWithObjects:(id)first, ...rest {
+    let new = msg_class![env; NSArray alloc];
+    from_va_args(env, new, first, rest);
+    autorelease(env, new)
+}
+
++ (id)array {
+    let new = msg![env; this alloc];
+    let new = msg![env; new init];
+    autorelease(env, new)
+}
+
++ (id)arrayWithObject:(id)obj {
+    let new = msg![env; this alloc];
+    retain(env, obj);
+    env.objc.borrow_mut::<ArrayHostObject>(new).array.push(obj);
     autorelease(env, new)
 }
 
@@ -126,6 +131,61 @@ pub const CLASSES: ClassExports = objc_classes! {
     this
 }
 
+- (id)initWithObjects:(id)first, ...rest {
+    from_va_args(env, this, first, rest);
+    this
+}
+
+- (NSUInteger)countByEnumeratingWithState:(MutPtr<NSFastEnumerationState>)state
+                                  objects:(MutPtr<id>)stackbuf
+                                    count:(NSUInteger)len {
+    let host_object = env.objc.borrow::<ArrayHostObject>(this);
+
+    if host_object.array.is_empty() {
+        return 0;
+    }
+
+    let NSFastEnumerationState {
+        state: cur_idx,
+        ..
+    } = env.mem.read(state);
+
+    let this_round = min(host_object.array.len() as u32 - cur_idx, len);
+    if cur_idx == 0 {
+        env.mem.write(state, NSFastEnumerationState {
+            state: 0,
+            items_ptr: stackbuf,
+            mutations_ptr: this.cast(),
+            extra: Default::default(),
+        });
+    }
+    env.mem.write(state.cast(), (cur_idx + this_round) as NSUInteger);
+    for i in 0..this_round {
+        env.mem.write(stackbuf.add(i), host_object.array[(cur_idx + i) as usize]);
+    }
+    this_round
+}
+
+-(id)mutableCopyWithZone:(NSZonePtr)_zone {
+    let new = msg_class![env; NSMutableArray alloc];
+    msg![env; new initWithArray: this]
+}
+
+-(id)mutableCopy {
+    msg![env; this mutableCopyWithZone:(MutVoidPtr::null())]
+}
+
+- (id)objectEnumerator { // NSEnumerator*
+    let array_host_object: &mut ArrayHostObject = env.objc.borrow_mut(this);
+    let vec = array_host_object.array.to_vec();
+    let host_object = Box::new(ObjectEnumeratorHostObject {
+        iterator: vec.into_iter(),
+    });
+    let class = env.objc.get_known_class("_touchHLE_NSArray_ObjectEnumerator", &mut env.mem);
+    let enumerator = env.objc.alloc_object(class, host_object, &mut env.mem);
+    autorelease(env, enumerator)
+}
+
 @end
 
 // NSMutableArray is an abstract class. A subclass must provide everything
@@ -148,7 +208,8 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 // NSCopying implementation
 - (id)copyWithZone:(NSZonePtr)_zone {
-    todo!(); // TODO: this should produce an immutable copy
+    let new = msg_class![env; NSArray alloc];
+    msg![env; new initWithArray: this]
 }
 
 @end
@@ -197,17 +258,6 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.dealloc_object(this, &mut env.mem)
 }
 
-- (id)objectEnumerator { // NSEnumerator*
-    let array_host_object: &mut ArrayHostObject = env.objc.borrow_mut(this);
-    let vec = array_host_object.array.to_vec();
-    let host_object = Box::new(ObjectEnumeratorHostObject {
-        iterator: vec.into_iter(),
-    });
-    let class = env.objc.get_known_class("_touchHLE_NSArray_ObjectEnumerator", &mut env.mem);
-    let enumerator = env.objc.alloc_object(class, host_object, &mut env.mem);
-    autorelease(env, enumerator)
-}
-
 // TODO: more init methods, etc
 
 - (NSUInteger)count {
@@ -216,36 +266,6 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (id)objectAtIndex:(NSUInteger)index {
     // TODO: throw real exception rather than panic if out-of-bounds?
     env.objc.borrow::<ArrayHostObject>(this).array[index as usize]
-}
-
-- (NSUInteger)countByEnumeratingWithState:(MutPtr<NSFastEnumerationState>)state
-                                  objects:(MutPtr<id>)stackbuf
-                                    count:(NSUInteger)len {
-    let host_object = env.objc.borrow::<ArrayHostObject>(this);
-
-    if host_object.array.is_empty() {
-        return 0;
-    }
-
-    let NSFastEnumerationState {
-        state: cur_idx,
-        ..
-    } = env.mem.read(state);
-
-    let this_round = min(host_object.array.len() as u32 - cur_idx, len);
-    if cur_idx == 0 {
-        env.mem.write(state, NSFastEnumerationState {
-            state: 0,
-            items_ptr: stackbuf,
-            mutations_ptr: stackbuf.cast(),
-            extra: Default::default(),
-        });
-    }
-    env.mem.write(state.cast(), (cur_idx + this_round) as NSUInteger);
-    for i in 0..this_round {
-        env.mem.write(stackbuf.add(i), host_object.array[(cur_idx + i) as usize]);
-    }
-    this_round
 }
 
 -(bool)containsObject:(id)needle {
@@ -366,4 +386,17 @@ pub fn from_vec(env: &mut Environment, objects: Vec<id>) -> id {
 
 pub fn to_vec(env: &mut Environment, array: id) -> Vec<id> {
     env.objc.borrow::<ArrayHostObject>(array).array.clone()
+}
+
+fn from_va_args(env: &mut Environment, array: id, first: id, rest: DotDotDot) {
+    let mut va_args = rest.start();
+    let mut v = vec![retain(env, first)];
+    loop {
+        let obj = va_args.next(env);
+        if obj == nil {
+            break;
+        }
+        v.push(retain(env, obj));
+    }
+    env.objc.borrow_mut::<ArrayHostObject>(array).array = v;
 }

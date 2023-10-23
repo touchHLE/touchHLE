@@ -124,6 +124,24 @@
       "parentUuid": "16fd94d0_d68ff757",
       "revId": "163ee6891c206d52d5deff380ad7a63cf2ac352b",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "bf12560b_13890029",
+        "filename": "touchHLE_default_options.txt",
+        "patchSetId": 9
+      },
+      "lineNbr": 52,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-10-23T14:59:22Z",
+      "side": 1,
+      "message": "OK so I can\u0027t reproduce the issue I was having before… it seems like this game works with any tilt offset. So you can revert this.",
+      "parentUuid": "f4bb3f72_9c67ef34",
+      "revId": "163ee6891c206d52d5deff380ad7a63cf2ac352b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

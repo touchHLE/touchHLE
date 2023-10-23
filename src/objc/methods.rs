@@ -24,6 +24,7 @@ use std::any::TypeId;
 /// "guest methods" (functions in the guest app). Either way, the function needs
 /// to conform to the same ABI: [id] and [SEL] must be its first two parameters.
 #[allow(clippy::upper_case_acronyms)]
+#[derive(Clone)]
 pub enum IMP {
     Host(&'static dyn HostIMP),
     Guest(GuestIMP),
@@ -218,5 +219,30 @@ impl ObjC {
                 class = superclass;
             }
         }
+    }
+    pub fn lookup_method_imp(env: &mut Environment, orig_class: Class, method: SEL) -> IMP {
+        let mut class = orig_class;
+        while class != nil {
+            let host_object = env.objc.get_host_object(class).unwrap();
+            let Some(&ClassHostObject {
+                superclass,
+                ref methods,
+                ..
+            }) = host_object.as_any().downcast_ref()
+            else {
+                panic!("Attempting to lookup method in something that is not a real class");
+            };
+            if let Some(imp) = methods.get(&method) {
+                return imp.clone();
+            }
+            class = superclass;
+        }
+        let class_host_object = env.objc.get_host_object(orig_class).unwrap();
+        let ClassHostObject { name, .. } = class_host_object.as_any().downcast_ref().unwrap();
+        panic!(
+            "Unable to lookup method {:?} in class {:?}",
+            method.as_str(&env.mem),
+            name
+        )
     }
 }

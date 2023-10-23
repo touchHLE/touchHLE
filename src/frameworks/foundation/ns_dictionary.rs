@@ -46,6 +46,20 @@ impl DictionaryHostObject {
         }
         nil
     }
+    pub(super) fn remove(&mut self, env: &mut Environment, key: id) {
+        let hash: Hash = msg![env; key hash];
+        let Some(collisions) = self.map.get_mut(&hash) else {
+            return;
+        };
+        for i in 0..collisions.len() {
+            let cand = collisions[i].0;
+            if cand == key || msg![env; cand isEqualTo:key] {
+                release(env, collisions[i].0);
+                release(env, collisions[i].1);
+                collisions.swap_remove(i);
+            }
+        }
+    }
     pub(super) fn insert(&mut self, env: &mut Environment, key: id, value: id, copy_key: bool) {
         let key: id = if copy_key {
             msg![env; key copy]

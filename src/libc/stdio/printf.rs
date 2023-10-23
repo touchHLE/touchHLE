@@ -193,6 +193,10 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
                 let int: i32 = args.next(env);
                 res.extend_from_slice(format!("{:x}", int).as_bytes());
             }
+            (b'X', b'n') => {
+                let int: i32 = args.next(env);
+                res.extend_from_slice(format!("{:X}", int).as_bytes());
+            }
             (b'p', b'n') => {
                 let ptr: MutVoidPtr = args.next(env);
                 res.extend_from_slice(format!("{:?}", ptr).as_bytes());

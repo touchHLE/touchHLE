@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-use crate::dyld::{export_c_func, FunctionExports};
+use crate::dyld::{export_c_func, ConstantExports, FunctionExports, HostConstant};
 use crate::mem::MutVoidPtr;
 use crate::Environment;
 
@@ -16,3 +16,8 @@ fn NSSetUncaughtExceptionHandler(
 }
 
 pub const FUNCTIONS: FunctionExports = &[export_c_func!(NSSetUncaughtExceptionHandler(_))];
+
+pub const CONSTANTS: ConstantExports = &[(
+    "_NSInvalidArgumentException",
+    HostConstant::NSString("NSInvalidArgumentException"),
+)];

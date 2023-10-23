@@ -16,6 +16,24 @@
       "message": "There\u0027s still no `retain` here.",
       "revId": "f578834533446479031b3da14c77cade348ac9d0",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "68129e85_04ddeb68",
+        "filename": "src/frameworks/core_foundation/cf_bundle.rs",
+        "patchSetId": 17
+      },
+      "lineNbr": 93,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2023-10-23T20:34:02Z",
+      "side": 1,
+      "message": "Oops!",
+      "parentUuid": "856a684e_fc358d7a",
+      "revId": "f578834533446479031b3da14c77cade348ac9d0",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

@@ -1,0 +1,135 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f404fd6a_7e5ac274",
+        "filename": "src/frameworks/core_foundation/cf_bundle.rs",
+        "patchSetId": 15
+      },
+      "lineNbr": 44,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-10-23T08:18:24Z",
+      "side": 1,
+      "message": "Nitpick: can you try to use `snake_case` for all the function arguments and local variables here?",
+      "revId": "f3079a244ddaa7be340191a2407d4ac531947055",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7ea41e51_df99223b",
+        "filename": "src/frameworks/core_foundation/cf_bundle.rs",
+        "patchSetId": 15
+      },
+      "lineNbr": 82,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-10-23T08:18:24Z",
+      "side": 1,
+      "message": "Hyper-nitpick: personally I tend to omit the spaces after the colons in Objective-C, because that\u0027s what Apple seem to do, but I won\u0027t require you to change this.",
+      "revId": "f3079a244ddaa7be340191a2407d4ac531947055",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d7cb82aa_11dab431",
+        "filename": "src/frameworks/core_foundation/cf_bundle.rs",
+        "patchSetId": 15
+      },
+      "lineNbr": 85,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-10-23T08:18:24Z",
+      "side": 1,
+      "message": "You need to do `retain(env, prefLoc)` to increment the reference count here. `ns_array::from_vec` doesn\u0027t do a retain for you, unfortunately. Maybe I should change the name to make that more obvious.",
+      "revId": "f3079a244ddaa7be340191a2407d4ac531947055",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7b5d5fb9_c26fd1de",
+        "filename": "src/frameworks/core_foundation/cf_bundle.rs",
+        "patchSetId": 15
+      },
+      "lineNbr": 90,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-10-23T08:18:24Z",
+      "side": 1,
+      "message": "Is this what Apple\u0027s implementation does? It makes sense to me either way, so I don\u0027t object to the code, but it might be good to mention in the comment if this is just something we\u0027ve invented.",
+      "revId": "f3079a244ddaa7be340191a2407d4ac531947055",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5c5bc4a0_b5cd74b3",
+        "filename": "src/frameworks/core_foundation/cf_bundle.rs",
+        "patchSetId": 15
+      },
+      "lineNbr": 92,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-10-23T08:18:24Z",
+      "side": 1,
+      "message": "Also here, a retain is needed.",
+      "revId": "f3079a244ddaa7be340191a2407d4ac531947055",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "cfea35d7_c7a558d7",
+        "filename": "src/frameworks/foundation/ns_bundle.rs",
+        "patchSetId": 15
+      },
+      "lineNbr": 80,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-10-23T08:18:24Z",
+      "side": 1,
+      "message": "Nitpick: `snake_case` preferred for function arguments and local variables.",
+      "range": {
+        "startLine": 80,
+        "startChar": 42,
+        "endLine": 80,
+        "endChar": 60
+      },
+      "revId": "f3079a244ddaa7be340191a2407d4ac531947055",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9135d0f6_48bd69cb",
+        "filename": "src/frameworks/foundation/ns_locale.rs",
+        "patchSetId": 15
+      },
+      "lineNbr": 22,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-10-23T08:18:24Z",
+      "side": 1,
+      "message": "Can you use the `snake_case` naming style? That\u0027s the standard for Rust (https://rust-lang.github.io/api-guidelines/naming.html) and touchHLE tries to follow the Rust standard for its internal code, only using other conventions when implementing third-party APIs (like all the Apple ones for example).\n\nI guess I should have written a coding style guide somewhere, sorry.",
+      "range": {
+        "startLine": 22,
+        "startChar": 7,
+        "endLine": 22,
+        "endChar": 42
+      },
+      "revId": "f3079a244ddaa7be340191a2407d4ac531947055",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

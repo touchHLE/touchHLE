@@ -80,6 +80,9 @@ pub const CLASSES: ClassExports = objc_classes! {
     () = msg_class![env; NSAutoreleasePool addObject:this];
     this
 }
+- (NSUInteger)retainCount {
+    env.objc.get_refcount(this)
+}
 
 - (())dealloc {
     log_dbg!("[{:?} dealloc]", this);

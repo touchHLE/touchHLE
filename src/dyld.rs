@@ -162,6 +162,7 @@ pub struct Dyld {
     return_to_host_routine: Option<GuestFunction>,
     thread_exit_routine: Option<GuestFunction>,
     constants_to_link_later: Vec<(MutPtr<ConstVoidPtr>, &'static HostConstant)>,
+    get_proc_addr_cache: HashMap<String, GuestFunction>,
 }
 
 impl Dyld {
@@ -184,6 +185,7 @@ impl Dyld {
             return_to_host_routine: None,
             thread_exit_routine: None,
             constants_to_link_later: Vec::new(),
+            get_proc_addr_cache: HashMap::new(),
         }
     }
 
@@ -558,24 +560,30 @@ impl Dyld {
         cpu: &mut Cpu,
         symbol: &str,
     ) -> Result<GuestFunction, ()> {
-        let &(symbol, f) = search_lists(function_lists::FUNCTION_LISTS, symbol).ok_or(())?;
+        if let Some(addr) = self.get_proc_addr_cache.get(symbol) {
+            Ok(*addr)
+        } else {
+            let &(symbol, f) = search_lists(function_lists::FUNCTION_LISTS, symbol).ok_or(())?;
 
-        // Allocate an SVC ID for this host function
-        let idx: u32 = self.linked_host_functions.len().try_into().unwrap();
-        let svc = idx + Self::SVC_LINKED_FUNCTIONS_BASE;
-        self.linked_host_functions.push((symbol, f));
+            // Allocate an SVC ID for this host function
+            let idx: u32 = self.linked_host_functions.len().try_into().unwrap();
+            let svc = idx + Self::SVC_LINKED_FUNCTIONS_BASE;
+            self.linked_host_functions.push((symbol, f));
 
-        // Create guest function to call this host function
-        let function_ptr = mem.alloc(8);
-        let function_ptr: MutPtr<u32> = function_ptr.cast();
-        mem.write(function_ptr + 0, encode_a32_svc(svc));
-        mem.write(function_ptr + 1, encode_a32_ret());
+            // Create guest function to call this host function
+            let function_ptr = mem.alloc(8);
+            let function_ptr: MutPtr<u32> = function_ptr.cast();
+            mem.write(function_ptr + 0, encode_a32_svc(svc));
+            mem.write(function_ptr + 1, encode_a32_ret());
 
-        // Just in case
-        cpu.invalidate_cache_range(function_ptr.to_bits(), 4);
+            // Just in case
+            cpu.invalidate_cache_range(function_ptr.to_bits(), 4);
 
-        Ok(GuestFunction::from_addr_with_thumb_bit(
-            function_ptr.to_bits(),
-        ))
+            let addr = GuestFunction::from_addr_with_thumb_bit(
+                function_ptr.to_bits(),
+            );
+            self.get_proc_addr_cache.insert(symbol.to_string(), addr);
+            Ok(addr)
+        }
     }
 }

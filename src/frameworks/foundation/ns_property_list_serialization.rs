@@ -1,11 +1,15 @@
 //! `NSPropertyListSerialization`.
 
 use super::{ns_array, ns_dictionary, ns_string, NSUInteger};
+use crate::frameworks::foundation::ns_array::to_vec;
+use crate::frameworks::foundation::ns_data::to_rust_slice;
+use crate::frameworks::foundation::ns_dictionary::dict_to_keys_and_objects;
+use crate::frameworks::foundation::ns_string::to_rust_string;
 use crate::fs::GuestPath;
-use crate::mem::MutPtr;
-use crate::objc::{id, msg, msg_class, nil, release};
-use crate::Environment;
-use plist::Value;
+use crate::mem::{ConstPtr, GuestUSize, MutPtr};
+use crate::objc::{id, msg, msg_class, nil, release, ClassExports};
+use crate::{objc_classes, Environment};
+use plist::{Dictionary, Integer, Value};
 use std::io::Cursor;
 
 // TODO: Implement reading of property lists other than Info.plist.
@@ -79,8 +83,8 @@ fn deserialize_plist(env: &mut Environment, value: &Value) -> id {
             let length: NSUInteger = d.len().try_into().unwrap();
             let alloc: MutPtr<u8> = env.mem.alloc(length).cast();
             env.mem.bytes_at_mut(alloc, length).copy_from_slice(d);
-            let data: id = msg_class![env; NSData alloc];
-            msg![env; data initWithBytesNoCopy:alloc length:length]
+            let data: id = msg_class![env; NSMutableData alloc];
+            msg![env; data initWithBytesNoCopy:(alloc.cast_void()) length:length]
         }
         Value::Date(_) => {
             todo!("deserialize plist value: {:?}", value); // TODO
@@ -114,3 +118,101 @@ fn deserialize_plist(env: &mut Environment, value: &Value) -> id {
         }
     }
 }
+
+fn serialize_plist(env: &mut Environment, obj: id) -> Value {
+    let class: id = msg![env; obj class];
+    let dict_class = env.objc.get_known_class("NSDictionary", &mut env.mem);
+    let number_class = env.objc.get_known_class("NSNumber", &mut env.mem);
+    let string_class = env.objc.get_known_class("NSString", &mut env.mem);
+    let data_class = env.objc.get_known_class("NSData", &mut env.mem);
+    let array_class = env.objc.get_known_class("NSArray", &mut env.mem);
+    if msg![env; obj isKindOfClass: dict_class] {
+        let mut pdict = Dictionary::new();
+        for (k, v) in dict_to_keys_and_objects(env, obj) {
+            pdict.insert(to_rust_string(env, k).to_string(), serialize_plist(env, v));
+        }
+        Value::Dictionary(pdict)
+    } else if msg![env; obj isKindOfClass: number_class] {
+        let type_str: ConstPtr<u8> = msg![env; obj objCType];
+        match env.mem.read(type_str) {
+            b'B' => Value::Boolean(msg![env; obj boolValue]),
+            b'Q' => {
+                let val: u64 = msg![env; obj unsignedLongLongValue];
+                Value::Integer(Integer::from(val))
+            }
+            b'q' => {
+                let val: i64 = msg![env; obj longLongValue];
+                Value::Integer(Integer::from(val))
+            }
+            b'd' => Value::Real(msg![env; obj doubleValue]),
+            t => todo!("Unknown type: {}", t),
+        }
+    } else if msg![env; obj isKindOfClass: string_class] {
+        Value::String(to_rust_string(env, obj).to_string())
+    } else if msg![env; obj isKindOfClass: data_class] {
+        Value::Data(to_rust_slice(env, obj).to_vec())
+    } else if msg![env; obj isKindOfClass: array_class] {
+        Value::Array(
+            to_vec(env, obj)
+                .iter()
+                .map(|&x| serialize_plist(env, x))
+                .collect(),
+        )
+    } else {
+        todo!(
+            "Serializing {} not supported yet",
+            env.objc.get_class_name(class)
+        )
+    }
+}
+
+pub type NSPropertyListFormat = NSUInteger;
+pub const NSPropertyListXMLFormat_v1_0: NSPropertyListFormat = 100;
+
+pub const CLASSES: ClassExports = objc_classes! {
+
+(env, this, _cmd);
+
+@implementation NSPropertyListSerialization: NSObject
+
++ (id)dataFromPropertyList:(id)plist
+                    format:(NSPropertyListFormat)format
+          errorDescription:(MutPtr<id>)error {
+    let val = serialize_plist(env, plist);
+    let mut data = Vec::new();
+    match format {
+        NSPropertyListXMLFormat_v1_0 => val.to_writer_xml(&mut data).unwrap(),
+        f => todo!("Unimplemented plist serialization format: {}", f),
+    };
+    let len = data.len() as GuestUSize;
+    let ptr = env.mem.alloc(len).cast();
+    env.mem.bytes_at_mut(ptr, len).copy_from_slice(&data);
+    if !error.is_null() {
+        env.mem.write(error, nil);
+    }
+    msg_class![env; NSData dataWithBytesNoCopy:(ptr.cast_void())
+                                        length:len]
+}
+
++ (id)propertyListFromData:(id)data
+          mutabilityOption:(NSUInteger)opt
+                    format:(MutPtr<NSPropertyListFormat>)format
+          errorDescription:(MutPtr<id>)err {
+    assert_eq!(opt, 2);
+    if !err.is_null() {
+        env.mem.write(err, nil);
+    }
+    if !format.is_null() {
+        env.mem.write(format, NSPropertyListXMLFormat_v1_0);
+    }
+    let bytes = to_rust_slice(env, data);
+    let Ok(root) = Value::from_reader(Cursor::new(bytes)) else {
+        log_dbg!("Couldn't parse plist, returning nil.");
+        return nil;
+    };
+    deserialize_plist(env, &root)
+}
+
+@end
+
+};

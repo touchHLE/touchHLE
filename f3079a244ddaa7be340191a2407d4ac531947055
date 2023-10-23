@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "715bda86_4a1b108a",
+        "filename": "src/frameworks/core_foundation/cf_bundle.rs",
+        "patchSetId": 15
+      },
+      "lineNbr": 44,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2023-10-23T18:39:59Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "f404fd6a_7e5ac274",
+      "revId": "f3079a244ddaa7be340191a2407d4ac531947055",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "7ea41e51_df99223b",
@@ -31,6 +49,24 @@
       "writtenOn": "2023-10-23T08:18:24Z",
       "side": 1,
       "message": "Hyper-nitpick: personally I tend to omit the spaces after the colons in Objective-C, because that\u0027s what Apple seem to do, but I won\u0027t require you to change this.",
+      "revId": "f3079a244ddaa7be340191a2407d4ac531947055",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "2c4241e8_81bf7d83",
+        "filename": "src/frameworks/core_foundation/cf_bundle.rs",
+        "patchSetId": 15
+      },
+      "lineNbr": 82,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2023-10-23T18:39:59Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "7ea41e51_df99223b",
       "revId": "f3079a244ddaa7be340191a2407d4ac531947055",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
@@ -54,6 +90,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "30135772_c371485c",
+        "filename": "src/frameworks/core_foundation/cf_bundle.rs",
+        "patchSetId": 15
+      },
+      "lineNbr": 85,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2023-10-23T18:39:59Z",
+      "side": 1,
+      "message": "Would I have to retain the strings in CFBundleCopyBundleLocalizations too?",
+      "parentUuid": "d7cb82aa_11dab431",
+      "revId": "f3079a244ddaa7be340191a2407d4ac531947055",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "7b5d5fb9_c26fd1de",
         "filename": "src/frameworks/core_foundation/cf_bundle.rs",
         "patchSetId": 15
@@ -65,6 +119,24 @@
       "writtenOn": "2023-10-23T08:18:24Z",
       "side": 1,
       "message": "Is this what Apple\u0027s implementation does? It makes sense to me either way, so I don\u0027t object to the code, but it might be good to mention in the comment if this is just something we\u0027ve invented.",
+      "revId": "f3079a244ddaa7be340191a2407d4ac531947055",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "507c26bb_e151c9b3",
+        "filename": "src/frameworks/core_foundation/cf_bundle.rs",
+        "patchSetId": 15
+      },
+      "lineNbr": 90,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2023-10-23T18:39:59Z",
+      "side": 1,
+      "message": "It\u0027s what Apple does (tested on current macOS).\n\nIf i send an array with valid values i get this:\n```\nCFArrayRef source \u003d (__bridge CFArrayRef)@[@\"es\", @\"en\", @\"de\"];\nCFArrayRef copied \u003d CFBundleCopyPreferredLocalizationsFromArray(source);\nCFIndex count \u003d CFArrayGetCount(copied);\nfor( int i \u003d 0; i \u003c count ; ++i)\n{\n   CFStringRef loc \u003d (CFStringRef)CFArrayGetValueAtIndex(copied, i);\n   NSLog(@\"copied[%d]: %@\", i, loc);\n}\n```\n```copied[0]: en```\nHowever if i send an array with nonsense values i get an array with just the first nonsense value:\n```\nCFArrayRef source \u003d (__bridge CFArrayRef)@[@\"Test1\", @\"Test2\", @\"Test3\"];\nCFArrayRef copied \u003d CFBundleCopyPreferredLocalizationsFromArray(source);\nCFIndex count \u003d CFArrayGetCount(copied);\nfor( int i \u003d 0; i \u003c count ; ++i)\n{\n   CFStringRef loc \u003d (CFStringRef)CFArrayGetValueAtIndex(copied, i);\n   NSLog(@\"copied[%d]: %@\", i, loc);\n}\n```\n```copied[0]: Test1```",
+      "parentUuid": "7b5d5fb9_c26fd1de",
       "revId": "f3079a244ddaa7be340191a2407d4ac531947055",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
@@ -82,6 +154,24 @@
       "writtenOn": "2023-10-23T08:18:24Z",
       "side": 1,
       "message": "Also here, a retain is needed.",
+      "revId": "f3079a244ddaa7be340191a2407d4ac531947055",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "9d7fb95b_09198818",
+        "filename": "src/frameworks/core_foundation/cf_bundle.rs",
+        "patchSetId": 15
+      },
+      "lineNbr": 92,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2023-10-23T18:39:59Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "5c5bc4a0_b5cd74b3",
       "revId": "f3079a244ddaa7be340191a2407d4ac531947055",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
@@ -109,6 +199,30 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "d6e18a5c_3e269944",
+        "filename": "src/frameworks/foundation/ns_bundle.rs",
+        "patchSetId": 15
+      },
+      "lineNbr": 80,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2023-10-23T18:39:59Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "cfea35d7_c7a558d7",
+      "range": {
+        "startLine": 80,
+        "startChar": 42,
+        "endLine": 80,
+        "endChar": 60
+      },
+      "revId": "f3079a244ddaa7be340191a2407d4ac531947055",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "9135d0f6_48bd69cb",
@@ -122,6 +236,30 @@
       "writtenOn": "2023-10-23T08:18:24Z",
       "side": 1,
       "message": "Can you use the `snake_case` naming style? That\u0027s the standard for Rust (https://rust-lang.github.io/api-guidelines/naming.html) and touchHLE tries to follow the Rust standard for its internal code, only using other conventions when implementing third-party APIs (like all the Apple ones for example).\n\nI guess I should have written a coding style guide somewhere, sorry.",
+      "range": {
+        "startLine": 22,
+        "startChar": 7,
+        "endLine": 22,
+        "endChar": 42
+      },
+      "revId": "f3079a244ddaa7be340191a2407d4ac531947055",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "328092de_6eaee3a7",
+        "filename": "src/frameworks/foundation/ns_locale.rs",
+        "patchSetId": 15
+      },
+      "lineNbr": 22,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2023-10-23T18:39:59Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "9135d0f6_48bd69cb",
       "range": {
         "startLine": 22,
         "startChar": 7,

@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f35ddc08_3ec6d1d3",
+        "filename": "src/frameworks/uikit/ui_view.rs",
+        "patchSetId": 17
+      },
+      "lineNbr": 353,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-10-23T07:44:28Z",
+      "side": 1,
+      "message": "`UIViewContentMode` is an `NSInteger`-based enum, so `(id)` shouldn\u0027t be used.\n\nI would do:\n\n    - (())setContentMode:(NSInteger)content_mode { // should be UIViewContentMode",
+      "revId": "a6bfba667e65548bd76753a8db000a6732a50783",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d7a4aab8_243be236",
+        "filename": "src/frameworks/uikit/ui_view.rs",
+        "patchSetId": 17
+      },
+      "lineNbr": 354,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-10-23T07:44:28Z",
+      "side": 1,
+      "message": "missing `]` after the `{:?}`",
+      "revId": "a6bfba667e65548bd76753a8db000a6732a50783",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

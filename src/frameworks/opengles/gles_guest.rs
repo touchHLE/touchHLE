@@ -25,8 +25,9 @@ use crate::gles::gles11_raw::types::{
     GLuint, GLvoid,
 };
 // These types have different sizes, so some care is needed.
-use crate::gles::gles11_raw::types::GLsizeiptr as HostGLsizeiptr;
+use crate::gles::gles11_raw::types::{GLintptr as HostGLintptr, GLsizeiptr as HostGLsizeiptr};
 type GuestGLsizeiptr = GuestISize;
+type GuestGLintptr = GuestISize;
 
 fn with_ctx_and_mem<T, U>(env: &mut Environment, f: T) -> U
 where
@@ -320,6 +321,24 @@ fn glBufferData(
                 .cast()
         };
         gles.BufferData(target, size as HostGLsizeiptr, data, usage)
+    })
+}
+
+fn glBufferSubData(
+    env: &mut Environment,
+    target: GLenum,
+    offset: GuestGLintptr,
+    size: GuestGLsizeiptr,
+    data: ConstPtr<GLvoid>,
+) {
+    with_ctx_and_mem(env, |gles, mem| unsafe {
+        let data = if data.is_null() {
+            std::ptr::null()
+        } else {
+            mem.ptr_at(data.cast::<u8>(), size.try_into().unwrap())
+                .cast()
+        };
+        gles.BufferSubData(target, offset as HostGLintptr, size as HostGLsizeiptr, data)
     })
 }
 
@@ -1012,6 +1031,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(glDeleteBuffers(_, _)),
     export_c_func!(glBindBuffer(_, _)),
     export_c_func!(glBufferData(_, _, _, _)),
+    export_c_func!(glBufferSubData(_, _, _, _)),
     // Non-pointers
     export_c_func!(glColor4f(_, _, _, _)),
     export_c_func!(glColor4x(_, _, _, _)),

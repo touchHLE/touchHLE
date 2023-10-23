@@ -130,6 +130,9 @@ impl GLES for GLES1Native {
     unsafe fn FrontFace(&mut self, mode: GLenum) {
         gles11::FrontFace(mode)
     }
+    unsafe fn LineWidth(&mut self, val: GLfloat) {
+        gles11::LineWidth(val)
+    }
     unsafe fn DepthRangef(&mut self, near: GLclampf, far: GLclampf) {
         gles11::DepthRangef(near, far)
     }

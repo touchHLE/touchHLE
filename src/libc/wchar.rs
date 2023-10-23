@@ -88,10 +88,10 @@ fn wcslen(env: &mut Environment, s: ConstPtr<wchar_t>) -> GuestUSize {
     GenericChar::<wchar_t>::strlen(env, s)
 }
 fn wcscpy(env: &mut Environment, dest: MutPtr<wchar_t>, src: ConstPtr<wchar_t>) -> MutPtr<wchar_t> {
-    GenericChar::<wchar_t>::strcpy(env, dest, src)
+    GenericChar::<wchar_t>::strcpy(env, dest, src, GuestUSize::MAX)
 }
 fn wcscat(env: &mut Environment, dest: MutPtr<wchar_t>, src: ConstPtr<wchar_t>) -> MutPtr<wchar_t> {
-    GenericChar::<wchar_t>::strcat(env, dest, src)
+    GenericChar::<wchar_t>::strcat(env, dest, src, GuestUSize::MAX)
 }
 fn wcsncpy(
     env: &mut Environment,

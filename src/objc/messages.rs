@@ -88,8 +88,8 @@ fn objc_msgSend_inner(env: &mut Environment, receiver: id, selector: SEL, super2
                 continue;
             }
 
-            if let Some(imp) = methods.get(&selector) {
-                match imp {
+            if let Some(mt) = methods.get(&selector) {
+                match mt.imp {
                     IMP::Host(host_imp) => {
                         // TODO: do type checks when calling GuestIMPs too.
                         // That requires using Objective-C type strings, rather

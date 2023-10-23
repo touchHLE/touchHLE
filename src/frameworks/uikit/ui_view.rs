@@ -40,6 +40,7 @@ pub(super) struct UIViewHostObject {
     superview: id,
     clears_context_before_drawing: bool,
     user_interaction_enabled: bool,
+    needs_layout: bool,
 }
 impl HostObject for UIViewHostObject {}
 impl Default for UIViewHostObject {
@@ -52,6 +53,7 @@ impl Default for UIViewHostObject {
             superview: nil,
             clears_context_before_drawing: true,
             user_interaction_enabled: true,
+            needs_layout: true,
         }
     }
 }
@@ -268,6 +270,7 @@ pub const CLASSES: ClassExports = objc_classes! {
         subviews,
         clears_context_before_drawing: _,
         user_interaction_enabled: _,
+        needs_layout: _,
     } = std::mem::take(env.objc.borrow_mut(this));
 
     release(env, layer);
@@ -443,6 +446,26 @@ pub const CLASSES: ClassExports = objc_classes! {
     msg![env; this_layer convertPoint:point toLayer:other_layer]
 }
 
+-(())setNeedsLayout {
+    let host = env.objc.borrow_mut::<UIViewHostObject>(this);
+    host.needs_layout = true;
+    let sv = host.superview;
+    if sv != nil {
+        () = msg![env; sv setNeedsLayout];
+    }
+}
+
+-(())layoutIfNeeded {
+    if !env.objc.borrow::<UIViewHostObject>(this).needs_layout {
+        return;
+    }
+    () = msg![env; this layoutSubviews];
+    env.objc.borrow_mut::<UIViewHostObject>(this).needs_layout = false;
+    for subview in env.objc.borrow::<UIViewHostObject>(this).subviews.clone() {
+        () = msg![env; subview layoutIfNeeded];
+    }
+}
+
 @end
 
 };
@@ -456,6 +479,5 @@ fn adopt_subview(env: &mut Environment, this: id, view: id) {
     let this_obj = env.objc.borrow_mut::<UIViewHostObject>(this);
     let this_layer = this_obj.layer;
     () = msg![env; this_layer addSublayer:subview_layer];
-    () = msg![env; this layoutSubviews];
-    () = msg![env; view layoutSubviews];
+    () = msg![env; view setNeedsLayout];
 }

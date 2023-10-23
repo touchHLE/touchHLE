@@ -185,6 +185,24 @@ pub const CLASSES: ClassExports = objc_classes! {
     class_conformsToProtocol(env, class, protocol)
 }
 
+- (id)performSelector:(SEL)sel {
+    assert!(sel != SEL::null());
+    msg_send(env, (this, sel))
+}
+
+- (id)performSelector:(SEL)sel
+           withObject:(id)o1 {
+    assert!(sel != SEL::null());
+    msg_send(env, (this, sel, o1))
+}
+
+- (id)performSelector:(SEL)sel
+           withObject:(id)o1
+           withObject:(id)o2 {
+    assert!(sel != SEL::null());
+    msg_send(env, (this, sel, o1, o2))
+}
+
 - (())performSelector:(SEL)selector
                onThread:(id)thread
              withObject:(id)arg

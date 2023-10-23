@@ -17,6 +17,8 @@ type useconds_t = u32;
 
 const F_OK: i32 = 0;
 const R_OK: i32 = 4;
+const W_OK: i32 = 2;
+const X_OK: i32 = 1;
 
 fn sleep(env: &mut Environment, seconds: u32) -> u32 {
     env.sleep(Duration::from_secs(seconds.into()), true);
@@ -55,25 +57,24 @@ fn isatty(_env: &mut Environment, fd: FileDescriptor) -> i32 {
 fn access(env: &mut Environment, path: ConstPtr<u8>, mode: i32) -> i32 {
     let binding = env.mem.cstr_at_utf8(path).unwrap();
     let guest_path = GuestPath::new(&binding);
-    let (exists, r, _, _) = env.fs.access(guest_path);
-    // TODO: set errno
-    match mode {
-        F_OK => {
-            if exists {
-                0
-            } else {
-                -1
-            }
-        }
-        R_OK => {
-            if r {
-                0
-            } else {
-                -1
-            }
-        }
-        _ => unimplemented!("{}", mode),
+    let (exists, r, w, x) = env.fs.access(guest_path);
+    if mode == F_OK {
+        return if exists {
+            0
+        } else {
+            -1
+        };
     }
+    if mode & R_OK != 0 && !r {
+        return -1;
+    }
+    if mode & W_OK != 0 && !w {
+        return -1;
+    }
+    if mode & X_OK != 0 && !x {
+        return -1;
+    }
+    0
 }
 
 pub const FUNCTIONS: FunctionExports = &[

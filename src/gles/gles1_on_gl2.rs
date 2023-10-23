@@ -760,6 +760,9 @@ impl GLES for GLES1OnGL2 {
     unsafe fn Viewport(&mut self, x: GLint, y: GLint, width: GLsizei, height: GLsizei) {
         gl21::Viewport(x, y, width, height)
     }
+    unsafe fn LineWidth(&mut self, val: GLfloat) {
+        gl21::LineWidth(val)
+    }
 
     // Lighting and materials
     unsafe fn Fogf(&mut self, pname: GLenum, param: GLfloat) {

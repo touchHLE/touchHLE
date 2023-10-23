@@ -103,10 +103,13 @@ impl<T: Copy + Default + Eq + Ord + SafeRead + Debug> GenericChar<T> {
         i
     }
 
-    pub(super) fn strcpy(env: &mut Environment, dest: MutPtr<T>, src: ConstPtr<T>) -> MutPtr<T> {
+    pub(super) fn strcpy(env: &mut Environment, dest: MutPtr<T>, src: ConstPtr<T>, mut bufsz: GuestUSize) -> MutPtr<T> {
         {
             let (mut dest, mut src) = (dest, src);
             loop {
+                if bufsz == 0 {
+                    panic!("Buffer overrun");
+                }
                 let c = env.mem.read(src);
                 env.mem.write(dest, c);
                 if c == Self::null() {
@@ -114,14 +117,17 @@ impl<T: Copy + Default + Eq + Ord + SafeRead + Debug> GenericChar<T> {
                 }
                 dest += 1;
                 src += 1;
+                bufsz -= 1;
             }
         }
         dest
     }
-    pub(super) fn strcat(env: &mut Environment, dest: MutPtr<T>, src: ConstPtr<T>) -> MutPtr<T> {
+    pub(super) fn strcat(env: &mut Environment, dest: MutPtr<T>, src: ConstPtr<T>, bufsz: GuestUSize) -> MutPtr<T> {
         {
-            let dest = dest + Self::strlen(env, dest.cast_const());
-            Self::strcpy(env, dest, src);
+            let dest_len = Self::strlen(env, dest.cast_const());
+            let dest = dest + dest_len;
+            let remaining = bufsz - dest_len;
+            Self::strcpy(env, dest, src, remaining);
         }
         dest
     }
@@ -150,7 +156,7 @@ impl<T: Copy + Default + Eq + Ord + SafeRead + Debug> GenericChar<T> {
     pub(super) fn strdup(env: &mut Environment, src: ConstPtr<T>) -> MutPtr<T> {
         let len = Self::strlen(env, src);
         let new = env.mem.alloc((len + 1) * guest_size_of::<T>()).cast();
-        Self::strcpy(env, new, src)
+        Self::strcpy(env, new, src, GuestUSize::MAX)
     }
 
     pub(super) fn strcmp(env: &mut Environment, a: ConstPtr<T>, b: ConstPtr<T>) -> i32 {

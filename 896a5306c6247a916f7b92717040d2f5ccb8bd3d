@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "71740cca_4302b77a",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-10-23T07:49:01Z",
+      "side": 1,
+      "message": "I\u0027m never opposed to new tests, but I have a suggestion to make these more practical.",
+      "revId": "896a5306c6247a916f7b92717040d2f5ccb8bd3d",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3f38a837_02e163d9",
+        "filename": "tests/TestApp_source/main.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 287,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-10-23T07:49:01Z",
+      "side": 1,
+      "message": "I think these would be easier to read if you used `memcmp` instead. By the way, we have C99, so you can declare variables in-line:\n\n    char expected[] \u003d \"test\\x00\\x7f\\x7f\\x7f\\x7f\\x7f\";\n    if (retval !\u003d dst || !memcmp(retval, expected, sizeof expected))\n        return 1;",
+      "revId": "896a5306c6247a916f7b92717040d2f5ccb8bd3d",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

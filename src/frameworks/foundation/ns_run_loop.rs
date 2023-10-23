@@ -231,6 +231,35 @@ fn run_run_loop(
             .expect("NSRunLoop not supported in headless mode")
             .poll_for_events(&env.options);
 
+        let mut invocations = Vec::new();
+        mem::swap(
+            &mut invocations,
+            &mut env
+                .objc
+                .borrow_mut::<NSRunLoopHostObject>(run_loop)
+                .scheduled_invocations,
+        );
+
+        for invocation in invocations.drain(..) {
+            () = msg_send(
+                env,
+                (invocation.target, invocation.selector, invocation.arg),
+            );
+            release(env, invocation.arg);
+            release(env, invocation.target);
+        }
+
+        let visible_windows = env
+            .framework_state
+            .uikit
+            .ui_view
+            .ui_window
+            .visible_windows
+            .clone();
+        for window in visible_windows {
+            () = msg![env; window layoutIfNeeded];
+        }
+
         let next_due = uikit::handle_events(env);
         limit_sleep_time(&mut sleep_until, next_due);
 
@@ -256,24 +285,6 @@ fn run_run_loop(
         for timer in timers_tmp.drain(..) {
             let next_due = ns_timer::handle_timer(env, timer);
             limit_sleep_time(&mut sleep_until, next_due);
-        }
-
-        let mut invocations = Vec::new();
-        mem::swap(
-            &mut invocations,
-            &mut env
-                .objc
-                .borrow_mut::<NSRunLoopHostObject>(run_loop)
-                .scheduled_invocations,
-        );
-
-        for invocation in invocations.drain(..) {
-            () = msg_send(
-                env,
-                (invocation.target, invocation.selector, invocation.arg),
-            );
-            release(env, invocation.arg);
-            release(env, invocation.target);
         }
 
         // Unfortunately, touchHLE has to poll for certain things repeatedly;

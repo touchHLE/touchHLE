@@ -10,6 +10,7 @@ use super::{
     ns_enumerator::NSFastEnumerationState, ns_keyed_unarchiver, ns_string, ns_url, NSUInteger,
 };
 use crate::abi::DotDotDot;
+use crate::frameworks::foundation::ns_range::NSNotFound;
 use crate::fs::GuestPath;
 use crate::mem::{MutPtr, MutVoidPtr};
 use crate::objc::{
@@ -175,6 +176,21 @@ pub const CLASSES: ClassExports = objc_classes! {
     msg![env; this mutableCopyWithZone:(MutVoidPtr::null())]
 }
 
+- (NSUInteger)indexOfObject:(id)needle {
+    let objs = env.objc.borrow::<ArrayHostObject>(this).array.clone();
+    for (i, &obj) in objs.iter().enumerate() {
+        if msg![env; needle isEqual: obj] {
+            return i as NSUInteger;
+        }
+    }
+    NSNotFound
+}
+
+-(bool)containsObject:(id)needle {
+    let idx: NSUInteger = msg![env; this indexOfObject: needle];
+    idx != NSNotFound
+}
+
 - (id)objectEnumerator { // NSEnumerator*
     let array_host_object: &mut ArrayHostObject = env.objc.borrow_mut(this);
     let vec = array_host_object.array.to_vec();
@@ -266,16 +282,6 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (id)objectAtIndex:(NSUInteger)index {
     // TODO: throw real exception rather than panic if out-of-bounds?
     env.objc.borrow::<ArrayHostObject>(this).array[index as usize]
-}
-
--(bool)containsObject:(id)needle {
-    let objs = env.objc.borrow::<ArrayHostObject>(this).array.clone();
-    for obj in objs {
-        if msg![env; needle isEqual: obj] {
-            return true;
-        }
-    }
-    false
 }
 
 @end

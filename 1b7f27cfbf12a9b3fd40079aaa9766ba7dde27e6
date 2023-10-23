@@ -34,6 +34,24 @@
       "parentUuid": "6a3cca8c_1f3fb4ee",
       "revId": "1b7f27cfbf12a9b3fd40079aaa9766ba7dde27e6",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "7e66db09_bf6aec80",
+        "filename": "touchHLE_default_options.txt",
+        "patchSetId": 12
+      },
+      "lineNbr": 51,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-10-23T15:11:14Z",
+      "side": 1,
+      "message": "Thanks!",
+      "parentUuid": "7afc14cf_cd40b861",
+      "revId": "1b7f27cfbf12a9b3fd40079aaa9766ba7dde27e6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

@@ -6,7 +6,7 @@
 
 use crate::Environment;
 use crate::mem::MutVoidPtr;
-use crate::dyld::{export_c_func, FunctionExports};
+use crate::dyld::{ConstantExports, export_c_func, FunctionExports, HostConstant};
 
 fn NSSetUncaughtExceptionHandler(
     _: &mut Environment,
@@ -16,3 +16,10 @@ fn NSSetUncaughtExceptionHandler(
 }
 
 pub const FUNCTIONS: FunctionExports = &[export_c_func!(NSSetUncaughtExceptionHandler(_))];
+
+pub const CONSTANTS: ConstantExports = &[
+    (
+        "_NSInvalidArgumentException",
+        HostConstant::NSString("NSInvalidArgumentException"),
+    ),
+];

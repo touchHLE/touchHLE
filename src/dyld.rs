@@ -162,6 +162,7 @@ pub struct Dyld {
     return_to_host_routine: Option<GuestFunction>,
     thread_exit_routine: Option<GuestFunction>,
     constants_to_link_later: Vec<(MutPtr<ConstVoidPtr>, &'static HostConstant)>,
+    functions_to_link_later: Vec<(MutPtr<ConstVoidPtr>, String)>,
     get_proc_addr_cache: HashMap<String, GuestFunction>,
 }
 
@@ -185,6 +186,7 @@ impl Dyld {
             return_to_host_routine: None,
             thread_exit_routine: None,
             constants_to_link_later: Vec::new(),
+            functions_to_link_later: Vec::new(),
             get_proc_addr_cache: HashMap::new(),
         }
     }
@@ -326,6 +328,9 @@ impl Dyld {
             {
                 // Often used for C++ RTTI
                 Ptr::from_bits(external_addr)
+            } else if let Some(_) = search_lists(function_lists::FUNCTION_LISTS, name) {
+                self.functions_to_link_later.push((ptr_ptr, name.clone()));
+                continue;
             } else {
                 unhandled_relocations
                     .entry(name)
@@ -385,6 +390,11 @@ impl Dyld {
                 continue;
             }
 
+            if let Some(_) = search_lists(function_lists::FUNCTION_LISTS, symbol) {
+                self.functions_to_link_later.push((ptr_ptr, symbol.to_owned()));
+                continue;
+            }
+
             log!(
                 "Warning: unhandled non-lazy symbol {:?} at {:?} in \"{}\"",
                 symbol,
@@ -417,6 +427,11 @@ impl Dyld {
                 HostConstant::Custom(f) => f(&mut env.mem),
             };
             env.mem.write(symbol_ptr_ptr, symbol_ptr.cast());
+        }
+        let to_link = std::mem::take(&mut env.dyld.functions_to_link_later);
+        for (symbol_ptr_ptr, symbol) in to_link {
+            let addr = env.dyld.create_proc_address(&mut env.mem, &mut env.cpu, &symbol).unwrap();
+            env.mem.write(symbol_ptr_ptr, Ptr::from_bits(addr.addr_with_thumb_bit()));
         }
     }
 

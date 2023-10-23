@@ -11,7 +11,7 @@ use crate::frameworks::foundation::{ns_string, unichar};
 use crate::libc::posix_io::{STDERR_FILENO, STDOUT_FILENO};
 use crate::libc::stdio::FILE;
 use crate::mem::{ConstPtr, GuestUSize, Mem, MutPtr, MutVoidPtr};
-use crate::objc::{id, msg};
+use crate::objc::{id, msg, nil};
 use crate::Environment;
 use std::collections::HashSet;
 use std::io::Write;
@@ -181,10 +181,14 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
                 let object: id = args.next(env);
                 // TODO: use localized description if available?
                 let description: id = msg![env; object description];
-                // TODO: avoid copy
-                // TODO: what if the description isn't valid UTF-16?
-                let description = ns_string::to_rust_string(env, description);
-                write!(&mut res, "{}", description).unwrap();
+                if description != nil {
+                    // TODO: avoid copy
+                    // TODO: what if the description isn't valid UTF-16?
+                    let description = ns_string::to_rust_string(env, description);
+                    write!(&mut res, "{}", description).unwrap();
+                } else {
+                    write!(&mut res, "(null)").unwrap();
+                }
             }
             b'x' => {
                 // Note: on 32-bit system unsigned int and unsigned long

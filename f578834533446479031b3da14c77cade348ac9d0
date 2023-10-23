@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "856a684e_fc358d7a",
+        "filename": "src/frameworks/core_foundation/cf_bundle.rs",
+        "patchSetId": 17
+      },
+      "lineNbr": 93,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-10-23T20:23:37Z",
+      "side": 1,
+      "message": "There\u0027s still no `retain` here.",
+      "revId": "f578834533446479031b3da14c77cade348ac9d0",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

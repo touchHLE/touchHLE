@@ -28,6 +28,8 @@ pub struct State {
 
 type UIAccelerationValue = f64;
 
+const DEFAULT_UPDATE_INTERVAL: f64 = 1.0 / 60.0;
+
 struct UIAccelerationHostObject {
     x: UIAccelerationValue,
     y: UIAccelerationValue,
@@ -76,8 +78,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (NSTimeInterval)updateInterval {
-    // TODO: return some reasonable default value
-    env.framework_state.uikit.ui_accelerometer.update_interval.unwrap()
+    env.framework_state.uikit.ui_accelerometer.update_interval.unwrap_or(DEFAULT_UPDATE_INTERVAL)
 }
 - (())setUpdateInterval:(NSTimeInterval)interval {
     // The system can limit this value, and must (some apps pass 0 and this can
@@ -128,8 +129,7 @@ pub(super) fn handle_accelerometer(env: &mut Environment) -> Option<Instant> {
         return None;
     };
 
-    // TODO: use some reasonable default value
-    let ns_interval = state.update_interval.unwrap();
+    let ns_interval = state.update_interval.unwrap_or(DEFAULT_UPDATE_INTERVAL);
     let rust_interval = Duration::from_secs_f64(ns_interval);
 
     let now = Instant::now();

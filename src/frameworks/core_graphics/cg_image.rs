@@ -157,6 +157,10 @@ fn CGImageGetDataProvider(env: &mut Environment, image: CGImageRef) -> CGDataPro
     autorelease(env, cg_data_provider)
 }
 
+fn CGImageGetBitsPerComponent(_: &mut Environment, _: CGImageRef) -> GuestUSize {
+    8 // Fix this when we support anything else
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGImageRelease(_)),
     export_c_func!(CGImageRetain(_)),
@@ -166,4 +170,5 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGImageGetWidth(_)),
     export_c_func!(CGImageGetHeight(_)),
     export_c_func!(CGImageGetDataProvider(_)),
+    export_c_func!(CGImageGetBitsPerComponent(_)),
 ];

@@ -23,7 +23,7 @@ use crate::frameworks::uikit::ui_font::{
 };
 use crate::fs::GuestPath;
 use crate::mach_o::MachO;
-use crate::mem::{guest_size_of, ConstPtr, Mem, MutPtr, Ptr, SafeRead};
+use crate::mem::{guest_size_of, ConstPtr, ConstVoidPtr, Mem, MutPtr, Ptr, SafeRead};
 use crate::objc::{
     autorelease, id, msg, msg_class, nil, objc_classes, retain, Class, ClassExports, HostObject,
     NSZonePtr, ObjC,
@@ -91,13 +91,8 @@ impl StringHostObject {
         // TODO: error handling
 
         match encoding {
-            NSASCIIStringEncoding => {
-                assert!(bytes.iter().all(|byte| byte.is_ascii()));
-                // Safety: guaranteed by above assertion
-                let string = unsafe { String::from_utf8_unchecked(bytes.into_owned()) };
-                StringHostObject::Utf8(Cow::Owned(string))
-            }
-            NSUTF8StringEncoding => {
+            NSUTF8StringEncoding | NSASCIIStringEncoding => {
+                // There are apps that say ascii and mean utf-8
                 let string = String::from_utf8(bytes.into_owned()).unwrap();
                 StringHostObject::Utf8(Cow::Owned(string))
             }
@@ -528,6 +523,21 @@ pub const CLASSES: ClassExports = objc_classes! {
     c_string.cast_const()
 }
 
+- (id)dataUsingEncoding:(NSStringEncoding)encoding {
+    msg![env; this dataUsingEncoding: encoding allowLossyConversion: false]
+}
+
+- (id)dataUsingEncoding:(NSStringEncoding)encoding
+   allowLossyConversion:(bool)_lossy {
+    assert!(encoding == NSUTF8StringEncoding || encoding == NSASCIIStringEncoding);
+    let string = to_rust_string(env, this);
+    let size = string.len() as NSUInteger;
+    let alloc = env.mem.alloc(size);
+    let slice = env.mem.bytes_at_mut(alloc.cast(), size);
+    slice.copy_from_slice(string.as_bytes());
+    msg_class![env; NSData dataWithBytesNoCopy: alloc length: size]
+}
+
 - (id)stringByTrimmingCharactersInSet:(id)set { // NSCharacterSet*
     let initial_length: NSUInteger = msg![env; this length];
 
@@ -814,6 +824,11 @@ pub const CLASSES: ClassExports = objc_classes! {
         None => NSRange{location: NSNotFound as CFIndex, length: 0}
     }
 }
+
+-(ConstPtr<u8>)fileSystemRepresentation {
+    msg![env; this UTF8String]
+}
+
 @end
 
 // Our private subclass that is the single implementation of NSString for the
@@ -879,6 +894,13 @@ pub const CLASSES: ClassExports = objc_classes! {
     assert!(C_STRING_FRIENDLY_ENCODINGS.contains(&encoding));
     let len: NSUInteger = env.mem.cstr_at(c_string).len().try_into().unwrap();
     msg![env; this initWithBytes:c_string length:len encoding:encoding]
+}
+
+- (id)initWithData:(id)data
+          encoding:(NSStringEncoding)encoding {
+    let bytes: ConstVoidPtr = msg![env; data bytes];
+    let len: NSUInteger = msg![env; data length];
+    msg![env; this initWithBytes: (bytes.cast::<u8>()) length: len encoding: encoding]
 }
 
 - (id)initWithContentsOfFile:(id)path // NSString*

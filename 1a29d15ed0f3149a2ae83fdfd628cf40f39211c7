@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "404c8553_5180a36a",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2023-10-23T18:37:47Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "ae852e0d_a03f7e6e",
+      "revId": "1a29d15ed0f3149a2ae83fdfd628cf40f39211c7",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "ee02c860_476ffc48",
@@ -31,6 +49,24 @@
       "writtenOn": "2023-10-23T07:55:57Z",
       "side": 1,
       "message": "cppreference.com says:\n\n\u003e The terminating null character is always appended in the end (so the maximum number of bytes the function may write is count+1).\n\nSo, I think there needs to be code to write a null terminator if `s2` didn\u0027t have one (i.e. the loop ended at the character limit rather than an early exit).",
+      "revId": "1a29d15ed0f3149a2ae83fdfd628cf40f39211c7",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "4660ff48_a3db43c1",
+        "filename": "src/libc/generic_char.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 220,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2023-10-23T18:37:47Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "ee02c860_476ffc48",
       "revId": "1a29d15ed0f3149a2ae83fdfd628cf40f39211c7",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

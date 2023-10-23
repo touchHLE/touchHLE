@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ae852e0d_a03f7e6e",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-10-23T07:55:57Z",
+      "side": 1,
+      "message": "Thanks for fixing this. Sorry about how things got messed up last time.\n\nBy the way, if you change the test style in the strncpy patch, please do it here too.",
+      "revId": "1a29d15ed0f3149a2ae83fdfd628cf40f39211c7",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ee02c860_476ffc48",
+        "filename": "src/libc/generic_char.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 220,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-10-23T07:55:57Z",
+      "side": 1,
+      "message": "cppreference.com says:\n\n\u003e The terminating null character is always appended in the end (so the maximum number of bytes the function may write is count+1).\n\nSo, I think there needs to be code to write a null terminator if `s2` didn\u0027t have one (i.e. the loop ended at the character limit rather than an early exit).",
+      "revId": "1a29d15ed0f3149a2ae83fdfd628cf40f39211c7",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

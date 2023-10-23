@@ -129,7 +129,7 @@ pub(super) fn handle_accelerometer(env: &mut Environment) -> Option<Instant> {
     };
 
     // TODO: use some reasonable default value
-    let ns_interval = state.update_interval.unwrap();
+    let ns_interval = state.update_interval.unwrap_or(1.0 / 60.0);
     let rust_interval = Duration::from_secs_f64(ns_interval);
 
     let now = Instant::now();

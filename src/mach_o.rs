@@ -489,6 +489,11 @@ impl MachO {
                                 };
                                 into_mem.write(addr, entry);
                             }
+                            Some(Symbol::Prebound { name: Some(n), .. }) => {
+                                let ptr_ptr = Ptr::<u32, true>::from_bits(addr);
+                                into_mem.write(ptr_ptr, 0); // Clear prebinding.
+                                external_relocations.push((addr, String::from(n)));
+                            }
                             _ => panic!("Unexpected symbol kind {:?}", sym),
                         };
                     }

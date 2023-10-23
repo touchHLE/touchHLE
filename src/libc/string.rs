@@ -64,6 +64,10 @@ fn strtok(env: &mut Environment, s: MutPtr<u8>, sep: ConstPtr<u8>) -> MutPtr<u8>
 
 // Functions shared with wchar.rs
 
+fn bzero(env: &mut Environment, dest: MutVoidPtr, count: GuestUSize) {
+    memset(env, dest, 0, count);
+}
+
 fn memset(env: &mut Environment, dest: MutVoidPtr, ch: i32, count: GuestUSize) -> MutVoidPtr {
     GenericChar::<u8>::memset(env, dest.cast(), ch as u8, count).cast()
 }
@@ -93,19 +97,22 @@ pub(super) fn strlen(env: &mut Environment, s: ConstPtr<u8>) -> GuestUSize {
     GenericChar::<u8>::strlen(env, s)
 }
 fn strcpy(env: &mut Environment, dest: MutPtr<u8>, src: ConstPtr<u8>) -> MutPtr<u8> {
-    GenericChar::<u8>::strcpy(env, dest, src)
+    GenericChar::<u8>::strcpy(env, dest, src, GuestUSize::MAX)
 }
 fn __strcpy_chk(
     env: &mut Environment,
     dest: MutPtr<u8>,
     src: ConstPtr<u8>,
-    _size: GuestUSize,
+    size: GuestUSize,
 ) -> MutPtr<u8> {
-    log!("Warning: ignore a buffer overflow check in __strcpy_chk");
-    strcpy(env, dest, src)
+    GenericChar::<u8>::strcpy(env, dest, src, size)
 }
 fn strcat(env: &mut Environment, dest: MutPtr<u8>, src: ConstPtr<u8>) -> MutPtr<u8> {
-    GenericChar::<u8>::strcat(env, dest, src)
+    GenericChar::<u8>::strcat(env, dest, src, GuestUSize::MAX)
+}
+
+fn __strcat_chk(env: &mut Environment, dest: MutPtr<u8>, src: ConstPtr<u8>, size: GuestUSize) -> MutPtr<u8> {
+    GenericChar::<u8>::strcat(env, dest, src, size)
 }
 fn strncpy(
     env: &mut Environment,
@@ -215,6 +222,7 @@ fn strrchr(env: &mut Environment, path: ConstPtr<u8>, c: u8) -> ConstPtr<u8> {
 
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(strtok(_, _)),
+    export_c_func!(bzero(_, _)),
     // Functions shared with wchar.rs
     export_c_func!(memset(_, _, _)),
     export_c_func!(memcpy(_, _, _)),
@@ -225,6 +233,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(strcpy(_, _)),
     export_c_func!(__strcpy_chk(_, _, _)),
     export_c_func!(strcat(_, _)),
+    export_c_func!(__strcat_chk(_, _, _)),
     export_c_func!(strncpy(_, _, _)),
     export_c_func!(strsep(_, _)),
     export_c_func!(strdup(_)),

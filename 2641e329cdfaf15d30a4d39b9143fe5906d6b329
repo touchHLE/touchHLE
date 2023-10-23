@@ -34,6 +34,24 @@
       "parentUuid": "e1015e46_803fadab",
       "revId": "2641e329cdfaf15d30a4d39b9143fe5906d6b329",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "423f54ad_39ed2654",
+        "filename": "src/libc/generic_char.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 275,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-10-23T07:59:03Z",
+      "side": 1,
+      "message": "This looks like it wasn\u0027t actually fixed btw, did you forget to commit it?",
+      "parentUuid": "fa506c7a_1c95de40",
+      "revId": "2641e329cdfaf15d30a4d39b9143fe5906d6b329",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

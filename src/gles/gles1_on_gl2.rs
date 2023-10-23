@@ -874,8 +874,19 @@ impl GLES for GLES1OnGL2 {
         data: *const GLvoid,
         usage: GLenum,
     ) {
-        assert!(target == gles11::ARRAY_BUFFER || target == gles11::ELEMENT_ARRAY_BUFFER);
+        assert!(target == gl21::ARRAY_BUFFER || target == gl21::ELEMENT_ARRAY_BUFFER);
         gl21::BufferData(target, size, data, usage)
+    }
+
+    unsafe fn BufferSubData(
+        &mut self,
+        target: GLenum,
+        offset: GLintptr,
+        size: GLsizeiptr,
+        data: *const GLvoid,
+    ) {
+        assert!(target == gl21::ARRAY_BUFFER || target == gl21::ELEMENT_ARRAY_BUFFER);
+        gl21::BufferSubData(target, offset, size, data)
     }
 
     // Non-pointers

@@ -645,6 +645,14 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.alloc_object(class, host_object, &mut env.mem)
 }
 
+- (id)stringByAppendingFormat:(id)format, ...args {
+    let mut me = to_rust_string(env, this).to_string();
+    let other = with_format(env, format, args.start());
+    me.push_str(&other);
+    let new = from_rust_string(env, me);
+    autorelease(env, new)
+}
+
 - (id)stringByDeletingLastPathComponent {
     let string = to_rust_string(env, this); // TODO: avoid copying
     let (res, _) = path_algorithms::split_last_path_component(&string);
@@ -816,6 +824,18 @@ pub const CLASSES: ClassExports = objc_classes! {
     st[..cutoff].parse().unwrap_or(0)
 }
 
+- (id)substringToIndex:(NSUInteger)index {
+    let st = to_rust_string(env, this);
+    let sub = from_rust_string(env, st[..index as usize].to_string());
+    autorelease(env, sub)
+}
+
+- (id)substringFromIndex:(NSUInteger)index {
+    let st = to_rust_string(env, this);
+    let sub = from_rust_string(env, st[index as usize..].to_string());
+    autorelease(env, sub)
+}
+
 -(NSRange)rangeOfString:(id)other {
     let haystack = to_rust_string(env, this);
     let needle = to_rust_string(env, other);
@@ -823,6 +843,30 @@ pub const CLASSES: ClassExports = objc_classes! {
         Some(start) => NSRange{location: start as CFIndex, length: needle.len() as CFIndex},
         None => NSRange{location: NSNotFound as CFIndex, length: 0}
     }
+}
+
+-(id)lowercaseString {
+    let rs = to_rust_string(env, this);
+    let nss = from_rust_string(env, rs.to_lowercase());
+    autorelease(env, nss)
+}
+
+-(id)uppercaseString {
+    let rs = to_rust_string(env, this);
+    let nss = from_rust_string(env, rs.to_uppercase());
+    autorelease(env, nss)
+}
+
+-(bool)hasSuffix:(id)suf {
+    let me = to_rust_string(env, this);
+    let suf = to_rust_string(env, suf);
+    me.ends_with(suf.as_ref())
+}
+
+-(bool)hasPrefix:(id)pref {
+    let me = to_rust_string(env, this);
+    let pref = to_rust_string(env, pref);
+    me.starts_with(pref.as_ref())
 }
 
 -(ConstPtr<u8>)fileSystemRepresentation {

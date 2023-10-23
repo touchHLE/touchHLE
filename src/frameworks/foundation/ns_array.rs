@@ -19,6 +19,7 @@ use crate::objc::{
 };
 use crate::Environment;
 use std::cmp::min;
+use std::mem;
 use std::ops::Add;
 
 struct ObjectEnumeratorHostObject {
@@ -228,6 +229,14 @@ pub const CLASSES: ClassExports = objc_classes! {
     msg![env; new initWithArray: this]
 }
 
+-(())addObjectsFromArray:(id)other {
+    let count: NSUInteger = msg![env; other count];
+    for i in 0..count {
+        let obj: id = msg![env; other objectAtIndex: i];
+        () = msg![env; this addObject: obj];
+    }
+}
+
 @end
 
 // Our private subclass that is the single implementation of NSArray for the
@@ -357,6 +366,42 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (())removeLastObject {
     let object = env.objc.borrow_mut::<ArrayHostObject>(this).array.pop().unwrap();
     release(env, object)
+}
+
+- (())removeObject:(id)needle {
+    let mut objects = mem::take(&mut env.objc.borrow_mut::<ArrayHostObject>(this).array);
+    retain(env, needle);
+    objects.retain(|&obj| {
+        if obj == needle || msg![env; needle isEqual: obj] {
+            release(env, obj);
+            false
+        } else {
+            true
+        }
+    });
+    release(env, needle);
+    env.objc.borrow_mut::<ArrayHostObject>(this).array = objects;
+}
+
+- (())insertObject:(id)obj
+           atIndex:(NSUInteger)index {
+    let obj = retain(env, obj);
+    env.objc.borrow_mut::<ArrayHostObject>(this).array.insert(index as usize, obj);
+}
+
+- (())replaceObjectAtIndex:(NSUInteger)index
+                withObject:(id)obj {
+    let obj = retain(env, obj);
+    let old = env.objc.borrow_mut::<ArrayHostObject>(this).array[index as usize];
+    env.objc.borrow_mut::<ArrayHostObject>(this).array[index as usize] = obj;
+    release(env, old);
+}
+
+- (())removeAllObjects {
+    let objects = mem::take(&mut env.objc.borrow_mut::<ArrayHostObject>(this).array);
+    for object in objects {
+        release(env, object);
+    }
 }
 
 @end

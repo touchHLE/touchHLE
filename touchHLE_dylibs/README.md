@@ -21,6 +21,12 @@ These are impractical to reimplement, but they are Free Software.
 * Binary origin: `/usr/lib/` of iPhone OS 2.2.1 for the iPod touch (2nd generation), build 5H11a
 * Source code: <https://github.com/sqlite/sqlite>
 
+## `libxml2.2.dylib`
+
+* License: MIT (see `Copyright.libxml2`)
+* Binary origin: `/usr/lib/` of iPhone OS 2.2.1 for the iPod touch (2nd generation), build 5H11a
+* Source code: <https://gitlab.gnome.org/GNOME/libxml2>
+
 ## Original Apple license acknowledgements
 
 > **Free Software Foundation** ( libgcc, libstdc++ )

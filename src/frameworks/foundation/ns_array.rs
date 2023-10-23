@@ -134,6 +134,36 @@ pub const CLASSES: ClassExports = objc_classes! {
     msg![env; this objectAtIndex: (size - 1)]
 }
 
+- (NSUInteger)countByEnumeratingWithState:(MutPtr<NSFastEnumerationState>)state
+                                  objects:(MutPtr<id>)stackbuf
+                                    count:(NSUInteger)len {
+    let host_object = env.objc.borrow::<ArrayHostObject>(this);
+
+    if host_object.array.len() == 0 {
+        return 0;
+    }
+
+    let NSFastEnumerationState {
+        state: cur_idx,
+        ..
+    } = env.mem.read(state);
+
+    let this_round = min(host_object.array.len() as u32 - cur_idx, len);
+    if cur_idx == 0 {
+        env.mem.write(state, NSFastEnumerationState {
+            state: 0,
+            items_ptr: stackbuf,
+            mutations_ptr: this.cast(),
+            extra: Default::default(),
+        });
+    }
+    env.mem.write(state.cast(), (cur_idx + this_round) as NSUInteger);
+    for i in 0..this_round {
+        env.mem.write(stackbuf.add(i), host_object.array[(cur_idx + i) as usize]);
+    }
+    this_round
+}
+
 -(id)mutableCopyWithZone:(NSZonePtr)_zone {
     let new = msg_class![env; NSMutableArray alloc];
     msg![env; new initWithArray: this]
@@ -141,6 +171,17 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 -(id)mutableCopy {
     msg![env; this mutableCopyWithZone:(MutVoidPtr::null())]
+}
+
+- (id)objectEnumerator { // NSEnumerator*
+    let array_host_object: &mut ArrayHostObject = env.objc.borrow_mut(this);
+    let vec = array_host_object.array.to_vec();
+    let host_object = Box::new(ObjectEnumeratorHostObject {
+        iterator: vec.into_iter(),
+    });
+    let class = env.objc.get_known_class("_touchHLE_NSArray_ObjectEnumerator", &mut env.mem);
+    let enumerator = env.objc.alloc_object(class, host_object, &mut env.mem);
+    autorelease(env, enumerator)
 }
 
 @end
@@ -215,17 +256,6 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.dealloc_object(this, &mut env.mem)
 }
 
-- (id)objectEnumerator { // NSEnumerator*
-    let array_host_object: &mut ArrayHostObject = env.objc.borrow_mut(this);
-    let vec = array_host_object.array.to_vec();
-    let host_object = Box::new(ObjectEnumeratorHostObject {
-        iterator: vec.into_iter(),
-    });
-    let class = env.objc.get_known_class("_touchHLE_NSArray_ObjectEnumerator", &mut env.mem);
-    let enumerator = env.objc.alloc_object(class, host_object, &mut env.mem);
-    autorelease(env, enumerator)
-}
-
 // TODO: more init methods, etc
 
 - (NSUInteger)count {
@@ -234,36 +264,6 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (id)objectAtIndex:(NSUInteger)index {
     // TODO: throw real exception rather than panic if out-of-bounds?
     env.objc.borrow::<ArrayHostObject>(this).array[index as usize]
-}
-
-- (NSUInteger)countByEnumeratingWithState:(MutPtr<NSFastEnumerationState>)state
-                                  objects:(MutPtr<id>)stackbuf
-                                    count:(NSUInteger)len {
-    let host_object = env.objc.borrow::<ArrayHostObject>(this);
-
-    if host_object.array.len() == 0 {
-        return 0;
-    }
-
-    let NSFastEnumerationState {
-        state: cur_idx,
-        ..
-    } = env.mem.read(state);
-
-    let this_round = min(host_object.array.len() as u32 - cur_idx, len);
-    if cur_idx == 0 {
-        env.mem.write(state, NSFastEnumerationState {
-            state: 0,
-            items_ptr: stackbuf,
-            mutations_ptr: stackbuf.cast(),
-            extra: Default::default(),
-        });
-    }
-    env.mem.write(state.cast(), (cur_idx + this_round) as NSUInteger);
-    for i in 0..this_round {
-        env.mem.write(stackbuf.add(i), host_object.array[(cur_idx + i) as usize]);
-    }
-    this_round
 }
 
 -(bool)containsObject:(id)needle {

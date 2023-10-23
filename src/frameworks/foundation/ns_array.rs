@@ -5,12 +5,15 @@
  */
 //! The `NSArray` class cluster, including `NSMutableArray`.
 
-use std::cmp::min;
-use std::ops::Add;
+use std::cmp::{min, Ordering};
 use std::mem;
+use std::ops::Add;
 use crate::abi::DotDotDot;
 use super::ns_property_list_serialization::deserialize_plist_from_file;
-use super::{ns_keyed_unarchiver, ns_string, ns_url, NSUInteger, ns_enumerator::NSFastEnumerationState};
+use super::{
+    ns_keyed_unarchiver, ns_string, ns_url, NSUInteger, ns_enumerator::NSFastEnumerationState,
+    NSOrderedAscending, NSOrderedSame, NSOrderedDescending
+};
 use crate::fs::GuestPath;
 use crate::objc::{
     autorelease, id, msg_class, nil, objc_classes, release, retain, ClassExports, HostObject,
@@ -399,6 +402,28 @@ pub const CLASSES: ClassExports = objc_classes! {
     for object in objects {
         release(env, object);
     }
+}
+
+- (())sortUsingDescriptors:(id)descs {
+    let mut v = mem::take(&mut env.objc.borrow_mut::<ArrayHostObject>(this).array);
+    v.sort_by(|&a, &b| {
+        let mut order = NSOrderedAscending;
+        let descs_count: NSUInteger = msg![env; descs count];
+        for i in 0..descs_count {
+            let desc = msg![env; descs objectAtIndex: i];
+            order = msg![env; desc compareObject: a toObject: b];
+            if order != 0 {
+                break
+            }
+        }
+        match order {
+            NSOrderedAscending => Ordering::Less,
+            NSOrderedSame => Ordering::Equal,
+            NSOrderedDescending => Ordering::Greater,
+            _ => panic!(),
+        }
+    });
+    env.objc.borrow_mut::<ArrayHostObject>(this).array = v;
 }
 
 @end

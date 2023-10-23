@@ -96,7 +96,7 @@ If the emulator crashes almost immediately while running a **known-working** ver
 
 # Building and contributing
 
-Please see the BUILDING.md, DEBUGGING.md and CONTRIBUTING.md files in the git repo.
+See the `CONTRIBUTING.md` file in the git repo if you want to contribute. If you just want build touchHLE, look at `dev-docs/building.md`.
 
 # License
 

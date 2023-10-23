@@ -16,6 +16,24 @@
       "message": "Could you sink the variable declaration to this line, C99-style? I think it improves the readability of the code.",
       "revId": "4b868e953f85a9a7b956f340c69de5df0584700e",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "49f01460_5c0c994a",
+        "filename": "tests/TestApp_source/main.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 301,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2023-10-23T18:38:23Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "f73fa743_3b06d84d",
+      "revId": "4b868e953f85a9a7b956f340c69de5df0584700e",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

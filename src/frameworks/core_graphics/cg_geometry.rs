@@ -159,10 +159,18 @@ fn CGRectEqualToRect(_env: &mut Environment, a: CGRect, b: CGRect) -> bool {
 
 pub const CGRectZero: CGRect = CGRect { origin: CGPointZero, size: CGSizeZero };
 
+fn CGRectContainsPoint(_env: &mut Environment, rect: CGRect, point: CGPoint) -> bool {
+    rect.origin.x < point.x &&
+        rect.origin.x + rect.size.width > point.x &&
+        rect.origin.y < point.y &&
+        rect.origin.y + rect.size.height > point.y
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGPointEqualToPoint(_, _)),
     export_c_func!(CGSizeEqualToSize(_, _)),
     export_c_func!(CGRectEqualToRect(_, _)),
+    export_c_func!(CGRectContainsPoint(_, _)),
 ];
 
 pub const CONSTANTS: ConstantExports = &[

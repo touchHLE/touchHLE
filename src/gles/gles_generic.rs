@@ -103,6 +103,13 @@ pub trait GLES {
         data: *const GLvoid,
         usage: GLenum,
     );
+    unsafe fn BufferSubData(
+        &mut self,
+        target: GLenum,
+        offset: GLintptr,
+        size: GLsizeiptr,
+        data: *const GLvoid,
+    );
 
     // Non-pointers
     unsafe fn Color4f(&mut self, red: GLfloat, green: GLfloat, blue: GLfloat, alpha: GLfloat);

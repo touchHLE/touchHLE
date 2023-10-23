@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6a3cca8c_1f3fb4ee",
+        "filename": "touchHLE_default_options.txt",
+        "patchSetId": 12
+      },
+      "lineNbr": 51,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-10-23T15:04:40Z",
+      "side": 1,
+      "message": "Super nitpick, shouldn\u0027t it be capitalised (i.e. “Love”)?",
+      "revId": "1b7f27cfbf12a9b3fd40079aaa9766ba7dde27e6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

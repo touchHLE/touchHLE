@@ -12,7 +12,7 @@ use crate::mem::{ConstVoidPtr, MutPtr, MutVoidPtr, Ptr};
 use crate::objc::{
     autorelease, id, msg, nil, objc_classes, release, retain, ClassExports, HostObject, NSZonePtr,
 };
-use crate::Environment;
+use crate::{msg_class, Environment};
 
 struct NSDataHostObject {
     bytes: MutVoidPtr,
@@ -125,6 +125,13 @@ pub const CLASSES: ClassExports = objc_classes! {
     retain(env, this)
 }
 
+- (id)mutableCopyWithZone:(NSZonePtr)_zone {
+    let bytes: ConstVoidPtr = msg![env; this bytes];
+    let length: NSUInteger = msg![env; this length];
+    let new = msg_class![env; NSMutableData alloc];
+    msg![env; new initWithBytes:(bytes.cast_mut()) length:length]
+}
+
 - (ConstVoidPtr)bytes {
     env.objc.borrow::<NSDataHostObject>(this).bytes.cast_const()
 }
@@ -144,6 +151,35 @@ pub const CLASSES: ClassExports = objc_classes! {
         bytes.cast_const() + range.location,
         range.length,
     );
+}
+
+- (())getBytes:(MutPtr<u8>)buffer {
+    let &NSDataHostObject { bytes, length, .. } = env.objc.borrow(this);
+    env.mem.memmove(
+        buffer.cast(),
+        bytes.cast_const(),
+        length,
+    );
+}
+
+@end
+
+@implementation NSMutableData: NSData
+
+- (id)copyWithZone:(NSZonePtr)_zone {
+    let bytes: ConstVoidPtr = msg![env; this bytes];
+    let length: NSUInteger = msg![env; this length];
+    let new = msg_class![env; NSData alloc];
+    msg![env; new initWithBytes:bytes length:length]
+}
+
+- (())increaseLengthBy:(NSUInteger)add_len {
+    let &NSDataHostObject { bytes, length, .. } = env.objc.borrow(this);
+    let new_len = length + add_len;
+    let new_bytes = env.mem.realloc(bytes, new_len);
+    let host = env.objc.borrow_mut::<NSDataHostObject>(this);
+    host.length = new_len;
+    host.bytes = new_bytes;
 }
 
 @end

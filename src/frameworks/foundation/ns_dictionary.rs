@@ -15,6 +15,7 @@ use crate::objc::{
 };
 use crate::Environment;
 use std::collections::HashMap;
+use crate::frameworks::foundation::ns_array::from_vec;
 
 /// Alias for the return type of the `hash` method of the `NSObject` protocol.
 type Hash = NSUInteger;
@@ -28,7 +29,7 @@ pub(super) struct DictionaryHostObject {
     /// hash-map, which is not ideally efficient. :)
     /// The keys are the hash values, the values are a list of key-value pairs
     /// where the keys have the same hash value.
-    map: HashMap<Hash, Vec<(id, id)>>,
+    pub(super) map: HashMap<Hash, Vec<(id, id)>>,
     pub(super) count: NSUInteger,
 }
 impl HostObject for DictionaryHostObject {}
@@ -63,6 +64,7 @@ impl DictionaryHostObject {
         for &mut (candidate_key, ref mut existing_value) in collisions.iter_mut() {
             if candidate_key == key || msg![env; candidate_key isEqualTo:key] {
                 release(env, *existing_value);
+                release(env, key);
                 *existing_value = value;
                 return;
             }
@@ -186,6 +188,15 @@ pub const CLASSES: ClassExports = objc_classes! {
     retain(env, this)
 }
 
+-(id)allKeys {
+    let keys = env.objc.borrow::<DictionaryHostObject>(this).iter_keys().collect::<Vec<_>>();
+    for key in &keys {
+        retain(env, *key);
+    }
+    let ns_keys = from_vec(env, keys);
+    autorelease(env, ns_keys)
+}
+
 // TODO
 
 @end
@@ -203,6 +214,16 @@ pub const CLASSES: ClassExports = objc_classes! {
     let new = msg![env; this alloc];
     let new = msg![env; new initWithCapacity: cap];
     autorelease(env, new)
+}
+
+- (())setValue:(id)value
+       forKey:(id)key {
+    msg![env; this setObject: value forKey: key]
+}
+
+-(())removeAllObjects {
+    let mut objects = std::mem::take(env.objc.borrow_mut::<DictionaryHostObject>(this));
+    objects.release(env);
 }
 
 @end
@@ -248,6 +269,12 @@ pub const CLASSES: ClassExports = objc_classes! {
     res
 }
 
+-(())setObject:(id)value forKey:(id)key {
+    let mut host_obj: DictionaryHostObject = std::mem::take(env.objc.borrow_mut(this));
+    host_obj.insert(env, key, value, true);
+    *env.objc.borrow_mut(this) = host_obj;
+}
+
 @end
 
 };
@@ -257,7 +284,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 /// with a more intuitive argument order. Unlike [super::ns_array::from_vec],
 /// this **does** copy and retain!
 pub fn dict_from_keys_and_objects(env: &mut Environment, keys_and_objects: &[(id, id)]) -> id {
-    let dict: id = msg_class![env; NSDictionary alloc];
+    let dict: id = msg_class![env; NSMutableDictionary alloc];
 
     let mut host_object = <DictionaryHostObject as Default>::default();
     for &(key, object) in keys_and_objects {

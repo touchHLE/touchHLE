@@ -6,7 +6,7 @@
 //! `UIApplication` and `UIApplicationMain`.
 
 use super::ui_device::*;
-use crate::dyld::{export_c_func, FunctionExports};
+use crate::dyld::{export_c_func, ConstantExports, FunctionExports, HostConstant};
 use crate::frameworks::foundation::ns_string;
 use crate::frameworks::uikit::ui_nib::load_main_nib_file;
 use crate::mem::MutPtr;
@@ -277,3 +277,8 @@ pub(super) fn exit(env: &mut Environment) {
 }
 
 pub const FUNCTIONS: FunctionExports = &[export_c_func!(UIApplicationMain(_, _, _, _))];
+
+pub const CONSTANTS: ConstantExports = &[(
+    "_UIApplicationLaunchOptionsURLKey",
+    HostConstant::NSString("UIApplicationLaunchOptionsURLKey"),
+)];

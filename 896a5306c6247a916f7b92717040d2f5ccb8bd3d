@@ -87,6 +87,24 @@
       "parentUuid": "f574bf0c_0da62f16",
       "revId": "896a5306c6247a916f7b92717040d2f5ccb8bd3d",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5c672f4f_b53a832e",
+        "filename": "tests/TestApp_source/main.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 287,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-10-23T19:50:45Z",
+      "side": 1,
+      "message": "The explicit length is really nice and clear though, so not using `sizeof` seems like a good decision actually.",
+      "parentUuid": "63d1ba12_f9de23e1",
+      "revId": "896a5306c6247a916f7b92717040d2f5ccb8bd3d",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

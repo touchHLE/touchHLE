@@ -16,10 +16,10 @@
 
 use super::ns_string::to_rust_string;
 use super::{ns_run_loop, ns_thread, NSUInteger};
-use crate::mem::MutVoidPtr;
+use crate::mem::{ConstVoidPtr, MutVoidPtr};
 use crate::objc::{
     id, msg, msg_class, msg_send, objc_classes, Class, ClassExports, NSZonePtr, ObjC,
-    TrivialHostObject, SEL, class_conformsToProtocol
+    TrivialHostObject, SEL, class_conformsToProtocol, IMP
 };
 
 pub const CLASSES: ClassExports = objc_classes! {
@@ -58,6 +58,13 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 + (bool)instancesRespondToSelector:(SEL)selector {
     env.objc.class_has_method(this, selector)
+}
+
++(ConstVoidPtr)instanceMethodForSelector:(SEL)selector {
+    match ObjC::lookup_method_imp(env, this, selector) {
+        IMP::Guest(g) => ConstVoidPtr::from_bits(g.addr_with_thumb_bit()),
+        _ => todo!()
+    }
 }
 
 - (id)init {
@@ -154,6 +161,14 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (bool)respondsToSelector:(SEL)selector {
     let class = msg![env; this class];
     env.objc.class_has_method(class, selector)
+}
+
+- (ConstVoidPtr)methodForSelector:(SEL)selector {
+    let isa = ObjC::read_isa(this, &mut env.mem);
+    match ObjC::lookup_method_imp(env, isa, selector) {
+        IMP::Guest(g) => ConstVoidPtr::from_bits(g.addr_with_thumb_bit()),
+        _ => todo!()
+    }
 }
 
 - (bool)conformsToProtocol:(id)protocol {

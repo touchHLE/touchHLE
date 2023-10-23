@@ -51,6 +51,24 @@
       "parentUuid": "3f38a837_02e163d9",
       "revId": "896a5306c6247a916f7b92717040d2f5ccb8bd3d",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f574bf0c_0da62f16",
+        "filename": "tests/TestApp_source/main.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 287,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2023-10-23T18:38:10Z",
+      "side": 1,
+      "message": "sizeof expected would include the null terminator at the end of the char array, I ended up using the size hardcoded instead",
+      "parentUuid": "b7165a0a_34e3a4a4",
+      "revId": "896a5306c6247a916f7b92717040d2f5ccb8bd3d",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

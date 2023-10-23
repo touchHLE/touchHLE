@@ -10,13 +10,14 @@
 
 use super::ns_dictionary::dict_from_keys_and_objects;
 use super::ns_string;
-use crate::objc::{id, msg_class, objc_classes, ClassExports};
+use crate::objc::{id, msg, msg_class, objc_classes, ClassExports};
 use crate::Environment;
 
 #[derive(Default)]
 pub struct State {
     /// `NSDictionary*`
     standard_defaults: Option<id>,
+    storage_dict: Option<id>,
 }
 impl State {
     fn get(env: &mut Environment) -> &mut State {
@@ -37,12 +38,27 @@ pub const CLASSES: ClassExports = objc_classes! {
         // TODO: Are there other default keys we need to set?
         let langs_value: id = msg_class![env; NSLocale preferredLanguages];
         let langs_key: id = ns_string::get_static_str(env, "AppleLanguages");
-        let new = dict_from_keys_and_objects(env, &[(langs_key, langs_value)]);
+        let storage = dict_from_keys_and_objects(env, &[(langs_key, langs_value)]);
+        State::get(env).storage_dict = Some(storage);
+        let new = msg![env; this alloc];
         State::get(env).standard_defaults = Some(new);
         new
     }
 }
 
+- (id)objectForKey:(id)key {
+    let state = State::get(env).storage_dict.unwrap();
+    msg![env; state objectForKey: key]
+}
+
+- (())setObject:(id)value forKey:(id)key {
+    let state = State::get(env).storage_dict.unwrap();
+    msg![env; state setObject: value forKey: key]
+}
+
+-(()) synchronize {
+
+}
 // TODO: plist methods etc
 
 @end

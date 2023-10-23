@@ -19,6 +19,7 @@ pub struct State {
     random: u32,
     arc4random: u32,
     env: HashMap<Vec<u8>, MutPtr<u8>>,
+    env_initialized: bool,
 }
 
 // Sizes of zero are implementation-defined. macOS will happily give you back
@@ -168,6 +169,7 @@ fn arc4random(env: &mut Environment) -> u32 {
 }
 
 fn getenv(env: &mut Environment, name: ConstPtr<u8>) -> MutPtr<u8> {
+    init_env_vars(env);
     let name_cstr = env.mem.cstr_at(name);
     // TODO: Provide all the system environment variables an app might expect to
     // find. Currently the only environment variables that can be found are
@@ -190,7 +192,9 @@ fn getenv(env: &mut Environment, name: ConstPtr<u8>) -> MutPtr<u8> {
     // Caller should not modify the result
     value
 }
+
 fn setenv(env: &mut Environment, name: ConstPtr<u8>, value: ConstPtr<u8>, overwrite: i32) -> i32 {
+    init_env_vars(env);
     let name_cstr = env.mem.cstr_at(name);
     if let Some(&existing) = env.libc_state.stdlib.env.get(name_cstr) {
         if overwrite == 0 {
@@ -208,6 +212,19 @@ fn setenv(env: &mut Environment, name: ConstPtr<u8>, value: ConstPtr<u8>, overwr
         std::str::from_utf8(name_cstr),
     );
     0 // success
+}
+
+fn init_env_vars(env: &mut Environment) {
+    if env.libc_state.stdlib.env_initialized {
+        return;
+    }
+    let tmp_path = env.fs.home_directory().join("tmp");
+    let val_cstr = env.mem.alloc_and_write_cstr(tmp_path.as_str().as_bytes());
+    env.libc_state
+        .stdlib
+        .env
+        .insert(b"TMPDIR".to_vec(), val_cstr);
+    env.libc_state.stdlib.env_initialized = true;
 }
 
 fn exit(_env: &mut Environment, exit_code: i32) {

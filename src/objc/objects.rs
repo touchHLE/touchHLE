@@ -295,6 +295,19 @@ impl super::ObjC {
         *refcount = refcount.checked_add(1).unwrap();
     }
 
+    pub fn get_refcount(&mut self, object: id) -> u32 {
+        let Some(entry) = self.objects.get_mut(&object) else {
+            panic!(
+                "No entry found for object {:?}, it may have already been deallocated",
+                object
+            );
+        };
+        let Some(refcount) = entry.refcount.as_mut() else {
+            return 1;
+        };
+        refcount.get()
+    }
+
     /// Decrease the refcount of a reference-counted object. Do not call this
     /// directly unless you're implementing `release` on `NSObject`. That method
     /// may be overridden.

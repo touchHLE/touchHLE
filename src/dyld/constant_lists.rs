@@ -20,6 +20,7 @@ pub const CONSTANT_LISTS: &[super::ConstantExports] = &[
     core_graphics::cg_affine_transform::CONSTANTS,
     core_graphics::cg_color_space::CONSTANTS,
     core_graphics::cg_geometry::CONSTANTS,
+    foundation::ns_error::CONSTANTS,
     foundation::ns_exception::CONSTANTS,
     foundation::ns_keyed_unarchiver::CONSTANTS,
     foundation::ns_locale::CONSTANTS,

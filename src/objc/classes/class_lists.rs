@@ -29,6 +29,7 @@ pub const CLASS_LISTS: &[super::ClassExports] = &[
     foundation::ns_date_formatter::CLASSES,
     foundation::ns_dictionary::CLASSES,
     foundation::ns_enumerator::CLASSES,
+    foundation::ns_error::CLASSES,
     foundation::ns_file_manager::CLASSES,
     foundation::ns_keyed_unarchiver::CLASSES,
     foundation::ns_locale::CLASSES,

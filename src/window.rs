@@ -141,6 +141,7 @@ pub struct Window {
     _sensor_ctx: sdl2::SensorSubsystem,
     accelerometer: Option<sdl2::sensor::Sensor>,
     virtual_cursor_last: Option<(f32, f32, bool, bool)>,
+    virtual_cursor_last_unsticky: Option<(f32, f32, Instant)>,
 }
 impl Window {
     /// Returns [true] if touchHLE is running on a device where we should always
@@ -276,6 +277,7 @@ impl Window {
             _sensor_ctx: sensor_ctx,
             accelerometer,
             virtual_cursor_last: None,
+            virtual_cursor_last_unsticky: None,
         };
 
         // Set up OpenGL ES context used for splash screen and app UI rendering
@@ -424,18 +426,17 @@ impl Window {
         }
 
         if controller_updated {
-            let (new_x, new_y, new_pressed, visible) = self.get_virtual_cursor(options);
-            let (old_x, old_y, old_pressed, _) = self.virtual_cursor_last.unwrap_or_default();
-            self.virtual_cursor_last = Some((new_x, new_y, new_pressed, visible));
+            let (new_x, new_y, pressed, pressed_changed, moved) =
+                self.update_virtual_cursor(options);
             self.event_queue
-                .push_back(match (old_pressed, new_pressed) {
-                    (false, true) => {
+                .push_back(match (pressed, pressed_changed, moved) {
+                    (true, true, _) => {
                         Event::TouchDown(transform_input_coords(self, (new_x, new_y), false))
                     }
-                    (true, false) => {
+                    (false, true, _) => {
                         Event::TouchUp(transform_input_coords(self, (new_x, new_y), false))
                     }
-                    _ if (new_x, new_y) != (old_x, old_y) && new_pressed => {
+                    (true, _, true) => {
                         Event::TouchMove(transform_input_coords(self, (new_x, new_y), false))
                     }
                     _ => return,
@@ -554,15 +555,23 @@ impl Window {
     pub fn virtual_cursor_visible_at(&self) -> Option<(f32, f32, bool)> {
         let (x, y, pressed, visible) = self.virtual_cursor_last?;
         if visible {
-            Some((x, y, pressed))
+            // When stickyness is in use, the visual cursor movement appears
+            // uncomfortably choppy. Showing the un-sticky position is a bit
+            // misleading but it *feels* better, and it is documented.
+            if let Some((x_unsticky, y_unsticky, _time)) = self.virtual_cursor_last_unsticky {
+                Some((x_unsticky, y_unsticky, pressed))
+            } else {
+                Some((x, y, pressed))
+            }
         } else {
             None
         }
     }
 
-    /// Get the new  on-screen position, click state and visibility of the
-    /// analog stick-controlled virtual cursor.
-    fn get_virtual_cursor(&self, options: &Options) -> (f32, f32, bool, bool) {
+    /// Update the virtual cursor's position, click state and visibility, then
+    /// return the new position, pressed state, whether the press state changed
+    /// and whether the cursor moved.
+    fn update_virtual_cursor(&mut self, options: &Options) -> (f32, f32, bool, bool, bool) {
         // Get right analog stick input. The range is [-1, 1] on each axis.
         let (x, y, pressed) = self.get_controller_stick(options, false);
 
@@ -592,7 +601,59 @@ impl Window {
         let x = (x / 2.0 + 0.5) * vw + vx;
         let y = (y / 2.0 + 0.5) * vh + vy;
 
-        (x, y, pressed, visible)
+        let (old_x, old_y, old_pressed, _old_visible) =
+            self.virtual_cursor_last.unwrap_or_default();
+
+        let (x, y) = if let Some((smoothing_strength, sticky_radius)) =
+            options.stabilize_virtual_cursor
+        {
+            let new_time = Instant::now();
+
+            let (old_x_unsticky, old_y_unsticky, old_time) = self
+                .virtual_cursor_last_unsticky
+                .unwrap_or((0.0, 0.0, new_time));
+
+            let delta_t = new_time.saturating_duration_since(old_time).as_secs_f32();
+
+            // Apply a feedback-based smoothing with exponential decay, to try
+            // to dampen shakiness in the stick movement.
+
+            let smooth = |old: f32, new: f32| -> f32 {
+                if smoothing_strength != 0.0 {
+                    let lerp_factor = 1.0 - (0.5_f32).powf(delta_t * (1.0 / smoothing_strength));
+                    old + (new - old) * lerp_factor
+                } else {
+                    new
+                }
+            };
+
+            let new_x_unsticky = smooth(old_x_unsticky, x);
+            let new_y_unsticky = smooth(old_y_unsticky, y);
+
+            self.virtual_cursor_last_unsticky = Some((new_x_unsticky, new_y_unsticky, new_time));
+
+            // Make the reported position "sticky" within a certain radius, i.e.
+            // if the new position's distance from the old one is within the
+            // radius, report no change in position.
+
+            if (new_x_unsticky - old_x).hypot(new_y_unsticky - old_y) < sticky_radius {
+                (old_x, old_y)
+            } else {
+                (new_x_unsticky, new_y_unsticky)
+            }
+        } else {
+            (x, y)
+        };
+
+        self.virtual_cursor_last = Some((x, y, pressed, visible));
+
+        (
+            x,
+            y,
+            pressed,
+            pressed != old_pressed,
+            x != old_x || y != old_y,
+        )
     }
 
     /// Get the summed X and Y positions and button state of the left or right

@@ -95,6 +95,27 @@ Game controller options:
         right analog stick (tap/hold by pressing the stick or right shoulder
         button).
 
+    --stabilize-virtual-cursor=...
+        Apply motion smoothing and a sticky radius to the virtual cursor
+        (controlled by the right analog stick).
+
+        Some apps are very sensitive to small finger movements and will always
+        register an attempted "tap" as a scrolling gesture if the finger moves
+        even very slightly. When combined with the low precision and shakiness
+        of the virtual cursor, it can be difficult to use certain apps' menus.
+        This option exists to compensate for this.
+
+        The value is two floating-point (decimal) numbers separated by a comma.
+        The first is the strength of the motion smoothing, and the second is a
+        radius, in pixels, within which movement of the cursor will be ignored.
+        To increase these values is to trade off responsiveness and precision
+        respectively. Either number can be zero if desired. Note that the effect
+        of the sticky radius is *not* shown on-screen!
+
+        For example, --stabilize-virtual-cursor=0.1,10 will smooth out movements
+        such that sharp movements take about half a second to complete, while
+        movements within a 10px radius will be completely ignored.
+
 Graphics driver options:
     --gles1=...
         Force touchHLE to use a particular OpenGL ES 1.1 implementation.

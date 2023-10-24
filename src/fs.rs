@@ -474,6 +474,7 @@ impl Fs {
 
         let mut documents_host_path = None;
         let mut tmp_host_path = None;
+        let mut library_host_path = None;
         if !read_only_mode {
             let base_path = paths::user_data_base_path()
                 .join(paths::SANDBOX_DIR)
@@ -494,6 +495,21 @@ impl Fs {
                 );
             }
             tmp_host_path = Some(temps_host_path);
+            let libs_host_path = base_path.join("Library");
+            if let Err(e) = std::fs::create_dir_all(&libs_host_path) {
+                panic!(
+                    "Could not create library directory for app at {:?}: {:?}",
+                    libs_host_path, e
+                );
+            }
+            let app_support_host_path = libs_host_path.join("Application Support");
+            if let Err(e) = std::fs::create_dir_all(&app_support_host_path) {
+                panic!(
+                    "Could not create application support directory for app at {:?}: {:?}",
+                    app_support_host_path, e
+                );
+            }
+            library_host_path = Some(libs_host_path)
         }
 
         // Some Free Software libraries are bundled with touchHLE.
@@ -545,6 +561,12 @@ impl Fs {
             app_dir_children.insert(
                 "tmp".to_string(),
                 FsNode::from_host_dir(&tmp_host_path, /* writeable: */ true),
+            );
+        }
+        if let Some(library_host_path) = library_host_path {
+            app_dir_children.insert(
+                "Library".to_string(),
+                FsNode::from_host_dir(&library_host_path, /* writeable: */ true),
             );
         }
 

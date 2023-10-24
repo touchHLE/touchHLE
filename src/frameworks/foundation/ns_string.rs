@@ -40,6 +40,7 @@ pub const NSUTF16BigEndianStringEncoding: NSUInteger = 0x90000100;
 pub const NSUTF16LittleEndianStringEncoding: NSUInteger = 0x94000100;
 
 pub type NSStringCompareOptions = NSUInteger;
+pub const NSCaseInsensitiveSearch: NSUInteger = 1;
 pub const NSLiteralSearch: NSUInteger = 2;
 pub const NSNumericSearch: NSUInteger = 64;
 
@@ -386,6 +387,15 @@ pub const CLASSES: ClassExports = objc_classes! {
     match mask {
         NSLiteralSearch => {
             from_rust_ordering(a_iter.cmp(b_iter))
+        },
+        NSCaseInsensitiveSearch => {
+            for (a, b) in char::decode_utf16(a_iter).zip(char::decode_utf16(b_iter)) {
+                match a.unwrap().cmp(&b.unwrap()) {
+                    std::cmp::Ordering::Equal => {},
+                    o => return from_rust_ordering(o)
+                }
+            }
+            return from_rust_ordering(std::cmp::Ordering::Equal);
         },
         NSNumericSearch => {
             loop {
@@ -938,7 +948,10 @@ pub const CLASSES: ClassExports = objc_classes! {
 
     // TODO: avoid copy?
     let path = to_rust_string(env, path);
-    let bytes = env.fs.read(GuestPath::new(&path)).unwrap();
+    let bytes = match env.fs.read(GuestPath::new(&path)) {
+        Ok(b) => b,
+        Err(_) => return nil
+    };
 
     let host_object = StringHostObject::decode(Cow::Owned(bytes), encoding);
 

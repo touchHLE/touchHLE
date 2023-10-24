@@ -18,13 +18,10 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);
 
-@implementation NSLock: NSObject
+@implementation _NSLockCommon: NSObject
 
 + (id)allocWithZone:(NSZonePtr)_zone {
-    let host_object = Box::new(LockHostObject {
-        mutex_id: env.mutex_state.init_mutex(MutexType::PTHREAD_MUTEX_NORMAL),
-    });
-    env.objc.alloc_object(this, host_object, &mut env.mem)
+    panic!();
 }
 
 -(())lock {
@@ -43,5 +40,28 @@ pub const CLASSES: ClassExports = objc_classes! {
 
     env.objc.dealloc_object(this, &mut env.mem)
 }
+
+@end
+
+@implementation NSLock: _NSLockCommon
+
++ (id)allocWithZone:(NSZonePtr)_zone {
+    let host_object = Box::new(LockHostObject {
+        mutex_id: env.mutex_state.init_mutex(MutexType::PTHREAD_MUTEX_NORMAL),
+    });
+    env.objc.alloc_object(this, host_object, &mut env.mem)
+}
+
+@end
+
+@implementation NSRecursiveLock: _NSLockCommon
+
++ (id)allocWithZone:(NSZonePtr)_zone {
+    let host_object = Box::new(LockHostObject {
+        mutex_id: env.mutex_state.init_mutex(MutexType::PTHREAD_MUTEX_RECURSIVE),
+    });
+    env.objc.alloc_object(this, host_object, &mut env.mem)
+}
+
 @end
 };

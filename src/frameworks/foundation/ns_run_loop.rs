@@ -31,7 +31,7 @@ pub const CONSTANTS: ConstantExports = &[
         HostConstant::NSString(NSRunLoopCommonModes),
     ),
     (
-        "_NSRunLoopDefaultMode",
+        "_NSDefaultRunLoopMode",
         HostConstant::NSString(NSDefaultRunLoopMode),
     ),
 ];

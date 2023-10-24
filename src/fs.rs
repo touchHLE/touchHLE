@@ -475,6 +475,20 @@ impl Fs {
                 documents_host_path, e
             );
         }
+        let library_host_path = data_host_path.join("Library");
+        if let Err(e) = std::fs::create_dir_all(&library_host_path) {
+            panic!(
+                "Could not create library directory for app at {:?}: {:?}",
+                library_host_path, e
+            );
+        }
+        let app_support_host_path = library_host_path.join("Application Support");
+        if let Err(e) = std::fs::create_dir_all(&app_support_host_path) {
+            panic!(
+                "Could not create application support directory for app at {:?}: {:?}",
+                app_support_host_path, e
+            );
+        }
         let tmp_host_path = data_host_path.join("tmp");
         if let Err(e) = std::fs::create_dir_all(&tmp_host_path) {
             panic!(
@@ -538,6 +552,12 @@ impl Fs {
                                             &documents_host_path,
                                             /* writeable: */ true,
                                         ),
+                                    ),
+                                    (
+                                        "Library".to_string(),
+                                        FsNode::from_host_dir(
+                                            &library_host_path, true,
+                                        )
                                     ),
                                     (
                                         "tmp".to_string(),

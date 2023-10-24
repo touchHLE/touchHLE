@@ -12,6 +12,7 @@ use super::cf_allocator::{kCFAllocatorDefault, CFAllocatorRef};
 use super::cf_dictionary::CFDictionaryRef;
 use crate::abi::{DotDotDot, VaList};
 use crate::dyld::{export_c_func, FunctionExports};
+use crate::frameworks::core_foundation::{CFIndex, CFOptionFlags};
 use crate::frameworks::foundation::ns_string;
 use crate::mem::ConstPtr;
 use crate::objc::{id, msg, msg_class};
@@ -20,6 +21,8 @@ use crate::Environment;
 pub type CFStringRef = super::CFTypeRef;
 
 pub type CFStringEncoding = u32;
+pub type CFComparisonResult = CFIndex;
+pub type CFStringCompareFlags = CFOptionFlags;
 pub const kCFStringEncodingASCII: CFStringEncoding = 0x600;
 pub const kCFStringEncodingUTF8: CFStringEncoding = 0x8000100;
 pub const kCFStringEncodingUnicode: CFStringEncoding = 0x100;
@@ -88,10 +91,20 @@ fn CFStringCreateWithFormatAndArguments(
     ns_string::from_rust_string(env, res)
 }
 
+fn CFStringCompare(
+    env: &mut Environment,
+    a: CFStringRef,
+    b: CFStringRef,
+    flags: CFStringCompareFlags,
+) -> CFComparisonResult {
+    msg![env; a compare:b options:flags]
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CFStringConvertEncodingToNSStringEncoding(_)),
     export_c_func!(CFStringConvertNSStringEncodingToEncoding(_)),
     export_c_func!(CFStringCreateWithCString(_, _, _)),
     export_c_func!(CFStringCreateWithFormat(_, _, _, _)),
     export_c_func!(CFStringCreateWithFormatAndArguments(_, _, _, _)),
+    export_c_func!(CFStringCompare(_, _, _)),
 ];

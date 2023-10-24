@@ -36,6 +36,7 @@ pub const CLASS_LISTS: &[super::ClassExports] = &[
     foundation::ns_notification_center::CLASSES,
     foundation::ns_null::CLASSES,
     foundation::ns_object::CLASSES,
+    foundation::ns_operation::CLASSES,
     foundation::ns_process_info::CLASSES,
     foundation::ns_property_list_serialization::CLASSES,
     foundation::ns_run_loop::CLASSES,

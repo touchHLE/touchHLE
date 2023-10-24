@@ -12,7 +12,7 @@ use super::cf_allocator::{kCFAllocatorDefault, CFAllocatorRef};
 use super::cf_dictionary::CFDictionaryRef;
 use crate::abi::{DotDotDot, VaList};
 use crate::dyld::{export_c_func, FunctionExports};
-use crate::frameworks::foundation::ns_string;
+use crate::frameworks::foundation::{ns_string, NSInteger, NSUInteger};
 use crate::mem::ConstPtr;
 use crate::objc::{id, msg, msg_class};
 use crate::Environment;
@@ -88,10 +88,20 @@ fn CFStringCreateWithFormatAndArguments(
     ns_string::from_rust_string(env, res)
 }
 
+fn CFStringCompare(
+    env: &mut Environment,
+    a: CFStringRef,
+    b: CFStringRef,
+    flags: NSUInteger,
+) -> NSInteger {
+    msg![env; a compare: b options: flags]
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CFStringConvertEncodingToNSStringEncoding(_)),
     export_c_func!(CFStringConvertNSStringEncodingToEncoding(_)),
     export_c_func!(CFStringCreateWithCString(_, _, _)),
     export_c_func!(CFStringCreateWithFormat(_, _, _, _)),
     export_c_func!(CFStringCreateWithFormatAndArguments(_, _, _, _)),
+    export_c_func!(CFStringCompare(_, _, _)),
 ];

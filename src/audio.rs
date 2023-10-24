@@ -21,7 +21,7 @@ pub use touchHLE_openal_soft_wrapper as openal;
 use crate::fs::{Fs, GuestPath};
 use std::io::Cursor;
 
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq)]
 pub enum AudioFormat {
     LinearPcm {
         is_float: bool,

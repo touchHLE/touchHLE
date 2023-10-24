@@ -17,6 +17,7 @@ use crate::Environment;
 type NSSearchPathDirectory = NSUInteger;
 const NSApplicationDirectory: NSSearchPathDirectory = 1;
 const NSDocumentDirectory: NSSearchPathDirectory = 9;
+const NSApplicationSupportDirectory: NSSearchPathDirectory = 14;
 
 type NSSearchPathDomainMask = NSUInteger;
 const NSUserDomainMask: NSSearchPathDomainMask = 1;
@@ -37,6 +38,11 @@ fn NSSearchPathForDirectoriesInDomains(
         // request this; Wolfenstein 3D requests it but never uses it.
         NSApplicationDirectory => GuestPath::new(crate::fs::APPLICATIONS).to_owned(),
         NSDocumentDirectory => env.fs.home_directory().join("Documents"),
+        NSApplicationSupportDirectory => env
+            .fs
+            .home_directory()
+            .join("Library")
+            .join("Application Support"),
         _ => todo!("NSSearchPathDirectory {}", directory),
     };
     let dir = ns_string::from_rust_string(env, String::from(dir));

@@ -18,6 +18,10 @@ pub const OPTIONS_HELP: &str =
 /// Game controller button for `--button-to-touch=` option.
 #[derive(Copy, Clone, Hash, PartialEq, Eq, Debug)]
 pub enum Button {
+    DPadLeft,
+    DPadUp,
+    DPadRight,
+    DPadDown,
     A,
     B,
     X,
@@ -112,6 +116,10 @@ impl Options {
                 .split_once(',')
                 .ok_or_else(|| "--button-to-touch= requires three values".to_string())?;
             let button = match button {
+                "DPadLeft" => Ok(Button::DPadLeft),
+                "DPadUp" => Ok(Button::DPadUp),
+                "DPadRight" => Ok(Button::DPadRight),
+                "DPadDown" => Ok(Button::DPadDown),
                 "A" => Ok(Button::A),
                 "B" => Ok(Button::B),
                 "X" => Ok(Button::X),

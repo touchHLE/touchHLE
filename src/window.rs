@@ -349,6 +349,10 @@ impl Window {
         }
         fn translate_button(button: sdl2::controller::Button) -> Option<crate::options::Button> {
             match button {
+                sdl2::controller::Button::DPadLeft => Some(crate::options::Button::DPadLeft),
+                sdl2::controller::Button::DPadUp => Some(crate::options::Button::DPadUp),
+                sdl2::controller::Button::DPadRight => Some(crate::options::Button::DPadRight),
+                sdl2::controller::Button::DPadDown => Some(crate::options::Button::DPadDown),
                 sdl2::controller::Button::A => Some(crate::options::Button::A),
                 sdl2::controller::Button::B => Some(crate::options::Button::B),
                 sdl2::controller::Button::X => Some(crate::options::Button::X),

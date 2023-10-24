@@ -30,6 +30,7 @@ pub mod time;
 pub use cf_type::{CFRelease, CFRetain, CFTypeRef};
 
 pub type CFIndex = i32;
+pub type CFOptionFlags = u32;
 
 use crate::abi::GuestArg;
 use crate::impl_GuestRet_for_large_struct;

@@ -65,6 +65,23 @@ pub(super) fn objc_setProperty(
     }
 }
 
+pub(super) fn objc_getProperty(
+    env: &mut Environment,
+    this: id,
+    _cmd: SEL,
+    offset: GuestISize,
+    atomic: bool,
+) -> id {
+    assert!(offset >= 4);
+
+    if atomic {
+        log!("ignoring atomic access attempt");
+    }
+
+    let ivar: MutPtr<id> = Ptr::from_bits(this.to_bits().checked_add_signed(offset).unwrap());
+    env.mem.read(ivar)
+}
+
 // note: https://opensource.apple.com/source/objc4/objc4-723/runtime/objc-accessors.mm.auto.html
 //       says that hasStrong is unused.
 pub(super) fn objc_copyStruct(

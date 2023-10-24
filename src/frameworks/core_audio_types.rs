@@ -5,7 +5,7 @@
  */
 //! The Core Audio Types framework. (Yes, it's not part of Core Audio?)
 
-use crate::mem::SafeRead;
+use crate::mem::{MutPtr, SafeRead};
 
 // The audio frameworks love FourCC's, and we currently don't need these
 // anywhere else, so this is as good a place to put this as any.
@@ -89,3 +89,12 @@ pub const kAudioFormatFlagIsFloat: AudioFormatFlags = 1 << 0;
 pub const kAudioFormatFlagIsBigEndian: AudioFormatFlags = 1 << 1;
 pub const kAudioFormatFlagIsSignedInteger: AudioFormatFlags = 1 << 2;
 pub const kAudioFormatFlagIsPacked: AudioFormatFlags = 1 << 3;
+
+#[repr(C, packed)]
+#[derive(Debug)]
+pub struct AudioBuffer {
+    pub num_channels: u32,
+    pub data_byte_size: u32,
+    pub data: MutPtr<u8>,
+}
+unsafe impl SafeRead for AudioBuffer {}

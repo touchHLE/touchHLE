@@ -22,6 +22,7 @@ use crate::fs::{Fs, GuestPath};
 use std::io::Cursor;
 
 #[derive(Debug)]
+#[derive(Eq, PartialEq)]
 pub enum AudioFormat {
     LinearPcm {
         is_float: bool,

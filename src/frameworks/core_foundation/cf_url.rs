@@ -11,10 +11,11 @@
 use super::cf_allocator::{kCFAllocatorDefault, CFAllocatorRef};
 use super::CFIndex;
 use crate::dyld::{export_c_func, FunctionExports};
+use crate::frameworks::core_foundation::cf_string::CFStringRef;
 use crate::frameworks::foundation::ns_string::{to_rust_string, NSUTF8StringEncoding};
 use crate::frameworks::foundation::NSUInteger;
 use crate::mem::{ConstPtr, MutPtr};
-use crate::objc::{id, msg, msg_class};
+use crate::objc::{id, msg, msg_class, retain};
 use crate::Environment;
 
 pub type CFURLRef = super::CFTypeRef;
@@ -61,7 +62,14 @@ pub fn CFURLCreateFromFileSystemRepresentation(
     msg![env; url initFileURLWithPath:string isDirectory:is_directory]
 }
 
+pub fn CFURLCopyPathExtension(env: &mut Environment, url: CFURLRef) -> CFStringRef {
+    let path = msg![env; url path];
+    let ext = msg![env; path pathExtension];
+    retain(env, ext)
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CFURLGetFileSystemRepresentation(_, _, _, _)),
     export_c_func!(CFURLCreateFromFileSystemRepresentation(_, _, _, _)),
+    export_c_func!(CFURLCopyPathExtension(_)),
 ];

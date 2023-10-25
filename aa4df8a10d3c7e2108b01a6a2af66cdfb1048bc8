@@ -54,6 +54,29 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "dc96c0a6_fe48a27e",
+        "filename": "src/frameworks/uikit/ui_view/ui_control/ui_button.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 130,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-10-25T18:08:02Z",
+      "side": 1,
+      "message": "Nitpick: double space.",
+      "range": {
+        "startLine": 130,
+        "startChar": 36,
+        "endLine": 130,
+        "endChar": 37
+      },
+      "revId": "aa4df8a10d3c7e2108b01a6a2af66cdfb1048bc8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "fada4843_f784baf8",
         "filename": "src/frameworks/uikit/ui_view/ui_control/ui_button.rs",
         "patchSetId": 1

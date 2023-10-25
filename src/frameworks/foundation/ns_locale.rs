@@ -7,7 +7,9 @@
 
 use super::{ns_array, ns_string};
 use crate::objc::{id, objc_classes, ClassExports};
+use crate::options::Options;
 use crate::Environment;
+use std::ffi::CStr;
 
 #[derive(Default)]
 pub struct State {
@@ -19,20 +21,47 @@ impl State {
     }
 }
 
-pub fn get_preferred_language_from_environment() -> String {
-    if let Ok(lang) = std::env::var("LANG") {
-        // turn e.g. "sv_SE.UTF-8" into just "sv"
-        let lang = lang
-            .split_once(['_', '.'])
-            .map(|(a, _b)| a)
-            .unwrap_or(&lang)
-            .to_string();
-        log!("The app requested your preferred languages. {:?} will reported based on your LANG environment variable.", lang);
-        lang
-    } else {
+/// Use `msg_class![env; NSLocale preferredLanguages]` rather than calling this
+/// directly, because it may be slow and there is no caching.
+fn get_preferred_languages(options: &Options) -> Vec<String> {
+    if let Some(ref preferred_languages) = options.preferred_languages {
+        log!("The app requested your preferred languages. {:?} will reported based on your --preferred-languages= option.", preferred_languages);
+        return preferred_languages.clone();
+    }
+
+    // Unfortunately Rust-SDL2 doesn't provide a wrapper for this yet.
+    let languages = unsafe {
+        let mut languages = Vec::new();
+        let locales_raw = sdl2_sys::SDL_GetPreferredLocales();
+        if !locales_raw.is_null() {
+            for i in 0.. {
+                let sdl2_sys::SDL_Locale { language, country } = locales_raw.offset(i).read();
+                if language.is_null() && country.is_null() {
+                    // Terminator
+                    break;
+                }
+
+                // The country code is ignored because many iPhone OS games
+                // (e.g. Super Monkey Ball and Wolfenstein RPG) don't seem to be
+                // able to handle it and fall back to English, so providing it
+                // does more harm than good. It's also often unhelpful anyway:
+                // on macOS, the country code seems to just be the system
+                // region, rather than reflecting a preference for
+                // e.g. US vs UK English.
+                languages.push(CStr::from_ptr(language).to_str().unwrap().to_string());
+            }
+            sdl2_sys::SDL_free(locales_raw.cast());
+        }
+        languages
+    };
+
+    if languages.is_empty() {
         let lang = "en".to_string();
-        log!("The app requested your preferred language. No LANG environment variable was found, so {:?} (English) will be reported.", lang);
-        lang
+        log!("The app requested your preferred languages. No information could be retrieved, so {:?} (English) will be reported.", lang);
+        vec![lang]
+    } else {
+        log!("The app requested your preferred languages. {:?} will reported based on your system language preferences.", languages);
+        languages
     }
 }
 
@@ -50,9 +79,9 @@ pub const CLASSES: ClassExports = objc_classes! {
     if let Some(existing) = State::get(env).preferred_languages {
         existing
     } else {
-        let lang = get_preferred_language_from_environment();
-        let lang_ns_string = ns_string::from_rust_string(env, lang);
-        let new = ns_array::from_vec(env, vec![lang_ns_string]);
+        let langs = get_preferred_languages(&env.options);
+        let lang_ns_strings = langs.into_iter().map(|lang| ns_string::from_rust_string(env, lang)).collect();
+        let new = ns_array::from_vec(env, lang_ns_strings);
         State::get(env).preferred_languages = Some(new);
         new
     }

@@ -13,7 +13,6 @@ use super::cf_string::CFStringRef;
 use super::cf_url::CFURLRef;
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::frameworks::foundation::ns_bundle::NSBundleHostObject;
-use crate::frameworks::foundation::ns_locale::get_preferred_language_from_environment;
 use crate::frameworks::foundation::{ns_array, ns_string, NSUInteger};
 use crate::objc::{id, msg, msg_class, retain};
 use crate::Environment;
@@ -71,35 +70,40 @@ pub fn CFBundleCopyPreferredLocalizationsFromArray(
     env: &mut Environment,
     loc_array: CFArrayRef,
 ) -> CFArrayRef {
-    let preferred_language = get_preferred_language_from_environment();
-    let mut preferred_languages: Vec<id> = Vec::new();
+    let mut result = Vec::new();
 
-    let pref_loc = ns_string::from_rust_string(env, preferred_language);
-    // Check if the user's preferred language is in locArray
-    let count: NSUInteger = msg![env; loc_array count];
-    for index in 0..count {
-        let loc: id = msg![env; loc_array objectAtIndex:index];
-        let equal: bool = msg![env; loc isEqualToString:pref_loc];
-        if equal {
-            // If it is, add it to the array
-            preferred_languages.push(pref_loc);
-            retain(env, pref_loc);
-            break;
+    let preferred_languages: id = msg_class![env; NSLocale preferredLanguages];
+
+    // Check if the user's preferred languages are in loc_array
+    let loc_count: NSUInteger = msg![env; loc_array count];
+    let pref_loc_count: NSUInteger = msg![env; preferred_languages count];
+    for loc_index in 0..loc_count {
+        let loc: id = msg![env; loc_array objectAtIndex:loc_index];
+        println!("{:?}", ns_string::to_rust_string(env, loc));
+        for pref_loc_index in 0..pref_loc_count {
+            let pref_loc: id = msg![env; preferred_languages objectAtIndex:pref_loc_index];
+            let equal: bool = msg![env; loc isEqualToString:pref_loc];
+            if equal {
+                // If one of them is, add it to the array
+                result.push(loc);
+                retain(env, loc);
+                break;
+            }
         }
     }
 
     // Add the first element as fallback
     let first_loc: id = msg![env; loc_array objectAtIndex: (0 as NSUInteger)];
-    preferred_languages.push(first_loc);
-    retain(env, pref_loc);
+    result.push(first_loc);
+    retain(env, first_loc);
 
-    let pref_loc_array = ns_array::from_vec(env, preferred_languages);
+    let result = ns_array::from_vec(env, result);
     log_dbg!(
         "CFBundleCopyPreferredLocalizationsFromArray({:?}) => {:?}",
         loc_array,
-        pref_loc_array
+        result
     );
-    pref_loc_array
+    result
 }
 
 pub const FUNCTIONS: FunctionExports = &[

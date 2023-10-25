@@ -39,6 +39,7 @@ pub struct Options {
     pub gles1_implementation: Option<GLESImplementation>,
     pub direct_memory_access: bool,
     pub gdb_listen_addrs: Option<Vec<SocketAddr>>,
+    pub preferred_languages: Option<Vec<String>>,
     pub headless: bool,
     pub print_fps: bool,
 }
@@ -59,6 +60,7 @@ impl Default for Options {
             gles1_implementation: None,
             direct_memory_access: true,
             gdb_listen_addrs: None,
+            preferred_languages: None,
             headless: false,
             print_fps: false,
         }
@@ -153,6 +155,8 @@ impl Options {
                 .map_err(|e| format!("Could not resolve GDB server listen address: {}", e))?
                 .collect();
             self.gdb_listen_addrs = Some(addrs);
+        } else if let Some(value) = arg.strip_prefix("--preferred-languages=") {
+            self.preferred_languages = Some(value.split(',').map(ToOwned::to_owned).collect());
         } else if arg == "--headless" {
             self.headless = true;
         } else if arg == "--print-fps" {

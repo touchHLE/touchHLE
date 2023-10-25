@@ -5,7 +5,7 @@
  */
 //! `NSBundle`.
 
-use super::ns_string;
+use super::{ns_string, NSUInteger};
 use crate::bundle::Bundle;
 use crate::frameworks::core_foundation::cf_bundle::{
     CFBundleCopyBundleLocalizations, CFBundleCopyPreferredLocalizationsFromArray,
@@ -14,6 +14,7 @@ use crate::objc::{
     autorelease, id, msg, msg_class, nil, objc_classes, release, ClassExports, HostObject,
 };
 use crate::Environment;
+use std::collections::HashSet;
 
 // Should be ISO 639-1 (or ISO 639-2) compliant
 // TODO: complete this list or use some crate for mapping
@@ -136,26 +137,29 @@ pub const CLASSES: ClassExports = objc_classes! {
         return path
     }
 
-    // Get preferred languages
+    // Try preferred languages in order of preference
     let langs: id = msg_class![env; NSLocale preferredLanguages];
-    // TODO: iterate over all
-    let lang: id = msg![env; langs objectAtIndex:0u32];
-    let lang_code = ns_string::to_rust_string(env, lang); // TODO: avoid copy
-    let lproj_name = match LANG_ID_TO_LANG_PROJ.iter().find(|&&(code, _)| code == lang_code) {
-        Some(&(_, name)) => name,
-        None => {
-            log!("TODO: {:?} is not mapped to a language name, fallback to English", lang_code);
-            "English.lproj"
+    let lang_count: NSUInteger = msg![env; langs count];
+    let mut unknown_codes = HashSet::new();
+    for i in 0..lang_count {
+        let lang_code: id = msg![env; langs objectAtIndex:i];
+        let lang_code = ns_string::to_rust_string(env, lang_code); // TODO: avoid copy
+        if let Some(&(_, lproj)) = LANG_ID_TO_LANG_PROJ.iter().find(|&&(code, _)| code == lang_code) {
+            let lproj: id = ns_string::get_static_str(env, lproj);
+            let localized_path = path_for_resource_helper(env, this, name, lproj, directory, extension);
+            if localized_path != nil {
+                return localized_path;
+            }
+        } else {
+            unknown_codes.insert(lang_code);
         }
-    };
-    let lproj: id = ns_string::get_static_str(env, lproj_name);
-    let localized_path = path_for_resource_helper(env, this, name, lproj, directory, extension);
-    if localized_path != nil {
-        return localized_path
     }
 
     // As a last resort, fallback to English
     // TODO: fallback to a development language (CFBundleDevelopmentRegion from Info.plist)
+    if !unknown_codes.is_empty() {
+        log!("TODO: language codes {:?} aren't mapped to a language name, falling back to English", unknown_codes);
+    }
     let lproj: id = ns_string::get_static_str(env, "English.lproj");
     path_for_resource_helper(env, this, name, lproj, directory, extension)
 }

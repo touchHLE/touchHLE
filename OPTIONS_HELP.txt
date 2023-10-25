@@ -145,6 +145,20 @@ Debugging options:
         brackets, e.g. --gdb=[::1]:9001 for IPv6 loopback device port 9001.
 
 Other options:
+    --preferred-languages=...
+        Specifies a list of preferred languages to be reported to the app.
+
+        This should be one or more ISO 639 language codes (usually two letters)
+        in order of preference, separated by commas. For example,
+        --preferred-languages=de,ja,en means you would prefer German, or failing
+        that Japanese, or failing that English.
+
+        If this option is not specified, the list comes from your operating
+        system's language settings.
+
+        Whether and how this preference is respected, and whether any particular
+        language is supported, is determined entirely by the app.
+
     --headless
         Run in headless mode. touchHLE will not create a window, so there will
         be no graphical output and no input. Only useful for command-line apps.

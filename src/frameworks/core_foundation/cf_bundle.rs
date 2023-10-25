@@ -79,7 +79,6 @@ pub fn CFBundleCopyPreferredLocalizationsFromArray(
     let pref_loc_count: NSUInteger = msg![env; preferred_languages count];
     for loc_index in 0..loc_count {
         let loc: id = msg![env; loc_array objectAtIndex:loc_index];
-        println!("{:?}", ns_string::to_rust_string(env, loc));
         for pref_loc_index in 0..pref_loc_count {
             let pref_loc: id = msg![env; preferred_languages objectAtIndex:pref_loc_index];
             let equal: bool = msg![env; loc isEqualToString:pref_loc];

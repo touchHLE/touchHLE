@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1f8bb7c9_2e1190a4",
+        "filename": "src/frameworks/uikit/ui_application.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 96,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-10-25T18:26:22Z",
+      "side": 1,
+      "message": "Can you remove the TODO and the preceding blank line?",
+      "revId": "3b057f7e736e2c680fd0e9a84a458aafff05fe49",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

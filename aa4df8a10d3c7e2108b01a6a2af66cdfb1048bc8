@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "dc9f2ced_010aacc8",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-10-25T18:06:05Z",
+      "side": 1,
+      "message": "This looks good to me overall.",
+      "revId": "aa4df8a10d3c7e2108b01a6a2af66cdfb1048bc8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e9b3f9f9_25dc3e14",
+        "filename": "src/frameworks/uikit/ui_view/ui_control/ui_button.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 39,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-10-25T18:06:05Z",
+      "side": 1,
+      "message": "I don\u0027t know if it matters, since this detail seems not to be exposed in the interface, but does the background image actually use a UIImageView? I think it might actually be applied to the UIButton view itself, using the contents property. In other words, it displays the background image the same way UIImageView itself does.",
+      "revId": "aa4df8a10d3c7e2108b01a6a2af66cdfb1048bc8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3b729e9c_0d78fb99",
+        "filename": "src/frameworks/uikit/ui_view/ui_control/ui_button.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 99,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-10-25T18:06:05Z",
+      "side": 1,
+      "message": "Would you be interested in supporting this? I have a simple app which can be used to test it, and some reference screenshots. Instead of embedding a PNG, I was thinking it out to be possible to synthesize a 1×1 solid colour image on-the-fly.",
+      "revId": "aa4df8a10d3c7e2108b01a6a2af66cdfb1048bc8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fada4843_f784baf8",
+        "filename": "src/frameworks/uikit/ui_view/ui_control/ui_button.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 293,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-10-25T18:06:05Z",
+      "side": 1,
+      "message": "Please move these up to line 281 and edit the TODO, so they\u0027re grouped with the other state-dependent properties.\n\nAlso, the use of spaces in these method signatures doesn\u0027t match the style in the surrounding code. There\u0027s no auto-formatting for it, sorry :(",
+      "revId": "aa4df8a10d3c7e2108b01a6a2af66cdfb1048bc8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

@@ -4,10 +4,20 @@
 //! on Android, where the command-line way to view license text doesn't exist.
 
 use crate::bundle::Bundle;
-use crate::frameworks::core_graphics::{cg_image, CGFloat, CGPoint, CGRect, CGSize};
+use crate::frameworks::core_graphics::cg_bitmap_context::{
+    CGBitmapContextCreate, CGBitmapContextCreateImage,
+};
+use crate::frameworks::core_graphics::cg_color_space::CGColorSpaceCreateDeviceRGB;
+use crate::frameworks::core_graphics::cg_context::{
+    CGContextFillRect, CGContextRelease, CGContextScaleCTM, CGContextSetRGBFillColor,
+    CGContextTranslateCTM,
+};
+use crate::frameworks::core_graphics::cg_image::{self, kCGImageAlphaPremultipliedLast};
+use crate::frameworks::core_graphics::{CGFloat, CGPoint, CGRect, CGSize};
 use crate::frameworks::foundation::ns_run_loop::run_run_loop_single_iteration;
 use crate::frameworks::foundation::ns_string;
 use crate::frameworks::uikit::ui_font::{UITextAlignmentCenter, UITextAlignmentRight};
+use crate::frameworks::uikit::ui_graphics::{UIGraphicsPopContext, UIGraphicsPushContext};
 use crate::frameworks::uikit::ui_view::ui_control::ui_button::{
     UIButtonTypeCustom, UIButtonTypeRoundedRect,
 };
@@ -16,6 +26,7 @@ use crate::frameworks::uikit::ui_view::ui_control::{
 };
 use crate::fs::BundleData;
 use crate::image::Image;
+use crate::mem::Ptr;
 use crate::objc::{id, msg, msg_class, nil, objc_classes, release, ClassExports, HostObject};
 use crate::options::Options;
 use crate::paths;
@@ -28,6 +39,10 @@ struct AppInfo {
     path: PathBuf,
     display_name: String,
     icon: Option<Image>,
+    /// `NSString*`
+    display_name_ns_string: Option<id>,
+    /// `UIImage*`
+    icon_ui_image: Option<id>,
 }
 
 pub fn app_picker(options: Options) -> Result<(PathBuf, Environment), String> {
@@ -99,6 +114,8 @@ fn enumerate_apps(apps_dir: &Path) -> Result<Vec<AppInfo>, std::io::Error> {
             path: app_path,
             display_name,
             icon,
+            display_name_ns_string: None,
+            icon_ui_image: None,
         });
     }
     Ok(apps)
@@ -106,7 +123,7 @@ fn enumerate_apps(apps_dir: &Path) -> Result<Vec<AppInfo>, std::io::Error> {
 
 #[derive(Default)]
 struct AppPickerDelegateHostObject {
-    app_tapped: id,
+    icon_tapped: id,
     copyright_show: bool,
     copyright_hide: bool,
     copyright_prev: bool,
@@ -123,12 +140,12 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 @implementation _touchHLE_AppPickerDelegate
 
-- (())appTapped:(id)sender {
+- (())iconTapped:(id)sender {
     // There is no allocWithZone: that creates AppPickerDelegateHostObject, so
     // this downcast effectively acts as an assertion that this class is being
     // used within the app picker, so it can't be abused. :)
     let host_obj = env.objc.borrow_mut::<AppPickerDelegateHostObject>(this);
-    host_obj.app_tapped = sender;
+    host_obj.icon_tapped = sender;
 }
 
 - (())copyrightInfoShow {
@@ -179,7 +196,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 fn show_app_picker_gui(
     options: Options,
-    apps: Result<Vec<AppInfo>, String>,
+    mut apps: Result<Vec<AppInfo>, String>,
 ) -> Result<(PathBuf, Environment), String> {
     let mut environment = Environment::new_without_app(options)?;
     let env = &mut environment;
@@ -239,10 +256,13 @@ fn show_app_picker_gui(
 
     let divider = app_frame.size.height - 100.0;
 
-    let mut app_map = HashMap::new();
-
-    match apps {
-        Ok(apps) => make_icon_grid(env, delegate, main_view, app_frame, apps, &mut app_map),
+    let mut icon_grid_stuff = match &mut apps {
+        Ok(ref mut apps) => {
+            let mut icon_grid_stuff =
+                make_icon_grid(env, delegate, main_view, app_frame, apps.len());
+            update_icon_grid(env, &mut icon_grid_stuff, apps, 0);
+            Some(icon_grid_stuff)
+        }
         Err(e) => {
             let label_frame = CGRect {
                 origin: CGPoint { x: 10.0, y: 10.0 },
@@ -253,7 +273,7 @@ fn show_app_picker_gui(
             };
             let label: id = msg_class![env; UILabel alloc];
             let label: id = msg![env; label initWithFrame:label_frame];
-            let text = ns_string::from_rust_string(env, e);
+            let text = ns_string::from_rust_string(env, e.clone());
             () = msg![env; label setText:text];
             () = msg![env; label setTextAlignment:UITextAlignmentCenter];
             () = msg![env; label setNumberOfLines:0]; // unlimited
@@ -262,8 +282,9 @@ fn show_app_picker_gui(
             let bg_color: id = msg_class![env; UIColor clearColor];
             () = msg![env; label setBackgroundColor:bg_color];
             () = msg![env; main_view addSubview:label];
+            None
         }
-    }
+    };
 
     let buttons_row_center = divider + (app_frame.size.height - divider) / 4.0;
     let buttons_row2_center = divider + (app_frame.size.height - divider) / 1.6;
@@ -299,11 +320,26 @@ fn show_app_picker_gui(
     loop {
         run_run_loop_single_iteration(env, main_run_loop);
         let host_obj = env.objc.borrow_mut::<AppPickerDelegateHostObject>(delegate);
-        if host_obj.app_tapped != nil {
-            let app_path = app_map.remove(&host_obj.app_tapped).unwrap();
-            echo!("Picked: {}", app_path.display());
-            // Return the environment so some parts of it can be salvaged.
-            return Ok((app_path, environment));
+        let icon_tapped = std::mem::take(&mut host_obj.icon_tapped);
+        if icon_tapped != nil {
+            match icon_grid_stuff.as_ref().unwrap().icon_map.get(&icon_tapped) {
+                Some(&TappedIcon::App(app_idx)) => {
+                    let app_path = &apps.as_ref().unwrap()[app_idx].path;
+                    echo!("Picked: {}", app_path.display());
+                    // Return the environment so some parts of it can be salvaged.
+                    return Ok((app_path.clone(), environment));
+                }
+                Some(&TappedIcon::ChangePage(page_idx)) => {
+                    update_icon_grid(
+                        env,
+                        icon_grid_stuff.as_mut().unwrap(),
+                        apps.as_mut().unwrap(),
+                        page_idx,
+                    );
+                }
+                None => (), // Tapped on a black space
+            }
+            continue;
         }
         if std::mem::take(&mut host_obj.copyright_show) {
             copyright_info_page_idx = 0;
@@ -338,14 +374,32 @@ fn show_app_picker_gui(
     }
 }
 
+const ICON_SIZE: CGSize = CGSize {
+    width: 57.0,
+    height: 57.0,
+};
+
+enum TappedIcon {
+    App(usize),
+    ChangePage(usize),
+}
+
+struct IconGridStuff {
+    icon_buttons_and_labels: Vec<(id, id)>,
+    placeholder_icon: Option<id>,
+    prev_icon: Option<id>,
+    next_icon: Option<id>,
+    pages: Vec<std::ops::Range<usize>>,
+    icon_map: HashMap<id, TappedIcon>,
+}
+
 fn make_icon_grid(
     env: &mut Environment,
     delegate: id,
     main_view: id,
     app_frame: CGRect,
-    apps: Vec<AppInfo>,
-    app_map: &mut HashMap<id, PathBuf>,
-) {
+    total_app_count: usize,
+) -> IconGridStuff {
     let num_cols = 4;
     let num_cols_f = num_cols as CGFloat;
     let num_rows = 4;
@@ -353,79 +407,48 @@ fn make_icon_grid(
         width: 74.0,
         height: 13.0,
     };
-    let icon_size = CGSize {
-        width: 57.0,
-        height: 57.0,
-    };
     let icon_gap_x: CGFloat = 19.0;
     let icon_gap_y: CGFloat = 4.0 + label_size.height + 14.0;
-    let icon_grid_width = (icon_size.width * num_cols_f) + icon_gap_x * (num_cols_f - 1.0);
+    let icon_grid_width = (ICON_SIZE.width * num_cols_f) + icon_gap_x * (num_cols_f - 1.0);
     let icon_grid_origin = CGPoint {
         x: (app_frame.size.width - icon_grid_width) / 2.0,
         y: 12.0,
     };
 
-    let app_tapped_sel = env.objc.lookup_selector("appTapped:").unwrap();
+    let icon_tapped_sel = env.objc.lookup_selector("iconTapped:").unwrap();
 
-    for (i, app) in apps.into_iter().enumerate() {
-        if i >= num_cols * num_rows {
-            // TODO: add pagination in order to remove app count limit
-            log!(
-                "Warning: too many apps, only showing the first {}.",
-                num_cols * num_rows
-            );
-            break;
-        }
+    let mut icon_buttons_and_labels = Vec::new();
+
+    for i in 0..(num_cols * num_rows) {
         let col = i % num_cols;
         let row = i / num_cols;
 
         let icon_frame = CGRect {
             origin: CGPoint {
-                x: icon_grid_origin.x + (col as CGFloat) * (icon_size.width + icon_gap_x),
-                y: icon_grid_origin.y + (row as CGFloat) * (icon_size.height + icon_gap_y),
+                x: icon_grid_origin.x + (col as CGFloat) * (ICON_SIZE.width + icon_gap_x),
+                y: icon_grid_origin.y + (row as CGFloat) * (ICON_SIZE.height + icon_gap_y),
             },
-            size: icon_size,
+            size: ICON_SIZE,
         };
         let icon_button: id = msg_class![env; UIButton buttonWithType:UIButtonTypeCustom];
         () = msg![env; icon_button setFrame:icon_frame];
-        if let Some(icon) = app.icon {
-            let image = cg_image::from_image(env, icon);
-            let image: id = msg_class![env; UIImage imageWithCGImage:image];
-            () = msg![env; icon_button setImage:image forState:UIControlStateNormal];
-            let image_view: id = msg![env; icon_button imageView];
-            let bounds: CGRect = msg![env; icon_button bounds];
-            () = msg![env; image_view setFrame:bounds];
-        } else {
-            let text = ns_string::get_static_str(env, "?");
-            () = msg![env; icon_button setTitle:text forState:UIControlStateNormal];
-            let color: id = msg_class![env; UIColor whiteColor];
-            () = msg![env; icon_button setTitleColor:color forState:UIControlStateNormal];
-            let bg_color: id = msg_class![env; UIColor grayColor];
-            () = msg![env; icon_button setBackgroundColor:bg_color];
-            let label: id = msg![env; icon_button titleLabel];
-            () = msg![env; label setTextAlignment:UITextAlignmentCenter];
-            let font_size: CGFloat = 40.0;
-            let font: id = msg_class![env; UIFont systemFontOfSize:font_size];
-            () = msg![env; label setFont:font];
-            // FIXME: manually calling layoutSubviews shouldn't be needed
-            () = msg![env; icon_button layoutSubviews];
-        }
+        let image_view: id = msg![env; icon_button imageView];
+        let bounds: CGRect = msg![env; icon_button bounds];
+        () = msg![env; image_view setFrame:bounds];
         () = msg![env; icon_button addTarget:delegate
-                                      action:app_tapped_sel
+                                      action:icon_tapped_sel
                             forControlEvents:UIControlEventTouchUpInside];
         () = msg![env; main_view addSubview:icon_button];
 
         let label_frame = CGRect {
             origin: CGPoint {
-                x: icon_frame.origin.x - (label_size.width - icon_size.width) / 2.0,
-                y: icon_frame.origin.y + icon_size.height + 4.0,
+                x: icon_frame.origin.x - (label_size.width - ICON_SIZE.width) / 2.0,
+                y: icon_frame.origin.y + ICON_SIZE.height + 4.0,
             },
             size: label_size,
         };
         let label: id = msg_class![env; UILabel alloc];
         let label: id = msg![env; label initWithFrame:label_frame];
-        let text = ns_string::from_rust_string(env, app.display_name);
-        () = msg![env; label setText:text];
         () = msg![env; label setTextAlignment:UITextAlignmentCenter];
         let font_size: CGFloat = label_size.height - 2.0;
         let font: id = msg_class![env; UIFont boldSystemFontOfSize:font_size];
@@ -436,7 +459,166 @@ fn make_icon_grid(
         () = msg![env; label setBackgroundColor:bg_color];
         () = msg![env; main_view addSubview:label];
 
-        app_map.insert(icon_button, app.path);
+        icon_buttons_and_labels.push((icon_button, label));
+    }
+
+    // TODO: Use UIScrollView pagination and UIPageControl once available.
+    let mut pages = Vec::new();
+    let mut start = 0;
+    while start < total_app_count {
+        let mut end = start + icon_buttons_and_labels.len();
+        if start > 0 {
+            end -= 1; // one icon space taken by "previous" button
+        }
+        if end < total_app_count {
+            end -= 1; // one icon space taken by "next" button
+        } else {
+            end = total_app_count;
+        }
+        pages.push(start..end);
+        start = end;
+    }
+
+    IconGridStuff {
+        icon_buttons_and_labels,
+        placeholder_icon: None,
+        prev_icon: None,
+        next_icon: None,
+        pages,
+        icon_map: HashMap::new(),
+    }
+}
+
+fn make_icon_from_glyph(
+    env: &mut Environment,
+    glyph: char,
+    font_size: CGFloat,
+    baseline_offset: CGFloat,
+    bg_color: (CGFloat, CGFloat, CGFloat, CGFloat),
+) -> id {
+    let color_space = CGColorSpaceCreateDeviceRGB(env);
+    let context = CGBitmapContextCreate(
+        env,
+        Ptr::null(),
+        ICON_SIZE.width as u32,
+        ICON_SIZE.height as u32,
+        8,
+        4 * (ICON_SIZE.width as u32),
+        color_space,
+        kCGImageAlphaPremultipliedLast,
+    );
+    UIGraphicsPushContext(env, context);
+
+    // Compensate for row order inversion
+    CGContextTranslateCTM(env, context, 0.0, ICON_SIZE.height);
+    CGContextScaleCTM(env, context, 1.0, -1.0);
+
+    let (r, g, b, a) = bg_color;
+    CGContextSetRGBFillColor(env, context, r, g, b, a);
+    CGContextFillRect(
+        env,
+        context,
+        CGRect {
+            origin: CGPoint { x: 0.0, y: 0.0 },
+            size: ICON_SIZE,
+        },
+    );
+
+    let font: id = msg_class![env; UIFont systemFontOfSize:font_size];
+    let glyph_string: id = ns_string::from_rust_string(env, [glyph].into_iter().collect());
+    let glyph_size: CGSize = msg![env; glyph_string sizeWithFont:font];
+    CGContextSetRGBFillColor(env, context, 1.0, 1.0, 1.0, 1.0); // white
+    let glyph_origin = CGPoint {
+        x: ICON_SIZE.width / 2.0 - glyph_size.width / 2.0,
+        y: ICON_SIZE.height / 2.0 - glyph_size.height / 2.0 + baseline_offset,
+    };
+    let _: CGSize = msg![env; glyph_string drawAtPoint:glyph_origin withFont:font];
+    release(env, glyph_string);
+
+    UIGraphicsPopContext(env);
+
+    let cg_image = CGBitmapContextCreateImage(env, context);
+    // This radius should match the one in src/bundle.rs.
+    cg_image::borrow_image_mut(&mut env.objc, cg_image)
+        .round_corners((10.0 / 57.0) * ICON_SIZE.width);
+    CGContextRelease(env, context);
+
+    let ui_image: id = msg_class![env; UIImage imageWithCGImage:cg_image];
+    release(env, cg_image);
+
+    ui_image
+}
+
+fn update_icon_grid(
+    env: &mut Environment,
+    icon_grid_stuff: &mut IconGridStuff,
+    apps: &mut [AppInfo],
+    page_idx: usize,
+) {
+    icon_grid_stuff.icon_map.clear();
+
+    let app_idx_range = icon_grid_stuff.pages[page_idx].clone();
+    let have_prev_icon = page_idx != 0;
+    let have_next_icon = app_idx_range.end != apps.len();
+
+    let mut icon_iter = icon_grid_stuff.icon_buttons_and_labels.iter();
+
+    if have_prev_icon {
+        let &(icon_button, label) = icon_iter.next().unwrap();
+        let image = *icon_grid_stuff.prev_icon.get_or_insert_with(|| {
+            make_icon_from_glyph(env, '←', 50.0, -9.0, (0.25, 0.25, 0.25, 1.0))
+        });
+        () = msg![env; icon_button setImage:image forState:UIControlStateNormal];
+        () = msg![env; label setText:(ns_string::get_static_str(env, ""))];
+        icon_grid_stuff
+            .icon_map
+            .insert(icon_button, TappedIcon::ChangePage(page_idx - 1));
+    }
+
+    for app_idx in app_idx_range.clone() {
+        let app = &mut apps[app_idx];
+
+        let &(icon_button, label) = icon_iter.next().unwrap();
+
+        if let Some(icon) = app.icon.take() {
+            let image = cg_image::from_image(env, icon);
+            let image: id = msg_class![env; UIImage imageWithCGImage:image];
+            app.icon_ui_image = Some(image);
+        }
+
+        let image = app.icon_ui_image.unwrap_or_else(|| {
+            *icon_grid_stuff.placeholder_icon.get_or_insert_with(|| {
+                make_icon_from_glyph(env, '?', 40.0, 0.0, (0.5, 0.5, 0.5, 1.0))
+            })
+        });
+        () = msg![env; icon_button setImage:image forState:UIControlStateNormal];
+
+        let text = *app
+            .display_name_ns_string
+            .get_or_insert_with(|| ns_string::from_rust_string(env, app.display_name.clone()));
+        () = msg![env; label setText:text];
+
+        icon_grid_stuff
+            .icon_map
+            .insert(icon_button, TappedIcon::App(app_idx));
+    }
+
+    if have_next_icon {
+        let &(icon_button, label) = icon_iter.next().unwrap();
+        let image = *icon_grid_stuff.next_icon.get_or_insert_with(|| {
+            make_icon_from_glyph(env, '→', 50.0, -9.0, (0.25, 0.25, 0.25, 1.0))
+        });
+        () = msg![env; icon_button setImage:image forState:UIControlStateNormal];
+        () = msg![env; label setText:(ns_string::get_static_str(env, ""))];
+        icon_grid_stuff
+            .icon_map
+            .insert(icon_button, TappedIcon::ChangePage(page_idx + 1));
+    }
+
+    // There may be remaining spaces might need to be blanked.
+    for &(icon_button, label) in icon_iter {
+        () = msg![env; icon_button setImage:nil forState:UIControlStateNormal];
+        () = msg![env; label setText:(ns_string::get_static_str(env, ""))];
     }
 }
 

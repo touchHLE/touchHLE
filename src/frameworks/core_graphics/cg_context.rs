@@ -89,7 +89,7 @@ fn CGContextSetGrayFillColor(
         .rgb_fill_color = color;
 }
 
-fn CGContextFillRect(env: &mut Environment, context: CGContextRef, rect: CGRect) {
+pub fn CGContextFillRect(env: &mut Environment, context: CGContextRef, rect: CGRect) {
     cg_bitmap_context::fill_rect(env, context, rect, /* clear: */ false);
 }
 

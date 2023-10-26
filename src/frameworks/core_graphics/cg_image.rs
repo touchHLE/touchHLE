@@ -87,6 +87,12 @@ pub fn borrow_image(objc: &ObjC, image: CGImageRef) -> &Image {
     &objc.borrow::<CGImageHostObject>(image).image
 }
 
+/// Shortcut used by the app picker, counterpart to [borrow_image].
+/// FIXME: This should not exist!
+pub fn borrow_image_mut(objc: &mut ObjC, image: CGImageRef) -> &mut Image {
+    &mut objc.borrow_mut::<CGImageHostObject>(image).image
+}
+
 // TODO: More create methods.
 
 fn CGImageCreateWithPNGDataProvider(

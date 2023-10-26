@@ -27,6 +27,7 @@ Usability:
 - The Android version of touchHLE now writes all log messages to a file called `log.txt`, in addition to outputting them to logcat. (@hikari-no-yume)
 - The new `--stabilize-virtual-cursor=` option makes the analog stick-controlled virtual cursor appear more stable to the emulated app, which is helpful in some games with overly sensitive menu scrolling. In some titles it is applied by default. (@hikari-no-yume; special thanks: @wareya)
 - Automatic language detection now works on all platforms, and supports a list of languages in order of preference, rather than just one. The `LANG` environment variable is no longer supported, and instead the new `--preferred-languages=` option can be used. Note that it is the emulated app itself that decides what to do with this list, and whether particular languages are supported. (@hikari-no-yume)
+- The app picker now has multiple pages, so it is no longer limited to 16 apps. (@hikari-no-yume)
 
 ## v0.2.0 (2023-08-31)
 

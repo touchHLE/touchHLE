@@ -18,7 +18,7 @@ use super::cg_image::{
 };
 use super::{CGFloat, CGPoint, CGRect};
 use crate::dyld::{export_c_func, FunctionExports};
-use crate::image::{gamma_decode, gamma_encode};
+use crate::image::{gamma_decode, gamma_encode, Image};
 use crate::mem::{GuestUSize, Mem, MutVoidPtr};
 use crate::objc::ObjC;
 use crate::Environment;
@@ -107,6 +107,30 @@ pub fn CGBitmapContextGetHeight(env: &mut Environment, context: CGContextRef) ->
     let host_obj = env.objc.borrow::<CGContextHostObject>(context);
     let CGContextSubclass::CGBitmapContext(bitmap_data) = host_obj.subclass;
     bitmap_data.height
+}
+
+pub fn CGBitmapContextCreateImage(env: &mut Environment, context: CGContextRef) -> CGImageRef {
+    // TODO: Image::from_pixel_vec() should not exist, and this function should
+    // support any bitmap format.
+    let host_obj = env.objc.borrow::<CGContextHostObject>(context);
+    let CGContextSubclass::CGBitmapContext(bitmap_data) = host_obj.subclass;
+    assert!(
+        bitmap_data.bits_per_component == 8
+            && bitmap_data.bytes_per_row == bitmap_data.width * 4
+            && bitmap_data.color_space == kCGColorSpaceGenericRGB
+            && bitmap_data.alpha_info == kCGImageAlphaPremultipliedLast
+    );
+    let pixels = env
+        .mem
+        .bytes_at(
+            bitmap_data.data.cast(),
+            bitmap_data.bytes_per_row * bitmap_data.height,
+        )
+        .to_vec();
+    cg_image::from_image(
+        env,
+        Image::from_pixel_vec(pixels, (bitmap_data.width, bitmap_data.height)),
+    )
 }
 
 fn components_for_rgb(bitmap_info: CGBitmapInfo) -> Result<GuestUSize, ()> {
@@ -585,6 +609,7 @@ pub fn get_data(objc: &ObjC, context: CGContextRef) -> (GuestUSize, GuestUSize, 
 
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGBitmapContextCreate(_, _, _, _, _, _, _)),
+    export_c_func!(CGBitmapContextCreateImage(_)),
     export_c_func!(CGBitmapContextGetData(_)),
     export_c_func!(CGBitmapContextGetWidth(_)),
     export_c_func!(CGBitmapContextGetHeight(_)),

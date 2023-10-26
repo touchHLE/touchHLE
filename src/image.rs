@@ -18,8 +18,13 @@ use touchHLE_pvrt_decompress_wrapper::*;
 use touchHLE_stb_image_wrapper::*;
 
 pub struct Image {
-    pixels: *mut c_uchar,
+    pixels: PixelStore,
     dimensions: (u32, u32),
+}
+
+enum PixelStore {
+    StbImage(*mut c_uchar),
+    Vec(Vec<u8>),
 }
 
 impl Image {
@@ -74,9 +79,19 @@ impl Image {
         }
 
         Ok(Image {
-            pixels,
+            pixels: PixelStore::StbImage(pixels),
             dimensions: (width, height),
         })
+    }
+
+    /// TODO: This shouldn't really exist, it's a workaround for `CGImage`
+    /// relying on this type and should be removed once it can be refactored.
+    pub fn from_pixel_vec(pixels: Vec<u8>, dimensions: (u32, u32)) -> Image {
+        assert!(dimensions.0 as usize * 4 * dimensions.1 as usize == pixels.len());
+        Image {
+            pixels: PixelStore::Vec(pixels),
+            dimensions,
+        }
     }
 
     pub fn dimensions(&self) -> (u32, u32) {
@@ -86,20 +101,26 @@ impl Image {
     /// Get image data as bytes (8 bits per channel sRGB RGBA with premultiplied
     /// alpha). Rows are in top-to-bottom order.
     pub fn pixels(&self) -> &[u8] {
-        unsafe {
-            std::slice::from_raw_parts(
-                self.pixels,
-                self.dimensions.0 as usize * self.dimensions.1 as usize * 4,
-            )
+        match self.pixels {
+            PixelStore::Vec(ref vec) => vec,
+            PixelStore::StbImage(ptr) => unsafe {
+                std::slice::from_raw_parts(
+                    ptr,
+                    self.dimensions.0 as usize * self.dimensions.1 as usize * 4,
+                )
+            },
         }
     }
 
     fn pixels_mut(&mut self) -> &mut [u8] {
-        unsafe {
-            std::slice::from_raw_parts_mut(
-                self.pixels,
-                self.dimensions.0 as usize * self.dimensions.1 as usize * 4,
-            )
+        match self.pixels {
+            PixelStore::Vec(ref mut vec) => vec,
+            PixelStore::StbImage(ptr) => unsafe {
+                std::slice::from_raw_parts_mut(
+                    ptr,
+                    self.dimensions.0 as usize * self.dimensions.1 as usize * 4,
+                )
+            },
         }
     }
 
@@ -157,7 +178,10 @@ impl Image {
 
 impl Drop for Image {
     fn drop(&mut self) {
-        unsafe { stbi_image_free(self.pixels.cast()) }
+        match self.pixels {
+            PixelStore::StbImage(ptr) => unsafe { stbi_image_free(ptr.cast()) },
+            PixelStore::Vec(_) => (),
+        }
     }
 }
 

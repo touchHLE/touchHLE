@@ -119,11 +119,17 @@ pub fn url_for_opening_user_data_dir() -> Result<String, String> {
             .join(".")
             .canonicalize()
             .map_err(|e| format!("Can't canonicalize path to user data directory: {}", e))?;
-        Ok(format!(
-            "file://{}",
-            path.to_str()
-                .ok_or_else(|| "User data directory path is not UTF-8".to_string())?
-        ))
+        let path = path
+            .to_str()
+            .ok_or_else(|| "User data directory path is not UTF-8".to_string())?;
+        // std::fs::canonicalize() on Windows uses the extended-length path
+        // syntax, but Windows Explorer doesn't understand it.
+        let path = if std::env::consts::OS == "windows" {
+            path.strip_prefix("\\\\?\\").unwrap_or(path)
+        } else {
+            path
+        };
+        Ok(format!("file://{}", path))
     }
 }
 

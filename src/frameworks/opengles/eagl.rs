@@ -16,9 +16,10 @@ use crate::gles::gles11_raw::types::*;
 use crate::gles::present::{present_frame, FpsCounter};
 use crate::gles::{create_gles1_ctx, gles1_on_gl2, GLES};
 use crate::objc::{id, msg, nil, objc_classes, release, retain, ClassExports, HostObject};
+use crate::options::Options;
 use crate::window::Window;
 use std::collections::HashMap;
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
 // These are used by the EAGLDrawable protocol implemented by CAEAGLayer.
 // Since these have the ABI of constant symbols rather than literal constants,
@@ -60,6 +61,7 @@ pub(super) struct EAGLContextHostObject {
     /// (always `CAEAGLLayer*`). Retains the instance so it won't dangle.
     renderbuffer_drawable_bindings: HashMap<GLuint, id>,
     fps_counter: Option<FpsCounter>,
+    next_frame_due: Option<Instant>,
 }
 impl HostObject for EAGLContextHostObject {}
 
@@ -74,6 +76,7 @@ pub const CLASSES: ClassExports = objc_classes! {
         gles_ctx: None,
         renderbuffer_drawable_bindings: HashMap::new(),
         fps_counter: None,
+        next_frame_due: None,
     });
     env.objc.alloc_object(this, host_object, &mut env.mem)
 }
@@ -192,6 +195,10 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (bool)presentRenderbuffer:(NSUInteger)target {
     assert!(target == gles11::RENDERBUFFER_OES);
 
+    // The presented frame should be displayed ASAP, but the next one must be
+    // delayed, so this needs to be checked before returning.
+    let sleep_for = limit_framerate(&mut env.objc.borrow_mut::<EAGLContextHostObject>(this).next_frame_due, &env.options);
+
     if env.options.print_fps {
         env
             .objc
@@ -246,6 +253,9 @@ pub const CLASSES: ClassExports = objc_classes! {
                 fullscreen_layer,
                 renderbuffer,
             );
+            if let Some(sleep_for) = sleep_for {
+                env.sleep(sleep_for, /* tail_call: */ false);
+            }
             return true;
         }
 
@@ -268,12 +278,74 @@ pub const CLASSES: ClassExports = objc_classes! {
         present_pixels(env, drawable, pixels_vec, width, height);
     }
 
+    if let Some(sleep_for) = sleep_for {
+        env.sleep(sleep_for, /* tail_call: */ false);
+    }
+
     true
 }
 
 @end
 
 };
+
+/// Implement framerate limiting.
+///
+/// The real iPhone OS seems to force 60Hz v-sync in `presentRenderbuffer:`.
+/// touchHLE does not force v-sync, and its users might not have 60Hz monitors
+/// in any case, so to avoid excessive FPS or games running too fast, we need
+/// to simulate it.
+///
+/// V-sync is essentially a limiter with no "slop", or allowance for frames
+/// arriving late: if the frame misses a 60Hz interval, it must wait until the
+/// next one. This is quite harsh: if frames consistently arrive very slightly
+/// late, the framerate is halved!
+///
+/// Most games already use NSTimer, which is itself a v-sync-like limiter.
+/// For the remainder, let's do something a bit kinder, for the benefit of users
+/// with slow systems or which are using high scale hack settings: allow at most
+/// an interval's worth of accumulated slop. Allowing infinite accumulation of
+/// slop is not desirable, because if the game is running slowly for a long time
+/// and suddenly speeds back up, it will then run too fast for a long time.
+fn limit_framerate(next_frame_due: &mut Option<Instant>, options: &Options) -> Option<Duration> {
+    let interval = if let Some(fps) = options.fps_limit {
+        1.0 / fps
+    } else {
+        return None;
+    };
+    let interval_rust = Duration::from_secs_f64(interval);
+
+    let &mut Some(current_frame_due) = next_frame_due else {
+        // First frame presented: no delay yet.
+        *next_frame_due = Some(Instant::now() + interval_rust);
+        return None;
+    };
+
+    let now = Instant::now();
+    *next_frame_due = if now > current_frame_due + interval_rust {
+        // Too much slop has accumulated. Make the next frame wait for the next
+        // interval.
+        log_dbg!("Too much slop accumulated, skipping an interval.");
+        Some(
+            current_frame_due
+                + Duration::from_secs_f64(
+                    interval * (((now - current_frame_due).as_secs_f64() / interval).ceil()),
+                ),
+        )
+    } else {
+        // Time next frame based on when the current frame was due, not
+        // the current time, so as to allow some slop.
+        Some(current_frame_due + interval_rust)
+    };
+
+    if now < current_frame_due {
+        // Frame was presented early, delay it to maintain framerate limit.
+        Some(current_frame_due.saturating_duration_since(now))
+    } else {
+        // Frame was presented on time or late, don't delay.
+        None
+    }
+}
 
 // These helper functions make the state backup code easier to read, but
 // more importantly, they make it free of mutable variables that wouldn't

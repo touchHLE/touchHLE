@@ -165,3 +165,15 @@ Other options:
 
     --print-fps
         Logs the current framerate (FPS) to the console once per second.
+
+    --fps-limit=...
+        Modify or disable the framerate (FPS) limit.
+
+        By default, touchHLE limits the framerate of an app to 60fps, because
+        this is required for accurate emulation. Some apps can however run
+        correctly at a higher framerate than normal. Note that many apps have
+        an internal timer that determines how often they present frames, so
+        raising the limit has no virtually no effect on them.
+
+        This is either 'off', to disable the framerate limit, or otherwise
+        a floating-point (decimal) number of frames per second.

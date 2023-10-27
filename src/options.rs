@@ -42,6 +42,7 @@ pub struct Options {
     pub preferred_languages: Option<Vec<String>>,
     pub headless: bool,
     pub print_fps: bool,
+    pub fps_limit: Option<f64>,
 }
 
 impl Default for Options {
@@ -63,6 +64,7 @@ impl Default for Options {
             preferred_languages: None,
             headless: false,
             print_fps: false,
+            fps_limit: Some(60.0), // Original iPhone is 60Hz and uses v-sync
         }
     }
 }
@@ -161,6 +163,17 @@ impl Options {
             self.headless = true;
         } else if arg == "--print-fps" {
             self.print_fps = true;
+        } else if let Some(value) = arg.strip_prefix("--fps-limit=") {
+            if value == "off" {
+                self.fps_limit = None;
+            } else {
+                let limit: f64 = value
+                    .parse()
+                    .ok()
+                    .and_then(|v| if v <= 0.0 { None } else { Some(v) })
+                    .ok_or_else(|| "Invalid value for --fps-limit=".to_string())?;
+                self.fps_limit = Some(limit);
+            }
         } else {
             return Ok(false);
         };

@@ -28,7 +28,7 @@ Usability:
 - The new `--stabilize-virtual-cursor=` option makes the analog stick-controlled virtual cursor appear more stable to the emulated app, which is helpful in some games with overly sensitive menu scrolling. In some titles it is applied by default. (@hikari-no-yume; special thanks: @wareya)
 - Automatic language detection now works on all platforms, and supports a list of languages in order of preference, rather than just one. The `LANG` environment variable is no longer supported, and instead the new `--preferred-languages=` option can be used. Note that it is the emulated app itself that decides what to do with this list, and whether particular languages are supported. (@hikari-no-yume)
 - The app picker now has multiple pages, so it is no longer limited to 16 apps. (@hikari-no-yume)
-- The framerate is now limited to 60fps by default, which matches the original iPhone OS and fixes issues with some games where the game ran too fast or consumed excessive energy and CPU time. This limit can be adjusted or disabled with the new `--limit-fps=` option, but note that many games are unaffected by it. (@hikari-no-yume; special thanks: @wareya)
+- The framerate is now limited to 60fps by default, which matches the original iPhone OS and fixes issues with some games where the game ran too fast or consumed excessive energy and CPU time. This limit can be adjusted or disabled with the new `--limit-fps=` option. (@hikari-no-yume; special thanks: @wareya)
 
 ## v0.2.0 (2023-08-31)
 

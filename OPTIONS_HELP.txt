@@ -171,9 +171,11 @@ Other options:
 
         By default, touchHLE limits the framerate of an app to 60fps, because
         this is required for accurate emulation. Some apps can however run
-        correctly at a higher framerate than normal. Note that many apps have
-        an internal timer that determines how often they present frames, so
-        raising the limit has no virtually no effect on them.
+        correctly at a higher framerate than normal.
 
         This is either 'off', to disable the framerate limit, or otherwise
         a floating-point (decimal) number of frames per second.
+
+        Note that many apps have an internal timer that determines how often
+        they present frames; increasing the limit will not increase their
+        framerate, but may make it less consistent.

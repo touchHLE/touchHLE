@@ -188,7 +188,10 @@ pub fn main<T: Iterator<Item = String>>(mut args: T) -> Result<(), String> {
 
     let bundle_data = fs::BundleData::open_any(&bundle_path)
         .map_err(|e| format!("Could not open app bundle: {e}"))?;
-    let (bundle, fs) = match bundle::Bundle::new_bundle_and_fs_from_host_path(bundle_data) {
+    let (bundle, fs) = match bundle::Bundle::new_bundle_and_fs_from_host_path(
+        bundle_data,
+        /* read_only_mode: */ false,
+    ) {
         Ok(bundle) => bundle,
         Err(err) => {
             return Err(format!("Application bundle error: {err}. Check that the path is to an .app directory or an .ipa file."));

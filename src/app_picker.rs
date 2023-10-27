@@ -84,10 +84,10 @@ fn enumerate_apps(apps_dir: &Path) -> Result<Vec<AppInfo>, std::io::Error> {
             continue;
         }
 
-        // TODO: avoid loading the whole FS
-        let (bundle, fs) = match BundleData::open_any(&app_path)
-            .and_then(Bundle::new_bundle_and_fs_from_host_path)
-        {
+        // TODO: avoid loading the whole FS somehow?
+        let (bundle, fs) = match BundleData::open_any(&app_path).and_then(|bundle_data| {
+            Bundle::new_bundle_and_fs_from_host_path(bundle_data, /* read_only_mode: */ true)
+        }) {
             Ok(ok) => ok,
             Err(e) => {
                 log!(

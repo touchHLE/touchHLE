@@ -438,10 +438,16 @@ impl Fs {
     /// the app. This will be used to construct the host path for the app's
     /// sandbox directory, where documents can be stored. A directory will be
     /// created at that path if it does not already exist.
+    ///
+    /// `read_only_mode` can be used when the app won't actually be run, just
+    /// just inspected (e.g. to retrieve display name and icon), so no user data
+    /// directories are required and no sandbox directory will be created on the
+    /// host.
     pub fn new(
         app_bundle: BundleData,
         bundle_dir_name: String,
         bundle_id: &str,
+        read_only_mode: bool,
     ) -> (Fs, GuestPathBuf) {
         const FAKE_UUID: &str = "00000000-0000-0000-0000-000000000000";
 
@@ -450,16 +456,21 @@ impl Fs {
 
         let bundle_guest_path = home_directory.join(&bundle_dir_name);
 
-        let documents_host_path = paths::user_data_base_path()
-            .join(paths::SANDBOX_DIR)
-            .join(bundle_id)
-            .join("Documents");
-        if let Err(e) = std::fs::create_dir_all(&documents_host_path) {
-            panic!(
-                "Could not create documents directory for app at {:?}: {:?}",
-                documents_host_path, e
-            );
-        }
+        let documents_host_path = if !read_only_mode {
+            let path = paths::user_data_base_path()
+                .join(paths::SANDBOX_DIR)
+                .join(bundle_id)
+                .join("Documents");
+            if let Err(e) = std::fs::create_dir_all(&path) {
+                panic!(
+                    "Could not create documents directory for app at {:?}: {:?}",
+                    path, e
+                );
+            }
+            Some(path)
+        } else {
+            None
+        };
 
         // Some Free Software libraries are bundled with touchHLE.
         use paths::DYLIBS_DIR;
@@ -478,6 +489,15 @@ impl Fs {
                 FsNode::resource_file(format!("{}/libstdc++.6.0.4.dylib", DYLIBS_DIR)),
             );
 
+        let mut app_dir_children = HashMap::new();
+        app_dir_children.insert(bundle_dir_name, app_bundle.into_fs_node());
+        if let Some(documents_host_path) = documents_host_path {
+            app_dir_children.insert(
+                "Documents".to_string(),
+                FsNode::from_host_dir(&documents_host_path, /* writeable: */ true),
+            );
+        }
+
         let root = FsNode::dir()
             .with_child(
                 "var",
@@ -488,16 +508,7 @@ impl Fs {
                         FsNode::dir().with_child(
                             FAKE_UUID,
                             FsNode::Directory {
-                                children: HashMap::from([
-                                    (bundle_dir_name, app_bundle.into_fs_node()),
-                                    (
-                                        "Documents".to_string(),
-                                        FsNode::from_host_dir(
-                                            &documents_host_path,
-                                            /* writeable: */ true,
-                                        ),
-                                    ),
-                                ]),
+                                children: app_dir_children,
                                 writeable: None,
                             },
                         ),

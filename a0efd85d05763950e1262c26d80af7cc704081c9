@@ -16,6 +16,24 @@
       "message": "This line is redundant now.",
       "revId": "a0efd85d05763950e1262c26d80af7cc704081c9",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "83d972a8_f7aea6e1",
+        "filename": "src/window.rs",
+        "patchSetId": 6
+      },
+      "lineNbr": 366,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-10-28T19:39:38Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "172749ba_b5186739",
+      "revId": "a0efd85d05763950e1262c26d80af7cc704081c9",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

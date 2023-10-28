@@ -20,6 +20,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "0c7c19ad_6da8a5b5",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-10-28T14:41:14Z",
+      "side": 1,
+      "message": "Does it need to be fixed as a part of this commit or a TODO/FIXME would be sufficient?",
+      "parentUuid": "585b730a_c6cba88c",
+      "revId": "735fa9b5fe10a7387966f271f2ccd81239884e82",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "282c669e_8b74a9b0",
         "filename": "src/frameworks/uikit/ui_event.rs",
         "patchSetId": 2
@@ -31,6 +49,24 @@
       "writtenOn": "2023-10-28T10:10:40Z",
       "side": 1,
       "message": "This is quite different from the old code. Are you sure `touchesForView:` works this way? (I\u0027m not sure the old code was correct either FWIW but…)",
+      "revId": "735fa9b5fe10a7387966f271f2ccd81239884e82",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "07621dfc_5b0bff41",
+        "filename": "src/frameworks/uikit/ui_event.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 50,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-10-28T14:41:14Z",
+      "side": 1,
+      "message": "I verified behaviour with a small test app as described here https://discord.com/channels/1070753159246524436/1072075510131204147/1155622256853135380\nDo you have any particular concern about the behaviour?",
+      "parentUuid": "282c669e_8b74a9b0",
       "revId": "735fa9b5fe10a7387966f271f2ccd81239884e82",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

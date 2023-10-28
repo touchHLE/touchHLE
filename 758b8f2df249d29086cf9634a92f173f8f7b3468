@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "41fc5b82_90374d4b",
+        "filename": "src/frameworks/foundation/ns_set.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 73,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-10-28T10:03:57Z",
+      "side": 1,
+      "message": "Can you add a TODO or FIXME comment here about how this has bad time complexity? It\u0027s no big deal for touch inputs obviously.",
+      "revId": "758b8f2df249d29086cf9634a92f173f8f7b3468",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

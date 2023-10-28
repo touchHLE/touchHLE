@@ -120,6 +120,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "9f15164d_d701fe21",
+        "filename": "src/window.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 374,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-10-28T19:07:07Z",
+      "side": 1,
+      "message": "It\u0027s logged in the other branch of the `if` though?",
+      "parentUuid": "5b1b828d_233cc272",
+      "revId": "ed80d3d5ca7aa6d71012aafdb88b834e833a3776",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "f84b1a65_040613ed",
         "filename": "src/window.rs",
         "patchSetId": 3
@@ -237,6 +255,30 @@
       "side": 1,
       "message": "i kinda don\u0027t want to battle with fmt :)",
       "parentUuid": "dd86dbe1_48d37cc0",
+      "range": {
+        "startLine": 505,
+        "startChar": 28,
+        "endLine": 525,
+        "endChar": 97
+      },
+      "revId": "ed80d3d5ca7aa6d71012aafdb88b834e833a3776",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "739ae444_914577cb",
+        "filename": "src/window.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 525,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-10-28T19:07:07Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "444b03bf_9310a793",
       "range": {
         "startLine": 505,
         "startChar": 28,

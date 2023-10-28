@@ -36,6 +36,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "45379150_8968d4f1",
+        "filename": "src/frameworks/foundation/ns_set.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 60,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-10-28T14:41:52Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "be714957_6742466c",
+      "revId": "93fe26b06a659ada1af59681d956f35686d24bf3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "df5e1433_600cd972",
@@ -67,6 +85,24 @@
       "side": 1,
       "message": "Oh wait sorry, this is in the follow-up patch.",
       "parentUuid": "df5e1433_600cd972",
+      "revId": "93fe26b06a659ada1af59681d956f35686d24bf3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "298b96ec_cec9f432",
+        "filename": "src/frameworks/foundation/ns_set.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 66,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-10-28T14:41:52Z",
+      "side": 1,
+      "message": "Now it\u0027s a part of this commit",
+      "parentUuid": "c979ebd7_3e475bf2",
       "revId": "93fe26b06a659ada1af59681d956f35686d24bf3",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

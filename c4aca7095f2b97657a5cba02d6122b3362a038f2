@@ -34,6 +34,24 @@
       "parentUuid": "3ea24aa7_b0ebef05",
       "revId": "c4aca7095f2b97657a5cba02d6122b3362a038f2",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "664ae0ae_b553d5ab",
+        "filename": "src/frameworks/uikit/ui_event.rs",
+        "patchSetId": 8
+      },
+      "lineNbr": 52,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-10-28T19:57:01Z",
+      "side": 1,
+      "message": "The problem can\u0027t be solved with just a change to `touchesForView:`, it also affects the set provided in `touchesBegan:withEvent`[0] etc. The code that decides which view receives a touch needs to avoid associating more than one touch with a view if it doesn\u0027t support multiple touches. This is the bit I was scared about with implementing multi-touch…\n\n[0] https://developer.apple.com/documentation/uikit/uiresponder/1621142-touchesbegan?language\u003dobjc",
+      "parentUuid": "95003429_6f0b0376",
+      "revId": "c4aca7095f2b97657a5cba02d6122b3362a038f2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

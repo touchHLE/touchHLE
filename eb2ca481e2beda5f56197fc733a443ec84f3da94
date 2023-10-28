@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "bfc898be_976b55a0",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 7
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-10-28T20:14:10Z",
+      "side": 1,
+      "message": "Doesn\u0027t build:\n\n    error[E0599]: no associated item named `Touch` found for type `i64` in the current scope\n       --\u003e src/window.rs:493:61\n        |\n    493 | ...m([(FingerId::Touch(finger_id), coords)]);\n        |                  ^^^^^ associated item not found in `i64`\n    \n    For more information about this error, try `rustc --explain E0599`.",
+      "revId": "eb2ca481e2beda5f56197fc733a443ec84f3da94",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

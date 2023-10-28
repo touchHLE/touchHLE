@@ -24,6 +24,30 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "3ef1cb66_bd78fdb7",
+        "filename": "src/window.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 366,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-10-28T15:50:02Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "e93e38be_c50c6068",
+      "range": {
+        "startLine": 364,
+        "startChar": 24,
+        "endLine": 366,
+        "endChar": 38
+      },
+      "revId": "ed80d3d5ca7aa6d71012aafdb88b834e833a3776",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "f1dd70cf_88725c81",
@@ -37,6 +61,24 @@
       "writtenOn": "2023-10-28T15:19:16Z",
       "side": 1,
       "message": "I think it might be easier to follow this if you merge it into the `} else {` on line 369, so it would be `} else if let Some(e) \u003d self.event_pump.poll_event() {` for consuming the new event, then add a } else { break; }` after it.",
+      "revId": "ed80d3d5ca7aa6d71012aafdb88b834e833a3776",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "659e908e_b3e777bc",
+        "filename": "src/window.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 370,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-10-28T15:50:02Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "f1dd70cf_88725c81",
       "revId": "ed80d3d5ca7aa6d71012aafdb88b834e833a3776",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
@@ -60,6 +102,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "5b1b828d_233cc272",
+        "filename": "src/window.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 374,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-10-28T15:50:02Z",
+      "side": 1,
+      "message": "I don\u0027t want to log Unknown event",
+      "parentUuid": "48ba1ad1_25f686b6",
+      "revId": "ed80d3d5ca7aa6d71012aafdb88b834e833a3776",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "f84b1a65_040613ed",
         "filename": "src/window.rs",
         "patchSetId": 3
@@ -71,6 +131,24 @@
       "writtenOn": "2023-10-28T15:19:16Z",
       "side": 1,
       "message": "Since there is a usage of `E::` before this line, I would suggest moving this statement up to the top of this loop. I was confused for a moment.",
+      "revId": "ed80d3d5ca7aa6d71012aafdb88b834e833a3776",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "aa297d0d_39de2df7",
+        "filename": "src/window.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 379,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-10-28T15:50:02Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "f84b1a65_040613ed",
       "revId": "ed80d3d5ca7aa6d71012aafdb88b834e833a3776",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
@@ -88,6 +166,30 @@
       "writtenOn": "2023-10-28T15:19:16Z",
       "side": 1,
       "message": "This can be condensed to:\n\n    while let Some(next) \u003d self.event_pump.poll_event() {",
+      "range": {
+        "startLine": 494,
+        "startChar": 0,
+        "endLine": 499,
+        "endChar": 49
+      },
+      "revId": "ed80d3d5ca7aa6d71012aafdb88b834e833a3776",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "1c7ac134_a0117053",
+        "filename": "src/window.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 499,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-10-28T15:50:02Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "273c6986_014c523a",
       "range": {
         "startLine": 494,
         "startChar": 0,
@@ -123,6 +225,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "444b03bf_9310a793",
+        "filename": "src/window.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 525,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-10-28T15:50:02Z",
+      "side": 1,
+      "message": "i kinda don\u0027t want to battle with fmt :)",
+      "parentUuid": "dd86dbe1_48d37cc0",
+      "range": {
+        "startLine": 505,
+        "startChar": 28,
+        "endLine": 525,
+        "endChar": 97
+      },
+      "revId": "ed80d3d5ca7aa6d71012aafdb88b834e833a3776",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "ca0e49b2_2707ef93",
         "filename": "src/window.rs",
         "patchSetId": 3
@@ -134,6 +260,24 @@
       "writtenOn": "2023-10-28T15:19:16Z",
       "side": 1,
       "message": "Maybe a comment can be added here about why this exists. Also I guess an assert that it\u0027s not already set would be good, just in case.",
+      "revId": "ed80d3d5ca7aa6d71012aafdb88b834e833a3776",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "98be0b68_2cc61f61",
+        "filename": "src/window.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 535,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-10-28T15:50:02Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "ca0e49b2_2707ef93",
       "revId": "ed80d3d5ca7aa6d71012aafdb88b834e833a3776",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

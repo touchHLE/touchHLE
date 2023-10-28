@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "585b730a_c6cba88c",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-10-28T10:10:40Z",
+      "side": 1,
+      "message": "So, the big thing missing here is we need to support the `multipleTouchEnabled` property on `UIView`. When that is `false` (which is the default), UIKit will only report a single touch event at a time (e.g. https://stackoverflow.com/questions/6483927/why-does-touchesforview-returns-only-1-touch).",
+      "revId": "735fa9b5fe10a7387966f271f2ccd81239884e82",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "282c669e_8b74a9b0",
+        "filename": "src/frameworks/uikit/ui_event.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 50,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-10-28T10:10:40Z",
+      "side": 1,
+      "message": "This is quite different from the old code. Are you sure `touchesForView:` works this way? (I\u0027m not sure the old code was correct either FWIW but…)",
+      "revId": "735fa9b5fe10a7387966f271f2ccd81239884e82",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

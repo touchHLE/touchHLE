@@ -16,6 +16,24 @@
       "message": "This can\u0027t work; NSSet (and the Rust HashMap we\u0027re using to implement it) is unordered, so it will return a different touch if more are added later. Also, I guess there\u0027ll be weird touchesMoved/touchesEnd events that don\u0027t correspond to the single touch the view is aware of. I think the event handling code will have to reject additional touches if the view is not multi-touch aware. Exactly what should happen to those touches, I\u0027m not sure…",
       "revId": "c4aca7095f2b97657a5cba02d6122b3362a038f2",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "95003429_6f0b0376",
+        "filename": "src/frameworks/uikit/ui_event.rs",
+        "patchSetId": 8
+      },
+      "lineNbr": 52,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-10-28T19:37:49Z",
+      "side": 1,
+      "message": "The docs https://developer.apple.com/documentation/uikit/uiview/1622519-multipletouchenabled mention that \"only the first touch event\" gets delivered to a view. I can try to sort them by timestamp but this will not solve the problem (if it\u0027s a problem) with \"touches added later\"",
+      "parentUuid": "3ea24aa7_b0ebef05",
+      "revId": "c4aca7095f2b97657a5cba02d6122b3362a038f2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

@@ -20,6 +20,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "be714957_6742466c",
+        "filename": "src/frameworks/foundation/ns_set.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 60,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-10-28T09:59:39Z",
+      "side": 1,
+      "message": "Uh, between our private subclasses of NSSet and NSMutableSet, that is.",
+      "parentUuid": "1262612f_81cc9085",
+      "revId": "93fe26b06a659ada1af59681d956f35686d24bf3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "df5e1433_600cd972",
         "filename": "src/frameworks/foundation/ns_set.rs",
         "patchSetId": 2

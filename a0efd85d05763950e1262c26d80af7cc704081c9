@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "172749ba_b5186739",
+        "filename": "src/window.rs",
+        "patchSetId": 6
+      },
+      "lineNbr": 366,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-10-28T19:37:47Z",
+      "side": 1,
+      "message": "This line is redundant now.",
+      "revId": "a0efd85d05763950e1262c26d80af7cc704081c9",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

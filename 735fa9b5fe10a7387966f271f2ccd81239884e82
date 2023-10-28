@@ -38,6 +38,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "8afb21b2_6ddd2c09",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-10-28T15:21:33Z",
+      "side": 1,
+      "message": "It\u0027s inconvenient but I don\u0027t really want to commit this to trunk as-is otherwise, because it might break some existing app on Android. :/",
+      "parentUuid": "0c7c19ad_6da8a5b5",
+      "revId": "735fa9b5fe10a7387966f271f2ccd81239884e82",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "282c669e_8b74a9b0",
         "filename": "src/frameworks/uikit/ui_event.rs",
         "patchSetId": 2
@@ -67,6 +85,24 @@
       "side": 1,
       "message": "I verified behaviour with a small test app as described here https://discord.com/channels/1070753159246524436/1072075510131204147/1155622256853135380\nDo you have any particular concern about the behaviour?",
       "parentUuid": "282c669e_8b74a9b0",
+      "revId": "735fa9b5fe10a7387966f271f2ccd81239884e82",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "276e772c_2b74f2b1",
+        "filename": "src/frameworks/uikit/ui_event.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 50,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-10-28T15:21:33Z",
+      "side": 1,
+      "message": "Oh right, thanks for the reminder. OK, seems fine.",
+      "parentUuid": "07621dfc_5b0bff41",
       "revId": "735fa9b5fe10a7387966f271f2ccd81239884e82",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

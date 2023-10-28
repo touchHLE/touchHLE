@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1262612f_81cc9085",
+        "filename": "src/frameworks/foundation/ns_set.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 60,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-10-28T09:58:59Z",
+      "side": 1,
+      "message": "Methods on the abstract class aren\u0027t supposed to know about our internal implementation details. If you want to share the code between NSSet and NSMutableSet, I suggest making a helper function.",
+      "revId": "93fe26b06a659ada1af59681d956f35686d24bf3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "df5e1433_600cd972",
+        "filename": "src/frameworks/foundation/ns_set.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 66,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-10-28T09:58:59Z",
+      "side": 1,
+      "message": "Won\u0027t this need to be handled now that we have multi-touch? A nightmare to test though… but I think Super Monkey Ball will crash on this assert if you were to use two fingers at once.",
+      "revId": "93fe26b06a659ada1af59681d956f35686d24bf3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

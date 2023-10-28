@@ -16,6 +16,24 @@
       "message": "Can you add a `copyWithZone:` implementation in `NSMutableSet` (not the private subclass) and remove this comment? Adding just `todo!()` is fine, that\u0027s what `NSMutableArray` does. (The idea is `copyWithZone:` produces an immutable copy, so for an immutable object it just retains it, but a mutable object has to do a copy of some kind.)",
       "revId": "25def47edd158dcbed395e46674f73915f579628",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "04f5152d_06618a01",
+        "filename": "src/frameworks/foundation/ns_set.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 53,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-10-28T15:09:55Z",
+      "side": 1,
+      "message": "This is already done, check line 75 here.\nBut i removed the comment, this was an overlook.",
+      "parentUuid": "ae6763d1_b0732592",
+      "revId": "25def47edd158dcbed395e46674f73915f579628",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

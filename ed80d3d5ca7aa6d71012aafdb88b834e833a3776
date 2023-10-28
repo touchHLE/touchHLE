@@ -1,0 +1,141 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e93e38be_c50c6068",
+        "filename": "src/window.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 366,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-10-28T15:19:16Z",
+      "side": 1,
+      "message": "Btw you could condense this to: `if let Some(e) \u003d previous_event.take() {`",
+      "range": {
+        "startLine": 364,
+        "startChar": 24,
+        "endLine": 366,
+        "endChar": 38
+      },
+      "revId": "ed80d3d5ca7aa6d71012aafdb88b834e833a3776",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f1dd70cf_88725c81",
+        "filename": "src/window.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 370,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-10-28T15:19:16Z",
+      "side": 1,
+      "message": "I think it might be easier to follow this if you merge it into the `} else {` on line 369, so it would be `} else if let Some(e) \u003d self.event_pump.poll_event() {` for consuming the new event, then add a } else { break; }` after it.",
+      "revId": "ed80d3d5ca7aa6d71012aafdb88b834e833a3776",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "48ba1ad1_25f686b6",
+        "filename": "src/window.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 374,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-10-28T15:19:16Z",
+      "side": 1,
+      "message": "What\u0027s this about?",
+      "revId": "ed80d3d5ca7aa6d71012aafdb88b834e833a3776",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f84b1a65_040613ed",
+        "filename": "src/window.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 379,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-10-28T15:19:16Z",
+      "side": 1,
+      "message": "Since there is a usage of `E::` before this line, I would suggest moving this statement up to the top of this loop. I was confused for a moment.",
+      "revId": "ed80d3d5ca7aa6d71012aafdb88b834e833a3776",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "273c6986_014c523a",
+        "filename": "src/window.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 499,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-10-28T15:19:16Z",
+      "side": 1,
+      "message": "This can be condensed to:\n\n    while let Some(next) \u003d self.event_pump.poll_event() {",
+      "range": {
+        "startLine": 494,
+        "startChar": 0,
+        "endLine": 499,
+        "endChar": 49
+      },
+      "revId": "ed80d3d5ca7aa6d71012aafdb88b834e833a3776",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "dd86dbe1_48d37cc0",
+        "filename": "src/window.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 525,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-10-28T15:19:16Z",
+      "side": 1,
+      "message": "I hate how rustfmt formatted this. Maybe you could put `#[rustfmt::skip]` on this `match` and put the stuff between curly braces on a single line? IDK, up to you.",
+      "range": {
+        "startLine": 505,
+        "startChar": 28,
+        "endLine": 525,
+        "endChar": 97
+      },
+      "revId": "ed80d3d5ca7aa6d71012aafdb88b834e833a3776",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ca0e49b2_2707ef93",
+        "filename": "src/window.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 535,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-10-28T15:19:16Z",
+      "side": 1,
+      "message": "Maybe a comment can be added here about why this exists. Also I guess an assert that it\u0027s not already set would be good, just in case.",
+      "revId": "ed80d3d5ca7aa6d71012aafdb88b834e833a3776",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

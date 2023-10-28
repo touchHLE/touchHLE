@@ -138,6 +138,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "eb361839_03b02db4",
+        "filename": "src/window.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 374,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-10-28T19:11:52Z",
+      "side": 1,
+      "message": "hmmm, not sure which `if` you\u0027re talking about\n\nWhat I mean here, is that I want to log every event, except for Unknown one.\n(if i log everything, on Android it become very spamming as there are a lot unknown events generated)",
+      "parentUuid": "9f15164d_d701fe21",
+      "revId": "ed80d3d5ca7aa6d71012aafdb88b834e833a3776",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "f84b1a65_040613ed",
         "filename": "src/window.rs",
         "patchSetId": 3

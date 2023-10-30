@@ -87,6 +87,24 @@
       "parentUuid": "e1ecb675_d31794d4",
       "revId": "30216643e3425e1b5eeb40cd456094eaa5bf83e3",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3272fc02_29fad776",
+        "filename": "src/frameworks/uikit/ui_touch.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 234,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-10-30T22:49:04Z",
+      "side": 1,
+      "message": "So, the new code prevents reporting multiple new touches to the view at once. But it is also necessary to account for the case where a touch was previously reported to the view and is still active (and this new touch is from a different finger). The only way that could be done is by looking for any existing touch for this view in the framework state.",
+      "parentUuid": "2d9a6cbe_1de30855",
+      "revId": "30216643e3425e1b5eeb40cd456094eaa5bf83e3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

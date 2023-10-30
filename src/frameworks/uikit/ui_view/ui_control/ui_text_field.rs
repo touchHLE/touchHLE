@@ -5,7 +5,7 @@
  */
 //! `UITextField`.
 
-use crate::frameworks::foundation::NSInteger;
+use crate::frameworks::foundation::{ns_string, NSInteger};
 use crate::objc::{id, objc_classes, ClassExports};
 
 type UIKeyboardAppearance = NSInteger;
@@ -22,6 +22,11 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 // TODO: rendering
 // TODO: more properties
+
+- (id)text {
+    // This should be `nil` by default, but Wolf3d crashes otherwise
+    ns_string::get_static_str(env, "")
+}
 
 - (())setText:(id)_text { // NSString*
     // TODO

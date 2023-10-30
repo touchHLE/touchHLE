@@ -49,6 +49,10 @@ pub const CLASSES: ClassExports = objc_classes! {
     );
 }
 
+- (bool)becomeFirstResponder {
+    // TODO
+    false
+}
 - (bool)resignFirstResponder {
     // TODO
     true

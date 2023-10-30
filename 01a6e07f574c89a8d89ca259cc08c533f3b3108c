@@ -144,6 +144,30 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "7d7480ea_b82a8f4b",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 8
+      },
+      "lineNbr": 8,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-10-30T21:06:28Z",
+      "side": 1,
+      "message": "Changed to be consistent on all platforms, Nighto confirmed to me it works on Windows multi touch",
+      "parentUuid": "ae49b0e4_de5fab8c",
+      "range": {
+        "startLine": 7,
+        "startChar": 32,
+        "endLine": 8,
+        "endChar": 1
+      },
+      "revId": "01a6e07f574c89a8d89ca259cc08c533f3b3108c",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "714cc072_7f653229",

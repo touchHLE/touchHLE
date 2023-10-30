@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "346af4e7_bee4cbce",
+        "filename": "src/frameworks/uikit/ui_touch.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 156,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-10-30T20:32:09Z",
+      "side": 1,
+      "message": "Might be good to include the finger ID for debugging.",
+      "revId": "30216643e3425e1b5eeb40cd456094eaa5bf83e3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d5453d2d_0d670c95",
+        "filename": "src/frameworks/uikit/ui_touch.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 234,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-10-30T20:32:09Z",
+      "side": 1,
+      "message": "OK so I think the necessary changes are:\n\n- Check `[view isMultipleTouchEnabled]` here.\n- If it\u0027s false, check if there\u0027s already touches in the set.\n- If so, mention that we\u0027re ignoring the touch and simply don\u0027t deliver it to the view. It\u0027s not clear to me whether it should still be delivered somewhere, but that can be a `TODO` item maybe? You might want to add a check for `view \u003d\u003d nil` in `handle_touches_move` and `handle_touches_end`, though messaging `nil` does nothing so technically you wouldn\u0027t need to.\n\nMy plan was to implement this myself, but I realised the changes are so small that it feels weird to credit myself as a co-author.",
+      "revId": "30216643e3425e1b5eeb40cd456094eaa5bf83e3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

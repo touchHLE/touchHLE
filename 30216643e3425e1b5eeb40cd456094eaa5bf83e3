@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "79f87e5b_c40f1fd5",
+        "filename": "src/frameworks/uikit/ui_touch.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 156,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-10-30T21:28:28Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "346af4e7_bee4cbce",
+      "revId": "30216643e3425e1b5eeb40cd456094eaa5bf83e3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "d5453d2d_0d670c95",
@@ -49,6 +67,24 @@
       "side": 1,
       "message": "Aaah wait you would also need to check if there\u0027s existing touches (from a previous event) already associated with the view, using the `current_touches` state I guess.",
       "parentUuid": "d5453d2d_0d670c95",
+      "revId": "30216643e3425e1b5eeb40cd456094eaa5bf83e3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2d9a6cbe_1de30855",
+        "filename": "src/frameworks/uikit/ui_touch.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 234,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-10-30T21:28:28Z",
+      "side": 1,
+      "message": "Done for the first part, but I\u0027m not sure about your second comment here.\nCould you please elaborate?",
+      "parentUuid": "e1ecb675_d31794d4",
       "revId": "30216643e3425e1b5eeb40cd456094eaa5bf83e3",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

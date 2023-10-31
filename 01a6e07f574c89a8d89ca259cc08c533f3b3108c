@@ -183,6 +183,24 @@
       "message": "Seems fine in my testing, but due to the noisy TODO logs I won\u0027t merge it until the later patches are ready.",
       "revId": "01a6e07f574c89a8d89ca259cc08c533f3b3108c",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "a356ae06_88074943",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 8
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-10-31T12:30:53Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "714cc072_7f653229",
+      "revId": "01a6e07f574c89a8d89ca259cc08c533f3b3108c",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

@@ -15,6 +15,7 @@ pub mod ui_label;
 pub mod ui_window;
 
 use super::ui_graphics::{UIGraphicsPopContext, UIGraphicsPushContext};
+use crate::frameworks::core_graphics::cg_affine_transform::CGAffineTransform;
 use crate::frameworks::core_graphics::cg_context::{CGContextClearRect, CGContextRef};
 use crate::frameworks::core_graphics::{CGFloat, CGPoint, CGRect};
 use crate::frameworks::foundation::ns_string::get_static_str;
@@ -353,6 +354,10 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (())setFrame:(CGRect)frame {
     let layer = env.objc.borrow::<UIViewHostObject>(this).layer;
     msg![env; layer setFrame:frame]
+}
+
+- (())setTransform:(CGAffineTransform)transform {
+    log!("TODO: [{:?} setTransform:{:?}]", this, transform);
 }
 
 - (())setContentMode:(NSInteger)content_mode { // should be UIViewContentMode

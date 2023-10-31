@@ -20,6 +20,10 @@ Compatibility:
 - API support improvements:
   - Various small contributions. (@hikari-no-yume, @ciciplusplus, @alborrajo)
 
+Quality:
+
+- Multi-touch is now supported. (@ciciplusplus)
+
 Usability:
 
 - The Android version of touchHLE now has a _documents provider_. Thanks to a mere three hundred lines of boilerplate code [originally written for the emulator Skyline](https://github.com/skyline-emu/skyline/blob/dc20a615275f66bee20a4fd851ef0231daca4f14/app/src/main/java/emu/skyline/provider/DocumentsProvider.kt) (RIP), it is now possible for you, as the owner of a device running a newer Android version, to move ~~files~~ _documents_ in and out of touchHLE's ~~directory~~ _location_ on your device with relative ease. For example, it is now possible to download an ~~.ipa file~~ _`application/octet-stream` document_ to the Downloads folder of your device, then, using an appropriate app, move this _document_ to the touchHLE _location_. Users of normal operating systems and [older versions of Android](https://developer.android.com/about/versions/11/privacy/storage#other-apps-data) continue to be able to access a superior version of the same functionality via a so-called “file manager”. (@hikari-no-yume)
@@ -29,6 +33,7 @@ Usability:
 - Automatic language detection now works on all platforms, and supports a list of languages in order of preference, rather than just one. The `LANG` environment variable is no longer supported, and instead the new `--preferred-languages=` option can be used. Note that it is the emulated app itself that decides what to do with this list, and whether particular languages are supported. (@hikari-no-yume)
 - The app picker now has multiple pages, so it is no longer limited to 16 apps. (@hikari-no-yume)
 - The framerate is now limited to 60fps by default, which matches the original iPhone OS and fixes issues with some games where the game ran too fast or consumed excessive energy and CPU time. This limit can be adjusted or disabled with the new `--limit-fps=` option. (@hikari-no-yume; special thanks: @wareya)
+- The `--button-to-touch=` option now supports D-pad mappings in addition to the A/B/X/Y buttons. (@alborrajo)
 
 ## v0.2.0 (2023-08-31)
 

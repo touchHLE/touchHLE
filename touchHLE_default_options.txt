@@ -55,3 +55,6 @@ com.namconetworks.katamari: --landscape-left --stabilize-virtual-cursor=0.1,10
 
 # Wolfenstein RPG
 com.eamobile.wolfbv: --landscape-left --stabilize-virtual-cursor=0.1,10
+
+# Doom II RPG
+com.idsoftware.Doom2rpg: --landscape-left --stabilize-virtual-cursor=0.1,10

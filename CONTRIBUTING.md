@@ -4,7 +4,10 @@ Please also read the [code of conduct](CODE_OF_CONDUCT.md).
 
 ## Issues
 
-Please bear in mind that there are infinitely many apps that do not work in touchHLE right now, so please don't open issues about apps that aren't in [the supported list](APP_SUPPORT.md), unless you've got it partially working (e.g. loaded up to the menu but the main game doesn't work). The fact that an app's splash screen (Default.png) shows up doesn't mean it's partially working.
+Please bear in mind that there are infinitely many apps that do not work in touchHLE right now, so please don't open issues about broken apps unless one of these applies:
+
+- You know that this specific version of the app worked in a previous version of touchHLE and you can reproduce this.
+- The app is partially working (e.g. loaded up to the menu but the main game doesn't work). The fact that an app's splash screen (Default.png) shows up doesn't mean it's partially working.
 
 ## Source control and review
 

@@ -1,19 +1,19 @@
 # touchHLE: high-level emulator for iPhone OS apps
 
-**touchHLE** is a high-level emulator (HLE) for iPhone OS apps. It runs on modern desktop operating systems and Android, and is written in Rust.
+**touchHLE** is a high-level emulator for iPhone OS apps. It runs on modern desktop operating systems and Android, and is written in Rust.
 
-As an HLE, touchHLE is radically different from a low-level emulator (LLE) like QEMU. The only code the [emulated CPU](https://github.com/merryhime/dynarmic) executes is the app binary and [a handful of libraries](touchHLE_dylibs/); touchHLE takes the place of iPhone OS and provides its own implementations of the system frameworks (Foundation, UIKit, OpenGL ES, OpenAL, etc).
+touchHLE's high-level emulation (HLE) approach differs from low-level emulation (LLE) in that it does not directly simulate the iPhone/iPod touch hardware. Instead of running iPhone OS inside emulation, touchHLE _itself_ takes the place of iPhone OS and provides its own implementations of the system frameworks (Foundation, UIKit, OpenGL ES, OpenAL, etc). The only code the [emulated CPU](https://github.com/merryhime/dynarmic) executes is the app binary and [a handful of libraries](touchHLE_dylibs/).
 
 The goal of this project is to run games from the early days of iOS:
 
-* Currently: iPhone and iPod touch apps for iPhone OS 2.x. [A few of these are known to work](APP_SUPPORT.md), and of course we are trying to make the list longer. :)
+* Currently: iPhone and iPod touch apps for iPhone OS 2.x.
 * Next: iPhone OS 3.0 support.
 * Longer term: iPhone OS 3.1, iPad apps (iPhone OS 3.2), iOS 4.x, …
-* Never: 64-bit iOS.
+* [Never](https://github.com/hikari-no-yume/touchHLE/issues/181#issuecomment-1777098259): 64-bit iOS.
 
 Support for apps that aren't games isn't a priority: it's more complex and less fun.
 
-Visit our homepage! <https://touchhle.org/>
+The [touchHLE app compatibility database](https://appdb.touchhle.org/) tracks which apps work in touchHLE. It is a crowdsourced effort to which anyone can contribute.
 
 If you're curious about the history and motivation behind the project, you might want to read [the original announcement](https://hikari.noyu.me/blog/2023-02-06-touchhle-anouncement-thread-tech-games-me-and-passion-projects.html). For an introduction to some of the technical details, check out [_touchHLE in depth_](https://hikari.noyu.me/blog/2023-04-13-touchhle-in-depth-1-function-calls.html).
 
@@ -33,25 +33,27 @@ Only use touchHLE to emulate software you have obtained legally.
 
 Input methods:
 
-- For simulated touch input, there are three options:
+- For simulated touch input, there are four options:
   - Mouse/trackpad input (tap/hold/drag by pressing the left mouse button)
-  - Virtual cursor using the right analog stick on a game controller (tap/hold/drag by pressing the stick or the right shoulder button)
+  - Virtual cursor using a game controller (move the cursor with the right analog stick , and tap/hold/drag by pressing the stick or the right shoulder button)
+  - Mapping of game controller buttons (see the description of `--button-to-touch=` in `OPTIONS_HELP.txt`)
   - Real touch input, if you're on a device that has a touch screen
 - For simulated accelerometer input, there are two options:
   - Tilt control simulation using the left analog stick of a game controller
   - Real accelerometer input, if you are using a phone, tablet or some other device with a built-in accelerometer (TODO: support game controllers with accelerometers)
+    - This apparently doesn't work on certain Android devices, particularly Xiaomi/MIUI devices, [but we don't know why](https://github.com/hikari-no-yume/touchHLE/issues/151)
 
 ## Development status
 
-Real development started in December 2022, and this is so far [a single person](https://hikari.noyu.me/)'s full-time passion project. There's only been a handful of releases so far and no promises can be made about the future. Please be patient.
+Real development started in December 2022. This is so far [a single person](https://hikari.noyu.me/)'s full-time passion project; please consider helping me to keep doing this by [donating](https://liberapay.com/hikari_no_yume)! There are also a number of [volunteers contributing in their free time](https://github.com/hikari-no-yume/touchHLE/graphs/contributors). There's only been a handful of releases so far and no promises can be made about the future. Please be patient.
 
-Currently, the supported functionality is not much more than what's needed by a handful of supported apps, although the code tries to be reasonably complete where it can. The completeness varies a lot between APIs, e.g. UIKit is easily the most hacky and incomplete of the large frameworks that have been implemented, whereas the OpenGL ES and OpenAL implementations are probably complete enough to cover a large number of early apps.
+In general, the supported functionality is defined by the supported apps: most contributors are interested in getting a particular game working, and contribute support for whichever missing features are needed for that game. Consequently, the completeness varies a lot between APIs, e.g. UIKit is easily the most hacky and incomplete of the large frameworks that have been implemented, because most games don't use very much of its functionality, whereas the OpenGL ES and OpenAL implementations are probably complete enough to cover a large number of early apps, because games make heavy use of these.
 
 # Usage
 
 First obtain touchHLE, either a [binary release](https://github.com/hikari-no-yume/touchHLE/releases) or by building it yourself (see the next section).
 
-You'll then need an app that you can run (check [the list of supported apps](APP_SUPPORT.md)). Note that the app binary must be decrypted to be usable.
+You'll then need an app that you can run. The [app compatibility database](https://appdb.touchhle.org/) is a good guide for which versions of which apps are known to work, but bear in mind that it may contain outdated or inaccurate information. Note that the app binary must be decrypted to be usable.
 
 There's a few ways you can run an app in touchHLE.
 
@@ -63,7 +65,7 @@ On Android, only the graphical user interface (app picker) is available. Therefo
 
 File management can be tricky on Android due to [restrictions introduced by Google in newer Android versions](https://developer.android.com/about/versions/11/privacy/storage#scoped-storage). One of these methods may work:
 
-* (The following describes a new feature that is not in the current release.) If you tap the “Open file manager” button in touchHLE, this should open some sort of file manager. You might also be able to find touchHLE in your device's file manager app (often called “Files”), alongside cloud storage services. There are some limitations on what kinds of operations are possible. The files in this location are stored on your device.
+* If you tap the “Open file manager” button in touchHLE, this should open some sort of file manager. You might also be able to find touchHLE in your device's file manager app (often called “Files”), alongside cloud storage services. There are some limitations on what kinds of operations are possible. The files in this location are stored on your device.
 * If you have an older version of Android, you may be able to directly access touchHLE's files by browsing to `/sdcard/Android/data/org.touchhle.android/files/touchHLE_apps`. Note that the `/sdcard` directory is usually not on the SD card.
 * You may be able to use ADB. If you're unfamiliar with ADB, try using <https://yume-chan.github.io/ya-webadb/> (in Google Chrome or another browser with WebUSB) with your device connected over USB. touchHLE's files can be found in “sdcard” > “Android” > “data” > “org.touchhle.android” > “files” > “touchHLE\_apps”.
 
@@ -90,7 +92,7 @@ If you're a Windows user and unfamiliar with the command line, these instruction
 
 Any data saved by the app (e.g. **saved games**) are stored in the `touchHLE_sandbox` folder.
 
-If the emulator crashes almost immediately while running a game **listed as supported**, please check whether you have any overlays turned on like the Steam overlay, Discord overlay, RivaTuner Statistics Server, etc. Sadly, as useful as these tools are, they work by injecting themselves into other apps or games and don't always clean up after themselves, so they can break touchHLE… it's not our fault. 😢 Currently only RivaTuner Statistics Server is known to be a problem. If you find another overlay that doesn't work, please tell us about it.
+If the emulator crashes almost immediately while running a **known-working** version of a game, please check whether you have any overlays turned on like the Steam overlay, Discord overlay, RivaTuner Statistics Server, etc. Sadly, as useful as these tools are, they work by injecting themselves into other apps or games and don't always clean up after themselves, so they can break touchHLE… it's not our fault. 😢 Currently only RivaTuner Statistics Server is known to be a problem. If you find another overlay that doesn't work, please tell us about it.
 
 # Building and contributing
 

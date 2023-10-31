@@ -2,7 +2,9 @@
 
 This will list notable changes from release to release, and credit the people who contributed them. This mainly covers changes that are visible to end users, so please look at the commit history if you want to know all the details.
 
-Names preceded by an @ are GitHub usernames. Credits for new app support indicate someone who put a lot of effort into getting that app working, but compatibility is always a cumulative collaborative effort.
+Names preceded by an @ are GitHub usernames.
+
+Lists of new working apps are a guideline, not a guarantee of support, and are not comprehensive. Credits for new working apps indicate someone who put a lot of effort into getting that particular app working, but compatibility is always a cumulative collaborative effort.
 
 Changes are categorised as follows:
 
@@ -11,14 +13,19 @@ Changes are categorised as follows:
 * Usability: changes to features of the emulator unrelated to the above, e.g. new input methods.
 * Other: when none of the above seem to fit.
 
-If an app is added to the supported list after the relevant version has already been released, its entry in the changelog will be followed by the date it was added \[in square brackets\].
+## v0.2.1 (2023-10-31)
 
-## NEXT
+From this release onwards, the old list of supported apps is replaced by the crowdsourced [touchHLE app compatibility database](https://appdb.touchhle.org/).
 
 Compatibility:
 
 - API support improvements:
   - Various small contributions. (@hikari-no-yume, @ciciplusplus, @alborrajo)
+- New working apps:
+  - [Doom](https://appdb.touchhle.org/apps/56) (@ciciplusplus)
+  - [Doom II RPG](https://appdb.touchhle.org/apps/57) (@alborrajo)
+  - [I Love Katamari](https://appdb.touchhle.org/apps/55) (@ciciplusplus)
+  - [Wolfenstein RPG](https://appdb.touchhle.org/apps/58) (@alborrajo)
 
 Quality:
 
@@ -34,6 +41,7 @@ Usability:
 - The app picker now has multiple pages, so it is no longer limited to 16 apps. (@hikari-no-yume)
 - The framerate is now limited to 60fps by default, which matches the original iPhone OS and fixes issues with some games where the game ran too fast or consumed excessive energy and CPU time. This limit can be adjusted or disabled with the new `--limit-fps=` option. (@hikari-no-yume; special thanks: @wareya)
 - The `--button-to-touch=` option now supports D-pad mappings in addition to the A/B/X/Y buttons. (@alborrajo)
+- Default game controller button mappings have been added for Wolfenstein RPG and Doom II RPG, including for the D-pad. (@alborrajo)
 
 ## v0.2.0 (2023-08-31)
 
@@ -95,7 +103,7 @@ Compatibility:
   - MP3 is now a supported audio file format in Audio Toolbox. This is done in a fairly hacky way so it might not work for some apps. (@hikari-no-yume)
 - New supported apps:
   - Touch & Go LITE (@hikari-no-yume)
-  - Touch & Go \[2023-03-12\] (@hikari-no-yume)
+  - Touch & Go \[added to changelog after release: 2023-03-12\] (@hikari-no-yume)
   - Super Monkey Ball Lite (@hikari-no-yume; full version was already supported)
 
 Quality:

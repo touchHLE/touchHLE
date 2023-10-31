@@ -13,11 +13,7 @@ rm new_release/touchHLE_fonts/README.md
 mkdir new_release/touchHLE_apps/
 cp ../touchHLE_apps/README.txt new_release/touchHLE_apps/
 
-sed -e 's#](APP_SUPPORT.md)#](APP_SUPPORT.html)#g' ../README.md > README-html.md
-pandoc -s README-html.md -o new_release/README.html
-rm README-html.md
-
-pandoc -s ../APP_SUPPORT.md -o new_release/APP_SUPPORT.html
+pandoc -s ../README.md -o new_release/README.html
 
 pandoc -s ../CHANGELOG.md -o new_release/CHANGELOG.html
 

@@ -196,6 +196,19 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 };
 
+pub fn from_rust_slice(env: &mut Environment, slice: &[u8]) -> id {
+    let length = slice.len().try_into().unwrap();
+    let bytes = env.mem.alloc(length);
+    env.mem
+        .bytes_at_mut(bytes.cast(), length)
+        .copy_from_slice(slice);
+    let guest_object = msg_class![env; NSData alloc];
+    let host_object = env.objc.borrow_mut::<NSDataHostObject>(guest_object);
+    host_object.bytes = bytes;
+    host_object.length = length;
+    autorelease(env, guest_object)
+}
+
 pub fn to_rust_slice(env: &mut Environment, data: id) -> &[u8] {
     let borrowed_data = env.objc.borrow::<NSDataHostObject>(data);
     assert!(!borrowed_data.bytes.is_null() && borrowed_data.length != 0);

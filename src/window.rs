@@ -146,7 +146,7 @@ pub struct Window {
     scale_hack: NonZeroU32,
     internal_gl_ctx: Option<Box<dyn GLES>>,
     splash_image: Option<Image>,
-    device_orientation: DeviceOrientation,
+    pub device_orientation: DeviceOrientation,
     app_gl_ctx_no_longer_current: bool,
     controller_ctx: sdl2::GameControllerSubsystem,
     controllers: Vec<sdl2::controller::GameController>,

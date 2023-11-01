@@ -293,6 +293,9 @@ fn glLightxv(env: &mut Environment, light: GLenum, pname: GLenum, params: ConstP
         unsafe { gles.Lightxv(light, pname, params) }
     })
 }
+fn glLightModelf(env: &mut Environment, pname: GLenum, param: GLfloat) {
+    with_ctx_and_mem(env, |gles, _mem| unsafe { gles.LightModelf(pname, param) })
+}
 fn glLightModelfv(env: &mut Environment, pname: GLenum, params: ConstPtr<GLfloat>) {
     with_ctx_and_mem(env, |gles, mem| {
         let params = mem.ptr_at(params, 4 /* upper bound */);
@@ -1058,6 +1061,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(glLightx(_, _, _)),
     export_c_func!(glLightfv(_, _, _)),
     export_c_func!(glLightxv(_, _, _)),
+    export_c_func!(glLightModelf(_, _)),
     export_c_func!(glLightModelfv(_, _)),
     export_c_func!(glMaterialf(_, _, _)),
     export_c_func!(glMaterialx(_, _, _)),

@@ -22,6 +22,7 @@ pub mod ns_date_formatter;
 pub mod ns_dictionary;
 pub mod ns_enumerator;
 pub mod ns_exception;
+pub mod ns_file_handle;
 pub mod ns_file_manager;
 pub mod ns_keyed_unarchiver;
 pub mod ns_locale;

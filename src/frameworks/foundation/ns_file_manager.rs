@@ -82,16 +82,24 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (bool)fileExistsAtPath:(id)path { // NSString*
+    if path.is_null() {
+        log_dbg!("[(NSFileManager*) {:?} fileExistsAtPath:NULL] => false", this);
+        return false;
+    }
     let path = ns_string::to_rust_string(env, path); // TODO: avoid copy
     // fileExistsAtPath: will return true for directories, hence Fs::exists()
     // rather than Fs::is_file() is appropriate.
     let res = env.fs.exists(GuestPath::new(&path));
-    log_dbg!("fileExistsAtPath:{:?} => {}", path, res);
+    log_dbg!("[NSFileManager*) {:?} fileExistsAtPath:{:?}] => {}", this, path, res);
     res
 }
 
 - (bool)fileExistsAtPath:(id)path // NSString*
              isDirectory:(MutPtr<bool>)is_dir {
+    if path.is_null() {
+        log_dbg!("[(NSFileManager*) {:?} fileExistsAtPath:NULL] => false", this);
+        return false;
+    }
     // TODO: mutualize with fileExistsAtPath:
     let path = ns_string::to_rust_string(env, path); // TODO: avoid copy
     let guest_path = GuestPath::new(&path);
@@ -99,9 +107,9 @@ pub const CLASSES: ClassExports = objc_classes! {
     if !is_dir.is_null() {
         let res_is_dir = !env.fs.is_file(guest_path);
         env.mem.write(is_dir, res_is_dir);
-        log_dbg!("fileExistsAtPath:{:?} isDirectory:{:?} => {}", path, res_is_dir, res_exists);
+        log_dbg!("[NSFileManager*) {:?} fileExistsAtPath:{:?} isDirectory:{:?}] => {}", this, path, res_is_dir, res_exists);
     } else {
-        log_dbg!("fileExistsAtPath:{:?} isDirectory:NULL => {}", path, res_exists);
+        log_dbg!("[NSFileManager*) {:?} fileExistsAtPath:{:?} isDirectory:NULL] => {}", this, path, res_exists);
     }
     res_exists
 }

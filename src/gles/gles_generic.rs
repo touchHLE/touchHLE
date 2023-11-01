@@ -91,6 +91,7 @@ pub trait GLES {
     unsafe fn Lightx(&mut self, light: GLenum, pname: GLenum, param: GLfixed);
     unsafe fn Lightfv(&mut self, light: GLenum, pname: GLenum, params: *const GLfloat);
     unsafe fn Lightxv(&mut self, light: GLenum, pname: GLenum, params: *const GLfixed);
+    unsafe fn LightModelf(&mut self, pname: GLenum, param: GLfloat);
     unsafe fn LightModelfv(&mut self, pname: GLenum, params: *const GLfloat);
     unsafe fn Materialf(&mut self, face: GLenum, pname: GLenum, param: GLfloat);
     unsafe fn Materialx(&mut self, face: GLenum, pname: GLenum, param: GLfixed);

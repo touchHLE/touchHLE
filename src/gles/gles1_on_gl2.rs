@@ -844,6 +844,9 @@ impl GLES for GLES1OnGL2 {
             params,
         )
     }
+    unsafe fn LightModelf(&mut self, pname: GLenum, param: GLfloat) {
+        gl21::LightModelf(pname, param)
+    }
     unsafe fn LightModelfv(&mut self, pname: GLenum, params: *const GLfloat) {
         gl21::LightModelfv(pname, params)
     }

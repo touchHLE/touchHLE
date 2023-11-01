@@ -82,27 +82,34 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (bool)fileExistsAtPath:(id)path { // NSString*
-    let path = ns_string::to_rust_string(env, path); // TODO: avoid copy
-    // fileExistsAtPath: will return true for directories, hence Fs::exists()
-    // rather than Fs::is_file() is appropriate.
-    let res = env.fs.exists(GuestPath::new(&path));
-    log_dbg!("fileExistsAtPath:{:?} => {}", path, res);
-    res
+    let res_exists = if path == nil {
+        false
+    } else {
+        let path = ns_string::to_rust_string(env, path); // TODO: avoid copy
+        // fileExistsAtPath: will return true for directories
+        // hence Fs::exists() rather than Fs::is_file() is appropriate.
+        env.fs.exists(GuestPath::new(&path))
+    };
+    log_dbg!("[(NSFileManager*) {:?} fileExistsAtPath:{:?}] => {}", this, path, res_exists);
+    res_exists
 }
 
 - (bool)fileExistsAtPath:(id)path // NSString*
              isDirectory:(MutPtr<bool>)is_dir {
-    // TODO: mutualize with fileExistsAtPath:
-    let path = ns_string::to_rust_string(env, path); // TODO: avoid copy
-    let guest_path = GuestPath::new(&path);
-    let res_exists = env.fs.exists(guest_path);
-    if !is_dir.is_null() {
-        let res_is_dir = !env.fs.is_file(guest_path);
-        env.mem.write(is_dir, res_is_dir);
-        log_dbg!("fileExistsAtPath:{:?} isDirectory:{:?} => {}", path, res_is_dir, res_exists);
+    let (res_exists, res_is_dir) = if path == nil {
+        (false, false)
     } else {
-        log_dbg!("fileExistsAtPath:{:?} isDirectory:NULL => {}", path, res_exists);
+        // TODO: mutualize with fileExistsAtPath:
+        let path = ns_string::to_rust_string(env, path); // TODO: avoid copy
+        let guest_path = GuestPath::new(&path);
+        (env.fs.exists(guest_path), !env.fs.is_file(guest_path))
+    };
+
+    if !is_dir.is_null() {
+        env.mem.write(is_dir, res_is_dir);
     }
+
+    log_dbg!("[(NSFileManager*) {:?} fileExistsAtPath:{:?} isDirectory:{:?}] => {}", this, path, res_is_dir, res_exists);
     res_exists
 }
 

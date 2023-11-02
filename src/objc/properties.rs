@@ -19,6 +19,25 @@ use crate::mem::{ConstVoidPtr, GuestISize, GuestUSize, MutPtr, MutVoidPtr, Ptr};
 use crate::Environment;
 
 /// Undocumented function (see link above) apparently used by auto-generated
+/// methods for properties to get an ivar.
+pub(super) fn objc_getProperty(
+    env: &mut Environment,
+    this: id,
+    _cmd: SEL,
+    offset: GuestISize,
+    atomic: bool,
+) -> id {
+    assert!(offset >= 4);
+
+    if atomic {
+        log!("TODO: Lock when atomic is set to true in objc_getProperty");
+    }
+
+    let ivar: MutPtr<id> = Ptr::from_bits(this.to_bits().checked_add_signed(offset).unwrap());
+    env.mem.read(ivar)
+}
+
+/// Undocumented function (see link above) apparently used by auto-generated
 /// methods for properties to set an ivar and handle reference counting, copying
 /// and locking.
 pub(super) fn objc_setProperty(
@@ -38,7 +57,9 @@ pub(super) fn objc_setProperty(
     // safeguard: any real ivar offset will be after the isa pointer.
     assert!(offset >= 4);
 
-    assert!(!atomic); // what do we do with this?
+    if atomic {
+        log!("TODO: Lock when atomic is set to true in objc_setProperty");
+    }
 
     let ivar: MutPtr<id> = Ptr::from_bits(this.to_bits().checked_add_signed(offset).unwrap());
     let old = env.mem.read(ivar);

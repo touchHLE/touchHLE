@@ -63,6 +63,11 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (id)autorelease { this }
 - (())release {}
 
+- (id)windows {
+    let visible_windows = env.framework_state.uikit.ui_view.ui_window.visible_windows.to_owned();
+    ns_array::from_vec(env, visible_windows)
+}
+
 - (id)delegate {
     env.objc.borrow::<UIApplicationHostObject>(this).delegate
 }

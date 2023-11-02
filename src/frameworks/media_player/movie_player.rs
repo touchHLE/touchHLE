@@ -74,6 +74,10 @@ pub const CLASSES: ClassExports = objc_classes! {
     this
 }
 
+- (())setBackgroundColor:(id)_color { // UIColor*
+    // TODO
+}
+
 - (())setScalingMode:(MPMovieScalingMode)_mode {
     // TODO
 }

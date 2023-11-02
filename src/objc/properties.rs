@@ -35,7 +35,9 @@ pub(super) fn objc_getProperty(
     // safeguard: any real ivar offset will be after the isa pointer.
     assert!(offset >= 4);
 
-    assert!(!atomic); // what do we do with this?
+    if atomic {
+        log!("TODO: Lock when atomic is set to true in objc_getProperty");
+    }
 
     let ivar: MutPtr<id> = Ptr::from_bits(this.to_bits().checked_add_signed(offset).unwrap());
     env.mem.read(ivar)
@@ -61,7 +63,9 @@ pub(super) fn objc_setProperty(
     // safeguard: any real ivar offset will be after the isa pointer.
     assert!(offset >= 4);
 
-    assert!(!atomic); // what do we do with this?
+    if atomic {
+        log!("TODO: Lock when atomic is set to true in objc_setProperty");
+    }
 
     let ivar: MutPtr<id> = Ptr::from_bits(this.to_bits().checked_add_signed(offset).unwrap());
     let old = env.mem.read(ivar);

@@ -150,7 +150,12 @@ pub(super) fn handle_accelerometer(env: &mut Environment) -> Option<Instant> {
         let advance_by = rust_interval.checked_mul(advance_by).unwrap();
         Some(due_by.checked_add(advance_by).unwrap())
     } else {
-        Some(now.checked_add(rust_interval).unwrap())
+        let due_by = now.checked_add(rust_interval).unwrap();
+        let new_due_by = Some(due_by);
+        if due_by > now {
+            return new_due_by;
+        }
+        new_due_by
     };
     state.due_by = new_due_by;
 

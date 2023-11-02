@@ -150,7 +150,16 @@ pub(super) fn handle_accelerometer(env: &mut Environment) -> Option<Instant> {
         let advance_by = rust_interval.checked_mul(advance_by).unwrap();
         Some(due_by.checked_add(advance_by).unwrap())
     } else {
-        Some(now.checked_add(rust_interval).unwrap())
+        // In Resident Evil 4 the delegate is set before it fully initializes.
+        // If the first message is sent immediately, it crashes.
+        // This change prevents it by not sending the first message until the
+        // time interval first passes
+        let due_by = now.checked_add(rust_interval).unwrap();
+        let new_due_by = Some(due_by);
+        if due_by > now {
+            return new_due_by;
+        }
+        new_due_by
     };
     state.due_by = new_due_by;
 

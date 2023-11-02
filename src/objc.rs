@@ -50,6 +50,8 @@ use properties::{objc_copyStruct, objc_setProperty};
 use selectors::sel_registerName;
 use synchronization::{objc_sync_enter, objc_sync_exit};
 
+use self::properties::objc_getProperty;
+
 /// Typedef for `NSZone *`. This is a [fossil type] found in the signature of
 /// `allocWithZone:` and similar methods. Its value is always ignored.
 ///
@@ -96,6 +98,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(objc_msgSend(_, _)),
     export_c_func!(objc_msgSend_stret(_, _, _)),
     export_c_func!(objc_msgSendSuper2(_, _)),
+    export_c_func!(objc_getProperty(_, _, _, _)),
     export_c_func!(objc_setProperty(_, _, _, _, _, _)),
     export_c_func!(objc_copyStruct(_, _, _, _, _)),
     export_c_func!(objc_sync_enter(_)),

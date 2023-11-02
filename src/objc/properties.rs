@@ -19,6 +19,29 @@ use crate::mem::{ConstVoidPtr, GuestISize, GuestUSize, MutPtr, MutVoidPtr, Ptr};
 use crate::Environment;
 
 /// Undocumented function (see link above) apparently used by auto-generated
+/// methods for properties to get an ivar.
+pub(super) fn objc_getProperty(
+    env: &mut Environment,
+    this: id,
+    _cmd: SEL,
+    offset: GuestISize,
+    atomic: bool,
+) -> id {
+    // We currently aren't touching the ivar layouts contained in the binary, so
+    // we are assuming they are already correctly set by the compiler. Since we
+    // aren't using ivars at all in our host classes, we shouldn't have any
+    // issues with host classes' ivars clobbering guest classes' ivars, but
+    // what if the compiler doesn't set the ivar layout at all? This is a simple
+    // safeguard: any real ivar offset will be after the isa pointer.
+    assert!(offset >= 4);
+
+    assert!(!atomic); // what do we do with this?
+
+    let ivar: MutPtr<id> = Ptr::from_bits(this.to_bits().checked_add_signed(offset).unwrap());
+    env.mem.read(ivar)
+}
+
+/// Undocumented function (see link above) apparently used by auto-generated
 /// methods for properties to set an ivar and handle reference counting, copying
 /// and locking.
 pub(super) fn objc_setProperty(

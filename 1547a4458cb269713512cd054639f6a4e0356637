@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "0c12b1a0_6ef32607",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 4
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-11-03T19:21:54Z",
+      "side": 1,
+      "message": "For same reasons as described here https://review.gerrithub.io/c/hikari-no-yume/touchHLE/+/1169919/2..8/src/frameworks/foundation/ns_set.rs#b60, this should not be done",
+      "revId": "1547a4458cb269713512cd054639f6a4e0356637",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

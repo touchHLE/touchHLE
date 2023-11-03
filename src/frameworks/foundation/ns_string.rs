@@ -12,7 +12,8 @@ mod path_algorithms;
 
 use super::ns_array;
 use super::{
-    NSComparisonResult, NSOrderedAscending, NSOrderedDescending, NSOrderedSame, NSUInteger,
+    NSComparisonResult, NSNotFound, NSOrderedAscending, NSOrderedDescending, NSOrderedSame,
+    NSRange, NSUInteger,
 };
 use crate::abi::VaList;
 use crate::frameworks::core_graphics::{CGFloat, CGPoint, CGRect, CGSize};
@@ -330,6 +331,36 @@ pub const CLASSES: ClassExports = objc_classes! {
 
     // TODO: raise exception instead of panicking?
     utf16[index as usize]
+}
+
+- (NSRange)rangeOfString:(id)search_string
+                 options:(NSStringCompareOptions)options { // NSString *
+    // TODO: search options
+    log_dbg!("rangeOfString:options: {}", options);
+    let len: NSUInteger = msg![env; this length];
+    let len_search: NSUInteger = msg![env; search_string length];
+    if len_search == 0 {
+        return NSRange { location: NSNotFound as NSUInteger, length: 0 };
+    }
+    for i in 0..len {
+        let mut match_found = true;
+        for j in 0..len_search {
+            if (i + j) >= len {
+                match_found = false;
+                break;
+            }
+            let a_c: u16 = msg![env; this characterAtIndex:(i + j)];
+            let b_c: u16 = msg![env; search_string characterAtIndex:j];
+            if a_c != b_c {
+                match_found = false;
+                break;
+            }
+        }
+        if match_found {
+            return NSRange { location: i, length: len_search }
+        }
+    }
+    NSRange { location: NSNotFound as NSUInteger, length: 0 }
 }
 
 - (id)description {

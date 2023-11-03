@@ -72,6 +72,8 @@ pub trait GLES {
     unsafe fn DepthRangef(&mut self, near: GLclampf, far: GLclampf);
     unsafe fn DepthRangex(&mut self, near: GLclampx, far: GLclampx);
     unsafe fn FrontFace(&mut self, mode: GLenum);
+    unsafe fn PolygonOffset(&mut self, factor: GLfloat, units: GLfloat);
+    unsafe fn PolygonOffsetx(&mut self, factor: GLfixed, units: GLfixed);
     unsafe fn ShadeModel(&mut self, mode: GLenum);
     unsafe fn Scissor(&mut self, x: GLint, y: GLint, width: GLsizei, height: GLsizei);
     unsafe fn Viewport(&mut self, x: GLint, y: GLint, width: GLsizei, height: GLsizei);

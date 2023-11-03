@@ -182,6 +182,16 @@ fn glDepthRangex(env: &mut Environment, near: GLclampx, far: GLclampx) {
 fn glFrontFace(env: &mut Environment, mode: GLenum) {
     with_ctx_and_mem(env, |gles, _mem| unsafe { gles.FrontFace(mode) })
 }
+fn glPolygonOffset(env: &mut Environment, factor: GLfloat, units: GLfloat) {
+    with_ctx_and_mem(env, |gles, _mem| unsafe {
+        gles.PolygonOffset(factor, units)
+    })
+}
+fn glPolygonOffsetx(env: &mut Environment, factor: GLfixed, units: GLfixed) {
+    with_ctx_and_mem(env, |gles, _mem| unsafe {
+        gles.PolygonOffsetx(factor, units)
+    })
+}
 fn glShadeModel(env: &mut Environment, mode: GLenum) {
     with_ctx_and_mem(env, |gles, _mem| unsafe { gles.ShadeModel(mode) })
 }
@@ -971,6 +981,8 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(glDepthRangef(_, _)),
     export_c_func!(glDepthRangex(_, _)),
     export_c_func!(glFrontFace(_)),
+    export_c_func!(glPolygonOffset(_, _)),
+    export_c_func!(glPolygonOffsetx(_, _)),
     export_c_func!(glShadeModel(_)),
     export_c_func!(glScissor(_, _, _, _)),
     export_c_func!(glViewport(_, _, _, _)),

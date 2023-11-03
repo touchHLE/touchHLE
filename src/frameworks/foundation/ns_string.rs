@@ -547,6 +547,34 @@ pub const CLASSES: ClassExports = objc_classes! {
     c_string.cast_const()
 }
 
+- (id)substringToIndex:(NSUInteger)to {
+    let mut res_utf16: Utf16String = Vec::with_capacity(to as usize);
+
+    for_each_code_unit(env, this, |idx, c| {
+        if idx < to {
+            res_utf16.push(c);
+        }
+    });
+
+    let res = msg_class![env; _touchHLE_NSString alloc];
+    *env.objc.borrow_mut(res) = StringHostObject::Utf16(res_utf16);
+    autorelease(env, res)
+}
+
+- (id)substringFromIndex:(NSUInteger)from {
+    let mut res_utf16: Utf16String = Vec::with_capacity(from as usize);
+
+    for_each_code_unit(env, this, |idx, c| {
+        if idx >= from {
+            res_utf16.push(c);
+        }
+    });
+
+    let res = msg_class![env; _touchHLE_NSString alloc];
+    *env.objc.borrow_mut(res) = StringHostObject::Utf16(res_utf16);
+    autorelease(env, res)
+}
+
 - (id)stringByTrimmingCharactersInSet:(id)set { // NSCharacterSet*
     let initial_length: NSUInteger = msg![env; this length];
 

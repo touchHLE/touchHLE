@@ -58,6 +58,9 @@ pub struct State {
 pub type NSInteger = i32;
 pub type NSUInteger = u32;
 
+// this should be equal to NSIntegerMax
+pub const NSNotFound: i32 = 0x7fffffff;
+
 #[derive(Debug)]
 #[repr(C, packed)]
 pub struct NSRange {

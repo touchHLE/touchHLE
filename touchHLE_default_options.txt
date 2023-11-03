@@ -77,3 +77,6 @@ com.darxun.motoracinggp: --landscape-right --button-to-touch=A,25,295 --button-t
 # Warrior Nation Blade
 # Left/Right = Walk, A = Attack, B = Defend, X = Magic, Y = Secondary Attack, LeftShoulder = Special, Start = Pause
 com.bestsungame.warriornationblade:  --button-to-touch=DPadLeft,50,285 --button-to-touch=DPadRight,120,285 --button-to-touch=A,430,260 --button-to-touch=B,440,185 --button-to-touch=X,360,280 --button-to-touch=Y,230,270 --button-to-touch=LeftShoulder,270,30 --button-to-touch=Start,460,20
+
+# Resident Evil 4
+jp.co.capcom.res4: --landscape-left --stabilize-virtual-cursor=0.1,10 --button-to-touch=A,430,280 --button-to-touch=B,440,200 --button-to-touch=X,360,200 --button-to-touch=Y,440,150 --button-to-touch=DPadLeft,25,247 --button-to-touch=DPadUp,72,200 --button-to-touch=DPadRight,120,247 --button-to-touch=DPadDown,72,300

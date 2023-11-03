@@ -16,6 +16,24 @@
       "message": "I\u0027m pretty sure `long` is 32-bit on 32-bit iOS? (https://github.com/hikari-no-yume/touchHLE/issues/48 is overdue, sorry about that.) These two functions are effectively aliases of eachother on 32-bit.",
       "revId": "406ca1ed0a223bb967ee4291dbc6b5dd50709f01",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7983b99b_f8a63c6f",
+        "filename": "src/libc/stdlib.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 80,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-11-03T19:15:51Z",
+      "side": 1,
+      "message": "oops, done",
+      "parentUuid": "3c359d09_abc820d2",
+      "revId": "406ca1ed0a223bb967ee4291dbc6b5dd50709f01",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

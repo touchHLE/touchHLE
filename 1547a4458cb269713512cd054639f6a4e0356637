@@ -34,6 +34,24 @@
       "parentUuid": "0c12b1a0_6ef32607",
       "revId": "1547a4458cb269713512cd054639f6a4e0356637",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4f34f313_8311222a",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 4
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-11-03T21:11:19Z",
+      "side": 1,
+      "message": "In general, I agree. But duplication could be avoided by using helper functions.\nOtherwise, maybe we can have a common private superclass between ummutable and mutable ones? Dunno, maybe something to discuss with hikari",
+      "parentUuid": "c78b332b_e6cef0ea",
+      "revId": "1547a4458cb269713512cd054639f6a4e0356637",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

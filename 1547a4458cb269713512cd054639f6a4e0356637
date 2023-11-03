@@ -16,6 +16,24 @@
       "message": "For same reasons as described here https://review.gerrithub.io/c/hikari-no-yume/touchHLE/+/1169919/2..8/src/frameworks/foundation/ns_set.rs#b60, this should not be done",
       "revId": "1547a4458cb269713512cd054639f6a4e0356637",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c78b332b_e6cef0ea",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 4
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1022009
+      },
+      "writtenOn": "2023-11-03T20:52:24Z",
+      "side": 1,
+      "message": "ok, but why are we doing separate subclasses for NSWhatever and NSMutableWhatever, it seems to create a lot of useless code duplication.",
+      "parentUuid": "0c12b1a0_6ef32607",
+      "revId": "1547a4458cb269713512cd054639f6a4e0356637",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

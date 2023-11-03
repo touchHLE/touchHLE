@@ -136,6 +136,12 @@ impl GLES for GLES1Native {
     unsafe fn DepthRangex(&mut self, near: GLclampx, far: GLclampx) {
         gles11::DepthRangex(near, far)
     }
+    unsafe fn PolygonOffset(&mut self, factor: GLfloat, units: GLfloat) {
+        gles11::PolygonOffset(factor, units)
+    }
+    unsafe fn PolygonOffsetx(&mut self, factor: GLfixed, units: GLfixed) {
+        gles11::PolygonOffsetx(factor, units)
+    }
     unsafe fn ShadeModel(&mut self, mode: GLenum) {
         gles11::ShadeModel(mode)
     }

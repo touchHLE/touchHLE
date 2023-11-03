@@ -75,7 +75,7 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
             None
         };
 
-        let specifier = get_format_char(&env.mem, format_char_idx);
+        let mut specifier = get_format_char(&env.mem, format_char_idx);
         format_char_idx += 1;
 
         assert!(specifier != b'\0');
@@ -88,6 +88,12 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
             assert!(
                 INTEGER_SPECIFIERS.contains(&specifier) || FLOAT_SPECIFIERS.contains(&specifier)
             )
+        }
+
+        if specifier == b'l' {
+            specifier = get_format_char(&env.mem, format_char_idx);
+            assert!(matches!(specifier, b'd' | b'x'));
+            format_char_idx += 1;
         }
 
         match specifier {

@@ -16,6 +16,24 @@
       "message": "Could you please:\n\n- Remove the TODO comment above (line 131)\n- Also update `updateInterval` above\n- Maybe make this a constant so these two places can share it?",
       "revId": "40ed4a8215deede2f5f0d2849c353c07e0e9f5e0",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "14224f87_38b64363",
+        "filename": "src/frameworks/uikit/ui_accelerometer.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 132,
+      "author": {
+        "id": 1022009
+      },
+      "writtenOn": "2023-11-03T17:53:27Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "c583d82b_7b0696ce",
+      "revId": "40ed4a8215deede2f5f0d2849c353c07e0e9f5e0",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

@@ -7,6 +7,7 @@
 //! filesystem.
 use crate::fs::{FsNode, GuestPath};
 use std::cell::RefCell;
+use std::collections::HashMap;
 use std::fmt::Debug;
 use std::io::Read;
 use std::path::{Path, PathBuf};
@@ -144,6 +145,7 @@ impl BundleData {
             BundleData::HostDirectory(path) => FsNode::from_host_dir(&path, false),
             BundleData::Zip { zip, bundle_path } => {
                 let archive = Rc::new(RefCell::new(zip));
+                let archive_cache = Rc::new(RefCell::new(HashMap::new()));
 
                 let mut archive_guard = (*archive).borrow_mut();
 
@@ -160,6 +162,7 @@ impl BundleData {
                                 path,
                                 FsNode::bundle_zip_file(IpaFileRef {
                                     archive: archive.clone(),
+                                    archive_cursor_cache: archive_cache.clone(),
                                     index: i,
                                 }),
                             );
@@ -195,28 +198,33 @@ impl BundleData {
 #[derive(Debug)]
 pub struct IpaFileRef {
     archive: Rc<RefCell<ZipArchive<std::fs::File>>>,
+    archive_cursor_cache: Rc<RefCell<HashMap<usize, std::io::Cursor<Vec<u8>>>>>,
     index: usize,
 }
 
 impl IpaFileRef {
     pub fn open(&self) -> IpaFile {
-        let mut archive = (*self.archive).borrow_mut();
-        let mut file = match archive.by_index(self.index) {
-            Ok(file) => file,
-            Err(ZipError::Io(e)) => {
-                // this is a runtime error, which we __probably__ should not
-                // bubble up to the guest
-                panic!("IO error while opening file from IPA bundle: {e}")
-            }
-            // anything other than IO error is a bug in the code, we should
-            // always have a valid index
-            Err(e) => panic!("BUG: could not open file from IPA bundle: {e}"),
-        };
-        let mut buf = Vec::new();
-        file.read_to_end(&mut buf).unwrap();
-        IpaFile {
-            file: std::io::Cursor::new(buf),
-        }
+        let mut archive_cache = (*self.archive_cursor_cache).borrow_mut();
+        archive_cache.entry(self.index).or_insert_with(|| {
+            let mut archive = (*self.archive).borrow_mut();
+            let mut file = match archive.by_index(self.index) {
+                Ok(file) => file,
+                Err(ZipError::Io(e)) => {
+                    // this is a runtime error, which we __probably__ should not
+                    // bubble up to the guest
+                    panic!("IO error while opening file from IPA bundle: {e}")
+                }
+                // anything other than IO error is a bug in the code, we should
+                // always have a valid index
+                Err(e) => panic!("BUG: could not open file from IPA bundle: {e}"),
+            };
+            let mut buf = Vec::new();
+            file.read_to_end(&mut buf).unwrap();
+            std::io::Cursor::new(buf)
+        });
+        let mut cursor = archive_cache.get(&self.index).unwrap().clone();
+        cursor.set_position(0);
+        IpaFile { file: cursor }
     }
 }
 

@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "5f75e602_26aba899",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 4
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-11-03T17:54:49Z",
+      "side": 1,
+      "message": "Thanks. If you mark the patch as verified (please run `cargo test`) you can merge it.",
+      "revId": "2ed655bdcc339b7e422132a895c369627a112b17",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

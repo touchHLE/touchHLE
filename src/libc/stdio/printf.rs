@@ -74,6 +74,13 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
             None
         };
 
+        let length_modifier = if get_format_char(&env.mem, format_char_idx) == b'l' {
+            format_char_idx += 1;
+            Some(b'l')
+        } else {
+            None
+        };
+
         let specifier = get_format_char(&env.mem, format_char_idx);
         format_char_idx += 1;
 
@@ -91,12 +98,15 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
 
         match specifier {
             b'c' => {
+                // TODO: support length modifier
+                assert!(length_modifier.is_none());
                 let c: u8 = args.next(env);
                 assert!(pad_char == ' ' && pad_width == 0); // TODO
                 res.push(c);
             }
             // Apple extension? Seemingly works in both NSLog and printf.
             b'C' => {
+                assert!(length_modifier.is_none());
                 let c: unichar = args.next(env);
                 // TODO
                 assert!(pad_char == ' ' && pad_width == 0);
@@ -106,6 +116,8 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
                 write!(&mut res, "{}", c).unwrap();
             }
             b's' => {
+                // TODO: support length modifier
+                assert!(length_modifier.is_none());
                 let c_string: ConstPtr<u8> = args.next(env);
                 assert!(pad_char == ' ' && pad_width == 0); // TODO
                 if !c_string.is_null() {
@@ -115,6 +127,8 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
                 }
             }
             b'd' | b'i' | b'u' => {
+                // Note: on 32-bit system int and long are i32,
+                // so length_modifier is ignored
                 let int: i64 = if specifier == b'u' {
                     let uint: u32 = args.next(env);
                     uint.into()
@@ -140,6 +154,8 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
                 }
             }
             b'f' => {
+                // TODO: support length modifier
+                assert!(length_modifier.is_none());
                 let float: f64 = args.next(env);
                 let precision_value = precision.unwrap_or(6);
                 if pad_width > 0 {
@@ -153,6 +169,7 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
                 }
             }
             b'@' if NS_LOG => {
+                assert!(length_modifier.is_none());
                 let object: id = args.next(env);
                 // TODO: use localized description if available?
                 let description: id = msg![env; object description];
@@ -162,14 +179,19 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
                 write!(&mut res, "{}", description).unwrap();
             }
             b'x' => {
-                let int: i32 = args.next(env);
-                res.extend_from_slice(format!("{:x}", int).as_bytes());
+                // Note: on 32-bit system unsigned int and unsigned long
+                // are u32, so length_modifier is ignored
+                let uint: u32 = args.next(env);
+                res.extend_from_slice(format!("{:x}", uint).as_bytes());
             }
             b'X' => {
-                let int: i32 = args.next(env);
-                res.extend_from_slice(format!("{:X}", int).as_bytes());
+                // Note: on 32-bit system unsigned int and unsigned long
+                // are u32, so length_modifier is ignored
+                let uint: u32 = args.next(env);
+                res.extend_from_slice(format!("{:X}", uint).as_bytes());
             }
             b'p' => {
+                assert!(length_modifier.is_none());
                 let ptr: MutVoidPtr = args.next(env);
                 res.extend_from_slice(format!("{:?}", ptr).as_bytes());
             }

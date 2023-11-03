@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c583d82b_7b0696ce",
+        "filename": "src/frameworks/uikit/ui_accelerometer.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 132,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-11-03T16:47:55Z",
+      "side": 1,
+      "message": "Could you please:\n\n- Remove the TODO comment above (line 131)\n- Also update `updateInterval` above\n- Maybe make this a constant so these two places can share it?",
+      "revId": "40ed4a8215deede2f5f0d2849c353c07e0e9f5e0",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

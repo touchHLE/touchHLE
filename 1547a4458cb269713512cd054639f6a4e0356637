@@ -52,6 +52,24 @@
       "parentUuid": "c78b332b_e6cef0ea",
       "revId": "1547a4458cb269713512cd054639f6a4e0356637",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a040ca7c_6062df77",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 4
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1022009
+      },
+      "writtenOn": "2023-11-03T21:22:02Z",
+      "side": 1,
+      "message": "Imo, its easier to not bother, it is rather unlikely that there are applications that send NSMutableWhatever\u0027s methods to a NSWhatever and expect those to fail. And if we want the optimization that a NSWhatever can be cloned with a retain, we can just have a \"mutable\" flag with copy doing a retain or full copy depending on it.",
+      "parentUuid": "4f34f313_8311222a",
+      "revId": "1547a4458cb269713512cd054639f6a4e0356637",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

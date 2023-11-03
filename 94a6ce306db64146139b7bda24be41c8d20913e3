@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "cfe9a447_18e5f87f",
+        "filename": "src/frameworks/uikit/ui_view.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 192,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-11-03T17:57:50Z",
+      "side": 1,
+      "message": "Oh I just realised that each of the views needs to be retained also, sorry. `ns_array::from_vec` doesn\u0027t retain for you. I guess the easiest solution is a loop like `for \u0026view in views.iter() { retain(env, view); }`.",
+      "revId": "94a6ce306db64146139b7bda24be41c8d20913e3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

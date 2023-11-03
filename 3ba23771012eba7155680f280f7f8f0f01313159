@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "06671663_d38654e4",
+        "filename": "src/frameworks/uikit/ui_view.rs",
+        "patchSetId": 4
+      },
+      "lineNbr": 187,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-11-03T17:15:04Z",
+      "side": 1,
+      "message": "Please add a space here to match the style of the surrounding code.",
+      "revId": "3ba23771012eba7155680f280f7f8f0f01313159",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "582f2b7c_e32bd213",
+        "filename": "src/frameworks/uikit/ui_view.rs",
+        "patchSetId": 4
+      },
+      "lineNbr": 189,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-11-03T17:15:04Z",
+      "side": 1,
+      "message": "This needs to be autoreleased.",
+      "revId": "3ba23771012eba7155680f280f7f8f0f01313159",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "440b13c9_503681f9",
+        "filename": "src/frameworks/uikit/ui_view.rs",
+        "patchSetId": 4
+      },
+      "lineNbr": 191,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-11-03T17:15:04Z",
+      "side": 1,
+      "message": "Please remove the TODO comment.",
+      "revId": "3ba23771012eba7155680f280f7f8f0f01313159",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

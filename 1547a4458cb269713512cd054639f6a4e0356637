@@ -70,6 +70,24 @@
       "parentUuid": "4f34f313_8311222a",
       "revId": "1547a4458cb269713512cd054639f6a4e0356637",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c32dbed2_bd41d38f",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 4
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-11-04T11:04:02Z",
+      "side": 1,
+      "message": "Technically, this will not be conformant with an Apple implementation as for example NSArray and NSMutableArray are just interfaces. One can provide their own implementation of those.",
+      "parentUuid": "a040ca7c_6062df77",
+      "revId": "1547a4458cb269713512cd054639f6a4e0356637",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

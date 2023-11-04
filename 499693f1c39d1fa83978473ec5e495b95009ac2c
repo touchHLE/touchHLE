@@ -26,6 +26,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "ef7eeed3_6687595f",
+        "filename": "src/dyld.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 355,
+      "author": {
+        "id": 1021823
+      },
+      "writtenOn": "2023-11-04T02:18:25Z",
+      "side": 1,
+      "message": "Fair, hopefully the new one is more clear.",
+      "parentUuid": "4f54afbe_dd6a4ad7",
+      "range": {
+        "startLine": 354,
+        "startChar": 0,
+        "endLine": 355,
+        "endChar": 50
+      },
+      "revId": "499693f1c39d1fa83978473ec5e495b95009ac2c",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "8b2d54ad_e652e28e",
         "filename": "src/dyld.rs",
         "patchSetId": 1
@@ -37,6 +61,30 @@
       "writtenOn": "2023-10-25T18:23:11Z",
       "side": 1,
       "message": "This is basically doing the same thing as `create_proc_address`, right? I think I\u0027d rather see these be merged. Both could benefit from caching, incidentally.",
+      "range": {
+        "startLine": 356,
+        "startChar": 0,
+        "endLine": 372,
+        "endChar": 23
+      },
+      "revId": "499693f1c39d1fa83978473ec5e495b95009ac2c",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d053bb5d_dbab2945",
+        "filename": "src/dyld.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 372,
+      "author": {
+        "id": 1021823
+      },
+      "writtenOn": "2023-11-04T02:18:25Z",
+      "side": 1,
+      "message": "I didn\u0027t notice that at all! I just went and merged the two. The functions was already \"cached\" (i.e. repeated calls point to the same pointer), unless you mean something else.",
+      "parentUuid": "8b2d54ad_e652e28e",
       "range": {
         "startLine": 356,
         "startChar": 0,

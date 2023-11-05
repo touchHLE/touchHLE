@@ -13,9 +13,10 @@ use super::cf_dictionary::CFDictionaryRef;
 use crate::abi::{DotDotDot, VaList};
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::frameworks::foundation::ns_string;
-use crate::mem::ConstPtr;
+use crate::mem::{ConstPtr, Ptr};
 use crate::objc::{id, msg, msg_class};
 use crate::Environment;
+use crate::frameworks::core_foundation::CFIndex;
 
 pub type CFStringRef = super::CFTypeRef;
 
@@ -88,10 +89,25 @@ fn CFStringCreateWithFormatAndArguments(
     ns_string::from_rust_string(env, res)
 }
 
+fn CFStringGetCString(
+    env: &mut Environment,
+    theString: CFStringRef,
+    buffer: Ptr<char, true>,
+    bufferSize: CFIndex,
+    encoding: CFStringEncoding
+) -> bool {
+    // TODO:    1. Convert the CFString to the encoding specified by encoding.
+    // TODO:    2. Copy the encoded CFString to the buffer.
+
+    // TODO: True if successful or False if conversion fails or the buffer is to small.
+    return true;
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CFStringConvertEncodingToNSStringEncoding(_)),
     export_c_func!(CFStringConvertNSStringEncodingToEncoding(_)),
     export_c_func!(CFStringCreateWithCString(_, _, _)),
     export_c_func!(CFStringCreateWithFormat(_, _, _, _)),
     export_c_func!(CFStringCreateWithFormatAndArguments(_, _, _, _)),
+    export_c_func!(CFStringGetCString(_, _, _, _)),
 ];

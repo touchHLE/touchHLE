@@ -5,6 +5,7 @@
  */
 //! `NSFileManager` etc.
 
+use crate::mem::ConstPtr;
 use super::{ns_array, ns_string, NSUInteger};
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::fs::{GuestPath, GuestPathBuf};
@@ -13,6 +14,7 @@ use crate::objc::{
     autorelease, id, msg, msg_class, nil, objc_classes, release, ClassExports, HostObject,
 };
 use crate::Environment;
+use crate::frameworks::foundation::ns_url::to_rust_path;
 
 type NSSearchPathDirectory = NSUInteger;
 const NSApplicationDirectory: NSSearchPathDirectory = 1;
@@ -140,6 +142,22 @@ pub const CLASSES: ClassExports = objc_classes! {
             false
         }
     }
+}
+
+- (bool) changeCurrentDirectoryPath:(id)path {
+    let path_str = ns_string::to_rust_string(env, path); // TODO: avoid copy
+
+    env.fs.change_working_directory(GuestPath::new(&path_str));
+
+    return true;
+}
+
+- (id) currentDirectoryPath {
+    return nil;
+}
+
+- (id) fileAttributesAtPath:(id) path traverseLink:(bool) yorn {
+    return nil;
 }
 
 - (id)enumeratorAtPath:(id)path { // NSString*

@@ -146,6 +146,19 @@ pub const CLASSES: ClassExports = objc_classes! {
     );
 }
 
+-(()) getBytes:(MutPtr<u8>)buffer {
+    let host_object = env.objc.borrow::<NSDataHostObject>(this);
+
+    let size = host_object.length;
+    let bytes = host_object.bytes;
+
+    env.mem.memmove(
+        buffer.cast(),
+        bytes.cast_const(),
+        size
+    );
+}
+
 @end
 
 };

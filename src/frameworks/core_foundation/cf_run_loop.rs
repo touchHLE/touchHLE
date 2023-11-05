@@ -8,12 +8,18 @@
 //! This is not even toll-free bridged to `NSRunLoop` in Apple's implementation,
 //! but here it is the same type.
 
+use sdl2_sys::u_long;
 use crate::dyld::{export_c_func, ConstantExports, FunctionExports, HostConstant};
 use crate::objc::msg_class;
 use crate::Environment;
+use crate::frameworks::core_foundation::cf_allocator::CFAllocatorRef;
+use crate::frameworks::core_foundation::CFIndex;
+use crate::frameworks::core_foundation::time::CFTimeInterval;
 
 pub type CFRunLoopRef = super::CFTypeRef;
 pub type CFRunLoopMode = super::cf_string::CFStringRef;
+pub type CFAbsoluteTime = CFTimeInterval;
+pub type CFOptionFlags = u_long;
 
 fn CFRunLoopGetCurrent(env: &mut Environment) -> CFRunLoopRef {
     msg_class![env; NSRunLoop currentRunLoop]
@@ -22,6 +28,12 @@ fn CFRunLoopGetCurrent(env: &mut Environment) -> CFRunLoopRef {
 pub fn CFRunLoopGetMain(env: &mut Environment) -> CFRunLoopRef {
     msg_class![env; NSRunLoop mainRunLoop]
 }
+
+// TODO: Not sure what void (^block)(CFRunLoopTimerRef timer) is.
+// CFRunLoopTimerRef CFRunLoopTimerCreateWithHandler(CFAllocatorRef allocator, CFAbsoluteTime fireDate, CFTimeInterval interval, CFOptionFlags flags, CFIndex order, void (^block)(CFRunLoopTimerRef timer));
+// pub fn CFRunLoopTimerCreateWithHandler(env: &mut Environment, allocator: CFAllocatorRef, fireDate: CFAbsoluteTime, interval: CFTimeInterval, flags: CFOptionFlags, order: CFIndex, ) -> CFRunLoopRef {
+//     // TODO: Create a new CFRunLoopTimer
+// }
 
 pub const kCFRunLoopCommonModes: &str = "kCFRunLoopCommonModes";
 pub const kCFRunLoopDefaultMode: &str = "kCFRunLoopDefaultMode";

@@ -16,6 +16,24 @@
       "message": "For reference, I did check that the it does respect the page size for both host and guest code, there just isn\u0027t a super clean way to add it as a test for now. I\u0027ll let you submit if you want to test it.",
       "revId": "b2fa0b807c761a40e8f68b8c0b958d2fc6ce373c",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b323dc48_6a4b1dd9",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-11-05T20:54:01Z",
+      "side": 1,
+      "message": "I assume you\u0027ve run `cargo test` and at least two games (a 4KiB segment title and 16KiB segment title). Your code looks right to me, I\u0027m not gonna bother with further testing.",
+      "parentUuid": "77cbe685_68c5faa1",
+      "revId": "b2fa0b807c761a40e8f68b8c0b958d2fc6ce373c",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

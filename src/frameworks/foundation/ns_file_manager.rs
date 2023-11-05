@@ -147,13 +147,32 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (bool) changeCurrentDirectoryPath:(id)path {
     let path_str = ns_string::to_rust_string(env, path); // TODO: avoid copy
 
-    env.fs.change_working_directory(GuestPath::new(&path_str));
+    match env.fs.change_working_directory(GuestPath::new(&path_str)) {
+        Ok(new) => {
+            log_dbg!(
+                "chdir({:?}) => 0, new working directory: {:?}",
+                path_str,
+                new,
+            );
+
+            return true;
+        }
+        Err(()) => {
+            log!("Warning: chdir({:?}) failed, could not change working directory to {:?}, returning -1", path_str, path);
+
+            return false;
+        }
+    }
 
     return true;
 }
 
 - (id) currentDirectoryPath {
-    return nil;
+    let currentDirectory = env.fs.working_directory();
+
+    let nsCurrentDirectory = ns_string::from_rust_string(env, currentDirectory.as_str().to_string());
+
+    autorelease(env, nsCurrentDirectory)
 }
 
 - (id) fileAttributesAtPath:(id) path traverseLink:(bool) yorn {

@@ -34,6 +34,24 @@
       "parentUuid": "32f6e833_1e491e27",
       "revId": "61b15958df357fd150904478c11c4722d5faf646",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "89b5bed3_6c22b1b4",
+        "filename": "src/mem.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 357,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-11-05T12:02:07Z",
+      "side": 1,
+      "message": "Hmm. I was a little worried since we do memory accesses so frequently, but most of those are done by dynarmic and it uses the page table mechanism, so it isn\u0027t affected by this, so it should be fine.",
+      "parentUuid": "6788bd17_496f5e89",
+      "revId": "61b15958df357fd150904478c11c4722d5faf646",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

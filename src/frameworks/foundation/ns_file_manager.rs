@@ -5,8 +5,9 @@
  */
 //! `NSFileManager` etc.
 
+use std::ptr::null;
 use crate::mem::ConstPtr;
-use super::{ns_array, ns_string, NSUInteger};
+use super::{ns_array, ns_string, ns_dictionary, NSUInteger};
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::fs::{GuestPath, GuestPathBuf};
 use crate::mem::MutPtr;
@@ -176,6 +177,10 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (id) fileAttributesAtPath:(id) path traverseLink:(bool) yorn {
+    let path_str = ns_string::to_rust_string(env, path); // TODO: avoid copy
+
+    // let filAttrib = ns_dictionary::dict_from_keys_and_objects(env, );
+
     return nil;
 }
 

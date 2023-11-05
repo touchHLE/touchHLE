@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "e09b05cc_898beac6",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 9
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-11-05T23:15:32Z",
+      "side": 1,
+      "message": "looks good, thanks!",
+      "revId": "8a15e5943f352b5397448a57e02b0943fb9877bb",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "339bbf02_6fd5265a",
+        "filename": "src/mach_o.rs",
+        "patchSetId": 9
+      },
+      "lineNbr": 228,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-11-05T23:15:32Z",
+      "side": 1,
+      "message": "Nitpick: any value is possible if the binary is weird or corrupt, a normal panic is better.",
+      "revId": "8a15e5943f352b5397448a57e02b0943fb9877bb",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

@@ -33,6 +33,24 @@
       "message": "Nitpick: any value is possible if the binary is weird or corrupt, a normal panic is better.",
       "revId": "8a15e5943f352b5397448a57e02b0943fb9877bb",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "8c08a6fd_d920b8c4",
+        "filename": "src/mach_o.rs",
+        "patchSetId": 9
+      },
+      "lineNbr": 228,
+      "author": {
+        "id": 1022009
+      },
+      "writtenOn": "2023-11-06T11:12:36Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "339bbf02_6fd5265a",
+      "revId": "8a15e5943f352b5397448a57e02b0943fb9877bb",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

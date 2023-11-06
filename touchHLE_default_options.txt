@@ -61,4 +61,5 @@ com.eamobile.wolfinc: --landscape-left --stabilize-virtual-cursor=0.1,10 --butto
 com.idsoftware.Doom2rpg: --landscape-left --stabilize-virtual-cursor=0.1,10 --button-to-touch=A,240,160 --button-to-touch=B,240,280 --button-to-touch=X,176,280 --button-to-touch=Y,320,280 --button-to-touch=DPadLeft,34,178 --button-to-touch=DPadUp,76,140 --button-to-touch=DPadRight,116,180 --button-to-touch=DPadDown,76,220
 
 # Tony Hawk's Pro Skater 2
+# A = Jump, B = Grab, X = Flip, Y = Grind, Start = Pause
 com.activision.thps2: --landscape-left --button-to-touch=DPadLeft,30,235 --button-to-touch=DPadUp,85,180 --button-to-touch=DPadRight,135,235 --button-to-touch=DPadDown,85,285 --button-to-touch=Start,240,30 --button-to-touch=A,395,280 --button-to-touch=B,445,230 --button-to-touch=X,345,230 --button-to-touch=Y,395,185

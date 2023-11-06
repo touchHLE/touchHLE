@@ -335,7 +335,7 @@ unsafe fn translate_pointer_or_offset(
 ) -> *const GLvoid {
     let mut buffer_binding = 0;
     gles.GetIntegerv(which_binding, &mut buffer_binding);
-    if buffer_binding != 0 {
+    if buffer_binding != 0 || pointer_or_offset.is_null() {
         let offset = pointer_or_offset.to_bits();
         offset as usize as *const _
     } else {

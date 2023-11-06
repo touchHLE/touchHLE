@@ -338,6 +338,8 @@ unsafe fn translate_pointer_or_offset(
     if buffer_binding != 0 {
         let offset = pointer_or_offset.to_bits();
         offset as usize as *const _
+    } else if pointer_or_offset.is_null() {
+        std::ptr::null()
     } else {
         let pointer = pointer_or_offset;
         // bounds checking is hopeless here

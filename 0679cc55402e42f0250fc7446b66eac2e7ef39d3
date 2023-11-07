@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "01eaa9fc_aba11ef2",
+        "filename": "src/frameworks/core_graphics/cg_color_space.rs",
+        "patchSetId": 7
+      },
+      "lineNbr": 28,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-11-07T23:29:20Z",
+      "side": 1,
+      "message": "Are you sure you need the non_camel_case_types thing? These aren\u0027t types…",
+      "revId": "0679cc55402e42f0250fc7446b66eac2e7ef39d3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

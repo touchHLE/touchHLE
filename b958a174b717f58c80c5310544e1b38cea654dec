@@ -1,6 +1,23 @@
 {
   "comments": [
     {
+      "unresolved": true,
+      "key": {
+        "uuid": "f10c75eb_a4c19c39",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 7
+      },
+      "lineNbr": 3,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-11-07T23:23:45Z",
+      "side": 1,
+      "message": "Btw you can use --reset-author when amending if you don\u0027t want this date to be stuck in the past. I think I must be the only one who ever notices or cares though…",
+      "revId": "b958a174b717f58c80c5310544e1b38cea654dec",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": false,
       "key": {
         "uuid": "dbf53ded_d6c6f070",
@@ -14,6 +31,23 @@
       "writtenOn": "2023-11-07T21:29:59Z",
       "side": 1,
       "message": "I tried moving it outside, to an external function and call it from within the objective rust code but had issues with msg_super so i left it duplicated in each function body.",
+      "revId": "b958a174b717f58c80c5310544e1b38cea654dec",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4f9a1022_15f7ae2f",
+        "filename": "src/frameworks/uikit/ui_view/ui_label.rs",
+        "patchSetId": 7
+      },
+      "lineNbr": 66,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-11-07T23:23:45Z",
+      "side": 1,
+      "message": "Can you add TODO comments about the fact we aren\u0027t decoding the actual properties from the nib file? Alternatively, you could actually implement that. I am guessing lightbike has a UILabel in its nib file? You can use `plutil -p` to look at the nib file and figure out what strings you have to pass to decodeObjectForKey.",
       "revId": "b958a174b717f58c80c5310544e1b38cea654dec",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

@@ -142,7 +142,8 @@ impl GdbServer {
         match stop_reason {
             None => {
                 if self.first_halt {
-                    // The debugger has just connected, it hasn't sent anything yet.
+                    // The debugger has just connected, it hasn't sent anything
+                    // yet.
                     self.first_halt = false;
                 } else {
                     // The debugger previously requested stepping and no errors
@@ -310,7 +311,8 @@ impl GdbServer {
                     panic!("Debugger requested kill.");
                 }
                 _ => {
-                    // Query whether we're attaching to an existing or new process
+                    // Query whether we're attaching to an existing or new
+                    // process
                     if p == "qAttached" {
                         // New process
                         self.send_packet("0");

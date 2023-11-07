@@ -246,7 +246,8 @@ fn pixel_offsets(data: &CGBitmapContextData) -> (usize, usize, usize, Option<usi
             }
         }
         kCGColorSpaceGenericGray => {
-            // TODO: this is probably isn't doing RGB to grayscale conversion properly
+            // TODO: this is probably isn't doing RGB to grayscale conversion
+            // properly
             match data.alpha_info {
                 kCGImageAlphaNone => (0, 0, 0, None),
                 kCGImageAlphaPremultipliedLast | kCGImageAlphaLast => (0, 0, 0, Some(1)),
@@ -577,9 +578,23 @@ pub(super) fn draw_image(
 
     let mut drawer = CGBitmapContextDrawer::new(&env.objc, &mut env.mem, context);
 
-    // let _ = std::fs::write(format!("image-{:?}-{:?}.data", (image as *const _ as *const ()), image.dimensions()), image.pixels());
+    //let _ = std::fs::write(
+    //  format!(
+    //      "image-{:?}-{:?}.data",
+    //      (image as *const _ as *const ()),
+    //      image.dimensions()
+    //  ),
+    //  image.pixels()
+    //);
 
-    // let _ = std::fs::write(format!("bitmap-{:?}-{:?}-before.data", (image as *const _ as *const ()), (drawer.width(), drawer.height())), &drawer.pixels);
+    //let _ = std::fs::write(
+    //  format!(
+    //      "bitmap-{:?}-{:?}-before.data",
+    //      (image as *const _ as *const ()),
+    //      (drawer.width(), drawer.height())
+    //  ),
+    //  &drawer.pixels
+    //);
 
     let (image_width, image_height) = image.dimensions();
 
@@ -595,7 +610,14 @@ pub(super) fn draw_image(
         }
     }
 
-    // let _ = std::fs::write(format!("bitmap-{:?}-{:?}-after.data", (image as *const _ as *const ()), (drawer.width(), drawer.height())), &drawer.pixels);
+    //let _ = std::fs::write(
+    //  format!(
+    //      "bitmap-{:?}-{:?}-after.data",
+    //      (image as *const _ as *const ()),
+    //      (drawer.width(), drawer.height())
+    //  ),
+    //  &drawer.pixels
+    //);
 }
 
 #[allow(rustdoc::broken_intra_doc_links)] // https://github.com/rust-lang/rust/issues/83049

@@ -49,7 +49,8 @@ pub fn CGColorSpaceCreateWithName(env: &mut Environment, name: CFStringRef) -> C
 }
 
 pub fn CGColorSpaceCreateDeviceRGB(env: &mut Environment) -> CGColorSpaceRef {
-    // TODO: figure out what characteristics kCGColorSpaceDeviceRGB actually has on an iPhone
+    // TODO: figure out what characteristics kCGColorSpaceDeviceRGB actually has
+    //       on an iPhone
     let isa = env
         .objc
         .get_known_class("_touchHLE_CGColorSpace", &mut env.mem);

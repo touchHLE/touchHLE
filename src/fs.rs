@@ -715,7 +715,8 @@ impl Fs {
     /// Like [File::open] but for the guest filesystem.
     #[allow(dead_code)]
     pub fn open<P: AsRef<GuestPath>>(&self, path: P) -> Result<GuestFile, ()> {
-        // it would be nice to delegate to self.open_with_options, but currently it wants a mutable reference to self
+        // it would be nice to delegate to self.open_with_options, but
+        // currently it wants a mutable reference to self
         let node = self.lookup_node(path.as_ref()).ok_or(())?;
         match node {
             FsNode::File { location, .. } => match location {

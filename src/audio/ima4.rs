@@ -7,7 +7,9 @@
 //!
 //! Resources on IMA ADPCM in general:
 //! - MultimediaWiki's [IMA ADPCM](https://wiki.multimedia.cx/index.php?title=IMA_ADPCM) page
-//! - The IMA's _Recommended Practices for Enhancing Digital Audio Compatibility in Multimedia Systems_, which includes a reference decoding algorithm in C on pages 31 and 32.
+//! - The IMA's _Recommended Practices for Enhancing Digital Audio Compatibility
+//!   in Multimedia Systems_, which includes a reference decoding algorithm in C
+//!   on pages 31 and 32.
 //!   - [OCR'd PDF](http://www.cs.columbia.edu/~hgs/audio/dvi/IMA_ADPCM.pdf)
 //!   - [Untouched scans](http://www.cs.columbia.edu/~hgs/audio/dvi/)
 //!

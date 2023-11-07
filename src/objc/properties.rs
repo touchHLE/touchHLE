@@ -73,8 +73,8 @@ pub(super) fn objc_copyStruct(
     _atomic: bool,
     _hasStrong: bool,
 ) {
-    // It's safe to ignore atomic as we never switch thread unless we call back into guest code
-    // and we're not doing that here, just calling memmove
+    // It's safe to ignore atomic as we never switch thread unless we call back
+    // into guest code and we're not doing that here, just calling memmove.
     // TODO: implement atomic support
     env.mem.memmove(dest, src, size);
 }

@@ -221,10 +221,21 @@ macro_rules! _objc_method {
 ///             } as fn(&mut Environment, id, SEL) -> id)),
 ///         ],
 ///         instance_methods: &[
-///             ("barWithQux:", &(|env: &mut Environment, this: id, _cmd: SEL, qux: u32| -> id {
+///             ("barWithQux:", &(|
+///                 env: &mut Environment,
+///                 this: id,
+///                 _cmd: SEL,
+///                 qux: u32
+///             | -> id {
 ///                 // ...
 ///             } as &fn(&mut Environment, id, SEL, u32) -> id)),
-///             ("barWithVaArgs:", &(|env: &mut Environment, this: id, _cmd: SEL, qux: u32, va_args: DotDotDot| -> id {
+///             ("barWithVaArgs:", &(|
+///                 env: &mut Environment,
+///                 this: id,
+///                 _cmd: SEL,
+///                 qux: u32,
+///                 va_args: DotDotDot
+///             | -> id {
 ///                 // ...
 ///             } as &fn(&mut Environment, id, SEL, u32, DotDotDot) -> id)),
 ///         ],

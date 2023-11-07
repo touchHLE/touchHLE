@@ -37,7 +37,8 @@ struct UIControlHostObject {
     /// `UITouch*` of the touch currently being tracked, [nil] if none
     tracked_touch: id,
     tracking: bool,
-    /// See `addTarget:action:forControlEvents:`. The target is a weak reference!
+    /// See `addTarget:action:forControlEvents:`. The target is a weak
+    /// reference!
     action_targets: Vec<(id, SEL, UIControlEvents)>,
 }
 impl_HostObject_with_superclass!(UIControlHostObject);

@@ -154,7 +154,8 @@ fn fwrite(
             }
         }
         _ => {
-            // The comment about the item_size/n_items split in fread() applies here too
+            // The comment about the item_size/n_items split in fread() applies
+            // here too.
             match posix_io::write(env, fd, buffer, total_size) {
                 // TODO: ferror() support.
                 -1 => 0,

@@ -91,8 +91,8 @@ impl MutexState {
             log_dbg!("Attempted to destroy mutex with waiting locks, returning EBUSY!");
             return Err(EBUSY);
         }
-        // TODO?: If we switch to a vec-based system, we should reuse destroyed ids
-        // if they are at the top of the stack.
+        // TODO?: If we switch to a vec-based system, we should reuse destroyed
+        // ids if they are at the top of the stack.
         self.mutexes.remove(&mutex_id);
         Ok(())
     }

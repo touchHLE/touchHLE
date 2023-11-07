@@ -183,7 +183,8 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (())layoutSubviews {
-    // On iOS 5.1 and earlier, the default implementation of this method does nothing.
+    // On iOS 5.1 and earlier, the default implementation of this method does
+    // nothing.
 }
 
 - (id)superview {

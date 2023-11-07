@@ -533,7 +533,8 @@ impl GLES1OnGL2 {
     /// Apple platforms (even modern Mac OS) seem to handle that gracefully,
     /// however, both Windows and Android have issues in those cases.
     /// This workaround is required so Doom 2 RPG renders correctly.
-    /// It prevents divisions by zero in levels where fog is used and both values are set to 10000.
+    /// It prevents divisions by zero in levels where fog is used and both
+    /// values are set to 10000.
     unsafe fn clamp_fog_state_values(&mut self) -> Option<(f32, f32)> {
         let mut fogEnabled: GLboolean = 0;
         gl21::GetBooleanv(gl21::FOG, &mut fogEnabled);
@@ -1005,8 +1006,8 @@ impl GLES for GLES1OnGL2 {
             if self.pointer_is_fixed_point.iter().any(|&is_fixed| is_fixed) {
                 // Scan the index buffer to find the range of data that may need
                 // fixed-point translation.
-                // TODO: Would it be more efficient to turn this into a non-indexed
-                // draw-call instead?
+                // TODO: Would it be more efficient to turn this into a
+                // non-indexed draw-call instead?
 
                 let mut index_buffer_binding = 0;
                 gl21::GetIntegerv(

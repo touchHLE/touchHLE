@@ -190,8 +190,8 @@ pub(super) fn UIApplicationMain(
     {
         let pool: id = msg_class![env; NSAutoreleasePool new];
         let delegate: id = msg![env; ui_application delegate];
-        // IOS 3+ apps usually use application:didFinishLaunchingWithOptions:, and it
-        // seems to be prioritized over applicationDidFinishLaunching:.
+        // iOS 3+ apps usually use application:didFinishLaunchingWithOptions:,
+        // and it seems to be prioritized over applicationDidFinishLaunching:.
         if env.objc.object_has_method_named(
             &env.mem,
             delegate,
@@ -217,7 +217,8 @@ pub(super) fn UIApplicationMain(
         () = msg![env; view layoutSubviews];
     }
 
-    // Send applicationDidBecomeActive now that the application is ready to become active.
+    // Send applicationDidBecomeActive now that the application is ready to
+    // become active.
     {
         let pool: id = msg_class![env; NSAutoreleasePool new];
         let delegate: id = msg![env; ui_application delegate];

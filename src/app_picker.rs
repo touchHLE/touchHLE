@@ -326,7 +326,8 @@ fn show_app_picker_gui(
                 Some(&TappedIcon::App(app_idx)) => {
                     let app_path = &apps.as_ref().unwrap()[app_idx].path;
                     echo!("Picked: {}", app_path.display());
-                    // Return the environment so some parts of it can be salvaged.
+                    // Return the environment so some parts of it can be
+                    // salvaged.
                     return Ok((app_path.clone(), environment));
                 }
                 Some(&TappedIcon::ChangePage(page_idx)) => {

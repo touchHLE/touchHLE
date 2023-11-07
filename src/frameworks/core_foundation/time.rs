@@ -36,8 +36,8 @@ pub struct CFGregorianDate {
 unsafe impl SafeRead for CFGregorianDate {}
 impl_GuestRet_for_large_struct!(CFGregorianDate);
 
-/// Absolute time is measured in seconds relative to the absolute reference date of Jan 1 2001
-/// 00:00:00 GMT.
+/// Absolute time is measured in seconds relative to the absolute reference date
+/// of Jan 1 2001 00:00:00 GMT.
 fn CFAbsoluteTimeGetCurrent(_env: &mut Environment) -> CFAbsoluteTime {
     SystemTime::now()
         .duration_since(apple_epoch())

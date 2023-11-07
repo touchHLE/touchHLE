@@ -183,8 +183,8 @@ mod collections {
             let (idx, _) = {
                 let mut best_chunk: Option<(usize, GuestUSize)> = None;
 
-                // Search from end because we should prefer recently-freed allocations
-                // that might be the right size.
+                // Search from end because we should prefer recently-freed
+                // allocations that might be the right size.
                 for (idx, chunk) in self.chunks_by_log2_size[bucket]
                     .iter_mut()
                     .enumerate()
@@ -229,8 +229,8 @@ mod collections {
                 return Some(alloc);
             }
 
-            // Exact match has been ruled out, find the smallest chunk in the next
-            // largest non-empty bucket.
+            // Exact match has been ruled out, find the smallest chunk in the
+            // next largest non-empty bucket.
 
             let bucket = self.chunks_by_log2_size[bucket + 1..]
                 .iter()

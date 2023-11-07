@@ -25,7 +25,8 @@ struct pthread_mutexattr_t {
 unsafe impl SafeRead for pthread_mutexattr_t {}
 
 /// Apple's implementation is a 4-byte magic number followed by a 56-byte opaque
-/// region. We will store the actual data on the host, determined by a mutex identifier.
+/// region. We will store the actual data on the host, determined by a mutex
+/// identifier.
 #[repr(C, packed)]
 struct pthread_mutex_t {
     /// Magic number (must be [MAGIC_MUTEX])

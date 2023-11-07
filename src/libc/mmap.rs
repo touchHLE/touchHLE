@@ -15,7 +15,8 @@ use crate::mem::{GuestUSize, MutVoidPtr};
 const MAP_FILE: i32 = 0x0000;
 const MAP_ANON: i32 = 0x1000;
 
-/// Our implementation of mmap is really simple: it's just load entirety of file in memory!
+/// Our implementation of mmap is really simple: it's just load entirety of
+/// file in memory!
 fn mmap(
     env: &mut Environment,
     addr: MutVoidPtr,

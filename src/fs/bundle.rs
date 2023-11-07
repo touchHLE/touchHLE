@@ -3,7 +3,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
-//! IPA file format support, allowing it to be used as part of the guest filesystem.
+//! IPA file format support, allowing it to be used as part of the guest
+//! filesystem.
 use crate::fs::{FsNode, GuestPath};
 use std::cell::RefCell;
 use std::fmt::Debug;
@@ -13,8 +14,9 @@ use std::rc::Rc;
 use zip::result::ZipError;
 use zip::ZipArchive;
 
-/// A helper struct to build an FsNode with files and directories coming in arbitrary order.
-/// This is required, because ZIP files are allowed to store entries in arbitrary order.
+/// A helper struct to build an FsNode with files and directories coming in
+/// arbitrary order. This is required, because ZIP files are allowed to store
+/// entries in arbitrary order.
 struct FsNodeBuilder {
     root: FsNode,
 }
@@ -202,10 +204,12 @@ impl IpaFileRef {
         let mut file = match archive.by_index(self.index) {
             Ok(file) => file,
             Err(ZipError::Io(e)) => {
-                // this is a runtime error, which we __probably__ should not bubble up to the guest
+                // this is a runtime error, which we __probably__ should not
+                // bubble up to the guest
                 panic!("IO error while opening file from IPA bundle: {e}")
             }
-            // anything other than IO error is a bug in the code, we should always have a valid index
+            // anything other than IO error is a bug in the code, we should
+            // always have a valid index
             Err(e) => panic!("BUG: could not open file from IPA bundle: {e}"),
         };
         let mut buf = Vec::new();

@@ -60,8 +60,8 @@ fn set_sdl2_orientation(orientation: DeviceOrientation) {
         "SDL_IOS_ORIENTATIONS",
         match orientation {
             DeviceOrientation::Portrait => "Portrait",
-            // The inversion is deliberate. These probably correspond to iPhone OS
-            // content orientations?
+            // The inversion is deliberate. These probably correspond to
+            // iPhone OS content orientations?
             DeviceOrientation::LandscapeLeft => "LandscapeRight",
             DeviceOrientation::LandscapeRight => "LandscapeLeft",
         },
@@ -496,9 +496,9 @@ impl Window {
                     ..
                 } => {
                     log_dbg!("Starting multi-touch for {:?}", event);
-                    // To implement multi-touch we accumulate here same touch events at the same
-                    // timestamp. This is consistent with UIKit API, but could be broken if events
-                    // come out of the order.
+                    // To implement multi-touch we accumulate here same touch
+                    // events at the same timestamp. This is consistent with
+                    // UIKit, but could be broken if events come out of order.
                     // (in worst case we separate multi-touches in several ones)
                     // TODO: handle out of order touches
                     let curr_timestamp = timestamp;
@@ -542,8 +542,9 @@ impl Window {
                                 continue;
                             }
                             _ => {
-                                // event_pump doesn't have a method to peek on events
-                                // so, we keep track of an unconsumed one from a previous loop iteration
+                                // event_pump doesn't have a method to peek on
+                                // events, so we keep track of an unconsumed
+                                // one from a previous loop iteration
                                 assert!(previous_event.is_none());
                                 previous_event = Some(next);
                                 break;
@@ -642,8 +643,8 @@ impl Window {
                 // UIAcceleration reports acceleration towards gravity, but SDL2
                 // reports acceleration away from gravity.
                 let (x, y, z) = (-x, -y, -z);
-                // UIAcceleration reports acceleration in units of g-force, but SDL2
-                // reports acceleration in units of m/s^2.
+                // UIAcceleration reports acceleration in units of g-force, but
+                // SDL2 reports acceleration in units of m/s^2.
                 let gravity: f32 = 9.80665; // SDL_STANDARD_GRAVITY
                 let (x, y, z) = (x / gravity, y / gravity, z / gravity);
                 return (x, y, z);

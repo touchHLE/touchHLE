@@ -87,7 +87,15 @@ pub fn prep_stack_for_start(
         stack_region[i as usize] = reversed_data[(stack_height - i - 1) as usize];
     }
 
-    //println!("{:?}", std::str::from_utf8(&stack_region.iter().flat_map(|&c| std::ascii::escape_default(c)).collect::<Vec<u8>>()).unwrap());
+    //println!(
+    //  "{:?}",
+    //  std::str::from_utf8(
+    //      &stack_region
+    //      .iter()
+    //      .flat_map(|&c| std::ascii::escape_default(c))
+    //      .collect::<Vec<u8>>())
+    //  .unwrap()
+    //);
 
     cpu.regs_mut()[Cpu::SP] = stack_ptr.to_bits();
 }

@@ -192,7 +192,8 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 @end
 
-// Our private subclass that is the single implementation of NSMutableArray for // the time being.
+// Our private subclass that is the single implementation of NSMutableArray for
+// the time being.
 @implementation _touchHLE_NSMutableArray: NSMutableArray
 
 + (id)allocWithZone:(NSZonePtr)_zone {

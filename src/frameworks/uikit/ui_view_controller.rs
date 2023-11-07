@@ -45,7 +45,8 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (())loadView {
-    // TODO: Check if the UIViewController has an associated nib file and load the view from there instead if it does
+    // TODO: Check if the UIViewController has an associated nib file and load
+    // the view from there instead if it does
     let view: id = msg_class![env; UIView alloc];
     let view: id = msg![env; view init];
     () = msg![env; this setView: view];

@@ -56,8 +56,8 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 @end
 
-// Our private subclass that is the single implementation of NSCharacterSet for the
-// time being.
+// Our private subclass that is the single implementation of NSCharacterSet for
+// the time being.
 @implementation _touchHLE_NSCharacterSet: NSCharacterSet
 
 + (id)allocWithZone:(NSZonePtr)_zone {

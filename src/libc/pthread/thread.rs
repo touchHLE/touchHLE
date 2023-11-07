@@ -174,9 +174,10 @@ fn pthread_join(env: &mut Environment, thread: pthread_t, retval: MutPtr<MutVoid
     // The joinee is the thread that is being waited on.
     let joinee_thread = State::get(env).threads.get_mut(&thread).unwrap().thread_id;
 
-    // FIXME?: Blocking on the main thread is technically allowed, but effectively useless (as the
-    // main thread exiting means the whole application exits). It complicates some handling and is
-    // probably safe to ignore here.
+    // FIXME?: Blocking on the main thread is technically allowed, but
+    // effectively useless (as the main thread exiting means the whole
+    // application exits). It complicates some handling and is probably safe to
+    // ignore here.
     assert!(joinee_thread != 0);
 
     // Can't join thread with itself!
@@ -185,14 +186,16 @@ fn pthread_join(env: &mut Environment, thread: pthread_t, retval: MutPtr<MutVoid
         return EDEADLK;
     }
 
-    // Check that the current thread is not being waited on by the joinee, to prevent deadlocks.
-    // This only prevents 2-long cycles (matching aspen simulator), which is to say:
-    //             joining                            joining              joining
-    // [Thread 1] --------> [Thread 2]    [Thread 1] --------> [Thread 2] --------> [Thread 3]
-    //     ^                    |             ^                                         |
-    //     |       joining      |             |                 joining                 |
-    //     '--------------------'             '-----------------------------------------'
-    //       This is prevented,                             but this is not.
+    // Check that the current thread is not being waited on by the joinee, to
+    // prevent deadlocks.
+    // This only prevents 2-long cycles (matching aspen simulator), which is
+    // to say:
+    //       joining                joining        joining
+    // [T1] --------> [T2]    [T1] --------> [T2] --------> [T3]
+    //   ^              |       ^                             |
+    //   |    joining   |       |           joining           |
+    //   '--------------'       '-----------------------------'
+    //  This is prevented,               but this is not.
     let host_obj_curr = State::get(env).threads.get(&curr_pthread_t).unwrap();
     if let Some(thread) = host_obj_curr.joined_by {
         if thread == joinee_thread {
@@ -209,7 +212,8 @@ fn pthread_join(env: &mut Environment, thread: pthread_t, retval: MutPtr<MutVoid
     }
 
     host_obj_joinee.joined_by = Some(current_thread);
-    // The executor will write the return value (void*) to *retval after the join occurs.
+    // The executor will write the return value (void*) to *retval after the
+    // join occurs.
     env.join_with_thread(joinee_thread, retval);
     0
 }

@@ -142,8 +142,8 @@ impl ClassHostObject {
 }
 
 impl ObjC {
-    /// Checks if the provided class has a method in it's class chain (that is to say, objects of
-    /// the given class respond to a selector).
+    /// Checks if the provided class has a method in its class chain (that is
+    /// to say, objects of the given class respond to a selector).
     pub fn class_has_method(&self, class: Class, sel: SEL) -> bool {
         let mut class = class;
         loop {
@@ -162,7 +162,8 @@ impl ObjC {
         }
     }
 
-    /// Same as [Self::class_has_method], but using a named selector (rather than a pointer).
+    /// Same as [Self::class_has_method], but using a named selector (rather
+    /// than a pointer).
     #[allow(dead_code)]
     pub fn class_has_method_named(&self, class: Class, sel_name: &str) -> bool {
         if let Some(sel) = self.lookup_selector(sel_name) {
@@ -177,7 +178,8 @@ impl ObjC {
         self.class_has_method(ObjC::read_isa(obj, mem), sel)
     }
 
-    /// Same as [Self::object_has_method], but using a named selector (rather than a pointer).
+    /// Same as [Self::object_has_method], but using a named selector (rather
+    /// than a pointer).
     pub fn object_has_method_named(&self, mem: &Mem, obj: id, sel_name: &str) -> bool {
         if let Some(sel) = self.lookup_selector(sel_name) {
             self.object_has_method(mem, obj, sel)

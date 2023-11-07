@@ -62,7 +62,8 @@ type HostFunction = &'static dyn CallFromGuest;
 /// See also [ConstantExports] and [crate::objc::ClassExports].
 pub type FunctionExports = &'static [(&'static str, HostFunction)];
 
-/// Macro for exporting a function with C-style name mangling. See [FunctionExports].
+/// Macro for exporting a function with C-style name mangling. See
+/// [FunctionExports].
 ///
 /// ```ignore
 /// export_c_func!(NSFoo(_, _))

@@ -504,9 +504,10 @@ fn alDopplerFactor(_env: &mut Environment, value: ALfloat) {
 }
 
 fn alDopplerVelocity(env: &mut Environment, value: ALfloat) {
-    // Apparently wolf3d sets doppler velocity to zero, but this results in muting all of the audio
-    // with Open AL 1.1 soft implementation!
-    // Check "A note for OpenAL library implementors regarding OpenAL 1.0" from OpenAL 1.1 specs for more info
+    // Apparently wolf3d sets doppler velocity to zero, but this results in
+    // muting all of the audio with Open AL 1.1 soft implementation!
+    // Check "A note for OpenAL library implementors regarding OpenAL 1.0" from
+    // OpenAL 1.1 specs for more info
     let bundle_id = env.bundle.bundle_identifier();
     if bundle_id.starts_with("com.zodttd.wolf3d") || bundle_id.starts_with("com.idsoftware.wolf3d")
     {
@@ -519,8 +520,8 @@ fn alDopplerVelocity(env: &mut Environment, value: ALfloat) {
 
 // TODO: more functions
 
-// Note: For some reasons Wolf3d registers many OpenAl functions, but actually uses only few ones.
-// To workaround this, we just provide stubs
+// Note: For some reasons Wolf3d registers many OpenAl functions, but actually
+// uses only few ones. To workaround this, we just provide stubs.
 
 fn alcGetEnumValue(
     _env: &mut Environment,

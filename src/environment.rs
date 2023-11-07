@@ -579,7 +579,8 @@ impl Environment {
         self.threads[self.current_thread].blocked_by = ThreadBlock::Mutex(mutex_id);
     }
 
-    /// Locks a semaphore (decrements value of a semaphore and blocks if necessary)
+    /// Locks a semaphore (decrements value of a semaphore and blocks
+    /// if necessary).
     ///
     /// Also note that like [Self::sleep], this only takes effect after the host
     /// function returns to the main run loop ([Environment::run]).
@@ -795,11 +796,13 @@ impl Environment {
                             // Normal return from host-to-guest call.
                             ThreadNextAction::ReturnToHost
                         } else {
-                            // FIXME?: A drawback of the current thread model is that host-to-guest
-                            // calls affect the host call stack. This is a problem because it means
-                            // that threads have to return in the order they were called, which
-                            // means that threads that return while they aren't at the top of the
-                            // call stack have to wait until they can.
+                            // FIXME?: A drawback of the current thread model is
+                            // that host-to-guest calls affect the host call
+                            // stack. This is a problem because it means that
+                            // threads have to return in the order they were
+                            // called, which means that threads that return
+                            // while they aren't at the top of the call stack
+                            // have to wait until they can.
                             log_dbg!("Thread {} returned from host-to-guest call but thread {} is top of call stack, deferring!",
                                      self.current_thread,
                                      initial_thread
@@ -963,7 +966,8 @@ impl Environment {
                                     self.current_thread,
                                     joinee_thread
                                 );
-                                // Write the return value, unless the pointer to write to is null.
+                                // Write the return value, unless the pointer to
+                                // write to is null.
                                 if !ptr.is_null() {
                                     self.mem.write(
                                         ptr,
@@ -979,7 +983,8 @@ impl Environment {
                             if i == initial_thread {
                                 log_dbg!("Thread {} is now able to return, returning", i);
                                 self.threads[i].blocked_by = ThreadBlock::NotBlocked;
-                                // Thread is now top of call stack, should return
+                                // Thread is now top of call stack, should
+                                // return
                                 self.switch_thread(i);
                                 return;
                             }

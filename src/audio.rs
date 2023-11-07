@@ -245,9 +245,11 @@ impl AudioFile {
                 for sample in wave_reader.samples().take(sample_count) {
                     let sample: i16 = sample.map_err(|_| ())?;
                     match bytes_per_sample {
-                        // From the OpenAL docs: 8-bit PCM data is expressed as an unsigned value
-                        // over the range 0 to 255, 128 being an audio output level of zero.
-                        // Loaded wav samples must be converted to that from signed with 0 as output level 0
+                        // From the OpenAL docs: 8-bit PCM data is expressed as
+                        // an unsigned value over the range 0 to 255, 128 being
+                        // an audio output level of zero. Loaded wav samples
+                        // must be converted to that from signed with 0 as
+                        // output level 0.
                         1 => buffer[byte_offset] = (sample + 128) as u8,
                         2 => buffer[byte_offset..][..2].copy_from_slice(&sample.to_le_bytes()),
                         _ => todo!(),

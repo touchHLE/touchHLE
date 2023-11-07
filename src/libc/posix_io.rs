@@ -317,8 +317,9 @@ pub fn close(env: &mut Environment, fd: FileDescriptor) -> i32 {
 
     match env.libc_state.posix_io.files[fd_to_file_idx(fd)].take() {
         Some(file) => {
-            // The actual closing of the file happens implicitly when `file` falls out
-            // of scope. The return value is about whether flushing succeeds.
+            // The actual closing of the file happens implicitly when `file`
+            // falls out of scope. The return value is about whether flushing
+            // succeeds.
             match file.file.sync_all() {
                 Ok(()) => {
                     log_dbg!("close({:?}) => 0", fd);

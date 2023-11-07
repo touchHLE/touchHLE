@@ -505,7 +505,8 @@ impl GuestArg for GuestFunction {
 impl GuestArg for VaList {
     const REG_COUNT: usize = <ConstVoidPtr as GuestArg>::REG_COUNT;
     fn from_regs(regs: &[u32]) -> Self {
-        // `reg_offset` initialized to 4 as we want to use `stack_pointer` when calling [read_next_arg]
+        // `reg_offset` initialized to 4 as we want to use `stack_pointer` when
+        // calling [read_next_arg]
         VaList {
             reg_offset: 4,
             stack_pointer: <ConstVoidPtr as GuestArg>::from_regs(regs),

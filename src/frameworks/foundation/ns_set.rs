@@ -238,7 +238,8 @@ fn fast_enumeration_helper(
             items_ptr: stackbuf,
             // can be anything as long as it's dereferenceable and the same
             // each iteration
-            // Note: stackbuf can be different each time, it's better to return self pointer
+            // Note: stackbuf can be different each time, it's better to return
+            // self pointer
             mutations_ptr: set.cast(),
             extra: Default::default(),
         },

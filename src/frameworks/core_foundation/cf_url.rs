@@ -27,7 +27,8 @@ pub fn CFURLGetFileSystemRepresentation(
     buffer_size: CFIndex,
 ) -> bool {
     if resolve_against_base {
-        // this function usually called to resolve resources from the main bundle
+        // this function usually called to resolve resources from the main
+        // bundle
         // thus, the url should already be an absolute path name
         // TODO: use absoluteURL instead once implemented
         let path = msg![env; url path];

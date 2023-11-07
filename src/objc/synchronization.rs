@@ -54,8 +54,9 @@ pub(super) fn objc_sync_exit(env: &mut Environment, obj: id) -> i32 {
                     if lock_count == 0 {
                         // Try to destroy mutex:
                         if env.mutex_state.destroy_mutex(mutex_id).is_ok() {
-                            // If the mutex wasn't destroyed (Err), it means there's another mutex
-                            // still locked, so we can't destroy the id->mutex mapping yet.
+                            // If the mutex wasn't destroyed (Err), it means
+                            // there's another mutex still locked, so we can't
+                            // destroy the id->mutex mapping yet.
                             log_dbg!(
                                 "Regular @synchronized block exit for {:#x} using mutex #{}, unlocked (destroying)",
                                 obj.to_bits(),
@@ -92,8 +93,9 @@ pub(super) fn objc_sync_exit(env: &mut Environment, obj: id) -> i32 {
                 "Attempt to exit from @synchronized block for object {:#x} that was not entered properly",
                 obj.to_bits()
             );
-            // Should technically return an error (non-zero), although I don't think it's ever checked?
-            // Something probably went wrong to get here.
+            // Should technically return an error (non-zero), although I don't
+            // think it's ever checked? Something probably went wrong to get
+            // here.
         }
     }
 

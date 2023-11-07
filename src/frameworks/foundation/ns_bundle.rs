@@ -156,7 +156,8 @@ pub const CLASSES: ClassExports = objc_classes! {
     }
 
     // As a last resort, fallback to English
-    // TODO: fallback to a development language (CFBundleDevelopmentRegion from Info.plist)
+    // TODO: fallback to a development language (CFBundleDevelopmentRegion from
+    // Info.plist)
     if !unknown_codes.is_empty() {
         log!("TODO: language codes {:?} aren't mapped to a language name, falling back to English", unknown_codes);
     }

@@ -683,9 +683,11 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 - (id)stringByStandardizingPath {
     let path = to_rust_string(env, this); // TODO: avoid copying
-    // TODO: Expanding an initial tilde expression using stringByExpandingTildeInPath
+    // TODO: Expanding an initial tilde expression using
+    //       stringByExpandingTildeInPath
     assert!(!path.contains('~'));
-    // TODO: Removing an initial component of "/private/var/automount", "/var/automount”, or "/private” from the path
+    // TODO: Removing an initial component of "/private/var/automount",
+    //       "/var/automount”, or "/private” from the path
     assert!(!path.starts_with("/private"));
     assert!(!path.starts_with("/var/automount"));
     // TODO: Reducing empty components and references to the current directory
@@ -693,7 +695,8 @@ pub const CLASSES: ClassExports = objc_classes! {
     assert!(!path.contains("/./"));
     // Removing a trailing slash from the last component.
     let path = path_algorithms::trim_trailing_slashes(&path);
-    // TODO: For absolute paths only, resolving references to the parent directory
+    // TODO: For absolute paths only, resolving references to the parent
+    //       directory
     if path.starts_with('/') {
         assert!(!path.contains(".."));
     }

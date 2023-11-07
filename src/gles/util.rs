@@ -182,16 +182,18 @@ pub fn try_decode_pvrtc(
 }
 
 pub struct PalettedTextureFormat {
-    /// `true` for 4-bit (nibble) index, 16-color palette. `false` for 8-bit (byte) index, 256-color palette.
+    /// * `true` for 4-bit (nibble) index, 16-color palette.
+    /// * `false` for 8-bit (byte) index, 256-color palette.
     pub index_is_nibble: bool,
     /// `glTexImage2D`-style `format` for palette entries: `GL_RGB` or `GL_RGBA`
     pub palette_entry_format: GLenum,
-    /// `glTexImage2D`-style `type` for palette entries: `GL_UNSIGNED_BYTE` or some `GL_UNSIGNED_SHORT_` value
+    /// `glTexImage2D`-style `type` for palette entries: `GL_UNSIGNED_BYTE` or
+    /// some `GL_UNSIGNED_SHORT_` value
     pub palette_entry_type: GLenum,
 }
 impl PalettedTextureFormat {
-    /// If the provided format is from `OES_compressed_paletted_texture`, returns
-    /// [Some] with information about it, or [None] otherwise.
+    /// If the provided format is from `OES_compressed_paletted_texture`,
+    /// return [Some] with information about it, or [None] otherwise.
     pub fn get_info(internalformat: GLenum) -> Option<Self> {
         match internalformat {
             gles11::PALETTE4_RGB8_OES => Some(Self {

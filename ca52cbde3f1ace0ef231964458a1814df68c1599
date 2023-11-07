@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "080d4098_f4fb3dfb",
+        "filename": "src/frameworks/foundation/ns_array.rs",
+        "patchSetId": 6
+      },
+      "lineNbr": 62,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-11-07T15:26:15Z",
+      "side": 1,
+      "message": "This is a special subclass that shouldn\u0027t be used here.\n\nAlso, it\u0027d be cleaner and simpler to not use `NSMutableArray`. You can just collect the arguments into a `Vec`, retain each one and then call `from_vec()`.",
+      "range": {
+        "startLine": 62,
+        "startChar": 36,
+        "endLine": 62,
+        "endChar": 74
+      },
+      "revId": "ca52cbde3f1ace0ef231964458a1814df68c1599",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

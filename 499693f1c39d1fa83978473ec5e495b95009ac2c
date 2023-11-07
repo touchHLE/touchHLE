@@ -48,6 +48,30 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "c37a0392_fc68d59e",
+        "filename": "src/dyld.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 355,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-11-07T13:45:35Z",
+      "side": 1,
+      "message": "Yeah, the new one is a bit better.",
+      "parentUuid": "ef7eeed3_6687595f",
+      "range": {
+        "startLine": 354,
+        "startChar": 0,
+        "endLine": 355,
+        "endChar": 50
+      },
+      "revId": "499693f1c39d1fa83978473ec5e495b95009ac2c",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "8b2d54ad_e652e28e",
@@ -85,6 +109,30 @@
       "side": 1,
       "message": "I didn\u0027t notice that at all! I just went and merged the two. The functions was already \"cached\" (i.e. repeated calls point to the same pointer), unless you mean something else.",
       "parentUuid": "8b2d54ad_e652e28e",
+      "range": {
+        "startLine": 356,
+        "startChar": 0,
+        "endLine": 372,
+        "endChar": 23
+      },
+      "revId": "499693f1c39d1fa83978473ec5e495b95009ac2c",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "9cb23a33_1296b835",
+        "filename": "src/dyld.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 372,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-11-07T13:45:35Z",
+      "side": 1,
+      "message": "Thanks.",
+      "parentUuid": "d053bb5d_dbab2945",
       "range": {
         "startLine": 356,
         "startChar": 0,

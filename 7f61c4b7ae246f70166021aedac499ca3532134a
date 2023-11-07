@@ -1,0 +1,44 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3be6159e_26e8a3ca",
+        "filename": "src/abi.rs",
+        "patchSetId": 4
+      },
+      "lineNbr": 57,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-11-07T13:45:35Z",
+      "side": 1,
+      "message": "This is overdue tbh, thank you for adding it.\n\nBtw you could simplify it to just `self.0` if you want.",
+      "revId": "7f61c4b7ae246f70166021aedac499ca3532134a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "23fb5a8a_92139b9c",
+        "filename": "src/dyld.rs",
+        "patchSetId": 4
+      },
+      "lineNbr": 510,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-11-07T13:45:35Z",
+      "side": 1,
+      "message": "“via existing stub” might be a better wording.",
+      "range": {
+        "startLine": 510,
+        "startChar": 66,
+        "endLine": 510,
+        "endChar": 70
+      },
+      "revId": "7f61c4b7ae246f70166021aedac499ca3532134a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

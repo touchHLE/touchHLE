@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "19670783_949bfb67",
+        "filename": "src/frameworks/foundation/ns_thread.rs",
+        "patchSetId": 6
+      },
+      "lineNbr": 57,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-11-07T14:35:01Z",
+      "side": 1,
+      "message": "Better to write `/* tail_call: */ true` instead of `false`, so the thread is less likely to block other threads while sleeping.",
+      "revId": "b5feb92ac8ffd8c653be2f842801215c677b088b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

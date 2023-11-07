@@ -1,6 +1,23 @@
 {
   "comments": [
     {
+      "unresolved": true,
+      "key": {
+        "uuid": "fa61e5bf_8a6eea12",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 3
+      },
+      "lineNbr": 7,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-11-07T20:30:11Z",
+      "side": 1,
+      "message": "Oh wait, it would be good to update the commit message I guess.",
+      "revId": "7f664917cd22b3c48a239a610e841c9b38e39a73",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": false,
       "key": {
         "uuid": "a3a2b93b_32a03a84",

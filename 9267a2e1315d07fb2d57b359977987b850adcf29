@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4aaad9c7_77562e45",
+        "filename": "src/frameworks/foundation/ns_array.rs",
+        "patchSetId": 7
+      },
+      "lineNbr": 74,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-11-07T23:11:08Z",
+      "side": 1,
+      "message": "Oh, this also needs to be autoreleased. (There is a rule in Objective-C design along the lines of, if you don\u0027t call alloc, you don\u0027t get back something that it\u0027s your responsibility to free, so you either get back something that\u0027s an existing object or that is a brand new object but which is autoreleased for you. Hence all the arrayWith, stringWith etc methods autorelease, and if you prefer manual memory management you call alloc and then use their initWith counterpart. I hope that makes sense. I should collect this stuff somewhere :p)",
+      "revId": "9267a2e1315d07fb2d57b359977987b850adcf29",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

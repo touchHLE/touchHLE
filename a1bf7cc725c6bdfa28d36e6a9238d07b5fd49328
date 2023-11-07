@@ -34,6 +34,24 @@
       "parentUuid": "788fc5e5_204e5ab8",
       "revId": "a1bf7cc725c6bdfa28d36e6a9238d07b5fd49328",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "cfb55c8a_4185ffe6",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 8
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1022009
+      },
+      "writtenOn": "2023-11-07T14:00:21Z",
+      "side": 1,
+      "message": "Sqlite does it for some inscrutable reason.",
+      "parentUuid": "d901a174_f170bf6a",
+      "revId": "a1bf7cc725c6bdfa28d36e6a9238d07b5fd49328",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7e5e813d_15bb2fd1",
+        "filename": "src/frameworks/foundation/ns_keyed_unarchiver.rs",
+        "patchSetId": 7
+      },
+      "lineNbr": 100,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-11-07T23:15:21Z",
+      "side": 1,
+      "message": "Oh uh, can you add decodeIntegerForKey too? That one returns NSInteger. I think that\u0027s all of them.",
+      "revId": "afeb762b73a4fbb61ba324c6b5e83fc3c6e3743b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

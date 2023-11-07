@@ -4,6 +4,9 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 //! The `NSString` class cluster, including `NSMutableString`.
+//!
+//! Resources:
+//! - Apple's [String Programming Guide](https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/Strings/introStrings.html)
 
 mod path_algorithms;
 

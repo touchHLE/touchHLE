@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "76697575_6bd462fe",
+        "filename": "src/frameworks/foundation/ns_bundle.rs",
+        "patchSetId": 6
+      },
+      "lineNbr": 231,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-11-07T13:52:00Z",
+      "side": 1,
+      "message": "You should change `stringByAppendingPathExtension:` instead, that\u0027s where this behaviour comes from (I tested it).",
+      "revId": "cffc8cdfd6c4f3b1874f10aded73b8c759dffb41",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

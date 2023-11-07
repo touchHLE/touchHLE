@@ -18,6 +18,10 @@ jobs:
     - uses: actions/checkout@v3
       with:
         fetch-depth: 0 # touchHLE's git-describe versioning needs tag history
+    - name: Install clang-format
+      run: brew install clang-format
+    - name: Check formatting
+      run: dev-scripts/format.sh --check
     - name: Get Submodules
       run: git submodule update --init
     - name: Install Boost
@@ -60,6 +64,10 @@ jobs:
     - uses: actions/checkout@v3
       with:
         fetch-depth: 0 # touchHLE's git-describe versioning needs tag history
+    # Apparently the Windows runner already has clang-format? That's nice.
+    - name: Check formatting
+      shell: bash # no command output without this
+      run: dev-scripts/format.sh --check
     - name: Get Submodules
       run: git submodule update --init
     - name: Try to get cached copy of Boost

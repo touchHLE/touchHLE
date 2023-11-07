@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "56a8c263_89f6dd0f",
+        "filename": "src/frameworks/foundation/ns_keyed_unarchiver.rs",
+        "patchSetId": 6
+      },
+      "lineNbr": 82,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-11-07T14:18:09Z",
+      "side": 1,
+      "message": "You can change this to do a `.try_into().unwrap()`. You can keep the comment about the `NSRangeException` if you want (though I think touchHLE will never actually support objc exceptions).",
+      "revId": "4c8c28eca0aa615b5d5027c8b80fb4f43138f5dd",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

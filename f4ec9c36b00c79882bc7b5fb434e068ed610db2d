@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "37856f88_68275792",
+        "filename": "src/frameworks/uikit/ui_view/ui_label.rs",
+        "patchSetId": 6
+      },
+      "lineNbr": 209,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-11-07T15:31:16Z",
+      "side": 1,
+      "message": "Uhhhhh… this should already have been accomplished by the nil check in `setTextColor:` above, which is called in `initWithFrame:`?\n\nIs the problem that `initWithCoder:` isn\u0027t overridden? That could be it.",
+      "revId": "f4ec9c36b00c79882bc7b5fb434e068ed610db2d",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

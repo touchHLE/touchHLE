@@ -16,6 +16,24 @@
       "message": "I don\u0027t like the use of the mutability here to fix the wrong value being assigned to the specifier. There is even a bug: the `assert!` above for the precision will fail.\n\nI would suggest moving this to before line 78 (where `specifier` is assigned) and assigning the value to a variable, something like:\n\n    let length_modifier \u003d if get_format_char(\u0026env.mem, format_char_idx) \u003d\u003d b\u0027l\u0027 {\n        format_char_idx +\u003d 1;\n        Some(b\u0027l\u0027)\n    } else {\n        None\n    };\n\nThen I suggest adding an `assert!(length_modifier.is_none());` for all the `match` cases below, with a TODO comment where appropriate (if the specifier should support this modifier), and for the integer ones you can add a comment about the fact it\u0027s the same size as normal.",
       "revId": "de85bde10ad207be58f225b6adf01f226bfcd2bb",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "cc47b8e4_00200ab8",
+        "filename": "src/libc/stdio/printf.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 97,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-11-07T20:17:27Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "db96be25_c24d98c8",
+      "revId": "de85bde10ad207be58f225b6adf01f226bfcd2bb",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

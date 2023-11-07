@@ -22,9 +22,9 @@ use crate::abi::GuestFunction;
 use crate::fs::{Fs, GuestPath};
 use crate::mem::{Mem, Ptr};
 use mach_object::{
-    vm_prot_t, DyLib, LoadCommand, MachCommand, OFile, Symbol, SymbolIter, ThreadState,
-    N_ARM_THUMB_DEF, S_LAZY_SYMBOL_POINTERS, S_MOD_INIT_FUNC_POINTERS, S_NON_LAZY_SYMBOL_POINTERS,
-    S_SYMBOL_STUBS, cpu_subtype_t
+    cpu_subtype_t, vm_prot_t, DyLib, LoadCommand, MachCommand, OFile, Symbol, SymbolIter,
+    ThreadState, N_ARM_THUMB_DEF, S_LAZY_SYMBOL_POINTERS, S_MOD_INIT_FUNC_POINTERS,
+    S_NON_LAZY_SYMBOL_POINTERS, S_SYMBOL_STUBS,
 };
 use std::collections::HashMap;
 use std::io::{Cursor, Seek, SeekFrom};
@@ -250,20 +250,25 @@ impl MachO {
                 let mut best_subslice = None;
                 let mut best_type = None;
                 for (arch, _) in files {
-                    if arch.cputype == mach_object::CPU_TYPE_ARM {
-                        if arch.cpusubtype == mach_object::CPU_SUBTYPE_ARM_V7 ||
-                            (arch.cpusubtype == mach_object::CPU_SUBTYPE_ARM_V6 && best_type != Some(mach_object::CPU_SUBTYPE_ARM_V7)) ||
-                            best_type.is_none() {
-                            best_subslice = Some(&bytes[arch.offset as usize..arch.offset as usize + arch.size as usize]);
-                            best_type = Some(arch.cpusubtype);
-                        }
+                    if arch.cputype != mach_object::CPU_TYPE_ARM {
+                        continue;
+                    }
+                    if arch.cpusubtype == mach_object::CPU_SUBTYPE_ARM_V7
+                        || (arch.cpusubtype == mach_object::CPU_SUBTYPE_ARM_V6
+                            && best_type != Some(mach_object::CPU_SUBTYPE_ARM_V7))
+                        || best_type.is_none()
+                    {
+                        best_subslice = Some(
+                            &bytes[arch.offset as usize..arch.offset as usize + arch.size as usize],
+                        );
+                        best_type = Some(arch.cpusubtype);
                     }
                 }
                 return if let Some(subslice) = best_subslice {
                     MachO::load_from_bytes(subslice, into_mem, name)
                 } else {
                     Err("No supported architecture in the fat binary")
-                }
+                };
             }
             OFile::ArFile { .. } | OFile::SymDef { .. } => {
                 return Err("Unexpected Mach-O file kind: not an executable");
@@ -273,7 +278,11 @@ impl MachO {
         if header.cputype != mach_object::CPU_TYPE_ARM {
             return Err("Executable is not for an ARM CPU!");
         }
-        log!("Loading an {} slice for {}", cpu_subtype_to_str(header.cpusubtype), name);
+        log!(
+            "Loading an {} slice for {}",
+            cpu_subtype_to_str(header.cpusubtype),
+            name
+        );
 
         let is_bigend = header.is_bigend();
         if is_bigend {

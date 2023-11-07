@@ -20,7 +20,10 @@ use crate::frameworks::core_graphics::cg_context::{CGContextClearRect, CGContext
 use crate::frameworks::core_graphics::{CGFloat, CGPoint, CGRect};
 use crate::frameworks::foundation::ns_string::get_static_str;
 use crate::frameworks::foundation::{ns_array, NSInteger, NSUInteger};
-use crate::objc::{id, msg, nil, objc_classes, release, retain, Class, ClassExports, HostObject, NSZonePtr, autorelease};
+use crate::objc::{
+    autorelease, id, msg, nil, objc_classes, release, retain, Class, ClassExports, HostObject,
+    NSZonePtr,
+};
 use crate::Environment;
 
 #[derive(Default)]

@@ -9,8 +9,8 @@ use super::ns_property_list_serialization::deserialize_plist_from_file;
 use super::{ns_keyed_unarchiver, ns_string, ns_url, NSUInteger};
 use crate::fs::GuestPath;
 use crate::objc::{
-    autorelease, id, msg_class, nil, objc_classes, release, retain, ClassExports, HostObject,
-    NSZonePtr, msg,
+    autorelease, id, msg, msg_class, nil, objc_classes, release, retain, ClassExports, HostObject,
+    NSZonePtr,
 };
 use crate::Environment;
 

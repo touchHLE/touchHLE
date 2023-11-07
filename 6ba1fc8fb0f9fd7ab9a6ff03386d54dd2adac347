@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a473342e_145724ed",
+        "filename": "src/objc/classes.rs",
+        "patchSetId": 7
+      },
+      "lineNbr": 562,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-11-07T14:09:51Z",
+      "side": 1,
+      "message": "It\u0027d be good to have a comment about this.",
+      "revId": "6ba1fc8fb0f9fd7ab9a6ff03386d54dd2adac347",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

@@ -16,6 +16,24 @@
       "message": "What\u0027s the motivation? Was it a performance bottleneck?",
       "revId": "a1bf7cc725c6bdfa28d36e6a9238d07b5fd49328",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d901a174_f170bf6a",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 8
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-11-07T13:59:13Z",
+      "side": 1,
+      "message": "I guess the memmove code copied the wrong amount of data, so that should be fixed. But I prefer it if shrinking actually does free memory.",
+      "parentUuid": "788fc5e5_204e5ab8",
+      "revId": "a1bf7cc725c6bdfa28d36e6a9238d07b5fd49328",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

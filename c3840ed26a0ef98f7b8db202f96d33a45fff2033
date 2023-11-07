@@ -1,0 +1,61 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1da7b36e_4ca9d3d0",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 5
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-11-07T14:42:31Z",
+      "side": 1,
+      "message": "It\u0027d be good to have at least a basic test for this.",
+      "revId": "c3840ed26a0ef98f7b8db202f96d33a45fff2033",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a527b85e_f34276fe",
+        "filename": "src/libc/stdio/printf.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 59,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-11-07T14:42:31Z",
+      "side": 1,
+      "message": "Apparently it\u0027s an `int` (so, `i32` in Rust) and can actually be negative, and that changes the mode. You can `assert` that it\u0027s not negative if you don\u0027t want to implement that mode.",
+      "range": {
+        "startLine": 59,
+        "startChar": 40,
+        "endLine": 59,
+        "endChar": 43
+      },
+      "revId": "c3840ed26a0ef98f7b8db202f96d33a45fff2033",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fd772479_97fb0003",
+        "filename": "src/libc/stdio/printf.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 66,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-11-07T14:42:31Z",
+      "side": 1,
+      "message": "Did you forget to run `cargo fmt`?\n\nBtw you could write it a bit more neatly as:\n\n    let pad_width \u003d if get_format_char … {\n    \n    } else {\n         let mut pad_width \u003d 0;\n         while … {\n         }\n         pad_width\n    };",
+      "revId": "c3840ed26a0ef98f7b8db202f96d33a45fff2033",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

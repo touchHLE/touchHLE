@@ -22,6 +22,11 @@ jobs:
       run: git submodule update --init
     - name: Install Boost
       run: brew install boost
+    # This is the earliest point at which we can do linting: clippy will end up
+    # building dynarmic, which needs Boost, but we don't need LLVM until
+    # building tests.
+    - name: Lint
+      run: dev-scripts/lint.sh
     - name: Try to get cached copy of LLVM
       id: cache-llvm
       uses: actions/cache@v3
@@ -69,6 +74,12 @@ jobs:
     - if: ${{ steps.cache-boost.outputs.cache-hit != 'true' }}
       name: Extract Boost
       run: 7z -ovendor x boost_1_81_0.7z && ren vendor\boost_1_81_0 boost
+    # This is the earliest point at which we can do linting: clippy will end up
+    # building dynarmic, which needs Boost, but we don't need LLVM until
+    # building tests.
+    - name: Lint
+      shell: bash # no command output without this
+      run: dev-scripts/lint.sh
     - name: Try to get cached copy of LLVM
       id: cache-llvm
       uses: actions/cache@v3

@@ -22,6 +22,30 @@
       },
       "revId": "3ae79112153c25d99a16ccba751814490ddb205c",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "053eefed_8cc740f5",
+        "filename": "src/objc/classes.rs",
+        "patchSetId": 8
+      },
+      "lineNbr": 562,
+      "author": {
+        "id": 1022009
+      },
+      "writtenOn": "2023-11-07T15:00:53Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "549f0719_7ef70e5f",
+      "range": {
+        "startLine": 562,
+        "startChar": 40,
+        "endLine": 562,
+        "endChar": 44
+      },
+      "revId": "3ae79112153c25d99a16ccba751814490ddb205c",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

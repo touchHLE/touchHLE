@@ -34,6 +34,24 @@
       "parentUuid": "bcccb433_5e86352d",
       "revId": "65e46b0bbd6f87dafc2ef84a4f39c02568ee3756",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "08b97816_3ffe17be",
+        "filename": "src/frameworks/core_graphics/cg_image.rs",
+        "patchSetId": 6
+      },
+      "lineNbr": 149,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-11-07T20:27:19Z",
+      "side": 1,
+      "message": "They aren\u0027t mutually exclusive: RGBA is the order and number of components, sRGB is the presumed color space.",
+      "parentUuid": "9335df50_8f55155a",
+      "revId": "65e46b0bbd6f87dafc2ef84a4f39c02568ee3756",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

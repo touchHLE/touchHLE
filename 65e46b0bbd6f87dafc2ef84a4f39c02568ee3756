@@ -16,6 +16,24 @@
       "message": "Isn\u0027t it 32, since it\u0027s RGBA? (I haven\u0027t tested this.)\n\nAlso, I think you can remove the `log!`, there\u0027s nothing that needs to be warned about here. If a different value would be appropriate, it will already have hit some other assertion related to CGImage.",
       "revId": "65e46b0bbd6f87dafc2ef84a4f39c02568ee3756",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9335df50_8f55155a",
+        "filename": "src/frameworks/core_graphics/cg_image.rs",
+        "patchSetId": 6
+      },
+      "lineNbr": 149,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2023-11-07T19:46:00Z",
+      "side": 1,
+      "message": "I don\u0027t remember where i got sRGB from, probably from image.rs where I saw this comment\n```// TODO: we\u0027re currently assuming this is sRGB, can we check somehow?```\nI didn\u0027t check much for this function, so if it\u0027s RGBA instead, i\u0027ll change it.",
+      "parentUuid": "bcccb433_5e86352d",
+      "revId": "65e46b0bbd6f87dafc2ef84a4f39c02568ee3756",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

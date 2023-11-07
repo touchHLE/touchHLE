@@ -598,6 +598,7 @@ pub(super) fn draw_image(
     // let _ = std::fs::write(format!("bitmap-{:?}-{:?}-after.data", (image as *const _ as *const ()), (drawer.width(), drawer.height())), &drawer.pixels);
 }
 
+#[allow(rustdoc::broken_intra_doc_links)] // https://github.com/rust-lang/rust/issues/83049
 /// Shortcut for [crate::frameworks::core_animation::composition]. This is a
 /// workaround for not having a `&mut Environment` that should eventually be
 /// removed somehow (TODO).

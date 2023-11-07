@@ -6,6 +6,7 @@
 //! Guest mutex interface.
 //!
 //! See [crate::environment::mutex] for the internal implementation.
+#![allow(rustdoc::broken_intra_doc_links)] // https://github.com/rust-lang/rust/issues/83049
 
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::mem::{ConstPtr, MutPtr, Ptr, SafeRead};

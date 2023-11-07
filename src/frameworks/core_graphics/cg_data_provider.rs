@@ -112,6 +112,7 @@ fn CGDataProviderCreateWithData(
     )
 }
 
+#[allow(rustdoc::broken_intra_doc_links)] // https://github.com/rust-lang/rust/issues/83049
 /// This is for use by [super::cg_image::CGImageGetDataProvider].
 pub(super) fn from_cg_image(env: &mut Environment, cg_image: CGImageRef) -> CGDataProviderRef {
     CGImageRetain(env, cg_image);

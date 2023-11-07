@@ -56,7 +56,7 @@ Please also see the following guidelines for what to do with code changes.
 
 The developer documentation can be found in [the `dev-docs` directory](dev-docs/) and throughout the codebase. At a minimum, you'll probably want to read [the building guide](dev-docs/building.md).
 
-Please run `cargo fmt` and `cargo clippy` on your changes before committing. For the handful of C and C++ files, please use `clang-format -i` to format them.
+Please run `cargo fmt` and [`dev-scripts/lint.sh`](dev-scripts/lint.sh) on your changes before committing. For the handful of C and C++ files, please use `clang-format -i` to format them.
 
 You should also run `cargo test`. [Building the integration tests requires downloading LLVM](tests/README.md), so it's understandable if you want to skip them (`cargo test -- --skip run_test_app`) and let the GitHub Actions CI catch any issues when you submit your pull request. Alternatively, you can download a pre-built version of the integration tests app (TestApp) from GitHub Actions CI and run it in touchHLE.
 

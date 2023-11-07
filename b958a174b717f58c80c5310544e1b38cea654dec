@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "dbf53ded_d6c6f070",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 7
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2023-11-07T21:29:59Z",
+      "side": 1,
+      "message": "I tried moving it outside, to an external function and call it from within the objective rust code but had issues with msg_super so i left it duplicated in each function body.",
+      "revId": "b958a174b717f58c80c5310544e1b38cea654dec",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

@@ -4,7 +4,6 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 //! Reading of Mach-O files, the executable and library format on iPhone OS.
-//! Currently only handles executables.
 //!
 //! Implemented using the mach_object crate. All usage of that crate should be
 //! confined to this module. The goal is to read the Mach-O binary exactly once,
@@ -280,7 +279,7 @@ impl MachO {
             return Err("Executable is not for an ARM CPU!");
         }
         log!(
-            "Loading an {} slice for {}",
+            "Loading {} slice for {:?}",
             cpu_subtype_to_str(header.cpusubtype),
             name
         );

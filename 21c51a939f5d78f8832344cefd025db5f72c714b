@@ -16,6 +16,24 @@
       "message": "Apparently paths like `~/foo` and `~bar/foo` are also considered absolute: https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/Strings/Articles/ManipulatingPaths.html#//apple_ref/doc/uid/20000152-BBCBIGHH",
       "revId": "21c51a939f5d78f8832344cefd025db5f72c714b",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "30df8e06_45ed47f8",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 849,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-11-07T20:17:07Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "e80a3674_f3266c51",
+      "revId": "21c51a939f5d78f8832344cefd025db5f72c714b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

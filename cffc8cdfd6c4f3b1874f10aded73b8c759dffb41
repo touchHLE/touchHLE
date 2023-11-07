@@ -16,6 +16,24 @@
       "message": "You should change `stringByAppendingPathExtension:` instead, that\u0027s where this behaviour comes from (I tested it).",
       "revId": "cffc8cdfd6c4f3b1874f10aded73b8c759dffb41",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "16c9dd60_8e8ad890",
+        "filename": "src/frameworks/foundation/ns_bundle.rs",
+        "patchSetId": 6
+      },
+      "lineNbr": 231,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-11-07T14:36:26Z",
+      "side": 1,
+      "message": "Oh actually there\u0027s already a patch for this here: https://review.gerrithub.io/c/hikari-no-yume/touchHLE/+/1169671\n\nI suggest abandoning yours.",
+      "parentUuid": "76697575_6bd462fe",
+      "revId": "cffc8cdfd6c4f3b1874f10aded73b8c759dffb41",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

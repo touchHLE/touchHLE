@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "bcccb433_5e86352d",
+        "filename": "src/frameworks/core_graphics/cg_image.rs",
+        "patchSetId": 6
+      },
+      "lineNbr": 149,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-11-07T14:21:55Z",
+      "side": 1,
+      "message": "Isn\u0027t it 32, since it\u0027s RGBA? (I haven\u0027t tested this.)\n\nAlso, I think you can remove the `log!`, there\u0027s nothing that needs to be warned about here. If a different value would be appropriate, it will already have hit some other assertion related to CGImage.",
+      "revId": "65e46b0bbd6f87dafc2ef84a4f39c02568ee3756",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

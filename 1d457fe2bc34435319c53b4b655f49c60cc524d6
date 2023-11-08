@@ -1,0 +1,44 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a749046b_865c059e",
+        "filename": "src/frameworks/uikit/ui_image.rs",
+        "patchSetId": 10
+      },
+      "lineNbr": 59,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-11-08T15:58:05Z",
+      "side": 1,
+      "message": "nitpick: no space.",
+      "range": {
+        "startLine": 59,
+        "startChar": 44,
+        "endLine": 59,
+        "endChar": 46
+      },
+      "revId": "1d457fe2bc34435319c53b4b655f49c60cc524d6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "eef1ff59_c6dc95a8",
+        "filename": "src/frameworks/uikit/ui_image.rs",
+        "patchSetId": 10
+      },
+      "lineNbr": 92,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-11-08T15:58:05Z",
+      "side": 1,
+      "message": "Nitpick: Can you add a space between the - and the opening (, and add a comment with the type of `data`? (Though it\u0027s obvious from context, I know.)",
+      "revId": "1d457fe2bc34435319c53b4b655f49c60cc524d6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

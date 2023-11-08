@@ -164,7 +164,8 @@ impl Cpu {
     /// becomes bound to that [Mem] instance (subsequent calls must use the same
     /// one).
     pub fn new(direct_memory_access: Option<&mut Mem>) -> Cpu {
-        // Null page count is in pages rather than bytes. Mem ensures it is page aligned.
+        // Null page count is in pages rather than bytes. Mem ensures it is
+        // page aligned.
         let null_page_count: usize = direct_memory_access
             .as_ref()
             .map_or(0, |mem| mem.null_segment_size() / 0x1000)

@@ -161,7 +161,7 @@ public:
                null_page_count, page_table.size());
         abort();
       }
-      for (int i = 0; i < null_page_count; i++) {
+      for (size_t i = 0; i < null_page_count; i++) {
         page_table[i] = nullptr;
       }
       user_config.page_table = &page_table;

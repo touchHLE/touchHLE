@@ -292,13 +292,14 @@ impl Mem {
     }
 
     /// Sets up the null segment of the given size. There's no reason to call
-    /// this outside of binary loading, and it won't be respected even if you do.
-    /// The size must not have been set already, and must be page aligned.
+    /// this outside of binary loading, and it won't be respected even if you
+    /// do. The size must not have been set already, and must be page aligned.
     pub fn set_null_segment_size(&mut self, new_null_segment_size: VAddr) {
         // TODO?: Maybe this should be replaced with a per-page rwx/callback
-        // setting? Currently we don't properly follow segment protections, which
-        // means that applications can write into segments they shouldn't be.
-        // Adding that would fix that, along with removing this special case.
+        //        setting? Currently we don't properly follow segment
+        //        protections, which means that applications can write into
+        //        segments they shouldn't be able to. Adding that would fix
+        //        this, along with removing this special case.
         assert!(self.null_segment_size == 0);
         assert!(new_null_segment_size % 0x1000 == 0);
         self.allocator

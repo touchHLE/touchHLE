@@ -38,6 +38,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "5e0307b8_4c7d39f1",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 10
+      },
+      "lineNbr": 7,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-11-08T18:03:38Z",
+      "side": 1,
+      "message": "Oh I see, because the mutex ID is part of the mutex struct, so if we don\u0027t check if the struct is valid, we operate on the wrong mutex…\n\nI think the commit message should be something more like “Fix bug where wrong mutex is used when statically initialized”.",
+      "parentUuid": "23a1e7a3_de0fd79f",
+      "revId": "f13be9e642366e5e3d0044feead5b933486f5ea2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "979d7116_28654526",
         "filename": "src/libc/pthread/mutex.rs",
         "patchSetId": 10

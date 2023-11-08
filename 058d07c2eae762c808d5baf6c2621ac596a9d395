@@ -34,6 +34,24 @@
       "parentUuid": "fbe4fef1_bcc82c18",
       "revId": "058d07c2eae762c808d5baf6c2621ac596a9d395",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "77d71942_066108ce",
+        "filename": "src/libc/stdio.rs",
+        "patchSetId": 4
+      },
+      "lineNbr": 71,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-11-08T19:47:33Z",
+      "side": 1,
+      "message": "Done for both 😊",
+      "parentUuid": "f357a8c0_e3f3478a",
+      "revId": "058d07c2eae762c808d5baf6c2621ac596a9d395",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

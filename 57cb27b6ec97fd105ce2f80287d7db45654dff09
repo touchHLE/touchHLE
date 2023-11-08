@@ -16,6 +16,24 @@
       "message": "Can you add comments with the types?\n\nOtherwise, looks good :)",
       "revId": "57cb27b6ec97fd105ce2f80287d7db45654dff09",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ac184fc4_b1f346af",
+        "filename": "src/frameworks/foundation/ns_file_manager.rs",
+        "patchSetId": 10
+      },
+      "lineNbr": 184,
+      "author": {
+        "id": 1022009
+      },
+      "writtenOn": "2023-11-08T19:21:40Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "e158e93b_3443ba9e",
+      "revId": "57cb27b6ec97fd105ce2f80287d7db45654dff09",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

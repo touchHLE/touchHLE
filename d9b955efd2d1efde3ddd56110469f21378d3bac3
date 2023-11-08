@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "254b6709_55705525",
+        "filename": "src/frameworks/foundation/ns_autorelease_pool.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 59,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-11-08T20:02:23Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "7faee4af_b7dd57be",
+      "revId": "d9b955efd2d1efde3ddd56110469f21378d3bac3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "5f3ea7e4_c1950bff",
@@ -35,6 +53,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "7c5ddcbc_ea84fba8",
+        "filename": "src/frameworks/foundation/ns_autorelease_pool.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 81,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-11-08T20:02:23Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "5f3ea7e4_c1950bff",
+      "revId": "d9b955efd2d1efde3ddd56110469f21378d3bac3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "aa473a18_c2cea058",
@@ -48,6 +84,30 @@
       "writtenOn": "2023-11-08T19:53:52Z",
       "side": 1,
       "message": "s/that/what/ ?",
+      "range": {
+        "startLine": 84,
+        "startChar": 20,
+        "endLine": 84,
+        "endChar": 24
+      },
+      "revId": "d9b955efd2d1efde3ddd56110469f21378d3bac3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5c693f58_86bc6f6e",
+        "filename": "src/frameworks/foundation/ns_autorelease_pool.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 84,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-11-08T20:02:23Z",
+      "side": 1,
+      "message": "Sorry, done",
+      "parentUuid": "aa473a18_c2cea058",
       "range": {
         "startLine": 84,
         "startChar": 20,

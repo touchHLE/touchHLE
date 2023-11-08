@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7a41db19_b396fea6",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 9
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-11-08T20:00:31Z",
+      "side": 1,
+      "message": "Can\u0027t be merged for the same reason as for libsqlite3: https://review.gerrithub.io/c/hikari-no-yume/touchHLE/+/1170763",
+      "revId": "144df307e14e8176a76a962b4016cda05a5f13e4",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

@@ -16,6 +16,24 @@
       "message": "I don\u0027t think there\u0027s any need for a warning tbh, it\u0027s not actually an error AFAICT. Btw, can you add the same check for fread too?",
       "revId": "058d07c2eae762c808d5baf6c2621ac596a9d395",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f357a8c0_e3f3478a",
+        "filename": "src/libc/stdio.rs",
+        "patchSetId": 4
+      },
+      "lineNbr": 71,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-11-08T15:52:38Z",
+      "side": 1,
+      "message": "I meant fwrite, oops.",
+      "parentUuid": "fbe4fef1_bcc82c18",
+      "revId": "058d07c2eae762c808d5baf6c2621ac596a9d395",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

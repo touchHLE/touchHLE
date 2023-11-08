@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "d7836079_ef7520f8",
+        "filename": "src/frameworks/uikit/ui_application.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 144,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-11-08T19:46:58Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "4ca1aeb8_a3812b99",
+      "revId": "6c41f35efa6aae5570a0977065519b4dae3066ad",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "15deb6b7_882ff013",
@@ -31,6 +49,24 @@
       "writtenOn": "2023-11-08T17:14:05Z",
       "side": 1,
       "message": "The windows need to be retained and the vec needs to be autoreleased.",
+      "revId": "6c41f35efa6aae5570a0977065519b4dae3066ad",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "c57f8fe9_6146ce54",
+        "filename": "src/frameworks/uikit/ui_application.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 152,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-11-08T19:46:58Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "15deb6b7_882ff013",
       "revId": "6c41f35efa6aae5570a0977065519b4dae3066ad",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

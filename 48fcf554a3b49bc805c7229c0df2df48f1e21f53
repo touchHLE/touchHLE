@@ -57,6 +57,24 @@
       "parentUuid": "98446e31_2345650b",
       "revId": "48fcf554a3b49bc805c7229c0df2df48f1e21f53",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c0b7773d_208d5c84",
+        "filename": "src/objc/objects.rs",
+        "patchSetId": 8
+      },
+      "lineNbr": 301,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-11-08T18:08:31Z",
+      "side": 1,
+      "message": "Hmm… that might be a bug you need to investigate, it could be a symptom of some larger problem!\n\nBut I guess tolerating retainCount on a freed object is fine. I would suggest you make this return None in that case (rather than 0) and then the caller can do something like `log!(\"Warning: retainCount called on unknown object {:?}]\");`? Though it is very suspicious that this would happen at all. touchHLE\u0027s implementation of free will zero the allocation, so a freed object shouldn\u0027t have a valid `isa` :/",
+      "parentUuid": "81baaaaa_94490f6b",
+      "revId": "48fcf554a3b49bc805c7229c0df2df48f1e21f53",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

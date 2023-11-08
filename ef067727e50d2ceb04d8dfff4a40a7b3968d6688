@@ -1,0 +1,44 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "3e14e21c_46747167",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 10
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-11-08T16:33:50Z",
+      "side": 1,
+      "message": "Cop",
+      "revId": "ef067727e50d2ceb04d8dfff4a40a7b3968d6688",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1d02bd4d_0b2ed339",
+        "filename": "touchHLE_dylibs/README.md",
+        "patchSetId": 10
+      },
+      "lineNbr": 21,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-11-08T16:33:50Z",
+      "side": 1,
+      "message": "If we think of the public domain in software license terms, it\u0027s not “viral” like the GPL, in that there is no guarantee the resulting binary has the same license as the source. We can\u0027t know whether Apple added proprietary code to it. So, unfortunately, I must reject this.\n\nBut if someone trustworthy wants to build the library from source using an old version of Xcode (I could attempt this, for example), that\u0027d be fine. Apple publish the source they used on their site.",
+      "range": {
+        "startLine": 21,
+        "startChar": 0,
+        "endLine": 21,
+        "endChar": 96
+      },
+      "revId": "ef067727e50d2ceb04d8dfff4a40a7b3968d6688",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4ca1aeb8_a3812b99",
+        "filename": "src/frameworks/uikit/ui_application.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 144,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-11-08T17:14:05Z",
+      "side": 1,
+      "message": "Hmm. I guess it\u0027d be annoying to fix this. Can you add a `log!` about this in the accessor, so we\u0027ll at least know about it if it breaks something?",
+      "revId": "6c41f35efa6aae5570a0977065519b4dae3066ad",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "15deb6b7_882ff013",
+        "filename": "src/frameworks/uikit/ui_application.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 152,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-11-08T17:14:05Z",
+      "side": 1,
+      "message": "The windows need to be retained and the vec needs to be autoreleased.",
+      "revId": "6c41f35efa6aae5570a0977065519b4dae3066ad",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

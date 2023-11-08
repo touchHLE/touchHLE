@@ -54,6 +54,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "1b2cbecf_e9fcb50b",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 10
+      },
+      "lineNbr": 7,
+      "author": {
+        "id": 1022009
+      },
+      "writtenOn": "2023-11-08T19:20:58Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "5e0307b8_4c7d39f1",
+      "revId": "f13be9e642366e5e3d0044feead5b933486f5ea2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "979d7116_28654526",
@@ -67,6 +85,30 @@
       "writtenOn": "2023-11-08T16:30:10Z",
       "side": 1,
       "message": "Uhh, can\u0027t check_or_register_mutex just be called before reading the mutex data? I don\u0027t think there\u0027s any reason to read it twice.",
+      "range": {
+        "startLine": 132,
+        "startChar": 0,
+        "endLine": 135,
+        "endChar": 5
+      },
+      "revId": "f13be9e642366e5e3d0044feead5b933486f5ea2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "58400c3b_905be31f",
+        "filename": "src/libc/pthread/mutex.rs",
+        "patchSetId": 10
+      },
+      "lineNbr": 135,
+      "author": {
+        "id": 1022009
+      },
+      "writtenOn": "2023-11-08T19:20:58Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "979d7116_28654526",
       "range": {
         "startLine": 132,
         "startChar": 0,

@@ -5,7 +5,10 @@
  */
 //! `NSThread`.
 
+use std::time::Duration;
+
 use crate::objc::{id, objc_classes, ClassExports};
+use crate::frameworks::foundation::NSTimeInterval;
 
 pub const CLASSES: ClassExports = objc_classes! {
 

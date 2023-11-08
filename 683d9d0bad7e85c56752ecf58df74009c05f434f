@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "a6bad445_b620c488",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 8
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-11-08T16:05:46Z",
+      "side": 1,
+      "message": "Don\u0027t forget to submit the CGPointZero and CGSizeZero commit first.",
+      "revId": "683d9d0bad7e85c56752ecf58df74009c05f434f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

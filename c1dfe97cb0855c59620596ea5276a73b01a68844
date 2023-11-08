@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1c1fce4a_98f81e37",
+        "filename": "src/frameworks/foundation/ns_autorelease_pool.rs",
+        "patchSetId": 4
+      },
+      "lineNbr": 47,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-11-08T13:23:16Z",
+      "side": 1,
+      "message": "I think it\u0027d be good to add the current thread ID to all these log messages, to help debugging.",
+      "revId": "c1dfe97cb0855c59620596ea5276a73b01a68844",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b553348c_b121be36",
+        "filename": "src/frameworks/foundation/ns_autorelease_pool.rs",
+        "patchSetId": 4
+      },
+      "lineNbr": 83,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-11-08T13:23:16Z",
+      "side": 1,
+      "message": "If this assertion fails it\u0027s gonna be pretty confusing, and honestly it\u0027s very unclear to me if we can assume this anyway. Could you add the original thread ID to host object, and then assert that the current thread ID matches first of all (with `assert_eq!`)? I think that\u0027d help debugging. It would also be good to have a comment about the fact it\u0027s unclear what should happen when draining a pool on the wrong thread, so we\u0027re just being conservative.",
+      "revId": "c1dfe97cb0855c59620596ea5276a73b01a68844",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

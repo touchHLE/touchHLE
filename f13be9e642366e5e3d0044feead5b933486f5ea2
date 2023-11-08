@@ -20,6 +20,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "23a1e7a3_de0fd79f",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 10
+      },
+      "lineNbr": 7,
+      "author": {
+        "id": 1022009
+      },
+      "writtenOn": "2023-11-08T16:31:59Z",
+      "side": 1,
+      "message": "This is a bug where if an app uses more than one statically initialized mutex, we lock the wrong mutex sometimes. sqlite triggers this.",
+      "parentUuid": "7c7e4522_060b31e2",
+      "revId": "f13be9e642366e5e3d0044feead5b933486f5ea2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "979d7116_28654526",
         "filename": "src/libc/pthread/mutex.rs",
         "patchSetId": 10

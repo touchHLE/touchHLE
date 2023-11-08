@@ -16,6 +16,64 @@
       "message": "Huh. Do you have an example of when this happens? (Feel free to @ me on Discord or something, Gerrit is probably not the best place to discuss it.)",
       "revId": "a2e49c4316cc2a906becd374de9f7004af64a321",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "6b49e5a4_a959af1d",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 8
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-11-08T16:54:26Z",
+      "side": 1,
+      "message": "I am told libxml does this with libc functions, and it\u0027s probably for a function pointer table considering it uses malloc and free.",
+      "parentUuid": "497c8d1a_b49da836",
+      "revId": "a2e49c4316cc2a906becd374de9f7004af64a321",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "cf23b1e7_d3a34cb8",
+        "filename": "src/dyld.rs",
+        "patchSetId": 8
+      },
+      "lineNbr": 335,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-11-08T16:54:26Z",
+      "side": 1,
+      "message": "Can you add an assertion for the offset being zero? It theoretically could happen but I don\u0027t know what it would mean and things would go wrong if the offset was applied to one of our host function stubs.",
+      "revId": "a2e49c4316cc2a906becd374de9f7004af64a321",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6296fb35_a0459968",
+        "filename": "src/dyld.rs",
+        "patchSetId": 8
+      },
+      "lineNbr": 401,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-11-08T16:54:26Z",
+      "side": 1,
+      "message": "I think functions can actually be linked immediately, if you use the recent changes in this file from LennyKappa — https://review.gerrithub.io/c/hikari-no-yume/touchHLE/+/1170344 — the patch isn\u0027t merged yet but I think you could rebase your commit on it, it won\u0027t change much before being submitted. That patch also adds the non-lazy linking of functions but in a cleaner way, but it doesn\u0027t add relocations I think.",
+      "range": {
+        "startLine": 396,
+        "startChar": 0,
+        "endLine": 401,
+        "endChar": 1
+      },
+      "revId": "a2e49c4316cc2a906becd374de9f7004af64a321",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

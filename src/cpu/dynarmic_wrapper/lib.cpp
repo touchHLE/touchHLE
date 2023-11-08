@@ -157,10 +157,11 @@ public:
       static_assert(1 << Dynarmic::A32::UserConfig::PAGE_BITS == 0x1000);
 
       if (null_page_count > page_table.size()) {
-        printf("Too many null pages, %zu requested but maximum is %zu.", null_page_count, page_table.size());
+        printf("Too many null pages, %zu requested but maximum is %zu.",
+               null_page_count, page_table.size());
         abort();
       }
-      for (int i = 0; i < null_page_count; i++){
+      for (int i = 0; i < null_page_count; i++) {
         page_table[i] = nullptr;
       }
       user_config.page_table = &page_table;
@@ -220,7 +221,8 @@ public:
 
 extern "C" {
 
-DynarmicWrapper *touchHLE_DynarmicWrapper_new(void *direct_memory_access_ptr, size_t null_page_count) {
+DynarmicWrapper *touchHLE_DynarmicWrapper_new(void *direct_memory_access_ptr,
+                                              size_t null_page_count) {
   return new DynarmicWrapper(direct_memory_access_ptr, null_page_count);
 }
 void touchHLE_DynarmicWrapper_delete(DynarmicWrapper *cpu) { delete cpu; }

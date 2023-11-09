@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "cbc9c2c1_2e221865",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 8
+      },
+      "lineNbr": 7,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-11-09T16:47:11Z",
+      "side": 1,
+      "message": "This commit message kept confusing me, only now do I realise it\u0027s a typo of “width”. Can you fix it before submitting? I think commit message changes don\u0027t remove the +2.",
+      "range": {
+        "startLine": 7,
+        "startChar": 21,
+        "endLine": 7,
+        "endChar": 25
+      },
+      "revId": "54fae931fc52563b43f26760d2c17eee5b28dcef",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

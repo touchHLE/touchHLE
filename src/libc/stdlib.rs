@@ -252,7 +252,8 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(strtof(_, _)),
 ];
 
-/// Returns a tuple containing the parsed number and the length of the number in the string
+/// Returns a tuple containing the parsed number and the length of the number in
+/// the string
 fn atof_inner(env: &mut Environment, s: ConstPtr<u8>) -> Result<(f64, u32), <f64 as FromStr>::Err> {
     // atof() is similar to atoi().
     // FIXME: no C99 hexfloat, INF, NAN support

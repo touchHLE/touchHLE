@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ee252d45_4968ff61",
+        "filename": "src/frameworks/core_graphics/cg_geometry.rs",
+        "patchSetId": 9
+      },
+      "lineNbr": 169,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-11-09T21:29:04Z",
+      "side": 1,
+      "message": "min x and min y should be included in the check. as per docs:\n\n\u003e A point is considered inside the rectangle if its coordinates lie inside the rectangle or on the minimum X or minimum Y edge.\n\nhttps://developer.apple.com/documentation/coregraphics/1456316-cgrectcontainspoint?language\u003dobjc",
+      "revId": "04f1d791f3bc8bf0f18cfab5234b8a5a46a6ad64",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

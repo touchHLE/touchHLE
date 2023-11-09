@@ -88,6 +88,24 @@
       "parentUuid": "f8671ac9_6c807f42",
       "revId": "3b14180bbd979a6285221d48fa95f4db713c348e",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "de78f48b_f13c6b59",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 11
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1022009
+      },
+      "writtenOn": "2023-11-09T20:28:37Z",
+      "side": 1,
+      "message": "I ran `cargo update proc-macro2`",
+      "parentUuid": "277f4f51_48152f79",
+      "revId": "3b14180bbd979a6285221d48fa95f4db713c348e",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

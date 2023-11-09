@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a1ce6503_91946785",
+        "filename": "src/frameworks/foundation/ns_object.rs",
+        "patchSetId": 9
+      },
+      "lineNbr": 189,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-11-09T23:13:03Z",
+      "side": 1,
+      "message": "please add asserts about `sel` not being NULL (here and for other methods)",
+      "revId": "405396b01d23e40fd3b07791b2d9c713cf001bbf",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

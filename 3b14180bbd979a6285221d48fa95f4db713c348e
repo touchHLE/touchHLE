@@ -70,6 +70,24 @@
       "parentUuid": "5a0b071e_cded0530",
       "revId": "3b14180bbd979a6285221d48fa95f4db713c348e",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "277f4f51_48152f79",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 11
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-11-09T20:27:44Z",
+      "side": 1,
+      "message": "Ah, I see. But proc-macro2 isn\u0027t directly used by touchHLE, it must be coming from a dependency… did you manually edit the lock file, or, how did only this package get updated?",
+      "parentUuid": "f8671ac9_6c807f42",
+      "revId": "3b14180bbd979a6285221d48fa95f4db713c348e",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

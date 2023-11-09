@@ -16,6 +16,24 @@
       "message": "sorry",
       "revId": "253ba9c807e9b0103cac9453b04b637e241a8e5b",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "caf50f1f_fc9f1146",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-11-09T10:32:13Z",
+      "side": 1,
+      "message": "No problem, it happens to all of us!",
+      "parentUuid": "e6b0f2d1_947d11c5",
+      "revId": "253ba9c807e9b0103cac9453b04b637e241a8e5b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

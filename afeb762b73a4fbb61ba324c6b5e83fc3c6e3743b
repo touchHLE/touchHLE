@@ -16,6 +16,24 @@
       "message": "Oh uh, can you add decodeIntegerForKey too? That one returns NSInteger. I think that\u0027s all of them.",
       "revId": "afeb762b73a4fbb61ba324c6b5e83fc3c6e3743b",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "0228a309_7721c6e1",
+        "filename": "src/frameworks/foundation/ns_keyed_unarchiver.rs",
+        "patchSetId": 7
+      },
+      "lineNbr": 100,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2023-11-09T16:32:59Z",
+      "side": 1,
+      "message": "Oops, missed that one since it was defined in the superclass. Done",
+      "parentUuid": "7e5e813d_15bb2fd1",
+      "revId": "afeb762b73a4fbb61ba324c6b5e83fc3c6e3743b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

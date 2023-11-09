@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "f6009407_185c7b77",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 5
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2023-11-09T16:31:40Z",
+      "side": 1,
+      "message": "Updated existing %d and %f tests to include * padding",
+      "parentUuid": "1da7b36e_4ca9d3d0",
+      "revId": "c3840ed26a0ef98f7b8db202f96d33a45fff2033",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "a527b85e_f34276fe",
@@ -41,6 +59,30 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "10cb98f8_0389fe44",
+        "filename": "src/libc/stdio/printf.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 59,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2023-11-09T16:31:40Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "a527b85e_f34276fe",
+      "range": {
+        "startLine": 59,
+        "startChar": 40,
+        "endLine": 59,
+        "endChar": 43
+      },
+      "revId": "c3840ed26a0ef98f7b8db202f96d33a45fff2033",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "fd772479_97fb0003",
@@ -54,6 +96,24 @@
       "writtenOn": "2023-11-07T14:42:31Z",
       "side": 1,
       "message": "Did you forget to run `cargo fmt`?\n\nBtw you could write it a bit more neatly as:\n\n    let pad_width \u003d if get_format_char … {\n    \n    } else {\n         let mut pad_width \u003d 0;\n         while … {\n         }\n         pad_width\n    };",
+      "revId": "c3840ed26a0ef98f7b8db202f96d33a45fff2033",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "9c0d3eff_fa5c450b",
+        "filename": "src/libc/stdio/printf.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 66,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2023-11-09T16:31:40Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "fd772479_97fb0003",
       "revId": "c3840ed26a0ef98f7b8db202f96d33a45fff2033",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

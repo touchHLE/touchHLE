@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7198ea13_c3ac664d",
+        "filename": "src/frameworks/core_foundation/cf_string.rs",
+        "patchSetId": 8
+      },
+      "lineNbr": 97,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-11-09T23:07:32Z",
+      "side": 1,
+      "message": "could you remove spaces between function parts and arguments?\ne.g. it should be `msg![env; a compare:b options:flags]`",
+      "revId": "597c0b70c4e9fdafea1ba59e689eb9b0d5c87ec2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

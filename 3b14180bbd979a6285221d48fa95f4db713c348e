@@ -16,6 +16,24 @@
       "message": "I don\u0027t have this build issue FWIW, could you tell me what Rust version and OS you get it on?",
       "revId": "3b14180bbd979a6285221d48fa95f4db713c348e",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "088b3761_9e599142",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 11
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1022009
+      },
+      "writtenOn": "2023-11-09T19:59:00Z",
+      "side": 1,
+      "message": "rustc 1.75.0-nightly (475c71da0 2023-10-11)\nmacos 14.1.1, (arm64)",
+      "parentUuid": "ec3cf5c1_ff69a0a0",
+      "revId": "3b14180bbd979a6285221d48fa95f4db713c348e",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

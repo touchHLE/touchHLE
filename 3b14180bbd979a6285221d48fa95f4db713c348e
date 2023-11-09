@@ -34,6 +34,24 @@
       "parentUuid": "ec3cf5c1_ff69a0a0",
       "revId": "3b14180bbd979a6285221d48fa95f4db713c348e",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5a0b071e_cded0530",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 11
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-11-09T20:20:04Z",
+      "side": 1,
+      "message": "Oh, maybe it\u0027s because you\u0027re using the nightly toolchain? I am using the stable one. Can you check if trunk works on stable for you?",
+      "parentUuid": "088b3761_9e599142",
+      "revId": "3b14180bbd979a6285221d48fa95f4db713c348e",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

@@ -52,6 +52,24 @@
       "parentUuid": "088b3761_9e599142",
       "revId": "3b14180bbd979a6285221d48fa95f4db713c348e",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f8671ac9_6c807f42",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 11
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1022009
+      },
+      "writtenOn": "2023-11-09T20:26:09Z",
+      "side": 1,
+      "message": "It builds on stable, however the issue is that proc-macro2 is using a nightly feature that _will_ be removed in 1.75. So we will need to update it when 1.75 goes stable anyway.",
+      "parentUuid": "5a0b071e_cded0530",
+      "revId": "3b14180bbd979a6285221d48fa95f4db713c348e",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

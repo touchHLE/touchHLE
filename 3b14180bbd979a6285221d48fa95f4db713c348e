@@ -124,6 +124,24 @@
       "parentUuid": "de78f48b_f13c6b59",
       "revId": "3b14180bbd979a6285221d48fa95f4db713c348e",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "532983a2_76e55a0e",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 11
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1022009
+      },
+      "writtenOn": "2023-11-09T20:43:38Z",
+      "side": 1,
+      "message": "I am actually not sure about stable, but fixing nightly will make it more convenient for me to build touchhle.",
+      "parentUuid": "10e0c739_d04df03b",
+      "revId": "3b14180bbd979a6285221d48fa95f4db713c348e",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

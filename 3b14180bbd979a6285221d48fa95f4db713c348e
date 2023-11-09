@@ -106,6 +106,24 @@
       "parentUuid": "277f4f51_48152f79",
       "revId": "3b14180bbd979a6285221d48fa95f4db713c348e",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "10e0c739_d04df03b",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 11
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-11-09T20:41:31Z",
+      "side": 1,
+      "message": "Is this about https://github.com/rust-lang/rust/issues/113152? Are you sure it affects stable and not just nightly?",
+      "parentUuid": "de78f48b_f13c6b59",
+      "revId": "3b14180bbd979a6285221d48fa95f4db713c348e",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

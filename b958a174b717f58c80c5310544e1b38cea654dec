@@ -20,6 +20,24 @@
     {
       "unresolved": false,
       "key": {
+        "uuid": "a6ce0142_95a75f78",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 7
+      },
+      "lineNbr": 3,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2023-11-09T16:42:35Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "f10c75eb_a4c19c39",
+      "revId": "b958a174b717f58c80c5310544e1b38cea654dec",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
         "uuid": "dbf53ded_d6c6f070",
         "filename": "/PATCHSET_LEVEL",
         "patchSetId": 7
@@ -48,6 +66,24 @@
       "writtenOn": "2023-11-07T23:23:45Z",
       "side": 1,
       "message": "Can you add TODO comments about the fact we aren\u0027t decoding the actual properties from the nib file? Alternatively, you could actually implement that. I am guessing lightbike has a UILabel in its nib file? You can use `plutil -p` to look at the nib file and figure out what strings you have to pass to decodeObjectForKey.",
+      "revId": "b958a174b717f58c80c5310544e1b38cea654dec",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ee3e5582_857184b4",
+        "filename": "src/frameworks/uikit/ui_view/ui_label.rs",
+        "patchSetId": 7
+      },
+      "lineNbr": 66,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2023-11-09T16:42:35Z",
+      "side": 1,
+      "message": "lightbike doesn\u0027t load the views from the nib file, they\u0027re instanced from the code instead",
+      "parentUuid": "4f9a1022_15f7ae2f",
       "revId": "b958a174b717f58c80c5310544e1b38cea654dec",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

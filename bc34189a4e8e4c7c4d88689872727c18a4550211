@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6ac44e44_741275e8",
+        "filename": "src/frameworks/foundation/ns_data.rs",
+        "patchSetId": 9
+      },
+      "lineNbr": 128,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-11-09T23:11:07Z",
+      "side": 1,
+      "message": "add space between - and (id)",
+      "revId": "bc34189a4e8e4c7c4d88689872727c18a4550211",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "34613629_9c4c3899",
+        "filename": "src/frameworks/foundation/ns_data.rs",
+        "patchSetId": 9
+      },
+      "lineNbr": 132,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-11-09T23:11:07Z",
+      "side": 1,
+      "message": "remove spaces between function parts and arguments",
+      "revId": "bc34189a4e8e4c7c4d88689872727c18a4550211",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

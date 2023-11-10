@@ -62,6 +62,9 @@ impl SEL {
         // selectors are probably always UTF-8 but this hasn't been verified
         mem.cstr_at_utf8(self.0).unwrap()
     }
+    pub fn is_null(self) -> bool {
+        self.0.is_null()
+    }
 }
 
 impl ObjC {

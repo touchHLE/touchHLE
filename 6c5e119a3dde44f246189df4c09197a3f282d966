@@ -20,6 +20,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "59f31ad3_eca1abc7",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 13
+      },
+      "lineNbr": 777,
+      "author": {
+        "id": 1022009
+      },
+      "writtenOn": "2023-11-10T12:38:32Z",
+      "side": 1,
+      "message": "At least for intValue, there is at least one app that expects 123SomeJunkHere to parse to 123. Float probably does the same thing",
+      "parentUuid": "55e782de_c8532d58",
+      "revId": "6c5e119a3dde44f246189df4c09197a3f282d966",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "b06b47ae_8fa8c5c6",
         "filename": "src/frameworks/foundation/ns_string.rs",
         "patchSetId": 13

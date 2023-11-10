@@ -16,6 +16,24 @@
       "message": "Please use appropriate aliased types here. It seems like this should take a `CFStringCompareFlags` and return a `CFComparisonResult`, and I guess you\u0027ve checked that all the enum values happen to be the same between the NS and CF versions? If so you can just make these be type aliases of their NS counterparts.",
       "revId": "64c3190e530922eff5aba011fa1b64ec49bc9a2f",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "4a48d961_f9a17ba6",
+        "filename": "src/frameworks/core_foundation/cf_string.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 96,
+      "author": {
+        "id": 1022009
+      },
+      "writtenOn": "2023-11-10T15:50:18Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "553672a0_64184009",
+      "revId": "64c3190e530922eff5aba011fa1b64ec49bc9a2f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

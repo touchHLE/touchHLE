@@ -34,6 +34,24 @@
       "parentUuid": "5bd80647_00ac925e",
       "revId": "babb93d5e3e09c8735ee7535db4e4f39c27dd4e5",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "5ba22133_bee8bf16",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 12
+      },
+      "lineNbr": 773,
+      "author": {
+        "id": 1022009
+      },
+      "writtenOn": "2023-11-10T11:00:24Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "db34adab_9dd61c4b",
+      "revId": "babb93d5e3e09c8735ee7535db4e4f39c27dd4e5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3b7842f6_b5a809cb",
+        "filename": "src/frameworks/uikit/ui_view/ui_scroll_view.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 44,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-11-10T20:21:42Z",
+      "side": 1,
+      "message": "please follow same formatting as for other NS classes:\n- no spaces between function parts and argument\n- spaces between -/+ and return value\n- spaces after last argument and {\n\nthis should be applied to all methods",
+      "revId": "fcc218e940bdb9ee71ca5d7add7ea5ab979031de",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9cee2940_05701461",
+        "filename": "src/frameworks/uikit/ui_view/ui_scroll_view.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 87,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-11-10T20:21:42Z",
+      "side": 1,
+      "message": "the multi touch support is already present on the trunk, you may wish to update your code here.\nor at least add a TODO",
+      "revId": "fcc218e940bdb9ee71ca5d7add7ea5ab979031de",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e37b8c32_4ae621fb",
+        "filename": "src/frameworks/uikit/ui_view/ui_scroll_view.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 88,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-11-10T20:21:42Z",
+      "side": 1,
+      "message": "please no space between function parts and arguments\nthis comment applied to all objc method calls",
+      "revId": "fcc218e940bdb9ee71ca5d7add7ea5ab979031de",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "15abcdcf_1877ec54",
+        "filename": "src/frameworks/uikit/ui_view/ui_scroll_view.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 106,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-11-10T20:21:42Z",
+      "side": 1,
+      "message": "we usually use snake_case for local vars (e.g. it should be new_content_offset)",
+      "revId": "fcc218e940bdb9ee71ca5d7add7ea5ab979031de",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

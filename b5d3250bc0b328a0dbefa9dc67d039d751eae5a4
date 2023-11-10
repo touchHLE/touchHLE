@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f2a0d931_dc2b38ba",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-11-10T20:23:04Z",
+      "side": 1,
+      "message": "Same comments about formatting as for https://review.gerrithub.io/c/hikari-no-yume/touchHLE/+/1169566, sorry\n(hopefully we sill add a linter for objc rust as well)",
+      "revId": "b5d3250bc0b328a0dbefa9dc67d039d751eae5a4",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

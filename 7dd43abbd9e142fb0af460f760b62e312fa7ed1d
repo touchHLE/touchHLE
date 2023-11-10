@@ -16,6 +16,24 @@
       "message": "Rebase mistake maybe?",
       "revId": "7dd43abbd9e142fb0af460f760b62e312fa7ed1d",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "e6d0e153_18f34d3b",
+        "filename": "src/libc/string.rs",
+        "patchSetId": 13
+      },
+      "lineNbr": 69,
+      "author": {
+        "id": 1022009
+      },
+      "writtenOn": "2023-11-10T16:22:26Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "f67288da_908268d2",
+      "revId": "7dd43abbd9e142fb0af460f760b62e312fa7ed1d",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

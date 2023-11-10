@@ -16,6 +16,24 @@
       "message": "Nitpick: This extra newline doesn\u0027t match the surroundings.",
       "revId": "4dbcfc1e06d7f423d0bf186758b74aa7226539a7",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "db6235a8_58ed30fa",
+        "filename": "src/libc/string.rs",
+        "patchSetId": 14
+      },
+      "lineNbr": 113,
+      "author": {
+        "id": 1022009
+      },
+      "writtenOn": "2023-11-10T16:22:26Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "34e153a2_ba54b8f4",
+      "revId": "4dbcfc1e06d7f423d0bf186758b74aa7226539a7",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

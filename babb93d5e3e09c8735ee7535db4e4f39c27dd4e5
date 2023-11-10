@@ -16,6 +16,24 @@
       "message": "Does it handle nicely stripping of white spaces at the beginning?\nAlso you should add a TODO about overflow/underflow behavior",
       "revId": "babb93d5e3e09c8735ee7535db4e4f39c27dd4e5",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "db34adab_9dd61c4b",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 12
+      },
+      "lineNbr": 773,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-11-10T09:58:56Z",
+      "side": 1,
+      "message": "Yeah I was wondering the same thing, whitespace handling might differ between Rust and Objective-C.",
+      "parentUuid": "5bd80647_00ac925e",
+      "revId": "babb93d5e3e09c8735ee7535db4e4f39c27dd4e5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

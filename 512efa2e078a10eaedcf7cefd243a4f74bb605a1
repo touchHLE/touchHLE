@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "01d2ff3f_73f186b5",
+        "filename": "src/frameworks/uikit/ui_view.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 171,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-11-10T20:15:59Z",
+      "side": 1,
+      "message": "add log message and/or TODO comment",
+      "revId": "512efa2e078a10eaedcf7cefd243a4f74bb605a1",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "14b7a67c_3615ae59",
+        "filename": "src/frameworks/uikit/ui_view.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 175,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-11-10T20:15:59Z",
+      "side": 1,
+      "message": "add log message and/or TODO comment",
+      "revId": "512efa2e078a10eaedcf7cefd243a4f74bb605a1",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "56ff2ac9_0eea9d21",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-11-10T20:15:01Z",
+      "side": 1,
+      "message": "i\u0027m kinda not in the favour of sorting options by alphabet - instead of just adding new game option at the bottom, we would need to search for a correct place, which is mildly inconvenient",
+      "revId": "3d7885e19baac2fab2e4bd564049f030494d8c75",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

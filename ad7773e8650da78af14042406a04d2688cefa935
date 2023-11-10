@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "77ba0d5e_340be477",
+        "filename": "src/mem.rs",
+        "patchSetId": 16
+      },
+      "lineNbr": 488,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-11-10T20:40:23Z",
+      "side": 1,
+      "message": "i think you should merge it with previous condition (e.g. it should be  if old_size \u003c\u003d size)",
+      "revId": "ad7773e8650da78af14042406a04d2688cefa935",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

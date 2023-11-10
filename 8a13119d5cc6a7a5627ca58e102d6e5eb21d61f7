@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "b524603d_394428eb",
+        "filename": "src/frameworks/foundation/ns_data.rs",
+        "patchSetId": 12
+      },
+      "lineNbr": 128,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-11-10T15:58:15Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "a6e2f967_5b34a499",
+      "revId": "8a13119d5cc6a7a5627ca58e102d6e5eb21d61f7",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "b2a57687_33d25621",
@@ -35,6 +53,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "090986e7_042c06a2",
+        "filename": "src/frameworks/foundation/ns_data.rs",
+        "patchSetId": 12
+      },
+      "lineNbr": 170,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-11-10T15:58:15Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "b2a57687_33d25621",
+      "revId": "8a13119d5cc6a7a5627ca58e102d6e5eb21d61f7",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "fe247e33_4dc09dc8",
@@ -48,6 +84,30 @@
       "writtenOn": "2023-11-10T14:36:03Z",
       "side": 1,
       "message": "Why not use `realloc` instead?",
+      "range": {
+        "startLine": 175,
+        "startChar": 35,
+        "endLine": 178,
+        "endChar": 59
+      },
+      "revId": "8a13119d5cc6a7a5627ca58e102d6e5eb21d61f7",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "09d8314b_d314d6ea",
+        "filename": "src/frameworks/foundation/ns_data.rs",
+        "patchSetId": 12
+      },
+      "lineNbr": 178,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-11-10T15:58:15Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "fe247e33_4dc09dc8",
       "range": {
         "startLine": 175,
         "startChar": 35,

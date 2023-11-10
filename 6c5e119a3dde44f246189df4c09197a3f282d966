@@ -38,6 +38,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "767aa642_eba04995",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 13
+      },
+      "lineNbr": 777,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-11-10T12:41:15Z",
+      "side": 1,
+      "message": "ok I see, thanks\nbut why do you need to include \u0027+\u0027 in the condition?",
+      "parentUuid": "59f31ad3_eca1abc7",
+      "revId": "6c5e119a3dde44f246189df4c09197a3f282d966",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "b06b47ae_8fa8c5c6",
         "filename": "src/frameworks/foundation/ns_string.rs",
         "patchSetId": 13

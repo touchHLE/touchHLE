@@ -75,6 +75,24 @@
       "parentUuid": "81baaaaa_94490f6b",
       "revId": "48fcf554a3b49bc805c7229c0df2df48f1e21f53",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f8aba122_e6646664",
+        "filename": "src/objc/objects.rs",
+        "patchSetId": 8
+      },
+      "lineNbr": 301,
+      "author": {
+        "id": 1022009
+      },
+      "writtenOn": "2023-11-10T14:02:58Z",
+      "side": 1,
+      "message": "Whatever happened before, i can no longer reproduce it, so put the panic back.",
+      "parentUuid": "c0b7773d_208d5c84",
+      "revId": "48fcf554a3b49bc805c7229c0df2df48f1e21f53",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

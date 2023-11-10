@@ -24,6 +24,30 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "b59cb86c_cac7d1f4",
+        "filename": "src/libc/generic_char.rs",
+        "patchSetId": 12
+      },
+      "lineNbr": 139,
+      "author": {
+        "id": 1022009
+      },
+      "writtenOn": "2023-11-10T15:52:06Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "ea1b18b1_f483d2ae",
+      "range": {
+        "startLine": 139,
+        "startChar": 28,
+        "endLine": 139,
+        "endChar": 45
+      },
+      "revId": "e26b1676602491768cf9e6acc02a4f09a5566f56",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "9bec0d04_89606fce",
@@ -37,6 +61,30 @@
       "writtenOn": "2023-11-10T14:15:08Z",
       "side": 1,
       "message": "I guess this case is harmless, but wherever possible I would prefer using `Option`, `Result` or similar rather than special values like this.",
+      "range": {
+        "startLine": 169,
+        "startChar": 36,
+        "endLine": 169,
+        "endChar": 51
+      },
+      "revId": "e26b1676602491768cf9e6acc02a4f09a5566f56",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ce713885_4417649a",
+        "filename": "src/libc/generic_char.rs",
+        "patchSetId": 12
+      },
+      "lineNbr": 169,
+      "author": {
+        "id": 1022009
+      },
+      "writtenOn": "2023-11-10T15:52:06Z",
+      "side": 1,
+      "message": "In this case it is not a sentinel value that is treated separately.",
+      "parentUuid": "9bec0d04_89606fce",
       "range": {
         "startLine": 169,
         "startChar": 36,

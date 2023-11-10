@@ -16,6 +16,24 @@
       "message": "why it\u0027s gles11:: and gl21:: here?\nwhile the values are the same, I think we should use proper namespace for consistent.\nAlso it should be fixed for BufferData() asset\n\nnot blocking, but I think it\u0027s good to change",
       "revId": "c26945bda4cef1121b67b371355e56830fdbf4b2",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "efe86ffe_885ee882",
+        "filename": "src/gles/gles1_on_gl2.rs",
+        "patchSetId": 10
+      },
+      "lineNbr": 888,
+      "author": {
+        "id": 1022009
+      },
+      "writtenOn": "2023-11-10T11:00:49Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "dcd90444_bdd5a92b",
+      "revId": "c26945bda4cef1121b67b371355e56830fdbf4b2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

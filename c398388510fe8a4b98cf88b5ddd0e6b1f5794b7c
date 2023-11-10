@@ -16,6 +16,24 @@
       "message": "Can you put these in their own section? Maybe right above `CFStringCompare`? I want to keep `CFStringEncoding` grouped with its enum members.",
       "revId": "c398388510fe8a4b98cf88b5ddd0e6b1f5794b7c",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "423b2874_8433457c",
+        "filename": "src/frameworks/core_foundation/cf_string.rs",
+        "patchSetId": 12
+      },
+      "lineNbr": 25,
+      "author": {
+        "id": 1022009
+      },
+      "writtenOn": "2023-11-10T16:22:58Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "141aded1_c6d01b66",
+      "revId": "c398388510fe8a4b98cf88b5ddd0e6b1f5794b7c",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

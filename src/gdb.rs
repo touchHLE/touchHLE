@@ -129,6 +129,7 @@ impl GdbServer {
     /// Communciates with the debugger, returning only once it requests
     /// execution should continue. Returns [true] if the CPU should step and
     /// then resume debugging, or [false] if it should resume normal execution.
+    #[must_use]
     pub fn wait_for_debugger(
         &mut self,
         stop_reason: Option<CpuError>,

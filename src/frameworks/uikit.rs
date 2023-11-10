@@ -86,6 +86,15 @@ pub fn handle_events(env: &mut Environment) -> Option<Instant> {
                 log!("Handling app-will-terminate event.");
                 ui_application::exit(env);
             }
+            Event::EnterDebugger => {
+                if env.is_debugging_enabled() {
+                    log!("Handling EnterDebugger event: entering debugger.");
+                    let step = env.enter_debugger(/* reason: */ None);
+                    assert!(!step, "Can't step right now!"); // TODO?
+                } else {
+                    log!("Ignroing EnterDebugger event: no debugger connected.");
+                }
+            }
         }
     }
 

@@ -90,6 +90,9 @@ pub enum Event {
     TouchesDown(HashMap<FingerId, Coords>),
     TouchesMove(HashMap<FingerId, Coords>),
     TouchesUp(HashMap<FingerId, Coords>),
+    /// User pressed F12, requesting that execution be paused and the debugger
+    /// take over.
+    EnterDebugger,
 }
 
 pub enum GLVersion {
@@ -558,6 +561,15 @@ impl Window {
                         E::FingerDown { .. } => Event::TouchesDown(map),
                         _ => unreachable!(),
                     }
+                }
+                E::KeyDown {
+                    keycode: Some(sdl2::keyboard::Keycode::F12),
+                    ..
+                } => {
+                    // Log this so you can tell when touchHLE has received
+                    // the event but it's stuck in the queue.
+                    echo!("F12 pressed, EnterDebugger event queued.");
+                    Event::EnterDebugger
                 }
                 _ => continue,
             })

@@ -302,7 +302,8 @@ impl Environment {
                 .map_err(|e| format!("Could not accept connection: {}", e))?;
             echo!("Debugger client connected on {}.", client_addr);
             let mut gdb_server = gdb::GdbServer::new(client);
-            gdb_server.wait_for_debugger(None, &mut env.cpu, &mut env.mem);
+            let step = gdb_server.wait_for_debugger(None, &mut env.cpu, &mut env.mem);
+            assert!(!step, "Can't step right now!"); // TODO?
             env.gdb_server = Some(gdb_server);
         }
 
@@ -735,14 +736,28 @@ impl Environment {
         }
 
         echo!("Debuggable error during CPU execution: {:?}.", error);
+        self.enter_debugger(Some(error))
+    }
+
+    /// Used to check whether a debugger is connected, and therefore whether
+    /// [Environment::enter_debugger] will do something.
+    pub fn is_debugging_enabled(&self) -> bool {
+        self.gdb_server.is_some()
+    }
+
+    /// Suspend execution and hand control to the connected debugger.
+    /// You should precede this call with a log message that explains why the
+    /// debugger is being invoked. The return value is the same as
+    /// [gdb::GdbServer::wait_for_debugger]'s.
+    #[must_use]
+    pub fn enter_debugger(&mut self, reason: Option<cpu::CpuError>) -> bool {
         // GDB doesn't seem to manage to produce a useful stack trace, so
         // let's print our own.
         self.stack_trace();
-        self.gdb_server.as_mut().unwrap().wait_for_debugger(
-            Some(error),
-            &mut self.cpu,
-            &mut self.mem,
-        )
+        self.gdb_server
+            .as_mut()
+            .unwrap()
+            .wait_for_debugger(reason, &mut self.cpu, &mut self.mem)
     }
 
     #[inline(always)]

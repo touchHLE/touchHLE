@@ -59,7 +59,7 @@ Beware that iPhone OS apps often contain a mix of Thumb functions and normal Arm
 
 GDB seems to [mostly](https://sourceware.org/bugzilla/show_bug.cgi?id=30385) understand the convention of setting the lower bit of the address to 1 to indicate a Thumb function, and in any case setting an Arm breakpoint in Thumb code (not vice-versa) usually works, so you usually only need to worry about this when disassembling things.
 
-touchHLE only communicates with GDB while execution is paused. Beyond being paused when you initially connect, it is also paused when certain CPU errors occur, or after stepping (resuming execution for a single instruction). Breakpoints are a useful way to force execution to pause at convenient locations.
+touchHLE only communicates with GDB while execution is paused. Beyond being paused when you initially connect, it is also paused when certain CPU errors occur, or after stepping (resuming execution for a single instruction). Breakpoints are a useful way to force execution to pause at convenient locations. Another option is to press the F12 key while you have the touchHLE window in focus, which will make touchHLE pause during the next NSRunLoop iteration. If the app fails to return to the NSRunLoop then this won't be useful.
 
 ## Graphics debugging
 

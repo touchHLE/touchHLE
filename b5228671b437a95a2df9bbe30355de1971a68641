@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a0497890_efa42bf1",
+        "filename": "src/frameworks/foundation/ns_value.rs",
+        "patchSetId": 10
+      },
+      "lineNbr": 121,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-11-10T09:10:40Z",
+      "side": 1,
+      "message": "Hmm, I did a little testing:\n\n    #import \"Foundation/Foundation.h\"\n    \n    int main(void)\n    {\n        NSLog(@\"%@ %@ %@\", @1, [@1 debugDescription], [@1 description]);\n        NSLog(@\"%@ %@ %@\", @1.0, [@1.0 debugDescription], [@1.0 description]);\n        NSLog(@\"%@ %@ %@\", @YES, [@YES debugDescription], [@YES description]);\n        NSLog(@\"%@ %@ %@\", [NSNumber numberWithBool:1], [[NSNumber numberWithBool:1] debugDescription], [[NSNumber numberWithBool:1] description]);\n        NSLog(@\"%@ %@ %@\", [NSNumber numberWithUnsignedLongLong:1], [[NSNumber numberWithUnsignedLongLong:1] debugDescription], [[NSNumber numberWithUnsignedLongLong:1] description]);\n        NSLog(@\"%@ %@ %@\", [NSNumber numberWithLongLong:1], [[NSNumber numberWithLongLong:1] debugDescription], [[NSNumber numberWithLongLong:1] description]);\n        NSLog(@\"%@ %@ %@\", [NSNumber numberWithFloat:1], [[NSNumber numberWithFloat:1] debugDescription], [[NSNumber numberWithFloat:1] description]);\n        NSLog(@\"%@ %@ %@\", [NSNumber numberWithDouble:1], [[NSNumber numberWithDouble:1] debugDescription], [[NSNumber numberWithDouble:1] description]);\n    }\n\nAll of these lines printed “1 1 1”.\n\nI then compared it to Rust:\n\n    fn main() {\n        println!(\"{}\", (1).to_string());\n        println!(\"{}\", (1.0).to_string());\n        println!(\"{}\", (true).to_string());\n    }\n\nThe first two printed “1” but the last one was “true”.\n\nSo, if you want to match iPhone OS, you should make it case the bool to an integer first before printing it?",
+      "revId": "b5228671b437a95a2df9bbe30355de1971a68641",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

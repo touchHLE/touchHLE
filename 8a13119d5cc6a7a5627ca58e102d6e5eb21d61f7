@@ -1,0 +1,61 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a6e2f967_5b34a499",
+        "filename": "src/frameworks/foundation/ns_data.rs",
+        "patchSetId": 12
+      },
+      "lineNbr": 128,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-11-10T14:36:03Z",
+      "side": 1,
+      "message": "This shouldn\u0027t be implemented directly. It\u0027s like `copy` in that it should be an `NSObject` convenience method that calls `mutableCopyWithZone:`. Also, there should be a comment about NSMutableCopying, like there is for NSCopying.",
+      "revId": "8a13119d5cc6a7a5627ca58e102d6e5eb21d61f7",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b2a57687_33d25621",
+        "filename": "src/frameworks/foundation/ns_data.rs",
+        "patchSetId": 12
+      },
+      "lineNbr": 170,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-11-10T14:36:03Z",
+      "side": 1,
+      "message": "The whole thing with `copy` vs `mutableCopy` is the former always gives you an immutable copy, even if the original is mutable. So this isn\u0027t right, it needs to make an immutable copy.",
+      "revId": "8a13119d5cc6a7a5627ca58e102d6e5eb21d61f7",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fe247e33_4dc09dc8",
+        "filename": "src/frameworks/foundation/ns_data.rs",
+        "patchSetId": 12
+      },
+      "lineNbr": 178,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-11-10T14:36:03Z",
+      "side": 1,
+      "message": "Why not use `realloc` instead?",
+      "range": {
+        "startLine": 175,
+        "startChar": 35,
+        "endLine": 178,
+        "endChar": 59
+      },
+      "revId": "8a13119d5cc6a7a5627ca58e102d6e5eb21d61f7",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

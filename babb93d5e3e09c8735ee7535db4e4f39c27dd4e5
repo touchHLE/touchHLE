@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5bd80647_00ac925e",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 12
+      },
+      "lineNbr": 773,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-11-10T09:57:49Z",
+      "side": 1,
+      "message": "Does it handle nicely stripping of white spaces at the beginning?\nAlso you should add a TODO about overflow/underflow behavior",
+      "revId": "babb93d5e3e09c8735ee7535db4e4f39c27dd4e5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

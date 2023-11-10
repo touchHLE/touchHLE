@@ -16,6 +16,24 @@
       "message": "missing space between - and (f32)",
       "revId": "0ac1d62356e97a5d4b71a29a4f96a0f74727396d",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "05efcca3_eb112e0b",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 772,
+      "author": {
+        "id": 1022009
+      },
+      "writtenOn": "2023-11-10T08:01:21Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "b184f45e_f3ec4e21",
+      "revId": "0ac1d62356e97a5d4b71a29a4f96a0f74727396d",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

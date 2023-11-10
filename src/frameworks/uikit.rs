@@ -92,7 +92,7 @@ pub fn handle_events(env: &mut Environment) -> Option<Instant> {
                     let step = env.enter_debugger(/* reason: */ None);
                     assert!(!step, "Can't step right now!"); // TODO?
                 } else {
-                    log!("Ignroing EnterDebugger event: no debugger connected.");
+                    log!("Ignoring EnterDebugger event: no debugger connected.");
                 }
             }
         }

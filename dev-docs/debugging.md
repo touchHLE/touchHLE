@@ -65,4 +65,4 @@ touchHLE only communicates with GDB while execution is paused. Beyond being paus
 
 [apitrace](https://apitrace.github.io/) is invaluable for figuring out OpenGL-related issues.
 
-Outside the OpenGL realm, sometimes the most effective solution is dumping image data to a file. You can use Rust's `std::fs::write` for this. If you're a GIMP user, you might want to use it to open raw RGBA8 image data (easiest if the filename ends in `.data`), though there are probably better tools.
+More generally, and especially Outside the OpenGL realm, sometimes the most effective solution is dumping image data to a file. There's some functions in [`crate::debug`](../src/debug.rs) that might be useful for this. Don't forget that you can also use Rust's `std::fs::write` if necessary. GIMP and some other tools can read raw pixel data (easiest if the filename ends in `.data`).

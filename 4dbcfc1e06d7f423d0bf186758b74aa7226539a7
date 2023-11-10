@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "34e153a2_ba54b8f4",
+        "filename": "src/libc/string.rs",
+        "patchSetId": 14
+      },
+      "lineNbr": 113,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-11-10T15:56:42Z",
+      "side": 1,
+      "message": "Nitpick: This extra newline doesn\u0027t match the surroundings.",
+      "revId": "4dbcfc1e06d7f423d0bf186758b74aa7226539a7",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f67288da_908268d2",
+        "filename": "src/libc/string.rs",
+        "patchSetId": 13
+      },
+      "lineNbr": 69,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-11-10T15:55:35Z",
+      "side": 1,
+      "message": "Rebase mistake maybe?",
+      "revId": "7dd43abbd9e142fb0af460f760b62e312fa7ed1d",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ea1b18b1_f483d2ae",
+        "filename": "src/libc/generic_char.rs",
+        "patchSetId": 12
+      },
+      "lineNbr": 139,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-11-10T14:15:08Z",
+      "side": 1,
+      "message": "This looks like an overflow hazard. If the destination string has already overflowed the buffer, then `remaining` could end up as a huge value in a release build.\n\nI would suggest changing to a strategy where you increment a counter and assert it\u0027s less than the buffer size, rather than decrementing the buffer size. That also avoids mutability, which I think is nice.",
+      "range": {
+        "startLine": 139,
+        "startChar": 28,
+        "endLine": 139,
+        "endChar": 45
+      },
+      "revId": "e26b1676602491768cf9e6acc02a4f09a5566f56",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9bec0d04_89606fce",
+        "filename": "src/libc/generic_char.rs",
+        "patchSetId": 12
+      },
+      "lineNbr": 169,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-11-10T14:15:08Z",
+      "side": 1,
+      "message": "I guess this case is harmless, but wherever possible I would prefer using `Option`, `Result` or similar rather than special values like this.",
+      "range": {
+        "startLine": 169,
+        "startChar": 36,
+        "endLine": 169,
+        "endChar": 51
+      },
+      "revId": "e26b1676602491768cf9e6acc02a4f09a5566f56",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

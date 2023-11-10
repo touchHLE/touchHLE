@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "064795d4_89a945b2",
+        "filename": "src/gles/gles1_native.rs",
+        "patchSetId": 9
+      },
+      "lineNbr": 222,
+      "author": {
+        "id": 1022009
+      },
+      "writtenOn": "2023-11-10T08:02:58Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "95b02f64_5e2ff3cb",
+      "revId": "645bdacbdd33efba9ca2d3c84c395e948f50a1cf",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "899188fa_e6127928",
@@ -31,6 +49,24 @@
       "writtenOn": "2023-11-09T21:32:56Z",
       "side": 1,
       "message": "you should use same assert as for BufferData()",
+      "revId": "645bdacbdd33efba9ca2d3c84c395e948f50a1cf",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "24ac6d51_172dd980",
+        "filename": "src/gles/gles1_on_gl2.rs",
+        "patchSetId": 9
+      },
+      "lineNbr": 882,
+      "author": {
+        "id": 1022009
+      },
+      "writtenOn": "2023-11-10T08:02:58Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "899188fa_e6127928",
       "revId": "645bdacbdd33efba9ca2d3c84c395e948f50a1cf",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

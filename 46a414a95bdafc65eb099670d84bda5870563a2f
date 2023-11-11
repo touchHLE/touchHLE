@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "93b2b9e5_b552e1c0",
+        "filename": "src/frameworks/core_foundation/cf_url.rs",
+        "patchSetId": 15
+      },
+      "lineNbr": 69,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-11-11T16:25:19Z",
+      "side": 1,
+      "message": "could you send a copy message instead?\nI know it\u0027s equivalent, but it\u0027s clearlier this way",
+      "revId": "46a414a95bdafc65eb099670d84bda5870563a2f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

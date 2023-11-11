@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ed2d3625_6d6a62b1",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 17
+      },
+      "lineNbr": 798,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-11-11T16:33:59Z",
+      "side": 1,
+      "message": "missing space",
+      "revId": "7d8bf48d776f58189bc80ae1c47b466b16f41266",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "50eade90_f56153cd",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 17
+      },
+      "lineNbr": 799,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-11-11T16:33:59Z",
+      "side": 1,
+      "message": "you should trim trailing white spaces",
+      "revId": "7d8bf48d776f58189bc80ae1c47b466b16f41266",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1de8e2dd_724b10e4",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 17
+      },
+      "lineNbr": 802,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-11-11T16:33:59Z",
+      "side": 1,
+      "message": "you should handle +/-",
+      "revId": "7d8bf48d776f58189bc80ae1c47b466b16f41266",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "460320e6_ec6928c5",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 17
+      },
+      "lineNbr": 807,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-11-11T16:33:59Z",
+      "side": 1,
+      "message": "add a todo about handling over/undeflow",
+      "revId": "7d8bf48d776f58189bc80ae1c47b466b16f41266",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

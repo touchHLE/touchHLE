@@ -61,11 +61,16 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.class_has_method(this, selector)
 }
 
-+(ConstVoidPtr)instanceMethodForSelector:(SEL)selector {
-    match ObjC::lookup_method_imp(env, this, selector) {
-        IMP::Guest(g) => ConstVoidPtr::from_bits(g.addr_with_thumb_bit()),
-        _ => todo!()
++ (ConstVoidPtr)instanceMethodForSelector:(SEL)selector {
+    match ObjC::lookup_method(env, this, selector).map(|x| x.imp) {
+        Some(IMP::Guest(g)) => ConstVoidPtr::from_bits(g.addr_with_thumb_bit()),
+        Some(_) => todo!(),
+        None => panic!("Unable to lookup method {:?} in class {:?}", selector.as_str(&env.mem), this)
     }
+}
+
++ (bool)accessInstanceVariablesDirectly {
+    true
 }
 
 - (id)init {
@@ -171,6 +176,54 @@ pub const CLASSES: ClassExports = objc_classes! {
     unimplemented!("TODO: object {:?} does not have simple setter method for {}, use fallback", this, key);
 }
 
+- (id)valueForKey:(id)key {
+    let r_key = to_rust_string(env, key);
+    let uc_key = format!("{}{}" ,r_key.as_bytes()[0].to_ascii_uppercase() as char, &r_key[1..]);
+
+    let class = msg![env; this class];
+
+    let sel_cand = env.objc.lookup_selector(&format!("get{}", uc_key))
+        .or_else(|| env.objc.lookup_selector(&r_key))
+        .or_else(|| env.objc.lookup_selector(&format!("is{}", uc_key)))
+        .or_else(|| env.objc.lookup_selector(&format!("_{}", r_key)));
+    if let Some(sel) = sel_cand {
+        if let Some(mt) = ObjC::lookup_method(env, class, sel) {
+            return match mt.type_[0] {
+                b'@' => msg_send(env, (this, sel)),
+                b'i' => {
+                    let ret: i32 = msg_send(env, (this, sel));
+                    msg_class![env; NSNumber numberWithInt: ret]
+                },
+                t => todo!("Unsupported type: {}", t as char)
+            }
+        }
+    }
+
+    if env.objc.lookup_selector(&format!("countOf{}", uc_key)).is_some() && (
+        env.objc.lookup_selector(&format!("objectIn{}AtIndex:", uc_key)).is_some() ||
+        env.objc.lookup_selector(&format!("{}AtIndexes:", r_key)).is_some()
+    ) {
+        unimplemented!("TODO: key value access for array proxies")
+    }
+
+    if env.objc.lookup_selector(&format!("countOf{}", uc_key)).is_some() &&
+        env.objc.lookup_selector(&format!("enumeratorOf{}", uc_key)).is_some() &&
+        env.objc.lookup_selector(&format!("memberOf{}:", uc_key)).is_some() {
+        unimplemented!("TODO: key value access for set proxies")
+    }
+
+    let direct: bool = msg![env; class accessInstanceVariablesDirectly];
+    if direct {
+        unimplemented!("TODO: direct key value access")
+    }
+
+    msg![env; this valueForUnderfinedKey:key]
+}
+
+- (id)valueForUndefinedKey:(id)key {
+    panic!("Unable to find accessor for key {} on {:?}", to_rust_string(env, key), this);
+}
+
 - (bool)respondsToSelector:(SEL)selector {
     let class = msg![env; this class];
     env.objc.class_has_method(class, selector)
@@ -196,9 +249,10 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 - (ConstVoidPtr)methodForSelector:(SEL)selector {
     let isa = ObjC::read_isa(this, &env.mem);
-    match ObjC::lookup_method_imp(env, isa, selector) {
-        IMP::Guest(g) => ConstVoidPtr::from_bits(g.addr_with_thumb_bit()),
-        _ => todo!()
+    match ObjC::lookup_method(env, isa, selector).map(|x| x.imp) {
+        Some(IMP::Guest(g)) => ConstVoidPtr::from_bits(g.addr_with_thumb_bit()),
+        Some(_) => todo!(),
+        None => panic!("Unable to lookup method {:?} in class {:?}", selector.as_str(&env.mem), isa)
     }
 }
 

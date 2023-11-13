@@ -116,6 +116,30 @@
       },
       "revId": "d9b955efd2d1efde3ddd56110469f21378d3bac3",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "3d06a071_fc3b0ece",
+        "filename": "src/frameworks/foundation/ns_autorelease_pool.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 84,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-11-13T18:41:48Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "5c693f58_86bc6f6e",
+      "range": {
+        "startLine": 84,
+        "startChar": 20,
+        "endLine": 84,
+        "endChar": 24
+      },
+      "revId": "d9b955efd2d1efde3ddd56110469f21378d3bac3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

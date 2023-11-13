@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "bf0ff5c4_cdf172d6",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 774,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-11-13T21:54:34Z",
+      "side": 1,
+      "message": "NSMutableString should inherit from NSString and have proper private implementation",
+      "revId": "22a30a2f5a6b84af0dc00239d141e7f3df4e040a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

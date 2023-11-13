@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c6840449_7c69b991",
+        "filename": "src/frameworks/uikit/ui_view/ui_activity_indicator_view.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 29,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-11-13T21:52:30Z",
+      "side": 1,
+      "message": "style should have UIActivityIndicatorViewStyle type",
+      "revId": "85e66b8908afc8e2801f584f81ff58e906f7a410",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

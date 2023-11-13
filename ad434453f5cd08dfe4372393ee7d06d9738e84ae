@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fa7f994a_34d7aaf8",
+        "filename": "src/frameworks/foundation/ns_autorelease_pool.rs",
+        "patchSetId": 12
+      },
+      "lineNbr": 46,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-11-13T23:11:40Z",
+      "side": 1,
+      "message": "I think you can combine them with .and_then()",
+      "revId": "ad434453f5cd08dfe4372393ee7d06d9738e84ae",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

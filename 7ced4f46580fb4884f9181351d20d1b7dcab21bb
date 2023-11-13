@@ -54,6 +54,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "0d067903_92fe955c",
+        "filename": "src/frameworks/foundation/ns_object.rs",
+        "patchSetId": 7
+      },
+      "lineNbr": 171,
+      "author": {
+        "id": 1022009
+      },
+      "writtenOn": "2023-11-13T22:17:15Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "4c6a8525_4749fceb",
+      "revId": "7ced4f46580fb4884f9181351d20d1b7dcab21bb",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "35543549_9ec32443",
@@ -67,6 +85,24 @@
       "writtenOn": "2023-11-13T21:09:44Z",
       "side": 1,
       "message": "nitpick: this message technically not true for the case of no simple accessor method but NSArray/NSSet methods special cases",
+      "revId": "7ced4f46580fb4884f9181351d20d1b7dcab21bb",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "835d3816_e02d95e6",
+        "filename": "src/frameworks/foundation/ns_object.rs",
+        "patchSetId": 7
+      },
+      "lineNbr": 189,
+      "author": {
+        "id": 1022009
+      },
+      "writtenOn": "2023-11-13T22:17:15Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "35543549_9ec32443",
       "revId": "7ced4f46580fb4884f9181351d20d1b7dcab21bb",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

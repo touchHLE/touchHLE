@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "2c3fe5b0_e2e0d610",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 11
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-11-13T21:48:08Z",
+      "side": 1,
+      "message": "This seems to be a highly WIP, have you attempted an actual implementation?",
+      "revId": "7df2c046c046db3bf7f5e7d12cd8f504b5d00493",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c78e3b9d_7c468ba8",
+        "filename": "src/libc/clocale.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 16,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-11-13T21:48:08Z",
+      "side": 1,
+      "message": "remove it or uncomment",
+      "revId": "7df2c046c046db3bf7f5e7d12cd8f504b5d00493",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f4221867_5533e648",
+        "filename": "src/libc/clocale.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 17,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-11-13T21:48:08Z",
+      "side": 1,
+      "message": "this leaks memory, it should be fixed or logged",
+      "revId": "7df2c046c046db3bf7f5e7d12cd8f504b5d00493",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

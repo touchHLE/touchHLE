@@ -16,6 +16,41 @@
       "message": "anything else to fix here?",
       "revId": "a4d7025ba2e35de425779bfab2641e6f2d56de72",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "9a0c80a5_6785b8f0",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 10
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-11-13T19:29:05Z",
+      "side": 1,
+      "message": "I don\u0027t think so, but I have a small question.",
+      "parentUuid": "8b4911be_32da96bd",
+      "revId": "a4d7025ba2e35de425779bfab2641e6f2d56de72",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fffcaac7_984e0cc1",
+        "filename": "src/app_picker.rs",
+        "patchSetId": 10
+      },
+      "lineNbr": 208,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-11-13T19:29:05Z",
+      "side": 1,
+      "message": "Was this necessary to add? It seems reasonable and I\u0027d probably accept a commit containing just this change, but I\u0027m wondering whether it is directly related to the other stuff in the commit.",
+      "revId": "a4d7025ba2e35de425779bfab2641e6f2d56de72",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

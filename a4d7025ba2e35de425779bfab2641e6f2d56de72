@@ -51,6 +51,24 @@
       "message": "Was this necessary to add? It seems reasonable and I\u0027d probably accept a commit containing just this change, but I\u0027m wondering whether it is directly related to the other stuff in the commit.",
       "revId": "a4d7025ba2e35de425779bfab2641e6f2d56de72",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a7706653_50b1c38a",
+        "filename": "src/app_picker.rs",
+        "patchSetId": 10
+      },
+      "lineNbr": 208,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-11-13T19:41:40Z",
+      "side": 1,
+      "message": "Yes, if i don\u0027t do that, the app picker would crash at first call to autorelease to \nan NSObject (UIFont class methods in this case).\n\nThe other solution would be to modify addObject: method to create a pool for a current thread if absent.",
+      "parentUuid": "fffcaac7_984e0cc1",
+      "revId": "a4d7025ba2e35de425779bfab2641e6f2d56de72",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

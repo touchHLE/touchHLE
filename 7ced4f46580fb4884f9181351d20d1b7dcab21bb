@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c6ffc2ca_a0164205",
+        "filename": "src/frameworks/foundation/ns_object.rs",
+        "patchSetId": 7
+      },
+      "lineNbr": 171,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-11-13T20:51:00Z",
+      "side": 1,
+      "message": "It seems like a lot of logic is missing according to \"Search Pattern for the Basic Getter\" docs: get\u003cKey\u003e,is\u003cKey\u003e and _\u003ckey\u003e variants, NSArray/NSSet methods special cases, check for accessInstanceVariablesDirectly, redirect to valueForUndefinedKey:, etc.\nCould you please at least add TODOs for each of them?",
+      "revId": "7ced4f46580fb4884f9181351d20d1b7dcab21bb",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

@@ -87,6 +87,24 @@
       "parentUuid": "a7706653_50b1c38a",
       "revId": "a4d7025ba2e35de425779bfab2641e6f2d56de72",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "6a213006_2116e921",
+        "filename": "src/app_picker.rs",
+        "patchSetId": 10
+      },
+      "lineNbr": 208,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-11-13T23:10:34Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "89fbd1ba_168b5c40",
+      "revId": "a4d7025ba2e35de425779bfab2641e6f2d56de72",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

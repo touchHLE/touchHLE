@@ -34,6 +34,24 @@
       "parentUuid": "c6ffc2ca_a0164205",
       "revId": "7ced4f46580fb4884f9181351d20d1b7dcab21bb",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4c6a8525_4749fceb",
+        "filename": "src/frameworks/foundation/ns_object.rs",
+        "patchSetId": 7
+      },
+      "lineNbr": 171,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-11-13T21:02:09Z",
+      "side": 1,
+      "message": "Compare \"Search Pattern for the Basic Getter\" and \"Search Pattern for the Basic Setter\" descriptions in the docs, there are more logic in getter than setter, i think it\u0027s TODO worthy.\n(TBH i think setter is missing TODOs as well, it would be great if this could be addressed that too)",
+      "parentUuid": "0ced36cc_578df7b3",
+      "revId": "7ced4f46580fb4884f9181351d20d1b7dcab21bb",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

@@ -69,6 +69,24 @@
       "parentUuid": "fffcaac7_984e0cc1",
       "revId": "a4d7025ba2e35de425779bfab2641e6f2d56de72",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "89fbd1ba_168b5c40",
+        "filename": "src/app_picker.rs",
+        "patchSetId": 10
+      },
+      "lineNbr": 208,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-11-13T21:54:39Z",
+      "side": 1,
+      "message": "Oh, in that case, please remove this and change the behaviour of addObject so the old behaviour is retained: don\u0027t create a new pool, don\u0027t crash, just warn. I\u0027m pretty sure I chose that behaviour to be compatible with the real OS.",
+      "parentUuid": "a7706653_50b1c38a",
+      "revId": "a4d7025ba2e35de425779bfab2641e6f2d56de72",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

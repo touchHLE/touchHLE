@@ -1,0 +1,89 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b290f52b_a6455c36",
+        "filename": "src/frameworks/opengles/gles_guest.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 997,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-11-13T21:46:42Z",
+      "side": 1,
+      "message": "According to https://registry.khronos.org/OpenGL/extensions/OES/OES_mapbuffer.txt, you should assert that access is WRITE_ONLY_OES",
+      "revId": "2ac6d642e7757d89c0f1f8308aa9a451ddf079a1",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6eb8a35a_efc5ef28",
+        "filename": "src/frameworks/opengles/gles_guest.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 1018,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-11-13T21:46:42Z",
+      "side": 1,
+      "message": "you could return u32 directly from the helper function",
+      "revId": "2ac6d642e7757d89c0f1f8308aa9a451ddf079a1",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b1186212_09c52f5a",
+        "filename": "src/frameworks/opengles/gles_guest.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 1022,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-11-13T21:46:42Z",
+      "side": 1,
+      "message": "The one fear what i have here is that difference in bitness (32bit guest vs 64bit host) would require reconversion (e.g. shrink from 64bit to 32bit on map and grow back on unmap). i\u0027m not sure what exact behaviour is expected here and/or how to test this.",
+      "revId": "2ac6d642e7757d89c0f1f8308aa9a451ddf079a1",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "158eca94_f90a9b41",
+        "filename": "src/frameworks/opengles/gles_guest.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 1191,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-11-13T21:46:42Z",
+      "side": 1,
+      "message": "use snake_case for rust helper methods",
+      "revId": "2ac6d642e7757d89c0f1f8308aa9a451ddf079a1",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e3010c5d_bb3cc837",
+        "filename": "src/gles/gles1_on_gl2.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 1694,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-11-13T21:46:42Z",
+      "side": 1,
+      "message": "What happens here when you call it with WRITE_ONLY_OES access?\nDoes it generate any Gl error?",
+      "revId": "2ac6d642e7757d89c0f1f8308aa9a451ddf079a1",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

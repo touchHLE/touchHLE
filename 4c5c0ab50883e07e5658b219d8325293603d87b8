@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "bfca6e01_81877ee9",
+        "filename": "src/frameworks/opengles/gles_guest.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 233,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-11-14T16:54:06Z",
+      "side": 1,
+      "message": "maybe implement other variants as well to be complete?",
+      "revId": "4c5c0ab50883e07e5658b219d8325293603d87b8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "55f59ddb_0440425c",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 11
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-11-14T18:52:28Z",
+      "side": 1,
+      "message": "It\u0027s hard to verify the behavior of those undocumented classes.\nCould you please add a brief explanation in the comments of how you come up with those and/or provide some examples of nib structure in question?\n\n(Ideally, I would like to see tests but we\u0027re not here yet...)",
+      "revId": "54e5589dfb7718bfde2e8e7d784e145be8be1b33",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d811d7e7_3e0dded4",
+        "filename": "src/frameworks/uikit/ui_nib.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 273,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-11-14T18:52:28Z",
+      "side": 1,
+      "message": "Why do you need to change this?",
+      "revId": "54e5589dfb7718bfde2e8e7d784e145be8be1b33",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

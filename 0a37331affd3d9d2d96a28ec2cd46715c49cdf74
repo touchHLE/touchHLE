@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "87d070eb_a652b4d9",
+        "filename": "src/libc/mach_host.rs",
+        "patchSetId": 14
+      },
+      "lineNbr": 70,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-11-14T23:49:58Z",
+      "side": 1,
+      "message": "Why those numbers? Would it be possible to just count size of currently used chunks in the Allocator?",
+      "revId": "0a37331affd3d9d2d96a28ec2cd46715c49cdf74",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

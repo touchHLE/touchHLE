@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "72bdd2b3_8c33b1de",
+        "filename": "src/frameworks/foundation/ns_array.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 110,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-11-14T16:45:00Z",
+      "side": 1,
+      "message": "this method should belong to a private implementation of NSArray",
+      "revId": "d7a08f6d247f64d4e5b8c14bd7654609d0dd2184",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c618068b_37f325e5",
+        "filename": "src/frameworks/foundation/ns_array.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 112,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-11-14T16:45:00Z",
+      "side": 1,
+      "message": "As we already have an implementation of this for NSSet https://github.com/hikari-no-yume/touchHLE/blob/07b4c03e2f8ad93427fbcdd05909508a53b8bedc/src/frameworks/foundation/ns_set.rs#L128, could you please see how this can be unified across classes?",
+      "revId": "d7a08f6d247f64d4e5b8c14bd7654609d0dd2184",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a4d8176f_9db415d1",
+        "filename": "src/gles/gles1_on_gl2.rs",
+        "patchSetId": 12
+      },
+      "lineNbr": 39,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-11-14T19:00:43Z",
+      "side": 1,
+      "message": "remove this?",
+      "revId": "6eb446568770499c46dbce34439aa1745b347416",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f2faabf2_e9f499dd",
+        "filename": "src/gles/gles1_on_gl2.rs",
+        "patchSetId": 12
+      },
+      "lineNbr": 71,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-11-14T19:00:43Z",
+      "side": 1,
+      "message": "There is no POINT_SPRITE in gles11, but POINT_SPRITE_OES.\nAre you sure it\u0027s the same thing?",
+      "revId": "6eb446568770499c46dbce34439aa1745b347416",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fb8df1d0_22651595",
+        "filename": "src/gles/gles1_on_gl2.rs",
+        "patchSetId": 12
+      },
+      "lineNbr": 1426,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-11-14T19:00:43Z",
+      "side": 1,
+      "message": "remove this?",
+      "revId": "6eb446568770499c46dbce34439aa1745b347416",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

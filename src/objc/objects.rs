@@ -23,7 +23,6 @@
 use super::{Class, ClassHostObject};
 use crate::mem::{guest_size_of, GuestUSize, Mem, MutPtr, Ptr, SafeRead};
 use std::any::Any;
-use std::num::NonZeroU32;
 
 /// Memory layout of a minimal Objective-C object. See [id].
 ///
@@ -54,14 +53,17 @@ pub type id = MutPtr<objc_object>;
 #[allow(non_upper_case_globals)]
 pub const nil: id = Ptr::null();
 
+const STATIC_OBJ_REFCOUNT: u32 = 0xFFFFFFFF;
+
 /// Struct used to track the host object and refcount of every object.
 /// Maybe debugging info too eventually?
 ///
-/// If the `refcount` is `None`, that means this object has a static duration
-/// and should not be reference-counted, e.g. it is a class.
+/// If the `refcount` is `STATIC_OBJ_REFCOUNT`, that means this object
+/// has a static duration and should not be reference-counted,
+/// e.g. it is a class.
 pub(super) struct HostObjectEntry {
     host_object: Box<dyn AnyHostObject>,
-    refcount: Option<NonZeroU32>,
+    refcount: u32,
 }
 
 /// Type for host objects.
@@ -156,7 +158,7 @@ impl super::ObjC {
         instance_size: GuestUSize,
         host_object: Box<dyn AnyHostObject>,
         mem: &mut Mem,
-        refcount: Option<NonZeroU32>,
+        refcount: u32,
     ) -> id {
         let guest_object = objc_object { isa };
         // FIXME: Apparently some classes have an instance size of 0?
@@ -189,13 +191,7 @@ impl super::ObjC {
         mem: &mut Mem,
     ) -> id {
         let &ClassHostObject { instance_size, .. } = self.borrow(isa);
-        self.alloc_object_inner(
-            isa,
-            instance_size,
-            host_object,
-            mem,
-            Some(NonZeroU32::new(1).unwrap()),
-        )
+        self.alloc_object_inner(isa, instance_size, host_object, mem, 1)
     }
 
     /// Allocate a static-lifetime (guest) object (for example, a class) and
@@ -212,7 +208,7 @@ impl super::ObjC {
         mem: &mut Mem,
     ) -> id {
         let size = guest_size_of::<objc_object>();
-        self.alloc_object_inner(isa, size, host_object, mem, None)
+        self.alloc_object_inner(isa, size, host_object, mem, STATIC_OBJ_REFCOUNT)
     }
 
     /// Associate a host object with an existing static-lifetime (guest) object
@@ -227,7 +223,7 @@ impl super::ObjC {
             guest_object,
             HostObjectEntry {
                 host_object,
-                refcount: None,
+                refcount: STATIC_OBJ_REFCOUNT,
             },
         );
     }
@@ -285,14 +281,24 @@ impl super::ObjC {
                 object
             );
         };
-        let Some(refcount) = entry.refcount.as_mut() else {
+        if entry.refcount == STATIC_OBJ_REFCOUNT {
             // Might mean a missing `retain` override.
             panic!(
                 "Attempt to increment refcount on static-lifetime object {:?}!",
                 object
             );
         };
-        *refcount = refcount.checked_add(1).unwrap();
+        if entry.refcount == 0 {
+            log!(
+                "App attempted to resurrect object {:?} in dealloc. Expect crashes.",
+                object
+            );
+            return;
+        }
+        entry.refcount += 1;
+        if entry.refcount == STATIC_OBJ_REFCOUNT {
+            panic!("Reference count overflowed")
+        }
     }
 
     pub fn get_refcount(&mut self, object: id) -> u32 {
@@ -302,10 +308,7 @@ impl super::ObjC {
                 object
             );
         };
-        let Some(refcount) = entry.refcount.as_ref() else {
-            return 1;
-        };
-        refcount.get()
+        entry.refcount
     }
 
     /// Decrease the refcount of a reference-counted object. Do not call this
@@ -322,18 +325,24 @@ impl super::ObjC {
                 object
             );
         };
-        let Some(refcount) = entry.refcount.as_mut() else {
+        if entry.refcount == STATIC_OBJ_REFCOUNT {
             // Might mean a missing `release` override.
             panic!(
                 "Attempt to decrement refcount on static-lifetime object {:?}!",
                 object
             );
         };
-        if refcount.get() == 1 {
-            entry.refcount = None;
+        if entry.refcount == 1 {
+            entry.refcount = 0;
             true
+        } else if entry.refcount == 0 {
+            log!(
+                "App is over-releasing {:?} (or tried to resurrect it previously)",
+                object
+            );
+            false
         } else {
-            *refcount = NonZeroU32::new(refcount.get() - 1).unwrap();
+            entry.refcount -= 1;
             false
         }
     }
@@ -346,7 +355,7 @@ impl super::ObjC {
             refcount,
         } = self.objects.remove(&object).unwrap();
 
-        if let Some(refcount) = refcount {
+        if refcount != 0 {
             // This is a serious bug if it ever happens in host code.
             // Well-behaved apps should also never do this, but Crash Bandicoot
             // Nitro Kart 3D is not a well-behaved app.

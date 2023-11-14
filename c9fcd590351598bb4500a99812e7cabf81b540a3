@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "098415e6_548d6b80",
+        "filename": "src/frameworks/foundation/ns_lock.rs",
+        "patchSetId": 12
+      },
+      "lineNbr": 17,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-11-14T19:08:17Z",
+      "side": 1,
+      "message": "you should keep track on which thread the lock was created and assert that it\u0027s the same thread on each of the other methods",
+      "revId": "c9fcd590351598bb4500a99812e7cabf81b540a3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3ea17a62_505d46f0",
+        "filename": "src/frameworks/foundation/ns_lock.rs",
+        "patchSetId": 12
+      },
+      "lineNbr": 37,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-11-14T19:08:17Z",
+      "side": 1,
+      "message": "fix the log (here and for other methods)",
+      "revId": "c9fcd590351598bb4500a99812e7cabf81b540a3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6494f5d7_dd78d86c",
+        "filename": "src/frameworks/foundation/ns_lock.rs",
+        "patchSetId": 12
+      },
+      "lineNbr": 45,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-11-14T19:08:17Z",
+      "side": 1,
+      "message": "according to the docs, unlocking a non-locked lock should print a warning message",
+      "revId": "c9fcd590351598bb4500a99812e7cabf81b540a3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

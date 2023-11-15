@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "dfe3194f_3f1e4c0a",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 13
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-11-15T11:04:45Z",
+      "side": 1,
+      "message": "Obsolete after the merge of https://review.gerrithub.io/c/hikari-no-yume/touchHLE/+/1171662",
+      "revId": "f4d2da28aaa5395dfe137c9a183aff2ed03cb532",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

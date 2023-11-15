@@ -378,9 +378,10 @@ impl Dyld {
             }
 
             if let Some((symbol, _)) = search_lists(function_lists::FUNCTION_LISTS, symbol) {
-                // We want the same symbol name to always point to the same function. It could
-                // point to a specific stub entry, but it's easier to just create a new function
-                // and point all the stub entries to it.
+                // We want the same symbol name to always point to the same
+                // function. It could point to a specific stub entry, but it's
+                // easier to just create a new function and point all the stub
+                // entries to it.
                 let trampoline_ptr = self
                     .create_proc_address_no_inval(mem, symbol)
                     .unwrap()
@@ -470,8 +471,8 @@ impl Dyld {
         cpu: &mut Cpu,
         svc_pc: u32,
     ) -> Option<HostFunction> {
-        // Links by restoring the original stub function, then updating __la_symbol_ptr to the
-        // appropriate function.
+        // Links by restoring the original stub function, then updating 
+        // __la_symbol_ptr to the appropriate function.
         fn link_by_restoring_stub(
             mem: &mut Mem,
             cpu: &mut Cpu,
@@ -524,8 +525,8 @@ impl Dyld {
         let symbol = info.indirect_undef_symbols[idx].as_deref().unwrap();
 
         if let Some(&addr) = self.non_lazy_host_functions.get(symbol) {
-            // The host function was already linked non-lazily, point the stub and __la_symbol_ptr to
-            // the function.
+            // The host function was already linked non-lazily, point the 
+            // stub and __la_symbol_ptr to the function.
             let (stub_function_ptr, la_symbol_ptr) = link_by_restoring_stub(
                 mem,
                 cpu,
@@ -540,7 +541,8 @@ impl Dyld {
                 la_symbol_ptr,
                 addr,
             );
-            // The stub jumps to the non-lazy function, which calls the host function.
+            // The stub jumps to the non-lazy function, which calls the 
+            // host function.
             return None;
         }
 

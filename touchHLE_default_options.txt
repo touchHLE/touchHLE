@@ -31,38 +31,38 @@
 # - Use --stabilize-virtual-cursor= if the game's menus are practically unusable
 #   without it.
 
-# Crash Bandicoot Nitro Kart 3D
-# A = jump/drift, B = brake, Start = pause, Y = use item
-com.vgmobile.cnk2: --landscape-left --button-to-touch=A,240,160 --button-to-touch=B,240,310 --button-to-touch=Start,10,310 --button-to-touch=Y,470,310
-
-# Doom II RPG
-com.idsoftware.Doom2rpg: --landscape-left --stabilize-virtual-cursor=0.1,10 --button-to-touch=A,240,160 --button-to-touch=B,240,280 --button-to-touch=X,176,280 --button-to-touch=Y,320,280 --button-to-touch=DPadLeft,34,178 --button-to-touch=DPadUp,76,140 --button-to-touch=DPadRight,116,180 --button-to-touch=DPadDown,76,220
-
-# Fastlane Street Racing
-# A = accelerate, B = brake, X = Camera, Start = Pause
-com.atodab.actane: --landscape-left --button-to-touch=A,430,300 --button-to-touch=B,30,300 --button-to-touch=X,15,15 --button-to-touch=Start,470,15
-
-# Head2Head
-com.darxun: --landscape-right --y-tilt-offset=24
-
-# KataDama (I Love Katamari)
-com.namconetworks.katamari: --landscape-left --stabilize-virtual-cursor=0.1,10 --y-tilt-offset=24 --button-to-touch=Start,240,15
-
-# Mystery Mania
-com.ea.mysterymania.inc: --landscape-left
-
 # Super Monkey Ball and Super Monkey Ball Lite
 # B = speed up level intro, Start = pause
 com.ooi.supermonkeyball: --landscape-left --y-tilt-offset=24 --button-to-touch=B,470,160 --button-to-touch=Start,240,10
 smblite: --landscape-left --y-tilt-offset=24 --button-to-touch=B,470,160 --button-to-touch=Start,240,10
 
-# Tony Hawk's Pro Skater 2
-# A = Jump, B = Grab, X = Flip, Y = Grind, Start = Pause
-com.activision.thps2: --landscape-left --button-to-touch=DPadLeft,30,235 --button-to-touch=DPadUp,85,180 --button-to-touch=DPadRight,135,235 --button-to-touch=DPadDown,85,285 --button-to-touch=Start,240,30 --button-to-touch=A,395,280 --button-to-touch=B,445,230 --button-to-touch=X,345,230 --button-to-touch=Y,395,185
+# Crash Bandicoot Nitro Kart 3D
+# A = jump/drift, B = brake, Start = pause, Y = use item
+com.vgmobile.cnk2: --landscape-left --button-to-touch=A,240,160 --button-to-touch=B,240,310 --button-to-touch=Start,10,310 --button-to-touch=Y,470,310
+
+# Mystery Mania
+com.ea.mysterymania.inc: --landscape-left
+
+# Fastlane Street Racing
+# A = accelerate, B = brake, X = Camera, Start = Pause
+com.atodab.actane: --landscape-left --button-to-touch=A,430,300 --button-to-touch=B,30,300 --button-to-touch=X,15,15 --button-to-touch=Start,470,15
 
 # Wolfenstein 3D
 com.idsoftware.wolf3d: --landscape-right
 
+# KataDama (I Love Katamari)
+com.namconetworks.katamari: --landscape-left --stabilize-virtual-cursor=0.1,10 --y-tilt-offset=24 --button-to-touch=Start,240,15
+
 # Wolfenstein RPG
 com.eamobile.wolfbv: --landscape-left --stabilize-virtual-cursor=0.1,10 --button-to-touch=A,240,160 --button-to-touch=B,240,280 --button-to-touch=X,26,280 --button-to-touch=Y,454,280 --button-to-touch=DPadLeft,34,178 --button-to-touch=DPadUp,76,140 --button-to-touch=DPadRight,116,180 --button-to-touch=DPadDown,76,220
 com.eamobile.wolfinc: --landscape-left --stabilize-virtual-cursor=0.1,10 --button-to-touch=A,240,160 --button-to-touch=B,240,280 --button-to-touch=X,26,280 --button-to-touch=Y,454,280 --button-to-touch=DPadLeft,34,178 --button-to-touch=DPadUp,76,140 --button-to-touch=DPadRight,116,180 --button-to-touch=DPadDown,76,220
+
+# Doom II RPG
+com.idsoftware.Doom2rpg: --landscape-left --stabilize-virtual-cursor=0.1,10 --button-to-touch=A,240,160 --button-to-touch=B,240,280 --button-to-touch=X,176,280 --button-to-touch=Y,320,280 --button-to-touch=DPadLeft,34,178 --button-to-touch=DPadUp,76,140 --button-to-touch=DPadRight,116,180 --button-to-touch=DPadDown,76,220
+
+# Tony Hawk's Pro Skater 2
+# A = Jump, B = Grab, X = Flip, Y = Grind, Start = Pause
+com.activision.thps2: --landscape-left --button-to-touch=DPadLeft,30,235 --button-to-touch=DPadUp,85,180 --button-to-touch=DPadRight,135,235 --button-to-touch=DPadDown,85,285 --button-to-touch=Start,240,30 --button-to-touch=A,395,280 --button-to-touch=B,445,230 --button-to-touch=X,345,230 --button-to-touch=Y,395,185
+
+# Head2Head
+com.darxun: --landscape-right --y-tilt-offset=24

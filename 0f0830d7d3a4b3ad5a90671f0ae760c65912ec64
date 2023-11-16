@@ -68,6 +68,24 @@
       "message": "just keep in mind that this will be merged only after Tony hawk\u0027s branch merge",
       "revId": "0f0830d7d3a4b3ad5a90671f0ae760c65912ec64",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "18b3a900_ad0e6a06",
+        "filename": "touchHLE_default_options.txt",
+        "patchSetId": 3
+      },
+      "lineNbr": 63,
+      "author": {
+        "id": 1021974
+      },
+      "writtenOn": "2023-11-16T10:47:30Z",
+      "side": 1,
+      "message": "Do you prefer that I left THPS buttons for a different patch?",
+      "parentUuid": "2aaf151a_b08a88ac",
+      "revId": "0f0830d7d3a4b3ad5a90671f0ae760c65912ec64",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

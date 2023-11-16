@@ -16,6 +16,40 @@
       "message": "As discussed on Discord, dropped the reordering.",
       "revId": "0f0830d7d3a4b3ad5a90671f0ae760c65912ec64",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "0ac38465_bfa850b0",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 3
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-11-16T10:41:39Z",
+      "side": 1,
+      "message": "as you change not only about the Start button, you should precise that in the commit message",
+      "revId": "0f0830d7d3a4b3ad5a90671f0ae760c65912ec64",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2aaf151a_b08a88ac",
+        "filename": "touchHLE_default_options.txt",
+        "patchSetId": 3
+      },
+      "lineNbr": 63,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-11-16T10:41:39Z",
+      "side": 1,
+      "message": "just keep in mind that this will be merged only after Tony hawk\u0027s branch merge",
+      "revId": "0f0830d7d3a4b3ad5a90671f0ae760c65912ec64",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

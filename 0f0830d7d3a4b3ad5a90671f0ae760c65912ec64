@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ae41d97a_32df540f",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 3
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021974
+      },
+      "writtenOn": "2023-11-16T10:33:31Z",
+      "side": 1,
+      "message": "As discussed on Discord, dropped the reordering.",
+      "revId": "0f0830d7d3a4b3ad5a90671f0ae760c65912ec64",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

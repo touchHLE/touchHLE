@@ -13,10 +13,11 @@
 
 use super::ns_string::{from_rust_string, to_rust_string};
 use crate::frameworks::core_graphics::{CGPoint, CGRect, CGSize};
-use crate::frameworks::foundation::NSInteger;
+use crate::frameworks::foundation::{NSInteger, NSUInteger};
 use crate::frameworks::uikit::ui_geometry::{
     CGPointFromString, CGRectFromString, CGSizeFromString,
 };
+use crate::mem::ConstVoidPtr;
 use crate::objc::{
     autorelease, id, msg, nil, objc_classes, release, retain, ClassExports, HostObject, NSZonePtr,
 };
@@ -47,8 +48,42 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.alloc_object(this, unarchiver, &mut env.mem)
 }
 
++ (id)unarchiveObjectWithData:(id)data { // NSData *
+    let new: id = msg![env; this alloc];
+    let new: id = msg![env; new initForReadingWithData:data];
+    let result: id = msg![env; new decodeObject];
+    autorelease(env, result)
+}
+
 // TODO: real init methods. This is currently only initialized by the shortcut
 // function below.
+
+- (id)initForReadingWithData:(id)data { // NSData *
+    if data == nil {
+        return nil;
+    }
+
+    let length: NSUInteger = msg![env; data length];
+    let bytes: ConstVoidPtr = msg![env; data bytes];
+    let slice = env.mem.bytes_at(bytes.cast(), length);
+
+    let host_obj = env.objc.borrow_mut::<NSKeyedUnarchiverHostObject>(this);
+    assert!(host_obj.already_unarchived.is_empty());
+    assert!(host_obj.current_key.is_none());
+    assert!(host_obj.plist.is_empty());
+
+    let plist = Value::from_reader(Cursor::new(slice)).unwrap();
+    let plist = plist.into_dictionary().unwrap();
+    assert!(plist["$version"].as_unsigned_integer() == Some(100000));
+    assert!(plist["$archiver"].as_string() == Some("NSKeyedArchiver"));
+
+    let key_count = plist["$objects"].as_array().unwrap().len();
+
+    host_obj.already_unarchived = vec![None; key_count];
+    host_obj.plist = plist;
+
+    this
+}
 
 - (())dealloc {
     let host_obj = borrow_host_obj(env, this);
@@ -134,6 +169,10 @@ pub const CLASSES: ClassExports = objc_classes! {
     autorelease(env, object)
 }
 
+- (id)decodeObject {
+    todo!()
+}
+
 // TODO: add more decode methods
 
 // These come from a category in UIKit's UIGeometry.h
@@ -170,27 +209,6 @@ fn get_value_to_decode_for_key(env: &mut Environment, unarchiver: id, key: id) -
     .as_dictionary()
     .unwrap();
     scope.get(&key)
-}
-
-/// Shortcut for use by [crate::frameworks::uikit::ui_nib::load_main_nib_file].
-///
-/// This is equivalent to calling `initForReadingWithData:` in the proper API.
-pub fn init_for_reading_with_data(env: &mut Environment, unarchiver: id, data: &[u8]) {
-    // Should have already been alloc'd the proper way.
-    let host_obj = borrow_host_obj(env, unarchiver);
-    assert!(host_obj.already_unarchived.is_empty());
-    assert!(host_obj.current_key.is_none());
-    assert!(host_obj.plist.is_empty());
-
-    let plist = Value::from_reader(Cursor::new(data)).unwrap();
-    let plist = plist.into_dictionary().unwrap();
-    assert!(plist["$version"].as_unsigned_integer() == Some(100000));
-    assert!(plist["$archiver"].as_string() == Some("NSKeyedArchiver"));
-
-    let key_count = plist["$objects"].as_array().unwrap().len();
-
-    host_obj.already_unarchived = vec![None; key_count];
-    host_obj.plist = plist;
 }
 
 /// The core of the implementation: unarchive something by its uid.

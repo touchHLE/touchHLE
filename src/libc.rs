@@ -14,6 +14,7 @@ mod generic_char;
 pub mod clocale;
 pub mod ctype;
 pub mod cxxabi;
+pub mod dirent;
 pub mod dlfcn;
 pub mod errno;
 pub mod ifaddrs;
@@ -39,6 +40,7 @@ pub mod wchar;
 /// Container for state of various child modules
 #[derive(Default)]
 pub struct State {
+    dirent: dirent::State,
     keymgr: keymgr::State,
     posix_io: posix_io::State,
     pthread: pthread::State,

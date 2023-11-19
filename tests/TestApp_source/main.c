@@ -102,6 +102,18 @@ int sem_wait(sem_t *);
 #define LC_MESSAGES 6
 char *setlocale(int category, const char *locale);
 
+// <dirent.h>
+typedef struct {
+  int _unused;
+} DIR;
+struct dirent {
+  char _unused[21]; // TODO
+  char d_name[1024];
+};
+DIR *opendir(const char *);
+struct dirent *readdir(DIR *);
+int closedir(DIR *);
+
 // === Main code ===
 
 int int_compar(const void *a, const void *b) { return *(int *)a - *(int *)b; }
@@ -601,6 +613,39 @@ int test_setlocale() {
   return 0;
 }
 
+int test_dirent() {
+  struct dirent *dp;
+#ifdef DEFINE_ME_WHEN_BUILDING_ON_MACOS
+  // assume project dir as cwd
+  const char *path = "./tests/TestApp.app";
+#else
+  const char *path = "/var/mobile/Applications/"
+                     "00000000-0000-0000-0000-000000000000/TestApp.app";
+#endif
+  DIR *dirp = opendir(path);
+  if (dirp == NULL) {
+    return -1;
+  }
+  char *contents[] = {"TestApp", "Info.plist", "PkgInfo"};
+  int counts[] = {1, 1, 1};
+  int total = sizeof(contents) / sizeof(char *);
+  while ((dp = readdir(dirp)) != NULL) {
+    for (int i = 0; i < total; i++) {
+      if (strcmp(contents[i], dp->d_name) == 0) {
+        counts[i]--;
+        break;
+      }
+    }
+  }
+  closedir(dirp);
+  for (int i = 0; i < total; i++) {
+    if (counts[i] != 0) {
+      return -2;
+    }
+  }
+  return 0;
+}
+
 #define FUNC_DEF(func)                                                         \
   { &func, #func }
 struct {
@@ -614,7 +659,7 @@ struct {
     FUNC_DEF(test_sem),     FUNC_DEF(test_CGAffineTransform),
     FUNC_DEF(test_strncpy), FUNC_DEF(test_strncat),
     FUNC_DEF(test_strlcpy), FUNC_DEF(test_setlocale),
-    FUNC_DEF(test_strtoul),
+    FUNC_DEF(test_strtoul), FUNC_DEF(test_dirent),
 };
 
 // Because no libc is linked into this executable, there is no libc entry point

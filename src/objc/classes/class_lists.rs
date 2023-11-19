@@ -44,6 +44,7 @@ pub const CLASS_LISTS: &[super::ClassExports] = &[
     foundation::ns_user_defaults::CLASSES,
     foundation::ns_value::CLASSES,
     media_player::movie_player::CLASSES,
+    media_player::music_player::CLASSES,
     opengles::eagl::CLASSES,
     uikit::ui_accelerometer::CLASSES,
     uikit::ui_activity_indicator_view::CLASSES,

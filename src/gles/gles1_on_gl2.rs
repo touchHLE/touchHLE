@@ -644,6 +644,12 @@ impl GLES for GLES1OnGL2 {
         assert!(type_ == ParamType::Int);
         gl21::GetIntegerv(pname, params);
     }
+    unsafe fn GetTexEnviv(&mut self, target: GLenum, pname: GLenum, params: *mut GLint) {
+        let (type_, _count) = TEX_ENV_PARAMS.get_type_info(pname);
+        assert!(type_ == ParamType::Int);
+        assert_eq!(target, gl21::TEXTURE_ENV);
+        gl21::GetTexEnviv(target, pname, params);
+    }
     unsafe fn GetPointerv(&mut self, pname: GLenum, params: *mut *const GLvoid) {
         assert!(ARRAYS
             .iter()

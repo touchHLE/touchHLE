@@ -16,6 +16,24 @@
       "message": "LGTM, praying this doesn\u0027t cause a ton of regressions.",
       "revId": "d771063e93af45135d1339994eacf3bcf663f231",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "20dd203f_a2b3be3d",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-11-19T12:22:34Z",
+      "side": 1,
+      "message": ":pray:",
+      "parentUuid": "ed35242c_9d07c8a1",
+      "revId": "d771063e93af45135d1339994eacf3bcf663f231",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

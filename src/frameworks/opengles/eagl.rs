@@ -368,6 +368,20 @@ unsafe fn get_int(gles: &mut dyn GLES, pname: GLenum) -> GLint {
     get_ints::<1>(gles, pname)[0]
 }
 // Safety: caller's responsibility to use appropriate N.
+unsafe fn get_tex_env_ints<const N: usize>(
+    gles: &mut dyn GLES,
+    target: GLenum,
+    pname: GLenum,
+) -> [GLint; N] {
+    let mut res = [0; N];
+    gles.GetTexEnviv(target, pname, res.as_mut_ptr());
+    res
+}
+// Safety: caller's responsibility to only use this for scalars.
+unsafe fn get_tex_env_int(gles: &mut dyn GLES, target: GLenum, pname: GLenum) -> GLint {
+    get_tex_env_ints::<1>(gles, target, pname)[0]
+}
+// Safety: caller's responsibility to use appropriate N.
 unsafe fn get_floats<const N: usize>(gles: &mut dyn GLES, pname: GLenum) -> [GLfloat; N] {
     let mut res = [0.0; N];
     gles.GetFloatv(pname, res.as_mut_ptr());
@@ -567,6 +581,14 @@ unsafe fn present_renderbuffer(gles: &mut dyn GLES, window: &mut Window) {
     let old_blend_sfactor: GLenum = get_int(gles, gles11::BLEND_SRC) as _;
     let old_blend_dfactor: GLenum = get_int(gles, gles11::BLEND_DST) as _;
 
+    let old_tex_env_mode = get_tex_env_int(gles, gles11::TEXTURE_ENV, gles11::TEXTURE_ENV_MODE);
+    let default_tex_env_mode_arr = [gles11::MODULATE; 1];
+    gles.TexEnviv(
+        gles11::TEXTURE_ENV,
+        gles11::TEXTURE_ENV_MODE,
+        default_tex_env_mode_arr.as_ptr().cast(),
+    );
+
     // Draw the quad
     present_frame(
         gles,
@@ -632,6 +654,13 @@ unsafe fn present_renderbuffer(gles: &mut dyn GLES, window: &mut Window) {
     );
     gles.BindBuffer(gles11::ARRAY_BUFFER, old_array_buffer);
     gles.BlendFunc(old_blend_sfactor, old_blend_dfactor);
+
+    let old_tex_env_mode_arr = [old_tex_env_mode; 1];
+    gles.TexEnviv(
+        gles11::TEXTURE_ENV,
+        gles11::TEXTURE_ENV_MODE,
+        old_tex_env_mode_arr.as_ptr().cast(),
+    );
 
     // SDL2's documentation warns 0 should be bound to the draw framebuffer
     // when swapping the window, so this is the perfect moment.

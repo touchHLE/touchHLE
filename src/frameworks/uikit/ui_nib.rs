@@ -10,7 +10,7 @@
 //! - GitHub user 0xced's [reverse-engineering of UIClassSwapper](https://gist.github.com/0xced/45daf79b62ad6a20be1c).
 
 use crate::frameworks::foundation::ns_string::{get_static_str, to_rust_string};
-use crate::frameworks::foundation::{ns_keyed_unarchiver, NSUInteger};
+use crate::frameworks::foundation::{ns_string, NSUInteger};
 use crate::objc::{
     id, msg, msg_class, nil, objc_classes, release, retain, ClassExports, HostObject,
 };
@@ -175,7 +175,10 @@ pub fn load_main_nib_file(env: &mut Environment, _ui_application: id) {
         return;
     };
 
-    let Ok(data) = env.fs.read(path) else {
+    let path = ns_string::from_rust_string(env, path.as_str().to_string());
+    assert!(msg![env; path isAbsolutePath]);
+    let ns_data: id = msg_class![env; NSData dataWithContentsOfFile:path];
+    if ns_data == nil {
         // Apparently it's permitted to specify the nib file key in the
         // Info.plist, yet not have it point to a valid nib file?!
         log!("Warning: couldn't load main nib file");
@@ -183,7 +186,7 @@ pub fn load_main_nib_file(env: &mut Environment, _ui_application: id) {
     };
 
     let unarchiver = msg_class![env; NSKeyedUnarchiver alloc];
-    ns_keyed_unarchiver::init_for_reading_with_data(env, unarchiver, &data);
+    let unarchiver = msg![env; unarchiver initForReadingWithData:ns_data];
 
     // The top-level keys in a nib file's keyed archive appear to be
     // UINibAccessibilityConfigurationsKey, UINibConnectionsKey,

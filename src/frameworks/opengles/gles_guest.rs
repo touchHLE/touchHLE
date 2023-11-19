@@ -17,7 +17,6 @@ use crate::gles::gles11_raw as gles11; // constants only
 use crate::gles::GLES;
 use crate::mem::{ConstPtr, ConstVoidPtr, GuestISize, GuestUSize, Mem, MutPtr};
 use crate::Environment;
-use core::ffi::CStr;
 
 // These types are the same size in guest code (32-bit) and host code (64-bit).
 use crate::gles::gles11_raw::types::{
@@ -131,15 +130,36 @@ fn glFlush(env: &mut Environment) {
     with_ctx_and_mem(env, |gles, _mem| unsafe { gles.Flush() })
 }
 fn glGetString(env: &mut Environment, name: GLenum) -> ConstPtr<GLubyte> {
-    with_ctx_and_mem(env, |gles, mem| {
-        let s = unsafe { CStr::from_ptr(gles.GetString(name).cast()) };
-        log!(
-            "TODO: glGetString({}) does not match real device and leaks memory",
-            name,
-        );
-        log_dbg!("glGetString({}) => {:?}", name, s);
-        mem.alloc_and_write_cstr(s.to_bytes()).cast_const()
-    })
+    let res = if let Some(&str) = env.framework_state.opengles.strings_cache.get(&name) {
+        str
+    } else {
+        let new_str = with_ctx_and_mem(env, |_gles, mem| {
+            // Those values are extracted from the iPod touch 2nd gen, iOS 4.2.1
+            let s: &[u8] = match name {
+                gles11::VENDOR => {
+                    b"Imagination Technologies"
+                }
+                gles11::RENDERER => {
+                    b"PowerVR MBXLite with VGPLite"
+                }
+                gles11::VERSION => {
+                    b"OpenGL ES-CM 1.1 (76)"
+                }
+                gles11::EXTENSIONS => {
+                    b"GL_APPLE_framebuffer_multisample GL_APPLE_texture_max_level GL_EXT_discard_framebuffer GL_EXT_texture_filter_anisotropic GL_EXT_texture_lod_bias GL_IMG_read_format GL_IMG_texture_compression_pvrtc GL_IMG_texture_format_BGRA8888 GL_OES_blend_subtract GL_OES_compressed_paletted_texture GL_OES_depth24 GL_OES_draw_texture GL_OES_framebuffer_object GL_OES_mapbuffer GL_OES_matrix_palette GL_OES_point_size_array GL_OES_point_sprite GL_OES_read_format GL_OES_rgb8_rgba8 GL_OES_texture_mirrored_repeat GL_OES_vertex_array_object "
+                }
+                _ => unreachable!(),
+            };
+            mem.alloc_and_write_cstr(s).cast_const()
+        });
+        env.framework_state
+            .opengles
+            .strings_cache
+            .insert(name, new_str);
+        new_str
+    };
+    log_dbg!("glGetString({}) => {:?}", name, res);
+    res
 }
 
 // Other state manipulation

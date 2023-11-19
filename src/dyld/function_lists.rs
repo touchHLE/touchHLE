@@ -52,6 +52,7 @@ pub const FUNCTION_LISTS: &[super::FunctionExports] = &[
     core_foundation::cf_bundle::FUNCTIONS,
     core_foundation::cf_data::FUNCTIONS,
     core_foundation::cf_run_loop::FUNCTIONS,
+    core_foundation::cf_run_loop_timer::FUNCTIONS,
     core_foundation::cf_string::FUNCTIONS,
     core_foundation::cf_type::FUNCTIONS,
     core_foundation::cf_url::FUNCTIONS,

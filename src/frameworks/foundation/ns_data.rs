@@ -49,9 +49,9 @@ pub const CLASSES: ClassExports = objc_classes! {
     autorelease(env, new)
 }
 
-+ (id)dataWithContentsOfFile:(id)path{
++ (id)dataWithContentsOfFile:(id)path {
     let new: id = msg![env; this alloc];
-    let new: id = msg![env; new initWithContentsOfFile: path];
+    let new: id = msg![env; new initWithContentsOfFile:path];
     autorelease(env, new)
 }
 

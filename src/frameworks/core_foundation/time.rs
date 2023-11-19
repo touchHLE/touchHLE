@@ -21,7 +21,7 @@ pub fn apple_epoch() -> SystemTime {
 }
 
 pub type CFTimeInterval = NSTimeInterval;
-type CFAbsoluteTime = CFTimeInterval;
+pub type CFAbsoluteTime = CFTimeInterval;
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 #[repr(C, packed)]

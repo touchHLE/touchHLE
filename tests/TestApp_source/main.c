@@ -427,8 +427,36 @@ int test_sem() {
 
   sem_close(semaphore);
   sem_unlink("sem_test");
+  if (shared_int != 1) {
+    return -1;
+  }
 
-  return shared_int == 1 ? 0 : -1;
+  // Check that reopen is fine
+  semaphore = sem_open("sem_test", O_CREAT, 0644, 1);
+  if (semaphore == SEM_FAILED) {
+    printf("Error opening semaphore\n");
+    return -1;
+  }
+
+  // Sem @ -1
+  if (sem_trywait(semaphore) == -1) {
+    return -1;
+  }
+
+  // Sem still @ -1, should not lock
+  if (sem_trywait(semaphore) == 0) {
+    return -1;
+  }
+
+  // Sem @ 0, should be able to relock
+  sem_post(semaphore);
+  if (sem_trywait(semaphore) == -1) {
+    return -1;
+  }
+
+  sem_close(semaphore);
+  sem_unlink("sem_test");
+  return 0;
 }
 
 int test_strncpy() {

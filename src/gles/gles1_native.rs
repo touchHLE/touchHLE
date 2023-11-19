@@ -83,6 +83,9 @@ impl GLES for GLES1Native {
     unsafe fn GetIntegerv(&mut self, pname: GLenum, params: *mut GLint) {
         gles11::GetIntegerv(pname, params)
     }
+    unsafe fn GetTexEnviv(&mut self, target: GLenum, pname: GLenum, params: *mut GLint) {
+        gles11::GetTexEnviv(target, pname, params)
+    }
     unsafe fn GetPointerv(&mut self, pname: GLenum, params: *mut *const GLvoid) {
         // The second argument to glGetPointerv must be a mutable pointer,
         // but gl_generator generates the wrong signature by mistake, see

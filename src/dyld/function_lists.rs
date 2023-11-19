@@ -17,6 +17,7 @@ use crate::libc;
 pub const FUNCTION_LISTS: &[super::FunctionExports] = &[
     libc::ctype::FUNCTIONS,
     libc::cxxabi::FUNCTIONS,
+    libc::dirent::FUNCTIONS,
     libc::dlfcn::FUNCTIONS,
     libc::errno::FUNCTIONS,
     libc::ifaddrs::FUNCTIONS,

@@ -16,6 +16,24 @@
       "message": "you should add space here at the end befire \u0027{\u0027 (and below), otherwise CI build would fail on clang-format checks",
       "revId": "bc416e902bfac082fd0ea3d2688fc8303b115d68",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "a28b4302_1fd08a0c",
+        "filename": "tests/TestApp_source/main.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 432,
+      "author": {
+        "id": 1021823
+      },
+      "writtenOn": "2023-11-20T22:23:29Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "04a34246_9acffcfb",
+      "revId": "bc416e902bfac082fd0ea3d2688fc8303b115d68",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

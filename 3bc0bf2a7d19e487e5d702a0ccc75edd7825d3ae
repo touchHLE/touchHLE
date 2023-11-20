@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ad598c45_ca078f9a",
+        "filename": "src/frameworks/uikit/ui_view/ui_control/ui_button.rs",
+        "patchSetId": 12
+      },
+      "lineNbr": 170,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-11-20T23:09:59Z",
+      "side": 1,
+      "message": "are you sure that both label and image should have a same frame?",
+      "revId": "3bc0bf2a7d19e487e5d702a0ccc75edd7825d3ae",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

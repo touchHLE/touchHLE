@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "04a34246_9acffcfb",
+        "filename": "tests/TestApp_source/main.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 432,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-11-20T21:10:11Z",
+      "side": 1,
+      "message": "you should add space here at the end befire \u0027{\u0027 (and below), otherwise CI build would fail on clang-format checks",
+      "revId": "bc416e902bfac082fd0ea3d2688fc8303b115d68",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

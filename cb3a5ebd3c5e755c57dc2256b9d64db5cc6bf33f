@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f1f5cd86_8c42177b",
+        "filename": "src/frameworks/uikit/ui_view.rs",
+        "patchSetId": 13
+      },
+      "lineNbr": 205,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-11-20T23:15:21Z",
+      "side": 1,
+      "message": "Have you checked this behaviour with a real device or a sim?\nShould be relatively easy to build a test app",
+      "revId": "cb3a5ebd3c5e755c57dc2256b9d64db5cc6bf33f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

@@ -66,3 +66,6 @@ com.activision.thps2: --landscape-left --button-to-touch=DPadLeft,30,235 --butto
 
 # Head2Head
 com.darxun: --landscape-right --y-tilt-offset=24
+
+# Jackpot Casino
+com.chillingo.jackpotcasino: --landscape-right

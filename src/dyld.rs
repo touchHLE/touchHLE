@@ -618,8 +618,8 @@ impl Dyld {
         symbol: &str,
     ) -> Result<GuestFunction, ()> {
         let &(symbol, f) = search_lists(function_lists::FUNCTION_LISTS, symbol).ok_or(())?;
-        if let Some(cached_fn) = self.non_lazy_host_functions.get(symbol) {
-            return Ok(cached_fn.clone());
+        if let Some(&cached_fn) = self.non_lazy_host_functions.get(symbol) {
+            return Ok(cached_fn);
         }
 
         // Allocate an SVC ID for this host function

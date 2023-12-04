@@ -17,5 +17,8 @@ printf '\e[32mNone found.\e[0m\n'
 
 set -ex
 
-cargo clippy
-cargo doc
+# "--deny warnings" ensures that warnings result in a non-zero exit status.
+cargo clippy -- --deny warnings
+# "--document-private-items" has to be added again so the flag from
+# .cargo/config.toml isn't overridden
+RUSTDOCFLAGS="--deny warnings --document-private-items" cargo doc

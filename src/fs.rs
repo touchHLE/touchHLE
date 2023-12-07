@@ -493,11 +493,11 @@ impl Fs {
             .with_child(
                 // symlink
                 "libstdc++.6.dylib",
-                FsNode::resource_file(format!("{}/libstdc++.6.0.4.dylib", DYLIBS_DIR)),
+                FsNode::resource_file(format!("{}/libstdc++.6.0.9.dylib", DYLIBS_DIR)),
             )
             .with_child(
-                "libstdc++.6.0.4.dylib",
-                FsNode::resource_file(format!("{}/libstdc++.6.0.4.dylib", DYLIBS_DIR)),
+                "libstdc++.6.0.9.dylib",
+                FsNode::resource_file(format!("{}/libstdc++.6.0.9.dylib", DYLIBS_DIR)),
             );
 
         let mut app_dir_children = HashMap::new();

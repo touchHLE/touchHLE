@@ -2,18 +2,18 @@
 
 These are impractical to reimplement, but they are Free Software.
 
-## `libstdc++.6.0.4.dylib`
+## `libstdc++.6.0.9.dylib`
 
 * Alias: `libstdc++.6.dylib`
 * License: GNU GPL v2 or later (see `COPYING.libstdc++`)
-* Binary origin: `/usr/lib/` of iPhone OS 2.2.1 for the iPod touch (2nd generation), build 5H11a
-* Source code: <https://github.com/apple-oss-distributions/libstdcxx/tree/libstdcxx-5.1.0.7>
+* Binary origin: `/usr/lib/` of iPhone OS 3.0.1 for the iPhone 3G, build 7A400
+* Source code: <https://github.com/apple-oss-distributions/libstdcxx/tree/libstdcxx-37.11>
 
 ## `libgcc_s.1.dylib`
 
 * License: GNU GPLv2 or later (see `COPYING.libgcc`)
-* Binary origin: `/usr/lib/` of iPhone OS 2.2.1 for the iPod touch (2nd generation), build 5H11a
-* Source code: <https://github.com/apple-oss-distributions/libgcc/tree/libgcc-8.1>
+* Binary origin: `/usr/lib/` of iPhone OS 3.0.1 for the iPhone 3G, build 7A400
+* Source code: <https://github.com/apple-oss-distributions/gcc/tree/gcc-5572.10.2>
 
 ## Original Apple license acknowledgements
 
@@ -57,7 +57,7 @@ These are impractical to reimplement, but they are Free Software.
 > >
 > > Activities other than copying, distribution and modification are not covered by this License; they are outside its scope. The act of running the Program is not restricted, and the output from the Program is covered only if its contents constitute a work based on the Program (independent of having been made by running the Program). Whether that is true depends on what the Program does. 
 > >
-> > **1.**  You may copy and distribute verbatim copies of the Program's source code as you receive it, in any medium, provided that you conspicuously and appropriately publish on each copy an appropriate copyright notice and disclaimer of warranty; keep intact all the notices that refer to this License and to the absence of any warranty; and give any other recipients of the Program a copy of this License along with the Program.
+> > **1.** You may copy and distribute verbatim copies of the Program's source code as you receive it, in any medium, provided that you conspicuously and appropriately publish on each copy an appropriate copyright notice and disclaimer of warranty; keep intact all the notices that refer to this License and to the absence of any warranty; and give any other recipients of the Program a copy of this License along with the Program. 
 > >
 > > You may charge a fee for the physical act of transferring a copy, and you may at your option offer warranty protection in exchange for a fee. 
 > >
@@ -117,4 +117,3 @@ These are impractical to reimplement, but they are Free Software.
 > >
 > > **END OF TERMS AND CONDITIONS**
 > >
-

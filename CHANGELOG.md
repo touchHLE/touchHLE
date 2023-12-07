@@ -17,9 +17,12 @@ Changes are categorised as follows:
 
 Compatibility:
 
-- API support improvements
+- API support improvements:
   - Various small contributions. (@alborrajo, @WhatAmISupposedToPutHere, @ciciplusplus, @hikari-no-yume, @LennyKappa)
-  - Basic support for fat binaries has been added. touchHLE will no longer crash when trying to run an app with both ARMv6 and ARMv7 versions, and instead will try to pick the best available option (ARMv7, or failing this, ARMv6). This improves compatibility with iPhone OS 3.0 apps, many of which use fat binaries in order to improve performance on the iPhone 3GS. (@WhatAmISupposedToPutHere)
+- There is now support for iPhone OS 3.0 apps, in addition to the existing support for iPhone OS 2.x apps:
+  - Support for fat binaries has been added. touchHLE will no longer crash when trying to run an app with both ARMv6 and ARMv7 versions, and instead will try to pick the best available option (ARMv7, or failing this, ARMv6). This improves compatibility with iPhone OS 3.0 apps, many of which use fat binaries in order to improve performance on the iPhone 3GS and iPod touch (3rd generation). (@WhatAmISupposedToPutHere)
+  - The bundled ARMv6 dynamic libraries, libgcc and libstdc++, have been updated to their iPhone OS 3.0.1 versions. Previously the iPhone OS 2.2.1 versions were used. (@hikari-no-yume)
+  - touchHLE will no longer output a warning when trying to run an app with iPhone OS 3.0 as its minimum OS version. The warning now only appears for apps requiring iPhone OS 3.1 and later. (@hikari-no-yume)
 
 ## v0.2.1 (2023-10-31)
 

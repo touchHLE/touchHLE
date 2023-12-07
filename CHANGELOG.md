@@ -24,6 +24,10 @@ Compatibility:
   - The bundled ARMv6 dynamic libraries, libgcc and libstdc++, have been updated to their iPhone OS 3.0.1 versions. Previously the iPhone OS 2.2.1 versions were used. (@hikari-no-yume)
   - touchHLE will no longer output a warning when trying to run an app with iPhone OS 3.0 as its minimum OS version. The warning now only appears for apps requiring iPhone OS 3.1 and later. (@hikari-no-yume)
 
+Usability:
+
+- The `--button-to-touch=` option now supports the Start button in addition to the A/B/X/Y buttons and D-pad. Certain games' default options have been adjusted to use the Start button. (@nighto)
+
 ## v0.2.1 (2023-10-31)
 
 From this release onwards, the old list of supported apps is replaced by the crowdsourced [touchHLE app compatibility database](https://appdb.touchhle.org/).

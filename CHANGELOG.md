@@ -13,6 +13,14 @@ Changes are categorised as follows:
 * Usability: changes to features of the emulator unrelated to the above, e.g. new input methods.
 * Other: when none of the above seem to fit.
 
+## NEXT
+
+Compatibility:
+
+- API support improvements
+  - Various small contributions. (@alborrajo, @WhatAmISupposedToPutHere, @ciciplusplus, @hikari-no-yume, @LennyKappa)
+  - Basic support for fat binaries has been added. touchHLE will no longer crash when trying to run an app with both ARMv6 and ARMv7 versions, and instead will try to pick the best available option (ARMv7, or failing this, ARMv6). This improves compatibility with iPhone OS 3.0 apps, many of which use fat binaries in order to improve performance on the iPhone 3GS. (@WhatAmISupposedToPutHere)
+
 ## v0.2.1 (2023-10-31)
 
 From this release onwards, the old list of supported apps is replaced by the crowdsourced [touchHLE app compatibility database](https://appdb.touchhle.org/).

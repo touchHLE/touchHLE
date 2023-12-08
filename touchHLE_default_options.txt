@@ -69,3 +69,7 @@ com.darxun: --landscape-right --y-tilt-offset=24
 
 # Jackpot Casino
 com.chillingo.jackpotcasino: --landscape-right
+
+# Warrior Nation Blade
+# Left/Right = Walk, A = Attack, B = Defend, X = Magic, Y = Secondary Attack, LeftShoulder = Special, Start = Pause
+com.bestsungame.warriornationblade:  --button-to-touch=DPadLeft,50,285 --button-to-touch=DPadRight,120,285 --button-to-touch=A,430,260 --button-to-touch=B,440,185 --button-to-touch=X,360,280 --button-to-touch=Y,230,270 --button-to-touch=LeftShoulder,270,30 --button-to-touch=Start,460,20

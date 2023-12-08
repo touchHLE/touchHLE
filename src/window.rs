@@ -361,6 +361,9 @@ impl Window {
                 sdl2::controller::Button::B => Some(crate::options::Button::B),
                 sdl2::controller::Button::X => Some(crate::options::Button::X),
                 sdl2::controller::Button::Y => Some(crate::options::Button::Y),
+                sdl2::controller::Button::LeftShoulder => {
+                    Some(crate::options::Button::LeftShoulder)
+                }
                 _ => None,
             }
         }

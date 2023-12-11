@@ -41,10 +41,6 @@ pub const CLASSES: ClassExports = objc_classes! {
     result
 }
 
-- (NSTimeInterval)timeIntervalSinceReferenceDate {
-    env.objc.borrow::<NSDateHostObject>(this).instant
-}
-
 @end
 
 };

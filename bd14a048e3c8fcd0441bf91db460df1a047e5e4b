@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3616f0f1_4da08900",
+        "filename": "src/frameworks/foundation/ns_locale.rs",
+        "patchSetId": 14
+      },
+      "lineNbr": 80,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-12-11T20:32:36Z",
+      "side": 1,
+      "message": "Typo: local/locale?",
+      "revId": "bd14a048e3c8fcd0441bf91db460df1a047e5e4b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ef734b34_22490b87",
+        "filename": "src/frameworks/foundation/ns_locale.rs",
+        "patchSetId": 14
+      },
+      "lineNbr": 108,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-12-11T20:32:36Z",
+      "side": 1,
+      "message": "I don\u0027t think we need to guess it, SDL outright gives us a country code? But I haven\u0027t tested how the results differ between Windows, macOS and iOS.",
+      "revId": "bd14a048e3c8fcd0441bf91db460df1a047e5e4b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

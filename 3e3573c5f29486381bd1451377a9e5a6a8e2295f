@@ -36,6 +36,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "7651e0d6_e42b54ff",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 14
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-12-12T12:51:04Z",
+      "side": 1,
+      "message": "I think someone might have told me I was confusing NSTimeInterval and NSDate somewhere, but maybe that was already fixed, because when I look at those places in UIKit, they _are_ meant to be using NSTimeInterval as returned by `systemUptime`, so there\u0027s no issue.",
+      "parentUuid": "9e288da5_f343a6e1",
+      "revId": "3e3573c5f29486381bd1451377a9e5a6a8e2295f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "eef44294_30457a36",
@@ -67,6 +85,24 @@
       "side": 1,
       "message": "changed to `time_interval` instead",
       "parentUuid": "eef44294_30457a36",
+      "revId": "3e3573c5f29486381bd1451377a9e5a6a8e2295f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "92f78eaf_88181eb4",
+        "filename": "src/frameworks/foundation/ns_date.rs",
+        "patchSetId": 14
+      },
+      "lineNbr": 15,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-12-12T12:51:04Z",
+      "side": 1,
+      "message": "Thanks!",
+      "parentUuid": "15639c0e_68456146",
       "revId": "3e3573c5f29486381bd1451377a9e5a6a8e2295f",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

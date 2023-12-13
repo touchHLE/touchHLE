@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "2d72777a_357df160",
+        "filename": "src/libc/time.rs",
+        "patchSetId": 19
+      },
+      "lineNbr": 336,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-12-13T22:35:32Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "9a0797fe_cf054be4",
+      "revId": "8c59a850fe6b3847b79f49edcddfc1dea02bfbaf",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "7efdb969_f643c997",
@@ -31,6 +49,24 @@
       "writtenOn": "2023-12-12T13:38:18Z",
       "side": 1,
       "message": "Are you sure this is right? Please double-check, but I think the nanoseconds value is a fractional component of a number and the seconds part is the whole component, so you\u0027d need to add both. Neatest way is probably to use both Duration::from_secs() and add Duration::from_nanos() and add them together?",
+      "revId": "8c59a850fe6b3847b79f49edcddfc1dea02bfbaf",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "59df5f0d_ce74d57e",
+        "filename": "src/libc/time.rs",
+        "patchSetId": 19
+      },
+      "lineNbr": 342,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-12-13T22:35:32Z",
+      "side": 1,
+      "message": "Indeed, according to posix specs (https://www.open-std.org/jtc1/sc22/open/n4217.pdf), \"The time interval described by this structure is (tv_sec * 10^9 + tv_nsec) nanoseconds.\"\n\nBut i\u0027m asserting here that tv_sec is 0 at line 340 ;)\n\nAnyway, changed as you requested",
+      "parentUuid": "7efdb969_f643c997",
       "revId": "8c59a850fe6b3847b79f49edcddfc1dea02bfbaf",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

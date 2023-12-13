@@ -34,6 +34,24 @@
       "parentUuid": "09dde291_8a8448cb",
       "revId": "892414184779bc4bbc5081edb9ffaf8f94e1e877",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8d6c0255_79df444e",
+        "filename": "src/libc/stdio.rs",
+        "patchSetId": 20
+      },
+      "lineNbr": 41,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-12-13T22:37:20Z",
+      "side": 1,
+      "message": "Sure, please let me know",
+      "parentUuid": "bcfcf0c0_b29ffb67",
+      "revId": "892414184779bc4bbc5081edb9ffaf8f94e1e877",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

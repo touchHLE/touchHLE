@@ -69,6 +69,24 @@
       "parentUuid": "7efdb969_f643c997",
       "revId": "8c59a850fe6b3847b79f49edcddfc1dea02bfbaf",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ad566b71_711bc9ba",
+        "filename": "src/libc/time.rs",
+        "patchSetId": 19
+      },
+      "lineNbr": 342,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-12-13T23:16:17Z",
+      "side": 1,
+      "message": "Ah, I had missed that, but I like the new version better nonetheless, the assert feels arbitrary. Thanks!",
+      "parentUuid": "59df5f0d_ce74d57e",
+      "revId": "8c59a850fe6b3847b79f49edcddfc1dea02bfbaf",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

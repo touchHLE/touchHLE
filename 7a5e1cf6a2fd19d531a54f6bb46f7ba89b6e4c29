@@ -16,6 +16,24 @@
       "message": "Can you add a basic test? Doesn\u0027t have to be much, a single case is fine.",
       "revId": "7a5e1cf6a2fd19d531a54f6bb46f7ba89b6e4c29",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "dc291ef8_f058ae95",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 18
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-12-13T22:35:03Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "f2ec52ed_0caad332",
+      "revId": "7a5e1cf6a2fd19d531a54f6bb46f7ba89b6e4c29",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

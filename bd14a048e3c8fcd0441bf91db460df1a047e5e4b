@@ -36,6 +36,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "2a00bde9_cf5be1dc",
+        "filename": "src/frameworks/foundation/ns_locale.rs",
+        "patchSetId": 14
+      },
+      "lineNbr": 80,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-12-17T23:05:34Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "63c11eb0_e2ddbf16",
+      "revId": "bd14a048e3c8fcd0441bf91db460df1a047e5e4b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "ef734b34_22490b87",
@@ -85,6 +103,24 @@
       "side": 1,
       "message": "Done, tested on macOS so far, it works",
       "parentUuid": "a847789a_68e89ce8",
+      "revId": "bd14a048e3c8fcd0441bf91db460df1a047e5e4b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "e7cf1371_864ff4a8",
+        "filename": "src/frameworks/foundation/ns_locale.rs",
+        "patchSetId": 14
+      },
+      "lineNbr": 108,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-12-17T23:05:34Z",
+      "side": 1,
+      "message": "Looks good, thanks!",
+      "parentUuid": "b84b2669_c7de5417",
       "revId": "bd14a048e3c8fcd0441bf91db460df1a047e5e4b",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

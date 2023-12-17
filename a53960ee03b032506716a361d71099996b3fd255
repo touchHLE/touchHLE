@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2fb00937_02982c0a",
+        "filename": "src/frameworks/foundation/ns_locale.rs",
+        "patchSetId": 18
+      },
+      "lineNbr": 105,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-12-17T22:42:06Z",
+      "side": 1,
+      "message": "Can you add log messages similar to the one for preferred languages?",
+      "revId": "a53960ee03b032506716a361d71099996b3fd255",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

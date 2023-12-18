@@ -16,6 +16,24 @@
       "message": "You could just use `ptr_at` here, but it\u0027s fine as it is.",
       "revId": "02fb18334bfebcfad6c0a42c2217046257643496",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "0bcbf92c_bf944b2a",
+        "filename": "src/frameworks/openal.rs",
+        "patchSetId": 22
+      },
+      "lineNbr": 227,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-12-18T15:01:19Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "b7b89f09_6f3503fe",
+      "revId": "02fb18334bfebcfad6c0a42c2217046257643496",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

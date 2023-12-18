@@ -52,6 +52,24 @@
       "parentUuid": "bcfcf0c0_b29ffb67",
       "revId": "892414184779bc4bbc5081edb9ffaf8f94e1e877",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9c7b1be6_49f85fe1",
+        "filename": "src/libc/stdio.rs",
+        "patchSetId": 20
+      },
+      "lineNbr": 41,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-12-18T17:06:15Z",
+      "side": 1,
+      "message": "Okay I did some testing and realised that just adding more strings isn\u0027t the way to go, so I made my own version on trunk here: 51a3a12b5e50a29efe6214cbed22c3a297d98ae4. I didn\u0027t check it worked with Rayman but it would be weird if it didn\u0027t. Maybe you can abandon this now?",
+      "parentUuid": "8d6c0255_79df444e",
+      "revId": "892414184779bc4bbc5081edb9ffaf8f94e1e877",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

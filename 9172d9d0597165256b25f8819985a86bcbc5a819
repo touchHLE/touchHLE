@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "de329732_25e6894e",
+        "filename": "src/libc/stdio/printf.rs",
+        "patchSetId": 24
+      },
+      "lineNbr": 374,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-12-18T17:43:29Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "ad894af2_35faabc1",
+      "revId": "9172d9d0597165256b25f8819985a86bcbc5a819",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "9dbe0d4c_7074b987",
@@ -31,6 +49,24 @@
       "writtenOn": "2023-12-18T17:16:05Z",
       "side": 1,
       "message": "I won\u0027t force you to split this out but please mention in the commit message that you are adding basic %i support.",
+      "revId": "9172d9d0597165256b25f8819985a86bcbc5a819",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "aab82c56_62f8354d",
+        "filename": "src/libc/stdio/printf.rs",
+        "patchSetId": 24
+      },
+      "lineNbr": 377,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-12-18T17:43:29Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "9dbe0d4c_7074b987",
       "revId": "9172d9d0597165256b25f8819985a86bcbc5a819",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

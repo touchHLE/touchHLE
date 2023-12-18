@@ -36,7 +36,7 @@ type fpos_t = off_t;
 fn fopen(env: &mut Environment, filename: ConstPtr<u8>, mode: ConstPtr<u8>) -> MutPtr<FILE> {
     // Some testing on macOS suggests Apple's implementation will just ignore
     // flags it doesn't know about, and unfortunately real-world apps seem to
-    // rely on this, e.g. using "wt" to mean open for writing in binary mode,
+    // rely on this, e.g. using "wt" to mean open for writing in text mode,
     // even though that's not a real flag. The one thing that is required is for
     // a known basic mode (r/w/a) to come first.
 

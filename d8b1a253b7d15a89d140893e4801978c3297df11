@@ -1,0 +1,44 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "68921596_0490d7e1",
+        "filename": "src/frameworks/foundation/ns_thread.rs",
+        "patchSetId": 19
+      },
+      "lineNbr": 82,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-12-18T15:12:08Z",
+      "side": 1,
+      "message": "Is this a real name or something you made up? If it\u0027s something we\u0027re inventing, I suggest namespacing, like `__touchHLE_NSThreadInvocationHelper` or something. Ditto for the `pub fn` below.",
+      "range": {
+        "startLine": 82,
+        "startChar": 16,
+        "endLine": 82,
+        "endChar": 38
+      },
+      "revId": "d8b1a253b7d15a89d140893e4801978c3297df11",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "cfffc232_60591aa6",
+        "filename": "src/frameworks/foundation/ns_thread.rs",
+        "patchSetId": 19
+      },
+      "lineNbr": 129,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-12-18T15:12:08Z",
+      "side": 1,
+      "message": "You can get rid of this now right?",
+      "revId": "d8b1a253b7d15a89d140893e4801978c3297df11",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

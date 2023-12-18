@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b7b89f09_6f3503fe",
+        "filename": "src/frameworks/openal.rs",
+        "patchSetId": 22
+      },
+      "lineNbr": 227,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-12-18T13:06:20Z",
+      "side": 1,
+      "message": "You could just use `ptr_at` here, but it\u0027s fine as it is.",
+      "revId": "02fb18334bfebcfad6c0a42c2217046257643496",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

@@ -34,6 +34,24 @@
       "parentUuid": "d7b8ddb4_4102a82d",
       "revId": "47b48d2dc4bb8d504f061a499e31c4bd7f3ada8d",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "dbb7c25b_1ee044db",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 20
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2023-12-19T22:49:34Z",
+      "side": 1,
+      "message": "Love the comment, thanks! I\u0027ll probably hold off on merging until after next release because the memory usage increase isn\u0027t worth it until the rest of the THPS2 stuff is in.",
+      "parentUuid": "b289ef3a_6ee1e76e",
+      "revId": "47b48d2dc4bb8d504f061a499e31c4bd7f3ada8d",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

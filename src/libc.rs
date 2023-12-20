@@ -47,7 +47,7 @@ pub struct State {
     dirent: dirent::State,
     keymgr: keymgr::State,
     posix_io: posix_io::State,
-    pthread: pthread::State,
+    pub pthread: pthread::State,
     pub semaphore: semaphore::State,
     stdlib: stdlib::State,
     string: string::State,

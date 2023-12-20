@@ -33,7 +33,7 @@ pub struct pthread_mutex_t {
     /// Magic number (must be [MAGIC_MUTEX])
     magic: u32,
     /// Unique mutex identifier, used in matching the mutex to it's host object.
-    mutex_id: MutexId,
+    pub mutex_id: MutexId,
 }
 unsafe impl SafeRead for pthread_mutex_t {}
 
@@ -129,7 +129,9 @@ fn check_or_register_mutex(env: &mut Environment, mutex: MutPtr<pthread_mutex_t>
 pub fn pthread_mutex_lock(env: &mut Environment, mutex: MutPtr<pthread_mutex_t>) -> i32 {
     check_or_register_mutex(env, mutex);
     let mutex_data = env.mem.read(mutex);
-    env.lock_mutex(mutex_data.mutex_id).err().unwrap_or(0)
+    let mutex_id = mutex_data.mutex_id;
+    log_dbg!("About to lock mutex #{} ({:#x})", mutex_id, mutex.to_bits());
+    env.lock_mutex(mutex_id).err().unwrap_or(0)
 }
 
 pub fn pthread_mutex_trylock(env: &mut Environment, mutex: MutPtr<pthread_mutex_t>) -> i32 {
@@ -145,7 +147,13 @@ pub fn pthread_mutex_trylock(env: &mut Environment, mutex: MutPtr<pthread_mutex_
 pub fn pthread_mutex_unlock(env: &mut Environment, mutex: MutPtr<pthread_mutex_t>) -> i32 {
     check_or_register_mutex(env, mutex);
     let mutex_data = env.mem.read(mutex);
-    env.unlock_mutex(mutex_data.mutex_id).err().unwrap_or(0)
+    let mutex_id = mutex_data.mutex_id;
+    log_dbg!(
+        "About to unlock mutex #{} ({:#x})",
+        mutex_id,
+        mutex.to_bits()
+    );
+    env.unlock_mutex(mutex_id).err().unwrap_or(0)
 }
 
 pub fn pthread_mutex_destroy(env: &mut Environment, mutex: MutPtr<pthread_mutex_t>) -> i32 {

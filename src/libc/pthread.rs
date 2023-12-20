@@ -28,6 +28,7 @@ macro_rules! check_magic {
     }
 }
 
+pub mod cond;
 pub mod key;
 pub mod mutex;
 pub mod once;
@@ -35,6 +36,7 @@ pub mod thread;
 
 #[derive(Default)]
 pub struct State {
+    pub cond: cond::State,
     key: key::State,
     thread: thread::State,
 }

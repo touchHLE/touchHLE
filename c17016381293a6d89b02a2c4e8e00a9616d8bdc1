@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "c46ed34b_7edd3fb7",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 15
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-12-27T18:11:10Z",
+      "side": 1,
+      "message": "i don\u0027t really get this commit, it was already done in I48c7eed4aec877d272b22ee753dd915f77afc6fb which was merged?",
+      "revId": "c17016381293a6d89b02a2c4e8e00a9616d8bdc1",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

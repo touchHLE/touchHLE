@@ -119,7 +119,11 @@ impl<T, const MUT: bool> Default for Ptr<T, MUT> {
 
 impl<T, const MUT: bool> std::fmt::Debug for Ptr<T, MUT> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:#x}", self.to_bits())
+        if self.is_null() {
+            write!(f, "(null)")
+        } else {
+            write!(f, "{:#x}", self.to_bits())
+        }
     }
 }
 

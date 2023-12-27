@@ -16,6 +16,24 @@
       "message": "CGAffineTransform is a struct, not an object",
       "revId": "67fdc46bcf9010a70f391a0482ebd7bcb90ed59b",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "0831b7b4_442fad56",
+        "filename": "src/frameworks/uikit/ui_view.rs",
+        "patchSetId": 13
+      },
+      "lineNbr": 406,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2023-12-27T15:06:43Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "0644b2ce_ba00f66e",
+      "revId": "67fdc46bcf9010a70f391a0482ebd7bcb90ed59b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

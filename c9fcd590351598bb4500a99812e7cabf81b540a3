@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "f7e46a6b_953a9a95",
+        "filename": "src/frameworks/foundation/ns_lock.rs",
+        "patchSetId": 12
+      },
+      "lineNbr": 17,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2023-12-27T15:07:29Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "098415e6_548d6b80",
+      "revId": "c9fcd590351598bb4500a99812e7cabf81b540a3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "3ea17a62_505d46f0",
@@ -35,6 +53,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "6d2b808b_90ab39bf",
+        "filename": "src/frameworks/foundation/ns_lock.rs",
+        "patchSetId": 12
+      },
+      "lineNbr": 37,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2023-12-27T15:07:29Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "3ea17a62_505d46f0",
+      "revId": "c9fcd590351598bb4500a99812e7cabf81b540a3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "6494f5d7_dd78d86c",
@@ -48,6 +84,24 @@
       "writtenOn": "2023-11-14T19:08:17Z",
       "side": 1,
       "message": "according to the docs, unlocking a non-locked lock should print a warning message",
+      "revId": "c9fcd590351598bb4500a99812e7cabf81b540a3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "2a0bba9b_b3966871",
+        "filename": "src/frameworks/foundation/ns_lock.rs",
+        "patchSetId": 12
+      },
+      "lineNbr": 45,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2023-12-27T15:07:29Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "6494f5d7_dd78d86c",
       "revId": "c9fcd590351598bb4500a99812e7cabf81b540a3",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

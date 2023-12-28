@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2ecd1258_399aca62",
+        "filename": "src/gles/gles1_on_gl2.rs",
+        "patchSetId": 15
+      },
+      "lineNbr": 821,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-12-28T18:56:58Z",
+      "side": 1,
+      "message": "why not just GLenum and GLfixed for types here?",
+      "revId": "271a087584f08c5026a16dceaed66fd03de0217d",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "69edd59b_f43b8112",
+        "filename": "src/frameworks/foundation/ns_thread.rs",
+        "patchSetId": 17
+      },
+      "lineNbr": 143,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-12-28T18:51:15Z",
+      "side": 1,
+      "message": "`alloc` should never be called solely - either balance it with `init` or use class creation methods like `new` (or `dictionary` in this case)",
+      "revId": "6312495111ec0f5a703170ca2892b4d0a31258dd",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "92983e61_794fa02c",
+        "filename": "src/objc/selectors.rs",
+        "patchSetId": 17
+      },
+      "lineNbr": 40,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-12-28T18:51:15Z",
+      "side": 1,
+      "message": "why this need to be changed?",
+      "revId": "6312495111ec0f5a703170ca2892b4d0a31258dd",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

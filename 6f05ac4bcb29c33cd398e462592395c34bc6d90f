@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f1d9ff8d_d5a9880d",
+        "filename": "src/frameworks/uikit/ui_view/ui_control/ui_rounded_rect_button.rs",
+        "patchSetId": 15
+      },
+      "lineNbr": 14,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2023-12-28T19:44:14Z",
+      "side": 1,
+      "message": "Are you sure this class is a part of UIKit? (At least, public part of UIKit)\nI could not find any reference in public Apple\u0027s docs.",
+      "revId": "6f05ac4bcb29c33cd398e462592395c34bc6d90f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

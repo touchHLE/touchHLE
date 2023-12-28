@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "9a49ea4a_8dba56c8",
+        "filename": "src/frameworks/foundation/ns_array.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 110,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2023-12-28T16:06:29Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "72bdd2b3_8c33b1de",
+      "revId": "d7a08f6d247f64d4e5b8c14bd7654609d0dd2184",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "c618068b_37f325e5",
@@ -31,6 +49,24 @@
       "writtenOn": "2023-11-14T16:45:00Z",
       "side": 1,
       "message": "As we already have an implementation of this for NSSet https://github.com/hikari-no-yume/touchHLE/blob/07b4c03e2f8ad93427fbcdd05909508a53b8bedc/src/frameworks/foundation/ns_set.rs#L128, could you please see how this can be unified across classes?",
+      "revId": "d7a08f6d247f64d4e5b8c14bd7654609d0dd2184",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ebfb9caa_ecfd82ed",
+        "filename": "src/frameworks/foundation/ns_array.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 112,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2023-12-28T16:06:29Z",
+      "side": 1,
+      "message": "I\u0027m not sure this is the most appropriate solution. I still struggle a bit with generics and the borrow system. Let me know your thoughts",
+      "parentUuid": "c618068b_37f325e5",
       "revId": "d7a08f6d247f64d4e5b8c14bd7654609d0dd2184",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

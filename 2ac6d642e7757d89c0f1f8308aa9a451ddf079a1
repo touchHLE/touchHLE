@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "86f05c74_3e4ae40b",
+        "filename": "src/frameworks/opengles/gles_guest.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 997,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2023-12-28T13:47:40Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "b290f52b_a6455c36",
+      "revId": "2ac6d642e7757d89c0f1f8308aa9a451ddf079a1",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "6eb8a35a_efc5ef28",
@@ -31,6 +49,24 @@
       "writtenOn": "2023-11-13T21:46:42Z",
       "side": 1,
       "message": "you could return u32 directly from the helper function",
+      "revId": "2ac6d642e7757d89c0f1f8308aa9a451ddf079a1",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "dfb993ca_41a2103b",
+        "filename": "src/frameworks/opengles/gles_guest.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 1018,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2023-12-28T13:47:40Z",
+      "side": 1,
+      "message": "The only reason im casting the value is to be used later when copying, where it must be u32 in one place, and usize in another. Because of that I didn\u0027t feel the need that the helper function should be the one casting it.",
+      "parentUuid": "6eb8a35a_efc5ef28",
       "revId": "2ac6d642e7757d89c0f1f8308aa9a451ddf079a1",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
@@ -69,6 +105,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "0716ee12_b0ff7062",
+        "filename": "src/frameworks/opengles/gles_guest.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 1191,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2023-12-28T13:47:40Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "158eca94_f90a9b41",
+      "revId": "2ac6d642e7757d89c0f1f8308aa9a451ddf079a1",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "e3010c5d_bb3cc837",
@@ -82,6 +136,24 @@
       "writtenOn": "2023-11-13T21:46:42Z",
       "side": 1,
       "message": "What happens here when you call it with WRITE_ONLY_OES access?\nDoes it generate any Gl error?",
+      "revId": "2ac6d642e7757d89c0f1f8308aa9a451ddf079a1",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "3f56d392_915088a8",
+        "filename": "src/gles/gles1_on_gl2.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 1694,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2023-12-28T13:47:40Z",
+      "side": 1,
+      "message": "It doesn\u0027t seem to generate any error",
+      "parentUuid": "e3010c5d_bb3cc837",
       "revId": "2ac6d642e7757d89c0f1f8308aa9a451ddf079a1",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

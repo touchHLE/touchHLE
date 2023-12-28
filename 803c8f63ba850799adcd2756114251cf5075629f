@@ -16,6 +16,24 @@
       "message": "it should return size_t, not int",
       "revId": "803c8f63ba850799adcd2756114251cf5075629f",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "beb0d9fa_1a3b26f3",
+        "filename": "tests/TestApp_source/main.c",
+        "patchSetId": 13
+      },
+      "lineNbr": 62,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2023-12-28T13:47:49Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "1875b65d_98e208aa",
+      "revId": "803c8f63ba850799adcd2756114251cf5075629f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

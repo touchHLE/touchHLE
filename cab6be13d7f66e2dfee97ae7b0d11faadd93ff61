@@ -16,6 +16,24 @@
       "message": "I think it would be cleaner to return Result and always release Ok() object",
       "revId": "cab6be13d7f66e2dfee97ae7b0d11faadd93ff61",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "21db8252_df4d549c",
+        "filename": "src/frameworks/uikit/ui_nib.rs",
+        "patchSetId": 15
+      },
+      "lineNbr": 233,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2023-12-29T12:31:43Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "92b485de_ba2eaa60",
+      "revId": "cab6be13d7f66e2dfee97ae7b0d11faadd93ff61",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

@@ -16,6 +16,24 @@
       "message": "it seems you forgot `return 0;` here",
       "revId": "4ac3dfe01ac885f7e40c43d5713cd2aa118c90c8",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "3dfa34ef_99243397",
+        "filename": "tests/TestApp_source/main.c",
+        "patchSetId": 14
+      },
+      "lineNbr": 527,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2023-12-29T12:31:21Z",
+      "side": 1,
+      "message": "Oops! Nice catch",
+      "parentUuid": "10225fa4_ba334cb0",
+      "revId": "4ac3dfe01ac885f7e40c43d5713cd2aa118c90c8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

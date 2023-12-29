@@ -16,6 +16,24 @@
       "message": "why not just GLenum and GLfixed for types here?",
       "revId": "271a087584f08c5026a16dceaed66fd03de0217d",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b626a723_6fa00fd3",
+        "filename": "src/gles/gles1_on_gl2.rs",
+        "patchSetId": 15
+      },
+      "lineNbr": 821,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2023-12-29T12:31:33Z",
+      "side": 1,
+      "message": "Autocompleted function signature, my bad.",
+      "parentUuid": "2ecd1258_399aca62",
+      "revId": "271a087584f08c5026a16dceaed66fd03de0217d",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

@@ -16,6 +16,24 @@
       "message": "Are you sure this class is a part of UIKit? (At least, public part of UIKit)\nI could not find any reference in public Apple\u0027s docs.",
       "revId": "6f05ac4bcb29c33cd398e462592395c34bc6d90f",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "c0a1e946_bdf7ad0e",
+        "filename": "src/frameworks/uikit/ui_view/ui_control/ui_rounded_rect_button.rs",
+        "patchSetId": 15
+      },
+      "lineNbr": 14,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2023-12-29T12:31:51Z",
+      "side": 1,
+      "message": "I\u0027m not sure why it\u0027s not referenced in the docs but it\u0027s part of UIKit. I tested the following in Xcode targeting an iOS 2.2.1 simulator:\n```objc\nUIButton* btn \u003d [UIButton buttonWithType:UIButtonTypeRoundedRect];\n[btn setTitle:@\"Testing\" forState:UIControlStateNormal];\nbtn.frame \u003d CGRectMake(0,0,100,50);\n[window addSubview:btn];\nNSLog(@\"%@\", NSStringFromClass([btn class]));\n```\nit would show a button with rounded borders and log the following:\n```2023-12-29 07:57:50.864 test[231:20b] UIRoundedRectButton```",
+      "parentUuid": "f1d9ff8d_d5a9880d",
+      "revId": "6f05ac4bcb29c33cd398e462592395c34bc6d90f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

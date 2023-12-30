@@ -33,6 +33,24 @@
       "message": "have you tested what is returned on iOS/macOS?\nit\u0027s possible that it\u0027s actually absolutePath",
       "revId": "f73ace556f3a629de9826f51f8fe0d3d09d0bf73",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d05c073e_c9659a71",
+        "filename": "src/frameworks/foundation/ns_url.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 98,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2023-12-30T16:23:54Z",
+      "side": 1,
+      "message": "description returns the path as-is when its not a file URL:\n```objc\n[NSURL URLWithString:@\"/probando\"] -\u003e /probando\n[NSURL URLWithString:@\"~/probando\"] -\u003e ~/probando\n[NSURL URLWithString:@\"file:///probando\"] -\u003e file:///probando\n```\nbut when created with fileURLWithPath, it returns the path if it\u0027s absolute, or, if it\u0027s relative, it returns the path alongside the CWD at the time the object was created:\n```objc\nurl \u003d [NSURL fileURLWithPath:@\"./probando\"];\n[NSURL fileURLWithPath:url] -\u003e probando -- file:///Users/alborrajo/Library/Developer/Xcode/DerivedData/testing-bbhwuupzownunbdvrxmcmqbnuodd/Build/Products/Debug/\n[[NSFileManager defaultManager] changeCurrentDirectoryPath:@\"/\"];\n[[NSFileManager defaultManager] currentDirectoryPath] -\u003e /\n[NSURL fileURLWithPath:url] -\u003e probando -- file:///Users/alborrajo/Library/Developer/Xcode/DerivedData/testing-bbhwuupzownunbdvrxmcmqbnuodd/Build/Products/Debug/\n```",
+      "parentUuid": "a585e8e5_75d64735",
+      "revId": "f73ace556f3a629de9826f51f8fe0d3d09d0bf73",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

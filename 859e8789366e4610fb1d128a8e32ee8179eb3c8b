@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c1828e9c_adea2c6f",
+        "filename": "src/frameworks/foundation/ns_url.rs",
+        "patchSetId": 18
+      },
+      "lineNbr": 105,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-01-03T21:17:58Z",
+      "side": 1,
+      "message": "reading NSURLHostObject comments and init\u0027s TODO, i have an impression that \"file://\" prefix would be stripped during the creation, so this and next if wouldn\u0027t make sense",
+      "revId": "859e8789366e4610fb1d128a8e32ee8179eb3c8b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

@@ -86,6 +86,24 @@
       "parentUuid": "f4221867_5533e648",
       "revId": "7df2c046c046db3bf7f5e7d12cd8f504b5d00493",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "8f3a9ee4_e67fb96f",
+        "filename": "src/libc/clocale.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 17,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-01-06T21:42:45Z",
+      "side": 1,
+      "message": "nice!",
+      "parentUuid": "387ef5b9_a36980c3",
+      "revId": "7df2c046c046db3bf7f5e7d12cd8f504b5d00493",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

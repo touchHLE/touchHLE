@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6daca39d_6871f876",
+        "filename": "src/libc/clocale.rs",
+        "patchSetId": 16
+      },
+      "lineNbr": 15,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-01-06T21:42:45Z",
+      "side": 1,
+      "message": "we usually group only last part of the imports.\ncould you please follow that?",
+      "revId": "f8a9d1377b8457b20be2c21449b58767946c7c84",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5563fa6f_2024585e",
+        "filename": "src/libc/clocale.rs",
+        "patchSetId": 16
+      },
+      "lineNbr": 18,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-01-06T21:42:45Z",
+      "side": 1,
+      "message": "you can introduce some type for readability instead of using i32 (e.g. like FileDescriptor type of STDIN_FILENO)",
+      "revId": "f8a9d1377b8457b20be2c21449b58767946c7c84",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

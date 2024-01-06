@@ -35,6 +35,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "bd3d7b56_84dcb437",
+        "filename": "src/libc/clocale.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 16,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-01-06T20:57:02Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "c78e3b9d_7c468ba8",
+      "revId": "7df2c046c046db3bf7f5e7d12cd8f504b5d00493",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "f4221867_5533e648",
@@ -48,6 +66,24 @@
       "writtenOn": "2023-11-13T21:48:08Z",
       "side": 1,
       "message": "this leaks memory, it should be fixed or logged",
+      "revId": "7df2c046c046db3bf7f5e7d12cd8f504b5d00493",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "387ef5b9_a36980c3",
+        "filename": "src/libc/clocale.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 17,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-01-06T20:57:02Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "f4221867_5533e648",
       "revId": "7df2c046c046db3bf7f5e7d12cd8f504b5d00493",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

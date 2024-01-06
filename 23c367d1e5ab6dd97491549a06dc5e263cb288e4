@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "63981ef7_f52631e1",
+        "filename": "src/gles/gles1_on_gl2.rs",
+        "patchSetId": 21
+      },
+      "lineNbr": 39,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-01-06T21:45:34Z",
+      "side": 1,
+      "message": "you forgot to remove this one",
+      "revId": "23c367d1e5ab6dd97491549a06dc5e263cb288e4",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

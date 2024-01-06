@@ -16,6 +16,24 @@
       "message": "are you sure that both label and image should have a same frame?",
       "revId": "3bc0bf2a7d19e487e5d702a0ccc75edd7825d3ae",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e9b747d5_d96d25b2",
+        "filename": "src/frameworks/uikit/ui_view/ui_control/ui_button.rs",
+        "patchSetId": 12
+      },
+      "lineNbr": 170,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-01-06T20:56:36Z",
+      "side": 1,
+      "message": "The buttons in Lightbike are images with no text. Like this, they display properly but without doing this they don\u0027t display at all. I\u0027m not sure how I could check for sure.",
+      "parentUuid": "ad598c45_ca078f9a",
+      "revId": "3bc0bf2a7d19e487e5d702a0ccc75edd7825d3ae",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

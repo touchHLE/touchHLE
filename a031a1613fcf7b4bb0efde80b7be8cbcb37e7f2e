@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0ea69295_724afb92",
+        "filename": "src/frameworks/foundation/ns_url.rs",
+        "patchSetId": 20
+      },
+      "lineNbr": 27,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-01-06T21:31:00Z",
+      "side": 1,
+      "message": "I really doubt that NSURL keeps track of working directory at creation time.",
+      "revId": "a031a1613fcf7b4bb0efde80b7be8cbcb37e7f2e",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

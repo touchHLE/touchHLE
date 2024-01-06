@@ -105,6 +105,24 @@
       "parentUuid": "d05c073e_c9659a71",
       "revId": "f73ace556f3a629de9826f51f8fe0d3d09d0bf73",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b57f5357_6abae990",
+        "filename": "src/frameworks/foundation/ns_url.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 98,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-01-06T21:31:00Z",
+      "side": 1,
+      "message": "\u003e could you please also output absolute path of current working directory before and after you changed it to \"/\"?\n\nhave you tried this?",
+      "parentUuid": "5753b6a4_9d7cb8ee",
+      "revId": "f73ace556f3a629de9826f51f8fe0d3d09d0bf73",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

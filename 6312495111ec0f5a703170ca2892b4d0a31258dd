@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "b54f2117_335ea161",
+        "filename": "src/frameworks/foundation/ns_thread.rs",
+        "patchSetId": 17
+      },
+      "lineNbr": 143,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-01-07T12:17:53Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "69edd59b_f43b8112",
+      "revId": "6312495111ec0f5a703170ca2892b4d0a31258dd",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "92983e61_794fa02c",
@@ -31,6 +49,24 @@
       "writtenOn": "2023-12-28T18:51:15Z",
       "side": 1,
       "message": "why this need to be changed?",
+      "revId": "6312495111ec0f5a703170ca2892b4d0a31258dd",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "0d7280e1_e5db9918",
+        "filename": "src/objc/selectors.rs",
+        "patchSetId": 17
+      },
+      "lineNbr": 40,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-01-07T12:17:53Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "92983e61_794fa02c",
       "revId": "6312495111ec0f5a703170ca2892b4d0a31258dd",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

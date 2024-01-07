@@ -123,6 +123,24 @@
       "parentUuid": "5753b6a4_9d7cb8ee",
       "revId": "f73ace556f3a629de9826f51f8fe0d3d09d0bf73",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7eccb338_6963fc3c",
+        "filename": "src/frameworks/foundation/ns_url.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 98,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-01-07T11:56:10Z",
+      "side": 1,
+      "message": "Yes, the CWD before changeCurrentDirectoryPath is the debug build directory of the xcode project:\n```objc\nurl \u003d [NSURL fileURLWithPath:@\"./probando\"];\n[NSURL fileURLWithPath:url] -\u003e probando -- file:///Users/alborrajo/Library/Developer/Xcode/DerivedData/testing-bbhwuupzownunbdvrxmcmqbnuodd/Build/Products/Debug/\n[[NSFileManager defaultManager] currentDirectoryPath] -\u003e /Users/alborrajo/Library/Developer/Xcode/DerivedData/testing-bbhwuupzownunbdvrxmcmqbnuodd/Build/Products/Debug\n[[NSFileManager defaultManager] changeCurrentDirectoryPath:@\"/\"];\n[[NSFileManager defaultManager] currentDirectoryPath] -\u003e /\n[NSURL fileURLWithPath:url] -\u003e probando -- file:///Users/alborrajo/Library/Developer/Xcode/DerivedData/testing-bbhwuupzownunbdvrxmcmqbnuodd/Build/Products/Debug/\n```",
+      "parentUuid": "b57f5357_6abae990",
+      "revId": "f73ace556f3a629de9826f51f8fe0d3d09d0bf73",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

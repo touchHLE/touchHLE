@@ -16,6 +16,24 @@
       "message": "I really doubt that NSURL keeps track of working directory at creation time.",
       "revId": "a031a1613fcf7b4bb0efde80b7be8cbcb37e7f2e",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0646f7b8_0365f168",
+        "filename": "src/frameworks/foundation/ns_url.rs",
+        "patchSetId": 20
+      },
+      "lineNbr": 27,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-01-07T11:56:10Z",
+      "side": 1,
+      "message": "NSURL has two properties: absoluteString and relativeString.\n\nIf you instance an NSURL like this:\n```objc\n[NSURL fileURLWithPath:@\"probando\"]\n```\n\nYou can log them both and see this:\n```\nabsoluteString: file:///Users/alborrajo/Library/Developer/Xcode/DerivedData/testing-bbhwuupzownunbdvrxmcmqbnuodd/Build/Products/Debug/probando\nrelativeString: probando\n```\n\nAnd if you log its description you get this:\n```\nprobando -- file:///Users/alborrajo/Library/Developer/Xcode/DerivedData/testing-bbhwuupzownunbdvrxmcmqbnuodd/Build/Products/Debug/\n```\n\nWhether this is how NSURL keeps track of it internally, im not so sure, but from what i could gather, it does keep track of the working directory when instancing it with fileURLWithPath:",
+      "parentUuid": "0ea69295_724afb92",
+      "revId": "a031a1613fcf7b4bb0efde80b7be8cbcb37e7f2e",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

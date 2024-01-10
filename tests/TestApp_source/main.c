@@ -22,6 +22,7 @@
 // <stddef.h>
 #define NULL ((void *)0)
 typedef unsigned long size_t;
+typedef int wchar_t;
 
 // <errno.h>
 int *__error(void);
@@ -40,6 +41,7 @@ int fclose(FILE *);
 int sscanf(const char *, const char *, ...);
 int printf(const char *, ...);
 int vsnprintf(char *, size_t, const char *, va_list);
+int swprintf(wchar_t *, size_t, const wchar_t *, ...);
 
 // <stdlib.h>
 #define EXIT_SUCCESS 0
@@ -710,6 +712,14 @@ int test_strchr() {
   return 0;
 }
 
+int test_swprintf() {
+  wchar_t wcsbuf[20];
+  int res = swprintf(wcsbuf, 20, L"%s", "abc");
+  if (res != 3)
+    return -1;
+  return 0;
+}
+
 #define FUNC_DEF(func)                                                         \
   { &func, #func }
 struct {
@@ -724,7 +734,7 @@ struct {
     FUNC_DEF(test_strncpy), FUNC_DEF(test_strncat),
     FUNC_DEF(test_strlcpy), FUNC_DEF(test_setlocale),
     FUNC_DEF(test_strtoul), FUNC_DEF(test_dirent),
-    FUNC_DEF(test_strchr),
+    FUNC_DEF(test_strchr),  FUNC_DEF(test_swprintf),
 };
 
 // Because no libc is linked into this executable, there is no libc entry point

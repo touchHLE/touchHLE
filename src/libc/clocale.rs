@@ -26,7 +26,11 @@ pub struct State {
     locale: std::collections::HashMap<LocaleCategory, MutPtr<u8>>,
 }
 
-fn setlocale(env: &mut Environment, category: LocaleCategory, locale: ConstPtr<u8>) -> MutPtr<u8> {
+pub fn setlocale(
+    env: &mut Environment,
+    category: LocaleCategory,
+    locale: ConstPtr<u8>,
+) -> MutPtr<u8> {
     assert!(matches!(
         category,
         LC_ALL | LC_COLLATE | LC_CTYPE | LC_MONETARY | LC_NUMERIC | LC_TIME | LC_MESSAGES

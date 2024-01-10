@@ -8,10 +8,12 @@
 use crate::abi::{DotDotDot, VaList};
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::frameworks::foundation::{ns_string, unichar};
+use crate::libc::clocale::{setlocale, LC_CTYPE};
 use crate::libc::posix_io::{STDERR_FILENO, STDOUT_FILENO};
 use crate::libc::stdio::FILE;
 use crate::libc::stdlib::atoi_inner;
-use crate::mem::{ConstPtr, GuestUSize, Mem, MutPtr, MutVoidPtr};
+use crate::libc::wchar::wchar_t;
+use crate::mem::{ConstPtr, GuestUSize, Mem, MutPtr, MutVoidPtr, Ptr};
 use crate::objc::{id, msg, nil};
 use crate::Environment;
 use std::collections::HashSet;
@@ -429,6 +431,49 @@ fn sprintf(env: &mut Environment, dest: MutPtr<u8>, format: ConstPtr<u8>, args: 
     res.len().try_into().unwrap()
 }
 
+fn swprintf(
+    env: &mut Environment,
+    ws: MutPtr<wchar_t>,
+    n: GuestUSize,
+    format: ConstPtr<wchar_t>,
+    args: DotDotDot,
+) -> i32 {
+    // TODO: support other locales
+    let ctype_locale = setlocale(env, LC_CTYPE, Ptr::null());
+    assert_eq!(env.mem.read(ctype_locale), b'C');
+
+    let wcstr_format = env.mem.wcstr_at(format);
+    log_dbg!(
+        "swprintf({:?}, {}, {:?} ({:?}), ...)",
+        ws,
+        n,
+        format,
+        wcstr_format
+    );
+
+    let wcstr_format_bytes = wcstr_format.as_bytes();
+    let len: GuestUSize = wcstr_format_bytes.len() as GuestUSize;
+    let res = printf_inner::<false, _>(
+        env,
+        |_mem, idx| {
+            if idx == len {
+                b'\0'
+            } else {
+                wcstr_format_bytes[idx as usize]
+            }
+        },
+        args.start(),
+    );
+
+    let to_write = n.min(res.len() as GuestUSize);
+    for i in 0..to_write {
+        env.mem.write(ws + i, res[i as usize] as wchar_t);
+    }
+    assert!(to_write < n);
+    env.mem.write(ws + to_write, wchar_t::default());
+    to_write as i32
+}
+
 fn printf(env: &mut Environment, format: ConstPtr<u8>, args: DotDotDot) -> i32 {
     log_dbg!(
         "printf({:?} ({:?}), ...)",
@@ -594,6 +639,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(vsnprintf(_, _, _, _)),
     export_c_func!(vsprintf(_, _, _)),
     export_c_func!(sprintf(_, _, _)),
+    export_c_func!(swprintf(_, _, _, _)),
     export_c_func!(printf(_, _)),
     export_c_func!(fprintf(_, _, _)),
 ];

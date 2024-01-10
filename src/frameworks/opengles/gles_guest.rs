@@ -242,12 +242,14 @@ fn glViewport(env: &mut Environment, x: GLint, y: GLint, width: GLsizei, height:
         gles.Viewport(x, y, width, height)
     })
 }
-
 fn glLineWidth(env: &mut Environment, val: GLfloat) {
     with_ctx_and_mem(env, |gles, _mem| unsafe { gles.LineWidth(val) })
 }
 fn glLineWidthx(env: &mut Environment, val: GLfixed) {
     with_ctx_and_mem(env, |gles, _mem| unsafe { gles.LineWidthx(val) })
+}
+fn glPointSize(env: &mut Environment, size: GLfloat) {
+    with_ctx_and_mem(env, |gles, _mem| unsafe { gles.PointSize(size) })
 }
 
 // Lighting and materials
@@ -289,6 +291,12 @@ fn glLightxv(env: &mut Environment, light: GLenum, pname: GLenum, params: ConstP
     with_ctx_and_mem(env, |gles, mem| {
         let params = mem.ptr_at(params, 4 /* upper bound */);
         unsafe { gles.Lightxv(light, pname, params) }
+    })
+}
+fn glLightModelfv(env: &mut Environment, pname: GLenum, params: ConstPtr<GLfloat>) {
+    with_ctx_and_mem(env, |gles, mem| {
+        let params = mem.ptr_at(params, 4 /* upper bound */);
+        unsafe { gles.LightModelfv(pname, params) }
     })
 }
 fn glMaterialf(env: &mut Environment, face: GLenum, pname: GLenum, param: GLfloat) {
@@ -1040,6 +1048,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(glViewport(_, _, _, _)),
     export_c_func!(glLineWidth(_)),
     export_c_func!(glLineWidthx(_)),
+    export_c_func!(glPointSize(_)),
     // Lighting and materials
     export_c_func!(glFogf(_, _)),
     export_c_func!(glFogx(_, _)),
@@ -1049,6 +1058,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(glLightx(_, _, _)),
     export_c_func!(glLightfv(_, _, _)),
     export_c_func!(glLightxv(_, _, _)),
+    export_c_func!(glLightModelfv(_, _)),
     export_c_func!(glMaterialf(_, _, _)),
     export_c_func!(glMaterialx(_, _, _)),
     export_c_func!(glMaterialfv(_, _, _)),

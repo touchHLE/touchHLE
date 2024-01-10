@@ -751,6 +751,7 @@ fn image_size_estimate(pixel_count: GuestUSize, format: GLenum, type_: GLenum) -
             gles11::LUMINANCE_ALPHA => 2,
             gles11::RGB => 3,
             gles11::RGBA => 4,
+            touchHLE_gl_bindings::gl21compat::BGRA => 4,
             _ => panic!("Unexpected format {:#x}", format),
         },
         gles11::UNSIGNED_SHORT_5_6_5

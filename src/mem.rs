@@ -474,10 +474,9 @@ impl Mem {
         // TODO: for a moment we always assume that we do not have enough size
         //       to realloc inplace
         let old_size = self.allocator.find_allocated_size(old_ptr.to_bits());
-        if old_size == size {
+        if old_size >= size {
             return old_ptr;
         }
-        assert!(size > old_size);
         let new_ptr = self.alloc(size);
         self.memmove(new_ptr, old_ptr.cast_const(), old_size);
         self.free(old_ptr);

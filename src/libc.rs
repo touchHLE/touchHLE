@@ -30,6 +30,7 @@ pub mod setjmp;
 pub mod stdio;
 pub mod stdlib;
 pub mod string;
+pub mod sys;
 pub mod sysctl;
 pub mod time;
 pub mod unistd;

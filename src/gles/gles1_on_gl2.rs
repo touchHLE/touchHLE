@@ -124,6 +124,11 @@ pub const ARRAYS: &[ArrayInfo] = &[
     },
 ];
 
+// OES_matrix_palette constants
+// More info: https://registry.khronos.org/OpenGL/extensions/OES/OES_matrix_palette.txt
+const MAX_PALETTE_MATRICES_OES: GLenum = 0x8842;
+const MAX_VERTEX_UNITS_OES: GLenum = 0x86A4;
+
 /// Table of `glGet` parameters shared by OpenGL ES 1.1 and OpenGL 2.1.
 const GET_PARAMS: ParamTable = ParamTable(&[
     (gl21::ACTIVE_TEXTURE, ParamType::Int, 1),
@@ -271,6 +276,11 @@ const GET_PARAMS: ParamTable = ParamTable(&[
     (gl21::RENDERBUFFER_BINDING_EXT, ParamType::Int, 1),
     // EXT_texture_lod_bias
     (gl21::MAX_TEXTURE_LOD_BIAS_EXT, ParamType::Float, 1),
+    (gl21::MAX_TEXTURE_MAX_ANISOTROPY_EXT, ParamType::Float, 2),
+    // OES_matrix_palette
+    // Note: defaults are used, not values from a real device!
+    (MAX_PALETTE_MATRICES_OES, ParamType::Int, 9),
+    (MAX_VERTEX_UNITS_OES, ParamType::Int, 3),
 ]);
 
 /// Table of `glFog` parameters shared by OpenGL ES 1.1 and OpenGL 2.1.

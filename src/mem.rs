@@ -14,6 +14,8 @@
 //! Relevant Apple documentation:
 //! * [Memory Usage Performance Guidelines](https://developer.apple.com/library/archive/documentation/Performance/Conceptual/ManagingMemory/ManagingMemory.html)
 
+use crate::libc::wchar::wchar_t;
+
 mod allocator;
 
 /// Equivalent of `usize` for guest memory.
@@ -527,6 +529,18 @@ impl Mem {
     pub fn cstr_at_utf8<const MUT: bool>(&self, ptr: Ptr<u8, MUT>) -> Result<&str, &[u8]> {
         let bytes = self.cstr_at(ptr);
         std::str::from_utf8(bytes).map_err(|_| bytes)
+    }
+
+    pub fn wcstr_at<const MUT: bool>(&self, ptr: Ptr<wchar_t, MUT>) -> String {
+        let mut len = 0;
+        while self.read(ptr + len) != wchar_t::default() {
+            len += 1;
+        }
+        let iter = self
+            .bytes_at(ptr.cast(), len * guest_size_of::<wchar_t>())
+            .chunks(4)
+            .map(|chunk| char::from_u32(u32::from_le_bytes(chunk.try_into().unwrap())).unwrap());
+        String::from_iter(iter)
     }
 
     /// Permanently mark a region of address space as being unusable to the

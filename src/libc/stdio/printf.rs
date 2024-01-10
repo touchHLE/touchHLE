@@ -10,6 +10,7 @@ use crate::dyld::{export_c_func, FunctionExports};
 use crate::frameworks::foundation::{ns_string, unichar};
 use crate::libc::posix_io::{STDERR_FILENO, STDOUT_FILENO};
 use crate::libc::stdio::FILE;
+use crate::libc::wchar::wchar_t;
 use crate::mem::{ConstPtr, GuestUSize, Mem, MutPtr, MutVoidPtr};
 use crate::objc::{id, msg};
 use crate::Environment;
@@ -309,6 +310,38 @@ fn sprintf(env: &mut Environment, dest: MutPtr<u8>, format: ConstPtr<u8>, args: 
     res.len().try_into().unwrap()
 }
 
+fn swprintf(
+    env: &mut Environment,
+    ws: MutPtr<wchar_t>,
+    n: GuestUSize,
+    format: ConstPtr<wchar_t>,
+    args: DotDotDot,
+) -> i32 {
+    // TODO: assert C locale
+    let wcstr = env.mem.wcstr_at(format);
+    let wcstr_bytes = wcstr.as_bytes();
+    let len: GuestUSize = wcstr_bytes.len() as GuestUSize;
+    let res = printf_inner::<false, _>(
+        env,
+        |_mem, idx| {
+            if idx == len {
+                b'\0'
+            } else {
+                wcstr_bytes[idx as usize]
+            }
+        },
+        args.start(),
+    );
+
+    let to_write = n.min(len).min(res.len() as GuestUSize);
+    for i in 0..to_write {
+        env.mem.write(ws + i, res[i as usize] as wchar_t);
+    }
+    assert!(to_write < n);
+    env.mem.write(ws + to_write, wchar_t::default());
+    to_write as i32
+}
+
 fn printf(env: &mut Environment, format: ConstPtr<u8>, args: DotDotDot) -> i32 {
     log_dbg!(
         "printf({:?} ({:?}), ...)",
@@ -492,6 +525,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(vsnprintf(_, _, _, _)),
     export_c_func!(vsprintf(_, _, _)),
     export_c_func!(sprintf(_, _, _)),
+    export_c_func!(swprintf(_, _, _, _)),
     export_c_func!(printf(_, _)),
     export_c_func!(fprintf(_, _, _)),
 ];

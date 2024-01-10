@@ -489,17 +489,12 @@ fn printf(env: &mut Environment, format: ConstPtr<u8>, args: DotDotDot) -> i32 {
 
 // TODO: more printf variants
 
-fn sscanf(env: &mut Environment, src: ConstPtr<u8>, format: ConstPtr<u8>, args: DotDotDot) -> i32 {
-    log_dbg!(
-        "sscanf({:?} ({:?}), {:?} ({:?}), ...)",
-        src,
-        env.mem.cstr_at_utf8(src),
-        format,
-        env.mem.cstr_at_utf8(format)
-    );
-
-    let mut args = args.start();
-
+fn sscanf_common(
+    env: &mut Environment,
+    src: ConstPtr<u8>,
+    format: ConstPtr<u8>,
+    mut args: VaList,
+) -> i32 {
     let mut src_ptr = src.cast_mut();
     let mut format_char_idx = 0;
 
@@ -609,6 +604,29 @@ fn sscanf(env: &mut Environment, src: ConstPtr<u8>, format: ConstPtr<u8>, args: 
     matched_args
 }
 
+fn sscanf(env: &mut Environment, src: ConstPtr<u8>, format: ConstPtr<u8>, args: DotDotDot) -> i32 {
+    log_dbg!(
+        "sscanf({:?} ({:?}), {:?} ({:?}), ...)",
+        src,
+        env.mem.cstr_at_utf8(src),
+        format,
+        env.mem.cstr_at_utf8(format)
+    );
+
+    sscanf_common(env, src, format, args.start())
+}
+
+fn vsscanf(env: &mut Environment, src: ConstPtr<u8>, format: ConstPtr<u8>, arg: VaList) -> i32 {
+    log_dbg!(
+        "vsscanf({:?}, {:?} ({:?}), ...)",
+        src,
+        format,
+        env.mem.cstr_at_utf8(format)
+    );
+
+    sscanf_common(env, src, format, arg)
+}
+
 fn fprintf(
     env: &mut Environment,
     stream: MutPtr<FILE>,
@@ -634,6 +652,7 @@ fn fprintf(
 
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(sscanf(_, _, _)),
+    export_c_func!(vsscanf(_, _, _)),
     export_c_func!(snprintf(_, _, _, _)),
     export_c_func!(vprintf(_, _)),
     export_c_func!(vsnprintf(_, _, _, _)),

@@ -801,6 +801,9 @@ impl GLES for GLES1OnGL2 {
     unsafe fn LineWidthx(&mut self, val: GLfixed) {
         gl21::LineWidth(fixed_to_float(val))
     }
+    unsafe fn PointSize(&mut self, size: GLfloat) {
+        gl21::PointSize(size)
+    }
 
     // Lighting and materials
     unsafe fn Fogf(&mut self, pname: GLenum, param: GLfloat) {
@@ -850,6 +853,9 @@ impl GLES for GLES1OnGL2 {
             pname,
             params,
         )
+    }
+    unsafe fn LightModelfv(&mut self, pname: GLenum, params: *const GLfloat) {
+        gl21::LightModelfv(pname, params)
     }
     unsafe fn Materialf(&mut self, face: GLenum, pname: GLenum, param: GLfloat) {
         assert!(face == gl21::FRONT_AND_BACK);

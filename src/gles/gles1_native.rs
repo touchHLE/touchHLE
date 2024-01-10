@@ -383,7 +383,7 @@ impl GLES for GLES1Native {
         &mut self,
         target: GLenum,
         level: GLint,
-        internalformat: GLint,
+        mut internalformat: GLint,
         width: GLsizei,
         height: GLsizei,
         border: GLint,
@@ -391,6 +391,16 @@ impl GLES for GLES1Native {
         type_: GLenum,
         pixels: *const GLvoid,
     ) {
+        if format == touchHLE_gl_bindings::gl21compat::BGRA {
+            // This is needed in order to avoid white screen issue on Android!
+            // As per BGRA extension specs
+            // https://registry.khronos.org/OpenGL/extensions/EXT/EXT_texture_format_BGRA8888.txt,
+            // both internalformat and format should be BGRA
+            // Tangentially related issue
+            // (actually a reverse of what we're doing here)
+            // https://android-review.googlesource.com/c/platform/external/qemu/+/974666
+            internalformat = touchHLE_gl_bindings::gl21compat::BGRA as GLint
+        }
         gles11::TexImage2D(
             target,
             level,

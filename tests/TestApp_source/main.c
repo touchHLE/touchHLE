@@ -354,6 +354,15 @@ int test_strtof() {
   return 0;
 }
 
+int test_strtoul() {
+  char *text = "0xcccccccc";
+  char *endptr;
+  if (strtoul(text, &endptr, 16) != 3435973836 || endptr != text + 10) {
+    return -1;
+  }
+  return 0;
+}
+
 int test_getcwd_chdir() {
   char buf[256];
   char *buf2 = getcwd(buf, sizeof buf);
@@ -599,7 +608,8 @@ struct {
     FUNC_DEF(test_strtof),  FUNC_DEF(test_getcwd_chdir),
     FUNC_DEF(test_sem),     FUNC_DEF(test_CGAffineTransform),
     FUNC_DEF(test_strncpy), FUNC_DEF(test_strncat),
-    FUNC_DEF(test_strlcpy), FUNC_DEF(test_setjmp),
+    FUNC_DEF(test_setjmp),  FUNC_DEF(test_strtoul),
+    FUNC_DEF(test_strtoul),
 };
 
 // Because no libc is linked into this executable, there is no libc entry point

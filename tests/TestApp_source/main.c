@@ -51,6 +51,8 @@ void qsort(void *, size_t, size_t, int (*)(const void *, const void *));
 void *realloc(void *, size_t);
 double atof(const char *);
 float strtof(const char *, char **);
+unsigned long strtoul(const char *restrict str, char **restrict endptr,
+                      int base);
 
 // <string.h>
 void *memset(void *, int, size_t);
@@ -353,6 +355,15 @@ int test_strtof() {
   return 0;
 }
 
+int test_strtoul() {
+  char *text = "0xcccccccc";
+  char *endptr;
+  if (strtoul(text, &endptr, 16) != 3435973836 || endptr != text + 10) {
+    return -1;
+  }
+  return 0;
+}
+
 int test_getcwd_chdir() {
   char buf[256];
   char *buf2 = getcwd(buf, sizeof buf);
@@ -533,7 +544,7 @@ struct {
     FUNC_DEF(test_strtof),  FUNC_DEF(test_getcwd_chdir),
     FUNC_DEF(test_sem),     FUNC_DEF(test_CGAffineTransform),
     FUNC_DEF(test_strncpy), FUNC_DEF(test_strncat),
-    FUNC_DEF(test_setjmp),
+    FUNC_DEF(test_setjmp),  FUNC_DEF(test_strtoul),
 };
 
 // Because no libc is linked into this executable, there is no libc entry point

@@ -23,6 +23,8 @@ type AudioSessionPropertyID = u32;
 const kAudioSessionProperty_OtherAudioIsPlaying: AudioSessionPropertyID = fourcc(b"othr");
 const kAudioSessionProperty_AudioCategory: AudioSessionPropertyID = fourcc(b"acat");
 const kAudioSessionProperty_CurrentHardwareSampleRate: AudioSessionPropertyID = fourcc(b"chsr");
+const kAudioSessionProperty_CurrentHardwareOutputNumberChannels: AudioSessionPropertyID =
+    fourcc(b"choc");
 const kAudioSessionProperty_PreferredHardwareIOBufferDuration: AudioSessionPropertyID =
     fourcc(b"iobd");
 
@@ -49,6 +51,7 @@ fn AudioSessionGetProperty(
         kAudioSessionProperty_OtherAudioIsPlaying => guest_size_of::<u32>(),
         kAudioSessionProperty_AudioCategory => guest_size_of::<u32>(),
         kAudioSessionProperty_CurrentHardwareSampleRate => guest_size_of::<f64>(),
+        kAudioSessionProperty_CurrentHardwareOutputNumberChannels => guest_size_of::<u32>(),
         _ => unimplemented!("Unimplemented property ID: {}", debug_fourcc(in_ID)),
     };
     if env.mem.read(io_data_size) != required_size {
@@ -68,6 +71,10 @@ fn AudioSessionGetProperty(
         }
         kAudioSessionProperty_CurrentHardwareSampleRate => {
             let value: f64 = 44100.0; // Value taken from an iOS 2 simulator
+            env.mem.write(out_data.cast(), value);
+        }
+        kAudioSessionProperty_CurrentHardwareOutputNumberChannels => {
+            let value: u32 = 2; // Value taken from an iOS 2 simulator
             env.mem.write(out_data.cast(), value);
         }
         _ => unreachable!(),

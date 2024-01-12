@@ -1,4 +1,7 @@
 use std::collections::HashMap;
+use std::time::Instant;
+
+use touchHLE_openal_soft_wrapper::al_types::ALuint;
 
 use crate::abi::GuestFunction;
 use crate::dyld::FunctionExports;
@@ -33,6 +36,8 @@ pub struct AudioComponentInstanceHostObject {
     pub global_stream_format: AudioStreamBasicDescription,
     pub output_stream_format: Option<AudioStreamBasicDescription>,
     pub render_callback: Option<AURenderCallbackStruct>,
+    pub last_render_time: Option<Instant>,
+    pub al_source: Option<ALuint>,
 }
 impl Default for AudioComponentInstanceHostObject {
     fn default() -> Self {
@@ -54,6 +59,8 @@ impl Default for AudioComponentInstanceHostObject {
             },
             output_stream_format: None,
             render_callback: None,
+            last_render_time: None,
+            al_source: None,
         }
     }
 }

@@ -24,6 +24,7 @@ macro_rules! return_if_null {
     };
 }
 
+pub mod audio_components;
 pub mod audio_file;
 pub mod audio_queue;
 pub mod audio_services;
@@ -33,6 +34,7 @@ pub mod audio_session;
 pub struct State {
     audio_file: audio_file::State,
     audio_queue: audio_queue::State,
+    audio_components: audio_components::State,
     al_device_and_context: Option<(*mut ALCdevice, *mut ALCcontext)>,
 }
 impl State {

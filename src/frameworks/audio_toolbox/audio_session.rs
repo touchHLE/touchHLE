@@ -25,6 +25,8 @@ const kAudioSessionProperty_AudioCategory: AudioSessionPropertyID = fourcc(b"aca
 const kAudioSessionProperty_CurrentHardwareSampleRate: AudioSessionPropertyID = fourcc(b"chsr");
 const kAudioSessionProperty_CurrentHardwareOutputNumberChannels: AudioSessionPropertyID =
     fourcc(b"choc");
+const kAudioSessionProperty_PreferredHardwareIOBufferDuration: AudioSessionPropertyID =
+    fourcc(b"iobd");
 
 const kAudioSessionCategory_SoloAmbientSound: u32 = fourcc(b"solo");
 
@@ -89,6 +91,7 @@ fn AudioSessionSetProperty(
 ) -> OSStatus {
     let required_size: GuestUSize = match in_ID {
         kAudioSessionProperty_AudioCategory => guest_size_of::<u32>(),
+        kAudioSessionProperty_PreferredHardwareIOBufferDuration => guest_size_of::<f32>(),
         _ => unimplemented!("Unimplemented property ID: {}", debug_fourcc(in_ID)),
     };
     if in_data_size != required_size {

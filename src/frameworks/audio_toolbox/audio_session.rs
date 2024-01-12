@@ -32,8 +32,8 @@ const kAudioSessionCategory_SoloAmbientSound: u32 = fourcc(b"solo");
 
 pub struct State {
     audio_session_category: u32,
-    current_hardware_sample_rate: f64,
-    current_hardware_output_number_channels: u32,
+    pub current_hardware_sample_rate: f64,
+    pub current_hardware_output_number_channels: u32,
 }
 impl Default for State {
     fn default() -> Self {

@@ -29,6 +29,7 @@ pub mod audio_file;
 pub mod audio_queue;
 pub mod audio_services;
 pub mod audio_session;
+pub mod audio_unit;
 
 #[derive(Default)]
 pub struct State {

@@ -22,6 +22,7 @@ const kAudioSessionBadPropertySizeError: OSStatus = fourcc(b"!siz") as _;
 type AudioSessionPropertyID = u32;
 const kAudioSessionProperty_OtherAudioIsPlaying: AudioSessionPropertyID = fourcc(b"othr");
 const kAudioSessionProperty_AudioCategory: AudioSessionPropertyID = fourcc(b"acat");
+const kAudioSessionProperty_CurrentHardwareSampleRate: AudioSessionPropertyID = fourcc(b"chsr");
 const kAudioSessionProperty_PreferredHardwareIOBufferDuration: AudioSessionPropertyID =
     fourcc(b"iobd");
 
@@ -47,6 +48,7 @@ fn AudioSessionGetProperty(
     let required_size: GuestUSize = match in_ID {
         kAudioSessionProperty_OtherAudioIsPlaying => guest_size_of::<u32>(),
         kAudioSessionProperty_AudioCategory => guest_size_of::<u32>(),
+        kAudioSessionProperty_CurrentHardwareSampleRate => guest_size_of::<f64>(),
         _ => unimplemented!("Unimplemented property ID: {}", debug_fourcc(in_ID)),
     };
     if env.mem.read(io_data_size) != required_size {
@@ -62,6 +64,10 @@ fn AudioSessionGetProperty(
         kAudioSessionProperty_AudioCategory => {
             // This is the default value. TODO: Actually support changing it?
             let value: u32 = kAudioSessionCategory_SoloAmbientSound;
+            env.mem.write(out_data.cast(), value);
+        }
+        kAudioSessionProperty_CurrentHardwareSampleRate => {
+            let value: f64 = 44100.0;
             env.mem.write(out_data.cast(), value);
         }
         _ => unreachable!(),

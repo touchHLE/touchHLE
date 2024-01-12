@@ -11,6 +11,7 @@
 use super::{ns_string, ns_timer};
 use crate::dyld::{ConstantExports, HostConstant};
 use crate::frameworks::audio_toolbox::audio_queue::{handle_audio_queue, AudioQueueRef};
+use crate::frameworks::audio_toolbox::audio_unit::{render_audio_unit, AudioUnit};
 use crate::frameworks::core_foundation::cf_run_loop::{
     kCFRunLoopCommonModes, kCFRunLoopDefaultMode, CFRunLoopRef,
 };
@@ -42,6 +43,7 @@ pub struct State {
 }
 
 struct NSRunLoopHostObject {
+    audio_units: Vec<AudioUnit>,
     /// Weak reference. Audio queue must remove itself when destroyed (TODO).
     /// They are in no particular order.
     audio_queues: Vec<AudioQueueRef>,
@@ -62,6 +64,7 @@ pub const CLASSES: ClassExports = objc_classes! {
         rl
     } else {
         let host_object = Box::new(NSRunLoopHostObject {
+            audio_units: Vec::new(),
             audio_queues: Vec::new(),
             timers: Vec::new(),
         });
@@ -117,6 +120,24 @@ pub const CLASSES: ClassExports = objc_classes! {
 @end
 
 };
+
+/// For use by Audio Toolbox.
+pub fn add_audio_unit(env: &mut Environment, run_loop: id, unit: AudioUnit) {
+    env.objc
+        .borrow_mut::<NSRunLoopHostObject>(run_loop)
+        .audio_units
+        .push(unit);
+}
+
+/// For use by Audio Toolbox.
+pub fn remove_audio_unit(env: &mut Environment, run_loop: id, unit: AudioUnit) {
+    let units = &mut env
+        .objc
+        .borrow_mut::<NSRunLoopHostObject>(run_loop)
+        .audio_units;
+    let unit_idx = units.iter().position(|&item| item == unit).unwrap();
+    units.remove(unit_idx);
+}
 
 /// For use by Audio Toolbox.
 /// TODO: Maybe replace this with a `CFRunLoopObserver` or some other generic
@@ -177,6 +198,7 @@ fn run_run_loop(env: &mut Environment, run_loop: id, single_iteration: bool) {
     // environment or to lock the object. Re-used each iteration for efficiency.
     let mut timers_tmp = Vec::new();
     let mut audio_queues_tmp = Vec::new();
+    let mut audio_units_tmp = Vec::new();
 
     fn limit_sleep_time(current: &mut Option<Instant>, new: Option<Instant>) {
         if let Some(new) = new {
@@ -215,6 +237,14 @@ fn run_run_loop(env: &mut Environment, run_loop: id, single_iteration: bool) {
 
         for audio_queue in audio_queues_tmp.drain(..) {
             handle_audio_queue(env, audio_queue);
+        }
+
+        assert!(audio_units_tmp.is_empty());
+        audio_units_tmp
+            .extend_from_slice(&env.objc.borrow::<NSRunLoopHostObject>(run_loop).audio_units);
+
+        for audio_unit in audio_units_tmp.drain(..) {
+            render_audio_unit(env, audio_unit);
         }
 
         media_player::handle_players(env);

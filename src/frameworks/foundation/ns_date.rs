@@ -33,9 +33,7 @@ pub const CLASSES: ClassExports = objc_classes! {
         time_interval
     });
     let new = env.objc.alloc_object(this, host_object, &mut env.mem);
-
-    log_dbg!("[(NSDate*){:?} date]: New date {:?}", this, new);
-
+    log_dbg!("[NSDate date] => {:?} ({:?}s)", new, time_interval);
     autorelease(env, new)
 }
 
@@ -43,8 +41,8 @@ pub const CLASSES: ClassExports = objc_classes! {
     assert!(!anotherDate.is_null());
     let host_object = env.objc.borrow::<NSDateHostObject>(this);
     let another_date_host_object = env.objc.borrow::<NSDateHostObject>(anotherDate);
-    let result = another_date_host_object.time_interval - host_object.time_interval;
-    log_dbg!("[(NSDate*){:?} timeIntervalSinceDate:{:?}]: result {} seconds", this, anotherDate, result);
+    let result =  host_object.time_interval-another_date_host_object.time_interval;
+    log_dbg!("[(NSDate*){:?} ({:?}s) timeIntervalSinceDate:{:?} ({:?}s)] => {}", this, host_object.time_interval, anotherDate, another_date_host_object.time_interval, result);
     result
 }
 

@@ -32,7 +32,9 @@ impl State {
 }
 
 #[derive(Default, Clone)]
-pub struct AudioComponentInstanceHostObject {}
+pub struct AudioComponentInstanceHostObject {
+    pub started: bool,
+}
 
 #[derive(Clone)]
 #[repr(C, packed)]

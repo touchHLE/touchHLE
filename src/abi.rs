@@ -292,15 +292,40 @@ macro_rules! impl_CallFromHost {
                 args: ($($P,)*),
             ) -> R {
                 assert!(R::SIZE_IN_MEM.is_none()); // pointer return TODO
+
+                let (old_pc, old_lr) = env
+                    .cpu
+                    .branch_with_link(*self, env.dyld.return_to_host_routine());
+
+                // Create a new guest stack frame.
                 let regs = env.cpu.regs_mut();
-                let old_sp = extend_stack_for_args(
+                let (old_sp, old_fp) = {
+                    let old_sp = regs[Cpu::SP];
+                    let old_fp = regs[FRAME_POINTER];
+                    regs[Cpu::SP] -= 8;
+                    regs[FRAME_POINTER] = old_sp;
+                    env.mem
+                        .write(Ptr::from_bits(regs[Cpu::SP]), regs[FRAME_POINTER]);
+                    env.mem.write(Ptr::from_bits(regs[Cpu::SP] + 4), old_lr);
+                    (old_sp, old_fp)
+                };
+
+                // Push call args
+                extend_stack_for_args(
                     0 $(+ <$P as GuestArg>::REG_COUNT)*,
                     regs,
                 );
                 let mut reg_offset = 0;
                 $(write_next_arg::<$P>(&mut reg_offset, regs, &mut env.mem, args.$p);)*
-                self.call(env);
-                env.cpu.regs_mut()[Cpu::SP] = old_sp;
+
+                env.run_call();
+
+                env.cpu.branch(old_pc);
+                let regs = env.cpu.regs_mut();
+                regs[Cpu::LR] = old_lr.addr_with_thumb_bit();
+                regs[Cpu::SP] = old_sp;
+                regs[FRAME_POINTER] = old_fp;
+
                 <R as GuestRet>::from_regs(env.cpu.regs())
             }
         }

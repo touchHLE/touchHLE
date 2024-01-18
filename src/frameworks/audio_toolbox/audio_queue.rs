@@ -9,7 +9,7 @@
 //! Apple's implementation probably uses Core Audio instead.
 
 use crate::abi::{CallFromHost, GuestFunction};
-use crate::audio::decode_ima4;
+use crate::audio::{decode_ima4, ContextManager};
 use crate::audio::openal as al;
 use crate::audio::openal::al_types::*;
 use crate::audio::openal::alc_types::*;
@@ -26,7 +26,7 @@ use crate::frameworks::core_foundation::cf_run_loop::{
 use crate::frameworks::foundation::ns_run_loop;
 use crate::frameworks::foundation::ns_string::get_static_str;
 use crate::mem::{
-    guest_size_of, ConstPtr, ConstVoidPtr, GuestUSize, Mem, MutPtr, MutVoidPtr, Ptr, SafeRead,
+    guest_size_of, ConstPtr, ConstVoidPtr, GuestUSize, MutPtr, MutVoidPtr, Ptr, SafeRead,
 };
 use crate::objc::msg;
 use crate::Environment;
@@ -60,21 +60,6 @@ impl State {
         // This object will make sure the existing context, which will belong
         // to the guest app, is restored once we're done.
         ContextManager::make_active(context)
-    }
-}
-
-#[must_use]
-struct ContextManager(*mut ALCcontext);
-impl ContextManager {
-    pub fn make_active(new_context: *mut ALCcontext) -> ContextManager {
-        let old_context = unsafe { al::alcGetCurrentContext() };
-        assert!(unsafe { al::alcMakeContextCurrent(new_context) } == al::ALC_TRUE);
-        ContextManager(old_context)
-    }
-}
-impl Drop for ContextManager {
-    fn drop(&mut self) {
-        assert!(unsafe { al::alcMakeContextCurrent(self.0) } == al::ALC_TRUE)
     }
 }
 
@@ -451,22 +436,18 @@ fn is_supported_audio_format(format: &AudioStreamBasicDescription) -> bool {
     }
 }
 
-/// Decode an [AudioQueueBuffer]'s content to raw PCM suitable for an OpenAL
-/// buffer.
-fn decode_buffer(
-    mem: &Mem,
+/// Decode audio bytes to raw PCM suitable for an OpenAL buffer.
+pub fn decode_buffer(
+    data: &[u8],
     format: &AudioStreamBasicDescription,
-    buffer: &AudioQueueBuffer,
 ) -> (ALenum, ALsizei, Vec<u8>) {
-    let data_slice = mem.bytes_at(buffer.audio_data.cast(), buffer.audio_data_byte_size);
-
     assert!(is_supported_audio_format(format));
 
     match format.format_id {
         kAudioFormatAppleIMA4 => {
-            assert!(data_slice.len() % 34 == 0);
-            let mut out_pcm = Vec::<u8>::with_capacity((data_slice.len() / 34) * 64 * 2);
-            let packets = data_slice.chunks(34);
+            assert!(data.len() % 34 == 0);
+            let mut out_pcm = Vec::<u8>::with_capacity((data.len() / 34) * 64 * 2);
+            let packets = data.chunks(34);
 
             if format.channels_per_frame == 1 {
                 for packet in packets {
@@ -501,11 +482,11 @@ fn decode_buffer(
         kAudioFormatLinearPCM => {
             // The end of the data might be misaligned (this happens in Crash
             // Bandicoot Nitro Kart 3D somehow).
-            let misaligned_by = data_slice.len() % (format.bytes_per_frame as usize);
+            let misaligned_by = data.len() % (format.bytes_per_frame as usize);
             let data_slice = if misaligned_by != 0 {
-                &data_slice[..data_slice.len() - misaligned_by]
+                &data[..data.len() - misaligned_by]
             } else {
-                data_slice
+                data
             };
 
             let f = match (format.channels_per_frame, format.bits_per_channel) {
@@ -587,8 +568,11 @@ fn prime_audio_queue(
             al_buffer
         });
 
-        let (al_format, al_frequency, data) =
-            decode_buffer(&env.mem, &host_object.format, &next_buffer);
+        let data = env.mem.bytes_at(
+            next_buffer.audio_data.cast(),
+            next_buffer.audio_data_byte_size,
+        );
+        let (al_format, al_frequency, data) = decode_buffer(data, &host_object.format);
         unsafe {
             al::alBufferData(
                 next_al_buffer,

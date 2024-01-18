@@ -8,11 +8,7 @@
 use crate::audio; // Keep this module namespaced to avoid confusion
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::frameworks::carbon_core::{eofErr, OSStatus};
-use crate::frameworks::core_audio_types::{
-    debug_fourcc, fourcc, kAudioFormatAppleIMA4, kAudioFormatFlagIsBigEndian,
-    kAudioFormatFlagIsFloat, kAudioFormatFlagIsPacked, kAudioFormatFlagIsSignedInteger,
-    kAudioFormatLinearPCM, AudioStreamBasicDescription,
-};
+use crate::frameworks::core_audio_types::{debug_fourcc, fourcc, AudioStreamBasicDescription};
 use crate::frameworks::core_foundation::cf_url::CFURLRef;
 use crate::frameworks::foundation::ns_url::to_rust_path;
 use crate::mem::{guest_size_of, GuestUSize, MutPtr, MutVoidPtr, SafeRead};
@@ -166,53 +162,10 @@ fn AudioFileGetProperty(
 
     match in_property_id {
         kAudioFilePropertyDataFormat => {
-            let audio::AudioDescription {
-                sample_rate,
-                format,
-                bytes_per_packet,
-                frames_per_packet,
-                channels_per_frame,
-                bits_per_channel,
-            } = host_object.audio_file.audio_description();
-
-            let desc: AudioStreamBasicDescription = match format {
-                audio::AudioFormat::LinearPcm {
-                    is_float,
-                    is_little_endian,
-                } => {
-                    let is_packed = (bits_per_channel * channels_per_frame * frames_per_packet)
-                        == (bytes_per_packet * 8);
-                    let format_flags = (u32::from(is_float) * kAudioFormatFlagIsFloat)
-                        | (u32::from((!is_float) && matches!(bits_per_channel, 16 | 24))
-                            * kAudioFormatFlagIsSignedInteger)
-                        | (u32::from(is_packed) * kAudioFormatFlagIsPacked)
-                        | (u32::from(!is_little_endian) * kAudioFormatFlagIsBigEndian);
-                    AudioStreamBasicDescription {
-                        sample_rate,
-                        format_id: kAudioFormatLinearPCM,
-                        format_flags,
-                        bytes_per_packet,
-                        frames_per_packet,
-                        bytes_per_frame: bytes_per_packet / frames_per_packet,
-                        channels_per_frame,
-                        bits_per_channel,
-                        _reserved: 0,
-                    }
-                }
-                audio::AudioFormat::AppleIma4 => {
-                    AudioStreamBasicDescription {
-                        sample_rate,
-                        format_id: kAudioFormatAppleIMA4,
-                        format_flags: 0,
-                        bytes_per_packet,
-                        frames_per_packet,
-                        bytes_per_frame: 0, // compressed
-                        channels_per_frame,
-                        bits_per_channel,
-                        _reserved: 0,
-                    }
-                }
-            };
+            let desc = host_object
+                .audio_file
+                .audio_description()
+                .into_basic_description();
             env.mem.write(out_property_data.cast(), desc);
         }
         kAudioFilePropertyAudioDataByteCount => {

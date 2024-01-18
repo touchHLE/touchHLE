@@ -35,6 +35,7 @@ pub mod audio_unit;
 pub struct State {
     audio_file: audio_file::State,
     audio_queue: audio_queue::State,
+    audio_services: audio_services::State,
     audio_components: audio_components::State,
     audio_session: audio_session::State,
     al_device_and_context: Option<(*mut ALCdevice, *mut ALCcontext)>,

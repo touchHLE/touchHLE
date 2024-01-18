@@ -30,4 +30,5 @@ pub mod audio_session;
 pub struct State {
     audio_file: audio_file::State,
     audio_queue: audio_queue::State,
+    audio_services: audio_services::State,
 }

@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b8386d36_7028758b",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 19
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-01-25T19:27:21Z",
+      "side": 1,
+      "message": "(i assume you\u0027ve already verified that it builds/lints correctly)",
+      "revId": "d856949c244f053cdde302b0b09e4d1b4a5beb16",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

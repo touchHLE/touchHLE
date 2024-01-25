@@ -36,7 +36,7 @@ pub struct AudioComponentInstanceHostObject {
     pub started: bool,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 #[repr(C, packed)]
 #[allow(dead_code)]
 pub struct AURenderCallbackStruct {

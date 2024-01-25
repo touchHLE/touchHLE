@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "18def417_7985e358",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 20
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-01-25T19:28:16Z",
+      "side": 1,
+      "message": "(i assume you\u0027ve already verified that it builds/lints correctly)",
+      "revId": "ddd4d7450205b1a7bb7e83c9450f5c61511a1f24",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8f7695bc_fd6f68d8",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 20
+      },
+      "lineNbr": 806,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-01-25T19:28:16Z",
+      "side": 1,
+      "message": "OPT: refactor with floatValue() to some common private method",
+      "revId": "ddd4d7450205b1a7bb7e83c9450f5c61511a1f24",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

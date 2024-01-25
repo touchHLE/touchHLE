@@ -401,10 +401,7 @@ impl Mem {
     /// well-aligned for the host. Rust strictly requires pointers to be
     /// well-aligned when dereferencing them, or when constructing references or
     /// slices from them, so **be very careful**.
-    pub fn ptr_at<T, const MUT: bool>(&self, ptr: Ptr<T, MUT>, count: GuestUSize) -> *const T
-    where
-        T: SafeRead,
-    {
+    pub fn ptr_at<T, const MUT: bool>(&self, ptr: Ptr<T, MUT>, count: GuestUSize) -> *const T {
         let size = count.checked_mul(guest_size_of::<T>()).unwrap();
         self.bytes_at(ptr.cast(), size).as_ptr().cast()
     }
@@ -429,10 +426,7 @@ impl Mem {
 
     /// Read a value for memory. This is the preferred way to read memory in
     /// most cases.
-    pub fn read<T, const MUT: bool>(&self, ptr: Ptr<T, MUT>) -> T
-    where
-        T: SafeRead,
-    {
+    pub fn read<T, const MUT: bool>(&self, ptr: Ptr<T, MUT>) -> T {
         // This is unsafe unless we are careful with which types SafeRead is
         // implemented for!
         // This would also be unsafe if the non-unaligned method was used.
@@ -440,10 +434,7 @@ impl Mem {
     }
     /// Write a value to memory. This is the preferred way to write memory in
     /// most cases.
-    pub fn write<T>(&mut self, ptr: MutPtr<T>, value: T)
-    where
-        T: SafeWrite,
-    {
+    pub fn write<T>(&mut self, ptr: MutPtr<T>, value: T) {
         let size = guest_size_of::<T>();
         assert!(size > 0);
         let slice = self.bytes_at_mut(ptr.cast(), size);
@@ -492,10 +483,7 @@ impl Mem {
 
     /// Allocate memory large enough for a value of type `T` and write the value
     /// to it. Equivalent to [Self::alloc] + [Self::write].
-    pub fn alloc_and_write<T>(&mut self, value: T) -> MutPtr<T>
-    where
-        T: SafeWrite,
-    {
+    pub fn alloc_and_write<T>(&mut self, value: T) -> MutPtr<T> {
         let ptr = self.alloc(guest_size_of::<T>()).cast();
         self.write(ptr, value);
         ptr

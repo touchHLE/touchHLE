@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "eadf207d_b13f515f",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 17
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-01-25T18:18:37Z",
+      "side": 1,
+      "message": "please update commit message as well, as it\u0027s not a stub anymore\n\nalso, it would be great to have some simple tests",
+      "revId": "5d6cfb0a48cb07441b151b17b2cebec50aba2271",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

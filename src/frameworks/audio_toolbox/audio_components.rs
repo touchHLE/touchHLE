@@ -37,6 +37,18 @@ pub struct AURenderCallbackStruct {
     pub input_proc_ref_con: ConstVoidPtr,
 }
 unsafe impl SafeRead for AURenderCallbackStruct {}
+impl std::fmt::Debug for AURenderCallbackStruct {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let &AURenderCallbackStruct {
+            input_proc,
+            input_proc_ref_con,
+        } = self;
+        f.debug_struct("AURenderCallbackStruct")
+            .field("input_proc", &input_proc)
+            .field("input_proc_ref_con", &input_proc_ref_con)
+            .finish()
+    }
+}
 
 #[repr(C, packed)]
 struct OpaqueAudioComponent {}

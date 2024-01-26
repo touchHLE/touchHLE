@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "3b52ba6b_2d69d8ae",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021974
+      },
+      "writtenOn": "2024-01-26T09:21:49Z",
+      "side": 1,
+      "message": "New commit to fix merge conflict on the other one",
+      "revId": "d72a76f67cc0ea944f2bd36d375d6b1f1de15859",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

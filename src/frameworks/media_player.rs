@@ -6,6 +6,7 @@
 //! The Media Player framework.
 
 pub mod movie_player;
+pub mod music_player;
 
 #[derive(Default)]
 pub struct State {

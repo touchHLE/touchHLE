@@ -64,6 +64,9 @@ fn strtok(env: &mut Environment, s: MutPtr<u8>, sep: ConstPtr<u8>) -> MutPtr<u8>
 
 // Functions shared with wchar.rs
 
+fn bzero(env: &mut Environment, dest: MutVoidPtr, count: GuestUSize) {
+    memset(env, dest, 0, count);
+}
 fn memset(env: &mut Environment, dest: MutVoidPtr, ch: i32, count: GuestUSize) -> MutVoidPtr {
     GenericChar::<u8>::memset(env, dest.cast(), ch as u8, count).cast()
 }
@@ -155,7 +158,7 @@ fn strsep(env: &mut Environment, stringp: MutPtr<MutPtr<u8>>, delim: ConstPtr<u8
 pub(super) fn strdup(env: &mut Environment, src: ConstPtr<u8>) -> MutPtr<u8> {
     GenericChar::<u8>::strdup(env, src)
 }
-fn strcmp(env: &mut Environment, a: ConstPtr<u8>, b: ConstPtr<u8>) -> i32 {
+pub fn strcmp(env: &mut Environment, a: ConstPtr<u8>, b: ConstPtr<u8>) -> i32 {
     GenericChar::<u8>::strcmp(env, a, b)
 }
 fn strncmp(env: &mut Environment, a: ConstPtr<u8>, b: ConstPtr<u8>, n: GuestUSize) -> i32 {
@@ -222,6 +225,7 @@ fn strrchr(env: &mut Environment, path: ConstPtr<u8>, c: u8) -> ConstPtr<u8> {
 
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(strtok(_, _)),
+    export_c_func!(bzero(_, _)),
     // Functions shared with wchar.rs
     export_c_func!(memset(_, _, _)),
     export_c_func!(memcpy(_, _, _)),

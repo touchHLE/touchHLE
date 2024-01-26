@@ -8,7 +8,7 @@
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::mem::{guest_size_of, ConstPtr, MutPtr, Ptr, SafeRead};
 use crate::Environment;
-use std::time::SystemTime;
+use std::time::{Duration, Instant, SystemTime};
 
 #[derive(Default)]
 pub struct State {
@@ -23,6 +23,18 @@ pub struct State {
 #[allow(non_camel_case_types)]
 /// Time in seconds since UNIX epoch (1970-01-01 00:00:00)
 pub type time_t = i32;
+
+#[allow(non_camel_case_types)]
+type clock_t = u64;
+
+const CLOCKS_PER_SEC: clock_t = 1000000;
+
+fn clock(env: &mut Environment) -> clock_t {
+    Instant::now()
+        .duration_since(env.startup_time)
+        .as_secs()
+        .wrapping_mul(CLOCKS_PER_SEC)
+}
 
 fn time(env: &mut Environment, out: MutPtr<time_t>) -> time_t {
     let time64 = SystemTime::now()
@@ -270,6 +282,14 @@ unsafe impl SafeRead for timeval {}
 
 #[allow(non_camel_case_types)]
 #[repr(C, packed)]
+struct timespec {
+    tv_sec: time_t,
+    tv_nsec: i32,
+}
+unsafe impl SafeRead for timespec {}
+
+#[allow(non_camel_case_types)]
+#[repr(C, packed)]
 struct timezone {
     tz_minuteswest: i32,
     tz_dsttime: i32,
@@ -312,11 +332,24 @@ fn gettimeofday(
     0 // success
 }
 
+fn nanosleep(env: &mut Environment, rqtp: ConstPtr<timespec>, _rmtp: MutPtr<timespec>) -> i32 {
+    let t = env.mem.read(rqtp);
+    let tv_sec = t.tv_sec;
+    let tv_nsec = t.tv_nsec;
+    log_dbg!("nanosleep {} {}", tv_sec, tv_nsec);
+    let total_sleep = Duration::from_secs(tv_sec.try_into().unwrap())
+        + Duration::from_nanos(tv_nsec.try_into().unwrap());
+    env.sleep(total_sleep, true);
+    0 // success
+}
+
 pub const FUNCTIONS: FunctionExports = &[
+    export_c_func!(clock()),
     export_c_func!(time(_)),
     export_c_func!(gmtime_r(_, _)),
     export_c_func!(gmtime(_)),
     export_c_func!(localtime_r(_, _)),
     export_c_func!(localtime(_)),
     export_c_func!(gettimeofday(_, _)),
+    export_c_func!(nanosleep(_, _)),
 ];

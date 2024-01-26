@@ -32,7 +32,7 @@ use crate::objc::{nil, ObjC};
 use crate::Environment;
 use std::collections::HashMap;
 
-type HostFunction = &'static dyn CallFromGuest;
+pub type HostFunction = &'static dyn CallFromGuest;
 
 /// Type for lists of functions exported by host implementations of frameworks.
 ///
@@ -611,7 +611,7 @@ impl Dyld {
     }
 
     /// Internal [Self::create_proc_address] that doesn't invalidate the cache.
-    /// For use before a [Cpu] is availible.
+    /// For use before a [Cpu] is available.
     fn create_proc_address_no_inval(
         &mut self,
         mem: &mut Mem,
@@ -621,7 +621,17 @@ impl Dyld {
         if let Some(&cached_fn) = self.non_lazy_host_functions.get(symbol) {
             return Ok(cached_fn);
         }
+        let function_ptr = self.create_guest_function(mem, symbol, f);
+        self.non_lazy_host_functions.insert(symbol, function_ptr);
+        Ok(function_ptr)
+    }
 
+    pub fn create_guest_function(
+        &mut self,
+        mem: &mut Mem,
+        symbol: &'static str,
+        f: HostFunction,
+    ) -> GuestFunction {
         // Allocate an SVC ID for this host function
         let idx: u32 = self.linked_host_functions.len().try_into().unwrap();
         let svc = idx + Self::SVC_LINKED_FUNCTIONS_BASE;
@@ -633,8 +643,6 @@ impl Dyld {
         mem.write(function_ptr + 0, encode_a32_svc(svc));
         mem.write(function_ptr + 1, encode_a32_ret());
 
-        let function_ptr = GuestFunction::from_addr_with_thumb_bit(function_ptr.to_bits());
-        self.non_lazy_host_functions.insert(symbol, function_ptr);
-        Ok(function_ptr)
+        GuestFunction::from_addr_with_thumb_bit(function_ptr.to_bits())
     }
 }

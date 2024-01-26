@@ -54,7 +54,7 @@ Please also see the following guidelines for what to do with code changes.
 
 ## Code contributions
 
-The developer documentation can be found in [the `dev-docs` directory](dev-docs/) and throughout the codebase. At a minimum, you'll probably want to read [the building guide](dev-docs/building.md).
+The developer documentation can be found in [the `dev-docs` directory](dev-docs/) and throughout the codebase. At a minimum, you'll probably want to read [the building guide](dev-docs/building.md) and [the coding style guide](dev-docs/code-style.md).
 
 Please run [`dev-scripts/format.sh`](dev-scripts/format.sh) and [`dev-scripts/lint.sh`](dev-scripts/lint.sh) on your changes before committing.
 

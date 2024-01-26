@@ -769,6 +769,54 @@ pub const CLASSES: ClassExports = objc_classes! {
     ui_font::draw_in_rect(env, font, &text, rect, line_break_mode, align)
 }
 
+- (bool)writeToFile:(id)path // NSString*
+         atomically:(bool)use_aux_file
+           encoding:(NSStringEncoding)encoding
+              error:(MutPtr<id>)error { // NSError**
+    assert!(encoding == NSUTF8StringEncoding || encoding == NSASCIIStringEncoding);
+
+    let string = to_rust_string(env, this);
+    let c_string = env.mem.alloc_and_write_cstr(string.as_bytes());
+    let length: NSUInteger = (string.len() + 1).try_into().unwrap();
+    // NSData will handle releasing the string (it is autoreleased)
+    let data: id = msg_class![env; NSData dataWithBytesNoCopy:(c_string.cast_void())
+                                                    length:length];
+
+    let success: bool = msg![env; data writeToFile:path atomically:use_aux_file];
+    if !success && !error.is_null() {
+        todo!(); // TODO: create an NSError if requested
+    }
+    success
+}
+
+- (f32)floatValue {
+    let st = to_rust_string(env, this);
+    let st = st.trim_start();
+    let mut cutoff = st.len();
+    for (i, c) in st.char_indices() {
+        if !c.is_ascii_digit() && c != '.' && c != '+' && c != '-' {
+            cutoff = i;
+            break;
+        }
+    }
+    // TODO: handle over/underflow properly
+    st[..cutoff].parse().unwrap_or(0.0)
+}
+
+- (i32)intValue {
+    let st = to_rust_string(env, this);
+    let st = st.trim_start();
+    let mut cutoff = st.len();
+    for (i, c) in st.char_indices() {
+        if !c.is_ascii_digit() && c != '+' && c != '-' {
+            cutoff = i;
+            break;
+        }
+    }
+    // TODO: handle over/underflow properly
+    st[..cutoff].parse().unwrap_or(0)
+}
+
 @end
 
 // Our private subclass that is the single implementation of NSString for the

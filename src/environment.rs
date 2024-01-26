@@ -602,7 +602,11 @@ impl Environment {
         );
 
         if !wait_on_lock {
-            return host_sem.value >= 0;
+            if host_sem.value < 0 {
+                host_sem.value += 1;
+                return false;
+            }
+            return true;
         }
 
         if host_sem.value < 0 {

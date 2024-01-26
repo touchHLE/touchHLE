@@ -15,9 +15,12 @@ use crate::audio::openal as al;
 use crate::audio::openal::al_types::*;
 use crate::audio::openal::alc_types::*;
 use crate::dyld::{export_c_func, FunctionExports};
+use crate::libc::string::strcmp;
 use crate::mem::{ConstPtr, ConstVoidPtr, GuestUSize, MutPtr, MutVoidPtr, Ptr, SafeWrite};
 use crate::Environment;
 use std::collections::HashMap;
+use std::ffi::{CStr, CString};
+use touchHLE_openal_soft_wrapper::ALC_DEVICE_SPECIFIER;
 
 #[derive(Default)]
 pub struct State {
@@ -44,10 +47,14 @@ impl SafeWrite for GuestALCcontext {}
 // === alc.h ===
 
 fn alcOpenDevice(env: &mut Environment, devicename: ConstPtr<u8>) -> MutPtr<GuestALCdevice> {
-    // NULL means you don't care what device is opened. If an app tries to use
-    // a specific device name, it's probably going to be something specific to
-    // Apple and fail, so let's assert just in case that happens.
-    assert!(devicename.is_null());
+    if !devicename.is_null() {
+        // If device name name is not null, we check if it's the one which was
+        // obtained from a call to alcGetString(NULL, ALC_DEVICE_SPECIFIER)
+
+        let d_name = alcGetString(env, Ptr::null(), ALC_DEVICE_SPECIFIER);
+        assert_eq!(strcmp(env, d_name, devicename), 0);
+        env.mem.free(d_name.cast_mut().cast());
+    }
 
     let res = unsafe { al::alcOpenDevice(std::ptr::null()) };
     if res.is_null() {
@@ -74,6 +81,20 @@ fn alcGetError(env: &mut Environment, device: MutPtr<GuestALCdevice>) -> i32 {
     let res = unsafe { al::alcGetError(host_device) };
     log_dbg!("alcGetError({:?}) => {:#x}", host_device, res);
     res
+}
+
+fn alcGetString(
+    env: &mut Environment,
+    device: MutPtr<GuestALCdevice>,
+    param: ALenum,
+) -> ConstPtr<u8> {
+    assert!(device.is_null());
+
+    let res = unsafe { al::alcGetString(std::ptr::null_mut(), param) };
+    let s = unsafe { CStr::from_ptr(res) };
+    log_dbg!("alcGetString({:?}) => {:?}", param, s);
+    log!("TODO: alcGetString({}) leaks memory", param);
+    env.mem.alloc_and_write_cstr(s.to_bytes()).cast_const()
 }
 
 fn alcCreateContext(
@@ -199,6 +220,22 @@ fn alGetError(_env: &mut Environment) -> i32 {
 
 fn alDistanceModel(_env: &mut Environment, value: ALenum) {
     unsafe { al::alDistanceModel(value) };
+}
+
+fn alGetEnumValue(env: &mut Environment, enumName: ConstPtr<u8>) -> ALenum {
+    let s = env.mem.cstr_at_utf8(enumName).unwrap();
+    let ss = CString::new(s).unwrap();
+    let res = unsafe { al::alGetEnumValue(ss.as_ptr()) };
+    log_dbg!("alGetEnumValue({:?}) => {:?}", s, res);
+    res
+}
+
+fn alIsBuffer(_env: &mut Environment, buffer: ALuint) -> ALboolean {
+    unsafe { al::alIsBuffer(buffer) }
+}
+
+fn alIsSource(_env: &mut Environment, source: ALuint) -> ALboolean {
+    unsafe { al::alIsSource(source) }
 }
 
 fn alListenerf(_env: &mut Environment, param: ALenum, value: ALfloat) {
@@ -539,22 +576,12 @@ fn alcGetIntegerv(
 ) {
     todo!();
 }
-fn alcGetString(
-    _env: &mut Environment,
-    _device: MutPtr<GuestALCdevice>,
-    _param: ALenum,
-) -> ConstPtr<u8> {
-    todo!();
-}
 fn alcIsExtensionPresent(
     _env: &mut Environment,
     _device: MutPtr<GuestALCdevice>,
     _extName: ConstPtr<u8>,
 ) -> ALCboolean {
     0
-}
-fn alIsBuffer(_env: &mut Environment, _buffer: ALuint) -> ALboolean {
-    todo!();
 }
 fn alGetBufferf(_env: &mut Environment, _buffer: ALuint, _param: ALenum, _value: MutPtr<ALfloat>) {
     todo!();
@@ -592,9 +619,6 @@ fn alGetInteger(_env: &mut Environment, _param: ALenum) -> ALint {
 fn alGetIntegerv(_env: &mut Environment, _param: ALenum, _values: MutPtr<ALint>) {
     todo!();
 }
-fn alGetEnumValue(_env: &mut Environment, _enumName: ConstPtr<u8>) -> ALenum {
-    todo!();
-}
 fn alGetProcAddress(_env: &mut Environment, _funcName: ConstPtr<u8>) -> MutVoidPtr {
     todo!();
 }
@@ -605,9 +629,6 @@ fn alIsExtensionPresent(_env: &mut Environment, _extName: ConstPtr<u8>) -> ALboo
     todo!();
 }
 fn alIsEnabled(_env: &mut Environment, _capability: ALenum) -> ALboolean {
-    todo!();
-}
-fn alIsSource(_env: &mut Environment, _source: ALuint) -> ALboolean {
     todo!();
 }
 fn alSourcePlayv(_env: &mut Environment, _nsources: ALsizei, _sources: ConstPtr<ALuint>) {

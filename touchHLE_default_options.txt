@@ -69,3 +69,7 @@ com.darxun: --landscape-right --y-tilt-offset=24
 
 # Jackpot Casino
 com.chillingo.jackpotcasino: --landscape-right
+
+# MotoRacing GP
+# A = wheelie, B = restore
+com.darxun.motoracinggp: --landscape-right --button-to-touch=A,25,295 --button-to-touch=B,115,295

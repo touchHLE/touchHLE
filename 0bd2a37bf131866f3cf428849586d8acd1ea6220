@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "61f51ced_88d4af81",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 11
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-01-26T10:48:37Z",
+      "side": 1,
+      "message": "I like that we have now a possibility to write objc tests as well, thanks! hopefully we can merge it soon",
+      "revId": "0bd2a37bf131866f3cf428849586d8acd1ea6220",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7d09b4c3_fb7ce08d",
+        "filename": "tests/ObjCTestApp_source/system_headers.h",
+        "patchSetId": 11
+      },
+      "lineNbr": 9,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-01-26T10:48:37Z",
+      "side": 1,
+      "message": "Could you please try to have a common header for TestApp and ObjCTestApp?\nI would like to avoid definition duplication",
+      "revId": "0bd2a37bf131866f3cf428849586d8acd1ea6220",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ad035156_d90d25c1",
+        "filename": "tests/ObjCTestApp_source/system_headers.h",
+        "patchSetId": 11
+      },
+      "lineNbr": 76,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-01-26T10:48:37Z",
+      "side": 1,
+      "message": "Is it suggest by clang formatter?\n\nusually it should be `- (id)init` to follow our conventions\n\nthis comment applies to every objc definition in your commit",
+      "revId": "0bd2a37bf131866f3cf428849586d8acd1ea6220",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "32d54900_6a70178b",
+        "filename": "tests/README.md",
+        "patchSetId": 11
+      },
+      "lineNbr": 23,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-01-26T10:48:37Z",
+      "side": 1,
+      "message": "the phrase about macOS is duplicated here",
+      "revId": "0bd2a37bf131866f3cf428849586d8acd1ea6220",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

@@ -16,6 +16,24 @@
       "message": "you should `return 0;` here",
       "revId": "5ffdcdc6be28b35f11c1097db91042f9c35257ef",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d837154e_832f82bc",
+        "filename": "tests/TestApp_source/main.c",
+        "patchSetId": 18
+      },
+      "lineNbr": 590,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-01-27T13:05:50Z",
+      "side": 1,
+      "message": "Oops!",
+      "parentUuid": "06b203b2_559099a1",
+      "revId": "5ffdcdc6be28b35f11c1097db91042f9c35257ef",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

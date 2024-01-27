@@ -16,6 +16,24 @@
       "message": "please update commit message as well, as it\u0027s not a stub anymore\n\nalso, it would be great to have some simple tests",
       "revId": "5d6cfb0a48cb07441b151b17b2cebec50aba2271",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "36352416_dba5d63d",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 17
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-01-27T11:30:16Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "eadf207d_b13f515f",
+      "revId": "5d6cfb0a48cb07441b151b17b2cebec50aba2271",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "870dc07a_a527ee3b",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 19
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-01-27T14:30:01Z",
+      "side": 1,
+      "message": "it\u0027s nearly good to be merged! i have 2 small comments",
+      "revId": "db91a6ed30655169131beba8f7d6524dc70ec147",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c7b91040_662e75b5",
+        "filename": "src/libc/clocale.rs",
+        "patchSetId": 19
+      },
+      "lineNbr": 36,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-01-27T14:30:01Z",
+      "side": 1,
+      "message": "please add a todo about checking that combination of category and locale does make sense",
+      "revId": "db91a6ed30655169131beba8f7d6524dc70ec147",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2a002366_0ec9c397",
+        "filename": "src/libc/clocale.rs",
+        "patchSetId": 19
+      },
+      "lineNbr": 36,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-01-27T14:30:01Z",
+      "side": 1,
+      "message": "you should also assert that locale is not an empty string",
+      "revId": "db91a6ed30655169131beba8f7d6524dc70ec147",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

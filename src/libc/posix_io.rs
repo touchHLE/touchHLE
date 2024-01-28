@@ -122,7 +122,18 @@ pub fn open_direct(env: &mut Environment, path: ConstPtr<u8>, flags: i32) -> Fil
         options.truncate();
     }
 
-    let path_string = env.mem.cstr_at_utf8(path).unwrap().to_owned();
+    let path_string = match env.mem.cstr_at_utf8(path) {
+        Ok(path_str) => path_str.to_owned(),
+        Err(err) => {
+            log!(
+                "open() error, unable to treat {:?} as utf8 str: {:?}",
+                path,
+                err
+            );
+            // TODO: set errno
+            return -1;
+        }
+    };
     // TODO: symlinks don't exist in the FS yet, so we can't "not follow" them.
     if flags & O_NOFOLLOW != 0 {
         log!("Ignoring O_NOFOLLOW when opening {:?}", path_string);

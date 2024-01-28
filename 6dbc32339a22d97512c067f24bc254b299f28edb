@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4f48c36c_9c82512b",
+        "filename": "tests/TestApp_source/main.c",
+        "patchSetId": 20
+      },
+      "lineNbr": 600,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-01-28T13:06:49Z",
+      "side": 1,
+      "message": "why do you need to change indentation here?",
+      "revId": "6dbc32339a22d97512c067f24bc254b299f28edb",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

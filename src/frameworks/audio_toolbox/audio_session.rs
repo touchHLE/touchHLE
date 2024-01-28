@@ -32,13 +32,21 @@ const kAudioSessionCategory_SoloAmbientSound: u32 = fourcc(b"solo");
 
 fn AudioSessionInitialize(
     _env: &mut Environment,
-    _in_run_loop: CFRunLoopRef,
-    _in_run_loop_mode: CFRunLoopMode,
-    _in_interruption_listener: AudioSessionInterruptionListener,
-    _in_client_data: MutVoidPtr,
+    in_run_loop: CFRunLoopRef,
+    in_run_loop_mode: CFRunLoopMode,
+    in_interruption_listener: AudioSessionInterruptionListener,
+    in_client_data: MutVoidPtr,
 ) -> OSStatus {
-    // TODO: actually implement this
-    0 // success
+    let result = 0; // success
+    log!(
+        "TODO: AudioSessionInitialize({:?}, {:?}, {:?}, {:?}) -> {:?}",
+        in_run_loop,
+        in_run_loop_mode,
+        in_interruption_listener,
+        in_client_data,
+        result
+    );
+    result
 }
 
 fn AudioSessionGetProperty(
@@ -80,14 +88,24 @@ fn AudioSessionGetProperty(
         _ => unreachable!(),
     }
 
-    0 // success
+    let result = 0; // success
+    log_dbg!(
+        "AudioSessionGetProperty({:?}, {:?} ({:?}), {:?} ({:?})) -> {:?})",
+        in_ID,
+        io_data_size,
+        io_data_size_value,
+        out_data,
+        env.mem.bytes_at(out_data.cast(), io_data_size_value),
+        result
+    );
+    result
 }
 
 fn AudioSessionSetProperty(
-    _env: &mut Environment,
+    env: &mut Environment,
     in_ID: AudioSessionPropertyID,
     in_data_size: u32,
-    _in_data: ConstVoidPtr,
+    in_data: ConstVoidPtr,
 ) -> OSStatus {
     let required_size: GuestUSize = match in_ID {
         kAudioSessionProperty_AudioCategory => guest_size_of::<u32>(),
@@ -95,17 +113,26 @@ fn AudioSessionSetProperty(
         _ => unimplemented!("Unimplemented property ID: {}", debug_fourcc(in_ID)),
     };
     if in_data_size != required_size {
-        log!("Warning: AudioSessionGetProperty() failed");
+        log!("Warning: AudioSessionSetProperty() failed");
         return kAudioSessionBadPropertySizeError;
     }
 
-    // TODO: actually implement this
-
-    0 // success
+    let result = 0; // success
+    log!(
+        "TODO: AudioSessionSetProperty({:?}, {:?}, {:?} ({:?})) -> {:?}",
+        in_ID,
+        in_data_size,
+        in_data,
+        env.mem.bytes_at(in_data.cast(), in_data_size),
+        result
+    );
+    result
 }
 
-fn AudioSessionSetActive(_env: &mut Environment, _active: bool) -> OSStatus {
-    0 // success
+fn AudioSessionSetActive(_env: &mut Environment, active: bool) -> OSStatus {
+    let result = 0; // success
+    log!("TODO: AudioSessionSetActive({:?}) -> {:?}", active, result);
+    result
 }
 
 fn AudioSessionAddPropertyListener(

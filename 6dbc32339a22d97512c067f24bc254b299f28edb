@@ -16,6 +16,24 @@
       "message": "why do you need to change indentation here?",
       "revId": "6dbc32339a22d97512c067f24bc254b299f28edb",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b4109773_19383fe3",
+        "filename": "tests/TestApp_source/main.c",
+        "patchSetId": 20
+      },
+      "lineNbr": 600,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-01-28T13:31:02Z",
+      "side": 1,
+      "message": "The format script did that, im not sure why either.",
+      "parentUuid": "4f48c36c_9c82512b",
+      "revId": "6dbc32339a22d97512c067f24bc254b299f28edb",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

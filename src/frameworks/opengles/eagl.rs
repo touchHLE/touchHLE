@@ -582,11 +582,13 @@ unsafe fn present_renderbuffer(gles: &mut dyn GLES, window: &mut Window) {
     let old_blend_dfactor: GLenum = get_int(gles, gles11::BLEND_DST) as _;
 
     let old_tex_env_mode = get_tex_env_int(gles, gles11::TEXTURE_ENV, gles11::TEXTURE_ENV_MODE);
-    let default_tex_env_mode_arr = [gles11::MODULATE; 1];
+    // if the mode is REPLACE, we don't have to reset the other texture
+    // environment values
+    let tex_env_mode_arr = [gles11::REPLACE; 1];
     gles.TexEnviv(
         gles11::TEXTURE_ENV,
         gles11::TEXTURE_ENV_MODE,
-        default_tex_env_mode_arr.as_ptr().cast(),
+        tex_env_mode_arr.as_ptr().cast(),
     );
 
     // Draw the quad

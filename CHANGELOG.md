@@ -30,6 +30,11 @@ Compatibility:
 Usability:
 
 - The `--button-to-touch=` option now supports the Start and the LeftShoulder buttons in addition to the A/B/X/Y buttons and D-pad. Certain games' default options have been adjusted to use them. (@nighto)
+- Default options for various games (@nighto)
+
+Quality:
+
+- [touchHLE coding style guide](https://github.com/hikari-no-yume/touchHLE/blob/trunk/dev-docs/code-style.md) (@hikari-no-yume)
 
 ## v0.2.1 (2023-10-31)
 

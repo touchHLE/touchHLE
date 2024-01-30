@@ -17,8 +17,11 @@ Changes are categorised as follows:
 
 Compatibility:
 
+- New working apps:
+  - Rayman 2 (@ciciplusplus)
+  - Tony Hawk's Pro Skater 2 (@ciciplusplus)
 - API support improvements:
-  - Various small contributions. (@alborrajo, @WhatAmISupposedToPutHere, @ciciplusplus, @hikari-no-yume, @LennyKappa)
+  - Various contributions. (@alborrajo, @WhatAmISupposedToPutHere, @ciciplusplus, @hikari-no-yume, @LennyKappa)
 - There is now support for iPhone OS 3.0 apps, in addition to the existing support for iPhone OS 2.x apps:
   - Support for fat binaries has been added. touchHLE will no longer crash when trying to run an app with both ARMv6 and ARMv7 versions, and instead will try to pick the best available option (ARMv7, or failing this, ARMv6). This improves compatibility with iPhone OS 3.0 apps, many of which use fat binaries in order to improve performance on the iPhone 3GS and iPod touch (3rd generation). (@WhatAmISupposedToPutHere)
   - The bundled ARMv6 dynamic libraries, libgcc and libstdc++, have been updated to their iPhone OS 3.0.1 versions. Previously the iPhone OS 2.2.1 versions were used. (@hikari-no-yume)
@@ -26,7 +29,7 @@ Compatibility:
 
 Usability:
 
-- The `--button-to-touch=` option now supports the Start button in addition to the A/B/X/Y buttons and D-pad. Certain games' default options have been adjusted to use the Start button. (@nighto)
+- The `--button-to-touch=` option now supports the Start and the LeftShoulder buttons in addition to the A/B/X/Y buttons and D-pad. Certain games' default options have been adjusted to use them. (@nighto)
 
 ## v0.2.1 (2023-10-31)
 

@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ad37683c_ea1a067a",
+        "filename": "src/frameworks/uikit/ui_nib.rs",
+        "patchSetId": 26
+      },
+      "lineNbr": 242,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-01-30T22:15:32Z",
+      "side": 1,
+      "message": "could you please log path as well?",
+      "revId": "faac5f257254343ff5f3d61f424799b13f678a8d",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

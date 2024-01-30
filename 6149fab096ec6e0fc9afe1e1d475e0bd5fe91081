@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e82775a3_7e727754",
+        "filename": "src/libc/stdio/printf.rs",
+        "patchSetId": 17
+      },
+      "lineNbr": 202,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-01-30T22:04:04Z",
+      "side": 1,
+      "message": "testing on macos `NSLog(@\"%@\", nil);` outputs `(null)`",
+      "revId": "6149fab096ec6e0fc9afe1e1d475e0bd5fe91081",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

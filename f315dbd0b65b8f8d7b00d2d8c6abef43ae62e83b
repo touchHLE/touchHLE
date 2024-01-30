@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6b93b841_92f4cdd1",
+        "filename": "src/mem.rs",
+        "patchSetId": 18
+      },
+      "lineNbr": 488,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-01-30T21:52:26Z",
+      "side": 1,
+      "message": "you should remove this assert",
+      "revId": "f315dbd0b65b8f8d7b00d2d8c6abef43ae62e83b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

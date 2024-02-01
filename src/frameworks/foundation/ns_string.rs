@@ -560,10 +560,20 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (ConstPtr<u8>)cStringUsingEncoding:(NSStringEncoding)encoding {
+    let string = to_rust_string(env, this);
     // TODO: other encodings
-    assert!(encoding == NSUTF8StringEncoding || encoding == NSASCIIStringEncoding);
+    let bytes: Vec<u8> = match encoding {
+        NSUTF8StringEncoding | NSASCIIStringEncoding => string.as_bytes().to_vec(),
+        NSUTF16LittleEndianStringEncoding => string.encode_utf16().flat_map(u16::to_le_bytes).collect(),
+        _ => unimplemented!()
+    };
     // FIXME: validate ASCII
-    msg![env; this UTF8String]
+    let c_string = env.mem.alloc_and_write_cstr(&bytes);
+    let length: NSUInteger = (bytes.len() + 1).try_into().unwrap();
+    // NSData will handle releasing the string (it is autoreleased)
+    let _: id = msg_class![env; NSData dataWithBytesNoCopy:(c_string.cast_void())
+                                                    length:length];
+    c_string.cast_const()
 }
 
 - (ConstPtr<u8>)UTF8String {

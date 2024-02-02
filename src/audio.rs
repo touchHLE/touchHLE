@@ -23,6 +23,12 @@ use crate::fs::{Fs, GuestPath};
 use std::io::Cursor;
 
 #[derive(Debug)]
+pub enum AudioFileOpenError {
+    FileReadError,
+    FileDecodeError,
+}
+
+#[derive(Debug)]
 pub enum AudioFormat {
     LinearPcm {
         is_float: bool,
@@ -53,9 +59,15 @@ enum AudioFileInner {
 }
 
 impl AudioFile {
-    pub fn open_for_reading<P: AsRef<GuestPath>>(path: P, fs: &Fs) -> Result<Self, ()> {
+    pub fn open_for_reading<P: AsRef<GuestPath>>(
+        path: P,
+        fs: &Fs,
+    ) -> Result<Self, AudioFileOpenError> {
         // TODO: it would be better not to load the whole file at once
-        let bytes = fs.read(path.as_ref())?;
+        let Ok(bytes) = fs.read(path.as_ref()) else {
+            // TODO: Handle other FS related errors?
+            return Err(AudioFileOpenError::FileReadError);
+        };
 
         // Both WavReader::new() and CafPacketReader::new() consume the reader
         // (in this case, a Cursor) passed to them. This is a bit annoying
@@ -85,7 +97,7 @@ impl AudioFile {
                 "Could not decode audio file at path {:?}, likely an unimplemented file format.",
                 path.as_ref()
             );
-            Err(())
+            Err(AudioFileOpenError::FileDecodeError)
         }
     }
 

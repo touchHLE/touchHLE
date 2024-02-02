@@ -20,7 +20,7 @@ use crate::frameworks::audio_toolbox::audio_queue::{
 use crate::frameworks::carbon_core::eofErr;
 use crate::frameworks::core_audio_types::AudioStreamBasicDescription;
 use crate::frameworks::core_foundation::cf_run_loop::kCFRunLoopCommonModes;
-use crate::frameworks::foundation::{ns_string, NSInteger};
+use crate::frameworks::foundation::{ns_string, NSInteger, NSTimeInterval};
 use crate::mem::{guest_size_of, GuestUSize, MutPtr, MutVoidPtr, Ptr};
 use crate::msg;
 use crate::objc::{id, nil, release, retain, Class, ClassExports, HostObject, NSZonePtr};
@@ -38,6 +38,7 @@ struct AVAudioPlayerHostObject {
     audio_queue_buffers: Option<MutPtr<AudioQueueBufferRef>>,
     num_packets_to_read: u32,
     current_packet: i64,
+    set_current_time: NSTimeInterval,
     volume: f32,
     is_playing: bool,
     num_of_loops: NSInteger,
@@ -66,6 +67,7 @@ pub const CLASSES: ClassExports = objc_classes! {
         audio_queue_buffers: None,
         num_packets_to_read: 0,
         current_packet: 0,
+        set_current_time: 0.0,
         volume: 1.0,
         is_playing: false,
         num_of_loops: 0
@@ -140,6 +142,13 @@ pub const CLASSES: ClassExports = objc_classes! {
     let aq_ref = env.mem.read(aq_ref_ptr);
     env.objc.borrow_mut::<AVAudioPlayerHostObject>(this).audio_queue = Some(aq_ref);
 
+    // Reapply the previously set current time and volume in case
+    // setVolume/setCurrentTime were called before prepareToPlay
+    let volume = env.objc.borrow::<AVAudioPlayerHostObject>(this).volume;
+    () = msg![env; this setVolume:volume];
+    let set_current_time = env.objc.borrow::<AVAudioPlayerHostObject>(this).set_current_time;
+    () = msg![env; this setCurrentTime:set_current_time];
+
     let size = guest_size_of::<u32>();
     env.mem.write(tmp_size_ptr, size);
     let prop_size_ptr: MutPtr<u32> = env.mem.alloc(size).cast();
@@ -168,10 +177,6 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.mem.free(tmp_size_ptr.cast());
     env.mem.free(aq_ref_ptr.cast());
     env.mem.free(tmp_data_ptr.cast());
-
-    // Reapply volume in case setVolume was called before prepareToPlay
-    let volume = env.objc.borrow::<AVAudioPlayerHostObject>(this).volume;
-    () = msg![env; this setVolume:volume];
 }
 
 - (bool)isPlaying {
@@ -224,6 +229,7 @@ pub const CLASSES: ClassExports = objc_classes! {
         audio_queue_buffers: None,
         num_packets_to_read: 0,
         current_packet: 0,
+        set_current_time: 0.0,
         volume: 1.0,
         is_playing: false
     };
@@ -239,6 +245,28 @@ pub const CLASSES: ClassExports = objc_classes! {
     let url = env.objc.borrow_mut::<AVAudioPlayerHostObject>(this).audio_file_url;
     release(env, url);
     env.objc.dealloc_object(this, &mut env.mem)
+}
+
+- (NSTimeInterval)currentTime {
+    let host_object = env.objc.borrow::<AVAudioPlayerHostObject>(this);
+    let current_time = if let Some(audio_desc) = host_object.audio_desc {
+        let current_frame = (host_object.current_packet as f64) * (audio_desc.frames_per_packet as f64);
+        current_frame / audio_desc.sample_rate
+    } else {
+        0.0
+    };
+    log_dbg!("[(AVAudioPlayer *) {:?} currentTime] -> {:?}", this, current_time);
+    current_time
+}
+- (())setCurrentTime:(NSTimeInterval)currentTime {
+    // TODO: Support setting current time before having an audio description
+    let host_object = env.objc.borrow_mut::<AVAudioPlayerHostObject>(this);
+    host_object.set_current_time = currentTime;
+    if let Some(audio_desc) = host_object.audio_desc {
+        let new_current_frame = audio_desc.sample_rate * currentTime;
+        host_object.current_packet = (new_current_frame / (audio_desc.frames_per_packet as f64)) as i64;
+    }
+    log_dbg!("[(AVAudioPlayer *) {:?} setCurrentTime: {}]", this, currentTime);
 }
 
 @end

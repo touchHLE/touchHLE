@@ -61,6 +61,10 @@ pub const kAudioFilePropertyPacketSizeUpperBound: AudioFilePropertyID = fourcc(b
 const kAudioFilePropertyMagicCookieData: AudioFilePropertyID = fourcc(b"mgic");
 const kAudioFilePropertyChannelLayout: AudioFilePropertyID = fourcc(b"cmap");
 
+// Audio File Errors
+pub const kAudioFileUnspecifiedError: OSStatus = fourcc(b"wht?") as OSStatus;
+pub const kAudioFileUnsupportedFileTypeError: OSStatus = fourcc(b"typ?") as OSStatus;
+
 pub fn AudioFileOpenURL(
     env: &mut Environment,
     in_file_ref: CFURLRef,

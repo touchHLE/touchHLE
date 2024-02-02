@@ -41,9 +41,12 @@ unsafe impl SafeRead for OpaqueAudioFileID {}
 
 pub type AudioFileID = MutPtr<OpaqueAudioFileID>;
 
+#[allow(dead_code)]
 const kAudioFileFileNotFoundError: OSStatus = -43;
 const kAudioFileBadPropertySizeError: OSStatus = fourcc(b"!siz") as _;
 const kAudioFileUnsupportedProperty: OSStatus = fourcc(b"pty?") as _;
+const kAudioFileUnsupportedFileTypeError: OSStatus = fourcc(b"typ?") as _;
+const kAudioFileUnspecifiedError: OSStatus = fourcc(b"wht?") as _;
 
 type AudioFilePermissions = i8;
 pub const kAudioFileReadPermission: AudioFilePermissions = 1;
@@ -84,12 +87,18 @@ pub fn AudioFileOpenURL(
     }
 
     let path = to_rust_path(env, in_file_ref);
-    let Ok(audio_file) = audio::AudioFile::open_for_reading(path, &env.fs) else {
-        log!(
-            "Warning: AudioFileOpenURL() for path {:?} failed",
-            in_file_ref
-        );
-        return kAudioFileFileNotFoundError;
+    let audio_file = match audio::AudioFile::open_for_reading(path, &env.fs) {
+        Ok(audio_file) => audio_file,
+        Err(error) => {
+            log!(
+                "Warning: AudioFileOpenURL() for path {:?} failed",
+                in_file_ref
+            );
+            return match error {
+                audio::AudioFileOpenError::FileDecodeError => kAudioFileUnsupportedFileTypeError,
+                _ => kAudioFileUnspecifiedError,
+            };
+        }
     };
 
     let host_object = AudioFileHostObject { audio_file };

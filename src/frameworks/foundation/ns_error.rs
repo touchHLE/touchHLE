@@ -9,8 +9,13 @@ use crate::frameworks::foundation::NSInteger;
 use crate::objc::{id, nil, release, retain, ClassExports, HostObject, NSZonePtr};
 use crate::objc_classes;
 
+/// `NSString*`
+pub type NSErrorDomain = id;
+
+pub const NSOSStatusErrorDomain: &str = "NSOSStatusErrorDomain";
+
 struct ErrorHostObject {
-    domain: id,
+    domain: NSErrorDomain,
     code: NSInteger,
     user_info: id,
 }
@@ -32,7 +37,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.alloc_object(this, host_object, &mut env.mem)
 }
 
-- (id)initWithDomain:(id)domain
+- (id)initWithDomain:(NSErrorDomain)domain
                 code:(NSInteger)code
             userInfo:(id)user_info {
     retain(env, domain);
@@ -57,7 +62,13 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 };
 
-pub const CONSTANTS: ConstantExports = &[(
-    "_NSLocalizedDescriptionKey",
-    HostConstant::NSString("NSLocalizedDescriptionKey"),
-)];
+pub const CONSTANTS: ConstantExports = &[
+    (
+        "_NSLocalizedDescriptionKey",
+        HostConstant::NSString("NSLocalizedDescriptionKey"),
+    ),
+    (
+        "_NSOSStatusErrorDomain",
+        HostConstant::NSString(NSOSStatusErrorDomain),
+    ),
+];

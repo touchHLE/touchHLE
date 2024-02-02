@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "dcbb4ef2_353fda4c",
+        "filename": "src/frameworks/audio_toolbox/audio_unit.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 293,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-02-02T00:24:56Z",
+      "side": 1,
+      "message": "I\u0027m not happy with this solution but it\u0027s the best I could do to make sense of the buffers. I think part of the blame is that the stream format provided by Resident Evil 4, well, doesn\u0027t make sense and has conflicting values. My only hope to figure these values out is to find other games that make use of AudioUnits and see if it can be made sense of comparing between games.\nThe only thing im 100% certain of in this is that the sample rate doesn\u0027t come from the value provided in the stream format but from AudioSession current hardware sample rate.",
+      "revId": "7616a06a1eb49517f0d10b90ab3ecdade4f9bb03",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

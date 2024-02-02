@@ -38,6 +38,7 @@ struct AVAudioPlayerHostObject {
     audio_queue_buffers: Option<MutPtr<AudioQueueBufferRef>>,
     num_packets_to_read: u32,
     current_packet: i64,
+    volume: f32,
     is_playing: bool,
 }
 impl HostObject for AVAudioPlayerHostObject {}
@@ -64,6 +65,7 @@ pub const CLASSES: ClassExports = objc_classes! {
         audio_queue_buffers: None,
         num_packets_to_read: 0,
         current_packet: 0,
+        volume: 1.0,
         is_playing: false
     });
     env.objc.alloc_object(this, host_object, &mut env.mem)
@@ -87,9 +89,12 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (())setVolume:(f32)volume {
-    let aq_ref = env.objc.borrow_mut::<AVAudioPlayerHostObject>(this).audio_queue.unwrap();
-    let status = AudioQueueSetParameter(env, aq_ref, kAudioQueueParam_Volume, volume);
-    assert_eq!(status, 0);
+    let host_object = env.objc.borrow_mut::<AVAudioPlayerHostObject>(this);
+    host_object.volume = volume;
+    if let Some(aq_ref) = host_object.audio_queue {
+        let status = AudioQueueSetParameter(env, aq_ref, kAudioQueueParam_Volume, volume);
+        assert_eq!(status, 0);
+    }
 }
 
 - (())prepareToPlay {
@@ -159,6 +164,10 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.mem.free(tmp_size_ptr.cast());
     env.mem.free(aq_ref_ptr.cast());
     env.mem.free(tmp_data_ptr.cast());
+
+    // Reapply volume in case setVolume was called before prepareToPlay
+    let volume = env.objc.borrow::<AVAudioPlayerHostObject>(this).volume;
+    () = msg![env; this setVolume:volume];
 }
 
 - (bool)isPlaying {
@@ -210,6 +219,7 @@ pub const CLASSES: ClassExports = objc_classes! {
         audio_queue_buffers: None,
         num_packets_to_read: 0,
         current_packet: 0,
+        volume: 1.0,
         is_playing: false
     };
 }

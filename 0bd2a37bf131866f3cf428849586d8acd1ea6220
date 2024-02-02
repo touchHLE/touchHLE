@@ -37,6 +37,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "a684880d_aba6e3a0",
+        "filename": "tests/ObjCTestApp_source/system_headers.h",
+        "patchSetId": 11
+      },
+      "lineNbr": 9,
+      "author": {
+        "id": 1021823
+      },
+      "writtenOn": "2024-02-02T14:27:08Z",
+      "side": 1,
+      "message": "On recommendation of @hikari@noyu.me, I\u0027m going to merge TestApp and ObjCTestApp entirely, and just cut out windows test support (at least in CI).",
+      "parentUuid": "7d09b4c3_fb7ce08d",
+      "revId": "0bd2a37bf131866f3cf428849586d8acd1ea6220",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "ad035156_d90d25c1",
         "filename": "tests/ObjCTestApp_source/system_headers.h",
         "patchSetId": 11
@@ -54,6 +72,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "015e0e8c_598db70d",
+        "filename": "tests/ObjCTestApp_source/system_headers.h",
+        "patchSetId": 11
+      },
+      "lineNbr": 76,
+      "author": {
+        "id": 1021823
+      },
+      "writtenOn": "2024-02-02T14:27:08Z",
+      "side": 1,
+      "message": "I forgot to add the directory to the format script, oops .-.",
+      "parentUuid": "ad035156_d90d25c1",
+      "revId": "0bd2a37bf131866f3cf428849586d8acd1ea6220",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "32d54900_6a70178b",
         "filename": "tests/README.md",
         "patchSetId": 11
@@ -65,6 +101,24 @@
       "writtenOn": "2024-01-26T10:48:37Z",
       "side": 1,
       "message": "the phrase about macOS is duplicated here",
+      "revId": "0bd2a37bf131866f3cf428849586d8acd1ea6220",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "15818903_0ddbef67",
+        "filename": "tests/README.md",
+        "patchSetId": 11
+      },
+      "lineNbr": 23,
+      "author": {
+        "id": 1021823
+      },
+      "writtenOn": "2024-02-02T14:27:08Z",
+      "side": 1,
+      "message": "It\u0027s \"(The same) As on Mac OS\". I\u0027ll change it since it\u0027s unclear.",
+      "parentUuid": "32d54900_6a70178b",
       "revId": "0bd2a37bf131866f3cf428849586d8acd1ea6220",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

@@ -20,7 +20,7 @@ use crate::frameworks::audio_toolbox::audio_queue::{
 use crate::frameworks::carbon_core::eofErr;
 use crate::frameworks::core_audio_types::AudioStreamBasicDescription;
 use crate::frameworks::core_foundation::cf_run_loop::kCFRunLoopCommonModes;
-use crate::frameworks::foundation::ns_string;
+use crate::frameworks::foundation::{ns_string, NSInteger};
 use crate::mem::{guest_size_of, GuestUSize, MutPtr, MutVoidPtr, Ptr};
 use crate::msg;
 use crate::objc::{id, nil, retain, Class, ClassExports, HostObject, NSZonePtr};
@@ -213,6 +213,11 @@ pub const CLASSES: ClassExports = objc_classes! {
         is_playing: false
     };
 }
+
+- (())setNumberOfLoops:(NSInteger)numberOfLoops {
+    log!("TODO: [(AVAudioPlayer *) {:?} setNumberOfLoops:{:?}]", this, numberOfLoops);
+}
+
 
 @end
 

@@ -73,8 +73,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.alloc_object(this, host_object, &mut env.mem)
 }
 
-- (id)initWithContentsOfURL:(id)url error:(id)error {
-    assert!(error.is_null());
+- (id)initWithContentsOfURL:(id)url error:(id)_error {
     let path: id = msg![env; url path];
     let path_str = ns_string::to_rust_string(env, path);
     log_dbg!("initWithContentsOfURL: {}", path_str);
@@ -83,6 +82,9 @@ pub const CLASSES: ClassExports = objc_classes! {
 
     let host_object = env.objc.borrow_mut::<AVAudioPlayerHostObject>(this);
     host_object.audio_file_url = url;
+
+    // TODO: Check for errors, return nil and write them to error if there are
+
     this
 }
 

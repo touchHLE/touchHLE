@@ -23,10 +23,10 @@ pub struct State {
     pub open_semaphores: HashMap<MutPtr<sem_t>, Rc<RefCell<SemaphoreHostObject>>>,
 }
 impl State {
-    fn get(env: &Environment) -> &Self {
+    pub fn get(env: &Environment) -> &Self {
         &env.libc_state.semaphore
     }
-    fn get_mut(env: &mut Environment) -> &mut Self {
+    pub fn get_mut(env: &mut Environment) -> &mut Self {
         &mut env.libc_state.semaphore
     }
 }
@@ -37,7 +37,7 @@ pub type sem_t = i32;
 pub struct SemaphoreHostObject {
     pub value: i32,
     pub waiting: HashSet<ThreadId>,
-    guest_sem: Option<MutPtr<sem_t>>,
+    pub guest_sem: Option<MutPtr<sem_t>>,
 }
 
 fn sem_open(

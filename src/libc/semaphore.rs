@@ -16,7 +16,7 @@ use std::collections::{HashMap, HashSet};
 use std::rc::Rc;
 
 // SEM_FAILED is defined as -1 while having a type of sem_t *
-const SEM_FAILED: MutPtr<sem_t> = MutPtr::from_bits(u32::MAX);
+pub const SEM_FAILED: MutPtr<sem_t> = MutPtr::from_bits(u32::MAX);
 
 #[derive(Default)]
 pub struct State {
@@ -41,7 +41,7 @@ pub struct SemaphoreHostObject {
     guest_sem: Option<MutPtr<sem_t>>,
 }
 
-fn sem_open(
+pub fn sem_open(
     env: &mut Environment,
     name: ConstPtr<u8>,
     oflag: i32,
@@ -87,7 +87,7 @@ fn sem_open(
     sem
 }
 
-fn sem_post(env: &mut Environment, sem: MutPtr<sem_t>) -> i32 {
+pub fn sem_post(env: &mut Environment, sem: MutPtr<sem_t>) -> i32 {
     // TODO: handle errno properly
     set_errno(env, 0);
 
@@ -95,7 +95,7 @@ fn sem_post(env: &mut Environment, sem: MutPtr<sem_t>) -> i32 {
     0 // success
 }
 
-fn sem_wait(env: &mut Environment, sem: MutPtr<sem_t>) -> i32 {
+pub fn sem_wait(env: &mut Environment, sem: MutPtr<sem_t>) -> i32 {
     // TODO: handle errno properly
     set_errno(env, 0);
 
@@ -114,7 +114,7 @@ fn sem_trywait(env: &mut Environment, sem: MutPtr<sem_t>) -> i32 {
     }
 }
 
-fn sem_close(env: &mut Environment, sem: MutPtr<sem_t>) -> i32 {
+pub fn sem_close(env: &mut Environment, sem: MutPtr<sem_t>) -> i32 {
     // TODO: handle errno properly
     set_errno(env, 0);
 
@@ -130,7 +130,7 @@ fn sem_close(env: &mut Environment, sem: MutPtr<sem_t>) -> i32 {
     0 // success
 }
 
-fn sem_unlink(env: &mut Environment, name: ConstPtr<u8>) -> i32 {
+pub fn sem_unlink(env: &mut Environment, name: ConstPtr<u8>) -> i32 {
     // TODO: handle errno properly
     set_errno(env, 0);
 

@@ -132,7 +132,7 @@ pub fn CGContextTranslateCTM(
     host_obj.transform = host_obj.transform.translate(tx, ty);
 }
 
-fn CGContextDrawImage(
+pub fn CGContextDrawImage(
     env: &mut Environment,
     context: CGContextRef,
     rect: CGRect,

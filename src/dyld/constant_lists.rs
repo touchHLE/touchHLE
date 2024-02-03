@@ -15,6 +15,7 @@ use crate::libc;
 pub const CONSTANT_LISTS: &[super::ConstantExports] = &[
     libc::ctype::CONSTANTS,
     libc::stdio::CONSTANTS,
+    libc::mach_init::CONSTANTS,
     core_foundation::cf_allocator::CONSTANTS,
     core_foundation::cf_run_loop::CONSTANTS,
     core_graphics::cg_affine_transform::CONSTANTS,

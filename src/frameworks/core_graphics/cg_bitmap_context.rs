@@ -119,7 +119,10 @@ pub fn CGBitmapContextCreateImage(env: &mut Environment, context: CGContextRef) 
         bitmap_data.bits_per_component == 8
             && bitmap_data.bytes_per_row == bitmap_data.width * 4
             && bitmap_data.color_space == kCGColorSpaceGenericRGB
-            && bitmap_data.alpha_info == kCGImageAlphaPremultipliedLast
+            && matches!(
+                bitmap_data.alpha_info,
+                kCGImageAlphaNoneSkipLast | kCGImageAlphaPremultipliedLast
+            )
     );
     let pixels = env
         .mem

@@ -35,6 +35,7 @@ pub const FUNCTION_LISTS: &[super::FunctionExports] = &[
     libc::pthread::thread::FUNCTIONS,
     libc::semaphore::FUNCTIONS,
     libc::setjmp::FUNCTIONS,
+    libc::signal::FUNCTIONS,
     libc::stdio::FUNCTIONS,
     libc::stdio::printf::FUNCTIONS,
     libc::stdlib::FUNCTIONS,

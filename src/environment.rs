@@ -12,7 +12,7 @@ mod mutex;
 
 use crate::abi::{CallFromHost, GuestRet};
 use crate::libc::semaphore::sem_t;
-use crate::mem::{MutPtr, MutVoidPtr};
+use crate::mem::{GuestUSize, MutPtr, MutVoidPtr};
 use crate::{
     abi, bundle, cpu, dyld, frameworks, fs, gdb, image, libc, mach_o, mem, objc, options, stack,
     window,
@@ -543,8 +543,8 @@ impl Environment {
         &mut self,
         start_routine: abi::GuestFunction,
         user_data: mem::MutVoidPtr,
+        stack_size: GuestUSize,
     ) -> ThreadId {
-        let stack_size = mem::Mem::SECONDARY_THREAD_STACK_SIZE;
         let stack_alloc = self.mem.alloc(stack_size);
         let stack_high_addr = stack_alloc.to_bits() + stack_size;
         assert!(stack_high_addr % 4 == 0);

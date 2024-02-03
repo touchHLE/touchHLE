@@ -8,7 +8,8 @@
 use crate::abi::GuestFunction;
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::libc::errno::{EDEADLK, EINVAL};
-use crate::mem::{ConstPtr, ConstVoidPtr, MutPtr, MutVoidPtr, SafeRead};
+use crate::libc::mach_host::PAGE_SIZE;
+use crate::mem::{self, ConstPtr, ConstVoidPtr, GuestUSize, MutPtr, MutVoidPtr, SafeRead};
 use crate::{Environment, ThreadId};
 use std::collections::HashMap;
 
@@ -31,14 +32,16 @@ pub struct pthread_attr_t {
     /// Magic number (must be [MAGIC_ATTR])
     magic: u32,
     detachstate: i32,
-    _unused: [u32; 8],
+    stacksize: GuestUSize,
+    _unused: [u32; 7],
 }
 unsafe impl SafeRead for pthread_attr_t {}
 
 const DEFAULT_ATTR: pthread_attr_t = pthread_attr_t {
     magic: MAGIC_ATTR,
     detachstate: PTHREAD_CREATE_JOINABLE,
-    _unused: [0; 8],
+    stacksize: mem::Mem::SECONDARY_THREAD_DEFAULT_STACK_SIZE,
+    _unused: [0; 7],
 };
 
 /// Apple's implementation is a 4-byte magic number followed by a massive
@@ -50,6 +53,7 @@ pub struct OpaqueThread {
 }
 unsafe impl SafeRead for OpaqueThread {}
 
+#[allow(non_camel_case_types)]
 pub type pthread_t = MutPtr<OpaqueThread>;
 
 struct ThreadHostObject {
@@ -68,6 +72,9 @@ type DetachState = i32;
 const PTHREAD_CREATE_JOINABLE: DetachState = 1;
 pub const PTHREAD_CREATE_DETACHED: DetachState = 2;
 
+/// Value taken from an iOS 2.0 simulator
+const PTHREAD_STACK_MIN: GuestUSize = 2 * PAGE_SIZE;
+
 pub fn pthread_attr_init(env: &mut Environment, attr: MutPtr<pthread_attr_t>) -> i32 {
     env.mem.write(attr, DEFAULT_ATTR);
     0 // success
@@ -84,6 +91,20 @@ pub fn pthread_attr_setdetachstate(
     env.mem.write(attr, attr_copy);
     0 // success
 }
+pub fn pthread_attr_setstacksize(
+    env: &mut Environment,
+    attr: MutPtr<pthread_attr_t>,
+    stacksize: GuestUSize,
+) -> i32 {
+    if attr.is_null() || stacksize < PTHREAD_STACK_MIN || stacksize % PAGE_SIZE != 0 {
+        return EINVAL;
+    }
+    check_magic!(env, attr, MAGIC_ATTR);
+    let mut attr_copy = env.mem.read(attr);
+    attr_copy.stacksize = stacksize;
+    env.mem.write(attr, attr_copy);
+    0 // success
+}
 fn pthread_attr_destroy(env: &mut Environment, attr: MutPtr<pthread_attr_t>) -> i32 {
     check_magic!(env, attr, MAGIC_ATTR);
     env.mem.write(
@@ -91,6 +112,7 @@ fn pthread_attr_destroy(env: &mut Environment, attr: MutPtr<pthread_attr_t>) -> 
         pthread_attr_t {
             magic: 0,
             detachstate: 0,
+            stacksize: 0,
             _unused: Default::default(),
         },
     );
@@ -111,7 +133,7 @@ pub fn pthread_create(
         DEFAULT_ATTR
     };
 
-    let thread_id = env.new_thread(start_routine, user_data);
+    let thread_id = env.new_thread(start_routine, user_data, attr.stacksize);
 
     let opaque = env.mem.alloc_and_write(OpaqueThread {
         magic: MAGIC_THREAD,
@@ -226,6 +248,7 @@ fn pthread_testcancel(_env: &mut Environment) {
     log!("TODO: pthread_testcancel()");
 }
 
+#[allow(non_camel_case_types)]
 type mach_port_t = u32;
 
 /// Undocumented Darwin function that returns a `mach_port_t`, which in practice
@@ -268,6 +291,7 @@ fn pthread_setschedparam(
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(pthread_attr_init(_)),
     export_c_func!(pthread_attr_setdetachstate(_, _)),
+    export_c_func!(pthread_attr_setstacksize(_, _)),
     export_c_func!(pthread_attr_destroy(_)),
     export_c_func!(pthread_create(_, _, _, _)),
     export_c_func!(pthread_self()),

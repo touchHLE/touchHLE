@@ -24,7 +24,7 @@ type vm_size_t = natural_t;
 // per host so we could assert against it in our code.
 const MACH_HOST_SELF: host_name_port_t = 0x100c442e;
 
-const PAGE_SIZE: vm_size_t = 4096;
+pub const PAGE_SIZE: vm_size_t = 4096;
 
 const HOST_VM_INFO: host_flavor_t = 2;
 

@@ -257,7 +257,7 @@ impl Mem {
     pub const MAIN_THREAD_STACK_LOW_END: VAddr = 0u32.wrapping_sub(Self::MAIN_THREAD_STACK_SIZE);
 
     /// iPhone OS secondary thread stack size.
-    pub const SECONDARY_THREAD_STACK_SIZE: GuestUSize = 512 * 1024;
+    pub const SECONDARY_THREAD_DEFAULT_STACK_SIZE: GuestUSize = 512 * 1024;
 
     /// Create a fresh instance of guest memory.
     pub fn new() -> Mem {

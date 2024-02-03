@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "57807fca_071ce717",
+        "filename": "src/frameworks/foundation/ns_lock.rs",
+        "patchSetId": 29
+      },
+      "lineNbr": 51,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-02-03T13:56:06Z",
+      "side": 1,
+      "message": "why do you use echo!() and not log!() here?",
+      "revId": "c9eb3dfdd508285e337bbb1886bd517a3bd37df8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

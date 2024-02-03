@@ -175,6 +175,17 @@ pub const CLASSES: ClassExports = objc_classes! {
     msg_send(env, (this, sel, o1, o2))
 }
 
+- (())performSelectorOnMainThread:(SEL)sel
+            withObject:(id)arg
+            waitUntilDone:(bool)_wait {
+    // TODO: waitUntilDone
+    assert!(!sel.is_null());
+    let old_thread = env.current_thread;
+    env.switch_thread(0);
+    () = msg_send(env, (this, sel, arg));
+    env.switch_thread(old_thread);
+}
+
 @end
 
 };

@@ -16,6 +16,24 @@
       "message": "why do you use echo!() and not log!() here?",
       "revId": "c9eb3dfdd508285e337bbb1886bd517a3bd37df8",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2f75b629_fa0cebd8",
+        "filename": "src/frameworks/foundation/ns_lock.rs",
+        "patchSetId": 29
+      },
+      "lineNbr": 51,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-02-03T14:57:16Z",
+      "side": 1,
+      "message": "From the macro doc comments:\n```\n/// Print a message (with implicit newline). This should be used for all\n/// touchHLE output that isn\u0027t coming from the app itself.\n///\n/// Prefer use [log] or [log_dbg] for errors and warnings during emulation.\n```\nSince this isn\u0027t really an emulation error or warning, but rather, an error in the emulated app, I thought echo was more fitting than log.",
+      "parentUuid": "57807fca_071ce717",
+      "revId": "c9eb3dfdd508285e337bbb1886bd517a3bd37df8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

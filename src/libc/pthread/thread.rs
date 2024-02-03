@@ -8,7 +8,7 @@
 use crate::abi::GuestFunction;
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::libc::errno::{EDEADLK, EINVAL};
-use crate::mem::{ConstPtr, MutPtr, MutVoidPtr, SafeRead};
+use crate::mem::{ConstPtr, GuestISize, MutPtr, MutVoidPtr, SafeRead};
 use crate::{Environment, ThreadId};
 use std::collections::HashMap;
 
@@ -83,6 +83,18 @@ pub fn pthread_attr_setdetachstate(
     attr_copy.detachstate = detachstate;
     env.mem.write(attr, attr_copy);
     0 // success
+}
+pub fn pthread_attr_setstacksize(
+    _env: &mut Environment,
+    attr: MutPtr<pthread_attr_t>,
+    stacksize: GuestISize,
+) -> i32 {
+    log!(
+        "TODO: pthread_attr_setstacksize({:?}, {:?})",
+        attr,
+        stacksize
+    );
+    0
 }
 fn pthread_attr_destroy(env: &mut Environment, attr: MutPtr<pthread_attr_t>) -> i32 {
     check_magic!(env, attr, MAGIC_ATTR);
@@ -234,6 +246,7 @@ fn pthread_mach_thread_np(env: &mut Environment, thread: pthread_t) -> mach_port
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(pthread_attr_init(_)),
     export_c_func!(pthread_attr_setdetachstate(_, _)),
+    export_c_func!(pthread_attr_setstacksize(_, _)),
     export_c_func!(pthread_attr_destroy(_)),
     export_c_func!(pthread_create(_, _, _, _)),
     export_c_func!(pthread_self()),

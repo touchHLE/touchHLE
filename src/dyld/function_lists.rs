@@ -28,6 +28,7 @@ pub const FUNCTION_LISTS: &[super::FunctionExports] = &[
     libc::net::if_::FUNCTIONS,
     libc::posix_io::FUNCTIONS,
     libc::posix_io::stat::FUNCTIONS,
+    libc::pthread::cond::FUNCTIONS,
     libc::pthread::key::FUNCTIONS,
     libc::pthread::mutex::FUNCTIONS,
     libc::pthread::once::FUNCTIONS,

@@ -34,6 +34,41 @@
       "parentUuid": "57807fca_071ce717",
       "revId": "c9eb3dfdd508285e337bbb1886bd517a3bd37df8",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "c06542bb_1afdc3e3",
+        "filename": "src/frameworks/foundation/ns_lock.rs",
+        "patchSetId": 29
+      },
+      "lineNbr": 51,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-02-03T16:34:05Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "2f75b629_fa0cebd8",
+      "revId": "c9eb3dfdd508285e337bbb1886bd517a3bd37df8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c8e0ab3a_85d32703",
+        "filename": "src/frameworks/foundation/ns_lock.rs",
+        "patchSetId": 29
+      },
+      "lineNbr": 57,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-02-03T16:34:05Z",
+      "side": 1,
+      "message": "name defined as a `copy` property\n\nyou should do something like this here https://stackoverflow.com/a/39845254/2241008",
+      "revId": "c9eb3dfdd508285e337bbb1886bd517a3bd37df8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

@@ -72,7 +72,9 @@ pub const CLASSES: ClassExports = objc_classes! {
     let old_delegate = std::mem::replace(&mut host_object.delegate, delegate);
     if host_object.delegate_is_retained {
         host_object.delegate_is_retained = false;
-        release(env, old_delegate);
+        if delegate != old_delegate {
+            release(env, old_delegate);
+        }
     }
 }
 

@@ -28,6 +28,7 @@ macro_rules! check_magic {
     }
 }
 
+pub mod cond;
 pub mod key;
 pub mod mutex;
 pub mod once;

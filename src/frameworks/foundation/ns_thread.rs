@@ -13,12 +13,12 @@ use crate::libc::pthread::thread::{
     PTHREAD_CREATE_DETACHED,
 };
 use crate::mem::{guest_size_of, MutPtr};
+use crate::msg;
 use crate::objc::{
     id, msg_send, nil, objc_classes, release, retain, Class, ClassExports, HostObject, NSZonePtr,
     SEL,
 };
 use crate::Environment;
-use crate::{msg, msg_class};
 use std::time::Duration;
 
 struct NSThreadHostObject {
@@ -44,13 +44,13 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 + (f64)threadPriority {
-    let current_thread = msg_class![env; NSThread currentThread];
-    msg![env; current_thread threadPriority]
+    log!("TODO: [NSThread threadPriority] (not implemented yet)");
+    1.0
 }
 
 + (bool)setThreadPriority:(f64)priority {
-    let current_thread = msg_class![env; NSThread currentThread];
-    msg![env; current_thread setThreadPriority:priority]
+    log!("TODO: [NSThread setThreadPriority:{:?}] (ignored)", priority);
+    true
 }
 
 + (id)currentThread {
@@ -97,15 +97,6 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 // TODO: construction etc
-- (f64)threadPriority {
-    log!("TODO: [(NSThread*){:?} threadPriority] (not implemented yet)", this);
-    1.0
-}
-
-- (bool)setThreadPriority:(f64)priority {
-    log!("TODO: [(NSThread*){:?} setThreadPriority:{:?}] (ignored)", this, priority);
-    true
-}
 
 @end
 

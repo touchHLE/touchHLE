@@ -51,6 +51,7 @@ void qsort(void *, size_t, size_t, int (*)(const void *, const void *));
 void *realloc(void *, size_t);
 double atof(const char *);
 float strtof(const char *, char **);
+unsigned long strtoul(const char *, char **, int);
 
 // <string.h>
 void *memset(void *, int, size_t);

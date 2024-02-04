@@ -16,6 +16,24 @@
       "message": "why do you need this?",
       "revId": "bb4553431f2c88dcb82f11673b19b91d9fc758a3",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e178d150_15c26d9f",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-02-04T10:59:49Z",
+      "side": 1,
+      "message": "AudioUnit render callbacks have one parameter of type AudioBufferList, which consists of an uint and an AudioBuffer array. This array isn\u0027t a pointer, it\u0027s inline in the struct itself, and can be of any size (specified by the first uint of the struct):\n\n```\nstruct AudioBufferList\n{\n    UInt32      mNumberBuffers;\n    AudioBuffer mBuffers[1]; // this is a variable length array of mNumberBuffers elements\n}\n```\n\nTo be able to write this in Rust code without entering unsafe territory, I defined the struct like this\n```\nstruct AudioBufferList\u003cT: ?Sized\u003e {\n    mNumberBuffers: u32,\n    mBuffers: ManuallyDrop\u003cT\u003e,\n}\n```\nwhich i would then declare and write like this\n```\nlet audio_buffer_list: AudioBufferList\u003c[AudioBuffer; 2]\u003e \u003d AudioBufferList {\n        mNumberBuffers: 2,\n        mBuffers: ManuallyDrop::new([\n            AudioBuffer {\n                mNumberChannels: 2,\n                mDataByteSize: buffer_size,\n                mData: buffer1Data,\n            },\n            AudioBuffer {\n                mNumberChannels: 2,\n                mDataByteSize: buffer_size,\n                mData: buffer2Data,\n            },\n        ]),\n    };\nlet audio_buffer_list \u003d env.mem.alloc_and_write(audio_buffer_list);\n```\nand, since i have to use ManuallyDrop, i\u0027d later free like this:\n```\nlet audio_buffer_list_array \u003d \u0026mut env.mem.read(audio_buffer_list).mBuffers;\nunsafe { ManuallyDrop::\u003c[AudioBuffer; 2]\u003e::drop(audio_buffer_list_array) };\nenv.mem.free(audio_buffer_list.cast_void());\n```\n\nThis does work, although it\u0027s probably not the cleanest solution, I\u0027m no expert in Rust, so I don\u0027t know if there\u0027s a better way to have unsized structs. Granted, I could always just alloc the required size and then write to the offsets \"manually\", but doing things this way makes for a cleaner and easier to read code, and I\u0027m sure this won\u0027t be the only place where unsized structs will be used.",
+      "parentUuid": "0917f175_8ab925ac",
+      "revId": "bb4553431f2c88dcb82f11673b19b91d9fc758a3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

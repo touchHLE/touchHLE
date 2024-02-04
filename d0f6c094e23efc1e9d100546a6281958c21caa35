@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "73a72bfb_d677873d",
+        "filename": "src/frameworks/uikit/ui_device.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 88,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-02-04T11:04:46Z",
+      "side": 1,
+      "message": "I don\u0027t know how I missed that one, thanks",
+      "parentUuid": "d9339029_054d72d9",
+      "revId": "d0f6c094e23efc1e9d100546a6281958c21caa35",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "f6997c2d_99e1aa60",
@@ -31,6 +49,24 @@
       "writtenOn": "2024-02-03T20:34:20Z",
       "side": 1,
       "message": "you don\u0027t need to make this public\n\nin general please prefer to use accessor methods",
+      "revId": "d0f6c094e23efc1e9d100546a6281958c21caa35",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "c574c8ba_2570bba0",
+        "filename": "src/window.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 149,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-02-04T11:04:46Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "f6997c2d_99e1aa60",
       "revId": "d0f6c094e23efc1e9d100546a6281958c21caa35",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

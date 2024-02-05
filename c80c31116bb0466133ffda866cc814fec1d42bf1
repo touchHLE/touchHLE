@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "8fd7283f_ac49d977",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 30
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-02-05T22:36:15Z",
+      "side": 1,
+      "message": "LGTM, but please rebase (i merged some changes around this code recently), i\u0027ll have another look after that",
+      "revId": "c80c31116bb0466133ffda866cc814fec1d42bf1",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

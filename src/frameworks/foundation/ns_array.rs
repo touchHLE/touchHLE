@@ -7,7 +7,7 @@
 
 use super::ns_enumerator::{fast_enumeration_helper, NSFastEnumerationState};
 use super::ns_property_list_serialization::deserialize_plist_from_file;
-use super::{ns_keyed_unarchiver, ns_string, ns_url, NSUInteger};
+use super::{ns_keyed_unarchiver, ns_string, ns_url, NSNotFound, NSUInteger};
 use crate::fs::GuestPath;
 use crate::mem::MutPtr;
 use crate::objc::{
@@ -95,6 +95,18 @@ pub const CLASSES: ClassExports = objc_classes! {
 // NSCopying implementation
 - (id)copyWithZone:(NSZonePtr)_zone {
     retain(env, this)
+}
+
+- (NSUInteger)indexOfObject:(id)object {
+    let count: NSUInteger = msg![env; this count];
+    for i in 0..count {
+        let curr_object: id = msg![env; this objectAtIndex:i];
+        let equal: bool = msg![env; object isEqual:curr_object];
+        if equal {
+            return i;
+        }
+    }
+    NSNotFound as NSUInteger
 }
 
 - (id)lastObject {

@@ -42,6 +42,7 @@ pub const NSUTF16BigEndianStringEncoding: NSUInteger = 0x90000100;
 pub const NSUTF16LittleEndianStringEncoding: NSUInteger = 0x94000100;
 
 pub type NSStringCompareOptions = NSUInteger;
+pub const NSCaseInsensitiveSearch: NSUInteger = 1;
 pub const NSLiteralSearch: NSUInteger = 2;
 pub const NSNumericSearch: NSUInteger = 64;
 
@@ -395,6 +396,10 @@ pub const CLASSES: ClassExports = objc_classes! {
     msg![env; this compare:other options:NSLiteralSearch]
 }
 
+- (NSComparisonResult)caseInsensitiveCompare:(id)other { //NSString*
+    msg![env; this compare:other options:NSCaseInsensitiveSearch]
+}
+
 - (NSComparisonResult)compare:(id)other options:(NSStringCompareOptions)mask { // NSString*
     fn ascii_number(iter: &mut Peekable<CodeUnitIterator>, leftmost_digit: char) -> u32 {
         let mut num = leftmost_digit.to_digit(10).unwrap();
@@ -410,8 +415,33 @@ pub const CLASSES: ClassExports = objc_classes! {
     // copies the string first)
     let mut a_iter = env.objc.borrow::<StringHostObject>(this).iter_code_units().peekable();
     let mut b_iter = env.objc.borrow::<StringHostObject>(other).iter_code_units().peekable();
+
+    // By default, no mask is a literal search
+    let mask = if mask == 0 {
+        NSLiteralSearch
+    } else {
+        mask
+    };
+
     // TODO: OR'ing of compare options
     match mask {
+        NSCaseInsensitiveSearch => {
+            loop {
+                let a_next = a_iter.next();
+                let b_next = b_iter.next();
+                let (Some(a_unit), Some(b_unit)) = (a_next, b_next) else {
+                    return from_rust_ordering(a_next.cmp(&b_next));
+                };
+                let (Some(a_c), Some(b_c)) = (char::from_u32(a_unit as u32), char::from_u32(b_unit as u32)) else {
+                    panic!("Invalid chars in the strings!");
+                };
+
+                let insensitive_order = a_c.to_lowercase().cmp(b_c.to_lowercase());
+                if insensitive_order != std::cmp::Ordering::Equal {
+                    return from_rust_ordering(insensitive_order);
+                }
+            }
+        },
         NSLiteralSearch => {
             from_rust_ordering(a_iter.cmp(b_iter))
         },
@@ -442,7 +472,7 @@ pub const CLASSES: ClassExports = objc_classes! {
                 }
             }
         },
-        _ => unimplemented!("Other masks"),
+        mask => unimplemented!("Other mask: {mask}"),
     }
 }
 
@@ -680,6 +710,13 @@ pub const CLASSES: ClassExports = objc_classes! {
     let class = env.objc.get_known_class("_touchHLE_NSString", &mut env.mem);
     let host_object = Box::new(StringHostObject::Utf16(new_utf16));
     env.objc.alloc_object(class, host_object, &mut env.mem)
+}
+
+- (id)stringByAppendingFormat:(id)format, ...args {
+    let new_string = with_format(env, format,  args.start());
+    let new_string = from_rust_string(env, new_string);
+    let new_string = msg![env; this stringByAppendingString:new_string];
+    autorelease(env, new_string)
 }
 
 - (id)stringByDeletingLastPathComponent {
@@ -963,6 +1000,31 @@ pub const CLASSES: ClassExports = objc_classes! {
     // TODO: avoid copy?
     let path = to_rust_string(env, this);
     path.starts_with('/') || path.starts_with('~')
+}
+
+
+- (bool)boolValue {
+    let string = to_rust_string(env, this);
+    let string = string.trim_start_matches(|c: char| {
+        c.is_ascii_whitespace() || c == '-' || c == '+' || c == '0'
+    });
+
+    let matching_values = "YyTt123456789";
+    string.chars()
+        .next()
+        .map(|c| matching_values.contains(c))
+        .unwrap_or(false)
+}
+
+- (id)dataUsingEncoding:(NSStringEncoding)encoding {
+    assert!(encoding == NSUTF8StringEncoding || encoding == NSASCIIStringEncoding);
+
+    // TODO: refactor with UTF8String method
+    let string = to_rust_string(env, this);
+    let c_string = env.mem.alloc_and_write_cstr(string.as_bytes());
+    let length: NSUInteger = (string.len() + 1).try_into().unwrap();
+
+    msg_class![env; NSData dataWithBytesNoCopy:(c_string.cast_void()) length:length]
 }
 
 @end

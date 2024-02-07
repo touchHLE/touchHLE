@@ -92,6 +92,10 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (id)initWithString:(id)url { // NSString*
+    if url == nil {
+        return nil;
+    }
+
     // FIXME: this should parse the URL
     assert!(!to_rust_string(env, url).starts_with("file:")); // TODO
     let url: id = msg![env; url copy];

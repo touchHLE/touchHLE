@@ -69,6 +69,15 @@ pub const CLASSES: ClassExports = objc_classes! {
     ns_string::get_static_str(env, "iPhone")
 }
 
+- (id)name {
+    // TODO: Hardcoded to iPhone for now
+    ns_string::get_static_str(env, "iPhone")
+}
+
+- (id)systemName {
+    ns_string::get_static_str(env, "iPhone OS")
+}
+
 // NSString
 - (id)systemVersion {
     ns_string::get_static_str(env, "2.0")

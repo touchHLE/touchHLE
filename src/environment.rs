@@ -192,6 +192,7 @@ impl Environment {
         } else {
             mem::Mem::new()
         };
+        mem.zero_memory_on_free = !bundle.bundle_identifier().starts_with("com.ea.spore");
 
         let executable = mach_o::MachO::load_from_file(bundle.executable_path(), &fs, &mut mem)
             .map_err(|e| format!("Could not load executable: {}", e))?;

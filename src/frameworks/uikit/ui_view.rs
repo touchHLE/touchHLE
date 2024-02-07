@@ -237,7 +237,10 @@ pub const CLASSES: ClassExports = objc_classes! {
         ..
     } = env.objc.borrow_mut(this);
 
-    let idx = subviews.iter().position(|&subview2| subview2 == subview).unwrap();
+    let Some(idx) = subviews.iter().position(|&subview2| subview2 == subview) else {
+        log!("Warning: Unable to find the subview {:?} in subviews of {:?}", subview, this);
+        return;
+    };
     let subview2 = subviews.remove(idx);
     assert!(subview2 == subview);
     subviews.push(subview);

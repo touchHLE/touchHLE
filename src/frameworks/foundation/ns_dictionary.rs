@@ -13,7 +13,7 @@ use crate::objc::{
     autorelease, id, msg, msg_class, nil, objc_classes, release, retain, ClassExports, HostObject,
     NSZonePtr,
 };
-use crate::Environment;
+use crate::{msg_super, Environment};
 use std::collections::HashMap;
 
 /// Alias for the return type of the `hash` method of the `NSObject` protocol.
@@ -115,6 +115,15 @@ pub fn init_with_objects_and_keys(
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);
+
+@implementation NSMutableDictionary: _touchHLE_NSDictionary
+- (())setObject:(id)object
+                forKey:(id) key {
+
+    let mut host_obj: DictionaryHostObject = std::mem::take(env.objc.borrow_mut(this));
+    host_obj.insert(env, object, key, true);
+}
+@end
 
 // NSDictionary is an abstract class. A subclass must provide:
 // - (id)initWithObjects:(id*)forKeys:(id*)count:(NSUInteger)
@@ -219,11 +228,22 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (NSUInteger)count {
     env.objc.borrow::<DictionaryHostObject>(this).count
 }
+
 - (id)objectForKey:(id)key {
     let host_obj: DictionaryHostObject = std::mem::take(env.objc.borrow_mut(this));
     let res = host_obj.lookup(env, key);
     *env.objc.borrow_mut(this) = host_obj;
     res
+}
+
+- (id)valueForKey:(id)forKey {
+    let value: id = msg_super![env; this valueForKey:forKey];
+    if value.is_null() {
+        let dict_value: id = msg![env; this objectForKey:forKey];
+        dict_value
+    } else {
+        value
+    }
 }
 
 @end

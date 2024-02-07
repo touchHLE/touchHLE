@@ -16,7 +16,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 // TODO: should extend UINavigationController, which extends
 //       UIViewController.
-@implementation UIImagePickerController
+@implementation UIImagePickerController: UIViewController
 
 + (bool)isSourceTypeAvailable:(UIImagePickerControllerSourceType)_type {
     // For now, simply claim no sources are available.

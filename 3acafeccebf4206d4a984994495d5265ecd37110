@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "22029dd4_54dc7e5d",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-02-07T18:44:06Z",
+      "side": 1,
+      "message": "please also replace \u0027null\u0027 with \u0027nil\u0027 in the commit\u0027s mesage",
+      "revId": "3acafeccebf4206d4a984994495d5265ecd37110",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "cfba1b7f_b2037650",
+        "filename": "src/frameworks/foundation/ns_url.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 91,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-02-07T18:44:06Z",
+      "side": 1,
+      "message": "you should use `nil` object\n\nthe code should be something like this:\n\nif url \u003d\u003d nil {\n  return nil;\n}",
+      "revId": "3acafeccebf4206d4a984994495d5265ecd37110",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

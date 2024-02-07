@@ -72,6 +72,11 @@ pub const CLASSES: ClassExports = objc_classes! {
     log!("TODO: [(UIViewController*){:?} setEditing:{}]", this, editing); // TODO
 }
 
+- (())dismissModalViewControllerAnimated:(bool)animated {
+    log!("TODO: [(UIViewController*){:?} dismissModalViewControllerAnimated:{}]", this, animated); // TODO
+
+}
+
 @end
 
 };

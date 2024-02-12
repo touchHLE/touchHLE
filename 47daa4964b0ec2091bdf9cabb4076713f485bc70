@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "66f42f25_bdd33027",
+        "filename": "src/frameworks/foundation/ns_array.rs",
+        "patchSetId": 20
+      },
+      "lineNbr": 142,
+      "author": {
+        "id": 1022009
+      },
+      "writtenOn": "2024-02-12T23:11:40Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "c56829d7_3a1588cc",
+      "revId": "47daa4964b0ec2091bdf9cabb4076713f485bc70",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "503e9f4d_72ab7849",
@@ -31,6 +49,24 @@
       "writtenOn": "2024-02-12T23:05:32Z",
       "side": 1,
       "message": "this method should not be moved in the class hierarchy",
+      "revId": "47daa4964b0ec2091bdf9cabb4076713f485bc70",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2e1b8f2c_38800393",
+        "filename": "src/frameworks/foundation/ns_array.rs",
+        "patchSetId": 20
+      },
+      "lineNbr": 146,
+      "author": {
+        "id": 1022009
+      },
+      "writtenOn": "2024-02-12T23:11:40Z",
+      "side": 1,
+      "message": "I need it on NSMutableArray too",
+      "parentUuid": "503e9f4d_72ab7849",
       "revId": "47daa4964b0ec2091bdf9cabb4076713f485bc70",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
@@ -52,6 +88,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "e5db11a0_14a1c3b5",
+        "filename": "src/frameworks/foundation/ns_array.rs",
+        "patchSetId": 20
+      },
+      "lineNbr": 247,
+      "author": {
+        "id": 1022009
+      },
+      "writtenOn": "2024-02-12T23:11:40Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "e16a67fd_79646c76",
+      "revId": "47daa4964b0ec2091bdf9cabb4076713f485bc70",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "76a19512_519bfa32",
@@ -69,6 +123,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "535eb6db_2005d04a",
+        "filename": "src/frameworks/foundation/ns_array.rs",
+        "patchSetId": 20
+      },
+      "lineNbr": 365,
+      "author": {
+        "id": 1022009
+      },
+      "writtenOn": "2024-02-12T23:11:40Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "76a19512_519bfa32",
+      "revId": "47daa4964b0ec2091bdf9cabb4076713f485bc70",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "83768930_c9d46573",
@@ -82,6 +154,24 @@
       "writtenOn": "2024-02-12T23:05:32Z",
       "side": 1,
       "message": "same comment about retain",
+      "revId": "47daa4964b0ec2091bdf9cabb4076713f485bc70",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "81dc17b5_9770b10b",
+        "filename": "src/frameworks/foundation/ns_array.rs",
+        "patchSetId": 20
+      },
+      "lineNbr": 372,
+      "author": {
+        "id": 1022009
+      },
+      "writtenOn": "2024-02-12T23:11:40Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "83768930_c9d46573",
       "revId": "47daa4964b0ec2091bdf9cabb4076713f485bc70",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

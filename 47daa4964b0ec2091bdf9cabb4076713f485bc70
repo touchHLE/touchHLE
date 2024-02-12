@@ -1,0 +1,89 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c56829d7_3a1588cc",
+        "filename": "src/frameworks/foundation/ns_array.rs",
+        "patchSetId": 20
+      },
+      "lineNbr": 142,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-02-12T23:05:32Z",
+      "side": 1,
+      "message": "you don\u0027t need to define this method, it\u0027s already defined for NSObject",
+      "revId": "47daa4964b0ec2091bdf9cabb4076713f485bc70",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "503e9f4d_72ab7849",
+        "filename": "src/frameworks/foundation/ns_array.rs",
+        "patchSetId": 20
+      },
+      "lineNbr": 146,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-02-12T23:05:32Z",
+      "side": 1,
+      "message": "this method should not be moved in the class hierarchy",
+      "revId": "47daa4964b0ec2091bdf9cabb4076713f485bc70",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e16a67fd_79646c76",
+        "filename": "src/frameworks/foundation/ns_array.rs",
+        "patchSetId": 20
+      },
+      "lineNbr": 247,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-02-12T23:05:32Z",
+      "side": 1,
+      "message": "add space between `- (bool)...`",
+      "revId": "47daa4964b0ec2091bdf9cabb4076713f485bc70",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "76a19512_519bfa32",
+        "filename": "src/frameworks/foundation/ns_array.rs",
+        "patchSetId": 20
+      },
+      "lineNbr": 365,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-02-12T23:05:32Z",
+      "side": 1,
+      "message": "it\u0027s more question of style, but it should be just `retain(env, first);`\nyou can check how retain/release is used across codebase, we should be consistent",
+      "revId": "47daa4964b0ec2091bdf9cabb4076713f485bc70",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "83768930_c9d46573",
+        "filename": "src/frameworks/foundation/ns_array.rs",
+        "patchSetId": 20
+      },
+      "lineNbr": 372,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-02-12T23:05:32Z",
+      "side": 1,
+      "message": "same comment about retain",
+      "revId": "47daa4964b0ec2091bdf9cabb4076713f485bc70",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

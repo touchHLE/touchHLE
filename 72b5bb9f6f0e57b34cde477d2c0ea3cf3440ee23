@@ -1,0 +1,89 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "26c2d4ec_ee580be6",
+        "filename": "src/frameworks/foundation/ns_array.rs",
+        "patchSetId": 18
+      },
+      "lineNbr": 139,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-02-12T19:47:40Z",
+      "side": 1,
+      "message": "i think this is already implemented on trunk",
+      "revId": "72b5bb9f6f0e57b34cde477d2c0ea3cf3440ee23",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c6faafc6_ab7db42e",
+        "filename": "src/frameworks/foundation/ns_array.rs",
+        "patchSetId": 18
+      },
+      "lineNbr": 169,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-02-12T19:47:40Z",
+      "side": 1,
+      "message": "add space between `- (id)...`",
+      "revId": "72b5bb9f6f0e57b34cde477d2c0ea3cf3440ee23",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5623a261_65c5f30a",
+        "filename": "src/frameworks/foundation/ns_array.rs",
+        "patchSetId": 18
+      },
+      "lineNbr": 174,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-02-12T19:47:40Z",
+      "side": 1,
+      "message": "add space between `- (id)...`",
+      "revId": "72b5bb9f6f0e57b34cde477d2c0ea3cf3440ee23",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "52734797_bac2bb57",
+        "filename": "src/frameworks/foundation/ns_array.rs",
+        "patchSetId": 18
+      },
+      "lineNbr": 212,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-02-12T19:47:40Z",
+      "side": 1,
+      "message": "remove space between `initWithArray:this`",
+      "revId": "72b5bb9f6f0e57b34cde477d2c0ea3cf3440ee23",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "98a9810b_6d47b683",
+        "filename": "src/frameworks/foundation/ns_array.rs",
+        "patchSetId": 18
+      },
+      "lineNbr": 393,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-02-12T19:47:40Z",
+      "side": 1,
+      "message": "it\u0027s a nitpick, but could you please separate retaining and placing the object to vector?",
+      "revId": "72b5bb9f6f0e57b34cde477d2c0ea3cf3440ee23",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

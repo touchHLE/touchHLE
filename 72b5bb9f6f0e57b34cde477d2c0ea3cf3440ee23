@@ -84,6 +84,23 @@
       "message": "it\u0027s a nitpick, but could you please separate retaining and placing the object to vector?",
       "revId": "72b5bb9f6f0e57b34cde477d2c0ea3cf3440ee23",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c958806a_06e172cd",
+        "filename": "src/frameworks/foundation/ns_array.rs",
+        "patchSetId": 18
+      },
+      "lineNbr": 399,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-02-12T19:49:15Z",
+      "side": 1,
+      "message": "same comment",
+      "revId": "72b5bb9f6f0e57b34cde477d2c0ea3cf3440ee23",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

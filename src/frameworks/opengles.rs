@@ -31,15 +31,20 @@ impl State {
     }
 }
 
-fn sync_context<'a>(
+fn sync_context<'a, F>(
     state: &mut State,
     objc: &'a mut crate::objc::ObjC,
     window: &mut crate::window::Window,
     current_thread: crate::ThreadId,
-) -> &'a mut dyn crate::gles::GLES {
+    mut action: F,
+) where
+    F: FnMut(&mut dyn crate::gles::GLES, &'a mut crate::objc::ObjC, &mut crate::window::Window),
+{
     let current_ctx = state.current_ctx_for_thread(current_thread);
     let host_obj = objc.borrow_mut::<eagl::EAGLContextHostObject>(current_ctx.unwrap());
-    let gles_ctx = host_obj.gles_ctx.as_deref_mut().unwrap();
+    let gles_ctx_rc = host_obj.gles_ctx.clone().unwrap();
+    let mut gles_ctx_refcell = gles_ctx_rc.borrow_mut();
+    let gles_ctx: &mut dyn crate::gles::GLES = &mut **gles_ctx_refcell;
 
     if window.is_app_gl_ctx_no_longer_current() || state.current_ctx_thread != Some(current_thread)
     {
@@ -50,5 +55,5 @@ fn sync_context<'a>(
         gles_ctx.make_current(window);
     }
 
-    gles_ctx
+    action(gles_ctx, objc, window);
 }

@@ -30,22 +30,23 @@ type GuestGLintptr = GuestISize;
 
 fn with_ctx_and_mem<T, U>(env: &mut Environment, f: T) -> U
 where
-    T: FnOnce(&mut dyn GLES, &mut Mem) -> U,
+    T: FnOnce(&mut dyn GLES, &mut Mem) -> U + Copy,
 {
-    let gles = super::sync_context(
+    let mut res: Option<U> = None;
+    super::sync_context(
         &mut env.framework_state.opengles,
         &mut env.objc,
         env.window
             .as_mut()
             .expect("OpenGL ES is not supported in headless mode"),
         env.current_thread,
+        |gles, _, _| {
+            //panic_on_gl_errors(&mut **gles);
+            res = Some(f(gles, &mut env.mem));
+            //panic_on_gl_errors(&mut **gles);
+        },
     );
-
-    //panic_on_gl_errors(&mut **gles);
-    let res = f(gles, &mut env.mem);
-    //panic_on_gl_errors(&mut **gles);
-    #[allow(clippy::let_and_return)]
-    res
+    res.unwrap()
 }
 
 /// Useful for debugging

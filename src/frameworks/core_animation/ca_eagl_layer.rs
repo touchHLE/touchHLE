@@ -109,25 +109,3 @@ pub fn find_fullscreen_eagl_layer(env: &mut Environment) -> id {
 
     layer
 }
-
-/// For use by `EAGLContext` when presenting to a `CAEAGLLayer`:
-/// [std::mem::take]s the buffer used to hold the pixels. It should be passed
-/// back to [present_pixels] once it has been filled.
-pub fn get_pixels_vec_for_presenting(env: &mut Environment, layer: id) -> Vec<u8> {
-    env.objc
-        .borrow_mut::<CALayerHostObject>(layer)
-        .presented_pixels
-        .take()
-        .map(|(vec, _width, _height)| vec)
-        .unwrap_or_default()
-}
-
-/// For use by `EAGLContext` when presenting to a `CAEAGLLayer`: provide the new
-/// frame rendered by the app, so it can be used when compositing. The buffer
-/// should have been obtained with [get_pixels_vec_for_presenting] before
-/// filling. The data must be in RGBA8 format.
-pub fn present_pixels(env: &mut Environment, layer: id, pixels: Vec<u8>, width: u32, height: u32) {
-    let host_obj = env.objc.borrow_mut::<CALayerHostObject>(layer);
-    host_obj.presented_pixels = Some((pixels, width, height));
-    host_obj.gles_texture_is_up_to_date = false;
-}

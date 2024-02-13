@@ -23,7 +23,7 @@ use crate::mem::{GuestUSize, Ptr};
 use crate::objc::{id, msg, nil, objc_classes, release, retain, ClassExports, HostObject, ObjC};
 use std::collections::HashMap;
 
-pub(super) struct CALayerHostObject {
+pub struct CALayerHostObject {
     /// Possibly nil, usually a UIView. This is a weak reference.
     delegate: id,
     /// Sublayers in back-to-front order. These are strong references.
@@ -43,13 +43,13 @@ pub(super) struct CALayerHostObject {
     /// For CAEAGLLayer only
     pub(super) drawable_properties: id,
     /// For CAEAGLLayer only (internal state for compositor)
-    pub(super) presented_pixels: Option<(Vec<u8>, u32, u32)>,
+    pub presented_pixels: Option<(Vec<u8>, u32, u32)>,
     /// Internal, only exposed when calling `drawLayer:inContext:`
     pub(super) cg_context: Option<CGContextRef>,
     /// Internal state for compositor
     pub(super) gles_texture: Option<crate::gles::gles11_raw::types::GLuint>,
     /// Internal state for compositor
-    pub(super) gles_texture_is_up_to_date: bool,
+    pub gles_texture_is_up_to_date: bool,
 }
 impl HostObject for CALayerHostObject {}
 

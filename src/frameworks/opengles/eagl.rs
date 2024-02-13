@@ -6,9 +6,8 @@
 //! EAGL.
 
 use crate::dyld::{ConstantExports, HostConstant};
-use crate::frameworks::core_animation::ca_eagl_layer::{
-    find_fullscreen_eagl_layer, get_pixels_vec_for_presenting, present_pixels,
-};
+use crate::frameworks::core_animation::ca_eagl_layer::find_fullscreen_eagl_layer;
+use crate::frameworks::core_animation::ca_layer::CALayerHostObject;
 use crate::frameworks::foundation::ns_string::get_static_str;
 use crate::frameworks::foundation::NSUInteger;
 use crate::gles::gles11_raw as gles11; // constants only
@@ -18,7 +17,9 @@ use crate::gles::{create_gles1_ctx, gles1_on_gl2, GLES};
 use crate::objc::{id, msg, nil, objc_classes, release, retain, ClassExports, HostObject};
 use crate::options::Options;
 use crate::window::Window;
+use std::cell::RefCell;
 use std::collections::HashMap;
+use std::rc::Rc;
 use std::time::{Duration, Instant};
 
 // These are used by the EAGLDrawable protocol implemented by CAEAGLayer.
@@ -56,7 +57,7 @@ const kEAGLRenderingAPIOpenGLES2: EAGLRenderingAPI = 2;
 const kEAGLRenderingAPIOpenGLES3: EAGLRenderingAPI = 3;
 
 pub(super) struct EAGLContextHostObject {
-    pub(super) gles_ctx: Option<Box<dyn GLES>>,
+    pub(super) gles_ctx: Option<Rc<RefCell<Box<dyn GLES>>>>,
     /// Mapping of OpenGL ES renderbuffer names to `EAGLDrawable` instances
     /// (always `CAEAGLLayer*`). Retains the instance so it won't dangle.
     renderbuffer_drawable_bindings: HashMap<GLuint, id>,
@@ -65,6 +66,7 @@ pub(super) struct EAGLContextHostObject {
 }
 impl HostObject for EAGLContextHostObject {}
 
+#[allow(clippy::assigning_clones)]
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);
@@ -102,12 +104,32 @@ pub const CLASSES: ClassExports = objc_classes! {
 
     if context != nil {
         let host_obj = env.objc.borrow_mut::<EAGLContextHostObject>(context);
-        host_obj.gles_ctx.as_mut().unwrap().make_current(env.window.as_ref().unwrap());
+        let gles_ctx_rc = host_obj.gles_ctx.clone().unwrap();
+        let mut gles_ctx_refcell = gles_ctx_rc.borrow_mut();
+        let gles_ctx: &mut dyn GLES = &mut **gles_ctx_refcell;
+        gles_ctx.make_current(env.window.as_ref().unwrap());
         *current_ctx = Some(context);
         env.framework_state.opengles.current_ctx_thread = Some(env.current_thread);
     }
 
     true
+}
+
+- (id)initWithAPI:(EAGLRenderingAPI)api sharegroup:(id)group {
+    assert!(api == kEAGLRenderingAPIOpenGLES1);
+
+    if group == nil {
+        return msg![env; this initWithAPI:api];
+    }
+
+    let prev_context = &env.objc.borrow::<EAGLContextHostObject>(group).gles_ctx;
+    assert!(prev_context.is_some());
+    env.objc.borrow_mut::<EAGLContextHostObject>(this).gles_ctx = prev_context.clone();
+    // TODO: share via Rc refcell as well??
+    env.objc.borrow_mut::<EAGLContextHostObject>(this).renderbuffer_drawable_bindings
+        = env.objc.borrow::<EAGLContextHostObject>(group).renderbuffer_drawable_bindings.clone();
+
+    this
 }
 
 - (id)initWithAPI:(EAGLRenderingAPI)api {
@@ -125,8 +147,12 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.framework_state.opengles.current_ctx_thread = None;
     log!("Driver info: {}", unsafe { gles1_ctx.driver_description() });
 
-    env.objc.borrow_mut::<EAGLContextHostObject>(this).gles_ctx = Some(gles1_ctx);
+    env.objc.borrow_mut::<EAGLContextHostObject>(this).gles_ctx = Some(Rc::new(RefCell::new(gles1_ctx)));
 
+    this
+}
+
+- (id)sharegroup {
     this
 }
 
@@ -172,14 +198,15 @@ pub const CLASSES: ClassExports = objc_classes! {
 
     // Unclear from documentation if this method requires an appropriate context
     // to already be active, but that seems to be the case in practice?
-    let gles = super::sync_context(&mut env.framework_state.opengles, &mut env.objc, window, env.current_thread);
-    let renderbuffer: GLuint = unsafe {
-        gles.RenderbufferStorageOES(target, internalformat, width.try_into().unwrap(), height.try_into().unwrap());
-        let mut renderbuffer = 0;
-        gles.GetIntegerv(gles11::RENDERBUFFER_BINDING_OES, &mut renderbuffer);
-        renderbuffer as _
-    };
-
+    let mut renderbuffer: GLuint = GLuint::default();
+    super::sync_context(&mut env.framework_state.opengles, &mut env.objc, window, env.current_thread, |gles, _, _| {
+        renderbuffer = unsafe {
+            gles.RenderbufferStorageOES(target, internalformat, width.try_into().unwrap(), height.try_into().unwrap());
+            let mut renderbuffer = 0;
+            gles.GetIntegerv(gles11::RENDERBUFFER_BINDING_OES, &mut renderbuffer);
+            renderbuffer as _
+        };
+    });
     retain(env, drawable);
     let host_obj = env.objc.borrow_mut::<EAGLContextHostObject>(this);
     if let Some(old_drawable) = host_obj.renderbuffer_drawable_bindings.insert(
@@ -213,69 +240,78 @@ pub const CLASSES: ClassExports = objc_classes! {
     // Unclear from documentation if this method requires the context to be
     // current, but it would be weird if it didn't?
     let window = env.window.as_mut().expect("OpenGL ES is not supported in headless mode");
-    let gles = super::sync_context(&mut env.framework_state.opengles, &mut env.objc, window, env.current_thread);
+    let mut need_return = false;
+    super::sync_context(&mut env.framework_state.opengles, &mut env.objc, window, env.current_thread, |gles, objc, window| {
+        let renderbuffer: GLuint = unsafe {
+            let mut renderbuffer = 0;
+            gles.GetIntegerv(gles11::RENDERBUFFER_BINDING_OES, &mut renderbuffer);
+            renderbuffer as _
+        };
 
-    let renderbuffer: GLuint = unsafe {
-        let mut renderbuffer = 0;
-        gles.GetIntegerv(gles11::RENDERBUFFER_BINDING_OES, &mut renderbuffer);
-        renderbuffer as _
-    };
+        let &drawable = objc
+            .borrow::<EAGLContextHostObject>(this)
+            .renderbuffer_drawable_bindings
+            .get(&renderbuffer)
+            .expect("Can't present a renderbuffer not bound to a drawable!");
 
-    let &drawable = env
-        .objc
-        .borrow::<EAGLContextHostObject>(this)
-        .renderbuffer_drawable_bindings
-        .get(&renderbuffer)
-        .expect("Can't present a renderbuffer not bound to a drawable!");
-
-    // We're presenting to the opaque CAEAGLLayer that covers the screen.
-    // We can use the fast path where we skip composition and present directly.
-    if drawable == fullscreen_layer {
-        log_dbg!(
-            "Layer {:?} is the fullscreen layer, presenting renderbuffer {:?} directly (fast path).",
-            drawable,
-            renderbuffer,
-        );
-        // re-borrow
-        let gles = super::sync_context(&mut env.framework_state.opengles, &mut env.objc, env.window.as_mut().unwrap(), env.current_thread);
-        unsafe {
-            present_renderbuffer(gles, env.window.as_mut().unwrap());
-        }
-    } else {
-        if fullscreen_layer != nil {
-            // If there's a single layer that covers the screen, and this isn't
-            // it, there's no point in presenting the output because it won't be
-            // seen. Using a noisy log because it's a weird scenario and might
-            // indicate a bug.
-            log!(
-                "Layer {:?} is not the fullscreen layer {:?}, skipping presentation of renderbuffer {:?}!",
+        // We're presenting to the opaque CAEAGLLayer that covers the screen.
+        // We can use the fast path where we skip composition and present
+        // directly.
+        if drawable == fullscreen_layer {
+            log_dbg!(
+                "Layer {:?} is the fullscreen layer, presenting renderbuffer {:?} directly (fast path).",
                 drawable,
-                fullscreen_layer,
                 renderbuffer,
             );
-            if let Some(sleep_for) = sleep_for {
-                env.sleep(sleep_for, /* tail_call: */ false);
+            unsafe {
+                present_renderbuffer(gles, window);
             }
-            return true;
-        }
+        } else {
+            if fullscreen_layer != nil {
+                // If there's a single layer that covers the screen, and
+                // this isn't it, there's no point in presenting the output
+                // because it won't be seen. Using a noisy log because it's
+                // a weird scenario and might indicate a bug.
+                log!(
+                    "Layer {:?} is not the fullscreen layer {:?}, skipping presentation of renderbuffer {:?}!",
+                    drawable,
+                    fullscreen_layer,
+                    renderbuffer,
+                );
+                need_return = true;
+            }
 
-        // The very slow and inefficient path: not only does glReadPixels()
-        // block the thread until rendering finishes, but the result has to be
-        // copied back to system RAM, and then will have to be copied to VRAM
-        // again during composition. find_fullscreen_eagl_layer() exists to
-        // avoid this.
-        log_dbg!(
-            "There is no fullscreen layer, presenting renderbuffer {:?} to layer {:?} by copying to RAM (slow path).",
-            renderbuffer,
-            drawable,
-        );
-        let pixels_vec = get_pixels_vec_for_presenting(env, drawable);
-        // re-borrow
-        let gles = super::sync_context(&mut env.framework_state.opengles, &mut env.objc, env.window.as_mut().unwrap(), env.current_thread);
-        let (pixels_vec, width, height) = unsafe {
-            read_renderbuffer(gles, pixels_vec)
-        };
-        present_pixels(env, drawable, pixels_vec, width, height);
+            // The very slow and inefficient path: not only does glReadPixels()
+            // block the thread until rendering finishes, but the result has to
+            // be copied back to system RAM, and then will have to be copied to
+            // VRAM again during composition. find_fullscreen_eagl_layer()
+            // exists to avoid this.
+            if !need_return {
+                log_dbg!(
+                    "There is no fullscreen layer, presenting renderbuffer {:?} to layer {:?} by copying to RAM (slow path).",
+                    renderbuffer,
+                    drawable,
+                );
+                let pixels_vec = objc
+                    .borrow_mut::<CALayerHostObject>(drawable)
+                    .presented_pixels
+                    .take()
+                    .map(|(vec, _width, _height)| vec)
+                    .unwrap_or_default();
+                let (pixels_vec, width, height) = unsafe {
+                    read_renderbuffer(gles, pixels_vec)
+                };
+                let host_obj = objc.borrow_mut::<CALayerHostObject>(drawable);
+                host_obj.presented_pixels = Some((pixels_vec, width, height));
+                host_obj.gles_texture_is_up_to_date = false;
+            }
+        }
+    });
+    if need_return {
+        if let Some(sleep_for) = sleep_for {
+            env.sleep(sleep_for, /* tail_call: */ false);
+        }
+        return true;
     }
 
     if let Some(sleep_for) = sleep_for {

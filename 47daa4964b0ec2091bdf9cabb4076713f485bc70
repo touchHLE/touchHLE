@@ -73,6 +73,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "365fe110_b307d386",
+        "filename": "src/frameworks/foundation/ns_array.rs",
+        "patchSetId": 20
+      },
+      "lineNbr": 146,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-02-14T14:33:26Z",
+      "side": 1,
+      "message": "current way of dealing with it is to define methods for each of private implementations and refactor common body code to avoid the duplication.\n\ni suggest to move out this change to a separate commit to not block the merge of initialisers",
+      "parentUuid": "2e1b8f2c_38800393",
+      "revId": "47daa4964b0ec2091bdf9cabb4076713f485bc70",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "e16a67fd_79646c76",
         "filename": "src/frameworks/foundation/ns_array.rs",
         "patchSetId": 20

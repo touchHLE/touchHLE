@@ -1,0 +1,89 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d48e1e69_f420ef4b",
+        "filename": "src/frameworks/foundation/ns_array.rs",
+        "patchSetId": 21
+      },
+      "lineNbr": 73,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-02-14T14:33:26Z",
+      "side": 1,
+      "message": "why do you alloc this way here, but using `let new \u003d msg![env; this alloc];` in other methods?",
+      "revId": "fb0c3b8b05bda452abc3c16aa4de03c156603fab",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d5819fd9_ccba3ec6",
+        "filename": "src/frameworks/foundation/ns_array.rs",
+        "patchSetId": 21
+      },
+      "lineNbr": 125,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-02-14T14:33:26Z",
+      "side": 1,
+      "message": "nitpick: remove space `objectAtIndex:i`",
+      "revId": "fb0c3b8b05bda452abc3c16aa4de03c156603fab",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f7b3393d_ae3dc67a",
+        "filename": "src/frameworks/foundation/ns_array.rs",
+        "patchSetId": 21
+      },
+      "lineNbr": 243,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-02-14T14:33:26Z",
+      "side": 1,
+      "message": "also, not really related to initialisers, maybe move out to a different commit",
+      "revId": "fb0c3b8b05bda452abc3c16aa4de03c156603fab",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2949b1e5_3bbe292d",
+        "filename": "src/frameworks/foundation/ns_array.rs",
+        "patchSetId": 21
+      },
+      "lineNbr": 244,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-02-14T14:33:26Z",
+      "side": 1,
+      "message": "do you really need to clone here?",
+      "revId": "fb0c3b8b05bda452abc3c16aa4de03c156603fab",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "84796a92_9f4a6da0",
+        "filename": "src/frameworks/foundation/ns_array.rs",
+        "patchSetId": 21
+      },
+      "lineNbr": 246,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-02-14T14:33:26Z",
+      "side": 1,
+      "message": "nitpick: remove space `isEqual:obj`",
+      "revId": "fb0c3b8b05bda452abc3c16aa4de03c156603fab",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

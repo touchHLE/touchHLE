@@ -32,6 +32,7 @@ use crate::fs::bundle::{IpaFile, IpaFileRef};
 use crate::paths;
 use std::collections::HashMap;
 use std::fs::File;
+use std::fs::metadata;
 use std::io::{Read, Seek, Write};
 use std::path::{Path, PathBuf};
 
@@ -580,6 +581,14 @@ impl Fs {
         };
         self.working_directory = GuestPathBuf::from(new_path);
         Ok(&self.working_directory)
+    }
+
+    pub fn is_symlink(&mut self, path: &GuestPath) -> bool {
+        let metadata = std::fs::symlink_metadata(path.as_str());
+        let file_type = metadata.unwrap().file_type();
+        let is_symlink = file_type.is_symlink();
+
+        return is_symlink;
     }
 
     /// [Self::lookup_node] with a pre-resolved path.

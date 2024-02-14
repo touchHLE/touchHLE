@@ -196,6 +196,35 @@ pub const CLASSES: ClassExports = objc_classes! {
     true
 }
 
+- (bool) changeCurrentDirectoryPath:(id)path {
+    let path_str = ns_string::to_rust_string(env, path);
+
+    match env.fs.change_working_directory(GuestPath::new(&path_str)) {
+        Ok(new) => {
+            log_dbg!(
+                "chdir({:?}) => 0, new working directory: {:?}",
+                path_str,
+                new,
+            );
+
+            true
+        }
+        Err(()) => {
+            log!("Warning: chdir({:?}) failed, could not change working directory to {:?}, returning -1", path_str, path);
+
+            false
+        }
+    }
+}
+
+- (id) currentDirectoryPath { 
+    let currentDirectory = env.fs.working_directory();
+
+    let nsCurrentDirectory = ns_string::from_rust_string(env, currentDirectory.as_str().to_string());
+
+    autorelease(env, nsCurrentDirectory)
+}
+
 @end
 
 @implementation NSDirectoryEnumerator: NSEnumerator

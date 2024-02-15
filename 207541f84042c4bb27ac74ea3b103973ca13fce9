@@ -1,0 +1,89 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f8cf5e25_cf81fd47",
+        "filename": "src/frameworks/foundation/ns_array.rs",
+        "patchSetId": 22
+      },
+      "lineNbr": 68,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-02-15T17:36:23Z",
+      "side": 1,
+      "message": "remove space `initWithArray:other`",
+      "revId": "207541f84042c4bb27ac74ea3b103973ca13fce9",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b2a5806a_2a9c2ebf",
+        "filename": "src/frameworks/foundation/ns_array.rs",
+        "patchSetId": 22
+      },
+      "lineNbr": 74,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-02-15T17:36:23Z",
+      "side": 1,
+      "message": "you should re-assign returned array (see below)",
+      "revId": "207541f84042c4bb27ac74ea3b103973ca13fce9",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "97a925fc_3eec7391",
+        "filename": "src/frameworks/foundation/ns_array.rs",
+        "patchSetId": 22
+      },
+      "lineNbr": 126,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-02-15T17:36:23Z",
+      "side": 1,
+      "message": "please use retain as their own statement and push obj to the vector",
+      "revId": "207541f84042c4bb27ac74ea3b103973ca13fce9",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "da91c140_4f8e26c7",
+        "filename": "src/frameworks/foundation/ns_array.rs",
+        "patchSetId": 22
+      },
+      "lineNbr": 133,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-02-15T17:36:23Z",
+      "side": 1,
+      "message": "you should re-assign the returned array (see below)",
+      "revId": "207541f84042c4bb27ac74ea3b103973ca13fce9",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5279a61f_d45497e4",
+        "filename": "src/frameworks/foundation/ns_array.rs",
+        "patchSetId": 22
+      },
+      "lineNbr": 349,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-02-15T17:36:23Z",
+      "side": 1,
+      "message": "please rename to `init_with_object` and return resulting array as `id`\n\nyou can have a look how this is done for init_with_objects_and_keys() of NSDIctionary",
+      "revId": "207541f84042c4bb27ac74ea3b103973ca13fce9",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

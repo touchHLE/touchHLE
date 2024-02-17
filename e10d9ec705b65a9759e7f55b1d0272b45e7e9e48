@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2afc1a98_e7dbc0f9",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 18
+      },
+      "lineNbr": 973,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-02-17T23:53:47Z",
+      "side": 1,
+      "message": "how this part is related to NSCaseInsensitiveSearch? i think it should be a separated commit (with brief description of reasoning)",
+      "revId": "e10d9ec705b65a9759e7f55b1d0272b45e7e9e48",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

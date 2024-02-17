@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d3d7214d_9b0f85af",
+        "filename": "src/objc/methods.rs",
+        "patchSetId": 9
+      },
+      "lineNbr": 113,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-02-17T23:51:22Z",
+      "side": 1,
+      "message": "not sure what this struct represents, it\u0027s missing an explanation comment\n(e.g. does it follows ObjC conventions? what is the difference with method_t? etc.)",
+      "revId": "7e6d6374ec99e946400009fcfd6e37019ee4e25c",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "73abb114_9c1977a2",
+        "filename": "src/objc/methods.rs",
+        "patchSetId": 9
+      },
+      "lineNbr": 136,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-02-17T23:51:22Z",
+      "side": 1,
+      "message": "isn\u0027t this TODO get addressed by this commit? if yes, please remove it",
+      "revId": "7e6d6374ec99e946400009fcfd6e37019ee4e25c",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

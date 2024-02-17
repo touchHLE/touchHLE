@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "bb9249e9_ce950647",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 4
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-02-17T23:58:10Z",
+      "side": 1,
+      "message": "As far as I understand, you\u0027re providing real implementations later?\nCould you please merge them together, i don\u0027t really see the point in reviewing stubs in that case. (but also keep in mind that smaller commits gets reviewed faster, so please merge wisely)",
+      "revId": "9a32a923371e138929b12171bcccc95a1656f9f4",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

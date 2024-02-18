@@ -81,6 +81,19 @@ pub const CLASSES: ClassExports = objc_classes! {
     }
 }
 
+- (id)currentDirectoryPath {
+    ns_string::from_rust_string(env, env.fs.working_directory().as_str().to_string())
+}
+
+- (bool)changeCurrentDirectoryPath:(id)path {
+    let path = ns_string::to_rust_string(env, path); // TODO: avoid copy
+    let path = GuestPath::new(&path);
+    match env.fs.change_working_directory(path) {
+        Ok(_) => true,
+        Err(()) => false
+    }
+}
+
 - (bool)fileExistsAtPath:(id)path { // NSString*
     let path = ns_string::to_rust_string(env, path); // TODO: avoid copy
     // fileExistsAtPath: will return true for directories, hence Fs::exists()

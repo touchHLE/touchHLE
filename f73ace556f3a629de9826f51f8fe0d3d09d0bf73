@@ -159,6 +159,24 @@
       "parentUuid": "7eccb338_6963fc3c",
       "revId": "f73ace556f3a629de9826f51f8fe0d3d09d0bf73",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6815194d_81c62b71",
+        "filename": "src/frameworks/foundation/ns_url.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 98,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-02-18T11:38:36Z",
+      "side": 1,
+      "message": "I\u0027ve written a test app that checks the CWD, instances an url with ```[NSURL fileURLWithPath:@\"./probando\"];```, stores its description, changes the CWD to /var, and then stores its description afterwards. This is the output:\n\nOn an emulator:\nCWD: /\nURL: probando -- /\n~ Change CWD to /var ~\nCWD: /private/var\nURL: probando -- /\n\nOn a real device:\nCWD: /\nURL: probando -- file://localhost/\n~ Change CWD to /var ~\nCWD: /private/var\nURL: probando -- file://localhost/",
+      "parentUuid": "cd54c90d_aaf06d47",
+      "revId": "f73ace556f3a629de9826f51f8fe0d3d09d0bf73",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

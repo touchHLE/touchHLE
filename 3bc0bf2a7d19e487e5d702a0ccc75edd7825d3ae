@@ -52,6 +52,24 @@
       "parentUuid": "e9b747d5_d96d25b2",
       "revId": "3bc0bf2a7d19e487e5d702a0ccc75edd7825d3ae",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "05878480_dd5bcf41",
+        "filename": "src/frameworks/uikit/ui_view/ui_control/ui_button.rs",
+        "patchSetId": 12
+      },
+      "lineNbr": 170,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-02-18T00:08:31Z",
+      "side": 1,
+      "message": "Actually, I think you could use UIView\u0027s recursive description to inspect real layout: https://idevrecipes.wordpress.com/2011/02/10/exploring-iphone-view-hierarchies/\n\nFor example, create a test app with a button and check frames of recursive description. I\u0027m doubting that inner label have same frame as whole button, but let\u0027s try and see.",
+      "parentUuid": "6ba5dbc3_05211aaa",
+      "revId": "3bc0bf2a7d19e487e5d702a0ccc75edd7825d3ae",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

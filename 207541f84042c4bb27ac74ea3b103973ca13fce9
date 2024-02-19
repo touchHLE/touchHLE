@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "292c48dc_c8c39b7a",
+        "filename": "src/frameworks/foundation/ns_array.rs",
+        "patchSetId": 22
+      },
+      "lineNbr": 68,
+      "author": {
+        "id": 1022009
+      },
+      "writtenOn": "2024-02-19T08:10:05Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "f8cf5e25_cf81fd47",
+      "revId": "207541f84042c4bb27ac74ea3b103973ca13fce9",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "b2a5806a_2a9c2ebf",
@@ -31,6 +49,24 @@
       "writtenOn": "2024-02-15T17:36:23Z",
       "side": 1,
       "message": "you should re-assign returned array (see below)",
+      "revId": "207541f84042c4bb27ac74ea3b103973ca13fce9",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f1f9dbb2_b725a0d6",
+        "filename": "src/frameworks/foundation/ns_array.rs",
+        "patchSetId": 22
+      },
+      "lineNbr": 74,
+      "author": {
+        "id": 1022009
+      },
+      "writtenOn": "2024-02-19T08:10:05Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "b2a5806a_2a9c2ebf",
       "revId": "207541f84042c4bb27ac74ea3b103973ca13fce9",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
@@ -52,6 +88,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "173522db_3761fa65",
+        "filename": "src/frameworks/foundation/ns_array.rs",
+        "patchSetId": 22
+      },
+      "lineNbr": 126,
+      "author": {
+        "id": 1022009
+      },
+      "writtenOn": "2024-02-19T08:10:05Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "97a925fc_3eec7391",
+      "revId": "207541f84042c4bb27ac74ea3b103973ca13fce9",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "da91c140_4f8e26c7",
@@ -69,6 +123,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "aa013dbb_ddd4e136",
+        "filename": "src/frameworks/foundation/ns_array.rs",
+        "patchSetId": 22
+      },
+      "lineNbr": 133,
+      "author": {
+        "id": 1022009
+      },
+      "writtenOn": "2024-02-19T08:10:05Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "da91c140_4f8e26c7",
+      "revId": "207541f84042c4bb27ac74ea3b103973ca13fce9",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "5279a61f_d45497e4",
@@ -82,6 +154,24 @@
       "writtenOn": "2024-02-15T17:36:23Z",
       "side": 1,
       "message": "please rename to `init_with_object` and return resulting array as `id`\n\nyou can have a look how this is done for init_with_objects_and_keys() of NSDIctionary",
+      "revId": "207541f84042c4bb27ac74ea3b103973ca13fce9",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "da0ac34d_47296339",
+        "filename": "src/frameworks/foundation/ns_array.rs",
+        "patchSetId": 22
+      },
+      "lineNbr": 349,
+      "author": {
+        "id": 1022009
+      },
+      "writtenOn": "2024-02-19T08:10:05Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "5279a61f_d45497e4",
       "revId": "207541f84042c4bb27ac74ea3b103973ca13fce9",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

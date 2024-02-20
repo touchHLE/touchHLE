@@ -20,6 +20,23 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "5cde4d00_0ed1487b",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 430,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-02-20T14:57:42Z",
+      "side": 1,
+      "message": "OPT: remove empty line",
+      "revId": "642dac6584cf7958661e884ee487f1caf3b50453",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "4c52d84c_b18511c4",
         "filename": "src/frameworks/foundation/ns_string.rs",
         "patchSetId": 1
@@ -48,6 +65,40 @@
       "writtenOn": "2024-02-20T14:56:47Z",
       "side": 1,
       "message": "could you get first char after cleaning and check if it contains() in a string \"YyTt123...\" ,?",
+      "revId": "642dac6584cf7958661e884ee487f1caf3b50453",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "09f30339_d15994b6",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 1027,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-02-20T14:57:42Z",
+      "side": 1,
+      "message": "OPT: remove empty line",
+      "revId": "642dac6584cf7958661e884ee487f1caf3b50453",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "177c7bb2_8e06bba5",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 1033,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-02-20T14:57:42Z",
+      "side": 1,
+      "message": "OPT: remove empty line",
       "revId": "642dac6584cf7958661e884ee487f1caf3b50453",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

@@ -65,7 +65,7 @@ impl Default for AudioComponentInstanceHostObject {
     }
 }
 
-#[derive(Clone)]
+#[derive(Copy, Clone)]
 #[repr(C, packed)]
 pub struct AURenderCallbackStruct {
     pub input_proc: AURenderCallback,

@@ -78,7 +78,7 @@ fn AudioUnitSetProperty(
 }
 
 fn AudioUnitGetProperty(
-    _env: &mut Environment,
+    env: &mut Environment,
     in_unit: AudioUnit,
     in_id: AudioUnitPropertyID,
     in_scope: AudioUnitScope,
@@ -86,15 +86,25 @@ fn AudioUnitGetProperty(
     out_data: MutVoidPtr,
     io_data_size: MutPtr<u32>,
 ) -> OSStatus {
+    assert!(in_element == 0);
+
+    let host_object = audio_components::State::get(&mut env.framework_state)
+        .audio_component_instances
+        .get_mut(&in_unit)
+        .unwrap();
+
     match in_id {
         kAudioUnitProperty_StreamFormat => {
-            log!(
-                "TODO: AudioUnitGetProperty({:?}, kAudioUnitProperty_StreamFormat, {:?}, {:?}, {:?}, {:?})",
-                in_unit,
-                in_scope,
-                in_element,
-                out_data,
-                io_data_size
+            assert!(env.mem.read(io_data_size) == guest_size_of::<AudioStreamBasicDescription>());
+            let stream_format = match in_scope {
+                kAudioUnitScope_Global => host_object.global_stream_format,
+                kAudioUnitScope_Output => host_object.output_stream_format.unwrap(),
+                _ => unimplemented!(),
+            };
+            env.mem.write(out_data.cast(), stream_format);
+            env.mem.write(
+                io_data_size.cast(),
+                guest_size_of::<AudioStreamBasicDescription>(),
             );
         }
         _ => unimplemented!(),

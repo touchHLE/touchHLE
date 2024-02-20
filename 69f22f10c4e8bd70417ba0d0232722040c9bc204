@@ -34,6 +34,24 @@
       "parentUuid": "67d407e5_6dc80cea",
       "revId": "69f22f10c4e8bd70417ba0d0232722040c9bc204",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ae8180da_88ba2fc7",
+        "filename": "src/frameworks/uikit/ui_image_picker_controller.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 19,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-02-20T14:37:37Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "bfd1c3ca_bee7919e",
+      "revId": "69f22f10c4e8bd70417ba0d0232722040c9bc204",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

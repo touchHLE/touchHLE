@@ -16,6 +16,24 @@
       "message": "why do you need to change this?",
       "revId": "69f22f10c4e8bd70417ba0d0232722040c9bc204",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "bfd1c3ca_bee7919e",
+        "filename": "src/frameworks/uikit/ui_image_picker_controller.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 19,
+      "author": {
+        "id": 1037730
+      },
+      "writtenOn": "2024-02-20T10:02:41Z",
+      "side": 1,
+      "message": "Spore will use methods from UIViewController on the UIImagePickerController object. If it does not depend on it, the methods are unavailable.\n\nIt is still not 100% not correct, as methods added in UINavigationController are not available, but it is more correct nevertheless",
+      "parentUuid": "67d407e5_6dc80cea",
+      "revId": "69f22f10c4e8bd70417ba0d0232722040c9bc204",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8b2892cf_f16dfd82",
+        "filename": "src/frameworks/core_foundation/cf_string.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 109,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-02-20T14:41:11Z",
+      "side": 1,
+      "message": "you should convert from cfstringencdong to nsstringencoding before calling the nsstring method (check other methods in this file for example)",
+      "revId": "2dcb7c4a57b19ba19d3a4377d6110d57fb95f5ba",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "39277845_799f89d5",
+        "filename": "src/frameworks/core_foundation/cf_string.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 112,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-02-20T14:41:11Z",
+      "side": 1,
+      "message": "nitpick: remove space `encoding:encoding`",
+      "revId": "2dcb7c4a57b19ba19d3a4377d6110d57fb95f5ba",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

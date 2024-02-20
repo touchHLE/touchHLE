@@ -5,7 +5,7 @@ use crate::frameworks::audio_toolbox::audio_components;
 use crate::frameworks::carbon_core::OSStatus;
 use crate::mem::{ConstVoidPtr, MutPtr, MutVoidPtr};
 
-use super::audio_components::{AudioComponentInstance};
+use super::audio_components::AudioComponentInstance;
 
 type AudioUnit = AudioComponentInstance;
 type AudioUnitPropertyID = u32;

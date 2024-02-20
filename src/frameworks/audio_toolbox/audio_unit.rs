@@ -59,7 +59,7 @@ fn AudioUnitSetProperty(
             let bytes_per_channel = stream_format.bits_per_channel / 8;
             let actual_bytes_per_frame = stream_format.channels_per_frame * bytes_per_channel;
             if actual_bytes_per_frame != stream_format.bytes_per_packet {
-            log!(
+                log!(
                     "Warning: Stream format has non-sensical values: {:?}",
                     stream_format
                 );

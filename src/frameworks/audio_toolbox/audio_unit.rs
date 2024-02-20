@@ -3,7 +3,7 @@ use crate::environment::Environment;
 use crate::export_c_func;
 use crate::frameworks::audio_toolbox::audio_components;
 use crate::frameworks::carbon_core::OSStatus;
-use crate::mem::{ConstPtr, ConstVoidPtr};
+use crate::mem::{ConstVoidPtr, MutPtr, MutVoidPtr};
 
 use super::audio_components::{AURenderCallbackStruct, AudioComponentInstance};
 
@@ -62,8 +62,8 @@ fn AudioUnitGetProperty(
     inID: AudioUnitPropertyID,
     inScope: AudioUnitScope,
     inElement: AudioUnitElement,
-    outData: ConstVoidPtr,
-    ioDataSize: ConstPtr<u32>,
+    outData: MutVoidPtr,
+    ioDataSize: MutPtr<u32>,
 ) -> OSStatus {
     match inID {
         kAudioUnitProperty_StreamFormat => {

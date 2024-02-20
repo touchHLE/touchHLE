@@ -12,7 +12,10 @@ use crate::dyld::FunctionExports;
 use crate::environment::Environment;
 use crate::export_c_func;
 use crate::frameworks::carbon_core::{paramErr, OSStatus};
-use crate::frameworks::core_audio_types::fourcc;
+use crate::frameworks::core_audio_types::{
+    fourcc, kAudioFormatFlagIsAlignedHigh, kAudioFormatFlagIsFloat, kAudioFormatFlagIsPacked,
+    kAudioFormatFlagIsSignedInteger, kAudioFormatLinearPCM, AudioStreamBasicDescription,
+};
 use crate::mem::{ConstPtr, ConstVoidPtr, MutPtr, SafeRead};
 use crate::objc::nil;
 
@@ -31,9 +34,37 @@ impl State {
     }
 }
 
-#[derive(Default, Clone)]
+#[derive(Clone)]
 pub struct AudioComponentInstanceHostObject {
     pub started: bool,
+    pub global_stream_format: AudioStreamBasicDescription,
+    pub output_stream_format: Option<AudioStreamBasicDescription>,
+    pub render_callback: Option<AURenderCallbackStruct>,
+}
+impl Default for AudioComponentInstanceHostObject {
+    fn default() -> Self {
+        // Default values obtained from an iPod Touch 4 running iOS 6.1.6
+        // through a test app built targetting iOS 2.0
+        AudioComponentInstanceHostObject {
+            started: false,
+            global_stream_format: AudioStreamBasicDescription {
+                sample_rate: 44100.0,
+                format_id: kAudioFormatLinearPCM,
+                format_flags: kAudioFormatFlagIsFloat
+                    | kAudioFormatFlagIsSignedInteger
+                    | kAudioFormatFlagIsPacked
+                    | kAudioFormatFlagIsAlignedHigh,
+                bytes_per_packet: 4,
+                frames_per_packet: 1,
+                bytes_per_frame: 4,
+                channels_per_frame: 2,
+                bits_per_channel: 32,
+                _reserved: 0,
+            },
+            output_stream_format: None,
+            render_callback: None,
+        }
+    }
 }
 
 #[derive(Clone, Debug)]

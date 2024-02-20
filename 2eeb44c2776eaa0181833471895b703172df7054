@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c9d0f455_84602a13",
+        "filename": "src/frameworks/foundation/ns_url.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 92,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-02-20T14:35:50Z",
+      "side": 1,
+      "message": "you should return `nil` here, not `this`.\n\nin objective-c, if initialization fails, it returns a nil object.",
+      "revId": "2eeb44c2776eaa0181833471895b703172df7054",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

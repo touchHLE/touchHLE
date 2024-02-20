@@ -9,15 +9,21 @@ use crate::dyld::FunctionExports;
 use crate::environment::Environment;
 use crate::export_c_func;
 use crate::frameworks::audio_toolbox::audio_components;
+use crate::frameworks::audio_toolbox::audio_queue::log_if_broken_audio_format;
 use crate::frameworks::carbon_core::OSStatus;
-use crate::mem::{ConstVoidPtr, MutPtr, MutVoidPtr};
+use crate::frameworks::core_audio_types::AudioStreamBasicDescription;
+use crate::mem::{guest_size_of, ConstVoidPtr, MutPtr, MutVoidPtr};
 
-use super::audio_components::AudioComponentInstance;
+use super::audio_components::{AURenderCallbackStruct, AudioComponentInstance};
 
 type AudioUnit = AudioComponentInstance;
 type AudioUnitPropertyID = u32;
 type AudioUnitScope = u32;
 type AudioUnitElement = u32;
+
+// TODO: Other scopes
+const kAudioUnitScope_Global: AudioUnitScope = 0;
+const kAudioUnitScope_Output: AudioUnitScope = 2;
 
 const kAudioUnitProperty_SetRenderCallback: AudioUnitPropertyID = 23;
 const kAudioUnitProperty_StreamFormat: AudioUnitPropertyID = 8;
@@ -28,7 +34,7 @@ fn AudioUnitInitialize(_env: &mut Environment, inUnit: AudioUnit) -> OSStatus {
 }
 
 fn AudioUnitSetProperty(
-    _env: &mut Environment,
+    env: &mut Environment,
     in_unit: AudioUnit,
     in_id: AudioUnitPropertyID,
     in_scope: AudioUnitScope,
@@ -36,31 +42,39 @@ fn AudioUnitSetProperty(
     in_data: ConstVoidPtr,
     in_data_size: u32,
 ) -> OSStatus {
+    assert!(in_element == 0);
+
+    let host_object = audio_components::State::get(&mut env.framework_state)
+        .audio_component_instances
+        .get_mut(&in_unit)
+        .unwrap();
+
+    let result;
     match in_id {
         kAudioUnitProperty_SetRenderCallback => {
-            log!(
-                "TODO: AudioUnitSetProperty({:?}, kAudioUnitProperty_SetRenderCallback, {:?}, {:?}, {:?}, {:?})",
-                in_unit,
-                in_scope,
-                in_element,
-                in_data,
-                in_data_size
-            );
+            assert!(in_scope == kAudioUnitScope_Global);
+            assert!(in_data_size == guest_size_of::<AURenderCallbackStruct>());
+            let render_callback = env.mem.read(in_data.cast::<AURenderCallbackStruct>());
+            host_object.render_callback = Some(render_callback);
+            result = 0;
+            log_dbg!("AudioUnitSetProperty({:?}, kAudioUnitProperty_SetRenderCallback, {:?}, {:?}, {:?}, {:?}) -> {:?}", in_unit, in_scope, in_element, render_callback, in_data_size, result);
         }
         kAudioUnitProperty_StreamFormat => {
-            log!(
-                "TODO: AudioUnitSetProperty({:?}, kAudioUnitProperty_StreamFormat, {:?}, {:?}, {:?}, {:?})",
-                in_unit,
-                in_scope,
-                in_element,
-                in_data,
-                in_data_size
-            );
+            assert!(in_data_size == guest_size_of::<AudioStreamBasicDescription>());
+            let stream_format = env.mem.read(in_data.cast::<AudioStreamBasicDescription>());
+            log_if_broken_audio_format(&stream_format);
+            match in_scope {
+                kAudioUnitScope_Global => host_object.global_stream_format = stream_format,
+                kAudioUnitScope_Output => host_object.output_stream_format = Some(stream_format),
+                _ => unimplemented!(),
+            };
+            result = 0;
+            log_dbg!("AudioUnitSetProperty({:?}, kAudioUnitProperty_StreamFormat, {:?}, {:?}, {:?}, {:?}) -> {:?}", in_unit, in_scope, in_element, stream_format, in_data_size, result);
         }
         _ => unimplemented!(),
     };
 
-    0 // success
+    result
 }
 
 fn AudioUnitGetProperty(

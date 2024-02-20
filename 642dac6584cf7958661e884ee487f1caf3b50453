@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "fd818ca9_907247c2",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-02-20T14:56:47Z",
+      "side": 1,
+      "message": "OPT: remove",
+      "revId": "642dac6584cf7958661e884ee487f1caf3b50453",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4c52d84c_b18511c4",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 1010,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-02-20T14:56:47Z",
+      "side": 1,
+      "message": "you should remove trailing whitespaces before comparison, +/- and leading zeroes\nhttps://developer.apple.com/documentation/foundation/nsstring/1409420-boolvalue?language\u003dobjc\nI also suggest to write a small test program in objc to confirm the behavior",
+      "revId": "642dac6584cf7958661e884ee487f1caf3b50453",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f71ab0d2_ae87869a",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 1023,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-02-20T14:56:47Z",
+      "side": 1,
+      "message": "could you get first char after cleaning and check if it contains() in a string \"YyTt123...\" ,?",
+      "revId": "642dac6584cf7958661e884ee487f1caf3b50453",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

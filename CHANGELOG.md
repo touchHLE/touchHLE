@@ -4,7 +4,7 @@ This will list notable changes from release to release, and credit the people wh
 
 Names preceded by an @ are GitHub usernames.
 
-Lists of new working apps are a guideline, not a guarantee of support, and are not comprehensive. Credits for new working apps indicate someone who put a lot of effort into getting that particular app working, but compatibility is always a cumulative collaborative effort.
+Lists of new working apps are a guideline, not a guarantee of support, and are not comprehensive. Credits for new working apps indicate someone who put a lot of effort into getting that particular app working, but compatibility is always a cumulative collaborative effort. The “Various small contributions” in the changelog often add up in a big way.
 
 Changes are categorised as follows:
 
@@ -21,7 +21,7 @@ Compatibility:
   - Rayman 2 (@ciciplusplus)
   - Tony Hawk's Pro Skater 2 (@ciciplusplus)
 - API support improvements:
-  - Various contributions. (@alborrajo, @WhatAmISupposedToPutHere, @ciciplusplus, @hikari-no-yume, @LennyKappa)
+  - Various small contributions. (@alborrajo, @WhatAmISupposedToPutHere, @ciciplusplus, @hikari-no-yume, @LennyKappa)
   - AAC audio files (AAC-LC in a typical MPEG-4 container) are now supported in Audio Toolbox. This is done in a fairly hacky way so it might not work for some apps. (@hikari-no-yume)
 - There is now support for iPhone OS 3.0 apps, in addition to the existing support for iPhone OS 2.x apps:
   - Support for fat binaries has been added. touchHLE will no longer crash when trying to run an app with both ARMv6 and ARMv7 versions, and instead will try to pick the best available option (ARMv7, or failing this, ARMv6). This improves compatibility with iPhone OS 3.0 apps, many of which use fat binaries in order to improve performance on the iPhone 3GS and iPod touch (3rd generation). (@WhatAmISupposedToPutHere)
@@ -32,10 +32,6 @@ Usability:
 
 - The `--button-to-touch=` option now supports the Start and the LeftShoulder buttons in addition to the A/B/X/Y buttons and D-pad. Certain games' default options have been adjusted to use them. (@nighto)
 - Default options for various games (@nighto)
-
-Quality:
-
-- [touchHLE coding style guide](https://github.com/hikari-no-yume/touchHLE/blob/trunk/dev-docs/code-style.md) (@hikari-no-yume)
 
 ## v0.2.1 (2023-10-31)
 

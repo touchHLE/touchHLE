@@ -16,6 +16,24 @@
       "message": "why do you think we need this?",
       "revId": "0d645a2401bf8eaa5d0cbf908cb9872d647f5321",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "78108e56_1e6f8fbd",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021823
+      },
+      "writtenOn": "2024-02-23T01:28:58Z",
+      "side": 1,
+      "message": "I have a default clang format I use for most of my coding that uses a different style. I do have a working solution for myself now (so this isn\u0027t strictly necessary), but this just means that it\u0027s easier to keep in line for other contributors.",
+      "parentUuid": "ed4d1c28_2e1a5ed1",
+      "revId": "0d645a2401bf8eaa5d0cbf908cb9872d647f5321",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

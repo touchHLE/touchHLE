@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "6841b768_4caad899",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-02-23T09:47:57Z",
+      "side": 1,
+      "message": "@teromene@teromene.fr Do you need guidance for submitting this?",
+      "revId": "bf089055818433ce9a1284ccdcfd8e32439ced0c",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

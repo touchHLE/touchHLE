@@ -33,6 +33,24 @@
       "message": "you should use `nil` object\n\nthe code should be something like this:\n\nif url \u003d\u003d nil {\n  return nil;\n}",
       "revId": "3acafeccebf4206d4a984994495d5265ecd37110",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "9af94a33_fb9e1958",
+        "filename": "src/frameworks/foundation/ns_url.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 91,
+      "author": {
+        "id": 1037730
+      },
+      "writtenOn": "2024-02-23T10:22:59Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "cfba1b7f_b2037650",
+      "revId": "3acafeccebf4206d4a984994495d5265ecd37110",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

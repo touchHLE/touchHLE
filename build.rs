@@ -100,4 +100,24 @@ pub fn main() {
     assert!(dynarmic_legal.contains(dynarmic_license_oneline));
     let dynarmic_summary = dynarmic_legal.replace(dynarmic_license_oneline, &dynarmic_license);
     std::fs::write(out_dir.join("dynarmic_license.txt"), dynarmic_summary).unwrap();
+
+    // libc++_shared.so has to be copied into the APK. See README of cargo-ndk.
+    if std::env::var("CARGO_CFG_TARGET_OS").unwrap() == "android" {
+        println!("cargo:rustc-link-lib=c++_shared");
+        let sysroot_libs_path =
+            PathBuf::from(std::env::var_os("CARGO_NDK_SYSROOT_LIBS_PATH").unwrap());
+        let lib_path = sysroot_libs_path.join("libc++_shared.so");
+        std::fs::copy(
+            lib_path,
+            // cargo-ndk as invoked by cargo-ndk-android-gradle actually
+            // copies from the target directory, using this hacky path
+            // concatenation approach. :(
+            package_root
+                .join("target")
+                .join(std::env::var("TARGET").unwrap())
+                .join(std::env::var("PROFILE").unwrap())
+                .join("libc++_shared.so"),
+        )
+        .unwrap();
+    }
 }

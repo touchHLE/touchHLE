@@ -4,10 +4,16 @@
 
 A list of supported target platforms (platforms you can build touchHLE _for_) can be found in `README.md`. However, that's not the whole story, because you should also know supported host platforms when building (platforms you can build touchHLE _on_).
 
-Things tend to be easiest when the target and host platforms are the same. When they aren't the same, it's called “cross-compilation”. These are expected to work:
+Things tend to be easiest when the target and host platforms are the same. When they aren't the same, it's called “cross-compilation”.
+
+These three platforms are [used by our GitHub Actions CI](../.github/workflows/touchHLE_release.yml)
 
 * Building for x64 Windows on x64 Windows
 * Building for x64 macOS on x64 macOS
+* Building for AArch64 Android on x64 Linux
+
+This platform is manually tested by certain developers:
+
 * Building for AArch64 Android on x64 macOS
 
 These should also work but aren't regularly tested:

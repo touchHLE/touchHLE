@@ -56,6 +56,60 @@ jobs:
         name: TestApp_built_on_macOS
         path: tests/TestApp.app
 
+  build-android:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0 # touchHLE's git-describe versioning needs tag history
+    - name: Check formatting
+      run: dev-scripts/format.sh --check
+    - name: Get Submodules
+      run: git submodule update --init
+    - name: Try to get cached copy of Boost
+      id: cache-boost
+      uses: actions/cache@v3
+      with:
+        path: vendor/boost
+        key: boost_1_81_0
+    - if: ${{ steps.cache-boost.outputs.cache-hit != 'true' }}
+      name: Download Boost
+      run: curl -L -o boost_1_81_0.7z "https://boostorg.jfrog.io/artifactory/main/release/1.81.0/source/boost_1_81_0.7z"
+    - if: ${{ steps.cache-boost.outputs.cache-hit != 'true' }}
+      name: Extract Boost
+      run: 7z -ovendor x boost_1_81_0.7z && mv vendor/boost_1_81_0 vendor/boost
+    - name: Install AArch64 Android Rust toolchain
+      run: rustup target add aarch64-linux-android
+    - name: Install cargo-ndk
+      run: cargo install cargo-ndk
+    # Gradle version compatibility is a nightmare and we refuse to use gradlew.
+    - name: Try to get a cached copy of Gradle
+      id: cache-gradle
+      uses: actions/cache@v3
+      with:
+        path: gradle
+        key: gradle-7.3
+    - if: ${{ steps.cache-gradle.outputs.cache-hit != 'true' }}
+      name: Download Gradle
+      run: curl -L -o gradle-7.3-bin.zip "https://services.gradle.org/distributions/gradle-7.3-bin.zip"
+    - if: ${{ steps.cache-gradle.outputs.cache-hit != 'true' }}
+      name: Extract Gradle
+      run: 7z -ogradle x gradle-7.3-bin.zip
+    # Why isn't there a command for this?
+    - name: Generate local.properties file
+      run: echo 'sdk.dir='$ANDROID_SDK_ROOT > android/local.properties
+    # Let's not even bother with linting (would need to build for host, not just
+    # Android, which makes things more complicated) or trying to run tests
+    # (would have to run on Android 😰).
+    - name: Build for Android
+      run: cd android && ../gradle/gradle-7.3/bin/gradle assembleRelease && mv app/build/outputs/apk/release/app-release.apk ../touchHLE.apk
+    - uses: actions/upload-artifact@v3
+      with:
+        name: touchHLE_Android_AArch64
+        path: touchHLE.apk
+
   build-win:
 
     runs-on: windows-latest

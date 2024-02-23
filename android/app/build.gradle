@@ -25,8 +25,6 @@ android {
         }
         minSdkVersion 21 // first version with AArch64
         targetSdkVersion 31
-        versionCode 1
-        versionName "1.0"
         externalNativeBuild {
             ndkBuild {
                 arguments "APP_PLATFORM=android-21"

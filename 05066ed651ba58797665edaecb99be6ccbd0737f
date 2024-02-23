@@ -16,6 +16,24 @@
       "message": "Please don\u0027t remove the `SafeRead` bound, it exists to avoid safety issues in Rust (`std::mem::transmute` is generally unsafe) and also protects against accidental use of types not designed for guest memory. I would suggest using the manual offset approach.",
       "revId": "05066ed651ba58797665edaecb99be6ccbd0737f",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "df588047_157f96f3",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 7
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-02-23T14:47:36Z",
+      "side": 1,
+      "message": "Uh, ditto for `SafeWrite`, but without the safety concern. If you want to, maybe you can define `SafeWrite` for your unsized struct?",
+      "parentUuid": "a326be11_a40d01a1",
+      "revId": "05066ed651ba58797665edaecb99be6ccbd0737f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

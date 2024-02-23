@@ -61,6 +61,8 @@ int strcmp(const char *, const char *);
 char *strncpy(char *, const char *, size_t);
 char *strncat(char *, const char *, size_t);
 size_t strlcpy(char *, const char *, size_t);
+char *strchr(const char *s, int c);
+char *strrchr(const char *s, int c);
 
 // <unistd.h>
 typedef unsigned int __uint32_t;
@@ -646,6 +648,21 @@ int test_dirent() {
   return 0;
 }
 
+int test_strchr() {
+  char *src = "abc";
+  if (strchr(src, 'a')[0] != 'a' || strrchr(src, 'a')[0] != 'a')
+    return -1;
+  if (strchr(src, 'b')[0] != 'b' || strrchr(src, 'b')[0] != 'b')
+    return -2;
+  if (strchr(src, 'c')[0] != 'c' || strrchr(src, 'c')[0] != 'c')
+    return -3;
+  if (strchr(src, '\0')[0] != '\0' || strrchr(src, '\0')[0] != '\0')
+    return -4;
+  if (strchr(src, 'd') != NULL || strrchr(src, 'd') != NULL)
+    return -5;
+  return 0;
+}
+
 #define FUNC_DEF(func)                                                         \
   { &func, #func }
 struct {
@@ -660,6 +677,7 @@ struct {
     FUNC_DEF(test_strncpy), FUNC_DEF(test_strncat),
     FUNC_DEF(test_strlcpy), FUNC_DEF(test_setlocale),
     FUNC_DEF(test_strtoul), FUNC_DEF(test_dirent),
+    FUNC_DEF(test_strchr),
 };
 
 // Because no libc is linked into this executable, there is no libc entry point

@@ -266,26 +266,27 @@ impl<T: Copy + Default + Eq + Ord + SafeRead + Debug> GenericChar<T> {
     pub(super) fn strchr(env: &mut Environment, string: ConstPtr<T>, char: T) -> ConstPtr<T> {
         let mut offset = 0;
         loop {
+            // if c is '\0', the function should locate the terminating '\0'
+            if env.mem.read(string + offset) == char {
+                return string + offset;
+            }
             if offset == Self::strlen(env, string) {
                 return Ptr::null();
             }
             offset += 1;
-            if env.mem.read(string + offset) == char {
-                return string + offset;
-            }
         }
     }
 
     pub(super) fn strrchr(env: &mut Environment, string: ConstPtr<T>, char: T) -> ConstPtr<T> {
         let mut offset = Self::strlen(env, string);
         loop {
+            if env.mem.read(string + offset) == char {
+                return string + offset;
+            }
             if offset == 0 {
                 return Ptr::null();
             }
             offset -= 1;
-            if env.mem.read(string + offset) == char {
-                return string + offset;
-            }
         }
     }
 

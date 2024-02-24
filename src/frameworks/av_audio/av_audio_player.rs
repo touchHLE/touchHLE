@@ -23,7 +23,7 @@ use crate::frameworks::core_foundation::cf_run_loop::kCFRunLoopCommonModes;
 use crate::frameworks::foundation::ns_string;
 use crate::mem::{guest_size_of, GuestUSize, MutPtr, MutVoidPtr, Ptr};
 use crate::msg;
-use crate::objc::{id, nil, retain, Class, ClassExports, HostObject, NSZonePtr};
+use crate::objc::{id, nil, release, retain, Class, ClassExports, HostObject, NSZonePtr};
 use crate::objc_classes;
 use crate::Environment;
 
@@ -200,10 +200,10 @@ pub const CLASSES: ClassExports = objc_classes! {
     AudioFileClose(env, audio_file_id.unwrap());
     env.mem.free(audio_queue_buffers.unwrap().cast());
 
-    let callback = env.objc.borrow_mut::<AVAudioPlayerHostObject>(this).output_callback;
+    let &AVAudioPlayerHostObject { audio_file_url, output_callback, .. } = env.objc.borrow(this);
     *env.objc.borrow_mut::<AVAudioPlayerHostObject>(this) = AVAudioPlayerHostObject {
-        audio_file_url: nil,
-        output_callback: callback,
+        audio_file_url,
+        output_callback,
         audio_file_id: None,
         audio_desc: None,
         audio_queue: None,
@@ -212,6 +212,13 @@ pub const CLASSES: ClassExports = objc_classes! {
         current_packet: 0,
         is_playing: false
     };
+}
+
+- (())dealloc {
+    () = msg![env; this stop];
+    let url = env.objc.borrow_mut::<AVAudioPlayerHostObject>(this).audio_file_url;
+    release(env, url);
+    env.objc.dealloc_object(this, &mut env.mem)
 }
 
 @end

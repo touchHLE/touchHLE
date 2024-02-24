@@ -177,6 +177,24 @@
       "parentUuid": "cd54c90d_aaf06d47",
       "revId": "f73ace556f3a629de9826f51f8fe0d3d09d0bf73",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "9eaa5320_fbd8b726",
+        "filename": "src/frameworks/foundation/ns_url.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 98,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-02-24T13:23:19Z",
+      "side": 1,
+      "message": "With the current patchset, and a test app adding the path ./.././path/to/../to/./probando i managed to get the same output as in the real device",
+      "parentUuid": "6815194d_81c62b71",
+      "revId": "f73ace556f3a629de9826f51f8fe0d3d09d0bf73",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

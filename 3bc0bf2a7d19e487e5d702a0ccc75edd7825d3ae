@@ -70,6 +70,24 @@
       "parentUuid": "6ba5dbc3_05211aaa",
       "revId": "3bc0bf2a7d19e487e5d702a0ccc75edd7825d3ae",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "eeb071b9_1b71cb6f",
+        "filename": "src/frameworks/uikit/ui_view/ui_control/ui_button.rs",
+        "patchSetId": 12
+      },
+      "lineNbr": 170,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-02-24T11:14:39Z",
+      "side": 1,
+      "message": "With this code:\n```objc\n    UIButton *button \u003d [UIButton buttonWithType:UIButtonTypeRoundedRect];\n    [button setTitle:@\"Press Me\" forState:UIControlStateNormal];\n    \n    UIImage *btnImage \u003d [UIImage imageNamed:@\"resident4.png\"];\n    [button setImage:[btnImage imageWithRenderingMode:UIImageRenderingModeAlwaysOriginal] forState:UIControlStateNormal];\n    \n    [button sizeToFit];\n    button.center \u003d CGPointMake(200, 200);\n    \n    [self.view addSubview:button];\n    \n    NSLog(@\"%@\", [self.view performSelector:@selector(recursiveDescription)]);\n```\ni get the following:\n```\n\u003cUIView: 0x106207f50; frame \u003d (0 0; 393 852); autoresize \u003d W+H; backgroundColor \u003d \u003cUIDynamicSystemColor: 0x60000170b9c0; name \u003d systemBackgroundColor\u003e; layer \u003d \u003cCALayer: 0x600000239ae0\u003e\u003e\n   | \u003cUIButton: 0x106207870; frame \u003d (139.5 171.5; 121 57); opaque \u003d NO; gestureRecognizers \u003d \u003cNSArray: 0x600000c5af40\u003e; layer \u003d \u003cCALayer: 0x600000239d40\u003e\u003e\n   |    | \u003cUIImageView: 0x10620d2a0; frame \u003d (0 0; 0 0); clipsToBounds \u003d YES; opaque \u003d NO; userInteractionEnabled \u003d NO; image \u003d \u003c(null):0x0 (null) anonymous; (0 0)@0\u003e; layer \u003d \u003cCALayer: 0x600000264540\u003e\u003e\n```\nwhich seems to indicate that the UIButton not only does it not use the same frame for the image but also that there seems to be no UILabel rendered at all?",
+      "parentUuid": "05878480_dd5bcf41",
+      "revId": "3bc0bf2a7d19e487e5d702a0ccc75edd7825d3ae",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

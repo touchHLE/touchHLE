@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "8f96712a_51424d11",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-02-25T18:30:35Z",
+      "side": 1,
+      "message": "nearly good for me!\n(i can +2 if you fix nitpicks as well)",
+      "revId": "03b73018a174ff8605681f4ca5d0828ad73a3f4a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f50c702a_4d11904b",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 1009,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-02-25T18:30:35Z",
+      "side": 1,
+      "message": "OPT: space between `- (bool)boolValue`",
+      "revId": "03b73018a174ff8605681f4ca5d0828ad73a3f4a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

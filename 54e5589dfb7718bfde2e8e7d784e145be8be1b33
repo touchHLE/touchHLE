@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "cabadfdc_1710c311",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 11
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-02-25T11:23:09Z",
+      "side": 1,
+      "message": "I couldn\u0027t find out much about them other than their class hierarchy and structure. Anyways, i\u0027ve added comments with an example of how they look like inside the nib files.",
+      "parentUuid": "55f59ddb_0440425c",
+      "revId": "54e5589dfb7718bfde2e8e7d784e145be8be1b33",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "d811d7e7_3e0dded4",

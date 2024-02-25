@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a9208b73_936ca0a6",
+        "filename": "src/frameworks/foundation/ns_url.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 90,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-02-25T09:25:11Z",
+      "side": 1,
+      "message": "OPT: remove empty line",
+      "revId": "f2990321788ab5fafc232f1a335fc5c8bd8d89f3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "88269b1d_09cb7593",
+        "filename": "src/frameworks/foundation/ns_date.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 84,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-02-25T19:33:51Z",
+      "side": 1,
+      "message": "NSTimeZone should be declared in their own proper file",
+      "revId": "140315029fd5e1a9ecac4ce65b4e63fcdd7e8849",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

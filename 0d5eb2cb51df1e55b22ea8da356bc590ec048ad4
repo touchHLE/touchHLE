@@ -52,6 +52,24 @@
       "parentUuid": "e5db8bc3_39eb22fa",
       "revId": "0d5eb2cb51df1e55b22ea8da356bc590ec048ad4",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f50533d9_4bbc496e",
+        "filename": "src/frameworks/foundation/ns_url.rs",
+        "patchSetId": 35
+      },
+      "lineNbr": 27,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-02-26T18:34:49Z",
+      "side": 1,
+      "message": "For example, absoluteString. Right now its implementation assumes the url is absolute and returns it as-is (with a FIXME comment reminding of it) but a proper implementation would make a NSURL instanced like this:\n```[NSURL fileURLWithPath:@\"test\"]```\nreturn the following:\n```file:///path/to/working/directory/test```\nas far as i\u0027ve tested",
+      "parentUuid": "1e5cae1f_f0ac810a",
+      "revId": "0d5eb2cb51df1e55b22ea8da356bc590ec048ad4",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "29fc5789_e4d2121c",
+        "filename": "src/frameworks/foundation/ns_bundle.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 75,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-02-26T22:29:37Z",
+      "side": 1,
+      "message": "could you refactor this code to call bundleWithPath: to avoid duplication?",
+      "revId": "5d7c894321147e2eaaca17116e046d5b75244c47",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "adce5a14_ff9db1e9",
+        "filename": "src/frameworks/foundation/ns_bundle.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 85,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-02-26T22:29:37Z",
+      "side": 1,
+      "message": "nitpick: `+ (id)bundleWithPath:(id)bundle_path`",
+      "revId": "5d7c894321147e2eaaca17116e046d5b75244c47",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6097a06a_044e5ce0",
+        "filename": "src/frameworks/foundation/ns_bundle.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 240,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-02-26T22:29:37Z",
+      "side": 1,
+      "message": "this should be:\n```\nif key \u003d\u003d nil {\n    return nil;\n}\n```",
+      "revId": "5d7c894321147e2eaaca17116e046d5b75244c47",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

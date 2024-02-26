@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "91ca02b9_88e581d4",
+        "filename": "src/frameworks/foundation/ns_url.rs",
+        "patchSetId": 35
+      },
+      "lineNbr": 27,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-02-26T17:27:42Z",
+      "side": 1,
+      "message": "Thanks for adding the comment, but it\u0027s only explains `what` it is, not `why` we need it. You should precise what it is used only for description but nothing else.",
+      "revId": "0d5eb2cb51df1e55b22ea8da356bc590ec048ad4",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

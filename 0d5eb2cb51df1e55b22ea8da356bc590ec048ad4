@@ -16,6 +16,24 @@
       "message": "Thanks for adding the comment, but it\u0027s only explains `what` it is, not `why` we need it. You should precise what it is used only for description but nothing else.",
       "revId": "0d5eb2cb51df1e55b22ea8da356bc590ec048ad4",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e5db8bc3_39eb22fa",
+        "filename": "src/frameworks/foundation/ns_url.rs",
+        "patchSetId": 35
+      },
+      "lineNbr": 27,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-02-26T18:26:22Z",
+      "side": 1,
+      "message": "It\u0027s only used for the description _yet_. There are some other selectors that will have to make use of the working directory when implemented in the future.",
+      "parentUuid": "91ca02b9_88e581d4",
+      "revId": "0d5eb2cb51df1e55b22ea8da356bc590ec048ad4",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

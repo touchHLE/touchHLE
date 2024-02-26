@@ -34,6 +34,24 @@
       "parentUuid": "91ca02b9_88e581d4",
       "revId": "0d5eb2cb51df1e55b22ea8da356bc590ec048ad4",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1e5cae1f_f0ac810a",
+        "filename": "src/frameworks/foundation/ns_url.rs",
+        "patchSetId": 35
+      },
+      "lineNbr": 27,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-02-26T18:28:52Z",
+      "side": 1,
+      "message": "hhhm, which selectors you have in mind?\n\nbut in any case right now it is used only for description, this it merit an explanation comment",
+      "parentUuid": "e5db8bc3_39eb22fa",
+      "revId": "0d5eb2cb51df1e55b22ea8da356bc590ec048ad4",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

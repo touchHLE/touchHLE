@@ -898,9 +898,25 @@ impl GLES for GLES1OnGL2 {
         LIGHT_MODEL_PARAMS.assert_component_count(pname, 1);
         gl21::LightModelf(pname, param)
     }
+    unsafe fn LightModelx(&mut self, pname: GLenum, param: GLfixed) {
+        LIGHT_MODEL_PARAMS.setx(
+            |param| gl21::LightModelf(pname, param),
+            |_| unreachable!(),
+            pname,
+            param,
+        )
+    }
     unsafe fn LightModelfv(&mut self, pname: GLenum, params: *const GLfloat) {
         LIGHT_MODEL_PARAMS.assert_known_param(pname);
         gl21::LightModelfv(pname, params)
+    }
+    unsafe fn LightModelxv(&mut self, pname: GLenum, params: *const GLfixed) {
+        LIGHT_MODEL_PARAMS.setxv(
+            |param| gl21::LightModelfv(pname, param),
+            |_| unreachable!(),
+            pname,
+            params,
+        )
     }
     unsafe fn Materialf(&mut self, face: GLenum, pname: GLenum, param: GLfloat) {
         assert!(face == gl21::FRONT_AND_BACK);

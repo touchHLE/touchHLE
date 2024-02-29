@@ -14,6 +14,7 @@ use crate::mem::{guest_size_of, ConstVoidPtr, GuestUSize, MutPtr, MutVoidPtr};
 use crate::Environment;
 
 type AudioSessionInterruptionListener = GuestFunction;
+type AudioSessionPropertyListener = GuestFunction;
 
 const kAudioSessionBadPropertySizeError: OSStatus = fourcc(b"!siz") as _;
 
@@ -91,9 +92,27 @@ fn AudioSessionSetActive(_env: &mut Environment, _active: bool) -> OSStatus {
     0 // success
 }
 
+fn AudioSessionAddPropertyListener(
+    _env: &mut Environment,
+    inID: AudioSessionPropertyID,
+    inProc: AudioSessionPropertyListener,
+    inClientData: MutVoidPtr,
+) -> OSStatus {
+    let result = 0; // success
+    log!(
+        "TODO: AudioSessionAddPropertyListener({:?}, {:?}, {:?}) -> {}",
+        inID,
+        inProc,
+        inClientData,
+        result
+    );
+    result
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(AudioSessionInitialize(_, _, _, _)),
     export_c_func!(AudioSessionGetProperty(_, _, _)),
     export_c_func!(AudioSessionSetProperty(_, _, _)),
     export_c_func!(AudioSessionSetActive(_)),
+    export_c_func!(AudioSessionAddPropertyListener(_, _, _)),
 ];

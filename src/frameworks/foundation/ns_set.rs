@@ -14,6 +14,11 @@ use crate::objc::{
     autorelease, id, msg, msg_class, nil, objc_classes, retain, ClassExports, HostObject, NSZonePtr,
 };
 
+struct ObjectEnumeratorHostObject {
+    iterator: std::vec::IntoIter<id>,
+}
+impl HostObject for ObjectEnumeratorHostObject {}
+
 /// Belongs to _touchHLE_NSSet
 #[derive(Debug, Default)]
 struct SetHostObject {
@@ -179,6 +184,14 @@ pub const CLASSES: ClassExports = objc_classes! {
     ns_array::from_vec(env, objects)
 }
 
+- (id)objectEnumerator { // NSEnumerator*
+    let iterator = env.objc.borrow_mut::<SetHostObject>(this).dict.iter_keys().collect::<Vec<id>>().into_iter();
+    let host_object = Box::new(ObjectEnumeratorHostObject { iterator });
+    let class = env.objc.get_known_class("_touchHLE_NSMutableSet_ObjectEnumerator", &mut env.mem);
+    let enumerator = env.objc.alloc_object(class, host_object, &mut env.mem);
+    autorelease(env, enumerator)
+}
+
 // NSFastEnumeration implementation
 - (NSUInteger)countByEnumeratingWithState:(MutPtr<NSFastEnumerationState>)state
                                   objects:(MutPtr<id>)stackbuf
@@ -194,6 +207,15 @@ pub const CLASSES: ClassExports = objc_classes! {
     let mut host_obj: SetHostObject = std::mem::take(env.objc.borrow_mut(this));
     host_obj.dict.insert(env, object, null, /* copy_key: */ false);
     *env.objc.borrow_mut(this) = host_obj;
+}
+
+@end
+
+@implementation _touchHLE_NSMutableSet_ObjectEnumerator: NSEnumerator
+
+- (id)nextObject {
+    let host_obj = env.objc.borrow_mut::<ObjectEnumeratorHostObject>(this);
+    host_obj.iterator.next().map_or(nil, |o| o)
 }
 
 @end

@@ -123,6 +123,11 @@ pub const CLASSES: ClassExports = objc_classes! {
     ns_array::from_vec(env, objects)
 }
 
+- (id)objectEnumerator { // NSEnumerator*
+    let array: id = msg![env; this allObjects];
+    msg![env; array objectEnumerator]
+}
+
 // NSFastEnumeration implementation
 - (NSUInteger)countByEnumeratingWithState:(MutPtr<NSFastEnumerationState>)state
                                   objects:(MutPtr<id>)stackbuf
@@ -177,6 +182,11 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (id)allObjects {
     let objects = env.objc.borrow_mut::<SetHostObject>(this).dict.iter_keys().collect();
     ns_array::from_vec(env, objects)
+}
+
+- (id)objectEnumerator { // NSEnumerator*
+    let array: id = msg![env; this allObjects];
+    msg![env; array objectEnumerator]
 }
 
 // NSFastEnumeration implementation

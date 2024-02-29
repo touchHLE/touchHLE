@@ -142,18 +142,30 @@ fn arc4random(env: &mut Environment) -> u32 {
 }
 
 fn getenv(env: &mut Environment, name: ConstPtr<u8>) -> MutPtr<u8> {
-    let name_cstr = env.mem.cstr_at(name);
+    let name_cstr = env.mem.cstr_at(name).to_owned();
     // TODO: Provide all the system environment variables an app might expect to
     // find. Currently the only environment variables that can be found are
-    // those put there by the app (Crash Bandicoot Nitro Kart 3D uses this).
-    let Some(&value) = env.libc_state.stdlib.env.get(name_cstr) else {
-        log!(
-            "Warning: getenv() for {:?} ({:?}) unhandled",
-            name,
-            std::str::from_utf8(name_cstr)
-        );
-        return Ptr::null();
+    // HOME and those set by the app (Used by Crash Bandicoot Nitro Kart 3D)
+    let Some(value) = env.libc_state.stdlib.env.get(name_cstr.as_slice()).cloned() else {
+        return match name_cstr.as_slice() {
+            b"HOME" => {
+                let ptr = env
+                    .mem
+                    .alloc_and_write_cstr(env.fs.home_directory().as_str().as_bytes());
+                env.libc_state.stdlib.env.insert(name_cstr, ptr);
+                ptr
+            }
+            _ => {
+                log!(
+                    "Warning: getenv() for {:?} ({:?}) unhandled",
+                    name,
+                    std::str::from_utf8(name_cstr.as_slice())
+                );
+                Ptr::null()
+            }
+        };
     };
+
     log_dbg!(
         "getenv({:?} ({:?})) => {:?} ({:?})",
         name,

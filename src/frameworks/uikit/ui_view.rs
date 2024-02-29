@@ -461,7 +461,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     for subview in subviews.into_iter().rev() { // later views are on top
         let hidden: bool = msg![env; subview isHidden];
         let alpha: CGFloat = msg![env; subview alpha];
-        let interactible: bool = msg![env; this isUserInteractionEnabled];
+        let interactible: bool = msg![env; subview isUserInteractionEnabled];
         if hidden || alpha < 0.01 || !interactible {
            continue;
         }
@@ -497,6 +497,19 @@ pub const CLASSES: ClassExports = objc_classes! {
         }
     }
     false
+}
+
+// UIResponder implementation
+// From the Apple UIView docs regarding [UIResponder nextResponder]:
+// "UIView implements this method and returns the UIViewController object that
+//  manages it (if it has one) or its superview (if it doesn’t)."
+- (id)nextResponder {
+    let host_object = env.objc.borrow::<UIViewHostObject>(this);
+    if host_object.view_controller != nil {
+        host_object.view_controller
+    } else {
+        host_object.superview
+    }
 }
 
 // Co-ordinate space conversion

@@ -168,6 +168,23 @@ pub const CLASSES: ClassExports = objc_classes! {
     log!("TODO: ignoring setApplicationIconBadgeNumber:{}", bn);
 }
 
+// UIResponder implementation
+// From the Apple UIView docs regarding [UIResponder nextResponder]:
+// "The shared UIApplication object normally returns nil, but it returns its
+//  app delegate if that object is a subclass of UIResponder and hasn’t
+//  already been called to handle the event."
+- (id)nextResponder {
+    let delegate = msg![env; this delegate];
+    let app_delegate_class = msg![env; delegate class];
+    let ui_responder_class = env.objc.get_known_class("UIResponder", &mut env.mem);
+    if env.objc.class_is_subclass_of(app_delegate_class, ui_responder_class) {
+        // TODO: Send nil if it's already been called to handle the event
+        delegate
+    } else {
+        nil
+    }
+}
+
 @end
 
 };

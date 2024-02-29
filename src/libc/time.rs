@@ -286,7 +286,7 @@ unsafe impl SafeRead for timeval {}
 
 #[allow(non_camel_case_types)]
 #[repr(C, packed)]
-struct timespec {
+pub struct timespec {
     tv_sec: time_t,
     tv_nsec: i32,
 }

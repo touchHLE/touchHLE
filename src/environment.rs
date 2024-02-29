@@ -17,6 +17,7 @@ use crate::{
     abi, bundle, cpu, dyld, frameworks, fs, gdb, image, libc, mach_o, mem, objc, options, stack,
     window,
 };
+use std::collections::HashMap;
 use std::net::TcpListener;
 use std::time::{Duration, Instant};
 
@@ -95,6 +96,7 @@ pub struct Environment {
     pub mutex_state: mutex::MutexState,
     pub options: options::Options,
     gdb_server: Option<gdb::GdbServer>,
+    pub env_vars: HashMap<Vec<u8>, MutPtr<u8>>,
 }
 
 /// What to do next when executing this thread.
@@ -280,7 +282,10 @@ impl Environment {
             framework_state: Default::default(),
             options,
             gdb_server: None,
+            env_vars: Default::default(),
         };
+
+        env.set_up_initial_env_vars();
 
         dyld::Dyld::do_late_linking(&mut env);
 
@@ -422,7 +427,10 @@ impl Environment {
             framework_state: Default::default(),
             options,
             gdb_server: None,
+            env_vars: Default::default(),
         };
+
+        env.set_up_initial_env_vars();
 
         // Dyld::do_late_linking() would be called here, but it doesn't do
         // anything relevant here, so it's skipped.
@@ -1060,5 +1068,16 @@ impl Environment {
                 }
             }
         }
+    }
+
+    fn set_up_initial_env_vars(&mut self) {
+        // TODO: Provide all the system environment variables an app might
+        // expect to find.
+
+        // Initialize HOME envvar
+        let home_value_cstr = self
+            .mem
+            .alloc_and_write_cstr(self.fs.home_directory().as_str().as_bytes());
+        self.env_vars.insert(b"HOME".to_vec(), home_value_cstr);
     }
 }

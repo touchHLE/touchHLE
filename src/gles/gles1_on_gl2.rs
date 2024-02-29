@@ -312,6 +312,11 @@ const LIGHT_PARAMS: ParamTable = ParamTable(&[
     (gl21::QUADRATIC_ATTENUATION, ParamType::Float, 1),
 ]);
 
+const LIGHT_MODEL_PARAMS: ParamTable = ParamTable(&[
+    (gl21::LIGHT_MODEL_AMBIENT, ParamType::Float, 4),
+    (gl21::LIGHT_MODEL_TWO_SIDE, ParamType::Float, 1),
+]);
+
 /// Table of `glMaterial` parameters shared by OpenGL ES 1.1 and OpenGL 2.1.
 const MATERIAL_PARAMS: ParamTable = ParamTable(&[
     (gl21::AMBIENT, ParamType::Float, 4),
@@ -858,9 +863,11 @@ impl GLES for GLES1OnGL2 {
         )
     }
     unsafe fn LightModelf(&mut self, pname: GLenum, param: GLfloat) {
+        LIGHT_MODEL_PARAMS.assert_component_count(pname, 1);
         gl21::LightModelf(pname, param)
     }
     unsafe fn LightModelfv(&mut self, pname: GLenum, params: *const GLfloat) {
+        LIGHT_MODEL_PARAMS.assert_known_param(pname);
         gl21::LightModelfv(pname, params)
     }
     unsafe fn Materialf(&mut self, face: GLenum, pname: GLenum, param: GLfloat) {

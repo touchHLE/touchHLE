@@ -164,6 +164,16 @@ pub const CLASSES: ClassExports = objc_classes! {
     log!("TODO: ignoring registerForRemoteNotificationTypes:{}", types);
 }
 
+// UIResponder implementation
+// From the Apple UIView docs regarding [UIResponder nextResponder]:
+// "The shared UIApplication object normally returns nil, but it returns its
+//  app delegate if that object is a subclass of UIResponder and hasn’t
+//  already been called to handle the event."
+// TODO: The latter part
+- (id)nextResponder {
+    nil
+}
+
 @end
 
 };

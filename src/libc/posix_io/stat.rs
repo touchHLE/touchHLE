@@ -5,15 +5,101 @@
  */
 //! POSIX `sys/stat.h`
 
-use super::{off_t, FileDescriptor};
+use super::{close, off_t, open_direct, FileDescriptor};
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::fs::GuestPath;
-use crate::mem::{ConstPtr, MutVoidPtr};
+use crate::libc::time::timespec;
+use crate::mem::{ConstPtr, MutPtr, SafeRead};
 use crate::Environment;
 use std::io::{Seek, SeekFrom};
 
 #[allow(non_camel_case_types)]
+pub type dev_t = u32;
+#[allow(non_camel_case_types)]
 pub type mode_t = u16;
+#[allow(non_camel_case_types)]
+pub type nlink_t = u16;
+#[allow(non_camel_case_types)]
+pub type __darwin_ino64_t = u64;
+#[allow(non_camel_case_types)]
+pub type uid_t = u32;
+#[allow(non_camel_case_types)]
+pub type gid_t = u32;
+#[allow(non_camel_case_types)]
+pub type blkcnt_t = u64;
+#[allow(non_camel_case_types)]
+pub type blksize_t = u32;
+
+// Copied from https://crazyeights225.github.io/standalone/linux_st_mode.html
+#[allow(dead_code)]
+pub const S_IFMT: mode_t = 0o00170000; // bit mask for the file type bit fields
+#[allow(dead_code)]
+pub const S_IFSOCK: mode_t = 0o0140000; // is socket
+#[allow(dead_code)]
+pub const S_IFLNK: mode_t = 0o0120000; // is symbolic link
+pub const S_IFREG: mode_t = 0o0100000; // is regular file
+#[allow(dead_code)]
+pub const S_IFBLK: mode_t = 0o0060000; // is block device
+#[allow(dead_code)]
+pub const S_IFDIR: mode_t = 0o0040000; // is directory
+#[allow(dead_code)]
+pub const S_IFCHR: mode_t = 0o0020000; // is character device
+#[allow(dead_code)]
+pub const S_IFIFO: mode_t = 0o0010000; // is FIFO
+#[allow(dead_code)]
+pub const S_ISUID: mode_t = 0o0004000; // UID bit set
+#[allow(dead_code)]
+pub const S_ISGID: mode_t = 0o0002000; // group-ID bit set
+#[allow(dead_code)]
+pub const S_ISVTX: mode_t = 0o0001000; // sticky bit set
+#[allow(dead_code)]
+pub const S_IRWXU: mode_t = 0o00700; // mask for file owner permissions
+#[allow(dead_code)]
+pub const S_IRUSR: mode_t = 0o00400; // owner has read permissions
+#[allow(dead_code)]
+pub const S_IWUSR: mode_t = 0o00200; // owner has write permissions
+#[allow(dead_code)]
+pub const S_IXUSR: mode_t = 0o00100; // owner has execute permissions
+#[allow(dead_code)]
+pub const S_IRWXG: mode_t = 0o00070; // mask for group permissions
+#[allow(dead_code)]
+pub const S_IRGRP: mode_t = 0o00040; // group has read permissions
+#[allow(dead_code)]
+pub const S_IWGRP: mode_t = 0o00020; // group has write permissions
+#[allow(dead_code)]
+pub const S_IXGRP: mode_t = 0o00010; // group has execute permissions
+#[allow(dead_code)]
+pub const S_IRWXO: mode_t = 0o00007; // mask for others permissions
+#[allow(dead_code)]
+pub const S_IROTH: mode_t = 0o00004; // others have read permissions
+#[allow(dead_code)]
+pub const S_IWOTH: mode_t = 0o00002; // others have write permissions
+#[allow(dead_code)]
+pub const S_IXOTH: mode_t = 0o00001; // others have execute permissions
+
+#[allow(non_camel_case_types)]
+#[repr(C, packed)]
+pub struct stat {
+    st_dev: dev_t,
+    st_mode: mode_t,
+    st_nlink: nlink_t,
+    st_ino: __darwin_ino64_t,
+    st_uid: uid_t,
+    st_gid: gid_t,
+    st_rdev: dev_t,
+    st_atimespec: timespec,
+    st_mtimespec: timespec,
+    st_ctimespec: timespec,
+    st_birthtimespec: timespec,
+    st_size: off_t,
+    st_blocks: blkcnt_t,
+    st_blksize: blksize_t,
+    st_flags: u32,
+    st_gen: u32,
+    st_lspare: i32,
+    st_qspare: [i64; 2],
+}
+unsafe impl SafeRead for stat {}
 
 fn mkdir(env: &mut Environment, path: ConstPtr<u8>, mode: mode_t) -> i32 {
     // TODO: respect the mode
@@ -37,22 +123,31 @@ fn mkdir(env: &mut Environment, path: ConstPtr<u8>, mode: mode_t) -> i32 {
     }
 }
 
-fn fstat(env: &mut Environment, fd: FileDescriptor, buf: MutVoidPtr) -> i32 {
+fn fstat(env: &mut Environment, fd: FileDescriptor, buf: MutPtr<stat>) -> i32 {
     // TODO: error handling for unknown fd?
     let file = env.libc_state.posix_io.file_for_fd(fd).unwrap();
 
     log!("Warning: fstat() call, this function is mostly unimplemented");
     // FIXME: This implementation is highly incomplete. fstat() returns a huge
     // struct with many kinds of data in it. This code is assuming the caller
-    // only wants the file size.
-    let st_size_ptr = (buf + 0x3c).cast::<off_t>();
+    // only wants a small part of it.
 
+    let mut stat = env.mem.read(buf);
+
+    stat.st_mode |= S_IFREG;
+
+    // Obtain file size
     // TODO: Use the stream_len() method if that ever gets stabilized.
     let old_pos = file.file.stream_position().unwrap();
-    let full_size = file.file.seek(SeekFrom::End(0)).unwrap();
+    stat.st_size = file
+        .file
+        .seek(SeekFrom::End(0))
+        .unwrap()
+        .try_into()
+        .unwrap();
     file.file.seek(SeekFrom::Start(old_pos)).unwrap();
 
-    env.mem.write(st_size_ptr, full_size.try_into().unwrap());
+    env.mem.write(buf, stat);
 
     0 // success
 }

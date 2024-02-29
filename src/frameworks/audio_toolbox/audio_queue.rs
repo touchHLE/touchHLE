@@ -148,6 +148,7 @@ type AudioQueuePropertyListenerProc = GuestFunction;
 
 const kAudioQueueErr_InvalidBuffer: OSStatus = -66687;
 const kAudioQueueErr_InvalidPropertySize: OSStatus = -66683;
+const kAudioQueueErr_BufferInQueue: OSStatus = -66679;
 
 pub fn AudioQueueNewOutput(
     env: &mut Environment,
@@ -893,7 +894,9 @@ fn AudioQueueFreeBuffer(
         .get_mut(&in_aq)
         .unwrap();
 
-    assert!(!host_object.buffer_queue.contains(&in_buffer));
+    if host_object.buffer_queue.contains(&in_buffer) {
+        return kAudioQueueErr_BufferInQueue;
+    }
 
     if let Some(index) = host_object.buffers.iter().position(|x| x == &in_buffer) {
         host_object.buffers.remove(index);

@@ -346,10 +346,19 @@ fn glLightxv(env: &mut Environment, light: GLenum, pname: GLenum, params: ConstP
 fn glLightModelf(env: &mut Environment, pname: GLenum, param: GLfloat) {
     with_ctx_and_mem(env, |gles, _mem| unsafe { gles.LightModelf(pname, param) })
 }
+fn glLightModelx(env: &mut Environment, pname: GLenum, param: GLfixed) {
+    with_ctx_and_mem(env, |gles, _mem| unsafe { gles.LightModelx(pname, param) })
+}
 fn glLightModelfv(env: &mut Environment, pname: GLenum, params: ConstPtr<GLfloat>) {
     with_ctx_and_mem(env, |gles, mem| {
         let params = mem.ptr_at(params, 4 /* upper bound */);
         unsafe { gles.LightModelfv(pname, params) }
+    })
+}
+fn glLightModelxv(env: &mut Environment, pname: GLenum, params: ConstPtr<GLfixed>) {
+    with_ctx_and_mem(env, |gles, mem| {
+        let params = mem.ptr_at(params, 4 /* upper bound */);
+        unsafe { gles.LightModelxv(pname, params) }
     })
 }
 fn glMaterialf(env: &mut Environment, face: GLenum, pname: GLenum, param: GLfloat) {
@@ -1211,6 +1220,8 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(glLightxv(_, _, _)),
     export_c_func!(glLightModelf(_, _)),
     export_c_func!(glLightModelfv(_, _)),
+    export_c_func!(glLightModelx(_, _)),
+    export_c_func!(glLightModelxv(_, _)),
     export_c_func!(glMaterialf(_, _, _)),
     export_c_func!(glMaterialx(_, _, _)),
     export_c_func!(glMaterialfv(_, _, _)),

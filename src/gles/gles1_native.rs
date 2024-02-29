@@ -215,8 +215,14 @@ impl GLES for GLES1Native {
     unsafe fn LightModelf(&mut self, pname: GLenum, param: GLfloat) {
         gles11::LightModelf(pname, param)
     }
+    unsafe fn LightModelx(&mut self, pname: GLenum, param: GLfixed) {
+        gles11::LightModelx(pname, param)
+    }
     unsafe fn LightModelfv(&mut self, pname: GLenum, params: *const GLfloat) {
         gles11::LightModelfv(pname, params)
+    }
+    unsafe fn LightModelxv(&mut self, pname: GLenum, params: *const GLfixed) {
+        gles11::LightModelxv(pname, params)
     }
     unsafe fn Materialf(&mut self, face: GLenum, pname: GLenum, param: GLfloat) {
         gles11::Materialf(face, pname, param)

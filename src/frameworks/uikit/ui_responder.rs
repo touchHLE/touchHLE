@@ -5,7 +5,8 @@
  */
 //! `UIResponder`.
 
-use crate::objc::{id, objc_classes, ClassExports};
+use crate::msg;
+use crate::objc::{id, nil, objc_classes, ClassExports};
 
 #[derive(Default)]
 pub struct State {
@@ -20,9 +21,8 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 // TODO: real responder implementation etc
 
-// These methods print debug logs because they are only likely to get called if
-// a subclass didn't override them, which might mean we delivered the event to
-// the wrong object or it is unhandled.
+// The default implementation of these methods forward the message
+// up the responder chain
 
 - (())touchesBegan:(id)touches // NSSet* of UITouch*
          withEvent:(id)event { // UIEvent*
@@ -32,6 +32,10 @@ pub const CLASSES: ClassExports = objc_classes! {
         touches,
         event,
     );
+    let next_responder: id = msg![env; this nextResponder];
+    if next_responder != nil {
+        () = msg![env; next_responder touchesBegan:touches withEvent:event];
+    }
 }
 
 - (())touchesMoved:(id)touches // NSSet* of UITouch*
@@ -42,6 +46,10 @@ pub const CLASSES: ClassExports = objc_classes! {
         touches,
         event,
     );
+    let next_responder: id = msg![env; this nextResponder];
+    if next_responder != nil {
+        () = msg![env; next_responder touchesMoved:touches withEvent:event];
+    }
 }
 
 - (())touchesEnded:(id)touches // NSSet* of UITouch*
@@ -52,6 +60,10 @@ pub const CLASSES: ClassExports = objc_classes! {
         touches,
         event,
     );
+    let next_responder: id = msg![env; this nextResponder];
+    if next_responder != nil {
+        () = msg![env; next_responder touchesEnded:touches withEvent:event];
+    }
 }
 
 - (bool)isFirstResponder {

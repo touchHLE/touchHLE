@@ -5,6 +5,8 @@
  */
 //! Shared utilities.
 
+use std::ptr::read_unaligned;
+
 use super::gles11_raw as gles11; // constants only
 use super::gles11_raw::types::{GLenum, GLfixed, GLfloat, GLint, GLsizei};
 use super::GLES;
@@ -21,7 +23,7 @@ pub fn fixed_to_float(fixed: GLfixed) -> GLfloat {
 pub unsafe fn matrix_fixed_to_float(m: *const GLfixed) -> [GLfloat; 16] {
     let mut matrix = [0f32; 16];
     for (i, cell) in matrix.iter_mut().enumerate() {
-        *cell = fixed_to_float(*m.add(i));
+        *cell = fixed_to_float(read_unaligned(m.add(i)));
     }
     matrix
 }

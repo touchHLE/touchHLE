@@ -70,6 +70,10 @@ pub const CAPABILITIES: &[GLenum] = &[
     gl21::POINT_SPRITE,
 ];
 
+pub const UNSUPPORTED_CAPABILITIES: &[GLenum] = &[
+    0x8620, // GL_VERTEX_PROGRAM_NV
+];
+
 pub struct ArrayInfo {
     /// Enum used by `glEnableClientState`, `glDisableClientState` and
     /// `glGetBoolean`.
@@ -600,6 +604,8 @@ impl GLES for GLES1OnGL2 {
     unsafe fn Disable(&mut self, cap: GLenum) {
         if ARRAYS.iter().any(|&ArrayInfo { name, .. }| name == cap) {
             log_dbg!("Tolerating glDisable({:#x}) of client state", cap);
+        } else if UNSUPPORTED_CAPABILITIES.contains(&cap) {
+            log_dbg!("Tolerating glDisable({:#x}) of unsupported capability", cap);
         } else {
             assert!(CAPABILITIES.contains(&cap));
         }

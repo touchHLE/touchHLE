@@ -9,6 +9,7 @@
 #![allow(rustdoc::broken_intra_doc_links)] // https://github.com/rust-lang/rust/issues/83049
 
 use crate::dyld::{export_c_func, FunctionExports};
+use crate::libc::errno::EBUSY;
 use crate::mem::{ConstPtr, MutPtr, Ptr, SafeRead};
 use crate::{Environment, MutexId, PTHREAD_MUTEX_DEFAULT};
 
@@ -131,6 +132,16 @@ pub fn pthread_mutex_lock(env: &mut Environment, mutex: MutPtr<pthread_mutex_t>)
     env.lock_mutex(mutex_data.mutex_id).err().unwrap_or(0)
 }
 
+pub fn pthread_mutex_trylock(env: &mut Environment, mutex: MutPtr<pthread_mutex_t>) -> i32 {
+    check_or_register_mutex(env, mutex);
+    let mutex_data = env.mem.read(mutex);
+    if env.mutex_state.mutex_is_locked(mutex_data.mutex_id) {
+        EBUSY
+    } else {
+        pthread_mutex_lock(env, mutex)
+    }
+}
+
 pub fn pthread_mutex_unlock(env: &mut Environment, mutex: MutPtr<pthread_mutex_t>) -> i32 {
     check_or_register_mutex(env, mutex);
     let mutex_data = env.mem.read(mutex);
@@ -156,6 +167,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(pthread_mutexattr_destroy(_)),
     export_c_func!(pthread_mutex_init(_, _)),
     export_c_func!(pthread_mutex_lock(_)),
+    export_c_func!(pthread_mutex_trylock(_)),
     export_c_func!(pthread_mutex_unlock(_)),
     export_c_func!(pthread_mutex_destroy(_)),
 ];

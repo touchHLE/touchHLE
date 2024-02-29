@@ -5,6 +5,8 @@
  */
 //! Shared utilities.
 
+use std::slice::from_raw_parts;
+
 use super::gles11_raw as gles11; // constants only
 use super::gles11_raw::types::{GLenum, GLfixed, GLfloat, GLint, GLsizei};
 use super::GLES;
@@ -19,9 +21,13 @@ pub fn fixed_to_float(fixed: GLfixed) -> GLfloat {
 
 /// Convert a fixed-point 4-by-4 matrix to floating-point.
 pub unsafe fn matrix_fixed_to_float(m: *const GLfixed) -> [GLfloat; 16] {
+    let m = m as *const u8;
     let mut matrix = [0f32; 16];
     for (i, cell) in matrix.iter_mut().enumerate() {
-        *cell = fixed_to_float(*m.add(i));
+        // Read from a possibly misaligned pointer
+        let fixed: GLfixed =
+            i32::from_le_bytes(from_raw_parts(m.add(i * 4), 4).try_into().unwrap());
+        *cell = fixed_to_float(fixed);
     }
     matrix
 }

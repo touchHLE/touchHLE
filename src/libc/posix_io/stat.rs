@@ -61,6 +61,7 @@ pub const S_IWUSR: mode_t = 0o0000200; /* write permission, owner */
 pub const S_IXUSR: mode_t = 0o0000100; /* execute/search permission, owner */
 
 #[allow(non_camel_case_types)]
+#[derive(Default)]
 #[repr(C, packed)]
 pub struct stat {
     st_dev: dev_t,
@@ -106,16 +107,16 @@ fn mkdir(env: &mut Environment, path: ConstPtr<u8>, mode: mode_t) -> i32 {
     }
 }
 
-fn fstat(env: &mut Environment, fd: FileDescriptor, buf: MutPtr<stat>) -> i32 {
+/// Helper for [stat()] and [fstat()] that fills the data in the stat struct
+fn fstat_inner(env: &mut Environment, fd: FileDescriptor, buf: MutPtr<stat>) -> i32 {
     // TODO: error handling for unknown fd?
     let file = env.libc_state.posix_io.file_for_fd(fd).unwrap();
 
-    log!("Warning: fstat() call, this function is mostly unimplemented");
     // FIXME: This implementation is highly incomplete. fstat() returns a huge
     // struct with many kinds of data in it. This code is assuming the caller
     // only wants a small part of it.
 
-    let mut stat = env.mem.read(buf);
+    let mut stat = stat::default();
 
     match file.file {
         GuestFile::File(_) | GuestFile::IpaBundleFile(_) | GuestFile::ResourceFile(_) => {
@@ -144,4 +145,45 @@ fn fstat(env: &mut Environment, fd: FileDescriptor, buf: MutPtr<stat>) -> i32 {
     0 // success
 }
 
-pub const FUNCTIONS: FunctionExports = &[export_c_func!(mkdir(_, _)), export_c_func!(fstat(_, _))];
+fn fstat(env: &mut Environment, fd: FileDescriptor, buf: MutPtr<stat>) -> i32 {
+    log!("Warning: fstat() call, this function is mostly unimplemented");
+    let result = fstat_inner(env, fd, buf);
+    log_dbg!("fstat({:?}, {:?}) -> {}", fd, buf, result);
+    result
+}
+
+fn stat(env: &mut Environment, path: ConstPtr<u8>, buf: MutPtr<stat>) -> i32 {
+    log!("Warning: stat() call, this function is mostly unimplemented");
+
+    fn do_stat(env: &mut Environment, path: ConstPtr<u8>, buf: MutPtr<stat>) -> i32 {
+        if path.is_null() {
+            return -1; // TODO: Set errno
+        }
+
+        // Open and reuse fstat implementation
+        let fd = open_direct(env, path, 0);
+        if fd == -1 {
+            return -1; // TODO: Set errno
+        }
+
+        let result = fstat_inner(env, fd, buf);
+        assert!(close(env, fd) == 0);
+        result
+    }
+    let result = do_stat(env, path, buf);
+
+    log_dbg!(
+        "stat({:?} {:?}, {:?}) -> {}",
+        path,
+        env.mem.cstr_at_utf8(path),
+        buf,
+        result
+    );
+    result
+}
+
+pub const FUNCTIONS: FunctionExports = &[
+    export_c_func!(mkdir(_, _)),
+    export_c_func!(fstat(_, _)),
+    export_c_func!(stat(_, _)),
+];

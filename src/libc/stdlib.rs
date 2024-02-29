@@ -14,7 +14,6 @@ use crate::libc::string::strlen;
 use crate::libc::wchar::wchar_t;
 use crate::mem::{ConstPtr, ConstVoidPtr, GuestUSize, MutPtr, MutVoidPtr, Ptr};
 use crate::Environment;
-use std::collections::HashMap;
 use std::str::FromStr;
 
 pub mod qsort;
@@ -24,7 +23,6 @@ pub struct State {
     rand: u32,
     random: u32,
     arc4random: u32,
-    env: HashMap<Vec<u8>, MutPtr<u8>>,
 }
 
 // Sizes of zero are implementation-defined. macOS will happily give you back
@@ -169,10 +167,7 @@ fn arc4random(env: &mut Environment) -> u32 {
 
 fn getenv(env: &mut Environment, name: ConstPtr<u8>) -> MutPtr<u8> {
     let name_cstr = env.mem.cstr_at(name);
-    // TODO: Provide all the system environment variables an app might expect to
-    // find. Currently the only environment variables that can be found are
-    // those put there by the app (Crash Bandicoot Nitro Kart 3D uses this).
-    let Some(&value) = env.libc_state.stdlib.env.get(name_cstr) else {
+    let Some(&value) = env.env_vars.get(name_cstr) else {
         log!(
             "Warning: getenv() for {:?} ({:?}) unhandled",
             name,
@@ -180,6 +175,7 @@ fn getenv(env: &mut Environment, name: ConstPtr<u8>) -> MutPtr<u8> {
         );
         return Ptr::null();
     };
+
     log_dbg!(
         "getenv({:?} ({:?})) => {:?} ({:?})",
         name,
@@ -195,7 +191,7 @@ fn setenv(env: &mut Environment, name: ConstPtr<u8>, value: ConstPtr<u8>, overwr
     set_errno(env, 0);
 
     let name_cstr = env.mem.cstr_at(name);
-    if let Some(&existing) = env.libc_state.stdlib.env.get(name_cstr) {
+    if let Some(&existing) = env.env_vars.get(name_cstr) {
         if overwrite == 0 {
             return 0; // success
         }
@@ -203,7 +199,7 @@ fn setenv(env: &mut Environment, name: ConstPtr<u8>, value: ConstPtr<u8>, overwr
     };
     let value = super::string::strdup(env, value);
     let name_cstr = env.mem.cstr_at(name); // reborrow
-    env.libc_state.stdlib.env.insert(name_cstr.to_vec(), value);
+    env.env_vars.insert(name_cstr.to_vec(), value);
     log_dbg!(
         "Stored new value {:?} ({:?}) for environment variable {:?}",
         value,

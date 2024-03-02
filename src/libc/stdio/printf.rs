@@ -355,7 +355,7 @@ fn sscanf(env: &mut Environment, src: ConstPtr<u8>, format: ConstPtr<u8>, args: 
         if c != b'%' {
             let cc = env.mem.read(src_ptr);
             if c != cc {
-                return matched_args - 1;
+                return matched_args;
             }
             src_ptr += 1;
             continue;

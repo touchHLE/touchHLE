@@ -220,6 +220,9 @@ int test_sscanf() {
   matched = sscanf("+10 -10", "%hd %hd", &c, &d);
   if (!(matched == 2 && c == 10 && d == -10))
     return -9;
+  matched = sscanf("3000\\t4", "%d %d", &a, &b);
+  if (!(matched == 1 && a == 3000))
+    return -10;
   return 0;
 }
 

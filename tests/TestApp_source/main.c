@@ -194,23 +194,32 @@ int test_vsnprintf() {
 
 int test_sscanf() {
   int a, b;
-  short c;
+  short c, d;
   char str[4];
   int matched = sscanf("1.23", "%d.%d", &a, &b);
   if (!(matched == 2 && a == 1 && b == 23))
     return -1;
   matched = sscanf("abc111.42", "abc%d.%d", &a, &b);
   if (!(matched == 2 && a == 111 && b == 42))
-    return -1;
+    return -2;
   matched = sscanf("abc", "%d.%d", &a, &b);
   if (matched != 0)
-    return -1;
+    return -3;
   matched = sscanf("abc,8", "%[^,],%d", str, &b);
   if (!(matched == 2 && strcmp(str, "abc") == 0 && b == 8))
-    return -1;
+    return -4;
   matched = sscanf("9,10", "%hi,%i", &c, &a);
   if (!(c == 9 && a == 10))
-    return -1;
+    return -5;
+  matched = sscanf("DUMMY", "%d", &a);
+  if (matched != 0)
+    return -6;
+  matched = sscanf("+10 -10", "%d %d", &a, &b);
+  if (!(matched == 2 && a == 10 && b == -10))
+    return -7;
+  matched = sscanf("+10 -10", "%hd %hd", &c, &d);
+  if (!(matched == 2 && c == 10 && d == -10))
+    return -9;
   return 0;
 }
 

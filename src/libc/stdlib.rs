@@ -75,22 +75,9 @@ fn skip_whitespace(env: &mut Environment, s: ConstPtr<u8>) -> ConstPtr<u8> {
 }
 
 fn atoi(env: &mut Environment, s: ConstPtr<u8>) -> i32 {
-    // atoi() doesn't work with a null-terminated string, instead it stops
-    // once it hits something that's not a digit, so we have to do some parsing
-    // ourselves.
-    let start = skip_whitespace(env, s);
-    let mut len = 0;
-    let maybe_sign = env.mem.read(start + len);
-    if maybe_sign == b'+' || maybe_sign == b'-' || maybe_sign.is_ascii_digit() {
-        len += 1;
-    }
-    while env.mem.read(start + len).is_ascii_digit() {
-        len += 1;
-    }
-
-    let s = std::str::from_utf8(env.mem.bytes_at(start, len)).unwrap();
     // conveniently, overflow is undefined, so 0 is as valid a result as any
-    s.parse().unwrap_or(0)
+    let (res, _) = atoi_inner(env, s).unwrap_or((0, 0));
+    res
 }
 
 fn atol(env: &mut Environment, s: ConstPtr<u8>) -> i32 {
@@ -307,6 +294,28 @@ fn atof_inner(env: &mut Environment, s: ConstPtr<u8>) -> Result<(f64, u32), <f64
         while env.mem.read(start + len).is_ascii_digit() {
             len += 1;
         }
+    }
+
+    let s = std::str::from_utf8(env.mem.bytes_at(start, len)).unwrap();
+    s.parse().map(|result| (result, whitespace_len + len))
+}
+
+pub fn atoi_inner(
+    env: &mut Environment,
+    s: ConstPtr<u8>,
+) -> Result<(i32, u32), <i32 as FromStr>::Err> {
+    // atoi() doesn't work with a null-terminated string, instead it stops
+    // once it hits something that's not a digit, so we have to do some parsing
+    // ourselves.
+    let start = skip_whitespace(env, s);
+    let whitespace_len = Ptr::to_bits(start) - Ptr::to_bits(s);
+    let mut len = 0;
+    let maybe_sign = env.mem.read(start + len);
+    if maybe_sign == b'+' || maybe_sign == b'-' || maybe_sign.is_ascii_digit() {
+        len += 1;
+    }
+    while env.mem.read(start + len).is_ascii_digit() {
+        len += 1;
     }
 
     let s = std::str::from_utf8(env.mem.bytes_at(start, len)).unwrap();

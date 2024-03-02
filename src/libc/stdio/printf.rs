@@ -10,6 +10,7 @@ use crate::dyld::{export_c_func, FunctionExports};
 use crate::frameworks::foundation::{ns_string, unichar};
 use crate::libc::posix_io::{STDERR_FILENO, STDOUT_FILENO};
 use crate::libc::stdio::FILE;
+use crate::libc::stdlib::atoi_inner;
 use crate::mem::{ConstPtr, GuestUSize, Mem, MutPtr, MutVoidPtr};
 use crate::objc::{id, msg, nil};
 use crate::Environment;
@@ -382,26 +383,27 @@ fn sscanf(env: &mut Environment, src: ConstPtr<u8>, format: ConstPtr<u8>, args: 
                         match lm {
                             b'h' => {
                                 // signed short* or unsigned short*
-                                let mut val: i16 = 0;
-                                while let c @ b'0'..=b'9' = env.mem.read(src_ptr) {
-                                    val = val * 10 + (c - b'0') as i16;
-                                    src_ptr += 1;
+                                match atoi_inner(env, src_ptr.cast_const()) {
+                                    Ok((val, len)) => {
+                                        src_ptr += len;
+                                        let c_int_ptr: ConstPtr<i16> = args.next(env);
+                                        env.mem
+                                            .write(c_int_ptr.cast_mut(), val.try_into().unwrap());
+                                    }
+                                    Err(_) => break,
                                 }
-                                let c_short_ptr: ConstPtr<i16> = args.next(env);
-                                env.mem.write(c_short_ptr.cast_mut(), val);
                             }
                             _ => unimplemented!(),
                         }
                     }
-                    _ => {
-                        let mut val: i32 = 0;
-                        while let c @ b'0'..=b'9' = env.mem.read(src_ptr) {
-                            val = val * 10 + (c - b'0') as i32;
-                            src_ptr += 1;
+                    _ => match atoi_inner(env, src_ptr.cast_const()) {
+                        Ok((val, len)) => {
+                            src_ptr += len;
+                            let c_int_ptr: ConstPtr<i32> = args.next(env);
+                            env.mem.write(c_int_ptr.cast_mut(), val);
                         }
-                        let c_int_ptr: ConstPtr<i32> = args.next(env);
-                        env.mem.write(c_int_ptr.cast_mut(), val);
-                    }
+                        Err(_) => break,
+                    },
                 }
             }
             b'[' => {

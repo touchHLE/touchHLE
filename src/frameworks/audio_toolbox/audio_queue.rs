@@ -188,7 +188,7 @@ pub fn AudioQueueNewOutput(
         volume: 1.0,
         buffers: Vec::new(),
         buffer_queue: VecDeque::new(),
-        is_running: AudioQueueIsRunning::Running,
+        is_running: AudioQueueIsRunning::Stopped,
         al_source: None,
         al_unused_buffers: Vec::new(),
         aq_is_running_proc: None,

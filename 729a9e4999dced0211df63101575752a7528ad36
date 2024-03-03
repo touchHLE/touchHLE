@@ -16,6 +16,24 @@
       "message": "Do you think it\u0027s possible to refactor common parts here?\nFor example, have helper methods for \u0027f\u0027 and \u0027g\u0027 cases and reuse them for \u0027e\u0027 as well?",
       "revId": "729a9e4999dced0211df63101575752a7528ad36",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f1a94824_a3b94f05",
+        "filename": "src/libc/stdio/printf.rs",
+        "patchSetId": 41
+      },
+      "lineNbr": 210,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-03-03T12:53:41Z",
+      "side": 1,
+      "message": "I\u0027ve tried keeping it that way at first but from my testing, formatting doesn\u0027t work exactly the same in \u0027f\u0027 and \u0027e\u0027 as it does in \u0027g\u0027. In the end keeping separate implementations was easier and made for cleaner code",
+      "parentUuid": "82b4fad9_4b7065e8",
+      "revId": "729a9e4999dced0211df63101575752a7528ad36",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "82b4fad9_4b7065e8",
+        "filename": "src/libc/stdio/printf.rs",
+        "patchSetId": 41
+      },
+      "lineNbr": 210,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-03-03T11:50:16Z",
+      "side": 1,
+      "message": "Do you think it\u0027s possible to refactor common parts here?\nFor example, have helper methods for \u0027f\u0027 and \u0027g\u0027 cases and reuse them for \u0027e\u0027 as well?",
+      "revId": "729a9e4999dced0211df63101575752a7528ad36",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "39a93233_04564441",
+        "filename": ".github/workflows/touchHLE_release.yml",
+        "patchSetId": 14
+      },
+      "lineNbr": 124,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-03-03T11:44:33Z",
+      "side": 1,
+      "message": "I remember we had a situation where linter failed on Windows build, but not MacOS one. Not sure if it\u0027s important though.",
+      "revId": "590e0e2874c495763b650c2546c98d42f8bee9cf",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5b41db3d_b8c58bc0",
+        "filename": "tests/TestApp_source/CGAffineTransform.c",
+        "patchSetId": 14
+      },
+      "lineNbr": 20,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-03-03T11:44:33Z",
+      "side": 1,
+      "message": "could you please DEFINE_ME_WHEN_BUILDING_ON_MACOS ifdef instead?",
+      "revId": "590e0e2874c495763b650c2546c98d42f8bee9cf",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "85219448_6d55afc5",
+        "filename": "tests/TestApp_source/CGAffineTransform.c",
+        "patchSetId": 14
+      },
+      "lineNbr": 21,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-03-03T11:44:33Z",
+      "side": 1,
+      "message": "also, this seems already be defined in system_headers.h anyway? (\u003cstdbool.h\u003e part)",
+      "revId": "590e0e2874c495763b650c2546c98d42f8bee9cf",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "cb177262_3a69d94d",
+        "filename": "tests/TestApp_source/main.m",
+        "patchSetId": 14
+      },
+      "lineNbr": 14,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-03-03T11:44:33Z",
+      "side": 1,
+      "message": "why import and not include here?",
+      "revId": "590e0e2874c495763b650c2546c98d42f8bee9cf",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

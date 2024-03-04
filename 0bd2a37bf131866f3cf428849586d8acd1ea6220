@@ -71,6 +71,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "b862d9a0_505674f3",
+        "filename": "tests/ObjCTestApp_source/system_headers.h",
+        "patchSetId": 11
+      },
+      "lineNbr": 9,
+      "author": {
+        "id": 1021823
+      },
+      "writtenOn": "2024-03-04T02:14:45Z",
+      "side": 1,
+      "message": "Done (for real)",
+      "parentUuid": "177ef813_85ae6e6a",
+      "revId": "0bd2a37bf131866f3cf428849586d8acd1ea6220",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "ad035156_d90d25c1",

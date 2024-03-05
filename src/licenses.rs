@@ -6,7 +6,7 @@
 /// Prints copyright, authorship and license information.
 
 const MAIN_COPYRIGHT: &str = "
-touchHLE © 2023 hikari_no_yume and other contributors.
+touchHLE © 2023–2024 touchHLE project contributors.
 ";
 
 const MAIN_LICENSE: &str = "

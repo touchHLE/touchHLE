@@ -24,8 +24,8 @@ These should also work but aren't regularly tested:
 
 Some pairings that have been tried and apparently **don't work**:
 
-* [Building for x64 macOS on AArch64 macOS](https://github.com/hikari-no-yume/touchHLE/issues/71)
-* [Building for AArch64 Android on x64 Windows](https://github.com/hikari-no-yume/touchHLE/issues/107)
+* [Building for x64 macOS on AArch64 macOS](https://github.com/touchHLE/touchHLE/issues/71)
+* [Building for AArch64 Android on x64 Windows](https://github.com/touchHLE/touchHLE/issues/107)
 
 Of course, we aspire to have cross-compilation work cleanly for all platforms, but alas we're not there yet. Contributions are of course encouraged, and if you hit an issue when cross-compiling targeting a supported platform, please do tell us about it, though no promises can be made about whether your issue will be fixed.
 

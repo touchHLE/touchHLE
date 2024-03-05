@@ -8,7 +8,7 @@ The goal of this project is to run games from the early days of iOS:
 
 * Currently: iPhone and iPod touch apps for iPhone OS 2.x and iPhone OS 3.0. (iPhone OS 3.0 support is a recent addition and is not in a release yet.)
 * Longer term: iPhone OS 3.1, iPad apps (iPhone OS 3.2), iOS 4.x, …
-* [Never](https://github.com/hikari-no-yume/touchHLE/issues/181#issuecomment-1777098259): 64-bit iOS.
+* [Never](https://github.com/touchHLE/touchHLE/issues/181#issuecomment-1777098259): 64-bit iOS.
 
 Support for apps that aren't games isn't a priority: it's more complex and less fun.
 
@@ -40,17 +40,17 @@ Input methods:
 - For simulated accelerometer input, there are two options:
   - Tilt control simulation using the left analog stick of a game controller
   - Real accelerometer input, if you are using a phone, tablet or some other device with a built-in accelerometer (TODO: support game controllers with accelerometers)
-    - This apparently doesn't work on certain Android devices, particularly Xiaomi/MIUI devices, [but we don't know why](https://github.com/hikari-no-yume/touchHLE/issues/151)
+    - This apparently doesn't work on certain Android devices, particularly Xiaomi/MIUI devices, [but we don't know why](https://github.com/touchHLE/touchHLE/issues/151)
 
 ## Development status
 
-Real development started in December 2022. This is so far [a single person](https://hikari.noyu.me/)'s full-time passion project; please consider helping me to keep doing this by [donating](https://liberapay.com/hikari_no_yume)! There are also a number of [volunteers contributing in their free time](https://github.com/hikari-no-yume/touchHLE/graphs/contributors). There's only been a handful of releases so far and no promises can be made about the future. Please be patient.
+Real development started in December 2022. This is so far [a single person](https://hikari.noyu.me/)'s full-time passion project; please consider helping me to keep doing this by [donating](https://liberapay.com/hikari_no_yume)! There are also a number of [volunteers contributing in their free time](https://github.com/touchHLE/touchHLE/graphs/contributors). There's only been a handful of releases so far and no promises can be made about the future. Please be patient.
 
 In general, the supported functionality is defined by the supported apps: most contributors are interested in getting a particular game working, and contribute support for whichever missing features are needed for that game. Consequently, the completeness varies a lot between APIs, e.g. UIKit is easily the most hacky and incomplete of the large frameworks that have been implemented, because most games don't use very much of its functionality, whereas the OpenGL ES and OpenAL implementations are probably complete enough to cover a large number of early apps, because games make heavy use of these.
 
 # Usage
 
-First obtain touchHLE, either a [binary release](https://github.com/hikari-no-yume/touchHLE/releases) or by building it yourself (see the next section).
+First obtain touchHLE, either a [binary release](https://github.com/touchHLE/touchHLE/releases) or by building it yourself (see the next section).
 
 You'll then need an app that you can run. The [app compatibility database](https://appdb.touchhle.org/) is a good guide for which versions of which apps are known to work, but bear in mind that it may contain outdated or inaccurate information. Note that the app binary must be decrypted to be usable.
 

@@ -16,7 +16,7 @@ Please bear in mind that there are infinitely many apps that do not work in touc
 touchHLE uses git source control. You can get the source code from GitHub like this:
 
 ```
-$ git clone https://github.com/hikari-no-yume/touchHLE.git
+$ git clone https://github.com/touchHLE/touchHLE.git
 $ cd touchHLE
 ```
 

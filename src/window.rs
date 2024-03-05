@@ -176,7 +176,7 @@ impl Window {
         // is available, but we don't want to enable SDL's HIDAPI controller
         // drivers because they cause duplicated controllers on macOS
         // (https://github.com/libsdl-org/SDL/issues/7479). Once that's fixed,
-        // remove this (https://github.com/hikari-no-yume/touchHLE/issues/85).
+        // remove this (https://github.com/touchHLE/touchHLE/issues/85).
         sdl2::hint::set("SDL_JOYSTICK_HIDAPI", "0");
 
         if env::consts::OS == "android" {

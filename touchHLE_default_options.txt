@@ -198,3 +198,6 @@ com.gameloft.HOS2: --stick-to-touch=28,206,84,84 --button-to-touch=Start,25,25 -
 # Star Battalion
 com.gameloft.starfighter: --skip-objc-type-checks
 com.gameloft.starfighteriPad: --skip-objc-type-checks
+
+# Resident Evil Degeneration
+jp.co.capcom.residentevil.en: --landscape-left --stabilize-virtual-cursor=0.1,10 --button-to-touch=A,430,280 --button-to-touch=B,440,200 --button-to-touch=Y,440,100 --button-to-touch=Start,30,30 --dpad-to-touch=25,200,95,100 --stick-to-touch=25,200,95,100

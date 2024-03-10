@@ -177,3 +177,6 @@ com.pangea.bug2: --ignore-gl-errors
 # Casper
 # (force composition fixes graphical issues)
 com.mastertronic.casper: --force-composition
+
+# Resident Evil Degeneration
+jp.co.capcom.residentevil.en: --landscape-left

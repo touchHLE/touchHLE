@@ -93,3 +93,6 @@ com.gameloft.TVSK: --landscape-right
 
 # CSI: Miami
 com.gameloft.csimiami: --landscape-left
+
+# Resident Evil Degeneration
+jp.co.capcom.residentevil.en: --landscape-left

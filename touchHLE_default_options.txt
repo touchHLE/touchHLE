@@ -204,3 +204,6 @@ com.KelliNoda.Zombieville: --landscape-left --force-composition
 # Ace Combat Xi
 # Start: Pause, DPad: Pitch/Yaw, Left stick: Pitch/Roll, Left shoulder button: Throttle, X: Brake, Y: Objective, B: Missile, A: Gun
 com.namconetworks.AceCombatXi: --landscape-left --y-tilt-offset=45 --button-to-touch=Start,195,310 --dpad-to-touch=15,150,75,75 --button-to-touch=LeftShoulder,33,263 --button-to-touch=X,115,295  --button-to-touch=Y,355,230 --button-to-touch=B,440,260 --button-to-touch=A,355,300
+
+# Resident Evil Degeneration
+jp.co.capcom.residentevil.en: --landscape-left --stabilize-virtual-cursor=0.1,10 --button-to-touch=A,430,280 --button-to-touch=B,440,200 --button-to-touch=Y,440,100 --button-to-touch=Start,30,30 --dpad-to-touch=25,200,95,100 --stick-to-touch=25,200,95,100

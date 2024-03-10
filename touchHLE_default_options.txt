@@ -84,3 +84,6 @@ jp.co.capcom.res4: --landscape-left --stabilize-virtual-cursor=0.1,10 --button-t
 # Earthworm Jim
 # Up/Down/Left/Right = Move, A = Jump, B = Whip, X = Fire
 com.gameloft.Earthworm: --landscape-left --button-to-touch=DPadUp,72,194 --button-to-touch=DPadDown,72,278 --button-to-touch=DPadLeft,30,238 --button-to-touch=DPadRight,110,238 --button-to-touch=A,442,284 --button-to-touch=X,378,248 --button-to-touch=B,442,212 --button-to-touch=Start,448,32
+
+# Resident Evil Degeneration
+jp.co.capcom.residentevil.en: --landscape-left

@@ -37,6 +37,23 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "9c2ad359_e20eb750",
+        "filename": "tests/TestApp_source/system_headers_objc.h",
+        "patchSetId": 15
+      },
+      "lineNbr": 9,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-03-11T22:05:52Z",
+      "side": 1,
+      "message": "you should not add \u0027;\u0027 in the defines for true/false - otherwise it will be expanded to `0;` or `1;` and would not always compile (for example, if true or false is passed as an argument to a function)",
+      "revId": "4c1495844f627abf4308955a4d8320f250002ae9",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "d96470fc_6f6237d4",
         "filename": "tests/integration.rs",
         "patchSetId": 15

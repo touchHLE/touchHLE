@@ -251,8 +251,11 @@ impl AudioFile {
                     unreachable!()
                 };
 
+                let channels: u64 = wave_reader.spec().channels.into();
+                // WavReader expects number of samples which are
+                // independent of the number of channels here
                 wave_reader
-                    .seek((offset / bytes_per_sample).try_into().unwrap())
+                    .seek((offset / (bytes_per_sample * channels)).try_into().unwrap())
                     .map_err(|_| ())?;
 
                 let mut byte_offset = 0;

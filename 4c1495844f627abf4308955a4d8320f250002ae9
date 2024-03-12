@@ -20,6 +20,23 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "f82ffe9f_dc56f144",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 15
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021823
+      },
+      "writtenOn": "2024-03-12T00:13:06Z",
+      "side": 1,
+      "message": "Migrating to https://review.gerrithub.io/c/touchHLE/touchHLE/+/1178142",
+      "revId": "4c1495844f627abf4308955a4d8320f250002ae9",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "18e95986_278e63c8",
         "filename": "tests/TestApp_source/CGAffineTransform.c",
         "patchSetId": 15
@@ -31,6 +48,24 @@
       "writtenOn": "2024-03-08T22:54:32Z",
       "side": 1,
       "message": "this is not valid anymore, please remove",
+      "revId": "4c1495844f627abf4308955a4d8320f250002ae9",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "777e8340_bc5c104b",
+        "filename": "tests/TestApp_source/CGAffineTransform.c",
+        "patchSetId": 15
+      },
+      "lineNbr": 9,
+      "author": {
+        "id": 1021823
+      },
+      "writtenOn": "2024-03-12T00:13:06Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "18e95986_278e63c8",
       "revId": "4c1495844f627abf4308955a4d8320f250002ae9",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
@@ -52,6 +87,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "adc39c6f_7ec013fb",
+        "filename": "tests/TestApp_source/system_headers_objc.h",
+        "patchSetId": 15
+      },
+      "lineNbr": 9,
+      "author": {
+        "id": 1021823
+      },
+      "writtenOn": "2024-03-12T00:13:06Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "9c2ad359_e20eb750",
+      "revId": "4c1495844f627abf4308955a4d8320f250002ae9",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "d96470fc_6f6237d4",
@@ -65,6 +118,30 @@
       "writtenOn": "2024-03-08T22:54:32Z",
       "side": 1,
       "message": "What are current errors/blockers for Windows? just curios",
+      "range": {
+        "startLine": 133,
+        "startChar": 32,
+        "endLine": 133,
+        "endChar": 51
+      },
+      "revId": "4c1495844f627abf4308955a4d8320f250002ae9",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "26fc5635_31a65cda",
+        "filename": "tests/integration.rs",
+        "patchSetId": 15
+      },
+      "lineNbr": 133,
+      "author": {
+        "id": 1021823
+      },
+      "writtenOn": "2024-03-12T00:13:06Z",
+      "side": 1,
+      "message": "The linker port would need cygwin, and I haven\u0027t bothered to test it. I\u0027m pretty sure there aren\u0027t any issues but I don\u0027t want to say for sure.",
+      "parentUuid": "d96470fc_6f6237d4",
       "range": {
         "startLine": 133,
         "startChar": 32,

@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8828b9a6_6c64e0dd",
+        "filename": "src/dyld/constant_lists.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 27,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-03-13T22:56:08Z",
+      "side": 1,
+      "message": "? this is already imported on the line 31",
+      "revId": "f334dedbe7daa02774b69dfacd2e59fd4eecfd34",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

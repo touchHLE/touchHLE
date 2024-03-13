@@ -20,7 +20,7 @@ use crate::frameworks::audio_toolbox::audio_queue::{
 use crate::frameworks::carbon_core::eofErr;
 use crate::frameworks::core_audio_types::AudioStreamBasicDescription;
 use crate::frameworks::core_foundation::cf_run_loop::kCFRunLoopCommonModes;
-use crate::frameworks::foundation::ns_string;
+use crate::frameworks::foundation::{ns_string, NSInteger};
 use crate::mem::{guest_size_of, GuestUSize, MutPtr, MutVoidPtr, Ptr};
 use crate::msg;
 use crate::objc::{id, nil, release, retain, Class, ClassExports, HostObject, NSZonePtr};
@@ -40,6 +40,7 @@ struct AVAudioPlayerHostObject {
     current_packet: i64,
     volume: f32,
     is_playing: bool,
+    num_of_loops: NSInteger,
 }
 impl HostObject for AVAudioPlayerHostObject {}
 
@@ -66,7 +67,8 @@ pub const CLASSES: ClassExports = objc_classes! {
         num_packets_to_read: 0,
         current_packet: 0,
         volume: 1.0,
-        is_playing: false
+        is_playing: false,
+        num_of_loops: 0
     });
     env.objc.alloc_object(this, host_object, &mut env.mem)
 }
@@ -209,10 +211,11 @@ pub const CLASSES: ClassExports = objc_classes! {
     AudioFileClose(env, audio_file_id.unwrap());
     env.mem.free(audio_queue_buffers.unwrap().cast());
 
-    let &AVAudioPlayerHostObject { audio_file_url, output_callback, .. } = env.objc.borrow(this);
+    let &AVAudioPlayerHostObject { audio_file_url, output_callback, num_of_loops, .. } = env.objc.borrow(this);
     *env.objc.borrow_mut::<AVAudioPlayerHostObject>(this) = AVAudioPlayerHostObject {
         audio_file_url,
         output_callback,
+        num_of_loops,
         audio_file_id: None,
         audio_desc: None,
         audio_queue: None,
@@ -222,6 +225,11 @@ pub const CLASSES: ClassExports = objc_classes! {
         volume: 1.0,
         is_playing: false
     };
+}
+
+- (())setNumberOfLoops:(NSInteger)numberOfLoops {
+    log_dbg!("[(AVAudioPlayer *) {:?} setNumberOfLoops:{:?}]", this, numberOfLoops);
+    env.objc.borrow_mut::<AVAudioPlayerHostObject>(this).num_of_loops = numberOfLoops;
 }
 
 - (())dealloc {
@@ -316,15 +324,14 @@ fn _touchHLE_AVAudioPlayerOutputBufferHelper(
         num_packets_ptr,
         audio_queue_buffer.audio_data,
     );
-    if status == eofErr {
-        // TODO: respect number of loops
-        return;
-    } else {
-        assert_eq!(status, 0);
-    }
     let num_packets = env.mem.read(num_packets_ptr);
+    let num_bytes = env.mem.read(num_bytes_ptr);
+    env.mem.free(num_packets_ptr.cast());
+    env.mem.free(num_bytes_ptr.cast());
+
     if num_packets > 0 {
-        audio_queue_buffer.audio_data_byte_size = env.mem.read(num_bytes_ptr);
+        assert!(status == 0 || status == eofErr);
+        audio_queue_buffer.audio_data_byte_size = num_bytes;
         env.mem.write(in_buf, audio_queue_buffer);
         let status = AudioQueueEnqueueBuffer(env, aq, in_buf, 0, Ptr::null());
         assert_eq!(status, 0);
@@ -332,13 +339,27 @@ fn _touchHLE_AVAudioPlayerOutputBufferHelper(
             .borrow_mut::<AVAudioPlayerHostObject>(av_audio_player)
             .current_packet = current_packet + num_packets as i64;
     } else {
-        let status = AudioQueueStop(env, aq, false);
-        assert_eq!(status, 0);
-        env.objc
-            .borrow_mut::<AVAudioPlayerHostObject>(av_audio_player)
-            .is_playing = false;
+        assert_eq!(status, eofErr);
+        let number_of_loops = env
+            .objc
+            .borrow::<AVAudioPlayerHostObject>(av_audio_player)
+            .num_of_loops;
+        if number_of_loops == 0 {
+            let status = AudioQueueStop(env, aq, false);
+            assert_eq!(status, 0);
+            env.objc
+                .borrow_mut::<AVAudioPlayerHostObject>(av_audio_player)
+                .is_playing = false;
+        } else {
+            if number_of_loops > 0 {
+                env.objc
+                    .borrow_mut::<AVAudioPlayerHostObject>(av_audio_player)
+                    .num_of_loops -= 1;
+            }
+            env.objc
+                .borrow_mut::<AVAudioPlayerHostObject>(av_audio_player)
+                .current_packet = 0;
+            _touchHLE_AVAudioPlayerOutputBufferHelper(env, in_user_data, in_aq, in_buf);
+        }
     }
-
-    env.mem.free(num_packets_ptr.cast());
-    env.mem.free(num_bytes_ptr.cast());
 }

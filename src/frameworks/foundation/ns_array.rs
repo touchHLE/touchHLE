@@ -8,6 +8,7 @@
 use super::ns_enumerator::{fast_enumeration_helper, NSFastEnumerationState};
 use super::ns_property_list_serialization::deserialize_plist_from_file;
 use super::{ns_keyed_unarchiver, ns_string, ns_url, NSUInteger};
+use crate::frameworks::foundation::{NSComparisonResult, NSNotFound, NSOrderedSame};
 use crate::fs::GuestPath;
 use crate::mem::MutPtr;
 use crate::objc::{
@@ -97,6 +98,19 @@ pub const CLASSES: ClassExports = objc_classes! {
     // TODO: override this once we have NSMutableArray!
     retain(env, this)
 }
+
+- (NSUInteger)indexOfObject:(id)object {
+    let count: NSUInteger = msg![env; this count];
+    for i in 0..count {
+        let cur_object: id = msg![env; this objectAtIndex:i];
+        let compare_result:NSComparisonResult = msg![env; cur_object compare:object options: 0u32];
+        if compare_result == NSOrderedSame {
+            return i;
+        }
+    }
+    NSNotFound as NSUInteger
+}
+
 
 - (id)lastObject {
     let size: NSUInteger = msg![env; this count];

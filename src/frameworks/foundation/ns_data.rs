@@ -149,6 +149,13 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.borrow::<NSDataHostObject>(this).length
 }
 
+- (bool)isEqualToData:(id)other {
+    //FIXME: Avoid allocation
+    let a = to_rust_slice(env, this).to_owned();
+    let b = to_rust_slice(env, other);
+    a == b
+}
+
 - (())getBytes:(MutPtr<u8>)buffer range:(NSRange)range {
     if range.length == 0 {
         return;

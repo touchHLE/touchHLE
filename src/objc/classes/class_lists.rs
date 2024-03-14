@@ -47,6 +47,7 @@ pub const CLASS_LISTS: &[super::ClassExports] = &[
     foundation::ns_thread::CLASSES,
     foundation::ns_timer::CLASSES,
     foundation::ns_url::CLASSES,
+    foundation::ns_url_request::CLASSES,
     foundation::ns_user_defaults::CLASSES,
     foundation::ns_value::CLASSES,
     av_audio::av_audio_player::CLASSES,

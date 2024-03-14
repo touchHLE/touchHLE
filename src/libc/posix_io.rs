@@ -441,7 +441,6 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(lseek(_, _, _)),
     export_c_func!(close(_)),
     export_c_func!(getcwd(_, _)),
-    export_c_func!(getcwd(_, _)),
     export_c_func!(chdir(_)),
     export_c_func!(flock(_, _)),
     export_c_func!(ftruncate(_, _)),

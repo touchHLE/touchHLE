@@ -29,6 +29,7 @@ impl State {
 
 struct PosixFileHostObject {
     file: GuestFile,
+    options: GuestOpenOptions,
     reached_eof: bool,
 }
 
@@ -140,11 +141,12 @@ pub fn open_direct(env: &mut Environment, path: ConstPtr<u8>, flags: i32) -> Fil
     }
     let res = match env
         .fs
-        .open_with_options(GuestPath::new(&path_string), options)
+        .open_with_options(GuestPath::new(&path_string), options.clone())
     {
         Ok(file) => {
             let host_object = PosixFileHostObject {
                 file,
+                options,
                 reached_eof: false,
             };
 
@@ -349,29 +351,35 @@ pub fn close(env: &mut Environment, fd: FileDescriptor) -> i32 {
         return 0;
     }
 
-    match env.libc_state.posix_io.files[fd_to_file_idx(fd)].take() {
+    let result = match env.libc_state.posix_io.files[fd_to_file_idx(fd)].take() {
         Some(file) => {
             // The actual closing of the file happens implicitly when `file`
             // falls out of scope. The return value is about whether flushing
             // succeeds.
-            match file.file.sync_all() {
-                Ok(()) => {
-                    log_dbg!("close({:?}) => 0", fd);
-                    0
-                }
-                Err(_) => {
-                    // TODO: set errno
-                    log!("Warning: close({:?}) failed, returning -1", fd);
-                    -1
+            if !file.options.write {
+                0
+            } else {
+                match file.file.sync_all() {
+                    Ok(()) => 0,
+                    Err(_) => {
+                        // TODO: set errno
+                        -1
+                    }
                 }
             }
         }
         None => {
             // TODO: set errno
-            log!("Warning: close({:?}) failed, returning -1", fd);
             -1
         }
+    };
+
+    if result == 0 {
+        log_dbg!("close({:?}) => 0", fd);
+    } else {
+        log!("Warning: close({:?}) failed, returning -1", fd);
     }
+    result
 }
 
 pub fn getcwd(env: &mut Environment, buf_ptr: MutPtr<u8>, buf_size: GuestUSize) -> MutPtr<u8> {

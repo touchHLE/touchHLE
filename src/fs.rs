@@ -757,6 +757,7 @@ impl Fs {
             append,
             create,
             truncate,
+            ..
         } = options;
         assert!((!truncate && !create) || write || append);
 

@@ -29,6 +29,7 @@ impl State {
 
 struct PosixFileHostObject {
     file: GuestFile,
+    needs_flush: bool,
     reached_eof: bool,
 }
 
@@ -105,11 +106,20 @@ pub fn open_direct(env: &mut Environment, path: ConstPtr<u8>, flags: i32) -> Fil
 
     // TODO: respect the mode (in the variadic arguments) when creating a file
     // Note: NONBLOCK flag is ignored, assumption is all file I/O is fast
+    let mut needs_flush = false;
     let mut options = GuestOpenOptions::new();
     match flags & O_ACCMODE {
-        O_RDONLY => options.read(),
-        O_WRONLY => options.write(),
-        O_RDWR => options.read().write(),
+        O_RDONLY => {
+            options.read();
+        }
+        O_WRONLY => {
+            options.write();
+            needs_flush = true;
+        }
+        O_RDWR => {
+            options.read().write();
+            needs_flush = true;
+        }
         _ => panic!(),
     };
     if (flags & O_APPEND) != 0 {
@@ -145,6 +155,7 @@ pub fn open_direct(env: &mut Environment, path: ConstPtr<u8>, flags: i32) -> Fil
         Ok(file) => {
             let host_object = PosixFileHostObject {
                 file,
+                needs_flush,
                 reached_eof: false,
             };
 
@@ -349,29 +360,35 @@ pub fn close(env: &mut Environment, fd: FileDescriptor) -> i32 {
         return 0;
     }
 
-    match env.libc_state.posix_io.files[fd_to_file_idx(fd)].take() {
+    let result = match env.libc_state.posix_io.files[fd_to_file_idx(fd)].take() {
         Some(file) => {
             // The actual closing of the file happens implicitly when `file`
             // falls out of scope. The return value is about whether flushing
             // succeeds.
-            match file.file.sync_all() {
-                Ok(()) => {
-                    log_dbg!("close({:?}) => 0", fd);
-                    0
-                }
-                Err(_) => {
-                    // TODO: set errno
-                    log!("Warning: close({:?}) failed, returning -1", fd);
-                    -1
+            if !file.needs_flush {
+                0
+            } else {
+                match file.file.sync_all() {
+                    Ok(()) => 0,
+                    Err(_) => {
+                        // TODO: set errno
+                        -1
+                    }
                 }
             }
         }
         None => {
             // TODO: set errno
-            log!("Warning: close({:?}) failed, returning -1", fd);
             -1
         }
+    };
+
+    if result == 0 {
+        log_dbg!("close({:?}) => 0", fd);
+    } else {
+        log!("Warning: close({:?}) failed, returning -1", fd);
     }
+    result
 }
 
 pub fn getcwd(env: &mut Environment, buf_ptr: MutPtr<u8>, buf_size: GuestUSize) -> MutPtr<u8> {

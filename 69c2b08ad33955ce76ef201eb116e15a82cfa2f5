@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "57d3188c_25d719b8",
+        "filename": "src/frameworks/foundation/ns_thread.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 137,
+      "author": {
+        "id": 1021823
+      },
+      "writtenOn": "2024-03-19T01:15:46Z",
+      "side": 1,
+      "message": "If the thread was created by pthread_create, thread_dictionary current would be nil. It\u0027s probably better to make the dictionary as needed.",
+      "revId": "69c2b08ad33955ce76ef201eb116e15a82cfa2f5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

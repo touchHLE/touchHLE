@@ -16,6 +16,24 @@
       "message": "could you check what is returned on the emulator or real device by default?",
       "revId": "efd38c33a1be88d4aeda790ef06f3b593dc10e5e",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4dd0d261_8984dc03",
+        "filename": "src/frameworks/audio_toolbox/audio_session.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 69,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-03-20T23:19:36Z",
+      "side": 1,
+      "message": "Same comment for kAudioSessionProperty_CurrentHardwareOutputNumberChannels",
+      "parentUuid": "ba2596e5_aa8b1c71",
+      "revId": "efd38c33a1be88d4aeda790ef06f3b593dc10e5e",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

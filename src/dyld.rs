@@ -570,7 +570,7 @@ impl Dyld {
             return Some(f);
         }
 
-        for dylib in &bins[1..] {
+        for dylib in bins.iter() {
             if let Some(&addr) = dylib.exported_symbols.get(symbol) {
                 let (stub_function_ptr, la_symbol_ptr) =
                     link_by_restoring_stub(mem, cpu, addr, svc_pc, info.entry_size);

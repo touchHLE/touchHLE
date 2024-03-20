@@ -1294,6 +1294,7 @@ impl GLES for GLES1OnGL2 {
                 || format == gl21::RGBA
                 || format == gl21::LUMINANCE
                 || format == gl21::LUMINANCE_ALPHA
+                || format == gl21::BGRA
         );
         assert!(
             type_ == gl21::UNSIGNED_BYTE

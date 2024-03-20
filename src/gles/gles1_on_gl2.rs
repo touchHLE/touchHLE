@@ -196,6 +196,7 @@ const GET_PARAMS: ParamTable = ParamTable(&[
     (gl21::MAX_LIGHTS, ParamType::Int, 1),
     (gl21::MAX_MODELVIEW_STACK_DEPTH, ParamType::Int, 1),
     (gl21::MAX_PROJECTION_STACK_DEPTH, ParamType::Int, 1),
+    (gl21::MAX_TEXTURE_MAX_ANISOTROPY_EXT, ParamType::Float, 1),
     (gl21::MAX_TEXTURE_SIZE, ParamType::Int, 1),
     (gl21::MAX_TEXTURE_STACK_DEPTH, ParamType::Int, 1),
     (gl21::MAX_TEXTURE_UNITS, ParamType::Int, 1),
@@ -272,6 +273,10 @@ const GET_PARAMS: ParamTable = ParamTable(&[
     (gl21::RENDERBUFFER_BINDING_EXT, ParamType::Int, 1),
     // EXT_texture_lod_bias
     (gl21::MAX_TEXTURE_LOD_BIAS_EXT, ParamType::Float, 1),
+    // OES_matrix_palette -> ARB_matrix_palette
+    (gl21::MAX_PALETTE_MATRICES_ARB, ParamType::Int, 1),
+    // OES_matrix_palette -> ARB_vertex_blend
+    (gl21::MAX_VERTEX_UNITS_ARB, ParamType::Int, 1),
 ]);
 
 const POINT_PARAMS: ParamTable = ParamTable(&[

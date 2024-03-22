@@ -16,6 +16,24 @@
       "message": "you should free(str) after each check, otherwise it creates a memory leak here.\n(check how str_format() is implemented)",
       "revId": "f02138683f0e488941b46e6a08f057e1ed1be6fb",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "2d26c1c2_73e497a7",
+        "filename": "tests/TestApp_source/main.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 195,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-03-22T15:36:12Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "3341c1bb_7913f762",
+      "revId": "f02138683f0e488941b46e6a08f057e1ed1be6fb",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

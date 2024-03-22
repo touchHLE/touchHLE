@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7597eea9_345c6a9b",
+        "filename": "src/libc/stdlib.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 140,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-03-22T21:35:10Z",
+      "side": 1,
+      "message": "why do you need to have this?",
+      "revId": "e1a60f1f003695cae0e768590e972846bdae2ee9",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c108ced9_6580a8c9",
+        "filename": "src/libc/stdlib.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 150,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-03-22T21:35:10Z",
+      "side": 1,
+      "message": "Are you sure it\u0027s always returning the current home directory or the default one (e.g. the root of your sandbox)?\n\nif it\u0027s the latter, you should fill HOME value of env at the app start and not change getenv() at all",
+      "revId": "e1a60f1f003695cae0e768590e972846bdae2ee9",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0a22eaef_4ce306b0",
+        "filename": "src/libc/posix_io/stat.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 188,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-03-22T21:46:55Z",
+      "side": 1,
+      "message": "not sure what you\u0027re doing here. is it for caching? how this supposed to work?",
+      "revId": "ea14e3bebb1d32e131f6d8834a10ff1765afd5e9",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "44a9bf57_38e93c3a",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-03-22T22:06:37Z",
+      "side": 1,
+      "message": "you should use snake_case for function input parameters and struct definitions",
+      "revId": "401f1730846dea4b95dbdcb68ce4e006ae32618f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

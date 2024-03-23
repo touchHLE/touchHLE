@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "52cda173_3bd879bc",
+        "filename": "src/objc/methods.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 129,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-03-23T18:06:35Z",
+      "side": 1,
+      "message": "it should be `type`, not `types`",
+      "revId": "47f2af236f2e12b226d090590fa35eb453b19533",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ec06bde6_d386615a",
+        "filename": "src/objc/methods.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 282,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-03-23T18:06:35Z",
+      "side": 1,
+      "message": "I suggest to change the signature to:\n`pub fn class_lookup_ivar(\u0026self, class: Class, sel: SEL) -\u003e Option\u003cConstPtr\u003cGuestUSize\u003e\u003e`\n\ni\u0027ll explain more in the review of following patchsets",
+      "revId": "47f2af236f2e12b226d090590fa35eb453b19533",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "07a14e4c_78ba2569",
+        "filename": "src/objc/methods.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 302,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-03-23T18:06:35Z",
+      "side": 1,
+      "message": "do see the need in this function, i suggest to remove it",
+      "revId": "47f2af236f2e12b226d090590fa35eb453b19533",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

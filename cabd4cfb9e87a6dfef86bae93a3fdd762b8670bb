@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6e1851f7_ca9dc00d",
+        "filename": "src/objc/messages.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 127,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-03-23T18:10:10Z",
+      "side": 1,
+      "message": "You should not do that! It\u0027s a bad idea to mix generic message send and ivar access via key-value coding. (e.g. if a getter message send to an object match against ivar selector, you\u0027ll override ivar with a object itself!)\n\nYou should move this code to NSKeyValue implementation (next patchset)",
+      "revId": "cabd4cfb9e87a6dfef86bae93a3fdd762b8670bb",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

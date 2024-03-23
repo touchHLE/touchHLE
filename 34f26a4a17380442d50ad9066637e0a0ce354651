@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ede1c661_b25563b0",
+        "filename": "src/frameworks/foundation/ns_object.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 166,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-03-23T18:16:48Z",
+      "side": 1,
+      "message": "I\u0027m not quite sure about the order of checks here.\nI think you should check for both selector presence and ivar existence for each of _\u003ckey\u003e, _is\u003cKey\u003e, \u003ckey\u003e and is\u003cKey\u003e cases, one by one",
+      "revId": "34f26a4a17380442d50ad9066637e0a0ce354651",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e9ca565f_e5982e29",
+        "filename": "src/frameworks/foundation/ns_object.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 185,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-03-23T18:16:48Z",
+      "side": 1,
+      "message": "you already checked for class_has_method() case at line 149, it shouldn\u0027t be checked here",
+      "revId": "34f26a4a17380442d50ad9066637e0a0ce354651",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2fe7f7f5_91eee8c3",
+        "filename": "src/frameworks/foundation/ns_object.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 185,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-03-23T18:16:48Z",
+      "side": 1,
+      "message": "replace class_has_ivar() with class class_lookup_ivar(), if found write to returned offset directly without a call to msg_send",
+      "revId": "34f26a4a17380442d50ad9066637e0a0ce354651",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f35e11cd_cab0dee5",
+        "filename": "src/objc/methods.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 306,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-03-23T18:16:48Z",
+      "side": 1,
+      "message": "is it used only for debug logs?",
+      "revId": "34f26a4a17380442d50ad9066637e0a0ce354651",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

@@ -16,6 +16,24 @@
       "message": "not sure what you\u0027re doing here. is it for caching? how this supposed to work?",
       "revId": "ea14e3bebb1d32e131f6d8834a10ff1765afd5e9",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "55bd13b3_32271f67",
+        "filename": "src/libc/posix_io/stat.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 188,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-03-23T16:24:10Z",
+      "side": 1,
+      "message": "I do it inside a closure so I can return early in case of error, therefore having less nested if statements",
+      "parentUuid": "0a22eaef_4ce306b0",
+      "revId": "ea14e3bebb1d32e131f6d8834a10ff1765afd5e9",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

@@ -602,9 +602,23 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "62e48dba70095f265fdb269b99619b95d04c89e619538138383e63310b14d941"
 dependencies = [
  "lazy_static",
+ "symphonia-bundle-mp3",
  "symphonia-codec-aac",
  "symphonia-core",
  "symphonia-format-isomp4",
+ "symphonia-metadata",
+]
+
+[[package]]
+name = "symphonia-bundle-mp3"
+version = "0.5.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0f31d7fece546f1e6973011a9eceae948133bbd18fd3d52f6073b1e38ae6368a"
+dependencies = [
+ "bitflags",
+ "lazy_static",
+ "log",
+ "symphonia-core",
  "symphonia-metadata",
 ]
 
@@ -767,20 +781,12 @@ dependencies = [
  "sdl2",
  "sdl2-sys",
  "symphonia",
- "touchHLE_dr_mp3_wrapper",
  "touchHLE_dynarmic_wrapper",
  "touchHLE_gl_bindings",
  "touchHLE_openal_soft_wrapper",
  "touchHLE_pvrt_decompress_wrapper",
  "touchHLE_stb_image_wrapper",
  "zip",
-]
-
-[[package]]
-name = "touchHLE_dr_mp3_wrapper"
-version = "0.2.2"
-dependencies = [
- "cc",
 ]
 
 [[package]]

@@ -11,11 +11,11 @@
 
 use std::io::Cursor;
 use symphonia::core::audio::{RawSampleBuffer, SignalSpec};
-use symphonia::core::codecs::CODEC_TYPE_AAC;
+use symphonia::core::codecs::{CODEC_TYPE_AAC, CODEC_TYPE_MP3};
 use symphonia::core::io::MediaSourceStream;
 
 /// PCM data decoded from an AAC file.
-pub struct AacDecodedToPcm {
+pub struct SymphoniaDecodedToPcm {
     /// 16-bit little-endian PCM samples, grouped in frames (one sample per
     /// channel in each frame).
     pub bytes: Vec<u8>,
@@ -25,7 +25,7 @@ pub struct AacDecodedToPcm {
     pub channels: u32,
 }
 
-pub fn decode_aac_to_pcm(file: Cursor<Vec<u8>>) -> Result<AacDecodedToPcm, ()> {
+pub fn decode_symphonia_to_pcm(file: Cursor<Vec<u8>>) -> Result<SymphoniaDecodedToPcm, ()> {
     let mss = MediaSourceStream::new(Box::new(file), Default::default());
 
     // If this failed, the container format is not supported.
@@ -43,7 +43,7 @@ pub fn decode_aac_to_pcm(file: Cursor<Vec<u8>>) -> Result<AacDecodedToPcm, ()> {
     let track = format
         .tracks()
         .iter()
-        .find(|t| t.codec_params.codec == CODEC_TYPE_AAC)
+        .find(|t| t.codec_params.codec == CODEC_TYPE_AAC || t.codec_params.codec == CODEC_TYPE_MP3)
         .ok_or(())?;
     let track_id = track.id;
 
@@ -91,8 +91,7 @@ pub fn decode_aac_to_pcm(file: Cursor<Vec<u8>>) -> Result<AacDecodedToPcm, ()> {
         }
     }
     let signal_spec = signal_spec.ok_or(())?;
-
-    Ok(AacDecodedToPcm {
+    Ok(SymphoniaDecodedToPcm {
         bytes: out_pcm,
         sample_rate: signal_spec.rate,
         channels: signal_spec.channels.count().try_into().unwrap(),

@@ -5,7 +5,7 @@
  */
 //! `pthread_once`.
 
-use crate::abi::GuestFunction;
+use crate::abi::{CallFromHost, GuestFunction};
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::mem::{MutPtr, SafeRead};
 use crate::Environment;
@@ -42,7 +42,7 @@ fn pthread_once(
                 init: 0xFFFFFFFF,
             };
             env.mem.write(once_control, new_once);
-            init_routine.call(env);
+            () = init_routine.call_from_host(env, ());
             log_dbg!("Init routine {:?} done", init_routine);
         }
         0xFFFFFFFF => {

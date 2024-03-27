@@ -127,13 +127,6 @@ const PVRTD_LICENSE: &str = include_str!(concat!(
     "/vendor/PVRTDecompress/LICENSE.md"
 ));
 
-const DR_MP3: &str = "
-touchHLE, and therefore this executable, incorporates the library dr_mp3,
-which is available either under The Unlicense (which is a public domain
-dedication) or under the terms of the MIT license. dr_mp3 is in turn derived
-from the library minimp3, which is licensed under the Creative Commons CC0 1.0
-Universal Public Domain Dedication.
-";
 
 // When resource files are bundled with touchHLE in such a way that the user can
 // read their license files directly, use this caveat.
@@ -216,7 +209,6 @@ fn print(out: &mut String, resources_are_external_files: bool) -> Result<(), std
     writeln!(out, "{}", PVRTD_DESCRIPTION)?;
     writeln!(out, "{}", PVRTD_LICENSE.trim_end())?;
     divider(out)?;
-    writeln!(out, "{}", DR_MP3)?;
     if !resources_are_external_files {
         divider(out)?;
         writeln!(out, "{}", INTERNAL_DYLIBS_DESCRIPTION)?;

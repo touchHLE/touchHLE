@@ -56,71 +56,8 @@ impl GuestFunction {
         self.0
     }
 
-    /// Execute the guest function and return to the host when it is done.
-    /// A new stack frame will be created for the duration of the call.
-    ///
-    /// For a host-to-guest call to work, several pieces need to work in
-    /// concert:
-    /// * The arguments to the function need to be placed in registers or the
-    ///   stack according to the calling convention. This is not handled by this
-    ///   method. This might be done via [CallFromHost], or in some other way,
-    ///   e.g. `objc_msgSend` can leave the registers and stack as they are
-    ///   because it passes on the arguments from its caller.
-    /// * This method:
-    ///   * sets the program counter (PC) and Thumb flag to match the function
-    ///     to be called;
-    ///   * sets the link register (LR) to point to a special routine for
-    ///     returning to the host;
-    ///   * pushes a new stack frame (this is optional, but makes stack traces
-    ///     clearer, cf. [Self::call_without_pushing_stack_frame]); and
-    ///   * resumes CPU emulation.
-    /// * The emulated function eventually returns to the caller by jumping to
-    ///   the address in the link register, which should be the special routine.
-    /// * The CPU emulation recognises the special routine and returns back to
-    ///   this method.
-    /// * This method restores the original PC, Thumb flag and LR, and pops the
-    ///   stack frame.
-    /// * The return values are extracted from registers or the stack, if
-    ///   appropriate. This is not handled by this method. This might be done
-    ///   via [CallFromHost].
-    ///
-    /// See also [CallFromGuest] and [CallFromHost]. The latter is implemented
-    /// for [GuestFunction] using this method.
-    pub fn call(self, env: &mut Environment) {
-        log_dbg!("Begin call to guest function {:?}", self);
-
-        let (old_pc, old_lr) = env
-            .cpu
-            .branch_with_link(self, env.dyld.return_to_host_routine());
-
-        // Create a new guest stack frame. This is redundant considering we are
-        // storing this data on the host stack, but this makes stack traces work
-        // nicely. :)
-        let (old_sp, old_fp) = {
-            let regs = env.cpu.regs_mut();
-            let old_sp = regs[Cpu::SP];
-            let old_fp = regs[FRAME_POINTER];
-            regs[Cpu::SP] -= 8;
-            regs[FRAME_POINTER] = old_sp;
-            env.mem
-                .write(Ptr::from_bits(regs[Cpu::SP]), regs[FRAME_POINTER]);
-            env.mem.write(Ptr::from_bits(regs[Cpu::SP] + 4), old_lr);
-            (old_sp, old_fp)
-        };
-
-        env.run_call();
-
-        env.cpu.branch(old_pc);
-        let regs = env.cpu.regs_mut();
-        regs[Cpu::LR] = old_lr.addr_with_thumb_bit();
-        regs[Cpu::SP] = old_sp;
-        regs[FRAME_POINTER] = old_fp;
-
-        log_dbg!("End call to guest function {:?}", self);
-    }
-
-    /// Like [Self::call], but doesn't push a new guest stack frame. This is not
-    /// a true tail call: PC and LR are still preserved.
+    /// Like [CallFromHost::call_from_host], but doesn't push a new guest stack
+    /// frame. This is not a true tail call: PC and LR are still preserved.
     ///
     /// This is only needed in special applications where having a new stack
     /// frame would be troublesome, e.g. a tail call with stack argument
@@ -167,7 +104,7 @@ impl GuestFunction {
 /// [function pointers][fn] with compatible argument and return types. Only
 /// unusual cases should need to provide their own implementation.
 ///
-/// See also [GuestFunction::call] and
+/// See also [CallFromHost] and
 /// [GuestFunction::call_without_pushing_stack_frame].
 pub trait CallFromGuest {
     fn call_from_guest(&self, env: &mut Environment);
@@ -243,6 +180,35 @@ impl_CallFromGuest!(0 => P0, 1 => P1, 2 => P2, 3 => P3, 4 => P4, 5 => P5, 6 => P
 /// code, but using the guest ABI. See [CallFromGuest], which this is the
 /// inverse of.
 pub trait CallFromHost<R, P> {
+    /// Execute the "guest" function and return to the host when it is done.
+    /// Note that this does not mean that the function is actually a guest
+    /// function, just that it acts as one for this trait.
+    ///
+    /// For calls to actual guest functions, a new stack frame will be
+    /// created for the duration of the call.
+    ///
+    /// For a host-to-guest call to work, several pieces need to work in
+    /// concert:
+    /// * A new stack frame is pushed (this is optional, but makes stack
+    ///     traces clearer)
+    /// * The arguments to the function are placed in registers or the
+    ///     stack according to the calling convention. This is handled by
+    ///     this trait; functions that pass through arguments to another 
+    ///     function (such as `objc_msgsend`) should call
+    ///     [GuestFunction::call_without_pushing_stack_frame] instead.
+    /// * The program counter (PC) and Thumb flag have to be set to match
+    ///     the function being called;
+    /// * The link register (LR) to point to a special routine for
+    ///     returning to the host;
+    /// * The emulated function eventually returns to the caller by jumping to
+    ///     the address in the link register, which should be the special 
+    ///     routine.
+    /// * The CPU emulation recognises the special routine and returns back to
+    ///     this method.
+    /// * This method restores the original PC, Thumb flag and LR, and pops any
+    ///     stack arguments and the stack frame.
+    /// * The return values are extracted from registers or the stack, if
+    ///     appropriate.
     fn call_from_host(&self, env: &mut Environment, args: P) -> R;
 }
 
@@ -291,16 +257,50 @@ macro_rules! impl_CallFromHost {
                 env: &mut Environment,
                 args: ($($P,)*),
             ) -> R {
+                log_dbg!("Begin call to guest function {:?}", self);
+
+                let (old_pc, old_lr) = env
+                    .cpu
+                    .branch_with_link(*self, env.dyld.return_to_host_routine());
+
+                // Create a new guest stack frame. This is redundant considering
+                // we are storing this data on the host stack, but this makes 
+                // stack traces work nicely. :)
+                let (old_sp, old_fp) = {
+                    let regs = env.cpu.regs_mut();
+                    let old_sp = regs[Cpu::SP];
+                    let old_fp = regs[FRAME_POINTER];
+                    regs[Cpu::SP] -= 8;
+                    regs[FRAME_POINTER] = regs[Cpu::SP];
+                    env.mem
+                        .write(Ptr::from_bits(regs[Cpu::SP]), old_fp);
+                    env.mem.write(Ptr::from_bits(regs[Cpu::SP] + 4), old_lr);
+                    (old_sp, old_fp)
+                };
+
                 assert!(R::SIZE_IN_MEM.is_none()); // pointer return TODO
                 let regs = env.cpu.regs_mut();
-                let old_sp = extend_stack_for_args(
+                let _ = extend_stack_for_args(
                     0 $(+ <$P as GuestArg>::REG_COUNT)*,
                     regs,
                 );
                 let mut reg_offset = 0;
                 $(write_next_arg::<$P>(&mut reg_offset, regs, &mut env.mem, args.$p);)*
-                self.call(env);
-                env.cpu.regs_mut()[Cpu::SP] = old_sp;
+
+                // It would actually be possible to use
+                // [GuestFunction::call_without_pushing_stack_frame] here, but
+                // it would mess up debug logging, so duplicating the code
+                // is easier.
+                env.run_call();
+
+                env.cpu.branch(old_pc);
+
+                let regs = env.cpu.regs_mut();
+                log_dbg!("End call to guest function {:?}", self);
+
+                regs[Cpu::LR] = old_lr.addr_with_thumb_bit();
+                regs[Cpu::SP] = old_sp;
+                regs[FRAME_POINTER] = old_fp;
                 <R as GuestRet>::from_regs(env.cpu.regs())
             }
         }

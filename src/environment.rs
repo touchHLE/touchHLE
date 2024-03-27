@@ -10,7 +10,7 @@
 
 mod mutex;
 
-use crate::abi::GuestRet;
+use crate::abi::{CallFromHost, GuestRet};
 use crate::libc::semaphore::sem_t;
 use crate::mem::{MutPtr, MutVoidPtr};
 use crate::{
@@ -341,13 +341,12 @@ impl Environment {
             let count = section.size / 4;
             for i in 0..count {
                 let func = env.mem.read(base + i);
-                func.call(&mut env);
+                () = func.call_from_host(&mut env, ());
             }
             log_dbg!("Static initialization done");
         }
 
         env.cpu.branch(entry_point_addr);
-
         Ok(env)
     }
 
@@ -708,7 +707,7 @@ impl Environment {
     }
 
     /// Run the emulator until the app returns control to the host. This is for
-    /// host-to-guest function calls (see [abi::GuestFunction::call]).
+    /// host-to-guest function calls (see [abi::CallFromHost::call_from_host]).
     ///
     /// Note that this might execute code from other threads while waiting for
     /// the app to return control on the original thread!

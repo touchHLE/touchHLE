@@ -3,6 +3,23 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "f1a835fd_286c5cb2",
+        "filename": "src/frameworks/foundation/ns_object.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 165,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-03-27T17:29:24Z",
+      "side": 1,
+      "message": "in this case you should also retain() the value (refer to https://developer.apple.com/documentation/objectivec/nsobject/1415969-setvalue?language\u003dobjc)",
+      "revId": "34f26a4a17380442d50ad9066637e0a0ce354651",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "ede1c661_b25563b0",
         "filename": "src/frameworks/foundation/ns_object.rs",
         "patchSetId": 3

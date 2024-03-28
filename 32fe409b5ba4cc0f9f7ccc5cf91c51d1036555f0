@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "cf3877ea_74a232ad",
+        "filename": "src/libc/posix_io/stat.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 23,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-03-28T15:43:19Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "5d3a65e7_d5cc1dbb",
+      "revId": "32fe409b5ba4cc0f9f7ccc5cf91c51d1036555f0",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "ce520acc_3e8ae074",
@@ -31,6 +49,24 @@
       "writtenOn": "2024-03-22T21:46:05Z",
       "side": 1,
       "message": "not all of those mode are available/used on macOS/iOS\nuse `man 2 stat` as a reference instead",
+      "revId": "32fe409b5ba4cc0f9f7ccc5cf91c51d1036555f0",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "eb0f805b_de52d814",
+        "filename": "src/libc/posix_io/stat.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 33,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-03-28T15:43:19Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "ce520acc_3e8ae074",
       "revId": "32fe409b5ba4cc0f9f7ccc5cf91c51d1036555f0",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

@@ -34,6 +34,24 @@
       "parentUuid": "0a22eaef_4ce306b0",
       "revId": "ea14e3bebb1d32e131f6d8834a10ff1765afd5e9",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9c0599c5_c11652c7",
+        "filename": "src/libc/posix_io/stat.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 188,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-03-28T12:34:02Z",
+      "side": 1,
+      "message": "Could you use a named helper function instead? I think it would be cleaner. (you could keep nested definition)",
+      "parentUuid": "55bd13b3_32271f67",
+      "revId": "ea14e3bebb1d32e131f6d8834a10ff1765afd5e9",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

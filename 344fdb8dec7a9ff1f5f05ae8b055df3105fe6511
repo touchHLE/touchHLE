@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "06330cd4_4d9d7c28",
+        "filename": "tests/integration.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 33,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-03-28T12:32:13Z",
+      "side": 0,
+      "message": "I would probably prefer to keep downloaded version of llvm/clang.\nThis would allow us to have windows support for intégration tests (I assume we would need to just build ld tools then)",
+      "revId": "344fdb8dec7a9ff1f5f05ae8b055df3105fe6511",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

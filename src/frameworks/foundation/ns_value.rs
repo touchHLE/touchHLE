@@ -6,20 +6,60 @@
 //! The `NSValue` class cluster, including `NSNumber`.
 
 use super::NSUInteger;
+use crate::environment::Environment;
 use crate::frameworks::foundation::ns_string::from_rust_string;
+use crate::frameworks::foundation::NSInteger;
 use crate::objc::{
     autorelease, id, msg, msg_class, objc_classes, retain, Class, ClassExports, HostObject,
     NSZonePtr,
 };
 
+macro_rules! impl_AsValue {
+    ($method_name:tt, $typ:tt) => {
+        #[allow(unused)]
+        pub fn $method_name(&self) -> $typ {
+            match self {
+                // Cast to u8 is needed for float conversions
+                NSNumberHostObject::Bool(x) => *x as u8 as _,
+                NSNumberHostObject::UnsignedLongLong(x) => *x as _,
+                NSNumberHostObject::Int(x) => *x as _,
+                NSNumberHostObject::LongLong(x) => *x as _,
+                NSNumberHostObject::Float(x) => *x as _,
+                NSNumberHostObject::Double(x) => *x as _,
+            }
+        }
+    };
+}
+
 enum NSNumberHostObject {
     Bool(bool),
     UnsignedLongLong(u64),
+    Int(i32), // Also covers Integer since this is a 32 bit platform.
     LongLong(i64),
     Float(f32),
     Double(f64),
 }
 impl HostObject for NSNumberHostObject {}
+
+impl NSNumberHostObject {
+    #[allow(unused)]
+    fn as_bool(&self) -> bool {
+        match self {
+            // Cast to u8 is needed for float conversions
+            NSNumberHostObject::Bool(x) => *x as _,
+            NSNumberHostObject::UnsignedLongLong(x) => *x == 0,
+            NSNumberHostObject::Int(x) => *x == 0,
+            NSNumberHostObject::LongLong(x) => *x == 0,
+            NSNumberHostObject::Float(x) => *x == 0.0,
+            NSNumberHostObject::Double(x) => *x == 0.0,
+        }
+    }
+    impl_AsValue!(as_int, i32);
+    impl_AsValue!(as_ll, i64);
+    impl_AsValue!(as_ull, u64);
+    impl_AsValue!(as_float, f32);
+    impl_AsValue!(as_double, f64);
+}
 
 pub const CLASSES: ClassExports = objc_classes! {
 
@@ -68,6 +108,22 @@ pub const CLASSES: ClassExports = objc_classes! {
     autorelease(env, new)
 }
 
++ (id)numberWithInt:(i32)value {
+    // TODO: for greater efficiency we could return a static-lifetime value
+
+    let new: id = msg![env; this alloc];
+    let new: id = msg![env; new initWithInt:value];
+    autorelease(env, new)
+}
+
++ (id)numberWithInteger:(NSInteger)value {
+    // TODO: for greater efficiency we could return a static-lifetime value
+
+    let new: id = msg![env; this alloc];
+    let new: id = msg![env; new initWithInteger:value];
+    autorelease(env, new)
+}
+
 + (id)numberWithLongLong:(i64)value {
     // TODO: for greater efficiency we could return a static-lifetime value
 
@@ -106,42 +162,55 @@ pub const CLASSES: ClassExports = objc_classes! {
     this
 }
 
+- (id)initWithInt:(i32)value {
+    *env.objc.borrow_mut(this) = NSNumberHostObject::Int(value);
+    this
+}
+
+- (id)initWithInteger:(NSInteger)value {
+    *env.objc.borrow_mut(this) = NSNumberHostObject::Int(value);
+    this
+}
+
 - (id)initWithUnsignedLongLong:(u64)value {
     *env.objc.borrow_mut(this) = NSNumberHostObject::UnsignedLongLong(value);
     this
+}
+
+- (NSInteger)integerValue {
+    env.objc.borrow::<NSNumberHostObject>(this).as_int()
 }
 
 - (id)description {
     let desc = match env.objc.borrow(this) {
         NSNumberHostObject::Bool(value) => from_rust_string(env, (*value as i32).to_string()),
         NSNumberHostObject::UnsignedLongLong(value) => from_rust_string(env, value.to_string()),
+        NSNumberHostObject::Int(value) => from_rust_string(env, value.to_string()),
         NSNumberHostObject::LongLong(value) => from_rust_string(env, value.to_string()),
         NSNumberHostObject::Float(value) => from_rust_string(env, value.to_string()),
         NSNumberHostObject::Double(value) => from_rust_string(env, value.to_string())
     };
     autorelease(env, desc)
 }
+
 - (NSUInteger)hash {
-    let &NSNumberHostObject::Bool(value) = env.objc.borrow(this) else {
-        todo!();
+    // The only requirement for [obj hash] is that values that compare equal
+    // (via [obj isEqual] have the same hash. Hashing the underlying
+    // bits works here.
+    let value =
+    match env.objc.borrow(this) {
+        NSNumberHostObject::Bool(value) => *value as u64,
+        NSNumberHostObject::UnsignedLongLong(value) => *value,
+        NSNumberHostObject::Int(value) => *value as u64,
+        NSNumberHostObject::LongLong(value) => *value as u64,
+        NSNumberHostObject::Float(value) => value.to_bits() as u64,
+        NSNumberHostObject::Double(value) => value.to_bits(),
     };
     super::hash_helper(&value)
 }
+
 - (bool)isEqualTo:(id)other {
-    if this == other {
-        return true;
-    }
-    let class: Class = msg_class![env; NSNumber class];
-    if !msg![env; other isKindOfClass:class] {
-        return false;
-    }
-    let &NSNumberHostObject::Bool(a) = env.objc.borrow(this) else {
-        todo!();
-    };
-    let &NSNumberHostObject::Bool(b) = env.objc.borrow(other) else {
-        todo!();
-    };
-    a == b
+    equality_helper(env, this, other)
 }
 
 // TODO: accessors etc
@@ -149,3 +218,24 @@ pub const CLASSES: ClassExports = objc_classes! {
 @end
 
 };
+
+fn equality_helper(env: &mut Environment, this: id, other: id) -> bool {
+    if this == other {
+        return true;
+    }
+    let class: Class = msg_class![env; NSNumber class];
+    if !msg![env; other isKindOfClass:class] {
+        return false;
+    }
+    match (env.objc.borrow(this), env.objc.borrow(other)) {
+        (&NSNumberHostObject::Bool(a), &NSNumberHostObject::Bool(b)) => a == b,
+        (&NSNumberHostObject::UnsignedLongLong(a), &NSNumberHostObject::UnsignedLongLong(b)) => {
+            a == b
+        }
+        (&NSNumberHostObject::Int(a), &NSNumberHostObject::Int(b)) => a == b,
+        (&NSNumberHostObject::LongLong(a), &NSNumberHostObject::LongLong(b)) => a == b,
+        (&NSNumberHostObject::Float(a), &NSNumberHostObject::Float(b)) => a == b,
+        (&NSNumberHostObject::Double(a), &NSNumberHostObject::Double(b)) => a == b,
+        _ => todo!("Implement NSNumber comparisions of different types"),
+    }
+}

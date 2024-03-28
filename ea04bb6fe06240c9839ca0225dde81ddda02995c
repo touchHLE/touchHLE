@@ -16,6 +16,24 @@
       "message": "this should return EBUSY",
       "revId": "ea04bb6fe06240c9839ca0225dde81ddda02995c",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "7fafd16f_25900a35",
+        "filename": "src/libc/pthread/mutex.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 138,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-03-28T15:36:21Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "86df8ade_502c9590",
+      "revId": "ea04bb6fe06240c9839ca0225dde81ddda02995c",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

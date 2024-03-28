@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4ebf428f_1cfde133",
+        "filename": "src/libc/posix_io/stat.rs",
+        "patchSetId": 4
+      },
+      "lineNbr": 148,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-03-28T22:32:20Z",
+      "side": 1,
+      "message": "I don\u0027t see the point to define it as mutable var, it should a normal nested function:\n\nfn do_stat() -\u003e i32 {...}",
+      "revId": "699deef02e1f3717df31c778f2052d2bdfef9ab1",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

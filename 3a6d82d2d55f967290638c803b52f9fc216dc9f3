@@ -16,6 +16,24 @@
       "message": "Should add that I do have tests for this. I\u0027ll upload them on request, though they can\u0027t be added to tests.",
       "revId": "3a6d82d2d55f967290638c803b52f9fc216dc9f3",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "313de712_0c7d5a37",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-03-28T12:33:01Z",
+      "side": 1,
+      "message": "Maybe push them as a separate draft patchset?",
+      "parentUuid": "8f2794cb_2c1ceec3",
+      "revId": "3a6d82d2d55f967290638c803b52f9fc216dc9f3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

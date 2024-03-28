@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "06a80f4a_fa6d654b",
+        "filename": "src/libc/stdlib.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 140,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-03-28T15:36:17Z",
+      "side": 1,
+      "message": "I need it so it holds ownership over the string. The string is used passed as a slice but I can\u0027t use it without copying it first into a vec since it\u0027d reborrow env",
+      "parentUuid": "7597eea9_345c6a9b",
+      "revId": "e1a60f1f003695cae0e768590e972846bdae2ee9",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "c108ced9_6580a8c9",
@@ -31,6 +49,24 @@
       "writtenOn": "2024-03-22T21:35:10Z",
       "side": 1,
       "message": "Are you sure it\u0027s always returning the current home directory or the default one (e.g. the root of your sandbox)?\n\nif it\u0027s the latter, you should fill HOME value of env at the app start and not change getenv() at all",
+      "revId": "e1a60f1f003695cae0e768590e972846bdae2ee9",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "26779945_0a51b204",
+        "filename": "src/libc/stdlib.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 150,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-03-28T15:36:17Z",
+      "side": 1,
+      "message": "It doesn\u0027t always return the home directory, if the envvar is overwritten, it\u0027ll return the written value. What I do in this function is fill the HOME envvar if it hasn\u0027t yet been set with the real home directory; if it has been set it\u0027ll return the written value.",
+      "parentUuid": "c108ced9_6580a8c9",
       "revId": "e1a60f1f003695cae0e768590e972846bdae2ee9",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

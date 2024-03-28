@@ -52,6 +52,24 @@
       "parentUuid": "55bd13b3_32271f67",
       "revId": "ea14e3bebb1d32e131f6d8834a10ff1765afd5e9",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "4a0a75e9_b8526333",
+        "filename": "src/libc/posix_io/stat.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 188,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-03-28T15:36:12Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "9c0599c5_c11652c7",
+      "revId": "ea14e3bebb1d32e131f6d8834a10ff1765afd5e9",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

@@ -16,6 +16,24 @@
       "message": "You should not do that! It\u0027s a bad idea to mix generic message send and ivar access via key-value coding. (e.g. if a getter message send to an object match against ivar selector, you\u0027ll override ivar with a object itself!)\n\nYou should move this code to NSKeyValue implementation (next patchset)",
       "revId": "cabd4cfb9e87a6dfef86bae93a3fdd762b8670bb",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9d0cde1f_d6a910b1",
+        "filename": "src/objc/messages.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 127,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-03-28T20:42:21Z",
+      "side": 1,
+      "message": "I\u0027m not sure I follow, if I move this to NSKeyValue, and the app code does [obj ivar], should the emulator then call valueForKey: or setValue:forKey: underneath? I was under the impression it should be the opposite way",
+      "parentUuid": "6e1851f7_ca9dc00d",
+      "revId": "cabd4cfb9e87a6dfef86bae93a3fdd762b8670bb",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

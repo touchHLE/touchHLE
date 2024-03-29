@@ -34,6 +34,24 @@
       "parentUuid": "ba2596e5_aa8b1c71",
       "revId": "efd38c33a1be88d4aeda790ef06f3b593dc10e5e",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "337a7d15_9fb88f92",
+        "filename": "src/frameworks/audio_toolbox/audio_session.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 69,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-03-29T12:28:56Z",
+      "side": 1,
+      "message": "The values match with what\u0027s returned by the emulator.",
+      "parentUuid": "4dd0d261_8984dc03",
+      "revId": "efd38c33a1be88d4aeda790ef06f3b593dc10e5e",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

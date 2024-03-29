@@ -125,9 +125,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 pub(super) fn handle_accelerometer(env: &mut Environment) -> Option<Instant> {
     let state = &mut env.framework_state.uikit.ui_accelerometer;
 
-    let Some(delegate) = state.delegate else {
-        return None;
-    };
+    let delegate = state.delegate?;
 
     let ns_interval = state.update_interval.unwrap_or(DEFAULT_UPDATE_INTERVAL);
     let rust_interval = Duration::from_secs_f64(ns_interval);

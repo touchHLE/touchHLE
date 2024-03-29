@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8bd94df0_a30cbd31",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 4
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-03-29T19:35:45Z",
+      "side": 1,
+      "message": "Could you please confirm that this patch-set is working properly with SMB?",
+      "revId": "7d63c7fb369d010eeb02c8a0c29aab0de26a35f1",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ad33fab0_45ad5b66",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 4
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-03-29T19:35:45Z",
+      "side": 1,
+      "message": "could you confirm that this patchset is working propserly with SMB?",
+      "revId": "7d63c7fb369d010eeb02c8a0c29aab0de26a35f1",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

@@ -16,6 +16,24 @@
       "message": "I don\u0027t see the point to define it as mutable var, it should a normal nested function:\n\nfn do_stat() -\u003e i32 {...}",
       "revId": "699deef02e1f3717df31c778f2052d2bdfef9ab1",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "1de8a381_63dfe777",
+        "filename": "src/libc/posix_io/stat.rs",
+        "patchSetId": 4
+      },
+      "lineNbr": 148,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-03-29T11:37:31Z",
+      "side": 1,
+      "message": "It was so I could do it as a closure and therefore have access to the variables in the outer scope. I\u0027ll replace it with a normal function if it\u0027s preferred.",
+      "parentUuid": "4ebf428f_1cfde133",
+      "revId": "699deef02e1f3717df31c778f2052d2bdfef9ab1",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

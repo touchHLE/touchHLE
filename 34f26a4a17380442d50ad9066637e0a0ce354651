@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "6220693e_49353248",
+        "filename": "src/frameworks/foundation/ns_object.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 165,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-03-29T11:52:09Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "f1a835fd_286c5cb2",
+      "revId": "34f26a4a17380442d50ad9066637e0a0ce354651",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "ede1c661_b25563b0",
@@ -31,6 +49,24 @@
       "writtenOn": "2024-03-23T18:16:48Z",
       "side": 1,
       "message": "I\u0027m not quite sure about the order of checks here.\nI think you should check for both selector presence and ivar existence for each of _\u003ckey\u003e, _is\u003cKey\u003e, \u003ckey\u003e and is\u003cKey\u003e cases, one by one",
+      "revId": "34f26a4a17380442d50ad9066637e0a0ce354651",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6b89f1f5_16ae21ee",
+        "filename": "src/frameworks/foundation/ns_object.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 166,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-03-29T11:52:09Z",
+      "side": 1,
+      "message": "What\u0027s the advantage of doing it one by one as opposed to chaining Options?",
+      "parentUuid": "ede1c661_b25563b0",
       "revId": "34f26a4a17380442d50ad9066637e0a0ce354651",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
@@ -69,6 +105,42 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "cde4acb1_fd80cbcd",
+        "filename": "src/frameworks/foundation/ns_object.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 185,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-03-29T11:52:09Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "e9ca565f_e5982e29",
+      "revId": "34f26a4a17380442d50ad9066637e0a0ce354651",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "9ee37902_b3b14ec7",
+        "filename": "src/frameworks/foundation/ns_object.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 185,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-03-29T11:52:09Z",
+      "side": 1,
+      "message": "Used object_lookup_ivar instead",
+      "parentUuid": "2fe7f7f5_91eee8c3",
+      "revId": "34f26a4a17380442d50ad9066637e0a0ce354651",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "f35e11cd_cab0dee5",
@@ -82,6 +154,24 @@
       "writtenOn": "2024-03-23T18:16:48Z",
       "side": 1,
       "message": "is it used only for debug logs?",
+      "revId": "34f26a4a17380442d50ad9066637e0a0ce354651",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "59e6d425_5909a439",
+        "filename": "src/objc/methods.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 306,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-03-29T11:52:09Z",
+      "side": 1,
+      "message": "Yes. I thought about removing it but I found it useful when debugging",
+      "parentUuid": "f35e11cd_cab0dee5",
       "revId": "34f26a4a17380442d50ad9066637e0a0ce354651",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "93c93543_3d28ab13",
+        "filename": "src/objc/methods.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 129,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-03-29T11:50:55Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "52cda173_3bd879bc",
+      "revId": "47f2af236f2e12b226d090590fa35eb453b19533",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "ec06bde6_d386615a",
@@ -35,6 +53,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "a431205f_bdb9d06f",
+        "filename": "src/objc/methods.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 282,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-03-29T11:50:55Z",
+      "side": 1,
+      "message": "Instead of doing that I opted for a function that looks up the ivar in the object itself, not just the offset",
+      "parentUuid": "ec06bde6_d386615a",
+      "revId": "47f2af236f2e12b226d090590fa35eb453b19533",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "07a14e4c_78ba2569",
@@ -48,6 +84,24 @@
       "writtenOn": "2024-03-23T18:06:35Z",
       "side": 1,
       "message": "do see the need in this function, i suggest to remove it",
+      "revId": "47f2af236f2e12b226d090590fa35eb453b19533",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "1705a825_a6a7ab49",
+        "filename": "src/objc/methods.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 302,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-03-29T11:50:55Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "07a14e4c_78ba2569",
       "revId": "47f2af236f2e12b226d090590fa35eb453b19533",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

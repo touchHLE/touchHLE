@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "05680d62_7c6530f0",
+        "filename": "src/frameworks/audio_toolbox/audio_components.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 118,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-03-29T23:38:00Z",
+      "side": 1,
+      "message": "How you figure this value out?\nIt should be a defnied constant btw.\nSeems like kAudioComponentErr_InvalidFormat or kAudioComponentErr_UnsupportedType is more appropriate here",
+      "revId": "b31c2a30a5564073c11ae56b82bb58c16d5fc7e8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

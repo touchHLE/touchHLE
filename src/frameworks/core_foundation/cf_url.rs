@@ -20,6 +20,13 @@ use crate::Environment;
 
 pub type CFURLRef = super::CFTypeRef;
 
+type CFURLPathStyle = CFIndex;
+const kCFURLPOSIXPathStyle: CFURLPathStyle = 0;
+#[allow(dead_code)]
+const kCFURLHFSPathStyle: CFURLPathStyle = 1;
+#[allow(dead_code)]
+const kCFURLWindowsPathStyle: CFURLPathStyle = 2;
+
 pub fn CFURLGetFileSystemRepresentation(
     env: &mut Environment,
     url: CFURLRef,
@@ -68,8 +75,19 @@ pub fn CFURLCopyPathExtension(env: &mut Environment, url: CFURLRef) -> CFStringR
     msg![env; ext copy]
 }
 
+fn CFURLCopyFileSystemPath(
+    env: &mut Environment,
+    url: CFURLRef,
+    style: CFURLPathStyle,
+) -> CFStringRef {
+    assert_eq!(style, kCFURLPOSIXPathStyle);
+    let path: CFStringRef = msg![env; url path];
+    msg![env; path copy]
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CFURLGetFileSystemRepresentation(_, _, _, _)),
     export_c_func!(CFURLCreateFromFileSystemRepresentation(_, _, _, _)),
     export_c_func!(CFURLCopyPathExtension(_)),
+    export_c_func!(CFURLCopyFileSystemPath(_, _)),
 ];

@@ -469,7 +469,10 @@ fn swprintf(
     for i in 0..to_write {
         env.mem.write(ws + i, res[i as usize] as wchar_t);
     }
-    assert!(to_write < n);
+    if to_write >= n {
+        // TODO: set errno
+        return -1;
+    }
     env.mem.write(ws + to_write, wchar_t::default());
     to_write as i32
 }

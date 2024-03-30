@@ -756,6 +756,9 @@ int test_swprintf() {
   int res = swprintf(wcsbuf, 20, L"%s", "abc");
   if (res != 3)
     return -1;
+  res = swprintf(wcsbuf, 2, L"%d", 510);
+  if (res != -1)
+    return -2;
   return 0;
 }
 

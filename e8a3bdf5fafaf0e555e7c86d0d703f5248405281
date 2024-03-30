@@ -20,6 +20,23 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "22f4b9ac_07e7d732",
+        "filename": "src/objc/methods.rs",
+        "patchSetId": 4
+      },
+      "lineNbr": 129,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-03-30T10:30:40Z",
+      "side": 1,
+      "message": "the usual convention is to use `type_`",
+      "revId": "e8a3bdf5fafaf0e555e7c86d0d703f5248405281",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "f2d538c6_e3e3a10f",
         "filename": "src/objc/methods.rs",
         "patchSetId": 4

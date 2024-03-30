@@ -54,6 +54,7 @@ void *realloc(void *, size_t);
 double atof(const char *);
 float strtof(const char *, char **);
 unsigned long strtoul(const char *, char **, int);
+char *realpath(const char *, char *);
 
 // <string.h>
 void *memset(void *, int, size_t);
@@ -65,6 +66,8 @@ char *strncat(char *, const char *, size_t);
 size_t strlcpy(char *, const char *, size_t);
 char *strchr(const char *s, int c);
 char *strrchr(const char *s, int c);
+size_t strlen(const char *);
+int strncmp(const char *, const char *, size_t);
 
 // <unistd.h>
 typedef unsigned int __uint32_t;
@@ -699,16 +702,17 @@ int test_setlocale() {
   return 0;
 }
 
+#ifdef DEFINE_ME_WHEN_BUILDING_ON_MACOS
+// assume project dir as cwd
+const char *path_test_app = "./tests/TestApp.app";
+#else
+const char *path_test_app = "/var/mobile/Applications/"
+                            "00000000-0000-0000-0000-000000000000/TestApp.app";
+#endif
+
 int test_dirent() {
   struct dirent *dp;
-#ifdef DEFINE_ME_WHEN_BUILDING_ON_MACOS
-  // assume project dir as cwd
-  const char *path = "./tests/TestApp.app";
-#else
-  const char *path = "/var/mobile/Applications/"
-                     "00000000-0000-0000-0000-000000000000/TestApp.app";
-#endif
-  DIR *dirp = opendir(path);
+  DIR *dirp = opendir(path_test_app);
   if (dirp == NULL) {
     return -1;
   }
@@ -755,21 +759,38 @@ int test_swprintf() {
   return 0;
 }
 
+int test_realpath() {
+  char buf[256];
+  if (chdir(path_test_app))
+    return -1;
+  // absolute path
+  char *res = realpath("/usr", buf);
+  if (!res || strcmp(res, "/usr") != 0)
+    return -2;
+  // relative path
+  res = realpath("TestApp", buf);
+  char *cwd = getcwd(NULL, 0);
+  if (!res || strncmp(cwd, res, strlen(cwd)) != 0)
+    return -3;
+  return 0;
+}
+
 #define FUNC_DEF(func)                                                         \
   { &func, #func }
 struct {
   int (*func)();
   const char *name;
 } test_func_array[] = {
-    FUNC_DEF(test_qsort),   FUNC_DEF(test_vsnprintf),
-    FUNC_DEF(test_sscanf),  FUNC_DEF(test_errno),
-    FUNC_DEF(test_realloc), FUNC_DEF(test_atof),
-    FUNC_DEF(test_strtof),  FUNC_DEF(test_getcwd_chdir),
-    FUNC_DEF(test_sem),     FUNC_DEF(test_CGAffineTransform),
-    FUNC_DEF(test_strncpy), FUNC_DEF(test_strncat),
-    FUNC_DEF(test_strlcpy), FUNC_DEF(test_setlocale),
-    FUNC_DEF(test_strtoul), FUNC_DEF(test_dirent),
-    FUNC_DEF(test_strchr),  FUNC_DEF(test_swprintf),
+    FUNC_DEF(test_qsort),    FUNC_DEF(test_vsnprintf),
+    FUNC_DEF(test_sscanf),   FUNC_DEF(test_errno),
+    FUNC_DEF(test_realloc),  FUNC_DEF(test_atof),
+    FUNC_DEF(test_strtof),   FUNC_DEF(test_getcwd_chdir),
+    FUNC_DEF(test_sem),      FUNC_DEF(test_CGAffineTransform),
+    FUNC_DEF(test_strncpy),  FUNC_DEF(test_strncat),
+    FUNC_DEF(test_strlcpy),  FUNC_DEF(test_setlocale),
+    FUNC_DEF(test_strtoul),  FUNC_DEF(test_dirent),
+    FUNC_DEF(test_strchr),   FUNC_DEF(test_swprintf),
+    FUNC_DEF(test_realpath),
 };
 
 // Because no libc is linked into this executable, there is no libc entry point

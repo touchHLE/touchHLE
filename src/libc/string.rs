@@ -95,7 +95,7 @@ fn memcmp(env: &mut Environment, a: ConstVoidPtr, b: ConstVoidPtr, size: GuestUS
 pub(super) fn strlen(env: &mut Environment, s: ConstPtr<u8>) -> GuestUSize {
     GenericChar::<u8>::strlen(env, s)
 }
-fn strcpy(env: &mut Environment, dest: MutPtr<u8>, src: ConstPtr<u8>) -> MutPtr<u8> {
+pub(super) fn strcpy(env: &mut Environment, dest: MutPtr<u8>, src: ConstPtr<u8>) -> MutPtr<u8> {
     GenericChar::<u8>::strcpy(env, dest, src, GuestUSize::MAX)
 }
 fn __strcpy_chk(

@@ -351,7 +351,7 @@ pub fn close(env: &mut Environment, fd: FileDescriptor) -> i32 {
     }
 }
 
-fn getcwd(env: &mut Environment, buf_ptr: MutPtr<u8>, buf_size: GuestUSize) -> MutPtr<u8> {
+pub fn getcwd(env: &mut Environment, buf_ptr: MutPtr<u8>, buf_size: GuestUSize) -> MutPtr<u8> {
     let working_directory = env.fs.working_directory();
     if !env.fs.is_dir(working_directory) {
         // TODO: set errno to ENOENT

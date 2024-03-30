@@ -7,8 +7,10 @@
 
 use crate::abi::{CallFromHost, GuestFunction};
 use crate::dyld::{export_c_func, FunctionExports};
+use crate::libc::posix_io::getcwd;
+use crate::libc::string::{strcpy, strlen};
 use crate::mem::{ConstPtr, ConstVoidPtr, GuestUSize, MutPtr, MutVoidPtr, Ptr};
-use crate::Environment;
+use crate::{export_c_func_aliased, Environment};
 use std::collections::HashMap;
 use std::str::FromStr;
 
@@ -241,6 +243,39 @@ fn strtoul(env: &mut Environment, str: ConstPtr<u8>, endptr: MutPtr<MutPtr<u8>>,
     res
 }
 
+fn realpath(
+    env: &mut Environment,
+    file_name: ConstPtr<u8>,
+    resolve_name: MutPtr<u8>,
+) -> MutPtr<u8> {
+    assert!(!resolve_name.is_null());
+
+    let file_name_str = env.mem.cstr_at_utf8(file_name).unwrap();
+    // TOD0: resolve symbolic links
+    assert!(!file_name_str.contains("//"));
+    assert!(!file_name_str.contains("/."));
+    assert!(!file_name_str.starts_with('.'));
+
+    if file_name_str.starts_with('/') {
+        strcpy(env, resolve_name, file_name);
+    } else {
+        let cwd_ptr = getcwd(env, Ptr::null(), 0);
+        let cwd_len = strlen(env, cwd_ptr.cast_const());
+
+        strcpy(env, resolve_name, cwd_ptr.cast_const());
+        env.mem.write(resolve_name + cwd_len, b'/');
+        strcpy(env, resolve_name + cwd_len + 1, file_name);
+    };
+
+    log_dbg!(
+        "realpath file_name '{}', resolve_name '{}'",
+        env.mem.cstr_at_utf8(file_name).unwrap(),
+        env.mem.cstr_at_utf8(resolve_name).unwrap()
+    );
+
+    resolve_name
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(malloc(_)),
     export_c_func!(calloc(_, _)),
@@ -262,6 +297,8 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(bsearch(_, _, _, _, _)),
     export_c_func!(strtof(_, _)),
     export_c_func!(strtoul(_, _, _)),
+    export_c_func!(realpath(_, _)),
+    export_c_func_aliased!("realpath$DARWIN_EXTSN", realpath(_, _)),
 ];
 
 /// Returns a tuple containing the parsed number and the length of the number in

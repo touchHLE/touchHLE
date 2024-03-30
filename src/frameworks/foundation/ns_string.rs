@@ -983,12 +983,14 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (id)initWithContentsOfFile:(id)path // NSString*
                     encoding:(NSStringEncoding)encoding
                        error:(MutPtr<id>)error { // NSError**
-    assert!(error.is_null()); // TODO: error handling
-
     // TODO: avoid copy?
     let path = to_rust_string(env, path);
-    let bytes = env.fs.read(GuestPath::new(&path)).unwrap();
+    let Ok(bytes) = env.fs.read(GuestPath::new(&path)) else {
+        assert!(error.is_null()); // TODO: error handling
+        return nil;
+    };
 
+    // TODO: error handling for encoding
     let host_object = StringHostObject::decode(Cow::Owned(bytes), encoding);
 
     *env.objc.borrow_mut(this) = host_object;

@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5e5a1e19_999f78c2",
+        "filename": "src/frameworks/foundation/ns_object.rs",
+        "patchSetId": 4
+      },
+      "lineNbr": 141,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-03-30T10:19:56Z",
+      "side": 1,
+      "message": "you should not change this behaviour, the existence of selector doesn\u0027t garantie that class has this method. (e.g. object can respond to \"_set{}:\", but not to \"set{}:\". this your change you\u0027ll skip check of a second one.)",
+      "revId": "d05e8e8e56c8d1158e1544935690e6d4f81c8a0a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "92de8b3c_176a30cc",
+        "filename": "src/frameworks/foundation/ns_object.rs",
+        "patchSetId": 4
+      },
+      "lineNbr": 159,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-03-30T10:19:56Z",
+      "side": 1,
+      "message": "no, it should not. please re-read the doc https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/KeyValueCoding/SearchImplementation.html, \"Search Pattern for the Basic Setter\" section. In case of direct instance variable access, it is \"set the variable directly with the input value\", there is not method invocation being involved.",
+      "revId": "d05e8e8e56c8d1158e1544935690e6d4f81c8a0a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "18524a60_a17ffb5f",
+        "filename": "src/frameworks/foundation/ns_object.rs",
+        "patchSetId": 4
+      },
+      "lineNbr": 161,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-03-30T10:19:56Z",
+      "side": 1,
+      "message": "As per comments in the previous patch-set, you should use names instead of selectors for lookups of instance variables",
+      "revId": "d05e8e8e56c8d1158e1544935690e6d4f81c8a0a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

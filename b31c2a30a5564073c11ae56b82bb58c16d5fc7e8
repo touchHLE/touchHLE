@@ -34,6 +34,24 @@
       "parentUuid": "05680d62_7c6530f0",
       "revId": "b31c2a30a5564073c11ae56b82bb58c16d5fc7e8",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f2918640_2caeba83",
+        "filename": "src/frameworks/audio_toolbox/audio_components.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 118,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-03-31T22:07:09Z",
+      "side": 1,
+      "message": "OK, but the comment about named constant still persists.\nplease use paramErr from carbon_core.rs",
+      "parentUuid": "0faa52c5_4de5b7fc",
+      "revId": "b31c2a30a5564073c11ae56b82bb58c16d5fc7e8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

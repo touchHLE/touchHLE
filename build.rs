@@ -102,10 +102,6 @@ pub fn main() {
     let dynarmic_summary = dynarmic_legal.replace(dynarmic_license_oneline, &dynarmic_license);
     std::fs::write(out_dir.join("dynarmic_license.txt"), dynarmic_summary).unwrap();
 
-    for (key, value) in std::env::vars_os() {
-        println!("{key:?}: {value:?}");
-    }
-
     // libc++_shared.so has to be copied into the APK. See README of cargo-ndk.
     if std::env::var("CARGO_CFG_TARGET_OS").unwrap() == "android" {
         fn host_os_arch() -> &'static str {

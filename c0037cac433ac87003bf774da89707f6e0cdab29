@@ -92,6 +92,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "b0e56da4_dad82943",
+        "filename": "src/objc/methods.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 187,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-03-31T22:49:44Z",
+      "side": 1,
+      "message": "I suggest to just remove those comments here, they are not making much sense for ivar names.",
+      "parentUuid": "4b56aa9a_09346305",
+      "revId": "c0037cac433ac87003bf774da89707f6e0cdab29",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "d3b74b12_06a36391",
         "filename": "src/objc/methods.rs",
         "patchSetId": 5

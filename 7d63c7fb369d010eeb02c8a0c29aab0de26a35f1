@@ -33,6 +33,24 @@
       "message": "could you confirm that this patchset is working propserly with SMB?",
       "revId": "7d63c7fb369d010eeb02c8a0c29aab0de26a35f1",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a0a937e4_8db2b9c6",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 4
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-03-31T16:10:53Z",
+      "side": 1,
+      "message": "It works properly as far as I\u0027ve tested (the first world). What worries me is what to do with the created instances once the thread finishes.",
+      "parentUuid": "8bd94df0_a30cbd31",
+      "revId": "7d63c7fb369d010eeb02c8a0c29aab0de26a35f1",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

@@ -128,6 +128,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "f4560e7c_61f95aab",
+        "filename": "src/objc/methods.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 187,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-03-31T23:07:49Z",
+      "side": 1,
+      "message": "The pointer value is unrelated here as you should compare values of strings for ivar\u0027s name (think strcmp()). Deduplication doesn\u0027t make sense as you\u0027re not storing ivar\u0027s name globally.\n\nThe deduplication for selectors make sense because their definition is global and shared in the objc runtime. (check `selectors` of ObjC struct) Thus is perfectly normal to have 2 (or more) different classes responding to the same selector.",
+      "parentUuid": "6691f7da_daa2ce86",
+      "revId": "c0037cac433ac87003bf774da89707f6e0cdab29",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "d3b74b12_06a36391",
         "filename": "src/objc/methods.rs",
         "patchSetId": 5

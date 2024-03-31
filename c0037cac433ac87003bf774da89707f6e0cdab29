@@ -74,6 +74,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "4b56aa9a_09346305",
+        "filename": "src/objc/methods.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 187,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-03-31T22:48:28Z",
+      "side": 1,
+      "message": "I\u0027m not sure what you mean here. Instance variable can be looked by string name in the class. You could implement that lookup with Rust strings or with C strings.\n\n(Actually, objc runtime have lookup method https://developer.apple.com/documentation/objectivec/1418643-class_getinstancevariable?language\u003dobjc which takes a class and a C string. Whatever pointer you pass as name, only value of string does matter.)",
+      "parentUuid": "d767bd8e_ccd0560e",
+      "revId": "c0037cac433ac87003bf774da89707f6e0cdab29",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "d3b74b12_06a36391",
         "filename": "src/objc/methods.rs",
         "patchSetId": 5

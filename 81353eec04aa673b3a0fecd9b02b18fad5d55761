@@ -35,6 +35,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "046bf3f4_525aadc1",
+        "filename": "src/frameworks/uikit/ui_nib.rs",
+        "patchSetId": 4
+      },
+      "lineNbr": 18,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-03-31T16:41:34Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "38b911e4_3a89a90e",
+      "revId": "81353eec04aa673b3a0fecd9b02b18fad5d55761",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "0e035dfd_7287279c",
@@ -48,6 +66,24 @@
       "writtenOn": "2024-03-31T10:00:38Z",
       "side": 1,
       "message": "linter will complain about comment line length, please fix (you can remove uids for example)",
+      "revId": "81353eec04aa673b3a0fecd9b02b18fad5d55761",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "63529be1_c013b1fd",
+        "filename": "src/frameworks/uikit/ui_nib.rs",
+        "patchSetId": 4
+      },
+      "lineNbr": 178,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-03-31T16:41:34Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "0e035dfd_7287279c",
       "revId": "81353eec04aa673b3a0fecd9b02b18fad5d55761",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

@@ -50,6 +50,7 @@ You need three additional things for Android:
 
 1. Its Rust toolchain: `rustup target add aarch64-linux-android`
 2. cargo-ndk: `cargo install cargo-ndk`
+   - Important: make sure to use version 3.4.0 or later (can be checked with `cargo ndk -v`)
 3. The Android SDK and NDK. There's two options:
     - Install Android Studio (recommended): https://developer.android.com/
     - Install "Command line tools only": https://developer.android.com/studio/index.html#command-line-tools-only

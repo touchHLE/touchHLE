@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "072c836c_122d3cda",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 4
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-03-31T10:00:38Z",
+      "side": 1,
+      "message": "LGTM overall, but please make linter happy",
+      "revId": "81353eec04aa673b3a0fecd9b02b18fad5d55761",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "38b911e4_3a89a90e",
+        "filename": "src/frameworks/uikit/ui_nib.rs",
+        "patchSetId": 4
+      },
+      "lineNbr": 18,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-03-31T10:00:38Z",
+      "side": 1,
+      "message": "this is more a style thing, but impl_HostObject_with_superclass and msg_super should be imported via crate::objc::",
+      "revId": "81353eec04aa673b3a0fecd9b02b18fad5d55761",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0e035dfd_7287279c",
+        "filename": "src/frameworks/uikit/ui_nib.rs",
+        "patchSetId": 4
+      },
+      "lineNbr": 178,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-03-31T10:00:38Z",
+      "side": 1,
+      "message": "linter will complain about comment line length, please fix (you can remove uids for example)",
+      "revId": "81353eec04aa673b3a0fecd9b02b18fad5d55761",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

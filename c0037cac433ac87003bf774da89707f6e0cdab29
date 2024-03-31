@@ -108,6 +108,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "6691f7da_daa2ce86",
+        "filename": "src/objc/methods.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 187,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-03-31T22:55:46Z",
+      "side": 1,
+      "message": "My point was that since you couldn\u0027t guarantee the ivar name would always be stored in the same pointer, you\u0027d have to compare the string, and not just if the pointer was the same. If duplication implies something else I\u0027m missing or if the comment is confusing or misleading, i\u0027ll just remove it.",
+      "parentUuid": "b0e56da4_dad82943",
+      "revId": "c0037cac433ac87003bf774da89707f6e0cdab29",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "d3b74b12_06a36391",

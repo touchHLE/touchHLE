@@ -56,6 +56,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "d767bd8e_ccd0560e",
+        "filename": "src/objc/methods.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 187,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-03-31T22:25:40Z",
+      "side": 1,
+      "message": "Loading nib files, the ivar name string would be a different pointer than the pointer with the ivar name in the class definition. Would that not be duplication?",
+      "parentUuid": "7f4b9b25_b151fae1",
+      "revId": "c0037cac433ac87003bf774da89707f6e0cdab29",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "d3b74b12_06a36391",
         "filename": "src/objc/methods.rs",
         "patchSetId": 5

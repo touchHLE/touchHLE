@@ -30,6 +30,23 @@ const kAudioSessionProperty_PreferredHardwareIOBufferDuration: AudioSessionPrope
 
 const kAudioSessionCategory_SoloAmbientSound: u32 = fourcc(b"solo");
 
+pub struct State {
+    audio_session_category: u32,
+    current_hardware_sample_rate: f64,
+    current_hardware_output_number_channels: u32,
+}
+impl Default for State {
+    fn default() -> Self {
+        // TODO: Check values from a real device
+        State {
+            audio_session_category: kAudioSessionCategory_SoloAmbientSound,
+            // Values taken from an iOS 2 simulator
+            current_hardware_sample_rate: 44100.0,
+            current_hardware_output_number_channels: 2,
+        }
+    }
+}
+
 fn AudioSessionInitialize(
     _env: &mut Environment,
     in_run_loop: CFRunLoopRef,
@@ -62,11 +79,13 @@ fn AudioSessionGetProperty(
         kAudioSessionProperty_CurrentHardwareOutputNumberChannels => guest_size_of::<u32>(),
         _ => unimplemented!("Unimplemented property ID: {}", debug_fourcc(in_ID)),
     };
-    if env.mem.read(io_data_size) != required_size {
+    let io_data_size_value = env.mem.read(io_data_size);
+    if io_data_size_value != required_size {
         log!("Warning: AudioSessionGetProperty() failed");
         return kAudioSessionBadPropertySizeError;
     }
 
+    let state = &env.framework_state.audio_toolbox.audio_session;
     match in_ID {
         kAudioSessionProperty_OtherAudioIsPlaying => {
             let value: u32 = 0;
@@ -74,15 +93,15 @@ fn AudioSessionGetProperty(
         }
         kAudioSessionProperty_AudioCategory => {
             // This is the default value. TODO: Actually support changing it?
-            let value: u32 = kAudioSessionCategory_SoloAmbientSound;
+            let value: u32 = state.audio_session_category;
             env.mem.write(out_data.cast(), value);
         }
         kAudioSessionProperty_CurrentHardwareSampleRate => {
-            let value: f64 = 44100.0; // Value taken from an iOS 2 simulator
+            let value: f64 = state.current_hardware_sample_rate;
             env.mem.write(out_data.cast(), value);
         }
         kAudioSessionProperty_CurrentHardwareOutputNumberChannels => {
-            let value: u32 = 2; // Value taken from an iOS 2 simulator
+            let value: u32 = state.current_hardware_output_number_channels;
             env.mem.write(out_data.cast(), value);
         }
         _ => unreachable!(),

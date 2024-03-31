@@ -21,6 +21,7 @@ Compatibility:
   - Rayman 2 (@ciciplusplus)
   - Tony Hawk's Pro Skater 2 (@ciciplusplus)
   - Earthworm Jim (@ciciplusplus)
+  - Castle of Magic (@ciciplusplus)
 - API support improvements:
   - Various small contributions. (@alborrajo, @WhatAmISupposedToPutHere, @ciciplusplus, @hikari-no-yume, @LennyKappa, @Skryptonyte, @teromene)
   - AAC audio files (AAC-LC in a typical MPEG-4 container) are now supported in Audio Toolbox. This is done in a fairly hacky way so it might not work for some apps. (@hikari-no-yume)

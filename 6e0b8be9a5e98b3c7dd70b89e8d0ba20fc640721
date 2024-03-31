@@ -24,6 +24,30 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "efb559da_ed29432b",
+        "filename": "src/frameworks/foundation/ns_object.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 189,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-03-31T22:11:32Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "0d5c9641_36b346d0",
+      "range": {
+        "startLine": 189,
+        "startChar": 83,
+        "endLine": 189,
+        "endChar": 103
+      },
+      "revId": "6e0b8be9a5e98b3c7dd70b89e8d0ba20fc640721",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "d362e741_1c578ae6",
@@ -37,6 +61,24 @@
       "writtenOn": "2024-03-31T21:50:45Z",
       "side": 1,
       "message": "better to split to 2 helper functions as described above",
+      "revId": "6e0b8be9a5e98b3c7dd70b89e8d0ba20fc640721",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "226ca298_f24441d3",
+        "filename": "src/objc/methods.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 303,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-03-31T22:11:32Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "d362e741_1c578ae6",
       "revId": "6e0b8be9a5e98b3c7dd70b89e8d0ba20fc640721",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

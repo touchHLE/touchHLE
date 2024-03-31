@@ -20,6 +20,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "25a087cc_c9f408c1",
+        "filename": "src/objc/methods.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 187,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-03-31T22:11:39Z",
+      "side": 1,
+      "message": "In a way, it does. It explains why the pointer to the string can\u0027t be used, and instead the value must be copied and compared to.",
+      "parentUuid": "7760a00a_1971a0f6",
+      "revId": "c0037cac433ac87003bf774da89707f6e0cdab29",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "d3b74b12_06a36391",
         "filename": "src/objc/methods.rs",
         "patchSetId": 5
@@ -31,6 +49,30 @@
       "writtenOn": "2024-03-31T21:38:57Z",
       "side": 1,
       "message": "please remove this part of the comment",
+      "range": {
+        "startLine": 275,
+        "startChar": 70,
+        "endLine": 276,
+        "endChar": 64
+      },
+      "revId": "c0037cac433ac87003bf774da89707f6e0cdab29",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "72496626_8d252fdf",
+        "filename": "src/objc/methods.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 276,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-03-31T22:11:39Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "d3b74b12_06a36391",
       "range": {
         "startLine": 275,
         "startChar": 70,

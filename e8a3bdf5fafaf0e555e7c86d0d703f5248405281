@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "a6dfe45d_1c0029b2",
+        "filename": "src/objc/classes.rs",
+        "patchSetId": 4
+      },
+      "lineNbr": 42,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-03-31T16:41:29Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "d1566c95_0f2d96d9",
+      "revId": "e8a3bdf5fafaf0e555e7c86d0d703f5248405281",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "22f4b9ac_07e7d732",
@@ -31,6 +49,24 @@
       "writtenOn": "2024-03-30T10:30:40Z",
       "side": 1,
       "message": "the usual convention is to use `type_`",
+      "revId": "e8a3bdf5fafaf0e555e7c86d0d703f5248405281",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b3cab7da_add76da7",
+        "filename": "src/objc/methods.rs",
+        "patchSetId": 4
+      },
+      "lineNbr": 129,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-03-31T16:41:29Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "22f4b9ac_07e7d732",
       "revId": "e8a3bdf5fafaf0e555e7c86d0d703f5248405281",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
@@ -52,6 +88,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "5712f24d_6fd6d5fe",
+        "filename": "src/objc/methods.rs",
+        "patchSetId": 4
+      },
+      "lineNbr": 193,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-03-31T16:41:29Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "f2d538c6_e3e3a10f",
+      "revId": "e8a3bdf5fafaf0e555e7c86d0d703f5248405281",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "370da677_7f0367b2",
@@ -65,6 +119,24 @@
       "writtenOn": "2024-03-30T10:18:47Z",
       "side": 1,
       "message": "you should lookup instance variable by name, not but selector",
+      "revId": "e8a3bdf5fafaf0e555e7c86d0d703f5248405281",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "e1156f24_69ef246e",
+        "filename": "src/objc/methods.rs",
+        "patchSetId": 4
+      },
+      "lineNbr": 281,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-03-31T16:41:29Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "370da677_7f0367b2",
       "revId": "e8a3bdf5fafaf0e555e7c86d0d703f5248405281",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

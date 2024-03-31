@@ -71,6 +71,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "f923c0c9_2ea39fae",
+        "filename": "src/frameworks/foundation/ns_object.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 166,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-03-31T16:41:20Z",
+      "side": 1,
+      "message": "Resolved since ivars no longer use selectors",
+      "parentUuid": "6b89f1f5_16ae21ee",
+      "revId": "34f26a4a17380442d50ad9066637e0a0ce354651",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "e9ca565f_e5982e29",
@@ -190,6 +208,24 @@
       "side": 1,
       "message": "you should prefix it somehow and add an explanation comment to distinguish from \"normal\" methods",
       "parentUuid": "59e6d425_5909a439",
+      "revId": "34f26a4a17380442d50ad9066637e0a0ce354651",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b6399277_a464d1dc",
+        "filename": "src/objc/methods.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 306,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-03-31T16:41:20Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "705cb35b_60a9e791",
       "revId": "34f26a4a17380442d50ad9066637e0a0ce354651",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

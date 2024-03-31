@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "5c22eb61_85ed7631",
+        "filename": "src/frameworks/foundation/ns_object.rs",
+        "patchSetId": 4
+      },
+      "lineNbr": 141,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-03-31T16:41:20Z",
+      "side": 1,
+      "message": "All this time i hadn\u0027t realized that this function doesn\u0027t look up for the selector _in the class_ 🤦",
+      "parentUuid": "5e5a1e19_999f78c2",
+      "revId": "d05e8e8e56c8d1158e1544935690e6d4f81c8a0a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "92de8b3c_176a30cc",
@@ -35,6 +53,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "2f013ebf_aebd20a9",
+        "filename": "src/frameworks/foundation/ns_object.rs",
+        "patchSetId": 4
+      },
+      "lineNbr": 159,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-03-31T16:41:20Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "92de8b3c_176a30cc",
+      "revId": "d05e8e8e56c8d1158e1544935690e6d4f81c8a0a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "18524a60_a17ffb5f",
@@ -48,6 +84,24 @@
       "writtenOn": "2024-03-30T10:19:56Z",
       "side": 1,
       "message": "As per comments in the previous patch-set, you should use names instead of selectors for lookups of instance variables",
+      "revId": "d05e8e8e56c8d1158e1544935690e6d4f81c8a0a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "287d9d78_f4284258",
+        "filename": "src/frameworks/foundation/ns_object.rs",
+        "patchSetId": 4
+      },
+      "lineNbr": 161,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-03-31T16:41:20Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "18524a60_a17ffb5f",
       "revId": "d05e8e8e56c8d1158e1544935690e6d4f81c8a0a",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

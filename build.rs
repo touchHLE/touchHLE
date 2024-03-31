@@ -4,7 +4,6 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 use cargo_license::{get_dependencies_from_cargo_lock, GetDependenciesOpt};
-use std::ffi::OsString;
 use std::fmt::Write;
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -104,37 +103,9 @@ pub fn main() {
 
     // libc++_shared.so has to be copied into the APK. See README of cargo-ndk.
     if std::env::var("CARGO_CFG_TARGET_OS").unwrap() == "android" {
-        fn host_os_arch() -> &'static str {
-            #[cfg(target_os = "macos")]
-            return "darwin-x86_64";
-            #[cfg(target_os = "linux")]
-            return "linux-x86_64";
-            #[cfg(target_os = "windows")]
-            return "windows-x86_64";
-        }
-        // in some cases CARGO_NDK_SYSROOT_LIBS_PATH wouldn't be defined,
-        // we fallback here to resolving sysroot path manually,
-        // the same way cargo ndk does it
-        fn ndk_sysroot_libs_fallback() -> OsString {
-            PathBuf::from(std::env::var("ANDROID_NDK_HOME").unwrap())
-                .join("toolchains")
-                .join("llvm")
-                .join("prebuilt")
-                .join(host_os_arch())
-                .join("sysroot")
-                .join("usr")
-                .join("lib")
-                .join(std::env::var("TARGET").unwrap())
-                .to_str()
-                .unwrap()
-                .parse()
-                .unwrap()
-        }
-
         println!("cargo:rustc-link-lib=c++_shared");
-        let sysroot_libs_path = PathBuf::from(
-            std::env::var_os("CARGO_NDK_SYSROOT_LIBS_PATH").unwrap_or(ndk_sysroot_libs_fallback()),
-        );
+        let sysroot_libs_path =
+            PathBuf::from(std::env::var_os("CARGO_NDK_SYSROOT_LIBS_PATH").unwrap());
         let lib_path = sysroot_libs_path.join("libc++_shared.so");
         std::fs::copy(
             lib_path,

@@ -18,10 +18,10 @@ Changes are categorised as follows:
 Compatibility:
 
 - New working apps:
-  - Rayman 2 (@ciciplusplus)
-  - Tony Hawk's Pro Skater 2 (@ciciplusplus)
-  - Earthworm Jim (@ciciplusplus)
-  - Castle of Magic (@ciciplusplus)
+  - [Rayman 2](https://appdb.touchhle.org/apps/279) (@ciciplusplus)
+  - [Tony Hawk's Pro Skater 2](https://appdb.touchhle.org/apps/75) (@ciciplusplus)
+  - [Earthworm Jim](https://appdb.touchhle.org/apps/280) (@ciciplusplus)
+  - [Castle of Magic](https://appdb.touchhle.org/apps/281) (@ciciplusplus)
 - API support improvements:
   - Various small contributions. (@alborrajo, @WhatAmISupposedToPutHere, @ciciplusplus, @hikari-no-yume, @LennyKappa, @Skryptonyte, @teromene)
   - AAC audio files (AAC-LC in a typical MPEG-4 container) are now supported in Audio Toolbox. This is done in a fairly hacky way so it might not work for some apps. (@hikari-no-yume)

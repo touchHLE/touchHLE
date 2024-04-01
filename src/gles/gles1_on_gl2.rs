@@ -1528,7 +1528,13 @@ impl GLES for GLES1OnGL2 {
                 gl21::TexEnvi(target, pname, param)
             }
             gl21::TEXTURE_2D => {
+                // This is not a valid TexEnvi target, but we a tolerating it
+                // for a Rayman 2 case.
                 assert!(pname == gl21::TEXTURE_ENV_MODE);
+                log_dbg!(
+                    "Tolerating glTexEnvi(GL_TEXTURE_2D, TEXTURE_ENV_MODE, {})",
+                    param
+                );
                 gl21::TexEnvi(target, pname, param)
             }
             _ => unimplemented!("target 0x{:X}, pname 0x{:X}", target, pname),

@@ -736,7 +736,7 @@ dependencies = [
 
 [[package]]
 name = "touchHLE"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "caf",
  "cargo-license",
@@ -761,14 +761,14 @@ dependencies = [
 
 [[package]]
 name = "touchHLE_dr_mp3_wrapper"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "cc",
 ]
 
 [[package]]
 name = "touchHLE_dynarmic_wrapper"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "cc",
  "cmake",
@@ -776,28 +776,28 @@ dependencies = [
 
 [[package]]
 name = "touchHLE_gl_bindings"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "gl_generator",
 ]
 
 [[package]]
 name = "touchHLE_openal_soft_wrapper"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "cmake",
 ]
 
 [[package]]
 name = "touchHLE_pvrt_decompress_wrapper"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "cc",
 ]
 
 [[package]]
 name = "touchHLE_stb_image_wrapper"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "cc",
 ]

@@ -1527,7 +1527,11 @@ impl GLES for GLES1OnGL2 {
                 assert!(pname == gl21::COORD_REPLACE);
                 gl21::TexEnvi(target, pname, param)
             }
-            _ => unimplemented!(),
+            gl21::TEXTURE_2D => {
+                assert!(pname == gl21::TEXTURE_ENV_MODE);
+                gl21::TexEnvi(target, pname, param)
+            }
+            _ => unimplemented!("target 0x{:X}, pname 0x{:X}", target, pname),
         }
     }
     unsafe fn TexEnvfv(&mut self, target: GLenum, pname: GLenum, params: *const GLfloat) {

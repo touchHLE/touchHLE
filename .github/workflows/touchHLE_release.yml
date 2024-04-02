@@ -3,8 +3,6 @@ name: Build touchHLE
 on:
   push:
     branches: [ "trunk" ]
-    tags:
-      - '*'
   pull_request:
     branches: [ "trunk" ]
 

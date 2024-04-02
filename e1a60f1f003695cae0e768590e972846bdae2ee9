@@ -69,6 +69,24 @@
       "parentUuid": "c108ced9_6580a8c9",
       "revId": "e1a60f1f003695cae0e768590e972846bdae2ee9",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "dda2d86e_a8a5925c",
+        "filename": "src/libc/stdlib.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 150,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-04-02T22:29:51Z",
+      "side": 1,
+      "message": "If the home directory was changed before first access to HOME env var has happened, the implemented behaviour will return different results in comparison to setting HOME var at the app start.\n\nHave you verified what is actually happening on iOS?",
+      "parentUuid": "26779945_0a51b204",
+      "revId": "e1a60f1f003695cae0e768590e972846bdae2ee9",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

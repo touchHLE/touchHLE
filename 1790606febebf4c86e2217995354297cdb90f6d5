@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "dae0c378_ed641503",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 7
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-04-02T21:18:53Z",
+      "side": 1,
+      "message": "it\u0027s already good, in nearly mergeable state, but few more assertions/TODOs is are needed",
+      "revId": "1790606febebf4c86e2217995354297cdb90f6d5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "58db0568_22bc6a8a",
+        "filename": "src/frameworks/foundation/ns_object.rs",
+        "patchSetId": 7
+      },
+      "lineNbr": 130,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-04-02T21:18:53Z",
+      "side": 1,
+      "message": "you should assert that value is not nil (or implement it).\nif value is nil, `-setNilValueForKey:` should be invoked",
+      "revId": "1790606febebf4c86e2217995354297cdb90f6d5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "379e4e0c_079a771e",
+        "filename": "src/frameworks/foundation/ns_object.rs",
+        "patchSetId": 7
+      },
+      "lineNbr": 143,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-04-02T21:18:53Z",
+      "side": 1,
+      "message": "Technically, you should also handle the case of value being NSNumber/NSValue, which in that case should be `unwrapped` (check documentation for details).\n\nI think it\u0027s OK to have a TODO for that case. (I would prefer to have an assertion , but logic is a bit complex as you\u0027ll actually need to check for type of method parameter and/or type of instance variable).\n\nThis comment applies to all of the case of setting the value.",
+      "revId": "1790606febebf4c86e2217995354297cdb90f6d5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

@@ -37,6 +37,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "a5b0158e_509ed38e",
+        "filename": "src/objc/methods.rs",
+        "patchSetId": 7
+      },
+      "lineNbr": 169,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-04-03T20:16:33Z",
+      "side": 1,
+      "message": "The size is included in the file to make the format extensible (allows adding more struct members in newer versions). I don\u0027t know if they made use of that extensibility for the ivar type specifically.",
+      "parentUuid": "437ddf38_bd9c8e78",
+      "revId": "4a3da7b4d11a138896e371680479e52889b534ab",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "fdb78cec_e8215bc8",
         "filename": "src/objc/methods.rs",
         "patchSetId": 7
@@ -48,6 +66,23 @@
       "writtenOn": "2024-04-03T19:03:48Z",
       "side": 1,
       "message": "Could you elaborate on this todo?",
+      "revId": "4a3da7b4d11a138896e371680479e52889b534ab",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "57401a77_4eeacea0",
+        "filename": "src/objc/methods.rs",
+        "patchSetId": 7
+      },
+      "lineNbr": 187,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-04-03T20:16:33Z",
+      "side": 1,
+      "message": "I wonder, could we at least have some assert for this so it won\u0027t break silently?",
       "revId": "4a3da7b4d11a138896e371680479e52889b534ab",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

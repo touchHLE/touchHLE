@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9c2fa78e_c1055dcd",
+        "filename": "src/libc/posix_io/stat.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 140,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-04-03T21:48:53Z",
+      "side": 1,
+      "message": "could you implement the same log_dbg() print as for stat() ?",
+      "revId": "cd1641214f47c1860fae8361a0980f69307c4cee",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e2b59e8c_ef333cb5",
+        "filename": "src/libc/posix_io/stat.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 178,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-04-03T21:48:53Z",
+      "side": 1,
+      "message": "you already have env.mem.cstr_at_utf8() method",
+      "revId": "cd1641214f47c1860fae8361a0980f69307c4cee",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

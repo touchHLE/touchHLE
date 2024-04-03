@@ -87,6 +87,24 @@
       "parentUuid": "26779945_0a51b204",
       "revId": "e1a60f1f003695cae0e768590e972846bdae2ee9",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5b9f98fe_d635de0f",
+        "filename": "src/libc/stdlib.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 150,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-04-03T11:50:52Z",
+      "side": 1,
+      "message": "I haven\u0027t found much about setting the home directory, only getting it. How can an app change that value?",
+      "parentUuid": "dda2d86e_a8a5925c",
+      "revId": "e1a60f1f003695cae0e768590e972846bdae2ee9",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

@@ -16,6 +16,40 @@
       "message": "LGTM, will have another look later",
       "revId": "4a3da7b4d11a138896e371680479e52889b534ab",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "437ddf38_bd9c8e78",
+        "filename": "src/objc/methods.rs",
+        "patchSetId": 7
+      },
+      "lineNbr": 169,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-04-03T19:03:48Z",
+      "side": 1,
+      "message": "How entsize could be bigger than ivar_it?",
+      "revId": "4a3da7b4d11a138896e371680479e52889b534ab",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fdb78cec_e8215bc8",
+        "filename": "src/objc/methods.rs",
+        "patchSetId": 7
+      },
+      "lineNbr": 181,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-04-03T19:03:48Z",
+      "side": 1,
+      "message": "Could you elaborate on this todo?",
+      "revId": "4a3da7b4d11a138896e371680479e52889b534ab",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

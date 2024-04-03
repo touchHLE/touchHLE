@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d045d18e_d247e5f6",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 13
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-04-03T21:41:45Z",
+      "side": 1,
+      "message": "replaced with real implementation here https://github.com/touchHLE/touchHLE/commit/83ee4e61d8be80f6c99b2b7fa7c917665d2c19af\n\nseems to work OK with RE4, menu music now plays in the loop",
+      "revId": "a350baf0c728986b67e869e27f6e0de780596be8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

@@ -50,6 +50,23 @@
       "message": "Technically, you should also handle the case of value being NSNumber/NSValue, which in that case should be `unwrapped` (check documentation for details).\n\nI think it\u0027s OK to have a TODO for that case. (I would prefer to have an assertion , but logic is a bit complex as you\u0027ll actually need to check for type of method parameter and/or type of instance variable).\n\nThis comment applies to all of the case of setting the value.",
       "revId": "1790606febebf4c86e2217995354297cdb90f6d5",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1ad9715d_5217649e",
+        "filename": "src/frameworks/foundation/ns_object.rs",
+        "patchSetId": 7
+      },
+      "lineNbr": 189,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-04-03T20:19:01Z",
+      "side": 1,
+      "message": "Can you reformat this into more than one line? ^^;",
+      "revId": "1790606febebf4c86e2217995354297cdb90f6d5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

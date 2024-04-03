@@ -105,6 +105,24 @@
       "parentUuid": "dda2d86e_a8a5925c",
       "revId": "e1a60f1f003695cae0e768590e972846bdae2ee9",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1db4a2c1_12c5821c",
+        "filename": "src/libc/stdlib.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 150,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-04-03T16:54:03Z",
+      "side": 1,
+      "message": "Hhhm, you\u0027re probably right, home directory is immutable on iOS",
+      "parentUuid": "5b9f98fe_d635de0f",
+      "revId": "e1a60f1f003695cae0e768590e972846bdae2ee9",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

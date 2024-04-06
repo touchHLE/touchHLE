@@ -22,7 +22,10 @@ pub struct State {
     current_ctxs: std::collections::HashMap<crate::ThreadId, Option<crate::objc::id>>,
     /// Which thread's EAGLContext is currently active
     current_ctx_thread: Option<crate::ThreadId>,
+    /// Cache of strings queried by glGetString()
     strings_cache: std::collections::HashMap<GLenum, ConstPtr<u8>>,
+    /// Used for glGetPointerv()
+    pointer_is_offset: std::collections::HashSet<GLenum>,
 }
 impl State {
     fn current_ctx_for_thread(&mut self, thread: crate::ThreadId) -> &mut Option<crate::objc::id> {

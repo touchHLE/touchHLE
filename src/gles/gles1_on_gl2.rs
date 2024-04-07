@@ -541,36 +541,6 @@ impl GLES1OnGL2 {
             }
         }
     }
-
-    /// If fog is enabled, check if the values for start and end distances
-    /// are equal, or start distance is greater than end distance.
-    /// Apple platforms (even modern Mac OS) seem to handle that gracefully,
-    /// however, both Windows and Android have issues in those cases.
-    /// This workaround is required so Doom 2 RPG renders correctly.
-    /// It prevents divisions by zero in levels where fog is used and both
-    /// values are set to 10000.
-    unsafe fn clamp_fog_state_values(&mut self) -> Option<(f32, f32)> {
-        let mut fogEnabled: GLboolean = 0;
-        gl21::GetBooleanv(gl21::FOG, &mut fogEnabled);
-        if fogEnabled != 0 {
-            let mut fogStart: GLfloat = 0.0;
-            let mut fogEnd: GLfloat = 0.0;
-            gl21::GetFloatv(gl21::FOG_START, &mut fogStart);
-            gl21::GetFloatv(gl21::FOG_END, &mut fogEnd);
-            if fogStart == fogEnd {
-                let newFogStart = fogEnd - 0.001;
-                gl21::Fogf(gl21::FOG_START, newFogStart);
-                return Some((fogStart, fogEnd));
-            }
-        }
-        None
-    }
-    unsafe fn restore_fog_state_values(&mut self, from_backup: Option<(f32, f32)>) {
-        if let Some((fogStart, fogEnd)) = from_backup {
-            gl21::Fogf(gl21::FOG_START, fogStart);
-            gl21::Fogf(gl21::FOG_END, fogEnd);
-        }
-    }
 }
 impl GLES for GLES1OnGL2 {
     fn description() -> &'static str {
@@ -1069,12 +1039,10 @@ impl GLES for GLES1OnGL2 {
         ]
         .contains(&mode));
 
-        let fog_state_backup = self.clamp_fog_state_values();
         let fixed_point_arrays_state_backup = self.translate_fixed_point_arrays(first, count);
 
         gl21::DrawArrays(mode, first, count);
 
-        self.restore_fog_state_values(fog_state_backup);
         self.restore_fixed_point_arrays(fixed_point_arrays_state_backup);
     }
     unsafe fn DrawElements(
@@ -1096,7 +1064,6 @@ impl GLES for GLES1OnGL2 {
         .contains(&mode));
         assert!(type_ == gl21::UNSIGNED_BYTE || type_ == gl21::UNSIGNED_SHORT);
 
-        let fog_state_backup = self.clamp_fog_state_values();
         let fixed_point_arrays_state_backup =
             if self.pointer_is_fixed_point.iter().any(|&is_fixed| is_fixed) {
                 // Scan the index buffer to find the range of data that may need
@@ -1152,7 +1119,6 @@ impl GLES for GLES1OnGL2 {
 
         gl21::DrawElements(mode, count, type_, indices);
 
-        self.restore_fog_state_values(fog_state_backup);
         if let Some(fixed_point_arrays_state_backup) = fixed_point_arrays_state_backup {
             self.restore_fixed_point_arrays(fixed_point_arrays_state_backup);
         }

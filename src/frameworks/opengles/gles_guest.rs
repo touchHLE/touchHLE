@@ -548,7 +548,9 @@ fn glVertexPointer(
 // Drawing
 fn glDrawArrays(env: &mut Environment, mode: GLenum, first: GLint, count: GLsizei) {
     with_ctx_and_mem(env, |gles, _mem| unsafe {
-        gles.DrawArrays(mode, first, count)
+        let fog_state_backup = clamp_fog_state_values(gles);
+        gles.DrawArrays(mode, first, count);
+        restore_fog_state_values(gles, fog_state_backup);
     })
 }
 fn glDrawElements(
@@ -559,13 +561,15 @@ fn glDrawElements(
     indices: ConstVoidPtr,
 ) {
     with_ctx_and_mem(env, |gles, mem| unsafe {
+        let fog_state_backup = clamp_fog_state_values(gles);
         let indices = translate_pointer_or_offset_to_host(
             gles,
             mem,
             indices,
             gles11::ELEMENT_ARRAY_BUFFER_BINDING,
         );
-        gles.DrawElements(mode, count, type_, indices)
+        gles.DrawElements(mode, count, type_, indices);
+        restore_fog_state_values(gles, fog_state_backup);
     })
 }
 
@@ -1096,6 +1100,35 @@ fn glDeleteRenderbuffersOES(env: &mut Environment, n: GLsizei, renderbuffers: Co
 }
 fn glGenerateMipmapOES(env: &mut Environment, target: GLenum) {
     with_ctx_and_mem(env, |gles, _mem| unsafe { gles.GenerateMipmapOES(target) })
+}
+
+/// If fog is enabled, check if the values for start and end distances
+/// are equal. Apple platforms (even modern Mac OS) seem to handle that
+/// gracefully, however, both Windows and Android have issues in those cases.
+/// This workaround is required so Doom 2 RPG renders correctly.
+/// It prevents divisions by zero in levels where fog is used and both
+/// values are set to 10000.
+unsafe fn clamp_fog_state_values(gles: &mut dyn GLES) -> Option<(f32, f32)> {
+    let mut fogEnabled: GLboolean = 0;
+    gles.GetBooleanv(gles11::FOG, &mut fogEnabled);
+    if fogEnabled != 0 {
+        let mut fogStart: GLfloat = 0.0;
+        let mut fogEnd: GLfloat = 0.0;
+        gles.GetFloatv(gles11::FOG_START, &mut fogStart);
+        gles.GetFloatv(gles11::FOG_END, &mut fogEnd);
+        if fogStart == fogEnd {
+            let newFogStart = fogEnd - 0.001;
+            gles.Fogf(gles11::FOG_START, newFogStart);
+            return Some((fogStart, fogEnd));
+        }
+    }
+    None
+}
+unsafe fn restore_fog_state_values(gles: &mut dyn GLES, from_backup: Option<(f32, f32)>) {
+    if let Some((fogStart, fogEnd)) = from_backup {
+        gles.Fogf(gles11::FOG_START, fogStart);
+        gles.Fogf(gles11::FOG_END, fogEnd);
+    }
 }
 
 pub const FUNCTIONS: FunctionExports = &[

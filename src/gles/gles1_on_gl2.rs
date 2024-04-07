@@ -617,7 +617,9 @@ impl GLES for GLES1OnGL2 {
         gl21::Enable(cap);
     }
     unsafe fn IsEnabled(&mut self, cap: GLenum) -> GLboolean {
-        assert!(CAPABILITIES.contains(&cap));
+        assert!(
+            CAPABILITIES.contains(&cap) || ARRAYS.iter().any(|&ArrayInfo { name, .. }| name == cap)
+        );
         gl21::IsEnabled(cap)
     }
     unsafe fn Disable(&mut self, cap: GLenum) {

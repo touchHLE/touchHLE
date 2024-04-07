@@ -70,6 +70,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "67673249_e7cbb8e1",
+        "filename": "src/objc/methods.rs",
+        "patchSetId": 7
+      },
+      "lineNbr": 181,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-04-07T11:24:17Z",
+      "side": 1,
+      "message": "As far as I remember, these values are used when shifting offsets when the superclass grows into the subclass pointer offsets. Right now we\u0027re not doing that shifting, so these values are unused. I\u0027ll rewrite the comment to clear things up.",
+      "parentUuid": "fdb78cec_e8215bc8",
+      "revId": "4a3da7b4d11a138896e371680479e52889b534ab",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "57401a77_4eeacea0",
@@ -83,6 +101,24 @@
       "writtenOn": "2024-04-03T20:16:33Z",
       "side": 1,
       "message": "I wonder, could we at least have some assert for this so it won\u0027t break silently?",
+      "revId": "4a3da7b4d11a138896e371680479e52889b534ab",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "7d2d3606_77888768",
+        "filename": "src/objc/methods.rs",
+        "patchSetId": 7
+      },
+      "lineNbr": 187,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-04-07T11:24:17Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "57401a77_4eeacea0",
       "revId": "4a3da7b4d11a138896e371680479e52889b534ab",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

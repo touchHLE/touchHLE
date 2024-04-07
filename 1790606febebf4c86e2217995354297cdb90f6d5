@@ -35,6 +35,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "1ed7270d_f88deaa4",
+        "filename": "src/frameworks/foundation/ns_object.rs",
+        "patchSetId": 7
+      },
+      "lineNbr": 130,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-04-07T11:24:24Z",
+      "side": 1,
+      "message": "setNilValueForKey is invoked only when key corresponds with an int or float. It ties with the comment below, where we\u0027d have to check for the ivar/method argument type.",
+      "parentUuid": "58db0568_22bc6a8a",
+      "revId": "1790606febebf4c86e2217995354297cdb90f6d5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "379e4e0c_079a771e",
@@ -52,6 +70,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "7ff8b8a0_b564bc58",
+        "filename": "src/frameworks/foundation/ns_object.rs",
+        "patchSetId": 7
+      },
+      "lineNbr": 143,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-04-07T11:24:24Z",
+      "side": 1,
+      "message": "Added asserts that are overkill and will trigger even in situations that must work (setting nil values on keys that allow nil and setting NSValue/NSNumber values on keys that are NSValue/NSNumber), but it works for loading nibs which is the use case in Lightbike",
+      "parentUuid": "379e4e0c_079a771e",
+      "revId": "1790606febebf4c86e2217995354297cdb90f6d5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "1ad9715d_5217649e",
@@ -65,6 +101,24 @@
       "writtenOn": "2024-04-03T20:19:01Z",
       "side": 1,
       "message": "Can you reformat this into more than one line? ^^;",
+      "revId": "1790606febebf4c86e2217995354297cdb90f6d5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "92733076_5a0b49d2",
+        "filename": "src/frameworks/foundation/ns_object.rs",
+        "patchSetId": 7
+      },
+      "lineNbr": 189,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-04-07T11:24:24Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "1ad9715d_5217649e",
       "revId": "1790606febebf4c86e2217995354297cdb90f6d5",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

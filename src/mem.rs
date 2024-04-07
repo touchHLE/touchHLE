@@ -429,6 +429,19 @@ impl Mem {
         self.bytes_at_mut(ptr.cast(), size).as_mut_ptr().cast()
     }
 
+    /// Transform a host pointer addressing a location in guest memory back into
+    /// a guest pointer. This exists solely to deal with OpenGL `glGetPointerv`.
+    /// You should never have another reason to use this.
+    ///
+    /// Panics if the host pointer is not addressing a location in guest memory.
+    pub fn host_ptr_to_guest_ptr(&self, host_ptr: *const std::ffi::c_void) -> ConstVoidPtr {
+        let host_ptr = host_ptr.cast::<u8>();
+        let guest_mem_range = self.bytes().as_ptr_range();
+        assert!(guest_mem_range.contains(&host_ptr));
+        let guest_addr = host_ptr as usize - guest_mem_range.start as usize;
+        Ptr::from_bits(u32::try_from(guest_addr).unwrap())
+    }
+
     /// Read a value for memory. This is the preferred way to read memory in
     /// most cases.
     pub fn read<T, const MUT: bool>(&self, ptr: Ptr<T, MUT>) -> T

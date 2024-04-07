@@ -75,13 +75,13 @@ pub struct ArrayInfo {
     /// `glGetBoolean`.
     pub name: GLenum,
     /// Buffer binding enum for `glGetInteger`.
-    buffer_binding: GLenum,
+    pub buffer_binding: GLenum,
     /// Size enum for `glGetInteger`.
     size: Option<GLenum>,
     /// Stride enum for `glGetInteger`.
     stride: GLenum,
     /// Pointer enum for `glGetPointer`.
-    pointer: GLenum,
+    pub pointer: GLenum,
 }
 
 struct ArrayStateBackup {

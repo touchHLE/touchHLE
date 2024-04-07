@@ -15,7 +15,7 @@
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::gles::gles11_raw as gles11; // constants only
 use crate::gles::GLES;
-use crate::mem::{ConstPtr, ConstVoidPtr, GuestISize, GuestUSize, Mem, MutPtr};
+use crate::mem::{ConstPtr, ConstVoidPtr, GuestISize, GuestUSize, Mem, MutPtr, Ptr};
 use crate::Environment;
 
 // These types are the same size in guest code (32-bit) and host code (64-bit).
@@ -121,6 +121,20 @@ fn glGetIntegerv(env: &mut Environment, pname: GLenum, params: MutPtr<GLint>) {
     with_ctx_and_mem(env, |gles, mem| {
         let params = mem.ptr_at_mut(params, 16 /* upper bound */);
         unsafe { gles.GetIntegerv(pname, params) };
+    });
+}
+fn glGetPointerv(env: &mut Environment, pname: GLenum, params: MutPtr<ConstVoidPtr>) {
+    use crate::gles::gles1_on_gl2::{ArrayInfo, ARRAYS};
+    let &ArrayInfo { buffer_binding, .. } =
+        ARRAYS.iter().find(|info| info.pointer == pname).unwrap();
+    with_ctx_and_mem(env, |gles, mem| {
+        // params always points to just one pointer for this function
+        let mut host_pointer_or_offset = std::ptr::null();
+        let guest_pointer_or_offset = unsafe {
+            gles.GetPointerv(pname, &mut host_pointer_or_offset);
+            translate_pointer_or_offset_to_guest(gles, mem, host_pointer_or_offset, buffer_binding)
+        };
+        mem.write(params, guest_pointer_or_offset);
     });
 }
 fn glGetTexEnviv(env: &mut Environment, target: GLenum, pname: GLenum, params: MutPtr<GLint>) {
@@ -430,9 +444,14 @@ fn glNormal3x(env: &mut Environment, nx: GLfixed, ny: GLfixed, nz: GLfixed) {
 
 // Pointers
 
-/// One of the ugliest things in OpenGL is that, depending on dynamic state, the
-/// pointer parameter of certain functions is either a pointer or an offset!
-unsafe fn translate_pointer_or_offset(
+/// Helper for implementing OpenGL pointer setting functions.
+///
+/// One of the ugliest things in OpenGL is that, depending on dynamic state
+/// (`ARRAY_BUFFER_BINDING` or `ELEMENT_ARRAY_BUFFER_BINDING`), the pointer
+/// parameter of certain functions is either a pointer or an offset!
+///
+/// See also: [translate_pointer_or_offset_to_guest]
+unsafe fn translate_pointer_or_offset_to_host(
     gles: &mut dyn GLES,
     mem: &Mem,
     pointer_or_offset: ConstVoidPtr,
@@ -452,6 +471,33 @@ unsafe fn translate_pointer_or_offset(
     }
 }
 
+/// Helper for implementing OpenGL pointer retrieval.
+///
+/// Reverse of [translate_pointer_or_offset_to_host]. Depending on the value
+/// of `VERTEX_ARRAY_BUFFER_BINDING`/`NORMAL_ARRAY_BUFFER_BINDING`/etc
+/// (not to be confused with `ARRAY_BUFFER_BINDING`, only used when *setting*),
+/// the pointer retrieved with `glGetPointerv` may actually be an offset.
+///
+/// See also: [translate_pointer_or_offset_to_host]
+unsafe fn translate_pointer_or_offset_to_guest(
+    gles: &mut dyn GLES,
+    mem: &Mem,
+    pointer_or_offset: *const GLvoid,
+    which_binding: GLenum,
+) -> ConstVoidPtr {
+    let mut buffer_binding = 0;
+    gles.GetIntegerv(which_binding, &mut buffer_binding);
+    if buffer_binding != 0 {
+        let offset = pointer_or_offset as usize;
+        Ptr::from_bits(u32::try_from(offset).unwrap())
+    } else if pointer_or_offset.is_null() {
+        Ptr::null()
+    } else {
+        let pointer = pointer_or_offset;
+        mem.host_ptr_to_guest_ptr(pointer)
+    }
+}
+
 fn glColorPointer(
     env: &mut Environment,
     size: GLint,
@@ -460,13 +506,15 @@ fn glColorPointer(
     pointer: ConstVoidPtr,
 ) {
     with_ctx_and_mem(env, |gles, mem| unsafe {
-        let pointer = translate_pointer_or_offset(gles, mem, pointer, gles11::ARRAY_BUFFER_BINDING);
+        let pointer =
+            translate_pointer_or_offset_to_host(gles, mem, pointer, gles11::ARRAY_BUFFER_BINDING);
         gles.ColorPointer(size, type_, stride, pointer)
     })
 }
 fn glNormalPointer(env: &mut Environment, type_: GLenum, stride: GLsizei, pointer: ConstVoidPtr) {
     with_ctx_and_mem(env, |gles, mem| unsafe {
-        let pointer = translate_pointer_or_offset(gles, mem, pointer, gles11::ARRAY_BUFFER_BINDING);
+        let pointer =
+            translate_pointer_or_offset_to_host(gles, mem, pointer, gles11::ARRAY_BUFFER_BINDING);
         gles.NormalPointer(type_, stride, pointer)
     })
 }
@@ -478,7 +526,8 @@ fn glTexCoordPointer(
     pointer: ConstVoidPtr,
 ) {
     with_ctx_and_mem(env, |gles, mem| unsafe {
-        let pointer = translate_pointer_or_offset(gles, mem, pointer, gles11::ARRAY_BUFFER_BINDING);
+        let pointer =
+            translate_pointer_or_offset_to_host(gles, mem, pointer, gles11::ARRAY_BUFFER_BINDING);
         gles.TexCoordPointer(size, type_, stride, pointer)
     })
 }
@@ -490,7 +539,8 @@ fn glVertexPointer(
     pointer: ConstVoidPtr,
 ) {
     with_ctx_and_mem(env, |gles, mem| unsafe {
-        let pointer = translate_pointer_or_offset(gles, mem, pointer, gles11::ARRAY_BUFFER_BINDING);
+        let pointer =
+            translate_pointer_or_offset_to_host(gles, mem, pointer, gles11::ARRAY_BUFFER_BINDING);
         gles.VertexPointer(size, type_, stride, pointer)
     })
 }
@@ -509,8 +559,12 @@ fn glDrawElements(
     indices: ConstVoidPtr,
 ) {
     with_ctx_and_mem(env, |gles, mem| unsafe {
-        let indices =
-            translate_pointer_or_offset(gles, mem, indices, gles11::ELEMENT_ARRAY_BUFFER_BINDING);
+        let indices = translate_pointer_or_offset_to_host(
+            gles,
+            mem,
+            indices,
+            gles11::ELEMENT_ARRAY_BUFFER_BINDING,
+        );
         gles.DrawElements(mode, count, type_, indices)
     })
 }
@@ -1056,6 +1110,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(glGetBooleanv(_, _)),
     export_c_func!(glGetFloatv(_, _)),
     export_c_func!(glGetIntegerv(_, _)),
+    export_c_func!(glGetPointerv(_, _)),
     export_c_func!(glGetTexEnviv(_, _, _)),
     export_c_func!(glHint(_, _)),
     export_c_func!(glFlush()),

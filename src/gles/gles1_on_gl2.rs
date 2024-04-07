@@ -38,7 +38,6 @@ use std::ffi::CStr;
 pub const CAPABILITIES: &[GLenum] = &[
     gl21::ALPHA_TEST,
     gl21::BLEND,
-    gl21::COLOR_ARRAY,
     gl21::COLOR_LOGIC_OP,
     gl21::CLIP_PLANE0,
     gl21::LIGHT0,
@@ -58,7 +57,6 @@ pub const CAPABILITIES: &[GLenum] = &[
     gl21::LINE_SMOOTH,
     gl21::MULTISAMPLE,
     gl21::NORMALIZE,
-    gl21::NORMAL_ARRAY,
     gl21::POINT_SMOOTH,
     gl21::POLYGON_OFFSET_FILL,
     gl21::RESCALE_NORMAL,
@@ -68,8 +66,6 @@ pub const CAPABILITIES: &[GLenum] = &[
     gl21::SCISSOR_TEST,
     gl21::STENCIL_TEST,
     gl21::TEXTURE_2D,
-    gl21::TEXTURE_COORD_ARRAY,
-    gl21::VERTEX_ARRAY,
     // Same as POINT_SPRITE_OES from the GLES extension
     gl21::POINT_SPRITE,
 ];

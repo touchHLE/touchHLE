@@ -48,7 +48,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 + (id)sharedApplication {
-    env.framework_state.uikit.ui_application.shared_application.unwrap()
+    env.framework_state.uikit.ui_application.shared_application.unwrap_or(nil)
 }
 
 // This should only be called by UIApplicationMain

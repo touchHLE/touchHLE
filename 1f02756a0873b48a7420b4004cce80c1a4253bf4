@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ff011f4f_89714dc4",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 9
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-04-08T16:35:41Z",
+      "side": 1,
+      "message": "I re-read it again, have one more question",
+      "revId": "1f02756a0873b48a7420b4004cce80c1a4253bf4",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "862969ed_2b5cda40",
+        "filename": "src/objc/methods.rs",
+        "patchSetId": 9
+      },
+      "lineNbr": 303,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-04-08T16:35:41Z",
+      "side": 1,
+      "message": "could you have an assertion instead?\nit seems like your implementation would work only if instance_start is always 0",
+      "revId": "1f02756a0873b48a7420b4004cce80c1a4253bf4",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

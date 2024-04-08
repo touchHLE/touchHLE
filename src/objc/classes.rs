@@ -618,6 +618,49 @@ impl ObjC {
         }
     }
 
+    pub fn dump_classes(&self) {
+        let mut normal_classes = Vec::new();
+        let mut unimpl_classes = Vec::new();
+        let mut fake_classes = Vec::new();
+        for (_, o) in self.classes.iter() {
+            let host_obj = self.get_host_object(*o).unwrap();
+
+            if let Some(ClassHostObject {
+                name,
+                superclass: sup,
+                ..
+            }) = host_obj.as_any().downcast_ref()
+            {
+                if name == "NSObject" {
+                    normal_classes.push(name.clone())
+                } else {
+                    normal_classes.push(format!("{} (super: {})", name, self.get_class_name(*sup)));
+                }
+            } else if let Some(UnimplementedClass { name, .. }) = host_obj.as_any().downcast_ref() {
+                unimpl_classes.push(format!("Unimplemented: {}", name));
+            } else if let Some(FakeClass { name, .. }) = host_obj.as_any().downcast_ref() {
+                fake_classes.push(format!("Faked: {}", name));
+            } else {
+                log!("Unrecognized class type (maybe bad?)");
+            }
+        }
+        normal_classes.sort();
+        unimpl_classes.sort();
+        fake_classes.sort();
+
+        for s in normal_classes {
+            log!("{}", s);
+        }
+
+        for s in unimpl_classes {
+            log!("{}", s);
+        }
+
+        for s in fake_classes {
+            log!("{}", s);
+        }
+    }
+
     /// For use by [crate::dyld]: register all the categories from the
     /// application binary.
     pub fn register_bin_categories(&mut self, bin: &MachO, mem: &mut Mem) {
@@ -705,15 +748,20 @@ impl ObjC {
     }
 
     pub fn get_class_name(&self, class: Class) -> &str {
-        let host_object = self.get_host_object(class).unwrap();
+        self.try_get_class_name(class)
+            .expect("Could not get class name!")
+    }
+
+    pub fn try_get_class_name(&self, class: Class) -> Option<&str> {
+        let host_object = self.get_host_object(class)?;
         if let Some(ClassHostObject { name, .. }) = host_object.as_any().downcast_ref() {
-            name
+            Some(name)
         } else if let Some(UnimplementedClass { name, .. }) = host_object.as_any().downcast_ref() {
-            name
+            Some(name)
         } else if let Some(FakeClass { name, .. }) = host_object.as_any().downcast_ref() {
-            name
+            Some(name)
         } else {
-            panic!();
+            None
         }
     }
 }

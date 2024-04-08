@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "8dff920d_6b84b6f4",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 9
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-04-08T16:29:11Z",
+      "side": 1,
+      "message": "some nitpicks about the comments, otherwise seems good to me",
+      "revId": "febbd042beac9b7b09d8b530c285337bbe16abee",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a29acf4c_cfcc09ff",
+        "filename": "src/frameworks/foundation/ns_object.rs",
+        "patchSetId": 9
+      },
+      "lineNbr": 139,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-04-08T16:29:11Z",
+      "side": 1,
+      "message": "Replace \u0027int/float\u0027 with \u0027a non-object type\u0027.\nAlso \u0027:\u0027 is missing in the definition of setNilValueForKey:",
+      "revId": "febbd042beac9b7b09d8b530c285337bbe16abee",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

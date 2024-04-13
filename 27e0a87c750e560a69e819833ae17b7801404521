@@ -16,6 +16,24 @@
       "message": "Is this for debuggability, or is it for compatibility with `printf()`?",
       "revId": "27e0a87c750e560a69e819833ae17b7801404521",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "8eb15775_43bbea78",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 9
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-04-13T19:55:51Z",
+      "side": 1,
+      "message": "It\u0027s for compatibility, although i didn\u0027t have printf in mind. I noticed when implementing NSLock log messages that nulls were formatted as (null)\nhttps://review.gerrithub.io/c/hikari-no-yume/touchHLE/+/1169657/29..31/src/frameworks/foundation/ns_lock.rs#b51",
+      "parentUuid": "d7b6d134_3be24b2c",
+      "revId": "27e0a87c750e560a69e819833ae17b7801404521",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

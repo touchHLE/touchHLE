@@ -34,6 +34,24 @@
       "parentUuid": "d7b6d134_3be24b2c",
       "revId": "27e0a87c750e560a69e819833ae17b7801404521",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "19977aa1_4469f840",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 9
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-04-13T20:28:55Z",
+      "side": 1,
+      "message": "Ah. Our handling of %p in printf probably shouldn\u0027t be using `{:?}` and hence this `Debug` implementation, I don\u0027t like connecting internal debugging stuff (`Debug`) to something the guest app could observe (`sprintf` output for example)…",
+      "parentUuid": "8eb15775_43bbea78",
+      "revId": "27e0a87c750e560a69e819833ae17b7801404521",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

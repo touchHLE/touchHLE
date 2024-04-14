@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6e037cb0_3f92c953",
+        "filename": "src/libc/posix_io/stat.rs",
+        "patchSetId": 6
+      },
+      "lineNbr": 120,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-04-14T08:49:18Z",
+      "side": 1,
+      "message": "could you please assert that file is indeed a regular file?",
+      "revId": "cfaf9edf7e3faee27405158a3cbd51b3dcf879c1",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

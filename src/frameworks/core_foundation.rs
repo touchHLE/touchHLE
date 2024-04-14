@@ -37,6 +37,8 @@ use crate::abi::GuestArg;
 use crate::impl_GuestRet_for_large_struct;
 use crate::mem::SafeRead;
 
+pub const kCFNotFound: CFIndex = -1;
+
 #[derive(Copy, Clone, Debug)]
 #[repr(C, packed)]
 pub struct CFRange {

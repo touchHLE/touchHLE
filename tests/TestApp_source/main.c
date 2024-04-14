@@ -121,6 +121,25 @@ DIR *opendir(const char *);
 struct dirent *readdir(DIR *);
 int closedir(DIR *);
 
+// `CFBase.h`
+
+typedef const struct _CFAllocator *CFAllocatorRef;
+typedef unsigned int CFStringEncoding;
+typedef signed long CFIndex;
+typedef struct {
+  CFIndex location;
+  CFIndex length;
+} CFRange;
+typedef unsigned long CFOptionFlags;
+typedef const struct _CFString *CFStringRef;
+
+// `CFString.h`
+
+CFStringRef CFStringCreateWithCString(CFAllocatorRef alloc, const char *cStr,
+                                      CFStringEncoding encoding);
+CFRange CFStringFind(CFStringRef theString, CFStringRef stringToFind,
+                     CFOptionFlags compareOptions);
+
 // === Main code ===
 
 int int_compar(const void *a, const void *b) { return *(int *)a - *(int *)b; }
@@ -778,6 +797,38 @@ int test_realpath() {
   return 0;
 }
 
+int test_CFStringFind() {
+  CFStringRef a = CFStringCreateWithCString(NULL, "/a/b/c/b", 0x0600);
+  CFStringRef b = CFStringCreateWithCString(NULL, "/b", 0x0600);
+  CFStringRef d = CFStringCreateWithCString(NULL, "/d", 0x0600);
+  // 0 for default options
+  CFRange r = CFStringFind(a, b, 0);
+  if (!(r.location == 2 && r.length == 2)) {
+    return -1;
+  }
+  // 4 for kCFCompareBackwards
+  r = CFStringFind(a, b, 4);
+  if (!(r.location == 6 && r.length == 2)) {
+    return -2;
+  }
+  // search string in itself
+  r = CFStringFind(a, a, 0);
+  if (!(r.location == 0 && r.length == 8)) {
+    return -3;
+  }
+  // search string in itself, backwards
+  r = CFStringFind(a, a, 4);
+  if (!(r.location == 0 && r.length == 8)) {
+    return -4;
+  }
+  // not found case
+  r = CFStringFind(a, d, 0);
+  if (!(r.location == -1 && r.length == 0)) {
+    return -5;
+  }
+  return 0;
+}
+
 #define FUNC_DEF(func)                                                         \
   { &func, #func }
 struct {
@@ -793,7 +844,7 @@ struct {
     FUNC_DEF(test_strlcpy),  FUNC_DEF(test_setlocale),
     FUNC_DEF(test_strtoul),  FUNC_DEF(test_dirent),
     FUNC_DEF(test_strchr),   FUNC_DEF(test_swprintf),
-    FUNC_DEF(test_realpath),
+    FUNC_DEF(test_realpath), FUNC_DEF(test_CFStringFind),
 };
 
 // Because no libc is linked into this executable, there is no libc entry point

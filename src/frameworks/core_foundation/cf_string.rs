@@ -12,8 +12,8 @@ use super::cf_allocator::{kCFAllocatorDefault, CFAllocatorRef};
 use super::cf_dictionary::CFDictionaryRef;
 use crate::abi::{DotDotDot, VaList};
 use crate::dyld::{export_c_func, FunctionExports};
-use crate::frameworks::core_foundation::{CFIndex, CFOptionFlags};
-use crate::frameworks::foundation::{ns_string, NSUInteger};
+use crate::frameworks::core_foundation::{kCFNotFound, CFIndex, CFOptionFlags, CFRange};
+use crate::frameworks::foundation::{ns_string, NSNotFound, NSRange, NSUInteger};
 use crate::mem::{ConstPtr, MutPtr};
 use crate::objc::{id, msg, msg_class};
 use crate::Environment;
@@ -113,6 +113,25 @@ fn CFStringGetCString(
     msg![env; a getCString:buffer maxLength:buffer_size encoding:encoding]
 }
 
+fn CFStringFind(
+    env: &mut Environment,
+    string: CFStringRef,
+    to_find: CFStringRef,
+    options: CFStringCompareFlags,
+) -> CFRange {
+    let range: NSRange = msg![env; string rangeOfString:to_find options:options];
+    let location: CFIndex = if range.location == NSNotFound as NSUInteger {
+        // NSNotFound and kCFNotFound are not the same!
+        kCFNotFound
+    } else {
+        range.location.try_into().unwrap()
+    };
+    CFRange {
+        location,
+        length: range.length.try_into().unwrap(),
+    }
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CFStringConvertEncodingToNSStringEncoding(_)),
     export_c_func!(CFStringConvertNSStringEncodingToEncoding(_)),
@@ -121,4 +140,5 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CFStringCreateWithFormatAndArguments(_, _, _, _)),
     export_c_func!(CFStringCompare(_, _, _)),
     export_c_func!(CFStringGetCString(_, _, _, _)),
+    export_c_func!(CFStringFind(_, _, _)),
 ];

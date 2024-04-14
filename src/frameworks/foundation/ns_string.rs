@@ -44,6 +44,7 @@ pub const NSUTF16LittleEndianStringEncoding: NSUInteger = 0x94000100;
 pub type NSStringCompareOptions = NSUInteger;
 pub const NSCaseInsensitiveSearch: NSUInteger = 1;
 pub const NSLiteralSearch: NSUInteger = 2;
+pub const NSBackwardsSearch: NSUInteger = 4;
 pub const NSNumericSearch: NSUInteger = 64;
 
 /// Encodings that C strings (null-terminated byte strings) can use.
@@ -336,30 +337,34 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 - (NSRange)rangeOfString:(id)search_string
                  options:(NSStringCompareOptions)options { // NSString *
-    // TODO: search options
-    log_dbg!("rangeOfString:options: {}", options);
+    log_dbg!(
+        "[(NSString *){} rangeOfString:{} options:{}]",
+        to_rust_string(env, this), to_rust_string(env, search_string), options
+    );
     let len: NSUInteger = msg![env; this length];
     let len_search: NSUInteger = msg![env; search_string length];
     if len_search == 0 {
         return NSRange { location: NSNotFound as NSUInteger, length: 0 };
     }
-    for i in 0..len {
-        let mut match_found = true;
-        for j in 0..len_search {
-            if (i + j) >= len {
-                match_found = false;
-                break;
+    // TODO: other search options
+    // TODO: OR'ing of options
+    match options {
+        // 0 is for default options, which is NSLiteralSearch
+        NSLiteralSearch | 0 => {
+            for i in 0..len {
+                if is_match_at_position(env, this, search_string, i, len, len_search) {
+                    return NSRange { location: i, length: len_search }
+                }
             }
-            let a_c: u16 = msg![env; this characterAtIndex:(i + j)];
-            let b_c: u16 = msg![env; search_string characterAtIndex:j];
-            if a_c != b_c {
-                match_found = false;
-                break;
+        },
+        NSBackwardsSearch => {
+            for i in (0..len).rev() {
+                if is_match_at_position(env, this, search_string, i, len, len_search) {
+                    return NSRange { location: i, length: len_search }
+                }
             }
-        }
-        if match_found {
-            return NSRange { location: i, length: len_search }
-        }
+        },
+        _ => unimplemented!("options {}", options)
     }
     NSRange { location: NSNotFound as NSUInteger, length: 0 }
 }
@@ -489,6 +494,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     assert!(encoding == NSUTF8StringEncoding || encoding == NSASCIIStringEncoding);
 
     let src = to_rust_string(env, this);
+    log!("getCString:maxLength:encoding: {}", src);
     if encoding == NSASCIIStringEncoding {
         assert!(src.as_bytes().iter().all(|byte| byte.is_ascii()));
     }
@@ -1167,4 +1173,26 @@ where
             f(idx, c);
             idx += 1;
         });
+}
+
+/// Helper function for `rangeOfString:options:` method
+/// Note: this implementation is O(n*m)
+fn is_match_at_position(
+    env: &mut Environment,
+    the_string: id,
+    search_string: id,
+    start: NSUInteger,
+    len: NSUInteger,
+    len_search: NSUInteger,
+) -> bool {
+    (0..len_search).all(|j| {
+        let curr: NSUInteger = start + j;
+        if curr < len {
+            let a_c: u16 = msg![env; the_string characterAtIndex:curr];
+            let b_c: u16 = msg![env; search_string characterAtIndex:j];
+            a_c == b_c
+        } else {
+            false
+        }
+    })
 }

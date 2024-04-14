@@ -494,7 +494,6 @@ pub const CLASSES: ClassExports = objc_classes! {
     assert!(encoding == NSUTF8StringEncoding || encoding == NSASCIIStringEncoding);
 
     let src = to_rust_string(env, this);
-    log!("getCString:maxLength:encoding: {}", src);
     if encoding == NSASCIIStringEncoding {
         assert!(src.as_bytes().iter().all(|byte| byte.is_ascii()));
     }

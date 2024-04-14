@@ -792,8 +792,14 @@ int test_realpath() {
   // relative path
   res = realpath("TestApp", buf);
   char *cwd = getcwd(NULL, 0);
-  if (!res || strncmp(cwd, res, strlen(cwd)) != 0)
+  if (!res || strncmp(cwd, res, strlen(cwd)) != 0 ||
+      strncmp("/TestApp", res + strlen(cwd), 8) != 0)
     return -3;
+  // `..` and `.` resolution
+  res = realpath("../TestApp.app/./TestApp", buf);
+  if (!res || strncmp(cwd, res, strlen(cwd)) != 0 ||
+      strncmp("/TestApp", res + strlen(cwd), 8) != 0)
+    return -4;
   return 0;
 }
 

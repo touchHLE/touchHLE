@@ -262,7 +262,7 @@ fn apply_path_component<'a>(components: &mut Vec<&'a str>, component: &'a str) {
 /// `relative_to` is the starting point for resolving a relative path, e.g. the
 /// current directory. It must be an absolute path. It is optional if `path`
 /// is absolute.
-fn resolve_path<'a>(path: &'a GuestPath, relative_to: Option<&'a GuestPath>) -> Vec<&'a str> {
+pub fn resolve_path<'a>(path: &'a GuestPath, relative_to: Option<&'a GuestPath>) -> Vec<&'a str> {
     log_dbg!("Resolving {:?} relative to {:?}", path, relative_to);
 
     let mut components = Vec::new();

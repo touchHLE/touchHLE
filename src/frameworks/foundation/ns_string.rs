@@ -1176,7 +1176,7 @@ where
 }
 
 /// Helper function for `rangeOfString:options:` method
-/// Note: this implementation is O(n*m)
+/// Note: this implementation is linear
 fn is_match_at_position(
     env: &mut Environment,
     the_string: id,

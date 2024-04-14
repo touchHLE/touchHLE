@@ -11,6 +11,10 @@
 //! Being aware of this concept will make common types like `NSArray` and
 //! `NSString` easier to understand.
 
+use crate::dyld::{export_c_func, FunctionExports};
+use crate::objc::id;
+use crate::Environment;
+
 pub mod ns_array;
 pub mod ns_autorelease_pool;
 pub mod ns_bundle;
@@ -87,6 +91,13 @@ impl crate::abi::GuestArg for NSRange {
     }
 }
 
+fn NSStringFromRange(env: &mut Environment, range: NSRange) -> id {
+    let loc = range.location;
+    let len = range.length;
+    let string = format!("{{{}, {}}}", loc, len);
+    ns_string::from_rust_string(env, string)
+}
+
 pub type NSComparisonResult = NSInteger;
 pub const NSOrderedAscending: NSComparisonResult = -1;
 pub const NSOrderedSame: NSComparisonResult = 0;
@@ -111,3 +122,5 @@ fn hash_helper<T: std::hash::Hash>(hashable: &T) -> NSUInteger {
     let hash_u64: u64 = hasher.finish();
     (hash_u64 as u32) ^ ((hash_u64 >> 32) as u32)
 }
+
+pub const FUNCTIONS: FunctionExports = &[export_c_func!(NSStringFromRange(_))];

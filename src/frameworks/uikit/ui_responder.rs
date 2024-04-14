@@ -7,6 +7,11 @@
 
 use crate::objc::{id, objc_classes, ClassExports};
 
+#[derive(Default)]
+pub struct State {
+    pub(crate) first_responder: id,
+}
+
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);
@@ -49,9 +54,15 @@ pub const CLASSES: ClassExports = objc_classes! {
     );
 }
 
+- (bool)canBecomeFirstResponder {
+    false
+}
 - (bool)becomeFirstResponder {
     // TODO
     false
+}
+- (bool)canResignFirstResponder {
+    true
 }
 - (bool)resignFirstResponder {
     // TODO

@@ -78,6 +78,13 @@ pub enum FingerId {
 pub type Coords = (f32, f32);
 
 #[derive(Debug)]
+pub enum TextInputEvent {
+    Text(String),
+    Backspace,
+    Return,
+}
+
+#[derive(Debug)]
 pub enum Event {
     /// User requested quit.
     Quit,
@@ -93,6 +100,7 @@ pub enum Event {
     /// User pressed F12, requesting that execution be paused and the debugger
     /// take over.
     EnterDebugger,
+    TextInput(TextInputEvent),
 }
 
 pub enum GLVersion {
@@ -574,6 +582,24 @@ impl Window {
                     // the event but it's stuck in the queue.
                     echo!("F12 pressed, EnterDebugger event queued.");
                     Event::EnterDebugger
+                }
+                E::KeyDown {
+                    keycode: Some(sdl2::keyboard::Keycode::Backspace),
+                    ..
+                } => {
+                    log_dbg!("SDL TextInput Backspace");
+                    Event::TextInput(TextInputEvent::Backspace)
+                }
+                E::KeyDown {
+                    keycode: Some(sdl2::keyboard::Keycode::Return),
+                    ..
+                } => {
+                    log_dbg!("SDL TextInput Return");
+                    Event::TextInput(TextInputEvent::Return)
+                }
+                E::TextInput { text, .. } => {
+                    log_dbg!("SDL TextInput {}", text);
+                    Event::TextInput(TextInputEvent::Text(text))
                 }
                 _ => continue,
             })

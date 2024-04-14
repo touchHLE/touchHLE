@@ -9,7 +9,7 @@
 //! likely to use UIKit in very simple and limited ways, so this implementation
 //! will probably take a lot of shortcuts.
 
-use crate::Environment;
+use crate::{msg, Environment};
 use std::time::Instant;
 
 pub mod ui_accelerometer;
@@ -41,6 +41,7 @@ pub struct State {
     ui_screen: ui_screen::State,
     ui_touch: ui_touch::State,
     pub ui_view: ui_view::State,
+    ui_responder: ui_responder::State,
 }
 
 /// For use by `NSRunLoop`: handles any events that have queued up.
@@ -49,6 +50,7 @@ pub struct State {
 /// time an accelerometer input is due.
 pub fn handle_events(env: &mut Environment) -> Option<Instant> {
     use crate::window::Event;
+    use crate::window::TextInputEvent;
 
     loop {
         // NSRunLoop will never call this function in headless mode.
@@ -94,6 +96,25 @@ pub fn handle_events(env: &mut Environment) -> Option<Instant> {
                     assert!(!step, "Can't step right now!"); // TODO?
                 } else {
                     log!("Ignoring EnterDebugger event: no debugger connected.");
+                }
+            }
+            Event::TextInput(text_event) => {
+                let responder = env.framework_state.uikit.ui_responder.first_responder;
+                let class = msg![env; responder class];
+                let ui_text_field_class = env.objc.get_known_class("UITextField", &mut env.mem);
+                if !responder.is_null() && env.objc.class_is_subclass_of(class, ui_text_field_class)
+                {
+                    match text_event {
+                        TextInputEvent::Text(text) => {
+                            ui_view::ui_control::ui_text_field::handle_text(env, responder, text)
+                        }
+                        TextInputEvent::Backspace => {
+                            ui_view::ui_control::ui_text_field::handle_backspace(env, responder)
+                        }
+                        TextInputEvent::Return => {
+                            ui_view::ui_control::ui_text_field::handle_return(env, responder)
+                        }
+                    }
                 }
             }
         }

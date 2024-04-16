@@ -7,6 +7,7 @@
 
 use crate::dyld::{ConstantExports, HostConstant};
 use crate::frameworks::foundation::{ns_string, ns_url, NSInteger};
+use crate::frameworks::uikit::ui_device::UIDeviceOrientation;
 use crate::objc::{id, msg, msg_class, objc_classes, release, retain, ClassExports};
 use crate::Environment;
 use std::collections::VecDeque;
@@ -97,6 +98,12 @@ pub const CLASSES: ClassExports = objc_classes! {
     }
     // As this is undocumented and we don't have real video playback yet, let's
     // ignore it otherwise.
+}
+
+// Another undocumented one! But some apps may still use it :/
+// https://stackoverflow.com/a/1390079/2241008
+- (())setOrientation:(UIDeviceOrientation)_orientation animated:(bool)_animated {
+
 }
 
 // MPMediaPlayback implementation

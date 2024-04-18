@@ -8,6 +8,9 @@
 use crate::abi::{CallFromHost, GuestFunction};
 use crate::dyld::{export_c_func, export_c_func_aliased, FunctionExports};
 use crate::fs::{resolve_path, GuestPath};
+use crate::libc::clocale::{setlocale, LC_CTYPE};
+use crate::libc::string::strlen;
+use crate::libc::wchar::wchar_t;
 use crate::mem::{ConstPtr, ConstVoidPtr, GuestUSize, MutPtr, MutVoidPtr, Ptr};
 use crate::Environment;
 use std::collections::HashMap;
@@ -271,6 +274,54 @@ fn realpath(
     resolve_name
 }
 
+fn mbstowcs(
+    env: &mut Environment,
+    pwcs: MutPtr<wchar_t>,
+    s: ConstPtr<u8>,
+    n: GuestUSize,
+) -> GuestUSize {
+    // TODO: support other locales
+    let ctype_locale = setlocale(env, LC_CTYPE, Ptr::null());
+    assert_eq!(env.mem.read(ctype_locale), b'C');
+
+    let size = strlen(env, s);
+    let to_write = size.min(n);
+    for i in 0..to_write {
+        let c = env.mem.read(s + i);
+        env.mem.write(pwcs + i, c as wchar_t);
+    }
+    if to_write < n {
+        env.mem.write(pwcs + to_write, wchar_t::default());
+    }
+    to_write
+}
+
+fn wcstombs(
+    env: &mut Environment,
+    s: ConstPtr<u8>,
+    pwcs: MutPtr<wchar_t>,
+    n: GuestUSize,
+) -> GuestUSize {
+    // TODO: support other locales
+    let ctype_locale = setlocale(env, LC_CTYPE, Ptr::null());
+    assert_eq!(env.mem.read(ctype_locale), b'C');
+
+    if n == 0 {
+        return 0;
+    }
+    let wcstr = env.mem.wcstr_at(pwcs);
+    let len: GuestUSize = wcstr.bytes().len() as GuestUSize;
+    let len = len.min(n);
+    log_dbg!("wcstombs '{}', len {}, n {}", wcstr, len, n);
+    env.mem
+        .bytes_at_mut(s.cast_mut(), len)
+        .copy_from_slice(wcstr.as_bytes());
+    if len < n {
+        env.mem.write((s + len).cast_mut(), b'\0');
+    }
+    len
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(malloc(_)),
     export_c_func!(calloc(_, _)),
@@ -294,6 +345,8 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(strtoul(_, _, _)),
     export_c_func!(realpath(_, _)),
     export_c_func_aliased!("realpath$DARWIN_EXTSN", realpath(_, _)),
+    export_c_func!(mbstowcs(_, _, _)),
+    export_c_func!(wcstombs(_, _, _)),
 ];
 
 /// Returns a tuple containing the parsed number and the length of the number in

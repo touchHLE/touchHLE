@@ -55,6 +55,8 @@ double atof(const char *);
 float strtof(const char *, char **);
 unsigned long strtoul(const char *, char **, int);
 char *realpath(const char *, char *);
+size_t mbstowcs(wchar_t *, const char *, size_t);
+size_t wcstombs(char *, const wchar_t *, size_t);
 
 // <string.h>
 void *memset(void *, int, size_t);
@@ -852,6 +854,29 @@ int test_strcspn() {
   return 0;
 }
 
+int test_mbstowcs() {
+  wchar_t wbuffer[64];
+  char buffer[64];
+  size_t res;
+
+  char *test_str = "Hello, World!";
+  res = mbstowcs(wbuffer, test_str, 64);
+  if (res == (size_t)-1) {
+    return -1;
+  }
+
+  res = wcstombs(buffer, wbuffer, 64);
+  if (res == (size_t)-1) {
+    return -2;
+  }
+
+  if (strcmp(test_str, buffer) != 0) {
+    return -3;
+  }
+
+  return 0;
+}
+
 #define FUNC_DEF(func)                                                         \
   { &func, #func }
 struct {
@@ -868,7 +893,7 @@ struct {
     FUNC_DEF(test_strtoul),  FUNC_DEF(test_dirent),
     FUNC_DEF(test_strchr),   FUNC_DEF(test_swprintf),
     FUNC_DEF(test_realpath), FUNC_DEF(test_CFStringFind),
-    FUNC_DEF(test_strcspn),
+    FUNC_DEF(test_strcspn),  FUNC_DEF(test_mbstowcs),
 };
 
 // Because no libc is linked into this executable, there is no libc entry point

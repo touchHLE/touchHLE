@@ -79,7 +79,11 @@ impl Bundle {
     }
 
     pub fn bundle_localizations(&self) -> &[Value] {
-        self.plist["CFBundleLocalizations"].as_array().unwrap()
+        static EMPTY_VAL: Vec<Value> = Vec::new();
+        self.plist
+            .get("CFBundleLocalizations")
+            .and_then(|v| v.as_array())
+            .unwrap_or(&EMPTY_VAL)
     }
 
     /// Canonical name for the bundle according to Info.plist

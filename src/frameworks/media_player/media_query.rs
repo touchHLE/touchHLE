@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
-//! `MPMusicPlayerController` etc.
+//! `MPMediaQuery`.
 
 use crate::objc::{id, nil, objc_classes, ClassExports};
 
@@ -11,21 +11,10 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);
 
-@implementation MPMusicPlayerController: NSObject
+@implementation MPMediaQuery: NSObject
 
-+ (id)iPodMusicPlayer {
-    log_dbg!(
-        "TODO: [(MPMusicPlayerController*){:?} iPodMusicPlayer]",
-        this
-    );
-    nil
-}
-
-+ (id)applicationMusicPlayer {
-    log_dbg!(
-        "TODO: [(MPMusicPlayerController*){:?} applicationMusicPlayer]",
-        this
-    );
++ (id)playlistsQuery {
+    log!("TODO: [MPMediaQuery playlistsQuery] (not implemented yet)");
     nil
 }
 

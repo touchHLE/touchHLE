@@ -10,8 +10,7 @@ use crate::bundle::Bundle;
 use crate::frameworks::core_foundation::cf_bundle::{
     CFBundleCopyBundleLocalizations, CFBundleCopyPreferredLocalizationsFromArray,
 };
-use crate::frameworks::foundation::ns_string::get_static_str;
-use crate::frameworks::foundation::ns_string::to_rust_string;
+use crate::frameworks::foundation::ns_string::{from_rust_string, get_static_str, to_rust_string};
 use crate::frameworks::uikit::ui_nib::load_nib_file;
 use crate::fs::GuestPathBuf;
 use crate::objc::{
@@ -144,6 +143,11 @@ pub const CLASSES: ClassExports = objc_classes! {
     // This seems to be the same as the bundle path. The iPhone OS bundle
     // structure is a lot flatter than the macOS one.
     msg![env; this bundleURL]
+}
+
+- (id)executablePath {
+    let exec_path_str = env.bundle.executable_path().as_str().to_string();
+    from_rust_string(env, exec_path_str)
 }
 
 - (id)pathForResource:(id)name // NSString*

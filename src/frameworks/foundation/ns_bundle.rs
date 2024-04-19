@@ -147,7 +147,8 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 - (id)executablePath {
     let exec_path_str = env.bundle.executable_path().as_str().to_string();
-    from_rust_string(env, exec_path_str)
+    let exec_path = from_rust_string(env, exec_path_str);
+    autorelease(env, exec_path)
 }
 
 - (id)pathForResource:(id)name // NSString*

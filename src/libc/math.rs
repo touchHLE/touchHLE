@@ -6,6 +6,7 @@
 //! `math.h`
 
 use crate::dyld::{export_c_func, FunctionExports};
+use crate::mem::MutPtr;
 use crate::Environment;
 
 // The sections in this file are organized to match the C standard.
@@ -189,6 +190,11 @@ fn trunc(_env: &mut Environment, arg: f64) -> f64 {
 fn truncf(_env: &mut Environment, arg: f32) -> f32 {
     arg.trunc()
 }
+fn modff(env: &mut Environment, val: f32, iptr: MutPtr<f32>) -> f32 {
+    let ivalue = truncf(env, val);
+    env.mem.write(iptr, ivalue);
+    val - ivalue
+}
 
 // Remainder functions
 // TODO: implement the rest
@@ -272,6 +278,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(roundf(_)),
     export_c_func!(trunc(_)),
     export_c_func!(truncf(_)),
+    export_c_func!(modff(_, _)),
     // Remainder functions
     export_c_func!(fmod(_, _)),
     export_c_func!(fmodf(_, _)),

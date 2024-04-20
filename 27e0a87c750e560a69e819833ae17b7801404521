@@ -52,6 +52,24 @@
       "parentUuid": "8eb15775_43bbea78",
       "revId": "27e0a87c750e560a69e819833ae17b7801404521",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6c3be1e2_5b330c94",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 9
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-04-20T20:39:16Z",
+      "side": 1,
+      "message": "Oh this isn\u0027t observed by the guest app, it\u0027s for a log message (log! macro), so the output message matches what would be logged by Apple\u0027s implementation of NSLock",
+      "parentUuid": "19977aa1_4469f840",
+      "revId": "27e0a87c750e560a69e819833ae17b7801404521",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

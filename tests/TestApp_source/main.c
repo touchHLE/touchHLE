@@ -68,6 +68,7 @@ char *strchr(const char *s, int c);
 char *strrchr(const char *s, int c);
 size_t strlen(const char *);
 int strncmp(const char *, const char *, size_t);
+size_t strcspn(const char *, const char *);
 
 // <unistd.h>
 typedef unsigned int __uint32_t;
@@ -835,6 +836,22 @@ int test_CFStringFind() {
   return 0;
 }
 
+int test_strcspn() {
+  size_t res = strcspn("abcdef", "abcd");
+  if (res != 0) {
+    return -1;
+  }
+  res = strcspn("abcdef", "ef");
+  if (res != 4) {
+    return -2;
+  }
+  res = strcspn("abcdef", "");
+  if (res != 6) {
+    return -3;
+  }
+  return 0;
+}
+
 #define FUNC_DEF(func)                                                         \
   { &func, #func }
 struct {
@@ -851,6 +868,7 @@ struct {
     FUNC_DEF(test_strtoul),  FUNC_DEF(test_dirent),
     FUNC_DEF(test_strchr),   FUNC_DEF(test_swprintf),
     FUNC_DEF(test_realpath), FUNC_DEF(test_CFStringFind),
+    FUNC_DEF(test_strcspn),
 };
 
 // Because no libc is linked into this executable, there is no libc entry point

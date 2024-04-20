@@ -142,6 +142,33 @@ impl<T: Copy + Default + Eq + Ord + SafeRead + Debug> GenericChar<T> {
         dest
     }
 
+    pub(super) fn strcspn(
+        env: &mut Environment,
+        s: ConstPtr<T>,
+        charset: ConstPtr<T>,
+    ) -> GuestUSize {
+        let mut i = 0;
+        loop {
+            let c = env.mem.read(s + i);
+            if c == Self::null() {
+                break;
+            }
+            let mut j = 0;
+            loop {
+                let cc = env.mem.read(charset + j);
+                if c == cc {
+                    return i;
+                }
+                if cc == Self::null() {
+                    break;
+                }
+                j += 1;
+            }
+            i += 1;
+        }
+        i
+    }
+
     pub(super) fn strncpy(
         env: &mut Environment,
         dest: MutPtr<T>,

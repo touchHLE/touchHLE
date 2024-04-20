@@ -33,6 +33,24 @@
       "message": "could you have an assertion instead?\nit seems like your implementation would work only if instance_start is always 0",
       "revId": "1f02756a0873b48a7420b4004cce80c1a4253bf4",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "54ccb1ce_30777c05",
+        "filename": "src/objc/methods.rs",
+        "patchSetId": 9
+      },
+      "lineNbr": 303,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-04-20T20:39:11Z",
+      "side": 1,
+      "message": "I don\u0027t remember why I worded that comment like that, instance_start is used for when the superclass grows into the subclass, for which there\u0027s already an assert in add_ivars_from_bin to check whether that has happened or not. I\u0027ve removed the comment to avoid confusion.",
+      "parentUuid": "862969ed_2b5cda40",
+      "revId": "1f02756a0873b48a7420b4004cce80c1a4253bf4",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

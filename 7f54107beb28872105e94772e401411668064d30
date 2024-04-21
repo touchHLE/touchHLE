@@ -52,6 +52,40 @@
       "parentUuid": "158aa7bf_ccd00697",
       "revId": "7f54107beb28872105e94772e401411668064d30",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fde36f35_2d4e5ace",
+        "filename": "src/frameworks/audio_toolbox.rs",
+        "patchSetId": 8
+      },
+      "lineNbr": 9,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-04-21T12:49:58Z",
+      "side": 1,
+      "message": "use `use crate::audio::openal::alc_types::*;` instead",
+      "revId": "7f54107beb28872105e94772e401411668064d30",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3d9c1dba_b059c8d2",
+        "filename": "src/frameworks/audio_toolbox/audio_queue.rs",
+        "patchSetId": 8
+      },
+      "lineNbr": 609,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-04-21T12:49:58Z",
+      "side": 1,
+      "message": "Why the order has changed?",
+      "revId": "7f54107beb28872105e94772e401411668064d30",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

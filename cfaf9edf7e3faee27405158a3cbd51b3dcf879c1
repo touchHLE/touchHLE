@@ -34,6 +34,24 @@
       "parentUuid": "6e037cb0_3f92c953",
       "revId": "cfaf9edf7e3faee27405158a3cbd51b3dcf879c1",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2a83c07c_862f51cd",
+        "filename": "src/libc/posix_io/stat.rs",
+        "patchSetId": 6
+      },
+      "lineNbr": 120,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-04-21T16:48:59Z",
+      "side": 1,
+      "message": "there is is_dir() function in fs.rs, you have an example in opendir() implementation",
+      "parentUuid": "59a8ba3e_76e57bd6",
+      "revId": "cfaf9edf7e3faee27405158a3cbd51b3dcf879c1",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

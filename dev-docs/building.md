@@ -42,6 +42,8 @@ There is one special external dependency, Boost:
 * If your _host platform_ is Windows or your _target platform_ is Android, download it from <https://www.boost.org/users/download/> and extract the contents of the directory with a name like `boost_1_81_0` to `vendor/boost`.
 * On other OSes, install Boost from your package manager. If you are on macOS and using [Homebrew](https://brew.sh/): `brew install boost`.
 
+On Ubuntu, you can install all dependencies with: `sudo apt install build-essential cmake git libboost-all-dev libsdl2-dev && sudo snap install rustup --classic`
+
 ### Android
 
 All the general prerequisites apply for Android, and we recommend trying to build for another OS first.

@@ -835,6 +835,12 @@ int test_CFStringFind() {
   if (!(r.location == -1 && r.length == 0)) {
     return -5;
   }
+  // 1 for kCFCompareCaseInsensitive
+  CFStringRef b2 = CFStringCreateWithCString(NULL, "/B", 0x0600);
+  r = CFStringFind(a, b2, 1);
+  if (!(r.location == 2 && r.length == 2)) {
+    return -6;
+  }
   return 0;
 }
 

@@ -352,14 +352,27 @@ pub const CLASSES: ClassExports = objc_classes! {
         // 0 is for default options, which is NSLiteralSearch
         NSLiteralSearch | 0 => {
             for i in 0..len {
-                if is_match_at_position(env, this, search_string, i, len, len_search) {
+                if is_match_at_position(env, this, search_string, i, len, len_search, |a, b| a == b) {
+                    return NSRange { location: i, length: len_search }
+                }
+            }
+        },
+        NSCaseInsensitiveSearch => {
+            let compare = |a, b| {
+                let (Some(a_c), Some(b_c)) = (char::from_u32(a as u32), char::from_u32(b as u32)) else {
+                    panic!("Invalid chars in the strings!");
+                };
+                a_c.to_lowercase().eq(b_c.to_lowercase())
+            };
+            for i in 0..len {
+                if is_match_at_position(env, this, search_string, i, len, len_search, compare) {
                     return NSRange { location: i, length: len_search }
                 }
             }
         },
         NSBackwardsSearch => {
             for i in (0..len).rev() {
-                if is_match_at_position(env, this, search_string, i, len, len_search) {
+                if is_match_at_position(env, this, search_string, i, len, len_search, |a, b| a == b) {
                     return NSRange { location: i, length: len_search }
                 }
             }
@@ -1176,20 +1189,21 @@ where
 
 /// Helper function for `rangeOfString:options:` method
 /// Note: this implementation is linear
-fn is_match_at_position(
+fn is_match_at_position<F: Fn(u16, u16) -> bool>(
     env: &mut Environment,
     the_string: id,
     search_string: id,
     start: NSUInteger,
     len: NSUInteger,
     len_search: NSUInteger,
+    compare_fn: F,
 ) -> bool {
     (0..len_search).all(|j| {
         let curr: NSUInteger = start + j;
         if curr < len {
             let a_c: u16 = msg![env; the_string characterAtIndex:curr];
             let b_c: u16 = msg![env; search_string characterAtIndex:j];
-            a_c == b_c
+            compare_fn(a_c, b_c)
         } else {
             false
         }

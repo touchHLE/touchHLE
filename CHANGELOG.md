@@ -13,6 +13,19 @@ Changes are categorised as follows:
 * Usability: changes to features of the emulator unrelated to the above, e.g. new input methods.
 * Other: when none of the above seem to fit.
 
+## Next
+
+Compatibility:
+
+- New working apps:
+  - [Dungeon Hunter](https://appdb.touchhle.org/apps/313) (@ciciplusplus)
+- API support improvements:
+  - Various small contributions. (@hikari-no-yume, @alborrajo, @ciciplusplus)
+
+Usability:
+
+- UITextField now supports real text input with a keyboard. On Windows/macOS physical keyboard is used, on Android it's done via a system soft keyboard. (@ciciplusplus)
+
 ## v0.2.2 (2024-04-01)
 
 Compatibility:

@@ -192,6 +192,19 @@ pub const CLASSES: ClassExports = objc_classes! {
         return false;
     }
 
+    // If text is nil, it becomes an empty string
+    // on becoming the first responder.
+    // This behaviour was validated on the Aspen Simulator
+    let text_label = env
+        .objc
+        .borrow_mut::<UITextFieldHostObject>(this)
+        .text_label;
+    let curr_text: id = msg![env; text_label text];
+    if curr_text == nil {
+        let empty = ns_string::get_static_str(env, "");
+        () = msg![env; text_label setText:empty];
+    }
+
     env.framework_state.uikit.ui_responder.first_responder = this;
     unsafe { SDL_StartTextInput(); }
 
@@ -243,10 +256,7 @@ pub fn handle_text(env: &mut Environment, text_field: id, text: String) {
         .objc
         .borrow_mut::<UITextFieldHostObject>(text_field)
         .text_label;
-    let mut curr_text = msg![env; text_label text];
-    if curr_text == nil {
-        curr_text = ns_string::get_static_str(env, "");
-    }
+    let curr_text = msg![env; text_label text];
 
     let len = msg![env; curr_text length];
     let range = NSRange {

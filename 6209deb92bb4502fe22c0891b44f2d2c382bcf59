@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "72930271_d56bd6be",
+        "filename": "src/frameworks/foundation/ns_thread.rs",
+        "patchSetId": 10
+      },
+      "lineNbr": 41,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-05-01T21:36:39Z",
+      "side": 1,
+      "message": "according to docs, it should be NSMutableDictionary",
+      "revId": "6209deb92bb4502fe22c0891b44f2d2c382bcf59",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

@@ -158,6 +158,24 @@
       "parentUuid": "27655264_ee24ed2b",
       "revId": "7f54107beb28872105e94772e401411668064d30",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "139de87e_2f7a9169",
+        "filename": "src/frameworks/audio_toolbox/audio_queue.rs",
+        "patchSetId": 8
+      },
+      "lineNbr": 609,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-05-01T10:29:35Z",
+      "side": 1,
+      "message": "That is, I think the current patch is fine and can be submitted as-is, and trying to remove the ordering change will probably be complained about by the borrow checker.",
+      "parentUuid": "07f4c82b_27a16cc3",
+      "revId": "7f54107beb28872105e94772e401411668064d30",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

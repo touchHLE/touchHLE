@@ -73,12 +73,19 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
 
         let precision = if get_format_char(&env.mem, format_char_idx) == b'.' {
             format_char_idx += 1;
-            let mut precision = 0;
-            while let c @ b'0'..=b'9' = get_format_char(&env.mem, format_char_idx) {
-                precision = precision * 10 + (c - b'0') as usize;
+            if get_format_char(&env.mem, format_char_idx) == b'*' {
+                let precision: i32 = args.next(env);
+                assert!(precision >= 0);
                 format_char_idx += 1;
+                Some(precision as usize)
+            } else {
+                let mut precision = 0;
+                while let c @ b'0'..=b'9' = get_format_char(&env.mem, format_char_idx) {
+                    precision = precision * 10 + (c - b'0') as usize;
+                    format_char_idx += 1;
+                }
+                Some(precision)
             }
-            Some(precision)
         } else {
             None
         };

@@ -122,6 +122,24 @@
       "parentUuid": "3d9c1dba_b059c8d2",
       "revId": "7f54107beb28872105e94772e401411668064d30",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "27655264_ee24ed2b",
+        "filename": "src/frameworks/audio_toolbox/audio_queue.rs",
+        "patchSetId": 8
+      },
+      "lineNbr": 609,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-05-01T09:24:20Z",
+      "side": 1,
+      "message": "Sorry to be picky, but I\u0027m kinda not a big fan of changes in the sake of changes, especially on the code which is not covered by tests.\n\nAt the first glance the changes seems harmless and I assume it builds, but I would prefer to have a second look here.\n\nYou could also remove those changes of ordering, sticking to the original purpose described in the commit message, I\u0027ll +2 then",
+      "parentUuid": "829c5f95_6ca39fdf",
+      "revId": "7f54107beb28872105e94772e401411668064d30",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

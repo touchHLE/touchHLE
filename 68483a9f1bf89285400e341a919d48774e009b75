@@ -1,0 +1,89 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "a2685266_bc1e8e02",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 10
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-05-01T21:34:48Z",
+      "side": 1,
+      "message": "Unless I\u0027m missing something, this implementation seems wrong to me",
+      "revId": "68483a9f1bf89285400e341a919d48774e009b75",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f5c28fce_4cb0bb09",
+        "filename": "src/frameworks/foundation/ns_thread.rs",
+        "patchSetId": 10
+      },
+      "lineNbr": 137,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-05-01T21:34:48Z",
+      "side": 1,
+      "message": "I don\u0027t see lazy initialization here, I see creation of new dictionary on each access of this property.",
+      "revId": "68483a9f1bf89285400e341a919d48774e009b75",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a4df49d8_89f0f950",
+        "filename": "src/frameworks/foundation/ns_thread.rs",
+        "patchSetId": 10
+      },
+      "lineNbr": 139,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-05-01T21:34:48Z",
+      "side": 1,
+      "message": "it\u0027s preferable to compare objects to `nil`",
+      "revId": "68483a9f1bf89285400e341a919d48774e009b75",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "053eca4e_ce36d37f",
+        "filename": "src/frameworks/foundation/ns_thread.rs",
+        "patchSetId": 10
+      },
+      "lineNbr": 141,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-05-01T21:34:48Z",
+      "side": 1,
+      "message": "btw you can replace this 2 lines by just `msg_class![env; NSDictionary new]`",
+      "revId": "68483a9f1bf89285400e341a919d48774e009b75",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "600c5c7e_747176ba",
+        "filename": "src/frameworks/foundation/ns_thread.rs",
+        "patchSetId": 10
+      },
+      "lineNbr": 162,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-05-01T21:34:48Z",
+      "side": 1,
+      "message": "are you calling free on the NSObject?",
+      "revId": "68483a9f1bf89285400e341a919d48774e009b75",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

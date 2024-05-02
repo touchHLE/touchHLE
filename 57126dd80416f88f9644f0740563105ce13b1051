@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f4770245_69a6e95a",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 10
+      },
+      "lineNbr": 486,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-05-02T10:45:55Z",
+      "side": 1,
+      "message": "can you address this TODO as well?",
+      "revId": "57126dd80416f88f9644f0740563105ce13b1051",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

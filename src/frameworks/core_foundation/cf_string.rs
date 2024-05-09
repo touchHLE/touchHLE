@@ -3,10 +3,10 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
-//! `CFString`.
+//! `CFString` and `CFMutableString`.
 //!
-//! This is toll-free bridged to `NSString` in Apple's implementation. Here it
-//! is the same type.
+//! This is toll-free bridged to `NSString` and `NSMutableString` in
+//! Apple's implementation. Here it is the same type.
 
 use super::cf_allocator::{kCFAllocatorDefault, CFAllocatorRef};
 use super::cf_dictionary::CFDictionaryRef;
@@ -19,6 +19,7 @@ use crate::objc::{id, msg, msg_class};
 use crate::Environment;
 
 pub type CFStringRef = super::CFTypeRef;
+pub type CFMutableStringRef = CFStringRef;
 
 pub type CFStringEncoding = u32;
 pub const kCFStringEncodingASCII: CFStringEncoding = 0x600;
@@ -27,6 +28,20 @@ pub const kCFStringEncodingUnicode: CFStringEncoding = 0x100;
 pub const kCFStringEncodingUTF16: CFStringEncoding = kCFStringEncodingUnicode;
 pub const kCFStringEncodingUTF16BE: CFStringEncoding = 0x10000100;
 pub const kCFStringEncodingUTF16LE: CFStringEncoding = 0x14000100;
+
+fn CFStringAppendFormat(
+    env: &mut Environment,
+    string: CFMutableStringRef,
+    // Apple's own docs say these are unimplemented!
+    _format_options: CFDictionaryRef,
+    format: CFStringRef,
+    dots: DotDotDot,
+) {
+    let res = ns_string::with_format(env, format, dots.start());
+    let to_append: id = ns_string::from_rust_string(env, res);
+    msg![env; string appendString:to_append]
+}
+
 fn CFStringConvertEncodingToNSStringEncoding(
     _env: &mut Environment,
     encoding: CFStringEncoding,
@@ -52,6 +67,17 @@ fn CFStringConvertNSStringEncodingToEncoding(
         ns_string::NSUTF16LittleEndianStringEncoding => kCFStringEncodingUTF16LE,
         _ => unimplemented!("Unhandled: NSStringEncoding {:#x}", encoding),
     }
+}
+
+fn CFStringCreateMutable(
+    env: &mut Environment,
+    allocator: CFAllocatorRef,
+    max_length: CFIndex,
+) -> CFMutableStringRef {
+    assert_eq!(allocator, kCFAllocatorDefault); // unimplemented
+    assert_eq!(max_length, 0);
+    let str: id = msg_class![env; NSMutableString alloc];
+    msg![env; str init]
 }
 
 fn CFStringCreateWithCString(
@@ -133,8 +159,10 @@ fn CFStringFind(
 }
 
 pub const FUNCTIONS: FunctionExports = &[
+    export_c_func!(CFStringAppendFormat(_, _, _, _)),
     export_c_func!(CFStringConvertEncodingToNSStringEncoding(_)),
     export_c_func!(CFStringConvertNSStringEncodingToEncoding(_)),
+    export_c_func!(CFStringCreateMutable(_, _)),
     export_c_func!(CFStringCreateWithCString(_, _, _)),
     export_c_func!(CFStringCreateWithFormat(_, _, _, _)),
     export_c_func!(CFStringCreateWithFormatAndArguments(_, _, _, _)),

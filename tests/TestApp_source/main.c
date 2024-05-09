@@ -134,12 +134,22 @@ typedef struct {
   CFIndex length;
 } CFRange;
 typedef unsigned long CFOptionFlags;
+typedef const struct _CFDictionary *CFDictionaryRef;
 typedef const struct _CFString *CFStringRef;
+typedef const struct _CFString *CFMutableStringRef;
 
 // `CFString.h`
 
+typedef int CFComparisonResult;
+typedef unsigned int CFStringCompareFlags;
+
+void CFStringAppendFormat(CFMutableStringRef s, CFDictionaryRef fo,
+                          CFStringRef format, ...);
+CFMutableStringRef CFStringCreateMutable(CFAllocatorRef alloc, CFIndex max_len);
 CFStringRef CFStringCreateWithCString(CFAllocatorRef alloc, const char *cStr,
                                       CFStringEncoding encoding);
+CFComparisonResult CFStringCompare(CFStringRef a, CFStringRef b,
+                                   CFStringCompareFlags flags);
 CFRange CFStringFind(CFStringRef theString, CFStringRef stringToFind,
                      CFOptionFlags compareOptions);
 
@@ -883,23 +893,46 @@ int test_mbstowcs() {
   return 0;
 }
 
+int test_CFMutableString() {
+  CFMutableStringRef mut_str = CFStringCreateMutable(NULL, 0);
+  CFStringRef fmt = CFStringCreateWithCString(NULL, "%d %.2f", 0x0600);
+  CFStringAppendFormat(mut_str, NULL, fmt, -100, 3.14);
+  CFStringRef res = CFStringCreateWithCString(NULL, "-100 3.14", 0x0600);
+  if (CFStringCompare(mut_str, res, 0) != 0) {
+    return -1;
+  }
+  return 0;
+}
+
 #define FUNC_DEF(func)                                                         \
   { &func, #func }
 struct {
   int (*func)();
   const char *name;
 } test_func_array[] = {
-    FUNC_DEF(test_qsort),    FUNC_DEF(test_vsnprintf),
-    FUNC_DEF(test_sscanf),   FUNC_DEF(test_errno),
-    FUNC_DEF(test_realloc),  FUNC_DEF(test_atof),
-    FUNC_DEF(test_strtof),   FUNC_DEF(test_getcwd_chdir),
-    FUNC_DEF(test_sem),      FUNC_DEF(test_CGAffineTransform),
-    FUNC_DEF(test_strncpy),  FUNC_DEF(test_strncat),
-    FUNC_DEF(test_strlcpy),  FUNC_DEF(test_setlocale),
-    FUNC_DEF(test_strtoul),  FUNC_DEF(test_dirent),
-    FUNC_DEF(test_strchr),   FUNC_DEF(test_swprintf),
-    FUNC_DEF(test_realpath), FUNC_DEF(test_CFStringFind),
-    FUNC_DEF(test_strcspn),  FUNC_DEF(test_mbstowcs),
+    FUNC_DEF(test_qsort),
+    FUNC_DEF(test_vsnprintf),
+    FUNC_DEF(test_sscanf),
+    FUNC_DEF(test_errno),
+    FUNC_DEF(test_realloc),
+    FUNC_DEF(test_atof),
+    FUNC_DEF(test_strtof),
+    FUNC_DEF(test_getcwd_chdir),
+    FUNC_DEF(test_sem),
+    FUNC_DEF(test_CGAffineTransform),
+    FUNC_DEF(test_strncpy),
+    FUNC_DEF(test_strncat),
+    FUNC_DEF(test_strlcpy),
+    FUNC_DEF(test_setlocale),
+    FUNC_DEF(test_strtoul),
+    FUNC_DEF(test_dirent),
+    FUNC_DEF(test_strchr),
+    FUNC_DEF(test_swprintf),
+    FUNC_DEF(test_realpath),
+    FUNC_DEF(test_CFStringFind),
+    FUNC_DEF(test_strcspn),
+    FUNC_DEF(test_mbstowcs),
+    FUNC_DEF(test_CFMutableString),
 };
 
 // Because no libc is linked into this executable, there is no libc entry point

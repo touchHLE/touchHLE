@@ -952,10 +952,22 @@ pub const CLASSES: ClassExports = objc_classes! {
     todo!(); // TODO: this should produce an immutable copy
 }
 
+- (())appendString:(id)a_string { // NSString*
+    // TODO: this is inefficient? append in place instead
+    let new: id = msg![env; this stringByAppendingString:a_string];
+    () = msg![env; this setString:new];
+}
+
 - (())appendFormat:(id)format, // NSString*
                    ...args {
     let res = with_format(env, format, args.start());
     *env.objc.borrow_mut(this) = StringHostObject::Utf8(format!("{}{}", to_rust_string(env, this), res).into());
+}
+
+- (())setString:(id)a_string { // NSString*
+    let str = to_rust_string(env, a_string);
+    let host_object = StringHostObject::Utf8(str);
+    *env.objc.borrow_mut(this) = host_object;
 }
 
 @end

@@ -7,7 +7,7 @@
 
 use super::ui_device::*;
 use crate::dyld::{export_c_func, FunctionExports};
-use crate::frameworks::foundation::{ns_array, ns_string};
+use crate::frameworks::foundation::{ns_array, ns_string, NSUInteger};
 use crate::frameworks::uikit::ui_nib::load_main_nib_file;
 use crate::mem::MutPtr;
 use crate::objc::{
@@ -31,6 +31,7 @@ struct UIApplicationHostObject {
 impl HostObject for UIApplicationHostObject {}
 
 type UIInterfaceOrientation = UIDeviceOrientation;
+type UIRemoteNotificationType = NSUInteger;
 
 pub const CLASSES: ClassExports = objc_classes! {
 
@@ -155,6 +156,10 @@ pub const CLASSES: ClassExports = objc_classes! {
     }
     let windows = ns_array::from_vec(env, visible_windows);
     autorelease(env, windows)
+}
+
+- (())registerForRemoteNotificationTypes:(UIRemoteNotificationType)types {
+    log!("TODO: ignoring registerForRemoteNotificationTypes:{}", types);
 }
 
 @end

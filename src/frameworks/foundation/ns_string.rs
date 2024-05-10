@@ -953,6 +953,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (())appendString:(id)a_string { // NSString*
+    assert_ne!(a_string, nil);
     // TODO: this is inefficient? append in place instead
     let new: id = msg![env; this stringByAppendingString:a_string];
     () = msg![env; this setString:new];
@@ -960,11 +961,13 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 - (())appendFormat:(id)format, // NSString*
                    ...args {
+    assert_ne!(format, nil);
     let res = with_format(env, format, args.start());
     *env.objc.borrow_mut(this) = StringHostObject::Utf8(format!("{}{}", to_rust_string(env, this), res).into());
 }
 
 - (())setString:(id)a_string { // NSString*
+    assert_ne!(a_string, nil);
     let str = to_rust_string(env, a_string);
     let host_object = StringHostObject::Utf8(str);
     *env.objc.borrow_mut(this) = host_object;

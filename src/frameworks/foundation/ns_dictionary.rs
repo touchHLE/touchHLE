@@ -8,6 +8,7 @@
 use super::ns_property_list_serialization::deserialize_plist_from_file;
 use super::{ns_string, ns_url, NSUInteger};
 use crate::abi::VaList;
+use crate::frameworks::foundation::ns_string::{from_rust_string, to_rust_string};
 use crate::fs::GuestPath;
 use crate::objc::{
     autorelease, id, msg, msg_class, nil, objc_classes, release, retain, ClassExports, HostObject,
@@ -138,6 +139,13 @@ pub const CLASSES: ClassExports = objc_classes! {
     autorelease(env, new_dict)
 }
 
++ (id)dictionaryWithObject:(id)object forKey:(id)key {
+    assert_ne!(key, nil); // TODO: raise proper exception
+
+    let new_dict = dict_from_keys_and_objects(env, &[(key, object)]);
+    autorelease(env, new_dict)
+}
+
 + (id)dictionaryWithObjectsAndKeys:(id)first_object, ...dots {
     let new_dict: id = msg![env; this alloc];
     let new_dict = init_with_objects_and_keys(env, new_dict, first_object, dots.start());
@@ -182,7 +190,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 // NSCopying implementation
 - (id)copyWithZone:(NSZonePtr)_zone {
-    // TODO: override this once we have NSMutableString!
+    // TODO: override this once we have NSMutableDictionary!
     retain(env, this)
 }
 
@@ -224,6 +232,31 @@ pub const CLASSES: ClassExports = objc_classes! {
     let res = host_obj.lookup(env, key);
     *env.objc.borrow_mut(this) = host_obj;
     res
+}
+
+- (id)description {
+    // According to docs, this description should be formatted as property list.
+    // But by the same docs, it's meant to be used for debugging purposes only.
+    let desc: id = msg_class![env; NSMutableString new];
+    let prefix: id = from_rust_string(env, "{\n".to_string());
+    () = msg![env; desc appendString:prefix];
+    release(env, prefix);
+    let keys: Vec<id> = env.objc.borrow_mut::<DictionaryHostObject>(this).iter_keys().collect();
+    for key in keys {
+        let key_desc: id = msg![env; key description];
+        let value: id = msg![env; this objectForKey:key];
+        let val_desc: id = msg![env; value description];
+        // TODO: respect nesting and padding
+        let format = format!("\t{} = {};\n", to_rust_string(env, key_desc), to_rust_string(env, val_desc));
+        let format = from_rust_string(env, format);
+        () = msg![env; desc appendString:format];
+        release(env, format);
+    }
+    let suffix: id = from_rust_string(env, "}".to_string());
+    () = msg![env; desc appendString:suffix];
+    release(env, suffix);
+    // TODO: return an immutable copy once supported
+    desc
 }
 
 @end

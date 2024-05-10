@@ -112,13 +112,14 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (id)description {
-    match env.objc.borrow(this) {
+    let desc = match env.objc.borrow(this) {
         NSNumberHostObject::Bool(value) => from_rust_string(env, (*value as i32).to_string()),
         NSNumberHostObject::UnsignedLongLong(value) => from_rust_string(env, value.to_string()),
         NSNumberHostObject::LongLong(value) => from_rust_string(env, value.to_string()),
         NSNumberHostObject::Float(value) => from_rust_string(env, value.to_string()),
         NSNumberHostObject::Double(value) => from_rust_string(env, value.to_string())
-    }
+    };
+    autorelease(env, desc)
 }
 - (NSUInteger)hash {
     let &NSNumberHostObject::Bool(value) = env.objc.borrow(this) else {

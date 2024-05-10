@@ -111,7 +111,8 @@ pub const CLASSES: ClassExports = objc_classes! {
             if !description.starts_with('/') {
                 description = format!("{} -- file://localhost{}", description.trim_start_matches("./"), working_directory );
             }
-            from_rust_string(env, description)
+            let desc = from_rust_string(env, description);
+            autorelease(env, desc)
         },
         NSURLHostObject::OtherURL { ns_string } => *ns_string,
     }

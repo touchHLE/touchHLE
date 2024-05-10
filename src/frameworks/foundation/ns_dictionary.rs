@@ -256,7 +256,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     () = msg![env; desc appendString:suffix];
     release(env, suffix);
     // TODO: return an immutable copy once supported
-    desc
+    autorelease(env, desc)
 }
 
 @end

@@ -22,7 +22,7 @@ use crate::frameworks::uikit::ui_font::{
 };
 use crate::fs::GuestPath;
 use crate::mach_o::MachO;
-use crate::mem::{guest_size_of, ConstPtr, Mem, MutPtr, Ptr, SafeRead};
+use crate::mem::{guest_size_of, ConstPtr, GuestUSize, Mem, MutPtr, Ptr, SafeRead};
 use crate::objc::{
     autorelease, id, msg, msg_class, nil, objc_classes, retain, Class, ClassExports, HostObject,
     NSZonePtr, ObjC,
@@ -30,6 +30,7 @@ use crate::objc::{
 use crate::Environment;
 use std::borrow::Cow;
 use std::collections::HashMap;
+use std::io::Write;
 use std::iter::Peekable;
 use std::string::FromUtf16Error;
 
@@ -577,21 +578,35 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (ConstPtr<u8>)cStringUsingEncoding:(NSStringEncoding)encoding {
+    // TODO: avoid copying
+    let string = to_rust_string(env, this);
     // TODO: other encodings
-    assert!(encoding == NSUTF8StringEncoding || encoding == NSASCIIStringEncoding);
-    // FIXME: validate ASCII
-    msg![env; this UTF8String]
+    let bytes: Vec<u8> = match encoding {
+        NSUTF8StringEncoding | NSASCIIStringEncoding => {
+            // FIXME: validate ASCII
+            string.as_bytes().to_vec()
+        },
+        NSUTF16LittleEndianStringEncoding => string.encode_utf16().flat_map(u16::to_le_bytes).collect(),
+        _ => unimplemented!()
+    };
+    let null_size: GuestUSize = match encoding {
+        NSUTF8StringEncoding | NSASCIIStringEncoding => 1,
+        NSUTF16LittleEndianStringEncoding => 2,
+        _ => unimplemented!()
+    };
+    let bytes_size = bytes.len() as GuestUSize;
+    let total_size: GuestUSize = bytes_size + null_size;
+    let c_string: MutPtr<u8> = env.mem.alloc(total_size).cast();
+    _ = env.mem.bytes_at_mut(c_string, bytes_size).write(&bytes).unwrap();
+    assert_eq!(env.mem.read(c_string + total_size - 1), b'\0');
+    // NSData will handle releasing the string (it is autoreleased)
+    let _: id = msg_class![env; NSData dataWithBytesNoCopy:(c_string.cast_void())
+                                                    length:total_size];
+    c_string.cast_const()
 }
 
 - (ConstPtr<u8>)UTF8String {
-    // TODO: avoid copying
-    let string = to_rust_string(env, this);
-    let c_string = env.mem.alloc_and_write_cstr(string.as_bytes());
-    let length: NSUInteger = (string.len() + 1).try_into().unwrap();
-    // NSData will handle releasing the string (it is autoreleased)
-    let _: id = msg_class![env; NSData dataWithBytesNoCopy:(c_string.cast_void())
-                                                    length:length];
-    c_string.cast_const()
+    msg![env; this cStringUsingEncoding:NSUTF8StringEncoding]
 }
 
 - (id)substringToIndex:(NSUInteger)to {

@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "214b5bbd_fd0c4954",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 590,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-05-11T15:59:29Z",
+      "side": 1,
+      "message": "Null character in UTF16 is 2 bytes long: https://www.fileformat.info/info/unicode/char/0000/index.htm",
+      "revId": "2560972649d4819587ad4de4fc0aa264530e8e36",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

@@ -208,19 +208,23 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.framework_state.uikit.ui_responder.first_responder = this;
     unsafe { SDL_StartTextInput(); }
 
+    // TODO: is it the right spot?
+    env.objc.borrow_mut::<UITextFieldHostObject>(this).editing = true;
+
     let sel: SEL = env.objc.register_host_selector("textFieldDidBeginEditing:".to_string(), &mut env.mem);
     if msg![env; delegate respondsToSelector:sel] {
         () = msg![env; delegate textFieldDidBeginEditing:this];
     }
-
-    // TODO: is it the right spot?
-    env.objc.borrow_mut::<UITextFieldHostObject>(this).editing = true;
 
     true
 }
 
 - (bool)resignFirstResponder {
     log_dbg!("resignFirstResponder");
+
+    if !env.objc.borrow::<UITextFieldHostObject>(this).editing {
+        return true;
+    }
 
     let delegate: id = env.objc.borrow::<UITextFieldHostObject>(this).delegate;
     let sel: SEL = env.objc.register_host_selector("textFieldShouldEndEditing:".to_string(), &mut env.mem);
@@ -232,13 +236,13 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.framework_state.uikit.ui_responder.first_responder = nil;
     unsafe { SDL_StopTextInput(); }
 
+    // TODO: is it the right spot?
+    env.objc.borrow_mut::<UITextFieldHostObject>(this).editing = false;
+
     let sel: SEL = env.objc.register_host_selector("textFieldDidEndEditing:".to_string(), &mut env.mem);
     if msg![env; delegate respondsToSelector:sel] {
         () = msg![env; delegate textFieldDidEndEditing:this];
     }
-
-    // TODO: is it the right spot?
-    env.objc.borrow_mut::<UITextFieldHostObject>(this).editing = false;
 
     true
 }
@@ -248,6 +252,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 };
 
 pub fn handle_text(env: &mut Environment, text_field: id, text: String) {
+    log_dbg!("Calling handle_text for {:?} with '{}'", text_field, text);
     let txt = ns_string::from_rust_string(env, text);
     let txt_len: NSUInteger = msg![env; txt length];
     assert_eq!(txt_len, 1);
@@ -256,7 +261,14 @@ pub fn handle_text(env: &mut Environment, text_field: id, text: String) {
         .objc
         .borrow_mut::<UITextFieldHostObject>(text_field)
         .text_label;
-    let curr_text = msg![env; text_label text];
+    let mut curr_text = msg![env; text_label text];
+    if curr_text == nil {
+        curr_text = ns_string::get_static_str(env, "");
+    }
+    log_dbg!(
+        "handle_text, curr_text: {}",
+        ns_string::to_rust_string(env, curr_text)
+    );
 
     let len = msg![env; curr_text length];
     let range = NSRange {
@@ -291,6 +303,7 @@ pub fn handle_text(env: &mut Environment, text_field: id, text: String) {
 }
 
 pub fn handle_backspace(env: &mut Environment, text_field: id) {
+    log_dbg!("Calling handle_backspace for {:?}", text_field);
     let text_label = env
         .objc
         .borrow_mut::<UITextFieldHostObject>(text_field)
@@ -333,6 +346,7 @@ pub fn handle_backspace(env: &mut Environment, text_field: id) {
 }
 
 pub fn handle_return(env: &mut Environment, text_field: id) {
+    log_dbg!("Calling handle_return for {:?}", text_field);
     let delegate: id = env
         .objc
         .borrow::<UITextFieldHostObject>(text_field)

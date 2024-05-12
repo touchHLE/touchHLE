@@ -9,8 +9,8 @@ use super::ns_notification::NSNotificationName;
 use super::ns_string;
 
 use crate::objc::{
-    id, msg, msg_class, msg_send, nil, objc_classes, release, retain, ClassExports, HostObject,
-    NSZonePtr, SEL,
+    id, msg, msg_class, msg_send, nil, objc_classes, release, retain, Class, ClassExports,
+    HostObject, NSZonePtr, SEL,
 };
 use std::borrow::Cow;
 use std::collections::HashMap;
@@ -129,7 +129,22 @@ pub const CLASSES: ClassExports = objc_classes! {
     }
 
     for removed_observer in removed_observers {
-        release(env, removed_observer.observer);
+        if env.bundle.bundle_identifier().starts_with("com.ea.spore") {
+            let class: Class = msg![env; (removed_observer.observer) class];
+            if "Core_MovieController" == env.objc.get_class_name(class) {
+                // Spore already calls release when receiving
+                // a MPMoviePlayerPlaybackDidFinishNotification.
+                // But it also remove the observer BEFORE calling a callback
+                // stored inside movie controller. We need to prevent release
+                // of this object before callback finishes.
+                // FIXME: fix a memory leak of a movie controller
+                log!("Applying game-specific hack for Spore Origins: ignore release() on Core_MovieController in removeObserver:");
+            } else {
+                release(env, removed_observer.observer);
+            }
+        } else {
+            release(env, removed_observer.observer);
+        }
         release(env, removed_observer.object);
     }
 }

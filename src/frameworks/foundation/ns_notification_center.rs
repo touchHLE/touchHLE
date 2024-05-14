@@ -167,8 +167,13 @@ pub const CLASSES: ClassExports = objc_classes! {
             observer
         );
 
+        // In some cases, observer could be removed during the
+        // processing of the notification, effectively releasing it.
+        // We need to retain it for correctness.
+        retain(env, observer);
         // Signature should be `- (void)notification:(NSNotification *)notif`.
         let _: () = msg_send(env, (observer, selector, notification));
+        release(env, observer);
     }
 }
 - (())postNotificationName:(NSNotificationName)name

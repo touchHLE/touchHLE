@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "77fb5ab7_3f78eade",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-05-15T07:28:43Z",
+      "side": 1,
+      "message": "Merged as https://github.com/touchHLE/touchHLE/commit/69c8fe73d089ef360335b501cb462e8621289ac2",
+      "revId": "ed49920b3402d3584c8b576f7f9ee6158097ebb4",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

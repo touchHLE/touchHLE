@@ -196,6 +196,13 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 // TODO
 
+- (id)valueForKey:(id)key { // NSString*
+    let key_str = to_rust_string(env, key);
+    // TODO: strip '@' and call super
+    assert!(!key_str.starts_with('@'));
+    msg![env; this objectForKey:key]
+}
+
 @end
 
 // NSMutableDictionary is an abstract class. A subclass must provide everything
@@ -254,13 +261,6 @@ pub const CLASSES: ClassExports = objc_classes! {
     let res = host_obj.lookup(env, key);
     *env.objc.borrow_mut(this) = host_obj;
     res
-}
-
-- (id)valueForKey:(id)key { // NSString*
-    let key_str = to_rust_string(env, key);
-    // TODO: strip '@' and call super
-    assert!(!key_str.starts_with('@'));
-    msg![env; this objectForKey:key]
 }
 
 - (id)description {

@@ -198,6 +198,28 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 @end
 
+// NSMutableDictionary is an abstract class. A subclass must provide everything
+// NSDictionary provides, plus:
+// - (void)setObject:(id)object forKey:(id)key;
+// - (void)removeObjectForKey:(id)key;
+// Note that it inherits from NSDictionary, so we must ensure we override
+// any default methods that would be inappropriate for mutability.
+@implementation NSMutableDictionary: NSDictionary
+
++ (id)allocWithZone:(NSZonePtr)zone {
+    // NSDictionary might be subclassed by something which needs allocWithZone:
+    // to have the normal behaviour. Unimplemented: call superclass alloc then.
+    assert!(this == env.objc.get_known_class("NSMutableDictionary", &mut env.mem));
+    msg_class![env; _touchHLE_NSMutableDictionary allocWithZone:zone]
+}
+
+// NSCopying implementation
+- (id)copyWithZone:(NSZonePtr)_zone {
+    todo!(); // TODO: this should produce an immutable copy
+}
+
+@end
+
 // Our private subclass that is the single implementation of NSDictionary for
 // the time being.
 @implementation _touchHLE_NSDictionary: NSDictionary
@@ -264,6 +286,55 @@ pub const CLASSES: ClassExports = objc_classes! {
     release(env, suffix);
     // TODO: return an immutable copy once supported
     autorelease(env, desc)
+}
+
+@end
+
+// Our private subclass that is the single implementation of
+// NSMutableDictionary for the time being.
+@implementation _touchHLE_NSMutableDictionary: NSMutableDictionary
+
++ (id)allocWithZone:(NSZonePtr)_zone {
+    let host_object = Box::<DictionaryHostObject>::default();
+    env.objc.alloc_object(this, host_object, &mut env.mem)
+}
+
+- (())dealloc {
+    std::mem::take(env.objc.borrow_mut::<DictionaryHostObject>(this)).release(env);
+
+    env.objc.dealloc_object(this, &mut env.mem)
+}
+
+- (id)initWithObjectsAndKeys:(id)first_object, ...dots {
+    init_with_objects_and_keys(env, this, first_object, dots.start())
+}
+
+- (id)init {
+    *env.objc.borrow_mut(this) = <DictionaryHostObject as Default>::default();
+    this
+}
+
+// TODO: enumeration, more init methods, etc
+
+- (NSUInteger)count {
+    env.objc.borrow::<DictionaryHostObject>(this).count
+}
+- (id)objectForKey:(id)key {
+    let host_obj: DictionaryHostObject = std::mem::take(env.objc.borrow_mut(this));
+    let res = host_obj.lookup(env, key);
+    *env.objc.borrow_mut(this) = host_obj;
+    res
+}
+
+- (())setObject:(id)object
+         forKey:(id)key {
+    // TODO: raise NSInvalidArgumentException
+    assert_ne!(object, nil);
+    // TODO: raise NSInvalidArgumentException
+    assert_ne!(key, nil);
+    let mut host_obj: DictionaryHostObject = std::mem::take(env.objc.borrow_mut(this));
+    host_obj.insert(env, object, key, /* copy_key: */ true);
+    *env.objc.borrow_mut(this) = host_obj;
 }
 
 @end

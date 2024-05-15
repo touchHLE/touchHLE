@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "19cd9ea8_427dd995",
+        "filename": "src/frameworks/foundation/ns_array.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 106,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-05-15T19:13:08Z",
+      "side": 1,
+      "message": "it should use isEqual: method instead",
+      "revId": "247ca155139cbaa3bffe790e94c640de5fba6644",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

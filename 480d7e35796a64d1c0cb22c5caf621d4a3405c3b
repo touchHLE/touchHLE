@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0fc13425_455580b6",
+        "filename": "src/frameworks/foundation/ns_dictionary.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 119,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-05-15T15:14:47Z",
+      "side": 1,
+      "message": "more methods need to be implemented/overridden to be correct.\nyou can refer to NSMutableArray implementation for reference",
+      "revId": "480d7e35796a64d1c0cb22c5caf621d4a3405c3b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c7fb2a17_0227bbb6",
+        "filename": "src/frameworks/foundation/ns_dictionary.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 123,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-05-15T15:14:47Z",
+      "side": 1,
+      "message": "borrow here effectively destroys the host object, you need to put it back after modifications",
+      "revId": "480d7e35796a64d1c0cb22c5caf621d4a3405c3b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ca067b5b_205ace34",
+        "filename": "src/frameworks/foundation/ns_dictionary.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 239,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-05-15T15:14:47Z",
+      "side": 1,
+      "message": "this is not a correct implementation of this method, refer to https://developer.apple.com/documentation/foundation/nsdictionary/1410210-valueforkey?language\u003dobjc",
+      "revId": "480d7e35796a64d1c0cb22c5caf621d4a3405c3b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

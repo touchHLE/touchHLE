@@ -234,6 +234,13 @@ pub const CLASSES: ClassExports = objc_classes! {
     res
 }
 
+- (id)valueForKey:(id)key { // NSString*
+    let key_str = to_rust_string(env, key);
+    // TODO: strip '@' and call super
+    assert!(!key_str.starts_with('@'));
+    msg![env; this objectForKey:key]
+}
+
 - (id)description {
     // According to docs, this description should be formatted as property list.
     // But by the same docs, it's meant to be used for debugging purposes only.

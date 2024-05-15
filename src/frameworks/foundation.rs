@@ -44,6 +44,7 @@ pub mod ns_run_loop;
 pub mod ns_set;
 pub mod ns_string;
 pub mod ns_thread;
+pub mod ns_time_zone;
 pub mod ns_timer;
 pub mod ns_url;
 pub mod ns_user_defaults;

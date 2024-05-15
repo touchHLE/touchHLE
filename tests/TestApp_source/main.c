@@ -904,6 +904,7 @@ int test_CFMutableString() {
   return 0;
 }
 
+// clang-format off
 #define FUNC_DEF(func)                                                         \
   { &func, #func }
 struct {
@@ -934,6 +935,7 @@ struct {
     FUNC_DEF(test_mbstowcs),
     FUNC_DEF(test_CFMutableString),
 };
+// clang-format on
 
 // Because no libc is linked into this executable, there is no libc entry point
 // to call main. Instead, integration.rs tells Clang to set the _main symbol

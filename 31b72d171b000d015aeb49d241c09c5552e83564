@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2cff24de_86d3cd19",
+        "filename": "src/frameworks/foundation/ns_url_request.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 1,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-05-16T09:04:05Z",
+      "side": 1,
+      "message": "there is no license header",
+      "revId": "31b72d171b000d015aeb49d241c09c5552e83564",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "245c7fd8_72f1e760",
+        "filename": "src/frameworks/foundation/ns_url_request.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 45,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-05-16T09:04:05Z",
+      "side": 1,
+      "message": "this should be nil",
+      "revId": "31b72d171b000d015aeb49d241c09c5552e83564",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

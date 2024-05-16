@@ -36,6 +36,7 @@ pub struct AudioComponentInstanceHostObject {}
 
 #[derive(Clone)]
 #[repr(C, packed)]
+#[allow(dead_code)]
 pub struct AURenderCallbackStruct {
     pub input_proc: AURenderCallback,
     pub input_proc_ref_con: ConstVoidPtr,
@@ -48,6 +49,7 @@ unsafe impl SafeRead for OpaqueAudioComponent {}
 
 type AudioComponent = MutPtr<OpaqueAudioComponent>;
 
+#[allow(dead_code)]
 pub type AURenderCallback = GuestFunction;
 
 #[repr(C, packed)]

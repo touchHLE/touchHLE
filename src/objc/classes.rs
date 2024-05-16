@@ -73,6 +73,7 @@ impl HostObject for FakeClass {}
 ///
 /// The name, field names and field layout are based on what Ghidra outputs.
 #[repr(C, packed)]
+#[allow(dead_code)]
 struct class_t {
     isa: Class, // note that this matches objc_object
     superclass: Class,
@@ -86,6 +87,7 @@ unsafe impl SafeRead for class_t {}
 ///
 /// The name, field names and field layout are based on what Ghidra's output.
 #[repr(C, packed)]
+#[allow(dead_code)]
 struct class_rw_t {
     _flags: u32,
     instance_start: GuestUSize,

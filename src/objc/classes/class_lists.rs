@@ -49,6 +49,7 @@ pub const CLASS_LISTS: &[super::ClassExports] = &[
     foundation::ns_timer::CLASSES,
     foundation::ns_time_zone::CLASSES,
     foundation::ns_url::CLASSES,
+    foundation::ns_url_connection::CLASSES,
     foundation::ns_url_request::CLASSES,
     foundation::ns_user_defaults::CLASSES,
     foundation::ns_value::CLASSES,

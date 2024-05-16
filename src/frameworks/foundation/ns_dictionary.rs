@@ -222,7 +222,9 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 // NSCopying implementation
 - (id)copyWithZone:(NSZonePtr)_zone {
-    todo!(); // TODO: this should produce an immutable copy
+    let entries: Vec<_> =
+        env.objc.borrow_mut::<DictionaryHostObject>(this).map.values().flatten().copied().collect();
+    dict_from_keys_and_objects(env, &entries)
 }
 
 @end

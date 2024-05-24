@@ -640,9 +640,18 @@ impl Window {
             log!("Warning: A new controller was connected, but it couldn't be accessed!");
             return;
         };
+        
+        let controller_name = controller.name();
+        if env::consts::OS == "android" {
+        if controller_name.starts_with("uinput-") {
+        
+        return;
+        
+        }
+        }
         log!(
             "New controller connected: {}. Left stick = device tilt. Right stick = touch input (press the stick or shoulder button to tap/hold).",
-            controller.name()
+            controller_name
         );
         self.controllers.push(controller);
     }

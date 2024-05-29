@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "36566fb9_203f1035",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-05-29T12:27:19Z",
+      "side": 1,
+      "message": "looks OK for me overall, but you should fix formatting before merge",
+      "revId": "35adb6a3b22b3c5d2727c0224770af4077b8fd5d",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6635838c_774b2182",
+        "filename": "src/window.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 643,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-05-29T12:27:19Z",
+      "side": 1,
+      "message": "have you run a formatter?",
+      "revId": "35adb6a3b22b3c5d2727c0224770af4077b8fd5d",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "95447bc1_fd39541b",
+        "filename": "src/window.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 645,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-05-29T12:27:19Z",
+      "side": 1,
+      "message": "please use a single if with 2 conditions",
+      "revId": "35adb6a3b22b3c5d2727c0224770af4077b8fd5d",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b24a2608_6c9ad101",
+        "filename": "src/window.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 648,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-05-29T12:27:19Z",
+      "side": 1,
+      "message": "please add log message about ignoring the device",
+      "revId": "35adb6a3b22b3c5d2727c0224770af4077b8fd5d",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

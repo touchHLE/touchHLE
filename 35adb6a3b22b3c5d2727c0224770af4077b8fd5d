@@ -89,6 +89,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "aac70c07_b7a5b4ff",
+        "filename": "src/window.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 646,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-05-29T14:08:01Z",
+      "side": 1,
+      "message": "Oh maybe the problem is we have a super outdated SDL2 version? Maybe we can just update it. The annoying thing is we have to fork rust-sdl2 for that and ensure the submodule is consistent with it, but it\u0027s not that hard.",
+      "parentUuid": "51b288ab_a4f8baaf",
+      "revId": "35adb6a3b22b3c5d2727c0224770af4077b8fd5d",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "b24a2608_6c9ad101",
         "filename": "src/window.rs",
         "patchSetId": 1

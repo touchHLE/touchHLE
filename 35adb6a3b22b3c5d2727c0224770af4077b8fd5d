@@ -71,6 +71,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "51b288ab_a4f8baaf",
+        "filename": "src/window.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 646,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-05-29T13:17:26Z",
+      "side": 1,
+      "message": "Maybe we should blacklist just uinput-fpc the same way as SDL https://github.com/libsdl-org/SDL/commit/a2e856523089d5d95ba565a26a35ab367c960f12",
+      "parentUuid": "5819e3a7_0bf06247",
+      "revId": "35adb6a3b22b3c5d2727c0224770af4077b8fd5d",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "b24a2608_6c9ad101",
         "filename": "src/window.rs",
         "patchSetId": 1

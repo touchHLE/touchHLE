@@ -54,6 +54,23 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "5819e3a7_0bf06247",
+        "filename": "src/window.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 646,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-05-29T12:30:07Z",
+      "side": 1,
+      "message": "What does this prefix mean? Do we know that it is _only_ used for unwanted devices? How?",
+      "revId": "35adb6a3b22b3c5d2727c0224770af4077b8fd5d",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "b24a2608_6c9ad101",
         "filename": "src/window.rs",
         "patchSetId": 1

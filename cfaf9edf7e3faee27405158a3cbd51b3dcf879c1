@@ -70,6 +70,24 @@
       "parentUuid": "2a83c07c_862f51cd",
       "revId": "cfaf9edf7e3faee27405158a3cbd51b3dcf879c1",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "71c9e789_8f349bc0",
+        "filename": "src/libc/posix_io/stat.rs",
+        "patchSetId": 6
+      },
+      "lineNbr": 120,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-06-02T10:44:34Z",
+      "side": 1,
+      "message": "You should be able to open directory as a file in read-only mode (ref https://stackoverflow.com/questions/21405048/linux-open-directory-as-a-file)\nTechnically, an fd obtained like this could be passed in fstat() and should be handled correctly. You could write a small test program to confirm the behaviour.\n\nWe should have at least an assert to catch this situation.\nOr, preferably, properly implement it.",
+      "parentUuid": "2e882959_40f60283",
+      "revId": "cfaf9edf7e3faee27405158a3cbd51b3dcf879c1",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

@@ -16,13 +16,14 @@ pub mod ui_window;
 
 use super::ui_graphics::{UIGraphicsPopContext, UIGraphicsPushContext};
 use crate::frameworks::core_graphics::cg_affine_transform::CGAffineTransform;
+use crate::frameworks::core_graphics::cg_color::CGColorRef;
 use crate::frameworks::core_graphics::cg_context::{CGContextClearRect, CGContextRef};
 use crate::frameworks::core_graphics::{CGFloat, CGPoint, CGRect};
 use crate::frameworks::foundation::ns_string::get_static_str;
 use crate::frameworks::foundation::{ns_array, NSInteger, NSUInteger};
 use crate::objc::{
-    autorelease, id, msg, nil, objc_classes, release, retain, Class, ClassExports, HostObject,
-    NSZonePtr,
+    autorelease, id, msg, msg_class, nil, objc_classes, release, retain, Class, ClassExports,
+    HostObject, NSZonePtr,
 };
 use crate::Environment;
 
@@ -324,15 +325,13 @@ pub const CLASSES: ClassExports = objc_classes! {
     msg![env; layer setOpacity:alpha]
 }
 
-// FIXME: CALayer's backgroundColor should be a CGColorRef, which is supposedly
-// a separate type from UIColor. For now we have not implemented it and treat
-// them as the same type (and it seems like UIKit itself maybe did this once),
-// but eventually we'll have to do this properly.
 - (id)backgroundColor {
     let layer = env.objc.borrow::<UIViewHostObject>(this).layer;
-    msg![env; layer backgroundColor]
+    let cg_color: CGColorRef = msg![env; layer backgroundColor];
+    msg_class![env; UIColor colorWithCGColor:cg_color]
 }
 - (())setBackgroundColor:(id)color { // UIColor*
+    let color: CGColorRef = msg![env; color CGColor];
     let layer = env.objc.borrow::<UIViewHostObject>(this).layer;
     msg![env; layer setBackgroundColor:color]
 }

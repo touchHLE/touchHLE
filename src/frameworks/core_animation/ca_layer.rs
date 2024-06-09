@@ -5,10 +5,10 @@
  */
 //! `CALayer`.
 
-use crate::frameworks::core_foundation::{CFRelease, CFRetain};
 use crate::frameworks::core_graphics::cg_bitmap_context::{
     CGBitmapContextCreate, CGBitmapContextGetHeight, CGBitmapContextGetWidth,
 };
+use crate::frameworks::core_graphics::cg_color::{CGColorRef, CGColorRelease, CGColorRetain};
 use crate::frameworks::core_graphics::cg_color_space::CGColorSpaceCreateDeviceRGB;
 use crate::frameworks::core_graphics::cg_context::{
     CGContextClearRect, CGContextRef, CGContextRelease, CGContextTranslateCTM,
@@ -34,7 +34,7 @@ pub(super) struct CALayerHostObject {
     pub(super) hidden: bool,
     pub(super) opaque: bool,
     pub(super) opacity: f32,
-    pub(super) background_color: id,
+    pub(super) background_color: CGColorRef,
     pub(super) needs_display: bool,
     /// `CGImageRef*`
     pub(super) contents: id,
@@ -108,9 +108,7 @@ pub const CLASSES: ClassExports = objc_classes! {
         release(env, contents);
     }
 
-    if background_color != nil {
-        CFRelease(env, background_color);
-    }
+    CGColorRelease(env, background_color);
 
     if let Some(cg_context) = cg_context {
         CGContextRelease(env, cg_context);
@@ -234,19 +232,14 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.borrow_mut::<CALayerHostObject>(this).opacity = opacity;
 }
 
-// See remarks in ui_view.rs about the type of this property
-- (id)backgroundColor {
+- (CGColorRef)backgroundColor {
     env.objc.borrow::<CALayerHostObject>(this).background_color
 }
-- (())setBackgroundColor:(id)new_color {
+- (())setBackgroundColor:(CGColorRef)new_color {
     let host_obj = env.objc.borrow_mut::<CALayerHostObject>(this);
     let old_color = std::mem::replace(&mut host_obj.background_color, new_color);
-    if new_color != nil {
-        CFRetain(env, new_color); // CFRetain doesn't like nil
-    }
-    if old_color != nil {
-        CFRelease(env, old_color); // CFRelease doesn't like nil
-    }
+    CGColorRetain(env, new_color);
+    CGColorRelease(env, old_color);
 }
 
 - (bool)needsDisplay {

@@ -10,6 +10,7 @@
 
 pub mod cg_affine_transform;
 pub mod cg_bitmap_context;
+pub mod cg_color;
 pub mod cg_color_space;
 pub mod cg_context;
 pub mod cg_data_provider;

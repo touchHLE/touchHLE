@@ -12,9 +12,8 @@
 use super::ca_eagl_layer::find_fullscreen_eagl_layer;
 use super::ca_layer::CALayerHostObject;
 use crate::frameworks::core_graphics::{
-    cg_bitmap_context, cg_image, CGFloat, CGPoint, CGRect, CGSize,
+    cg_bitmap_context, cg_color, cg_image, CGFloat, CGPoint, CGRect, CGSize,
 };
-use crate::frameworks::uikit::ui_color;
 use crate::gles::gles11_raw as gles11; // constants only
 use crate::gles::gles11_raw::types::*;
 use crate::gles::present::{present_frame, FpsCounter};
@@ -316,7 +315,7 @@ unsafe fn composite_layer_recursive(
     let have_background = if host_obj.background_color == nil {
         false
     } else {
-        let (r, g, b, a) = ui_color::get_rgba(objc, host_obj.background_color);
+        let (r, g, b, a) = cg_color::to_rgba(objc, host_obj.background_color);
         // TODO: fully support alpha transparency for backgrounds
         if a == 0.0 || opacity == 0.0 {
             false

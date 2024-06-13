@@ -7,8 +7,11 @@
 
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::frameworks::core_foundation::{CFRelease, CFRetain, CFTypeRef};
-use crate::frameworks::core_graphics::cg_color_space::kCGColorSpaceGenericRGB;
+use crate::frameworks::core_graphics::cg_color_space::{
+    kCGColorSpaceGenericRGB, CGColorSpaceHostObject, CGColorSpaceRef,
+};
 use crate::frameworks::core_graphics::CGFloat;
+use crate::mem::MutPtr;
 use crate::objc::{objc_classes, ClassExports, HostObject, ObjC};
 use crate::Environment;
 
@@ -50,9 +53,24 @@ pub fn CGColorRetain(env: &mut Environment, c: CGColorRef) -> CGColorRef {
     }
 }
 
+fn CGColorCreate(
+    env: &mut Environment,
+    space: CGColorSpaceRef,
+    components: MutPtr<CGFloat>,
+) -> CGColorRef {
+    let color_space = env.objc.borrow::<CGColorSpaceHostObject>(space).name;
+    assert_eq!(color_space, kCGColorSpaceGenericRGB);
+    let r = env.mem.read(components);
+    let g = env.mem.read(components + 1);
+    let b = env.mem.read(components + 2);
+    let a = env.mem.read(components + 3);
+    from_rgba(env, (r, g, b, a))
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGColorRetain(_)),
     export_c_func!(CGColorRelease(_)),
+    export_c_func!(CGColorCreate(_, _)),
 ];
 
 /// Shortcut for use by `UIColor`: directly construct a `CGColor` instance from

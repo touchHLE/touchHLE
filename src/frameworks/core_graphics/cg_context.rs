@@ -42,7 +42,7 @@ pub(super) struct CGContextHostObject {
     /// Current transform.
     pub(super) transform: CGAffineTransform,
     // TODO: keep more states saved once they are implemented
-    pub(super) state_stack: Vec<((CGFloat, CGFloat, CGFloat, CGFloat), CGAffineTransform)>
+    pub(super) state_stack: Vec<((CGFloat, CGFloat, CGFloat, CGFloat), CGAffineTransform)>,
 }
 impl HostObject for CGContextHostObject {}
 
@@ -143,18 +143,14 @@ pub fn CGContextDrawImage(
     cg_bitmap_context::draw_image(env, context, rect, image);
 }
 
-fn CGContextSaveGState(
-    env: &mut Environment,
-    context: CGContextRef
-) {
+fn CGContextSaveGState(env: &mut Environment, context: CGContextRef) {
     let host_obj = env.objc.borrow_mut::<CGContextHostObject>(context);
-    host_obj.state_stack.push((host_obj.rgb_fill_color, host_obj.transform));
+    host_obj
+        .state_stack
+        .push((host_obj.rgb_fill_color, host_obj.transform));
 }
 
-fn CGContextRestoreGState(
-    env: &mut Environment,
-    context: CGContextRef
-) {
+fn CGContextRestoreGState(env: &mut Environment, context: CGContextRef) {
     let host_obj = env.objc.borrow_mut::<CGContextHostObject>(context);
     let state = host_obj.state_stack.pop().unwrap();
     host_obj.rgb_fill_color = state.0;

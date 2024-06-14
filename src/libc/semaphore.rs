@@ -40,7 +40,7 @@ pub struct SemaphoreHostObject {
     guest_sem: Option<MutPtr<sem_t>>,
 }
 
-fn sem_open(
+pub fn sem_open(
     env: &mut Environment,
     name: ConstPtr<u8>,
     oflag: i32,
@@ -83,12 +83,12 @@ fn sem_open(
     sem
 }
 
-fn sem_post(env: &mut Environment, sem: MutPtr<sem_t>) -> i32 {
+pub fn sem_post(env: &mut Environment, sem: MutPtr<sem_t>) -> i32 {
     env.sem_increment(sem);
     0 // success
 }
 
-fn sem_wait(env: &mut Environment, sem: MutPtr<sem_t>) -> i32 {
+pub fn sem_wait(env: &mut Environment, sem: MutPtr<sem_t>) -> i32 {
     env.sem_decrement(sem, true);
     0 // success
 }
@@ -101,7 +101,7 @@ fn sem_trywait(env: &mut Environment, sem: MutPtr<sem_t>) -> i32 {
     }
 }
 
-fn sem_close(env: &mut Environment, sem: MutPtr<sem_t>) -> i32 {
+pub fn sem_close(env: &mut Environment, sem: MutPtr<sem_t>) -> i32 {
     let host_sem_rc = env
         .libc_state
         .semaphore
@@ -114,7 +114,7 @@ fn sem_close(env: &mut Environment, sem: MutPtr<sem_t>) -> i32 {
     0 // success
 }
 
-fn sem_unlink(env: &mut Environment, name: ConstPtr<u8>) -> i32 {
+pub fn sem_unlink(env: &mut Environment, name: ConstPtr<u8>) -> i32 {
     let sem_name = env.mem.cstr_at_utf8(name).unwrap();
     env.libc_state.semaphore.named_semaphores.remove(sem_name);
     0 // success

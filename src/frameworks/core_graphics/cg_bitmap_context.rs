@@ -83,6 +83,7 @@ pub fn CGBitmapContextCreate(
         // TODO: is this the correct default?
         rgb_fill_color: (0.0, 0.0, 0.0, 0.0),
         transform: CGAffineTransformIdentity,
+        state_stack: Vec::new()
     };
     let isa = env
         .objc
@@ -364,6 +365,7 @@ impl CGBitmapContextDrawer<'_> {
             subclass: CGContextSubclass::CGBitmapContext(bitmap_info),
             rgb_fill_color,
             transform,
+            ..
         } = objc.borrow(context);
 
         let pixels = get_pixels(&bitmap_info, mem);

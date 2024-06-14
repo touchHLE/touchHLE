@@ -8,7 +8,7 @@
 use super::ns_string::to_rust_string;
 use super::{NSRange, NSUInteger};
 use crate::fs::GuestPath;
-use crate::mem::{ConstVoidPtr, MutPtr, MutVoidPtr, Ptr};
+use crate::mem::{ConstPtr, ConstVoidPtr, MutPtr, MutVoidPtr, Ptr};
 use crate::objc::{
     autorelease, id, msg, nil, objc_classes, release, retain, ClassExports, HostObject, NSZonePtr,
 };
@@ -189,6 +189,10 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 @implementation NSMutableData: NSData
 
+- (id)initWithCapacity:(NSUInteger)_capacity {
+    msg![env; this init]
+}
+
 - (id)copyWithZone:(NSZonePtr)_zone {
     let bytes: ConstVoidPtr = msg![env; this bytes];
     let length: NSUInteger = msg![env; this length];
@@ -203,6 +207,17 @@ pub const CLASSES: ClassExports = objc_classes! {
     let host = env.objc.borrow_mut::<NSDataHostObject>(this);
     host.length = new_len;
     host.bytes = new_bytes;
+    log_dbg!("increaseLengthBy bytes {:?}, new_bytes {:?}; length {}, new_len {}", bytes, new_bytes, length, new_len);
+}
+
+- (())appendBytes:(ConstPtr<u8>)append_bytes length:(NSUInteger)append_length {
+    let old_len = env.objc.borrow::<NSDataHostObject>(this).length;
+    let old_bytes = env.objc.borrow::<NSDataHostObject>(this).bytes;
+    () = msg![env; this increaseLengthBy:append_length];
+    let &NSDataHostObject { bytes, length, .. } = env.objc.borrow(this);
+    log_dbg!("appendBytes old_len {}, append_length {}, length {}", old_len, append_length, length);
+    log_dbg!("appendBytes old_bytes {:?}, append_bytes {:?}, bytes {:?}", old_bytes, append_bytes, bytes);
+    env.mem.memmove(bytes + old_len, append_bytes.cast(), append_length);
 }
 
 @end

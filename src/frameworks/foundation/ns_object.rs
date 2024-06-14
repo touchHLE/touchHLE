@@ -14,12 +14,17 @@
 //!
 //! See also: [crate::objc], especially the `objects` module.
 
-use super::ns_string::to_rust_string;
-use super::NSUInteger;
-use crate::mem::MutVoidPtr;
+use super::ns_dictionary::dict_from_keys_and_objects;
+use super::ns_run_loop::NSDefaultRunLoopMode;
+use super::ns_string::{from_rust_string, get_static_str, to_rust_string};
+use super::{NSInteger, NSUInteger};
+use crate::environment::ThreadId;
+use crate::libc::posix_io::{O_CREAT, O_EXCL};
+use crate::libc::semaphore::{sem_close, sem_open, sem_post, sem_t, sem_unlink, sem_wait};
+use crate::mem::{MutPtr, MutVoidPtr};
 use crate::objc::{
-    id, msg, msg_class, msg_send, objc_classes, Class, ClassExports, NSZonePtr, ObjC,
-    TrivialHostObject, SEL,
+    id, msg, msg_class, msg_send, nil, objc_classes, release, retain, Class, ClassExports,
+    HostObject, NSZonePtr, ObjC, TrivialHostObject, SEL,
 };
 
 pub const CLASSES: ClassExports = objc_classes! {
@@ -175,6 +180,130 @@ pub const CLASSES: ClassExports = objc_classes! {
     msg_send(env, (this, sel, o1, o2))
 }
 
+- (())performSelectorOnMainThread:(SEL)sel withObject:(id)arg waitUntilDone:(bool)wait {
+    log_dbg!("performSelectorOnMainThread:{} withObject:{:?} waitUntilDone:{}", sel.as_str(&env.mem), arg, wait);
+    if wait && env.current_thread == 0 {
+        () = msg_send(env, (this, sel, arg));
+        return;
+    }
+    let sem_obj = if wait {
+        let sem: id = msg_class![env; _touchHLE_NSObjectSemaphore alloc];
+        msg![env; sem initWithObject:this]
+    } else {
+        nil
+    };
+
+    let sel_key: id = get_static_str(env, "SEL");
+    let sel_str = from_rust_string(env, sel.as_str(&env.mem).to_string());
+    let arg_key: id = get_static_str(env, "arg");
+    let sem_key: id = get_static_str(env, "sem");
+    let dict = dict_from_keys_and_objects(env, &[(sel_key, sel_str), (arg_key, arg), (sem_key, sem_obj)]);
+
+    // TODO: using timer is not the most efficient implementation,
+    // but does work
+    let selector = env.objc.lookup_selector("_touchHLE_timerFireMethod:").unwrap();
+    let timer:id = msg_class![env; NSTimer timerWithTimeInterval:0.0
+                                              target:this
+                                            selector:selector
+                                            userInfo:dict
+                                             repeats:false];
+
+    let run_loop: id = msg_class![env; NSRunLoop mainRunLoop];
+    let mode: id = get_static_str(env, NSDefaultRunLoopMode);
+    () = msg![env; run_loop addTimer:timer forMode:mode];
+
+    let _: NSInteger = msg![env; sem_obj wait];
+}
+
+// Private method, used by performSelectorOnMainThread:withObject:waitUntilDone:
+- (())_touchHLE_timerFireMethod:(id)which { // NSTimer *
+    let dict: id = msg![env; which userInfo];
+
+    let sel_key: id = get_static_str(env, "SEL");
+    let sel_str_id: id = msg![env; dict objectForKey:sel_key];
+    let sel_str = to_rust_string(env, sel_str_id);
+    let sel = env.objc.lookup_selector(&sel_str).unwrap();
+
+    let arg_key: id = get_static_str(env, "arg");
+    let arg: id = msg![env; dict objectForKey:arg_key];
+
+    () = msg_send(env, (this, sel, arg));
+
+    let sem_key: id = get_static_str(env, "sem");
+    let sem_obj: id = msg![env; dict objectForKey:sem_key];
+    let _: NSInteger = msg![env; sem_obj post];
+}
+
+@end
+
+@implementation _touchHLE_NSObjectSemaphore: NSObject
+
++ (id)allocWithZone:(NSZonePtr)_zone {
+    let host_object = Box::new(NSObjectSemaphoreHostObject {
+        orig_thread: 0,
+        object: nil,
+        sem: MutPtr::null()
+    });
+    env.objc.alloc_object(this, host_object, &mut env.mem)
+}
+
+- (id)initWithObject:(id)object {
+    retain(env, object);
+
+    let name = env.mem.alloc_and_write_cstr(format!("_touchHLE_sem_{}_{:?}", env.current_thread, this).as_bytes());
+    let sem = sem_open(env, name.cast_const(), O_EXCL | O_CREAT, 0, 0);
+    env.mem.free(name.cast());
+
+    let host_object: &mut NSObjectSemaphoreHostObject = env.objc.borrow_mut(this);
+    host_object.orig_thread = env.current_thread;
+    host_object.object = object;
+    host_object.sem = sem;
+
+    this
+}
+
+- (NSInteger)wait {
+    let sem = env.objc.borrow::<NSObjectSemaphoreHostObject>(this).sem;
+    let res = sem_wait(env, sem);
+    assert_eq!(res, 0);
+    res
+}
+
+- (NSInteger)post {
+    let sem = env.objc.borrow::<NSObjectSemaphoreHostObject>(this).sem;
+    let res = sem_post(env, sem);
+    assert_eq!(res, 0);
+    res
+}
+
+- (())dealloc {
+    let &NSObjectSemaphoreHostObject {
+        orig_thread,
+        object,
+        sem
+    } = env.objc.borrow(this);
+
+    let name = env.mem.alloc_and_write_cstr(format!("_touchHLE_sem_{}_{:?}", orig_thread, object).as_bytes());
+    let res = sem_unlink(env, name.cast_const());
+    assert_eq!(res, 0);
+    env.mem.free(name.cast());
+
+    let res = sem_close(env, sem);
+    assert_eq!(res, 0);
+
+    release(env, object);
+
+    env.objc.dealloc_object(this, &mut env.mem)
+}
+
 @end
 
 };
+
+/// Belongs to _touchHLE_NSObjectSemaphore
+struct NSObjectSemaphoreHostObject {
+    orig_thread: ThreadId,
+    object: id,
+    sem: MutPtr<sem_t>,
+}
+impl HostObject for NSObjectSemaphoreHostObject {}

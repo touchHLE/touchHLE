@@ -31,6 +31,7 @@ use std::any::TypeId;
 /// overwriting it.
 #[allow(non_snake_case)]
 fn objc_msgSend_inner(env: &mut Environment, receiver: id, selector: SEL, super2: Option<Class>) {
+    log!("Dispatching {} for {:?}", selector.as_str(&env.mem), receiver);
     let message_type_info = env.objc.message_type_info.take();
 
     if receiver == nil {
@@ -78,6 +79,7 @@ fn objc_msgSend_inner(env: &mut Environment, receiver: id, selector: SEL, super2
         if let Some(&super::ClassHostObject {
             superclass,
             ref methods,
+            ref name,
             ..
         }) = host_object.as_any().downcast_ref()
         {
@@ -89,6 +91,7 @@ fn objc_msgSend_inner(env: &mut Environment, receiver: id, selector: SEL, super2
             }
 
             if let Some(imp) = methods.get(&selector) {
+                log!("Found method on: {}", name);
                 match imp {
                     IMP::Host(host_imp) => {
                         // TODO: do type checks when calling GuestIMPs too.

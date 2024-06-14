@@ -50,6 +50,7 @@ pub const kAudioFileReadPermission: AudioFilePermissions = 1;
 
 /// Usually a FourCC.
 type AudioFileTypeID = u32;
+const kAudioFileCAFType: AudioFileTypeID = fourcc(b"caff");
 
 /// Usually a FourCC.
 type AudioFilePropertyID = u32;
@@ -73,7 +74,14 @@ pub fn AudioFileOpenURL(
 
     // The hint is optional and is supposed to only be used for certain file
     // formats that can't be uniquely identified, which we don't support so far.
-    assert!(in_file_type_hint == 0);
+    // Hints for well-known types are ignored as well.
+    match in_file_type_hint {
+        0 => {}
+        kAudioFileCAFType => {
+            log!("Ignoring 'caff' file type hint for AudioFileOpenURL()");
+        }
+        _ => unimplemented!(),
+    }
 
     let path = to_rust_path(env, in_file_ref);
     let Ok(audio_file) = audio::AudioFile::open_for_reading(path, &env.fs) else {

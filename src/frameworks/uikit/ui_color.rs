@@ -5,7 +5,9 @@
  */
 //! `UIColor`.
 
+use super::ui_graphics::UIGraphicsGetCurrentContext;
 use crate::frameworks::core_graphics::cg_color::{CGColorRef, CGColorRelease, CGColorRetain};
+use crate::frameworks::core_graphics::cg_context::CGContextSetRGBFillColor;
 use crate::frameworks::core_graphics::{cg_color, CGFloat};
 use crate::mem::MutPtr;
 use crate::objc::{
@@ -139,6 +141,18 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.mem.write(b, b_);
     env.mem.write(a, a_);
     true
+}
+
+- (())set {
+    msg![env; this setFill]
+    // TODO: set stroke color as well
+}
+
+- (())setFill {
+    let context = UIGraphicsGetCurrentContext(env);
+    assert_ne!(context, nil);
+    let (r, g, b, a) = get_rgba(&env.objc, this);
+    CGContextSetRGBFillColor(env, context, r, g, b, a);
 }
 
 - (CGColorRef)CGColor {

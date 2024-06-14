@@ -411,6 +411,12 @@ pub const CLASSES: ClassExports = objc_classes! {
     to_rust_string(env, this) == to_rust_string(env, other)
 }
 
+- (bool)hasPrefix:(id)str { // NSString*
+    // TODO: avoid copying
+    let str = to_rust_string(env, str).to_string();
+    to_rust_string(env, this).starts_with(&str)
+}
+
 - (NSComparisonResult)compare:(id)other { // NSString*
     msg![env; this compare:other options:NSLiteralSearch]
 }

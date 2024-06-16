@@ -52,6 +52,24 @@
       "parentUuid": "23d2ccd0_9c90fdfb",
       "revId": "d0d66a4e5b9a1e7ef594f570473392eb0b90277c",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ae07cfcd_4c4a8a03",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-06-16T14:10:53Z",
+      "side": 1,
+      "message": "Yes, as soon as Change-Id is the same, Gerrit will be able to keep track of them properly.\n\nI can explain more about the usual Gerrit workflow if needed.",
+      "parentUuid": "23d2ccd0_9c90fdfb",
+      "revId": "d0d66a4e5b9a1e7ef594f570473392eb0b90277c",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

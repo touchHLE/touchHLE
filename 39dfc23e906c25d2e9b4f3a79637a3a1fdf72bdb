@@ -1,0 +1,123 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "4de65fcc_294ab27f",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 10
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-06-16T13:18:33Z",
+      "side": 1,
+      "message": "few nitpicks and a question",
+      "revId": "39dfc23e906c25d2e9b4f3a79637a3a1fdf72bdb",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0e8df3e4_bee44e95",
+        "filename": "src/frameworks/foundation/ns_file_manager.rs",
+        "patchSetId": 10
+      },
+      "lineNbr": 84,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-06-16T13:18:33Z",
+      "side": 1,
+      "message": "Normally, path is supposed to be non-nil string.\nDo you know why it\u0027s called with nil?",
+      "revId": "39dfc23e906c25d2e9b4f3a79637a3a1fdf72bdb",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d20427a7_6bc07c50",
+        "filename": "src/frameworks/foundation/ns_file_manager.rs",
+        "patchSetId": 10
+      },
+      "lineNbr": 85,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-06-16T13:18:33Z",
+      "side": 1,
+      "message": "please compare against nil",
+      "revId": "39dfc23e906c25d2e9b4f3a79637a3a1fdf72bdb",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a7d50fb8_ae07cec1",
+        "filename": "src/frameworks/foundation/ns_file_manager.rs",
+        "patchSetId": 10
+      },
+      "lineNbr": 93,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-06-16T13:18:33Z",
+      "side": 1,
+      "message": "missing \u0027(\u0027",
+      "revId": "39dfc23e906c25d2e9b4f3a79637a3a1fdf72bdb",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2186376e_288328a3",
+        "filename": "src/frameworks/foundation/ns_file_manager.rs",
+        "patchSetId": 10
+      },
+      "lineNbr": 99,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-06-16T13:18:33Z",
+      "side": 1,
+      "message": "please compare against nil",
+      "revId": "39dfc23e906c25d2e9b4f3a79637a3a1fdf72bdb",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4d3c9c78_604320e0",
+        "filename": "src/frameworks/foundation/ns_file_manager.rs",
+        "patchSetId": 10
+      },
+      "lineNbr": 110,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-06-16T13:18:33Z",
+      "side": 1,
+      "message": "missing \u0027(\u0027",
+      "revId": "39dfc23e906c25d2e9b4f3a79637a3a1fdf72bdb",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "cef73bdd_2822cdf2",
+        "filename": "src/frameworks/foundation/ns_file_manager.rs",
+        "patchSetId": 10
+      },
+      "lineNbr": 112,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-06-16T13:18:33Z",
+      "side": 1,
+      "message": "missing \u0027(\u0027",
+      "revId": "39dfc23e906c25d2e9b4f3a79637a3a1fdf72bdb",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

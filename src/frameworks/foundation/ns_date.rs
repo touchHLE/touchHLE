@@ -23,6 +23,13 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 @implementation NSDate: NSObject
 
++ (NSTimeInterval)timeIntervalSinceReferenceDate {
+    SystemTime::now()
+        .duration_since(apple_epoch())
+        .unwrap()
+        .as_secs_f64()
+}
+
 + (id)date {
     // "Date objects are immutable, representing an invariant time interval
     // relative to an absolute reference date (00:00:00 UTC on 1 January 2001)."

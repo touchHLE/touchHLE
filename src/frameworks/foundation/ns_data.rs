@@ -55,6 +55,12 @@ pub const CLASSES: ClassExports = objc_classes! {
     autorelease(env, new)
 }
 
++ (id)dataWithContentsOfMappedFile:(id)path { // TODO: This hack is probably not how it should be implemented
+    let new: id = msg![env; this alloc];
+    let new: id = msg![env; new initWithContentsOfFile:path];
+    autorelease(env, new)
+}
+
 + (id)dataWithContentsOfURL:(id)url {
     let new: id = msg![env; this alloc];
     let new: id = msg![env; new initWithContentsOfURL:url];

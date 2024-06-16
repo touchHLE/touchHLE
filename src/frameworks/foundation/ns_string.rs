@@ -495,6 +495,8 @@ pub const CLASSES: ClassExports = objc_classes! {
     }
 }
 
+// TODO: - (NSComparisonResult)compare:(id)other options:(NSStringCompareOptions)mask range:(NSRange)other_range { }
+
 // NSCopying implementation
 - (id)copyWithZone:(NSZonePtr)_zone {
     retain(env, this)

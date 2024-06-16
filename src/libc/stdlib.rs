@@ -232,7 +232,12 @@ fn strtof(env: &mut Environment, nptr: ConstPtr<u8>, endptr: MutPtr<ConstPtr<u8>
     number as f32
 }
 
-fn strtoul(env: &mut Environment, str: ConstPtr<u8>, endptr: MutPtr<MutPtr<u8>>, base: i32) -> u32 {
+pub fn strtoul(
+    env: &mut Environment,
+    str: ConstPtr<u8>,
+    endptr: MutPtr<MutPtr<u8>>,
+    base: i32,
+) -> u32 {
     let s = env.mem.cstr_at_utf8(str).unwrap();
     log_dbg!("strtoul '{}'", s);
     assert_eq!(base, 16);

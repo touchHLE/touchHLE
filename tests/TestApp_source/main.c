@@ -330,6 +330,9 @@ int test_sscanf() {
   matched = sscanf("3000\\t4", "%d %d", &a, &b);
   if (!(matched == 1 && a == 3000))
     return -10;
+  matched = sscanf("0xFF0000", "%08x", &a);
+  if (a != 16711680)
+    return -11;
   return 0;
 }
 

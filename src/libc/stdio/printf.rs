@@ -11,7 +11,8 @@ use crate::frameworks::foundation::{ns_string, unichar};
 use crate::libc::clocale::{setlocale, LC_CTYPE};
 use crate::libc::posix_io::{STDERR_FILENO, STDOUT_FILENO};
 use crate::libc::stdio::FILE;
-use crate::libc::stdlib::atoi_inner;
+use crate::libc::stdlib::{atoi_inner, strtoul};
+use crate::libc::string::strlen;
 use crate::libc::wchar::wchar_t;
 use crate::mem::{ConstPtr, GuestUSize, Mem, MutPtr, MutVoidPtr, Ptr};
 use crate::objc::{id, msg, nil};
@@ -519,6 +520,12 @@ fn sscanf_common(
             continue;
         }
 
+        let mut max_width: i32 = 0;
+        while let c @ b'0'..=b'9' = env.mem.read(format + format_char_idx) {
+            max_width = max_width * 10 + (c - b'0') as i32;
+            format_char_idx += 1;
+        }
+
         let length_modifier = if env.mem.read(format + format_char_idx) == b'h' {
             format_char_idx += 1;
             Some(b'h')
@@ -531,6 +538,7 @@ fn sscanf_common(
 
         match specifier {
             b'd' | b'i' => {
+                assert_eq!(max_width, 0);
                 if specifier == b'i' {
                     // TODO: hexs and octals
                     assert_ne!(env.mem.read(src_ptr), b'0');
@@ -564,7 +572,18 @@ fn sscanf_common(
                     },
                 }
             }
+            b'x' | b'X' => {
+                let c_len: GuestUSize = strlen(env, src_ptr.cast_const());
+                if max_width != 0 {
+                    assert_eq!(c_len, max_width.try_into().unwrap());
+                }
+                let val: u32 = strtoul(env, src_ptr.cast_const(), Ptr::null(), 16);
+                src_ptr += c_len;
+                let c_u32_ptr: ConstPtr<u32> = args.next(env);
+                env.mem.write(c_u32_ptr.cast_mut(), val);
+            }
             b'[' => {
+                assert_eq!(max_width, 0);
                 assert!(length_modifier.is_none());
                 // TODO: support ranges like [0-9]
                 // [set] case

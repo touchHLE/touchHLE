@@ -50,7 +50,13 @@ pub const CLASSES: ClassExports = objc_classes! {
     let view: id = msg_class![env; UIView alloc];
     let view: id = msg![env; view init];
     () = msg![env; this setView: view];
+    () = msg![env; this viewDidLoad]; // TODO: handle this better?
 }
+
+- (())viewDidLoad {
+    log!("TODO: [(UIViewController*){:?} viewDidLoad]", this); // TODO
+}
+
 - (())setView:(id)new_view { // UIView*
     let host_obj = env.objc.borrow_mut::<UIViewControllerHostObject>(this);
     let old_view = std::mem::replace(&mut host_obj.view, new_view);

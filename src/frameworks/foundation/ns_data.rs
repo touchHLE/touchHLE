@@ -55,6 +55,13 @@ pub const CLASSES: ClassExports = objc_classes! {
     autorelease(env, new)
 }
 
++ (id)dataWithContentsOfMappedFile:(id)path {
+    log!("TODO [NSData dataWithContentsOfMappedFile:{:?}] uses [NSData dataWithContentsOfFile:] implementation instead of its own", path);
+    let new: id = msg![env; this alloc];
+    let new: id = msg![env; new initWithContentsOfFile:path];
+    autorelease(env, new)
+}
+
 + (id)dataWithContentsOfURL:(id)url {
     let new: id = msg![env; this alloc];
     let new: id = msg![env; new initWithContentsOfURL:url];

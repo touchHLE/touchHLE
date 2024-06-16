@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "983f5184_d247f9fe",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 10
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-06-16T13:58:29Z",
+      "side": 1,
+      "message": "Seems more like a workaround than a solution to the described issue.\n@hikari@noyu.me would like to hear your opinion as well.",
+      "revId": "ee9ff4ca50259df07b858956300253a19b77e207",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e05ab209_05150c7f",
+        "filename": "src/frameworks/uikit/ui_accelerometer.rs",
+        "patchSetId": 10
+      },
+      "lineNbr": 153,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-06-16T13:58:29Z",
+      "side": 1,
+      "message": "Could you please add a second paragraph of the commit message as a comment here?",
+      "revId": "ee9ff4ca50259df07b858956300253a19b77e207",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

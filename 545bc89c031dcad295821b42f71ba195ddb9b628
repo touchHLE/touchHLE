@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fd688574_4537144e",
+        "filename": "src/gles/gles1_on_gl2.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 1199,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-06-16T12:36:42Z",
+      "side": 1,
+      "message": "optional: remove empty lines before and after the function",
+      "revId": "545bc89c031dcad295821b42f71ba195ddb9b628",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

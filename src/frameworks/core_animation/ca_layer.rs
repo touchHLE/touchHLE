@@ -5,6 +5,7 @@
  */
 //! `CALayer`.
 
+use crate::dyld::{ConstantExports, HostConstant};
 use crate::frameworks::core_graphics::cg_bitmap_context::{
     CGBitmapContextCreate, CGBitmapContextGetHeight, CGBitmapContextGetWidth,
 };
@@ -16,6 +17,7 @@ use crate::frameworks::core_graphics::cg_context::{
 use crate::frameworks::core_graphics::cg_image::{
     kCGImageAlphaPremultipliedLast, kCGImageByteOrder32Big,
 };
+use crate::frameworks::foundation::ns_string;
 use crate::frameworks::core_graphics::{CGPoint, CGRect, CGSize};
 use crate::mem::{GuestUSize, Ptr};
 use crate::objc::{id, msg, nil, objc_classes, release, retain, ClassExports, HostObject, ObjC};
@@ -50,6 +52,25 @@ pub(super) struct CALayerHostObject {
     pub(super) gles_texture_is_up_to_date: bool,
 }
 impl HostObject for CALayerHostObject {}
+
+pub const kCAFilterLinear: &str = "kCAFilterLinear";
+pub const kCAFilterNearest: &str = "kCAFilterNearest";
+pub const kCAFilterTrilinear: &str = "kCAFilterTrilinear";
+
+pub const CONSTANTS: ConstantExports = &[
+    (
+        "_kCAFilterLinear",
+        HostConstant::NSString(kCAFilterLinear),
+    ),
+    (
+        "_kCAFilterNearest",
+        HostConstant::NSString(kCAFilterNearest),
+    ),
+    (
+        "_kCAFilterTrilinear",
+        HostConstant::NSString(kCAFilterTrilinear),
+    ),
+];
 
 pub const CLASSES: ClassExports = objc_classes! {
 
@@ -364,6 +385,18 @@ pub const CLASSES: ClassExports = objc_classes! {
     let old_contents = std::mem::replace(&mut host_obj.contents, new_contents);
     retain(env, new_contents);
     release(env, old_contents);
+}
+
+- (())setEdgeAntialiasingMask:(u32)mask {
+	log!("TODO: [(CALayer*){:?} setEdgeAntialiasingMask: {}]", this, mask); // TODO
+}
+
+- (())setMagnificationFilter:(id)filter {
+	log!("TODO: [(CALayer*){:?} setMagnificationFilter: {}]", this, ns_string::to_rust_string(env, filter)); // TODO
+}
+
+- (())setMinificationFilter:(id)filter {
+	log!("TODO: [(CALayer*){:?} setMinificationFilter: {}]", this, ns_string::to_rust_string(env, filter)); // TODO
 }
 
 - (bool)containsPoint:(CGPoint)point {

@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "e058ab36_1d9fbd10",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-06-16T12:40:40Z",
+      "side": 1,
+      "message": "please run isntead linter on each individual commit and amend them",
+      "revId": "d0d66a4e5b9a1e7ef594f570473392eb0b90277c",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

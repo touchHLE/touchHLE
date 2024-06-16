@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "81ac8bcc_79e5677e",
+        "filename": "src/frameworks/foundation/ns_data.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 58,
+      "author": {
+        "id": 1038113
+      },
+      "writtenOn": "2024-06-16T15:36:34Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "5f609d91_6d126743",
+      "revId": "c306656101c3d5031c1ffb8347522d10f0994715",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "c753ff84_023406e2",
@@ -31,6 +49,24 @@
       "writtenOn": "2024-06-16T12:48:02Z",
       "side": 1,
       "message": "if it\u0027s not implemented, I don\u0027t see much of the point to have this TODO comment",
+      "revId": "c306656101c3d5031c1ffb8347522d10f0994715",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "452f66bd_a2090020",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 498,
+      "author": {
+        "id": 1038113
+      },
+      "writtenOn": "2024-06-16T15:36:34Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "c753ff84_023406e2",
       "revId": "c306656101c3d5031c1ffb8347522d10f0994715",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

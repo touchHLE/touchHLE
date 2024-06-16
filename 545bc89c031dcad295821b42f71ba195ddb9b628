@@ -1,6 +1,23 @@
 {
   "comments": [
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "2c10f820_d86e40f7",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-06-16T12:39:32Z",
+      "side": 1,
+      "message": "please don\u0027t forget to run linter and amend existing commits",
+      "revId": "545bc89c031dcad295821b42f71ba195ddb9b628",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "fd688574_4537144e",

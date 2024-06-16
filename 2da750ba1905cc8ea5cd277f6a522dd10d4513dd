@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "80ed94ed_3d4a9e6b",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 7
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-06-16T13:04:33Z",
+      "side": 1,
+      "message": "This class is already implemented on the trunk.\nCould you please check and include only the methods what are missing?",
+      "revId": "2da750ba1905cc8ea5cd277f6a522dd10d4513dd",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e118e991_be8cd753",
+        "filename": "src/frameworks/foundation/ns_file_handle.rs",
+        "patchSetId": 7
+      },
+      "lineNbr": 15,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-06-16T13:04:33Z",
+      "side": 1,
+      "message": "I think it\u0027s better to use standard file descriptors for the implementation - as per doc \"You use file handle objects to access data associated with files, sockets, pipes, and devices.\"",
+      "revId": "2da750ba1905cc8ea5cd277f6a522dd10d4513dd",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

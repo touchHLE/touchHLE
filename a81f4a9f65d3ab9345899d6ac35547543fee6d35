@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "8c83eaa6_4b69797e",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-06-16T14:49:47Z",
+      "side": 1,
+      "message": "few nitpicks (i think you forgot to rebase after changes on other commits)",
+      "revId": "a81f4a9f65d3ab9345899d6ac35547543fee6d35",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "bfcc61ab_63b2e8e3",
+        "filename": "src/frameworks/core_animation/ca_layer.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 62,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-06-16T14:49:47Z",
+      "side": 1,
+      "message": "please remove an extra space at the end",
+      "revId": "a81f4a9f65d3ab9345899d6ac35547543fee6d35",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0fa87e8d_a14eb644",
+        "filename": "src/frameworks/opengles/gles_guest.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 762,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-06-16T14:49:47Z",
+      "side": 1,
+      "message": "this shouldn\u0027t be a part of this patch set",
+      "revId": "a81f4a9f65d3ab9345899d6ac35547543fee6d35",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3d961452_8dafc767",
+        "filename": "src/gles/gles1_native.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 381,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-06-16T14:49:47Z",
+      "side": 1,
+      "message": "this shouldn\u0027t be a part of this patch set",
+      "revId": "a81f4a9f65d3ab9345899d6ac35547543fee6d35",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

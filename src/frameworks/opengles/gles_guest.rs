@@ -758,6 +758,11 @@ fn glDeleteTextures(env: &mut Environment, n: GLsizei, textures: ConstPtr<GLuint
 fn glActiveTexture(env: &mut Environment, texture: GLenum) {
     with_ctx_and_mem(env, |gles, _mem| unsafe { gles.ActiveTexture(texture) })
 }
+fn glIsTexture(env: &mut Environment, texture: GLuint) -> GLboolean {
+    with_ctx_and_mem(env, |gles, _mem| unsafe {
+        gles.IsTexture(texture)
+    })
+}
 fn glBindTexture(env: &mut Environment, target: GLenum, texture: GLuint) {
     with_ctx_and_mem(env, |gles, _mem| unsafe {
         gles.BindTexture(target, texture)
@@ -1239,6 +1244,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(glGenTextures(_, _)),
     export_c_func!(glDeleteTextures(_, _)),
     export_c_func!(glActiveTexture(_)),
+    export_c_func!(glIsTexture(_)),
     export_c_func!(glBindTexture(_, _)),
     export_c_func!(glTexParameteri(_, _, _)),
     export_c_func!(glTexParameterf(_, _, _)),

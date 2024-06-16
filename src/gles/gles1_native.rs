@@ -378,6 +378,9 @@ impl GLES for GLES1Native {
     unsafe fn ActiveTexture(&mut self, texture: GLenum) {
         gles11::ActiveTexture(texture)
     }
+    unsafe fn IsTexture(&mut self, texture: GLuint) -> GLboolean{
+        gles11::IsTexture(texture)
+    }
     unsafe fn BindTexture(&mut self, target: GLenum, texture: GLuint) {
         gles11::BindTexture(target, texture)
     }

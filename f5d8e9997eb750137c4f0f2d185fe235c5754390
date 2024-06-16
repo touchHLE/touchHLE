@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fa927b6f_5c0607a0",
+        "filename": "src/frameworks/av_audio/av_audio_player.rs",
+        "patchSetId": 21
+      },
+      "lineNbr": 247,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-06-16T13:08:54Z",
+      "side": 1,
+      "message": "Shouldn\u0027t be very hard to implement both of those methods - as we only support constant bitrate right now, just convert between the current packet and desired duration",
+      "revId": "f5d8e9997eb750137c4f0f2d185fe235c5754390",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

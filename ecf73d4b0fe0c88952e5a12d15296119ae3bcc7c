@@ -16,6 +16,24 @@
       "message": "With these changes jp.co.capcom.gspackuall will try to launch properly after viewDidLoad is called but after a bit it crashes on two glClear calls which I think get called before there is an eagl context resulting in an unwrap on None.\n\nIf we ignore that problem and continue execution it fails an assert in openal on line 105.\n\nif we ignore that issue a UIView named EAGLView expects input to be given to it which touchHLE doesn\u0027t give, and again if we force touchHLE to give that input to the EAGLView the game seems to work as expected.\n\nthat is only true until we try to go into a menu to save the game which breaks again because of yet another unwrap on None for a timer because the object doesn\u0027t exist and handle_timer will call borrow on it.",
       "revId": "ecf73d4b0fe0c88952e5a12d15296119ae3bcc7c",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "07d51ba0_96821762",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038113
+      },
+      "writtenOn": "2024-06-16T12:10:19Z",
+      "side": 1,
+      "message": "Since the hacks I used to fix the problems that are mentioned were in my opinion too intrusive and would most likely be fixed with a more robust implementation of the systems that cause them in the first place I decided to omit them from these changes",
+      "parentUuid": "62e8c72e_181802cb",
+      "revId": "ecf73d4b0fe0c88952e5a12d15296119ae3bcc7c",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

@@ -34,6 +34,24 @@
       "parentUuid": "e058ab36_1d9fbd10",
       "revId": "d0d66a4e5b9a1e7ef594f570473392eb0b90277c",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "bc16d1a4_7e4e61fc",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038113
+      },
+      "writtenOn": "2024-06-16T14:08:53Z",
+      "side": 1,
+      "message": "nevermind i was a little confused on how gerrithub works I\u0027ll do that",
+      "parentUuid": "23d2ccd0_9c90fdfb",
+      "revId": "d0d66a4e5b9a1e7ef594f570473392eb0b90277c",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

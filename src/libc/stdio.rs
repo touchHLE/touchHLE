@@ -61,7 +61,7 @@ fn fopen(env: &mut Environment, filename: ConstPtr<u8>, mode: ConstPtr<u8>) -> M
 
     let flags = match (basic_mode, plus) {
         (b'r', false) => O_RDONLY,
-        (b'r', true) => O_RDWR | O_APPEND,
+        (b'r', true) => O_RDWR,
         (b'w', false) => O_WRONLY | O_CREAT | O_TRUNC,
         (b'w', true) => O_RDWR | O_CREAT | O_TRUNC,
         (b'a', false) => O_WRONLY | O_APPEND | O_CREAT,

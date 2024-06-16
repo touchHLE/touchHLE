@@ -759,9 +759,7 @@ fn glActiveTexture(env: &mut Environment, texture: GLenum) {
     with_ctx_and_mem(env, |gles, _mem| unsafe { gles.ActiveTexture(texture) })
 }
 fn glIsTexture(env: &mut Environment, texture: GLuint) -> GLboolean {
-    with_ctx_and_mem(env, |gles, _mem| unsafe {
-        gles.IsTexture(texture)
-    })
+    with_ctx_and_mem(env, |gles, _mem| unsafe { gles.IsTexture(texture) })
 }
 fn glBindTexture(env: &mut Environment, target: GLenum, texture: GLuint) {
     with_ctx_and_mem(env, |gles, _mem| unsafe {

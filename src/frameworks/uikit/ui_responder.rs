@@ -5,7 +5,7 @@
  */
 //! `UIResponder`.
 
-use crate::objc::{id, objc_classes, ClassExports};
+use crate::objc::{id, nil, objc_classes, ClassExports};
 
 #[derive(Default)]
 pub struct State {
@@ -56,6 +56,9 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 - (bool)canBecomeFirstResponder {
     false
+}
+- (id)nextResponder {
+    nil
 }
 - (bool)becomeFirstResponder {
     // TODO

@@ -44,6 +44,7 @@ pub(super) struct UIViewHostObject {
     clears_context_before_drawing: bool,
     user_interaction_enabled: bool,
     multiple_touch_enabled: bool,
+    exclusive_touch: bool,
 }
 impl HostObject for UIViewHostObject {}
 impl Default for UIViewHostObject {
@@ -57,6 +58,7 @@ impl Default for UIViewHostObject {
             clears_context_before_drawing: true,
             user_interaction_enabled: true,
             multiple_touch_enabled: false,
+            exclusive_touch: true,
         }
     }
 }
@@ -183,6 +185,13 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.borrow_mut::<UIViewHostObject>(this).multiple_touch_enabled = enabled;
 }
 
+- (bool)isExclusiveTouch {
+    env.objc.borrow::<UIViewHostObject>(this).exclusive_touch
+}
+- (())setExclusiveTouch:(bool)exclusive {
+    env.objc.borrow_mut::<UIViewHostObject>(this).exclusive_touch = exclusive;
+}
+
 - (())layoutSubviews {
     // On iOS 5.1 and earlier, the default implementation of this method does
     // nothing.
@@ -278,6 +287,7 @@ pub const CLASSES: ClassExports = objc_classes! {
         clears_context_before_drawing: _,
         user_interaction_enabled: _,
         multiple_touch_enabled: _,
+        exclusive_touch: _,
     } = std::mem::take(env.objc.borrow_mut(this));
 
     release(env, layer);
@@ -366,6 +376,10 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (())setFrame:(CGRect)frame {
     let layer = env.objc.borrow::<UIViewHostObject>(this).layer;
     msg![env; layer setFrame:frame]
+}
+
+- (())setClipsToBounds:(bool)clip {
+    log!("TODO: [UIView setClipsToBounds:{}]", clip);
 }
 
 - (())setTransform:(CGAffineTransform)transform {

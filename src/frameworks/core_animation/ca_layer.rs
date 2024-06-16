@@ -17,8 +17,8 @@ use crate::frameworks::core_graphics::cg_context::{
 use crate::frameworks::core_graphics::cg_image::{
     kCGImageAlphaPremultipliedLast, kCGImageByteOrder32Big,
 };
-use crate::frameworks::foundation::ns_string;
 use crate::frameworks::core_graphics::{CGPoint, CGRect, CGSize};
+use crate::frameworks::foundation::ns_string;
 use crate::mem::{GuestUSize, Ptr};
 use crate::objc::{id, msg, nil, objc_classes, release, retain, ClassExports, HostObject, ObjC};
 use std::collections::HashMap;
@@ -388,15 +388,15 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (())setEdgeAntialiasingMask:(u32)mask {
-	log!("TODO: [(CALayer*){:?} setEdgeAntialiasingMask: {}]", this, mask); // TODO
+    log!("TODO: [(CALayer*){:?} setEdgeAntialiasingMask: {}]", this, mask); // TODO
 }
 
 - (())setMagnificationFilter:(id)filter {
-	log!("TODO: [(CALayer*){:?} setMagnificationFilter: {}]", this, ns_string::to_rust_string(env, filter)); // TODO
+    log!("TODO: [(CALayer*){:?} setMagnificationFilter: {}]", this, ns_string::to_rust_string(env, filter)); // TODO
 }
 
 - (())setMinificationFilter:(id)filter {
-	log!("TODO: [(CALayer*){:?} setMinificationFilter: {}]", this, ns_string::to_rust_string(env, filter)); // TODO
+    log!("TODO: [(CALayer*){:?} setMinificationFilter: {}]", this, ns_string::to_rust_string(env, filter)); // TODO
 }
 
 - (bool)containsPoint:(CGPoint)point {

@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "c359ce15_dd11043d",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 10
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-06-16T13:22:17Z",
+      "side": 1,
+      "message": "2 nitpicks",
+      "revId": "5c17049be71c43dfb6687897fcd1a4fff837ab32",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6f615ccf_649e201d",
+        "filename": "src/objc.rs",
+        "patchSetId": 10
+      },
+      "lineNbr": 53,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-06-16T13:22:17Z",
+      "side": 1,
+      "message": "this should go to line 49",
+      "revId": "5c17049be71c43dfb6687897fcd1a4fff837ab32",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9352fe69_9f34bc55",
+        "filename": "src/objc/properties.rs",
+        "patchSetId": 10
+      },
+      "lineNbr": 30,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-06-16T13:22:17Z",
+      "side": 1,
+      "message": "you should keep the same comment about this assert as in objc_setProperty",
+      "revId": "5c17049be71c43dfb6687897fcd1a4fff837ab32",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

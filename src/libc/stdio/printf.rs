@@ -638,6 +638,35 @@ fn sscanf(env: &mut Environment, src: ConstPtr<u8>, format: ConstPtr<u8>, args: 
     sscanf_common(env, src, format, args.start())
 }
 
+fn swscanf(
+    env: &mut Environment,
+    ws: ConstPtr<wchar_t>,
+    format: ConstPtr<wchar_t>,
+    args: DotDotDot,
+) -> i32 {
+    // TODO: support other locales
+    let ctype_locale = setlocale(env, LC_CTYPE, Ptr::null());
+    assert_eq!(env.mem.read(ctype_locale), b'C');
+
+    let w_string = env.mem.wcstr_at(ws);
+    let w_format = env.mem.wcstr_at(format);
+    log_dbg!(
+        "swscanf({:?} ({:?}), {:?} ({:?}), ...)",
+        ws,
+        w_string,
+        format,
+        w_format
+    );
+    // TODO: refactor code to parametrise sscanf_common()
+    // for normal and wide strings instead
+    let c_string = env.mem.alloc_and_write_cstr(w_string.as_bytes());
+    let c_format = env.mem.alloc_and_write_cstr(w_format.as_bytes());
+    let res = sscanf(env, c_string.cast_const(), c_format.cast_const(), args);
+    env.mem.free(c_string.cast());
+    env.mem.free(c_format.cast());
+    res
+}
+
 fn vsscanf(env: &mut Environment, src: ConstPtr<u8>, format: ConstPtr<u8>, arg: VaList) -> i32 {
     log_dbg!(
         "vsscanf({:?}, {:?} ({:?}), ...)",
@@ -674,6 +703,7 @@ fn fprintf(
 
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(sscanf(_, _, _)),
+    export_c_func!(swscanf(_, _, _)),
     export_c_func!(vsscanf(_, _, _)),
     export_c_func!(snprintf(_, _, _, _)),
     export_c_func!(vprintf(_, _)),

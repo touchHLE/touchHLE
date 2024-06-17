@@ -124,6 +124,9 @@ DIR *opendir(const char *);
 struct dirent *readdir(DIR *);
 int closedir(DIR *);
 
+// <wchar.h>
+int swscanf(const wchar_t *, const wchar_t *, ...);
+
 // `CFBase.h`
 
 typedef const struct _CFAllocator *CFAllocatorRef;
@@ -333,6 +336,14 @@ int test_sscanf() {
   matched = sscanf("0xFF0000", "%08x", &a);
   if (a != 16711680)
     return -11;
+  return 0;
+}
+
+int test_swscanf() {
+  int a, b;
+  int matched = swscanf(L"1.23", L"%d.%d", &a, &b);
+  if (!(matched == 2 && a == 1 && b == 23))
+    return -1;
   return 0;
 }
 
@@ -917,6 +928,7 @@ struct {
     FUNC_DEF(test_qsort),
     FUNC_DEF(test_vsnprintf),
     FUNC_DEF(test_sscanf),
+    FUNC_DEF(test_swscanf),
     FUNC_DEF(test_errno),
     FUNC_DEF(test_realloc),
     FUNC_DEF(test_atof),

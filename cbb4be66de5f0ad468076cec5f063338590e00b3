@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "dd90e918_36295137",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-06-17T16:36:18Z",
+      "side": 1,
+      "message": "@atasro2@gmail.com do you need more help/explanations for merging your patchsets on Gerrit?\n\n(Just double checking as Gerrit flow is not very intuitive)",
+      "revId": "cbb4be66de5f0ad468076cec5f063338590e00b3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

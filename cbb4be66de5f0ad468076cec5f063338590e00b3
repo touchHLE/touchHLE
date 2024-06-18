@@ -16,6 +16,24 @@
       "message": "@atasro2@gmail.com do you need more help/explanations for merging your patchsets on Gerrit?\n\n(Just double checking as Gerrit flow is not very intuitive)",
       "revId": "cbb4be66de5f0ad468076cec5f063338590e00b3",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ce354df8_ac5a6e6f",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038113
+      },
+      "writtenOn": "2024-06-18T00:25:05Z",
+      "side": 1,
+      "message": "Yeah that would be appreciated if you don\u0027t mind  definitely need the help",
+      "parentUuid": "dd90e918_36295137",
+      "revId": "cbb4be66de5f0ad468076cec5f063338590e00b3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

@@ -34,6 +34,24 @@
       "parentUuid": "dd90e918_36295137",
       "revId": "cbb4be66de5f0ad468076cec5f063338590e00b3",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "edb86527_9d62037e",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-06-18T00:32:46Z",
+      "side": 1,
+      "message": "First of all, you need to set +1 verified on your patch sets. Commonly, it means that you \"verified\" it - linter is passing, tests are passing, build is ok, etc.\n\nOnce you have +2 from reviewers, you will have \"Ready to submit\" status. Once clicked on \"Submit\" and if there is no merge conflicts with a trunk, Gerrit will rebase your patch set on the trunk and also sync it to GitHub.",
+      "parentUuid": "ce354df8_ac5a6e6f",
+      "revId": "cbb4be66de5f0ad468076cec5f063338590e00b3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

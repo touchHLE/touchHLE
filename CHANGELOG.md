@@ -26,6 +26,10 @@ Usability:
 
 - UITextField now supports real text input with a keyboard. On Windows/macOS physical keyboard is used, on Android it's done via a system soft keyboard. (@ciciplusplus)
 
+Quality:
+
+- Fix problem with non-working accelerometer on some Android phones. (@Oscar1640)
+
 ## v0.2.2 (2024-04-01)
 
 Compatibility:

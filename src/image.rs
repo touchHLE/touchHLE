@@ -160,7 +160,7 @@ impl Image {
                 let opacity = if corner_x > 0.0 && corner_y > 0.0 {
                     let distance = (corner_x * corner_x + corner_y * corner_y).sqrt();
                     // Bad approximation of the pixel coverage of a filled arc.
-                    let distance = (distance - radius).max(0.0).min(1.0);
+                    let distance = (distance - radius).clamp(0.0, 1.0);
                     let area = distance * distance;
                     1.0 - area
                 } else {

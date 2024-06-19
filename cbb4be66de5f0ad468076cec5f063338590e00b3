@@ -52,6 +52,23 @@
       "parentUuid": "ce354df8_ac5a6e6f",
       "revId": "cbb4be66de5f0ad468076cec5f063338590e00b3",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "9a802eb0_36b8252b",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-06-19T19:42:16Z",
+      "side": 1,
+      "message": "If you want to submit this, you\u0027ll need to rebase on the trunk first (as parent is not yet mergeable)\n\nyou can do it with \"Rebase\" button in the UI\nafter that you\u0027ll be able to submit",
+      "revId": "cbb4be66de5f0ad468076cec5f063338590e00b3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

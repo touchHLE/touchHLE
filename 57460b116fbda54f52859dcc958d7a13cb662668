@@ -1,5 +1,23 @@
 {
-  "comments": [],
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "9e0b4a20_7fb6e78e",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 3
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-06-20T04:44:58Z",
+      "side": 1,
+      "message": "@atasro2@gmail.com congrats on your first contributions!\n\nIf you want to have access to private developer channel on Discord, please email me",
+      "revId": "57460b116fbda54f52859dcc958d7a13cb662668",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ],
   "submitRequirementResults": [
     {
       "submitRequirement": {

@@ -34,6 +34,24 @@
       "parentUuid": "22408026_654dc9fc",
       "revId": "c6b80668238152d888ec365ac756796997748e9a",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "4d93b4d9_c0d6f040",
+        "filename": "src/frameworks/audio_toolbox/audio_components.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 49,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-06-20T22:32:13Z",
+      "side": 1,
+      "message": "Ok, please add a comment explaining how you got the values and which device you used",
+      "parentUuid": "eb1eac82_51141a62",
+      "revId": "c6b80668238152d888ec365ac756796997748e9a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

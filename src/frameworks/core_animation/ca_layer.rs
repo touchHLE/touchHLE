@@ -58,10 +58,7 @@ pub const kCAFilterNearest: &str = "kCAFilterNearest";
 pub const kCAFilterTrilinear: &str = "kCAFilterTrilinear";
 
 pub const CONSTANTS: ConstantExports = &[
-    (
-        "_kCAFilterLinear",
-        HostConstant::NSString(kCAFilterLinear),
-    ),
+    ("_kCAFilterLinear", HostConstant::NSString(kCAFilterLinear)),
     (
         "_kCAFilterNearest",
         HostConstant::NSString(kCAFilterNearest),

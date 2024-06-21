@@ -24,6 +24,7 @@ pub mod mach_time;
 pub mod math;
 pub mod mmap;
 pub mod net;
+pub mod netdb;
 pub mod posix_io;
 pub mod pthread;
 pub mod sched;

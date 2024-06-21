@@ -611,6 +611,12 @@ pub const CLASSES: ClassExports = objc_classes! {
     c_string.cast_const()
 }
 
+- (ConstPtr<u8>)cString {
+    // TODO: use default C-string encoding of the current locale
+    // TODO: raise NSCharacterConversionException if couldn't represent
+    msg![env; this UTF8String]
+}
+
 - (ConstPtr<u8>)UTF8String {
     msg![env; this cStringUsingEncoding:NSUTF8StringEncoding]
 }

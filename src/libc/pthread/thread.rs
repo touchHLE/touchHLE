@@ -217,9 +217,13 @@ fn pthread_join(env: &mut Environment, thread: pthread_t, retval: MutPtr<MutVoid
     env.join_with_thread(joinee_thread, retval);
     0
 }
-fn pthread_setcanceltype(_env: &mut Environment, _type: i32, _oldtype: MutPtr<i32>) -> i32 {
-    // TODO
+
+fn pthread_setcanceltype(_env: &mut Environment, type_: i32, oldtype: MutPtr<i32>) -> i32 {
+    log!("TODO: pthread_setcanceltype({}, {:?})", type_, oldtype);
     0
+}
+fn pthread_testcancel(_env: &mut Environment) {
+    log!("TODO: pthread_testcancel()");
 }
 
 type mach_port_t = u32;
@@ -239,5 +243,6 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(pthread_self()),
     export_c_func!(pthread_join(_, _)),
     export_c_func!(pthread_setcanceltype(_, _)),
+    export_c_func!(pthread_testcancel()),
     export_c_func!(pthread_mach_thread_np(_)),
 ];

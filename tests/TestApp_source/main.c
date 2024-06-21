@@ -344,6 +344,9 @@ int test_swscanf() {
   int matched = swscanf(L"1.23", L"%d.%d", &a, &b);
   if (!(matched == 2 && a == 1 && b == 23))
     return -1;
+  matched = swscanf(L"str_01", L"str_%2d", &a);
+  if (!(matched == 1 && a == 1))
+    return -2;
   return 0;
 }
 

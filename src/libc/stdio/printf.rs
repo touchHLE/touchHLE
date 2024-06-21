@@ -538,7 +538,6 @@ fn sscanf_common(
 
         match specifier {
             b'd' | b'i' => {
-                assert_eq!(max_width, 0);
                 if specifier == b'i' {
                     // TODO: hexs and octals
                     assert_ne!(env.mem.read(src_ptr), b'0');
@@ -551,6 +550,9 @@ fn sscanf_common(
                                 // signed short* or unsigned short*
                                 match atoi_inner(env, src_ptr.cast_const()) {
                                     Ok((val, len)) => {
+                                        if max_width > 0 {
+                                            assert_eq!(max_width, len as i32);
+                                        }
                                         src_ptr += len;
                                         let c_int_ptr: ConstPtr<i16> = args.next(env);
                                         env.mem

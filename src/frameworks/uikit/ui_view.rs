@@ -307,6 +307,10 @@ pub const CLASSES: ClassExports = objc_classes! {
     msg![env; layer setHidden:hidden]
 }
 
+- (())setClipsToBounds:(bool)clips {
+    log!("TODO: [{:?} setClipsToBounds:{}]", this, clips);
+}
+
 - (bool)isOpaque {
     let layer = env.objc.borrow::<UIViewHostObject>(this).layer;
     msg![env; layer isOpaque]

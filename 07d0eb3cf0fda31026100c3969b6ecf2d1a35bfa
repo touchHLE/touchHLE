@@ -16,6 +16,24 @@
       "message": "why you cannot just use derive(Debug) in the struct itself?",
       "revId": "07d0eb3cf0fda31026100c3969b6ecf2d1a35bfa",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "a2a862b9_8cfc207b",
+        "filename": "src/frameworks/audio_toolbox/audio_components.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 46,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-06-22T13:05:19Z",
+      "side": 1,
+      "message": "Much better like that, thanks!",
+      "parentUuid": "02af2773_323330f2",
+      "revId": "07d0eb3cf0fda31026100c3969b6ecf2d1a35bfa",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

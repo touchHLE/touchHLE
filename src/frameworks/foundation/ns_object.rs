@@ -178,32 +178,38 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (())performSelectorOnMainThread:(SEL)sel withObject:(id)arg waitUntilDone:(bool)wait {
-    log_dbg!("performSelectorOnMainThread:{} withObject:{:?} waitUntilDone:{}", sel.as_str(&env.mem), arg, wait);
-    if wait && env.current_thread == 0 {
+    log!("performSelectorOnMainThread:{} withObject:{:?} waitUntilDone:{}", sel.as_str(&env.mem), arg, wait);
+    if wait {
+        // TODO: switching threads is inneficient but works
+        // A proper implementation would require tail calls for message send
+        // or a switch to async model
+        let old_thread = env.current_thread;
+        if old_thread != 0 {
+            env.switch_thread(0);
+        }
         () = msg_send(env, (this, sel, arg));
-        return;
+        if old_thread != env.current_thread {
+            env.switch_thread(old_thread);
+        }
+    } else {
+        let sel_key: id = get_static_str(env, "SEL");
+        let sel_str = from_rust_string(env, sel.as_str(&env.mem).to_string());
+        let arg_key: id = get_static_str(env, "arg");
+        let dict = dict_from_keys_and_objects(env, &[(sel_key, sel_str), (arg_key, arg)]);
+
+        // TODO: using timer is not the most efficient implementation but works
+        // Proper implementation requires a message queue in the run loop
+        let selector = env.objc.lookup_selector("_touchHLE_timerFireMethod:").unwrap();
+        let timer:id = msg_class![env; NSTimer timerWithTimeInterval:0.0
+                                                target:this
+                                                selector:selector
+                                                userInfo:dict
+                                                repeats:false];
+
+        let run_loop: id = msg_class![env; NSRunLoop mainRunLoop];
+        let mode: id = get_static_str(env, NSDefaultRunLoopMode);
+        () = msg![env; run_loop addTimer:timer forMode:mode];
     }
-    // TODO: support waiting
-    // This would require tail calls for message send or a switch to async model
-    assert!(!wait);
-
-    let sel_key: id = get_static_str(env, "SEL");
-    let sel_str = from_rust_string(env, sel.as_str(&env.mem).to_string());
-    let arg_key: id = get_static_str(env, "arg");
-    let dict = dict_from_keys_and_objects(env, &[(sel_key, sel_str), (arg_key, arg)]);
-
-    // TODO: using timer is not the most efficient implementation, but does work
-    // Proper implementation requires a message queue in the run loop
-    let selector = env.objc.lookup_selector("_touchHLE_timerFireMethod:").unwrap();
-    let timer:id = msg_class![env; NSTimer timerWithTimeInterval:0.0
-                                              target:this
-                                            selector:selector
-                                            userInfo:dict
-                                             repeats:false];
-
-    let run_loop: id = msg_class![env; NSRunLoop mainRunLoop];
-    let mode: id = get_static_str(env, NSDefaultRunLoopMode);
-    () = msg![env; run_loop addTimer:timer forMode:mode];
 }
 
 // Private method, used by performSelectorOnMainThread:withObject:waitUntilDone:

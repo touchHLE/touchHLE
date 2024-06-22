@@ -33,6 +33,24 @@
       "message": "Could you please add a second paragraph of the commit message as a comment here?",
       "revId": "ee9ff4ca50259df07b858956300253a19b77e207",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b7f49d06_e18776c6",
+        "filename": "src/frameworks/uikit/ui_accelerometer.rs",
+        "patchSetId": 10
+      },
+      "lineNbr": 153,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-06-22T13:05:14Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "e05ab209_05150c7f",
+      "revId": "ee9ff4ca50259df07b858956300253a19b77e207",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

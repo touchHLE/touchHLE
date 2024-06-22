@@ -699,7 +699,7 @@ impl Environment {
         self.threads[self.current_thread].in_host_function = was_in_host_function;
     }
 
-    fn switch_thread(&mut self, new_thread: ThreadId) {
+    pub fn switch_thread(&mut self, new_thread: ThreadId) {
         assert!(new_thread != self.current_thread);
 
         log_dbg!(

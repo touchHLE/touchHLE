@@ -18,9 +18,10 @@ use super::ns_dictionary::dict_from_keys_and_objects;
 use super::ns_run_loop::NSDefaultRunLoopMode;
 use super::ns_string::{from_rust_string, get_static_str, to_rust_string};
 use super::NSUInteger;
+use crate::environment::ThreadId;
 use crate::mem::MutVoidPtr;
 use crate::objc::{
-    id, msg, msg_class, msg_send, objc_classes, Class, ClassExports, NSZonePtr, ObjC,
+    id, msg, msg_class, msg_send, nil, objc_classes, Class, ClassExports, NSZonePtr, ObjC,
     TrivialHostObject, SEL,
 };
 
@@ -179,31 +180,37 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 - (())performSelectorOnMainThread:(SEL)sel withObject:(id)arg waitUntilDone:(bool)wait {
     log_dbg!("performSelectorOnMainThread:{} withObject:{:?} waitUntilDone:{}", sel.as_str(&env.mem), arg, wait);
+
     if wait && env.current_thread == 0 {
         () = msg_send(env, (this, sel, arg));
         return;
     }
-    if env.bundle.bundle_identifier().starts_with("com.gameloft.POP") && sel == env.objc.lookup_selector("startMovie:").unwrap() && wait {
-        log!("Applying game-specific hack for PoP: WW: ignoring performSelectorOnMainThread:SEL(startMovie:) waitUntilDone:true");
-        return;
-    }
-    // TODO: support waiting
-    // This would require tail calls for message send or a switch to async model
-    assert!(!wait);
 
     let sel_key: id = get_static_str(env, "SEL");
     let sel_str = from_rust_string(env, sel.as_str(&env.mem).to_string());
     let arg_key: id = get_static_str(env, "arg");
-    let dict = dict_from_keys_and_objects(env, &[(sel_key, sel_str), (arg_key, arg)]);
 
-    // TODO: using timer is not the most efficient implementation, but does work
+    let mut pairs = vec![(sel_key, sel_str), (arg_key, arg)];
+    if wait {
+        let current_thread = env.current_thread as i32;
+        let thread_id_key: id = get_static_str(env, "ThreadId");
+        let thread_id_id: id = msg_class![env; NSNumber numberWithInt:current_thread];
+        pairs.push((thread_id_key, thread_id_id));
+
+        // The wait will begin after the function returns
+        env.wait_for_selector(0, sel, arg);
+    }
+
+    let dict = dict_from_keys_and_objects(env, &pairs);
+
+    // TODO: using timer is not the most efficient implementation but works
     // Proper implementation requires a message queue in the run loop
     let selector = env.objc.lookup_selector("_touchHLE_timerFireMethod:").unwrap();
     let timer:id = msg_class![env; NSTimer timerWithTimeInterval:0.0
-                                              target:this
+                                            target:this
                                             selector:selector
                                             userInfo:dict
-                                             repeats:false];
+                                            repeats:false];
 
     let run_loop: id = msg_class![env; NSRunLoop mainRunLoop];
     let mode: id = get_static_str(env, NSDefaultRunLoopMode);
@@ -222,7 +229,18 @@ pub const CLASSES: ClassExports = objc_classes! {
     let arg_key: id = get_static_str(env, "arg");
     let arg: id = msg![env; dict objectForKey:arg_key];
 
-    () = msg_send(env, (this, sel, arg));
+    if env.bundle.bundle_identifier().starts_with("com.gameloft.POP") && sel == env.objc.lookup_selector("startMovie:").unwrap() {
+        log!("Applying game-specific hack for PoP: WW: ignoring performSelectorOnMainThread:SEL(startMovie:) waitUntilDone:true");
+    } else {
+        () = msg_send(env, (this, sel, arg));
+    }
+
+    let thread_id_key: id = get_static_str(env, "ThreadId");
+    let thread_id_id: id = msg![env; dict objectForKey:thread_id_key];
+    if thread_id_id != nil {
+        let thread_id: i32 = msg![env; thread_id_id intValue];
+        env.unblock_wait_for_selector(thread_id as ThreadId);
+    }
 }
 
 @end

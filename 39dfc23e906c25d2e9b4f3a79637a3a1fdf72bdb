@@ -35,6 +35,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "fb7475aa_3a7009bb",
+        "filename": "src/frameworks/foundation/ns_file_manager.rs",
+        "patchSetId": 10
+      },
+      "lineNbr": 84,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-06-22T13:04:57Z",
+      "side": 1,
+      "message": "I hadn\u0027t checked the why but i saw (on modern MacOS) that this function handles gracefully sending a nil",
+      "parentUuid": "0e8df3e4_bee44e95",
+      "revId": "39dfc23e906c25d2e9b4f3a79637a3a1fdf72bdb",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "d20427a7_6bc07c50",
@@ -48,6 +66,24 @@
       "writtenOn": "2024-06-16T13:18:33Z",
       "side": 1,
       "message": "please compare against nil",
+      "revId": "39dfc23e906c25d2e9b4f3a79637a3a1fdf72bdb",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "8821c095_233a92d4",
+        "filename": "src/frameworks/foundation/ns_file_manager.rs",
+        "patchSetId": 10
+      },
+      "lineNbr": 85,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-06-22T13:04:57Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "d20427a7_6bc07c50",
       "revId": "39dfc23e906c25d2e9b4f3a79637a3a1fdf72bdb",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
@@ -69,6 +105,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "7037b537_8a126093",
+        "filename": "src/frameworks/foundation/ns_file_manager.rs",
+        "patchSetId": 10
+      },
+      "lineNbr": 93,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-06-22T13:04:57Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "a7d50fb8_ae07cec1",
+      "revId": "39dfc23e906c25d2e9b4f3a79637a3a1fdf72bdb",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "2186376e_288328a3",
@@ -82,6 +136,24 @@
       "writtenOn": "2024-06-16T13:18:33Z",
       "side": 1,
       "message": "please compare against nil",
+      "revId": "39dfc23e906c25d2e9b4f3a79637a3a1fdf72bdb",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "40f68803_2008879a",
+        "filename": "src/frameworks/foundation/ns_file_manager.rs",
+        "patchSetId": 10
+      },
+      "lineNbr": 99,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-06-22T13:04:57Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "2186376e_288328a3",
       "revId": "39dfc23e906c25d2e9b4f3a79637a3a1fdf72bdb",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
@@ -103,6 +175,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "8e787b22_b180c66e",
+        "filename": "src/frameworks/foundation/ns_file_manager.rs",
+        "patchSetId": 10
+      },
+      "lineNbr": 110,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-06-22T13:04:57Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "4d3c9c78_604320e0",
+      "revId": "39dfc23e906c25d2e9b4f3a79637a3a1fdf72bdb",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "cef73bdd_2822cdf2",
@@ -116,6 +206,24 @@
       "writtenOn": "2024-06-16T13:18:33Z",
       "side": 1,
       "message": "missing \u0027(\u0027",
+      "revId": "39dfc23e906c25d2e9b4f3a79637a3a1fdf72bdb",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d10d9dc3_04d1503c",
+        "filename": "src/frameworks/foundation/ns_file_manager.rs",
+        "patchSetId": 10
+      },
+      "lineNbr": 112,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-06-22T13:04:57Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "cef73bdd_2822cdf2",
       "revId": "39dfc23e906c25d2e9b4f3a79637a3a1fdf72bdb",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

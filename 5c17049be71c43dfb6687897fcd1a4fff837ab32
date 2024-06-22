@@ -35,6 +35,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "e21565eb_547173eb",
+        "filename": "src/objc.rs",
+        "patchSetId": 10
+      },
+      "lineNbr": 53,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-06-22T13:05:08Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "6f615ccf_649e201d",
+      "revId": "5c17049be71c43dfb6687897fcd1a4fff837ab32",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "9352fe69_9f34bc55",
@@ -48,6 +66,24 @@
       "writtenOn": "2024-06-16T13:22:17Z",
       "side": 1,
       "message": "you should keep the same comment about this assert as in objc_setProperty",
+      "revId": "5c17049be71c43dfb6687897fcd1a4fff837ab32",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "516b4150_17328eef",
+        "filename": "src/objc/properties.rs",
+        "patchSetId": 10
+      },
+      "lineNbr": 30,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-06-22T13:05:08Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "9352fe69_9f34bc55",
       "revId": "5c17049be71c43dfb6687897fcd1a4fff837ab32",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

@@ -35,6 +35,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "e8b114aa_66f197eb",
+        "filename": "src/frameworks/foundation/ns_thread.rs",
+        "patchSetId": 10
+      },
+      "lineNbr": 137,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-06-22T11:16:29Z",
+      "side": 1,
+      "message": "My bad, i forgot to store back to the host object",
+      "parentUuid": "f5c28fce_4cb0bb09",
+      "revId": "68483a9f1bf89285400e341a919d48774e009b75",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "a4df49d8_89f0f950",
@@ -48,6 +66,24 @@
       "writtenOn": "2024-05-01T21:34:48Z",
       "side": 1,
       "message": "it\u0027s preferable to compare objects to `nil`",
+      "revId": "68483a9f1bf89285400e341a919d48774e009b75",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "9dd94e80_df0df78b",
+        "filename": "src/frameworks/foundation/ns_thread.rs",
+        "patchSetId": 10
+      },
+      "lineNbr": 139,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-06-22T11:16:29Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "a4df49d8_89f0f950",
       "revId": "68483a9f1bf89285400e341a919d48774e009b75",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
@@ -69,6 +105,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "5eb82876_cd568d34",
+        "filename": "src/frameworks/foundation/ns_thread.rs",
+        "patchSetId": 10
+      },
+      "lineNbr": 141,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-06-22T11:16:29Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "053eca4e_ce36d37f",
+      "revId": "68483a9f1bf89285400e341a919d48774e009b75",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "600c5c7e_747176ba",
@@ -82,6 +136,24 @@
       "writtenOn": "2024-05-01T21:34:48Z",
       "side": 1,
       "message": "are you calling free on the NSObject?",
+      "revId": "68483a9f1bf89285400e341a919d48774e009b75",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "a36070b3_bdb607ba",
+        "filename": "src/frameworks/foundation/ns_thread.rs",
+        "patchSetId": 10
+      },
+      "lineNbr": 162,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-06-22T11:16:29Z",
+      "side": 1,
+      "message": "Yes, i\u0027m passing to free the id that points to the thread\u0027s NSDictionary, previously instanced in line 160",
+      "parentUuid": "600c5c7e_747176ba",
       "revId": "68483a9f1bf89285400e341a919d48774e009b75",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "8348fea3_66438864",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 15
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-06-22T18:36:38Z",
+      "side": 1,
+      "message": "few nitpicks",
+      "revId": "828a20e476a7e272ec6ae0839662175d88d04cb0",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4c34117f_87c2e75c",
+        "filename": "src/frameworks/audio_toolbox/audio_unit.rs",
+        "patchSetId": 15
+      },
+      "lineNbr": 7,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-06-22T18:36:38Z",
+      "side": 1,
+      "message": "please add an empty line before",
+      "revId": "828a20e476a7e272ec6ae0839662175d88d04cb0",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "bad8e219_9755ce2e",
+        "filename": "src/frameworks/audio_toolbox/audio_unit.rs",
+        "patchSetId": 15
+      },
+      "lineNbr": 30,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-06-22T18:36:38Z",
+      "side": 1,
+      "message": "env is not used here",
+      "revId": "828a20e476a7e272ec6ae0839662175d88d04cb0",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

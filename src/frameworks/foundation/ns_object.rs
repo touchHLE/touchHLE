@@ -18,6 +18,7 @@ use super::ns_dictionary::dict_from_keys_and_objects;
 use super::ns_run_loop::NSDefaultRunLoopMode;
 use super::ns_string::{from_rust_string, get_static_str, to_rust_string};
 use super::{NSTimeInterval, NSUInteger};
+use crate::environment::ThreadId;
 use crate::mem::MutVoidPtr;
 use crate::objc::{
     id, msg, msg_class, msg_send, nil, objc_classes, retain, Class, ClassExports, NSZonePtr, ObjC,
@@ -232,28 +233,12 @@ forUndefinedKey:(id)key { // NSString*
 
 - (())performSelector:(SEL)sel withObject:(id)arg afterDelay:(NSTimeInterval)delay {
     log_dbg!("performSelector:{} withObject:{:?} afterDelay:{}", sel.as_str(&env.mem), arg, delay);
-
-    let sel_key: id = get_static_str(env, "SEL");
-    let sel_str = from_rust_string(env, sel.as_str(&env.mem).to_string());
-    let arg_key: id = get_static_str(env, "arg");
-    let dict = dict_from_keys_and_objects(env, &[(sel_key, sel_str), (arg_key, arg)]);
-
-    // TODO: using timer is not the most efficient implementation, but does work
-    // Proper implementation requires a message queue in the run loop
-    let selector = env.objc.lookup_selector("_touchHLE_timerFireMethod:").unwrap();
-    let timer:id = msg_class![env; NSTimer timerWithTimeInterval:delay
-                                              target:this
-                                            selector:selector
-                                            userInfo:dict
-                                             repeats:false];
-
-    let run_loop: id = msg_class![env; NSRunLoop mainRunLoop];
-    let mode: id = get_static_str(env, NSDefaultRunLoopMode);
-    () = msg![env; run_loop addTimer:timer forMode:mode];
+    msg![env; this _touchHLE_performSelector:sel withObject:arg afterDelay:delay waitUntilDone:false]
 }
 
 - (())performSelectorOnMainThread:(SEL)sel withObject:(id)arg waitUntilDone:(bool)wait {
     log_dbg!("performSelectorOnMainThread:{} withObject:{:?} waitUntilDone:{}", sel.as_str(&env.mem), arg, wait);
+
     if wait && env.current_thread == 0 {
         if sel.as_str(&env.mem).ends_with(':') {
             () = msg_send(env, (this, sel, arg));
@@ -271,13 +256,41 @@ forUndefinedKey:(id)key { // NSString*
         log!("Applying game-specific hack for Asphalt5: ignoring performSelectorOnMainThread:SEL({}) waitUntilDone:true", sel.as_str(&env.mem));
         return;
     }
-    // TODO: support waiting
-    // This would require tail calls for message send or a switch to async model
-    assert!(!wait);
 
-    // The current implementation of performSelector:withObject:afterDelay
-    // already runs on the main thread.
-    msg![env; this performSelector:sel withObject:arg afterDelay:0.0]
+    // The current implementation of the method already runs on the main thread
+    msg![env; this _touchHLE_performSelector:sel withObject:arg afterDelay:0.0 waitUntilDone:wait]
+}
+
+- (())_touchHLE_performSelector:(SEL)sel withObject:(id)arg afterDelay:(NSTimeInterval)delay waitUntilDone:(bool)wait {
+    let sel_key: id = get_static_str(env, "SEL");
+    let sel_str = from_rust_string(env, sel.as_str(&env.mem).to_string());
+    let arg_key: id = get_static_str(env, "arg");
+
+    let mut pairs = vec![(sel_key, sel_str), (arg_key, arg)];
+    if wait {
+        let current_thread = env.current_thread as i32;
+        let thread_id_key: id = get_static_str(env, "ThreadId");
+        let thread_id_id: id = msg_class![env; NSNumber numberWithInt:current_thread];
+        pairs.push((thread_id_key, thread_id_id));
+
+        // The wait will begin after the function returns
+        env.wait_for_selector(0, sel, arg);
+    }
+
+    let dict = dict_from_keys_and_objects(env, &pairs);
+
+    // TODO: using timer is not the most efficient implementation but works
+    // Proper implementation requires a message queue in the run loop
+    let selector = env.objc.lookup_selector("_touchHLE_timerFireMethod:").unwrap();
+    let timer:id = msg_class![env; NSTimer timerWithTimeInterval:delay
+                                            target:this
+                                            selector:selector
+                                            userInfo:dict
+                                            repeats:false];
+
+    let run_loop: id = msg_class![env; NSRunLoop mainRunLoop];
+    let mode: id = get_static_str(env, NSDefaultRunLoopMode);
+    () = msg![env; run_loop addTimer:timer forMode:mode];
 }
 
 // Private method, used by performSelectorOnMainThread:withObject:waitUntilDone:
@@ -294,6 +307,13 @@ forUndefinedKey:(id)key { // NSString*
 
     // FIXME: handle the case of a selector without an arg here too
     () = msg_send(env, (this, sel, arg));
+
+    let thread_id_key: id = get_static_str(env, "ThreadId");
+    let thread_id_id: id = msg![env; dict objectForKey:thread_id_key];
+    if thread_id_id != nil {
+        let thread_id: i32 = msg![env; thread_id_id intValue];
+        env.unblock_wait_for_selector(thread_id as ThreadId);
+    }
 }
 
 @end

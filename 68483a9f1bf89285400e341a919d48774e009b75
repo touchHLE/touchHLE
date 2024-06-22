@@ -156,6 +156,24 @@
       "parentUuid": "600c5c7e_747176ba",
       "revId": "68483a9f1bf89285400e341a919d48774e009b75",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a0928949_ef3a29e3",
+        "filename": "src/frameworks/foundation/ns_thread.rs",
+        "patchSetId": 10
+      },
+      "lineNbr": 162,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-06-22T13:10:27Z",
+      "side": 1,
+      "message": "This is wrong. For Obj-C object reference counting is used, it will be deallocated automatically then reference count drops to 0. If you use free directly, it will create a memory leak. You should use release() helper here and also compare against nil. You have a plenty of examples for how to do it properly for NS classes all over codebase.",
+      "parentUuid": "a36070b3_bdb607ba",
+      "revId": "68483a9f1bf89285400e341a919d48774e009b75",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

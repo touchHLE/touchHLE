@@ -16,6 +16,24 @@
       "message": "according to docs, `threadDictionary` is a property. what happens if someone try to set it with a value?",
       "revId": "9280507b896dc09130f4f7bc77ee44c628aef7b6",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b350a686_758e9989",
+        "filename": "src/frameworks/foundation/ns_thread.rs",
+        "patchSetId": 13
+      },
+      "lineNbr": 136,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-06-25T17:12:33Z",
+      "side": 1,
+      "message": "According to the docs its a readonly property. I didn\u0027t implement the setter because of that. I\u0027m not sure if readonly properties should be handled in any other way",
+      "parentUuid": "6a65e25a_89a32708",
+      "revId": "9280507b896dc09130f4f7bc77ee44c628aef7b6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

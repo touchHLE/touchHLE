@@ -69,6 +69,24 @@
       "message": "Add a TODO here to store the thread’s default NSConnection and NSAssertionHandler instances",
       "revId": "9280507b896dc09130f4f7bc77ee44c628aef7b6",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "59583764_962acacc",
+        "filename": "src/frameworks/foundation/ns_thread.rs",
+        "patchSetId": 13
+      },
+      "lineNbr": 141,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-06-25T17:33:35Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "a200ce44_aa5dfce2",
+      "revId": "9280507b896dc09130f4f7bc77ee44c628aef7b6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

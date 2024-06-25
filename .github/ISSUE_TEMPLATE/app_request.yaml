@@ -1,0 +1,15 @@
+name: Request support for a specific app
+description: We do not take these requests. Please do not make them.
+labels: ["issue does not meet guidelines"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        We do not take requests to add support for specific apps.
+        Please do not make such requests.
+  - type: checkboxes
+    attributes:
+      label: By submitting this issue, I certify that…
+      options:
+        - label: I understand my issue will be immediately rejected.
+          required: true

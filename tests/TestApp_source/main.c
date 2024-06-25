@@ -80,7 +80,13 @@ char *getcwd(char *, size_t);
 int usleep(useconds_t);
 
 // <fcntl.h>
+#define O_RDONLY 0x00000000
+#define O_WRONLY 0x00000001
+#define O_RDWR 0x00000002
 #define O_CREAT 0x00000200
+
+int open(const char *, int, ...);
+int close(int);
 
 // <pthread.h>
 typedef struct opaque_pthread_t opaque_pthread_t;
@@ -931,6 +937,29 @@ int test_CFMutableString() {
   return 0;
 }
 
+int test_open() {
+  int fd;
+  // Test opening directories
+  fd = open("/usr", O_RDONLY);
+  if (fd == -1) {
+    return -1;
+  }
+
+  fd = open("/usr", O_WRONLY);
+  if (fd != -1) {
+    close(fd);
+    return -2;
+  }
+
+  fd = open("/usr", O_RDWR);
+  if (fd != -1) {
+    close(fd);
+    return -3;
+  }
+
+  return 0;
+}
+
 // clang-format off
 #define FUNC_DEF(func)                                                         \
   { &func, #func }
@@ -962,6 +991,7 @@ struct {
     FUNC_DEF(test_strcspn),
     FUNC_DEF(test_mbstowcs),
     FUNC_DEF(test_CFMutableString),
+    FUNC_DEF(test_open),
 };
 // clang-format on
 

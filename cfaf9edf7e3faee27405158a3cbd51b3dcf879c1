@@ -88,6 +88,24 @@
       "parentUuid": "2e882959_40f60283",
       "revId": "cfaf9edf7e3faee27405158a3cbd51b3dcf879c1",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "02af7c13_ce2d3a24",
+        "filename": "src/libc/posix_io/stat.rs",
+        "patchSetId": 6
+      },
+      "lineNbr": 120,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-06-25T18:38:23Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "71c9e789_8f349bc0",
+      "revId": "cfaf9edf7e3faee27405158a3cbd51b3dcf879c1",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

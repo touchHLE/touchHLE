@@ -40,7 +40,6 @@ Input methods:
 - For simulated accelerometer input, there are two options:
   - Tilt control simulation using the left analog stick of a game controller
   - Real accelerometer input, if you are using a phone, tablet or some other device with a built-in accelerometer (TODO: support game controllers with accelerometers)
-    - This apparently doesn't work on certain Android devices, particularly Xiaomi/MIUI devices, [but we don't know why](https://github.com/touchHLE/touchHLE/issues/151)
 
 ## Development status
 

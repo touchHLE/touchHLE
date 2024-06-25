@@ -351,18 +351,24 @@ pub fn close(env: &mut Environment, fd: FileDescriptor) -> i32 {
 
     match env.libc_state.posix_io.files[fd_to_file_idx(fd)].take() {
         Some(file) => {
-            // The actual closing of the file happens implicitly when `file`
-            // falls out of scope. The return value is about whether flushing
-            // succeeds.
-            match file.file.sync_all() {
-                Ok(()) => {
-                    log_dbg!("close({:?}) => 0", fd);
-                    0
-                }
-                Err(_) => {
-                    // TODO: set errno
-                    log!("Warning: close({:?}) failed, returning -1", fd);
-                    -1
+            match file.file {
+                // Closing directories requires no other actions
+                GuestFile::Directory => 0,
+                _ => {
+                    // The actual closing of the file happens implicitly when
+                    // `file` falls out of scope. The return value is about
+                    // whether flushing succeeds.
+                    match file.file.sync_all() {
+                        Ok(()) => {
+                            log_dbg!("close({:?}) => 0", fd);
+                            0
+                        }
+                        Err(_) => {
+                            // TODO: set errno
+                            log!("Warning: close({:?}) failed, returning -1", fd);
+                            -1
+                        }
+                    }
                 }
             }
         }

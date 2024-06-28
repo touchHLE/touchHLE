@@ -305,6 +305,7 @@ int test_vsnprintf() {
 int test_sscanf() {
   int a, b;
   short c, d;
+  float f;
   char str[4];
   int matched = sscanf("1.23", "%d.%d", &a, &b);
   if (!(matched == 2 && a == 1 && b == 23))
@@ -334,8 +335,17 @@ int test_sscanf() {
   if (!(matched == 1 && a == 3000))
     return -10;
   matched = sscanf("0xFF0000", "%08x", &a);
-  if (a != 16711680)
+  if (!(matched == 1 && a == 16711680))
     return -11;
+  matched = sscanf("ABC\t1\t", "%s %f", str, &f);
+  if (!(matched == 2 && strcmp(str, "ABC") == 0 && f == 1.0))
+    return -12;
+  matched = sscanf("ABC   1\t", "%s\t%f", str, &f);
+  if (!(matched == 2 && strcmp(str, "ABC") == 0 && f == 1.0))
+    return -13;
+  matched = sscanf("MAX\t\t\t48.0\r\n", "%s %f", str, &f);
+  if (!(matched == 2 && strcmp(str, "MAX") == 0 && f == 48.0))
+    return -14;
   return 0;
 }
 

@@ -11,7 +11,7 @@ use crate::frameworks::foundation::{ns_string, unichar};
 use crate::libc::clocale::{setlocale, LC_CTYPE};
 use crate::libc::posix_io::{STDERR_FILENO, STDOUT_FILENO};
 use crate::libc::stdio::FILE;
-use crate::libc::stdlib::{atoi_inner, strtoul};
+use crate::libc::stdlib::{atof_inner, atoi_inner, strtoul};
 use crate::libc::string::strlen;
 use crate::libc::wchar::wchar_t;
 use crate::mem::{ConstPtr, GuestUSize, Mem, MutPtr, MutVoidPtr, Ptr};
@@ -499,6 +499,12 @@ fn sscanf_common(
     format: ConstPtr<u8>,
     mut args: VaList,
 ) -> i32 {
+    fn isspace(env: &mut Environment, src: ConstPtr<u8>) -> bool {
+        let c = env.mem.read(src);
+        // Rust's definition of whitespace excludes vertical tab, unlike C's
+        c.is_ascii_whitespace() || c == b'\x0b'
+    }
+
     let mut src_ptr = src.cast_mut();
     let mut format_char_idx = 0;
 
@@ -512,6 +518,12 @@ fn sscanf_common(
             break;
         }
         if c != b'%' {
+            if isspace(env, format + format_char_idx - 1) && isspace(env, src_ptr.cast_const()) {
+                while isspace(env, src_ptr.cast_const()) {
+                    src_ptr += 1;
+                }
+                continue;
+            }
             let cc = env.mem.read(src_ptr);
             if c != cc {
                 return matched_args;
@@ -574,6 +586,18 @@ fn sscanf_common(
                     },
                 }
             }
+            b'f' => {
+                assert_eq!(max_width, 0);
+                assert!(length_modifier.is_none());
+                match atof_inner(env, src_ptr.cast_const()) {
+                    Ok((val, len)) => {
+                        src_ptr += len;
+                        let c_int_ptr: ConstPtr<f32> = args.next(env);
+                        env.mem.write(c_int_ptr.cast_mut(), val as f32);
+                    }
+                    Err(_) => break,
+                }
+            }
             b'x' | b'X' => {
                 let c_len: GuestUSize = strlen(env, src_ptr.cast_const());
                 if max_width != 0 {
@@ -616,6 +640,21 @@ fn sscanf_common(
                 }
                 // we need to backtrack one position
                 src_ptr -= 1;
+                env.mem.write(dst_ptr, b'\0');
+            }
+            b's' => {
+                assert_eq!(max_width, 0);
+                assert!(length_modifier.is_none());
+                let mut dst_ptr: MutPtr<u8> = args.next(env);
+                loop {
+                    if !isspace(env, src_ptr.cast_const()) {
+                        env.mem.write(dst_ptr, env.mem.read(src_ptr));
+                        src_ptr += 1;
+                        dst_ptr += 1;
+                    } else {
+                        break;
+                    }
+                }
                 env.mem.write(dst_ptr, b'\0');
             }
             // TODO: more specifiers

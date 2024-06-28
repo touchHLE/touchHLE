@@ -253,6 +253,18 @@ pub(super) fn clearerr(env: &mut Environment, fd: FileDescriptor) {
     file.reached_eof = false;
 }
 
+/// Helper for C `fflush()`.
+pub(super) fn fflush(env: &mut Environment, fd: FileDescriptor) -> i32 {
+    let Some(file) = env.libc_state.posix_io.file_for_fd(fd) else {
+        // TODO: set errno to EBADF
+        return -1;
+    };
+    match file.file.flush() {
+        Ok(_) => 0,
+        Err(_) => -1,
+    }
+}
+
 pub fn write(
     env: &mut Environment,
     fd: FileDescriptor,

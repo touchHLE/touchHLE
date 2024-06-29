@@ -189,6 +189,11 @@ pub fn read(
     buffer: MutVoidPtr,
     size: GuestUSize,
 ) -> GuestISize {
+    if buffer.is_null() {
+        // TODO: set errno to EFAULT
+        return -1;
+    }
+
     // TODO: error handling for unknown fd?
     let file = env.libc_state.posix_io.file_for_fd(fd).unwrap();
 

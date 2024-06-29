@@ -242,6 +242,12 @@ pub(super) fn eof(env: &mut Environment, fd: FileDescriptor) -> i32 {
     }
 }
 
+/// Helper for C `clearerr()`.
+pub(super) fn clearerr(env: &mut Environment, fd: FileDescriptor) {
+    let file = env.libc_state.posix_io.file_for_fd(fd).unwrap();
+    file.reached_eof = false;
+}
+
 pub fn write(
     env: &mut Environment,
     fd: FileDescriptor,

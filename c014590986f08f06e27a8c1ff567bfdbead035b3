@@ -16,6 +16,23 @@
       "message": "this is not a correct implementation, refer to this discussion https://discord.com/channels/1070753159246524436/1072075510131204147/1252700493478760508",
       "revId": "c014590986f08f06e27a8c1ff567bfdbead035b3",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "16e73cbb_0f72d4a0",
+        "filename": "src/frameworks/foundation/ns_object.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 192,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-06-29T11:19:08Z",
+      "side": 1,
+      "message": "this will crash if you\u0027re already on the old_thread after msg_send return",
+      "revId": "c014590986f08f06e27a8c1ff567bfdbead035b3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

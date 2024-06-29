@@ -21,6 +21,7 @@ Compatibility:
   - [Dungeon Hunter](https://appdb.touchhle.org/apps/313) (@ciciplusplus)
   - [Crystal Defenders: Vanguard Storm](https://appdb.touchhle.org/apps/100) (@ciciplusplus)
   - [Zombie Infection](https://appdb.touchhle.org/apps/347) (@ciciplusplus)
+  - [Gangstar: West Coast Hustle](https://appdb.touchhle.org/apps/351) (@ciciplusplus)
 - API support improvements:
   - Various small contributions. (@hikari-no-yume, @alborrajo, @ciciplusplus, @atasro2)
 

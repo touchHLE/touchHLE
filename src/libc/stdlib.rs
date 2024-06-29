@@ -115,6 +115,7 @@ fn prng(state: u32) -> u32 {
 }
 
 const RAND_MAX: i32 = i32::MAX;
+const LONG_MAX: i32 = i32::MAX;
 const ULONG_MAX: u32 = u32::MAX;
 
 fn srand(env: &mut Environment, seed: u32) {
@@ -239,10 +240,23 @@ pub fn strtoul(
     base: i32,
 ) -> u32 {
     let s = env.mem.cstr_at_utf8(str).unwrap();
-    log_dbg!("strtoul '{}'", s);
+    log_dbg!("strtoul({:?} ({}), {:?}, {})", str, s, endptr, base);
     assert_eq!(base, 16);
     let without_prefix = s.trim_start_matches("0x");
     let res = u32::from_str_radix(without_prefix, 16).unwrap_or(ULONG_MAX);
+    if !endptr.is_null() {
+        let len: GuestUSize = s.len().try_into().unwrap();
+        env.mem.write(endptr, (str + len).cast_mut());
+    }
+    res
+}
+
+fn strtol(env: &mut Environment, str: ConstPtr<u8>, endptr: MutPtr<MutPtr<u8>>, base: i32) -> i32 {
+    let s = env.mem.cstr_at_utf8(str).unwrap();
+    log_dbg!("strtol({:?} ({}), {:?}, {})", str, s, endptr, base);
+    assert_eq!(base, 16);
+    let without_prefix = s.trim_start_matches("0x");
+    let res = i32::from_str_radix(without_prefix, 16).unwrap_or(LONG_MAX);
     if !endptr.is_null() {
         let len: GuestUSize = s.len().try_into().unwrap();
         env.mem.write(endptr, (str + len).cast_mut());
@@ -348,6 +362,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(bsearch(_, _, _, _, _)),
     export_c_func!(strtof(_, _)),
     export_c_func!(strtoul(_, _, _)),
+    export_c_func!(strtol(_, _, _)),
     export_c_func!(realpath(_, _)),
     export_c_func_aliased!("realpath$DARWIN_EXTSN", realpath(_, _)),
     export_c_func!(mbstowcs(_, _, _)),

@@ -961,6 +961,20 @@ pub const CLASSES: ClassExports = objc_classes! {
     st[..cutoff].parse().unwrap_or(0)
 }
 
+- (id)lowercaseString {
+    // TODO: check if rust methods are consistent with ObjC one
+    let str = to_rust_string(env, this).to_lowercase();
+    let res = from_rust_string(env, str);
+    autorelease(env, res)
+}
+
+- (id)uppercaseString {
+    // TODO: check if rust methods are consistent with ObjC one
+    let str = to_rust_string(env, this).to_uppercase();
+    let res = from_rust_string(env, str);
+    autorelease(env, res)
+}
+
 @end
 
 // NSMutableString is an abstract class. A subclass must everything

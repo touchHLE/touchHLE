@@ -33,6 +33,24 @@
       "message": "this will crash if you\u0027re already on the old_thread after msg_send return",
       "revId": "c014590986f08f06e27a8c1ff567bfdbead035b3",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "801a9316_7301df69",
+        "filename": "src/frameworks/foundation/ns_object.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 192,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-06-30T09:42:18Z",
+      "side": 1,
+      "message": "Hadn\u0027t considered that a thread could switch during a message send, thanks.",
+      "parentUuid": "16e73cbb_0f72d4a0",
+      "revId": "c014590986f08f06e27a8c1ff567bfdbead035b3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

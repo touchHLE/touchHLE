@@ -152,6 +152,15 @@ fn fputs(env: &mut Environment, str: ConstPtr<u8>, stream: MutPtr<FILE>) -> i32 
         .unwrap()
 }
 
+fn fputc(env: &mut Environment, c: i32, stream: MutPtr<FILE>) -> i32 {
+    let ptr: MutPtr<u8> = env.mem.alloc_and_write(c.try_into().unwrap());
+    let res = fwrite(env, ptr.cast_const().cast(), 1, 1, stream)
+        .try_into()
+        .unwrap();
+    env.mem.free(ptr.cast());
+    res
+}
+
 fn fwrite(
     env: &mut Environment,
     buffer: ConstVoidPtr,
@@ -351,6 +360,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(fgetc(_)),
     export_c_func!(fgets(_, _, _)),
     export_c_func!(fputs(_, _)),
+    export_c_func!(fputc(_, _)),
     export_c_func!(fwrite(_, _, _, _)),
     export_c_func!(fseek(_, _, _)),
     export_c_func!(ftell(_)),

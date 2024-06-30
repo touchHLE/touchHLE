@@ -1,0 +1,123 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ddc30bc5_7d8265dc",
+        "filename": "src/fs.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 374,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-06-30T17:22:47Z",
+      "side": 1,
+      "message": "Could you add \" as a guest file\" to the message to make it clear?",
+      "revId": "479ae068c31fa8af5cc69bb4c683ba61187df637",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3a04a5a9_afa23d6e",
+        "filename": "src/fs.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 386,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-06-30T17:22:47Z",
+      "side": 1,
+      "message": "\" as a guest file\"",
+      "revId": "479ae068c31fa8af5cc69bb4c683ba61187df637",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c8e7f9ee_7ab0a6df",
+        "filename": "src/fs.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 397,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-06-30T17:22:47Z",
+      "side": 1,
+      "message": "\" as a guest file\"",
+      "revId": "479ae068c31fa8af5cc69bb4c683ba61187df637",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "88f06cff_66c89384",
+        "filename": "src/fs.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 412,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-06-30T17:22:47Z",
+      "side": 1,
+      "message": "\" as a guest file\"",
+      "revId": "479ae068c31fa8af5cc69bb4c683ba61187df637",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6f703354_72f4caf2",
+        "filename": "src/fs.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 425,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-06-30T17:22:47Z",
+      "side": 1,
+      "message": "\" as a guest file\"",
+      "revId": "479ae068c31fa8af5cc69bb4c683ba61187df637",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a9d73d5c_3182a430",
+        "filename": "src/fs.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 436,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-06-30T17:22:47Z",
+      "side": 1,
+      "message": "\" as a guest file\"",
+      "revId": "479ae068c31fa8af5cc69bb4c683ba61187df637",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "00385af9_147632f6",
+        "filename": "src/fs.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 824,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-06-30T17:22:47Z",
+      "side": 1,
+      "message": "Did you check what actually happens in iOS (or macOS) in case of opening a directory as a file descriptor with different flags?\nAlso, it would be great to have tests, at least for success cases.",
+      "revId": "479ae068c31fa8af5cc69bb4c683ba61187df637",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

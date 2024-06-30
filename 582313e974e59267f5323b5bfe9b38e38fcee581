@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "83dbba72_3c8b6307",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 18
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-06-30T17:08:23Z",
+      "side": 1,
+      "message": "Not sure I get motivation behind this commit, can you explain a little bit why you\u0027re doing this patch set? As far as I can tell, setter is not implemented, so no reason to keep the state (yet?).",
+      "revId": "582313e974e59267f5323b5bfe9b38e38fcee581",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6531dc4d_2320b6fe",
+        "filename": "src/frameworks/audio_toolbox/audio_session.rs",
+        "patchSetId": 18
+      },
+      "lineNbr": 95,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-06-30T17:08:23Z",
+      "side": 1,
+      "message": "you should move this comment up as well",
+      "revId": "582313e974e59267f5323b5bfe9b38e38fcee581",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

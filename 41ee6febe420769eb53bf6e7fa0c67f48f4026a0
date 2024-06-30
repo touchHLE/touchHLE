@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6087bab0_4d825041",
+        "filename": "src/libc/posix_io/stat.rs",
+        "patchSetId": 10
+      },
+      "lineNbr": 110,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-06-30T18:12:52Z",
+      "side": 1,
+      "message": "add a comment explaining that this function is a helper one and not a part of `sys/stat.h`",
+      "revId": "41ee6febe420769eb53bf6e7fa0c67f48f4026a0",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ed5a293c_bdb49875",
+        "filename": "src/libc/posix_io/stat.rs",
+        "patchSetId": 10
+      },
+      "lineNbr": 118,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-06-30T18:12:52Z",
+      "side": 1,
+      "message": "not sure about this, why do think it\u0027s better this way?",
+      "revId": "41ee6febe420769eb53bf6e7fa0c67f48f4026a0",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

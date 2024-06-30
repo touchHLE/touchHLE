@@ -1732,6 +1732,15 @@ impl GLES for GLES1OnGL2 {
     ) {
         gl21::FramebufferTexture2DEXT(target, attachment, textarget, texture, level)
     }
+    unsafe fn GetFramebufferAttachmentParameterivOES(
+        &mut self,
+        target: GLenum,
+        attachment: GLenum,
+        pname: GLenum,
+        params: *mut GLint,
+    ) {
+        gl21::GetFramebufferAttachmentParameterivEXT(target, attachment, pname, params)
+    }
     unsafe fn GetRenderbufferParameterivOES(
         &mut self,
         target: GLenum,

@@ -352,6 +352,13 @@ pub trait GLES {
         texture: GLuint,
         level: i32,
     );
+    unsafe fn GetFramebufferAttachmentParameterivOES(
+        &mut self,
+        target: GLenum,
+        attachment: GLenum,
+        pname: GLenum,
+        params: *mut GLint,
+    );
     unsafe fn GetRenderbufferParameterivOES(
         &mut self,
         target: GLenum,

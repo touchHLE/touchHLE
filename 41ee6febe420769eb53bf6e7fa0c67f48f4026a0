@@ -33,6 +33,24 @@
       "message": "not sure about this, why do think it\u0027s better this way?",
       "revId": "41ee6febe420769eb53bf6e7fa0c67f48f4026a0",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f0de6b25_55fd9220",
+        "filename": "src/libc/posix_io/stat.rs",
+        "patchSetId": 10
+      },
+      "lineNbr": 118,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-06-30T22:00:43Z",
+      "side": 1,
+      "message": "Resident Evil Degeneration allocates memory once for the stat struct and reuses it across calls. If we read its value, we\u0027re sending back the values for the previous call (for example, st_mode flags). To prevent that I reset the value back to the default",
+      "parentUuid": "ed5a293c_bdb49875",
+      "revId": "41ee6febe420769eb53bf6e7fa0c67f48f4026a0",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

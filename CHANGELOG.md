@@ -22,6 +22,7 @@ Compatibility:
   - [Crystal Defenders: Vanguard Storm](https://appdb.touchhle.org/apps/100) (@ciciplusplus)
   - [Zombie Infection](https://appdb.touchhle.org/apps/347) (@ciciplusplus)
   - [Gangstar: West Coast Hustle](https://appdb.touchhle.org/apps/351) (@ciciplusplus)
+  - [Asphalt 4: Elite Racing](https://appdb.touchhle.org/apps/96) (@ciciplusplus)
 - API support improvements:
   - Various small contributions. (@hikari-no-yume, @alborrajo, @ciciplusplus, @atasro2)
 

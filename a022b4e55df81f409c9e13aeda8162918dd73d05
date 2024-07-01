@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "85d4df05_de734736",
+        "filename": "src/libc/posix_io/stat.rs",
+        "patchSetId": 12
+      },
+      "lineNbr": 120,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-07-01T20:12:55Z",
+      "side": 1,
+      "message": "why `|\u003d` and not just `\u003d` here?",
+      "revId": "a022b4e55df81f409c9e13aeda8162918dd73d05",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

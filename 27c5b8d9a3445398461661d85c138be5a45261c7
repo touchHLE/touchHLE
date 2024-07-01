@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "effab186_e7e26434",
+        "filename": "src/libc/posix_io/stat.rs",
+        "patchSetId": 13
+      },
+      "lineNbr": 130,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-07-01T22:14:48Z",
+      "side": 1,
+      "message": "In your current implementation fstat on the directory will crash here.\nAre sure it\u0027s the behavior on macOS/iOS?\nAgain, a test would clear any doubts here.",
+      "revId": "27c5b8d9a3445398461661d85c138be5a45261c7",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

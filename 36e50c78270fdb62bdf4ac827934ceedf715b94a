@@ -16,6 +16,24 @@
       "message": "We do have NSError class. Do you know which kind of error are returned be the AVAudioPlayer?",
       "revId": "36e50c78270fdb62bdf4ac827934ceedf715b94a",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "676848a1_bae30f55",
+        "filename": "src/frameworks/av_audio/av_audio_player.rs",
+        "patchSetId": 17
+      },
+      "lineNbr": 86,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-07-01T18:12:19Z",
+      "side": 1,
+      "message": "The docs don\u0027t go into detail of what errors AVAudioPlayer returns and I hadn\u0027t found much information about it online either",
+      "parentUuid": "9673c6a8_58d5531c",
+      "revId": "36e50c78270fdb62bdf4ac827934ceedf715b94a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

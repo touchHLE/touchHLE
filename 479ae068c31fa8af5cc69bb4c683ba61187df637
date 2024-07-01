@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "3d14dfb6_dd78ff28",
+        "filename": "src/fs.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 374,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-07-01T18:48:30Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "ddc30bc5_7d8265dc",
+      "revId": "479ae068c31fa8af5cc69bb4c683ba61187df637",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "3a04a5a9_afa23d6e",
@@ -31,6 +49,24 @@
       "writtenOn": "2024-06-30T17:22:47Z",
       "side": 1,
       "message": "\" as a guest file\"",
+      "revId": "479ae068c31fa8af5cc69bb4c683ba61187df637",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "e48a6175_20ea3da7",
+        "filename": "src/fs.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 386,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-07-01T18:48:30Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "3a04a5a9_afa23d6e",
       "revId": "479ae068c31fa8af5cc69bb4c683ba61187df637",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
@@ -52,6 +88,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "96aa453c_38d02114",
+        "filename": "src/fs.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 397,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-07-01T18:48:30Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "c8e7f9ee_7ab0a6df",
+      "revId": "479ae068c31fa8af5cc69bb4c683ba61187df637",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "88f06cff_66c89384",
@@ -65,6 +119,24 @@
       "writtenOn": "2024-06-30T17:22:47Z",
       "side": 1,
       "message": "\" as a guest file\"",
+      "revId": "479ae068c31fa8af5cc69bb4c683ba61187df637",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "8d592573_3f661aa6",
+        "filename": "src/fs.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 412,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-07-01T18:48:30Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "88f06cff_66c89384",
       "revId": "479ae068c31fa8af5cc69bb4c683ba61187df637",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
@@ -86,6 +158,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "46016314_7aa7d0c5",
+        "filename": "src/fs.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 425,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-07-01T18:48:30Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "6f703354_72f4caf2",
+      "revId": "479ae068c31fa8af5cc69bb4c683ba61187df637",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "a9d73d5c_3182a430",
@@ -103,6 +193,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "c8c405d5_5203f506",
+        "filename": "src/fs.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 436,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-07-01T18:48:30Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "a9d73d5c_3182a430",
+      "revId": "479ae068c31fa8af5cc69bb4c683ba61187df637",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "00385af9_147632f6",
@@ -116,6 +224,24 @@
       "writtenOn": "2024-06-30T17:22:47Z",
       "side": 1,
       "message": "Did you check what actually happens in iOS (or macOS) in case of opening a directory as a file descriptor with different flags?\nAlso, it would be great to have tests, at least for success cases.",
+      "revId": "479ae068c31fa8af5cc69bb4c683ba61187df637",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ab1e3b22_e0d1c6bb",
+        "filename": "src/fs.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 824,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-07-01T18:48:30Z",
+      "side": 1,
+      "message": "With O_WRONLY or O_RDWR it returns a fd of -1\nWith O_RDONLY, O_APPEND, O_SHLOCK, O_NOFOLLOW, O_TRUNC or O_EXCL it returns a valid fd.\nI\u0027ll remove append from the check and have it so if the write flag is set, it returns Err.",
+      "parentUuid": "00385af9_147632f6",
       "revId": "479ae068c31fa8af5cc69bb4c683ba61187df637",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

@@ -16,6 +16,24 @@
       "message": "why `|\u003d` and not just `\u003d` here?",
       "revId": "a022b4e55df81f409c9e13aeda8162918dd73d05",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "708cd6b6_96718f18",
+        "filename": "src/libc/posix_io/stat.rs",
+        "patchSetId": 12
+      },
+      "lineNbr": 120,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-07-01T21:52:39Z",
+      "side": 1,
+      "message": "Later for other flags we\u0027d do |\u003d to set them. Right now since this is the onyl flag being set there\u0027s no reason in particular though.",
+      "parentUuid": "85d4df05_de734736",
+      "revId": "a022b4e55df81f409c9e13aeda8162918dd73d05",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

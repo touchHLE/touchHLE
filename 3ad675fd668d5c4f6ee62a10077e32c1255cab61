@@ -16,6 +16,24 @@
       "message": "why do you moved this up?",
       "revId": "3ad675fd668d5c4f6ee62a10077e32c1255cab61",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "167fa632_90ddda9a",
+        "filename": "src/frameworks/av_audio/av_audio_player.rs",
+        "patchSetId": 33
+      },
+      "lineNbr": 170,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-07-01T18:12:03Z",
+      "side": 0,
+      "message": "I did it so the audio didn\u0027t start playing before the current time was reapplied. If i didn\u0027t do this, the audio would first play from the beginning and shortly after would jump to the set time",
+      "parentUuid": "6e87fc56_eaa8eaaf",
+      "revId": "3ad675fd668d5c4f6ee62a10077e32c1255cab61",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

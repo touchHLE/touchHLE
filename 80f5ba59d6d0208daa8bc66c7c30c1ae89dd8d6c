@@ -35,6 +35,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "1d4d7551_5551475f",
+        "filename": "src/frameworks/av_audio/av_audio_player.rs",
+        "patchSetId": 33
+      },
+      "lineNbr": 41,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-07-01T18:12:03Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "eecfa1ba_ef2baae2",
+      "revId": "80f5ba59d6d0208daa8bc66c7c30c1ae89dd8d6c",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "d55203e0_7f5d386b",
@@ -48,6 +66,24 @@
       "writtenOn": "2024-06-30T16:56:44Z",
       "side": 1,
       "message": "what happens if currentTime is outside of the total duration of the audio?",
+      "revId": "80f5ba59d6d0208daa8bc66c7c30c1ae89dd8d6c",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "de9c0047_3f5c6d3e",
+        "filename": "src/frameworks/av_audio/av_audio_player.rs",
+        "patchSetId": 33
+      },
+      "lineNbr": 259,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-07-01T18:12:03Z",
+      "side": 1,
+      "message": "In current MacOS, it sets the currentTime as 0. I\u0027ve updated this so it behaves that way too.",
+      "parentUuid": "d55203e0_7f5d386b",
       "revId": "80f5ba59d6d0208daa8bc66c7c30c1ae89dd8d6c",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

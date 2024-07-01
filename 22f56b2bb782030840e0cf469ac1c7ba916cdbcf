@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ba77af27_86d4ec5c",
+        "filename": "tests/TestApp_source/main.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 946,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-07-01T20:09:57Z",
+      "side": 1,
+      "message": "`close(fd)` as well here?",
+      "revId": "22f56b2bb782030840e0cf469ac1c7ba916cdbcf",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

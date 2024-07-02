@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "c5cb7ba6_226d7c5e",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 4
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-07-02T20:12:10Z",
+      "side": 1,
+      "message": "seems OK, but let\u0027s see if it\u0027s enough for both stat() and fstat() implementations",
+      "revId": "062a8805e15a90d617ea264dc055a535d0fd9a05",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

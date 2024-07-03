@@ -16,6 +16,24 @@
       "message": "Do you need that now? As far as i understand you previous commits you\u0027re handling this at fstat_common level.\n\nAlso it means that the call of fstat() on directory will crash on assert, but stat() on the same directory path will succeed. we should be consistent.",
       "revId": "dd8ad789f8d0d87e6c86e4c6b4edeece81f204cf",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "a0756479_798f0fdf",
+        "filename": "src/libc/posix_io/stat.rs",
+        "patchSetId": 14
+      },
+      "lineNbr": 164,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-07-03T17:24:27Z",
+      "side": 1,
+      "message": "Aghh turns out this was what prevented fstat_inner from crashing, RE Degeneration does call stat on directories. I had to remove the assert that it wasnt being run on a directory and move the st_size calculation into the match, i hope it\u0027s fine.",
+      "parentUuid": "634b11a3_0a1428ac",
+      "revId": "dd8ad789f8d0d87e6c86e4c6b4edeece81f204cf",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

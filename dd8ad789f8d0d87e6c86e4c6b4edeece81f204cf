@@ -34,6 +34,24 @@
       "parentUuid": "634b11a3_0a1428ac",
       "revId": "dd8ad789f8d0d87e6c86e4c6b4edeece81f204cf",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c2d21c3a_8136903d",
+        "filename": "src/libc/posix_io/stat.rs",
+        "patchSetId": 14
+      },
+      "lineNbr": 164,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-07-05T17:30:53Z",
+      "side": 1,
+      "message": "hhhhm do you know which fields from stat struct is used by RE game when called against directory?",
+      "parentUuid": "a0756479_798f0fdf",
+      "revId": "dd8ad789f8d0d87e6c86e4c6b4edeece81f204cf",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

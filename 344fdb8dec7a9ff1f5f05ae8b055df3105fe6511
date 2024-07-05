@@ -16,6 +16,24 @@
       "message": "I would probably prefer to keep downloaded version of llvm/clang.\nThis would allow us to have windows support for intégration tests (I assume we would need to just build ld tools then)",
       "revId": "344fdb8dec7a9ff1f5f05ae8b055df3105fe6511",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0295bdc6_13e428ca",
+        "filename": "tests/integration.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 33,
+      "author": {
+        "id": 1021823
+      },
+      "writtenOn": "2024-07-05T04:30:11Z",
+      "side": 0,
+      "message": "FWIW, the same would be true even if we didn\u0027t use downloaded llvm/clang, since the tests work fine on newest clang. I\u0027ll change it so that it uses the clang/linker from an environment variable or the directory,\n\nUnfortunately, I don\u0027t think it\u0027s possible (or at least, it\u0027s really difficult) to build the linker port on windows,even with cygwin. I might(?) have something to solve this in the future but for now there\u0027s not much that can be done.",
+      "parentUuid": "06330cd4_4d9d7c28",
+      "revId": "344fdb8dec7a9ff1f5f05ae8b055df3105fe6511",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

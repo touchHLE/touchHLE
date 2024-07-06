@@ -22,6 +22,7 @@ pub type CFStringRef = super::CFTypeRef;
 pub type CFMutableStringRef = CFStringRef;
 
 pub type CFStringEncoding = u32;
+pub const kCFStringEncodingMacRoman: CFStringEncoding = 0;
 pub const kCFStringEncodingASCII: CFStringEncoding = 0x600;
 pub const kCFStringEncodingUTF8: CFStringEncoding = 0x8000100;
 pub const kCFStringEncodingUnicode: CFStringEncoding = 0x100;
@@ -47,6 +48,7 @@ fn CFStringConvertEncodingToNSStringEncoding(
     encoding: CFStringEncoding,
 ) -> ns_string::NSStringEncoding {
     match encoding {
+        kCFStringEncodingMacRoman => ns_string::NSMacOSRomanStringEncoding,
         kCFStringEncodingASCII => ns_string::NSASCIIStringEncoding,
         kCFStringEncodingUTF8 => ns_string::NSUTF8StringEncoding,
         kCFStringEncodingUTF16 => ns_string::NSUTF16StringEncoding,
@@ -60,6 +62,7 @@ fn CFStringConvertNSStringEncodingToEncoding(
     encoding: ns_string::NSStringEncoding,
 ) -> CFStringEncoding {
     match encoding {
+        ns_string::NSMacOSRomanStringEncoding => kCFStringEncodingMacRoman,
         ns_string::NSASCIIStringEncoding => kCFStringEncodingASCII,
         ns_string::NSUTF8StringEncoding => kCFStringEncodingUTF8,
         ns_string::NSUTF16StringEncoding => kCFStringEncodingUTF16,

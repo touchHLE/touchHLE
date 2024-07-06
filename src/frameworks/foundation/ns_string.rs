@@ -38,6 +38,7 @@ pub type NSStringEncoding = NSUInteger;
 pub const NSASCIIStringEncoding: NSUInteger = 1;
 pub const NSUTF8StringEncoding: NSUInteger = 4;
 pub const NSUnicodeStringEncoding: NSUInteger = 10;
+pub const NSMacOSRomanStringEncoding: NSUInteger = 30;
 pub const NSUTF16StringEncoding: NSUInteger = NSUnicodeStringEncoding;
 pub const NSUTF16BigEndianStringEncoding: NSUInteger = 0x90000100;
 pub const NSUTF16LittleEndianStringEncoding: NSUInteger = 0x94000100;
@@ -592,15 +593,20 @@ pub const CLASSES: ClassExports = objc_classes! {
     let string = to_rust_string(env, this);
     // TODO: other encodings
     let bytes: Vec<u8> = match encoding {
-        NSUTF8StringEncoding | NSASCIIStringEncoding => {
-            // FIXME: validate ASCII
+        NSASCIIStringEncoding | NSMacOSRomanStringEncoding => {
+            // TODO: properly support Mac OS Roman encoding.
+            // The first 128 characters are identical to the ASCII
+            assert!(string.as_bytes().iter().all(|byte| byte.is_ascii()));
+            string.as_bytes().to_vec()
+        },
+        NSUTF8StringEncoding => {
             string.as_bytes().to_vec()
         },
         NSUTF16LittleEndianStringEncoding => string.encode_utf16().flat_map(u16::to_le_bytes).collect(),
         _ => unimplemented!()
     };
     let null_size: GuestUSize = match encoding {
-        NSUTF8StringEncoding | NSASCIIStringEncoding => 1,
+        NSUTF8StringEncoding | NSASCIIStringEncoding | NSMacOSRomanStringEncoding => 1,
         NSUTF16LittleEndianStringEncoding => 2,
         _ => unimplemented!()
     };

@@ -127,6 +127,15 @@ fn CFStringCompare(
     msg![env; a compare:b options:flags]
 }
 
+fn CFStringGetCStringPtr(
+    env: &mut Environment,
+    the_string: CFStringRef,
+    encoding: CFStringEncoding,
+) -> ConstPtr<u8> {
+    let encoding = CFStringConvertEncodingToNSStringEncoding(env, encoding);
+    msg![env; the_string cStringUsingEncoding:encoding]
+}
+
 fn CFStringGetCString(
     env: &mut Environment,
     a: CFStringRef,
@@ -137,6 +146,11 @@ fn CFStringGetCString(
     let encoding = CFStringConvertEncodingToNSStringEncoding(env, encoding);
     let buffer_size = buffer_size as NSUInteger;
     msg![env; a getCString:buffer maxLength:buffer_size encoding:encoding]
+}
+
+fn CFStringGetLength(env: &mut Environment, the_string: CFStringRef) -> CFIndex {
+    let length: NSUInteger = msg![env; the_string length];
+    length.try_into().unwrap()
 }
 
 fn CFStringFind(
@@ -167,6 +181,8 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CFStringCreateWithFormat(_, _, _, _)),
     export_c_func!(CFStringCreateWithFormatAndArguments(_, _, _, _)),
     export_c_func!(CFStringCompare(_, _, _)),
+    export_c_func!(CFStringGetCStringPtr(_, _)),
     export_c_func!(CFStringGetCString(_, _, _, _)),
+    export_c_func!(CFStringGetLength(_)),
     export_c_func!(CFStringFind(_, _, _)),
 ];

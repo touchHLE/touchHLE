@@ -70,6 +70,24 @@
       "parentUuid": "c2d21c3a_8136903d",
       "revId": "dd8ad789f8d0d87e6c86e4c6b4edeece81f204cf",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "c274a170_cb905460",
+        "filename": "src/libc/posix_io/stat.rs",
+        "patchSetId": 14
+      },
+      "lineNbr": 164,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-07-07T15:16:04Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "ab3b1b2b_000f656d",
+      "revId": "dd8ad789f8d0d87e6c86e4c6b4edeece81f204cf",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

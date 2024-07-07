@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "2ca6e9e0_783203b0",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 15
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-07-07T15:15:37Z",
+      "side": 1,
+      "message": "It seems OK, but I would prefer to have a second review before the merge",
+      "revId": "2c6821d135cb57cbaa163d7833bb8a6d9337fe01",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

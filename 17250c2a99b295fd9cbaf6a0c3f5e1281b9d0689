@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "54d8a430_52917791",
+        "filename": "src/objc/methods.rs",
+        "patchSetId": 15
+      },
+      "lineNbr": 180,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-07-08T22:13:46Z",
+      "side": 1,
+      "message": "There is a problem with this assertion, or to be more precise, with this borrowing.\nYou see, this borrow does lookup on the all known guest objects mapped to the host object, but for the superclass you do not have a guaranty that it was already mapped! Thus, this borrow may fail.",
+      "revId": "17250c2a99b295fd9cbaf6a0c3f5e1281b9d0689",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

@@ -292,6 +292,16 @@ pub const CLASSES: ClassExports = objc_classes! {
     release(env, object)
 }
 
+- (())removeAllObjects {
+    let host_object: &mut ArrayHostObject = env.objc.borrow_mut(this);
+    let array = std::mem::take(&mut host_object.array);
+    for object in array {
+        release(env, object);
+    }
+
+    env.objc.borrow_mut::<ArrayHostObject>(this).array = Vec::new()
+}
+
 @end
 
 // Special variant for use by CFArray with NULL callbacks: objects aren't

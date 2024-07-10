@@ -18,7 +18,7 @@ fn NSLog(
 fn NSLogv(
     env: &mut Environment,
     format: id, // NSString
-    arg: VaList
+    arg: VaList,
 ) {
     // TODO: avoid copy
     let format_string = ns_string::to_rust_string(env, format);
@@ -45,7 +45,4 @@ fn NSLogv(
     );
 }
 
-pub const FUNCTIONS: FunctionExports = &[
-    export_c_func!(NSLog(_, _)),
-    export_c_func!(NSLogv(_, _))
-];
+pub const FUNCTIONS: FunctionExports = &[export_c_func!(NSLog(_, _)), export_c_func!(NSLogv(_, _))];

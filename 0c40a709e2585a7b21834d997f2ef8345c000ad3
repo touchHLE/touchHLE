@@ -16,6 +16,41 @@
       "message": "What was the issue? Can you write a test also?",
       "revId": "0c40a709e2585a7b21834d997f2ef8345c000ad3",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a2aa8413_d58133f9",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 15
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-07-13T22:14:51Z",
+      "side": 1,
+      "message": "Is this about https://github.com/touchHLE/touchHLE/issues/132 ?\n\nDid we finally find an app that that issue affects?",
+      "parentUuid": "42914b28_edf28285",
+      "revId": "0c40a709e2585a7b21834d997f2ef8345c000ad3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b0abff6f_9c7b4b17",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 15
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-07-13T22:14:51Z",
+      "side": 1,
+      "message": "Is this about",
+      "revId": "0c40a709e2585a7b21834d997f2ef8345c000ad3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

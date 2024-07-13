@@ -9,6 +9,8 @@
 #include "dynarmic/interface/A32/a32.h"
 #include "dynarmic/interface/A32/config.h"
 #include "dynarmic/interface/A32/context.h"
+#include "dynarmic/interface/A32/coprocessor.h"
+#include "dynarmic/interface/exclusive_monitor.h"
 
 namespace touchHLE::cpu {
 
@@ -103,6 +105,28 @@ private:
     }
   }
 
+  bool MemoryWriteExclusive8(VAddr, std::uint8_t, std::uint8_t) override {
+    abort(); // TODO
+  }
+  bool MemoryWriteExclusive16(VAddr, std::uint16_t, std::uint16_t) override {
+    abort(); // TODO
+  }
+  bool MemoryWriteExclusive32(VAddr addr, std::uint32_t value, std::uint32_t expected) override {
+    // As soon as we stay single threaded on the host side,
+    // this implementation is OK
+    // TODO: revisit once (if) we switch to a host multi-threading
+    if (MemoryRead32(addr) != expected) {
+      // TODO: implement CAS mechanism or similar
+      // (be aware that implementation may need to be platform specific!)
+      abort();
+    }
+    MemoryWrite32(addr, value);
+    return true;
+  }
+  bool MemoryWriteExclusive64(VAddr, std::uint64_t, std::uint64_t) override {
+    abort(); // TODO
+  }
+
   void InterpreterFallback(std::uint32_t, size_t) override {
     abort(); // TODO
   }
@@ -134,9 +158,48 @@ private:
   std::uint64_t GetTicksRemaining() override { return ticks_remaining; }
 };
 
+class ArmDynarmicCP15 : public Dynarmic::A32::Coprocessor {
+  std::uint32_t addr = 0;
+
+public:
+  using CoprocReg = Dynarmic::A32::CoprocReg;
+
+  CallbackOrAccessOneWord CompileSendOneWord(bool two, unsigned opc1, CoprocReg CRn,
+                                             CoprocReg CRm, unsigned opc2) override {
+    // Corresponds to `coproc_moveto_Data_Memory_Barrier(0)` according
+    // to the Ghidra or `mcr p15,0x0,lr,cr7,cr10,0x5` in the assembly
+    if (!two && CRn == CoprocReg::C7 && opc1 == 0 && CRm == CoprocReg::C10 && opc2 == 5) {
+      // just return the address to be used as storage
+      return &addr;
+    }
+    return CallbackOrAccessOneWord{};
+  }
+
+  // TODO
+  std::optional<Callback> CompileInternalOperation(bool, unsigned, CoprocReg, CoprocReg, CoprocReg, unsigned) override {
+    return std::nullopt;
+  }
+  CallbackOrAccessTwoWords CompileSendTwoWords(bool, unsigned, CoprocReg) override {
+    return CallbackOrAccessTwoWords{};
+  }
+  CallbackOrAccessOneWord CompileGetOneWord(bool, unsigned, CoprocReg, CoprocReg, unsigned) override {
+    return CallbackOrAccessOneWord{};
+  }
+  CallbackOrAccessTwoWords CompileGetTwoWords(bool, unsigned, CoprocReg) override {
+    return CallbackOrAccessTwoWords{};
+  }
+  std::optional<Callback> CompileLoadWords(bool, bool, CoprocReg, std::optional<std::uint8_t>) override {
+    return std::nullopt;
+  }
+  std::optional<Callback> CompileStoreWords(bool, bool, CoprocReg, std::optional<std::uint8_t>) override {
+    return std::nullopt;
+  }
+};
+
 class DynarmicWrapper {
   Environment env;
   std::unique_ptr<Dynarmic::A32::Jit> cpu;
+  std::unique_ptr<Dynarmic::ExclusiveMonitor> mon;
   std::array<std::uint8_t *, Dynarmic::A32::UserConfig::NUM_PAGE_TABLE_ENTRIES>
       page_table;
 
@@ -144,6 +207,9 @@ public:
   DynarmicWrapper(void *direct_memory_access_ptr, size_t null_page_count) {
     Dynarmic::A32::UserConfig user_config;
     user_config.callbacks = &env;
+    user_config.coprocessors[15] = std::make_shared<ArmDynarmicCP15>();
+    mon = std::make_unique<Dynarmic::ExclusiveMonitor>(1);
+    user_config.global_monitor = mon.get();
     // TODO: only do this in debug builds? it's probably expensive
     user_config.check_halt_on_memory_access = true;
     if (direct_memory_access_ptr) {

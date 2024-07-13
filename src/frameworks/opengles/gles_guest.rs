@@ -143,6 +143,13 @@ fn glGetTexEnviv(env: &mut Environment, target: GLenum, pname: GLenum, params: M
         unsafe { gles.GetTexEnviv(target, pname, params) };
     });
 }
+fn glGetTexEnvfv(env: &mut Environment, target: GLenum, pname: GLenum, params: MutPtr<GLfloat>) {
+    with_ctx_and_mem(env, |gles, mem| {
+        let params = mem.ptr_at_mut(params, 16 /* upper bound */);
+        unsafe { gles.GetTexEnvfv(target, pname, params) };
+    });
+}
+
 fn glHint(env: &mut Environment, target: GLenum, mode: GLenum) {
     with_ctx_and_mem(env, |gles, _mem| unsafe { gles.Hint(target, mode) })
 }
@@ -1163,6 +1170,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(glGetIntegerv(_, _)),
     export_c_func!(glGetPointerv(_, _)),
     export_c_func!(glGetTexEnviv(_, _, _)),
+    export_c_func!(glGetTexEnvfv(_, _, _)),
     export_c_func!(glHint(_, _)),
     export_c_func!(glFlush()),
     export_c_func!(glGetString(_)),

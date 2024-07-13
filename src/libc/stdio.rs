@@ -168,7 +168,7 @@ fn fwrite(
     n_items: GuestUSize,
     file_ptr: MutPtr<FILE>,
 ) -> GuestUSize {
-    if item_size == 0 {
+    if item_size == 0 || buffer.is_null() {
         return 0;
     }
 

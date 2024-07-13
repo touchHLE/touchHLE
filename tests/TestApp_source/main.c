@@ -42,6 +42,7 @@ int sscanf(const char *, const char *, ...);
 int printf(const char *, ...);
 int vsnprintf(char *, size_t, const char *, va_list);
 int swprintf(wchar_t *, size_t, const wchar_t *, ...);
+int fwrite(const void *, size_t, size_t, FILE *);
 
 // <stdlib.h>
 #define EXIT_SUCCESS 0
@@ -934,6 +935,16 @@ int test_CFMutableString() {
   return 0;
 }
 
+int test_fwrite() {
+  FILE *some_file = fopen("TestApp", "r");
+  int res = fwrite(NULL, 1, 1, some_file);
+  fclose(some_file);
+  if (res != 0) {
+    return -1;
+  }
+  return 0;
+}
+
 // clang-format off
 #define FUNC_DEF(func)                                                         \
   { &func, #func }
@@ -965,6 +976,7 @@ struct {
     FUNC_DEF(test_strcspn),
     FUNC_DEF(test_mbstowcs),
     FUNC_DEF(test_CFMutableString),
+    FUNC_DEF(test_fwrite),
 };
 // clang-format on
 

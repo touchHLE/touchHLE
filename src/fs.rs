@@ -31,6 +31,7 @@ pub use bundle::BundleData;
 use crate::fs::bundle::{IpaFile, IpaFileRef};
 use crate::paths;
 use std::collections::HashMap;
+use std::fs;
 use std::fs::File;
 use std::io::{Read, Seek, Write};
 use std::path::{Path, PathBuf};
@@ -742,6 +743,34 @@ impl Fs {
                 }
             },
             FsNode::Directory { .. } => Err(()),
+        }
+    }
+
+    pub fn rename<P: AsRef<GuestPath>>(&self, from: P, to: P) -> Result<(), ()> {
+        let from_node = self.lookup_node(from.as_ref()).ok_or(())?;
+        match from_node {
+            FsNode::File {
+                location: from_location,
+                ..
+            } => match from_location {
+                FileLocation::Path(from_host_path) => {
+                    let to_node = self.lookup_node(to.as_ref()).ok_or(())?;
+                    match to_node {
+                        FsNode::File {
+                            location: to_location,
+                            ..
+                        } => match to_location {
+                            FileLocation::Path(to_host_path) => {
+                                fs::rename(from_host_path, to_host_path).map_err(|_| ())
+                            }
+                            _ => unreachable!(),
+                        },
+                        _ => unimplemented!(),
+                    }
+                }
+                _ => unreachable!(),
+            },
+            _ => unimplemented!(),
         }
     }
 

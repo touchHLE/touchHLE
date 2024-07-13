@@ -374,6 +374,16 @@ pub fn close(env: &mut Environment, fd: FileDescriptor) -> i32 {
     }
 }
 
+fn rename(env: &mut Environment, old: ConstPtr<u8>, new: ConstPtr<u8>) -> i32 {
+    let old = env.mem.cstr_at_utf8(old).unwrap();
+    let new = env.mem.cstr_at_utf8(new).unwrap();
+    log_dbg!("rename('{}', '{}')", old, new);
+    match env.fs.rename(GuestPath::new(&old), GuestPath::new(&new)) {
+        Ok(_) => 0,
+        Err(_) => -1,
+    }
+}
+
 pub fn getcwd(env: &mut Environment, buf_ptr: MutPtr<u8>, buf_size: GuestUSize) -> MutPtr<u8> {
     let working_directory = env.fs.working_directory();
     if !env.fs.is_dir(working_directory) {
@@ -463,6 +473,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(write(_, _, _)),
     export_c_func!(lseek(_, _, _)),
     export_c_func!(close(_)),
+    export_c_func!(rename(_, _)),
     export_c_func!(getcwd(_, _)),
     export_c_func!(chdir(_)),
     export_c_func!(flock(_, _)),

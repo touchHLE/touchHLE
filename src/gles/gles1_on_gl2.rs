@@ -777,6 +777,9 @@ impl GLES for GLES1OnGL2 {
     unsafe fn LineWidthx(&mut self, val: GLfixed) {
         gl21::LineWidth(fixed_to_float(val))
     }
+    unsafe fn StencilMask(&mut self, mask: GLuint) {
+        gl21::StencilMask(mask);
+    }
 
     // Points
     unsafe fn PointSize(&mut self, size: GLfloat) {

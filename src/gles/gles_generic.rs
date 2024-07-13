@@ -81,6 +81,7 @@ pub trait GLES {
     unsafe fn Viewport(&mut self, x: GLint, y: GLint, width: GLsizei, height: GLsizei);
     unsafe fn LineWidth(&mut self, val: GLfloat);
     unsafe fn LineWidthx(&mut self, val: GLfixed);
+    unsafe fn StencilMask(&mut self, mask: GLuint);
 
     // Points
     unsafe fn PointSize(&mut self, size: GLfloat);

@@ -160,6 +160,9 @@ impl GLES for GLES1Native {
     unsafe fn LineWidthx(&mut self, val: GLfixed) {
         gles11::LineWidthx(val)
     }
+    unsafe fn StencilMask(&mut self, mask: GLuint) {
+        gles11::StencilMask(mask);
+    }
 
     // Points
     unsafe fn PointSize(&mut self, size: GLfloat) {

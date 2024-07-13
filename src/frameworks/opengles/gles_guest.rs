@@ -262,6 +262,9 @@ fn glLineWidth(env: &mut Environment, val: GLfloat) {
 fn glLineWidthx(env: &mut Environment, val: GLfixed) {
     with_ctx_and_mem(env, |gles, _mem| unsafe { gles.LineWidthx(val) })
 }
+fn glStencilMask(env: &mut Environment, mask: GLuint) {
+    with_ctx_and_mem(env, |gles, _mem| unsafe { gles.StencilMask(mask) });
+}
 // Points
 fn glPointSize(env: &mut Environment, size: GLfloat) {
     with_ctx_and_mem(env, |gles, _mem| unsafe { gles.PointSize(size) })
@@ -1181,6 +1184,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(glViewport(_, _, _, _)),
     export_c_func!(glLineWidth(_)),
     export_c_func!(glLineWidthx(_)),
+    export_c_func!(glStencilMask(_)),
     // Points
     export_c_func!(glPointSize(_)),
     export_c_func!(glPointSizex(_)),

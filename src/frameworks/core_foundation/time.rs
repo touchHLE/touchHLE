@@ -75,8 +75,18 @@ pub fn CFAbsoluteTimeGetGregorianDate(
     }
 }
 
+fn CFAbsoluteTimeGetDayOfWeek(
+    env: &mut Environment,
+    at: CFAbsoluteTime,
+    tz: CFTimeZoneRef,
+) -> i32 {
+    assert!(tz.is_null());
+    CFAbsoluteTimeGetGregorianDate(env, at, tz).day.into()
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CFAbsoluteTimeGetCurrent()),
     export_c_func!(CFTimeZoneCopySystem()),
     export_c_func!(CFAbsoluteTimeGetGregorianDate(_, _)),
+    export_c_func!(CFAbsoluteTimeGetDayOfWeek(_, _)),
 ];

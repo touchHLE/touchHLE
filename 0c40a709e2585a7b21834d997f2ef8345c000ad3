@@ -51,6 +51,24 @@
       "message": "Is this about",
       "revId": "0c40a709e2585a7b21834d997f2ef8345c000ad3",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1936abf9_9aa54d4b",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 15
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-07-14T12:25:50Z",
+      "side": 1,
+      "message": "Yes, it\u0027s related to that issue. The issue was when calling the AudioUnit render callback in Resident Evil 4. We\u0027ve discussed this back then in here: https://discord.com/channels/1070753159246524436/1072075510131204147/1194364100529103028",
+      "parentUuid": "a2aa8413_d58133f9",
+      "revId": "0c40a709e2585a7b21834d997f2ef8345c000ad3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

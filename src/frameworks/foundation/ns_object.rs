@@ -183,6 +183,10 @@ pub const CLASSES: ClassExports = objc_classes! {
         () = msg_send(env, (this, sel, arg));
         return;
     }
+    if env.bundle.bundle_identifier().starts_with("com.gameloft.POP") && sel == env.objc.lookup_selector("startMovie:").unwrap() && wait {
+        log!("Applying game-specific hack for PoP: WW: ignoring performSelectorOnMainThread:SEL(startMovie:) waitUntilDone:true");
+        return;
+    }
     // TODO: support waiting
     // This would require tail calls for message send or a switch to async model
     assert!(!wait);

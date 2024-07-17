@@ -29,6 +29,7 @@ Compatibility:
 Usability:
 
 - UITextField now supports real text input with a keyboard. On Windows/macOS physical keyboard is used, on Android it's done via a system soft keyboard. (@ciciplusplus)
+- Default options for "Earthworm Jim", improvement for default options of "Crash Bandicoot Nitro Kart 3D" (@celerizer)
 
 Quality:
 

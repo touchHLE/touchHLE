@@ -130,10 +130,18 @@ fn alcDestroyContext(env: &mut Environment, context: MutPtr<GuestALCcontext>) {
 }
 
 fn alcProcessContext(env: &mut Environment, context: MutPtr<GuestALCcontext>) {
+    if context.is_null() {
+        log!("alcProcessContext() is called with NULL context, ignoring");
+        return;
+    }
     let host_context = State::get(env).contexts.get(&context).copied().unwrap();
     unsafe { al::alcProcessContext(host_context) }
 }
 fn alcSuspendContext(env: &mut Environment, context: MutPtr<GuestALCcontext>) {
+    if context.is_null() {
+        log!("alcSuspendContext() is called with NULL context, ignoring");
+        return;
+    }
     let host_context = State::get(env).contexts.get(&context).copied().unwrap();
     unsafe { al::alcSuspendContext(host_context) }
 }

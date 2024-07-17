@@ -183,6 +183,10 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.borrow_mut::<UIViewHostObject>(this).multiple_touch_enabled = enabled;
 }
 
+- (())setExclusiveTouch:(bool)exclusive {
+    log!("TODO: ignoring setExclusiveTouch:{} for view {:?}", exclusive, this);
+}
+
 - (())layoutSubviews {
     // On iOS 5.1 and earlier, the default implementation of this method does
     // nothing.

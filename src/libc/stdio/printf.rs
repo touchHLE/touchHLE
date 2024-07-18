@@ -180,16 +180,36 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
                 }
             }
             b'x' => {
+                assert!(precision.is_none());
                 // Note: on 32-bit system unsigned int and unsigned long
                 // are u32, so length_modifier is ignored
                 let uint: u32 = args.next(env);
-                res.extend_from_slice(format!("{:x}", uint).as_bytes());
+                if pad_width > 0 {
+                    let pad_width = pad_width as usize;
+                    if pad_char == '0' && precision.is_none() {
+                        write!(&mut res, "{:0>1$x}", uint, pad_width).unwrap();
+                    } else {
+                        write!(&mut res, "{:>1$x}", uint, pad_width).unwrap();
+                    }
+                } else {
+                    res.extend_from_slice(format!("{:x}", uint).as_bytes());
+                }
             }
             b'X' => {
+                assert!(precision.is_none());
                 // Note: on 32-bit system unsigned int and unsigned long
                 // are u32, so length_modifier is ignored
                 let uint: u32 = args.next(env);
-                res.extend_from_slice(format!("{:X}", uint).as_bytes());
+                if pad_width > 0 {
+                    let pad_width = pad_width as usize;
+                    if pad_char == '0' && precision.is_none() {
+                        write!(&mut res, "{:0>1$X}", uint, pad_width).unwrap();
+                    } else {
+                        write!(&mut res, "{:>1$X}", uint, pad_width).unwrap();
+                    }
+                } else {
+                    res.extend_from_slice(format!("{:X}", uint).as_bytes());
+                }
             }
             b'p' => {
                 assert!(length_modifier.is_none());

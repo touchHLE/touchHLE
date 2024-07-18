@@ -214,6 +214,9 @@ int test_vsnprintf() {
   str = str_format("%x", 2042);
   res += !!strcmp(str, "7fa");
   free(str);
+  str = str_format("0x%08x", 184638698);
+  res += !!strcmp(str, "0x0b015cea");
+  free(str);
   // Test %d
   str = str_format("%d|%8d|%08d|%.d|%8.d|%.3d|%8.3d|%08.3d|%*d|%0*d", 5, 5, 5,
                    5, 5, 5, 5, 5, 8, 5, 8, 5);

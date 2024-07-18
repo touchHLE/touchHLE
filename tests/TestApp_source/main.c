@@ -302,6 +302,11 @@ int test_vsnprintf() {
   res += !!strcmp(str, "-10.1235|-10.1235|-10.1235|-1e+01|  -1e+01|-10.1|   "
                        "-10.1|-00010.1|-10.1235|-10.1235");
   free(str);
+  // Test length modifiers
+  str = str_format("%d %ld %lld %u %lu %llu", 10, 100, 4294967296, 10, 100,
+                   4294967296);
+  res += !!strcmp(str, "10 100 4294967296 10 100 4294967296");
+  free(str);
 
   return res;
 }

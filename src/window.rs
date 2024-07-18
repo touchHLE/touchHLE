@@ -909,6 +909,12 @@ impl Window {
         self.video_ctx.gl_get_proc_address(procname) as *const _
     }
 
+    pub fn set_share_with_current_context(&self, value: bool) {
+        self.video_ctx
+            .gl_attr()
+            .set_share_with_current_context(value)
+    }
+
     pub unsafe fn make_gl_context_current(&self, gl_ctx: &GLContext) {
         self.window.gl_make_current(&gl_ctx.0).unwrap();
     }

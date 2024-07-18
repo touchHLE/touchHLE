@@ -110,6 +110,23 @@ pub const CLASSES: ClassExports = objc_classes! {
     true
 }
 
+- (id)initWithAPI:(EAGLRenderingAPI)api sharegroup:(id)group {
+    assert!(api == kEAGLRenderingAPIOpenGLES1);
+
+    if group == nil {
+        return msg![env; this initWithAPI:api];
+    }
+
+    let window = env.window.as_mut().expect("OpenGL ES is not supported in headless mode");
+    let prev_context = env.objc.borrow::<EAGLContextHostObject>(group).gles_ctx.as_ref().unwrap();
+    prev_context.make_current(window);
+
+    unsafe { sdl2_sys::SDL_GL_SetAttribute(sdl2_sys::SDL_GLattr::SDL_GL_SHARE_WITH_CURRENT_CONTEXT, 1) };
+    let res: id = msg![env; this initWithAPI:api];
+    unsafe { sdl2_sys::SDL_GL_SetAttribute(sdl2_sys::SDL_GLattr::SDL_GL_SHARE_WITH_CURRENT_CONTEXT, 0) };
+    res
+}
+
 - (id)initWithAPI:(EAGLRenderingAPI)api {
     assert!(api == kEAGLRenderingAPIOpenGLES1);
 
@@ -127,6 +144,10 @@ pub const CLASSES: ClassExports = objc_classes! {
 
     env.objc.borrow_mut::<EAGLContextHostObject>(this).gles_ctx = Some(gles1_ctx);
 
+    this
+}
+
+- (id)sharegroup {
     this
 }
 

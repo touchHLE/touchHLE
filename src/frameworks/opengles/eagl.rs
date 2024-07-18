@@ -110,6 +110,28 @@ pub const CLASSES: ClassExports = objc_classes! {
     true
 }
 
+- (id)initWithAPI:(EAGLRenderingAPI)api sharegroup:(id)group {
+    assert!(api == kEAGLRenderingAPIOpenGLES1);
+
+    if group == nil {
+        return msg![env; this initWithAPI:api];
+    }
+
+    let window = env.window.as_mut().expect("OpenGL ES is not supported in headless mode");
+    let prev_context = env.objc.borrow::<EAGLContextHostObject>(group).gles_ctx.as_ref().unwrap();
+    prev_context.make_current(window);
+
+    env.window.as_mut().unwrap().set_share_with_current_context(true);
+    let res: id = msg![env; this initWithAPI:api];
+    // Setting current_ctx_thread to None should cause sync_context to
+    // switch back to the right context if the app makes an OpenGL ES call.
+    // (it's already done in initWithAPI: but we want to be explicit here.)
+    env.framework_state.opengles.current_ctx_thread = None;
+    env.window.as_mut().unwrap().set_share_with_current_context(false);
+
+    res
+}
+
 - (id)initWithAPI:(EAGLRenderingAPI)api {
     assert!(api == kEAGLRenderingAPIOpenGLES1);
 
@@ -127,6 +149,12 @@ pub const CLASSES: ClassExports = objc_classes! {
 
     env.objc.borrow_mut::<EAGLContextHostObject>(this).gles_ctx = Some(gles1_ctx);
 
+    this
+}
+
+- (id)sharegroup {
+    // We use object itself as the sharegroup.
+    // Check initWithAPI:sharegroup: for more info
     this
 }
 

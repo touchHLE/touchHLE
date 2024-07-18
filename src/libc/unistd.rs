@@ -76,6 +76,14 @@ fn access(env: &mut Environment, path: ConstPtr<u8>, mode: i32) -> i32 {
     }
 }
 
+fn unlink(env: &mut Environment, path: ConstPtr<u8>) -> i32 {
+    log!(
+        "TODO: unlink('{}') => -1",
+        env.mem.cstr_at_utf8(path).unwrap()
+    );
+    -1
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(sleep(_)),
     export_c_func!(usleep(_)),
@@ -83,4 +91,5 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(getppid()),
     export_c_func!(isatty(_)),
     export_c_func!(access(_, _)),
+    export_c_func!(unlink(_)),
 ];

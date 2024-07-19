@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "80ccde3f_c2774bd2",
+        "filename": "src/frameworks/opengles/eagl.rs",
+        "patchSetId": 4
+      },
+      "lineNbr": 129,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-07-19T15:29:12Z",
+      "side": 1,
+      "message": "Strictly speaking this is redudant as `initWithAPI:` already does it, but to be safe, you should add:\n\n    env.framework_state.opengles.current_ctx_thread \u003d None;\n    \nAnd a comment explaining why (something like the comment in `initWithAPI:`).",
+      "revId": "c17825eb1a8e707234b8858d717a84a9b8ad6288",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

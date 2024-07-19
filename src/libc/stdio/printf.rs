@@ -137,6 +137,20 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
                     res.extend_from_slice("(null)".as_bytes());
                 }
             }
+            b'S' => {
+                // TODO: support length modifier
+                assert!(length_modifier.is_none());
+                // TODO: support other locales
+                let ctype_locale = setlocale(env, LC_CTYPE, Ptr::null());
+                assert_eq!(env.mem.read(ctype_locale), b'C');
+                let w_string: ConstPtr<wchar_t> = args.next(env);
+                assert!(pad_char == ' ' && pad_width == 0); // TODO
+                if !w_string.is_null() {
+                    res.extend_from_slice(env.mem.wcstr_at(w_string).as_bytes());
+                } else {
+                    res.extend_from_slice("(null)".as_bytes());
+                }
+            }
             b'd' | b'i' | b'u' => {
                 // Note: on 32-bit system int and long are i32,
                 // so length_modifier is ignored

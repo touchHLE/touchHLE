@@ -42,7 +42,7 @@ int sscanf(const char *, const char *, ...);
 int printf(const char *, ...);
 int vsnprintf(char *, size_t, const char *, va_list);
 int swprintf(wchar_t *, size_t, const wchar_t *, ...);
-int fwrite(const void *, size_t, size_t, FILE *);
+size_t fwrite(const void *, size_t, size_t, FILE *);
 
 // <stdlib.h>
 #define EXIT_SUCCESS 0
@@ -937,7 +937,7 @@ int test_CFMutableString() {
 
 int test_fwrite() {
   FILE *some_file = fopen("TestApp", "r");
-  int res = fwrite(NULL, 1, 1, some_file);
+  size_t res = fwrite(NULL, 1, 1, some_file);
   fclose(some_file);
   if (res != 0) {
     return -1;

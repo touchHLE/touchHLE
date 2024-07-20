@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b89c209c_7c05547d",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 11
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-07-20T17:32:34Z",
+      "side": 1,
+      "message": "My gut feeling is that it should be implemented on the start of application, not at first access (yes, I understand that it will work for HOME env var as it\u0027s immutable)\n\nWould like to hear that @hikari@noyu.me thinks as well",
+      "revId": "016d1b920d9838cd8127eb1e2136b1ba40d74077",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

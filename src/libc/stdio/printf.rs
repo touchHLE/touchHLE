@@ -545,12 +545,6 @@ fn sscanf_common(
     format: ConstPtr<u8>,
     mut args: VaList,
 ) -> i32 {
-    fn isspace(env: &mut Environment, src: ConstPtr<u8>) -> bool {
-        let c = env.mem.read(src);
-        // Rust's definition of whitespace excludes vertical tab, unlike C's
-        c.is_ascii_whitespace() || c == b'\x0b'
-    }
-
     let mut src_ptr = src.cast_mut();
     let mut format_char_idx = 0;
 
@@ -813,3 +807,11 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(fprintf(_, _, _)),
     export_c_func!(vfprintf(_, _, _)),
 ];
+
+// Helper function, not a part of printf family
+// TODO: write proper libc's isspace()
+pub fn isspace(env: &mut Environment, src: ConstPtr<u8>) -> bool {
+    let c = env.mem.read(src);
+    // Rust's definition of whitespace excludes vertical tab, unlike C's
+    c.is_ascii_whitespace() || c == b'\x0b'
+}

@@ -9,6 +9,7 @@ use crate::abi::{CallFromHost, GuestFunction};
 use crate::dyld::{export_c_func, export_c_func_aliased, FunctionExports};
 use crate::fs::{resolve_path, GuestPath};
 use crate::libc::clocale::{setlocale, LC_CTYPE};
+use crate::libc::stdio::printf::isspace;
 use crate::libc::string::strlen;
 use crate::libc::wchar::wchar_t;
 use crate::mem::{ConstPtr, ConstVoidPtr, GuestUSize, MutPtr, MutVoidPtr, Ptr};
@@ -233,6 +234,7 @@ fn strtof(env: &mut Environment, nptr: ConstPtr<u8>, endptr: MutPtr<ConstPtr<u8>
     number as f32
 }
 
+// TODO: fix same issues as for strtol()
 pub fn strtoul(
     env: &mut Environment,
     str: ConstPtr<u8>,
@@ -252,14 +254,42 @@ pub fn strtoul(
 }
 
 fn strtol(env: &mut Environment, str: ConstPtr<u8>, endptr: MutPtr<MutPtr<u8>>, base: i32) -> i32 {
-    let s = env.mem.cstr_at_utf8(str).unwrap();
+    let start = skip_whitespace(env, str);
+    let whitespace_len = Ptr::to_bits(start) - Ptr::to_bits(str);
+    let mut len = 0;
+    while env.mem.read(start + len) != b'\0' && !isspace(env, start + len) {
+        len += 1;
+    }
+
+    let s = std::str::from_utf8(env.mem.bytes_at(start, len)).unwrap();
     log_dbg!("strtol({:?} ({}), {:?}, {})", str, s, endptr, base);
-    assert_eq!(base, 16);
-    let without_prefix = s.trim_start_matches("0x");
-    let res = i32::from_str_radix(without_prefix, 16).unwrap_or(LONG_MAX);
+    let res = match base {
+        16 => {
+            let without_prefix = s.trim_start_matches("0x");
+            if without_prefix
+                .chars()
+                .all(|c| c == '+' || c == '-' || c.is_ascii_hexdigit())
+            {
+                i32::from_str_radix(without_prefix, 16).unwrap_or(LONG_MAX)
+            } else {
+                0
+            }
+        }
+        10 => {
+            if s.chars()
+                .all(|c| c == '+' || c == '-' || c.is_ascii_digit())
+            {
+                s.parse::<i32>().unwrap_or(LONG_MAX)
+            } else {
+                0
+            }
+        }
+        _ => unimplemented!(),
+    };
     if !endptr.is_null() {
         let len: GuestUSize = s.len().try_into().unwrap();
-        env.mem.write(endptr, (str + len).cast_mut());
+        env.mem
+            .write(endptr, (str + whitespace_len + len).cast_mut());
     }
     res
 }

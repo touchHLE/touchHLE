@@ -54,6 +54,7 @@ void qsort(void *, size_t, size_t, int (*)(const void *, const void *));
 void *realloc(void *, size_t);
 double atof(const char *);
 float strtof(const char *, char **);
+long strtol(const char *, char **, int);
 unsigned long strtoul(const char *, char **, int);
 char *realpath(const char *, char *);
 size_t mbstowcs(wchar_t *, const char *, size_t);
@@ -531,6 +532,29 @@ int test_strtoul() {
   return 0;
 }
 
+#ifdef DEFINE_ME_WHEN_BUILDING_ON_MACOS
+#define MAX_LONG 9223372036854775807
+#else
+#define MAX_LONG 2147483647
+#endif
+
+int test_strtol() {
+  const char *p = "10 200000000000000000000000000000  30   -40    junk";
+  long res[] = {10, MAX_LONG, 30, -40, 0};
+  int count = sizeof(res) / sizeof(long);
+  for (int i = 0; i < count; i++) {
+    char *endp = NULL;
+    long l = strtol(p, &endp, 10);
+    if (p == endp)
+      break;
+    p = endp;
+    if (res[i] != l) {
+      return -(i + 1);
+    }
+  }
+  return 0;
+}
+
 int test_getcwd_chdir() {
   char buf[256];
   char *buf2 = getcwd(buf, sizeof buf);
@@ -976,6 +1000,7 @@ struct {
     FUNC_DEF(test_strlcpy),
     FUNC_DEF(test_setlocale),
     FUNC_DEF(test_strtoul),
+    FUNC_DEF(test_strtol),
     FUNC_DEF(test_dirent),
     FUNC_DEF(test_strchr),
     FUNC_DEF(test_swprintf),

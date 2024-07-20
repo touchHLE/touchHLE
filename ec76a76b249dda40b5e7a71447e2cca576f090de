@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "4f19f6dc_30d6fe31",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-07-20T22:14:11Z",
+      "side": 1,
+      "message": "you should handle file descriptors of directories as a special case in close() regardless of set flags",
+      "revId": "ec76a76b249dda40b5e7a71447e2cca576f090de",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

@@ -34,6 +34,23 @@
       "parentUuid": "8f2794cb_2c1ceec3",
       "revId": "3a6d82d2d55f967290638c803b52f9fc216dc9f3",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "0cf972f4_79803e18",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-07-20T17:34:56Z",
+      "side": 1,
+      "message": "Seems like where are merge conflicts now. Could you please update/rebase?",
+      "revId": "3a6d82d2d55f967290638c803b52f9fc216dc9f3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

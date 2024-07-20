@@ -75,11 +75,7 @@ pub fn CFAbsoluteTimeGetGregorianDate(
     }
 }
 
-fn CFAbsoluteTimeGetDayOfWeek(
-    env: &mut Environment,
-    at: CFAbsoluteTime,
-    tz: CFTimeZoneRef,
-) -> i32 {
+fn CFAbsoluteTimeGetDayOfWeek(env: &mut Environment, at: CFAbsoluteTime, tz: CFTimeZoneRef) -> i32 {
     assert!(tz.is_null());
     CFAbsoluteTimeGetGregorianDate(env, at, tz).day.into()
 }

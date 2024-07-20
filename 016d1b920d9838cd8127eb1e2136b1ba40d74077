@@ -34,6 +34,24 @@
       "parentUuid": "b89c209c_7c05547d",
       "revId": "016d1b920d9838cd8127eb1e2136b1ba40d74077",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3c4c39fe_b2325415",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 11
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-07-20T20:46:50Z",
+      "side": 1,
+      "message": "Environment variables can be provided to the C main() function on Unix, so touchHLE actually has to put them on the stack before starting execution of the guest app. Uhh… I think it\u0027s in stack.rs where we do that.\n\nMaybe this hashmap should actually be elevated to the Environment object, and after doing stack setup we\u0027d populate it with the initial values stack-allocated environment variables?",
+      "parentUuid": "18b8a448_b23d00d7",
+      "revId": "016d1b920d9838cd8127eb1e2136b1ba40d74077",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

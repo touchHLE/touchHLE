@@ -16,6 +16,24 @@
       "message": "My gut feeling is that it should be implemented on the start of application, not at first access (yes, I understand that it will work for HOME env var as it\u0027s immutable)\n\nWould like to hear that @hikari@noyu.me thinks as well",
       "revId": "016d1b920d9838cd8127eb1e2136b1ba40d74077",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "18b8a448_b23d00d7",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 11
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-07-20T19:58:57Z",
+      "side": 1,
+      "message": "If i were to set them on startup where would be a good place to do it? I chose to do it lazily for simplicity, the setting of the values is closer to its usage so theres less surprises when reading the code, if it makes sense",
+      "parentUuid": "b89c209c_7c05547d",
+      "revId": "016d1b920d9838cd8127eb1e2136b1ba40d74077",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

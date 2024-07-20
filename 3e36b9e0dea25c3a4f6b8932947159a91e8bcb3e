@@ -16,6 +16,24 @@
       "message": "Tbh I don\u0027t like exposing the options object and having to make its fields public. Could you instead make it some boolean? Like `is_readonly` or `needs_flush` maybe.",
       "revId": "3e36b9e0dea25c3a4f6b8932947159a91e8bcb3e",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "c9bcc0eb_2837af21",
+        "filename": "src/libc/posix_io.rs",
+        "patchSetId": 15
+      },
+      "lineNbr": 149,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-07-20T17:28:14Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "8cb06edd_5cef6eff",
+      "revId": "3e36b9e0dea25c3a4f6b8932947159a91e8bcb3e",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

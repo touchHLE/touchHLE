@@ -34,6 +34,23 @@
       "parentUuid": "7f3080b8_8acd6ba6",
       "revId": "5e85eff1651f1ce031eaeb9140387ea99e087c83",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "26381134_041986ae",
+        "filename": "src/gles/gles1_on_gl2.rs",
+        "patchSetId": 17
+      },
+      "lineNbr": 317,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-07-20T22:17:53Z",
+      "side": 1,
+      "message": "Are you sure it\u0027s a float and not a boolean?",
+      "revId": "5e85eff1651f1ce031eaeb9140387ea99e087c83",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

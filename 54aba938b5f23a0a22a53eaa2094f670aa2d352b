@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ece43ef7_ac6d47f7",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-07-20T15:47:53Z",
+      "side": 1,
+      "message": "The current FS design doesn\u0027t support symlinks, and passing through the host FS symlink status will create a mess, it\u0027s not consistent between e.g. a real directory and an IPA file, and real symlinks shouldn\u0027t actually exist in the host FS in normal circumstances, so this probably won\u0027t achieve whatever your goal was.",
+      "revId": "54aba938b5f23a0a22a53eaa2094f670aa2d352b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

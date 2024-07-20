@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0dd8ff3c_9d452aba",
+        "filename": "src/gles/gles1_on_gl2.rs",
+        "patchSetId": 17
+      },
+      "lineNbr": 881,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-07-20T22:19:11Z",
+      "side": 1,
+      "message": "add comment \"// no integer parameters exist\"",
+      "revId": "6cda28120c405e33f2f1079e59dd667834950969",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "64344e4c_9e88c42c",
+        "filename": "src/gles/gles1_on_gl2.rs",
+        "patchSetId": 17
+      },
+      "lineNbr": 893,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-07-20T22:19:11Z",
+      "side": 1,
+      "message": "add comment \"// no integer parameters exist\"",
+      "revId": "6cda28120c405e33f2f1079e59dd667834950969",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

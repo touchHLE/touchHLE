@@ -69,6 +69,24 @@
       "parentUuid": "a2aa8413_d58133f9",
       "revId": "0c40a709e2585a7b21834d997f2ef8345c000ad3",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e8a2f40b_7345579c",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 15
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-07-20T16:07:40Z",
+      "side": 1,
+      "message": "Thanks.\n\nThe code seems to make sense at first glance but I didn\u0027t look too closely. I was scared this would break unusual uses of CallFromHost, but I think those don\u0027t call it for GuestFunctions, so it should be okay…\n\nI notice two problems:\n\n- What is GuestFunction::call() for, now? GuestFunction::call_without_pushing_stack_frame() has a reason to exist, but I think ::call() might only be used for running the module init functions and pthread_once routine. The pthread_once case can be changed to use CallFromHost (with an empty argument list and return value). Then maybe we can just get rid of GuestFunction::call() by inlining the relevant bit in the code that calls the module init functions.\n- The documentation of CallFromGuest and CallFromHost probably needs updating now? The documentation removed with GuestFunction::call() could go on CallFromHost instead, but it would need some adjustments.",
+      "parentUuid": "1936abf9_9aa54d4b",
+      "revId": "0c40a709e2585a7b21834d997f2ef8345c000ad3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

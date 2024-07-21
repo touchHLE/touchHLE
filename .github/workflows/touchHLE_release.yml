@@ -12,7 +12,8 @@ env:
 jobs:
   build-osx:
 
-    runs-on: macos-latest
+    # TODO: Use macos-latest once AArch64 cross-compile for x86_64 works
+    runs-on: macos-12
 
     steps:
     - uses: actions/checkout@v3

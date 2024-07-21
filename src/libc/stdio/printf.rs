@@ -11,7 +11,7 @@ use crate::frameworks::foundation::{ns_string, unichar};
 use crate::libc::clocale::{setlocale, LC_CTYPE};
 use crate::libc::posix_io::{STDERR_FILENO, STDOUT_FILENO};
 use crate::libc::stdio::FILE;
-use crate::libc::stdlib::{atof_inner, atoi_inner, strtoul};
+use crate::libc::stdlib::{atof_inner, strtol_inner, strtoul};
 use crate::libc::string::strlen;
 use crate::libc::wchar::wchar_t;
 use crate::mem::{ConstPtr, GuestUSize, Mem, MutPtr, MutVoidPtr, Ptr};
@@ -590,17 +590,19 @@ fn sscanf_common(
 
         match specifier {
             b'd' | b'i' => {
-                if specifier == b'i' {
-                    // TODO: hexs and octals
-                    assert_ne!(env.mem.read(src_ptr), b'0');
-                }
+                let base: u32 = if specifier == b'd' {
+                    10
+                } else {
+                    // automatic base detection in strtol
+                    0
+                };
 
                 match length_modifier {
                     Some(lm) => {
                         match lm {
                             b'h' => {
                                 // signed short* or unsigned short*
-                                match atoi_inner(env, src_ptr.cast_const()) {
+                                match strtol_inner(env, src_ptr.cast_const(), base) {
                                     Ok((val, len)) => {
                                         if max_width > 0 {
                                             assert_eq!(max_width, len as i32);
@@ -616,7 +618,7 @@ fn sscanf_common(
                             _ => unimplemented!(),
                         }
                     }
-                    _ => match atoi_inner(env, src_ptr.cast_const()) {
+                    _ => match strtol_inner(env, src_ptr.cast_const(), base) {
                         Ok((val, len)) => {
                             src_ptr += len;
                             let c_int_ptr: ConstPtr<i32> = args.next(env);

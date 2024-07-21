@@ -663,6 +663,9 @@ impl GLES for GLES1OnGL2 {
         assert!([gl21::FASTEST, gl21::NICEST, gl21::DONT_CARE].contains(&mode));
         gl21::Hint(target, mode);
     }
+    unsafe fn Finish(&mut self) {
+        gl21::Finish();
+    }
     unsafe fn Flush(&mut self) {
         gl21::Flush();
     }

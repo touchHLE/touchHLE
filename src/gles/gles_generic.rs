@@ -54,6 +54,7 @@ pub trait GLES {
     unsafe fn GetTexEnvfv(&mut self, target: GLenum, pname: GLenum, params: *mut GLfloat);
     unsafe fn GetPointerv(&mut self, pname: GLenum, params: *mut *const GLvoid);
     unsafe fn Hint(&mut self, target: GLenum, mode: GLenum);
+    unsafe fn Finish(&mut self);
     unsafe fn Flush(&mut self);
     #[allow(dead_code)]
     unsafe fn GetString(&mut self, name: GLenum) -> *const GLubyte;

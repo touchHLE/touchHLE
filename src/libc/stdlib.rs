@@ -9,7 +9,6 @@ use crate::abi::{CallFromHost, GuestFunction};
 use crate::dyld::{export_c_func, export_c_func_aliased, FunctionExports};
 use crate::fs::{resolve_path, GuestPath};
 use crate::libc::clocale::{setlocale, LC_CTYPE};
-use crate::libc::stdio::printf::isspace;
 use crate::libc::string::strlen;
 use crate::libc::wchar::wchar_t;
 use crate::mem::{ConstPtr, ConstVoidPtr, GuestUSize, MutPtr, MutVoidPtr, Ptr};
@@ -81,7 +80,7 @@ fn skip_whitespace(env: &mut Environment, s: ConstPtr<u8>) -> ConstPtr<u8> {
 
 fn atoi(env: &mut Environment, s: ConstPtr<u8>) -> i32 {
     // conveniently, overflow is undefined, so 0 is as valid a result as any
-    let (res, _) = atoi_inner(env, s).unwrap_or((0, 0));
+    let (res, _) = strtol_inner(env, s, 10).unwrap_or((0, 0));
     res
 }
 
@@ -254,44 +253,20 @@ pub fn strtoul(
 }
 
 fn strtol(env: &mut Environment, str: ConstPtr<u8>, endptr: MutPtr<MutPtr<u8>>, base: i32) -> i32 {
-    let start = skip_whitespace(env, str);
-    let whitespace_len = Ptr::to_bits(start) - Ptr::to_bits(str);
-    let mut len = 0;
-    while env.mem.read(start + len) != b'\0' && !isspace(env, start + len) {
-        len += 1;
-    }
-
-    let s = std::str::from_utf8(env.mem.bytes_at(start, len)).unwrap();
-    log_dbg!("strtol({:?} ({}), {:?}, {})", str, s, endptr, base);
-    let res = match base {
-        16 => {
-            let without_prefix = s.trim_start_matches("0x");
-            if without_prefix
-                .chars()
-                .all(|c| c == '+' || c == '-' || c.is_ascii_hexdigit())
-            {
-                i32::from_str_radix(without_prefix, 16).unwrap_or(LONG_MAX)
-            } else {
-                0
+    match strtol_inner(env, str, base as u32) {
+        Ok((res, len)) => {
+            if !endptr.is_null() {
+                env.mem.write(endptr, (str + len).cast_mut());
             }
+            res
         }
-        10 => {
-            if s.chars()
-                .all(|c| c == '+' || c == '-' || c.is_ascii_digit())
-            {
-                s.parse::<i32>().unwrap_or(LONG_MAX)
-            } else {
-                0
+        Err(_) => {
+            if !endptr.is_null() {
+                env.mem.write(endptr, str.cast_mut());
             }
+            0
         }
-        _ => unimplemented!(),
-    };
-    if !endptr.is_null() {
-        let len: GuestUSize = s.len().try_into().unwrap();
-        env.mem
-            .write(endptr, (str + whitespace_len + len).cast_mut());
     }
-    res
 }
 
 fn realpath(
@@ -438,24 +413,59 @@ pub fn atof_inner(
     s.parse().map(|result| (result, whitespace_len + len))
 }
 
-pub fn atoi_inner(
+/// Returns a tuple containing the parsed number in the given base and
+/// the length of the number in the string.
+/// Base is mutable because in case if base 0 we need to auto-detect it.
+pub fn strtol_inner(
     env: &mut Environment,
-    s: ConstPtr<u8>,
-) -> Result<(i32, u32), <i32 as FromStr>::Err> {
-    // atoi() doesn't work with a null-terminated string, instead it stops
+    str: ConstPtr<u8>,
+    mut base: u32,
+) -> Result<(i32, u32), ()> {
+    // strtol() doesn't work with a null-terminated string, instead it stops
     // once it hits something that's not a digit, so we have to do some parsing
     // ourselves.
-    let start = skip_whitespace(env, s);
-    let whitespace_len = Ptr::to_bits(start) - Ptr::to_bits(s);
+    let start = skip_whitespace(env, str);
+    let whitespace_len = Ptr::to_bits(start) - Ptr::to_bits(str);
     let mut len = 0;
     let maybe_sign = env.mem.read(start + len);
-    if maybe_sign == b'+' || maybe_sign == b'-' || maybe_sign.is_ascii_digit() {
+    let mut has_sign = false;
+    if maybe_sign == b'+' || maybe_sign == b'-' {
+        has_sign = true;
         len += 1;
     }
-    while env.mem.read(start + len).is_ascii_digit() {
+    // We need to do base detection before we can start counting
+    // the number length, but after we maybe skipped the sign
+    if base == 0 {
+        base = if env.mem.read(start + len) == b'0' {
+            len += 1;
+            let next = env.mem.read(start + len);
+            if next == b'x' || next == b'X' {
+                len += 1;
+                16
+            } else {
+                8
+            }
+        } else {
+            10
+        }
+    }
+    while (env.mem.read(start + len) as char).is_digit(base) {
         len += 1;
     }
 
     let s = std::str::from_utf8(env.mem.bytes_at(start, len)).unwrap();
-    s.parse().map(|result| (result, whitespace_len + len))
+    log_dbg!("strtol_inner({:?} ({}), {})", str, s, base);
+    assert!((2..=36).contains(&base));
+    let magnitude_len = if has_sign {
+        len - 1
+    } else {
+        len
+    };
+    let res = if magnitude_len > 0 {
+        // TODO: set errno on range errors
+        i32::from_str_radix(s, base).unwrap_or(LONG_MAX)
+    } else {
+        return Err(());
+    };
+    Ok((res, whitespace_len + len))
 }

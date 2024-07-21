@@ -115,6 +115,7 @@ fn prng(state: u32) -> u32 {
 }
 
 const RAND_MAX: i32 = i32::MAX;
+const LONG_MIN: i32 = i32::MIN;
 const LONG_MAX: i32 = i32::MAX;
 const ULONG_MAX: u32 = u32::MAX;
 
@@ -428,19 +429,19 @@ pub fn strtol_inner(
     let whitespace_len = Ptr::to_bits(start) - Ptr::to_bits(str);
     let mut len = 0;
     let maybe_sign = env.mem.read(start + len);
-    let mut has_sign = false;
+    let mut sign = None;
+    let mut prefix_length = 0;
     if maybe_sign == b'+' || maybe_sign == b'-' {
-        has_sign = true;
+        sign = Some(maybe_sign);
+        prefix_length += 1;
         len += 1;
     }
     // We need to do base detection before we can start counting
     // the number length, but after we maybe skipped the sign
     if base == 0 {
         base = if env.mem.read(start + len) == b'0' {
-            len += 1;
-            let next = env.mem.read(start + len);
+            let next = env.mem.read(start + len + 1);
             if next == b'x' || next == b'X' {
-                len += 1;
                 16
             } else {
                 8
@@ -449,21 +450,34 @@ pub fn strtol_inner(
             10
         }
     }
+    // Skipping prefix if needed
+    if (base == 8 || base == 16) && env.mem.read(start + len) == b'0' {
+        len += 1;
+        prefix_length += 1;
+        if base == 16 {
+            let next = env.mem.read(start + len);
+            if next == b'x' || next == b'X' {
+                len += 1;
+                prefix_length += 1;
+            }
+        }
+    }
     while (env.mem.read(start + len) as char).is_digit(base) {
         len += 1;
     }
 
-    let s = std::str::from_utf8(env.mem.bytes_at(start, len)).unwrap();
-    log_dbg!("strtol_inner({:?} ({}), {})", str, s, base);
+    let s =
+        std::str::from_utf8(env.mem.bytes_at(start + prefix_length, len - prefix_length)).unwrap();
+    log!("strtol_inner({:?} ({}), {})", str, s, base);
     assert!((2..=36).contains(&base));
-    let magnitude_len = if has_sign {
-        len - 1
-    } else {
-        len
-    };
+    let magnitude_len = len - prefix_length;
     let res = if magnitude_len > 0 {
         // TODO: set errno on range errors
-        i32::from_str_radix(s, base).unwrap_or(LONG_MAX)
+        let mut res = i32::from_str_radix(s, base).unwrap_or(LONG_MAX);
+        if sign == Some(b'-') {
+            res = res.checked_mul(-1).unwrap_or(LONG_MIN);
+        }
+        res
     } else {
         return Err(());
     };

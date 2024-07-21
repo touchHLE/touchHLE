@@ -573,6 +573,20 @@ int test_strtol() {
   if (l != 0) {
     return -(count + 2);
   }
+  p = "0x123 +0x123 -0x123";
+  long res2[] = {291, 291, -291};
+  int count2 = sizeof(res2) / sizeof(long);
+  for (int i = 0; i < count2; i++) {
+    char *endp = NULL;
+    l = strtol(p, &endp, 16);
+    if (p == endp)
+      break;
+    p = endp;
+    printf("%d %ld %ld\n", i, res2[i], l);
+    if (res2[i] != l) {
+      return -(count + 2 + i + 1);
+    }
+  }
   return 0;
 }
 

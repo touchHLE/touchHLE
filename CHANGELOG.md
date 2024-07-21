@@ -23,6 +23,7 @@ Compatibility:
   - [Zombie Infection](https://appdb.touchhle.org/apps/347) (@ciciplusplus)
   - [Gangstar: West Coast Hustle](https://appdb.touchhle.org/apps/351) (@ciciplusplus)
   - [Asphalt 4: Elite Racing](https://appdb.touchhle.org/apps/96) (@ciciplusplus)
+  - [Prince of Persia: Warrior Within](https://appdb.touchhle.org/apps/127) (@ciciplusplus)
 - API support improvements:
   - Various small contributions. (@hikari-no-yume, @alborrajo, @ciciplusplus, @atasro2)
 

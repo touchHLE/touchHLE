@@ -330,7 +330,7 @@ int test_sscanf() {
   if (!(matched == 2 && strcmp(str, "abc") == 0 && b == 8))
     return -4;
   matched = sscanf("9,10", "%hi,%i", &c, &a);
-  if (!(c == 9 && a == 10))
+  if (!(matched == 2 && c == 9 && a == 10))
     return -5;
   matched = sscanf("DUMMY", "%d", &a);
   if (matched != 0)
@@ -356,6 +356,12 @@ int test_sscanf() {
   matched = sscanf("MAX\t\t\t48.0\r\n", "%s %f", str, &f);
   if (!(matched == 2 && strcmp(str, "MAX") == 0 && f == 48.0))
     return -14;
+  matched = sscanf("011", "%i", &a);
+  if (!(matched == 1 && a == 9))
+    return -15;
+  matched = sscanf("09", "%i", &a);
+  if (!(matched == 1 && a == 0))
+    return -16;
   return 0;
 }
 
@@ -551,6 +557,21 @@ int test_strtol() {
     if (res[i] != l) {
       return -(i + 1);
     }
+  }
+  p = "-";
+  long l = strtol(p, NULL, 0);
+  if (l != 0) {
+    return -count;
+  }
+  p = "+";
+  l = strtol(p, NULL, 0);
+  if (l != 0) {
+    return -(count + 1);
+  }
+  p = "+-+";
+  l = strtol(p, NULL, 0);
+  if (l != 0) {
+    return -(count + 2);
   }
   return 0;
 }

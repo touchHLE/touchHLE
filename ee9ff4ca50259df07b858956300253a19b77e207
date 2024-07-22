@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "78dcd2da_a7515dd3",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 10
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-07-22T09:05:19Z",
+      "side": 1,
+      "message": "It is a workaround in some sense, but this kind of bug is not uncommon (I had to do similar stuff for the notification of when a video finishes playing) and I don\u0027t think a game-specific hack would be better. We are just matching the behaviour of iOS more closely. So I think this is fine.",
+      "parentUuid": "983f5184_d247f9fe",
+      "revId": "ee9ff4ca50259df07b858956300253a19b77e207",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "e05ab209_05150c7f",

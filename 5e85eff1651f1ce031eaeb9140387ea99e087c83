@@ -87,6 +87,24 @@
       "parentUuid": "d2d5459f_10145923",
       "revId": "5e85eff1651f1ce031eaeb9140387ea99e087c83",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ea53ca0a_625193c9",
+        "filename": "src/gles/gles1_on_gl2.rs",
+        "patchSetId": 17
+      },
+      "lineNbr": 317,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-07-22T21:36:15Z",
+      "side": 1,
+      "message": "I just noticed that in GET_PARAMS we got it as boolean\n```(gl21::LIGHT_MODEL_TWO_SIDE, ParamType::Boolean, 1),```\nI\u0027m a bit confused, even if its values are only 0.0 or 1.0, if it\u0027s accessed with a function that takes floats/fixed should the ParamType still be boolean? I guess it\u0027d still work, as the type is only used for conversions to/from GLfixed and in all other cases it\u0027s passed as-is (Correct me if i\u0027m wrong)",
+      "parentUuid": "0abb5c96_d4d10825",
+      "revId": "5e85eff1651f1ce031eaeb9140387ea99e087c83",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

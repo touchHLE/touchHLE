@@ -16,6 +16,24 @@
       "message": "Simpler fix would be to use `read_unaligned`?",
       "revId": "6cda28120c405e33f2f1079e59dd667834950969",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "83fef408_b61aeafe",
+        "filename": "src/gles/util.rs",
+        "patchSetId": 17
+      },
+      "lineNbr": 24,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-07-22T22:33:04Z",
+      "side": 0,
+      "message": "...oh my god",
+      "parentUuid": "ab857179_c2b4a691",
+      "revId": "6cda28120c405e33f2f1079e59dd667834950969",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

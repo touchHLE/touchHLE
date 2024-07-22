@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ab857179_c2b4a691",
+        "filename": "src/gles/util.rs",
+        "patchSetId": 17
+      },
+      "lineNbr": 24,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-07-22T10:56:53Z",
+      "side": 0,
+      "message": "Simpler fix would be to use `read_unaligned`?",
+      "revId": "6cda28120c405e33f2f1079e59dd667834950969",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

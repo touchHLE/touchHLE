@@ -69,6 +69,24 @@
       "parentUuid": "26381134_041986ae",
       "revId": "5e85eff1651f1ce031eaeb9140387ea99e087c83",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "0abb5c96_d4d10825",
+        "filename": "src/gles/gles1_on_gl2.rs",
+        "patchSetId": 17
+      },
+      "lineNbr": 317,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-07-22T21:16:28Z",
+      "side": 1,
+      "message": "Why do you think that LIGHT_MODEL_TWO_SIDE is a float?\n\nCheck page 39 of your linked document:\n\n\u003e tbs boolean FALSE use two-sided lighting mode",
+      "parentUuid": "d2d5459f_10145923",
+      "revId": "5e85eff1651f1ce031eaeb9140387ea99e087c83",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

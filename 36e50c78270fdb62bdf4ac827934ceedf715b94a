@@ -52,6 +52,24 @@
       "parentUuid": "676848a1_bae30f55",
       "revId": "36e50c78270fdb62bdf4ac827934ceedf715b94a",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "c102f4bd_8e7658d9",
+        "filename": "src/frameworks/av_audio/av_audio_player.rs",
+        "patchSetId": 17
+      },
+      "lineNbr": 86,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-07-22T23:40:48Z",
+      "side": 1,
+      "message": "After a little bit of testing i found out the following:\n\nDirectory\n    Error Domain\u003dNSOSStatusErrorDomain Code\u003d2003334207 \"(null)\"\n\nNonexistant file\n    Error Domain\u003dNSOSStatusErrorDomain Code\u003d2003334207 \"(null)\"\n\nInvalid URL\n    Error Domain\u003dNSOSStatusErrorDomain Code\u003d2003334207 \"(null)\"\n\nValid HTTP URL with no audio in it\n    Error Domain\u003dNSOSStatusErrorDomain Code\u003d2003334207 \"(null)\"\n\nValid HTTP URL with audio in it\n    Error Domain\u003dNSOSStatusErrorDomain Code\u003d2003334207 \"(null)\"\n\nExisting but invalid file\n    Error Domain\u003dNSOSStatusErrorDomain Code\u003d1954115647 \"(null)\"",
+      "parentUuid": "97759b95_93ed5326",
+      "revId": "36e50c78270fdb62bdf4ac827934ceedf715b94a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

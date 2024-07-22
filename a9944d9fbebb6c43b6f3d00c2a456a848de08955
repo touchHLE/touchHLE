@@ -52,6 +52,24 @@
       "parentUuid": "9a4c18ce_9ec768a7",
       "revId": "a9944d9fbebb6c43b6f3d00c2a456a848de08955",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "12cc2762_3fac5eff",
+        "filename": "src/frameworks/audio_toolbox/audio_unit.rs",
+        "patchSetId": 18
+      },
+      "lineNbr": 70,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-07-22T19:27:37Z",
+      "side": 1,
+      "message": "Not even that.\nstream_format.bits_per_channel \u003d 16\nstream_format.channels_per_frame \u003d 2\nstream_format.bytes_per_packet \u003d 2\nTherefore\nbytes_per_packet \u003d 2\nactual_bytes_per_frame \u003d 4",
+      "parentUuid": "0a9e74de_8f505347",
+      "revId": "a9944d9fbebb6c43b6f3d00c2a456a848de08955",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

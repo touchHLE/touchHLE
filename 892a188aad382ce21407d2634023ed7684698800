@@ -16,6 +16,24 @@
       "message": "Could you implement it for NSSet as well?",
       "revId": "892a188aad382ce21407d2634023ed7684698800",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "4ee93a3f_fd4a370f",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 17
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-07-22T22:33:09Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "3a368e04_26992af7",
+      "revId": "892a188aad382ce21407d2634023ed7684698800",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

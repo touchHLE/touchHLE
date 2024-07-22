@@ -206,7 +206,7 @@ pub fn main<T: Iterator<Item = String>>(mut args: T) -> Result<(), String> {
         echo!(
             "No app specified, opening app picker. Use the --help flag to see command-line usage."
         );
-        let (bundle_path, env_for_salvage) = app_picker::app_picker(options)?;
+        let (bundle_path, env_for_salvage) = app_picker::app_picker(options, &mut option_args)?;
         (bundle_path, Some(env_for_salvage))
     };
 

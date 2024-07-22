@@ -167,7 +167,7 @@ impl Window {
     /// Returns [true] if touchHLE is running on a device where we should always
     /// display fullscreen, but SDL2 will let us control the orientation, i.e.
     /// Android devices.
-    fn rotatable_fullscreen() -> bool {
+    pub fn rotatable_fullscreen() -> bool {
         env::consts::OS == "android"
     }
 

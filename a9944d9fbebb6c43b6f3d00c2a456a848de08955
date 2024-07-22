@@ -34,6 +34,24 @@
       "parentUuid": "63d6334e_1ffc9542",
       "revId": "a9944d9fbebb6c43b6f3d00c2a456a848de08955",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0a9e74de_8f505347",
+        "filename": "src/frameworks/audio_toolbox/audio_unit.rs",
+        "patchSetId": 18
+      },
+      "lineNbr": 70,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-07-22T09:29:31Z",
+      "side": 1,
+      "message": "Is stream_format.bytes_per_packet at least \u003e\u003d actual_bytes_per_frame for RE4?",
+      "parentUuid": "9a4c18ce_9ec768a7",
+      "revId": "a9944d9fbebb6c43b6f3d00c2a456a848de08955",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

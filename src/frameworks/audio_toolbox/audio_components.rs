@@ -37,9 +37,9 @@ impl State {
 #[derive(Clone)]
 pub struct AudioComponentInstanceHostObject {
     pub started: bool,
-    pub global_stream_format: AudioStreamBasicDescription,
-    pub output_stream_format: Option<AudioStreamBasicDescription>,
-    pub render_callback: Option<AURenderCallbackStruct>,
+    pub _global_stream_format: AudioStreamBasicDescription,
+    pub _output_stream_format: Option<AudioStreamBasicDescription>,
+    pub _render_callback: Option<AURenderCallbackStruct>,
 }
 impl Default for AudioComponentInstanceHostObject {
     fn default() -> Self {
@@ -47,7 +47,7 @@ impl Default for AudioComponentInstanceHostObject {
         // through a test app built targetting iOS 2.0
         AudioComponentInstanceHostObject {
             started: false,
-            global_stream_format: AudioStreamBasicDescription {
+            _global_stream_format: AudioStreamBasicDescription {
                 sample_rate: 44100.0,
                 format_id: kAudioFormatLinearPCM,
                 format_flags: kAudioFormatFlagIsFloat
@@ -61,8 +61,8 @@ impl Default for AudioComponentInstanceHostObject {
                 bits_per_channel: 32,
                 _reserved: 0,
             },
-            output_stream_format: None,
-            render_callback: None,
+            _render_callback: None,
+            _output_stream_format: None,
         }
     }
 }

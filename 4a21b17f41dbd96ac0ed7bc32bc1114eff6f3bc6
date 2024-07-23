@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d41f4bb9_f19551ff",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 22
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-07-23T22:19:31Z",
+      "side": 1,
+      "message": "Seems fine, but would like to have a second look from @hikari@noyu.me",
+      "revId": "4a21b17f41dbd96ac0ed7bc32bc1114eff6f3bc6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

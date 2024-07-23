@@ -16,6 +16,24 @@
       "message": "Are you sure about this?",
       "revId": "4aaa238567181f688dd748557607356bcdc9a7cf",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "36c0e4c7_d423569c",
+        "filename": "src/frameworks/av_audio/av_audio_player.rs",
+        "patchSetId": 21
+      },
+      "lineNbr": 220,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-07-23T10:49:54Z",
+      "side": 0,
+      "message": "With these changes, the file is opened during init, not prepareToPlay. If you were to call stop and later on call play, you\u0027d be without any audio file opened. The closing of the audio file was moved to dealloc.",
+      "parentUuid": "c48f1056_9bfeef1e",
+      "revId": "4aaa238567181f688dd748557607356bcdc9a7cf",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

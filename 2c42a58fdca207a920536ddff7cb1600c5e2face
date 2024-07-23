@@ -1,5 +1,40 @@
 {
-  "comments": [],
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6a5814d7_cc8086e0",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-07-23T09:27:31Z",
+      "side": 1,
+      "message": "Does it passes the linter?",
+      "revId": "2c42a58fdca207a920536ddff7cb1600c5e2face",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a2d8a021_f1f84859",
+        "filename": "src/libc/string.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 78,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-07-23T09:27:31Z",
+      "side": 1,
+      "message": "in rust, the last expression in the function is returned automatically, you don\u0027t need to specify the return here.",
+      "revId": "2c42a58fdca207a920536ddff7cb1600c5e2face",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ],
   "submitRequirementResults": [
     {
       "submitRequirement": {

@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "93ec0ebf_df07d1c1",
+        "filename": "src/frameworks/av_audio/av_audio_player.rs",
+        "patchSetId": 21
+      },
+      "lineNbr": 92,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-07-23T22:15:27Z",
+      "side": 1,
+      "message": "The actual AVAudioPlayer does store the url even if the loading of the media fails",
+      "parentUuid": "3dbe08be_93080375",
+      "revId": "9407bd038022ef2e5552e8929a9128aa688f4512",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "b6498389_a34fa2e2",
@@ -35,6 +53,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "9746bdd3_f813376a",
+        "filename": "src/frameworks/av_audio/av_audio_player.rs",
+        "patchSetId": 21
+      },
+      "lineNbr": 97,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-07-23T22:15:27Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "b6498389_a34fa2e2",
+      "revId": "9407bd038022ef2e5552e8929a9128aa688f4512",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "60495764_499be856",
@@ -48,6 +84,24 @@
       "writtenOn": "2024-07-23T10:46:34Z",
       "side": 1,
       "message": "Same comment about the code constant.",
+      "revId": "9407bd038022ef2e5552e8929a9128aa688f4512",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "33e7e544_20c6506a",
+        "filename": "src/frameworks/av_audio/av_audio_player.rs",
+        "patchSetId": 21
+      },
+      "lineNbr": 112,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-07-23T22:15:27Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "60495764_499be856",
       "revId": "9407bd038022ef2e5552e8929a9128aa688f4512",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

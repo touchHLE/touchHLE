@@ -33,6 +33,24 @@
       "message": "Why not change the audio file code to return an enum saying why it failed? This implementation would effectively test if the file exists twice, which seems like an ugly workaround…",
       "revId": "4a21b17f41dbd96ac0ed7bc32bc1114eff6f3bc6",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f9fb656a_eef906d7",
+        "filename": "src/frameworks/av_audio/av_audio_player.rs",
+        "patchSetId": 22
+      },
+      "lineNbr": 93,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-07-24T21:15:36Z",
+      "side": 1,
+      "message": "I just realised, and confirmed through testing, that AudioFileOpenURL is supposed to return the same values that i was copying to the NSError (Tested on modern macOS)",
+      "parentUuid": "17c9025d_99a99efd",
+      "revId": "4a21b17f41dbd96ac0ed7bc32bc1114eff6f3bc6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

@@ -16,6 +16,23 @@
       "message": "Seems fine, but would like to have a second look from @hikari@noyu.me",
       "revId": "4a21b17f41dbd96ac0ed7bc32bc1114eff6f3bc6",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "17c9025d_99a99efd",
+        "filename": "src/frameworks/av_audio/av_audio_player.rs",
+        "patchSetId": 22
+      },
+      "lineNbr": 93,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-07-24T20:18:21Z",
+      "side": 1,
+      "message": "Why not change the audio file code to return an enum saying why it failed? This implementation would effectively test if the file exists twice, which seems like an ugly workaround…",
+      "revId": "4a21b17f41dbd96ac0ed7bc32bc1114eff6f3bc6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

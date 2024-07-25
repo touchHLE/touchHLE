@@ -20,6 +20,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "e3733d46_b8fdd790",
+        "filename": "src/frameworks/audio_toolbox/audio_file.rs",
+        "patchSetId": 23
+      },
+      "lineNbr": 99,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-07-25T19:17:43Z",
+      "side": 1,
+      "message": "There\u0027s plenty of Audio File error codes, but from what I gathered from testing, when using AudioFileOpenURL, I was only able to get kAudioFileUnsupportedFileTypeError when opening files that aren\u0027t audio files and kAudioFileUnspecifiedError when opening directories, files that don\u0027t exist, or HTTP URLs",
+      "parentUuid": "725ad247_92d6ae81",
+      "revId": "6f6731cb2e569f2af951180c14e615a5a36b6422",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "c6c4a705_dcaee9db",
         "filename": "src/frameworks/av_audio/av_audio_player.rs",
         "patchSetId": 23
@@ -31,6 +49,24 @@
       "writtenOn": "2024-07-25T10:23:47Z",
       "side": 1,
       "message": "I\u0027m a bit nervous about types here, could you add an `as` cast with whatever type `initWithDomain:code:userInfo:` needs?",
+      "revId": "6f6731cb2e569f2af951180c14e615a5a36b6422",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "9d9fb833_29129106",
+        "filename": "src/frameworks/av_audio/av_audio_player.rs",
+        "patchSetId": 23
+      },
+      "lineNbr": 93,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-07-25T19:17:43Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "c6c4a705_dcaee9db",
       "revId": "6f6731cb2e569f2af951180c14e615a5a36b6422",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

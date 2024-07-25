@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "725ad247_92d6ae81",
+        "filename": "src/frameworks/audio_toolbox/audio_file.rs",
+        "patchSetId": 23
+      },
+      "lineNbr": 99,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-07-25T10:23:47Z",
+      "side": 1,
+      "message": "Maybe there\u0027s a more specific code for I/O errors?",
+      "revId": "6f6731cb2e569f2af951180c14e615a5a36b6422",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c6c4a705_dcaee9db",
+        "filename": "src/frameworks/av_audio/av_audio_player.rs",
+        "patchSetId": 23
+      },
+      "lineNbr": 93,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-07-25T10:23:47Z",
+      "side": 1,
+      "message": "I\u0027m a bit nervous about types here, could you add an `as` cast with whatever type `initWithDomain:code:userInfo:` needs?",
+      "revId": "6f6731cb2e569f2af951180c14e615a5a36b6422",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

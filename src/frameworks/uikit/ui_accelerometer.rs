@@ -131,7 +131,7 @@ pub(super) fn handle_accelerometer(env: &mut Environment) -> Option<Instant> {
     let rust_interval = Duration::from_secs_f64(ns_interval);
 
     let now = Instant::now();
-    let new_due_by = if let Some(due_by) = state.due_by {
+    if let Some(due_by) = state.due_by {
         if due_by > now {
             return Some(due_by);
         }
@@ -148,20 +148,19 @@ pub(super) fn handle_accelerometer(env: &mut Environment) -> Option<Instant> {
             log_dbg!("Warning: Accelerometer is lagging. It is overdue by {}s and has missed {} interval(s)!", overdue_by.as_secs_f64(), advance_by - 1);
         }
         let advance_by = rust_interval.checked_mul(advance_by).unwrap();
-        Some(due_by.checked_add(advance_by).unwrap())
+        let new_due_by = due_by.checked_add(advance_by).unwrap();
+        state.due_by = Some(new_due_by);
     } else {
         // In Resident Evil 4 the delegate is set before it fully initializes.
         // If the first message is sent immediately, it crashes.
         // This change prevents it by not sending the first message until the
         // time interval first passes
-        let due_by = now.checked_add(rust_interval).unwrap();
-        let new_due_by = Some(due_by);
-        if due_by > now {
-            return new_due_by;
+        let new_due_by = now.checked_add(rust_interval).unwrap();
+        state.due_by = Some(new_due_by);
+        if new_due_by > now {
+            return Some(new_due_by);
         }
-        new_due_by
     };
-    state.due_by = new_due_by;
 
     // UIKit creates and drains autorelease pools when handling events.
     let pool: id = msg_class![env; NSAutoreleasePool new];
@@ -196,5 +195,5 @@ pub(super) fn handle_accelerometer(env: &mut Environment) -> Option<Instant> {
 
     release(env, pool);
 
-    new_due_by
+    env.framework_state.uikit.ui_accelerometer.due_by
 }

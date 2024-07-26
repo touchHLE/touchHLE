@@ -786,6 +786,34 @@ impl GLES for GLES1OnGL2 {
     unsafe fn LineWidthx(&mut self, val: GLfixed) {
         gl21::LineWidth(fixed_to_float(val))
     }
+    unsafe fn StencilFunc(&mut self, func: GLenum, ref_: GLint, mask: GLuint) {
+        assert!([
+            gl21::NEVER,
+            gl21::LESS,
+            gl21::EQUAL,
+            gl21::LEQUAL,
+            gl21::GREATER,
+            gl21::NOTEQUAL,
+            gl21::GEQUAL,
+            gl21::ALWAYS
+        ]
+        .contains(&func));
+        gl21::StencilFunc(func, ref_, mask);
+    }
+    unsafe fn StencilOp(&mut self, sfail: GLenum, dpfail: GLenum, dppass: GLenum) {
+        for enum_ in [sfail, dpfail, dppass].iter() {
+            assert!([
+                gl21::KEEP,
+                gl21::ZERO,
+                gl21::REPLACE,
+                gl21::INCR,
+                gl21::DECR,
+                gl21::INVERT,
+            ]
+            .contains(enum_));
+        }
+        gl21::StencilOp(sfail, dpfail, dppass);
+    }
     unsafe fn StencilMask(&mut self, mask: GLuint) {
         gl21::StencilMask(mask);
     }

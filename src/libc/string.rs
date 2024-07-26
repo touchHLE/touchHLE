@@ -70,6 +70,13 @@ fn bzero(env: &mut Environment, dest: MutVoidPtr, count: GuestUSize) {
 fn memset(env: &mut Environment, dest: MutVoidPtr, ch: i32, count: GuestUSize) -> MutVoidPtr {
     GenericChar::<u8>::memset(env, dest.cast(), ch as u8, count).cast()
 }
+fn __memset_chk(env: &mut Environment, dest: MutVoidPtr, ch: i32, count: GuestUSize, dest_count: GuestUSize) -> MutVoidPtr {
+    if dest_count < count {
+        panic!();
+    }
+
+    memset(env, dest, ch, count);
+}
 fn memcpy(
     env: &mut Environment,
     dest: MutVoidPtr,
@@ -239,6 +246,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(bzero(_, _)),
     // Functions shared with wchar.rs
     export_c_func!(memset(_, _, _)),
+    export_c_func!(__memset_chk(_, _, _, _)),
     export_c_func!(memcpy(_, _, _)),
     export_c_func!(memmove(_, _, _)),
     export_c_func!(memchr(_, _, _)),

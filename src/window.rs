@@ -162,6 +162,7 @@ pub struct Window {
     accelerometer: Option<sdl2::sensor::Sensor>,
     virtual_cursor_last: Option<(f32, f32, bool, bool)>,
     virtual_cursor_last_unsticky: Option<(f32, f32, Instant)>,
+    virtual_accelerometer_last: Option<(f32, f32, bool)>,
 }
 impl Window {
     /// Returns [true] if touchHLE is running on a device where we should always
@@ -301,6 +302,7 @@ impl Window {
             accelerometer,
             virtual_cursor_last: None,
             virtual_cursor_last_unsticky: None,
+            virtual_accelerometer_last: None,
         };
 
         // Set up OpenGL ES context used for splash screen and app UI rendering
@@ -358,6 +360,12 @@ impl Window {
             let out_y = (y + 0.5) * out_h as f32;
             (out_x, out_y)
         }
+        fn transform_virt_accel_coords(window: &Window, (in_x, in_y): (i32, i32)) -> (f32, f32) {
+            let (_, _, vw, vh) = window.viewport();
+            let out_x = ((in_x as f32 / vw as f32) * 2.0 - 1.0).clamp(-1.0, 1.0);
+            let out_y = ((in_y as f32 / vh as f32) * 2.0 - 1.0).clamp(-1.0, 1.0);
+            (out_x, out_y)
+        }
         fn translate_button(button: sdl2::controller::Button) -> Option<crate::options::Button> {
             match button {
                 sdl2::controller::Button::DPadLeft => Some(crate::options::Button::DPadLeft),
@@ -402,6 +410,38 @@ impl Window {
             } else {
                 break;
             };
+
+            // Virtual accelerometer
+            match event {
+                E::MouseButtonDown {
+                    x,
+                    y,
+                    mouse_btn: MouseButton::Right,
+                    ..
+                } => {
+                    let (x, y) = transform_virt_accel_coords(self, (x, y));
+                    self.virtual_accelerometer_last = Some((x, y, true));
+                }
+                E::MouseMotion {
+                    x, y, mousestate, ..
+                } => {
+                    if mousestate.right() {
+                        let (x, y) = transform_virt_accel_coords(self, (x, y));
+                        self.virtual_accelerometer_last = Some((x, y, true));
+                    }
+                }
+                E::MouseButtonUp {
+                    x,
+                    y,
+                    mouse_btn: MouseButton::Right,
+                    ..
+                } => {
+                    let (x, y) = transform_virt_accel_coords(self, (x, y));
+                    self.virtual_accelerometer_last = Some((x, y, false));
+                }
+                _ => {}
+            }
+
             self.event_queue.push_back(match event {
                 E::Quit { .. } => Event::Quit,
                 E::MouseButtonDown {
@@ -676,6 +716,7 @@ impl Window {
         } else if self.controllers.is_empty() {
             log!("Connect a controller to get accelerometer simulation.");
         }
+        log!("You can also hold right click and move the cursor to simulate the accelerometer.");
     }
 
     /// Get the real or simulated accelerometer output.
@@ -699,8 +740,18 @@ impl Window {
             }
         }
 
-        // Get left analog stick input. The range is [-1, 1] on each axis.
-        let (x, y, _) = self.get_controller_stick(options, true);
+        let (x, y) = if self
+            .virtual_accelerometer_last
+            .is_some_and(|(_x, _y, right_click_hold)| right_click_hold)
+        {
+            self.virtual_accelerometer_last
+                .map(|(x, y, _right_click_hold)| (x, y))
+                .unwrap()
+        } else {
+            // Get left analog stick input. The range is [-1, 1] on each axis.
+            let (x, y, _) = self.get_controller_stick(options, true);
+            (x, y)
+        };
 
         // Correct for window rotation
         let [x, y] = self.rotation_matrix().transform([x, y]);

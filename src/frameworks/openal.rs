@@ -189,7 +189,7 @@ fn alcGetProcAddress(
     env: &mut Environment,
     _device: ConstPtr<GuestALCdevice>,
     func_name: ConstPtr<u8>,
-) -> ConstVoidPtr {
+) -> MutVoidPtr {
     let mangled_func_name = format!("_{}", env.mem.cstr_at_utf8(func_name).unwrap());
     assert!(mangled_func_name.starts_with("_al"));
 
@@ -543,6 +543,11 @@ fn alBufferDataStatic(
 fn alcMacOSXMixerOutputRate(_env: &mut Environment, value: ALdouble) {
     log!("App wants to set mixer output sample rate to {} Hz", value);
 }
+fn alcMacOSXGetMixerOutputRate(_env: &mut Environment) -> ALdouble {
+    // Default was checked on iPhone 3GS, iOS 4.0.1
+    log!("App wants to get mixer output sample rate, returning default 0");
+    0.0
+}
 
 fn alDopplerFactor(_env: &mut Environment, value: ALfloat) {
     unsafe { al::alDopplerFactor(value) };
@@ -631,8 +636,8 @@ fn alGetInteger(_env: &mut Environment, _param: ALenum) -> ALint {
 fn alGetIntegerv(_env: &mut Environment, _param: ALenum, _values: MutPtr<ALint>) {
     todo!();
 }
-fn alGetProcAddress(_env: &mut Environment, _funcName: ConstPtr<u8>) -> MutVoidPtr {
-    todo!();
+fn alGetProcAddress(env: &mut Environment, funcName: ConstPtr<u8>) -> MutVoidPtr {
+    alcGetProcAddress(env, Ptr::null(), funcName)
 }
 fn alGetString(_env: &mut Environment, _param: ALenum) -> ConstPtr<u8> {
     todo!();
@@ -705,6 +710,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(alBufferData(_, _, _, _, _)),
     export_c_func!(alBufferDataStatic(_, _, _, _, _)),
     export_c_func!(alcMacOSXMixerOutputRate(_)),
+    export_c_func!(alcMacOSXGetMixerOutputRate()),
     export_c_func!(alcGetContextsDevice(_)),
     export_c_func!(alcGetCurrentContext()),
     export_c_func!(alcGetEnumValue(_, _)),

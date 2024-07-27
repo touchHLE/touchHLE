@@ -1502,6 +1502,16 @@ impl GLES for GLES1OnGL2 {
                 assert!(pname == gl21::COORD_REPLACE);
                 gl21::TexEnvf(target, pname, param)
             }
+            gl21::TEXTURE_2D => {
+                // This is not a valid TexEnvf target, but we're tolerating it
+                // for a Driver case.
+                assert_eq!(pname, gl21::TEXTURE_ENV_MODE);
+                log_dbg!(
+                    "Tolerating glTexEnvf(GL_TEXTURE_2D, TEXTURE_ENV_MODE, {})",
+                    param
+                );
+                gl21::TexEnvf(target, pname, param)
+            }
             _ => unimplemented!("TexEnvf target {}", target.to_string()),
         }
     }
@@ -1539,7 +1549,7 @@ impl GLES for GLES1OnGL2 {
                 gl21::TexEnvi(target, pname, param)
             }
             gl21::TEXTURE_2D => {
-                // This is not a valid TexEnvi target, but we a tolerating it
+                // This is not a valid TexEnvi target, but we're tolerating it
                 // for a Rayman 2 case.
                 assert!(pname == gl21::TEXTURE_ENV_MODE);
                 log_dbg!(

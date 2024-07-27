@@ -563,6 +563,10 @@ fn alDopplerVelocity(env: &mut Environment, value: ALfloat) {
     unsafe { al::alDopplerVelocity(value) };
 }
 
+fn alSpeedOfSound(_env: &mut Environment, value: ALfloat) {
+    unsafe { al::alSpeedOfSound(value) };
+}
+
 // TODO: more functions
 
 // Note: For some reasons Wolf3d registers many OpenAl functions, but actually
@@ -739,4 +743,5 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(alSourcePausev(_, _)),
     export_c_func!(alSourceStopv(_, _)),
     export_c_func!(alSourceRewindv(_, _)),
+    export_c_func!(alSpeedOfSound(_)),
 ];

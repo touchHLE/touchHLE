@@ -217,6 +217,11 @@ pub const CLASSES: ClassExports = objc_classes! {
     () = msg_super![env; this setHighlighted:highlighted];
     update(env, this);
 }
+- (())setFont:(id)font { // UIFont*
+    let label = env.objc.borrow_mut::<UIButtonHostObject>(this).title_label;
+    () = msg![env; label setFont:font];
+    update(env, this);
+}
 // TODO: observe focussing somehow
 
 - (id)currentTitle {

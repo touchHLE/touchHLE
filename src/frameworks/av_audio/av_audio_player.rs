@@ -227,12 +227,12 @@ pub const CLASSES: ClassExports = objc_classes! {
     AudioQueueDispose(env, audio_queue.unwrap(), true);
     env.mem.free(audio_queue_buffers.unwrap().cast());
 
-    let &AVAudioPlayerHostObject { audio_file_url, output_callback, num_of_loops, .. } = env.objc.borrow(this);
+    let &AVAudioPlayerHostObject { audio_file_url, output_callback, num_of_loops, audio_file_id, .. } = env.objc.borrow(this);
     *env.objc.borrow_mut::<AVAudioPlayerHostObject>(this) = AVAudioPlayerHostObject {
         audio_file_url,
         output_callback,
         num_of_loops,
-        audio_file_id: None,
+        audio_file_id,
         audio_desc: None,
         audio_queue: None,
         audio_queue_buffers: None,

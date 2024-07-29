@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d4b73c32_e96b0067",
+        "filename": "src/frameworks/foundation/ns_value.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 46,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-07-29T17:43:20Z",
+      "side": 1,
+      "message": "hhhm if it\u0027s unused, why keep it?",
+      "revId": "f8b8db646e55c89fcf1a85f69d3e806f1dda9dbe",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

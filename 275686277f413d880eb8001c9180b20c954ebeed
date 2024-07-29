@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "e623d2b7_e1a933fb",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021823
+      },
+      "writtenOn": "2024-07-29T05:05:07Z",
+      "side": 1,
+      "message": "Feel free to reject this one: I added it since i think it\u0027s convenient for development but it\u0027s not critical to anything",
+      "revId": "275686277f413d880eb8001c9180b20c954ebeed",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

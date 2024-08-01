@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d914e9a0_48cfe697",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021823
+      },
+      "writtenOn": "2024-08-01T23:46:25Z",
+      "side": 1,
+      "message": "This (seems?) to fix fastlane v1.7, I haven\u0027t checked super throughly but it boots and plays a bit",
+      "revId": "e90da58336287da05a0bc859160e52b5907a1ada",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

@@ -207,16 +207,19 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (id)URLForResource:(id)name // NSString*
        withExtension:(id)extension // NSString *
         subdirectory:(id)subpath { // NSString *
-   let path_string: id = msg![env; this pathForResource:name
+    let path_string: id = msg![env; this pathForResource:name
                                                  ofType:extension
                                             inDirectory:subpath];
-   let path_url: id = msg_class![env; NSURL alloc];
-   let path_url: id = msg![env; path_url initFileURLWithPath:path_string];
-   autorelease(env, path_url)
+    if path_string == nil {
+        return nil;
+    }
+    let path_url: id = msg_class![env; NSURL alloc];
+    let path_url: id = msg![env; path_url initFileURLWithPath:path_string];
+    autorelease(env, path_url)
 }
 - (id)URLForResource:(id)name // NSString*
        withExtension:(id)extension { // NSString *
-   msg![env; this URLForResource:name withExtension:extension subdirectory:nil]
+    msg![env; this URLForResource:name withExtension:extension subdirectory:nil]
 }
 
 - (id)localizedStringForKey:(id)key

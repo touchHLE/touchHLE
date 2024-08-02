@@ -1,6 +1,23 @@
 {
   "comments": [
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "944788c6_ad408e0e",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021823
+      },
+      "writtenOn": "2024-08-02T02:40:17Z",
+      "side": 1,
+      "message": "messed up the as_bool impl",
+      "revId": "f8b8db646e55c89fcf1a85f69d3e806f1dda9dbe",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "d4b73c32_e96b0067",
@@ -14,6 +31,24 @@
       "writtenOn": "2024-07-29T17:43:20Z",
       "side": 1,
       "message": "hhhm if it\u0027s unused, why keep it?",
+      "revId": "f8b8db646e55c89fcf1a85f69d3e806f1dda9dbe",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "43897417_7731ee1e",
+        "filename": "src/frameworks/foundation/ns_value.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 46,
+      "author": {
+        "id": 1021823
+      },
+      "writtenOn": "2024-08-02T02:40:17Z",
+      "side": 1,
+      "message": "I\u0027ve added the functions that use them.",
+      "parentUuid": "d4b73c32_e96b0067",
       "revId": "f8b8db646e55c89fcf1a85f69d3e806f1dda9dbe",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

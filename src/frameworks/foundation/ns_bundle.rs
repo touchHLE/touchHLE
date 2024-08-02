@@ -47,6 +47,8 @@ pub struct NSBundleHostObject {
     pub bundle: Option<Bundle>,
     /// NSString with bundle path.
     bundle_path: id,
+    /// NSString with bundle identifier.
+    bundle_identifier: id,
     /// NSURL with bundle path. [None] if not created yet.
     bundle_url: Option<id>,
     /// `NSDictionary*` for the `Info.plist` content. [None] if not created yet.
@@ -66,9 +68,12 @@ pub const CLASSES: ClassExports = objc_classes! {
     } else {
         let bundle_path = env.bundle.bundle_path().as_str().to_string();
         let bundle_path = ns_string::from_rust_string(env, bundle_path);
+        let bundle_identifier = env.bundle.bundle_identifier().to_string();
+        let bundle_identifier = ns_string::from_rust_string(env, bundle_identifier);
         let host_object = NSBundleHostObject {
             bundle: None,
             bundle_path,
+            bundle_identifier,
             bundle_url: None,
             info_dictionary: None,
         };
@@ -91,6 +96,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     let &NSBundleHostObject {
         bundle: _,
         bundle_path: _, // FIXME?
+        bundle_identifier: _, // FIXME?
         bundle_url,
         info_dictionary,
     } = env.objc.borrow(this);
@@ -105,6 +111,9 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 - (id)bundlePath {
     env.objc.borrow::<NSBundleHostObject>(this).bundle_path
+}
+- (id)bundleIdentifier {
+    env.objc.borrow::<NSBundleHostObject>(this).bundle_identifier
 }
 - (id)bundleURL {
     if let Some(url) = env.objc.borrow::<NSBundleHostObject>(this).bundle_url {

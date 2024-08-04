@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b0b9bb02_4bccfe7b",
+        "filename": "src/frameworks/foundation/ns_value.rs",
+        "patchSetId": 4
+      },
+      "lineNbr": 9,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-08-04T16:45:11Z",
+      "side": 1,
+      "message": "I think we prefer to `use crate:: Environment;` directly",
+      "revId": "5d33472af4e8c2d14ea2343e38041d3741b3c886",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

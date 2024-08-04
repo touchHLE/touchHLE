@@ -34,6 +34,24 @@
       "parentUuid": "4f19f6dc_30d6fe31",
       "revId": "ec76a76b249dda40b5e7a71447e2cca576f090de",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "c978f540_ed4d1600",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-08-04T16:49:10Z",
+      "side": 1,
+      "message": "The thing is, if you cherry pick this comment as is, it will break the ci on the trunk and it was the reason for reverting it.\n\nI think it should be fixed in the way independent of other unmerged commits.",
+      "parentUuid": "863fcfa4_a534d2ff",
+      "revId": "ec76a76b249dda40b5e7a71447e2cca576f090de",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

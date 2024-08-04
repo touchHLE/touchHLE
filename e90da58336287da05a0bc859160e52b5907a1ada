@@ -16,6 +16,23 @@
       "message": "This (seems?) to fix fastlane v1.7, I haven\u0027t checked super throughly but it boots and plays a bit",
       "revId": "e90da58336287da05a0bc859160e52b5907a1ada",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "62b08010_b34feef9",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-08-04T16:46:49Z",
+      "side": 1,
+      "message": "LGTM, but formating seems to be off - why do you need to add an extra space?",
+      "revId": "e90da58336287da05a0bc859160e52b5907a1ada",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

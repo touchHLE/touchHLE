@@ -108,7 +108,7 @@ jobs:
       run: cd android && ../gradle/gradle-7.3/bin/gradle assembleRelease && mv app/build/outputs/apk/release/app-release.apk ../touchHLE.apk
       env:
         # The version should match the ndkVersion defined in `android\app\build.gradle`
-        ANDROID_NDK_ROOT: $ANDROID_SDK_ROOT'/ndk/25.2.9519653'
+        ANDROID_NDK_ROOT: '${{ env.ANDROID_SDK_ROOT }}/ndk/25.2.9519653'
     - uses: actions/upload-artifact@v3
       with:
         name: touchHLE_Android_AArch64

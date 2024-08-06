@@ -22,6 +22,7 @@ pub const FUNCTION_LISTS: &[super::FunctionExports] = &[
     libc::ifaddrs::FUNCTIONS,
     libc::keymgr::FUNCTIONS,
     libc::netdb::FUNCTIONS,
+    libc::mach_host::FUNCTIONS,
     libc::mach_thread_info::FUNCTIONS,
     libc::mach_time::FUNCTIONS,
     libc::math::FUNCTIONS,

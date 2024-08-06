@@ -30,5 +30,6 @@ pub const CONSTANT_LISTS: &[super::ConstantExports] = &[
     media_player::movie_player::CONSTANTS,
     media_player::music_player::CONSTANTS,
     opengles::eagl::CONSTANTS,
+    uikit::ui_application::CONSTANTS,
     uikit::ui_device::CONSTANTS,
 ];

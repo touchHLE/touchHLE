@@ -6,7 +6,7 @@
 //! `UIApplication` and `UIApplicationMain`.
 
 use super::ui_device::*;
-use crate::dyld::{export_c_func, FunctionExports};
+use crate::dyld::{export_c_func, ConstantExports, FunctionExports, HostConstant};
 use crate::frameworks::foundation::{ns_array, ns_string, NSUInteger};
 use crate::frameworks::uikit::ui_nib::load_main_nib_file;
 use crate::mem::MutPtr;
@@ -307,5 +307,14 @@ pub(super) fn exit(env: &mut Environment) {
 
     std::process::exit(0);
 }
+
+pub const UIApplicationLaunchOptionsRemoteNotificationKey: &str =
+    "UIApplicationLaunchOptionsRemoteNotificationKey";
+
+/// `UIApplicationLaunchOptionsKey` values.
+pub const CONSTANTS: ConstantExports = &[(
+    "_UIApplicationLaunchOptionsRemoteNotificationKey",
+    HostConstant::NSString(UIApplicationLaunchOptionsRemoteNotificationKey),
+)];
 
 pub const FUNCTIONS: FunctionExports = &[export_c_func!(UIApplicationMain(_, _, _, _))];

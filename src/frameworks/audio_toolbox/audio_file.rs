@@ -282,6 +282,29 @@ fn AudioFileReadBytes(
     }
 }
 
+fn AudioFileReadPacketData(
+    env: &mut Environment,
+    in_audio_file: AudioFileID,
+    in_use_cache: bool,
+    out_num_bytes: MutPtr<u32>,
+    out_packet_descriptions: MutVoidPtr, // unimplemented
+    in_starting_packet: i64,
+    io_num_packets: MutPtr<u32>,
+    out_buffer: MutVoidPtr,
+) -> OSStatus {
+    // TODO: real VBR support
+    AudioFileReadPackets(
+        env,
+        in_audio_file,
+        in_use_cache,
+        out_num_bytes,
+        out_packet_descriptions,
+        in_starting_packet,
+        io_num_packets,
+        out_buffer,
+    )
+}
+
 pub fn AudioFileReadPackets(
     env: &mut Environment,
     in_audio_file: AudioFileID,
@@ -349,5 +372,6 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(AudioFileGetProperty(_, _, _, _)),
     export_c_func!(AudioFileReadBytes(_, _, _, _, _)),
     export_c_func!(AudioFileReadPackets(_, _, _, _, _, _, _)),
+    export_c_func!(AudioFileReadPacketData(_, _, _, _, _, _, _)),
     export_c_func!(AudioFileClose(_)),
 ];

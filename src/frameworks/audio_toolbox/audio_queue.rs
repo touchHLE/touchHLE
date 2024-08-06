@@ -86,7 +86,7 @@ pub struct AudioQueueBuffer {
     pub audio_data: MutVoidPtr,
     pub audio_data_byte_size: u32,
     user_data: MutVoidPtr,
-    _packet_description_capacity: u32,
+    packet_description_capacity: u32,
     /// Should be a `MutPtr<AudioStreamPacketDescription>`, but that's not
     /// implemented yet.
     _packet_descriptions: MutVoidPtr,
@@ -143,7 +143,26 @@ pub fn AudioQueueNewOutput(
         in_callback_run_loop
     };
 
-    let format = env.mem.read(in_format);
+    let mut format = env.mem.read(in_format);
+    if env
+        .bundle
+        .bundle_identifier()
+        .starts_with("com.ea.candcra.row")
+        && format.format_id == fourcc(b".mp3")
+    {
+        log!("Applying game-specific hack for C&C Red Alert: Fixing hardcoded audio format from .mp3 to PCM.");
+        format = AudioStreamBasicDescription {
+            sample_rate: 44100.0,
+            format_id: kAudioFormatLinearPCM,
+            format_flags: 12,
+            bytes_per_packet: 4,
+            frames_per_packet: 1,
+            bytes_per_frame: 4,
+            channels_per_frame: 2,
+            bits_per_channel: 16,
+            _reserved: 0,
+        }
+    }
 
     let host_object = AudioQueueHostObject {
         format,
@@ -224,6 +243,17 @@ pub fn AudioQueueSetParameter(
     0 // success
 }
 
+fn AudioQueueAllocateBufferWithPacketDescriptions(
+    env: &mut Environment,
+    in_aq: AudioQueueRef,
+    in_buffer_byte_size: GuestUSize,
+    _in_number_packet_desc: GuestUSize,
+    out_buffer: MutPtr<AudioQueueBufferRef>,
+) -> OSStatus {
+    // TODO: support packet descriptions
+    AudioQueueAllocateBuffer(env, in_aq, in_buffer_byte_size, out_buffer)
+}
+
 pub fn AudioQueueAllocateBuffer(
     env: &mut Environment,
     in_aq: AudioQueueRef,
@@ -237,13 +267,24 @@ pub fn AudioQueueAllocateBuffer(
         .get_mut(&in_aq)
         .unwrap();
 
+    let packet_description_capacity = if env
+        .bundle
+        .bundle_identifier()
+        .starts_with("com.ea.candcra.row")
+    {
+        log!("Applying game-specific hack for C&C Red Alert: Setting packet description capacity to 1024.");
+        1024
+    } else {
+        0
+    };
+
     let audio_data = env.mem.alloc(in_buffer_byte_size);
     let buffer_ptr = env.mem.alloc_and_write(AudioQueueBuffer {
         audio_data_bytes_capacity: in_buffer_byte_size,
         audio_data,
         audio_data_byte_size: 0,
         user_data: Ptr::null(),
-        _packet_description_capacity: 0,
+        packet_description_capacity,
         _packet_descriptions: Ptr::null(),
         _packet_description_count: 0,
     });
@@ -847,6 +888,12 @@ fn AudioQueueReset(env: &mut Environment, in_aq: AudioQueueRef) -> OSStatus {
     0 // success
 }
 
+fn AudioQueueFlush(_env: &mut Environment, in_aq: AudioQueueRef) -> OSStatus {
+    return_if_null!(in_aq);
+    // TODO
+    0 // success
+}
+
 fn AudioQueueFreeBuffer(
     env: &mut Environment,
     in_aq: AudioQueueRef,
@@ -930,6 +977,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(AudioQueueNewOutput(_, _, _, _, _, _, _)),
     export_c_func!(AudioQueueGetParameter(_, _, _)),
     export_c_func!(AudioQueueSetParameter(_, _, _)),
+    export_c_func!(AudioQueueAllocateBufferWithPacketDescriptions(_, _, _, _)),
     export_c_func!(AudioQueueAllocateBuffer(_, _, _)),
     export_c_func!(AudioQueueEnqueueBuffer(_, _, _, _)),
     export_c_func!(AudioQueueAddPropertyListener(_, _, _, _)),
@@ -941,6 +989,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(AudioQueuePause(_)),
     export_c_func!(AudioQueueStop(_, _)),
     export_c_func!(AudioQueueReset(_)),
+    export_c_func!(AudioQueueFlush(_)),
     export_c_func!(AudioQueueFreeBuffer(_, _)),
     export_c_func!(AudioQueueDispose(_, _)),
 ];

@@ -581,6 +581,8 @@ impl GLES for GLES1OnGL2 {
     unsafe fn Enable(&mut self, cap: GLenum) {
         if ARRAYS.iter().any(|&ArrayInfo { name, .. }| name == cap) {
             log_dbg!("Tolerating glEnable({:#x}) of client state", cap);
+        } else if cap == gl21::PERSPECTIVE_CORRECTION_HINT || cap == gl21::SMOOTH {
+            log_dbg!("Tolerating glEnable({:#x})", cap);
         } else {
             assert!(CAPABILITIES.contains(&cap));
         }

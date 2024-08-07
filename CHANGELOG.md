@@ -25,6 +25,7 @@ Compatibility:
   - [Asphalt 4: Elite Racing](https://appdb.touchhle.org/apps/96) (@ciciplusplus)
   - [Prince of Persia: Warrior Within](https://appdb.touchhle.org/apps/127) (@ciciplusplus)
   - [Resident Evil 4: Mobile Edition](https://appdb.touchhle.org/apps/91) (@alborrajo)
+  - [Command & Conquer: Red Alert](https://appdb.touchhle.org/apps/404) (@ciciplusplus)
 - API support improvements:
   - Various small contributions. (@hikari-no-yume, @alborrajo, @ciciplusplus, @atasro2, @LennyKappa)
   - UITextField now supports real text input with a keyboard. On Windows/macOS physical keyboard is used, on Android it's done via a system soft keyboard. (@ciciplusplus)

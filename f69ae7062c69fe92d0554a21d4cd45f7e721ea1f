@@ -69,6 +69,24 @@
       "parentUuid": "bd4570c8_dee933ef",
       "revId": "f69ae7062c69fe92d0554a21d4cd45f7e721ea1f",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b4e45855_0f5cbbf8",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-08-08T18:20:43Z",
+      "side": 1,
+      "message": "I don\u0027t really like this approach to handling Microsoft ADPCM because it\u0027s a lower-quality implementation than what we have for the Apple “ima4” format. Couldn\u0027t we do just-in-time decoding for the Microsoft format too?",
+      "parentUuid": "0254b4a2_b06ee31e",
+      "revId": "f69ae7062c69fe92d0554a21d4cd45f7e721ea1f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

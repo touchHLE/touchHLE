@@ -87,6 +87,24 @@
       "parentUuid": "0254b4a2_b06ee31e",
       "revId": "f69ae7062c69fe92d0554a21d4cd45f7e721ea1f",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6551b2d0_8f54f916",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021823
+      },
+      "writtenOn": "2024-08-09T01:35:56Z",
+      "side": 1,
+      "message": "It would mean we\u0027d have to do the wav parsing ourselves or with something other than hound, since it doesn\u0027t support ima-adpcm. (of course, we can also solve this by \"properly\" decoding symphonia, although that\u0027s it\u0027s own can of worms)",
+      "parentUuid": "b4e45855_0f5cbbf8",
+      "revId": "f69ae7062c69fe92d0554a21d4cd45f7e721ea1f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

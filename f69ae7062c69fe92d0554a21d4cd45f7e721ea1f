@@ -105,6 +105,24 @@
       "parentUuid": "b4e45855_0f5cbbf8",
       "revId": "f69ae7062c69fe92d0554a21d4cd45f7e721ea1f",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fea9207a_eb50b684",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-08-09T01:52:23Z",
+      "side": 1,
+      "message": "Oh, right, hound is the limiting factor. :/ That library has been quite annoying so far…\n\nCan Symphonia read WAV files in an acceptable way? I assume it might be a pain.",
+      "parentUuid": "6551b2d0_8f54f916",
+      "revId": "f69ae7062c69fe92d0554a21d4cd45f7e721ea1f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

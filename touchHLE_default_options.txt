@@ -90,3 +90,6 @@ com.gameloft.Earthworm: --landscape-left --button-to-touch=DPadUp,72,194 --butto
 
 # TV Show King
 com.gameloft.TVSK: --landscape-right
+
+# CSI: Miami
+com.gameloft.csimiami: --landscape-left

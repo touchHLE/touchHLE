@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1831798d_49196555",
+        "filename": "src/frameworks/uikit/ui_view/ui_scroll_view/ui_text_view.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 194,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-08-11T15:28:08Z",
+      "side": 1,
+      "message": "I\u0027m nearly convinced this is the _right_ thing to do",
+      "revId": "c331c007c1ed13f8f9437866fc66fc6ee246c806",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

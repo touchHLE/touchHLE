@@ -33,6 +33,24 @@
       "message": "I don\u0027t think `fs.rs` should try to handle the concept of opening of directories, it doesn\u0027t really map cleanly to the underlying Rust filesystem APIs. IMO it should be in `posix_io.rs`.",
       "revId": "b2a8b48f5180a298f4aa667f984b54386fc4f79d",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a40dc513_5ffbc5da",
+        "filename": "src/fs.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 348,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-08-12T20:46:09Z",
+      "side": 1,
+      "message": "On second thoughts, maybe this is fine. We might need something like this once we allow reading the list of files in the directory, so that it behaves correctly if the directory is renamed while it\u0027s open.",
+      "parentUuid": "26846052_1c6e8979",
+      "revId": "b2a8b48f5180a298f4aa667f984b54386fc4f79d",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

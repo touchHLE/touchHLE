@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "7a77779f_aeb675ce",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-08-12T19:12:40Z",
+      "side": 1,
+      "message": "LGTM\n\nwill give +2 if you rebase on the trunk",
+      "revId": "b2a8b48f5180a298f4aa667f984b54386fc4f79d",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

@@ -93,3 +93,6 @@ com.gameloft.TVSK: --landscape-right
 
 # CSI: Miami
 com.gameloft.csimiami: --landscape-left
+
+# Wave Blazer
+com.polarbit.waveblazer: --landscape-left

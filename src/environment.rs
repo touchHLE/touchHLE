@@ -350,6 +350,10 @@ impl Environment {
             env.objc.dump_classes();
         }
 
+        if env.options.dump_lazy_syms {
+            env.dyld.dump_lazy_symbols(&env.bins);
+        }
+
         env.cpu.branch(entry_point_addr);
         Ok(env)
     }

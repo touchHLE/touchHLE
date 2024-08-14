@@ -123,6 +123,24 @@
       "parentUuid": "83fdd57c_ef60a5a9",
       "revId": "0c40a709e2585a7b21834d997f2ef8345c000ad3",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b433ff8c_5e5439d3",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 15
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-08-14T22:34:31Z",
+      "side": 1,
+      "message": "I approved LennyKappa\u0027s version, so I guess this patch can be abandoned once that\u0027s merged. Shame that effort was duplicated, but this kind of stuff just happens I guess.",
+      "parentUuid": "46686f3f_6d9e6f56",
+      "revId": "0c40a709e2585a7b21834d997f2ef8345c000ad3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "e1716fdc_f9c9c3d9",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 6
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-08-14T08:33:17Z",
+      "side": 1,
+      "message": "Any particular reason for not submitting yet?\n\n(i need to have some methods from this patch set and I don\u0027t want to re-implement them on my own as it would create a merge conflict)",
+      "revId": "790bbd283b3354b62d4f88ace387821935b1e82c",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

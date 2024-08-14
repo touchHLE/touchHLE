@@ -16,6 +16,24 @@
       "message": "Any particular reason for not submitting yet?\n\n(i need to have some methods from this patch set and I don\u0027t want to re-implement them on my own as it would create a merge conflict)",
       "revId": "790bbd283b3354b62d4f88ace387821935b1e82c",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "71730ed6_6be2a44e",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 6
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021823
+      },
+      "writtenOn": "2024-08-14T16:18:18Z",
+      "side": 1,
+      "message": "nope, just thought you +1ed it",
+      "parentUuid": "e1716fdc_f9c9c3d9",
+      "revId": "790bbd283b3354b62d4f88ace387821935b1e82c",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

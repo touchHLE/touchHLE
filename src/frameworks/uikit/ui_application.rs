@@ -308,13 +308,21 @@ pub(super) fn exit(env: &mut Environment) {
     std::process::exit(0);
 }
 
+pub const UIApplicationDidReceiveMemoryWarningNotification: &str =
+    "UIApplicationDidReceiveMemoryWarningNotification";
 pub const UIApplicationLaunchOptionsRemoteNotificationKey: &str =
     "UIApplicationLaunchOptionsRemoteNotificationKey";
 
 /// `UIApplicationLaunchOptionsKey` values.
-pub const CONSTANTS: ConstantExports = &[(
-    "_UIApplicationLaunchOptionsRemoteNotificationKey",
-    HostConstant::NSString(UIApplicationLaunchOptionsRemoteNotificationKey),
-)];
+pub const CONSTANTS: ConstantExports = &[
+    (
+        "_UIApplicationDidReceiveMemoryWarningNotification",
+        HostConstant::NSString(UIApplicationDidReceiveMemoryWarningNotification),
+    ),
+    (
+        "_UIApplicationLaunchOptionsRemoteNotificationKey",
+        HostConstant::NSString(UIApplicationLaunchOptionsRemoteNotificationKey),
+    ),
+];
 
 pub const FUNCTIONS: FunctionExports = &[export_c_func!(UIApplicationMain(_, _, _, _))];

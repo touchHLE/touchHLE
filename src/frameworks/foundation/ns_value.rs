@@ -6,13 +6,13 @@
 //! The `NSValue` class cluster, including `NSNumber`.
 
 use super::NSUInteger;
-use crate::Environment;
 use crate::frameworks::foundation::ns_string::from_rust_string;
 use crate::frameworks::foundation::NSInteger;
 use crate::objc::{
     autorelease, id, msg, msg_class, objc_classes, retain, Class, ClassExports, HostObject,
     NSZonePtr,
 };
+use crate::Environment;
 
 macro_rules! impl_AsValue {
     ($method_name:tt, $typ:tt) => {

@@ -34,6 +34,24 @@
       "parentUuid": "caa0120c_f247ed62",
       "revId": "e467164fbd4731b79f78510875326b29099c2941",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b7ae09a2_66dc46d0",
+        "filename": "src/libc/posix_io/stat.rs",
+        "patchSetId": 18
+      },
+      "lineNbr": 33,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-08-14T22:38:40Z",
+      "side": 1,
+      "message": "Actually these are in the POSIX standard I think, maybe I was worrying too much.",
+      "parentUuid": "fc5a900f_96e5b19c",
+      "revId": "e467164fbd4731b79f78510875326b29099c2941",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

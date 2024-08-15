@@ -93,3 +93,6 @@ com.gameloft.TVSK: --landscape-right
 
 # CSI: Miami
 com.gameloft.csimiami: --landscape-left
+
+# Command & Conquer: Red Alert
+com.ea.candcra.row: --landscape-left

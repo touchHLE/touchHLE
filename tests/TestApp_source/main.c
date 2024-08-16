@@ -1014,6 +1014,7 @@ int test_fwrite() {
   if (res != 0) {
     return -1;
   }
+  return 0;
 }
 
 int test_open() {

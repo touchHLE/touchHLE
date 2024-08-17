@@ -118,11 +118,31 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.borrow::<NSTimerHostObject>(this).due_by.is_some()
 }
 
--(())invalidate {
+- (())invalidate {
     // Timer might already be invalid, don't try to remove it twice.
     if env.objc.borrow_mut::<NSTimerHostObject>(this).due_by.take().is_some() {
         let run_loop: id = msg_class![env; NSRunLoop currentRunLoop];
         ns_run_loop::remove_timer(env, run_loop, this);
+    }
+}
+
+- (())fire {
+    let &NSTimerHostObject {
+        target,
+        selector,
+        repeats,
+        ..
+    } = env.objc.borrow(this);
+
+    let pool: id = msg_class![env; NSAutoreleasePool new];
+
+    // Signature should be `- (void)timerDidFire:(NSTimer *)which`.
+    let _: () = msg_send(env, (target, selector, this));
+
+    release(env, pool);
+
+    if !repeats {
+        () = msg![env; this invalidate];
     }
 }
 

@@ -9,8 +9,8 @@ use crate::abi::{DotDotDot, VaList};
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::frameworks::foundation::{ns_string, unichar};
 use crate::libc::clocale::{setlocale, LC_CTYPE};
-use crate::libc::posix_io::{STDERR_FILENO, STDOUT_FILENO};
-use crate::libc::stdio::FILE;
+use crate::libc::posix_io::{STDERR_FILENO, STDIN_FILENO, STDOUT_FILENO};
+use crate::libc::stdio::{fwrite, FILE};
 use crate::libc::stdlib::{atof_inner, strtol_inner, strtoul};
 use crate::libc::string::strlen;
 use crate::libc::wchar::wchar_t;
@@ -788,9 +788,21 @@ fn vfprintf(env: &mut Environment, stream: MutPtr<FILE>, format: ConstPtr<u8>, a
     let res = printf_inner::<false, _>(env, |mem, idx| mem.read(format + idx), arg);
     // TODO: I/O error handling
     match env.mem.read(stream).fd {
+        STDIN_FILENO => panic!("Unexpected file descriptor"),
         STDOUT_FILENO => _ = std::io::stdout().write_all(&res),
         STDERR_FILENO => _ = std::io::stderr().write_all(&res),
-        _ => unimplemented!(),
+        _ => {
+            let buf = env.mem.alloc_and_write_cstr(res.as_slice());
+            let result = fwrite(
+                env,
+                buf.cast_const().cast(),
+                1,
+                res.len() as GuestUSize,
+                stream,
+            );
+            assert_eq!(result, res.len() as GuestUSize);
+            env.mem.free(buf.cast());
+        }
     }
     res.len().try_into().unwrap()
 }

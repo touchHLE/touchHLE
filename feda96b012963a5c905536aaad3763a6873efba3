@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "21aca4ba_ffc92a60",
+        "filename": "src/frameworks/opengles/gles_guest.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 139,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-08-17T15:50:59Z",
+      "side": 1,
+      "message": "Due to the automatic type conversion feature, I think it might be necessary to also support getting the number and maybe the list via glGetFloatv? But it\u0027s such an unusual possibility that I would be fine with just asserting that this never happens.",
+      "revId": "feda96b012963a5c905536aaad3763a6873efba3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

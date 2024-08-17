@@ -98,12 +98,15 @@ fn AudioOutputUnitStart(env: &mut Environment, ci: AudioUnit) -> OSStatus {
 }
 
 fn AudioOutputUnitStop(env: &mut Environment, ci: AudioUnit) -> OSStatus {
-    audio_components::State::get(&mut env.framework_state)
+    if let Some(audio_unit) = audio_components::State::get(&mut env.framework_state)
         .audio_component_instances
         .get_mut(&ci)
-        .unwrap()
-        .started = false;
-    0 // success
+    {
+        audio_unit.started = false;
+        0 // success
+    } else {
+        -1
+    }
 }
 
 pub const FUNCTIONS: FunctionExports = &[

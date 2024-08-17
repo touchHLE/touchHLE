@@ -50,8 +50,15 @@ fn NSHomeDirectory(env: &mut Environment) -> id {
     autorelease(env, dir)
 }
 
+fn NSTemporaryDirectory(env: &mut Environment) -> id {
+    let dir = env.fs.tmp_directory();
+    let dir = ns_string::from_rust_string(env, String::from(dir.as_str()));
+    autorelease(env, dir)
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(NSHomeDirectory()),
+    export_c_func!(NSTemporaryDirectory()),
     export_c_func!(NSSearchPathForDirectoriesInDomains(_, _, _)),
 ];
 

@@ -16,7 +16,9 @@ pub mod ui_scroll_view;
 pub mod ui_window;
 
 use super::ui_graphics::{UIGraphicsPopContext, UIGraphicsPushContext};
-use crate::frameworks::core_graphics::cg_affine_transform::CGAffineTransform;
+use crate::frameworks::core_graphics::cg_affine_transform::{
+    CGAffineTransform, CGAffineTransformIdentity,
+};
 use crate::frameworks::core_graphics::cg_color::CGColorRef;
 use crate::frameworks::core_graphics::cg_context::{CGContextClearRect, CGContextRef};
 use crate::frameworks::core_graphics::{CGFloat, CGPoint, CGRect};
@@ -394,6 +396,9 @@ pub const CLASSES: ClassExports = objc_classes! {
     msg![env; layer setFrame:frame]
 }
 
+- (CGAffineTransform)transform {
+    CGAffineTransformIdentity
+}
 - (())setTransform:(CGAffineTransform)transform {
     log!("TODO: [{:?} setTransform:{:?}]", this, transform);
 }

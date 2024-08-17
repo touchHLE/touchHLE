@@ -160,6 +160,8 @@ struct dirent {
 DIR *opendir(const char *);
 struct dirent *readdir(DIR *);
 int closedir(DIR *);
+int scandir(const char *, struct dirent ***, int (*)(struct dirent *),
+            int (*)(const void *, const void *));
 
 // <wchar.h>
 int swscanf(const wchar_t *, const wchar_t *, ...);
@@ -933,6 +935,33 @@ int test_dirent() {
   return 0;
 }
 
+int test_scandir() {
+  struct dirent **namelist;
+  int n = scandir(path_test_app, &namelist, NULL, NULL);
+  if (n < 0) {
+    return -1;
+  }
+  char *contents[] = {"TestApp", "Info.plist", "PkgInfo"};
+  int counts[] = {1, 1, 1};
+  int total = sizeof(contents) / sizeof(char *);
+  while (n--) {
+    for (int i = 0; i < total; i++) {
+      if (strcmp(contents[i], namelist[n]->d_name) == 0) {
+        counts[i]--;
+        break;
+      }
+    }
+    free(namelist[n]);
+  }
+  free(namelist);
+  for (int i = 0; i < total; i++) {
+    if (counts[i] != 0) {
+      return -2;
+    }
+  }
+  return 0;
+}
+
 int test_strchr() {
   char *src = "abc";
   if (strchr(src, 'a')[0] != 'a' || strrchr(src, 'a')[0] != 'a')
@@ -1131,6 +1160,7 @@ struct {
     FUNC_DEF(test_strtoul),
     FUNC_DEF(test_strtol),
     FUNC_DEF(test_dirent),
+    FUNC_DEF(test_scandir),
     FUNC_DEF(test_strchr),
     FUNC_DEF(test_swprintf),
     FUNC_DEF(test_realpath),

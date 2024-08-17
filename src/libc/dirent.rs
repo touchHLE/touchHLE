@@ -5,10 +5,11 @@
  */
 //! `dirent.h`
 
+use crate::abi::GuestFunction;
 use crate::dyld::FunctionExports;
 use crate::fs::GuestPath;
 use crate::libc::errno::set_errno;
-use crate::mem::{ConstPtr, MutPtr, Ptr, SafeRead};
+use crate::mem::{guest_size_of, ConstPtr, MutPtr, Ptr, SafeRead};
 use crate::{export_c_func, impl_GuestRet_for_large_struct, Environment};
 use std::collections::HashMap;
 
@@ -130,8 +131,52 @@ fn closedir(env: &mut Environment, dirp: MutPtr<DIR>) -> i32 {
     0 // Success
 }
 
+fn scandir(
+    env: &mut Environment,
+    dirname: ConstPtr<u8>,
+    list: MutPtr<MutPtr<MutPtr<dirent>>>,
+    select: GuestFunction, // int (*select)(const struct dirent *)
+    compar: GuestFunction, // int (*compar)(const struct dirent **, const struct dirent **)
+) -> i32 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
+    assert!(select.to_ptr().is_null());
+    assert!(compar.to_ptr().is_null());
+
+    let dirp = opendir(env, dirname);
+    if dirp.is_null() {
+        // TODO: set errno
+        return -1;
+    }
+    let mut next_dir_entry = readdir(env, dirp);
+    let mut tmp_vec: Vec<MutPtr<dirent>> = vec![];
+    while !next_dir_entry.is_null() {
+        tmp_vec.push(next_dir_entry);
+        next_dir_entry = readdir(env, dirp);
+    }
+    // we want to free dirp, but not entries themselves
+    // so, we're not calling closedir() here
+    env.libc_state.dirent.read_dirs.remove(&dirp);
+    env.libc_state.dirent.open_dirs.remove(&dirp);
+    env.mem.free(dirp.cast());
+
+    let count: i32 = tmp_vec.len() as i32;
+    let size = guest_size_of::<MutPtr<dirent>>() * count as u32;
+    let mut output: MutPtr<MutPtr<dirent>> = env.mem.alloc(size).cast();
+    env.mem.write(list, output);
+
+    for entry in tmp_vec {
+        env.mem.write(output, entry);
+        output += 1;
+    }
+
+    count
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(opendir(_)),
     export_c_func!(readdir(_)),
     export_c_func!(closedir(_)),
+    export_c_func!(scandir(_, _, _, _)),
 ];

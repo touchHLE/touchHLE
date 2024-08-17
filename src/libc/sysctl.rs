@@ -7,8 +7,15 @@
 
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::libc::errno::set_errno;
-use crate::mem::{ConstPtr, GuestUSize, MutPtr, MutVoidPtr};
+use crate::libc::sysctl::SysInfoType::String;
+use crate::mem::{guest_size_of, ConstPtr, GuestUSize, MutPtr, MutVoidPtr};
 use crate::Environment;
+
+enum SysInfoType {
+    String(&'static [u8]),
+    Int32(i32),
+    Int64(i64),
+}
 
 fn sysctl(
     env: &mut Environment,
@@ -50,26 +57,69 @@ fn sysctlbyname(
 
     let name_str = env.mem.cstr_at_utf8(name).unwrap();
     log_dbg!(
-        "TODO: sysctlbyname({:?}, {:?}, {:?}, {:?}, {:x})",
+        "sysctlbyname({:?}, {:?}, {:?}, {:?}, {:x})",
         name_str,
         oldp,
         oldlenp,
         newp,
         newlen
     );
-    assert_eq!(name_str, "hw.machine");
-    if oldp.is_null() && newp.is_null() {
-        // "iPhone1,1"
-        env.mem.write(oldlenp, 10);
+
+    assert!(newp.is_null());
+    assert_eq!(newlen, 0);
+
+    // Below values corresponds to the original iPhone.
+    // Reference https://www.mail-archive.com/misc@openbsd.org/msg80988.html
+    let val: SysInfoType = match name_str {
+        // Generic CPU, I/O
+        "hw.machine" => String(b"iPhone1,1"),
+        "hw.model" => String(b"M68AP"),
+        "hw.ncpu" => SysInfoType::Int32(1),
+        "hw.cpufrequency" => SysInfoType::Int64(412000000),
+        "hw.busfrequency" => SysInfoType::Int64(103000000),
+        "hw.physmem" => SysInfoType::Int32(121634816), // not sure about this type
+        "hw.usermem" => SysInfoType::Int32(93564928), // not sure about this type
+        "hw.memsize" => SysInfoType::Int64(121634816),
+        "hw.pagesize" => SysInfoType::Int64(4096),
+        // High kernel limits
+        "kern.ostype" => String(b"Darwin"),
+        "kern.osrelease" => String(b"10.0.0d3"),
+        "kern.osversion" => String(b"7A341"),
+        "kern.hostname" => String(b"touchHLE"), // this is arbitrary
+        "kern.version" => String(b"Darwin Kernel Version 10.0.0d3: Wed May 13 22:11:58 PDT 2009; root:xnu-1357.2.89~4/RELEASE_ARM_S5L8900X"),
+        _str => unimplemented!("{}", _str)
+    };
+    let len: GuestUSize = match val {
+        String(str) => str.len() as GuestUSize + 1,
+        SysInfoType::Int32(_) => guest_size_of::<i32>(),
+        SysInfoType::Int64(_) => guest_size_of::<i64>(),
+    };
+    if oldp.is_null() {
+        env.mem.write(oldlenp, len);
         return 0;
     }
     assert!(!oldp.is_null() && !oldlenp.is_null());
-    assert!(newp.is_null());
-    let hw_machine_str = env.mem.alloc_and_write_cstr(b"iPhone1,1");
-    assert_eq!(env.mem.read(oldlenp), 10);
-    env.mem
-        .memmove(oldp, hw_machine_str.cast().cast_const(), 10);
-    env.mem.free(hw_machine_str.cast());
+    let oldlen = env.mem.read(oldlenp);
+    if oldlen < len {
+        // TODO: set errno
+        // TODO: write partial data
+        log!("sysctlbyname for '{}': the buffer of size {} is too low to fit the value of size {}, returning -1", name_str, oldlen, len);
+        return -1;
+    }
+    match val {
+        String(str) => {
+            let sysctl_str = env.mem.alloc_and_write_cstr(str);
+            env.mem.memmove(oldp, sysctl_str.cast().cast_const(), len);
+            env.mem.free(sysctl_str.cast());
+        }
+        SysInfoType::Int32(num) => {
+            env.mem.write(oldp.cast(), num);
+        }
+        SysInfoType::Int64(num) => {
+            env.mem.write(oldp.cast(), num);
+        }
+    }
+    env.mem.write(oldlenp, len);
     0 // success
 }
 

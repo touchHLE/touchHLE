@@ -10,7 +10,7 @@ pub mod stat;
 use crate::abi::DotDotDot;
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::fs::{GuestFile, GuestOpenOptions, GuestPath};
-use crate::libc::errno::set_errno;
+use crate::libc::errno::{set_errno, EBADF};
 use crate::mem::{ConstPtr, ConstVoidPtr, GuestISize, GuestUSize, MutPtr, MutVoidPtr, Ptr};
 use crate::Environment;
 use std::io::{Read, Seek, SeekFrom, Write};
@@ -67,6 +67,11 @@ pub const O_NOFOLLOW: OpenFlag = 0x100;
 pub const O_CREAT: OpenFlag = 0x200;
 pub const O_TRUNC: OpenFlag = 0x400;
 pub const O_EXCL: OpenFlag = 0x800;
+
+/// File control command flags.
+/// This alias is for readability, POSIX just uses `int`.
+pub type FileControlCommand = i32;
+const F_NOCACHE: FileControlCommand = 48;
 
 pub type FLockFlag = i32;
 pub const LOCK_SH: FLockFlag = 1;
@@ -506,6 +511,38 @@ fn chdir(env: &mut Environment, path_ptr: ConstPtr<u8>) -> i32 {
 }
 // TODO: fchdir(), once open() on a directory is supported.
 
+fn fcntl(
+    env: &mut Environment,
+    fd: FileDescriptor,
+    cmd: FileControlCommand,
+    args: DotDotDot,
+) -> i32 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
+    if fd >= NORMAL_FILENO_BASE
+        && env
+            .libc_state
+            .posix_io
+            .files
+            .get(fd_to_file_idx(fd))
+            .is_none()
+    {
+        set_errno(env, EBADF);
+        return -1;
+    }
+
+    assert_eq!(cmd, F_NOCACHE);
+    let mut args = args.start();
+    let arg: i32 = args.next(env);
+    assert_eq!(arg, 1);
+    log!(
+        "TODO: Ignoring enabling F_NOCACHE for file descriptor {}",
+        fd
+    );
+    0 // success
+}
+
 fn flock(env: &mut Environment, fd: FileDescriptor, operation: FLockFlag) -> i32 {
     // TODO: handle errno properly
     set_errno(env, 0);
@@ -534,6 +571,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(rename(_, _)),
     export_c_func!(getcwd(_, _)),
     export_c_func!(chdir(_)),
+    export_c_func!(fcntl(_, _, _)),
     export_c_func!(flock(_, _)),
     export_c_func!(ftruncate(_, _)),
 ];

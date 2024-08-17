@@ -12,6 +12,7 @@ use crate::Environment;
 use std::io::Write;
 
 pub const EPERM: i32 = 1;
+pub const EBADF: i32 = 9;
 pub const EDEADLK: i32 = 11;
 pub const EBUSY: i32 = 16;
 pub const EEXIST: i32 = 17;

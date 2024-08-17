@@ -8,7 +8,7 @@
 use crate::abi::GuestFunction;
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::libc::errno::{EDEADLK, EINVAL};
-use crate::mem::{ConstPtr, MutPtr, MutVoidPtr, SafeRead};
+use crate::mem::{ConstPtr, ConstVoidPtr, MutPtr, MutVoidPtr, SafeRead};
 use crate::{Environment, ThreadId};
 use std::collections::HashMap;
 
@@ -235,6 +235,36 @@ fn pthread_mach_thread_np(env: &mut Environment, thread: pthread_t) -> mach_port
     host_object.thread_id.try_into().unwrap()
 }
 
+fn pthread_getschedparam(
+    _env: &mut Environment,
+    thread: pthread_t,
+    policy: i32,
+    param: MutVoidPtr,
+) -> i32 {
+    log_dbg!(
+        "TODO: pthread_getschedparam({:?}, {}, {:?})",
+        thread,
+        policy,
+        param
+    );
+    0
+}
+
+fn pthread_setschedparam(
+    _env: &mut Environment,
+    thread: pthread_t,
+    policy: i32,
+    param: ConstVoidPtr,
+) -> i32 {
+    log_dbg!(
+        "TODO: pthread_setschedparam({:?}, {}, {:?})",
+        thread,
+        policy,
+        param
+    );
+    0
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(pthread_attr_init(_)),
     export_c_func!(pthread_attr_setdetachstate(_, _)),
@@ -245,4 +275,6 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(pthread_setcanceltype(_, _)),
     export_c_func!(pthread_testcancel()),
     export_c_func!(pthread_mach_thread_np(_)),
+    export_c_func!(pthread_getschedparam(_, _, _)),
+    export_c_func!(pthread_setschedparam(_, _, _)),
 ];

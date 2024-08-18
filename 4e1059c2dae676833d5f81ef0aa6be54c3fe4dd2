@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ee5d0afd_b1b5d394",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 14
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-08-18T17:51:45Z",
+      "side": 1,
+      "message": "I\u0027m not sure about this one.\nCould you use existing semaphore implementation interfaces without re-using implementation details?",
+      "revId": "4e1059c2dae676833d5f81ef0aa6be54c3fe4dd2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

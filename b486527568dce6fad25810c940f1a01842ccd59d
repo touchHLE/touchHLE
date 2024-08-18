@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "01b73652_a0039a64",
+        "filename": "src/frameworks/foundation/ns_file_manager.rs",
+        "patchSetId": 18
+      },
+      "lineNbr": 91,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-08-18T16:37:35Z",
+      "side": 1,
+      "message": "Does it work well with relative paths?\nI know that we already doing some resolving inside this method, but does it cover all of cases? Maybe some additional testing is needed to replicate iOS behavior (or just some assertion about the path)",
+      "revId": "b486527568dce6fad25810c940f1a01842ccd59d",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

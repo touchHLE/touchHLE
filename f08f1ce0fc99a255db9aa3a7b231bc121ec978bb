@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "dfcc0095_e269104d",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-08-18T17:25:38Z",
+      "side": 1,
+      "message": "you should probably group such patch sets in batches",
+      "revId": "f08f1ce0fc99a255db9aa3a7b231bc121ec978bb",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

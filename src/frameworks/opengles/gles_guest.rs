@@ -487,8 +487,11 @@ unsafe fn translate_pointer_or_offset_to_host(
         std::ptr::null()
     } else {
         let pointer = pointer_or_offset;
-        // bounds checking is hopeless here
-        mem.ptr_at(pointer.cast::<u8>(), 0).cast::<GLvoid>()
+        // We need to use an unchecked version of ptr_at to avoid crashing here
+        // if dynamic state was disabled.
+        // Also, bounds checking is hopeless here
+        mem.unchecked_ptr_at(pointer.cast::<u8>(), 0)
+            .cast::<GLvoid>()
     }
 }
 

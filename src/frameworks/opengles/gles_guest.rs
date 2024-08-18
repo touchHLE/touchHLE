@@ -80,10 +80,8 @@ fn glEnable(env: &mut Environment, cap: GLenum) {
         unsafe { gles.Enable(cap) };
     });
 }
-fn glIsEnabled(env: &mut Environment, cap: GLenum) {
-    with_ctx_and_mem(env, |gles, _mem| {
-        unsafe { gles.IsEnabled(cap) };
-    });
+fn glIsEnabled(env: &mut Environment, cap: GLenum) -> GLboolean {
+    with_ctx_and_mem(env, |gles, _mem| unsafe { gles.IsEnabled(cap) })
 }
 fn glDisable(env: &mut Environment, cap: GLenum) {
     with_ctx_and_mem(env, |gles, _mem| {

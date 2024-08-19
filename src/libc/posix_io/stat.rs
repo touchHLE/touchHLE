@@ -7,8 +7,8 @@
 
 use super::{close, off_t, open_direct, FileDescriptor};
 use crate::dyld::{export_c_func, FunctionExports};
-use crate::fs::{GuestFile, GuestPath};
-use crate::libc::errno::set_errno;
+use crate::fs::{FsError, GuestFile, GuestPath};
+use crate::libc::errno::{set_errno, EEXIST};
 use crate::libc::time::timespec;
 use crate::mem::{ConstPtr, MutPtr, SafeRead};
 use crate::Environment;
@@ -71,14 +71,20 @@ fn mkdir(env: &mut Environment, path: ConstPtr<u8>, mode: mode_t) -> i32 {
             log_dbg!("mkdir({:?} {:?}, {:#x}) => 0", path, path_str, mode);
             0
         }
-        Err(()) => {
-            // TODO: set errno
+        Err(err) => {
             log!(
-                "Warning: mkdir({:?} {:?}, {:#x}) failed, returning -1",
+                "Warning: mkdir({:?} {:?}, {:#x}) failed with {:?}, returning -1",
                 path,
                 path_str,
                 mode,
+                err
             );
+            match err {
+                FsError::AlreadyExist => {
+                    set_errno(env, EEXIST);
+                }
+                _ => unimplemented!(),
+            }
             -1
         }
     }

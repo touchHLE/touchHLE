@@ -49,6 +49,14 @@ enum FileLocation {
 }
 
 #[derive(Debug)]
+pub enum FsError {
+    AlreadyExist,
+    InvalidParentDir,
+    NonexistentParentDir,
+    ReadonlyParentDir,
+}
+
+#[derive(Debug)]
 enum FsNode {
     File {
         location: FileLocation,
@@ -984,10 +992,12 @@ impl Fs {
     }
 
     /// Like [std::fs::create_dir] but for the guest filesystem.
-    pub fn create_dir<P: AsRef<GuestPath>>(&mut self, path: P) -> Result<(), ()> {
+    pub fn create_dir<P: AsRef<GuestPath>>(&mut self, path: P) -> Result<(), FsError> {
         let path = path.as_ref();
 
-        let (parent_node, new_dir_name) = self.lookup_parent_node(path).ok_or(())?;
+        let (parent_node, new_dir_name) = self
+            .lookup_parent_node(path)
+            .ok_or(FsError::NonexistentParentDir)?;
 
         // Parent directory is not a directory
         let FsNode::Directory {
@@ -995,17 +1005,17 @@ impl Fs {
             writeable: dir_host_path,
         } = parent_node
         else {
-            return Err(());
+            return Err(FsError::InvalidParentDir);
         };
 
         // There's already a file/directory with this name
         if children.contains_key(&new_dir_name) {
-            return Err(());
+            return Err(FsError::AlreadyExist);
         }
 
         let Some(dir_host_path) = dir_host_path else {
             log!("Warning: attempt to create directory at path {:?}, but parent directory is read-only", path);
-            return Err(());
+            return Err(FsError::ReadonlyParentDir);
         };
 
         for c in new_dir_name.chars() {

@@ -64,20 +64,19 @@ fn mkdir(env: &mut Environment, path: ConstPtr<u8>, mode: mode_t) -> i32 {
     // TODO: handle errno properly
     set_errno(env, 0);
 
+    let path_str = env.mem.cstr_at_utf8(path).unwrap();
     // TODO: respect the mode
-    match env
-        .fs
-        .create_dir(GuestPath::new(&env.mem.cstr_at_utf8(path).unwrap()))
-    {
+    match env.fs.create_dir(GuestPath::new(&path_str)) {
         Ok(()) => {
-            log_dbg!("mkdir({:?}, {:#x}) => 0", path, mode);
+            log_dbg!("mkdir({:?} {:?}, {:#x}) => 0", path, path_str, mode);
             0
         }
         Err(()) => {
             // TODO: set errno
             log!(
-                "Warning: mkdir({:?}, {:#x}) failed, returning -1",
+                "Warning: mkdir({:?} {:?}, {:#x}) failed, returning -1",
                 path,
+                path_str,
                 mode,
             );
             -1

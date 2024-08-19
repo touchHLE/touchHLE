@@ -96,3 +96,9 @@ com.gameloft.csimiami: --landscape-left
 
 # MLB World Series 2009
 com.mlb.mlb2009: --landscape-left
+
+# Wave Blazer
+com.polarbit.waveblazer: --landscape-left
+
+# Command & Conquer: Red Alert
+com.ea.candcra.row: --landscape-left

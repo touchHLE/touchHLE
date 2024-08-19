@@ -94,5 +94,10 @@ com.gameloft.TVSK: --landscape-right
 # CSI: Miami
 com.gameloft.csimiami: --landscape-left
 
+
 # MLB World Series 2009
 com.mlb.mlb2009: --landscape-left
+
+# Wave Blazer
+com.polarbit.waveblazer: --landscape-left
+

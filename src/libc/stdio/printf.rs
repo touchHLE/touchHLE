@@ -9,6 +9,7 @@ use crate::abi::{DotDotDot, VaList};
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::frameworks::foundation::{ns_string, unichar};
 use crate::libc::clocale::{setlocale, LC_CTYPE};
+use crate::libc::errno::set_errno;
 use crate::libc::posix_io::{STDERR_FILENO, STDIN_FILENO, STDOUT_FILENO};
 use crate::libc::stdio::{fwrite, FILE};
 use crate::libc::stdlib::{atof_inner, strtol_inner, strtoul};
@@ -525,6 +526,9 @@ fn swprintf(
 }
 
 fn printf(env: &mut Environment, format: ConstPtr<u8>, args: DotDotDot) -> i32 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     log_dbg!(
         "printf({:?} ({:?}), ...)",
         format,
@@ -767,6 +771,9 @@ fn fprintf(
     format: ConstPtr<u8>,
     args: DotDotDot,
 ) -> i32 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     log_dbg!(
         "fprintf({:?}, {:?} ({:?}), ...)",
         stream,

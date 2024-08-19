@@ -7,6 +7,7 @@
 
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::fs::GuestPath;
+use crate::libc::errno::set_errno;
 use crate::libc::posix_io::{FileDescriptor, STDERR_FILENO, STDIN_FILENO, STDOUT_FILENO};
 use crate::mem::ConstPtr;
 use crate::Environment;
@@ -27,6 +28,9 @@ fn sleep(env: &mut Environment, seconds: u32) -> u32 {
 }
 
 fn usleep(env: &mut Environment, useconds: useconds_t) -> i32 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     env.sleep(Duration::from_micros(useconds.into()), true);
     0 // success
 }
@@ -44,7 +48,10 @@ fn getppid(_env: &mut Environment) -> pid_t {
     0
 }
 
-fn isatty(_env: &mut Environment, fd: FileDescriptor) -> i32 {
+fn isatty(env: &mut Environment, fd: FileDescriptor) -> i32 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     if [STDIN_FILENO, STDOUT_FILENO, STDERR_FILENO].contains(&fd) {
         1
     } else {
@@ -53,6 +60,9 @@ fn isatty(_env: &mut Environment, fd: FileDescriptor) -> i32 {
 }
 
 fn access(env: &mut Environment, path: ConstPtr<u8>, mode: i32) -> i32 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     let binding = env.mem.cstr_at_utf8(path).unwrap();
     let guest_path = GuestPath::new(&binding);
     let (exists, r, _, _) = env.fs.access(guest_path);
@@ -77,6 +87,9 @@ fn access(env: &mut Environment, path: ConstPtr<u8>, mode: i32) -> i32 {
 }
 
 fn unlink(env: &mut Environment, path: ConstPtr<u8>) -> i32 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     log!(
         "TODO: unlink('{}') => -1",
         env.mem.cstr_at_utf8(path).unwrap()

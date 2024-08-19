@@ -21,25 +21,39 @@ pub struct State {
     errnos: std::collections::HashMap<crate::ThreadId, MutPtr<i32>>,
 }
 impl State {
-    fn errno_for_thread(
+    fn errno_ptr_for_thread(
         &mut self,
         mem: &mut crate::mem::Mem,
         thread: crate::ThreadId,
     ) -> MutPtr<i32> {
-        *self.errnos.entry(thread).or_insert_with(|| {
-            log!(
-                "TODO: errno accessed on thread {} (will always be 0)",
-                thread
-            );
-            mem.alloc_and_write(0i32)
-        })
+        *self
+            .errnos
+            .entry(thread)
+            .or_insert_with(|| mem.alloc_and_write(0i32))
     }
+
+    pub fn set_errno_for_thread(
+        &mut self,
+        mem: &mut crate::mem::Mem,
+        thread: crate::ThreadId,
+        val: i32,
+    ) {
+        let ptr = self.errno_ptr_for_thread(mem, thread);
+        mem.write(ptr, val);
+    }
+}
+
+/// Helper function, not a part of libc errno
+pub fn set_errno(env: &mut Environment, val: i32) {
+    env.libc_state
+        .errno
+        .set_errno_for_thread(&mut env.mem, env.current_thread, val);
 }
 
 fn __error(env: &mut Environment) -> MutPtr<i32> {
     env.libc_state
         .errno
-        .errno_for_thread(&mut env.mem, env.current_thread)
+        .errno_ptr_for_thread(&mut env.mem, env.current_thread)
 }
 
 fn perror(env: &mut Environment, s: ConstPtr<u8>) {

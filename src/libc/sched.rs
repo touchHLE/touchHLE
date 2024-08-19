@@ -6,9 +6,13 @@
 //! `sched.h`.
 
 use crate::dyld::{export_c_func, FunctionExports};
+use crate::libc::errno::set_errno;
 use crate::Environment;
 
 fn sched_yield(env: &mut Environment) -> i32 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     log_dbg!(
         "TODO: thread {} requested processor yield, ignoring",
         env.current_thread

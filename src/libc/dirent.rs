@@ -7,6 +7,7 @@
 
 use crate::dyld::FunctionExports;
 use crate::fs::GuestPath;
+use crate::libc::errno::set_errno;
 use crate::mem::{ConstPtr, MutPtr, Ptr, SafeRead};
 use crate::{export_c_func, impl_GuestRet_for_large_struct, Environment};
 use std::collections::HashMap;
@@ -107,6 +108,9 @@ fn readdir(env: &mut Environment, dirp: MutPtr<DIR>) -> MutPtr<dirent> {
 }
 
 fn closedir(env: &mut Environment, dirp: MutPtr<DIR>) -> i32 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     log_dbg!("closedir: dirp {:?}", dirp);
     if let Some(vec) = env.libc_state.dirent.read_dirs.remove(&dirp) {
         for dirent in vec {

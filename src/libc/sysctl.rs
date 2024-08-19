@@ -6,6 +6,7 @@
 //! `sys/sysctl.h`
 
 use crate::dyld::{export_c_func, FunctionExports};
+use crate::libc::errno::set_errno;
 use crate::mem::{ConstPtr, GuestUSize, MutPtr, MutVoidPtr};
 use crate::Environment;
 
@@ -18,6 +19,9 @@ fn sysctl(
     newp: MutVoidPtr,
     newlen: GuestUSize,
 ) -> i32 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     log!(
         "TODO: sysctl({:?}, {:#x}, {:?}, {:?}, {:?}, {:x})",
         name,

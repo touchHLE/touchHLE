@@ -354,6 +354,10 @@ impl Environment {
             env.dyld.dump_lazy_symbols(&env.bins);
         }
 
+        if env.options.dump_selectors {
+            env.objc.dump_selectors(&env.bins[0], &env.mem);
+        }
+
         env.cpu.branch(entry_point_addr);
         Ok(env)
     }

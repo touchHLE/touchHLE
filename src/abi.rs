@@ -193,7 +193,7 @@ pub trait CallFromHost<R, P> {
     ///     traces clearer)
     /// * The arguments to the function are placed in registers or the
     ///     stack according to the calling convention. This is handled by
-    ///     this trait; functions that pass through arguments to another 
+    ///     this trait; functions that pass through arguments to another
     ///     function (such as `objc_msgsend`) should call
     ///     [GuestFunction::call_without_pushing_stack_frame] instead.
     /// * The program counter (PC) and Thumb flag have to be set to match
@@ -201,7 +201,7 @@ pub trait CallFromHost<R, P> {
     /// * The link register (LR) to point to a special routine for
     ///     returning to the host;
     /// * The emulated function eventually returns to the caller by jumping to
-    ///     the address in the link register, which should be the special 
+    ///     the address in the link register, which should be the special
     ///     routine.
     /// * The CPU emulation recognises the special routine and returns back to
     ///     this method.
@@ -264,7 +264,7 @@ macro_rules! impl_CallFromHost {
                     .branch_with_link(*self, env.dyld.return_to_host_routine());
 
                 // Create a new guest stack frame. This is redundant considering
-                // we are storing this data on the host stack, but this makes 
+                // we are storing this data on the host stack, but this makes
                 // stack traces work nicely. :)
                 let (old_sp, old_fp) = {
                     let regs = env.cpu.regs_mut();

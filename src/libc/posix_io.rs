@@ -10,6 +10,7 @@ pub mod stat;
 use crate::abi::DotDotDot;
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::fs::{GuestFile, GuestOpenOptions, GuestPath};
+use crate::libc::errno::set_errno;
 use crate::mem::{ConstPtr, ConstVoidPtr, GuestISize, GuestUSize, MutPtr, MutVoidPtr, Ptr};
 use crate::Environment;
 use std::io::{Read, Seek, SeekFrom, Write};
@@ -77,6 +78,9 @@ pub const LOCK_NB: FLockFlag = 4;
 pub const LOCK_UN: FLockFlag = 8;
 
 fn open(env: &mut Environment, path: ConstPtr<u8>, flags: i32, _args: DotDotDot) -> FileDescriptor {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     // TODO: parse variadic arguments and pass them on (file creation mode)
     self::open_direct(env, path, flags)
 }
@@ -200,6 +204,9 @@ pub fn read(
     buffer: MutVoidPtr,
     size: GuestUSize,
 ) -> GuestISize {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     if buffer.is_null() {
         // TODO: set errno to EFAULT
         return -1;
@@ -260,12 +267,18 @@ pub(super) fn eof(env: &mut Environment, fd: FileDescriptor) -> i32 {
 
 /// Helper for C `clearerr()`.
 pub(super) fn clearerr(env: &mut Environment, fd: FileDescriptor) {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     let file = env.libc_state.posix_io.file_for_fd(fd).unwrap();
     file.reached_eof = false;
 }
 
 /// Helper for C `fflush()`.
 pub(super) fn fflush(env: &mut Environment, fd: FileDescriptor) -> i32 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     let Some(file) = env.libc_state.posix_io.file_for_fd(fd) else {
         // TODO: set errno to EBADF
         return -1;
@@ -282,6 +295,9 @@ pub fn write(
     buffer: ConstVoidPtr,
     size: GuestUSize,
 ) -> GuestISize {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     // TODO: error handling for unknown fd?
     let file = env.libc_state.posix_io.file_for_fd(fd).unwrap();
 
@@ -327,6 +343,9 @@ pub const SEEK_SET: i32 = 0;
 pub const SEEK_CUR: i32 = 1;
 pub const SEEK_END: i32 = 2;
 pub fn lseek(env: &mut Environment, fd: FileDescriptor, offset: off_t, whence: i32) -> off_t {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     // TODO: error handling for unknown fd?
     let file = env.libc_state.posix_io.file_for_fd(fd).unwrap();
 
@@ -355,6 +374,9 @@ pub fn lseek(env: &mut Environment, fd: FileDescriptor, offset: off_t, whence: i
 }
 
 pub fn close(env: &mut Environment, fd: FileDescriptor) -> i32 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     // TODO: error handling for unknown fd?
     if fd < 0 || matches!(fd, STDOUT_FILENO | STDERR_FILENO) {
         return 0;
@@ -399,6 +421,9 @@ pub fn close(env: &mut Environment, fd: FileDescriptor) -> i32 {
 }
 
 fn rename(env: &mut Environment, old: ConstPtr<u8>, new: ConstPtr<u8>) -> i32 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     let old = env.mem.cstr_at_utf8(old).unwrap();
     let new = env.mem.cstr_at_utf8(new).unwrap();
     log_dbg!("rename('{}', '{}')", old, new);
@@ -459,6 +484,9 @@ pub fn getcwd(env: &mut Environment, buf_ptr: MutPtr<u8>, buf_size: GuestUSize) 
 }
 
 fn chdir(env: &mut Environment, path_ptr: ConstPtr<u8>) -> i32 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     let path = GuestPath::new(env.mem.cstr_at_utf8(path_ptr).unwrap());
     match env.fs.change_working_directory(path) {
         Ok(new) => {
@@ -478,12 +506,18 @@ fn chdir(env: &mut Environment, path_ptr: ConstPtr<u8>) -> i32 {
 }
 // TODO: fchdir(), once open() on a directory is supported.
 
-fn flock(_env: &mut Environment, fd: FileDescriptor, operation: FLockFlag) -> i32 {
+fn flock(env: &mut Environment, fd: FileDescriptor, operation: FLockFlag) -> i32 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     log!("TODO: flock({:?}, {:?})", fd, operation);
     0
 }
 
 fn ftruncate(env: &mut Environment, fd: FileDescriptor, len: off_t) -> i32 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     let file = env.libc_state.posix_io.file_for_fd(fd).unwrap();
     match file.file.set_len(len as u64) {
         Ok(()) => 0,

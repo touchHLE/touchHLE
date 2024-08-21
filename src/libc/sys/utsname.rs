@@ -8,13 +8,17 @@
 use crate::dyld::FunctionExports;
 use crate::environment::Environment;
 use crate::export_c_func;
+use crate::libc::errno::set_errno;
 use crate::mem::MutPtr;
 
 // TODO: struct definition
 #[allow(non_camel_case_types)]
 struct utsname {}
 
-fn uname(_env: &mut Environment, name: MutPtr<utsname>) -> i32 {
+fn uname(env: &mut Environment, name: MutPtr<utsname>) -> i32 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     log!("TODO: uname({:?}), returning -1", name);
     // TODO: set errno
     -1

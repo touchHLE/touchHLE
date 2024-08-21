@@ -5,11 +5,11 @@
  */
 //! `wchar.h`
 
+use super::generic_char::GenericChar;
 use crate::dyld::{export_c_func, FunctionExports};
+use crate::libc::errno::set_errno;
 use crate::mem::{ConstPtr, GuestUSize, MutPtr};
 use crate::Environment;
-
-use super::generic_char::GenericChar;
 
 #[allow(non_camel_case_types)]
 pub type wchar_t = i32; // not sure if this signedness is correct
@@ -82,9 +82,15 @@ fn wmemcmp(
     b: ConstPtr<wchar_t>,
     size: GuestUSize,
 ) -> i32 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     GenericChar::<wchar_t>::memcmp(env, a, b, size)
 }
 fn wcslen(env: &mut Environment, s: ConstPtr<wchar_t>) -> GuestUSize {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     GenericChar::<wchar_t>::strlen(env, s)
 }
 fn wcscpy(env: &mut Environment, dest: MutPtr<wchar_t>, src: ConstPtr<wchar_t>) -> MutPtr<wchar_t> {
@@ -98,6 +104,9 @@ fn wcscspn(
     str: ConstPtr<wchar_t>,
     charset: ConstPtr<wchar_t>,
 ) -> GuestUSize {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     GenericChar::<wchar_t>::strcspn(env, str, charset)
 }
 fn wcsncpy(
@@ -112,6 +121,9 @@ fn wcsdup(env: &mut Environment, src: ConstPtr<wchar_t>) -> MutPtr<wchar_t> {
     GenericChar::<wchar_t>::strdup(env, src)
 }
 fn wcscmp(env: &mut Environment, a: ConstPtr<wchar_t>, b: ConstPtr<wchar_t>) -> i32 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     GenericChar::<wchar_t>::strcmp(env, a, b)
 }
 fn wcsncmp(
@@ -120,6 +132,9 @@ fn wcsncmp(
     b: ConstPtr<wchar_t>,
     n: GuestUSize,
 ) -> i32 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     GenericChar::<wchar_t>::strncmp(env, a, b, n)
 }
 fn wcsncat(
@@ -149,6 +164,9 @@ fn wcslcpy(
     src: ConstPtr<wchar_t>,
     size: GuestUSize,
 ) -> GuestUSize {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     GenericChar::<wchar_t>::strlcpy(env, dst, src, size)
 }
 

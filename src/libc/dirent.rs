@@ -7,6 +7,7 @@
 
 use crate::dyld::FunctionExports;
 use crate::fs::GuestPath;
+use crate::libc::errno::set_errno;
 use crate::mem::{ConstPtr, MutPtr, Ptr, SafeRead};
 use crate::{export_c_func, impl_GuestRet_for_large_struct, Environment};
 use std::collections::HashMap;
@@ -49,6 +50,9 @@ impl State {
 }
 
 fn opendir(env: &mut Environment, filename: ConstPtr<u8>) -> MutPtr<DIR> {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     let path_string = env.mem.cstr_at_utf8(filename).unwrap().to_owned();
     log_dbg!("opendir: filename {}", path_string);
     let guest_path = GuestPath::new(&path_string);
@@ -70,6 +74,9 @@ fn opendir(env: &mut Environment, filename: ConstPtr<u8>) -> MutPtr<DIR> {
 
 // TODO: return '.' and '..' entries as well
 fn readdir(env: &mut Environment, dirp: MutPtr<DIR>) -> MutPtr<dirent> {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     let mut dir = env.mem.read(dirp);
     let vec = env.libc_state.dirent.open_dirs.get(&dirp).unwrap();
     log_dbg!(
@@ -107,6 +114,9 @@ fn readdir(env: &mut Environment, dirp: MutPtr<DIR>) -> MutPtr<dirent> {
 }
 
 fn closedir(env: &mut Environment, dirp: MutPtr<DIR>) -> i32 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     log_dbg!("closedir: dirp {:?}", dirp);
     if let Some(vec) = env.libc_state.dirent.read_dirs.remove(&dirp) {
         for dirent in vec {

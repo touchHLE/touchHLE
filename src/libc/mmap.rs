@@ -7,6 +7,7 @@
 use crate::dyld::FunctionExports;
 use crate::environment::Environment;
 use crate::export_c_func;
+use crate::libc::errno::set_errno;
 use crate::libc::posix_io;
 use crate::libc::posix_io::{off_t, FileDescriptor, SEEK_SET};
 use crate::mem::{GuestUSize, MutVoidPtr};
@@ -26,6 +27,9 @@ fn mmap(
     fd: FileDescriptor,
     offset: off_t,
 ) -> MutVoidPtr {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     assert!(addr.is_null());
     assert_eq!(offset, 0);
     assert_eq!((flags & MAP_ANON), 0);

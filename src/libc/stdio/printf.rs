@@ -9,6 +9,7 @@ use crate::abi::{DotDotDot, VaList};
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::frameworks::foundation::{ns_string, unichar};
 use crate::libc::clocale::{setlocale, LC_CTYPE};
+use crate::libc::errno::set_errno;
 use crate::libc::posix_io::{STDERR_FILENO, STDIN_FILENO, STDOUT_FILENO};
 use crate::libc::stdio::{fwrite, FILE};
 use crate::libc::stdlib::{atof_inner, strtol_inner, strtoul};
@@ -393,10 +394,16 @@ fn snprintf(
     format: ConstPtr<u8>,
     args: DotDotDot,
 ) -> i32 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     vsnprintf(env, dest, n, format, args.start())
 }
 
 fn vprintf(env: &mut Environment, format: ConstPtr<u8>, arg: VaList) -> i32 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     log_dbg!(
         "vprintf({:?} ({:?}), ...)",
         format,
@@ -416,6 +423,9 @@ fn vsnprintf(
     format: ConstPtr<u8>,
     arg: VaList,
 ) -> i32 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     log_dbg!(
         "vsnprintf({:?} {:?} {:?})",
         dest,
@@ -439,6 +449,9 @@ fn vsnprintf(
 }
 
 fn vsprintf(env: &mut Environment, dest: MutPtr<u8>, format: ConstPtr<u8>, arg: VaList) -> i32 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     log_dbg!(
         "vsprintf({:?}, {:?} ({:?}), ...)",
         dest,
@@ -459,6 +472,9 @@ fn vsprintf(env: &mut Environment, dest: MutPtr<u8>, format: ConstPtr<u8>, arg: 
 }
 
 fn sprintf(env: &mut Environment, dest: MutPtr<u8>, format: ConstPtr<u8>, args: DotDotDot) -> i32 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     log_dbg!(
         "sprintf({:?}, {:?} ({:?}), ...)",
         dest,
@@ -485,6 +501,9 @@ fn swprintf(
     format: ConstPtr<wchar_t>,
     args: DotDotDot,
 ) -> i32 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     // TODO: support other locales
     let ctype_locale = setlocale(env, LC_CTYPE, Ptr::null());
     assert_eq!(env.mem.read(ctype_locale), b'C');
@@ -525,6 +544,9 @@ fn swprintf(
 }
 
 fn printf(env: &mut Environment, format: ConstPtr<u8>, args: DotDotDot) -> i32 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     log_dbg!(
         "printf({:?} ({:?}), ...)",
         format,
@@ -710,6 +732,9 @@ fn sscanf_common(
 }
 
 fn sscanf(env: &mut Environment, src: ConstPtr<u8>, format: ConstPtr<u8>, args: DotDotDot) -> i32 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     log_dbg!(
         "sscanf({:?} ({:?}), {:?} ({:?}), ...)",
         src,
@@ -727,6 +752,9 @@ fn swscanf(
     format: ConstPtr<wchar_t>,
     args: DotDotDot,
 ) -> i32 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     // TODO: support other locales
     let ctype_locale = setlocale(env, LC_CTYPE, Ptr::null());
     assert_eq!(env.mem.read(ctype_locale), b'C');
@@ -751,6 +779,9 @@ fn swscanf(
 }
 
 fn vsscanf(env: &mut Environment, src: ConstPtr<u8>, format: ConstPtr<u8>, arg: VaList) -> i32 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     log_dbg!(
         "vsscanf({:?}, {:?} ({:?}), ...)",
         src,
@@ -767,6 +798,9 @@ fn fprintf(
     format: ConstPtr<u8>,
     args: DotDotDot,
 ) -> i32 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     log_dbg!(
         "fprintf({:?}, {:?} ({:?}), ...)",
         stream,
@@ -778,6 +812,9 @@ fn fprintf(
 }
 
 fn vfprintf(env: &mut Environment, stream: MutPtr<FILE>, format: ConstPtr<u8>, arg: VaList) -> i32 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     log_dbg!(
         "vfprintf({:?}, {:?} ({:?}), ...)",
         stream,

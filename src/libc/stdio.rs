@@ -11,11 +11,11 @@ use super::posix_io::{
 };
 use crate::dyld::{export_c_func, ConstantExports, FunctionExports, HostConstant};
 use crate::fs::GuestPath;
+use crate::libc::errno::set_errno;
 use crate::libc::string::strlen;
 use crate::mem::{ConstPtr, ConstVoidPtr, GuestUSize, Mem, MutPtr, MutVoidPtr, Ptr, SafeRead};
 use crate::Environment;
 use std::io::Write;
-
 // Standard C functions
 
 pub mod printf;
@@ -82,6 +82,9 @@ fn fread(
     n_items: GuestUSize,
     file_ptr: MutPtr<FILE>,
 ) -> GuestUSize {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     if item_size == 0 {
         return 0;
     }
@@ -103,6 +106,9 @@ fn fread(
 }
 
 fn fgetc(env: &mut Environment, file_ptr: MutPtr<FILE>) -> i32 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     let FILE { fd } = env.mem.read(file_ptr);
     let buffer = env.mem.alloc(1);
 
@@ -145,6 +151,9 @@ fn fgets(
 }
 
 fn fputs(env: &mut Environment, str: ConstPtr<u8>, stream: MutPtr<FILE>) -> i32 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     // TODO: this function doesn't set errno or return EOF yet
     let str_len = strlen(env, str);
     fwrite(env, str.cast(), str_len, 1, stream)
@@ -153,6 +162,9 @@ fn fputs(env: &mut Environment, str: ConstPtr<u8>, stream: MutPtr<FILE>) -> i32 
 }
 
 fn fputc(env: &mut Environment, c: i32, stream: MutPtr<FILE>) -> i32 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     let ptr: MutPtr<u8> = env.mem.alloc_and_write(c.try_into().unwrap());
     let res = fwrite(env, ptr.cast_const().cast(), 1, 1, stream)
         .try_into()
@@ -168,6 +180,9 @@ fn fwrite(
     n_items: GuestUSize,
     file_ptr: MutPtr<FILE>,
 ) -> GuestUSize {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     if item_size == 0 || buffer.is_null() {
         return 0;
     }
@@ -211,6 +226,9 @@ const SEEK_SET: i32 = posix_io::SEEK_SET;
 const SEEK_CUR: i32 = posix_io::SEEK_CUR;
 const SEEK_END: i32 = posix_io::SEEK_END;
 fn fseek(env: &mut Environment, file_ptr: MutPtr<FILE>, offset: i32, whence: i32) -> i32 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     let FILE { fd } = env.mem.read(file_ptr);
 
     assert!([SEEK_SET, SEEK_CUR, SEEK_END].contains(&whence));
@@ -221,6 +239,9 @@ fn fseek(env: &mut Environment, file_ptr: MutPtr<FILE>, offset: i32, whence: i32
 }
 
 fn ftell(env: &mut Environment, file_ptr: MutPtr<FILE>) -> i32 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     let FILE { fd } = env.mem.read(file_ptr);
 
     match posix_io::lseek(env, fd, 0, posix_io::SEEK_CUR) {
@@ -231,10 +252,16 @@ fn ftell(env: &mut Environment, file_ptr: MutPtr<FILE>) -> i32 {
 }
 
 fn rewind(env: &mut Environment, file_ptr: MutPtr<FILE>) {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     fseek(env, file_ptr, 0, SEEK_SET);
 }
 
 fn fclose(env: &mut Environment, file_ptr: MutPtr<FILE>) -> i32 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     let FILE { fd } = env.mem.read(file_ptr);
 
     env.mem.free(file_ptr.cast());
@@ -247,6 +274,9 @@ fn fclose(env: &mut Environment, file_ptr: MutPtr<FILE>) -> i32 {
 }
 
 fn fsetpos(env: &mut Environment, file_ptr: MutPtr<FILE>, pos: ConstPtr<fpos_t>) -> i32 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     let FILE { fd } = env.mem.read(file_ptr);
 
     let res = posix_io::lseek(env, fd, env.mem.read(pos), SEEK_SET);
@@ -258,6 +288,9 @@ fn fsetpos(env: &mut Environment, file_ptr: MutPtr<FILE>, pos: ConstPtr<fpos_t>)
 }
 
 fn fgetpos(env: &mut Environment, file_ptr: MutPtr<FILE>, pos: MutPtr<fpos_t>) -> i32 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     let FILE { fd } = env.mem.read(file_ptr);
 
     let res = posix_io::lseek(env, fd, 0, posix_io::SEEK_CUR);
@@ -269,21 +302,33 @@ fn fgetpos(env: &mut Environment, file_ptr: MutPtr<FILE>, pos: MutPtr<fpos_t>) -
 }
 
 fn feof(env: &mut Environment, file_ptr: MutPtr<FILE>) -> i32 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     let FILE { fd } = env.mem.read(file_ptr);
     posix_io::eof(env, fd)
 }
 
 fn clearerr(env: &mut Environment, file_ptr: MutPtr<FILE>) {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     let FILE { fd } = env.mem.read(file_ptr);
     posix_io::clearerr(env, fd)
 }
 
 fn fflush(env: &mut Environment, file_ptr: MutPtr<FILE>) -> i32 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     let FILE { fd } = env.mem.read(file_ptr);
     posix_io::fflush(env, fd)
 }
 
 fn puts(env: &mut Environment, s: ConstPtr<u8>) -> i32 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     let _ = std::io::stdout().write_all(env.mem.cstr_at(s));
     let _ = std::io::stdout().write_all(b"\n");
     // TODO: I/O error handling
@@ -291,12 +336,18 @@ fn puts(env: &mut Environment, s: ConstPtr<u8>) -> i32 {
     0
 }
 
-fn putchar(_env: &mut Environment, c: u8) -> i32 {
+fn putchar(env: &mut Environment, c: u8) -> i32 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     let _ = std::io::stdout().write(std::slice::from_ref(&c));
     0
 }
 
 fn remove(env: &mut Environment, path: ConstPtr<u8>) -> i32 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     if Ptr::is_null(path) {
         // TODO: set errno
         log!("remove({:?}) => -1, attempted to remove null", path);
@@ -319,7 +370,10 @@ fn remove(env: &mut Environment, path: ConstPtr<u8>) -> i32 {
     }
 }
 
-fn setbuf(_env: &mut Environment, stream: MutPtr<FILE>, buf: ConstPtr<u8>) {
+fn setbuf(env: &mut Environment, stream: MutPtr<FILE>, buf: ConstPtr<u8>) {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     assert!(buf.is_null());
     log!(
         "Warning: ignoring a setbuf() for {:?} with NULL (unbuffered)",

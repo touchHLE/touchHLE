@@ -113,6 +113,8 @@ jobs:
       run: 7z -oandroid-ndk x android-ndk-r25c-linux.zip
     - name: Link Android NDK
       run: ln -s android-ndk/android-ndk-r25c /usr/local/lib/android/sdk/ndk/25.2.9519653
+    - name: Test 3
+      run: ls -la /usr/local/lib/android/sdk/ndk/25.2.9519653
     # Why isn't there a command for this?
     - name: Generate local.properties file
       run: echo 'sdk.dir='$ANDROID_SDK_ROOT > android/local.properties

@@ -397,6 +397,8 @@ fn snprintf(
     // TODO: handle errno properly
     set_errno(env, 0);
 
+    log_dbg!("snprintf() implemented as a wrapper of vsnprintf()");
+
     vsnprintf(env, dest, n, format, args.start())
 }
 
@@ -504,13 +506,28 @@ fn swprintf(
     // TODO: handle errno properly
     set_errno(env, 0);
 
+    log_dbg!("swprintf() implemented as a wrapper of vswprintf()");
+
+    vswprintf(env, ws, n, format, args.start())
+}
+
+fn vswprintf(
+    env: &mut Environment,
+    ws: MutPtr<wchar_t>,
+    n: GuestUSize,
+    format: ConstPtr<wchar_t>,
+    args: VaList,
+) -> i32 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     // TODO: support other locales
     let ctype_locale = setlocale(env, LC_CTYPE, Ptr::null());
     assert_eq!(env.mem.read(ctype_locale), b'C');
 
     let wcstr_format = env.mem.wcstr_at(format);
     log_dbg!(
-        "swprintf({:?}, {}, {:?} ({:?}), ...)",
+        "vswprintf({:?}, {}, {:?} ({:?}), ...)",
         ws,
         n,
         format,
@@ -528,7 +545,7 @@ fn swprintf(
                 wcstr_format_bytes[idx as usize]
             }
         },
-        args.start(),
+        args,
     );
 
     let to_write = n.min(res.len() as GuestUSize);
@@ -801,12 +818,7 @@ fn fprintf(
     // TODO: handle errno properly
     set_errno(env, 0);
 
-    log_dbg!(
-        "fprintf({:?}, {:?} ({:?}), ...)",
-        stream,
-        format,
-        env.mem.cstr_at_utf8(format)
-    );
+    log_dbg!("fprintf() implemented as a wrapper of vfprintf()");
 
     vfprintf(env, stream, format, args.start())
 }
@@ -854,6 +866,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(vsprintf(_, _, _)),
     export_c_func!(sprintf(_, _, _)),
     export_c_func!(swprintf(_, _, _, _)),
+    export_c_func!(vswprintf(_, _, _, _)),
     export_c_func!(printf(_, _)),
     export_c_func!(fprintf(_, _, _)),
     export_c_func!(vfprintf(_, _, _)),

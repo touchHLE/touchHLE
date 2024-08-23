@@ -16,6 +16,23 @@
       "message": "I think it\u0027s OK to share the enumerator implementation between our implementations of NSSet and NSMutableSet, but I would to double check with hikari",
       "revId": "90ba607e456160414109258b171228989c2c4640",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b1d2dc20_36d58b7b",
+        "filename": "src/frameworks/foundation/ns_set.rs",
+        "patchSetId": 20
+      },
+      "lineNbr": 222,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-08-23T14:17:06Z",
+      "side": 1,
+      "message": "Could you please add a comment explaining that this class is re-used between NSSet and NSMutableSet for enumeration?",
+      "revId": "90ba607e456160414109258b171228989c2c4640",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

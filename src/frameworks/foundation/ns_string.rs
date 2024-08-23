@@ -10,7 +10,7 @@
 
 mod path_algorithms;
 
-use super::ns_array;
+use super::{ns_array, unichar};
 use super::{
     NSComparisonResult, NSNotFound, NSOrderedAscending, NSOrderedDescending, NSOrderedSame,
     NSRange, NSUInteger,
@@ -115,9 +115,11 @@ impl StringHostObject {
                     NSUTF16StringEncoding => match &bytes[0..2] {
                         [0xFE, 0xFF] => true,
                         [0xFF, 0xFE] => false,
-                        // TODO: what does NSUnicodeStringEncoding mean if no
-                        // BOM is present?
-                        _ => unimplemented!("Default endianness"),
+                        // Assuming NSUTF16LittleEndianStringEncoding if no BOM
+                        // is present
+                        // TODO: it seems that foundation can prefix string
+                        // with BOM bytes?
+                        _ => false,
                     },
                     _ => unreachable!(),
                 };
@@ -599,6 +601,20 @@ pub const CLASSES: ClassExports = objc_classes! {
     autorelease(env, array)
 }
 
+- (())getCharacters:(MutPtr<unichar>)buffer {
+    let host_object = env.objc.borrow_mut::<StringHostObject>(this);
+
+    // this conversion maybe not most optimal heuristic
+    let (utf16, did_convert) = host_object.convert_to_utf16_inplace();
+    if did_convert {
+        log_dbg!("[{:?} getCharacters:{:?}]: converted string to UTF-16", this, buffer);
+    }
+
+    let len: GuestUSize = guest_size_of::<unichar>() * utf16.len() as GuestUSize;
+    let tmp_vec: Vec<u8> = utf16.iter().flat_map(|c| u16::to_le_bytes(*c)).collect();
+    _ = env.mem.bytes_at_mut(buffer.cast(), len).write(tmp_vec.as_slice()).unwrap();
+}
+
 - (ConstPtr<u8>)cStringUsingEncoding:(NSStringEncoding)encoding {
     // TODO: avoid copying
     let string = to_rust_string(env, this);
@@ -1078,6 +1094,14 @@ pub const CLASSES: ClassExports = objc_classes! {
     *env.objc.borrow_mut(this) = host_object;
 
     this
+}
+
+- (id)initWithCharacters:(ConstPtr<unichar>)characters length:(NSUInteger)len {
+    assert!(!characters.is_null());
+    let num_bytes = len * 2;
+    msg![env; this initWithBytes:(characters.cast::<u8>())
+                          length:num_bytes
+                        encoding:NSUTF16StringEncoding]
 }
 
 - (id)initWithString:(id)string { // NSString *

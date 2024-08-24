@@ -96,7 +96,7 @@ pub extern "C" fn SDL_main(
         let payload = if let Some(s) = info.payload().downcast_ref::<&str>() {
             s
         } else if let Some(s) = info.payload().downcast_ref::<String>() {
-            &s
+            s
         } else {
             "(non-string payload)"
         };
@@ -112,7 +112,7 @@ pub extern "C" fn SDL_main(
         Ok(_) => echo!("touchHLE finished"),
         Err(e) => echo!("touchHLE errored: {e:?}"),
     }
-    return 0;
+    0
 }
 
 const USAGE: &str = "\

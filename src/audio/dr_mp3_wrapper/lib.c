@@ -15,7 +15,7 @@ int16_t *touchHLE_decode_mp3_to_pcm(const uint8_t *data, size_t data_size,
                                     uint64_t *frame_count) {
   drmp3_config config;
   int16_t *samples = drmp3_open_memory_and_read_pcm_frames_s16(
-      data, data_size, &config, frame_count,
+      data, data_size, &config, (drmp3_uint64 *)frame_count,
       /* pAllocationCallbacks: */ NULL);
   if (samples) {
     *channels = config.channels;

@@ -357,13 +357,15 @@ impl Environment {
     /// some of the fields with fake data is a hack, but it means the frameworks
     /// do not need to be aware of the app picker's peculiarities, so it is
     /// cleaner than the alternative!
-    pub fn new_without_app(options: options::Options) -> Result<Environment, String> {
+    pub fn new_without_app(
+        options: options::Options,
+        icon: image::Image,
+    ) -> Result<Environment, String> {
         let bundle = bundle::Bundle::new_fake_bundle();
         let fs = fs::Fs::new_fake_fs();
 
         let startup_time = Instant::now();
 
-        let icon = None;
         let launch_image = None;
 
         assert!(!options.headless);
@@ -378,7 +380,7 @@ impl Environment {
                 },
                 super::VERSION
             ),
-            icon,
+            Some(icon),
             launch_image,
             &options,
         ));

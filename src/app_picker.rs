@@ -258,7 +258,25 @@ fn show_app_picker_gui(
     option_args: &mut Vec<String>,
     mut apps: Result<Vec<AppInfo>, String>,
 ) -> Result<(PathBuf, Environment), String> {
-    let mut environment = Environment::new_without_app(options)?;
+    let icon = {
+        let bytes: &[u8] = match super::branding() {
+            "" => include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/res/icon.png")),
+            "UNOFFICIAL" => include_bytes!(concat!(
+                env!("CARGO_MANIFEST_DIR"),
+                "/res/icon-unofficial.png"
+            )),
+            "PREVIEW" => {
+                include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/res/icon-preview.png"))
+            }
+            _ => panic!(),
+        };
+        let mut image = Image::from_bytes(bytes).unwrap();
+        // should match Bundle::load_icon()
+        image.round_corners((10.0 / 57.0) * (image.dimensions().0 as f32));
+        image
+    };
+
+    let mut environment = Environment::new_without_app(options, icon)?;
     let env = &mut environment;
 
     // Note that objects are generally not released in this code, because they

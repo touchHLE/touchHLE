@@ -208,7 +208,7 @@ public:
     } else if (Dynarmic::Has(hr, HaltReasonSvc)) {
       res = std::int32_t(env.halting_svc);
     } else {
-      printf("unhandled halt reason %u\n", hr);
+      printf("unhandled halt reason %u\n", unsigned(hr));
       abort();
     }
     env.mem = nullptr;

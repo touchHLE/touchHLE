@@ -116,9 +116,14 @@ jobs:
     # Why isn't there a command for this?
     - name: Generate local.properties file
       run: echo 'sdk.dir='$ANDROID_SDK_ROOT > android/local.properties
-    # Let's not even bother with linting (would need to build for host, not just
-    # Android, which makes things more complicated) or trying to run tests
-    # (would have to run on Android 😰).
+    - name: Lint
+      run: dev-scripts/lint.sh ndk -t arm64-v8a
+      env:
+        # The version should match the ndkVersion defined in `android\app\build.gradle`
+        ANDROID_NDK_ROOT: '/usr/local/lib/android/sdk/ndk/25.2.9519653'
+        ANDROID_NDK: '/usr/local/lib/android/sdk/ndk/25.2.9519653'
+        ANDROID_NDK_HOME: '/usr/local/lib/android/sdk/ndk/25.2.9519653'
+    # Don't attempt to run tests (can't run on Android).
     - name: Build for Android
       run: cd android && ../gradle/gradle-7.3/bin/gradle assembleRelease && mv app/build/outputs/apk/release/app-release.apk ../touchHLE.apk
       env:

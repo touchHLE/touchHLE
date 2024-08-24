@@ -3,6 +3,23 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "707397a8_ace50cf1",
+        "filename": "src/frameworks/foundation/ns_set.rs",
+        "patchSetId": 20
+      },
+      "lineNbr": 132,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-08-24T18:35:50Z",
+      "side": 1,
+      "message": "I was hoping this code could be shared with NSArray\u0027s. I was about to suggest some ambitious refactoring, but I just had a better idea: you can just do this I think?\n\n  let array: id \u003d msg![env; this allObjects];\n  msg![env; array objectEnumerator]\n\nThough I think there\u0027s some retain/release bugs here. `allObjects` probably needs to retain all the objects…",
+      "revId": "90ba607e456160414109258b171228989c2c4640",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "aefe0376_8b568deb",
         "filename": "src/frameworks/foundation/ns_set.rs",
         "patchSetId": 20
@@ -14,6 +31,24 @@
       "writtenOn": "2024-08-18T16:40:27Z",
       "side": 1,
       "message": "I think it\u0027s OK to share the enumerator implementation between our implementations of NSSet and NSMutableSet, but I would to double check with hikari",
+      "revId": "90ba607e456160414109258b171228989c2c4640",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b629140d_6dcbb46d",
+        "filename": "src/frameworks/foundation/ns_set.rs",
+        "patchSetId": 20
+      },
+      "lineNbr": 198,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-08-24T18:35:50Z",
+      "side": 1,
+      "message": "Yeah the implementation is the same either way, I guess it can be a function they both call.",
+      "parentUuid": "aefe0376_8b568deb",
       "revId": "90ba607e456160414109258b171228989c2c4640",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },

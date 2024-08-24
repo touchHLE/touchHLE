@@ -16,6 +16,24 @@
       "message": "Does it work well with relative paths?\nI know that we already doing some resolving inside this method, but does it cover all of cases? Maybe some additional testing is needed to replicate iOS behavior (or just some assertion about the path)",
       "revId": "b486527568dce6fad25810c940f1a01842ccd59d",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "93951b44_2e07f3dd",
+        "filename": "src/frameworks/foundation/ns_file_manager.rs",
+        "patchSetId": 18
+      },
+      "lineNbr": 91,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-08-24T18:24:46Z",
+      "side": 1,
+      "message": "I am pretty sure the relative path resolution in `fs.rs` is solid, but I don\u0027t think we have handling of `~/` and `~username` paths. Not sure what places we need to support that in though, but I\u0027m going to guess/hope not this one.",
+      "parentUuid": "01b73652_a0039a64",
+      "revId": "b486527568dce6fad25810c940f1a01842ccd59d",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

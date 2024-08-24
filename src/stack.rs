@@ -68,6 +68,15 @@ pub fn prep_stack_for_start(
     }
     string_ptrs.push(0); // terminator
 
+    // Pad to ensure stack is 4-byte aligned
+    let misaligned_by = reversed_data.len() % 4;
+    let pad_by = if misaligned_by != 0 {
+        4 - misaligned_by
+    } else {
+        0
+    };
+    reversed_data.resize(reversed_data.len() + pad_by, 0);
+
     for ptr in string_ptrs.iter().rev() {
         reversed_data.extend_from_slice(ptr.to_be_bytes().as_slice());
     }
@@ -77,9 +86,6 @@ pub fn prep_stack_for_start(
     let stack_height: GuestUSize = reversed_data.len().try_into().unwrap();
 
     assert!(stack_height < Mem::MAIN_THREAD_STACK_SIZE);
-    // FIXME: make stack always be 4-byte aligned. it is currently aligned only
-    // by accident
-    assert!(stack_height % 4 == 0);
 
     let stack_region = mem.bytes_at_mut(stack_ptr, stack_height);
 
@@ -88,7 +94,7 @@ pub fn prep_stack_for_start(
     }
 
     //println!(
-    //  "{:?}",
+    //  "{}",
     //  std::str::from_utf8(
     //      &stack_region
     //      .iter()
@@ -96,6 +102,12 @@ pub fn prep_stack_for_start(
     //      .collect::<Vec<u8>>())
     //  .unwrap()
     //);
+    //println!(
+    //    "{:?}",
+    //    mem.cstr_at_utf8(MutPtr::from_bits(mem.read((stack_ptr + 4).cast())))
+    //);
+
+    assert!(stack_height % 4 == 0); // ensure padding worked properly
 
     cpu.regs_mut()[Cpu::SP] = stack_ptr.to_bits();
 }

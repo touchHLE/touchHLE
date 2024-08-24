@@ -21,7 +21,7 @@ pub fn fixed_to_float(fixed: GLfixed) -> GLfloat {
 pub unsafe fn matrix_fixed_to_float(m: *const GLfixed) -> [GLfloat; 16] {
     let mut matrix = [0f32; 16];
     for (i, cell) in matrix.iter_mut().enumerate() {
-        *cell = fixed_to_float(*m.add(i));
+        *cell = fixed_to_float(m.add(i).read_unaligned());
     }
     matrix
 }

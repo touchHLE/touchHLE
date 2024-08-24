@@ -40,11 +40,15 @@ fn main() {
     // This is Windows- and Android-specific because on macOS or Linux, you can
     // easily get Boost with a package manager.
     let os = env::var("CARGO_CFG_TARGET_OS").expect("CARGO_CFG_TARGET_OS was not set");
-    if os.eq_ignore_ascii_case("windows") || os.eq_ignore_ascii_case("android") {
-        let boost_path = workspace_root.join("vendor/boost");
-        if !boost_path.is_dir() {
-            panic!("Could not find Boost. Download it from https://www.boost.org/users/download/ and put it at vendor/boost");
-        }
+    let boost_path = workspace_root.join("vendor/boost");
+    if (os.eq_ignore_ascii_case("windows") || os.eq_ignore_ascii_case("android"))
+        && !boost_path.is_dir()
+    {
+        panic!("Could not find Boost. Download it from https://www.boost.org/users/download/ and put it at vendor/boost");
+    }
+    // Allow providing Boost manually regardless of what platform we're on
+    // (or whether the target platform was detected correctly…)
+    if boost_path.is_dir() {
         build.define("Boost_INCLUDE_DIR", boost_path);
     }
     // Prevent CMake from using macOS-only linker commands when cross-compiling

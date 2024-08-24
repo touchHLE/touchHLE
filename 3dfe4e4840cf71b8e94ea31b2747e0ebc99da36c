@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1af47b88_cac850b5",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 20
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-08-24T18:47:24Z",
+      "side": 1,
+      "message": "Pushed my own version in 123eae9843d5fc2b90722902c236e4870c26bbb3 because I like the method syntax more… sorry about the mess.",
+      "revId": "3dfe4e4840cf71b8e94ea31b2747e0ebc99da36c",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

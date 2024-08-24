@@ -105,6 +105,24 @@
       "parentUuid": "0abb5c96_d4d10825",
       "revId": "5e85eff1651f1ce031eaeb9140387ea99e087c83",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0cc693df_9a052287",
+        "filename": "src/gles/gles1_on_gl2.rs",
+        "patchSetId": 17
+      },
+      "lineNbr": 317,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-08-24T18:52:03Z",
+      "side": 1,
+      "message": "It\u0027s definitely a boolean (I checked in https://hikari.noyu.me/etc/gl-state-tables.html). OpenGL has implicit conversions between types though, so if you fetch it as a float you\u0027ll get a float.",
+      "parentUuid": "ea53ca0a_625193c9",
+      "revId": "5e85eff1651f1ce031eaeb9140387ea99e087c83",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

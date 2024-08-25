@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "04b67c67_185c7eb9",
+        "filename": "src/frameworks/audio_toolbox/audio_unit.rs",
+        "patchSetId": 27
+      },
+      "lineNbr": 8,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-08-25T15:55:06Z",
+      "side": 1,
+      "message": "Ignorance. Thanks for the suggestion, this cleans things up",
+      "parentUuid": "5f8ae20f_4711d6fd",
+      "revId": "df64fdb65b0bb8db4216bcc348e24848e5129dc2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "eba4f8d7_293d0031",
@@ -31,6 +49,24 @@
       "writtenOn": "2024-08-25T13:49:44Z",
       "side": 1,
       "message": "Shouldn\u0027t this check the number of frames per packet also?",
+      "revId": "df64fdb65b0bb8db4216bcc348e24848e5129dc2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "08f41c38_c19fc229",
+        "filename": "src/frameworks/audio_toolbox/audio_unit.rs",
+        "patchSetId": 27
+      },
+      "lineNbr": 68,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-08-25T15:55:06Z",
+      "side": 1,
+      "message": "I haven\u0027t had issues with it as i wasn\u0027t using it on the render function, but yeah for good measure it\u0027s better to also check it.",
+      "parentUuid": "eba4f8d7_293d0031",
       "revId": "df64fdb65b0bb8db4216bcc348e24848e5129dc2",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

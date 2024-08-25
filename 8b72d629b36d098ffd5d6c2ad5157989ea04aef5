@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "62078f9f_e28ebf59",
+        "filename": "src/frameworks/foundation/ns_object.rs",
+        "patchSetId": 18
+      },
+      "lineNbr": 144,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-08-25T14:43:04Z",
+      "side": 1,
+      "message": "NSNumber is an NSValue, can\u0027t you check just for NSValue? Assuming you use the method that checks the whole superclass chain.",
+      "revId": "8b72d629b36d098ffd5d6c2ad5157989ea04aef5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

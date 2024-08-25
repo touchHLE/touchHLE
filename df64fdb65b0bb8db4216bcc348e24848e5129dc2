@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5f8ae20f_4711d6fd",
+        "filename": "src/frameworks/audio_toolbox/audio_unit.rs",
+        "patchSetId": 27
+      },
+      "lineNbr": 8,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-08-25T13:49:44Z",
+      "side": 1,
+      "message": "Any reason you didn\u0027t use `guest_size_of`?",
+      "revId": "df64fdb65b0bb8db4216bcc348e24848e5129dc2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "eba4f8d7_293d0031",
+        "filename": "src/frameworks/audio_toolbox/audio_unit.rs",
+        "patchSetId": 27
+      },
+      "lineNbr": 68,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-08-25T13:49:44Z",
+      "side": 1,
+      "message": "Shouldn\u0027t this check the number of frames per packet also?",
+      "revId": "df64fdb65b0bb8db4216bcc348e24848e5129dc2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

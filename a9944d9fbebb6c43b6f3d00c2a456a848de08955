@@ -70,6 +70,24 @@
       "parentUuid": "0a9e74de_8f505347",
       "revId": "a9944d9fbebb6c43b6f3d00c2a456a848de08955",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "89d0ec19_5733bdf5",
+        "filename": "src/frameworks/audio_toolbox/audio_unit.rs",
+        "patchSetId": 18
+      },
+      "lineNbr": 70,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-08-25T13:49:44Z",
+      "side": 1,
+      "message": "We have validation for audio formats in a few places now. Could you maybe factor this out to some like `log_if_broken_audio_format` function and call it not just here, but also when creating an audio queue?",
+      "parentUuid": "12cc2762_3fac5eff",
+      "revId": "a9944d9fbebb6c43b6f3d00c2a456a848de08955",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

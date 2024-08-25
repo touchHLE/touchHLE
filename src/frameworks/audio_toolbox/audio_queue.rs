@@ -187,6 +187,8 @@ pub fn AudioQueueNewOutput(
 
     ns_run_loop::add_audio_queue(env, in_callback_run_loop, aq_ref);
 
+    log_if_broken_audio_format(&format);
+
     if !is_supported_audio_format(&format) {
         log_dbg!("Warning: Audio queue {:?} will be ignored because its format is not yet supported: {:#?}", aq_ref, format);
     }
@@ -431,6 +433,20 @@ fn AudioQueueGetProperty(
     }
 
     0 // success
+}
+
+pub fn log_if_broken_audio_format(format: &AudioStreamBasicDescription) {
+    let bytes_per_channel = format.bits_per_channel / 8;
+    let expected_bytes_per_packet = format.bytes_per_frame * format.frames_per_packet;
+    let expected_bytes_per_frame = format.channels_per_frame * bytes_per_channel;
+    if format.bytes_per_packet < expected_bytes_per_packet
+        || format.bytes_per_frame < expected_bytes_per_frame
+    {
+        log!(
+            "Warning: Stream format has non-sensical values: {:?}",
+            format
+        );
+    }
 }
 
 /// Check if the format of an audio queue is one we currently support.

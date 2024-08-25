@@ -123,6 +123,24 @@
       "parentUuid": "ea53ca0a_625193c9",
       "revId": "5e85eff1651f1ce031eaeb9140387ea99e087c83",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "a5250b89_be6900b1",
+        "filename": "src/gles/gles1_on_gl2.rs",
+        "patchSetId": 17
+      },
+      "lineNbr": 317,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-08-25T11:29:25Z",
+      "side": 1,
+      "message": "Thanks for the explanation",
+      "parentUuid": "0cc693df_9a052287",
+      "revId": "5e85eff1651f1ce031eaeb9140387ea99e087c83",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

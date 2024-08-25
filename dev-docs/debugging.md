@@ -19,6 +19,13 @@ The `RUST_BACKTRACE=1` environment variable is always helpful. You'll probably w
 
 touchHLE will print the basic registers (r0-r13, SP, LR, PC) and a basic stack trace (using frame pointers) for the current thread when a panic occurs. To make sense of the result, you will probably want to open the app binary in Ghidra or another reverse-engineering tool.
 
+## Dumping classes/selectors/function symbols from binaries
+The `--dump-linking-info` flag dumps information about the classes, selectors, and lazy symbols (functions) that are requested by the binary, and how touchHLE is handling them. This is output to stdout as JSON, and a `\x1e` character is output (so you can split the output for scripts).
+
+The most useful application for this is determining which classes/selectors/functions that (might) be needed by an application are not implemented by touchHLE. This can be checked with `dev-scripts/log_unimplemented.sh [name of app to check]` (make sure `jq` is installed!).
+
+The schemas for the JSON are described in `ObjC::dump_classes` (in `src/objc/classes.rs`), `ObjC::dump_selectors` (in `src/objc/selectors.rs`), and `Dyld::dump_lazy_symbols` (in `src/dyld.rs`).
+
 ### GDB Remote Serial Protocol server
 
 For more complex cases, you can use the `--gdb=` command-line argument to start touchHLE in debugging mode, where it will provide a GDB Remote Serial Protocol server. You can then connect to touchHLE with GDB. (In theory LLDB also should work, but it doesn't.)

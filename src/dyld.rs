@@ -238,6 +238,59 @@ impl Dyld {
         ns_string::register_constant_strings(&bins[0], mem, objc);
     }
 
+    /// Dumps all lazy symbols (functions) referenced by the binary
+    /// as JSON to stdout.
+    ///
+    /// The JSON has the following form:
+    /// ```json
+    /// {
+    ///     "object": "lazy_symbols",
+    ///     "symbols": [
+    ///         {
+    ///             "symbol": ((name of symbol)),
+    ///             "linked_to": "host" | "dylib" | null,
+    ///             "dylib": ((name of dylib)) | null,
+    ///         },
+    ///         ...
+    ///     ]
+    /// }
+    /// ```
+    pub fn dump_lazy_symbols(&mut self, bins: &[MachO]) {
+        // Guest binary is always bin 0.
+        let stubs = bins[0].get_section(SectionType::SymbolStubs).unwrap();
+        let info = stubs.dyld_indirect_symbol_info.as_ref().unwrap();
+        echo!("{{\n    \"object\":\"lazy_symbols\",\n    \"symbols\": [");
+
+        'sym: for (i, symbol) in info.indirect_undef_symbols.iter().enumerate() {
+            // Why doesn't json allow trailing commas...
+            let comma = if i == info.indirect_undef_symbols.len() - 1 {
+                ""
+            } else {
+                ","
+            };
+            let symbol = symbol.as_ref().unwrap();
+            if let Some(&(_, _)) = search_lists(function_lists::FUNCTION_LISTS, symbol) {
+                echo!(
+                    "        {{ \"symbol\": \"{}\", \"linked_to\": \"host\"}}{}",
+                    symbol,
+                    comma
+                );
+                continue;
+            }
+            for dylib in bins.iter() {
+                if dylib.exported_symbols.contains_key(symbol) {
+                    echo!(
+                        "        {{ \"symbol\": \"{}\", \"linked_to\": \"dylib\", \"dylib\": \"{}\"}}{}",
+                        symbol, dylib.name, comma
+                    );
+                    continue 'sym;
+                }
+            }
+            echo!("        {{ \"symbol\": \"{}\" }}{}", symbol, comma);
+        }
+        echo!("    ]\n}}");
+    }
+
     /// [Self::do_initial_linking] but for when this is the app picker's special
     /// environment with no binary (see [crate::Environment::new_without_app]).
     pub fn do_initial_linking_with_no_bins(&mut self, mem: &mut Mem, objc: &mut ObjC) {

@@ -16,6 +16,24 @@
       "message": "There is a problem with this assertion, or to be more precise, with this borrowing.\nYou see, this borrow does lookup on the all known guest objects mapped to the host object, but for the superclass you do not have a guaranty that it was already mapped! Thus, this borrow may fail.",
       "revId": "17250c2a99b295fd9cbaf6a0c3f5e1281b9d0689",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "23fb13d5_77ea1779",
+        "filename": "src/objc/methods.rs",
+        "patchSetId": 15
+      },
+      "lineNbr": 180,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-08-25T14:27:04Z",
+      "side": 1,
+      "message": "Hmm, this seems like it\u0027s an important thing to check for debugging, otherwise we\u0027re gonna get weird crashes later.\n\nMaybe it\u0027s possible to do this assertion in a separate pass later. Like, if you find the code that ultimately calls `from_bin`, it probably knows at some point that the superclass has been created, and then could call some other function that would do this check. I realise the chain of function calls here is a bit messy, but can you see if it\u0027s possible?",
+      "parentUuid": "54d8a430_52917791",
+      "revId": "17250c2a99b295fd9cbaf6a0c3f5e1281b9d0689",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "638226c4_2bb7bbb1",
+        "filename": "src/frameworks/audio_toolbox/audio_queue.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 442,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-08-25T18:16:27Z",
+      "side": 1,
+      "message": "Oops! Missed that",
+      "parentUuid": "2dc5ea20_929a512c",
+      "revId": "5d3354064d78fee191a7c37079dfb4d6c65f8912",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "0cd8ec43_a964bc5f",
@@ -31,6 +49,24 @@
       "writtenOn": "2024-08-25T17:10:13Z",
       "side": 1,
       "message": "I\u0027m not sure but it might be okay for a packet to be padded a bit, so you might want to change this check to something like (bytes_per_packet / frames_per_packet) \u003c bytes_per_frame, if that\u0027s possible.",
+      "revId": "5d3354064d78fee191a7c37079dfb4d6c65f8912",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "30d8d68c_ffdc424c",
+        "filename": "src/frameworks/audio_toolbox/audio_queue.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 443,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-08-25T18:16:27Z",
+      "side": 1,
+      "message": "If i understand correctly, the frame size comparison shouldn\u0027t take that possible padding into account, right?",
+      "parentUuid": "0cd8ec43_a964bc5f",
       "revId": "5d3354064d78fee191a7c37079dfb4d6c65f8912",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

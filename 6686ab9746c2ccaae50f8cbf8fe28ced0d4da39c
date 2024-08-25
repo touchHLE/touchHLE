@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "69faa026_e3ed9f45",
+        "filename": "src/frameworks/uikit/ui_view/ui_control/ui_button.rs",
+        "patchSetId": 15
+      },
+      "lineNbr": 191,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-08-25T14:39:28Z",
+      "side": 1,
+      "message": "The reason I left it as a TODO is that it\u0027s meant to be laid out next to the label when you have an image, like, you can make a button that looks like [🙂 Hello].\n\nYou can see some examples in Apple\u0027s docs…\n\nBut this is an improvement still so maybe I should merge it anyway idk. It would be pretty obvious when it is wrong.",
+      "revId": "6686ab9746c2ccaae50f8cbf8fe28ced0d4da39c",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

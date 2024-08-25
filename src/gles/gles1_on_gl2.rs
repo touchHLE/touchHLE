@@ -423,7 +423,10 @@ impl GLES1OnGL2 {
 
             let mut buffer_binding = 0;
             gl21::GetIntegerv(array_info.buffer_binding, &mut buffer_binding);
-            // TODO: translation for bound array buffers
+            if buffer_binding != 0 {
+                // TODO: translation for bound array buffers
+                todo!("TODO: GLES1-on-GL2 layer does not support buffer bindings yet. (Try OpenGL ES on Android.)");
+            }
             assert!(buffer_binding == 0);
 
             // Get and back up data
@@ -1145,8 +1148,10 @@ impl GLES for GLES1OnGL2 {
                     gl21::ELEMENT_ARRAY_BUFFER_BINDING,
                     &mut index_buffer_binding,
                 );
-                // TODO: handling of bound index array buffers
-                assert!(index_buffer_binding == 0);
+                if index_buffer_binding != 0 {
+                    // TODO: translation for bound index array buffers
+                    todo!("TODO: GLES1-on-GL2 layer does not support buffer bindings yet. (Try OpenGL ES on Android.)");
+                }
 
                 let mut first = usize::MAX;
                 let mut last = usize::MIN;

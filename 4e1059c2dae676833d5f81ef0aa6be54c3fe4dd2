@@ -16,6 +16,24 @@
       "message": "I\u0027m not sure about this one.\nCould you use existing semaphore implementation interfaces without re-using implementation details?",
       "revId": "4e1059c2dae676833d5f81ef0aa6be54c3fe4dd2",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e2f27b47_731f2c1d",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 14
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-08-25T11:21:08Z",
+      "side": 1,
+      "message": "I\u0027m not too sure what i should stop using, the sem_t type, the SemaphoreHostObject, the State struct or the sem_increment/sem_decrement functions?",
+      "parentUuid": "ee5d0afd_b1b5d394",
+      "revId": "4e1059c2dae676833d5f81ef0aa6be54c3fe4dd2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "410855ff_27bea118",
+        "filename": "src/frameworks/audio_toolbox/audio_unit.rs",
+        "patchSetId": 27
+      },
+      "lineNbr": 309,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-08-25T14:01:06Z",
+      "side": 1,
+      "message": "If I\u0027m not wrong, this will create a `Vec` for each frame, which is not something you want to do in a hot code loop like this. There are some nice functions on `u32`, `u16` etc that give you byte arrays, that would let you avoid this. For big-to-little-endian conversion there\u0027s even a function for this.",
+      "revId": "897a679a1be2a45f1abd6da61dc2e5ea8ae42fe5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "aee4c51d_5c5d61e2",
+        "filename": "src/environment.rs",
+        "patchSetId": 16
+      },
+      "lineNbr": 20,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-08-25T14:54:52Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "be3c2c80_8f915cd5",
+      "revId": "9030cdac9d9aa89ef8db09bc386d1c931cc84baa",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "8dc791ff_078f1bce",
@@ -31,6 +49,24 @@
       "writtenOn": "2024-08-25T13:22:28Z",
       "side": 1,
       "message": "If you want to avoid the extra copy, you could do the `\u003cT: AsRef\u003cstr\u003e\u003e` trick, but tbh this is fine, I will merge this even if you don\u0027t change it.",
+      "revId": "9030cdac9d9aa89ef8db09bc386d1c931cc84baa",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "5226b898_c4985338",
+        "filename": "src/environment.rs",
+        "patchSetId": 16
+      },
+      "lineNbr": 313,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-08-25T14:54:52Z",
+      "side": 1,
+      "message": "Decided to keep it like this, i feel like its more easily understood what the intention is (at least for someone like me with not too much experience in Rust)",
+      "parentUuid": "8dc791ff_078f1bce",
       "revId": "9030cdac9d9aa89ef8db09bc386d1c931cc84baa",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

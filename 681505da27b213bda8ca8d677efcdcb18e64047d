@@ -34,6 +34,24 @@
       "parentUuid": "7f223c1e_abef92a6",
       "revId": "681505da27b213bda8ca8d677efcdcb18e64047d",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4d35f054_959919b2",
+        "filename": "src/frameworks/audio_toolbox/audio_queue.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 442,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-08-25T18:30:57Z",
+      "side": 1,
+      "message": "Oh there should also be an `format.bytes_per_frame` \u003c `actual_bytes_per_frame` check? But rename that to `expected_bytes_per_frame`, “actual” is a bit confusing IMO…",
+      "parentUuid": "4087f0e8_77be2d1a",
+      "revId": "681505da27b213bda8ca8d677efcdcb18e64047d",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

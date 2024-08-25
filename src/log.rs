@@ -82,6 +82,28 @@ macro_rules! echo {
     }
 }
 
+/// Print a message (*without* implicit newline). This should be used for all
+/// touchHLE output that isn't coming from the app itself.
+///
+/// Prefer use [log] or [log_dbg] for errors and warnings during emulation.
+macro_rules! echo_nn {
+    ($($arg:tt)+) => {
+        {
+            #[cfg(target_os = "android")]
+            {
+                let formatted_str = format!($($arg)+);
+                sdl2::log::log(&formatted_str);
+                use std::io::Write;
+                let mut log_file = $crate::log::get_log_file();
+                let _ = log_file.write_all(formatted_str.as_bytes());
+            }
+            #[cfg(not(target_os = "android"))]
+            eprint!($($arg)+);
+        }
+    };
+    () => {}
+}
+
 /// Put modules to enable [log_dbg] for here, e.g. "touchHLE::mem" to see when
 /// memory is allocated and freed.
 pub const ENABLED_MODULES: &[&str] = &[];

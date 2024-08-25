@@ -16,6 +16,24 @@
       "message": "You should change this so the initial environment variables are in this list too (makes them accessible as an argument to main).\n\nIdeally they should share pointers and stuff but that\u0027s complicated and messy. Maybe `env.set_up_initial_env_vars` can return a `Vec\u003cString\u003e` that can then be passed as `envp` here.",
       "revId": "9ea4f141e9d9dd1680e1829307886d5f7914319d",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "06671fa3_6b536aac",
+        "filename": "src/environment.rs",
+        "patchSetId": 14
+      },
+      "lineNbr": 440,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-08-25T11:29:33Z",
+      "side": 1,
+      "message": "The envp variable points to cstrs formatted as \"KEY\u003dvalue\", the pointers can\u0027t be shared. I avoided altering the signature of prep_stack_for_start which probably means i made a bit of an ownsership mess, where I have to hold a reference to the formatted env vars list first and then build a vector of references to it so I can pass as it as a slice of references to prep_stack_for_start.\nIf its desired, I could probably skip some of those steps if i were to pass the hash map of env vars to prep_stack_for_start and push to the stack reading the values from it directly.",
+      "parentUuid": "c8f46c59_e40ff288",
+      "revId": "9ea4f141e9d9dd1680e1829307886d5f7914319d",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

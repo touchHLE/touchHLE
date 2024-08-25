@@ -34,6 +34,7 @@ Usability:
 
 - Added default options for Earthworm Jim and improved default options for Crash Bandicoot Nitro Kart 3D. (@celerizer)
 - The app picker now has a “Quick options” feature. This provides a quicker and easier way to set some common options. (@hikari-no-yume)
+- The accelerometer (tilt controls) can now be simulated using a mouse, instead of a game controller or real accelerometer. Simply hold down the right mouse button and move the mouse cursor. (@alborrajo)
 
 Quality:
 

@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3283c14b_dc5d0682",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 22
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-08-25T13:11:19Z",
+      "side": 1,
+      "message": "This looks good, but please check if the game still works / doesn\u0027t crash before merging. I think there\u0027s probably a retain/release bug in the NSArray code. If there is, maybe it can be fixed in a separate commit, this one seems good.",
+      "revId": "eb10917620954fb532b3e223dee2bb7e6b992da4",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

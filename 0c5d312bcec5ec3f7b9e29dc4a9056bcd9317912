@@ -16,6 +16,24 @@
       "message": "Did you run the formatter on this? There\u0027s some really long debug print lines.",
       "revId": "0c5d312bcec5ec3f7b9e29dc4a9056bcd9317912",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ab33f108_064a7e37",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 29
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-08-25T18:58:53Z",
+      "side": 1,
+      "message": "Running both dev-scripts for formatting and linting, i get no complaints about them",
+      "parentUuid": "1290b6eb_9dc8eced",
+      "revId": "0c5d312bcec5ec3f7b9e29dc4a9056bcd9317912",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

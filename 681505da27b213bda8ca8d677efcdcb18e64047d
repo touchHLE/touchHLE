@@ -52,6 +52,24 @@
       "parentUuid": "4087f0e8_77be2d1a",
       "revId": "681505da27b213bda8ca8d677efcdcb18e64047d",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "8ca33bd9_f4ee4ab8",
+        "filename": "src/frameworks/audio_toolbox/audio_queue.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 442,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-08-25T18:50:37Z",
+      "side": 1,
+      "message": "Sorry, all these concepts started to get confusing when shuffled around. I hope i got it right now",
+      "parentUuid": "4d35f054_959919b2",
+      "revId": "681505da27b213bda8ca8d677efcdcb18e64047d",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

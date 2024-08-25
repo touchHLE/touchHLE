@@ -1,0 +1,106 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "57b5ee2c_9e998a80",
+        "filename": "src/libc/setjmp.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 39,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-08-25T14:17:39Z",
+      "side": 1,
+      "message": "The signature _is_ complete now right? This documentation can be dropped.",
+      "revId": "4486c647732f26be9d8fde482f53d47ef0f941d6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e423f27c_bdbff46e",
+        "filename": "src/libc/setjmp.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 42,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-08-25T14:17:39Z",
+      "side": 1,
+      "message": "It\u0027s no longer a TODO, right? You can drop that prefix.",
+      "revId": "4486c647732f26be9d8fde482f53d47ef0f941d6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9b740487_9d54461b",
+        "filename": "src/libc/setjmp.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 43,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-08-25T14:17:39Z",
+      "side": 1,
+      "message": "Same comment about re-using the reference here.",
+      "revId": "4486c647732f26be9d8fde482f53d47ef0f941d6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b40b8169_972ac2ff",
+        "filename": "src/libc/setjmp.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 67,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-08-25T14:17:39Z",
+      "side": 1,
+      "message": "I am really not comfortable with cross-host-stack-frame jumps, it seems like an easy way to get things into a horrifyingly broken state. I am only going to merge this if this is changed back to a panic.\n\nMaybe there are games that this is enough to fix?\n\nWe might also be able to make changes to how some host functions do guest function calls to make this panic trigger less often.",
+      "revId": "4486c647732f26be9d8fde482f53d47ef0f941d6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "33b8849c_b4724259",
+        "filename": "src/libc/setjmp.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 72,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-08-25T14:17:39Z",
+      "side": 1,
+      "message": "Can you do like `let regs \u003d env.cpu.regs_mut();` here? Unfortunately due to this calling into C++ code, I don\u0027t think `rustc` can optimise away repeated uses of regs_mut() call (but I\u0027ve never checked).",
+      "revId": "4486c647732f26be9d8fde482f53d47ef0f941d6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "614ee7a9_e78651d0",
+        "filename": "tests/TestApp_source/main.c",
+        "patchSetId": 11
+      },
+      "lineNbr": 113,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-08-25T14:17:39Z",
+      "side": 1,
+      "message": "Uhhh, this definition of jmp_buf is very architecture-specific, I think you should use an ifdef to remove it on macOS instead ;)",
+      "revId": "4486c647732f26be9d8fde482f53d47ef0f941d6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

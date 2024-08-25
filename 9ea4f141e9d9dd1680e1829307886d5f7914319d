@@ -34,6 +34,24 @@
       "parentUuid": "c8f46c59_e40ff288",
       "revId": "9ea4f141e9d9dd1680e1829307886d5f7914319d",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "3f4df352_54c1a34c",
+        "filename": "src/environment.rs",
+        "patchSetId": 14
+      },
+      "lineNbr": 440,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-08-25T13:22:28Z",
+      "side": 1,
+      "message": "Thanks!",
+      "parentUuid": "06671fa3_6b536aac",
+      "revId": "9ea4f141e9d9dd1680e1829307886d5f7914319d",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "be3c2c80_8f915cd5",
+        "filename": "src/environment.rs",
+        "patchSetId": 16
+      },
+      "lineNbr": 20,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-08-25T13:22:28Z",
+      "side": 1,
+      "message": "Nitpick: we always use the `std` versions of stuff, and personally for little functions like this I tend to just use it fully-qualified like `std::str::whatever` rather than importing it.",
+      "revId": "9030cdac9d9aa89ef8db09bc386d1c931cc84baa",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8dc791ff_078f1bce",
+        "filename": "src/environment.rs",
+        "patchSetId": 16
+      },
+      "lineNbr": 313,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-08-25T13:22:28Z",
+      "side": 1,
+      "message": "If you want to avoid the extra copy, you could do the `\u003cT: AsRef\u003cstr\u003e\u003e` trick, but tbh this is fine, I will merge this even if you don\u0027t change it.",
+      "revId": "9030cdac9d9aa89ef8db09bc386d1c931cc84baa",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

@@ -1136,60 +1136,63 @@ impl GLES for GLES1OnGL2 {
         .contains(&mode));
         assert!(type_ == gl21::UNSIGNED_BYTE || type_ == gl21::UNSIGNED_SHORT);
 
-        let fixed_point_arrays_state_backup =
-            if self.pointer_is_fixed_point.iter().any(|&is_fixed| is_fixed) {
-                // Scan the index buffer to find the range of data that may need
-                // fixed-point translation.
-                // TODO: Would it be more efficient to turn this into a
-                // non-indexed draw-call instead?
+        let fixed_point_arrays_state_backup = if self
+            .pointer_is_fixed_point
+            .iter()
+            .any(|&is_fixed| is_fixed)
+        {
+            // Scan the index buffer to find the range of data that may need
+            // fixed-point translation.
+            // TODO: Would it be more efficient to turn this into a
+            // non-indexed draw-call instead?
 
-                let mut index_buffer_binding = 0;
-                gl21::GetIntegerv(
-                    gl21::ELEMENT_ARRAY_BUFFER_BINDING,
-                    &mut index_buffer_binding,
-                );
-                if index_buffer_binding != 0 {
-                    // TODO: translation for bound index array buffers
-                    todo!("TODO: GLES1-on-GL2 layer does not support buffer bindings yet. (Try OpenGL ES on Android.)");
-                }
+            let mut index_buffer_binding = 0;
+            gl21::GetIntegerv(
+                gl21::ELEMENT_ARRAY_BUFFER_BINDING,
+                &mut index_buffer_binding,
+            );
+            if index_buffer_binding != 0 {
+                // TODO: translation for bound index array buffers
+                todo!("TODO: GLES1-on-GL2 layer does not support buffer bindings yet. (Try OpenGL ES on Android.)");
+            }
 
-                let mut first = usize::MAX;
-                let mut last = usize::MIN;
-                assert!(count >= 0);
-                match type_ {
-                    gl21::UNSIGNED_BYTE => {
-                        let indices_ptr: *const GLubyte = indices.cast();
-                        for i in 0..(count as usize) {
-                            let index = indices_ptr.add(i).read_unaligned();
-                            first = first.min(index as usize);
-                            last = last.max(index as usize);
-                        }
+            let mut first = usize::MAX;
+            let mut last = usize::MIN;
+            assert!(count >= 0);
+            match type_ {
+                gl21::UNSIGNED_BYTE => {
+                    let indices_ptr: *const GLubyte = indices.cast();
+                    for i in 0..(count as usize) {
+                        let index = indices_ptr.add(i).read_unaligned();
+                        first = first.min(index as usize);
+                        last = last.max(index as usize);
                     }
-                    gl21::UNSIGNED_SHORT => {
-                        let indices_ptr: *const GLushort = indices.cast();
-                        for i in 0..(count as usize) {
-                            let index = indices_ptr.add(i).read_unaligned();
-                            first = first.min(index as usize);
-                            last = last.max(index as usize);
-                        }
-                    }
-                    _ => unreachable!(),
                 }
+                gl21::UNSIGNED_SHORT => {
+                    let indices_ptr: *const GLushort = indices.cast();
+                    for i in 0..(count as usize) {
+                        let index = indices_ptr.add(i).read_unaligned();
+                        first = first.min(index as usize);
+                        last = last.max(index as usize);
+                    }
+                }
+                _ => unreachable!(),
+            }
 
-                let (first, count) = if first == usize::MAX && last == usize::MIN {
-                    assert!(count == 0);
-                    (0, 0)
-                } else {
-                    (
-                        first.try_into().unwrap(),
-                        (last + 1 - first).try_into().unwrap(),
-                    )
-                };
-
-                Some(self.translate_fixed_point_arrays(first, count))
+            let (first, count) = if first == usize::MAX && last == usize::MIN {
+                assert!(count == 0);
+                (0, 0)
             } else {
-                None
+                (
+                    first.try_into().unwrap(),
+                    (last + 1 - first).try_into().unwrap(),
+                )
             };
+
+            Some(self.translate_fixed_point_arrays(first, count))
+        } else {
+            None
+        };
 
         gl21::DrawElements(mode, count, type_, indices);
 

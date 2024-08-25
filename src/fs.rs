@@ -453,7 +453,6 @@ pub struct Fs {
     root: FsNode,
     working_directory: GuestPathBuf,
     home_directory: GuestPathBuf,
-    tmp_directory: GuestPathBuf,
 }
 impl Fs {
     /// Construct a filesystem containing a home directory for the app, its
@@ -485,9 +484,6 @@ impl Fs {
 
         let home_directory = APPLICATIONS.join(FAKE_UUID);
         let working_directory = GuestPathBuf::from("/".to_string());
-        // This is not necessary corresponds to an actual directory which iOS
-        // uses for temporary directory, but it's good enough for our purposes
-        let tmp_directory = GuestPathBuf::from("/tmp".to_string());
 
         let bundle_guest_path = home_directory.join(&bundle_dir_name);
 
@@ -505,24 +501,6 @@ impl Fs {
             Some(path)
         } else {
             None
-        };
-
-        let tmp_host_path = {
-            let epoch_millis = std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)
-                .unwrap()
-                .as_millis();
-            let tmp_path = std::env::temp_dir()
-                .join("touchHLE")
-                .join(bundle_id)
-                .join(format!("{}", epoch_millis));
-            if let Err(e) = std::fs::create_dir_all(&tmp_path) {
-                panic!(
-                    "Could not create tmp directory for app at {:?}: {:?}",
-                    tmp_path, e
-                );
-            }
-            tmp_path
         };
 
         // Some Free Software libraries are bundled with touchHLE.
@@ -568,12 +546,7 @@ impl Fs {
                     ),
                 ),
             )
-            .with_child("usr", FsNode::dir().with_child("lib", usr_lib))
-            .with_child(
-                // should be consistent with tmp_directory
-                "tmp",
-                FsNode::from_host_dir(&tmp_host_path, /* writeable: */ true),
-            );
+            .with_child("usr", FsNode::dir().with_child("lib", usr_lib));
 
         log_dbg!("Initial filesystem layout: {:#?}", root);
 
@@ -581,7 +554,6 @@ impl Fs {
             root,
             working_directory,
             home_directory,
-            tmp_directory,
         };
         assert!(fs.lookup_node(&bundle_guest_path).is_some());
         (fs, bundle_guest_path)
@@ -593,7 +565,6 @@ impl Fs {
             root: FsNode::dir(),
             working_directory: GuestPathBuf::from(String::new()),
             home_directory: GuestPathBuf::from(String::new()),
-            tmp_directory: GuestPathBuf::from(String::new()),
         }
     }
 
@@ -606,11 +577,6 @@ impl Fs {
     /// path may be invalid if the directory was moved or deleted.
     pub fn working_directory(&self) -> &GuestPath {
         &self.working_directory
-    }
-
-    /// Get the absolute path of the guest app's temporary directory.
-    pub fn tmp_directory(&self) -> &GuestPath {
-        &self.tmp_directory
     }
 
     /// Attempts to change the working directory.

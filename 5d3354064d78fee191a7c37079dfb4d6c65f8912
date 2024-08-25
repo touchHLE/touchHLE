@@ -16,6 +16,23 @@
       "message": "There might be multiple frames in a packet, need to add a multiplication of some kind?",
       "revId": "5d3354064d78fee191a7c37079dfb4d6c65f8912",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0cd8ec43_a964bc5f",
+        "filename": "src/frameworks/audio_toolbox/audio_queue.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 443,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-08-25T17:10:13Z",
+      "side": 1,
+      "message": "I\u0027m not sure but it might be okay for a packet to be padded a bit, so you might want to change this check to something like (bytes_per_packet / frames_per_packet) \u003c bytes_per_frame, if that\u0027s possible.",
+      "revId": "5d3354064d78fee191a7c37079dfb4d6c65f8912",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

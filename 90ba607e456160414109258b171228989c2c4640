@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "a2af859a_deb9c6ea",
+        "filename": "src/frameworks/foundation/ns_set.rs",
+        "patchSetId": 20
+      },
+      "lineNbr": 132,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-08-25T11:29:19Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "707397a8_ace50cf1",
+      "revId": "90ba607e456160414109258b171228989c2c4640",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "aefe0376_8b568deb",
@@ -53,6 +71,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "f4d2d74b_ba6d2265",
+        "filename": "src/frameworks/foundation/ns_set.rs",
+        "patchSetId": 20
+      },
+      "lineNbr": 198,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-08-25T11:29:19Z",
+      "side": 1,
+      "message": "Since we\u0027re now using NSArray\u0027s i guess this doesn\u0027t apply anymore",
+      "parentUuid": "b629140d_6dcbb46d",
+      "revId": "90ba607e456160414109258b171228989c2c4640",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "b1d2dc20_36d58b7b",
@@ -66,6 +102,24 @@
       "writtenOn": "2024-08-23T14:17:06Z",
       "side": 1,
       "message": "Could you please add a comment explaining that this class is re-used between NSSet and NSMutableSet for enumeration?",
+      "revId": "90ba607e456160414109258b171228989c2c4640",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "acf2ef79_4097e618",
+        "filename": "src/frameworks/foundation/ns_set.rs",
+        "patchSetId": 20
+      },
+      "lineNbr": 222,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-08-25T11:29:19Z",
+      "side": 1,
+      "message": "ditto",
+      "parentUuid": "b1d2dc20_36d58b7b",
       "revId": "90ba607e456160414109258b171228989c2c4640",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

@@ -320,6 +320,13 @@ impl Environment {
             env.gdb_server = Some(gdb_server);
         }
 
+        if env.options.dump_linking_info {
+            env.objc.dump_classes();
+            env.dyld.dump_lazy_symbols(&env.bins);
+            env.objc.dump_selectors(&env.bins[0], &env.mem);
+            println!("\x1e");
+        }
+
         echo!("CPU emulation begins now.");
 
         // Static initializers for libraries must be run before the initializer

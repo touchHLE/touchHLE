@@ -16,6 +16,24 @@
       "message": "Uhh what I meant was, this comparison should be like:\n\n    if format.bytes_per_packet \u003c format.bytes_per_frame * format.frames_per_packet {\n\n(The division doesn\u0027t make sense.)",
       "revId": "681505da27b213bda8ca8d677efcdcb18e64047d",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4087f0e8_77be2d1a",
+        "filename": "src/frameworks/audio_toolbox/audio_queue.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 442,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-08-25T18:25:38Z",
+      "side": 1,
+      "message": "This part of the comparison, I mean. If you want the multiplication to be done in its own variable, it could be named like `expected_bytes_per_packet`.",
+      "parentUuid": "7f223c1e_abef92a6",
+      "revId": "681505da27b213bda8ca8d677efcdcb18e64047d",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

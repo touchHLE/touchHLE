@@ -29,12 +29,14 @@ Compatibility:
 - API support improvements:
   - Various small contributions. (@hikari-no-yume, @alborrajo, @ciciplusplus, @atasro2, @LennyKappa)
   - UITextField now supports real text input with a keyboard. On Windows/macOS physical keyboard is used, on Android it's done via a system soft keyboard. (@ciciplusplus)
+  - UIScrollView and UITextView partial implementations. (@Skryptonyte, @ciciplusplus)
 
 Usability:
 
 - Added default options for Earthworm Jim and improved default options for Crash Bandicoot Nitro Kart 3D. (@celerizer)
 - The app picker now has a “Quick options” feature. This provides a quicker and easier way to set some common options. (@hikari-no-yume)
 - The accelerometer (tilt controls) can now be simulated using a mouse, instead of a game controller or real accelerometer. Simply hold down the right mouse button and move the mouse cursor. (@alborrajo)
+- Default options for various games. (@nighto)
 
 Quality:
 

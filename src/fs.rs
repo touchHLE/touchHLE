@@ -502,6 +502,33 @@ impl Fs {
         } else {
             None
         };
+        let tmp_host_path = if !read_only_mode {
+            let path = paths::user_data_base_path()
+                .join(paths::SANDBOX_DIR)
+                .join(bundle_id)
+                .join("tmp");
+            // We clean temporary directory for current app at startup.
+            // This is no-op if directory doesn't exist.
+            match std::fs::remove_dir_all(&path) {
+                Ok(_) => {}
+                Err(e) => {
+                    log_dbg!(
+                        "Unable to clean tmp host folder {:?} at startup: {}",
+                        path,
+                        e
+                    );
+                }
+            }
+            if let Err(e) = std::fs::create_dir_all(&path) {
+                panic!(
+                    "Could not create temporary directory for app at {:?}: {:?}",
+                    path, e
+                );
+            }
+            Some(path)
+        } else {
+            None
+        };
 
         // Some Free Software libraries are bundled with touchHLE.
         use paths::DYLIBS_DIR;
@@ -526,6 +553,12 @@ impl Fs {
             app_dir_children.insert(
                 "Documents".to_string(),
                 FsNode::from_host_dir(&documents_host_path, /* writeable: */ true),
+            );
+        }
+        if let Some(tmp_host_path) = tmp_host_path {
+            app_dir_children.insert(
+                "tmp".to_string(),
+                FsNode::from_host_dir(&tmp_host_path, /* writeable: */ true),
             );
         }
 

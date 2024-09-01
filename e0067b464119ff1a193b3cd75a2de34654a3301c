@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ade4dc30_1a8e5689",
+        "filename": "src/frameworks/foundation/ns_thread.rs",
+        "patchSetId": 16
+      },
+      "lineNbr": 75,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-09-01T16:47:24Z",
+      "side": 1,
+      "message": "Unless I misunderstood this implementation, there are several issues here:\n\n1. You\u0027re operating on the copy/clone of the state set of threads.\n2. That set of threads seems to never get updated? And you\u0027re always returning a new copy here?\n3. How do you manage threads which finished? Those should be removed from the set.",
+      "revId": "e0067b464119ff1a193b3cd75a2de34654a3301c",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

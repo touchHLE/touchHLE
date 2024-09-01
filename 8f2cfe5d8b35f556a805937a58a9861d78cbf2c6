@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fd2a3ab3_6242f922",
+        "filename": "src/frameworks/foundation/ns_thread.rs",
+        "patchSetId": 16
+      },
+      "lineNbr": 168,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-09-01T16:58:51Z",
+      "side": 1,
+      "message": "you\u0027re already having dealloc implementation at line 151, you should update it instead",
+      "revId": "8f2cfe5d8b35f556a805937a58a9861d78cbf2c6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

@@ -202,7 +202,7 @@ pub fn AudioQueueNewOutput(
     0 // success
 }
 
-fn AudioQueueGetParameter(
+pub fn AudioQueueGetParameter(
     env: &mut Environment,
     in_aq: AudioQueueRef,
     in_param_id: AudioQueueParameterID,

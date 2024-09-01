@@ -15,8 +15,8 @@ use crate::frameworks::audio_toolbox::audio_file::{
 };
 use crate::frameworks::audio_toolbox::audio_queue::{
     kAudioQueueParam_Volume, AudioQueueAllocateBuffer, AudioQueueBufferRef, AudioQueueDispose,
-    AudioQueueEnqueueBuffer, AudioQueueNewOutput, AudioQueueOutputCallback, AudioQueuePause,
-    AudioQueueRef, AudioQueueSetParameter, AudioQueueStart, AudioQueueStop,
+    AudioQueueEnqueueBuffer, AudioQueueGetParameter, AudioQueueNewOutput, AudioQueueOutputCallback,
+    AudioQueuePause, AudioQueueRef, AudioQueueSetParameter, AudioQueueStart, AudioQueueStop,
 };
 use crate::frameworks::carbon_core::eofErr;
 use crate::frameworks::core_audio_types::AudioStreamBasicDescription;
@@ -112,6 +112,20 @@ pub const CLASSES: ClassExports = objc_classes! {
     log!("TODO: [(AVAudioPlayer*){:?} setDelegate:{:?}]", this, delegate);
 }
 
+- (f32)volume {
+    let aq_ref = env.objc.borrow_mut::<AVAudioPlayerHostObject>(this).audio_queue;
+    if aq_ref.is_none() {
+        // TODO: is it correct? can we always return it instead of querying?
+        return env.objc.borrow_mut::<AVAudioPlayerHostObject>(this).volume;
+    }
+
+    let tmp: MutPtr<f32> = env.mem.alloc(guest_size_of::<f32>()).cast();
+    let status = AudioQueueGetParameter(env, aq_ref.unwrap(), kAudioQueueParam_Volume, tmp);
+    assert_eq!(status, 0);
+    let res = env.mem.read(tmp);
+    env.mem.free(tmp.cast());
+    res
+}
 - (())setVolume:(f32)volume {
     let host_object = env.objc.borrow_mut::<AVAudioPlayerHostObject>(this);
     host_object.volume = volume;

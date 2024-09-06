@@ -249,6 +249,10 @@ int test_vsnprintf() {
   str = str_format("%s", NULL);
   res += !!strcmp(str, "(null)");
   free(str);
+  // Test % without a specifier
+  str = str_format("abc%");
+  res += !!strcmp(str, "abc");
+  free(str);
   // Test %x
   str = str_format("%x", 2042);
   res += !!strcmp(str, "7fa");

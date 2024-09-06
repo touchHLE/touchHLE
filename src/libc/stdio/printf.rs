@@ -100,7 +100,13 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
         let specifier = get_format_char(&env.mem, format_char_idx);
         format_char_idx += 1;
 
-        assert!(specifier != b'\0');
+        if specifier == b'\0' {
+            // Apparently, errno is not set in this case (tested on macOS),
+            // thus we treat this situation as a normal
+            // and just stop the formatting.
+            log!("printf_inner encountered '%' at the end of format string, ignoring.");
+            break;
+        }
         if specifier == b'%' {
             res.push(b'%');
             continue;

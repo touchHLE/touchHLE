@@ -27,7 +27,7 @@ use crate::objc::{
     autorelease, id, msg, msg_class, nil, objc_classes, retain, Class, ClassExports, HostObject,
     NSZonePtr, ObjC,
 };
-use crate::Environment;
+use crate::{fs, Environment};
 use std::borrow::Cow;
 use std::collections::HashMap;
 use std::io::Write;
@@ -875,12 +875,20 @@ pub const CLASSES: ClassExports = objc_classes! {
     assert!(!path.contains("/./"));
     // Removing a trailing slash from the last component.
     let path = path_algorithms::trim_trailing_slashes(&path);
-    // TODO: For absolute paths only, resolving references to the parent
-    //       directory
-    if path.starts_with('/') {
-        assert!(!path.contains(".."));
-    }
-    let new_string = from_rust_string(env, String::from(path));
+    // For absolute paths only, resolve references to the parent directory
+    let new_path_str = if path.starts_with('/') {
+        assert!(!path.starts_with("/.."));
+        // Note: while we are using fs function, it's just string manipulation
+        // here.
+        let resolved = fs::resolve_path(GuestPath::new(path), None);
+        let new_path = format!("/{}", resolved.join("/"));
+        assert!(!new_path.contains(".."));
+        new_path
+    } else {
+        String::from(path)
+    };
+    log_dbg!("[(NSString *){:?} stringByStandardizingPath] {} -> {}", this, to_rust_string(env, this), new_path_str);
+    let new_string = from_rust_string(env, new_path_str);
     autorelease(env, new_string)
 }
 

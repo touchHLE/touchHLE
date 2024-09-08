@@ -139,6 +139,10 @@ pub const CLASSES: ClassExports = objc_classes! {
     log!("TODO: setClearButtonMode:{}", mode);
 }
 
+- (())setSecureTextEntry:(bool)secure {
+    log!("TODO: setSecureTextEntry:{}", secure);
+}
+
 // weak/non-retaining
 - (())setDelegate:(id)delegate { // something implementing UITextFieldDelegate
     log_dbg!("setDelegate:{:?}", delegate);

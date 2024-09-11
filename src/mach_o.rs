@@ -51,6 +51,9 @@ pub struct MachO {
     pub external_relocations: Vec<(u32, String)>,
     /// Address/program counter value for the entry point.
     pub entry_point_pc: Option<u32>,
+    /// Slide value is used to load binary at proper base address value.
+    /// For now, it's 0 or hardcoded (see `slide_for_binary_name`).
+    pub slide: u32,
 }
 
 #[derive(Debug)]
@@ -237,6 +240,7 @@ impl MachO {
         bytes: &[u8],
         into_mem: &mut Mem,
         name: String,
+        slide_to_address: u32,
     ) -> Result<MachO, &'static str> {
         log_dbg!("Reading {:?}", name);
 
@@ -265,7 +269,7 @@ impl MachO {
                     }
                 }
                 return if let Some(subslice) = best_subslice {
-                    MachO::load_from_bytes(subslice, into_mem, name)
+                    MachO::load_from_bytes(subslice, into_mem, name, slide_to_address)
                 } else {
                     Err("No supported architecture in the fat binary")
                 };
@@ -310,6 +314,8 @@ impl MachO {
         let mut indirect_undef_symbols: Vec<Option<String>> = Vec::new();
         let mut external_relocations: Vec<(u32, String)> = Vec::new();
         let mut entry_point_pc: Option<u32> = None;
+
+        let slide = slide_to_address;
 
         for MachCommand(command, _size) in commands {
             match command {
@@ -360,7 +366,13 @@ impl MachO {
                     };
 
                     if load_me {
-                        into_mem.reserve(vmaddr, vmsize);
+                        log_dbg!(
+                            "reserve {} addr {:#x} size {}",
+                            segname,
+                            vmaddr + slide,
+                            vmsize
+                        );
+                        into_mem.reserve(vmaddr + slide, vmsize);
 
                         // If filesize is less than vmsize, the rest of the
                         // segment should be filled with zeroes. We are assuming
@@ -369,7 +381,8 @@ impl MachO {
                             assert!(filesize <= vmsize);
 
                             let src = &bytes[fileoff..][..filesize as usize];
-                            let dst = into_mem.bytes_at_mut(Ptr::from_bits(vmaddr), filesize);
+                            let dst =
+                                into_mem.bytes_at_mut(Ptr::from_bits(vmaddr + slide), filesize);
                             dst.copy_from_slice(src);
                         }
                     }
@@ -413,7 +426,7 @@ impl MachO {
                                 } else {
                                     entry
                                 };
-                                exported_symbols.insert(name.to_string(), entry);
+                                exported_symbols.insert(name.to_string(), slide + entry);
                             };
                         }
                     }
@@ -557,12 +570,6 @@ impl MachO {
                     bind_size,
                     ..
                 } => {
-                    // TODO: Implement sliding and handle properly here
-                    let slide = 0;
-                    if rebase_size != 0 {
-                        log!("Warning: Binary \"{}\" requests rebasing, skipping!", name);
-                    }
-
                     let rebase_opcodes = Rebase::parse(
                         &bytes[rebase_off as usize..][..rebase_size as usize],
                         size_of::<GuestUSize>(),
@@ -571,8 +578,9 @@ impl MachO {
                     for symb in rebase_opcodes {
                         match symb.symbol_type {
                             BindSymbolType::Pointer => {
-                                let addr =
-                                    segment_offsets[symb.segment_index] + symb.symbol_offset as u32;
+                                let addr = segment_offsets[symb.segment_index]
+                                    + symb.symbol_offset as u32
+                                    + slide;
                                 let original_location = Ptr::from_bits(addr);
                                 let old: u32 = into_mem.read(original_location);
                                 log_dbg!(
@@ -597,8 +605,9 @@ impl MachO {
                     for symb in bind_opcodes {
                         match symb.symbol_type {
                             BindSymbolType::Pointer => {
-                                let addr =
-                                    segment_offsets[symb.segment_index] + symb.symbol_offset as u32;
+                                let addr = segment_offsets[symb.segment_index]
+                                    + symb.symbol_offset as u32
+                                    + slide;
                                 log_dbg!("Pointer bind: {:#x} -> {}", addr, symb.name);
                                 external_relocations.push((addr, symb.name));
                             }
@@ -671,6 +680,7 @@ impl MachO {
             exported_symbols,
             external_relocations,
             entry_point_pc,
+            slide,
         })
     }
 
@@ -681,6 +691,7 @@ impl MachO {
         path: P,
         fs: &Fs,
         into_mem: &mut Mem,
+        slide_to_address: u32,
     ) -> Result<MachO, &'static str> {
         let name = path.as_ref().file_name().unwrap().to_string();
         Self::load_from_bytes(
@@ -688,6 +699,7 @@ impl MachO {
                 .map_err(|_| "Could not read executable file")?,
             into_mem,
             name,
+            slide_to_address,
         )
     }
 

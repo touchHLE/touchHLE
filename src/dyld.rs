@@ -424,6 +424,8 @@ impl Dyld {
 
         let entry_size = stubs.dyld_indirect_symbol_info.as_ref().unwrap().entry_size;
 
+        let slide = bin.slide;
+
         // two or three A32 instructions (PIC stub needs one more) followed by
         // the address or offset of the corresponding __la_symbol_ptr
         let expected_instructions = match entry_size {
@@ -436,7 +438,7 @@ impl Dyld {
         assert!(stubs.size % entry_size == 0);
         let stub_count = stubs.size / entry_size;
         for i in 0..stub_count {
-            let ptr: MutPtr<u32> = Ptr::from_bits(stubs.addr + i * entry_size);
+            let ptr: MutPtr<u32> = Ptr::from_bits(slide + stubs.addr + i * entry_size);
 
             for (j, &instr) in expected_instructions.iter().enumerate() {
                 assert!(mem.read(ptr + j.try_into().unwrap()) == instr);
@@ -558,7 +560,8 @@ impl Dyld {
                 continue;
             };
 
-            let ptr_ptr: MutPtr<ConstVoidPtr> = Ptr::from_bits(ptrs.addr + i * entry_size);
+            let ptr_ptr: MutPtr<ConstVoidPtr> =
+                Ptr::from_bits(bin.slide + ptrs.addr + i * entry_size);
 
             for other_bin in bins {
                 if let Some(&addr) = other_bin.exported_symbols.get(symbol) {
@@ -715,23 +718,25 @@ impl Dyld {
             (stub_function_ptr, la_symbol_ptr)
         }
 
-        let (stubs, pic_offset) = bins
+        let (stubs, pic_offset, slide) = bins
             .iter()
             .find_map(|bin| {
                 let stubs = bin.get_section(SectionType::SymbolStubs)?;
-                if !(stubs.addr..(stubs.addr + stubs.size)).contains(&svc_pc) {
+                if !((bin.slide + stubs.addr)..(bin.slide + stubs.addr + stubs.size))
+                    .contains(&svc_pc)
+                {
                     return None;
                 }
                 let pic_offset = bin
                     .get_section(SectionType::LazySymbolPointers)
                     .map_or(0, |lazy_ptrs| lazy_ptrs.addr - stubs.addr);
-                Some((stubs, pic_offset))
+                Some((stubs, pic_offset, bin.slide))
             })
             .unwrap();
 
         let info = stubs.dyld_indirect_symbol_info.as_ref().unwrap();
 
-        let offset = svc_pc - stubs.addr;
+        let offset = svc_pc - (slide + stubs.addr);
         assert!(offset.is_multiple_of(info.entry_size));
         let idx = (offset / info.entry_size) as usize;
 
@@ -800,7 +805,7 @@ impl Dyld {
                     symbol,
                     stub_function_ptr,
                     la_symbol_ptr,
-                    addr,
+                    dylib.slide + addr,
                     dylib.name
                 );
                 // Tell the caller it needs to restart execution at svc_pc.

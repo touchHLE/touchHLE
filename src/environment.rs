@@ -355,16 +355,23 @@ impl Environment {
             log!("Applying game-specific hack for Spore Origins: zeroing memory on alloc instead of free.");
         }
 
-        let executable = mach_o::MachO::load_from_file(bundle.executable_path(), &fs, &mut mem)
-            .map_err(|e| format!("Could not load executable: {e}"))?;
+        let app_name = bundle.executable_path().file_name().unwrap().to_string();
+        let executable =
+            mach_o::MachO::load_from_file(bundle.executable_path(), &fs, &mut mem, &app_name)
+                .map_err(|e| format!("Could not load executable: {e}"))?;
 
         let mut dylibs = Vec::new();
         for dylib in &executable.dynamic_libraries {
             // There are some Free Software libraries bundled with touchHLE and
             // exposed via the guest file system (see Fs::new()).
             if fs.is_file(fs::GuestPath::new(dylib)) {
-                let dylib = mach_o::MachO::load_from_file(fs::GuestPath::new(dylib), &fs, &mut mem)
-                    .map_err(|e| format!("Could not load bundled dylib: {e}"))?;
+                let dylib = mach_o::MachO::load_from_file(
+                    fs::GuestPath::new(dylib),
+                    &fs,
+                    &mut mem,
+                    &app_name,
+                )
+                .map_err(|e| format!("Could not load bundled dylib: {e}"))?;
                 dylibs.push(dylib);
             // Otherwise, look for it in our host implementations.
             } else if !crate::dyld::DYLIB_LIST
@@ -504,12 +511,19 @@ impl Environment {
                 continue;
             };
 
+            let slide = bin.slide;
+
             log_dbg!("Calling static initializers for {:?}", bin.name);
             assert!(section.size % 4 == 0);
-            let base: mem::ConstPtr<abi::GuestFunction> = mem::Ptr::from_bits(section.addr);
+            let base: mem::ConstPtr<abi::GuestFunction> = mem::Ptr::from_bits(section.addr + slide);
             let count = section.size / 4;
             for i in 0..count {
                 let func = env.mem.read(base + i);
+                log_dbg!(
+                    "Calling static initilizer at {:?} from {:?}",
+                    func,
+                    (base + i)
+                );
                 () = func.call_from_host(&mut env, ());
             }
             log_dbg!("Static initialization done");

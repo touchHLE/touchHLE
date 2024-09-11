@@ -354,17 +354,43 @@ impl Environment {
         if is_spore {
             log!("Applying game-specific hack for Spore Origins: zeroing memory on alloc instead of free.");
         }
-
-        let executable = mach_o::MachO::load_from_file(bundle.executable_path(), &fs, &mut mem)
-            .map_err(|e| format!("Could not load executable: {e}"))?;
+        let executable = mach_o::MachO::load_from_file(
+            bundle.executable_path(),
+            &fs,
+            &mut mem,
+            /* slide: */ 0,
+        )
+        .map_err(|e| format!("Could not load executable: {e}"))?;
 
         let mut dylibs = Vec::new();
         for dylib in &executable.dynamic_libraries {
             // There are some Free Software libraries bundled with touchHLE and
             // exposed via the guest file system (see Fs::new()).
-            if fs.is_file(fs::GuestPath::new(dylib)) {
-                let dylib = mach_o::MachO::load_from_file(fs::GuestPath::new(dylib), &fs, &mut mem)
-                    .map_err(|e| format!("Could not load bundled dylib: {e}"))?;
+            let dylib_path = fs::GuestPath::new(dylib);
+            if fs.is_file(dylib_path) {
+                // We use hardcoded slide values for libgcc and libstdc++
+                // based on base addresses of those dylibs prior to iOS 3.1
+                // TODO: implement some kind of ASLR instead of hardcoding
+                assert!(dylib_path.as_str().starts_with("/usr/lib/"));
+                let name = dylib_path.file_name().unwrap();
+                let dylib_slide = match name {
+                    "libstdc++.6.dylib" | "libstdc++.6.0.9.dylib" => 0x3748a000,
+                    "libgcc_s.1.dylib" => 0x30000000,
+                    "libz.1.dylib" | "libz.1.2.3.dylib" | "libz.dylib" | "libz.1.1.3.dylib" => {
+                        // We build `libz` from sources with our OSS toolchain,
+                        // the base address is already set and sliding is not
+                        // needed.
+                        0
+                    }
+                    _ => unimplemented!("Unknown binary slide for {}", name),
+                };
+                let dylib = mach_o::MachO::load_from_file(
+                    fs::GuestPath::new(dylib),
+                    &fs,
+                    &mut mem,
+                    dylib_slide,
+                )
+                .map_err(|e| format!("Could not load bundled dylib: {e}"))?;
                 dylibs.push(dylib);
             // Otherwise, look for it in our host implementations.
             } else if !crate::dyld::DYLIB_LIST
@@ -510,6 +536,11 @@ impl Environment {
             let count = section.size / 4;
             for i in 0..count {
                 let func = env.mem.read(base + i);
+                log_dbg!(
+                    "Calling static initializer at {:?} from {:?}",
+                    func,
+                    (base + i)
+                );
                 () = func.call_from_host(&mut env, ());
             }
             log_dbg!("Static initialization done");

@@ -52,6 +52,24 @@
       "parentUuid": "a4436deb_fabf4f09",
       "revId": "897a679a1be2a45f1abd6da61dc2e5ea8ae42fe5",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d983a86d_46a7462c",
+        "filename": "src/frameworks/audio_toolbox/audio_unit.rs",
+        "patchSetId": 27
+      },
+      "lineNbr": 309,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-09-12T11:52:07Z",
+      "side": 1,
+      "message": "Trying to solve this problem without being able to know in compile time the size has been a bit of a headache, i\u0027m not too sure this code is the best it can be but at least its not creating a vec on each chunk",
+      "parentUuid": "4587c400_8aedb4e9",
+      "revId": "897a679a1be2a45f1abd6da61dc2e5ea8ae42fe5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

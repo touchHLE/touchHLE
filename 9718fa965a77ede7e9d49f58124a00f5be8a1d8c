@@ -16,6 +16,24 @@
       "message": "How difficult it would be to properly implement this function?",
       "revId": "9718fa965a77ede7e9d49f58124a00f5be8a1d8c",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ef50e83c_6d560a9f",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 12
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-09-12T15:31:16Z",
+      "side": 1,
+      "message": "Turns out it was easy",
+      "parentUuid": "50e92a18_028146df",
+      "revId": "9718fa965a77ede7e9d49f58124a00f5be8a1d8c",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

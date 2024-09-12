@@ -1,0 +1,89 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6030a1a4_4282ce06",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 33
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-09-12T20:59:50Z",
+      "side": 1,
+      "message": "This looks like a significant improvement.\n\nDo we need an assertion somewhere in the audio unit code that the format is supported? For audio queues, if the format is unsupported, it simply skips playback.",
+      "revId": "a564f0c3df37e286cfba5052f47e4bcc053c376f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3e958fa3_0a9200cd",
+        "filename": "src/frameworks/audio_toolbox/audio_components.rs",
+        "patchSetId": 33
+      },
+      "lineNbr": 11,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-09-12T20:59:50Z",
+      "side": 1,
+      "message": "Please import this via `crate::audio::openal::al_types::` instead. Sorry, I guess I need to find a way to automatically enforce this kind of rule.",
+      "revId": "a564f0c3df37e286cfba5052f47e4bcc053c376f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b031f357_556ee679",
+        "filename": "src/frameworks/audio_toolbox/audio_queue.rs",
+        "patchSetId": 33
+      },
+      "lineNbr": 479,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-09-12T20:59:50Z",
+      "side": 1,
+      "message": "Can you update this comment?",
+      "revId": "a564f0c3df37e286cfba5052f47e4bcc053c376f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3ef6a5e8_e88da132",
+        "filename": "src/frameworks/audio_toolbox/audio_queue.rs",
+        "patchSetId": 33
+      },
+      "lineNbr": 541,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-09-12T20:59:50Z",
+      "side": 1,
+      "message": "Like I did with CBNK3D, maybe you can add a comment here about Resident Evil, so future readers have an idea of which application we have to do this for?",
+      "revId": "a564f0c3df37e286cfba5052f47e4bcc053c376f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9326f08a_768f6566",
+        "filename": "src/frameworks/audio_toolbox/audio_queue.rs",
+        "patchSetId": 33
+      },
+      "lineNbr": 551,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-09-12T20:59:50Z",
+      "side": 1,
+      "message": "I think we probably need an assertion that the format is little-endian in the other path, and big-endian in this path? Even better, this code would be skipped if it\u0027s not big-endian?",
+      "revId": "a564f0c3df37e286cfba5052f47e4bcc053c376f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

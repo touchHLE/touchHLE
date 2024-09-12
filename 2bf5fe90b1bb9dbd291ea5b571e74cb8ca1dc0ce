@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b1c7b782_790f08ff",
+        "filename": "src/environment.rs",
+        "patchSetId": 19
+      },
+      "lineNbr": 21,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-09-12T20:50:54Z",
+      "side": 1,
+      "message": "This is part of the Rust prelude, you don\u0027t need to import it (also we don\u0027t use `core::`).",
+      "revId": "2bf5fe90b1bb9dbd291ea5b571e74cb8ca1dc0ce",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2b0fb9bd_4e24ee42",
+        "filename": "src/frameworks/foundation/ns_object.rs",
+        "patchSetId": 19
+      },
+      "lineNbr": 198,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-09-12T20:50:54Z",
+      "side": 1,
+      "message": "Maybe add a comment here remarking that the actual waiting will happen once it returns.",
+      "revId": "2bf5fe90b1bb9dbd291ea5b571e74cb8ca1dc0ce",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "eb169c31_ed911ea2",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 33
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-09-13T10:21:14Z",
+      "side": 1,
+      "message": "Added an assertion since this is the only game that uses AudioUnits yet. If we want to ignore unsupported formats we can do it later.",
+      "parentUuid": "6030a1a4_4282ce06",
+      "revId": "a564f0c3df37e286cfba5052f47e4bcc053c376f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "3e958fa3_0a9200cd",
@@ -31,6 +49,24 @@
       "writtenOn": "2024-09-12T20:59:50Z",
       "side": 1,
       "message": "Please import this via `crate::audio::openal::al_types::` instead. Sorry, I guess I need to find a way to automatically enforce this kind of rule.",
+      "revId": "a564f0c3df37e286cfba5052f47e4bcc053c376f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d2c3fd25_f7754f26",
+        "filename": "src/frameworks/audio_toolbox/audio_components.rs",
+        "patchSetId": 33
+      },
+      "lineNbr": 11,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-09-13T10:21:14Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "3e958fa3_0a9200cd",
       "revId": "a564f0c3df37e286cfba5052f47e4bcc053c376f",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
@@ -52,6 +88,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "767a6d2e_3203c3fd",
+        "filename": "src/frameworks/audio_toolbox/audio_queue.rs",
+        "patchSetId": 33
+      },
+      "lineNbr": 479,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-09-13T10:21:14Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "b031f357_556ee679",
+      "revId": "a564f0c3df37e286cfba5052f47e4bcc053c376f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "3ef6a5e8_e88da132",
@@ -69,6 +123,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "06427e7f_65180d8d",
+        "filename": "src/frameworks/audio_toolbox/audio_queue.rs",
+        "patchSetId": 33
+      },
+      "lineNbr": 541,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-09-13T10:21:14Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "3ef6a5e8_e88da132",
+      "revId": "a564f0c3df37e286cfba5052f47e4bcc053c376f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "9326f08a_768f6566",
@@ -82,6 +154,24 @@
       "writtenOn": "2024-09-12T20:59:50Z",
       "side": 1,
       "message": "I think we probably need an assertion that the format is little-endian in the other path, and big-endian in this path? Even better, this code would be skipped if it\u0027s not big-endian?",
+      "revId": "a564f0c3df37e286cfba5052f47e4bcc053c376f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7054aa4b_3c76729e",
+        "filename": "src/frameworks/audio_toolbox/audio_queue.rs",
+        "patchSetId": 33
+      },
+      "lineNbr": 551,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-09-13T10:21:14Z",
+      "side": 1,
+      "message": "The thing is that i\u0027m not too sure why this format is big endian, the audio format doesn\u0027t say it is:\n```\ntouchHLE::frameworks::audio_toolbox::audio_queue: Warning: Stream format has non-sensical values:\nAudioStreamBasicDescription { \n  sample_rate: 11025.0, \n  format_id: \"\u0027lpcm\u0027\", \n  format_flags: [\n    \"kAudioFormatFlagIsSignedInteger\",\n    \"kAudioFormatFlagIsPacked\"\n  ],\n  bytes_per_packet: 2,\n  frames_per_packet: 1,\n  bytes_per_frame: 2,\n  channels_per_frame: 2,\n  bits_per_channel: 16\n}\n```",
+      "parentUuid": "9326f08a_768f6566",
       "revId": "a564f0c3df37e286cfba5052f47e4bcc053c376f",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

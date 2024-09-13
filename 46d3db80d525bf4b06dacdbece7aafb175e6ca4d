@@ -52,6 +52,24 @@
       "parentUuid": "f113e4e1_3f9d80fd",
       "revId": "46d3db80d525bf4b06dacdbece7aafb175e6ca4d",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "c54ba99e_0a56e933",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 25
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-09-13T22:47:47Z",
+      "side": 1,
+      "message": "UITextField works fine in both games and multitouch works normally as far as I tried",
+      "parentUuid": "b3389cd4_497e3346",
+      "revId": "46d3db80d525bf4b06dacdbece7aafb175e6ca4d",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

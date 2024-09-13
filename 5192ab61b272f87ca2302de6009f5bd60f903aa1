@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "1e0ce1c0_c1cf63a4",
+        "filename": "src/frameworks/uikit/ui_application.rs",
+        "patchSetId": 28
+      },
+      "lineNbr": 177,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-09-13T22:47:47Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "b20092b6_bbeac5ff",
+      "revId": "5192ab61b272f87ca2302de6009f5bd60f903aa1",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "c00baaaf_cc2626b0",
@@ -31,6 +49,24 @@
       "writtenOn": "2024-09-13T22:15:14Z",
       "side": 1,
       "message": "you may also want to provide default implementation for nextResponder method here, which just returns nil",
+      "revId": "5192ab61b272f87ca2302de6009f5bd60f903aa1",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "e9c15bd8_bb92feb9",
+        "filename": "src/frameworks/uikit/ui_responder.rs",
+        "patchSetId": 28
+      },
+      "lineNbr": 68,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-09-13T22:47:47Z",
+      "side": 1,
+      "message": "Oops, missed that from the docs somehow, thanks.",
+      "parentUuid": "c00baaaf_cc2626b0",
       "revId": "5192ab61b272f87ca2302de6009f5bd60f903aa1",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

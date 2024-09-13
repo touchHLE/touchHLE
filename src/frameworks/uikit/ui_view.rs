@@ -44,6 +44,8 @@ pub(super) struct UIViewHostObject {
     subviews: Vec<id>,
     /// The superview. This is a weak reference.
     superview: id,
+    /// The view controller that controls this view. This is a weak reference
+    view_controller: id,
     clears_context_before_drawing: bool,
     user_interaction_enabled: bool,
     multiple_touch_enabled: bool,
@@ -57,11 +59,17 @@ impl Default for UIViewHostObject {
             layer: nil,
             subviews: Vec::new(),
             superview: nil,
+            view_controller: nil,
             clears_context_before_drawing: true,
             user_interaction_enabled: true,
             multiple_touch_enabled: false,
         }
     }
+}
+
+pub fn set_view_controller(env: &mut Environment, view: id, controller: id) {
+    let host_obj = env.objc.borrow_mut::<UIViewHostObject>(view);
+    host_obj.view_controller = controller;
 }
 
 /// Shared parts of `initWithCoder:` and `initWithFrame:`. These can't call
@@ -299,12 +307,14 @@ pub const CLASSES: ClassExports = objc_classes! {
         layer,
         superview,
         subviews,
+        view_controller,
         clears_context_before_drawing: _,
         user_interaction_enabled: _,
         multiple_touch_enabled: _,
     } = std::mem::take(env.objc.borrow_mut(this));
 
     release(env, layer);
+    assert!(view_controller == nil);
     assert!(superview == nil);
     for subview in subviews {
         env.objc.borrow_mut::<UIViewHostObject>(subview).superview = nil;

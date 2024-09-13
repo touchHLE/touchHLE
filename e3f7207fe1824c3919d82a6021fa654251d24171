@@ -51,6 +51,23 @@
       "parentUuid": "5f86088c_b836c94e",
       "revId": "e3f7207fe1824c3919d82a6021fa654251d24171",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0059979b_21460224",
+        "filename": "src/frameworks/uikit/ui_view_controller.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 58,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-09-13T21:30:19Z",
+      "side": 1,
+      "message": "you need to check that old_view is not nil, otherwise it will crash on borrow",
+      "revId": "e3f7207fe1824c3919d82a6021fa654251d24171",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

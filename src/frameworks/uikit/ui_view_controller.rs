@@ -6,6 +6,7 @@
 //! `UIViewController`.
 
 use crate::frameworks::foundation::ns_string::get_static_str;
+use crate::frameworks::uikit::ui_view::set_view_controller;
 use crate::objc::{
     id, msg, msg_class, nil, objc_classes, release, retain, ClassExports, HostObject, NSZonePtr,
 };
@@ -54,6 +55,8 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (())setView:(id)new_view { // UIView*
     let host_obj = env.objc.borrow_mut::<UIViewControllerHostObject>(this);
     let old_view = std::mem::replace(&mut host_obj.view, new_view);
+    set_view_controller(env, old_view, nil);
+    set_view_controller(env, new_view, this);
     retain(env, new_view);
     release(env, old_view);
 }

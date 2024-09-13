@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b20092b6_bbeac5ff",
+        "filename": "src/frameworks/uikit/ui_application.rs",
+        "patchSetId": 28
+      },
+      "lineNbr": 177,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-09-13T19:19:07Z",
+      "side": 1,
+      "message": "This TODO seems fine because if this causes some infinite loop it\u0027ll probably be noticeable, so it\u0027s not like we won\u0027t realise something is broken.",
+      "revId": "5192ab61b272f87ca2302de6009f5bd60f903aa1",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

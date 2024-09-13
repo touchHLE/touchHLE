@@ -34,6 +34,24 @@
       "parentUuid": "ee5d0afd_b1b5d394",
       "revId": "4e1059c2dae676833d5f81ef0aa6be54c3fe4dd2",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5e9f0c60_082beeb2",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 14
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-09-13T20:19:14Z",
+      "side": 1,
+      "message": "Latter, I thought about implementing as wrappers:\n\nsemaphore_create -\u003e sem_open\nsemaphore_wait -\u003e sem_wait\netc...\n\nMaybe it\u0027s less convenient, but worth exploring as it will hide implementation details",
+      "parentUuid": "e2f27b47_731f2c1d",
+      "revId": "4e1059c2dae676833d5f81ef0aa6be54c3fe4dd2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

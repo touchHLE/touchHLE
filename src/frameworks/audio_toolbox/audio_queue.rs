@@ -451,7 +451,7 @@ pub fn log_if_broken_audio_format(format: &AudioStreamBasicDescription) {
 
 /// Check if the format of an audio queue is one we currently support.
 /// If not, we should skip trying to play it rather than crash.
-fn is_supported_audio_format(format: &AudioStreamBasicDescription) -> bool {
+pub fn is_supported_audio_format(format: &AudioStreamBasicDescription) -> bool {
     let &AudioStreamBasicDescription {
         format_id,
         format_flags,
@@ -475,14 +475,15 @@ fn is_supported_audio_format(format: &AudioStreamBasicDescription) -> bool {
     }
 }
 
-/// Decode an [AudioQueueBuffer]'s content to raw PCM suitable for an OpenAL
-/// buffer.
-fn decode_buffer(
+/// Decode an [AudioQueueBuffer] or [super::audio_unit::AudioBuffer]'s content
+/// to raw PCM suitable for an OpenAL buffer.
+pub fn decode_buffer(
     mem: &Mem,
     format: &AudioStreamBasicDescription,
-    buffer: &AudioQueueBuffer,
+    audio_data: MutPtr<u8>,
+    audio_data_byte_size: GuestUSize,
 ) -> (ALenum, ALsizei, Vec<u8>) {
-    let data_slice = mem.bytes_at(buffer.audio_data.cast(), buffer.audio_data_byte_size);
+    let data_slice = mem.bytes_at(audio_data, audio_data_byte_size);
 
     assert!(is_supported_audio_format(format));
 
@@ -532,14 +533,53 @@ fn decode_buffer(
                 data_slice
             };
 
-            let f = match (format.channels_per_frame, format.bits_per_channel) {
+            let bytes_per_channel = format.bits_per_channel / 8;
+            let actual_bytes_per_frame = format.channels_per_frame * bytes_per_channel;
+            let actual_channels_per_frame = format.bytes_per_frame / bytes_per_channel;
+
+            // In case the audio format has inconsistent values, we apply some
+            // processing before passing it to OpenAL.
+            // This is the case in Resident Evil 4
+            let processed_data: Vec<u8> = if actual_bytes_per_frame == format.bytes_per_frame {
+                data_slice.to_owned()
+            } else {
+                let actual_frame_count = data_slice.len() / actual_bytes_per_frame as usize;
+                let processed_frame_count = format.bytes_per_frame as usize * actual_frame_count;
+                let mut processed_data = Vec::<u8>::with_capacity(processed_frame_count);
+                for frame in data_slice.chunks(actual_bytes_per_frame as usize) {
+                    // Fetch only frame bytes
+                    let frame_bytes = &frame[frame.len() - format.bytes_per_frame as usize..];
+                    // Change from big to little endian
+                    match format.bytes_per_frame {
+                        1 => processed_data.extend(
+                            &u8::from_be_bytes(frame_bytes.try_into().unwrap()).to_le_bytes(),
+                        ),
+                        2 => processed_data.extend_from_slice(
+                            &u16::from_be_bytes(frame_bytes.try_into().unwrap()).to_le_bytes(),
+                        ),
+                        4 => processed_data.extend_from_slice(
+                            &u32::from_be_bytes(frame_bytes.try_into().unwrap()).to_le_bytes(),
+                        ),
+                        8 => processed_data.extend_from_slice(
+                            &u64::from_be_bytes(frame_bytes.try_into().unwrap()).to_le_bytes(),
+                        ),
+                        16 => processed_data.extend_from_slice(
+                            &u128::from_be_bytes(frame_bytes.try_into().unwrap()).to_le_bytes(),
+                        ),
+                        _ => unimplemented!(),
+                    };
+                }
+                processed_data
+            };
+
+            let f = match (actual_channels_per_frame, format.bits_per_channel) {
                 (1, 8) => al::AL_FORMAT_MONO8,
                 (1, 16) => al::AL_FORMAT_MONO16,
                 (2, 8) => al::AL_FORMAT_STEREO8,
                 (2, 16) => al::AL_FORMAT_STEREO16,
                 _ => unreachable!(),
             };
-            (f, format.sample_rate as ALsizei, data_slice.to_owned())
+            (f, format.sample_rate as ALsizei, processed_data)
         }
         _ => unreachable!(),
     }
@@ -612,8 +652,12 @@ fn prime_audio_queue(
             al_buffer
         });
 
-        let (al_format, al_frequency, data) =
-            decode_buffer(&env.mem, &host_object.format, &next_buffer);
+        let (al_format, al_frequency, data) = decode_buffer(
+            &env.mem,
+            &host_object.format,
+            next_buffer.audio_data.cast(),
+            next_buffer.audio_data_byte_size,
+        );
         unsafe {
             al::alBufferData(
                 next_al_buffer,

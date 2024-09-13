@@ -55,6 +55,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "0c3b100b_d6e75444",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-09-13T22:47:33Z",
+      "side": 1,
+      "message": "I don\u0027t know if this is how Apple\u0027s implementation does it, but it seemed to me like the most straightforward way to implement this (in order to be useful for the UIResponder patchset) would be by holding a back reference. Another option would be to hold a list of UIViewControllers in the state and iterate over them until finding the controller for a certain view",
+      "parentUuid": "93c26213_f742dd6a",
+      "revId": "e3f7207fe1824c3919d82a6021fa654251d24171",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "0059979b_21460224",
         "filename": "src/frameworks/uikit/ui_view_controller.rs",
         "patchSetId": 2
@@ -66,6 +84,24 @@
       "writtenOn": "2024-09-13T21:30:19Z",
       "side": 1,
       "message": "you need to check that old_view is not nil, otherwise it will crash on borrow",
+      "revId": "e3f7207fe1824c3919d82a6021fa654251d24171",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "df57dd26_172fe4e2",
+        "filename": "src/frameworks/uikit/ui_view_controller.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 58,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-09-13T22:47:33Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "0059979b_21460224",
       "revId": "e3f7207fe1824c3919d82a6021fa654251d24171",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

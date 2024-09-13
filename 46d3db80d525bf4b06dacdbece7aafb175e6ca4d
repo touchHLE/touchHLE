@@ -34,6 +34,24 @@
       "parentUuid": "540c91d9_7d9062ed",
       "revId": "46d3db80d525bf4b06dacdbece7aafb175e6ca4d",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b3389cd4_497e3346",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 25
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-09-13T19:28:28Z",
+      "side": 1,
+      "message": "seems OKish, but I would suggest to test for regressions before merging.\n\nlike, checking that multi-touch still works and UITextField works as well for DH and Spore",
+      "parentUuid": "f113e4e1_3f9d80fd",
+      "revId": "46d3db80d525bf4b06dacdbece7aafb175e6ca4d",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

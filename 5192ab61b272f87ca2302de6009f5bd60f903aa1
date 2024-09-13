@@ -16,6 +16,23 @@
       "message": "This TODO seems fine because if this causes some infinite loop it\u0027ll probably be noticeable, so it\u0027s not like we won\u0027t realise something is broken.",
       "revId": "5192ab61b272f87ca2302de6009f5bd60f903aa1",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c00baaaf_cc2626b0",
+        "filename": "src/frameworks/uikit/ui_responder.rs",
+        "patchSetId": 28
+      },
+      "lineNbr": 68,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-09-13T22:15:14Z",
+      "side": 1,
+      "message": "you may also want to provide default implementation for nextResponder method here, which just returns nil",
+      "revId": "5192ab61b272f87ca2302de6009f5bd60f903aa1",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

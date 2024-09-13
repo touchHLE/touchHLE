@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "581d3793_cf10f64a",
+        "filename": "src/environment.rs",
+        "patchSetId": 19
+      },
+      "lineNbr": 21,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-09-13T00:51:20Z",
+      "side": 1,
+      "message": "My bad, all these import mistakes are because i put too much faith in the LSP\u0027s choices",
+      "parentUuid": "b1c7b782_790f08ff",
+      "revId": "2bf5fe90b1bb9dbd291ea5b571e74cb8ca1dc0ce",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "2b0fb9bd_4e24ee42",
@@ -31,6 +49,24 @@
       "writtenOn": "2024-09-12T20:50:54Z",
       "side": 1,
       "message": "Maybe add a comment here remarking that the actual waiting will happen once it returns.",
+      "revId": "2bf5fe90b1bb9dbd291ea5b571e74cb8ca1dc0ce",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d795e432_06d1f836",
+        "filename": "src/frameworks/foundation/ns_object.rs",
+        "patchSetId": 19
+      },
+      "lineNbr": 198,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-09-13T00:51:20Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "2b0fb9bd_4e24ee42",
       "revId": "2bf5fe90b1bb9dbd291ea5b571e74cb8ca1dc0ce",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

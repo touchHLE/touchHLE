@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "df8e80b8_52ede34d",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 20
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-09-13T00:51:20Z",
+      "side": 1,
+      "message": "I had to re-introduce the PoP hack as it seems to be caused by the timing of the movie player notifications (I think?) I tried finding out exactly the why to make a less-dirty hack but its almost 3 am and I can\u0027t figure out why by the time the second video plays the IsPlaying function returns true, making it not initialize properly and get stuck in a loop \"playing\" a video",
+      "revId": "94fedec3db93ce8e6d6f69a4f5842dfd097357e3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

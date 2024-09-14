@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3c2f4ece_11036b91",
+        "filename": "src/frameworks/foundation/ns_object.rs",
+        "patchSetId": 22
+      },
+      "lineNbr": 232,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-09-14T22:02:41Z",
+      "side": 1,
+      "message": "why did you move this hack down?",
+      "revId": "5a75a4d3461cc50aafbdc80b75917fc4365f59ee",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

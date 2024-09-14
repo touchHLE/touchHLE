@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "610def45_66741b59",
+        "filename": "src/libc/mach_init.rs",
+        "patchSetId": 23
+      },
+      "lineNbr": 9,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-09-14T21:54:58Z",
+      "side": 1,
+      "message": "could you use instead of null some unique value against which we could assert later in code?\n\nsomething similar to what is done for MACH_HOST_SELF",
+      "revId": "52425898ab33e49aa497efaab5a26a3fbc2bc9ad",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

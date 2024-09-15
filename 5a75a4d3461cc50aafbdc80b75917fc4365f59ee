@@ -16,6 +16,24 @@
       "message": "why did you move this hack down?",
       "revId": "5a75a4d3461cc50aafbdc80b75917fc4365f59ee",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "514ce36e_ae36e942",
+        "filename": "src/frameworks/foundation/ns_object.rs",
+        "patchSetId": 22
+      },
+      "lineNbr": 232,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-09-15T11:18:11Z",
+      "side": 1,
+      "message": "No reason in particular, I was trying to see if I could get it to work without the hack but the timings of the movie player events were still giving troubles (see my other comment) so I added it back here. I can move it back up",
+      "parentUuid": "3c2f4ece_11036b91",
+      "revId": "5a75a4d3461cc50aafbdc80b75917fc4365f59ee",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

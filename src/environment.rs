@@ -62,7 +62,7 @@ pub struct Thread {
     /// When a thread is currently executing, its state is stored directly in
     /// the CPU, rather than in a context object. In that case, this field is
     /// None. See also: [std::mem::take] and [cpu::Cpu::swap_context].
-    context: Option<cpu::CpuContext>,
+    context: Option<Box<cpu::CpuContext>>,
     /// Address range of this thread's stack, used to check if addresses are in
     /// range while producing a stack trace.
     stack: Option<std::ops::RangeInclusive<u32>>,
@@ -555,25 +555,24 @@ impl Environment {
             return_value: None,
             in_start_routine: true,
             in_host_function: false,
-            context: Some(cpu::CpuContext::new()),
+            context: Some(Box::new(cpu::CpuContext::new())),
             stack: Some(stack_alloc.to_bits()..=(stack_high_addr - 1)),
         });
         let new_thread_id = self.threads.len() - 1;
 
         log_dbg!("Created new thread {} with stack {:#x}–{:#x}, will execute function {:?} with data {:?}", new_thread_id, stack_alloc.to_bits(), (stack_high_addr - 1), start_routine, user_data);
 
-        let old_thread = self.current_thread;
-
         // Switch to the new context (all zeroes) and set up the registers
         // (which we can only do by switching). The original thread's state
         // should be the same as before.
-        self.switch_thread(new_thread_id);
-        self.cpu.set_cpsr(cpu::Cpu::CPSR_USER_MODE);
-        self.cpu.regs_mut()[cpu::Cpu::SP] = stack_high_addr;
-        self.cpu.regs_mut()[0] = user_data.to_bits();
-        self.cpu
-            .branch_with_link(start_routine, self.dyld.thread_exit_routine());
-        self.switch_thread(old_thread);
+        let context = self.threads[new_thread_id].context.as_mut().unwrap();
+        context.regs[cpu::Cpu::SP] = stack_high_addr;
+        context.regs[0] = user_data.to_bits();
+
+        context.cpsr =
+            cpu::Cpu::CPSR_USER_MODE | ((start_routine.is_thumb() as u32) * cpu::Cpu::CPSR_THUMB);
+        context.regs[cpu::Cpu::PC] = start_routine.addr_without_thumb_bit();
+        context.regs[cpu::Cpu::LR] = self.dyld.thread_exit_routine().addr_with_thumb_bit();
 
         new_thread_id
     }

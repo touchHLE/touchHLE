@@ -562,18 +562,17 @@ impl Environment {
 
         log_dbg!("Created new thread {} with stack {:#x}–{:#x}, will execute function {:?} with data {:?}", new_thread_id, stack_alloc.to_bits(), (stack_high_addr - 1), start_routine, user_data);
 
-        let old_thread = self.current_thread;
-
         // Switch to the new context (all zeroes) and set up the registers
         // (which we can only do by switching). The original thread's state
         // should be the same as before.
-        self.switch_thread(new_thread_id);
-        self.cpu.set_cpsr(cpu::Cpu::CPSR_USER_MODE);
-        self.cpu.regs_mut()[cpu::Cpu::SP] = stack_high_addr;
-        self.cpu.regs_mut()[0] = user_data.to_bits();
-        self.cpu
-            .branch_with_link(start_routine, self.dyld.thread_exit_routine());
-        self.switch_thread(old_thread);
+        let context = self.threads[new_thread_id].context.as_mut().unwrap();
+        context.regs[cpu::Cpu::SP] = stack_high_addr;
+        context.regs[0] = user_data.to_bits();
+
+        context.cpsr =
+            cpu::Cpu::CPSR_USER_MODE | ((start_routine.is_thumb() as u32) * cpu::Cpu::CPSR_THUMB);
+        context.regs[cpu::Cpu::PC] = start_routine.addr_without_thumb_bit();
+        context.regs[cpu::Cpu::LR] = self.dyld.thread_exit_routine().addr_with_thumb_bit();
 
         new_thread_id
     }

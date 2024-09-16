@@ -17,6 +17,7 @@ use crate::mem::{ConstPtr, GuestUSize, Mem, MutPtr, Ptr, SafeRead, SafeWrite};
 use touchHLE_dynarmic_wrapper::*;
 
 type VAddr = u32;
+pub type CpuContext = touchHLE_DynarmicContext;
 
 fn touchHLE_cpu_read_impl<T: SafeRead + Default>(
     mem: *mut touchHLE_Mem,
@@ -101,23 +102,6 @@ pub struct Cpu {
 impl Drop for Cpu {
     fn drop(&mut self) {
         unsafe { touchHLE_DynarmicWrapper_delete(self.dynarmic_wrapper) }
-    }
-}
-
-/// Object for storing the state of a CPU (registers etc), useful when switching
-/// threads.
-pub struct CpuContext {
-    context: *mut Dynarmic_A32_Context,
-}
-impl CpuContext {
-    pub fn new() -> Self {
-        let context = unsafe { touchHLE_DynarmicWrapper_Context_new() };
-        CpuContext { context }
-    }
-}
-impl Drop for CpuContext {
-    fn drop(&mut self) {
-        unsafe { touchHLE_DynarmicWrapper_Context_delete(self.context) }
     }
 }
 
@@ -231,7 +215,12 @@ impl Cpu {
     /// Swap the current state of the CPU (registers etc) with the state stored
     /// in the context object.
     pub fn swap_context(&mut self, context: &mut CpuContext) {
-        unsafe { touchHLE_DynarmicWrapper_swap_context(self.dynarmic_wrapper, context.context) }
+        unsafe {
+            touchHLE_DynarmicWrapper_swap_context(
+                self.dynarmic_wrapper,
+                context as *mut touchHLE_DynarmicContext,
+            )
+        }
     }
 
     /// Get PC with the Thumb bit appropriately set.

@@ -17,10 +17,33 @@ pub type touchHLE_DynarmicWrapper = std::ffi::c_void;
 /// `c_void` is used here to avoid depending on it directly)
 #[allow(non_camel_case_types)]
 pub type touchHLE_Mem = std::ffi::c_void;
-/// Opaque C++ type
-#[allow(non_camel_case_types)]
-pub type Dynarmic_A32_Context = std::ffi::c_void;
 
+#[repr(C)]
+#[allow(non_camel_case_types)]
+#[derive(Debug)]
+pub struct touchHLE_DynarmicContext {
+    pub regs: [u32; 16],
+    pub extregs: [u32; 64],
+    pub cpsr: u32,
+    pub fpscr: u32,
+}
+
+impl Default for touchHLE_DynarmicContext {
+    fn default() -> Self {
+        Self {
+            regs: [0; 16],
+            extregs: [0; 64],
+            cpsr: 0,
+            fpscr: 0,
+        }
+    }
+}
+
+impl touchHLE_DynarmicContext {
+    pub fn new() -> Self {
+        Self::default()
+    }
+}
 type VAddr = u32;
 
 // Import functions from lib.cpp, see build.rs. Note that lib.cpp depends on
@@ -37,7 +60,7 @@ extern "C" {
     pub fn touchHLE_DynarmicWrapper_set_cpsr(cpu: *mut touchHLE_DynarmicWrapper, cpsr: u32);
     pub fn touchHLE_DynarmicWrapper_swap_context(
         cpu: *mut touchHLE_DynarmicWrapper,
-        context: *mut Dynarmic_A32_Context,
+        context: *mut touchHLE_DynarmicContext,
     );
     pub fn touchHLE_DynarmicWrapper_invalidate_cache_range(
         cpu: *mut touchHLE_DynarmicWrapper,
@@ -50,6 +73,4 @@ extern "C" {
         ticks: Option<&mut u64>,
     ) -> i32;
 
-    pub fn touchHLE_DynarmicWrapper_Context_new() -> *mut Dynarmic_A32_Context;
-    pub fn touchHLE_DynarmicWrapper_Context_delete(context: *mut Dynarmic_A32_Context);
 }

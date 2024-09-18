@@ -16,7 +16,7 @@ use super::gles11_raw as gles11;
 use super::gles11_raw::types::*;
 use super::util::{try_decode_pvrtc, PalettedTextureFormat};
 use super::GLES;
-use crate::window::{GLContext, GLVersion, Window};
+use crate::window::{GLContext, GLCriticalSection, GLVersion, Window};
 use std::ffi::CStr;
 
 pub struct GLES1Native {
@@ -33,9 +33,10 @@ impl GLES for GLES1Native {
         })
     }
 
-    fn make_current(&self, window: &Window) {
-        unsafe { window.make_gl_context_current(&self.gl_ctx) };
-        gles11::load_with(|s| window.gl_get_proc_address(s))
+    fn make_current(&self, window: &Window) -> GLCriticalSection {
+        let critical_section = unsafe { window.make_gl_context_current(&self.gl_ctx) };
+        gles11::load_with(|s| window.gl_get_proc_address(s));
+        critical_section
     }
 
     unsafe fn driver_description(&self) -> String {

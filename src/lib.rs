@@ -28,7 +28,6 @@
 #[macro_use]
 mod log;
 mod abi;
-mod app_picker;
 mod audio;
 mod bundle;
 mod cpu;
@@ -206,7 +205,9 @@ pub fn main<T: Iterator<Item = String>>(mut args: T) -> Result<(), String> {
         echo!(
             "No app specified, opening app picker. Use the --help flag to see command-line usage."
         );
-        let (bundle_path, env_for_salvage) = app_picker::app_picker(options, &mut option_args)?;
+        let (bundle_path, mut extra_options, env_for_salvage) =
+            environment::app_picker::app_picker(options)?;
+        option_args.append(&mut extra_options);
         (bundle_path, Some(env_for_salvage))
     };
 
@@ -321,7 +322,7 @@ pub fn main<T: Iterator<Item = String>>(mut args: T) -> Result<(), String> {
         assert!(parse_result == Ok(true));
     }
 
-    let mut env = Environment::new(bundle, fs, options, env_for_salvage)?;
+    let env = Environment::new(bundle, fs, options, env_for_salvage)?;
     env.run();
     Ok(())
 }

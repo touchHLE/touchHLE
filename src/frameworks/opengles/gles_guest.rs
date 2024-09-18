@@ -62,7 +62,7 @@ fn with_ctx_and_mem<T, U>(env: &mut Environment, f: T) -> U
 where
     T: FnOnce(&mut dyn GLES, &mut Mem) -> U,
 {
-    let gles = super::sync_context(
+    let (_c, gles) = super::sync_context(
         &mut env.framework_state.opengles,
         &mut env.objc,
         env.window

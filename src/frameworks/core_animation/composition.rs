@@ -131,7 +131,7 @@ pub fn recomposite_if_necessary(env: &mut Environment) -> Option<Instant> {
     let opacity = 1.0;
 
     let window = env.window.as_mut().unwrap();
-    window.make_internal_gl_ctx_current();
+    let _c = window.make_internal_gl_ctx_current();
     let gles = window.get_internal_gl_ctx();
 
     // Set up GL objects needed for render-to-texture. We could draw directly

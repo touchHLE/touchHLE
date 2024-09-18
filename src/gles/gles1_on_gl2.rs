@@ -26,7 +26,7 @@ use super::util::{
     ParamType,
 };
 use super::GLES;
-use crate::window::{GLContext, GLVersion, Window};
+use crate::window::{GLContext, GLCriticalSection, GLVersion, Window};
 use std::collections::HashSet;
 use std::ffi::CStr;
 
@@ -566,9 +566,10 @@ impl GLES for GLES1OnGL2 {
         })
     }
 
-    fn make_current(&self, window: &Window) {
-        unsafe { window.make_gl_context_current(&self.gl_ctx) };
-        gl21::load_with(|s| window.gl_get_proc_address(s))
+    fn make_current(&self, window: &Window) -> GLCriticalSection {
+        let critical_section = unsafe { window.make_gl_context_current(&self.gl_ctx) };
+        gl21::load_with(|s| window.gl_get_proc_address(s));
+        critical_section
     }
 
     unsafe fn driver_description(&self) -> String {

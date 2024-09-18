@@ -9,6 +9,8 @@
 //! usage is to import `GLES` and `types` from this module, but get the
 //! constants from [super::gles11_raw].
 
+use crate::window::GLCriticalSection;
+
 use super::gles11_raw::types::*;
 
 /// Trait representing an OpenGL ES implementation and context.
@@ -33,7 +35,8 @@ pub trait GLES {
 
     /// Make this context (and any underlying context) the active OpenGL
     /// context.
-    fn make_current(&self, window: &crate::window::Window);
+    #[must_use]
+    fn make_current(&self, window: &crate::window::Window) -> GLCriticalSection;
 
     /// Get some string describing the underlying driver. For OpenGL this is
     /// `GL_VENDOR`, `GL_RENDERER` and `GL_VERSION`.

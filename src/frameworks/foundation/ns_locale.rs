@@ -8,7 +8,6 @@
 use super::{ns_array, ns_string};
 use crate::dyld::{ConstantExports, HostConstant};
 use crate::objc::{id, objc_classes, ClassExports, HostObject};
-use crate::options::Options;
 use crate::Environment;
 use std::ffi::CStr;
 
@@ -32,7 +31,9 @@ impl State {
 
 /// Use `msg_class![env; NSLocale preferredLanguages]` rather than calling this
 /// directly, because it may be slow and there is no caching.
-fn get_preferred_languages(options: &Options) -> Vec<String> {
+// BEFOREMERGE: Doesn't really need to be mut but it should be ok right?
+fn get_preferred_languages(env: &mut Environment) -> Vec<String> {
+    let options = env.options.as_ref();
     if let Some(ref preferred_languages) = options.preferred_languages {
         log!("The app requested your preferred languages. {:?} will reported based on your --preferred-languages= option.", preferred_languages);
         return preferred_languages.clone();
@@ -41,7 +42,8 @@ fn get_preferred_languages(options: &Options) -> Vec<String> {
     // Unfortunately Rust-SDL2 doesn't provide a wrapper for this yet.
     let languages = unsafe {
         let mut languages = Vec::new();
-        let locales_raw = sdl2_sys::SDL_GetPreferredLocales();
+        let locales_raw =
+            env.on_parent_stack_in_coroutine(|_, _| sdl2_sys::SDL_GetPreferredLocales());
         if !locales_raw.is_null() {
             for i in 0.. {
                 let sdl2_sys::SDL_Locale { language, country } = locales_raw.offset(i).read();
@@ -126,7 +128,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     if let Some(existing) = State::get(env).preferred_languages {
         existing
     } else {
-        let langs = get_preferred_languages(&env.options);
+        let langs = get_preferred_languages(env);
         let lang_ns_strings = langs.into_iter().map(|lang| ns_string::from_rust_string(env, lang)).collect();
         let new = ns_array::from_vec(env, lang_ns_strings);
         State::get(env).preferred_languages = Some(new);

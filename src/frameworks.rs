@@ -48,3 +48,9 @@ pub struct State {
     opengles: opengles::State,
     uikit: uikit::State,
 }
+
+impl State {
+    pub fn in_critical_section(&self) -> bool {
+        self.audio_toolbox.in_critical_section()
+    }
+}

@@ -354,7 +354,7 @@ fn nanosleep(env: &mut Environment, rqtp: ConstPtr<timespec>, _rmtp: MutPtr<time
     log_dbg!("nanosleep {} {}", tv_sec, tv_nsec);
     let total_sleep = Duration::from_secs(tv_sec.try_into().unwrap())
         + Duration::from_nanos(tv_nsec.try_into().unwrap());
-    env.sleep(total_sleep, true);
+    env.sleep(total_sleep);
     0 // success
 }
 

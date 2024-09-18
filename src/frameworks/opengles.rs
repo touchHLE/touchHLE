@@ -15,7 +15,7 @@ mod gles_guest;
 pub use gles_guest::FUNCTIONS;
 use touchHLE_gl_bindings::gles11::types::GLenum;
 
-use crate::mem::ConstPtr;
+use crate::{mem::ConstPtr, window::GLCriticalSection};
 
 #[derive(Default)]
 pub struct State {
@@ -32,24 +32,28 @@ impl State {
     }
 }
 
+#[must_use]
 fn sync_context<'a>(
     state: &mut State,
     objc: &'a mut crate::objc::ObjC,
     window: &mut crate::window::Window,
     current_thread: crate::ThreadId,
-) -> &'a mut dyn crate::gles::GLES {
+) -> (GLCriticalSection, &'a mut dyn crate::gles::GLES) {
     let current_ctx = state.current_ctx_for_thread(current_thread);
     let host_obj = objc.borrow_mut::<eagl::EAGLContextHostObject>(current_ctx.unwrap());
     let gles_ctx = host_obj.gles_ctx.as_deref_mut().unwrap();
 
-    if window.is_app_gl_ctx_no_longer_current() || state.current_ctx_thread != Some(current_thread)
+    let critical_section = if window.is_app_gl_ctx_no_longer_current()
+        || state.current_ctx_thread != Some(current_thread)
     {
         log_dbg!(
             "Restoring guest app OpenGL context for thread {}.",
             current_thread
         );
-        gles_ctx.make_current(window);
-    }
+        gles_ctx.make_current(window)
+    } else {
+        window.make_critical_section()
+    };
 
-    gles_ctx
+    (critical_section, gles_ctx)
 }

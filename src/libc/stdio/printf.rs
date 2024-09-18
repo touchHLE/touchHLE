@@ -752,7 +752,8 @@ fn sscanf_common(
                 let mut dst_ptr: MutPtr<u8> = args.next(env);
                 loop {
                     if !isspace(env, src_ptr.cast_const()) {
-                        env.mem.write(dst_ptr, env.mem.read(src_ptr));
+                        let mem = env.mem.as_mut();
+                        mem.write(dst_ptr, mem.read(src_ptr));
                         src_ptr += 1;
                         dst_ptr += 1;
                     } else {

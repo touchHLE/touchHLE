@@ -138,14 +138,14 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (id)initWithAPI:(EAGLRenderingAPI)api {
     assert!(api == kEAGLRenderingAPIOpenGLES1);
 
-    let window = env.window.as_mut().expect("OpenGL ES is not supported in headless mode");
-    let gles1_ctx = create_gles1_ctx(window, &env.options);
+    let gles1_ctx = env.on_parent_stack_in_coroutine(|window, options| {create_gles1_ctx(window, options )});
 
     // Make the context current so we can get driver info from it.
     // initWithAPI: is not supposed to make the new context current (the app
     // must call setCurrentContext: for that), so we need to hide this from the
     // app. Setting current_ctx_thread to None should cause sync_context to
     // switch back to the right context if the app makes an OpenGL ES call.
+    let window = env.window.as_mut().expect("OpenGL ES is not supported in headless mode");
     gles1_ctx.make_current(window);
     env.framework_state.opengles.current_ctx_thread = None;
     log!("Driver info: {}", unsafe { gles1_ctx.driver_description() });
@@ -290,7 +290,7 @@ pub const CLASSES: ClassExports = objc_classes! {
                 renderbuffer,
             );
             if let Some(sleep_for) = sleep_for {
-                env.sleep(sleep_for, /* tail_call: */ false);
+                env.sleep(sleep_for);
             }
             return true;
         }
@@ -315,7 +315,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     }
 
     if let Some(sleep_for) = sleep_for {
-        env.sleep(sleep_for, /* tail_call: */ false);
+        env.sleep(sleep_for);
     }
 
     true

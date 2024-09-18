@@ -20,15 +20,19 @@
 
 use super::gl21compat_raw as gl21;
 use super::gl21compat_raw::types::*;
-use super::gles11_raw as gles11; // constants only
+use super::gles11_raw as gles11;
+use super::gles_generic::GLESContext;
+// constants only
 use super::util::{
     fixed_to_float, matrix_fixed_to_float, try_decode_pvrtc, PalettedTextureFormat, ParamTable,
     ParamType,
 };
 use super::GLES;
-use crate::window::{GLContext, GLVersion, Window};
+use crate::window::{GLContext, GLCriticalSection, GLVersion, Window};
+use std::cell::RefCell;
 use std::collections::HashSet;
 use std::ffi::CStr;
+use std::sync::atomic::AtomicBool;
 
 /// List of capabilities shared by OpenGL ES 1.1 and OpenGL 2.1.
 ///
@@ -366,13 +370,62 @@ const TEX_PARAMS: ParamTable = ParamTable(&[
     (gl21::MAX_TEXTURE_MAX_ANISOTROPY_EXT, ParamType::Float, 1),
 ]);
 
-pub struct GLES1OnGL2 {
-    gl_ctx: GLContext,
+pub struct GLES1OnGL2State {
     pointer_is_fixed_point: [bool; ARRAYS.len()],
     fixed_point_texture_units: HashSet<GLenum>,
     fixed_point_translation_buffers: [Vec<GLfloat>; ARRAYS.len()],
 }
-impl GLES1OnGL2 {
+
+pub struct GLES1OnGL2 {
+    gl_ctx: GLContext,
+    state: RefCell<GLES1OnGL2State>,
+    is_loaded: AtomicBool,
+}
+impl GLES for GLES1OnGL2 {
+    fn description() -> &'static str {
+        "OpenGL ES 1.1 via touchHLE GLES1-on-GL2 layer"
+    }
+
+    fn new(window: &mut Window) -> Result<Self, String> {
+        Ok(Self {
+            gl_ctx: window.create_gl_context(GLVersion::GL21Compat)?,
+            state: RefCell::new(GLES1OnGL2State {
+                pointer_is_fixed_point: [false; ARRAYS.len()],
+                fixed_point_texture_units: HashSet::new(),
+                fixed_point_translation_buffers: [Vec::new(), Vec::new(), Vec::new(), Vec::new()],
+            }),
+            is_loaded: false.into(),
+        })
+    }
+
+    fn make_current<'a>(&'a self, window: &Window) -> Box<dyn GLESContext + 'a> {
+        if self.gl_ctx.is_current() && self.is_loaded.load(std::sync::atomic::Ordering::Acquire) {
+            return Box::new(GLES1OnGL2Context {
+                critical_section: window.make_critical_section(),
+                state: &self.state,
+            });
+        }
+
+        let critical_section = unsafe { window.make_gl_context_current(&self.gl_ctx) };
+        gl21::load_with(|s| window.gl_get_proc_address(s));
+        self.is_loaded
+            .store(true, std::sync::atomic::Ordering::Release);
+
+        Box::new(GLES1OnGL2Context {
+            critical_section,
+            state: &self.state,
+        })
+    }
+}
+
+pub struct GLES1OnGL2Context<'a> {
+    state: &'a RefCell<GLES1OnGL2State>,
+    // This gets used on Drop, we never need to touch it otherwise.
+    #[allow(unused)]
+    critical_section: GLCriticalSection,
+}
+
+impl GLES1OnGL2Context<'_> {
     /// If any arrays with fixed-point data are in use at the time of a draw
     /// call, this function will convert the data to floating-point and
     /// replace the pointers. [Self::restore_fixed_point_arrays] can be called
@@ -386,7 +439,7 @@ impl GLES1OnGL2 {
         for (i, array_info) in ARRAYS.iter().enumerate() {
             // Decide whether we need to do anything for this array
 
-            if !self.pointer_is_fixed_point[i] {
+            if !self.state.borrow_mut().pointer_is_fixed_point[i] {
                 continue;
             }
 
@@ -399,7 +452,12 @@ impl GLES1OnGL2 {
                     gl21::ACTIVE_TEXTURE,
                     &mut active_texture as *mut _ as *mut _,
                 );
-                if !self.fixed_point_texture_units.contains(&active_texture) {
+                if !self
+                    .state
+                    .borrow_mut()
+                    .fixed_point_texture_units
+                    .contains(&active_texture)
+                {
                     continue;
                 }
 
@@ -465,7 +523,7 @@ impl GLES1OnGL2 {
                 stride
             };
 
-            let buffer = &mut self.fixed_point_translation_buffers[i];
+            let buffer = &mut self.state.borrow_mut().fixed_point_translation_buffers[i];
             buffer.clear();
             buffer.resize(((first + count) * size).try_into().unwrap(), 0.0);
 
@@ -534,7 +592,11 @@ impl GLES1OnGL2 {
                         gl21::ACTIVE_TEXTURE,
                         &mut active_texture as *mut _ as *mut _,
                     );
-                    assert!(self.fixed_point_texture_units.contains(&active_texture));
+                    assert!(self
+                        .state
+                        .borrow_mut()
+                        .fixed_point_texture_units
+                        .contains(&active_texture));
                     let mut old_client_active_texture: GLenum = 0;
                     gl21::GetIntegerv(
                         gl21::CLIENT_ACTIVE_TEXTURE,
@@ -552,25 +614,8 @@ impl GLES1OnGL2 {
         }
     }
 }
-impl GLES for GLES1OnGL2 {
-    fn description() -> &'static str {
-        "OpenGL ES 1.1 via touchHLE GLES1-on-GL2 layer"
-    }
 
-    fn new(window: &mut Window) -> Result<Self, String> {
-        Ok(Self {
-            gl_ctx: window.create_gl_context(GLVersion::GL21Compat)?,
-            pointer_is_fixed_point: [false; ARRAYS.len()],
-            fixed_point_texture_units: HashSet::new(),
-            fixed_point_translation_buffers: [Vec::new(), Vec::new(), Vec::new(), Vec::new()],
-        })
-    }
-
-    fn make_current(&self, window: &Window) {
-        unsafe { window.make_gl_context_current(&self.gl_ctx) };
-        gl21::load_with(|s| window.gl_get_proc_address(s))
-    }
-
+impl GLESContext for GLES1OnGL2Context<'_> {
     unsafe fn driver_description(&self) -> String {
         let version = CStr::from_ptr(gl21::GetString(gl21::VERSION) as *const _);
         let vendor = CStr::from_ptr(gl21::GetString(gl21::VENDOR) as *const _);
@@ -583,7 +628,6 @@ impl GLES for GLES1OnGL2 {
             renderer.to_string_lossy()
         )
     }
-
     // Generic state manipulation
     unsafe fn GetError(&mut self) -> GLenum {
         gl21::GetError()
@@ -1053,22 +1097,22 @@ impl GLES for GLES1OnGL2 {
         assert!(size == 4);
         if type_ == gles11::FIXED {
             // Translation deferred until draw call
-            self.pointer_is_fixed_point[0] = true;
+            self.state.borrow_mut().pointer_is_fixed_point[0] = true;
             gl21::ColorPointer(size, gl21::FLOAT, stride, pointer)
         } else {
             assert!(type_ == gl21::UNSIGNED_BYTE || type_ == gl21::FLOAT);
-            self.pointer_is_fixed_point[0] = false;
+            self.state.borrow_mut().pointer_is_fixed_point[0] = false;
             gl21::ColorPointer(size, type_, stride, pointer)
         }
     }
     unsafe fn NormalPointer(&mut self, type_: GLenum, stride: GLsizei, pointer: *const GLvoid) {
         if type_ == gles11::FIXED {
             // Translation deferred until draw call
-            self.pointer_is_fixed_point[1] = true;
+            self.state.borrow_mut().pointer_is_fixed_point[1] = true;
             gl21::NormalPointer(gl21::FLOAT, stride, pointer)
         } else {
             assert!(type_ == gl21::BYTE || type_ == gl21::SHORT || type_ == gl21::FLOAT);
-            self.pointer_is_fixed_point[1] = false;
+            self.state.borrow_mut().pointer_is_fixed_point[1] = false;
             gl21::NormalPointer(type_, stride, pointer)
         }
     }
@@ -1088,15 +1132,21 @@ impl GLES for GLES1OnGL2 {
         if type_ == gles11::FIXED {
             // Translation deferred until draw call.
             // There is one texture co-ordinates pointer per texture unit.
-            self.fixed_point_texture_units.insert(active_texture);
-            self.pointer_is_fixed_point[2] = true;
+            self.state
+                .borrow_mut()
+                .fixed_point_texture_units
+                .insert(active_texture);
+            self.state.borrow_mut().pointer_is_fixed_point[2] = true;
             gl21::TexCoordPointer(size, gl21::FLOAT, stride, pointer)
         } else {
             // TODO: byte
             assert!(type_ == gl21::SHORT || type_ == gl21::FLOAT);
-            self.fixed_point_texture_units.remove(&active_texture);
-            if self.fixed_point_texture_units.is_empty() {
-                self.pointer_is_fixed_point[2] = false;
+            self.state
+                .borrow_mut()
+                .fixed_point_texture_units
+                .remove(&active_texture);
+            if self.state.borrow_mut().fixed_point_texture_units.is_empty() {
+                self.state.borrow_mut().pointer_is_fixed_point[2] = false;
             }
             gl21::TexCoordPointer(size, type_, stride, pointer)
         }
@@ -1111,12 +1161,12 @@ impl GLES for GLES1OnGL2 {
         assert!(size == 2 || size == 3 || size == 4);
         if type_ == gles11::FIXED {
             // Translation deferred until draw call
-            self.pointer_is_fixed_point[3] = true;
+            self.state.borrow_mut().pointer_is_fixed_point[3] = true;
             gl21::VertexPointer(size, gl21::FLOAT, stride, pointer)
         } else {
             // TODO: byte
             assert!(type_ == gl21::SHORT || type_ == gl21::FLOAT);
-            self.pointer_is_fixed_point[3] = false;
+            self.state.borrow_mut().pointer_is_fixed_point[3] = false;
             gl21::VertexPointer(size, type_, stride, pointer)
         }
     }
@@ -1160,6 +1210,8 @@ impl GLES for GLES1OnGL2 {
         assert!(type_ == gl21::UNSIGNED_BYTE || type_ == gl21::UNSIGNED_SHORT);
 
         let fixed_point_arrays_state_backup = if self
+            .state
+            .borrow_mut()
             .pointer_is_fixed_point
             .iter()
             .any(|&is_fixed| is_fixed)

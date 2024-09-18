@@ -36,7 +36,7 @@ pub fn dump_framebuffer(
     y: u32,
     width: u32,
     height: u32,
-    gles: &mut dyn crate::gles::GLES,
+    gles: &mut dyn crate::gles::GLESContext,
 ) {
     let mut rgba8_pixels = Vec::<u8>::with_capacity(width as usize * height as usize * 4);
     // 0x7F grey chosen to make missing data obvious: it's more likely to

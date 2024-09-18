@@ -19,8 +19,7 @@ use touchHLE_gl_bindings::gles11::{
 
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::frameworks::opengles::eagl::EAGLContextHostObject;
-use crate::gles::gles11_raw as gles11; // constants only
-use crate::gles::GLES;
+use crate::gles::{gles11_raw as gles11, GLESContext}; // constants only
 use crate::mem::{ConstPtr, ConstVoidPtr, GuestISize, GuestUSize, Mem, MutPtr, MutVoidPtr, Ptr};
 use crate::objc::nil;
 use crate::Environment;
@@ -60,9 +59,9 @@ const SUPPORTED_COMPRESSED_TEXTURE_FORMATS: &[GLenum] = &[
 
 fn with_ctx_and_mem<T, U>(env: &mut Environment, f: T) -> U
 where
-    T: FnOnce(&mut dyn GLES, &mut Mem) -> U,
+    T: FnOnce(&mut dyn GLESContext, &mut Mem) -> U,
 {
-    let gles = super::sync_context(
+    let mut gles = super::sync_context(
         &mut env.framework_state.opengles,
         &mut env.objc,
         env.window
@@ -72,7 +71,7 @@ where
     );
 
     //panic_on_gl_errors(&mut **gles);
-    let res = f(gles, &mut env.mem);
+    let res = f(gles.as_mut(), &mut env.mem);
     //panic_on_gl_errors(&mut **gles);
     #[allow(clippy::let_and_return)]
     res
@@ -80,7 +79,7 @@ where
 
 /// Useful for debugging
 #[allow(dead_code)]
-fn panic_on_gl_errors(gles: &mut dyn GLES) {
+fn panic_on_gl_errors(gles: &mut dyn GLESContext) {
     let mut did_error = false;
     loop {
         let err = unsafe { gles.GetError() };
@@ -526,7 +525,7 @@ fn glNormal3x(env: &mut Environment, nx: GLfixed, ny: GLfixed, nz: GLfixed) {
 ///
 /// See also: [translate_pointer_or_offset_to_guest]
 unsafe fn translate_pointer_or_offset_to_host(
-    gles: &mut dyn GLES,
+    gles: &mut dyn GLESContext,
     mem: &Mem,
     pointer_or_offset: ConstVoidPtr,
     which_binding: GLenum,
@@ -557,7 +556,7 @@ unsafe fn translate_pointer_or_offset_to_host(
 ///
 /// See also: [translate_pointer_or_offset_to_host]
 unsafe fn translate_pointer_or_offset_to_guest(
-    gles: &mut dyn GLES,
+    gles: &mut dyn GLESContext,
     mem: &Mem,
     pointer_or_offset: *const GLvoid,
     which_binding: GLenum,
@@ -1294,7 +1293,7 @@ fn glUnmapBufferOES(env: &mut Environment, target: GLenum) -> GLboolean {
 /// This workaround is required so Doom 2 RPG renders correctly.
 /// It prevents divisions by zero in levels where fog is used and both
 /// values are set to 10000.
-unsafe fn clamp_fog_state_values(gles: &mut dyn GLES) -> Option<(f32, f32)> {
+unsafe fn clamp_fog_state_values(gles: &mut dyn GLESContext) -> Option<(f32, f32)> {
     let mut fogEnabled: GLboolean = 0;
     gles.GetBooleanv(gles11::FOG, &mut fogEnabled);
     if fogEnabled != 0 {
@@ -1310,7 +1309,7 @@ unsafe fn clamp_fog_state_values(gles: &mut dyn GLES) -> Option<(f32, f32)> {
     }
     None
 }
-unsafe fn restore_fog_state_values(gles: &mut dyn GLES, from_backup: Option<(f32, f32)>) {
+unsafe fn restore_fog_state_values(gles: &mut dyn GLESContext, from_backup: Option<(f32, f32)>) {
     if let Some((fogStart, fogEnd)) = from_backup {
         gles.Fogf(gles11::FOG_START, fogStart);
         gles.Fogf(gles11::FOG_END, fogEnd);

@@ -12,12 +12,7 @@
 use super::gles11_raw::types::*;
 
 /// Trait representing an OpenGL ES implementation and context.
-///
-/// # Safety
-/// It is the caller's responsibility to make the context active before using
-/// any of the `unsafe` methods of this trait.
 #[allow(clippy::upper_case_acronyms)]
-#[allow(clippy::too_many_arguments)] // not our fault :(
 pub trait GLES {
     /// Get a human-friendly description of this implementation.
     fn description() -> &'static str
@@ -33,12 +28,23 @@ pub trait GLES {
 
     /// Make this context (and any underlying context) the active OpenGL
     /// context.
-    fn make_current(&self, window: &crate::window::Window);
-
+    // The lifetime ensures safety - the GLES object can't be destroyed while
+    // the instance is active, so the OpenGL state remains valid.
+    #[must_use]
+    fn make_current<'a>(&'a self, window: &crate::window::Window) -> Box<dyn GLESContext + 'a>;
+}
+// BEFOREMERGE: document new context system
+// Should this be renamed to GLESInstance or something like that? I don't want
+// it to be confused.
+/// # Safety
+/// These functions (should) act as documented by the OpenGL ES spec. Callers
+/// should ensure that all uses of raw pointers are verfied to be valid and
+/// of the correct size as documented in the OpenGL ES spec.
+#[allow(clippy::too_many_arguments)] // not our fault :(
+pub trait GLESContext {
     /// Get some string describing the underlying driver. For OpenGL this is
     /// `GL_VENDOR`, `GL_RENDERER` and `GL_VERSION`.
     unsafe fn driver_description(&self) -> String;
-
     // Generic state manipulation
     unsafe fn GetError(&mut self) -> GLenum;
     unsafe fn Enable(&mut self, cap: GLenum);

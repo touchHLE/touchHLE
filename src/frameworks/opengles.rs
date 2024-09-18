@@ -21,8 +21,9 @@ use crate::mem::ConstPtr;
 pub struct State {
     /// Current EAGLContext for each thread
     current_ctxs: std::collections::HashMap<crate::ThreadId, Option<crate::objc::id>>,
-    /// Which thread's EAGLContext is currently active
-    current_ctx_thread: Option<crate::ThreadId>,
+    // BEFOREMERGE Note: There's no need to cache this here anymore - GLES
+    // instaces will automatically check if a context is active and not bother
+    // switching if there's no need.
     strings_cache: std::collections::HashMap<GLenum, ConstPtr<u8>>,
 }
 impl State {
@@ -32,24 +33,15 @@ impl State {
     }
 }
 
+#[must_use]
 fn sync_context<'a>(
     state: &mut State,
     objc: &'a mut crate::objc::ObjC,
     window: &mut crate::window::Window,
     current_thread: crate::ThreadId,
-) -> &'a mut dyn crate::gles::GLES {
+) -> Box<dyn crate::gles::GLESContext + 'a> {
     let current_ctx = state.current_ctx_for_thread(current_thread);
     let host_obj = objc.borrow_mut::<eagl::EAGLContextHostObject>(current_ctx.unwrap());
     let gles_ctx = host_obj.gles_ctx.as_deref_mut().unwrap();
-
-    if window.is_app_gl_ctx_no_longer_current() || state.current_ctx_thread != Some(current_thread)
-    {
-        log_dbg!(
-            "Restoring guest app OpenGL context for thread {}.",
-            current_thread
-        );
-        gles_ctx.make_current(window);
-    }
-
-    gles_ctx
+    gles_ctx.make_current(window)
 }

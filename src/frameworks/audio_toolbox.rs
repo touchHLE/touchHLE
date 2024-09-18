@@ -5,6 +5,9 @@
  */
 //! The Audio Toolbox framework.
 
+use std::rc::Rc;
+use std::sync::atomic::AtomicU64;
+
 use crate::audio::openal as al;
 use crate::audio::openal::alc_types::{ALCcontext, ALCdevice};
 
@@ -38,6 +41,7 @@ pub struct State {
     audio_components: audio_components::State,
     audio_session: audio_session::State,
     al_device_and_context: Option<(*mut ALCdevice, *mut ALCcontext)>,
+    in_critical_section: Rc<AtomicU64>,
 }
 impl State {
     pub fn make_al_context_current(&mut self) -> ContextManager {
@@ -58,21 +62,38 @@ impl State {
 
         // This object will make sure the existing context, which will belong
         // to the guest app, is restored once we're done.
-        ContextManager::make_active(context)
+        ContextManager::make_active(context, self.in_critical_section.clone())
+    }
+    pub fn in_critical_section(&self) -> bool {
+        self.in_critical_section
+            .load(std::sync::atomic::Ordering::SeqCst)
+            != 0
     }
 }
 
 #[must_use]
-pub struct ContextManager(*mut ALCcontext);
+pub struct ContextManager {
+    old_context: *mut ALCcontext,
+    critical_section: Rc<AtomicU64>,
+}
 impl ContextManager {
-    pub fn make_active(new_context: *mut ALCcontext) -> ContextManager {
+    fn make_active(new_context: *mut ALCcontext, critical_section: Rc<AtomicU64>) -> Self {
         let old_context = unsafe { al::alcGetCurrentContext() };
         assert!(unsafe { al::alcMakeContextCurrent(new_context) } == al::ALC_TRUE);
-        ContextManager(old_context)
+        assert!(critical_section.fetch_add(1, std::sync::atomic::Ordering::SeqCst) != u64::MAX);
+        ContextManager {
+            old_context,
+            critical_section,
+        }
     }
 }
 impl Drop for ContextManager {
     fn drop(&mut self) {
-        assert!(unsafe { al::alcMakeContextCurrent(self.0) } == al::ALC_TRUE)
+        assert!(
+            self.critical_section
+                .fetch_sub(1, std::sync::atomic::Ordering::SeqCst)
+                != 0
+        );
+        assert!(unsafe { al::alcMakeContextCurrent(self.old_context) } == al::ALC_TRUE)
     }
 }

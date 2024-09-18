@@ -7,7 +7,7 @@
 
 use super::gles11_raw as gles11; // constants only
 use super::gles11_raw::types::{GLenum, GLfixed, GLfloat, GLint, GLsizei};
-use super::GLES;
+use super::gles_generic::GLESContext;
 
 /// Convert a fixed-point scalar to a floating-point scalar.
 ///
@@ -143,7 +143,7 @@ impl ParamTable {
 /// Note that this panics rather than create GL errors for invalid use (TODO?)
 #[allow(clippy::too_many_arguments)]
 pub fn try_decode_pvrtc(
-    gles: &mut dyn GLES,
+    gles: &mut dyn GLESContext,
     target: GLenum,
     level: GLint,
     internalformat: GLenum,

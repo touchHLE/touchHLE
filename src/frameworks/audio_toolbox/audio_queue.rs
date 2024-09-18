@@ -730,6 +730,8 @@ pub fn handle_audio_queue(env: &mut Environment, in_aq: AudioQueueRef) {
         buffers_to_reuse.push(buffer_ref);
     });
 
+    std::mem::drop(context_manager);
+
     let &mut AudioQueueHostObject {
         callback_proc,
         callback_user_data,
@@ -751,7 +753,7 @@ pub fn handle_audio_queue(env: &mut Environment, in_aq: AudioQueueRef) {
 
     // Push new buffers etc.
 
-    let _context_manager = prime_audio_queue(env, in_aq, Some(context_manager));
+    let _context_manager = prime_audio_queue(env, in_aq, None);
 
     if is_running != AudioQueueIsRunning::Stopped {
         unsafe {

@@ -6,8 +6,9 @@
 //! Utilities for presenting frames to the window using an abstract OpenGL ES
 //! implementation.
 
-use super::gles11_raw as gles11; // constants and types only
-use super::GLES;
+use super::gles11_raw as gles11;
+use super::GLESContext;
+// constants and types only
 use crate::matrix::Matrix;
 use std::time::{Duration, Instant};
 
@@ -45,7 +46,7 @@ impl FpsCounter {
 ///
 /// The provided context must be current.
 pub unsafe fn present_frame(
-    gles: &mut dyn GLES,
+    gles: &mut dyn GLESContext,
     viewport: (u32, u32, u32, u32),
     rotation_matrix: Matrix<2>,
     virtual_cursor_visible_at: Option<(f32, f32, bool)>,

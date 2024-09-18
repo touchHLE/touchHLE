@@ -67,6 +67,18 @@ impl AudioFile {
             return Err(AudioFileOpenError::FileReadError);
         };
 
+        if let Ok(bytes) = Self::read_from_vec(bytes) {
+            Ok(bytes)
+        } else {
+            log!(
+                "Could not decode audio file at path {:?}, likely an unimplemented file format.",
+                path.as_ref()
+            );
+            Err(AudioFileOpenError::FileReadError)
+        }
+    }
+
+    pub fn read_from_vec(bytes: Vec<u8>) -> Result<Self, AudioFileOpenError> {
         // Both WavReader::new() and CafPacketReader::new() consume the reader
         // (in this case, a Cursor) passed to them. This is a bit annoying
         // considering we don't know which is appropriate for the file without

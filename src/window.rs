@@ -12,6 +12,7 @@
 //! window system interaction in general, because it is assumed only one window
 //! will be needed for the runtime of the app.
 
+use crate::environment::Environment;
 use crate::gles::present::present_frame;
 use crate::gles::{create_gles1_ctx, GLES};
 use crate::image::Image;
@@ -164,6 +165,7 @@ pub struct Window {
     virtual_cursor_last_unsticky: Option<(f32, f32, Instant)>,
     virtual_accelerometer_last: Option<(f32, f32, bool)>,
 }
+
 impl Window {
     /// Returns [true] if touchHLE is running on a device where we should always
     /// display fullscreen, but SDL2 will let us control the orientation, i.e.
@@ -1204,6 +1206,6 @@ impl Window {
     }
 }
 
-pub fn open_url(url: &str) -> Result<(), String> {
-    sdl2::url::open_url(url).map_err(|e| e.to_string())
+pub fn open_url(env: &mut Environment, url: &str) -> Result<(), String> {
+    env.on_parent_stack_in_coroutine(|_, _| sdl2::url::open_url(url).map_err(|e| e.to_string()))
 }

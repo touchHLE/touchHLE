@@ -118,7 +118,7 @@ pub enum CpuState {
 }
 
 /// A reason that can cause CPU execution to be interrupted.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum CpuError {
     /// Memory error during execution (probably a null page access).
     MemoryError,
@@ -187,21 +187,18 @@ impl Cpu {
     pub fn dump_regs(&self) {
         let regs = self.regs();
         for row in 0..4 {
-            use std::fmt::Write;
-            let mut line = String::new();
             for col in 0..4 {
                 let reg_idx = row * 4 + col;
                 match reg_idx {
-                    Self::SP => write!(&mut line, "\t SP: "),
-                    Self::LR => write!(&mut line, "\t LR: "),
-                    Self::PC => write!(&mut line, "\t PC: "),
-                    _ if reg_idx <= 9 => write!(&mut line, "\t R{}: ", reg_idx),
-                    _ => write!(&mut line, "\tR{}: ", reg_idx),
+                    Self::SP => echo_nn_no_panic!("\t SP: "),
+                    Self::LR => echo_nn_no_panic!("\t LR: "),
+                    Self::PC => echo_nn_no_panic!("\t PC: "),
+                    _ if reg_idx <= 9 => echo_nn_no_panic!("\t R{}: ", reg_idx),
+                    _ => echo_nn_no_panic!("\tR{}: ", reg_idx),
                 }
-                .unwrap();
-                write!(&mut line, "{:#010x}", regs[reg_idx]).unwrap();
+                echo_nn_no_panic!("{:#010x}", regs[reg_idx]);
             }
-            echo!("{}", line);
+            echo_no_panic!();
         }
     }
 

@@ -65,9 +65,7 @@ where
     let gles = super::sync_context(
         &mut env.framework_state.opengles,
         &mut env.objc,
-        env.window
-            .as_mut()
-            .expect("OpenGL ES is not supported in headless mode"),
+        env.window.as_mut().unwrap(),
         env.current_thread,
     );
 

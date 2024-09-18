@@ -5,6 +5,7 @@
  */
 //! `AudioFile.h` (Audio File Services)
 
+use crate::abi::{CallFromHost, GuestFunction};
 use crate::audio; // Keep this module namespaced to avoid confusion
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::frameworks::carbon_core::{eofErr, OSStatus};
@@ -113,6 +114,83 @@ pub fn AudioFileOpenURL(
     log_dbg!(
         "AudioFileOpenURL() opened path {:?}, new audio file handle: {:?}",
         in_file_ref,
+        guest_audio_file
+    );
+
+    0 // success
+}
+
+pub fn AudioFileOpenWithCallbacks(
+    env: &mut Environment,
+    client_data: MutVoidPtr,
+    read_callback: GuestFunction,
+    _write_callback: GuestFunction,
+    getsize_callback: GuestFunction,
+    _setsize_callback: GuestFunction,
+    in_file_type_hint: AudioFileTypeID,
+    out_audio_file: MutPtr<AudioFileID>,
+) -> OSStatus {
+    // The hint is optional and is supposed to only be used for certain file
+    // formats that can't be uniquely identified, which we don't support so far.
+    if in_file_type_hint != 0 {
+        log!("Ignoring file type hint for AudioFileOpenWithCallbacks()");
+    }
+
+    // TODO: We're just reading in the whole file at once and parsing it here,
+    // this should change when streaming parsing is implemented.
+    let size: i64 = getsize_callback.call_from_host(env, (client_data,));
+    let size: u32 = size.try_into().unwrap();
+
+    assert!(
+        size != 0,
+        "0 byte size of file for AudioFileOpenWithCallbacks(), likely bad!"
+    );
+
+    let data_ptr: MutPtr<u8> = env.mem.alloc(size).cast();
+    let bytes_read_ptr: MutPtr<u32> = env.mem.alloc(guest_size_of::<u32>()).cast();
+
+    env.mem.write(bytes_read_ptr, 0);
+    log_dbg!(
+        "AudioFileOpenWithCallbacks() calling read: {:?}",
+        (client_data, 0_i64, size, data_ptr, bytes_read_ptr)
+    );
+    let status: OSStatus =
+        read_callback.call_from_host(env, (client_data, 0_i64, size, data_ptr, bytes_read_ptr));
+    if status != 0 {
+        log!(
+            "AudioFileOpenWithCallbacks() failed read, returning {}",
+            fourcc(&status.to_le_bytes())
+        );
+
+        return status;
+    }
+
+    assert!(
+        env.mem.read(bytes_read_ptr) == size,
+        "Bytes read != size for AudioFileOpenWithCallbacks(), likely bad!"
+    );
+
+    let data_vec = env
+        .mem
+        .bytes_at(data_ptr, env.mem.read(bytes_read_ptr))
+        .to_vec();
+
+    let Ok(audio_file) = audio::AudioFile::read_from_vec(data_vec) else {
+        log!("Warning: AudioFileOpenWithCallbacks() failed parse",);
+        return kAudioFileUnsupportedFileTypeError;
+    };
+    let guest_audio_file = env.mem.alloc_and_write(OpaqueAudioFileID { _filler: 0 });
+
+    let host_object = AudioFileHostObject { audio_file };
+
+    State::get(&mut env.framework_state)
+        .audio_files
+        .insert(guest_audio_file, host_object);
+
+    env.mem.write(out_audio_file, guest_audio_file);
+
+    log_dbg!(
+        "AudioFileOpenWithCallbacks() opened, new audio file handle: {:?}",
         guest_audio_file
     );
 
@@ -373,5 +451,6 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(AudioFileReadBytes(_, _, _, _, _)),
     export_c_func!(AudioFileReadPackets(_, _, _, _, _, _, _)),
     export_c_func!(AudioFileReadPacketData(_, _, _, _, _, _, _)),
+    export_c_func!(AudioFileOpenWithCallbacks(_, _, _, _, _, _, _)),
     export_c_func!(AudioFileClose(_)),
 ];

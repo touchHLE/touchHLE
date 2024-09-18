@@ -14,6 +14,7 @@ use std::collections::HashSet;
 /// Belongs to _touchHLE_NSCharacterSet
 struct CharacterSetHostObject {
     set: HashSet<unichar>,
+    inverted: bool,
 }
 impl HostObject for CharacterSetHostObject {}
 
@@ -63,6 +64,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 + (id)allocWithZone:(NSZonePtr)_zone {
     let host_object = Box::new(CharacterSetHostObject {
         set: HashSet::new(),
+        inverted: false
     });
     env.objc.alloc_object(this, host_object, &mut env.mem)
 }
@@ -70,7 +72,18 @@ pub const CLASSES: ClassExports = objc_classes! {
 // TODO: initWithCoder:
 
 - (bool)characterIsMember:(unichar)code_unit {
-    env.objc.borrow::<CharacterSetHostObject>(this).set.contains(&code_unit)
+    let host_object = env.objc.borrow::<CharacterSetHostObject>(this);
+    host_object.set.contains(&code_unit) ^ host_object.inverted
+}
+
+- (id)invertedSet {
+    let old_host_object = env.objc.borrow::<CharacterSetHostObject>(this);
+    let host_object = Box::new(CharacterSetHostObject {
+        set: old_host_object.set.clone(),
+        inverted: !old_host_object.inverted
+    });
+    let class = env.objc.get_known_class("_touchHLE_NSCharacterSet", &mut env.mem);
+    env.objc.alloc_object(class, host_object, &mut env.mem)
 }
 
 @end

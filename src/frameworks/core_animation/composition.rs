@@ -14,10 +14,9 @@ use super::ca_layer::CALayerHostObject;
 use crate::frameworks::core_graphics::{
     cg_bitmap_context, cg_color, cg_image, CGFloat, CGPoint, CGRect, CGSize,
 };
-use crate::gles::gles11_raw as gles11; // constants only
 use crate::gles::gles11_raw::types::*;
 use crate::gles::present::{present_frame, FpsCounter};
-use crate::gles::GLES;
+use crate::gles::{gles11_raw as gles11, GLES}; // constants only
 use crate::mem::Mem;
 use crate::objc::{id, msg, msg_class, nil, ObjC};
 use crate::Environment;
@@ -131,8 +130,7 @@ pub fn recomposite_if_necessary(env: &mut Environment) -> Option<Instant> {
     let opacity = 1.0;
 
     let window = env.window.as_mut().unwrap();
-    window.make_internal_gl_ctx_current();
-    let gles = window.get_internal_gl_ctx();
+    let mut gles = window.make_internal_gl_ctx_current();
 
     // Set up GL objects needed for render-to-texture. We could draw directly
     // to the screen instead, but this way we can reuse the code for scaling and
@@ -210,7 +208,7 @@ pub fn recomposite_if_necessary(env: &mut Environment) -> Option<Instant> {
     // Here's where the actual drawing happens
     unsafe {
         composite_layer_recursive(
-            gles,
+            gles.as_mut(),
             &mut env.objc,
             &env.mem,
             root_layer,
@@ -237,13 +235,14 @@ pub fn recomposite_if_necessary(env: &mut Environment) -> Option<Instant> {
         gles.BindTexture(gles11::TEXTURE_2D, texture);
         gles.BindFramebufferOES(gles11::FRAMEBUFFER_OES, 0);
         present_frame(
-            gles,
+            gles.as_mut(),
             present_frame_args.0,
             present_frame_args.1,
             present_frame_args.2,
         );
     }
-    env.window().swap_window();
+    std::mem::drop(gles);
+    window.swap_window();
 
     new_recomposite_next
 }

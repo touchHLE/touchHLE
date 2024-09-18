@@ -13,10 +13,11 @@
 //! will be needed for the runtime of the app.
 
 use crate::gles::present::present_frame;
-use crate::gles::{create_gles1_ctx, GLES};
+use crate::gles::{create_gles1_ctx_no_parent_stack, GLESContext, GLES};
 use crate::image::Image;
 use crate::matrix::Matrix;
 use crate::options::Options;
+use crate::Environment;
 use sdl2::mouse::MouseButton;
 use sdl2::pixels::PixelFormatEnum;
 use sdl2::surface::Surface;
@@ -24,6 +25,8 @@ use std::collections::{HashMap, VecDeque};
 use std::env;
 use std::f32::consts::FRAC_PI_2;
 use std::num::NonZeroU32;
+use std::rc::Rc;
+use std::sync::atomic::AtomicBool;
 use std::time::{Duration, Instant};
 
 #[derive(Copy, Clone, Eq, PartialEq)]
@@ -112,6 +115,12 @@ pub enum GLVersion {
 
 pub struct GLContext(sdl2::video::GLContext);
 
+impl GLContext {
+    pub fn is_current(&self) -> bool {
+        self.0.is_current()
+    }
+}
+
 fn surface_from_image(image: &Image) -> Surface {
     let src_pixels = image.pixels();
     let (width, height) = image.dimensions();
@@ -133,6 +142,27 @@ fn surface_from_image(image: &Image) -> Surface {
     surface
 }
 
+/// Helper for creating a "critical section" that doesn't allow thread yields
+/// inside it. This only needs to be used by GLES management code.
+pub struct GLCriticalSection {
+    critical_section: Rc<AtomicBool>,
+}
+
+impl GLCriticalSection {
+    pub fn new(critical_section: Rc<AtomicBool>) -> Self {
+        assert!(!critical_section.load(std::sync::atomic::Ordering::Relaxed));
+        critical_section.store(true, std::sync::atomic::Ordering::Relaxed);
+        GLCriticalSection { critical_section }
+    }
+}
+
+impl Drop for GLCriticalSection {
+    fn drop(&mut self) {
+        self.critical_section
+            .store(false, std::sync::atomic::Ordering::Relaxed);
+    }
+}
+
 pub struct Window {
     _sdl_ctx: sdl2::Sdl,
     video_ctx: sdl2::VideoSubsystem,
@@ -152,7 +182,7 @@ pub struct Window {
     /// [Self::rotatable_fullscreen] returns [true].
     fullscreen: bool,
     scale_hack: NonZeroU32,
-    internal_gl_ctx: Option<Box<dyn GLES>>,
+    internal_gl_ins: Option<Box<dyn GLESContext>>,
     splash_image: Option<Image>,
     device_orientation: DeviceOrientation,
     app_gl_ctx_no_longer_current: bool,
@@ -163,7 +193,9 @@ pub struct Window {
     virtual_cursor_last: Option<(f32, f32, bool, bool)>,
     virtual_cursor_last_unsticky: Option<(f32, f32, Instant)>,
     virtual_accelerometer_last: Option<(f32, f32, bool)>,
+    gl_instance_active: Rc<AtomicBool>,
 }
+
 impl Window {
     /// Returns [true] if touchHLE is running on a device where we should always
     /// display fullscreen, but SDL2 will let us control the orientation, i.e.
@@ -292,7 +324,7 @@ impl Window {
             viewport_y_offset: 0,
             fullscreen,
             scale_hack,
-            internal_gl_ctx: None,
+            internal_gl_ins: None,
             splash_image: launch_image,
             device_orientation,
             app_gl_ctx_no_longer_current: false,
@@ -303,16 +335,19 @@ impl Window {
             virtual_cursor_last: None,
             virtual_cursor_last_unsticky: None,
             virtual_accelerometer_last: None,
+            gl_instance_active: Rc::new(false.into()),
         };
 
         // Set up OpenGL ES context used for splash screen and app UI rendering
         // (see src/frameworks/core_animation/composition.rs). OpenGL ES is used
         // because SDL2 won't let us use more than one graphics API in the same
         // window, and we also need OpenGL ES for the app's own rendering.
-        let gl_ctx = create_gles1_ctx(&mut window, options);
-        gl_ctx.make_current(&window);
-        log!("Driver info: {}", unsafe { gl_ctx.driver_description() });
-        window.internal_gl_ctx = Some(gl_ctx);
+        let gl_ins = create_gles1_ctx_no_parent_stack(&mut window, options);
+        {
+            let gl_ctx = gl_ins.make_current(&window);
+            log!("Driver info: {}", unsafe { gl_ctx.driver_description() });
+        }
+        window.internal_gl_ins = Some(gl_ins);
 
         if window.splash_image.is_some() {
             window.display_splash();
@@ -966,8 +1001,10 @@ impl Window {
             .set_share_with_current_context(value)
     }
 
-    pub unsafe fn make_gl_context_current(&self, gl_ctx: &GLContext) {
+    #[must_use]
+    pub unsafe fn make_gl_context_current(&self, gl_ctx: &GLContext) -> GLCriticalSection {
         self.window.gl_make_current(&gl_ctx.0).unwrap();
+        GLCriticalSection::new(self.gl_instance_active.clone())
     }
 
     /// Retrieve and reset the flag that indicates if the current OpenGL context
@@ -983,15 +1020,18 @@ impl Window {
 
     /// Make the internal OpenGL ES context (for splash screen and UI rendering)
     /// current.
-    pub fn make_internal_gl_ctx_current(&mut self) {
+    #[must_use]
+    pub fn make_internal_gl_ctx_current(&mut self) -> Box<dyn GLES + '_> {
         self.app_gl_ctx_no_longer_current = true;
-        self.internal_gl_ctx.as_ref().unwrap().make_current(self);
+        self.internal_gl_ins.as_ref().unwrap().make_current(self)
     }
 
     /// Get the internal OpenGL ES context (for splash screen and UI rendering).
     /// This does not ensure the context is current.
-    pub fn get_internal_gl_ctx(&mut self) -> &mut dyn GLES {
-        self.internal_gl_ctx.as_deref_mut().unwrap()
+    // BEFOREMERGE: Is this still needed?
+    #[allow(unused)]
+    pub fn get_internal_gl_ctx(&mut self) -> &mut dyn GLESContext {
+        self.internal_gl_ins.as_deref_mut().unwrap()
     }
 
     fn display_splash(&mut self) {
@@ -1003,10 +1043,8 @@ impl Window {
         let (vx, vy, vw, vh) = self.viewport();
         let viewport = (vx, vy + self.viewport_y_offset(), vw, vh);
 
-        self.make_internal_gl_ctx_current();
-
         let image = self.splash_image.as_ref().unwrap();
-        let gl_ctx = self.internal_gl_ctx.as_deref_mut().unwrap();
+        let mut gl_ctx = self.internal_gl_ins.as_ref().unwrap().make_current(self);
 
         use crate::gles::gles11_raw as gles11; // constants only
 
@@ -1038,7 +1076,10 @@ impl Window {
             );
 
             present_frame(
-                gl_ctx, viewport, matrix, /* virtual_cursor_visible_at: */ None,
+                gl_ctx.as_mut(),
+                viewport,
+                matrix,
+                /* virtual_cursor_visible_at: */ None,
             );
 
             gl_ctx.DeleteTextures(1, &texture);
@@ -1202,8 +1243,18 @@ impl Window {
             false => self.video_ctx.disable_screen_saver(),
         }
     }
+
+    #[must_use]
+    pub fn make_critical_section(&self) -> GLCriticalSection {
+        GLCriticalSection::new(self.gl_instance_active.clone())
+    }
+
+    pub fn in_critical_section(&self) -> bool {
+        self.gl_instance_active
+            .load(std::sync::atomic::Ordering::Relaxed)
+    }
 }
 
-pub fn open_url(url: &str) -> Result<(), String> {
-    sdl2::url::open_url(url).map_err(|e| e.to_string())
+pub fn open_url(env: &mut Environment, url: &str) -> Result<(), String> {
+    env.on_parent_stack_in_coroutine(|_, _| sdl2::url::open_url(url).map_err(|e| e.to_string()))
 }

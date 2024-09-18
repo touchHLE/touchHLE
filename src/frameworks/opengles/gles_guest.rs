@@ -19,8 +19,7 @@ use touchHLE_gl_bindings::gles11::{
 
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::frameworks::opengles::eagl::EAGLContextHostObject;
-use crate::gles::gles11_raw as gles11; // constants only
-use crate::gles::GLES;
+use crate::gles::{gles11_raw as gles11, GLES}; // constants only
 use crate::mem::{ConstPtr, ConstVoidPtr, GuestISize, GuestUSize, Mem, MutPtr, MutVoidPtr, Ptr};
 use crate::objc::nil;
 use crate::Environment;
@@ -62,7 +61,7 @@ fn with_ctx_and_mem<T, U>(env: &mut Environment, f: T) -> U
 where
     T: FnOnce(&mut dyn GLES, &mut Mem) -> U,
 {
-    let gles = super::sync_context(
+    let mut gles = super::sync_context(
         &mut env.framework_state.opengles,
         &mut env.objc,
         env.window
@@ -72,7 +71,7 @@ where
     );
 
     //panic_on_gl_errors(&mut **gles);
-    let res = f(gles, &mut env.mem);
+    let res = f(gles.as_mut(), &mut env.mem);
     //panic_on_gl_errors(&mut **gles);
     #[allow(clippy::let_and_return)]
     res

@@ -13,7 +13,7 @@ use crate::frameworks::{
 
 /// All the lists of classes that the runtime should search through.
 pub const CLASS_LISTS: &[super::ClassExports] = &[
-    crate::app_picker::CLASSES, // Not a framework! Special internal classes.
+    crate::environment::app_picker::CLASSES, // Not a framework! Special internal classes.
     core_animation::ca_eagl_layer::CLASSES,
     core_animation::ca_layer::CLASSES,
     core_graphics::cg_data_provider::CLASSES,

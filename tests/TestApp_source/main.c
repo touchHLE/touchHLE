@@ -773,6 +773,7 @@ int test_sem() {
   if (sem_trywait(semaphore) == -1) {
     return -1;
   }
+  // BEFOREMERGE: Should add multi-thread semaphore test.
 
   sem_close(semaphore);
   sem_unlink("sem_test");

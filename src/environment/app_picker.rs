@@ -3,7 +3,10 @@
 //! This also includes a license text viewer. The license text viewer is needed
 //! on Android, where the command-line way to view license text doesn't exist.
 
+use corosensei::Coroutine;
+
 use crate::bundle::Bundle;
+use crate::environment::ThreadBlock;
 use crate::frameworks::core_graphics::cg_bitmap_context::{
     CGBitmapContextCreate, CGBitmapContextCreateImage,
 };
@@ -34,10 +37,13 @@ use crate::options::Options;
 use crate::paths;
 use crate::window::DeviceOrientation;
 use crate::Environment;
+use std::cell::Cell;
 use std::collections::HashMap;
 use std::ffi::OsStr;
 use std::num::NonZeroU32;
 use std::path::{Path, PathBuf};
+use std::rc::Rc;
+use std::time::Instant;
 
 struct AppInfo {
     path: PathBuf,
@@ -49,10 +55,7 @@ struct AppInfo {
     icon_ui_image: Option<id>,
 }
 
-pub fn app_picker(
-    options: Options,
-    option_args: &mut Vec<String>,
-) -> Result<(PathBuf, Environment), String> {
+pub fn app_picker(options: Options) -> Result<(PathBuf, Vec<String>, Environment), String> {
     let apps_dir = paths::user_data_base_path().join(paths::APPS_DIR);
 
     let apps: Result<Vec<AppInfo>, String> = if !apps_dir.is_dir() {
@@ -78,7 +81,7 @@ pub fn app_picker(
             })
     };
 
-    show_app_picker_gui(options, option_args, apps)
+    show_app_picker_gui(options, apps)
 }
 
 fn enumerate_apps(apps_dir: &Path) -> Result<Vec<AppInfo>, std::io::Error> {
@@ -231,7 +234,8 @@ pub const CLASSES: ClassExports = objc_classes! {
         Ok(url) => {
             // Our `openURL:` implementation is bypassed because it doesn't
             // allow non-web URLs.
-            if let Err(e) = crate::window::open_url(&url) {
+            let url_res = crate::window::open_url(env, &url);
+            if let Err(e) = url_res {
                 echo!("Couldn't open file manager at {:?}: {}", url, e);
             } else {
                 echo!("Opened file manager at {:?}, exiting.", url);
@@ -258,11 +262,10 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 fn show_app_picker_gui(
     options: Options,
-    option_args: &mut Vec<String>,
-    mut apps: Result<Vec<AppInfo>, String>,
-) -> Result<(PathBuf, Environment), String> {
+    apps: Result<Vec<AppInfo>, String>,
+) -> Result<(PathBuf, Vec<String>, Environment), String> {
     let icon = {
-        let bytes: &[u8] = match super::branding() {
+        let bytes: &[u8] = match crate::branding() {
             "" => include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/res/icon.png")),
             "UNOFFICIAL" => include_bytes!(concat!(
                 env!("CARGO_MANIFEST_DIR"),
@@ -280,8 +283,62 @@ fn show_app_picker_gui(
     };
 
     let mut environment = Environment::new_without_app(options, icon)?;
-    let env = &mut environment;
+    let panic_cell = Rc::new(Cell::new(None));
+    let mut app_picker_coroutine = Coroutine::new(move |yielder, mut env: Environment| {
+        env.panic_cell = panic_cell.clone();
+        let res = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            env.run_with_yielder(yielder, |env| app_picker_inner(env, apps))
+        }));
+        if let Err(e) = res {
+            let panic_cell = env.panic_cell.clone();
+            panic_cell.set(Some(env));
+            std::panic::resume_unwind(e);
+        }
+        res.unwrap().map(|r| (r.0, r.1, env))
+    });
+    loop {
+        let res = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            app_picker_coroutine.resume(environment)
+        }));
+        environment = match res {
+            Ok(ret) => match ret {
+                corosensei::CoroutineResult::Yield(env) => env,
+                corosensei::CoroutineResult::Return(ret_val) => {
+                    return ret_val;
+                }
+            },
+            Err(e) => {
+                log_no_panic!("Crash in app picker!");
+                // No need to get the environment back - It's local to this
+                // function anyways.
+                std::panic::resume_unwind(e);
+            }
+        };
+        environment
+            .window
+            .as_mut()
+            .unwrap()
+            .poll_for_events(environment.options.as_ref());
+        assert!(environment.threads.len() == 1);
+        match environment.threads[0].blocked_by {
+            ThreadBlock::NotBlocked => {}
+            ThreadBlock::Sleeping(until) => {
+                let duration = until.duration_since(Instant::now());
+                std::thread::sleep(duration);
+            }
+            _ => {
+                panic!("Unexpected ThreadBlock in app picker!");
+            }
+        }
+        environment.threads[0].blocked_by = ThreadBlock::NotBlocked;
+    }
+}
 
+fn app_picker_inner(
+    env: &mut Environment,
+    mut apps: Result<Vec<AppInfo>, String>,
+) -> Result<(PathBuf, Vec<String>), String> {
+    let mut option_args = Vec::new();
     // Note that objects are generally not released in this code, because they
     // don't need to be: the entire Environment is thrown away at the end.
 
@@ -377,8 +434,8 @@ fn show_app_picker_gui(
             env,
             format!(
                 "touchHLE {}{}{}",
-                super::branding(),
-                if super::branding().is_empty() {
+                crate::branding(),
+                if crate::branding().is_empty() {
                     ""
                 } else {
                     " "
@@ -402,7 +459,7 @@ fn show_app_picker_gui(
         () = msg![env; main_view addSubview:label];
     }
 
-    let brand_color: id = if super::branding() == "UNOFFICIAL" {
+    let brand_color: id = if crate::branding() == "UNOFFICIAL" {
         msg_class![env; UIColor redColor]
     } else {
         msg_class![env; UIColor grayColor]
@@ -421,7 +478,7 @@ fn show_app_picker_gui(
         };
         let label: id = msg_class![env; UILabel alloc];
         let label: id = msg![env; label initWithFrame:label_frame];
-        let text = ns_string::from_rust_string(env, super::branding().to_owned());
+        let text = ns_string::from_rust_string(env, crate::branding().to_owned());
         () = msg![env; label setText:text];
         () = msg![env; label setTextAlignment:(if i % 2 == 0 { UITextAlignmentLeft } else { UITextAlignmentRight })];
         let font_size: CGFloat = 48.0;
@@ -703,7 +760,7 @@ fn show_app_picker_gui(
     }
 
     // Return the environment so some parts of it can be salvaged.
-    Ok((app_path, environment))
+    Ok((app_path, option_args))
 }
 
 const ICON_SIZE: CGSize = CGSize {

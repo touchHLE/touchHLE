@@ -6,8 +6,9 @@
 //! Utilities for presenting frames to the window using an abstract OpenGL ES
 //! implementation.
 
-use super::gles11_raw as gles11; // constants and types only
+use super::gles11_raw as gles11;
 use super::GLES;
+// constants and types only
 use crate::matrix::Matrix;
 use std::time::{Duration, Instant};
 

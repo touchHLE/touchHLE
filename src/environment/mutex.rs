@@ -107,17 +107,20 @@ impl MutexState {
 impl Environment {
     /// Relock mutex that was just unblocked. This should probably only be used
     /// by the thread scheduler.
-    pub fn relock_unblocked_mutex(&mut self, mutex_id: MutexId) {
+    pub fn relock_unblocked_mutex_for_thread(&mut self, thread_id: ThreadId, mutex_id: MutexId) {
         log_dbg!(
-            "Relocking unblocked mutex {}, waiting count {}",
+            "Relocking unblocked mutex {} for thread {}, waiting count {}",
             mutex_id,
+            self.current_thread,
             self.mutex_state
                 .mutexes
                 .get_mut(&mutex_id)
                 .unwrap()
                 .waiting_count
         );
-        self.lock_mutex(mutex_id).unwrap();
+        let mutex: &mut _ = self.mutex_state.mutexes.get_mut(&mutex_id).unwrap();
+        assert!(mutex.locked.is_none());
+        mutex.locked = Some((thread_id, NonZeroU32::new(1).unwrap()));
         if self
             .mutex_state
             .mutexes
@@ -239,8 +242,9 @@ impl Environment {
         } else {
             assert!(mutex.type_ == MutexType::PTHREAD_MUTEX_RECURSIVE);
             log_dbg!(
-                "Decreasing lock level on recursive mutex #{}, currently locked by thread {}.",
+                "Decreasing lock level on recursive mutex #{} (count {}), currently locked by thread {}.",
                 mutex_id,
+                lock_count,
                 locking_thread
             );
             mutex.locked = Some((

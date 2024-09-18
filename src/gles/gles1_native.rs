@@ -14,15 +14,19 @@
 
 use super::gles11_raw as gles11;
 use super::gles11_raw::types::*;
+use super::gles_generic::GLES;
 use super::util::{try_decode_pvrtc, PalettedTextureFormat};
-use super::GLES;
-use crate::window::{GLContext, GLVersion, Window};
+use super::GLESContext;
+use crate::window::{GLContext, GLCriticalSection, GLVersion, Window};
 use std::ffi::CStr;
+use std::marker::PhantomData;
+use std::sync::atomic::AtomicBool;
 
-pub struct GLES1Native {
+pub struct GLES1NativeContext {
     gl_ctx: GLContext,
+    is_loaded: AtomicBool,
 }
-impl GLES for GLES1Native {
+impl GLESContext for GLES1NativeContext {
     fn description() -> &'static str {
         "Native OpenGL ES 1.1"
     }
@@ -30,14 +34,36 @@ impl GLES for GLES1Native {
     fn new(window: &mut Window) -> Result<Self, String> {
         Ok(Self {
             gl_ctx: window.create_gl_context(GLVersion::GLES11)?,
+            is_loaded: false.into(),
         })
     }
 
-    fn make_current(&self, window: &Window) {
-        unsafe { window.make_gl_context_current(&self.gl_ctx) };
-        gles11::load_with(|s| window.gl_get_proc_address(s))
+    fn make_current<'a>(&'a self, window: &Window) -> Box<dyn GLES + 'a> {
+        if self.gl_ctx.is_current() && self.is_loaded.load(std::sync::atomic::Ordering::Acquire) {
+            return Box::new(GLES1Native {
+                critical_section: window.make_critical_section(),
+                _lifetime: PhantomData,
+            });
+        }
+        let critical_section = unsafe { window.make_gl_context_current(&self.gl_ctx) };
+        gles11::load_with(|s| window.gl_get_proc_address(s));
+        self.is_loaded
+            .store(true, std::sync::atomic::Ordering::Release);
+        Box::new(GLES1Native {
+            critical_section,
+            _lifetime: PhantomData,
+        })
     }
+}
 
+pub struct GLES1Native<'a> {
+    // This gets used on Drop, we never need to touch it otherwise.
+    #[allow(unused)]
+    critical_section: GLCriticalSection,
+    _lifetime: PhantomData<&'a ()>,
+}
+
+impl GLES for GLES1Native<'_> {
     unsafe fn driver_description(&self) -> String {
         let version = CStr::from_ptr(gles11::GetString(gles11::VERSION) as *const _);
         let vendor = CStr::from_ptr(gles11::GetString(gles11::VENDOR) as *const _);

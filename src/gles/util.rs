@@ -7,7 +7,7 @@
 
 use super::gles11_raw as gles11; // constants only
 use super::gles11_raw::types::{GLenum, GLfixed, GLfloat, GLint, GLsizei};
-use super::GLES;
+use super::gles_generic::GLES;
 
 /// Convert a fixed-point scalar to a floating-point scalar.
 ///

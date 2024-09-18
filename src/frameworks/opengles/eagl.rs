@@ -11,10 +11,10 @@ use crate::frameworks::core_animation::ca_eagl_layer::{
 };
 use crate::frameworks::foundation::ns_string::get_static_str;
 use crate::frameworks::foundation::NSUInteger;
-use crate::gles::gles11_raw as gles11; // constants only
 use crate::gles::gles11_raw::types::*;
 use crate::gles::present::{present_frame, FpsCounter};
 use crate::gles::{create_gles1_ctx, gles1_on_gl2, GLES};
+use crate::gles::{gles11_raw as gles11, GLESContext}; // constants only
 use crate::mem::MutPtr;
 use crate::objc::{id, msg, nil, objc_classes, release, retain, ClassExports, HostObject};
 use crate::options::Options;
@@ -57,7 +57,7 @@ const kEAGLRenderingAPIOpenGLES2: EAGLRenderingAPI = 2;
 const kEAGLRenderingAPIOpenGLES3: EAGLRenderingAPI = 3;
 
 pub(super) struct EAGLContextHostObject {
-    pub(super) gles_ctx: Option<Box<dyn GLES>>,
+    pub(super) gles_ctx: Option<Box<dyn GLESContext>>,
     /// Mapping of OpenGL ES renderbuffer names to `EAGLDrawable` instances
     /// (always `CAEAGLLayer*`). Retains the instance so it won't dangle.
     renderbuffer_drawable_bindings: HashMap<GLuint, id>,
@@ -97,17 +97,13 @@ pub const CLASSES: ClassExports = objc_classes! {
 
     if let Some(old_ctx) = std::mem::take(current_ctx) {
         release(env, old_ctx);
-        env.framework_state.opengles.current_ctx_thread = None;
     }
 
     // reborrow
     let current_ctx = env.framework_state.opengles.current_ctx_for_thread(env.current_thread);
 
     if context != nil {
-        let host_obj = env.objc.borrow_mut::<EAGLContextHostObject>(context);
-        host_obj.gles_ctx.as_mut().unwrap().make_current(env.window.as_ref().unwrap());
         *current_ctx = Some(context);
-        env.framework_state.opengles.current_ctx_thread = Some(env.current_thread);
     }
 
     true
@@ -122,35 +118,43 @@ pub const CLASSES: ClassExports = objc_classes! {
 
     let window = env.window.as_mut().expect("OpenGL ES is not supported in headless mode");
     let prev_context = env.objc.borrow::<EAGLContextHostObject>(group).gles_ctx.as_ref().unwrap();
-    prev_context.make_current(window);
 
+    // This is sort of a hack - we set the "current" context, then immediately
+    // drop it. Since we know all the code between here and creating the new
+    // context, we know that there won't be any context switches, so it's fine
+    // to do this.
+    {
+        let _prev_ctx = prev_context.make_current(window);
+    }
     env.window.as_mut().unwrap().set_share_with_current_context(true);
-    let res: id = msg![env; this initWithAPI:api];
-    // Setting current_ctx_thread to None should cause sync_context to
-    // switch back to the right context if the app makes an OpenGL ES call.
-    // (it's already done in initWithAPI: but we want to be explicit here.)
-    env.framework_state.opengles.current_ctx_thread = None;
+
+    let gles1_ins = create_gles1_ctx(env);
+
+    let window = env.window.as_mut().expect("OpenGL ES is not supported in headless mode");
+    {
+        let gles1_ctx = gles1_ins.make_current(window);
+        log!("Driver info: {}", unsafe { gles1_ctx.driver_description() });
+    }
+
+    env.objc.borrow_mut::<EAGLContextHostObject>(this).gles_ctx = Some(gles1_ins);
+
     env.window.as_mut().unwrap().set_share_with_current_context(false);
 
-    res
+    this
 }
 
 - (id)initWithAPI:(EAGLRenderingAPI)api {
     assert!(api == kEAGLRenderingAPIOpenGLES1);
 
+    let gles1_ins = create_gles1_ctx(env);
+
     let window = env.window.as_mut().expect("OpenGL ES is not supported in headless mode");
-    let gles1_ctx = create_gles1_ctx(window, &env.options);
+    {
+        let gles1_ctx = gles1_ins.make_current(window);
+        log!("Driver info: {}", unsafe { gles1_ctx.driver_description() });
+    }
 
-    // Make the context current so we can get driver info from it.
-    // initWithAPI: is not supposed to make the new context current (the app
-    // must call setCurrentContext: for that), so we need to hide this from the
-    // app. Setting current_ctx_thread to None should cause sync_context to
-    // switch back to the right context if the app makes an OpenGL ES call.
-    gles1_ctx.make_current(window);
-    env.framework_state.opengles.current_ctx_thread = None;
-    log!("Driver info: {}", unsafe { gles1_ctx.driver_description() });
-
-    env.objc.borrow_mut::<EAGLContextHostObject>(this).gles_ctx = Some(gles1_ctx);
+    env.objc.borrow_mut::<EAGLContextHostObject>(this).gles_ctx = Some(gles1_ins);
 
     this
 }
@@ -204,14 +208,17 @@ pub const CLASSES: ClassExports = objc_classes! {
     // FIXME: get width and height from the layer!
     let (width, height) = window.size_unrotated_scalehacked();
 
-    // Unclear from documentation if this method requires an appropriate context
-    // to already be active, but that seems to be the case in practice?
-    let gles = super::sync_context(&mut env.framework_state.opengles, &mut env.objc, window, env.current_thread);
-    let renderbuffer: GLuint = unsafe {
-        gles.RenderbufferStorageOES(target, internalformat, width.try_into().unwrap(), height.try_into().unwrap());
-        let mut renderbuffer = 0;
-        gles.GetIntegerv(gles11::RENDERBUFFER_BINDING_OES, &mut renderbuffer);
-        renderbuffer as _
+    let renderbuffer = {
+        // Unclear from documentation if this method requires an appropriate
+        // context to already be active, but that seems to be the case
+        // in practice?
+        let mut gles = super::sync_context(&mut env.framework_state.opengles, &mut env.objc, window, env.current_thread);
+        unsafe {
+            gles.RenderbufferStorageOES(target, internalformat, width.try_into().unwrap(), height.try_into().unwrap());
+            let mut renderbuffer = 0;
+            gles.GetIntegerv(gles11::RENDERBUFFER_BINDING_OES, &mut renderbuffer);
+            renderbuffer as _
+        }
     };
 
     retain(env, drawable);
@@ -247,13 +254,15 @@ pub const CLASSES: ClassExports = objc_classes! {
     // Unclear from documentation if this method requires the context to be
     // current, but it would be weird if it didn't?
     let window = env.window.as_mut().expect("OpenGL ES is not supported in headless mode");
-    let gles = super::sync_context(&mut env.framework_state.opengles, &mut env.objc, window, env.current_thread);
+    let mut gles = super::sync_context(&mut env.framework_state.opengles, &mut env.objc, window, env.current_thread);
 
     let renderbuffer: GLuint = unsafe {
         let mut renderbuffer = 0;
         gles.GetIntegerv(gles11::RENDERBUFFER_BINDING_OES, &mut renderbuffer);
         renderbuffer as _
     };
+
+    std::mem::drop(gles);
 
     let Some(&drawable) = env
         .objc
@@ -273,9 +282,9 @@ pub const CLASSES: ClassExports = objc_classes! {
             renderbuffer,
         );
         // re-borrow
-        let gles = super::sync_context(&mut env.framework_state.opengles, &mut env.objc, env.window.as_mut().unwrap(), env.current_thread);
+        let mut gles = super::sync_context(&mut env.framework_state.opengles, &mut env.objc, env.window.as_mut().unwrap(), env.current_thread);
         unsafe {
-            present_renderbuffer(gles, env.window.as_mut().unwrap());
+            present_renderbuffer(gles.as_mut(), env.window.as_mut().unwrap());
         }
     } else {
         if fullscreen_layer != nil {
@@ -290,7 +299,7 @@ pub const CLASSES: ClassExports = objc_classes! {
                 renderbuffer,
             );
             if let Some(sleep_for) = sleep_for {
-                env.sleep(sleep_for, /* tail_call: */ false);
+                env.sleep(sleep_for);
             }
             return true;
         }
@@ -307,15 +316,17 @@ pub const CLASSES: ClassExports = objc_classes! {
         );
         let pixels_vec = get_pixels_vec_for_presenting(env, drawable);
         // re-borrow
-        let gles = super::sync_context(&mut env.framework_state.opengles, &mut env.objc, env.window.as_mut().unwrap(), env.current_thread);
-        let (pixels_vec, width, height) = unsafe {
-            read_renderbuffer(gles, pixels_vec)
+        let (pixels_vec, width, height) = {
+            let mut gles = super::sync_context(&mut env.framework_state.opengles, &mut env.objc, env.window.as_mut().unwrap(), env.current_thread);
+            unsafe {
+                read_renderbuffer(gles.as_mut(), pixels_vec)
+            }
         };
         present_pixels(env, drawable, pixels_vec, width, height);
     }
 
     if let Some(sleep_for) = sleep_for {
-        env.sleep(sleep_for, /* tail_call: */ false);
+        env.sleep(sleep_for);
     }
 
     true

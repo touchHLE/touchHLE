@@ -206,6 +206,12 @@ pub const CLASSES: ClassExports = objc_classes! {
     *env.objc.borrow_mut(this) = host_obj;
 }
 
+- (()) removeAllObjects {
+    *env.objc.borrow_mut(this) = SetHostObject {
+        dict: Default::default(),
+    };
+}
+
 @end
 
 };

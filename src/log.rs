@@ -37,6 +37,15 @@ macro_rules! log {
     }
 }
 
+/// Same as [crate::log::log], but silently fails on panic instead of
+/// panicking.
+
+macro_rules! log_no_panic {
+    ($($arg:tt)+) => {
+        echo_no_panic!("{}: {}", module_path!(), format_args!($($arg)+));
+    }
+}
+
 /// Like [log], but prints the message only if debugging is enabled for the
 /// module where it is used. This can be used for verbose things only needed
 /// when debugging.
@@ -52,7 +61,7 @@ macro_rules! log_dbg {
 /// touchHLE output that isn't coming from the app itself.
 ///
 /// Prefer use [log] or [log_dbg] for errors and warnings during emulation.
-macro_rules! echo {
+macro_rules! echo_nn {
     ($($arg:tt)+) => {
         {
             #[cfg(target_os = "android")]
@@ -62,26 +71,47 @@ macro_rules! echo {
                 use std::io::Write;
                 let mut log_file = $crate::log::get_log_file();
                 let _ = log_file.write_all(formatted_str.as_bytes());
-                let _ = log_file.write_all(b"\n");
             }
             #[cfg(not(target_os = "android"))]
-            eprintln!($($arg)+);
+            eprint!($($arg)+);
         }
     };
     () => {
+        {}
+    }
+}
+
+macro_rules! echo {
+    () => {
+        echo_nn!("\n");
+    };
+    ($($arg:tt)+) => {
         {
-            #[cfg(target_os = "android")]
-            {
-                sdl2::log::log("");
-                use std::io::Write;
-                let _ = $crate::log::get_log_file().write_all(b"\n");
-            }
-            #[cfg(not(target_os = "android"))]
-            eprintln!("");
+            echo_nn!($($arg)+);
+            echo_nn!("\n");
         }
     }
 }
 
+macro_rules! echo_no_panic {
+    ($($arg:tt)+) => {
+        {
+            let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                echo!($($arg)+);
+            }));
+        }
+    }
+}
+
+macro_rules! echo_nn_no_panic {
+    ($($arg:tt)+) => {
+        {
+            let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                echo_nn!($($arg)+);
+            }));
+        }
+    }
+}
 /// Put modules to enable [log_dbg] for here, e.g. "touchHLE::mem" to see when
 /// memory is allocated and freed.
 pub const ENABLED_MODULES: &[&str] = &[];

@@ -53,6 +53,8 @@ pub fn app_picker(
     options: Options,
     option_args: &mut Vec<String>,
 ) -> Result<(PathBuf, Environment), String> {
+    // BEFOREMERGE: yeah we should probably fix this
+    todo!();
     let apps_dir = paths::user_data_base_path().join(paths::APPS_DIR);
 
     let apps: Result<Vec<AppInfo>, String> = if !apps_dir.is_dir() {

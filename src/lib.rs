@@ -321,7 +321,7 @@ pub fn main<T: Iterator<Item = String>>(mut args: T) -> Result<(), String> {
         assert!(parse_result == Ok(true));
     }
 
-    let mut env = Environment::new(bundle, fs, options, env_for_salvage)?;
+    let env = Environment::new(bundle, fs, options, env_for_salvage)?;
     env.run();
     Ok(())
 }

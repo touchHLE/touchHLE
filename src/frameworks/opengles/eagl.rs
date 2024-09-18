@@ -288,7 +288,7 @@ pub const CLASSES: ClassExports = objc_classes! {
                 renderbuffer,
             );
             if let Some(sleep_for) = sleep_for {
-                env.sleep(sleep_for, /* tail_call: */ false);
+                env.sleep(sleep_for);
             }
             return true;
         }
@@ -313,7 +313,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     }
 
     if let Some(sleep_for) = sleep_for {
-        env.sleep(sleep_for, /* tail_call: */ false);
+        env.sleep(sleep_for);
     }
 
     true

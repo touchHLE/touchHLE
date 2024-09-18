@@ -322,8 +322,9 @@ pub const CLASSES: ClassExports = objc_classes! {
         release(env, subview);
     }
 
-    env.framework_state.uikit.ui_view.views.swap_remove(
-        env.framework_state.uikit.ui_view.views.iter().position(|&v| v == this).unwrap()
+    let state = &mut env.framework_state.uikit.ui_view.views;
+    state.swap_remove(
+        state.iter().position(|&v| v == this).unwrap()
     );
 
     env.objc.dealloc_object(this, &mut env.mem);

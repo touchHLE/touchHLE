@@ -33,6 +33,24 @@
       "message": "you need to release all of the keys before deleting set itself",
       "revId": "d5001506b3e0657c7e900d9f2d77e38ea2339a84",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "50e5ffe0_9c3b4850",
+        "filename": "src/frameworks/foundation/ns_set.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 210,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-09-19T12:20:53Z",
+      "side": 1,
+      "message": "unless you\u0027re sure that those would be released on dealloc of the dict?",
+      "parentUuid": "d689a86e_488df70f",
+      "revId": "d5001506b3e0657c7e900d9f2d77e38ea2339a84",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

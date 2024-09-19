@@ -35,6 +35,42 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "e1ca514a_66a88ba7",
+        "filename": "src/libc/mach_init.rs",
+        "patchSetId": 24
+      },
+      "lineNbr": 5,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-09-19T11:24:50Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "127e56b0_a464dfae",
+      "revId": "59161491ed02477652b150ede53d7cac4444cf8a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "0ea94d09_27354a06",
+        "filename": "src/libc/mach_init.rs",
+        "patchSetId": 24
+      },
+      "lineNbr": 5,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-09-19T11:24:50Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "b6909027_775be92e",
+      "revId": "59161491ed02477652b150ede53d7cac4444cf8a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "70e8725f_d92ffb03",
@@ -48,6 +84,24 @@
       "writtenOn": "2024-09-19T05:50:37Z",
       "side": 1,
       "message": "hhhm, this really makes me think that we should refactor common mach_ definitions to a separate files \ncould you please check how it is organized in iOS SDK (or at least add a Todo comment here)?",
+      "revId": "59161491ed02477652b150ede53d7cac4444cf8a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f6920073_902e3be3",
+        "filename": "src/libc/mach_init.rs",
+        "patchSetId": 24
+      },
+      "lineNbr": 8,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-09-19T11:24:50Z",
+      "side": 1,
+      "message": "This value is defined in mach_init.h, although we probably shouldn\u0027t necessarily do things the same way the iOS SDK does. If you feel we should move them somewhere else let me know",
+      "parentUuid": "70e8725f_d92ffb03",
       "revId": "59161491ed02477652b150ede53d7cac4444cf8a",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

@@ -49,6 +49,7 @@ rusttype = "0.9.3"
 # enabled, because it's old enough that it *probably* isn't patent-encumbered,
 # but IANAL. Newer AAC profiles on the other hand are nightmares.
 symphonia = { version = "0.5.3", default-features = false, features = ["aac", "isomp4"] }
+quick-xml = "0.36.1"
 # We currently use a fork of rust-sdl2 because we need a fix for Android builds
 # that's not upstream yet.
 # The HIDAPI feature is enabled because rust-sdl2 hides the SDL2 sensor features

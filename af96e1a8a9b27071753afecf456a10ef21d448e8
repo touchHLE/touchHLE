@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ac1f3213_257ca207",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 4
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-09-19T22:20:45Z",
+      "side": 1,
+      "message": "Curious to hear which games will potentially work with that.\nMaybe an Asphalt 4?",
+      "revId": "af96e1a8a9b27071753afecf456a10ef21d448e8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "72c9abfc_7dc7c991",
+        "filename": "src/frameworks/audio_toolbox/audio_file.rs",
+        "patchSetId": 4
+      },
+      "lineNbr": 144,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-09-19T22:20:45Z",
+      "side": 1,
+      "message": "OPT: I would just assert the size is \u003e 0",
+      "revId": "af96e1a8a9b27071753afecf456a10ef21d448e8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "632da794_b0fd622e",
+        "filename": "src/frameworks/audio_toolbox/audio_file.rs",
+        "patchSetId": 4
+      },
+      "lineNbr": 166,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-09-19T22:20:45Z",
+      "side": 1,
+      "message": "OPT: I would just assert that sizes are !\u003d",
+      "revId": "af96e1a8a9b27071753afecf456a10ef21d448e8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

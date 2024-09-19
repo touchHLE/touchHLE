@@ -305,6 +305,33 @@ pub const CLASSES: ClassExports = objc_classes! {
     autorelease(env, res)
 }
 
++ (id)pathWithComponents:(id)components {
+    let count: NSUInteger = msg![env; components count];
+    if count == 0 {
+        return nil;
+    }
+    let mut res = msg_class![env; NSString new];
+    let enumerator: id = msg![env; components objectEnumerator];
+    // FIXME: remove duplicate path separators
+    // While Apple's docs claim that "This method doesn’t clean up the path
+    // created", it seems that duplicate path separators are removed.
+    loop {
+        let next: id = msg![env; enumerator nextObject];
+        if next == nil {
+            break;
+        }
+        let len: NSUInteger = msg![env; next length];
+        if len == 0 {
+            continue;
+        }
+        // FIXME: this leads to O(N^2) for N char string, but it should be O(N)
+        res = msg![env; res stringByAppendingPathComponent:next];
+    }
+    // Note: we need to strip leading "/"
+    // because we started from an empty string
+    msg![env; res substringFromIndex:1u32]
+}
+
 // These are the two methods that have to be overridden by subclasses, so these
 // implementations don't have to care about foreign subclasses.
 - (NSUInteger)length {

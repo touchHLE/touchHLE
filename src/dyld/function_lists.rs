@@ -17,6 +17,7 @@ pub const FUNCTION_LISTS: &[super::FunctionExports] = &[
     libc::clocale::FUNCTIONS,
     libc::ctype::FUNCTIONS,
     libc::cxxabi::FUNCTIONS,
+    libc::crypto::FUNCTIONS,
     libc::dirent::FUNCTIONS,
     libc::dlfcn::FUNCTIONS,
     libc::errno::FUNCTIONS,

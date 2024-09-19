@@ -137,6 +137,12 @@ pub const CLASSES: ClassExports = objc_classes! {
     msg_class![env; _touchHLE_NSMutableArray allocWithZone:zone]
 }
 
++ (id)arrayWithCapacity:(NSUInteger)capacity {
+    let new: id = msg![env; this alloc];
+    let new: id = msg![env; new initWithCapacity:capacity];
+    autorelease(env, new)
+}
+
 // NSCopying implementation
 - (id)copyWithZone:(NSZonePtr)_zone {
     todo!(); // TODO: this should produce an immutable copy
@@ -246,6 +252,11 @@ pub const CLASSES: ClassExports = objc_classes! {
     assert!(host_object.array.is_empty());
     host_object.array = objects; // objects are already retained
     this
+}
+
+- (id)initWithCapacity:(NSUInteger)_capacity {
+    // TODO: capacity
+    msg![env; this init]
 }
 
 - (())dealloc {

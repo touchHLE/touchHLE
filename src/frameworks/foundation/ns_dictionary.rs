@@ -272,28 +272,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (id)description {
-    // According to docs, this description should be formatted as property list.
-    // But by the same docs, it's meant to be used for debugging purposes only.
-    let desc: id = msg_class![env; NSMutableString new];
-    let prefix: id = from_rust_string(env, "{\n".to_string());
-    () = msg![env; desc appendString:prefix];
-    release(env, prefix);
-    let keys: Vec<id> = env.objc.borrow_mut::<DictionaryHostObject>(this).iter_keys().collect();
-    for key in keys {
-        let key_desc: id = msg![env; key description];
-        let value: id = msg![env; this objectForKey:key];
-        let val_desc: id = msg![env; value description];
-        // TODO: respect nesting and padding
-        let format = format!("\t{} = {};\n", to_rust_string(env, key_desc), to_rust_string(env, val_desc));
-        let format = from_rust_string(env, format);
-        () = msg![env; desc appendString:format];
-        release(env, format);
-    }
-    let suffix: id = from_rust_string(env, "}".to_string());
-    () = msg![env; desc appendString:suffix];
-    release(env, suffix);
-    // TODO: return an immutable copy once supported
-    autorelease(env, desc)
+    build_description(env, this)
 }
 
 @end
@@ -350,6 +329,10 @@ pub const CLASSES: ClassExports = objc_classes! {
     *env.objc.borrow_mut(this) = host_obj;
 }
 
+- (id)description {
+    build_description(env, this)
+}
+
 @end
 
 };
@@ -368,4 +351,39 @@ pub fn dict_from_keys_and_objects(env: &mut Environment, keys_and_objects: &[(id
     *env.objc.borrow_mut(dict) = host_object;
 
     dict
+}
+
+/// A helper to build a description NSString
+/// for a NSDictionary or a NSMutableDictionary.
+fn build_description(env: &mut Environment, dict: id) -> id {
+    // According to docs, this description should be formatted as property list.
+    // But by the same docs, it's meant to be used for debugging purposes only.
+    let desc: id = msg_class![env; NSMutableString new];
+    let prefix: id = from_rust_string(env, "{\n".to_string());
+    () = msg![env; desc appendString:prefix];
+    release(env, prefix);
+    let keys: Vec<id> = env
+        .objc
+        .borrow_mut::<DictionaryHostObject>(dict)
+        .iter_keys()
+        .collect();
+    for key in keys {
+        let key_desc: id = msg![env; key description];
+        let value: id = msg![env; dict objectForKey:key];
+        let val_desc: id = msg![env; value description];
+        // TODO: respect nesting and padding
+        let format = format!(
+            "\t{} = {};\n",
+            to_rust_string(env, key_desc),
+            to_rust_string(env, val_desc)
+        );
+        let format = from_rust_string(env, format);
+        () = msg![env; desc appendString:format];
+        release(env, format);
+    }
+    let suffix: id = from_rust_string(env, "}".to_string());
+    () = msg![env; desc appendString:suffix];
+    release(env, suffix);
+    // TODO: return an immutable copy once supported
+    autorelease(env, desc)
 }

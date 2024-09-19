@@ -1010,6 +1010,24 @@ impl Fs {
         Ok(())
     }
 
+    /// Like [std::fs::create_dir_all] but for the guest filesystem.
+    pub fn create_dir_all<P: AsRef<GuestPath>>(&mut self, path: P) -> Result<(), FsError> {
+        let path = path.as_ref();
+        assert!(path.as_str().starts_with('/'));
+        // TODO: use GuestPathBuf push() once implemented
+        let mut tmp_vec = vec![""];
+        let components = resolve_path(path, None);
+        for component in components {
+            tmp_vec.push(component);
+            let res = self.create_dir(GuestPathBuf::from(tmp_vec.join("/")));
+            match res {
+                Ok(_) | Err(FsError::AlreadyExist) => {}
+                _ => return res,
+            }
+        }
+        Ok(())
+    }
+
     /// Like [std::fs::create_dir] but for the guest filesystem.
     pub fn create_dir<P: AsRef<GuestPath>>(&mut self, path: P) -> Result<(), FsError> {
         let path = path.as_ref();

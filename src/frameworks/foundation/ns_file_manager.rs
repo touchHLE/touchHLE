@@ -176,6 +176,35 @@ pub const CLASSES: ClassExports = objc_classes! {
     }
 }
 
+- (bool)createDirectoryAtPath:(id)path // NSString *
+  withIntermediateDirectories:(bool)with_intermediates
+                   attributes:(id)attributes // NSDictionary*
+                        error:(MutPtr<id>)error { // NSError**
+    assert_eq!(attributes, nil); // TODO
+    assert!(error.is_null());
+
+    let path_str = ns_string::to_rust_string(env, path); // TODO: avoid copy
+    let res = if with_intermediates {
+        env.fs.create_dir_all(GuestPath::new(&path_str))
+    } else {
+        env.fs.create_dir(GuestPath::new(&path_str))
+    };
+    match res {
+        Ok(()) => {
+            log_dbg!("createDirectoryAtPath {} => true", path_str);
+            true
+        }
+        Err(err) => {
+            log!(
+                "Warning: createDirectoryAtPath {} failed with {:?}, returning false",
+                path_str,
+                err,
+            );
+            false
+        }
+    }
+}
+
 - (id)enumeratorAtPath:(id)path { // NSString*
     let path = ns_string::to_rust_string(env, path); // TODO: avoid copy
     let Ok(paths) = env.fs.enumerate_recursive(GuestPath::new(&path)) else {

@@ -188,7 +188,15 @@ pub const CLASSES: ClassExports = objc_classes! {
                                      qualifiedName:nil];
                 }
             }
-            Event::CData(_) => {
+            Event::CData(e) => {
+                if env.bundle.bundle_identifier().starts_with("com.chillingo.cuttherope") {
+                    log!("Applying game-specific hack for \"Cut the Rope\": sending NSXMLParserDelegate foundCharacters: with CData");
+                    let text = e.escape().unwrap().unescape().unwrap().to_string();
+                    let text = from_rust_string(env, text);
+                    let text = autorelease(env, text);
+                    () = msg![env; delegate parser:this foundCharacters:text];
+                    continue;
+                }
                 let sel: SEL = env
                     .objc
                     .register_host_selector("parser:foundCDATA:".to_string(), &mut env.mem);

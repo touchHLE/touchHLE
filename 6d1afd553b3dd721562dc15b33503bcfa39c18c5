@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ae2af7e2_c596a2cb",
+        "filename": "src/frameworks/foundation/ns_character_set.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 59,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-09-19T05:46:23Z",
+      "side": 1,
+      "message": "do you really need to define that?\nyou\u0027ll already crash with unrecognized selector otherwise",
+      "revId": "6d1afd553b3dd721562dc15b33503bcfa39c18c5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

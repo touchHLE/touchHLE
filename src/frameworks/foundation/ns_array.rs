@@ -143,6 +143,20 @@ pub const CLASSES: ClassExports = objc_classes! {
     autorelease(env, new)
 }
 
++ (id)arrayWithArray:(id)array {
+    // TODO: simplify
+    let new: id = msg![env; this alloc];
+    let enumerator: id = msg![env; array objectEnumerator];
+    loop {
+        let next: id = msg![env; enumerator nextObject];
+        if next == nil {
+            break;
+        }
+        () = msg![env; new addObject:next];
+    }
+    autorelease(env, new)
+}
+
 // NSCopying implementation
 - (id)copyWithZone:(NSZonePtr)_zone {
     todo!(); // TODO: this should produce an immutable copy

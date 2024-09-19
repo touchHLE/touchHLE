@@ -487,48 +487,38 @@ impl Fs {
 
         let bundle_guest_path = home_directory.join(&bundle_dir_name);
 
-        let documents_host_path = if !read_only_mode {
-            let path = paths::user_data_base_path()
-                .join(paths::SANDBOX_DIR)
-                .join(bundle_id)
-                .join("Documents");
-            if let Err(e) = std::fs::create_dir_all(&path) {
-                panic!(
-                    "Could not create documents directory for app at {:?}: {:?}",
-                    path, e
-                );
-            }
-            Some(path)
-        } else {
-            None
-        };
-        let tmp_host_path = if !read_only_mode {
-            let path = paths::user_data_base_path()
-                .join(paths::SANDBOX_DIR)
-                .join(bundle_id)
-                .join("tmp");
-            // We clean temporary directory for current app at startup.
-            // This is no-op if directory doesn't exist.
-            match std::fs::remove_dir_all(&path) {
-                Ok(_) => {}
-                Err(e) => {
-                    log_dbg!(
-                        "Unable to clean tmp host folder {:?} at startup: {}",
-                        path,
-                        e
+        let directories = ["Documents", "Library", "tmp"];
+        let host_path_directories = directories.map(|dir| {
+            if !read_only_mode {
+                let path = paths::user_data_base_path()
+                    .join(paths::SANDBOX_DIR)
+                    .join(bundle_id)
+                    .join(dir);
+                if dir == "tmp" {
+                    // We clean temporary directory for current app at startup.
+                    // This is no-op if directory doesn't exist.
+                    match std::fs::remove_dir_all(&path) {
+                        Ok(_) => {}
+                        Err(e) => {
+                            log_dbg!(
+                                "Unable to clean tmp host folder {:?} at startup: {}",
+                                path,
+                                e
+                            );
+                        }
+                    }
+                }
+                if let Err(e) = std::fs::create_dir_all(&path) {
+                    panic!(
+                        "Could not create documents directory for app at {:?}: {:?}",
+                        path, e
                     );
                 }
+                Some(path)
+            } else {
+                None
             }
-            if let Err(e) = std::fs::create_dir_all(&path) {
-                panic!(
-                    "Could not create temporary directory for app at {:?}: {:?}",
-                    path, e
-                );
-            }
-            Some(path)
-        } else {
-            None
-        };
+        });
 
         // Some Free Software libraries are bundled with touchHLE.
         use paths::DYLIBS_DIR;
@@ -549,17 +539,13 @@ impl Fs {
 
         let mut app_dir_children = HashMap::new();
         app_dir_children.insert(bundle_dir_name, app_bundle.into_fs_node());
-        if let Some(documents_host_path) = documents_host_path {
-            app_dir_children.insert(
-                "Documents".to_string(),
-                FsNode::from_host_dir(&documents_host_path, /* writeable: */ true),
-            );
-        }
-        if let Some(tmp_host_path) = tmp_host_path {
-            app_dir_children.insert(
-                "tmp".to_string(),
-                FsNode::from_host_dir(&tmp_host_path, /* writeable: */ true),
-            );
+        for (dir, host_path) in directories.iter().zip(host_path_directories.iter()) {
+            if let Some(host_path) = host_path {
+                app_dir_children.insert(
+                    dir.to_string(),
+                    FsNode::from_host_dir(host_path, /* writeable: */ true),
+                );
+            }
         }
 
         let root = FsNode::dir()

@@ -37,6 +37,8 @@ pub const MPMoviePlayerPlaybackDidFinishNotification: &str =
 /// Apparently an undocumented, private API. Spore Origins uses it.
 pub const MPMoviePlayerContentPreloadDidFinishNotification: &str =
     "MPMoviePlayerContentPreloadDidFinishNotification";
+pub const MPMoviePlayerScalingModeDidChangeNotification: &str =
+    "MPMoviePlayerScalingModeDidChangeNotification";
 // TODO: More notifications?
 
 /// `NSNotificationName` values.
@@ -48,6 +50,10 @@ pub const CONSTANTS: ConstantExports = &[
     (
         "_MPMoviePlayerContentPreloadDidFinishNotification",
         HostConstant::NSString(MPMoviePlayerContentPreloadDidFinishNotification),
+    ),
+    (
+        "_MPMoviePlayerScalingModeDidChangeNotification",
+        HostConstant::NSString(MPMoviePlayerScalingModeDidChangeNotification),
     ),
 ];
 

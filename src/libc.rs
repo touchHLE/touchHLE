@@ -12,6 +12,7 @@
 mod generic_char;
 
 pub mod clocale;
+pub mod crypto;
 pub mod ctype;
 pub mod cxxabi;
 pub mod dirent;

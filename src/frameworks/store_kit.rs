@@ -5,4 +5,5 @@
  */
 //! StoreKit
 
+pub mod sk_payment_queue;
 pub mod sk_product;

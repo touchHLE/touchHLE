@@ -4,14 +4,19 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-use crate::objc::{objc_classes, ClassExports};
+use crate::objc::{id, nil, objc_classes, ClassExports};
 
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);
 
-@implementation SKProduct: NSObject
-// TODO
+@implementation SKPaymentQueue: NSObject
+
++ (id)defaultQueue {
+    // TODO
+    nil
+}
+
 @end
 
 };

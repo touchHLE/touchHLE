@@ -188,12 +188,25 @@ pub const CLASSES: ClassExports = objc_classes! {
                                      qualifiedName:nil];
                 }
             }
-            Event::CData(_) => {
+            Event::CData(e) => {
                 let sel: SEL = env
                     .objc
                     .register_host_selector("parser:foundCDATA:".to_string(), &mut env.mem);
                 let responds: bool = msg![env; delegate respondsToSelector:sel];
-                assert!(!responds); // TODO
+                if responds {
+                    todo!("Implement parser:foundCDATA: delegate call");
+                } else {
+                    let sel: SEL = env
+                        .objc
+                        .register_host_selector("parser:foundCharacters:".to_string(), &mut env.mem);
+                    let responds: bool = msg![env; delegate respondsToSelector:sel];
+                    if responds {
+                        let text = e.escape().unwrap().unescape().unwrap().to_string();
+                        let text = from_rust_string(env, text);
+                        let text = autorelease(env, text);
+                        () = msg![env; delegate parser:this foundCharacters:text];
+                    }
+                }
             }
             e => unimplemented!("{:?}", e)
         }

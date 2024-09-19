@@ -20,7 +20,8 @@ use crate::frameworks::uikit::ui_geometry::{
 };
 use crate::mem::ConstVoidPtr;
 use crate::objc::{
-    autorelease, id, msg, nil, objc_classes, release, retain, ClassExports, HostObject, NSZonePtr,
+    autorelease, id, msg, msg_class, nil, objc_classes, release, retain, ClassExports, HostObject,
+    NSZonePtr,
 };
 use crate::Environment;
 use plist::{Dictionary, Uid, Value};
@@ -54,6 +55,14 @@ pub const CLASSES: ClassExports = objc_classes! {
         already_unarchived: Vec::new(),
     });
     env.objc.alloc_object(this, unarchiver, &mut env.mem)
+}
+
++ (id)unarchiveObjectWithFile:(id)path { // NSString *
+    let data: id = msg_class![env; NSData dataWithContentsOfFile:path];
+    if data == nil {
+        return nil;
+    }
+    msg![env; this unarchiveObjectWithData:data]
 }
 
 + (id)unarchiveObjectWithData:(id)data { // NSData *

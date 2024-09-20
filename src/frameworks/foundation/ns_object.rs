@@ -66,6 +66,9 @@ pub const CLASSES: ClassExports = objc_classes! {
     this
 }
 
+- (NSUInteger)retainCount {
+    env.objc.get_refcount(this).into()
+}
 
 - (id)retain {
     log_dbg!("[{:?} retain]", this);

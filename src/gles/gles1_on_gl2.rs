@@ -618,11 +618,25 @@ impl GLES for GLES1OnGL2 {
         gl21::ClientActiveTexture(texture);
     }
     unsafe fn EnableClientState(&mut self, array: GLenum) {
-        assert!(ARRAYS.iter().any(|&ArrayInfo { name, .. }| name == array));
+        if CAPABILITIES.contains(&array) {
+            log_dbg!(
+                "Tolerating glEnableClientState({:#x}) of a capability",
+                array
+            );
+        } else {
+            assert!(ARRAYS.iter().any(|&ArrayInfo { name, .. }| name == array));
+        }
         gl21::EnableClientState(array);
     }
     unsafe fn DisableClientState(&mut self, array: GLenum) {
-        assert!(ARRAYS.iter().any(|&ArrayInfo { name, .. }| name == array));
+        if CAPABILITIES.contains(&array) {
+            log_dbg!(
+                "Tolerating glDisableClientState({:#x}) of a capability",
+                array
+            );
+        } else {
+            assert!(ARRAYS.iter().any(|&ArrayInfo { name, .. }| name == array));
+        }
         gl21::DisableClientState(array);
     }
     unsafe fn GetBooleanv(&mut self, pname: GLenum, params: *mut GLboolean) {

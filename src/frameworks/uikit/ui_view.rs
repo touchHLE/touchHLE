@@ -12,6 +12,7 @@ pub mod ui_alert_view;
 pub mod ui_control;
 pub mod ui_image_view;
 pub mod ui_label;
+pub mod ui_picker_view;
 pub mod ui_scroll_view;
 pub mod ui_window;
 
@@ -21,7 +22,7 @@ use crate::frameworks::core_graphics::cg_affine_transform::{
 };
 use crate::frameworks::core_graphics::cg_color::CGColorRef;
 use crate::frameworks::core_graphics::cg_context::{CGContextClearRect, CGContextRef};
-use crate::frameworks::core_graphics::{CGFloat, CGPoint, CGRect};
+use crate::frameworks::core_graphics::{CGFloat, CGPoint, CGRect, CGSize};
 use crate::frameworks::foundation::ns_string::get_static_str;
 use crate::frameworks::foundation::{ns_array, NSInteger, NSUInteger};
 use crate::objc::{
@@ -521,6 +522,11 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 - (())setAutoresizesSubviews:(bool)enabled {
     log!("TODO: [(UIView*){:?} setAutoresizesSubviews:{}]", this, enabled);
+}
+
+- (CGSize)sizeThatFits:(CGSize)size {
+    // default implementation, subclasses can override
+    size
 }
 
 @end

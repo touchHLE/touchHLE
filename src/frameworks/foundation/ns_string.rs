@@ -22,7 +22,7 @@ use crate::frameworks::uikit::ui_font::{
 };
 use crate::fs::GuestPath;
 use crate::mach_o::MachO;
-use crate::mem::{guest_size_of, ConstPtr, GuestUSize, Mem, MutPtr, Ptr, SafeRead};
+use crate::mem::{guest_size_of, ConstPtr, ConstVoidPtr, GuestUSize, Mem, MutPtr, Ptr, SafeRead};
 use crate::objc::{
     autorelease, id, msg, msg_class, nil, objc_classes, retain, Class, ClassExports, HostObject,
     NSZonePtr, ObjC,
@@ -1078,6 +1078,16 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 // TODO: more init methods
+
+- (id)initWithData:(id)data // NSData *
+          encoding:(NSStringEncoding)encoding {
+    let bytes: ConstVoidPtr = msg![env; data bytes];
+    let bytes: ConstPtr<u8> = bytes.cast();
+    let length: NSUInteger = msg![env; data length];
+    let new = msg![env; this initWithBytes:bytes length:length encoding:encoding];
+    log_dbg!("initWithData:encoding: {}", to_rust_string(env, new));
+    new
+}
 
 - (id)initWithFormat:(id)format, // NSString*
                      ...args {

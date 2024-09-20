@@ -29,6 +29,7 @@ pub mod core_foundation;
 pub mod core_graphics;
 pub mod dnssd;
 pub mod foundation;
+pub mod game_kit;
 pub mod media_player;
 pub mod openal;
 pub mod opengles;

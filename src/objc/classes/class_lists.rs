@@ -6,10 +6,7 @@
 //! Separate module just for the class lists, since this will probably be a
 //! very long and frequently-updated list.
 
-use crate::frameworks::{
-    av_audio, core_animation, core_foundation, core_graphics, foundation, media_player, opengles,
-    store_kit, uikit,
-};
+use crate::frameworks::{av_audio, core_animation, core_foundation, core_graphics, foundation, game_kit, media_player, opengles, store_kit, uikit};
 
 /// All the lists of classes that the runtime should search through.
 pub const CLASS_LISTS: &[super::ClassExports] = &[
@@ -22,6 +19,7 @@ pub const CLASS_LISTS: &[super::ClassExports] = &[
     core_graphics::cg_context::CLASSES,
     core_graphics::cg_image::CLASSES,
     core_foundation::cf_run_loop_timer::CLASSES, // Special internal classes.
+    game_kit::gk_local_player::CLASSES,
     foundation::ns_array::CLASSES,
     foundation::ns_autorelease_pool::CLASSES,
     foundation::ns_bundle::CLASSES,

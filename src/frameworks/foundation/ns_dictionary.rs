@@ -356,6 +356,16 @@ pub const CLASSES: ClassExports = objc_classes! {
     *env.objc.borrow_mut(this) = host_obj;
 }
 
+- (())addEntriesFromDictionary:(id)other { // NSDictionary *
+    let host_obj: DictionaryHostObject = std::mem::take(env.objc.borrow_mut(other));
+    for (k, v) in host_obj.map.values().flatten() {
+        let existing: id = msg![env; this objectForkey:(*k)];
+        assert_eq!(existing, nil); // TODO
+        () = msg![env; this setObject:(*v) forKey:(*k)];
+    }
+    *env.objc.borrow_mut(this) = host_obj;
+}
+
 - (id)description {
     build_description(env, this)
 }

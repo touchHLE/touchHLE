@@ -63,10 +63,22 @@ pub const CLASSES: ClassExports = objc_classes! {
     let langs_value: id = msg_class![env; NSLocale preferredLanguages];
     let langs_key: id = ns_string::get_static_str(env, "AppleLanguages");
 
-    let dict = msg_class![env; NSMutableDictionary dictionary];
-    () = msg![env; dict setObject:langs_value forKey:langs_key];
+    let plist_file_name = format!("{}.plist", env.bundle.bundle_identifier());
+    let plist_file_path_buf = env.fs.home_directory()
+        .join("Library")
+        .join("Preferences")
+        .join(plist_file_name);
+    let plist_file_path = ns_string::from_rust_string(env, plist_file_path_buf.as_str().to_string());
+    let dict: id = msg_class![env; NSDictionary dictionaryWithContentsOfFile:plist_file_path];
 
+    let dict: id = if dict == nil {
+        msg_class![env; NSMutableDictionary dictionary]
+    } else {
+        msg![env; dict mutableCopy]
+    };
+    () = msg![env; dict setObject:langs_value forKey:langs_key];
     retain(env, dict);
+
     env.objc.borrow_mut::<NSUserDefaultsHostObject>(this).dictionary = dict;
     this
 }
@@ -132,6 +144,21 @@ pub const CLASSES: ClassExports = objc_classes! {
         todo!();
     }
     nil
+}
+
+- (bool)synchronize {
+    let plist_file_path_dir = env.fs.home_directory()
+        .join("Library")
+        .join("Preferences");
+    // TODO: can we avoid this creation call on each sync?
+    _ = env.fs.create_dir_all(plist_file_path_dir.clone());
+    let plist_file_name = format!("{}.plist", env.bundle.bundle_identifier());
+    let plist_file_path_buf = plist_file_path_dir.join(plist_file_name);
+    let plist_file_path = ns_string::from_rust_string(env, plist_file_path_buf.as_str().to_string());
+    let dict = env.objc.borrow::<NSUserDefaultsHostObject>(this).dictionary;
+    // TODO: support saving a mutable dict
+    let dict = msg![env; dict copy];
+    msg![env; dict writeToFile:plist_file_path atomically:true]
 }
 
 @end

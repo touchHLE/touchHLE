@@ -27,8 +27,14 @@ impl State {
 }
 
 struct NSUserDefaultsHostObject {
-    // NSMutableDictionary *
-    dictionary: id,
+    /// Defaults meant to be seen by all applications.
+    /// *Does NOT* persist on disk.
+    /// `NSMutableDictionary *`
+    global_domain_dict: id,
+    /// Application own preferences.
+    /// *Does* persist on disk.
+    /// `NSMutableDictionary *`
+    app_domain_dict: id,
 }
 impl HostObject for NSUserDefaultsHostObject {}
 
@@ -51,7 +57,8 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 + (id)allocWithZone:(NSZonePtr)_zone {
     let host_object = Box::new(NSUserDefaultsHostObject {
-        dictionary: nil,
+        global_domain_dict: nil,
+        app_domain_dict: nil,
     });
     env.objc.alloc_object(this, host_object, &mut env.mem)
 }
@@ -59,6 +66,8 @@ pub const CLASSES: ClassExports = objc_classes! {
 // TODO: plist methods etc
 
 - (id)init {
+    // First, init globals
+    // TODO: init globals once per app run
     // TODO: Are there other default keys we need to set?
     let langs_value: id = msg_class![env; NSLocale preferredLanguages];
     let langs_key: id = ns_string::get_static_str(env, "AppleLanguages");
@@ -67,34 +76,65 @@ pub const CLASSES: ClassExports = objc_classes! {
     () = msg![env; dict setObject:langs_value forKey:langs_key];
 
     retain(env, dict);
-    env.objc.borrow_mut::<NSUserDefaultsHostObject>(this).dictionary = dict;
+    env.objc.borrow_mut::<NSUserDefaultsHostObject>(this).global_domain_dict = dict;
+
+    // Now, load from disk and init app's own preferences.
+    let plist_file_name = format!("{}.plist", env.bundle.bundle_identifier());
+    let plist_file_path_buf = env.fs.home_directory()
+        .join("Library")
+        .join("Preferences")
+        .join(plist_file_name);
+    let plist_file_path = ns_string::from_rust_string(env, plist_file_path_buf.as_str().to_string());
+    let dict: id = msg_class![env; NSDictionary dictionaryWithContentsOfFile:plist_file_path];
+
+    let dict: id = if dict == nil {
+        msg_class![env; NSMutableDictionary new]
+    } else {
+        msg![env; dict mutableCopy]
+    };
+    env.objc.borrow_mut::<NSUserDefaultsHostObject>(this).app_domain_dict = dict;
+
     this
 }
 
 - (())dealloc {
-    let dict = env.objc.borrow::<NSUserDefaultsHostObject>(this).dictionary;
-    release(env, dict);
+    let app_domain_dict = env.objc.borrow::<NSUserDefaultsHostObject>(this).app_domain_dict;
+    release(env, app_domain_dict);
+    let global_domain_dict = env.objc.borrow::<NSUserDefaultsHostObject>(this).global_domain_dict;
+    release(env, global_domain_dict);
 
     env.objc.dealloc_object(this, &mut env.mem);
 }
 
 - (id)dictionaryRepresentation { // NSDictionary *
-    let dict = env.objc.borrow::<NSUserDefaultsHostObject>(this).dictionary;
+    let dict = msg_class![env; NSMutableDictionary new];
+    let global_domain_dict = env.objc.borrow::<NSUserDefaultsHostObject>(this).global_domain_dict;
+    () = msg![env; dict addEntriesFromDictionary:global_domain_dict];
+    let app_domain_dict = env.objc.borrow::<NSUserDefaultsHostObject>(this).app_domain_dict;
+    () = msg![env; dict addEntriesFromDictionary:app_domain_dict];
     let dict = msg![env; dict copy];
     autorelease(env, dict)
 }
 
 - (id)objectForKey:(id)key { // NSString*
-    let dict = env.objc.borrow::<NSUserDefaultsHostObject>(this).dictionary;
-    msg![env; dict objectForKey:key]
+    // TODO: check if order of searching is correct
+    let app_domain_dict = env.objc.borrow::<NSUserDefaultsHostObject>(this).app_domain_dict;
+    let res: id = msg![env; app_domain_dict objectForKey:key];
+    if res != nil {
+        return res;
+    }
+    let global_domain_dict = env.objc.borrow::<NSUserDefaultsHostObject>(this).global_domain_dict;
+    msg![env; global_domain_dict objectForKey:key]
 }
 - (())setObject:(id)object
          forKey:(id)key { // NSString*
-    let dict = env.objc.borrow::<NSUserDefaultsHostObject>(this).dictionary;
+    // Only app domain gets affected!
+    let dict = env.objc.borrow::<NSUserDefaultsHostObject>(this).app_domain_dict;
     msg![env; dict setObject:object forKey:key]
 }
 - (())removeObjectForKey:(id)key {
-    let dict = env.objc.borrow::<NSUserDefaultsHostObject>(this).dictionary;
+    // Only app domain gets affected!
+    let dict = env.objc.borrow::<NSUserDefaultsHostObject>(this).app_domain_dict;
     msg![env; dict removeObjectForKey:key]
 }
 
@@ -132,6 +172,22 @@ pub const CLASSES: ClassExports = objc_classes! {
         todo!();
     }
     nil
+}
+
+- (bool)synchronize {
+    // Note: only app domain dict gets synchronized!
+    let plist_file_path_dir = env.fs.home_directory()
+        .join("Library")
+        .join("Preferences");
+    // TODO: can we avoid this creation call on each sync?
+    _ = env.fs.create_dir_all(plist_file_path_dir.clone());
+    let plist_file_name = format!("{}.plist", env.bundle.bundle_identifier());
+    let plist_file_path_buf = plist_file_path_dir.join(plist_file_name);
+    let plist_file_path = ns_string::from_rust_string(env, plist_file_path_buf.as_str().to_string());
+    let dict = env.objc.borrow::<NSUserDefaultsHostObject>(this).app_domain_dict;
+    // TODO: support saving a mutable dict
+    let dict = msg![env; dict copy];
+    msg![env; dict writeToFile:plist_file_path atomically:true]
 }
 
 @end

@@ -17,6 +17,10 @@ pub const CLASSES: ClassExports = objc_classes! {
     nil
 }
 
++ (bool)canMakePayments {
+    false
+}
+
 @end
 
 };

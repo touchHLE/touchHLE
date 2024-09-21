@@ -55,6 +55,16 @@ fn realloc(env: &mut Environment, ptr: MutVoidPtr, size: GuestUSize) -> MutVoidP
 }
 
 fn free(env: &mut Environment, ptr: MutVoidPtr) {
+    // We need to catch situations of freeing NSObjects early!
+    if env.objc.get_host_object(ptr.cast()).is_some() {
+        log!(
+            "App attempted to call free({:?}) on an object, calling dealloc_object() instead!",
+            ptr
+        );
+        env.objc.dealloc_object(ptr.cast(), &mut env.mem);
+        return;
+    }
+
     // TODO: handle errno properly
     set_errno(env, 0);
 

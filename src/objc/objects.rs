@@ -233,7 +233,7 @@ impl super::ObjC {
     }
 
     /// Get a reference to a host object, if the object exists.
-    pub(super) fn get_host_object(&self, object: id) -> Option<&dyn AnyHostObject> {
+    pub fn get_host_object(&self, object: id) -> Option<&dyn AnyHostObject> {
         self.objects.get(&object).map(|entry| &*entry.host_object)
     }
 

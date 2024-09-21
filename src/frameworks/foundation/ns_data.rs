@@ -42,7 +42,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     autorelease(env, new)
 }
 
-+ (id)dataWithBytes:(MutVoidPtr)bytes
++ (id)dataWithBytes:(ConstVoidPtr)bytes
              length:(NSUInteger)length {
     let new: id = msg![env; this alloc];
     let new: id = msg![env; new initWithBytes:bytes length:length];
@@ -80,12 +80,12 @@ pub const CLASSES: ClassExports = objc_classes! {
     this
 }
 
-- (id)initWithBytes:(MutVoidPtr)bytes
+- (id)initWithBytes:(ConstVoidPtr)bytes
               length:(NSUInteger)length {
     let host_object = env.objc.borrow_mut::<NSDataHostObject>(this);
     assert!(host_object.bytes.is_null() && host_object.length == 0);
     let alloc = env.mem.alloc(length);
-    env.mem.memmove(alloc, bytes.cast_const(), length);
+    env.mem.memmove(alloc, bytes, length);
     host_object.bytes = alloc;
     host_object.length = length;
     this

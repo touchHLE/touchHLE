@@ -30,7 +30,8 @@ macro_rules! impl_AsValue {
     };
 }
 
-enum NSNumberHostObject {
+#[derive(Debug)]
+pub(super) enum NSNumberHostObject {
     Bool(bool),
     UnsignedLongLong(u64),
     Int(i32), // Also covers Integer since this is a 32 bit platform.

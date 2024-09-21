@@ -22,8 +22,9 @@ struct ObjectEnumeratorHostObject {
 impl HostObject for ObjectEnumeratorHostObject {}
 
 /// Belongs to _touchHLE_NSArray
-struct ArrayHostObject {
-    array: Vec<id>,
+#[derive(Debug, Default)]
+pub(super) struct ArrayHostObject {
+    pub(super) array: Vec<id>,
 }
 impl HostObject for ArrayHostObject {}
 

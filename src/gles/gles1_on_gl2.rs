@@ -964,6 +964,15 @@ impl GLES for GLES1OnGL2 {
         )
     }
     unsafe fn Materialfv(&mut self, face: GLenum, pname: GLenum, params: *const GLfloat) {
+        if face == gl21::FRONT || face == gl21::BACK {
+            log!(
+                "App is calling glMaterialfv({:#x}, {:#x}, {:?}) with wrong face value, ignoring",
+                face,
+                pname,
+                params
+            );
+            return;
+        }
         assert!(face == gl21::FRONT_AND_BACK);
         MATERIAL_PARAMS.assert_known_param(pname);
         gl21::Materialfv(face, pname, params);

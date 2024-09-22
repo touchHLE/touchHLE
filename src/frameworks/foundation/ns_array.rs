@@ -322,6 +322,16 @@ pub const CLASSES: ClassExports = objc_classes! {
     build_description(env, this)
 }
 
+// NSFastEnumeration implementation
+- (NSUInteger)countByEnumeratingWithState:(MutPtr<NSFastEnumerationState>)state
+                                  objects:(MutPtr<id>)stackbuf
+                                    count:(NSUInteger)len {
+    // TODO?: Should block mutation on reuse of the object, should be fine
+    // for well behaved apps.
+    let mut iterator = env.objc.borrow_mut::<ArrayHostObject>(this).array.iter().copied();
+    fast_enumeration_helper(&mut env.mem, this, &mut iterator, state, stackbuf, len)
+}
+
 // TODO: more mutation methods
 
 - (())addObject:(id)object {

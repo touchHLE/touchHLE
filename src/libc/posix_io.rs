@@ -71,6 +71,7 @@ pub const O_EXCL: OpenFlag = 0x800;
 /// File control command flags.
 /// This alias is for readability, POSIX just uses `int`.
 pub type FileControlCommand = i32;
+const F_RDADVISE: FileControlCommand = 44;
 const F_NOCACHE: FileControlCommand = 48;
 
 pub type FLockFlag = i32;
@@ -532,14 +533,21 @@ fn fcntl(
         return -1;
     }
 
-    assert_eq!(cmd, F_NOCACHE);
-    let mut args = args.start();
-    let arg: i32 = args.next(env);
-    assert_eq!(arg, 1);
-    log!(
-        "TODO: Ignoring enabling F_NOCACHE for file descriptor {}",
-        fd
-    );
+    match cmd {
+        F_NOCACHE => {
+            let mut args = args.start();
+            let arg: i32 = args.next(env);
+            assert_eq!(arg, 1);
+            log!(
+                "TODO: Ignoring enabling F_NOCACHE for file descriptor {}",
+                fd
+            );
+        }
+        F_RDADVISE => {
+            log_dbg!("TODO: Ignoring F_RDADVISE for file descriptor {}", fd);
+        }
+        _ => unimplemented!(),
+    }
     0 // success
 }
 

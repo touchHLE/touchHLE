@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2e63302e_8c956084",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-09-22T11:43:19Z",
+      "side": 1,
+      "message": "This looks nice overall. Can you add an acknowledgment to the README? I suggest putting it right after the mention of the plist crate.",
+      "revId": "167328bcba583132b79d4e0d99db4ab1112f0ca4",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

@@ -7,7 +7,7 @@
 
 use super::ui_device::*;
 use crate::dyld::{export_c_func, ConstantExports, FunctionExports, HostConstant};
-use crate::frameworks::foundation::{ns_array, ns_string, NSUInteger};
+use crate::frameworks::foundation::{ns_array, ns_string, NSInteger, NSUInteger};
 use crate::frameworks::uikit::ui_nib::load_main_nib_file;
 use crate::mem::MutPtr;
 use crate::objc::{
@@ -162,6 +162,10 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 - (())registerForRemoteNotificationTypes:(UIRemoteNotificationType)types {
     log!("TODO: ignoring registerForRemoteNotificationTypes:{}", types);
+}
+
+- (())setApplicationIconBadgeNumber:(NSInteger)bn {
+    log!("TODO: ignoring setApplicationIconBadgeNumber:{}", bn);
 }
 
 @end

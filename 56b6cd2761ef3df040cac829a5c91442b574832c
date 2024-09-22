@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "cce509ec_6d0e9149",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 16
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-09-22T19:38:47Z",
+      "side": 1,
+      "message": "The overall idea is good but there are some fundamental problems currently.",
+      "revId": "56b6cd2761ef3df040cac829a5c91442b574832c",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9863c76e_1047d7dd",
+        "filename": "src/frameworks/opengles.rs",
+        "patchSetId": 16
+      },
+      "lineNbr": 29,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-09-22T19:38:47Z",
+      "side": 1,
+      "message": "You can use GLvoid here and avoid the c_void import (but that\u0027s a nitpick).\n\nMore importantly: I don\u0027t think you can use `GLenum` as the key here:\n\n- The `GLenum` will be something like `GL_ARRAY_BUFFER` if I remember correctly, but the thing that\u0027s actually being bound is what ever the “current” buffer in the state is. So there can be several things accessed by that name at different times.\n- There can be several OpenGL contexts, with different ones current at different times; this info needs to be stored in the per-context state somehow.",
+      "revId": "56b6cd2761ef3df040cac829a5c91442b574832c",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8b7748b8_ec23d0b8",
+        "filename": "src/frameworks/opengles/gles_guest.rs",
+        "patchSetId": 16
+      },
+      "lineNbr": 1230,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-09-22T19:38:47Z",
+      "side": 1,
+      "message": "Prefer MutVoidPtr.",
+      "revId": "56b6cd2761ef3df040cac829a5c91442b574832c",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

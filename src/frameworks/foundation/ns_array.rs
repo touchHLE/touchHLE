@@ -315,6 +315,13 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.borrow_mut::<ArrayHostObject>(this).array.push(object);
 }
 
+- (())removeAllObjects {
+    let objects = std::mem::take(&mut env.objc.borrow_mut::<ArrayHostObject>(this).array);
+    for object in objects {
+        release(env, object)
+    }
+}
+
 - (())removeObjectAtIndex:(NSUInteger)index {
     let object = env.objc.borrow_mut::<ArrayHostObject>(this).array.remove(index as usize);
     release(env, object)
@@ -355,6 +362,10 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 - (())removeLastObject {
     env.objc.borrow_mut::<ArrayHostObject>(this).array.pop().unwrap();
+}
+
+- (())removeAllObjects {
+    env.objc.borrow_mut::<ArrayHostObject>(this).array = Vec::new()
 }
 
 @end

@@ -353,6 +353,10 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.borrow_mut::<ArrayHostObject>(this).array.remove(index as usize);
 }
 
+- (())removeLastObject {
+    env.objc.borrow_mut::<ArrayHostObject>(this).array.pop().unwrap();
+}
+
 @end
 
 };

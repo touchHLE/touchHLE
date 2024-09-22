@@ -399,6 +399,10 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.borrow_mut::<ArrayHostObject>(this).array.pop().unwrap();
 }
 
+- (())removeAllObjects {
+    env.objc.borrow_mut::<ArrayHostObject>(this).array = Vec::new()
+}
+
 @end
 
 };

@@ -384,6 +384,7 @@ fn build_description(env: &mut Environment, dict: id) -> id {
     let suffix: id = from_rust_string(env, "}".to_string());
     () = msg![env; desc appendString:suffix];
     release(env, suffix);
-    // TODO: return an immutable copy once supported
-    autorelease(env, desc)
+    let desc_imm = msg![env; desc copy];
+    release(env, desc);
+    autorelease(env, desc_imm)
 }

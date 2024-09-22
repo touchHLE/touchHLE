@@ -23,7 +23,7 @@ struct DIR {
 unsafe impl SafeRead for DIR {}
 
 // While early iOS is 32-bit system, underling file system uses 64-bit inodes!
-const MAXPATHLEN: usize = 1024;
+pub const MAXPATHLEN: usize = 1024;
 
 #[allow(non_camel_case_types)]
 #[derive(Debug)]

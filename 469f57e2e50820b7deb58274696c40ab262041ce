@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7b8a7732_cf2b0476",
+        "filename": "src/objc/classes.rs",
+        "patchSetId": 19
+      },
+      "lineNbr": 649,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-09-23T21:25:24Z",
+      "side": 1,
+      "message": "I don\u0027t get it. If you\u0027re taking host object of class itself with get_host_object() (which may fail silently), why are you just borrowing for superclass here?\n\nFYI this will fail if the superclass if unimplemented. You\u0027ll need to handle that somehow.\nEither by checking for FakeClass/UnimplementedClass before downcasting and/or logging a fail to downcast.\n\nMaybe use get_host_object() for superclass as well and add logs for the downcast failures.",
+      "revId": "469f57e2e50820b7deb58274696c40ab262041ce",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1c478e32_e2e52521",
+        "filename": "src/objc/classes.rs",
+        "patchSetId": 19
+      },
+      "lineNbr": 650,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-09-23T21:25:24Z",
+      "side": 1,
+      "message": "Are you sure this assert will not introduce regressions for existing games?\nAs here you will check _all the classes_, not just one with ivars as in your previous implementation.",
+      "revId": "469f57e2e50820b7deb58274696c40ab262041ce",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

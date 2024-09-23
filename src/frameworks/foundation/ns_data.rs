@@ -56,9 +56,8 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 + (id)dataWithContentsOfMappedFile:(id)path {
-    log!("TODO [NSData dataWithContentsOfMappedFile:{:?}] uses [NSData dataWithContentsOfFile:] implementation instead of its own", path);
     let new: id = msg![env; this alloc];
-    let new: id = msg![env; new initWithContentsOfFile:path];
+    let new: id = msg![env; new initWithContentsOfMappedFile:path];
     autorelease(env, new)
 }
 
@@ -120,6 +119,11 @@ pub const CLASSES: ClassExports = objc_classes! {
     host_object.bytes = alloc;
     host_object.length = size;
     this
+}
+
+- (id)initWithContentsOfMappedFile:(id)path {
+    log!("[NSData initWithContentsOfMappedFile:] not using memory mapping");
+    msg![env; this initWithContentsOfFile:path]
 }
 
 // FIXME: writes should be atomic

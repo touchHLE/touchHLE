@@ -35,6 +35,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "f6c060b1_fef82c99",
+        "filename": "src/frameworks/opengles.rs",
+        "patchSetId": 16
+      },
+      "lineNbr": 29,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-09-23T11:33:09Z",
+      "side": 1,
+      "message": "I\u0027m not sure i got it right, let me know if this is more correct",
+      "parentUuid": "9863c76e_1047d7dd",
+      "revId": "56b6cd2761ef3df040cac829a5c91442b574832c",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "8b7748b8_ec23d0b8",
@@ -48,6 +66,24 @@
       "writtenOn": "2024-09-22T19:38:47Z",
       "side": 1,
       "message": "Prefer MutVoidPtr.",
+      "revId": "56b6cd2761ef3df040cac829a5c91442b574832c",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "fb0867fd_c44468ff",
+        "filename": "src/frameworks/opengles/gles_guest.rs",
+        "patchSetId": 16
+      },
+      "lineNbr": 1230,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-09-23T11:33:09Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "8b7748b8_ec23d0b8",
       "revId": "56b6cd2761ef3df040cac829a5c91442b574832c",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

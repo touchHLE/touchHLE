@@ -1206,6 +1206,14 @@ pub const CLASSES: ClassExports = objc_classes! {
     msg_class![env; NSData dataWithBytesNoCopy:(c_string.cast_void()) length:length]
 }
 
+-(id) substringWithRange:(NSRange)range {
+    let host_object = env.objc.borrow_mut::<StringHostObject>(this);
+    let (orig_string, _) = host_object.convert_to_utf16_inplace();
+    let host_string =
+        orig_string[(range.location as usize)..((range.location + range.length) as usize)].to_vec();
+    from_u16_vec(env, host_string)
+}
+
 @end
 
 // Specialised subclass for static-lifetime strings.
@@ -1325,6 +1333,14 @@ pub fn from_rust_string(env: &mut Environment, from: String) -> id {
     let string: id = msg_class![env; _touchHLE_NSString alloc];
     let host_object: &mut StringHostObject = env.objc.borrow_mut(string);
     *host_object = StringHostObject::Utf8(Cow::Owned(from));
+    string
+}
+
+/// Shortcut for host code, allocs and inits with the given u16 vec.
+pub fn from_u16_vec(env: &mut Environment, from: Vec<u16>) -> id {
+    let string: id = msg_class![env; _touchHLE_NSString alloc];
+    let host_object: &mut StringHostObject = env.objc.borrow_mut(string);
+    *host_object = StringHostObject::Utf16(from);
     string
 }
 

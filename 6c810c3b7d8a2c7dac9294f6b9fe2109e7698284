@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "12b8a498_12998d82",
+        "filename": "src/frameworks/audio_toolbox/audio_file.rs",
+        "patchSetId": 7
+      },
+      "lineNbr": 126,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-09-23T19:27:13Z",
+      "side": 1,
+      "message": "could you define a type for each callback or at least add a inline comment with function definition?",
+      "revId": "6c810c3b7d8a2c7dac9294f6b9fe2109e7698284",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "19ba9723_3b3fc44f",
+        "filename": "src/frameworks/audio_toolbox/audio_file.rs",
+        "patchSetId": 7
+      },
+      "lineNbr": 129,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-09-23T19:27:13Z",
+      "side": 1,
+      "message": "could you assert instead that write_callback and setsize_callback are nulls?",
+      "revId": "6c810c3b7d8a2c7dac9294f6b9fe2109e7698284",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

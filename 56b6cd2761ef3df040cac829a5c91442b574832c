@@ -55,6 +55,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "736fd511_94e00acc",
+        "filename": "src/frameworks/opengles.rs",
+        "patchSetId": 16
+      },
+      "lineNbr": 29,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-09-23T20:09:07Z",
+      "side": 1,
+      "message": "I don\u0027t think the thread ID is the right approach, you should store it inside the EAGLContext.\n\nAlso, I think there shouldn\u0027t be any GLenum here, just the “object name” I think it\u0027s called.",
+      "parentUuid": "f6c060b1_fef82c99",
+      "revId": "56b6cd2761ef3df040cac829a5c91442b574832c",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "8b7748b8_ec23d0b8",
         "filename": "src/frameworks/opengles/gles_guest.rs",
         "patchSetId": 16

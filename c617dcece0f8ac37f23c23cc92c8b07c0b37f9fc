@@ -105,6 +105,23 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "979e4e58_2db9d3f6",
+        "filename": "src/objc/classes.rs",
+        "patchSetId": 20
+      },
+      "lineNbr": 661,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-09-24T21:26:12Z",
+      "side": 1,
+      "message": "Wait, shouldn\u0027t it be like, `instance_start \u003e\u003d superclass_instance_start + superclass_instance_size`?",
+      "revId": "c617dcece0f8ac37f23c23cc92c8b07c0b37f9fc",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "fb81ea74_efbd4886",
         "filename": "src/objc/methods.rs",
         "patchSetId": 20

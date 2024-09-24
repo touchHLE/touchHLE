@@ -512,16 +512,13 @@ fn alBufferData(
     samplerate: ALsizei,
 ) {
     let size_usize: GuestUSize = size.try_into().unwrap();
-    let data_slice = env.mem.bytes_at(data.cast(), size_usize);
-    unsafe {
-        al::alBufferData(
-            buffer,
-            format,
-            data_slice.as_ptr() as *const _,
-            size,
-            samplerate,
-        )
+    let data_ptr: *const ALvoid = if data.is_null() {
+        std::ptr::null()
+    } else {
+        let data_slice = env.mem.bytes_at(data.cast(), size_usize);
+        data_slice.as_ptr() as *const _
     };
+    unsafe { al::alBufferData(buffer, format, data_ptr, size, samplerate) };
 }
 
 /// This is an Apple extension that treats the data passed as a static buffer

@@ -58,7 +58,9 @@ pub const CLASSES: ClassExports = objc_classes! {
     if old_view != nil {
         set_view_controller(env, old_view, nil);
     }
-    set_view_controller(env, new_view, this);
+    if new_view != nil {
+        set_view_controller(env, new_view, this);
+    }
     retain(env, new_view);
     release(env, old_view);
 }

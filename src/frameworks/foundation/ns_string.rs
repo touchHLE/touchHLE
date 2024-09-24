@@ -424,6 +424,12 @@ pub const CLASSES: ClassExports = objc_classes! {
     to_rust_string(env, this).starts_with(&str)
 }
 
+- (bool)hasSuffix:(id)str { // NSString*
+    // TODO: avoid copying
+    let str = to_rust_string(env, str).to_string();
+    to_rust_string(env, this).ends_with(&str)
+}
+
 - (NSComparisonResult)localizedCompare:(id)other { // NSString*
     // TODO: use current locale
     // TODO: support `compatibility equivalence` in the Unicode standard

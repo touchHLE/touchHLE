@@ -8,7 +8,9 @@
 use crate::dyld::{ConstantExports, HostConstant};
 use crate::frameworks::foundation::{ns_string, ns_url, NSInteger};
 use crate::frameworks::uikit::ui_device::UIDeviceOrientation;
-use crate::objc::{id, msg, msg_class, objc_classes, release, retain, ClassExports};
+use crate::objc::{
+    id, msg, msg_class, nil, objc_classes, release, retain, ClassExports, HostObject, NSZonePtr,
+};
 use crate::Environment;
 use std::collections::VecDeque;
 
@@ -57,6 +59,12 @@ pub const CONSTANTS: ConstantExports = &[
     ),
 ];
 
+struct MPMoviePlayerControllerHostObject {
+    // NSURL *
+    content_url: id,
+}
+impl HostObject for MPMoviePlayerControllerHostObject {}
+
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);
@@ -64,6 +72,13 @@ pub const CLASSES: ClassExports = objc_classes! {
 @implementation MPMoviePlayerController: NSObject
 
 // TODO: actual playback
+
++ (id)allocWithZone:(NSZonePtr)_zone {
+    let host_object = Box::new(MPMoviePlayerControllerHostObject {
+        content_url: nil,
+    });
+    env.objc.alloc_object(this, host_object, &mut env.mem)
+}
 
 - (id)initWithContentURL:(id)url { // NSURL*
     log!(
@@ -73,12 +88,26 @@ pub const CLASSES: ClassExports = objc_classes! {
         ns_url::to_rust_path(env, url),
     );
 
+    retain(env, url);
+    env.objc.borrow_mut::<MPMoviePlayerControllerHostObject>(this).content_url = url;
+
     // Act as if loading immediately completed (Spore Origins waits for this).
     State::get(env).pending_notifications.push_back(
         (MPMoviePlayerContentPreloadDidFinishNotification, this)
     );
 
     this
+}
+
+- (())dealloc {
+    let url = env.objc.borrow::<MPMoviePlayerControllerHostObject>(this).content_url;
+    release(env, url);
+
+    env.objc.dealloc_object(this, &mut env.mem);
+}
+
+- (id)contentURL {
+    env.objc.borrow::<MPMoviePlayerControllerHostObject>(this).content_url
 }
 
 - (())setBackgroundColor:(id)_color { // UIColor*

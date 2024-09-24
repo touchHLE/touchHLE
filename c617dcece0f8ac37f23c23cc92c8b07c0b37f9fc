@@ -16,6 +16,142 @@
       "message": "Thanks, seems OK for me now overall",
       "revId": "c617dcece0f8ac37f23c23cc92c8b07c0b37f9fc",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "cdffb353_1b026e61",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 20
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-09-24T21:23:13Z",
+      "side": 1,
+      "message": "Looks very nice and clean now, I have some nitpicks and would like some small changes but overall this seems great, thanks for your hard work. This is definitely the last round of review :)",
+      "revId": "c617dcece0f8ac37f23c23cc92c8b07c0b37f9fc",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "488fea6c_3ea7fd5c",
+        "filename": "src/objc/classes.rs",
+        "patchSetId": 20
+      },
+      "lineNbr": 17,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-09-24T21:23:13Z",
+      "side": 1,
+      "message": "There should be a `use methods::ivar_list_t;` in `objc.rs` instead, and then this can use it without the `methods::` prefix. I guess it\u0027s a bit arbitrary, but that\u0027s how this whole thing is organised rn.",
+      "revId": "c617dcece0f8ac37f23c23cc92c8b07c0b37f9fc",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c90684af_3d10a26b",
+        "filename": "src/objc/classes.rs",
+        "patchSetId": 20
+      },
+      "lineNbr": 645,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-09-24T21:23:13Z",
+      "side": 1,
+      "message": "Optional: You could reduce the indentation a bit by using `let … \u003d … else { continue; }` here.\n\nMore important is to add a comment (something like: “superclass might be an unimplemented or fake class, nothing to do in that case because those don\u0027t have ivars”)",
+      "revId": "c617dcece0f8ac37f23c23cc92c8b07c0b37f9fc",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "02290122_0bca70e1",
+        "filename": "src/objc/classes.rs",
+        "patchSetId": 20
+      },
+      "lineNbr": 650,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-09-24T21:23:13Z",
+      "side": 1,
+      "message": "Optional: Could use a `continue;` here to reduce indentation again, but it\u0027s not important.",
+      "revId": "c617dcece0f8ac37f23c23cc92c8b07c0b37f9fc",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "27ba8e4e_06f7b568",
+        "filename": "src/objc/classes.rs",
+        "patchSetId": 20
+      },
+      "lineNbr": 659,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-09-24T21:23:13Z",
+      "side": 1,
+      "message": "Optional: another `let … \u003d … else { continue; }` opportunity here.",
+      "revId": "c617dcece0f8ac37f23c23cc92c8b07c0b37f9fc",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fb81ea74_efbd4886",
+        "filename": "src/objc/methods.rs",
+        "patchSetId": 20
+      },
+      "lineNbr": 121,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-09-24T21:23:13Z",
+      "side": 1,
+      "message": "Probably all the stuff added in this file should be added in `properties.rs` instead? It doesn\u0027t feel to me like it has any inherent connection with methods (are they even callable?).",
+      "revId": "c617dcece0f8ac37f23c23cc92c8b07c0b37f9fc",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7b2f00e3_742fe9e7",
+        "filename": "src/objc/methods.rs",
+        "patchSetId": 20
+      },
+      "lineNbr": 271,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-09-24T21:23:13Z",
+      "side": 1,
+      "message": "“its” not “it\u0027s”. Also I guess it should explain what the return value is.",
+      "revId": "c617dcece0f8ac37f23c23cc92c8b07c0b37f9fc",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "df4a7f38_018fe9d1",
+        "filename": "src/objc/methods.rs",
+        "patchSetId": 20
+      },
+      "lineNbr": 284,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-09-24T21:23:13Z",
+      "side": 1,
+      "message": "Since this caused a problem in the other file\u0027s case, are we okay with it crashing here if the superclass is unimplemented or fake? That does seem reasonable to me I guess, I think objc_msgSend would also crash? Just wanted to point it out.",
+      "revId": "c617dcece0f8ac37f23c23cc92c8b07c0b37f9fc",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

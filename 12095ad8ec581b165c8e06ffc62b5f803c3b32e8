@@ -36,6 +36,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "388d85c1_972d869c",
+        "filename": "src/objc/properties.rs",
+        "patchSetId": 21
+      },
+      "lineNbr": 22,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-09-25T22:35:48Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "95ba342c_67e7b1c3",
+      "revId": "12095ad8ec581b165c8e06ffc62b5f803c3b32e8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "54222e94_f396c50a",
@@ -49,6 +67,24 @@
       "writtenOn": "2024-09-25T22:30:33Z",
       "side": 1,
       "message": "provided?",
+      "revId": "12095ad8ec581b165c8e06ffc62b5f803c3b32e8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "51c518c9_912bc3bc",
+        "filename": "src/objc/properties.rs",
+        "patchSetId": 21
+      },
+      "lineNbr": 77,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-09-25T22:35:48Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "54222e94_f396c50a",
       "revId": "12095ad8ec581b165c8e06ffc62b5f803c3b32e8",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

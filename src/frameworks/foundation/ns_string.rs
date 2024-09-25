@@ -379,6 +379,40 @@ pub const CLASSES: ClassExports = objc_classes! {
     utf16[index as usize]
 }
 
+- (NSRange)lineRangeForRange:(NSRange)range {
+    let string = to_rust_string(env, this);
+    let characters: Vec<char> = string.chars().collect();
+
+    let mut first_line_start_loc = 0;
+    for char_idx in (0..=range.location as usize).rev() {
+        let character = characters[char_idx];
+        if character == '\n' {
+            first_line_start_loc = char_idx+1;
+            break;
+        }
+    }
+
+    let mut last_line_end_loc = string.len();
+    for (char_idx, &character) in characters.iter().enumerate().take(string.len()).skip((range.location+range.length) as usize) {
+        if character == '\n' {
+            // The range end is the first char past the terminator
+            if char_idx == string.len() {
+                last_line_end_loc = char_idx;
+            } else {
+                last_line_end_loc = char_idx + 1;
+            }
+            break;
+        }
+    }
+
+    let line_range = NSRange {
+        location: first_line_start_loc as NSUInteger,
+        length: (last_line_end_loc-first_line_start_loc) as NSUInteger
+    };
+    log_dbg!("[(NSString*) {:?} ({}) lineRangeForRange:{:?}] -> {:?}", this, string, range, line_range);
+    line_range
+}
+
 - (NSRange)rangeOfString:(id)search_string {
     msg![env; this rangeOfString:search_string options:0u32]
 }

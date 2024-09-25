@@ -290,6 +290,9 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (())setAdjustsImageWhenHighlighted:(bool)adjusts {
     todo_objc_setter!(this, adjusts);
 }
+- (())setAdjustsImageWhenDisabled:(bool)adjusts {
+    todo_objc_setter!(this, adjusts);
+}
 - (())setShowsTouchWhenHighlighted:(bool)shows {
     todo_objc_setter!(this, shows);
 }

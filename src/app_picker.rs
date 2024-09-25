@@ -125,6 +125,9 @@ fn enumerate_apps(apps_dir: &Path) -> Result<Vec<AppInfo>, std::io::Error> {
             icon_ui_image: None,
         });
     }
+
+    apps.sort_by_key(|app| app.display_name.to_uppercase());
+
     Ok(apps)
 }
 

@@ -52,6 +52,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "6ec179e3_468718d3",
+        "filename": "src/objc/classes.rs",
+        "patchSetId": 20
+      },
+      "lineNbr": 17,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-09-25T22:13:58Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "488fea6c_3ea7fd5c",
+      "revId": "c617dcece0f8ac37f23c23cc92c8b07c0b37f9fc",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "c90684af_3d10a26b",
@@ -65,6 +83,24 @@
       "writtenOn": "2024-09-24T21:23:13Z",
       "side": 1,
       "message": "Optional: You could reduce the indentation a bit by using `let … \u003d … else { continue; }` here.\n\nMore important is to add a comment (something like: “superclass might be an unimplemented or fake class, nothing to do in that case because those don\u0027t have ivars”)",
+      "revId": "c617dcece0f8ac37f23c23cc92c8b07c0b37f9fc",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "37aa82a7_0acc481c",
+        "filename": "src/objc/classes.rs",
+        "patchSetId": 20
+      },
+      "lineNbr": 645,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-09-25T22:13:58Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "c90684af_3d10a26b",
       "revId": "c617dcece0f8ac37f23c23cc92c8b07c0b37f9fc",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
@@ -86,6 +122,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "5e3c0718_60842e7e",
+        "filename": "src/objc/classes.rs",
+        "patchSetId": 20
+      },
+      "lineNbr": 650,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-09-25T22:13:58Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "02290122_0bca70e1",
+      "revId": "c617dcece0f8ac37f23c23cc92c8b07c0b37f9fc",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "27ba8e4e_06f7b568",
@@ -99,6 +153,24 @@
       "writtenOn": "2024-09-24T21:23:13Z",
       "side": 1,
       "message": "Optional: another `let … \u003d … else { continue; }` opportunity here.",
+      "revId": "c617dcece0f8ac37f23c23cc92c8b07c0b37f9fc",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "9c98c0e8_f59ced60",
+        "filename": "src/objc/classes.rs",
+        "patchSetId": 20
+      },
+      "lineNbr": 659,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-09-25T22:13:58Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "27ba8e4e_06f7b568",
       "revId": "c617dcece0f8ac37f23c23cc92c8b07c0b37f9fc",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
@@ -120,6 +192,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "751b10e3_40f418dc",
+        "filename": "src/objc/classes.rs",
+        "patchSetId": 20
+      },
+      "lineNbr": 661,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-09-25T22:13:58Z",
+      "side": 1,
+      "message": "OH! Nice catch! I don\u0027t know how i could\u0027ve written it like this. According to the source I had linked, just ```instance_start \u003e\u003d superclass_instance_size``` is enough",
+      "parentUuid": "979e4e58_2db9d3f6",
+      "revId": "c617dcece0f8ac37f23c23cc92c8b07c0b37f9fc",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "fb81ea74_efbd4886",
@@ -133,6 +223,24 @@
       "writtenOn": "2024-09-24T21:23:13Z",
       "side": 1,
       "message": "Probably all the stuff added in this file should be added in `properties.rs` instead? It doesn\u0027t feel to me like it has any inherent connection with methods (are they even callable?).",
+      "revId": "c617dcece0f8ac37f23c23cc92c8b07c0b37f9fc",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "36a50671_c31efebd",
+        "filename": "src/objc/methods.rs",
+        "patchSetId": 20
+      },
+      "lineNbr": 121,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-09-25T22:13:58Z",
+      "side": 1,
+      "message": "You\u0027re right, it seems so obvious in hindsight.",
+      "parentUuid": "fb81ea74_efbd4886",
       "revId": "c617dcece0f8ac37f23c23cc92c8b07c0b37f9fc",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
@@ -154,6 +262,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "55fcc5d5_5465c386",
+        "filename": "src/objc/methods.rs",
+        "patchSetId": 20
+      },
+      "lineNbr": 271,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-09-25T22:13:58Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "7b2f00e3_742fe9e7",
+      "revId": "c617dcece0f8ac37f23c23cc92c8b07c0b37f9fc",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "df4a7f38_018fe9d1",
@@ -167,6 +293,24 @@
       "writtenOn": "2024-09-24T21:23:13Z",
       "side": 1,
       "message": "Since this caused a problem in the other file\u0027s case, are we okay with it crashing here if the superclass is unimplemented or fake? That does seem reasonable to me I guess, I think objc_msgSend would also crash? Just wanted to point it out.",
+      "revId": "c617dcece0f8ac37f23c23cc92c8b07c0b37f9fc",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0cbfdbdd_353a8a02",
+        "filename": "src/objc/methods.rs",
+        "patchSetId": 20
+      },
+      "lineNbr": 284,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-09-25T22:13:58Z",
+      "side": 1,
+      "message": "I\u0027m not too sure. I guess we\u0027d want to crash if the object happens to be a subclass of an unimplemented class but at the same time I imagine we\u0027d crash earlier in a situation like that",
+      "parentUuid": "df4a7f38_018fe9d1",
       "revId": "c617dcece0f8ac37f23c23cc92c8b07c0b37f9fc",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

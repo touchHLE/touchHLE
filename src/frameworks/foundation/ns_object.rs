@@ -18,6 +18,7 @@ use super::ns_dictionary::dict_from_keys_and_objects;
 use super::ns_run_loop::NSDefaultRunLoopMode;
 use super::ns_string::{from_rust_string, get_static_str, to_rust_string};
 use super::NSUInteger;
+use crate::frameworks::foundation::NSTimeInterval;
 use crate::mem::MutVoidPtr;
 use crate::objc::{
     id, msg, msg_class, msg_send, nil, objc_classes, retain, Class, ClassExports, NSZonePtr, ObjC,
@@ -228,6 +229,26 @@ forUndefinedKey:(id)key { // NSString*
            withObject:(id)o2 {
     assert!(!sel.is_null());
     msg_send(env, (this, sel, o1, o2))
+}
+
+- (())performSelector:(SEL)sel withObject:(id)arg afterDelay:(NSTimeInterval)delay {
+    log_dbg!("performSelector:{} withObject:{:?} afterDelay:{}", sel.as_str(&env.mem), arg, delay);
+
+    let sel_key: id = get_static_str(env, "SEL");
+    let sel_str = from_rust_string(env, sel.as_str(&env.mem).to_string());
+    let arg_key: id = get_static_str(env, "arg");
+    let dict = dict_from_keys_and_objects(env, &[(sel_key, sel_str), (arg_key, arg)]);
+
+    let selector = env.objc.lookup_selector("_touchHLE_timerFireMethod:").unwrap();
+    let timer:id = msg_class![env; NSTimer timerWithTimeInterval:delay
+                                              target:this
+                                            selector:selector
+                                            userInfo:dict
+                                             repeats:false];
+
+    let run_loop: id = msg_class![env; NSRunLoop mainRunLoop];
+    let mode: id = get_static_str(env, NSDefaultRunLoopMode);
+    () = msg![env; run_loop addTimer:timer forMode:mode];
 }
 
 - (())performSelectorOnMainThread:(SEL)sel withObject:(id)arg waitUntilDone:(bool)wait {

@@ -7,6 +7,7 @@
 
 use crate::frameworks::core_graphics::cg_image::CGImageRef;
 use crate::frameworks::core_graphics::{CGPoint, CGRect, CGSize};
+use crate::frameworks::foundation::NSTimeInterval;
 use crate::objc::{
     id, impl_HostObject_with_superclass, msg, msg_super, objc_classes, release, retain,
     ClassExports, NSZonePtr,
@@ -76,6 +77,14 @@ pub const CLASSES: ClassExports = objc_classes! {
 
     let layer: id = msg![env; this layer];
     () = msg![env; layer setNeedsDisplay];
+}
+
+- (())setAnimationImages:(id)animationImages { // NSArray<UIImage *>*
+    log!("TODO: [(UIImageView*) {:?} setAnimationImages:{:?}]", this, animationImages);
+}
+
+- (())setAnimationDuration:(NSTimeInterval)animationDuration { // NSArray<UIImage *>*
+    log!("TODO: [(UIImageView*) {:?} setAnimationDuration:{}]", this, animationDuration);
 }
 
 // Normally a UIKit view is drawn into a CGContextRef by drawRect:, which is

@@ -67,6 +67,31 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.borrow_mut::<UIScrollViewHostObject>(this).scroll_enabled = scroll_enabled;
 }
 
+- (())setDirectionalLockEnabled:(bool)enabled {
+    log!("TODO: [(UIScrollView*) {:?} setDirectionalLockEnabled:{}]", this, enabled);
+}
+
+- (())setPagingEnabled:(bool)enabled {
+    log!("TODO: [(UIScrollView*) {:?} setPagingEnabled:{}]", this, enabled);
+}
+
+- (())setShowsHorizontalScrollIndicator:(bool)value {
+    log!("TODO: [(UIScrollView*) {:?} setShowsHorizontalScrollIndicator:{}]", this, value);
+}
+
+- (())setShowsVerticalScrollIndicator:(bool)value {
+    log!("TODO: [(UIScrollView*) {:?} setShowsVerticalScrollIndicator:{}]", this, value);
+}
+
+- (())setScrollsToTop:(bool)value {
+    log!("TODO: [(UIScrollView*) {:?} setScrollsToTop:{}]", this, value);
+}
+
+- (())setContentOffset:(CGPoint)content_offset
+              animated:(bool)animated {
+    log!("TODO: [(UIScrollView*) {:?} setScrollsToTop:{:?} animated:{}]", this, content_offset, animated);
+}
+
 - (CGPoint)contentOffset {
     env.objc.borrow::<UIScrollViewHostObject>(this).content_offset
 }

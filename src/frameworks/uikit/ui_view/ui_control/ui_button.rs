@@ -304,6 +304,14 @@ pub const CLASSES: ClassExports = objc_classes! {
     update(env, this);
 }
 
+- (())setAdjustsImageWhenHighlighted:(bool)value {
+    log!("TODO: [(UIBUtton*) {:?} setAdjustsImageWhenHighlighted:{}]", this, value);
+}
+
+- (())setAdjustsImageWhenDisabled:(bool)value {
+    log!("TODO: [(UIBUtton*) {:?} setAdjustsImageWhenDisabled:{}]", this, value);
+}
+
 // TODO: actions, etc
 
 - (id)hitTest:(CGPoint)point

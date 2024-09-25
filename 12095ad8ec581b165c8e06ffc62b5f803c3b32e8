@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "95ba342c_67e7b1c3",
+        "filename": "src/objc/properties.rs",
+        "patchSetId": 21
+      },
+      "lineNbr": 22,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-09-25T22:30:33Z",
+      "side": 1,
+      "message": "This and the line above it should do `use super::`, otherwise this is fine.",
+      "revId": "12095ad8ec581b165c8e06ffc62b5f803c3b32e8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "54222e94_f396c50a",
+        "filename": "src/objc/properties.rs",
+        "patchSetId": 21
+      },
+      "lineNbr": 77,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-09-25T22:30:33Z",
+      "side": 1,
+      "message": "provided?",
+      "revId": "12095ad8ec581b165c8e06ffc62b5f803c3b32e8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

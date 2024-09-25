@@ -20,6 +20,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "9dbc3eec_dd342e39",
+        "filename": "src/objc/properties.rs",
+        "patchSetId": 21
+      },
+      "lineNbr": 22,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-09-25T22:31:46Z",
+      "side": 1,
+      "message": "(and it should be just one line)",
+      "parentUuid": "95ba342c_67e7b1c3",
+      "revId": "12095ad8ec581b165c8e06ffc62b5f803c3b32e8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "54222e94_f396c50a",
         "filename": "src/objc/properties.rs",
         "patchSetId": 21

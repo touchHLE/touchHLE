@@ -537,6 +537,9 @@ fn alBufferDataStatic(
 }
 
 // Apple-specific extension to OpenAL
+fn alcMacOSMixerOutputRate(_env: &mut Environment, value: ALdouble) {
+    log!("App wants to set mixer output sample rate to {} Hz", value);
+}
 fn alcMacOSXMixerOutputRate(_env: &mut Environment, value: ALdouble) {
     log!("App wants to set mixer output sample rate to {} Hz", value);
 }
@@ -706,6 +709,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(alDeleteBuffers(_, _)),
     export_c_func!(alBufferData(_, _, _, _, _)),
     export_c_func!(alBufferDataStatic(_, _, _, _, _)),
+    export_c_func!(alcMacOSMixerOutputRate(_)),
     export_c_func!(alcMacOSXMixerOutputRate(_)),
     export_c_func!(alcMacOSXGetMixerOutputRate()),
     export_c_func!(alcGetContextsDevice(_)),

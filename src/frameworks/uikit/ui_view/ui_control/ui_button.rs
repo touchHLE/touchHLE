@@ -291,6 +291,9 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (())setAdjustsImageWhenHighlighted:(bool)adjusts {
     todo_objc_setter!(this, adjusts);
 }
+- (())setAdjustsImageWhenDisabled:(bool)value {
+    log!("TODO: [(UIBUtton*) {:?} setAdjustsImageWhenDisabled:{}]", this, value);
+}
 - (())setShowsTouchWhenHighlighted:(bool)shows {
     todo_objc_setter!(this, shows);
 }

@@ -291,6 +291,9 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (())setAdjustsImageWhenHighlighted:(bool)adjusts {
     log!("TODO: [(UIButton*){:?} setAdjustsImageWhenHighlighted:{}]", this, adjusts);
 }
+- (())setAdjustsImageWhenDisabled:(bool)value {
+    log!("TODO: [(UIBUtton*) {:?} setAdjustsImageWhenDisabled:{}]", this, value);
+}
 - (())setShowsTouchWhenHighlighted:(bool)shows {
     log!("TODO: [(UIButton*){:?} setShowsTouchWhenHighlighted:{}]", this, shows);
 }

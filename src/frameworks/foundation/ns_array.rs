@@ -45,6 +45,11 @@ pub const CLASSES: ClassExports = objc_classes! {
     msg_class![env; _touchHLE_NSArray allocWithZone:zone]
 }
 
++ (id)array {
+    let array: id = msg![env; this alloc];
+    autorelease(env, array)
+}
+
 // These probably comes from some category related to plists.
 + (id)arrayWithContentsOfFile:(id)path { // NSString*
     let path = ns_string::to_rust_string(env, path);

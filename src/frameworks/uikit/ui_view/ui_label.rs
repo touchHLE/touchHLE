@@ -20,6 +20,8 @@ use crate::objc::{
     retain, todo_objc_setter, ClassExports, NSZonePtr,
 };
 
+type UIBaselineAdjustment = NSInteger;
+
 pub struct UILabelHostObject {
     superclass: super::UIViewHostObject,
     /// `NSString*`
@@ -235,6 +237,14 @@ pub const CLASSES: ClassExports = objc_classes! {
         log!("TODO: UILabel numberOfLines > 1 (label {:?})", this);
     }
     () = msg![env; this setNeedsDisplay];
+}
+
+- (())setBaselineAdjustment:(UIBaselineAdjustment)value {
+    log!("TODO: [(UILabel*) {:?} setBaselineAdjustment:{}]", this, value);
+}
+
+- (())sizeToFit {
+    log!("TODO: [UILabel*) {:?} sizeToFit]", this);
 }
 
 - (())drawRect:(CGRect)_rect {

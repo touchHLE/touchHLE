@@ -12,8 +12,8 @@
 //!   the platform these may or may not be ordinary files, and must be accessed
 //!   through [ResourceFile].
 //! * Files the user is expected to modify, but not touchHLE: [APPS_DIR],
-//!   [USER_OPTIONS_FILE]. These are ordinary files and are found in
-//!   [user_data_base_path].
+//!   [USER_OPTIONS_FILE], [WALLPAPER_FILES]. These are ordinary files and are
+//!   found in [user_data_base_path].
 //! * Files that touchHLE will create and modify, and the user may modify if
 //!   they want to: [SANDBOX_DIR]. These are ordinary files and are found in
 //!   [user_data_base_path].
@@ -75,6 +75,14 @@ pub const APPS_DIR: &str = "touchHLE_apps";
 
 /// Name of the file intended for the user's own options.
 pub const USER_OPTIONS_FILE: &str = "touchHLE_options.txt";
+
+/// Names of files the user can put a wallpaper image (for the app picker) in.
+#[allow(unused)]
+pub const WALLPAPER_FILES: &[&str] = &[
+    "touchHLE_wallpaper.png",
+    "touchHLE_wallpaper.jpg",
+    "touchHLE_wallpaper.jpeg",
+];
 
 /// Name of the directory where touchHLE will store sandboxed app data, e.g.
 /// the `Documents` directory.

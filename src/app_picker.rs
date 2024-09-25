@@ -308,6 +308,57 @@ fn show_app_picker_gui(
     let main_view: id = msg![env; main_view initWithFrame:app_frame];
     () = msg![env; window addSubview:main_view];
 
+    // Wallpaper
+    let mut found_wallpaper = false;
+    let mut have_wallpaper = false;
+    for candidate in paths::WALLPAPER_FILES {
+        let candidate = paths::user_data_base_path().join(candidate);
+        if !candidate.exists() {
+            continue;
+        }
+        found_wallpaper = true;
+
+        let image = match std::fs::read(&candidate) {
+            Ok(image) => image,
+            Err(e) => {
+                log!("Warning: couldn't read {}: {}", candidate.display(), e);
+                break;
+            }
+        };
+        let image = match Image::from_bytes(&image) {
+            Ok(image) => image,
+            Err(e) => {
+                log!("Warning: couldn't decode {}: {}", candidate.display(), e);
+                break;
+            }
+        };
+
+        let image = cg_image::from_image(env, image);
+        let image: id = msg_class![env; UIImage imageWithCGImage:image];
+        let wallpaper: id = msg_class![env; UIImageView alloc];
+        let wallpaper: id = msg![env; wallpaper initWithImage:image];
+        () = msg![env; wallpaper setFrame:(CGRect {
+            origin: CGPoint {
+                x: 0.0,
+                y: 0.0,
+            },
+            size: app_frame.size,
+        })];
+        () = msg![env; wallpaper setAlpha:(0.5 as CGFloat)];
+        () = msg![env; main_view addSubview:wallpaper];
+        have_wallpaper = true;
+        break;
+    }
+    if !found_wallpaper {
+        let CGSize { width, height } = app_frame.size;
+        log!(
+            "No wallpaper found; filename can be one of: {}; ideal size is {}×{} pixels",
+            paths::WALLPAPER_FILES.join(", "),
+            width,
+            height,
+        );
+    }
+
     // Version label
     {
         let label_frame = CGRect {
@@ -340,12 +391,22 @@ fn show_app_picker_gui(
         let font_size: CGFloat = 12.0;
         let font: id = msg_class![env; UIFont systemFontOfSize:font_size];
         () = msg![env; label setFont:font];
-        let text_color: id = msg_class![env; UIColor lightGrayColor];
+        let text_color: id = if have_wallpaper {
+            msg_class![env; UIColor whiteColor]
+        } else {
+            msg_class![env; UIColor lightGrayColor]
+        };
         () = msg![env; label setTextColor:text_color];
         let bg_color: id = msg_class![env; UIColor clearColor];
         () = msg![env; label setBackgroundColor:bg_color];
         () = msg![env; main_view addSubview:label];
     }
+
+    let brand_color: id = if super::branding() == "UNOFFICIAL" {
+        msg_class![env; UIColor redColor]
+    } else {
+        msg_class![env; UIColor grayColor]
+    };
 
     for i in 1..=7 {
         let label_frame = CGRect {
@@ -366,12 +427,7 @@ fn show_app_picker_gui(
         let font_size: CGFloat = 48.0;
         let font: id = msg_class![env; UIFont systemFontOfSize:font_size];
         () = msg![env; label setFont:font];
-        let text_color: id = if super::branding() == "UNOFFICIAL" {
-            msg_class![env; UIColor redColor]
-        } else {
-            msg_class![env; UIColor grayColor]
-        };
-        () = msg![env; label setTextColor:text_color];
+        () = msg![env; label setTextColor:brand_color];
         let bg_color: id = msg_class![env; UIColor clearColor];
         () = msg![env; label setBackgroundColor:bg_color];
         () = msg![env; main_view addSubview:label];
@@ -381,8 +437,14 @@ fn show_app_picker_gui(
 
     let mut icon_grid_stuff = match &mut apps {
         Ok(ref mut apps) => {
-            let mut icon_grid_stuff =
-                make_icon_grid(env, delegate, main_view, app_frame, apps.len());
+            let mut icon_grid_stuff = make_icon_grid(
+                env,
+                delegate,
+                main_view,
+                app_frame,
+                apps.len(),
+                have_wallpaper,
+            );
             update_icon_grid(env, &mut icon_grid_stuff, apps, 0);
             Some(icon_grid_stuff)
         }
@@ -669,6 +731,7 @@ fn make_icon_grid(
     main_view: id,
     app_frame: CGRect,
     total_app_count: usize,
+    have_wallpaper: bool,
 ) -> IconGridStuff {
     let num_cols = 4;
     let num_cols_f = num_cols as CGFloat;
@@ -721,9 +784,17 @@ fn make_icon_grid(
         let label: id = msg![env; label initWithFrame:label_frame];
         () = msg![env; label setTextAlignment:UITextAlignmentCenter];
         let font_size: CGFloat = label_size.height - 2.0;
-        let font: id = msg_class![env; UIFont boldSystemFontOfSize:font_size];
+        let font: id = if have_wallpaper {
+            msg_class![env; UIFont systemFontOfSize:font_size]
+        } else {
+            msg_class![env; UIFont boldSystemFontOfSize:font_size]
+        };
         () = msg![env; label setFont:font];
-        let text_color: id = msg_class![env; UIColor lightGrayColor];
+        let text_color: id = if have_wallpaper {
+            msg_class![env; UIColor whiteColor]
+        } else {
+            msg_class![env; UIColor lightGrayColor]
+        };
         () = msg![env; label setTextColor:text_color];
         let bg_color: id = msg_class![env; UIColor clearColor];
         () = msg![env; label setBackgroundColor:bg_color];

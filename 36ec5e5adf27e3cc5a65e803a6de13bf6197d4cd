@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "88ef917d_eaf98a96",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 5
+      },
+      "lineNbr": 7,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-09-26T00:57:23Z",
+      "side": 1,
+      "message": "The : is a typo I guess?",
+      "revId": "36ec5e5adf27e3cc5a65e803a6de13bf6197d4cd",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

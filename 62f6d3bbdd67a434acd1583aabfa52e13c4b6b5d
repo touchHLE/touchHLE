@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0121c032_5da56a12",
+        "filename": "src/frameworks/foundation/ns_array.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 49,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-09-26T01:02:51Z",
+      "side": 1,
+      "message": "Change this to call `new` instead. It doesn\u0027t actually make a difference with our current implementation but something weird could happen in a subclass I guess.",
+      "revId": "62f6d3bbdd67a434acd1583aabfa52e13c4b6b5d",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

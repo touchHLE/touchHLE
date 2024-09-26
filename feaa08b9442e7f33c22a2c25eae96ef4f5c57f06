@@ -16,6 +16,24 @@
       "message": "What the hell? Surely there can\u0027t be both MacOS and MacOSX versions???",
       "revId": "feaa08b9442e7f33c22a2c25eae96ef4f5c57f06",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e8d80da4_ddf3978f",
+        "filename": "src/frameworks/openal.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 540,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-09-26T09:11:48Z",
+      "side": 1,
+      "message": "I couldn\u0027t find much info about these functions but Silent Hill calls it...",
+      "parentUuid": "666c8591_c5fd8eb6",
+      "revId": "feaa08b9442e7f33c22a2c25eae96ef4f5c57f06",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

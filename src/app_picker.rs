@@ -160,7 +160,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);
 
-@implementation _touchHLE_AppPickerDelegate
+@implementation _touchHLE_AppPickerDelegate: NSObject
 
 - (())iconTapped:(id)sender {
     // There is no allocWithZone: that creates AppPickerDelegateHostObject, so

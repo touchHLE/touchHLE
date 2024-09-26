@@ -16,6 +16,24 @@
       "message": "Seems like this or an equivalent patch was already merged, you can abandon it maybe?",
       "revId": "91b003c7f25db3d77af61249be9e799fa988becf",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "76327485_20cd08cb",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 3
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021823
+      },
+      "writtenOn": "2024-09-26T11:57:33Z",
+      "side": 1,
+      "message": "No, this one\u0027s for CFArray with NULL callbacks, but the earlier one is for NSArray, Without this, the calls get forwarded to the earlier one (and calls release on it, which isn\u0027t correct).",
+      "parentUuid": "2f4536ce_d9bf6a08",
+      "revId": "91b003c7f25db3d77af61249be9e799fa988becf",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

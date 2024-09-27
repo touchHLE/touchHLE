@@ -158,17 +158,20 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 + (id)arrayWithArray:(id)array {
-    // TODO: simplify
     let new: id = msg![env; this alloc];
-    let enumerator: id = msg![env; array objectEnumerator];
+    () = msg![env; new addObjectsFromArray:array];
+    autorelease(env, new)
+}
+
+- (())addObjectsFromArray:(id)other { // NSArray*
+    let enumerator: id = msg![env; other objectEnumerator];
     loop {
         let next: id = msg![env; enumerator nextObject];
         if next == nil {
             break;
         }
-        () = msg![env; new addObject:next];
+        () = msg![env; this addObject:next];
     }
-    autorelease(env, new)
 }
 
 // NSCopying implementation

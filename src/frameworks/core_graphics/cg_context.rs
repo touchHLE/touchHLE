@@ -13,6 +13,8 @@ use crate::frameworks::core_foundation::{CFRelease, CFRetain, CFTypeRef};
 use crate::objc::{objc_classes, ClassExports, HostObject};
 use crate::Environment;
 
+type CGInterpolationQuality = i32;
+
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);
@@ -157,6 +159,18 @@ fn CGContextRestoreGState(env: &mut Environment, context: CGContextRef) {
     host_obj.transform = state.1;
 }
 
+fn CGContextSetInterpolationQuality(
+    _env: &mut Environment,
+    context: CGContextRef,
+    quality: CGInterpolationQuality,
+) {
+    log!(
+        "TODO: CGContextSetInterpolationQuality({:?}, {:?})",
+        context,
+        quality
+    );
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGContextRetain(_)),
     export_c_func!(CGContextRelease(_)),
@@ -172,4 +186,5 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGContextDrawImage(_, _, _)),
     export_c_func!(CGContextSaveGState(_)),
     export_c_func!(CGContextRestoreGState(_)),
+    export_c_func!(CGContextSetInterpolationQuality(_, _)),
 ];

@@ -5,6 +5,8 @@
  */
 //! `CGColor.h`
 
+use std::ops::{Add, Mul, Sub};
+
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::frameworks::core_foundation::{CFRelease, CFRetain, CFTypeRef};
 use crate::frameworks::core_graphics::cg_color_space::{
@@ -27,7 +29,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 };
 
-#[derive(Clone)]
+#[derive(Copy, Clone)]
 pub struct CGColorHostObject {
     pub color_space_name: &'static str,
     // this assumes usage of CGColorSpaceGenericRGB
@@ -38,6 +40,47 @@ pub struct CGColorHostObject {
     pub a: CGFloat,
 }
 impl HostObject for CGColorHostObject {}
+// Implemented to aid animation code.
+// Theres are the operations needed for the interpolation.
+impl Mul<f32> for CGColorHostObject {
+    type Output = CGColorHostObject;
+
+    fn mul(self, rhs: f32) -> Self::Output {
+        CGColorHostObject {
+            color_space_name: self.color_space_name,
+            r: self.r * rhs,
+            g: self.g * rhs,
+            b: self.b * rhs,
+            a: self.a * rhs,
+        }
+    }
+}
+impl Add<CGColorHostObject> for CGColorHostObject {
+    type Output = CGColorHostObject;
+
+    fn add(self, rhs: CGColorHostObject) -> Self::Output {
+        CGColorHostObject {
+            color_space_name: self.color_space_name,
+            r: self.r + rhs.r,
+            g: self.g + rhs.g,
+            b: self.b + rhs.b,
+            a: self.a + rhs.a,
+        }
+    }
+}
+impl Sub<CGColorHostObject> for CGColorHostObject {
+    type Output = CGColorHostObject;
+
+    fn sub(self, rhs: CGColorHostObject) -> Self::Output {
+        CGColorHostObject {
+            color_space_name: self.color_space_name,
+            r: self.r - rhs.r,
+            g: self.g - rhs.g,
+            b: self.b - rhs.b,
+            a: self.a - rhs.a,
+        }
+    }
+}
 
 pub type CGColorRef = CFTypeRef;
 pub fn CGColorRelease(env: &mut Environment, c: CGColorRef) {

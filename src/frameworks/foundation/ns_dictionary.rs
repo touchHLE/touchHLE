@@ -9,6 +9,7 @@ use super::ns_property_list_serialization::deserialize_plist_from_file;
 use super::{ns_string, ns_url, NSUInteger};
 use crate::abi::VaList;
 use crate::frameworks::foundation::ns_string::{from_rust_string, to_rust_string};
+use crate::frameworks::foundation::NSInteger;
 use crate::fs::GuestPath;
 use crate::objc::{
     autorelease, id, msg, msg_class, nil, objc_classes, release, retain, ClassExports, HostObject,
@@ -201,6 +202,24 @@ pub const CLASSES: ClassExports = objc_classes! {
     // TODO: strip '@' and call super
     assert!(!key_str.starts_with('@'));
     msg![env; this objectForKey:key]
+}
+- (bool)boolForKey:(id)key {
+    let value = msg![env; this valueForKey:key];
+    if value == nil {
+        return false
+    }
+    // Handle NSValues
+    msg![env; value boolValue]
+    // TODO: Handle NSStrings "true", "YES", "1", etc.
+}
+- (NSInteger)integerForKey:(id)key {
+    let value = msg![env; this valueForKey:key];
+    if value == nil {
+        return 0
+    }
+    // Handle NSValues
+    msg![env; value integerValue]
+    // TODO: Handle NSStrings "123", "2.64" by rounding, etc.
 }
 
 @end

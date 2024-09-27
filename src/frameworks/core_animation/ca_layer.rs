@@ -18,9 +18,11 @@ use crate::frameworks::core_graphics::cg_image::{
     kCGImageAlphaPremultipliedLast, kCGImageByteOrder32Big,
 };
 use crate::frameworks::core_graphics::{CGPoint, CGRect, CGSize};
-use crate::frameworks::foundation::ns_string;
+use crate::frameworks::foundation::ns_string::{self, to_rust_string};
 use crate::mem::{GuestUSize, Ptr};
-use crate::objc::{id, msg, nil, objc_classes, release, retain, ClassExports, HostObject, ObjC};
+use crate::objc::{
+    id, msg, nil, objc_classes, release, retain, Class, ClassExports, HostObject, ObjC,
+};
 use std::collections::HashMap;
 
 pub(super) struct CALayerHostObject {
@@ -50,6 +52,7 @@ pub(super) struct CALayerHostObject {
     pub(super) gles_texture: Option<crate::gles::gles11_raw::types::GLuint>,
     /// Internal state for compositor
     pub(super) gles_texture_is_up_to_date: bool,
+    animations: HashMap<id, id>, // NSString*, CAAnimation*
 }
 impl HostObject for CALayerHostObject {}
 
@@ -97,6 +100,7 @@ pub const CLASSES: ClassExports = objc_classes! {
         cg_context: None,
         gles_texture: None,
         gles_texture_is_up_to_date: false,
+        animations: HashMap::new(),
     });
     env.objc.alloc_object(this, host_object, &mut env.mem)
 }
@@ -320,6 +324,19 @@ pub const CLASSES: ClassExports = objc_classes! {
         }
     }
 
+    // Set all CABasicAnimations to the end value
+    // TODO: Actually animate the values over time
+    let ca_basic_animation_class = env.objc.get_known_class("CABasicAnimation", &mut env.mem);
+    for (key, animation) in env.objc.borrow::<CALayerHostObject>(this).animations.clone() {
+        log_dbg!("TODO: Animate CALayer {:?} animation {}: {:?}", this, to_rust_string(env, key), animation);
+        let animation_class: Class = msg![env; animation class];
+        if env.objc.class_is_subclass_of(animation_class, ca_basic_animation_class) {
+            let animation_key: id = msg![env; animation keyPath];
+            let to_value: id = msg![env; animation toValue];
+            () = msg![env; this setValue:to_value forKey:animation_key];
+        }
+    }
+
     let &mut CALayerHostObject {
         cg_context,
         ref mut gles_texture_is_up_to_date,
@@ -487,6 +504,24 @@ pub const CLASSES: ClassExports = objc_classes! {
     assert!(other != nil); // TODO
 
     msg![env; other convertPoint:point fromLayer:this]
+}
+
+- (())addAnimation:(id)anim // CAAnimation*
+            forKey:(id)key { // NSString*
+    log_dbg!("[(CALayer*){:?} addAnimation:{:?} forKey:{:?} ({:?})]", this, anim, key, to_rust_string(env, key));
+    retain(env, anim);
+    retain(env, key);
+    env.objc.borrow_mut::<CALayerHostObject>(this).animations.insert(key, anim);
+}
+
+- (())removeAnimationForKey:(id)key { // NSString*
+    let key_string = to_rust_string(env, key);
+    log_dbg!("[(CALayer*){:?} removeAnimationForKey:{:?} ({:?})]", this, key, key_string);
+    let Some((key, anim)) = env.objc.borrow_mut::<CALayerHostObject>(this).animations.remove_entry(&key) else {
+        panic!("Attempted to remove from CALayer animation {:?} ({:?}) which wasn't present", key, key_string)
+    };
+    release(env, anim);
+    release(env, key);
 }
 
 // TODO: more

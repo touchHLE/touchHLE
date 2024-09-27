@@ -21,7 +21,7 @@ use crate::objc::{
 use crate::Environment;
 
 // TODO: There are many members of this enum missing.
-type UIControlEvents = NSUInteger;
+pub type UIControlEvents = NSUInteger;
 const UIControlEventTouchDown: UIControlEvents = 1 << 0;
 const UIControlEventTouchDragInside: UIControlEvents = 1 << 2;
 const UIControlEventTouchDragOutside: UIControlEvents = 1 << 3;

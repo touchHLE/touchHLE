@@ -6,6 +6,7 @@
 //! `CALayer`.
 
 use crate::dyld::{ConstantExports, HostConstant};
+use crate::frameworks::core_foundation::time::CFTimeInterval;
 use crate::frameworks::core_graphics::cg_affine_transform::{
     CGAffineTransform, CGAffineTransformIdentity,
 };
@@ -21,14 +22,16 @@ use crate::frameworks::core_graphics::cg_image::{
     kCGImageAlphaPremultipliedLast, kCGImageByteOrder32Big,
 };
 use crate::frameworks::core_graphics::{CGFloat, CGPoint, CGRect, CGSize};
-use crate::frameworks::foundation::ns_string;
+use crate::frameworks::foundation::ns_string::{self, to_rust_string};
 use crate::mem::{GuestUSize, Ptr};
 use crate::objc::{
-    autorelease, id, msg, nil, objc_classes, release, retain, ClassExports, HostObject, ObjC,
+    autorelease, id, msg, msg_class, nil, objc_classes, release, retain, ClassExports, HostObject,
+    ObjC,
 };
 use crate::Environment;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
+#[derive(Clone)]
 pub(super) struct CALayerHostObject {
     /// Possibly nil, usually a UIView. This is a weak reference.
     delegate: id,
@@ -58,6 +61,8 @@ pub(super) struct CALayerHostObject {
     pub(super) gles_texture: Option<crate::gles::gles11_raw::types::GLuint>,
     /// Internal state for compositor
     pub(super) gles_texture_is_up_to_date: bool,
+    pub(super) animations: HashMap<String, id>, // CAAnimation*
+    pub(super) anonymous_animations: HashSet<id>, // CAAnimation*
 }
 impl HostObject for CALayerHostObject {}
 
@@ -127,6 +132,8 @@ pub const CLASSES: ClassExports = objc_classes! {
         cg_context: None,
         gles_texture: None,
         gles_texture_is_up_to_date: false,
+        animations: HashMap::new(),
+        anonymous_animations: HashSet::new(),
     });
     env.objc.alloc_object(this, host_object, &mut env.mem)
 }
@@ -312,7 +319,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (CGColorRef)backgroundColor {
-    if let Some(bg_color) = env.objc.borrow::<CALayerHostObject>(this).background_color.clone() {
+    if let Some(bg_color) = env.objc.borrow::<CALayerHostObject>(this).background_color {
         let class = env.objc.get_known_class("_touchHLE_CGColor", &mut env.mem);
         let obj = env.objc.alloc_object(class, Box::new(bg_color), &mut env.mem);
         autorelease(env, obj)
@@ -324,7 +331,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     let new_color = if new_color == nil {
         None
     } else {
-        Some(env.objc.borrow::<CGColorHostObject>(new_color).clone())
+        Some(*env.objc.borrow::<CGColorHostObject>(new_color))
     };
     env.objc.borrow_mut::<CALayerHostObject>(this).background_color = new_color;
 }
@@ -492,11 +499,54 @@ pub const CLASSES: ClassExports = objc_classes! {
     res
 }
 
+- (())addAnimation:(id)anim // CAAnimation*
+            forKey:(id)key { // NSString*
+    let duration: CFTimeInterval = msg![env; anim duration];
+    if duration == 0.0 {
+        // From the docs:
+        //  If the duration property of the animation is zero or negative, the
+        //  duration is changed to the current value of the
+        //  kCATransactionAnimationDuration transaction property (if set) or to
+        //  the default value of 0.25 seconds.
+        let duration: CFTimeInterval = msg_class![env; CATransaction animationDuration];
+        () = msg![env; anim setDuration:duration];
+    }
+
+    if key == nil {
+        log_dbg!("[(CALayer*){:?} addAnimation:{:?} forKey:{:?}]", this, anim, key);
+        let inserted = env.objc.borrow_mut::<CALayerHostObject>(this).anonymous_animations.insert(anim);
+        assert!(inserted);
+    } else {
+        let key_string = to_rust_string(env, key);
+        log_dbg!("[(CALayer*){:?} addAnimation:{:?} forKey:{:?} ({:?})]", this, anim, key, key_string);
+        env.objc.borrow_mut::<CALayerHostObject>(this).animations.insert(key_string.to_string(), anim);
+    }
+    retain(env, anim);
+}
+
+- (())removeAnimationForKey:(id)key { // NSString*
+    let key_string = to_rust_string(env, key);
+    log_dbg!("[(CALayer*){:?} removeAnimationForKey:{:?} ({:?})]", this, key, key_string);
+    if let Some(anim) = env.objc.borrow_mut::<CALayerHostObject>(this).animations.remove(&*key_string) {
+        release(env, anim);
+    };
+}
+
 // TODO: more
 
 @end
 
 };
+
+pub fn remove_anonymous_animation(env: &mut Environment, layer: id, animation: id) {
+    let removed = env
+        .objc
+        .borrow_mut::<CALayerHostObject>(layer)
+        .anonymous_animations
+        .remove(&animation);
+    assert!(removed);
+    release(env, animation);
+}
 
 fn transform_for_conversion(env: &mut Environment, this: id, other: id) -> CGAffineTransform {
     // The convertPoint methods can be used in two ways:

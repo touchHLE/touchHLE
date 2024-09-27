@@ -12,6 +12,7 @@ use crate::frameworks::foundation::ns_string::{get_static_str, to_rust_string};
 use crate::objc::{
     autorelease, id, msg, nil, objc_classes, release, retain, ClassExports, HostObject, NSZonePtr,
 };
+use crate::Environment;
 use crate::{impl_HostObject_with_superclass, msg_class, msg_super};
 
 type CATransitionType = id; // NSString*
@@ -72,6 +73,7 @@ struct CAAnimationHostObject {
     begin_time: CFTimeInterval,
     duration: CFTimeInterval,
     fill_mode: &'static str,
+    started_at: Option<CFTimeInterval>,
 }
 impl HostObject for CAAnimationHostObject {}
 impl Default for CAAnimationHostObject {
@@ -85,6 +87,7 @@ impl Default for CAAnimationHostObject {
             begin_time: Default::default(),
             duration: Default::default(),
             fill_mode: kCAFillModeRemoved,
+            started_at: None,
         }
     }
 }
@@ -318,3 +321,13 @@ pub const CLASSES: ClassExports = objc_classes! {
 @end
 
 };
+
+pub fn get_animation_start_time(
+    env: &mut Environment,
+    animation: id,
+) -> &mut Option<CFTimeInterval> {
+    &mut env
+        .objc
+        .borrow_mut::<CAAnimationHostObject>(animation)
+        .started_at
+}

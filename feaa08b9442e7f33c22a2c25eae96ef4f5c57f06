@@ -52,6 +52,24 @@
       "parentUuid": "e8d80da4_ddf3978f",
       "revId": "feaa08b9442e7f33c22a2c25eae96ef4f5c57f06",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "89ac2f4f_635cd0b2",
+        "filename": "src/frameworks/openal.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 540,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-09-27T14:47:05Z",
+      "side": 1,
+      "message": "You\u0027re right that the client does perform a null check and if i return a null pointer instead of panicking the app seems to work (Although without sound since the game depends on an API that right now is a bunch of stubs). How should I proceed?",
+      "parentUuid": "fffedd4a_308abe96",
+      "revId": "feaa08b9442e7f33c22a2c25eae96ef4f5c57f06",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

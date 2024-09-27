@@ -199,7 +199,7 @@ impl BundleData {
 /// Seeking in compressed files is hard, so the simple solution is to read the
 /// whole file into memory. This is shared so having multiple copies of the same
 /// file open won't waste memory.
-pub type DecompressedFile = Rc<[u8]>;
+type DecompressedFile = Rc<[u8]>;
 
 /// Represents a file inside an IPA bundle that can be opened.
 #[derive(Debug)]

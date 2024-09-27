@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "9c61f3f9_7977c0a3",
+        "filename": "src/frameworks/audio_toolbox/audio_file.rs",
+        "patchSetId": 7
+      },
+      "lineNbr": 126,
+      "author": {
+        "id": 1021823
+      },
+      "writtenOn": "2024-09-27T15:59:25Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "12b8a498_12998d82",
+      "revId": "6c810c3b7d8a2c7dac9294f6b9fe2109e7698284",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "19ba9723_3b3fc44f",
@@ -31,6 +49,24 @@
       "writtenOn": "2024-09-23T19:27:13Z",
       "side": 1,
       "message": "could you assert instead that write_callback and setsize_callback are nulls?",
+      "revId": "6c810c3b7d8a2c7dac9294f6b9fe2109e7698284",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f7d789c4_da36aca3",
+        "filename": "src/frameworks/audio_toolbox/audio_file.rs",
+        "patchSetId": 7
+      },
+      "lineNbr": 129,
+      "author": {
+        "id": 1021823
+      },
+      "writtenOn": "2024-09-27T15:59:25Z",
+      "side": 1,
+      "message": "Some apps will set this to empty callbacks instead of NULL if they don\u0027t use them (at least DDR S and TVSK do this). We don\u0027t have any AudioFile functions that write anyways, so any apps that do need to write will just fail anyways.",
+      "parentUuid": "19ba9723_3b3fc44f",
       "revId": "6c810c3b7d8a2c7dac9294f6b9fe2109e7698284",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

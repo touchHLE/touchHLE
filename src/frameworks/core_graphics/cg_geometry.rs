@@ -7,6 +7,8 @@
 //!
 //! See also [crate::frameworks::uikit::ui_geometry].
 
+use std::ops::{Add, Mul, Sub};
+
 use super::CGFloat;
 use crate::abi::{impl_GuestRet_for_large_struct, GuestArg};
 use crate::dyld::{export_c_func, ConstantExports, FunctionExports, HostConstant};
@@ -54,6 +56,38 @@ impl std::fmt::Display for CGPoint {
         write!(f, "{{{x}, {y}}}")
     }
 }
+// Implemented to aid animation code.
+// Theres are the operations needed for the interpolation.
+impl Mul<f32> for CGPoint {
+    type Output = CGPoint;
+
+    fn mul(self, rhs: f32) -> Self::Output {
+        CGPoint {
+            x: self.x * rhs,
+            y: self.y * rhs,
+        }
+    }
+}
+impl Add<CGPoint> for CGPoint {
+    type Output = CGPoint;
+
+    fn add(self, rhs: CGPoint) -> Self::Output {
+        CGPoint {
+            x: self.x + rhs.x,
+            y: self.y + rhs.y,
+        }
+    }
+}
+impl Sub<CGPoint> for CGPoint {
+    type Output = CGPoint;
+
+    fn sub(self, rhs: CGPoint) -> Self::Output {
+        CGPoint {
+            x: self.x - rhs.x,
+            y: self.y - rhs.y,
+        }
+    }
+}
 // This function is rare because it is usually inlined.
 fn CGPointEqualToPoint(_env: &mut Environment, a: CGPoint, b: CGPoint) -> bool {
     a == b
@@ -98,6 +132,38 @@ impl std::fmt::Display for CGSize {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
         let &CGSize { width, height } = self;
         write!(f, "{{{width}, {height}}}")
+    }
+}
+// Implemented to aid animation code.
+// Theres are the operations needed for the interpolation.
+impl Mul<f32> for CGSize {
+    type Output = CGSize;
+
+    fn mul(self, rhs: f32) -> Self::Output {
+        CGSize {
+            width: self.width * rhs,
+            height: self.height * rhs,
+        }
+    }
+}
+impl Add<CGSize> for CGSize {
+    type Output = CGSize;
+
+    fn add(self, rhs: CGSize) -> Self::Output {
+        CGSize {
+            width: self.width + rhs.width,
+            height: self.height + rhs.height,
+        }
+    }
+}
+impl Sub<CGSize> for CGSize {
+    type Output = CGSize;
+
+    fn sub(self, rhs: CGSize) -> Self::Output {
+        CGSize {
+            width: self.width - rhs.width,
+            height: self.height - rhs.height,
+        }
     }
 }
 // This function is rare because it is usually inlined.
@@ -153,6 +219,38 @@ impl std::fmt::Display for CGRect {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
         let &CGRect { origin, size } = self;
         write!(f, "{{{origin}, {size}}}")
+    }
+}
+// Implemented to aid animation code.
+// Theres are the operations needed for the interpolation.
+impl Mul<f32> for CGRect {
+    type Output = CGRect;
+
+    fn mul(self, rhs: f32) -> Self::Output {
+        CGRect {
+            origin: self.origin * rhs,
+            size: self.size * rhs,
+        }
+    }
+}
+impl Add<CGRect> for CGRect {
+    type Output = CGRect;
+
+    fn add(self, rhs: CGRect) -> Self::Output {
+        CGRect {
+            origin: self.origin + rhs.origin,
+            size: self.size + rhs.size,
+        }
+    }
+}
+impl Sub<CGRect> for CGRect {
+    type Output = CGRect;
+
+    fn sub(self, rhs: CGRect) -> Self::Output {
+        CGRect {
+            origin: self.origin - rhs.origin,
+            size: self.size - rhs.size,
+        }
     }
 }
 // This function is rare because it is usually inlined.

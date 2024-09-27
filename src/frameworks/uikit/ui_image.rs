@@ -6,8 +6,10 @@
 //! `UIImage`.
 
 use crate::frameworks::core_graphics::cg_context::CGContextDrawImage;
-use crate::frameworks::core_graphics::cg_image::{self, CGImageRef, CGImageRelease, CGImageRetain};
-use crate::frameworks::core_graphics::{CGRect, CGSize};
+use crate::frameworks::core_graphics::cg_image::{
+    self, CGImageGetHeight, CGImageGetWidth, CGImageRef, CGImageRelease, CGImageRetain,
+};
+use crate::frameworks::core_graphics::{CGFloat, CGPoint, CGRect, CGSize};
 use crate::frameworks::foundation::{ns_data, ns_string, NSInteger};
 use crate::frameworks::uikit::ui_graphics::UIGraphicsGetCurrentContext;
 use crate::fs::GuestPath;
@@ -125,6 +127,19 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (())drawInRect:(CGRect)rect {
     let context = UIGraphicsGetCurrentContext(env);
     let image = env.objc.borrow::<UIImageHostObject>(this).cg_image;
+    CGContextDrawImage(env, context, rect, image);
+}
+
+- (())drawAtPoint:(CGPoint)point {
+    let context = UIGraphicsGetCurrentContext(env);
+    let image = env.objc.borrow::<UIImageHostObject>(this).cg_image;
+    let rect = CGRect {
+        origin: point,
+        size: CGSize {
+            width: CGImageGetWidth(env, image) as CGFloat,
+            height: CGImageGetHeight(env, image) as CGFloat,
+        }
+    };
     CGContextDrawImage(env, context, rect, image);
 }
 

@@ -65,8 +65,6 @@ pub(super) struct CALayerHostObject {
     pub(super) gles_texture_is_up_to_date: bool,
     pub(super) animations: HashMap<String, id>, // CAAnimation*
     pub(super) anonymous_animations: HashSet<id>, // CAAnimation*
-    // TODO: Remove once CAActions are implemented
-    pub(super) use_implicit_animations: bool,
 }
 impl HostObject for CALayerHostObject {}
 
@@ -139,7 +137,6 @@ pub const CLASSES: ClassExports = objc_classes! {
         gles_texture_is_up_to_date: false,
         animations: HashMap::new(),
         anonymous_animations: HashSet::new(),
-        use_implicit_animations: true,
     });
     env.objc.alloc_object(this, host_object, &mut env.mem)
 }
@@ -243,7 +240,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (())setBounds:(CGRect)bounds {
     let host_object = env.objc.borrow_mut::<CALayerHostObject>(this);
     let old_bounds = std::mem::replace(&mut host_object.bounds, bounds);
-    if host_object.use_implicit_animations && old_bounds != bounds {
+    if is_implicit_animation_enabled(env, this) && old_bounds != bounds {
         let old_bounds: id = msg_class![env; NSValue valueWithCGRect:old_bounds];
         let bounds: id = msg_class![env; NSValue valueWithCGRect:bounds];
         add_default_implied_basic_animation(env, this, "bounds", old_bounds, bounds);
@@ -259,7 +256,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (())setPosition:(CGPoint)position {
     let host_object = env.objc.borrow_mut::<CALayerHostObject>(this);
     let old_position = std::mem::replace(&mut host_object.position, position);
-    if host_object.use_implicit_animations && old_position != position {
+    if is_implicit_animation_enabled(env, this) && old_position != position {
         let old_position: id = msg_class![env; NSValue valueWithCGPoint:old_position];
         let position: id = msg_class![env; NSValue valueWithCGPoint:position];
         add_default_implied_basic_animation(env, this, "position", old_position, position);
@@ -272,7 +269,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (())setAnchorPoint:(CGPoint)anchor_point {
     let host_object = env.objc.borrow_mut::<CALayerHostObject>(this);
     let old_anchor_point = std::mem::replace(&mut host_object.anchor_point, anchor_point);
-    if host_object.use_implicit_animations && old_anchor_point != anchor_point {
+    if is_implicit_animation_enabled(env, this) && old_anchor_point != anchor_point {
         let old_anchor_point: id = msg_class![env; NSValue valueWithCGPoint:old_anchor_point];
         let anchor_point: id = msg_class![env; NSValue valueWithCGPoint:anchor_point];
         add_default_implied_basic_animation(env, this, "anchorPoint", old_anchor_point, anchor_point);
@@ -285,7 +282,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (())setAffineTransform:(CGAffineTransform)affine_transform {
     let host_object = env.objc.borrow_mut::<CALayerHostObject>(this);
     let old_affine_transform = std::mem::replace(&mut host_object.affine_transform, affine_transform);
-    if host_object.use_implicit_animations && old_affine_transform != affine_transform {
+    if is_implicit_animation_enabled(env, this) && old_affine_transform != affine_transform {
         log!("TODO: Implicit animation for affineTransform change from {old_affine_transform:?} to {affine_transform:?}");
     }
 }
@@ -338,7 +335,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (())setHidden:(bool)hidden {
     let host_object = env.objc.borrow_mut::<CALayerHostObject>(this);
     let old_hidden = std::mem::replace(&mut host_object.hidden, hidden);
-    if host_object.use_implicit_animations && old_hidden != hidden {
+    if is_implicit_animation_enabled(env, this) && old_hidden != hidden {
         // i kinda hate this
         let old_hidden: id = msg_class![env; NSNumber numberWithBool:old_hidden];
         let hidden: id = msg_class![env; NSNumber numberWithBool:hidden];
@@ -359,7 +356,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (())setOpacity:(f32)opacity {
     let host_object = env.objc.borrow_mut::<CALayerHostObject>(this);
     let old_opacity = std::mem::replace(&mut host_object.opacity, opacity);
-    if host_object.use_implicit_animations && old_opacity != opacity {
+    if is_implicit_animation_enabled(env, this) && old_opacity != opacity {
         let old_opacity: id = msg_class![env; NSNumber numberWithFloat:old_opacity];
         let opacity: id = msg_class![env; NSNumber numberWithFloat:opacity];
         add_default_implied_basic_animation(env, this, "opacity", old_opacity, opacity);
@@ -384,7 +381,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     };
     let host_object = env.objc.borrow_mut::<CALayerHostObject>(this);
     host_object.background_color = new_color;
-    if host_object.use_implicit_animations && old_color_ref != nil && new_color_ref != nil {
+    if is_implicit_animation_enabled(env, this) && old_color_ref != nil && new_color_ref != nil {
         add_default_implied_basic_animation(env, this, "backgroundColor", old_color_ref, new_color_ref);
     }
 }
@@ -395,7 +392,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (())setCornerRadius:(CGFloat)corner_radius {
     let host_object = env.objc.borrow_mut::<CALayerHostObject>(this);
     let old_corner_radius = std::mem::replace(&mut host_object.corner_radius, corner_radius);
-    if host_object.use_implicit_animations && old_corner_radius != corner_radius {
+    if is_implicit_animation_enabled(env, this) && old_corner_radius != corner_radius {
         let old_corner_radius: id = msg_class![env; NSNumber numberWithFloat:old_corner_radius];
         let corner_radius: id = msg_class![env; NSNumber numberWithFloat:corner_radius];
         add_default_implied_basic_animation(env, this, "cornerRadius", old_corner_radius, corner_radius);
@@ -706,8 +703,12 @@ fn add_default_implied_basic_animation(
     ca_transaction::State::add_animation(env, layer, animation);
 }
 
-pub fn set_use_implicit_animations(env: &mut Environment, layer: id, enable: bool) {
-    env.objc
-        .borrow_mut::<CALayerHostObject>(layer)
-        .use_implicit_animations = enable;
+// TODO: Remove once CAActions are implemented
+fn is_implicit_animation_enabled(env: &mut Environment, layer: id) -> bool {
+    // CALayers have implicit animations enabled by default, but UIKit doesn't
+    // unless there's an active UIView animation block.
+    let delegate = msg![env; layer delegate];
+    let uiview_class = env.objc.get_known_class("UIView", &mut env.mem);
+    let delegate_is_uiview: bool = msg![env; delegate isKindOfClass:uiview_class];
+    !delegate_is_uiview || env.framework_state.uikit.ui_view.animation_block_count > 0
 }

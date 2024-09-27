@@ -13,7 +13,9 @@ pub mod ca_eagl_layer;
 pub mod ca_layer;
 pub mod ca_media_timing_function;
 
+mod animation;
 mod composition;
+
 pub use composition::recomposite_if_necessary;
 
 use crate::dyld::{export_c_func, FunctionExports};

@@ -368,6 +368,22 @@ pub const CLASSES: ClassExports = objc_classes! {
     object_enumerator_inner(env, this)
 }
 
+// NSFastEnumeration implementation
+- (NSUInteger)countByEnumeratingWithState:(MutPtr<NSFastEnumerationState>)state
+                                  objects:(MutPtr<id>)stackbuf
+                                    count:(NSUInteger)len {
+    let mut iterator = env.objc.borrow_mut::<ArrayHostObject>(this).array.iter().copied();
+    fast_enumeration_helper(&mut env.mem, this, &mut iterator, state, stackbuf, len)
+}
+
+
+// TODO: init methods etc
+
+- (id)initWithCapacity:(NSUInteger)numItems {
+    env.objc.borrow_mut::<ArrayHostObject>(this).array.reserve(numItems as usize);
+    this
+}
+
 - (NSUInteger)count {
     env.objc.borrow::<ArrayHostObject>(this).array.len().try_into().unwrap()
 }

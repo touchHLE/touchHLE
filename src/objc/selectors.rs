@@ -56,6 +56,11 @@ impl GuestRet for SEL {
         <ConstPtr<u8> as GuestRet>::to_regs(self.0, regs)
     }
 }
+impl Default for SEL {
+    fn default() -> Self {
+        Self(Default::default())
+    }
+}
 
 impl SEL {
     pub fn as_str(self, mem: &Mem) -> &str {

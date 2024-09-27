@@ -17,25 +17,57 @@ pub mod ui_scroll_view;
 pub mod ui_web_view;
 pub mod ui_window;
 
+use core::panic;
+
 use super::ui_graphics::{UIGraphicsPopContext, UIGraphicsPushContext};
-use crate::frameworks::core_animation::ca_layer;
+use crate::frameworks::core_animation::ca_animation::{
+    kCAFillModeBackwards, CAMediaTimingFillMode,
+};
+use crate::frameworks::core_animation::ca_media_timing_function::{
+    kCAMediaTimingFunctionEaseIn, kCAMediaTimingFunctionEaseInEaseOut,
+    kCAMediaTimingFunctionEaseOut, kCAMediaTimingFunctionLinear,
+};
+use crate::frameworks::core_animation::CACurrentMediaTime;
+use crate::frameworks::core_animation::{ca_layer, ca_transaction};
+use crate::frameworks::core_foundation::time::CFTimeInterval;
 use crate::frameworks::core_graphics::cg_affine_transform::CGAffineTransform;
 use crate::frameworks::core_graphics::cg_color::CGColorRef;
 use crate::frameworks::core_graphics::cg_context::{CGContextClearRect, CGContextRef};
 use crate::frameworks::core_graphics::{CGFloat, CGPoint, CGRect, CGSize};
-use crate::frameworks::foundation::ns_string::get_static_str;
-use crate::frameworks::foundation::{ns_array, NSInteger, NSUInteger};
+use crate::frameworks::foundation::ns_string::{from_rust_string, get_static_str, to_rust_string};
+use crate::frameworks::foundation::{ns_array, NSInteger, NSTimeInterval, NSUInteger};
+use crate::mem::{ConstVoidPtr, GuestUSize};
 use crate::objc::{
-    autorelease, id, msg, msg_class, nil, objc_classes, release, retain, todo_objc_setter, Class,
-    ClassExports, HostObject, NSZonePtr, ObjC,
+    autorelease, id, msg, msg_class, msg_send, nil, objc_classes, release, retain,
+    todo_objc_setter, Class, ClassExports, HostObject, NSZonePtr, ObjC, SEL,
 };
 use crate::Environment;
+
+const touchHLE_kCATransactionAnimationId: &str = "_touchHLE_kCATransactionAnimationId";
+const touchHLE_kCATransactionAnimationContext: &str = "_touchHLE_kCATransactionAnimationContext";
+const touchHLE_kCATransactionAnimationDelay: &str = "_touchHLE_kCATransactionAnimationDelay";
+const touchHLE_kCATransactionAnimationRepeatCount: &str =
+    "_touchHLE_kCATransactionAnimationRepeatCount";
+const touchHLE_kCATransactionAnimationRepeatAutoreverses: &str =
+    "_touchHLE_kCATransactionAnimationRepeatAutoreverses";
+const touchHLE_kCATransactionAnimationDelegate: &str = "_touchHLE_kCATransactionAnimationDelegate";
+const touchHLE_kCATransactionAnimationWillStartSelector: &str =
+    "_touchHLE_kCATransactionAnimationWillStartSelector";
+const touchHLE_kCATransactionAnimationDidStopSelector: &str =
+    "_touchHLE_kCATransactionAnimationDidStopSelector";
+
+type UIViewAnimationCurve = NSInteger;
+const UIViewAnimationCurveEaseInOut: UIViewAnimationCurve = 0;
+const UIViewAnimationCurveEaseIn: UIViewAnimationCurve = 1;
+const UIViewAnimationCurveEaseOut: UIViewAnimationCurve = 2;
+const UIViewAnimationCurveLinear: UIViewAnimationCurve = 3;
 
 #[derive(Default)]
 pub struct State {
     /// List of views for internal purposes. Non-retaining!
     pub(super) views: Vec<id>,
     pub ui_window: ui_window::State,
+    animation_block_count: usize,
 }
 
 pub(super) struct UIViewHostObject {
@@ -69,6 +101,19 @@ impl Default for UIViewHostObject {
         }
     }
 }
+
+#[derive(Default)]
+struct UIViewAnimationDelegateHostObject {
+    animation_id: id, // NSString*
+    context: ConstVoidPtr,
+    delegate: id,
+    will_start_selector: Option<SEL>,
+    did_stop_selector: Option<SEL>,
+    total_animation_count: u32,
+    started_animation_count: u32,
+    finished_animation_count: u32,
+}
+impl HostObject for UIViewAnimationDelegateHostObject {}
 
 pub fn set_view_controller(env: &mut Environment, view: id, controller: id) {
     let host_obj = env.objc.borrow_mut::<UIViewHostObject>(view);
@@ -111,6 +156,171 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 + (Class)layerClass {
     env.objc.get_known_class("CALayer", &mut env.mem)
+}
+
++ (())setAnimationDuration:(NSTimeInterval)duration {
+    log_dbg!("[UIView setAnimationDuration:{:?}]", duration);
+    () = msg_class![env; CATransaction setAnimationDuration:duration];
+}
+
++ (())setAnimationDelay:(NSTimeInterval)delay {
+    log_dbg!("[UIView setAnimationDelay:{:?}]", delay);
+    let value: id = msg_class![env; NSNumber numberWithDouble:delay];
+    () = msg_class![env; CATransaction setValue:value forKey:(get_static_str(env, touchHLE_kCATransactionAnimationDelay))];
+}
+
++ (())setAnimationCurve:(UIViewAnimationCurve)curve {
+    log_dbg!("[UIView setAnimationCurve:{:?}]", curve);
+    let timing_function: id = match curve {
+        UIViewAnimationCurveEaseInOut => {
+            msg_class![env; CAMediaTimingFunction functionWithName:
+                (get_static_str(env, kCAMediaTimingFunctionEaseInEaseOut))]
+        },
+        UIViewAnimationCurveEaseIn => {
+            msg_class![env; CAMediaTimingFunction functionWithName:
+                (get_static_str(env, kCAMediaTimingFunctionEaseIn))]
+        },
+        UIViewAnimationCurveEaseOut => {
+            msg_class![env; CAMediaTimingFunction functionWithName:
+                (get_static_str(env, kCAMediaTimingFunctionEaseOut))]
+        },
+        UIViewAnimationCurveLinear => {
+            msg_class![env; CAMediaTimingFunction functionWithName:
+                (get_static_str(env, kCAMediaTimingFunctionLinear))]
+        },
+        _ => panic!("Unknown UIViewAnimationCurve {:?}", curve),
+    };
+    () = msg_class![env; CATransaction setAnimationTimingFunction:timing_function];
+}
+
++ (())setAnimationRepeatAutoreverses:(bool)repeat_autoreverses {
+    log_dbg!("[UIView setAnimationRepeatAutoreverses:{:?}]", repeat_autoreverses);
+    let value: id = msg_class![env; NSNumber numberWithBool:repeat_autoreverses];
+    () = msg_class![env; CATransaction setValue:value forKey:(get_static_str(env, touchHLE_kCATransactionAnimationRepeatAutoreverses))];
+}
+
++ (())setAnimationRepeatCount:(f32)repeat_count {
+    log_dbg!("[UIView setAnimationRepeatCount:{:?}]", repeat_count);
+    assert!(repeat_count >= 0.0);
+    let value: id = msg_class![env; NSNumber numberWithFloat:repeat_count];
+    () = msg_class![env; CATransaction setValue:value forKey:(get_static_str(env, touchHLE_kCATransactionAnimationRepeatCount))];
+}
+
++ (())setAnimationDelegate:(id)delegate {
+    log_dbg!("[UIView setAnimationDelegate:{:?}]", delegate);
+    retain(env, delegate);
+    () = msg_class![env; CATransaction setValue:delegate forKey:(get_static_str(env, touchHLE_kCATransactionAnimationDelegate))];
+}
+
++ (())setAnimationWillStartSelector:(SEL)selector {
+    let selector_str = selector.as_str(&env.mem);
+    log_dbg!("[UIView setAnimationWillStartSelector:{:?} ({})]", selector, selector_str);
+    let selector_nsstring = from_rust_string(env, selector_str.to_string());
+    () = msg_class![env; CATransaction setValue:selector_nsstring forKey:(get_static_str(env, touchHLE_kCATransactionAnimationWillStartSelector))];
+}
+
++ (())setAnimationDidStopSelector:(SEL)selector {
+    let selector_str = selector.as_str(&env.mem);
+    log_dbg!("[UIView setAnimationDidStopSelector:{:?} ({})]", selector, selector_str);
+    let selector_nsstring = from_rust_string(env, selector_str.to_string());
+    () = msg_class![env; CATransaction setValue:selector_nsstring forKey:(get_static_str(env, touchHLE_kCATransactionAnimationDidStopSelector))];
+}
+
++ (())beginAnimations:(id)animation_id // NSString*
+              context:(ConstVoidPtr)context {
+    log_dbg!("[UIView beginAnimations:{:?} context:{:?}]", animation_id, context);
+    () = msg_class![env; CATransaction begin];
+    () = msg_class![env; CATransaction setValue:animation_id forKey:(get_static_str(env, touchHLE_kCATransactionAnimationId))];
+    if !context.is_null() {
+        let context: id = msg_class![env; NSNumber numberWithUnsignedInt:(context.to_bits())];
+        () = msg_class![env; CATransaction setValue:context forKey:(get_static_str(env, touchHLE_kCATransactionAnimationContext))];
+    }
+    // Default values
+    () = msg_class![env; UIView setAnimationDuration:0.2];
+    () = msg_class![env; UIView setAnimationCurve:UIViewAnimationCurveEaseInOut];
+
+    // Enable implicit animations on all layers
+    env.framework_state.uikit.ui_view.animation_block_count += 1;
+    for view in env.framework_state.uikit.ui_view.views.clone() {
+        let layer: id = msg![env; view layer];
+        ca_layer::set_use_implicit_animations(env, layer, true);
+    }
+}
+
++ (())commitAnimations {
+    log_dbg!("[UIView commitAnimations]");
+
+    // TODO: What if there's interleaved UIView animations and CATransactions?
+    let animations = ca_transaction::State::get_current_transaction(env).unwrap().get_animations();
+
+    // TODO: I believe the delegate should be called even if the animation
+    // block is committed with no animations?
+    assert!(!animations.is_empty());
+
+    let delegate: id = msg_class![env; CATransaction valueForKey:(get_static_str(env, touchHLE_kCATransactionAnimationDelegate))];
+    let animation_delegate = if delegate == nil {
+        nil
+    } else {
+        let animation_delegate = msg_class![env; _touchHLE_UIView_AnimationDelegate new];
+        () = msg![env; animation_delegate setDelegate:delegate];
+        let animation_id: id = msg_class![env; CATransaction valueForKey:(get_static_str(env, touchHLE_kCATransactionAnimationId))];
+        () = msg![env; animation_delegate setAnimationId:animation_id];
+        let context: id = msg_class![env; CATransaction valueForKey:(get_static_str(env, touchHLE_kCATransactionAnimationContext))];
+        if context != nil {
+            let context: u32 = msg![env; context unsignedIntValue];
+            let context: ConstVoidPtr = ConstVoidPtr::from_bits(context as GuestUSize);
+            () = msg![env; animation_delegate setContext:context];
+        }
+        let will_start_selector: id = msg_class![env; CATransaction valueForKey:(get_static_str(env, touchHLE_kCATransactionAnimationWillStartSelector))];
+        if will_start_selector != nil {
+            let will_start_selector = to_rust_string(env, will_start_selector);
+            let will_start_selector = env.objc.lookup_selector(&will_start_selector).unwrap();
+            () = msg![env; animation_delegate setWillStartSelector:will_start_selector];
+        }
+        let did_stop_selector: id = msg_class![env; CATransaction valueForKey:(get_static_str(env, touchHLE_kCATransactionAnimationDidStopSelector))];
+        if did_stop_selector != nil {
+            let did_stop_selector = to_rust_string(env, did_stop_selector);
+            let did_stop_selector = env.objc.lookup_selector(&did_stop_selector).unwrap();
+            () = msg![env; animation_delegate setDidStopSelector:did_stop_selector];
+        }
+        let total_animation_count = animations.len() as u32;
+        () = msg![env; animation_delegate setTotalAnimationCount:total_animation_count];
+        animation_delegate
+    };
+    let delay: id = msg_class![env; CATransaction valueForKey:(get_static_str(env, touchHLE_kCATransactionAnimationDelay))];
+    let repeat_count: id = msg_class![env; CATransaction valueForKey:(get_static_str(env, touchHLE_kCATransactionAnimationRepeatCount))];
+    let repeat_autoreverses: id = msg_class![env; CATransaction valueForKey:(get_static_str(env, touchHLE_kCATransactionAnimationRepeatAutoreverses))];
+    for (layer, animation) in animations {
+        log_dbg!("[UIView commitAnimations] adding animation {:?} to layer {:?}", animation, layer);
+        () = msg![env; animation setDelegate:animation_delegate];
+        if delay != nil {
+            let delay: f32 = msg![env; delay floatValue];
+            let begin_time: CFTimeInterval = CACurrentMediaTime(env) + delay as f64;
+            () = msg![env; animation setBeginTime:begin_time];
+            let fill_mode: CAMediaTimingFillMode = get_static_str(env, kCAFillModeBackwards);
+            () = msg![env; animation setFillMode:fill_mode];
+        }
+        if repeat_count != nil {
+            let repeat_count: f32 = msg![env; repeat_count floatValue];
+            () = msg![env; animation setRepeatCount:repeat_count];
+        }
+        if repeat_autoreverses != nil {
+            let repeat_autoreverses: bool = msg![env; repeat_autoreverses boolValue];
+            () = msg![env; animation setAutoreverses:repeat_autoreverses];
+        }
+    }
+    () = msg_class![env; CATransaction commit];
+
+    env.framework_state.uikit.ui_view.animation_block_count -= 1;
+
+    // Disable implicit animations on all layers if there are no more active
+    // UIView animation blocks.
+    if env.framework_state.uikit.ui_view.animation_block_count == 0 {
+        for view in env.framework_state.uikit.ui_view.views.clone() {
+            let layer: id = msg![env; view layer];
+            ca_layer::set_use_implicit_animations(env, layer, false);
+        }
+    }
 }
 
 // TODO: accessors etc
@@ -711,6 +921,97 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 - (CGFloat)contentScaleFactor {
     1.0 // TODO
+}
+
+@end
+
+@implementation _touchHLE_UIView_AnimationDelegate: NSObject
+
++ (id)alloc {
+    let host_object = Box::<UIViewAnimationDelegateHostObject>::default();
+    env.objc.alloc_object(this, host_object, &mut env.mem)
+}
+
+- (())setAnimationId:(id)animation_id { // NSString*
+    retain(env, animation_id);
+    env.objc.borrow_mut::<UIViewAnimationDelegateHostObject>(this).animation_id = animation_id;
+}
+
+- (())setContext:(ConstVoidPtr)context {
+    env.objc.borrow_mut::<UIViewAnimationDelegateHostObject>(this).context = context;
+}
+
+- (())setDelegate:(id)delegate {
+    retain(env, delegate);
+    env.objc.borrow_mut::<UIViewAnimationDelegateHostObject>(this).delegate = delegate;
+}
+
+- (())setWillStartSelector:(SEL)selector {
+    env.objc.borrow_mut::<UIViewAnimationDelegateHostObject>(this).will_start_selector = Some(selector);
+}
+
+- (())setDidStopSelector:(SEL)selector {
+    env.objc.borrow_mut::<UIViewAnimationDelegateHostObject>(this).did_stop_selector = Some(selector);
+}
+
+- (())setTotalAnimationCount:(NSUInteger)count {
+    env.objc.borrow_mut::<UIViewAnimationDelegateHostObject>(this).total_animation_count = count;
+}
+
+- (())dealloc {
+    let UIViewAnimationDelegateHostObject {
+        animation_id,
+        delegate,
+        ..
+    } = *env.objc.borrow::<UIViewAnimationDelegateHostObject>(this);
+    release(env, animation_id);
+    release(env, delegate);
+    env.objc.dealloc_object(this, &mut env.mem)
+}
+
+// CAAnimationDelegate protocol implementation
+- (())animationDidStart:(id)animation { // CAAnimation*
+    let UIViewAnimationDelegateHostObject {
+        started_animation_count,
+        delegate,
+        will_start_selector,
+        context,
+        animation_id,
+        ..
+    } = *env.objc.borrow::<UIViewAnimationDelegateHostObject>(this);
+    let new_started_animation_count = started_animation_count + 1;
+    log_dbg!("[(_touchHLE_UIView_AnimationDelegate*){:?} animationDidStart:{:?}] started_animation_count {} -> {}", this, animation, started_animation_count, new_started_animation_count);
+    if started_animation_count == 0 && delegate != nil && will_start_selector.is_some() {
+        let will_start_selector = will_start_selector.unwrap();
+        log_dbg!("Notifying delegate {:?} {:?} {} with args {:?}, {:?}", delegate, will_start_selector, will_start_selector.as_str(&env.mem), animation_id, context);
+        () = msg_send(env, (delegate, will_start_selector, animation_id, context));
+    }
+    env.objc.borrow_mut::<UIViewAnimationDelegateHostObject>(this).started_animation_count = new_started_animation_count;
+}
+
+- (())animationDidStop:(id)animation // CAAnimation*
+              finished:(bool)finished {
+    assert!(finished);
+    let host_object = env.objc.borrow_mut::<UIViewAnimationDelegateHostObject>(this);
+    let finished_animation_count = host_object.finished_animation_count;
+    let new_finished_animation_count = finished_animation_count + finished as u32;
+    log_dbg!("[(_touchHLE_UIView_AnimationDelegate*){:?} animationDidStop:{:?} finished:{}] finished_animation_count {} -> {}", this, animation, finished, finished_animation_count, new_finished_animation_count);
+    env.objc.borrow_mut::<UIViewAnimationDelegateHostObject>(this).finished_animation_count = new_finished_animation_count;
+    let UIViewAnimationDelegateHostObject {
+        total_animation_count,
+        finished_animation_count,
+        delegate,
+        did_stop_selector,
+        context,
+        animation_id,
+        ..
+    } = *env.objc.borrow::<UIViewAnimationDelegateHostObject>(this);
+    if finished_animation_count == total_animation_count && delegate != nil && did_stop_selector.is_some() {
+        let did_stop_selector = did_stop_selector.unwrap();
+        let finished: id = msg_class![env; NSNumber numberWithBool:finished];
+        log_dbg!("Notifying delegate {:?} {:?} {} with args {:?}, {:?}, {:?}", delegate, did_stop_selector, did_stop_selector.as_str(&env.mem), animation_id, finished, context);
+        () = msg_send(env, (delegate, did_stop_selector, animation_id, finished, context));
+    }
 }
 
 @end

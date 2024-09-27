@@ -139,8 +139,6 @@ impl Transaction {
         }
     }
 
-    // Unused until support for UIView animations is implemented.
-    #[allow(unused)]
     pub fn get_animations(&self) -> Vec<(id, id)> {
         self.animations.clone()
     }

@@ -205,6 +205,20 @@ pub const CLASSES: ClassExports = objc_classes! {
     this
 }
 
+- (id)initWithArray:(id)array { // NSArray*
+    let mut objects = Vec::new();
+    let enumerator: id = msg![env; array objectEnumerator];
+    loop {
+        let next: id = msg![env; enumerator nextObject];
+        if next == nil {
+            break;
+        }
+        objects.push(next);
+    }
+    env.objc.borrow_mut::<ArrayHostObject>(this).array = objects;
+    this
+}
+
 - (())dealloc {
     let host_object: &mut ArrayHostObject = env.objc.borrow_mut(this);
     let array = std::mem::take(&mut host_object.array);

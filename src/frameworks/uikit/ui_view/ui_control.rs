@@ -164,6 +164,10 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.borrow::<UIControlHostObject>(this).tracking
 }
 
+- (())cancelTrackingWithEvent:(id)_event {
+    // default implementation, subclasses can override this
+}
+
 - (bool)beginTrackingWithTouch:(id)_touch // UITouch*
                      withEvent:(id)_event { // UIEvent*
     // default implementation, subclasses can override this

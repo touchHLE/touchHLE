@@ -1205,6 +1205,31 @@ pub const CLASSES: ClassExports = objc_classes! {
     from_u16_vec(env, host_string)
 }
 
+-(NSRange)lineRangeForRange:(NSRange)range {
+    let (start, end, _) = line_range_helper(env, this, range, true, true);
+    NSRange { location: start, length: end - start }
+}
+
+-(())getLineStart:(MutPtr<NSUInteger>)start_ptr
+              end:(MutPtr<NSUInteger>)end_ptr
+      contentsEnd:(MutPtr<NSUInteger>)contents_end_ptr
+         forRange:(NSRange)range {
+    let get_start = !start_ptr.is_null();
+    let get_end = !end_ptr.is_null() || !contents_end_ptr.is_null();
+    let (start, end, contents_end) = line_range_helper(env, this, range, get_start, get_end);
+
+    if !start_ptr.is_null() {
+        env.mem.write(start_ptr, start);
+    }
+
+    if !end_ptr.is_null() {
+        env.mem.write(end_ptr, end);
+    }
+
+    if !contents_end_ptr.is_null() {
+        env.mem.write(contents_end_ptr, contents_end);
+    }
+}
 @end
 
 // Specialised subclass for static-lifetime strings.
@@ -1388,4 +1413,89 @@ fn is_match_at_position<F: Fn(u16, u16) -> bool>(
             false
         }
     })
+}
+/// Helper function for lineRangeForRange: and
+/// getLineStart:end:contentsEnd:forRange:.
+///
+/// The two last arguments (get_[start/end]) correspond to the
+/// start and end/contentsEnd returns. If false is specified for a given
+/// argument, the corresponding return values will not be calculated and
+/// set to 0.
+fn line_range_helper(
+    env: &mut Environment,
+    string: id,
+    range: NSRange,
+    get_start: bool,
+    get_end: bool,
+) -> (NSUInteger, NSUInteger, NSUInteger) {
+    let NSRange {
+        location: r_start,
+        length,
+    } = range;
+    let r_end = r_start.checked_add(length).unwrap();
+    // All the line range functions are "counting the posts, not the fences", so
+    // it's ok if r_end = length.
+    let str_len: u32 = msg![env; string length];
+    assert!(r_end <= str_len, "Range out of bounds!");
+
+    let mut start_pos = 0;
+    if get_start {
+        start_pos = r_start;
+        while start_pos > 0 {
+            let c: u16 = msg![env; string characterAtIndex:(start_pos - 1)];
+            match c {
+                0x000A | 0x0085 | 0x2028 | 0x2029 => break,
+                0x000D => {
+                    // If the first character is CR, and it is followed by an
+                    // LF, then it's not counted as a line delimiter.
+                    // (verified on simulator)
+                    if start_pos == r_start && start_pos < str_len {
+                        let after_cr: u16 = msg![env; string characterAtIndex:start_pos];
+                        if after_cr == 0x000A {
+                            start_pos -= 1;
+                            continue;
+                        }
+                    }
+                    break;
+                }
+                _ => {}
+            }
+            start_pos -= 1;
+        }
+    }
+
+    // There is very little extra cost for also getting contentsEnd if we're
+    // getting end (or vice-versa), so they're combined into one argument.
+    let mut end_pos = 0;
+    let mut cend_pos = 0;
+    if get_end {
+        cend_pos = r_end;
+        while cend_pos < str_len {
+            let c: u16 = msg![env; string characterAtIndex:cend_pos];
+            match c {
+                0x000A | 0x0085 | 0x2028 | 0x2029 => {
+                    end_pos = cend_pos + 1;
+                    break;
+                }
+                0x000D => {
+                    if cend_pos < str_len - 1 {
+                        let after_cr: u16 = msg![env; string characterAtIndex:(cend_pos + 1)];
+                        if after_cr == 0x000A {
+                            end_pos = cend_pos + 2;
+                            break;
+                        }
+                    }
+                    end_pos = cend_pos + 1;
+                    break;
+                }
+                _ => {}
+            }
+            cend_pos += 1;
+        }
+        if cend_pos == str_len {
+            end_pos = cend_pos
+        }
+    }
+
+    (start_pos, end_pos, cend_pos)
 }

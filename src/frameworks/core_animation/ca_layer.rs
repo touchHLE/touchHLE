@@ -21,7 +21,7 @@ use crate::frameworks::core_graphics::cg_image::{
     kCGImageAlphaPremultipliedLast, kCGImageByteOrder32Big,
 };
 use crate::frameworks::core_graphics::{CGFloat, CGPoint, CGRect, CGSize};
-use crate::frameworks::foundation::ns_string;
+use crate::frameworks::foundation::ns_string::{self, to_rust_string};
 use crate::mem::{GuestUSize, Ptr};
 use crate::objc::{
     autorelease, id, msg, nil, objc_classes, release, retain, ClassExports, HostObject, ObjC,
@@ -29,6 +29,7 @@ use crate::objc::{
 use crate::Environment;
 use std::collections::HashMap;
 
+#[derive(Clone)]
 pub(super) struct CALayerHostObject {
     /// Possibly nil, usually a UIView. This is a weak reference.
     delegate: id,
@@ -58,6 +59,7 @@ pub(super) struct CALayerHostObject {
     pub(super) gles_texture: Option<crate::gles::gles11_raw::types::GLuint>,
     /// Internal state for compositor
     pub(super) gles_texture_is_up_to_date: bool,
+    pub(super) animations: HashMap<id, id>, // NSString*, CAAnimation*
 }
 impl HostObject for CALayerHostObject {}
 
@@ -127,6 +129,7 @@ pub const CLASSES: ClassExports = objc_classes! {
         cg_context: None,
         gles_texture: None,
         gles_texture_is_up_to_date: false,
+        animations: HashMap::new(),
     });
     env.objc.alloc_object(this, host_object, &mut env.mem)
 }
@@ -223,6 +226,11 @@ pub const CLASSES: ClassExports = objc_classes! {
     assert!(sublayer == this);
     release(env, this);
 }
+
+// TODO: Wrap setters to add the default implied animations
+// https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/CoreAnimation_guide/AnimatableProperties/AnimatableProperties.html
+// Implicit animations can't be removed directly (what does directly mean?)
+// https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/CoreAnimation_guide/CreatingBasicAnimations/CreatingBasicAnimations.html#//apple_ref/doc/uid/TP40004514-CH3-SW7
 
 - (CGRect)bounds {
     env.objc.borrow::<CALayerHostObject>(this).bounds
@@ -490,6 +498,23 @@ pub const CLASSES: ClassExports = objc_classes! {
     let res = transform_for_conversion(env, other, this).apply_to_rect(rect);
     log_dbg!("Converted {rect:?} from {this:?} to {other:?}: {res:?}");
     res
+}
+
+- (())addAnimation:(id)anim // CAAnimation*
+            forKey:(id)key { // NSString*
+    log_dbg!("[(CALayer*){:?} addAnimation:{:?} forKey:{:?} ({:?})]", this, anim, key, to_rust_string(env, key));
+    retain(env, anim);
+    retain(env, key);
+    env.objc.borrow_mut::<CALayerHostObject>(this).animations.insert(key, anim);
+}
+
+- (())removeAnimationForKey:(id)key { // NSString*
+    let key_string = to_rust_string(env, key);
+    log_dbg!("[(CALayer*){:?} removeAnimationForKey:{:?} ({:?})]", this, key, key_string);
+    if let Some((key, anim)) = env.objc.borrow_mut::<CALayerHostObject>(this).animations.remove_entry(&key) {
+        release(env, anim);
+        release(env, key);
+    };
 }
 
 // TODO: more

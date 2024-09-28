@@ -109,12 +109,20 @@ pub const CLASSES: ClassExports = objc_classes! {
     NSNotFound as NSUInteger
 }
 
+- (id)firstObject {
+    let size: NSUInteger = msg![env; this count];
+    if size == 0 {
+        return nil;
+    }
+    msg![env; this objectAtIndex:0u32]
+}
+
 - (id)lastObject {
     let size: NSUInteger = msg![env; this count];
     if size == 0 {
         return nil;
     }
-    msg![env; this objectAtIndex: (size - 1)]
+    msg![env; this objectAtIndex:(size - 1)]
 }
 
 @end

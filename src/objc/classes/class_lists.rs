@@ -46,6 +46,7 @@ pub const CLASS_LISTS: &[super::ClassExports] = &[
     foundation::ns_process_info::CLASSES,
     foundation::ns_property_list_serialization::CLASSES,
     foundation::ns_run_loop::CLASSES,
+    foundation::ns_scanner::CLASSES,
     foundation::ns_set::CLASSES,
     foundation::ns_string::CLASSES,
     foundation::ns_thread::CLASSES,

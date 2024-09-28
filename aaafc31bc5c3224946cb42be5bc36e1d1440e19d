@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "15598069_1d83e1ee",
+        "filename": "src/audio.rs",
+        "patchSetId": 4
+      },
+      "lineNbr": 22,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-09-28T17:43:49Z",
+      "side": 1,
+      "message": "Wait isn\u0027t this self-referential??",
+      "revId": "aaafc31bc5c3224946cb42be5bc36e1d1440e19d",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b0d141de_cdbf5e94",
+        "filename": "src/audio.rs",
+        "patchSetId": 4
+      },
+      "lineNbr": 27,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-09-28T17:43:49Z",
+      "side": 1,
+      "message": "This doesn\u0027t fit with the layering model I try to follow in touchHLE. The stuff in src/frameworks/ can rely on the abstractions in src/*.rs, but not the other way around. If you want to share this stuff you should put it in `core_audio_types.rs` I guess.",
+      "revId": "aaafc31bc5c3224946cb42be5bc36e1d1440e19d",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

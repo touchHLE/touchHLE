@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6319a685_5848cde5",
+        "filename": "src/frameworks/foundation/ns_object.rs",
+        "patchSetId": 7
+      },
+      "lineNbr": 242,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-09-28T14:44:16Z",
+      "side": 1,
+      "message": "you should add the same comment as on line 277, about the message queue",
+      "revId": "7dba534bb711ce9954a98a82603a1586e154274f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0d866371_7e978014",
+        "filename": "src/frameworks/foundation/ns_object.rs",
+        "patchSetId": 7
+      },
+      "lineNbr": 272,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-09-28T14:44:16Z",
+      "side": 1,
+      "message": "Please refactor this with performSelector:withObject:afterDelay: to avoid code duplication.\n\nI think you should just call performSelector:withObject:afterDelay: here, after current thread and wait assertions.",
+      "revId": "7dba534bb711ce9954a98a82603a1586e154274f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

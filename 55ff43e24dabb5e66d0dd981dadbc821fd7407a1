@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1c25991e_7fd9d096",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 1209,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-09-28T20:32:25Z",
+      "side": 1,
+      "message": "a space between - and (id) is missing",
+      "revId": "55ff43e24dabb5e66d0dd981dadbc821fd7407a1",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

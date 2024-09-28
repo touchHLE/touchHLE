@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c69ea5c6_23c40237",
+        "filename": "src/frameworks/opengles/gles_guest.rs",
+        "patchSetId": 24
+      },
+      "lineNbr": 1277,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-09-28T17:39:17Z",
+      "side": 1,
+      "message": "Should we maybe panic if it\u0027s not found…?",
+      "revId": "7bbbaf637b42f132e345bba9a7fc5e2fa2e0aea9",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

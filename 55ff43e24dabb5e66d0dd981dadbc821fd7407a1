@@ -16,6 +16,23 @@
       "message": "a space between - and (id) is missing",
       "revId": "55ff43e24dabb5e66d0dd981dadbc821fd7407a1",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e982882c_3d724a39",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 1211,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-09-28T20:34:43Z",
+      "side": 1,
+      "message": "please add same comment about `did_convert` as other methods which uses convert_to_utf16_inplace",
+      "revId": "55ff43e24dabb5e66d0dd981dadbc821fd7407a1",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

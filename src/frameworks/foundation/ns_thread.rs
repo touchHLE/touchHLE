@@ -63,6 +63,11 @@ pub const CLASSES: ClassExports = objc_classes! {
     this
 }
 
++ (id)callStackReturnAddresses {
+    log!("WARNING: [NSThread callStackReturnAddresses] is called, returning an empty array!");
+    msg_class![env; NSArray new]
+}
+
 + (())sleepForTimeInterval:(NSTimeInterval)ti {
     log_dbg!("[NSThread sleepForTimeInterval:{:?}]", ti);
     env.sleep(Duration::from_secs_f64(ti), /* tail_call: */ true);

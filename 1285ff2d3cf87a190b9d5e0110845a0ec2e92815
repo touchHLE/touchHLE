@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "8328b8d7_64f3914d",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-09-28T08:34:28Z",
+      "side": 1,
+      "message": "Those are the methods of NSUserDefaults and not of NSDictionary!\n\nThere was an issue with previous implementation of NSUserDefaults as it was incorrectly inheriting from NSDictionary.\nI addressed this issue partially on the trunk some time ago, please rebase.",
+      "revId": "1285ff2d3cf87a190b9d5e0110845a0ec2e92815",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

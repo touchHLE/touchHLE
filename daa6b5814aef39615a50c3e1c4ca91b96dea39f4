@@ -16,6 +16,24 @@
       "message": "please fix the formatting here, it should be `- (id)substring...`",
       "revId": "daa6b5814aef39615a50c3e1c4ca91b96dea39f4",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "1a63b282_ae0a3044",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 4
+      },
+      "lineNbr": 1209,
+      "author": {
+        "id": 1021823
+      },
+      "writtenOn": "2024-09-28T18:17:06Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "3a8d8285_99ac8cc6",
+      "revId": "daa6b5814aef39615a50c3e1c4ca91b96dea39f4",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

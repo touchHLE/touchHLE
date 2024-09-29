@@ -34,6 +34,24 @@
       "parentUuid": "c69ea5c6_23c40237",
       "revId": "7bbbaf637b42f132e345bba9a7fc5e2fa2e0aea9",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ed220bf6_492f9ca7",
+        "filename": "src/frameworks/opengles/gles_guest.rs",
+        "patchSetId": 24
+      },
+      "lineNbr": 1277,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-09-29T16:37:21Z",
+      "side": 1,
+      "message": "Oh I see. Seems fine I guess.",
+      "parentUuid": "6cd2dffc_b42d79bc",
+      "revId": "7bbbaf637b42f132e345bba9a7fc5e2fa2e0aea9",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

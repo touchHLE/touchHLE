@@ -16,6 +16,24 @@
       "message": "Oh, it probably doesn\u0027t matter, but i guess any guest buffers still mapped should be freed in the dealloc method for EAGLContext?",
       "revId": "8142ea9da469ac62c467b3e1917654b10a95d8b0",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "7faa64fd_84250333",
+        "filename": "src/frameworks/opengles/eagl.rs",
+        "patchSetId": 25
+      },
+      "lineNbr": 66,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-09-29T18:47:04Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "8cca17df_36e831a4",
+      "revId": "8142ea9da469ac62c467b3e1917654b10a95d8b0",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

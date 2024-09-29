@@ -13,9 +13,6 @@ use crate::Environment;
 use plist::Value;
 use std::io::Cursor;
 
-// TODO: Implement reading of property lists other than Info.plist.
-// [NSDictionary contentsOfFile:] and [NSArray contentsOfFile:] in particular.
-
 /// Internals of `initWithContentsOfFile:` on `NSArray` and `NSDictionary`.
 /// Returns `nil` on failure.
 pub(super) fn deserialize_plist_from_file(

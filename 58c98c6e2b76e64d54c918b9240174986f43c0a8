@@ -16,6 +16,24 @@
       "message": "Do we actually need this copy? It shouldn\u0027t get mutated by the saving process, right?",
       "revId": "58c98c6e2b76e64d54c918b9240174986f43c0a8",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "31c2d297_163eb15e",
+        "filename": "src/frameworks/foundation/ns_user_defaults.rs",
+        "patchSetId": 10
+      },
+      "lineNbr": 189,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-09-29T22:31:59Z",
+      "side": 1,
+      "message": "It should not, but the app_domain_dict here is NSMutableDictionary.\nAnd the current serializer works only with immutable objects.",
+      "parentUuid": "802dcabb_32cda5cb",
+      "revId": "58c98c6e2b76e64d54c918b9240174986f43c0a8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

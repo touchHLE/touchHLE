@@ -613,6 +613,20 @@ fn glVertexPointer(
     })
 }
 
+fn glMatrixIndexPointerOES(
+    env: &mut Environment,
+    size: GLint,
+    type_: GLenum,
+    stride: GLsizei,
+    pointer: ConstVoidPtr,
+) {
+    with_ctx_and_mem(env, |gles, mem| unsafe {
+        let pointer =
+            translate_pointer_or_offset_to_host(gles, mem, pointer, gles11::ARRAY_BUFFER_BINDING);
+        gles.MatrixIndexPointerOES(size, type_, stride, pointer)
+    })
+}
+
 // Drawing
 fn glDrawArrays(env: &mut Environment, mode: GLenum, first: GLint, count: GLsizei) {
     with_ctx_and_mem(env, |gles, _mem| unsafe {
@@ -1295,6 +1309,8 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(glNormalPointer(_, _, _)),
     export_c_func!(glTexCoordPointer(_, _, _, _)),
     export_c_func!(glVertexPointer(_, _, _, _)),
+    // OES_matrix_palette
+    export_c_func!(glMatrixIndexPointerOES(_, _, _, _)),
     // Drawing
     export_c_func!(glDrawArrays(_, _, _)),
     export_c_func!(glDrawElements(_, _, _, _)),

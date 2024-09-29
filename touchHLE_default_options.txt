@@ -228,3 +228,6 @@ www.fishlabs.net.GalaxyOnFire: --landscape-right --button-to-touch=A,427,274 --b
 
 # Palm Heroes
 com.palmheroes.PalmHeroes: --landscape-right
+
+# Silent Hill: The Escape
+com.konami-europe.silenthillescape: --x-tilt-offset=-45

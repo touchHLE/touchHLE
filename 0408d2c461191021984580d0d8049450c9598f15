@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "091cdb9f_30f99486",
+        "filename": "src/frameworks/foundation/ns_object.rs",
+        "patchSetId": 9
+      },
+      "lineNbr": 21,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-09-29T19:12:52Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "c4665687_f47531f5",
+      "revId": "0408d2c461191021984580d0d8049450c9598f15",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "855008e6_588a4048",
@@ -31,6 +49,24 @@
       "writtenOn": "2024-09-29T18:49:34Z",
       "side": 1,
       "message": "does passing 0 really works here? I think it should be 0.0 to pass the validation check.",
+      "revId": "0408d2c461191021984580d0d8049450c9598f15",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "61609809_56f2c074",
+        "filename": "src/frameworks/foundation/ns_object.rs",
+        "patchSetId": 9
+      },
+      "lineNbr": 276,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-09-29T19:12:52Z",
+      "side": 1,
+      "message": "It built fine but just to be sure i changed it to 0.0",
+      "parentUuid": "855008e6_588a4048",
       "revId": "0408d2c461191021984580d0d8049450c9598f15",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

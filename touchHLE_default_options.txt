@@ -174,3 +174,6 @@ com.pangea.nano2: --ignore-gl-errors
 
 # Bugdom 2
 com.pangea.bug2: --ignore-gl-errors
+
+# Silent Hill: The Escape
+com.konami-europe.silenthillescape: --x-tilt-offset=-45

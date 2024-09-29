@@ -3,6 +3,74 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "90d276e1_187965d4",
+        "filename": "src/frameworks/foundation/ns_property_list_serialization.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 37,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-09-29T19:37:33Z",
+      "side": 1,
+      "message": "Can you add `// TODO` next to these two?",
+      "revId": "b13fa6db3d0a53c4c44df58ab5d1e11587ff97b4",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "dc1e5ed5_29b49ab2",
+        "filename": "src/frameworks/foundation/ns_property_list_serialization.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 46,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-09-29T19:37:33Z",
+      "side": 1,
+      "message": "It probably doesn\u0027t matter, but there shouldn\u0027t be the null terminator on the string for this, right? Maybe we could have an `alloc_and_write_bytes` method that does the same thing without adding a null terminator.",
+      "revId": "b13fa6db3d0a53c4c44df58ab5d1e11587ff97b4",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "40a7a68b_c0b7d55d",
+        "filename": "src/frameworks/foundation/ns_property_list_serialization.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 47,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-09-29T19:37:33Z",
+      "side": 1,
+      "message": "This is a memory leak, `dataWithBytes:` does a copy but you don\u0027t clean up `ptr`. Did you mean to use `dataWithBytesNoCopy:`?",
+      "revId": "b13fa6db3d0a53c4c44df58ab5d1e11587ff97b4",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ade0dd5c_64bb1447",
+        "filename": "src/frameworks/foundation/ns_property_list_serialization.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 54,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-09-29T19:37:33Z",
+      "side": 1,
+      "message": "Also would like to see `// TODO`\u0027s here.",
+      "revId": "b13fa6db3d0a53c4c44df58ab5d1e11587ff97b4",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "5381aedf_bb9c0d76",
         "filename": "src/frameworks/foundation/ns_property_list_serialization.rs",
         "patchSetId": 1
@@ -67,6 +135,24 @@
       "side": 1,
       "message": "I\u0027m placing it back on the line 191, so it is not destroyed.\nI can change to cloning if it\u0027s preferable.",
       "parentUuid": "1d5e8abe_e9a4ab17",
+      "revId": "b13fa6db3d0a53c4c44df58ab5d1e11587ff97b4",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "be1c7201_2cbd623d",
+        "filename": "src/frameworks/foundation/ns_property_list_serialization.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 184,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-09-29T19:37:33Z",
+      "side": 1,
+      "message": "Oh I see. I guess it\u0027s fine then.",
+      "parentUuid": "365445e1_d99c552f",
       "revId": "b13fa6db3d0a53c4c44df58ab5d1e11587ff97b4",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

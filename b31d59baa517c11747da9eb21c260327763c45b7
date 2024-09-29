@@ -36,6 +36,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "1c19e3ed_f6b03c5c",
+        "filename": "src/frameworks/foundation/ns_dictionary.rs",
+        "patchSetId": 6
+      },
+      "lineNbr": 362,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-09-29T22:15:06Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "5fff6abc_12ac1595",
+      "revId": "b31d59baa517c11747da9eb21c260327763c45b7",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "8a1be651_9a21df64",
@@ -67,6 +85,24 @@
       "side": 1,
       "message": "I\u0027m not sure, docs are saying the following:\n\n\u003e If both dictionaries contain the same key, the receiving dictionary’s previous value object for that key is sent a release message, and the new value object takes its place.\n\nhttps://developer.apple.com/documentation/foundation/nsmutabledictionary/1411035-addentriesfromdictionary?language\u003dobjc",
       "parentUuid": "8a1be651_9a21df64",
+      "revId": "b31d59baa517c11747da9eb21c260327763c45b7",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "75100ff4_e2326e3a",
+        "filename": "src/frameworks/foundation/ns_dictionary.rs",
+        "patchSetId": 6
+      },
+      "lineNbr": 363,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-09-29T22:15:06Z",
+      "side": 1,
+      "message": "Yes, it\u0027s just standard replacement behaviour. I checked the implementation and I\u0027m pretty sure this is what `setObject:` does.",
+      "parentUuid": "1bc0d256_86dd342a",
       "revId": "b31d59baa517c11747da9eb21c260327763c45b7",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
@@ -106,6 +142,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "59028d25_6bb179fe",
+        "filename": "src/frameworks/foundation/ns_dictionary.rs",
+        "patchSetId": 6
+      },
+      "lineNbr": 366,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-09-29T22:15:06Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "f86e3e6c_55479481",
+      "revId": "b31d59baa517c11747da9eb21c260327763c45b7",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "48d29240_4e45f9ab",
@@ -137,6 +191,24 @@
       "side": 1,
       "message": "good catch! thanks, done",
       "parentUuid": "48d29240_4e45f9ab",
+      "revId": "b31d59baa517c11747da9eb21c260327763c45b7",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "56fea86b_2d2ca1d1",
+        "filename": "src/frameworks/foundation/ns_user_defaults.rs",
+        "patchSetId": 6
+      },
+      "lineNbr": 95,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-09-29T22:15:06Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "7b61da5a_6645d3f0",
       "revId": "b31d59baa517c11747da9eb21c260327763c45b7",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

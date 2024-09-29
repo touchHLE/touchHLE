@@ -69,6 +69,24 @@
       "parentUuid": "855008e6_588a4048",
       "revId": "0408d2c461191021984580d0d8049450c9598f15",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7f6f61e7_135f9f8a",
+        "filename": "src/frameworks/foundation/ns_object.rs",
+        "patchSetId": 9
+      },
+      "lineNbr": 276,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-09-29T19:21:17Z",
+      "side": 1,
+      "message": "Thanks! Type checks are done at runtime for host to host obj-c calls, so if you pass u32 for f64 argument, it will crash on that check.",
+      "parentUuid": "61609809_56f2c074",
+      "revId": "0408d2c461191021984580d0d8049450c9598f15",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

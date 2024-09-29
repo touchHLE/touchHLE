@@ -200,3 +200,6 @@ com.unity3d.3Dworld: --landscape-left --force-composition
 
 # Zombieville
 com.KelliNoda.Zombieville: --landscape-left --force-composition
+
+# Silent Hill: The Escape
+com.konami-europe.silenthillescape: --x-tilt-offset=-45

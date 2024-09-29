@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "dadf7ff7_af7699c4",
+        "filename": "src/frameworks/foundation/ns_dictionary.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 346,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-09-29T19:56:11Z",
+      "side": 1,
+      "message": "Do you want to add `mutableCopyWithZone:` here while you\u0027re at it?",
+      "revId": "0e14c4f3f6e76699255478b0607637fab5954995",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

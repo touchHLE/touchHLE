@@ -198,3 +198,6 @@ com.gameloft.HOS2: --stick-to-touch=28,206,84,84 --button-to-touch=Start,25,25 -
 # Star Battalion
 com.gameloft.starfighter: --skip-objc-type-checks
 com.gameloft.starfighteriPad: --skip-objc-type-checks
+
+# Silent Hill: The Escape
+com.konami-europe.silenthillescape: --x-tilt-offset=-45

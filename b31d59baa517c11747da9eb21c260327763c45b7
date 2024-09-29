@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7a8727db_9f941dde",
+        "filename": "src/frameworks/foundation/ns_dictionary.rs",
+        "patchSetId": 6
+      },
+      "lineNbr": 362,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-09-29T21:59:45Z",
+      "side": 1,
+      "message": "Won\u0027t the capitalisation typo mean it crashes?",
+      "revId": "b31d59baa517c11747da9eb21c260327763c45b7",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8a1be651_9a21df64",
+        "filename": "src/frameworks/foundation/ns_dictionary.rs",
+        "patchSetId": 6
+      },
+      "lineNbr": 363,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-09-29T21:59:45Z",
+      "side": 1,
+      "message": "Won\u0027t `setObject` already do the right thing?",
+      "revId": "b31d59baa517c11747da9eb21c260327763c45b7",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "81167ea7_00de4bb3",
+        "filename": "src/frameworks/foundation/ns_dictionary.rs",
+        "patchSetId": 6
+      },
+      "lineNbr": 366,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-09-29T21:59:45Z",
+      "side": 1,
+      "message": "This is meant to be `other` right?",
+      "revId": "b31d59baa517c11747da9eb21c260327763c45b7",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "48d29240_4e45f9ab",
+        "filename": "src/frameworks/foundation/ns_user_defaults.rs",
+        "patchSetId": 6
+      },
+      "lineNbr": 95,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-09-29T21:59:45Z",
+      "side": 1,
+      "message": "There is a retention bug here, on line 93 we make a new object that we own, whereas on line 91 we don\u0027t. You can just drop the `retain` here and use `new` instead of `dictionary` above.",
+      "revId": "b31d59baa517c11747da9eb21c260327763c45b7",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

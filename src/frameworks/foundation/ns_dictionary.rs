@@ -229,13 +229,6 @@ pub const CLASSES: ClassExports = objc_classes! {
     autorelease(env, new)
 }
 
-// NSCopying implementation
-- (id)copyWithZone:(NSZonePtr)_zone {
-    let entries: Vec<_> =
-        env.objc.borrow_mut::<DictionaryHostObject>(this).map.values().flatten().copied().collect();
-    dict_from_keys_and_objects(env, &entries)
-}
-
 @end
 
 // Our private subclass that is the single implementation of NSDictionary for
@@ -272,6 +265,16 @@ pub const CLASSES: ClassExports = objc_classes! {
     let res = host_obj.lookup(env, key);
     *env.objc.borrow_mut(this) = host_obj;
     res
+}
+
+- (id)mutableCopyWithZone:(NSZonePtr)_zone {
+    let mut_dict: id = msg_class![env; NSMutableDictionary alloc];
+    let host_obj: DictionaryHostObject = std::mem::take(env.objc.borrow_mut(this));
+    for (k, v) in host_obj.map.values().flatten() {
+        () = msg![env; mut_dict setObject:(*v) forKey:(*k)];
+    }
+    *env.objc.borrow_mut(this) = host_obj;
+    mut_dict
 }
 
 - (id)description {
@@ -332,6 +335,13 @@ pub const CLASSES: ClassExports = objc_classes! {
     let res = host_obj.lookup(env, key);
     *env.objc.borrow_mut(this) = host_obj;
     res
+}
+
+// NSCopying implementation
+- (id)copyWithZone:(NSZonePtr)_zone {
+    let entries: Vec<_> =
+        env.objc.borrow_mut::<DictionaryHostObject>(this).map.values().flatten().copied().collect();
+    dict_from_keys_and_objects(env, &entries)
 }
 
 - (())setObject:(id)object

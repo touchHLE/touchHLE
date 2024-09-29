@@ -10,6 +10,7 @@ use super::{ns_string, ns_url, NSUInteger};
 use crate::abi::VaList;
 use crate::frameworks::foundation::ns_string::{from_rust_string, to_rust_string};
 use crate::fs::GuestPath;
+use crate::mem::{MutPtr, Ptr};
 use crate::objc::{
     autorelease, id, msg, msg_class, nil, objc_classes, release, retain, ClassExports, HostObject,
     NSZonePtr,
@@ -273,6 +274,20 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 - (id)description {
     build_description(env, this)
+}
+
+// FIXME: writes should be atomic
+- (bool)writeToFile:(id)path // NSString*
+         atomically:(bool)_use_aux_file {
+    let file_path = to_rust_string(env, path);
+    let error_desc: MutPtr<id> = Ptr::null();
+    let data: id = msg_class![env; NSPropertyListSerialization
+            dataFromPropertyList:this
+                          format:NSPropertyListBinaryFormat_v1_0
+                errorDescription:error_desc];
+    let res = msg![env; data writeToFile:path atomically:true];
+    log_dbg!("[(NSDictionary *){:?} writeToFile:{:?} atomically:_] -> {}", this, file_path, res);
+    res
 }
 
 @end

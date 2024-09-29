@@ -328,6 +328,17 @@ impl GLES for GLES1Native {
         gles11::VertexPointer(size, type_, stride, pointer)
     }
 
+    // OES_matrix_palette
+    unsafe fn MatrixIndexPointerOES(
+        &mut self,
+        size: GLint,
+        type_: GLenum,
+        stride: GLsizei,
+        pointer: *const GLvoid,
+    ) {
+        gles11::MatrixIndexPointerOES(size, type_, stride, pointer)
+    }
+
     // Drawing
     unsafe fn DrawArrays(&mut self, mode: GLenum, first: GLint, count: GLsizei) {
         gles11::DrawArrays(mode, first, count)

@@ -126,6 +126,15 @@ pub const ARRAYS: &[ArrayInfo] = &[
         stride: gl21::VERTEX_ARRAY_STRIDE,
         pointer: gl21::VERTEX_ARRAY_POINTER,
     },
+    ArrayInfo {
+        name: gl21::MATRIX_INDEX_ARRAY_ARB,
+        // FIXME: MATRIX_INDEX_ARRAY_BUFFER_BINDING_OES, seems to be not defined
+        // even if other extension constants are present
+        buffer_binding: 0x8B9E,
+        size: Some(gl21::MATRIX_INDEX_ARRAY_SIZE_ARB),
+        stride: gl21::MATRIX_INDEX_ARRAY_STRIDE_ARB,
+        pointer: gl21::MATRIX_INDEX_ARRAY_POINTER_ARB,
+    },
 ];
 
 /// Table of `glGet` parameters shared by OpenGL ES 1.1 and OpenGL 2.1.
@@ -194,7 +203,14 @@ const GET_PARAMS: ParamTable = ParamTable(&[
     (gl21::LINE_SMOOTH_HINT, ParamType::Int, 1),
     (gl21::LINE_WIDTH, ParamType::Float, 1),
     (gl21::LOGIC_OP_MODE, ParamType::Int, 1),
+    (gl21::MATRIX_INDEX_ARRAY_ARB, ParamType::Boolean, 1),
+    // FIXME: this should be MATRIX_INDEX_ARRAY_BUFFER_BINDING_ARB ?
+    (0x8B9E, ParamType::Int, 1),
+    (gl21::MATRIX_INDEX_ARRAY_SIZE_ARB, ParamType::Int, 1),
+    (gl21::MATRIX_INDEX_ARRAY_STRIDE_ARB, ParamType::Int, 1),
+    (gl21::MATRIX_INDEX_ARRAY_TYPE_ARB, ParamType::Int, 1),
     (gl21::MATRIX_MODE, ParamType::Int, 1),
+    (gl21::MATRIX_PALETTE_ARB, ParamType::Int, 1),
     (gl21::MAX_CLIP_PLANES, ParamType::Int, 1),
     (gl21::MAX_LIGHTS, ParamType::Int, 1),
     (gl21::MAX_MODELVIEW_STACK_DEPTH, ParamType::Int, 1),
@@ -562,7 +578,13 @@ impl GLES for GLES1OnGL2 {
             gl_ctx: window.create_gl_context(GLVersion::GL21Compat)?,
             pointer_is_fixed_point: [false; ARRAYS.len()],
             fixed_point_texture_units: HashSet::new(),
-            fixed_point_translation_buffers: [Vec::new(), Vec::new(), Vec::new(), Vec::new()],
+            fixed_point_translation_buffers: [
+                Vec::new(),
+                Vec::new(),
+                Vec::new(),
+                Vec::new(),
+                Vec::new(),
+            ],
         })
     }
 
@@ -594,7 +616,7 @@ impl GLES for GLES1OnGL2 {
         } else if cap == gl21::PERSPECTIVE_CORRECTION_HINT || cap == gl21::SMOOTH {
             log_dbg!("Tolerating glEnable({:#x})", cap);
         } else {
-            assert!(CAPABILITIES.contains(&cap));
+            assert!(CAPABILITIES.contains(&cap), "cap {:#x}", cap);
         }
         gl21::Enable(cap);
     }
@@ -1119,6 +1141,26 @@ impl GLES for GLES1OnGL2 {
             self.pointer_is_fixed_point[3] = false;
             gl21::VertexPointer(size, type_, stride, pointer)
         }
+    }
+
+    // OES_matrix_palette
+    unsafe fn MatrixIndexPointerOES(
+        &mut self,
+        size: GLint,
+        type_: GLenum,
+        stride: GLsizei,
+        pointer: *const GLvoid,
+    ) {
+        assert_eq!(type_, gl21::UNSIGNED_BYTE);
+        let mut max_vertex_units = 0;
+        gl21::GetIntegerv(gl21::MAX_VERTEX_UNITS_ARB, &mut max_vertex_units);
+        // Note: ARB_matrix_palette says that size "must be less than the
+        // implementation defined value MAX_VERTEX_UNITS_ARB", but
+        // OES_matrix_palette says that it "must be less than or equal
+        // to the implementation defined value MAX_VERTEX_UNITS_OES"
+        assert!(1 <= size && size < max_vertex_units);
+        self.pointer_is_fixed_point[4] = false;
+        gl21::MatrixIndexPointerARB(size, type_, stride, pointer)
     }
 
     // Drawing

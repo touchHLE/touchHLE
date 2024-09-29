@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c4665687_f47531f5",
+        "filename": "src/frameworks/foundation/ns_object.rs",
+        "patchSetId": 9
+      },
+      "lineNbr": 21,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-09-29T18:49:34Z",
+      "side": 1,
+      "message": "nit: please group those 2 lines together",
+      "revId": "0408d2c461191021984580d0d8049450c9598f15",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "855008e6_588a4048",
+        "filename": "src/frameworks/foundation/ns_object.rs",
+        "patchSetId": 9
+      },
+      "lineNbr": 276,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-09-29T18:49:34Z",
+      "side": 1,
+      "message": "does passing 0 really works here? I think it should be 0.0 to pass the validation check.",
+      "revId": "0408d2c461191021984580d0d8049450c9598f15",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

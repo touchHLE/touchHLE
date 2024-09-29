@@ -110,3 +110,6 @@ com.chillingo.defenderchronicles: --landscape-left
 # (we neeed to force language to avoid a crash)
 com.ea.simcitybv: --preferred-languages=en
 com.ea.simcityinc: --preferred-languages=en
+
+# Silent Hill: The Escape
+com.konami-europe.silenthillescape: --x-tilt-offset=-45

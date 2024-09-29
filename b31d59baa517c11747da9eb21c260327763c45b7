@@ -20,6 +20,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "5fff6abc_12ac1595",
+        "filename": "src/frameworks/foundation/ns_dictionary.rs",
+        "patchSetId": 6
+      },
+      "lineNbr": 362,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-09-29T22:13:33Z",
+      "side": 1,
+      "message": "oopsie\n\nyes, it wasn\u0027t working before\n\ndone",
+      "parentUuid": "7a8727db_9f941dde",
+      "revId": "b31d59baa517c11747da9eb21c260327763c45b7",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "8a1be651_9a21df64",
         "filename": "src/frameworks/foundation/ns_dictionary.rs",
         "patchSetId": 6
@@ -31,6 +49,24 @@
       "writtenOn": "2024-09-29T21:59:45Z",
       "side": 1,
       "message": "Won\u0027t `setObject` already do the right thing?",
+      "revId": "b31d59baa517c11747da9eb21c260327763c45b7",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1bc0d256_86dd342a",
+        "filename": "src/frameworks/foundation/ns_dictionary.rs",
+        "patchSetId": 6
+      },
+      "lineNbr": 363,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-09-29T22:13:33Z",
+      "side": 1,
+      "message": "I\u0027m not sure, docs are saying the following:\n\n\u003e If both dictionaries contain the same key, the receiving dictionary’s previous value object for that key is sent a release message, and the new value object takes its place.\n\nhttps://developer.apple.com/documentation/foundation/nsmutabledictionary/1411035-addentriesfromdictionary?language\u003dobjc",
+      "parentUuid": "8a1be651_9a21df64",
       "revId": "b31d59baa517c11747da9eb21c260327763c45b7",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
@@ -54,6 +90,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "f86e3e6c_55479481",
+        "filename": "src/frameworks/foundation/ns_dictionary.rs",
+        "patchSetId": 6
+      },
+      "lineNbr": 366,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-09-29T22:13:33Z",
+      "side": 1,
+      "message": "double oopsie\n\ndone",
+      "parentUuid": "81167ea7_00de4bb3",
+      "revId": "b31d59baa517c11747da9eb21c260327763c45b7",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "48d29240_4e45f9ab",
         "filename": "src/frameworks/foundation/ns_user_defaults.rs",
         "patchSetId": 6
@@ -65,6 +119,24 @@
       "writtenOn": "2024-09-29T21:59:45Z",
       "side": 1,
       "message": "There is a retention bug here, on line 93 we make a new object that we own, whereas on line 91 we don\u0027t. You can just drop the `retain` here and use `new` instead of `dictionary` above.",
+      "revId": "b31d59baa517c11747da9eb21c260327763c45b7",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7b61da5a_6645d3f0",
+        "filename": "src/frameworks/foundation/ns_user_defaults.rs",
+        "patchSetId": 6
+      },
+      "lineNbr": 95,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-09-29T22:13:33Z",
+      "side": 1,
+      "message": "good catch! thanks, done",
+      "parentUuid": "48d29240_4e45f9ab",
       "revId": "b31d59baa517c11747da9eb21c260327763c45b7",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

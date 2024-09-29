@@ -20,6 +20,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "936d4364_f9ea8ff1",
+        "filename": "src/frameworks/foundation/ns_property_list_serialization.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 178,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-09-29T19:31:25Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "5381aedf_bb9c0d76",
+      "revId": "b13fa6db3d0a53c4c44df58ab5d1e11587ff97b4",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "1d5e8abe_e9a4ab17",
         "filename": "src/frameworks/foundation/ns_property_list_serialization.rs",
         "patchSetId": 1
@@ -31,6 +49,24 @@
       "writtenOn": "2024-09-29T19:29:22Z",
       "side": 1,
       "message": "The use of `std::mem::take` in this function means the object contents are destroyed by serializing them. That seems… bad? Maybe you want to just clone instead?",
+      "revId": "b13fa6db3d0a53c4c44df58ab5d1e11587ff97b4",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "365445e1_d99c552f",
+        "filename": "src/frameworks/foundation/ns_property_list_serialization.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 184,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-09-29T19:31:25Z",
+      "side": 1,
+      "message": "I\u0027m placing it back on the line 191, so it is not destroyed.\nI can change to cloning if it\u0027s preferable.",
+      "parentUuid": "1d5e8abe_e9a4ab17",
       "revId": "b13fa6db3d0a53c4c44df58ab5d1e11587ff97b4",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

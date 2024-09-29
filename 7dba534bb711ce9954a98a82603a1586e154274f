@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "d16940d7_22ef4d76",
+        "filename": "src/frameworks/foundation/ns_object.rs",
+        "patchSetId": 7
+      },
+      "lineNbr": 242,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-09-29T12:00:54Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "6319a685_5848cde5",
+      "revId": "7dba534bb711ce9954a98a82603a1586e154274f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "0d866371_7e978014",
@@ -31,6 +49,24 @@
       "writtenOn": "2024-09-28T14:44:16Z",
       "side": 1,
       "message": "Please refactor this with performSelector:withObject:afterDelay: to avoid code duplication.\n\nI think you should just call performSelector:withObject:afterDelay: here, after current thread and wait assertions.",
+      "revId": "7dba534bb711ce9954a98a82603a1586e154274f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ef7723d0_84fed126",
+        "filename": "src/frameworks/foundation/ns_object.rs",
+        "patchSetId": 7
+      },
+      "lineNbr": 272,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-09-29T12:00:54Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "0d866371_7e978014",
       "revId": "7dba534bb711ce9954a98a82603a1586e154274f",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "802dcabb_32cda5cb",
+        "filename": "src/frameworks/foundation/ns_user_defaults.rs",
+        "patchSetId": 10
+      },
+      "lineNbr": 189,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-09-29T22:21:13Z",
+      "side": 1,
+      "message": "Do we actually need this copy? It shouldn\u0027t get mutated by the saving process, right?",
+      "revId": "58c98c6e2b76e64d54c918b9240174986f43c0a8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

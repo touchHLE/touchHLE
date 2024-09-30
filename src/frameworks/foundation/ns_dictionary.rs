@@ -5,7 +5,9 @@
  */
 //! The `NSDictionary` class cluster, including `NSMutableDictionary`.
 
-use super::ns_property_list_serialization::deserialize_plist_from_file;
+use super::ns_property_list_serialization::{
+    deserialize_plist_from_file, NSPropertyListBinaryFormat_v1_0,
+};
 use super::{ns_string, ns_url, NSUInteger};
 use crate::abi::VaList;
 use crate::frameworks::foundation::ns_string::{from_rust_string, to_rust_string};
@@ -30,7 +32,7 @@ pub(super) struct DictionaryHostObject {
     /// hash-map, which is not ideally efficient. :)
     /// The keys are the hash values, the values are a list of key-value pairs
     /// where the keys have the same hash value.
-    map: HashMap<Hash, Vec<(id, id)>>,
+    pub(super) map: HashMap<Hash, Vec<(id, id)>>,
     pub(super) count: NSUInteger,
 }
 impl HostObject for DictionaryHostObject {}

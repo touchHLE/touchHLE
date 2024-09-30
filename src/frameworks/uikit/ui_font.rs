@@ -60,9 +60,9 @@ pub const CLASSES: ClassExports = objc_classes! {
 @implementation UIFont: NSObject
 
 + (id)systemFontOfSize:(CGFloat)size {
-    let font_name = String::from("LiberationSans-Regular.ttf");
+    let font_name = String::from("ArialMT");
     // Cache for later use
-    env.framework_state.uikit.ui_font.fonts.entry(font_name.to_owned()).or_insert_with(|| Font::from_resource_file(&font_name));
+    env.framework_state.uikit.ui_font.fonts.entry(font_name.to_owned()).or_insert_with(|| Font::from_resource_file(get_equivalent_font(&font_name).unwrap()));
     let host_object = UIFontHostObject {
         font_name,
         size,
@@ -71,9 +71,9 @@ pub const CLASSES: ClassExports = objc_classes! {
     autorelease(env, new)
 }
 + (id)boldSystemFontOfSize:(CGFloat)size {
-    let font_name = String::from("LiberationSans-Bold.ttf");
+    let font_name = String::from("Arial-BoldMT");
     // Cache for later use
-    env.framework_state.uikit.ui_font.fonts.entry(font_name.to_owned()).or_insert_with(|| Font::from_resource_file(&font_name));
+    env.framework_state.uikit.ui_font.fonts.entry(font_name.to_owned()).or_insert_with(|| Font::from_resource_file(get_equivalent_font(&font_name).unwrap()));
     let host_object = UIFontHostObject {
         font_name,
         size,
@@ -82,9 +82,9 @@ pub const CLASSES: ClassExports = objc_classes! {
     autorelease(env, new)
 }
 + (id)italicSystemFontOfSize:(CGFloat)size {
-    let font_name = String::from("LiberationSans-Italic.ttf");
+    let font_name = String::from("Arial-ItalicMT");
     // Cache for later use
-    env.framework_state.uikit.ui_font.fonts.entry(font_name.to_owned()).or_insert_with(|| Font::from_resource_file(&font_name));
+    env.framework_state.uikit.ui_font.fonts.entry(font_name.to_owned()).or_insert_with(|| Font::from_resource_file(get_equivalent_font(&font_name).unwrap()));
     let host_object = UIFontHostObject {
         font_name,
         size,
@@ -311,4 +311,13 @@ pub fn draw_in_rect(
     );
 
     text_size
+}
+
+fn get_equivalent_font(system_font: &str) -> Option<&str> {
+    match system_font {
+        "ArialMT" => Some("LiberationSans-Regular.ttf"),
+        "Arial-BoldMT" => Some("LiberationSans-Bold.ttf"),
+        "Arial-ItalicMT" => Some("LiberationSans-Italic.ttf"),
+        _ => None,
+    }
 }

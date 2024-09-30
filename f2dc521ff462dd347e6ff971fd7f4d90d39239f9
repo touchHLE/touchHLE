@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "46f418b3_47504484",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021823
+      },
+      "writtenOn": "2024-09-30T17:26:53Z",
+      "side": 1,
+      "message": "I\u0027ll talk about this a bit more in a day or so. This is still very draft quality - the app picker and gdb don\u0027t work (see the BEFOREMERGE comments)",
+      "revId": "f2dc521ff462dd347e6ff971fd7f4d90d39239f9",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

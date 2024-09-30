@@ -314,10 +314,68 @@ pub fn draw_in_rect(
 }
 
 fn get_equivalent_font(system_font: &str) -> Option<&str> {
+    // Maps every font found in every font family in an iOS 2 Simulator
     match system_font {
+        // Font Family: Courier
+        "Courier" => None,
+        "Courier-BoldOblique" => None,
+        "Courier-Oblique" => None,
+        "Courier-Bold" => None,
+        // Font Family: AppleGothic
+        "AppleGothic" => None,
+        // Font Family: Arial
         "ArialMT" => Some("LiberationSans-Regular.ttf"),
         "Arial-BoldMT" => Some("LiberationSans-Bold.ttf"),
+        "Arial-BoldItalicMT" => Some("LiberationSans-BoldItalic.ttf"),
         "Arial-ItalicMT" => Some("LiberationSans-Italic.ttf"),
+        // Font Family: STHeiti TC
+        "STHeitiTC-Light" => None,
+        "STHeitiTC-Medium" => None,
+        // Font Family: Hiragino Kaku Gothic ProN
+        "HiraKakuProN-W6" => None,
+        "HiraKakuProN-W3" => None,
+        // Font Family: Courier New
+        "CourierNewPS-BoldMT" => Some("LiberationMono-Bold.ttf"),
+        "CourierNewPS-ItalicMT" => Some("LiberationMono-Italic.ttf"),
+        "CourierNewPS-BoldItalicMT" => Some("LiberationMono-BoldItalic.ttf"),
+        "CourierNewPSMT" => Some("LiberationMono-Regular.ttf"),
+        // Font Family: Zapfino
+        "Zapfino" => None,
+        // Font Family: Arial Unicode MS
+        "ArialUnicodeMS" => None,
+        // Font Family: STHeiti SC
+        "STHeitiSC-Medium" => None,
+        "STHeitiSC-Light" => None,
+        // Font Family: American Typewriter
+        "AmericanTypewriter" => None,
+        "AmericanTypewriter-Bold" => None,
+        // Font Family: Helvetica
+        "Helvetica-Oblique" => None,
+        "Helvetica-BoldOblique" => None,
+        "Helvetica" => None,
+        "Helvetica-Bold" => None,
+        // Font Family: Marker Felt
+        "MarkerFelt-Thin" => None,
+        // Font Family: Helvetica Neue
+        "HelveticaNeue" => None,
+        "HelveticaNeue-Bold" => None,
+        // Font Family: DB LCD Temp
+        "DBLCDTempBlack" => None,
+        // Font Family: Verdana
+        "Verdana-Bold" => None,
+        "Verdana-BoldItalic" => None,
+        "Verdana" => None,
+        "Verdana-Italic" => None,
+        // Font Family: Times New Roman
+        "TimesNewRomanPSMT" => Some("LiberationSerif-Regular.ttf"),
+        "TimesNewRomanPS-BoldMT" => Some("LiberationSerif-BoldMT.ttf"),
+        "TimesNewRomanPS-BoldItalicMT" => Some("LiberationSerif-BoldItalicMT.ttf"),
+        "TimesNewRomanPS-ItalicMT" => Some("LiberationSerif-ItalicMT.ttf"),
+        // Font Family: Georgia
+        "Georgia-Bold" => None,
+        "Georgia" => None,
+        "Georgia-BoldItalic" => None,
+        "Georgia-Italic" => None,
         _ => None,
     }
 }

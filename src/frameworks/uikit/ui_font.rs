@@ -9,6 +9,7 @@ use super::ui_graphics::UIGraphicsGetCurrentContext;
 use crate::font::{Font, TextAlignment, WrapMode};
 use crate::frameworks::core_graphics::cg_bitmap_context::CGBitmapContextDrawer;
 use crate::frameworks::core_graphics::{CGFloat, CGPoint, CGRect, CGSize};
+use crate::frameworks::foundation::ns_string::to_rust_string;
 use crate::frameworks::foundation::NSInteger;
 use crate::objc::{autorelease, id, objc_classes, ClassExports, HostObject};
 use crate::Environment;
@@ -16,18 +17,114 @@ use std::ops::Range;
 
 #[derive(Default)]
 pub(super) struct State {
-    regular: Option<Font>,
-    bold: Option<Font>,
-    italic: Option<Font>,
-    regular_ja: Option<Font>,
-    bold_ja: Option<Font>,
+    mono_regular: Option<Font>,
+    mono_bold: Option<Font>,
+    mono_bold_italic: Option<Font>,
+    mono_italic: Option<Font>,
+    sans_regular: Option<Font>,
+    sans_bold: Option<Font>,
+    sans_bold_italic: Option<Font>,
+    sans_italic: Option<Font>,
+    sans_regular_ja: Option<Font>,
+    sans_bold_ja: Option<Font>,
+    serif_regular: Option<Font>,
+    serif_bold: Option<Font>,
+    serif_bold_italic: Option<Font>,
+    serif_italic: Option<Font>,
+}
+impl State {
+    fn get_font_by_kind(&mut self, font_kind: FontKind) -> &Font {
+        match font_kind {
+            FontKind::MonoRegular => {
+                if self.mono_regular.is_none() {
+                    self.mono_regular = Some(Font::mono_regular());
+                }
+                self.mono_regular.as_ref().unwrap()
+            }
+            FontKind::MonoBold => {
+                if self.mono_bold.is_none() {
+                    self.mono_bold = Some(Font::mono_bold());
+                }
+                self.mono_bold.as_ref().unwrap()
+            }
+            FontKind::MonoBoldItalic => {
+                if self.mono_bold_italic.is_none() {
+                    self.mono_bold_italic = Some(Font::mono_bold_italic());
+                }
+                self.mono_bold_italic.as_ref().unwrap()
+            }
+            FontKind::MonoItalic => {
+                if self.mono_italic.is_none() {
+                    self.mono_italic = Some(Font::mono_italic());
+                }
+                self.mono_italic.as_ref().unwrap()
+            }
+            FontKind::SansRegular => {
+                if self.sans_regular.is_none() {
+                    self.sans_regular = Some(Font::sans_regular());
+                }
+                self.sans_regular.as_ref().unwrap()
+            }
+            FontKind::SansBold => {
+                if self.sans_bold.is_none() {
+                    self.sans_bold = Some(Font::sans_bold());
+                }
+                self.sans_bold.as_ref().unwrap()
+            }
+            FontKind::SansBoldItalic => {
+                if self.sans_bold_italic.is_none() {
+                    self.sans_bold_italic = Some(Font::sans_bold_italic());
+                }
+                self.sans_bold_italic.as_ref().unwrap()
+            }
+            FontKind::SansItalic => {
+                if self.sans_italic.is_none() {
+                    self.sans_italic = Some(Font::sans_italic());
+                }
+                self.sans_italic.as_ref().unwrap()
+            }
+            FontKind::SerifRegular => {
+                if self.serif_regular.is_none() {
+                    self.serif_regular = Some(Font::serif_regular());
+                }
+                self.serif_regular.as_ref().unwrap()
+            }
+            FontKind::SerifBold => {
+                if self.serif_bold.is_none() {
+                    self.serif_bold = Some(Font::serif_bold());
+                }
+                self.serif_bold.as_ref().unwrap()
+            }
+            FontKind::SerifBoldItalic => {
+                if self.serif_bold_italic.is_none() {
+                    self.serif_bold_italic = Some(Font::serif_bold_italic());
+                }
+                self.serif_bold_italic.as_ref().unwrap()
+            }
+            FontKind::SerifItalic => {
+                if self.serif_italic.is_none() {
+                    self.serif_italic = Some(Font::serif_italic());
+                }
+                self.serif_italic.as_ref().unwrap()
+            }
+        }
+    }
 }
 
 #[derive(Copy, Clone)]
 enum FontKind {
-    Regular,
-    Bold,
-    Italic,
+    MonoRegular,
+    MonoBold,
+    MonoBoldItalic,
+    MonoItalic,
+    SansRegular,
+    SansBold,
+    SansBoldItalic,
+    SansItalic,
+    SerifRegular,
+    SerifBold,
+    SerifBoldItalic,
+    SerifItalic,
 }
 
 struct UIFontHostObject {
@@ -68,36 +165,49 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 + (id)systemFontOfSize:(CGFloat)size {
     // Cache for later use
-    if env.framework_state.uikit.ui_font.regular.is_none() {
-        env.framework_state.uikit.ui_font.regular = Some(Font::sans_regular());
+    if env.framework_state.uikit.ui_font.sans_regular.is_none() {
+        env.framework_state.uikit.ui_font.sans_regular = Some(Font::sans_regular());
     }
     let host_object = UIFontHostObject {
         size,
-        kind: FontKind::Regular,
+        kind: FontKind::SansRegular,
     };
     let new = env.objc.alloc_object(this, Box::new(host_object), &mut env.mem);
     autorelease(env, new)
 }
 + (id)boldSystemFontOfSize:(CGFloat)size {
     // Cache for later use
-    if env.framework_state.uikit.ui_font.bold.is_none() {
-        env.framework_state.uikit.ui_font.bold = Some(Font::sans_bold());
+    if env.framework_state.uikit.ui_font.sans_bold.is_none() {
+        env.framework_state.uikit.ui_font.sans_bold = Some(Font::sans_bold());
     }
     let host_object = UIFontHostObject {
         size,
-        kind: FontKind::Bold,
+        kind: FontKind::SansBold,
     };
     let new = env.objc.alloc_object(this, Box::new(host_object), &mut env.mem);
     autorelease(env, new)
 }
 + (id)italicSystemFontOfSize:(CGFloat)size {
     // Cache for later use
-    if env.framework_state.uikit.ui_font.italic.is_none() {
-        env.framework_state.uikit.ui_font.italic = Some(Font::sans_italic());
+    if env.framework_state.uikit.ui_font.sans_italic.is_none() {
+        env.framework_state.uikit.ui_font.sans_italic = Some(Font::sans_italic());
     }
     let host_object = UIFontHostObject {
         size,
-        kind: FontKind::Italic,
+        kind: FontKind::SansItalic,
+    };
+    let new = env.objc.alloc_object(this, Box::new(host_object), &mut env.mem);
+    autorelease(env, new)
+}
++ (id)fontWithName:(id)fontName // NSString*
+            size:(CGFloat)fontSize {
+    let font_name = to_rust_string(env, fontName).to_string();
+    let host_object = UIFontHostObject {
+        kind: get_equivalent_font(&font_name).unwrap_or_else(|| {
+            log!("No replacement found for font {}. Using system font instead.", font_name);
+            FontKind::SansRegular
+        }),
+        size: fontSize,
     };
     let new = env.objc.alloc_object(this, Box::new(host_object), &mut env.mem);
     autorelease(env, new)
@@ -134,27 +244,23 @@ fn get_font<'a>(state: &'a mut State, kind: FontKind, text: &str) -> &'a Font {
            (0x3400..=0x4DBF).contains(&c) { // more kanji
             match kind {
                 // CJK has no italic equivalent
-                FontKind::Regular | FontKind::Italic => {
-                    if state.regular_ja.is_none() {
-                        state.regular_ja = Some(Font::sans_regular_ja());
+                FontKind::MonoRegular | FontKind::MonoItalic | FontKind::SansRegular | FontKind::SansItalic | FontKind::SerifRegular | FontKind::SerifItalic => {
+                    if state.sans_regular_ja.is_none() {
+                        state.sans_regular_ja = Some(Font::sans_regular_ja());
                     }
-                    return state.regular_ja.as_ref().unwrap();
+                    return state.sans_regular_ja.as_ref().unwrap();
                 },
-                FontKind::Bold => {
-                    if state.bold_ja.is_none() {
-                        state.bold_ja = Some(Font::sans_bold_ja());
+                FontKind::MonoBold | FontKind::MonoBoldItalic | FontKind::SansBold | FontKind::SansBoldItalic | FontKind::SerifBold | FontKind::SerifBoldItalic => {
+                    if state.sans_bold_ja.is_none() {
+                        state.sans_bold_ja = Some(Font::sans_bold_ja());
                     }
-                    return state.bold_ja.as_ref().unwrap();
+                    return state.sans_bold_ja.as_ref().unwrap();
                 },
             }
         }
     }
 
-    match kind {
-        FontKind::Regular => state.regular.as_ref().unwrap(),
-        FontKind::Bold => state.bold.as_ref().unwrap(),
-        FontKind::Italic => state.italic.as_ref().unwrap(),
-    }
+    state.get_font_by_kind(kind)
 }
 
 /// Called by the `sizeWithFont:` method family on `NSString`.
@@ -329,4 +435,71 @@ pub fn draw_in_rect(
     );
 
     text_size
+}
+
+fn get_equivalent_font(system_font: &str) -> Option<FontKind> {
+    // Maps every font found in every font family in an iOS 2 Simulator
+    match system_font {
+        // Font Family: Courier
+        "Courier" => None,
+        "Courier-BoldOblique" => None,
+        "Courier-Oblique" => None,
+        "Courier-Bold" => None,
+        // Font Family: AppleGothic
+        "AppleGothic" => None,
+        // Font Family: Arial
+        "ArialMT" => Some(FontKind::SansRegular),
+        "Arial-BoldMT" => Some(FontKind::SansBold),
+        "Arial-BoldItalicMT" => Some(FontKind::SansBoldItalic),
+        "Arial-ItalicMT" => Some(FontKind::SansItalic),
+        // Font Family: STHeiti TC
+        "STHeitiTC-Light" => None,
+        "STHeitiTC-Medium" => None,
+        // Font Family: Hiragino Kaku Gothic ProN
+        "HiraKakuProN-W6" => None,
+        "HiraKakuProN-W3" => None,
+        // Font Family: Courier New
+        "CourierNewPS-BoldMT" => Some(FontKind::MonoRegular),
+        "CourierNewPS-ItalicMT" => Some(FontKind::MonoBold),
+        "CourierNewPS-BoldItalicMT" => Some(FontKind::MonoBoldItalic),
+        "CourierNewPSMT" => Some(FontKind::MonoItalic),
+        // Font Family: Zapfino
+        "Zapfino" => None,
+        // Font Family: Arial Unicode MS
+        "ArialUnicodeMS" => None,
+        // Font Family: STHeiti SC
+        "STHeitiSC-Medium" => None,
+        "STHeitiSC-Light" => None,
+        // Font Family: American Typewriter
+        "AmericanTypewriter" => Some(FontKind::MonoRegular),
+        "AmericanTypewriter-Bold" => Some(FontKind::MonoBold),
+        // Font Family: Helvetica
+        "Helvetica-Oblique" => None,
+        "Helvetica-BoldOblique" => None,
+        "Helvetica" => None,
+        "Helvetica-Bold" => None,
+        // Font Family: Marker Felt
+        "MarkerFelt-Thin" => None,
+        // Font Family: Helvetica Neue
+        "HelveticaNeue" => None,
+        "HelveticaNeue-Bold" => None,
+        // Font Family: DB LCD Temp
+        "DBLCDTempBlack" => None,
+        // Font Family: Verdana
+        "Verdana-Bold" => None,
+        "Verdana-BoldItalic" => None,
+        "Verdana" => None,
+        "Verdana-Italic" => None,
+        // Font Family: Times New Roman
+        "TimesNewRomanPSMT" => Some(FontKind::SerifRegular),
+        "TimesNewRomanPS-BoldMT" => Some(FontKind::SerifBold),
+        "TimesNewRomanPS-BoldItalicMT" => Some(FontKind::SerifBoldItalic),
+        "TimesNewRomanPS-ItalicMT" => Some(FontKind::SerifItalic),
+        // Font Family: Georgia
+        "Georgia-Bold" => None,
+        "Georgia" => None,
+        "Georgia-BoldItalic" => None,
+        "Georgia-Italic" => None,
+        _ => None,
+    }
 }

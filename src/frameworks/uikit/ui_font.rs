@@ -9,30 +9,23 @@ use super::ui_graphics::UIGraphicsGetCurrentContext;
 use crate::font::{Font, TextAlignment, WrapMode};
 use crate::frameworks::core_graphics::cg_bitmap_context::CGBitmapContextDrawer;
 use crate::frameworks::core_graphics::{CGFloat, CGPoint, CGRect, CGSize};
+use crate::frameworks::foundation::ns_string::to_rust_string;
 use crate::frameworks::foundation::NSInteger;
 use crate::objc::{autorelease, id, objc_classes, ClassExports, HostObject};
 use crate::Environment;
+use std::collections::HashMap;
 use std::ops::Range;
 
 #[derive(Default)]
 pub(super) struct State {
-    regular: Option<Font>,
-    bold: Option<Font>,
-    italic: Option<Font>,
+    fonts: HashMap<String, Font>,
     regular_ja: Option<Font>,
     bold_ja: Option<Font>,
 }
 
-#[derive(Copy, Clone)]
-enum FontKind {
-    Regular,
-    Bold,
-    Italic,
-}
-
 struct UIFontHostObject {
+    font_name: String,
     size: CGFloat,
-    kind: FontKind,
 }
 impl HostObject for UIFontHostObject {}
 
@@ -67,37 +60,34 @@ pub const CLASSES: ClassExports = objc_classes! {
 @implementation UIFont: NSObject
 
 + (id)systemFontOfSize:(CGFloat)size {
+    let font_name = String::from("LiberationSans-Regular.ttf");
     // Cache for later use
-    if env.framework_state.uikit.ui_font.regular.is_none() {
-        env.framework_state.uikit.ui_font.regular = Some(Font::sans_regular());
-    }
+    env.framework_state.uikit.ui_font.fonts.entry(font_name.to_owned()).or_insert_with(|| Font::from_resource_file(&font_name));
     let host_object = UIFontHostObject {
+        font_name,
         size,
-        kind: FontKind::Regular,
     };
     let new = env.objc.alloc_object(this, Box::new(host_object), &mut env.mem);
     autorelease(env, new)
 }
 + (id)boldSystemFontOfSize:(CGFloat)size {
+    let font_name = String::from("LiberationSans-Bold.ttf");
     // Cache for later use
-    if env.framework_state.uikit.ui_font.bold.is_none() {
-        env.framework_state.uikit.ui_font.bold = Some(Font::sans_bold());
-    }
+    env.framework_state.uikit.ui_font.fonts.entry(font_name.to_owned()).or_insert_with(|| Font::from_resource_file(&font_name));
     let host_object = UIFontHostObject {
+        font_name,
         size,
-        kind: FontKind::Bold,
     };
     let new = env.objc.alloc_object(this, Box::new(host_object), &mut env.mem);
     autorelease(env, new)
 }
 + (id)italicSystemFontOfSize:(CGFloat)size {
+    let font_name = String::from("LiberationSans-Italic.ttf");
     // Cache for later use
-    if env.framework_state.uikit.ui_font.italic.is_none() {
-        env.framework_state.uikit.ui_font.italic = Some(Font::sans_italic());
-    }
+    env.framework_state.uikit.ui_font.fonts.entry(font_name.to_owned()).or_insert_with(|| Font::from_resource_file(&font_name));
     let host_object = UIFontHostObject {
+        font_name,
         size,
-        kind: FontKind::Italic,
     };
     let new = env.objc.alloc_object(this, Box::new(host_object), &mut env.mem);
     autorelease(env, new)
@@ -119,7 +109,7 @@ fn convert_line_break_mode(ui_mode: UILineBreakMode) -> WrapMode {
 }
 
 #[rustfmt::skip]
-fn get_font<'a>(state: &'a mut State, kind: FontKind, text: &str) -> &'a Font {
+fn get_font<'a>(state: &'a mut State, font_name: &str, text: &str) -> &'a Font {
     // The default fonts (see font.rs) are the Liberation family, which are a
     // good substitute for Helvetica, the iPhone OS system font. Unfortunately,
     // there is no CJK support in these fonts. To support Super Monkey Ball in
@@ -132,29 +122,21 @@ fn get_font<'a>(state: &'a mut State, kind: FontKind, text: &str) -> &'a Font {
            (0xFF00..=0xFFEF).contains(&c) || // full-width/half-width chars
            (0x4e00..=0x9FA0).contains(&c) || // various kanji
            (0x3400..=0x4DBF).contains(&c) { // more kanji
-            match kind {
-                // CJK has no italic equivalent
-                FontKind::Regular | FontKind::Italic => {
-                    if state.regular_ja.is_none() {
-                        state.regular_ja = Some(Font::sans_regular_ja());
-                    }
-                    return state.regular_ja.as_ref().unwrap();
-                },
-                FontKind::Bold => {
-                    if state.bold_ja.is_none() {
-                        state.bold_ja = Some(Font::sans_bold_ja());
-                    }
-                    return state.bold_ja.as_ref().unwrap();
-                },
+            if font_name.contains("Bold") {
+                if state.bold_ja.is_none() {
+                    state.bold_ja = Some(Font::sans_bold_ja());
+                }
+                return state.bold_ja.as_ref().unwrap();
+            } else {
+                if state.regular_ja.is_none() {
+                    state.regular_ja = Some(Font::sans_regular_ja());
+                }
+                return state.regular_ja.as_ref().unwrap();
             }
         }
     }
 
-    match kind {
-        FontKind::Regular => state.regular.as_ref().unwrap(),
-        FontKind::Bold => state.bold.as_ref().unwrap(),
-        FontKind::Italic => state.italic.as_ref().unwrap(),
-    }
+    state.fonts.get(font_name).unwrap()
 }
 
 /// Called by the `sizeWithFont:` method family on `NSString`.
@@ -168,7 +150,7 @@ pub fn size_with_font(
 
     let font = get_font(
         &mut env.framework_state.uikit.ui_font,
-        host_object.kind,
+        &host_object.font_name,
         text,
     );
 
@@ -247,7 +229,7 @@ pub fn draw_at_point(
 
     let font = get_font(
         &mut env.framework_state.uikit.ui_font,
-        host_object.kind,
+        &host_object.font_name,
         text,
     );
 
@@ -297,7 +279,7 @@ pub fn draw_in_rect(
 
     let font = get_font(
         &mut env.framework_state.uikit.ui_font,
-        host_object.kind,
+        &host_object.font_name,
         text,
     );
 

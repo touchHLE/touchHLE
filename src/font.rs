@@ -67,7 +67,7 @@ impl RasterGlyph<'_> {
 }
 
 impl Font {
-    fn from_resource_file(filename: &str) -> Font {
+    pub fn from_resource_file(filename: &str) -> Font {
         let mut bytes = Vec::new();
         let path = format!("{}/{}", paths::FONTS_DIR, filename);
         if let Err(e) = paths::ResourceFile::open(&path)
@@ -86,15 +86,6 @@ impl Font {
         Font { font }
     }
 
-    pub fn sans_regular() -> Font {
-        Self::from_resource_file("LiberationSans-Regular.ttf")
-    }
-    pub fn sans_bold() -> Font {
-        Self::from_resource_file("LiberationSans-Bold.ttf")
-    }
-    pub fn sans_italic() -> Font {
-        Self::from_resource_file("LiberationSans-Italic.ttf")
-    }
     pub fn sans_regular_ja() -> Font {
         Self::from_resource_file("NotoSansJP-Regular.otf")
     }

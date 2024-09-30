@@ -92,6 +92,24 @@ pub const CLASSES: ClassExports = objc_classes! {
     let new = env.objc.alloc_object(this, Box::new(host_object), &mut env.mem);
     autorelease(env, new)
 }
++ (id)fontWithName:(id)fontName // NSString*
+            size:(CGFloat)fontSize {
+    let font_name = to_rust_string(env, fontName).to_string();
+    // Cache for later use
+    env.framework_state.uikit.ui_font.fonts.entry(font_name.to_owned()).or_insert_with(|| {
+        let font_file = get_equivalent_font(&font_name).unwrap_or_else(|| {
+            log!("No replacement found for font {}. Falling back to LiberationSans-Regular.ttf", font_name);
+            "LiberationSans-Regular.ttf"
+        });
+        Font::from_resource_file(font_file)
+    });
+    let host_object = UIFontHostObject {
+        font_name,
+        size: fontSize,
+    };
+    let new = env.objc.alloc_object(this, Box::new(host_object), &mut env.mem);
+    autorelease(env, new)
+}
 
 @end
 

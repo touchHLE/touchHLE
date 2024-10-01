@@ -16,6 +16,24 @@
       "message": "Do you want to add `mutableCopyWithZone:` here while you\u0027re at it?",
       "revId": "0e14c4f3f6e76699255478b0607637fab5954995",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "4ab1ae33_1f3caefa",
+        "filename": "src/frameworks/foundation/ns_dictionary.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 346,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-10-01T21:59:28Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "dadf7ff7_af7699c4",
+      "revId": "0e14c4f3f6e76699255478b0607637fab5954995",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

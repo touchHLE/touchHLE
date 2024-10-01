@@ -489,7 +489,10 @@ impl Environment {
         )
     }
 
-    fn stack_trace(&self) {
+    /// Get a stack trace for the current running thread, and dump to the log
+    /// output.
+    #[allow(unused)]
+    fn stack_trace_current(&self) {
         if self.current_thread == 0 {
             echo!("Attempting to produce stack trace for main thread:");
         } else {
@@ -499,19 +502,32 @@ impl Environment {
             );
         }
         let stack_range = self.threads[self.current_thread].stack.clone().unwrap();
-        echo!(
-            " 0. {:#x} (PC)",
-            self.cpu.pc_with_thumb_bit().addr_with_thumb_bit()
-        );
         let regs = self.cpu.regs();
+        self.stack_trace_inner(stack_range, regs);
+    }
+
+    /// Get a stack trace for all running threads, and dump to the log output.
+    fn stack_trace_all(&self) {
+        for (n, thread) in self.threads.iter().enumerate() {
+            if thread.active {
+                echo!("Stack trace for thread {}", n);
+                let stack_range = self.threads[n].stack.clone().unwrap();
+                let regs = if n == self.current_thread {
+                    self.cpu.regs()
+                } else {
+                    &thread.context.as_ref().unwrap().regs
+                };
+                self.stack_trace_inner(stack_range, regs);
+            }
+        }
+    }
+
+    fn stack_trace_inner(&self, stack_range: std::ops::RangeInclusive<u32>, regs: &[u32; 16]) {
+        echo!(" 0. {:#x} (PC)", regs[cpu::Cpu::PC]);
         let mut lr = regs[cpu::Cpu::LR];
         let return_to_host_routine_addr = self.dyld.return_to_host_routine().addr_with_thumb_bit();
-        let thread_exit_routine_addr = self.dyld.thread_exit_routine().addr_with_thumb_bit();
         if lr == return_to_host_routine_addr {
             echo!(" 1. [host function] (LR)");
-        } else if lr == thread_exit_routine_addr {
-            echo!(" 1. [thread exit] (LR)");
-            return;
         } else {
             echo!(" 1. {:#x} (LR)", lr);
         }
@@ -526,13 +542,22 @@ impl Environment {
             fp = self.mem.read(fp.cast());
             if lr == return_to_host_routine_addr {
                 echo!("{:2}. [host function]", i);
-            } else if lr == thread_exit_routine_addr {
-                echo!("{:2}. [thread exit]", i);
-                return;
             } else {
                 echo!("{:2}. {:#x}", i, lr);
             }
             i += 1;
+        }
+    }
+
+    fn dump_regs_all(&self) {
+        for (n, thread) in self.threads.iter().enumerate() {
+            echo!("Registers for thread {}", n);
+            let regs = if n == self.current_thread {
+                self.cpu.regs()
+            } else {
+                &thread.context.as_ref().unwrap().regs
+            };
+            crate::cpu::Cpu::dump_regs(regs);
         }
     }
 
@@ -726,8 +751,8 @@ impl Environment {
         let res = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| self.run_inner(true)));
         if let Err(e) = res {
             echo!("Register state immediately after panic:");
-            self.cpu.dump_regs();
-            self.stack_trace();
+            self.dump_regs_all();
+            self.stack_trace_all();
             std::panic::resume_unwind(e);
         }
     }
@@ -804,7 +829,7 @@ impl Environment {
     pub fn enter_debugger(&mut self, reason: Option<cpu::CpuError>) -> bool {
         // GDB doesn't seem to manage to produce a useful stack trace, so
         // let's print our own.
-        self.stack_trace();
+        self.stack_trace_all();
         self.gdb_server
             .as_mut()
             .unwrap()

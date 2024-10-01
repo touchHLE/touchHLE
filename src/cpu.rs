@@ -184,8 +184,14 @@ impl Cpu {
         }
     }
 
-    pub fn dump_regs(&self) {
-        let regs = self.regs();
+    /// Dump registers to the log output with the currently active registers.
+    #[allow(unused)]
+    pub fn dump_current_regs(&self) {
+        Self::dump_regs(self.regs());
+    }
+
+    /// Dump registers to the log output using the registers passed in.
+    pub fn dump_regs(regs: &[u32; 16]) {
         for row in 0..4 {
             use std::fmt::Write;
             let mut line = String::new();

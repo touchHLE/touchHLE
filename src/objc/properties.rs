@@ -21,9 +21,15 @@ use crate::mem::{
 };
 use crate::Environment;
 
+pub struct IVar {
+    type_: String,
+    offset: GuestUSize,
+}
+
 /// The layout of a property list in an app binary.
 ///
 /// The name, field names and field layout are based on what Ghidra outputs.
+#[allow(non_camel_case_types)]
 #[repr(C, packed)]
 pub(super) struct ivar_list_t {
     entsize: GuestUSize,
@@ -35,6 +41,7 @@ unsafe impl SafeRead for ivar_list_t {}
 /// The layout of a property in an app binary.
 ///
 /// The name, field names and field layout are based on what Ghidra outputs.
+#[allow(non_camel_case_types)]
 #[repr(C, packed)]
 struct ivar_t {
     offset: ConstPtr<GuestUSize>,
@@ -59,28 +66,30 @@ impl ClassHostObject {
             let ivar_t {
                 offset,
                 name,
-                type_: _,
+                type_,
                 // TODO: Use these values when shifting offsets
                 alignment: _,
                 size: _,
             } = mem.read(ivar_ptr);
 
             let name_string = mem.cstr_at_utf8(name).unwrap().into();
-            self.ivars.insert(name_string, offset);
+            let type_ = mem.cstr_at_utf8(type_).unwrap().into();
+            let offset = mem.read(offset);
+            self.ivars.insert(name_string, IVar { type_, offset });
         }
     }
 }
 
 impl ObjC {
     /// Checks if the object's class has an ivar in its class chain with the
-    /// provided name and returns the pointer to the object's ivar, if any,
-    /// or None if the object's class doesn't have an ivar with that name.
+    /// provided name and returns the pointer to the object's ivar and its type
+    /// if any or None if the object's class has no ivar with that name.
     pub fn object_lookup_ivar(
         &self,
         mem: &Mem,
         obj: id,
         name: &String,
-    ) -> Option<MutPtr<GuestUSize>> {
+    ) -> Option<(MutPtr<GuestUSize>, &str)> {
         let mut class = ObjC::read_isa(obj, mem);
         loop {
             let &ClassHostObject {
@@ -88,10 +97,9 @@ impl ObjC {
                 ref ivars,
                 ..
             } = self.borrow(class);
-            if let Some(ivar_offset_ptr) = ivars.get(name) {
-                let ivar_offset = mem.read(*ivar_offset_ptr);
-                let ivar_ptr = MutVoidPtr::from_bits(obj.to_bits() + ivar_offset);
-                return Some(ivar_ptr.cast());
+            if let Some(ivar) = ivars.get(name) {
+                let ivar_ptr = MutVoidPtr::from_bits(obj.to_bits() + ivar.offset);
+                return Some((ivar_ptr.cast(), &ivar.type_));
             } else if superclass == nil {
                 return None;
             } else {

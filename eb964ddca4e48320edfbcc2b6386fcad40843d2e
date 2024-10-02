@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4aaae408_3bb6e631",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 6
+      },
+      "lineNbr": 723,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-10-02T10:44:28Z",
+      "side": 1,
+      "message": "not sure about this part. previous it will return an auto released string which was retained, and now you just return self?",
+      "revId": "eb964ddca4e48320edfbcc2b6386fcad40843d2e",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

@@ -16,6 +16,24 @@
       "message": "please use snake_case for arguments",
       "revId": "df5ba893fb03fc65884277315aa5e85f07ea0a98",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2762fd15_6ebca001",
+        "filename": "src/frameworks/foundation/ns_array.rs",
+        "patchSetId": 6
+      },
+      "lineNbr": 166,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-10-02T17:52:22Z",
+      "side": 1,
+      "message": "for selector arguments too? i usually see them them use the same formatting as in Obj C",
+      "parentUuid": "d2b3752d_aa944a8c",
+      "revId": "df5ba893fb03fc65884277315aa5e85f07ea0a98",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

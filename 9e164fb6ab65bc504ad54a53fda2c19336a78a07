@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "11726a08_8e4c9c0b",
+        "filename": "vendor/dr_libs",
+        "patchSetId": 6
+      },
+      "lineNbr": 1,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-10-02T10:45:31Z",
+      "side": 1,
+      "message": "I think this part is committed by mistake?",
+      "revId": "9e164fb6ab65bc504ad54a53fda2c19336a78a07",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

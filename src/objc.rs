@@ -56,6 +56,58 @@ use synchronization::{objc_sync_enter, objc_sync_exit};
 /// [fossil type]: https://en.wiktionary.org/wiki/fossil_word
 pub type NSZonePtr = crate::mem::MutVoidPtr;
 
+pub const TYPE_ID: char = '@';
+pub const TYPE_CLASS: char = '#';
+pub const TYPE_SEL: char = ':';
+pub const TYPE_CHAR: char = 'c';
+pub const TYPE_UCHAR: char = 'C';
+pub const TYPE_SHORT: char = 's';
+pub const TYPE_USHORT: char = 'S';
+pub const TYPE_INT: char = 'i';
+pub const TYPE_UINT: char = 'I';
+pub const TYPE_LONG: char = 'l';
+pub const TYPE_ULONG: char = 'L';
+pub const TYPE_LONGLONG: char = 'q';
+pub const TYPE_ULONGLONG: char = 'Q';
+pub const TYPE_FLOAT: char = 'f';
+pub const TYPE_DOUBLE: char = 'd';
+#[allow(unused)]
+pub const TYPE_BITFIELD: char = 'b';
+pub const TYPE_BOOL: char = 'B';
+pub const TYPE_VOID: char = 'v';
+pub const TYPE_UNDEF: char = '?';
+#[allow(unused)]
+pub const TYPE_PTR: char = '^';
+#[allow(unused)]
+pub const TYPE_CHAR_PTR: char = '*';
+#[allow(unused)]
+pub const TYPE_ARRAY_OPEN: char = '[';
+#[allow(unused)]
+pub const TYPE_ARRAY_CLOSE: char = ']';
+#[allow(unused)]
+pub const TYPE_UNION_OPEN: char = '(';
+#[allow(unused)]
+pub const TYPE_UNION_CLOSE: char = ')';
+#[allow(unused)]
+pub const TYPE_STRUCT_OPEN: char = '{';
+#[allow(unused)]
+pub const TYPE_STRUCT_CLOSE: char = '}';
+
+#[allow(unused)]
+pub const METHOD_ENCODING_CONST: char = 'r';
+#[allow(unused)]
+pub const METHOD_ENCODING_IN: char = 'n';
+#[allow(unused)]
+pub const METHOD_ENCODING_INOUT: char = 'N';
+#[allow(unused)]
+pub const METHOD_ENCODING_OUT: char = 'o';
+#[allow(unused)]
+pub const METHOD_ENCODING_BYCOPY: char = 'O';
+#[allow(unused)]
+pub const METHOD_ENCODING_BYREF: char = 'R';
+#[allow(unused)]
+pub const METHOD_ENCODING_ONEWAY: char = 'V';
+
 /// Main type holding Objective-C runtime state.
 pub struct ObjC {
     /// Known selectors (interned method name strings).

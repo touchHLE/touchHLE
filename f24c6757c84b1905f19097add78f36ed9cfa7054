@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2a003535_a065b8c3",
+        "filename": "src/frameworks/foundation/ns_array.rs",
+        "patchSetId": 6
+      },
+      "lineNbr": 225,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-10-02T15:50:33Z",
+      "side": 1,
+      "message": "you forgot to retain each object",
+      "revId": "f24c6757c84b1905f19097add78f36ed9cfa7054",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

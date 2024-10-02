@@ -209,7 +209,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     let sel = env.objc.lookup_selector("accessInstanceVariablesDirectly").unwrap();
     let accessInstanceVariablesDirectly = msg_send(env, (class, sel));
     if accessInstanceVariablesDirectly {
-        if let Some(ivar_ptr) = env.objc.object_lookup_ivar(&env.mem, this, &format!("_{key_string}"))
+        if let Some((ivar_ptr, ivar_type)) = env.objc.object_lookup_ivar(&env.mem, this, &format!("_{key_string}"))
             .or_else(|| env.objc.object_lookup_ivar(&env.mem, this, &format!("_is{camel_case_key_string}")))
             .or_else(|| env.objc.object_lookup_ivar(&env.mem, this, &format!("{key_string}")))
             .or_else(|| env.objc.object_lookup_ivar(&env.mem, this, &format!("is{camel_case_key_string}"))

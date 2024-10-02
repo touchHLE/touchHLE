@@ -16,6 +16,24 @@
       "message": "I think this part is committed by mistake?",
       "revId": "9e164fb6ab65bc504ad54a53fda2c19336a78a07",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "eafef187_a4069d10",
+        "filename": "vendor/dr_libs",
+        "patchSetId": 6
+      },
+      "lineNbr": 1,
+      "author": {
+        "id": 1021823
+      },
+      "writtenOn": "2024-10-02T19:37:19Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "11726a08_8e4c9c0b",
+      "revId": "9e164fb6ab65bc504ad54a53fda2c19336a78a07",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

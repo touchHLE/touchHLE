@@ -21,6 +21,12 @@ use crate::mem::{
 };
 use crate::Environment;
 
+pub struct IVar {
+    pub type_: String,
+    pub offset: ConstPtr<GuestUSize>,
+    pub alignment: u32,
+}
+
 /// The layout of a property list in an app binary.
 ///
 /// The name, field names and field layout are based on what Ghidra outputs.
@@ -60,25 +66,34 @@ impl ClassHostObject {
                 offset,
                 name,
                 alignment,
+                type_,
                 ..
             } = mem.read(ivar_ptr);
 
             let name_string = mem.cstr_at_utf8(name).unwrap().into();
-            self.ivars.insert(name_string, (offset, alignment));
+            let type_ = mem.cstr_at_utf8(type_).unwrap().into();
+            self.ivars.insert(
+                name_string,
+                IVar {
+                    type_,
+                    offset,
+                    alignment,
+                },
+            );
         }
     }
 }
 
 impl ObjC {
     /// Checks if the object's class has an ivar in its class chain with the
-    /// provided name and returns the pointer to the object's ivar, if any,
-    /// or None if the object's class doesn't have an ivar with that name.
+    /// provided name and returns the pointer to the object's ivar and its type
+    /// if any or None if the object's class has no ivar with that name.
     pub fn object_lookup_ivar(
         &self,
         mem: &Mem,
         obj: id,
         name: &String,
-    ) -> Option<MutPtr<GuestUSize>> {
+    ) -> Option<(MutPtr<GuestUSize>, &str)> {
         let mut class = ObjC::read_isa(obj, mem);
         loop {
             let &ClassHostObject {
@@ -86,10 +101,10 @@ impl ObjC {
                 ref ivars,
                 ..
             } = self.borrow(class);
-            if let Some((ivar_offset_ptr, _)) = ivars.get(name) {
-                let ivar_offset = mem.read(*ivar_offset_ptr);
+            if let Some(ivar) = ivars.get(name) {
+                let ivar_offset = mem.read(ivar.offset);
                 let ivar_ptr = MutVoidPtr::from_bits(obj.to_bits() + ivar_offset);
-                return Some(ivar_ptr.cast());
+                return Some((ivar_ptr.cast(), &ivar.type_));
             } else if superclass == nil {
                 return None;
             } else {

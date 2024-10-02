@@ -10,6 +10,7 @@
 //! Resources:
 //! - [[objc explain]: Classes and metaclasses](http://www.sealiesoftware.com/blog/archive/2009/04/14/objc_explain_Classes_and_metaclasses.html), especially [the PDF diagram](http://www.sealiesoftware.com/blog/class%20diagram.pdf)
 
+use super::methods::Method;
 use super::properties::IVar;
 use super::{
     id, ivar_list_t, method_list_t, nil, objc_object, AnyHostObject, HostIMP, HostObject, ObjC,
@@ -39,7 +40,7 @@ pub(super) struct ClassHostObject {
     pub(super) name: String,
     pub(super) is_metaclass: bool,
     pub(super) superclass: Class,
-    pub(super) methods: HashMap<SEL, IMP>,
+    pub(super) methods: HashMap<SEL, Method>,
     pub(super) guest_method_signatures: HashMap<SEL, ConstPtr<u8>>,
     pub(super) ivars: HashMap<String, IVar>,
     /// Offset into the allocated memory for the object where the ivars of
@@ -385,7 +386,13 @@ impl ClassHostObject {
                     // The selector should already have been registered by
                     // [ObjC::register_host_selectors], so we can panic
                     // if it hasn't been.
-                    (objc.selectors[name], IMP::Host(host_imp))
+                    (
+                        objc.selectors[name],
+                        Method {
+                            types: host_imp.types_string(),
+                            imp: IMP::Host(host_imp),
+                        },
+                    )
                 }),
             ),
             guest_method_signatures: HashMap::default(),
@@ -1075,19 +1082,21 @@ pub(super) fn class_replaceMethod(
             imp,
             name.as_str(&env.mem)
         );
-        e.insert(imp);
+        let types = env.mem.cstr_at_utf8(types).unwrap().to_owned();
+        e.insert(Method { types, imp });
         guest_method_signatures.insert(name, types_copy);
         return IMP::guest_null();
     }
     env.mem.free(types_copy.cast().cast_mut());
     // TODO: use `method_setImplementation` once implemented
     // Note: encoding types are ignored
-    let existing = methods.insert(name, imp.clone()).unwrap();
+    let method = methods.get_mut(&name).unwrap();
+    let existing = std::mem::replace(&mut method.imp, imp);
     assert!(matches!(existing, IMP::Guest(_))); // TODO
     log_dbg!(
         "class_replaceMethod: existing {:?} replaced with {:?} for method {}",
         existing,
-        imp,
+        method.imp,
         name.as_str(&env.mem)
     );
     existing
@@ -1105,9 +1114,9 @@ pub(super) fn class_getMethodImplementation(env: &mut Environment, cls: Class, n
             ..
         } = env.objc.borrow(class);
         if methods.contains_key(&name) {
-            let method = methods.get(&name).unwrap().clone();
-            assert!(matches!(method, IMP::Guest(_))); // TODO
-            return method;
+            let method = methods.get(&name).unwrap();
+            assert!(matches!(method.imp, IMP::Guest(_))); // TODO
+            return method.imp.clone();
         } else if next == nil {
             // TODO: currently this returns NULL for unimplemented host methods
             return IMP::guest_null();

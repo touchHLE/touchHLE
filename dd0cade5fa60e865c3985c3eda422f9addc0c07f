@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f52e7b8b_6c934d09",
+        "filename": "src/frameworks/foundation/ns_array.rs",
+        "patchSetId": 7
+      },
+      "lineNbr": 219,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-10-02T18:02:07Z",
+      "side": 1,
+      "message": "on the second read, maybe an enumerator is an over kill here.\n\ncould you try to copy inner array and just retain objects in that copy in the loop?",
+      "revId": "dd0cade5fa60e865c3985c3eda422f9addc0c07f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

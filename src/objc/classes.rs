@@ -13,6 +13,7 @@
 mod class_lists;
 pub(super) use class_lists::CLASS_LISTS;
 
+use super::properties::IVar;
 use super::{
     id, ivar_list_t, method_list_t, nil, objc_object, AnyHostObject, HostIMP, HostObject, ObjC,
     IMP, SEL,
@@ -39,7 +40,7 @@ pub(super) struct ClassHostObject {
     pub(super) is_metaclass: bool,
     pub(super) superclass: Class,
     pub(super) methods: HashMap<SEL, IMP>,
-    pub(super) ivars: HashMap<String, ConstPtr<GuestUSize>>,
+    pub(super) ivars: HashMap<String, IVar>,
     /// Offset into the allocated memory for the object where the ivars of
     /// instances of this class or metaclass (respectively: normal objects or
     /// classes) should live. This is always >= the value in the superclass.
@@ -75,7 +76,7 @@ impl HostObject for FakeClass {}
 ///
 /// The name, field names and field layout are based on what Ghidra outputs.
 #[repr(C, packed)]
-#[allow(dead_code)]
+#[allow(dead_code, non_camel_case_types)]
 struct class_t {
     isa: Class, // note that this matches objc_object
     superclass: Class,
@@ -89,7 +90,7 @@ unsafe impl SafeRead for class_t {}
 ///
 /// The name, field names and field layout are based on what Ghidra's output.
 #[repr(C, packed)]
-#[allow(dead_code)]
+#[allow(dead_code, non_camel_case_types)]
 struct class_rw_t {
     _flags: u32,
     instance_start: GuestUSize,
@@ -108,6 +109,7 @@ unsafe impl SafeRead for class_rw_t {}
 ///
 /// The name, field names and field layout are based on what Ghidra outputs.
 #[repr(C, packed)]
+#[allow(non_camel_case_types)]
 struct category_t {
     name: ConstPtr<u8>,
     class: Class,

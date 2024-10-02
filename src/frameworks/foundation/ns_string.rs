@@ -288,6 +288,11 @@ pub const CLASSES: ClassExports = objc_classes! {
     autorelease(env, new)
 }
 
++ (id)stringWithContentsOfFile:(id)path { // NSString*
+    let new: id = msg![env; this alloc];
+    msg![env; new initWithContentsOfFile:path]
+}
+
 + (id)stringWithContentsOfFile:(id)path // NSString*
                       encoding:(NSStringEncoding)encoding
                          error:(MutPtr<id>)error { // NSError**
@@ -1196,6 +1201,26 @@ pub const CLASSES: ClassExports = objc_classes! {
     assert!(C_STRING_FRIENDLY_ENCODINGS.contains(&encoding));
     let len: NSUInteger = env.mem.cstr_at(c_string).len().try_into().unwrap();
     msg![env; this initWithBytes:c_string length:len encoding:encoding]
+}
+
+- (id)initWithContentsOfFile:(id)path { // NSString*
+    // TODO: avoid copy?
+    let path = to_rust_string(env, path);
+    let Ok(bytes) = env.fs.read(GuestPath::new(&path)) else {
+        return nil;
+    };
+
+    let encoding = if bytes[..2] == [0xFE, 0xFF] || bytes[..2] == [0xFF, 0xFE] {
+        NSUTF16StringEncoding
+    } else {
+        msg_class![env; NSString defaultCStringEncoding]
+    };
+
+    let host_object = StringHostObject::decode(Cow::Owned(bytes), encoding);
+
+    *env.objc.borrow_mut(this) = host_object;
+
+    this
 }
 
 - (id)initWithContentsOfFile:(id)path // NSString*

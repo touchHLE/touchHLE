@@ -13,6 +13,7 @@
 mod class_lists;
 pub(super) use class_lists::CLASS_LISTS;
 
+use super::methods::Method;
 use super::properties::IVar;
 use super::{
     id, ivar_list_t, method_list_t, nil, objc_object, AnyHostObject, HostIMP, HostObject, ObjC,
@@ -39,7 +40,7 @@ pub(super) struct ClassHostObject {
     pub(super) name: String,
     pub(super) is_metaclass: bool,
     pub(super) superclass: Class,
-    pub(super) methods: HashMap<SEL, IMP>,
+    pub(super) methods: HashMap<SEL, Method>,
     pub(super) ivars: HashMap<String, IVar>,
     /// Offset into the allocated memory for the object where the ivars of
     /// instances of this class or metaclass (respectively: normal objects or
@@ -360,7 +361,13 @@ impl ClassHostObject {
                     // The selector should already have been registered by
                     // [ObjC::register_host_selectors], so we can panic
                     // if it hasn't been.
-                    (objc.selectors[name], IMP::Host(host_imp))
+                    (
+                        objc.selectors[name],
+                        Method {
+                            types: host_imp.types_string(),
+                            imp: IMP::Host(host_imp),
+                        },
+                    )
                 }),
             ),
             // maybe this should be 0 for NSObject? does it matter?

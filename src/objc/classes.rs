@@ -10,6 +10,7 @@
 //! Resources:
 //! - [[objc explain]: Classes and metaclasses](http://www.sealiesoftware.com/blog/archive/2009/04/14/objc_explain_Classes_and_metaclasses.html), especially [the PDF diagram](http://www.sealiesoftware.com/blog/class%20diagram.pdf)
 
+use super::methods::Method;
 use super::properties::IVar;
 use super::{
     id, ivar_list_t, method_list_t, nil, objc_object, AnyHostObject, HostIMP, HostObject, ObjC,
@@ -37,7 +38,7 @@ pub(super) struct ClassHostObject {
     pub(super) name: String,
     pub(super) is_metaclass: bool,
     pub(super) superclass: Class,
-    pub(super) methods: HashMap<SEL, IMP>,
+    pub(super) methods: HashMap<SEL, Method>,
     pub(super) guest_method_signatures: HashMap<SEL, ConstPtr<u8>>,
     pub(super) ivars: HashMap<String, IVar>,
     /// Offset into the allocated memory for the object where the ivars of
@@ -383,7 +384,13 @@ impl ClassHostObject {
                     // The selector should already have been registered by
                     // [ObjC::register_host_selectors], so we can panic
                     // if it hasn't been.
-                    (objc.selectors[name], IMP::Host(host_imp))
+                    (
+                        objc.selectors[name],
+                        Method {
+                            types: host_imp.types_string(),
+                            imp: IMP::Host(host_imp),
+                        },
+                    )
                 }),
             ),
             guest_method_signatures: HashMap::default(),

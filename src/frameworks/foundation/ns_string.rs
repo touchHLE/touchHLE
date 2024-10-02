@@ -305,6 +305,13 @@ pub const CLASSES: ClassExports = objc_classes! {
     autorelease(env, res)
 }
 
++ (NSStringEncoding)defaultCStringEncoding {
+    // I don't want to figure out what that is on all platforms, and the use
+    // I've seen of this method was on ASCII strings, so let's just hardcode
+    // UTF-8 and hope that works.
+    NSUTF8StringEncoding
+}
+
 // These are the two methods that have to be overridden by subclasses, so these
 // implementations don't have to care about foreign subclasses.
 - (NSUInteger)length {
@@ -595,17 +602,13 @@ pub const CLASSES: ClassExports = objc_classes! {
     true
 }
 - (())getCString:(MutPtr<u8>)buffer {
-    // This is a deprecated method nobody should use, but unfortunately, it is
-    // used. The encoding it should use is [NSString defaultCStringEncoding]
-    // but I don't want to figure out what that is on all platforms, and the use
-    // I've seen of this method was on ASCII strings, so let's just hardcode
-    // UTF-8 and hope that works.
+    let encoding: NSStringEncoding = msg_class![env; NSString defaultCStringEncoding];
 
     // Prevent slice out-of-range error
     let length = (u32::MAX - buffer.to_bits()).min(NSMaximumStringLength);
     let res: bool = msg![env; this getCString:buffer
                                     maxLength:length
-                                     encoding:NSUTF8StringEncoding];
+                                     encoding:encoding];
     assert!(res);
 }
 
@@ -1185,12 +1188,8 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (id)initWithCString:(ConstPtr<u8>)c_string {
-    // This is a deprecated method nobody should use, but unfortunately, it is
-    // used. The encoding it should use is [NSString defaultCStringEncoding]
-    // but I don't want to figure out what that is on all platforms, and the use
-    // I've seen of this method was on ASCII strings, so let's just hardcode
-    // UTF-8 and hope that works.
-    msg![env; this initWithCString:c_string encoding:NSUTF8StringEncoding]
+    let encoding: NSStringEncoding = msg_class![env; NSString defaultCStringEncoding];
+    msg![env; this initWithCString:c_string encoding:encoding]
 }
 
 - (id)initWithCString:(ConstPtr<u8>)c_string

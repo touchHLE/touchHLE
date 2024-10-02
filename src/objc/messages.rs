@@ -14,6 +14,7 @@
 use super::{id, nil, Class, ObjC, IMP, SEL};
 use crate::abi::{CallFromHost, GuestRet};
 use crate::mem::{ConstPtr, MutVoidPtr, SafeRead};
+use crate::objc::methods::Method;
 use crate::Environment;
 use std::any::TypeId;
 
@@ -100,8 +101,12 @@ fn objc_msgSend_inner(
                 continue;
             }
 
-            if let Some(imp) = methods.get(&selector) {
+            if let Some(Method { imp, .. }) = methods.get(&selector) {
                 log_dbg!("Found method on: {}", name);
+                // TODO: Use type strings instead so it's compatible
+                // with both guest and host methods.
+                // It should probably warn rather than panicking,
+                // because apps might rely on type punning.
                 match imp {
                     IMP::Host(host_imp) => {
                         // TODO: do type checks when calling GuestIMPs too.

@@ -9,7 +9,10 @@
 //! - [Apple's documentation of `class_addMethod`](https://developer.apple.com/documentation/objectivec/1418901-class_addmethod?language=objc)
 
 use super::{
-    id, nil, objc_super, Class, ClassHostObject, MsgSendSignature, MsgSendSuperSignature, ObjC, SEL,
+    id, nil, objc_super, Class, ClassHostObject, MsgSendSignature, MsgSendSuperSignature, ObjC,
+    SEL, TYPE_BOOL, TYPE_CHAR, TYPE_CLASS, TYPE_DOUBLE, TYPE_FLOAT, TYPE_ID, TYPE_INT, TYPE_LONG,
+    TYPE_LONGLONG, TYPE_SEL, TYPE_SHORT, TYPE_UCHAR, TYPE_UINT, TYPE_ULONG, TYPE_ULONGLONG,
+    TYPE_UNDEF, TYPE_USHORT, TYPE_VOID,
 };
 use crate::abi::{CallFromGuest, DotDotDot, GuestArg, GuestFunction, GuestRet};
 use crate::mem::{guest_size_of, ConstPtr, GuestUSize, Mem, Ptr, SafeRead};
@@ -29,10 +32,18 @@ pub enum IMP {
     Guest(GuestIMP),
 }
 
+pub struct Method {
+    pub types: String,
+    pub imp: IMP,
+}
+
 /// Type for any host function implementing a method (see also [IMP]).
 pub trait HostIMP: CallFromGuest {
     /// See [MsgSendSignature::type_info].
     fn type_info(&self) -> (TypeId, &'static str);
+
+    /// An Objective-C style types string
+    fn types_string(&self) -> String;
 }
 
 macro_rules! impl_HostIMP {
@@ -45,6 +56,15 @@ macro_rules! impl_HostIMP {
             fn type_info(&self) -> (TypeId, &'static str) {
                 <(R, (id, SEL, $($P,)*)) as MsgSendSignature>::type_info()
             }
+
+            fn types_string(&self) -> String {
+                // TODO: VERY INCOMPLETE! Include each type's offsets
+                String::from_iter(&[
+                    type_char(TypeId::of::<R>()),
+                    type_char(TypeId::of::<SEL>()),
+                    $(type_char(TypeId::of::<$P>()),)*
+                ])
+            }
         }
         impl<R, $($P,)*> HostIMP for fn(&mut Environment, id, SEL, $($P,)* DotDotDot) -> R
         where
@@ -53,6 +73,16 @@ macro_rules! impl_HostIMP {
         {
             fn type_info(&self) -> (TypeId, &'static str) {
                 todo!("host-to-host message calls with var-args"); // TODO
+            }
+
+            fn types_string(&self) -> String {
+                // TODO: VERY INCOMPLETE! Include each type's offsets
+                String::from_iter(&[
+                    type_char(TypeId::of::<R>()),
+                    type_char(TypeId::of::<SEL>()),
+                    $(type_char(TypeId::of::<$P>()),)*
+                    '?', // TODO: Varargs
+                ])
             }
         }
 
@@ -89,6 +119,7 @@ pub type GuestIMP = GuestFunction;
 /// The layout of a method list in an app binary.
 ///
 /// The name, field names and field layout are based on what Ghidra outputs.
+#[allow(non_camel_case_types)]
 #[repr(C, packed)]
 pub(super) struct method_list_t {
     entsize: GuestUSize,
@@ -100,6 +131,7 @@ unsafe impl SafeRead for method_list_t {}
 /// The layout of a method in an app binary.
 ///
 /// The name, field names and field layout are based on what Ghidra outputs.
+#[allow(non_camel_case_types)]
 #[repr(C, packed)]
 struct method_t {
     name: ConstPtr<u8>,
@@ -127,16 +159,18 @@ impl ClassHostObject {
                 Ptr::from_bits(methods_base_ptr.to_bits() + i * entsize);
 
             // TODO: support type strings
-            let method_t {
-                name,
-                types: _,
-                imp,
-            } = mem.read(method_ptr);
+            let method_t { name, types, imp } = mem.read(method_ptr);
 
             // There is no guarantee this string is unique or known.
             // We must deduplicate it like any other.
             let sel = objc.register_bin_selector(name, mem);
-            self.methods.insert(sel, IMP::Guest(imp));
+            self.methods.insert(
+                sel,
+                Method {
+                    types: mem.cstr_at_utf8(types).unwrap().to_string(),
+                    imp: IMP::Guest(imp),
+                },
+            );
         }
     }
 }
@@ -241,5 +275,46 @@ impl ObjC {
             }
         }
         selector_strings
+    }
+}
+
+fn type_char(type_id: TypeId) -> char {
+    // TODO: Handle arrays, structs, unions, bitfields, pointers and other types that span multiple chars
+    if type_id == TypeId::of::<id>() {
+        TYPE_ID
+    } else if type_id == TypeId::of::<Class>() {
+        TYPE_CLASS
+    } else if type_id == TypeId::of::<SEL>() {
+        TYPE_SEL
+    } else if type_id == TypeId::of::<i8>() {
+        TYPE_CHAR
+    } else if type_id == TypeId::of::<u8>() {
+        TYPE_UCHAR
+    } else if type_id == TypeId::of::<i16>() {
+        TYPE_SHORT
+    } else if type_id == TypeId::of::<u16>() {
+        TYPE_USHORT
+    } else if type_id == TypeId::of::<i32>() {
+        TYPE_INT
+    } else if type_id == TypeId::of::<u32>() {
+        TYPE_UINT
+    } else if type_id == TypeId::of::<i32>() {
+        TYPE_LONG
+    } else if type_id == TypeId::of::<u32>() {
+        TYPE_ULONG
+    } else if type_id == TypeId::of::<i64>() {
+        TYPE_LONGLONG
+    } else if type_id == TypeId::of::<u64>() {
+        TYPE_ULONGLONG
+    } else if type_id == TypeId::of::<f32>() {
+        TYPE_FLOAT
+    } else if type_id == TypeId::of::<f64>() {
+        TYPE_DOUBLE
+    } else if type_id == TypeId::of::<bool>() {
+        TYPE_BOOL
+    } else if type_id == TypeId::of::<std::ffi::c_void>() || type_id == TypeId::of::<()>() {
+        TYPE_VOID
+    } else {
+        TYPE_UNDEF
     }
 }

@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "0f4a0d29_fcb14a99",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 8
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-10-02T19:46:23Z",
+      "side": 1,
+      "message": "seems goood for me, but would like hikari to double check the retain-autorelease vs copy-autorelease part",
+      "revId": "7cd38ae5b3b26a6bb8ebae4b3fca19345ff38b18",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

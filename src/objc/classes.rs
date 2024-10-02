@@ -1008,6 +1008,29 @@ impl ObjC {
         let host_object = self.get_host_object(class).unwrap();
         matches!(host_object.as_any().downcast_ref(), Some(FakeClass { .. }))
     }
+
+    pub fn get_class_method(&self, class: Class, selector: SEL) -> &Method {
+        let mut class = class;
+        loop {
+            let host_object = self.get_host_object(class).unwrap();
+            if let Some(ClassHostObject {
+                superclass,
+                methods,
+                ..
+            }) = host_object.as_any().downcast_ref()
+            {
+                if let Some(method) = methods.get(&selector) {
+                    return method;
+                } else if *superclass == nil {
+                    panic!();
+                } else {
+                    class = *superclass;
+                }
+            } else {
+                panic!();
+            }
+        }
+    }
 }
 
 pub(super) fn objc_getClass(env: &mut Environment, name: ConstPtr<u8>) -> id {

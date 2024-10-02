@@ -16,6 +16,24 @@
       "message": "not sure about this part. previous it will return an auto released string which was retained, and now you just return self?",
       "revId": "eb964ddca4e48320edfbcc2b6386fcad40843d2e",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "5cbdab09_66e8b49c",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 6
+      },
+      "lineNbr": 723,
+      "author": {
+        "id": 1021823
+      },
+      "writtenOn": "2024-10-02T19:40:47Z",
+      "side": 1,
+      "message": "I\u0027ve since realized that the correct behavior for this should actually be to copy-autorelease, not retain-autorelease or ignore, since retain-autorelease or ignoring a NSMutableString wouldn\u0027t be correct. This seems to match the behavior (but curiously not the implementation) of the function in simulator.",
+      "parentUuid": "4aaae408_3bb6e631",
+      "revId": "eb964ddca4e48320edfbcc2b6386fcad40843d2e",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

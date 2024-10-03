@@ -51,6 +51,24 @@
       "parentUuid": "3ecc42f6_422c10dd",
       "revId": "19d3ef2dbd2efc594597204408cb1edcf51efbc6",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "297142ba_d2e054d7",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 1216,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-10-03T20:08:15Z",
+      "side": 1,
+      "message": "Wait no, hold on, it looks like this method is right, it\u0027s stringWithContentsOfFile that behaves differently?\n\n\"Initializes the receiver, a newly allocated NSString object, by reading data from the file named by path. If the contents begin with a byte-order mark (U+FEFF or U+FFFE), interprets the contents as UTF-16 code units; otherwise interprets the contents as data in the default C string encoding.\"\nhttps://developer.apple.com/documentation/foundation/nsstring/1497398-initwithcontentsoffile",
+      "parentUuid": "8b50865e_31525864",
+      "revId": "19d3ef2dbd2efc594597204408cb1edcf51efbc6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

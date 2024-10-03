@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "70c6df5d_949c5988",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 293,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-10-03T19:56:07Z",
+      "side": 1,
+      "message": "missing autorelease",
+      "revId": "19d3ef2dbd2efc594597204408cb1edcf51efbc6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3ecc42f6_422c10dd",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 1216,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-10-03T19:56:07Z",
+      "side": 1,
+      "message": "are you sure about this behavior? how did you test?",
+      "revId": "19d3ef2dbd2efc594597204408cb1edcf51efbc6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

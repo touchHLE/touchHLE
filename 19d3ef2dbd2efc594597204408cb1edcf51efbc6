@@ -69,6 +69,24 @@
       "parentUuid": "8b50865e_31525864",
       "revId": "19d3ef2dbd2efc594597204408cb1edcf51efbc6",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "acde69b8_68db2b0d",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 1216,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-10-03T20:36:35Z",
+      "side": 1,
+      "message": "The best would be to write a test program and verify each method behavior for mentioned encodings. For example, you can create a string with known encoding, write it to a file and check with both methods what is returned.",
+      "parentUuid": "297142ba_d2e054d7",
+      "revId": "19d3ef2dbd2efc594597204408cb1edcf51efbc6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

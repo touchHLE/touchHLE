@@ -69,6 +69,14 @@ pub const CLASSES: ClassExports = objc_classes! {
          selector:(SEL)selector
              name:(NSNotificationName)name
            object:(id)object {
+    if name == nil &&
+        env.bundle.bundle_identifier().starts_with("com.chillingo.cuttherope") &&
+        selector == env.objc.lookup_selector("fetchUpdateNotification:").unwrap() {
+        // As we nullified Flurry SDK, we also need to no-op
+        // related notifications
+        log!("Applying game-specific hack for Cut the Rope: ignoring addObserver:selector:name:object: for fetchUpdateNotification:");
+        return;
+    }
     // TODO: handle case where name is nil
     // Usually a static string, so no real copy will happen
     let name = ns_string::to_rust_string(env, name);

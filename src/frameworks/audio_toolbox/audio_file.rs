@@ -319,7 +319,17 @@ pub fn AudioFileReadPackets(
 
     // Variable-size packets are not implemented currently. When they are,
     // this parameter should be a `MutPtr<AudioStreamPacketDescription>`.
-    assert!(out_packet_descriptions.is_null());
+    if out_packet_descriptions.is_null() {
+        if env
+            .bundle
+            .bundle_identifier()
+            .starts_with("com.chillingo.cuttherope")
+        {
+            log!("Applying game-specific hack for Cut the Rope: ignoring out_packet_descriptions in AudioFileReadPackets()");
+        } else {
+            unimplemented!(); // TODO
+        }
+    }
 
     let host_object = State::get(&mut env.framework_state)
         .audio_files

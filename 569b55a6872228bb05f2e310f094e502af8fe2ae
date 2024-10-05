@@ -16,6 +16,24 @@
       "message": "what do you think about setting one of image from this array (first or last one) as a current image of UIImageView?\n\nit should be easy to implement and will look better compared to an empty view",
       "revId": "569b55a6872228bb05f2e310f094e502af8fe2ae",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ac82fcef_4b0be775",
+        "filename": "src/frameworks/uikit/ui_view/ui_image_view.rs",
+        "patchSetId": 14
+      },
+      "lineNbr": 83,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-10-05T17:18:38Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "295ec067_b7ef47ff",
+      "revId": "569b55a6872228bb05f2e310f094e502af8fe2ae",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

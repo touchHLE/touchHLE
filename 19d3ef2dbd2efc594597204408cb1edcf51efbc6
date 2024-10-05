@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "b3bab272_56be1c7c",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 293,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-10-05T17:18:35Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "70c6df5d_949c5988",
+      "revId": "19d3ef2dbd2efc594597204408cb1edcf51efbc6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "3ecc42f6_422c10dd",
@@ -85,6 +103,24 @@
       "side": 1,
       "message": "The best would be to write a test program and verify each method behavior for mentioned encodings. For example, you can create a string with known encoding, write it to a file and check with both methods what is returned.",
       "parentUuid": "297142ba_d2e054d7",
+      "revId": "19d3ef2dbd2efc594597204408cb1edcf51efbc6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b3d6951f_b41a5786",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 1216,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-10-05T17:18:35Z",
+      "side": 1,
+      "message": "A test string \"José\" was written in three different encodings into three different files: testutf8, testutf16 and testroman.\n```\n$ xxd testutf8 \n00000000: efbb bf4a 6f73 c3a9                      ...Jos..\n```\n```\n$ xxd testutf16\n00000000: fffe 4a00 6f00 7300 e900                 ..J.o.s...\n```\n```\n$ xxd testroman\n00000000: 4a6f 738e                                Jos.\n```\nIn modern macOS, with a default C string encoding of NSMacOSRomanStringEncoding a test program was written to read and log each of the three files, once with stringWithContentsOfFile, and then with initWithContentsOfFile.\nIn all three cases the text was interpreted with the right encoding with both methods.",
+      "parentUuid": "acde69b8_68db2b0d",
       "revId": "19d3ef2dbd2efc594597204408cb1edcf51efbc6",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

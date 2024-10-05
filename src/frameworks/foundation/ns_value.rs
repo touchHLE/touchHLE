@@ -6,6 +6,7 @@
 //! The `NSValue` class cluster, including `NSNumber`.
 
 use super::NSUInteger;
+use crate::frameworks::core_graphics::CGRect;
 use crate::frameworks::foundation::ns_string::from_rust_string;
 use crate::frameworks::foundation::NSInteger;
 use crate::objc::{
@@ -13,6 +14,12 @@ use crate::objc::{
     NSZonePtr,
 };
 use crate::Environment;
+
+#[derive(Debug)]
+pub(super) enum NSValueHostObject {
+    CGRect(CGRect),
+}
+impl HostObject for NSValueHostObject {}
 
 macro_rules! impl_AsValue {
     ($method_name:tt, $typ:tt) => {
@@ -66,6 +73,24 @@ pub const CLASSES: ClassExports = objc_classes! {
 // NSValue is an abstract class. None of the things it should provide are
 // implemented here yet (TODO).
 @implementation NSValue: NSObject
+
++ (id)allocWithZone:(NSZonePtr)_zone {
+    let host_object = Box::new(NSValueHostObject::CGRect(CGRect::default()));
+    env.objc.alloc_object(this, host_object, &mut env.mem)
+}
+
++ (id)valueWithCGRect:(CGRect)value {
+    let new: id = msg![env; this alloc];
+    *env.objc.borrow_mut(new) = NSValueHostObject::CGRect(value);
+    autorelease(env, new)
+}
+
+- (CGRect)CGRectValue {
+    let host_object = env.objc.borrow::<NSValueHostObject>(this);
+    match host_object {
+        NSValueHostObject::CGRect(cg_rect) => *cg_rect
+    }
+}
 
 // NSCopying implementation
 - (id)copyWithZone:(NSZonePtr)_zone {

@@ -11,6 +11,7 @@ use crate::frameworks::core_foundation::cf_number::{
     kCFNumberCharType, kCFNumberFloat32Type, kCFNumberFloatType, kCFNumberIntType,
     kCFNumberSInt16Type, kCFNumberSInt32Type, kCFNumberSInt8Type, kCFNumberShortType, CFNumberType,
 };
+use crate::frameworks::core_graphics::{CGPoint, CGRect, CGSize};
 use crate::frameworks::foundation::NSInteger;
 use crate::mem::{ConstVoidPtr, MutVoidPtr};
 use crate::objc::{
@@ -19,6 +20,14 @@ use crate::objc::{
 };
 use crate::Environment;
 use std::cmp::Ordering;
+
+#[derive(Debug)]
+pub(super) enum NSValueHostObject {
+    CGPoint(CGPoint),
+    CGSize(CGSize),
+    CGRect(CGRect),
+}
+impl HostObject for NSValueHostObject {}
 
 macro_rules! impl_AsValue {
     ($method_name:tt, $typ:tt) => {
@@ -95,6 +104,48 @@ pub const CLASSES: ClassExports = objc_classes! {
 + (id)valueWithPointer:(ConstVoidPtr)ptr {
     // TODO: implement with `value:withObjCType:` instead
     msg_class![env; NSNumber numberWithUnsignedInt:(ptr.to_bits())]
+}
+
++ (id)valueWithCGPoint:(CGPoint)value {
+    let host_object = Box::new(NSValueHostObject::CGPoint(value));
+    let new = env.objc.alloc_object(this, host_object, &mut env.mem);
+    autorelease(env, new)
+}
+
++ (id)valueWithCGSize:(CGSize)value {
+    let host_object = Box::new(NSValueHostObject::CGSize(value));
+    let new = env.objc.alloc_object(this, host_object, &mut env.mem);
+    autorelease(env, new)
+}
+
++ (id)valueWithCGRect:(CGRect)value {
+    let host_object = Box::new(NSValueHostObject::CGRect(value));
+    let new = env.objc.alloc_object(this, host_object, &mut env.mem);
+    autorelease(env, new)
+}
+
+- (CGPoint)CGPointValue {
+    let host_object = env.objc.borrow::<NSValueHostObject>(this);
+    match host_object {
+        NSValueHostObject::CGPoint(cg_point) => *cg_point,
+        _ => unimplemented!()
+    }
+}
+
+- (CGSize)CGSizeValue {
+    let host_object = env.objc.borrow::<NSValueHostObject>(this);
+    match host_object {
+        NSValueHostObject::CGSize(cg_size) => *cg_size,
+        _ => unimplemented!()
+    }
+}
+
+- (CGRect)CGRectValue {
+    let host_object = env.objc.borrow::<NSValueHostObject>(this);
+    match host_object {
+        NSValueHostObject::CGRect(cg_rect) => *cg_rect,
+        _ => unimplemented!()
+    }
 }
 
 // NSCopying implementation

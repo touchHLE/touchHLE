@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "831627d4_695bc5e9",
+        "filename": "src/frameworks/uikit/ui_view/ui_image_view.rs",
+        "patchSetId": 15
+      },
+      "lineNbr": 82,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-10-06T18:32:56Z",
+      "side": 1,
+      "message": "please use snake_case for parameters",
+      "revId": "8c80426aa874408e111a4d139a5291b11fc0ace0",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3775fe4d_c559eb02",
+        "filename": "src/frameworks/uikit/ui_view/ui_image_view.rs",
+        "patchSetId": 15
+      },
+      "lineNbr": 89,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-10-06T18:32:56Z",
+      "side": 1,
+      "message": "please use snake_case for parameters",
+      "revId": "8c80426aa874408e111a4d139a5291b11fc0ace0",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

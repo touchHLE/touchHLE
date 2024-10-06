@@ -106,6 +106,15 @@ pub const CLASSES: ClassExports = objc_classes! {
     }
 }
 
+- (id)readDataToEndOfFile { // NSData*
+    let offset: i64 = msg![env; this offsetInFile];
+    let eof: i64 = msg![env; this seekToEndOfFile];
+    let _: () = msg![env; this seekToFileOffset:offset];
+    let length: NSUInteger = (eof - offset).try_into().unwrap();
+
+    msg![env; this readDataOfLength:length]
+}
+
 - (())writeData:(id)data { // NSData *
     let fd = env.objc.borrow::<NSFileHandleHostObject>(this).fd;
     let bytes: ConstVoidPtr = msg![env; data bytes];

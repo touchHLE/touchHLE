@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f91a43c8_7d2153bd",
+        "filename": "src/frameworks/foundation/ns_array.rs",
+        "patchSetId": 7
+      },
+      "lineNbr": 336,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-10-06T22:25:24Z",
+      "side": 1,
+      "message": "This method is already there on trunk, but the override in the non-retaining version isn\u0027t. Oops, I guess something was merged that shouldn\u0027t have been.",
+      "revId": "387118eb151d1d6cb638043d6a9d93dccbec2144",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

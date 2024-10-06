@@ -16,6 +16,23 @@
       "message": "I am willing to merge this if you move the ADPCM+WAV part to a separate commit (which I will also +2, I don\u0027t love this solution but I think it\u0027s unreasonable for me to hold this up over that), and if you also make sure to remove the mention dr_mp3 from the README.",
       "revId": "069e1a626cd91dfd9a7cf6bd1f1a2a8d79cb857f",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2387a538_51a7671c",
+        "filename": "src/audio/aac.rs",
+        "patchSetId": 8
+      },
+      "lineNbr": 1,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-10-06T22:22:14Z",
+      "side": 1,
+      "message": "I guess this file should be renamed and have its doc-comment changed too? I don\u0027t have a good idea for what it should be called though. Maybe `misc_format.rs`?",
+      "revId": "069e1a626cd91dfd9a7cf6bd1f1a2a8d79cb857f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

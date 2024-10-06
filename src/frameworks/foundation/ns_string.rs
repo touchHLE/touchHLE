@@ -871,6 +871,19 @@ pub const CLASSES: ClassExports = objc_classes! {
     autorelease(env, new_string)
 }
 
+- (id)stringByAddingPercentEscapesUsingEncoding:(NSStringEncoding)encoding {
+    assert_eq!(encoding, NSASCIIStringEncoding); // TODO: other encodings
+    // TODO: implement escaping as per RFC 2396
+    let str = to_rust_string(env, this);
+    // FIXME: figure out why '[' and ']' are escaped on iOS simulator
+    assert!(str.as_bytes().iter().all(|byte| {
+        (byte.is_ascii_alphanumeric() || b"-_.~".contains(byte)) // unreserved
+        || b"!*'();:@&=+$,/?%#".contains(byte) // reserved
+    }));
+    let new: id = msg![env; this copy];
+    autorelease(env, new)
+}
+
 - (id)stringByAppendingPathComponent:(id)component { // NSString*
     // TODO: avoid copying
     // FIXME: check if Rust join() matches NSString (it probably doesn't)

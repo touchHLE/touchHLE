@@ -16,6 +16,23 @@
       "message": "You\u0027ll need to set your patch set to \"verified +1\" in order to submit it.\n(After you\u0027ve verified that it compiles and passes the linter of cause :) )",
       "revId": "e2390d90179be593c4e43cbddcc6385e616e73dd",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2cf5db38_63df10e8",
+        "filename": "src/frameworks/foundation/ns_file_handle.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 109,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-10-07T08:47:27Z",
+      "side": 1,
+      "message": "Nitpick: the comment here with the datatype isn\u0027t needed. We use those for parameters but not for return values.",
+      "revId": "e2390d90179be593c4e43cbddcc6385e616e73dd",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

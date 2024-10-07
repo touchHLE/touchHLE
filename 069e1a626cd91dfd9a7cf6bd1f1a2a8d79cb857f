@@ -38,6 +38,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "138d6707_dd2c7e6f",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 8
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-10-07T20:18:57Z",
+      "side": 1,
+      "message": "Oh, you mean like proper support for MP3 and AAC, closer to what we have for ima4 ADPCM? That\u0027d be great, didn\u0027t know you\u0027d started work on that. I was thinking I\u0027d eventually have to do it myself.",
+      "parentUuid": "fae6b53b_8ffa7319",
+      "revId": "069e1a626cd91dfd9a7cf6bd1f1a2a8d79cb857f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "2387a538_51a7671c",
         "filename": "src/audio/aac.rs",
         "patchSetId": 8
@@ -67,6 +85,24 @@
       "side": 1,
       "message": "I\u0027ll probably call it something like `symphonia_formats.rs`.",
       "parentUuid": "2387a538_51a7671c",
+      "revId": "069e1a626cd91dfd9a7cf6bd1f1a2a8d79cb857f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4e39c520_4d1a845b",
+        "filename": "src/audio/aac.rs",
+        "patchSetId": 8
+      },
+      "lineNbr": 1,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-10-07T20:18:57Z",
+      "side": 1,
+      "message": "Sure.",
+      "parentUuid": "88a5492e_98adac62",
       "revId": "069e1a626cd91dfd9a7cf6bd1f1a2a8d79cb857f",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

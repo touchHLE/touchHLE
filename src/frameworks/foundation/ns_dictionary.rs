@@ -5,12 +5,13 @@
  */
 //! The `NSDictionary` class cluster, including `NSMutableDictionary`.
 
+use super::ns_array::ArrayHostObject;
 use super::ns_property_list_serialization::{
     deserialize_plist_from_file, NSPropertyListBinaryFormat_v1_0,
 };
+use super::ns_string::{from_rust_string, to_rust_string};
 use super::{ns_string, ns_url, NSUInteger};
 use crate::abi::VaList;
-use crate::frameworks::foundation::ns_string::{from_rust_string, to_rust_string};
 use crate::fs::GuestPath;
 use crate::mem::{MutPtr, Ptr};
 use crate::objc::{
@@ -381,6 +382,98 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 - (id)description {
     build_description(env, this)
+}
+
+@end
+
+// Special variant for use by CFDictionary with NULL callbacks: objects aren't
+// necessarily Objective-C objects and won't be retained/released.
+// TODO: refactor with lookup/insert methods to use callbacks
+@implementation _touchHLE_NSMutableDictionary_non_retaining: _touchHLE_NSMutableDictionary
+
+- (())dealloc {
+    env.objc.dealloc_object(this, &mut env.mem)
+}
+
+- (id)initWithObjectsAndKeys:(id)_first_object, ..._dots {
+    todo!();
+}
+- (id)description {
+    todo!();
+}
+- (id)copyWithZone:(NSZonePtr)_zone {
+    todo!();
+}
+- (id)mutableCopyWithZone:(NSZonePtr)_zone {
+    todo!();
+}
+
+- (id)objectForKey:(id)key {
+    // TODO: use CFDictionaryHashCallBack
+    let hash: Hash = key.to_bits();
+    let host_obj: &mut DictionaryHostObject = env.objc.borrow_mut(this);
+    let Some(collisions) = host_obj.map.get(&hash) else {
+        return nil;
+    };
+    for &(candidate_key, value) in collisions {
+        // TODO: use CFDictionaryEqualCallBack
+        if candidate_key == key {
+            return value;
+        }
+    }
+    nil
+}
+
+- (id)valueForKey:(id)_key {
+    panic!("Unexpected call to valueForKey: for _touchHLE_NSMutableDictionary_non_retaining object {:?}", this);
+}
+
+- (())setObject:(id)value
+         forKey:(id)key {
+    assert!(!key.is_null());
+    // TODO: use CFDictionaryHashCallBack
+    let hash: Hash = key.to_bits();
+    let host_obj: &mut DictionaryHostObject = env.objc.borrow_mut(this);
+    let Some(collisions) = host_obj.map.get_mut(&hash) else {
+        host_obj.map.insert(hash, vec![(key, value)]);
+        host_obj.count += 1;
+        return;
+    };
+    for &mut (candidate_key, ref mut existing_value) in collisions.iter_mut() {
+        // TODO: use CFDictionaryEqualCallBack
+        if candidate_key == key {
+            *existing_value = value;
+            return;
+        }
+    }
+    collisions.push((key, value));
+    host_obj.count += 1;
+}
+
+- (())removeObjectForKey:(id)key {
+    assert!(!key.is_null());
+    // TODO: use CFDictionaryHashCallBack
+    let hash: Hash = key.to_bits();
+    let host_obj: &mut DictionaryHostObject = env.objc.borrow_mut(this);
+    let Some(collisions) = host_obj.map.get_mut(&hash) else {
+        return;
+    };
+    let idx = collisions.iter().position(|&(candidate_key, _)| {
+        // TODO: use CFDictionaryEqualCallBack
+        candidate_key == key
+    }).unwrap();
+    collisions.remove(idx);
+    host_obj.count -= 1;
+}
+
+- (id)allKeys {
+    let host_obj: DictionaryHostObject = std::mem::take(env.objc.borrow_mut(this));
+    let keys: Vec<id> = host_obj.map.values().flatten().map(|&(key, _value)| key).collect();
+    *env.objc.borrow_mut(this) = host_obj;
+
+    let array: id = msg_class![env; _touchHLE_NSArray_non_retaining alloc];
+    env.objc.borrow_mut::<ArrayHostObject>(array).array = keys;
+    array
 }
 
 @end

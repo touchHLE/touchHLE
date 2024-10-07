@@ -260,6 +260,16 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 @end
 
+// Special variant for use by CFArray with NULL callbacks: objects aren't
+// necessarily Objective-C objects and won't be retained/released.
+@implementation _touchHLE_NSArray_non_retaining: _touchHLE_NSArray
+
+- (())dealloc {
+    env.objc.dealloc_object(this, &mut env.mem)
+}
+
+@end
+
 @implementation _touchHLE_NSArray_ObjectEnumerator: NSEnumerator
 
 - (id)nextObject {

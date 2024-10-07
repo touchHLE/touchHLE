@@ -33,6 +33,24 @@
       "message": "This needs to be `autorelease`d because the method name doesn\u0027t have `alloc`/`new`/`copy` in it.",
       "revId": "7cd38ae5b3b26a6bb8ebae4b3fca19345ff38b18",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b6725eff_62cb0717",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 8
+      },
+      "lineNbr": 1206,
+      "author": {
+        "id": 1021823
+      },
+      "writtenOn": "2024-10-07T16:55:09Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "56b1e8fb_751d9655",
+      "revId": "7cd38ae5b3b26a6bb8ebae4b3fca19345ff38b18",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

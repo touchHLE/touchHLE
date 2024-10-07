@@ -49,7 +49,7 @@ rusttype = "0.9.3"
 # active patent claims. The "aac" feature only enables AAC-LC, so it's should 
 # be ok.
 # (The above statements should not understood as legal claims/advice.)
-symphonia = { version = "0.5.3", default-features = false, features = ["aac", "isomp4", "mp3"] }
+symphonia = { version = "0.5.3", default-features = false, features = ["adpcm", "wav", "aac", "isomp4", "mp3"] }
 quick-xml = "0.36.2"
 md5 = "0.7.0"
 # We currently use a fork of rust-sdl2 because we need a fix for Android builds

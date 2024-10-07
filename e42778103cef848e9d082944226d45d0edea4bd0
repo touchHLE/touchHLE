@@ -16,6 +16,24 @@
       "message": "I don\u0027t really like this kind of game-specific hack because it is not working around a bug in the game, just something unfinished in touchHLE.\n\nCould we perhaps always ignore this (since we don\u0027t support variable-length formats) and always print a warning?",
       "revId": "e42778103cef848e9d082944226d45d0edea4bd0",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0daec3e5_6fe2e747",
+        "filename": "src/frameworks/audio_toolbox/audio_file.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 328,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-10-07T19:49:02Z",
+      "side": 1,
+      "message": "(and in a separate patch)",
+      "parentUuid": "b68dad2f_c270b451",
+      "revId": "e42778103cef848e9d082944226d45d0edea4bd0",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

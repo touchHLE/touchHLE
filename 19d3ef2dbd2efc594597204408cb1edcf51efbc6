@@ -123,6 +123,24 @@
       "parentUuid": "acde69b8_68db2b0d",
       "revId": "19d3ef2dbd2efc594597204408cb1edcf51efbc6",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "88e4a45b_1d667486",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 1216,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-10-07T19:19:50Z",
+      "side": 1,
+      "message": "Thanks for checking",
+      "parentUuid": "b3d6951f_b41a5786",
+      "revId": "19d3ef2dbd2efc594597204408cb1edcf51efbc6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

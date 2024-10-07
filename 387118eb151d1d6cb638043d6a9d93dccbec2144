@@ -20,6 +20,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "89a313a3_dc088b0d",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 7
+      },
+      "lineNbr": 7,
+      "author": {
+        "id": 1021823
+      },
+      "writtenOn": "2024-10-07T16:22:06Z",
+      "side": 1,
+      "message": "It\u0027s the non-retaining version, given that it\u0027s only used for CFArray.",
+      "parentUuid": "0baaca8d_7335296e",
+      "revId": "387118eb151d1d6cb638043d6a9d93dccbec2144",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "f91a43c8_7d2153bd",
         "filename": "src/frameworks/foundation/ns_array.rs",
         "patchSetId": 7
@@ -31,6 +49,24 @@
       "writtenOn": "2024-10-06T22:25:24Z",
       "side": 1,
       "message": "This method is already there on trunk, but the override in the non-retaining version isn\u0027t. Oops, I guess something was merged that shouldn\u0027t have been.",
+      "revId": "387118eb151d1d6cb638043d6a9d93dccbec2144",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "044bd817_d0ff77ea",
+        "filename": "src/frameworks/foundation/ns_array.rs",
+        "patchSetId": 7
+      },
+      "lineNbr": 336,
+      "author": {
+        "id": 1021823
+      },
+      "writtenOn": "2024-10-07T16:22:06Z",
+      "side": 1,
+      "message": "I\u0027ll make this just the non-retaining version then.",
+      "parentUuid": "f91a43c8_7d2153bd",
       "revId": "387118eb151d1d6cb638043d6a9d93dccbec2144",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

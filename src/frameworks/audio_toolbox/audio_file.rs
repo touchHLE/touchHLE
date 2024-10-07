@@ -319,7 +319,9 @@ pub fn AudioFileReadPackets(
 
     // Variable-size packets are not implemented currently. When they are,
     // this parameter should be a `MutPtr<AudioStreamPacketDescription>`.
-    assert!(out_packet_descriptions.is_null());
+    if !out_packet_descriptions.is_null() {
+        log!("Warning: ignoring non-null out_packet_descriptions in AudioFileReadPackets()");
+    }
 
     let host_object = State::get(&mut env.framework_state)
         .audio_files

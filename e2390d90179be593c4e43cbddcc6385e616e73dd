@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "cbb8c016_1f415967",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-10-07T08:08:58Z",
+      "side": 1,
+      "message": "You\u0027ll need to set your patch set to \"verified +1\" in order to submit it.\n(After you\u0027ve verified that it compiles and passes the linter of cause :) )",
+      "revId": "e2390d90179be593c4e43cbddcc6385e616e73dd",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

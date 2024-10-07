@@ -20,6 +20,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "fae6b53b_8ffa7319",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 8
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021823
+      },
+      "writtenOn": "2024-10-07T19:49:40Z",
+      "side": 1,
+      "message": "Yeah, sorry for putting this on the backburner. I was actually working on an attempt to stream symphonia-based file formats, but I thought that the threading improvements were more important. I will try to clean this up and split it out, it shouldn\u0027t be too terribly hard.",
+      "parentUuid": "8c3ff2ad_2a4bff5e",
+      "revId": "069e1a626cd91dfd9a7cf6bd1f1a2a8d79cb857f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "2387a538_51a7671c",
         "filename": "src/audio/aac.rs",
         "patchSetId": 8
@@ -31,6 +49,24 @@
       "writtenOn": "2024-10-06T22:22:14Z",
       "side": 1,
       "message": "I guess this file should be renamed and have its doc-comment changed too? I don\u0027t have a good idea for what it should be called though. Maybe `misc_format.rs`?",
+      "revId": "069e1a626cd91dfd9a7cf6bd1f1a2a8d79cb857f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "88a5492e_98adac62",
+        "filename": "src/audio/aac.rs",
+        "patchSetId": 8
+      },
+      "lineNbr": 1,
+      "author": {
+        "id": 1021823
+      },
+      "writtenOn": "2024-10-07T19:49:40Z",
+      "side": 1,
+      "message": "I\u0027ll probably call it something like `symphonia_formats.rs`.",
+      "parentUuid": "2387a538_51a7671c",
       "revId": "069e1a626cd91dfd9a7cf6bd1f1a2a8d79cb857f",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

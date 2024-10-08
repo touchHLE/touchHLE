@@ -23,7 +23,7 @@ pub fn debug_fourcc(fourcc: u32) -> String {
     }
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq)]
 #[repr(C, packed)]
 pub struct AudioStreamBasicDescription {
     // Hz

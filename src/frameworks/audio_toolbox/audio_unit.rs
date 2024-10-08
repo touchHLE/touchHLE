@@ -4,6 +4,8 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 //! `AudioUnit.h` (Audio Unit Services)
+//!
+//! [Audio Unit Programming Guide](https://developer.apple.com/library/archive/documentation/MusicAudio/Conceptual/AudioUnitProgrammingGuide/TheAudioUnit/TheAudioUnit.html)
 
 use std::time::Instant;
 
@@ -43,6 +45,7 @@ struct AudioBufferList<const COUNT: usize> {
     number_buffers: u32,
     buffers: [AudioBuffer; COUNT],
 }
+unsafe impl SafeRead for AudioBufferList<1> {}
 unsafe impl SafeRead for AudioBufferList<2> {}
 
 #[repr(C, packed)]
@@ -54,6 +57,7 @@ pub struct AudioBuffer {
 
 // TODO: Other scopes
 const kAudioUnitScope_Global: AudioUnitScope = 0;
+const kAudioUnitScope_Input: AudioUnitScope = 1;
 const kAudioUnitScope_Output: AudioUnitScope = 2;
 
 const kAudioUnitProperty_SetRenderCallback: AudioUnitPropertyID = 23;
@@ -92,21 +96,22 @@ fn AudioUnitSetProperty(
     let result;
     match in_id {
         kAudioUnitProperty_SetRenderCallback => {
-            assert!(in_scope == kAudioUnitScope_Global);
-            assert!(in_data_size == guest_size_of::<AURenderCallbackStruct>());
+            assert_eq!(in_scope, kAudioUnitScope_Global);
+            assert_eq!(in_data_size, guest_size_of::<AURenderCallbackStruct>());
             let render_callback = env.mem.read(in_data.cast::<AURenderCallbackStruct>());
             host_object.render_callback = Some(render_callback);
             result = 0;
             log_dbg!("AudioUnitSetProperty({:?}, kAudioUnitProperty_SetRenderCallback, {:?}, {:?}, {:?}, {:?}) -> {:?}", in_unit, in_scope, in_element, render_callback, in_data_size, result);
         }
         kAudioUnitProperty_StreamFormat => {
-            assert!(in_data_size == guest_size_of::<AudioStreamBasicDescription>());
+            assert_eq!(in_data_size, guest_size_of::<AudioStreamBasicDescription>());
             let stream_format = env.mem.read(in_data.cast::<AudioStreamBasicDescription>());
             log_if_broken_audio_format(&stream_format);
             match in_scope {
                 kAudioUnitScope_Global => host_object.global_stream_format = stream_format,
                 kAudioUnitScope_Output => host_object.output_stream_format = Some(stream_format),
-                _ => unimplemented!(),
+                kAudioUnitScope_Input => host_object.input_stream_format = Some(stream_format),
+                _ => unimplemented!("in_scope {}", in_scope),
             };
             result = 0;
             log_dbg!("AudioUnitSetProperty({:?}, kAudioUnitProperty_StreamFormat, {:?}, {:?}, {:?}, {:?}) -> {:?}", in_unit, in_scope, in_element, stream_format, in_data_size, result);
@@ -144,10 +149,14 @@ fn AudioUnitGetProperty(
 
     match in_id {
         kAudioUnitProperty_StreamFormat => {
-            assert!(env.mem.read(io_data_size) == guest_size_of::<AudioStreamBasicDescription>());
+            assert_eq!(
+                env.mem.read(io_data_size),
+                guest_size_of::<AudioStreamBasicDescription>()
+            );
             let stream_format = match in_scope {
                 kAudioUnitScope_Global => host_object.global_stream_format,
                 kAudioUnitScope_Output => host_object.output_stream_format.unwrap(),
+                kAudioUnitScope_Input => host_object.input_stream_format.unwrap(),
                 _ => unimplemented!(),
             };
             env.mem.write(out_data.cast(), stream_format);
@@ -230,9 +239,29 @@ pub fn render_audio_unit(env: &mut Environment, audio_unit: AudioUnit) {
         return;
     }
 
-    let stream_format = audio_unit_host_object
-        .output_stream_format
-        .unwrap_or(audio_unit_host_object.global_stream_format);
+    let input_stream_format = audio_unit_host_object.input_stream_format;
+    let output_stream_format = audio_unit_host_object.output_stream_format;
+    let stream_format = if input_stream_format.is_some()
+        && output_stream_format.is_some()
+        && input_stream_format != output_stream_format
+    {
+        unimplemented!("AudioUnit {:?} has non default and different input {:?} and output {:?} stream formats, conversion is needed", audio_unit, input_stream_format, output_stream_format);
+    } else {
+        // For purposes, the only important part is that format is supported
+        // and playable by OpenAL. Thus, it doesn't really matter if input or
+        // output format is defined by the application.
+        // (but not both at the same time, see the check above)
+        input_stream_format
+            .unwrap_or(output_stream_format.unwrap_or(audio_unit_host_object.global_stream_format))
+    };
+    let sample_rate = if let Some(input_stream_format) = input_stream_format {
+        input_stream_format.sample_rate
+    } else {
+        assert!(output_stream_format.is_some());
+        // TODO: confirm that this is the general behaviour
+        // (and not only RE4 thing)
+        current_hardware_sample_rate
+    };
 
     assert!(is_supported_audio_format(&stream_format));
 
@@ -257,7 +286,7 @@ pub fn render_audio_unit(env: &mut Environment, audio_unit: AudioUnit) {
     // if it's been too long since the last render.
     // TODO: Verify if this behavior is right
     let elapsed_time = now.duration_since(audio_unit_host_object.last_render_time.unwrap());
-    let number_frames = (elapsed_time.as_secs_f64().min(0.1) * current_hardware_sample_rate) as u32;
+    let number_frames = (elapsed_time.as_secs_f64().min(0.1) * sample_rate) as u32;
 
     let bytes_per_channel = stream_format.bits_per_channel / 8;
     let actual_bytes_per_frame = stream_format.channels_per_frame * bytes_per_channel;
@@ -267,25 +296,51 @@ pub fn render_audio_unit(env: &mut Environment, audio_unit: AudioUnit) {
     // Alloc callback arguments
     let action_flags = env.mem.alloc_and_write(0);
 
-    // Resident Evil 4 expects 2 buffers though it copies the same data to both
-    let buffer1Data = env.mem.alloc(buffer_size);
-    let buffer2Data = env.mem.alloc(buffer_size);
-    let audio_buffer_list: AudioBufferList<2> = AudioBufferList {
-        number_buffers: 2,
-        buffers: [
-            AudioBuffer {
+    let (audio_buffer_list, buffer1Data, buffer2Data): (
+        MutVoidPtr,
+        MutVoidPtr,
+        Option<MutVoidPtr>,
+    ) = if input_stream_format.is_some() {
+        let bufferData = env.mem.alloc(buffer_size);
+        let audio_buffer_list: AudioBufferList<1> = AudioBufferList {
+            number_buffers: 1,
+            buffers: [AudioBuffer {
                 number_channels: stream_format.channels_per_frame,
                 data_byte_size: buffer_size,
-                data: buffer1Data,
-            },
-            AudioBuffer {
-                number_channels: stream_format.channels_per_frame,
-                data_byte_size: buffer_size,
-                data: buffer2Data,
-            },
-        ],
+                data: bufferData,
+            }],
+        };
+        (
+            env.mem.alloc_and_write(audio_buffer_list).cast(),
+            bufferData,
+            None,
+        )
+    } else {
+        // Resident Evil 4 expects 2 buffers
+        // though it copies the same data to both
+        let buffer1Data = env.mem.alloc(buffer_size);
+        let buffer2Data = env.mem.alloc(buffer_size);
+        let audio_buffer_list: AudioBufferList<2> = AudioBufferList {
+            number_buffers: 2,
+            buffers: [
+                AudioBuffer {
+                    number_channels: stream_format.channels_per_frame,
+                    data_byte_size: buffer_size,
+                    data: buffer1Data,
+                },
+                AudioBuffer {
+                    number_channels: stream_format.channels_per_frame,
+                    data_byte_size: buffer_size,
+                    data: buffer2Data,
+                },
+            ],
+        };
+        (
+            env.mem.alloc_and_write(audio_buffer_list).cast(),
+            buffer1Data,
+            Some(buffer2Data),
+        )
     };
-    let audio_buffer_list = env.mem.alloc_and_write(audio_buffer_list);
 
     // Run render callback
     let AURenderCallbackStruct {
@@ -300,7 +355,7 @@ pub fn render_audio_unit(env: &mut Environment, audio_unit: AudioUnit) {
             nil.cast_void().cast_const(),
             0u32,
             number_frames,
-            audio_buffer_list.cast_void(),
+            audio_buffer_list,
         ),
     );
 
@@ -320,9 +375,7 @@ pub fn render_audio_unit(env: &mut Environment, audio_unit: AudioUnit) {
             al_format,
             processed_data.as_ptr() as *const ALvoid,
             processed_data.len().try_into().unwrap(),
-            // AudioUnits seem to ignore the audio format sample rate and use
-            // AudioSession state current_hardware_sample_rate value instead
-            current_hardware_sample_rate as i32,
+            sample_rate as i32,
         );
         alSourceQueueBuffers(al_source, 1, &al_buffer);
 
@@ -346,7 +399,9 @@ pub fn render_audio_unit(env: &mut Environment, audio_unit: AudioUnit) {
     env.mem.free(action_flags.cast_void());
 
     env.mem.free(buffer1Data.cast_void());
-    env.mem.free(buffer2Data.cast_void());
+    if let Some(buffer2Data) = buffer2Data {
+        env.mem.free(buffer2Data.cast_void());
+    }
 
     env.mem.free(audio_buffer_list.cast_void());
 

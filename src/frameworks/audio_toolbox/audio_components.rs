@@ -40,6 +40,7 @@ impl State {
 pub struct AudioComponentInstanceHostObject {
     pub started: bool,
     pub global_stream_format: AudioStreamBasicDescription,
+    pub input_stream_format: Option<AudioStreamBasicDescription>,
     pub output_stream_format: Option<AudioStreamBasicDescription>,
     pub render_callback: Option<AURenderCallbackStruct>,
     pub last_render_time: Option<Instant>,
@@ -65,6 +66,7 @@ impl Default for AudioComponentInstanceHostObject {
                 bits_per_channel: 32,
                 _reserved: 0,
             },
+            input_stream_format: None,
             output_stream_format: None,
             render_callback: None,
             last_render_time: None,
@@ -88,7 +90,6 @@ unsafe impl SafeRead for OpaqueAudioComponent {}
 
 type AudioComponent = MutPtr<OpaqueAudioComponent>;
 
-#[allow(dead_code)]
 pub type AURenderCallback = GuestFunction;
 
 #[repr(C, packed)]

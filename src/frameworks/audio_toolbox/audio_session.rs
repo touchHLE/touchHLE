@@ -27,6 +27,7 @@ const kAudioSessionProperty_CurrentHardwareOutputNumberChannels: AudioSessionPro
     fourcc(b"choc");
 const kAudioSessionProperty_PreferredHardwareIOBufferDuration: AudioSessionPropertyID =
     fourcc(b"iobd");
+const kAudioSessionProperty_PreferredHardwareSampleRate: AudioSessionPropertyID = fourcc(b"hwsr");
 
 const kAudioSessionCategory_SoloAmbientSound: u32 = fourcc(b"solo");
 
@@ -129,11 +130,25 @@ fn AudioSessionSetProperty(
     let required_size: GuestUSize = match in_ID {
         kAudioSessionProperty_AudioCategory => guest_size_of::<u32>(),
         kAudioSessionProperty_PreferredHardwareIOBufferDuration => guest_size_of::<f32>(),
+        kAudioSessionProperty_PreferredHardwareSampleRate => guest_size_of::<f64>(),
         _ => unimplemented!("Unimplemented property ID: {}", debug_fourcc(in_ID)),
     };
     if in_data_size != required_size {
         log!("Warning: AudioSessionSetProperty() failed");
         return kAudioSessionBadPropertySizeError;
+    }
+    if in_ID == kAudioSessionProperty_PreferredHardwareSampleRate {
+        env.framework_state
+            .audio_toolbox
+            .audio_session
+            .current_hardware_sample_rate = env.mem.read(in_data.cast::<f64>());
+        log!(
+            "AudioSessionSetProperty current_hardware_sample_rate {}",
+            env.framework_state
+                .audio_toolbox
+                .audio_session
+                .current_hardware_sample_rate
+        );
     }
 
     let result = 0; // success

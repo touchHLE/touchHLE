@@ -3,18 +3,18 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
-//! Quick-and-dirty AAC-LC decoding.
+//! Quick-and-dirty decoding of miscellaneous formats (MP3, AAC) to linear PCM.
 //!
 //! This should be the only module in touchHLE that makes use of [symphonia].
-//! Only the LC profile and MPEG-4 container format are supported (see feature
-//! list in Cargo.toml).
+//! For AAC, Only the LC profile and MPEG-4 container format are supported (see
+//! feature list in Cargo.toml).
 
 use std::io::Cursor;
 use symphonia::core::audio::{RawSampleBuffer, SignalSpec};
 use symphonia::core::codecs::{CODEC_TYPE_AAC, CODEC_TYPE_MP3};
 use symphonia::core::io::MediaSourceStream;
 
-/// PCM data decoded from an AAC file.
+/// PCM data decoded from an miscellaneous format file.
 pub struct SymphoniaDecodedToPcm {
     /// 16-bit little-endian PCM samples, grouped in frames (one sample per
     /// channel in each frame).
@@ -38,7 +38,7 @@ pub fn decode_symphonia_to_pcm(file: Cursor<Vec<u8>>) -> Result<SymphoniaDecoded
         )
         .map_err(|_| ())?;
 
-    // If this failed, no AAC audio track was found.
+    // If this failed, audio track with a relevant format was found.
     let mut format = probed.format;
     let track = format
         .tracks()

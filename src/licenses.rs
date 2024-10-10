@@ -127,7 +127,6 @@ const PVRTD_LICENSE: &str = include_str!(concat!(
     "/vendor/PVRTDecompress/LICENSE.md"
 ));
 
-
 // When resource files are bundled with touchHLE in such a way that the user can
 // read their license files directly, use this caveat.
 

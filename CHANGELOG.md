@@ -44,6 +44,10 @@ Quality:
 
 - Fix problem with non-working accelerometer on some Android phones. (@Oscar1640)
 
+Other:
+
+- MP3 decoding now uses Symphonia rather than dr\_mp3. We do not expect this to affect compatibility. (@LennyKappa)
+
 ## v0.2.2 (2024-04-01)
 
 Compatibility:

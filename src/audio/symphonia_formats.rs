@@ -38,7 +38,7 @@ pub fn decode_symphonia_to_pcm(file: Cursor<Vec<u8>>) -> Result<SymphoniaDecoded
         )
         .map_err(|_| ())?;
 
-    // If this failed, audio track with a relevant format was found.
+    // If this failed, no audio track with a relevant format was found.
     let mut format = probed.format;
     let track = format
         .tracks()

@@ -27,6 +27,8 @@ Compatibility:
   - [Resident Evil 4: Mobile Edition](https://appdb.touchhle.org/apps/91) (@alborrajo)
   - [Command & Conquer: Red Alert](https://appdb.touchhle.org/apps/404) (@ciciplusplus)
   - [SimCity](https://appdb.touchhle.org/apps/250) (@ciciplusplus)
+  - [Asphalt 5](https://appdb.touchhle.org/apps/411) (@ciciplusplus, @hikari-no-yume)
+  - [Cut the Rope](https://appdb.touchhle.org/apps/124) (@ciciplusplus)
 - API support improvements:
   - Various small contributions. (@hikari-no-yume, @alborrajo, @ciciplusplus, @atasro2, @LennyKappa)
   - UITextField now supports real text input with a keyboard. On Windows/macOS physical keyboard is used, on Android it's done via a system soft keyboard. (@ciciplusplus)

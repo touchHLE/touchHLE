@@ -7,7 +7,7 @@
 
 use crate::dyld::FunctionExports;
 use crate::frameworks::core_foundation::cf_allocator::{kCFAllocatorDefault, CFAllocatorRef};
-use crate::mem::{ConstPtr, MutPtr, Ptr, SafeRead};
+use crate::mem::{ConstPtr, ConstVoidPtr, MutPtr, MutVoidPtr, Ptr, SafeRead};
 use crate::{export_c_func, Environment};
 
 #[repr(C, packed)]
@@ -31,4 +31,36 @@ fn SCNetworkReachabilityCreateWithName(
     Ptr::null()
 }
 
-pub const FUNCTIONS: FunctionExports = &[export_c_func!(SCNetworkReachabilityCreateWithName(_, _))];
+fn SCNetworkReachabilityCreateWithAddress(
+    _env: &mut Environment,
+    allocator: CFAllocatorRef,
+    address: ConstVoidPtr,
+) -> SCNetworkReachabilityRef {
+    assert_eq!(allocator, kCFAllocatorDefault); // unimplemented
+    log!(
+        "TODO: SCNetworkReachabilityCreateWithAddress({:?}, {:?}) -> NULL",
+        allocator,
+        address
+    );
+    Ptr::null()
+}
+
+fn SCNetworkReachabilityGetFlags(
+    _env: &mut Environment,
+    target: SCNetworkReachabilityRef,
+    flags: MutVoidPtr,
+) -> bool {
+    assert!(target.is_null());
+    log!(
+        "TODO: SCNetworkReachabilityGetFlags({:?}, {:?}) -> false",
+        target,
+        flags
+    );
+    false
+}
+
+pub const FUNCTIONS: FunctionExports = &[
+    export_c_func!(SCNetworkReachabilityCreateWithName(_, _)),
+    export_c_func!(SCNetworkReachabilityCreateWithAddress(_, _)),
+    export_c_func!(SCNetworkReachabilityGetFlags(_, _)),
+];

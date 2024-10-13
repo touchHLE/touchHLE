@@ -172,6 +172,9 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (())setBorderStyle:(NSInteger)style {
     log!("TODO: setBorderStyle:{}", style);
 }
+- (())setEnablesReturnKeyAutomatically:(bool)enables {
+    log!("TODO: setEnablesReturnKeyAutomatically:{}", enables);
+}
 
 - (())touchesBegan:(id)_touches // NSSet* of UITouch*
          withEvent:(id)_event { // UIEvent*

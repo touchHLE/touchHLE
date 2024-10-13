@@ -102,3 +102,6 @@ com.polarbit.waveblazer: --landscape-left
 
 # Command & Conquer: Red Alert
 com.ea.candcra.row: --landscape-left
+
+# Castle of Magic
+com.gameloft.CastleofMagic: --button-to-touch=DPadLeft,50,285 --button-to-touch=DPadRight,120,285 --button-to-touch=A,430,260  --button-to-touch=X,360,280 --button-to-touch=Y, 440,150 

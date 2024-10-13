@@ -551,6 +551,9 @@ pub const CLASSES: ClassExports = objc_classes! {
     // default implementation, subclasses can override
     size
 }
+- (())sizeToFit {
+    log!("TODO: [(UIView *){:?} sizeToFit]", this);
+}
 
 @end
 

@@ -20,6 +20,13 @@ pub const CLASSES: ClassExports = objc_classes! {
     msg![env; this init]
 }
 
+- (())startAnimating {
+    log!("TODO: [(UIActivityIndicatorView *){:?} startAnimating]", this);
+}
+- (())stopAnimating {
+    log!("TODO: [(UIActivityIndicatorView *){:?} stopAnimating]", this);
+}
+
 @end
 
 };

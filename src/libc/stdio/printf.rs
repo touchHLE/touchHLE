@@ -378,7 +378,13 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
                     formatted_f
                 };
 
-                res.extend_from_slice(result.as_bytes());
+                res.extend_from_slice(
+                    // TODO: skip if alternative representation is requested
+                    result
+                        .trim_end_matches('0')
+                        .trim_end_matches('.')
+                        .as_bytes(),
+                );
             }
             // TODO: more specifiers
             _ => unimplemented!(

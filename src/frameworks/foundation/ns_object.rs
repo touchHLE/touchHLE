@@ -255,7 +255,12 @@ forUndefinedKey:(id)key { // NSString*
 - (())performSelectorOnMainThread:(SEL)sel withObject:(id)arg waitUntilDone:(bool)wait {
     log_dbg!("performSelectorOnMainThread:{} withObject:{:?} waitUntilDone:{}", sel.as_str(&env.mem), arg, wait);
     if wait && env.current_thread == 0 {
-        () = msg_send(env, (this, sel, arg));
+        if sel.as_str(&env.mem).ends_with(':') {
+            () = msg_send(env, (this, sel, arg));
+        } else {
+            assert!(arg.is_null());
+            () = msg_send(env, (this, sel));
+        }
         return;
     }
     if env.bundle.bundle_identifier().starts_with("com.gameloft.POP") && sel == env.objc.lookup_selector("startMovie:").unwrap() && wait {
@@ -287,6 +292,7 @@ forUndefinedKey:(id)key { // NSString*
     let arg_key: id = get_static_str(env, "arg");
     let arg: id = msg![env; dict objectForKey:arg_key];
 
+    // FIXME: handle the case of a selector without an arg here too
     () = msg_send(env, (this, sel, arg));
 }
 

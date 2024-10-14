@@ -50,6 +50,11 @@ pub const CLASSES: ClassExports = objc_classes! {
 // TODO: more init methods
 // TODO: more delegate messages to support
 
+- (id)initWithContentsOfURL:(id)url { // NSURL *
+    let data: id = msg_class![env; NSData dataWithContentsOfURL:url];
+    msg![env; this initWithData:data]
+}
+
 - (id)initWithData:(id)data { // NSData *
     retain(env, data);
     env.objc.borrow_mut::<NSXMLParserHostObject>(this).data = data;

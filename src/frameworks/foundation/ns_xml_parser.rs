@@ -213,6 +213,18 @@ pub const CLASSES: ClassExports = objc_classes! {
                     }
                 }
             }
+            Event::Comment(e) => {
+                let comment = e.unescape().unwrap().into_owned();
+                let sel: SEL = env
+                    .objc
+                    .register_host_selector("parser:foundComment:".to_string(), &mut env.mem);
+                let responds: bool = msg![env; delegate respondsToSelector:sel];
+                if responds {
+                    let comment = from_rust_string(env, comment);
+                    let comment = autorelease(env, comment);
+                    () = msg![env; delegate parser:this foundComment:comment];
+                }
+            }
             e => unimplemented!("{:?}", e)
         }
     }

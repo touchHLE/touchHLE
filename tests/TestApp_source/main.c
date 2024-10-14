@@ -371,6 +371,10 @@ int test_vsnprintf() {
   str = str_format("%.14g", 1.0);
   res += !!strcmp(str, "1");
   free(str);
+  // Test %g with a precision argument
+  str = str_format("%.*g", 4, 10.234);
+  res += !!strcmp(str, "10.23");
+  free(str);
   // Test length modifiers
   str = str_format("%d %ld %lld %u %lu %llu", 10, 100, 4294967296, 10, 100,
                    4294967296);

@@ -5,6 +5,7 @@
  */
 //! `UIWindow`.
 
+use crate::dyld::{ConstantExports, HostConstant};
 use crate::frameworks::core_graphics::CGRect;
 use crate::objc::{id, msg, msg_class, msg_super, objc_classes, ClassExports};
 
@@ -118,3 +119,28 @@ pub const CLASSES: ClassExports = objc_classes! {
 @end
 
 };
+
+// TODO: more keyboard notifications
+pub const UIKeyboardWillShowNotification: &str = "UIKeyboardWillShowNotification";
+pub const UIKeyboardDidShowNotification: &str = "UIKeyboardDidShowNotification";
+pub const UIKeyboardWillHideNotification: &str = "UIKeyboardWillHideNotification";
+pub const UIKeyboardDidHideNotification: &str = "UIKeyboardDidHideNotification";
+
+pub const CONSTANTS: ConstantExports = &[
+    (
+        "_UIKeyboardWillShowNotification",
+        HostConstant::NSString(UIKeyboardWillShowNotification),
+    ),
+    (
+        "_UIKeyboardDidShowNotification",
+        HostConstant::NSString(UIKeyboardDidShowNotification),
+    ),
+    (
+        "_UIKeyboardWillHideNotification",
+        HostConstant::NSString(UIKeyboardWillHideNotification),
+    ),
+    (
+        "_UIKeyboardDidHideNotification",
+        HostConstant::NSString(UIKeyboardDidHideNotification),
+    ),
+];

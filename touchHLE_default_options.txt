@@ -102,3 +102,6 @@ com.polarbit.waveblazer: --landscape-left
 
 # Command & Conquer: Red Alert
 com.ea.candcra.row: --landscape-left
+
+# Silent Hill: The Escape
+com.konami-europe.silenthillescape: --x-tilt-offset=-45

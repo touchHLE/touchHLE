@@ -18,6 +18,8 @@ use crate::objc::{
 };
 use crate::Environment;
 
+use super::ui_view::ui_control::UIControlEvents;
+
 struct UIRuntimeConnectionHostObject {
     destination: id,
     label: id,
@@ -37,7 +39,7 @@ impl Default for UIRuntimeConnectionHostObject {
 #[derive(Default)]
 struct UIRuntimeEventConnectionHostObject {
     superclass: UIRuntimeConnectionHostObject,
-    eventMask: i32,
+    eventMask: UIControlEvents,
 }
 impl_HostObject_with_superclass!(UIRuntimeEventConnectionHostObject);
 
@@ -189,7 +191,20 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (())connect {
-    log!("TODO: [(UIRuntimeEventConnection*) {:?} connect]", this);
+    let &UIRuntimeConnectionHostObject {
+        destination,
+        label,
+        source
+    } = env.objc.borrow(this);
+    let &UIRuntimeEventConnectionHostObject {
+        superclass: _,
+        eventMask
+    } = env.objc.borrow(this);
+
+    let selector = to_rust_string(env, label);
+    let action = env.objc.lookup_selector(&selector).unwrap();
+
+    () = msg![env; source addTarget:destination action:action forControlEvents:eventMask];
 }
 
 // NSCoding implementation
@@ -200,7 +215,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     let event_mask: i32 = msg![env; coder decodeIntForKey: event_mask_key];
 
     let host_obj = env.objc.borrow_mut::<UIRuntimeEventConnectionHostObject>(this);
-    host_obj.eventMask = event_mask;
+    host_obj.eventMask = event_mask as UIControlEvents;
 
     this
 }

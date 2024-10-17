@@ -14,8 +14,10 @@ use crate::frameworks::{
 /// All the lists of classes that the runtime should search through.
 pub const CLASS_LISTS: &[super::ClassExports] = &[
     crate::app_picker::CLASSES, // Not a framework! Special internal classes.
+    core_animation::ca_animation::CLASSES,
     core_animation::ca_eagl_layer::CLASSES,
     core_animation::ca_layer::CLASSES,
+    core_animation::ca_media_timing_function::CLASSES,
     core_graphics::cg_data_provider::CLASSES,
     core_graphics::cg_color::CLASSES,
     core_graphics::cg_color_space::CLASSES,
@@ -82,9 +84,14 @@ pub const CLASS_LISTS: &[super::ClassExports] = &[
     uikit::ui_view::ui_alert_view::CLASSES,
     uikit::ui_view::ui_control::CLASSES,
     uikit::ui_view::ui_control::ui_button::CLASSES,
+    uikit::ui_view::ui_control::ui_rounded_rect_button::CLASSES,
+    uikit::ui_view::ui_control::ui_segment::CLASSES,
+    uikit::ui_view::ui_control::ui_segmented_control::CLASSES,
+    uikit::ui_view::ui_control::ui_slider::CLASSES,
     uikit::ui_view::ui_control::ui_text_field::CLASSES,
     uikit::ui_view::ui_image_view::CLASSES,
     uikit::ui_view::ui_label::CLASSES,
+    uikit::ui_view::ui_page_control::CLASSES,
     uikit::ui_view::ui_picker_view::CLASSES,
     uikit::ui_view::ui_scroll_view::CLASSES,
     uikit::ui_view::ui_scroll_view::ui_text_view::CLASSES,

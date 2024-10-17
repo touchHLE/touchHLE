@@ -9,13 +9,15 @@ use crate::frameworks::foundation::NSInteger;
 use crate::objc::{id, msg, ClassExports};
 use crate::objc_classes;
 
+type UIActivityIndicatorViewStyle = NSInteger;
+
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);
 
 @implementation UIActivityIndicatorView: UIView
 
-- (id)initWithActivityIndicatorStyle:(NSInteger)_style {
+- (id)initWithActivityIndicatorStyle:(UIActivityIndicatorViewStyle)_style {
     // TODO: proper init
     msg![env; this init]
 }

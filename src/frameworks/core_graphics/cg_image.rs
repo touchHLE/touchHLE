@@ -128,7 +128,7 @@ fn CGImageGetColorSpace(env: &mut Environment, _image: CGImageRef) -> CGColorSpa
     CGColorSpaceCreateWithName(env, srgb_name)
 }
 
-fn CGImageGetWidth(env: &mut Environment, image: CGImageRef) -> GuestUSize {
+pub fn CGImageGetWidth(env: &mut Environment, image: CGImageRef) -> GuestUSize {
     let (width, _height) = env
         .objc
         .borrow::<CGImageHostObject>(image)
@@ -136,7 +136,7 @@ fn CGImageGetWidth(env: &mut Environment, image: CGImageRef) -> GuestUSize {
         .dimensions();
     width
 }
-fn CGImageGetHeight(env: &mut Environment, image: CGImageRef) -> GuestUSize {
+pub fn CGImageGetHeight(env: &mut Environment, image: CGImageRef) -> GuestUSize {
     let (_width, height) = env
         .objc
         .borrow::<CGImageHostObject>(image)

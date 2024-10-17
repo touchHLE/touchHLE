@@ -288,6 +288,12 @@ pub const CLASSES: ClassExports = objc_classes! {
     autorelease(env, new)
 }
 
++ (id)stringWithContentsOfFile:(id)path { // NSString*
+    let new: id = msg![env; this alloc];
+    let new: id = msg![env; new initWithContentsOfFile:path];
+    autorelease(env, new)
+}
+
 + (id)stringWithContentsOfFile:(id)path // NSString*
                       encoding:(NSStringEncoding)encoding
                          error:(MutPtr<id>)error { // NSError**
@@ -332,6 +338,13 @@ pub const CLASSES: ClassExports = objc_classes! {
     msg![env; res substringFromIndex:1u32]
 }
 
++ (NSStringEncoding)defaultCStringEncoding {
+    // I don't want to figure out what that is on all platforms, and the use
+    // I've seen of this method was on ASCII strings, so let's just hardcode
+    // UTF-8 and hope that works.
+    NSUTF8StringEncoding
+}
+
 // These are the two methods that have to be overridden by subclasses, so these
 // implementations don't have to care about foreign subclasses.
 - (NSUInteger)length {
@@ -364,6 +377,48 @@ pub const CLASSES: ClassExports = objc_classes! {
 
     // TODO: raise exception instead of panicking?
     utf16[index as usize]
+}
+
+- (NSRange)lineRangeForRange:(NSRange)range {
+    let string = to_rust_string(env, this);
+    let characters: Vec<char> = string.chars().collect();
+
+    let mut first_line_start_loc = 0;
+    for char_idx in (0..=range.location as usize).rev() {
+        let character = characters[char_idx];
+        if character == '\n' {
+            first_line_start_loc = char_idx+1;
+            break;
+        }
+    }
+
+    let mut last_line_end_loc = string.len();
+    for (char_idx, &character) in characters.iter().enumerate().take(string.len()).skip((range.location+range.length) as usize) {
+        if character == '\n' {
+            // The range end is the first char past the terminator
+            if char_idx == string.len() {
+                last_line_end_loc = char_idx;
+            } else {
+                last_line_end_loc = char_idx + 1;
+            }
+            break;
+        }
+    }
+
+    let line_range = NSRange {
+        location: first_line_start_loc as NSUInteger,
+        length: (last_line_end_loc-first_line_start_loc) as NSUInteger
+    };
+    log_dbg!("[(NSString*) {:?} ({}) lineRangeForRange:{:?}] -> {:?}", this, string, range, line_range);
+    line_range
+}
+
+- (id)substringWithRange:(NSRange)range {
+    let string = to_rust_string(env, this);
+    let substring = string[range.location as usize..(range.location+range.length) as usize].to_owned();
+    let substring_id = from_rust_string(env, substring.clone());
+    log_dbg!("[(NSString*) {:?} ({}) substringWithRange:{:?}] -> {:?} ({})", this, string, range, substring_id, substring);
+    substring_id
 }
 
 - (NSRange)rangeOfString:(id)search_string {
@@ -579,17 +634,13 @@ pub const CLASSES: ClassExports = objc_classes! {
     true
 }
 - (())getCString:(MutPtr<u8>)buffer {
-    // This is a deprecated method nobody should use, but unfortunately, it is
-    // used. The encoding it should use is [NSString defaultCStringEncoding]
-    // but I don't want to figure out what that is on all platforms, and the use
-    // I've seen of this method was on ASCII strings, so let's just hardcode
-    // UTF-8 and hope that works.
+    let encoding: NSStringEncoding = msg_class![env; NSString defaultCStringEncoding];
 
     // Prevent slice out-of-range error
     let length = (u32::MAX - buffer.to_bits()).min(NSMaximumStringLength);
     let res: bool = msg![env; this getCString:buffer
                                     maxLength:length
-                                     encoding:NSUTF8StringEncoding];
+                                     encoding:encoding];
     assert!(res);
 }
 
@@ -1171,12 +1222,8 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (id)initWithCString:(ConstPtr<u8>)c_string {
-    // This is a deprecated method nobody should use, but unfortunately, it is
-    // used. The encoding it should use is [NSString defaultCStringEncoding]
-    // but I don't want to figure out what that is on all platforms, and the use
-    // I've seen of this method was on ASCII strings, so let's just hardcode
-    // UTF-8 and hope that works.
-    msg![env; this initWithCString:c_string encoding:NSUTF8StringEncoding]
+    let encoding: NSStringEncoding = msg_class![env; NSString defaultCStringEncoding];
+    msg![env; this initWithCString:c_string encoding:encoding]
 }
 
 - (id)initWithCString:(ConstPtr<u8>)c_string
@@ -1184,6 +1231,28 @@ pub const CLASSES: ClassExports = objc_classes! {
     assert!(C_STRING_FRIENDLY_ENCODINGS.contains(&encoding));
     let len: NSUInteger = env.mem.cstr_at(c_string).len().try_into().unwrap();
     msg![env; this initWithBytes:c_string length:len encoding:encoding]
+}
+
+- (id)initWithContentsOfFile:(id)path { // NSString*
+    // TODO: avoid copy?
+    let path = to_rust_string(env, path);
+    let Ok(bytes) = env.fs.read(GuestPath::new(&path)) else {
+        return nil;
+    };
+
+    let encoding = if bytes[..2] == [0xFE, 0xFF] || bytes[..2] == [0xFF, 0xFE] {
+        NSUTF16StringEncoding
+    } else if bytes[..3] == [0xEF, 0xBB, 0xBF] {
+        NSUTF8StringEncoding
+    } else {
+        msg_class![env; NSString defaultCStringEncoding]
+    };
+
+    let host_object = StringHostObject::decode(Cow::Owned(bytes), encoding);
+
+    *env.objc.borrow_mut(this) = host_object;
+
+    this
 }
 
 - (id)initWithContentsOfFile:(id)path // NSString*

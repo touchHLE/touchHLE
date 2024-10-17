@@ -12,9 +12,12 @@ pub mod ui_alert_view;
 pub mod ui_control;
 pub mod ui_image_view;
 pub mod ui_label;
+pub mod ui_page_control;
 pub mod ui_picker_view;
 pub mod ui_scroll_view;
 pub mod ui_window;
+
+use std::fmt::Debug;
 
 use super::ui_graphics::{UIGraphicsPopContext, UIGraphicsPushContext};
 use crate::frameworks::core_graphics::cg_affine_transform::{
@@ -23,19 +26,67 @@ use crate::frameworks::core_graphics::cg_affine_transform::{
 use crate::frameworks::core_graphics::cg_color::CGColorRef;
 use crate::frameworks::core_graphics::cg_context::{CGContextClearRect, CGContextRef};
 use crate::frameworks::core_graphics::{CGFloat, CGPoint, CGRect, CGSize};
+use crate::frameworks::foundation::ns_run_loop::NSDefaultRunLoopMode;
 use crate::frameworks::foundation::ns_string::get_static_str;
-use crate::frameworks::foundation::{ns_array, NSInteger, NSUInteger};
+use crate::frameworks::foundation::{ns_array, NSInteger, NSTimeInterval, NSUInteger};
+use crate::mem::ConstVoidPtr;
 use crate::objc::{
-    autorelease, id, msg, msg_class, nil, objc_classes, release, retain, Class, ClassExports,
-    HostObject, NSZonePtr,
+    autorelease, id, msg, msg_class, msg_send, nil, objc_classes, release, retain, Class,
+    ClassExports, HostObject, NSZonePtr, SEL,
 };
 use crate::Environment;
+
+type UIViewAnimationCurve = NSInteger;
 
 #[derive(Default)]
 pub struct State {
     /// List of views for internal purposes. Non-retaining!
     pub(super) views: Vec<id>,
     pub ui_window: ui_window::State,
+    animations: Vec<AnimationState>,
+    committed_animations: Vec<AnimationState>,
+}
+impl State {
+    fn get(env: &mut Environment) -> &State {
+        &env.framework_state.uikit.ui_view
+    }
+
+    fn get_mut(env: &mut Environment) -> &mut State {
+        &mut env.framework_state.uikit.ui_view
+    }
+}
+
+#[derive(Copy, Clone)]
+struct AnimationState {
+    id: id, // NSString*
+    duration: NSTimeInterval,
+    delay: NSTimeInterval,
+    repeat_count: f32,
+    delegate: id,
+    context: ConstVoidPtr,
+    did_stop_selector: SEL,
+}
+impl Default for AnimationState {
+    fn default() -> Self {
+        AnimationState {
+            id: nil,
+            duration: 0.2,
+            delay: 0.0,
+            repeat_count: 0.0,
+            delegate: nil,
+            context: ConstVoidPtr::default(),
+            did_stop_selector: SEL::default(),
+        }
+    }
+}
+impl Debug for AnimationState {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "Animation {:?} (Delay of {}s) Duration of {}s x{} repeats",
+            self.id, self.delay, self.duration, self.repeat_count
+        )
+    }
 }
 
 pub(super) struct UIViewHostObject {
@@ -50,6 +101,8 @@ pub(super) struct UIViewHostObject {
     clears_context_before_drawing: bool,
     user_interaction_enabled: bool,
     multiple_touch_enabled: bool,
+    clips_to_bounds: bool,        // TODO: Handle this property
+    transform: CGAffineTransform, // TODO: Handle this property
 }
 impl HostObject for UIViewHostObject {}
 impl Default for UIViewHostObject {
@@ -64,6 +117,8 @@ impl Default for UIViewHostObject {
             clears_context_before_drawing: true,
             user_interaction_enabled: true,
             multiple_touch_enabled: false,
+            clips_to_bounds: false,
+            transform: CGAffineTransformIdentity,
         }
     }
 }
@@ -89,7 +144,7 @@ fn init_common(env: &mut Environment, this: id) -> id {
 
     env.objc.borrow_mut::<UIViewHostObject>(this).layer = layer;
 
-    env.framework_state.uikit.ui_view.views.push(this);
+    State::get_mut(env).views.push(this);
 
     this
 }
@@ -107,6 +162,90 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 + (Class)layerClass {
     env.objc.get_known_class("CALayer", &mut env.mem)
+}
+
++ (())setAnimationDuration:(NSTimeInterval)duration {
+    log_dbg!("[UIView setAnimationDuration:{:?}]", duration);
+    State::get_mut(env).animations.last_mut().unwrap().duration = duration;
+}
+
++ (())setAnimationDelay:(NSTimeInterval)delay {
+    log_dbg!("[UIView setAnimationDelay:{:?}]", delay);
+    State::get_mut(env).animations.last_mut().unwrap().delay = delay;
+}
+
++ (())setAnimationCurve:(UIViewAnimationCurve)curve {
+    log!("TODO: [UIView setAnimationCurve:{:?}]", curve);
+}
+
++ (())setAnimationRepeatAutoreverses:(bool)repeatAutoreverses {
+    log!("TODO: [UIView setAnimationRepeatAutoreverses:{:?}]", repeatAutoreverses);
+}
+
++ (())setAnimationRepeatCount:(f32)repeatCount {
+    log_dbg!("[UIView setAnimationRepeatCount:{:?}]", repeatCount);
+    assert!(repeatCount >= 0.0);
+    State::get_mut(env).animations.last_mut().unwrap().repeat_count = repeatCount;
+}
+
++ (())setAnimationDelegate:(id)delegate {
+    log_dbg!("[UIView setAnimationDelegate:{:?}]", delegate);
+    State::get_mut(env).animations.last_mut().unwrap().delegate = delegate;
+}
+
++ (())setAnimationDidStopSelector:(SEL)selector {
+    log_dbg!("[UIView setAnimationDidStopSelector:{:?}]", selector);
+    State::get_mut(env).animations.last_mut().unwrap().did_stop_selector = selector;
+}
+
++ (())beginAnimations:(id)animationID // NSString*
+              context:(ConstVoidPtr)context {
+    log_dbg!("[UIView beginAnimations:{:?} context:{:?}]", animationID, context);
+    for animation in State::get(env).animations.iter() {
+        assert_ne!(animationID, animation.id);
+    }
+    State::get_mut(env).animations.push(AnimationState::default());
+}
+
++ (())commitAnimations {
+    log_dbg!("[UIView commitAnimations]");
+    let committed_animations = State::get(env).animations.clone();
+    for animation in committed_animations.iter() {
+        log_dbg!("Starting animation {:?}", animation);
+        if animation.delegate != nil && !animation.did_stop_selector.is_null() {
+            log_dbg!("The delegate {:?} {:?} will be notified when it finishes", animation.delegate, animation.did_stop_selector);
+        }
+        // Run an NSTimer for the animation duration and send to the delegate
+        // messages with each animation's selector and context
+        let total_time = animation.duration+animation.delay*(animation.repeat_count as f64);
+        let selector = env.objc.lookup_selector("_touchHLE_animationFinished:").unwrap();
+        let user_info = animation.id;
+        let timer:id = msg_class![env; NSTimer timerWithTimeInterval:total_time
+                                                target:this
+                                                selector:selector
+                                                userInfo:user_info
+                                                repeats:false];
+
+        let run_loop: id = msg_class![env; NSRunLoop mainRunLoop];
+        let mode: id = get_static_str(env, NSDefaultRunLoopMode);
+        () = msg![env; run_loop addTimer:timer forMode:mode];
+    }
+    let state = State::get_mut(env);
+    state.committed_animations.extend_from_slice(&committed_animations);
+    state.animations.clear();
+}
+
++ (())_touchHLE_animationFinished:(id)which {// NSTimer *
+    let animation_id: id = msg![env; which userInfo];
+    let committed_animations = &mut State::get_mut(env).committed_animations;
+    let animation_index = committed_animations.iter().position(|animation| animation.id == animation_id).unwrap();
+    let animation = committed_animations.swap_remove(animation_index);
+    log_dbg!("Finished UIView animation: {:?}", animation);
+    if animation.delegate != nil && !animation.did_stop_selector.is_null() {
+        let finished: id = msg_class![env; NSNumber numberWithBool:true];
+        log_dbg!("Notifying delegate {:?} {:?} with args {:?}, {:?}, {:?}", animation.delegate, animation.did_stop_selector, animation.id, finished, animation.context);
+        () = msg_send(env, (animation.delegate, animation.did_stop_selector, animation.id, finished, animation.context));
+    }
 }
 
 // TODO: accessors etc
@@ -186,6 +325,12 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 - (())setUserInteractionEnabled:(bool)enabled {
     env.objc.borrow_mut::<UIViewHostObject>(this).user_interaction_enabled = enabled;
+}
+- (bool)isClipsToBounds {
+    env.objc.borrow::<UIViewHostObject>(this).clips_to_bounds
+}
+- (())setClipsToBounds:(bool)clips_to_bounds {
+    env.objc.borrow_mut::<UIViewHostObject>(this).clips_to_bounds = clips_to_bounds;
 }
 
 - (bool)isMultipleTouchEnabled {
@@ -312,6 +457,8 @@ pub const CLASSES: ClassExports = objc_classes! {
         clears_context_before_drawing: _,
         user_interaction_enabled: _,
         multiple_touch_enabled: _,
+        clips_to_bounds: _,
+        transform: _,
     } = std::mem::take(env.objc.borrow_mut(this));
 
     release(env, layer);
@@ -423,6 +570,13 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 - (())setClearsContextBeforeDrawing:(bool)v {
     env.objc.borrow_mut::<UIViewHostObject>(this).clears_context_before_drawing = v;
+}
+
+- (CGAffineTransform)transform {
+    env.objc.borrow::<UIViewHostObject>(this).transform
+}
+- (())setTransform:(CGAffineTransform)transform {
+    env.objc.borrow_mut::<UIViewHostObject>(this).transform = transform;
 }
 
 // Drawing stuff that views should override

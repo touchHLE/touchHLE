@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "19626953_d82c935a",
+        "filename": "src/frameworks/uikit/ui_font.rs",
+        "patchSetId": 9
+      },
+      "lineNbr": 19,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-10-17T13:28:40Z",
+      "side": 1,
+      "message": "I don\u0027t think this is scaling well the more fonts we\u0027ll add.\nCan you use the Hash map here with FontKind as the key?",
+      "revId": "255d854958b3b032a4582bfced153264fa3bd800",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

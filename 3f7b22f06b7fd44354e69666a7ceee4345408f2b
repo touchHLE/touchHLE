@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a73f9c4a_2ea38b38",
+        "filename": "android/app/src/main/java/org/libsdl/app",
+        "patchSetId": 3
+      },
+      "lineNbr": 1,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-10-20T19:59:00Z",
+      "side": 0,
+      "message": "I know this is WIP, but could you instead symlink all of unmodified files and only copy SDLActivity.java with necessary modifications?",
+      "revId": "3f7b22f06b7fd44354e69666a7ceee4345408f2b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

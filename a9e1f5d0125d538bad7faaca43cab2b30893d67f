@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "669f31fc_7cf1217f",
+        "filename": "src/frameworks/uikit/ui_font.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 65,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-10-20T06:23:08Z",
+      "side": 1,
+      "message": "Since there\u0027s no auto-formatting, could you add a line break to all the lines like this one so they\u0027re a bit less long?",
+      "revId": "a9e1f5d0125d538bad7faaca43cab2b30893d67f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

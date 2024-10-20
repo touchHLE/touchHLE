@@ -180,14 +180,15 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (())layoutSubviews {
-    let label = env.objc.borrow_mut::<UIButtonHostObject>(this).title_label;
-    let background_image_view = env.objc.borrow_mut::<UIButtonHostObject>(this).background_image_view;
+    let host_object = env.objc.borrow_mut::<UIButtonHostObject>(this);
+    let title_label = host_object.title_label;
+    let background_image_view = host_object.background_image_view;
+    let image_view = host_object.image_view;
     let bounds: CGRect = msg![env; this bounds];
 
+    () = msg![env; title_label setFrame:bounds];
     () = msg![env; background_image_view setFrame:bounds];
-    () = msg![env; label setFrame:bounds];
-    // TODO: layout for image
-
+    () = msg![env; image_view setFrame:bounds];
 }
 
 - (UIButtonType)buttonType {
@@ -231,8 +232,15 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (id)titleForState:(UIControlState)state {
     let host_obj = env.objc.borrow::<UIButtonHostObject>(this);
     host_obj.titles_for_states.get(&state).or_else(|| {
+        // " If no title has been set for the specific state,
+        //   this method returns the title associated with the
+        //   UIControlStateNormal state. "
+        // https://developer.apple.com/documentation/uikit/uibutton/1624022-titleforstate
+        // " If you don’t set the value for UIControlStateNormal,
+        //   then the property defaults to a system value. "
+        // https://developer.apple.com/documentation/uikit/uibutton/1624018-settitle?language=objc
         host_obj.titles_for_states.get(&UIControlStateNormal)
-    }).copied().unwrap()
+    }).copied().unwrap_or(nil)
 }
 - (())setTitle:(id)title // NSString*
       forState:(UIControlState)state {
@@ -251,8 +259,13 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (id)backgroundImageForState:(UIControlState)state {
     let host_obj = env.objc.borrow::<UIButtonHostObject>(this);
     host_obj.background_images_for_states.get(&state).or_else(|| {
+        // " In general, if a property is not specified for a state,
+        //   the default is to use the UIControlStateNormal value.
+        //   If the UIControlStateNormal value is not set, then the property
+        //   defaults to a system value. "
+        // https://developer.apple.com/documentation/uikit/uibutton/1624016-setbackgroundimage?language=objc
         host_obj.background_images_for_states.get(&UIControlStateNormal)
-    }).copied().unwrap()
+    }).copied().unwrap_or(nil)
 }
 - (())setBackgroundImage:(id)image forState:(UIControlState)state {
     retain(env,image);
@@ -270,8 +283,17 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (id)titleColorForState:(UIControlState)state {
     let host_obj = env.objc.borrow::<UIButtonHostObject>(this);
     host_obj.title_colors_for_states.get(&state).or_else(|| {
+        // " In general, if a property is not specified for a state,
+        //   the default is to use the UIControlStateNormal value. "
+        // https://developer.apple.com/documentation/uikit/uibutton/1623993-settitlecolor?language=objc
         host_obj.title_colors_for_states.get(&UIControlStateNormal)
-    }).copied().unwrap()
+    }).copied().unwrap_or_else(|| {
+        // " If you don’t set the value for UIControlStateNormal,
+        //   then the property defaults to a system value. "
+        // https://developer.apple.com/documentation/uikit/uibutton/1623993-settitlecolor?language=objc
+        // This value was taken from an iOS 2 Simulator
+        msg_class![env; UIColor whiteColor]
+    })
 }
 - (())setTitleColor:(id)color // UIColor*
       forState:(UIControlState)state {
@@ -290,8 +312,13 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (id)imageForState:(UIControlState)state {
     let host_obj = env.objc.borrow::<UIButtonHostObject>(this);
     host_obj.images_for_states.get(&state).or_else(|| {
+        // " If you don’t specify an image for the other states,
+        //   the button uses the image associated with UIControlStateNormal.
+        //   If you don’t specify an image for the UIControlStateNormal state,
+        //   the button uses a system value."
+        // https://developer.apple.com/documentation/uikit/uibutton/1623997-setimage?language=objc
         host_obj.images_for_states.get(&UIControlStateNormal)
-    }).copied().unwrap()
+    }).copied().unwrap_or(nil)
 }
 - (())setImage:(id)image // UIImage*
       forState:(UIControlState)state {
@@ -301,6 +328,14 @@ pub const CLASSES: ClassExports = objc_classes! {
         release(env, old);
     }
     update(env, this);
+}
+
+- (())setAdjustsImageWhenHighlighted:(bool)value {
+    log!("TODO: [(UIBUtton*) {:?} setAdjustsImageWhenHighlighted:{}]", this, value);
+}
+
+- (())setAdjustsImageWhenDisabled:(bool)value {
+    log!("TODO: [(UIBUtton*) {:?} setAdjustsImageWhenDisabled:{}]", this, value);
 }
 
 // TODO: actions, etc

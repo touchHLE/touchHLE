@@ -21,7 +21,9 @@ use super::{NSTimeInterval, NSUInteger};
 use crate::mem::MutVoidPtr;
 use crate::objc::{
     id, msg, msg_class, msg_send, nil, objc_classes, retain, Class, ClassExports, NSZonePtr, ObjC,
-    TrivialHostObject, SEL,
+    TrivialHostObject, SEL, TYPE_BOOL, TYPE_CHAR, TYPE_CHAR_PTR, TYPE_CLASS, TYPE_DOUBLE,
+    TYPE_FLOAT, TYPE_ID, TYPE_INT, TYPE_LONG, TYPE_LONGLONG, TYPE_SEL, TYPE_SHORT, TYPE_UCHAR,
+    TYPE_UINT, TYPE_ULONG, TYPE_ULONGLONG, TYPE_UNDEF, TYPE_USHORT, TYPE_VOID,
 };
 
 pub const CLASSES: ClassExports = objc_classes! {
@@ -144,26 +146,75 @@ pub const CLASSES: ClassExports = objc_classes! {
     // checked. If it's non-object type, invoke setNilValueForKey:
     assert!(value != nil);
 
-    // TODO: If value is a NSNumber or NSValue, it must be unwrapped
     let value_class = msg![env; value class];
     let ns_value_class = env.objc.get_known_class("NSValue", &mut env.mem);
-    assert!(!env.objc.class_is_subclass_of(value_class, ns_value_class));
 
     // Look for the first accessor named set<Key>: or _set<Key>, in that order.
     // If found, invoke it with the input value (or unwrapped value, as needed)
     // and finish.
-    if let Some(sel) = env.objc.lookup_selector(&format!("set{}:", camel_case_key_string)) {
-        if env.objc.class_has_method(class, sel) {
-            () = msg_send(env, (this, sel, value));
-            return;
-        }
-    }
+    if let Some(sel) = env.objc.lookup_selector(&format!("set{}:", camel_case_key_string)).filter(|&sel| env.objc.class_has_method(class, sel))
+        .or_else(|| env.objc.lookup_selector(&format!("_set{}:", camel_case_key_string))).filter(|&sel| env.objc.class_has_method(class, sel)
+    ) {
+        if env.objc.class_is_subclass_of(value_class, ns_value_class) {
+            // If value is a NSValue, it must be unwrapped
+            // Find the selector's first (and only) argument type:
+            let types = env.objc.get_class_method(class, sel).types.clone();
+            let mut type_index = 0;
+            let mut argument_type = None;
+            assert_ne!(types.len(), 0);
+            for character in types.chars() {
+                // TODO: Handle arrays, structs, unions, bitfields, pointers
+                // and other types that span multiple chars
+                if matches!(character, TYPE_ID | TYPE_CLASS | TYPE_SEL | TYPE_CHAR | TYPE_UCHAR | TYPE_SHORT | TYPE_USHORT | TYPE_INT | TYPE_UINT | TYPE_LONG | TYPE_ULONG | TYPE_LONGLONG | TYPE_ULONGLONG | TYPE_FLOAT | TYPE_DOUBLE | TYPE_BOOL | TYPE_VOID | TYPE_CHAR_PTR | TYPE_UNDEF) {
+                    match type_index {
+                        // First type is the return type
+                        0 => assert_eq!(character, TYPE_VOID),
+                        // Second type in methods must be the selector
+                        1 => assert_eq!(character, TYPE_SEL),
+                        // Third type is the method's first argument type
+                        2 => argument_type = Some(character),
+                        // Panic if there's more than one type
+                        _ => panic!(),
+                    }
+                    type_index += 1;
+                }
+            }
 
-    if let Some(sel) = env.objc.lookup_selector(&format!("_set{}:", camel_case_key_string)) {
-        if env.objc.class_has_method(class, sel) {
+            match argument_type.unwrap() {
+                TYPE_BOOL => {
+                    let value: bool = msg![env; value boolValue];
+                    () = msg_send(env, (this, sel, value));
+                },
+                TYPE_DOUBLE => {
+                    let value: f64 = msg![env; value doubleValue];
+                    () = msg_send(env, (this, sel, value));
+                },
+                TYPE_FLOAT => {
+                    let value: f32 = msg![env; value floatValue];
+                    () = msg_send(env, (this, sel, value));
+                },
+                TYPE_INT => {
+                    let value: i32 = msg![env; value intValue];
+                    () = msg_send(env, (this, sel, value));
+                },
+                TYPE_LONGLONG => {
+                    let value: i64 = msg![env; value longLongValue];
+                    () = msg_send(env, (this, sel, value));
+                },
+                TYPE_UINT => {
+                    let value: u32 = msg![env; value unsignedIntValue];
+                    () = msg_send(env, (this, sel, value));
+                },
+                TYPE_ULONGLONG => {
+                    let value: u64 = msg![env; value unsignedLongLongValue];
+                    () = msg_send(env, (this, sel, value));
+                },
+                argument_type => unimplemented!("TODO: [(NSObject*){:?} setValue:{:?} forKey:{:?}]: Received an NSValue which must be unwrapped to type {}", this, value, key, argument_type)
+            };
+        } else {
             () = msg_send(env, (this, sel, value));
-            return;
         }
+        return;
     }
 
     // If no simple accessor is found, and if the class method
@@ -175,13 +226,48 @@ pub const CLASSES: ClassExports = objc_classes! {
     let sel = env.objc.lookup_selector("accessInstanceVariablesDirectly").unwrap();
     let accessInstanceVariablesDirectly = msg_send(env, (class, sel));
     if accessInstanceVariablesDirectly {
-        if let Some(ivar_ptr) = env.objc.object_lookup_ivar(&env.mem, this, &format!("_{}", key_string))
+        if let Some((ivar_ptr, ivar_type)) = env.objc.object_lookup_ivar(&env.mem, this, &format!("_{}", key_string))
             .or_else(|| env.objc.object_lookup_ivar(&env.mem, this, &format!("_is{}", camel_case_key_string)))
             .or_else(|| env.objc.object_lookup_ivar(&env.mem, this, &format!("{}", key_string)))
             .or_else(|| env.objc.object_lookup_ivar(&env.mem, this, &format!("is{}", camel_case_key_string))
         ) {
-            retain(env, value);
-            env.mem.write(ivar_ptr.cast(), value);
+            if env.objc.class_is_subclass_of(value_class, ns_value_class) {
+                // If value is a NSValue, it must be unwrapped
+                match ivar_type.chars().next().unwrap() {
+                    TYPE_BOOL => {
+                        let value: bool = msg![env; value boolValue];
+                        env.mem.write(ivar_ptr.cast(), value);
+                    },
+                    TYPE_DOUBLE => {
+                        let value: f64 = msg![env; value doubleValue];
+                        env.mem.write(ivar_ptr.cast(), value);
+                    },
+                    TYPE_FLOAT => {
+                        let value: f32 = msg![env; value floatValue];
+                        env.mem.write(ivar_ptr.cast(), value);
+                    },
+                    TYPE_INT => {
+                        let value: i32 = msg![env; value intValue];
+                        env.mem.write(ivar_ptr.cast(), value);
+                    },
+                    TYPE_LONGLONG => {
+                        let value: i64 = msg![env; value longLongValue];
+                        env.mem.write(ivar_ptr.cast(), value);
+                    },
+                    TYPE_UINT => {
+                        let value: u32 = msg![env; value unsignedIntValue];
+                        env.mem.write(ivar_ptr.cast(), value);
+                    },
+                    TYPE_ULONGLONG => {
+                        let value: u64 = msg![env; value unsignedLongLongValue];
+                        env.mem.write(ivar_ptr.cast(), value);
+                    },
+                    _ => unimplemented!("TODO: [(NSObject*){:?} setValue:{:?} forKey:{:?}]: Received an NSValue which must be unwrapped to type {}", this, value, key, ivar_type)
+                };
+            } else {
+                retain(env, value);
+                env.mem.write(ivar_ptr.cast(), value);
+            };
             return;
         }
     }

@@ -13,6 +13,8 @@
 mod class_lists;
 pub(super) use class_lists::CLASS_LISTS;
 
+use super::methods::Method;
+use super::properties::IVar;
 use super::{
     id, ivar_list_t, method_list_t, nil, objc_object, AnyHostObject, HostIMP, HostObject, ObjC,
     IMP, SEL,
@@ -38,8 +40,8 @@ pub(super) struct ClassHostObject {
     pub(super) name: String,
     pub(super) is_metaclass: bool,
     pub(super) superclass: Class,
-    pub(super) methods: HashMap<SEL, IMP>,
-    pub(super) ivars: HashMap<String, ConstPtr<GuestUSize>>,
+    pub(super) methods: HashMap<SEL, Method>,
+    pub(super) ivars: HashMap<String, IVar>,
     /// Offset into the allocated memory for the object where the ivars of
     /// instances of this class or metaclass (respectively: normal objects or
     /// classes) should live. This is always >= the value in the superclass.
@@ -75,7 +77,7 @@ impl HostObject for FakeClass {}
 ///
 /// The name, field names and field layout are based on what Ghidra outputs.
 #[repr(C, packed)]
-#[allow(dead_code)]
+#[allow(dead_code, non_camel_case_types)]
 struct class_t {
     isa: Class, // note that this matches objc_object
     superclass: Class,
@@ -89,7 +91,7 @@ unsafe impl SafeRead for class_t {}
 ///
 /// The name, field names and field layout are based on what Ghidra's output.
 #[repr(C, packed)]
-#[allow(dead_code)]
+#[allow(dead_code, non_camel_case_types)]
 struct class_rw_t {
     _flags: u32,
     instance_start: GuestUSize,
@@ -108,6 +110,7 @@ unsafe impl SafeRead for class_rw_t {}
 ///
 /// The name, field names and field layout are based on what Ghidra outputs.
 #[repr(C, packed)]
+#[allow(non_camel_case_types)]
 struct category_t {
     name: ConstPtr<u8>,
     class: Class,
@@ -358,7 +361,13 @@ impl ClassHostObject {
                     // The selector should already have been registered by
                     // [ObjC::register_host_selectors], so we can panic
                     // if it hasn't been.
-                    (objc.selectors[name], IMP::Host(host_imp))
+                    (
+                        objc.selectors[name],
+                        Method {
+                            types: host_imp.types_string(),
+                            imp: IMP::Host(host_imp),
+                        },
+                    )
                 }),
             ),
             // maybe this should be 0 for NSObject? does it matter?
@@ -775,6 +784,29 @@ impl ObjC {
             name
         } else {
             panic!();
+        }
+    }
+
+    pub fn get_class_method(&self, class: Class, selector: SEL) -> &Method {
+        let mut class = class;
+        loop {
+            let host_object = self.get_host_object(class).unwrap();
+            if let Some(ClassHostObject {
+                superclass,
+                methods,
+                ..
+            }) = host_object.as_any().downcast_ref()
+            {
+                if let Some(method) = methods.get(&selector) {
+                    return method;
+                } else if *superclass == nil {
+                    panic!();
+                } else {
+                    class = *superclass;
+                }
+            } else {
+                panic!();
+            }
         }
     }
 }

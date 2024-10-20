@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "3e36db66_dd75bc61",
+        "filename": "android/app/src/main/java/org/libsdl/app/SDLActivity.java",
+        "patchSetId": 3
+      },
+      "lineNbr": 711,
+      "author": {
+        "id": 1021823
+      },
+      "writtenOn": "2024-10-20T06:00:31Z",
+      "side": 1,
+      "message": "Only actual changes in the SDLActivity part.",
+      "range": {
+        "startLine": 710,
+        "startChar": 0,
+        "endLine": 711,
+        "endChar": 2
+      },
+      "revId": "8dad13b270ec83c7d27d581ec72afd396ed8497a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

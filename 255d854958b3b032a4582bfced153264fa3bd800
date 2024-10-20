@@ -34,6 +34,24 @@
       "parentUuid": "19626953_d82c935a",
       "revId": "255d854958b3b032a4582bfced153264fa3bd800",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "68cb365d_94f82bc0",
+        "filename": "src/frameworks/uikit/ui_font.rs",
+        "patchSetId": 9
+      },
+      "lineNbr": 19,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-10-20T12:37:42Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "5c6c2a9d_4d5cdb6d",
+      "revId": "255d854958b3b032a4582bfced153264fa3bd800",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

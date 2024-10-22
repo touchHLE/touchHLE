@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "a80d6c04_a4dace23",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038408
+      },
+      "writtenOn": "2024-10-22T19:07:09Z",
+      "side": 1,
+      "message": "hikari_no_yume",
+      "revId": "bcd7ece6f0cf9cc41c1cf16fbe252868c93dc9f2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

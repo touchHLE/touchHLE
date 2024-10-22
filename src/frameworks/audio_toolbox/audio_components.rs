@@ -19,7 +19,6 @@ use crate::frameworks::core_audio_types::{
     kAudioFormatFlagIsSignedInteger, kAudioFormatLinearPCM, AudioStreamBasicDescription,
 };
 use crate::mem::{ConstPtr, ConstVoidPtr, MutPtr, SafeRead};
-use crate::objc::nil;
 
 const kAudioUnitType_Output: u32 = fourcc(b"auou");
 const kAudioUnitSubType_RemoteIO: u32 = fourcc(b"rioc");
@@ -27,6 +26,7 @@ const kAudioUnitManufacturer_Apple: u32 = fourcc(b"appl");
 
 #[derive(Default)]
 pub struct State {
+    pub audio_component: AudioComponent,
     pub audio_component_instances:
         HashMap<AudioComponentInstance, AudioComponentInstanceHostObject>,
 }
@@ -85,7 +85,9 @@ pub struct AURenderCallbackStruct {
 unsafe impl SafeRead for AURenderCallbackStruct {}
 
 #[repr(C, packed)]
-struct OpaqueAudioComponent {}
+pub struct OpaqueAudioComponent {
+    _pad: u8,
+}
 unsafe impl SafeRead for OpaqueAudioComponent {}
 
 type AudioComponent = MutPtr<OpaqueAudioComponent>;
@@ -115,12 +117,20 @@ fn AudioComponentFindNext(
     in_component: AudioComponent,
     in_desc: ConstPtr<AudioComponentDescription>,
 ) -> AudioComponent {
+    assert!(in_component.is_null());
+
     let audio_comp_descr = env.mem.read(in_desc);
     assert!(audio_comp_descr.component_type == kAudioUnitType_Output);
     assert!(audio_comp_descr.component_sub_type == kAudioUnitSubType_RemoteIO);
     assert!(audio_comp_descr.component_manufacturer == kAudioUnitManufacturer_Apple);
 
-    let out_component = nil.cast();
+    let state = State::get(&mut env.framework_state);
+    if state.audio_component.is_null() {
+        state.audio_component = env.mem.alloc_and_write(OpaqueAudioComponent { _pad: 0 });
+    }
+
+    let out_component: AudioComponent = state.audio_component;
+
     log!(
         "TODO: AudioComponentFindNext({:?}, {:?}) -> {:?}",
         in_component,

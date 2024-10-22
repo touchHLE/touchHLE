@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a72c8902_66373a86",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 13
+      },
+      "lineNbr": 1250,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-10-22T20:37:41Z",
+      "side": 1,
+      "message": "nitpick: please add space between - and (",
+      "revId": "f5f6c6b311aa418c1de773b34dc34b6b747dcddd",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "62d8d066_d386e9c7",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 13
+      },
+      "lineNbr": 1255,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-10-22T20:37:41Z",
+      "side": 1,
+      "message": "same nitpick (you\u0027ll also need to shift one space 3 lines below to align on `:`)",
+      "revId": "f5f6c6b311aa418c1de773b34dc34b6b747dcddd",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a12f9fb6_e646fa84",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 13
+      },
+      "lineNbr": 1489,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-10-22T20:37:41Z",
+      "side": 1,
+      "message": "how you get those values?\n\nplease use a named constants or write a comment there",
+      "revId": "f5f6c6b311aa418c1de773b34dc34b6b747dcddd",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "cc2a5dc8_cdb45591",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 13
+      },
+      "lineNbr": 1518,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-10-22T20:37:41Z",
+      "side": 1,
+      "message": "same comment",
+      "revId": "f5f6c6b311aa418c1de773b34dc34b6b747dcddd",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

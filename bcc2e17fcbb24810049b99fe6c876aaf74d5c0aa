@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3c6120f6_05e0f0d1",
+        "filename": "src/frameworks/foundation/ns_array.rs",
+        "patchSetId": 13
+      },
+      "lineNbr": 349,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-10-22T20:32:14Z",
+      "side": 1,
+      "message": "I\u0027m not sure if the current `state` handling is OK for mutable objects...\n(check also the comment in the fast_enumeration_helper)\n\nThe thing is, because the array is mutable, it can be changed during the enumeration.\n\nI think the safest is to first confirm what is the behaviour in that case on a real iOS.",
+      "revId": "bcc2e17fcbb24810049b99fe6c876aaf74d5c0aa",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

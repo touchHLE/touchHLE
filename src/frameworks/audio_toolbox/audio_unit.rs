@@ -57,6 +57,7 @@ const kAudioUnitScope_Global: AudioUnitScope = 0;
 const kAudioUnitScope_Output: AudioUnitScope = 2;
 
 const kAudioUnitProperty_SetRenderCallback: AudioUnitPropertyID = 23;
+const kAudioUnitProperty_MaximumFramesPerSlice: AudioUnitPropertyID = 14;
 const kAudioUnitProperty_StreamFormat: AudioUnitPropertyID = 8;
 
 const kAudioOutputUnitProperty_EnableIO: AudioUnitPropertyID = 2003;
@@ -143,6 +144,18 @@ fn AudioUnitGetProperty(
         .unwrap();
 
     match in_id {
+        kAudioUnitProperty_MaximumFramesPerSlice => {
+            assert_eq!(
+                env.mem.read(io_data_size),
+                guest_size_of::<u32>()
+            );
+            let max_frames: u32 = host_object.maximum_frames_per_slice;
+            env.mem.write(out_data.cast(), max_frames);
+            env.mem.write(
+                io_data_size.cast(),
+                guest_size_of::<u32>(),
+            );
+        }
         kAudioUnitProperty_StreamFormat => {
             assert!(env.mem.read(io_data_size) == guest_size_of::<AudioStreamBasicDescription>());
             let stream_format = match in_scope {

@@ -27,6 +27,7 @@ const kAudioUnitManufacturer_Apple: u32 = fourcc(b"appl");
 
 #[derive(Default)]
 pub struct State {
+    pub audio_component : AudioComponent,
     pub audio_component_instances:
         HashMap<AudioComponentInstance, AudioComponentInstanceHostObject>,
 }
@@ -39,6 +40,7 @@ impl State {
 #[derive(Clone)]
 pub struct AudioComponentInstanceHostObject {
     pub started: bool,
+    pub maximum_frames_per_slice: u32,
     pub global_stream_format: AudioStreamBasicDescription,
     pub output_stream_format: Option<AudioStreamBasicDescription>,
     pub render_callback: Option<AURenderCallbackStruct>,
@@ -51,6 +53,7 @@ impl Default for AudioComponentInstanceHostObject {
         // through a test app built targetting iOS 2.0
         AudioComponentInstanceHostObject {
             started: false,
+            maximum_frames_per_slice: 1024,
             global_stream_format: AudioStreamBasicDescription {
                 sample_rate: 44100.0,
                 format_id: kAudioFormatLinearPCM,
@@ -83,7 +86,9 @@ pub struct AURenderCallbackStruct {
 unsafe impl SafeRead for AURenderCallbackStruct {}
 
 #[repr(C, packed)]
-struct OpaqueAudioComponent {}
+pub struct OpaqueAudioComponent {
+    _pad: u8,
+}
 unsafe impl SafeRead for OpaqueAudioComponent {}
 
 type AudioComponent = MutPtr<OpaqueAudioComponent>;
@@ -119,7 +124,17 @@ fn AudioComponentFindNext(
     assert!(audio_comp_descr.component_sub_type == kAudioUnitSubType_RemoteIO);
     assert!(audio_comp_descr.component_manufacturer == kAudioUnitManufacturer_Apple);
 
-    let out_component = nil.cast();
+    let mut out_component: AudioComponent = nil.cast();
+
+    if in_component.is_null() {
+        let state = State::get(&mut env.framework_state);
+        if state.audio_component.is_null() {
+            state.audio_component = env.mem.alloc_and_write(OpaqueAudioComponent {_pad: 0});
+        }
+    
+        out_component = state.audio_component;
+     }
+
     log!(
         "TODO: AudioComponentFindNext({:?}, {:?}) -> {:?}",
         in_component,

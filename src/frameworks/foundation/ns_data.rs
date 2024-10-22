@@ -14,9 +14,9 @@ use crate::objc::{
 };
 use crate::{msg_class, Environment};
 
-struct NSDataHostObject {
-    bytes: MutVoidPtr,
-    length: NSUInteger,
+pub(super) struct NSDataHostObject {
+    pub(super) bytes: MutVoidPtr,
+    pub(super) length: NSUInteger,
 }
 impl HostObject for NSDataHostObject {}
 

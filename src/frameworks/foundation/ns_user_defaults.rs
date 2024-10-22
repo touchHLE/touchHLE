@@ -10,7 +10,7 @@
 
 use super::{ns_string, NSInteger};
 use crate::objc::{
-    autorelease, id, msg, msg_class, nil, objc_classes, release, retain, ClassExports, HostObject,
+    autorelease, id, msg, msg_class, nil, objc_classes, release, retain, Class, ClassExports, HostObject,
     NSZonePtr,
 };
 use crate::Environment;
@@ -136,6 +136,24 @@ pub const CLASSES: ClassExports = objc_classes! {
     // Only app domain gets affected!
     let dict = env.objc.borrow::<NSUserDefaultsHostObject>(this).app_domain_dict;
     msg![env; dict removeObjectForKey:key]
+}
+
+- (id)dataForKey:(id)key {
+    let val: id = msg![env; this objectForKey:key];
+    if val == nil {
+        return nil;
+    }
+
+    let class: Class = msg![env; val class];
+    if class == nil {
+        return nil;
+    }
+
+    let ns_data_class = env.objc.get_known_class("NSData", &mut env.mem);
+    if env.objc.class_is_subclass_of(class, ns_data_class) {
+        return val;
+    }
+    nil
 }
 
 - (bool)boolForKey:(id)key { // NSString *

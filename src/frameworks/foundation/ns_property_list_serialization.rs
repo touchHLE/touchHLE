@@ -7,10 +7,11 @@
 
 use super::{ns_array, ns_data, ns_dictionary, ns_string, NSUInteger};
 use super::{
-    ns_array::ArrayHostObject, ns_dictionary::DictionaryHostObject, ns_value::NSNumberHostObject,
+    ns_array::ArrayHostObject, ns_dictionary::DictionaryHostObject, ns_value::NSNumberHostObject, ns_data::NSDataHostObject,
 };
 use crate::fs::GuestPath;
 use crate::mem::MutPtr;
+use crate::mem::MutVoidPtr;
 use crate::objc::{id, msg, msg_class, nil, objc_classes, release, Class, ClassExports};
 use crate::Environment;
 use plist::Value;
@@ -129,8 +130,8 @@ fn deserialize_plist(env: &mut Environment, value: &Value) -> id {
         }
         Value::Data(d) => {
             let length: NSUInteger = d.len().try_into().unwrap();
-            let alloc: MutPtr<u8> = env.mem.alloc(length).cast();
-            env.mem.bytes_at_mut(alloc, length).copy_from_slice(d);
+            let alloc: MutVoidPtr = env.mem.alloc(length);
+            env.mem.bytes_at_mut(alloc.cast(), length).copy_from_slice(d);
             let data: id = msg_class![env; NSData alloc];
             msg![env; data initWithBytesNoCopy:alloc length:length]
         }
@@ -229,6 +230,10 @@ fn serialize_plist(env: &mut Environment, plist: id) -> Value {
             NSNumberHostObject::LongLong(ll) => Value::from(*ll),
             _ => todo!("num {:?}", num),
         }
+    } else if class == env.objc.get_known_class("NSData", &mut env.mem) {
+        let nsdata = env.objc.borrow::<NSDataHostObject>(plist);
+        let buffer_slice = env.mem.bytes_at(nsdata.bytes.cast(), nsdata.length);
+	    Value::Data(buffer_slice.to_vec())
     } else {
         unimplemented!("class {}", env.objc.get_class_name(class))
     }

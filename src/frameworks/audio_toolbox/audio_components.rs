@@ -27,6 +27,7 @@ const kAudioUnitManufacturer_Apple: u32 = fourcc(b"appl");
 
 #[derive(Default)]
 pub struct State {
+    pub audio_component: AudioComponent,
     pub audio_component_instances:
         HashMap<AudioComponentInstance, AudioComponentInstanceHostObject>,
 }
@@ -83,7 +84,9 @@ pub struct AURenderCallbackStruct {
 unsafe impl SafeRead for AURenderCallbackStruct {}
 
 #[repr(C, packed)]
-struct OpaqueAudioComponent {}
+pub struct OpaqueAudioComponent {
+    _pad: u8,
+}
 unsafe impl SafeRead for OpaqueAudioComponent {}
 
 type AudioComponent = MutPtr<OpaqueAudioComponent>;
@@ -119,7 +122,17 @@ fn AudioComponentFindNext(
     assert!(audio_comp_descr.component_sub_type == kAudioUnitSubType_RemoteIO);
     assert!(audio_comp_descr.component_manufacturer == kAudioUnitManufacturer_Apple);
 
-    let out_component = nil.cast();
+    let mut out_component: AudioComponent = nil.cast();
+
+    if in_component.is_null() {
+        let state = State::get(&mut env.framework_state);
+        if state.audio_component.is_null() {
+            state.audio_component = env.mem.alloc_and_write(OpaqueAudioComponent { _pad: 0 });
+        }
+
+        out_component = state.audio_component;
+    }
+
     log!(
         "TODO: AudioComponentFindNext({:?}, {:?}) -> {:?}",
         in_component,

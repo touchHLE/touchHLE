@@ -281,6 +281,14 @@ fn fclose(env: &mut Environment, file_ptr: MutPtr<FILE>) -> i32 {
     }
 }
 
+fn ferror(env: &mut Environment, _file_ptr: MutPtr<FILE>) -> i32 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
+    log!("TODO: ferror() support.");
+    0
+}
+
 fn fsetpos(env: &mut Environment, file_ptr: MutPtr<FILE>, pos: ConstPtr<fpos_t>) -> i32 {
     // TODO: handle errno properly
     set_errno(env, 0);
@@ -439,6 +447,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(clearerr(_)),
     export_c_func!(fflush(_)),
     export_c_func!(fclose(_)),
+    export_c_func!(ferror(_)),
     export_c_func!(puts(_)),
     export_c_func!(putchar(_)),
     export_c_func!(remove(_)),

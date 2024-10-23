@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "dd8d7903_b36f9dad",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-10-23T19:20:32Z",
+      "side": 1,
+      "message": "LGTM but let\u0027s merge it once the game is in fact supported on the trunk",
+      "revId": "8af5f8644fb3282d3aae4e248ff214d1d2676c51",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

@@ -1,0 +1,89 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d84d3eef_612bf646",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-10-23T19:19:39Z",
+      "side": 1,
+      "message": "OPT: I would split AudioComponentFindNext and adding a property to 2 different commits",
+      "revId": "79f34ccba3a8f9872e650c320f30495d6ccc3a17",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "bd767856_a75f1150",
+        "filename": "src/frameworks/audio_toolbox/audio_components.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 30,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-10-23T19:19:39Z",
+      "side": 1,
+      "message": "remove an extra space",
+      "revId": "79f34ccba3a8f9872e650c320f30495d6ccc3a17",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "eb4bbf64_1eda049a",
+        "filename": "src/frameworks/audio_toolbox/audio_components.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 56,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-10-23T19:19:39Z",
+      "side": 1,
+      "message": "have you verified it on the real device as stated in the above comment?\n\n(if you just the got the values from docs, then it should be reflected in some kind of another comment here)",
+      "revId": "79f34ccba3a8f9872e650c320f30495d6ccc3a17",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "758f4fc2_d9c36db9",
+        "filename": "src/frameworks/audio_toolbox/audio_components.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 129,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-10-23T19:19:39Z",
+      "side": 1,
+      "message": "I\u0027m actually not sure about this logic.\nWhat docs are saying?",
+      "revId": "79f34ccba3a8f9872e650c320f30495d6ccc3a17",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "97fd734e_f4ec6098",
+        "filename": "src/frameworks/audio_toolbox/audio_components.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 134,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-10-23T19:19:39Z",
+      "side": 1,
+      "message": "have you run the linting scripts on those files?",
+      "revId": "79f34ccba3a8f9872e650c320f30495d6ccc3a17",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

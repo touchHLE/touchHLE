@@ -46,6 +46,30 @@
       },
       "revId": "34aeb2079e847b91b27c66801e0cf20a88f0ff9c",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3e4423dd_887a529c",
+        "filename": "android/app/src/main/java/org/libsdl/app/SDLActivity.java",
+        "patchSetId": 10
+      },
+      "lineNbr": 711,
+      "author": {
+        "id": 1021823
+      },
+      "writtenOn": "2024-10-23T14:36:41Z",
+      "side": 1,
+      "message": "None that I noticed and there\u0027s no reason to believe it would",
+      "parentUuid": "764a7343_37f7fa43",
+      "range": {
+        "startLine": 710,
+        "startChar": 0,
+        "endLine": 711,
+        "endChar": 2
+      },
+      "revId": "34aeb2079e847b91b27c66801e0cf20a88f0ff9c",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

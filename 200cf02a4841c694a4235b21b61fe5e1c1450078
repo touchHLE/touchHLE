@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ce35f85e_cf6fcf55",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 3
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-10-23T19:10:41Z",
+      "side": 1,
+      "message": "my main concern here: does this implementation is consistent with what real iOS do? E.g. if one copies plist with serialized NSData from iOS device, would touchHLE read it? and vice versa\n\nmaybe a test program is need to be written to confirm that",
+      "revId": "200cf02a4841c694a4235b21b61fe5e1c1450078",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4d6759ed_cd18af4d",
+        "filename": "src/frameworks/foundation/ns_property_list_serialization.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 133,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-10-23T19:10:41Z",
+      "side": 1,
+      "message": "why do you need to change that?",
+      "revId": "200cf02a4841c694a4235b21b61fe5e1c1450078",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f3283465_2a9bdaf6",
+        "filename": "src/frameworks/foundation/ns_property_list_serialization.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 236,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-10-23T19:10:41Z",
+      "side": 1,
+      "message": "please remove extra indentation here",
+      "revId": "200cf02a4841c694a4235b21b61fe5e1c1450078",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "22a4f6e3_a119e942",
+        "filename": "src/frameworks/foundation/ns_user_defaults.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 148,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-10-23T19:10:41Z",
+      "side": 1,
+      "message": "can this really happen?",
+      "revId": "200cf02a4841c694a4235b21b61fe5e1c1450078",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

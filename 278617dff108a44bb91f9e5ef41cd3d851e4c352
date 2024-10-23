@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5bb92952_dfd069ef",
+        "filename": "src/libc/stdio.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 288,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-10-23T19:12:37Z",
+      "side": 1,
+      "message": "could you check if you can get that from Rust api for host files?",
+      "revId": "278617dff108a44bb91f9e5ef41cd3d851e4c352",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

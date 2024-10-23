@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "8362662c_7b4faa8e",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 8
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021823
+      },
+      "writtenOn": "2024-10-23T06:21:45Z",
+      "side": 1,
+      "message": "This is 97% done, so I\u0027ll pull it off WIP. There\u0027s still a little documentation work to be done but I\u0027m satisfied with it design wise.\n\nJust so you know, all the `// BEFOREMERGE:` comments aren\u0027t going to stay after merging. The `// BEFOREMERGE: Note:` are notes that are mainly in context of what is being changed, and wouldn\u0027t necessarily make sense otherwise (some might get modified and put in final version). The other ones that are just `// BEFOREMERGE:` are usually either design issues(ish) that I\u0027d like comments on, or notes to document things better later. All of these should be gone for the final release.\n\nPlease test this with a lot of apps! In particular, apps that use multiple GLES contexts (especially with sharegroups), I don\u0027t have any of those apps on hand to test with. Testing is most useful on android (it\u0027s the one with the most chance of causing issues), but other platforms are always good to test on. Also if the logs ever say anything like \"(...), must abort!\", that\u0027s considered a bug and you should report that.",
+      "revId": "1e7cf8cdcf73d5e33fb4dbce98701e2a79c3db22",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

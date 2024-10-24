@@ -51,6 +51,12 @@ pub const CLASSES: ClassExports = objc_classes! {
     autorelease(env, array)
 }
 
++ (id)arrayWithArray:(id)other { // NSArray*
+    let array: id = msg![env; this alloc];
+    let array: id = msg![env; array initWithArray:other];
+    autorelease(env, array)
+}
+
 // These probably comes from some category related to plists.
 + (id)arrayWithContentsOfFile:(id)path { // NSString*
     let path = ns_string::to_rust_string(env, path);

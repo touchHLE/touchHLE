@@ -17,6 +17,9 @@ use crate::objc::{
 use crate::Environment;
 
 struct ObjectEnumeratorHostObject {
+    /// the enumerated collection, NSArray *
+    array: id,
+    /// an iterator
     iterator: std::vec::IntoIter<id>,
 }
 impl HostObject for ObjectEnumeratorHostObject {}
@@ -250,8 +253,10 @@ pub const CLASSES: ClassExports = objc_classes! {
     let array_host_object: &mut ArrayHostObject = env.objc.borrow_mut(this);
     let vec = array_host_object.array.to_vec();
     let host_object = Box::new(ObjectEnumeratorHostObject {
+        array: this,
         iterator: vec.into_iter(),
     });
+    retain(env, this);
     let class = env.objc.get_known_class("_touchHLE_NSArray_ObjectEnumerator", &mut env.mem);
     let enumerator = env.objc.alloc_object(class, host_object, &mut env.mem);
     autorelease(env, enumerator)
@@ -296,6 +301,12 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (id)nextObject {
     let host_obj = env.objc.borrow_mut::<ObjectEnumeratorHostObject>(this);
     host_obj.iterator.next().map_or(nil, |o| o)
+}
+
+- (())dealloc {
+    let host_obj = env.objc.borrow::<ObjectEnumeratorHostObject>(this);
+    release(env, host_obj.array);
+    env.objc.dealloc_object(this, &mut env.mem)
 }
 
 @end

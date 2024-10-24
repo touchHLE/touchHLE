@@ -161,6 +161,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "548cc967_66368438",
+        "filename": "src/frameworks/audio_toolbox/audio_components.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 129,
+      "author": {
+        "id": 1038408
+      },
+      "writtenOn": "2024-10-24T21:09:48Z",
+      "side": 1,
+      "message": "I think an app could have some logic to ask in a loop to actually enumerate the components but im completely ok to do it with just an assert and it can be improved in future if needed.",
+      "parentUuid": "cc60041b_9ce382ca",
+      "revId": "79f34ccba3a8f9872e650c320f30495d6ccc3a17",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "97fd734e_f4ec6098",
         "filename": "src/frameworks/audio_toolbox/audio_components.rs",
         "patchSetId": 1

@@ -35,6 +35,11 @@ struct NSUserDefaultsHostObject {
     /// *Does* persist on disk.
     /// `NSMutableDictionary *`
     app_domain_dict: id,
+    /// Application temporary defaults.
+    /// *Does NOT* persist on disk.
+    /// Used if not found in other dictionaries.
+    /// `NSMutableDictionary *`
+    registration_domain_dict: id,
 }
 impl HostObject for NSUserDefaultsHostObject {}
 
@@ -59,6 +64,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     let host_object = Box::new(NSUserDefaultsHostObject {
         global_domain_dict: nil,
         app_domain_dict: nil,
+        registration_domain_dict: nil,
     });
     env.objc.alloc_object(this, host_object, &mut env.mem)
 }
@@ -102,12 +108,18 @@ pub const CLASSES: ClassExports = objc_classes! {
     release(env, app_domain_dict);
     let global_domain_dict = env.objc.borrow::<NSUserDefaultsHostObject>(this).global_domain_dict;
     release(env, global_domain_dict);
+    let registration_domain_dict = env.objc.borrow::<NSUserDefaultsHostObject>(this).registration_domain_dict;
+    release(env, registration_domain_dict);
 
     env.objc.dealloc_object(this, &mut env.mem);
 }
 
 - (id)dictionaryRepresentation { // NSDictionary *
     let dict = msg_class![env; NSMutableDictionary new];
+    let registration_domain_dict = env.objc.borrow::<NSUserDefaultsHostObject>(this).registration_domain_dict;
+    if registration_domain_dict != nil {
+        () = msg![env; dict addEntriesFromDictionary:registration_domain_dict];
+    }
     let global_domain_dict = env.objc.borrow::<NSUserDefaultsHostObject>(this).global_domain_dict;
     () = msg![env; dict addEntriesFromDictionary:global_domain_dict];
     let app_domain_dict = env.objc.borrow::<NSUserDefaultsHostObject>(this).app_domain_dict;
@@ -124,14 +136,35 @@ pub const CLASSES: ClassExports = objc_classes! {
         return res;
     }
     let global_domain_dict = env.objc.borrow::<NSUserDefaultsHostObject>(this).global_domain_dict;
-    msg![env; global_domain_dict objectForKey:key]
+    let res = msg![env; global_domain_dict objectForKey:key];
+    if res != nil {
+        return res;
+    }
+    let registration_domain_dict = env.objc.borrow::<NSUserDefaultsHostObject>(this).registration_domain_dict;
+    msg![env; registration_domain_dict objectForKey:key]
 }
+
+- (())registerDefaults:(id)registration_dictionary {
+    let reg_dict = env.objc.borrow::<NSUserDefaultsHostObject>(this).registration_domain_dict;
+    let dict = if reg_dict != nil {
+        reg_dict
+    } else {
+        let new_dict = msg_class![env; NSMutableDictionary new];
+        env.objc.borrow_mut::<NSUserDefaultsHostObject>(this).registration_domain_dict = new_dict;
+        new_dict
+    };
+
+    // Add new defaults and replace any already defined ones
+    () = msg![env; dict addEntriesFromDictionary:registration_dictionary];
+}
+
 - (())setObject:(id)object
          forKey:(id)key { // NSString*
     // Only app domain gets affected!
     let dict = env.objc.borrow::<NSUserDefaultsHostObject>(this).app_domain_dict;
     msg![env; dict setObject:object forKey:key]
 }
+
 - (())removeObjectForKey:(id)key {
     // Only app domain gets affected!
     let dict = env.objc.borrow::<NSUserDefaultsHostObject>(this).app_domain_dict;

@@ -16,6 +16,24 @@
       "message": "could you check if you can get that from Rust api for host files?",
       "revId": "278617dff108a44bb91f9e5ef41cd3d851e4c352",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ccd6acd5_06490243",
+        "filename": "src/libc/stdio.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 288,
+      "author": {
+        "id": 1038408
+      },
+      "writtenOn": "2024-10-24T16:06:36Z",
+      "side": 1,
+      "message": "as far as i can see there is no simple way for that. There is the same todo comment for ferror in few other places in the existing code. I think we would need to catch file errors in the read/write code and store/remember the error state if they happen etc.",
+      "parentUuid": "5bb92952_dfd069ef",
+      "revId": "278617dff108a44bb91f9e5ef41cd3d851e4c352",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

@@ -102,3 +102,6 @@ com.polarbit.waveblazer: --landscape-left
 
 # Command & Conquer: Red Alert
 com.ea.candcra.row: --landscape-left
+
+# Resident Evil Degeneration
+jp.co.capcom.residentevil.en: --landscape-left

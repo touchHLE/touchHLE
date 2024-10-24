@@ -8,8 +8,10 @@
 //! Useful resources:
 //! - Apple's [Core Animation Programming Guide](https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/CoreAnimation_guide/Introduction/Introduction.html)
 
+pub mod ca_animation;
 pub mod ca_eagl_layer;
 pub mod ca_layer;
+pub mod ca_media_timing_function;
 
 mod composition;
 pub use composition::recomposite_if_necessary;

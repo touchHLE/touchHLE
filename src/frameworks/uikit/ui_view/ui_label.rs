@@ -19,6 +19,8 @@ use crate::objc::{
     retain, ClassExports, NSZonePtr,
 };
 
+type UIBaselineAdjustment = NSInteger;
+
 pub struct UILabelHostObject {
     superclass: super::UIViewHostObject,
     /// `NSString*`
@@ -167,6 +169,15 @@ pub const CLASSES: ClassExports = objc_classes! {
     };
     msg_super![env; this setBackgroundColor:color]
 }
+
+- (())setShadowColor:(id)color { // UIColor*
+    log!("TODO: [(UILabel*) {:?} setShadowColor:{:?}]", this, color);
+}
+
+- (())setShadowOffset:(CGSize)value {
+    log!("TODO: [(UILabel*) {:?} setShadowOffset:{:?}]", this, value);
+}
+
 - (())setOpaque:(bool)_opaque {
     // Built-in views don't have user-controlled opaqueness.
 }
@@ -196,6 +207,18 @@ pub const CLASSES: ClassExports = objc_classes! {
         log!("TODO: UILabel numberOfLines > 1 (label {:?})", this);
     }
     () = msg![env; this setNeedsDisplay];
+}
+
+- (())setAdjustsFontSizeToFitWidth:(bool)value {
+    log!("TODO: [(UILabel*) {:?} setAdjustsFontSizeToFitWidth:{}]", this, value);
+}
+
+- (())setBaselineAdjustment:(UIBaselineAdjustment)value {
+    log!("TODO: [(UILabel*) {:?} setBaselineAdjustment:{}]", this, value);
+}
+
+- (())sizeToFit {
+    log!("TODO: [UILabel*) {:?} sizeToFit]", this);
 }
 
 - (())drawRect:(CGRect)_rect {

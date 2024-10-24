@@ -424,14 +424,15 @@ fn substitute_classes(
     let name = mem.cstr_at_utf8(name).unwrap();
 
     // Currently the only thing we try to substitute: classes that seem to be
-    // from various third-party advertising SDKs. Naturally it
-    // makes a lot of use of UIKit in ways we don't support yet, so it's easier
-    // to skip this. This isn't "ad blocking" because ads no longer work on real
-    // devices anyway :)
+    // from various third-party advertising or social network SDKs.
+    // Naturally it makes a lot of use of UIKit and networking in ways we
+    // don't support yet. This isn't "ad blocking" because ads no longer work
+    // on real devices anyway :)
     if !(name.starts_with("AdMob")
         || name.starts_with("AltAds")
         || name.starts_with("Mobclix")
-        || name.starts_with("Flurry"))
+        || name.starts_with("Flurry")
+        || name.starts_with("OpenFeint"))
     {
         return None;
     }

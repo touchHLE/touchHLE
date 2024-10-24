@@ -20,6 +20,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "3aed7eed_e35b7d6b",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038408
+      },
+      "writtenOn": "2024-10-24T16:06:21Z",
+      "side": 1,
+      "message": "sure will do",
+      "parentUuid": "d84d3eef_612bf646",
+      "revId": "79f34ccba3a8f9872e650c320f30495d6ccc3a17",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "bd767856_a75f1150",
         "filename": "src/frameworks/audio_toolbox/audio_components.rs",
         "patchSetId": 1
@@ -72,6 +90,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "39f4c854_559d7ffa",
+        "filename": "src/frameworks/audio_toolbox/audio_components.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 56,
+      "author": {
+        "id": 1038408
+      },
+      "writtenOn": "2024-10-24T16:06:21Z",
+      "side": 1,
+      "message": "Dont have any real device or emulator. 1 seems weird as the game passes it to the audio library as a buffer length used for the audio. Docu says 1024 or im missing something - https://developer.apple.com/documentation/audiotoolbox/kaudiounitproperty_maximumframesperslice",
+      "parentUuid": "eb4bbf64_1eda049a",
+      "revId": "79f34ccba3a8f9872e650c320f30495d6ccc3a17",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "758f4fc2_d9c36db9",
         "filename": "src/frameworks/audio_toolbox/audio_components.rs",
         "patchSetId": 1
@@ -89,6 +125,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "75632267_15ca2e46",
+        "filename": "src/frameworks/audio_toolbox/audio_components.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 129,
+      "author": {
+        "id": 1038408
+      },
+      "writtenOn": "2024-10-24T16:06:21Z",
+      "side": 1,
+      "message": "Its supposed to find the next audio component after the in_component that matches the requirements. If we get nil then we should return the first one. If we get something else (like the one we returned) we should find a next one but there is no other device at the moment.\n\nhttps://developer.apple.com/documentation/audiotoolbox/1410445-audiocomponentfindnext",
+      "parentUuid": "758f4fc2_d9c36db9",
+      "revId": "79f34ccba3a8f9872e650c320f30495d6ccc3a17",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "97fd734e_f4ec6098",
         "filename": "src/frameworks/audio_toolbox/audio_components.rs",
         "patchSetId": 1
@@ -100,6 +154,24 @@
       "writtenOn": "2024-10-23T19:19:39Z",
       "side": 1,
       "message": "have you run the linting scripts on those files?",
+      "revId": "79f34ccba3a8f9872e650c320f30495d6ccc3a17",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e8a531d0_f929ee4d",
+        "filename": "src/frameworks/audio_toolbox/audio_components.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 134,
+      "author": {
+        "id": 1038408
+      },
+      "writtenOn": "2024-10-24T16:06:21Z",
+      "side": 1,
+      "message": "couldnt get it working on windows. Would running cargo clippy be enough ? Doesnt seem to remove the empty line tho if i just run it.\n\ncargo fmt seems to work fine!",
+      "parentUuid": "97fd734e_f4ec6098",
       "revId": "79f34ccba3a8f9872e650c320f30495d6ccc3a17",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

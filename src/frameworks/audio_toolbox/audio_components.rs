@@ -39,6 +39,7 @@ impl State {
 #[derive(Clone)]
 pub struct AudioComponentInstanceHostObject {
     pub started: bool,
+    pub maximum_frames_per_slice: u32,
     pub global_stream_format: AudioStreamBasicDescription,
     pub input_stream_format: Option<AudioStreamBasicDescription>,
     pub output_stream_format: Option<AudioStreamBasicDescription>,
@@ -52,6 +53,8 @@ impl Default for AudioComponentInstanceHostObject {
         // through a test app built targetting iOS 2.0
         AudioComponentInstanceHostObject {
             started: false,
+            // returning 1024 based on https://developer.apple.com/documentation/audiotoolbox/kaudiounitproperty_maximumframesperslice
+            maximum_frames_per_slice: 1024,
             global_stream_format: AudioStreamBasicDescription {
                 sample_rate: 44100.0,
                 format_id: kAudioFormatLinearPCM,

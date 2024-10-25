@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e689e8a6_bc8f3340",
+        "filename": "src/frameworks/foundation/ns_user_defaults.rs",
+        "patchSetId": 4
+      },
+      "lineNbr": 143,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-10-25T19:51:27Z",
+      "side": 1,
+      "message": "(this one is OK)",
+      "revId": "5dbc1e7818d874fbe850a3ea2978afb7489c4795",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1473ee0e_f3d7d75a",
+        "filename": "src/frameworks/foundation/ns_user_defaults.rs",
+        "patchSetId": 4
+      },
+      "lineNbr": 153,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-10-25T19:51:27Z",
+      "side": 1,
+      "message": "nearly same reasoning, it\u0027s better to assert instead of returning nil.",
+      "revId": "5dbc1e7818d874fbe850a3ea2978afb7489c4795",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

@@ -7,7 +7,7 @@
 
 use crate::abi::GuestFunction;
 use crate::dyld::{export_c_func, FunctionExports};
-use crate::libc::errno::{EDEADLK, EINVAL};
+use crate::libc::errno::{EDEADLK, EINVAL, ESRCH};
 use crate::libc::mach_host::PAGE_SIZE;
 use crate::mem::{self, ConstPtr, ConstVoidPtr, GuestUSize, MutPtr, MutVoidPtr, SafeRead};
 use crate::{Environment, ThreadId};
@@ -240,6 +240,22 @@ fn pthread_join(env: &mut Environment, thread: pthread_t, retval: MutPtr<MutVoid
     0
 }
 
+fn pthread_detach(env: &mut Environment, thread: pthread_t) -> i32 {
+    let Some(host_obj_joinee) = State::get(env).threads.get_mut(&thread) else {
+        // Defender Chronicles calls with non-existing threadid
+        log_dbg!("Thread attempted detach a thread that doesnt exist, returning ESRCH!");
+        return ESRCH;
+    };
+
+    if host_obj_joinee._attr.detachstate == PTHREAD_CREATE_DETACHED {
+        log_dbg!("Thread attempted detach with deattached thread, returning EINVAL!");
+        return EINVAL;
+    }
+
+    log!("TODO: pthread_detach({:?})", thread);
+    0
+}
+
 fn pthread_setcanceltype(_env: &mut Environment, type_: i32, oldtype: MutPtr<i32>) -> i32 {
     log!("TODO: pthread_setcanceltype({}, {:?})", type_, oldtype);
     0
@@ -296,6 +312,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(pthread_create(_, _, _, _)),
     export_c_func!(pthread_self()),
     export_c_func!(pthread_join(_, _)),
+    export_c_func!(pthread_detach(_)),
     export_c_func!(pthread_setcanceltype(_, _)),
     export_c_func!(pthread_testcancel()),
     export_c_func!(pthread_mach_thread_np(_)),

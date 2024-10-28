@@ -35,6 +35,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "83b8eea6_d2d3c273",
+        "filename": "src/frameworks/foundation/ns_property_list_serialization.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 15,
+      "author": {
+        "id": 1038408
+      },
+      "writtenOn": "2024-10-28T23:03:39Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "7bf709a4_412bd353",
+      "revId": "4b839d67a4d446aaa1acf9428d296b89860aa3c6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "0fb4a743_f8e0aeaf",
@@ -52,6 +70,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "96df15a7_a8458c33",
+        "filename": "src/frameworks/foundation/ns_property_list_serialization.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 237,
+      "author": {
+        "id": 1038408
+      },
+      "writtenOn": "2024-10-28T23:03:39Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "0fb4a743_f8e0aeaf",
+      "revId": "4b839d67a4d446aaa1acf9428d296b89860aa3c6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "ca9fd469_32e55a3e",
@@ -65,6 +101,24 @@
       "writtenOn": "2024-10-28T18:04:37Z",
       "side": 1,
       "message": "you don\u0027t needed to explicitly return here, the value of the last statement is automatically returned in rust.\n\njust use `val` here",
+      "revId": "4b839d67a4d446aaa1acf9428d296b89860aa3c6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "bcdd3f17_54f491b6",
+        "filename": "src/frameworks/foundation/ns_user_defaults.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 150,
+      "author": {
+        "id": 1038408
+      },
+      "writtenOn": "2024-10-28T23:03:39Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "ca9fd469_32e55a3e",
       "revId": "4b839d67a4d446aaa1acf9428d296b89860aa3c6",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

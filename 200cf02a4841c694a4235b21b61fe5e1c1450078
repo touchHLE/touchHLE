@@ -38,6 +38,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "a2f05fdb_23c68d90",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 3
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038408
+      },
+      "writtenOn": "2024-10-28T00:35:28Z",
+      "side": 1,
+      "message": "Found plist for the game here - https://www.icopybot.com/blog/defender-chronicles-cheat.htm and verified it loads fine. Cant really do more myself.",
+      "parentUuid": "b7480ed1_339db7db",
+      "revId": "200cf02a4841c694a4235b21b61fe5e1c1450078",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "4d6759ed_cd18af4d",
         "filename": "src/frameworks/foundation/ns_property_list_serialization.rs",
         "patchSetId": 3
@@ -85,6 +103,24 @@
       "side": 1,
       "message": "oh good catch! thanks for fixing that",
       "parentUuid": "1731da44_20ee34d5",
+      "revId": "200cf02a4841c694a4235b21b61fe5e1c1450078",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "666de804_184382bb",
+        "filename": "src/frameworks/foundation/ns_property_list_serialization.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 133,
+      "author": {
+        "id": 1038408
+      },
+      "writtenOn": "2024-10-28T00:35:28Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "36f122ac_88e9816d",
       "revId": "200cf02a4841c694a4235b21b61fe5e1c1450078",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
@@ -191,6 +227,24 @@
       "side": 1,
       "message": "the more safe solution is to crash here instead of returning nil.\nIf object is not nil, but their class is nil, it probably means that it was deallocate and we want to crash as soon as possible.",
       "parentUuid": "c2b4e690_3d45174b",
+      "revId": "200cf02a4841c694a4235b21b61fe5e1c1450078",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "907f9c83_f835e278",
+        "filename": "src/frameworks/foundation/ns_user_defaults.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 148,
+      "author": {
+        "id": 1038408
+      },
+      "writtenOn": "2024-10-28T00:35:28Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "f557fa1a_661cb75d",
       "revId": "200cf02a4841c694a4235b21b61fe5e1c1450078",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

@@ -52,6 +52,24 @@
       "parentUuid": "ccd6acd5_06490243",
       "revId": "278617dff108a44bb91f9e5ef41cd3d851e4c352",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d4884c16_684aa140",
+        "filename": "src/libc/stdio.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 288,
+      "author": {
+        "id": 1038408
+      },
+      "writtenOn": "2024-10-28T23:05:34Z",
+      "side": 1,
+      "message": "changed it to log. fd has 2 different indicators. eof (supported by touchHLE) and error (not supported). feof checks for one and ferror for the other. I verified and it returns 0 even tho feof returns 1.",
+      "parentUuid": "d0d6014f_5da06167",
+      "revId": "278617dff108a44bb91f9e5ef41cd3d851e4c352",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "51601305_67eafdd5",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 6
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-10-28T23:18:25Z",
+      "side": 1,
+      "message": "(once you set Verified +1, you should be able to submit this patch set. If there are no merge conflicts, Gerrit will automatically rebase it on top of the trunk)",
+      "revId": "56922727e3b36874c3fc79c1dc17e49437dfb572",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

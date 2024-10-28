@@ -16,6 +16,24 @@
       "message": "AFAIK OpenFeint is not an ad SDK, but a social platform.\n\nIn general, I\u0027m OK to nullify it but you should reword the comment and the commit message.",
       "revId": "93ab4f33c4360cb658307f4e7461fa954dca92bf",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "0b74fed6_83b7188f",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038408
+      },
+      "writtenOn": "2024-10-28T00:36:31Z",
+      "side": 1,
+      "message": "done",
+      "parentUuid": "1921294e_dbf1958a",
+      "revId": "93ab4f33c4360cb658307f4e7461fa954dca92bf",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

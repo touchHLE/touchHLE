@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "87740985_f56c1734",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 5
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-10-28T18:04:37Z",
+      "side": 1,
+      "message": "Looks good overall, just few syntax nitpicks",
+      "revId": "4b839d67a4d446aaa1acf9428d296b89860aa3c6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7bf709a4_412bd353",
+        "filename": "src/frameworks/foundation/ns_property_list_serialization.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 15,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-10-28T18:04:37Z",
+      "side": 1,
+      "message": "nitpick: please group common imports together.\n\nhere it should become `use crate::mem::{MutPtr, MutVoidPtr};`",
+      "revId": "4b839d67a4d446aaa1acf9428d296b89860aa3c6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0fb4a743_f8e0aeaf",
+        "filename": "src/frameworks/foundation/ns_property_list_serialization.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 237,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-10-28T18:04:37Z",
+      "side": 1,
+      "message": "nitpick: name this var as `data` or `ns_data`",
+      "revId": "4b839d67a4d446aaa1acf9428d296b89860aa3c6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ca9fd469_32e55a3e",
+        "filename": "src/frameworks/foundation/ns_user_defaults.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 150,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-10-28T18:04:37Z",
+      "side": 1,
+      "message": "you don\u0027t needed to explicitly return here, the value of the last statement is automatically returned in rust.\n\njust use `val` here",
+      "revId": "4b839d67a4d446aaa1acf9428d296b89860aa3c6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

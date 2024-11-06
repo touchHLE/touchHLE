@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "af03beb8_968341af",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 3
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-11-06T22:30:09Z",
+      "side": 1,
+      "message": "commit message could be as simple as \"Implemented pthread_detach() stub\" or something like that\n\n(cf. another comment below too)",
+      "revId": "527d4fe077f3e6aafbdd8b814ee67807b857e09a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5845006e_3fda9c8b",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 3
+      },
+      "lineNbr": 7,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-11-06T22:30:09Z",
+      "side": 1,
+      "message": "Do you know why thread is non-existant? It seems fishy",
+      "revId": "527d4fe077f3e6aafbdd8b814ee67807b857e09a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "037cec8c_bc5cc1c3",
+        "filename": "src/libc/pthread/thread.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 245,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-11-06T22:30:09Z",
+      "side": 1,
+      "message": "please add log_dbg here as well",
+      "revId": "527d4fe077f3e6aafbdd8b814ee67807b857e09a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "05171362_b6407f47",
+        "filename": "src/libc/pthread/thread.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 252,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-11-06T22:30:09Z",
+      "side": 1,
+      "message": "move your commit message as commit here (or to ESRCH part) with a mention of a concrete game",
+      "revId": "527d4fe077f3e6aafbdd8b814ee67807b857e09a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

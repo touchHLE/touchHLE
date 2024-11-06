@@ -1,0 +1,123 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8b424c1b_77465140",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 3
+      },
+      "lineNbr": 7,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-11-06T23:38:28Z",
+      "side": 1,
+      "message": "nitpick: the position of `:` is strange, as it indicates the passed parameters of the method. it should rather be `NSUserDefaults registerDefaults:` here.",
+      "revId": "7265955ee6963c6da1cc583aac246cf0952cd614",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4ed020b8_ced05d8f",
+        "filename": "src/frameworks/foundation/ns_user_defaults.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 38,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-11-06T23:38:28Z",
+      "side": 1,
+      "message": "It\u0027s better to call that something like `Application temporary defaults`\n\nReference https://developer.apple.com/documentation/foundation/nsregistrationdomain",
+      "revId": "7265955ee6963c6da1cc583aac246cf0952cd614",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0e471be0_dafb0951",
+        "filename": "src/frameworks/foundation/ns_user_defaults.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 42,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-11-06T23:38:28Z",
+      "side": 1,
+      "message": "this should be called `registration_domain_dict` to be consistent with other naming",
+      "revId": "7265955ee6963c6da1cc583aac246cf0952cd614",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "33ba9fad_8046654e",
+        "filename": "src/frameworks/foundation/ns_user_defaults.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 142,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-11-06T23:38:28Z",
+      "side": 1,
+      "message": "you don\u0027t need to check for nil here, in obj-c sending messages to nil is noop and return nil",
+      "revId": "7265955ee6963c6da1cc583aac246cf0952cd614",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "237aee6b_ca9a1601",
+        "filename": "src/frameworks/foundation/ns_user_defaults.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 143,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-11-06T23:38:28Z",
+      "side": 1,
+      "message": "this should be app_defaults_dict!",
+      "revId": "7265955ee6963c6da1cc583aac246cf0952cd614",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a96805e3_acbb0436",
+        "filename": "src/frameworks/foundation/ns_user_defaults.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 148,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-11-06T23:38:28Z",
+      "side": 1,
+      "message": "use snake_case for method parameters\n\n(check the coding style https://github.com/touchHLE/touchHLE/blob/trunk/dev-docs/code-style.md)",
+      "revId": "7265955ee6963c6da1cc583aac246cf0952cd614",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "27bd0837_953d7724",
+        "filename": "src/frameworks/foundation/ns_user_defaults.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 155,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-11-06T23:38:28Z",
+      "side": 1,
+      "message": "Are you sure about this behaviour? If one calls this method twice with 2 different dictionaries, does entries of last dict are added or replaced?",
+      "revId": "7265955ee6963c6da1cc583aac246cf0952cd614",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

@@ -20,6 +20,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "0923b6c3_dd75a82c",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 3
+      },
+      "lineNbr": 7,
+      "author": {
+        "id": 1038408
+      },
+      "writtenOn": "2024-11-07T16:32:49Z",
+      "side": 1,
+      "message": "thanks. Im really still learning about the rust syntax so glad you are looking for these :)",
+      "parentUuid": "8b424c1b_77465140",
+      "revId": "7265955ee6963c6da1cc583aac246cf0952cd614",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "4ed020b8_ced05d8f",
         "filename": "src/frameworks/foundation/ns_user_defaults.rs",
         "patchSetId": 3
@@ -116,6 +134,24 @@
       "writtenOn": "2024-11-06T23:38:28Z",
       "side": 1,
       "message": "Are you sure about this behaviour? If one calls this method twice with 2 different dictionaries, does entries of last dict are added or replaced?",
+      "revId": "7265955ee6963c6da1cc583aac246cf0952cd614",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d960abef_2cfd434c",
+        "filename": "src/frameworks/foundation/ns_user_defaults.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 155,
+      "author": {
+        "id": 1038408
+      },
+      "writtenOn": "2024-11-07T16:32:49Z",
+      "side": 1,
+      "message": "for fun i tried with https://www.jdoodle.com/execute-objective-c-online since i dont have osx or any apple device experience and it seems to replace the settings from the previous call. Ill test if addEntriesFromDictionary does the same and add some comment to the code also",
+      "parentUuid": "27bd0837_953d7724",
       "revId": "7265955ee6963c6da1cc583aac246cf0952cd614",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

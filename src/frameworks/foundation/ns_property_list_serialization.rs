@@ -11,8 +11,10 @@ use super::{
     ns_value::NSNumberHostObject,
 };
 use crate::fs::GuestPath;
-use crate::mem::{MutPtr, MutVoidPtr};
-use crate::objc::{id, msg, msg_class, nil, objc_classes, release, Class, ClassExports};
+use crate::mem::{MutPtr, MutVoidPtr, Ptr};
+use crate::objc::{
+    autorelease, id, msg, msg_class, nil, objc_classes, release, Class, ClassExports,
+};
 use crate::Environment;
 use plist::Value;
 use std::io::Cursor;
@@ -21,6 +23,7 @@ pub type NSPropertyListMutabilityOptions = NSUInteger;
 pub const NSPropertyListImmutable: NSPropertyListMutabilityOptions = 0;
 
 pub type NSPropertyListFormat = NSUInteger;
+pub const NSPropertyListXMLFormat_v1_0: NSPropertyListFormat = 100;
 pub const NSPropertyListBinaryFormat_v1_0: NSPropertyListFormat = 200;
 
 pub const CLASSES: ClassExports = objc_classes! {
@@ -51,13 +54,31 @@ pub const CLASSES: ClassExports = objc_classes! {
                     format:(MutPtr<NSPropertyListFormat>)format
           errorDescription:(MutPtr<id>)error_string { // NSString **
     assert_eq!(opt, NSPropertyListImmutable); // TODO
-    assert!(format.is_null()); // TODO
-    assert!(error_string.is_null()); // TODO
-
     let slice = ns_data::to_rust_slice(env, data);
-    let root = Value::from_reader(Cursor::new(slice)).unwrap();
-    assert!(root.as_array().is_some() || root.as_dictionary().is_some());
-    deserialize_plist(env, &root)
+
+    if let Ok(root) = Value::from_reader_xml(Cursor::new(slice)) {
+        assert!(root.as_array().is_some() || root.as_dictionary().is_some());
+        if !format.is_null() {
+            env.mem.write(format, NSPropertyListXMLFormat_v1_0);
+        }
+        let property_list = deserialize_plist(env, &root);
+        return autorelease(env, property_list)
+    }
+
+    if let Ok(root) = Value::from_reader(Cursor::new(slice)) {
+        assert!(root.as_array().is_some() || root.as_dictionary().is_some());
+        if !format.is_null() {
+            env.mem.write(format, NSPropertyListBinaryFormat_v1_0);
+        }
+        let property_list = deserialize_plist(env, &root);
+        return autorelease(env, property_list)
+    }
+
+    let error_message = ns_string::from_rust_string(env, String::from("Failed to parse plist"));
+    env.mem.write(error_string, error_message);
+    autorelease(env, error_message);
+
+    Ptr::null()
 }
 
 @end

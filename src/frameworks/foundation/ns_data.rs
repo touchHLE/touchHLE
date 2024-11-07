@@ -67,6 +67,12 @@ pub const CLASSES: ClassExports = objc_classes! {
     autorelease(env, new)
 }
 
++ (id)dataWithData:(id)data {
+    let new: id = msg![env; this alloc];
+    let new: id = msg![env; new initWithData:data];
+    autorelease(env, new)
+}
+
 // Calling the standard `init` is also allowed, in which case we just get data
 // of size 0.
 

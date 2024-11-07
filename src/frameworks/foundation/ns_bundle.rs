@@ -296,6 +296,13 @@ pub const CLASSES: ClassExports = objc_classes! {
     autorelease(env, localizations)
 }
 
+- (id)preferredLocalizations {
+    let loc_array = CFBundleCopyBundleLocalizations(env, this);
+
+    let preferred_localizations = CFBundleCopyPreferredLocalizationsFromArray(env, loc_array);
+    autorelease(env, preferred_localizations)
+}
+
 // TODO: constructors, more accessors
 
 @end

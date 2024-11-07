@@ -369,6 +369,14 @@ pub const CLASSES: ClassExports = objc_classes! {
     autorelease(env, res)
 }
 
++ (id)dictionaryWithObjects:(id)objects //NSArray *
+                    forKeys:(id)keys { //NSArray *
+    let new_dict: id = msg![env; this alloc];
+    let new_dict: id = msg![env; new_dict initWithObjects:objects forKeys:keys];
+
+    autorelease(env, new_dict)
+}
+
 + (id)dictionaryWithDictionary:(id)dict { // NSDictionary*
     let new_dict: id = msg![env; this alloc];
     let new_dict: id = msg![env; new_dict initWithDictionary:dict];
@@ -400,6 +408,29 @@ pub const CLASSES: ClassExports = objc_classes! {
     release(env, this);
     let path = ns_url::to_rust_path(env, url);
     deserialize_plist_from_file(env, &path, /* array_expected: */ false)
+}
+
+- (id)initWithObjects:(id)objects //NSArray *
+                    forKeys:(id)keys { //NSArray *
+    let keys_size: NSUInteger = msg![env; keys count];
+    let objects_size: NSUInteger = msg![env; objects count];
+    assert_eq!(keys_size, objects_size); // TODO: raise proper exception
+
+    let mut host_object = <DictionaryHostObject as Default>::default();
+
+    let objects_enumerator: id = msg![env; objects objectEnumerator];
+    let keys_enumerator: id = msg![env; keys objectEnumerator];
+
+    loop {
+        let next_key: id = msg![env; keys_enumerator nextObject];
+        let next_object: id = msg![env; objects_enumerator nextObject];
+        if next_key == nil {
+            break;
+        }
+        host_object.insert(env, next_key, next_object, /* copy_key: */ true);
+    }
+    *env.objc.borrow_mut(this) = host_object;
+    this
 }
 
 - (bool)writeToFile:(id)path // NSString*

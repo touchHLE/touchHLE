@@ -17,7 +17,7 @@ use crate::{
     abi, bundle, cpu, dyld, frameworks, fs, gdb, image, libc, mach_o, mem, objc, options, stack,
     window,
 };
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 use std::net::TcpListener;
 use std::time::{Duration, Instant};
 
@@ -129,6 +129,93 @@ pub enum ThreadBlock {
     Joining(ThreadId, MutPtr<MutVoidPtr>),
     // Deferred guest-to-host return
     DeferredReturn,
+}
+
+struct BinaryDependencyNode {
+    name: String,
+    dependencies: Vec<String>,
+}
+
+/// Topologically sorts the binary dylibs using Kahn's algorithm
+/// and returns the sorted list of indices
+fn generate_binary_load_order(graph: &[BinaryDependencyNode]) -> Result<Vec<usize>, String> {
+    let node_to_index: HashMap<_, _> = graph
+        .iter()
+        .enumerate()
+        .map(|(idx, node)| (node.name.as_str(), idx))
+        .collect();
+
+    let mut node_dependents = HashMap::new();
+    let mut node_in_degrees: HashMap<_, _> = node_to_index.values().map(|&idx| (idx, 0)).collect();
+
+    for node in graph {
+        let &bin_index = node_to_index
+            .get(node.name.as_str())
+            .ok_or_else(|| format!("Failed to find {:?} name mapping", &node.name))?;
+
+        // Bin names dont include prefix while dynamic lib paths do
+        for dependency in node
+            .dependencies
+            .iter()
+            .map(|path| path.strip_prefix("/usr/lib/").unwrap_or(path.as_str()))
+        {
+            // Ignore dependencies that are not included in packaged dylibs
+            let Some(&dylib_index) = node_to_index.get(dependency) else {
+                continue;
+            };
+            node_dependents
+                .entry(dylib_index)
+                .or_insert_with(Vec::new)
+                .push(bin_index);
+
+            node_in_degrees
+                .entry(bin_index)
+                .and_modify(|in_degree| *in_degree += 1);
+        }
+    }
+
+    let mut leaf_nodes: VecDeque<_> = node_in_degrees
+        .iter()
+        .filter(|(_, &in_degree)| in_degree == 0)
+        .map(|(&node, _)| node)
+        .collect();
+
+    let mut sorted_indices = Vec::new();
+
+    while let Some(node) = leaf_nodes.pop_front() {
+        sorted_indices.push(node);
+
+        let Some(dependents) = node_dependents.get(&node) else {
+            continue;
+        };
+
+        for &dependant in dependents {
+            let Some(in_degree) = node_in_degrees.get_mut(&dependant) else {
+                continue;
+            };
+            *in_degree -= 1;
+
+            if *in_degree == 0 {
+                leaf_nodes.push_back(dependant);
+            }
+        }
+    }
+
+    if let Some((&index, _)) = node_in_degrees.iter().find(|(_, &in_degree)| in_degree > 0) {
+        return Err(format!(
+            "Failed to sort nodes, cycle with {:?}",
+            graph.get(index).unwrap().name
+        ));
+    }
+    log!(
+        "Found sorted order {:?}",
+        sorted_indices
+            .iter()
+            .map(|&index| graph.get(index).unwrap().name.as_str())
+            .collect::<Vec<_>>()
+    );
+
+    Ok(sorted_indices)
 }
 
 impl Environment {
@@ -353,10 +440,7 @@ impl Environment {
 
         // Static initializers for libraries must be run before the initializer
         // in the app binary.
-        // TODO: once we support more libraries, replace this hard-coded order
-        //       with e.g. a topological sort.
-        assert!(env.bins.len() <= 3);
-        for bin_idx in [1, 2, 0] {
+        for bin_idx in env.get_sorted_bin_indices()? {
             let Some(bin) = env.bins.get(bin_idx) else {
                 continue;
             };
@@ -1146,5 +1230,183 @@ impl Environment {
             .mem
             .alloc_and_write_cstr(self.fs.home_directory().as_str().as_bytes());
         self.env_vars.insert(b"HOME".to_vec(), home_value_cstr);
+    }
+
+    fn get_sorted_bin_indices(&self) -> Result<Vec<usize>, String> {
+        let dylib_graph: Vec<BinaryDependencyNode> = self
+            .bins
+            .iter()
+            .map(|bin| BinaryDependencyNode {
+                name: bin.name.clone(),
+                dependencies: bin.dynamic_libraries.clone(),
+            })
+            .collect();
+
+        generate_binary_load_order(&dylib_graph)
+    }
+}
+
+#[cfg(test)]
+mod dylib_sorting_tests {
+    use std::collections::HashSet;
+
+    use super::*;
+
+    fn create_dylib_graph(bin_configs: &[(&str, &[&str])]) -> Vec<BinaryDependencyNode> {
+        bin_configs
+            .iter()
+            .map(|(name, dependencies)| BinaryDependencyNode {
+                name: name.to_string(),
+                dependencies: dependencies.iter().map(|s| s.to_string()).collect(),
+            })
+            .collect()
+    }
+
+    /// Verify dylib sort by checking that no dependents are needed
+    /// before their import
+    fn verify_sort(graph: &[BinaryDependencyNode], sorted_indices: &[usize]) {
+        assert_eq!(sorted_indices.len(), graph.len());
+
+        let bin_to_index: HashMap<_, _> = graph
+            .iter()
+            .enumerate()
+            .map(|(idx, node)| (node.name.as_str(), idx))
+            .collect();
+
+        let mut loaded_dylibs = HashSet::new();
+
+        for &index in sorted_indices {
+            let current_bin = graph.get(index).unwrap();
+
+            for dependency in current_bin
+                .dependencies
+                .iter()
+                .map(|path| path.strip_prefix("/usr/lib/").unwrap_or(path.as_str()))
+            {
+                // Ignore dependencies that are not included in packaged dylibs
+                let Some(&dylib_index) = bin_to_index.get(dependency) else {
+                    continue;
+                };
+
+                assert!(loaded_dylibs.contains(&dylib_index));
+            }
+
+            loaded_dylibs.insert(index);
+        }
+    }
+
+    #[test]
+    fn test_no_dependencies() {
+        let dylib_graph = create_dylib_graph(&[]);
+        let sorted_indices = generate_binary_load_order(&dylib_graph).unwrap();
+        verify_sort(&dylib_graph, &sorted_indices);
+    }
+
+    #[test]
+    fn test_single_bin() {
+        let dylib_graph = create_dylib_graph(&[("A", &[])]);
+
+        let sorted_indices = generate_binary_load_order(&dylib_graph).unwrap();
+
+        verify_sort(&dylib_graph, &sorted_indices);
+    }
+
+    #[test]
+    fn test_linear_dependencies() {
+        // A -> B -> C -> D
+        let dylib_graph = create_dylib_graph(&[
+            ("A", &[]),
+            ("B", &["/usr/lib/A"]),
+            ("C", &["/usr/lib/B"]),
+            ("D", &["/usr/lib/C"]),
+        ]);
+
+        let sorted_indices = generate_binary_load_order(&dylib_graph).unwrap();
+
+        verify_sort(&dylib_graph, &sorted_indices);
+    }
+
+    #[test]
+    fn test_diamond_dependencies() {
+        // A -> B -> D
+        //  \-> C -/
+        let dylib_graph =
+            create_dylib_graph(&[("A", &[]), ("B", &["A"]), ("C", &["A"]), ("D", &["B", "C"])]);
+
+        let sorted_indices = generate_binary_load_order(&dylib_graph).unwrap();
+
+        verify_sort(&dylib_graph, &sorted_indices);
+    }
+
+    #[test]
+    fn test_with_isolated_nodes() {
+        // A -> B
+        // C
+        // D
+        let dylib_graph = create_dylib_graph(&[("A", &[]), ("B", &["A"]), ("C", &[]), ("D", &[])]);
+
+        let sorted_indices = generate_binary_load_order(&dylib_graph).unwrap();
+
+        verify_sort(&dylib_graph, &sorted_indices);
+    }
+
+    #[test]
+    fn test_complex_dependency_graph() {
+        // A -> B -> D
+        // A -> C -> E
+        // F -> G
+        // H
+        let dylib_graph = create_dylib_graph(&[
+            ("A", &[]),
+            ("B", &["A"]),
+            ("C", &["A"]),
+            ("D", &["B"]),
+            ("E", &["C"]),
+            ("F", &[]),
+            ("G", &["F"]),
+            ("H", &[]),
+        ]);
+
+        let sorted_indices = generate_binary_load_order(&dylib_graph).unwrap();
+
+        verify_sort(&dylib_graph, &sorted_indices);
+    }
+
+    #[test]
+    fn test_with_external_dependencies() {
+        let dylib_graph = create_dylib_graph(&[
+            ("A", &["external1"]),
+            ("B", &["A", "external2"]),
+            ("C", &["B"]),
+        ]);
+
+        let sorted_indices = generate_binary_load_order(&dylib_graph).unwrap();
+
+        verify_sort(&dylib_graph, &sorted_indices);
+    }
+
+    #[test]
+    fn test_cycle() {
+        // A -> B -> C -> A
+        let dylib_graph = create_dylib_graph(&[("A", &["C"]), ("B", &["A"]), ("C", &["B"])]);
+
+        let result = generate_binary_load_order(&dylib_graph);
+
+        assert!(
+            result.is_err(),
+            "Sort should detect cycle and return an error"
+        );
+    }
+
+    #[test]
+    fn test_self_dependency() {
+        let dylib_graph = create_dylib_graph(&[("A", &["A"])]);
+
+        let result = generate_binary_load_order(&dylib_graph);
+
+        assert!(
+            result.is_err(),
+            "Sort should detect self-dependency as a cycle and return an error"
+        );
     }
 }

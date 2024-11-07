@@ -37,6 +37,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "5119c335_b3660d62",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 3
+      },
+      "lineNbr": 7,
+      "author": {
+        "id": 1038408
+      },
+      "writtenOn": "2024-11-07T16:19:13Z",
+      "side": 1,
+      "message": "Not sure but ill add some traces to see how it creates/closes threads and see if i can figure it out. I just saw it calls detatch 2x when closing the app on the same thread id which doesnt exist but i didnt bother checking more yet.",
+      "parentUuid": "5845006e_3fda9c8b",
+      "revId": "527d4fe077f3e6aafbdd8b814ee67807b857e09a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "037cec8c_bc5cc1c3",
         "filename": "src/libc/pthread/thread.rs",
         "patchSetId": 3

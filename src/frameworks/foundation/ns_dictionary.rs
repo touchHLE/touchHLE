@@ -335,6 +335,14 @@ pub const CLASSES: ClassExports = objc_classes! {
     );
     autorelease(env, res)
 }
+
++ (id)dictionaryWithDictionary:(id)dict { // NSDictionary*
+    let new_dict: id = msg![env; this alloc];
+    let new_dict: id = msg![env; new_dict initWithDictionary:dict];
+
+    autorelease(env, new_dict)
+}
+
 + (id)dictionaryWithContentsOfURL:(id)url { // NSURL*
     let path = ns_url::to_rust_path(env, url);
     let res = deserialize_plist_from_file(env, &path, /* array_expected: */ false);

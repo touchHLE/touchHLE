@@ -369,6 +369,29 @@ pub const CLASSES: ClassExports = objc_classes! {
     autorelease(env, res)
 }
 
++ (id)dictionaryWithObjects:(id)objects //NSArray *
+                    forKeys:(id)keys { //NSArray *
+    assert_eq!(msg![env; objects count], msg![env; keys count]); // TODO: raise proper exception
+    
+    let new_dict: id = msg![env; this alloc];
+    let mut host_object: DictionaryHostObject = std::mem::take(env.objc.borrow_mut(new_dict));
+
+    let objects_enumerator: id = msg![env; objects objectEnumerator];
+    let keys_enumerator: id = msg![env; keys objectEnumerator];
+
+    loop {
+        let next_key: id = msg![env; keys_enumerator nextObject];
+        let next_object: id = msg![env; objects_enumerator nextObject];
+        if next_key == nil {
+            break;
+        }
+        host_object.insert(env, next_key, next_object, /* copy_key: */ true);
+    }
+    *env.objc.borrow_mut(new_dict) = host_object;
+
+    autorelease(env, new_dict)
+}
+
 + (id)dictionaryWithDictionary:(id)dict { // NSDictionary*
     let new_dict: id = msg![env; this alloc];
     let new_dict: id = msg![env; new_dict initWithDictionary:dict];

@@ -36,7 +36,7 @@ const VM_PROT_EXECUTE: vm_prot_t = 4;
 
 #[derive(Debug)]
 pub struct MachO {
-    /// Name (for debugging purposes)
+    /// Name (for debugging purposes and sorting)
     pub name: String,
     /// Paths of dynamic libraries referenced by the binary.
     pub dynamic_libraries: Vec<String>,

@@ -17,7 +17,7 @@ use crate::{
     abi, bundle, cpu, dyld, frameworks, fs, gdb, image, libc, mach_o, mem, objc, options, stack,
     window,
 };
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 use std::net::TcpListener;
 use std::time::{Duration, Instant};
 
@@ -353,10 +353,11 @@ impl Environment {
 
         // Static initializers for libraries must be run before the initializer
         // in the app binary.
-        // TODO: once we support more libraries, replace this hard-coded order
-        //       with e.g. a topological sort.
-        assert!(env.bins.len() <= 3);
-        for bin_idx in [1, 2, 0] {
+        let sorted_library_indicies = match env.sort_dylib_dependencies() {
+            Ok(indicies) => indicies,
+            Err(e) => return Err(e),
+        };
+        for bin_idx in sorted_library_indicies {
             let Some(bin) = env.bins.get(bin_idx) else {
                 continue;
             };
@@ -1129,5 +1130,86 @@ impl Environment {
             .mem
             .alloc_and_write_cstr(self.fs.home_directory().as_str().as_bytes());
         self.env_vars.insert(b"HOME".to_vec(), home_value_cstr);
+    }
+
+    fn sort_dylib_dependencies(&self) -> Result<Vec<usize>, String> {
+        let bin_to_index: HashMap<_, _> = self
+            .bins
+            .iter()
+            .enumerate()
+            .map(|(idx, bin)| (bin.name.as_str(), idx))
+            .collect();
+
+        let mut node_dependents = HashMap::new();
+        let mut node_in_degrees = HashMap::new();
+
+        for bin in self.bins.iter() {
+            let bin_index = bin_to_index
+                .get(bin.name.as_str())
+                .ok_or_else(|| format!("Failed to find {:?} name mapping", &bin.name))?;
+
+            // Bin names dont include prefix while dynamic lib paths do
+            for dependency in bin
+                .dynamic_libraries
+                .iter()
+                .map(|path| path.strip_prefix("/usr/lib/").unwrap_or(path.as_str()))
+            {
+                // Ignore dependencies that are not included in packaged dylibs
+                if let Some(dylib_index) = bin_to_index.get(dependency) {
+                    node_dependents
+                        .entry(dylib_index)
+                        .or_insert_with(Vec::new)
+                        .push(bin_index);
+                    node_in_degrees.entry(dylib_index).or_insert(0);
+                    node_in_degrees
+                        .entry(bin_index)
+                        .and_modify(|in_degree| *in_degree += 1)
+                        .or_insert(1);
+                }
+            }
+        }
+
+        let mut leaf_nodes: VecDeque<_> = node_in_degrees
+            .iter()
+            .filter(|(_, &in_degree)| in_degree == 0)
+            .map(|(&node, _)| node)
+            .collect();
+
+        let mut sorted_indicies = Vec::new();
+
+        while let Some(node) = leaf_nodes.pop_front() {
+            sorted_indicies.push(*node);
+
+            if let Some(dependents) = node_dependents.get(node) {
+                for &dependant in dependents {
+                    if let Some(in_degree) = node_in_degrees.get_mut(dependant) {
+                        *in_degree -= 1;
+
+                        if *in_degree == 0 {
+                            leaf_nodes.push_back(dependant);
+                        }
+                    }
+                }
+            }
+        }
+
+        if let Some((&index, _)) = node_in_degrees.iter().find(|(_, &in_degree)| in_degree > 0) {
+            return Err(format!(
+                "Failed to sort dependencies, cycle with {:?}",
+                self.bins
+                    .get(*index)
+                    .ok_or_else(|| format!("Invalid bin index {}", index))?
+                    .name
+            ));
+        }
+        log!(
+            "Found sorted import order {:?}",
+            sorted_indicies
+                .iter()
+                .map(|&index| self.bins.get(index).unwrap().name.as_str())
+                .collect::<Vec<_>>()
+        );
+
+        Ok(sorted_indicies)
     }
 }

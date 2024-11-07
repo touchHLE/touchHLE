@@ -437,6 +437,21 @@ pub const CLASSES: ClassExports = objc_classes! {
     this
 }
 
+- (id)initWithDictionary:(id)dictionary {
+    let other_host_object: DictionaryHostObject = std::mem::take(env.objc.borrow_mut(dictionary));
+
+    let mut host_object = <DictionaryHostObject as Default>::default();
+
+    for key in other_host_object.iter_keys() {
+        let object = other_host_object.lookup(env, key);
+        host_object.insert(env, key, object, /* copy_key: */ true);
+    }
+
+    *env.objc.borrow_mut(this) = host_object;
+    *env.objc.borrow_mut(dictionary) = other_host_object;
+    this
+}
+
 // TODO: enumeration, more init methods, etc
 
 - (NSUInteger)count {

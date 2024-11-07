@@ -17,7 +17,7 @@ use crate::{
     abi, bundle, cpu, dyld, frameworks, fs, gdb, image, libc, mach_o, mem, objc, options, stack,
     window,
 };
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 use std::net::TcpListener;
 use std::time::{Duration, Instant};
 
@@ -353,10 +353,7 @@ impl Environment {
 
         // Static initializers for libraries must be run before the initializer
         // in the app binary.
-        // TODO: once we support more libraries, replace this hard-coded order
-        //       with e.g. a topological sort.
-        assert!(env.bins.len() <= 3);
-        for bin_idx in [1, 2, 0] {
+        for bin_idx in env.get_sorted_bin_indices()? {
             let Some(bin) = env.bins.get(bin_idx) else {
                 continue;
             };
@@ -1146,5 +1143,284 @@ impl Environment {
             .mem
             .alloc_and_write_cstr(self.fs.home_directory().as_str().as_bytes());
         self.env_vars.insert(b"HOME".to_vec(), home_value_cstr);
+    }
+
+    /// Topologically sorts the binary dylibs using Kahn's algorithm
+    /// and returns the sortled list of indices
+    fn get_sorted_bin_indices(&self) -> Result<Vec<usize>, String> {
+        let bin_to_index: HashMap<_, _> = self
+            .bins
+            .iter()
+            .enumerate()
+            .map(|(idx, bin)| (bin.name.as_str(), idx))
+            .collect();
+
+        let mut node_dependents = HashMap::new();
+        let mut node_in_degrees: HashMap<_, _> =
+            bin_to_index.values().map(|&idx| (idx, 0)).collect();
+
+        for bin in self.bins.iter() {
+            let &bin_index = bin_to_index
+                .get(bin.name.as_str())
+                .ok_or_else(|| format!("Failed to find {:?} name mapping", &bin.name))?;
+
+            // Bin names dont include prefix while dynamic lib paths do
+            for dependency in bin
+                .dynamic_libraries
+                .iter()
+                .map(|path| path.strip_prefix("/usr/lib/").unwrap_or(path.as_str()))
+            {
+                // Ignore dependencies that are not included in packaged dylibs
+                let Some(&dylib_index) = bin_to_index.get(dependency) else {
+                    continue;
+                };
+                node_dependents
+                    .entry(dylib_index)
+                    .or_insert_with(Vec::new)
+                    .push(bin_index);
+
+                node_in_degrees
+                    .entry(bin_index)
+                    .and_modify(|in_degree| *in_degree += 1);
+            }
+        }
+
+        let mut leaf_nodes: VecDeque<_> = node_in_degrees
+            .iter()
+            .filter(|(_, &in_degree)| in_degree == 0)
+            .map(|(&node, _)| node)
+            .collect();
+
+        let mut sorted_indicies = Vec::new();
+
+        while let Some(node) = leaf_nodes.pop_front() {
+            sorted_indicies.push(node);
+
+            let Some(dependents) = node_dependents.get(&node) else {
+                continue;
+            };
+
+            for &dependant in dependents {
+                let Some(in_degree) = node_in_degrees.get_mut(&dependant) else {
+                    continue;
+                };
+                *in_degree -= 1;
+
+                if *in_degree == 0 {
+                    leaf_nodes.push_back(dependant);
+                }
+            }
+        }
+
+        if let Some((&index, _)) = node_in_degrees.iter().find(|(_, &in_degree)| in_degree > 0) {
+            return Err(format!(
+                "Failed to sort dependencies, cycle with {:?}",
+                self.bins.get(index).unwrap().name
+            ));
+        }
+        log!(
+            "Found sorted import order {:?}",
+            sorted_indicies
+                .iter()
+                .map(|&index| self.bins.get(index).unwrap().name.as_str())
+                .collect::<Vec<_>>()
+        );
+
+        Ok(sorted_indicies)
+    }
+}
+
+#[cfg(test)]
+mod dylib_sorting_tests {
+    use std::collections::HashSet;
+
+    use super::*;
+
+    fn create_test_env(bin_configs: &[(&str, &[&str])]) -> Environment {
+        let bins = bin_configs
+            .iter()
+            .map(|(name, deps)| mach_o::MachO {
+                name: name.to_string(),
+                dynamic_libraries: deps.iter().map(|d| d.to_string()).collect(),
+                sections: Vec::new(),
+                exported_symbols: HashMap::new(),
+                external_relocations: Vec::new(),
+                entry_point_pc: None,
+            })
+            .collect();
+
+        Environment {
+            startup_time: Instant::now(),
+            bundle: bundle::Bundle::new_fake_bundle(),
+            fs: fs::Fs::new_fake_fs(),
+            window: None,
+            mem: mem::Mem::new(),
+            bins,
+            objc: objc::ObjC::new(),
+            dyld: dyld::Dyld::new(),
+            cpu: cpu::Cpu::new(None),
+            current_thread: 0,
+            threads: Vec::new(),
+            libc_state: libc::State::default(),
+            framework_state: frameworks::State::default(),
+            mutex_state: mutex::MutexState::default(),
+            options: options::Options::default(),
+            gdb_server: None,
+            env_vars: HashMap::new(),
+        }
+    }
+
+    /// Verify dylib sort by checking that no dependents are needed
+    /// before their import
+    fn verify_sort(test_env: &Environment, sorted_indices: &[usize]) {
+        let bin_to_index: HashMap<_, _> = test_env
+            .bins
+            .iter()
+            .enumerate()
+            .map(|(idx, bin)| (bin.name.as_str(), idx))
+            .collect();
+
+        let mut loaded_dylibs = HashSet::new();
+
+        for &index in sorted_indices {
+            let current_bin = test_env.bins.get(index).unwrap();
+
+            for dependency in current_bin
+                .dynamic_libraries
+                .iter()
+                .map(|path| path.strip_prefix("/usr/lib/").unwrap_or(path.as_str()))
+            {
+                // Ignore dependencies that are not included in packaged dylibs
+                let Some(&dylib_index) = bin_to_index.get(dependency) else {
+                    continue;
+                };
+
+                assert!(loaded_dylibs.contains(&dylib_index));
+            }
+
+            loaded_dylibs.insert(index);
+        }
+    }
+
+    #[test]
+    fn test_no_dependencies() {
+        let test_env = create_test_env(&[]);
+        let sorted_indices = test_env.get_sorted_bin_indices().unwrap();
+        verify_sort(&test_env, &sorted_indices);
+    }
+
+    #[test]
+    fn test_single_bin() {
+        let test_env = create_test_env(&[("A", &[])]);
+
+        let sorted_indices = test_env.get_sorted_bin_indices().unwrap();
+
+        assert_eq!(sorted_indices.len(), 1);
+        verify_sort(&test_env, &sorted_indices);
+    }
+
+    #[test]
+    fn test_linear_dependencies() {
+        // A -> B -> C -> D
+        let test_env = create_test_env(&[
+            ("A", &[]),
+            ("B", &["/usr/lib/A"]),
+            ("C", &["/usr/lib/B"]),
+            ("D", &["/usr/lib/C"]),
+        ]);
+
+        let sorted_indices = test_env.get_sorted_bin_indices().unwrap();
+
+        assert_eq!(sorted_indices.len(), test_env.bins.len());
+
+        verify_sort(&test_env, &sorted_indices);
+    }
+
+    #[test]
+    fn test_diamond_dependencies() {
+        // A -> B -> D
+        //  \-> C -/
+        let test_env =
+            create_test_env(&[("A", &[]), ("B", &["A"]), ("C", &["A"]), ("D", &["B", "C"])]);
+
+        let sorted_indices = test_env.get_sorted_bin_indices().unwrap();
+
+        assert_eq!(sorted_indices.len(), test_env.bins.len());
+        verify_sort(&test_env, &sorted_indices);
+    }
+
+    #[test]
+    fn test_with_isolated_nodes() {
+        // A -> B
+        // C
+        // D
+        let test_env = create_test_env(&[("A", &[]), ("B", &["A"]), ("C", &[]), ("D", &[])]);
+
+        let sorted_indices = test_env.get_sorted_bin_indices().unwrap();
+
+        assert_eq!(sorted_indices.len(), test_env.bins.len());
+        verify_sort(&test_env, &sorted_indices);
+    }
+
+    #[test]
+    fn test_complex_dependency_graph() {
+        // A -> B -> D
+        // A -> C -> E
+        // F -> G
+        // H
+        let test_env = create_test_env(&[
+            ("A", &[]),
+            ("B", &["A"]),
+            ("C", &["A"]),
+            ("D", &["B"]),
+            ("E", &["C"]),
+            ("F", &[]),
+            ("G", &["F"]),
+            ("H", &[]),
+        ]);
+
+        let sorted_indices = test_env.get_sorted_bin_indices().unwrap();
+
+        assert_eq!(sorted_indices.len(), test_env.bins.len());
+        verify_sort(&test_env, &sorted_indices);
+    }
+
+    #[test]
+    fn test_with_external_dependencies() {
+        let test_env = create_test_env(&[
+            ("A", &["external1"]),
+            ("B", &["A", "external2"]),
+            ("C", &["B"]),
+        ]);
+
+        let sorted_indices = test_env.get_sorted_bin_indices().unwrap();
+
+        assert_eq!(sorted_indices.len(), test_env.bins.len());
+        verify_sort(&test_env, &sorted_indices);
+    }
+
+    #[test]
+    fn test_cycle() {
+        // A -> B -> C -> A
+        let test_env = create_test_env(&[("A", &["C"]), ("B", &["A"]), ("C", &["B"])]);
+
+        let result = test_env.get_sorted_bin_indices();
+
+        assert!(
+            result.is_err(),
+            "Sort should detect cycle and return an error"
+        );
+    }
+
+    #[test]
+    fn test_self_dependency() {
+        let test_struct = create_test_env(&[("A", &["A"])]);
+
+        let result = test_struct.get_sorted_bin_indices();
+
+        assert!(
+            result.is_err(),
+            "Sort should detect self-dependency as a cycle and return an error"
+        );
     }
 }

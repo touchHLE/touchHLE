@@ -90,6 +90,12 @@ pub const CLASSES: ClassExports = objc_classes! {
     this
 }
 
+- (id)initWithData:(id)data {
+    let bytes: ConstVoidPtr = msg![env; data bytes];
+    let length: NSUInteger = msg![env; data length];
+    msg![env; this initWithBytes:bytes length:length]
+}
+
 - (id)initWithContentsOfURL:(id)url { // NSURL *
     let path: id = msg![env; url absoluteString];
     let path = to_rust_string(env, path);

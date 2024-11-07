@@ -21,6 +21,8 @@ use std::collections::HashMap;
 use std::net::TcpListener;
 use std::time::{Duration, Instant};
 
+use petgraph::{algo, graph};
+
 use crate::libc::pthread::cond::pthread_cond_t;
 pub use mutex::{MutexId, MutexType, PTHREAD_MUTEX_DEFAULT};
 
@@ -353,10 +355,54 @@ impl Environment {
 
         // Static initializers for libraries must be run before the initializer
         // in the app binary.
-        // TODO: once we support more libraries, replace this hard-coded order
-        //       with e.g. a topological sort.
-        assert!(env.bins.len() <= 3);
-        for bin_idx in [1, 2, 0] {
+        let mut bin_to_index = HashMap::new();
+        let mut dependency_graph = graph::Graph::new();
+
+        for bin in env.bins.iter() {
+            bin_to_index.insert(&bin.name, dependency_graph.add_node(&bin.name));
+        }
+
+        for bin in env.bins.iter() {
+            let bin_index = match bin_to_index.get(&bin.name) {
+                Some(index) => index,
+                None => {
+                    return Err(format!(
+                        "Failed to find {:?} in dependency graph",
+                        &bin.name
+                    ))
+                }
+            };
+
+            for dependency in bin.dynamic_libraries.iter() {
+                let dylib_index = bin_to_index.get(dependency);
+
+                // Ignores dependencies that are not included in packaged dylibs
+                if let Some(dylib_index) = dylib_index {
+                    dependency_graph.add_edge(*bin_index, *dylib_index, ());
+                }
+            }
+        }
+
+        let ordered_libraries = match algo::toposort(&dependency_graph, None) {
+            Ok(libraries) => libraries,
+            Err(e) => {
+                return Err(format!(
+                    "Failed to sort dependencies, cycle with {:?}",
+                    dependency_graph.node_weight(e.node_id())
+                ))
+            }
+        };
+
+        log!(
+            "Found sorted import order {:?}",
+            ordered_libraries
+                .iter()
+                .map(|node_index| *dependency_graph.node_weight(*node_index).unwrap())
+                .collect::<Vec<&String>>()
+        );
+
+        let ordered_libraries = ordered_libraries.iter().map(|index| index.index());
+        for bin_idx in ordered_libraries {
             let Some(bin) = env.bins.get(bin_idx) else {
                 continue;
             };

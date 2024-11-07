@@ -10,7 +10,7 @@ use super::ns_property_list_serialization::{
     deserialize_plist_from_file, NSPropertyListBinaryFormat_v1_0,
 };
 use super::ns_string::{from_rust_string, to_rust_string};
-use super::{ns_string, ns_url, NSUInteger};
+use super::{ns_array, ns_string, ns_url, NSUInteger};
 use crate::abi::VaList;
 use crate::fs::GuestPath;
 use crate::mem::{MutPtr, Ptr};
@@ -278,6 +278,14 @@ pub const CLASSES: ClassExports = objc_classes! {
     let res = host_obj.lookup(env, key);
     *env.objc.borrow_mut(this) = host_obj;
     res
+}
+
+- (id)allKeys {
+    let host_obj: DictionaryHostObject = std::mem::take(env.objc.borrow_mut(this));
+    let keys: Vec<id> = host_obj.map.values().flatten().map(|&(key, _value)| key).collect();
+    *env.objc.borrow_mut(this) = host_obj;
+
+    ns_array::from_vec(env, keys)
 }
 
 // NSCopying implementation

@@ -54,6 +54,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "77998da9_b7e796e6",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 3
+      },
+      "lineNbr": 7,
+      "author": {
+        "id": 1038408
+      },
+      "writtenOn": "2024-11-08T00:29:46Z",
+      "side": 1,
+      "message": "which makes it even more confusing :)",
+      "parentUuid": "c33e03df_fc7e2d1c",
+      "revId": "7265955ee6963c6da1cc583aac246cf0952cd614",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "4ed020b8_ced05d8f",
@@ -67,6 +85,24 @@
       "writtenOn": "2024-11-06T23:38:28Z",
       "side": 1,
       "message": "It\u0027s better to call that something like `Application temporary defaults`\n\nReference https://developer.apple.com/documentation/foundation/nsregistrationdomain",
+      "revId": "7265955ee6963c6da1cc583aac246cf0952cd614",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "70eea610_731a4b99",
+        "filename": "src/frameworks/foundation/ns_user_defaults.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 38,
+      "author": {
+        "id": 1038408
+      },
+      "writtenOn": "2024-11-08T00:29:46Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "4ed020b8_ced05d8f",
       "revId": "7265955ee6963c6da1cc583aac246cf0952cd614",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
@@ -88,6 +124,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "8eb3e321_b4d4e34e",
+        "filename": "src/frameworks/foundation/ns_user_defaults.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 42,
+      "author": {
+        "id": 1038408
+      },
+      "writtenOn": "2024-11-08T00:29:46Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "0e471be0_dafb0951",
+      "revId": "7265955ee6963c6da1cc583aac246cf0952cd614",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "33ba9fad_8046654e",
@@ -101,6 +155,24 @@
       "writtenOn": "2024-11-06T23:38:28Z",
       "side": 1,
       "message": "you don\u0027t need to check for nil here, in obj-c sending messages to nil is noop and return nil",
+      "revId": "7265955ee6963c6da1cc583aac246cf0952cd614",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "77f9f685_3cd91612",
+        "filename": "src/frameworks/foundation/ns_user_defaults.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 142,
+      "author": {
+        "id": 1038408
+      },
+      "writtenOn": "2024-11-08T00:29:46Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "33ba9fad_8046654e",
       "revId": "7265955ee6963c6da1cc583aac246cf0952cd614",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
@@ -122,6 +194,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "d6c477c8_f5b0d601",
+        "filename": "src/frameworks/foundation/ns_user_defaults.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 143,
+      "author": {
+        "id": 1038408
+      },
+      "writtenOn": "2024-11-08T00:29:46Z",
+      "side": 1,
+      "message": "nice catch ! damn copy paste :(",
+      "parentUuid": "237aee6b_ca9a1601",
+      "revId": "7265955ee6963c6da1cc583aac246cf0952cd614",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "a96805e3_acbb0436",
@@ -135,6 +225,24 @@
       "writtenOn": "2024-11-06T23:38:28Z",
       "side": 1,
       "message": "use snake_case for method parameters\n\n(check the coding style https://github.com/touchHLE/touchHLE/blob/trunk/dev-docs/code-style.md)",
+      "revId": "7265955ee6963c6da1cc583aac246cf0952cd614",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "950b13fa_69614043",
+        "filename": "src/frameworks/foundation/ns_user_defaults.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 148,
+      "author": {
+        "id": 1038408
+      },
+      "writtenOn": "2024-11-08T00:29:46Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "a96805e3_acbb0436",
       "revId": "7265955ee6963c6da1cc583aac246cf0952cd614",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
@@ -170,6 +278,24 @@
       "side": 1,
       "message": "for fun i tried with https://www.jdoodle.com/execute-objective-c-online since i dont have osx or any apple device experience and it seems to replace the settings from the previous call. Ill test if addEntriesFromDictionary does the same and add some comment to the code also",
       "parentUuid": "27bd0837_953d7724",
+      "revId": "7265955ee6963c6da1cc583aac246cf0952cd614",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "3d1e5894_5d25d863",
+        "filename": "src/frameworks/foundation/ns_user_defaults.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 155,
+      "author": {
+        "id": 1038408
+      },
+      "writtenOn": "2024-11-08T00:29:46Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "d960abef_2cfd434c",
       "revId": "7265955ee6963c6da1cc583aac246cf0952cd614",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

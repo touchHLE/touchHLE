@@ -73,6 +73,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "b6a7623a_2ad8ef91",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 3
+      },
+      "lineNbr": 7,
+      "author": {
+        "id": 1038408
+      },
+      "writtenOn": "2024-11-08T01:28:38Z",
+      "side": 1,
+      "message": "The game sends the value inside the pthread_t instead of the actual pthread_t. \ntouchHLE::libc::pthread::thread: Thread attempted detach a thread that doesnt exist (0x54485244), returning ESRCH!\ntouchHLE::libc::pthread::thread: Thread attempted detach a thread that doesnt exist (0x54485244), returning ESRCH!\n0x54485244 is the value inside the opaque \n let opaque \u003d env.mem.alloc_and_write(OpaqueThread {\n        magic: MAGIC_THREAD,\n    });\nconst MAGIC_THREAD: u32 \u003d u32::from_be_bytes(*b\"THRD\");\n\nfunny but mostly harmless bug in the games audio library it seems :)",
+      "parentUuid": "5119c335_b3660d62",
+      "revId": "527d4fe077f3e6aafbdd8b814ee67807b857e09a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "037cec8c_bc5cc1c3",
         "filename": "src/libc/pthread/thread.rs",
         "patchSetId": 3

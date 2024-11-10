@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b92a8330_1f2499f0",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-11-10T00:30:34Z",
+      "side": 1,
+      "message": "nitpick: in the commit message the name of the method should end with `:` as it is signify that method does expect an argument",
+      "revId": "8a2392d0cfc7be257d682c01b76d6dc85ec7129d",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

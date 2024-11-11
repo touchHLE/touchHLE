@@ -1,0 +1,463 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f7de124a_fc1fe160",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 11
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-11-11T19:59:05Z",
+      "side": 1,
+      "message": "Thanks very much for your hard work! I\u0027m very excited for where this can take touchHLE in the future.\n\nAlas, a large change means a large number of comments…",
+      "revId": "bfc494a1aeee0383b587f01bf05d7a34e5281e1a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8d32faf9_6b9eb2b8",
+        "filename": "src/dyld.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 189,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-11-11T19:59:05Z",
+      "side": 1,
+      "message": "Does this mean thread exiting no longer works though?",
+      "revId": "bfc494a1aeee0383b587f01bf05d7a34e5281e1a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "22727113_fef2e869",
+        "filename": "src/environment.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 48,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-11-11T19:59:05Z",
+      "side": 1,
+      "message": "I\u0027m not sure I understand the logic of this. The purpose of the boolean was to detect unexpected return-to-hosts I think; we never use return-to-host to end the main thread, but we do use it when running initialization functions.",
+      "revId": "bfc494a1aeee0383b587f01bf05d7a34e5281e1a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "19803d22_688ca059",
+        "filename": "src/environment.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 86,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-11-11T19:59:05Z",
+      "side": 1,
+      "message": "Presumably we can\u0027t actually fix this, so maybe it should be something more like “TODO: Try to avoid having to split up the Environment so much”? idk",
+      "revId": "bfc494a1aeee0383b587f01bf05d7a34e5281e1a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "de612a49_67c2b244",
+        "filename": "src/environment.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 111,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-11-11T19:59:05Z",
+      "side": 1,
+      "message": "You can just drop the BEFOREMERGE and put this as part of the comment.",
+      "revId": "bfc494a1aeee0383b587f01bf05d7a34e5281e1a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "160df100_43f19527",
+        "filename": "src/environment.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 164,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-11-11T19:59:05Z",
+      "side": 1,
+      "message": "Can we have a comment about why we enforce this invariant? Is it because the existence of several could imply a very messy coroutine state? On that note, maybe the comment at the top of this file should say that only this file can directly use corosensei, like how only window.rs is allowed to directly use SDL2 etc.",
+      "revId": "bfc494a1aeee0383b587f01bf05d7a34e5281e1a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2be70de7_a0358bb9",
+        "filename": "src/environment.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 537,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-11-11T19:59:05Z",
+      "side": 1,
+      "message": "Please just say this in the comment, then. It\u0027s better to know _why_ this safety constraint exists.",
+      "revId": "bfc494a1aeee0383b587f01bf05d7a34e5281e1a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "dd16fc43_47c80b9b",
+        "filename": "src/environment.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 566,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-11-11T19:59:05Z",
+      "side": 1,
+      "message": "I also would prefer if this comment is not removed.",
+      "revId": "bfc494a1aeee0383b587f01bf05d7a34e5281e1a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "052c8125_10fccbec",
+        "filename": "src/environment.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 690,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-11-11T19:59:05Z",
+      "side": 1,
+      "message": "I don\u0027t know!",
+      "revId": "bfc494a1aeee0383b587f01bf05d7a34e5281e1a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "cc658401_a24d5c07",
+        "filename": "src/environment.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 840,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-11-11T19:59:05Z",
+      "side": 1,
+      "message": "Would there be some advantage to that?",
+      "revId": "bfc494a1aeee0383b587f01bf05d7a34e5281e1a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "61beabb5_07954f3d",
+        "filename": "src/environment.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 1006,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-11-11T19:59:05Z",
+      "side": 1,
+      "message": "its",
+      "revId": "bfc494a1aeee0383b587f01bf05d7a34e5281e1a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a4bf8fa2_5bb4e242",
+        "filename": "src/environment.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 1153,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-11-11T19:59:05Z",
+      "side": 1,
+      "message": "Why are these resources special? Or: why is it a problem if we yield in these now, but it wasn\u0027t before? Or was it a problem before, and we just had no check for it?",
+      "revId": "bfc494a1aeee0383b587f01bf05d7a34e5281e1a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f833c25b_dcc8b37a",
+        "filename": "src/environment.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 1160,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-11-11T19:59:05Z",
+      "side": 1,
+      "message": "This double-newline was a mistake I guess?",
+      "revId": "bfc494a1aeee0383b587f01bf05d7a34e5281e1a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5ca2aac4_848eff6d",
+        "filename": "src/environment.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 1354,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-11-11T19:59:05Z",
+      "side": 1,
+      "message": "s/oom/OOM/\n\nBtw, do you want to rewrite the documentation of `env_for_salvage`? Clearly you figured out why it exists. Indeed, it\u0027s about the OOM problem on Android.",
+      "revId": "bfc494a1aeee0383b587f01bf05d7a34e5281e1a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ce159bda_1fae0608",
+        "filename": "src/environment.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 1385,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-11-11T19:59:05Z",
+      "side": 1,
+      "message": "Maybe the window functions could have some safety assertion?",
+      "revId": "bfc494a1aeee0383b587f01bf05d7a34e5281e1a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "137fee37_ed3aabe4",
+        "filename": "src/environment/app_picker.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 6,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-11-11T19:59:05Z",
+      "side": 1,
+      "message": "Is there some way we could avoid having to use corosensei directly in this file? I\u0027d rather it be confined entirely to environment.rs if possible.",
+      "revId": "bfc494a1aeee0383b587f01bf05d7a34e5281e1a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c3ee386a_e1ec25cd",
+        "filename": "src/environment/nullable_box.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 5,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-11-11T19:59:05Z",
+      "side": 1,
+      "message": "dereferencing",
+      "revId": "bfc494a1aeee0383b587f01bf05d7a34e5281e1a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a608b940_2321c648",
+        "filename": "src/environment/nullable_box.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 11,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-11-11T19:59:05Z",
+      "side": 1,
+      "message": "This doesn\u0027t actually justify why we\u0027re doing it this way instead of panicking. Is it purely a performance concern?",
+      "revId": "bfc494a1aeee0383b587f01bf05d7a34e5281e1a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4e5a83a5_8a942352",
+        "filename": "src/frameworks.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 54,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-11-11T19:59:05Z",
+      "side": 1,
+      "message": "Wait, what about GLES?",
+      "revId": "bfc494a1aeee0383b587f01bf05d7a34e5281e1a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0082c2b4_7c36b337",
+        "filename": "src/frameworks/foundation/ns_locale.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 45,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-11-11T19:59:05Z",
+      "side": 1,
+      "message": "FWIW this function should never have ended up in this file, we probably should wrap it on window.rs",
+      "revId": "bfc494a1aeee0383b587f01bf05d7a34e5281e1a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b508ce25_e2cec177",
+        "filename": "src/frameworks/foundation/ns_run_loop.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 212,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-11-11T19:59:05Z",
+      "side": 1,
+      "message": "?",
+      "revId": "bfc494a1aeee0383b587f01bf05d7a34e5281e1a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5f000551_645a3206",
+        "filename": "src/frameworks/opengles.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 26,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-11-11T19:59:05Z",
+      "side": 1,
+      "message": "What do you mean? The strings cache has no particular relevance to thread switches. Do you mean that it belongs inside the EAGLContext?",
+      "revId": "bfc494a1aeee0383b587f01bf05d7a34e5281e1a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "79e948ec_879fe3e1",
+        "filename": "src/frameworks/uikit/ui_application.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 100,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-11-11T19:59:05Z",
+      "side": 1,
+      "message": "Please remove the extra space.",
+      "revId": "bfc494a1aeee0383b587f01bf05d7a34e5281e1a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7f37317f_cbd7ff49",
+        "filename": "src/gles/gles_generic.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 31,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-11-11T19:59:05Z",
+      "side": 1,
+      "message": "Why has this been put here, rather than on sync_context, which previously had this role?",
+      "revId": "bfc494a1aeee0383b587f01bf05d7a34e5281e1a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "bf746599_1ce10780",
+        "filename": "src/gles/present.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 11,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-11-11T19:59:05Z",
+      "side": 1,
+      "message": "This got moved by accident?",
+      "revId": "bfc494a1aeee0383b587f01bf05d7a34e5281e1a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6e19067b_a24edeef",
+        "filename": "src/gles/util.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 10,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-11-11T19:59:05Z",
+      "side": 1,
+      "message": "What, why?",
+      "revId": "bfc494a1aeee0383b587f01bf05d7a34e5281e1a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b48eed0f_de4717b6",
+        "filename": "tests/TestApp_source/main.c",
+        "patchSetId": 11
+      },
+      "lineNbr": 776,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-11-11T19:59:05Z",
+      "side": 1,
+      "message": "ok",
+      "revId": "bfc494a1aeee0383b587f01bf05d7a34e5281e1a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

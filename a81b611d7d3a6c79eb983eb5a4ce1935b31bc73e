@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b0d7520e_c56f7811",
+        "filename": "src/frameworks/opengles.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 45,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-11-11T19:59:05Z",
+      "side": 0,
+      "message": "If you\u0027re going to remove the check for this, shouldn\u0027t you remove the field and accessor method? Also, how are you ensuring that the app\u0027s GL context doesn\u0027t go out of sync now? I\u0027m not sure I understand that part.",
+      "revId": "a81b611d7d3a6c79eb983eb5a4ce1935b31bc73e",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

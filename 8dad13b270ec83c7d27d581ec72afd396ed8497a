@@ -22,6 +22,30 @@
       },
       "revId": "8dad13b270ec83c7d27d581ec72afd396ed8497a",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5567a1a7_1eeb6af2",
+        "filename": "android/app/src/main/java/org/libsdl/app/SDLActivity.java",
+        "patchSetId": 3
+      },
+      "lineNbr": 711,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-11-11T19:59:05Z",
+      "side": 1,
+      "message": "Can you add some sort of clearly marked header at the top of the file indicating that the file is identical to the SDL file except for downstream modifications, and then edit this comment to make it obvious this line (and only this line) has been changed?",
+      "parentUuid": "3e36db66_dd75bc61",
+      "range": {
+        "startLine": 710,
+        "startChar": 0,
+        "endLine": 711,
+        "endChar": 2
+      },
+      "revId": "8dad13b270ec83c7d27d581ec72afd396ed8497a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

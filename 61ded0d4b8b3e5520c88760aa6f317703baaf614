@@ -16,6 +16,24 @@
       "message": "What was your test program to confirm that?\n\nOne case that I have in mind:\n\nLet\u0027s have 2 dicts, dict1 \u003d { key1: A, key2: B} and dict2 \u003d { key2: C, key3: D }.\nNow the app calls registerDefaults: on nsuserdefaults first with dict1 and after with dict2. What will be the default value for key1?\n\nWith your implementation it would return A, but it could as well be nil if iOS implementation replaces the dict completely.",
       "revId": "61ded0d4b8b3e5520c88760aa6f317703baaf614",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6bbd871a_d9c393a9",
+        "filename": "src/frameworks/foundation/ns_user_defaults.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 150,
+      "author": {
+        "id": 1038408
+      },
+      "writtenOn": "2024-11-13T23:20:17Z",
+      "side": 1,
+      "message": "yeah i confirm it adds values+replaces existing.\n\ni used :\n\n[[NSUserDefaults standardUserDefaults] setObject:@\"uservalue\" forKey:@\"user\"];\nNSDictionary *appDefaults \u003d [NSDictionary dictionaryWithObjectsAndKeys:\n                                @\"userdefval\",@\"user\" ,\n                                @\"def1\", @\"d1\",\n                                @\"def2a\", @\"d2\", nil];\nNSDictionary *appDefaults2 \u003d [NSDictionary dictionaryWithObjectsAndKeys:\n                                @\"def2b\", @\"d2\",\n                                @\"def3\", @\"d3\", nil];\n[[NSUserDefaults standardUserDefaults] registerDefaults:appDefaults];\n[[NSUserDefaults standardUserDefaults] registerDefaults:appDefaults2];\n\nNSLog(@\"%@\", [[NSUserDefaults standardUserDefaults] objectForKey:@\"user\"]);\nNSLog(@\"%@\", [[NSUserDefaults standardUserDefaults] objectForKey:@\"d1\"]);\nNSLog(@\"%@\", [[NSUserDefaults standardUserDefaults] objectForKey:@\"d2\"]);\nNSLog(@\"%@\", [[NSUserDefaults standardUserDefaults] objectForKey:@\"d3\"]);\n\nand the output is \n2024-11-13 23:16:40.601 jdoodle[10:10] uservalue\n2024-11-13 23:16:40.601 jdoodle[10:10] def1\n2024-11-13 23:16:40.601 jdoodle[10:10] def2b\n2024-11-13 23:16:40.601 jdoodle[10:10] def3",
+      "parentUuid": "371e5425_15beef30",
+      "revId": "61ded0d4b8b3e5520c88760aa6f317703baaf614",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

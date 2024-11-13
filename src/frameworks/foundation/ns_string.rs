@@ -869,19 +869,6 @@ pub const CLASSES: ClassExports = objc_classes! {
     autorelease(env, new_string)
 }
 
-- (id)stringByAddingPercentEscapesUsingEncoding:(NSStringEncoding)encoding {
-    assert_eq!(encoding, NSASCIIStringEncoding); // TODO: other encodings
-    // TODO: implement escaping as per RFC 2396
-    let str = to_rust_string(env, this);
-    // FIXME: figure out why '[' and ']' are escaped on iOS simulator
-    assert!(str.as_bytes().iter().all(|byte| {
-        (byte.is_ascii_alphanumeric() || b"-_.~".contains(byte)) // unreserved
-        || b"!*'();:@&=+$,/?%#".contains(byte) // reserved
-    }));
-    let new: id = msg![env; this copy];
-    autorelease(env, new)
-}
-
 - (id)stringByAppendingPathComponent:(id)component { // NSString*
     // TODO: avoid copying
     // FIXME: check if Rust join() matches NSString (it probably doesn't)
@@ -1273,6 +1260,95 @@ pub const CLASSES: ClassExports = objc_classes! {
     let res = from_u16_vec(env, host_string);
     autorelease(env, res)
 }
+
+- (id)stringByAddingPercentEscapesUsingEncoding:(NSStringEncoding)encoding {
+    assert!(encoding == NSUTF8StringEncoding || encoding == NSASCIIStringEncoding);
+    // TODO: refactor to iterate over utf16 data - not sure what to do with
+    // unpaired surrogates
+    let orig_str = to_rust_string(env, this);
+    let mut output_str = String::with_capacity(orig_str.len());
+    for c in orig_str.chars() {
+        // The chars here are determined from the outputs of iPhone 5.1
+        // Simulator. The replacing is naive (doesn't care about URL syntax).
+        match c {
+            '!'
+            | '$'
+            | '&'
+            | '\''
+            | '('
+            | ')'
+            | '*'
+            | '+'
+            | ','
+            | '-'
+            | '.'
+            | '/'
+            | '0'..='9'
+            | ':'
+            | ';'
+            | '='
+            | '?'
+            | '@'
+            | 'A'..='Z'
+            | '_'
+            | 'a'..='z' => {
+                output_str.push(c);
+            }
+            _ => {
+                let mut buf = [0; 4];
+                c.encode_utf8(&mut buf);
+                for i in 0..c.len_utf8() {
+                    let hex = format!("%{:X}", buf[i]);
+                    output_str.push_str(&hex);
+                }
+            }
+        }
+    }
+    let out = from_rust_string(env, output_str);
+    autorelease(env, out)
+}
+
+- (id)stringByReplacingPercentEscapesUsingEncoding:(NSStringEncoding)encoding {
+    assert!(encoding == NSUTF8StringEncoding || encoding == NSASCIIStringEncoding);
+    // TODO: refactor to iterate over utf16 data
+    // Note that this returns nil on error - but we log anyways, since it could
+    // be app or emulator error.
+    let orig_str = to_rust_string(env, this);
+    let mut output_str = String::with_capacity(orig_str.len());
+    let mut str_iter = orig_str.chars().peekable();
+    while let Some(c) = str_iter.peek() {
+        if *c == '%' {
+            let mut bytes: Vec<u8> = Vec::new();
+            while let Some('%') = str_iter.peek() {
+                str_iter.next().unwrap();
+                let Some(hex1) = str_iter.next().map(|d| d.to_digit(16)).flatten() else {
+                    log!("[\"{}\" stringByReplacingPercentEscapesUsingEncoding:(...)] is malformed, returning nil.", orig_str);
+                    return nil;
+                };
+                let Some(hex2) = str_iter.next().map(|d| d.to_digit(16)).flatten() else {
+                    log!("[\"{}\" stringByReplacingPercentEscapesUsingEncoding:(...)] is malformed, returning nil.", orig_str);
+                    return nil;
+                };
+                bytes.push((hex1 << 4 + hex2).try_into().unwrap());
+            }
+            if bytes.len() > 1 && encoding == NSASCIIStringEncoding {
+                log!("[\"{}\" stringByReplacingPercentEscapesUsingEncoding:NSAsciiStringEncoding] is malformed, returning nil.", orig_str);
+                return nil;
+            }
+            let Ok(dec) = std::str::from_utf8(bytes.as_slice()) else {
+                log!("[\"{}\" stringByReplacingPercentEscapesUsingEncoding:(...)] is malformed, returning nil.", orig_str);
+                return nil;
+            };
+            output_str.push_str(dec);
+        } else {
+            let c = str_iter.next().unwrap();
+            output_str.push(c);
+        }
+    }
+    let out = from_rust_string(env, output_str);
+    autorelease(env, out)
+}
+
 
 @end
 

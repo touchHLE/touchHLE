@@ -16,6 +16,24 @@
       "message": "As `_attr` is now used, it should be renamed (globally) to just `attr`",
       "revId": "8a2bb129310eaa664f577274e460a1593c7e2811",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d23f9be7_58ee06df",
+        "filename": "src/libc/pthread/thread.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 250,
+      "author": {
+        "id": 1038408
+      },
+      "writtenOn": "2024-11-13T23:55:26Z",
+      "side": 1,
+      "message": "i copied that if from pthread_join so it was already used before. but if you want i can rename it",
+      "parentUuid": "4a6fa348_642ddf61",
+      "revId": "8a2bb129310eaa664f577274e460a1593c7e2811",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

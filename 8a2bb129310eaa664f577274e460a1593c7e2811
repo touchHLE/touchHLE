@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4a6fa348_642ddf61",
+        "filename": "src/libc/pthread/thread.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 250,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-11-13T22:00:07Z",
+      "side": 1,
+      "message": "As `_attr` is now used, it should be renamed (globally) to just `attr`",
+      "revId": "8a2bb129310eaa664f577274e460a1593c7e2811",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

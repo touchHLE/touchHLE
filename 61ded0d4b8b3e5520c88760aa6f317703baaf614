@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "371e5425_15beef30",
+        "filename": "src/frameworks/foundation/ns_user_defaults.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 150,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-11-13T21:50:55Z",
+      "side": 1,
+      "message": "What was your test program to confirm that?\n\nOne case that I have in mind:\n\nLet\u0027s have 2 dicts, dict1 \u003d { key1: A, key2: B} and dict2 \u003d { key2: C, key3: D }.\nNow the app calls registerDefaults: on nsuserdefaults first with dict1 and after with dict2. What will be the default value for key1?\n\nWith your implementation it would return A, but it could as well be nil if iOS implementation replaces the dict completely.",
+      "revId": "61ded0d4b8b3e5520c88760aa6f317703baaf614",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

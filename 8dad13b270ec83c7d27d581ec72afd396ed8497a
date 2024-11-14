@@ -46,6 +46,30 @@
       },
       "revId": "8dad13b270ec83c7d27d581ec72afd396ed8497a",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "63011f42_7fe81e5c",
+        "filename": "android/app/src/main/java/org/libsdl/app/SDLActivity.java",
+        "patchSetId": 3
+      },
+      "lineNbr": 711,
+      "author": {
+        "id": 1021823
+      },
+      "writtenOn": "2024-11-14T21:47:52Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "5567a1a7_1eeb6af2",
+      "range": {
+        "startLine": 710,
+        "startChar": 0,
+        "endLine": 711,
+        "endChar": 2
+      },
+      "revId": "8dad13b270ec83c7d27d581ec72afd396ed8497a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

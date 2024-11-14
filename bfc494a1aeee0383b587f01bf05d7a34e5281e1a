@@ -18,6 +18,23 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "cf6e1e96_9684d3ff",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 11
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021823
+      },
+      "writtenOn": "2024-11-14T21:47:52Z",
+      "side": 1,
+      "message": "I\u0027ll answer the rest later!",
+      "revId": "bfc494a1aeee0383b587f01bf05d7a34e5281e1a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "8d32faf9_6b9eb2b8",
@@ -31,6 +48,24 @@
       "writtenOn": "2024-11-11T19:59:05Z",
       "side": 1,
       "message": "Does this mean thread exiting no longer works though?",
+      "revId": "bfc494a1aeee0383b587f01bf05d7a34e5281e1a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f96102fd_0006be22",
+        "filename": "src/dyld.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 189,
+      "author": {
+        "id": 1021823
+      },
+      "writtenOn": "2024-11-14T21:47:52Z",
+      "side": 1,
+      "message": "It still works just fine! Secondary threads (currently) just exit the `thread_routine`, which is the optimal way since it avoids a stack unwind. This is why the `run()` loop handles coroutine returns. We\u0027ll need to do something different, for pthread_exit/cancel etc, probably similar to gdb.",
+      "parentUuid": "8d32faf9_6b9eb2b8",
       "revId": "bfc494a1aeee0383b587f01bf05d7a34e5281e1a",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
@@ -69,6 +104,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "19d83530_5ec77258",
+        "filename": "src/environment.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 86,
+      "author": {
+        "id": 1021823
+      },
+      "writtenOn": "2024-11-14T21:47:52Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "19803d22_688ca059",
+      "revId": "bfc494a1aeee0383b587f01bf05d7a34e5281e1a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "de612a49_67c2b244",
@@ -82,6 +135,24 @@
       "writtenOn": "2024-11-11T19:59:05Z",
       "side": 1,
       "message": "You can just drop the BEFOREMERGE and put this as part of the comment.",
+      "revId": "bfc494a1aeee0383b587f01bf05d7a34e5281e1a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "0f4bdb16_77f77fb2",
+        "filename": "src/environment.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 111,
+      "author": {
+        "id": 1021823
+      },
+      "writtenOn": "2024-11-14T21:47:52Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "de612a49_67c2b244",
       "revId": "bfc494a1aeee0383b587f01bf05d7a34e5281e1a",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
@@ -103,6 +174,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "46f6014b_cbb58172",
+        "filename": "src/environment.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 164,
+      "author": {
+        "id": 1021823
+      },
+      "writtenOn": "2024-11-14T21:47:52Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "160df100_43f19527",
+      "revId": "bfc494a1aeee0383b587f01bf05d7a34e5281e1a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "2be70de7_a0358bb9",
@@ -116,6 +205,24 @@
       "writtenOn": "2024-11-11T19:59:05Z",
       "side": 1,
       "message": "Please just say this in the comment, then. It\u0027s better to know _why_ this safety constraint exists.",
+      "revId": "bfc494a1aeee0383b587f01bf05d7a34e5281e1a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "df13e7e4_632a4413",
+        "filename": "src/environment.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 537,
+      "author": {
+        "id": 1021823
+      },
+      "writtenOn": "2024-11-14T21:47:52Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "2be70de7_a0358bb9",
       "revId": "bfc494a1aeee0383b587f01bf05d7a34e5281e1a",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
@@ -137,6 +244,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "cec484dd_a90fcc98",
+        "filename": "src/environment.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 566,
+      "author": {
+        "id": 1021823
+      },
+      "writtenOn": "2024-11-14T21:47:52Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "dd16fc43_47c80b9b",
+      "revId": "bfc494a1aeee0383b587f01bf05d7a34e5281e1a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "052c8125_10fccbec",
@@ -150,6 +275,24 @@
       "writtenOn": "2024-11-11T19:59:05Z",
       "side": 1,
       "message": "I don\u0027t know!",
+      "revId": "bfc494a1aeee0383b587f01bf05d7a34e5281e1a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "c8598e70_ec00a201",
+        "filename": "src/environment.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 690,
+      "author": {
+        "id": 1021823
+      },
+      "writtenOn": "2024-11-14T21:47:52Z",
+      "side": 1,
+      "message": "Oh, I think that was a note for myself. It\u0027s fine where it is.",
+      "parentUuid": "052c8125_10fccbec",
       "revId": "bfc494a1aeee0383b587f01bf05d7a34e5281e1a",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
@@ -171,6 +314,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "3afa3512_60bb1fdd",
+        "filename": "src/environment.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 840,
+      "author": {
+        "id": 1021823
+      },
+      "writtenOn": "2024-11-14T21:47:52Z",
+      "side": 1,
+      "message": "Long term I\u0027d like to see a better crash handler that doesn\u0027t just crash the whole app, so we\u0027d want to be able to keep the `Environment` around so it can be salvaged. We could also just return the `Environment` from the function though.",
+      "parentUuid": "cc658401_a24d5c07",
+      "revId": "bfc494a1aeee0383b587f01bf05d7a34e5281e1a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "61beabb5_07954f3d",
@@ -184,6 +345,24 @@
       "writtenOn": "2024-11-11T19:59:05Z",
       "side": 1,
       "message": "its",
+      "revId": "bfc494a1aeee0383b587f01bf05d7a34e5281e1a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "227e5294_68585def",
+        "filename": "src/environment.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 1006,
+      "author": {
+        "id": 1021823
+      },
+      "writtenOn": "2024-11-14T21:47:52Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "61beabb5_07954f3d",
       "revId": "bfc494a1aeee0383b587f01bf05d7a34e5281e1a",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
@@ -218,6 +397,24 @@
       "writtenOn": "2024-11-11T19:59:05Z",
       "side": 1,
       "message": "This double-newline was a mistake I guess?",
+      "revId": "bfc494a1aeee0383b587f01bf05d7a34e5281e1a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "e8c0286d_3f93851e",
+        "filename": "src/environment.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 1160,
+      "author": {
+        "id": 1021823
+      },
+      "writtenOn": "2024-11-14T21:47:52Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "f833c25b_dcc8b37a",
       "revId": "bfc494a1aeee0383b587f01bf05d7a34e5281e1a",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
@@ -309,6 +506,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "fb073c42_a285a4df",
+        "filename": "src/environment/nullable_box.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 11,
+      "author": {
+        "id": 1021823
+      },
+      "writtenOn": "2024-11-14T21:47:52Z",
+      "side": 1,
+      "message": "It is purely a performance concern, I\u0027ll add that there.",
+      "parentUuid": "a608b940_2321c648",
+      "revId": "bfc494a1aeee0383b587f01bf05d7a34e5281e1a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "4e5a83a5_8a942352",
         "filename": "src/frameworks.rs",
         "patchSetId": 11
@@ -320,6 +535,24 @@
       "writtenOn": "2024-11-11T19:59:05Z",
       "side": 1,
       "message": "Wait, what about GLES?",
+      "revId": "bfc494a1aeee0383b587f01bf05d7a34e5281e1a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6a1098ae_6e7ee414",
+        "filename": "src/frameworks.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 54,
+      "author": {
+        "id": 1021823
+      },
+      "writtenOn": "2024-11-14T21:47:52Z",
+      "side": 1,
+      "message": "In `Window`, I\u0027ve moved all of the checks to an `Environment` function so that it\u0027s more clear.",
+      "parentUuid": "4e5a83a5_8a942352",
       "revId": "bfc494a1aeee0383b587f01bf05d7a34e5281e1a",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
@@ -358,6 +591,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "058f21ec_cf34a479",
+        "filename": "src/frameworks/foundation/ns_run_loop.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 212,
+      "author": {
+        "id": 1021823
+      },
+      "writtenOn": "2024-11-14T21:47:52Z",
+      "side": 1,
+      "message": "Yeah, probably not.",
+      "parentUuid": "b508ce25_e2cec177",
+      "revId": "bfc494a1aeee0383b587f01bf05d7a34e5281e1a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "5f000551_645a3206",
@@ -377,6 +628,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "2b69359c_d72a4771",
+        "filename": "src/frameworks/opengles.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 26,
+      "author": {
+        "id": 1021823
+      },
+      "writtenOn": "2024-11-14T21:47:52Z",
+      "side": 1,
+      "message": "Should clarify, this comment is in relation to `current_ctx_thread`.",
+      "parentUuid": "5f000551_645a3206",
+      "revId": "bfc494a1aeee0383b587f01bf05d7a34e5281e1a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "79e948ec_879fe3e1",
         "filename": "src/frameworks/uikit/ui_application.rs",
         "patchSetId": 11
@@ -388,6 +657,24 @@
       "writtenOn": "2024-11-11T19:59:05Z",
       "side": 1,
       "message": "Please remove the extra space.",
+      "revId": "bfc494a1aeee0383b587f01bf05d7a34e5281e1a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6e4c8fc4_6825dd15",
+        "filename": "src/frameworks/uikit/ui_application.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 100,
+      "author": {
+        "id": 1021823
+      },
+      "writtenOn": "2024-11-14T21:47:52Z",
+      "side": 1,
+      "message": "Isn\u0027t that how we normally format objc methods?",
+      "parentUuid": "79e948ec_879fe3e1",
       "revId": "bfc494a1aeee0383b587f01bf05d7a34e5281e1a",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
@@ -426,6 +713,42 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "d50d162c_1d78fc24",
+        "filename": "src/gles/present.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 11,
+      "author": {
+        "id": 1021823
+      },
+      "writtenOn": "2024-11-14T21:47:52Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "bf746599_1ce10780",
+      "revId": "bfc494a1aeee0383b587f01bf05d7a34e5281e1a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "72e7bc49_72a6ee3b",
+        "filename": "src/gles/present.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 11,
+      "author": {
+        "id": 1021823
+      },
+      "writtenOn": "2024-11-14T21:47:52Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "bf746599_1ce10780",
+      "revId": "bfc494a1aeee0383b587f01bf05d7a34e5281e1a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "6e19067b_a24edeef",
@@ -439,6 +762,24 @@
       "writtenOn": "2024-11-11T19:59:05Z",
       "side": 1,
       "message": "What, why?",
+      "revId": "bfc494a1aeee0383b587f01bf05d7a34e5281e1a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "cbafde44_d45e0648",
+        "filename": "src/gles/util.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 10,
+      "author": {
+        "id": 1021823
+      },
+      "writtenOn": "2024-11-14T21:47:52Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "6e19067b_a24edeef",
       "revId": "bfc494a1aeee0383b587f01bf05d7a34e5281e1a",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },

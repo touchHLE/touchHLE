@@ -3,6 +3,57 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "7050e9d3_142ff004",
+        "filename": "src/frameworks/foundation/ns_user_defaults.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 111,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-11-14T00:01:47Z",
+      "side": 1,
+      "message": "you\u0027ll need to release here the registration dormant dict as well",
+      "revId": "61ded0d4b8b3e5520c88760aa6f317703baaf614",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7fe73553_138d5996",
+        "filename": "src/frameworks/foundation/ns_user_defaults.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 118,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-11-14T00:01:47Z",
+      "side": 1,
+      "message": "what happens if registration dict is nil here?",
+      "revId": "61ded0d4b8b3e5520c88760aa6f317703baaf614",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "82204223_f633103e",
+        "filename": "src/frameworks/foundation/ns_user_defaults.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 144,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-11-14T00:01:47Z",
+      "side": 1,
+      "message": "could you rewrite this part to avoid using mut?\n\nsomething like:\n\nlet dict \u003d if is nil {\n// create\n} else {\n// use existing one\n};\n\nI think we already have plenty of examples on the codebase",
+      "revId": "61ded0d4b8b3e5520c88760aa6f317703baaf614",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "371e5425_15beef30",
         "filename": "src/frameworks/foundation/ns_user_defaults.rs",
         "patchSetId": 5
@@ -32,6 +83,24 @@
       "side": 1,
       "message": "yeah i confirm it adds values+replaces existing.\n\ni used :\n\n[[NSUserDefaults standardUserDefaults] setObject:@\"uservalue\" forKey:@\"user\"];\nNSDictionary *appDefaults \u003d [NSDictionary dictionaryWithObjectsAndKeys:\n                                @\"userdefval\",@\"user\" ,\n                                @\"def1\", @\"d1\",\n                                @\"def2a\", @\"d2\", nil];\nNSDictionary *appDefaults2 \u003d [NSDictionary dictionaryWithObjectsAndKeys:\n                                @\"def2b\", @\"d2\",\n                                @\"def3\", @\"d3\", nil];\n[[NSUserDefaults standardUserDefaults] registerDefaults:appDefaults];\n[[NSUserDefaults standardUserDefaults] registerDefaults:appDefaults2];\n\nNSLog(@\"%@\", [[NSUserDefaults standardUserDefaults] objectForKey:@\"user\"]);\nNSLog(@\"%@\", [[NSUserDefaults standardUserDefaults] objectForKey:@\"d1\"]);\nNSLog(@\"%@\", [[NSUserDefaults standardUserDefaults] objectForKey:@\"d2\"]);\nNSLog(@\"%@\", [[NSUserDefaults standardUserDefaults] objectForKey:@\"d3\"]);\n\nand the output is \n2024-11-13 23:16:40.601 jdoodle[10:10] uservalue\n2024-11-13 23:16:40.601 jdoodle[10:10] def1\n2024-11-13 23:16:40.601 jdoodle[10:10] def2b\n2024-11-13 23:16:40.601 jdoodle[10:10] def3",
       "parentUuid": "371e5425_15beef30",
+      "revId": "61ded0d4b8b3e5520c88760aa6f317703baaf614",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "8803138d_5b5f4e2c",
+        "filename": "src/frameworks/foundation/ns_user_defaults.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 150,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-11-14T00:01:47Z",
+      "side": 1,
+      "message": "Cool, thanks for checking!",
+      "parentUuid": "6bbd871a_d9c393a9",
       "revId": "61ded0d4b8b3e5520c88760aa6f317703baaf614",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

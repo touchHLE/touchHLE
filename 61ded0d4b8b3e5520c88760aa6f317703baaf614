@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "69214a84_a9867736",
+        "filename": "src/frameworks/foundation/ns_user_defaults.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 111,
+      "author": {
+        "id": 1038408
+      },
+      "writtenOn": "2024-11-14T23:13:55Z",
+      "side": 1,
+      "message": "yup. completely missed there is a destructor.",
+      "parentUuid": "7050e9d3_142ff004",
+      "revId": "61ded0d4b8b3e5520c88760aa6f317703baaf614",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "7fe73553_138d5996",
@@ -35,6 +53,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "3cffc9c1_1bac6493",
+        "filename": "src/frameworks/foundation/ns_user_defaults.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 118,
+      "author": {
+        "id": 1038408
+      },
+      "writtenOn": "2024-11-14T23:13:55Z",
+      "side": 1,
+      "message": "I somehow thought it was the object the msg was called on so it would become noope but its just a paramater. ill return the if!",
+      "parentUuid": "7fe73553_138d5996",
+      "revId": "61ded0d4b8b3e5520c88760aa6f317703baaf614",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "82204223_f633103e",
@@ -48,6 +84,24 @@
       "writtenOn": "2024-11-14T00:01:47Z",
       "side": 1,
       "message": "could you rewrite this part to avoid using mut?\n\nsomething like:\n\nlet dict \u003d if is nil {\n// create\n} else {\n// use existing one\n};\n\nI think we already have plenty of examples on the codebase",
+      "revId": "61ded0d4b8b3e5520c88760aa6f317703baaf614",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "3fc9f7cc_abb4fda0",
+        "filename": "src/frameworks/foundation/ns_user_defaults.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 144,
+      "author": {
+        "id": 1038408
+      },
+      "writtenOn": "2024-11-14T23:13:55Z",
+      "side": 1,
+      "message": "Spent some time trying to figure out if its possible to do it with just one let variable but only found a way if the value was Optional using if let Some(). So i hope you ment it how i did it now :)",
+      "parentUuid": "82204223_f633103e",
       "revId": "61ded0d4b8b3e5520c88760aa6f317703baaf614",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },

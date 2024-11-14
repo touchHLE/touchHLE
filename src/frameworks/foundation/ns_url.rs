@@ -5,9 +5,19 @@
  */
 //! `NSURL`.
 
-use super::ns_string::{from_rust_string, to_rust_string, NSUTF8StringEncoding};
+// TODO: The url crate is not quite perfect for what we want - it doesn't
+// support relative URLs, and it's also based on newer url standards.
+// While the latter is probably fine, the former has to be worked around by
+// basing relative URLs on another url.
+// Note that hyper::http::uri is a worse choice here - even though it supports
+// relative URLs, it doesn't support joining relative URLs to absolute URLs,
+// which is needed for [NSURL path], among other apis.
+use url::Url;
+
+use super::ns_string::{from_rust_string, to_rust_string};
 use super::NSUInteger;
-use crate::fs::{GuestPath, GuestPathBuf};
+use crate::frameworks::foundation::unichar;
+use crate::fs::GuestPath;
 use crate::mem::MutPtr;
 use crate::objc::{
     autorelease, id, msg, nil, objc_classes, release, retain, ClassExports, HostObject, NSZonePtr,
@@ -15,21 +25,33 @@ use crate::objc::{
 use crate::Environment;
 use std::borrow::Cow;
 
-/// It seems like there's two kinds of NSURLs: ones for file paths, and others.
-/// So far only the former is implemented (TODO).
+// A base url for urls that are relative but should have no base.
+// This is to work around limitations in the url crate, see above
+static relative_base: std::sync::LazyLock<Url> =
+    std::sync::LazyLock::new(|| Url::parse("file://localhost").unwrap());
+
+#[derive(Clone)]
 enum NSURLHostObject {
-    /// This is a file URL. The NSString is a system path (no `file:///`).
-    ///
-    /// This is a wrapper around NSString so that conversions between NSURL
-    /// and NSString, which happen often, can be simple and efficient.
-    FileURL {
-        ns_string: id,
-        // Relative file URL save the working directory at the time of creation
-        // At the moment, used in the description selector.
-        working_directory: GuestPathBuf,
+    /// An absolute URL.
+    AbsoluteURL {
+        url_string: id,
+        url: Url,
     },
-    /// Non-file URL.
-    OtherURL { ns_string: id },
+    /// A relative URL without a defined base.
+    RelativeURL {
+        /// Note that this is already an absolute URL based on relative_base!
+        url_string: id,
+        url: Url,
+    },
+    /// A relative URL with a defined base.
+    RelativeURLWithBase {
+        url_string: id,
+        /// Note that this is already an absolute URL based on base_url!
+        url: Url,
+        base_string: id,
+        base_url: Url,
+    },
+    Uninit,
 }
 impl HostObject for NSURLHostObject {}
 
@@ -40,7 +62,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 @implementation NSURL: NSObject
 
 + (id)allocWithZone:(NSZonePtr)_zone {
-    let host_object = NSURLHostObject::FileURL { ns_string: nil, working_directory: env.fs.working_directory().into() };
+    let host_object = NSURLHostObject::Uninit;
     env.objc.alloc_object(this, Box::new(host_object), &mut env.mem)
 }
 
@@ -65,8 +87,19 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 - (())dealloc {
     match *env.objc.borrow(this) {
-        NSURLHostObject::FileURL { ns_string, .. } => release(env, ns_string),
-        NSURLHostObject::OtherURL { ns_string } => release(env, ns_string),
+        NSURLHostObject::AbsoluteURL { url_string, .. }
+        | NSURLHostObject::RelativeURL { url_string, .. } => {
+            release(env, url_string);
+        }
+        NSURLHostObject::RelativeURLWithBase {
+            url_string,
+            base_string,
+            ..
+        } => {
+            release(env, url_string);
+            release(env, base_string);
+        }
+        NSURLHostObject::Uninit => {}
     }
     env.objc.dealloc_object(this, &mut env.mem)
 }
@@ -82,12 +115,28 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (id)initFileURLWithPath:(id)path // NSString*
-              isDirectory:(bool)_is_dir {
+              isDirectory:(bool)is_dir {
     // FIXME: this does not resolve relative paths to be absolute!
     // TODO: this does not strip the file:/// prefix!
-    assert!(!to_rust_string(env, path).starts_with("file:"));
+    let mut path_str = to_rust_string(env, path).to_string();
+    // HACK: This should block against url
+    assert!(!path_str.contains(":") && !path_str.starts_with("//"));
+    if is_dir && !path_str.ends_with("/") {
+        path_str += "/";
+    } else if !is_dir && path_str.ends_with("/") {
+        path_str.truncate(path_str.len() - 1)
+    }
     let path: id = msg![env; path copy];
-    *env.objc.borrow_mut(this) = NSURLHostObject::FileURL { ns_string: path, working_directory: env.fs.working_directory().into() };
+    let (base_url, base_string) = working_directory_url_helper(env);
+    let url = match base_url.join(path_str.as_ref()) {
+        Ok(url) => url,
+        Err(err) => {
+            log!("initFileURLWithPath:({}) isDirectory:({}) failed to make url (error: {}), returning nil!", path_str, is_dir, err);
+            return nil;
+        }
+    };
+    *env.objc.borrow_mut(this) = NSURLHostObject::RelativeURLWithBase { url_string: path, url, base_string, base_url };
+
     this
 }
 
@@ -96,69 +145,104 @@ pub const CLASSES: ClassExports = objc_classes! {
         return nil;
     }
 
-    // FIXME: this should parse the URL
-    assert!(!to_rust_string(env, url).starts_with("file:")); // TODO
-    let url: id = msg![env; url copy];
-    *env.objc.borrow_mut(this) = NSURLHostObject::OtherURL { ns_string: url };
+    let url_string: id = msg![env; url copy];
+    let url_str = to_rust_string(env, url_string);
+    match Url::parse(&url_str) {
+        Ok(url) => {
+            *env.objc.borrow_mut(this) = NSURLHostObject::AbsoluteURL { url_string, url };
+        },
+        Err(first_err) => {
+            // Check if this is an unbased relative url.
+            match relative_base.join(&url_str) {
+                Ok(url) => {
+                    *env.objc.borrow_mut(this) = NSURLHostObject::RelativeURL { url_string, url };
+                },
+                Err(second_err) => {
+                    log!("[NSURL initWithString:{}] failed, errors ({}), ({})", url_str, first_err, second_err);
+                    return nil;
+                },
+            }
+        },
+    }
     this
 }
 
 - (id)description {
-    match env.objc.borrow(this) {
-        NSURLHostObject::FileURL { ns_string, working_directory } => {
-            let working_directory = working_directory.as_str().to_string();
-            let mut description = to_rust_string(env, *ns_string).to_string().clone();
-            if !description.starts_with('/') {
-                description = format!("{} -- file://localhost{}", description.trim_start_matches("./"), working_directory );
-            }
-            let desc = from_rust_string(env, description);
-            autorelease(env, desc)
-        },
-        NSURLHostObject::OtherURL { ns_string } => *ns_string,
+    let host_obj = env.objc.borrow::<NSURLHostObject>(this).clone();
+    match host_obj {
+        NSURLHostObject::AbsoluteURL { url_string, .. }
+        | NSURLHostObject::RelativeURL { url_string, .. } => url_string,
+        NSURLHostObject::RelativeURLWithBase {
+            url_string,
+            base_string,
+            ..
+        } => {
+            let url_str = to_rust_string(env, url_string);
+            let base_str = to_rust_string(env, base_string);
+            from_rust_string(env, format!("{} -- {}", url_str, base_str))
+        }
+        NSURLHostObject::Uninit => panic!("Use of uninitialized NSURL {:?}!", this),
     }
 }
 
 - (id)path {
-    match *env.objc.borrow(this) {
-        NSURLHostObject::FileURL { ns_string, .. } => ns_string,
-        NSURLHostObject::OtherURL { ns_string } => {
-            // TODO: Support full URLs, not only ones that are just a path.
-            // FIXME: This should do unescaping.
-            // TODO: Avoid copy.
-            assert!(to_rust_string(env, ns_string).starts_with('/'));
-            ns_string
+    let host_obj = env.objc.borrow::<NSURLHostObject>(this).clone();
+    match host_obj {
+        NSURLHostObject::AbsoluteURL { url, .. } |
+        NSURLHostObject::RelativeURLWithBase { url, .. } => {
+            from_rust_string(env, url.path().to_string())
         },
+        NSURLHostObject::RelativeURL { url_string, url }=> {
+            // url::URL always adds a leading '/' to the path - we only want to
+            // keep it if the original string starts with a '/' (0x002F).
+            let leading_char: unichar = msg![env; url_string characterAtIndex:0];
+            if leading_char == 0x002F as unichar {
+                from_rust_string(env, url.path().to_string())
+            } else {
+                from_rust_string(env, url.path()[1..].to_string())
+            }
+        },
+        NSURLHostObject::Uninit => panic!("Use of uninitialized NSURL {:?}!", this),
     }
 }
 
 - (id)absoluteString {
-    match *env.objc.borrow(this) {
-        // FIXME: don't assume URL is already absolute
-        NSURLHostObject::FileURL { ns_string, .. } => ns_string,
-        NSURLHostObject::OtherURL { ns_string } => {
-            // TODO: full RFC 1808 resolution
-            assert!(to_rust_string(env, ns_string).starts_with("http"));
-            ns_string
-        },
-    }
+    todo!()
 }
 
 - (id)absoluteURL {
-    // FIXME: don't assume URL is already absolute
-    let &NSURLHostObject::OtherURL { .. } = env.objc.borrow(this) else {
-        unimplemented!(); // TODO
-    };
-    this
+    todo!();
 }
 
 - (bool)getFileSystemRepresentation:(MutPtr<u8>)buffer
                           maxLength:(NSUInteger)buffer_size {
-    let &NSURLHostObject::FileURL { ns_string, .. } = env.objc.borrow(this) else {
-        unimplemented!(); // TODO
-    };
-    msg![env; ns_string getCString:buffer
-                         maxLength:buffer_size
-                          encoding:NSUTF8StringEncoding]
+    // FIXME: Should canonicalize file names
+    let host_obj = env.objc.borrow::<NSURLHostObject>(this).clone();
+    match host_obj {
+        NSURLHostObject::AbsoluteURL { url, .. } => {
+            if url.scheme() != "file" {
+                log!("[NSURL({}) getFileSystemRepresentation:getFileSystemRepresentation:] called for non-file URL, returning nil.", url.as_str());
+                false
+            } else {
+                let path = url.path().as_bytes();
+                if path.len() > buffer_size as usize {
+                    false
+                } else {
+                    // Does not write null terminator (tested on simulator 5.1)
+                    let buf = env.mem.bytes_at_mut(buffer, path.len().try_into().unwrap());
+                    buf.copy_from_slice(path);
+                    true
+                }
+            }
+        }
+        NSURLHostObject::RelativeURLWithBase { .. } => {
+            todo!()
+        }
+        NSURLHostObject::RelativeURL { .. } => {
+            todo!()
+        }
+        NSURLHostObject::Uninit => panic!("Use of uninitialized NSURL!"),
+    }
 }
 
 // TODO: more constructors, more accessors
@@ -176,4 +260,15 @@ pub fn to_rust_path(env: &mut Environment, url: id) -> Cow<'static, GuestPath> {
         Cow::Borrowed(path) => Cow::Borrowed(path.as_ref()),
         Cow::Owned(path_buf) => Cow::Owned(path_buf.into()),
     }
+}
+
+/// Gets a file:// url pointing to the working directory.
+pub fn working_directory_url_helper(env: &mut Environment) -> (Url, id) {
+    let working_directory = env.fs.working_directory().as_str();
+    // WIP TODO: this should percent escape characters, borrowed from the
+    // nsstring impl
+    let url_string = format!("file://localhost/{}", working_directory);
+    let url = Url::parse(&url_string).unwrap();
+    let url_ns_string = from_rust_string(env, url_string);
+    (url, url_ns_string)
 }

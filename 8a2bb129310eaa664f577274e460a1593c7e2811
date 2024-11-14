@@ -34,6 +34,24 @@
       "parentUuid": "4a6fa348_642ddf61",
       "revId": "8a2bb129310eaa664f577274e460a1593c7e2811",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "87918761_8d80232b",
+        "filename": "src/libc/pthread/thread.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 250,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-11-14T00:03:09Z",
+      "side": 1,
+      "message": "Yes, I think it\u0027s an oversight.\nIt\u0027s better to rename.\n\nWe use _ to indicated unused vars.",
+      "parentUuid": "d23f9be7_58ee06df",
+      "revId": "8a2bb129310eaa664f577274e460a1593c7e2811",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

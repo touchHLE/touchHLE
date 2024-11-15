@@ -16,6 +16,24 @@
       "message": "just use `let new_dict \u003d msg_class[env; NSMutableDictionary new];` instead of those 2 lines.\n\n(It is equivalent to alloc and init messages)",
       "revId": "6f7bfa6ee5e1ef6b177ae0cfb40364bf745520d6",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "53d0730f_dd2f2095",
+        "filename": "src/frameworks/foundation/ns_user_defaults.rs",
+        "patchSetId": 7
+      },
+      "lineNbr": 153,
+      "author": {
+        "id": 1038408
+      },
+      "writtenOn": "2024-11-15T10:13:34Z",
+      "side": 1,
+      "message": "done, same pattern is used in init(), should i change it there too or there its ok ?",
+      "parentUuid": "f80c1a78_3bf7f7d1",
+      "revId": "6f7bfa6ee5e1ef6b177ae0cfb40364bf745520d6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

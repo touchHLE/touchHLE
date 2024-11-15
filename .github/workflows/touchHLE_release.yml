@@ -10,53 +10,54 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-#  build-osx:
-#
-#    # TODO: Use macos-latest once AArch64 cross-compile for x86_64 works
-#    runs-on: macos-12
-#
-#    steps:
-#    - uses: actions/checkout@v3
-#      with:
-#        fetch-depth: 0 # touchHLE's git-describe versioning needs tag history
-#    - name: Install clang-format
-#      run: brew install clang-format
-#    - name: Check formatting
-#      run: dev-scripts/format.sh --check
-#    - name: Get Submodules
-#      run: git submodule update --init
-#    - name: Install Boost
-#      run: brew install boost
-#    # This is the earliest point at which we can do linting: clippy will end up
-#    # building dynarmic, which needs Boost, but we don't need LLVM until
-#    # building tests.
-#    - name: Lint
-#      run: dev-scripts/lint.sh
-#    - name: Try to get cached copy of LLVM
-#      id: cache-llvm
-#      uses: actions/cache@v3
-#      with:
-#        path: tests/llvm
-#        key: llvm_12_0_0_macOS_x64
-#    - if: ${{ steps.cache-llvm.outputs.cache-hit != 'true' }}
-#      name: Download LLVM
-#      run: curl -L -O "https://github.com/llvm/llvm-project/releases/download/llvmorg-12.0.0/clang+llvm-12.0.0-x86_64-apple-darwin.tar.xz"
-#    - if: ${{ steps.cache-llvm.outputs.cache-hit != 'true' }}
-#      name: Extract LLVM
-#      run: tar -xf clang+llvm-12.0.0-x86_64-apple-darwin.tar.xz && mkdir tests/llvm && mv clang+llvm-12.0.0-x86_64-apple-darwin/* tests/llvm
-#    - name: Test
-#      run: cargo test
-#    - name: Build
-#      run: cargo build --release && mv target/release/touchHLE .
-#    - uses: actions/upload-artifact@v3
-#      with:
-#        name: touchHLE_macOS_x86_64
-#        path: touchHLE
-#    - uses: actions/upload-artifact@v3
-#      with:
-#        name: TestApp_built_on_macOS
-#        path: tests/TestApp.app
-#
+  build-osx:
+
+    runs-on: macos-latest
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0 # touchHLE's git-describe versioning needs tag history
+    - name: Install clang-format
+      run: brew install clang-format
+    - name: Check formatting
+      run: dev-scripts/format.sh --check
+    - name: Get Submodules
+      run: git submodule update --init
+    - name: Install Boost
+      run: brew install boost
+    # This is the earliest point at which we can do linting: clippy will end up
+    # building dynarmic, which needs Boost, but we don't need LLVM until
+    # building tests.
+    - name: Lint
+      run: dev-scripts/lint.sh
+    - name: Try to get cached copy of LLVM
+      id: cache-llvm
+      uses: actions/cache@v3
+      with:
+        path: tests/llvm
+        key: llvm_12_0_0_macOS_x64
+    - if: ${{ steps.cache-llvm.outputs.cache-hit != 'true' }}
+      name: Download LLVM
+      run: curl -L -O "https://github.com/llvm/llvm-project/releases/download/llvmorg-12.0.0/clang+llvm-12.0.0-x86_64-apple-darwin.tar.xz"
+    - if: ${{ steps.cache-llvm.outputs.cache-hit != 'true' }}
+      name: Extract LLVM
+      run: tar -xf clang+llvm-12.0.0-x86_64-apple-darwin.tar.xz && mkdir tests/llvm && mv clang+llvm-12.0.0-x86_64-apple-darwin/* tests/llvm
+    - name: Install x86_64 toolchain
+      run: rustup target add x86_64-apple-darwin
+    - name: Test
+      run: cargo test --target x86_64-apple-darwin
+    - name: Build
+      run: cargo build --target x86_64-apple-darwin --release && mv target/x86_64-apple-darwin/release/touchHLE .
+    - uses: actions/upload-artifact@v3
+      with:
+        name: touchHLE_macOS_x86_64
+        path: touchHLE
+    - uses: actions/upload-artifact@v3
+      with:
+        name: TestApp_built_on_macOS
+        path: tests/TestApp.app
+
   build-android:
 
     runs-on: ubuntu-latest

@@ -836,6 +836,25 @@ fn glTranslatex(env: &mut Environment, x: GLfixed, y: GLfixed, z: GLfixed) {
 fn glPixelStorei(env: &mut Environment, pname: GLenum, param: GLint) {
     with_ctx_and_mem(env, |gles, _mem| unsafe { gles.PixelStorei(pname, param) })
 }
+fn glReadPixels(
+    env: &mut Environment,
+    x: GLint,
+    y: GLint,
+    width: GLsizei,
+    height: GLsizei,
+    format: GLenum,
+    type_: GLenum,
+    pixels: MutVoidPtr,
+) {
+    with_ctx_and_mem(env, |gles, mem| {
+        let pixels = {
+            let pixel_count: GuestUSize = width.checked_mul(height).unwrap().try_into().unwrap();
+            let size = image_size_estimate(pixel_count, format, type_);
+            mem.ptr_at_mut(pixels.cast::<u8>(), size).cast::<GLvoid>()
+        };
+        unsafe { gles.ReadPixels(x, y, width, height, format, type_, pixels) }
+    })
+}
 fn glGenTextures(env: &mut Environment, n: GLsizei, textures: MutPtr<GLuint>) {
     with_ctx_and_mem(env, |gles, mem| {
         let n_usize: GuestUSize = n.try_into().unwrap();
@@ -1451,6 +1470,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(glTranslatex(_, _, _)),
     // Textures
     export_c_func!(glPixelStorei(_, _)),
+    export_c_func!(glReadPixels(_, _, _, _, _, _, _)),
     export_c_func!(glGenTextures(_, _)),
     export_c_func!(glDeleteTextures(_, _)),
     export_c_func!(glActiveTexture(_)),

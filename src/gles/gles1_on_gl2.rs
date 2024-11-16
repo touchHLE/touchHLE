@@ -591,7 +591,10 @@ impl GLES for GLES1OnGL2 {
     unsafe fn Enable(&mut self, cap: GLenum) {
         if ARRAYS.iter().any(|&ArrayInfo { name, .. }| name == cap) {
             log_dbg!("Tolerating glEnable({:#x}) of client state", cap);
-        } else if cap == gl21::PERSPECTIVE_CORRECTION_HINT || cap == gl21::SMOOTH {
+        } else if cap == gl21::PERSPECTIVE_CORRECTION_HINT
+            || cap == gl21::SMOOTH
+            || cap == gl21::BLEND_EQUATION
+        {
             log_dbg!("Tolerating glEnable({:#x})", cap);
         } else {
             assert!(CAPABILITIES.contains(&cap));
@@ -751,6 +754,15 @@ impl GLES for GLES1OnGL2 {
             log_dbg!("Tolerating dfactor {:#x} in sfactor argument", sfactor);
         }
         gl21::BlendFunc(sfactor, dfactor);
+    }
+    unsafe fn BlendEquationOES(&mut self, mode: GLenum) {
+        let functions = [
+            gl21::FUNC_ADD,
+            gl21::FUNC_SUBTRACT,
+            gl21::FUNC_REVERSE_SUBTRACT,
+        ];
+        assert!(functions.contains(&mode));
+        gl21::BlendEquation(mode);
     }
     unsafe fn ColorMask(
         &mut self,

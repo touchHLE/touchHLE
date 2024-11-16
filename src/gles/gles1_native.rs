@@ -118,6 +118,9 @@ impl GLES for GLES1Native {
     unsafe fn BlendFunc(&mut self, sfactor: GLenum, dfactor: GLenum) {
         gles11::BlendFunc(sfactor, dfactor)
     }
+    unsafe fn BlendEquationOES(&mut self, mode: GLenum) {
+        gles11::BlendEquationOES(mode);
+    }
     unsafe fn ColorMask(
         &mut self,
         red: GLboolean,

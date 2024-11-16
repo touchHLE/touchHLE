@@ -246,6 +246,9 @@ fn glBlendFunc(env: &mut Environment, sfactor: GLenum, dfactor: GLenum) {
         gles.BlendFunc(sfactor, dfactor)
     })
 }
+fn glBlendEquationOES(env: &mut Environment, mode: GLenum) {
+    with_ctx_and_mem(env, |gles, _mem| unsafe { gles.BlendEquationOES(mode) })
+}
 fn glColorMask(
     env: &mut Environment,
     red: GLboolean,
@@ -1340,6 +1343,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(glAlphaFunc(_, _)),
     export_c_func!(glAlphaFuncx(_, _)),
     export_c_func!(glBlendFunc(_, _)),
+    export_c_func!(glBlendEquationOES(_)),
     export_c_func!(glColorMask(_, _, _, _)),
     export_c_func!(glCullFace(_)),
     export_c_func!(glDepthFunc(_)),

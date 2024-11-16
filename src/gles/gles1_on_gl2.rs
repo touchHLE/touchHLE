@@ -129,6 +129,13 @@ pub const ARRAYS: &[ArrayInfo] = &[
         pointer: gl21::VERTEX_ARRAY_POINTER,
     },
     ArrayInfo {
+        name: gl21::WEIGHT_ARRAY_ARB,
+        buffer_binding: gl21::WEIGHT_ARRAY_BUFFER_BINDING,
+        size: Some(gl21::WEIGHT_ARRAY_SIZE_ARB),
+        stride: gl21::WEIGHT_ARRAY_STRIDE_ARB,
+        pointer: gl21::WEIGHT_ARRAY_POINTER_ARB,
+    },
+    ArrayInfo {
         name: gl21::MATRIX_INDEX_ARRAY_ARB,
         // FIXME: MATRIX_INDEX_ARRAY_BUFFER_BINDING_ARB, seems to be not defined
         // even if other extension constants are present
@@ -301,6 +308,8 @@ const GET_PARAMS: ParamTable = ParamTable(&[
     (gl21::MAX_PALETTE_MATRICES_ARB, ParamType::Int, 1),
     // OES_matrix_palette -> ARB_vertex_blend
     (gl21::MAX_VERTEX_UNITS_ARB, ParamType::Int, 1),
+    // OES_matrix_palette -> ARB_vertex_blend
+    (gl21::WEIGHT_ARRAY_ARB, ParamType::Boolean, 1),
 ]);
 
 const POINT_PARAMS: ParamTable = ParamTable(&[
@@ -590,6 +599,7 @@ impl GLES for GLES1OnGL2 {
                 Vec::new(),
                 Vec::new(),
                 Vec::new(),
+                Vec::new(),
             ],
         })
     }
@@ -666,7 +676,11 @@ impl GLES for GLES1OnGL2 {
                 array
             );
         } else {
-            assert!(ARRAYS.iter().any(|&ArrayInfo { name, .. }| name == array));
+            assert!(
+                ARRAYS.iter().any(|&ArrayInfo { name, .. }| name == array),
+                "array {:#x}",
+                array
+            );
         }
         gl21::DisableClientState(array);
     }

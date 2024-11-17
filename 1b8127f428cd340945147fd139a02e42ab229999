@@ -16,6 +16,24 @@
       "message": "please add corresponding tests to main.c",
       "revId": "1b8127f428cd340945147fd139a02e42ab229999",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "69568b72_5ae155e1",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038408
+      },
+      "writtenOn": "2024-11-17T22:31:22Z",
+      "side": 1,
+      "message": "Thanks didnt know about that. Running a test build now - https://github.com/hujerhoe/touchHLE/actions/runs/11882739000",
+      "parentUuid": "30f3c477_8df3df6c",
+      "revId": "1b8127f428cd340945147fd139a02e42ab229999",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

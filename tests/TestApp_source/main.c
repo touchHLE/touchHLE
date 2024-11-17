@@ -376,9 +376,9 @@ int test_vsnprintf() {
   res += !!strcmp(str, "10.23");
   free(str);
   // Test length modifiers
-  str = str_format("%d %ld %lld %u %lu %llu", 10, 100, 4294967296, 10, 100,
-                   4294967296);
-  res += !!strcmp(str, "10 100 4294967296 10 100 4294967296");
+  str = str_format("%d %ld %lld %qd %u %lu %llu %qu", 10, 100, 4294967296, 4294967296,
+                   10, 100, 4294967296, 4294967296);
+  res += !!strcmp(str, "10 100 4294967296 4294967296 10 100 4294967296 4294967296");
   free(str);
 
   return res;

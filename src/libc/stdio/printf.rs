@@ -93,16 +93,23 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
             None
         };
 
-        let length_modifier = if get_format_char(&env.mem, format_char_idx) == b'l' {
-            format_char_idx += 1;
-            if get_format_char(&env.mem, format_char_idx) == b'l' {
+        let length_modifier = match get_format_char(&env.mem, format_char_idx) {
+            b'l' => {
+                format_char_idx += 1;
+                if get_format_char(&env.mem, format_char_idx) == b'l' {
+                    format_char_idx += 1;
+                    Some("ll")
+                } else {
+                    Some("l")
+                }
+            }
+            // q seems to be an equivalent of 'll'
+            // https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/Strings/Articles/formatSpecifiers.html#//apple_ref/doc/uid/TP40004265-SW1
+            b'q' => {
                 format_char_idx += 1;
                 Some("ll")
-            } else {
-                Some("l")
             }
-        } else {
-            None
+            _ => None,
         };
 
         let specifier = get_format_char(&env.mem, format_char_idx);

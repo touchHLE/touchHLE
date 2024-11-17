@@ -52,6 +52,24 @@
       "parentUuid": "69568b72_5ae155e1",
       "revId": "1b8127f428cd340945147fd139a02e42ab229999",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "30d9112c_f48b0940",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038408
+      },
+      "writtenOn": "2024-11-17T23:13:01Z",
+      "side": 1,
+      "message": "all good now https://github.com/hujerhoe/touchHLE/actions/runs/11882855123",
+      "parentUuid": "371e0afa_5b09e581",
+      "revId": "1b8127f428cd340945147fd139a02e42ab229999",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

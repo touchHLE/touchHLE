@@ -16,6 +16,24 @@
       "message": "If you\u0027re going to remove the check for this, shouldn\u0027t you remove the field and accessor method? Also, how are you ensuring that the app\u0027s GL context doesn\u0027t go out of sync now? I\u0027m not sure I understand that part.",
       "revId": "a81b611d7d3a6c79eb983eb5a4ce1935b31bc73e",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "bdd4dfea_3df5d67b",
+        "filename": "src/frameworks/opengles.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 45,
+      "author": {
+        "id": 1021823
+      },
+      "writtenOn": "2024-11-18T05:59:58Z",
+      "side": 0,
+      "message": "This just always switches to the new context now, so it\u0027s in sync. The GLES object itself checks if it is the current global context so there\u0027s no issue with constantly reloading the function pointers.",
+      "parentUuid": "b0d7520e_c56f7811",
+      "revId": "a81b611d7d3a6c79eb983eb5a4ce1935b31bc73e",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

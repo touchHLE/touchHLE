@@ -87,6 +87,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "fe23e347_610d1d01",
+        "filename": "src/environment.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 48,
+      "author": {
+        "id": 1021823
+      },
+      "writtenOn": "2024-11-18T05:59:58Z",
+      "side": 1,
+      "message": "Yeah, I wasn\u0027t really clear about what I meant, and the pthread related stuff is for the future. It\u0027s only used for checking that the main thread doesn\u0027t return from it\u0027s initial function, but now this is just handled inside the coroutine itself. (line 333 in environment.rs)",
+      "parentUuid": "22727113_fef2e869",
+      "revId": "bfc494a1aeee0383b587f01bf05d7a34e5281e1a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "19803d22_688ca059",
@@ -386,6 +404,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "92ea7bc7_b5b76359",
+        "filename": "src/environment.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 1153,
+      "author": {
+        "id": 1021823
+      },
+      "writtenOn": "2024-11-18T05:59:58Z",
+      "side": 1,
+      "message": "I think this was always a problem for the app internal GLES context, but not for OpenAL. The problem is that when we switch threads while using a global resource, then the next thread switches out the context, the original thread uses the switched-to context, not the original one. This was previously OK since we knew that the next thread would have to fully return before it would switch back, but that\u0027s not true anymore.\n\nActually, I\u0027ve come to the realization that it\u0027s possible to just implicitly bake this into the lifetime of the GLES context, like we sort of already did with `sync_context`. If we require a `\u0026mut Window` to activate the context (and something similar for OpenAL), it becomes impossible to switch contexts since you need a `\u0026mut` on the whole environment to yield, but you\u0027re holding on to an inner reference. I\u0027ve modified GLES to work this way so you can review it, and I\u0027ll do the same for OpenAL later it you think the design is ok.",
+      "parentUuid": "a4bf8fa2_5bb4e242",
+      "revId": "bfc494a1aeee0383b587f01bf05d7a34e5281e1a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "f833c25b_dcc8b37a",
         "filename": "src/environment.rs",
         "patchSetId": 11
@@ -436,6 +472,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "134ff1d6_055e00ea",
+        "filename": "src/environment.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 1354,
+      "author": {
+        "id": 1021823
+      },
+      "writtenOn": "2024-11-18T05:59:58Z",
+      "side": 1,
+      "message": "It seems mostly fine to me? I\u0027ve added in a bit about that.",
+      "parentUuid": "5ca2aac4_848eff6d",
+      "revId": "bfc494a1aeee0383b587f01bf05d7a34e5281e1a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "ce159bda_1fae0608",
@@ -449,6 +503,24 @@
       "writtenOn": "2024-11-11T19:59:05Z",
       "side": 1,
       "message": "Maybe the window functions could have some safety assertion?",
+      "revId": "bfc494a1aeee0383b587f01bf05d7a34e5281e1a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "68aa5e17_39ff51cd",
+        "filename": "src/environment.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 1385,
+      "author": {
+        "id": 1021823
+      },
+      "writtenOn": "2024-11-18T05:59:58Z",
+      "side": 1,
+      "message": "I\u0027ve added a quick flag to check that we\u0027re on the parent stack in `Window`, but it\u0027s not a particularly clean solution. There\u0027s not too many great ways to go about this sadly, but this should catch most mishaps.",
+      "parentUuid": "ce159bda_1fae0608",
       "revId": "bfc494a1aeee0383b587f01bf05d7a34e5281e1a",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
@@ -472,6 +544,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "e1ca2e5a_b8ea5c64",
+        "filename": "src/environment/app_picker.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 6,
+      "author": {
+        "id": 1021823
+      },
+      "writtenOn": "2024-11-18T05:59:58Z",
+      "side": 1,
+      "message": "Moved the run loop into environment, hopefully that works for you.",
+      "parentUuid": "137fee37_ed3aabe4",
+      "revId": "bfc494a1aeee0383b587f01bf05d7a34e5281e1a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "c3ee386a_e1ec25cd",
         "filename": "src/environment/nullable_box.rs",
         "patchSetId": 11
@@ -483,6 +573,24 @@
       "writtenOn": "2024-11-11T19:59:05Z",
       "side": 1,
       "message": "dereferencing",
+      "revId": "bfc494a1aeee0383b587f01bf05d7a34e5281e1a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b7ac86e8_2407faa2",
+        "filename": "src/environment/nullable_box.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 5,
+      "author": {
+        "id": 1021823
+      },
+      "writtenOn": "2024-11-18T05:59:58Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "c3ee386a_e1ec25cd",
       "revId": "bfc494a1aeee0383b587f01bf05d7a34e5281e1a",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
@@ -570,6 +678,24 @@
       "writtenOn": "2024-11-11T19:59:05Z",
       "side": 1,
       "message": "FWIW this function should never have ended up in this file, we probably should wrap it on window.rs",
+      "revId": "bfc494a1aeee0383b587f01bf05d7a34e5281e1a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "131635d8_0d54af68",
+        "filename": "src/frameworks/foundation/ns_locale.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 45,
+      "author": {
+        "id": 1021823
+      },
+      "writtenOn": "2024-11-18T05:59:58Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "0082c2b4_7c36b337",
       "revId": "bfc494a1aeee0383b587f01bf05d7a34e5281e1a",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
@@ -692,6 +818,24 @@
       "writtenOn": "2024-11-11T19:59:05Z",
       "side": 1,
       "message": "Why has this been put here, rather than on sync_context, which previously had this role?",
+      "revId": "bfc494a1aeee0383b587f01bf05d7a34e5281e1a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b78d8d56_1674be53",
+        "filename": "src/gles/gles_generic.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 31,
+      "author": {
+        "id": 1021823
+      },
+      "writtenOn": "2024-11-18T05:59:58Z",
+      "side": 1,
+      "message": "Having it here also means the internal GL context is safe, which wasn\u0027t true before.",
+      "parentUuid": "7f37317f_cbd7ff49",
       "revId": "bfc494a1aeee0383b587f01bf05d7a34e5281e1a",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },

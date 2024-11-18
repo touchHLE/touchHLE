@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "41077673_bca1f3d0",
+        "filename": "src/objc/classes.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 428,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-11-18T18:30:07Z",
+      "side": 1,
+      "message": "please don\u0027t mix general app wide class substitues and game specific hacks.\nthey should be 2 separated ifs/matches, not nested.",
+      "revId": "26ec5ff68034309f18155ff0760a3c8e9948bd8a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "22840251_c87b1e00",
+        "filename": "src/objc/classes.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 430,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-11-18T18:30:07Z",
+      "side": 1,
+      "message": "add a log message for game specific hack and a TODO comment about fixing it properly once sqlite3 is supported",
+      "revId": "26ec5ff68034309f18155ff0760a3c8e9948bd8a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "de66c876_1d9762be",
+        "filename": "src/objc/classes.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 431,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-11-18T18:30:07Z",
+      "side": 1,
+      "message": "If you\u0027re substituting one single class, use exact match, not start_with.",
+      "revId": "26ec5ff68034309f18155ff0760a3c8e9948bd8a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

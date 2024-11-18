@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "232a835c_fb6659e4",
+        "filename": "src/objc/classes.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 428,
+      "author": {
+        "id": 1038408
+      },
+      "writtenOn": "2024-11-18T23:07:15Z",
+      "side": 1,
+      "message": "yeah i wasnt sure which way would be best. This was just an idea to be able to be really game specific when it comes substitutions. But im happy to try your way.\n\nI was even thinking the list could come from the touchle_options if some game specific thing is needed but anything you guys find acceptable is ok :)",
+      "parentUuid": "41077673_bca1f3d0",
+      "revId": "26ec5ff68034309f18155ff0760a3c8e9948bd8a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "22840251_c87b1e00",
@@ -35,6 +53,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "7859d985_ee33d0e0",
+        "filename": "src/objc/classes.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 430,
+      "author": {
+        "id": 1038408
+      },
+      "writtenOn": "2024-11-18T23:07:15Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "22840251_c87b1e00",
+      "revId": "26ec5ff68034309f18155ff0760a3c8e9948bd8a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "de66c876_1d9762be",
@@ -48,6 +84,24 @@
       "writtenOn": "2024-11-18T18:30:07Z",
       "side": 1,
       "message": "If you\u0027re substituting one single class, use exact match, not start_with.",
+      "revId": "26ec5ff68034309f18155ff0760a3c8e9948bd8a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "0747eba9_7f0678b5",
+        "filename": "src/objc/classes.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 431,
+      "author": {
+        "id": 1038408
+      },
+      "writtenOn": "2024-11-18T23:07:15Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "de66c876_1d9762be",
       "revId": "26ec5ff68034309f18155ff0760a3c8e9948bd8a",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

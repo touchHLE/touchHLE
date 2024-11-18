@@ -16,6 +16,24 @@
       "message": "Why are you removing this?\nWe prefer to have a general solution instead, applicable for any app with OpenFeint integration.\nThis change could be considered as a regression.",
       "revId": "7a9205b30770eda38d83cda508f61909488d5912",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "210673b7_de192b14",
+        "filename": "src/objc/classes.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 435,
+      "author": {
+        "id": 1038408
+      },
+      "writtenOn": "2024-11-18T23:07:15Z",
+      "side": 0,
+      "message": "we added it specifically for this game so i wanted it to be game specific if possible but i dont mind doing it your way :)",
+      "parentUuid": "090282a1_43a73676",
+      "revId": "7a9205b30770eda38d83cda508f61909488d5912",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

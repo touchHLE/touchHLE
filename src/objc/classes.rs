@@ -17,6 +17,7 @@ use super::{
     id, ivar_list_t, method_list_t, nil, objc_object, AnyHostObject, HostIMP, HostObject, ObjC,
     IMP, SEL,
 };
+use crate::bundle;
 use crate::mach_o::MachO;
 use crate::mem::{guest_size_of, ConstPtr, ConstVoidPtr, GuestUSize, Mem, Ptr, SafeRead};
 use std::collections::HashMap;
@@ -415,6 +416,7 @@ impl ClassHostObject {
 /// touchHLE to currently support, but which can be easily replaced with simple
 /// fakes.
 fn substitute_classes(
+    bundle: &bundle::Bundle,
     mem: &Mem,
     class: Class,
     metaclass: Class,
@@ -434,7 +436,14 @@ fn substitute_classes(
         || name.starts_with("Flurry")
         || name.starts_with("OpenFeint"))
     {
-        return None;
+        // TODO : try to remove when sqlite3 is supported.
+        if (bundle.bundle_identifier() == "com.chillingo.defenderchronicles")
+            && (name == "OFHighScoreService")
+        {
+            log!("Applying game-specific hack for Defender Chronicles: skipping OpenFeint online high score system.");
+        } else {
+            return None;
+        }
     }
 
     {
@@ -592,7 +601,7 @@ impl ObjC {
 
     /// For use by [crate::dyld]: register all the classes from the application
     /// binary.
-    pub fn register_bin_classes(&mut self, bin: &MachO, mem: &mut Mem) {
+    pub fn register_bin_classes(&mut self, bundle: &bundle::Bundle, bin: &MachO, mem: &mut Mem) {
         let Some(list) = bin.get_section("__objc_classlist") else {
             return;
         };
@@ -603,7 +612,7 @@ impl ObjC {
             let class = mem.read(base + i);
             let metaclass = Self::read_isa(class, mem);
 
-            let name = if let Some(fakes) = substitute_classes(mem, class, metaclass) {
+            let name = if let Some(fakes) = substitute_classes(bundle, mem, class, metaclass) {
                 let (class_host_object, metaclass_host_object) = fakes;
 
                 assert!(class_host_object.name == metaclass_host_object.name);

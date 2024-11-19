@@ -16,6 +16,24 @@
       "message": "merge this condition with the previous if",
       "revId": "945b9b7121d6776a8666a024232a0d2a290154cc",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "a8adbc81_77d4763e",
+        "filename": "src/objc/classes.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 442,
+      "author": {
+        "id": 1038408
+      },
+      "writtenOn": "2024-11-19T11:13:15Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "8ac5dae2_6235332f",
+      "revId": "945b9b7121d6776a8666a024232a0d2a290154cc",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

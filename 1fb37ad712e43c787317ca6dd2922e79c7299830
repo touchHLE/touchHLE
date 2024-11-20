@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d79d5605_08737c44",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 3
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-11-20T21:09:32Z",
+      "side": 1,
+      "message": "I don\u0027t like the use of \"FIXME\" comments. If you think there\u0027s a bug in the generated GL bindings, maybe it can be \"TODO\" with an explanation of this. Ideally, file a bug on the gl-generator crate (but check the gl.xml from Khronos to see if that might actually be the problem instead)",
+      "revId": "1fb37ad712e43c787317ca6dd2922e79c7299830",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

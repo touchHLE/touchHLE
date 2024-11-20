@@ -232,7 +232,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     super::hash_helper(&value)
 }
 
-- (bool)isEqualTo:(id)other {
+- (bool)isEqual:(id)other {
     equality_helper(env, this, other)
 }
 

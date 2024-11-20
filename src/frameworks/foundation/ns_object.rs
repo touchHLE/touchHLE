@@ -110,6 +110,10 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (NSUInteger)hash {
     this.to_bits()
 }
+
+// To not confuse with isEqualTo:, which is
+// a category of NSWhoseSpecifier!
+// Reference https://nshipster.com/equality
 - (bool)isEqual:(id)other {
     this == other
 }

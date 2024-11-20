@@ -130,7 +130,7 @@ pub fn AudioQueueNewOutput(
     assert!(
         in_callback_run_loop_mode.is_null() || {
             let common_modes = get_static_str(env, kCFRunLoopCommonModes);
-            msg![env; in_callback_run_loop_mode isEqualTo:common_modes]
+            msg![env; in_callback_run_loop_mode isEqual:common_modes]
         }
     );
 

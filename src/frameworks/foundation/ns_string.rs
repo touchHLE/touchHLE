@@ -448,7 +448,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     // TODO: avoid copying
     super::hash_helper(&to_rust_string(env, this))
 }
-- (bool)isEqualTo:(id)other {
+- (bool)isEqual:(id)other {
     if this == other {
         return true;
     }

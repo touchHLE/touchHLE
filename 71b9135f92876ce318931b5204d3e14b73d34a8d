@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "85ca4d87_e8c38190",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-11-22T20:00:24Z",
+      "side": 1,
+      "message": "What is the value in defining landscape mode for the games which are already opening in the good orientation?",
+      "revId": "71b9135f92876ce318931b5204d3e14b73d34a8d",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fd592bca_9042b3dd",
+        "filename": "touchHLE_default_options.txt",
+        "patchSetId": 1
+      },
+      "lineNbr": 120,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-11-22T20:00:24Z",
+      "side": 1,
+      "message": "Could you define button for Virtual Pad same way as you did for Shrek?\nAFAIK you could choose Dpad too in the options of POP.",
+      "revId": "71b9135f92876ce318931b5204d3e14b73d34a8d",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

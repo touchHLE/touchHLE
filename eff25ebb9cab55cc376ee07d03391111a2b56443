@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "207f1ec4_785081b9",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-11-23T00:36:27Z",
+      "side": 1,
+      "message": "(in order to submit you should set verified +1, assuming you\u0027ve verified your patchset. then you could click on submit, if there is no merge conflicts, Gerrit will rebase and merge automatically)",
+      "revId": "eff25ebb9cab55cc376ee07d03391111a2b56443",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

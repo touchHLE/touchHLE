@@ -74,6 +74,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "09f4a153_ff6227cd",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-11-23T18:28:23Z",
+      "side": 1,
+      "message": "I wrote a small test program with single switch, hooked up some targets for events and tested on both simulator and real device.\n\nOn both sim and real device, the control state remains Normal during emit of ValueChanged event.\n\nOn sim, the events passed via target-action is always nils.\n\nOn real device, the events are non nil, but the event associated with ValueChanged always have 0 touches.\n\nI pushed changed to reflect that behavior, though I\u0027m not 100% sure about the passed event content.",
+      "parentUuid": "03d1cf37_e23c0575",
+      "revId": "28c2e83f04ddafb6038491a5da859a10968b4c87",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "31fef383_81877631",
         "filename": "src/frameworks/uikit/ui_view/ui_control/ui_switch.rs",
         "patchSetId": 1

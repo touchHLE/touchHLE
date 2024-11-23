@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d6e39510_f5f3e587",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-11-23T16:32:34Z",
+      "side": 1,
+      "message": "Makes sense to me, and I love how pretty it is. I would suggest you check how UISwitch should interact with UIControl\u0027s states mechanism though. Not sure if that\u0027s documented or you\u0027d have to tease it out with testing.",
+      "revId": "28c2e83f04ddafb6038491a5da859a10968b4c87",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "31fef383_81877631",
+        "filename": "src/frameworks/uikit/ui_view/ui_control/ui_switch.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 118,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-11-23T16:32:34Z",
+      "side": 1,
+      "message": "Maybe use ordinary quotes here, the backticks make it sound like you\u0027re referring to a variable or function or whatever.",
+      "revId": "28c2e83f04ddafb6038491a5da859a10968b4c87",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5ae5a49f_8e3b23c8",
+        "filename": "src/frameworks/uikit/ui_view/ui_control/ui_switch.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 279,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-11-23T16:32:34Z",
+      "side": 1,
+      "message": "Same thing here",
+      "revId": "28c2e83f04ddafb6038491a5da859a10968b4c87",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

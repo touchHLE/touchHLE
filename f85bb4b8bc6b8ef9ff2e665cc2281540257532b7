@@ -54,6 +54,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "b973ace5_e82bb980",
+        "filename": "src/frameworks/foundation/ns_data.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 252,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2024-11-23T00:23:11Z",
+      "side": 1,
+      "message": "What an adventure getting this working, but I can now build test app. Everything seems to be in order here.",
+      "parentUuid": "5d33d024_a630a0fc",
+      "revId": "f85bb4b8bc6b8ef9ff2e665cc2281540257532b7",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "e9cd8cd4_2541a8d4",

@@ -35,6 +35,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "82af134f_e070a800",
+        "filename": "src/frameworks/uikit/ui_view/ui_control/ui_switch.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 118,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-11-23T16:37:59Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "31fef383_81877631",
+      "revId": "28c2e83f04ddafb6038491a5da859a10968b4c87",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "5ae5a49f_8e3b23c8",
@@ -48,6 +66,24 @@
       "writtenOn": "2024-11-23T16:32:34Z",
       "side": 1,
       "message": "Same thing here",
+      "revId": "28c2e83f04ddafb6038491a5da859a10968b4c87",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f4ea63c4_ecf3558f",
+        "filename": "src/frameworks/uikit/ui_view/ui_control/ui_switch.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 279,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-11-23T16:37:59Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "5ae5a49f_8e3b23c8",
       "revId": "28c2e83f04ddafb6038491a5da859a10968b4c87",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

@@ -56,6 +56,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "03d1cf37_e23c0575",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-11-23T17:00:30Z",
+      "side": 1,
+      "message": "Also the documentation for UISwitch mentions a UIControlEventValueChanged event, that is probably not too complicated to support and probably important to have, I would guess some apps only know if the switch has been used by listening for that event.",
+      "parentUuid": "8411bde3_c420db0f",
+      "revId": "28c2e83f04ddafb6038491a5da859a10968b4c87",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "31fef383_81877631",
         "filename": "src/frameworks/uikit/ui_view/ui_control/ui_switch.rs",
         "patchSetId": 1

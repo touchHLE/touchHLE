@@ -29,6 +29,7 @@ const UIControlEventTouchDragEnter: UIControlEvents = 1 << 4;
 const UIControlEventTouchDragExit: UIControlEvents = 1 << 5;
 pub const UIControlEventTouchUpInside: UIControlEvents = 1 << 6;
 const UIControlEventTouchUpOutside: UIControlEvents = 1 << 7;
+pub const UIControlEventValueChanged: UIControlEvents = 1 << 12;
 
 struct UIControlHostObject {
     superclass: super::UIViewHostObject,
@@ -65,7 +66,12 @@ const UIControlStateSelected: UIControlState = 1 << 2;
 #[allow(dead_code)]
 const UIControlStateFocused: UIControlState = 1 << 3;
 
-fn send_actions(env: &mut Environment, this: id, event: id, control_event: UIControlEvents) {
+pub(super) fn send_actions(
+    env: &mut Environment,
+    this: id,
+    event: id,
+    control_event: UIControlEvents,
+) {
     log_dbg!(
         "Control event {:?} in control {:?} for event {:?}",
         control_event,

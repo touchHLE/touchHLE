@@ -38,6 +38,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "8411bde3_c420db0f",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-11-23T16:57:57Z",
+      "side": 1,
+      "message": "I mean https://developer.apple.com/documentation/uikit/uicontrol/1618245-state?language\u003dobjc this thing, maybe UIControlSelected or some other flag like this is used to mark the switch as off/on?",
+      "parentUuid": "0a925c5e_5c2b28f6",
+      "revId": "28c2e83f04ddafb6038491a5da859a10968b4c87",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "31fef383_81877631",
         "filename": "src/frameworks/uikit/ui_view/ui_control/ui_switch.rs",
         "patchSetId": 1

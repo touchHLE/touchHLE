@@ -110,3 +110,39 @@ com.chillingo.defenderchronicles: --landscape-left
 # (we neeed to force language to avoid a crash)
 com.ea.simcitybv: --preferred-languages=en
 com.ea.simcityinc: --preferred-languages=en
+
+# Iron Man
+# A = Fire, X = Dodge (on Level Tutorial 1), B = Dodge (on other levels), Start = Pause
+com.paramount.IronMan: --landscape-right --button-to-touch=A,450,160 --button-to-touch=X,40,255 --button-to-touch=B,40,164 --button-to-touch=Start,60,20
+
+# Iron Man 2
+com.gameloft.IronMan2: --landscape-left
+
+# Gangstar: West Coast Hustle
+com.gameloft.Gangstar: --landscape-left
+
+# Prince of Persia: Warrior Within
+# Notice that for directional buttons to work, first you need to go to Options > Controls and choose Virtual Pad
+# DPad = Walk, A = Sword, B = Defense, X = Jump, Y = Grab, Start = Pause, LeftShoulder = Resume
+com.gameloft.POP: --landscape-left --button-to-touch=DPadUp,90,190 --button-to-touch=DPadRight,135,235 --button-to-touch=DPadDown,90,280 --button-to-touch=DPadLeft,45,235 --button-to-touch=A,340,280 --button-to-touch=B,385,220 --button-to-touch=X,445,175 --button-to-touch=Y,460,300 --button-to-touch=Start,21,28 --button-to-touch=LeftShoulder,240,100
+
+# Shrek 4 / Forever After
+# Notice that for directional buttons to work, first you need to go to Options > Controls and choose Virtual Pad
+# DPad = Walk, A = Punch, X = Jump, Y = Skip (cutscenes), Start = Pause
+com.gameloft.Shrek4: --landscape-left --button-to-touch=DPadDown,44,278 --button-to-touch=DPadUp,52,224 --button-to-touch=DPadLeft,32,243 --button-to-touch=DPadRight,144,234 --button-to-touch=A,344,277 --button-to-touch=X,437,231 --button-to-touch=Start,33,28 --button-to-touch=Y,409,18
+com.gameloft.Shrek4Free: --landscape-left --button-to-touch=DPadDown,44,278 --button-to-touch=DPadUp,52,224 --button-to-touch=DPadLeft,32,243 --button-to-touch=DPadRight,144,234 --button-to-touch=A,344,277 --button-to-touch=X,437,231 --button-to-touch=Start,33,28 --button-to-touch=Y,409,18
+
+# Asphalt 4 Elite Racing
+# DPad = left and right, A = Nitro, X = Brake, Start = Pause
+com.gameloft.ASPHALT4: --button-to-touch=DPadLeft,30,300 --button-to-touch=DPadRight,300,300 --button-to-touch=A,298,385 --button-to-touch=X,230,425 --button-to-touch=Start,20,20
+
+# Asphalt 5
+# A = Nitro, B = Brake, Start = Pause
+com.gameloft.Asphalt5: --landscape-left --button-to-touch=A,415,295 --button-to-touch=B,60,300 --button-to-touch=Start,25,25
+
+# Skater Nation
+# DPad, A = A, B = B, Start = Pause, LeftShoulder = Resume
+com.gameloft.SkateNation: --landscape-left --button-to-touch=DPadLeft,45,237 --button-to-touch=DPadRight,132,237 --button-to-touch=DPadUp,90,190 --button-to-touch=DPadDown,90,280 --button-to-touch=A,435,275 --button-to-touch=B,350,240 --button-to-touch=Start,450,25 --button-to-touch=LeftShoulder,25,300
+
+# Zombie Infection
+com.gameloft.ZombieInfection: --landscape-left

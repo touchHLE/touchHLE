@@ -1,0 +1,123 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "fb7e6eac_d88b29e1",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 13
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-11-25T14:31:40Z",
+      "side": 1,
+      "message": "Seems OK overall.\n\nHave you thought what need to be done to properly implement animations? (just curious)",
+      "revId": "0ef9e775f830f6c3fe10586db6d2e34f5630c831",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "06d5b7ab_595933cb",
+        "filename": "src/frameworks/uikit/ui_view.rs",
+        "patchSetId": 13
+      },
+      "lineNbr": 15,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-11-25T14:31:40Z",
+      "side": 1,
+      "message": "why this is needed here?",
+      "revId": "0ef9e775f830f6c3fe10586db6d2e34f5630c831",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7d260fc6_39a23b07",
+        "filename": "src/frameworks/uikit/ui_view.rs",
+        "patchSetId": 13
+      },
+      "lineNbr": 59,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-11-25T14:31:40Z",
+      "side": 1,
+      "message": "As far as I understand, you\u0027ve implemented correct animation delays with proper post-animation actions, but not animations themselves.\n\nYou should explain that in the comment and add a TODO.\n\n(for example here, before this struct)",
+      "revId": "0ef9e775f830f6c3fe10586db6d2e34f5630c831",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "72a33fde_cc26bc04",
+        "filename": "src/frameworks/uikit/ui_view.rs",
+        "patchSetId": 13
+      },
+      "lineNbr": 61,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-11-25T14:31:40Z",
+      "side": 1,
+      "message": "please rename it to something more meaningful, like animation_id",
+      "revId": "0ef9e775f830f6c3fe10586db6d2e34f5630c831",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9c65663a_32168a73",
+        "filename": "src/frameworks/uikit/ui_view.rs",
+        "patchSetId": 13
+      },
+      "lineNbr": 207,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-11-25T14:31:40Z",
+      "side": 1,
+      "message": "why it\u0027s default here? At least you should set correct animation id for the state object",
+      "revId": "0ef9e775f830f6c3fe10586db6d2e34f5630c831",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c7842e09_e09746be",
+        "filename": "src/frameworks/uikit/ui_view.rs",
+        "patchSetId": 13
+      },
+      "lineNbr": 223,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-11-25T14:31:40Z",
+      "side": 1,
+      "message": "I know what timers are the only mechanism that we have right now for delayed execution, but it\u0027s not necessary the most optimal one.\n\nFor example, registering custom callbacks/sources in the run loop is other possible solution.\n\nIn any case, a comment and maybe a TODO is needed here.",
+      "revId": "0ef9e775f830f6c3fe10586db6d2e34f5630c831",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ed18f1bc_070bcc82",
+        "filename": "src/frameworks/uikit/ui_view.rs",
+        "patchSetId": 13
+      },
+      "lineNbr": 243,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-11-25T14:31:40Z",
+      "side": 1,
+      "message": "You don\u0027t need to check for delegate to be nil as any message to nil is noop.\n\nOn the other hand, do we have guaranty that delegate always responds to this selector? If it\u0027s optional you\u0027ll need to do a little dance with respondsToSelector: first here",
+      "revId": "0ef9e775f830f6c3fe10586db6d2e34f5630c831",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

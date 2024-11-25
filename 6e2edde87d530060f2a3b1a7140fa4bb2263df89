@@ -16,6 +16,24 @@
       "message": "According to docs, this method returns NSMutableData object containing length zeroed bytes.\n\nIn our current implementation, alloc() doesn\u0027t zero out memory by default.\nYou should explicitly do it here or use calloc().",
       "revId": "6e2edde87d530060f2a3b1a7140fa4bb2263df89",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "4d717ede_64a8fb99",
+        "filename": "src/frameworks/foundation/ns_data.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 213,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2024-11-25T00:07:06Z",
+      "side": 1,
+      "message": "Since we only provide calloc through stdlib, I explicitly zeroed the data out. Unless we want pub the calloc function in stdlib or provide it in memory?",
+      "parentUuid": "659ebed0_af95d897",
+      "revId": "6e2edde87d530060f2a3b1a7140fa4bb2263df89",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

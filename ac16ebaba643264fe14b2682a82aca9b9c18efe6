@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "af8e65da_cc157897",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-11-25T15:57:05Z",
+      "side": 1,
+      "message": "LGTM for controller support and thanks for adding PoP options\n\nRegarding the rest, I still not sure what is the benefit of adding that to the options if games are choosing correct orientation themselves.\nI let hikari approve this part.",
+      "revId": "ac16ebaba643264fe14b2682a82aca9b9c18efe6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

@@ -16,6 +16,24 @@
       "message": "please move it to another place, for example after initWithBytes:length: method\n\nas right now the above comment doesn\u0027t make sense anymore",
       "revId": "4459a72c04a2d9e157a981d3dd3f843ee093e681",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "52ffb34b_b27c5ba5",
+        "filename": "src/frameworks/foundation/ns_data.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 72,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2024-11-25T00:14:25Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "c1756901_9b6c4d85",
+      "revId": "4459a72c04a2d9e157a981d3dd3f843ee093e681",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

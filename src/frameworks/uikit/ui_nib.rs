@@ -14,7 +14,7 @@ use crate::frameworks::foundation::{ns_string, NSUInteger};
 use crate::fs::GuestPathBuf;
 use crate::objc::{
     autorelease, id, impl_HostObject_with_superclass, msg, msg_class, msg_super, nil, objc_classes,
-    release, retain, ClassExports, HostObject,
+    release, retain, Class, ClassExports, HostObject,
 };
 use crate::Environment;
 
@@ -24,6 +24,9 @@ struct UINibHostObject {
     nib_name: id,
     /// `NSBundle*`
     bundle: id,
+    /// File's Owner
+    /// (weak, non-retaining)
+    file_owner: id,
 }
 impl HostObject for UINibHostObject {}
 
@@ -63,7 +66,8 @@ pub const CLASSES: ClassExports = objc_classes! {
     retain(env, bundle);
     let host_object = Box::new(UINibHostObject {
         nib_name,
-        bundle
+        bundle,
+        file_owner: nil
     });
     let new = env.objc.alloc_object(this, host_object, &mut env.mem);
 
@@ -73,7 +77,8 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (())dealloc {
     let &UINibHostObject {
         nib_name,
-        bundle
+        bundle,
+        ..
     } = env.objc.borrow(this);
     release(env, nib_name);
     release(env, bundle);
@@ -94,10 +99,15 @@ pub const CLASSES: ClassExports = objc_classes! {
     assert!(msg![env; path isAbsolutePath]);
     let nib_path = to_rust_string(env, path).to_string();
 
-    let unarchiver = load_nib_file(env, GuestPathBuf::from(nib_path)).unwrap();
+    assert!(env.objc.borrow::<UINibHostObject>(this).file_owner == nil);
+    env.objc.borrow_mut::<UINibHostObject>(this).file_owner = owner;
+
+    let unarchiver = load_nib_file(env, this, GuestPathBuf::from(nib_path)).unwrap();
     let top_level_objects_key = get_static_str(env, "UINibTopLevelObjectsKey");
     let top_level_objects = msg![env; unarchiver decodeObjectForKey:top_level_objects_key];
     release(env, unarchiver);
+    env.objc.borrow_mut::<UINibHostObject>(this).file_owner = nil;
+
     top_level_objects
 }
 
@@ -119,20 +129,22 @@ pub const CLASSES: ClassExports = objc_classes! {
         // "delegate" outlet can be connected between it and the
         // UIApplicationDelegate.
         //
-        // TODO: This is a bit of a hack. Eventually it would be good to fix:
+        // TODO: Below implementation could still be "wrong".
+        // Other options to consider:
         // - The name "UIProxyObject" implies that it might be intended to
         //   proxy messages to another object, rather than be replaced by it.
         //   Check what iPhone OS does?
-        // - If/when the UINib class is implemented and arbitrary nib files can
-        //   be deserialized, an app could pick some other object to be the nib
-        //   file owner, which this would need to handle.
-        // - If this object is meant to be replaced, it's probably not meant to
-        //   be done via `initWithCoder:`, but instead by providing a delegate
-        //   to the NSKeyedUnarchiver. That might be needed to implement
-        //   replacement for objects other than the UIApplication instance.
-
-        release(env, this);
-        msg_class![env; UIApplication sharedApplication]
+        // - If this object is meant to be replaced, it's probably meant to
+        //   be done _after_ the call to `initWithCoder:`
+        let delegate: id = msg![env; coder delegate];
+        // TODO: can this happen?
+        assert!(delegate != nil);
+        let ui_nib_class: Class = msg_class![env; UINib class];
+        let delegate_class: Class = msg![env; delegate class];
+        assert!(msg![env; delegate_class isKindOfClass:ui_nib_class]);
+        let file_owner = env.objc.borrow::<UINibHostObject>(delegate).file_owner;
+        assert!(file_owner != nil);
+        file_owner
     } else {
         log!("TODO: UIProxyObject replacement for {}, instance {:?} left unreplaced", id, this);
         this
@@ -302,7 +314,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 /// Returns an empty [Err] if the file couldn't be loaded or an [Ok] wrapping
 /// an NSKeyedUnarchiver.
 /// The unarchiver should later be manually [release]d
-fn load_nib_file(env: &mut Environment, path: GuestPathBuf) -> Result<id, ()> {
+fn load_nib_file(env: &mut Environment, ui_nib: id, path: GuestPathBuf) -> Result<id, ()> {
     let path = ns_string::from_rust_string(env, path.as_str().to_string());
     assert!(msg![env; path isAbsolutePath]);
     let ns_data: id = msg_class![env; NSData dataWithContentsOfFile:path];
@@ -315,6 +327,10 @@ fn load_nib_file(env: &mut Environment, path: GuestPathBuf) -> Result<id, ()> {
 
     let unarchiver = msg_class![env; NSKeyedUnarchiver alloc];
     let unarchiver = msg![env; unarchiver initForReadingWithData:ns_data];
+
+    // ui_nib will hold a file's owner,
+    // which will replace corresponding UIProxyObject
+    () = msg![env; unarchiver setDelegate:ui_nib];
 
     // The top-level keys in a nib file's keyed archive appear to be
     // UINibAccessibilityConfigurationsKey, UINibConnectionsKey,

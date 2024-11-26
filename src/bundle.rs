@@ -158,12 +158,7 @@ impl Bundle {
         Ok(image)
     }
 
-    pub fn main_nib_file_path(&self) -> Option<GuestPathBuf> {
-        self.plist.get("NSMainNibFile").map(|filename| {
-            let filename = filename.as_string().unwrap();
-            // FIXME: There main nib file might be localized and have multiple
-            // paths. This method should definitely be removed eventually.
-            self.path.join(format!("{}.nib", filename))
-        })
+    pub fn main_nib_filename(&self) -> Option<&str> {
+        self.plist.get("NSMainNibFile").unwrap().as_string()
     }
 }

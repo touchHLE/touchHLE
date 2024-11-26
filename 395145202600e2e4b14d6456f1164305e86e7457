@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "557fc650_f22b7b47",
+        "filename": "src/frameworks/uikit/ui_nib.rs",
+        "patchSetId": 14
+      },
+      "lineNbr": 21,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-11-26T19:06:21Z",
+      "side": 1,
+      "message": "have you run linter on this file?",
+      "revId": "395145202600e2e4b14d6456f1164305e86e7457",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "21ce03ea_f3a7586b",
+        "filename": "src/frameworks/uikit/ui_nib.rs",
+        "patchSetId": 14
+      },
+      "lineNbr": 42,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-11-26T19:06:21Z",
+      "side": 1,
+      "message": "could you also rename eventMask to event_mask to comply with the coding style?",
+      "revId": "395145202600e2e4b14d6456f1164305e86e7457",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

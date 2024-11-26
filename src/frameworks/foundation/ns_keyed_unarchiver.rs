@@ -20,8 +20,8 @@ use crate::frameworks::uikit::ui_geometry::{
 };
 use crate::mem::ConstVoidPtr;
 use crate::objc::{
-    autorelease, id, msg, msg_class, nil, objc_classes, release, retain, ClassExports, HostObject,
-    NSZonePtr,
+    autorelease, id, msg, msg_class, nil, objc_classes, release, retain, Class, ClassExports,
+    HostObject, NSZonePtr,
 };
 use crate::Environment;
 use plist::{Dictionary, Uid, Value};
@@ -290,6 +290,66 @@ fn unarchive_key(env: &mut Environment, unarchiver: id, key: Uid) -> id {
     let host_obj = borrow_host_obj(env, unarchiver); // reborrow
     host_obj.already_unarchived[key.get() as usize] = Some(new_object);
     new_object
+}
+
+/// A helper method to substitute a proxy object by another one.
+///
+/// Right now it's only used to perform File's Owner replacement.
+///
+/// In the future it should support other substitutions such as
+/// UINibExternalObjects
+pub fn replace_proxy_by_id(env: &mut Environment, unarchiver: id, replace_key: id, replace: id) {
+    let host_obj = borrow_host_obj(env, unarchiver);
+
+    // We're redoing decoding here as we want to access an _index_ of
+    // the object in the internal data structure and not object itself
+    // to perform a substitution.
+    // TODO: avoid re-decoding somehow?
+    let top_dict = host_obj.plist["$top"].as_dictionary().unwrap();
+    log_dbg!("replace_proxy_by_id top_dict {:?}", top_dict);
+    let top_arr_key = top_dict
+        .get("UINibTopLevelObjectsKey")
+        .unwrap()
+        .as_uid()
+        .unwrap();
+    let objects = host_obj.plist["$objects"].as_array().unwrap();
+    let item = &objects[top_arr_key.get() as usize];
+    log_dbg!("replace_proxy_by_id item {:?}", item);
+    let keys = item.as_dictionary().unwrap()["NS.objects"]
+        .as_array()
+        .unwrap();
+    let keys: Vec<Uid> = keys
+        .iter()
+        .map(|value| value.as_uid().copied().unwrap())
+        .collect();
+    log_dbg!("replace_proxy_by_id keys {:?}", keys);
+
+    let proxy_class: Class = msg_class![env; UIProxyObject class];
+    for key in keys {
+        let host_obj = borrow_host_obj(env, unarchiver); // reborrow
+        let to_replace: id = host_obj.already_unarchived[key.get() as usize].unwrap();
+
+        let class: Class = msg![env; to_replace class];
+        if class == proxy_class {
+            let proxied_id: id = msg![env; to_replace proxiedId];
+            let equals: bool = msg![env; replace_key isEqualToString:proxied_id];
+            if equals {
+                log!(
+                    "Replacing proxy {:?} by owner {:?} for key {}",
+                    to_replace,
+                    replace,
+                    to_rust_string(env, replace_key)
+                );
+                let host_obj = borrow_host_obj(env, unarchiver); // reborrow
+                host_obj.already_unarchived[key.get() as usize] = Some(replace);
+                release(env, to_replace);
+                return;
+            }
+        }
+    }
+
+    // TODO: check if substitution can legitimately fail
+    unreachable!()
 }
 
 /// Shortcut for use by `[_touchHLE_NSArray initWithCoder:]`.

@@ -9,6 +9,7 @@
 //! - Apple's [Resource Programming Guide](https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/LoadingResources/CocoaNibs/CocoaNibs.html) is very helpful.
 //! - GitHub user 0xced's [reverse-engineering of UIClassSwapper](https://gist.github.com/0xced/45daf79b62ad6a20be1c).
 
+use crate::frameworks::foundation::ns_keyed_unarchiver::replace_proxy_by_id;
 use crate::frameworks::foundation::ns_string::{get_static_str, to_rust_string};
 use crate::frameworks::foundation::{ns_string, NSUInteger};
 use crate::fs::GuestPathBuf;
@@ -18,21 +19,13 @@ use crate::objc::{
 };
 use crate::Environment;
 
+#[derive(Default)]
 struct UIRuntimeConnectionHostObject {
     destination: id,
     label: id,
     source: id,
 }
 impl HostObject for UIRuntimeConnectionHostObject {}
-impl Default for UIRuntimeConnectionHostObject {
-    fn default() -> Self {
-        UIRuntimeConnectionHostObject {
-            destination: nil,
-            label: nil,
-            source: nil,
-        }
-    }
-}
 
 #[derive(Default)]
 struct UIRuntimeEventConnectionHostObject {
@@ -40,6 +33,13 @@ struct UIRuntimeEventConnectionHostObject {
     eventMask: i32,
 }
 impl_HostObject_with_superclass!(UIRuntimeEventConnectionHostObject);
+
+#[derive(Default)]
+struct UIProxyObjectHostObject {
+    /// `NSString*`
+    proxied_id: id,
+}
+impl HostObject for UIProxyObjectHostObject {}
 
 pub const CLASSES: ClassExports = objc_classes! {
 
@@ -52,36 +52,39 @@ pub const CLASSES: ClassExports = objc_classes! {
 // find and instantiate this class.
 @implementation UIProxyObject: NSObject
 
++ (id)alloc {
+    let host_object = Box::<UIProxyObjectHostObject>::default();
+    env.objc.alloc_object(this, host_object, &mut env.mem)
+}
+
 // NSCoding implementation
 - (id)initWithCoder:(id)coder {
     let id_key = get_static_str(env, "UIProxiedObjectIdentifier");
     let id_nss: id = msg![env; coder decodeObjectForKey:id_key];
     let id = to_rust_string(env, id_nss);
 
-    if id == "IBFilesOwner" {
-        // The file owner is usually the UIApplication instance.
-        // Replacing the proxy with that instance is important so that the
-        // "delegate" outlet can be connected between it and the
-        // UIApplicationDelegate.
-        //
-        // TODO: This is a bit of a hack. Eventually it would be good to fix:
-        // - The name "UIProxyObject" implies that it might be intended to
-        //   proxy messages to another object, rather than be replaced by it.
-        //   Check what iPhone OS does?
-        // - If/when the UINib class is implemented and arbitrary nib files can
-        //   be deserialized, an app could pick some other object to be the nib
-        //   file owner, which this would need to handle.
-        // - If this object is meant to be replaced, it's probably not meant to
-        //   be done via `initWithCoder:`, but instead by providing a delegate
-        //   to the NSKeyedUnarchiver. That might be needed to implement
-        //   replacement for objects other than the UIApplication instance.
-
-        release(env, this);
-        msg_class![env; UIApplication sharedApplication]
-    } else {
+    // Owner will be replaced later, before setting up outlets
+    // See `load_nib_file`
+    if id != "IBFilesOwner" {
         log!("TODO: UIProxyObject replacement for {}, instance {:?} left unreplaced", id, this);
-        this
     }
+
+    retain(env, id_nss);
+    let host_obj = env.objc.borrow_mut::<UIProxyObjectHostObject>(this);
+    host_obj.proxied_id = id_nss;
+
+    this
+}
+
+- (id)proxiedId {
+    env.objc.borrow::<UIProxyObjectHostObject>(this).proxied_id
+}
+
+- (())dealloc {
+    let proxied_id = env.objc.borrow::<UIProxyObjectHostObject>(this).proxied_id;
+    release(env, proxied_id);
+
+    env.objc.dealloc_object(this, &mut env.mem)
 }
 
 @end
@@ -253,12 +256,12 @@ pub const CLASSES: ClassExports = objc_classes! {
 /// return [nib instantiateWithOwner:[UIApplication sharedApplication]
 ///                     optionsOrNil:nil];
 /// ```
-pub fn load_main_nib_file(env: &mut Environment, _ui_application: id) {
+pub fn load_main_nib_file(env: &mut Environment, ui_application: id) {
     let Some(path) = env.bundle.main_nib_file_path() else {
         return;
     };
 
-    let loaded_nib = load_nib_file(env, path);
+    let loaded_nib = load_nib_file(env, path, ui_application);
 
     if let Ok(unarchiver) = loaded_nib {
         release(env, unarchiver);
@@ -269,7 +272,7 @@ pub fn load_main_nib_file(env: &mut Environment, _ui_application: id) {
 /// Returns an empty [Err] if the file couldn't be loaded or an [Ok] wrapping
 /// an NSKeyedUnarchiver.
 /// The unarchiver should later be manually [release]d
-pub fn load_nib_file(env: &mut Environment, path: GuestPathBuf) -> Result<id, ()> {
+pub fn load_nib_file(env: &mut Environment, path: GuestPathBuf, owner: id) -> Result<id, ()> {
     let path = ns_string::from_rust_string(env, path.as_str().to_string());
     assert!(msg![env; path isAbsolutePath]);
     let ns_data: id = msg_class![env; NSData dataWithContentsOfFile:path];
@@ -277,6 +280,9 @@ pub fn load_nib_file(env: &mut Environment, path: GuestPathBuf) -> Result<id, ()
         // Apparently it's permitted to specify the nib file key in the
         // Info.plist, yet not have it point to a valid nib file?!
         log!("Warning: couldn't load nib file {:?}", path);
+        // Extra safety check - replacing for app should never fail
+        let ui_application: id = msg_class![env; UIApplication sharedApplication];
+        assert_ne!(ui_application, owner);
         return Err(());
     };
 
@@ -287,6 +293,15 @@ pub fn load_nib_file(env: &mut Environment, path: GuestPathBuf) -> Result<id, ()
     // UINibAccessibilityConfigurationsKey, UINibConnectionsKey,
     // UINibObjectsKey, UINibTopLevelObjectsKey and UINibVisibleWindowsKey.
     // Each corresponds to an NSArray.
+
+    // First, deserialize top level objects.
+    let top_objects_key = get_static_str(env, "UINibTopLevelObjectsKey");
+    let _top_objects: id = msg![env; unarchiver decodeObjectForKey:top_objects_key];
+
+    // Now, perform the substitution of a proxy for the File's Owner
+    // TODO: other substitutions such as UINibExternalObjects
+    let owner_id = get_static_str(env, "IBFilesOwner");
+    replace_proxy_by_id(env, unarchiver, owner_id, owner);
 
     // We don't need to do anything with the list of objects, but deserializing
     // it ensures everything else is deserialized.

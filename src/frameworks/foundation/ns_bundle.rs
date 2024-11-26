@@ -128,7 +128,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (id)loadNibNamed:(id)name // NSString*
-             owner:(id)_owner
+             owner:(id)owner
            options:(id)options { // NSDictionary<UINibOptionsKey, id> *
     if !options.is_null() {
         let options_count: NSUInteger = msg![env; options count];
@@ -137,7 +137,9 @@ pub const CLASSES: ClassExports = objc_classes! {
     let name_string = to_rust_string(env, name);
     let bundle_path = to_rust_string(env, env.objc.borrow::<NSBundleHostObject>(this).bundle_path);
     let nib_path = format!("{}/{}.nib", bundle_path, name_string);
-    let unarchiver = load_nib_file(env, GuestPathBuf::from(nib_path)).unwrap(); // TODO: Set owner and use options
+    // TODO: use options
+    assert!(owner != nil);
+    let unarchiver = load_nib_file(env, GuestPathBuf::from(nib_path), owner).unwrap();
     let top_level_objects_key = get_static_str(env, "UINibTopLevelObjectsKey");
     let top_level_objects = msg![env; unarchiver decodeObjectForKey:top_level_objects_key];
     release(env, unarchiver);

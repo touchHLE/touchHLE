@@ -39,6 +39,8 @@ struct NSKeyedUnarchiverHostObject {
     current_key: Option<Uid>,
     /// linear map of Uid => id
     already_unarchived: Vec<Option<id>>,
+    /// Something responding to NSKeyedUnarchiverDelegate
+    delegate: id,
 }
 impl HostObject for NSKeyedUnarchiverHostObject {}
 
@@ -53,6 +55,7 @@ pub const CLASSES: ClassExports = objc_classes! {
         plist: Dictionary::new(),
         current_key: None,
         already_unarchived: Vec::new(),
+        delegate: nil
     });
     env.objc.alloc_object(this, unarchiver, &mut env.mem)
 }
@@ -111,6 +114,16 @@ pub const CLASSES: ClassExports = objc_classes! {
     }
 
     env.objc.dealloc_object(this, &mut env.mem)
+}
+
+// TODO: implement calls to delegate methods
+// weak/non-retaining
+- (())setDelegate:(id)delegate { // id<NSKeyedUnarchiverDelegate>
+    let host_object = env.objc.borrow_mut::<NSKeyedUnarchiverHostObject>(this);
+    host_object.delegate = delegate;
+}
+- (id)delegate {
+    env.objc.borrow::<NSKeyedUnarchiverHostObject>(this).delegate
 }
 
 // These methods drive most of the decoding. They get called in two cases:

@@ -34,6 +34,24 @@
       "parentUuid": "659ebed0_af95d897",
       "revId": "6e2edde87d530060f2a3b1a7140fa4bb2263df89",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ea42dfe6_4ded973d",
+        "filename": "src/frameworks/foundation/ns_data.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 213,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-11-26T18:25:16Z",
+      "side": 1,
+      "message": "Yes, I thought about defining calloc() on that Allocator and using it in both stlib calloc func and here",
+      "parentUuid": "4d717ede_64a8fb99",
+      "revId": "6e2edde87d530060f2a3b1a7140fa4bb2263df89",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

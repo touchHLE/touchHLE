@@ -7,8 +7,8 @@
 
 use super::ui_device::*;
 use crate::dyld::{export_c_func, ConstantExports, FunctionExports, HostConstant};
+use crate::frameworks::foundation::ns_string::from_rust_string;
 use crate::frameworks::foundation::{ns_array, ns_string, NSInteger, NSUInteger};
-use crate::frameworks::uikit::ui_nib::load_main_nib_file;
 use crate::mem::MutPtr;
 use crate::objc::{
     autorelease, id, msg, msg_class, nil, objc_classes, release, retain, ClassExports, HostObject,
@@ -233,7 +233,14 @@ pub(super) fn UIApplicationMain(
         };
         let ui_application: id = msg![env; principal_class new];
 
-        load_main_nib_file(env, ui_application);
+        // TODO: There main nib file might be localized
+        // and have multiple paths.
+        let main_nib_filename = env.bundle.main_nib_filename().unwrap();
+        let ns_main_nib_filename = from_rust_string(env, main_nib_filename.to_string());
+        let nib: id = msg_class![env; UINib nibWithNibName:ns_main_nib_filename bundle:nil];
+        release(env, ns_main_nib_filename);
+        let _: id = msg![env; nib instantiateWithOwner:ui_application
+                                               options:nil];
 
         let delegate: id = msg![env; ui_application delegate];
         if delegate != nil {

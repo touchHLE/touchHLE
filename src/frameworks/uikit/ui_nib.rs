@@ -13,26 +13,27 @@ use crate::frameworks::foundation::ns_string::{get_static_str, to_rust_string};
 use crate::frameworks::foundation::{ns_string, NSUInteger};
 use crate::fs::GuestPathBuf;
 use crate::objc::{
-    id, impl_HostObject_with_superclass, msg, msg_class, msg_super, nil, objc_classes, release,
-    retain, ClassExports, HostObject,
+    autorelease, id, impl_HostObject_with_superclass, msg, msg_class, msg_super, nil, objc_classes,
+    release, retain, ClassExports, HostObject,
 };
 use crate::Environment;
 
+#[derive(Default)]
+struct UINibHostObject {
+    /// `NSString*`
+    nib_name: id,
+    /// `NSBundle*`
+    bundle: id,
+}
+impl HostObject for UINibHostObject {}
+
+#[derive(Default)]
 struct UIRuntimeConnectionHostObject {
     destination: id,
     label: id,
     source: id,
 }
 impl HostObject for UIRuntimeConnectionHostObject {}
-impl Default for UIRuntimeConnectionHostObject {
-    fn default() -> Self {
-        UIRuntimeConnectionHostObject {
-            destination: nil,
-            label: nil,
-            source: nil,
-        }
-    }
-}
 
 #[derive(Default)]
 struct UIRuntimeEventConnectionHostObject {
@@ -45,8 +46,62 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);
 
-// TODO actual UINib class. It's not needed for the main nib file which is
-// loaded implicitly.
+@implementation UINib: NSObject
+
++ (id)nibWithNibName:(id)nib_name // NSString *
+              bundle:(id)bundle { //NSBundle *
+    let main_bundle = msg_class![env; NSBundle mainBundle];
+    let bundle: id = if bundle == nil {
+        main_bundle
+    } else {
+        // TODO: non-main bundles
+        assert_eq!(bundle, main_bundle);
+        bundle
+    };
+
+    retain(env, nib_name);
+    retain(env, bundle);
+    let host_object = Box::new(UINibHostObject {
+        nib_name,
+        bundle
+    });
+    let new = env.objc.alloc_object(this, host_object, &mut env.mem);
+
+    autorelease(env, new)
+}
+
+- (())dealloc {
+    let &UINibHostObject {
+        nib_name,
+        bundle
+    } = env.objc.borrow(this);
+    release(env, nib_name);
+    release(env, bundle);
+    env.objc.dealloc_object(this, &mut env.mem)
+}
+
+- (id)instantiateWithOwner:(id)owner
+                   options:(id)options { // NSDictionary *
+    assert!(owner != nil); // TODO
+    assert!(options == nil); // TODO
+
+    let bundle = env.objc.borrow::<UINibHostObject>(this).bundle;
+    let nib_name = env.objc.borrow::<UINibHostObject>(this).nib_name;
+    let type_: id = get_static_str(env, "nib");
+    let path: id  = msg![env; bundle pathForResource:nib_name ofType:type_];
+
+    assert!(path != nil);
+    assert!(msg![env; path isAbsolutePath]);
+    let nib_path = to_rust_string(env, path).to_string();
+
+    let unarchiver = load_nib_file(env, GuestPathBuf::from(nib_path)).unwrap();
+    let top_level_objects_key = get_static_str(env, "UINibTopLevelObjectsKey");
+    let top_level_objects = msg![env; unarchiver decodeObjectForKey:top_level_objects_key];
+    release(env, unarchiver);
+    top_level_objects
+}
+
+@end
 
 // An undocumented type that nib files reference by name. NSKeyedUnarchiver will
 // find and instantiate this class.
@@ -241,35 +296,13 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 @end
 
-
 };
-
-/// Shortcut for use by [super::ui_application::UIApplicationMain].
-/// Calls [load_nib_file] underneath.
-///
-/// In terms of the proper API, it should behave something like:
-/// ```objc
-/// UINib *nib = [UINib nibWithName:main_nib_file bundle:nil];
-/// return [nib instantiateWithOwner:[UIApplication sharedApplication]
-///                     optionsOrNil:nil];
-/// ```
-pub fn load_main_nib_file(env: &mut Environment, _ui_application: id) {
-    let Some(path) = env.bundle.main_nib_file_path() else {
-        return;
-    };
-
-    let loaded_nib = load_nib_file(env, path);
-
-    if let Ok(unarchiver) = loaded_nib {
-        release(env, unarchiver);
-    }
-}
 
 /// Takes a [GuestPathBuf] where a nib file is located and deserializes it.
 /// Returns an empty [Err] if the file couldn't be loaded or an [Ok] wrapping
 /// an NSKeyedUnarchiver.
 /// The unarchiver should later be manually [release]d
-pub fn load_nib_file(env: &mut Environment, path: GuestPathBuf) -> Result<id, ()> {
+fn load_nib_file(env: &mut Environment, path: GuestPathBuf) -> Result<id, ()> {
     let path = ns_string::from_rust_string(env, path.as_str().to_string());
     assert!(msg![env; path isAbsolutePath]);
     let ns_data: id = msg_class![env; NSData dataWithContentsOfFile:path];

@@ -34,6 +34,24 @@
       "parentUuid": "a3cb3f1e_6805fa6a",
       "revId": "0423253874b27df74f1c265b224ba3ea12f3148f",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "bb3b8c46_01464d7b",
+        "filename": "src/frameworks/foundation/ns_data.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 251,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2024-11-27T18:35:18Z",
+      "side": 1,
+      "message": "Also wrote a test program and verified resizing works as expected.",
+      "parentUuid": "d416fc55_1384b5c1",
+      "revId": "0423253874b27df74f1c265b224ba3ea12f3148f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

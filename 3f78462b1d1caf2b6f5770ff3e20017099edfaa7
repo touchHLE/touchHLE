@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "175d158d_80bfca00",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 2
+      },
+      "lineNbr": 7,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-11-28T21:48:54Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "aa1d0df9_3238876d",
+      "revId": "3f78462b1d1caf2b6f5770ff3e20017099edfaa7",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "4e7debf0_d4f521cc",
@@ -31,6 +49,24 @@
       "writtenOn": "2024-11-28T20:33:28Z",
       "side": 1,
       "message": "Typo: weak\n\n(Also I\u0027m not sure if rustdoc respects single newlines like this, because of Markdown; I would put this in brackets instead. You can check if you want. The linter script builds the documentation, it should be in `target/doc/touchHLE/index.html` or something.)",
+      "revId": "3f78462b1d1caf2b6f5770ff3e20017099edfaa7",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "2f757848_c805e637",
+        "filename": "src/frameworks/uikit/ui_nib.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 28,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-11-28T21:48:54Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "4e7debf0_d4f521cc",
       "revId": "3f78462b1d1caf2b6f5770ff3e20017099edfaa7",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

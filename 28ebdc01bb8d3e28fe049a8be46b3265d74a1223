@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f8764487_638af911",
+        "filename": "src/frameworks/uikit/ui_nib.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 132,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-11-28T20:33:28Z",
+      "side": 0,
+      "message": "We should probably keep this TODO around since it might still be the case that this implementation is “wrong”. You can modify it a bit though.",
+      "revId": "28ebdc01bb8d3e28fe049a8be46b3265d74a1223",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

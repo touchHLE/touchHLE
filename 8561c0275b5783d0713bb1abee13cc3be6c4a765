@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6711702c_1a27070d",
+        "filename": "src/frameworks/uikit/ui_view.rs",
+        "patchSetId": 14
+      },
+      "lineNbr": 234,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-11-28T22:02:27Z",
+      "side": 1,
+      "message": "i don\u0027t get this formula. could you please elaborate how you deduced it?",
+      "revId": "8561c0275b5783d0713bb1abee13cc3be6c4a765",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

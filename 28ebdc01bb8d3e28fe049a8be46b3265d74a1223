@@ -34,6 +34,24 @@
       "parentUuid": "f8764487_638af911",
       "revId": "28ebdc01bb8d3e28fe049a8be46b3265d74a1223",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3d63ac51_64275f65",
+        "filename": "src/frameworks/uikit/ui_nib.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 132,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-11-28T22:10:32Z",
+      "side": 0,
+      "message": "I guess it looks fine though maybe we should still mention that the replacement possibly should happen after `initWithCoder:` (we just know it\u0027s not via the delegate now)",
+      "parentUuid": "60f68c72_f9d41a1e",
+      "revId": "28ebdc01bb8d3e28fe049a8be46b3265d74a1223",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

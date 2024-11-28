@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5162a69a_6d2bc1c0",
+        "filename": "src/frameworks/uikit/ui_application.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 237,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-11-28T20:19:45Z",
+      "side": 1,
+      "message": "Don\u0027t we support the \"path for resource\" stuff already? We probably just need to use that?\n\nDoes it maybe happen automatically since you\u0027re using `pathForResource:` in the other file?",
+      "revId": "28ebdc01bb8d3e28fe049a8be46b3265d74a1223",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

@@ -35,6 +35,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "d4683953_47a12986",
+        "filename": "src/frameworks/uikit/ui_view.rs",
+        "patchSetId": 13
+      },
+      "lineNbr": 15,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-11-28T16:28:07Z",
+      "side": 1,
+      "message": "Sorry, this was intended to go in a different commit.",
+      "parentUuid": "06d5b7ab_595933cb",
+      "revId": "0ef9e775f830f6c3fe10586db6d2e34f5630c831",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "7d260fc6_39a23b07",
@@ -48,6 +66,24 @@
       "writtenOn": "2024-11-25T14:31:40Z",
       "side": 1,
       "message": "As far as I understand, you\u0027ve implemented correct animation delays with proper post-animation actions, but not animations themselves.\n\nYou should explain that in the comment and add a TODO.\n\n(for example here, before this struct)",
+      "revId": "0ef9e775f830f6c3fe10586db6d2e34f5630c831",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "690ce7d0_6bbefdd5",
+        "filename": "src/frameworks/uikit/ui_view.rs",
+        "patchSetId": 13
+      },
+      "lineNbr": 59,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-11-28T16:28:07Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "7d260fc6_39a23b07",
       "revId": "0ef9e775f830f6c3fe10586db6d2e34f5630c831",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
@@ -69,6 +105,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "64233060_d3be676d",
+        "filename": "src/frameworks/uikit/ui_view.rs",
+        "patchSetId": 13
+      },
+      "lineNbr": 61,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-11-28T16:28:07Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "72a33fde_cc26bc04",
+      "revId": "0ef9e775f830f6c3fe10586db6d2e34f5630c831",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "9c65663a_32168a73",
@@ -82,6 +136,24 @@
       "writtenOn": "2024-11-25T14:31:40Z",
       "side": 1,
       "message": "why it\u0027s default here? At least you should set correct animation id for the state object",
+      "revId": "0ef9e775f830f6c3fe10586db6d2e34f5630c831",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "0f377d99_926d6b36",
+        "filename": "src/frameworks/uikit/ui_view.rs",
+        "patchSetId": 13
+      },
+      "lineNbr": 207,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-11-28T16:28:07Z",
+      "side": 1,
+      "message": "Nice catch, thanks",
+      "parentUuid": "9c65663a_32168a73",
       "revId": "0ef9e775f830f6c3fe10586db6d2e34f5630c831",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
@@ -103,6 +175,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "c014e6e6_0f5e63bd",
+        "filename": "src/frameworks/uikit/ui_view.rs",
+        "patchSetId": 13
+      },
+      "lineNbr": 223,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-11-28T16:28:07Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "c7842e09_e09746be",
+      "revId": "0ef9e775f830f6c3fe10586db6d2e34f5630c831",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "ed18f1bc_070bcc82",
@@ -116,6 +206,24 @@
       "writtenOn": "2024-11-25T14:31:40Z",
       "side": 1,
       "message": "You don\u0027t need to check for delegate to be nil as any message to nil is noop.\n\nOn the other hand, do we have guaranty that delegate always responds to this selector? If it\u0027s optional you\u0027ll need to do a little dance with respondsToSelector: first here",
+      "revId": "0ef9e775f830f6c3fe10586db6d2e34f5630c831",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d7b3c6a8_d68b071e",
+        "filename": "src/frameworks/uikit/ui_view.rs",
+        "patchSetId": 13
+      },
+      "lineNbr": 243,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-11-28T16:28:07Z",
+      "side": 1,
+      "message": "If the delegate is set and isn\u0027t nil but it doesn\u0027t respond to the selector, the app crashes. The current implementation behaves the same way",
+      "parentUuid": "ed18f1bc_070bcc82",
       "revId": "0ef9e775f830f6c3fe10586db6d2e34f5630c831",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

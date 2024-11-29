@@ -16,6 +16,24 @@
       "message": "I really don\u0027t want to merge just subclasses of UIViews as they will silently fail to render and it will be hard to detect that visually.\n\nInstead, you should override both initWithFrame: and initWithCoder: in your stubs, call super and do a log TODO message.\n\nAlso remove UIRoundedButton, it was already defined on the trunk.\n(For the future, if you define undocumented classes of UIKit, always prefer to write a comment to distinguish them from the normal one.)",
       "revId": "a844055d91c9e0ac714df9fe3c3626b53cf91a46",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "e6a53f44_9039538c",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 35
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-11-29T16:20:43Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "a7beed19_52226e47",
+      "revId": "a844055d91c9e0ac714df9fe3c3626b53cf91a46",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

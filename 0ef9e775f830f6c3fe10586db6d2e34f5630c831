@@ -38,6 +38,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "7fc19f22_efed140b",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 13
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-11-29T16:20:39Z",
+      "side": 1,
+      "message": "I thought about doing something similar to what audio queues do, register something that will be called from the main loop so that the properties can be updated each frame. I think that\u0027d be a simple enough solution that would work for this.",
+      "parentUuid": "3a49ef94_b8125842",
+      "revId": "0ef9e775f830f6c3fe10586db6d2e34f5630c831",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "06d5b7ab_595933cb",
         "filename": "src/frameworks/uikit/ui_view.rs",
         "patchSetId": 13

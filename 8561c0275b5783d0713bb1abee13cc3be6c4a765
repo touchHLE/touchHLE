@@ -16,6 +16,24 @@
       "message": "i don\u0027t get this formula. could you please elaborate how you deduced it?",
       "revId": "8561c0275b5783d0713bb1abee13cc3be6c4a765",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "973b8d57_542eeaf2",
+        "filename": "src/frameworks/uikit/ui_view.rs",
+        "patchSetId": 14
+      },
+      "lineNbr": 234,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-11-29T16:20:39Z",
+      "side": 1,
+      "message": "Nevermind, it\u0027s a screw up on my part. It should be duration that gets multiplied by repeat count, and delay that gets added later.",
+      "parentUuid": "6711702c_1a27070d",
+      "revId": "8561c0275b5783d0713bb1abee13cc3be6c4a765",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

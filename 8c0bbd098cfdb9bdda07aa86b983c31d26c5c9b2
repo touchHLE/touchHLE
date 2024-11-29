@@ -16,6 +16,24 @@
       "message": "I\u0027m still not sure this formula is correct. How did you test it?\n\nAccording to docs, repeat count by default is 0, corresponding to performing the animation _once_ without repeating.",
       "revId": "8c0bbd098cfdb9bdda07aa86b983c31d26c5c9b2",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "eb185f59_30503fe7",
+        "filename": "src/frameworks/uikit/ui_view.rs",
+        "patchSetId": 15
+      },
+      "lineNbr": 229,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-11-29T19:01:53Z",
+      "side": 1,
+      "message": "Oh, my bad. I hadn\u0027t tested it, i was going by what made sense by reading the docs but i didn\u0027t catch that 1 meant REPEAT once, instead of play once.",
+      "parentUuid": "a5ac522f_cb2578db",
+      "revId": "8c0bbd098cfdb9bdda07aa86b983c31d26c5c9b2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

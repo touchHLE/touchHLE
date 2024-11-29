@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1fa523dd_cca56d4d",
+        "filename": "src/frameworks/uikit/ui_view/ui_control/ui_slider.rs",
+        "patchSetId": 36
+      },
+      "lineNbr": 14,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-11-29T16:39:10Z",
+      "side": 1,
+      "message": "why it is inherited from UIButton?\n\nalso you forget to override initilizers",
+      "revId": "97cd341453ba0d2bfb3359b740252832e595311d",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

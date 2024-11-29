@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5422ecbf_19a450fc",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 16
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-11-29T20:01:42Z",
+      "side": 1,
+      "message": "LGTM overall, but I would like to have a second look from hikari\n\nBasically, we need to decide if using timers like this is OK",
+      "revId": "39b5958cd07faf3b6d6a38f5d22e15462ce099c9",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

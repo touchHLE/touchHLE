@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a5ac522f_cb2578db",
+        "filename": "src/frameworks/uikit/ui_view.rs",
+        "patchSetId": 15
+      },
+      "lineNbr": 229,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-11-29T16:44:22Z",
+      "side": 1,
+      "message": "I\u0027m still not sure this formula is correct. How did you test it?\n\nAccording to docs, repeat count by default is 0, corresponding to performing the animation _once_ without repeating.",
+      "revId": "8c0bbd098cfdb9bdda07aa86b983c31d26c5c9b2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

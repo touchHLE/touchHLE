@@ -52,6 +52,24 @@
       "parentUuid": "4d46fe89_3a20e85c",
       "revId": "28ebdc01bb8d3e28fe049a8be46b3265d74a1223",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b64c373a_38e6d0d1",
+        "filename": "src/frameworks/uikit/ui_application.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 237,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-11-30T15:03:26Z",
+      "side": 1,
+      "message": "I removed the TODO here and added TODOs in ns_bundle.rs",
+      "parentUuid": "bf2d77cb_61148c1c",
+      "revId": "28ebdc01bb8d3e28fe049a8be46b3265d74a1223",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

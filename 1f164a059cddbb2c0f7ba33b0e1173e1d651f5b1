@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "5a467168_9910c686",
+        "filename": "src/frameworks/uikit/ui_view/ui_control/ui_segmented_control.rs",
+        "patchSetId": 37
+      },
+      "lineNbr": 24,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-11-30T10:32:36Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "8f8a46ae_9a31482f",
+      "revId": "1f164a059cddbb2c0f7ba33b0e1173e1d651f5b1",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "3aac0cbc_a12b60d6",
@@ -31,6 +49,24 @@
       "writtenOn": "2024-11-29T19:58:47Z",
       "side": 1,
       "message": "If it\u0027s undocumented, I\u0027m imagining it only being used via instantiation from the NIB and not ever called with initWithFrame:\n\nI think you should replace body of this method with a comment and an `unreachable!()` statement",
+      "revId": "1f164a059cddbb2c0f7ba33b0e1173e1d651f5b1",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "a8b2036d_5ea6d301",
+        "filename": "src/frameworks/uikit/ui_view/ui_control/ui_segmented_control.rs",
+        "patchSetId": 37
+      },
+      "lineNbr": 35,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2024-11-30T10:32:36Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "3aac0cbc_a12b60d6",
       "revId": "1f164a059cddbb2c0f7ba33b0e1173e1d651f5b1",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

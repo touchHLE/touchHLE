@@ -16,6 +16,24 @@
       "message": "LGTM for controller support and thanks for adding PoP options\n\nRegarding the rest, I still not sure what is the benefit of adding that to the options if games are choosing correct orientation themselves.\nI let hikari approve this part.",
       "revId": "ac16ebaba643264fe14b2682a82aca9b9c18efe6",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "89841fae_a7835eb5",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-12-02T12:10:27Z",
+      "side": 1,
+      "message": "The auto-rotation is not perfect and it sometimes provides a better user experience, or avoids very unusual bugs, to have the orientation in the default options anyway. But this may end up just cluttering the list of options, since we\u0027d have to do it for hundreds or thousands of titles. Maybe we should stop doing this?",
+      "parentUuid": "af8e65da_cc157897",
+      "revId": "ac16ebaba643264fe14b2682a82aca9b9c18efe6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

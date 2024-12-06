@@ -174,7 +174,6 @@ pub struct Dyld {
     /// removed in release builds if it's ever necessary.
     linked_host_functions: Vec<(&'static str, HostFunction)>,
     return_to_host_routine: Option<GuestFunction>,
-    thread_exit_routine: Option<GuestFunction>,
     constants_to_link_later: Vec<(MutPtr<ConstVoidPtr>, &'static HostConstant)>,
     non_lazy_host_functions: HashMap<&'static str, GuestFunction>,
 }
@@ -182,10 +181,14 @@ pub struct Dyld {
 impl Dyld {
     /// We reserve this SVC ID for invoking the lazy linker.
     pub const SVC_LAZY_LINK: u32 = 0;
-    /// We reserve this SVC ID for the exit routine for spawned threads.
-    pub const SVC_THREAD_EXIT: u32 = 1;
     /// We reserve this SVC ID for the special return-to-host routine.
-    pub const SVC_RETURN_TO_HOST: u32 = 2;
+    pub const SVC_RETURN_TO_HOST: u32 = 1;
+    // BEFOREMERGE: Note: SVC_THREAD_EXIT is gone because there's should be
+    // no need for it - even pthread_exit should be able to just exit the
+    // thread directly (probably through some special yield), and regular
+    // thread exits just return the coroutine right now.
+    // Keeping it might make stack traces a little bit easier to read though?
+    //
     /// The range of SVC IDs `SVC_LINKED_FUNCTIONS_BASE..` is used to reference
     /// [Self::linked_host_functions] entries.
     pub const SVC_LINKED_FUNCTIONS_BASE: u32 = Self::SVC_RETURN_TO_HOST + 1;
@@ -197,7 +200,6 @@ impl Dyld {
         Dyld {
             linked_host_functions: Vec::new(),
             return_to_host_routine: None,
-            thread_exit_routine: None,
             constants_to_link_later: Vec::new(),
             non_lazy_host_functions: HashMap::new(),
         }
@@ -207,18 +209,12 @@ impl Dyld {
         self.return_to_host_routine.unwrap()
     }
 
-    pub fn thread_exit_routine(&self) -> GuestFunction {
-        self.thread_exit_routine.unwrap()
-    }
-
     /// Do linking-related tasks that need doing right after loading the
     /// binaries.
     pub fn do_initial_linking(&mut self, bins: &[MachO], mem: &mut Mem, objc: &mut ObjC) {
         assert!(self.return_to_host_routine.is_none());
-        assert!(self.thread_exit_routine.is_none());
         self.return_to_host_routine =
             Some(write_return_to_host_routine(mem, Self::SVC_RETURN_TO_HOST));
-        self.thread_exit_routine = Some(write_return_to_host_routine(mem, Self::SVC_THREAD_EXIT));
 
         // Currently assuming only the app binary contains Objective-C things.
 
@@ -242,10 +238,8 @@ impl Dyld {
     /// environment with no binary (see [crate::Environment::new_without_app]).
     pub fn do_initial_linking_with_no_bins(&mut self, mem: &mut Mem, objc: &mut ObjC) {
         assert!(self.return_to_host_routine.is_none());
-        assert!(self.thread_exit_routine.is_none());
         self.return_to_host_routine =
             Some(write_return_to_host_routine(mem, Self::SVC_RETURN_TO_HOST));
-        self.thread_exit_routine = Some(write_return_to_host_routine(mem, Self::SVC_THREAD_EXIT));
 
         objc.register_host_selectors(mem);
     }
@@ -464,7 +458,7 @@ impl Dyld {
     ) -> Option<HostFunction> {
         match svc {
             Self::SVC_LAZY_LINK => self.do_lazy_link(bins, mem, cpu, svc_pc),
-            Self::SVC_THREAD_EXIT | Self::SVC_RETURN_TO_HOST => unreachable!(), // don't handle here
+            Self::SVC_RETURN_TO_HOST => unreachable!(), // don't handle here
             Self::SVC_LINKED_FUNCTIONS_BASE.. => {
                 let f = self
                     .linked_host_functions

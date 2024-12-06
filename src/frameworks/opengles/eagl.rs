@@ -6,19 +6,19 @@
 //! EAGL.
 
 use crate::dyld::{ConstantExports, HostConstant};
+use crate::environment::Environment;
 use crate::frameworks::core_animation::ca_eagl_layer::{
     find_fullscreen_eagl_layer, get_pixels_vec_for_presenting, present_pixels,
 };
 use crate::frameworks::foundation::ns_string::get_static_str;
 use crate::frameworks::foundation::NSUInteger;
-use crate::gles::gles11_raw as gles11; // constants only
 use crate::gles::gles11_raw::types::*;
 use crate::gles::present::{present_frame, FpsCounter};
-use crate::gles::{create_gles1_ctx, gles1_on_gl2, GLES};
+use crate::gles::{create_gles1_ctx, gles1_on_gl2, GLES, GLESContext};
+use crate::gles::gles11_raw as gles11; // constants only
 use crate::mem::MutPtr;
 use crate::objc::{id, msg, nil, objc_classes, release, retain, ClassExports, HostObject};
 use crate::options::Options;
-use crate::window::Window;
 use std::collections::HashMap;
 use std::time::{Duration, Instant};
 
@@ -57,7 +57,7 @@ const kEAGLRenderingAPIOpenGLES2: EAGLRenderingAPI = 2;
 const kEAGLRenderingAPIOpenGLES3: EAGLRenderingAPI = 3;
 
 pub(super) struct EAGLContextHostObject {
-    pub(super) gles_ctx: Option<Box<dyn GLES>>,
+    pub(super) gles_ctx: Option<Box<dyn GLESContext>>,
     /// Mapping of OpenGL ES renderbuffer names to `EAGLDrawable` instances
     /// (always `CAEAGLLayer*`). Retains the instance so it won't dangle.
     renderbuffer_drawable_bindings: HashMap<GLuint, id>,
@@ -90,24 +90,17 @@ pub const CLASSES: ClassExports = objc_classes! {
 + (bool)setCurrentContext:(id)context { // EAGLContext*
     retain(env, context);
 
-    // Clear flag value, we're changing context anyway.
-    let _ = env.window_mut().is_app_gl_ctx_no_longer_current();
-
     let current_ctx = env.framework_state.opengles.current_ctx_for_thread(env.current_thread);
 
     if let Some(old_ctx) = std::mem::take(current_ctx) {
         release(env, old_ctx);
-        env.framework_state.opengles.current_ctx_thread = None;
     }
 
     // reborrow
     let current_ctx = env.framework_state.opengles.current_ctx_for_thread(env.current_thread);
 
     if context != nil {
-        let host_obj = env.objc.borrow_mut::<EAGLContextHostObject>(context);
-        host_obj.gles_ctx.as_mut().unwrap().make_current(env.window.as_ref().unwrap());
         *current_ctx = Some(context);
-        env.framework_state.opengles.current_ctx_thread = Some(env.current_thread);
     }
 
     true
@@ -128,18 +121,30 @@ pub const CLASSES: ClassExports = objc_classes! {
     }
 
     let window = env.window.as_mut().expect("OpenGL ES is not supported in headless mode");
-    let prev_context = env.objc.borrow::<EAGLContextHostObject>(group).gles_ctx.as_ref().unwrap();
-    prev_context.make_current(window);
+    let prev_context = env.objc.borrow_mut::<EAGLContextHostObject>(group).gles_ctx.as_mut().unwrap();
 
+    // This is sort of a hack - we set the "current" context, then immediately
+    // drop it. Since we know all the code between here and creating the new
+    // context, we know that there won't be any context switches, so it's fine
+    // to do this.
+    {
+        let _prev_ctx = prev_context.make_current(window);
+    }
     env.window.as_mut().unwrap().set_share_with_current_context(true);
-    let res: id = msg![env; this initWithAPI:api];
-    // Setting current_ctx_thread to None should cause sync_context to
-    // switch back to the right context if the app makes an OpenGL ES call.
-    // (it's already done in initWithAPI: but we want to be explicit here.)
-    env.framework_state.opengles.current_ctx_thread = None;
+
+    let mut gles1_ins = create_gles1_ctx(env);
+
+    let window = env.window.as_mut().expect("OpenGL ES is not supported in headless mode");
+    {
+        let gles1_ctx = gles1_ins.make_current(window);
+        log!("Driver info: {}", unsafe { gles1_ctx.driver_description() });
+    }
+
+    env.objc.borrow_mut::<EAGLContextHostObject>(this).gles_ctx = Some(gles1_ins);
+
     env.window.as_mut().unwrap().set_share_with_current_context(false);
 
-    res
+    this
 }
 
 - (id)initWithAPI:(EAGLRenderingAPI)api {
@@ -151,19 +156,15 @@ pub const CLASSES: ClassExports = objc_classes! {
         return nil;
     }
 
+    let mut gles1_ins = create_gles1_ctx(env);
+
     let window = env.window.as_mut().expect("OpenGL ES is not supported in headless mode");
-    let gles1_ctx = create_gles1_ctx(window, &env.options);
+    {
+        let gles1_ctx = gles1_ins.make_current(window);
+        log!("Driver info: {}", unsafe { gles1_ctx.driver_description() });
+    }
 
-    // Make the context current so we can get driver info from it.
-    // initWithAPI: is not supposed to make the new context current (the app
-    // must call setCurrentContext: for that), so we need to hide this from the
-    // app. Setting current_ctx_thread to None should cause sync_context to
-    // switch back to the right context if the app makes an OpenGL ES call.
-    gles1_ctx.make_current(window);
-    env.framework_state.opengles.current_ctx_thread = None;
-    log!("Driver info: {}", unsafe { gles1_ctx.driver_description() });
-
-    env.objc.borrow_mut::<EAGLContextHostObject>(this).gles_ctx = Some(gles1_ctx);
+    env.objc.borrow_mut::<EAGLContextHostObject>(this).gles_ctx = Some(gles1_ins);
 
     this
 }
@@ -222,14 +223,17 @@ pub const CLASSES: ClassExports = objc_classes! {
     // FIXME: get width and height from the layer!
     let (width, height) = window.size_unrotated_scalehacked();
 
-    // Unclear from documentation if this method requires an appropriate context
-    // to already be active, but that seems to be the case in practice?
-    let gles = super::sync_context(&mut env.framework_state.opengles, &mut env.objc, window, env.current_thread);
-    let renderbuffer: GLuint = unsafe {
-        gles.RenderbufferStorageOES(target, internalformat, width.try_into().unwrap(), height.try_into().unwrap());
-        let mut renderbuffer = 0;
-        gles.GetIntegerv(gles11::RENDERBUFFER_BINDING_OES, &mut renderbuffer);
-        renderbuffer as _
+    let renderbuffer = {
+        // Unclear from documentation if this method requires an appropriate
+        // context to already be active, but that seems to be the case
+        // in practice?
+        let mut gles = super::sync_context(&mut env.framework_state.opengles, &mut env.objc, window, env.current_thread);
+        unsafe {
+            gles.RenderbufferStorageOES(target, internalformat, width.try_into().unwrap(), height.try_into().unwrap());
+            let mut renderbuffer = 0;
+            gles.GetIntegerv(gles11::RENDERBUFFER_BINDING_OES, &mut renderbuffer);
+            renderbuffer as _
+        }
     };
 
     retain(env, drawable);
@@ -265,13 +269,15 @@ pub const CLASSES: ClassExports = objc_classes! {
     // Unclear from documentation if this method requires the context to be
     // current, but it would be weird if it didn't?
     let window = env.window.as_mut().expect("OpenGL ES is not supported in headless mode");
-    let gles = super::sync_context(&mut env.framework_state.opengles, &mut env.objc, window, env.current_thread);
+    let mut gles = super::sync_context(&mut env.framework_state.opengles, &mut env.objc, window, env.current_thread);
 
     let renderbuffer: GLuint = unsafe {
         let mut renderbuffer = 0;
         gles.GetIntegerv(gles11::RENDERBUFFER_BINDING_OES, &mut renderbuffer);
         renderbuffer as _
     };
+
+    std::mem::drop(gles);
 
     let Some(&drawable) = env
         .objc
@@ -291,9 +297,8 @@ pub const CLASSES: ClassExports = objc_classes! {
             renderbuffer,
         );
         // re-borrow
-        let gles = super::sync_context(&mut env.framework_state.opengles, &mut env.objc, env.window.as_mut().unwrap(), env.current_thread);
         unsafe {
-            present_renderbuffer(gles, env.window.as_mut().unwrap());
+            present_renderbuffer(env);
         }
     } else {
         if fullscreen_layer != nil {
@@ -308,7 +313,7 @@ pub const CLASSES: ClassExports = objc_classes! {
                 renderbuffer,
             );
             if let Some(sleep_for) = sleep_for {
-                env.sleep(sleep_for, /* tail_call: */ false);
+                env.sleep(sleep_for);
             }
             return true;
         }
@@ -325,15 +330,17 @@ pub const CLASSES: ClassExports = objc_classes! {
         );
         let pixels_vec = get_pixels_vec_for_presenting(env, drawable);
         // re-borrow
-        let gles = super::sync_context(&mut env.framework_state.opengles, &mut env.objc, env.window.as_mut().unwrap(), env.current_thread);
-        let (pixels_vec, width, height) = unsafe {
-            read_renderbuffer(gles, pixels_vec)
+        let (pixels_vec, width, height) = {
+            let mut gles = super::sync_context(&mut env.framework_state.opengles, &mut env.objc, env.window.as_mut().unwrap(), env.current_thread);
+            unsafe {
+                read_renderbuffer(gles.as_mut(), pixels_vec)
+            }
         };
         present_pixels(env, drawable, pixels_vec, width, height);
     }
 
     if let Some(sleep_for) = sleep_for {
-        env.sleep(sleep_for, /* tail_call: */ false);
+        env.sleep(sleep_for);
     }
 
     true
@@ -526,9 +533,21 @@ unsafe fn read_renderbuffer(gles: &mut dyn GLES, mut pixel_buffer: Vec<u8>) -> (
 /// (which should be provided by the app) to a texture and presents it with
 /// [present_frame], trying to avoid noticeably modifying OpenGL ES state while
 /// doing so. The front and back buffers are then swapped.
-///
-/// The provided context must be current.
-unsafe fn present_renderbuffer(gles: &mut dyn GLES, window: &mut Window) {
+unsafe fn present_renderbuffer(env: &mut Environment) {
+    // Save these for when we need to draw the frame
+    let viewport = env.window.as_mut().unwrap().viewport();
+    let rotation_matrix = env.window.as_mut().unwrap().rotation_matrix();
+    let virtual_cursor_visible_at = env.window.as_mut().unwrap().virtual_cursor_visible_at();
+
+    let gles_ctx = super::get_thread_context(
+        &mut env.framework_state.opengles,
+        &mut env.objc,
+        env.current_thread,
+    );
+
+    let mut gles_boxed = gles_ctx.make_current(env.window.as_mut().unwrap());
+    let gles = gles_boxed.as_mut();
+
     // We can't directly copy the content of the renderbuffer to the default
     // framebuffer (the window), but if we attach it to a framebuffer object, we
     // can use glCopyTexImage2D() to copy it to a texture, which we can then
@@ -646,12 +665,7 @@ unsafe fn present_renderbuffer(gles: &mut dyn GLES, window: &mut Window) {
     );
 
     // Draw the quad
-    present_frame(
-        gles,
-        window.viewport(),
-        window.rotation_matrix(),
-        window.virtual_cursor_visible_at(),
-    );
+    present_frame(gles, viewport, rotation_matrix, virtual_cursor_visible_at);
 
     // Clean up the texture
     gles.DeleteTextures(1, &texture);
@@ -718,13 +732,18 @@ unsafe fn present_renderbuffer(gles: &mut dyn GLES, window: &mut Window) {
         old_tex_env_mode_arr.as_ptr().cast(),
     );
 
+    std::mem::drop(gles_boxed);
+
     // SDL2's documentation warns 0 should be bound to the draw framebuffer
     // when swapping the window, so this is the perfect moment.
-    window.swap_window();
+    env.window.as_ref().unwrap().swap_window();
+
+    let mut gles_boxed = gles_ctx.make_current(env.window.as_mut().unwrap());
+    let gles = gles_boxed.as_mut();
 
     // Restore the other bindings
     gles.BindTexture(gles11::TEXTURE_2D, old_texture_2d);
     gles.BindFramebufferOES(gles11::FRAMEBUFFER_OES, old_framebuffer);
 
-    //{ let err = gl21::GetError(); if err != 0 { panic!("{:#x}", err); } }
+    // { let err = gles.GetError(); if err != 0 { panic!("{:#x}", err); } }
 }

@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d2f56b8d_fc285eb1",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2024-12-06T07:47:39Z",
+      "side": 1,
+      "message": "Originally https://review.gerrithub.io/c/touchHLE/touchHLE/+/1201989.",
+      "revId": "cadb94c5df2d67d0550c67c52f3df14b5ade206b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

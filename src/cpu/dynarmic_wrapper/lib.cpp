@@ -3,12 +3,12 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
+#include <algorithm>
 #include <cstdint>
 #include <cstdio>
 
 #include "dynarmic/interface/A32/a32.h"
 #include "dynarmic/interface/A32/config.h"
-#include "dynarmic/interface/A32/context.h"
 
 namespace touchHLE::cpu {
 
@@ -25,6 +25,12 @@ bool touchHLE_cpu_write_u8(touchHLE_Mem *mem, VAddr addr, std::uint8_t value);
 bool touchHLE_cpu_write_u16(touchHLE_Mem *mem, VAddr addr, std::uint16_t value);
 bool touchHLE_cpu_write_u32(touchHLE_Mem *mem, VAddr addr, std::uint32_t value);
 bool touchHLE_cpu_write_u64(touchHLE_Mem *mem, VAddr addr, std::uint64_t value);
+struct touchHLE_DynarmicContext {
+  std::array<std::uint32_t, 16> regs;
+  std::array<std::uint32_t, 64> extregs;
+  std::uint32_t cpsr;
+  std::uint32_t fpscr;
+};
 }
 
 const auto HaltReasonSvc = Dynarmic::HaltReason::UserDefined1;
@@ -181,10 +187,16 @@ public:
     cpu->InvalidateCacheRange(start, size);
   }
 
-  void swap_context(void *context) {
-    Dynarmic::A32::Context tmp = cpu->SaveContext();
-    cpu->LoadContext(*(Dynarmic::A32::Context *)context);
-    *(Dynarmic::A32::Context *)context = tmp;
+  void swap_context(touchHLE_DynarmicContext *context) {
+    touchHLE_DynarmicContext tmp = {.regs = cpu->Regs(),
+                                    .extregs = cpu->ExtRegs(),
+                                    .cpsr = cpu->Cpsr(),
+                                    .fpscr = cpu->Fpscr()};
+    cpu->Regs() = context->regs;
+    cpu->ExtRegs() = context->extregs;
+    cpu->SetCpsr(context->cpsr);
+    cpu->SetFpscr(context->fpscr);
+    *context = tmp;
   }
 
   std::int32_t run_or_step(touchHLE_Mem *mem, std::uint64_t *ticks) {
@@ -244,7 +256,7 @@ void touchHLE_DynarmicWrapper_set_cpsr(DynarmicWrapper *cpu,
 }
 
 void touchHLE_DynarmicWrapper_swap_context(DynarmicWrapper *cpu,
-                                           void *context) {
+                                           touchHLE_DynarmicContext *context) {
   cpu->swap_context(context);
 }
 
@@ -258,13 +270,6 @@ std::int32_t touchHLE_DynarmicWrapper_run_or_step(DynarmicWrapper *cpu,
                                                   touchHLE_Mem *mem,
                                                   std::uint64_t *ticks) {
   return cpu->run_or_step(mem, ticks);
-}
-
-void *touchHLE_DynarmicWrapper_Context_new() {
-  return (void *)new Dynarmic::A32::Context();
-}
-void touchHLE_DynarmicWrapper_Context_delete(void *context) {
-  delete (Dynarmic::A32::Context *)context;
 }
 }
 

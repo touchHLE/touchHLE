@@ -49,3 +49,9 @@ pub struct State {
     opengles: opengles::State,
     uikit: uikit::State,
 }
+
+impl State {
+    pub fn in_yield_free_section(&self) -> bool {
+        self.audio_toolbox.in_yield_free_section()
+    }
+}

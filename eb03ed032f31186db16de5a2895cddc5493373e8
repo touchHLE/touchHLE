@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "682dd46f_ca8ce163",
+        "filename": "src/frameworks/foundation/ns_dictionary.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 447,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-12-08T23:19:43Z",
+      "side": 1,
+      "message": "add a `/* copy_key: */` comment for the last parameter (as everywhere else)",
+      "revId": "eb03ed032f31186db16de5a2895cddc5493373e8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "89deb718_4eb923f9",
+        "filename": "src/cpu/dynarmic_wrapper/lib.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 115,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-12-10T20:35:36Z",
+      "side": 1,
+      "message": "Should be “As long”",
+      "revId": "787d86aaffd4ace11f15ed839e70f8390ff9b849",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

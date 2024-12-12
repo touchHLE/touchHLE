@@ -56,6 +56,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "d4b8b8fb_2c9844be",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 1
+      },
+      "lineNbr": 7,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-12-12T20:37:53Z",
+      "side": 1,
+      "message": "I choose --force-composition as it is shorter",
+      "parentUuid": "cfae1232_83c22dbb",
+      "revId": "8b7a848c2a970b1f1fc8f45cfd14312eb061de69",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "c467b919_1ae02459",
         "filename": "/COMMIT_MSG",
         "patchSetId": 1
@@ -84,6 +102,24 @@
       "writtenOn": "2024-12-12T20:37:29Z",
       "side": 1,
       "message": "Acknowledged",
+      "parentUuid": "c467b919_1ae02459",
+      "revId": "8b7a848c2a970b1f1fc8f45cfd14312eb061de69",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "a36f1b97_99351257",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 1
+      },
+      "lineNbr": 8,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-12-12T20:37:53Z",
+      "side": 1,
+      "message": "Done",
       "parentUuid": "c467b919_1ae02459",
       "revId": "8b7a848c2a970b1f1fc8f45cfd14312eb061de69",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
@@ -141,6 +177,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "49439ac0_77e58bdc",
+        "filename": "OPTIONS_HELP.txt",
+        "patchSetId": 1
+      },
+      "lineNbr": 186,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-12-12T20:37:53Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "045f4b61_8809f432",
+      "revId": "8b7a848c2a970b1f1fc8f45cfd14312eb061de69",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "8a58ac9b_ab2579a1",
@@ -176,6 +230,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "db8a481d_34a84eda",
+        "filename": "OPTIONS_HELP.txt",
+        "patchSetId": 1
+      },
+      "lineNbr": 188,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-12-12T20:37:53Z",
+      "side": 1,
+      "message": "Thanks, \"implies\" is the word I meant to use here ;)",
+      "parentUuid": "8a58ac9b_ab2579a1",
+      "revId": "8b7a848c2a970b1f1fc8f45cfd14312eb061de69",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "9f437c25_6ce36712",
@@ -206,6 +278,24 @@
       "writtenOn": "2024-12-12T20:37:29Z",
       "side": 1,
       "message": "Acknowledged",
+      "parentUuid": "9f437c25_6ce36712",
+      "revId": "8b7a848c2a970b1f1fc8f45cfd14312eb061de69",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "db18495c_28e92703",
+        "filename": "touchHLE_default_options.txt",
+        "patchSetId": 1
+      },
+      "lineNbr": 88,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-12-12T20:37:53Z",
+      "side": 1,
+      "message": "Done",
       "parentUuid": "9f437c25_6ce36712",
       "revId": "8b7a848c2a970b1f1fc8f45cfd14312eb061de69",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"

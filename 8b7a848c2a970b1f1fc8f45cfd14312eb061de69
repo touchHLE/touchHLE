@@ -36,6 +36,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "b057cdb9_4fbe3562",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 1
+      },
+      "lineNbr": 7,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-12-12T20:37:29Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "cfae1232_83c22dbb",
+      "revId": "8b7a848c2a970b1f1fc8f45cfd14312eb061de69",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "c467b919_1ae02459",
@@ -49,6 +67,24 @@
       "writtenOn": "2024-12-12T19:59:58Z",
       "side": 1,
       "message": "It would be better if you could fit the summary on a single line, max length 72 characters. You can mention the games in a following paragraph. Otherwise, part of the message gets cut off in GitHub and certain other views of git commit messages.",
+      "revId": "8b7a848c2a970b1f1fc8f45cfd14312eb061de69",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "a0c3680f_53ac5848",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 1
+      },
+      "lineNbr": 8,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-12-12T20:37:29Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "c467b919_1ae02459",
       "revId": "8b7a848c2a970b1f1fc8f45cfd14312eb061de69",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
@@ -87,6 +123,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "3ba2db88_c3de7498",
+        "filename": "OPTIONS_HELP.txt",
+        "patchSetId": 1
+      },
+      "lineNbr": 186,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-12-12T20:37:29Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "045f4b61_8809f432",
+      "revId": "8b7a848c2a970b1f1fc8f45cfd14312eb061de69",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "8a58ac9b_ab2579a1",
@@ -104,6 +158,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "eadbe160_c2d5e984",
+        "filename": "OPTIONS_HELP.txt",
+        "patchSetId": 1
+      },
+      "lineNbr": 188,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-12-12T20:37:29Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "8a58ac9b_ab2579a1",
+      "revId": "8b7a848c2a970b1f1fc8f45cfd14312eb061de69",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "9f437c25_6ce36712",
@@ -117,6 +189,24 @@
       "writtenOn": "2024-12-12T19:59:58Z",
       "side": 1,
       "message": "Maybe it would be good to add comments about what issue is making us need the flag / when it happens?",
+      "revId": "8b7a848c2a970b1f1fc8f45cfd14312eb061de69",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "fbfa000a_f5b9c8de",
+        "filename": "touchHLE_default_options.txt",
+        "patchSetId": 1
+      },
+      "lineNbr": 88,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-12-12T20:37:29Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "9f437c25_6ce36712",
       "revId": "8b7a848c2a970b1f1fc8f45cfd14312eb061de69",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

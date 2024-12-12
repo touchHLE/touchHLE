@@ -20,6 +20,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "cfae1232_83c22dbb",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 1
+      },
+      "lineNbr": 7,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-12-12T20:01:38Z",
+      "side": 1,
+      "message": "Or maybe `--disable-direct-presentation` would better explain why it\u0027s useful? Shrug.",
+      "parentUuid": "5bc60e97_b2d8adeb",
+      "revId": "8b7a848c2a970b1f1fc8f45cfd14312eb061de69",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "c467b919_1ae02459",
         "filename": "/COMMIT_MSG",
         "patchSetId": 1

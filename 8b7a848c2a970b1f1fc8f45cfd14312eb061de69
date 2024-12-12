@@ -1,0 +1,106 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5bc60e97_b2d8adeb",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 1
+      },
+      "lineNbr": 7,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-12-12T19:59:58Z",
+      "side": 1,
+      "message": "I would suggest calling it `--force-composition` instead.",
+      "revId": "8b7a848c2a970b1f1fc8f45cfd14312eb061de69",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c467b919_1ae02459",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 1
+      },
+      "lineNbr": 8,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-12-12T19:59:58Z",
+      "side": 1,
+      "message": "It would be better if you could fit the summary on a single line, max length 72 characters. You can mention the games in a following paragraph. Otherwise, part of the message gets cut off in GitHub and certain other views of git commit messages.",
+      "revId": "8b7a848c2a970b1f1fc8f45cfd14312eb061de69",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "87471ecf_1d574290",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-12-12T19:59:58Z",
+      "side": 1,
+      "message": "This does seem fine to me, but bear in mind the performance hit on Android in particular will probably be really really bad, this will prevent mobile GPUs from having rendering of one frame overlap the next (a common pipelining thing that improves performance).",
+      "revId": "8b7a848c2a970b1f1fc8f45cfd14312eb061de69",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "045f4b61_8809f432",
+        "filename": "OPTIONS_HELP.txt",
+        "patchSetId": 1
+      },
+      "lineNbr": 186,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-12-12T19:59:58Z",
+      "side": 1,
+      "message": "You could add something like “, i.e. renderbuffer will go through the compositor.”",
+      "revId": "8b7a848c2a970b1f1fc8f45cfd14312eb061de69",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8a58ac9b_ab2579a1",
+        "filename": "OPTIONS_HELP.txt",
+        "patchSetId": 1
+      },
+      "lineNbr": 188,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-12-12T19:59:58Z",
+      "side": 1,
+      "message": "“inquires” doesn\u0027t sound right here, I guess “involves”, “implies” or “requires” is what you were looking for.",
+      "revId": "8b7a848c2a970b1f1fc8f45cfd14312eb061de69",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9f437c25_6ce36712",
+        "filename": "touchHLE_default_options.txt",
+        "patchSetId": 1
+      },
+      "lineNbr": 88,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-12-12T19:59:58Z",
+      "side": 1,
+      "message": "Maybe it would be good to add comments about what issue is making us need the flag / when it happens?",
+      "revId": "8b7a848c2a970b1f1fc8f45cfd14312eb061de69",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

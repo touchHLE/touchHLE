@@ -46,6 +46,10 @@ pub const CLASSES: ClassExports = objc_classes! {
 /// and present it directly from the app's context. This function is used to
 /// determine when that will happen.
 pub fn find_fullscreen_eagl_layer(env: &mut Environment) -> id {
+    if env.options.force_no_fullscreen_layer {
+        return nil;
+    }
+
     // Assumes the last window in the list is the one on top.
     // TODO: this is not correct once we support zPosition.
     let Some(&top_window) = env

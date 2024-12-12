@@ -180,3 +180,10 @@ Other options:
         Note that many apps have an internal timer that determines how often
         they present frames; increasing the limit will not increase their
         framerate, but may make it less consistent.
+
+    --force-no-fullscreen-layer
+        Forces presentation of renderbuffer as if no fullscreen EAGL layer is
+        present.
+
+        Enabling this option may solve some rendering issues, but inquires
+        a performance hit which is undesirable in most of the cases.

@@ -49,6 +49,7 @@ pub struct Options {
     pub headless: bool,
     pub print_fps: bool,
     pub fps_limit: Option<f64>,
+    pub force_no_fullscreen_layer: bool,
 }
 
 impl Default for Options {
@@ -70,7 +71,8 @@ impl Default for Options {
             preferred_languages: None,
             headless: false,
             print_fps: false,
-            fps_limit: Some(60.0), // Original iPhone is 60Hz and uses v-sync
+            fps_limit: Some(60.0), // Original iPhone is 60Hz and uses v-sync,
+            force_no_fullscreen_layer: false,
         }
     }
 }
@@ -186,6 +188,8 @@ impl Options {
                     .ok_or_else(|| "Invalid value for --fps-limit=".to_string())?;
                 self.fps_limit = Some(limit);
             }
+        } else if arg == "--force-no-fullscreen-layer" {
+            self.force_no_fullscreen_layer = true;
         } else {
             return Ok(false);
         };

@@ -20,6 +20,23 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "784bc657_f7c85ffd",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-12-15T21:23:44Z",
+      "side": 1,
+      "message": "Thanks for the previous changes, this seems a lot better. I\u0027m sorry I didn\u0027t get around to looking at it again until now.",
+      "revId": "cadb94c5df2d67d0550c67c52f3df14b5ade206b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "294e168c_8b38c374",
         "filename": "android/app/src/main/java/org/libsdl/app/SDLActivity.java",
         "patchSetId": 1
@@ -31,6 +48,193 @@
       "writtenOn": "2024-12-15T20:47:18Z",
       "side": 1,
       "message": "I would like this comment to explicitly state this file is copied from SDL, the path it is copied from, and the fact it retains SDL licensing terms. I don\u0027t want that to just be implied by context, it\u0027s not like the other files that have this be obvious because of the symlink.",
+      "revId": "cadb94c5df2d67d0550c67c52f3df14b5ade206b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fdc9ed07_d0aa8841",
+        "filename": "src/environment.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 578,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-12-15T21:23:44Z",
+      "side": 1,
+      "message": "The first line of the comment should probably explain what this actually does. The `run_` thing made me think it was a relative of `Environment::run()`. Maybe `with_yielder` would be a better name.",
+      "revId": "cadb94c5df2d67d0550c67c52f3df14b5ade206b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "57570e67_ce3f87fb",
+        "filename": "src/environment.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 609,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-12-15T21:23:44Z",
+      "side": 1,
+      "message": "This looks unsafe for re-entrancy, should there be an assert or something?",
+      "revId": "cadb94c5df2d67d0550c67c52f3df14b5ade206b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "653fbabe_fd3878ef",
+        "filename": "src/environment/app_picker.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 689,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-12-15T21:23:44Z",
+      "side": 1,
+      "message": "Comment is now outdated?",
+      "revId": "cadb94c5df2d67d0550c67c52f3df14b5ade206b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "53c110fa_bc3a10ca",
+        "filename": "src/frameworks/opengles.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 26,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-12-15T21:23:44Z",
+      "side": 1,
+      "message": "Cache what? I\u0027m still unsure why we wouldn\u0027t need `current_ctxs` anymore, we still need to track which context is active on which thread from the app\u0027s perspective, because of the multiplexing.",
+      "revId": "cadb94c5df2d67d0550c67c52f3df14b5ade206b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "811cdac7_2133c417",
+        "filename": "src/frameworks/opengles.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 46,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-12-15T21:23:44Z",
+      "side": 1,
+      "message": "Is this split into its own function for lifetime reasons?",
+      "revId": "cadb94c5df2d67d0550c67c52f3df14b5ade206b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "988b63b1_ac7e312a",
+        "filename": "src/frameworks/opengles/eagl.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 18,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-12-15T21:23:44Z",
+      "side": 1,
+      "message": "Please put `gles11_raw` back on its own line, the comment doesn\u0027t make sense attached to the context object.",
+      "revId": "cadb94c5df2d67d0550c67c52f3df14b5ade206b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1a6d53fe_fb3a4472",
+        "filename": "src/frameworks/uikit/ui_application.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 100,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-12-15T21:23:44Z",
+      "side": 1,
+      "message": "s/`_|  {`/`_| {`/",
+      "revId": "cadb94c5df2d67d0550c67c52f3df14b5ade206b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4615cc93_08e6a9a7",
+        "filename": "src/frameworks/uikit/ui_application.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 117,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-12-15T21:23:44Z",
+      "side": 1,
+      "message": "ditto",
+      "revId": "cadb94c5df2d67d0550c67c52f3df14b5ade206b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0b11733a_432cb879",
+        "filename": "src/gles/gles1_on_gl2.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 25,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-12-15T21:23:44Z",
+      "side": 1,
+      "message": "This comment should be moved back",
+      "revId": "cadb94c5df2d67d0550c67c52f3df14b5ade206b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4fc76591_1b58d324",
+        "filename": "src/gles/gles_generic.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 64,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-12-15T21:23:44Z",
+      "side": 1,
+      "message": "This trait doesn\u0027t do that, and that\u0027s not the purpose of the abstraction.",
+      "revId": "cadb94c5df2d67d0550c67c52f3df14b5ade206b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0d231ace_58502bfb",
+        "filename": "src/window.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 177,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-12-15T21:23:44Z",
+      "side": 1,
+      "message": "This is in `Window`, but I guess it\u0027s really more of an `Environment` thing, but it\u0027d be awkward to make all these functions need a reference to some other part of the `Environment` I guess?\n\nDoes it have to be a boolean piece of state? It feels like something that could be derived from some thread-local state or something.",
       "revId": "cadb94c5df2d67d0550c67c52f3df14b5ade206b",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

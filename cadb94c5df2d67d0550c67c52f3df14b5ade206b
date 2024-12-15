@@ -16,6 +16,23 @@
       "message": "Originally https://review.gerrithub.io/c/touchHLE/touchHLE/+/1201989.",
       "revId": "cadb94c5df2d67d0550c67c52f3df14b5ade206b",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "294e168c_8b38c374",
+        "filename": "android/app/src/main/java/org/libsdl/app/SDLActivity.java",
+        "patchSetId": 1
+      },
+      "lineNbr": 1,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-12-15T20:47:18Z",
+      "side": 1,
+      "message": "I would like this comment to explicitly state this file is copied from SDL, the path it is copied from, and the fact it retains SDL licensing terms. I don\u0027t want that to just be implied by context, it\u0027s not like the other files that have this be obvious because of the symlink.",
+      "revId": "cadb94c5df2d67d0550c67c52f3df14b5ade206b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

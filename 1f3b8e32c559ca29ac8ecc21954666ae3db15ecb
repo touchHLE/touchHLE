@@ -16,6 +16,24 @@
       "message": "This will not work well as keys inside this array would be unretained and also you\u0027re leaking an array here!\n\nYou basically need to retain them one-by-one and return an autoreleased array.\n(you can check my implementation of allKeys for mutable dict as a reference)\n\nIn order to convince yourself you could write some tests similar to what I did to test allKeys for mutable dict:\n\n```\n    NSMutableDictionary *dict \u003d [NSMutableDictionary new];\n    for (int i \u003d 0; i \u003c 5; i++) {\n        NSString *key \u003d [[NSString alloc] initWithFormat:@\"key %d\", i];\n        NSString *val \u003d [[NSString alloc] initWithFormat:@\"val %d\", i];\n        [dict setObject:val forKey:key];\n        [key release];\n        [val release];\n    }\n\n    NSArray *arr \u003d [dict allKeys];\n    [dict release];\n\n    for (int i \u003d 0; i \u003c 5; i++) {\n        NSLog(@\"%@\", [arr objectAtIndex:i]);\n    }\n```\n\nP.S. you\u0027ll also need to unify allKeys methods of mutable and immutable dicts with some helper function to avoid code duplication",
       "revId": "1f3b8e32c559ca29ac8ecc21954666ae3db15ecb",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "80cae57a_5db7807a",
+        "filename": "src/frameworks/foundation/ns_dictionary.rs",
+        "patchSetId": 6
+      },
+      "lineNbr": 457,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2024-12-19T06:35:28Z",
+      "side": 1,
+      "message": "Thanks for the review! That actually makes a lot of sense and might explain why I had to double retain one of the images, though it does depend on how cooking mama loads things. To double check, the array leak is because I didn\u0027t assign the array to an auto release pool right?\n\nI went ahead an made a common all keys method and call that within both mut and non mut dicts. Seems to work during my test.",
+      "parentUuid": "27706b64_ec1d2466",
+      "revId": "1f3b8e32c559ca29ac8ecc21954666ae3db15ecb",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

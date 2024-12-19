@@ -34,6 +34,24 @@
       "parentUuid": "27706b64_ec1d2466",
       "revId": "1f3b8e32c559ca29ac8ecc21954666ae3db15ecb",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "dae821d7_25d5aac6",
+        "filename": "src/frameworks/foundation/ns_dictionary.rs",
+        "patchSetId": 6
+      },
+      "lineNbr": 457,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2024-12-19T06:42:29Z",
+      "side": 1,
+      "message": "Actually quick sanity check, I overwrote the allKeys for the non retaining dict, but this might be incorrect since it a special implementation. Should I revert this?",
+      "parentUuid": "80cae57a_5db7807a",
+      "revId": "1f3b8e32c559ca29ac8ecc21954666ae3db15ecb",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

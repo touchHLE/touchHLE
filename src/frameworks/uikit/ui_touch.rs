@@ -192,7 +192,19 @@ fn handle_touches_down(env: &mut Environment, map: HashMap<FingerId, Coords>) {
         retain(env, new_touch);
     }
 
-    let event = ui_event::new_event(env, touches);
+    let all_touches: id = msg_class![env; NSMutableSet allocWithZone:(MutVoidPtr::null())];
+    for &touch in env
+        .framework_state
+        .uikit
+        .ui_touch
+        .current_touches
+        .clone()
+        .values()
+    {
+        let _: () = msg![env; all_touches addObject:touch];
+    }
+
+    let event = ui_event::new_event(env, all_touches);
     autorelease(env, event);
 
     // views with existing touches (see isMultipleTouchEnabled check below)
@@ -346,7 +358,19 @@ fn handle_touches_move(env: &mut Environment, map: HashMap<FingerId, Coords>) {
         let _: () = msg![env; touches addObject:touch];
     }
 
-    let event = ui_event::new_event(env, touches);
+    let all_touches: id = msg_class![env; NSMutableSet allocWithZone:(MutVoidPtr::null())];
+    for &touch in env
+        .framework_state
+        .uikit
+        .ui_touch
+        .current_touches
+        .clone()
+        .values()
+    {
+        let _: () = msg![env; all_touches addObject:touch];
+    }
+
+    let event = ui_event::new_event(env, all_touches);
     autorelease(env, event);
 
     for (view, touches) in view_touches {
@@ -417,10 +441,22 @@ fn handle_touches_up(env: &mut Environment, map: HashMap<FingerId, Coords>) {
             .ui_touch
             .current_touches
             .remove(&finger_id);
-        retain(env, touch); // only owner now should be the NSSet
+        release(env, touch); // only owner now should be the NSSet
     }
 
-    let event = ui_event::new_event(env, touches);
+    let all_touches: id = msg_class![env; NSMutableSet allocWithZone:(MutVoidPtr::null())];
+    for &touch in env
+        .framework_state
+        .uikit
+        .ui_touch
+        .current_touches
+        .clone()
+        .values()
+    {
+        let _: () = msg![env; all_touches addObject:touch];
+    }
+
+    let event = ui_event::new_event(env, all_touches);
     autorelease(env, event);
 
     for (view, touches) in view_touches {

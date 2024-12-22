@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "b8e34ac1_16617302",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 9
+      },
+      "lineNbr": 7,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2024-12-22T17:26:08Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "1ab28b1a_a6bcefd8",
+      "revId": "899a2e543789d20ac8e9340ee12f17faba02dd58",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "bcbd3cfe_5e01dbea",
@@ -31,6 +49,24 @@
       "writtenOn": "2024-12-22T10:35:31Z",
       "side": 1,
       "message": "This init should be a part of concrete implementation not an abstract class because it\u0027s relaying on the internal host object representation.\n\nYou should move definition to the _touchHLE_* implementations and unify it the same they you did for allKeys.\n\n(Note: this comment doesn\u0027t apply to the dictionaryWithObjects:forKeys: because it only relay on the _public interface_ and not the internal representation)",
+      "revId": "899a2e543789d20ac8e9340ee12f17faba02dd58",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "a37e5b44_8b010be3",
+        "filename": "src/frameworks/foundation/ns_dictionary.rs",
+        "patchSetId": 9
+      },
+      "lineNbr": 413,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2024-12-22T17:26:08Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "bcbd3cfe_5e01dbea",
       "revId": "899a2e543789d20ac8e9340ee12f17faba02dd58",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
@@ -52,6 +88,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "f36f5ef4_5cc41e30",
+        "filename": "src/frameworks/foundation/ns_dictionary.rs",
+        "patchSetId": 9
+      },
+      "lineNbr": 414,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2024-12-22T17:26:08Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "4cdd454c_9bb7efe5",
+      "revId": "899a2e543789d20ac8e9340ee12f17faba02dd58",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "010e2c33_306d7d3e",
@@ -65,6 +119,24 @@
       "writtenOn": "2024-12-22T10:35:31Z",
       "side": 1,
       "message": "please add an assertion about `next_object` being nil as well",
+      "revId": "899a2e543789d20ac8e9340ee12f17faba02dd58",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "8c216ad2_af63c119",
+        "filename": "src/frameworks/foundation/ns_dictionary.rs",
+        "patchSetId": 9
+      },
+      "lineNbr": 428,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2024-12-22T17:26:08Z",
+      "side": 1,
+      "message": "Is this just to make sure that they were enumerated properly?",
+      "parentUuid": "010e2c33_306d7d3e",
       "revId": "899a2e543789d20ac8e9340ee12f17faba02dd58",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

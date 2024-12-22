@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1ab28b1a_a6bcefd8",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 9
+      },
+      "lineNbr": 7,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-12-22T10:35:31Z",
+      "side": 1,
+      "message": "nit: full method signatures should include trailing `:`",
+      "revId": "899a2e543789d20ac8e9340ee12f17faba02dd58",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "bcbd3cfe_5e01dbea",
+        "filename": "src/frameworks/foundation/ns_dictionary.rs",
+        "patchSetId": 9
+      },
+      "lineNbr": 413,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-12-22T10:35:31Z",
+      "side": 1,
+      "message": "This init should be a part of concrete implementation not an abstract class because it\u0027s relaying on the internal host object representation.\n\nYou should move definition to the _touchHLE_* implementations and unify it the same they you did for allKeys.\n\n(Note: this comment doesn\u0027t apply to the dictionaryWithObjects:forKeys: because it only relay on the _public interface_ and not the internal representation)",
+      "revId": "899a2e543789d20ac8e9340ee12f17faba02dd58",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4cdd454c_9bb7efe5",
+        "filename": "src/frameworks/foundation/ns_dictionary.rs",
+        "patchSetId": 9
+      },
+      "lineNbr": 414,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-12-22T10:35:31Z",
+      "side": 1,
+      "message": "please align semi colons\n\n(it\u0027s not in our coding style per say, but it\u0027s better to follow common Obj-C conventions such as https://google.github.io/styleguide/objcguide.html#method-declarations-and-definitions)",
+      "revId": "899a2e543789d20ac8e9340ee12f17faba02dd58",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "010e2c33_306d7d3e",
+        "filename": "src/frameworks/foundation/ns_dictionary.rs",
+        "patchSetId": 9
+      },
+      "lineNbr": 428,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-12-22T10:35:31Z",
+      "side": 1,
+      "message": "please add an assertion about `next_object` being nil as well",
+      "revId": "899a2e543789d20ac8e9340ee12f17faba02dd58",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

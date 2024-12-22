@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "475be92f_7794e4ea",
+        "filename": "src/frameworks/foundation/ns_thread.rs",
+        "patchSetId": 41
+      },
+      "lineNbr": 140,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-12-22T10:57:29Z",
+      "side": 1,
+      "message": "there is a big issue with the current implementation: object, target and ns_thread object themself are not retained here or in the init method, but being released on the invocation.\n\nthe proper implementation may require refactoring of the existent detach part.",
+      "revId": "58ccf74850e700d6fb390774459bfebab3b32dde",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

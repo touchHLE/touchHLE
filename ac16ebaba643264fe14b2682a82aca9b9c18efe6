@@ -52,6 +52,24 @@
       "parentUuid": "89841fae_a7835eb5",
       "revId": "ac16ebaba643264fe14b2682a82aca9b9c18efe6",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ff83d58c_5b48b850",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-12-25T14:22:52Z",
+      "side": 1,
+      "message": "In order to move forward on this patchset I suggest you amend it to only contain the \"must have\" options.",
+      "parentUuid": "824e1dda_9fb1f243",
+      "revId": "ac16ebaba643264fe14b2682a82aca9b9c18efe6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "960f6053_54d7f385",
+        "filename": "OPTIONS_HELP.txt",
+        "patchSetId": 1
+      },
+      "lineNbr": 149,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-12-26T21:04:50Z",
+      "side": 1,
+      "message": "1. I would prefer this to be more descriptive, something like “Disables the graphical error message popup (outputs error to terminal only).\"\n\n2. There should be a newline after the option, like there was before (also the extra one at the end of the file should be removed).",
+      "revId": "4e765fe65c831c4d3d0ebd56dfffb612268d11e2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "58aa9d05_a33abca4",
+        "filename": "src/window.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 1231,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-12-26T21:04:50Z",
+      "side": 1,
+      "message": "Shouldn\u0027t we use the ERROR type rather than INFORMATION?",
+      "revId": "4e765fe65c831c4d3d0ebd56dfffb612268d11e2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1697d3d6_c4c489ff",
+        "filename": "src/window.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 1248,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-12-26T21:04:50Z",
+      "side": 1,
+      "message": "We only produce a log on Android (currently; this should probably be changed, but not in this commit).",
+      "revId": "4e765fe65c831c4d3d0ebd56dfffb612268d11e2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7692ebde_46cb6ce4",
+        "filename": "src/window.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 1261,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-12-26T21:04:50Z",
+      "side": 1,
+      "message": "What if you close the window by another means? Are you sure this path is unreachable?",
+      "revId": "4e765fe65c831c4d3d0ebd56dfffb612268d11e2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

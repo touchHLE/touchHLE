@@ -304,7 +304,53 @@ pub fn main<T: Iterator<Item = String>>(mut args: T) -> Result<(), String> {
         assert!(parse_result == Ok(true));
     }
 
-    let mut env = Environment::new(bundle, fs, options, env_for_salvage)?;
-    env.run();
-    Ok(())
+    let res = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        Environment::new(bundle, fs, options.clone(), env_for_salvage)
+    }));
+    let mut env = match res {
+        Ok(ret) => match ret {
+            Ok(env) => env,
+            Err(e) => {
+                if options.popup_errors {
+                    window::show_error_messagebox(None, e.as_str());
+                }
+                return Err(e);
+            }
+        },
+        Err(e) => {
+            if options.popup_errors {
+                let error_string = if let Some(s) = e.downcast_ref::<&str>() {
+                    s
+                } else if let Some(s) = e.downcast_ref::<String>() {
+                    s
+                } else {
+                    "(non-string payload)"
+                };
+                window::show_error_messagebox(None, error_string);
+            }
+            std::panic::resume_unwind(e)
+        }
+    };
+
+    // We can set the parent window after the environment is set up, so this
+    // panic-catch is seperate.
+    let res = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        env.run();
+    }));
+    match res {
+        Ok(_) => Ok(()),
+        Err(e) => {
+            if options.popup_errors {
+                let error_string = if let Some(s) = e.downcast_ref::<&str>() {
+                    s
+                } else if let Some(s) = e.downcast_ref::<String>() {
+                    s
+                } else {
+                    "(non-string payload)"
+                };
+                window::show_error_messagebox(env.window.as_ref(), error_string);
+            }
+            std::panic::resume_unwind(e)
+        }
+    }
 }

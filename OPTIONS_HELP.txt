@@ -145,6 +145,10 @@ Debugging options:
         host name or an IP address. IPv6 addresses should be enclosed in square
         brackets, e.g. --gdb=[::1]:9001 for IPv6 loopback device port 9001.
 
+    --no-error-popup
+        Disables the graphical error message box (outputs to terminal/log file
+        only).
+
 Other options:
     --preferred-languages=...
         Specifies a list of preferred languages to be reported to the app.
@@ -163,6 +167,7 @@ Other options:
     --headless
         Run in headless mode. touchHLE will not create a window, so there will
         be no graphical output and no input. Only useful for command-line apps.
+        Implies --no-error-popup.
 
     --print-fps
         Logs the current framerate (FPS) to the console once per second.

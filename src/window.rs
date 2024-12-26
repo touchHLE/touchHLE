@@ -1207,3 +1207,59 @@ impl Window {
 pub fn open_url(url: &str) -> Result<(), String> {
     sdl2::url::open_url(url).map_err(|e| e.to_string())
 }
+
+/// Show an SDL messagebox for an error (typically after a panic).
+///
+/// The window argument allows for passing in the parent window for the
+/// messagebox, which is not required but should be done if possible.
+pub fn show_error_messagebox(window: Option<&Window>, error_message: &str) {
+    use sdl2::messagebox;
+    let mbox = [
+        messagebox::ButtonData {
+            flags: messagebox::MessageBoxButtonFlag::NOTHING,
+            button_id: 0,
+            text: "Open touchHLE directory",
+        },
+        messagebox::ButtonData {
+            flags: messagebox::MessageBoxButtonFlag::NOTHING,
+            button_id: 1,
+            text: "Close",
+        },
+    ];
+
+    let Ok(clicked_button) = messagebox::show_message_box(
+        messagebox::MessageBoxFlag::INFORMATION,
+        &mbox,
+        "touchHLE crashed!",
+        &format!(
+            "touchHLE crashed with the following error: {}",
+            error_message
+        ),
+        window.map(|win| &win.window),
+        None,
+    ) else {
+        panic!("Failed to show message box!");
+    };
+
+    match clicked_button {
+        messagebox::ClickedButton::CloseButton => {}
+        messagebox::ClickedButton::CustomButton(button) => {
+            match button.button_id {
+                // Open log file
+                0 => match crate::paths::url_for_opening_user_data_dir() {
+                    Ok(url) => {
+                        if let Err(e) = crate::window::open_url(&url) {
+                            echo!("Couldn't open file manager at {:?}: {}", url, e);
+                        } else {
+                            echo!("Opened file manager at {:?}, exiting.", url);
+                        }
+                    }
+                    Err(e) => echo!("Couldn't open file manager: {}", e),
+                },
+                // Close
+                1 => {}
+                _ => unreachable!(),
+            }
+        }
+    }
+}

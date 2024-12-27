@@ -1,6 +1,23 @@
 {
   "comments": [
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "dce37e09_26ee4bc2",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2024-12-27T03:15:16Z",
+      "side": 1,
+      "message": "I\u0027ll add that long term, I think that it should be possible to recover back to the app picker, but I don\u0027t want to do this before coroutines are merged because it\u0027s more indepth and would have to be redone for it anyways.",
+      "revId": "4e765fe65c831c4d3d0ebd56dfffb612268d11e2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "960f6053_54d7f385",
@@ -18,6 +35,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "f5a484c0_47e3cb0d",
+        "filename": "OPTIONS_HELP.txt",
+        "patchSetId": 1
+      },
+      "lineNbr": 149,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2024-12-27T03:15:16Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "960f6053_54d7f385",
+      "revId": "4e765fe65c831c4d3d0ebd56dfffb612268d11e2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "58aa9d05_a33abca4",
@@ -31,6 +66,24 @@
       "writtenOn": "2024-12-26T21:04:50Z",
       "side": 1,
       "message": "Shouldn\u0027t we use the ERROR type rather than INFORMATION?",
+      "revId": "4e765fe65c831c4d3d0ebd56dfffb612268d11e2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d194a053_77184bcf",
+        "filename": "src/window.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 1231,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2024-12-27T03:15:16Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "58aa9d05_a33abca4",
       "revId": "4e765fe65c831c4d3d0ebd56dfffb612268d11e2",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
@@ -65,6 +118,24 @@
       "writtenOn": "2024-12-26T21:04:50Z",
       "side": 1,
       "message": "What if you close the window by another means? Are you sure this path is unreachable?",
+      "revId": "4e765fe65c831c4d3d0ebd56dfffb612268d11e2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "686d2bbc_cc8bbfae",
+        "filename": "src/window.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 1261,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2024-12-27T03:15:16Z",
+      "side": 1,
+      "message": "If you close it from pressing the close button/other means, it sends a close event. The unreachable part is on the custom button ids, which can only be the ones specified on the buttons.",
+      "parentUuid": "7692ebde_46cb6ce4",
       "revId": "4e765fe65c831c4d3d0ebd56dfffb612268d11e2",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

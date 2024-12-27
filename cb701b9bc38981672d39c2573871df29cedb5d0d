@@ -16,6 +16,24 @@
       "message": "I\u0027m not sure this comment makes sense, the one on line 410 doesn\u0027t really either, maybe they are both a legacy of some older code that no longer exists? But I\u0027m not sure how to clear it up, so I am +2\u0027ing.",
       "revId": "cb701b9bc38981672d39c2573871df29cedb5d0d",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "351e5c0e_81b620bc",
+        "filename": "src/dyld.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 344,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-12-27T22:16:44Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "958c6009_91404942",
+      "revId": "cb701b9bc38981672d39c2573871df29cedb5d0d",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

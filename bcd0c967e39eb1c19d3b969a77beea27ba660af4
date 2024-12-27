@@ -16,6 +16,24 @@
       "message": "This is basically a variation on the case from line 410 below, right? Should we have a similar log message?",
       "revId": "bcd0c967e39eb1c19d3b969a77beea27ba660af4",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ce32ed24_6c280987",
+        "filename": "src/dyld.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 345,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-12-27T21:59:36Z",
+      "side": 1,
+      "message": "Yes, I added a similar log message",
+      "parentUuid": "e30594a2_7f064331",
+      "revId": "bcd0c967e39eb1c19d3b969a77beea27ba660af4",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

@@ -34,6 +34,24 @@
       "parentUuid": "e30594a2_7f064331",
       "revId": "bcd0c967e39eb1c19d3b969a77beea27ba660af4",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "0b7feb3b_f74976b9",
+        "filename": "src/dyld.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 345,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-12-27T22:15:12Z",
+      "side": 1,
+      "message": "Thanks!",
+      "parentUuid": "ce32ed24_6c280987",
+      "revId": "bcd0c967e39eb1c19d3b969a77beea27ba660af4",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

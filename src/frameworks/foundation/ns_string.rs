@@ -907,10 +907,18 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 - (id)stringByAppendingPathComponent:(id)component { // NSString*
     // TODO: avoid copying
-    // FIXME: check if Rust join() matches NSString (it probably doesn't)
-    let combined = GuestPath::new(&to_rust_string(env, this))
-        .join(to_rust_string(env, component));
-    let new_string = from_rust_string(env, String::from(combined));
+    let left = to_rust_string(env, this);
+    if left.is_empty() {
+        let new_string = msg![env; component copy];
+        return autorelease(env, new_string);
+    }
+    let left_trimmed = path_algorithms::trim_trailing_slashes(&left);
+    assert!(left_trimmed.starts_with('/')); // TODO
+    let right = to_rust_string(env, component);
+    let right_trimmed = path_algorithms::trim_leading_slashes(&right);
+    let combined = format!("{}/{}", left_trimmed, right_trimmed).replace("//", "/");
+    assert!(!combined.contains("//"));
+    let new_string = from_rust_string(env, combined);
     autorelease(env, new_string)
 }
 

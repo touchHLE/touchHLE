@@ -105,6 +105,24 @@
       "parentUuid": "51832292_8cf5a154",
       "revId": "3ed823f5f97740d059c84f8d394222657d324a76",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d062acf9_20c8432c",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 920,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-12-28T22:55:14Z",
+      "side": 1,
+      "message": "I switched to handling single \"/\" as a special case.\nI also handle some of corner case now (as was confirmed on the simulator).\nPlease check",
+      "parentUuid": "ac70e01b_f3505af0",
+      "revId": "3ed823f5f97740d059c84f8d394222657d324a76",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

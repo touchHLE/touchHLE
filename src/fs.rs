@@ -168,6 +168,10 @@ impl GuestPath {
     /// implementation of `AsRef<GuestPath>` for all `AsRef<str>` types, so we
     /// would have to implement it for everything that can derference to `&str`.
     /// It's easier to just use `&str`.
+    ///
+    /// Warning! This function should only be used for internal touchHLE
+    /// purposes.
+    /// For Foundation case, use `[NSString stringByAppendingPathComponent:]`
     pub fn join<P: AsRef<str>>(&self, path: P) -> GuestPathBuf {
         GuestPathBuf::from(format!("{}/{}", self.as_str(), path.as_ref()))
     }

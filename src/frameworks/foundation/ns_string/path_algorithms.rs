@@ -23,6 +23,15 @@ pub fn trim_trailing_slashes(path: &str) -> &str {
     }
 }
 
+pub fn trim_leading_slashes(path: &str) -> &str {
+    let without_leading_slashes = path.trim_start_matches('/');
+    if without_leading_slashes.is_empty() && path.ends_with('/') {
+        "/"
+    } else {
+        without_leading_slashes
+    }
+}
+
 /// Returns a tuple with the `stringByDeletingLastPathComponent` and
 /// `lastPathComponent` values for a string, in that order.
 pub fn split_last_path_component(path: &str) -> (&str, &str) {

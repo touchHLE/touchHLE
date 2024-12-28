@@ -16,6 +16,24 @@
       "message": "Typo of “stuff”? Maybe “purposes” would sound better?",
       "revId": "7b57c29f7633c900a7472dfcf32873a3cef8284c",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "cb8eeeeb_155bbc3a",
+        "filename": "src/fs.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 172,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-12-28T22:04:10Z",
+      "side": 1,
+      "message": "oops, done",
+      "parentUuid": "fdc5e162_fca8dd71",
+      "revId": "7b57c29f7633c900a7472dfcf32873a3cef8284c",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

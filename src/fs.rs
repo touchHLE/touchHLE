@@ -169,7 +169,9 @@ impl GuestPath {
     /// would have to implement it for everything that can derference to `&str`.
     /// It's easier to just use `&str`.
     pub fn join<P: AsRef<str>>(&self, path: P) -> GuestPathBuf {
-        GuestPathBuf::from(format!("{}/{}", self.as_str(), path.as_ref()))
+        let joined = format!("{}/{}", self.as_str(), path.as_ref()).replace("//", "/");
+        assert!(!joined.contains("//"));
+        GuestPathBuf::from(joined)
     }
 
     /// Splits the path into a parent path and a file name.

@@ -87,6 +87,24 @@
       "parentUuid": "87efb122_b5090358",
       "revId": "3ed823f5f97740d059c84f8d394222657d324a76",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ac70e01b_f3505af0",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 920,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-12-28T22:01:53Z",
+      "side": 1,
+      "message": "but this mean to handle the special case for both string itself and the component?\ni think it would be less clean",
+      "parentUuid": "51832292_8cf5a154",
+      "revId": "3ed823f5f97740d059c84f8d394222657d324a76",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

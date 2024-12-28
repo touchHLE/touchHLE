@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "9cea1601_7615be3e",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 913,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-12-28T21:22:42Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "d2caade0_67b347db",
+      "revId": "3ed823f5f97740d059c84f8d394222657d324a76",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "858fc184_e7910b76",
@@ -31,6 +49,24 @@
       "writtenOn": "2024-12-28T21:15:27Z",
       "side": 1,
       "message": "If leading and trailing slashes are removed, can this even happen?",
+      "revId": "3ed823f5f97740d059c84f8d394222657d324a76",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "87efb122_b5090358",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 920,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2024-12-28T21:22:42Z",
+      "side": 1,
+      "message": "an [@\"/\" stringByAppendingPathComponent:@\"scratch.tiff\"] would lead to the incorrect results:\n\n`Tests[0] [FAIL] For path \u0027/\u0027: expected \u0027/scratch.tiff\u0027 but got \u0027//scratch.tiff\u0027`",
+      "parentUuid": "858fc184_e7910b76",
       "revId": "3ed823f5f97740d059c84f8d394222657d324a76",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

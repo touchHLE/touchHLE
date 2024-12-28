@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d2caade0_67b347db",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 913,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-12-28T21:15:27Z",
+      "side": 1,
+      "message": "Style nit: combine return with this line.",
+      "revId": "3ed823f5f97740d059c84f8d394222657d324a76",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "858fc184_e7910b76",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 920,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-12-28T21:15:27Z",
+      "side": 1,
+      "message": "If leading and trailing slashes are removed, can this even happen?",
+      "revId": "3ed823f5f97740d059c84f8d394222657d324a76",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

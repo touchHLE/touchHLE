@@ -11,7 +11,7 @@ use crate::frameworks::foundation::ns_string::get_static_str;
 use crate::fs::{GuestPath, GuestPathBuf};
 use crate::mem::{ConstPtr, MutPtr, Ptr};
 use crate::objc::{
-    autorelease, id, msg, msg_class, nil, objc_classes, release, ClassExports, HostObject,
+    autorelease, id, msg, msg_class, nil, objc_classes, release, retain, ClassExports, HostObject,
 };
 use crate::Environment;
 
@@ -44,24 +44,33 @@ fn NSSearchPathForDirectoriesInDomains(
     assert!(domain_mask == NSUserDomainMask);
     assert!(expand_tilde);
 
-    let dir = match directory {
+    let dir: id = match directory {
         NSApplicationDirectory => {
             // This might not actually be correct. I haven't bothered to
             // test it because I can't think of a good reason an iPhone OS app
             // would have to request this;
             // Wolfenstein 3D requests it but never uses it.
-            GuestPath::new(crate::fs::APPLICATIONS).to_owned()
+            let path_buf = GuestPath::new(crate::fs::APPLICATIONS).to_owned();
+            let dir = ns_string::from_rust_string(env, String::from(path_buf));
+            // to be consistent with other cases
+            autorelease(env, dir)
         }
-        NSDocumentDirectory => env.fs.home_directory().join("Documents"),
-        NSLibraryDirectory => env.fs.home_directory().join("Library"),
+        NSDocumentDirectory => {
+            let home_directory = NSHomeDirectory(env);
+            msg![env; home_directory stringByAppendingPathComponent:(get_static_str(env, "Documents"))]
+        }
+        NSLibraryDirectory => {
+            let home_directory = NSHomeDirectory(env);
+            msg![env; home_directory stringByAppendingPathComponent:(get_static_str(env, "Library"))]
+        }
         _ => todo!("NSSearchPathDirectory {}", directory),
     };
-    let dir = ns_string::from_rust_string(env, String::from(dir));
+    retain(env, dir);
     let dir_list = ns_array::from_vec(env, vec![dir]);
     autorelease(env, dir_list)
 }
 
-fn NSHomeDirectory(env: &mut Environment) -> id {
+pub fn NSHomeDirectory(env: &mut Environment) -> id {
     let dir = env.fs.home_directory();
     let dir = ns_string::from_rust_string(env, String::from(dir.as_str()));
     autorelease(env, dir)
@@ -70,9 +79,8 @@ fn NSHomeDirectory(env: &mut Environment) -> id {
 /// Check [crate::fs::Fs::new] for more info for
 /// how temporary folder is setup on startup
 fn NSTemporaryDirectory(env: &mut Environment) -> id {
-    let dir = env.fs.home_directory().join("tmp");
-    let dir = ns_string::from_rust_string(env, String::from(dir.as_str()));
-    autorelease(env, dir)
+    let home_directory = NSHomeDirectory(env);
+    msg![env; home_directory stringByAppendingPathComponent:(get_static_str(env, "tmp"))]
 }
 
 pub const FUNCTIONS: FunctionExports = &[

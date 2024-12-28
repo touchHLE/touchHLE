@@ -9,7 +9,9 @@
 //! - Apple's [Preferences and Settings Programming Guide](https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/UserDefaults/AboutPreferenceDomains/AboutPreferenceDomains.html).
 
 use super::{ns_string, NSInteger};
+use crate::frameworks::foundation::ns_file_manager::NSHomeDirectory;
 use crate::frameworks::foundation::ns_string::to_rust_string;
+use crate::fs::GuestPath;
 use crate::objc::{
     autorelease, id, msg, msg_class, nil, objc_classes, release, Class, ClassExports, HostObject,
     NSZonePtr,
@@ -85,13 +87,13 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.borrow_mut::<NSUserDefaultsHostObject>(this).global_domain_dict = dict;
 
     // Now, load from disk and init app's own preferences.
-    let plist_file_name = format!("{}.plist", env.bundle.bundle_identifier());
-    let plist_file_path_buf = env.fs.home_directory()
-        .join("Library")
-        .join("Preferences")
-        .join(plist_file_name);
-    let plist_file_path = ns_string::from_rust_string(env, plist_file_path_buf.as_str().to_string());
-    let dict: id = msg_class![env; NSDictionary dictionaryWithContentsOfFile:plist_file_path];
+    let home_directory = NSHomeDirectory(env);
+    let library_path = msg![env; home_directory stringByAppendingPathComponent:(ns_string::get_static_str(env, "Library"))];
+    let preferences_path = msg![env; library_path stringByAppendingPathComponent:(ns_string::get_static_str(env, "Preferences"))];
+    let plist_name = ns_string::from_rust_string(env, format!("{}.plist", env.bundle.bundle_identifier()));
+    let plist_path: id = msg![env; preferences_path stringByAppendingPathComponent:plist_name];
+    release(env, plist_name);
+    let dict: id = msg_class![env; NSDictionary dictionaryWithContentsOfFile:plist_path];
 
     let dict: id = if dict == nil {
         msg_class![env; NSMutableDictionary new]
@@ -232,16 +234,20 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 - (bool)synchronize {
     // Note: only app domain dict gets synchronized!
-    let plist_file_path_dir = env.fs.home_directory()
-        .join("Library")
-        .join("Preferences");
+    let home_directory = NSHomeDirectory(env);
+    let library_path = msg![env; home_directory stringByAppendingPathComponent:(ns_string::get_static_str(env, "Library"))];
+    let preferences_path = msg![env; library_path stringByAppendingPathComponent:(ns_string::get_static_str(env, "Preferences"))];
+
     // TODO: can we avoid this creation call on each sync?
-    _ = env.fs.create_dir_all(plist_file_path_dir.clone());
-    let plist_file_name = format!("{}.plist", env.bundle.bundle_identifier());
-    let plist_file_path_buf = plist_file_path_dir.join(plist_file_name);
-    let plist_file_path = ns_string::from_rust_string(env, plist_file_path_buf.as_str().to_string());
+    let tmp = to_rust_string(env, preferences_path);
+    _ = env.fs.create_dir_all(GuestPath::new(&tmp));
+
+    let plist_name = ns_string::from_rust_string(env, format!("{}.plist", env.bundle.bundle_identifier()));
+    let plist_path: id = msg![env; preferences_path stringByAppendingPathComponent:plist_name];
+    release(env, plist_name);
+
     let dict = env.objc.borrow::<NSUserDefaultsHostObject>(this).app_domain_dict;
-    msg![env; dict writeToFile:plist_file_path atomically:true]
+    msg![env; dict writeToFile:plist_path atomically:true]
 }
 
 @end

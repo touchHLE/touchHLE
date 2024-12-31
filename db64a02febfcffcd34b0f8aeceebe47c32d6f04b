@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6ae40f62_76849d05",
+        "filename": "src/frameworks/foundation/ns_property_list_serialization.rs",
+        "patchSetId": 8
+      },
+      "lineNbr": 78,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2024-12-31T13:29:56Z",
+      "side": 1,
+      "message": "You are now writing the error string unconditionally, this will crash if it is NULL.",
+      "revId": "db64a02febfcffcd34b0f8aeceebe47c32d6f04b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

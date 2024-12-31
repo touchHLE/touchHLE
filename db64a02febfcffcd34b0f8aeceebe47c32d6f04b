@@ -16,6 +16,24 @@
       "message": "You are now writing the error string unconditionally, this will crash if it is NULL.",
       "revId": "db64a02febfcffcd34b0f8aeceebe47c32d6f04b",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "71b38995_c9be784c",
+        "filename": "src/frameworks/foundation/ns_property_list_serialization.rs",
+        "patchSetId": 8
+      },
+      "lineNbr": 78,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2024-12-31T20:24:28Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "6ae40f62_76849d05",
+      "revId": "db64a02febfcffcd34b0f8aeceebe47c32d6f04b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

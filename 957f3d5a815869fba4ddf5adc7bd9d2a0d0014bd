@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4bac4d12_b24bbda7",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 5
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-01-01T22:31:19Z",
+      "side": 1,
+      "message": "A topological sort must be the way to go, but I would prefer it if we can avoid adding a new dependency if possible.\n\nAlso, what\u0027s the static element? Aren\u0027t they dynamic libraries?",
+      "revId": "957f3d5a815869fba4ddf5adc7bd9d2a0d0014bd",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

@@ -92,7 +92,7 @@ pub const CLASSES: ClassExports = objc_classes! {
         opacity: 1.0,
         background_color: nil, // transparency
         corner_radius: 0.0,
-        needs_display: true,
+        needs_display: false,
         contents: nil,
         drawable_properties: nil,
         presented_pixels: None,
@@ -318,34 +318,6 @@ pub const CLASSES: ClassExports = objc_classes! {
     if env.objc.class_has_method_named(delegate_class, "displayLayer:") {
         () = msg![env; delegate displayLayer:this];
         return;
-    }
-
-    // UIView has a method called drawRect: that subclasses override if they
-    // need custom drawing. touchHLE's UIView (a CALayerDelegate) provides
-    // an implementation of drawLayer:inContext: that calls drawRect:.
-    // This maintains a clean separation of UIView and CALayer, but it also
-    // means that CALayer has no idea which views actually need custom drawing,
-    // because they all have the inherited drawLayer:inContext: method.
-    // To avoid wasting space and time on unnecessary bitmaps, let's pierce the
-    // veil.
-    // (TODO: somehow do this optimization in UIView rather than CALayer.
-    // Apparently Apple do it that way: https://stackoverflow.com/q/4979192)
-    let ui_view_class = env.objc.get_known_class("UIView", &mut env.mem);
-    if env.objc.class_is_subclass_of(delegate_class, ui_view_class) {
-        let draw_rect_sel = env.objc.lookup_selector("drawRect:").unwrap();
-        let draw_layer_sel = env.objc.lookup_selector("drawLayer:inContext:").unwrap();
-        if !env.objc.class_overrides_method_of_superclass(
-            delegate_class,
-            draw_rect_sel,
-            ui_view_class
-        ) && !env.objc.class_overrides_method_of_superclass(
-            delegate_class,
-            draw_layer_sel,
-            ui_view_class
-        ) {
-            log_dbg!("Skipped render! {:?} does not override UIView's drawRect: or drawLayer:inContext: methods.", delegate_class);
-            return;
-        }
     }
 
     let &mut CALayerHostObject {

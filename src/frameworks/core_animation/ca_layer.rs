@@ -90,7 +90,7 @@ pub const CLASSES: ClassExports = objc_classes! {
         opaque: false,
         opacity: 1.0,
         background_color: nil, // transparency
-        needs_display: true,
+        needs_display: false,
         contents: nil,
         drawable_properties: nil,
         presented_pixels: None,

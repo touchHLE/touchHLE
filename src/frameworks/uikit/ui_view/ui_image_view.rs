@@ -76,7 +76,8 @@ pub const CLASSES: ClassExports = objc_classes! {
     release(env, old_image);
 
     let layer: id = msg![env; this layer];
-    () = msg![env; layer setNeedsDisplay];
+    let cg_image: CGImageRef = msg![env; new_image CGImage];
+    () = msg![env; layer setContents:cg_image];
 }
 
 - (())setAnimationImages:(id)images { // NSArray<UIImage *>*
@@ -98,17 +99,8 @@ pub const CLASSES: ClassExports = objc_classes! {
     log!("TODO: [(UIImageView*) {:?} stopAnimating]", this);
 }
 
-// Normally a UIKit view is drawn into a CGContextRef by drawRect:, which is
-// presumably called from drawLayer:inContext:. But for UIImageView, this would
-// be wasteful, we can tell Core Animation to display the image directly rather
-// than copying it to a (CGBitmapContext). If displayLayer: is defined, then
-// drawLayer:inContext: doesn't get called, so I assume this is what the real
-// UIKit does?
-- (())displayLayer:(id)layer {
-    let image: id = msg![env; this image];
-    let cg_image: CGImageRef = msg![env; image CGImage];
-    () = msg![env; layer setContents:cg_image];
-}
+// Need to override this method to do nothing so we never draw over layers as this is a layer backed view 
+- (())setNeedsDisplay {}
 
 @end
 

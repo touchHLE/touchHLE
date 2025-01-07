@@ -34,10 +34,12 @@ use std::io::Write;
 use std::iter::Peekable;
 use std::string::FromUtf16Error;
 use yore::code_pages::CP1252;
+use picori::ShiftJis2004;
 
 pub type NSStringEncoding = NSUInteger;
 pub const NSASCIIStringEncoding: NSUInteger = 1;
 pub const NSUTF8StringEncoding: NSUInteger = 4;
+pub const NSShiftJISStringEncoding: NSUInteger = 8;
 pub const NSUnicodeStringEncoding: NSUInteger = 10;
 pub const NSWindowsCP1252StringEncoding: NSUInteger = 12;
 pub const NSMacOSRomanStringEncoding: NSUInteger = 30;
@@ -111,6 +113,11 @@ impl StringHostObject {
             }
             NSWindowsCP1252StringEncoding => {
                 let string = CP1252.decode(&bytes).to_string();
+                StringHostObject::Utf8(Cow::Owned(string))
+            }
+            NSShiftJISStringEncoding => {
+                let string = ShiftJis2004::all(&mut bytes.into_iter()).unwrap();
+                log_dbg!("ShiftJIS decoded '{}'", string);
                 StringHostObject::Utf8(Cow::Owned(string))
             }
             NSUTF16StringEncoding

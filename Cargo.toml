@@ -53,6 +53,7 @@ symphonia = { version = "0.5.3", default-features = false, features = ["aac", "i
 quick-xml = "0.36.2"
 md5 = "0.7.0"
 yore = "1.1.0"
+encoding_rs = "0.8.35"
 # We currently use a fork of rust-sdl2 because we need a fix for Android builds
 # that's not upstream yet.
 # The HIDAPI feature is enabled because rust-sdl2 hides the SDL2 sensor features

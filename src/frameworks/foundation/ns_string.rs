@@ -28,6 +28,8 @@ use crate::objc::{
     NSZonePtr, ObjC,
 };
 use crate::{fs, Environment};
+use encoding::all::EUC_JP;
+use encoding::{DecoderTrap, Encoding};
 use std::borrow::Cow;
 use std::collections::HashMap;
 use std::io::Write;
@@ -38,6 +40,7 @@ use yore::code_pages::CP1252;
 pub type NSStringEncoding = NSUInteger;
 pub const NSASCIIStringEncoding: NSUInteger = 1;
 pub const NSUTF8StringEncoding: NSUInteger = 4;
+pub const NSShiftJISStringEncoding: NSUInteger = 8;
 pub const NSUnicodeStringEncoding: NSUInteger = 10;
 pub const NSWindowsCP1252StringEncoding: NSUInteger = 12;
 pub const NSMacOSRomanStringEncoding: NSUInteger = 30;
@@ -112,6 +115,11 @@ impl StringHostObject {
             NSWindowsCP1252StringEncoding => {
                 let string = CP1252.decode(&bytes).to_string();
                 StringHostObject::Utf8(Cow::Owned(string))
+            }
+            NSShiftJISStringEncoding => {
+                let string = EUC_JP.decode(&bytes, DecoderTrap::Strict);
+                log_dbg!("ShiftJIS decoded '{:?}'", string);
+                StringHostObject::Utf8(Cow::Owned(string.unwrap()))
             }
             NSUTF16StringEncoding
             | NSUTF16BigEndianStringEncoding

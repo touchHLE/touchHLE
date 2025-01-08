@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "baff3224_f5a6bc98",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-01-08T23:23:24Z",
+      "side": 1,
+      "message": "Please update the Thanks section in the README.",
+      "revId": "2f1cbe09dc286f9eb3d4ef85702598a2f983b716",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

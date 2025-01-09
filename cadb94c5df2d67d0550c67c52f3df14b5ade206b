@@ -37,6 +37,23 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "8efb9f0e_c937425e",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2025-01-09T17:40:04Z",
+      "side": 1,
+      "message": "I don\u0027t think I made how GLES was overhauled quite as clear as I should as I should have, so I\u0027ll put it here as a separate comment:\n\nWith the current setup, OpenGL contexts are split into two parts, `GLESContext` objects and  `GLES` objects (maybe better called a GLESInstances?). The `GLESContext` is an inactive context that don\u0027t expose any actual GL functions. `GLES` objects are the objects that actually allow access to the GL functions, and (normally) come from `GLESContext::make_active`, which activates the context (if it is not already actually active, which is checked first).\n\nThe main insight is that `GLES` requires a exclusive borrow over it\u0027s `GLESContext` and the global `Window` - so it\u0027s not possible to destroy the context while it\u0027s being used, nor activate another context, nor yield the guest thread. The nice part is that this is all caught at compile time, not runtime, like the older system. \n\nTo be fair, this is how `sync_context` used to work (and I didn\u0027t realize this, which is why the changes exist at all), but it wasn\u0027t how window-internal context management used to work. With this system, there\u0027s some ugly behind the scenes work to make the window-internal context management work, but consumers outside of Window get a (actually) safe interface, which was not true before.\n\nIf it\u0027s _really_ unacceptable I can change it back but it almost certainly will cause us to have issues down the road with host context management, so I wouldn\u0027t be happy with it.\n\nI\u0027ll also probably change the OpenAL API to something similar if there isn\u0027t any big issues, so that it can also be checked at compile time.",
+      "revId": "cadb94c5df2d67d0550c67c52f3df14b5ade206b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "294e168c_8b38c374",
         "filename": "android/app/src/main/java/org/libsdl/app/SDLActivity.java",
         "patchSetId": 1
@@ -69,6 +86,42 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "274a72d7_f43076e2",
+        "filename": "src/environment.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 578,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2025-01-09T17:40:04Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "fdc9ed07_d0aa8841",
+      "revId": "cadb94c5df2d67d0550c67c52f3df14b5ade206b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ed7e58e7_aead995f",
+        "filename": "src/environment.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 578,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2025-01-09T17:40:04Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "fdc9ed07_d0aa8841",
+      "revId": "cadb94c5df2d67d0550c67c52f3df14b5ade206b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "57570e67_ce3f87fb",
@@ -86,6 +139,42 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "c842f080_3fdc8c5f",
+        "filename": "src/environment.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 609,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2025-01-09T17:40:04Z",
+      "side": 1,
+      "message": "It is. I could make it so that it isn\u0027t but it\u0027s wrong behavior anyways. Thanks!",
+      "parentUuid": "57570e67_ce3f87fb",
+      "revId": "cadb94c5df2d67d0550c67c52f3df14b5ade206b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "1a8bbcc7_e7c07def",
+        "filename": "src/environment.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 609,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2025-01-09T17:40:04Z",
+      "side": 1,
+      "message": "Yes it is. Thanks!",
+      "parentUuid": "57570e67_ce3f87fb",
+      "revId": "cadb94c5df2d67d0550c67c52f3df14b5ade206b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "653fbabe_fd3878ef",
@@ -99,6 +188,24 @@
       "writtenOn": "2024-12-15T21:23:44Z",
       "side": 1,
       "message": "Comment is now outdated?",
+      "revId": "cadb94c5df2d67d0550c67c52f3df14b5ade206b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "50b9179f_c5f79dc3",
+        "filename": "src/environment/app_picker.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 689,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2025-01-09T17:40:04Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "653fbabe_fd3878ef",
       "revId": "cadb94c5df2d67d0550c67c52f3df14b5ade206b",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
@@ -122,6 +229,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "b0db8a73_a83b721b",
+        "filename": "src/frameworks/opengles.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 26,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2025-01-09T17:40:04Z",
+      "side": 1,
+      "message": "See GLES comment first. This is in reference to `current_ctx_thread` (now deleted). `current_ctxs` is still there, we just switch unconditionally, and GLESContext checks to see if it is actually current.",
+      "parentUuid": "53c110fa_bc3a10ca",
+      "revId": "cadb94c5df2d67d0550c67c52f3df14b5ade206b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "811cdac7_2133c417",
         "filename": "src/frameworks/opengles.rs",
         "patchSetId": 1
@@ -133,6 +258,24 @@
       "writtenOn": "2024-12-15T21:23:44Z",
       "side": 1,
       "message": "Is this split into its own function for lifetime reasons?",
+      "revId": "cadb94c5df2d67d0550c67c52f3df14b5ade206b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0842e31d_5c20f62f",
+        "filename": "src/frameworks/opengles.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 46,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2025-01-09T17:40:04Z",
+      "side": 1,
+      "message": "See GLES comment first. I don\u0027t know if this is actually needed though, I mostly added it for for convenience for consumers that might need to use it multiple times.",
+      "parentUuid": "811cdac7_2133c417",
       "revId": "cadb94c5df2d67d0550c67c52f3df14b5ade206b",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
@@ -156,6 +299,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "52cf9f19_1f578683",
+        "filename": "src/frameworks/opengles/eagl.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 18,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2025-01-09T17:40:04Z",
+      "side": 1,
+      "message": "I think this was me being lazy and letting rust-analyzer put in imports for me, sorry.",
+      "parentUuid": "988b63b1_ac7e312a",
+      "revId": "cadb94c5df2d67d0550c67c52f3df14b5ade206b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "1a6d53fe_fb3a4472",
         "filename": "src/frameworks/uikit/ui_application.rs",
         "patchSetId": 1
@@ -167,6 +328,24 @@
       "writtenOn": "2024-12-15T21:23:44Z",
       "side": 1,
       "message": "s/`_|  {`/`_| {`/",
+      "revId": "cadb94c5df2d67d0550c67c52f3df14b5ade206b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b89e471e_c8f08771",
+        "filename": "src/frameworks/uikit/ui_application.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 100,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2025-01-09T17:40:04Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "1a6d53fe_fb3a4472",
       "revId": "cadb94c5df2d67d0550c67c52f3df14b5ade206b",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
@@ -188,6 +367,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "cbb3e4c4_58eb05ef",
+        "filename": "src/frameworks/uikit/ui_application.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 117,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2025-01-09T17:40:04Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "4615cc93_08e6a9a7",
+      "revId": "cadb94c5df2d67d0550c67c52f3df14b5ade206b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "0b11733a_432cb879",
@@ -201,6 +398,24 @@
       "writtenOn": "2024-12-15T21:23:44Z",
       "side": 1,
       "message": "This comment should be moved back",
+      "revId": "cadb94c5df2d67d0550c67c52f3df14b5ade206b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "38bd3ff5_7f8314a0",
+        "filename": "src/gles/gles1_on_gl2.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 25,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2025-01-09T17:40:04Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "0b11733a_432cb879",
       "revId": "cadb94c5df2d67d0550c67c52f3df14b5ade206b",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
@@ -235,6 +450,24 @@
       "writtenOn": "2024-12-15T21:23:44Z",
       "side": 1,
       "message": "This is in `Window`, but I guess it\u0027s really more of an `Environment` thing, but it\u0027d be awkward to make all these functions need a reference to some other part of the `Environment` I guess?\n\nDoes it have to be a boolean piece of state? It feels like something that could be derived from some thread-local state or something.",
+      "revId": "cadb94c5df2d67d0550c67c52f3df14b5ade206b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2bb29c8d_aab80590",
+        "filename": "src/window.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 177,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2025-01-09T17:40:04Z",
+      "side": 1,
+      "message": "It can\u0027t be derived from corosensei, and putting it environment is pretty awkward. Maybe we can manually set a thread local? I don\u0027t know if that\u0027s great though.",
+      "parentUuid": "0d231ace_58502bfb",
       "revId": "cadb94c5df2d67d0550c67c52f3df14b5ade206b",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

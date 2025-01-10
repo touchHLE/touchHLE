@@ -58,6 +58,7 @@
 
     <application
         android:name="org.touchhle.android.touchHLEApplication"
+        android:appCategory="game"
         android:allowBackup="true"
         android:hardwareAccelerated="true"
         android:label="@string/app_name"

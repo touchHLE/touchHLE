@@ -1334,6 +1334,42 @@ pub const CLASSES: ClassExports = objc_classes! {
     autorelease(env, res)
 }
 
+- (NSRange)lineRangeForRange:(NSRange)range {
+    let host_object = env.objc.borrow_mut::<StringHostObject>(this);
+    let (orig_string, did_convert) = host_object.convert_to_utf16_inplace();
+    if did_convert {
+        log_dbg!("[{:?} length]: converted string to UTF-16", this);
+    }
+    let (start, end, _) = line_range_helper(orig_string, range, true, true);
+    NSRange { location: start, length: end - start }
+}
+
+- (())getLineStart:(MutPtr<NSUInteger>)start_ptr
+               end:(MutPtr<NSUInteger>)end_ptr
+       contentsEnd:(MutPtr<NSUInteger>)contents_end_ptr
+          forRange:(NSRange)range {
+    let host_object = env.objc.borrow_mut::<StringHostObject>(this);
+    let (orig_string, did_convert) = host_object.convert_to_utf16_inplace();
+    if did_convert {
+        log_dbg!("[{:?} length]: converted string to UTF-16", this);
+    }
+
+    let get_start = !start_ptr.is_null();
+    let get_end = !end_ptr.is_null() || !contents_end_ptr.is_null();
+    let (start, end, contents_end) = line_range_helper(orig_string, range, get_start, get_end);
+
+    if !start_ptr.is_null() {
+        env.mem.write(start_ptr, start);
+    }
+
+    if !end_ptr.is_null() {
+        env.mem.write(end_ptr, end);
+    }
+
+    if !contents_end_ptr.is_null() {
+        env.mem.write(contents_end_ptr, contents_end);
+    }
+}
 @end
 
 // Specialised subclass for static-lifetime strings.
@@ -1532,4 +1568,156 @@ fn float_value_common<F: std::str::FromStr + Default>(env: &mut Environment, str
     }
     // TODO: handle over/underflow properly
     st[..cutoff].parse().unwrap_or(Default::default())
+}
+
+/// Helper function for lineRangeForRange: and
+/// getLineStart:end:contentsEnd:forRange:.
+///
+/// The two last arguments (get_[start/end]) correspond to the
+/// start and end/contentsEnd returns. If false is specified for a given
+/// argument, the corresponding return values will not be calculated and
+/// set to 0.
+fn line_range_helper(
+    string: &Utf16String,
+    range: NSRange,
+    get_start: bool,
+    get_end: bool,
+) -> (NSUInteger, NSUInteger, NSUInteger) {
+    let NSRange {
+        location: r_start,
+        length,
+    } = range;
+    let r_end: usize = r_start.checked_add(length).unwrap().try_into().unwrap();
+    let r_start: usize = r_start.try_into().unwrap();
+    // All the line range functions are "counting the posts, not the fences", so
+    // it's ok if r_end = length.
+    let str_len = string.len();
+    assert!(r_end <= str_len, "Range out of bounds!");
+
+    let mut start_pos: usize = 0;
+    if get_start {
+        start_pos = r_start;
+        while start_pos > 0 {
+            let c: u16 = string[start_pos - 1];
+            // What counts as a line delimiter is noted here:
+            // https://developer.apple.com/documentation/foundation/nsstring/1415111-getlinestart?language=objc
+            // There's some special handling for if we start in the
+            // middle of a CRLF.
+            match c {
+                // 'LINE FEED (LF)' (\n), 'NEXT LINE (NEL)', 'LINE SEPARATOR',
+                // 'PARAGRAPH SEPARATOR'
+                0x000A | 0x0085 | 0x2028 | 0x2029 => break,
+                // 'CARRIAGE RETURN (CR)' (\r)
+                0x000D => {
+                    // If the first character is CR, and it is followed by an
+                    // LF, then it's not counted as a line delimiter.
+                    // (verified on simulator)
+                    if start_pos == r_start && start_pos < str_len {
+                        let after_cr: u16 = string[start_pos];
+                        // 'LINE FEED (LF)' (\n)
+                        if after_cr == 0x000A {
+                            start_pos -= 1;
+                            continue;
+                        }
+                    }
+                    break;
+                }
+                _ => {}
+            }
+            start_pos -= 1;
+        }
+    }
+
+    // There is very little extra cost for also getting contentsEnd if we're
+    // getting end (or vice-versa), so they're combined into one argument.
+    let mut end_pos = 0;
+    let mut cend_pos = 0;
+    if get_end {
+        // We want to include the entire line that covers the last char
+        // in [r_start, r_end).
+        cend_pos = if length > 0 { r_end - 1 } else { r_start };
+        while cend_pos < str_len {
+            let c: u16 = string[cend_pos];
+            // See above about what counts as a line delimiter.
+            // There's more understandable handling for CRLF here as well.
+            match c {
+                //  'NEXT LINE (NEL)', 'LINE SEPARATOR', 'PARAGRAPH SEPARATOR'
+                0x0085 | 0x2028 | 0x2029 => {
+                    end_pos = cend_pos + 1;
+                    break;
+                }
+                // 'LINE FEED (LF)' (\n),
+                0x000A => {
+                    // If this is the first character checked, then we also need
+                    // to check back for a CR.
+                    if cend_pos > 0 && string[cend_pos - 1] == 0x000D {
+                        cend_pos -= 1;
+                        end_pos = cend_pos + 2;
+                    } else {
+                        end_pos = cend_pos + 1;
+                    }
+                    break;
+                }
+                // 'CARRIAGE RETURN (CR)' (\r)
+                0x000D => {
+                    // Check if next character exists and is LF.
+                    if cend_pos < str_len - 1 {
+                        let after_cr: u16 = string[cend_pos + 1];
+                        // 'LINE FEED (LF)' (\n)
+                        if after_cr == 0x000A {
+                            end_pos = cend_pos + 2;
+                            break;
+                        }
+                    }
+                    end_pos = cend_pos + 1;
+                    break;
+                }
+                _ => {}
+            }
+            cend_pos += 1;
+        }
+        if cend_pos == str_len {
+            end_pos = cend_pos
+        }
+    }
+
+    (
+        start_pos.try_into().unwrap(),
+        end_pos.try_into().unwrap(),
+        cend_pos.try_into().unwrap(),
+    )
+}
+
+#[cfg(test)]
+mod ns_string_tests {
+    use super::*;
+    #[test]
+    fn linerange_tests() {
+        let range = |x, y| NSRange {
+            location: x,
+            length: y,
+        };
+        let str1: Utf16String = "abcd\nab".encode_utf16().collect();
+        assert!(line_range_helper(&str1, range(5, 1), true, true) == (5, 7, 7));
+        assert!(line_range_helper(&str1, range(4, 1), true, true) == (0, 5, 4));
+
+        let str2: Utf16String = "abc\r".encode_utf16().collect();
+        assert!(line_range_helper(&str2, range(4, 0), true, true) == (4, 4, 4));
+        assert!(line_range_helper(&str2, range(3, 1), true, true) == (0, 4, 3));
+
+        let str3: Utf16String = "abc\r\nab".encode_utf16().collect();
+        assert!(line_range_helper(&str3, range(4, 0), true, true) == (0, 5, 3));
+        assert!(line_range_helper(&str3, range(4, 1), true, true) == (0, 5, 3));
+        assert!(line_range_helper(&str3, range(6, 1), true, true) == (5, 7, 7));
+        assert!(line_range_helper(&str3, range(4, 2), true, true) == (0, 7, 7));
+
+        let str4: Utf16String = "\r\n".encode_utf16().collect();
+        assert!(line_range_helper(&str4, range(1, 0), true, true) == (0, 2, 0));
+        assert!(line_range_helper(&str4, range(1, 1), true, true) == (0, 2, 0));
+        assert!(line_range_helper(&str4, range(0, 0), true, true) == (0, 2, 0));
+
+        let str5: Utf16String = "abcd\na\n".encode_utf16().collect();
+        assert!(line_range_helper(&str5, range(6, 1), true, true) == (5, 7, 6));
+        assert!(line_range_helper(&str5, range(4, 1), true, true) == (0, 5, 4));
+    }
 }

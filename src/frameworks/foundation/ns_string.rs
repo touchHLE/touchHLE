@@ -1317,6 +1317,31 @@ pub const CLASSES: ClassExports = objc_classes! {
     autorelease(env, res)
 }
 
+- (NSRange)lineRangeForRange:(NSRange)range {
+    let (start, end, _) = line_range_helper(env, this, range, true, true);
+    NSRange { location: start, length: end - start }
+}
+
+- (())getLineStart:(MutPtr<NSUInteger>)start_ptr
+               end:(MutPtr<NSUInteger>)end_ptr
+       contentsEnd:(MutPtr<NSUInteger>)contents_end_ptr
+          forRange:(NSRange)range {
+    let get_start = !start_ptr.is_null();
+    let get_end = !end_ptr.is_null() || !contents_end_ptr.is_null();
+    let (start, end, contents_end) = line_range_helper(env, this, range, get_start, get_end);
+
+    if !start_ptr.is_null() {
+        env.mem.write(start_ptr, start);
+    }
+
+    if !end_ptr.is_null() {
+        env.mem.write(end_ptr, end);
+    }
+
+    if !contents_end_ptr.is_null() {
+        env.mem.write(contents_end_ptr, contents_end);
+    }
+}
 @end
 
 // Specialised subclass for static-lifetime strings.
@@ -1515,4 +1540,108 @@ fn float_value_common<F: std::str::FromStr + Default>(env: &mut Environment, str
     }
     // TODO: handle over/underflow properly
     st[..cutoff].parse().unwrap_or(Default::default())
+}
+
+/// Helper function for lineRangeForRange: and
+/// getLineStart:end:contentsEnd:forRange:.
+///
+/// The two last arguments (get_[start/end]) correspond to the
+/// start and end/contentsEnd returns. If false is specified for a given
+/// argument, the corresponding return values will not be calculated and
+/// set to 0.
+fn line_range_helper(
+    env: &mut Environment,
+    string: id,
+    range: NSRange,
+    get_start: bool,
+    get_end: bool,
+) -> (NSUInteger, NSUInteger, NSUInteger) {
+    let NSRange {
+        location: r_start,
+        length,
+    } = range;
+    assert!(length > 0); // TODO
+    let r_end = r_start.checked_add(length).unwrap();
+    // All the line range functions are "counting the posts, not the fences", so
+    // it's ok if r_end = length.
+    let str_len: NSUInteger = msg![env; string length];
+    assert!(r_end <= str_len, "Range out of bounds!");
+
+    let mut start_pos = 0;
+    if get_start {
+        start_pos = r_start;
+        while start_pos > 0 {
+            let c: u16 = msg![env; string characterAtIndex:(start_pos - 1)];
+            // What counts as a line delimiter is noted here:
+            // https://developer.apple.com/documentation/foundation/nsstring/1415111-getlinestart?language=objc
+            // There's some special handling for if we start in the
+            // middle of a CRLF.
+            match c {
+                // 'LINE FEED (LF)' (\n), 'NEXT LINE (NEL)', 'LINE SEPARATOR',
+                // 'PARAGRAPH SEPARATOR'
+                0x000A | 0x0085 | 0x2028 | 0x2029 => break,
+                // 'CARRIAGE RETURN (CR)' (\r)
+                0x000D => {
+                    // If the first character is CR, and it is followed by an
+                    // LF, then it's not counted as a line delimiter.
+                    // (verified on simulator)
+                    if start_pos == r_start && start_pos < str_len {
+                        let after_cr: u16 = msg![env; string characterAtIndex:start_pos];
+                        // 'LINE FEED (LF)' (\n)
+                        if after_cr == 0x000A {
+                            start_pos -= 1;
+                            continue;
+                        }
+                    }
+                    break;
+                }
+                _ => {}
+            }
+            start_pos -= 1;
+        }
+    }
+
+    // There is very little extra cost for also getting contentsEnd if we're
+    // getting end (or vice-versa), so they're combined into one argument.
+    let mut end_pos = 0;
+    let mut cend_pos = 0;
+    if get_end {
+        // We want to include the entire line that covers the last char in [r_start, r_end).
+        assert!(r_end >= 1);
+        cend_pos = r_end - 1;
+        while cend_pos < str_len {
+            let c: u16 = msg![env; string characterAtIndex:cend_pos];
+            // See above about what counts as a line delimiter.
+            // There's more understandable handling for CRLF here as well.
+            match c {
+                // 'LINE FEED (LF)' (\n), 'NEXT LINE (NEL)', 'LINE SEPARATOR',
+                // 'PARAGRAPH SEPARATOR'
+                0x000A | 0x0085 | 0x2028 | 0x2029 => {
+                    end_pos = cend_pos + 1;
+                    break;
+                }
+                // 'CARRIAGE RETURN (CR)' (\r)
+                0x000D => {
+                    // Check if next character exists and is LF.
+                    if cend_pos < str_len - 1 {
+                        let after_cr: u16 = msg![env; string characterAtIndex:(cend_pos + 1)];
+                        // 'LINE FEED (LF)' (\n)
+                        if after_cr == 0x000A {
+                            end_pos = cend_pos + 2;
+                            break;
+                        }
+                    }
+                    end_pos = cend_pos + 1;
+                    break;
+                }
+                _ => {}
+            }
+            cend_pos += 1;
+        }
+        if cend_pos == str_len {
+            end_pos = cend_pos
+        }
+    }
+
+    (start_pos, end_pos, cend_pos)
 }

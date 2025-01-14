@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d59e1605_710363c4",
+        "filename": "src/frameworks/uikit/ui_view.rs",
+        "patchSetId": 18
+      },
+      "lineNbr": 195,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-01-14T23:26:17Z",
+      "side": 1,
+      "message": "you also need to retain the delegate during the animation",
+      "revId": "774641ffaddb7c3bdc1c51c2260de2005784a819",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c9ee085b_f5ae1c5f",
+        "filename": "src/frameworks/uikit/ui_view.rs",
+        "patchSetId": 18
+      },
+      "lineNbr": 257,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-01-14T23:26:17Z",
+      "side": 1,
+      "message": "you need to release previously retained animation delegate here",
+      "revId": "774641ffaddb7c3bdc1c51c2260de2005784a819",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

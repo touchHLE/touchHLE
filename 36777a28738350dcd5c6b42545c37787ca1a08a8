@@ -16,6 +16,24 @@
       "message": "I haven\u0027t looked at this very closely and am not very familiar with the involved things, but I hope it\u0027s fine.",
       "revId": "36777a28738350dcd5c6b42545c37787ca1a08a8",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "bc43ea58_357d2078",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-01-14T20:44:33Z",
+      "side": 1,
+      "message": "Thanks!",
+      "parentUuid": "9f22daea_2f2bafde",
+      "revId": "36777a28738350dcd5c6b42545c37787ca1a08a8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

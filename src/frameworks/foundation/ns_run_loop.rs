@@ -10,14 +10,16 @@
 
 use super::{ns_string, ns_timer, NSComparisonResult, NSOrderedAscending};
 use crate::dyld::{ConstantExports, HostConstant};
+use crate::environment::ThreadId;
 use crate::frameworks::audio_toolbox::audio_queue::{handle_audio_queue, AudioQueueRef};
 use crate::frameworks::audio_toolbox::audio_unit::{render_audio_unit, AudioUnit};
 use crate::frameworks::core_foundation::cf_run_loop::{
     kCFRunLoopCommonModes, kCFRunLoopDefaultMode, CFRunLoopRef,
 };
 use crate::frameworks::{core_animation, media_player, uikit};
-use crate::objc::{id, msg, objc_classes, release, retain, ClassExports, HostObject};
+use crate::objc::{id, msg, objc_classes, release, retain, Class, ClassExports, HostObject};
 use crate::{msg_class, Environment};
+use std::collections::HashMap;
 use std::time::{Duration, Instant};
 
 /// `NSString*`
@@ -39,7 +41,7 @@ pub const CONSTANTS: ConstantExports = &[
 
 #[derive(Default)]
 pub struct State {
-    main_thread_run_loop: Option<id>,
+    run_loops: HashMap<ThreadId, id>,
     have_shown_reentrancy_warning: bool,
 }
 
@@ -64,24 +66,11 @@ pub const CLASSES: ClassExports = objc_classes! {
 @implementation NSRunLoop: NSObject
 
 + (id)mainRunLoop {
-    if let Some(rl) = env.framework_state.foundation.ns_run_loop.main_thread_run_loop {
-        rl
-    } else {
-        let host_object = Box::new(NSRunLoopHostObject {
-            audio_units: Vec::new(),
-            audio_queues: Vec::new(),
-            timers: Vec::new(),
-            is_running: false,
-        });
-        let new = env.objc.alloc_static_object(this, host_object, &mut env.mem);
-        env.framework_state.foundation.ns_run_loop.main_thread_run_loop = Some(new);
-        new
-    }
+    run_loop_for_thread(env, this, 0)
 }
 
 + (id)currentRunLoop {
-    assert!(env.current_thread == 0);
-    msg![env; this mainRunLoop]
+    run_loop_for_thread(env, this, env.current_thread)
 }
 
 // TODO: more accessors
@@ -248,19 +237,24 @@ fn run_run_loop(env: &mut Environment, run_loop: id, single_iteration: bool) {
         }
     }
 
+    let is_main_run_loop = env.current_thread == 0;
+
     loop {
         let mut sleep_until = None;
 
-        env.window
-            .as_mut()
-            .expect("NSRunLoop not supported in headless mode")
-            .poll_for_events(&env.options);
+        // We want to process those only on the main run loop
+        if is_main_run_loop {
+            env.window
+                .as_mut()
+                .expect("NSRunLoop not supported in headless mode")
+                .poll_for_events(&env.options);
 
-        let next_due = uikit::handle_events(env);
-        limit_sleep_time(&mut sleep_until, next_due);
+            let next_due = uikit::handle_events(env);
+            limit_sleep_time(&mut sleep_until, next_due);
 
-        let next_due = core_animation::recomposite_if_necessary(env);
-        limit_sleep_time(&mut sleep_until, next_due);
+            let next_due = core_animation::recomposite_if_necessary(env);
+            limit_sleep_time(&mut sleep_until, next_due);
+        }
 
         assert!(timers_tmp.is_empty());
         timers_tmp.extend_from_slice(&env.objc.borrow::<NSRunLoopHostObject>(run_loop).timers);
@@ -281,15 +275,19 @@ fn run_run_loop(env: &mut Environment, run_loop: id, single_iteration: bool) {
             handle_audio_queue(env, audio_queue);
         }
 
-        assert!(audio_units_tmp.is_empty());
-        audio_units_tmp
-            .extend_from_slice(&env.objc.borrow::<NSRunLoopHostObject>(run_loop).audio_units);
+        if is_main_run_loop {
+            // TODO: not clear if audio units should be processed in
+            // the run loop (and on the main thread)
+            assert!(audio_units_tmp.is_empty());
+            audio_units_tmp
+                .extend_from_slice(&env.objc.borrow::<NSRunLoopHostObject>(run_loop).audio_units);
 
-        for audio_unit in audio_units_tmp.drain(..) {
-            render_audio_unit(env, audio_unit);
+            for audio_unit in audio_units_tmp.drain(..) {
+                render_audio_unit(env, audio_unit);
+            }
+
+            media_player::handle_players(env);
         }
-
-        media_player::handle_players(env);
 
         // Unfortunately, touchHLE has to poll for certain things repeatedly;
         // it can't just wait until the next event appears.
@@ -319,4 +317,34 @@ fn run_run_loop(env: &mut Environment, run_loop: id, single_iteration: bool) {
     env.objc
         .borrow_mut::<NSRunLoopHostObject>(run_loop)
         .is_running = false;
+}
+
+/// Helper method for `mainRunLoop` and `currentRunLoop` NSThread class methods
+fn run_loop_for_thread(env: &mut Environment, this: Class, thread_id: ThreadId) -> id {
+    if let std::collections::hash_map::Entry::Vacant(e) = env
+        .framework_state
+        .foundation
+        .ns_run_loop
+        .run_loops
+        .entry(thread_id)
+    {
+        let host_object = Box::new(NSRunLoopHostObject {
+            audio_units: Vec::new(),
+            audio_queues: Vec::new(),
+            timers: Vec::new(),
+            is_running: false,
+        });
+        // TODO: is it OK to allocate static object for all threads,
+        // not only main one?
+        let new = env
+            .objc
+            .alloc_static_object(this, host_object, &mut env.mem);
+        e.insert(new);
+    }
+    *env.framework_state
+        .foundation
+        .ns_run_loop
+        .run_loops
+        .get(&thread_id)
+        .unwrap()
 }

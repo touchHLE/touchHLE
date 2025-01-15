@@ -16,6 +16,24 @@
       "message": "We are storing the audio units in the run loop object, so they probably shouldn\u0027t be ignored if this isn\u0027t the main run loop? But I don\u0027t know how they end up in this object.",
       "revId": "1c0ac7f62a5d1dc669760dfd2952f842961e764e",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "aba47b71_7bb85e84",
+        "filename": "src/frameworks/foundation/ns_run_loop.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 283,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-01-15T20:20:57Z",
+      "side": 1,
+      "message": "Oh, we are explicitly putting them in the main run loop in the audio unit code. Well, the `if` is redundant for them then. I would suggest moving this out of the `if`.",
+      "parentUuid": "778bfc03_48d0f575",
+      "revId": "1c0ac7f62a5d1dc669760dfd2952f842961e764e",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

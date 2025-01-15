@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "778bfc03_48d0f575",
+        "filename": "src/frameworks/foundation/ns_run_loop.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 283,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-01-15T20:18:11Z",
+      "side": 1,
+      "message": "We are storing the audio units in the run loop object, so they probably shouldn\u0027t be ignored if this isn\u0027t the main run loop? But I don\u0027t know how they end up in this object.",
+      "revId": "1c0ac7f62a5d1dc669760dfd2952f842961e764e",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

@@ -59,6 +59,7 @@ mod window;
 // via re-exports.
 use environment::{Environment, MutexId, MutexType, ThreadId, PTHREAD_MUTEX_DEFAULT};
 
+use dyld::dump_symbols;
 use std::path::PathBuf;
 
 pub use touchHLE_version::*;
@@ -113,6 +114,9 @@ Special options:
 
     --info
         Print basic information about the app bundle without running the app.
+
+    --dump_symbols
+        Print all symbols provided by touchHLE to stdout
 ";
 
 pub fn main<T: Iterator<Item = String>>(mut args: T) -> Result<(), String> {
@@ -156,6 +160,9 @@ pub fn main<T: Iterator<Item = String>>(mut args: T) -> Result<(), String> {
             return Ok(());
         } else if arg == "--info" {
             just_info = true;
+        } else if arg == "--dump_symbols" {
+            dump_symbols();
+            return Ok(());
         // Parse an option but discard the value, to test whether it's valid.
         // We don't want to apply it immediately, because then options loaded
         // from a file would take precedence over options from the command line.

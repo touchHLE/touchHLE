@@ -130,6 +130,12 @@ pub enum HostConstant {
 /// See also [FunctionExports], [crate::objc::ClassExports].
 pub type ConstantExports = &'static [(&'static str, HostConstant)];
 
+pub fn dump_symbols() {
+    for (symbol, _) in function_lists::FUNCTION_LISTS.iter().flat_map(|&n| n) {
+        println!("{}", symbol);
+    }
+}
+
 /// Helper for working with symbol lists in the style of [FunctionExports].
 pub fn search_lists<T>(
     lists: &'static [&'static [(&'static str, T)]],

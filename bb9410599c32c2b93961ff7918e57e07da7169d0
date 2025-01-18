@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ead8e8ba_f0fc9eb5",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2025-01-18T15:31:31Z",
+      "side": 1,
+      "message": "Pretty naive dumping of symbols from FUNCTIONS_LIST. This works for my needs but there may be a better way to do this.",
+      "revId": "bb9410599c32c2b93961ff7918e57e07da7169d0",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

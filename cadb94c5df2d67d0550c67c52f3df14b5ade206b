@@ -69,6 +69,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "1bafb701_2dbfa018",
+        "filename": "android/app/src/main/java/org/libsdl/app/SDLActivity.java",
+        "patchSetId": 1
+      },
+      "lineNbr": 1,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-01-25T14:42:17Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "294e168c_8b38c374",
+      "revId": "cadb94c5df2d67d0550c67c52f3df14b5ade206b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "fdc9ed07_d0aa8841",

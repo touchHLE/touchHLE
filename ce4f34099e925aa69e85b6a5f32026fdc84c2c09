@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f789d6fe_031edc94",
+        "filename": "OPTIONS_HELP.txt",
+        "patchSetId": 1
+      },
+      "lineNbr": 147,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-01-25T14:32:21Z",
+      "side": 1,
+      "message": "Two things:\n\n- There should be a newline before this.\n- I think we are probably going to add a lot of different “dumping” tools for various purposes. If this could be changed to `--dump\u003d...` and then have, idk, `linking_info` as the current only accepted value, then we can gradually add more of these without having to update `OPTIONS_HELP.txt` each time. This does mean the help file would be quite undescriptive for this particular option, but that\u0027s fine, it\u0027s for developers anyway. I guess `--dump\u003dhelp` could print a list of recognised options, if we want that to be a thing.",
+      "revId": "ce4f34099e925aa69e85b6a5f32026fdc84c2c09",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "cc29b2b6_df301964",
+        "filename": "src/log.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 89,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-01-25T14:32:21Z",
+      "side": 1,
+      "message": "Are you sure avoiding an implicit newline is even possible? I don\u0027t think `sdl2::log` can do that, and I\u0027m not sure this is useful on Android. Dumping everything to a file named `dump.txt` or printing only to stderr would be less troublesome. I\u0027d rather not add a macro that encourages doing things that won\u0027t work on Android.",
+      "revId": "ce4f34099e925aa69e85b6a5f32026fdc84c2c09",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

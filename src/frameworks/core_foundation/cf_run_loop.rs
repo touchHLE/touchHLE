@@ -8,6 +8,8 @@
 //! This is not even toll-free bridged to `NSRunLoop` in Apple's implementation,
 //! but here it is the same type.
 
+use touchhle_macros::validate_function_exports;
+
 use crate::dyld::{export_c_func, ConstantExports, FunctionExports, HostConstant};
 use crate::frameworks::core_foundation::time::CFTimeInterval;
 use crate::frameworks::foundation::ns_run_loop::run_run_loop_single_iteration;
@@ -64,6 +66,7 @@ pub const CONSTANTS: ConstantExports = &[
     ),
 ];
 
+#[validate_function_exports]
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CFRunLoopGetCurrent()),
     export_c_func!(CFRunLoopGetMain()),

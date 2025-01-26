@@ -5,6 +5,8 @@
  */
 //! `NSDate`.
 
+use touchhle_macros::validate_class_exports;
+
 use super::ns_string::from_rust_ordering;
 use super::{NSComparisonResult, NSTimeInterval};
 use crate::frameworks::core_foundation::time::{apple_epoch, SECS_FROM_UNIX_TO_APPLE_EPOCHS};
@@ -22,6 +24,7 @@ struct NSDateHostObject {
 }
 impl HostObject for NSDateHostObject {}
 
+#[validate_class_exports]
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);

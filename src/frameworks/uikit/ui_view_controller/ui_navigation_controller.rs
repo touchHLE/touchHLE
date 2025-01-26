@@ -5,6 +5,8 @@
  */
 //! `UINavigationController`.
 
+use touchhle_macros::validate_class_exports;
+
 use crate::frameworks::foundation::NSUInteger;
 use crate::objc::{
     id, impl_HostObject_with_superclass, msg, nil, objc_classes, release, retain, ClassExports,
@@ -25,6 +27,7 @@ struct UINavigationControllerHostObject {
 }
 impl_HostObject_with_superclass!(UINavigationControllerHostObject);
 
+#[validate_class_exports]
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);

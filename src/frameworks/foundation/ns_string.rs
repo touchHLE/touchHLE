@@ -34,6 +34,7 @@ use std::collections::HashMap;
 use std::io::Write;
 use std::iter::Peekable;
 use std::string::FromUtf16Error;
+use touchhle_macros::validate_class_exports;
 use yore::code_pages::CP1252;
 
 pub type NSStringEncoding = NSUInteger;
@@ -264,6 +265,7 @@ pub fn from_rust_ordering(ordering: std::cmp::Ordering) -> NSComparisonResult {
     }
 }
 
+#[validate_class_exports]
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);

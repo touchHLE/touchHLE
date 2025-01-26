@@ -9,6 +9,7 @@
 //! - [UITextFieldDelegate overview](https://developer.apple.com/documentation/uikit/uitextfielddelegate?language=objc)
 
 use sdl2_sys::{SDL_StartTextInput, SDL_StopTextInput};
+use touchhle_macros::validate_class_exports;
 
 use crate::dyld::{ConstantExports, HostConstant};
 use crate::frameworks::core_graphics::CGRect;
@@ -58,6 +59,7 @@ impl Default for UITextFieldHostObject {
     }
 }
 
+#[validate_class_exports]
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);

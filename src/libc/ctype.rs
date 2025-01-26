@@ -5,6 +5,8 @@
  */
 //! `ctype.h`
 
+use touchhle_macros::validate_function_exports;
+
 use super::wchar::wchar_t;
 use crate::abi::GuestFunction;
 use crate::dyld::{export_c_func, ConstantExports, Dyld, FunctionExports, HostConstant};
@@ -145,5 +147,6 @@ pub const CONSTANTS: ConstantExports = &[(
     HostConstant::Custom(get_default_rune_locale),
 )];
 
+#[validate_function_exports]
 pub const FUNCTIONS: FunctionExports =
     &[export_c_func!(__tolower(_)), export_c_func!(__toupper(_))];

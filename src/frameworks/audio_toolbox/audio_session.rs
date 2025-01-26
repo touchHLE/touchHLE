@@ -5,6 +5,8 @@
  */
 //! `AudioSession.h` (Audio Session) // TODO: is this the real name?
 
+use touchhle_macros::validate_function_exports;
+
 use crate::abi::GuestFunction;
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::frameworks::carbon_core::OSStatus;
@@ -194,6 +196,7 @@ fn AudioSessionAddPropertyListener(
     result
 }
 
+#[validate_function_exports]
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(AudioSessionInitialize(_, _, _, _)),
     export_c_func!(AudioSessionGetProperty(_, _, _)),

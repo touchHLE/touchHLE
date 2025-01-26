@@ -14,6 +14,8 @@ pub mod ui_slider;
 pub mod ui_switch;
 pub mod ui_text_field;
 
+use touchhle_macros::validate_class_exports;
+
 use crate::frameworks::core_graphics::CGPoint;
 use crate::frameworks::foundation::NSUInteger;
 use crate::objc::{
@@ -90,6 +92,7 @@ fn send_actions(env: &mut Environment, this: id, event: id, control_event: UICon
     }
 }
 
+#[validate_class_exports]
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);

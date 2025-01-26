@@ -18,6 +18,7 @@ use crate::objc::{
 use crate::Environment;
 use plist::Value;
 use std::io::Cursor;
+use touchhle_macros::validate_class_exports;
 
 pub type NSPropertyListMutabilityOptions = NSUInteger;
 pub const NSPropertyListImmutable: NSPropertyListMutabilityOptions = 0;
@@ -26,6 +27,7 @@ pub type NSPropertyListFormat = NSUInteger;
 pub const NSPropertyListXMLFormat_v1_0: NSPropertyListFormat = 100;
 pub const NSPropertyListBinaryFormat_v1_0: NSPropertyListFormat = 200;
 
+#[validate_class_exports]
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);

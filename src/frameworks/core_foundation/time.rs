@@ -5,6 +5,8 @@
  */
 //! Time things including `CFAbsoluteTime`.
 
+use touchhle_macros::validate_function_exports;
+
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::frameworks::core_foundation::CFTypeRef;
 use crate::frameworks::foundation::NSTimeInterval;
@@ -83,6 +85,7 @@ fn CFAbsoluteTimeGetDayOfWeek(env: &mut Environment, at: CFAbsoluteTime, tz: CFT
     CFAbsoluteTimeGetGregorianDate(env, at, tz).day.into()
 }
 
+#[validate_function_exports]
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CFAbsoluteTimeGetCurrent()),
     export_c_func!(CFTimeZoneCopySystem()),

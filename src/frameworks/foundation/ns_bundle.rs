@@ -5,6 +5,8 @@
  */
 //! `NSBundle`.
 
+use touchhle_macros::validate_class_exports;
+
 use super::{ns_string, NSUInteger};
 use crate::bundle::Bundle;
 use crate::frameworks::core_foundation::cf_bundle::{
@@ -54,6 +56,7 @@ pub struct NSBundleHostObject {
 }
 impl HostObject for NSBundleHostObject {}
 
+#[validate_class_exports]
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);

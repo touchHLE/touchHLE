@@ -7,6 +7,8 @@
 //!
 //! Implemented using Audio Queue Services based on [the PlayingAudio example](https://developer.apple.com/library/archive/documentation/MusicAudio/Conceptual/AudioQueueProgrammingGuide/AQPlayback/PlayingAudio.html)
 
+use touchhle_macros::validate_class_exports;
+
 use crate::dyld::HostFunction;
 use crate::frameworks::audio_toolbox::audio_file::{
     self, kAudioFilePropertyDataFormat, kAudioFilePropertyPacketSizeUpperBound,
@@ -50,6 +52,7 @@ struct AVAudioPlayerHostObject {
 }
 impl HostObject for AVAudioPlayerHostObject {}
 
+#[validate_class_exports]
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);

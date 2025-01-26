@@ -5,6 +5,8 @@
  */
 //! `NSData` and `NSMutableData`.
 
+use touchhle_macros::validate_class_exports;
+
 use super::ns_string::to_rust_string;
 use super::{NSRange, NSUInteger};
 use crate::frameworks::foundation::ns_keyed_unarchiver::decode_current_data;
@@ -22,6 +24,7 @@ pub(super) struct NSDataHostObject {
 }
 impl HostObject for NSDataHostObject {}
 
+#[validate_class_exports]
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);

@@ -5,6 +5,8 @@
  */
 //! `NSFileManager` etc.
 
+use touchhle_macros::{validate_class_exports, validate_function_exports};
+
 use super::{ns_array, ns_string, NSUInteger};
 use crate::dyld::{export_c_func, ConstantExports, FunctionExports, HostConstant};
 use crate::frameworks::foundation::ns_string::get_static_str;
@@ -75,6 +77,7 @@ fn NSTemporaryDirectory(env: &mut Environment) -> id {
     autorelease(env, dir)
 }
 
+#[validate_function_exports]
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(NSHomeDirectory()),
     export_c_func!(NSTemporaryDirectory()),
@@ -91,6 +94,7 @@ struct NSDirectoryEnumeratorHostObject {
 }
 impl HostObject for NSDirectoryEnumeratorHostObject {}
 
+#[validate_class_exports]
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);

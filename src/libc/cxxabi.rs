@@ -8,6 +8,8 @@
 //! Resources:
 //! - [Itanium C++ ABI specification](https://itanium-cxx-abi.github.io/cxx-abi/abi.html#dso-dtor-runtime-api)
 
+use touchhle_macros::validate_function_exports;
+
 use crate::abi::GuestFunction;
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::mem::MutVoidPtr;
@@ -34,6 +36,7 @@ fn __cxa_finalize(_env: &mut Environment, d: MutVoidPtr) {
     log!("TODO: __cxa_finalize({:?}) (unimplemented)", d);
 }
 
+#[validate_function_exports]
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(__cxa_atexit(_, _, _)),
     export_c_func!(__cxa_finalize(_)),

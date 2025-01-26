@@ -5,10 +5,13 @@
  */
 //! `NSProcessInfo`.
 
+use touchhle_macros::validate_class_exports;
+
 use super::NSTimeInterval;
 use crate::objc::{objc_classes, ClassExports};
 use std::time::Instant;
 
+#[validate_class_exports]
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);

@@ -5,6 +5,8 @@
  */
 //! `UIColor`.
 
+use touchhle_macros::validate_class_exports;
+
 use super::ui_graphics::UIGraphicsGetCurrentContext;
 use crate::frameworks::core_graphics::cg_color::{CGColorRef, CGColorRelease, CGColorRetain};
 use crate::frameworks::core_graphics::cg_context::CGContextSetRGBFillColor;
@@ -51,6 +53,7 @@ struct UIColorHostObject {
 }
 impl HostObject for UIColorHostObject {}
 
+#[validate_class_exports]
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);

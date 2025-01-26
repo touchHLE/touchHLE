@@ -5,9 +5,12 @@
  */
 //! `UISlider`.
 
+use touchhle_macros::validate_class_exports;
+
 use crate::frameworks::core_graphics::CGRect;
 use crate::objc::{id, msg_super, objc_classes, ClassExports};
 
+#[validate_class_exports]
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);

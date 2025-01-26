@@ -5,6 +5,8 @@
  */
 //! `CGColor.h`
 
+use touchhle_macros::{validate_class_exports, validate_function_exports};
+
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::frameworks::core_foundation::{CFRelease, CFRetain, CFTypeRef};
 use crate::frameworks::core_graphics::cg_color_space::{
@@ -15,6 +17,7 @@ use crate::mem::MutPtr;
 use crate::objc::{objc_classes, ClassExports, HostObject, ObjC};
 use crate::Environment;
 
+#[validate_class_exports]
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);
@@ -67,6 +70,7 @@ fn CGColorCreate(
     from_rgba(env, (r, g, b, a))
 }
 
+#[validate_function_exports]
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGColorRetain(_)),
     export_c_func!(CGColorRelease(_)),

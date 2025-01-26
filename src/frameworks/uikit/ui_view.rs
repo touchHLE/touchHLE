@@ -17,6 +17,8 @@ pub mod ui_scroll_view;
 pub mod ui_web_view;
 pub mod ui_window;
 
+use touchhle_macros::validate_class_exports;
+
 use super::ui_graphics::{UIGraphicsPopContext, UIGraphicsPushContext};
 use crate::frameworks::core_graphics::cg_affine_transform::{
     CGAffineTransform, CGAffineTransformIdentity,
@@ -97,6 +99,7 @@ fn init_common(env: &mut Environment, this: id) -> id {
     this
 }
 
+#[validate_class_exports]
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);

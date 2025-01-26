@@ -5,6 +5,8 @@
  */
 //! `UIImage`.
 
+use touchhle_macros::validate_class_exports;
+
 use crate::frameworks::core_graphics::cg_context::CGContextDrawImage;
 use crate::frameworks::core_graphics::cg_image::{
     self, CGImageGetHeight, CGImageGetWidth, CGImageRef, CGImageRelease, CGImageRetain,
@@ -24,6 +26,7 @@ struct UIImageHostObject {
 }
 impl HostObject for UIImageHostObject {}
 
+#[validate_class_exports]
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);

@@ -8,6 +8,8 @@
 //! This is not even toll-free bridged to `NSBundle` in Apple's implementation,
 //! but here it is the same type.
 
+use touchhle_macros::validate_function_exports;
+
 use super::cf_array::CFArrayRef;
 use super::cf_string::CFStringRef;
 use super::cf_url::CFURLRef;
@@ -154,6 +156,7 @@ pub fn CFBundleCopyPreferredLocalizationsFromArray(
     result
 }
 
+#[validate_function_exports]
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CFBundleGetMainBundle()),
     export_c_func!(CFBundleGetValueForInfoDictionaryKey(_, _)),

@@ -5,6 +5,8 @@
  */
 //! `semaphore.h`
 
+use touchhle_macros::validate_function_exports;
+
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::libc::errno::set_errno;
 use crate::libc::posix_io::stat::mode_t;
@@ -139,6 +141,7 @@ pub fn sem_unlink(env: &mut Environment, name: ConstPtr<u8>) -> i32 {
     0 // success
 }
 
+#[validate_function_exports]
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(sem_open(_, _, _, _)),
     export_c_func!(sem_post(_)),

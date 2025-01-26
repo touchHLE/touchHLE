@@ -5,6 +5,8 @@
  */
 //! `NSAutoreleasePool`.
 
+use touchhle_macros::validate_class_exports;
+
 use crate::objc::{id, msg, objc_classes, release, ClassExports, HostObject, NSZonePtr};
 use crate::{Environment, ThreadId};
 use std::collections::HashMap;
@@ -26,6 +28,7 @@ struct NSAutoreleasePoolHostObject {
 }
 impl HostObject for NSAutoreleasePoolHostObject {}
 
+#[validate_class_exports]
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);

@@ -5,6 +5,8 @@
  */
 //! `netdb.h`
 
+use touchhle_macros::validate_function_exports;
+
 use crate::dyld::FunctionExports;
 use crate::export_c_func;
 use crate::mem::{ConstPtr, MutPtr, Ptr};
@@ -24,4 +26,5 @@ fn gethostbyname(env: &mut Environment, name: ConstPtr<u8>) -> MutPtr<hostent> {
     Ptr::null()
 }
 
+#[validate_function_exports]
 pub const FUNCTIONS: FunctionExports = &[export_c_func!(gethostbyname(_))];

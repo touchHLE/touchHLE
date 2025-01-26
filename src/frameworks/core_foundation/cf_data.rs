@@ -8,6 +8,8 @@
 //! These are toll-free bridged to `NSData` and `NSMutableData` in Apple's
 //! implementation. Here they are the same types.
 
+use touchhle_macros::validate_function_exports;
+
 use super::cf_allocator::{kCFAllocatorDefault, CFAllocatorRef};
 use super::{CFIndex, CFRange};
 use crate::dyld::FunctionExports;
@@ -50,6 +52,7 @@ fn CFDataGetBytes(env: &mut Environment, data: CFDataRef, range: CFRange, buffer
     msg![env; data getBytes:buffer range:range]
 }
 
+#[validate_function_exports]
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CFDataCreate(_, _, _)),
     export_c_func!(CFDataGetLength(_)),

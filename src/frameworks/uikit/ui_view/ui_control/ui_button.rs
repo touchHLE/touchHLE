@@ -5,6 +5,8 @@
  */
 //! `UIButton`.
 
+use touchhle_macros::validate_class_exports;
+
 use super::{UIControlState, UIControlStateNormal};
 use crate::frameworks::core_graphics::{CGPoint, CGRect};
 use crate::frameworks::foundation::ns_string::{from_rust_string, get_static_str, to_rust_string};
@@ -146,6 +148,7 @@ fn set_type(env: &mut Environment, button: id, type_: UIButtonType) {
     }
 }
 
+#[validate_class_exports]
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);

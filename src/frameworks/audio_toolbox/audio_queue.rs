@@ -8,6 +8,8 @@
 //! The audio playback here is mapped onto OpenAL Soft for convenience.
 //! Apple's implementation probably uses Core Audio instead.
 
+use touchhle_macros::validate_function_exports;
+
 use crate::abi::{CallFromHost, GuestFunction};
 use crate::audio::decode_ima4;
 use crate::audio::openal as al;
@@ -1038,6 +1040,7 @@ pub fn AudioQueueDispose(
     0 // success
 }
 
+#[validate_function_exports]
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(AudioQueueNewOutput(_, _, _, _, _, _, _)),
     export_c_func!(AudioQueueGetParameter(_, _, _)),

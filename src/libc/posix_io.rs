@@ -7,6 +7,8 @@
 
 pub mod stat;
 
+use touchhle_macros::validate_function_exports;
+
 use crate::abi::DotDotDot;
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::fs::{GuestFile, GuestOpenOptions, GuestPath};
@@ -582,6 +584,7 @@ fn ftruncate(env: &mut Environment, fd: FileDescriptor, len: off_t) -> i32 {
     }
 }
 
+#[validate_function_exports]
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(open(_, _, _)),
     export_c_func!(read(_, _, _)),

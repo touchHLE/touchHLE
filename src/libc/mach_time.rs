@@ -5,6 +5,8 @@
  */
 //! `mach_time.h`
 
+use touchhle_macros::validate_function_exports;
+
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::mem::{MutPtr, SafeRead};
 use crate::Environment;
@@ -46,6 +48,7 @@ fn mach_absolute_time(env: &mut Environment) -> u64 {
         .unwrap()
 }
 
+#[validate_function_exports]
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(mach_timebase_info(_)),
     export_c_func!(mach_absolute_time()),

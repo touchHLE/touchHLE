@@ -11,6 +11,8 @@
 //! Being aware of this concept will make common types like `NSArray` and
 //! `NSString` easier to understand.
 
+use touchhle_macros::validate_function_exports;
+
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::objc::id;
 use crate::Environment;
@@ -128,4 +130,5 @@ fn hash_helper<T: std::hash::Hash>(hashable: &T) -> NSUInteger {
     (hash_u64 as u32) ^ ((hash_u64 >> 32) as u32)
 }
 
+#[validate_function_exports]
 pub const FUNCTIONS: FunctionExports = &[export_c_func!(NSStringFromRange(_))];

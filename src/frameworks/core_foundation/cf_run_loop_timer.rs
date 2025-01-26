@@ -7,6 +7,8 @@
 //!
 //! It's toll-free bridged with `NSTimer`.
 
+use touchhle_macros::{validate_class_exports, validate_function_exports};
+
 use crate::abi::CallFromHost;
 use crate::abi::GuestFunction;
 use crate::dyld::{export_c_func, FunctionExports};
@@ -95,6 +97,7 @@ fn CFRunLoopTimerInvalidate(env: &mut Environment, timer: CFRunLoopTimerRef) {
     () = msg![env; timer invalidate];
 }
 
+#[validate_function_exports]
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CFRunLoopTimerCreate(_, _, _, _, _, _, _)),
     export_c_func!(CFRunLoopAddTimer(_, _, _)),
@@ -110,6 +113,7 @@ impl HostObject for CFTimerTargetHostObject {}
 
 /// _touchHLE_CFTimerTarget serves as a convenience
 /// object for performing a callout from a timer.
+#[validate_class_exports]
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);

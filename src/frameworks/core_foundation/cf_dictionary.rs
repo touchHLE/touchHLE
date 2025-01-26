@@ -8,6 +8,8 @@
 //! These are toll-free bridged to `NSDictionary` and `NSMutableDictionary` in
 //! Apple's implementation. Here they are the same types.
 
+use touchhle_macros::validate_function_exports;
+
 use super::cf_allocator::{kCFAllocatorDefault, CFAllocatorRef};
 use super::{CFHashCode, CFIndex, CFRelease, CFRetain};
 use crate::abi::GuestFunction;
@@ -256,6 +258,7 @@ pub const CONSTANTS: ConstantExports = &[
     ),
 ];
 
+#[validate_function_exports]
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CFDictionaryCreateMutable(_, _, _, _)),
     export_c_func!(CFDictionaryAddValue(_, _, _)),

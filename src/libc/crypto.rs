@@ -5,6 +5,8 @@
  */
 //! CommonCrypto and friends
 
+use touchhle_macros::validate_function_exports;
+
 use crate::dyld::FunctionExports;
 use crate::mem::{ConstVoidPtr, MutPtr};
 use crate::{export_c_func, Environment};
@@ -16,4 +18,5 @@ fn CC_MD5(env: &mut Environment, data: ConstVoidPtr, len: u32, md: MutPtr<u8>) -
     md
 }
 
+#[validate_function_exports]
 pub const FUNCTIONS: FunctionExports = &[export_c_func!(CC_MD5(_, _, _))];

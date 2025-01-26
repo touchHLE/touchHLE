@@ -12,7 +12,10 @@ use crate::frameworks::{
 };
 use crate::libc;
 
+use touchhle_macros::no_duplicate_paths;
+
 /// All the lists of functions that the linker should search through.
+#[no_duplicate_paths]
 pub const FUNCTION_LISTS: &[super::FunctionExports] = &[
     libc::clocale::FUNCTIONS,
     libc::ctype::FUNCTIONS,

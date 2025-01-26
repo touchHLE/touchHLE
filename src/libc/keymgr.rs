@@ -7,6 +7,8 @@
 //!
 //! KeyMgr's only documentation seems to be in its [public source code](https://github.com/apple-opensource/keymgr).
 
+use touchhle_macros::validate_function_exports;
+
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::mem::{MutPtr, MutVoidPtr, Ptr};
 use crate::{Environment, ThreadId};
@@ -83,6 +85,7 @@ fn _keymgr_unlock_processwide_ptr(env: &mut Environment, key: i32) -> i32 {
     0 // success
 }
 
+#[validate_function_exports]
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(_keymgr_get_and_lock_processwide_ptr_2(_, _)),
     export_c_func!(_keymgr_get_and_lock_processwide_ptr(_)),

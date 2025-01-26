@@ -5,6 +5,8 @@
  */
 //! `sys/mount.h`, file system statistics
 
+use touchhle_macros::validate_function_exports;
+
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::libc::dirent::MAXPATHLEN;
 use crate::libc::posix_io::stat::uid_t;
@@ -77,4 +79,5 @@ fn statfs(env: &mut Environment, path: ConstPtr<u8>, buf: MutPtr<statfs>) -> i32
     0 // success
 }
 
+#[validate_function_exports]
 pub const FUNCTIONS: FunctionExports = &[export_c_func!(statfs(_, _))];

@@ -5,6 +5,8 @@
  */
 //! `wchar.h`
 
+use touchhle_macros::validate_function_exports;
+
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::mem::{ConstPtr, GuestUSize, MutPtr};
 use crate::Environment;
@@ -152,6 +154,7 @@ fn wcslcpy(
     GenericChar::<wchar_t>::strlcpy(env, dst, src, size)
 }
 
+#[validate_function_exports]
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(btowc(_)),
     export_c_func!(wctob(_)),

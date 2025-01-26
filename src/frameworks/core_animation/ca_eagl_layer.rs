@@ -5,11 +5,14 @@
  */
 //! `CAEAGLLayer`.
 
+use touchhle_macros::validate_class_exports;
+
 use super::ca_layer::CALayerHostObject;
 use crate::frameworks::core_graphics::{CGPoint, CGRect};
 use crate::objc::{id, msg, msg_class, nil, objc_classes, Class, ClassExports};
 use crate::Environment;
 
+#[validate_class_exports]
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);

@@ -5,6 +5,8 @@
  */
 //! `AudioServices.h` (Audio Services)
 
+use touchhle_macros::validate_function_exports;
+
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::frameworks::carbon_core::OSStatus;
 use crate::frameworks::core_audio_types::fourcc;
@@ -41,6 +43,7 @@ fn AudioServicesPlaySystemSound(_env: &mut Environment, in_system_sound_id: Syst
     // TODO: implement other system sounds
 }
 
+#[validate_function_exports]
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(AudioServicesGetProperty(_, _, _, _, _)),
     export_c_func!(AudioServicesPlaySystemSound(_)),

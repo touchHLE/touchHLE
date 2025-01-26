@@ -5,6 +5,8 @@
  */
 //! `CGDataProvider.h`
 
+use touchhle_macros::{validate_class_exports, validate_function_exports};
+
 use super::cg_image::{self, CGImageRef, CGImageRelease, CGImageRetain};
 use crate::abi::{CallFromHost, GuestFunction};
 use crate::dyld::FunctionExports;
@@ -40,6 +42,7 @@ enum CGDataProviderHostObject {
 }
 impl HostObject for CGDataProviderHostObject {}
 
+#[validate_class_exports]
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);
@@ -163,6 +166,7 @@ fn CGDataProviderCopyData(env: &mut Environment, provider: CGDataProviderRef) ->
     }
 }
 
+#[validate_function_exports]
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGDataProviderRetain(_)),
     export_c_func!(CGDataProviderRelease(_)),

@@ -5,6 +5,8 @@
  */
 //! `NSLock`.
 
+use touchhle_macros::validate_class_exports;
+
 use crate::environment::ThreadId;
 use crate::libc::pthread::mutex::{
     pthread_mutex_destroy, pthread_mutex_init, pthread_mutex_lock, pthread_mutex_t,
@@ -21,6 +23,7 @@ struct NSLockHostObject {
 }
 impl HostObject for NSLockHostObject {}
 
+#[validate_class_exports]
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);

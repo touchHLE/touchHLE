@@ -14,6 +14,8 @@
 //!
 //! See also: [crate::objc], especially the `objects` module.
 
+use touchhle_macros::validate_class_exports;
+
 use super::ns_dictionary::dict_from_keys_and_objects;
 use super::ns_run_loop::NSDefaultRunLoopMode;
 use super::ns_string::{from_rust_string, get_static_str, to_rust_string};
@@ -24,6 +26,7 @@ use crate::objc::{
     TrivialHostObject, SEL,
 };
 
+#[validate_class_exports]
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);

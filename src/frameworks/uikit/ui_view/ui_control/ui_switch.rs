@@ -5,6 +5,8 @@
  */
 //! `UISwitch`.
 
+use touchhle_macros::validate_class_exports;
+
 use crate::environment::Environment;
 use crate::frameworks::core_graphics::{CGFloat, CGPoint, CGRect, CGSize};
 use crate::frameworks::foundation::ns_string;
@@ -151,6 +153,7 @@ fn init_common(env: &mut Environment, this: id) -> id {
     this
 }
 
+#[validate_class_exports]
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);

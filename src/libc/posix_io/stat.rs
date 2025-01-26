@@ -5,6 +5,8 @@
  */
 //! POSIX `sys/stat.h`
 
+use touchhle_macros::validate_function_exports;
+
 use super::{close, off_t, open_direct, FileDescriptor};
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::fs::{FsError, GuestFile, GuestPath};
@@ -173,6 +175,7 @@ fn stat(env: &mut Environment, path: ConstPtr<u8>, buf: MutPtr<stat>) -> i32 {
     result
 }
 
+#[validate_function_exports]
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(mkdir(_, _)),
     export_c_func!(fstat(_, _)),

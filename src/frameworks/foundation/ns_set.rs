@@ -5,6 +5,8 @@
  */
 //! The `NSSet` class cluster, including `NSMutableSet` and `NSCountedSet`.
 
+use touchhle_macros::validate_class_exports;
+
 use super::ns_array;
 use super::ns_dictionary::DictionaryHostObject;
 use super::ns_enumerator::{fast_enumeration_helper, NSFastEnumerationState};
@@ -23,6 +25,7 @@ struct SetHostObject {
 }
 impl HostObject for SetHostObject {}
 
+#[validate_class_exports]
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);

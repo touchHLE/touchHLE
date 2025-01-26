@@ -5,9 +5,12 @@
  */
 //! `NSURLConnection`.
 
+use touchhle_macros::validate_class_exports;
+
 use crate::objc::{id, nil, ClassExports};
 use crate::objc_classes;
 
+#[validate_class_exports]
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);

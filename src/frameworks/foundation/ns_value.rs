@@ -5,6 +5,8 @@
  */
 //! The `NSValue` class cluster, including `NSNumber`.
 
+use touchhle_macros::validate_class_exports;
+
 use super::NSUInteger;
 use crate::frameworks::foundation::ns_string::from_rust_string;
 use crate::frameworks::foundation::NSInteger;
@@ -60,6 +62,7 @@ impl NSNumberHostObject {
     impl_AsValue!(as_double, f64);
 }
 
+#[validate_class_exports]
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);

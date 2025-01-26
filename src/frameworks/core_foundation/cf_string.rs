@@ -8,6 +8,8 @@
 //! This is toll-free bridged to `NSString` and `NSMutableString` in
 //! Apple's implementation. Here it is the same type.
 
+use touchhle_macros::validate_function_exports;
+
 use super::cf_allocator::{kCFAllocatorDefault, CFAllocatorRef};
 use super::cf_dictionary::CFDictionaryRef;
 use crate::abi::{DotDotDot, VaList};
@@ -175,6 +177,7 @@ fn CFStringFind(
     }
 }
 
+#[validate_function_exports]
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CFStringAppendFormat(_, _, _, _)),
     export_c_func!(CFStringConvertEncodingToNSStringEncoding(_)),

@@ -5,6 +5,8 @@
  */
 //! `CFLocale`
 
+use touchhle_macros::validate_function_exports;
+
 use super::cf_allocator::CFAllocatorRef;
 use super::cf_array::CFArrayRef;
 use super::cf_string::CFStringRef;
@@ -57,6 +59,7 @@ fn CFLocaleGetValue(env: &mut Environment, locale: CFLocaleRef, key: CFLocaleKey
     msg![env; locale objectForKey:key]
 }
 
+#[validate_function_exports]
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CFLocaleCopyCurrent()),
     export_c_func!(CFLocaleCopyPreferredLanguages()),

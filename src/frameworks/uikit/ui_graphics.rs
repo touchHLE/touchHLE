@@ -5,6 +5,8 @@
  */
 //! `UIGraphics.h`
 
+use touchhle_macros::validate_function_exports;
+
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::frameworks::core_graphics::cg_context::{
     CGContextRef, CGContextRelease, CGContextRetain,
@@ -39,6 +41,7 @@ pub fn UIGraphicsGetCurrentContext(env: &mut Environment) -> CGContextRef {
         .unwrap_or(nil)
 }
 
+#[validate_function_exports]
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(UIGraphicsPushContext(_)),
     export_c_func!(UIGraphicsPopContext()),

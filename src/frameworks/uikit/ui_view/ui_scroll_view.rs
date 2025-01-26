@@ -6,6 +6,8 @@
 //! `UIScrollView`.
 
 pub mod ui_text_view;
+use touchhle_macros::validate_class_exports;
+
 use crate::frameworks::core_graphics::{CGPoint, CGRect, CGSize};
 use crate::objc::{
     id, impl_HostObject_with_superclass, msg, nil, objc_classes, ClassExports, NSZonePtr, SEL,
@@ -35,6 +37,7 @@ impl Default for UIScrollViewHostObject {
     }
 }
 
+#[validate_class_exports]
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);

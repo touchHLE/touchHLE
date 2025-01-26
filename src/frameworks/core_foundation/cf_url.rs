@@ -8,6 +8,8 @@
 //! This is toll-free bridged to `NSURL` in Apple's implementation. Here it is
 //! the same type.
 
+use touchhle_macros::validate_function_exports;
+
 use super::cf_allocator::{kCFAllocatorDefault, CFAllocatorRef};
 use super::CFIndex;
 use crate::dyld::{export_c_func, FunctionExports};
@@ -85,6 +87,7 @@ fn CFURLCopyFileSystemPath(
     msg![env; path copy]
 }
 
+#[validate_function_exports]
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CFURLGetFileSystemRepresentation(_, _, _, _)),
     export_c_func!(CFURLCreateFromFileSystemRepresentation(_, _, _, _)),

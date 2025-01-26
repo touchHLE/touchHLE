@@ -5,6 +5,8 @@
  */
 //! `ifaddrs.h` (interface addresses)
 
+use touchhle_macros::validate_function_exports;
+
 use crate::dyld::FunctionExports;
 use crate::export_c_func;
 use crate::libc::errno::set_errno;
@@ -23,4 +25,5 @@ fn getifaddrs(env: &mut Environment, _ifap: MutPtr<MutPtr<ifaddrs>>) -> i32 {
     -1
 }
 
+#[validate_function_exports]
 pub const FUNCTIONS: FunctionExports = &[export_c_func!(getifaddrs(_))];

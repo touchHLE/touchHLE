@@ -5,6 +5,8 @@
  */
 //! `time.h` (C) and `sys/time.h` (POSIX)
 
+use touchhle_macros::validate_function_exports;
+
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::libc::errno::set_errno;
 use crate::mem::{guest_size_of, ConstPtr, MutPtr, Ptr, SafeRead};
@@ -527,6 +529,7 @@ fn nanosleep(env: &mut Environment, rqtp: ConstPtr<timespec>, _rmtp: MutPtr<time
     0 // success
 }
 
+#[validate_function_exports]
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(clock()),
     export_c_func!(time(_)),

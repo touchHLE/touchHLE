@@ -5,6 +5,8 @@
  */
 //! `NSURL`.
 
+use touchhle_macros::validate_class_exports;
+
 use super::ns_string::{from_rust_string, to_rust_string, NSUTF8StringEncoding};
 use super::NSUInteger;
 use crate::fs::{GuestPath, GuestPathBuf};
@@ -33,6 +35,7 @@ enum NSURLHostObject {
 }
 impl HostObject for NSURLHostObject {}
 
+#[validate_class_exports]
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);

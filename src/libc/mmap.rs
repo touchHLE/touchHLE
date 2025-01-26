@@ -4,6 +4,8 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
+use touchhle_macros::validate_function_exports;
+
 use crate::dyld::FunctionExports;
 use crate::environment::Environment;
 use crate::export_c_func;
@@ -41,4 +43,5 @@ fn mmap(
     ptr
 }
 
+#[validate_function_exports]
 pub const FUNCTIONS: FunctionExports = &[export_c_func!(mmap(_, _, _, _, _, _))];

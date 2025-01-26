@@ -5,6 +5,8 @@
  */
 //! `sys/utsname.h`
 
+use touchhle_macros::validate_function_exports;
+
 use crate::dyld::FunctionExports;
 use crate::environment::Environment;
 use crate::export_c_func;
@@ -24,4 +26,5 @@ fn uname(env: &mut Environment, name: MutPtr<utsname>) -> i32 {
     -1
 }
 
+#[validate_function_exports]
 pub const FUNCTIONS: FunctionExports = &[export_c_func!(uname(_))];

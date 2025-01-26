@@ -5,6 +5,8 @@
  */
 //! `NSNotificationCenter`.
 
+use touchhle_macros::validate_class_exports;
+
 use super::ns_notification::NSNotificationName;
 use super::ns_string;
 
@@ -32,6 +34,7 @@ struct NSNotificationCenterHostObject {
 }
 impl HostObject for NSNotificationCenterHostObject {}
 
+#[validate_class_exports]
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);

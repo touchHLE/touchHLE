@@ -5,6 +5,8 @@
  */
 //! `sched.h`.
 
+use touchhle_macros::validate_function_exports;
+
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::Environment;
 
@@ -16,4 +18,5 @@ fn sched_yield(env: &mut Environment) -> i32 {
     0 // success
 }
 
+#[validate_function_exports]
 pub const FUNCTIONS: FunctionExports = &[export_c_func!(sched_yield())];

@@ -5,6 +5,8 @@
  */
 //! `UITouch`.
 
+use touchhle_macros::validate_class_exports;
+
 use super::ui_event;
 use crate::frameworks::core_graphics::{CGPoint, CGRect};
 use crate::frameworks::foundation::{NSInteger, NSTimeInterval, NSUInteger};
@@ -44,6 +46,7 @@ pub(super) struct UITouchHostObject {
 }
 impl HostObject for UITouchHostObject {}
 
+#[validate_class_exports]
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);

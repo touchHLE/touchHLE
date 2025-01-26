@@ -8,6 +8,8 @@
 //! Useful resources:
 //! - [Apple's documentation for UIAcceleration](https://developer.apple.com/documentation/uikit/uiacceleration) has a really nice diagram of how the accelerometer axes relate to an iPhone.
 
+use touchhle_macros::validate_class_exports;
+
 use crate::frameworks::foundation::NSTimeInterval;
 use crate::objc::{
     autorelease, id, msg, msg_class, nil, objc_classes, release, ClassExports, HostObject,
@@ -38,6 +40,7 @@ struct UIAccelerationHostObject {
 }
 impl HostObject for UIAccelerationHostObject {}
 
+#[validate_class_exports]
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);

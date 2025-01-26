@@ -9,6 +9,8 @@
 //! - Apple's [Introduction to Data Formatting Programming Guide For Cocoa](https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/DataFormatting/DataFormatting.html)
 //! - [Unicode Technical Standard #35](https://unicode.org/reports/tr35/tr35-10.html#Date_Format_Patterns)
 
+use touchhle_macros::validate_class_exports;
+
 use crate::frameworks::core_foundation::time::CFAbsoluteTimeGetGregorianDate;
 use crate::frameworks::foundation::{ns_string, NSTimeInterval};
 use crate::objc::{autorelease, id, msg, nil, objc_classes, ClassExports, HostObject, NSZonePtr};
@@ -18,6 +20,7 @@ struct NSDateFormatterHostObject {
 }
 impl HostObject for NSDateFormatterHostObject {}
 
+#[validate_class_exports]
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);

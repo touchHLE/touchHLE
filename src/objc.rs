@@ -39,6 +39,7 @@ pub use objects::{
     id, impl_HostObject_with_superclass, nil, AnyHostObject, HostObject, TrivialHostObject,
 };
 pub use selectors::{selector, SEL};
+use touchhle_macros::validate_function_exports;
 
 use crate::mem::ConstVoidPtr;
 use crate::Environment;
@@ -109,6 +110,7 @@ fn _Block_object_dispose(_env: &mut Environment, object: ConstVoidPtr, flags: i3
     );
 }
 
+#[validate_function_exports]
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(objc_msgSend(_, _)),
     export_c_func!(objc_msgSend_stret(_, _, _)),

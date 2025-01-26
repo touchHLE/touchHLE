@@ -5,12 +5,15 @@
  */
 //! `UIActivityIndicatorView`.
 
+use touchhle_macros::validate_class_exports;
+
 use crate::frameworks::foundation::NSInteger;
 use crate::objc::{id, msg, ClassExports};
 use crate::objc_classes;
 
 type UIActivityIndicatorViewStyle = NSInteger;
 
+#[validate_class_exports]
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);

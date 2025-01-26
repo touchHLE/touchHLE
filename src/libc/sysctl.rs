@@ -5,6 +5,8 @@
  */
 //! `sys/sysctl.h`
 
+use touchhle_macros::validate_function_exports;
+
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::libc::errno::set_errno;
 use crate::libc::sysctl::SysInfoType::String;
@@ -123,6 +125,7 @@ fn sysctlbyname(
     0 // success
 }
 
+#[validate_function_exports]
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(sysctl(_, _, _, _, _, _)),
     export_c_func!(sysctlbyname(_, _, _, _, _)),

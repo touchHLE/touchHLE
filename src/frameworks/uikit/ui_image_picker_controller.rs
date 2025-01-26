@@ -5,11 +5,14 @@
  */
 //! `UIImagePickerController`
 
+use touchhle_macros::validate_class_exports;
+
 use crate::frameworks::foundation::NSInteger;
 use crate::objc::{objc_classes, ClassExports};
 
 type UIImagePickerControllerSourceType = NSInteger;
 
+#[validate_class_exports]
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);

@@ -7,6 +7,8 @@
 //!
 //! See also [crate::frameworks::uikit::ui_geometry].
 
+use touchhle_macros::validate_function_exports;
+
 use super::CGFloat;
 use crate::abi::{impl_GuestRet_for_large_struct, GuestArg};
 use crate::dyld::{export_c_func, ConstantExports, FunctionExports, HostConstant};
@@ -172,6 +174,7 @@ fn CGRectContainsPoint(_env: &mut Environment, rect: CGRect, point: CGPoint) -> 
         && rect.origin.y + rect.size.height > point.y
 }
 
+#[validate_function_exports]
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGPointEqualToPoint(_, _)),
     export_c_func!(CGSizeEqualToSize(_, _)),

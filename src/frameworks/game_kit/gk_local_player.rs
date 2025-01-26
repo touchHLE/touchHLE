@@ -5,9 +5,12 @@
  */
 //! `GKLocalPlayer`.
 
+use touchhle_macros::validate_class_exports;
+
 use crate::dyld::{ConstantExports, HostConstant};
 use crate::objc::{objc_classes, ClassExports};
 
+#[validate_class_exports]
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);

@@ -5,6 +5,8 @@
  */
 //! `UIResponder`.
 
+use touchhle_macros::validate_class_exports;
+
 use crate::objc::{id, msg, nil, objc_classes, ClassExports};
 
 #[derive(Default)]
@@ -12,6 +14,7 @@ pub struct State {
     pub(crate) first_responder: id,
 }
 
+#[validate_class_exports]
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);

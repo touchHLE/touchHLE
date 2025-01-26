@@ -5,6 +5,8 @@
  */
 //! `CGColorSpace.h`
 
+use touchhle_macros::{validate_class_exports, validate_function_exports};
+
 use crate::dyld::{export_c_func, ConstantExports, FunctionExports, HostConstant};
 use crate::frameworks::core_foundation::cf_string::CFStringRef;
 use crate::frameworks::core_foundation::{CFRelease, CFRetain, CFTypeRef};
@@ -12,6 +14,7 @@ use crate::frameworks::foundation::ns_string;
 use crate::objc::{msg, objc_classes, ClassExports, HostObject};
 use crate::Environment;
 
+#[validate_class_exports]
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);
@@ -128,6 +131,7 @@ pub const CONSTANTS: ConstantExports = &[
     ),
 ];
 
+#[validate_function_exports]
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGColorSpaceCreateWithName(_)),
     export_c_func!(CGColorSpaceCreateDeviceRGB()),

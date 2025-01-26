@@ -5,6 +5,8 @@
  */
 //! `NSTimeZone`.
 
+use touchhle_macros::validate_class_exports;
+
 use crate::frameworks::foundation::{ns_string, NSInteger};
 use crate::objc::{autorelease, id, nil, release, retain, ClassExports, HostObject, NSZonePtr};
 use crate::{msg, objc_classes};
@@ -15,6 +17,7 @@ struct NSTimeZoneHostObject {
 }
 impl HostObject for NSTimeZoneHostObject {}
 
+#[validate_class_exports]
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);

@@ -16,6 +16,7 @@ use touchHLE_gl_bindings::gles11::{
     ARRAY_BUFFER, ELEMENT_ARRAY_BUFFER, ELEMENT_ARRAY_BUFFER_BINDING, VERTEX_ARRAY_BUFFER_BINDING,
     WRITE_ONLY_OES,
 };
+use touchhle_macros::validate_function_exports;
 
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::frameworks::opengles::eagl::EAGLContextHostObject;
@@ -1335,6 +1336,7 @@ unsafe fn restore_fog_state_values(gles: &mut dyn GLES, from_backup: Option<(f32
     }
 }
 
+#[validate_function_exports]
 pub const FUNCTIONS: FunctionExports = &[
     // Generic state manipulation
     export_c_func!(glGetError()),

@@ -4,8 +4,11 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
+use touchhle_macros::validate_class_exports;
+
 use crate::objc::{id, nil, objc_classes, ClassExports};
 
+#[validate_class_exports]
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);

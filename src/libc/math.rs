@@ -5,6 +5,8 @@
  */
 //! `math.h`
 
+use touchhle_macros::validate_function_exports;
+
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::libc::errno::set_errno;
 use crate::mem::MutPtr;
@@ -410,6 +412,7 @@ fn fminf(_env: &mut Environment, arg1: f32, arg2: f32) -> f32 {
     arg1.min(arg2)
 }
 
+#[validate_function_exports]
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(abs(_)),
     // Trigonometric functions

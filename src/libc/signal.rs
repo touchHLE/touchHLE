@@ -4,6 +4,8 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
+use touchhle_macros::validate_function_exports;
+
 use crate::dyld::FunctionExports;
 use crate::environment::Environment;
 use crate::export_c_func;
@@ -26,6 +28,7 @@ fn signal(env: &mut Environment, signum: i32, handler: MutVoidPtr) -> MutVoidPtr
     Ptr::null()
 }
 
+#[validate_function_exports]
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(sigaction(_, _, _)),
     export_c_func!(signal(_, _)),

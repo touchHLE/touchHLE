@@ -5,6 +5,8 @@
  */
 //! The `NSCharacterSet` class cluster, including `NSMutableCharacterSet`.
 
+use touchhle_macros::validate_class_exports;
+
 use super::{ns_string, unichar};
 use crate::objc::{
     autorelease, id, msg, msg_class, objc_classes, retain, ClassExports, HostObject, NSZonePtr,
@@ -18,6 +20,7 @@ struct CharacterSetHostObject {
 }
 impl HostObject for CharacterSetHostObject {}
 
+#[validate_class_exports]
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);

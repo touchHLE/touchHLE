@@ -5,6 +5,8 @@
  */
 //! `NSURLRequest and NSMutableURLRequest`.
 
+use touchhle_macros::validate_class_exports;
+
 use super::{NSTimeInterval, NSUInteger};
 use crate::frameworks::foundation::ns_string::to_rust_string;
 use crate::msg;
@@ -13,6 +15,7 @@ use crate::objc::{id, nil, objc_classes, ClassExports};
 type NSURLRequestCachePolicy = NSUInteger;
 const NSURLRequestUseProtocolCachePolicy: NSURLRequestCachePolicy = 0;
 
+#[validate_class_exports]
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);

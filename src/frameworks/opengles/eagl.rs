@@ -5,6 +5,8 @@
  */
 //! EAGL.
 
+use touchhle_macros::validate_class_exports;
+
 use crate::dyld::{ConstantExports, HostConstant};
 use crate::frameworks::core_animation::ca_eagl_layer::{
     find_fullscreen_eagl_layer, get_pixels_vec_for_presenting, present_pixels,
@@ -67,6 +69,7 @@ pub(super) struct EAGLContextHostObject {
 }
 impl HostObject for EAGLContextHostObject {}
 
+#[validate_class_exports]
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);

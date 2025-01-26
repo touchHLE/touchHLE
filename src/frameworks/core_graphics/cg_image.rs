@@ -5,6 +5,8 @@
  */
 //! `CGImage.h`
 
+use touchhle_macros::{validate_class_exports, validate_function_exports};
+
 use super::cg_color_space::{kCGColorSpaceGenericRGB, CGColorSpaceCreateWithName, CGColorSpaceRef};
 use super::cg_data_provider::{self, CGDataProviderRef};
 use super::CGFloat;
@@ -42,6 +44,7 @@ pub const kCGBitmapAlphaInfoMask: CGBitmapInfo = 0x1F; // huh, it's not 0x7?
 pub const kCGBitmapByteOrderMask: CGBitmapInfo = kCGImageByteOrderMask;
 // TODO: other stuff in this enum (for now, always assert the rest is 0)
 
+#[validate_class_exports]
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);
@@ -164,6 +167,7 @@ fn CGImageGetBitsPerComponent(_: &mut Environment, _: CGImageRef) -> GuestUSize 
     8 // Fix this when we support anything else
 }
 
+#[validate_function_exports]
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGImageRelease(_)),
     export_c_func!(CGImageRetain(_)),

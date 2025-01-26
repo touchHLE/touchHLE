@@ -5,6 +5,8 @@
  */
 //! DNS Service Discovery C
 
+use touchhle_macros::validate_function_exports;
+
 use crate::dyld::FunctionExports;
 use crate::export_c_func;
 use crate::mem::{ConstPtr, ConstVoidPtr, MutVoidPtr};
@@ -33,6 +35,7 @@ fn DNSServiceRefSockFD(_env: &mut Environment, _sdRef: MutVoidPtr) -> DNSService
     kDNSServiceErr_Unsupported
 }
 
+#[validate_function_exports]
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(DNSServiceBrowse(_, _, _, _, _, _, _)),
     export_c_func!(DNSServiceRefSockFD(_)),

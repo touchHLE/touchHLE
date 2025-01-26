@@ -5,6 +5,8 @@
  */
 //! `CAAnimation` and its subclasses
 
+use touchhle_macros::validate_class_exports;
+
 use crate::dyld::{ConstantExports, HostConstant};
 use crate::frameworks::core_foundation::time::CFTimeInterval;
 use crate::frameworks::foundation::ns_string::to_rust_string;
@@ -66,6 +68,7 @@ struct CABasicAnimationHostObject {
 }
 impl_HostObject_with_superclass!(CABasicAnimationHostObject);
 
+#[validate_class_exports]
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);

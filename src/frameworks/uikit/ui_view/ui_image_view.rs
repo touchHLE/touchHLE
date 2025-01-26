@@ -5,6 +5,8 @@
  */
 //! `UIImageView`.
 
+use touchhle_macros::validate_class_exports;
+
 use crate::frameworks::core_graphics::cg_image::CGImageRef;
 use crate::frameworks::core_graphics::{CGPoint, CGRect, CGSize};
 use crate::frameworks::foundation::NSTimeInterval;
@@ -21,6 +23,7 @@ struct UIImageViewHostObject {
 }
 impl_HostObject_with_superclass!(UIImageViewHostObject);
 
+#[validate_class_exports]
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);

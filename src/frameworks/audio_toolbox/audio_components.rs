@@ -8,6 +8,8 @@
 use std::collections::HashMap;
 use std::time::Instant;
 
+use touchhle_macros::validate_function_exports;
+
 use crate::abi::GuestFunction;
 use crate::audio::openal::al_types::ALuint;
 use crate::dyld::FunctionExports;
@@ -190,6 +192,7 @@ fn AudioComponentInstanceDispose(
     result
 }
 
+#[validate_function_exports]
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(AudioComponentFindNext(_, _)),
     export_c_func!(AudioComponentInstanceNew(_, _)),

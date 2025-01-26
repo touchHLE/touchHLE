@@ -5,6 +5,8 @@
  */
 //! `NSLocale`.
 
+use touchhle_macros::validate_class_exports;
+
 use super::{ns_array, ns_string};
 use crate::dyld::{ConstantExports, HostConstant};
 use crate::frameworks::core_foundation::cf_locale::kCFLocaleCountryCode;
@@ -115,6 +117,7 @@ struct NSLocaleHostObject {
 }
 impl HostObject for NSLocaleHostObject {}
 
+#[validate_class_exports]
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);

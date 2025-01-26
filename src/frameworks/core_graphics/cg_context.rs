@@ -5,6 +5,8 @@
  */
 //! `CGContext.h`
 
+use touchhle_macros::{validate_class_exports, validate_function_exports};
+
 use super::cg_affine_transform::CGAffineTransform;
 use super::cg_image::CGImageRef;
 use super::{cg_bitmap_context, CGFloat, CGRect};
@@ -15,6 +17,7 @@ use crate::Environment;
 
 type CGInterpolationQuality = i32;
 
+#[validate_class_exports]
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);
@@ -171,6 +174,7 @@ fn CGContextSetInterpolationQuality(
     );
 }
 
+#[validate_function_exports]
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGContextRetain(_)),
     export_c_func!(CGContextRelease(_)),

@@ -5,6 +5,8 @@
  */
 //! Conditional variables.
 
+use touchhle_macros::validate_function_exports;
+
 use super::mutex::pthread_mutex_t;
 use crate::dyld::FunctionExports;
 use crate::libc::pthread::mutex::pthread_mutex_unlock;
@@ -107,6 +109,7 @@ fn pthread_cond_destroy(env: &mut Environment, cond: MutPtr<pthread_cond_t>) -> 
     0 // success
 }
 
+#[validate_function_exports]
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(pthread_cond_init(_, _)),
     export_c_func!(pthread_cond_wait(_, _)),

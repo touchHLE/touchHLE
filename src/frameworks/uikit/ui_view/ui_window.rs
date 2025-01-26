@@ -5,6 +5,8 @@
  */
 //! `UIWindow`.
 
+use touchhle_macros::validate_class_exports;
+
 use super::UIViewHostObject;
 use crate::dyld::{ConstantExports, HostConstant};
 use crate::frameworks::core_graphics::CGRect;
@@ -21,6 +23,7 @@ pub struct State {
     pub key_window: Option<id>,
 }
 
+#[validate_class_exports]
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);

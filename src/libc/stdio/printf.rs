@@ -5,6 +5,8 @@
  */
 //! `printf` function family. The implementation is also used by `NSLog` etc.
 
+use touchhle_macros::validate_function_exports;
+
 use crate::abi::{DotDotDot, VaList};
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::frameworks::foundation::{ns_string, unichar};
@@ -900,6 +902,7 @@ fn vfprintf(env: &mut Environment, stream: MutPtr<FILE>, format: ConstPtr<u8>, a
     res.len().try_into().unwrap()
 }
 
+#[validate_function_exports]
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(sscanf(_, _, _)),
     export_c_func!(swscanf(_, _, _)),

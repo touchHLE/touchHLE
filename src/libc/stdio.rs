@@ -5,6 +5,8 @@
  */
 //! `stdio.h`
 
+use touchhle_macros::validate_function_exports;
+
 use super::posix_io::{
     self, off_t, O_APPEND, O_CREAT, O_RDONLY, O_RDWR, O_TRUNC, O_WRONLY, STDERR_FILENO,
     STDIN_FILENO, STDOUT_FILENO,
@@ -428,6 +430,7 @@ pub const CONSTANTS: ConstantExports = &[
     ),
 ];
 
+#[validate_function_exports]
 pub const FUNCTIONS: FunctionExports = &[
     // Standard C functions
     export_c_func!(fopen(_, _)),

@@ -5,6 +5,8 @@
  */
 //! Threads.
 
+use touchhle_macros::validate_function_exports;
+
 use crate::abi::GuestFunction;
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::libc::errno::{EDEADLK, EINVAL, ESRCH};
@@ -317,6 +319,7 @@ fn pthread_setschedparam(
     0
 }
 
+#[validate_function_exports]
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(pthread_attr_init(_)),
     export_c_func!(pthread_attr_setdetachstate(_, _)),

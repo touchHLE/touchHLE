@@ -8,6 +8,8 @@
 //! Resources:
 //! - Apple's [Threading Programming Guide](https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/Multithreading/Introduction/Introduction.html)
 
+use touchhle_macros::validate_class_exports;
+
 use super::{ns_string, ns_timer, NSComparisonResult, NSOrderedAscending};
 use crate::dyld::{ConstantExports, HostConstant};
 use crate::environment::ThreadId;
@@ -59,6 +61,7 @@ struct NSRunLoopHostObject {
 }
 impl HostObject for NSRunLoopHostObject {}
 
+#[validate_class_exports]
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);

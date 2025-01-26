@@ -5,6 +5,8 @@
  */
 //! The `NSDictionary` class cluster, including `NSMutableDictionary`.
 
+use touchhle_macros::validate_class_exports;
+
 use super::ns_array::ArrayHostObject;
 use super::ns_property_list_serialization::{
     deserialize_plist_from_file, NSPropertyListBinaryFormat_v1_0,
@@ -343,6 +345,7 @@ fn all_keys_common(env: &mut Environment, this: id) -> id {
     autorelease(env, res)
 }
 
+#[validate_class_exports]
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);

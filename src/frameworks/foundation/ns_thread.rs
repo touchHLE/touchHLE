@@ -5,6 +5,8 @@
  */
 //! `NSThread`.
 
+use touchhle_macros::validate_class_exports;
+
 use super::NSTimeInterval;
 use crate::dyld::HostFunction;
 use crate::frameworks::core_foundation::CFTypeRef;
@@ -42,6 +44,7 @@ struct NSThreadHostObject {
 }
 impl HostObject for NSThreadHostObject {}
 
+#[validate_class_exports]
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);

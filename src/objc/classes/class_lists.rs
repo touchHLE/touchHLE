@@ -11,7 +11,10 @@ use crate::frameworks::{
     opengles, store_kit, uikit,
 };
 
+use touchhle_macros::no_duplicate_paths;
+
 /// All the lists of classes that the runtime should search through.
+#[no_duplicate_paths]
 pub const CLASS_LISTS: &[super::ClassExports] = &[
     crate::app_picker::CLASSES, // Not a framework! Special internal classes.
     core_animation::ca_animation::CLASSES,

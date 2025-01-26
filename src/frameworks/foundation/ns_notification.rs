@@ -5,6 +5,8 @@
  */
 //! `NSNotification`.
 
+use touchhle_macros::validate_class_exports;
+
 use crate::objc::{
     autorelease, id, msg, nil, objc_classes, release, retain, ClassExports, HostObject, NSZonePtr,
 };
@@ -19,6 +21,7 @@ struct NSNotificationHostObject {
 }
 impl HostObject for NSNotificationHostObject {}
 
+#[validate_class_exports]
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);

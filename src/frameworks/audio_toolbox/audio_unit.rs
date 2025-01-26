@@ -15,6 +15,7 @@ use touchHLE_openal_soft_wrapper::{
     alGetSourcei, alSourcePlay, alSourceQueueBuffers, alSourceUnqueueBuffers, AL_BUFFERS_PROCESSED,
     AL_PLAYING, AL_SOURCE_STATE,
 };
+use touchhle_macros::validate_function_exports;
 
 use crate::abi::CallFromHost;
 use crate::dyld::FunctionExports;
@@ -426,6 +427,7 @@ pub fn render_audio_unit(env: &mut Environment, audio_unit: AudioUnit) {
         .last_render_time = Some(now);
 }
 
+#[validate_function_exports]
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(AudioUnitInitialize(_)),
     export_c_func!(AudioUnitUninitialize(_)),

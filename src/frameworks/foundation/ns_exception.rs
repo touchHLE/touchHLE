@@ -4,6 +4,8 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
+use touchhle_macros::validate_function_exports;
+
 use crate::dyld::{ConstantExports, FunctionExports, HostConstant};
 use crate::mem::MutVoidPtr;
 use crate::{export_c_func, Environment};
@@ -285,4 +287,5 @@ fn NSSetUncaughtExceptionHandler(_env: &mut Environment, handler: MutVoidPtr) {
     );
 }
 
+#[validate_function_exports]
 pub const FUNCTIONS: FunctionExports = &[export_c_func!(NSSetUncaughtExceptionHandler(_))];

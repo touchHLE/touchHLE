@@ -5,6 +5,8 @@
  */
 //! `CGBitmapContext.h`
 
+use touchhle_macros::validate_function_exports;
+
 use super::cg_affine_transform::{CGAffineTransform, CGAffineTransformIdentity};
 use super::cg_color_space::{
     kCGColorSpaceGenericGray, kCGColorSpaceGenericRGB, CGColorSpaceHostObject, CGColorSpaceRef,
@@ -635,6 +637,7 @@ pub fn get_data(objc: &ObjC, context: CGContextRef) -> (GuestUSize, GuestUSize, 
     (bitmap_data.width, bitmap_data.height, bitmap_data.data)
 }
 
+#[validate_function_exports]
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGBitmapContextCreate(_, _, _, _, _, _, _)),
     export_c_func!(CGBitmapContextCreateImage(_)),

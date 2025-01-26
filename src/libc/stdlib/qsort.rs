@@ -5,6 +5,8 @@
  */
 //! stdlib's qsort
 
+use touchhle_macros::validate_function_exports;
+
 use crate::abi::{CallFromHost, GuestFunction};
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::mem::MutPtr;
@@ -79,4 +81,5 @@ fn swap_slices(env: &mut Environment, base: MutPtr<u8>, nitems: u32, size: u32, 
     left[..size as usize].swap_with_slice(&mut right[..size as usize]);
 }
 
+#[validate_function_exports]
 pub const FUNCTIONS: FunctionExports = &[export_c_func!(qsort(_, _, _, _))];

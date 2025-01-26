@@ -1,5 +1,7 @@
 //! `NSLog()`, `NSLogv()`
 
+use touchhle_macros::validate_function_exports;
+
 use super::ns_string;
 use crate::abi::{DotDotDot, VaList};
 use crate::dyld::{export_c_func, FunctionExports};
@@ -45,4 +47,5 @@ fn NSLogv(
     );
 }
 
+#[validate_function_exports]
 pub const FUNCTIONS: FunctionExports = &[export_c_func!(NSLog(_, _)), export_c_func!(NSLogv(_, _))];

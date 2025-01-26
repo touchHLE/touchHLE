@@ -23,6 +23,7 @@ use crate::objc::{
 };
 use quick_xml::events::{BytesStart, Event};
 use quick_xml::reader::Reader;
+use touchhle_macros::validate_class_exports;
 
 struct NSXMLParserHostObject {
     /// An internal representation of XML data to parse using NSData*
@@ -33,6 +34,7 @@ struct NSXMLParserHostObject {
 }
 impl HostObject for NSXMLParserHostObject {}
 
+#[validate_class_exports]
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);

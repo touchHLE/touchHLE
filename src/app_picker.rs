@@ -3,6 +3,8 @@
 //! This also includes a license text viewer. The license text viewer is needed
 //! on Android, where the command-line way to view license text doesn't exist.
 
+use touchhle_macros::validate_class_exports;
+
 use crate::bundle::Bundle;
 use crate::frameworks::core_graphics::cg_bitmap_context::{
     CGBitmapContextCreate, CGBitmapContextCreateImage,
@@ -155,6 +157,7 @@ impl HostObject for AppPickerDelegateHostObject {}
 /// Be careful! These classes go in the normal class list, just like everything
 /// else, so an app could try to instantiate them. Don't give them special
 /// powers that could be exploited!
+#[validate_class_exports]
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);

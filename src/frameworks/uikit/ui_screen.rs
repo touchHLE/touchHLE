@@ -5,6 +5,8 @@
  */
 //! `UIScreen`.
 
+use touchhle_macros::validate_class_exports;
+
 use crate::frameworks::core_graphics::{CGPoint, CGRect, CGSize};
 use crate::objc::{id, msg, objc_classes, ClassExports, TrivialHostObject};
 
@@ -13,6 +15,7 @@ pub struct State {
     main_screen: Option<id>,
 }
 
+#[validate_class_exports]
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);

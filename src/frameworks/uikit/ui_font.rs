@@ -5,6 +5,8 @@
  */
 //! `UIFont`.
 
+use touchhle_macros::validate_class_exports;
+
 use super::ui_graphics::UIGraphicsGetCurrentContext;
 use crate::font::{Font, TextAlignment, WrapMode};
 use crate::frameworks::core_graphics::cg_bitmap_context::CGBitmapContextDrawer;
@@ -89,6 +91,7 @@ pub const UITextAlignmentLeft: UITextAlignment = 0;
 pub const UITextAlignmentCenter: UITextAlignment = 1;
 pub const UITextAlignmentRight: UITextAlignment = 2;
 
+#[validate_class_exports]
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);

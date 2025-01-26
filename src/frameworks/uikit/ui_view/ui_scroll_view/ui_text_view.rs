@@ -5,6 +5,8 @@
  */
 //! `UITextView`.
 
+use touchhle_macros::validate_class_exports;
+
 use crate::frameworks::core_graphics::cg_context::CGContextSetRGBFillColor;
 use crate::frameworks::core_graphics::cg_geometry::CGPointZero;
 use crate::frameworks::core_graphics::{CGFloat, CGPoint, CGRect, CGSize};
@@ -66,6 +68,8 @@ fn update_scroll(env: &mut Environment, this: id) {
         () = msg![env; this setContentOffset:(CGPoint { x: 0.0, y: 0.0 })];
     }
 }
+
+#[validate_class_exports]
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);

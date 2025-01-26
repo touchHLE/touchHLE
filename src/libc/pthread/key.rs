@@ -5,6 +5,8 @@
  */
 //! Thread-specific data keys.
 
+use touchhle_macros::validate_function_exports;
+
 use crate::abi::GuestFunction;
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::mem::{ConstVoidPtr, MutPtr, MutVoidPtr, Ptr};
@@ -58,6 +60,7 @@ fn pthread_setspecific(env: &mut Environment, key: pthread_key_t, value: ConstVo
     0 // success
 }
 
+#[validate_function_exports]
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(pthread_key_create(_, _)),
     export_c_func!(pthread_getspecific(_)),

@@ -2,6 +2,8 @@
 //!
 //! See also [crate::frameworks::core_graphics::cg_geometry].
 
+use touchhle_macros::validate_function_exports;
+
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::frameworks::core_graphics::{CGPoint, CGRect, CGSize};
 use crate::frameworks::foundation::ns_string;
@@ -42,6 +44,7 @@ pub fn NSStringFromCGRect(env: &mut Environment, rect: CGRect) -> id {
     autorelease(env, s)
 }
 
+#[validate_function_exports]
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGPointFromString(_)),
     export_c_func!(CGSizeFromString(_)),

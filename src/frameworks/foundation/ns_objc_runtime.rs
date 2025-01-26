@@ -1,5 +1,7 @@
 //! Things from `NSObjCRuntime.h`.
 
+use touchhle_macros::validate_function_exports;
+
 use super::ns_string;
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::objc::{id, nil, Class, SEL};
@@ -41,6 +43,7 @@ fn NSClassFromString(env: &mut Environment, string: id) -> Class {
     env.objc.get_known_class(&string, &mut env.mem)
 }
 
+#[validate_function_exports]
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(NSStringFromSelector(_)),
     export_c_func!(NSSelectorFromString(_)),

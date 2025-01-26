@@ -9,6 +9,8 @@
 //! - Apple's [Resource Programming Guide](https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/LoadingResources/CocoaNibs/CocoaNibs.html) is very helpful.
 //! - GitHub user 0xced's [reverse-engineering of UIClassSwapper](https://gist.github.com/0xced/45daf79b62ad6a20be1c).
 
+use touchhle_macros::validate_class_exports;
+
 use crate::frameworks::foundation::ns_string::{get_static_str, to_rust_string};
 use crate::frameworks::foundation::{ns_string, NSUInteger};
 use crate::frameworks::uikit::ui_view::ui_control::UIControlEvents;
@@ -46,6 +48,7 @@ struct UIRuntimeEventConnectionHostObject {
 }
 impl_HostObject_with_superclass!(UIRuntimeEventConnectionHostObject);
 
+#[validate_class_exports]
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);

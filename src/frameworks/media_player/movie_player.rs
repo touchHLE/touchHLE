@@ -5,6 +5,8 @@
  */
 //! `MPMoviePlayerController` etc.
 
+use touchhle_macros::validate_class_exports;
+
 use crate::dyld::{ConstantExports, HostConstant};
 use crate::frameworks::foundation::{ns_string, ns_url, NSInteger};
 use crate::frameworks::uikit::ui_device::UIDeviceOrientation;
@@ -65,6 +67,7 @@ struct MPMoviePlayerControllerHostObject {
 }
 impl HostObject for MPMoviePlayerControllerHostObject {}
 
+#[validate_class_exports]
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);

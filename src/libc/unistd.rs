@@ -5,6 +5,8 @@
  */
 //! Miscellaneous parts of `unistd.h`
 
+use touchhle_macros::validate_function_exports;
+
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::fs::GuestPath;
 use crate::libc::errno::set_errno;
@@ -120,6 +122,7 @@ fn gethostname(env: &mut Environment, name: MutPtr<u8>, namelen: GuestUSize) -> 
     0 // Success
 }
 
+#[validate_function_exports]
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(sleep(_)),
     export_c_func!(usleep(_)),

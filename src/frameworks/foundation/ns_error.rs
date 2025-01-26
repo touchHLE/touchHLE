@@ -4,6 +4,8 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
+use touchhle_macros::validate_class_exports;
+
 use crate::dyld::{ConstantExports, HostConstant};
 use crate::frameworks::foundation::NSInteger;
 use crate::objc::{id, nil, release, retain, ClassExports, HostObject, NSZonePtr};
@@ -21,6 +23,7 @@ struct ErrorHostObject {
 }
 impl HostObject for ErrorHostObject {}
 
+#[validate_class_exports]
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);

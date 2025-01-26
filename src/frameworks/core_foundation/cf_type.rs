@@ -5,6 +5,8 @@
  */
 //! `CFType` (type-generic functions etc).
 
+use touchhle_macros::validate_function_exports;
+
 use super::{CFHashCode, CFIndex};
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::frameworks::foundation::NSUInteger;
@@ -45,6 +47,7 @@ pub fn CFHash(env: &mut Environment, object: CFTypeRef) -> CFHashCode {
     msg![env; object hash]
 }
 
+#[validate_function_exports]
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CFRetain(_)),
     export_c_func!(CFRelease(_)),

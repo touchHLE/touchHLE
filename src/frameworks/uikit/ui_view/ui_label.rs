@@ -5,6 +5,8 @@
  */
 //! `UILabel`.
 
+use touchhle_macros::validate_class_exports;
+
 use crate::frameworks::core_graphics::cg_context::CGContextSetRGBFillColor;
 use crate::frameworks::core_graphics::{CGFloat, CGPoint, CGRect, CGSize};
 use crate::frameworks::foundation::ns_string::get_static_str;
@@ -47,6 +49,7 @@ impl Default for UILabelHostObject {
     }
 }
 
+#[validate_class_exports]
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);

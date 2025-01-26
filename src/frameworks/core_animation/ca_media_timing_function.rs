@@ -5,6 +5,8 @@
  */
 //! `CAMediaTimingFunction`
 
+use touchhle_macros::validate_class_exports;
+
 use crate::{
     dyld::{ConstantExports, HostConstant},
     frameworks::foundation::ns_string::to_rust_string,
@@ -43,6 +45,7 @@ pub const CONSTANTS: ConstantExports = &[
     ),
 ];
 
+#[validate_class_exports]
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);

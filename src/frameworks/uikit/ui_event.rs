@@ -5,6 +5,8 @@
  */
 //! `UIEvent`.
 
+use touchhle_macros::validate_class_exports;
+
 use super::ui_touch::UITouchHostObject;
 use crate::frameworks::foundation::NSUInteger;
 use crate::mem::MutVoidPtr;
@@ -19,6 +21,7 @@ pub(super) struct UIEventHostObject {
 }
 impl HostObject for UIEventHostObject {}
 
+#[validate_class_exports]
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);

@@ -26,6 +26,7 @@ use crate::objc::{
 use crate::Environment;
 use plist::{Dictionary, Uid, Value};
 use std::io::Cursor;
+use touchhle_macros::validate_class_exports;
 
 pub const NSKeyedArchiveRootObjectKey: &str = "root";
 
@@ -44,6 +45,7 @@ struct NSKeyedUnarchiverHostObject {
 }
 impl HostObject for NSKeyedUnarchiverHostObject {}
 
+#[validate_class_exports]
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);

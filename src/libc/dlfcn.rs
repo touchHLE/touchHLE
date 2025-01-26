@@ -5,6 +5,8 @@
  */
 //! `dlfcn.h` (`dlopen()` and friends)
 
+use touchhle_macros::validate_function_exports;
+
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::mem::{ConstPtr, MutVoidPtr, Ptr};
 use crate::Environment;
@@ -52,6 +54,7 @@ fn dlclose(env: &mut Environment, handle: MutVoidPtr) -> i32 {
     0 // success
 }
 
+#[validate_function_exports]
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(dlopen(_, _)),
     export_c_func!(dlsym(_, _)),

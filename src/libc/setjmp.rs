@@ -15,6 +15,8 @@
 //! but it seems like the implementation of these on iPhone OS uses real
 //! functions, at least for the former.
 
+use touchhle_macros::validate_function_exports;
+
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::Environment;
 
@@ -27,4 +29,5 @@ fn setjmp(env: &mut Environment) -> i32 {
     0 // no longjmp() was performed
 }
 
+#[validate_function_exports]
 pub const FUNCTIONS: FunctionExports = &[export_c_func!(setjmp())];

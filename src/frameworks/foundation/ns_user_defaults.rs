@@ -8,6 +8,8 @@
 //! References:
 //! - Apple's [Preferences and Settings Programming Guide](https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/UserDefaults/AboutPreferenceDomains/AboutPreferenceDomains.html).
 
+use touchhle_macros::validate_class_exports;
+
 use super::{ns_string, NSInteger};
 use crate::frameworks::foundation::ns_string::to_rust_string;
 use crate::objc::{
@@ -44,6 +46,7 @@ struct NSUserDefaultsHostObject {
 }
 impl HostObject for NSUserDefaultsHostObject {}
 
+#[validate_class_exports]
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);

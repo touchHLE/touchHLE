@@ -15,6 +15,8 @@
 //! Resources:
 //! - The GCC documentation's [Fast Enumeration Protocol section](https://gcc.gnu.org/onlinedocs/gcc/Fast-enumeration-protocol.html)
 
+use touchhle_macros::validate_class_exports;
+
 use crate::mem::{MutPtr, MutVoidPtr, SafeRead};
 use crate::objc::{id, msg, nil, objc_classes, ClassExports};
 use crate::Environment;
@@ -30,6 +32,7 @@ pub struct NSFastEnumerationState {
 }
 unsafe impl SafeRead for NSFastEnumerationState {}
 
+#[validate_class_exports]
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);

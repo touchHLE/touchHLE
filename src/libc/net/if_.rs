@@ -5,6 +5,8 @@
  */
 //! `net/if.h`
 
+use touchhle_macros::validate_function_exports;
+
 use crate::dyld::FunctionExports;
 use crate::export_c_func;
 use crate::mem::{ConstPtr, Ptr};
@@ -19,4 +21,5 @@ fn if_nameindex(_env: &mut Environment) -> ConstPtr<if_nameindex> {
     Ptr::null()
 }
 
+#[validate_function_exports]
 pub const FUNCTIONS: FunctionExports = &[export_c_func!(if_nameindex())];

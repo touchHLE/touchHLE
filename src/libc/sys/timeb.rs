@@ -5,6 +5,8 @@
  */
 //! `sys/timeb.h`
 
+use touchhle_macros::validate_function_exports;
+
 use crate::dyld::FunctionExports;
 use crate::libc::time::time_t;
 use crate::mem::{MutPtr, SafeRead};
@@ -46,4 +48,5 @@ fn ftime(env: &mut Environment, tb: MutPtr<timeb>) -> i32 {
     0 // Success (always)
 }
 
+#[validate_function_exports]
 pub const FUNCTIONS: FunctionExports = &[export_c_func!(ftime(_))];

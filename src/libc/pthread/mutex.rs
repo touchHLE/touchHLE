@@ -8,6 +8,8 @@
 //! See [crate::environment::mutex] for the internal implementation.
 #![allow(rustdoc::broken_intra_doc_links)] // https://github.com/rust-lang/rust/issues/83049
 
+use touchhle_macros::validate_function_exports;
+
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::libc::errno::{EBUSY, EINVAL};
 use crate::mem::{ConstPtr, MutPtr, Ptr, SafeRead};
@@ -192,6 +194,7 @@ pub fn pthread_mutex_destroy(env: &mut Environment, mutex: MutPtr<pthread_mutex_
     env.mutex_state.destroy_mutex(mutex_id).err().unwrap_or(0)
 }
 
+#[validate_function_exports]
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(pthread_mutexattr_init(_)),
     export_c_func!(pthread_mutexattr_settype(_, _)),

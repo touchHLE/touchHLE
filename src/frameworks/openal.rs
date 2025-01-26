@@ -21,6 +21,7 @@ use crate::Environment;
 use std::collections::HashMap;
 use std::ffi::{CStr, CString};
 use touchHLE_openal_soft_wrapper::ALC_DEVICE_SPECIFIER;
+use touchhle_macros::validate_function_exports;
 
 #[derive(Default)]
 pub struct State {
@@ -665,6 +666,7 @@ fn alSourceRewindv(_env: &mut Environment, _nsources: ALsizei, _sources: ConstPt
     todo!();
 }
 
+#[validate_function_exports]
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(alcOpenDevice(_)),
     export_c_func!(alcCloseDevice(_)),

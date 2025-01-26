@@ -5,6 +5,8 @@
  */
 //! `stdlib.h`
 
+use touchhle_macros::validate_function_exports;
+
 use crate::abi::{CallFromHost, GuestFunction};
 use crate::dyld::{export_c_func, export_c_func_aliased, FunctionExports};
 use crate::fs::{resolve_path, GuestPath};
@@ -398,6 +400,7 @@ fn wcstombs(
     len
 }
 
+#[validate_function_exports]
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(malloc(_)),
     export_c_func!(calloc(_, _)),

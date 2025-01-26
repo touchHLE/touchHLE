@@ -9,6 +9,8 @@
 
 #![allow(non_camel_case_types)]
 
+use touchhle_macros::validate_function_exports;
+
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::mem::{guest_size_of, MutPtr, SafeRead};
 use crate::Environment;
@@ -153,6 +155,7 @@ fn thread_policy_set(
     KERN_SUCCESS
 }
 
+#[validate_function_exports]
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(thread_info(_, _, _, _)),
     export_c_func!(thread_policy_set(_, _, _, _)),

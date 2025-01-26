@@ -5,6 +5,8 @@
  */
 //! SCNetworkReachability
 
+use touchhle_macros::validate_function_exports;
+
 use crate::dyld::FunctionExports;
 use crate::frameworks::core_foundation::cf_allocator::{kCFAllocatorDefault, CFAllocatorRef};
 use crate::mem::{ConstPtr, ConstVoidPtr, MutPtr, MutVoidPtr, Ptr, SafeRead};
@@ -59,6 +61,7 @@ fn SCNetworkReachabilityGetFlags(
     false
 }
 
+#[validate_function_exports]
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(SCNetworkReachabilityCreateWithName(_, _)),
     export_c_func!(SCNetworkReachabilityCreateWithAddress(_, _)),

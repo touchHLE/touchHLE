@@ -5,6 +5,8 @@
  */
 //! `dirent.h`
 
+use touchhle_macros::validate_function_exports;
+
 use crate::abi::GuestFunction;
 use crate::dyld::FunctionExports;
 use crate::fs::GuestPath;
@@ -174,6 +176,7 @@ fn scandir(
     count
 }
 
+#[validate_function_exports]
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(opendir(_)),
     export_c_func!(readdir(_)),

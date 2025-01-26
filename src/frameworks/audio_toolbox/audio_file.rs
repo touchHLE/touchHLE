@@ -5,6 +5,8 @@
  */
 //! `AudioFile.h` (Audio File Services)
 
+use touchhle_macros::validate_function_exports;
+
 use crate::abi::{CallFromHost, GuestFunction};
 use crate::audio; // Keep this module namespaced to avoid confusion
 use crate::dyld::{export_c_func, FunctionExports};
@@ -484,6 +486,7 @@ fn AudioFileStreamOpen(
     kAudioFileUnspecifiedError
 }
 
+#[validate_function_exports]
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(AudioFileOpenURL(_, _, _, _)),
     export_c_func!(AudioFileGetPropertyInfo(_, _, _, _)),

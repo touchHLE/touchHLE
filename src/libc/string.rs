@@ -5,6 +5,8 @@
  */
 //! `string.h`
 
+use touchhle_macros::validate_function_exports;
+
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::mem::{ConstPtr, ConstVoidPtr, GuestUSize, MutPtr, MutVoidPtr, Ptr};
 use crate::Environment;
@@ -234,6 +236,7 @@ fn strlcpy(
     GenericChar::<u8>::strlcpy(env, dst, src, size)
 }
 
+#[validate_function_exports]
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(strtok(_, _)),
     export_c_func!(bzero(_, _)),

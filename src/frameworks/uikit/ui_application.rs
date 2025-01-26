@@ -5,6 +5,8 @@
  */
 //! `UIApplication` and `UIApplicationMain`.
 
+use touchhle_macros::{validate_class_exports, validate_function_exports};
+
 use super::ui_device::*;
 use crate::dyld::{export_c_func, ConstantExports, FunctionExports, HostConstant};
 use crate::frameworks::foundation::ns_string::{from_rust_string, get_static_str};
@@ -33,6 +35,7 @@ impl HostObject for UIApplicationHostObject {}
 type UIInterfaceOrientation = UIDeviceOrientation;
 type UIRemoteNotificationType = NSUInteger;
 
+#[validate_class_exports]
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);
@@ -393,4 +396,5 @@ pub const CONSTANTS: ConstantExports = &[
     ),
 ];
 
+#[validate_function_exports]
 pub const FUNCTIONS: FunctionExports = &[export_c_func!(UIApplicationMain(_, _, _, _))];

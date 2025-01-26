@@ -6,6 +6,8 @@
 
 //! `NSFileHandle`.
 
+use touchhle_macros::validate_class_exports;
+
 use super::ns_string;
 use super::NSUInteger;
 use crate::libc::posix_io;
@@ -18,6 +20,7 @@ struct NSFileHandleHostObject {
 }
 impl HostObject for NSFileHandleHostObject {}
 
+#[validate_class_exports]
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);

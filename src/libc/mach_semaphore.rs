@@ -11,6 +11,8 @@
 
 use std::collections::HashMap;
 
+use touchhle_macros::validate_function_exports;
+
 use crate::dyld::FunctionExports;
 use crate::environment::Environment;
 use crate::export_c_func;
@@ -108,6 +110,7 @@ fn semaphore_destroy(env: &mut Environment, semaphore: semaphore_t) -> kern_retu
     result
 }
 
+#[validate_function_exports]
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(semaphore_create(_, _, _, _)),
     export_c_func!(semaphore_signal(_)),

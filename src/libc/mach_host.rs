@@ -7,6 +7,8 @@
 
 #![allow(non_camel_case_types)]
 
+use touchhle_macros::validate_function_exports;
+
 use crate::dyld::FunctionExports;
 use crate::libc::mach_thread_info::{
     kern_return_t, mach_msg_type_number_t, mach_port_t, natural_t, KERN_SUCCESS,
@@ -104,6 +106,7 @@ fn host_statistics(
     KERN_SUCCESS
 }
 
+#[validate_function_exports]
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(mach_host_self()),
     export_c_func!(host_page_size(_, _)),

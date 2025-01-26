@@ -5,6 +5,8 @@
  */
 //! `errno.h`
 
+use touchhle_macros::validate_function_exports;
+
 use crate::dyld::FunctionExports;
 use crate::export_c_func;
 use crate::mem::{ConstPtr, MutPtr};
@@ -74,4 +76,5 @@ fn perror(env: &mut Environment, s: ConstPtr<u8>) {
     let _ = std::io::stderr().write_all(msg.as_bytes());
 }
 
+#[validate_function_exports]
 pub const FUNCTIONS: FunctionExports = &[export_c_func!(__error()), export_c_func!(perror(_))];

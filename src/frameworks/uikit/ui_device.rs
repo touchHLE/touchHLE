@@ -5,6 +5,8 @@
  */
 //! `UIDevice`.
 
+use touchhle_macros::validate_class_exports;
+
 use crate::dyld::ConstantExports;
 use crate::dyld::HostConstant;
 use crate::frameworks::foundation::ns_string;
@@ -38,6 +40,7 @@ pub const CONSTANTS: ConstantExports = &[(
     HostConstant::NSString(UIDeviceOrientationDidChangeNotification),
 )];
 
+#[validate_class_exports]
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);

@@ -5,6 +5,8 @@
  */
 //! `CGAffineTransform.h`
 
+use touchhle_macros::validate_function_exports;
+
 use super::{CGFloat, CGPoint, CGRect, CGSize};
 use crate::abi::{impl_GuestRet_for_large_struct, GuestArg};
 use crate::dyld::{export_c_func, ConstantExports, FunctionExports, HostConstant};
@@ -283,6 +285,7 @@ pub fn CGRectApplyAffineTransform(
     transform.apply_to_rect(rect)
 }
 
+#[validate_function_exports]
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGAffineTransformIsIdentity(_)),
     export_c_func!(CGAffineTransformEqualToTransform(_, _)),

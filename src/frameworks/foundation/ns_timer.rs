@@ -5,6 +5,8 @@
  */
 //! `NSTimer`.
 
+use touchhle_macros::validate_class_exports;
+
 use super::ns_run_loop::NSDefaultRunLoopMode;
 use super::NSTimeInterval;
 use super::{ns_run_loop, ns_string};
@@ -31,6 +33,7 @@ struct NSTimerHostObject {
 }
 impl HostObject for NSTimerHostObject {}
 
+#[validate_class_exports]
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);

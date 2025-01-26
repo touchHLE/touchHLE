@@ -21,6 +21,8 @@ pub const LC_NUMERIC: LocaleCategory = 4;
 pub const LC_TIME: LocaleCategory = 5;
 pub const LC_MESSAGES: LocaleCategory = 6;
 
+use touchhle_macros::validate_function_exports;
+
 #[derive(Default)]
 pub struct State {
     locale: std::collections::HashMap<LocaleCategory, MutPtr<u8>>,
@@ -51,4 +53,5 @@ pub fn setlocale(
     env.libc_state.clocale.locale.get(&category).unwrap().cast()
 }
 
+#[validate_function_exports]
 pub const FUNCTIONS: FunctionExports = &[export_c_func!(setlocale(_, _))];

@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "610edc4d_9c74ff13",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 14
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-02-01T00:06:37Z",
+      "side": 1,
+      "message": "I\u0027m very suspicious that this is not a correct method to implement for SilentHill.\nE.g. it should be https://developer.apple.com/documentation/foundation/nsmutabledictionary/1416335-setvalue?language\u003dobjc instead of https://developer.apple.com/documentation/objectivec/nsobject/1415969-setvalue?language\u003dobjc\n\nCould you please rebase against the latest trunk (i just pushed the NSMutableDictionary part) and see if you need this patchset (and related ones) at all?\n\n(Your implementation itself is still useful, I just doubting it is really needed for SH case)",
+      "revId": "da00a94fb48103eaf2e37303acd0b30b91eafdd1",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a5488e78_63a205c2",
+        "filename": "src/frameworks/audio_toolbox/audio_file.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 489,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-02-02T15:02:01Z",
+      "side": 1,
+      "message": "could you modify it to apply macros validations to FUNCTION_LISTS and CLASS_LISTS instead?\nthis will avoid defining it for each file individually",
+      "revId": "f397d01a48570e0a7e76daf80bd284c9714f37ce",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

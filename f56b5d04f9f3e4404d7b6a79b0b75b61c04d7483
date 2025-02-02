@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "e4e724d7_972aa34a",
+        "filename": "android/app/src/main/java/org/libsdl/app/SDLActivity.java",
+        "patchSetId": 3
+      },
+      "lineNbr": 3,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2025-02-02T17:54:57Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "4ad8b776_c0ee4a1c",
+      "revId": "f56b5d04f9f3e4404d7b6a79b0b75b61c04d7483",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "5867250a_cdabc651",
@@ -31,6 +49,42 @@
       "writtenOn": "2025-01-25T14:42:17Z",
       "side": 1,
       "message": "Can the old fmt::Write style of writing this be restored? I don\u0027t like how this will mess up the log output on Android.",
+      "revId": "f56b5d04f9f3e4404d7b6a79b0b75b61c04d7483",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ad9f6a51_b372f456",
+        "filename": "src/cpu.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 201,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2025-02-02T17:54:57Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "5867250a_cdabc651",
+      "revId": "f56b5d04f9f3e4404d7b6a79b0b75b61c04d7483",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "cdb3e4db_30f77eac",
+        "filename": "src/cpu.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 201,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2025-02-02T17:54:57Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "5867250a_cdabc651",
       "revId": "f56b5d04f9f3e4404d7b6a79b0b75b61c04d7483",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

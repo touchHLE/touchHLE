@@ -150,6 +150,18 @@ int sem_wait(sem_t *);
 #define LC_MESSAGES 6
 char *setlocale(int category, const char *locale);
 
+#ifdef DEFINE_ME_WHEN_BUILDING_ON_MACOS
+typedef long _register_t; // 64-bit definition
+#else
+typedef int _register_t;
+#endif
+
+// <setjmp.h>
+#define _JBLEN (10 + 16 + 2)
+typedef _register_t jmp_buf[_JBLEN];
+int setjmp(jmp_buf env);
+void longjmp(jmp_buf env, int val);
+
 // <ctype.h>
 int __maskrune(wchar_t, unsigned long);
 
@@ -2104,6 +2116,24 @@ int test_frexpf(void) {
   return 0;
 }
 
+void jmpfunction(jmp_buf env_buf) { longjmp(env_buf, 432); }
+
+int test_setjmp() {
+  int val;
+  jmp_buf env_buffer;
+
+  /* save calling environment for longjmp */
+  val = setjmp(env_buffer);
+
+  if (val != 0) {
+    return val == 432 ? 0 : -2;
+  }
+
+  jmpfunction(env_buffer);
+
+  return -1;
+}
+
 // clang-format off
 #define FUNC_DEF(func)                                                         \
   { &func, #func }
@@ -2147,6 +2177,7 @@ struct {
     FUNC_DEF(test_ldexp),
     FUNC_DEF(test_maskrune),
     FUNC_DEF(test_frexpf),
+    FUNC_DEF(test_setjmp),
 };
 // clang-format on
 

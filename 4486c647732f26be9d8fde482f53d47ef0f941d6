@@ -36,6 +36,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "2e1c822d_8e0bbcec",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 11
+      },
+      "lineNbr": 11,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-02-02T14:42:08Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "af916f23_12472b0c",
+      "revId": "4486c647732f26be9d8fde482f53d47ef0f941d6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "57b5ee2c_9e998a80",
@@ -49,6 +67,24 @@
       "writtenOn": "2024-08-25T14:17:39Z",
       "side": 1,
       "message": "The signature _is_ complete now right? This documentation can be dropped.",
+      "revId": "4486c647732f26be9d8fde482f53d47ef0f941d6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "e6472c91_beed5b2c",
+        "filename": "src/libc/setjmp.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 39,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-02-02T14:42:08Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "57b5ee2c_9e998a80",
       "revId": "4486c647732f26be9d8fde482f53d47ef0f941d6",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
@@ -70,6 +106,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "9d7bc9df_33d58b80",
+        "filename": "src/libc/setjmp.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 42,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-02-02T14:42:08Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "e423f27c_bdbff46e",
+      "revId": "4486c647732f26be9d8fde482f53d47ef0f941d6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "9b740487_9d54461b",
@@ -83,6 +137,24 @@
       "writtenOn": "2024-08-25T14:17:39Z",
       "side": 1,
       "message": "Same comment about re-using the reference here.",
+      "revId": "4486c647732f26be9d8fde482f53d47ef0f941d6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "00bf6b76_1f5c8a52",
+        "filename": "src/libc/setjmp.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 43,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-02-02T14:42:08Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "9b740487_9d54461b",
       "revId": "4486c647732f26be9d8fde482f53d47ef0f941d6",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
@@ -106,6 +178,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "4f3647c1_50b25e9e",
+        "filename": "src/libc/setjmp.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 67,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-02-02T14:42:08Z",
+      "side": 1,
+      "message": "Changed back to panic!()\n\nIt will not work for FIFA10 and CBNK2 cases, but seems to work well for HOS2",
+      "parentUuid": "b40b8169_972ac2ff",
+      "revId": "4486c647732f26be9d8fde482f53d47ef0f941d6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "33b8849c_b4724259",
         "filename": "src/libc/setjmp.rs",
         "patchSetId": 11
@@ -117,6 +207,24 @@
       "writtenOn": "2024-08-25T14:17:39Z",
       "side": 1,
       "message": "Can you do like `let regs \u003d env.cpu.regs_mut();` here? Unfortunately due to this calling into C++ code, I don\u0027t think `rustc` can optimise away repeated uses of regs_mut() call (but I\u0027ve never checked).",
+      "revId": "4486c647732f26be9d8fde482f53d47ef0f941d6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ea72487c_dbba1e08",
+        "filename": "src/libc/setjmp.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 72,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-02-02T14:42:08Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "33b8849c_b4724259",
       "revId": "4486c647732f26be9d8fde482f53d47ef0f941d6",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
@@ -134,6 +242,24 @@
       "writtenOn": "2024-08-25T14:17:39Z",
       "side": 1,
       "message": "Uhhh, this definition of jmp_buf is very architecture-specific, I think you should use an ifdef to remove it on macOS instead ;)",
+      "revId": "4486c647732f26be9d8fde482f53d47ef0f941d6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7fa17aa6_6e13ecae",
+        "filename": "tests/TestApp_source/main.c",
+        "patchSetId": 11
+      },
+      "lineNbr": 113,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-02-02T14:42:08Z",
+      "side": 1,
+      "message": "Tests are passing on macOS too, i proposed to leave it as is",
+      "parentUuid": "614ee7a9_e78651d0",
       "revId": "4486c647732f26be9d8fde482f53d47ef0f941d6",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

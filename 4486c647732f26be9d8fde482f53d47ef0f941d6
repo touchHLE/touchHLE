@@ -54,6 +54,23 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "d5ebb7e1_9685f370",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 11
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-02-02T14:43:53Z",
+      "side": 1,
+      "message": "As owner was changed it resulted in a new patchset https://review.gerrithub.io/c/touchHLE/touchHLE/+/1208179",
+      "revId": "4486c647732f26be9d8fde482f53d47ef0f941d6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "57b5ee2c_9e998a80",

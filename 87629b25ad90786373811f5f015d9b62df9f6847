@@ -16,6 +16,24 @@
       "message": "This is fine, but one drawback is this won\u0027t work properly with the scale-hack as-is. However we already have that problem for `glCopyTexImage2D` and it\u0027s not a blocker anyway. If you\u0027re interested in supporting the scale hack, you could do it as a follow-up commit. I can explain how elsewhere (though I think it\u0027s fairly obvious).",
       "revId": "87629b25ad90786373811f5f015d9b62df9f6847",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f509784a_2137d1fb",
+        "filename": "src/frameworks/opengles/gles_guest.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 855,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-02-02T12:40:58Z",
+      "side": 1,
+      "message": "Thanks! I\u0027ll check for the follow up later.",
+      "parentUuid": "60675be2_19e8fb09",
+      "revId": "87629b25ad90786373811f5f015d9b62df9f6847",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

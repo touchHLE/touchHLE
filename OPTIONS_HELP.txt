@@ -166,6 +166,15 @@ Debugging options:
         Disables the graphical error message box (outputs to terminal/log file
         only).
 
+    --dump=...
+        Dumps some information about app/emulator to dump file. Check
+        src/options.rs:parse_dump_options for the currently available options.
+
+    --dump-file=...
+        Pick the file for information to be dumped to, relative to the user
+        data directory. Defaults to {user directory}/DUMP.txt. Note that this
+        file will get truncated (deleted) if it already exists!
+
 Other options:
     --preferred-languages=...
         Specifies a list of preferred languages to be reported to the app.

@@ -98,6 +98,7 @@ pub struct Environment {
     pub options: options::Options,
     gdb_server: Option<gdb::GdbServer>,
     pub env_vars: HashMap<Vec<u8>, MutPtr<u8>>,
+    pub dump_file: Option<std::fs::File>,
 }
 
 /// What to do next when executing this thread.
@@ -293,7 +294,12 @@ impl Environment {
             options,
             gdb_server: None,
             env_vars: Default::default(),
+            dump_file: None,
         };
+
+        if env.options.dumping_options.any() {
+            env.dump_file = Some(std::fs::File::create(&env.options.dumping_file).map_err(|e| e.to_string())?);
+        }
 
         env.set_up_initial_env_vars();
 
@@ -373,6 +379,13 @@ impl Environment {
                 () = func.call_from_host(&mut env, ());
             }
             log_dbg!("Static initialization done");
+        }
+
+        if env.options.dumping_options.linking_info {
+            let file = env.dump_file.as_mut().unwrap();
+            env.objc.dump_classes(file).unwrap();
+            env.dyld.dump_lazy_symbols(&env.bins, file).unwrap();
+            env.objc.dump_selectors(&env.bins[0], &env.mem, file).unwrap();
         }
 
         env.cpu.branch(entry_point_addr);
@@ -456,6 +469,7 @@ impl Environment {
             options,
             gdb_server: None,
             env_vars: Default::default(),
+            dump_file: None
         };
 
         env.set_up_initial_env_vars();

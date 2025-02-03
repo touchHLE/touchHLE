@@ -111,6 +111,7 @@ pub struct Environment {
     /// Set to [true] when created using [Environment::new_without_app].
     /// In practice, this means we are in the app picker.
     pub is_fake: bool,
+    pub dump_file: Option<std::fs::File>,
 }
 
 /// What to do next when executing this thread.
@@ -394,7 +395,13 @@ impl Environment {
             gdb_server: None,
             env_vars: Default::default(),
             is_fake: false,
+            dump_file: None,
         };
+
+        if env.options.dumping_options.any() {
+            env.dump_file =
+                Some(std::fs::File::create(&env.options.dumping_file).map_err(|e| e.to_string())?);
+        }
 
         env.set_up_initial_env_vars();
 
@@ -471,6 +478,15 @@ impl Environment {
                 () = func.call_from_host(&mut env, ());
             }
             log_dbg!("Static initialization done");
+        }
+
+        if env.options.dumping_options.linking_info {
+            let file = env.dump_file.as_mut().unwrap();
+            env.objc.dump_classes(file).unwrap();
+            env.dyld.dump_lazy_symbols(&env.bins, file).unwrap();
+            env.objc
+                .dump_selectors(&env.bins[0], &env.mem, file)
+                .unwrap();
         }
 
         env.cpu.branch(entry_point_addr);
@@ -555,6 +571,7 @@ impl Environment {
             gdb_server: None,
             env_vars: Default::default(),
             is_fake: true,
+            dump_file: None,
         };
 
         env.set_up_initial_env_vars();

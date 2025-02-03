@@ -29,3 +29,7 @@ local.properties
 android/app/src/main/jniLibs
 android/app/build
 android/build
+
+# Default developer dump file
+
+DUMP.txt

@@ -145,6 +145,15 @@ Debugging options:
         host name or an IP address. IPv6 addresses should be enclosed in square
         brackets, e.g. --gdb=[::1]:9001 for IPv6 loopback device port 9001.
 
+    --dump=...
+        Dumps some information about app/emulator to dump file. Check
+        src/options.rs:parse_dump_options for the currently available options.
+
+    --dump-file=...
+        Pick the file for information to be dumped to, relative to the user
+        data directory. Defaults to {user directory}/DUMP.txt. Note that this
+        file will get truncated (deleted) if it already exists!
+
 Other options:
     --preferred-languages=...
         Specifies a list of preferred languages to be reported to the app.

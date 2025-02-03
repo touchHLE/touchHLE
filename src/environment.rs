@@ -98,6 +98,7 @@ pub struct Environment {
     pub options: options::Options,
     gdb_server: Option<gdb::GdbServer>,
     pub env_vars: HashMap<Vec<u8>, MutPtr<u8>>,
+    pub dump_file: Option<std::fs::File>,
 }
 
 /// What to do next when executing this thread.
@@ -147,6 +148,12 @@ impl Environment {
         env_for_salvage: Option<Environment>,
     ) -> Result<Environment, String> {
         let startup_time = Instant::now();
+
+        let dump_file = if options.dumping_options.any() {
+            Some(std::fs::File::create(&options.dumping_file).map_err(|e| e.to_string())?)
+        } else {
+            None
+        };
 
         // Extract things to salvage from the old environment, and then drop it.
         // This needs to be done before creating a new window, because SDL2 only
@@ -293,6 +300,7 @@ impl Environment {
             options,
             gdb_server: None,
             env_vars: Default::default(),
+            dump_file,
         };
 
         env.set_up_initial_env_vars();
@@ -347,6 +355,15 @@ impl Environment {
             let step = gdb_server.wait_for_debugger(None, &mut env.cpu, &mut env.mem);
             assert!(!step, "Can't step right now!"); // TODO?
             env.gdb_server = Some(gdb_server);
+        }
+
+        if env.options.dumping_options.linking_info {
+            let file = env.dump_file.as_mut().unwrap();
+            env.objc.dump_classes(file).unwrap();
+            env.dyld.dump_lazy_symbols(&env.bins, file).unwrap();
+            env.objc
+                .dump_selectors(&env.bins[0], &env.mem, file)
+                .unwrap();
         }
 
         echo!("CPU emulation begins now.");
@@ -456,6 +473,7 @@ impl Environment {
             options,
             gdb_server: None,
             env_vars: Default::default(),
+            dump_file: None,
         };
 
         env.set_up_initial_env_vars();

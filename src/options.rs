@@ -11,6 +11,7 @@ use std::collections::HashMap;
 use std::io::{BufRead, BufReader, Read};
 use std::net::{SocketAddr, ToSocketAddrs};
 use std::num::NonZeroU32;
+use std::path::PathBuf;
 
 pub const OPTIONS_HELP: &str =
     include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/OPTIONS_HELP.txt"));
@@ -54,6 +55,8 @@ pub struct Options {
     pub force_composition: bool,
     pub network_access: bool,
     pub popup_errors: bool,
+    pub dumping_options: DumpingOptions,
+    pub dumping_file: PathBuf,
 }
 
 impl Default for Options {
@@ -80,6 +83,8 @@ impl Default for Options {
             force_composition: false,
             network_access: false,
             popup_errors: true,
+            dumping_options: Default::default(),
+            dumping_file: crate::paths::user_data_base_path().join("DUMP.txt"),
         }
     }
 }
@@ -205,6 +210,10 @@ impl Options {
             self.network_access = true;
         } else if arg == "--no-error-popup" {
             self.popup_errors = false;
+        } else if let Some(values) = arg.strip_prefix("--dump=") {
+            self.dumping_options = parse_dump_options(values)?;
+        } else if let Some(path) = arg.strip_prefix("--dump-file=") {
+            self.dumping_file = crate::paths::user_data_base_path().join(path);
         } else {
             return Ok(false);
         };
@@ -253,4 +262,28 @@ pub fn get_options_from_file<F: Read>(file: F, app_id: &str) -> Result<Option<St
         }
     }
     Ok(None)
+}
+
+#[derive(Default, Clone)]
+pub struct DumpingOptions {
+    pub linking_info: bool,
+}
+
+impl DumpingOptions {
+    /// Check if any of the dumping options are active.
+    pub fn any(&self) -> bool {
+        self.linking_info
+    }
+}
+
+fn parse_dump_options(options: &str) -> Result<DumpingOptions, String> {
+    let mut dumping_options = DumpingOptions::default();
+    for opt in options.split(",") {
+        if opt == "linking-info" {
+            dumping_options.linking_info = true;
+        } else {
+            return Err(format!("Unrecognized option {opt} for --dump=..."));
+        }
+    }
+    Ok(dumping_options)
 }

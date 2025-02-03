@@ -776,6 +776,66 @@ impl ObjC {
         (need, diff)
     }
 
+    /// Dumps all classes available to the emulator in JSON to stdout.
+    ///
+    /// The JSON has the following form:
+    /// ```json
+    /// {
+    ///     "object": "classes",
+    ///     "classes": [
+    ///         {
+    ///             "name": ((name of class)),
+    ///             "super": ((name of superclass, if available)),
+    ///             "class_type": (("normal" | "unimplemented" | "fake"))
+    ///         },
+    ///         ...
+    ///     ]
+    /// }
+    /// ```
+    pub fn dump_classes(&self, file: &mut std::fs::File) -> Result<(), std::io::Error> {
+        use std::io::Write;
+        writeln!(file, "{{\n    \"object\": \"classes\",\n    \"classes\": [")?;
+        for (i, (_, o)) in self.classes.iter().enumerate() {
+            // Why doesn't json allow trailing commas...
+            let comma = if i == self.classes.len() - 1 { "" } else { "," };
+
+            let host_obj = self.get_host_object(*o).unwrap();
+
+            if let Some(ClassHostObject {
+                name,
+                superclass: sup,
+                ..
+            }) = host_obj.as_any().downcast_ref()
+            {
+                if *sup == nil {
+                    writeln!(
+                        file,
+                        "        {{ \"name\": \"{name}\", \"class_type\": \"normal\" }}{comma}"
+                    )?;
+                } else {
+                    writeln!(
+                        file,
+                        "        {{ \"name\": \"{}\", \"super\": \"{}\", \"class_type\": \"normal\" }}{}",
+                        name, self.get_class_name(*sup), comma
+                    )?;
+                }
+            } else if let Some(UnimplementedClass { name, .. }) = host_obj.as_any().downcast_ref() {
+                writeln!(
+                    file,
+                    "        {{ \"name\": \"{name}\", \"class_type\": \"unimplemented\" }}{comma}"
+                )?;
+            } else if let Some(FakeClass { name, .. }) = host_obj.as_any().downcast_ref() {
+                writeln!(
+                    file,
+                    "        {{ \"name\": \"{name}\", \"class_type\": \"fake\" }}{comma}"
+                )?;
+            } else {
+                panic!("Unrecognized class type!");
+            }
+        }
+        writeln!(file, "    ]\n}}")
+    }
+
     /// For use by [crate::dyld]: register all the categories from the
     /// application binary.
     pub fn register_bin_categories(&mut self, bin: &MachO, mem: &mut Mem) {
@@ -864,15 +924,20 @@ impl ObjC {
     }
 
     pub fn get_class_name(&self, class: Class) -> &str {
-        let host_object = self.get_host_object(class).unwrap();
+        self.try_get_class_name(class)
+            .expect("Could not get class name!")
+    }
+
+    pub fn try_get_class_name(&self, class: Class) -> Option<&str> {
+        let host_object = self.get_host_object(class)?;
         if let Some(ClassHostObject { name, .. }) = host_object.as_any().downcast_ref() {
-            name
+            Some(name)
         } else if let Some(UnimplementedClass { name, .. }) = host_object.as_any().downcast_ref() {
-            name
+            Some(name)
         } else if let Some(FakeClass { name, .. }) = host_object.as_any().downcast_ref() {
-            name
+            Some(name)
         } else {
-            panic!();
+            None
         }
     }
 }

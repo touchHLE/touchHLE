@@ -16,6 +16,40 @@
       "message": "I really don\u0027t feel good about this “ignoring” behaviour, I think it\u0027s very unlikely this is accurate.",
       "revId": "393e251b84cbf70b6fdf32c0194b78103f3c87d0",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "202c0534_8d4f8679",
+        "filename": "src/frameworks/opengles/gles_guest.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 98,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-02-07T21:19:15Z",
+      "side": 1,
+      "message": "I would suggest a more straightforward name like `_nodefault` or `_noskip` or something.",
+      "revId": "393e251b84cbf70b6fdf32c0194b78103f3c87d0",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2cbe2750_91346f60",
+        "filename": "src/frameworks/opengles/gles_guest.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 104,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-02-07T21:19:15Z",
+      "side": 1,
+      "message": "I don\u0027t recommend this as this will cause well-behaving apps to crash.",
+      "revId": "393e251b84cbf70b6fdf32c0194b78103f3c87d0",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

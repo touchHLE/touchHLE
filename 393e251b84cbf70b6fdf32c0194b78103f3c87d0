@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "8f0d41a2_b8c985b3",
+        "filename": "src/frameworks/opengles/gles_guest.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 79,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-02-07T21:29:47Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "bbfdc6a2_d95cb813",
+      "revId": "393e251b84cbf70b6fdf32c0194b78103f3c87d0",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "202c0534_8d4f8679",
@@ -35,6 +53,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "4f784ab8_e029e5e8",
+        "filename": "src/frameworks/opengles/gles_guest.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 98,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-02-07T21:29:47Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "202c0534_8d4f8679",
+      "revId": "393e251b84cbf70b6fdf32c0194b78103f3c87d0",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "2cbe2750_91346f60",
@@ -48,6 +84,24 @@
       "writtenOn": "2025-02-07T21:19:15Z",
       "side": 1,
       "message": "I don\u0027t recommend this as this will cause well-behaving apps to crash.",
+      "revId": "393e251b84cbf70b6fdf32c0194b78103f3c87d0",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d7a99237_2fec3536",
+        "filename": "src/frameworks/opengles/gles_guest.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 104,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-02-07T21:29:47Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "2cbe2750_91346f60",
       "revId": "393e251b84cbf70b6fdf32c0194b78103f3c87d0",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

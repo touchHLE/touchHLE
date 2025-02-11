@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7782d7c3_5f8c1a82",
+        "filename": "src/environment.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 1338,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-02-11T19:54:54Z",
+      "side": 1,
+      "message": "Hhhhm, do you have testcase in mind which would fail in the existing implementation of semaphores?\nIt\u0027s probably better to address in a separate commit (before the merge of coroutines).",
+      "revId": "6f47cafd08b34abbeb709589a23bc6cb03adc038",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

@@ -16,6 +16,24 @@
       "message": "Hhhhm, do you have testcase in mind which would fail in the existing implementation of semaphores?\nIt\u0027s probably better to address in a separate commit (before the merge of coroutines).",
       "revId": "6f47cafd08b34abbeb709589a23bc6cb03adc038",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b7b23d8c_47037c23",
+        "filename": "src/environment.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 1338,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2025-02-11T20:57:20Z",
+      "side": 1,
+      "message": "Here\u0027s a patch (git apply) for a test that fails on trunk but shouldn\u0027t. Also the implementation here is (slightly) wrong as well, the line `host_sem.value \u003e\u003d 0` should be `host_sem.value \u003e 0`.\n ```\ndiff --git a/tests/TestApp_source/main.c b/tests/TestApp_source/main.c\nindex 9ca5b1b..0e1e3a9 100644\n--- a/tests/TestApp_source/main.c\n+++ b/tests/TestApp_source/main.c\n@@ -121,6 +121,7 @@ typedef __pthread_condattr_t pthread_condattr_t;\n \n int pthread_create(pthread_t *, const pthread_attr_t *, void *(*)(void *),\n                    void *);\n+int pthread_join(pthread_t thread, void **value_ptr);\n \n int pthread_cond_init(pthread_cond_t *, const pthread_condattr_t *);\n int pthread_cond_signal(pthread_cond_t *);\n@@ -800,17 +801,17 @@ int test_sem() {\n     return -1;\n   }\n \n-  // Sem @ -1\n+  // Sem @ 0\n   if (sem_trywait(semaphore) \u003d\u003d -1) {\n     return -1;\n   }\n \n-  // Sem still @ -1, should not lock\n+  // Sem still @ 0, should not lock\n   if (sem_trywait(semaphore) \u003d\u003d 0) {\n     return -1;\n   }\n \n-  // Sem @ 0, should be able to relock\n+  // Sem @ 1, should be able to relock\n   sem_post(semaphore);\n   if (sem_trywait(semaphore) \u003d\u003d -1) {\n     return -1;\n@@ -821,6 +822,35 @@ int test_sem() {\n   return 0;\n }\n \n+sem_t* mt_semaphore;\n+\n+void mtsem_thread() {\n+  sem_wait(mt_semaphore);\n+  sem_post(mt_semaphore);\n+}\n+\n+int test_mtsem() {\n+  mt_semaphore \u003d sem_open(\"mtsem_test\", O_CREAT, 0644, 0);\n+  if (mt_semaphore \u003d\u003d SEM_FAILED) {\n+    printf(\"Error opening semaphore\\n\");\n+    return -1;\n+  }\n+\n+  pthread_t *my_thread \u003d (pthread_t *)malloc(sizeof(pthread_t));\n+  pthread_create(my_thread, NULL, (void *)mtsem_thread, NULL);\n+\n+  pthread_t *my_thread2 \u003d (pthread_t *)malloc(sizeof(pthread_t));\n+  pthread_create(my_thread2, NULL, (void *)mtsem_thread, NULL);\n+\n+  usleep(1);\n+  usleep(1);\n+\n+  sem_post(mt_semaphore);\n+  pthread_join(*my_thread, NULL);\n+  pthread_join(*my_thread2, NULL);\n+  return 0;\n+}\n+\n int done \u003d 0;\n pthread_mutex_t m;\n pthread_cond_t c;\n@@ -2121,6 +2151,7 @@ struct {\n     FUNC_DEF(test_strtof),\n     FUNC_DEF(test_getcwd_chdir),\n     FUNC_DEF(test_sem),\n+    FUNC_DEF(test_mtsem),\n     FUNC_DEF(test_CGAffineTransform),\n     FUNC_DEF(test_strncpy),\n     FUNC_DEF(test_strncat),\n```",
+      "parentUuid": "7782d7c3_5f8c1a82",
+      "revId": "6f47cafd08b34abbeb709589a23bc6cb03adc038",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

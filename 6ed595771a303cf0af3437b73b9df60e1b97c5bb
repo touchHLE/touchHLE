@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "96d49c7a_6544a099",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038640
+      },
+      "writtenOn": "2025-02-12T22:19:09Z",
+      "side": 1,
+      "message": "This addition gets \"New York Nights: Success in the City\" from \"Completely broken\" to \"Some of the main content of the app works, but with major issues.\" (I did actually get in-game and the biggest issue I noticed in a couple of minutes of playtime is that the animations run too fast.)",
+      "revId": "6ed595771a303cf0af3437b73b9df60e1b97c5bb",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

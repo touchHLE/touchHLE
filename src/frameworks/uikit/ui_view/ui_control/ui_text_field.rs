@@ -11,7 +11,7 @@
 use sdl2_sys::{SDL_StartTextInput, SDL_StopTextInput};
 
 use crate::dyld::{ConstantExports, HostConstant};
-use crate::frameworks::core_graphics::CGRect;
+use crate::frameworks::core_graphics::{CGRect,CGPoint};
 use crate::frameworks::foundation::ns_string::to_rust_string;
 use crate::frameworks::foundation::{ns_string, NSInteger, NSRange, NSUInteger};
 use crate::frameworks::uikit::ui_font::UITextAlignmentLeft;
@@ -160,6 +160,10 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 - (())setPlaceholder:(id)placeholder { // NSString*
     log!("TODO: setPlaceholder:'{}'", to_rust_string(env, placeholder));
+}
+
+- (())setPosition:(CGPoint)position {
+    log!("TODO: setPosition:'{}'", position);
 }
 
 // weak/non-retaining

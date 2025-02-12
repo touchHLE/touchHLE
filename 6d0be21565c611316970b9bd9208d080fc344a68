@@ -33,6 +33,24 @@
       "message": "Can I ask what the process forward is to fix my formatting error? Do I create another commit and push it to gerrit again? Can I somehow join it to this change?\n\nSorry again",
       "revId": "6d0be21565c611316970b9bd9208d080fc344a68",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7e6a5b8a_371676d1",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-02-12T23:44:24Z",
+      "side": 1,
+      "message": "hey, don\u0027t worry, I just pushed a fix.\n\nI usually run `cargo fmt \u0026\u0026 ./dev-scripts/lint.sh` before submitting patches",
+      "parentUuid": "318ab111_a8784b29",
+      "revId": "6d0be21565c611316970b9bd9208d080fc344a68",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

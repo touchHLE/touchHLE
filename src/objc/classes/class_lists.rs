@@ -101,3 +101,51 @@ pub const CLASS_LISTS: &[super::ClassExports] = &[
     uikit::ui_view_controller::CLASSES,
     uikit::ui_view_controller::ui_navigation_controller::CLASSES,
 ];
+
+#[cfg(test)]
+mod tests {
+    use crate::objc::ClassTemplate;
+
+    use super::*;
+    use std::collections::HashSet;
+
+    #[test]
+    fn no_duplicate_classes() {
+        let mut seen_classes = HashSet::new();
+
+        for &class_list in CLASS_LISTS {
+            for (class_name, template) in class_list {
+                if !seen_classes.insert(class_name) {
+                    panic!("Found duplicate class export {}", class_name);
+                }
+                let ClassTemplate {
+                    class_methods,
+                    instance_methods,
+                    ..
+                } = template;
+
+                let mut seen_class_methods = HashSet::with_capacity(class_methods.len());
+
+                for (method_name, _) in *class_methods {
+                    if !seen_class_methods.insert(method_name) {
+                        panic!(
+                            "Found duplicate class method {} for class {}",
+                            method_name, class_name
+                        )
+                    }
+                }
+
+                let mut seen_instance_methods = HashSet::with_capacity(instance_methods.len());
+
+                for (method_name, _) in *instance_methods {
+                    if !seen_instance_methods.insert(method_name) {
+                        panic!(
+                            "Found duplicate instance method {} for class {}",
+                            method_name, class_name
+                        )
+                    }
+                }
+            }
+        }
+    }
+}

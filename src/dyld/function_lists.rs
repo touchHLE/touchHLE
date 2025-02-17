@@ -94,3 +94,22 @@ pub const FUNCTION_LISTS: &[super::FunctionExports] = &[
     uikit::ui_geometry::FUNCTIONS,
     uikit::ui_graphics::FUNCTIONS,
 ];
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::collections::HashSet;
+
+    #[test]
+    fn no_duplicate_functions() {
+        let mut seen = HashSet::new();
+
+        for function_list in FUNCTION_LISTS {
+            for (function_name, _) in *function_list {
+                if !seen.insert(function_name) {
+                    panic!("Found duplicate function export {}", function_name);
+                }
+            }
+        }
+    }
+}

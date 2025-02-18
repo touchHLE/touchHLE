@@ -457,6 +457,7 @@ int test_sscanf() {
   int a, b;
   short c, d;
   float f;
+  double lf;
   char str[4];
   int matched = sscanf("1.23", "%d.%d", &a, &b);
   if (!(matched == 2 && a == 1 && b == 23))
@@ -509,6 +510,9 @@ int test_sscanf() {
   matched = sscanf("aa", "%10x", &a);
   if (!(matched == 1 && a == 170))
     return -18;
+  matched = sscanf("3.14159265359", "%lf", &lf);
+  if (!(matched == 1 && lf == 3.14159265359))
+    return -19;
   return 0;
 }
 

@@ -691,11 +691,33 @@ fn sscanf_common(
             format_char_idx += 1;
         }
 
-        let length_modifier = if env.mem.read(format + format_char_idx) == b'h' {
-            format_char_idx += 1;
-            Some(b'h')
-        } else {
-            None
+        let length_modifier = match env.mem.read(format + format_char_idx) {
+            b'h' => {
+                format_char_idx += 1;
+                if env.mem.read(format + format_char_idx) == b'h' {
+                    format_char_idx += 1;
+                    Some("hh")
+                } else {
+                    Some("h")
+                }
+            }
+            b'l' => {
+                format_char_idx += 1;
+                if env.mem.read(format + format_char_idx) == b'l' {
+                    format_char_idx += 1;
+                    Some("ll")
+                } else {
+                    Some("l")
+                }
+            }
+            // q seems to be an equivalent of 'll'
+            // https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/Strings/Articles/formatSpecifiers.html#//apple_ref/doc/uid/TP40004265-SW1
+            b'q' => {
+                format_char_idx += 1;
+                Some("ll")
+            }
+
+            _ => None,
         };
 
         let specifier = env.mem.read(format + format_char_idx);
@@ -713,7 +735,7 @@ fn sscanf_common(
                 match length_modifier {
                     Some(lm) => {
                         match lm {
-                            b'h' => {
+                            "h" => {
                                 // signed short* or unsigned short*
                                 match strtol_inner(env, src_ptr.cast_const(), base) {
                                     Ok((val, len)) => {
@@ -743,14 +765,25 @@ fn sscanf_common(
             }
             b'f' => {
                 assert_eq!(max_width, 0);
-                assert!(length_modifier.is_none());
-                match atof_inner(env, src_ptr.cast_const()) {
+                let val = match atof_inner(env, src_ptr.cast_const()) {
                     Ok((val, len)) => {
                         src_ptr += len;
+                        val
+                    }
+                    Err(_) => break,
+                };
+                match length_modifier {
+                    None => {
                         let c_int_ptr: ConstPtr<f32> = args.next(env);
                         env.mem.write(c_int_ptr.cast_mut(), val as f32);
                     }
-                    Err(_) => break,
+                    Some("l") => {
+                        let c_int_ptr: ConstPtr<f64> = args.next(env);
+                        env.mem.write(c_int_ptr.cast_mut(), val);
+                    }
+                    Some(modifier) => {
+                        unimplemented!("Length formater '{}' for f", modifier)
+                    }
                 }
             }
             b'x' | b'X' => {

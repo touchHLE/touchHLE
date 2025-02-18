@@ -16,6 +16,24 @@
       "message": "please add tests for those cases to the test app, main.c",
       "revId": "b7b15e13dce76d4bdc1a7fb871ae1b8fc037291b",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "a94afcb7_8c4d104e",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2025-02-18T20:12:00Z",
+      "side": 1,
+      "message": "I added simple test, please let me know if you think its not enough.",
+      "parentUuid": "c8d571e5_7f289235",
+      "revId": "b7b15e13dce76d4bdc1a7fb871ae1b8fc037291b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

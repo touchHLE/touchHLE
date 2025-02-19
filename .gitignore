@@ -12,8 +12,6 @@ touchHLE_wallpaper.*
 *.mode1v3
 !default.mode1v3
 
-tests/TestApp_source/build
-
 # Android
 
 *.iml

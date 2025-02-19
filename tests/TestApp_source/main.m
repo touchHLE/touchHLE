@@ -13,295 +13,33 @@
 // For convenience, let's just include the other source files.
 
 #include "CGAffineTransform.c"
+#import "SyncTester.h"
 
 // === Declarations ===
 
 // We don't have any system headers for iPhone OS, so we must declare everything
 // ourselves rather than #include'ing.
 
-// <stddef.h>
-#define NULL ((void *)0)
-typedef unsigned long size_t;
-typedef int wchar_t;
-
-// <errno.h>
-int *__error(void);
-#define errno (*__error())
-
-// <stdarg.h>
-typedef __builtin_va_list va_list;
-#define va_start(a, b) __builtin_va_start(a, b)
-#define va_arg(a, b) __builtin_va_arg(a, b)
-#define va_end(a) __builtin_va_end(a)
-
-// <stdio.h>
-typedef struct FILE FILE;
-FILE *fopen(const char *, const char *);
-int fclose(FILE *);
-int sscanf(const char *, const char *, ...);
-int printf(const char *, ...);
-int vsnprintf(char *, size_t, const char *, va_list);
-int swprintf(wchar_t *, size_t, const wchar_t *, ...);
-size_t fwrite(const void *, size_t, size_t, FILE *);
-
-// <stdlib.h>
-#define EXIT_SUCCESS 0
-#define EXIT_FAILURE 1
-void exit(int);
-void free(void *);
-void *malloc(size_t);
-void qsort(void *, size_t, size_t, int (*)(const void *, const void *));
-void *realloc(void *, size_t);
-double atof(const char *);
-float strtof(const char *, char **);
-long strtol(const char *, char **, int);
-unsigned long strtoul(const char *, char **, int);
-char *realpath(const char *, char *);
-size_t mbstowcs(wchar_t *, const char *, size_t);
-size_t wcstombs(char *, const wchar_t *, size_t);
-
-// <string.h>
-void *memset(void *, int, size_t);
-int memcmp(const void *, const void *, size_t);
-void *memmove(void *, const void *, size_t);
-int strcmp(const char *, const char *);
-char *strncpy(char *, const char *, size_t);
-char *strncat(char *, const char *, size_t);
-size_t strlcpy(char *, const char *, size_t);
-char *strchr(const char *s, int c);
-char *strrchr(const char *s, int c);
-size_t strlen(const char *);
-int strncmp(const char *, const char *, size_t);
-size_t strcspn(const char *, const char *);
-char *strdup(const char *);
-
-// <unistd.h>
-typedef unsigned int __uint32_t;
-typedef __uint32_t useconds_t;
-int chdir(const char *);
-char *getcwd(char *, size_t);
-int usleep(useconds_t);
-
-// <fcntl.h>
-#define O_RDONLY 0x00000000
-#define O_WRONLY 0x00000001
-#define O_RDWR 0x00000002
-#define O_CREAT 0x00000200
-
-int open(const char *, int, ...);
-int close(int);
-
-// <pthread.h>
-typedef struct opaque_pthread_t opaque_pthread_t;
-typedef struct opaque_pthread_t *__pthread_t;
-typedef __pthread_t pthread_t;
-
-typedef struct opaque_pthread_attr_t opaque_pthread_attr_t;
-typedef struct opaque_pthread_attr_t *__pthread_attr_t;
-typedef __pthread_attr_t pthread_attr_t;
-
-struct _opaque_pthread_mutex_t {
-  long __sig;
-  char __opaque[40];
-};
-typedef struct _opaque_pthread_mutex_t __pthread_mutex_t;
-typedef __pthread_mutex_t pthread_mutex_t;
-
-typedef struct opaque_pthread_mutexattr_t opaque_pthread_mutexattr_t;
-typedef struct opaque_pthread_mutexattr_t *__pthread_mutexattr_t;
-typedef __pthread_mutexattr_t pthread_mutexattr_t;
-
-typedef struct opaque_pthread_cond_t opaque_pthread_cond_t;
-typedef struct opaque_pthread_cond_t *__pthread_cond_t;
-typedef __pthread_cond_t pthread_cond_t;
-
-typedef struct opaque_pthread_condattr_t opaque_pthread_condattr_t;
-typedef struct opaque_pthread_condattr_t *__pthread_condattr_t;
-typedef __pthread_condattr_t pthread_condattr_t;
-
-int pthread_create(pthread_t *, const pthread_attr_t *, void *(*)(void *),
-                   void *);
-int pthread_join(pthread_t thread, void **value_ptr);
-
-int pthread_cond_init(pthread_cond_t *, const pthread_condattr_t *);
-int pthread_cond_signal(pthread_cond_t *);
-int pthread_cond_wait(pthread_cond_t *, pthread_mutex_t *);
-
-int pthread_mutex_init(pthread_mutex_t *, const pthread_mutexattr_t *);
-int pthread_mutex_lock(pthread_mutex_t *);
-int pthread_mutex_unlock(pthread_mutex_t *);
-
-// <semaphore.h>
-#define SEM_FAILED ((sem_t *)-1)
-typedef int sem_t;
-int sem_close(sem_t *);
-sem_t *sem_open(const char *, int, ...);
-int sem_post(sem_t *);
-int sem_trywait(sem_t *);
-int sem_unlink(const char *);
-int sem_wait(sem_t *);
-
-// <locale.h>
-#define LC_ALL 0
-#define LC_COLLATE 1
-#define LC_CTYPE 2
-#define LC_MONETARY 3
-#define LC_NUMERIC 4
-#define LC_TIME 5
-#define LC_MESSAGES 6
-char *setlocale(int category, const char *locale);
-
-#ifdef DEFINE_ME_WHEN_BUILDING_ON_MACOS
-typedef long _register_t; // 64-bit definition
-#else
-typedef int _register_t;
-#endif
-
-// <setjmp.h>
-#define _JBLEN (10 + 16 + 2)
-typedef _register_t jmp_buf[_JBLEN];
-int setjmp(jmp_buf env);
-void longjmp(jmp_buf env, int val);
-
-// <ctype.h>
-int __maskrune(wchar_t, unsigned long);
-
-// <dirent.h>
-typedef struct {
-  int _unused;
-} DIR;
-struct dirent {
-  char _unused[21]; // TODO
-  char d_name[1024];
-};
-DIR *opendir(const char *);
-struct dirent *readdir(DIR *);
-int closedir(DIR *);
-int scandir(const char *, struct dirent ***, int (*)(struct dirent *),
-            int (*)(const void *, const void *));
-
-// <wchar.h>
-int swscanf(const wchar_t *, const wchar_t *, ...);
-
-// <math.h>
-long int lrint(double);
-long int lrintf(float);
-double ldexp(double, int);
-float ldexpf(float, int);
-float frexpf(float, int *);
-double frexp(double, int *);
-double fabs(double);
-
-// <inet.h>
-typedef unsigned int socklen_t;
-typedef unsigned int in_addr_t;
-struct in_addr {
-  in_addr_t s_addr;
-};
-in_addr_t inet_addr(const char *);
-const char *inet_ntop(int, const void *, char *, socklen_t);
-int inet_pton(int, const char *, void *);
-
-// `CFBase.h`
-
-typedef unsigned char Boolean;
-typedef const void *CFTypeRef;
-typedef const struct _CFAllocator *CFAllocatorRef;
-typedef unsigned int CFStringEncoding;
-typedef unsigned long CFHashCode;
-typedef signed long CFIndex;
-typedef struct {
-  CFIndex location;
-  CFIndex length;
-} CFRange;
-typedef unsigned long CFOptionFlags;
-typedef const struct _CFDictionary *CFDictionaryRef;
-typedef const struct _CFString *CFStringRef;
-typedef const struct _CFString *CFMutableStringRef;
-typedef const struct _CFURL *CFURLRef;
-
-CFTypeRef CFRetain(CFTypeRef cf);
-void CFRelease(CFTypeRef cf);
-Boolean CFEqual(CFTypeRef cf1, CFTypeRef cf2);
-CFHashCode CFHash(CFTypeRef cf);
-
-// `CFString.h`
-
-enum { kCFStringEncodingASCII = 0x600 };
-
-typedef int CFComparisonResult;
-typedef unsigned int CFStringCompareFlags;
-
-void CFStringAppendFormat(CFMutableStringRef s, CFDictionaryRef fo,
-                          CFStringRef format, ...);
-CFMutableStringRef CFStringCreateMutable(CFAllocatorRef alloc, CFIndex max_len);
-CFStringRef CFStringCreateWithCString(CFAllocatorRef alloc, const char *cStr,
-                                      CFStringEncoding encoding);
-CFComparisonResult CFStringCompare(CFStringRef a, CFStringRef b,
-                                   CFStringCompareFlags flags);
-CFRange CFStringFind(CFStringRef theString, CFStringRef stringToFind,
-                     CFOptionFlags compareOptions);
-
-// `CFDictionary.h`
-
-typedef const struct _CFDictionary *CFMutableDictionaryRef;
-
-typedef const void *(*CFDictionaryRetainCallBack)(CFAllocatorRef alloc,
-                                                  const void *value);
-typedef void (*CFDictionaryReleaseCallBack)(CFAllocatorRef alloc,
-                                            const void *val);
-typedef CFStringRef (*CFDictionaryCopyDescriptionCallBack)(const void *val);
-typedef Boolean (*CFDictionaryEqualCallBack)(const void *val1,
-                                             const void *val2);
-typedef CFHashCode (*CFDictionaryHashCallBack)(const void *val);
-
-typedef struct {
-  CFIndex version;
-  CFDictionaryRetainCallBack retain;
-  CFDictionaryReleaseCallBack release;
-  CFDictionaryCopyDescriptionCallBack copyDescription;
-  CFDictionaryEqualCallBack equal;
-  CFDictionaryHashCallBack hash;
-} CFDictionaryKeyCallBacks;
-
-typedef struct {
-  CFIndex version;
-  CFDictionaryRetainCallBack retain;
-  CFDictionaryReleaseCallBack release;
-  CFDictionaryCopyDescriptionCallBack copyDescription;
-  CFDictionaryEqualCallBack equal;
-} CFDictionaryValueCallBacks;
-
-CFMutableDictionaryRef
-CFDictionaryCreateMutable(CFAllocatorRef allocator, CFIndex capacity,
-                          const CFDictionaryKeyCallBacks *keyCallBacks,
-                          const CFDictionaryValueCallBacks *valueCallBacks);
-void CFDictionaryAddValue(CFMutableDictionaryRef dict, const void *key,
-                          const void *value);
-void CFDictionarySetValue(CFMutableDictionaryRef dict, const void *key,
-                          const void *value);
-void CFDictionaryRemoveValue(CFMutableDictionaryRef dict, const void *key);
-void CFDictionaryRemoveAllValues(CFMutableDictionaryRef dict);
-const void *CFDictionaryGetValue(CFDictionaryRef dict, const void *key);
-CFIndex CFDictionaryGetCount(CFDictionaryRef dict);
-void CFDictionaryGetKeysAndValues(CFDictionaryRef dict, const void **keys,
-                                  const void **values);
-
-// `CFURL.h`
-
-CFURLRef CFURLCreateFromFileSystemRepresentation(CFAllocatorRef allocator,
-                                                 const char *buffer,
-                                                 CFIndex bufLen,
-                                                 Boolean isDirectory);
-CFStringRef CFURLCopyFileSystemPath(CFURLRef anURL, CFIndex pathStyle);
-
-CFURLRef CFURLCreateCopyAppendingPathComponent(CFAllocatorRef allocator,
-                                               CFURLRef url,
-                                               CFStringRef pathComponent,
-                                               Boolean isDirectory);
-CFURLRef CFURLCreateCopyDeletingLastPathComponent(CFAllocatorRef allocator,
-                                                  CFURLRef url);
-
+#include <CoreFoundation/CFBase.h>
+#include <CoreFoundation/CFDictionary.h>
+#include <CoreFoundation/CFString.h>
+#include <CoreFoundation/CFURL.h>
+#include <arpa/inet.h>
+#include <dirent.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <locale.h>
+#include <math.h>
+#include <pthread.h>
+#include <semaphore.h>
+#include <setjmp.h>
+#include <stdarg.h>
+#include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <wchar.h>
 // === Main code ===
 
 int int_compar(const void *a, const void *b) { return *(int *)a - *(int *)b; }
@@ -2406,9 +2144,9 @@ int test_inet_pton() {
 int test_case_CFURL(const char *basePathCStr, const char *urlPathCStr,
                     const char *fileNameCStr,
                     const char *expectedAppendedCStr) {
-  CFURLRef url = CFURLCreateFromFileSystemRepresentation(NULL, urlPathCStr,
-                                                         strlen(urlPathCStr),
-                                                         1 // isDirectory
+  CFURLRef url = CFURLCreateFromFileSystemRepresentation(
+      NULL, (uint8_t *)urlPathCStr, strlen(urlPathCStr),
+      1 // isDirectory
   );
   if (url == NULL) {
     return -1;
@@ -2499,6 +2237,43 @@ int test_CFURL() {
   return 0;
 }
 
+typedef struct {
+  SyncTester *tester;
+  BOOL res;
+} sync_test_arg;
+
+void *modify(sync_test_arg *arg) {
+  SyncTester *tester = arg->tester;
+  arg->res = [tester holdAndCheckCounter];
+  return NULL;
+}
+void *try_modify(SyncTester *tester) {
+  [tester tryModifyCounter];
+  return NULL;
+}
+
+int test_synchronized() {
+  SyncTester *sync_test = [SyncTester new];
+  sync_test_arg *arg = malloc(sizeof(sync_test_arg));
+  memset(arg, 0, sizeof(sync_test_arg));
+  arg->tester = sync_test;
+  pthread_t locking_thread;
+  pthread_create(&locking_thread, NULL, (void *(*)(void *)) & modify, arg);
+  pthread_t blocked_threads[10];
+  for (int i = 0; i < 10; i++) {
+    pthread_create(blocked_threads + i, NULL, (void *(*)(void *)) & try_modify,
+                   sync_test);
+  }
+  if (pthread_join(locking_thread, NULL))
+    return -1;
+  if (!arg->res)
+    return -1;
+  [sync_test recursiveSyncEnter];
+  if (!sync_test.test_ok)
+    return -1;
+  return 0;
+}
+
 // clang-format off
 #define FUNC_DEF(func)                                                         \
   { &func, #func }
@@ -2550,6 +2325,7 @@ struct {
     FUNC_DEF(test_inet_ntop),
     FUNC_DEF(test_inet_pton),
     FUNC_DEF(test_CFURL),
+    FUNC_DEF(test_synchronized)
 };
 // clang-format on
 

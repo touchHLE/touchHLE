@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "e76e0db1_5553395c",
+        "filename": "OPTIONS_HELP.txt",
+        "patchSetId": 1
+      },
+      "lineNbr": 147,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2025-02-19T22:29:24Z",
+      "side": 1,
+      "message": "Done. Didn\u0027t add `--dump\u003dhelp` or equivalent, and just pointed to `options.rs`.",
+      "parentUuid": "f789d6fe_031edc94",
+      "revId": "ce4f34099e925aa69e85b6a5f32026fdc84c2c09",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "cc29b2b6_df301964",
@@ -31,6 +49,24 @@
       "writtenOn": "2025-01-25T14:32:21Z",
       "side": 1,
       "message": "Are you sure avoiding an implicit newline is even possible? I don\u0027t think `sdl2::log` can do that, and I\u0027m not sure this is useful on Android. Dumping everything to a file named `dump.txt` or printing only to stderr would be less troublesome. I\u0027d rather not add a macro that encourages doing things that won\u0027t work on Android.",
+      "revId": "ce4f34099e925aa69e85b6a5f32026fdc84c2c09",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "81560d5b_24a01027",
+        "filename": "src/log.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 89,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2025-02-19T22:29:24Z",
+      "side": 1,
+      "message": "For some reason I thought it was? I\u0027ll change it to dump to a file instead.",
+      "parentUuid": "cc29b2b6_df301964",
       "revId": "ce4f34099e925aa69e85b6a5f32026fdc84c2c09",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

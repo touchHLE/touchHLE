@@ -35,6 +35,11 @@ android {
             }
         }
     }
+    java {
+        toolchain {
+            languageVersion.set(JavaLanguageVersion.of(11))
+        }
+    }
     buildTypes {
         release {
             signingConfig signingConfigs.debug

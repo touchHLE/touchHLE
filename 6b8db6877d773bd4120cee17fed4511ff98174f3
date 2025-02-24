@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "599a6fad_c69b6006",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2025-02-24T04:30:53Z",
+      "side": 1,
+      "message": "Tested the CI pipeline in my repo, everything is working.",
+      "revId": "6b8db6877d773bd4120cee17fed4511ff98174f3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

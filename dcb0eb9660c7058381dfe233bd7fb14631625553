@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "3119d4f8_356da068",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 20
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-02-24T03:18:34Z",
+      "side": 1,
+      "message": "I apologize for marking myself as a code reviewer accidentally. Should be fixed, but this generally looks good. Would like to see it merged as I am working on a different game that uses Core Animation.",
+      "revId": "dcb0eb9660c7058381dfe233bd7fb14631625553",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

@@ -567,6 +567,19 @@ impl GLES for GLES1Native {
         gles11::TexEnvi(target, pname, param)
     }
     unsafe fn TexEnvfv(&mut self, target: GLenum, pname: GLenum, params: *const GLfloat) {
+        if target == gles11::TEXTURE_FILTER_CONTROL_EXT {
+            assert!(pname == gles11::TEXTURE_LOD_BIAS_EXT);
+            unsafe {
+                if !CStr::from_ptr(gles11::GetString(gles11::EXTENSIONS) as _)
+                    .to_str()
+                    .unwrap()
+                    .contains("EXT_texture_lod_bias")
+                {
+                    log_dbg!("GL_EXT_texture_lod_bias is unsupported, skipping TexEnvfv({:#x}, {:#x}, ...) call", target, pname);
+                    return;
+                }
+            };
+        }
         gles11::TexEnvfv(target, pname, params)
     }
     unsafe fn TexEnvxv(&mut self, target: GLenum, pname: GLenum, params: *const GLfixed) {

@@ -17,7 +17,8 @@ fn link_lib(lib: &str) {
 }
 
 fn build_type_windows() -> &'static str {
-    if cfg!(target_os = "windows") {
+    let os = env::var("CARGO_CFG_TARGET_OS").expect("CARGO_CFG_TARGET_OS was not set");
+    if os.eq_ignore_ascii_case("windows") {
         if cfg!(debug_assertions) {
             "Debug"
         } else {

@@ -8,13 +8,7 @@
  */
 import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
 
-def buildAsLibrary = project.hasProperty('BUILD_AS_LIBRARY')
-def buildAsApplication = !buildAsLibrary
-if (buildAsApplication) {
-    apply plugin: 'com.android.application'
-} else {
-    apply plugin: 'com.android.library'
-}
+apply plugin: 'com.android.application'
 apply plugin: "com.github.willir.rust.cargo-ndk-android"
 apply plugin: 'org.jetbrains.kotlin.android'
 
@@ -22,9 +16,7 @@ android {
     ndkVersion "25.2.9519653"
     compileSdkVersion 31
     defaultConfig {
-        if (buildAsApplication) {
-            applicationId "org.touchhle.android"
-        }
+        applicationId "org.touchhle.android"
         minSdkVersion 21 // first version with AArch64
         targetSdkVersion 31
         externalNativeBuild {
@@ -76,18 +68,6 @@ android {
 
     lintOptions {
         abortOnError false
-    }
-
-    if (buildAsLibrary) {
-        libraryVariants.all { variant ->
-            variant.outputs.each { output ->
-                def outputFile = output.outputFile
-                if (outputFile != null && outputFile.name.endsWith(".aar")) {
-                    def fileName = "org.touchhle.android.aar"
-                    output.outputFile = new File(outputFile.parent, fileName)
-                }
-            }
-        }
     }
 }
 

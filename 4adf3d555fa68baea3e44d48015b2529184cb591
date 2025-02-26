@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "a12375af_14355d68",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-02-26T20:46:50Z",
+      "side": 1,
+      "message": "\u003e Gradle to 8.12.1 and AGP to 8.8.1\n\nHow you choose those versions? Why NDK version doesn\u0027t need to be updated?",
+      "revId": "4adf3d555fa68baea3e44d48015b2529184cb591",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

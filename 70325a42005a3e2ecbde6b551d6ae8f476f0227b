@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f365f72f_c0aee4a9",
+        "filename": "android/app/src/main/AndroidManifest.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 13,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-02-26T20:46:50Z",
+      "side": 0,
+      "message": "why this change is necessary?",
+      "revId": "70325a42005a3e2ecbde6b551d6ae8f476f0227b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

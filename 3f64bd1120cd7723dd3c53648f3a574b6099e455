@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "41a56565_d083627c",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-02-26T21:06:12Z",
+      "side": 1,
+      "message": "it seems like a correction after https://review.gerrithub.io/c/touchHLE/touchHLE/+/1209341/1 ?\n\nIf yes, just amend existing commit instead and remove this one",
+      "revId": "3f64bd1120cd7723dd3c53648f3a574b6099e455",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

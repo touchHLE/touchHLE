@@ -15,6 +15,13 @@ These are impractical to reimplement, but they are Free Software.
 * Binary origin: `/usr/lib/` of iPhone OS 3.0.1 for the iPhone 3G, build 7A400
 * Source code: <https://github.com/apple-oss-distributions/gcc/tree/gcc-5572.10.2>
 
+## `libz.1.2.3.dylib`
+
+* License: zlib License (see `COPYING.libz`)
+* Binary origin: compilation of zlib source code
+* Build code: <https://github.com/touchHLE/zlib-dylib>
+* Source code: <https://github.com/apple-oss-distributions/zlib/tree/zlib-23.0.1>
+
 ## Original Apple license acknowledgements
 
 > **Free Software Foundation** ( libgcc, libstdc++ )

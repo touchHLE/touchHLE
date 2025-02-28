@@ -11,7 +11,6 @@ import java.nio.file.Paths
 
 apply plugin: 'com.android.application'
 apply plugin: "com.github.willir.rust.cargo-ndk-android"
-apply plugin: 'org.jetbrains.kotlin.android'
 
 android {
     ndkVersion "25.2.9519653"
@@ -39,7 +38,6 @@ android {
         release {
             signingConfig signingConfigs.debug
             minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt')
             debuggable true // allow use of ADB to manage files, etc
         }
         debug {

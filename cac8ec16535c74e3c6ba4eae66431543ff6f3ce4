@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "289707b4_caa1db4e",
+        "filename": "src/fs.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 557,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-02-28T19:38:42Z",
+      "side": 1,
+      "message": "could you also add relevant symlinks?\nafaik where is one for libz.1.3.3.dylib ?",
+      "revId": "cac8ec16535c74e3c6ba4eae66431543ff6f3ce4",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

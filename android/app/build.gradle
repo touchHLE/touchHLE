@@ -38,7 +38,6 @@ android {
         release {
             signingConfig signingConfigs.debug
             minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt')
             debuggable true // allow use of ADB to manage files, etc
         }
         debug {

@@ -16,6 +16,24 @@
       "message": "I worry this will become an unnecessary maintenance burden. Can you not separate out the sorting algorithm in some way that makes it not need an Environment, or even a Dyld?",
       "revId": "3a953c31f653350e4595dcd59245beb3d1ee0ff2",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "910f3059_a5f832c5",
+        "filename": "src/environment.rs",
+        "patchSetId": 14
+      },
+      "lineNbr": 1239,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2025-03-03T22:43:38Z",
+      "side": 1,
+      "message": "Thats fair, rewrote with a new approach. Let me know what you think. I\u0027m not entirely sure what the best place to put the sorting function is.",
+      "parentUuid": "842e346d_fe25441d",
+      "revId": "3a953c31f653350e4595dcd59245beb3d1ee0ff2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

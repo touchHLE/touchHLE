@@ -325,7 +325,45 @@ typedef int CFNumberType;
 CFNumberRef CFNumberCreate(CFAllocatorRef, CFNumberType, const void *);
 CFComparisonResult CFNumberCompare(CFNumberRef, CFNumberRef, void *);
 
+// `CGGeometry.h`
+
+CGFloat CGRectGetMinX(CGRect);
+CGFloat CGRectGetMaxX(CGRect);
+CGFloat CGRectGetMinY(CGRect);
+CGFloat CGRectGetMaxY(CGRect);
+CGFloat CGRectGetHeight(CGRect);
+CGFloat CGRectGetWidth(CGRect);
+CGRect CGRectMake(CGFloat, CGFloat, CGFloat, CGFloat);
+
 // === Main code ===
+
+int test_CGGeometry(void) {
+  // x, y, width, height
+  CGRect testRect = CGRectMake(2.0, 3.0, 100.0, 200.0);
+
+  if (!(CGRectGetMinX(testRect) == testRect.origin.x &&
+        CGRectGetMinX(testRect) == 2.0))
+    return -1;
+  if (!(CGRectGetMaxX(testRect) == testRect.origin.x + testRect.size.width &&
+        CGRectGetMaxX(testRect) == 102.0))
+    return -2;
+
+  if (!(CGRectGetMinY(testRect) == testRect.origin.y &&
+        CGRectGetMinY(testRect) == 3.0))
+    return -3;
+
+  if (!(CGRectGetMaxY(testRect) == testRect.origin.y + testRect.size.height &&
+        CGRectGetMaxY(testRect) == 203.0))
+    return -4;
+
+  if (!(CGRectGetHeight(testRect) == testRect.size.height))
+    return -5;
+
+  if (!(CGRectGetWidth(testRect) == testRect.size.width))
+    return -6;
+
+  return 0;
+}
 
 int int_compar(const void *a, const void *b) { return *(int *)a - *(int *)b; }
 
@@ -3223,6 +3261,7 @@ struct {
     FUNC_DEF(test_CFNumberCompare_simple),
     FUNC_DEF(test_CFNumberCompare_extended),
     FUNC_DEF(test_memset_pattern),
+    FUNC_DEF(test_CGGeometry),
 };
 // clang-format on
 

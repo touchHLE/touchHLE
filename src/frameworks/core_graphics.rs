@@ -19,4 +19,6 @@ pub mod cg_image;
 
 pub type CGFloat = f32;
 
+pub type CGBlendMode = i32;
+
 pub use cg_geometry::{CGPoint, CGRect, CGSize};

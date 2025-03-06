@@ -143,6 +143,11 @@ pub const CLASSES: ClassExports = objc_classes! {
     let font = env.framework_state.uikit.ui_font.get_font_by_kind(host_object.kind);
     font.descent(host_object.size)
 }
+- (CGFloat)leading {
+    let host_object = env.objc.borrow::<UIFontHostObject>(this);
+    let font = env.framework_state.uikit.ui_font.get_font_by_kind(host_object.kind);
+    font.line_gap(host_object.size)
+}
 
 @end
 

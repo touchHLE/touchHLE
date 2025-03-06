@@ -955,6 +955,12 @@ pub const CLASSES: ClassExports = objc_classes! {
     autorelease(env, new_string)
 }
 
+- (id)stringByExpandingTildeInPath {
+    // FIXME: handle better than just returning a copy
+    let new_string = msg![env; this copy];
+    autorelease(env, new_string)
+}
+
 - (id)stringByStandardizingPath {
     let path = to_rust_string(env, this); // TODO: avoid copying
     // TODO: Expanding an initial tilde expression using

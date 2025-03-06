@@ -143,7 +143,10 @@ fn handle_touches_down(env: &mut Environment, map: HashMap<FingerId, Coords>) {
     // to be far off from the truth, since it should represent the
     // time when the event actually happened, not the time when the
     // event was dispatched. Maybe we'll need to fix this eventually.
-    let timestamp: NSTimeInterval = msg_class![env; NSProcessInfo systemUptime];
+    let timestamp: NSTimeInterval = {
+        let process_info = msg_class![env; NSProcessInfo processInfo];
+        msg![env; process_info systemUptime]
+    };
 
     let touches: id = msg_class![env; NSMutableSet allocWithZone:(MutVoidPtr::null())];
 
@@ -311,7 +314,10 @@ fn handle_touches_down(env: &mut Environment, map: HashMap<FingerId, Coords>) {
 fn handle_touches_move(env: &mut Environment, map: HashMap<FingerId, Coords>) {
     let pool: id = msg_class![env; NSAutoreleasePool new];
 
-    let timestamp: NSTimeInterval = msg_class![env; NSProcessInfo systemUptime];
+    let timestamp: NSTimeInterval = {
+        let process_info = msg_class![env; NSProcessInfo processInfo];
+        msg![env; process_info systemUptime]
+    };
 
     let touches: id = msg_class![env; NSMutableSet allocWithZone:(MutVoidPtr::null())];
 
@@ -389,7 +395,10 @@ fn handle_touches_move(env: &mut Environment, map: HashMap<FingerId, Coords>) {
 fn handle_touches_up(env: &mut Environment, map: HashMap<FingerId, Coords>) {
     let pool: id = msg_class![env; NSAutoreleasePool new];
 
-    let timestamp: NSTimeInterval = msg_class![env; NSProcessInfo systemUptime];
+    let timestamp: NSTimeInterval = {
+        let process_info = msg_class![env; NSProcessInfo processInfo];
+        msg![env; process_info systemUptime]
+    };
 
     let touches: id = msg_class![env; NSMutableSet allocWithZone:(MutVoidPtr::null())];
 

@@ -141,12 +141,18 @@ pub fn CFBundleCopyPreferredLocalizationsFromArray(
     }
 
     // Add the first element as fallback
-    let first_loc: id = msg![env; loc_array objectAtIndex: (0 as NSUInteger)];
-    result.push(first_loc);
-    retain(env, first_loc);
+    let count: NSUInteger = msg![env; loc_array count];
+    if count > 0 {
+        let first_loc: id = msg![env; loc_array objectAtIndex: (0 as NSUInteger)];
+
+        result.push(first_loc);
+        retain(env, first_loc);
+    } else {
+        log!("Warning: loc_array is empty");
+    }
 
     let result = ns_array::from_vec(env, result);
-    log_dbg!(
+    log!(
         "CFBundleCopyPreferredLocalizationsFromArray({:?}) => {:?}",
         loc_array,
         result

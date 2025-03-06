@@ -19,6 +19,15 @@ pub const CLASSES: ClassExports = objc_classes! {
     Instant::now().duration_since(env.startup_time).as_secs_f64()
 }
 
++ (())processInfo {
+    log!("TODO: [NSProccesInfo processInfo]");
+}
+
++ (u64)physicalMemory {
+    /* 2GB to align with mocked data in src/libc/mach_host.rs */
+    2147483648
+}
+
 @end
 
 };

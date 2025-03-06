@@ -166,7 +166,10 @@ pub(super) fn handle_accelerometer(env: &mut Environment) -> Option<Instant> {
     let pool: id = msg_class![env; NSAutoreleasePool new];
 
     let (x, y, z) = env.window().get_acceleration(&env.options);
-    let timestamp: NSTimeInterval = msg_class![env; NSProcessInfo systemUptime];
+    let timestamp: NSTimeInterval = {
+        let process_info = msg_class![env; NSProcessInfo processInfo];
+        msg![env; process_info systemUptime]
+    };
     let acceleration: id = msg_class![env; UIAcceleration alloc];
     *env.objc.borrow_mut(acceleration) = UIAccelerationHostObject {
         x: x.into(),

@@ -981,11 +981,34 @@ pub const CLASSES: ClassExports = objc_classes! {
     autorelease(env, new_string)
 }
 
+- (id)stringByExpandingTildeInPath {
+    // TODO: Deal with edge cases like ~foo/bar and/or ~user
+    // These get mapped (in sandbox folder) to app/foo/bar or app/user
+    // That is obviously wrong, but for the sake of touchHLE should work
+    // Have yet to see an iOS app that uses this function to expand ~user
+    let path = to_rust_string(env, this);
+
+    let new_path_str = if path.starts_with('~') {
+        let path = path.trim_start_matches('~');
+        // TODO: Fix this?
+        // Unix paths should only have ~ as first char
+        assert!(!path.contains('~'));
+        let guest_path = env.fs.home_directory().join(path);
+        let resolved = fs::resolve_path(&guest_path, None);
+        format!("/{}", resolved.join("/"))
+    } else {
+        path.to_string()
+    };
+
+    log_dbg!("[(NSString *){:?} stringByExpandingTildeInPath] {} -> {}", this, path, new_path_str);
+
+    let new_string = from_rust_string(env, new_path_str);
+    autorelease(env, new_string)
+}
+
 - (id)stringByStandardizingPath {
-    let path = to_rust_string(env, this); // TODO: avoid copying
-    // TODO: Expanding an initial tilde expression using
-    //       stringByExpandingTildeInPath
-    assert!(!path.contains('~'));
+    let expanded: id = msg![env; this stringByExpandingTildeInPath];
+    let path = to_rust_string(env, expanded); // TODO: avoid copying
     // TODO: Removing an initial component of "/private/var/automount",
     //       "/var/automount”, or "/private” from the path
     assert!(!path.starts_with("/private"));

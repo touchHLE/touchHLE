@@ -5,8 +5,8 @@
  */
 //! `NSProcessInfo`.
 
-use super::NSTimeInterval;
-use crate::objc::{objc_classes, ClassExports};
+use super::{NSTimeInterval, NSUInteger};
+use crate::objc::{id, objc_classes, ClassExports};
 use std::time::Instant;
 
 pub const CLASSES: ClassExports = objc_classes! {
@@ -15,8 +15,17 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 @implementation NSProcessInfo: NSObject
 
++ (id)processInfo {
+    this.cast()
+}
+
 + (NSTimeInterval)systemUptime {
     Instant::now().duration_since(env.startup_time).as_secs_f64()
+}
+
++ (NSUInteger)physicalMemory {
+    // see mocked memory data src/libc/mach_host.rs
+    2 * 1024 * 1024 * 1024 // `2GB`
 }
 
 @end

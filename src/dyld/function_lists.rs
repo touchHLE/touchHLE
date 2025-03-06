@@ -66,6 +66,7 @@ pub const FUNCTION_LISTS: &[super::FunctionExports] = &[
     audio_toolbox::audio_session::FUNCTIONS,
     audio_toolbox::audio_unit::FUNCTIONS,
     core_foundation::cf_array::FUNCTIONS,
+    core_foundation::cf_boolean::FUNCTIONS,
     core_foundation::cf_dictionary::FUNCTIONS,
     core_foundation::cf_bundle::FUNCTIONS,
     core_foundation::cf_socket::FUNCTIONS,

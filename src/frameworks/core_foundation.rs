@@ -18,6 +18,7 @@
 
 pub mod cf_allocator;
 pub mod cf_array;
+pub mod cf_boolean;
 pub mod cf_bundle;
 pub mod cf_data;
 pub mod cf_dictionary;

@@ -7,7 +7,7 @@
 
 use super::cg_affine_transform::CGAffineTransform;
 use super::cg_image::CGImageRef;
-use super::{cg_bitmap_context, CGFloat, CGRect};
+use super::{cg_bitmap_context, CGBlendMode, CGFloat, CGRect};
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::frameworks::core_foundation::{CFRelease, CFRetain, CFTypeRef};
 use crate::objc::{objc_classes, ClassExports, HostObject};
@@ -171,6 +171,24 @@ fn CGContextSetInterpolationQuality(
     );
 }
 
+fn CGContextSetBlendMode(_env: &mut Environment, context: CGContextRef, mode: CGBlendMode) {
+    log_dbg!("TODO: CGContextSetBlendMode({:?}, {:?})", context, mode);
+}
+
+fn CGContextSetAlpha(_env: &mut Environment, context: CGContextRef, alpha: CGFloat) {
+    log_dbg!("TODO: CGContextSetAlpha({:?}, {:?})", context, alpha);
+}
+
+pub fn CGContextGetUserSpaceToDeviceSpaceTransform(
+    env: &mut Environment,
+    context: CGContextRef,
+) -> CGAffineTransform {
+    // TODO: Make this not a copy of CGContextGetCTM
+    let res = env.objc.borrow::<CGContextHostObject>(context).transform;
+    log_dbg!("CGContextGetUserSpaceToDeviceSpaceTransform() => {:?}", res);
+    res
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGContextRetain(_)),
     export_c_func!(CGContextRelease(_)),
@@ -187,4 +205,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGContextSaveGState(_)),
     export_c_func!(CGContextRestoreGState(_)),
     export_c_func!(CGContextSetInterpolationQuality(_, _)),
+    export_c_func!(CGContextSetBlendMode(_, _)),
+    export_c_func!(CGContextSetAlpha(_, _)),
+    export_c_func!(CGContextGetUserSpaceToDeviceSpaceTransform(_)),
 ];

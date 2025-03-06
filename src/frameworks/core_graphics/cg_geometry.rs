@@ -179,12 +179,42 @@ fn CGRectIntersectsRect(_env: &mut Environment, rect1: CGRect, rect2: CGRect) ->
             <= (rect1.origin.y + rect1.size.height).min(rect2.origin.y + rect2.size.height)
 }
 
+fn CGRectGetMinX(_env: &mut Environment, rect: CGRect) -> CGFloat {
+    rect.origin.x
+}
+
+fn CGRectGetMaxX(_env: &mut Environment, rect: CGRect) -> CGFloat {
+    rect.origin.x + (rect.size.width - 1.0)
+}
+
+fn CGRectGetMinY(_env: &mut Environment, rect: CGRect) -> CGFloat {
+    rect.origin.y
+}
+
+fn CGRectGetMaxY(_env: &mut Environment, rect: CGRect) -> CGFloat {
+    rect.origin.y + (rect.size.height - 1.0)
+}
+
+fn CGRectGetHeight(_env: &mut Environment, rect: CGRect) -> CGFloat {
+    rect.size.height
+}
+
+fn CGRectGetWidth(_env: &mut Environment, rect: CGRect) -> CGFloat {
+    rect.size.width
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGPointEqualToPoint(_, _)),
     export_c_func!(CGSizeEqualToSize(_, _)),
     export_c_func!(CGRectEqualToRect(_, _)),
     export_c_func!(CGRectContainsPoint(_, _)),
     export_c_func!(CGRectIntersectsRect(_, _)),
+    export_c_func!(CGRectGetMinX(_)),
+    export_c_func!(CGRectGetMaxX(_)),
+    export_c_func!(CGRectGetMinY(_)),
+    export_c_func!(CGRectGetMaxY(_)),
+    export_c_func!(CGRectGetHeight(_)),
+    export_c_func!(CGRectGetWidth(_)),
 ];
 
 pub const CONSTANTS: ConstantExports = &[

@@ -12,6 +12,7 @@ pub mod ca_animation;
 pub mod ca_eagl_layer;
 pub mod ca_layer;
 pub mod ca_media_timing_function;
+pub mod ca_transaction;
 
 mod composition;
 pub use composition::recomposite_if_necessary;
@@ -27,11 +28,13 @@ pub const DYLIB: crate::dyld::HostDylib = crate::dyld::HostDylib {
         ca_eagl_layer::CLASSES,
         ca_layer::CLASSES,
         ca_media_timing_function::CLASSES,
+        ca_transaction::CLASSES,
     ],
     constant_exports: &[
         ca_animation::CONSTANTS,
         ca_layer::CONSTANTS,
         ca_media_timing_function::CONSTANTS,
+        ca_transaction::CONSTANTS,
     ],
     function_exports: &[],
 };

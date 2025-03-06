@@ -14,6 +14,7 @@ pub mod ui_segmented_control;
 pub mod ui_slider;
 pub mod ui_switch;
 pub mod ui_text_field;
+pub mod ui_toolbar;
 
 use crate::frameworks::core_graphics::CGPoint;
 use crate::frameworks::foundation::NSUInteger;

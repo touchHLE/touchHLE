@@ -19,6 +19,14 @@ pub const CLASSES: ClassExports = objc_classes! {
     Instant::now().duration_since(env.startup_time).as_secs_f64()
 }
 
++ (())processInfo {
+    return;
+}
+
++ (u64)physicalMemory {
+    return 2147483648; // 2GB to align with src/libc/mach_host.rs
+}
+
 @end
 
 };

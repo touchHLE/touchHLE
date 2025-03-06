@@ -94,6 +94,7 @@ pub const CLASS_LISTS: &[super::ClassExports] = &[
     uikit::ui_view::ui_control::ui_segmented_control::CLASSES,
     uikit::ui_view::ui_control::ui_slider::CLASSES,
     uikit::ui_view::ui_control::ui_text_field::CLASSES,
+    uikit::ui_view::ui_control::ui_toolbar::CLASSES,
     uikit::ui_view::ui_control::ui_switch::CLASSES,
     uikit::ui_view::ui_image_view::CLASSES,
     uikit::ui_view::ui_label::CLASSES,

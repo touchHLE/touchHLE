@@ -955,6 +955,14 @@ pub const CLASSES: ClassExports = objc_classes! {
     autorelease(env, new_string)
 }
 
+- (id)stringByExpandingTildeInPath {
+    let path = to_rust_string(env, this); // TODO: avoid copying
+    assert!(!path.contains('~'));
+    let new_path =  String::from(path);
+    let new_string = from_rust_string(env, new_path);
+    autorelease(env, new_string)
+}
+
 - (id)stringByStandardizingPath {
     let path = to_rust_string(env, this); // TODO: avoid copying
     // TODO: Expanding an initial tilde expression using

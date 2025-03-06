@@ -981,11 +981,37 @@ pub const CLASSES: ClassExports = objc_classes! {
     autorelease(env, new_string)
 }
 
+- (id)stringByExpandingTildeInPath {
+    let path = to_rust_string(env, this);
+
+    let new_path_str = if let Some(new_path) = path.strip_prefix('~') {
+        // ~ and anything up until the first / is stripped
+        // This was confirmed using a test app on iOS
+        // Examples (of what is placed after home directory):
+        //  "~"            -> ""
+        //  "~/"           -> ""
+        //  "~user"        -> ""
+        //  "~/Documents"  -> "/Documents"
+        //  "~foo/bar"     -> "/bar"
+        //  "~~foo/bar"    -> "/bar"
+        let within_home_dir = new_path.splitn(2, '/').nth(1).unwrap_or("");
+        let guest_path = env.fs.home_directory().join(within_home_dir);
+        let resolved = fs::resolve_path(&guest_path, None);
+        format!("/{}", resolved.join("/"))
+    } else {
+        // If called on a path with no leading ~ do nothing
+        path.to_string()
+    };
+
+    log_dbg!("[(NSString *){:?} stringByExpandingTildeInPath] {} -> {}", this, path, new_path_str);
+
+    let new_string = from_rust_string(env, new_path_str);
+    autorelease(env, new_string)
+}
+
 - (id)stringByStandardizingPath {
-    let path = to_rust_string(env, this); // TODO: avoid copying
-    // TODO: Expanding an initial tilde expression using
-    //       stringByExpandingTildeInPath
-    assert!(!path.contains('~'));
+    let expanded: id = msg![env; this stringByExpandingTildeInPath];
+    let path = to_rust_string(env, expanded); // TODO: avoid copying
     // TODO: Removing an initial component of "/private/var/automount",
     //       "/var/automount”, or "/private” from the path
     assert!(!path.starts_with("/private"));

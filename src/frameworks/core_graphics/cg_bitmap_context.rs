@@ -9,7 +9,7 @@ use super::cg_affine_transform::{CGAffineTransform, CGAffineTransformIdentity};
 use super::cg_color_space::{
     kCGColorSpaceGenericGray, kCGColorSpaceGenericRGB, CGColorSpaceHostObject, CGColorSpaceRef,
 };
-use super::cg_context::{CGContextHostObject, CGContextRef, CGContextSubclass};
+use super::cg_context::{CGBlendMode, CGContextHostObject, CGContextRef, CGContextSubclass};
 use super::cg_image::{
     self, kCGBitmapAlphaInfoMask, kCGBitmapByteOrderMask, kCGImageAlphaFirst, kCGImageAlphaLast,
     kCGImageAlphaNone, kCGImageAlphaNoneSkipFirst, kCGImageAlphaNoneSkipLast, kCGImageAlphaOnly,
@@ -84,6 +84,8 @@ pub fn CGBitmapContextCreate(
         rgb_fill_color: (0.0, 0.0, 0.0, 0.0),
         transform: CGAffineTransformIdentity,
         state_stack: Vec::new(),
+        alpha: 1.0,
+        blend_mode: CGBlendMode::Normal,
     };
     let isa = env
         .objc

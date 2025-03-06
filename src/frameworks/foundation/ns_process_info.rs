@@ -19,6 +19,14 @@ pub const CLASSES: ClassExports = objc_classes! {
     Instant::now().duration_since(env.startup_time).as_secs_f64()
 }
 
++ (())processInfo {
+    log!("TODO: [NSProccesInfo processInfo]");
+}
+
++ (u64)physicalMemory {
+    2147483648
+}
+
 @end
 
 };

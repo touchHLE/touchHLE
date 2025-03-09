@@ -15,10 +15,9 @@ use super::ca_layer::CALayerHostObject;
 use crate::frameworks::core_graphics::{
     cg_bitmap_context, cg_color, cg_image, CGFloat, CGPoint, CGRect,
 };
-use crate::gles::gles11_raw as gles11; // constants only
 use crate::gles::gles11_raw::types::*;
 use crate::gles::present::{present_frame, FpsCounter};
-use crate::gles::GLES;
+use crate::gles::{gles11_raw as gles11, GLES}; // constants only
 use crate::image::Image;
 use crate::matrix::Matrix;
 use crate::mem::{Mem, SafeWrite};
@@ -154,8 +153,7 @@ pub fn recomposite_if_necessary(env: &mut Environment, force: bool) -> Option<In
     let opacity = 1.0;
 
     let window = env.window.as_mut().unwrap();
-    window.make_internal_gl_ctx_current();
-    let gles = window.get_internal_gl_ctx();
+    let mut gles = window.make_internal_gl_ctx_current();
 
     // Set up GL objects needed for render-to-texture. We could draw directly
     // to the screen instead, but this way we can reuse the code for scaling and
@@ -244,7 +242,7 @@ pub fn recomposite_if_necessary(env: &mut Environment, force: bool) -> Option<In
                     gles11::GENERATE_MIPMAP,
                     gles11::TRUE as _,
                 );
-                upload_rgba8_pixels(gles, image.pixels(), (dimension as _, dimension as _));
+                upload_rgba8_pixels(gles.as_mut(), image.pixels(), (dimension as _, dimension as _));
                 gles.TexParameteri(
                     gles11::TEXTURE_2D,
                     gles11::TEXTURE_MIN_FILTER,
@@ -269,14 +267,14 @@ pub fn recomposite_if_necessary(env: &mut Environment, force: bool) -> Option<In
             };
             unsafe {
                 gles.BindBuffer(gles11::ARRAY_BUFFER, basic_square_buffer);
-                upload_slice(gles, gles11::ARRAY_BUFFER, &BASIC_SQUARE_POINTS, gles11::STATIC_DRAW);
+                upload_slice(gles.as_mut(), gles11::ARRAY_BUFFER, &BASIC_SQUARE_POINTS, gles11::STATIC_DRAW);
                 gles.BindBuffer(gles11::ARRAY_BUFFER, flipped_square_buffer);
-                upload_slice(gles, gles11::ARRAY_BUFFER, &FLIPPED_SQUARE_POINTS, gles11::STATIC_DRAW);
+                upload_slice(gles.as_mut(), gles11::ARRAY_BUFFER, &FLIPPED_SQUARE_POINTS, gles11::STATIC_DRAW);
                 gles.BindBuffer(gles11::ARRAY_BUFFER, rounded_vertex_buffer);
-                upload_slice(gles, gles11::ARRAY_BUFFER, &[0f32; FLOATS_PER_9PATCH], gles11::DYNAMIC_DRAW);
+                upload_slice(gles.as_mut(), gles11::ARRAY_BUFFER, &[0f32; FLOATS_PER_9PATCH], gles11::DYNAMIC_DRAW);
                 gles.BindBuffer(gles11::ARRAY_BUFFER, rounded_tex_coord_buffer);
                 upload_slice(
-                    gles,
+                    gles.as_mut(),
                     gles11::ARRAY_BUFFER,
                     &make_9patch_coords([0.0, 1.0, 1.0, 0.0], [0.0, 1.0, 1.0, 0.0]),
                     gles11::STATIC_DRAW,
@@ -285,7 +283,7 @@ pub fn recomposite_if_necessary(env: &mut Environment, force: bool) -> Option<In
                 gles.BindBuffer(gles11::ARRAY_BUFFER, 0);
 
                 gles.BindBuffer(gles11::ELEMENT_ARRAY_BUFFER, index_buffer);
-                upload_slice(gles, gles11::ELEMENT_ARRAY_BUFFER, &make_9patch_indices(), gles11::STATIC_DRAW);
+                upload_slice(gles.as_mut(), gles11::ELEMENT_ARRAY_BUFFER, &make_9patch_indices(), gles11::STATIC_DRAW);
                 // Prevent accidental subsequent use.
                 gles.BindBuffer(gles11::ELEMENT_ARRAY_BUFFER, 0);
             }
@@ -314,7 +312,7 @@ pub fn recomposite_if_necessary(env: &mut Environment, force: bool) -> Option<In
         // Using the projection matrix for this is more convenient than adding
         // an extra multiply to composite_layer_recursive.
         load_matrix(
-            gles,
+            gles.as_mut(),
             Matrix::from(&Matrix::scale_2d(
                 2.0 / screen_bounds.size.width,
                 -2.0 / screen_bounds.size.height,
@@ -331,7 +329,7 @@ pub fn recomposite_if_necessary(env: &mut Environment, force: bool) -> Option<In
     // Here's where the actual drawing happens
     unsafe {
         composite_layer_recursive(
-            gles,
+            gles.as_mut(),
             &mut env.objc,
             &env.mem,
             misc_gl_objects,
@@ -361,13 +359,14 @@ pub fn recomposite_if_necessary(env: &mut Environment, force: bool) -> Option<In
         gles.BindTexture(gles11::TEXTURE_2D, texture);
         gles.BindFramebufferOES(gles11::FRAMEBUFFER_OES, 0);
         present_frame(
-            gles,
+            gles.as_mut(),
             present_frame_args.0,
             present_frame_args.1,
             present_frame_args.2,
         );
     }
-    env.window().swap_window();
+    std::mem::drop(gles);
+    window.swap_window();
 
     new_recomposite_next
 }

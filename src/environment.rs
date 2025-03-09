@@ -749,34 +749,35 @@ impl Environment {
             .unwrap();
         let mut host_sem = (*host_sem_rc).borrow_mut();
 
-        host_sem.value -= 1;
-        log_dbg!(
-            "sem_decrement: semaphore {:?} is now {}",
-            sem,
-            host_sem.value
-        );
-
-        if !wait_on_lock {
-            if host_sem.value < 0 {
-                host_sem.value += 1;
-                return false;
-            }
+        if host_sem.value > 0 {
+            log_dbg!(
+                "sem_decrement: semaphore {:?} is now {}",
+                sem,
+                host_sem.value
+            );
+            host_sem.value -= 1;
             return true;
         }
 
-        if host_sem.value < 0 {
-            assert!(matches!(
-                self.threads[self.current_thread].blocked_by,
-                ThreadBlock::NotBlocked
-            ));
+        if !wait_on_lock {
             log_dbg!(
-                "Thread {} is blocking on semaphore {:?}",
-                self.current_thread,
-                sem
+                "sem_decrement: semaphore {:?} attempted decrement without waiting, failed",
+                sem,
             );
-            host_sem.waiting.insert(self.current_thread);
-            self.threads[self.current_thread].blocked_by = ThreadBlock::Semaphore(sem);
+            return false;
         }
+
+        assert!(matches!(
+            self.threads[self.current_thread].blocked_by,
+            ThreadBlock::NotBlocked
+        ));
+        log_dbg!(
+            "Thread {} is blocking on semaphore {:?}",
+            self.current_thread,
+            sem
+        );
+        host_sem.waiting.insert(self.current_thread);
+        self.threads[self.current_thread].blocked_by = ThreadBlock::Semaphore(sem);
 
         true
     }
@@ -1119,15 +1120,17 @@ impl Environment {
                                 .open_semaphores
                                 .get_mut(&sem)
                                 .unwrap();
-                            let host_sem = (*host_sem_rc).borrow();
+                            let mut host_sem = (*host_sem_rc).borrow_mut();
 
-                            if host_sem.value >= 0 {
+                            if host_sem.value > 0 {
                                 log_dbg!(
                                     "Thread {} has awaken on semaphore {:?} with value {}",
                                     i,
                                     sem,
                                     host_sem.value
                                 );
+                                host_sem.value -= 1;
+                                host_sem.waiting.remove(&self.current_thread);
                                 self.threads[i].blocked_by = ThreadBlock::NotBlocked;
                                 suitable_thread = Some(i);
                                 break;

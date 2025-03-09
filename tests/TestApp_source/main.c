@@ -121,6 +121,7 @@ typedef __pthread_condattr_t pthread_condattr_t;
 
 int pthread_create(pthread_t *, const pthread_attr_t *, void *(*)(void *),
                    void *);
+int pthread_join(pthread_t thread, void **value_ptr);
 
 int pthread_cond_init(pthread_cond_t *, const pthread_condattr_t *);
 int pthread_cond_signal(pthread_cond_t *);
@@ -897,17 +898,17 @@ int test_sem() {
     return -1;
   }
 
-  // Sem @ -1
+  // Sem @ 0
   if (sem_trywait(semaphore) == -1) {
     return -1;
   }
 
-  // Sem still @ -1, should not lock
+  // Sem still @ 0, should not lock
   if (sem_trywait(semaphore) == 0) {
     return -1;
   }
 
-  // Sem @ 0, should be able to relock
+  // Sem @ 1, should be able to relock
   sem_post(semaphore);
   if (sem_trywait(semaphore) == -1) {
     return -1;
@@ -915,6 +916,35 @@ int test_sem() {
 
   sem_close(semaphore);
   sem_unlink("sem_test");
+  return 0;
+}
+
+sem_t *mt_semaphore;
+
+void mtsem_thread() {
+  sem_wait(mt_semaphore);
+  sem_post(mt_semaphore);
+}
+
+int test_mtsem() {
+  mt_semaphore = sem_open("mtsem_test", O_CREAT, 0644, 0);
+  if (mt_semaphore == SEM_FAILED) {
+    printf("Error opening semaphore\n");
+    return -1;
+  }
+
+  pthread_t *my_thread = (pthread_t *)malloc(sizeof(pthread_t));
+  pthread_create(my_thread, NULL, (void *)mtsem_thread, NULL);
+
+  pthread_t *my_thread2 = (pthread_t *)malloc(sizeof(pthread_t));
+  pthread_create(my_thread2, NULL, (void *)mtsem_thread, NULL);
+
+  usleep(1);
+  usleep(1);
+
+  sem_post(mt_semaphore);
+  pthread_join(*my_thread, NULL);
+  pthread_join(*my_thread2, NULL);
   return 0;
 }
 
@@ -2296,6 +2326,7 @@ struct {
     FUNC_DEF(test_strtof),
     FUNC_DEF(test_getcwd_chdir),
     FUNC_DEF(test_sem),
+    FUNC_DEF(test_mtsem),
     FUNC_DEF(test_CGAffineTransform),
     FUNC_DEF(test_strncpy),
     FUNC_DEF(test_strncat),

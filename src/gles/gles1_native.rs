@@ -14,15 +14,18 @@
 
 use super::gles11_raw as gles11;
 use super::gles11_raw::types::*;
+use super::gles_generic::GLES;
 use super::util::{try_decode_pvrtc, PalettedTextureFormat};
-use super::GLES;
+use super::GLESContext;
 use crate::window::{GLContext, GLVersion, Window};
 use std::ffi::CStr;
+use std::marker::PhantomData;
 
-pub struct GLES1Native {
+pub struct GLES1NativeContext {
     gl_ctx: GLContext,
+    is_loaded: bool,
 }
-impl GLES for GLES1Native {
+impl GLESContext for GLES1NativeContext {
     fn description() -> &'static str {
         "Native OpenGL ES 1.1"
     }
@@ -30,14 +33,55 @@ impl GLES for GLES1Native {
     fn new(window: &mut Window) -> Result<Self, String> {
         Ok(Self {
             gl_ctx: window.create_gl_context(GLVersion::GLES11)?,
+            is_loaded: false,
         })
     }
 
-    fn make_current(&self, window: &Window) {
-        unsafe { window.make_gl_context_current(&self.gl_ctx) };
-        gles11::load_with(|s| window.gl_get_proc_address(s))
+    fn make_current<'gl_ctx, 'win: 'gl_ctx>(
+        &'gl_ctx mut self,
+        window: &'win mut Window,
+    ) -> Box<dyn GLES + 'gl_ctx> {
+        if self.gl_ctx.is_current() && self.is_loaded {
+            return Box::new(GLES1Native {
+                _gl_lifetime: PhantomData,
+            });
+        }
+
+        unsafe {
+            window.make_gl_context_current(&self.gl_ctx);
+        }
+        gles11::load_with(|s| window.gl_get_proc_address(s));
+        self.is_loaded = true;
+        Box::new(GLES1Native {
+            _gl_lifetime: PhantomData,
+        })
     }
 
+    unsafe fn make_current_unchecked_for_window<'gl_ctx>(
+        &'gl_ctx mut self,
+        make_current_fn: &mut dyn FnMut(&GLContext),
+        loader_fn: &mut dyn FnMut(&'static str) -> *const std::ffi::c_void,
+    ) -> Box<dyn GLES + 'gl_ctx> {
+        if self.gl_ctx.is_current() && self.is_loaded {
+            return Box::new(GLES1Native {
+                _gl_lifetime: PhantomData,
+            });
+        }
+
+        make_current_fn(&self.gl_ctx);
+        gles11::load_with(loader_fn);
+        self.is_loaded = true;
+        Box::new(GLES1Native {
+            _gl_lifetime: PhantomData,
+        })
+    }
+}
+
+pub struct GLES1Native<'gl_ctx> {
+    _gl_lifetime: PhantomData<&'gl_ctx ()>,
+}
+
+impl GLES for GLES1Native<'_> {
     unsafe fn driver_description(&self) -> String {
         let version = CStr::from_ptr(gles11::GetString(gles11::VERSION) as *const _);
         let vendor = CStr::from_ptr(gles11::GetString(gles11::VENDOR) as *const _);

@@ -9,16 +9,16 @@
 //! usage is to import `GLES` and `types` from this module, but get the
 //! constants from [super::gles11_raw].
 
+use crate::window::{GLContext, Window};
+
 use super::gles11_raw::types::*;
 
 /// Trait representing an OpenGL ES implementation and context.
 ///
-/// # Safety
-/// It is the caller's responsibility to make the context active before using
-/// any of the `unsafe` methods of this trait.
+/// The GL context is not necessarily active, so GL functions can't be called
+/// from this trait. It can be made active from [GLESContext::make_current].
 #[allow(clippy::upper_case_acronyms)]
-#[allow(clippy::too_many_arguments)] // not our fault :(
-pub trait GLES {
+pub trait GLESContext {
     /// Get a human-friendly description of this implementation.
     fn description() -> &'static str
     where
@@ -33,12 +33,47 @@ pub trait GLES {
 
     /// Make this context (and any underlying context) the active OpenGL
     /// context.
-    fn make_current(&self, window: &crate::window::Window);
+    ///
+    /// The lifetime ensures safety - the GLES object can't be destroyed while
+    /// the instance is active, so the OpenGL state remains valid, and the
+    /// window reference prevents the thread from yielding while the GLES
+    /// object is being used, and prevents multiple contexts from existing at
+    /// the same time (which can cause a UAF).
+    fn make_current<'gl_ctx, 'win: 'gl_ctx>(
+        &'gl_ctx mut self,
+        window: &'win mut Window,
+    ) -> Box<dyn GLES + 'gl_ctx>;
 
+    /// Make this context (and any underlying context) the active OpenGL
+    /// context, without checking if it is the only context. You shouldn't use
+    /// this outside of [crate::window::Window], as this is function exists to
+    /// work around lifetime splitting issues inside of it.
+    ///
+    /// SAFETY: Callers must ensure that this is the only active context,
+    /// that the GLES instance does not outlive the self or window
+    /// parameter, that make_current_fn makes the passed context current,
+    /// and that loader_fn properly loads the requested function.
+    unsafe fn make_current_unchecked_for_window<'gl_ctx>(
+        &'gl_ctx mut self,
+        make_current_fn: &mut dyn FnMut(&GLContext),
+        loader_fn: &mut dyn FnMut(&'static str) -> *const std::ffi::c_void,
+    ) -> Box<dyn GLES + 'gl_ctx>;
+}
+
+/// An active GLES context that can be used.
+///
+/// These are effectively direct wrappers around the raw OpenGL functions,
+/// but they make sure that the context is active while it is using it.
+/// # Safety
+/// These functions (should) act as documented by the OpenGL ES spec. Callers
+/// should ensure that all uses of raw pointers are verfied to be valid and
+/// of the correct size as documented in the OpenGL ES spec.
+#[allow(clippy::upper_case_acronyms)]
+#[allow(clippy::too_many_arguments)] // not our fault :(
+pub trait GLES {
     /// Get some string describing the underlying driver. For OpenGL this is
     /// `GL_VENDOR`, `GL_RENDERER` and `GL_VERSION`.
     unsafe fn driver_description(&self) -> String;
-
     // Generic state manipulation
     unsafe fn GetError(&mut self) -> GLenum;
     unsafe fn Enable(&mut self, cap: GLenum);

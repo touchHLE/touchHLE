@@ -13,7 +13,7 @@
 //! will be needed for the runtime of the app.
 
 use crate::gles::present::present_frame;
-use crate::gles::{create_gles1_ctx, GLES};
+use crate::gles::{create_gles1_ctx, GLESContext, GLES};
 use crate::image::Image;
 use crate::matrix::Matrix;
 use crate::options::Options;
@@ -132,6 +132,12 @@ pub enum GLVersion {
 
 pub struct GLContext(sdl2::video::GLContext);
 
+impl GLContext {
+    pub fn is_current(&self) -> bool {
+        self.0.is_current()
+    }
+}
+
 fn surface_from_image(image: &Image) -> Surface<'_> {
     let src_pixels = image.pixels();
     let (width, height) = image.dimensions();
@@ -172,10 +178,9 @@ pub struct Window {
     /// [Self::rotatable_fullscreen] returns [true].
     fullscreen: bool,
     scale_hack: NonZeroU32,
-    internal_gl_ctx: Option<Box<dyn GLES>>,
+    internal_gl_ins: Option<Box<dyn GLESContext>>,
     splash_image: Option<Image>,
     device_orientation: DeviceOrientation,
-    app_gl_ctx_no_longer_current: bool,
     controller_ctx: sdl2::GameControllerSubsystem,
     controllers: Vec<sdl2::controller::GameController>,
     dpad_state: DpadState,
@@ -313,10 +318,9 @@ impl Window {
             viewport_y_offset: 0,
             fullscreen,
             scale_hack,
-            internal_gl_ctx: None,
+            internal_gl_ins: None,
             splash_image: launch_image,
             device_orientation,
-            app_gl_ctx_no_longer_current: false,
             controller_ctx,
             controllers: Vec::new(),
             dpad_state: DpadState {
@@ -338,10 +342,12 @@ impl Window {
         // (see src/frameworks/core_animation/composition.rs). OpenGL ES is used
         // because SDL2 won't let us use more than one graphics API in the same
         // window, and we also need OpenGL ES for the app's own rendering.
-        let gl_ctx = create_gles1_ctx(&mut window, options);
-        gl_ctx.make_current(&window);
-        log!("Driver info: {}", unsafe { gl_ctx.driver_description() });
-        window.internal_gl_ctx = Some(gl_ctx);
+        let mut gl_ins = create_gles1_ctx(&mut window, options);
+        {
+            let gl_ctx = gl_ins.make_current(&mut window);
+            log!("Driver info: {}", unsafe { gl_ctx.driver_description() });
+        }
+        window.internal_gl_ins = Some(gl_ins);
 
         if window.splash_image.is_some() {
             window.display_splash();
@@ -1108,28 +1114,23 @@ impl Window {
         self.window.gl_make_current(&gl_ctx.0).unwrap();
     }
 
-    /// Retrieve and reset the flag that indicates if the current OpenGL context
-    /// was changed to one outside of the control of the guest app.
-    ///
-    /// This should be checked before making OpenGL calls on behalf of the guest
-    /// app, so its context can be restored.
-    pub fn is_app_gl_ctx_no_longer_current(&mut self) -> bool {
-        let value = self.app_gl_ctx_no_longer_current;
-        self.app_gl_ctx_no_longer_current = false;
-        value
-    }
-
     /// Make the internal OpenGL ES context (for splash screen and UI rendering)
     /// current.
-    pub fn make_internal_gl_ctx_current(&mut self) {
-        self.app_gl_ctx_no_longer_current = true;
-        self.internal_gl_ctx.as_ref().unwrap().make_current(self);
-    }
-
-    /// Get the internal OpenGL ES context (for splash screen and UI rendering).
-    /// This does not ensure the context is current.
-    pub fn get_internal_gl_ctx(&mut self) -> &mut dyn GLES {
-        self.internal_gl_ctx.as_deref_mut().unwrap()
+    #[must_use]
+    pub fn make_internal_gl_ctx_current<'win>(&'win mut self) -> Box<dyn GLES + 'win> {
+        // The invariant is held up here - since the instance we return is
+        // bound to the lifetime of window, it can't outlive the internal GL
+        // context and can't outlive the window.
+        let gl_ins = unsafe {
+            self.internal_gl_ins
+                .as_mut()
+                .unwrap()
+                .make_current_unchecked_for_window(
+                    &mut |gl_ctx| self.window.gl_make_current(&gl_ctx.0).unwrap(),
+                    &mut |s| self.video_ctx.gl_get_proc_address(s) as *const _,
+                )
+        };
+        gl_ins
     }
 
     fn display_splash(&mut self) {
@@ -1141,14 +1142,20 @@ impl Window {
         let (vx, vy, vw, vh) = self.viewport();
         let viewport = (vx, vy + self.viewport_y_offset(), vw, vh);
 
-        self.make_internal_gl_ctx_current();
-
         let image = self.splash_image.as_ref().unwrap();
-        let gl_ctx = self.internal_gl_ctx.as_deref_mut().unwrap();
-
-        use crate::gles::gles11_raw as gles11; // constants only
 
         unsafe {
+            let mut gl_ctx = self
+                .internal_gl_ins
+                .as_mut()
+                .unwrap()
+                .make_current_unchecked_for_window(
+                    &mut |gl_ctx| self.window.gl_make_current(&gl_ctx.0).unwrap(),
+                    &mut |s| self.video_ctx.gl_get_proc_address(s) as *const _,
+                );
+
+            use crate::gles::gles11_raw as gles11; // constants only
+
             let mut texture = 0;
             gl_ctx.GenTextures(1, &mut texture);
             gl_ctx.BindTexture(gles11::TEXTURE_2D, texture);
@@ -1176,7 +1183,10 @@ impl Window {
             );
 
             present_frame(
-                gl_ctx, viewport, matrix, /* virtual_cursor_visible_at: */ None,
+                gl_ctx.as_mut(),
+                viewport,
+                matrix,
+                /* virtual_cursor_visible_at: */ None,
             );
 
             gl_ctx.DeleteTextures(1, &texture);

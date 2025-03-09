@@ -21,11 +21,12 @@
 use super::gl21compat_raw as gl21;
 use super::gl21compat_raw::types::*;
 use super::gles11_raw as gles11; // constants only
+use super::gles_generic::GLES;
 use super::util::{
     fixed_to_float, matrix_fixed_to_float, try_decode_pvrtc, PalettedTextureFormat, ParamTable,
     ParamType,
 };
-use super::GLES;
+use super::GLESContext;
 use crate::window::{GLContext, GLVersion, Window};
 use std::collections::HashSet;
 use std::ffi::CStr;
@@ -383,13 +384,81 @@ const TEX_PARAMS: ParamTable = ParamTable(&[
     (gl21::MAX_TEXTURE_MAX_ANISOTROPY_EXT, ParamType::Float, 1),
 ]);
 
-pub struct GLES1OnGL2 {
-    gl_ctx: GLContext,
+pub struct GLES1OnGL2State {
     pointer_is_fixed_point: [bool; ARRAYS.len()],
     fixed_point_texture_units: HashSet<GLenum>,
     fixed_point_translation_buffers: [Vec<GLfloat>; ARRAYS.len()],
 }
-impl GLES1OnGL2 {
+
+pub struct GLES1OnGL2Context {
+    gl_ctx: GLContext,
+    state: GLES1OnGL2State,
+    is_loaded: bool,
+}
+impl GLESContext for GLES1OnGL2Context {
+    fn description() -> &'static str {
+        "OpenGL ES 1.1 via touchHLE GLES1-on-GL2 layer"
+    }
+
+    fn new(window: &mut Window) -> Result<Self, String> {
+        Ok(Self {
+            gl_ctx: window.create_gl_context(GLVersion::GL21Compat)?,
+            state: GLES1OnGL2State {
+                pointer_is_fixed_point: [false; ARRAYS.len()],
+                fixed_point_texture_units: HashSet::new(),
+                fixed_point_translation_buffers: [Vec::new(), Vec::new(), Vec::new(), Vec::new()],
+            },
+            is_loaded: false,
+        })
+    }
+
+    fn make_current<'gl_ctx, 'win: 'gl_ctx>(
+        &'gl_ctx mut self,
+        window: &'win mut Window,
+    ) -> Box<dyn GLES + 'gl_ctx> {
+        if self.gl_ctx.is_current() && self.is_loaded {
+            return Box::new(GLES1OnGL2 {
+                state: &mut self.state,
+            });
+        }
+
+        unsafe {
+            window.make_gl_context_current(&self.gl_ctx);
+        }
+        gl21::load_with(|s| window.gl_get_proc_address(s));
+        self.is_loaded = true;
+
+        Box::new(GLES1OnGL2 {
+            state: &mut self.state,
+        })
+    }
+
+    unsafe fn make_current_unchecked_for_window<'gl_ctx>(
+        &'gl_ctx mut self,
+        make_current_fn: &mut dyn FnMut(&GLContext),
+        loader_fn: &mut dyn FnMut(&'static str) -> *const std::ffi::c_void,
+    ) -> Box<dyn GLES + 'gl_ctx> {
+        if self.gl_ctx.is_current() && self.is_loaded {
+            return Box::new(GLES1OnGL2 {
+                state: &mut self.state,
+            });
+        }
+
+        make_current_fn(&self.gl_ctx);
+        gl21::load_with(loader_fn);
+        self.is_loaded = true;
+
+        Box::new(GLES1OnGL2 {
+            state: &mut self.state,
+        })
+    }
+}
+
+pub struct GLES1OnGL2<'a> {
+    state: &'a mut GLES1OnGL2State,
+}
+
+impl GLES1OnGL2<'_> {
     /// If any arrays with fixed-point data are in use at the time of a draw
     /// call, this function will convert the data to floating-point and
     /// replace the pointers. [Self::restore_fixed_point_arrays] can be called
@@ -403,7 +472,7 @@ impl GLES1OnGL2 {
         for (i, array_info) in ARRAYS.iter().enumerate() {
             // Decide whether we need to do anything for this array
 
-            if !self.pointer_is_fixed_point[i] {
+            if !self.state.pointer_is_fixed_point[i] {
                 continue;
             }
 
@@ -416,7 +485,11 @@ impl GLES1OnGL2 {
                     gl21::ACTIVE_TEXTURE,
                     &mut active_texture as *mut _ as *mut _,
                 );
-                if !self.fixed_point_texture_units.contains(&active_texture) {
+                if !self
+                    .state
+                    .fixed_point_texture_units
+                    .contains(&active_texture)
+                {
                     continue;
                 }
 
@@ -489,7 +562,7 @@ impl GLES1OnGL2 {
                 stride
             };
 
-            let buffer = &mut self.fixed_point_translation_buffers[i];
+            let buffer = &mut self.state.fixed_point_translation_buffers[i];
             buffer.clear();
             buffer.resize(((first + count) * size).try_into().unwrap(), 0.0);
 
@@ -568,7 +641,10 @@ impl GLES1OnGL2 {
                         gl21::ACTIVE_TEXTURE,
                         &mut active_texture as *mut _ as *mut _,
                     );
-                    assert!(self.fixed_point_texture_units.contains(&active_texture));
+                    assert!(self
+                        .state
+                        .fixed_point_texture_units
+                        .contains(&active_texture));
                     let mut old_client_active_texture: GLenum = 0;
                     gl21::GetIntegerv(
                         gl21::CLIENT_ACTIVE_TEXTURE,
@@ -586,25 +662,8 @@ impl GLES1OnGL2 {
         }
     }
 }
-impl GLES for GLES1OnGL2 {
-    fn description() -> &'static str {
-        "OpenGL ES 1.1 via touchHLE GLES1-on-GL2 layer"
-    }
 
-    fn new(window: &mut Window) -> Result<Self, String> {
-        Ok(Self {
-            gl_ctx: window.create_gl_context(GLVersion::GL21Compat)?,
-            pointer_is_fixed_point: [false; ARRAYS.len()],
-            fixed_point_texture_units: HashSet::new(),
-            fixed_point_translation_buffers: [Vec::new(), Vec::new(), Vec::new(), Vec::new()],
-        })
-    }
-
-    fn make_current(&self, window: &Window) {
-        unsafe { window.make_gl_context_current(&self.gl_ctx) };
-        gl21::load_with(|s| window.gl_get_proc_address(s))
-    }
-
+impl GLES for GLES1OnGL2<'_> {
     unsafe fn driver_description(&self) -> String {
         let version = CStr::from_ptr(gl21::GetString(gl21::VERSION) as *const _);
         let vendor = CStr::from_ptr(gl21::GetString(gl21::VENDOR) as *const _);
@@ -617,7 +676,6 @@ impl GLES for GLES1OnGL2 {
             renderer.to_string_lossy()
         )
     }
-
     // Generic state manipulation
     unsafe fn GetError(&mut self) -> GLenum {
         gl21::GetError()
@@ -1155,22 +1213,22 @@ impl GLES for GLES1OnGL2 {
         assert!(size == 4);
         if type_ == gles11::FIXED {
             // Translation deferred until draw call
-            self.pointer_is_fixed_point[0] = true;
+            self.state.pointer_is_fixed_point[0] = true;
             gl21::ColorPointer(size, gl21::FLOAT, stride, pointer)
         } else {
             assert!(type_ == gl21::UNSIGNED_BYTE || type_ == gl21::FLOAT);
-            self.pointer_is_fixed_point[0] = false;
+            self.state.pointer_is_fixed_point[0] = false;
             gl21::ColorPointer(size, type_, stride, pointer)
         }
     }
     unsafe fn NormalPointer(&mut self, type_: GLenum, stride: GLsizei, pointer: *const GLvoid) {
         if type_ == gles11::FIXED {
             // Translation deferred until draw call
-            self.pointer_is_fixed_point[1] = true;
+            self.state.pointer_is_fixed_point[1] = true;
             gl21::NormalPointer(gl21::FLOAT, stride, pointer)
         } else {
             assert!(type_ == gl21::BYTE || type_ == gl21::SHORT || type_ == gl21::FLOAT);
-            self.pointer_is_fixed_point[1] = false;
+            self.state.pointer_is_fixed_point[1] = false;
             gl21::NormalPointer(type_, stride, pointer)
         }
     }
@@ -1190,15 +1248,15 @@ impl GLES for GLES1OnGL2 {
         if type_ == gles11::FIXED {
             // Translation deferred until draw call.
             // There is one texture co-ordinates pointer per texture unit.
-            self.fixed_point_texture_units.insert(active_texture);
-            self.pointer_is_fixed_point[2] = true;
+            self.state.fixed_point_texture_units.insert(active_texture);
+            self.state.pointer_is_fixed_point[2] = true;
             gl21::TexCoordPointer(size, gl21::FLOAT, stride, pointer)
         } else {
             // TODO: byte
             assert!(type_ == gl21::SHORT || type_ == gl21::FLOAT);
-            self.fixed_point_texture_units.remove(&active_texture);
-            if self.fixed_point_texture_units.is_empty() {
-                self.pointer_is_fixed_point[2] = false;
+            self.state.fixed_point_texture_units.remove(&active_texture);
+            if self.state.fixed_point_texture_units.is_empty() {
+                self.state.pointer_is_fixed_point[2] = false;
             }
             gl21::TexCoordPointer(size, type_, stride, pointer)
         }
@@ -1213,12 +1271,12 @@ impl GLES for GLES1OnGL2 {
         assert!(size == 2 || size == 3 || size == 4);
         if type_ == gles11::FIXED {
             // Translation deferred until draw call
-            self.pointer_is_fixed_point[3] = true;
+            self.state.pointer_is_fixed_point[3] = true;
             gl21::VertexPointer(size, gl21::FLOAT, stride, pointer)
         } else {
             // TODO: byte
             assert!(type_ == gl21::SHORT || type_ == gl21::FLOAT);
-            self.pointer_is_fixed_point[3] = false;
+            self.state.pointer_is_fixed_point[3] = false;
             gl21::VertexPointer(size, type_, stride, pointer)
         }
     }
@@ -1261,69 +1319,72 @@ impl GLES for GLES1OnGL2 {
         .contains(&mode));
         assert!(type_ == gl21::UNSIGNED_BYTE || type_ == gl21::UNSIGNED_SHORT);
 
-        let fixed_point_arrays_state_backup =
-            if self.pointer_is_fixed_point.iter().any(|&is_fixed| is_fixed) {
-                // Scan the index buffer to find the range of data that may need
-                // fixed-point translation.
-                // TODO: Would it be more efficient to turn this into a
-                // non-indexed draw-call instead?
+        let fixed_point_arrays_state_backup = if self
+            .state
+            .pointer_is_fixed_point
+            .iter()
+            .any(|&is_fixed| is_fixed)
+        {
+            // Scan the index buffer to find the range of data that may need
+            // fixed-point translation.
+            // TODO: Would it be more efficient to turn this into a
+            // non-indexed draw-call instead?
 
-                let mut index_buffer_binding = 0;
-                gl21::GetIntegerv(
-                    gl21::ELEMENT_ARRAY_BUFFER_BINDING,
-                    &mut index_buffer_binding,
-                );
-                let indices = if index_buffer_binding != 0 {
-                    let mapped_buffer =
-                        gl21::MapBuffer(gl21::ELEMENT_ARRAY_BUFFER, gl21::READ_ONLY);
-                    assert!(!mapped_buffer.is_null());
-                    // in this case the indices is actually an offest!
-                    mapped_buffer.add(indices as usize)
-                } else {
-                    indices
-                };
-
-                let mut first = usize::MAX;
-                let mut last = usize::MIN;
-                assert!(count >= 0);
-                match type_ {
-                    gl21::UNSIGNED_BYTE => {
-                        let indices_ptr: *const GLubyte = indices.cast();
-                        for i in 0..(count as usize) {
-                            let index = indices_ptr.add(i).read_unaligned();
-                            first = first.min(index as usize);
-                            last = last.max(index as usize);
-                        }
-                    }
-                    gl21::UNSIGNED_SHORT => {
-                        let indices_ptr: *const GLushort = indices.cast();
-                        for i in 0..(count as usize) {
-                            let index = indices_ptr.add(i).read_unaligned();
-                            first = first.min(index as usize);
-                            last = last.max(index as usize);
-                        }
-                    }
-                    _ => unreachable!(),
-                }
-
-                let (first, count) = if first == usize::MAX && last == usize::MIN {
-                    assert!(count == 0);
-                    (0, 0)
-                } else {
-                    (
-                        first.try_into().unwrap(),
-                        (last + 1 - first).try_into().unwrap(),
-                    )
-                };
-
-                if index_buffer_binding != 0 {
-                    gl21::UnmapBuffer(gl21::ELEMENT_ARRAY_BUFFER);
-                }
-
-                Some(self.translate_fixed_point_arrays(first, count))
+            let mut index_buffer_binding = 0;
+            gl21::GetIntegerv(
+                gl21::ELEMENT_ARRAY_BUFFER_BINDING,
+                &mut index_buffer_binding,
+            );
+            let indices = if index_buffer_binding != 0 {
+                let mapped_buffer = gl21::MapBuffer(gl21::ELEMENT_ARRAY_BUFFER, gl21::READ_ONLY);
+                assert!(!mapped_buffer.is_null());
+                // in this case the indices is actually an offest!
+                mapped_buffer.add(indices as usize)
             } else {
-                None
+                indices
             };
+
+            let mut first = usize::MAX;
+            let mut last = usize::MIN;
+            assert!(count >= 0);
+            match type_ {
+                gl21::UNSIGNED_BYTE => {
+                    let indices_ptr: *const GLubyte = indices.cast();
+                    for i in 0..(count as usize) {
+                        let index = indices_ptr.add(i).read_unaligned();
+                        first = first.min(index as usize);
+                        last = last.max(index as usize);
+                    }
+                }
+                gl21::UNSIGNED_SHORT => {
+                    let indices_ptr: *const GLushort = indices.cast();
+                    for i in 0..(count as usize) {
+                        let index = indices_ptr.add(i).read_unaligned();
+                        first = first.min(index as usize);
+                        last = last.max(index as usize);
+                    }
+                }
+                _ => unreachable!(),
+            }
+
+            let (first, count) = if first == usize::MAX && last == usize::MIN {
+                assert!(count == 0);
+                (0, 0)
+            } else {
+                (
+                    first.try_into().unwrap(),
+                    (last + 1 - first).try_into().unwrap(),
+                )
+            };
+
+            if index_buffer_binding != 0 {
+                gl21::UnmapBuffer(gl21::ELEMENT_ARRAY_BUFFER);
+            }
+
+            Some(self.translate_fixed_point_arrays(first, count))
+        } else {
+            None
+        };
 
         gl21::DrawElements(mode, count, type_, indices);
 

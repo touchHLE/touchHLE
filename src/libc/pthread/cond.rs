@@ -73,10 +73,6 @@ pub fn pthread_cond_wait(
 ) -> i32 {
     let res = pthread_mutex_unlock(env, mutex);
     assert_eq!(res, 0);
-    assert!(matches!(
-        env.threads[env.current_thread].blocked_by,
-        ThreadBlock::NotBlocked
-    ));
     log_dbg!(
         "Thread {} is blocking on condition variable {:?}",
         env.current_thread,
@@ -97,7 +93,7 @@ pub fn pthread_cond_wait(
     );
     host_object.curr_mutex = Some(mutex);
     host_object.waiting.push_back(current_thread);
-    env.threads[env.current_thread].blocked_by = ThreadBlock::Condition(cond_var);
+    env.yield_thread(ThreadBlock::Condition(cond_var));
     0 // success
 }
 

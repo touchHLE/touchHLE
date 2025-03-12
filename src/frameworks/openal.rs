@@ -203,7 +203,7 @@ fn alcCreateContext(
 
     let res = unsafe {
         OpenALContext::new_with_device_and_attrlist(
-            &mut env.openal_manager,
+            env.openal_manager.as_mut(),
             host_device,
             attr_list_ptr,
         )

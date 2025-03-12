@@ -275,6 +275,10 @@ pub(super) fn UIApplicationMain(
         // We can't hang on to the delegate, the guest app may change it at any
         // time.
 
+        if env.bundle.status_bar_hidden() {
+            let _: () = msg![env; ui_application setStatusBarHidden:true];
+        }
+
         let _: () = msg![env; pool drain];
 
         ui_application

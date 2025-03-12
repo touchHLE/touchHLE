@@ -3,6 +3,7 @@
 /touchHLE_sandbox
 /touchHLE_apps/*.ipa
 /touchHLE_apps/*.app
+touchHLE_wallpaper.*
 
 # Xcode (integration testing app)
 

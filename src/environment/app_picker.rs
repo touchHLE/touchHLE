@@ -49,7 +49,7 @@ struct AppInfo {
     icon_ui_image: Option<id>,
 }
 
-pub fn app_picker(options: Options, option_args: &mut Vec<String>) -> Result<PathBuf, String> {
+pub fn app_picker(options: Options) -> Result<(PathBuf, Vec<String>), String> {
     let apps_dir = paths::user_data_base_path().join(paths::APPS_DIR);
 
     let apps: Result<Vec<AppInfo>, String> = if !apps_dir.is_dir() {
@@ -75,7 +75,7 @@ pub fn app_picker(options: Options, option_args: &mut Vec<String>) -> Result<Pat
             })
     };
 
-    show_app_picker_gui(options, option_args, apps)
+    show_app_picker_gui(options, apps)
 }
 
 fn enumerate_apps(apps_dir: &Path) -> Result<Vec<AppInfo>, std::io::Error> {
@@ -242,7 +242,8 @@ const CLASSES: ClassExports = objc_classes! {
         Ok(url) => {
             // Our `openURL:` implementation is bypassed because it doesn't
             // allow non-web URLs.
-            if let Err(e) = crate::window::open_url(&url) {
+            let url_res = crate::window::open_url(env, &url);
+            if let Err(e) = url_res {
                 echo!("Couldn't open file manager at {:?}: {}", url, e);
             } else {
                 echo!("Opened file manager at {:?}, exiting.", url);
@@ -269,11 +270,10 @@ const CLASSES: ClassExports = objc_classes! {
 
 fn show_app_picker_gui(
     options: Options,
-    option_args: &mut Vec<String>,
-    mut apps: Result<Vec<AppInfo>, String>,
-) -> Result<PathBuf, String> {
+    apps: Result<Vec<AppInfo>, String>,
+) -> Result<(PathBuf, Vec<String>), String> {
     let icon = {
-        let bytes: &[u8] = match super::branding() {
+        let bytes: &[u8] = match crate::branding() {
             "" => include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/res/icon.png")),
             "UNOFFICIAL" => include_bytes!(concat!(
                 env!("CARGO_MANIFEST_DIR"),
@@ -293,10 +293,15 @@ fn show_app_picker_gui(
         );
         image
     };
+    let environment = Environment::new_without_app(options, icon)?;
+    Ok(environment.run_app_picker(|env| app_picker_inner(env, apps)))
+}
 
-    let mut environment = Environment::new_without_app(options, icon)?;
-    let env = &mut environment;
-
+fn app_picker_inner(
+    env: &mut Environment,
+    mut apps: Result<Vec<AppInfo>, String>,
+) -> (PathBuf, Vec<String>) {
+    let mut option_args = Vec::new();
     // Note that objects are generally not released in this code, because they
     // don't need to be: the entire Environment is thrown away at the end.
 
@@ -392,8 +397,8 @@ fn show_app_picker_gui(
             env,
             format!(
                 "touchHLE {}{}{}",
-                super::branding(),
-                if super::branding().is_empty() {
+                crate::branding(),
+                if crate::branding().is_empty() {
                     ""
                 } else {
                     " "
@@ -417,7 +422,7 @@ fn show_app_picker_gui(
         () = msg![env; main_view addSubview:label];
     }
 
-    let brand_color: id = if super::branding() == "UNOFFICIAL" {
+    let brand_color: id = if crate::branding() == "UNOFFICIAL" {
         msg_class![env; UIColor redColor]
     } else {
         msg_class![env; UIColor grayColor]
@@ -436,7 +441,7 @@ fn show_app_picker_gui(
         };
         let label: id = msg_class![env; UILabel alloc];
         let label: id = msg![env; label initWithFrame:label_frame];
-        let text = ns_string::from_rust_string(env, super::branding().to_owned());
+        let text = ns_string::from_rust_string(env, crate::branding().to_owned());
         () = msg![env; label setText:text];
         () = msg![env; label setTextAlignment:(if i % 2 == 0 { UITextAlignmentLeft } else { UITextAlignmentRight })];
         let font_size: CGFloat = 48.0;
@@ -729,7 +734,8 @@ fn show_app_picker_gui(
         option_args.push("--allow-network-access".to_string());
     }
 
-    Ok(app_path)
+    // Return the environment so some parts of it can be salvaged.
+    (app_path, option_args)
 }
 
 const ICON_SIZE: CGSize = CGSize {

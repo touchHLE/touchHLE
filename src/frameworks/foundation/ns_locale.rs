@@ -9,9 +9,7 @@ use super::{ns_array, ns_string};
 use crate::dyld::{ConstantExports, HostConstant};
 use crate::frameworks::core_foundation::cf_locale::kCFLocaleCountryCode;
 use crate::objc::{id, nil, objc_classes, release, retain, ClassExports, HostObject, NSZonePtr};
-use crate::options::Options;
 use crate::Environment;
-use std::ffi::CStr;
 
 const NSLocaleCountryCode: &str = "NSLocaleCountryCode";
 
@@ -34,37 +32,19 @@ impl State {
 
 /// Use `msg_class![env; NSLocale preferredLanguages]` rather than calling this
 /// directly, because it may be slow and there is no caching.
-fn get_preferred_languages(options: &Options) -> Vec<String> {
+fn get_preferred_languages(env: &mut Environment) -> Vec<String> {
+    let options = env.options.as_ref();
     if let Some(ref preferred_languages) = options.preferred_languages {
         log!("The app requested your preferred languages. {:?} will reported based on your --preferred-languages= option.", preferred_languages);
         return preferred_languages.clone();
     }
 
-    // Unfortunately Rust-SDL2 doesn't provide a wrapper for this yet.
-    let languages = unsafe {
-        let mut languages = Vec::new();
-        let locales_raw = sdl2_sys::SDL_GetPreferredLocales();
-        if !locales_raw.is_null() {
-            for i in 0.. {
-                let sdl2_sys::SDL_Locale { language, country } = locales_raw.offset(i).read();
-                if language.is_null() && country.is_null() {
-                    // Terminator
-                    break;
-                }
+    let mut languages = Vec::new();
+    let mut locale_iter = env.on_parent_stack_in_coroutine(|window, _| window.locales_iterator());
 
-                // The country code is ignored because many iPhone OS games
-                // (e.g. Super Monkey Ball and Wolfenstein RPG) don't seem to be
-                // able to handle it and fall back to English, so providing it
-                // does more harm than good. It's also often unhelpful anyway:
-                // on macOS, the country code seems to just be the system
-                // region, rather than reflecting a preference for
-                // e.g. US vs UK English.
-                languages.push(CStr::from_ptr(language).to_str().unwrap().to_string());
-            }
-            sdl2_sys::SDL_free(locales_raw.cast());
-        }
-        languages
-    };
+    while let Some(locale) = locale_iter.next() {
+        languages.push(locale.language.to_str().unwrap().to_string());
+    }
 
     if languages.is_empty() {
         let lang = "en".to_string();
@@ -76,28 +56,17 @@ fn get_preferred_languages(options: &Options) -> Vec<String> {
     }
 }
 
-fn get_preferred_countries() -> Vec<String> {
+fn get_preferred_countries(env: &mut Environment) -> Vec<String> {
     // Unfortunately Rust-SDL2 doesn't provide a wrapper for this yet.
-    let countries = unsafe {
-        let mut countries = Vec::new();
-        let locales_raw = sdl2_sys::SDL_GetPreferredLocales();
-        if !locales_raw.is_null() {
-            for i in 0.. {
-                let sdl2_sys::SDL_Locale { language, country } = locales_raw.offset(i).read();
-                if language.is_null() && country.is_null() {
-                    // Terminator
-                    break;
-                }
+    let mut countries = Vec::new();
 
-                // country can be NULL
-                if !country.is_null() {
-                    countries.push(CStr::from_ptr(country).to_str().unwrap().to_string());
-                }
-            }
-            sdl2_sys::SDL_free(locales_raw.cast());
+    let mut locale_iter = env.on_parent_stack_in_coroutine(|window, _| window.locales_iterator());
+
+    while let Some(locale) = locale_iter.next() {
+        if let Some(country) = locale.country {
+            countries.push(country.to_str().unwrap().to_string());
         }
-        countries
-    };
+    }
 
     if countries.is_empty() {
         let country = "US".to_string();
@@ -139,7 +108,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     if let Some(existing) = State::get(env).preferred_languages {
         existing
     } else {
-        let langs = get_preferred_languages(&env.options);
+        let langs = get_preferred_languages(env);
         let lang_ns_strings = langs.into_iter().map(|lang| ns_string::from_rust_string(env, lang)).collect();
         let new = ns_array::from_vec(env, lang_ns_strings);
         State::get(env).preferred_languages = Some(new);
@@ -151,9 +120,9 @@ pub const CLASSES: ClassExports = objc_classes! {
     if let Some(locale) = State::get(env).current_locale {
         locale
     } else {
-        let countries = get_preferred_countries();
+        let countries = get_preferred_countries(env);
         let country_code = ns_string::from_rust_string(env, countries[0].clone());
-        let languages = get_preferred_languages(&env.options);
+        let languages = get_preferred_languages(env);
         let language_code = ns_string::from_rust_string(env, languages[0].clone());
         let host_object = NSLocaleHostObject {
             country_code,

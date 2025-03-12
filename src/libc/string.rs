@@ -111,7 +111,8 @@ fn memset_pattern_inner(
         target += pattern_len;
     }
     for i in 0..(len % pattern_len) {
-        env.mem.write(target, env.mem.read(pattern.cast() + i));
+        let value = env.mem.read(pattern.cast() + i);
+        env.mem.write(target, value);
         target += 1;
     }
 }

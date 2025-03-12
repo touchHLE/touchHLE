@@ -201,7 +201,7 @@ fn AudioOutputUnitStart(env: &mut Environment, ci: AudioUnit) -> OSStatus {
     let context = env
         .framework_state
         .audio_toolbox
-        .make_al_context_current(&mut env.openal_manager);
+        .make_al_context_current(env.openal_manager.as_mut());
 
     let mut source: ALuint = 0;
     unsafe {
@@ -228,7 +228,7 @@ fn AudioOutputUnitStop(env: &mut Environment, ci: AudioUnit) -> OSStatus {
     let at_state = &mut env.framework_state.audio_toolbox;
     let context = at_state
         .al_context
-        .make_al_context_current(&mut env.openal_manager);
+        .make_al_context_current(env.openal_manager.as_mut());
 
     let audio_components_state = &mut at_state.audio_components;
 
@@ -264,7 +264,7 @@ pub fn render_audio_unit(env: &mut Environment, audio_unit: AudioUnit) {
     let at_state = &mut env.framework_state.audio_toolbox;
     let context = at_state
         .al_context
-        .make_al_context_current(&mut env.openal_manager);
+        .make_al_context_current(env.openal_manager.as_mut());
 
     let audio_session::State {
         current_hardware_sample_rate,
@@ -413,7 +413,7 @@ pub fn render_audio_unit(env: &mut Environment, audio_unit: AudioUnit) {
     let at_state = &mut env.framework_state.audio_toolbox;
     let context = at_state
         .al_context
-        .make_al_context_current(&mut env.openal_manager);
+        .make_al_context_current(env.openal_manager.as_mut());
 
     let (al_format, _sample_rate, processed_data) =
         decode_buffer(&env.mem, &stream_format, buffer1Data.cast(), buffer_size);

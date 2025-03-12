@@ -122,12 +122,12 @@ pub const CLASSES: ClassExports = objc_classes! {
     }
 }
 - (())setStatusBarOrientation:(UIInterfaceOrientation)orientation {
-    env.window_mut().rotate_device(match orientation {
+    env.on_parent_stack_in_coroutine(|window, _| {window.rotate_device(match orientation {
         UIDeviceOrientationPortrait => DeviceOrientation::Portrait,
         UIDeviceOrientationLandscapeLeft => DeviceOrientation::LandscapeLeft,
         UIDeviceOrientationLandscapeRight => DeviceOrientation::LandscapeRight,
         _ => unimplemented!("Orientation {} not handled yet", orientation),
-    });
+    })});
 }
 - (())setStatusBarOrientation:(UIInterfaceOrientation)orientation
                      animated:(bool)_animated {
@@ -139,13 +139,13 @@ pub const CLASSES: ClassExports = objc_classes! {
     !env.window().is_screen_saver_enabled()
 }
 - (())setIdleTimerDisabled:(bool)disabled {
-    env.window_mut().set_screen_saver_enabled(!disabled);
+    env.on_parent_stack_in_coroutine(|window, _| window.set_screen_saver_enabled(!disabled))
 }
 
 - (bool)openURL:(id)url { // NSURL
     let ns_string = msg![env; url absoluteString];
     let url_string = ns_string::to_rust_string(env, ns_string);
-    if let Err(e) = crate::window::open_url(&url_string) {
+    if let Err(e) = crate::window::open_url(env, &url_string) {
         echo!("App opened URL {:?} unsuccessfully ({}), exiting.", url_string, e);
     } else {
         echo!("App opened URL {:?}, exiting.", url_string);
@@ -394,7 +394,7 @@ pub(super) fn exit(env: &mut Environment) {
 
         // Skip NSUserDefaults code while in the app picker, otherwise we get
         // a strange error when existing touchHLE due to the fake bundle.
-        if !env.is_fake {
+        if !env.is_app_picker {
             // Apple's docs (used to) vaguely mention that `synchronize` is
             // invoked on periodic intervals.
             // Second best - and implemented here - is to save before app exits.

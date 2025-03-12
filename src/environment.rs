@@ -8,26 +8,35 @@
 //! Unlike its siblings, this module should be considered private and only used
 //! via the re-exports one level up.
 
+pub mod app_picker;
 mod mutex;
+mod nullable_box;
 
-use crate::abi::{CallFromHost, GuestFunction, GuestRet};
+use crate::abi::{CallFromHost, GuestFunction};
 use crate::audio::openal::OpenALManager;
+use crate::cpu::Cpu;
 use crate::libc::semaphore::sem_t;
 use crate::mem::{GuestUSize, MutPtr, MutVoidPtr};
 use crate::{
     abi, bundle, cpu, dyld, frameworks, fs, gdb, image, libc, mach_o, mem, objc, options, stack,
     window,
 };
+use std::cell::Cell;
 use std::collections::{HashMap, VecDeque};
 use std::net::TcpListener;
+use std::rc::Rc;
 use std::time::{Duration, Instant};
 
 use crate::libc::pthread::cond::pthread_cond_t;
 use crate::window::DeviceFamily;
+use corosensei::{Coroutine, Yielder};
 pub use mutex::{MutexId, MutexType, PTHREAD_MUTEX_DEFAULT};
+use nullable_box::NullableBox;
 
 /// Index into the [Vec] of threads. Thread 0 is always the main thread.
 pub type ThreadId = usize;
+
+pub type HostContext = Coroutine<Environment, Environment, Environment>;
 
 /// Bookkeeping for a thread.
 pub struct Thread {
@@ -36,35 +45,24 @@ pub struct Thread {
     /// If this is not [ThreadBlock::NotBlocked], the thread is not executing
     /// until a certain condition is fufilled.
     pub blocked_by: ThreadBlock,
-    /// Set to [true] when a thread is running its startup routine (i.e. the
-    /// function pointer passed to `pthread_create`). When it returns to the
-    /// host, it should become inactive.
-    in_start_routine: bool,
     /// After a secondary thread finishes, this is set to the returned value.
     return_value: Option<MutVoidPtr>,
-    /// Set to [true] when a thread is currently waiting for a host function
-    /// call to return.
-    ///
-    /// This is needed when a guest function calls a host function, and that
-    /// host function calls a guest function on a different thread. While
-    /// executing the function on the other thread, [Environment::run_inner]
-    /// must ensure it does not switch back to the original thread and execute
-    /// guest code, as that thread is still waiting for the host function to
-    /// return.
-    ///
-    /// A host function that is being waited for can call back into guest code
-    /// on the same thread, in which case this will be set to [false] for the
-    /// duration of that call. This flag only indicates that the top-most "stack
-    /// frame" of the thread is a host function, not whether there are any host
-    /// functions at all.
-    in_host_function: bool,
     /// Context object containing the CPU state for this thread.
     ///
     /// There should always be `(threads.len() - 1)` contexts in existence.
     /// When a thread is currently executing, its state is stored directly in
     /// the CPU, rather than in a context object. In that case, this field is
     /// None. See also: [std::mem::take] and [cpu::Cpu::swap_context].
-    context: Option<Box<cpu::CpuContext>>,
+    guest_context: Option<Box<cpu::CpuContext>>,
+    /// The coroutine associated with this thread.
+    ///
+    /// In more typical rust, this is equivalent to to a [std::future::Future].
+    /// Like a [std::future::Future], it holds the call stack so the inner
+    /// function can (cooperatively) suspend execution and be resumed at a
+    /// later time. Unlike a [std::future::Future], the call stack is actually
+    /// stored as a stack, and not as an anonymous, compiler generated,
+    /// (typically heap allocated) object.
+    host_context: Option<HostContext>,
     /// Address range of this thread's stack, used to check if addresses are in
     /// range while producing a stack trace.
     stack: Option<std::ops::RangeInclusive<u32>>,
@@ -91,38 +89,40 @@ impl std::fmt::Debug for Thread {
 pub struct Environment {
     /// Reference point for various timing functions.
     pub startup_time: Instant,
-    pub bundle: bundle::Bundle,
-    pub fs: fs::Fs,
+    pub bundle: NullableBox<bundle::Bundle>,
+    pub fs: NullableBox<fs::Fs>,
     /// The window is only absent when running in headless mode.
-    pub window: Option<window::Window>,
-    pub openal_manager: OpenALManager,
-    pub mem: mem::Mem,
+    pub window: Option<Box<window::Window>>,
+    pub openal_manager: NullableBox<OpenALManager>,
+    pub mem: NullableBox<mem::Mem>,
     /// Loaded binaries. Index `0` is always the app binary, other entries are
     /// dynamic libraries.
     pub bins: Vec<mach_o::MachO>,
-    pub objc: objc::ObjC,
-    pub dyld: dyld::Dyld,
-    pub cpu: cpu::Cpu,
+    pub objc: NullableBox<objc::ObjC>,
+    pub dyld: NullableBox<dyld::Dyld>,
+    pub cpu: NullableBox<cpu::Cpu>,
     pub current_thread: ThreadId,
     pub threads: Vec<Thread>,
-    pub libc_state: libc::State,
-    pub framework_state: frameworks::State,
-    pub mutex_state: mutex::MutexState,
-    pub options: options::Options,
-    gdb_server: Option<gdb::GdbServer>,
+    pub libc_state: NullableBox<libc::State>,
+    pub framework_state: NullableBox<frameworks::State>,
+    pub mutex_state: NullableBox<mutex::MutexState>,
+    pub options: NullableBox<options::Options>,
+    gdb_server: Option<Box<gdb::GdbServer>>,
     pub env_vars: HashMap<Vec<u8>, MutPtr<u8>>,
     /// Set to [true] when created using [Environment::new_without_app].
-    /// In practice, this means we are in the app picker.
-    pub is_fake: bool,
     pub dump_file: Option<std::fs::File>,
+    pub is_app_picker: bool,
+    yielder: *const Yielder<Environment, Environment>,
+    // The amount of ticks to run for Some(value), or single-stepping for None.
+    // Sadly, setting ticks to 1 does not step properly, so Option is required.
+    remaining_ticks: Option<u64>,
+    panic_cell: Rc<Cell<Option<Environment>>>,
 }
 
 /// What to do next when executing this thread.
 enum ThreadNextAction {
     /// Continue CPU emulation.
     Continue,
-    /// Yield to another thread.
-    Yield,
     /// Return to host.
     ReturnToHost,
     /// Debug the current CPU error.
@@ -144,8 +144,8 @@ pub enum ThreadBlock {
     Condition(pthread_cond_t),
     // Thread is waiting for another thread to finish (joining).
     Joining(ThreadId, MutPtr<MutVoidPtr>),
-    // Deferred guest-to-host return
-    DeferredReturn,
+    // Thread has hit a cpu error, and is waiting to be debugged.
+    WaitingForDebugger(Option<cpu::CpuError>),
 }
 
 struct BinaryDependencyNode {
@@ -235,6 +235,11 @@ fn generate_binary_load_order(graph: &[BinaryDependencyNode]) -> Result<Vec<usiz
     Ok(sorted_indices)
 }
 
+/// Enforces the one (real) Environment limit. See
+/// [Environment::with_yielder] for why this is needed.
+static ENVIRONMENT_INSTANCE_EXISTS: std::sync::atomic::AtomicBool =
+    std::sync::atomic::AtomicBool::new(false);
+
 impl Environment {
     /// Loads the binary and sets up the emulator.
     pub fn new(
@@ -244,6 +249,12 @@ impl Environment {
         app_args: Vec<String>,
     ) -> Result<Environment, String> {
         let startup_time = Instant::now();
+
+        // Enforces the one (real) Environment limit. See `with_yielder` for
+        // why this is needed.
+        if ENVIRONMENT_INSTANCE_EXISTS.swap(true, std::sync::atomic::Ordering::SeqCst) {
+            return Err("Only one (real) Environment can exist at a time!".to_string());
+        }
 
         // Certain apps need to launch in a non-portrait orientation, and this
         // should be handled before creating the window because handling of
@@ -330,7 +341,7 @@ impl Environment {
                 None
             };
 
-            Some(window::Window::new(
+            Some(Box::new(window::Window::new(
                 &format!(
                     "{} (touchHLE {}{}{})",
                     bundle.display_name(),
@@ -345,7 +356,7 @@ impl Environment {
                 icon.ok(),
                 launch_image,
                 &options,
-            ))
+            )))
         };
 
         let mut mem = mem::Mem::new();
@@ -406,10 +417,13 @@ impl Environment {
             }
         }
 
-        let entry_point_addr = executable.entry_point_pc.ok_or_else(|| {
-            "Mach-O file does not specify an entry point PC, perhaps it is not an executable?"
-                .to_string()
-        })?;
+        let entry_point_addr = executable
+            .entry_point_pc
+            .ok_or_else(|| {
+                "Mach-O file does not specify an entry point PC, perhaps it is not an executable?"
+                    .to_string()
+            })
+            .unwrap();
         let entry_point_addr = abi::GuestFunction::from_addr_with_thumb_bit(entry_point_addr);
 
         log_dbg!("Address of start function: {:?}", entry_point_addr);
@@ -427,37 +441,123 @@ impl Environment {
             false => None,
         });
 
+        let main_thread_init_routine = Coroutine::new(move |yielder, mut env: Environment| {
+            let res = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                env.with_yielder(yielder, move |env| {
+                    echo!("CPU emulation begins now.");
+                    // Some apps use the stack inside the static initializer.
+                    // While properly behaving apps should be fine, some app
+                    // will try to poke the top of the stack, so we'll give
+                    // it some room.
+                    env.cpu.regs_mut()[Cpu::SP] = 0xFFFFF000;
+                    // Static initializers for libraries must be run before
+                    // the initializer in the app binary.
+                    for bin_idx in env.get_sorted_bin_indices().unwrap() {
+                        let Some(bin) = env.bins.get(bin_idx) else {
+                            continue;
+                        };
+                        let Some(section) =
+                            bin.get_section(mach_o::SectionType::ModInitFuncPointers)
+                        else {
+                            continue;
+                        };
+
+                        log_dbg!("Calling static initializers for {:?}", bin.name);
+                        assert!(section.size % 4 == 0);
+                        let base: mem::ConstPtr<abi::GuestFunction> =
+                            mem::Ptr::from_bits(section.addr);
+                        let count = section.size / 4;
+                        for i in 0..count {
+                            let func = env.mem.read(base + i);
+                            log_dbg!(
+                                "Calling static initializer at {:?} from {:?}",
+                                func,
+                                (base + i)
+                            );
+                            () = func.call_from_host(env, ());
+                        }
+                        log_dbg!("Static initialization done");
+                    }
+
+                    {
+                        let bin_path = env.bundle.executable_path();
+
+                        let envp_list: Vec<String> = env
+                            .env_vars
+                            .clone()
+                            .iter_mut()
+                            .map(|tuple| {
+                                [
+                                    std::str::from_utf8(tuple.0).unwrap(),
+                                    "=",
+                                    env.mem.cstr_at_utf8(*tuple.1).unwrap(),
+                                ]
+                                .concat()
+                            })
+                            .collect();
+                        let envp_ref_list: Vec<&str> =
+                            envp_list.iter().map(|keyvalue| keyvalue.as_str()).collect();
+
+                        let bin_path_apple_key = format!("executable_path={}", bin_path.as_str());
+
+                        let argv = Vec::from_iter(
+                            std::iter::once(bin_path.as_str())
+                                .chain(app_args.iter().map(|s| s.as_str())),
+                        );
+                        let envp = envp_ref_list.as_slice();
+                        let apple = &[bin_path_apple_key.as_str()];
+                        stack::prep_stack_for_start(&mut env.mem, &mut env.cpu, &argv, envp, apple);
+                    }
+
+                    // Manually call here, since running call_from_host pushes
+                    // a stack frame and disrupts abi for _start.
+                    env.cpu
+                        .branch_with_link(entry_point_addr, env.dyld.thread_exit_routine());
+                    env.run_call();
+
+                    panic!("Main function exited unexpectedly!");
+                })
+            }));
+            if let Err(e) = res {
+                let panic_cell = env.panic_cell.clone();
+                panic_cell.set(Some(env));
+                std::panic::resume_unwind(e);
+            }
+            env
+        });
         let main_thread = Thread {
             active: true,
             blocked_by: ThreadBlock::NotBlocked,
             return_value: None,
-            in_start_routine: false, // main thread never terminates
-            in_host_function: false,
-            context: None,
+            guest_context: None,
+            host_context: Some(main_thread_init_routine),
             stack: Some(mem::Mem::MAIN_THREAD_STACK_LOW_END..=0u32.wrapping_sub(1)),
         };
 
         let mut env = Environment {
             startup_time,
-            bundle,
-            fs,
+            bundle: NullableBox::new(bundle),
+            fs: NullableBox::new(fs),
             window,
-            openal_manager: OpenALManager::new()?,
-            mem,
+            openal_manager: NullableBox::new(OpenALManager::new()?),
+            mem: NullableBox::new(mem),
             bins,
-            objc,
-            dyld,
-            cpu,
+            objc: NullableBox::new(objc),
+            dyld: NullableBox::new(dyld),
+            cpu: NullableBox::new(cpu),
             current_thread: 0,
             threads: vec![main_thread],
             libc_state: Default::default(),
             mutex_state: Default::default(),
             framework_state: Default::default(),
-            options,
+            options: NullableBox::new(options),
             gdb_server: None,
             env_vars: Default::default(),
-            is_fake: false,
             dump_file: None,
+            is_app_picker: false,
+            yielder: std::ptr::null(),
+            remaining_ticks: None,
+            panic_cell: Rc::new(Cell::new(None)),
         };
 
         if env.options.dumping_options.any() {
@@ -466,37 +566,7 @@ impl Environment {
         }
 
         env.set_up_initial_env_vars();
-
         dyld::Dyld::do_late_linking(&mut env);
-
-        {
-            let bin_path = env.bundle.executable_path();
-
-            let envp_list: Vec<String> = env
-                .env_vars
-                .clone()
-                .iter_mut()
-                .map(|tuple| {
-                    [
-                        std::str::from_utf8(tuple.0).unwrap(),
-                        "=",
-                        env.mem.cstr_at_utf8(*tuple.1).unwrap(),
-                    ]
-                    .concat()
-                })
-                .collect();
-            let envp_ref_list: Vec<&str> =
-                envp_list.iter().map(|keyvalue| keyvalue.as_str()).collect();
-
-            let bin_path_apple_key = format!("executable_path={}", bin_path.as_str());
-
-            let argv = Vec::from_iter(
-                std::iter::once(bin_path.as_str()).chain(app_args.iter().map(|s| s.as_str())),
-            );
-            let envp = envp_ref_list.as_slice();
-            let apple = &[bin_path_apple_key.as_str()];
-            stack::prep_stack_for_start(&mut env.mem, &mut env.cpu, &argv, envp, apple);
-        }
 
         env.cpu.set_cpsr(cpu::Cpu::CPSR_USER_MODE);
 
@@ -518,35 +588,7 @@ impl Environment {
             let mut gdb_server = gdb::GdbServer::new(client);
             let step = gdb_server.wait_for_debugger(None, &mut env.cpu, &mut env.mem);
             assert!(!step, "Can't step right now!"); // TODO?
-            env.gdb_server = Some(gdb_server);
-        }
-
-        echo!("CPU emulation begins now.");
-
-        // Static initializers for libraries must be run before the initializer
-        // in the app binary.
-        for bin_idx in env.get_sorted_bin_indices()? {
-            let Some(bin) = env.bins.get(bin_idx) else {
-                continue;
-            };
-            let Some(section) = bin.get_section(mach_o::SectionType::ModInitFuncPointers) else {
-                continue;
-            };
-
-            log_dbg!("Calling static initializers for {:?}", bin.name);
-            assert!(section.size % 4 == 0);
-            let base: mem::ConstPtr<abi::GuestFunction> = mem::Ptr::from_bits(section.addr);
-            let count = section.size / 4;
-            for i in 0..count {
-                let func = env.mem.read(base + i);
-                log_dbg!(
-                    "Calling static initializer at {:?} from {:?}",
-                    func,
-                    (base + i)
-                );
-                () = func.call_from_host(&mut env, ());
-            }
-            log_dbg!("Static initialization done");
+            env.gdb_server = Some(Box::new(gdb_server));
         }
 
         if env.options.dumping_options.linking_info {
@@ -573,6 +615,12 @@ impl Environment {
         options: options::Options,
         icon: image::Image,
     ) -> Result<Environment, String> {
+        // Enforces a one (real) Environment limit. See `with_yielder` for
+        // why this is needed.
+        if ENVIRONMENT_INSTANCE_EXISTS.load(std::sync::atomic::Ordering::Relaxed) {
+            return Err("Only one (real) Environment can exist at a time!".to_string());
+        }
+        ENVIRONMENT_INSTANCE_EXISTS.store(true, std::sync::atomic::Ordering::Relaxed);
         let bundle = bundle::Bundle::new_fake_bundle();
         let fs = fs::Fs::new_fake_fs();
 
@@ -581,7 +629,7 @@ impl Environment {
         let launch_image = None;
 
         assert!(!options.headless);
-        let window = Some(window::Window::new(
+        let window = Some(Box::new(window::Window::new(
             &format!(
                 "touchHLE {}{}{}",
                 super::branding(),
@@ -595,7 +643,7 @@ impl Environment {
             Some(icon),
             launch_image,
             &options,
-        ));
+        )));
 
         let mut mem = mem::Mem::new();
 
@@ -615,33 +663,35 @@ impl Environment {
             active: true,
             blocked_by: ThreadBlock::NotBlocked,
             return_value: None,
-            in_start_routine: false, // main thread never terminates
-            in_host_function: false,
-            context: None,
+            guest_context: None,
+            host_context: None,
             stack: Some(mem::Mem::MAIN_THREAD_STACK_LOW_END..=0u32.wrapping_sub(1)),
         };
 
         let mut env = Environment {
             startup_time,
-            bundle,
-            fs,
+            bundle: NullableBox::new(bundle),
+            fs: NullableBox::new(fs),
             window,
-            openal_manager: OpenALManager::new()?,
-            mem,
+            openal_manager: NullableBox::new(OpenALManager::new()?),
+            mem: NullableBox::new(mem),
             bins,
-            objc,
-            dyld,
-            cpu,
+            objc: NullableBox::new(objc),
+            dyld: NullableBox::new(dyld),
+            cpu: NullableBox::new(cpu),
             current_thread: 0,
             threads: vec![main_thread],
             libc_state: Default::default(),
             mutex_state: Default::default(),
             framework_state: Default::default(),
-            options,
+            options: NullableBox::new(options),
             gdb_server: None,
             env_vars: Default::default(),
-            is_fake: true,
             dump_file: None,
+            is_app_picker: true,
+            yielder: std::ptr::null(),
+            remaining_ticks: None,
+            panic_cell: Rc::new(Cell::new(None)),
         };
 
         env.set_up_initial_env_vars();
@@ -666,6 +716,87 @@ impl Environment {
         Ok(env)
     }
 
+    /// Create a new Environment to swap with.
+    ///
+    /// SAFETY: You must *NEVER, IN ANY CIRCUMSTANCE* dereference any fields or
+    /// call any methods on the environment. This means that you must *NEVER,
+    /// IN ANY CIRCUMSTANCE* leak this to safe code. You *MUST* make sure this
+    /// includes panic safety - do not allow a panic to accidentally smuggle
+    /// out this environment to safe code!
+    ///
+    /// Admittedly, even if this is leaked, it's very unlikely it would lead to
+    /// any real problems, just a null pointer deref.
+    unsafe fn new_fake() -> Self {
+        Self {
+            startup_time: Instant::now(),
+            bundle: NullableBox::null(),
+            fs: NullableBox::null(),
+            window: None,
+            openal_manager: NullableBox::null(),
+            mem: NullableBox::null(),
+            bins: Vec::new(),
+            objc: NullableBox::null(),
+            dyld: NullableBox::null(),
+            cpu: NullableBox::null(),
+            current_thread: 0,
+            threads: Vec::new(),
+            libc_state: NullableBox::null(),
+            framework_state: NullableBox::null(),
+            mutex_state: NullableBox::null(),
+            options: NullableBox::null(),
+            gdb_server: None,
+            env_vars: HashMap::new(),
+            dump_file: None,
+            is_app_picker: true,
+            yielder: std::ptr::null(),
+            remaining_ticks: None,
+            panic_cell: Rc::new(Cell::new(None)),
+        }
+    }
+
+    /// Add a [corosensei::Yielder] so that it can be used by the passed
+    /// Environment in the passed function. This exists to avoid
+    /// reannotating all code with an additional lifetime on every use of
+    /// Environment.
+    ///
+    /// The design _would_ be unsound if it wasn't for the one real
+    /// Environment limit.
+    ///
+    /// Theoretically (even if this is extremely unlikely), this could
+    /// happen:
+    ///      - New thread(coroutine) is created and calls [Self::with_yielder]
+    ///      - Coroutine swaps the provided env with another env.
+    ///      - Coroutine moves the env to the executor.
+    ///      - Coroutine ends (and ends the yielder).
+    ///      - Executor uses yielder - oh no, UAF!
+    ///  (While this is pretty theoretical, prudent readers will in fact
+    ///  notice this is the exact same way we share Environments across
+    ///  threads anyways! - just with [Self::new_fake] instead of a "real"
+    ///  Environment.)
+    ///
+    ///  There is however, (seemingly) no way to (safely) move out behind a
+    ///  &mut T without another T to replace it - so it is safe as long there
+    ///  is only ever one Environment exposed to safe code (this is part of
+    ///  the [Self::new_fake] safety requirements).
+    pub fn with_yielder<F, T>(&mut self, yielder: &Yielder<Environment, Environment>, block: F) -> T
+    where
+        F: FnOnce(&mut Environment) -> T + 'static,
+        T: 'static,
+    {
+        assert!(self.yielder.is_null());
+        self.yielder = yielder;
+        // We need to ensure panic safety here, so make sure to reset the
+        // yielder if the inner function panics.
+        let res = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| block(self)));
+        self.yielder = std::ptr::null();
+        match res {
+            Ok(ret) => ret,
+            Err(e) => {
+                std::panic::resume_unwind(e);
+            }
+        }
+    }
+
     /// Get a shared reference to the window. Panics if touchHLE is running in
     /// headless mode.
     pub fn window(&self) -> &window::Window {
@@ -686,12 +817,8 @@ impl Environment {
         let stack_range = self.threads[self.current_thread].stack.clone().unwrap();
         let mut frames = Vec::new();
         let mut fp: mem::ConstPtr<u8> = mem::Ptr::from_bits(fp);
-        let thread_exit_routine_addr = self.dyld.thread_exit_routine().addr_with_thumb_bit();
         let return_to_host_routine_addr = self.dyld.return_to_host_routine().addr_with_thumb_bit();
-        while stack_range.contains(&fp.to_bits())
-            && lr != thread_exit_routine_addr
-            && lr != return_to_host_routine_addr
-        {
+        while stack_range.contains(&fp.to_bits()) && lr != return_to_host_routine_addr {
             frames.push(lr);
             lr = self.mem.read((fp + 4).cast());
             fp = self.mem.read(fp.cast());
@@ -700,24 +827,28 @@ impl Environment {
     }
 
     fn dump_all_regs(&self) {
-        echo!(
+        echo_no_panic!(
             "Dumping registers for current thread (#{})",
             self.current_thread
         );
         self.cpu.dump_regs();
         for (tid, thread) in self.threads.iter().enumerate() {
             if thread.active && tid != self.current_thread {
-                echo!("Dumping registers for thread #{}", tid);
-                cpu::Cpu::echo_regs(&thread.context.as_ref().unwrap().regs);
+                echo_no_panic!("Dumping registers for thread #{}", tid);
+                let Some(ctx) = thread.guest_context.as_ref() else {
+                    echo_no_panic!("Could not get registers for thread {}!", tid);
+                    return;
+                };
+                cpu::Cpu::echo_regs(&ctx.regs);
             }
         }
     }
 
     fn stack_trace_current(&self) {
         if self.current_thread == 0 {
-            echo!("Attempting to produce stack trace for main thread:");
+            echo_no_panic!("Attempting to produce stack trace for main thread:");
         } else {
-            echo!(
+            echo_no_panic!(
                 "Attempting to produce stack trace for thread {}:",
                 self.current_thread
             );
@@ -726,60 +857,73 @@ impl Environment {
     }
 
     fn stack_trace_all(&self) {
-        echo!(
+        echo_no_panic!(
             "Attempting to produce stack trace for current thread (#{}):",
             self.current_thread
         );
         self.stack_trace_for_thread(self.current_thread);
         for tid in 0..self.threads.len() {
             if self.threads[tid].active && tid != self.current_thread {
-                echo!("Attempting to produce stack trace for thread #{}:", tid);
+                echo_no_panic!("Attempting to produce stack trace for thread #{}:", tid);
                 self.stack_trace_for_thread(tid);
             }
         }
     }
 
     fn stack_trace_for_thread(&self, tid: usize) {
-        let stack_range = self.threads[tid].stack.clone().unwrap();
+        if tid >= self.threads.len() {
+            echo_no_panic!(
+                "Thread {} is too large ({} threads exist)!",
+                tid,
+                self.threads.len()
+            );
+        }
+        let Some(stack_range) = self.threads[tid].stack.clone() else {
+            echo_no_panic!("Failed to get stack trace!");
+            return;
+        };
         let (regs, cpsr) = if self.current_thread == tid {
             // Current thread is not stored in context since it is used by cpu,
             // get it from cpu.
             (*self.cpu.regs(), self.cpu.cpsr())
         } else {
-            let ctx = self.threads[tid].context.as_ref().unwrap();
+            let Some(ctx) = self.threads[tid].guest_context.as_ref() else {
+                echo_no_panic!("Failed to get registers for thread {}!", tid);
+                return;
+            };
             (ctx.regs, ctx.cpsr)
         };
         let pc_nothumb = regs[cpu::Cpu::PC];
         let thumb = (cpsr & cpu::Cpu::CPSR_THUMB) == cpu::Cpu::CPSR_THUMB;
         let pc = GuestFunction::from_addr_and_thumb_flag(pc_nothumb, thumb);
-        echo!(" 0. {:#x} (PC)", pc.addr_with_thumb_bit());
+        echo_no_panic!(" 0. {:#x} (PC)", pc.addr_with_thumb_bit());
         let mut lr = regs[cpu::Cpu::LR];
         let return_to_host_routine_addr = self.dyld.return_to_host_routine().addr_with_thumb_bit();
         let thread_exit_routine_addr = self.dyld.thread_exit_routine().addr_with_thumb_bit();
         if lr == return_to_host_routine_addr {
-            echo!(" 1. [host function] (LR)");
+            echo_no_panic!(" 1. [host function] (LR)");
         } else if lr == thread_exit_routine_addr {
-            echo!(" 1. [thread exit] (LR)");
+            echo_no_panic!(" 1. [thread exit] (LR)");
             return;
         } else {
-            echo!(" 1. {:#x} (LR)", lr);
+            echo_no_panic!(" 1. {:#x} (LR)", lr);
         }
         let mut i = 2;
         let mut fp: mem::ConstPtr<u8> = mem::Ptr::from_bits(regs[abi::FRAME_POINTER]);
         loop {
             if !stack_range.contains(&fp.to_bits()) {
-                echo!("Next FP ({:?}) is outside the stack.", fp);
+                echo_no_panic!("Next FP ({:?}) is outside the stack.", fp);
                 break;
             }
             lr = self.mem.read((fp + 4).cast());
             fp = self.mem.read(fp.cast());
             if lr == return_to_host_routine_addr {
-                echo!("{:2}. [host function]", i);
+                echo_no_panic!("{:2}. [host function]", i);
             } else if lr == thread_exit_routine_addr {
-                echo!("{:2}. [thread exit]", i);
+                echo_no_panic!("{:2}. [thread exit]", i);
                 return;
             } else {
-                echo!("{:2}. {:#x}", i, lr);
+                echo_no_panic!("{:2}. {:#x}", i, lr);
             }
             i += 1;
         }
@@ -798,28 +942,45 @@ impl Environment {
         let stack_high_addr = stack_alloc.to_bits() + stack_size;
         assert!(stack_high_addr.is_multiple_of(4));
 
+        let thread_routine = Coroutine::new(move |yielder, mut env: Environment| {
+            let res = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                env.with_yielder(yielder, move |env| {
+                    let regs = env.cpu.regs_mut();
+                    regs[cpu::Cpu::LR] = env.dyld.thread_exit_routine().addr_with_thumb_bit();
+                    regs[cpu::Cpu::SP] = stack_high_addr;
+                    regs[0] = user_data.to_bits();
+
+                    env.cpu.set_cpsr(
+                        cpu::Cpu::CPSR_USER_MODE
+                            | ((start_routine.is_thumb() as u32) * cpu::Cpu::CPSR_THUMB),
+                    );
+                    let return_value: mem::MutVoidPtr =
+                        start_routine.call_from_host(env, (user_data,));
+                    let curr_thread = &mut env.threads[env.current_thread];
+                    curr_thread.return_value = Some(return_value);
+                    curr_thread.active = false;
+                });
+            }));
+            if let Err(e) = res {
+                let panic_cell = env.panic_cell.clone();
+                panic_cell.set(Some(env));
+                std::panic::resume_unwind(e);
+            }
+            env
+        });
+
         self.threads.push(Thread {
             active: true,
             blocked_by: ThreadBlock::NotBlocked,
             return_value: None,
-            in_start_routine: true,
-            in_host_function: false,
-            context: Some(Box::new(cpu::CpuContext::new())),
+            guest_context: Some(Box::new(cpu::CpuContext::new())),
+            host_context: Some(thread_routine),
             stack: Some(stack_alloc.to_bits()..=(stack_high_addr - 1)),
         });
+
         let new_thread_id = self.threads.len() - 1;
 
         log_dbg!("Created new thread {} with stack {:#x}–{:#x}, will execute function {:?} with data {:?}", new_thread_id, stack_alloc.to_bits(), (stack_high_addr - 1), start_routine, user_data);
-
-        // Set up the registers for the new thread
-        let context = self.threads[new_thread_id].context.as_mut().unwrap();
-        context.regs[cpu::Cpu::SP] = stack_high_addr;
-        context.regs[0] = user_data.to_bits();
-
-        context.cpsr =
-            cpu::Cpu::CPSR_USER_MODE | ((start_routine.is_thumb() as u32) * cpu::Cpu::CPSR_THUMB);
-        context.regs[cpu::Cpu::PC] = start_routine.addr_without_thumb_bit();
-        context.regs[cpu::Cpu::LR] = self.dyld.thread_exit_routine().addr_with_thumb_bit();
 
         new_thread_id
     }
@@ -828,57 +989,36 @@ impl Environment {
     /// in the meantime as appropriate. Functions that call sleep right before
     /// they return back to the main run loop ([Environment::run]) should set
     /// `tail_call`.
-    pub fn sleep(&mut self, duration: Duration, tail_call: bool) {
-        assert!(matches!(
-            self.threads[self.current_thread].blocked_by,
-            ThreadBlock::NotBlocked
-        ));
-
+    pub fn sleep(&mut self, duration: Duration) {
         log_dbg!(
             "Thread {} is going to sleep for {:?}.",
             self.current_thread,
             duration
         );
         let until = Instant::now().checked_add(duration).unwrap();
-        self.threads[self.current_thread].blocked_by = ThreadBlock::Sleeping(until);
-        // For non tail-call sleeps (such as in NSRunLoop), we want to poll
-        // other threads but can't return back to the run loop, since it would
-        // go through the calling function. As such, we have to call into the
-        // run loop instead.
-        if !tail_call {
-            let old_pc = self.cpu.pc_with_thumb_bit();
-            self.cpu.branch(self.dyld.return_to_host_routine());
-            // Since the current thread is asleep, this will only run other
-            // threads until it wakes up, at which point it signals
-            // return-to-host and control is returned to this function.
-            self.run_call();
-            self.cpu.branch(old_pc);
-        }
+        self.yield_thread(ThreadBlock::Sleeping(until));
     }
 
     /// Block the current thread until the given mutex unlocks.
     ///
     /// Other threads also blocking on this mutex may get access first.
-    /// Also note that like [Self::sleep], this only takes effect after the host
-    /// function returns to the main run loop ([Environment::run]).
+    /// Like all other thread blocking functions, this will suspend
+    /// execution of the current host thread.
     pub fn block_on_mutex(&mut self, mutex_id: MutexId) {
-        assert!(matches!(
-            self.threads[self.current_thread].blocked_by,
-            ThreadBlock::NotBlocked
-        ));
         log_dbg!(
             "Thread {} blocking on mutex #{}.",
             self.current_thread,
             mutex_id
         );
-        self.threads[self.current_thread].blocked_by = ThreadBlock::Mutex(mutex_id);
+        self.yield_thread(ThreadBlock::Mutex(mutex_id));
     }
 
     /// Locks a semaphore (decrements value of a semaphore and blocks
     /// if necessary).
     ///
-    /// Also note that like [Self::sleep], this only takes effect after the host
-    /// function returns to the main run loop ([Environment::run]).
+    /// Like all other thread blocking functions, this will suspend
+    /// execution of the current host thread (if the semaphore is
+    /// currently at 0).
     pub fn sem_decrement(&mut self, sem: MutPtr<sem_t>, wait_on_lock: bool) -> bool {
         let host_sem_rc: &mut _ = self
             .libc_state
@@ -905,28 +1045,20 @@ impl Environment {
             );
             return false;
         }
-
-        assert!(matches!(
-            self.threads[self.current_thread].blocked_by,
-            ThreadBlock::NotBlocked
-        ));
         log_dbg!(
             "Thread {} is blocking on semaphore {:?}",
             self.current_thread,
             sem
         );
         host_sem.waiting.insert(self.current_thread);
-        self.threads[self.current_thread].blocked_by = ThreadBlock::Semaphore(sem);
+        std::mem::drop(host_sem);
+        // The scheduler will decrement the semaphore value when it unblocks.
+        self.yield_thread(ThreadBlock::Semaphore(sem));
 
         true
     }
 
-    /// Unlock a semaphore (increments value of a semaphore)
-    ///
-    /// Note: Actual thread awaking is done inside [Environment::run_inner] loop
-    ///
-    /// Also note that like [Self::sleep], this only takes effect after the host
-    /// function returns to the main run loop ([Environment::run]).
+    /// Unlock a semaphore (increments value of a semaphore).
     pub fn sem_increment(&mut self, sem: MutPtr<sem_t>) {
         let host_sem_rc: &mut _ = self
             .libc_state
@@ -951,32 +1083,271 @@ impl Environment {
     /// thread, joining a thread with itself, or deadlocking joins. Callers
     /// should ensure these do not occur!
     ///
-    /// Also note that like [Self::sleep], this only takes effect after the host
-    /// function returns to the main run loop ([Environment::run]).
+    /// Like all other thread blocking functions, this will suspend
+    /// execution of the current host thread.
     pub fn join_with_thread(&mut self, joinee_thread: ThreadId, ptr: MutPtr<MutVoidPtr>) {
-        assert!(matches!(
-            self.threads[self.current_thread].blocked_by,
-            ThreadBlock::NotBlocked
-        ));
         log_dbg!(
             "Thread {} waiting for thread {} to finish.",
             self.current_thread,
             joinee_thread
         );
-        self.threads[self.current_thread].blocked_by = ThreadBlock::Joining(joinee_thread, ptr);
+        self.yield_thread(ThreadBlock::Joining(joinee_thread, ptr));
+    }
+
+    pub fn run_app_picker<F, R>(mut self, f: F) -> R
+    where
+        F: FnOnce(&mut Environment) -> R + 'static,
+        R: 'static,
+    {
+        let panic_cell = Rc::new(Cell::new(None));
+        let mut app_picker_coroutine = Coroutine::new(move |yielder, mut env: Environment| {
+            env.panic_cell = panic_cell.clone();
+            let res = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                env.with_yielder(yielder, f)
+            }));
+            match res {
+                // We want the environment to be dropped outside of the
+                // coroutine, so send it back when we return.
+                Ok(r) => (r, env),
+                Err(e) => {
+                    let panic_cell = env.panic_cell.clone();
+                    panic_cell.set(Some(env));
+                    std::panic::resume_unwind(e);
+                }
+            }
+        });
+        loop {
+            let res = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                app_picker_coroutine.resume(self)
+            }));
+            self = match res {
+                Ok(ret) => match ret {
+                    corosensei::CoroutineResult::Yield(env) => env,
+                    corosensei::CoroutineResult::Return((ret_val, _env)) => {
+                        return ret_val;
+                    }
+                },
+                Err(e) => {
+                    log_no_panic!("Crash in app picker!");
+                    // No need to get the environment back - It's local to this
+                    // function anyways.
+                    std::panic::resume_unwind(e);
+                }
+            };
+
+            self.window
+                .as_mut()
+                .unwrap()
+                .poll_for_events(self.options.as_ref());
+            assert!(self.threads.len() == 1);
+            match self.threads[0].blocked_by {
+                ThreadBlock::NotBlocked => {}
+                ThreadBlock::Sleeping(until) => {
+                    let duration = until.duration_since(Instant::now());
+                    std::thread::sleep(duration);
+                }
+                _ => {
+                    panic!("Unexpected ThreadBlock in app picker!");
+                }
+            }
+            self.threads[0].blocked_by = ThreadBlock::NotBlocked;
+        }
     }
 
     /// Run the emulator. This is the main loop and won't return until app exit.
     /// Only `main.rs` should call this.
-    pub fn run(&mut self) {
-        // I'm not sure if this actually is unwind-safe, but considering
-        // the emulator will crash anyway, maybe this is okay.
-        let res = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| self.run_inner(true)));
-        if let Err(e) = res {
-            echo!("Register state immediately after panic:");
-            self.dump_all_regs();
-            self.stack_trace_all();
-            std::panic::resume_unwind(e);
+    pub fn run(mut self) {
+        let mut curr_host_context = self.threads[0].host_context.take().unwrap();
+        let panic_cell = self.panic_cell.clone();
+        let mut stepping = false;
+        loop {
+            if stepping {
+                self.remaining_ticks = None;
+            } else {
+                // 100,000 ticks is an arbitrary number. It needs to be
+                // reasonably large so we aren't jumping in and out of dynarmic
+                // or trying to poll for events too often. At the same time,
+                // very large values are bad for responsiveness.
+                self.remaining_ticks = Some(100_000);
+            }
+            let mut kill_current_thread = false;
+
+            if let Some(w) = self.window.as_mut() {
+                w.on_main_stack = false;
+            }
+            let res = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                curr_host_context.resume(self)
+            }));
+            self = match res {
+                Ok(ret) => match ret {
+                    corosensei::CoroutineResult::Yield(env) => env,
+                    corosensei::CoroutineResult::Return(env) => {
+                        kill_current_thread = true;
+                        env
+                    }
+                },
+                Err(e) => {
+                    let Some(mut env) = panic_cell.take() else {
+                        log_no_panic!("Did not recieve env from coroutine unwind, must abort!");
+                        std::process::exit(-1)
+                    };
+                    if let Some(window) = env.window.as_mut() {
+                        window.on_main_stack = true;
+                    };
+
+                    echo!("Register state immediately after panic:");
+                    env.dump_all_regs();
+                    env.stack_trace_all();
+
+                    if env.options.popup_errors {
+                        let error_string = if let Some(s) = e.downcast_ref::<&str>() {
+                            s
+                        } else if let Some(s) = e.downcast_ref::<String>() {
+                            s
+                        } else {
+                            "(non-string payload)"
+                        };
+                        window::show_error_messagebox(env.window.as_deref(), error_string);
+                    }
+                    // Put the host context back before resuming, the env will
+                    // clean it up on drop.
+                    let Some(thread) = env.threads.get_mut(env.current_thread) else {
+                        log_no_panic!("Bad current_thread, must abort!");
+                        std::process::exit(-1)
+                    };
+                    thread.host_context = Some(curr_host_context);
+                    std::panic::resume_unwind(e);
+                }
+            };
+
+            let mut old_context = if kill_current_thread {
+                log_dbg!("Killing thread {}", self.current_thread);
+                panic_cell.set(Some(self));
+                std::mem::drop(curr_host_context);
+                let Some(env) = panic_cell.take() else {
+                    log_no_panic!("Did not get env back from coroutine after drop, must abort!");
+                    std::process::exit(-1);
+                };
+                self = env;
+                let stack = self.threads[self.current_thread].stack.take().unwrap();
+                let stack: mem::MutVoidPtr = mem::Ptr::from_bits(*stack.start());
+                log_dbg!("Freeing thread {} stack {:?}", self.current_thread, stack);
+                self.mem.free(stack);
+                None
+            } else {
+                Some(curr_host_context)
+            };
+
+            if let Some(w) = self.window.as_mut() {
+                w.on_main_stack = true;
+            }
+
+            let res = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                // To maintain responsiveness when moving the window and so on,
+                // we need to poll for events occasionally, even if the app
+                // isn't actively processing them.
+                // Polling for events can be quite expensive, so we shouldn't do
+                // this until after we've done some amount of work on the guest
+                // thread, lest every single callback call pay this cost.
+                if let Some(ref mut window) = self.window {
+                    window.poll_for_events(&self.options);
+                }
+                let curr_thread_block = self.threads[self.current_thread].blocked_by.clone();
+                if stepping || matches!(curr_thread_block, ThreadBlock::WaitingForDebugger(_)) {
+                    if old_context.is_none() {
+                        let old_thread = self.current_thread;
+                        let next_thread = self.schedule_next_thread();
+                        self.switch_thread(&mut old_context, next_thread);
+                        echo!(
+                            "\nGDB WARNING ------- Thread {} has exited - switched thread to {}",
+                            old_thread,
+                            next_thread
+                        );
+                    }
+                    match self.threads[self.current_thread].blocked_by {
+                        ThreadBlock::NotBlocked | ThreadBlock::WaitingForDebugger(_) => {}
+                        _ => {
+                            let old_thread = self.current_thread;
+                            let next_thread = self.schedule_next_thread();
+                            self.switch_thread(&mut old_context, next_thread);
+                            let block = &self.threads[old_thread].blocked_by;
+                            echo!(
+                                "\nGDB WARNING ------- Thread {} is blocked by {:?} - switched thread to {}",
+                                old_thread,
+                                block,
+                                next_thread
+                            );
+                        }
+                    }
+                    let reason = if let ThreadBlock::WaitingForDebugger(reason) = curr_thread_block
+                    {
+                        self.threads[self.current_thread].blocked_by = ThreadBlock::NotBlocked;
+                        reason.clone()
+                    } else {
+                        None
+                    };
+                    let will_step = self.gdb_server.as_deref_mut().unwrap().wait_for_debugger(
+                        reason.clone(),
+                        self.cpu.as_mut(),
+                        self.mem.as_mut(),
+                    );
+                    if will_step {
+                        stepping = true;
+                    }
+                }
+
+                // Don't switch threads if stepping.
+                if stepping {
+                    assert!(old_context.is_some());
+                    return;
+                }
+
+                stepping = false;
+
+                let next_thread = self.schedule_next_thread();
+                if next_thread != self.current_thread {
+                    self.switch_thread(&mut old_context, next_thread);
+                }
+                assert!(old_context.is_some());
+            }));
+            match res {
+                Ok(_) => {}
+                Err(e) => {
+                    if let Some(window) = self.window.as_mut() {
+                        window.on_main_stack = true;
+                    };
+                    if self.options.popup_errors {
+                        let error_string = if let Some(s) = e.downcast_ref::<&str>() {
+                            s
+                        } else if let Some(s) = e.downcast_ref::<String>() {
+                            s
+                        } else {
+                            "(non-string payload)"
+                        };
+                        window::show_error_messagebox(self.window.as_deref(), error_string);
+                    }
+                    echo!("Register state immediately after panic:");
+                    self.dump_all_regs();
+                    self.stack_trace_all();
+
+                    // Clean up the used host context. The ones inside the env
+                    // are cleaned up by the drop handler.
+                    let panic_cell = self.panic_cell.clone();
+                    if let Some(ctx) = old_context {
+                        panic_cell.set(Some(self));
+                        std::mem::drop(ctx);
+                        self = panic_cell.take().unwrap_or_else(|| {
+                            log_no_panic!(
+                            "Did not recieve env from coroutine unwind during drop, must abort!"
+                            );
+                            std::process::exit(-1)
+                        });
+                        std::mem::drop(self);
+                    };
+                    std::panic::resume_unwind(e);
+                }
+            }
+            curr_host_context = old_context.unwrap();
         }
     }
 
@@ -986,16 +1357,18 @@ impl Environment {
     /// Note that this might execute code from other threads while waiting for
     /// the app to return control on the original thread!
     pub fn run_call(&mut self) {
-        let was_in_host_function = self.threads[self.current_thread].in_host_function;
         let old_thread = self.current_thread;
-        self.threads[self.current_thread].in_host_function = false;
-        self.run_inner(false);
+        self.run_inner();
         assert!(self.current_thread == old_thread);
-        self.threads[self.current_thread].in_host_function = was_in_host_function;
     }
 
-    fn switch_thread(&mut self, new_thread: ThreadId) {
+    /// Switch the current thread, putting the old host context (if it exists)
+    /// back into its thread, and the new host context where the old one was.
+    ///
+    /// This also internally switches the currently used guest context.
+    fn switch_thread(&mut self, old_context: &mut Option<HostContext>, new_thread: ThreadId) {
         assert!(new_thread != self.current_thread);
+        assert!(self.threads[new_thread].active);
 
         log_dbg!(
             "Switching thread: {} => {}",
@@ -1003,10 +1376,15 @@ impl Environment {
             new_thread
         );
 
-        let mut context = self.threads[new_thread].context.take().unwrap();
-        self.cpu.swap_context(&mut context);
-        assert!(self.threads[self.current_thread].context.is_none());
-        self.threads[self.current_thread].context = Some(context);
+        let mut guest_ctx = self.threads[new_thread].guest_context.take().unwrap();
+        self.cpu.swap_context(&mut guest_ctx);
+        assert!(self.threads[self.current_thread].guest_context.is_none());
+        assert!(old_context.is_some() || !self.threads[self.current_thread].active);
+        self.threads[self.current_thread].guest_context = Some(guest_ctx);
+
+        let new_host_ctx = self.threads[new_thread].host_context.take().unwrap();
+        self.threads[self.current_thread].host_context = old_context.take();
+        *old_context = Some(new_host_ctx);
         self.current_thread = new_thread;
     }
 
@@ -1014,7 +1392,7 @@ impl Environment {
     /// Let the debugger handle a CPU error, or panic if there's no debugger
     /// connected. Returns [true] if the CPU should step and then resume
     /// debugging, or [false] if it should resume normal execution.
-    fn debug_cpu_error(&mut self, error: cpu::CpuError) -> bool {
+    fn debug_cpu_error(&mut self, error: cpu::CpuError) {
         if matches!(error, cpu::CpuError::UndefinedInstruction)
             || matches!(error, cpu::CpuError::Breakpoint)
         {
@@ -1048,83 +1426,34 @@ impl Environment {
     /// You should precede this call with a log message that explains why the
     /// debugger is being invoked. The return value is the same as
     /// [gdb::GdbServer::wait_for_debugger]'s.
-    #[must_use]
-    pub fn enter_debugger(&mut self, reason: Option<cpu::CpuError>) -> bool {
+    ///
+    /// Note that this also yields the thread - take care!
+    pub fn enter_debugger(&mut self, reason: Option<cpu::CpuError>) {
         // GDB doesn't seem to manage to produce a useful stack trace, so
         // let's print our own.
         self.stack_trace_current();
-        self.gdb_server
-            .as_mut()
-            .unwrap()
-            .wait_for_debugger(reason, &mut self.cpu, &mut self.mem)
+
+        self.yield_thread(ThreadBlock::WaitingForDebugger(reason));
     }
 
     #[inline(always)]
     /// Respond to the new CPU state (do nothing, execute an SVC or enter
     /// debugging) and decide what to do next.
-    fn handle_cpu_state(
-        &mut self,
-        state: cpu::CpuState,
-        initial_thread: ThreadId,
-        root: bool,
-    ) -> ThreadNextAction {
+    fn handle_cpu_state(&mut self, state: cpu::CpuState) -> ThreadNextAction {
         match state {
             cpu::CpuState::Normal => ThreadNextAction::Continue,
             cpu::CpuState::Svc(svc) => {
-                // the program counter is pointing at the
+                // The program counter is pointing at the
                 // instruction after the SVC, but we want the
-                // address of the SVC itself
+                // address of the SVC itself.
                 let svc_pc = self.cpu.regs()[cpu::Cpu::PC] - 4;
                 match svc {
-                    dyld::Dyld::SVC_THREAD_EXIT => {
-                        assert!(svc_pc == self.dyld.thread_exit_routine().addr_without_thumb_bit());
-                        if !self.threads[self.current_thread].in_start_routine {
-                            panic!("Non-exiting thread {} exited!", self.current_thread);
-                        } else {
-                            // Secondary thread finished starting.
-                            log_dbg!(
-                                "Thread {} finished start routine and became inactive, {}",
-                                self.current_thread,
-                                initial_thread
-                            );
-                            let curr_thread = &mut self.threads[self.current_thread];
-                            curr_thread.return_value = Some(GuestRet::from_regs(self.cpu.regs()));
-                            curr_thread.active = false;
-                            let stack = curr_thread.stack.take().unwrap();
-                            let stack: mem::MutVoidPtr = mem::Ptr::from_bits(*stack.start());
-                            log_dbg!("Freeing thread {} stack {:?}", self.current_thread, stack);
-                            self.mem.free(stack);
-                            ThreadNextAction::Yield
-                        }
-                    }
                     dyld::Dyld::SVC_RETURN_TO_HOST => {
                         assert!(
                             svc_pc == self.dyld.return_to_host_routine().addr_without_thumb_bit()
                         );
-                        assert!(!root);
-                        if self.current_thread == initial_thread {
-                            log_dbg!(
-                                "Thread {} returned from host-to-guest call",
-                                self.current_thread
-                            );
-                            // Normal return from host-to-guest call.
-                            ThreadNextAction::ReturnToHost
-                        } else {
-                            // FIXME?: A drawback of the current thread model is
-                            // that host-to-guest calls affect the host call
-                            // stack. This is a problem because it means that
-                            // threads have to return in the order they were
-                            // called, which means that threads that return
-                            // while they aren't at the top of the call stack
-                            // have to wait until they can.
-                            log_dbg!("Thread {} returned from host-to-guest call but thread {} is top of call stack, deferring!",
-                                     self.current_thread,
-                                     initial_thread
-                            );
-                            self.threads[self.current_thread].blocked_by =
-                                ThreadBlock::DeferredReturn;
-                            ThreadNextAction::Yield
-                        }
+                        // Normal return from host-to-guest call.
+                        ThreadNextAction::ReturnToHost
                     }
                     dyld::Dyld::SVC_LAZY_LINK
                     | dyld::Dyld::SVC_LAZY_LINK_RET_FLAG
@@ -1136,34 +1465,21 @@ impl Environment {
                             svc_pc,
                             svc,
                         ) {
-                            let was_in_host_function =
-                                self.threads[self.current_thread].in_host_function;
-                            self.threads[self.current_thread].in_host_function = true;
                             f.call_from_guest(self);
-                            self.threads[self.current_thread].in_host_function =
-                                was_in_host_function;
-
                             // On entry_size 4 return here since there's
                             // no space to add a ret after the svc call
                             if svc & dyld::Dyld::SVC_LAZY_LINK_RET_FLAG != 0 {
-                                self.cpu.branch(GuestFunction::from_addr_with_thumb_bit(
-                                    self.cpu.regs()[cpu::Cpu::LR],
-                                ));
+                                let lr = self.cpu.regs()[cpu::Cpu::LR];
+                                self.cpu.branch(GuestFunction::from_addr_with_thumb_bit(lr));
                             }
-
-                            // Host function might have put the thread to sleep.
-                            if let ThreadBlock::NotBlocked =
-                                self.threads[self.current_thread].blocked_by
-                            {
-                                ThreadNextAction::Continue
-                            } else {
-                                log_dbg!("Yielding: thread {} is blocked.", self.current_thread);
-                                ThreadNextAction::Yield
-                            }
+                            ThreadNextAction::Continue
                         } else {
                             self.cpu.regs_mut()[cpu::Cpu::PC] = svc_pc;
                             ThreadNextAction::Continue
                         }
+                    }
+                    dyld::Dyld::SVC_THREAD_EXIT => {
+                        unimplemented!("TODO: implement exit routines for threads!")
                     }
                 }
             }
@@ -1171,204 +1487,196 @@ impl Environment {
         }
     }
 
-    fn run_inner(&mut self, root: bool) {
+    fn run_inner(&mut self) {
         let initial_thread = self.current_thread;
         assert!(self.threads[initial_thread].active);
-        assert!(self.threads[initial_thread].context.is_none());
+        assert!(self.threads[initial_thread].guest_context.is_none());
 
         loop {
-            // 100,000 ticks is an arbitrary number. It needs to be reasonably
-            // large so we aren't jumping in and out of dynarmic or trying to
-            // poll for events too often. At the same time, very large values
-            // are bad for responsiveness.
-            let mut ticks = if self.threads[self.current_thread].is_blocked() {
-                // The current thread might be asleep, in which case we want to
-                // immediately switch to another thread. This only happens when
-                // called from Self::sleep().
-                0
-            } else {
-                100_000
-            };
-            let mut step_and_debug = false;
-            while ticks > 0 {
-                let state = self.cpu.run_or_step(
-                    &mut self.mem,
-                    if step_and_debug {
-                        None
-                    } else {
-                        Some(&mut ticks)
-                    },
-                );
-                match self.handle_cpu_state(state, initial_thread, root) {
-                    ThreadNextAction::Continue => {
-                        if step_and_debug {
-                            step_and_debug = self.gdb_server.as_mut().unwrap().wait_for_debugger(
-                                None,
-                                &mut self.cpu,
-                                &mut self.mem,
-                            );
-                        }
-                    }
-                    ThreadNextAction::Yield => break,
+            while self
+                .remaining_ticks
+                .is_none_or(|remaining_ticks| remaining_ticks > 0)
+            {
+                let state = self
+                    .cpu
+                    .run_or_step(&mut self.mem, self.remaining_ticks.as_mut());
+
+                match self.handle_cpu_state(state) {
+                    ThreadNextAction::Continue => {}
                     ThreadNextAction::ReturnToHost => return,
                     ThreadNextAction::DebugCpuError(e) => {
-                        step_and_debug = self.debug_cpu_error(e);
+                        self.debug_cpu_error(e);
                     }
                 }
-            }
-
-            // To maintain responsiveness when moving the window and so on, we
-            // need to poll for events occasionally, even if the app isn't
-            // actively processing them.
-            // Polling for events can be quite expensive, so we shouldn't do
-            // this until after we've done some amount of work on the guest
-            // thread, lest every single callback call pay this cost.
-            if let Some(ref mut window) = self.window {
-                window.poll_for_events(&self.options);
-            }
-
-            loop {
-                // Try to find a new thread to execute, starting with the thread
-                // following the one currently executing.
-                let mut suitable_thread: Option<ThreadId> = None;
-                let mut next_awakening: Option<Instant> = None;
-                let mut mutex_to_relock: Option<MutexId> = None;
-                for i in 0..self.threads.len() {
-                    let i = (self.current_thread + 1 + i) % self.threads.len();
-                    let candidate = &mut self.threads[i];
-
-                    if !candidate.active || candidate.in_host_function {
-                        continue;
-                    }
-                    match candidate.blocked_by {
-                        ThreadBlock::Sleeping(sleeping_until) => {
-                            if sleeping_until <= Instant::now() {
-                                log_dbg!("Thread {} finished sleeping.", i);
-                                candidate.blocked_by = ThreadBlock::NotBlocked;
-                                suitable_thread = Some(i);
-                                break;
-                            } else {
-                                next_awakening = match next_awakening {
-                                    None => Some(sleeping_until),
-                                    Some(other) => Some(other.min(sleeping_until)),
-                                };
-                            }
-                        }
-                        ThreadBlock::Mutex(mutex_id) => {
-                            if !self.mutex_state.mutex_is_locked(mutex_id) {
-                                log_dbg!("Thread {} was unblocked due to mutex #{} unlocking, relocking mutex.", i, mutex_id);
-                                self.threads[i].blocked_by = ThreadBlock::NotBlocked;
-                                suitable_thread = Some(i);
-                                mutex_to_relock = Some(mutex_id);
-                                break;
-                            }
-                        }
-                        ThreadBlock::Semaphore(sem) => {
-                            let host_sem_rc: &mut _ = self
-                                .libc_state
-                                .semaphore
-                                .open_semaphores
-                                .get_mut(&sem)
-                                .unwrap();
-                            let mut host_sem = (*host_sem_rc).borrow_mut();
-
-                            if host_sem.value > 0 {
-                                log_dbg!(
-                                    "Thread {} has awaken on semaphore {:?} with value {}",
-                                    i,
-                                    sem,
-                                    host_sem.value
-                                );
-                                host_sem.value -= 1;
-                                host_sem.waiting.remove(&self.current_thread);
-                                self.threads[i].blocked_by = ThreadBlock::NotBlocked;
-                                suitable_thread = Some(i);
-                                break;
-                            }
-                        }
-                        ThreadBlock::Condition(cond) => {
-                            let host_cond = self
-                                .libc_state
-                                .pthread
-                                .cond
-                                .condition_variables
-                                .get_mut(&cond)
-                                .unwrap();
-                            let mutex = host_cond.curr_mutex.unwrap();
-                            if host_cond
-                                .waking
-                                .front()
-                                .is_some_and(|waking_thread| *waking_thread == i)
-                                && !self.mutex_state.mutex_is_locked(mutex)
-                            {
-                                log_dbg!("Thread {} is unblocking on cond var {:?}.", i, cond);
-                                host_cond.waking.pop_front();
-                                self.threads[i].blocked_by = ThreadBlock::NotBlocked;
-                                suitable_thread = Some(i);
-                                mutex_to_relock = Some(mutex);
-                            }
-                        }
-                        ThreadBlock::Joining(joinee_thread, ptr) => {
-                            if !self.threads[joinee_thread].active {
-                                log_dbg!(
-                                    "Thread {} joining with now finished thread {}.",
-                                    self.current_thread,
-                                    joinee_thread
-                                );
-                                // Write the return value, unless the pointer to
-                                // write to is null.
-                                if !ptr.is_null() {
-                                    self.mem.write(
-                                        ptr,
-                                        self.threads[joinee_thread].return_value.unwrap(),
-                                    );
-                                }
-                                self.threads[i].blocked_by = ThreadBlock::NotBlocked;
-                                suitable_thread = Some(i);
-                                break;
-                            }
-                        }
-                        ThreadBlock::DeferredReturn => {
-                            if i == initial_thread {
-                                log_dbg!("Thread {} is now able to return, returning", i);
-                                self.threads[i].blocked_by = ThreadBlock::NotBlocked;
-                                // Thread is now top of call stack, should
-                                // return
-                                self.switch_thread(i);
-                                return;
-                            }
-                        }
-                        ThreadBlock::NotBlocked => {
-                            suitable_thread = Some(i);
-                            break;
-                        }
-                    }
-                }
-
-                // There's a suitable thread we can switch to immediately.
-                if let Some(suitable_thread) = suitable_thread {
-                    if suitable_thread != self.current_thread {
-                        self.switch_thread(suitable_thread);
-                    }
-                    if let Some(mutex_id) = mutex_to_relock {
-                        self.relock_unblocked_mutex(mutex_id);
-                    }
+                if self.remaining_ticks.is_none() {
                     break;
-                // All suitable threads are blocked and at least one is asleep.
-                // Sleep until one of them wakes up.
-                } else if let Some(next_awakening) = next_awakening {
-                    let duration = next_awakening.duration_since(Instant::now());
-                    log_dbg!("All threads blocked/asleep, sleeping for {:?}.", duration);
-                    std::thread::sleep(duration);
-                    // Try again, there should be some thread awake now (or
-                    // there will be soon, since timing is approximate).
-                    continue;
-                } else {
-                    // This should hopefully not happen, but if a thread is
-                    // blocked on another thread waiting for a deferred return,
-                    // it could.
-                    panic!("No active threads, program has deadlocked!");
                 }
+            }
+            self.yield_thread(ThreadBlock::NotBlocked);
+        }
+    }
+
+    /// Yield the current thread, suspending execution and handing control back
+    /// to the executor ([Self::run]), waiting until the current `thread_block`
+    /// condition is met.
+    pub fn yield_thread(&mut self, thread_block: ThreadBlock) {
+        assert!(!self.threads[self.current_thread].is_blocked());
+        log_dbg!(
+            "Thread {} yielding on {:?}",
+            self.current_thread,
+            thread_block
+        );
+        unsafe {
+            self.threads[self.current_thread].blocked_by = thread_block;
+            let yielder = self.yielder.as_ref().unwrap();
+            self.yielder = std::ptr::null();
+            let panic_cell = self.panic_cell.clone();
+            let res = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                let env = std::mem::replace(self, Self::new_fake());
+                yielder.suspend(env)
+            }));
+            match res {
+                Ok(env) => {
+                    let _ = std::mem::replace(self, env);
+                    self.yielder = yielder;
+                }
+                Err(payload) => {
+                    let Some(env) = panic_cell.take() else {
+                        log_no_panic!("Did not recieve env for coroutine unwind, must abort!");
+                        std::process::exit(-1)
+                    };
+                    let _ = std::mem::replace(self, env);
+                    self.yielder = yielder;
+                    std::panic::resume_unwind(payload);
+                }
+            }
+        }
+        assert!(!self.threads[self.current_thread].is_blocked());
+    }
+
+    /// Find the next thread to execute, and set it up to be switched to.
+    ///
+    /// This also handles all the required bookkeeping (unlocking mutexes,
+    /// decrementing semaphores, setting the thread to be unblocked, etc.).
+    /// It is not required that the thread is switched to immediately.
+    fn schedule_next_thread(&mut self) -> ThreadId {
+        // GDB can allow schedule_next_thread to be called twice in a row -
+        // we make sure that this works by immediately fufilling conditions
+        // (relocking mutexes, decrementing semaphores, etc.)!
+        loop {
+            // Try to find a new thread to execute, starting with the thread
+            // following the one currently executing.
+            let mut next_awakening: Option<Instant> = None;
+            for i in 0..self.threads.len() {
+                let thread_id = (self.current_thread + 1 + i) % self.threads.len();
+                let candidate = &mut self.threads[thread_id];
+
+                if !candidate.active {
+                    continue;
+                }
+                match candidate.blocked_by {
+                    ThreadBlock::Sleeping(sleeping_until) => {
+                        if sleeping_until <= Instant::now() {
+                            log_dbg!("Thread {} finished sleeping.", thread_id);
+                            candidate.blocked_by = ThreadBlock::NotBlocked;
+                            return thread_id;
+                        } else {
+                            next_awakening = match next_awakening {
+                                None => Some(sleeping_until),
+                                Some(other) => Some(other.min(sleeping_until)),
+                            };
+                        }
+                    }
+                    ThreadBlock::Mutex(mutex_id) => {
+                        if !self.mutex_state.mutex_is_locked(mutex_id) {
+                            log_dbg!("Thread {} was unblocked due to mutex #{} unlocking, relocking mutex.", thread_id, mutex_id);
+                            self.threads[thread_id].blocked_by = ThreadBlock::NotBlocked;
+                            self.relock_unblocked_mutex_for_thread(thread_id, mutex_id);
+                            return thread_id;
+                        }
+                    }
+                    ThreadBlock::Semaphore(sem) => {
+                        let host_sem_rc: &mut _ = self
+                            .libc_state
+                            .semaphore
+                            .open_semaphores
+                            .get_mut(&sem)
+                            .unwrap();
+                        let mut host_sem = (*host_sem_rc).borrow_mut();
+
+                        if host_sem.value > 0 {
+                            log_dbg!(
+                                "Thread {} has awaken on semaphore {:?} with value {}",
+                                thread_id,
+                                sem,
+                                host_sem.value
+                            );
+                            host_sem.value -= 1;
+                            host_sem.waiting.remove(&self.current_thread);
+                            self.threads[thread_id].blocked_by = ThreadBlock::NotBlocked;
+                            return thread_id;
+                        }
+                    }
+                    ThreadBlock::Condition(cond) => {
+                        let host_cond = self
+                            .libc_state
+                            .pthread
+                            .cond
+                            .condition_variables
+                            .get_mut(&cond)
+                            .unwrap();
+                        let mutex = host_cond.curr_mutex.unwrap();
+                        if host_cond
+                            .waking
+                            .front()
+                            .is_some_and(|waking_thread| *waking_thread == thread_id)
+                            && !self.mutex_state.mutex_is_locked(mutex)
+                        {
+                            log_dbg!("Thread {} is unblocking on cond var {:?}.", thread_id, cond);
+                            host_cond.waking.pop_front();
+                            self.threads[thread_id].blocked_by = ThreadBlock::NotBlocked;
+                            self.relock_unblocked_mutex_for_thread(thread_id, mutex);
+                            return thread_id;
+                        }
+                    }
+                    ThreadBlock::Joining(joinee_thread, ptr) => {
+                        if !self.threads[joinee_thread].active {
+                            log_dbg!(
+                                "Thread {} joining with now finished thread {}.",
+                                self.current_thread,
+                                joinee_thread
+                            );
+                            // Write the return value, unless the pointer to
+                            // write to is null.
+                            if !ptr.is_null() {
+                                self.mem
+                                    .write(ptr, self.threads[joinee_thread].return_value.unwrap());
+                            }
+                            self.threads[thread_id].blocked_by = ThreadBlock::NotBlocked;
+                            return thread_id;
+                        }
+                    }
+                    ThreadBlock::NotBlocked => {
+                        return thread_id;
+                    }
+                    ThreadBlock::WaitingForDebugger(_) => unreachable!(),
+                }
+            }
+
+            // All suitable threads are blocked and at least one is asleep.
+            // Sleep until one of them wakes up.
+            if let Some(next_awakening) = next_awakening {
+                let duration = next_awakening.duration_since(Instant::now());
+                log_dbg!("All threads blocked/asleep, sleeping for {:?}.", duration);
+                std::thread::sleep(duration);
+                // Try again, there should be some thread awake now (or
+                // there will be soon, since timing is approximate).
+                continue;
+            } else {
+                // This should hopefully not happen, but if a thread is
+                // blocked on another thread waiting for a deferred return,
+                // it could.
+                panic!("No active threads, program has deadlocked!");
             }
         }
     }
@@ -1395,6 +1703,90 @@ impl Environment {
             .collect();
 
         generate_binary_load_order(&dylib_graph)
+    }
+
+    /// Run a function using window and options on the parent stack if we are
+    /// inside a coroutine, or run it directly if we aren't. Some
+    /// [window::Window] functions require to be called inside this function.
+    ///
+    /// Android's ABI seems to dislike if certain functions aren't called from
+    /// the main stack. Since corosensei uses seperate stacks to run
+    /// coroutines, Android doesn't recognize it as the main stack, so those
+    /// functions need to be run on the main stack. Unfortunately, there's no
+    /// documentation of which functions need to be called with this, so we
+    /// have to check ourselves.
+    pub fn on_parent_stack_in_coroutine<F, R>(&mut self, f: F) -> R
+    where
+        F: FnOnce(&mut window::Window, &mut options::Options) -> R + Send,
+    {
+        struct WindowWrapper<'a> {
+            window: &'a mut window::Window,
+        }
+        // SAFETY: we're not sending across threads, we're only sending across
+        // the coroutine boundary so it's ok.
+        unsafe impl Send for WindowWrapper<'_> {}
+
+        if !self.yielder.is_null() {
+            unsafe {
+                let yielder = self.yielder.as_ref().unwrap();
+                let wrapped = WindowWrapper {
+                    window: self.window.as_mut().unwrap(),
+                };
+                let res = yielder.on_parent_stack(|| {
+                    let wrapped = wrapped;
+                    wrapped.window.on_main_stack = true;
+                    f(wrapped.window, self.options.as_mut())
+                });
+                self.window.as_mut().unwrap().on_main_stack = false;
+                res
+            }
+        } else {
+            if let Some(w) = self.window.as_mut() {
+                w.on_main_stack = true;
+            }
+            f(self.window.as_mut().unwrap(), self.options.as_mut())
+        }
+    }
+}
+
+impl Drop for Environment {
+    // Clean up all the remaining HostContexts. This isn't strictly required,
+    // since this should only occur after a sucessful panic or the app ending,
+    // but it is a bit cleaner and avoids confusion inside the logs.
+    fn drop(&mut self) {
+        if self.objc.is_null() {
+            return;
+        }
+        if let Some(w) = self.window.as_mut() {
+            w.on_main_stack = false;
+        }
+        if self.threads.is_empty()
+            || self
+                .threads
+                .iter()
+                .all(|thread| thread.host_context.is_none())
+        {
+            ENVIRONMENT_INSTANCE_EXISTS.store(false, std::sync::atomic::Ordering::SeqCst);
+            return;
+        }
+        unsafe {
+            let mut env = std::mem::replace(self, Environment::new_fake());
+            let panic_cell = env.panic_cell.clone();
+            let threads_len = env.threads.len();
+            for i in 0..threads_len {
+                let host_context = env.threads[i].host_context.take();
+                panic_cell.set(Some(env));
+                std::mem::drop(host_context);
+                env = panic_cell.take().unwrap_or_else(|| {
+                    log_no_panic!(
+                        "Did not recieve env from coroutine unwind during drop, must abort!"
+                    );
+                    std::process::exit(-1)
+                });
+            }
+            *self = env;
+        }
+        ENVIRONMENT_INSTANCE_EXISTS.store(false, std::sync::atomic::Ordering::Relaxed);
     }
 }
 

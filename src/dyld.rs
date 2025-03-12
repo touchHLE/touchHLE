@@ -186,6 +186,12 @@ impl Dyld {
     pub const SVC_THREAD_EXIT: u32 = 1;
     /// We reserve this SVC ID for the special return-to-host routine.
     pub const SVC_RETURN_TO_HOST: u32 = 2;
+    // BEFOREMERGE: Note: SVC_THREAD_EXIT is gone because there's should be
+    // no need for it - even pthread_exit should be able to just exit the
+    // thread directly (probably through some special yield), and regular
+    // thread exits just return the coroutine right now.
+    // Keeping it might make stack traces a little bit easier to read though?
+    //
     /// The range of SVC IDs `SVC_LINKED_FUNCTIONS_BASE..` is used to reference
     /// [Self::linked_host_functions] entries.
     pub const SVC_LINKED_FUNCTIONS_BASE: u32 = Self::SVC_RETURN_TO_HOST + 1;
@@ -477,7 +483,7 @@ impl Dyld {
     ) -> Option<HostFunction> {
         match svc {
             Self::SVC_LAZY_LINK => self.do_lazy_link(bins, mem, cpu, svc_pc),
-            Self::SVC_THREAD_EXIT | Self::SVC_RETURN_TO_HOST => unreachable!(), // don't handle here
+            Self::SVC_RETURN_TO_HOST | Self::SVC_THREAD_EXIT => unreachable!(), // don't handle here
             Self::SVC_LINKED_FUNCTIONS_BASE.. => {
                 let f = self
                     .linked_host_functions

@@ -77,6 +77,8 @@ use gles1_on_gl2::GLES1OnGL2Context;
 pub use gles_generic::GLESContext;
 pub use gles_generic::GLES;
 
+use crate::environment::Environment;
+
 /// Labels for [GLES] implementations and an abstraction for constructing them.
 #[derive(Copy, Clone)]
 pub enum GLESImplementation {
@@ -121,10 +123,20 @@ impl GLESImplementation {
 
 /// Try to create an OpenGL ES 1.1 context using the configured strategies,
 /// panicking on failure.
-pub fn create_gles1_ctx(
+pub fn create_gles1_ctx(env: &mut Environment) -> Box<dyn GLESContext> {
+    env.on_parent_stack_in_coroutine(|window, options| {
+        create_gles1_ctx_no_parent_stack(window, options)
+    })
+}
+
+/// Same as [create_gles1_ctx], but without calling
+/// [Environment::on_parent_stack_in_coroutine]. Only should be called by
+/// functions not inside a coroutine that can't use [Environment].
+pub fn create_gles1_ctx_no_parent_stack(
     window: &mut crate::window::Window,
     options: &crate::options::Options,
 ) -> Box<dyn GLESContext> {
+    assert!(window.on_main_stack());
     log!("Creating an OpenGL ES 1.1 context:");
     let list = if let Some(ref preference) = options.gles1_implementation {
         std::slice::from_ref(preference)

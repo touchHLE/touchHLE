@@ -165,3 +165,6 @@ com.ea.fifa10wc.inc: --landscape-left
 
 # Real Racing
 com.firemint.realracing: --landscape-left
+
+# Girls of DOA BlackJack ~ The Kasumi Version ~
+jp.co.tecmo.DOABlackjack: --force-no-status-bar

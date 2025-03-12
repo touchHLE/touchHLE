@@ -124,6 +124,13 @@ impl Bundle {
         }
     }
 
+    pub fn status_bar_hidden(&self) -> bool {
+        self.plist
+            .get("UIStatusBarHidden")
+            .and_then(|v| v.as_boolean())
+            .unwrap_or(false)
+    }
+
     fn icon_path(&self) -> GuestPathBuf {
         if let Some(filename) = self.plist.get("CFBundleIconFile") {
             if filename

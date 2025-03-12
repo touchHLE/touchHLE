@@ -254,6 +254,10 @@ pub(super) fn UIApplicationMain(
             }
         }
 
+        if env.bundle.status_bar_hidden() {
+            let _: () = msg![env; ui_application setStatusBarHidden:true];
+        }
+
         let delegate: id = msg![env; ui_application delegate];
         if delegate != nil {
             // The delegate was created while loading the nib file.

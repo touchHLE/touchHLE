@@ -14,16 +14,18 @@
 use crate::audio::openal as al;
 use crate::audio::openal::al_types::*;
 use crate::audio::openal::alc_types::*;
+use crate::audio::openal::OpenALContext;
+use crate::audio::openal::{OpenAL, OpenALManager};
 use crate::dyld::{export_c_func, FunctionExports, HostDylib};
 use crate::libc::string::strcmp;
 use crate::mem::{ConstPtr, ConstVoidPtr, GuestUSize, MutPtr, MutVoidPtr, Ptr, SafeWrite};
 use crate::Environment;
-use std::collections::HashMap;
-use std::ffi::{CStr, CString};
-use touchHLE_openal_soft_wrapper::{
+use al::{
     ALC_DEVICE_SPECIFIER, ALC_FREQUENCY, ALC_MONO_SOURCES, ALC_REFRESH, ALC_STEREO_SOURCES,
     ALC_SYNC, AL_EXTENSIONS, AL_RENDERER, AL_VENDOR, AL_VERSION,
 };
+use std::collections::HashMap;
+use std::ffi::{CStr, CString};
 
 pub const DYLIB: HostDylib = HostDylib {
     path: "/System/Library/Frameworks/OpenAL.framework/OpenAL",
@@ -36,12 +38,55 @@ pub const DYLIB: HostDylib = HostDylib {
 #[derive(Default)]
 pub struct State {
     devices: HashMap<MutPtr<GuestALCdevice>, *mut ALCdevice>,
-    contexts: HashMap<MutPtr<GuestALCcontext>, *mut ALCcontext>,
+    contexts: ContextMap,
     strings_cache: HashMap<ALenum, ConstPtr<u8>>,
+    current_ctx: MutPtr<GuestALCcontext>,
 }
 impl State {
     fn get(env: &mut Environment) -> &mut Self {
         &mut env.framework_state.openal
+    }
+
+    fn make_current(env: &mut Environment) -> OpenAL<'_> {
+        let state = &mut env.framework_state.openal;
+        state
+            .contexts
+            .get_mut(&state.current_ctx)
+            .unwrap()
+            .make_current(&mut env.openal_manager)
+    }
+}
+
+#[derive(Default)]
+struct ContextMap(HashMap<MutPtr<GuestALCcontext>, OpenALContext>);
+
+impl ContextMap {
+    fn get(&self, guest_ctx: &MutPtr<GuestALCcontext>) -> Option<&OpenALContext> {
+        self.0.get(guest_ctx)
+    }
+
+    fn get_mut(&mut self, guest_ctx: &MutPtr<GuestALCcontext>) -> Option<&mut OpenALContext> {
+        self.0.get_mut(guest_ctx)
+    }
+
+    fn insert(&mut self, k: MutPtr<GuestALCcontext>, v: OpenALContext) {
+        self.0.insert(k, v);
+    }
+
+    fn remove(&mut self, k: &MutPtr<GuestALCcontext>) -> Option<OpenALContext> {
+        self.0.remove(k)
+    }
+
+    fn contains_key(&self, k: &MutPtr<GuestALCcontext>) -> bool {
+        self.0.contains_key(k)
+    }
+
+    fn make_current<'s, 'm: 's>(
+        &'s mut self,
+        guest_ctx: MutPtr<GuestALCcontext>,
+        manager: &'m mut OpenALManager,
+    ) -> OpenAL<'s> {
+        self.get_mut(&guest_ctx).unwrap().make_current(manager)
     }
 }
 
@@ -152,28 +197,37 @@ fn alcCreateContext(
         attr_list_slice.as_ptr() as *const _
     };
 
-    let &host_device = State::get(env).devices.get(&device).unwrap();
+    let state = State::get(env);
+    let &host_device = state.devices.get(&device).unwrap();
 
-    let res = unsafe { al::alcCreateContext(host_device, attr_list_ptr) };
-    if res.is_null() {
-        log_dbg!("alcCreateContext({:?}, NULL) returned NULL", device);
+    let res = unsafe {
+        OpenALContext::new_with_device_and_attrlist(
+            &mut env.openal_manager,
+            host_device,
+            attr_list_ptr,
+        )
+    };
+    let Ok(ctx) = res else {
+        log_dbg!("alcCreateContext({:?}, (...)) returned NULL", device);
         return Ptr::null();
-    }
+    };
 
     let guest_res = env.mem.alloc_and_write(GuestALCcontext { _filler: 0 });
-    State::get(env).contexts.insert(guest_res, res);
+
     log_dbg!(
         "alcCreateContext({:?}, NULL) => {:?} (host: {:?})",
         device,
         guest_res,
-        res,
+        ctx,
     );
+
+    State::get(env).contexts.insert(guest_res, ctx);
     guest_res
 }
 fn alcDestroyContext(env: &mut Environment, context: MutPtr<GuestALCcontext>) {
-    let host_context = State::get(env).contexts.remove(&context).unwrap();
+    let state = State::get(env);
+    let _host_context = state.contexts.remove(&context).unwrap();
     env.mem.free(context.cast());
-    unsafe { al::alcDestroyContext(host_context) };
     log_dbg!("alcDestroyContext({:?})", context);
 }
 
@@ -182,49 +236,39 @@ fn alcProcessContext(env: &mut Environment, context: MutPtr<GuestALCcontext>) {
         log!("alcProcessContext() is called with NULL context, ignoring");
         return;
     }
-    let host_context = State::get(env).contexts.get(&context).copied().unwrap();
-    unsafe { al::alcProcessContext(host_context) }
+    let host_context = State::get(env).contexts.get_mut(&context).unwrap();
+    host_context.ProcessContext()
 }
 fn alcSuspendContext(env: &mut Environment, context: MutPtr<GuestALCcontext>) {
     if context.is_null() {
         log!("alcSuspendContext() is called with NULL context, ignoring");
         return;
     }
-    let host_context = State::get(env).contexts.get(&context).copied().unwrap();
-    unsafe { al::alcSuspendContext(host_context) }
+    let host_context = State::get(env).contexts.get_mut(&context).unwrap();
+    host_context.SuspendContext()
 }
 
 fn alcMakeContextCurrent(env: &mut Environment, context: MutPtr<GuestALCcontext>) -> bool {
-    let host_context = if context.is_null() {
-        std::ptr::null_mut()
+    let res = if context.is_null() || State::get(env).contexts.contains_key(&context) {
+        State::get(env).current_ctx = context;
+        true
     } else {
-        State::get(env).contexts.get(&context).copied().unwrap()
+        false
     };
-    let res = unsafe { al::alcMakeContextCurrent(host_context) };
-    log_dbg!("alcMakeContextCurrent({:?}) => {:?}", context, res);
-    res != al::ALC_FALSE
+    log_dbg!("alcMakeContextCurrent({:?}) => {}", context, res);
+    res
 }
 
 fn alcGetCurrentContext(env: &mut Environment) -> MutPtr<GuestALCcontext> {
-    let host_context = unsafe { al::alcGetCurrentContext() };
-    if host_context.is_null() {
-        Ptr::null()
-    } else {
-        *State::get(env)
-            .contexts
-            .iter()
-            .find(|(&_guest, &host)| host == host_context)
-            .unwrap()
-            .0
-    }
+    State::get(env).current_ctx
 }
 
 fn alcGetContextsDevice(
     env: &mut Environment,
     context: MutPtr<GuestALCcontext>,
 ) -> MutPtr<GuestALCdevice> {
-    let host_context = State::get(env).contexts.get(&context).copied().unwrap();
-    let host_device = unsafe { al::alcGetContextsDevice(host_context) };
+    let host_context = State::get(env).contexts.get(&context).unwrap();
+    let host_device = host_context.GetContextsDevice();
     *State::get(env)
         .devices
         .iter()
@@ -261,49 +305,60 @@ fn alcGetProcAddress(
 
 // === al.h ===
 
-fn alGetError(_env: &mut Environment) -> i32 {
+fn alGetError(env: &mut Environment) -> i32 {
     // Super Monkey Ball tries to use this function (rather than alcGetError) to
     // figure out whether opening the device succeeded. This is not correct and
     // seems to be a bug. Presumably iPhone OS doesn't mind this, but OpenAL
     // Soft returns an error in this case, and the game skips the rest of its
     // audio initialization.
-    if unsafe { al::alcGetCurrentContext() }.is_null() {
+    if State::get(env).current_ctx.is_null() {
         log!("alGetError() called with no current context. Ignoring and returning AL_NO_ERROR for compatibility with Super Monkey Ball.");
         return al::AL_NO_ERROR;
     }
 
-    let res = unsafe { al::alGetError() };
+    let context = State::make_current(env);
+    let res = unsafe { context.GetError() };
     log_dbg!("alGetError() => {:#x}", res);
     res
 }
 
-fn alDistanceModel(_env: &mut Environment, value: ALenum) {
-    unsafe { al::alDistanceModel(value) };
+fn alDistanceModel(env: &mut Environment, value: ALenum) {
+    let context = State::make_current(env);
+    unsafe { context.DistanceModel(value) };
 }
 
 fn alGetEnumValue(env: &mut Environment, enumName: ConstPtr<u8>) -> ALenum {
     let s = env.mem.cstr_at_utf8(enumName).unwrap();
     let ss = CString::new(s).unwrap();
-    let res = unsafe { al::alGetEnumValue(ss.as_ptr()) };
+
+    let state = &mut env.framework_state.openal;
+    let context = state
+        .contexts
+        .make_current(state.current_ctx, &mut env.openal_manager);
+    let res = unsafe { context.GetEnumValue(ss.as_ptr()) };
     log_dbg!("alGetEnumValue({:?}) => {:?}", s, res);
     res
 }
 
-fn alIsBuffer(_env: &mut Environment, buffer: ALuint) -> ALboolean {
-    unsafe { al::alIsBuffer(buffer) }
+fn alIsBuffer(env: &mut Environment, buffer: ALuint) -> ALboolean {
+    let context = State::make_current(env);
+    unsafe { context.IsBuffer(buffer) }
 }
 
 fn alGetBufferi(env: &mut Environment, buffer: ALuint, param: ALenum, value: MutPtr<ALint>) {
     let value = env.mem.ptr_at(value, 1);
-    unsafe { al::alGetBufferi(buffer, param, value) }
+    let context = State::make_current(env);
+    unsafe { context.GetBufferi(buffer, param, value) }
 }
 
-fn alIsSource(_env: &mut Environment, source: ALuint) -> ALboolean {
-    unsafe { al::alIsSource(source) }
+fn alIsSource(env: &mut Environment, source: ALuint) -> ALboolean {
+    let context = State::make_current(env);
+    unsafe { context.IsSource(source) }
 }
 
-fn alEnable(_env: &mut Environment, capability: ALenum) {
-    unsafe { al::alEnable(capability) };
+fn alEnable(env: &mut Environment, capability: ALenum) {
+    let context = State::make_current(env);
+    unsafe { context.Enable(capability) };
 }
 
 fn alGetString(env: &mut Environment, param: ALenum) -> ConstPtr<u8> {
@@ -334,44 +389,45 @@ fn alGetString(env: &mut Environment, param: ALenum) -> ConstPtr<u8> {
     res
 }
 
-fn alListenerf(_env: &mut Environment, param: ALenum, value: ALfloat) {
-    unsafe { al::alListenerf(param, value) };
+fn alListenerf(env: &mut Environment, param: ALenum, value: ALfloat) {
+    let context = State::make_current(env);
+    unsafe { context.Listenerf(param, value) };
 }
 fn alListenerfv(env: &mut Environment, param: ALenum, values: ConstPtr<ALfloat>) {
     // we assume that at least 1 parameter should be passed
     let values = env.mem.ptr_at(values, 1);
-    unsafe { al::alListenerfv(param, values) };
+    let context = State::make_current(env);
+    unsafe { context.Listenerfv(param, values) };
 }
 fn alListener3f(
-    _env: &mut Environment,
+    env: &mut Environment,
 
     param: ALenum,
     value1: ALfloat,
     value2: ALfloat,
     value3: ALfloat,
 ) {
-    unsafe { al::alListener3f(param, value1, value2, value3) };
+    let context = State::make_current(env);
+    unsafe { context.Listener3f(param, value1, value2, value3) };
 }
-fn alListeneri(_env: &mut Environment, param: ALenum, value: ALint) {
-    unsafe { al::alListeneri(param, value) };
+fn alListeneri(env: &mut Environment, param: ALenum, value: ALint) {
+    let context = State::make_current(env);
+    unsafe { context.Listeneri(param, value) };
 }
-fn alListener3i(
-    _env: &mut Environment,
-
-    param: ALenum,
-    value1: ALint,
-    value2: ALint,
-    value3: ALint,
-) {
-    unsafe { al::alListener3i(param, value1, value2, value3) };
+fn alListener3i(env: &mut Environment, param: ALenum, value1: ALint, value2: ALint, value3: ALint) {
+    let context = State::make_current(env);
+    unsafe { context.Listener3i(param, value1, value2, value3) };
 }
 fn alListeneriv(env: &mut Environment, param: ALenum, values: ConstPtr<ALint>) {
     let values = env.mem.ptr_at(values, 3); // upper bound
-    unsafe { al::alListeneriv(param, values) };
+    let context = State::make_current(env);
+    unsafe { context.Listeneriv(param, values) };
 }
 
 fn alGetListenerf(env: &mut Environment, param: ALenum, value: MutPtr<ALfloat>) {
-    unsafe { al::alGetListenerf(param, env.mem.ptr_at_mut(value, 1)) };
+    let value = env.mem.ptr_at_mut(value, 1);
+    let context = State::make_current(env);
+    unsafe { context.GetListenerf(param, value) };
 }
 fn alGetListener3f(
     env: &mut Environment,
@@ -381,18 +437,22 @@ fn alGetListener3f(
     value2: MutPtr<ALfloat>,
     value3: MutPtr<ALfloat>,
 ) {
+    let context = State::make_current(env);
     let mut values = [0.0; 3];
-    unsafe { al::alGetListener3f(param, &mut values[0], &mut values[1], &mut values[2]) };
+    unsafe { context.GetListener3f(param, &mut values[0], &mut values[1], &mut values[2]) };
     env.mem.write(value1, values[0]);
     env.mem.write(value2, values[1]);
     env.mem.write(value3, values[2]);
 }
 fn alGetListenerfv(env: &mut Environment, param: ALenum, values: MutPtr<ALfloat>) {
     let values = env.mem.ptr_at_mut(values, 3); // upper bound
-    unsafe { al::alGetListenerfv(param, values) };
+    let context = State::make_current(env);
+    unsafe { context.GetListenerfv(param, values) };
 }
 fn alGetListeneri(env: &mut Environment, param: ALenum, value: MutPtr<ALint>) {
-    unsafe { al::alGetListeneri(param, env.mem.ptr_at_mut(value, 1)) };
+    let value = env.mem.ptr_at_mut(value, 1);
+    let context = State::make_current(env);
+    unsafe { context.GetListeneri(param, value) };
 }
 fn alGetListener3i(
     env: &mut Environment,
@@ -403,65 +463,77 @@ fn alGetListener3i(
     value3: MutPtr<ALint>,
 ) {
     let mut values = [0; 3];
-    unsafe { al::alGetListener3i(param, &mut values[0], &mut values[1], &mut values[2]) };
+    let context = State::make_current(env);
+    unsafe { context.GetListener3i(param, &mut values[0], &mut values[1], &mut values[2]) };
     env.mem.write(value1, values[0]);
     env.mem.write(value2, values[1]);
     env.mem.write(value3, values[2]);
 }
 fn alGetListeneriv(env: &mut Environment, param: ALenum, values: MutPtr<ALint>) {
     let values = env.mem.ptr_at_mut(values, 3); // upper bound
-    unsafe { al::alGetListeneriv(param, values) };
+    let context = State::make_current(env);
+    unsafe { context.GetListeneriv(param, values) };
 }
 
 fn alGenSources(env: &mut Environment, n: ALsizei, sources: MutPtr<ALuint>) {
     let n_usize: GuestUSize = n.try_into().unwrap();
     let sources = env.mem.ptr_at_mut(sources, n_usize);
-    unsafe { al::alGenSources(n, sources) };
+    let context = State::make_current(env);
+    unsafe { context.GenSources(n, sources) };
 }
 fn alDeleteSources(env: &mut Environment, n: ALsizei, sources: ConstPtr<ALuint>) {
     let n_usize: GuestUSize = n.try_into().unwrap();
     let sources = env.mem.ptr_at(sources, n_usize);
-    unsafe { al::alDeleteSources(n, sources) };
+    let context = State::make_current(env);
+    unsafe { context.DeleteSources(n, sources) };
 }
 
-fn alSourcef(_env: &mut Environment, source: ALuint, param: ALenum, value: ALfloat) {
-    unsafe { al::alSourcef(source, param, value) };
+fn alSourcef(env: &mut Environment, source: ALuint, param: ALenum, value: ALfloat) {
+    let context = State::make_current(env);
+    unsafe { context.Sourcef(source, param, value) };
 }
 fn alSourcefv(env: &mut Environment, source: ALuint, param: ALenum, values: ConstPtr<ALfloat>) {
     // we assume that at least 1 parameter should be passed
     let values = env.mem.ptr_at(values, 1);
-    unsafe { al::alSourcefv(source, param, values) };
+    let context = State::make_current(env);
+    unsafe { context.Sourcefv(source, param, values) };
 }
 fn alSource3f(
-    _env: &mut Environment,
+    env: &mut Environment,
     source: ALuint,
     param: ALenum,
     value1: ALfloat,
     value2: ALfloat,
     value3: ALfloat,
 ) {
-    unsafe { al::alSource3f(source, param, value1, value2, value3) };
+    let context = State::make_current(env);
+    unsafe { context.Source3f(source, param, value1, value2, value3) };
 }
-fn alSourcei(_env: &mut Environment, source: ALuint, param: ALenum, value: ALint) {
-    unsafe { al::alSourcei(source, param, value) };
+fn alSourcei(env: &mut Environment, source: ALuint, param: ALenum, value: ALint) {
+    let context = State::make_current(env);
+    unsafe { context.Sourcei(source, param, value) };
 }
 fn alSource3i(
-    _env: &mut Environment,
+    env: &mut Environment,
     source: ALuint,
     param: ALenum,
     value1: ALint,
     value2: ALint,
     value3: ALint,
 ) {
-    unsafe { al::alSource3i(source, param, value1, value2, value3) };
+    let context = State::make_current(env);
+    unsafe { context.Source3i(source, param, value1, value2, value3) };
 }
 fn alSourceiv(env: &mut Environment, source: ALuint, param: ALenum, values: ConstPtr<ALint>) {
     let values = env.mem.ptr_at(values, 3); // upper bound
-    unsafe { al::alSourceiv(source, param, values) };
+    let context = State::make_current(env);
+    unsafe { context.Sourceiv(source, param, values) };
 }
 
 fn alGetSourcef(env: &mut Environment, source: ALuint, param: ALenum, value: MutPtr<ALfloat>) {
-    unsafe { al::alGetSourcef(source, param, env.mem.ptr_at_mut(value, 1)) };
+    let value = env.mem.ptr_at_mut(value, 1);
+    let context = State::make_current(env);
+    unsafe { context.GetSourcef(source, param, value) };
 }
 fn alGetSource3f(
     env: &mut Environment,
@@ -472,8 +544,9 @@ fn alGetSource3f(
     value3: MutPtr<ALfloat>,
 ) {
     let mut values = [0.0; 3];
+    let context = State::make_current(env);
     unsafe {
-        al::alGetSource3f(
+        context.GetSource3f(
             source,
             param,
             &mut values[0],
@@ -487,10 +560,13 @@ fn alGetSource3f(
 }
 fn alGetSourcefv(env: &mut Environment, source: ALuint, param: ALenum, values: MutPtr<ALfloat>) {
     let values = env.mem.ptr_at_mut(values, 3); // upper bound
-    unsafe { al::alGetSourcefv(source, param, values) };
+    let context = State::make_current(env);
+    unsafe { context.GetSourcefv(source, param, values) };
 }
 fn alGetSourcei(env: &mut Environment, source: ALuint, param: ALenum, value: MutPtr<ALint>) {
-    unsafe { al::alGetSourcei(source, param, env.mem.ptr_at_mut(value, 1)) };
+    let value = env.mem.ptr_at_mut(value, 1);
+    let context = State::make_current(env);
+    unsafe { context.GetSourcei(source, param, value) };
 }
 fn alGetSource3i(
     env: &mut Environment,
@@ -501,8 +577,9 @@ fn alGetSource3i(
     value3: MutPtr<ALint>,
 ) {
     let mut values = [0; 3];
+    let context = State::make_current(env);
     unsafe {
-        al::alGetSource3i(
+        context.GetSource3i(
             source,
             param,
             &mut values[0],
@@ -516,20 +593,25 @@ fn alGetSource3i(
 }
 fn alGetSourceiv(env: &mut Environment, source: ALuint, param: ALenum, values: MutPtr<ALint>) {
     let values = env.mem.ptr_at_mut(values, 3); // upper bound
-    unsafe { al::alGetSourceiv(source, param, values) };
+    let context = State::make_current(env);
+    unsafe { context.GetSourceiv(source, param, values) };
 }
 
-fn alSourcePlay(_env: &mut Environment, source: ALuint) {
-    unsafe { al::alSourcePlay(source) };
+fn alSourcePlay(env: &mut Environment, source: ALuint) {
+    let context = State::make_current(env);
+    unsafe { context.SourcePlay(source) };
 }
-fn alSourcePause(_env: &mut Environment, source: ALuint) {
-    unsafe { al::alSourcePause(source) };
+fn alSourcePause(env: &mut Environment, source: ALuint) {
+    let context = State::make_current(env);
+    unsafe { context.SourcePause(source) };
 }
-fn alSourceStop(_env: &mut Environment, source: ALuint) {
-    unsafe { al::alSourceStop(source) };
+fn alSourceStop(env: &mut Environment, source: ALuint) {
+    let context = State::make_current(env);
+    unsafe { context.SourceStop(source) };
 }
-fn alSourceRewind(_env: &mut Environment, source: ALuint) {
-    unsafe { al::alSourceRewind(source) };
+fn alSourceRewind(env: &mut Environment, source: ALuint) {
+    let context = State::make_current(env);
+    unsafe { context.SourceRewind(source) };
 }
 
 fn alSourceQueueBuffers(
@@ -540,7 +622,8 @@ fn alSourceQueueBuffers(
 ) {
     let nb_usize: GuestUSize = nb.try_into().unwrap();
     let buffers = env.mem.ptr_at(buffers, nb_usize);
-    unsafe { al::alSourceQueueBuffers(source, nb, buffers) }
+    let context = State::make_current(env);
+    unsafe { context.SourceQueueBuffers(source, nb, buffers) }
 }
 fn alSourceUnqueueBuffers(
     env: &mut Environment,
@@ -563,9 +646,13 @@ fn alSourceUnqueueBuffers(
     // Limiting the number dequeued seems to be an effective workaround for the
     // apps that have been tested. That sample code isn't interested in actually
     // using the returned buffer IDs, so it's no problem that we write too few.
+    let state = &mut env.framework_state.openal;
+    let context = state
+        .contexts
+        .make_current(state.current_ctx, &mut env.openal_manager);
     let buffers_processed = {
         let mut val = 0;
-        unsafe { al::alGetSourcei(source, al::AL_BUFFERS_PROCESSED, &mut val) };
+        unsafe { context.GetSourcei(source, al::AL_BUFFERS_PROCESSED, &mut val) };
         val
     };
     let nb = if buffers_processed < nb {
@@ -577,18 +664,20 @@ fn alSourceUnqueueBuffers(
 
     let nb_usize: GuestUSize = nb.try_into().unwrap();
     let buffers = env.mem.ptr_at_mut(buffers, nb_usize);
-    unsafe { al::alSourceUnqueueBuffers(source, nb, buffers) }
+    unsafe { context.SourceUnqueueBuffers(source, nb, buffers) }
 }
 
 fn alGenBuffers(env: &mut Environment, n: ALsizei, buffers: MutPtr<ALuint>) {
     let n_usize: GuestUSize = n.try_into().unwrap();
     let buffers = env.mem.ptr_at_mut(buffers, n_usize);
-    unsafe { al::alGenBuffers(n, buffers) };
+    let context = State::make_current(env);
+    unsafe { context.GenBuffers(n, buffers) };
 }
 fn alDeleteBuffers(env: &mut Environment, n: ALsizei, buffers: ConstPtr<ALuint>) {
     let n_usize: GuestUSize = n.try_into().unwrap();
     let buffers = env.mem.ptr_at(buffers, n_usize);
-    unsafe { al::alDeleteBuffers(n, buffers) };
+    let context = State::make_current(env);
+    unsafe { context.DeleteBuffers(n, buffers) };
 }
 
 fn alBufferData(
@@ -606,7 +695,8 @@ fn alBufferData(
         let data_slice = env.mem.bytes_at(data.cast(), size_usize);
         data_slice.as_ptr() as *const _
     };
-    unsafe { al::alBufferData(buffer, format, data_ptr, size, samplerate) };
+    let context = State::make_current(env);
+    unsafe { context.BufferData(buffer, format, data_ptr, size, samplerate) };
 }
 
 /// This is an Apple extension that treats the data passed as a static buffer
@@ -634,8 +724,9 @@ fn alcMacOSXGetMixerOutputRate(_env: &mut Environment) -> ALdouble {
     0.0
 }
 
-fn alDopplerFactor(_env: &mut Environment, value: ALfloat) {
-    unsafe { al::alDopplerFactor(value) };
+fn alDopplerFactor(env: &mut Environment, value: ALfloat) {
+    let context = State::make_current(env);
+    unsafe { context.DopplerFactor(value) };
 }
 
 fn alDopplerVelocity(env: &mut Environment, value: ALfloat) {
@@ -652,11 +743,13 @@ fn alDopplerVelocity(env: &mut Environment, value: ALfloat) {
         assert_eq!(value, 0.0);
         return;
     }
-    unsafe { al::alDopplerVelocity(value) };
+    let context = State::make_current(env);
+    unsafe { context.DopplerVelocity(value) };
 }
 
-fn alSpeedOfSound(_env: &mut Environment, value: ALfloat) {
-    unsafe { al::alSpeedOfSound(value) };
+fn alSpeedOfSound(env: &mut Environment, value: ALfloat) {
+    let context = State::make_current(env);
+    unsafe { context.SpeedOfSound(value) };
 }
 
 // TODO: more functions

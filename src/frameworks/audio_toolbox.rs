@@ -5,8 +5,7 @@
  */
 //! The Audio Toolbox framework.
 
-use crate::audio::openal as al;
-use crate::audio::openal::alc_types::{ALCcontext, ALCdevice};
+use crate::audio::openal::{OpenAL, OpenALContext, OpenALManager};
 
 /// Macro for checking if an argument is null and returning `paramErr` if so.
 /// This seems to be what the real Audio Toolbox does, and some apps rely on it.
@@ -52,42 +51,33 @@ pub struct State {
     audio_queue: audio_queue::State,
     audio_components: audio_components::State,
     audio_session: audio_session::State,
-    al_device_and_context: Option<(*mut ALCdevice, *mut ALCcontext)>,
+    al_context: LazyALContext,
 }
 impl State {
-    pub fn make_al_context_current(&mut self) -> ContextManager {
-        if self.al_device_and_context.is_none() {
-            let device = unsafe { al::alcOpenDevice(std::ptr::null()) };
-            assert!(!device.is_null());
-            let context = unsafe { al::alcCreateContext(device, std::ptr::null()) };
-            assert!(!context.is_null());
-            log_dbg!(
-                "New internal OpenAL device ({:?}) and context ({:?})",
-                device,
-                context
-            );
-            self.al_device_and_context = Some((device, context));
+    pub fn make_al_context_current<'s, 'manager: 's>(
+        &'s mut self,
+        manager: &'manager mut OpenALManager,
+    ) -> OpenAL<'s> {
+        self.al_context.make_al_context_current(manager)
+    }
+}
+
+#[derive(Default)]
+pub struct LazyALContext(Option<OpenALContext>);
+
+impl LazyALContext {
+    pub fn make_al_context_current<'s, 'manager: 's>(
+        &'s mut self,
+        manager: &'manager mut OpenALManager,
+    ) -> OpenAL<'s> {
+        self.get_context(manager).make_current(manager)
+    }
+    pub fn get_context(&mut self, manager: &mut OpenALManager) -> &mut OpenALContext {
+        if self.0.is_none() {
+            let context = OpenALContext::new(manager).unwrap();
+            log_dbg!("New internal OpenAL context ({:?})", context);
+            self.0 = Some(context);
         }
-        let (device, context) = self.al_device_and_context.unwrap();
-        assert!(!device.is_null() && !context.is_null());
-
-        // This object will make sure the existing context, which will belong
-        // to the guest app, is restored once we're done.
-        ContextManager::make_active(context)
-    }
-}
-
-#[must_use]
-pub struct ContextManager(*mut ALCcontext);
-impl ContextManager {
-    pub fn make_active(new_context: *mut ALCcontext) -> ContextManager {
-        let old_context = unsafe { al::alcGetCurrentContext() };
-        assert!(unsafe { al::alcMakeContextCurrent(new_context) } == al::ALC_TRUE);
-        ContextManager(old_context)
-    }
-}
-impl Drop for ContextManager {
-    fn drop(&mut self) {
-        assert!(unsafe { al::alcMakeContextCurrent(self.0) } == al::ALC_TRUE)
+        self.0.as_mut().unwrap()
     }
 }

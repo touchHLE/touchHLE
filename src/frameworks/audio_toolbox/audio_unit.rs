@@ -9,12 +9,8 @@
 
 use std::time::Instant;
 
-use touchHLE_openal_soft_wrapper::al_types::{ALuint, ALvoid};
-use touchHLE_openal_soft_wrapper::{
-    alBufferData, alDeleteBuffers, alDeleteSources, alGenBuffers, alGenSources, alGetError,
-    alGetSourcei, alSourcePlay, alSourceQueueBuffers, alSourceUnqueueBuffers, AL_BUFFERS_PROCESSED,
-    AL_PLAYING, AL_SOURCE_STATE,
-};
+use crate::audio::openal::al_types::{ALuint, ALvoid};
+use crate::audio::openal::{AL_BUFFERS_PROCESSED, AL_PLAYING, AL_SOURCE_STATE};
 
 use crate::abi::CallFromHost;
 use crate::dyld::FunctionExports;
@@ -202,13 +198,16 @@ fn AudioUnitGetProperty(
 }
 
 fn AudioOutputUnitStart(env: &mut Environment, ci: AudioUnit) -> OSStatus {
-    let _context_manager = env.framework_state.audio_toolbox.make_al_context_current();
+    let context = env
+        .framework_state
+        .audio_toolbox
+        .make_al_context_current(&mut env.openal_manager);
 
     let mut source: ALuint = 0;
     unsafe {
-        alGenSources(1, &mut source);
-        alSourcePlay(source);
-        assert_eq!(alGetError(), 0);
+        context.GenSources(1, &mut source);
+        context.SourcePlay(source);
+        assert_eq!(context.GetError(), 0);
     }
 
     let audio_components_state = audio_components::State::get(&mut env.framework_state);
@@ -226,9 +225,12 @@ fn AudioOutputUnitStart(env: &mut Environment, ci: AudioUnit) -> OSStatus {
 }
 
 fn AudioOutputUnitStop(env: &mut Environment, ci: AudioUnit) -> OSStatus {
-    let _context_manager = env.framework_state.audio_toolbox.make_al_context_current();
+    let at_state = &mut env.framework_state.audio_toolbox;
+    let context = at_state
+        .al_context
+        .make_al_context_current(&mut env.openal_manager);
 
-    let audio_components_state = audio_components::State::get(&mut env.framework_state);
+    let audio_components_state = &mut at_state.audio_components;
 
     let result = if let Some(audio_unit_state) = audio_components_state
         .audio_component_instances
@@ -239,8 +241,8 @@ fn AudioOutputUnitStop(env: &mut Environment, ci: AudioUnit) -> OSStatus {
 
         if let Some(al_source) = audio_unit_state.al_source {
             unsafe {
-                alDeleteSources(1, &al_source);
-                assert_eq!(alGetError(), 0);
+                context.DeleteSources(1, &al_source);
+                assert_eq!(context.GetError(), 0);
             }
         }
         audio_unit_state.al_source = None;
@@ -259,14 +261,17 @@ pub fn render_audio_unit(env: &mut Environment, audio_unit: AudioUnit) {
         return;
     }
 
-    let _context_manager = env.framework_state.audio_toolbox.make_al_context_current();
+    let at_state = &mut env.framework_state.audio_toolbox;
+    let context = at_state
+        .al_context
+        .make_al_context_current(&mut env.openal_manager);
 
     let audio_session::State {
         current_hardware_sample_rate,
         ..
-    } = env.framework_state.audio_toolbox.audio_session;
+    } = at_state.audio_session;
 
-    let audio_components_state = audio_components::State::get(&mut env.framework_state);
+    let audio_components_state = &mut at_state.audio_components;
     let audio_unit_host_object = audio_components_state
         .audio_component_instances
         .get_mut(&audio_unit)
@@ -312,14 +317,14 @@ pub fn render_audio_unit(env: &mut Environment, audio_unit: AudioUnit) {
     let mut al_buffers = Vec::new();
     unsafe {
         let mut buffers_processed = 0;
-        alGetSourcei(al_source, AL_BUFFERS_PROCESSED, &mut buffers_processed);
+        context.GetSourcei(al_source, AL_BUFFERS_PROCESSED, &mut buffers_processed);
         while buffers_processed > 0 {
             let mut al_buffer = 0;
-            alSourceUnqueueBuffers(al_source, 1, &mut al_buffer);
+            context.SourceUnqueueBuffers(al_source, 1, &mut al_buffer);
             al_buffers.push(al_buffer);
-            alGetSourcei(al_source, AL_BUFFERS_PROCESSED, &mut buffers_processed);
+            context.GetSourcei(al_source, AL_BUFFERS_PROCESSED, &mut buffers_processed);
         }
-        assert_eq!(alGetError(), 0);
+        assert_eq!(context.GetError(), 0);
     }
 
     let now = Instant::now();
@@ -402,6 +407,11 @@ pub fn render_audio_unit(env: &mut Environment, audio_unit: AudioUnit) {
         ),
     );
 
+    let at_state = &mut env.framework_state.audio_toolbox;
+    let context = at_state
+        .al_context
+        .make_al_context_current(&mut env.openal_manager);
+
     let (al_format, _sample_rate, processed_data) =
         decode_buffer(&env.mem, &stream_format, buffer1Data.cast(), buffer_size);
 
@@ -409,33 +419,33 @@ pub fn render_audio_unit(env: &mut Environment, audio_unit: AudioUnit) {
         // Get an unqueued buffer or create a new one
         let al_buffer = al_buffers.pop().unwrap_or_else(|| {
             let mut al_buffer = 0;
-            alGenBuffers(1, &mut al_buffer);
+            context.GenBuffers(1, &mut al_buffer);
             al_buffer
         });
 
-        alBufferData(
+        context.BufferData(
             al_buffer,
             al_format,
             processed_data.as_ptr() as *const ALvoid,
             processed_data.len().try_into().unwrap(),
             sample_rate as i32,
         );
-        alSourceQueueBuffers(al_source, 1, &al_buffer);
+        context.SourceQueueBuffers(al_source, 1, &al_buffer);
 
         let mut al_source_state = 0;
-        alGetSourcei(al_source, AL_SOURCE_STATE, &mut al_source_state);
+        context.GetSourcei(al_source, AL_SOURCE_STATE, &mut al_source_state);
         if al_source_state != AL_PLAYING {
-            alSourcePlay(al_source);
+            context.SourcePlay(al_source);
         }
 
         // TODO: Play buffer 2 (In RE4 its the same as buffer 1 though)
 
         // Clear unused buffers
         if !al_buffers.is_empty() {
-            alDeleteBuffers(al_buffers.len() as i32, al_buffers.as_ptr());
+            context.DeleteBuffers(al_buffers.len() as i32, al_buffers.as_ptr());
         }
 
-        assert_eq!(alGetError(), 0);
+        assert_eq!(context.GetError(), 0);
     }
 
     // TODO: Do something with the action flags?

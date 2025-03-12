@@ -57,6 +57,7 @@ pub struct Options {
     pub popup_errors: bool,
     pub dumping_options: DumpingOptions,
     pub dumping_file: PathBuf,
+    pub force_no_status_bar: bool,
 }
 
 impl Default for Options {
@@ -85,6 +86,7 @@ impl Default for Options {
             popup_errors: true,
             dumping_options: Default::default(),
             dumping_file: crate::paths::user_data_base_path().join("DUMP.txt"),
+            force_no_status_bar: false,
         }
     }
 }
@@ -214,6 +216,8 @@ impl Options {
             self.dumping_options = parse_dump_options(values)?;
         } else if let Some(path) = arg.strip_prefix("--dump-file=") {
             self.dumping_file = crate::paths::user_data_base_path().join(path);
+        } else if arg == "--force-no-status-bar" {
+            self.force_no_status_bar = true;
         } else {
             return Ok(false);
         };

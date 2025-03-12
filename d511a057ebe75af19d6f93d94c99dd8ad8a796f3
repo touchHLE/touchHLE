@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a6bfb9a0_65a415c3",
+        "filename": "src/environment.rs",
+        "patchSetId": 8
+      },
+      "lineNbr": 396,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-03-12T23:19:22Z",
+      "side": 1,
+      "message": "you should update this part after https://review.gerrithub.io/c/touchHLE/touchHLE/+/1203713",
+      "revId": "d511a057ebe75af19d6f93d94c99dd8ad8a796f3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

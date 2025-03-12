@@ -31,6 +31,14 @@ macro_rules! log {
     }
 }
 
+/// Same as [log], but silently fails on panic instead of
+/// panicking.
+macro_rules! log_no_panic {
+    ($($arg:tt)+) => {
+        echo_no_panic!("{}: {}", module_path!(), format_args!($($arg)+));
+    }
+}
+
 /// Like [log], but prints the message only if debugging is enabled for the
 /// module where it is used. This can be used for verbose things only needed
 /// when debugging.
@@ -87,6 +95,18 @@ macro_rules! echo {
 
             use std::io::Write;
             let _ = $crate::log::get_log_file().write_all(b"\n");
+        }
+    }
+}
+
+/// Same as [echo], but silently fails on panic instead of
+/// panicking.
+macro_rules! echo_no_panic {
+    ($($arg:tt)*) => {
+        {
+            let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                echo!($($arg)*);
+            }));
         }
     }
 }

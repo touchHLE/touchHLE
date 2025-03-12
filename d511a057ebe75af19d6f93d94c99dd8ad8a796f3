@@ -16,6 +16,24 @@
       "message": "you should update this part after https://review.gerrithub.io/c/touchHLE/touchHLE/+/1203713",
       "revId": "d511a057ebe75af19d6f93d94c99dd8ad8a796f3",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d299d5b5_6c84eb51",
+        "filename": "src/environment.rs",
+        "patchSetId": 8
+      },
+      "lineNbr": 396,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-03-12T23:21:34Z",
+      "side": 1,
+      "message": "i.e. lines 394 - 398 should be removed here now",
+      "parentUuid": "a6bfb9a0_65a415c3",
+      "revId": "d511a057ebe75af19d6f93d94c99dd8ad8a796f3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

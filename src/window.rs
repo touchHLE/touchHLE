@@ -13,16 +13,18 @@
 //! will be needed for the runtime of the app.
 
 use crate::gles::present::present_frame;
-use crate::gles::{create_gles1_ctx, GLESContext, GLES};
+use crate::gles::{create_gles1_ctx_no_parent_stack, GLESContext, GLES};
 use crate::image::Image;
 use crate::matrix::Matrix;
 use crate::options::Options;
+use crate::Environment;
 use sdl2::mouse::MouseButton;
 use sdl2::pixels::PixelFormatEnum;
 use sdl2::surface::Surface;
 use std::collections::{HashMap, VecDeque};
 use std::env;
 use std::f32::consts::FRAC_PI_2;
+use std::ffi::CStr;
 use std::num::NonZeroU32;
 use std::time::{Duration, Instant};
 
@@ -168,7 +170,13 @@ pub struct Window {
     virtual_cursor_last: Option<(f32, f32, bool, bool)>,
     virtual_cursor_last_unsticky: Option<(f32, f32, Instant)>,
     virtual_accelerometer_last: Option<(f32, f32, bool)>,
+    /// Whether or not we are on the "main" environment stack (rather than
+    /// a coroutine stack). Checked in various functions to make sure that
+    /// certain SDL functions (that call JNI functions) are on the main
+    /// stack on Android.
+    pub(super) on_main_stack: bool,
 }
+
 impl Window {
     /// Returns [true] if touchHLE is running on a device where we should always
     /// display fullscreen, but SDL2 will let us control the orientation, i.e.
@@ -306,13 +314,14 @@ impl Window {
             virtual_cursor_last: None,
             virtual_cursor_last_unsticky: None,
             virtual_accelerometer_last: None,
+            on_main_stack: true,
         };
 
         // Set up OpenGL ES context used for splash screen and app UI rendering
         // (see src/frameworks/core_animation/composition.rs). OpenGL ES is used
         // because SDL2 won't let us use more than one graphics API in the same
         // window, and we also need OpenGL ES for the app's own rendering.
-        let mut gl_ins = create_gles1_ctx(&mut window, options);
+        let mut gl_ins = create_gles1_ctx_no_parent_stack(&mut window, options);
         {
             let gl_ctx = gl_ins.make_current(&mut window);
             log!("Driver info: {}", unsafe { gl_ctx.driver_description() });
@@ -334,6 +343,7 @@ impl Window {
     /// Since polling can be quite expensive, this function will skip it if it
     /// was called too recently.
     pub fn poll_for_events(&mut self, options: &Options) {
+        assert!(self.on_main_stack);
         let now = Instant::now();
         // poll roughly twice per frame to try to avoid missing frames sometimes
         if now.duration_since(self.last_polled) < Duration::from_secs_f64(1.0 / 120.0) {
@@ -1066,6 +1076,7 @@ impl Window {
     /// content appears upright. On a mobile device, this might do something
     /// else, because the user can physically rotate the screen.
     pub fn rotate_device(&mut self, new_orientation: DeviceOrientation) {
+        assert!(self.on_main_stack);
         if new_orientation == self.device_orientation {
             return;
         }
@@ -1202,13 +1213,86 @@ impl Window {
         self.video_ctx.is_screen_saver_enabled()
     }
     pub fn set_screen_saver_enabled(&mut self, enabled: bool) {
+        assert!(self.on_main_stack);
         match enabled {
             true => self.video_ctx.enable_screen_saver(),
             false => self.video_ctx.disable_screen_saver(),
         }
     }
+
+    pub fn locales_iterator(&self) -> LocaleIter {
+        assert!(self.on_main_stack);
+        unsafe { LocaleIter::from_sdl_locales(sdl2_sys::SDL_GetPreferredLocales()) }
+    }
+
+    pub fn start_text_input(&self) {
+        assert!(self.on_main_stack);
+        unsafe {
+            sdl2_sys::SDL_StartTextInput();
+        }
+    }
+    pub fn stop_text_input(&self) {
+        assert!(self.on_main_stack);
+        unsafe {
+            sdl2_sys::SDL_StopTextInput();
+        }
+    }
+
+    pub fn on_main_stack(&self) -> bool {
+        self.on_main_stack
+    }
 }
 
-pub fn open_url(url: &str) -> Result<(), String> {
-    sdl2::url::open_url(url).map_err(|e| e.to_string())
+pub fn open_url(env: &mut Environment, url: &str) -> Result<(), String> {
+    env.on_parent_stack_in_coroutine(|_, _| sdl2::url::open_url(url).map_err(|e| e.to_string()))
+}
+
+// Unfortunately Rust-SDL2 doesn't provide a wrapper for this yet, so we have to
+// make our own.
+pub struct LocaleIter {
+    // Owned by object
+    arr: *mut sdl2_sys::SDL_Locale,
+    off: usize,
+}
+
+impl LocaleIter {
+    /// Makes an iterator over SDL locales.
+    /// SAFETY: locales must be an index into
+    /// [sdl2_sys::SDL_GetPreferredLocales()].
+    unsafe fn from_sdl_locales(locales: *mut sdl2_sys::SDL_Locale) -> Self {
+        Self {
+            arr: locales,
+            off: 0,
+        }
+    }
+    pub fn next(&mut self) -> Option<Locale<'_>> {
+        let item = unsafe { self.arr.offset(self.off.try_into().unwrap()).read() };
+        if item.language.is_null() {
+            None
+        } else {
+            self.off += 1;
+            unsafe {
+                Some(Locale {
+                    language: CStr::from_ptr(item.language),
+                    country: if item.country.is_null() {
+                        None
+                    } else {
+                        Some(CStr::from_ptr(item.country))
+                    },
+                })
+            }
+        }
+    }
+}
+
+impl Drop for LocaleIter {
+    fn drop(&mut self) {
+        unsafe { sdl2_sys::SDL_free(self.arr.cast()) };
+    }
+}
+
+#[allow(unused)]
+pub struct Locale<'a> {
+    pub language: &'a CStr,
+    pub country: Option<&'a CStr>,
 }

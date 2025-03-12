@@ -187,3 +187,9 @@ Other options:
 
         Enabling this option may solve some rendering issues, but implies
         a performance hit which is undesirable in most of the cases.
+
+    --force-no-status-bar
+         Forces the applicationFrame bounds set by UIScreen to use no status bar
+
+         Enabling this option should be used when the game renders with a black
+         bar at the top of the screen or the game appears cut off in some way.

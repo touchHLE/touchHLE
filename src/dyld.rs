@@ -241,6 +241,9 @@ impl Dyld {
     pub const SVC_THREAD_EXIT: u32 = 1;
     /// We reserve this SVC ID for the special return-to-host routine.
     pub const SVC_RETURN_TO_HOST: u32 = 2;
+    // BEFOREMERGE: Note: I brought SVC_THREAD_EXIT_BACK, the benefit to stack
+    // traces seems worthwhile.
+    //
     /// The range of SVC IDs `SVC_LINKED_FUNCTIONS_BASE..` is used to reference
     /// [Self::linked_host_functions] entries.
     pub const SVC_LINKED_FUNCTIONS_BASE: u32 = Self::SVC_RETURN_TO_HOST + 1;

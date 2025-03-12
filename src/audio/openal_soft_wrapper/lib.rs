@@ -44,18 +44,21 @@ pub mod alc_types {
 }
 use alc_types::*;
 
-pub const ALC_FALSE: ALCboolean = 0;
-#[allow(dead_code)]
-pub const ALC_TRUE: ALCboolean = 1;
+pub mod alc_defines {
+    use crate::alc_types::*;
+    pub const ALC_FALSE: ALCboolean = 0;
+    #[allow(dead_code)]
+    pub const ALC_TRUE: ALCboolean = 1;
 
-pub const ALC_DEVICE_SPECIFIER: ALCenum = 0x1005;
+    pub const ALC_DEVICE_SPECIFIER: ALCenum = 0x1005;
 
-// Context attributes
-pub const ALC_FREQUENCY: ALCint = 0x1007;
-pub const ALC_REFRESH: ALCint = 0x1008;
-pub const ALC_SYNC: ALCint = 0x1009;
-pub const ALC_MONO_SOURCES: ALCint = 0x1010;
-pub const ALC_STEREO_SOURCES: ALCint = 0x1011;
+    // Context attributes
+    pub const ALC_FREQUENCY: ALCint = 0x1007;
+    pub const ALC_REFRESH: ALCint = 0x1008;
+    pub const ALC_SYNC: ALCint = 0x1009;
+    pub const ALC_MONO_SOURCES: ALCint = 0x1010;
+    pub const ALC_STEREO_SOURCES: ALCint = 0x1011;
+}
 
 extern "C" {
     pub fn alcOpenDevice(devicename: *const ALCchar) -> *mut ALCdevice;
@@ -98,29 +101,32 @@ pub mod al_types {
 }
 use al_types::*;
 
-pub const AL_NO_ERROR: ALenum = 0;
+pub mod al_defines {
+    use crate::al_types::*;
+    pub const AL_NO_ERROR: ALenum = 0;
 
-pub const AL_VENDOR: ALenum = 0xb001;
-pub const AL_VERSION: ALenum = 0xb002;
-pub const AL_RENDERER: ALenum = 0xb003;
-pub const AL_EXTENSIONS: ALenum = 0xb004;
+    pub const AL_VENDOR: ALenum = 0xb001;
+    pub const AL_VERSION: ALenum = 0xb002;
+    pub const AL_RENDERER: ALenum = 0xb003;
+    pub const AL_EXTENSIONS: ALenum = 0xb004;
 
-pub const AL_MAX_GAIN: ALenum = 0x100E;
+    pub const AL_MAX_GAIN: ALenum = 0x100E;
 
-pub const AL_SOURCE_STATE: ALenum = 0x1010;
+    pub const AL_SOURCE_STATE: ALenum = 0x1010;
 
-pub const AL_INITIAL: ALenum = 0x1011;
-pub const AL_PLAYING: ALenum = 0x1012;
-pub const AL_PAUSED: ALenum = 0x1013;
-pub const AL_STOPPED: ALenum = 0x1014;
+    pub const AL_INITIAL: ALenum = 0x1011;
+    pub const AL_PLAYING: ALenum = 0x1012;
+    pub const AL_PAUSED: ALenum = 0x1013;
+    pub const AL_STOPPED: ALenum = 0x1014;
 
-pub const AL_BUFFERS_QUEUED: ALenum = 0x1015;
-pub const AL_BUFFERS_PROCESSED: ALenum = 0x1016;
+    pub const AL_BUFFERS_QUEUED: ALenum = 0x1015;
+    pub const AL_BUFFERS_PROCESSED: ALenum = 0x1016;
 
-pub const AL_FORMAT_MONO8: ALenum = 0x1100;
-pub const AL_FORMAT_MONO16: ALenum = 0x1101;
-pub const AL_FORMAT_STEREO8: ALenum = 0x1102;
-pub const AL_FORMAT_STEREO16: ALenum = 0x1103;
+    pub const AL_FORMAT_MONO8: ALenum = 0x1100;
+    pub const AL_FORMAT_MONO16: ALenum = 0x1101;
+    pub const AL_FORMAT_STEREO8: ALenum = 0x1102;
+    pub const AL_FORMAT_STEREO16: ALenum = 0x1103;
+}
 
 extern "C" {
     pub fn alGetError() -> ALenum;

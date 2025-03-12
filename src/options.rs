@@ -53,6 +53,7 @@ pub struct Options {
     pub force_composition: bool,
     pub network_access: bool,
     pub popup_errors: bool,
+    pub force_no_status_bar: bool,
 }
 
 impl Default for Options {
@@ -78,6 +79,7 @@ impl Default for Options {
             force_composition: false,
             network_access: false,
             popup_errors: true,
+            force_no_status_bar: false,
         }
     }
 }
@@ -201,6 +203,8 @@ impl Options {
             self.network_access = true;
         } else if arg == "--no-error-popup" {
             self.popup_errors = false;
+        } else if arg == "--force-no-status-bar" {
+            self.force_no_status_bar = true;
         } else {
             return Ok(false);
         };

@@ -16,6 +16,24 @@
       "message": "Implemented it from scratch. I did some basic testing and everything its seems to work but haven\u0027t tested cycles (TBH I\u0027m not even sure they are possible here so perhaps we can skip checking). Also may be better to refactor to a generic topo sort and then call that after converting binaries to index. Thoughts?\n\nAs for the static element, I think it came from the Static initializer comment above it. I may have been a bit confused at the time :)",
       "revId": "b514b4cd452b9e27245a32919be3123e55807dc0",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "bb78401a_ece2215d",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 6
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2025-03-12T17:54:40Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "3036b288_84b3f275",
+      "revId": "b514b4cd452b9e27245a32919be3123e55807dc0",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

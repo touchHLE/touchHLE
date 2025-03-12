@@ -16,8 +16,8 @@ use crate::frameworks::core_graphics::{
 };
 use crate::gles::gles11_raw::types::*;
 use crate::gles::present::{present_frame, FpsCounter};
-use crate::matrix::Matrix;
 use crate::gles::{gles11_raw as gles11, GLES}; // constants only
+use crate::matrix::Matrix;
 use crate::mem::Mem;
 use crate::objc::{id, msg, msg_class, nil, ObjC};
 use crate::Environment;
@@ -230,7 +230,14 @@ pub fn recomposite_if_necessary(env: &mut Environment, force: bool) -> Option<In
 
     // Here's where the actual drawing happens
     unsafe {
-        composite_layer_recursive(gles.as_mut(), &mut env.objc, &env.mem, root_layer, origin, opacity);
+        composite_layer_recursive(
+            gles.as_mut(),
+            &mut env.objc,
+            &env.mem,
+            root_layer,
+            origin,
+            opacity,
+        );
     }
 
     // Clean up some GL state

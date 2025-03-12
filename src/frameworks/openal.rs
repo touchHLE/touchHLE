@@ -45,7 +45,7 @@ impl State {
             .contexts
             .get_mut(&state.current_ctx)
             .unwrap()
-            .make_current(&mut env.audio)
+            .make_current(env.audio.as_mut())
     }
 }
 
@@ -188,7 +188,7 @@ fn alcCreateContext(
     let &host_device = state.devices.get(&device).unwrap();
 
     let res = unsafe {
-        OpenALContext::new_with_device_and_attrlist(&mut env.audio, host_device, attr_list_ptr)
+        OpenALContext::new_with_device_and_attrlist(env.audio.as_mut(), host_device, attr_list_ptr)
     };
     let Ok(ctx) = res else {
         log_dbg!("alcCreateContext({:?}, (...)) returned NULL", device);
@@ -318,7 +318,7 @@ fn alGetEnumValue(env: &mut Environment, enumName: ConstPtr<u8>) -> ALenum {
     let state = &mut env.framework_state.openal;
     let context = state
         .contexts
-        .make_current(state.current_ctx, &mut env.audio);
+        .make_current(state.current_ctx, env.audio.as_mut());
     let res = unsafe { context.GetEnumValue(ss.as_ptr()) };
     log_dbg!("alGetEnumValue({:?}) => {:?}", s, res);
     res
@@ -633,7 +633,7 @@ fn alSourceUnqueueBuffers(
     let state = &mut env.framework_state.openal;
     let context = state
         .contexts
-        .make_current(state.current_ctx, &mut env.audio);
+        .make_current(state.current_ctx, env.audio.as_mut());
     let buffers_processed = {
         let mut val = 0;
         unsafe { context.GetSourcei(source, al::AL_BUFFERS_PROCESSED, &mut val) };

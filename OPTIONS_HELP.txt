@@ -221,3 +221,9 @@ Other options:
 
     --allow-network-access
         Allow apps running in touchHLE to access the Internet and the local network.
+
+    --force-no-status-bar
+         Forces the applicationFrame bounds set by UIScreen to use no status bar
+
+         Enabling this option should be used when the game renders with a black
+         bar at the top of the screen or the game appears cut off in some way.

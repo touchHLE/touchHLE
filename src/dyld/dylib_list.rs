@@ -14,7 +14,7 @@ use crate::objc;
 pub const DYLIB_LIST: &[&super::HostDylib] = &[
     &libc::DYLIB,
     &objc::DYLIB,
-    &crate::app_picker::DYLIB, // Not a real library; special internal classes.
+    &crate::environment::app_picker::DYLIB, // Not a real library; special internal classes.
     &frameworks::audio_toolbox::DYLIB,
     &frameworks::avfoundation::DYLIB,
     &frameworks::core_animation::DYLIB,

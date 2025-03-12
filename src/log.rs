@@ -40,6 +40,14 @@ macro_rules! log {
     }
 }
 
+/// Same as [log], but silently fails on panic instead of
+/// panicking.
+macro_rules! log_no_panic {
+    ($($arg:tt)+) => {
+        echo_no_panic!("{}: {}", module_path!(), format_args!($($arg)+));
+    }
+}
+
 /// Like [log], but prints the message only if debugging is enabled for the
 /// module where it is used. This can be used for verbose things only needed
 /// when debugging.
@@ -47,6 +55,16 @@ macro_rules! log_dbg {
     ($($arg:tt)+) => {
         if $crate::log::ENABLED_MODULES.contains(&module_path!()) {
             log!($($arg)*);
+        }
+    }
+}
+
+macro_rules! echo_no_panic {
+    ($($arg:tt)*) => {
+        {
+            let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                echo!($($arg)*);
+            }));
         }
     }
 }

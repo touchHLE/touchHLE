@@ -228,7 +228,7 @@ fn alcCreateContext(
 
     let res = unsafe {
         OpenALContext::new_with_device_and_attrlist(
-            &mut env.openal_manager,
+            env.openal_manager.as_mut(),
             host_device,
             attr_list_ptr,
         )
@@ -367,7 +367,7 @@ fn alGetEnumValue(env: &mut Environment, enumName: ConstPtr<u8>) -> ALenum {
     let state = &mut env.framework_state.openal;
     let context = state
         .contexts
-        .make_current(state.current_ctx, &mut env.openal_manager);
+        .make_current(state.current_ctx, env.openal_manager.as_mut());
     let res = unsafe { context.GetEnumValue(ss.as_ptr()) };
     log_dbg!("alGetEnumValue({:?}) => {:?}", s, res);
     res
@@ -682,7 +682,7 @@ fn alSourceUnqueueBuffers(
     let state = &mut env.framework_state.openal;
     let context = state
         .contexts
-        .make_current(state.current_ctx, &mut env.openal_manager);
+        .make_current(state.current_ctx, env.openal_manager.as_mut());
     let buffers_processed = {
         let mut val = 0;
         unsafe { context.GetSourcei(source, al::AL_BUFFERS_PROCESSED, &mut val) };

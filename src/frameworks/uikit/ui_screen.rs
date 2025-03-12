@@ -51,7 +51,11 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (CGRect)applicationFrame {
     let mut bounds: CGRect = msg![env; this bounds];
     const STATUS_BAR_HEIGHT: f32 = 20.0;
-    if !env.framework_state.uikit.ui_application.status_bar_hidden {
+    // This is a game option that can be used to make a game go full screen
+    // Real iOS has black bars on top and bottom (larger than the status bar)
+    // So consider this a sortof 'full screen' hack
+    // exmple: DOABlackJack
+    if !env.options.force_no_status_bar && !env.framework_state.uikit.ui_application.status_bar_hidden {
         bounds.origin.y += STATUS_BAR_HEIGHT;
         bounds.size.height -= STATUS_BAR_HEIGHT;
     }

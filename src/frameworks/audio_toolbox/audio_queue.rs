@@ -253,7 +253,7 @@ pub fn AudioQueueSetParameter(
         let context = env
             .framework_state
             .audio_toolbox
-            .make_al_context_current(&mut env.openal_manager);
+            .make_al_context_current(env.openal_manager.as_mut());
 
         // If not clamped, OpenAL generates an error.
         // While Apple's docs states that this range is expected,
@@ -635,7 +635,7 @@ pub fn decode_buffer(
 /// buffer.
 fn prime_audio_queue(env: &mut Environment, in_aq: AudioQueueRef) {
     let (state, context) =
-        State::get_with_context(&mut env.framework_state, &mut env.openal_manager);
+        State::get_with_context(env.framework_state.as_mut(), env.openal_manager.as_mut());
 
     let host_object = state.audio_queues.get_mut(&in_aq).unwrap();
 
@@ -651,15 +651,9 @@ fn prime_audio_queue(env: &mut Environment, in_aq: AudioQueueRef) {
         let volume = host_object.volume.clamp(0.0, 1.0);
         let mut al_source = 0;
         unsafe {
-<<<<<<< HEAD
-            al::alGenSources(1, &mut al_source);
-            al::alSourcef(al_source, al::AL_MAX_GAIN, volume);
-            assert!(al::alGetError() == 0);
-=======
             context.GenSources(1, &mut al_source);
-            context.Sourcef(al_source, al::AL_MAX_GAIN, host_object.volume);
+            context.Sourcef(al_source, al::AL_MAX_GAIN, volume);
             assert!(context.GetError() == 0);
->>>>>>> f72752ef (Refactor OpenAL context management)
         };
         host_object.al_source = Some(al_source);
     }
@@ -756,7 +750,7 @@ pub fn handle_audio_queue(env: &mut Environment, in_aq: AudioQueueRef) {
     // new buffers.
 
     let (state, context) =
-        State::get_with_context(&mut env.framework_state, &mut env.openal_manager);
+        State::get_with_context(env.framework_state.as_mut(), env.openal_manager.as_mut());
 
     let host_object = state.audio_queues.get_mut(&in_aq).unwrap();
     let Some(al_source) = host_object.al_source else {
@@ -800,7 +794,7 @@ pub fn handle_audio_queue(env: &mut Environment, in_aq: AudioQueueRef) {
     let context = env
         .framework_state
         .audio_toolbox
-        .make_al_context_current(&mut env.openal_manager);
+        .make_al_context_current(env.openal_manager.as_mut());
 
     if is_running != AudioQueueIsRunning::Stopped {
         unsafe {
@@ -880,7 +874,7 @@ pub fn AudioQueueStart(
     prime_audio_queue(env, in_aq);
 
     let (state, context) =
-        State::get_with_context(&mut env.framework_state, &mut env.openal_manager);
+        State::get_with_context(env.framework_state.as_mut(), env.openal_manager.as_mut());
 
     let host_object = state.audio_queues.get_mut(&in_aq).unwrap();
 
@@ -906,7 +900,7 @@ pub fn AudioQueuePause(env: &mut Environment, in_aq: AudioQueueRef) -> OSStatus 
     return_if_null!(in_aq);
 
     let (state, context) =
-        State::get_with_context(&mut env.framework_state, &mut env.openal_manager);
+        State::get_with_context(env.framework_state.as_mut(), env.openal_manager.as_mut());
 
     let host_object = state.audio_queues.get_mut(&in_aq).unwrap();
     // FIXME: is this correct? is it notifiable?
@@ -939,7 +933,7 @@ pub fn AudioQueueStop(env: &mut Environment, in_aq: AudioQueueRef, in_immediate:
         log_dbg!("Performing immediate AudioQueueStop for {:?}.", in_aq);
 
         let (state, context) =
-            State::get_with_context(&mut env.framework_state, &mut env.openal_manager);
+            State::get_with_context(env.framework_state.as_mut(), env.openal_manager.as_mut());
 
         let host_object = state.audio_queues.get_mut(&in_aq).unwrap();
         if let Some(al_source) = host_object.al_source {
@@ -969,7 +963,7 @@ fn AudioQueueReset(env: &mut Environment, in_aq: AudioQueueRef) -> OSStatus {
     return_if_null!(in_aq);
 
     let (state, context) =
-        State::get_with_context(&mut env.framework_state, &mut env.openal_manager);
+        State::get_with_context(env.framework_state.as_mut(), env.openal_manager.as_mut());
 
     log_dbg!("Resetting queue {:?}.", in_aq);
 
@@ -1047,7 +1041,7 @@ pub fn AudioQueueDispose(
     assert!(in_immediate); // TODO
 
     let (state, context) =
-        State::get_with_context(&mut env.framework_state, &mut env.openal_manager);
+        State::get_with_context(env.framework_state.as_mut(), env.openal_manager.as_mut());
 
     let mut host_object = state.audio_queues.remove(&in_aq).unwrap();
     log_dbg!("Disposing of audio queue {:?}", in_aq);

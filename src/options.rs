@@ -50,6 +50,7 @@ pub struct Options {
     pub print_fps: bool,
     pub fps_limit: Option<f64>,
     pub force_composition: bool,
+    pub force_no_status_bar: bool,
 }
 
 impl Default for Options {
@@ -73,6 +74,7 @@ impl Default for Options {
             print_fps: false,
             fps_limit: Some(60.0), // Original iPhone is 60Hz and uses v-sync,
             force_composition: false,
+            force_no_status_bar: false,
         }
     }
 }
@@ -190,6 +192,8 @@ impl Options {
             }
         } else if arg == "--force-composition" {
             self.force_composition = true;
+        } else if arg == "--force-no-status-bar" {
+            self.force_no_status_bar = true;
         } else {
             return Ok(false);
         };

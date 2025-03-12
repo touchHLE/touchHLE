@@ -151,3 +151,6 @@ com.konami-europe.mgst: --preferred-languages=ja --landscape-left
 
 # Dark Nebula
 com.1337gamedesign.DarkNebula: --x-tilt-offset=-14
+
+# Girls of DOA BlackJack ~ The Kasumi Version ~
+jp.co.tecmo.DOABlackjack: --force-no-status-bar

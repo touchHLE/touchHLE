@@ -51,7 +51,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (CGRect)applicationFrame {
     let mut bounds: CGRect = msg![env; this bounds];
     const STATUS_BAR_HEIGHT: f32 = 20.0;
-    if !env.framework_state.uikit.ui_application.status_bar_hidden {
+    if !env.options.force_no_status_bar && !env.framework_state.uikit.ui_application.status_bar_hidden {
         bounds.origin.y += STATUS_BAR_HEIGHT;
         bounds.size.height -= STATUS_BAR_HEIGHT;
     }

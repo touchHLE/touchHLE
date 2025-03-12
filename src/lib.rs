@@ -28,7 +28,6 @@
 #[macro_use]
 mod log;
 mod abi;
-mod app_picker;
 mod audio;
 mod bundle;
 mod cpu;
@@ -199,7 +198,9 @@ pub fn main<T: Iterator<Item = String>>(mut args: T) -> Result<(), String> {
         echo!(
             "No app specified, opening app picker. Use the --help flag to see command-line usage."
         );
-        let (bundle_path, env_for_salvage) = app_picker::app_picker(options, &mut option_args)?;
+        let ((bundle_path, mut extra_options), env_for_salvage) =
+            environment::app_picker::app_picker(options)?;
+        option_args.append(&mut extra_options);
         (bundle_path, Some(env_for_salvage))
     };
 
@@ -319,7 +320,7 @@ pub fn main<T: Iterator<Item = String>>(mut args: T) -> Result<(), String> {
             env_for_salvage,
         )
     }));
-    let mut env = match res {
+    let env = match res {
         Ok(ret) => match ret {
             Ok(env) => env,
             Err(e) => {
@@ -343,26 +344,6 @@ pub fn main<T: Iterator<Item = String>>(mut args: T) -> Result<(), String> {
             std::panic::resume_unwind(e)
         }
     };
-
-    // We can set the parent window after the environment is set up, so this
-    // panic-catch is seperate.
-    let res = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-        env.run();
-    }));
-    match res {
-        Ok(_) => Ok(()),
-        Err(e) => {
-            if options.popup_errors {
-                let error_string = if let Some(s) = e.downcast_ref::<&str>() {
-                    s
-                } else if let Some(s) = e.downcast_ref::<String>() {
-                    s
-                } else {
-                    "(non-string payload)"
-                };
-                window::show_error_messagebox(env.window.as_ref(), error_string);
-            }
-            std::panic::resume_unwind(e)
-        }
-    }
+    env.run();
+    Ok(())
 }

@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c4bb38b0_2a3a2a39",
+        "filename": "src/frameworks/core_foundation/cf_boolean.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 13,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-03-13T22:56:53Z",
+      "side": 1,
+      "message": "according to the docs, kCFBooleanTrue is defined as pointer to a struct, not a string.\nwe should mimic that in some way",
+      "revId": "ddd47144ccf8216f54fefd78d54c5d9e888c21db",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

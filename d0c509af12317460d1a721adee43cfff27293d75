@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c44ede51_02a2b01c",
+        "filename": "src/environment.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 87,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-03-13T22:05:22Z",
+      "side": 1,
+      "message": "I think this field should be called `openal_manager` or something like that. Naming it `audio` makes it seem like it\u0027s some higher-level audio thing perhaps unrelated to OpenAL, and doesn\u0027t match the type or module name.",
+      "revId": "d0c509af12317460d1a721adee43cfff27293d75",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "475d0869_276e0870",
+        "filename": "src/frameworks/openal.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 53,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-03-13T22:05:22Z",
+      "side": 1,
+      "message": "This seems potentially overengineered? Can\u0027t we access the hashmap directly without this layer?",
+      "revId": "d0c509af12317460d1a721adee43cfff27293d75",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

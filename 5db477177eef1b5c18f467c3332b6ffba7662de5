@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "84c85b94_3ae31121",
+        "filename": "src/frameworks/core_graphics/cg_geometry.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 187,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-03-13T22:55:04Z",
+      "side": 1,
+      "message": "what? why 1 is subtracted here?",
+      "revId": "5db477177eef1b5c18f467c3332b6ffba7662de5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4e89c9c9_a4cf697e",
+        "filename": "src/frameworks/core_graphics/cg_geometry.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 195,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-03-13T22:55:04Z",
+      "side": 1,
+      "message": "same comment",
+      "revId": "5db477177eef1b5c18f467c3332b6ffba7662de5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

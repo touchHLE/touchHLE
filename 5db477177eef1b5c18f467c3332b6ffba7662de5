@@ -20,6 +20,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "949cb0d3_e9acacd7",
+        "filename": "src/frameworks/core_graphics/cg_geometry.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 187,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-03-13T23:06:02Z",
+      "side": 1,
+      "message": "Searching I found a StackOverflow question and answer about this and according to that there shouldn\u0027t be a -1. I guess it should be tested on iOS or macOS but I also think this code is most likely wrong. I haven\u0027t seen anything suggesting CGRect follows this kind of pixel-based numbering.",
+      "parentUuid": "84c85b94_3ae31121",
+      "revId": "5db477177eef1b5c18f467c3332b6ffba7662de5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "4e89c9c9_a4cf697e",
         "filename": "src/frameworks/core_graphics/cg_geometry.rs",
         "patchSetId": 1

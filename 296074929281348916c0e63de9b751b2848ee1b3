@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "664f7ceb_11fc3930",
+        "filename": "src/frameworks/core_graphics.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 23,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-03-13T23:11:34Z",
+      "side": 1,
+      "message": "What is the purpose of this TODO?\nRight now those are not used anyway as you\u0027re stubbing the functionality.",
+      "revId": "296074929281348916c0e63de9b751b2848ee1b3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "96a48e19_a27c8e60",
+        "filename": "src/frameworks/core_graphics/cg_context.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 175,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-03-13T23:11:34Z",
+      "side": 1,
+      "message": "Why log_dbg() here and not just log() ? Is it spammy?\n\nSame question for other stubs in this patch set",
+      "revId": "296074929281348916c0e63de9b751b2848ee1b3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

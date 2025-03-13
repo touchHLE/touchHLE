@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "379cedc3_0c9257c3",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 962,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-03-13T23:06:20Z",
+      "side": 1,
+      "message": "if you not modifing the current and string, why not just copy ?",
+      "revId": "623008f4aea71af12da92ae088d8de9f9bab73bd",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

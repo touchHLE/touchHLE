@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "dd4b4e36_98cfe493",
+        "filename": "src/frameworks/foundation/ns_process_info.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 22,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-03-13T23:02:13Z",
+      "side": 1,
+      "message": "this is not correct at all, check the docs https://developer.apple.com/documentation/foundation/nsprocessinfo/1408734-processinfo",
+      "revId": "582bc49ee2b4ff8c00f75b0616a79b3808212416",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "196df24d_45948280",
+        "filename": "src/frameworks/foundation/ns_process_info.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 27,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-03-13T23:02:13Z",
+      "side": 1,
+      "message": "are you sure this function returns the same value as mach_host?\n\nalso, in rust you don\u0027t need to return the last value of an expression, it\u0027s done implicitly",
+      "revId": "582bc49ee2b4ff8c00f75b0616a79b3808212416",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

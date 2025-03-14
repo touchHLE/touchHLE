@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b455b71d_ed6071cd",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 7
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-03-14T22:50:02Z",
+      "side": 1,
+      "message": "I don\u0027t think this should be done. It seems like this is hiding a real problem, which is incomplete handling on the status bar",
+      "revId": "a5b18a4be3a57cb943fcef811225ad7324238006",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

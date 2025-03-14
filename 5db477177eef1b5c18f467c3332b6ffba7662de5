@@ -51,6 +51,24 @@
       "message": "same comment",
       "revId": "5db477177eef1b5c18f467c3332b6ffba7662de5",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a5d8ed57_435e1ed4",
+        "filename": "src/frameworks/core_graphics/cg_geometry.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 195,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-03-14T03:37:35Z",
+      "side": 1,
+      "message": "I removed the - 1.0, not sure why I added it in the first place. Tested the game I was making work and everything still works fine.\n\nI assume for this game (DOA Blackjack) it is calcuating the size of a CGRect you are making to determine if you swiped (which is stay) or just clicked on the screen (once for hit or twice to dounle down).\n\nAs far as this not being the right way (pixel based math), I cannot speak to that but doing it this way works for this game (DOA Blacjack). I realize you likely don\u0027t want to merge this with it broken, so if you want me to put comments like TODO: confirm this is the right way to calculate this or something, I can, otherwise I\u0027m not sure how to test this on macOS or iOS like you mentioned.",
+      "parentUuid": "4e89c9c9_a4cf697e",
+      "revId": "5db477177eef1b5c18f467c3332b6ffba7662de5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

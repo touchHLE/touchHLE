@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "b37b0dc9_74f53c56",
+        "filename": "src/frameworks/foundation/ns_process_info.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 22,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-03-14T03:59:28Z",
+      "side": 1,
+      "message": "I changed it to just a TODO Stub and this will be fine for the game (DOA Blacjack) I am trying to get working.",
+      "parentUuid": "dd4b4e36_98cfe493",
+      "revId": "582bc49ee2b4ff8c00f75b0616a79b3808212416",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "196df24d_45948280",
@@ -31,6 +49,24 @@
       "writtenOn": "2025-03-13T23:02:13Z",
       "side": 1,
       "message": "are you sure this function returns the same value as mach_host?\n\nalso, in rust you don\u0027t need to return the last value of an expression, it\u0027s done implicitly",
+      "revId": "582bc49ee2b4ff8c00f75b0616a79b3808212416",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "075a26b3_b48a4087",
+        "filename": "src/frameworks/foundation/ns_process_info.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 27,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-03-14T03:59:28Z",
+      "side": 1,
+      "message": "According to https://stackoverflow.com/questions/23619452/meaning-of-nsprocessinfo-physicalmemory-value this does in fact return the total physical memory of the device. So I think 2GB is correct here based on the 1.1/2GB in the mock data in mach_host.res",
+      "parentUuid": "196df24d_45948280",
       "revId": "582bc49ee2b4ff8c00f75b0616a79b3808212416",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "9e08dca7_a2a52fe2",
+        "filename": "src/frameworks/core_animation/ca_transaction.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 49,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-03-14T05:37:23Z",
+      "side": 1,
+      "message": "log_dbg used because this class will produce a lot of logs!",
+      "range": {
+        "startLine": 49,
+        "startChar": 0,
+        "endLine": 49,
+        "endChar": 4
+      },
+      "revId": "be8bef86ac31c16e02e07cdaa65e730c896e651e",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

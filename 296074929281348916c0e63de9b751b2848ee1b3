@@ -33,6 +33,24 @@
       "message": "Why log_dbg() here and not just log() ? Is it spammy?\n\nSame question for other stubs in this patch set",
       "revId": "296074929281348916c0e63de9b751b2848ee1b3",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "acd3bd94_bb6482dc",
+        "filename": "src/frameworks/core_graphics/cg_context.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 175,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-03-14T02:43:56Z",
+      "side": 1,
+      "message": "@cicipluspus Some of these are very spammy, especially the CATransaction ones. So, running this game on real hardware, I can definitely see the transitions between screens; there are fadeouts (and fade ins) with an black \u0027shadow\u0027 placed over the layers. I believe that is all these are being used for, so if they don\u0027t have stubs, the game will crash, but with them stubbed out but not actually doing anything, the game is constantly waiting for something to happen to confirm the fadeout (or fadein) occurred. However, the next screen does come up, and you are able to proceed with the game. As I have mentioned in the PR are on GitHub this patchset gets this particular game to 4/5 stars.",
+      "parentUuid": "96a48e19_a27c8e60",
+      "revId": "296074929281348916c0e63de9b751b2848ee1b3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

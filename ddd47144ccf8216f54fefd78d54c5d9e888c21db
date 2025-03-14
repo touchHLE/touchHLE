@@ -34,6 +34,24 @@
       "parentUuid": "c4bb38b0_2a3a2a39",
       "revId": "ddd47144ccf8216f54fefd78d54c5d9e888c21db",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7dcc3276_bbacb5ce",
+        "filename": "src/frameworks/core_foundation/cf_boolean.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 13,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-03-14T22:38:39Z",
+      "side": 1,
+      "message": "You can have a look how HostConstant::Custom is used in the codebase.\n\nOtherwise I think it requires some test progams on iOS or macOS to check how those bool constants behave.",
+      "parentUuid": "900b7d95_1894d2dd",
+      "revId": "ddd47144ccf8216f54fefd78d54c5d9e888c21db",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

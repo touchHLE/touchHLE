@@ -34,6 +34,24 @@
       "parentUuid": "379cedc3_0c9257c3",
       "revId": "623008f4aea71af12da92ae088d8de9f9bab73bd",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "da5f1e5b_ac3ded9f",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 962,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-03-14T22:48:00Z",
+      "side": 1,
+      "message": "i mean that you should use something like this here without converting back and forth:\n\nlet new_string \u003d msg![env; this copy];",
+      "parentUuid": "334a6620_e3c328bd",
+      "revId": "623008f4aea71af12da92ae088d8de9f9bab73bd",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

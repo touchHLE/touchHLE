@@ -16,6 +16,24 @@
       "message": "according to the docs, kCFBooleanTrue is defined as pointer to a struct, not a string.\nwe should mimic that in some way",
       "revId": "ddd47144ccf8216f54fefd78d54c5d9e888c21db",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "900b7d95_1894d2dd",
+        "filename": "src/frameworks/core_foundation/cf_boolean.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 13,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-03-14T04:24:50Z",
+      "side": 1,
+      "message": "Same here. I just put this in so the game (DOA Blacjack) would work. Do you maybe have an example in the code I can look at to make this right?",
+      "parentUuid": "c4bb38b0_2a3a2a39",
+      "revId": "ddd47144ccf8216f54fefd78d54c5d9e888c21db",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

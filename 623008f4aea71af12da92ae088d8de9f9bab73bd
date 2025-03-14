@@ -16,6 +16,24 @@
       "message": "if you not modifing the current and string, why not just copy ?",
       "revId": "623008f4aea71af12da92ae088d8de9f9bab73bd",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "334a6620_e3c328bd",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 962,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-03-14T04:21:59Z",
+      "side": 1,
+      "message": "I\u0027m actually not sure what you mean. Definitley another instance of this function has to be here for the game (DOA Blackjack) to work. However I should change this so the game still works but it is cleaner code, let me know.",
+      "parentUuid": "379cedc3_0c9257c3",
+      "revId": "623008f4aea71af12da92ae088d8de9f9bab73bd",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

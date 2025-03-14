@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6b4267ce_ea2555bf",
+        "filename": "src/frameworks/foundation/ns_process_info.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 22,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-03-14T22:45:47Z",
+      "side": 1,
+      "message": "This is still not correct.\n\n() return type corresponds to void type, while processInfo returns a pointer to the object, which we denote as id.\n\nPlease check documentation https://developer.apple.com/documentation/foundation/nsprocessinfo/1408734-processinfo before implementing",
+      "revId": "c3f9f906e478ee3ed2989932171f9552cf050b90",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "63fd31f4_695ad1cb",
+        "filename": "src/frameworks/foundation/ns_process_info.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 26,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-03-14T22:45:47Z",
+      "side": 1,
+      "message": "why this defined as a class method?",
+      "revId": "c3f9f906e478ee3ed2989932171f9552cf050b90",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "80187633_7eeb0c85",
+        "filename": "src/frameworks/foundation/ns_process_info.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 28,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-03-14T22:45:47Z",
+      "side": 1,
+      "message": "It\u0027s better to define a constant for that value and reuse it here and in mach_host.\n\n(though this is wrong because you\u0027re implementing inexistant class method...)",
+      "revId": "c3f9f906e478ee3ed2989932171f9552cf050b90",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

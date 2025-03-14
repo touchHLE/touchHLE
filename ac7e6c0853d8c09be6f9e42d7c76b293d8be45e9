@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "02d9dcae_6f6b1297",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-03-14T19:20:28Z",
+      "side": 1,
+      "message": "Thanks for your first contribution!\n\nIf you want to have access to dev chat in our discord server, please email me your discord handle",
+      "revId": "ac7e6c0853d8c09be6f9e42d7c76b293d8be45e9",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

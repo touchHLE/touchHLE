@@ -20,6 +20,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "aa21927a_a104c1e3",
+        "filename": "src/frameworks/foundation/ns_process_info.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 22,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-03-15T03:11:37Z",
+      "side": 1,
+      "message": "Just trying to stub it so I don\u0027t get a panic: \nClass 0x374f8260 (metaclass \"NSProcessInfo\", 0x374f8250) does not respond to selector \"processInfo\"!",
+      "parentUuid": "6b4267ce_ea2555bf",
+      "revId": "c3f9f906e478ee3ed2989932171f9552cf050b90",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "63fd31f4_695ad1cb",
         "filename": "src/frameworks/foundation/ns_process_info.rs",
         "patchSetId": 5

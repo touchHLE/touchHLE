@@ -86,6 +86,24 @@
       "message": "It\u0027s better to define a constant for that value and reuse it here and in mach_host.\n\n(though this is wrong because you\u0027re implementing inexistant class method...)",
       "revId": "c3f9f906e478ee3ed2989932171f9552cf050b90",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2cb9a89e_9a8abbe7",
+        "filename": "src/frameworks/foundation/ns_process_info.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 28,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-03-15T03:19:09Z",
+      "side": 1,
+      "message": "The 2GB is just mentioned in a comment in mach_host.rs",
+      "parentUuid": "80187633_7eeb0c85",
+      "revId": "c3f9f906e478ee3ed2989932171f9552cf050b90",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

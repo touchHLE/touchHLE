@@ -153,15 +153,44 @@ impl super::ObjC {
     fn alloc_object_inner(
         &mut self,
         isa: Class,
-        instance_size: GuestUSize,
+        mut instance_size: GuestUSize,
         host_object: Box<dyn AnyHostObject>,
         mem: &mut Mem,
         refcount: Option<NonZeroU32>,
     ) -> id {
         let guest_object = objc_object { isa };
-        // FIXME: Apparently some classes have an instance size of 0?
-        //        Figure out what that actually means and remove this hack.
-        let instance_size = instance_size.max(guest_size_of::<objc_object>());
+        if instance_size == 0 {
+            // TODO: figure out why instance_size is 0 in first place
+            let &ClassHostObject {
+                instance_start,
+                superclass,
+                ref ivars,
+                ..
+            } = self.borrow(isa);
+            assert!(instance_start == 0);
+            assert!(superclass != nil);
+            // Below code only making sense if no new ivars
+            // were added to the subclass
+            assert!(ivars.is_empty());
+
+            let mut class = isa;
+            loop {
+                let &ClassHostObject {
+                    superclass: next,
+                    instance_size: size,
+                    ..
+                } = self.borrow(class);
+                if size > 0 {
+                    // TODO: cache result for faster lookups
+                    instance_size = size;
+                    break;
+                }
+                class = next;
+            }
+        }
+        // 16 bytes is minimum for CF
+        // [ref.](https://github.com/apple-oss-distributions/objc4/blob/89543e2c0f67d38ca5211cea33f42c51500287d5/runtime/objc-runtime-new.h#L3219)
+        instance_size = instance_size.max(16);
         assert!(instance_size >= guest_size_of::<objc_object>());
 
         let ptr: MutPtr<objc_object> = mem.alloc(instance_size).cast();

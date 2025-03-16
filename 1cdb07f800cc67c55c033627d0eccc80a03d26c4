@@ -16,6 +16,24 @@
       "message": "This feels too hacky for my taste.\n\nWe should implement support for the non-fragile ivar ABI, it would fix this automatically I believe.",
       "revId": "1cdb07f800cc67c55c033627d0eccc80a03d26c4",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "4c18da5e_f51b8edc",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-03-16T21:28:48Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "1605a791_2d22fbc4",
+      "revId": "1cdb07f800cc67c55c033627d0eccc80a03d26c4",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ],
   "submitRequirementResults": [

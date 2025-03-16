@@ -59,14 +59,12 @@ impl ClassHostObject {
             let ivar_t {
                 offset,
                 name,
-                type_: _,
-                // TODO: Use these values when shifting offsets
-                alignment: _,
-                size: _,
+                alignment,
+                ..
             } = mem.read(ivar_ptr);
 
             let name_string = mem.cstr_at_utf8(name).unwrap().into();
-            self.ivars.insert(name_string, offset);
+            self.ivars.insert(name_string, (offset, alignment));
         }
     }
 }
@@ -88,7 +86,7 @@ impl ObjC {
                 ref ivars,
                 ..
             } = self.borrow(class);
-            if let Some(ivar_offset_ptr) = ivars.get(name) {
+            if let Some((ivar_offset_ptr, _)) = ivars.get(name) {
                 let ivar_offset = mem.read(*ivar_offset_ptr);
                 let ivar_ptr = MutVoidPtr::from_bits(obj.to_bits() + ivar_offset);
                 return Some(ivar_ptr.cast());

@@ -52,6 +52,24 @@
       "parentUuid": "900b7d95_1894d2dd",
       "revId": "ddd47144ccf8216f54fefd78d54c5d9e888c21db",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "85caaa8d_692cc4dc",
+        "filename": "src/frameworks/core_foundation/cf_boolean.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 13,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-03-16T16:38:04Z",
+      "side": 1,
+      "message": "Alright, went back and properly implemented CFBoolean for the constants and Get function. Has a TypeID funtion too that I did not do, but not needed right now.",
+      "parentUuid": "7dcc3276_bbacb5ce",
+      "revId": "ddd47144ccf8216f54fefd78d54c5d9e888c21db",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

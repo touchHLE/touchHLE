@@ -19,7 +19,7 @@ use super::{
 };
 use crate::mach_o::MachO;
 use crate::mem::{guest_size_of, ConstPtr, ConstVoidPtr, GuestUSize, Mem, Ptr, SafeRead};
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 
 /// Generic pointer to an Objective-C class or metaclass.
 ///
@@ -631,52 +631,124 @@ impl ObjC {
             self.classes.insert(name.to_string(), class);
         }
 
-        // Second pass to ensure no superclass has "grown into" any of its
-        // subclasses.
-        // TODO: Shift ivar offsets in the subclasses where it happens
-        // (https://alwaysprocessing.blog/2023/03/12/objc-ivar-abi)
+        // Second pass to build an inverted inheritance graph
+        let mut root_class: Option<Class> = None;
+        let mut inverted_inheritance = HashMap::<Class, Vec<Class>>::new();
         for (_name, class) in self.classes.iter() {
             let class_host_object = self
                 .get_host_object(*class)
                 .unwrap()
                 .as_any()
                 .downcast_ref();
-            let Some(ClassHostObject {
-                superclass,
-                instance_start,
-                ivars,
-                ..
-            }) = class_host_object
-            else {
-                // The class might be a FakeClass or UnimplementedClass
-                // In those cases we move on as they don't have ivars
+            let Some(ClassHostObject { superclass, .. }) = class_host_object else {
+                // Skip FakeClass or UnimplementedClass
                 continue;
             };
 
-            if ivars.is_empty() {
-                continue;
+            if *superclass != nil {
+                inverted_inheritance
+                    .entry(*superclass)
+                    .and_modify(|v| v.push(*class))
+                    .or_insert(vec![*class]);
+            } else {
+                assert!(root_class.is_none());
+                root_class = Some(*class);
             }
-
-            if *superclass == nil {
-                continue;
-            }
-
-            let superclass_host_object = self
-                .get_host_object(*superclass)
-                .unwrap()
-                .as_any()
-                .downcast_ref();
-            let Some(ClassHostObject {
-                instance_size: superclass_instance_size,
-                ..
-            }) = superclass_host_object
-            else {
-                // Superclass could also be a FakeClass or UnimplementedClass
-                continue;
-            };
-
-            assert!(instance_start >= superclass_instance_size);
         }
+
+        // Third pass to ensure no superclass has "grown into" any of its
+        // subclasses.
+        // TODO: Shift ivar offsets in the subclasses where it happens
+        // (https://alwaysprocessing.blog/2023/03/12/objc-ivar-abi)
+        if let Some(root_class) = root_class {
+            let root_class_name = &self.borrow::<ClassHostObject>(root_class).name;
+
+            // BFS starting from root for ivar reconciliation
+            //
+            // It is required to be traversed in this order,
+            // as one overgrown class potentially implies
+            // reconciliation for _all of subclasses_
+            let mut queue = VecDeque::<Class>::new();
+            queue.push_back(root_class);
+            while !queue.is_empty() {
+                let next = queue.pop_front().unwrap();
+                let (need, diff) = self.need_ivar_reconciliation(next);
+                if need {
+                    let ClassHostObject {
+                        name, superclass, ..
+                    } = self.borrow(next);
+                    log_dbg!(
+                        "Class {} need ivar reconciliation with superclass {}!",
+                        name,
+                        &self.borrow::<ClassHostObject>(*superclass).name
+                    );
+
+                    let ClassHostObject {
+                        ref mut instance_start,
+                        ref mut instance_size,
+                        ref ivars,
+                        ..
+                    } = self.borrow_mut(next);
+
+                    // TODO: ivars slide
+                    assert!(ivars.is_empty());
+
+                    *instance_start += diff;
+                    *instance_size += diff;
+                }
+                if let Some(subclasses) = inverted_inheritance.get(&next) {
+                    queue.extend(subclasses);
+                }
+            }
+        }
+    }
+
+    fn need_ivar_reconciliation(&mut self, class: Class) -> (bool, u32) {
+        let class_host_object = self.get_host_object(class).unwrap().as_any().downcast_ref();
+        let Some(ClassHostObject {
+            name,
+            superclass,
+            instance_start,
+            instance_size,
+            ..
+        }) = class_host_object
+        else {
+            // The class might be a FakeClass or UnimplementedClass
+            // In those cases we move on as they don't have ivars
+            return (false, 0);
+        };
+        log_dbg!(
+            "Checking need_ivar_reconciliation for {}, start {}, size {}",
+            name,
+            instance_start,
+            instance_size
+        );
+
+        if *superclass == nil {
+            return (false, 0);
+        }
+
+        let superclass_host_object = self
+            .get_host_object(*superclass)
+            .unwrap()
+            .as_any()
+            .downcast_ref();
+        let Some(ClassHostObject {
+            instance_size: superclass_instance_size,
+            ..
+        }) = superclass_host_object
+        else {
+            // Superclass could also be a FakeClass or UnimplementedClass
+            return (false, 0);
+        };
+
+        let need = instance_start < superclass_instance_size;
+        let diff = if need {
+            superclass_instance_size - instance_start
+        } else {
+            0
+        };
+        (need, diff)
     }
 
     /// For use by [crate::dyld]: register all the categories from the

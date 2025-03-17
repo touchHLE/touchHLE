@@ -38,6 +38,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "47930e72_290fdac4",
+        "filename": "src/objc/classes.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 666,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-03-17T21:45:12Z",
+      "side": 1,
+      "message": "I think it\u0027s possible to define one\u0027s own root classes, I would expect it happens sometimes.",
+      "parentUuid": "18532ce3_f248ed8f",
+      "revId": "547171423b94eb1d7bfa26b3bcbf87f31f4aece5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "ee7f96f5_a2284b70",
         "filename": "src/objc/classes.rs",
         "patchSetId": 1

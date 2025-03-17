@@ -16,6 +16,24 @@
       "message": "Is there some reason we can only handle NSObject?",
       "revId": "547171423b94eb1d7bfa26b3bcbf87f31f4aece5",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "18532ce3_f248ed8f",
+        "filename": "src/objc/classes.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 666,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-03-17T21:27:49Z",
+      "side": 1,
+      "message": "no reason really, I thought it will be safe to assert",
+      "parentUuid": "fb6e2174_63adff34",
+      "revId": "547171423b94eb1d7bfa26b3bcbf87f31f4aece5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

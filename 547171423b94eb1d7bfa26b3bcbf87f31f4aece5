@@ -34,6 +34,23 @@
       "parentUuid": "fb6e2174_63adff34",
       "revId": "547171423b94eb1d7bfa26b3bcbf87f31f4aece5",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ee7f96f5_a2284b70",
+        "filename": "src/objc/classes.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 719,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-03-17T21:44:08Z",
+      "side": 1,
+      "message": "Yes, but if you somehow end up with an object of one of those classes (not completely impossible), it would still need to be resized to fit the isa pointer, right?",
+      "revId": "547171423b94eb1d7bfa26b3bcbf87f31f4aece5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

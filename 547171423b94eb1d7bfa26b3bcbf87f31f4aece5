@@ -87,6 +87,24 @@
       "message": "Yes, but if you somehow end up with an object of one of those classes (not completely impossible), it would still need to be resized to fit the isa pointer, right?",
       "revId": "547171423b94eb1d7bfa26b3bcbf87f31f4aece5",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "71013f5d_74152979",
+        "filename": "src/objc/classes.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 719,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-03-17T22:33:51Z",
+      "side": 1,
+      "message": "Both FakeClass and UnimplementedClass have only name and is_metaclas, but no ivars or instance start/size. Not sure how would you apply resizing here.",
+      "parentUuid": "ee7f96f5_a2284b70",
+      "revId": "547171423b94eb1d7bfa26b3bcbf87f31f4aece5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

@@ -56,6 +56,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "3b2121b3_fb618395",
+        "filename": "src/objc/classes.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 666,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-03-17T21:52:15Z",
+      "side": 1,
+      "message": "It makes sense, I removed the assertion",
+      "parentUuid": "47930e72_290fdac4",
+      "revId": "547171423b94eb1d7bfa26b3bcbf87f31f4aece5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "ee7f96f5_a2284b70",
         "filename": "src/objc/classes.rs",
         "patchSetId": 1

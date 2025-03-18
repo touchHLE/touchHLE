@@ -105,6 +105,24 @@
       "parentUuid": "ee7f96f5_a2284b70",
       "revId": "547171423b94eb1d7bfa26b3bcbf87f31f4aece5",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "44765ac6_683bbc1c",
+        "filename": "src/objc/classes.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 719,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-03-18T22:12:22Z",
+      "side": 1,
+      "message": "In addition, this is not changing the existing behaviour https://github.com/touchHLE/touchHLE/blob/6fd486891d6cbe9ef77a0be46883300280363b4d/src/objc/classes.rs#L651",
+      "parentUuid": "71013f5d_74152979",
+      "revId": "547171423b94eb1d7bfa26b3bcbf87f31f4aece5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

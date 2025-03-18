@@ -15,6 +15,8 @@ use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 use std::rc::Rc;
 
+use super::errno::EINVAL;
+
 // SEM_FAILED is defined as -1 while having a type of sem_t *
 pub const SEM_FAILED: MutPtr<sem_t> = MutPtr::from_bits(u32::MAX);
 
@@ -39,6 +41,41 @@ pub struct SemaphoreHostObject {
     pub value: i32,
     pub waiting: HashSet<ThreadId>,
     guest_sem: Option<MutPtr<sem_t>>,
+    named: bool,
+}
+
+pub fn sem_init(env: &mut Environment, sem: MutPtr<sem_t>, pshared: i32, value: u32) -> i32 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
+    assert!(pshared == 0);
+
+    let state = State::get_mut(env);
+    if state.open_semaphores.contains_key(&sem) {
+        return 0;
+    }
+    let host_sem_rc = Rc::new(RefCell::new(SemaphoreHostObject {
+        value: value as i32,
+        waiting: HashSet::new(),
+        guest_sem: Some(sem),
+        named: false,
+    }));
+
+    state.open_semaphores.insert(sem, host_sem_rc);
+    0
+}
+
+pub fn sem_destroy(env: &mut Environment, sem: MutPtr<sem_t>) -> i32 {
+    let state = State::get_mut(env);
+    let sem = state.open_semaphores.remove(&sem);
+    if let Some(sem) = sem {
+        assert!(!sem.borrow().named);
+        // Don't free, it's not our resposibility to.
+        0
+    } else {
+        // No semaphores at that pointer.
+        EINVAL
+    }
 }
 
 pub fn sem_open(
@@ -73,6 +110,7 @@ pub fn sem_open(
                 value: value as i32,
                 waiting: HashSet::new(),
                 guest_sem: None,
+                named: true,
             }));
             State::get_mut(env)
                 .named_semaphores
@@ -125,6 +163,7 @@ pub fn sem_close(env: &mut Environment, sem: MutPtr<sem_t>) -> i32 {
         .remove(&sem)
         .unwrap();
     let mut host_sem = (*host_sem_rc).borrow_mut();
+    assert!(host_sem.named);
     env.mem.free(host_sem.guest_sem.unwrap().cast());
     host_sem.guest_sem = None;
     0 // success
@@ -140,6 +179,8 @@ pub fn sem_unlink(env: &mut Environment, name: ConstPtr<u8>) -> i32 {
 }
 
 pub const FUNCTIONS: FunctionExports = &[
+    export_c_func!(sem_init(_, _, _)),
+    export_c_func!(sem_destroy(_)),
     export_c_func!(sem_open(_, _, _, _)),
     export_c_func!(sem_post(_)),
     export_c_func!(sem_wait(_)),

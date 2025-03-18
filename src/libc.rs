@@ -50,7 +50,6 @@ pub mod wchar;
 pub struct State {
     dirent: dirent::State,
     keymgr: keymgr::State,
-    mach_semaphore: mach_semaphore::State,
     posix_io: posix_io::State,
     pub pthread: pthread::State,
     pub semaphore: semaphore::State,

@@ -9,18 +9,13 @@
 
 #![allow(non_camel_case_types)]
 
-use std::collections::HashMap;
-
 use crate::dyld::FunctionExports;
 use crate::environment::Environment;
 use crate::export_c_func;
 use crate::libc::mach_init::MACH_TASK_SELF;
 use crate::libc::mach_thread_info::{kern_return_t, KERN_SUCCESS};
-use crate::libc::posix_io::{O_CREAT, O_EXCL};
-use crate::libc::semaphore::{
-    sem_close, sem_open, sem_post, sem_t, sem_unlink, sem_wait, SEM_FAILED,
-};
-use crate::mem::{ConstPtr, MutPtr};
+use crate::libc::semaphore::{sem_destroy, sem_init, sem_post, sem_t, sem_wait};
+use crate::mem::MutPtr;
 
 type task = std::ffi::c_void;
 type task_t = MutPtr<task>;
@@ -28,24 +23,6 @@ type task_t = MutPtr<task>;
 // Opaque type, can be anything we want. Reusing sem_t for convenience
 type semaphore = sem_t;
 type semaphore_t = MutPtr<semaphore>;
-
-#[derive(Default)]
-pub struct State {
-    next_semaphore_id: u64,
-    semaphores: HashMap<semaphore_t, MachSemaphoreHostObject>,
-}
-impl State {
-    fn get(env: &Environment) -> &Self {
-        &env.libc_state.mach_semaphore
-    }
-    fn get_mut(env: &mut Environment) -> &mut Self {
-        &mut env.libc_state.mach_semaphore
-    }
-}
-
-struct MachSemaphoreHostObject {
-    libc_sem_name: ConstPtr<u8>,
-}
 
 fn semaphore_create(
     env: &mut Environment,
@@ -57,19 +34,9 @@ fn semaphore_create(
     assert_eq!(task.to_bits(), MACH_TASK_SELF);
     assert_eq!(policy, 0);
 
-    let next_semaphore_id = State::get(env).next_semaphore_id;
-
-    let name = format!("mach_semaphore_{}", next_semaphore_id);
-    let libc_sem_name = env.mem.alloc_and_write_cstr(name.as_ref()).cast_const();
-
-    let open_semaphore: semaphore_t =
-        sem_open(env, libc_sem_name, O_CREAT | O_EXCL, 0, value as u32);
-    assert_ne!(open_semaphore, SEM_FAILED);
-
-    State::get_mut(env)
-        .semaphores
-        .insert(open_semaphore, MachSemaphoreHostObject { libc_sem_name });
-    State::get_mut(env).next_semaphore_id = next_semaphore_id + 1;
+    let open_semaphore: semaphore_t = env.mem.alloc_and_write(0);
+    let res = sem_init(env, open_semaphore, 0, value.try_into().unwrap());
+    assert_eq!(res, 0);
 
     env.mem.write(semaphore, open_semaphore);
     let result = KERN_SUCCESS;
@@ -99,10 +66,8 @@ fn semaphore_wait(env: &mut Environment, semaphore: semaphore_t) -> kern_return_
 }
 
 fn semaphore_destroy(env: &mut Environment, semaphore: semaphore_t) -> kern_return_t {
-    let host_object = State::get_mut(env).semaphores.remove(&semaphore).unwrap();
-    sem_unlink(env, host_object.libc_sem_name);
-    sem_close(env, semaphore);
-    env.mem.free(host_object.libc_sem_name.cast_mut().cast());
+    sem_destroy(env, semaphore);
+    env.mem.free(semaphore.cast());
     let result = KERN_SUCCESS;
     log_dbg!("semaphore_destroy({:?}) -> {:?}", semaphore, result);
     result

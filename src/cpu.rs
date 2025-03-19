@@ -186,6 +186,10 @@ impl Cpu {
 
     pub fn dump_regs(&self) {
         let regs = self.regs();
+        Self::echo_regs(regs);
+    }
+
+    pub fn echo_regs(regs: &[u32; 16]) {
         for row in 0..4 {
             use std::fmt::Write;
             let mut line = String::new();

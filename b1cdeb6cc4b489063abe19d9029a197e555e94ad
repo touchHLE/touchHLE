@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "63b4dc18_77eba8ba",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 13
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-03-19T19:45:10Z",
+      "side": 1,
+      "message": "Once CFBoolean ibrary is approved, will need to probably be used in this library, but since it is a stub righ now, it is fine.",
+      "revId": "b1cdeb6cc4b489063abe19d9029a197e555e94ad",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

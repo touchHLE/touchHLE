@@ -655,7 +655,21 @@ impl Environment {
         frames
     }
 
-    fn stack_trace(&self) {
+    fn dump_all_regs(&self) {
+        echo!(
+            "Dumping registers for current thread (#{})",
+            self.current_thread
+        );
+        self.cpu.dump_regs();
+        for (tid, thread) in self.threads.iter().enumerate() {
+            if thread.active && tid != self.current_thread {
+                echo!("Dumping registers for thread #{}", tid);
+                cpu::Cpu::echo_regs(&thread.context.as_ref().unwrap().regs);
+            }
+        }
+    }
+
+    fn stack_trace_current(&self) {
         if self.current_thread == 0 {
             echo!("Attempting to produce stack trace for main thread:");
         } else {
@@ -664,12 +678,37 @@ impl Environment {
                 self.current_thread
             );
         }
-        let stack_range = self.threads[self.current_thread].stack.clone().unwrap();
+        self.stack_trace_for_thread(self.current_thread);
+    }
+
+    fn stack_trace_all(&self) {
         echo!(
-            " 0. {:#x} (PC)",
-            self.cpu.pc_with_thumb_bit().addr_with_thumb_bit()
+            "Attempting to produce stack trace for current thread (#{}):",
+            self.current_thread
         );
-        let regs = self.cpu.regs();
+        self.stack_trace_for_thread(self.current_thread);
+        for tid in 0..self.threads.len() {
+            if self.threads[tid].active && tid != self.current_thread {
+                echo!("Attempting to produce stack trace for thread #{}:", tid);
+                self.stack_trace_for_thread(tid);
+            }
+        }
+    }
+
+    fn stack_trace_for_thread(&self, tid: usize) {
+        let stack_range = self.threads[tid].stack.clone().unwrap();
+        let (regs, cpsr) = if self.current_thread == tid {
+            // Current thread is not stored in context since it is used by cpu,
+            // get it from cpu.
+            (*self.cpu.regs(), self.cpu.cpsr())
+        } else {
+            let ctx = self.threads[tid].context.as_ref().unwrap();
+            (ctx.regs, ctx.cpsr)
+        };
+        let pc_nothumb = regs[cpu::Cpu::PC];
+        let thumb = (cpsr & cpu::Cpu::CPSR_THUMB) == cpu::Cpu::CPSR_THUMB;
+        let pc = GuestFunction::from_addr_and_thumb_flag(pc_nothumb, thumb);
+        echo!(" 0. {:#x} (PC)", pc.addr_with_thumb_bit());
         let mut lr = regs[cpu::Cpu::LR];
         let return_to_host_routine_addr = self.dyld.return_to_host_routine().addr_with_thumb_bit();
         let thread_exit_routine_addr = self.dyld.thread_exit_routine().addr_with_thumb_bit();
@@ -893,8 +932,8 @@ impl Environment {
         let res = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| self.run_inner(true)));
         if let Err(e) = res {
             echo!("Register state immediately after panic:");
-            self.cpu.dump_regs();
-            self.stack_trace();
+            self.dump_all_regs();
+            self.stack_trace_all();
             std::panic::resume_unwind(e);
         }
     }
@@ -971,7 +1010,7 @@ impl Environment {
     pub fn enter_debugger(&mut self, reason: Option<cpu::CpuError>) -> bool {
         // GDB doesn't seem to manage to produce a useful stack trace, so
         // let's print our own.
-        self.stack_trace();
+        self.stack_trace_current();
         self.gdb_server
             .as_mut()
             .unwrap()

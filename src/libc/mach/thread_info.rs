@@ -96,7 +96,7 @@ fn thread_info(
                     },
                     cpu_usage: 0,
                     policy: POLICY_TIMESHARE, // no idea if this is realistic
-                    run_state: if thread.active {
+                    run_state: if thread.is_alive() {
                         TH_STATE_RUNNING
                     } else {
                         TH_STATE_STOPPED

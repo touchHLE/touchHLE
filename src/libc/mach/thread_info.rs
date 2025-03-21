@@ -100,7 +100,7 @@ fn thread_info(
                     },
                     cpu_usage: 0,
                     policy: POLICY_TIMESHARE, // no idea if this is realistic
-                    run_state: if thread.active {
+                    run_state: if thread.is_alive() {
                         match thread.blocked_by {
                             ThreadBlock::NotBlocked => TH_STATE_RUNNING,
                             ThreadBlock::Suspended(count, _) => {

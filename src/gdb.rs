@@ -12,8 +12,9 @@
 //!   - `include/gdb/signals.def` for the meanings of signal numbers
 //!   - `gdb/arch/arm.h` for ARMv6 register numbers
 
-use crate::cpu::{Cpu, CpuError};
-use crate::mem::{GuestUSize, Mem, Ptr};
+use crate::cpu::CpuError;
+use crate::environment::{Environment, ThreadState};
+use crate::mem::{GuestUSize, Ptr};
 use std::fmt::Write as _;
 use std::io::{BufRead, BufReader, ErrorKind, Read, Write};
 use std::net::TcpStream;
@@ -30,6 +31,8 @@ const TARGET_XML: &str = r#"
 /// GDB Remote Serial Protocol handler, implementing a server.
 pub struct GdbServer {
     reader: BufReader<TcpStream>,
+    thread_for_run: isize,
+    thread_for_other: isize,
     first_halt: bool,
 }
 
@@ -53,6 +56,8 @@ impl GdbServer {
 
         GdbServer {
             reader: BufReader::with_capacity(4096, connection),
+            thread_for_run: 0,
+            thread_for_other: 0,
             first_halt: true,
         }
     }
@@ -129,14 +134,27 @@ impl GdbServer {
     /// Communciates with the debugger, returning only once it requests
     /// execution should continue. Returns [true] if the CPU should step and
     /// then resume debugging, or [false] if it should resume normal execution.
-    #[must_use]
-    pub fn wait_for_debugger(
-        &mut self,
-        stop_reason: Option<CpuError>,
-        cpu: &mut Cpu,
-        mem: &mut Mem,
-    ) -> bool {
+    pub fn wait_for_debugger(&mut self, stop_reason: Option<CpuError>, env: &mut Environment) {
         echo!("Waiting for debugger to continue.");
+
+        fn regs_for_command<'b>(
+            server: &mut GdbServer,
+            env: &'b mut Environment,
+        ) -> &'b mut [u32; 16] {
+            let tid = server.thread_for_other;
+            // TID zero should mean any thread, but gdb expects it to
+            // mean the current thread.
+            let tid: usize = if tid == 0 {
+                env.current_thread
+            } else {
+                (tid - 1).try_into().unwrap()
+            };
+            if tid == env.current_thread {
+                env.cpu.regs_mut()
+            } else {
+                &mut env.threads[tid].guest_context.as_mut().unwrap().regs
+            }
+        }
 
         // Send reply to continue/step packet that gdb sent earlier, so it knows
         // why execution was stopped.
@@ -149,7 +167,8 @@ impl GdbServer {
                 } else {
                     // The debugger previously requested stepping and no errors
                     // occurred.
-                    self.send_packet("S05"); // SIGTRAP
+                    self.send_packet(format!("T05thread:{:x};", env.current_thread + 1).as_str());
+                    // SIGTRAP
                 }
             }
             // GDB uses an undefined instruction for software breakpoints in
@@ -157,14 +176,16 @@ impl GdbServer {
             // It apparently expects SIGTRAP instead of SIGILL even in the
             // former case.
             Some(CpuError::UndefinedInstruction) | Some(CpuError::Breakpoint) => {
-                self.send_packet("S05"); // SIGTRAP
+                self.send_packet(format!("T05thread:{:x};", env.current_thread + 1).as_str());
+                // SIGTRAP
             }
             Some(CpuError::MemoryError) => {
-                self.send_packet("S0b"); // SIGSEGV
+                self.send_packet(format!("T0bthread:{:x};", env.current_thread + 1).as_str());
+                // SIGSEGV
             }
         }
 
-        let do_step = loop {
+        'packet_loop: loop {
             let Some(p) = self.read_packet() else {
                 continue;
             };
@@ -181,8 +202,9 @@ impl GdbServer {
                 }
                 // Read general registers
                 b'g' => {
+                    let regs = regs_for_command(self, env);
                     let mut packet = String::with_capacity(16 * 4 * 2);
-                    for reg in cpu.regs() {
+                    for reg in regs {
                         // Rust always prints in big-endian, but GDB expects
                         // little-endian.
                         let reg = u32::from_be_bytes(reg.to_le_bytes());
@@ -193,7 +215,7 @@ impl GdbServer {
                 // Write general registers
                 b'G' => {
                     let data = &p[1..];
-                    let regs = cpu.regs_mut();
+                    let regs = regs_for_command(self, env);
                     assert!(data.len() == regs.len() * 4 * 2);
                     for (i, reg) in regs.iter_mut().enumerate() {
                         let word = &data[i * 4 * 2..][..4 * 2];
@@ -209,9 +231,20 @@ impl GdbServer {
                 b'p' => {
                     let num = usize::from_str_radix(&p[1..], 16).unwrap();
                     let reg = if num < 16 {
-                        Some(cpu.regs()[num])
+                        let regs = regs_for_command(self, env);
+                        Some(regs[num])
                     } else if num == 25 {
-                        Some(cpu.cpsr())
+                        let tid = self.thread_for_other;
+                        let tid: usize = if tid == 0 {
+                            env.current_thread
+                        } else {
+                            (tid - 1).try_into().unwrap()
+                        };
+                        if tid == env.current_thread {
+                            Some(env.cpu.cpsr())
+                        } else {
+                            Some(env.threads[tid].guest_context.as_mut().unwrap().cpsr)
+                        }
                     // TODO: FPSCR, VFP registers
                     } else {
                         None
@@ -235,10 +268,21 @@ impl GdbServer {
                     // little-endian.
                     let word = u32::from_le_bytes(word.to_be_bytes());
                     if num < 16 {
-                        cpu.regs_mut()[num] = word;
+                        let regs = regs_for_command(self, env);
+                        regs[num] = word;
                         self.send_packet("OK");
                     } else if num == 25 {
-                        cpu.set_cpsr(word);
+                        let tid = self.thread_for_other;
+                        let tid: usize = if tid == 0 {
+                            env.current_thread
+                        } else {
+                            (tid - 1).try_into().unwrap()
+                        };
+                        if tid == env.current_thread {
+                            env.cpu.set_cpsr(word);
+                        } else {
+                            env.threads[tid].guest_context.as_mut().unwrap().cpsr = word;
+                        }
                         self.send_packet("OK");
                     // TODO: FPSCR, VFP registers
                     } else {
@@ -252,7 +296,7 @@ impl GdbServer {
                     let addr = GuestUSize::from_str_radix(addr, 16).unwrap();
                     let length = GuestUSize::from_str_radix(length, 16).unwrap();
                     let mut packet = String::with_capacity(length as usize * 2);
-                    match mem.get_bytes_fallible(Ptr::from_bits(addr), length) {
+                    match env.mem.get_bytes_fallible(Ptr::from_bits(addr), length) {
                         Some(data) => {
                             for byte in data {
                                 write!(packet, "{byte:02x}").unwrap();
@@ -273,7 +317,7 @@ impl GdbServer {
                     let length = GuestUSize::from_str_radix(length, 16).unwrap();
                     assert!(data.len() == length as usize * 2);
 
-                    match mem.get_bytes_fallible_mut(Ptr::from_bits(addr), length) {
+                    match env.mem.get_bytes_fallible_mut(Ptr::from_bits(addr), length) {
                         Some(dest) => {
                             for i in 0..(length as usize) {
                                 let byte = &data[i * 2..][..2];
@@ -281,7 +325,7 @@ impl GdbServer {
                                 dest[i] = byte;
                             }
                             // Important for e.g. software breakpoints.
-                            cpu.invalidate_cache_range(addr, length);
+                            env.cpu.invalidate_cache_range(addr, length);
                             self.send_packet("OK");
                         }
                         None => {
@@ -290,32 +334,184 @@ impl GdbServer {
                         }
                     }
                 }
-                // Continue or Step
-                b'c' | b's' => {
-                    let addr = &p[1..];
-                    if !addr.is_empty() {
-                        todo!("TODO: Resume at {}", addr);
-                    }
-                    break p.as_bytes()[0] == b's';
-                }
-                // "Continue with signal" or "Step with signal".
+                // Continue or "Continue with signal".
                 // Presumably "with" means "ignoring"?
-                b'C' | b'S' => {
+                b'c' | b'C' => {
                     // Signal is just ignored for now (TODO?)
-                    if let Some((_signal, addr)) = p[1..].split_once(';') {
+                    if p.as_bytes()[0] == b'c' {
+                        let addr = &p[1..];
+                        if !addr.is_empty() {
+                            todo!("TODO: Resume at {}", addr);
+                        }
+                    } else if let Some((_signal, addr)) = p[1..].split_once(';') {
                         todo!("TODO: Resume at {}", addr);
                     }
-                    break p.as_bytes()[0] == b'S';
+                    for thread in env.threads.iter_mut() {
+                        if !thread.is_alive() {
+                            continue;
+                        } else {
+                            // TODO: Is this actually the correct behaviour?
+                            // (This is effectively the same as
+                            // set scheduler-locking step)
+                            // It's probably not a big deal, since any
+                            // reasonably new version of gdb will use vCont.
+                            thread.state = ThreadState::Running;
+                        }
+                    }
+
+                    break;
+                }
+                // Step or "Step with signal".
+                b's' | b'S' => {
+                    // Signal is just ignored for now (TODO?)
+                    if p.as_bytes()[0] == b's' {
+                        let addr = &p[1..];
+                        if !addr.is_empty() {
+                            todo!("TODO: Resume at {}", addr);
+                        }
+                    } else if let Some((_signal, addr)) = p[1..].split_once(';') {
+                        todo!("TODO: Resume at {}", addr);
+                    }
+                    assert!(self.thread_for_run > 0);
+                    let target_tid = self.thread_for_run.try_into().unwrap();
+                    for (tid, thread) in env.threads.iter_mut().enumerate() {
+                        if !thread.is_alive() {
+                            continue;
+                        } else if tid == target_tid {
+                            thread.state = ThreadState::Stepping;
+                        } else {
+                            // TODO: Is this actually the correct behaviour?
+                            // It's probably not a big deal, since any
+                            // reasonably new version of gdb will use vCont.
+                            thread.state = ThreadState::Paused;
+                        }
+                    }
+
+                    break;
+                }
+                // New style run/continue command.
+                b'v' => {
+                    if p == "vCont?" {
+                        self.send_packet("vCont;c;s;C;S")
+                    } else if p.starts_with("vCont") {
+                        let Some((_, commands)) = p.split_once(';') else {
+                            // Bad vcont packet
+                            self.send_packet("E00");
+                            continue;
+                        };
+                        let mut states = vec![None; env.threads.len()];
+                        let mut default_state = ThreadState::Paused;
+                        let mut has_stepped = false;
+                        for subcommand in commands.split(';') {
+                            let state = match subcommand.as_bytes()[0] {
+                                // Signal is just ignored for now (TODO?)
+                                b'c' | b'C' => ThreadState::Running,
+                                b's' | b'S' => {
+                                    // It doesn't _really_ make sense for more
+                                    // than one thread to be stepping at any
+                                    // given time, although maybe gdb allows it?
+                                    assert!(!has_stepped);
+                                    has_stepped = true;
+                                    ThreadState::Stepping
+                                }
+                                _ => {
+                                    // Bad packet
+                                    self.send_packet("E00");
+                                    continue 'packet_loop;
+                                }
+                            };
+                            match subcommand.split_once(':') {
+                                Some((_, tid_str)) => {
+                                    let tid: isize = tid_str.parse().unwrap();
+                                    if tid == -1 {
+                                        default_state = state;
+                                    } else {
+                                        let tid: usize = tid.try_into().unwrap();
+                                        let tid = tid.saturating_sub(1);
+                                        states[tid] = Some(state);
+                                    }
+                                }
+                                None => default_state = state,
+                            }
+                        }
+                        for (thread, curr_state) in env.threads.iter_mut().zip(states) {
+                            if !thread.is_alive() {
+                                continue;
+                            }
+                            match curr_state {
+                                Some(next_state) => thread.state = next_state,
+                                None => thread.state = default_state,
+                            }
+                        }
+                        break;
+                    } else {
+                        log_dbg!("Unhandled packet.");
+                        self.send_packet("");
+                    }
+                }
+                // Checks if thread is still alive
+                b'T' => {
+                    let tid: usize = p.split_at(1).1.parse().unwrap();
+                    if env.threads[tid - 1].is_alive() {
+                        self.send_packet("OK");
+                    } else {
+                        self.send_packet("");
+                    }
+                }
+                // Specifies thread commands should run on.
+                b'H' => {
+                    let command = p.as_bytes()[1];
+                    let tid: isize = p.split_at(2).1.parse().unwrap();
+                    if command == b'c' {
+                        self.thread_for_run = tid;
+                    } else if command == b'g' {
+                        self.thread_for_other = tid;
+                    } else {
+                        // Unsupported command type
+                        self.send_packet("E00");
+                    }
+                    self.send_packet("OK");
                 }
                 // Kill
                 b'k' => {
                     panic!("Debugger requested kill.");
                 }
-                _ => {
-                    // Query whether we're attaching to an existing or new
-                    // process
-                    if p == "qAttached" {
-                        // New process
+                b'q' => {
+                    if p == "qC" {
+                        let tid = env.current_thread + 1;
+                        self.send_packet(format!("QC{tid:x}").as_str());
+                    } else if p == "qfThreadInfo" {
+                        // First command to get threads, just send whole
+                        // list over now.
+                        let mut live_threads = Vec::new();
+                        for (tid, thread) in env.threads.iter().enumerate() {
+                            if thread.is_alive() {
+                                live_threads.push(tid + 1);
+                            }
+                        }
+
+                        let mut packet = "m".to_string();
+                        for tid in live_threads[..live_threads.len() - 1].iter() {
+                            write!(packet, "{tid:x},").unwrap();
+                        }
+                        write!(packet, "{:x}", live_threads[live_threads.len() - 1]).unwrap();
+                        self.send_packet(packet.as_str());
+                    } else if p == "qsThreadInfo" {
+                        // Second command to get threads, end the list.
+                        self.send_packet("l");
+                    } else if p.starts_with("qThreadExtraInfo") {
+                        let (_, tid_str) = p.split_once(',').unwrap();
+                        let tid: usize = tid_str.parse().unwrap();
+                        let tid = tid.saturating_sub(1);
+                        let thread_block = format!("{}", env.threads[tid].blocked_by);
+                        let mut thread_block_hex = String::new();
+                        thread_block
+                            .bytes()
+                            .for_each(|b| write!(thread_block_hex, "{b:02x}").unwrap());
+                        self.send_packet(thread_block_hex.as_str());
+                    } else if p == "qAttached" {
+                        // Query whether we're attaching to an existing or new
+                        // process (always sends new process)
                         self.send_packet("0");
                     // Query for supported features
                     } else if p == "qSupported" || p.starts_with("qSupported:") {
@@ -351,21 +547,18 @@ impl GdbServer {
                         }
                     } else {
                         log_dbg!("Unhandled packet.");
-                        // Tell GDB we don't understand this packet.
-                        // In some cases this causes convenient fallbacks:
-                        // Since we don't support 'Z', GDB will implement
-                        // software breakpoints for us with trap instructions.
                         self.send_packet("");
                     }
                 }
+                _ => {
+                    log_dbg!("Unhandled packet.");
+                    // Tell GDB we don't understand this packet.
+                    // In some cases this causes convenient fallbacks:
+                    // Since we don't support 'Z', GDB will implement
+                    // software breakpoints for us with trap instructions.
+                    self.send_packet("");
+                }
             }
-        };
-
-        if do_step {
-            echo!("Debugger requested step, resuming execution for one instruction only.");
-        } else {
-            echo!("Debugger requested continue, resuming execution.");
         }
-        do_step
     }
 }

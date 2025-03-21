@@ -58,6 +58,8 @@ GDB provides various services on top of this, for example:
 * `kill` will make touchHLE crash
 * `step` resumes execution for a single instruction
 * `continue` resumes execution indefinitely
+* `info threads` shows the list of running threads
+* `thread 1` switches to the first thread (GDB threads are 1-indexed)
 
 Beware that iPhone OS apps often contain a mix of Thumb functions and normal Arm functions. GDB usually won't know which kind of function it's dealing with:
 
@@ -68,6 +70,7 @@ GDB seems to [mostly](https://sourceware.org/bugzilla/show_bug.cgi?id=30385) und
 
 touchHLE only communicates with GDB while execution is paused. Beyond being paused when you initially connect, it is also paused when certain CPU errors occur, or after stepping (resuming execution for a single instruction). Breakpoints are a useful way to force execution to pause at convenient locations. Another option is to press the F12 key while you have the touchHLE window in focus, which will make touchHLE pause during the next NSRunLoop iteration. If the app fails to return to the NSRunLoop then this won't be useful.
 
+By default, GDB expects that other threads will also run while stepping/continuing, and touchHLE respects that behaviour. To it set it so that only the "focused" thread will run, use `set scheduler-locking off` or `set scheduler-locking step` (the latter will run all threads while continuing but not while stepping).
 ## Graphics debugging
 
 [apitrace](https://apitrace.github.io/) is invaluable for figuring out OpenGL-related issues.

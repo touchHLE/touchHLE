@@ -41,7 +41,7 @@ pub type HostContext = Coroutine<Environment, Environment, Environment>;
 /// Bookkeeping for a thread.
 pub struct Thread {
     /// Once a thread finishes, this is set to false.
-    pub active: bool,
+    pub state: ThreadState,
     /// If this is not [ThreadBlock::NotBlocked], the thread is not executing
     /// until a certain condition is fufilled.
     pub blocked_by: ThreadBlock,
@@ -53,7 +53,7 @@ pub struct Thread {
     /// When a thread is currently executing, its state is stored directly in
     /// the CPU, rather than in a context object. In that case, this field is
     /// None. See also: [std::mem::take] and [cpu::Cpu::swap_context].
-    guest_context: Option<Box<cpu::CpuContext>>,
+    pub guest_context: Option<Box<cpu::CpuContext>>,
     /// The coroutine associated with this thread.
     ///
     /// In more typical rust, this is equivalent to to a [std::future::Future].
@@ -72,14 +72,20 @@ impl Thread {
     fn is_blocked(&self) -> bool {
         !matches!(self.blocked_by, ThreadBlock::NotBlocked)
     }
+    pub fn is_alive(&self) -> bool {
+        !matches!(self.state, ThreadState::Dead)
+    }
+    pub fn is_running(&self) -> bool {
+        matches!(self.state, ThreadState::Running | ThreadState::Stepping)
+    }
 }
 
 impl std::fmt::Debug for Thread {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "Thread {{ active: {:?}, blocked_by: {:?}, return_value: {:?} }}",
-            self.active, self.blocked_by, self.return_value
+            "Thread {{ state: {:?}, blocked_by: {:?}, return_value: {:?} }}",
+            self.state, self.blocked_by, self.return_value
         )
     }
 }
@@ -146,6 +152,36 @@ pub enum ThreadBlock {
     Joining(ThreadId, MutPtr<MutVoidPtr>),
     // Thread has hit a cpu error, and is waiting to be debugged.
     WaitingForDebugger(Option<cpu::CpuError>),
+}
+
+impl std::fmt::Display for ThreadBlock {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ThreadBlock::NotBlocked => write!(f, "Running"),
+            ThreadBlock::Sleeping(wake_time) => {
+                let remaining = wake_time.checked_duration_since(Instant::now());
+                match remaining {
+                    Some(dur) => write!(f, "Sleeping for {:.3}s", dur.as_secs_f32()),
+                    None => write!(f, "Waking"),
+                }
+            }
+            ThreadBlock::Mutex(ptr) => write!(f, "Blocked on mutex {ptr:?}"),
+            ThreadBlock::Semaphore(ptr) => write!(f, "Blocked on semaphore {ptr:?}"),
+            ThreadBlock::Condition(ptr) => write!(f, "Blocked on condition {ptr:?}"),
+            // tid adds 1 to match gdb's thread numbers
+            ThreadBlock::Joining(tid, _) => write!(f, "Joining on thread {}", tid + 1),
+            // Unlikely to be seen
+            ThreadBlock::WaitingForDebugger(_) => write!(f, "Waiting for debugger"),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum ThreadState {
+    Running,
+    Stepping,
+    Paused,
+    Dead,
 }
 
 struct BinaryDependencyNode {
@@ -526,7 +562,7 @@ impl Environment {
             env
         });
         let main_thread = Thread {
-            active: true,
+            state: ThreadState::Running,
             blocked_by: ThreadBlock::NotBlocked,
             return_value: None,
             guest_context: None,
@@ -585,10 +621,7 @@ impl Environment {
                 .accept()
                 .map_err(|e| format!("Could not accept connection: {e}"))?;
             echo!("Debugger client connected on {}.", client_addr);
-            let mut gdb_server = gdb::GdbServer::new(client);
-            let step = gdb_server.wait_for_debugger(None, &mut env.cpu, &mut env.mem);
-            assert!(!step, "Can't step right now!"); // TODO?
-            env.gdb_server = Some(Box::new(gdb_server));
+            env.gdb_server = Some(Box::new(gdb::GdbServer::new(client)));
         }
 
         if env.options.dumping_options.linking_info {
@@ -660,7 +693,7 @@ impl Environment {
         });
 
         let main_thread = Thread {
-            active: true,
+            state: ThreadState::Running,
             blocked_by: ThreadBlock::NotBlocked,
             return_value: None,
             guest_context: None,
@@ -833,7 +866,7 @@ impl Environment {
         );
         self.cpu.dump_regs();
         for (tid, thread) in self.threads.iter().enumerate() {
-            if thread.active && tid != self.current_thread {
+            if thread.is_alive() && tid != self.current_thread {
                 echo_no_panic!("Dumping registers for thread #{}", tid);
                 let Some(ctx) = thread.guest_context.as_ref() else {
                     echo_no_panic!("Could not get registers for thread {}!", tid);
@@ -863,7 +896,7 @@ impl Environment {
         );
         self.stack_trace_for_thread(self.current_thread);
         for tid in 0..self.threads.len() {
-            if self.threads[tid].active && tid != self.current_thread {
+            if self.threads[tid].is_alive() && tid != self.current_thread {
                 echo_no_panic!("Attempting to produce stack trace for thread #{}:", tid);
                 self.stack_trace_for_thread(tid);
             }
@@ -958,7 +991,7 @@ impl Environment {
                         start_routine.call_from_host(env, (user_data,));
                     let curr_thread = &mut env.threads[env.current_thread];
                     curr_thread.return_value = Some(return_value);
-                    curr_thread.active = false;
+                    curr_thread.state = ThreadState::Dead;
                 });
             }));
             if let Err(e) = res {
@@ -970,7 +1003,7 @@ impl Environment {
         });
 
         self.threads.push(Thread {
-            active: true,
+            state: ThreadState::Running,
             blocked_by: ThreadBlock::NotBlocked,
             return_value: None,
             guest_context: Some(Box::new(cpu::CpuContext::new())),
@@ -1159,9 +1192,12 @@ impl Environment {
     pub fn run(mut self) {
         let mut curr_host_context = self.threads[0].host_context.take().unwrap();
         let panic_cell = self.panic_cell.clone();
-        let mut stepping = false;
+        if let Some(mut gdb_server) = self.gdb_server.take() {
+            gdb_server.wait_for_debugger(None, &mut self);
+            self.gdb_server = Some(gdb_server);
+        }
         loop {
-            if stepping {
+            if self.threads[self.current_thread].state == ThreadState::Stepping {
                 self.remaining_ticks = None;
             } else {
                 // 100,000 ticks is an arbitrary number. It needs to be
@@ -1253,32 +1289,11 @@ impl Environment {
                     window.poll_for_events(&self.options);
                 }
                 let curr_thread_block = self.threads[self.current_thread].blocked_by.clone();
-                if stepping || matches!(curr_thread_block, ThreadBlock::WaitingForDebugger(_)) {
-                    if old_context.is_none() {
-                        let old_thread = self.current_thread;
-                        let next_thread = self.schedule_next_thread();
-                        self.switch_thread(&mut old_context, next_thread);
-                        echo!(
-                            "\nGDB WARNING ------- Thread {} has exited - switched thread to {}",
-                            old_thread,
-                            next_thread
-                        );
-                    }
-                    match self.threads[self.current_thread].blocked_by {
-                        ThreadBlock::NotBlocked | ThreadBlock::WaitingForDebugger(_) => {}
-                        _ => {
-                            let old_thread = self.current_thread;
-                            let next_thread = self.schedule_next_thread();
-                            self.switch_thread(&mut old_context, next_thread);
-                            let block = &self.threads[old_thread].blocked_by;
-                            echo!(
-                                "\nGDB WARNING ------- Thread {} is blocked by {:?} - switched thread to {}",
-                                old_thread,
-                                block,
-                                next_thread
-                            );
-                        }
-                    }
+                if matches!(
+                    self.threads[self.current_thread].state,
+                    ThreadState::Stepping
+                ) || matches!(curr_thread_block, ThreadBlock::WaitingForDebugger(_))
+                {
                     let reason = if let ThreadBlock::WaitingForDebugger(reason) = curr_thread_block
                     {
                         self.threads[self.current_thread].blocked_by = ThreadBlock::NotBlocked;
@@ -1286,23 +1301,10 @@ impl Environment {
                     } else {
                         None
                     };
-                    let will_step = self.gdb_server.as_deref_mut().unwrap().wait_for_debugger(
-                        reason.clone(),
-                        self.cpu.as_mut(),
-                        self.mem.as_mut(),
-                    );
-                    if will_step {
-                        stepping = true;
-                    }
+                    let mut gdb_server = self.gdb_server.take().unwrap();
+                    gdb_server.wait_for_debugger(reason.clone(), &mut self);
+                    self.gdb_server = Some(gdb_server);
                 }
-
-                // Don't switch threads if stepping.
-                if stepping {
-                    assert!(old_context.is_some());
-                    return;
-                }
-
-                stepping = false;
 
                 let next_thread = self.schedule_next_thread();
                 if next_thread != self.current_thread {
@@ -1368,7 +1370,7 @@ impl Environment {
     /// This also internally switches the currently used guest context.
     fn switch_thread(&mut self, old_context: &mut Option<HostContext>, new_thread: ThreadId) {
         assert!(new_thread != self.current_thread);
-        assert!(self.threads[new_thread].active);
+        assert!(self.threads[new_thread].is_running());
 
         log_dbg!(
             "Switching thread: {} => {}",
@@ -1379,7 +1381,7 @@ impl Environment {
         let mut guest_ctx = self.threads[new_thread].guest_context.take().unwrap();
         self.cpu.swap_context(&mut guest_ctx);
         assert!(self.threads[self.current_thread].guest_context.is_none());
-        assert!(old_context.is_some() || !self.threads[self.current_thread].active);
+        assert!(old_context.is_some() || !self.threads[self.current_thread].is_alive());
         self.threads[self.current_thread].guest_context = Some(guest_ctx);
 
         let new_host_ctx = self.threads[new_thread].host_context.take().unwrap();
@@ -1489,7 +1491,7 @@ impl Environment {
 
     fn run_inner(&mut self) {
         let initial_thread = self.current_thread;
-        assert!(self.threads[initial_thread].active);
+        assert!(self.threads[initial_thread].is_running());
         assert!(self.threads[initial_thread].guest_context.is_none());
 
         loop {
@@ -1502,14 +1504,15 @@ impl Environment {
                     .run_or_step(&mut self.mem, self.remaining_ticks.as_mut());
 
                 match self.handle_cpu_state(state) {
-                    ThreadNextAction::Continue => {}
+                    ThreadNextAction::Continue => {
+                        if self.remaining_ticks.is_none() {
+                            break;
+                        }
+                    }
                     ThreadNextAction::ReturnToHost => return,
                     ThreadNextAction::DebugCpuError(e) => {
                         self.debug_cpu_error(e);
                     }
-                }
-                if self.remaining_ticks.is_none() {
-                    break;
                 }
             }
             self.yield_thread(ThreadBlock::NotBlocked);
@@ -1571,7 +1574,7 @@ impl Environment {
                 let thread_id = (self.current_thread + 1 + i) % self.threads.len();
                 let candidate = &mut self.threads[thread_id];
 
-                if !candidate.active {
+                if !candidate.is_running() {
                     continue;
                 }
                 match candidate.blocked_by {
@@ -1640,7 +1643,7 @@ impl Environment {
                         }
                     }
                     ThreadBlock::Joining(joinee_thread, ptr) => {
-                        if !self.threads[joinee_thread].active {
+                        if !self.threads[joinee_thread].is_alive() {
                             log_dbg!(
                                 "Thread {} joining with now finished thread {}.",
                                 self.current_thread,

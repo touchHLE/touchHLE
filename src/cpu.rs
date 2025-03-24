@@ -126,6 +126,8 @@ pub enum CpuError {
     UndefinedInstruction,
     /// Breakpoint (`bkpt` instruction).
     Breakpoint,
+    /// Interrupt from Ctrl-C command by GDB.
+    Interrupt,
 }
 
 impl Cpu {

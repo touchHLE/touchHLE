@@ -1445,6 +1445,14 @@ impl Environment {
                     let mut gdb_server = self.gdb_server.take().unwrap();
                     gdb_server.wait_for_debugger(reason.clone(), &mut self);
                     self.gdb_server = Some(gdb_server);
+                } else if self
+                    .gdb_server
+                    .as_mut()
+                    .is_some_and(|server| server.break_was_sent())
+                {
+                    let mut gdb_server = self.gdb_server.take().unwrap();
+                    gdb_server.wait_for_debugger(Some(cpu::CpuError::Interrupt), &mut self);
+                    self.gdb_server = Some(gdb_server);
                 }
 
                 let next_thread = self.schedule_next_thread();

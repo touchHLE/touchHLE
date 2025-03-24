@@ -33,6 +33,8 @@ pub struct GdbServer {
     reader: BufReader<TcpStream>,
     thread_for_run: isize,
     thread_for_other: isize,
+    reader_is_nonblocking: bool,
+    first_char_ne_break: bool,
     first_halt: bool,
 }
 
@@ -54,11 +56,15 @@ impl GdbServer {
 
         connection.write_all(b"+").expect("Could not send greeting");
 
+        connection.set_nonblocking(false).unwrap();
+
         GdbServer {
             reader: BufReader::with_capacity(4096, connection),
             thread_for_run: 0,
             thread_for_other: 0,
             first_halt: true,
+            first_char_ne_break: false,
+            reader_is_nonblocking: true,
         }
     }
 
@@ -77,6 +83,8 @@ impl GdbServer {
             return None;
         }
 
+        self.first_char_ne_break = false;
+
         // Packets begin with '$', followed by the main content, followed by
         // '#', followed by a two-digit checksum in hexadecimal.
         // Except when some optional extensions are enabled, the content is
@@ -86,6 +94,10 @@ impl GdbServer {
             // This is just an acknowledgment
             self.reader.consume(1);
             log_dbg!("Got ACK");
+            return None;
+        } else if buffer[0] == 0x03 {
+            // Ctrl-C, can ignore since we're already in the debugger
+            self.reader.consume(1);
             return None;
         }
 
@@ -137,6 +149,11 @@ impl GdbServer {
     pub fn wait_for_debugger(&mut self, stop_reason: Option<CpuError>, env: &mut Environment) {
         echo!("Waiting for debugger to continue.");
 
+        if self.reader_is_nonblocking {
+            self.reader.get_mut().set_nonblocking(false).unwrap();
+            self.reader_is_nonblocking = false;
+        }
+
         fn regs_for_command<'b>(
             server: &mut GdbServer,
             env: &'b mut Environment,
@@ -182,6 +199,10 @@ impl GdbServer {
             Some(CpuError::MemoryError) => {
                 self.send_packet(format!("T0bthread:{:x};", env.current_thread + 1).as_str());
                 // SIGSEGV
+            }
+            Some(CpuError::Interrupt) => {
+                self.send_packet(format!("T02thread:{:x};", env.current_thread + 1).as_str());
+                // SIGINT
             }
         }
 
@@ -559,6 +580,36 @@ impl GdbServer {
                     self.send_packet("");
                 }
             }
+        }
+    }
+
+    /// Returns true if a break event was sent.
+    pub fn break_was_sent(&mut self) -> bool {
+        if self.first_char_ne_break {
+            return false;
+        }
+
+        if !self.reader_is_nonblocking {
+            self.reader.get_mut().set_nonblocking(true).unwrap();
+            self.reader_is_nonblocking = true;
+        }
+
+        let buf = match self.reader.fill_buf() {
+            Ok(buf) => buf,
+            Err(err) if err.kind() == std::io::ErrorKind::WouldBlock => self.reader.buffer(),
+            _ => unimplemented!(),
+        };
+        let Some(c) = buf.first() else {
+            return false;
+        };
+
+        // Not a break signal, return now.
+        if *c != 0x03 {
+            self.first_char_ne_break = true;
+            false
+        } else {
+            self.reader.consume(1);
+            true
         }
     }
 }

@@ -36,6 +36,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "408844fe_74a80d8f",
+        "filename": "src/frameworks/foundation/ns_process_info.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 22,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-03-27T04:40:06Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "aa21927a_a104c1e3",
+      "revId": "c3f9f906e478ee3ed2989932171f9552cf050b90",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "63fd31f4_695ad1cb",
@@ -71,6 +89,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "0ad53332_7031ee9a",
+        "filename": "src/frameworks/foundation/ns_process_info.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 26,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-03-27T04:40:06Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "7cd5331d_46e060fd",
+      "revId": "c3f9f906e478ee3ed2989932171f9552cf050b90",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "80187633_7eeb0c85",
@@ -102,6 +138,24 @@
       "side": 1,
       "message": "The 2GB is just mentioned in a comment in mach_host.rs",
       "parentUuid": "80187633_7eeb0c85",
+      "revId": "c3f9f906e478ee3ed2989932171f9552cf050b90",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "4c036ce0_6cb48de2",
+        "filename": "src/frameworks/foundation/ns_process_info.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 28,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-03-27T04:40:06Z",
+      "side": 1,
+      "message": "I did make it more clear that it is 2GB by using math versus the crazy number. Since it is actully only used here, it does not make sense to make it a constant.",
+      "parentUuid": "2cb9a89e_9a8abbe7",
       "revId": "c3f9f906e478ee3ed2989932171f9552cf050b90",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

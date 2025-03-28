@@ -70,6 +70,24 @@
       "parentUuid": "da5f1e5b_ac3ded9f",
       "revId": "623008f4aea71af12da92ae088d8de9f9bab73bd",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "7fe8de63_ab7b3f4a",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 962,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-03-28T16:20:13Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "22e730d7_8636eb89",
+      "revId": "623008f4aea71af12da92ae088d8de9f9bab73bd",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

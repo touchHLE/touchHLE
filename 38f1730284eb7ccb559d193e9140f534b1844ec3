@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f0a26d52_cfb08d9f",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-03-30T08:56:53Z",
+      "side": 1,
+      "message": "We mentioned previous audio codec changes in CHANGELOG.md, maybe do that here too? Looks fine otherwise.",
+      "revId": "38f1730284eb7ccb559d193e9140f534b1844ec3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

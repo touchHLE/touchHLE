@@ -60,8 +60,8 @@ encoding_rs = "0.8.35"
 # behind this, but the actual HIDAPI is not used by touchHLE (see window.rs).
 # Note that the submodule in vendor/SDL2/ must use exactly the same revision of
 # SDL2 that rust-sdl2 uses, so that the Android JNI interface matches.
-sdl2 = { git = "https://github.com/hikari-no-yume/rust-sdl2.git", tag = "touchHLE-2", features = ["hidapi"] }
-sdl2-sys = { git = "https://github.com/hikari-no-yume/rust-sdl2.git", tag = "touchHLE-2" }
+sdl2 = { version = "0.37.0", features = ["hidapi"] }
+sdl2-sys = "0.37.0"
 touchHLE_dynarmic_wrapper = { path = "src/cpu/dynarmic_wrapper" }
 touchHLE_gl_bindings = { path = "src/gles/gl_bindings" }
 touchHLE_openal_soft_wrapper = { path = "src/audio/openal_soft_wrapper" }

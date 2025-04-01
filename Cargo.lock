@@ -529,8 +529,9 @@ checksum = "ef703b7cb59335eae2eb93ceb664c0eb7ea6bf567079d843e09420219668e072"
 
 [[package]]
 name = "sdl2"
-version = "0.35.2"
-source = "git+https://github.com/hikari-no-yume/rust-sdl2.git?tag=touchHLE-2#15c58be733277f4314d47298132f4ad2304cc512"
+version = "0.37.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3b498da7d14d1ad6c839729bd4ad6fc11d90a57583605f3b4df2cd709a9cd380"
 dependencies = [
  "bitflags",
  "lazy_static",
@@ -540,8 +541,9 @@ dependencies = [
 
 [[package]]
 name = "sdl2-sys"
-version = "0.35.2"
-source = "git+https://github.com/hikari-no-yume/rust-sdl2.git?tag=touchHLE-2#15c58be733277f4314d47298132f4ad2304cc512"
+version = "0.37.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "951deab27af08ed9c6068b7b0d05a93c91f0a8eb16b6b816a5e73452a43521d3"
 dependencies = [
  "cfg-if",
  "cmake",

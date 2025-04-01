@@ -37,12 +37,14 @@ jobs:
         run: curl -L -O "https://github.com/Kitware/CMake/releases/download/v3.31.6/cmake-3.31.6-macos-universal.tar.gz"
       - if: ${{ steps.cache-cmake.outputs.cache-hit != 'true' }}
         name: Extract Cmake
-        run: tar xzvf -C vendor "cmake-3.31.6-macos-universal.tar.gz" && mv "vendor/cmake-3.31.6-macos-universal/CMake.app/Contents/" vendor/cmake && rm -rf vendor/cmake-3.31.6-macos-universal
+        run: tar xzvf "cmake-3.31.6-macos-universal.tar.gz" -C vendor && mv "vendor/cmake-3.31.6-macos-universal/CMake.app/Contents/" vendor/cmake && rm -rf vendor/cmake-3.31.6-macos-universal
       # This is the earliest point at which we can do linting: clippy will end up
       # building dynarmic, which needs Boost, but we don't need LLVM until
       # building tests.
       - name: Lint
         run: dev-scripts/lint.sh
+        env:
+          CMAKE: 'vendor/cmake/bin/cmake'
       - name: Try to get cached copy of LLVM
         id: cache-llvm
         uses: actions/cache@v3
@@ -111,7 +113,7 @@ jobs:
       run: curl -L -O "https://github.com/Kitware/CMake/releases/download/v3.31.6/cmake-3.31.6-linux-x86_64.tar.gz"
     - if: ${{ steps.cache-cmake.outputs.cache-hit != 'true' }}
       name: Extract Cmake
-      run: tar xzvf -C vendor "cmake-3.31.6-linux-x86_64.tar.gz" && mv vendor/cmake-3.31.6-linux-x86_64 vendor/cmake
+      run: tar xzvf "cmake-3.31.6-linux-x86_64.tar.gz" -C vendor && mv vendor/cmake-3.31.6-linux-x86_64 vendor/cmake
     - name: Install AArch64 Android Rust toolchain
       run: rustup target add aarch64-linux-android
     - name: Install cargo-ndk
@@ -211,6 +213,8 @@ jobs:
     - name: Lint
       shell: bash # no command output without this
       run: dev-scripts/lint.sh
+      env:
+        CMAKE: vendor\cmake\bin\cmake.exe
     - name: Try to get cached copy of LLVM
       id: cache-llvm
       uses: actions/cache@v3
@@ -223,8 +227,6 @@ jobs:
     - if: ${{ steps.cache-llvm.outputs.cache-hit != 'true' }}
       name: Extract LLVM
       run: 7z -otests/llvm x LLVM-12.0.1-win64.exe
-      env:
-        CMAKE: vendor\cmake\bin\cmake.exe
     - name: Test
       run: cargo test
       env:

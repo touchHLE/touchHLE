@@ -530,7 +530,7 @@ checksum = "ef703b7cb59335eae2eb93ceb664c0eb7ea6bf567079d843e09420219668e072"
 [[package]]
 name = "sdl2"
 version = "0.37.0"
-source = "git+https://github.com/Rust-SDL2/rust-sdl2.git#ecd03de215f2db2940efa3e902557e8316fdff4e"
+source = "git+https://github.com/touchHLE/rust-sdl2#ecd03de215f2db2940efa3e902557e8316fdff4e"
 dependencies = [
  "bitflags",
  "lazy_static",
@@ -541,7 +541,7 @@ dependencies = [
 [[package]]
 name = "sdl2-sys"
 version = "0.37.0"
-source = "git+https://github.com/Rust-SDL2/rust-sdl2.git#ecd03de215f2db2940efa3e902557e8316fdff4e"
+source = "git+https://github.com/touchHLE/rust-sdl2#ecd03de215f2db2940efa3e902557e8316fdff4e"
 dependencies = [
  "cfg-if",
  "cmake",

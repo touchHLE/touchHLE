@@ -26,6 +26,18 @@ jobs:
         run: git submodule update --init
       - name: Install Boost
         run: brew install boost
+      - name: Try to get cached copy of cmake
+        id: cache-cmake
+        uses: actions/cache@v3
+        with:
+          path: vendor/cmake
+          key: cmake_3_31_6
+      - if: ${{ steps.cache-cmake.outputs.cache-hit != 'true' }}
+        name: Download Cmake
+        run: curl -L -O "https://github.com/Kitware/CMake/releases/download/v3.31.6/cmake-3.31.6-macos-universal.tar.gz"
+      - if: ${{ steps.cache-cmake.outputs.cache-hit != 'true' }}
+        name: Extract Cmake
+        run: tar xzvf -C vendor "cmake-3.31.6-macos-universal.tar.gz" && mv "vendor/cmake-3.31.6-macos-universal/CMake.app/Contents/" vendor/cmake && rm -rf vendor/cmake-3.31.6-macos-universal
       # This is the earliest point at which we can do linting: clippy will end up
       # building dynarmic, which needs Boost, but we don't need LLVM until
       # building tests.
@@ -47,8 +59,12 @@ jobs:
         run: rustup target add x86_64-apple-darwin
       - name: Test
         run: cargo test --target x86_64-apple-darwin
+        env:
+          CMAKE: 'vendor/cmake/bin/cmake'
       - name: Build
         run: cargo build --target x86_64-apple-darwin --release
+        env:
+          CMAKE: 'vendor/cmake/bin/cmake'
       - name: Create .app bundle
         run: cd dev-scripts && ./make-macos-bundle.sh ../target/x86_64-apple-darwin/release/touchHLE && mkdir touchHLE-dmg-src && mv touchHLE.app touchHLE-dmg-src/ && hdiutil create -volname touchHLE -srcfolder touchHLE-dmg-src touchHLE.dmg && mv touchHLE.dmg ..
       - uses: actions/upload-artifact@v4
@@ -84,6 +100,18 @@ jobs:
     - if: ${{ steps.cache-boost.outputs.cache-hit != 'true' }}
       name: Extract Boost
       run: 7z -ovendor x boost_1_81_0.7z && mv vendor/boost_1_81_0 vendor/boost
+    - name: Try to get cached copy of cmake
+      id: cache-cmake
+      uses: actions/cache@v3
+      with:
+        path: vendor/cmake
+        key: cmake_3_31_6
+    - if: ${{ steps.cache-cmake.outputs.cache-hit != 'true' }}
+      name: Download Cmake
+      run: curl -L -O "https://github.com/Kitware/CMake/releases/download/v3.31.6/cmake-3.31.6-linux-x86_64.tar.gz"
+    - if: ${{ steps.cache-cmake.outputs.cache-hit != 'true' }}
+      name: Extract Cmake
+      run: tar xzvf -C vendor "cmake-3.31.6-linux-x86_64.tar.gz" && mv vendor/cmake-3.31.6-linux-x86_64 vendor/cmake
     - name: Install AArch64 Android Rust toolchain
       run: rustup target add aarch64-linux-android
     - name: Install cargo-ndk
@@ -126,12 +154,14 @@ jobs:
         ANDROID_NDK_ROOT: '/usr/local/lib/android/sdk/ndk/25.2.9519653'
         ANDROID_NDK: '/usr/local/lib/android/sdk/ndk/25.2.9519653'
         ANDROID_NDK_HOME: '/usr/local/lib/android/sdk/ndk/25.2.9519653'
+        CMAKE: 'vendor/cmake/bin/cmake'
     # Don't attempt to run tests (can't run on Android).
     - name: Build for Android
       run: cd android && ../gradle/gradle-7.3/bin/gradle assembleRelease && mv app/build/outputs/apk/release/app-release.apk ../touchHLE.apk
       env:
         # The version should match the ndkVersion defined in `android\app\build.gradle`
         ANDROID_NDK_ROOT: '/usr/local/lib/android/sdk/ndk/25.2.9519653'
+        CMAKE: 'vendor/cmake/bin/cmake'
     - uses: actions/upload-artifact@v4
       with:
         name: touchHLE_Android_AArch64
@@ -163,6 +193,18 @@ jobs:
     - if: ${{ steps.cache-boost.outputs.cache-hit != 'true' }}
       name: Extract Boost
       run: 7z -ovendor x boost_1_81_0.7z && ren vendor\boost_1_81_0 boost
+    - name: Try to get cached copy of cmake
+      id: cache-cmake
+      uses: actions/cache@v3
+      with:
+        path: vendor/cmake
+        key: cmake_3_31_6
+    - if: ${{ steps.cache-cmake.outputs.cache-hit != 'true' }}
+      name: Download Cmake
+      run: curl -L -O "https://github.com/Kitware/CMake/releases/download/v3.31.6/cmake-3.31.6-windows-x86_64.zip"
+    - if: ${{ steps.cache-cmake.outputs.cache-hit != 'true' }}
+      name: Extract Cmake
+      run: 7z -ovendor x "cmake-3.31.6-windows-x86_64.zip" && ren vendor\cmake-3.31.6-windows-x86_64 cmake
     # This is the earliest point at which we can do linting: clippy will end up
     # building dynarmic, which needs Boost, but we don't need LLVM until
     # building tests.
@@ -181,10 +223,16 @@ jobs:
     - if: ${{ steps.cache-llvm.outputs.cache-hit != 'true' }}
       name: Extract LLVM
       run: 7z -otests/llvm x LLVM-12.0.1-win64.exe
+      env:
+        CMAKE: vendor\cmake\bin\cmake.exe
     - name: Test
       run: cargo test
+      env:
+        CMAKE: vendor\cmake\bin\cmake.exe
     - name: Build
       run: cargo build --release && move target/release/touchHLE.exe .
+      env:
+        CMAKE: vendor\cmake\bin\cmake.exe
     - uses: actions/upload-artifact@v4
       with:
         name: touchHLE_Windows_x86_64

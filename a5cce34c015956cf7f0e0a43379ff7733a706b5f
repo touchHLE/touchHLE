@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9ecf984f_3060fc45",
+        "filename": "src/environment.rs",
+        "patchSetId": 13
+      },
+      "lineNbr": 1483,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-04-05T14:48:41Z",
+      "side": 1,
+      "message": "It was fixed here https://github.com/touchHLE/touchHLE/commit/3db0b1840cbea2a17af70601982cba1a6b990432, right?",
+      "revId": "a5cce34c015956cf7f0e0a43379ff7733a706b5f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

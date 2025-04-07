@@ -27,3 +27,9 @@ tests/TestApp_source/build
 local.properties
 android/app/src/main/jniLibs
 android/app/build
+
+# Nix
+result/
+
+# Direnv
+.direnv/

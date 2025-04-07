@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "a3d1b284_f39f006f",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1037965
+      },
+      "writtenOn": "2025-04-07T22:17:19Z",
+      "side": 1,
+      "message": "Hello, I\u0027d like for you to review my changes. I added nix and direnv to this project in light of recent CMake breakages on Linux. Hope this helps 😊",
+      "revId": "4cc3941b53535b65d5248f390ad541f451d49f8c",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

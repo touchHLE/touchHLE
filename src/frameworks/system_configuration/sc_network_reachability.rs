@@ -104,6 +104,15 @@ fn SCNetworkReachabilityGetFlags(
     target: SCNetworkReachabilityRef,
     flags: MutPtr<SCNetworkReachabilityFlags>,
 ) -> bool {
+    if !env.options.network_access {
+        log_dbg!(
+            "Network access is disabled, SCNetworkReachabilityGetFlags({:?}, {:?}) -> false",
+            target,
+            flags
+        );
+        return false;
+    }
+
     let target_class: Class = msg![env; target class];
     assert_eq!(
         target_class,

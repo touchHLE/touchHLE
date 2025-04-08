@@ -187,3 +187,8 @@ Other options:
 
         Enabling this option may solve some rendering issues, but implies
         a performance hit which is undesirable in most of the cases.
+
+    --network-access
+        Allow touchHLE to access network.
+
+        Currently used for local multiplayer over Wi-Fi for some games.

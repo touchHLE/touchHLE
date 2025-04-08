@@ -16,6 +16,8 @@ const AI_PASSIVE: i32 = 0x1;
 pub const IPPROTO_TCP: i32 = 6;
 pub const IPPROTO_UDP: i32 = 17;
 
+const EAI_FAIL: i32 = 4;
+
 #[allow(non_camel_case_types)]
 pub type socklen_t = u32;
 
@@ -45,6 +47,17 @@ fn getaddrinfo(
     hints: ConstPtr<addrinfo>,
     res: MutPtr<MutPtr<addrinfo>>,
 ) -> i32 {
+    if !env.options.network_access {
+        log_dbg!(
+            "Network access is disabled, getaddrinfo({:?}, {:?}, {:?}, {:?}) -> EAI_FAIL",
+            node_name,
+            serv_name,
+            hints,
+            res
+        );
+        return EAI_FAIL;
+    }
+
     assert!(node_name.is_null()); // TODO
 
     let hint = env.mem.read(hints);

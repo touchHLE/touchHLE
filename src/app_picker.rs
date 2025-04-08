@@ -148,6 +148,7 @@ struct AppPickerDelegateHostObject {
     orientation_default: bool,
     orientation_landscape_left: bool,
     orientation_landscape_right: bool,
+    network: bool,
     fullscreen: Option<bool>,
 }
 impl HostObject for AppPickerDelegateHostObject {}
@@ -211,6 +212,10 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 - (())orientationLandscapeRight {
     env.objc.borrow_mut::<AppPickerDelegateHostObject>(this).orientation_landscape_right = true;
+}
+- (())network:(id)switch { // UISwitch*
+    let switch_state: bool = msg![env; switch isOn];
+    env.objc.borrow_mut::<AppPickerDelegateHostObject>(this).network = switch_state;
 }
 - (())fullscreen:(id)switch { // UISwitch*
     let switch_state: bool = msg![env; switch isOn];
@@ -500,6 +505,7 @@ fn show_app_picker_gui(
     let mut quick_options_scale_hack: Option<NonZeroU32> = None;
     let mut quick_options_fullscreen: Option<()> = None;
     let mut quick_options_orientation: Option<DeviceOrientation> = None;
+    let mut quick_options_network = false;
 
     fn update_quick_option_buttons(env: &mut Environment, buttons: &[id], selected_idx: usize) {
         for (idx, &button) in buttons.iter().enumerate() {
@@ -668,6 +674,8 @@ fn show_app_picker_gui(
                 &quick_options_stuff.orientation_buttons,
                 quick_options_orientation,
             );
+        } else if std::mem::take(&mut host_obj.network) {
+            quick_options_network = true;
         } else if let Some(fullscreen) = std::mem::take(&mut host_obj.fullscreen) {
             quick_options_fullscreen = match fullscreen {
                 false => None,
@@ -692,6 +700,9 @@ fn show_app_picker_gui(
     }
     if let Some(()) = quick_options_fullscreen {
         option_args.push("--fullscreen".to_string());
+    }
+    if quick_options_network {
+        option_args.push("--network-access".to_string());
     }
 
     // Return the environment so some parts of it can be salvaged.
@@ -1283,6 +1294,8 @@ fn setup_quick_options(
             ("←", "orientationLandscapeLeft"),
             ("→", "orientationLandscapeRight"),
         ]),
+        RowKind::Label("Network access"),
+        RowKind::Switch("network:"),
         // ---- (divider for stuff skipped below)
         RowKind::Label("Fullscreen (override)"),
         RowKind::Switch("fullscreen:"),

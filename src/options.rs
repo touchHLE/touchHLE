@@ -50,6 +50,7 @@ pub struct Options {
     pub print_fps: bool,
     pub fps_limit: Option<f64>,
     pub force_composition: bool,
+    pub network_access: bool,
 }
 
 impl Default for Options {
@@ -73,6 +74,7 @@ impl Default for Options {
             print_fps: false,
             fps_limit: Some(60.0), // Original iPhone is 60Hz and uses v-sync,
             force_composition: false,
+            network_access: false,
         }
     }
 }
@@ -190,6 +192,8 @@ impl Options {
             }
         } else if arg == "--force-composition" {
             self.force_composition = true;
+        } else if arg == "--network-access" {
+            self.network_access = true;
         } else {
             return Ok(false);
         };

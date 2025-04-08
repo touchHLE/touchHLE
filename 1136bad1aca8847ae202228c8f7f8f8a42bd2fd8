@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2275398b_3d4a70e7",
+        "filename": "src/app_picker.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 704,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-04-08T21:10:51Z",
+      "side": 1,
+      "message": "This doesn\u0027t compile, surely?",
+      "revId": "1136bad1aca8847ae202228c8f7f8f8a42bd2fd8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

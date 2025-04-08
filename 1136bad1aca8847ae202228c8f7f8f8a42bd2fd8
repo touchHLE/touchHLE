@@ -52,6 +52,24 @@
       "parentUuid": "3cdb4540_a076e618",
       "revId": "1136bad1aca8847ae202228c8f7f8f8a42bd2fd8",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "cd9bc3aa_db414b02",
+        "filename": "src/app_picker.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 704,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-04-08T21:17:48Z",
+      "side": 1,
+      "message": "I guess because fullscreen option doesn\u0027t exist on Android?",
+      "parentUuid": "ed31b72b_54865bef",
+      "revId": "1136bad1aca8847ae202228c8f7f8f8a42bd2fd8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

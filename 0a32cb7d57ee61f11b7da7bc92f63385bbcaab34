@@ -1,0 +1,106 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "5099f859_4c1f5766",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-04-08T20:59:13Z",
+      "side": 1,
+      "message": "Thanks for adding this!",
+      "revId": "0a32cb7d57ee61f11b7da7bc92f63385bbcaab34",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c199c96b_dd82ab2c",
+        "filename": "OPTIONS_HELP.txt",
+        "patchSetId": 1
+      },
+      "lineNbr": 191,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-04-08T20:59:13Z",
+      "side": 1,
+      "message": "Can it be called `--allow-network-access`? Alternatively `--allow-networking`?\n\nThis applies to the name of the variable and the quick option too. I think using a positive word like “allow” would make it slightly clearer what it does.",
+      "revId": "0a32cb7d57ee61f11b7da7bc92f63385bbcaab34",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "bff35af3_efa65292",
+        "filename": "OPTIONS_HELP.txt",
+        "patchSetId": 1
+      },
+      "lineNbr": 192,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-04-08T20:59:13Z",
+      "side": 1,
+      "message": "I would prefer something like:\n\n  Allow apps running in touchHLE to access the Internet and the local network.\n\nThis can avoid some misconceptions:\n\n- It\u0027s not the emulator itself that requests network access, but the app itself; users might not trust the app.\n- Network access includes the Internet (might not be obvious to all users)",
+      "revId": "0a32cb7d57ee61f11b7da7bc92f63385bbcaab34",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "cce59649_604ee181",
+        "filename": "OPTIONS_HELP.txt",
+        "patchSetId": 1
+      },
+      "lineNbr": 194,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-04-08T20:59:13Z",
+      "side": 1,
+      "message": "I would prefer not to have this line, it feels a bit too application-specific. We could explain in the changelog instead.",
+      "revId": "0a32cb7d57ee61f11b7da7bc92f63385bbcaab34",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "69916e0c_cf468978",
+        "filename": "src/app_picker.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 151,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-04-08T20:59:13Z",
+      "side": 1,
+      "message": "This needs to be `Option\u003cbool\u003e` (see comment below).",
+      "revId": "0a32cb7d57ee61f11b7da7bc92f63385bbcaab34",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8de90a3d_47107cae",
+        "filename": "src/app_picker.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 678,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-04-08T20:59:13Z",
+      "side": 1,
+      "message": "You need to store the value that was `take`n here, otherwise enabling and then disabling won\u0027t work, i.e.\n\n    } else if let Some(enabled) \u003d std::mem::take(\u0026mut host_obj.network) {\n        quick_options_network \u003d enabled;",
+      "revId": "0a32cb7d57ee61f11b7da7bc92f63385bbcaab34",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

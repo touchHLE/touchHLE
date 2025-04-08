@@ -35,6 +35,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "a5a0d2d9_3f737750",
+        "filename": "OPTIONS_HELP.txt",
+        "patchSetId": 1
+      },
+      "lineNbr": 191,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-04-08T21:09:40Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "c199c96b_dd82ab2c",
+      "revId": "0a32cb7d57ee61f11b7da7bc92f63385bbcaab34",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "bff35af3_efa65292",
@@ -48,6 +66,24 @@
       "writtenOn": "2025-04-08T20:59:13Z",
       "side": 1,
       "message": "I would prefer something like:\n\n  Allow apps running in touchHLE to access the Internet and the local network.\n\nThis can avoid some misconceptions:\n\n- It\u0027s not the emulator itself that requests network access, but the app itself; users might not trust the app.\n- Network access includes the Internet (might not be obvious to all users)",
+      "revId": "0a32cb7d57ee61f11b7da7bc92f63385bbcaab34",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b9086e67_72d417d0",
+        "filename": "OPTIONS_HELP.txt",
+        "patchSetId": 1
+      },
+      "lineNbr": 192,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-04-08T21:09:40Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "bff35af3_efa65292",
       "revId": "0a32cb7d57ee61f11b7da7bc92f63385bbcaab34",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
@@ -69,6 +105,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "52731b41_b6a16239",
+        "filename": "OPTIONS_HELP.txt",
+        "patchSetId": 1
+      },
+      "lineNbr": 194,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-04-08T21:09:40Z",
+      "side": 1,
+      "message": "Sure, removed",
+      "parentUuid": "cce59649_604ee181",
+      "revId": "0a32cb7d57ee61f11b7da7bc92f63385bbcaab34",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "69916e0c_cf468978",
@@ -86,6 +140,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "f14e0278_ef035a4f",
+        "filename": "src/app_picker.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 151,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-04-08T21:09:40Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "69916e0c_cf468978",
+      "revId": "0a32cb7d57ee61f11b7da7bc92f63385bbcaab34",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "8de90a3d_47107cae",
@@ -99,6 +171,24 @@
       "writtenOn": "2025-04-08T20:59:13Z",
       "side": 1,
       "message": "You need to store the value that was `take`n here, otherwise enabling and then disabling won\u0027t work, i.e.\n\n    } else if let Some(enabled) \u003d std::mem::take(\u0026mut host_obj.network) {\n        quick_options_network \u003d enabled;",
+      "revId": "0a32cb7d57ee61f11b7da7bc92f63385bbcaab34",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "9f628495_1154e936",
+        "filename": "src/app_picker.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 678,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-04-08T21:09:40Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "8de90a3d_47107cae",
       "revId": "0a32cb7d57ee61f11b7da7bc92f63385bbcaab34",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

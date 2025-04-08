@@ -34,6 +34,24 @@
       "parentUuid": "2275398b_3d4a70e7",
       "revId": "1136bad1aca8847ae202228c8f7f8f8a42bd2fd8",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ed31b72b_54865bef",
+        "filename": "src/app_picker.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 704,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-04-08T21:15:48Z",
+      "side": 1,
+      "message": "Oh I see. I wonder why I didn\u0027t do this for fullscreen.",
+      "parentUuid": "3cdb4540_a076e618",
+      "revId": "1136bad1aca8847ae202228c8f7f8f8a42bd2fd8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

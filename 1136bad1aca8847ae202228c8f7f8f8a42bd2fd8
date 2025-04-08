@@ -16,6 +16,24 @@
       "message": "This doesn\u0027t compile, surely?",
       "revId": "1136bad1aca8847ae202228c8f7f8f8a42bd2fd8",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3cdb4540_a076e618",
+        "filename": "src/app_picker.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 704,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-04-08T21:13:21Z",
+      "side": 1,
+      "message": "hhhm it does? `network` of host objct is option boolean, but `quick_options_network` is just plain boolean",
+      "parentUuid": "2275398b_3d4a70e7",
+      "revId": "1136bad1aca8847ae202228c8f7f8f8a42bd2fd8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

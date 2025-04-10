@@ -34,6 +34,24 @@
       "parentUuid": "bdc5afca_008b7a3e",
       "revId": "eb02eeccf6f6bc33a0a6686fa1a6632adbcd9623",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "4fe4d292_b7fd56ee",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 13
+      },
+      "lineNbr": 959,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-04-10T19:40:45Z",
+      "side": 1,
+      "message": "Basically, the comment on my PR shows that a different game \u0027Galaxy on Fire\u0027 would get hung up in this function with an assert here. In order to make this function not hang up progress on that game, I left it out. If you want me to add it backo get this patchset approved though, I can.",
+      "parentUuid": "9f1a4e9a_2dd5473a",
+      "revId": "eb02eeccf6f6bc33a0a6686fa1a6632adbcd9623",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

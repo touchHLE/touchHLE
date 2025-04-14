@@ -16,6 +16,23 @@
       "message": "Hello, I\u0027d like for you to review my changes. I added nix and direnv to this project in light of recent CMake breakages on Linux. Hope this helps 😊",
       "revId": "4cc3941b53535b65d5248f390ad541f451d49f8c",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "010e0b46_602fbffd",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-04-14T19:13:26Z",
+      "side": 1,
+      "message": "Hi!\n\nFirst of all, I want to apologise for responding so slowly, I should\u0027ve gotten back to you sooner.\n\nI am personally kind of curious about Nix, it seems like an interesting system that might be a solution to some of touchHLE\u0027s problems. However, I don\u0027t really want to accept a patch like this that adds something that I and the other developers are unlikely to actually use, as everything in the repo is something that we have to maintain. I think also the toolchain versioning isn\u0027t the most pressing issue with building touchHLE; really, we need a total build system rewrite so we don\u0027t have this gradle-ndk-cmake-cargo monstrosity, but that\u0027s such a horrible task I don\u0027t think anyone will attempt it any time soon…\n\nSo, I appreciate the thought and the effort, but unfortunately I am probably not going to merge this. Sorry!",
+      "revId": "4cc3941b53535b65d5248f390ad541f451d49f8c",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

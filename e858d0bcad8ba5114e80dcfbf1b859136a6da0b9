@@ -88,6 +88,24 @@
       "parentUuid": "0926f40e_3962ba27",
       "revId": "e858d0bcad8ba5114e80dcfbf1b859136a6da0b9",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "cb788e01_e99b2f8c",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 6
+      },
+      "lineNbr": 962,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-04-14T20:16:31Z",
+      "side": 1,
+      "message": "`[@\"foo\" stringByAppendingPathComponent:@\"bar/../baz\"]` \u003d\u003e `foo/bar/../baz`\n`[@\"foo\" stringByAppendingPathComponent:@\"bar/..//baz\"]` \u003d\u003e `foo/bar/../baz`\n`[@\"foo\" stringByAppendingPathComponent:@\"bar/.///.//baz\"]` \u003d\u003e `foo/bar/././baz`",
+      "parentUuid": "0f564801_c6d469a9",
+      "revId": "e858d0bcad8ba5114e80dcfbf1b859136a6da0b9",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

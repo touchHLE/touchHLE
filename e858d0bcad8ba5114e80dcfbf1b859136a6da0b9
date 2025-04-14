@@ -70,6 +70,24 @@
       "parentUuid": "fcfccb4c_0929b8b6",
       "revId": "e858d0bcad8ba5114e80dcfbf1b859136a6da0b9",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0f564801_c6d469a9",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 6
+      },
+      "lineNbr": 962,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-04-14T20:14:34Z",
+      "side": 1,
+      "message": "they are indeed :/\n\nI did a little but more of testing:\n\n`[@\"foo\" stringByAppendingPathComponent:@\"bar/../baz\"]` \u003d\u003e `foo/bar/../baz`\n`[@\"foo\" stringByAppendingPathComponent:@\"bar/..//baz\"]` \u003d\u003e foo/bar/../baz`\n`[@\"foo\" stringByAppendingPathComponent:@\"bar/.///.//baz\"]` \u003d\u003e foo/bar/././baz`\n\nSo I think only multiple slashes are taken care of and the assertion above still holds",
+      "parentUuid": "0926f40e_3962ba27",
+      "revId": "e858d0bcad8ba5114e80dcfbf1b859136a6da0b9",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

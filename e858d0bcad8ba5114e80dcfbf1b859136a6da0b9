@@ -16,6 +16,24 @@
       "message": "This assert is a good idea in principle, but consider that if someone did\n\n  [@\"foo\" stringByAppendingPathComponent:@\"bar//baz\"]\n  \nthe assert would trigger incorrectly, because there\u0027s // in the interior of the component… so I think we have to remove the assert unfortunately.",
       "revId": "e858d0bcad8ba5114e80dcfbf1b859136a6da0b9",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "003fb454_b8d39f0d",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 6
+      },
+      "lineNbr": 962,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-04-14T20:00:10Z",
+      "side": 1,
+      "message": "Just tested on simulator, `[@\"foo\" stringByAppendingPathComponent:@\"bar//baz\"]` gives `foo/bar/baz` as a result",
+      "parentUuid": "acec55a4_2e96a7e5",
+      "revId": "e858d0bcad8ba5114e80dcfbf1b859136a6da0b9",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

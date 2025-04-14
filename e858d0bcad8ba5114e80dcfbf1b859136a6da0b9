@@ -34,6 +34,24 @@
       "parentUuid": "acec55a4_2e96a7e5",
       "revId": "e858d0bcad8ba5114e80dcfbf1b859136a6da0b9",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fcfccb4c_0929b8b6",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 6
+      },
+      "lineNbr": 962,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-04-14T20:04:50Z",
+      "side": 1,
+      "message": "Oh that\u0027s interesting, in that case maybe we should be using a different strategy not based on stripping slashes, but instead based on splitting into components and reconstructing…? I wonder what happens with `foo/../bar` etc…\n\nYou might find some inspiration in how `src/fs.rs` resolves paths.",
+      "parentUuid": "003fb454_b8d39f0d",
+      "revId": "e858d0bcad8ba5114e80dcfbf1b859136a6da0b9",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

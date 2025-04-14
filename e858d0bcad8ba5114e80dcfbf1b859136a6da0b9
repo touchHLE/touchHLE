@@ -52,6 +52,24 @@
       "parentUuid": "003fb454_b8d39f0d",
       "revId": "e858d0bcad8ba5114e80dcfbf1b859136a6da0b9",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0926f40e_3962ba27",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 6
+      },
+      "lineNbr": 962,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-04-14T20:08:04Z",
+      "side": 1,
+      "message": "(Path algorithms are such a pain aren\u0027t they :\u003c)",
+      "parentUuid": "fcfccb4c_0929b8b6",
+      "revId": "e858d0bcad8ba5114e80dcfbf1b859136a6da0b9",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

@@ -106,6 +106,24 @@
       "parentUuid": "0f564801_c6d469a9",
       "revId": "e858d0bcad8ba5114e80dcfbf1b859136a6da0b9",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "886f4690_eaee5973",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 6
+      },
+      "lineNbr": 962,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-04-14T20:23:12Z",
+      "side": 1,
+      "message": "Maybe this method should be rewritten to be based on splitting by \u0027/\u0027 and then combining the components and joining with \u0027/\u0027, and skipping empty components?\n\nBtw does the `//` behaviour apply to the base string too? Like does `[@\"foo//bar stringByAppendingPathComponent:@\"baz\"]` end up as `foo/bar/baz`?",
+      "parentUuid": "cb788e01_e99b2f8c",
+      "revId": "e858d0bcad8ba5114e80dcfbf1b859136a6da0b9",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

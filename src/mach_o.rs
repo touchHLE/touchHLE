@@ -20,9 +20,9 @@
 
 use crate::abi::GuestFunction;
 use crate::fs::{Fs, GuestPath};
-use crate::mem::{Mem, Ptr};
+use crate::mem::{GuestUSize, Mem, Ptr};
 use mach_object::{
-    cpu_subtype_t, vm_prot_t, DyLib, LoadCommand, MachCommand, OFile, Symbol, SymbolIter,
+    cpu_subtype_t, vm_prot_t, Bind, DyLib, LoadCommand, MachCommand, OFile, Symbol, SymbolIter,
     ThreadState, N_ARM_THUMB_DEF, S_LAZY_SYMBOL_POINTERS, S_MOD_INIT_FUNC_POINTERS,
     S_NON_LAZY_SYMBOL_POINTERS, S_SYMBOL_STUBS,
 };
@@ -302,6 +302,7 @@ impl MachO {
         let mut text_segment_base: Option<u32> = None;
         let mut all_sections = Vec::new();
         let mut sym_tab_info: Option<(u32, u32, u32, u32)> = None;
+        let mut segment_offsets = Vec::new();
 
         // Info used for the result
         let mut dynamic_libraries = Vec::new();
@@ -374,6 +375,7 @@ impl MachO {
                     }
 
                     all_sections.extend_from_slice(&sections);
+                    segment_offsets.push(vmaddr);
                 }
                 LoadCommand::SymTab {
                     symoff,
@@ -548,8 +550,13 @@ impl MachO {
                 }
                 // LoadCommand::DyldInfo is apparently a newer thing that 2008
                 // games don't have. Ignore for now? Unsure if/when iOS got it.
-                LoadCommand::DyldInfo { .. } => {
-                    log!("Warning! DyldInfo is not handled.");
+                LoadCommand::DyldInfo { bind_off, bind_size, .. } => {
+                    let opcodes =
+                        Bind::parse(&bytes[bind_off as usize..][..bind_size as usize], size_of::<GuestUSize>());
+                    for syms in opcodes {
+                        external_relocations.push((segment_offsets[syms.segment_index] + syms.symbol_offset as u32, syms.name));
+                    }
+                    log!("Warning! DyldInfo is only partially handled.");
                 }
                 _ => (),
             }

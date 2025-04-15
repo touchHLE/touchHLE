@@ -436,6 +436,10 @@ impl Dyld {
                     trampoline_ptr
                 );
                 trampoline_ptr
+            } else if search_lists(constant_lists::CONSTANT_LISTS, name).is_some() {
+                // Skip the constants from DYLD_INFO because we already
+                // handle the consts when reading the __nl_symbol_ptr section
+                continue;
             } else {
                 unhandled_relocations
                     .entry(name)

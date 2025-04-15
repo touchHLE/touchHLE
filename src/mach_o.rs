@@ -20,10 +20,10 @@
 
 use crate::abi::GuestFunction;
 use crate::fs::{Fs, GuestPath};
-use crate::mem::{Mem, Ptr};
+use crate::mem::{GuestUSize, Mem, Ptr};
 use mach_object::{
-    cpu_subtype_t, vm_prot_t, DyLib, LoadCommand, MachCommand, OFile, Symbol, SymbolIter,
-    ThreadState, N_ARM_THUMB_DEF, S_LAZY_SYMBOL_POINTERS, S_MOD_INIT_FUNC_POINTERS,
+    cpu_subtype_t, vm_prot_t, Bind, BindSymbolType, DyLib, LoadCommand, MachCommand, OFile, Symbol,
+    SymbolIter, ThreadState, N_ARM_THUMB_DEF, S_LAZY_SYMBOL_POINTERS, S_MOD_INIT_FUNC_POINTERS,
     S_NON_LAZY_SYMBOL_POINTERS, S_SYMBOL_STUBS,
 };
 use std::collections::HashMap;
@@ -302,6 +302,7 @@ impl MachO {
         let mut text_segment_base: Option<u32> = None;
         let mut all_sections = Vec::new();
         let mut sym_tab_info: Option<(u32, u32, u32, u32)> = None;
+        let mut segment_offsets = Vec::new();
 
         // Info used for the result
         let mut dynamic_libraries = Vec::new();
@@ -374,6 +375,7 @@ impl MachO {
                     }
 
                     all_sections.extend_from_slice(&sections);
+                    segment_offsets.push(vmaddr);
                 }
                 LoadCommand::SymTab {
                     symoff,
@@ -546,10 +548,37 @@ impl MachO {
                     let entryoff: u32 = entryoff.try_into().unwrap();
                     entry_point_pc = Some(text_segment_base.unwrap() + entryoff);
                 }
-                // LoadCommand::DyldInfo is apparently a newer thing that 2008
-                // games don't have. Ignore for now? Unsure if/when iOS got it.
-                LoadCommand::DyldInfo { .. } => {
-                    log!("Warning! DyldInfo is not handled.");
+                // Used in iOS 3.1+ apps. Also contains info about
+                // weak and lazy binds, but we already handle those.
+                LoadCommand::DyldInfo {
+                    rebase_off,
+                    rebase_size,
+                    bind_off,
+                    bind_size,
+                    ..
+                } => {
+                    // TODO: Implement rebasing once sliding support is added
+                    assert_eq!(rebase_off, 0);
+                    assert_eq!(rebase_size, 0);
+
+                    let bind_opcodes = Bind::parse(
+                        &bytes[bind_off as usize..][..bind_size as usize],
+                        size_of::<GuestUSize>(),
+                    );
+                    for symb in bind_opcodes {
+                        match symb.symbol_type {
+                            BindSymbolType::Pointer => {
+                                let addr =
+                                    segment_offsets[symb.segment_index] + symb.symbol_offset as u32;
+                                log_dbg!("Pointer bind: {:#x} -> {}", addr, symb.name);
+                                external_relocations.push((addr, symb.name));
+                            }
+                            _ => unimplemented!(
+                                "Unhandled DyldInfo bind symbol type: {:?}",
+                                symb.symbol_type
+                            ),
+                        }
+                    }
                 }
                 _ => (),
             }

@@ -10,7 +10,7 @@
 
 mod mutex;
 
-use crate::abi::{CallFromHost, GuestRet};
+use crate::abi::{CallFromHost, GuestFunction, GuestRet};
 use crate::libc::semaphore::sem_t;
 use crate::mem::{GuestUSize, MutPtr, MutVoidPtr};
 use crate::{
@@ -1025,7 +1025,9 @@ impl Environment {
                             ThreadNextAction::Yield
                         }
                     }
-                    dyld::Dyld::SVC_LAZY_LINK | dyld::Dyld::SVC_LINKED_FUNCTIONS_BASE.. => {
+                    dyld::Dyld::SVC_LAZY_LINK
+                    | dyld::Dyld::SVC_LAZY_LINK_RET
+                    | dyld::Dyld::SVC_LINKED_FUNCTIONS_BASE.. => {
                         if let Some(f) = self.dyld.get_svc_handler(
                             &self.bins,
                             &mut self.mem,
@@ -1039,6 +1041,17 @@ impl Environment {
                             f.call_from_guest(self);
                             self.threads[self.current_thread].in_host_function =
                                 was_in_host_function;
+
+                            // On entry_size 4 return here since there's
+                            // no space to add a ret after the svc call
+                            if svc == dyld::Dyld::SVC_LAZY_LINK_RET
+                                || svc & dyld::Dyld::SVC_RET_MASK != 0
+                            {
+                                self.cpu.branch(GuestFunction::from_addr_with_thumb_bit(
+                                    self.cpu.regs()[cpu::Cpu::LR],
+                                ));
+                            }
+
                             // Host function might have put the thread to sleep.
                             if let ThreadBlock::NotBlocked =
                                 self.threads[self.current_thread].blocked_by

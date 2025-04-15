@@ -184,12 +184,17 @@ impl Dyld {
     pub const SVC_LAZY_LINK: u32 = 0;
     /// We reserve this SVC ID for the exit routine for spawned threads.
     pub const SVC_THREAD_EXIT: u32 = 1;
+    /// We reserve this SVC ID for lazy linking and returning right after.
+    pub const SVC_LAZY_LINK_RET: u32 = 2;
     /// We reserve this SVC ID for the special return-to-host routine.
-    pub const SVC_RETURN_TO_HOST: u32 = 2;
+    pub const SVC_RETURN_TO_HOST: u32 = 3;
     /// The range of SVC IDs `SVC_LINKED_FUNCTIONS_BASE..` is used to reference
     /// [Self::linked_host_functions] entries.
     pub const SVC_LINKED_FUNCTIONS_BASE: u32 = Self::SVC_RETURN_TO_HOST + 1;
 
+    pub const SVC_RET_MASK: u32 = 0x800000;
+
+    const SYMBOL_STUB1_INSTRUCTIONS: [u32; 1] = [0xe59ff000]; // mask this with lowest 12 bits to restore instructions
     const SYMBOL_STUB_INSTRUCTIONS: [u32; 2] = [0xe59fc000, 0xe59cf000];
     const PIC_SYMBOL_STUB_INSTRUCTIONS: [u32; 3] = [0xe59fc004, 0xe08fc00c, 0xe59cf000];
 
@@ -345,6 +350,7 @@ impl Dyld {
         // two or three A32 instructions (PIC stub needs one more) followed by
         // the address or offset of the corresponding __la_symbol_ptr
         let expected_instructions = match entry_size {
+            4 => &[],
             12 => Self::SYMBOL_STUB_INSTRUCTIONS.as_slice(),
             16 => Self::PIC_SYMBOL_STUB_INSTRUCTIONS.as_slice(),
             _ => unimplemented!(),
@@ -359,10 +365,14 @@ impl Dyld {
                 assert!(mem.read(ptr + j.try_into().unwrap()) == instr);
             }
 
-            mem.write(ptr + 0, encode_a32_svc(Self::SVC_LAZY_LINK));
             // For convenience, make the stub return once the SVC is done
             // (Otherwise we'd have to manually update the PC)
-            mem.write(ptr + 1, encode_a32_ret());
+            if entry_size == 4 {
+                mem.write(ptr + 0, encode_a32_svc(Self::SVC_LAZY_LINK_RET));
+            } else {
+                mem.write(ptr + 0, encode_a32_svc(Self::SVC_LAZY_LINK));
+                mem.write(ptr + 1, encode_a32_ret());
+            }
             if entry_size == 16 {
                 // This is preceded by a return instruction, so if we do execute
                 // it, something has gone wrong.
@@ -549,12 +559,14 @@ impl Dyld {
         svc: u32,
     ) -> Option<HostFunction> {
         match svc {
-            Self::SVC_LAZY_LINK => self.do_lazy_link(bins, mem, cpu, svc_pc),
+            Self::SVC_LAZY_LINK | Self::SVC_LAZY_LINK_RET => {
+                self.do_lazy_link(bins, mem, cpu, svc_pc)
+            }
             Self::SVC_THREAD_EXIT | Self::SVC_RETURN_TO_HOST => unreachable!(), // don't handle here
             Self::SVC_LINKED_FUNCTIONS_BASE.. => {
                 let f = self
                     .linked_host_functions
-                    .get((svc - Self::SVC_LINKED_FUNCTIONS_BASE) as usize);
+                    .get(((svc & !Self::SVC_RET_MASK) - Self::SVC_LINKED_FUNCTIONS_BASE) as usize);
                 let Some(&(symbol, f)) = f else {
                     panic!("Unexpected SVC #{svc} at {svc_pc:#x}");
                 };
@@ -579,8 +591,10 @@ impl Dyld {
             linked_function: u32,
             svc_pc: u32,
             entry_size: u32,
+            pic_offset: u32,
         ) -> (MutPtr<u32>, MutPtr<u32>) {
             let original_instructions = match entry_size {
+                4 => Dyld::SYMBOL_STUB1_INSTRUCTIONS.as_slice(),
                 12 => Dyld::SYMBOL_STUB_INSTRUCTIONS.as_slice(),
                 16 => Dyld::PIC_SYMBOL_STUB_INSTRUCTIONS.as_slice(),
                 _ => unreachable!(),
@@ -589,8 +603,12 @@ impl Dyld {
 
             // Restore the original stub, which calls the __la_symbol_ptr
             let stub_function_ptr: MutPtr<u32> = Ptr::from_bits(svc_pc);
-            for (i, &instr) in original_instructions.iter().enumerate() {
-                mem.write(stub_function_ptr + i.try_into().unwrap(), instr)
+            if entry_size == 4 {
+                mem.write(stub_function_ptr, original_instructions[0] | pic_offset)
+            } else {
+                for (i, &instr) in original_instructions.iter().enumerate() {
+                    mem.write(stub_function_ptr + i.try_into().unwrap(), instr)
+                }
             }
 
             cpu.invalidate_cache_range(stub_function_ptr.to_bits(), instruction_count * 4);
@@ -603,8 +621,13 @@ impl Dyld {
             } else {
                 // The PIC (position-independent code) stub uses a
                 // PC-relative offset rather than an absolute address.
-                let offset = mem.read(stub_function_ptr + instruction_count);
-                Ptr::from_bits(stub_function_ptr.to_bits() + offset + 12)
+                if entry_size == 4 {
+                    let offset = mem.read(stub_function_ptr) & 0xFFF;
+                    Ptr::from_bits(stub_function_ptr.to_bits() + offset + 8)
+                } else {
+                    let offset = mem.read(stub_function_ptr + instruction_count);
+                    Ptr::from_bits(stub_function_ptr.to_bits() + offset + 12)
+                }
             };
             mem.write(la_symbol_ptr, linked_function);
             (stub_function_ptr, la_symbol_ptr)
@@ -617,6 +640,10 @@ impl Dyld {
             .unwrap();
 
         let info = stubs.dyld_indirect_symbol_info.as_ref().unwrap();
+
+        // currently assuming only the app binary can have entry size 4
+        let pic_offset = bins[0].get_section(SectionType::LazySymbolPointers)?.addr
+            - bins[0].get_section(SectionType::SymbolStubs)?.addr;
 
         let offset = svc_pc - stubs.addr;
         assert!(offset % info.entry_size == 0);
@@ -633,6 +660,7 @@ impl Dyld {
                 addr.addr_with_thumb_bit(),
                 svc_pc,
                 info.entry_size,
+                pic_offset,
             );
             log_dbg!(
                 "Linked host function {} at {:?}/{:?} to existing stub ({:?}).",
@@ -649,13 +677,19 @@ impl Dyld {
         if let Some(&(symbol, f)) = search_lists(function_lists::FUNCTION_LISTS, symbol) {
             // Allocate an SVC ID for this host function
             let idx: u32 = self.linked_host_functions.len().try_into().unwrap();
-            let svc = idx + Self::SVC_LINKED_FUNCTIONS_BASE;
+            let mut svc = idx + Self::SVC_LINKED_FUNCTIONS_BASE;
+            // indicate to the handler to return manually after call
+            if info.entry_size == 4 {
+                svc |= Self::SVC_RET_MASK;
+            }
             self.linked_host_functions.push((symbol, f));
 
             // Rewrite stub function to call this host function
             let stub_function_ptr: MutPtr<u32> = Ptr::from_bits(svc_pc);
             mem.write(stub_function_ptr, encode_a32_svc(svc));
-            assert!(mem.read(stub_function_ptr + 1) == encode_a32_ret());
+            if info.entry_size != 4 {
+                assert!(mem.read(stub_function_ptr + 1) == encode_a32_ret());
+            }
 
             cpu.invalidate_cache_range(stub_function_ptr.to_bits(), 4);
 
@@ -673,7 +707,7 @@ impl Dyld {
         for dylib in bins.iter() {
             if let Some(&addr) = dylib.exported_symbols.get(symbol) {
                 let (stub_function_ptr, la_symbol_ptr) =
-                    link_by_restoring_stub(mem, cpu, addr, svc_pc, info.entry_size);
+                    link_by_restoring_stub(mem, cpu, addr, svc_pc, info.entry_size, pic_offset);
                 log_dbg!(
                     "Linked {} at {:?}/{:?} to {:#x} from {}",
                     symbol,

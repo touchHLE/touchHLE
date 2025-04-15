@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "c79db21b_7bc0269b",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038767
+      },
+      "writtenOn": "2025-04-15T16:18:33Z",
+      "side": 1,
+      "message": "Since iPhoneOS 3.1 the app binaries store binding data in the LC_DYLD_INFO command, and leave the external relocations empty in the DYSYMTAB. Simply dumping all symbols and their offsets from DYLD_INFO into the external relocations map does the trick and greatly improves compatibility with 3.1+ (together with https://review.gerrithub.io/c/touchHLE/touchHLE/+/1213534 they go way past the usual crashing point and start to actually load), but non-lazy symbols are handled twice in this case, and DYLD_INFO could potentially contain more information that might need to be handled, most notably the rebase commands (we already handle weak binds). I am still yet to see a binary that does, though.",
+      "revId": "0e2a38c9b1e07efc9c7133f3d24f550cd1e9f615",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

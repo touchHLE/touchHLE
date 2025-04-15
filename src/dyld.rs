@@ -436,6 +436,10 @@ impl Dyld {
                     trampoline_ptr
                 );
                 trampoline_ptr
+            } else if let Some((_, template)) = search_lists(constant_lists::CONSTANT_LISTS, name) {
+                // See also similar code below
+                self.constants_to_link_later.push((ptr_ptr, template));
+                continue;
             } else {
                 unhandled_relocations
                     .entry(name)

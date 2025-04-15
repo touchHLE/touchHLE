@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "12bc75cf_18c845a7",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038767
+      },
+      "writtenOn": "2025-04-15T16:25:37Z",
+      "side": 1,
+      "message": "Since iPhoneOS 3.1, the binaries can use a different format for the symbol stub section. This format stores stub offsets in single 4-byte instructions, leaving us with no space for embuing a RET instruction after the SVC, so instead we manually invoke a return after handling the SVC if we marked it with the ret flag. Together with the previous commit, this fixes the loading of 3.1+ apps.",
+      "revId": "2b3e09054139ba739d0bedfe1d9a3fed8c664738",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

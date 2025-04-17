@@ -836,6 +836,21 @@ impl ObjC {
         writeln!(file, "    ]\n}}")
     }
 
+    pub fn dump_host_class_symbols(file: &mut std::fs::File) -> Result<(), std::io::Error> {
+        use std::io::Write;
+        for (class, _) in CLASS_LISTS.iter().flat_map(|class| class.iter()) {
+            writeln!(file, "_OBJC_CLASS_$_{class}")?;
+            writeln!(file, "_OBJC_METACLASS_$_{class}")?;
+        }
+
+        // These arent provided by us since the class system is handled on the
+        // host side, entirely seperately, but the linker still expects it to
+        // exist, so we need to provide it.
+        writeln!(file, "__objc_empty_cache")?;
+        writeln!(file, "__objc_empty_vtable")?;
+        Ok(())
+    }
+
     /// For use by [crate::dyld]: register all the categories from the
     /// application binary.
     pub fn register_bin_categories(&mut self, bin: &MachO, mem: &mut Mem) {

@@ -299,6 +299,18 @@ impl Dyld {
         writeln!(file, "    ]\n}}")
     }
 
+    /// Dumps all non-objc symbols provided by touchHLE.
+    pub fn dump_dyld_host_symbols(file: &mut std::fs::File) -> Result<(), std::io::Error> {
+        use std::io::Write;
+        for (symbol, _) in function_lists::FUNCTION_LISTS.iter().flat_map(|&n| n) {
+            writeln!(file, "{symbol}")?;
+        }
+        for (symbol, _) in constant_lists::CONSTANT_LISTS.iter().flat_map(|&n| n) {
+            writeln!(file, "{symbol}")?;
+        }
+        Ok(())
+    }
+
     /// [Self::do_initial_linking] but for when this is the app picker's special
     /// environment with no binary (see [crate::Environment::new_without_app]).
     pub fn do_initial_linking_with_no_bins(&mut self, mem: &mut Mem, objc: &mut ObjC) {

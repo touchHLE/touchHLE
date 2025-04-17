@@ -267,12 +267,13 @@ pub fn get_options_from_file<F: Read>(file: F, app_id: &str) -> Result<Option<St
 #[derive(Default, Clone)]
 pub struct DumpingOptions {
     pub linking_info: bool,
+    pub symbols: bool,
 }
 
 impl DumpingOptions {
     /// Check if any of the dumping options are active.
     pub fn any(&self) -> bool {
-        self.linking_info
+        self.linking_info || self.symbols
     }
 }
 
@@ -280,7 +281,11 @@ fn parse_dump_options(options: &str) -> Result<DumpingOptions, String> {
     let mut dumping_options = DumpingOptions::default();
     for opt in options.split(",") {
         if opt == "linking-info" {
+            // Dumps linked symbols, classes and selectors for the given app
             dumping_options.linking_info = true;
+        } else if opt == "symbols" {
+            // Dumps touchHLE provided symbols
+            dumping_options.symbols = true;
         } else {
             return Err(format!("Unrecognized option {opt} for --dump=..."));
         }

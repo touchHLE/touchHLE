@@ -434,7 +434,8 @@ fn substitute_classes(
         || name.starts_with("AltAds")
         || name.starts_with("Mobclix")
         || name.starts_with("Flurry")
-        || name.starts_with("OpenFeint"))
+        || name.starts_with("OpenFeint")
+        || name.starts_with("Appirater"))
     {
         return None;
     }

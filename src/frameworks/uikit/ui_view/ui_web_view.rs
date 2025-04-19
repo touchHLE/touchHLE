@@ -24,6 +24,9 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (())setDelegate:(id)_delegate {
     // TODO
 }
+- (())loadRequest:(id)_url {
+    // TODO
+}
 
 @end
 

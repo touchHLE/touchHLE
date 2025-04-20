@@ -10,7 +10,8 @@ use crate::dyld::HostConstant;
 use crate::frameworks::foundation::ns_string;
 use crate::frameworks::foundation::NSInteger;
 use crate::objc::{id, objc_classes, ClassExports, TrivialHostObject};
-use crate::window::DeviceOrientation;
+use crate::window::{get_battery_status, DeviceOrientation};
+use sdl2_sys::SDL_PowerState;
 
 pub const UIDeviceOrientationDidChangeNotification: &str =
     "UIDeviceOrientationDidChangeNotification";
@@ -27,6 +28,12 @@ pub const UIDeviceOrientationLandscapeRight: UIDeviceOrientation = 4;
 pub const UIDeviceOrientationFaceUp: UIDeviceOrientation = 5;
 #[allow(dead_code)]
 pub const UIDeviceOrientationFaceDown: UIDeviceOrientation = 6;
+
+pub type UIDeviceBatteryState = NSInteger;
+pub const UIDeviceBatteryStateUnknown: UIDeviceBatteryState = 0;
+pub const UIDeviceBatteryStateUnplugged: UIDeviceBatteryState = 1;
+pub const UIDeviceBatteryStateCharging: UIDeviceBatteryState = 2;
+pub const UIDeviceBatteryStateFull: UIDeviceBatteryState = 3;
 
 #[derive(Default)]
 pub struct State {
@@ -107,6 +114,27 @@ pub const CLASSES: ClassExports = objc_classes! {
         UIDeviceOrientationLandscapeRight => DeviceOrientation::LandscapeRight,
         _ => unimplemented!("Orientation {} not handled yet", orientation),
     });
+}
+
+- (bool)isBatteryMonitoringEnabled {
+    true
+}
+- (())setBatteryMonitoringEnabled:(bool)enabled {
+    log!("TODO: [(UIDevice*) {:?} setBatteryMonitoringEnabled:{:?}]", this, enabled);
+}
+- (f32)batteryLevel {
+    let (pct, ..) = get_battery_status();
+    pct as f32 / 100.0 // narrow down to 0.0 - 1.0
+    // TODO: 100% instead of -1% for compatibility?
+}
+- (UIDeviceBatteryState)batteryState {
+    match get_battery_status().1 {
+        SDL_PowerState::SDL_POWERSTATE_UNKNOWN => UIDeviceBatteryStateUnknown,
+        SDL_PowerState::SDL_POWERSTATE_ON_BATTERY => UIDeviceBatteryStateUnplugged,
+        SDL_PowerState::SDL_POWERSTATE_NO_BATTERY
+        | SDL_PowerState::SDL_POWERSTATE_CHARGING => UIDeviceBatteryStateCharging,
+        SDL_PowerState::SDL_POWERSTATE_CHARGED => UIDeviceBatteryStateFull
+    }
 }
 
 @end

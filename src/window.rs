@@ -20,10 +20,12 @@ use crate::options::Options;
 use sdl2::mouse::MouseButton;
 use sdl2::pixels::PixelFormatEnum;
 use sdl2::surface::Surface;
+use sdl2_sys::SDL_PowerState;
 use std::collections::{HashMap, VecDeque};
 use std::env;
 use std::f32::consts::FRAC_PI_2;
 use std::num::NonZeroU32;
+use std::ptr::null_mut;
 use std::time::{Duration, Instant};
 
 #[derive(Copy, Clone, Eq, PartialEq)]
@@ -1257,4 +1259,19 @@ pub fn show_error_messagebox(window: Option<&Window>, error_message: &str) {
             }
         }
     }
+}
+
+/// Get current battery state from SDL2.
+///
+/// Returns:
+/// - pct: i32 - percentage of battery remaining.
+/// - status: [SDL_PowerState] - the current status of the battery
+/// (unplugged, charging, full, etc.)
+pub fn get_battery_status() -> (i32, SDL_PowerState) {
+    let mut pct = 0;
+    let status = unsafe { sdl2_sys::SDL_GetPowerInfo(null_mut(), &mut pct) };
+    // Unfortunately, Rust-SDL2 does not expose this function yet.
+    // iPhoneOS does not measure the battery in seconds remaining,
+    // so we discard this argument.
+    (pct, status)
 }

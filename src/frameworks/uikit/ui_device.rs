@@ -28,6 +28,15 @@ pub const UIDeviceOrientationFaceUp: UIDeviceOrientation = 5;
 #[allow(dead_code)]
 pub const UIDeviceOrientationFaceDown: UIDeviceOrientation = 6;
 
+pub type UIDeviceBatteryState = NSInteger;
+#[allow(dead_code)]
+pub const UIDeviceBatteryStateUnknown: UIDeviceBatteryState = 0;
+#[allow(dead_code)]
+pub const UIDeviceBatteryStateUnplugged: UIDeviceBatteryState = 1;
+#[allow(dead_code)]
+pub const UIDeviceBatteryStateCharging: UIDeviceBatteryState = 2;
+pub const UIDeviceBatteryStateFull: UIDeviceBatteryState = 3;
+
 #[derive(Default)]
 pub struct State {
     current_device: Option<id>,
@@ -107,6 +116,19 @@ pub const CLASSES: ClassExports = objc_classes! {
         UIDeviceOrientationLandscapeRight => DeviceOrientation::LandscapeRight,
         _ => unimplemented!("Orientation {} not handled yet", orientation),
     });
+}
+
+- (bool)isBatteryMonitoringEnabled {
+    true
+}
+- (())setBatteryMonitoringEnabled:(bool)_enabled {
+    // nothing
+}
+- (f32)batteryLevel {
+    1.0f32 // 100%
+}
+- (UIDeviceBatteryState)batteryState {
+    UIDeviceBatteryStateFull
 }
 
 @end

@@ -38,6 +38,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "1599e3e7_fde867b0",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-04-20T23:36:31Z",
+      "side": 1,
+      "message": "Ah nice! Could you please move SDL related calls to window.rs and then call those functions here?\n\n(we would like to limit SDL2 calls to window.rs)",
+      "parentUuid": "d823dcf2_ede61d43",
+      "revId": "380fe9b6fa86be4590ed2a0ee6ff66dcf2c5ba92",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "1b5edab4_cd5aa0ca",
         "filename": "src/frameworks/uikit/ui_device.rs",
         "patchSetId": 1

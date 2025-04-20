@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f80509bb_8d37c063",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-04-20T12:29:43Z",
+      "side": 1,
+      "message": "LGTM overall for stubs, but it would be nice eventually to properly support battery levels with https://wiki.libsdl.org/SDL2/SDL_GetPowerInfo\n\nCould you please add some comments with a TODO for that please?",
+      "revId": "380fe9b6fa86be4590ed2a0ee6ff66dcf2c5ba92",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1b5edab4_cd5aa0ca",
+        "filename": "src/frameworks/uikit/ui_device.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 125,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-04-20T12:29:43Z",
+      "side": 1,
+      "message": "could please add a TODO log message here? (assuming it would not be too spammy)",
+      "revId": "380fe9b6fa86be4590ed2a0ee6ff66dcf2c5ba92",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fe79bf5f_5bb68d7f",
+        "filename": "src/frameworks/uikit/ui_device.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 128,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-04-20T12:29:43Z",
+      "side": 1,
+      "message": "OPT: drop f32 suffix, the correct type should be already derived from the signature",
+      "revId": "380fe9b6fa86be4590ed2a0ee6ff66dcf2c5ba92",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

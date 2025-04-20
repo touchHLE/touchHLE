@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "d823dcf2_ede61d43",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038767
+      },
+      "writtenOn": "2025-04-20T20:31:22Z",
+      "side": 1,
+      "message": "Interesting, I did originally want to implement it but I thought it might have been too complicated or we\u0027d need to introduce new libraries or permissions for Android, didn\u0027t know SDL already had the functions for it. I implemented it here now. I don\u0027t think we need to limit access to the battery level through batteryMonitoringEnabled state, but I still left a TODO log in its place. Let me know how it looks. Thank you 😊",
+      "parentUuid": "f80509bb_8d37c063",
+      "revId": "380fe9b6fa86be4590ed2a0ee6ff66dcf2c5ba92",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "1b5edab4_cd5aa0ca",
@@ -35,6 +53,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "ab5ef163_39e292ca",
+        "filename": "src/frameworks/uikit/ui_device.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 125,
+      "author": {
+        "id": 1038767
+      },
+      "writtenOn": "2025-04-20T20:31:22Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "1b5edab4_cd5aa0ca",
+      "revId": "380fe9b6fa86be4590ed2a0ee6ff66dcf2c5ba92",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "fe79bf5f_5bb68d7f",
@@ -48,6 +84,24 @@
       "writtenOn": "2025-04-20T12:29:43Z",
       "side": 1,
       "message": "OPT: drop f32 suffix, the correct type should be already derived from the signature",
+      "revId": "380fe9b6fa86be4590ed2a0ee6ff66dcf2c5ba92",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "dbfd780b_2568eb03",
+        "filename": "src/frameworks/uikit/ui_device.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 128,
+      "author": {
+        "id": 1038767
+      },
+      "writtenOn": "2025-04-20T20:31:22Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "fe79bf5f_5bb68d7f",
       "revId": "380fe9b6fa86be4590ed2a0ee6ff66dcf2c5ba92",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

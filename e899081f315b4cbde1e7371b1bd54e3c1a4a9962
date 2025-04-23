@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b642012e_d2eab4b9",
+        "filename": "src/frameworks/uikit/ui_device.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 14,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-04-23T20:00:27Z",
+      "side": 1,
+      "message": "sorry, I meant that _anything_ SDL should be moved to windows.rs\n\nso this import should be move there as well",
+      "revId": "e899081f315b4cbde1e7371b1bd54e3c1a4a9962",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

@@ -16,6 +16,24 @@
       "message": "sorry, I meant that _anything_ SDL should be moved to windows.rs\n\nso this import should be move there as well",
       "revId": "e899081f315b4cbde1e7371b1bd54e3c1a4a9962",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "7c5353b2_eb1d8d35",
+        "filename": "src/frameworks/uikit/ui_device.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 14,
+      "author": {
+        "id": 1038767
+      },
+      "writtenOn": "2025-04-24T10:50:53Z",
+      "side": 1,
+      "message": "Done. It feels weird to import from a framework implementation into window.rs IMO. It would be even weirder to define the BatteryState constants in window.rs. Another solution could be to just return raw integers and pray SDL doesn\u0027t change them? Let me know what you think.",
+      "parentUuid": "b642012e_d2eab4b9",
+      "revId": "e899081f315b4cbde1e7371b1bd54e3c1a4a9962",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

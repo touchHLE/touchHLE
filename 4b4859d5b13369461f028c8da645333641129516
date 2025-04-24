@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1c1b64bf_de67a50b",
+        "filename": "src/frameworks/uikit/ui_device.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 122,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-04-24T19:45:20Z",
+      "side": 1,
+      "message": "could you please assert additionally that enabled is true?",
+      "revId": "4b4859d5b13369461f028c8da645333641129516",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2091d6d9_ca77b6b7",
+        "filename": "src/frameworks/uikit/ui_device.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 127,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-04-24T19:45:20Z",
+      "side": 1,
+      "message": "could you handle that already? the logic you\u0027re describing is OK, just add a log_bdg message about it as well",
+      "revId": "4b4859d5b13369461f028c8da645333641129516",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4ccf3f23_a8386cfe",
+        "filename": "src/window.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 1279,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-04-24T19:45:20Z",
+      "side": 1,
+      "message": "does the null really need to be mutable here?",
+      "revId": "4b4859d5b13369461f028c8da645333641129516",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

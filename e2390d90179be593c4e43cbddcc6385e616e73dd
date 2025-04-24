@@ -33,6 +33,24 @@
       "message": "Nitpick: the comment here with the datatype isn\u0027t needed. We use those for parameters but not for return values.",
       "revId": "e2390d90179be593c4e43cbddcc6385e616e73dd",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "29b6d2f8_3d909ce1",
+        "filename": "src/frameworks/foundation/ns_file_handle.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 109,
+      "author": {
+        "id": 1038379
+      },
+      "writtenOn": "2025-04-24T22:32:48Z",
+      "side": 1,
+      "message": "Sorry for the very long delay on replying here. I\u0027ve made the change you requested and verified it still works after rebasing.",
+      "parentUuid": "2cf5db38_63df10e8",
+      "revId": "e2390d90179be593c4e43cbddcc6385e616e73dd",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

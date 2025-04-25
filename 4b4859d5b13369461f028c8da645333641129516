@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "10d2fe10_ccadf55b",
+        "filename": "src/frameworks/uikit/ui_device.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 122,
+      "author": {
+        "id": 1038767
+      },
+      "writtenOn": "2025-04-25T18:47:30Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "1c1b64bf_de67a50b",
+      "revId": "4b4859d5b13369461f028c8da645333641129516",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "2091d6d9_ca77b6b7",
@@ -35,6 +53,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "db5d7d7d_2e8d2629",
+        "filename": "src/frameworks/uikit/ui_device.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 127,
+      "author": {
+        "id": 1038767
+      },
+      "writtenOn": "2025-04-25T18:47:30Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "2091d6d9_ca77b6b7",
+      "revId": "4b4859d5b13369461f028c8da645333641129516",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "4ccf3f23_a8386cfe",
@@ -48,6 +84,24 @@
       "writtenOn": "2025-04-24T19:45:20Z",
       "side": 1,
       "message": "does the null really need to be mutable here?",
+      "revId": "4b4859d5b13369461f028c8da645333641129516",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d4909c06_093a3d70",
+        "filename": "src/window.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 1279,
+      "author": {
+        "id": 1038767
+      },
+      "writtenOn": "2025-04-25T18:47:30Z",
+      "side": 1,
+      "message": "Yes, SDL_GetPowerInfo takes a *mut pointer to i32 as it would normally modify the value at the passed address. In reality the underlying SDL function doesn\u0027t do anything if null is passed, but for type correctness the mut variant should be used, it seems like the simplest option.",
+      "parentUuid": "4ccf3f23_a8386cfe",
       "revId": "4b4859d5b13369461f028c8da645333641129516",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

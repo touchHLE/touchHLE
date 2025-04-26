@@ -34,6 +34,24 @@
       "parentUuid": "b642012e_d2eab4b9",
       "revId": "e899081f315b4cbde1e7371b1bd54e3c1a4a9962",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "736c8a5d_3e868b1a",
+        "filename": "src/frameworks/uikit/ui_device.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 14,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-04-26T18:03:40Z",
+      "side": 1,
+      "message": "The way window.rs is now importing from the frameworks is rather unclean. The way this problem is normally solved is to have window.rs define its own neutral enum for something, and then the frameworks can import it. The enum might just duplicate the UIKit stuff essentially, but the point is that this way, window.rs doesn\u0027t need to know about the frameworks, and the frameworks don\u0027t need to know about SDL.",
+      "parentUuid": "7c5353b2_eb1d8d35",
+      "revId": "e899081f315b4cbde1e7371b1bd54e3c1a4a9962",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

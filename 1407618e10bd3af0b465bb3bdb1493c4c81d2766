@@ -16,6 +16,23 @@
       "message": "Thanks!",
       "revId": "1407618e10bd3af0b465bb3bdb1493c4c81d2766",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d549d475_ea184724",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 7
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-04-26T07:40:55Z",
+      "side": 1,
+      "message": "Congrats on your first merged contribution!\n\nIf you want to have access to developers only touchHLE discord channel, please mail me your discord nickname 😊",
+      "revId": "1407618e10bd3af0b465bb3bdb1493c4c81d2766",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ],
   "submitRequirementResults": [

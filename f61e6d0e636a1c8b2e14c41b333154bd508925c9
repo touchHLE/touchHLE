@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "cc7f55de_efa17036",
+        "filename": "src/window.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 1271,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-04-27T22:37:52Z",
+      "side": 0,
+      "message": "It\u0027s hard for me to justify why but I feel like the floating-point conversion might also be a good fit for this file, something about the 0-100 integer format feels very SDL to me. I won\u0027t require that change though!",
+      "revId": "f61e6d0e636a1c8b2e14c41b333154bd508925c9",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

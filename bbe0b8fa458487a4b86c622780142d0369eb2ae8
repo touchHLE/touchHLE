@@ -16,6 +16,24 @@
       "message": "Unless I misunderstood, I think you mixed up No and On here?",
       "revId": "bbe0b8fa458487a4b86c622780142d0369eb2ae8",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "5007b961_58fed9c0",
+        "filename": "src/frameworks/uikit/ui_device.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 137,
+      "author": {
+        "id": 1038767
+      },
+      "writtenOn": "2025-04-27T22:37:39Z",
+      "side": 1,
+      "message": "This is how it was before the change, my logic was that a device with no battery would always be plugged in (charging).",
+      "parentUuid": "d3719da3_9120e795",
+      "revId": "bbe0b8fa458487a4b86c622780142d0369eb2ae8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

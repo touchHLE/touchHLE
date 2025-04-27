@@ -51,6 +51,24 @@
       "parentUuid": "d3719da3_9120e795",
       "revId": "bbe0b8fa458487a4b86c622780142d0369eb2ae8",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "7a76589e_59b1639f",
+        "filename": "src/frameworks/uikit/ui_device.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 137,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-04-27T22:39:18Z",
+      "side": 1,
+      "message": "Ah I see, that\u0027s fair enough. I think I misunderstood partly.",
+      "parentUuid": "5007b961_58fed9c0",
+      "revId": "bbe0b8fa458487a4b86c622780142d0369eb2ae8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

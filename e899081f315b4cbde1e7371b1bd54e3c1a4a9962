@@ -52,6 +52,24 @@
       "parentUuid": "7c5353b2_eb1d8d35",
       "revId": "e899081f315b4cbde1e7371b1bd54e3c1a4a9962",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "9fcaf023_11497c81",
+        "filename": "src/frameworks/uikit/ui_device.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 14,
+      "author": {
+        "id": 1038767
+      },
+      "writtenOn": "2025-04-28T13:22:05Z",
+      "side": 1,
+      "message": "Done - https://review.gerrithub.io/c/touchHLE/touchHLE/+/1214143/",
+      "parentUuid": "736c8a5d_3e868b1a",
+      "revId": "e899081f315b4cbde1e7371b1bd54e3c1a4a9962",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

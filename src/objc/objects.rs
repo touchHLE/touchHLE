@@ -24,6 +24,7 @@ use super::{Class, ClassHostObject};
 use crate::mem::{guest_size_of, GuestUSize, Mem, MutPtr, Ptr, SafeRead};
 use std::any::Any;
 use std::num::NonZeroU32;
+use crate::environment::Environment;
 
 /// Memory layout of a minimal Objective-C object. See [id].
 ///
@@ -365,4 +366,10 @@ impl super::ObjC {
 
         mem.free(object.cast());
     }
+}
+
+pub fn object_getClass(env: &mut Environment, obj: id) -> Class {
+    let obj: Ptr<objc_object, true> = obj.cast();
+    let obj = env.mem.read(obj);
+    obj.isa
 }

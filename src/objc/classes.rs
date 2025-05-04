@@ -18,8 +18,12 @@ use super::{
     IMP, SEL,
 };
 use crate::mach_o::MachO;
-use crate::mem::{guest_size_of, ConstPtr, ConstVoidPtr, GuestUSize, Mem, Ptr, SafeRead};
+use crate::mem::{guest_size_of, ConstPtr, ConstVoidPtr, GuestUSize, Mem, Ptr, SafeRead, SafeWrite};
 use std::collections::{HashMap, VecDeque};
+use std::ops::Add;
+use crate::abi::{CallFromGuest, GuestFunction};
+use crate::environment::Environment;
+use crate::objc::methods::GuestIMP;
 
 /// Generic pointer to an Objective-C class or metaclass.
 ///
@@ -869,4 +873,71 @@ impl ObjC {
             panic!();
         }
     }
+}
+
+pub fn objc_getClass(env: &mut Environment, name: ConstPtr<u8>) -> id {
+    let name = env.mem.cstr_at_utf8(name).unwrap();
+    env.objc.get_class(name, false, &env.mem).unwrap()
+}
+
+pub fn class_getSuperclass(env: &mut Environment, class: Class) -> Class {
+    let obj: &ClassHostObject = env.objc.get_host_object(class.cast()).unwrap().as_any().downcast_ref().unwrap();
+    obj.superclass
+}
+
+pub struct MethodRef(Class, SEL);
+
+unsafe impl SafeRead for MethodRef {}
+
+pub fn class_getInstanceMethod(env: &mut Environment, class: Class, name: SEL) -> ConstPtr<MethodRef> {
+    let obj: &ClassHostObject = env.objc.get_host_object(class.cast()).unwrap().as_any().downcast_ref().unwrap();
+    let opt = obj.methods.iter().find(|&(method, _i)| method.eq(&name));
+    let str_name = name.as_str(&env.mem);
+    if let None = opt {
+        if obj.superclass != nil {
+            return class_getInstanceMethod(env, obj.superclass, name);
+        }
+        log!("Method {}::{} not found!", obj.name, str_name);
+        return ConstPtr::null();
+    }
+    env.mem.alloc_and_write(MethodRef(class, name)).cast_const()
+}
+
+pub fn method_getImplementation(env: &mut Environment, method: ConstPtr<MethodRef>) -> ConstVoidPtr {
+    let method = env.mem.read(method);
+    get_implementation_ptr(env, method)
+}
+
+fn get_implementation_ptr(env: &mut Environment, method: MethodRef) -> ConstVoidPtr {
+    let (class, name) = (method.0, method.1);
+    let obj: &ClassHostObject = env.objc.get_host_object(class.cast()).unwrap().as_any().downcast_ref().unwrap();
+    let opt = obj.methods.iter().find(|&(method, _i)| method.eq(&name));
+    let str_name = name.as_str(&env.mem);
+    let ptr = match opt {
+        None => {
+            panic!("Method {}::{} not found!", obj.name, str_name)
+        }
+        Some((_, imp)) => {
+            match imp {
+                IMP::Host(hostimp) => {
+                    env.dyld.create_guest_hostimp(&mut env.mem, "HostFN", *hostimp).to_ptr()
+                }
+                IMP::Guest(guestimp) => {
+                    guestimp.to_ptr()
+                }
+            }
+        }
+    };
+    log!("Returning ptr to: {:#x}", ptr.to_bits());
+    ptr
+}
+
+pub fn method_setImplementation(env: &mut Environment, method: ConstPtr<MethodRef>, imp: ConstVoidPtr) -> ConstVoidPtr {
+    let method = env.mem.read(method);
+    let (class, name) = (method.0, method.1);
+    let old = get_implementation_ptr(env, method);
+    let obj: &mut ClassHostObject = env.objc.borrow_mut(class.cast());
+    obj.methods.remove(&name);
+    obj.methods.insert(name, IMP::Guest(GuestFunction::from_addr_with_thumb_bit(imp.to_bits())));
+    old
 }

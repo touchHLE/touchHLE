@@ -73,6 +73,7 @@ macro_rules! impl_HostIMP {
         {
             type WithoutSuper = (R, (id, SEL, $($P,)*));
         }
+
     }
 }
 

@@ -77,6 +77,9 @@ fn get_preferred_languages(options: &Options) -> Vec<String> {
 }
 
 fn get_preferred_countries() -> Vec<String> {
+    let country = "US".to_string();
+    log!("The app requested your current locale. {:?} will be reported.", country);
+    return vec![country];
     // Unfortunately Rust-SDL2 doesn't provide a wrapper for this yet.
     let countries = unsafe {
         let mut countries = Vec::new();
@@ -189,6 +192,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 - (id)objectForKey:(id)key {
     let key_str: &str = &ns_string::to_rust_string(env, key);
+    log!("Key: {}", key_str);
     match key_str {
         // Note: this is not the cleanest separation between NS and CF parts
         // But it does work on the iOS Simulator

@@ -76,10 +76,17 @@ fn get_preferred_languages(options: &Options) -> Vec<String> {
     }
 }
 
-fn get_preferred_countries() -> Vec<String> {
-    let country = "US".to_string();
-    log!("The app requested your current locale. {:?} will be reported.", country);
-    return vec![country];
+fn get_preferred_countries(env: &mut Environment) -> Vec<String> {
+    if env
+        .bundle
+        .bundle_identifier()
+        .starts_with("com.ea.causeofdeath")
+    {
+        // TODO Cause of Death crashes with non-US countries? Check on real device.
+        let country = "US".to_string();
+        log!("The app requested your current locale. {:?} will be reported.", country);
+        return vec![country];
+    }
     // Unfortunately Rust-SDL2 doesn't provide a wrapper for this yet.
     let countries = unsafe {
         let mut countries = Vec::new();
@@ -144,7 +151,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     if let Some(locale) = State::get(env).current_locale {
         locale
     } else {
-        let countries = get_preferred_countries();
+        let countries = get_preferred_countries(env);
         let country_code = ns_string::from_rust_string(env, countries[0].clone());
         let host_object = NSLocaleHostObject {
             country_code
@@ -191,7 +198,11 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (id)objectForKey:(id)key {
-    let key_str: &str = &ns_string::to_rust_string(env, key);
+    let key_str: &str = if key.is_null() {
+        NSLocaleCountryCode
+    } else {
+        &ns_string::to_rust_string(env, key)
+    };
     log!("Key: {}", key_str);
     match key_str {
         // Note: this is not the cleanest separation between NS and CF parts

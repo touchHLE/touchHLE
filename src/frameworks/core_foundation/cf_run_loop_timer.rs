@@ -50,18 +50,25 @@ fn CFRunLoopTimerCreate(
     assert_eq!(flags, 0);
     assert_eq!(order, 0);
 
-    let context = env.mem.read(context_ptr);
-    let version = context.version;
-    assert_eq!(version, 0);
-    let info: MutVoidPtr = context.info;
+    // According to Apple docs (and at least one game) context_ptr can be null if context.info
+    // is not used by the application.
+    let info = if !context_ptr.is_null() {
+        let context = env.mem.read(context_ptr);
+        let version = context.version;
+        assert_eq!(version, 0);
 
-    // TODO: handle non-NULL callbacks
-    let retain_callback = context.release_callback;
-    assert!(retain_callback.to_ptr().is_null());
-    let release_callback = context.release_callback;
-    assert!(release_callback.to_ptr().is_null());
-    let copy_desc_callback = context.copy_desc_callback;
-    assert!(copy_desc_callback.to_ptr().is_null());
+        // TODO: handle non-NULL callbacks
+        let retain_callback = context.release_callback;
+        assert!(retain_callback.to_ptr().is_null());
+        let release_callback = context.release_callback;
+        assert!(release_callback.to_ptr().is_null());
+        let copy_desc_callback = context.copy_desc_callback;
+        assert!(copy_desc_callback.to_ptr().is_null());
+
+        context.info
+    } else {
+        MutVoidPtr::null()
+    };
 
     let target: id = msg_class![env; _touchHLE_CFTimerTarget alloc];
     let target: id = msg![env; target initWithCallout:callout info:info];

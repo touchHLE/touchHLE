@@ -17,11 +17,12 @@ use crate::frameworks::core_graphics::cg_context::{
 use crate::frameworks::core_graphics::cg_image::{
     kCGImageAlphaPremultipliedLast, kCGImageByteOrder32Big,
 };
-use crate::frameworks::core_graphics::{CGPoint, CGRect, CGSize};
+use crate::frameworks::core_graphics::{CGFloat, CGPoint, CGRect, CGSize};
 use crate::frameworks::foundation::ns_string;
 use crate::mem::{GuestUSize, Ptr};
 use crate::objc::{id, msg, nil, objc_classes, release, retain, ClassExports, HostObject, ObjC};
 use std::collections::HashMap;
+use crate::frameworks::core_animation::ca_transform::CATransform3D;
 
 pub(super) struct CALayerHostObject {
     /// Possibly nil, usually a UIView. This is a weak reference.
@@ -32,12 +33,14 @@ pub(super) struct CALayerHostObject {
     superlayer: id,
     pub(super) bounds: CGRect,
     pub(super) position: CGPoint,
+    pub(super) zPosition: CGFloat,
     pub(super) anchor_point: CGPoint,
     pub(super) hidden: bool,
     pub(super) opaque: bool,
     pub(super) opacity: f32,
     pub(super) background_color: CGColorRef,
     pub(super) needs_display: bool,
+    pub(super) transform: CATransform3D,
     /// `CGImageRef*`
     pub(super) contents: id,
     /// For CAEAGLLayer only
@@ -85,12 +88,14 @@ pub const CLASSES: ClassExports = objc_classes! {
             size: CGSize { width: 0.0, height: 0.0 }
         },
         position: CGPoint { x: 0.0, y: 0.0 },
+        zPosition: 0.0,
         anchor_point: CGPoint { x: 0.5, y: 0.5 },
         hidden: false,
         opaque: false,
         opacity: 1.0,
         background_color: nil, // transparency
         needs_display: true,
+        transform: CATransform3D::identity(),
         contents: nil,
         drawable_properties: nil,
         presented_pixels: None,
@@ -194,11 +199,20 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (())setBounds:(CGRect)bounds {
     env.objc.borrow_mut::<CALayerHostObject>(this).bounds = bounds;
 }
+- (())setMasksToBounds:(bool)masksToBounds {
+    log!("Ignoring [(CALayer*){:?} setMasksToBounds:{:?}]", this, masksToBounds);
+}
 - (CGPoint)position {
     env.objc.borrow::<CALayerHostObject>(this).position
 }
 - (())setPosition:(CGPoint)position {
     env.objc.borrow_mut::<CALayerHostObject>(this).position = position;
+}
+- (CGFloat)zPosition {
+    env.objc.borrow::<CALayerHostObject>(this).zPosition
+}
+- (())setZPosition:(CGFloat)zPosition {
+    env.objc.borrow_mut::<CALayerHostObject>(this).zPosition = zPosition;
 }
 - (CGPoint)anchorPoint {
     env.objc.borrow::<CALayerHostObject>(this).anchor_point
@@ -378,6 +392,15 @@ pub const CLASSES: ClassExports = objc_classes! {
     CGContextClearRect(env, cg_context, CGRect { origin, size });
     () = msg![env; delegate drawLayer:this inContext:cg_context];
     CGContextTranslateCTM(env, cg_context, origin.x, origin.y);
+}
+
+// CATransform3D
+- (CATransform3D)transform {
+    env.objc.borrow::<CALayerHostObject>(this).transform
+}
+
+- (())setTransform:(CATransform3D)new_transform {
+    env.objc.borrow_mut::<CALayerHostObject>(this).transform = new_transform;
 }
 
 // CGImageRef*

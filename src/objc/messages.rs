@@ -82,10 +82,6 @@ fn objc_msgSend_inner(env: &mut Environment, receiver: id, selector: SEL, super2
             ..
         }) = host_object.as_any().downcast_ref()
         {
-            let name_str = name.clone();
-            let name = name_str.as_str();
-            let sel_name = selector.as_str(&env.mem);
-            log!("Calling {}::{}", name, sel_name);
             // Skip method lookup on first iteration if this is the super-call
             // variant of objc_msgSend (look up the superclass first)
             if super2.is_some() && class == orig_class {

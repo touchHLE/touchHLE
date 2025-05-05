@@ -49,6 +49,13 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 @implementation CAMediaTimingFunction: NSObject
 
++ (id)functionWithControlPoints :(f32)_c1x _y:(f32)_c1y _x2:(f32)_c2x _y2:(f32)_c2y {
+    let object = msg![env; this alloc];
+    let object = msg![env; object init];
+    log!("TODO: [CAMediaTimingFunction functionWithControlPoints::::] -> {:?}", object);
+    autorelease(env, object)
+}
+
 + (id)functionWithName:(CAMediaTimingFunctionName)name {
     let object = msg![env; this alloc];
     let object = msg![env; object init];

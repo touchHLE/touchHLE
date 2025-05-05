@@ -42,6 +42,9 @@ pub const kCGBitmapAlphaInfoMask: CGBitmapInfo = 0x1F; // huh, it's not 0x7?
 pub const kCGBitmapByteOrderMask: CGBitmapInfo = kCGImageByteOrderMask;
 // TODO: other stuff in this enum (for now, always assert the rest is 0)
 
+pub type CGColorRenderingIntent = i32;
+// TODO figure out values for this enum
+
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);
@@ -95,12 +98,47 @@ pub fn borrow_image_mut(objc: &mut ObjC, image: CGImageRef) -> &mut Image {
 
 // TODO: More create methods.
 
+fn CGImageCreate(
+    env: &mut Environment,
+    width: GuestUSize,
+    height: GuestUSize,
+    _bits_per_component: GuestUSize,
+    _bits_per_pixel: GuestUSize,
+    _bytes_per_row: GuestUSize,
+    _space: CGColorSpaceRef,
+    _bitmap_info: CGBitmapInfo,
+    provider: CGDataProviderRef,
+    decode: ConstPtr<CGFloat>,
+    _should_interpolate: bool,
+    _intent: CGColorRenderingIntent,
+) -> CGImageRef {
+    assert!(decode.is_null());
+    let bytes = cg_data_provider::borrow_bytes(env, provider);
+    from_image(env, Image::from_pixel_vec(bytes.to_vec(), (width, height), 4))
+}
+
+fn CGImageMaskCreate(
+    env: &mut Environment,
+    width: GuestUSize,
+    height: GuestUSize,
+    _bits_per_component: GuestUSize,
+    _bits_per_pixel: GuestUSize,
+    _bytes_per_row: GuestUSize,
+    provider: CGDataProviderRef,
+    decode: ConstPtr<CGFloat>,
+    _should_interpolate: bool,
+) -> CGImageRef {
+    assert!(decode.is_null());
+    let bytes = cg_data_provider::borrow_bytes(env, provider);
+    from_image(env, Image::from_pixel_vec(bytes.to_vec(), (width, height), 1))
+}
+
 fn CGImageCreateWithPNGDataProvider(
     env: &mut Environment,
     source: CGDataProviderRef,
     decode: ConstPtr<CGFloat>,
-    _should_interpolate: bool, // TODO
-    _intent: i32,              // TODO (should be CGColorRenderingIntent)
+    _should_interpolate: bool,       // TODO
+    _intent: CGColorRenderingIntent, // TODO (should be CGColorRenderingIntent)
 ) -> CGImageRef {
     assert!(decode.is_null()); // TODO
 
@@ -167,6 +205,8 @@ fn CGImageGetBitsPerComponent(_: &mut Environment, _: CGImageRef) -> GuestUSize 
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGImageRelease(_)),
     export_c_func!(CGImageRetain(_)),
+    export_c_func!(CGImageCreate(_, _, _, _, _, _, _, _, _, _, _)),
+    export_c_func!(CGImageMaskCreate(_, _, _, _, _, _, _, _)),
     export_c_func!(CGImageCreateWithPNGDataProvider(_, _, _, _)),
     export_c_func!(CGImageGetAlphaInfo(_)),
     export_c_func!(CGImageGetColorSpace(_)),

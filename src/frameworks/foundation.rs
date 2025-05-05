@@ -30,6 +30,7 @@ pub mod ns_exception;
 pub mod ns_file_handle;
 pub mod ns_file_manager;
 pub mod ns_keyed_unarchiver;
+pub mod ns_keyed_archiver;
 pub mod ns_locale;
 pub mod ns_lock;
 pub mod ns_log;

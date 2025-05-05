@@ -5,14 +5,19 @@
  */
 //! `CAAnimation` and its subclasses
 
-use crate::dyld::{ConstantExports, HostConstant};
+use crate::dyld::{ConstantExports, FunctionExports, HostConstant};
 use crate::frameworks::core_foundation::time::CFTimeInterval;
 use crate::frameworks::foundation::ns_string::to_rust_string;
 use crate::frameworks::foundation::NSTimeInterval;
 use crate::objc::{
     autorelease, id, msg, nil, objc_classes, release, retain, ClassExports, HostObject, NSZonePtr,
 };
-use crate::{impl_HostObject_with_superclass, msg_super};
+use crate::{export_c_func, impl_HostObject_with_superclass, msg_super};
+use crate::environment::Environment;
+use crate::frameworks::core_foundation::cf_string::CFStringRef;
+use crate::frameworks::core_graphics::CGFloat;
+use crate::libc::mach_time::mach_absolute_time;
+use crate::mem::MutPtr;
 
 type CATransitionType = id; // NSString*
 const kCATransitionFade: &str = "kCATransitionFade";
@@ -47,6 +52,9 @@ struct CAAnimationHostObject {
     autoreverses: bool,
     repeat_count: f32,
     duration: CFTimeInterval,
+    is_removed_on_completion: bool,
+    fill_mode: CFStringRef,
+    calculation_mode: CFStringRef,
 }
 impl HostObject for CAAnimationHostObject {}
 
@@ -65,6 +73,13 @@ struct CABasicAnimationHostObject {
     to_value: id,
 }
 impl_HostObject_with_superclass!(CABasicAnimationHostObject);
+
+#[derive(Default)]
+struct CAKeyframeAnimationHostObject {
+    superclass: CAPropertyAnimationHostObject,
+    duration: CGFloat,
+}
+impl_HostObject_with_superclass!(CAKeyframeAnimationHostObject);
 
 pub const CLASSES: ClassExports = objc_classes! {
 
@@ -113,6 +128,35 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (())setDuration:(CFTimeInterval)duration {
     log_dbg!("[(CAAnimation*){:?} setDuration:{:?}]", this, duration);
     env.objc.borrow_mut::<CAAnimationHostObject>(this).duration = duration;
+}
+
+- (())setRemovedOnCompletion:(bool)removed {
+    env.objc.borrow_mut::<CAAnimationHostObject>(this).is_removed_on_completion = removed;
+}
+- (bool)isRemovedOnCompletion {
+    env.objc.borrow::<CAAnimationHostObject>(this).is_removed_on_completion
+}
+
+- (())setFillMode:(CFStringRef)mode {
+    env.objc.borrow_mut::<CAAnimationHostObject>(this).fill_mode = mode
+}
+- (CFStringRef)fillMode {
+    env.objc.borrow::<CAAnimationHostObject>(this).fill_mode
+}
+
+- (())setCalculationMode:(CFStringRef)mode {
+    env.objc.borrow_mut::<CAAnimationHostObject>(this).calculation_mode = mode
+}
+- (CFStringRef)calculationMode {
+    env.objc.borrow::<CAAnimationHostObject>(this).calculation_mode
+}
+
+- (())setValues:(MutPtr<id>)mode {
+    log!("Ignoring [(CAAnimation*){:?} setValues:{:?}]", this, mode);
+}
+
+- (())setKeyTimes:(MutPtr<id>)mode {
+    log!("Ignoring [(CAAnimation*){:?} setKeyTimes:{:?}]", this, mode);
 }
 
 - (())dealloc {
@@ -213,6 +257,22 @@ pub const CLASSES: ClassExports = objc_classes! {
 @end
 
 
+@implementation CAKeyframeAnimation : CAPropertyAnimation
++ (id)allocWithZone:(NSZonePtr)_zone {
+    let host_object = Box::<CAKeyframeAnimationHostObject>::default();
+    env.objc.alloc_object(this, host_object, &mut env.mem)
+}
+
+- (CGFloat) duration {
+    env.objc.borrow::<CAKeyframeAnimationHostObject>(this).duration
+}
+- (()) setDuration:(CGFloat)duration {
+    env.objc.borrow_mut::<CAKeyframeAnimationHostObject>(this).duration = duration
+
+}
+@end
+
+
 @implementation CATransition : CAAnimation
 
 + (id)animation {
@@ -231,3 +291,11 @@ pub const CLASSES: ClassExports = objc_classes! {
 @end
 
 };
+
+fn CACurrentMediaTime(env: &mut Environment) -> CFTimeInterval {
+    mach_absolute_time(env) as f64 / 1e9f64
+}
+
+pub const FUNCTIONS: FunctionExports = &[
+    export_c_func!(CACurrentMediaTime())
+];

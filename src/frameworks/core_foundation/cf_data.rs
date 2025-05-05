@@ -14,7 +14,7 @@ use crate::dyld::FunctionExports;
 use crate::export_c_func;
 use crate::frameworks::foundation::{NSRange, NSUInteger};
 use crate::mem::{ConstPtr, ConstVoidPtr, MutPtr};
-use crate::objc::{id, msg, msg_class};
+use crate::objc::{msg, msg_class};
 use crate::Environment;
 
 pub type CFDataRef = super::CFTypeRef;
@@ -28,8 +28,7 @@ pub fn CFDataCreate(
     assert!(allocator == kCFAllocatorDefault); // unimplemented
     let bytes: ConstVoidPtr = bytes.cast();
     let length: NSUInteger = length.try_into().unwrap();
-    let new: id = msg_class![env; NSData alloc];
-    msg![env; new dataWithBytes:bytes length:length]
+    msg_class![env; NSData dataWithBytes:bytes length:length]
 }
 
 fn CFDataGetLength(env: &mut Environment, data: CFDataRef) -> CFIndex {

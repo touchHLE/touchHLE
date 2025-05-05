@@ -18,12 +18,10 @@ use super::{
     IMP, SEL,
 };
 use crate::mach_o::MachO;
-use crate::mem::{guest_size_of, ConstPtr, ConstVoidPtr, GuestUSize, Mem, Ptr, SafeRead, SafeWrite};
+use crate::mem::{guest_size_of, ConstPtr, ConstVoidPtr, GuestUSize, Mem, Ptr, SafeRead};
 use std::collections::{HashMap, VecDeque};
-use std::ops::Add;
-use crate::abi::{CallFromGuest, GuestFunction};
+use crate::abi::{GuestFunction};
 use crate::environment::Environment;
-use crate::objc::methods::GuestIMP;
 
 /// Generic pointer to an Objective-C class or metaclass.
 ///
@@ -360,11 +358,22 @@ impl ClassHostObject {
                     template.instance_methods
                 })
                 .iter()
-                .map(|&(name, host_imp)| {
+                .flat_map(|&(name, host_imp)| {
+                    // handle cases like functionWithControlPoints:::: where multiple objc
+                    // arguments without verb exist, which rust macro can't handle
+                    let sanitized_name = name
+                        .split(':')
+                        .map(|c| if c.starts_with('_') {""} else {c})
+                        .collect::<Vec<&str>>()
+                        .join(":");
+
                     // The selector should already have been registered by
                     // [ObjC::register_host_selectors], so we can panic
                     // if it hasn't been.
-                    (objc.selectors[name], IMP::Host(host_imp))
+                    [
+                        (objc.selectors[name], IMP::Host(host_imp)),
+                        (objc.selectors[sanitized_name.as_str()], IMP::Host(host_imp))
+                    ]
                 }),
             ),
             // maybe this should be 0 for NSObject? does it matter?
@@ -438,7 +447,8 @@ fn substitute_classes(
         || name.starts_with("AltAds")
         || name.starts_with("Mobclix")
         || name.starts_with("Flurry")
-        || name.starts_with("OpenFeint"))
+        || name.starts_with("OpenFeint")
+        || name.starts_with("Tapjoy"))
     {
         return None;
     }

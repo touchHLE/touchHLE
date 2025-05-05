@@ -25,12 +25,13 @@ use crate::frameworks::core_graphics::cg_color::CGColorRef;
 use crate::frameworks::core_graphics::cg_context::{CGContextClearRect, CGContextRef};
 use crate::frameworks::core_graphics::{CGFloat, CGPoint, CGRect, CGSize};
 use crate::frameworks::foundation::ns_string::get_static_str;
-use crate::frameworks::foundation::{ns_array, NSInteger, NSUInteger};
+use crate::frameworks::foundation::{ns_array, NSInteger, NSTimeInterval, NSUInteger};
 use crate::objc::{
     autorelease, id, msg, msg_class, nil, objc_classes, release, retain, Class, ClassExports,
     HostObject, NSZonePtr,
 };
 use crate::Environment;
+use crate::mem::MutVoidPtr;
 
 #[derive(Default)]
 pub struct State {
@@ -111,6 +112,15 @@ pub const CLASSES: ClassExports = objc_classes! {
 + (Class)layerClass {
     env.objc.get_known_class("CALayer", &mut env.mem)
 }
+
+
++ (()) beginAnimations: (id)_animationID context: (MutVoidPtr)_context {}
+
++ (()) setAnimationCurve: (NSInteger) _curve {}
++ (()) setAnimationDuration: (NSTimeInterval) _duration {}
++ (()) setAnimationDelay: (NSTimeInterval) _delay {}
+
++ (()) commitAnimations {}
 
 // TODO: accessors etc
 

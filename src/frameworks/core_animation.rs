@@ -12,6 +12,7 @@ pub mod ca_animation;
 pub mod ca_eagl_layer;
 pub mod ca_layer;
 pub mod ca_media_timing_function;
+pub mod ca_transform;
 
 mod composition;
 pub use composition::recomposite_if_necessary;

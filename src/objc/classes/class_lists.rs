@@ -23,6 +23,7 @@ pub const CLASS_LISTS: &[super::ClassExports] = &[
     core_graphics::cg_color_space::CLASSES,
     core_graphics::cg_context::CLASSES,
     core_graphics::cg_image::CLASSES,
+    core_graphics::cg_font::CLASSES,
     core_foundation::cf_run_loop_timer::CLASSES, // Special internal classes.
     core_location::CLASSES,
     game_kit::gk_local_player::CLASSES,
@@ -41,6 +42,7 @@ pub const CLASS_LISTS: &[super::ClassExports] = &[
     foundation::ns_file_handle::CLASSES,
     foundation::ns_file_manager::CLASSES,
     foundation::ns_keyed_unarchiver::CLASSES,
+    foundation::ns_keyed_archiver::CLASSES,
     foundation::ns_locale::CLASSES,
     foundation::ns_lock::CLASSES,
     foundation::ns_notification::CLASSES,

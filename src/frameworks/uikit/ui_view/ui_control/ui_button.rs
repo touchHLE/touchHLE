@@ -389,6 +389,10 @@ pub const CLASSES: ClassExports = objc_classes! {
     }
 }
 
+- (()) setImageEdgeInsets:(CGRect)rect {
+    log!("setImageEdgeInsets: {:?}", rect);
+}
+
 @end
 
 // Undocumented classes used by NIBs

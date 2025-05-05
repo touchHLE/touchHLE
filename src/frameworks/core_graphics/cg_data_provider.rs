@@ -13,7 +13,7 @@ use crate::frameworks::core_foundation::cf_allocator::kCFAllocatorDefault;
 use crate::frameworks::core_foundation::cf_data::{CFDataCreate, CFDataRef};
 use crate::frameworks::core_foundation::{CFRelease, CFRetain, CFTypeRef};
 use crate::frameworks::foundation::NSUInteger;
-use crate::mem::{ConstVoidPtr, GuestUSize, MutVoidPtr};
+use crate::mem::{ConstPtr, ConstVoidPtr, GuestUSize, MutVoidPtr};
 use crate::objc::{id, msg, msg_class, objc_classes, ClassExports, HostObject};
 use crate::Environment;
 
@@ -88,6 +88,23 @@ pub fn CGDataProviderRetain(env: &mut Environment, c: CGDataProviderRef) -> CGDa
     } else {
         c
     }
+}
+
+fn CGDataProviderCreateWithFilename(
+    env: &mut Environment,
+    filename: ConstPtr<u8>,
+) -> CGDataProviderRef {
+    let filename: id = msg_class![env; NSString stringWithCString:filename];
+    let ns_data: id = msg_class![env; NSData dataWithContentsOfFile:filename];
+    let bytes: ConstVoidPtr = msg![env; ns_data bytes];
+    let length: NSUInteger = msg![env; ns_data length];
+    CGDataProviderCreateWithData(
+        env,
+        MutVoidPtr::null(),
+        bytes,
+        length,
+        CGDataProviderReleaseDataCallback::null_ptr(),
+    )
 }
 
 fn CGDataProviderCreateWithData(
@@ -166,6 +183,7 @@ fn CGDataProviderCopyData(env: &mut Environment, provider: CGDataProviderRef) ->
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGDataProviderRetain(_)),
     export_c_func!(CGDataProviderRelease(_)),
+    export_c_func!(CGDataProviderCreateWithFilename(_)),
     export_c_func!(CGDataProviderCreateWithData(_, _, _, _)),
     export_c_func!(CGDataProviderCopyData(_)),
 ];

@@ -16,9 +16,11 @@
 use crate::paths;
 use rusttype::{Point, Scale};
 use std::io::Read;
+use owned_ttf_parser::{AsFaceRef, GlyphId, Rect, Tag};
 
 pub struct Font {
     font: rusttype::Font<'static>,
+    inner_font: owned_ttf_parser::OwnedFace,
 }
 
 pub enum TextAlignment {
@@ -79,11 +81,15 @@ impl Font {
             );
         }
 
-        let Some(font) = rusttype::Font::try_from_vec(bytes) else {
+        let Some(font) = rusttype::Font::try_from_vec(bytes.clone()) else {
             panic!("Couldn't parse bundled font file {:?}. This probably means the file is corrupt. Try re-downloading it.", path);
         };
 
-        Font { font }
+        let Ok(inner_font) = owned_ttf_parser::OwnedFace::from_vec(bytes, 0) else {
+            panic!("Couldn't parse bundled font file {:?}. This probably means the file is corrupt. Try re-downloading it.", path);
+        };
+
+        Font { font, inner_font }
     }
 
     pub fn mono_regular() -> Font {
@@ -315,6 +321,45 @@ impl Font {
             line_height * (lines.len() as f32) + line_gap * (lines.len().saturating_sub(1) as f32);
 
         (width, height)
+    }
+    
+    pub fn get_raw_table(&self, tag: u32) -> Vec<u8> {
+        let tag = Tag::from_bytes_lossy(&tag.to_be_bytes());
+        self.inner_font.as_face_ref().table_data(tag).unwrap().to_vec()
+    }
+    
+    pub fn name(&self) -> String {
+        String::from_utf8(self.inner_font.as_face_ref().names().get(0).unwrap().name.to_vec()).unwrap()
+    }
+
+    pub fn glyph_size(&self, glyph: GlyphId) -> Rect {
+        self.inner_font.as_face_ref().glyph_bounding_box(glyph).or_else(|| {
+            self.inner_font.as_face_ref().glyph_bounding_box(self.get_glyph('a').unwrap())
+        }).unwrap()
+    }
+
+    pub fn get_glyph(&self, char: char) -> Option<GlyphId> {
+        self.inner_font.as_face_ref().glyph_index(char)
+    }
+
+    pub fn advance_unscaled(&self, glyph_id: u16) -> i32 {
+        self.inner_font.as_face_ref().glyph_hor_advance(GlyphId(glyph_id)).unwrap() as i32
+    }
+
+    pub fn units_per_em(&self) -> u16 {
+        self.inner_font.as_face_ref().units_per_em()
+    }
+
+    pub fn ascent_unscaled(&self) -> i32 {
+        self.inner_font.as_face_ref().ascender() as i32
+    }
+
+    pub fn descent_unscaled(&self) -> i32 {
+        self.inner_font.as_face_ref().descender() as i32
+    }
+
+    pub fn cap_height(&self) -> i32 {
+        self.inner_font.as_face_ref().height() as i32
     }
 
     /// Draw text. Calls the provided callback for each glyph that is to be

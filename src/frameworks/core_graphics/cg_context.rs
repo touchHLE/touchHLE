@@ -5,6 +5,7 @@
  */
 //! `CGContext.h`
 
+use owned_ttf_parser::GlyphId;
 use super::cg_affine_transform::CGAffineTransform;
 use super::cg_image::CGImageRef;
 use super::{cg_bitmap_context, CGFloat, CGPoint, CGRect, CGSize};
@@ -256,10 +257,11 @@ pub fn CGContextSetShadowWithColor(env: &mut Environment, context: CGContextRef,
 
 pub fn CGContextShowGlyphsAtPoint(env: &mut Environment, context: CGContextRef, x: CGFloat, y: CGFloat, glyphs: ConstPtr<CGGlyph>, count: GuestUSize) {
     let context = env.objc.borrow::<CGContextHostObject>(context);
-    let glyphs = (0..count).map(|i| (glyphs+i, env.mem.read(glyphs+i))).collect::<Vec<(ConstPtr<CGGlyph>, CGGlyph)>>();
-    let glyphs = glyphs.iter().map(|(_, glyph)| *(glyph) as u8 as char).collect::<Vec<char>>();
-    let text: String = glyphs.into_iter().collect();
-    glyphs_at_point(env, context.state.text_font, &text, CGPoint {
+    let glyphs = (0..count)
+        .map(|i| env.mem.read(glyphs+i))
+        .map(|g| GlyphId(g))
+        .collect::<Vec<_>>();
+    glyphs_at_point(env, context.state.text_font, &glyphs, CGPoint {
         x, y
     })
 }

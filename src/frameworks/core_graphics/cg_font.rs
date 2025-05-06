@@ -125,7 +125,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 pub fn glyphs_at_point(
     env: &mut Environment,
     font: id,
-    text: &str,
+    glyphs: &[GlyphId],
     point: CGPoint,
 ) {
     let context = UIGraphicsGetCurrentContext(env);
@@ -138,9 +138,9 @@ pub fn glyphs_at_point(
     let mut drawer = CGBitmapContextDrawer::new(&env.objc, &mut env.mem, context);
     let fill_color = drawer.rgb_fill_color();
 
-    font.draw(
-        context_host.state.font_size * 0.45,
-        text,
+    font.draw_glyphs(
+        context_host.state.font_size * 0.5,
+        glyphs,
         (point.x, point.y),
         None,
         TextAlignment::Left,
@@ -177,7 +177,7 @@ pub fn CGFontCreateWithDataProvider(env: &mut Environment, provider: CGDataProvi
 
 pub fn CGFontCopyTableForTag(env: &mut Environment, font: CGFontRef, tag: u32) -> CFDataRef {
     let font = env.objc.borrow::<CGFontHostObject>(font);
-    let table_bytes = CMap::serialize(&CMap::table_from_font(&font.font));
+    let table_bytes = font.font.get_raw_table(tag);
     let table_bytes_guest = env.mem.alloc(table_bytes.len() as GuestUSize).cast();
     for i in 0..table_bytes.len() {
         env.mem.write::<u8>(table_bytes_guest + i as GuestUSize, table_bytes[i]);

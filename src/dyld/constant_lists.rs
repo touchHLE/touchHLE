@@ -20,6 +20,7 @@ pub const CONSTANT_LISTS: &[super::ConstantExports] = &[
     core_animation::ca_animation::CONSTANTS,
     core_animation::ca_layer::CONSTANTS,
     core_animation::ca_media_timing_function::CONSTANTS,
+    core_animation::ca_transform::CONSTANTS,
     core_foundation::cf_allocator::CONSTANTS,
     core_foundation::cf_bundle::CONSTANTS,
     core_foundation::cf_dictionary::CONSTANTS,

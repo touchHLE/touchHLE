@@ -25,7 +25,14 @@ const kCATransitionMoveIn: &str = "kCATransitionMoveIn";
 const kCATransitionPush: &str = "kCATransitionPush";
 const kCATransitionReveal: &str = "kCATransitionReveal";
 
-/// `CATransitionType` values.
+type CAAnimationCalculationModeType = id;
+const kCAAnimationLinear: &str = "kCAAnimationLinear";
+
+type CAMediaTimingFillModeType = id;
+const kCAFillModeBoth: &str = "kCAFillModeBoth";
+const kCAFillModeForwards: &str = "kCAFillModeForwards";
+
+/// Constant values.
 pub const CONSTANTS: ConstantExports = &[
     (
         "_kCATransitionFade",
@@ -43,6 +50,18 @@ pub const CONSTANTS: ConstantExports = &[
         "_kCATransitionReveal",
         HostConstant::NSString(kCATransitionReveal),
     ),
+    (
+        "_kCAAnimationLinear",
+        HostConstant::NSString(kCAAnimationLinear),
+    ),
+    (
+        "_kCAFillModeBoth",
+        HostConstant::NSString(kCAFillModeBoth),
+    ),
+    (
+        "_kCAFillModeForwards",
+        HostConstant::NSString(kCAFillModeForwards),
+    ),
 ];
 
 #[derive(Default)]
@@ -53,8 +72,8 @@ struct CAAnimationHostObject {
     repeat_count: f32,
     duration: CFTimeInterval,
     is_removed_on_completion: bool,
-    fill_mode: CFStringRef,
-    calculation_mode: CFStringRef,
+    fill_mode: CAMediaTimingFillModeType,
+    calculation_mode: CAAnimationCalculationModeType,
 }
 impl HostObject for CAAnimationHostObject {}
 
@@ -137,17 +156,17 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.borrow::<CAAnimationHostObject>(this).is_removed_on_completion
 }
 
-- (())setFillMode:(CFStringRef)mode {
+- (())setFillMode:(CAMediaTimingFillModeType)mode {
     env.objc.borrow_mut::<CAAnimationHostObject>(this).fill_mode = mode
 }
-- (CFStringRef)fillMode {
+- (CAMediaTimingFillModeType)fillMode {
     env.objc.borrow::<CAAnimationHostObject>(this).fill_mode
 }
 
-- (())setCalculationMode:(CFStringRef)mode {
+- (())setCalculationMode:(CAAnimationCalculationModeType)mode {
     env.objc.borrow_mut::<CAAnimationHostObject>(this).calculation_mode = mode
 }
-- (CFStringRef)calculationMode {
+- (CAAnimationCalculationModeType)calculationMode {
     env.objc.borrow::<CAAnimationHostObject>(this).calculation_mode
 }
 

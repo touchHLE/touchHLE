@@ -1,5 +1,5 @@
 use crate::abi::GuestArg;
-use crate::dyld::FunctionExports;
+use crate::dyld::{ConstantExports, FunctionExports, HostConstant};
 use crate::environment::Environment;
 use crate::frameworks::core_graphics::CGFloat;
 use crate::mem::SafeRead;
@@ -111,3 +111,13 @@ pub fn CATransform3DMakeScale(_env: &mut Environment, sx: CGFloat, sy: CGFloat, 
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CATransform3DMakeScale(_,_,_))
 ];
+
+
+pub const CONSTANTS: ConstantExports = &[(
+    "_CATransform3DIdentity",
+    HostConstant::Custom(|mem, _| {
+        mem.alloc_and_write(CATransform3D::identity())
+            .cast()
+            .cast_const()
+    }),
+)];

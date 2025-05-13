@@ -9,6 +9,7 @@
 use super::gles11_raw as gles11; // constants and types only
 use super::GLES;
 use crate::matrix::Matrix;
+use crate::window::DeviceOrientation;
 use std::time::{Duration, Instant};
 
 pub struct FpsCounter {
@@ -38,17 +39,66 @@ impl FpsCounter {
     }
 }
 
+pub struct TextureCoordinates {
+    tex_coords: [f32; 12],
+}
+
+impl TextureCoordinates {
+    pub const fn unnormalized() -> &'static TextureCoordinates {
+        &TextureCoordinates {
+            tex_coords: [0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0],
+        }
+    }
+
+    pub const fn normalized(
+        render_width: u32,
+        render_height: u32,
+        texture_width: u32,
+        texture_height: u32,
+        device_orientation: DeviceOrientation,
+    ) -> TextureCoordinates {
+        let (render_width, render_height) = match device_orientation {
+            DeviceOrientation::Portrait => (render_width, render_height),
+            _ => (render_height, render_width),
+        };
+
+        let (texture_width, texture_height) = match device_orientation {
+            DeviceOrientation::Portrait => (texture_width, texture_height),
+            _ => (texture_height, texture_width),
+        };
+
+        let normal_w = (render_width as f32) / texture_width as f32;
+        let normal_h = (render_height as f32) / texture_height as f32;
+
+        #[rustfmt::skip]
+        let tex_coords: [f32; 12] = [
+            0.0, 0.0,
+            0.0, normal_h,
+            normal_w, 0.0,
+            normal_w, 0.0,
+            0.0, normal_h,
+            normal_w, normal_h,
+        ];
+
+        Self { tex_coords }
+    }
+}
+
 /// Present the the latest frame (e.g. the app's splash screen or rendering
 /// output), provided as a texture bound to `GL_TEXTURE_2D`, by drawing it on
 /// the window. It may be rotated, scaled and/or letterboxed as necessary. The
 /// virtual cursor is also drawn if it should be currently visible.
 ///
 /// The provided context must be current.
+///
+/// If `normalized_texture_coords` is provided, then texture coordinates will
+/// be normalized with the provided UV width and height factors.
 pub unsafe fn present_frame(
     gles: &mut dyn GLES,
     viewport: (u32, u32, u32, u32),
     rotation_matrix: Matrix<2>,
     virtual_cursor_visible_at: Option<(f32, f32, bool)>,
+    normalized_texture_coords: Option<&TextureCoordinates>,
 ) {
     // While this is a generic utility, it is closely tied to
     // crate::frameworks::opengles::eagl::present_renderbuffer, which handles
@@ -64,6 +114,7 @@ pub unsafe fn present_frame(
         viewport.2 as _,
         viewport.3 as _,
     );
+
     gles.ClearColor(0.0, 0.0, 0.0, 1.0);
     gles.Clear(gles11::COLOR_BUFFER_BIT | gles11::DEPTH_BUFFER_BIT | gles11::STENCIL_BUFFER_BIT);
     gles.BindBuffer(gles11::ARRAY_BUFFER, 0);
@@ -72,9 +123,14 @@ pub unsafe fn present_frame(
     ];
     gles.EnableClientState(gles11::VERTEX_ARRAY);
     gles.VertexPointer(2, gles11::FLOAT, 0, vertices.as_ptr() as *const GLvoid);
-    let tex_coords: [f32; 12] = [0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0];
+
+    let tex_coords = normalized_texture_coords.map_or(
+        TextureCoordinates::unnormalized().tex_coords.as_ptr(),
+        |coords| coords.tex_coords.as_ptr(),
+    );
+
     gles.EnableClientState(gles11::TEXTURE_COORD_ARRAY);
-    gles.TexCoordPointer(2, gles11::FLOAT, 0, tex_coords.as_ptr() as *const GLvoid);
+    gles.TexCoordPointer(2, gles11::FLOAT, 0, tex_coords as *const GLvoid);
     let matrix = Matrix::<4>::from(&rotation_matrix);
     gles.MatrixMode(gles11::TEXTURE);
     gles.LoadMatrixf(matrix.columns().as_ptr() as *const _);

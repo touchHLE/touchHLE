@@ -272,6 +272,7 @@ pub fn recomposite_if_necessary(env: &mut Environment, force: bool) -> Option<In
             present_frame_args.0,
             present_frame_args.1,
             present_frame_args.2,
+            None,
         );
     }
     env.window().swap_window();

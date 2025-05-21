@@ -6,8 +6,9 @@ touchHLE's high-level emulation (HLE) approach differs from low-level emulation 
 
 The goal of this project is to run games from the early days of iOS:
 
-* Currently: iPhone and iPod touch apps for iPhone OS 2.x and iPhone OS 3.0.
+* Currently: iPhone and iPod touch apps for iPhone OS 2.x, iPhone OS 3.0, and aiming for compatibility with the latest iOS versions.
 * Longer term: iPhone OS 3.1, iPad apps (iPhone OS 3.2), iOS 4.x, …
+* Support for the latest iOS versions.
 * [Never](https://github.com/touchHLE/touchHLE/issues/181#issuecomment-1777098259): 64-bit iOS.
 
 Support for apps that aren't games isn't a priority: it's more complex and less fun.

@@ -4,12 +4,10 @@
 
 touchHLE's high-level emulation (HLE) approach differs from low-level emulation (LLE) in that it does not directly simulate the iPhone/iPod touch hardware. Instead of running iPhone OS inside emulation, touchHLE _itself_ takes the place of iPhone OS and provides its own implementations of the system frameworks (Foundation, UIKit, OpenGL ES, OpenAL, etc). The only code the [emulated CPU](https://github.com/merryhime/dynarmic) executes is the app binary and [a handful of libraries](touchHLE_dylibs/).
 
-The goal of this project is to run games from the early days of iOS:
-
-* Currently: iPhone and iPod touch apps for iPhone OS 2.x, iPhone OS 3.0, and aiming for compatibility with the latest iOS versions.
-* Longer term: iPhone OS 3.1, iPad apps (iPhone OS 3.2), iOS 4.x, …
-* Support for the latest iOS versions.
-* [Never](https://github.com/touchHLE/touchHLE/issues/181#issuecomment-1777098259): 64-bit iOS.
+The main goal of this project is to run iPhone OS applications directly in modern web browsers. This is achieved by:
+* Utilizing WebGPU for rendering and hardware acceleration.
+* Compiling the emulation core and necessary libraries to WebAssembly using Emscripten.
+* Focusing on .ipa file compatibility for web-based execution.
 
 Support for apps that aren't games isn't a priority: it's more complex and less fun.
 
@@ -27,11 +25,12 @@ Only use touchHLE to emulate software you have obtained legally.
 
 ## Platform support
 
-* Officially supported: x64 Windows, x64 macOS and AArch64 Android.
+* **Primary target:** Modern web browsers with WebGPU support.
+* Officially supported native platforms (for development/legacy use): x64 Windows, x64 macOS and AArch64 Android.
   * These are the platforms with binary releases.
   * If you're an Apple Silicon Mac user, the x64 build reportedly works in Rosetta.
-* Probably works, but you must build it yourself: AArch64 macOS, x64 Linux, AArch64 Linux.
-* Never?: other architectures.
+* Probably works for native builds (you must build it yourself): AArch64 macOS, x64 Linux, AArch64 Linux.
+* Never? (for native builds): other architectures.
 
 Input methods:
 

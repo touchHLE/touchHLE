@@ -16,6 +16,24 @@
       "message": "Thanks for your first contribution! If you want access to dev only Discord channel, please mail me your Discord nickname. (I can guess, but better not ;))",
       "revId": "a4a6000a4c1f4a10735f8584981f9764942acb3a",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f1260dbb_2d5b3eb7",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038857
+      },
+      "writtenOn": "2025-05-28T21:33:12Z",
+      "side": 1,
+      "message": "Sent you an email",
+      "parentUuid": "f305ca78_375836c5",
+      "revId": "a4a6000a4c1f4a10735f8584981f9764942acb3a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ],
   "submitRequirementResults": [

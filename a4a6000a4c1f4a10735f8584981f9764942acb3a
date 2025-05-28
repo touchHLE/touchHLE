@@ -1,5 +1,23 @@
 {
-  "comments": [],
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f305ca78_375836c5",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-05-28T21:25:00Z",
+      "side": 1,
+      "message": "Thanks for your first contribution! If you want access to dev only Discord channel, please mail me your Discord nickname. (I can guess, but better not ;))",
+      "revId": "a4a6000a4c1f4a10735f8584981f9764942acb3a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ],
   "submitRequirementResults": [
     {
       "submitRequirement": {

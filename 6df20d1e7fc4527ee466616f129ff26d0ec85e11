@@ -34,6 +34,24 @@
       "parentUuid": "7f33f013_66bd2742",
       "revId": "6df20d1e7fc4527ee466616f129ff26d0ec85e11",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1327cc25_1c62e6cb",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-05-31T18:33:56Z",
+      "side": 1,
+      "message": "I tested the build from Github PR and unfortunately it has regressions on my Android phone with a PowerVR GPU: SMB just gives black screen now and Asphalt5 only renders color strips.\n\n(note that my phone wasn\u0027t afftected before by \"white screen\" bug)\n\nI think you should find an Android phone (or someone with access to Android phone) to iterate further on this subject.",
+      "parentUuid": "5afc6d6f_0db13bf2",
+      "revId": "6df20d1e7fc4527ee466616f129ff26d0ec85e11",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

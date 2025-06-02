@@ -18,19 +18,20 @@ use crate::Environment;
 use std::collections::{HashMap, HashSet};
 
 // Should be ISO 639-1 (or ISO 639-2) compliant
+// Legacy projects use language names while newer ones use language code lprojs
 // TODO: complete this list or use some crate for mapping
-const LANG_ID_TO_LANG_PROJ: &[(&str, &str)] = &[
-    ("da", "Danish.lproj"),
-    ("nl", "Dutch.lproj"),
-    ("en", "English.lproj"),
-    ("fi", "Finnish.lproj"),
-    ("fr", "French.lproj"),
-    ("de", "German.lproj"),
-    ("it", "Italian.lproj"),
-    ("ja", "Japanese.lproj"),
-    ("no", "Norwegian.lproj"),
-    ("es", "Spanish.lproj"),
-    ("sv", "Swedish.lproj"),
+const LANG_ID_TO_LANG_PROJ: &[(&str, &[&str])] = &[
+    ("da", &["Danish.lproj", "da.lproj"]),
+    ("nl", &["Dutch.lproj", "nl.lproj"]),
+    ("en", &["English.lproj", "en.lproj"]),
+    ("fi", &["Finnish.lproj", "fi.lproj"]),
+    ("fr", &["French.lproj", "fr.lproj"]),
+    ("de", &["German.lproj", "de.lproj"]),
+    ("it", &["Italian.lproj", "it.lproj"]),
+    ("ja", &["Japanese.lproj", "ja.lproj"]),
+    ("no", &["Norwegian.lproj", "no.lproj"]),
+    ("es", &["Spanish.lproj", "es.lproj"]),
+    ("sv", &["Swedish.lproj", "sv.lproj"]),
 ];
 
 #[derive(Default)]
@@ -176,11 +177,13 @@ pub const CLASSES: ClassExports = objc_classes! {
     for i in 0..lang_count {
         let lang_code: id = msg![env; langs objectAtIndex:i];
         let lang_code = ns_string::to_rust_string(env, lang_code); // TODO: avoid copy
-        if let Some(&(_, lproj)) = LANG_ID_TO_LANG_PROJ.iter().find(|&&(code, _)| code == lang_code) {
-            let lproj: id = ns_string::get_static_str(env, lproj);
-            let localized_path = path_for_resource_helper(env, this, name, lproj, directory, extension);
-            if localized_path != nil {
-                return localized_path;
+        if let Some(&(_, lprojs)) = LANG_ID_TO_LANG_PROJ.iter().find(|&&(code, _)| code == lang_code) {
+            for lproj in lprojs {
+                let lproj: id = ns_string::get_static_str(env, lproj);
+                let localized_path = path_for_resource_helper(env, this, name, lproj, directory, extension);
+                if localized_path != nil {
+                    return localized_path;
+                }
             }
         } else {
             unknown_codes.insert(lang_code);

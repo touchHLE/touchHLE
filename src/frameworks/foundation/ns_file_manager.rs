@@ -270,6 +270,41 @@ pub const CLASSES: ClassExports = objc_classes! {
     contents
 }
 
+- (bool)isWritableFileAtPath:(id)path { // NSString*
+    let (_, _, writable, _) = {
+        let path = ns_string::to_rust_string(env, path); // TODO: avoid copy
+        env.fs.access(GuestPath::new(&path))
+    };
+    writable
+}
+
+- (bool)isDeletableFileAtPath:(id)path {// NSString*
+    let is_file = {
+        let path = ns_string::to_rust_string(env, path); // TODO: avoid copy
+        env.fs.is_file(GuestPath::new(&path))
+    };
+
+    if is_file {
+        return msg![env; this isWritableFileAtPath:path];
+    }
+
+    let directory_enumerator: id = msg![env; this enumeratorAtPath:path];
+
+    let mut is_deletable = true;
+    loop {
+        let path: id = msg![env; directory_enumerator nextObject];
+        if path == nil {
+            break;
+        }
+        let is_path_deletable: bool = msg![env; this isDeletableFileAtPath:path];
+        is_deletable &= is_path_deletable;
+        if !is_deletable {
+            break;
+        }
+    }
+    is_deletable
+}
+
 - (id)contentsAtPath:(id)path { // NSString *
     // TODO: return nil if path is directory
     // TODO: handle non-absolute paths?

@@ -86,6 +86,10 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.borrow_mut::<UIScrollViewHostObject>(this).content_size = size;
 }
 
+- (())setIndicatorStyle:(i32)style {
+    log!("TODO: [(UIScrollView*) {:?} setIndicatorStyle:{:?}]", this, style);
+}
+
 - (())touchesMoved:(id)touches // NSSet* of UITouch*
          withEvent:(id)_event { // UIEvent*
     let scroll_enabled: bool = msg![env; this scrollEnabled];

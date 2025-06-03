@@ -12,8 +12,8 @@ use crate::objc::{
 use std::collections::HashSet;
 
 /// Belongs to _touchHLE_NSCharacterSet
-struct CharacterSetHostObject {
-    set: HashSet<unichar>,
+pub struct CharacterSetHostObject {
+    pub set: HashSet<unichar>,
     inverted: bool,
 }
 impl HostObject for CharacterSetHostObject {}

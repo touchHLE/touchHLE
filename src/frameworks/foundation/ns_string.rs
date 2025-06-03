@@ -10,6 +10,7 @@
 
 mod path_algorithms;
 
+use super::ns_character_set::CharacterSetHostObject;
 use super::{ns_array, unichar};
 use super::{
     NSComparisonResult, NSNotFound, NSOrderedAscending, NSOrderedDescending, NSOrderedSame,
@@ -1333,6 +1334,31 @@ pub const CLASSES: ClassExports = objc_classes! {
     let length: NSUInteger = (string.len() + 1).try_into().unwrap();
 
     msg_class![env; NSData dataWithBytesNoCopy:(c_string.cast_void()) length:length]
+}
+
+- (id)componentsSeparatedByCharactersInSet:(id)cset { //NSCharacterSet*
+    let string = {
+        let host_object = env.objc.borrow_mut::<StringHostObject>(this);
+        let (orig_string, did_convert) = host_object.convert_to_utf16_inplace();
+        if did_convert {
+            log_dbg!("[{:?} length]: converted string to UTF-16", this);
+        }
+        orig_string.clone()
+    };
+
+    let substrings: Vec<&[u16]> = {
+        let cset_host_object = env.objc.borrow::<CharacterSetHostObject>(cset);
+        string.split(|c| cset_host_object.set.contains(c)).collect()
+    };
+
+    let substrings: Vec<id> = substrings.into_iter().map(|substr| {
+        let res = from_u16_vec(env, substr.to_vec());
+        autorelease(env, res);
+        retain(env, res)
+    }).collect();
+
+    let res = ns_array::from_vec(env, substrings);
+    autorelease(env, res)
 }
 
 - (id)substringWithRange:(NSRange)range {

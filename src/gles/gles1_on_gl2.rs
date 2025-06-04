@@ -282,6 +282,10 @@ const GET_PARAMS: ParamTable = ParamTable(&[
     (gl21::MAX_VERTEX_UNITS_ARB, ParamType::Int, 1),
 ]);
 
+const UNSUPPORTED_GET_PARAMS: ParamTable = ParamTable(&[
+    (gl21::COMPRESSED_TEXTURE_FORMATS, ParamType::Int, 0), // Dynamically sized
+]);
+
 const POINT_PARAMS: ParamTable = ParamTable(&[
     (gl21::POINT_SIZE_MIN, ParamType::Float, 1),
     (gl21::POINT_SIZE_MAX, ParamType::Float, 1),
@@ -614,16 +618,16 @@ impl GLES for GLES1OnGL2 {
         gl21::IsEnabled(cap)
     }
     unsafe fn Disable(&mut self, cap: GLenum) {
-        if ARRAYS.iter().any(|&ArrayInfo { name, .. }| name == cap) {
+        if CAPABILITIES.contains(&cap) {
+            log_dbg!("glDisable{:#x}", cap);
+        } else if ARRAYS.iter().any(|&ArrayInfo { name, .. }| name == cap) {
             log_dbg!("Tolerating glDisable({:#x}) of client state", cap);
         } else if UNSUPPORTED_CAPABILITIES.contains(&cap) {
             log_dbg!("Tolerating glDisable({:#x}) of unsupported capability", cap);
+        } else if GET_PARAMS.contains(cap) || UNSUPPORTED_GET_PARAMS.contains(cap) {
+            log_dbg!("Tolerating glDisable({:#x}) of parameter", cap);
         } else {
-            assert!(
-                CAPABILITIES.contains(&cap),
-                "Unexpected glDisable({:#x})",
-                cap
-            );
+            panic!("Unexpected glDisable({:#x})", cap);
         }
         gl21::Disable(cap);
     }

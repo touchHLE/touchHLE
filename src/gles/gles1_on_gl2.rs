@@ -618,12 +618,12 @@ impl GLES for GLES1OnGL2 {
             log_dbg!("Tolerating glDisable({:#x}) of client state", cap);
         } else if UNSUPPORTED_CAPABILITIES.contains(&cap) {
             log_dbg!("Tolerating glDisable({:#x}) of unsupported capability", cap);
+        } else if !CAPABILITIES.contains(&cap) {
+            // The API allows invalid capabilities and generates an error
+            // The error should be handled by the caller
+            log_dbg!("Tolerating glDisable({:#x}) of invalid capability", cap);
         } else {
-            assert!(
-                CAPABILITIES.contains(&cap),
-                "Unexpected glDisable({:#x})",
-                cap
-            );
+            log_dbg!("glDisable({:#x})", cap);
         }
         gl21::Disable(cap);
     }

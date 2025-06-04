@@ -67,6 +67,10 @@ impl ParamTable {
         self.get_type_info(pname);
     }
 
+    pub fn contains(&self, pname: GLenum) -> bool {
+        self.0.iter().any(|(pname2, _, _)| pname == *pname2)
+    }
+
     /// Assert that a parameter name is recognized and that the parameter has a
     /// particular component count.
     pub fn assert_component_count(&self, pname: GLenum, provided_count: u8) {

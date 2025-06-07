@@ -43,6 +43,9 @@ int printf(const char *, ...);
 int vsnprintf(char *, size_t, const char *, va_list);
 int swprintf(wchar_t *, size_t, const wchar_t *, ...);
 size_t fwrite(const void *, size_t, size_t, FILE *);
+size_t fread(void *, size_t, size_t, FILE *);
+int getc(FILE *);
+int ungetc(int, FILE *);
 
 // <stdlib.h>
 #define EXIT_SUCCESS 0
@@ -1263,6 +1266,35 @@ int test_realpath() {
   if (!res || strncmp(cwd, res, strlen(cwd)) != 0 ||
       strncmp("/TestApp", res + strlen(cwd), 8) != 0)
     return -4;
+  return 0;
+}
+
+int test_ungetc() {
+  FILE *file = fopen("test_ungetc", "r");
+  if (file == NULL) {
+    return -1;
+  }
+  char c = getc(file);
+  if (c != 'a') {
+    fclose(file);
+    return -2;
+  }
+  // ungetc with _wrong_ char
+  c = ungetc('b', file);
+  if (c != 'b') {
+    fclose(file);
+    return -3;
+  }
+  char buf[4];
+  memset(buf, '\0', 4);
+  size_t read = fread(buf, 1, 3, file);
+  fclose(file);
+  if (read != 3) {
+    return -4;
+  }
+  if (strcmp(buf, "baa") != 0) {
+    return -5;
+  }
   return 0;
 }
 
@@ -2533,6 +2565,7 @@ struct {
     FUNC_DEF(test_strchr),
     FUNC_DEF(test_swprintf),
     FUNC_DEF(test_realpath),
+    FUNC_DEF(test_ungetc),
     FUNC_DEF(test_CFStringFind),
     FUNC_DEF(test_strcspn),
     FUNC_DEF(test_mbstowcs),

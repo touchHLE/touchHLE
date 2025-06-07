@@ -127,6 +127,21 @@ fn fgetc(env: &mut Environment, file_ptr: MutPtr<FILE>) -> i32 {
     }
 }
 
+fn getc(env: &mut Environment, file_ptr: MutPtr<FILE>) -> i32 {
+    // `getc` is essentially identical to the `fgetc`
+    fgetc(env, file_ptr)
+}
+
+fn ungetc(env: &mut Environment, c: i32, file_ptr: MutPtr<FILE>) -> i32 {
+    // "normal" libc maintains a buffer of push-back
+    // characters, but it seems unnecessary for us
+    assert!(c != EOF);
+    // TODO: assert that pushed one corresponds to a previous
+    // one in the stream
+    let FILE { fd } = env.mem.read(file_ptr);
+    posix_io::lseek(env, fd, -1, SEEK_CUR) as i32
+}
+
 fn fgets(
     env: &mut Environment,
     str: MutPtr<u8>,
@@ -440,6 +455,8 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(fopen(_, _)),
     export_c_func!(fread(_, _, _, _)),
     export_c_func!(fgetc(_)),
+    export_c_func!(getc(_)),
+    export_c_func!(ungetc(_, _)),
     export_c_func!(fgets(_, _, _)),
     export_c_func!(fputs(_, _)),
     export_c_func!(fputc(_, _)),

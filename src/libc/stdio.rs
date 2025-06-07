@@ -15,6 +15,8 @@ use crate::libc::errno::set_errno;
 use crate::libc::string::strlen;
 use crate::mem::{ConstPtr, ConstVoidPtr, GuestUSize, Mem, MutPtr, MutVoidPtr, Ptr, SafeRead};
 use crate::Environment;
+
+use std::collections::HashMap;
 use std::io::Write;
 
 // Standard C functions
@@ -23,6 +25,11 @@ pub mod printf;
 
 const EOF: i32 = -1;
 
+struct FILEHostObject {
+    /// `ungetc()` implementation
+    pushbacks: Vec<u8>,
+}
+
 #[allow(clippy::upper_case_acronyms)]
 /// C `FILE` struct. This is an opaque type in C, so the definition here is our
 /// own.
@@ -30,6 +37,31 @@ struct FILE {
     fd: posix_io::FileDescriptor,
 }
 unsafe impl SafeRead for FILE {}
+
+#[derive(Default)]
+pub struct State {
+    file_streams: HashMap<MutPtr<FILE>, FILEHostObject>,
+}
+impl State {
+    fn get_mut(env: &mut Environment) -> &mut Self {
+        &mut env.libc_state.stdio
+    }
+    fn file_pushbacks_reverse(env: &mut Environment, file_ptr: MutPtr<FILE>, offset: usize) {
+        let FILEHostObject { ref mut pushbacks } =
+            Self::get_mut(env).file_streams.get_mut(&file_ptr).unwrap();
+        _ = &pushbacks[offset..].reverse();
+    }
+    fn file_pushbacks_truncate(env: &mut Environment, file_ptr: MutPtr<FILE>, offset: usize) {
+        let FILEHostObject { ref mut pushbacks } =
+            Self::get_mut(env).file_streams.get_mut(&file_ptr).unwrap();
+        pushbacks.truncate(offset);
+    }
+    fn file_pushbacks_clear(env: &mut Environment, file_ptr: MutPtr<FILE>) {
+        let FILEHostObject { ref mut pushbacks } =
+            Self::get_mut(env).file_streams.get_mut(&file_ptr).unwrap();
+        pushbacks.clear();
+    }
+}
 
 #[allow(non_camel_case_types)]
 type fpos_t = off_t;
@@ -72,13 +104,23 @@ fn fopen(env: &mut Environment, filename: ConstPtr<u8>, mode: ConstPtr<u8>) -> M
 
     match posix_io::open_direct(env, filename, flags) {
         -1 => Ptr::null(),
-        fd => env.mem.alloc_and_write(FILE { fd }),
+        fd => {
+            let res = env.mem.alloc_and_write(FILE { fd });
+            assert!(!State::get_mut(env).file_streams.contains_key(&res));
+            State::get_mut(env).file_streams.insert(
+                res,
+                FILEHostObject {
+                    pushbacks: Vec::new(),
+                },
+            );
+            res
+        }
     }
 }
 
 fn fread(
     env: &mut Environment,
-    buffer: MutVoidPtr,
+    mut buffer: MutVoidPtr,
     item_size: GuestUSize,
     n_items: GuestUSize,
     file_ptr: MutPtr<FILE>,
@@ -90,18 +132,52 @@ fn fread(
         return 0;
     }
 
-    let FILE { fd } = env.mem.read(file_ptr);
-
     // Yes, the item_size/n_items split doesn't mean anything. The C standard
     // really does expect you to just multiply and divide like this, with no
     // attempt being made to ensure a whole number are read or written!
-    let total_size = item_size.checked_mul(n_items).unwrap();
+    let mut total_size = item_size.checked_mul(n_items).unwrap();
+    let pushbacks_len = State::get_mut(env)
+        .file_streams
+        .get_mut(&file_ptr)
+        .unwrap()
+        .pushbacks
+        .len();
+    let already_read = if pushbacks_len > 0 {
+        let to_copy = pushbacks_len.min(total_size as usize);
+        let offset = pushbacks_len - to_copy;
+
+        State::file_pushbacks_reverse(env, file_ptr, offset);
+        let to_copy: GuestUSize = to_copy.try_into().unwrap();
+        // re-borrow
+        let pushbacks = &env
+            .libc_state
+            .stdio
+            .file_streams
+            .get(&file_ptr)
+            .unwrap()
+            .pushbacks;
+        env.mem
+            .bytes_at_mut(buffer.cast(), to_copy)
+            .copy_from_slice(&pushbacks[offset..]);
+        State::file_pushbacks_truncate(env, file_ptr, offset);
+
+        if total_size == to_copy {
+            return total_size;
+        }
+        total_size -= to_copy;
+        let ptr: MutPtr<u8> = buffer.cast();
+        buffer = (ptr + to_copy).cast();
+        to_copy
+    } else {
+        0
+    };
+    let FILE { fd } = env.mem.read(file_ptr);
     match posix_io::read(env, fd, buffer, total_size) {
         // TODO: ferror() support.
         -1 => 0,
         bytes_read => {
             let bytes_read: GuestUSize = bytes_read.try_into().unwrap();
-            bytes_read / item_size
+            (bytes_read + already_read) / item_size
         }
     }
 }
@@ -111,6 +187,14 @@ fn fgetc(env: &mut Environment, file_ptr: MutPtr<FILE>) -> i32 {
     set_errno(env, 0);
 
     let FILE { fd } = env.mem.read(file_ptr);
+    let FILEHostObject { ref mut pushbacks } =
+        State::get_mut(env).file_streams.get_mut(&file_ptr).unwrap();
+    if let Some(pushback) = pushbacks.pop() {
+        let new_offset = posix_io::lseek(env, fd, 1, SEEK_CUR);
+        assert!(new_offset > 0); // TODO: handle error
+        return pushback.into();
+    }
+
     let buffer = env.mem.alloc(1);
 
     match posix_io::read(env, fd, buffer, 1) {
@@ -125,6 +209,26 @@ fn fgetc(env: &mut Environment, file_ptr: MutPtr<FILE>) -> i32 {
             }
         }
     }
+}
+
+fn getc(env: &mut Environment, file_ptr: MutPtr<FILE>) -> i32 {
+    // `getc` is essentially identical to the `fgetc`
+    fgetc(env, file_ptr)
+}
+
+fn ungetc(env: &mut Environment, c: i32, file_ptr: MutPtr<FILE>) -> i32 {
+    assert!(c != EOF); // TODO
+    let FILE { fd } = env.mem.read(file_ptr);
+    let curr_offset = posix_io::lseek(env, fd, 0, SEEK_CUR);
+    assert!(curr_offset > 0);
+    // Note: successful seeking clears EOF indicator
+    let new_offset = posix_io::lseek(env, fd, -1, SEEK_CUR);
+    assert!(new_offset >= 0); // TODO: handle error
+    let FILEHostObject { ref mut pushbacks } =
+        State::get_mut(env).file_streams.get_mut(&file_ptr).unwrap();
+    pushbacks.push(c.try_into().unwrap());
+    log_dbg!("ungetc pushbacks: {:?}", pushbacks);
+    c
 }
 
 fn fgets(
@@ -242,7 +346,10 @@ fn fseek(env: &mut Environment, file_ptr: MutPtr<FILE>, offset: i32, whence: i32
     assert!([SEEK_SET, SEEK_CUR, SEEK_END].contains(&whence));
     match posix_io::lseek(env, fd, offset.into(), whence) {
         -1 => -1,
-        _cur_pos => 0,
+        _cur_pos => {
+            State::file_pushbacks_clear(env, file_ptr);
+            0
+        }
     }
 }
 
@@ -263,6 +370,7 @@ fn rewind(env: &mut Environment, file_ptr: MutPtr<FILE>) {
     // TODO: handle errno properly
     set_errno(env, 0);
 
+    // Note: this call will clean pushbacks as well
     fseek(env, file_ptr, 0, SEEK_SET);
 }
 
@@ -278,6 +386,7 @@ fn fclose(env: &mut Environment, file_ptr: MutPtr<FILE>) -> i32 {
     }
 
     let FILE { fd } = env.mem.read(file_ptr);
+    assert!(State::get_mut(env).file_streams.remove(&file_ptr).is_some());
 
     env.mem.free(file_ptr.cast());
 
@@ -306,6 +415,7 @@ fn fsetpos(env: &mut Environment, file_ptr: MutPtr<FILE>, pos: ConstPtr<fpos_t>)
     if res == -1 {
         -1
     } else {
+        State::file_pushbacks_clear(env, file_ptr);
         0
     }
 }
@@ -416,6 +526,7 @@ pub const CONSTANTS: ConstantExports = &[
         "___stdinp",
         HostConstant::Custom(|mem: &mut Mem, _| -> ConstVoidPtr {
             let ptr = mem.alloc_and_write(FILE { fd: STDIN_FILENO });
+            // TODO: handle pushbacks for STDIN
             mem.alloc_and_write(ptr).cast().cast_const()
         }),
     ),
@@ -423,6 +534,7 @@ pub const CONSTANTS: ConstantExports = &[
         "___stdoutp",
         HostConstant::Custom(|mem: &mut Mem, _| -> ConstVoidPtr {
             let ptr = mem.alloc_and_write(FILE { fd: STDOUT_FILENO });
+            // TODO: handle pushbacks for STDOUT
             mem.alloc_and_write(ptr).cast().cast_const()
         }),
     ),
@@ -430,6 +542,7 @@ pub const CONSTANTS: ConstantExports = &[
         "___stderrp",
         HostConstant::Custom(|mem: &mut Mem, _| -> ConstVoidPtr {
             let ptr = mem.alloc_and_write(FILE { fd: STDERR_FILENO });
+            // TODO: handle pushbacks for STDERR
             mem.alloc_and_write(ptr).cast().cast_const()
         }),
     ),
@@ -440,6 +553,8 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(fopen(_, _)),
     export_c_func!(fread(_, _, _, _)),
     export_c_func!(fgetc(_)),
+    export_c_func!(getc(_)),
+    export_c_func!(ungetc(_, _)),
     export_c_func!(fgets(_, _, _)),
     export_c_func!(fputs(_, _)),
     export_c_func!(fputc(_, _)),

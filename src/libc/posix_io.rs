@@ -364,6 +364,7 @@ pub fn lseek(env: &mut Environment, fd: FileDescriptor, offset: off_t, whence: i
 
     let res = match file.file.seek(from) {
         Ok(new_offset) => {
+            // TODO: this side-effect should be tightened to `fseek`
             // "A successful call to the fseek() function clears
             // the end-of-file indicator for the stream..."
             file.reached_eof = false;

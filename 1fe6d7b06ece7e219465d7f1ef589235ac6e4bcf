@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e0da2f96_73a7636a",
+        "filename": "src/frameworks/foundation/ns_file_manager.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 281,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-06-07T21:29:40Z",
+      "side": 1,
+      "message": "nit: missing space",
+      "revId": "1fe6d7b06ece7e219465d7f1ef589235ac6e4bcf",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

@@ -33,6 +33,24 @@
       "message": "I think you could use an ordinary `Vec\u003cu8\u003e` for this, though the data would have to be stored in the reverse order. You could then avoid doing a `collect` lower down, instead `\u0026pushbacks[pushbacks.len() - to_copy..]` + `copy_from_slice` + `reverse` would work. I\u0027m not sure if that\u0027s worth it though.",
       "revId": "32808e6a8e0d78c8d56a804fa05f1f671fa82be8",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a7bf9d01_db341ca5",
+        "filename": "src/libc/stdio.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 34,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-06-08T18:59:51Z",
+      "side": 1,
+      "message": "wouldn\u0027t reverse mean that I would need to collect first anyway?",
+      "parentUuid": "a89b7b74_ba8e89b5",
+      "revId": "32808e6a8e0d78c8d56a804fa05f1f671fa82be8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

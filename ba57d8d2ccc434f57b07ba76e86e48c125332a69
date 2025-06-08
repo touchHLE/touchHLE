@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2fc7d827_48b8af18",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 1346,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-06-08T19:48:42Z",
+      "side": 1,
+      "message": "do you really need to clone here?",
+      "revId": "ba57d8d2ccc434f57b07ba76e86e48c125332a69",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5d7faea0_03827535",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 1356,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-06-08T19:48:42Z",
+      "side": 1,
+      "message": "`from_u16_vec` aready retains res by allocating it, following autorelease + retain are unnecessary here",
+      "revId": "ba57d8d2ccc434f57b07ba76e86e48c125332a69",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

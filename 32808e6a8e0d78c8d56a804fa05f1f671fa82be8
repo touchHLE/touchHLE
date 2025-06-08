@@ -69,6 +69,24 @@
       "parentUuid": "a7bf9d01_db341ca5",
       "revId": "32808e6a8e0d78c8d56a804fa05f1f671fa82be8",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fe3a2ca2_50964309",
+        "filename": "src/libc/stdio.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 34,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-06-08T19:01:38Z",
+      "side": 1,
+      "message": "Or before, actually. Or you could probably somehow copy using a reversed iterator and avoid mutating anything.",
+      "parentUuid": "69ca86bb_f3ded29b",
+      "revId": "32808e6a8e0d78c8d56a804fa05f1f671fa82be8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

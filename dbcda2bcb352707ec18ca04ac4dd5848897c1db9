@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ab7c0c5b_af39654e",
+        "filename": "src/frameworks/uikit/ui_view/ui_scroll_view.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 90,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-06-08T19:46:21Z",
+      "side": 1,
+      "message": "could you please use a TODO log instead? check examples in other UIKit classes if needed",
+      "revId": "dbcda2bcb352707ec18ca04ac4dd5848897c1db9",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "399b2d95_7a170717",
+        "filename": "src/libc/stdio.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 33,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-06-08T19:42:26Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "e7bad28c_0cffe0e6",
+      "revId": "32808e6a8e0d78c8d56a804fa05f1f671fa82be8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "a89b7b74_ba8e89b5",
@@ -85,6 +103,24 @@
       "side": 1,
       "message": "Or before, actually. Or you could probably somehow copy using a reversed iterator and avoid mutating anything.",
       "parentUuid": "69ca86bb_f3ded29b",
+      "revId": "32808e6a8e0d78c8d56a804fa05f1f671fa82be8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4d4cc36c_645ec14a",
+        "filename": "src/libc/stdio.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 34,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-06-08T19:42:26Z",
+      "side": 1,
+      "message": "Thanks! Wasn\u0027t sure either if VecDeque is a correct choice here...\nChanged to Vec, please check",
+      "parentUuid": "fe3a2ca2_50964309",
       "revId": "32808e6a8e0d78c8d56a804fa05f1f671fa82be8",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

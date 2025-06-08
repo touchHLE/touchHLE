@@ -16,6 +16,24 @@
       "message": "nit: missing space",
       "revId": "1fe6d7b06ece7e219465d7f1ef589235ac6e4bcf",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "bb72d992_f9987168",
+        "filename": "src/frameworks/foundation/ns_file_manager.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 281,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2025-06-08T03:04:54Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "e0da2f96_73a7636a",
+      "revId": "1fe6d7b06ece7e219465d7f1ef589235ac6e4bcf",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

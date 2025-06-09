@@ -16,6 +16,24 @@
       "message": "nit: missing space after //",
       "revId": "8723c43ea6bc9f49d237c8885ecf5b6d220515f0",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "25b66b9a_81b550b6",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 4
+      },
+      "lineNbr": 1338,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2025-06-09T16:17:14Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "b96768cd_7f191224",
+      "revId": "8723c43ea6bc9f49d237c8885ecf5b6d220515f0",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

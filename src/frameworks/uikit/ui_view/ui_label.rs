@@ -17,7 +17,7 @@ use crate::frameworks::uikit::ui_font::{
 use crate::frameworks::uikit::ui_graphics::UIGraphicsGetCurrentContext;
 use crate::objc::{
     id, impl_HostObject_with_superclass, msg, msg_class, msg_super, nil, objc_classes, release,
-    retain, ClassExports, NSZonePtr,
+    retain, todo_objc_setter, ClassExports, NSZonePtr,
 };
 
 pub struct UILabelHostObject {
@@ -196,10 +196,10 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (())setShadowColor:(id)color { // UIColor*
-    log!("TODO: [(UILabel*) {:?} setShadowColor:{:?}]", this, color);
+    todo_objc_setter!(this, color);
 }
 - (())setShadowOffset:(CGSize)value {
-    log!("TODO: [(UILabel*) {:?} setShadowOffset:{:?}]", this, value);
+    todo_objc_setter!(this, value);
 }
 
 - (())setOpaque:(bool)_opaque {

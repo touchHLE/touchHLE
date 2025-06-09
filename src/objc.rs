@@ -38,6 +38,7 @@ pub use methods::{HostIMP, IMP};
 pub use objects::{
     id, impl_HostObject_with_superclass, nil, AnyHostObject, HostObject, TrivialHostObject,
 };
+pub use properties::todo_objc_setter;
 pub use selectors::{selector, SEL};
 
 use crate::mem::ConstVoidPtr;

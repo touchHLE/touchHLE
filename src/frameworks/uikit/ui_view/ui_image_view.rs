@@ -10,7 +10,7 @@ use crate::frameworks::core_graphics::{CGPoint, CGRect, CGSize};
 use crate::frameworks::foundation::NSTimeInterval;
 use crate::objc::{
     id, impl_HostObject_with_superclass, msg, msg_super, objc_classes, release, retain,
-    ClassExports, NSZonePtr,
+    todo_objc_setter, ClassExports, NSZonePtr,
 };
 
 #[derive(Default)]
@@ -81,14 +81,14 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (())setAnimationImages:(id)images { // NSArray<UIImage *>*
-    log!("TODO: [(UIImageView*) {:?} setAnimationImages:{:?}]", this, images);
+    todo_objc_setter!(this, images);
     // TODO: Use all images in the array instead of just the first one
     let first_image: id = msg![env; images objectAtIndex:0u32];
     () = msg![env; this setImage:first_image];
 }
 
 - (())setAnimationDuration:(NSTimeInterval)duration { // NSArray<UIImage *>*
-    log!("TODO: [(UIImageView*) {:?} setAnimationDuration:{}]", this, duration);
+    todo_objc_setter!(this, duration);
 }
 
 - (())startAnimating {

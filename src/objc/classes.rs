@@ -160,6 +160,7 @@ macro_rules! _objc_method {
         $env:ident,
         $this:ident,
         $_cmd:ident,
+        $cmd_name:ident,
         $retty:ty,
         $block:block
         $(, $ty:ty, $arg:ident)*
@@ -177,7 +178,10 @@ macro_rules! _objc_method {
             $_cmd: $crate::objc::SEL,
             $($arg: $ty,)*
             $(#[allow(unused_mut)] mut $va_arg: $va_type,)?
-        | -> $retty {$block}) as fn(
+        | -> $retty {
+            const _OBJC_CURRENT_SELECTOR: &str = stringify!($cmd_name);
+            $block
+        }) as fn(
             &mut $crate::Environment,
             $crate::objc::id,
             $crate::objc::SEL,
@@ -186,6 +190,25 @@ macro_rules! _objc_method {
         ) -> $retty)
     }
 }
+
+/// Logs a placeholder message for an unimplemented ObjC setter
+///
+/// This macro must be used inside [crate::_objc_method],
+/// as it relies on constants for the current class and selector
+/// set by it and [crate::objc::objc_classes]
+#[macro_export]
+macro_rules! todo_objc_setter {
+    ($this:ident, $value:ident) => {
+        log!(
+            "TODO: [({}*) {:?} {}:{:?}]",
+            _OBJC_CURRENT_CLASS,
+            $this,
+            _OBJC_CURRENT_SELECTOR,
+            $value
+        );
+    };
+}
+pub use crate::todo_objc_setter;
 
 /// Macro for creating a list of [ClassTemplate]s (i.e. [ClassExports]).
 /// It imitates the Objective-C class definition syntax.
@@ -297,6 +320,7 @@ macro_rules! objc_classes {
                                     $env,
                                     $this,
                                     $_cmd,
+                                    $cm_name,
                                     $cm_type,
                                     { $cm_block }
                                     $(, $cm_type1, $cm_arg1)?
@@ -318,6 +342,7 @@ macro_rules! objc_classes {
                                     $env,
                                     $this,
                                     $_cmd,
+                                    $im_name,
                                     $im_type,
                                     { $im_block }
                                     $(, $im_type1, $im_arg1)?

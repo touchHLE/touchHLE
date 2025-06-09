@@ -14,8 +14,8 @@ use crate::libc::pthread::thread::{
 };
 use crate::mem::{guest_size_of, MutPtr};
 use crate::objc::{
-    id, msg_send, nil, objc_classes, release, retain, Class, ClassExports, HostObject, NSZonePtr,
-    SEL,
+    id, msg_send, nil, objc_classes, release, retain, todo_objc_setter, Class, ClassExports,
+    HostObject, NSZonePtr, SEL,
 };
 use crate::Environment;
 use crate::{msg, msg_class};
@@ -187,7 +187,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     1.0
 }
 - (bool)setThreadPriority:(f64)priority {
-    log!("TODO: [(NSThread *){:?} setThreadPriority:{:?}] (ignored)", this, priority);
+    todo_objc_setter!(this, priority);
     true
 }
 

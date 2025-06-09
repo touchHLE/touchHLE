@@ -20,6 +20,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "5152f353_6ba15340",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 1346,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2025-06-09T03:54:39Z",
+      "side": 1,
+      "message": "I\u0027ve tried a bunch of ways to get this to work without clone. Unfortunately due to borrow constraints, I don\u0027t think this method will work without it, unless we want to reimplement split command ourselves. If there is a way I would love to see it.",
+      "parentUuid": "2fc7d827_48b8af18",
+      "revId": "ba57d8d2ccc434f57b07ba76e86e48c125332a69",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "5d7faea0_03827535",
         "filename": "src/frameworks/foundation/ns_string.rs",
         "patchSetId": 2
@@ -31,6 +49,24 @@
       "writtenOn": "2025-06-08T19:48:42Z",
       "side": 1,
       "message": "`from_u16_vec` aready retains res by allocating it, following autorelease + retain are unnecessary here",
+      "revId": "ba57d8d2ccc434f57b07ba76e86e48c125332a69",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "3aa7cd6c_09d69c33",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 1356,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2025-06-09T03:54:39Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "5d7faea0_03827535",
       "revId": "ba57d8d2ccc434f57b07ba76e86e48c125332a69",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

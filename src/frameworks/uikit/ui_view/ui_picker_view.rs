@@ -5,7 +5,7 @@
  */
 //! `UIPickerView`.
 
-use crate::objc::{id, objc_classes, ClassExports};
+use crate::objc::{id, objc_classes, todo_objc_setter, ClassExports};
 
 // TODO: rendering
 
@@ -16,7 +16,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 @implementation UIPickerView: UIView
 
 - (())setShowsSelectionIndicator:(bool)shows {
-    log!("TODO: [(UIPickerView*){:?} setShowsSelectionIndicator:{}]", this, shows);
+    todo_objc_setter!(this, shows);
 }
 - (())setDelegate:(id)_delegate {
     // TODO

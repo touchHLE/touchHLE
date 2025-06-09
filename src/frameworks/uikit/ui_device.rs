@@ -9,7 +9,7 @@ use crate::dyld::ConstantExports;
 use crate::dyld::HostConstant;
 use crate::frameworks::foundation::ns_string;
 use crate::frameworks::foundation::NSInteger;
-use crate::objc::{id, objc_classes, ClassExports, TrivialHostObject};
+use crate::objc::{id, objc_classes, todo_objc_setter, ClassExports, TrivialHostObject};
 use crate::window::{get_battery_status, BatteryState, DeviceOrientation};
 
 pub const UIDeviceOrientationDidChangeNotification: &str =
@@ -119,7 +119,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     true
 }
 - (())setBatteryMonitoringEnabled:(bool)enabled {
-    log!("TODO: [(UIDevice*) {:?} setBatteryMonitoringEnabled:{:?}]", this, enabled);
+    todo_objc_setter!(this, enabled);
     assert!(enabled);
 }
 - (f32)batteryLevel {

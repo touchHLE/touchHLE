@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ab8933b2_735e7c97",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 4
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-06-09T19:06:20Z",
+      "side": 1,
+      "message": "Can you add a test for this? You already wrote a little C program, right? If you don\u0027t want to have to create a file, using `stdin` would make sense.",
+      "revId": "1f259288dd6dd10a70df969da825c70a3720d988",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c7f62b82_476c0866",
+        "filename": "src/libc/stdio.rs",
+        "patchSetId": 4
+      },
+      "lineNbr": 108,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-06-09T19:06:20Z",
+      "side": 1,
+      "message": "Typo: should be `offset`.",
+      "revId": "1f259288dd6dd10a70df969da825c70a3720d988",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "43806f2f_cbe5a632",
+        "filename": "src/libc/stdio.rs",
+        "patchSetId": 4
+      },
+      "lineNbr": 111,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-06-09T19:06:20Z",
+      "side": 1,
+      "message": "You could move the `let to_copy: GuestUSize` cast up to before this line so that you don\u0027t have to write it out twice.",
+      "revId": "1f259288dd6dd10a70df969da825c70a3720d988",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8eb80ee6_7cf88703",
+        "filename": "src/libc/stdio.rs",
+        "patchSetId": 4
+      },
+      "lineNbr": 113,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-06-09T19:06:20Z",
+      "side": 1,
+      "message": "I think `pushbacks.truncate(offset);` would be a bit more straightforward.",
+      "revId": "1f259288dd6dd10a70df969da825c70a3720d988",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

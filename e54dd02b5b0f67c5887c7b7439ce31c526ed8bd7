@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "401c842b_8aa76dbe",
+        "filename": "src/frameworks/uikit/ui_view/ui_scroll_view.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 89,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-06-09T09:20:47Z",
+      "side": 1,
+      "message": "style should be UIActivityIndicatorViewStyle, please define that",
+      "revId": "e54dd02b5b0f67c5887c7b7439ce31c526ed8bd7",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

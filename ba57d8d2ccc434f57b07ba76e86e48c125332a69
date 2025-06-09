@@ -38,6 +38,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "a2e8e47d_943773ac",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 1346,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2025-06-09T04:48:19Z",
+      "side": 1,
+      "message": "Since I\u0027m pretty stuck at this point.",
+      "parentUuid": "5152f353_6ba15340",
+      "revId": "ba57d8d2ccc434f57b07ba76e86e48c125332a69",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "5d7faea0_03827535",
         "filename": "src/frameworks/foundation/ns_string.rs",
         "patchSetId": 2

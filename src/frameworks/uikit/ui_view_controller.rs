@@ -13,8 +13,8 @@ use crate::frameworks::foundation::ns_objc_runtime::NSStringFromClass;
 use crate::frameworks::foundation::ns_string::{from_rust_string, get_static_str, to_rust_string};
 use crate::frameworks::uikit::ui_view::set_view_controller;
 use crate::objc::{
-    id, msg, msg_class, nil, objc_classes, release, retain, Class, ClassExports, HostObject,
-    NSZonePtr,
+    id, msg, msg_class, nil, objc_classes, release, retain, todo_objc_setter, Class, ClassExports,
+    HostObject, NSZonePtr,
 };
 use crate::Environment;
 
@@ -167,10 +167,10 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (())setTitle:(id)title { // NSString *
-    log!("TODO: [(UIViewController*){:?} setTitle:{}]", this, to_rust_string(env, title)); // TODO
+    todo_objc_setter!(this, to_rust_string(env, title));
 }
 - (())setEditing:(bool)editing {
-    log!("TODO: [(UIViewController*){:?} setEditing:{}]", this, editing); // TODO
+    todo_objc_setter!(this, editing);
 }
 
 - (())dismissModalViewControllerAnimated:(bool)animated {

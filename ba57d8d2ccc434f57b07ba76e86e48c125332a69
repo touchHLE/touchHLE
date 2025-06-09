@@ -54,6 +54,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "8277e0dc_7830aa5f",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 1346,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-06-09T09:24:31Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "a2e8e47d_943773ac",
+      "revId": "ba57d8d2ccc434f57b07ba76e86e48c125332a69",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "5d7faea0_03827535",

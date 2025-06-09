@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b96768cd_7f191224",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 4
+      },
+      "lineNbr": 1338,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-06-09T09:24:31Z",
+      "side": 1,
+      "message": "nit: missing space after //",
+      "revId": "8723c43ea6bc9f49d237c8885ecf5b6d220515f0",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

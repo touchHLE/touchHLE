@@ -46,6 +46,30 @@
       },
       "revId": "6de976b27aaa8dbc77ba15387f9020935aaa90f7",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "bcb1e5c1_d4e12038",
+        "filename": "src/gles/gles1_on_gl2.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 283,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2025-06-10T15:37:13Z",
+      "side": 1,
+      "message": "I\u0027m fine with moving this to another commit. For supporting I\u0027m assuming that involves adding support for dynamic length parameters to GET_PARAM as well as adding custom cases to the glGet functions for COMPRESSED_TEXTURE_FORMATS that filters the returned formats based on the formats supported by PalettedTextureFormat?",
+      "parentUuid": "d8cb81b7_0febfbd2",
+      "range": {
+        "startLine": 283,
+        "startChar": 11,
+        "endLine": 283,
+        "endChar": 37
+      },
+      "revId": "6de976b27aaa8dbc77ba15387f9020935aaa90f7",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

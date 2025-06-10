@@ -22,6 +22,30 @@
       },
       "revId": "6de976b27aaa8dbc77ba15387f9020935aaa90f7",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d8cb81b7_0febfbd2",
+        "filename": "src/gles/gles1_on_gl2.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 283,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-06-10T08:56:44Z",
+      "side": 1,
+      "message": "I don\u0027t think I want to add this to the capabilities list here right now, because we are not actually supporting this parameter properly.",
+      "parentUuid": "63b66fd5_341a75b4",
+      "range": {
+        "startLine": 283,
+        "startChar": 11,
+        "endLine": 283,
+        "endChar": 37
+      },
+      "revId": "6de976b27aaa8dbc77ba15387f9020935aaa90f7",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1db26c0a_9f923440",
+        "filename": "src/libc/stdio.rs",
+        "patchSetId": 8
+      },
+      "lineNbr": 38,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-06-10T22:28:44Z",
+      "side": 1,
+      "message": "I suppose if we have a host object now, we could move the fd into it too, but I don\u0027t know if there\u0027s any value to that change.",
+      "revId": "645dcf79600835649c36df7c6e93b1ecee0d811b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f9267d49_a9d55c3e",
+        "filename": "src/libc/stdio.rs",
+        "patchSetId": 8
+      },
+      "lineNbr": 142,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-06-10T22:28:44Z",
+      "side": 1,
+      "message": "The problem is the State::get, that shorthand borrows the whole environment. If you write out the whole env.whatever.stdio thing you\u0027ll avoid that problem.",
+      "revId": "645dcf79600835649c36df7c6e93b1ecee0d811b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

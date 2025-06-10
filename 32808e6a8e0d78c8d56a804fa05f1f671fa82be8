@@ -123,6 +123,24 @@
       "parentUuid": "fe3a2ca2_50964309",
       "revId": "32808e6a8e0d78c8d56a804fa05f1f671fa82be8",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "24bda891_8446c71a",
+        "filename": "src/libc/stdio.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 34,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-06-10T21:55:25Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "4d4cc36c_645ec14a",
+      "revId": "32808e6a8e0d78c8d56a804fa05f1f671fa82be8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

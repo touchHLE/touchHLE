@@ -16,6 +16,24 @@
       "message": "The way how the gles1_on_gl2 is written, it\u0027s asserts valid parameters and fails fast on them, even if OpenGL probably just generates an error.\n\nIf you follow current convention, you should create another list or another condition to asset against particualr value(s) of invalid capabilit{y,ies}, not just all of them.\n\nI let hikari decide if your proposal is acceptable.",
       "revId": "7b2257f094fa1b95c1e914645cc02f49af48bd9d",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2a9c2a5d_82e80112",
+        "filename": "src/gles/gles1_on_gl2.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 626,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2025-06-10T01:08:17Z",
+      "side": 1,
+      "message": "I\u0027ve thought about what you\u0027ve said and realized I missed an important condition. What if we call glDisable with a param thats invalid in GLES1.1 but valid in GL2 (I don\u0027t know if this is possible, but safer to assume it is). I think a good compromise here is to allow any enum thats defined in GET_PARAMS as these are known to be shared and thus should result in a consistent error.",
+      "parentUuid": "df06f166_5089383b",
+      "revId": "7b2257f094fa1b95c1e914645cc02f49af48bd9d",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

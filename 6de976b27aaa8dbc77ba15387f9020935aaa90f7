@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "63b66fd5_341a75b4",
+        "filename": "src/gles/gles1_on_gl2.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 283,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2025-06-10T01:08:17Z",
+      "side": 1,
+      "message": "I\u0027m not sure of the best way to handle this. Its a variable sized param where the size of the allocated array is determined by another param NUM_COMPRESSED_TEXTURE_FORMATS. I\u0027ve set this to 0 for now, but would like to hear feedback on if we should handle this differently.",
+      "range": {
+        "startLine": 283,
+        "startChar": 11,
+        "endLine": 283,
+        "endChar": 37
+      },
+      "revId": "6de976b27aaa8dbc77ba15387f9020935aaa90f7",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

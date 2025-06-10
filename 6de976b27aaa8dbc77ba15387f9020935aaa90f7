@@ -118,6 +118,30 @@
       },
       "revId": "6de976b27aaa8dbc77ba15387f9020935aaa90f7",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "37fb4d2f_84e2bbc0",
+        "filename": "src/gles/gles1_on_gl2.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 283,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-06-10T18:13:21Z",
+      "side": 1,
+      "message": "Yes, that\u0027s what I was hoping this patch would be to begin with in fact.",
+      "parentUuid": "70b8a888_24eadda4",
+      "range": {
+        "startLine": 283,
+        "startChar": 11,
+        "endLine": 283,
+        "endChar": 37
+      },
+      "revId": "6de976b27aaa8dbc77ba15387f9020935aaa90f7",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

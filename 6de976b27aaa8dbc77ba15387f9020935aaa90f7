@@ -70,6 +70,30 @@
       },
       "revId": "6de976b27aaa8dbc77ba15387f9020935aaa90f7",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "bd71ffc2_53ddfdc3",
+        "filename": "src/gles/gles1_on_gl2.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 283,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-06-10T17:32:48Z",
+      "side": 1,
+      "message": "Yeah the problem is that we actually emulate support for compressed formats that the underlying OpenGL implementation may not support, and we don\u0027t want to expose compressed formats that iOS isn\u0027t meant to support, in case that triggers weird code paths that wouldn\u0027t trigger on a real device.",
+      "parentUuid": "bcb1e5c1_d4e12038",
+      "range": {
+        "startLine": 283,
+        "startChar": 11,
+        "endLine": 283,
+        "endChar": 37
+      },
+      "revId": "6de976b27aaa8dbc77ba15387f9020935aaa90f7",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

@@ -142,6 +142,30 @@
       },
       "revId": "6de976b27aaa8dbc77ba15387f9020935aaa90f7",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "a715dbd9_d2ef56e4",
+        "filename": "src/gles/gles1_on_gl2.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 283,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2025-06-10T18:54:25Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "37fb4d2f_84e2bbc0",
+      "range": {
+        "startLine": 283,
+        "startChar": 11,
+        "endLine": 283,
+        "endChar": 37
+      },
+      "revId": "6de976b27aaa8dbc77ba15387f9020935aaa90f7",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

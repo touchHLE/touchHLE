@@ -20,6 +20,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "b1357ec6_824a62d5",
+        "filename": "src/libc/stdio.rs",
+        "patchSetId": 8
+      },
+      "lineNbr": 38,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-06-11T20:21:29Z",
+      "side": 1,
+      "message": "I\u0027m not sure either, I guess I prefer to keep it as is - in most cases we need only fd which could be read directly form the guest struct.",
+      "parentUuid": "1db26c0a_9f923440",
+      "revId": "645dcf79600835649c36df7c6e93b1ecee0d811b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "f9267d49_a9d55c3e",
         "filename": "src/libc/stdio.rs",
         "patchSetId": 8
@@ -31,6 +49,24 @@
       "writtenOn": "2025-06-10T22:28:44Z",
       "side": 1,
       "message": "The problem is the State::get, that shorthand borrows the whole environment. If you write out the whole env.whatever.stdio thing you\u0027ll avoid that problem.",
+      "revId": "645dcf79600835649c36df7c6e93b1ecee0d811b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "812d160e_fc35d208",
+        "filename": "src/libc/stdio.rs",
+        "patchSetId": 8
+      },
+      "lineNbr": 142,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-06-11T20:21:29Z",
+      "side": 1,
+      "message": "Thanks, done!\n\nI also refactored code a bit for readability, let me know what you think",
+      "parentUuid": "f9267d49_a9d55c3e",
       "revId": "645dcf79600835649c36df7c6e93b1ecee0d811b",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

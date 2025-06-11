@@ -16,6 +16,24 @@
       "message": "This re-borrowing and the use of these new special methods makes the code harder to read. If you directly borrow the pushbacks mutably on line 148, then you won\u0027t need to reborrow it again later and the reversing and truncsting can be done as they were before.",
       "revId": "59b73d99e775f8410066ba124bf4df469168f17a",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0503243f_0e43f534",
+        "filename": "src/libc/stdio.rs",
+        "patchSetId": 10
+      },
+      "lineNbr": 152,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-06-11T22:16:28Z",
+      "side": 1,
+      "message": "Uh, on line 139 rather, if we put a\n\n  let pushbacks \u003d env.libc_state.…\n\nthere. Just don\u0027t touch any State methods after that and it\u0027ll all be nice.",
+      "parentUuid": "9a47f5d6_a158674b",
+      "revId": "59b73d99e775f8410066ba124bf4df469168f17a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

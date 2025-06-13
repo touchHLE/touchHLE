@@ -16,6 +16,24 @@
       "message": "Can\u0027t you just call your new method here and skip the code added above? But you would need to make the method take \u0026mut self rather than \u0026mut Environment. The other method can be used to make it shorter in the places where the borrowing isn\u0027t a problem (State::get(env).get_file_host_obj_mut).",
       "revId": "2b5ceb465437a6772f6f55046eb6f15c0f59173d",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "8af1a608_4b5f37f4",
+        "filename": "src/libc/stdio.rs",
+        "patchSetId": 12
+      },
+      "lineNbr": 159,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-06-13T22:52:14Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "d39a0b27_557aa427",
+      "revId": "2b5ceb465437a6772f6f55046eb6f15c0f59173d",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

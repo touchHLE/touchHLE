@@ -16,6 +16,24 @@
       "message": "Wait, if we don\u0027t create host objects for stdin/stdout/stderr, doesn\u0027t that mean you just broke fread() on stdin, because it\u0027ll crash when looking up the host object?",
       "revId": "9366032eb1f603bb9b65a0c6e9ba392ce04671ef",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7d9a085e_16093664",
+        "filename": "src/libc/stdio.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 511,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-06-13T21:14:35Z",
+      "side": 1,
+      "message": "True, thanks for cathcing that!\nUpdated to create host obejcts lazily in such cases",
+      "parentUuid": "63290940_dd41d05a",
+      "revId": "9366032eb1f603bb9b65a0c6e9ba392ce04671ef",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

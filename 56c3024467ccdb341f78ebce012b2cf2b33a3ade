@@ -51,6 +51,41 @@
       "parentUuid": "5f2aa641_76512f3c",
       "revId": "56c3024467ccdb341f78ebce012b2cf2b33a3ade",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "25e4b27c_580fd6d2",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 6
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-06-14T18:33:34Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "45cbfc31_b266a5ce",
+      "revId": "56c3024467ccdb341f78ebce012b2cf2b33a3ade",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c60f1d6a_4265f132",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 6
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-06-14T18:33:34Z",
+      "side": 1,
+      "message": "Replaced by: https://github.com/touchHLE/touchHLE/commit/aa8cbb665c72fae8f4da062013c00435544c6604",
+      "revId": "56c3024467ccdb341f78ebce012b2cf2b33a3ade",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

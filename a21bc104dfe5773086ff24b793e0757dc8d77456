@@ -3,6 +3,23 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "951c0e1e_2e08a7bc",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 5
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-06-14T18:34:56Z",
+      "side": 1,
+      "message": "This didn\u0027t work for me because it doesn\u0027t make the versions match (as it only specifies one), and also it specified a Java version that I didn\u0027t have installed. In  https://github.com/touchHLE/touchHLE/commit/aa8cbb665c72fae8f4da062013c00435544c6604 I took a different approach that replaces this.",
+      "revId": "a21bc104dfe5773086ff24b793e0757dc8d77456",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "403c7c81_88c22708",
         "filename": "android/app/build.gradle",
         "patchSetId": 5

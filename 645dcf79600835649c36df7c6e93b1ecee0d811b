@@ -36,6 +36,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "cf8a9e31_de16f725",
+        "filename": "src/libc/stdio.rs",
+        "patchSetId": 8
+      },
+      "lineNbr": 38,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-06-14T19:11:22Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "b1357ec6_824a62d5",
+      "revId": "645dcf79600835649c36df7c6e93b1ecee0d811b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "f9267d49_a9d55c3e",
@@ -67,6 +85,24 @@
       "side": 1,
       "message": "Thanks, done!\n\nI also refactored code a bit for readability, let me know what you think",
       "parentUuid": "f9267d49_a9d55c3e",
+      "revId": "645dcf79600835649c36df7c6e93b1ecee0d811b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "88c22b76_d1d53e2e",
+        "filename": "src/libc/stdio.rs",
+        "patchSetId": 8
+      },
+      "lineNbr": 142,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-06-14T19:11:22Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "812d160e_fc35d208",
       "revId": "645dcf79600835649c36df7c6e93b1ecee0d811b",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

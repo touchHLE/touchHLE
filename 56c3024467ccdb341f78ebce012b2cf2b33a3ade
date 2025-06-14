@@ -33,6 +33,24 @@
       "message": "It did in fact break everything, and an hour was not enough time to fix all the problems for me. This is not the fault of your patch, but I am scared of what happens if it is merged.",
       "revId": "56c3024467ccdb341f78ebce012b2cf2b33a3ade",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "45cbfc31_b266a5ce",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 6
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-06-14T17:15:03Z",
+      "side": 1,
+      "message": "It \u003d updating to the newest Android Studio (2024.3.2 Meerkat Feature Drop).",
+      "parentUuid": "5f2aa641_76512f3c",
+      "revId": "56c3024467ccdb341f78ebce012b2cf2b33a3ade",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

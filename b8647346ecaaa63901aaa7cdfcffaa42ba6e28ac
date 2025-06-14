@@ -39,6 +39,24 @@
       "message": "Not \u003e\u003d?",
       "revId": "b8647346ecaaa63901aaa7cdfcffaa42ba6e28ac",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b1baa79e_b9198116",
+        "filename": "src/libc/stdio.rs",
+        "patchSetId": 13
+      },
+      "lineNbr": 190,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-06-14T19:38:13Z",
+      "side": 1,
+      "message": "I\u0027m not sure how it can return zero in that case. Like, we\u0027re seeking one position forward from a current one. If zero is returned, we was at -1 which doesn\u0027t make sense, right?",
+      "parentUuid": "115c3d11_2e9f4bbb",
+      "revId": "b8647346ecaaa63901aaa7cdfcffaa42ba6e28ac",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

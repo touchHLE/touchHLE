@@ -86,6 +86,24 @@
       "message": "Replaced by: https://github.com/touchHLE/touchHLE/commit/aa8cbb665c72fae8f4da062013c00435544c6604",
       "revId": "56c3024467ccdb341f78ebce012b2cf2b33a3ade",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "a775aaf9_48e68f3c",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 6
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2025-06-14T21:06:28Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "c60f1d6a_4265f132",
+      "revId": "56c3024467ccdb341f78ebce012b2cf2b33a3ade",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

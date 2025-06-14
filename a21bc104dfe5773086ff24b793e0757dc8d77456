@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "403c7c81_88c22708",
+        "filename": "android/app/build.gradle",
+        "patchSetId": 5
+      },
+      "lineNbr": 39,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-06-14T14:47:15Z",
+      "side": 1,
+      "message": "Despite this change, I still get this warning:\n\n  \u003e Task :app:compileDebugKotlin\n  \u0027compileDebugJavaWithJavac\u0027 task (current target is 1.8) and \u0027compileDebugKotlin\u0027 task (current target is 11) jvm target compatibility should be set to the same Java version.\n\nSo I assume something is wrong.",
+      "revId": "a21bc104dfe5773086ff24b793e0757dc8d77456",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

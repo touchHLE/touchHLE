@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fdf5a949_fd020772",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 6
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-06-14T15:06:24Z",
+      "side": 1,
+      "message": "This is probably a perfectly valid patch, but:\n\n\u003e The project is using an incompatible version (AGP 8.8.2) of the Android Gradle plugin. Latest supported version is AGP 7.4.2\n\nI would have to update my Android Studio install, and I\u0027m scared that if I do that, it will never work again ^^;",
+      "revId": "56c3024467ccdb341f78ebce012b2cf2b33a3ade",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

@@ -3,13 +3,12 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
-use super::{GuestUSize, Mem, VAddr};
+use super::{GuestUSize, Mem, VAddr, PAGE_SIZE, PAGE_SIZE_ALIGN_MASK};
 use std::collections::BTreeMap;
 use std::num::NonZeroU32;
 
 /// iPhone OS's allocator always aligns to 16 bytes at minimum, and this
 /// is also the minimum allocation size.
-/// TODO: also do the 4096-byte alignment.
 pub const MIN_CHUNK_SIZE: GuestUSize = 16;
 
 /// A non-empty range of bytes in virtual address space.
@@ -24,6 +23,10 @@ pub struct Chunk {
 
 impl Chunk {
     pub fn new(base: VAddr, size: GuestUSize) -> Chunk {
+        if size >= PAGE_SIZE {
+            // Check for invariant of page alignment
+            assert!(base & PAGE_SIZE_ALIGN_MASK == 0);
+        }
         Chunk {
             base,
             size: NonZeroU32::new(size).unwrap(),
@@ -212,8 +215,23 @@ mod collections {
             }
 
             let alloc = Chunk::new(existing.base, size);
-            let rump = Chunk::new(existing.base + size, existing.size.get() - size);
-            self.insert(rump);
+            let rump_base = existing.base + size;
+            let rump_size = existing.size.get() - size;
+            if rump_size >= PAGE_SIZE && rump_base & PAGE_SIZE_ALIGN_MASK != 0 {
+                assert!(existing.base & PAGE_SIZE_ALIGN_MASK == 0);
+                // re-align base address by splitting in 2 chunks:
+                // less than page size, not aligned
+                let left = Chunk::new(existing.base + size, PAGE_SIZE - size);
+                // (maybe) more than page size, aligned
+                let right = Chunk::new(existing.base + PAGE_SIZE, existing.size.get() - PAGE_SIZE);
+                assert_eq!(left.last_byte() + 1, right.base); // sanity check, bases
+                assert_eq!(left.size.get() + right.size.get(), rump_size); // sanity check, sizes
+                self.insert(left);
+                self.insert(right);
+            } else {
+                let rump = Chunk::new(rump_base, rump_size);
+                self.insert(rump);
+            }
 
             Some(alloc)
         }
@@ -300,11 +318,11 @@ impl Allocator {
     }
 
     pub fn alloc(&mut self, size: GuestUSize) -> VAddr {
-        let size = size.max(MIN_CHUNK_SIZE);
-        let size = if size % MIN_CHUNK_SIZE != 0 {
-            size + MIN_CHUNK_SIZE - (size % MIN_CHUNK_SIZE)
+        let size = if size < PAGE_SIZE {
+            let size = size.max(MIN_CHUNK_SIZE);
+            Self::align(size, MIN_CHUNK_SIZE)
         } else {
-            size
+            Self::align(size, PAGE_SIZE)
         };
 
         let Some(alloc) = self.unused_chunks.allocate(size) else {
@@ -313,6 +331,14 @@ impl Allocator {
         self.used_chunks.insert(alloc);
 
         alloc.base
+    }
+
+    fn align(size: GuestUSize, align: GuestUSize) -> GuestUSize {
+        if size % align != 0 {
+            size + align - (size % align)
+        } else {
+            size
+        }
     }
 
     /// This is used for realloc
@@ -336,11 +362,21 @@ impl Allocator {
             .remove_with_base(freed.last_byte() + 1)
             .or_else(|| self.unused_chunks.remove_with_end(freed.base))
         {
-            let combined = Chunk::new(
-                freed.base.min(adjacent.base),
-                freed.size.get() + adjacent.size.get(),
-            );
-            self.unused_chunks.insert(combined);
+            let new_base = freed.base.min(adjacent.base);
+            let new_size = freed.size.get() + adjacent.size.get();
+            if new_size >= PAGE_SIZE && new_base & PAGE_SIZE_ALIGN_MASK != 0 {
+                // Invariant of page alignment would be violated!
+                // So we're not combining
+                self.unused_chunks.insert(adjacent);
+                self.unused_chunks.insert(freed);
+            } else {
+                // We are good to combine
+                let combined = Chunk::new(
+                    freed.base.min(adjacent.base),
+                    freed.size.get() + adjacent.size.get(),
+                );
+                self.unused_chunks.insert(combined);
+            }
         } else {
             self.unused_chunks.insert(freed);
         }

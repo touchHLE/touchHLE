@@ -11,7 +11,7 @@ use crate::dyld::FunctionExports;
 use crate::libc::mach_thread_info::{
     kern_return_t, mach_msg_type_number_t, mach_port_t, natural_t, KERN_SUCCESS,
 };
-use crate::mem::{guest_size_of, MutPtr, SafeRead};
+use crate::mem::{guest_size_of, MutPtr, SafeRead, PAGE_SIZE};
 use crate::{export_c_func, Environment};
 
 type host_t = mach_port_t;
@@ -32,7 +32,6 @@ const ACTIVE_COUNT: natural_t = 159853;
 const INACTIVE_COUNT: natural_t = 23544;
 const WIRE_COUNT: natural_t = 47539;
 
-pub const PAGE_SIZE: vm_size_t = 4096;
 pub const PHYSICAL_MEMORY: natural_t =
     (FREE_COUNT + ACTIVE_COUNT + INACTIVE_COUNT + WIRE_COUNT) * PAGE_SIZE;
 

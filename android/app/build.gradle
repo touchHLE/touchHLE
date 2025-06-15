@@ -99,7 +99,11 @@ cargoNdk {
         
         extraCargoEnv.putAll([
             "CC": clangPath.toString(),
-            "CXX": clangXXPath.toString()
+            "CXX": clangXXPath.toString(),
+            // The default generator on Windows (Visual Studio) does not respect 
+            // the CC and CXX environment variables. Using Ninja ensures that 
+            // the specified compilers are used
+            "CMAKE_GENERATOR": "Ninja"
         ])
     }
     // The default feature, "static", makes us use static linking for SDL2 and OpenAL Soft.

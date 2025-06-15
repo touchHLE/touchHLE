@@ -34,6 +34,24 @@
       "parentUuid": "0b1fa045_6b99f86e",
       "revId": "7def41cb74c01bed6078dab373656e501cdf0493",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f3c57850_b29ce3ca",
+        "filename": "src/gles/gles1_on_gl2.rs",
+        "patchSetId": 6
+      },
+      "lineNbr": 286,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-06-15T18:48:30Z",
+      "side": 1,
+      "message": "Yeah, looks good, thanks.",
+      "parentUuid": "a06b96bc_fb00e2cb",
+      "revId": "7def41cb74c01bed6078dab373656e501cdf0493",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

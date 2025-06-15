@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0b1fa045_6b99f86e",
+        "filename": "src/gles/gles1_on_gl2.rs",
+        "patchSetId": 6
+      },
+      "lineNbr": 286,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-06-15T18:12:58Z",
+      "side": 1,
+      "message": "Uh, I mean, can we have a TODO for actually supporting this parameter?",
+      "revId": "7def41cb74c01bed6078dab373656e501cdf0493",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

@@ -9,7 +9,6 @@ use std::num::NonZeroU32;
 
 /// iPhone OS's allocator always aligns to 16 bytes at minimum, and this
 /// is also the minimum allocation size.
-/// TODO: also do the 4096-byte alignment.
 pub const MIN_CHUNK_SIZE: GuestUSize = 16;
 
 /// A non-empty range of bytes in virtual address space.
@@ -248,6 +247,7 @@ mod collections {
         }
     }
 }
+use crate::libc::mach_host::PAGE_SIZE;
 use collections::{ChunkMap, SizeBucketedChunkMap};
 
 /// Tracks which memory is in use and makes allocations from it.
@@ -300,11 +300,11 @@ impl Allocator {
     }
 
     pub fn alloc(&mut self, size: GuestUSize) -> VAddr {
-        let size = size.max(MIN_CHUNK_SIZE);
-        let size = if size % MIN_CHUNK_SIZE != 0 {
-            size + MIN_CHUNK_SIZE - (size % MIN_CHUNK_SIZE)
+        let size = if size < PAGE_SIZE {
+            let size = size.max(MIN_CHUNK_SIZE);
+            Self::align(size, MIN_CHUNK_SIZE)
         } else {
-            size
+            Self::align(size, PAGE_SIZE)
         };
 
         let Some(alloc) = self.unused_chunks.allocate(size) else {
@@ -316,6 +316,14 @@ impl Allocator {
         self.used_chunks.insert(alloc);
 
         alloc.base
+    }
+
+    fn align(size: GuestUSize, align: GuestUSize) -> GuestUSize {
+        if size % align != 0 {
+            size + align - (size % align)
+        } else {
+            size
+        }
     }
 
     /// This is used for realloc

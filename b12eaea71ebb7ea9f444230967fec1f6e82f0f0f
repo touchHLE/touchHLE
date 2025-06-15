@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0895601c_c5f9909a",
+        "filename": "src/gles/gles1_on_gl2.rs",
+        "patchSetId": 4
+      },
+      "lineNbr": 286,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-06-15T09:43:11Z",
+      "side": 1,
+      "message": "Can you put a `// TODO:` here, since it\u0027s something should support in future?",
+      "revId": "b12eaea71ebb7ea9f444230967fec1f6e82f0f0f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

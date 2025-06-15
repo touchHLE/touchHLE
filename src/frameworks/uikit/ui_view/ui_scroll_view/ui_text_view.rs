@@ -8,6 +8,7 @@
 use crate::frameworks::core_graphics::cg_context::CGContextSetRGBFillColor;
 use crate::frameworks::core_graphics::cg_geometry::CGPointZero;
 use crate::frameworks::core_graphics::{CGFloat, CGPoint, CGRect, CGSize};
+use crate::frameworks::foundation::NSRange;
 use crate::frameworks::uikit::ui_color;
 use crate::frameworks::uikit::ui_font::{
     UILineBreakModeTailTruncation, UITextAlignment, UITextAlignmentLeft,
@@ -177,6 +178,10 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 - (())setEditable:(bool)editable {
     env.objc.borrow_mut::<UITextViewHostObject>(this).editable = editable;
+}
+
+- (())scrollRangeToVisible:(NSRange)range {
+    log!("TODO: [(UITextView*) {:?} scrollRangeToVisible:{:?}]", this, range);
 }
 
 - (())setReturnKeyType:(UIReturnKeyType)type_ {

@@ -8,9 +8,8 @@
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::fs::GuestPath;
 use crate::libc::errno::set_errno;
-use crate::libc::mach_host::PAGE_SIZE;
 use crate::libc::posix_io::{FileDescriptor, STDERR_FILENO, STDIN_FILENO, STDOUT_FILENO};
-use crate::mem::{ConstPtr, GuestUSize, MutPtr};
+use crate::mem::{ConstPtr, GuestUSize, MutPtr, PAGE_SIZE};
 use crate::Environment;
 use std::time::Duration;
 

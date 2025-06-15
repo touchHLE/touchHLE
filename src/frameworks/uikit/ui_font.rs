@@ -11,7 +11,7 @@ use crate::frameworks::core_graphics::cg_bitmap_context::CGBitmapContextDrawer;
 use crate::frameworks::core_graphics::{CGFloat, CGPoint, CGRect, CGSize};
 use crate::frameworks::foundation::ns_string::to_rust_string;
 use crate::frameworks::foundation::NSInteger;
-use crate::objc::{autorelease, id, objc_classes, ClassExports, HostObject};
+use crate::objc::{autorelease, id, msg, objc_classes, ClassExports, HostObject};
 use crate::Environment;
 use std::collections::HashMap;
 use std::ops::Range;
@@ -147,6 +147,17 @@ pub const CLASSES: ClassExports = objc_classes! {
     let host_object = env.objc.borrow::<UIFontHostObject>(this);
     let font = env.framework_state.uikit.ui_font.get_font_by_kind(host_object.kind);
     font.line_gap(host_object.size)
+}
+
+- (CGFloat)lineHeight {
+    let ascender: CGFloat = msg![env; this ascender];
+    let descender: CGFloat = msg![env; this descender];
+    let leading: CGFloat = msg![env; this leading];
+    if descender < 0.0 {
+        ascender + leading - descender
+    } else {
+        ascender + leading
+    }
 }
 
 @end

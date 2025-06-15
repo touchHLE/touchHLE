@@ -8,6 +8,7 @@
 use crate::frameworks::core_graphics::cg_context::CGContextSetRGBFillColor;
 use crate::frameworks::core_graphics::cg_geometry::CGPointZero;
 use crate::frameworks::core_graphics::{CGFloat, CGPoint, CGRect, CGSize};
+use crate::frameworks::foundation::NSRange;
 use crate::frameworks::uikit::ui_color;
 use crate::frameworks::uikit::ui_font::{
     UILineBreakModeTailTruncation, UITextAlignment, UITextAlignmentLeft,
@@ -177,6 +178,39 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 - (())setEditable:(bool)editable {
     env.objc.borrow_mut::<UITextViewHostObject>(this).editable = editable;
+}
+
+- (())scrollRangeToVisible:(NSRange)range {
+    let &mut UITextViewHostObject {
+        font,
+        text,
+        ..
+    } = env.objc.borrow_mut(this);
+
+    let bounds: CGRect = msg![env; this bounds];
+    let bound_size = bounds.size;
+
+    let line_height: CGFloat = msg![env; font lineHeight];
+
+    let range_to_start = NSRange{location: 0, length: range.location + 1};
+    let text_to_range_start: id = msg![env; text substringWithRange:range_to_start];
+    let size_to_range_start: CGSize = msg![env; text_to_range_start sizeWithFont:font constrainedToSize:bound_size];
+
+    let range_to_end = NSRange{location: 0, length: range.location + range.length};
+    let text_to_range_end: id = msg![env; text substringWithRange:range_to_end];
+    let size_to_range_end: CGSize = msg![env; text_to_range_end sizeWithFont:font constrainedToSize:bound_size];
+
+    let content_offset: CGPoint = msg![env; this contentOffset];
+
+    if size_to_range_start.height - line_height < content_offset.y {
+        let new_scroll_y = CGPoint {x: 0.0, y: size_to_range_start.height - line_height};
+        () = msg![env; this setContentOffset:new_scroll_y];
+    }
+    else if size_to_range_end.height > content_offset.y + bound_size.height {
+        let new_scroll_y = CGPoint {x: 0.0, y: size_to_range_end.height - bound_size.height};
+        () = msg![env; this setContentOffset:new_scroll_y];
+    }
+    update_scroll(env, this);
 }
 
 - (())setReturnKeyType:(UIReturnKeyType)type_ {

@@ -8,8 +8,9 @@
 use crate::abi::GuestFunction;
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::libc::errno::{EDEADLK, EINVAL, ESRCH};
-use crate::libc::mach_host::PAGE_SIZE;
-use crate::mem::{self, ConstPtr, ConstVoidPtr, GuestUSize, MutPtr, MutVoidPtr, SafeRead};
+use crate::mem::{
+    self, ConstPtr, ConstVoidPtr, GuestUSize, MutPtr, MutVoidPtr, SafeRead, PAGE_SIZE,
+};
 use crate::{Environment, ThreadId};
 use std::collections::HashMap;
 

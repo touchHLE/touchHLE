@@ -205,6 +205,8 @@ impl<T: SafeRead> SafeWrite for T {}
 
 type Bytes = [u8; 1 << 32];
 
+pub const PAGE_SIZE: GuestUSize = 4096;
+
 /// The type that owns the guest memory and provides accessors for it.
 pub struct Mem {
     /// This array is 4GiB in size so that it can cover the entire 32-bit
@@ -274,7 +276,8 @@ impl Mem {
     pub fn new() -> Mem {
         // This will hopefully get the host OS to lazily allocate the memory.
         let layout = std::alloc::Layout::new::<Bytes>();
-        let bytes = unsafe { std::alloc::alloc_zeroed(layout) as *mut Bytes };
+        let layout_aligned = layout.align_to(PAGE_SIZE.try_into().unwrap()).unwrap();
+        let bytes = unsafe { std::alloc::alloc_zeroed(layout_aligned) as *mut Bytes };
 
         let allocator = allocator::Allocator::new();
 

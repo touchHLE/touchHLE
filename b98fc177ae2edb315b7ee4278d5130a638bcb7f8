@@ -16,6 +16,24 @@
       "message": "Misleading log message.",
       "revId": "b98fc177ae2edb315b7ee4278d5130a638bcb7f8",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "da5d989b_f1b2be96",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 1343,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2025-06-15T18:17:06Z",
+      "side": 1,
+      "message": "I see where I got the wrong idea from. I cleaned up a few other misleading logs while at it. Hopefully thats fine to include in this patch.",
+      "parentUuid": "e59bb0c6_eeb46ae6",
+      "revId": "b98fc177ae2edb315b7ee4278d5130a638bcb7f8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

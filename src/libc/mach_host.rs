@@ -11,7 +11,7 @@ use crate::dyld::FunctionExports;
 use crate::libc::mach_thread_info::{
     kern_return_t, mach_msg_type_number_t, mach_port_t, natural_t, KERN_SUCCESS,
 };
-use crate::mem::{guest_size_of, MutPtr, SafeRead};
+use crate::mem::{guest_size_of, MutPtr, SafeRead, PAGE_SIZE};
 use crate::{export_c_func, Environment};
 
 type host_t = mach_port_t;
@@ -23,8 +23,6 @@ type vm_size_t = natural_t;
 // The value doesn't matter that much, only the fact that it's unique
 // per host so we could assert against it in our code.
 const MACH_HOST_SELF: host_name_port_t = 0x100c442e;
-
-pub const PAGE_SIZE: vm_size_t = 4096;
 
 const HOST_VM_INFO: host_flavor_t = 2;
 
@@ -58,7 +56,7 @@ fn host_page_size(
     out_page_size: MutPtr<vm_size_t>,
 ) -> kern_return_t {
     assert_eq!(host, MACH_HOST_SELF);
-    env.mem.write(out_page_size, PAGE_SIZE);
+    env.mem.write(out_page_size, PAGE_SIZE.try_into().unwrap());
     KERN_SUCCESS
 }
 

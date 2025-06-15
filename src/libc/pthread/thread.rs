@@ -8,8 +8,9 @@
 use crate::abi::GuestFunction;
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::libc::errno::{EDEADLK, EINVAL, ESRCH};
-use crate::libc::mach_host::PAGE_SIZE;
-use crate::mem::{self, ConstPtr, ConstVoidPtr, GuestUSize, MutPtr, MutVoidPtr, SafeRead};
+use crate::mem::{
+    self, ConstPtr, ConstVoidPtr, GuestUSize, MutPtr, MutVoidPtr, SafeRead, PAGE_SIZE,
+};
 use crate::{Environment, ThreadId};
 use std::collections::HashMap;
 
@@ -73,7 +74,7 @@ const PTHREAD_CREATE_JOINABLE: DetachState = 1;
 pub const PTHREAD_CREATE_DETACHED: DetachState = 2;
 
 /// Value taken from an iOS 2.0 simulator
-const PTHREAD_STACK_MIN: GuestUSize = 2 * PAGE_SIZE;
+const PTHREAD_STACK_MIN: GuestUSize = (2 * PAGE_SIZE) as GuestUSize;
 
 pub fn pthread_attr_init(env: &mut Environment, attr: MutPtr<pthread_attr_t>) -> i32 {
     env.mem.write(attr, DEFAULT_ATTR);
@@ -109,7 +110,10 @@ pub fn pthread_attr_setstacksize(
     attr: MutPtr<pthread_attr_t>,
     stacksize: GuestUSize,
 ) -> i32 {
-    if attr.is_null() || stacksize < PTHREAD_STACK_MIN || stacksize % PAGE_SIZE != 0 {
+    if attr.is_null()
+        || stacksize < PTHREAD_STACK_MIN
+        || stacksize % GuestUSize::try_from(PAGE_SIZE).unwrap() != 0
+    {
         return EINVAL;
     }
     check_magic!(env, attr, MAGIC_ATTR);

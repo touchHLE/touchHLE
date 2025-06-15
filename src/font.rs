@@ -176,7 +176,7 @@ impl Font {
     }
 
     /// Break text into lines with known widths.
-    fn break_lines<'a>(
+    pub fn break_lines<'a>(
         &self,
         font_size: f32,
         text: &'a str,

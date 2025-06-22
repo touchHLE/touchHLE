@@ -38,6 +38,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "b18c7489_a75f9795",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-06-22T16:09:56Z",
+      "side": 1,
+      "message": "One idea would be to construct memory Layout aligned to page size already and then adjust bucket allocations in the Allocation to be aligned too.\n\nThe resulting \"gaps\" can be resued to smaller than page size allocations.",
+      "parentUuid": "c411a858_de0538bf",
+      "revId": "160da3787a184d8b98475a6e8056bed46a2bfc17",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "0bbf2134_ffe00b8e",
         "filename": "src/mem/allocator.rs",
         "patchSetId": 1

@@ -387,6 +387,15 @@ fn fclose(env: &mut Environment, file_ptr: MutPtr<FILE>) -> i32 {
         return EOF;
     }
 
+    // This is needed in order to force lazy instantiation
+    // of stdin-like host object.
+    // Why the app may need to close stdin?
+    // The answer is left as an exercise for the reader.
+    _ = env
+        .libc_state
+        .stdio
+        .get_file_host_obj_mut(&mut env.mem, file_ptr);
+
     let FILE { fd } = env.mem.read(file_ptr);
     assert!(State::get_mut(env).file_streams.remove(&file_ptr).is_some());
 

@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "b8af50be_971b443f",
+        "filename": "tests/README.md",
+        "patchSetId": 3
+      },
+      "lineNbr": 21,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2025-06-27T15:49:22Z",
+      "side": 1,
+      "message": "Done (but not without lots of pain)",
+      "parentUuid": "2d16c694_cea6aa5b",
+      "revId": "dc406414c44afcc31050dcaa64cf6ee899d5fe04",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "b160c5c8_1d8453ef",
@@ -31,6 +49,24 @@
       "writtenOn": "2025-06-07T21:28:00Z",
       "side": 1,
       "message": "Have you run clang-format on this file after the changes?",
+      "revId": "dc406414c44afcc31050dcaa64cf6ee899d5fe04",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "87bf7d76_e61d0849",
+        "filename": "tests/TestApp_source/main.m",
+        "patchSetId": 3
+      },
+      "lineNbr": 2148,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2025-06-27T15:49:22Z",
+      "side": 1,
+      "message": "Was accidentally using an older version of clang-format, oops",
+      "parentUuid": "b160c5c8_1d8453ef",
       "revId": "dc406414c44afcc31050dcaa64cf6ee899d5fe04",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

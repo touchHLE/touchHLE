@@ -158,7 +158,7 @@ pub fn url_for_opening_user_data_dir() -> Result<String, String> {
         let path = user_data_base_path()
             .join(".")
             .canonicalize()
-            .map_err(|e| format!("Can't canonicalize path to user data directory: {}", e))?;
+            .map_err(|e| format!("Can't canonicalize path to user data directory: {e}"))?;
         let path = path
             .to_str()
             .ok_or_else(|| "User data directory path is not UTF-8".to_string())?;
@@ -169,7 +169,7 @@ pub fn url_for_opening_user_data_dir() -> Result<String, String> {
         } else {
             path
         };
-        Ok(format!("file://{}", path))
+        Ok(format!("file://{path}"))
     }
 }
 

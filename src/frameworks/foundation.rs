@@ -100,7 +100,7 @@ impl crate::abi::GuestArg for NSRange {
 fn NSStringFromRange(env: &mut Environment, range: NSRange) -> id {
     let loc = range.location;
     let len = range.length;
-    let string = format!("{{{}, {}}}", loc, len);
+    let string = format!("{{{loc}, {len}}}");
     ns_string::from_rust_string(env, string)
 }
 

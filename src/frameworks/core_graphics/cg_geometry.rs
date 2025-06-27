@@ -51,7 +51,7 @@ impl std::str::FromStr for CGPoint {
 impl std::fmt::Display for CGPoint {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
         let &CGPoint { x, y } = self;
-        write!(f, "{{{}, {}}}", x, y)
+        write!(f, "{{{x}, {y}}}")
     }
 }
 // This function is rare because it is usually inlined.
@@ -97,7 +97,7 @@ impl std::str::FromStr for CGSize {
 impl std::fmt::Display for CGSize {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
         let &CGSize { width, height } = self;
-        write!(f, "{{{}, {}}}", width, height)
+        write!(f, "{{{width}, {height}}}")
     }
 }
 // This function is rare because it is usually inlined.
@@ -152,7 +152,7 @@ impl std::str::FromStr for CGRect {
 impl std::fmt::Display for CGRect {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
         let &CGRect { origin, size } = self;
-        write!(f, "{{{}, {}}}", origin, size)
+        write!(f, "{{{origin}, {size}}}")
     }
 }
 // This function is rare because it is usually inlined.

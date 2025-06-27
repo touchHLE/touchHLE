@@ -32,12 +32,12 @@ pub fn main() {
             .is_some_and(|v| !v.starts_with(&toml_version))
             || !git_version.starts_with('v')
         {
-            println!("cargo:warning=Cargo.toml version (v{}) is not a prefix of `git describe` version ({})!", toml_version, git_version);
+            println!("cargo:warning=Cargo.toml version (v{toml_version}) is not a prefix of `git describe` version ({git_version})!");
         }
         git_version
     } else {
         rerun_if_changed(&workspace_root.join("Cargo.toml"));
-        format!("v{} (git rev. unknown)", toml_version)
+        format!("v{toml_version} (git rev. unknown)")
     };
     std::fs::write(out_dir.join("version.txt"), version).unwrap();
 }

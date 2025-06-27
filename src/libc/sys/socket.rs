@@ -466,7 +466,7 @@ fn select(
                             false
                         }
                         Err(e) => {
-                            panic!("select: Peek for socket {} failed: {e:?}", fd)
+                            panic!("select: Peek for socket {fd} failed: {e:?}")
                         }
                     }
                 }
@@ -505,10 +505,7 @@ fn select(
                                 return false;
                             }
                             Err(e) => {
-                                panic!(
-                                    "select: Socket {} has error accepting connection: {}",
-                                    fd, e
-                                );
+                                panic!("select: Socket {fd} has error accepting connection: {e}");
                             }
                         }
                     }
@@ -552,7 +549,7 @@ fn select(
                             false
                         }
                         Err(e) => {
-                            panic!("select: Peek for socket {} failed: {}", fd, e)
+                            panic!("select: Peek for socket {fd} failed: {e}")
                         }
                     }
                 }
@@ -630,7 +627,7 @@ fn select(
                             false
                         }
                         Ok(Some(error)) => unimplemented!("TCP socket {} error: {:?}", fd, error),
-                        Err(error) => panic!("TCP socket {} take_error failed: {:?}", fd, error),
+                        Err(error) => panic!("TCP socket {fd} take_error failed: {error:?}"),
                     }
                 }
                 SOCK_DGRAM => {
@@ -726,10 +723,7 @@ fn accept(
             unimplemented!("accept: TCP listener for socket {} would block on accepting, block current guest thread {}.", socket, env.current_thread)
         }
         Err(e) => {
-            panic!(
-                "accept: Socket {} has error accepting connection: {}",
-                socket, e
-            );
+            panic!("accept: Socket {socket} has error accepting connection: {e}");
         }
     }
 }
@@ -803,10 +797,7 @@ fn recvfrom(
                     // - unblock guest thread
                     unimplemented!("recvfrom: UDP socket {} would block on receiving, block current guest thread {}.", socket, env.current_thread)
                 }
-                Err(e) => panic!(
-                    "recvfrom: UDP socket {} encountered IO error: {}",
-                    socket, e
-                ),
+                Err(e) => panic!("recvfrom: UDP socket {socket} encountered IO error: {e}"),
             };
             if !address.is_null() {
                 let guest_addr = sockaddr::from_sockaddr_v4(&addr);
@@ -845,10 +836,7 @@ fn recvfrom(
                     // - unblock guest thread
                     unimplemented!("recvfrom: TCP socket {} would block on receiving, block current guest thread {}.", socket, env.current_thread)
                 }
-                Err(e) => panic!(
-                    "recvfrom: TCP socket {} encountered IO error: {}",
-                    socket, e
-                ),
+                Err(e) => panic!("recvfrom: TCP socket {socket} encountered IO error: {e}"),
             };
             (read, tcp_stream.peer_addr())
         }
@@ -900,7 +888,7 @@ fn send(
                     // - unblock guest thread
                     unimplemented!("send: TCP socket {} would block on sending, block current guest thread {}.", socket, env.current_thread)
                 }
-                Err(e) => panic!("send: Socket {} encountered IO error: {}", socket, e),
+                Err(e) => panic!("send: Socket {socket} encountered IO error: {e}"),
             }
         }
         _ => unreachable!(),
@@ -998,7 +986,7 @@ fn sendto(
                     // - unblock guest thread
                     unimplemented!("sendto: UDP socket {} would block on sending, block current guest thread {}.", socket, env.current_thread)
                 }
-                Err(e) => panic!("sendto: Socket {} encountered IO error: {}", socket, e),
+                Err(e) => panic!("sendto: Socket {socket} encountered IO error: {e}"),
             }
         }
         _ => unreachable!(),

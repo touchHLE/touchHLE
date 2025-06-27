@@ -375,7 +375,7 @@ impl Dyld {
                 bin.name,
                 addrs
                     .into_iter()
-                    .map(|addr| format!("{:#x}", addr))
+                    .map(|addr| format!("{addr:#x}"))
                     .collect::<Vec<String>>()
                     .join(", "),
             );
@@ -483,7 +483,7 @@ impl Dyld {
                     .linked_host_functions
                     .get((svc - Self::SVC_LINKED_FUNCTIONS_BASE) as usize);
                 let Some(&(symbol, f)) = f else {
-                    panic!("Unexpected SVC #{} at {:#x}", svc, svc_pc);
+                    panic!("Unexpected SVC #{svc} at {svc_pc:#x}");
                 };
                 log_dbg!("Call to host function, already linked: {}", symbol);
                 Some(f)
@@ -614,7 +614,7 @@ impl Dyld {
             }
         }
 
-        panic!("Call to unimplemented function {}", symbol);
+        panic!("Call to unimplemented function {symbol}");
     }
 
     /// Creates a guest function that will call a host function with the name

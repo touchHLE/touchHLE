@@ -285,7 +285,7 @@ impl Allocator {
         }
 
         let Some(to_trisect) = to_trisect else {
-            panic!("Could not reserve chunk {:?}!", chunk);
+            panic!("Could not reserve chunk {chunk:?}!");
         };
 
         let (before, after) = to_trisect.trisect_by(chunk).unwrap();
@@ -308,10 +308,7 @@ impl Allocator {
         };
 
         let Some(alloc) = self.unused_chunks.allocate(size) else {
-            panic!(
-                "Could not find large enough chunk to allocate {:#x} bytes",
-                size
-            );
+            panic!("Could not find large enough chunk to allocate {size:#x} bytes");
         };
         self.used_chunks.insert(alloc);
 
@@ -321,7 +318,7 @@ impl Allocator {
     /// This is used for realloc
     pub fn find_allocated_size(&mut self, base: VAddr) -> GuestUSize {
         let Some(size) = self.used_chunks.get_size_with_base(base) else {
-            panic!("Can't find {:#x}, unknown allocation!", base);
+            panic!("Can't find {base:#x}, unknown allocation!");
         };
         size.get()
     }

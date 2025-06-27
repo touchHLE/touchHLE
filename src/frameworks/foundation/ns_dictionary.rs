@@ -793,7 +793,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (id)valueForKey:(id)_key {
-    panic!("Unexpected call to valueForKey: for _touchHLE_NSMutableDictionary_non_retaining object {:?}", this);
+    panic!("Unexpected call to valueForKey: for _touchHLE_NSMutableDictionary_non_retaining object {this:?}");
 }
 
 - (())setObject:(id)object

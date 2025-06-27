@@ -606,8 +606,7 @@ impl GLES for GLES1OnGL2 {
         } else {
             assert!(
                 CAPABILITIES.contains(&cap),
-                "Unexpected capability for glEnable({:#x})",
-                cap
+                "Unexpected capability for glEnable({cap:#x})"
             );
         }
         gl21::Enable(cap);
@@ -628,7 +627,7 @@ impl GLES for GLES1OnGL2 {
         } else if GET_PARAMS.contains(cap) || UNSUPPORTED_GET_PARAMS.contains(cap) {
             log_dbg!("Tolerating glDisable({:#x}) of parameter", cap);
         } else {
-            panic!("Unexpected glDisable({:#x})", cap);
+            panic!("Unexpected glDisable({cap:#x})");
         }
         gl21::Disable(cap);
     }
@@ -712,9 +711,7 @@ impl GLES for GLES1OnGL2 {
         } else {
             assert!(
                 [gl21::FASTEST, gl21::NICEST, gl21::DONT_CARE].contains(&mode),
-                "Unexpected mode in glHint({:#x}, {:#x})",
-                target,
-                mode
+                "Unexpected mode in glHint({target:#x}, {mode:#x})"
             );
         }
         gl21::Hint(target, mode);
@@ -828,8 +825,7 @@ impl GLES for GLES1OnGL2 {
         } else {
             assert!(
                 [gl21::FRONT, gl21::BACK, gl21::FRONT_AND_BACK].contains(&mode),
-                "Unexpected glCullFace({:#x})",
-                mode
+                "Unexpected glCullFace({mode:#x})"
             );
         }
         gl21::CullFace(mode);

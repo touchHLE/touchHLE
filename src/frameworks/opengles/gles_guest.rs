@@ -998,12 +998,12 @@ fn image_size_estimate(pixel_count: GuestUSize, format: GLenum, type_: GLenum) -
             gles11::RGB => 3,
             gles11::RGBA => 4,
             gles11::BGRA_EXT => 4,
-            _ => panic!("Unexpected format {:#x}", format),
+            _ => panic!("Unexpected format {format:#x}"),
         },
         gles11::UNSIGNED_SHORT_5_6_5
         | gles11::UNSIGNED_SHORT_4_4_4_4
         | gles11::UNSIGNED_SHORT_5_5_5_1 => 2,
-        _ => panic!("Unexpected type {:#x}", type_),
+        _ => panic!("Unexpected type {type_:#x}"),
     };
     // This is approximate, it doesn't account for alignment.
     pixel_count.checked_mul(bytes_per_pixel).unwrap()
@@ -1137,9 +1137,7 @@ fn glTexEnvi(env: &mut Environment, target: GLenum, pname: GLenum, param: GLint)
 fn glTexEnvfv(env: &mut Environment, target: GLenum, pname: GLenum, params: ConstPtr<GLfloat>) {
     assert!(
         target == gles11::TEXTURE_ENV || target == gles11::TEXTURE_FILTER_CONTROL_EXT,
-        "target {:#x}, pname {:#x}",
-        target,
-        pname
+        "target {target:#x}, pname {pname:#x}"
     );
     // TODO: GL_POINT_SPRITE_OES
     with_ctx_and_mem(env, |gles, mem| {

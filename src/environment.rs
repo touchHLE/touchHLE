@@ -264,7 +264,7 @@ impl Environment {
                     .map_err(|_| "Could not read launch image file".to_string())
                     .and_then(|bytes| {
                         image::Image::from_bytes(&bytes)
-                            .map_err(|e| format!("Could not parse launch image: {}", e))
+                            .map_err(|e| format!("Could not parse launch image: {e}"))
                     });
                 if let Err(ref e) = res {
                     log!("Warning: {}", e);
@@ -306,7 +306,7 @@ impl Environment {
         }
 
         let executable = mach_o::MachO::load_from_file(bundle.executable_path(), &fs, &mut mem)
-            .map_err(|e| format!("Could not load executable: {}", e))?;
+            .map_err(|e| format!("Could not load executable: {e}"))?;
 
         let mut dylibs = Vec::new();
         for dylib in &executable.dynamic_libraries {
@@ -319,7 +319,7 @@ impl Environment {
             // exposed via the guest file system (see Fs::new()).
             if fs.is_file(fs::GuestPath::new(dylib)) {
                 let dylib = mach_o::MachO::load_from_file(fs::GuestPath::new(dylib), &fs, &mut mem)
-                    .map_err(|e| format!("Could not load bundled dylib: {}", e))?;
+                    .map_err(|e| format!("Could not load bundled dylib: {e}"))?;
                 dylibs.push(dylib);
             } else {
                 // System frameworks will have host implementations.
@@ -421,18 +421,18 @@ impl Environment {
 
         if let Some(addrs) = env.options.gdb_listen_addrs.take() {
             let listener = TcpListener::bind(addrs.as_slice())
-                .map_err(|e| format!("Could not bind to {:?}: {}", addrs, e))?;
+                .map_err(|e| format!("Could not bind to {addrs:?}: {e}"))?;
             echo!(
                 "Waiting for debugger connection on {}...",
                 addrs
                     .into_iter()
-                    .map(|a| format!("{}", a))
+                    .map(|a| format!("{a}"))
                     .collect::<Vec<String>>()
                     .join(", ")
             );
             let (client, client_addr) = listener
                 .accept()
-                .map_err(|e| format!("Could not accept connection: {}", e))?;
+                .map_err(|e| format!("Could not accept connection: {e}"))?;
             echo!("Debugger client connected on {}.", client_addr);
             let mut gdb_server = gdb::GdbServer::new(client);
             let step = gdb_server.wait_for_debugger(None, &mut env.cpu, &mut env.mem);
@@ -898,7 +898,7 @@ impl Environment {
         }
 
         if self.gdb_server.is_none() {
-            panic!("Error during CPU execution: {:?}", error);
+            panic!("Error during CPU execution: {error:?}");
         }
 
         echo!("Debuggable error during CPU execution: {:?}.", error);

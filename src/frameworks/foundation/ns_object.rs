@@ -159,14 +159,14 @@ pub const CLASSES: ClassExports = objc_classes! {
     // Look for the first accessor named set<Key>: or _set<Key>, in that order.
     // If found, invoke it with the input value (or unwrapped value, as needed)
     // and finish.
-    if let Some(sel) = env.objc.lookup_selector(&format!("set{}:", camel_case_key_string)) {
+    if let Some(sel) = env.objc.lookup_selector(&format!("set{camel_case_key_string}:")) {
         if env.objc.class_has_method(class, sel) {
             () = msg_send(env, (this, sel, value));
             return;
         }
     }
 
-    if let Some(sel) = env.objc.lookup_selector(&format!("_set{}:", camel_case_key_string)) {
+    if let Some(sel) = env.objc.lookup_selector(&format!("_set{camel_case_key_string}:")) {
         if env.objc.class_has_method(class, sel) {
             () = msg_send(env, (this, sel, value));
             return;
@@ -182,10 +182,10 @@ pub const CLASSES: ClassExports = objc_classes! {
     let sel = env.objc.lookup_selector("accessInstanceVariablesDirectly").unwrap();
     let accessInstanceVariablesDirectly = msg_send(env, (class, sel));
     if accessInstanceVariablesDirectly {
-        if let Some(ivar_ptr) = env.objc.object_lookup_ivar(&env.mem, this, &format!("_{}", key_string))
-            .or_else(|| env.objc.object_lookup_ivar(&env.mem, this, &format!("_is{}", camel_case_key_string)))
-            .or_else(|| env.objc.object_lookup_ivar(&env.mem, this, &format!("{}", key_string)))
-            .or_else(|| env.objc.object_lookup_ivar(&env.mem, this, &format!("is{}", camel_case_key_string))
+        if let Some(ivar_ptr) = env.objc.object_lookup_ivar(&env.mem, this, &format!("_{key_string}"))
+            .or_else(|| env.objc.object_lookup_ivar(&env.mem, this, &format!("_is{camel_case_key_string}")))
+            .or_else(|| env.objc.object_lookup_ivar(&env.mem, this, &format!("{key_string}")))
+            .or_else(|| env.objc.object_lookup_ivar(&env.mem, this, &format!("is{camel_case_key_string}"))
         ) {
             retain(env, value);
             env.mem.write(ivar_ptr.cast(), value);

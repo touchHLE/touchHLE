@@ -317,8 +317,7 @@ fn test_calendar_date_to_timestamp() {
         let roundtripped = calendar_date_to_timestamp(tm_struct);
         assert_eq!(
             roundtripped, timestamp,
-            "Roundtrip failed: original={}, after converting to tm and back={}",
-            timestamp, roundtripped
+            "Roundtrip failed: original={timestamp}, after converting to tm and back={roundtripped}"
         );
     }
 

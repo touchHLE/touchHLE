@@ -92,9 +92,9 @@ impl Options {
         fn parse_degrees(arg: &str, name: &str) -> Result<f32, String> {
             let arg: f32 = arg
                 .parse()
-                .map_err(|_| format!("Value for {} is invalid", name))?;
+                .map_err(|_| format!("Value for {name} is invalid"))?;
             if !arg.is_finite() || !(-360.0..=360.0).contains(&arg) {
-                return Err(format!("Value for {} is out of range", name));
+                return Err(format!("Value for {name} is out of range"));
             }
             Ok(arg)
         }
@@ -177,7 +177,7 @@ impl Options {
         } else if let Some(address) = arg.strip_prefix("--gdb=") {
             let addrs = address
                 .to_socket_addrs()
-                .map_err(|e| format!("Could not resolve GDB server listen address: {}", e))?
+                .map_err(|e| format!("Could not resolve GDB server listen address: {e}"))?
                 .collect();
             self.gdb_listen_addrs = Some(addrs);
         } else if let Some(value) = arg.strip_prefix("--preferred-languages=") {
@@ -223,7 +223,7 @@ pub fn get_options_from_file<F: Read>(file: F, app_id: &str) -> Result<Option<St
         // Line numbering usually starts from 1
         let line_no = line_no + 1;
 
-        let line = line.map_err(|e| format!("Error while reading line {}: {}", line_no, e))?;
+        let line = line.map_err(|e| format!("Error while reading line {line_no}: {e}"))?;
 
         // # for single-line comments
         let line = if let Some((rest, _)) = line.split_once('#') {
@@ -238,7 +238,7 @@ pub fn get_options_from_file<F: Read>(file: F, app_id: &str) -> Result<Option<St
             continue;
         }
 
-        let (line_app_id, line_options) = line.split_once(':').ok_or_else(|| format!("Line {} is not a comment and is missing a colon (:) to separate the app ID from the options", line_no))?;
+        let (line_app_id, line_options) = line.split_once(':').ok_or_else(|| format!("Line {line_no} is not a comment and is missing a colon (:) to separate the app ID from the options"))?;
         let line_app_id = line_app_id.trim();
 
         if line_app_id != app_id {

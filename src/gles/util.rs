@@ -58,7 +58,7 @@ impl ParamTable {
     pub fn get_type_info(&self, pname: GLenum) -> (ParamType, u8) {
         match self.0.iter().find(|&&(pname2, _, _)| pname == pname2) {
             Some(&(_, type_, count)) => (type_, count),
-            None => panic!("Unhandled parameter name: {:#x}", pname),
+            None => panic!("Unhandled parameter name: {pname:#x}"),
         }
     }
 
@@ -77,8 +77,7 @@ impl ParamTable {
         let (_type, actual_count) = self.get_type_info(pname);
         if actual_count != provided_count {
             panic!(
-                "Parameter {:#x} has component count {}, {} given.",
-                pname, actual_count, provided_count
+                "Parameter {pname:#x} has component count {actual_count}, {provided_count} given."
             );
         }
     }

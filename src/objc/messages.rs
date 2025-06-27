@@ -150,8 +150,7 @@ Type mismatch when sending message {} to {:?}!
             return;
         } else {
             panic!(
-                "Item {:?} in superclass chain of object {:?}'s class {:?} has an unexpected host object type.",
-                class, receiver, orig_class
+                "Item {class:?} in superclass chain of object {receiver:?}'s class {orig_class:?} has an unexpected host object type."
             );
         }
     }

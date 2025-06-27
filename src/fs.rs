@@ -96,7 +96,7 @@ impl FsNode {
             } else if kind.is_dir() {
                 children.insert(name, FsNode::from_host_dir(&host_path, writeable));
             } else {
-                panic!("{:?} is not a symlink, file or directory", host_path);
+                panic!("{host_path:?} is not a symlink, file or directory");
             }
         }
         FsNode::Directory {
@@ -350,7 +350,7 @@ fn handle_open_err<T, E: std::fmt::Display, P: std::fmt::Debug>(
 ) -> T {
     match open_result {
         Ok(ok) => ok,
-        Err(e) => panic!("Unexpected I/O failure when trying to access real path {:?}: {}. This might indicate that files needed by touchHLE are missing, or were moved while it was running.", host_path, e),
+        Err(e) => panic!("Unexpected I/O failure when trying to access real path {host_path:?}: {e}. This might indicate that files needed by touchHLE are missing, or were moved while it was running."),
     }
 }
 
@@ -393,10 +393,10 @@ impl GuestFile {
         match self {
             GuestFile::File(file) => file.set_len(len),
             GuestFile::IpaBundleFile(file) => {
-                panic!("Attempt to resize a read-only file: {:?}", file)
+                panic!("Attempt to resize a read-only file: {file:?}")
             }
             GuestFile::ResourceFile(file) => {
-                panic!("Attempt to resize a read-only file: {:?}", file)
+                panic!("Attempt to resize a read-only file: {file:?}")
             }
             GuestFile::Directory => panic!("Attempt to resize a directory as a guest file"),
             _ => unimplemented!(),
@@ -421,10 +421,10 @@ impl Write for GuestFile {
         match self {
             GuestFile::File(file) => file.write(buf),
             GuestFile::IpaBundleFile(file) => {
-                panic!("Attempt to write to a read-only file: {:?}", file)
+                panic!("Attempt to write to a read-only file: {file:?}")
             }
             GuestFile::ResourceFile(file) => {
-                panic!("Attempt to write to a read-only file: {:?}", file)
+                panic!("Attempt to write to a read-only file: {file:?}")
             }
             GuestFile::Directory => panic!("Attempt to write to a directory as a guest file"),
             _ => unimplemented!(),
@@ -435,10 +435,10 @@ impl Write for GuestFile {
         match self {
             GuestFile::File(file) => file.flush(),
             GuestFile::IpaBundleFile(file) => {
-                panic!("Attempt to flush a read-only file: {:?}", file)
+                panic!("Attempt to flush a read-only file: {file:?}")
             }
             GuestFile::ResourceFile(file) => {
-                panic!("Attempt to flush a read-only file: {:?}", file)
+                panic!("Attempt to flush a read-only file: {file:?}")
             }
             GuestFile::Directory => panic!("Attempt to flush a directory as a guest file"),
             _ => unimplemented!(),
@@ -520,10 +520,7 @@ impl Fs {
                     }
                 }
                 if let Err(e) = std::fs::create_dir_all(&path) {
-                    panic!(
-                        "Could not create documents directory for app at {:?}: {:?}",
-                        path, e
-                    );
+                    panic!("Could not create documents directory for app at {path:?}: {e:?}");
                 }
                 Some(path)
             } else {
@@ -541,10 +538,7 @@ impl Fs {
                 .join("Library")
                 .join("Preferences");
             if let Err(e) = std::fs::create_dir_all(&path) {
-                panic!(
-                    "Could not create documents sub-directory for app at {:?}: {:?}",
-                    path, e
-                );
+                panic!("Could not create documents sub-directory for app at {path:?}: {e:?}");
             }
         }
 
@@ -553,35 +547,35 @@ impl Fs {
         let usr_lib = FsNode::dir()
             .with_child(
                 "libgcc_s.1.dylib",
-                FsNode::resource_file(format!("{}/libgcc_s.1.dylib", DYLIBS_DIR)),
+                FsNode::resource_file(format!("{DYLIBS_DIR}/libgcc_s.1.dylib")),
             )
             .with_child(
                 // symlink
                 "libstdc++.6.dylib",
-                FsNode::resource_file(format!("{}/libstdc++.6.0.9.dylib", DYLIBS_DIR)),
+                FsNode::resource_file(format!("{DYLIBS_DIR}/libstdc++.6.0.9.dylib")),
             )
             .with_child(
                 "libstdc++.6.0.9.dylib",
-                FsNode::resource_file(format!("{}/libstdc++.6.0.9.dylib", DYLIBS_DIR)),
+                FsNode::resource_file(format!("{DYLIBS_DIR}/libstdc++.6.0.9.dylib")),
             )
             .with_child(
                 "libz.1.2.3.dylib",
-                FsNode::resource_file(format!("{}/libz.1.2.3.dylib", DYLIBS_DIR)),
+                FsNode::resource_file(format!("{DYLIBS_DIR}/libz.1.2.3.dylib")),
             )
             .with_child(
                 // symlink
                 "libz.1.dylib",
-                FsNode::resource_file(format!("{}/libz.1.2.3.dylib", DYLIBS_DIR)),
+                FsNode::resource_file(format!("{DYLIBS_DIR}/libz.1.2.3.dylib")),
             )
             .with_child(
                 // symlink
                 "libz.dylib",
-                FsNode::resource_file(format!("{}/libz.1.2.3.dylib", DYLIBS_DIR)),
+                FsNode::resource_file(format!("{DYLIBS_DIR}/libz.1.2.3.dylib")),
             )
             .with_child(
                 // symlink
                 "libz.1.1.3.dylib",
-                FsNode::resource_file(format!("{}/libz.1.2.3.dylib", DYLIBS_DIR)),
+                FsNode::resource_file(format!("{DYLIBS_DIR}/libz.1.2.3.dylib")),
             );
 
         let mut app_dir_children = HashMap::new();
@@ -1007,7 +1001,7 @@ impl Fs {
 
         for c in new_filename.chars() {
             if std::path::is_separator(c) {
-                panic!("Attempt to create file at path {:?}, but filename contains path separator character {:?}!", path, c);
+                panic!("Attempt to create file at path {path:?}, but filename contains path separator character {c:?}!");
             }
         }
 
@@ -1162,7 +1156,7 @@ impl Fs {
 
         for c in new_dir_name.chars() {
             if std::path::is_separator(c) {
-                panic!("Attempt to create directory at path {:?}, but directory name contains path separator character {:?}!", path, c);
+                panic!("Attempt to create directory at path {path:?}, but directory name contains path separator character {c:?}!");
             }
         }
 

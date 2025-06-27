@@ -179,7 +179,7 @@ pub(super) fn objc_setProperty(
             2 => msg![env; value mutableCopyWithZone:void_null],
             // Apple's source code implies that any non-zero value that isn't 2
             // should mean "copy", but that seems weird, let's be conservative.
-            _ => panic!("Unknown \"should copy\" value: {}", should_copy),
+            _ => panic!("Unknown \"should copy\" value: {should_copy}"),
         }
     } else {
         nil

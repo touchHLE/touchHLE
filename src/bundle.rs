@@ -148,7 +148,7 @@ impl Bundle {
             .read(self.icon_path())
             .map_err(|_| "Could not read icon file".to_string())?;
         let mut image =
-            Image::from_bytes(&bytes).map_err(|e| format!("Could not parse icon image: {}", e))?;
+            Image::from_bytes(&bytes).map_err(|e| format!("Could not parse icon image: {e}"))?;
         // iPhone OS icons are 57px by 57px and the OS always applies a
         // 10px radius rounded corner (see e.g. documentation of
         // UIPrerenderedIcon). If the icon is larger for some reason,

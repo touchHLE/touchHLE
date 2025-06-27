@@ -211,8 +211,8 @@ impl Cpu {
                     Self::SP => write!(&mut line, "\t SP: "),
                     Self::LR => write!(&mut line, "\t LR: "),
                     Self::PC => write!(&mut line, "\t PC: "),
-                    _ if reg_idx <= 9 => write!(&mut line, "\t R{}: ", reg_idx),
-                    _ => write!(&mut line, "\tR{}: ", reg_idx),
+                    _ if reg_idx <= 9 => write!(&mut line, "\t R{reg_idx}: "),
+                    _ => write!(&mut line, "\tR{reg_idx}: "),
                 }
                 .unwrap();
                 write!(&mut line, "{:#010x}", regs[reg_idx]).unwrap();

@@ -264,7 +264,7 @@ pub const CLASSES: ClassExports = objc_classes! {
             .borrow_mut::<EAGLContextHostObject>(this)
             .fps_counter
             .get_or_insert_with(FpsCounter::start)
-            .count_frame(format_args!("EAGLContext {:?}", this));
+            .count_frame(format_args!("EAGLContext {this:?}"));
     }
 
     let fullscreen_layer = find_fullscreen_eagl_layer(env);

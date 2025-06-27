@@ -436,8 +436,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     let title = env.objc.borrow::<UIButtonContentHostObject>(this).title;
     let title_color = env.objc.borrow::<UIButtonContentHostObject>(this).title_color;
     let desc_str = format!(
-        "UIButtonContent({:?}, title {:?}, title_color {:?})",
-        this, title, title_color
+        "UIButtonContent({this:?}, title {title:?}, title_color {title_color:?})"
     );
     let desc = from_rust_string(env, desc_str);
     autorelease(env, desc)

@@ -111,7 +111,7 @@ mod tests {
         for function_list in FUNCTION_LISTS {
             for (function_name, _) in *function_list {
                 if !seen.insert(function_name) {
-                    panic!("Found duplicate function export {}", function_name);
+                    panic!("Found duplicate function export {function_name}");
                 }
             }
         }

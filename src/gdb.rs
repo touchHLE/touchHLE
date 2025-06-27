@@ -122,7 +122,7 @@ impl GdbServer {
 
     fn send_packet(&mut self, body: &str) {
         let checksum = body.bytes().fold(0u8, |a, b| a.wrapping_add(b));
-        write!(self.reader.get_mut(), "${}#{:02x}", body, checksum).unwrap();
+        write!(self.reader.get_mut(), "${body}#{checksum:02x}").unwrap();
         log_dbg!("Sent packet: {:?}", body);
     }
 
@@ -186,7 +186,7 @@ impl GdbServer {
                         // Rust always prints in big-endian, but GDB expects
                         // little-endian.
                         let reg = u32::from_be_bytes(reg.to_le_bytes());
-                        write!(packet, "{:08x}", reg).unwrap();
+                        write!(packet, "{reg:08x}").unwrap();
                     }
                     self.send_packet(&packet);
                 }
@@ -220,7 +220,7 @@ impl GdbServer {
                         // Rust always prints in big-endian, but GDB expects
                         // little-endian.
                         let reg = u32::from_be_bytes(reg.to_le_bytes());
-                        self.send_packet(&format!("{:08x}", reg));
+                        self.send_packet(&format!("{reg:08x}"));
                     } else {
                         // Error 0
                         self.send_packet("E00");
@@ -255,7 +255,7 @@ impl GdbServer {
                     match mem.get_bytes_fallible(Ptr::from_bits(addr), length) {
                         Some(data) => {
                             for byte in data {
-                                write!(packet, "{:02x}", byte).unwrap();
+                                write!(packet, "{byte:02x}").unwrap();
                             }
                         }
                         None => {

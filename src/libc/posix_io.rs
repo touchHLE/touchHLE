@@ -359,7 +359,7 @@ pub fn lseek(env: &mut Environment, fd: FileDescriptor, offset: off_t, whence: i
         SEEK_SET => SeekFrom::Start(offset.try_into().unwrap()),
         SEEK_CUR => SeekFrom::Current(offset),
         SEEK_END => SeekFrom::End(offset),
-        _ => panic!("Unsupported \"whence\" parameter to seek(): {}", whence),
+        _ => panic!("Unsupported \"whence\" parameter to seek(): {whence}"),
     };
 
     let res = match file.file.seek(from) {

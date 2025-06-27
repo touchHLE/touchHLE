@@ -165,7 +165,7 @@ impl StringHostObject {
                         .collect()
                 })
             }
-            _ => panic!("Unimplemented encoding: {:#x}", encoding),
+            _ => panic!("Unimplemented encoding: {encoding:#x}"),
         }
     }
     fn to_utf8(&self) -> Result<Cow<'static, str>, FromUtf16Error> {
@@ -1249,7 +1249,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 - (id)initWithCString:(ConstPtr<u8>)c_string
              encoding:(NSStringEncoding)encoding {
-    assert!(C_STRING_FRIENDLY_ENCODINGS.contains(&encoding), "encoding {}", encoding);
+    assert!(C_STRING_FRIENDLY_ENCODINGS.contains(&encoding), "encoding {encoding}");
     let len: NSUInteger = env.mem.cstr_at(c_string).len().try_into().unwrap();
     msg![env; this initWithBytes:c_string length:len encoding:encoding]
 }
@@ -1495,7 +1495,7 @@ pub fn register_constant_strings(bin: &MachO, mem: &mut Mem, objc: &mut ObjC) {
                 "_touchHLE_NSString_CFConstantString_UTF16",
             )
         } else {
-            panic!("Bad CFTypeID for constant string: {:#x}", flags);
+            panic!("Bad CFTypeID for constant string: {flags:#x}");
         };
 
         objc.register_static_object(cfstr_ptr.cast().cast_mut(), Box::new(host_object));

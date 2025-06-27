@@ -225,7 +225,7 @@ fn cpu_subtype_to_str(ty: cpu_subtype_t) -> &'static str {
         mach_object::CPU_SUBTYPE_ARM_V7S => "armv7s",
         mach_object::CPU_SUBTYPE_ARM_V7K => "armv7k",
         mach_object::CPU_SUBTYPE_ARM_V8 => "armv8",
-        _ => panic!("Unexpected cpu subtype: {:?}", ty),
+        _ => panic!("Unexpected cpu subtype: {ty:?}"),
     }
 }
 
@@ -446,7 +446,7 @@ impl MachO {
                             // itself, e.g. to "__Znwm". might be a PIC thing
                             Some(Symbol::Defined { name: Some(n), .. }) => Some(String::from(n)),
                             None => None,
-                            _ => panic!("Unexpected symbol kind {:?}", sym),
+                            _ => panic!("Unexpected symbol kind {sym:?}"),
                         })
                     }
 
@@ -461,7 +461,7 @@ impl MachO {
                             type_: 0, // generic
                         } = reloc
                         else {
-                            panic!("Unhandled extrel: {:?}", reloc)
+                            panic!("Unhandled extrel: {reloc:?}")
                         };
                         let addr = if split_segs {
                             addr + first_read_write_segment_base.unwrap()
@@ -502,7 +502,7 @@ impl MachO {
                                 into_mem.write(ptr_ptr, 0); // Clear prebinding.
                                 external_relocations.push((addr, String::from(n)));
                             }
-                            _ => panic!("Unexpected symbol kind {:?}", sym),
+                            _ => panic!("Unexpected symbol kind {sym:?}"),
                         };
                     }
                 }
@@ -526,7 +526,7 @@ impl MachO {
                         __cpsr: 0,
                     } = state
                     else {
-                        panic!("Unexpected initial thread state in {:?}: {:?}", name, state);
+                        panic!("Unexpected initial thread state in {name:?}: {state:?}");
                     };
                     // There should only be a single initial thread state.
                     assert!(entry_point_pc.is_none());

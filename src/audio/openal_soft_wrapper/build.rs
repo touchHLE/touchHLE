@@ -14,14 +14,14 @@ fn link_search(path: &Path) {
 }
 fn link_lib(lib: &str) {
     if cfg!(feature = "static") {
-        println!("cargo:rustc-link-lib=static={}", lib);
+        println!("cargo:rustc-link-lib=static={lib}");
     } else {
-        println!("cargo:rustc-link-lib=dylib={}", lib);
+        println!("cargo:rustc-link-lib=dylib={lib}");
     }
 }
 
 fn link_framework(framework: &str) {
-    println!("cargo:rustc-link-lib=framework={}", framework);
+    println!("cargo:rustc-link-lib=framework={framework}");
 }
 
 fn main() {

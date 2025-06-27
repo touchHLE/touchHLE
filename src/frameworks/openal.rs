@@ -239,8 +239,7 @@ fn alcGetProcAddress(
             return Ptr::null();
         }
         panic!(
-            "Request for procedure address for unimplemented OpenAL function {}",
-            mangled_func_name
+            "Request for procedure address for unimplemented OpenAL function {mangled_func_name}"
         );
     }
 }

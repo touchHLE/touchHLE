@@ -118,7 +118,7 @@ mod tests {
         for &class_list in CLASS_LISTS {
             for (class_name, template) in class_list {
                 if !seen_classes.insert(class_name) {
-                    panic!("Found duplicate class export {}", class_name);
+                    panic!("Found duplicate class export {class_name}");
                 }
                 let ClassTemplate {
                     class_methods,
@@ -130,10 +130,7 @@ mod tests {
 
                 for (method_name, _) in *class_methods {
                     if !seen_class_methods.insert(method_name) {
-                        panic!(
-                            "Found duplicate class method {} for class {}",
-                            method_name, class_name
-                        )
+                        panic!("Found duplicate class method {method_name} for class {class_name}")
                     }
                 }
 
@@ -142,8 +139,7 @@ mod tests {
                 for (method_name, _) in *instance_methods {
                     if !seen_instance_methods.insert(method_name) {
                         panic!(
-                            "Found duplicate instance method {} for class {}",
-                            method_name, class_name
+                            "Found duplicate instance method {method_name} for class {class_name}"
                         )
                     }
                 }

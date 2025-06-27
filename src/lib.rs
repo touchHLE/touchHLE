@@ -164,7 +164,7 @@ pub fn main<T: Iterator<Item = String>>(mut args: T) -> Result<(), String> {
         } else {
             echo!("{}", USAGE);
             echo!("{}", options::OPTIONS_HELP);
-            return Err(format!("Unexpected argument: {:?}", arg));
+            return Err(format!("Unexpected argument: {arg:?}"));
         }
     }
 
@@ -262,10 +262,8 @@ pub fn main<T: Iterator<Item = String>>(mut args: T) -> Result<(), String> {
                 for option_arg in options_string.split_ascii_whitespace() {
                     match options.parse_argument(option_arg) {
                         Ok(true) => (),
-                        Ok(false) => return Err(format!("Unknown option {:?}", option_arg)),
-                        Err(err) => {
-                            return Err(format!("Invalid option {:?}: {}", option_arg, err))
-                        }
+                        Ok(false) => return Err(format!("Unknown option {option_arg:?}")),
+                        Err(err) => return Err(format!("Invalid option {option_arg:?}: {err}")),
                     }
                 }
             }

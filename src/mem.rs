@@ -347,10 +347,7 @@ impl Mem {
     // seems like a good idea to help the compiler optimise for the fast path
     #[cold]
     fn null_check_fail(at: VAddr, size: GuestUSize) {
-        panic!(
-            "Attempted null-page access at {:#x} ({:#x} bytes)",
-            at, size
-        )
+        panic!("Attempted null-page access at {at:#x} ({size:#x} bytes)")
     }
 
     /// Special version of [Self::bytes_at] that returns [None] rather than

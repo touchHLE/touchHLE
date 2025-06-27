@@ -154,8 +154,7 @@ impl Environment {
                 MutexType::PTHREAD_MUTEX_NORMAL => {
                     // This case would be a deadlock, we may as well panic.
                     panic!(
-                        "Attempted to lock non-error-checking mutex #{} for thread {}, already locked by same thread!",
-                        mutex_id, current_thread,
+                        "Attempted to lock non-error-checking mutex #{mutex_id} for thread {current_thread}, already locked by same thread!",
                     );
                 }
                 MutexType::PTHREAD_MUTEX_ERRORCHECK => {
@@ -195,8 +194,7 @@ impl Environment {
                 MutexType::PTHREAD_MUTEX_NORMAL => {
                     // This case is undefined, we may as well panic.
                     panic!(
-                        "Attempted to unlock non-error-checking mutex #{} for thread {}, already unlocked!",
-                        mutex_id, current_thread,
+                        "Attempted to unlock non-error-checking mutex #{mutex_id} for thread {current_thread}, already unlocked!",
                     );
                 }
                 MutexType::PTHREAD_MUTEX_ERRORCHECK | MutexType::PTHREAD_MUTEX_RECURSIVE => {
@@ -214,8 +212,7 @@ impl Environment {
                 MutexType::PTHREAD_MUTEX_NORMAL => {
                     // This case is undefined, we may as well panic.
                     panic!(
-                        "Attempted to unlock non-error-checking mutex #{} for thread {}, locked by different thread {}!",
-                        mutex_id, current_thread, locking_thread,
+                        "Attempted to unlock non-error-checking mutex #{mutex_id} for thread {current_thread}, locked by different thread {locking_thread}!",
                     );
                 }
                 MutexType::PTHREAD_MUTEX_ERRORCHECK | MutexType::PTHREAD_MUTEX_RECURSIVE => {

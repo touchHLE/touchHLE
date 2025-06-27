@@ -74,13 +74,12 @@ impl Font {
             .and_then(|mut f| f.get().read_to_end(&mut bytes).map_err(|e| e.to_string()))
         {
             panic!(
-                "Couldn't read bundled font file {:?}: {}. Perhaps the directory is missing?",
-                path, e
+                "Couldn't read bundled font file {path:?}: {e}. Perhaps the directory is missing?"
             );
         }
 
         let Some(font) = rusttype::Font::try_from_vec(bytes) else {
-            panic!("Couldn't parse bundled font file {:?}. This probably means the file is corrupt. Try re-downloading it.", path);
+            panic!("Couldn't parse bundled font file {path:?}. This probably means the file is corrupt. Try re-downloading it.");
         };
 
         Font { font }

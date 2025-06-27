@@ -195,7 +195,7 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
                 // This will panic if it's a surrogate! This isn't good if
                 // targeting UTF-16 ([NSString stringWithFormat:] etc).
                 let c = char::from_u32(c.into()).unwrap();
-                write!(&mut res, "{}", c).unwrap();
+                write!(&mut res, "{c}").unwrap();
             }
             b's' => {
                 assert!(!prepend_sign);
@@ -214,9 +214,9 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
                         let pad_width = pad_width as usize;
                         let str = env.mem.cstr_at_utf8(c_string).unwrap();
                         if left_justified {
-                            write!(&mut res, "{:<1$}", str, pad_width).unwrap();
+                            write!(&mut res, "{str:<pad_width$}").unwrap();
                         } else {
-                            write!(&mut res, "{:>1$}", str, pad_width).unwrap();
+                            write!(&mut res, "{str:>pad_width$}").unwrap();
                         }
                     } else {
                         res.extend_from_slice(env.mem.cstr_at(c_string));
@@ -265,7 +265,7 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
                 let int_with_precision = if precision.is_some_and(|value| value > 0) {
                     format!("{:01$}", int, precision.unwrap())
                 } else {
-                    format!("{}", int)
+                    format!("{int}")
                 };
 
                 if pad_width > 0 {
@@ -280,11 +280,11 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
                                 write!(&mut res, "-{:0>1$}", int.abs(), pad_width - 1).unwrap();
                             }
                         } else {
-                            write!(&mut res, "{:0>1$}", int, pad_width).unwrap();
+                            write!(&mut res, "{int:0>pad_width$}").unwrap();
                         }
                     } else {
                         assert!(!prepend_sign);
-                        write!(&mut res, "{:>1$}", int_with_precision, pad_width).unwrap();
+                        write!(&mut res, "{int_with_precision:>pad_width$}").unwrap();
                     }
                 } else {
                     assert!(!prepend_sign);
@@ -302,7 +302,7 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
                     // TODO: avoid copy
                     // TODO: what if the description isn't valid UTF-16?
                     let description = ns_string::to_rust_string(env, description);
-                    write!(&mut res, "{}", description).unwrap();
+                    write!(&mut res, "{description}").unwrap();
                 } else {
                     write!(&mut res, "(null)").unwrap();
                 }
@@ -317,9 +317,9 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
                     assert!(precision.is_none()); // TODO
                     let pad_width = pad_width as usize;
                     if pad_char == '0' && precision.is_none() {
-                        write!(&mut res, "{:0>1$x}", uint, pad_width).unwrap();
+                        write!(&mut res, "{uint:0>pad_width$x}").unwrap();
                     } else {
-                        write!(&mut res, "{:>1$x}", uint, pad_width).unwrap();
+                        write!(&mut res, "{uint:>pad_width$x}").unwrap();
                     }
                 } else {
                     let tmp = if precision.is_some_and(|value| value > 0) {
@@ -328,7 +328,7 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
                         if let Some(precision) = precision {
                             assert!(precision == 0 && uint != 0); // TODO
                         }
-                        format!("{:x}", uint)
+                        format!("{uint:x}")
                     };
                     res.extend_from_slice(tmp.as_bytes());
                 }
@@ -343,13 +343,13 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
                 if pad_width > 0 {
                     let pad_width = pad_width as usize;
                     if pad_char == '0' && precision.is_none() {
-                        write!(&mut res, "{:0>1$X}", uint, pad_width).unwrap();
+                        write!(&mut res, "{uint:0>pad_width$X}").unwrap();
                     } else {
                         assert!(pad_char == ' '); // TODO
-                        write!(&mut res, "{:>1$X}", uint, pad_width).unwrap();
+                        write!(&mut res, "{uint:>pad_width$X}").unwrap();
                     }
                 } else {
-                    res.extend_from_slice(format!("{:X}", uint).as_bytes());
+                    res.extend_from_slice(format!("{uint:X}").as_bytes());
                 }
             }
             b'p' => {
@@ -363,7 +363,7 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
                 if pad_width > 0 {
                     let pad_width = pad_width as usize;
                     assert!(pad_char == ' '); // TODO
-                    write!(&mut res, "{:>1$}", tmp, pad_width).unwrap();
+                    write!(&mut res, "{tmp:>pad_width$}").unwrap();
                 } else {
                     res.extend_from_slice(tmp.as_bytes());
                 }
@@ -432,9 +432,9 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
 
                     let trimmed_result = if pad_width > 0 && trimmed_result.len() < pad_width {
                         if pad_char == '0' {
-                            format!("{:0>1$}", trimmed_result, pad_width)
+                            format!("{trimmed_result:0>pad_width$}")
                         } else {
-                            format!("{:>1$}", trimmed_result, pad_width)
+                            format!("{trimmed_result:>pad_width$}")
                         }
                     } else {
                         trimmed_result.to_string()
@@ -464,10 +464,10 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
 
 fn f_format(float: f64, pad_width: usize, pad_char: char, precision: usize) -> String {
     if pad_char == '0' {
-        format!("{:01$.2$}", float, pad_width, precision)
+        format!("{float:0pad_width$.precision$}")
     } else {
         assert!(pad_char == ' '); // TODO
-        format!("{:1$.2$}", float, pad_width, precision)
+        format!("{float:pad_width$.precision$}")
     }
 }
 
@@ -480,7 +480,7 @@ fn e_format(float: f64, pad_width: usize, pad_char: char, precision: usize) -> S
     let mantissa = float.abs() / 10f64.powf(exponent);
     let sign = if float.is_sign_negative() { "-" } else { "" };
     if pad_char == '0' {
-        let float_exp_notation = format!("{0:.1$}e{2:+03}", mantissa, precision, exponent);
+        let float_exp_notation = format!("{mantissa:.precision$}e{exponent:+03}");
         format!(
             "{0}{1:0>2$}",
             sign,
@@ -489,8 +489,8 @@ fn e_format(float: f64, pad_width: usize, pad_char: char, precision: usize) -> S
         )
     } else {
         assert!(pad_char == ' '); // TODO
-        let float_exp_notation = format!("{0}{1:.2$}e{3:+03}", sign, mantissa, precision, exponent);
-        format!("{0:>1$}", float_exp_notation, pad_width)
+        let float_exp_notation = format!("{sign}{mantissa:.precision$}e{exponent:+03}");
+        format!("{float_exp_notation:>pad_width$}")
     }
 }
 

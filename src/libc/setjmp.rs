@@ -57,10 +57,7 @@ fn longjmp(env: &mut Environment, jmp_buf: MutPtr<JmpBuf>, status: u32) {
     let cur_stack = env.stack_for_longjmp(lr, fp);
     let other_stack = env.stack_for_longjmp(buf.lr, buf.fp);
     if cur_stack.last() != other_stack.last() {
-        panic!(
-            "longjmp across host stack frames, current {:?}, other {:?}",
-            cur_stack, other_stack
-        );
+        panic!("longjmp across host stack frames, current {cur_stack:?}, other {other_stack:?}");
     }
     let regs = env.cpu.regs_mut();
     regs[0] = status;

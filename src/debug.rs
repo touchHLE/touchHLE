@@ -14,7 +14,7 @@ pub fn write_ppm(path: &str, width: u32, height: u32, pixels: &[u8]) {
     use std::io::Write;
 
     let mut file = File::create(path).unwrap();
-    writeln!(file, "P6 {} {} 255", width, height).unwrap();
+    writeln!(file, "P6 {width} {height} 255").unwrap();
     file.write_all(pixels).unwrap();
 }
 

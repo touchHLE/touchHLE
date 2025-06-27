@@ -160,7 +160,7 @@ impl AudioFile {
                         //
                         // We should expose all of the formats eventually, but
                         // the others haven't been tested yet.
-                        _ => panic!("{:?} not supported yet", format_id),
+                        _ => panic!("{format_id:?} not supported yet"),
                     },
                     bytes_per_packet,
                     frames_per_packet,
@@ -195,7 +195,7 @@ impl AudioFile {
             ..
         } = self.audio_description();
         if !matches!(format, AudioFormat::LinearPcm { .. }) {
-            panic!("{:?} is a compressed format!", format);
+            panic!("{format:?} is a compressed format!");
         }
         ((bytes_per_packet / frames_per_packet) / channels_per_frame).into()
     }

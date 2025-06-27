@@ -182,39 +182,39 @@ fn divider(out: &mut String) -> Result<(), std::fmt::Error> {
 fn print(out: &mut String, resources_are_external_files: bool) -> Result<(), std::fmt::Error> {
     use std::fmt::Write;
     if resources_are_external_files {
-        writeln!(out, "{}", EXTERNAL_FILES_CAVEAT)?;
+        writeln!(out, "{EXTERNAL_FILES_CAVEAT}")?;
         divider(out)?;
     }
-    writeln!(out, "{}", MAIN_COPYRIGHT)?;
+    writeln!(out, "{MAIN_COPYRIGHT}")?;
     divider(out)?;
-    writeln!(out, "{}", MAIN_LICENSE)?;
+    writeln!(out, "{MAIN_LICENSE}")?;
     divider(out)?;
     #[cfg(target_os = "android")]
     {
         writeln!(out, "{}", SKYLINE)?;
         divider(out)?;
     }
-    writeln!(out, "{}", RUST_DESCRIPTION)?;
-    writeln!(out, "{}", RUST_DEPENDENCIES)?;
+    writeln!(out, "{RUST_DESCRIPTION}")?;
+    writeln!(out, "{RUST_DEPENDENCIES}")?;
     divider(out)?;
-    writeln!(out, "{}", DYNARMIC_DESCRIPTION)?;
-    writeln!(out, "{}", DYNARMIC_LICENSE)?;
+    writeln!(out, "{DYNARMIC_DESCRIPTION}")?;
+    writeln!(out, "{DYNARMIC_LICENSE}")?;
     divider(out)?;
-    writeln!(out, "{}", DYNARMIC_BOOST_DESCRIPTION)?;
-    writeln!(out, "{}", DYNARMIC_BOOST_LICENSE)?;
+    writeln!(out, "{DYNARMIC_BOOST_DESCRIPTION}")?;
+    writeln!(out, "{DYNARMIC_BOOST_LICENSE}")?;
     divider(out)?;
-    writeln!(out, "{}", SDL2_DESCRIPTION)?;
-    writeln!(out, "{}", SDL2_LICENSE)?;
+    writeln!(out, "{SDL2_DESCRIPTION}")?;
+    writeln!(out, "{SDL2_LICENSE}")?;
     divider(out)?;
-    writeln!(out, "{}", OPENAL_SOFT)?;
+    writeln!(out, "{OPENAL_SOFT}")?;
     divider(out)?;
-    writeln!(out, "{}", STB_IMAGE)?;
+    writeln!(out, "{STB_IMAGE}")?;
     divider(out)?;
-    writeln!(out, "{}", PVRTD_DESCRIPTION)?;
+    writeln!(out, "{PVRTD_DESCRIPTION}")?;
     writeln!(out, "{}", PVRTD_LICENSE.trim_end())?;
     if !resources_are_external_files {
         divider(out)?;
-        writeln!(out, "{}", INTERNAL_FSF_DYLIBS_DESCRIPTION)?;
+        writeln!(out, "{INTERNAL_FSF_DYLIBS_DESCRIPTION}")?;
         writeln!(
             out,
             "{}.",
@@ -232,21 +232,21 @@ fn print(out: &mut String, resources_are_external_files: bool) -> Result<(), std
                 .trim_start()
         )?;
         divider(out)?;
-        writeln!(out, "{}", INTERNAL_ZLIB_DYLIB_DESCRIPTION)?;
+        writeln!(out, "{INTERNAL_ZLIB_DYLIB_DESCRIPTION}")?;
         writeln!(
             out,
             "{}",
             read_bundled_file(&format!("{}/COPYING.libz", crate::paths::DYLIBS_DIR))
         )?;
         divider(out)?;
-        writeln!(out, "{}", INTERNAL_LIBERATION_FONTS_DESCRIPTION)?;
+        writeln!(out, "{INTERNAL_LIBERATION_FONTS_DESCRIPTION}")?;
         writeln!(
             out,
             "{}",
             read_bundled_file(&format!("{}/LICENSE.liberation", crate::paths::FONTS_DIR))
         )?;
         divider(out)?;
-        writeln!(out, "{}", INTERNAL_NOTO_FONTS_DESCRIPTION)?;
+        writeln!(out, "{INTERNAL_NOTO_FONTS_DESCRIPTION}")?;
         writeln!(
             out,
             "{}",

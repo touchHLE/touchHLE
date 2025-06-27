@@ -306,13 +306,7 @@ fn frexp(env: &mut Environment, arg: f64, exp: MutPtr<i32>) -> f64 {
     let b = arg.log2().floor() as i32 + 1;
     env.mem.write(exp, b);
     let frac = arg / 2f64.powi(b);
-    assert!(
-        (0.5..1.0).contains(&frac),
-        "arg {}, b {}, frac {}",
-        arg,
-        b,
-        frac
-    );
+    assert!((0.5..1.0).contains(&frac), "arg {arg}, b {b}, frac {frac}");
     frac
 }
 

@@ -13,7 +13,7 @@ fn link_search(path: &Path) {
     println!("cargo:rustc-link-search=native={}", path.to_str().unwrap());
 }
 fn link_lib(lib: &str) {
-    println!("cargo:rustc-link-lib=static={}", lib);
+    println!("cargo:rustc-link-lib=static={lib}");
 }
 
 fn build_type_windows() -> &'static str {

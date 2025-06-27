@@ -546,7 +546,7 @@ impl ObjC {
             ));
         } else {
             if !use_placeholder {
-                panic!("Missing implementation for class {}!", name);
+                panic!("Missing implementation for class {name}!");
             }
 
             // We don't have a real implementation for this class, use a

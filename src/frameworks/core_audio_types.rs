@@ -17,9 +17,9 @@ pub const fn fourcc(fourcc: &[u8; 4]) -> u32 {
 /// Display a FourCC appropriately for debugging.
 pub fn debug_fourcc(fourcc: u32) -> String {
     if let Ok(utf8) = std::str::from_utf8(&fourcc.to_be_bytes()) {
-        format!("'{}'", utf8)
+        format!("'{utf8}'")
     } else {
-        format!("{:#x}", fourcc)
+        format!("{fourcc:#x}")
     }
 }
 

@@ -67,7 +67,7 @@ fn perror(env: &mut Environment, s: ConstPtr<u8>) {
     let errno_msg = "<TODO: errno>\n";
     let msg = if !s.is_null() {
         if let Ok(str) = env.mem.cstr_at_utf8(s) {
-            format!("{}: {}", str, errno_msg)
+            format!("{str}: {errno_msg}")
         } else {
             errno_msg.to_string()
         }

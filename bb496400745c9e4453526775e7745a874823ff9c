@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6faa95db_131b86bd",
+        "filename": "src/dyld.rs",
+        "patchSetId": 6
+      },
+      "lineNbr": 284,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-07-02T18:07:49Z",
+      "side": 0,
+      "message": "this seems like unrelated changes, same commit for other files.\nmaybe you need to rebase?",
+      "revId": "bb496400745c9e4453526775e7745a874823ff9c",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

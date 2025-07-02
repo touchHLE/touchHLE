@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5d78a028_8db71060",
+        "filename": "tests/integration.rs",
+        "patchSetId": 6
+      },
+      "lineNbr": 213,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-07-02T18:07:49Z",
+      "side": 1,
+      "message": "I think it would be be better to have generation script aside and commit results to the repo.\n\n(Same commment for all generetations)",
+      "revId": "5d049d8b43db5df134f011930a635085700b4388",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

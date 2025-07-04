@@ -16,6 +16,24 @@
       "message": "I think it would be be better to have generation script aside and commit results to the repo.\n\n(Same commment for all generetations)",
       "revId": "5d049d8b43db5df134f011930a635085700b4388",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a3ed0f08_58ea3a02",
+        "filename": "tests/integration.rs",
+        "patchSetId": 6
+      },
+      "lineNbr": 213,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2025-07-04T17:57:47Z",
+      "side": 1,
+      "message": "The main reason to not do this is that you can\u0027t easily add tests for new behaviour this way. If we add new functions/classes, they wouldn\u0027t be accessible without sending the list of functions to the SDK and back. We would have to do something with github actions to run a workflow in the touchhle repo, then the SDK repo, then the touchhle repo again. It\u0027s possible but not very clean (imo).",
+      "parentUuid": "5d78a028_8db71060",
+      "revId": "5d049d8b43db5df134f011930a635085700b4388",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

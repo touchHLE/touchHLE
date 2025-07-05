@@ -74,6 +74,12 @@ impl Thread {
     }
 }
 
+impl std::fmt::Debug for Thread {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "[state: {:?}, blocked_by: {:?}, return_value: {:?}]", self.state, self.blocked_by, self.return_value)
+    }
+}
+
 /// The struct containing the entire emulator state. Methods are provided for
 /// execution and management of threads.
 pub struct Environment {

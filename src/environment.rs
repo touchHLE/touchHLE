@@ -80,7 +80,11 @@ impl Thread {
 
 impl std::fmt::Debug for Thread {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "[state: {:?}, blocked_by: {:?}, return_value: {:?}]", self.state, self.blocked_by, self.return_value)
+        write!(
+            f,
+            "[state: {:?}, blocked_by: {:?}, return_value: {:?}]",
+            self.state, self.blocked_by, self.return_value
+        )
     }
 }
 
@@ -1531,18 +1535,19 @@ impl Environment {
                             .pthread
                             .cond
                             .condition_variables
-                            .get(&cond)
+                            .get_mut(&cond)
                             .unwrap();
-                        if host_cond.done {
-                            log_dbg!(
-                                "Thread {} is unblocking on cond var {:?}.",
-                                self.current_thread,
-                                cond
-                            );
+                        let mutex = host_cond.curr_mutex.unwrap();
+                        if host_cond
+                            .waking
+                            .front()
+                            .is_some_and(|waking_thread| *waking_thread == thread_id)
+                            && !self.mutex_state.mutex_is_locked(mutex)
+                        {
+                            log_dbg!("Thread {} is unblocking on cond var {:?}.", thread_id, cond);
+                            host_cond.waking.pop_front();
                             self.threads[thread_id].blocked_by = ThreadBlock::NotBlocked;
-                            let used_mutex =
-                                self.libc_state.pthread.cond.mutexes.remove(&cond).unwrap();
-                            self.relock_unblocked_mutex_for_thread(thread_id, used_mutex.mutex_id);
+                            self.relock_unblocked_mutex_for_thread(thread_id, mutex);
                             return thread_id;
                         }
                     }

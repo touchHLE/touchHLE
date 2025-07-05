@@ -128,6 +128,7 @@ int pthread_join(pthread_t thread, void **value_ptr);
 
 int pthread_cond_init(pthread_cond_t *, const pthread_condattr_t *);
 int pthread_cond_signal(pthread_cond_t *);
+int pthread_cond_broadcast(pthread_cond_t *);
 int pthread_cond_wait(pthread_cond_t *, pthread_mutex_t *);
 
 int pthread_mutex_init(pthread_mutex_t *, const pthread_mutexattr_t *);
@@ -1016,9 +1017,9 @@ int test_mtsem() {
   return 0;
 }
 
-int done = 0;
+int done = 0, done2 = 0;
 pthread_mutex_t m;
-pthread_cond_t c;
+pthread_cond_t c, c2;
 
 void thr_exit() {
   pthread_mutex_lock(&m);
@@ -1029,6 +1030,15 @@ void thr_exit() {
 
 void *child(void *arg) {
   thr_exit();
+  return NULL;
+}
+
+void *child2(void *arg) {
+  pthread_mutex_lock(&m);
+  while (done == 0) {
+    pthread_cond_wait(&c2, &m);
+  }
+  pthread_mutex_unlock(&m);
   return NULL;
 }
 
@@ -1048,6 +1058,21 @@ int test_cond_var() {
 
   pthread_create(&p, NULL, child, NULL);
   thr_join();
+
+  // Should wake up all threads
+  pthread_t p1, p2, p3;
+  pthread_cond_init(&c2, NULL);
+  pthread_create(&p1, NULL, child, NULL);
+  pthread_create(&p2, NULL, child, NULL);
+  pthread_create(&p3, NULL, child, NULL);
+  usleep(100);
+  pthread_mutex_lock(&m);
+  done = 1;
+  pthread_cond_broadcast(&c);
+  pthread_mutex_unlock(&m);
+  pthread_join(p1, NULL);
+  pthread_join(p2, NULL);
+  pthread_join(p3, NULL);
 
   return done == 1 ? 0 : -1;
 }

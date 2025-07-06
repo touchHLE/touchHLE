@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "60c54271_42a961fa",
+        "filename": "tests/.gitignore",
+        "patchSetId": 5
+      },
+      "lineNbr": 2,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-07-06T13:48:43Z",
+      "side": 1,
+      "message": "maybe we should use it as git submodule instead?",
+      "revId": "6601e2a8afe70cefb2e4e428f551727129c306c6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

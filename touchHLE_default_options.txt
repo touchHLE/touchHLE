@@ -151,3 +151,12 @@ com.konami-europe.mgst: --preferred-languages=ja --landscape-left
 
 # Dark Nebula
 com.1337gamedesign.DarkNebula: --x-tilt-offset=-14
+
+# Crash Bandicoot Nitro Kart 2
+com.activision.CBNK2: --landscape-left
+
+# FIFA 10
+com.ea.fifa10.bv: --landscape-left
+
+# FIFA 2010 WORLD CUP SOUTH AFRICA
+com.ea.fifa10wc.inc: --landscape-left

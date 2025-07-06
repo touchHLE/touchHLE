@@ -16,6 +16,24 @@
       "message": "maybe we should use it as git submodule instead?",
       "revId": "6601e2a8afe70cefb2e4e428f551727129c306c6",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "77d2157e_3c0a01cb",
+        "filename": "tests/.gitignore",
+        "patchSetId": 5
+      },
+      "lineNbr": 2,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2025-07-06T18:10:59Z",
+      "side": 1,
+      "message": "We could, the main reason I didn\u0027t want to was because we had to use the prebuilt versions for windows earlier, although that should be solved now.\n\nRegardless this should be in the next commit, oops",
+      "parentUuid": "60c54271_42a961fa",
+      "revId": "6601e2a8afe70cefb2e4e428f551727129c306c6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

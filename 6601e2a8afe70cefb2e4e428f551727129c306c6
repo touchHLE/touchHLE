@@ -34,6 +34,24 @@
       "parentUuid": "60c54271_42a961fa",
       "revId": "6601e2a8afe70cefb2e4e428f551727129c306c6",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "6226f3d2_aeaf0ca6",
+        "filename": "tests/.gitignore",
+        "patchSetId": 5
+      },
+      "lineNbr": 2,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2025-07-07T16:32:11Z",
+      "side": 1,
+      "message": "Done, you can reopen on the other commit if you want",
+      "parentUuid": "77d2157e_3c0a01cb",
+      "revId": "6601e2a8afe70cefb2e4e428f551727129c306c6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

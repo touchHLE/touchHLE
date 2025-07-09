@@ -9,7 +9,7 @@
 use super::ns_string;
 use super::NSUInteger;
 use crate::libc::posix_io;
-use crate::mem::{ConstPtr, ConstVoidPtr};
+use crate::mem::{ConstPtr, ConstVoidPtr, Ptr};
 use crate::objc::{autorelease, id, nil, objc_classes, ClassExports, HostObject};
 use crate::{msg, msg_class};
 
@@ -67,6 +67,17 @@ pub const CLASSES: ClassExports = objc_classes! {
             autorelease(env, new)
         },
     }
+}
+
+- (id)availableData {
+    // TODO: Make this function actually return correct avaialble data
+    // Returning empty data probably does not work for large files
+    log_once!("Warning: NSFileHandle availableData returns empty data");
+    let bytes: ConstVoidPtr = Ptr::null();
+    let length: NSUInteger = 0;
+
+    let empty_data: id = msg_class![env; NSData dataWithBytes: bytes length: length];
+    empty_data
 }
 
 - (i64)offsetInFile {

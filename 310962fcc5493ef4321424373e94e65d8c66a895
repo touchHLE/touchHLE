@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "f431350a_4b85c7ba",
+        "filename": ".github/workflows/touchHLE_release.yml",
+        "patchSetId": 10
+      },
+      "lineNbr": 60,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2025-07-09T22:12:02Z",
+      "side": 1,
+      "message": "leftover comment, thanks for catching",
+      "parentUuid": "b16e76c6_6d671182",
+      "revId": "310962fcc5493ef4321424373e94e65d8c66a895",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "4d9bef5d_a5bc5ba9",
@@ -31,6 +49,24 @@
       "writtenOn": "2025-07-07T21:13:29Z",
       "side": 1,
       "message": "same as above",
+      "revId": "310962fcc5493ef4321424373e94e65d8c66a895",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "0fe2b2db_c962ec5c",
+        "filename": ".github/workflows/touchHLE_release.yml",
+        "patchSetId": 10
+      },
+      "lineNbr": 197,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2025-07-09T22:12:02Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "4d9bef5d_a5bc5ba9",
       "revId": "310962fcc5493ef4321424373e94e65d8c66a895",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

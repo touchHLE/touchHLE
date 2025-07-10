@@ -269,8 +269,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (id)initWithLength:(NSUInteger)length {
     let host_object = env.objc.borrow_mut::<NSDataHostObject>(this);
     assert!(host_object.bytes.is_null() && host_object.length == 0);
-    let alloc = env.mem.alloc(length);
-    env.mem.bytes_at_mut(alloc.cast(), length).fill(0);
+    let alloc = env.mem.calloc(length);
     host_object.bytes = alloc;
     host_object.length = length;
     this

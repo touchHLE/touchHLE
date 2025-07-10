@@ -526,6 +526,13 @@ impl Mem {
         ptr
     }
 
+    /// Allocate `size` bytes initialized to 0.
+    pub fn calloc(&mut self, size: GuestUSize) -> MutVoidPtr {
+        let ptr = self.alloc(size);
+        self.bytes_at_mut(ptr.cast(), size).fill(0);
+        ptr
+    }
+
     pub fn malloc_size(&mut self, ptr: ConstVoidPtr) -> GuestUSize {
         self.allocator.find_allocated_size(ptr.to_bits())
     }

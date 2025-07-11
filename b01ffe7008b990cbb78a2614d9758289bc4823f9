@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "a29e5827_c09d58ac",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-07-11T21:34:54Z",
+      "side": 1,
+      "message": "I noticed that problem too but never come to properly fix it...\n\nMany thanks for the fix and especially for writting tests!\n\nCould you please rebase on trunk so we can merge it already?",
+      "revId": "b01ffe7008b990cbb78a2614d9758289bc4823f9",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

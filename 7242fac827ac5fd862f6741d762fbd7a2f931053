@@ -35,6 +35,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "130fd4c4_2b68e9e9",
+        "filename": "src/frameworks/core_foundation/cf_boolean.rs",
+        "patchSetId": 17
+      },
+      "lineNbr": 16,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-07-13T23:36:34Z",
+      "side": 1,
+      "message": "Removed them.",
+      "parentUuid": "04a582fa_ba362298",
+      "revId": "7242fac827ac5fd862f6741d762fbd7a2f931053",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "a95609d4_7054400b",
@@ -52,6 +70,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "65018cf2_9274f259",
+        "filename": "src/frameworks/core_foundation/cf_boolean.rs",
+        "patchSetId": 17
+      },
+      "lineNbr": 45,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-07-13T23:36:34Z",
+      "side": 1,
+      "message": "Removed",
+      "parentUuid": "a95609d4_7054400b",
+      "revId": "7242fac827ac5fd862f6741d762fbd7a2f931053",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "34961c7c_13aa9eaa",
@@ -65,6 +101,24 @@
       "writtenOn": "2025-07-13T10:38:56Z",
       "side": 1,
       "message": "this is wrong. check https://developer.apple.com/documentation/corefoundation/cfbooleangetvalue(_:)?language\u003dobjc\n\ninput parameter should be CFBooleanRef and return Rust\u0027s bool",
+      "revId": "7242fac827ac5fd862f6741d762fbd7a2f931053",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "0e607d53_2f43ccd9",
+        "filename": "src/frameworks/core_foundation/cf_boolean.rs",
+        "patchSetId": 17
+      },
+      "lineNbr": 50,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-07-13T23:36:34Z",
+      "side": 1,
+      "message": "Right.  It had been awhie since I worked on this.  I\u0027ve studied the code a lot since then.  I fixed CF_boolean to be like the other files with it making it a proper TypeRef with the contants and GetValue function.  Eveyrhing is still working as I expect in the game I am implimenting this for so I hope this is all correct now.",
+      "parentUuid": "34961c7c_13aa9eaa",
       "revId": "7242fac827ac5fd862f6741d762fbd7a2f931053",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

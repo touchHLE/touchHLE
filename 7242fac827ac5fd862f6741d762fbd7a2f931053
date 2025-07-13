@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "4cc75dbe_8973bbf9",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 17
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-07-13T10:38:56Z",
+      "side": 1,
+      "message": "According to https://developer.apple.com/library/archive/documentation/CoreFoundation/Conceptual/CFDesignConcepts/Articles/tollFreeBridgedTypes.html, CFBooleanRef should be toll-free bridged to the NSNumber. This strongly suggest how this should be implemented.",
+      "revId": "7242fac827ac5fd862f6741d762fbd7a2f931053",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "04a582fa_ba362298",
+        "filename": "src/frameworks/core_foundation/cf_boolean.rs",
+        "patchSetId": 17
+      },
+      "lineNbr": 16,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-07-13T10:38:56Z",
+      "side": 1,
+      "message": "why those are needed?",
+      "revId": "7242fac827ac5fd862f6741d762fbd7a2f931053",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a95609d4_7054400b",
+        "filename": "src/frameworks/core_foundation/cf_boolean.rs",
+        "patchSetId": 17
+      },
+      "lineNbr": 45,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-07-13T10:38:56Z",
+      "side": 1,
+      "message": "it is not a large struct, this shouldn\u0027t be used",
+      "revId": "7242fac827ac5fd862f6741d762fbd7a2f931053",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "34961c7c_13aa9eaa",
+        "filename": "src/frameworks/core_foundation/cf_boolean.rs",
+        "patchSetId": 17
+      },
+      "lineNbr": 50,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-07-13T10:38:56Z",
+      "side": 1,
+      "message": "this is wrong. check https://developer.apple.com/documentation/corefoundation/cfbooleangetvalue(_:)?language\u003dobjc\n\ninput parameter should be CFBooleanRef and return Rust\u0027s bool",
+      "revId": "7242fac827ac5fd862f6741d762fbd7a2f931053",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

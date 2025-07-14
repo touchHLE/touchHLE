@@ -5,6 +5,7 @@
  */
 //! `UIImage`.
 
+use crate::dyld::{export_c_func, FunctionExports};
 use crate::frameworks::core_graphics::cg_context::CGContextDrawImage;
 use crate::frameworks::core_graphics::cg_image::{
     self, CGImageGetHeight, CGImageGetWidth, CGImageRef, CGImageRelease, CGImageRetain,
@@ -16,10 +17,10 @@ use crate::frameworks::uikit::ui_graphics::UIGraphicsGetCurrentContext;
 use crate::fs::GuestPath;
 use crate::image::Image;
 use crate::objc::{
-    autorelease, id, msg, msg_class, nil, objc_classes, release, retain, ClassExports, HostObject,
-    NSZonePtr,
+    autorelease, id, msg, msg_class, msg_send, nil, objc_classes, release, retain, ClassExports,
+    HostObject, NSZonePtr, SEL,
 };
-use crate::Environment;
+use crate::{Environment, paths};
 use std::collections::HashMap;
 
 const CACHE_SIZE: usize = 10;
@@ -213,3 +214,134 @@ pub const CLASSES: ClassExports = objc_classes! {
 @end
 
 };
+
+fn UIImageWriteToSavedPhotosAlbum(
+    env: &mut Environment,
+    image: id,
+    completionTarget: id,
+    completionSelector: SEL,
+    contextInfo: id,
+) {
+    log_dbg!(
+        "UIImageWriteToSavedPhotosAlbum image:{:?} completionTarget:{:?} completionSelector:{:?}",
+        image,
+        completionTarget,
+        completionSelector,
+    );
+
+    // Attempt save (best-effort)
+    let mut wrote_file = false;
+
+    if image != nil {
+        let cg_image: CGImageRef = msg![env; image CGImage];
+
+        if cg_image != nil {
+            let img = cg_image::borrow_image(&env.objc, cg_image);
+            let (w, h) = img.dimensions();
+            let rgba = img.pixels();
+
+            // Encode PNG using png crate
+            let mut png_data: Vec<u8> = Vec::new();
+            let mut encode_ok = false;
+
+            {
+                let mut encoder = png::Encoder::new(&mut png_data, w, h);
+                encoder.set_color(png::ColorType::Rgba);
+                encoder.set_depth(png::BitDepth::Eight);
+
+                match encoder.write_header() {
+                    Ok(mut writer) => {
+                        if let Err(e) = writer.write_image_data(rgba) {
+                            log!("Warning: PNG encode failed: {:?}", e);
+                        } else {
+                            encode_ok = true;
+                        }
+                    }
+                    Err(e) => {
+                        log!("Warning: PNG header encode failed: {:?}", e);
+                    }
+                }
+            } // encoder/writer dropped here, so png_data is no longer borrowed
+
+            if !encode_ok {
+                png_data.clear();
+            }
+
+            if !png_data.is_empty() {
+                let base = paths::user_data_base_path();
+                let album_dir = base.join(paths::PHOTO_ALBUM_DIR);
+
+                if let Err(e) = std::fs::create_dir_all(&album_dir) {
+                    log!(
+                        "Warning: UIImageWriteToSavedPhotosAlbum failed to create {:?}: {:?}",
+                        album_dir,
+                        e
+                    );
+                } else {
+                    // Find next IMG_####.PNG
+                    let mut max_index: u32 = 0;
+
+                    if let Ok(entries) = std::fs::read_dir(&album_dir) {
+                        for entry_res in entries {
+                            if let Ok(entry) = entry_res {
+                                if let Some(name) = entry.file_name().to_str() {
+                                    if name.len() >= 8 && name.starts_with("IMG_") {
+                                        if let Ok(n) = name[4..8].parse::<u32>() {
+                                            if n > max_index {
+                                                max_index = n;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    let file_name = format!("IMG_{:04}.PNG", max_index + 1);
+                    let file_path = album_dir.join(file_name);
+
+                    match std::fs::write(&file_path, &png_data) {
+                        Ok(()) => {
+                            wrote_file = true;
+                            log_dbg!(
+                                "UIImageWriteToSavedPhotosAlbum: wrote {:?} ({}×{})",
+                                file_path,
+                                w,
+                                h
+                            );
+                        }
+                        Err(e) => {
+                            log!(
+                                "Warning: UIImageWriteToSavedPhotosAlbum failed to write {:?}: {:?}",
+                                file_path,
+                                e
+                            );
+                        }
+                    }
+                }
+            }
+        } else {
+            log!("UIImageWriteToSavedPhotosAlbum: image has no CGImage, skipping save");
+        }
+    } else {
+        log!("UIImageWriteToSavedPhotosAlbum: image == nil, skipping save");
+    }
+
+    // Call completion handler (UIImageWriteToSavedPhotosAlbum callback signature includes an NSError*)
+    if completionTarget != nil {
+        let error: id = if wrote_file { nil } else { nil }; // TODO: build NSError on failure
+        let _: () = msg_send(
+            env,
+            (
+                completionTarget,
+                completionSelector,
+                image,
+                error,
+                contextInfo,
+            ),
+        );
+    }
+}
+
+pub const FUNCTIONS: FunctionExports =
+    &[export_c_func!(UIImageWriteToSavedPhotosAlbum(_, _, _, _))];

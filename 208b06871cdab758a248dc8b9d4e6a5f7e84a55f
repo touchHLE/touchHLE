@@ -16,6 +16,24 @@
       "message": "As ciciplusplus says, this should be bridged to NSNumber. You can look at how other CoreFoundation types work in touchHLE as an example.",
       "revId": "208b06871cdab758a248dc8b9d4e6a5f7e84a55f",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e076706d_c8d83287",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 18
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-07-14T06:35:18Z",
+      "side": 1,
+      "message": "I see @ciciplusplus@gmail.com has https://review.gerrithub.io/c/touchHLE/touchHLE/+/1218443/1/src/frameworks/core_foundation/cf_number.rs up which requires a change to HostConstants.  I\u0027m fine with that implimenation as well.  I can Abandon this commit once those 2 are Merged.",
+      "parentUuid": "53079423_44ba727a",
+      "revId": "208b06871cdab758a248dc8b9d4e6a5f7e84a55f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

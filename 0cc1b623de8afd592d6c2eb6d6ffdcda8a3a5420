@@ -69,6 +69,24 @@
       "parentUuid": "752218ae_0deff75f",
       "revId": "0cc1b623de8afd592d6c2eb6d6ffdcda8a3a5420",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6d46615a_f8df4454",
+        "filename": "src/frameworks/foundation/ns_process_info.rs",
+        "patchSetId": 29
+      },
+      "lineNbr": 48,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-07-14T12:30:10Z",
+      "side": 1,
+      "message": "Where do you see conflicting advices? Your implementation was incorrect previsouly, it is still incorrect now. Please check documentaion links what was previously linked to you and also check how similar cases were already handled in the code.",
+      "parentUuid": "3e6589a5_289c7685",
+      "revId": "0cc1b623de8afd592d6c2eb6d6ffdcda8a3a5420",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

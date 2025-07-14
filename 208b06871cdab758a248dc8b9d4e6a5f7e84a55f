@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "53079423_44ba727a",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 18
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-07-14T06:09:21Z",
+      "side": 1,
+      "message": "As ciciplusplus says, this should be bridged to NSNumber. You can look at how other CoreFoundation types work in touchHLE as an example.",
+      "revId": "208b06871cdab758a248dc8b9d4e6a5f7e84a55f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

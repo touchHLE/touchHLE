@@ -16,6 +16,24 @@
       "message": "Maybe this should still be in a new file, `cf_boolean.rs`, because on the CF side Boolean and Number are different things (even if they\u0027re both bridged to NSNumber).",
       "revId": "336702844b91b9e28ff4743c4673317c845e3e8b",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "20b9d454_fc95efbc",
+        "filename": "src/frameworks/core_foundation/cf_number.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 57,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-07-14T09:41:59Z",
+      "side": 1,
+      "message": "on the iOS SDK side, both defined in the same header file, so I think it was making sense",
+      "parentUuid": "a3a59888_c0337538",
+      "revId": "336702844b91b9e28ff4743c4673317c845e3e8b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

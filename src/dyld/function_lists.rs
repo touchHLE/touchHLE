@@ -99,6 +99,7 @@ pub const FUNCTION_LISTS: &[super::FunctionExports] = &[
     uikit::ui_application::FUNCTIONS,
     uikit::ui_geometry::FUNCTIONS,
     uikit::ui_graphics::FUNCTIONS,
+    uikit::ui_image::FUNCTIONS,
 ];
 
 #[cfg(test)]

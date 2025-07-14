@@ -72,6 +72,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "ed324c47_dbc2178d",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 29
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-07-14T13:12:17Z",
+      "side": 1,
+      "message": "Makes some sense I guess, but perhaps we have a difference of opinion here. In my view things like comments and unit tests are perfect for AI to write because it is a tedious task, but greatly helps a future developer understand why a decision that does not make sense was made. In most cases I find that AI understands code provided to it to do this well enough. Otherwise I understand not to use AI for future contributions to the touchHLE code base.",
+      "parentUuid": "abcf056a_9edbe042",
+      "revId": "0cc1b623de8afd592d6c2eb6d6ffdcda8a3a5420",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "752218ae_0deff75f",
@@ -175,6 +193,24 @@
       "side": 1,
       "message": "\u003e Is the game calling `[NSProcessInfo physicalMemory]` or is it calling `[[NSProcessInfo processInfo] physicalMemory]`? In the latter case, it would appear as a class method call because of the hacky implementation of `[NSProcessInfo processInfo]` that is returning the class instead of an instance, and that\u0027s fine, it\u0027s not the only place we do this, but it should be documented as such; having an actual instance method here doesn\u0027t make sense if we\u0027re deliberately avoiding creating an instance.\n\nThis makes a ton of sense. This is indeed what is likely happening. So, to be clear, you want me to remove the instance methods and make the comments be more clear that in the *actual* NSProcessInfo these are instance methods but touchHLE has it implemented in a hacky way so they are called as class methods. With that chsngr this will get approved?",
       "parentUuid": "6c203def_54035852",
+      "revId": "0cc1b623de8afd592d6c2eb6d6ffdcda8a3a5420",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "78ee38f4_88fbbbe3",
+        "filename": "src/frameworks/foundation/ns_process_info.rs",
+        "patchSetId": 29
+      },
+      "lineNbr": 48,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-07-14T13:12:17Z",
+      "side": 1,
+      "message": "* With that change this will get approved?",
+      "parentUuid": "6c2d1e4c_05fa31be",
       "revId": "0cc1b623de8afd592d6c2eb6d6ffdcda8a3a5420",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

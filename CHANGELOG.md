@@ -28,6 +28,7 @@ Compatibility:
     - If an app overrides the `shouldAutorotateToInterfaceOrientation:` method in a `UIViewController`, and the virtual device is in a landscape orientation, touchHLE will now apply a rotation transform to the root view when it is added to a window. (@hikari-no-yume)
     - Fixed a very old assumption that the backing store of a `CAEAGLLayer` should always be 320×480 pixels. (@hikari-no-yume)
   - Support for iPad device family. Device family is deduced from the app bundle, but user can also override it with `--device-family=` option. (@ciciplusplus)
+  - touchHLE now has Photo Album support (via `UIImageWriteToSavedPhotosAlbum`). Images saved to `DCIM/100APPLE` like real iOS. (@apexad)
 
 ## v0.2.3 (2026-01-02)
 

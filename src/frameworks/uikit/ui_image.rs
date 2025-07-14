@@ -5,6 +5,7 @@
  */
 //! `UIImage`.
 
+use crate::dyld::{export_c_func, FunctionExports};
 use crate::frameworks::core_graphics::cg_context::CGContextDrawImage;
 use crate::frameworks::core_graphics::cg_image::{
     self, CGImageGetHeight, CGImageGetWidth, CGImageRef, CGImageRelease, CGImageRetain,
@@ -15,8 +16,8 @@ use crate::frameworks::uikit::ui_graphics::UIGraphicsGetCurrentContext;
 use crate::fs::GuestPath;
 use crate::image::Image;
 use crate::objc::{
-    autorelease, id, msg, msg_class, nil, objc_classes, release, retain, ClassExports, HostObject,
-    NSZonePtr,
+    autorelease, id, msg, msg_class, msg_send, nil, objc_classes, release, retain, ClassExports,
+    HostObject, NSZonePtr, SEL,
 };
 use crate::Environment;
 use std::collections::HashMap;
@@ -187,3 +188,34 @@ pub const CLASSES: ClassExports = objc_classes! {
 @end
 
 };
+
+fn UIImageWriteToSavedPhotosAlbum(
+    env: &mut Environment,
+    image: id,
+    completionTarget: id,
+    completionSelector: SEL,
+    contextInfo: id,
+) {
+    log!(
+        "TODO: [UIImageWriteToSavedPhotosAlbum image:{:?} completionTarget:{:?} completionSelctor:{:?}]",
+        image,
+        completionTarget,
+        completionSelector,
+    );
+
+    if completionTarget != nil {
+        let _: () = msg_send(
+            env,
+            (
+                completionTarget,
+                completionSelector,
+                image,
+                nil,
+                contextInfo,
+            ),
+        );
+    }
+}
+
+pub const FUNCTIONS: FunctionExports =
+    &[export_c_func!(UIImageWriteToSavedPhotosAlbum(_, _, _, _))];

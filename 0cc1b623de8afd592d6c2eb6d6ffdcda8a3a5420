@@ -105,6 +105,24 @@
       "parentUuid": "3e6589a5_289c7685",
       "revId": "0cc1b623de8afd592d6c2eb6d6ffdcda8a3a5420",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "47e4e103_5c854bd5",
+        "filename": "src/frameworks/foundation/ns_process_info.rs",
+        "patchSetId": 29
+      },
+      "lineNbr": 48,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-07-14T12:43:44Z",
+      "side": 1,
+      "message": "Conflicting advice on if these should be class methods or instance methods. From both of you and from what Apple’s documentation says these methods should be used versus how they are actually being called by the game.",
+      "parentUuid": "6d46615a_f8df4454",
+      "revId": "0cc1b623de8afd592d6c2eb6d6ffdcda8a3a5420",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

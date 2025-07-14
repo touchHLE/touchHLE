@@ -216,6 +216,54 @@ impl Image {
             }
         }
     }
+
+    /// Writes an RGBA image to a PNG file using stb_image_write_png_to_func
+    /// This is used by `UIImageWriteToSavedPhotosAlbum` to save images
+    ///
+    /// Parameters:
+    /// - `ctx_ptr`: Context pointer used by the stb write callback.
+    /// - `w`: Image width in pixels.
+    /// - `h`: Image height in pixels.
+    /// - `rgba`: Raw pixel buffer in RGBA8888 format.
+    /// - `stride`: Number of bytes per image row (normally `width * 4`).
+    ///
+    /// Returns:
+    /// The return value from `stbi_write_png`:
+    /// - non-zero on success
+    /// - zero on failure.
+    pub fn write_png_image(
+        &self,
+        ctx_ptr: *mut std::ffi::c_void,
+        w: i32,
+        h: i32,
+        rgba: &[u8],
+        stride: i32,
+    ) -> i32 {
+        unsafe extern "C" fn write_cb(
+            context: *mut std::ffi::c_void,
+            data: *mut std::ffi::c_void,
+            size: std::ffi::c_int,
+        ) {
+            if context.is_null() || data.is_null() || size <= 0 {
+                return;
+            }
+            let out: &mut Vec<u8> = &mut *(context as *mut Vec<u8>);
+            let bytes = std::slice::from_raw_parts(data as *const u8, size as usize);
+            out.extend_from_slice(bytes);
+        }
+
+        unsafe {
+            stbi_write_png_to_func(
+                Some(write_cb),
+                ctx_ptr,
+                w,
+                h,
+                4,
+                rgba.as_ptr().cast(),
+                stride,
+            )
+        }
+    }
 }
 
 impl Clone for Image {

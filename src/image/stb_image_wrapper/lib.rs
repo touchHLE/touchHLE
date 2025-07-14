@@ -26,4 +26,15 @@ extern "C" {
     ) -> *mut c_uchar;
     pub fn stbi_image_free(retval_from_stbi_load: *mut c_void);
     pub fn stbi_failure_reason() -> *const c_char;
+
+    // stb_image_write.h
+    pub fn stbi_write_png_to_func(
+        func: Option<unsafe extern "C" fn(context: *mut c_void, data: *mut c_void, size: c_int)>,
+        context: *mut c_void,
+        w: c_int,
+        h: c_int,
+        comp: c_int,
+        data: *const c_void,
+        stride_in_bytes: c_int,
+    ) -> c_int;
 }

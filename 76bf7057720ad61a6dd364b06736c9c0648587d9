@@ -16,6 +16,24 @@
       "message": "Cool! This looks simpler than I expected. I am a little scared we might end up doing something during this early initialization that causes trouble, but we can worry about that when we come to it.",
       "revId": "76bf7057720ad61a6dd364b06736c9c0648587d9",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "25b186d7_f155b328",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-07-14T09:40:55Z",
+      "side": 1,
+      "message": "thanks!",
+      "parentUuid": "0d752d2c_b387c103",
+      "revId": "76bf7057720ad61a6dd364b06736c9c0648587d9",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

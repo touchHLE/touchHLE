@@ -36,6 +36,8 @@ Compatibility:
   - Fixed several issues related to apps that rely on UIKit to rotate their UI. (@hikari-no-yume)
   - Support for iPad device family. Device family is deduced from the app bundle, but user can also override it with `--device-family=` option. (@ciciplusplus)
   - [SQLite3](https://github.com/touchHLE/sqlite-dylib) and [libxml2](https://github.com/touchHLE/libxml2-dylib) dynamic libraries are now available, compiled from source using our [clean open-source toolchain](https://github.com/touchHLE/common-3.0-sdk). (@acieslewicz, @ciciplusplus)
+  - Photo Album support
+    - `UIImageWriteToSavedPhotosAlbum` saves to `DCIM/100APPLE` like real iOS. (@apexad)
 - Improved support for iOS 3.1+:
   - The bundled dynamic libraries, libgcc and libstdc++, have been updated to their iOS 4.0.1 versions. (@ciciplusplus)
   - Support for NIBArchive NIB file format decoding. (@ciciplusplus)

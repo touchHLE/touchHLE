@@ -1,6 +1,7 @@
 /target
 /vendor/boost
 /touchHLE_sandbox
+/DCIM
 /touchHLE_apps
 touchHLE_log.txt
 touchHLE_wallpaper.*

@@ -106,6 +106,10 @@ Real iOS devices could also join/host games!
 **Known issues:**
 * On macOS you may need to launch touchHLE from terminal as otherwise OS will block network connections.
 
+## Photo Album Support
+
+touchHLE will save any photos/images to the `DCIM/100APPLE` folder just like real iOS. Images are saved as IMG_####.PNG in this folder.
+
 ## Other stuff
 
 Any data saved by the app (e.g. **saved games**) are stored in the `touchHLE_sandbox` folder.

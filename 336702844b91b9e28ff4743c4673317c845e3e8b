@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a3a59888_c0337538",
+        "filename": "src/frameworks/core_foundation/cf_number.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 57,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-07-14T09:35:44Z",
+      "side": 1,
+      "message": "Maybe this should still be in a new file, `cf_boolean.rs`, because on the CF side Boolean and Number are different things (even if they\u0027re both bridged to NSNumber).",
+      "revId": "336702844b91b9e28ff4743c4673317c845e3e8b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

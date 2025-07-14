@@ -1,6 +1,7 @@
 /target
 /vendor/boost
 /touchHLE_sandbox
+/DCIM
 /touchHLE_apps/*.ipa
 /touchHLE_apps/*.app
 touchHLE_log.txt

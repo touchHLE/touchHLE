@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0e9c8cb2_01d47859",
+        "filename": ".github/workflows/touchHLE_release.yml",
+        "patchSetId": 11
+      },
+      "lineNbr": 67,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-07-14T10:02:27Z",
+      "side": 1,
+      "message": "depending on run-id is really fragile, at least because non-release builds a kept for 90 days only. can we use releases instead?",
+      "revId": "dec6ed969dd2a32263c8a3492ed343530de50e98",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f993e100_16cb259a",
+        "filename": ".github/workflows/touchHLE_release.yml",
+        "patchSetId": 11
+      },
+      "lineNbr": 203,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-07-14T10:02:27Z",
+      "side": 1,
+      "message": "same commentas above",
+      "revId": "dec6ed969dd2a32263c8a3492ed343530de50e98",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

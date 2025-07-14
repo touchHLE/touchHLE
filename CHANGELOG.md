@@ -35,6 +35,8 @@ Compatibility:
 - Improved support for iOS 3.1+:
   - The bundled dynamic libraries, libgcc and libstdc++, have been updated to their iOS 4.0.1 versions. (@ciciplusplus)
   - Support for NIBArchive NIB file format decoding. (@ciciplusplus)
+- Photo Album support
+  - `UIImageWriteToSavedPhotosAlbum` saves to `DCIM/100APPLE` like real iOS. (@apexad)
 
 ## v0.2.3 (2026-01-02)
 

@@ -5,6 +5,7 @@
  */
 //! `UIImage`.
 
+use crate::dyld::{export_c_func, FunctionExports};
 use crate::frameworks::core_graphics::cg_context::CGContextDrawImage;
 use crate::frameworks::core_graphics::cg_image::{
     self, CGImageGetHeight, CGImageGetWidth, CGImageRef, CGImageRelease, CGImageRetain,
@@ -16,8 +17,8 @@ use crate::frameworks::uikit::ui_graphics::UIGraphicsGetCurrentContext;
 use crate::fs::GuestPath;
 use crate::image::Image;
 use crate::objc::{
-    autorelease, id, msg, msg_class, nil, objc_classes, release, retain, ClassExports, HostObject,
-    NSZonePtr,
+    autorelease, id, msg, msg_class, msg_send, nil, objc_classes, release, retain, ClassExports,
+    HostObject, NSZonePtr, SEL,
 };
 use crate::Environment;
 use std::collections::HashMap;
@@ -213,3 +214,137 @@ pub const CLASSES: ClassExports = objc_classes! {
 @end
 
 };
+
+fn UIImageWriteToSavedPhotosAlbum(
+    env: &mut Environment,
+    image: id,
+    completionTarget: id,
+    completionSelector: SEL,
+    contextInfo: id,
+) {
+    log_dbg!(
+        "UIImageWriteToSavedPhotosAlbum image:{:?} completionTarget:{:?} completionSelector:{:?}",
+        image,
+        completionTarget,
+        completionSelector,
+    );
+
+    if image != nil {
+        let cg_image: CGImageRef = msg![env; image CGImage];
+        if cg_image != nil {
+            let img = cg_image::borrow_image(&env.objc, cg_image);
+            let (w_u32, h_u32) = img.dimensions();
+
+            let w = w_u32 as i32;
+            let h = h_u32 as i32;
+
+            let rgba: &[u8] = img.pixels();
+            let stride = (w_u32 as usize) * 4;
+
+            unsafe extern "C" fn write_cb(
+                context: *mut std::ffi::c_void,
+                data: *mut std::ffi::c_void,
+                size: std::ffi::c_int,
+            ) {
+                if context.is_null() || data.is_null() || size <= 0 {
+                    return;
+                }
+                let out: &mut Vec<u8> = &mut *(context as *mut Vec<u8>);
+                let bytes = std::slice::from_raw_parts(data as *const u8, size as usize);
+                out.extend_from_slice(bytes);
+            }
+
+            let mut png_data: Vec<u8> = Vec::new();
+            let ctx_ptr: *mut std::ffi::c_void = (&mut png_data as *mut Vec<u8>).cast();
+
+            let ok = unsafe {
+                touchHLE_stb_image_wrapper::stbi_write_png_to_func(
+                    Some(write_cb),
+                    ctx_ptr,
+                    w,
+                    h,
+                    4,
+                    rgba.as_ptr().cast(),
+                    stride as i32,
+                )
+            };
+
+            if ok == 0 {
+                log!(
+                    "Warning: UIImageWriteToSavedPhotosAlbum: stb_image_write failed to encode PNG"
+                );
+            } else {
+                let base = crate::paths::user_data_base_path();
+                let album_dir = base.join(crate::paths::PHOTO_ALBUM_DIR);
+
+                if let Err(e) = std::fs::create_dir_all(&album_dir) {
+                    log!(
+                        "Warning: UIImageWriteToSavedPhotosAlbum failed to create {:?}: {:?}",
+                        album_dir,
+                        e
+                    );
+                } else {
+                    // Find next IMG_####.PNG
+                    let mut max_index: u32 = 0;
+                    if let Ok(entries) = std::fs::read_dir(&album_dir) {
+                        for entry_res in entries {
+                            let Ok(entry) = entry_res else { continue };
+                            let name_os = entry.file_name();
+                            let Some(name) = name_os.to_str() else {
+                                continue;
+                            };
+
+                            // Accept IMG_0001.PNG / IMG_0001.png etc
+                            if name.len() >= 8 && name.starts_with("IMG_") {
+                                let num = &name[4..8];
+                                if let Ok(n) = num.parse::<u32>() {
+                                    max_index = max_index.max(n);
+                                }
+                            }
+                        }
+                    }
+
+                    let next_index = max_index + 1;
+                    let file_name = format!("IMG_{:04}.PNG", next_index);
+                    let file_path = album_dir.join(file_name);
+
+                    if let Err(e) = std::fs::write(&file_path, &png_data) {
+                        log!(
+                            "Warning: UIImageWriteToSavedPhotosAlbum failed to write {:?}: {:?}",
+                            file_path,
+                            e
+                        );
+                    } else {
+                        log_dbg!(
+                            "UIImageWriteToSavedPhotosAlbum: wrote {:?} ({}×{})",
+                            file_path,
+                            w_u32,
+                            h_u32
+                        );
+                    }
+                }
+            }
+        } else {
+            log!("UIImageWriteToSavedPhotosAlbum: image has no CGImage, skipping save");
+        }
+    } else {
+        log!("UIImageWriteToSavedPhotosAlbum: image == nil, skipping save");
+    }
+
+    // Call completion handler (best-effort, matches your previous behavior).
+    if completionTarget != nil {
+        let _: () = msg_send(
+            env,
+            (
+                completionTarget,
+                completionSelector,
+                image,
+                nil,
+                contextInfo,
+            ),
+        );
+    }
+}
+
+pub const FUNCTIONS: FunctionExports =
+    &[export_c_func!(UIImageWriteToSavedPhotosAlbum(_, _, _, _))];

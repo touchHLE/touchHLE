@@ -56,6 +56,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "abcf056a_9edbe042",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 29
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-07-14T12:53:56Z",
+      "side": 1,
+      "message": "The touchHLE copyright policy effectively forbids AI usage, because AI may have seen things it should not have seen and know things it should not know, but I haven\u0027t written this explicitly, so maybe I need to change it to do so.\n\nThat aside, even if there were that issue: comments are the absolute last thing that should be written using AI, because comments signal human intent. If there isn\u0027t a human behind them, then they become almost useless.",
+      "parentUuid": "5cfaa2c4_70eaf483",
+      "revId": "0cc1b623de8afd592d6c2eb6d6ffdcda8a3a5420",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "752218ae_0deff75f",
         "filename": "src/frameworks/foundation/ns_process_info.rs",
         "patchSetId": 29

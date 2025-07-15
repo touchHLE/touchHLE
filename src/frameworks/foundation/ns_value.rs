@@ -6,6 +6,10 @@
 //! The `NSValue` class cluster, including `NSNumber`.
 
 use super::NSUInteger;
+use crate::frameworks::core_foundation::cf_number::{
+    kCFNumberCharType, kCFNumberFloat32Type, kCFNumberFloatType, kCFNumberIntType,
+    kCFNumberSInt16Type, kCFNumberSInt32Type, kCFNumberSInt8Type, kCFNumberShortType, CFNumberType,
+};
 use crate::frameworks::foundation::ns_string::from_rust_string;
 use crate::frameworks::foundation::NSInteger;
 use crate::mem::{ConstVoidPtr, MutVoidPtr};
@@ -29,6 +33,19 @@ macro_rules! impl_AsValue {
                 NSNumberHostObject::Double(x) => *x as _,
                 NSNumberHostObject::Short(x) => *x as _,
                 NSNumberHostObject::Char(x) => *x as _,
+            }
+        }
+    };
+}
+
+macro_rules! impl_AsType {
+    ($method_name:tt, $typ:tt) => {
+        pub fn $method_name(&self) -> bool {
+            match self {
+                NSNumberHostObject::Int(x) => (*x as $typ) as i32 == *x,
+                NSNumberHostObject::LongLong(x) => (*x as $typ) as i64 == *x,
+                NSNumberHostObject::Double(x) => (*x as $typ) as f64 == *x,
+                _ => unimplemented!("impl_AsType for {:?}", self),
             }
         }
     };
@@ -62,6 +79,7 @@ impl NSNumberHostObject {
             NSNumberHostObject::Char(x) => *x != 0,
         }
     }
+
     impl_AsValue!(as_int, i32);
     impl_AsValue!(as_long_long, i64);
     impl_AsValue!(as_unsigned_long_long, u64);
@@ -70,6 +88,11 @@ impl NSNumberHostObject {
     impl_AsValue!(as_double, f64);
     impl_AsValue!(as_short, i16);
     impl_AsValue!(as_char, i8);
+
+    impl_AsType!(int_as, i32);
+    impl_AsType!(float_as, f32);
+    impl_AsType!(short_as, i16);
+    impl_AsType!(char_as, i8);
 }
 
 pub const CLASSES: ClassExports = objc_classes! {
@@ -353,5 +376,16 @@ fn equality_helper(env: &mut Environment, this: id, other: id) -> bool {
             left,
             right
         ),
+    }
+}
+
+pub fn is_conversion_lossless(env: &mut Environment, this: id, type_: CFNumberType) -> bool {
+    let num = env.objc.borrow::<NSNumberHostObject>(this);
+    match type_ {
+        kCFNumberSInt32Type | kCFNumberIntType => num.int_as(),
+        kCFNumberFloat32Type | kCFNumberFloatType => num.float_as(),
+        kCFNumberSInt16Type | kCFNumberShortType => num.short_as(),
+        kCFNumberSInt8Type | kCFNumberCharType => num.char_as(),
+        _ => unimplemented!("is_conversion_lossless for {}", type_),
     }
 }

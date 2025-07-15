@@ -228,6 +228,12 @@ void CFRelease(CFTypeRef cf);
 Boolean CFEqual(CFTypeRef cf1, CFTypeRef cf2);
 CFHashCode CFHash(CFTypeRef cf);
 
+enum {
+  kCFCompareLessThan = -1,
+  kCFCompareEqualTo = 0,
+  kCFCompareGreaterThan = 1
+};
+
 // `CFString.h`
 
 enum { kCFStringEncodingASCII = 0x600 };
@@ -304,6 +310,13 @@ CFURLRef CFURLCreateCopyAppendingPathComponent(CFAllocatorRef allocator,
                                                Boolean isDirectory);
 CFURLRef CFURLCreateCopyDeletingLastPathComponent(CFAllocatorRef allocator,
                                                   CFURLRef url);
+
+// `CFNumber.h`
+
+typedef const struct _CFNumber *CFNumberRef;
+typedef int CFNumberType;
+CFNumberRef CFNumberCreate(CFAllocatorRef, CFNumberType, const void *);
+CFComparisonResult CFNumberCompare(CFNumberRef, CFNumberRef, void *);
 
 // === Main code ===
 
@@ -2551,6 +2564,289 @@ int test_CFURL() {
   return 0;
 }
 
+int test_CFNumberCompare_simple() {
+  float a = 3.333;
+  CFNumberRef aa = CFNumberCreate(NULL, 5, &a); // kCFNumberFloat32Type
+  double b = 3.333;
+  CFNumberRef bb = CFNumberCreate(NULL, 6, &b); // kCFNumberFloat64Type
+  CFComparisonResult res = CFNumberCompare(aa, bb, NULL);
+  // `3.333` looses precision as float, thus 2 numbers are not equal
+  if (res != kCFCompareLessThan) {
+    return -1;
+  }
+  res = CFNumberCompare(bb, aa, NULL);
+  if (res != kCFCompareGreaterThan) {
+    return -2;
+  }
+  int c = -1;
+  CFNumberRef cc = CFNumberCreate(NULL, 3, &c); // kCFNumberSInt32Type
+  long long d = -1;
+  CFNumberRef dd = CFNumberCreate(NULL, 4, &d); // kCFNumberSInt64Type
+  res = CFNumberCompare(cc, dd, NULL);
+  if (res != kCFCompareEqualTo) {
+    return -3;
+  }
+  char e = 0;
+  CFNumberRef ee = CFNumberCreate(NULL, 1, &e); // kCFNumberSInt8Type
+  double f = 0.0;
+  CFNumberRef ff = CFNumberCreate(NULL, 6, &f); // kCFNumberFloat64Type
+  res = CFNumberCompare(ee, ff, NULL);
+  if (res != kCFCompareEqualTo) {
+    return -4;
+  }
+  return 0;
+}
+
+#define INT8_MAX 127
+#define INT16_MAX 32767
+#define INT32_MAX 2147483647
+#define INT64_MAX 9223372036854775807LL
+
+#define INT8_MIN -128
+#define INT16_MIN -32768
+
+// Note: those cannot expressed as literals
+#define INT32_MIN (-INT32_MAX - 1)
+#define INT64_MIN (-INT64_MAX - 1)
+
+#define UINT8_MAX 255
+#define UINT16_MAX 65535
+#define UINT32_MAX 4294967295U
+#define UINT64_MAX 18446744073709551615ULL
+
+#define HUGE_VALF 1e50f
+#define INFINITY HUGE_VALF
+
+typedef signed char int8_t;
+typedef short int16_t;
+typedef int int32_t;
+typedef long long int int64_t;
+
+#ifndef kCFNumberSInt8Type
+#define kCFNumberSInt8Type 1
+#define kCFNumberSInt16Type 2
+#define kCFNumberSInt32Type 3
+#define kCFNumberSInt64Type 4
+#define kCFNumberFloat32Type 5
+#define kCFNumberFloat64Type 6
+#endif
+
+static int cmp(CFNumberRef a, CFNumberRef b, CFComparisonResult expected,
+               const char *label, int failCode) {
+  CFComparisonResult r = CFNumberCompare(a, b, NULL);
+  if (r != expected) {
+    const char *expStr = expected == kCFCompareLessThan      ? "<"
+                         : expected == kCFCompareGreaterThan ? ">"
+                                                             : "==";
+    const char *gotStr = r == kCFCompareLessThan      ? "<"
+                         : r == kCFCompareGreaterThan ? ">"
+                                                      : "==";
+    printf("FAIL (%d): %s : expected %s, got %s\n", failCode, label, expStr,
+           gotStr);
+    return failCode;
+  }
+  return 0;
+}
+
+#define MAKE_NUM(var, typeEnum) CFNumberCreate(NULL, typeEnum, &(var))
+#define TEST_CMP(aRef, bRef, expected, label, code)                            \
+  do {                                                                         \
+    int _e = cmp(aRef, bRef, expected, label, code);                           \
+    if (_e) {                                                                  \
+      CFRelease(aRef);                                                         \
+      CFRelease(bRef);                                                         \
+      return _e;                                                               \
+    }                                                                          \
+    CFRelease(aRef);                                                           \
+    CFRelease(bRef);                                                           \
+  } while (0)
+
+static int compare_integral_examples(void) {
+  /* Cross-width equalities */
+  {
+    int32_t v32 = -1;
+    int64_t v64 = -1;
+    CFNumberRef n32 = MAKE_NUM(v32, kCFNumberSInt32Type);
+    CFNumberRef n64 = MAKE_NUM(v64, kCFNumberSInt64Type);
+    TEST_CMP(n32, n64, kCFCompareEqualTo, "SInt32 -1 == SInt64 -1", -10);
+  }
+  {
+    int8_t z8 = 0;
+    double zD = 0.0;
+    CFNumberRef n8 = MAKE_NUM(z8, kCFNumberSInt8Type);
+    CFNumberRef nD = MAKE_NUM(zD, kCFNumberFloat64Type);
+    TEST_CMP(n8, nD, kCFCompareEqualTo, "SInt8 0 == Float64 0.0", -11);
+  }
+
+  /* Min / Max ordering across widths */
+  {
+    int64_t min64 = INT64_MIN;
+    int32_t min32 = INT32_MIN;
+    CFNumberRef n64 = MAKE_NUM(min64, kCFNumberSInt64Type);
+    CFNumberRef n32 = MAKE_NUM(min32, kCFNumberSInt32Type);
+    TEST_CMP(n64, n32, kCFCompareLessThan, "INT64_MIN < INT32_MIN", -12);
+  }
+  {
+    int64_t max64 = INT64_MAX;
+    int32_t max32 = INT32_MAX;
+    CFNumberRef n64 = MAKE_NUM(max64, kCFNumberSInt64Type);
+    CFNumberRef n32 = MAKE_NUM(max32, kCFNumberSInt32Type);
+    TEST_CMP(n64, n32, kCFCompareGreaterThan, "INT64_MAX > INT32_MAX", -13);
+  }
+  {
+    int16_t min16 = INT16_MIN; /* -32768 */
+    int8_t min8 = INT8_MIN;    /* -128   */
+    CFNumberRef n16 = MAKE_NUM(min16, kCFNumberSInt16Type);
+    CFNumberRef n8 = MAKE_NUM(min8, kCFNumberSInt8Type);
+    TEST_CMP(n16, n8, kCFCompareLessThan, "INT16_MIN < INT8_MIN", -14);
+  }
+  {
+    int16_t max16 = INT16_MAX;
+    int8_t max8 = INT8_MAX;
+    CFNumberRef n16 = MAKE_NUM(max16, kCFNumberSInt16Type);
+    CFNumberRef n8 = MAKE_NUM(max8, kCFNumberSInt8Type);
+    TEST_CMP(n16, n8, kCFCompareGreaterThan, "INT16_MAX > INT8_MAX", -15);
+  }
+
+  /* Extremes vs -1 */
+  {
+    int64_t min64 = INT64_MIN;
+    int64_t neg1 = -1;
+    CFNumberRef nMin = MAKE_NUM(min64, kCFNumberSInt64Type);
+    CFNumberRef nNeg1 = MAKE_NUM(neg1, kCFNumberSInt64Type);
+    TEST_CMP(nMin, nNeg1, kCFCompareLessThan, "INT64_MIN < -1", -16);
+  }
+
+  return 0;
+}
+
+static int compare_precision_examples(void) {
+  /* Original float vs double 3.333 */
+  {
+    float f = 3.333f;
+    double d = 3.333;
+    CFNumberRef nf = MAKE_NUM(f, kCFNumberFloat32Type);
+    CFNumberRef nd = MAKE_NUM(d, kCFNumberFloat64Type);
+    /* float loses precision => float < double (expected) */
+    TEST_CMP(nf, nd, kCFCompareLessThan, "float 3.333f < double 3.333", -20);
+    /* Reverse */
+    float f2 = 3.333f;
+    double d2 = 3.333;
+    CFNumberRef nf2 = MAKE_NUM(f2, kCFNumberFloat32Type);
+    CFNumberRef nd2 = MAKE_NUM(d2, kCFNumberFloat64Type);
+    TEST_CMP(nd2, nf2, kCFCompareGreaterThan, "double 3.333 > float 3.333f",
+             -21);
+  }
+
+  /* 0.1f vs 0.1 (0.1f rounds *up* relative to double literal 0.1) */
+  {
+    float f = 0.1f;
+    double d = 0.1; /* double literal */
+    CFNumberRef nf = MAKE_NUM(f, kCFNumberFloat32Type);
+    CFNumberRef nd = MAKE_NUM(d, kCFNumberFloat64Type);
+    /* 0.1f (promoted) is slightly greater than 0.1 double */
+    TEST_CMP(nf, nd, kCFCompareGreaterThan, "0.1f > 0.1 (double)", -22);
+  }
+
+  /* INT64_MAX vs its double representation (double rounds) */
+  {
+    int64_t i = INT64_MAX;        /*  9223372036854775807 */
+    double d = (double)INT64_MAX; /* Rounds to 9223372036854775808 */
+    CFNumberRef ni = MAKE_NUM(i, kCFNumberSInt64Type);
+    CFNumberRef nd = MAKE_NUM(d, kCFNumberFloat64Type);
+    TEST_CMP(ni, nd, kCFCompareLessThan,
+             "INT64_MAX (exact) < double(INT64_MAX) (rounded up)", -23);
+  }
+
+  return 0;
+}
+
+static int compare_special_float_values(void) {
+  /* Positive vs negative zero */
+  {
+    double pz = 0.0;
+    double nz = -0.0;
+    CFNumberRef nP = MAKE_NUM(pz, kCFNumberFloat64Type);
+    CFNumberRef nN = MAKE_NUM(nz, kCFNumberFloat64Type);
+    TEST_CMP(nP, nN, kCFCompareEqualTo, "+0.0 == -0.0", -24);
+  }
+
+  /* Infinities */
+  {
+    double inf = INFINITY;
+    double ninf = -INFINITY;
+    double zero = 0.0;
+
+    CFNumberRef nInf = MAKE_NUM(inf, kCFNumberFloat64Type);
+    CFNumberRef nZero = MAKE_NUM(zero, kCFNumberFloat64Type);
+    TEST_CMP(nInf, nZero, kCFCompareGreaterThan, "Inf  > 0", -25);
+
+    nZero = MAKE_NUM(zero, kCFNumberFloat64Type);
+    CFNumberRef nNInf = MAKE_NUM(ninf, kCFNumberFloat64Type);
+    TEST_CMP(nNInf, nZero, kCFCompareLessThan, "-Inf < 0", -26);
+
+    nInf = MAKE_NUM(inf, kCFNumberFloat64Type);
+    nNInf = MAKE_NUM(ninf, kCFNumberFloat64Type);
+    TEST_CMP(nInf, nNInf, kCFCompareGreaterThan, "Inf  > -Inf", -27);
+  }
+
+  return 0;
+}
+
+static int compare_unsigned_limit_examples(void) {
+  /* UINT64_MAX cannot be stored exactly as a signed 64-bit CFNumber.
+     We *demonstrate* by comparing a double approximation vs INT64_MAX. */
+  {
+    double u64d = (double)UINT64_MAX; /* ~1.844674407e19 (loses low bits) */
+    int64_t i64max = INT64_MAX;       /*  9.223372036854775807e18 */
+    CFNumberRef nUApprox = MAKE_NUM(u64d, kCFNumberFloat64Type);
+    CFNumberRef nI64Max = MAKE_NUM(i64max, kCFNumberSInt64Type);
+    TEST_CMP(nUApprox, nI64Max, kCFCompareGreaterThan,
+             "double(UINT64_MAX) > INT64_MAX", -28);
+  }
+
+  /* Similar for smaller widths: compare UINT32_MAX via double vs INT32_MAX
+   * (exact vs rounding) */
+  {
+    double u32d = (double)UINT32_MAX; /* 4294967295 exactly representable */
+    int32_t s32max = INT32_MAX;       /* 2147483647 */
+    CFNumberRef nU = MAKE_NUM(u32d, kCFNumberFloat64Type);
+    CFNumberRef nS = MAKE_NUM(s32max, kCFNumberSInt32Type);
+    TEST_CMP(nU, nS, kCFCompareGreaterThan, "double(UINT32_MAX) > INT32_MAX",
+             -29);
+  }
+
+  /* UINT8_MAX vs INT8_MAX using a wider signed container (int16) for 255 */
+  {
+    int16_t u8max_as16 = 255; /* representable */
+    int8_t s8max = INT8_MAX;  /* 127 */
+    CFNumberRef nU = MAKE_NUM(u8max_as16, kCFNumberSInt16Type);
+    CFNumberRef nS = MAKE_NUM(s8max, kCFNumberSInt8Type);
+    TEST_CMP(nU, nS, kCFCompareGreaterThan, "255 (as SInt16) > INT8_MAX", -30);
+  }
+
+  return 0;
+}
+
+int test_CFNumberCompare_extended(void) {
+  int r;
+
+  r = compare_integral_examples();
+  if (r)
+    return r;
+  r = compare_precision_examples();
+  if (r)
+    return r;
+  r = compare_special_float_values();
+  if (r)
+    return r;
+  r = compare_unsigned_limit_examples();
+  if (r)
+    return r;
+
+  return 0;
+}
+
 // clang-format off
 #define FUNC_DEF(func)                                                         \
   { &func, #func }
@@ -2603,6 +2899,8 @@ struct {
     FUNC_DEF(test_inet_ntop),
     FUNC_DEF(test_inet_pton),
     FUNC_DEF(test_CFURL),
+    FUNC_DEF(test_CFNumberCompare_simple),
+    FUNC_DEF(test_CFNumberCompare_extended),
 };
 // clang-format on
 

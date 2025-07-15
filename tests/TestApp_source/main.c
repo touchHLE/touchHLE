@@ -228,6 +228,12 @@ void CFRelease(CFTypeRef cf);
 Boolean CFEqual(CFTypeRef cf1, CFTypeRef cf2);
 CFHashCode CFHash(CFTypeRef cf);
 
+enum {
+  kCFCompareLessThan = -1,
+  kCFCompareEqualTo = 0,
+  kCFCompareGreaterThan = 1
+};
+
 // `CFString.h`
 
 enum { kCFStringEncodingASCII = 0x600 };
@@ -304,6 +310,13 @@ CFURLRef CFURLCreateCopyAppendingPathComponent(CFAllocatorRef allocator,
                                                Boolean isDirectory);
 CFURLRef CFURLCreateCopyDeletingLastPathComponent(CFAllocatorRef allocator,
                                                   CFURLRef url);
+
+// `CFNumber.h`
+
+typedef const struct _CFNumber *CFNumberRef;
+typedef int CFNumberType;
+CFNumberRef CFNumberCreate(CFAllocatorRef, CFNumberType, const void *);
+CFComparisonResult CFNumberCompare(CFNumberRef, CFNumberRef, void *);
 
 // === Main code ===
 
@@ -2551,6 +2564,39 @@ int test_CFURL() {
   return 0;
 }
 
+int test_CFNumberCompare() {
+  float a = 3.333;
+  CFNumberRef aa = CFNumberCreate(NULL, 5, &a); // kCFNumberFloat32Type
+  double b = 3.333;
+  CFNumberRef bb = CFNumberCreate(NULL, 6, &b); // kCFNumberFloat64Type
+  CFComparisonResult res = CFNumberCompare(aa, bb, NULL);
+  // `3.333` looses precision as float, thus 2 numbers are not equal
+  if (res != kCFCompareLessThan) {
+    return -1;
+  }
+  res = CFNumberCompare(bb, aa, NULL);
+  if (res != kCFCompareGreaterThan) {
+    return -2;
+  }
+  int c = -1;
+  CFNumberRef cc = CFNumberCreate(NULL, 3, &c); // kCFNumberSInt32Type
+  long long d = -1;
+  CFNumberRef dd = CFNumberCreate(NULL, 4, &d); // kCFNumberSInt64Type
+  res = CFNumberCompare(cc, dd, NULL);
+  if (res != kCFCompareEqualTo) {
+    return -3;
+  }
+  char e = 0;
+  CFNumberRef ee = CFNumberCreate(NULL, 1, &e); // kCFNumberSInt8Type
+  double f = 0.0;
+  CFNumberRef ff = CFNumberCreate(NULL, 6, &f); // kCFNumberFloat64Type
+  res = CFNumberCompare(ee, ff, NULL);
+  if (res != kCFCompareEqualTo) {
+    return -4;
+  }
+  return 0;
+}
+
 // clang-format off
 #define FUNC_DEF(func)                                                         \
   { &func, #func }
@@ -2603,6 +2649,7 @@ struct {
     FUNC_DEF(test_inet_ntop),
     FUNC_DEF(test_inet_pton),
     FUNC_DEF(test_CFURL),
+    FUNC_DEF(test_CFNumberCompare),
 };
 // clang-format on
 

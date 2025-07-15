@@ -6,6 +6,10 @@
 //! The `NSValue` class cluster, including `NSNumber`.
 
 use super::NSUInteger;
+use crate::frameworks::core_foundation::cf_number::{
+    kCFNumberCharType, kCFNumberFloat32Type, kCFNumberFloatType, kCFNumberIntType,
+    kCFNumberSInt16Type, kCFNumberSInt32Type, kCFNumberSInt8Type, kCFNumberShortType, CFNumberType,
+};
 use crate::frameworks::foundation::ns_string::from_rust_string;
 use crate::frameworks::foundation::NSInteger;
 use crate::mem::{ConstVoidPtr, MutVoidPtr};
@@ -62,6 +66,12 @@ impl NSNumberHostObject {
             NSNumberHostObject::Char(x) => *x != 0,
         }
     }
+    fn is_float(&self) -> bool {
+        matches!(
+            self,
+            NSNumberHostObject::Float(_) | NSNumberHostObject::Double(_)
+        )
+    }
     impl_AsValue!(as_int, i32);
     impl_AsValue!(as_long_long, i64);
     impl_AsValue!(as_unsigned_long_long, u64);
@@ -70,6 +80,7 @@ impl NSNumberHostObject {
     impl_AsValue!(as_double, f64);
     impl_AsValue!(as_short, i16);
     impl_AsValue!(as_char, i8);
+    impl_AsValue!(as_i128, i128);
 }
 
 pub const CLASSES: ClassExports = objc_classes! {
@@ -320,7 +331,27 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (bool)isEqual:(id)other {
-    equality_helper(env, this, other)
+    if this == other {
+        return true;
+    }
+    let class: Class = msg_class![env; NSNumber class];
+    if !msg![env; other isKindOfClass:class] {
+        return false;
+    }
+    msg![env; this isEqualToNumber:other]
+}
+
+- (bool)isEqualToNumber:(id)other {
+    // TODO: use `compare:`
+    let num = env.objc.borrow::<NSNumberHostObject>(this);
+    let other_num = env.objc.borrow::<NSNumberHostObject>(other);
+    match (num.is_float(), other_num.is_float()) {
+        (false, false) => num.as_i128() == num.as_i128(),
+        _ => {
+            // in case of having a float, we promote to double for comparison
+            num.as_double() == other_num.as_double()
+        },
+    }
 }
 
 // TODO: accessors etc
@@ -329,29 +360,26 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 };
 
-fn equality_helper(env: &mut Environment, this: id, other: id) -> bool {
-    if this == other {
-        return true;
-    }
-    let class: Class = msg_class![env; NSNumber class];
-    if !msg![env; other isKindOfClass:class] {
-        return false;
-    }
-    let (left, right) = (env.objc.borrow(this), env.objc.borrow(other));
-    match (left, right) {
-        (&NSNumberHostObject::Bool(a), &NSNumberHostObject::Bool(b)) => a == b,
-        (&NSNumberHostObject::UnsignedLongLong(a), &NSNumberHostObject::UnsignedLongLong(b)) => {
-            a == b
+pub fn is_conversion_lossless(env: &mut Environment, this: id, type_: CFNumberType) -> bool {
+    let num = env.objc.borrow::<NSNumberHostObject>(this);
+    let num2: id = match type_ {
+        kCFNumberSInt32Type | kCFNumberIntType => {
+            let val: i32 = num.as_int();
+            msg_class![env; NSNumber numberWithInt:val]
         }
-        (&NSNumberHostObject::UnsignedInt(a), &NSNumberHostObject::UnsignedInt(b)) => a == b,
-        (&NSNumberHostObject::Int(a), &NSNumberHostObject::Int(b)) => a == b,
-        (&NSNumberHostObject::LongLong(a), &NSNumberHostObject::LongLong(b)) => a == b,
-        (&NSNumberHostObject::Float(a), &NSNumberHostObject::Float(b)) => a == b,
-        (&NSNumberHostObject::Double(a), &NSNumberHostObject::Double(b)) => a == b,
-        _ => todo!(
-            "Implement NSNumber comparisons of different types: {:?} vs {:?}",
-            left,
-            right
-        ),
-    }
+        kCFNumberFloat32Type | kCFNumberFloatType => {
+            let val: f32 = num.as_float();
+            msg_class![env; NSNumber numberWithFloat:val]
+        }
+        kCFNumberSInt16Type | kCFNumberShortType => {
+            let val: i16 = num.as_short();
+            msg_class![env; NSNumber numberWithShort:val]
+        }
+        kCFNumberSInt8Type | kCFNumberCharType => {
+            let val: i8 = num.as_char();
+            msg_class![env; NSNumber numberWithChar:val]
+        }
+        _ => unimplemented!("is_conversion_lossless for {}", type_),
+    };
+    msg![env; this isEqualToNumber:num2]
 }

@@ -409,6 +409,20 @@ impl GuestFile {
             _ => unimplemented!(),
         }
     }
+
+    pub fn stream_len(&mut self) -> std::io::Result<u64> {
+        // TODO: Remove if standard stream_len ever gets stabilized.
+        let old_position = self.stream_position()?;
+        let len = self.seek(std::io::SeekFrom::End(0))?;
+        self.seek(std::io::SeekFrom::Start(old_position))?;
+        Ok(len)
+    }
+
+    pub fn is_seekable(&self) -> bool {
+        // Due to legacy directory iteration support, directories as seekable
+        // https://stackoverflow.com/questions/65911066/what-does-lseek-mean-for-a-directory-file-descriptor
+        !matches!(self, GuestFile::Socket)
+    }
 }
 
 impl Read for GuestFile {

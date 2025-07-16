@@ -12,7 +12,6 @@ use crate::libc::errno::{set_errno, EBADF, EEXIST, ENOENT};
 use crate::libc::time::timespec;
 use crate::mem::{ConstPtr, MutPtr, SafeRead};
 use crate::Environment;
-use std::io::{Seek, SeekFrom};
 
 #[allow(non_camel_case_types)]
 pub type dev_t = u32;
@@ -109,15 +108,7 @@ fn fstat_inner(env: &mut Environment, fd: FileDescriptor, buf: MutPtr<stat>) -> 
             // TODO: use `std::fs::metadata()` instead
 
             // Obtain file size
-            // TODO: Use the stream_len() method if that ever gets stabilized.
-            let old_pos = file.file.stream_position().unwrap();
-            stat.st_size = file
-                .file
-                .seek(SeekFrom::End(0))
-                .unwrap()
-                .try_into()
-                .unwrap();
-            file.file.seek(SeekFrom::Start(old_pos)).unwrap();
+            stat.st_size = file.file.stream_len().unwrap().try_into().unwrap();
         }
         GuestFile::Directory => {
             stat.st_mode |= S_IFDIR;

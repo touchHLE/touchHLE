@@ -10,7 +10,7 @@ pub mod stat;
 use crate::abi::DotDotDot;
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::fs::{GuestFile, GuestOpenOptions, GuestPath};
-use crate::libc::errno::{set_errno, EBADF, EINTR, EINVAL, EIO};
+use crate::libc::errno::{set_errno, EBADF, EINTR, EINVAL, EIO, EOVERFLOW, ESPIPE};
 use crate::libc::sys::socket::close_socket;
 use crate::libc::unistd::pid_t;
 use crate::mem::{
@@ -289,6 +289,36 @@ pub fn read(
     }
 }
 
+pub fn pread(
+    env: &mut Environment,
+    fd: FileDescriptor,
+    buffer: MutVoidPtr,
+    size: GuestUSize,
+    offset: off_t,
+) -> GuestISize {
+    // Rust doesn't provide a way of reading at a specific offset on windows
+    // without affecting the underlying files cursor. Rather than bringing in a
+    // library that does this or dealing with the unsafe windows API directly
+    // (ReadFile + Overlapped), we can emulate the behavior with a set of seek
+    // and read calls.
+
+    // Errno is set by downstream lseek and read calls
+    let original_position = lseek(env, fd, 0, SEEK_CUR);
+    if original_position == -1 {
+        return -1;
+    }
+
+    if lseek(env, fd, offset, SEEK_SET) == -1 {
+        return -1;
+    }
+
+    let bytes_read = read(env, fd, buffer, size);
+
+    assert!(lseek(env, fd, original_position, SEEK_SET) != -1);
+
+    bytes_read
+}
+
 /// Helper for C `feof()`.
 pub(super) fn eof(env: &mut Environment, fd: FileDescriptor) -> i32 {
     let file = env.libc_state.posix_io.file_for_fd(fd).unwrap();
@@ -371,31 +401,107 @@ pub fn write(
     }
 }
 
+pub fn pwrite(
+    env: &mut Environment,
+    fd: FileDescriptor,
+    buffer: ConstVoidPtr,
+    size: GuestUSize,
+    offset: off_t,
+) -> GuestISize {
+    // Rust doesn't provide a way of writing at a specific offset on windows
+    // without affecting the underlying files cursor. Rather than bringing in a
+    // library that does this or dealing with the unsafe windows API directly
+    // (ReadFile + Overlapped), we can emulate the behavior with a set of seek
+    // and write calls.
+
+    // Errno is set by downstream lseek and write calls
+    let original_position = lseek(env, fd, 0, SEEK_CUR);
+    if original_position == -1 {
+        return -1;
+    }
+
+    if lseek(env, fd, offset, SEEK_SET) == -1 {
+        return -1;
+    }
+
+    let bytes_written = write(env, fd, buffer, size);
+
+    assert!(lseek(env, fd, original_position, SEEK_SET) != -1);
+
+    bytes_written
+}
+
 #[allow(non_camel_case_types)]
 pub type off_t = i64;
 pub const SEEK_SET: i32 = 0;
 pub const SEEK_CUR: i32 = 1;
 pub const SEEK_END: i32 = 2;
 pub fn lseek(env: &mut Environment, fd: FileDescriptor, offset: off_t, whence: i32) -> off_t {
-    // TODO: handle errno properly
-    set_errno(env, 0);
-
     let Some(file) = env.libc_state.posix_io.file_for_fd(fd) else {
-        log_dbg!("lseek({:?}, {:#x}, {}) => {}", fd, offset, whence, -1);
-        // TODO: set errno
+        log!("lseek({:?}, {:#x}, {}) => {}", fd, offset, whence, -1);
+        set_errno(env, EBADF);
         return -1;
     };
 
-    let from = match whence {
-        // not sure whether offset is treated as signed or unsigned when using
-        // SEEK_SET, so `.try_into()` seems safer.
-        SEEK_SET => SeekFrom::Start(offset.try_into().unwrap()),
-        SEEK_CUR => SeekFrom::Current(offset),
-        SEEK_END => SeekFrom::End(offset),
-        _ => panic!("Unsupported \"whence\" parameter to seek(): {whence}"),
+    if !file.file.is_seekable() {
+        log!(
+            "Warning: lseek({:?}, {:#x}, {}) => -1. Called with unseekable fd.",
+            fd,
+            offset,
+            whence
+        );
+        set_errno(env, ESPIPE);
+        return -1;
+    }
+
+    let start_position = match whence {
+        SEEK_SET => 0,
+        SEEK_CUR => file.file.stream_position().unwrap(),
+        SEEK_END => file.file.stream_len().unwrap(),
+        _ => {
+            log!(
+                "Warning: lseek({:?}, {:#x}, {}) => -1. Called with invalid \"whence\".",
+                fd,
+                offset,
+                whence
+            );
+            set_errno(env, EINVAL);
+            return -1;
+        }
     };
 
-    let res = match file.file.seek(from) {
+    let seek_position = match start_position.checked_add_signed(offset) {
+        Some(position) => position,
+        None => {
+            let (error_msg, errno) = if offset >= 0 {
+                ("Seek position does not fit in off_t.", EOVERFLOW)
+            } else {
+                ("Negative seek position.", EINVAL)
+            };
+            log!(
+                "Warning: lseek({:?}, {:#x}, {}) => -1. {}",
+                fd,
+                offset,
+                whence,
+                error_msg
+            );
+            set_errno(env, errno);
+            return -1;
+        }
+    };
+
+    if seek_position > off_t::MAX as u64 {
+        log!(
+            "Warning: lseek({:?}, {:#x}, {}) => -1. Seek position does not fit in off_t.",
+            fd,
+            offset,
+            whence
+        );
+        set_errno(env, EOVERFLOW);
+        return -1;
+    }
+
+    let res = match file.file.seek(SeekFrom::Start(seek_position)) {
         Ok(new_offset) => {
             // TODO: this side-effect should be tightened to `fseek`
             // "A successful call to the fseek() function clears
@@ -404,8 +510,20 @@ pub fn lseek(env: &mut Environment, fd: FileDescriptor, offset: off_t, whence: i
 
             new_offset.try_into().unwrap()
         }
-        // TODO: set errno
-        Err(_) => -1,
+        Err(seek_error) => {
+            match seek_error.kind() {
+                std::io::ErrorKind::InvalidInput => set_errno(env, EINVAL),
+                _ => unimplemented!("Unexpected seek error {:?}", seek_error),
+            }
+            log!(
+                "Warning: lseek({:?}, {:#x}, {}) failed with error: {:?}, returning -1",
+                fd,
+                offset,
+                whence,
+                seek_error
+            );
+            return -1;
+        }
     };
     log_dbg!("lseek({:?}, {:#x}, {}) => {}", fd, offset, whence, res);
     res
@@ -730,7 +848,9 @@ fn ftruncate(env: &mut Environment, fd: FileDescriptor, len: off_t) -> i32 {
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(open(_, _, _)),
     export_c_func!(read(_, _, _)),
+    export_c_func!(pread(_, _, _, _)),
     export_c_func!(write(_, _, _)),
+    export_c_func!(pwrite(_, _, _, _)),
     export_c_func!(lseek(_, _, _)),
     export_c_func!(close(_)),
     export_c_func!(rename(_, _)),
@@ -804,14 +924,7 @@ fn validate_lock(env: &mut Environment, fd: FileDescriptor, lock: &flock) -> Res
         }
         SEEK_END => {
             let file = env.libc_state.posix_io.file_for_fd(fd).unwrap();
-            let old_position = file.file.stream_position().unwrap();
-            let size: i64 = file
-                .file
-                .seek(SeekFrom::End(0))
-                .unwrap()
-                .try_into()
-                .unwrap();
-            file.file.seek(SeekFrom::Start(old_position)).unwrap();
+            let size: i64 = file.file.stream_len().unwrap().try_into().unwrap();
             size + lock.start
         }
         _ => {

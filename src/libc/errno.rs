@@ -21,9 +21,11 @@ pub const EDEADLK: i32 = 11;
 pub const EBUSY: i32 = 16;
 pub const EEXIST: i32 = 17;
 pub const EINVAL: i32 = 22;
+pub const ESPIPE: i32 = 29;
 #[allow(dead_code)]
 pub const EPROTONOSUPPORT: i32 = 43;
 pub const ECONNRESET: i32 = 54;
+pub const EOVERFLOW: i32 = 75;
 
 #[derive(Default)]
 pub struct State {

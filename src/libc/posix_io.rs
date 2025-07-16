@@ -72,6 +72,10 @@ pub const O_EXCL: OpenFlag = 0x800;
 /// File control command flags.
 /// This alias is for readability, POSIX just uses `int`.
 pub type FileControlCommand = i32;
+const F_GETFD: FileControlCommand = 1;
+const F_SETFD: FileControlCommand = 2;
+const F_GETLK: FileControlCommand = 7;
+const F_SETLK: FileControlCommand = 8;
 const F_RDADVISE: FileControlCommand = 44;
 const F_NOCACHE: FileControlCommand = 48;
 
@@ -564,7 +568,21 @@ fn fcntl(
         F_RDADVISE => {
             log_dbg!("TODO: Ignoring F_RDADVISE for file descriptor {}", fd);
         }
-        _ => unimplemented!(),
+        F_GETFD => {
+            log_dbg!("TODO: Ignoring F_GETFD for file descriptor {}", fd);
+        }
+        F_SETFD => {
+            log_dbg!("TODO: Ignoring F_SETFD for file descriptor {}", fd);
+        }
+        F_GETLK => {
+            log_dbg!("TODO: Ignoring F_GETLK for file descriptor {}", fd);
+        }
+        F_SETLK => {
+            log_dbg!("TODO: Ignoring F_SETLK for file descriptor {}", fd);
+        }
+        _ => {
+            unimplemented!("Unhandled fcntl command: {:?}", cmd);
+        }
     }
     0 // success
 }

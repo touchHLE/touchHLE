@@ -49,6 +49,15 @@ impl State {
         let ptr = self.errno_ptr_for_thread(mem, thread);
         mem.write(ptr, val);
     }
+
+    pub fn get_errno_for_thread(
+        &mut self,
+        mem: &mut crate::mem::Mem,
+        thread: crate::ThreadId,
+    ) -> i32 {
+        let ptr = self.errno_ptr_for_thread(mem, thread);
+        mem.read(ptr)
+    }
 }
 
 /// Helper function, not a part of libc errno
@@ -56,6 +65,13 @@ pub fn set_errno(env: &mut Environment, val: i32) {
     env.libc_state
         .errno
         .set_errno_for_thread(&mut env.mem, env.current_thread, val);
+}
+
+/// Helper function, not a part of the libc errno
+pub fn get_errno(env: &mut Environment) -> i32 {
+    env.libc_state
+        .errno
+        .get_errno_for_thread(&mut env.mem, env.current_thread)
 }
 
 fn __error(env: &mut Environment) -> MutPtr<i32> {

@@ -10,7 +10,7 @@ pub mod stat;
 use crate::abi::DotDotDot;
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::fs::{GuestFile, GuestOpenOptions, GuestPath};
-use crate::libc::errno::{set_errno, EBADF};
+use crate::libc::errno::{get_errno, set_errno, EBADF};
 use crate::libc::sys::socket::close_socket;
 use crate::mem::{ConstPtr, ConstVoidPtr, GuestISize, GuestUSize, MutPtr, MutVoidPtr, Ptr};
 use crate::Environment;
@@ -256,6 +256,37 @@ pub fn read(
     }
 }
 
+pub fn pread(
+    env: &mut Environment,
+    fd: FileDescriptor,
+    buffer: MutVoidPtr,
+    size: GuestUSize,
+    offset: off_t,
+) -> GuestISize {
+    let original_position = lseek(env, fd, 0, SEEK_CUR);
+    if original_position == -1 {
+        return -1;
+    }
+
+    if lseek(env, fd, offset, SEEK_SET) == -1 {
+        return -1;
+    }
+
+    let bytes_read = read(env, fd, buffer, size);
+    let read_errno = get_errno(env);
+
+    // This matches emulator behavior. If only last lseek fails, pread returns
+    // bytes_read with a set errno. If both read and lseek fail, pread returns
+    // -1 with the errno set by read.
+    lseek(env, fd, original_position, SEEK_SET);
+
+    if bytes_read == -1 {
+        set_errno(env, read_errno);
+    }
+
+    bytes_read
+}
+
 /// Helper for C `feof()`.
 pub(super) fn eof(env: &mut Environment, fd: FileDescriptor) -> i32 {
     let file = env.libc_state.posix_io.file_for_fd(fd).unwrap();
@@ -336,6 +367,37 @@ pub fn write(
             -1
         }
     }
+}
+
+pub fn pwrite(
+    env: &mut Environment,
+    fd: FileDescriptor,
+    buffer: ConstVoidPtr,
+    size: GuestUSize,
+    offset: off_t,
+) -> GuestISize {
+    let original_position = lseek(env, fd, 0, SEEK_CUR);
+    if original_position == -1 {
+        return -1;
+    }
+
+    if lseek(env, fd, offset, SEEK_SET) == -1 {
+        return -1;
+    }
+
+    let bytes_written = write(env, fd, buffer, size);
+    let write_errno = get_errno(env);
+
+    // This matches emulator behavior. If only last lseek fails, pwrite returns
+    // bytes_written with a set errno. If both write and lseek fail, pwrite
+    // returns -1 with the errno set by write.
+    lseek(env, fd, original_position, SEEK_SET);
+
+    if bytes_written == -1 {
+        set_errno(env, write_errno);
+    }
+
+    bytes_written
 }
 
 #[allow(non_camel_case_types)]
@@ -591,7 +653,9 @@ fn ftruncate(env: &mut Environment, fd: FileDescriptor, len: off_t) -> i32 {
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(open(_, _, _)),
     export_c_func!(read(_, _, _)),
+    export_c_func!(pread(_, _, _, _)),
     export_c_func!(write(_, _, _)),
+    export_c_func!(pwrite(_, _, _, _)),
     export_c_func!(lseek(_, _, _)),
     export_c_func!(close(_)),
     export_c_func!(rename(_, _)),

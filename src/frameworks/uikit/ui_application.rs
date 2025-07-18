@@ -165,7 +165,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (id)windows {
-    log!("TODO: UIApplication's windows getter is returning only visible windows");
+    log_once!("TODO: UIApplication's windows getter is returning only visible windows");
     let visible_windows: Vec<id> = (*env
         .framework_state
         .uikit

@@ -42,7 +42,6 @@ pub const CONSTANTS: ConstantExports = &[
 #[derive(Default)]
 pub struct State {
     run_loops: HashMap<ThreadId, id>,
-    have_shown_reentrancy_warning: bool,
 }
 
 struct NSRunLoopHostObject {
@@ -217,17 +216,9 @@ pub fn run_run_loop(
             "Run loop {:?} is already running, skipping (TODO: support run loop re-entrancy)",
             run_loop
         );
-        if !std::mem::replace(
-            &mut env
-                .framework_state
-                .foundation
-                .ns_run_loop
-                .have_shown_reentrancy_warning,
-            true,
-        ) {
-            // Show one-time non-dbg warning to avoid spammy log output.
-            log!("Warning: run loop re-entrancy is unimplemented but may be relied upon by this app, this warning will only be shown once");
-        }
+        log_once!(
+            "Warning: run loop re-entrancy is unimplemented but may be relied upon by this app."
+        );
         return;
     };
     env.objc

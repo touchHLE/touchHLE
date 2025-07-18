@@ -165,7 +165,8 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (id)windows {
-    log!("TODO: UIApplication's windows getter is returning only visible windows");
+    // very spammy in some games (example: DOA Blacjack), so using log_dbg
+    log_dbg!("TODO: UIApplication's windows getter is returning only visible windows");
     let visible_windows: Vec<id> = (*env
         .framework_state
         .uikit

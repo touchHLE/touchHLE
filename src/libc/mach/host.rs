@@ -8,9 +8,11 @@
 #![allow(non_camel_case_types)]
 
 use crate::dyld::FunctionExports;
-use crate::libc::mach_thread_info::{
-    kern_return_t, mach_msg_type_number_t, mach_port_t, natural_t, KERN_SUCCESS,
-};
+use crate::libc::mach::kern_return::{kern_return_t, KERN_SUCCESS};
+use crate::libc::mach::message::mach_msg_type_number_t;
+use crate::libc::mach::port::mach_port_t;
+use crate::libc::mach::types::natural_t;
+use crate::libc::mach::vm::{vm_size_t, PAGE_SIZE};
 use crate::mem::{guest_size_of, MutPtr, SafeRead};
 use crate::{export_c_func, Environment};
 
@@ -18,14 +20,10 @@ type host_t = mach_port_t;
 type host_name_port_t = host_t;
 type host_flavor_t = natural_t;
 type host_info_t = MutPtr<natural_t>;
-type vm_size_t = natural_t;
 
 // The value doesn't matter that much, only the fact that it's unique
 // per host so we could assert against it in our code.
 const MACH_HOST_SELF: host_name_port_t = 0x100c442e;
-
-pub const PAGE_SIZE: vm_size_t = 4096;
-
 const HOST_VM_INFO: host_flavor_t = 2;
 
 #[repr(C, packed)]

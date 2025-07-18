@@ -12,13 +12,10 @@
 use crate::dyld::FunctionExports;
 use crate::environment::Environment;
 use crate::export_c_func;
-use crate::libc::mach_init::MACH_TASK_SELF;
-use crate::libc::mach_thread_info::{kern_return_t, KERN_SUCCESS};
+use crate::libc::mach::kern_return::{kern_return_t, KERN_SUCCESS};
+use crate::libc::mach::task::{task_t, MACH_TASK_SELF};
 use crate::libc::semaphore::{sem_destroy, sem_init, sem_post, sem_t, sem_wait};
 use crate::mem::MutPtr;
-
-type task = std::ffi::c_void;
-type task_t = MutPtr<task>;
 
 // Opaque type, can be anything we want. Reusing sem_t for convenience
 type semaphore = sem_t;

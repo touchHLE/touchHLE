@@ -10,25 +10,19 @@
 #![allow(non_camel_case_types)]
 
 use crate::dyld::{export_c_func, FunctionExports};
+use crate::libc::mach::kern_return::{kern_return_t, KERN_SUCCESS};
+use crate::libc::mach::message::mach_msg_type_number_t;
+use crate::libc::mach::policy::policy_t;
+use crate::libc::mach::port::mach_port_t;
+use crate::libc::mach::types::{boolean_t, integer_t, natural_t};
+
 use crate::mem::{guest_size_of, MutPtr, SafeRead};
 use crate::Environment;
-
-// TODO: Move these common definitions into separate modules
-pub type kern_return_t = i32;
-pub const KERN_SUCCESS: kern_return_t = 0;
-
-pub type mach_port_t = u32;
-
-pub type natural_t = u32;
-type integer_t = i32;
-type boolean_t = i32;
 
 type thread_inspect_t = mach_port_t;
 type thread_flavor_t = natural_t;
 type thread_info_t = MutPtr<integer_t>;
-pub type mach_msg_type_number_t = natural_t;
 
-type policy_t = i32;
 const POLICY_TIMESHARE: policy_t = 1;
 
 const THREAD_BASIC_INFO: thread_flavor_t = 3;

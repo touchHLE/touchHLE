@@ -8,11 +8,8 @@
 //! There's not much documentation available for these.
 
 use crate::dyld::{ConstantExports, HostConstant};
-use crate::libc::mach_host::PAGE_SIZE;
-use crate::libc::mach_thread_info::mach_port_t;
-
-// Unique mock value so we can assert against itself
-pub const MACH_TASK_SELF: mach_port_t = 0x7461736b;
+use crate::libc::mach::task::MACH_TASK_SELF;
+use crate::libc::mach::vm::PAGE_SIZE;
 
 pub const CONSTANTS: ConstantExports = &[
     (

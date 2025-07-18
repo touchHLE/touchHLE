@@ -23,10 +23,10 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (())startAnimating {
-    log!("TODO: [(UIActivityIndicatorView *){:?} startAnimating]", this);
+    log_once!("TODO: [(UIActivityIndicatorView *){:?} startAnimating]", this);
 }
 - (())stopAnimating {
-    log!("TODO: [(UIActivityIndicatorView *){:?} stopAnimating]", this);
+    log_once!("TODO: [(UIActivityIndicatorView *){:?} stopAnimating]", this);
 }
 
 - (())setHidesWhenStopped:(bool)_hides {

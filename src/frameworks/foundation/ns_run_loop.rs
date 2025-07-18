@@ -20,6 +20,7 @@ use crate::frameworks::{core_animation, media_player, uikit};
 use crate::objc::{id, msg, objc_classes, release, retain, Class, ClassExports, HostObject};
 use crate::Environment;
 use std::collections::HashMap;
+use std::sync::OnceLock;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 /// `NSString*`
@@ -42,7 +43,6 @@ pub const CONSTANTS: ConstantExports = &[
 #[derive(Default)]
 pub struct State {
     run_loops: HashMap<ThreadId, id>,
-    have_shown_reentrancy_warning: bool,
 }
 
 struct NSRunLoopHostObject {
@@ -217,17 +217,11 @@ pub fn run_run_loop(
             "Run loop {:?} is already running, skipping (TODO: support run loop re-entrancy)",
             run_loop
         );
-        if !std::mem::replace(
-            &mut env
-                .framework_state
-                .foundation
-                .ns_run_loop
-                .have_shown_reentrancy_warning,
-            true,
-        ) {
-            // Show one-time non-dbg warning to avoid spammy log output.
-            log!("Warning: run loop re-entrancy is unimplemented but may be relied upon by this app, this warning will only be shown once");
-        }
+        static RE_ENTRANCY_WARNING: OnceLock<()> = OnceLock::new();
+        log_once!(
+            "Warning: run loop re-entrancy is unimplemented but may be relied upon by this app.",
+            RE_ENTRANCY_WARNING
+        );
         return;
     };
     env.objc

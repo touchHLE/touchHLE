@@ -42,6 +42,19 @@ macro_rules! log_dbg {
     }
 }
 
+/// Like [log], but messages only log once and cannot have formatting.
+/// To be used for log messages that are known to spam the log file (like those
+/// logged every frame).
+macro_rules! log_once {
+    ($msg:literal) => {{
+        use std::sync::OnceLock;
+        static LOG_ONCE_LOCK: OnceLock<()> = OnceLock::new();
+        if LOG_ONCE_LOCK.set(()).is_ok() {
+            log!("{} [this log will only be shown once]", $msg);
+        }
+    }};
+}
+
 /// Print a message (with implicit newline). This should be used for all
 /// touchHLE output that isn't coming from the app itself.
 ///

@@ -5,8 +5,13 @@
  */
 //! Logging and terminal output macros.
 
+use std::collections::HashSet;
 use std::fs::File;
-use std::sync::LazyLock;
+use std::sync::{LazyLock, Mutex};
+
+#[doc(hidden)]
+pub static LOGGED_MESSAGES: LazyLock<Mutex<HashSet<String>>> =
+    LazyLock::new(|| Mutex::new(HashSet::new()));
 
 /// Get a handle to the log file. This is only for use by logging macros!
 ///
@@ -40,6 +45,20 @@ macro_rules! log_dbg {
             log!($($arg)*);
         }
     }
+}
+
+/// Like [log], but prints the message only once when duplicates are detected.
+/// To be used for log messages that are kown to spam the log file (like those
+/// logged every frame).
+#[macro_export]
+macro_rules! log_once {
+    ($($arg:tt)+) => {{
+        let message = format!($($arg)+);
+        let mut set = $crate::log::LOGGED_MESSAGES.lock().unwrap();
+        if set.insert(message.clone()) {
+            log!("{}", message);
+        }
+    }};
 }
 
 /// Print a message (with implicit newline). This should be used for all

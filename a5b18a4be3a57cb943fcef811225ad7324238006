@@ -34,6 +34,24 @@
       "parentUuid": "b455b71d_ed6071cd",
       "revId": "a5b18a4be3a57cb943fcef811225ad7324238006",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d8df74ae_2f48b105",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 7
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-07-18T01:31:43Z",
+      "side": 1,
+      "message": "I looked into this and I am pretty sure that it is sizeToFit https://developer.apple.com/documentation/uikit/uiview/sizetofit()?language\u003dobjc\nor autoResizeSubViews https://developer.apple.com/documentation/appkit/nsview/autoresizessubviews \n\nOn a real iOS Device DOA Blackjack is sized down quite a bit on the screen and has a ton of black above and below (see this here: https://www.youtube.com/watch?v\u003d3gbIlrZ1DQ8 to see what I mean).  Since touchHLE just has sizeToFit and setAutoresizesSubviews stubbed, this game and any other that use it will probably have this status bar problem. \n\nHonestly I\u0027d rather not fix it to look like that with the black on top and bottom and just have it be full screen. This hack allows for that. I guess a different solution might be to simply implement the correct function above and make it remove the status bar gap then.",
+      "parentUuid": "c3f166f1_1853007c",
+      "revId": "a5b18a4be3a57cb943fcef811225ad7324238006",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

@@ -13,7 +13,6 @@ use std::time::{Duration, Instant, SystemTime};
 
 #[derive(Default)]
 pub struct State {
-    y2k38_warned: bool,
     /// Temporary static storage for the return value of `gmtime` or
     /// `localtime`. The standard allows calls to either to overwrite it.
     gmtime_tmp: Option<MutPtr<tm>>,
@@ -46,9 +45,8 @@ fn time(env: &mut Environment, out: MutPtr<time_t>) -> time_t {
         .unwrap()
         .as_secs();
     let time = time64 as time_t;
-    if !env.libc_state.time.y2k38_warned && time64 != time as u64 {
-        env.libc_state.time.y2k38_warned = true;
-        log!("Warning: system clock is beyond Y2K38 and might confuse the app");
+    if time64 != time as u64 {
+        log_once!("Warning: [time] system clock is beyond Y2K38 and might confuse the app");
     }
     if !out.is_null() {
         env.mem.write(out, time);
@@ -502,9 +500,8 @@ fn gettimeofday(
 
     let time_s_64: u64 = time.as_secs();
     let tv_sec = time_s_64 as time_t;
-    if !env.libc_state.time.y2k38_warned && time_s_64 != tv_sec as u64 {
-        env.libc_state.time.y2k38_warned = true;
-        log!("Warning: system clock is beyond Y2K38 and might confuse the app");
+    if time_s_64 != tv_sec as u64 {
+        log_once!("Warning: [gettimeofday] system clock is beyond Y2K38 and might confuse the app");
     }
     let tv_usec: suseconds_t = time.subsec_micros().try_into().unwrap();
 

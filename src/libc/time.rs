@@ -9,11 +9,13 @@ use crate::dyld::{export_c_func, FunctionExports};
 use crate::libc::errno::set_errno;
 use crate::mem::{guest_size_of, ConstPtr, MutPtr, Ptr, SafeRead};
 use crate::Environment;
+use std::sync::OnceLock;
 use std::time::{Duration, Instant, SystemTime};
+
+static Y2K38_WARNING: OnceLock<()> = OnceLock::new();
 
 #[derive(Default)]
 pub struct State {
-    y2k38_warned: bool,
     /// Temporary static storage for the return value of `gmtime` or
     /// `localtime`. The standard allows calls to either to overwrite it.
     gmtime_tmp: Option<MutPtr<tm>>,
@@ -46,9 +48,11 @@ fn time(env: &mut Environment, out: MutPtr<time_t>) -> time_t {
         .unwrap()
         .as_secs();
     let time = time64 as time_t;
-    if !env.libc_state.time.y2k38_warned && time64 != time as u64 {
-        env.libc_state.time.y2k38_warned = true;
-        log!("Warning: system clock is beyond Y2K38 and might confuse the app");
+    if time64 != time as u64 {
+        log_once!(
+            "Warning: system clock is beyond Y2K38 and might confuse the app",
+            Y2K38_WARNING
+        );
     }
     if !out.is_null() {
         env.mem.write(out, time);
@@ -502,9 +506,11 @@ fn gettimeofday(
 
     let time_s_64: u64 = time.as_secs();
     let tv_sec = time_s_64 as time_t;
-    if !env.libc_state.time.y2k38_warned && time_s_64 != tv_sec as u64 {
-        env.libc_state.time.y2k38_warned = true;
-        log!("Warning: system clock is beyond Y2K38 and might confuse the app");
+    if time_s_64 != tv_sec as u64 {
+        log_once!(
+            "Warning: system clock is beyond Y2K38 and might confuse the app",
+            Y2K38_WARNING
+        );
     }
     let tv_usec: suseconds_t = time.subsec_micros().try_into().unwrap();
 

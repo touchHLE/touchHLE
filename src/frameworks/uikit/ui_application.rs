@@ -16,6 +16,7 @@ use crate::objc::{
 };
 use crate::window::DeviceOrientation;
 use crate::Environment;
+use std::sync::OnceLock;
 
 #[derive(Default)]
 pub struct State {
@@ -165,7 +166,11 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (id)windows {
-    log!("TODO: UIApplication's windows getter is returning only visible windows");
+    static UIAPP_WINDOWS_TODO: OnceLock<()> = OnceLock::new();
+    log_once!(
+        "TODO: UIApplication's windows getter is returning only visible windows",
+        UIAPP_WINDOWS_TODO
+    );
     let visible_windows: Vec<id> = (*env
         .framework_state
         .uikit

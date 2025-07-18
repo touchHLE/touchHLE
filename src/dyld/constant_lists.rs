@@ -16,7 +16,7 @@ use crate::libc;
 pub const CONSTANT_LISTS: &[super::ConstantExports] = &[
     libc::ctype::CONSTANTS,
     libc::stdio::CONSTANTS,
-    libc::mach_init::CONSTANTS,
+    libc::mach::init::CONSTANTS,
     core_animation::ca_animation::CONSTANTS,
     core_animation::ca_layer::CONSTANTS,
     core_animation::ca_media_timing_function::CONSTANTS,

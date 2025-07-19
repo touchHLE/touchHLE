@@ -3,9 +3,17 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
-//! `NSURLConnection`.
+//! `NSURLConnection` mock implementation.
 
-use crate::objc::{autorelease, id, msg, nil, objc_classes, release, ClassExports};
+use crate::objc::{id, objc_classes, ClassExports, HostObject, NSZonePtr};
+
+#[derive(Default)]
+pub struct NSURLConnectionHostObject {
+    pub request_url: Option<String>,
+    pub is_running: bool,
+}
+
+impl HostObject for NSURLConnectionHostObject {}
 
 pub const CLASSES: ClassExports = objc_classes! {
 
@@ -13,30 +21,30 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 @implementation NSURLConnection: NSObject
 
-+ (id)connectionWithRequest:(id)request // NSURLRequest *
-                   delegate:(id)delegate {
-    let new: id = msg![env; this alloc];
-    let new: id = msg![env; new initWithRequest:request delegate:delegate];
-    autorelease(env, new)
++ (id)allocWithZone:(NSZonePtr)_zone {
+    let host_object = Box::<NSURLConnectionHostObject>::default();
+    env.objc.alloc_object(this, host_object, &mut env.mem)
 }
 
-- (id)initWithRequest:(id)request // NSURLRequest *
-             delegate:(id)delegate {
-    msg![env; this initWithRequest:request delegate:delegate startImmediately:true]
+- (id)initWithRequest:(id)request delegate:(id)delegate startImmediately:(bool)start {
+    log!("[NSURLConnection initWithRequest:delegate:startImmediately:] => request={:?}, delegate={:?}, start={:?}", request, delegate, start);
+
+    let url: Option<String> = Some("<mocked URL>".to_string());
+    let host = env.objc.borrow_mut::<NSURLConnectionHostObject>(this);
+    host.request_url = url;
+    host.is_running = start;
+
+    this
 }
 
-- (id)initWithRequest:(id)request // NSURLRequest *
-             delegate:(id)delegate
-     startImmediately:(bool)start_immediately {
-    log!(
-        "TODO: [(NSURLConnection *){:?} initWithRequest:{:?} delegate:{:?} startImmediately:{}]",
-        this,
-        request,
-        delegate,
-        start_immediately,
-    );
-    release(env, this);
-    nil
+- (())start {
+    log!("[NSURLConnection start]");
+    env.objc.borrow_mut::<NSURLConnectionHostObject>(this).is_running = true;
+}
+
+- (())cancel {
+    log!("[NSURLConnection cancel]");
+    env.objc.borrow_mut::<NSURLConnectionHostObject>(this).is_running = false;
 }
 
 @end

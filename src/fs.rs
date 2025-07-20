@@ -386,8 +386,14 @@ impl GuestFile {
         match self {
             GuestFile::File(file) => file.sync_all(),
             GuestFile::IpaBundleFile(_) | GuestFile::ResourceFile(_) => Ok(()),
-            GuestFile::Directory => panic!("Attempt to sync a directory as a guest file"),
-            _ => unimplemented!(),
+            GuestFile::Directory => {
+                log!("Warning: syncing directory as a guest file.");
+                Ok(())
+            }
+            GuestFile::Socket => Err(std::io::Error::new(
+                std::io::ErrorKind::Unsupported,
+                "Sync operation not supported on socket",
+            )),
         }
     }
     pub fn set_len(&self, len: u64) -> std::io::Result<()> {

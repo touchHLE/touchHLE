@@ -10,7 +10,7 @@ pub mod stat;
 use crate::abi::DotDotDot;
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::fs::{GuestFile, GuestOpenOptions, GuestPath};
-use crate::libc::errno::{set_errno, EBADF};
+use crate::libc::errno::{set_errno, EBADF, EINTR, EINVAL, EIO};
 use crate::libc::sys::socket::close_socket;
 use crate::mem::{ConstPtr, ConstVoidPtr, GuestISize, GuestUSize, MutPtr, MutVoidPtr, Ptr};
 use crate::Environment;
@@ -577,6 +577,43 @@ fn flock(env: &mut Environment, fd: FileDescriptor, operation: FLockFlag) -> i32
     0
 }
 
+fn fsync(env: &mut Environment, fd: FileDescriptor) -> i32 {
+    let Some(file) = env.libc_state.posix_io.file_for_fd(fd) else {
+        log!(
+            "Warning: fsync({:?}) called with unknown fd, returning -1",
+            fd,
+        );
+        set_errno(env, EBADF);
+        return -1;
+    };
+
+    match file.file.sync_all() {
+        Ok(()) => 0,
+        Err(error) => {
+            match error.kind() {
+                std::io::ErrorKind::PermissionDenied => {
+                    log!(
+                        "Warning: fsync({:?}) sync failed with error: {:?}, returning 0 to match expected behavior",
+                        fd,
+                        error
+                    );
+                    return 0;
+                }
+                std::io::ErrorKind::Unsupported => set_errno(env, EINVAL),
+                std::io::ErrorKind::Interrupted => set_errno(env, EINTR),
+                _ => set_errno(env, EIO),
+            }
+
+            log!(
+                "Warning: fsync({:?}) sync failed with error: {:?}, returning -1",
+                fd,
+                error
+            );
+            -1
+        }
+    }
+}
+
 fn ftruncate(env: &mut Environment, fd: FileDescriptor, len: off_t) -> i32 {
     // TODO: handle errno properly
     set_errno(env, 0);
@@ -599,6 +636,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(chdir(_)),
     export_c_func!(fcntl(_, _, _)),
     export_c_func!(flock(_, _)),
+    export_c_func!(fsync(_)),
     export_c_func!(ftruncate(_, _)),
 ];
 

@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a231346f_95058d06",
+        "filename": "src/fs.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 389,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-07-20T11:05:22Z",
+      "side": 1,
+      "message": "could you please keep GuestFile::Directory as own case and have a log message?",
+      "revId": "a6fc68116b36dd37b69527c43c3ed69a71b62fa3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "872bc6b2_cc433cfa",
+        "filename": "src/libc/posix_io.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 595,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-07-20T11:05:22Z",
+      "side": 1,
+      "message": "could you print error as well?",
+      "revId": "a6fc68116b36dd37b69527c43c3ed69a71b62fa3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "30243513_d4da48a1",
+        "filename": "src/libc/posix_io.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 596,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-07-20T11:05:22Z",
+      "side": 1,
+      "message": "nit: does this pass linting?",
+      "revId": "a6fc68116b36dd37b69527c43c3ed69a71b62fa3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "23c501d4_31e2bfdc",
+        "filename": "src/libc/posix_io.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 597,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-07-20T11:05:22Z",
+      "side": 1,
+      "message": "do we know what errno is expected here?",
+      "revId": "a6fc68116b36dd37b69527c43c3ed69a71b62fa3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

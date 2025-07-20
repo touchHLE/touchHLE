@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2beb6c44_42346d2a",
+        "filename": "src/libc/posix_io.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 581,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-07-20T18:06:12Z",
+      "side": 1,
+      "message": "I think you should either keep a TODO comment or remove that function call completely (if you\u0027re sure all errnos are set correctly here)",
+      "revId": "586f104b48b7c102beaccfd62ba9885e7c4552c0",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

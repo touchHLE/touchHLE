@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "7e1da2d0_21258e8e",
+        "filename": "src/fs.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 389,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2025-07-20T18:00:36Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "a231346f_95058d06",
+      "revId": "a6fc68116b36dd37b69527c43c3ed69a71b62fa3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "872bc6b2_cc433cfa",
@@ -31,6 +49,24 @@
       "writtenOn": "2025-07-20T11:05:22Z",
       "side": 1,
       "message": "could you print error as well?",
+      "revId": "a6fc68116b36dd37b69527c43c3ed69a71b62fa3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "4665f3fc_82394551",
+        "filename": "src/libc/posix_io.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 595,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2025-07-20T18:00:36Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "872bc6b2_cc433cfa",
       "revId": "a6fc68116b36dd37b69527c43c3ed69a71b62fa3",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
@@ -52,6 +88,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "048c6378_3632f9d3",
+        "filename": "src/libc/posix_io.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 596,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2025-07-20T18:00:36Z",
+      "side": 1,
+      "message": "It did pass the lint.",
+      "parentUuid": "30243513_d4da48a1",
+      "revId": "a6fc68116b36dd37b69527c43c3ed69a71b62fa3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "23c501d4_31e2bfdc",
@@ -65,6 +119,24 @@
       "writtenOn": "2025-07-20T11:05:22Z",
       "side": 1,
       "message": "do we know what errno is expected here?",
+      "revId": "a6fc68116b36dd37b69527c43c3ed69a71b62fa3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "da25c66c_e6807065",
+        "filename": "src/libc/posix_io.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 597,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2025-07-20T18:00:36Z",
+      "side": 1,
+      "message": "Fsync had less potential error to return than I expected. Should all be handled correctly now.",
+      "parentUuid": "23c501d4_31e2bfdc",
       "revId": "a6fc68116b36dd37b69527c43c3ed69a71b62fa3",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

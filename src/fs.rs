@@ -385,8 +385,9 @@ impl GuestFile {
     pub fn sync_all(&self) -> std::io::Result<()> {
         match self {
             GuestFile::File(file) => file.sync_all(),
-            GuestFile::IpaBundleFile(_) | GuestFile::ResourceFile(_) => Ok(()),
-            GuestFile::Directory => panic!("Attempt to sync a directory as a guest file"),
+            GuestFile::IpaBundleFile(_) | GuestFile::ResourceFile(_) | GuestFile::Directory => {
+                Ok(())
+            }
             _ => unimplemented!(),
         }
     }

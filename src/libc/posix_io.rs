@@ -577,6 +577,29 @@ fn flock(env: &mut Environment, fd: FileDescriptor, operation: FLockFlag) -> i32
     0
 }
 
+fn fsync(env: &mut Environment, fd: FileDescriptor) -> i32 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
+    let Some(file) = env.libc_state.posix_io.file_for_fd(fd) else {
+        log!(
+            "Warning: fsync({:?}) called with unknown fd, returning -1",
+            fd,
+        );
+        set_errno(env, EBADF);
+        return -1;
+    };
+
+    match file.file.sync_all() {
+        Ok(()) => 0,
+        Err(_) => {
+            log!("Warning: fsync({:?}) sync failed, returning -1", fd,);
+            // TODO: Set proper errno
+            -1
+        }
+    }
+}
+
 fn ftruncate(env: &mut Environment, fd: FileDescriptor, len: off_t) -> i32 {
     // TODO: handle errno properly
     set_errno(env, 0);
@@ -599,6 +622,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(chdir(_)),
     export_c_func!(fcntl(_, _, _)),
     export_c_func!(flock(_, _)),
+    export_c_func!(fsync(_)),
     export_c_func!(ftruncate(_, _)),
 ];
 

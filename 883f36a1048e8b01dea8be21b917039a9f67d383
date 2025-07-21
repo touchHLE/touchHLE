@@ -16,6 +16,24 @@
       "message": "TODOs shouldn\u0027t be silenced, they\u0027re annoying with a purpose (a reminder that something is missing, a hint for debugging). I will probably fix the list of windows soon for unrelated reasons.\n\nFor your own purposes, if it\u0027s too annoying, I suggest you just have a local patch you rebase that disables the log.",
       "revId": "883f36a1048e8b01dea8be21b917039a9f67d383",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "bde95953_100484eb",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-07-21T13:43:28Z",
+      "side": 1,
+      "message": "Hmmmm. What if I used a game specific hack to disable this log?",
+      "parentUuid": "64140d9f_7d5ec7af",
+      "revId": "883f36a1048e8b01dea8be21b917039a9f67d383",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

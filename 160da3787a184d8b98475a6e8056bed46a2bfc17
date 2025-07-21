@@ -56,6 +56,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "f7235025_7d5b698f",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-07-21T22:38:25Z",
+      "side": 1,
+      "message": "Kinda implemented that, it seems to work",
+      "parentUuid": "b18c7489_a75f9795",
+      "revId": "160da3787a184d8b98475a6e8056bed46a2bfc17",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "0bbf2134_ffe00b8e",
         "filename": "src/mem/allocator.rs",
         "patchSetId": 1
@@ -67,6 +85,24 @@
       "writtenOn": "2025-06-15T22:21:24Z",
       "side": 1,
       "message": "I would suggest that we do it the other way around, the page size should flow from the touchHLE mem module into libc.",
+      "revId": "160da3787a184d8b98475a6e8056bed46a2bfc17",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "98c0677c_843d3b02",
+        "filename": "src/mem/allocator.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 250,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-07-21T22:38:25Z",
+      "side": 1,
+      "message": "Done\n\nI like it less because now I need to convert from uzize to GuestUSize on each constant use in libc (am I doing it wrong??)",
+      "parentUuid": "0bbf2134_ffe00b8e",
       "revId": "160da3787a184d8b98475a6e8056bed46a2bfc17",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

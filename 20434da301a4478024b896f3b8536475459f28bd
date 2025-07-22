@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8dd6d20c_fc50a483",
+        "filename": "src/libc/posix_io.rs",
+        "patchSetId": 6
+      },
+      "lineNbr": 591,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-07-22T19:58:33Z",
+      "side": 1,
+      "message": "i liked previous version better - it was clear where is Ok and Error case, now it feels like you do a early return on success.",
+      "revId": "20434da301a4478024b896f3b8536475459f28bd",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

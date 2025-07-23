@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e33351e4_6d97026f",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 4
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-07-23T13:25:32Z",
+      "side": 1,
+      "message": "Sent via discord, but adding for consistency here as well.\n\nCould add this as well:\nhttps://github.com/touchHLE/touchHLE/blob/trunk/src/frameworks/foundation/ns_file_manager.rs#L340\nalso, could add these: https://github.com/touchHLE/touchHLE/blob/trunk/src/libc/cxxabi.rs (but in this case it would need to be changed to insert/compare the message prior to adding format)",
+      "revId": "df31c5f7fc4c70f138e814faaca1adca02cbe68a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

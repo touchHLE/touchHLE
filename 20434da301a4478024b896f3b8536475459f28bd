@@ -16,6 +16,24 @@
       "message": "i liked previous version better - it was clear where is Ok and Error case, now it feels like you do a early return on success.",
       "revId": "20434da301a4478024b896f3b8536475459f28bd",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "efd7009b_0cc5f4b3",
+        "filename": "src/libc/posix_io.rs",
+        "patchSetId": 6
+      },
+      "lineNbr": 591,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2025-07-23T08:02:45Z",
+      "side": 1,
+      "message": "Reverted, I was just trying to flatten the nesting a bit.",
+      "parentUuid": "8dd6d20c_fc50a483",
+      "revId": "20434da301a4478024b896f3b8536475459f28bd",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

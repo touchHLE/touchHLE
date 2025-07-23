@@ -16,6 +16,24 @@
       "message": "Sent via discord, but adding for consistency here as well.\n\nCould add this as well:\nhttps://github.com/touchHLE/touchHLE/blob/trunk/src/frameworks/foundation/ns_file_manager.rs#L340\nalso, could add these: https://github.com/touchHLE/touchHLE/blob/trunk/src/libc/cxxabi.rs (but in this case it would need to be changed to insert/compare the message prior to adding format)",
       "revId": "df31c5f7fc4c70f138e814faaca1adca02cbe68a",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "bf1747aa_d252518d",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 4
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-07-23T14:26:17Z",
+      "side": 1,
+      "message": "Would change to this to support messages where log is the same, but values change:\n\n/// Like [log], but prints the message only once when duplicates are detected.\n/// To be used for log messages that are known to spam the log file (like those\n/// logged every frame). If a formatted message is sent, it will only log the \n/// first instance even if the actual values change.\n#[macro_export]\nmacro_rules! log_once {\n    ($fmt:literal $(, $arg:expr)* $(,)?) \u003d\u003e {{\n        let key \u003d $fmt.to_string();\n        let mut set \u003d $crate::log::LOGGED_MESSAGES.lock().unwrap();\n        if set.insert(key) {\n            log!($fmt $(, $arg)*);\n        }\n    }};\n}",
+      "parentUuid": "e33351e4_6d97026f",
+      "revId": "df31c5f7fc4c70f138e814faaca1adca02cbe68a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

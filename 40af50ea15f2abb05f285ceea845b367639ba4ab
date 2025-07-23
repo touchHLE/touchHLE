@@ -35,6 +35,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "a39b384d_eac7b376",
+        "filename": "src/log.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 51,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-07-23T12:40:38Z",
+      "side": 1,
+      "message": "Fixed",
+      "parentUuid": "9af92658_91d63064",
+      "revId": "40af50ea15f2abb05f285ceea845b367639ba4ab",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "be2f435c_024dc3a7",
@@ -48,6 +66,24 @@
       "writtenOn": "2025-07-23T10:27:26Z",
       "side": 1,
       "message": "Instead of putting a static HashSet in this module, I was thinking it should be possible to put a static boolean inside the expansion of the macro itself. That would mean that it can\u0027t track different sets of format arguments of course, but I can\u0027t think of a place we actually need that. Perhaps you could make the macro only take a literal string argument (i.e. no formatting support) to avoid confusion?\n\nI guess a `OnceLock\u003c()\u003e` might be the ideal type, actually.",
+      "revId": "40af50ea15f2abb05f285ceea845b367639ba4ab",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b4e02076_3ed34f18",
+        "filename": "src/log.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 57,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-07-23T12:40:38Z",
+      "side": 1,
+      "message": "CATransaction setValue will need it to support formatting.",
+      "parentUuid": "be2f435c_024dc3a7",
       "revId": "40af50ea15f2abb05f285ceea845b367639ba4ab",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

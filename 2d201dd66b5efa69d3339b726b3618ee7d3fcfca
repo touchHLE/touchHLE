@@ -16,6 +16,23 @@
       "message": "This looks nice, but I think this should do something to prevent duplicates like https://review.gerrithub.io/c/touchHLE/touchHLE/+/1218716",
       "revId": "2d201dd66b5efa69d3339b726b3618ee7d3fcfca",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a0f61fc1_26cc4fc1",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-07-23T17:28:53Z",
+      "side": 1,
+      "message": "Also, take a look at https://review.gerrithub.io/c/touchHLE/touchHLE/+/1218485/4/src/frameworks/uikit/ui_image.rs\n\nI am sure there are other examples, but this is in instance where this is a TODO that is not a setter where I assume this macro could be used?\n\nwhy not just make this called \u0027log_todo\u0027 or something?",
+      "revId": "2d201dd66b5efa69d3339b726b3618ee7d3fcfca",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

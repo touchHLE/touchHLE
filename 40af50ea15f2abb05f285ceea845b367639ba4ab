@@ -20,6 +20,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "a50ab79f_6a9ccbf7",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-07-23T13:05:18Z",
+      "side": 1,
+      "message": "No problem!",
+      "parentUuid": "445a51c4_3dbaa455",
+      "revId": "40af50ea15f2abb05f285ceea845b367639ba4ab",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "9af92658_91d63064",
         "filename": "src/log.rs",
         "patchSetId": 2
@@ -102,6 +120,24 @@
       "side": 1,
       "message": "and possibly UIActivityIndicatorView",
       "parentUuid": "b4e02076_3ed34f18",
+      "revId": "40af50ea15f2abb05f285ceea845b367639ba4ab",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4a3b1819_d1e2cb88",
+        "filename": "src/log.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 57,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-07-23T13:05:18Z",
+      "side": 1,
+      "message": "Added the startAnimationg/stopAnimating from UIActivityIndicatorView and changed commit message, but also check out CATransaction -\u003e https://review.gerrithub.io/c/touchHLE/touchHLE/+/1210562",
+      "parentUuid": "502285c6_26c60877",
       "revId": "40af50ea15f2abb05f285ceea845b367639ba4ab",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

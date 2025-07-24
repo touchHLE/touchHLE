@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ce7d27bb_37295787",
+        "filename": "src/libc/pthread/cond.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 112,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-07-24T22:02:36Z",
+      "side": 1,
+      "message": "do you need to have log here and not log_dbg?",
+      "revId": "699f41fd22a3913b60804ea6839497532a2a0650",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "344fb6b9_780d9b09",
+        "filename": "src/libc/pthread/cond.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 119,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-07-24T22:02:36Z",
+      "side": 1,
+      "message": "do you need to have log here and not log_dbg?",
+      "revId": "699f41fd22a3913b60804ea6839497532a2a0650",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

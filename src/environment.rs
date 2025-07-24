@@ -1158,20 +1158,20 @@ impl Environment {
                                 .pthread
                                 .cond
                                 .condition_variables
-                                .get(&cond)
+                                .get_mut(&cond)
                                 .unwrap();
-                            if host_cond.done {
-                                log_dbg!(
-                                    "Thread {} is unblocking on cond var {:?}.",
-                                    self.current_thread,
-                                    cond
-                                );
+                            let mutex = host_cond.curr_mutex.unwrap();
+                            if host_cond
+                                .waking
+                                .front()
+                                .is_some_and(|waking_thread| *waking_thread == i)
+                                && !self.mutex_state.mutex_is_locked(mutex)
+                            {
+                                log_dbg!("Thread {} is unblocking on cond var {:?}.", i, cond);
+                                host_cond.waking.pop_front();
                                 self.threads[i].blocked_by = ThreadBlock::NotBlocked;
                                 suitable_thread = Some(i);
-                                let used_mutex =
-                                    self.libc_state.pthread.cond.mutexes.remove(&cond).unwrap();
-                                mutex_to_relock = Some(used_mutex.mutex_id);
-                                break;
+                                mutex_to_relock = Some(mutex);
                             }
                         }
                         ThreadBlock::Joining(joinee_thread, ptr) => {

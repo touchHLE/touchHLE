@@ -16,6 +16,24 @@
       "message": "does it need to be public?",
       "revId": "6c77210d955dfda2fd3875ade1268a62b71c6750",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f5edf4df_78ffbfdc",
+        "filename": "src/libc/pthread/cond.rs",
+        "patchSetId": 4
+      },
+      "lineNbr": 18,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2025-07-24T22:23:59Z",
+      "side": 1,
+      "message": "I don\u0027t think it has to be now, but the motivation for this change was to make NSOperationQueue work properly, so we\u0027ll need it then. I can move it to that commit but I don\u0027t see much need to.",
+      "parentUuid": "b311d4a8_9c066363",
+      "revId": "6c77210d955dfda2fd3875ade1268a62b71c6750",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4ea7bbd6_2279debc",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 5
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-07-26T23:21:59Z",
+      "side": 1,
+      "message": "There are few existing cases which could be switched to the new approach.\nFor example, `y2k38_warned` or `have_shown_reentrancy_warning`",
+      "revId": "cf8a9c2d123867735c890ad0200d570b3b2f44e9",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f3fcc870_c9f06357",
+        "filename": "src/frameworks/uikit/ui_activity_indicator_view.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 26,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-07-26T23:21:59Z",
+      "side": 1,
+      "message": "This should not be changed to the log_once. Any given activity indicator can be started and stopped multiple times, we don\u0027t have rendring for it right now and the log is the only way to see what is going on.",
+      "revId": "cf8a9c2d123867735c890ad0200d570b3b2f44e9",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "bf8a381f_52134cea",
+        "filename": "src/log.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 59,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-07-26T23:21:59Z",
+      "side": 1,
+      "message": "I think you should add some info here that the log will be only printed once.\nYou can see for the wording for exisitng log once cases.",
+      "revId": "cf8a9c2d123867735c890ad0200d570b3b2f44e9",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

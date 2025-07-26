@@ -176,6 +176,24 @@
       "parentUuid": "4a3b1819_d1e2cb88",
       "revId": "40af50ea15f2abb05f285ceea845b367639ba4ab",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "403d1ed9_cd6b0195",
+        "filename": "src/log.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 57,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-07-26T23:21:59Z",
+      "side": 1,
+      "message": "Was it acctually addressed? I don\u0027t see the changes in the patch set.\n\nI also agree no formatting support should be enough.",
+      "parentUuid": "9f3edc83_5258049c",
+      "revId": "40af50ea15f2abb05f285ceea845b367639ba4ab",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

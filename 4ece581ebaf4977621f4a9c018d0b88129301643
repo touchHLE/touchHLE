@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "cf1ae60c_325d1f49",
+        "filename": "src/libc/posix_io.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 574,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-07-26T23:08:50Z",
+      "side": 1,
+      "message": "because you\u0027re stubbing both get and set, i\u0027m not sure if it\u0027s OK. have you checked what is expected behaviour and why do you think it will be OK to stub?",
+      "revId": "4ece581ebaf4977621f4a9c018d0b88129301643",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9cda6f10_41e6419b",
+        "filename": "src/libc/posix_io.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 580,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-07-26T23:08:50Z",
+      "side": 1,
+      "message": "same comment as above",
+      "revId": "4ece581ebaf4977621f4a9c018d0b88129301643",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

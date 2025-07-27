@@ -1027,7 +1027,10 @@ pub fn AudioQueueDispose(
 ) -> OSStatus {
     return_if_null!(in_aq);
 
-    assert!(in_immediate); // TODO
+    if !in_immediate {
+        // TODO
+        log_once!("Warning! AudioQueueDispose: in_immediate = false; continuing anyway");
+    }
 
     let state = State::get(&mut env.framework_state);
 

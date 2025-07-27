@@ -123,6 +123,24 @@
       "parentUuid": "3644568c_0ed46be3",
       "revId": "5db477177eef1b5c18f467c3332b6ffba7662de5",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "afebb43a_e8926cd3",
+        "filename": "src/frameworks/core_graphics/cg_geometry.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 195,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-07-27T20:09:42Z",
+      "side": 1,
+      "message": "\u003e otherwise I\u0027m not sure how to test this on macOS or iOS like you mentioned.\n\nThere are many ways to test on macOS or iOS:\n\n- build a test iOS app and run on iOS device\n- build a test iOS app and run in the iPhone simulator\n- build a test macOS app and run it on macOS\n- define you tests in main.c of TestApp, run on both macOS and `cargo test` and compare the results\n\nThe last way is preferable and will get your changes to be merged quickest (of course, if you include the tests in the patchset itself).",
+      "parentUuid": "6078c820_8cc7350f",
+      "revId": "5db477177eef1b5c18f467c3332b6ffba7662de5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

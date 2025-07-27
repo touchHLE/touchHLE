@@ -1040,12 +1040,49 @@ pub fn AudioQueueDispose(
 ) -> OSStatus {
     return_if_null!(in_aq);
 
-    assert!(in_immediate); // TODO
+    if !in_immediate {
+        loop {
+            let _ = AudioQueueStop(env, in_aq, false);
 
+            let (need_finish, stopped) = {
+                let state = State::get(&mut env.framework_state);
+                match state.audio_queues.get(&in_aq) {
+                    Some(host_object) => {
+                        let stopped = host_object.is_running == AudioQueueIsRunning::Stopped;
+                        let need_finish = if !stopped {
+                            if let Some(src) = host_object.al_source {
+                                let mut al_state = 0;
+                                unsafe {
+                                    al::alGetSourcei(src, al::AL_SOURCE_STATE, &mut al_state);
+                                }
+                                al_state == al::AL_STOPPED
+                            } else {
+                                false
+                            }
+                        } else {
+                            false
+                        };
+                        (need_finish, stopped)
+                    }
+                    None => (false, true), // already removed
+                }
+            };
+
+            if stopped {
+                break;
+            }
+            if need_finish {
+                finish_stopping_audio_queue(env, in_aq);
+            }
+        }
+
+        log_dbg!("AudioQueueDispose(!in_immediate): stopped, running as in_immediate now");
+        return AudioQueueDispose(env, in_aq, true);
+    }
     let state = State::get(&mut env.framework_state);
 
     let mut host_object = state.audio_queues.remove(&in_aq).unwrap();
-    log_dbg!("Disposing of audio queue {:?}", in_aq);
+    log_dbg!("AudioQueueDispose(in_immediate): audio queue {:?}", in_aq);
 
     env.mem.free(in_aq.cast());
 

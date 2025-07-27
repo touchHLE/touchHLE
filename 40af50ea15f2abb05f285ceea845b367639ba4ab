@@ -212,6 +212,24 @@
       "parentUuid": "403d1ed9_cd6b0195",
       "revId": "40af50ea15f2abb05f285ceea845b367639ba4ab",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3e9f37db_ca0ec9f6",
+        "filename": "src/log.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 57,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-07-27T20:01:23Z",
+      "side": 1,
+      "message": "Please don\u0027t resolve the threads if you don\u0027t actually addressed them. At least, it\u0027s making your patchsets difficult to review.\n\nYou can define you macro to take 2 arguments - one for the name of the static lock (of type `OnceLock\u003c()\u003e`) and other for the message itself. Inside the init of the lock the log message would be printed, but any subsequent access would be no-ops. Does it make sense?",
+      "parentUuid": "2f5fc592_a0d6f993",
+      "revId": "40af50ea15f2abb05f285ceea845b367639ba4ab",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3a6a0b39_ca1701ed",
+        "filename": "src/log.rs",
+        "patchSetId": 8
+      },
+      "lineNbr": 58,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-07-27T20:01:23Z",
+      "side": 1,
+      "message": "I would prefer to have \"{} [this log will only be shown once]\" instead",
+      "revId": "3839dbe934afe12616269bfe675cff3cb356e4e3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

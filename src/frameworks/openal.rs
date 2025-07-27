@@ -89,6 +89,10 @@ fn alcOpenDevice(env: &mut Environment, devicename: ConstPtr<u8>) -> MutPtr<Gues
     guest_res
 }
 fn alcCloseDevice(env: &mut Environment, device: MutPtr<GuestALCdevice>) -> bool {
+    if device.is_null() {
+        log_dbg!("alcCloseDevice() is called with NULL device, ignoring");
+        return false;
+    }
     let host_device = State::get(env).devices.remove(&device).unwrap();
     env.mem.free(device.cast());
     let res = unsafe { al::alcCloseDevice(host_device) };
@@ -171,6 +175,10 @@ fn alcCreateContext(
     guest_res
 }
 fn alcDestroyContext(env: &mut Environment, context: MutPtr<GuestALCcontext>) {
+    if context.is_null() {
+        log_dbg!("alcDestroyContext() is called with NULL context, ignoring");
+        return;
+    }
     let host_context = State::get(env).contexts.remove(&context).unwrap();
     env.mem.free(context.cast());
     unsafe { al::alcDestroyContext(host_context) };
@@ -187,7 +195,7 @@ fn alcProcessContext(env: &mut Environment, context: MutPtr<GuestALCcontext>) {
 }
 fn alcSuspendContext(env: &mut Environment, context: MutPtr<GuestALCcontext>) {
     if context.is_null() {
-        log!("alcSuspendContext() is called with NULL context, ignoring");
+        log_dbg!("alcSuspendContext() is called with NULL context, ignoring");
         return;
     }
     let host_context = State::get(env).contexts.get(&context).copied().unwrap();
@@ -223,6 +231,10 @@ fn alcGetContextsDevice(
     env: &mut Environment,
     context: MutPtr<GuestALCcontext>,
 ) -> MutPtr<GuestALCdevice> {
+    if context.is_null() {
+        log_dbg!("alcGetContextsDevice() is called with NULL context, ignoring");
+        return Ptr::null();
+    }
     let host_context = State::get(env).contexts.get(&context).copied().unwrap();
     let host_device = unsafe { al::alcGetContextsDevice(host_context) };
     *State::get(env)

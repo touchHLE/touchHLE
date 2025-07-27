@@ -171,3 +171,6 @@ com.pangea.cromag: --ignore-gl-errors
 
 # Nanosaur 2
 com.pangea.nano2: --ignore-gl-errors
+
+# Galaxy on Fire
+www.fishlabs.net.GalaxyOnFire: --landscape-right --button-to-touch=A,427,274 --button-to-touch=X,380,254  --button-to-touch=Y,124,291  --button-to-touch=B,444,221 --button-to-touch=DPadUp,66,211 --button-to-touch=DPadRight,103,250 --button-to-touch=DPadDown,66,291 --button-to-touch=DPadLeft,25,250

@@ -1,0 +1,276 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b3e5ae0a_ffe3aeb3",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 28
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-07-27T20:51:08Z",
+      "side": 1,
+      "message": "there are simply too many issues with this implementation...\n\n@1437332+apexad@users.noreply.github.com could you please confirm that this is your original contribution and you haven\u0027t used any AI to generate the code?",
+      "revId": "3c9a4a6e61f07eaae565e7a6994f3b48e72655a2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0652400e_27b2c602",
+        "filename": "src/frameworks/uikit/ui_view/ui_control/ui_bar_button_item.rs",
+        "patchSetId": 28
+      },
+      "lineNbr": 45,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-07-27T20:51:08Z",
+      "side": 1,
+      "message": "please fix the formatting.\n\nyou could could check any NS* or UI* class to see how identaiton should be.",
+      "revId": "3c9a4a6e61f07eaae565e7a6994f3b48e72655a2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "aaf95223_f9d20cf9",
+        "filename": "src/frameworks/uikit/ui_view/ui_control/ui_bar_button_item.rs",
+        "patchSetId": 28
+      },
+      "lineNbr": 55,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-07-27T20:51:08Z",
+      "side": 1,
+      "message": "this is useless - if not overriden, the superclass method would be called automatically.",
+      "revId": "3c9a4a6e61f07eaae565e7a6994f3b48e72655a2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "bf3975d5_f92f5d4c",
+        "filename": "src/frameworks/uikit/ui_view/ui_control/ui_bar_button_item.rs",
+        "patchSetId": 28
+      },
+      "lineNbr": 59,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-07-27T20:51:08Z",
+      "side": 1,
+      "message": "this is wrong.\n\ncheck the documentations: the style is UIBarButtonItemStyle, which is an NSInteger enum",
+      "revId": "3c9a4a6e61f07eaae565e7a6994f3b48e72655a2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "000b9cc3_af8822a7",
+        "filename": "src/frameworks/uikit/ui_view/ui_control/ui_bar_button_item.rs",
+        "patchSetId": 28
+      },
+      "lineNbr": 72,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-07-27T20:51:08Z",
+      "side": 1,
+      "message": "why do you need this?",
+      "revId": "3c9a4a6e61f07eaae565e7a6994f3b48e72655a2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9a3f5745_ffaa4e9d",
+        "filename": "src/frameworks/uikit/ui_view/ui_control/ui_bar_button_item.rs",
+        "patchSetId": 28
+      },
+      "lineNbr": 74,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-07-27T20:51:08Z",
+      "side": 1,
+      "message": "are you sure this is a default color?",
+      "revId": "3c9a4a6e61f07eaae565e7a6994f3b48e72655a2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1a312d84_bdbd77df",
+        "filename": "src/frameworks/uikit/ui_view/ui_control/ui_bar_button_item.rs",
+        "patchSetId": 28
+      },
+      "lineNbr": 93,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-07-27T20:51:08Z",
+      "side": 1,
+      "message": "i think the target should be retained (and released on the dealloc)",
+      "revId": "3c9a4a6e61f07eaae565e7a6994f3b48e72655a2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b3e59257_571588bb",
+        "filename": "src/frameworks/uikit/ui_view/ui_control/ui_bar_button_item.rs",
+        "patchSetId": 28
+      },
+      "lineNbr": 95,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-07-27T20:51:08Z",
+      "side": 1,
+      "message": "you should define and use a constant",
+      "revId": "3c9a4a6e61f07eaae565e7a6994f3b48e72655a2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "88906244_8a43d0f8",
+        "filename": "src/frameworks/uikit/ui_view/ui_control/ui_bar_button_item.rs",
+        "patchSetId": 28
+      },
+      "lineNbr": 105,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-07-27T20:51:08Z",
+      "side": 1,
+      "message": "please define the correct type UIBarButtonSystemItem",
+      "revId": "3c9a4a6e61f07eaae565e7a6994f3b48e72655a2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0b7bc31f_d5f76e32",
+        "filename": "src/frameworks/uikit/ui_view/ui_control/ui_bar_button_item.rs",
+        "patchSetId": 28
+      },
+      "lineNbr": 117,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-07-27T20:51:08Z",
+      "side": 1,
+      "message": "why?",
+      "revId": "3c9a4a6e61f07eaae565e7a6994f3b48e72655a2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "94be7f66_18008ff7",
+        "filename": "src/frameworks/uikit/ui_view/ui_control/ui_bar_button_item.rs",
+        "patchSetId": 28
+      },
+      "lineNbr": 177,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-07-27T20:51:08Z",
+      "side": 1,
+      "message": "you should release the title",
+      "revId": "3c9a4a6e61f07eaae565e7a6994f3b48e72655a2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b28c91ca_f9ea9720",
+        "filename": "src/frameworks/uikit/ui_view/ui_toolbar.rs",
+        "patchSetId": 28
+      },
+      "lineNbr": 24,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-07-27T20:51:08Z",
+      "side": 1,
+      "message": "this doesn\u0027t make any sense...",
+      "revId": "3c9a4a6e61f07eaae565e7a6994f3b48e72655a2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "07d32dbe_d3514e6e",
+        "filename": "src/frameworks/uikit/ui_view/ui_toolbar.rs",
+        "patchSetId": 28
+      },
+      "lineNbr": 48,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-07-27T20:51:08Z",
+      "side": 1,
+      "message": "have you confirmed this behaviour on the iOS?",
+      "revId": "3c9a4a6e61f07eaae565e7a6994f3b48e72655a2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7ea56815_451ded70",
+        "filename": "src/frameworks/uikit/ui_view/ui_toolbar.rs",
+        "patchSetId": 28
+      },
+      "lineNbr": 113,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-07-27T20:51:08Z",
+      "side": 1,
+      "message": "this is not how touches should be propagated to subviews...",
+      "revId": "3c9a4a6e61f07eaae565e7a6994f3b48e72655a2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f2bf20fd_ae95b7fc",
+        "filename": "src/frameworks/uikit/ui_view/ui_toolbar.rs",
+        "patchSetId": 28
+      },
+      "lineNbr": 149,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-07-27T20:51:08Z",
+      "side": 1,
+      "message": "style is UIBarStyle not an id!",
+      "revId": "3c9a4a6e61f07eaae565e7a6994f3b48e72655a2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0ee021a1_53664462",
+        "filename": "src/frameworks/uikit/ui_view/ui_toolbar.rs",
+        "patchSetId": 28
+      },
+      "lineNbr": 184,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-07-27T20:51:08Z",
+      "side": 1,
+      "message": "you probably should estimate size taking into account text of the labels",
+      "revId": "3c9a4a6e61f07eaae565e7a6994f3b48e72655a2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

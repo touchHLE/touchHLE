@@ -425,7 +425,9 @@ pub const CLASSES: ClassExports = objc_classes! {
     log!("[NSString dataUsingEncoding:{:?}]", encoding);
 
     // TODO: Add support for NSISOLatin1StringEncoding = 5,
-    // assert!(encoding == NSUTF8StringEncoding || encoding == NSASCIIStringEncoding);
+    if encoding != NSUTF8StringEncoding && encoding != NSASCIIStringEncoding {
+        log!("Unexpected string encoding: {}", encoding);
+    }
 
     // TODO: refactor with UTF8String method
     let string = to_rust_string(env, this);

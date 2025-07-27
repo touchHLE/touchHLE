@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "4ff2ddc0_3e9ac6db",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 5
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-07-27T13:21:16Z",
+      "side": 1,
+      "message": "Changed these to use log_once",
+      "parentUuid": "4ea7bbd6_2279debc",
+      "revId": "cf8a9c2d123867735c890ad0200d570b3b2f44e9",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "f3fcc870_c9f06357",
@@ -66,6 +84,24 @@
       "writtenOn": "2025-07-26T23:21:59Z",
       "side": 1,
       "message": "I think you should add some info here that the log will be only printed once.\nYou can see for the wording for exisitng log once cases.",
+      "revId": "cf8a9c2d123867735c890ad0200d570b3b2f44e9",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "805da087_68a5abe0",
+        "filename": "src/log.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 59,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-07-27T13:21:16Z",
+      "side": 1,
+      "message": "Added the text log will only be shown once (with tildes around it, just to be different, but could use any suggestions here to adjust that)",
+      "parentUuid": "bf8a381f_52134cea",
       "revId": "cf8a9c2d123867735c890ad0200d570b3b2f44e9",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

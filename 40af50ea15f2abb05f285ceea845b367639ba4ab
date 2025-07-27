@@ -194,6 +194,24 @@
       "parentUuid": "9f3edc83_5258049c",
       "revId": "40af50ea15f2abb05f285ceea845b367639ba4ab",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "2f5fc592_a0d6f993",
+        "filename": "src/log.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 57,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-07-27T13:21:16Z",
+      "side": 1,
+      "message": "I changed it to accept just a string literal and do no formatting, but I don\u0027t understand how OnceLock could be used since there are many different messages coming in via log_once. You\u0027d have to do a OnceLock for each different message versus just relying on if \u0027set.insert\u0027 is successful or not to log the message.",
+      "parentUuid": "403d1ed9_cd6b0195",
+      "revId": "40af50ea15f2abb05f285ceea845b367639ba4ab",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

@@ -35,6 +35,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "002730f6_f5d5fdd8",
+        "filename": "src/frameworks/uikit/ui_activity_indicator_view.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 26,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-07-27T12:49:13Z",
+      "side": 1,
+      "message": "Marked as resolved.",
+      "parentUuid": "f3fcc870_c9f06357",
+      "revId": "cf8a9c2d123867735c890ad0200d570b3b2f44e9",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "bf8a381f_52134cea",

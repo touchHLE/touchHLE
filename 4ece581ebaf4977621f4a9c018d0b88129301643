@@ -69,6 +69,24 @@
       "parentUuid": "9cda6f10_41e6419b",
       "revId": "4ece581ebaf4977621f4a9c018d0b88129301643",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b7e839b0_1cb2c753",
+        "filename": "src/libc/posix_io.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 580,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2025-07-28T15:24:44Z",
+      "side": 1,
+      "message": "A little more info, it seems that the locks are process level. So all threads can access the file regardless of locks since the thread is running in a process that can access the lock. Thus since we only have one process running at a time it would follow that locks essentially do nothing for us and we should be fine to ignore them? Let me know if that makes sense.",
+      "parentUuid": "68388beb_9e16e708",
+      "revId": "4ece581ebaf4977621f4a9c018d0b88129301643",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

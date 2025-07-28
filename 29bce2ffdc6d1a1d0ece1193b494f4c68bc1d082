@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0a2cd9a1_06678396",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 11
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-07-28T21:55:12Z",
+      "side": 1,
+      "message": "Could you please update the commit description?",
+      "revId": "29bce2ffdc6d1a1d0ece1193b494f4c68bc1d082",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

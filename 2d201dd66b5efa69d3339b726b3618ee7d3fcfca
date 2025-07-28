@@ -33,6 +33,40 @@
       "message": "Also, take a look at https://review.gerrithub.io/c/touchHLE/touchHLE/+/1218485/4/src/frameworks/uikit/ui_image.rs\n\nI am sure there are other examples, but this is in instance where this is a TODO that is not a setter where I assume this macro could be used?\n\nwhy not just make this called \u0027log_todo\u0027 or something?",
       "revId": "2d201dd66b5efa69d3339b726b3618ee7d3fcfca",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b46c201e_c871941b",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-07-28T21:31:50Z",
+      "side": 1,
+      "message": "Ideally, we should have a macro which generates both setter and getter for properties (not stubs!), given an object, type and property name (and something else?).\n\n(something like Obj-C `@synthesise`)\n\n\nprobably, not very complex to implement.",
+      "revId": "2d201dd66b5efa69d3339b726b3618ee7d3fcfca",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8c1f951a_1e68f43b",
+        "filename": "src/objc/classes.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 206,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-07-28T21:31:50Z",
+      "side": 1,
+      "message": "is where are a way to assert that selector is actually starting with \"set\" ?",
+      "revId": "2d201dd66b5efa69d3339b726b3618ee7d3fcfca",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

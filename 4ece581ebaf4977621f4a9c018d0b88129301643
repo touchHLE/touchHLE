@@ -20,6 +20,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "d934d4b5_f730595c",
+        "filename": "src/libc/posix_io.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 574,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2025-07-28T08:59:57Z",
+      "side": 1,
+      "message": "This cmd is used for managing only one flag, close-on-exec, which determines whether an fd is closed when you run exec. Since we don\u0027t currently support the exec family function calls, this won\u0027t do anything (can ios apps even use exec?). I think in this case a stub is fine. Let me know if you disagree.",
+      "parentUuid": "cf1ae60c_325d1f49",
+      "revId": "4ece581ebaf4977621f4a9c018d0b88129301643",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "9cda6f10_41e6419b",
         "filename": "src/libc/posix_io.rs",
         "patchSetId": 2
@@ -31,6 +49,24 @@
       "writtenOn": "2025-07-26T23:08:50Z",
       "side": 1,
       "message": "same comment as above",
+      "revId": "4ece581ebaf4977621f4a9c018d0b88129301643",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "68388beb_9e16e708",
+        "filename": "src/libc/posix_io.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 580,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2025-07-28T08:59:57Z",
+      "side": 1,
+      "message": "This one is trickier but the main reason I stubbed this is that it gets pretty complicated imo to implement that more you think about it. Since the lock is per file not per fd, we would need a way to centrally store the locks and that gets back to an fs rewrite. My justification for why its fine to stub is that its unlikely that an IOS app would have multiple threads writing to the same file which could cause corruption in the case where a lock doesn\u0027t exist. Also we unfortunately can have setlk set an error. Interested to hear you thoughts.",
+      "parentUuid": "9cda6f10_41e6419b",
       "revId": "4ece581ebaf4977621f4a9c018d0b88129301643",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

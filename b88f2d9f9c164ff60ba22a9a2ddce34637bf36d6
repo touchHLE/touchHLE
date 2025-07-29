@@ -109,6 +109,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "19a9d137_3ed2e913",
+        "filename": "src/frameworks/foundation/ns_process_info.rs",
+        "patchSetId": 34
+      },
+      "lineNbr": 25,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-07-29T23:25:17Z",
+      "side": 1,
+      "message": "thanks for this I was also looking into adding host_info to mach_host.rs and then memory_size is 2GB here",
+      "parentUuid": "c6501317_cba0499e",
+      "revId": "b88f2d9f9c164ff60ba22a9a2ddce34637bf36d6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "95b202ce_668c8daa",
         "filename": "src/frameworks/foundation/ns_process_info.rs",
         "patchSetId": 34

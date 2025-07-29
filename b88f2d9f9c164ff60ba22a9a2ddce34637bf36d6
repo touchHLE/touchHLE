@@ -20,6 +20,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "0111fab3_98b3f785",
+        "filename": "src/frameworks/foundation/ns_process_info.rs",
+        "patchSetId": 34
+      },
+      "lineNbr": 19,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-07-29T23:23:18Z",
+      "side": 1,
+      "message": "NSUserDefaults just has get, same implementation, and NSFileManager does not even have this at all. Is it ok if I go the NSFileManger way and always just refer to it as env.framework_state.foundation.ns_process_info.process_info and not use State::?\n```\n+ (id)processInfo {\n    if let Some(existing) \u003d env.framework_state.foundation.ns_process_info.process_info {\n        existing\n    } else {\n        let process_info: id \u003d msg![env; this new];\n        env.framework_state.foundation.ns_process_info.process_info \u003d Some(process_info);\n        process_info\n    }\n}\n```",
+      "parentUuid": "5b3aab4a_c8d80fa7",
+      "revId": "b88f2d9f9c164ff60ba22a9a2ddce34637bf36d6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "0d1bc880_b085fe97",
         "filename": "src/frameworks/foundation/ns_process_info.rs",
         "patchSetId": 34
@@ -119,6 +137,24 @@
       "writtenOn": "2025-07-27T20:20:29Z",
       "side": 1,
       "message": "you should assert that the instance is the same as `State::get(env).instance`",
+      "revId": "b88f2d9f9c164ff60ba22a9a2ddce34637bf36d6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "aa89b764_1a47c127",
+        "filename": "src/frameworks/foundation/ns_process_info.rs",
+        "patchSetId": 34
+      },
+      "lineNbr": 48,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-07-29T23:23:18Z",
+      "side": 1,
+      "message": "So going with what I mentioned above renaming instance to prcess_info and not using State:: does\n ```assert_eq!(this, env.framework_state.foundation.ns_process_info.process_info.unwrap());```\n seem correct?",
+      "parentUuid": "295fbb7a_bb1b77f0",
       "revId": "b88f2d9f9c164ff60ba22a9a2ddce34637bf36d6",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },

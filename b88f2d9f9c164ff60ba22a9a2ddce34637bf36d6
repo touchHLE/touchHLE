@@ -55,6 +55,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "6b5c1a7a_66bec41f",
+        "filename": "src/frameworks/foundation/ns_process_info.rs",
+        "patchSetId": 34
+      },
+      "lineNbr": 25,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-07-29T16:48:51Z",
+      "side": 1,
+      "message": "for your reference https://stackoverflow.com/a/8540665/23039534\n\n(free + active + inactive + wire) * page_size should give the total RAM size of the device\n\nI think returned value of physicalMemory from processInfo here should be defined using existing constants, which already some up to ~2 Gb",
+      "parentUuid": "35161dda_81ea7733",
+      "revId": "b88f2d9f9c164ff60ba22a9a2ddce34637bf36d6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "95b202ce_668c8daa",
         "filename": "src/frameworks/foundation/ns_process_info.rs",
         "patchSetId": 34

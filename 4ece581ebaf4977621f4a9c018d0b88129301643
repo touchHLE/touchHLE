@@ -38,6 +38,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "6b9ddaf5_16da2b50",
+        "filename": "src/libc/posix_io.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 574,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-07-29T20:41:04Z",
+      "side": 1,
+      "message": "I think I would like to have a better explanation in the comment here.\nAlso a TODO about updating this once exec() is implemented.",
+      "parentUuid": "d934d4b5_f730595c",
+      "revId": "4ece581ebaf4977621f4a9c018d0b88129301643",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "9cda6f10_41e6419b",
         "filename": "src/libc/posix_io.rs",
         "patchSetId": 2
@@ -85,6 +103,24 @@
       "side": 1,
       "message": "A little more info, it seems that the locks are process level. So all threads can access the file regardless of locks since the thread is running in a process that can access the lock. Thus since we only have one process running at a time it would follow that locks essentially do nothing for us and we should be fine to ignore them? Let me know if that makes sense.",
       "parentUuid": "68388beb_9e16e708",
+      "revId": "4ece581ebaf4977621f4a9c018d0b88129301643",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "80f7bb24_c86ed5c1",
+        "filename": "src/libc/posix_io.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 580,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-07-29T20:41:04Z",
+      "side": 1,
+      "message": "So could you please define related flock struct, fill it on get and assert that it correctly filled on set (or vice versa)?\n\nNot every field of that struct would need to be set and you could keep a TODO. But for example we should check that PID is indeed what we expect.\n\nMaybe some testing is needed to see what real iOS does.",
+      "parentUuid": "b7e839b0_1cb2c753",
       "revId": "4ece581ebaf4977621f4a9c018d0b88129301643",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

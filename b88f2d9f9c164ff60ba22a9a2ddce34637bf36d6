@@ -37,6 +37,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "35161dda_81ea7733",
+        "filename": "src/frameworks/foundation/ns_process_info.rs",
+        "patchSetId": 34
+      },
+      "lineNbr": 25,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-07-29T07:13:04Z",
+      "side": 1,
+      "message": "I am using 2GB because of this block of code in src/libc/mach_host.rs where it is mentioned in a comment, not implimented in a meaningful way. Does not seem like there is any reason to change this either, so the const could be moved to this file, but would not actually be used there:\n\n    // Below values corresponds to a run of an iOS Simulator.\n    // As touchHLE doesn\u0027t have a paging system (yet? never?),\n    // those numbers are (mostly) meaningless.\n    // In reality, this function is commonly used by apps to get\n    // the amount of current free memory available.\n    // This output roughly corresponds to 1.1 Gb of free vm memory out of 2 Gb.\n    // TODO: approximate size of current memory allocations and return them?\n    env.mem.write(\n        host_info_out.cast(),\n        vm_statistics {\n            free_count: 287306,\n            active_count: 159853,\n            inactive_count: 23544,\n            wire_count: 47539,\n            zero_fill_count: 33647739,\n            reactivations: 129,\n            pageins: 183535,\n            pageouts: 0,\n            faults: 51089020,\n            cow_faults: 3169189,\n            lookups: 896665,\n            hits: 361073,\n            purgeable_count: 14412,\n            purges: 0,\n            speculative_count: 53842,\n        },\n    );",
+      "parentUuid": "0d1bc880_b085fe97",
+      "revId": "b88f2d9f9c164ff60ba22a9a2ddce34637bf36d6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "95b202ce_668c8daa",
         "filename": "src/frameworks/foundation/ns_process_info.rs",
         "patchSetId": 34

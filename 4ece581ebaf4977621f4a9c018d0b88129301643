@@ -56,6 +56,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "8c6ad809_d07acea1",
+        "filename": "src/libc/posix_io.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 574,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-07-29T21:28:42Z",
+      "side": 1,
+      "message": "hhm wait, if exec() is not supported in iOS (though it is mentioned in man pages for iOS), what would it mean to set this flag?\nmaybe also check with Ghidra what the app in question tries to achieve.",
+      "parentUuid": "6b9ddaf5_16da2b50",
+      "revId": "4ece581ebaf4977621f4a9c018d0b88129301643",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "9cda6f10_41e6419b",
         "filename": "src/libc/posix_io.rs",
         "patchSetId": 2

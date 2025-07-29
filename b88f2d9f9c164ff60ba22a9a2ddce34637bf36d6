@@ -127,6 +127,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "466316bd_f7931245",
+        "filename": "src/frameworks/foundation/ns_process_info.rs",
+        "patchSetId": 34
+      },
+      "lineNbr": 25,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-07-29T23:49:43Z",
+      "side": 1,
+      "message": "Are you saying do constants for free, inactive, inactive, and wire? rather than just a single one for full memory_sixe?",
+      "parentUuid": "19a9d137_3ed2e913",
+      "revId": "b88f2d9f9c164ff60ba22a9a2ddce34637bf36d6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "95b202ce_668c8daa",
         "filename": "src/frameworks/foundation/ns_process_info.rs",
         "patchSetId": 34

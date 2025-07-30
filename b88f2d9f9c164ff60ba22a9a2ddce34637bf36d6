@@ -38,6 +38,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "486c266c_7d88b619",
+        "filename": "src/frameworks/foundation/ns_process_info.rs",
+        "patchSetId": 34
+      },
+      "lineNbr": 19,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-07-30T18:07:37Z",
+      "side": 1,
+      "message": "If it works, you can keep state with defined helper method.\n\nIf it doesn\u0027t, you can refer to it by full expansion.",
+      "parentUuid": "0111fab3_98b3f785",
+      "revId": "b88f2d9f9c164ff60ba22a9a2ddce34637bf36d6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "0d1bc880_b085fe97",
         "filename": "src/frameworks/foundation/ns_process_info.rs",
         "patchSetId": 34
@@ -145,6 +163,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "7d6bad99_3fada8a9",
+        "filename": "src/frameworks/foundation/ns_process_info.rs",
+        "patchSetId": 34
+      },
+      "lineNbr": 25,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-07-30T18:07:37Z",
+      "side": 1,
+      "message": "Yes, 4 constants making are making sense for me.\nWhen you could use them to return the value for physicalMemory using above formula (or define a new constant computed from them)",
+      "parentUuid": "466316bd_f7931245",
+      "revId": "b88f2d9f9c164ff60ba22a9a2ddce34637bf36d6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "95b202ce_668c8daa",
         "filename": "src/frameworks/foundation/ns_process_info.rs",
         "patchSetId": 34
@@ -191,6 +227,24 @@
       "side": 1,
       "message": "So going with what I mentioned above renaming instance to prcess_info and not using State:: does\n ```assert_eq!(this, env.framework_state.foundation.ns_process_info.process_info.unwrap());```\n seem correct?",
       "parentUuid": "295fbb7a_bb1b77f0",
+      "revId": "b88f2d9f9c164ff60ba22a9a2ddce34637bf36d6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d9d8d345_16d3db44",
+        "filename": "src/frameworks/foundation/ns_process_info.rs",
+        "patchSetId": 34
+      },
+      "lineNbr": 48,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-07-30T18:07:37Z",
+      "side": 1,
+      "message": "Up to you. With a helper there is less code to type.",
+      "parentUuid": "aa89b764_1a47c127",
       "revId": "b88f2d9f9c164ff60ba22a9a2ddce34637bf36d6",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },

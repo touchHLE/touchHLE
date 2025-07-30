@@ -401,6 +401,14 @@ pub const CLASSES: ClassExports = objc_classes! {
 /// Helper function for `fileAttributesAtPath:traverseLink:` and
 /// `attributesOfItemAtPath:error:`
 fn file_attributes_common(env: &mut Environment, guest_path: &GuestPath) -> id {
+    if !env.fs.exists(guest_path) {
+        log!(
+            "file_attributes_common() called with file that does not exist: {:?}, Returning NULL",
+            guest_path
+        );
+        return Ptr::null();
+    }
+
     // TODO: support more attributes
     let unix_timestamp: f64 = env.fs.modified(guest_path).unwrap() as f64;
     let unix_ref_date: id = msg_class![env; NSDate dateWithTimeIntervalSince1970:0f64];

@@ -27,6 +27,8 @@ pub const UITouchPhaseEnded: UITouchPhase = 3;
 #[derive(Default)]
 pub struct State {
     current_touches: HashMap<FingerId, id>,
+    // Locations that are eligible to have a double tap.
+    potential_double_taps: Vec<(CGPoint, NSTimeInterval)>,
 }
 
 pub(super) struct UITouchHostObject {
@@ -39,7 +41,10 @@ pub(super) struct UITouchHostObject {
     location: CGPoint,
     /// Relative to the screen
     previous_location: CGPoint,
+    initial_location: CGPoint,
     timestamp: NSTimeInterval,
+    initial_timestamp: NSTimeInterval,
+    tap_count: NSUInteger,
     phase: UITouchPhase,
 }
 impl HostObject for UITouchHostObject {}
@@ -56,7 +61,10 @@ pub const CLASSES: ClassExports = objc_classes! {
         window: nil,
         location: CGPoint { x: 0.0, y: 0.0 },
         previous_location: CGPoint { x: 0.0, y: 0.0 },
+        initial_location: CGPoint { x: 0.0, y: 0.0 },
         timestamp: 0.0,
+        initial_timestamp: 0.0,
+        tap_count: 0,
         phase: UITouchPhaseBegan,
     });
     env.objc.alloc_object(this, host_object, &mut env.mem)
@@ -97,7 +105,8 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (NSUInteger)tapCount {
-    1 // TODO: support double-taps etc
+    env.objc.borrow::<UITouchHostObject>(this).tap_count
+
 }
 
 - (UITouchPhase)phase {
@@ -158,6 +167,29 @@ fn handle_touches_down(env: &mut Environment, map: HashMap<FingerId, Coords>) {
             y: coords.1,
         };
 
+        // Check if this tap is a double tap.
+        // TODO: This could try to be closer to Apple's handling. There
+        // seems to be some inconsistency for what counts as "fast enough",
+        // what counts as "close enough", and whether or not the first tap was
+        // "moved too much" to count as a double tap. I think the critera here
+        // (and in handle_touches_up) is "good enough" and closeish to the
+        // actual behaviour.
+
+        let potential_double_taps = &mut env.framework_state.uikit.ui_touch.potential_double_taps;
+
+        let mut tap_count = 1;
+        let mut i = 0;
+        while i < potential_double_taps.len() {
+            let (earlier_touch_location, earlier_touch_timestamp) = potential_double_taps[i];
+            if timestamp - earlier_touch_timestamp > 0.45 {
+                potential_double_taps.swap_remove(i);
+                continue;
+            } else if earlier_touch_location.distance(location) < 40.0 {
+                tap_count += 1;
+            }
+            i += 1;
+        }
+
         // TODO: is this the correct state of the UITouch and UIEvent during
         //       hit testing?
 
@@ -169,6 +201,9 @@ fn handle_touches_down(env: &mut Environment, map: HashMap<FingerId, Coords>) {
             previous_location: location,
             timestamp,
             phase: UITouchPhaseBegan,
+            initial_location: location,
+            initial_timestamp: timestamp,
+            tap_count,
         };
         autorelease(env, new_touch);
 
@@ -350,13 +385,16 @@ fn handle_touches_move(env: &mut Environment, map: HashMap<FingerId, Coords>) {
 
         let view = env.objc.borrow::<UITouchHostObject>(touch).view;
         let host_object = env.objc.borrow_mut::<UITouchHostObject>(touch);
-
         if host_object.location == location {
             continue;
         }
-
-        log_dbg!("Finger {:?} touch move: {:?}", finger_id, coords);
-
+        log_dbg!(
+            "Finger {:?} ({:?}) touch move: {:?} from {:?}",
+            finger_id,
+            touch,
+            location,
+            host_object.location
+        );
         host_object.previous_location = host_object.location;
         host_object.location = location;
         host_object.timestamp = timestamp;
@@ -458,6 +496,9 @@ fn handle_touches_up(env: &mut Environment, map: HashMap<FingerId, Coords>) {
         assert_eq!(host_object.phase, UITouchPhaseStationary);
         host_object.phase = UITouchPhaseEnded;
 
+        let initial_location = host_object.initial_location;
+        let initial_timestamp = host_object.initial_timestamp;
+
         let _: () = msg![env; touches addObject:touch];
 
         if let Entry::Vacant(e) = view_touches.entry(view) {
@@ -467,12 +508,13 @@ fn handle_touches_up(env: &mut Environment, map: HashMap<FingerId, Coords>) {
         let touches: id = *view_touches.get(&view).unwrap();
         let _: () = msg![env; touches addObject:touch];
 
-        let _ = &env
-            .framework_state
-            .uikit
-            .ui_touch
-            .current_touches
-            .remove(&finger_id);
+        let state = &mut env.framework_state.uikit.ui_touch;
+        let _ = state.current_touches.remove(&finger_id);
+
+        // TODO: See handle_touches_down
+        if timestamp - initial_timestamp < 0.75 && location.distance(initial_location) < 25.0 {
+            state.potential_double_taps.push((location, timestamp));
+        }
         release(env, touch); // only owner now should be the NSSet
     }
 

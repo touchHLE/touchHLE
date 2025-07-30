@@ -16,6 +16,24 @@
       "message": "hhhm could you try to implement that for real?\n\nlike you could estimate text size using given font size and line breaks (we should already have a helper for that?), then using range set the content offset?? or something like that\n\nmaybe we\u0027ll still need to test with device/emu for the correct behaviour, but I hope you get the main idea",
       "revId": "5f51ad931f58975d81050fd16c2d0fe7806163bf",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b173987d_cb9be20d",
+        "filename": "src/frameworks/uikit/ui_view/ui_scroll_view/ui_text_view.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 184,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2025-07-30T13:28:05Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "ceb31c0a_26de5d7d",
+      "revId": "5f51ad931f58975d81050fd16c2d0fe7806163bf",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

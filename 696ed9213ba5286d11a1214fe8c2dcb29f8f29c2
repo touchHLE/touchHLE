@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "96c49d2a_05d2e60c",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2025-07-30T15:32:50Z",
+      "side": 1,
+      "message": "Looking at objc4 it seems like this is a property of all classes, not just subclasses of NSObject, so it should be implemented at the object system level and not in NSObject.",
+      "revId": "696ed9213ba5286d11a1214fe8c2dcb29f8f29c2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

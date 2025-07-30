@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ab34296e_f51fa044",
+        "filename": "src/frameworks/foundation/ns_run_loop.rs",
+        "patchSetId": 10
+      },
+      "lineNbr": 220,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-07-30T18:18:25Z",
+      "side": 1,
+      "message": "why you cannot define the lock as the part of the macro?",
+      "revId": "48e9a8203da7b248c0a7108e5128965d43e533d8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

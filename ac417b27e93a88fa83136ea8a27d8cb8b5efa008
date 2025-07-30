@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "89600dbd_c6146eb0",
+        "filename": "src/frameworks/foundation/ns_file_manager.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 406,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-07-30T18:30:42Z",
+      "side": 1,
+      "message": "you\u0027re not \"Returning NULL\", you\u0027re \"returning nil\"\n\nnil is a special object in Objective-C",
+      "revId": "ac417b27e93a88fa83136ea8a27d8cb8b5efa008",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

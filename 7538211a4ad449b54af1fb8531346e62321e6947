@@ -16,6 +16,40 @@
       "message": "@hikari@noyu.me",
       "revId": "7538211a4ad449b54af1fb8531346e62321e6947",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5d150f58_10b5faca",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-07-30T18:16:38Z",
+      "side": 1,
+      "message": "typo: NSFileManager",
+      "revId": "7538211a4ad449b54af1fb8531346e62321e6947",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2e4cc49e_d297cade",
+        "filename": "src/frameworks/foundation/ns_file_manager.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 406,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-07-30T18:16:38Z",
+      "side": 1,
+      "message": "you\u0027re not ignoring it, you\u0027re returning nil here, so you should re-phrase that.\n\nalso you should remove trailing ]",
+      "revId": "7538211a4ad449b54af1fb8531346e62321e6947",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

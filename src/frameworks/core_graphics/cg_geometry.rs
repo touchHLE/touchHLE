@@ -88,6 +88,14 @@ impl Sub<CGPoint> for CGPoint {
         }
     }
 }
+
+impl CGPoint {
+    /// The distance from one point to another.
+    pub fn distance(self, other: CGPoint) -> CGFloat {
+        ((self.x - other.x) * (self.x - other.x) + (self.y - other.y) * (self.y - other.y)).sqrt()
+    }
+}
+
 // This function is rare because it is usually inlined.
 fn CGPointEqualToPoint(_env: &mut Environment, a: CGPoint, b: CGPoint) -> bool {
     a == b

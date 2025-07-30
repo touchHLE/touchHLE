@@ -54,6 +54,12 @@ impl std::fmt::Display for CGPoint {
         write!(f, "{{{x}, {y}}}")
     }
 }
+impl CGPoint {
+    /// Utility host function that isn't availible for some reason
+    pub fn distance_from_squared(self, other: CGPoint) -> CGFloat {
+        (self.x - other.x) * (self.x - other.x) + (self.y - other.y) * (self.y - other.y)
+    }
+}
 // This function is rare because it is usually inlined.
 fn CGPointEqualToPoint(_env: &mut Environment, a: CGPoint, b: CGPoint) -> bool {
     a == b

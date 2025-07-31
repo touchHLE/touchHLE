@@ -54,6 +54,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "89e131cd_aa5d7f0b",
+        "filename": "src/frameworks/foundation/ns_process_info.rs",
+        "patchSetId": 34
+      },
+      "lineNbr": 19,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-07-31T05:51:20Z",
+      "side": 1,
+      "message": "Marked as resolved.",
+      "parentUuid": "486c266c_7d88b619",
+      "revId": "b88f2d9f9c164ff60ba22a9a2ddce34637bf36d6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "0d1bc880_b085fe97",
@@ -179,6 +197,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "7626632d_8cfc473e",
+        "filename": "src/frameworks/foundation/ns_process_info.rs",
+        "patchSetId": 34
+      },
+      "lineNbr": 25,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-07-31T05:51:20Z",
+      "side": 1,
+      "message": "Marked as resolved.",
+      "parentUuid": "7d6bad99_3fada8a9",
+      "revId": "b88f2d9f9c164ff60ba22a9a2ddce34637bf36d6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "95b202ce_668c8daa",
@@ -192,6 +228,24 @@
       "writtenOn": "2025-07-27T20:20:29Z",
       "side": 1,
       "message": "please use `if let Some() \u003d ... { existing } else { \u003cinit\u003e }` as in `NSUserDefaults standardUserDefaults` or `NSFileManager defaultManager`",
+      "revId": "b88f2d9f9c164ff60ba22a9a2ddce34637bf36d6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "e4bcd784_004f94cc",
+        "filename": "src/frameworks/foundation/ns_process_info.rs",
+        "patchSetId": 34
+      },
+      "lineNbr": 35,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-07-31T05:51:20Z",
+      "side": 1,
+      "message": "Marked as resolved.",
+      "parentUuid": "95b202ce_668c8daa",
       "revId": "b88f2d9f9c164ff60ba22a9a2ddce34637bf36d6",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
@@ -249,6 +303,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "fbdd3156_66e96ab5",
+        "filename": "src/frameworks/foundation/ns_process_info.rs",
+        "patchSetId": 34
+      },
+      "lineNbr": 48,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-07-31T05:51:20Z",
+      "side": 1,
+      "message": "Marked as resolved.",
+      "parentUuid": "d9d8d345_16d3db44",
+      "revId": "b88f2d9f9c164ff60ba22a9a2ddce34637bf36d6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "7b216529_b9220b68",
@@ -262,6 +334,24 @@
       "writtenOn": "2025-07-27T20:20:29Z",
       "side": 1,
       "message": "same, you should assert that the instance is the same as `State::get(env).instance`",
+      "revId": "b88f2d9f9c164ff60ba22a9a2ddce34637bf36d6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "2c9397f8_5ba3fb7e",
+        "filename": "src/frameworks/foundation/ns_process_info.rs",
+        "patchSetId": 34
+      },
+      "lineNbr": 52,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-07-31T05:51:20Z",
+      "side": 1,
+      "message": "Marked as resolved.",
+      "parentUuid": "7b216529_b9220b68",
       "revId": "b88f2d9f9c164ff60ba22a9a2ddce34637bf36d6",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

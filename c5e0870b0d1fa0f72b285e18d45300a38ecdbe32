@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "e0bca067_6bbabaf2",
+        "filename": "src/frameworks/foundation/ns_process_info.rs",
+        "patchSetId": 35
+      },
+      "lineNbr": 20,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-07-31T23:29:52Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "cfd948e6_dab4dddb",
+      "revId": "c5e0870b0d1fa0f72b285e18d45300a38ecdbe32",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "ac4e91bd_231fb995",
@@ -31,6 +49,24 @@
       "writtenOn": "2025-07-31T19:37:55Z",
       "side": 1,
       "message": "the definition of class itself is not a singleton, singleton is returned on the call to processInfo.\n\nplease remove this comment",
+      "revId": "c5e0870b0d1fa0f72b285e18d45300a38ecdbe32",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "1cb8849e_66cadb9d",
+        "filename": "src/frameworks/foundation/ns_process_info.rs",
+        "patchSetId": 35
+      },
+      "lineNbr": 35,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-07-31T23:29:52Z",
+      "side": 1,
+      "message": "A few other classes used as singletons in touchHLE had this comment, but no problem, removed it.",
+      "parentUuid": "ac4e91bd_231fb995",
       "revId": "c5e0870b0d1fa0f72b285e18d45300a38ecdbe32",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
@@ -52,6 +88,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "2f4facda_c62b1fcf",
+        "filename": "src/frameworks/foundation/ns_process_info.rs",
+        "patchSetId": 35
+      },
+      "lineNbr": 49,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-07-31T23:29:52Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "471010a1_42f56064",
+      "revId": "c5e0870b0d1fa0f72b285e18d45300a38ecdbe32",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "248de0f2_fca7e202",
@@ -65,6 +119,24 @@
       "writtenOn": "2025-07-31T19:37:55Z",
       "side": 1,
       "message": "add \"// TODO\" to the end of this line",
+      "revId": "c5e0870b0d1fa0f72b285e18d45300a38ecdbe32",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "a0f13657_e8e407e9",
+        "filename": "src/frameworks/foundation/ns_process_info.rs",
+        "patchSetId": 35
+      },
+      "lineNbr": 54,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-07-31T23:29:52Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "248de0f2_fca7e202",
       "revId": "c5e0870b0d1fa0f72b285e18d45300a38ecdbe32",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
@@ -86,6 +158,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "752b48b7_a06b6c0d",
+        "filename": "src/frameworks/foundation/ns_process_info.rs",
+        "patchSetId": 35
+      },
+      "lineNbr": 59,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-07-31T23:29:52Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "4d4045d8_ec0fe617",
+      "revId": "c5e0870b0d1fa0f72b285e18d45300a38ecdbe32",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "a37f7dd1_e0c92d79",
@@ -99,6 +189,24 @@
       "writtenOn": "2025-07-31T19:37:55Z",
       "side": 1,
       "message": "how you figured this out? is it what real iOS do?",
+      "revId": "c5e0870b0d1fa0f72b285e18d45300a38ecdbe32",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "43e71005_6cb5b7e3",
+        "filename": "src/frameworks/foundation/ns_process_info.rs",
+        "patchSetId": 35
+      },
+      "lineNbr": 61,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-07-31T23:29:52Z",
+      "side": 1,
+      "message": "It\u0027s in this file from SDL -\u003e vendor/SDL/src/video/cocoa/SDL_cocoaevents.m\nIf you want me to just remove it for now I can.",
+      "parentUuid": "a37f7dd1_e0c92d79",
       "revId": "c5e0870b0d1fa0f72b285e18d45300a38ecdbe32",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

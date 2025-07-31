@@ -1,0 +1,106 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "cfd948e6_dab4dddb",
+        "filename": "src/frameworks/foundation/ns_process_info.rs",
+        "patchSetId": 35
+      },
+      "lineNbr": 20,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-07-31T19:37:55Z",
+      "side": 1,
+      "message": "rename to assert_process_info_singleton",
+      "revId": "c5e0870b0d1fa0f72b285e18d45300a38ecdbe32",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ac4e91bd_231fb995",
+        "filename": "src/frameworks/foundation/ns_process_info.rs",
+        "patchSetId": 35
+      },
+      "lineNbr": 35,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-07-31T19:37:55Z",
+      "side": 1,
+      "message": "the definition of class itself is not a singleton, singleton is returned on the call to processInfo.\n\nplease remove this comment",
+      "revId": "c5e0870b0d1fa0f72b285e18d45300a38ecdbe32",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "471010a1_42f56064",
+        "filename": "src/frameworks/foundation/ns_process_info.rs",
+        "patchSetId": 35
+      },
+      "lineNbr": 49,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-07-31T19:37:55Z",
+      "side": 1,
+      "message": "add \"// TODO\" to the end of this line",
+      "revId": "c5e0870b0d1fa0f72b285e18d45300a38ecdbe32",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "248de0f2_fca7e202",
+        "filename": "src/frameworks/foundation/ns_process_info.rs",
+        "patchSetId": 35
+      },
+      "lineNbr": 54,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-07-31T19:37:55Z",
+      "side": 1,
+      "message": "add \"// TODO\" to the end of this line",
+      "revId": "c5e0870b0d1fa0f72b285e18d45300a38ecdbe32",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4d4045d8_ec0fe617",
+        "filename": "src/frameworks/foundation/ns_process_info.rs",
+        "patchSetId": 35
+      },
+      "lineNbr": 59,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-07-31T19:37:55Z",
+      "side": 1,
+      "message": "add \"// TODO\" to the end of this line",
+      "revId": "c5e0870b0d1fa0f72b285e18d45300a38ecdbe32",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a37f7dd1_e0c92d79",
+        "filename": "src/frameworks/foundation/ns_process_info.rs",
+        "patchSetId": 35
+      },
+      "lineNbr": 61,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-07-31T19:37:55Z",
+      "side": 1,
+      "message": "how you figured this out? is it what real iOS do?",
+      "revId": "c5e0870b0d1fa0f72b285e18d45300a38ecdbe32",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

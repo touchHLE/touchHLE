@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "e60ef92a_281dc6d0",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 28
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-07-31T06:46:29Z",
+      "side": 1,
+      "message": "Working on some of the other things in here and will notify when done, but wanted to address this and some other comments which I\u0027ll resolve when I push new code.  \n\nI\u0027ve been working on getting this UIToolbar/UIBarButtonItem stuff to be more than just stubs for months (which is the reason for a bunch of things just being ids rather than enums or what they really should be), created many local branches of half fixes and parts that seemed to work, parts that did not and I copied tons from existing UIViews and UIContols in the touchHLE code (which at times was definitley in the non-needed init).\n\nBetween all of this is probably when at some point I messed up indentation across the 2 files as well. It\u0027s a ton of code and I just pushed it for review when it all semmed to finally work well enough.\n\nTo answer the question of if it is AI Generated, the only part that is was the stuff to figure out which button was pushed and calculating their width and spacing but I did not ask AI to implement that specifically, only generic questions to write out some of the math to do it. As you pointed out this was a hack and it is not how touches should be propagated to subviews and by the way the AI wrote it in NodeJS (the language I use for my real job) not rust and I had to make it rust code and change it to how CG does it. All of that is wrong since in real iOS the buttons do expand only to be the width of their text (as you also pointed out) and I\u0027ll work on code to make that happen in the touchHLE implementation too if I can.\n\nLastly, I can also do a different patch set of these 2 files just stubbed out again as well without all this hacky code that is definitley not how real iOS does it. In the case of DOA Blackjack this only causes issues in Album, but still would have the game at about 4/5 stars and totally playable.",
+      "parentUuid": "b3e5ae0a_ffe3aeb3",
+      "revId": "3c9a4a6e61f07eaae565e7a6994f3b48e72655a2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "0652400e_27b2c602",

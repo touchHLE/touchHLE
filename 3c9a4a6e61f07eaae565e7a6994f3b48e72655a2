@@ -123,6 +123,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "d60331fb_3c0553bc",
+        "filename": "src/frameworks/uikit/ui_view/ui_control/ui_bar_button_item.rs",
+        "patchSetId": 28
+      },
+      "lineNbr": 74,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-07-31T06:56:48Z",
+      "side": 1,
+      "message": "default color of what? text on UIBarButtonItems in real iOS? I know it is definitely not, but it is indeed the default color used in other parts of touchHLE for label text. Examples would be app_picker and UIButton.",
+      "parentUuid": "9a3f5745_ffaa4e9d",
+      "revId": "3c9a4a6e61f07eaae565e7a6994f3b48e72655a2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "1a312d84_bdbd77df",
         "filename": "src/frameworks/uikit/ui_view/ui_control/ui_bar_button_item.rs",
         "patchSetId": 28
@@ -236,6 +254,24 @@
       "writtenOn": "2025-07-27T20:51:08Z",
       "side": 1,
       "message": "have you confirmed this behaviour on the iOS?",
+      "revId": "3c9a4a6e61f07eaae565e7a6994f3b48e72655a2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e8ea2820_5d9b3b3c",
+        "filename": "src/frameworks/uikit/ui_view/ui_toolbar.rs",
+        "patchSetId": 28
+      },
+      "lineNbr": 48,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-07-31T06:56:48Z",
+      "side": 1,
+      "message": "Yes, as have others.  44 is a special number for the height of Toolbars and Navigation bars in iOS.\nSee https://stackoverflow.com/questions/46066726/creating-a-uitoolbar-in-swift-3 and https://stackoverflow.com/questions/44143347/ios-get-the-navigation-bar-height-inside-a-cell-class\nUnless Apple changes something in future iOS versions, the nav bar height is 44 always, regardless of device. Now, I understand your desire to have your code clean and access the value programatically, but it seems like an overkill for this. Also what do you mean by cells creation process? There are many steps to it, which exactly do you mean?",
+      "parentUuid": "07d32dbe_d3514e6e",
       "revId": "3c9a4a6e61f07eaae565e7a6994f3b48e72655a2",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },

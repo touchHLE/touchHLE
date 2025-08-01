@@ -34,6 +34,24 @@
       "parentUuid": "ab34296e_f51fa044",
       "revId": "48e9a8203da7b248c0a7108e5128965d43e533d8",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4336dab6_7f865686",
+        "filename": "src/frameworks/foundation/ns_run_loop.rs",
+        "patchSetId": 10
+      },
+      "lineNbr": 220,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-08-01T22:00:39Z",
+      "side": 1,
+      "message": "how this is supposed to work with one single lock?\n\nyou should pass name of the lock to the macro and _create_ lock with that name inside macro itself\n\nyou can have a look at this example https://github.com/touchHLE/touchHLE/blob/caa342a77a6528505372a0a107d18fd220d2be13/src/frameworks/foundation/ns_value.rs#L18 (there method name is passed to the macro, you\u0027ll need to pass name of the lock)",
+      "parentUuid": "e0faa494_6a11c202",
+      "revId": "48e9a8203da7b248c0a7108e5128965d43e533d8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

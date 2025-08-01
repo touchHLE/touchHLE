@@ -34,6 +34,24 @@
       "parentUuid": "0a2cd9a1_06678396",
       "revId": "29bce2ffdc6d1a1d0ece1193b494f4c68bc1d082",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6faa9262_0b1b215d",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 11
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-08-01T21:25:58Z",
+      "side": 1,
+      "message": "Commit message still referencing --dump-linking-info, but it should be --dump\u003dlinking-info instead",
+      "parentUuid": "7914a077_c9fc2472",
+      "revId": "29bce2ffdc6d1a1d0ece1193b494f4c68bc1d082",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

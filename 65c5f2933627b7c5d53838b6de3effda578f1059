@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "af6312e6_5de9f08c",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 12
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-08-01T21:25:58Z",
+      "side": 1,
+      "message": "comm",
+      "revId": "65c5f2933627b7c5d53838b6de3effda578f1059",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "761c16bc_a67f97c9",
+        "filename": "dev-docs/debugging.md",
+        "patchSetId": 12
+      },
+      "lineNbr": 22,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-08-01T21:25:58Z",
+      "side": 1,
+      "message": "nit: missing empty line",
+      "revId": "65c5f2933627b7c5d53838b6de3effda578f1059",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0d6f2daf_3d52f310",
+        "filename": "src/objc/classes.rs",
+        "patchSetId": 12
+      },
+      "lineNbr": 835,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-08-01T21:25:58Z",
+      "side": 1,
+      "message": "i wish we had some way to verify that resulting json is valid. but I assume this would require an external dependency? (which should be avoided)",
+      "revId": "65c5f2933627b7c5d53838b6de3effda578f1059",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

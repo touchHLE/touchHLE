@@ -245,6 +245,24 @@
       "parentUuid": "a37f7dd1_e0c92d79",
       "revId": "c5e0870b0d1fa0f72b285e18d45300a38ecdbe32",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e864a9fe_fc385ace",
+        "filename": "src/frameworks/foundation/ns_process_info.rs",
+        "patchSetId": 35
+      },
+      "lineNbr": 61,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-08-01T21:36:26Z",
+      "side": 1,
+      "message": "Please avoid resolving threads if you acctually didn\u0027t address them.\n\nAre you talking about this GetApplicationName https://github.com/libsdl-org/SDL/blob/1c5c3b1479a05196bee38aab101c5d3ef4a8c754/src/video/cocoa/SDL_cocoaevents.m#L382 ?\nI don\u0027t see how that function gives you any information about possbile processName implementation.",
+      "parentUuid": "43e71005_6cb5b7e3",
+      "revId": "c5e0870b0d1fa0f72b285e18d45300a38ecdbe32",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

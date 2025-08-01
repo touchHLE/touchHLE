@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "df175fc3_8e5d6c52",
+        "filename": "src/frameworks/foundation/ns_process_info.rs",
+        "patchSetId": 37
+      },
+      "lineNbr": 52,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-08-01T21:36:26Z",
+      "side": 1,
+      "message": "the returned type is wrong, check https://developer.apple.com/documentation/foundation/processinfo/physicalmemory?language\u003dobjc\n\nit should be `unsigned long long` which is u64",
+      "revId": "12605b4789b01dc00e7778063c034034e9e9adfb",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

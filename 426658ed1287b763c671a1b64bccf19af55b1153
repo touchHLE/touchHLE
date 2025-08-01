@@ -16,6 +16,24 @@
       "message": "seems like this is unrelated?",
       "revId": "426658ed1287b763c671a1b64bccf19af55b1153",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "a4428e82_ab5c0662",
+        "filename": "tests/.gitignore",
+        "patchSetId": 7
+      },
+      "lineNbr": 2,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2025-08-01T03:33:58Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "56bae53d_4ed8d103",
+      "revId": "426658ed1287b763c671a1b64bccf19af55b1153",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

@@ -52,6 +52,24 @@
       "parentUuid": "e0faa494_6a11c202",
       "revId": "48e9a8203da7b248c0a7108e5128965d43e533d8",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9eb6e5da_f6cc05c6",
+        "filename": "src/frameworks/foundation/ns_run_loop.rs",
+        "patchSetId": 10
+      },
+      "lineNbr": 220,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-08-01T22:40:30Z",
+      "side": 1,
+      "message": "maybe it does work with a single lock after all https://play.rust-lang.org/?version\u003dstable\u0026mode\u003ddebug\u0026edition\u003d2024\u0026gist\u003d1d5330bfad70b2e5b1a83e57ed9bffa4",
+      "parentUuid": "4336dab6_7f865686",
+      "revId": "48e9a8203da7b248c0a7108e5128965d43e533d8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

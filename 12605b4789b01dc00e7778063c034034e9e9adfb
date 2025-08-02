@@ -52,6 +52,24 @@
       "parentUuid": "bb941348_0566e444",
       "revId": "12605b4789b01dc00e7778063c034034e9e9adfb",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "54936bf5_1908a397",
+        "filename": "src/frameworks/foundation/ns_process_info.rs",
+        "patchSetId": 37
+      },
+      "lineNbr": 52,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-08-02T09:47:00Z",
+      "side": 1,
+      "message": "I\u0027m not following what you\u0027re trying to convey.\n\nTo recap:\n\n1. `physicalMemory` property of `NSProcessInfo` is defined as `unsigned long long` (not as `NSUInteger` as you did)\n2. In touchHLE, C type of `unsigned long long` is repesented as Rust type of `u64`\n\nYou could learn more about touchHLE types here https://github.com/touchHLE/touchHLE/issues/48.\nYou could also check existing code examples, such as this one https://github.com/touchHLE/touchHLE/blob/caa342a77a6528505372a0a107d18fd220d2be13/src/frameworks/foundation/ns_value.rs#L268.",
+      "parentUuid": "4d8f8eb9_52f7bd9b",
+      "revId": "12605b4789b01dc00e7778063c034034e9e9adfb",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

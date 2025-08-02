@@ -33,6 +33,7 @@ struct PosixFileHostObject {
     file: GuestFile,
     needs_flush: bool,
     reached_eof: bool,
+    flags: i32,
 }
 
 // TODO: stdin/stdout/stderr handling somehow
@@ -72,8 +73,13 @@ pub const O_EXCL: OpenFlag = 0x800;
 /// File control command flags.
 /// This alias is for readability, POSIX just uses `int`.
 pub type FileControlCommand = i32;
+const F_GETFD: FileControlCommand = 1;
+const F_SETFD: FileControlCommand = 2;
 const F_RDADVISE: FileControlCommand = 44;
 const F_NOCACHE: FileControlCommand = 48;
+
+pub type FDFlag = i32;
+pub const FD_CLOEXEC: FDFlag = 1;
 
 pub type FLockFlag = i32;
 pub const LOCK_SH: FLockFlag = 1;
@@ -168,6 +174,7 @@ pub fn open_direct(env: &mut Environment, path: ConstPtr<u8>, flags: i32) -> Fil
                 file,
                 needs_flush,
                 reached_eof: false,
+                flags: 0,
             };
 
             find_or_create_fd(env, host_object)
@@ -552,6 +559,30 @@ fn fcntl(
     }
 
     match cmd {
+        F_GETFD => {
+            let file = env.libc_state.posix_io.file_for_fd(fd).unwrap();
+            return file.flags;
+        }
+        F_SETFD => {
+            // SET/GETFD are responsible for managing the CLOEXEC flag on an FD.
+            // When set, exec* calls automatically close open FDs to prevent
+            // them from leaking. Since touchHLE only runs a single process and
+            // non-jailbroken apps can not call exec* functions, it's safe to
+            // ignore the flag being set.
+
+            // TODO: When exec* is added implement CLOEXEC functionality
+            let flags: i32 = args.start().next(env);
+            assert!(matches!(flags, FD_CLOEXEC | 0));
+            if flags & FD_CLOEXEC == FD_CLOEXEC {
+                log!(
+                    "TODO: fcntl({}, F_SETFD, {}) called. CLOEXEC currently not supported.",
+                    fd,
+                    flags
+                );
+            }
+            let file = env.libc_state.posix_io.file_for_fd(fd).unwrap();
+            file.flags = flags;
+        }
         F_NOCACHE => {
             let mut args = args.start();
             let arg: i32 = args.next(env);
@@ -665,6 +696,7 @@ pub fn find_or_create_socket(env: &mut Environment) -> FileDescriptor {
         file: GuestFile::Socket,
         needs_flush: false,
         reached_eof: false,
+        flags: 0,
     };
     find_or_create_fd(env, host_object)
 }

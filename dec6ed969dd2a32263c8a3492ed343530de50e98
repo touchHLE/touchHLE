@@ -38,6 +38,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "aec8433f_f2f5a45b",
+        "filename": ".github/workflows/touchHLE_release.yml",
+        "patchSetId": 11
+      },
+      "lineNbr": 67,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-08-02T09:58:48Z",
+      "side": 1,
+      "message": "hhhm why not just directly download release by link https://github.com/touchHLE/common-3.0-sdk/releases/download/v0.1.3/common-3.0.sdk.tar.gz ?",
+      "parentUuid": "e3f18c59_5e7a35e8",
+      "revId": "dec6ed969dd2a32263c8a3492ed343530de50e98",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "f993e100_16cb259a",
         "filename": ".github/workflows/touchHLE_release.yml",
         "patchSetId": 11

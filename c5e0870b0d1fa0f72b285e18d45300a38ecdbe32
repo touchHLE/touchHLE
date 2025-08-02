@@ -317,6 +317,24 @@
       "parentUuid": "706f49e2_b476294a",
       "revId": "c5e0870b0d1fa0f72b285e18d45300a38ecdbe32",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "2427957e_dc7d3604",
+        "filename": "src/frameworks/foundation/ns_process_info.rs",
+        "patchSetId": 35
+      },
+      "lineNbr": 61,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-08-02T21:58:43Z",
+      "side": 1,
+      "message": "To be clear, I don\u0027t think it really matters what processName actually is as long it\u0027s a unique value to the app which really does not matter in touchHLE since we are just running one app all the time.  Again, though I added it because SDL (which is included via vendor in the touchHLE source) had it.",
+      "parentUuid": "06353d37_bef6dce1",
+      "revId": "c5e0870b0d1fa0f72b285e18d45300a38ecdbe32",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

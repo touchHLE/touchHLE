@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1b724e2a_dafc5185",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 13
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-08-02T03:01:32Z",
+      "side": 1,
+      "message": "Just want to mention it here, since log_once can use OnceLock with no 2nd parameter, could I add formatting back in? since it would work identical to the other log macros? Would definitley be useful for some existing TODOs (thinking of CATransaction), If not feel free to say no and resolve this if everything else looks good,",
+      "revId": "4e4452188bc466321aed368c948c1a3df9e97c23",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

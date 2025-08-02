@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "88d5e5e5_53f00336",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-08-02T19:16:27Z",
+      "side": 1,
+      "message": "\u003e For example whence is 16 bit but 32 bit for lseek.\n\nInteresting, could you point to some docs about that?",
+      "revId": "45bea1fad22af4bedd61e4660a9d39d5a96af387",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

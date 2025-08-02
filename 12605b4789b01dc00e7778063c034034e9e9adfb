@@ -34,6 +34,24 @@
       "parentUuid": "df175fc3_8e5d6c52",
       "revId": "12605b4789b01dc00e7778063c034034e9e9adfb",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4d8f8eb9_52f7bd9b",
+        "filename": "src/frameworks/foundation/ns_process_info.rs",
+        "patchSetId": 37
+      },
+      "lineNbr": 52,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-08-02T02:51:54Z",
+      "side": 1,
+      "message": "I looked at the code in touchHLE after I sent this prior message,\n\nsrc/cpu/dynarmic_wrapper/lib.cpp does reference uint64_t\nand vendor/SDL/src/video/SDL_blit_N.c references u_int64_t\nbut nothing in the touchHLE rust code,\n\nDefintley some u64 though, Don\u0027t know what to do here,  Let me know what type alias I should use if do make it u64 (or don\u0027t use an alias) and also make it clear if I should only make PHYSICAL_MEMORY use u64 (or a type alias) and not the other values used to calculate it or if I should also make those values u64 as well.",
+      "parentUuid": "bb941348_0566e444",
+      "revId": "12605b4789b01dc00e7778063c034034e9e9adfb",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

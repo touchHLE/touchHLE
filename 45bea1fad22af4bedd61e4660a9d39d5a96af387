@@ -16,6 +16,24 @@
       "message": "\u003e For example whence is 16 bit but 32 bit for lseek.\n\nInteresting, could you point to some docs about that?",
       "revId": "45bea1fad22af4bedd61e4660a9d39d5a96af387",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e089ddc3_f4569324",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2025-08-02T19:32:14Z",
+      "side": 1,
+      "message": "https://developer.apple.com/library/archive/documentation/System/Conceptual/ManPages_iPhoneOS/man2/lseek.2.html\n\nhttps://developer.apple.com/library/archive/documentation/System/Conceptual/ManPages_iPhoneOS/man2/fcntl.2.html\n\nThe whence arg in lseek is int while the whence field in the lock struct is a short.",
+      "parentUuid": "88d5e5e5_53f00336",
+      "revId": "45bea1fad22af4bedd61e4660a9d39d5a96af387",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

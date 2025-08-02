@@ -70,6 +70,24 @@
       "parentUuid": "4d8f8eb9_52f7bd9b",
       "revId": "12605b4789b01dc00e7778063c034034e9e9adfb",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "67a710ac_52d82307",
+        "filename": "src/frameworks/foundation/ns_process_info.rs",
+        "patchSetId": 37
+      },
+      "lineNbr": 52,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-08-02T21:20:23Z",
+      "side": 1,
+      "message": "So you answered one question. No need to define type aliases. Just use u64 as the type for the return type of the physicalMemory function. Understand that.\n\nStill need an answer for this: Should I also make PHYSICAL_MEMORY const u64 as well? What about the other const I declared to calculate PHYSICAL_MEMORY (which were previosuly defined as natural_t/u32 by hikari before I made them into const)?",
+      "parentUuid": "54936bf5_1908a397",
+      "revId": "12605b4789b01dc00e7778063c034034e9e9adfb",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

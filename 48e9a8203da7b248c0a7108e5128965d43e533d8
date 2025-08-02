@@ -70,6 +70,24 @@
       "parentUuid": "4336dab6_7f865686",
       "revId": "48e9a8203da7b248c0a7108e5128965d43e533d8",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "cf209cd5_ec2cba0e",
+        "filename": "src/frameworks/foundation/ns_run_loop.rs",
+        "patchSetId": 10
+      },
+      "lineNbr": 220,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-08-02T00:59:22Z",
+      "side": 1,
+      "message": "See discussion on discord, but for context here, I tested this and because of macro expansion it does work. Also, the static is scoped only within the function call so there is not a name collision globally or anything. Also, the reason that ```use std::sync::OnceLock;``` is within the macro code, otherwise it has to be in every file used by the macro.",
+      "parentUuid": "9eb6e5da_f6cc05c6",
+      "revId": "48e9a8203da7b248c0a7108e5128965d43e533d8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

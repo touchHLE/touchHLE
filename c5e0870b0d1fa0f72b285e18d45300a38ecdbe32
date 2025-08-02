@@ -263,6 +263,24 @@
       "parentUuid": "43e71005_6cb5b7e3",
       "revId": "c5e0870b0d1fa0f72b285e18d45300a38ecdbe32",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a9826b7c_a095eb6e",
+        "filename": "src/frameworks/foundation/ns_process_info.rs",
+        "patchSetId": 35
+      },
+      "lineNbr": 61,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-08-02T02:23:49Z",
+      "side": 1,
+      "message": "I just meant it was used there, which is why I added it. It was setting the variable to bundleName from CFBundle which the \u0027NS\u0027 equivalent is NSBundle that is used in other places in touchHLE, but I saw no name but identifier made sense as it is a unique field sortof the name of the app?\n\nI just removed processName for now, Again just added it because I noticed it was referenced, but it was never there before, so the SDL must be able to set appName earlier or that code is not used at all.  Many other instance properties that should be in NSProcessInfo are not yet there, so no need to further discuss this one at the moment.\n\nI\u0027ll let you resolve this if you are fine with me just removing this, otherwise open to further discussion.",
+      "parentUuid": "e864a9fe_fc385ace",
+      "revId": "c5e0870b0d1fa0f72b285e18d45300a38ecdbe32",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

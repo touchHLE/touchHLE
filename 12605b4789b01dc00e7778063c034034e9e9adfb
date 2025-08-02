@@ -16,6 +16,24 @@
       "message": "the returned type is wrong, check https://developer.apple.com/documentation/foundation/processinfo/physicalmemory?language\u003dobjc\n\nit should be `unsigned long long` which is u64",
       "revId": "12605b4789b01dc00e7778063c034034e9e9adfb",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "bb941348_0566e444",
+        "filename": "src/frameworks/foundation/ns_process_info.rs",
+        "patchSetId": 37
+      },
+      "lineNbr": 52,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-08-02T02:23:49Z",
+      "side": 1,
+      "message": "Are you sure this was actually a u64 in iOS 3.0/4.0 times? The reason it is u32 is because everything in mach_host (done by by hikari_no_yume) is all natural_t aka u32 and frameworks/foundation.rs NSUInteger aka u32 already existed.\nAlso a u32 can be 4,294,967,295 which if that is bytes it is equivlent to around 4GB, which considering we are assuming physicalMemory is around 2GB, a u32 is fine.\n\nEasy to change this, but different what was done in prior in touchHLE.  Also, what would I call it, just use u64? uint64_t? u_int64_t?\n\nSee https://developer.apple.com/documentation/kernel/uint64_t?changes\u003d_1__8,_1__8\u0026language\u003dobjc,objc\nand\nhttps://developer.apple.com/documentation/kernel/u_int64_t?changes\u003d_1__8,_1__8\u0026language\u003dobjc,objc",
+      "parentUuid": "df175fc3_8e5d6c52",
+      "revId": "12605b4789b01dc00e7778063c034034e9e9adfb",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

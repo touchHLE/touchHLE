@@ -88,6 +88,24 @@
       "parentUuid": "54936bf5_1908a397",
       "revId": "12605b4789b01dc00e7778063c034034e9e9adfb",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "180956e0_69173b27",
+        "filename": "src/frameworks/foundation/ns_process_info.rs",
+        "patchSetId": 37
+      },
+      "lineNbr": 52,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-08-02T21:35:46Z",
+      "side": 1,
+      "message": "For now I just made the function return u64 and did PHYSICAL_MEMORY as u64.  Resolving, Please free to re-open if I should fix it earlier as I mentioned (in mach_host.rs).",
+      "parentUuid": "67a710ac_52d82307",
+      "revId": "12605b4789b01dc00e7778063c034034e9e9adfb",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

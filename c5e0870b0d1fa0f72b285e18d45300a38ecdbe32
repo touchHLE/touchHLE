@@ -299,6 +299,24 @@
       "parentUuid": "a9826b7c_a095eb6e",
       "revId": "c5e0870b0d1fa0f72b285e18d45300a38ecdbe32",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "06353d37_bef6dce1",
+        "filename": "src/frameworks/foundation/ns_process_info.rs",
+        "patchSetId": 35
+      },
+      "lineNbr": 61,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-08-02T21:35:46Z",
+      "side": 1,
+      "message": "Sorry, I mis-understood what you were asking.\n\nI created a basic app in Xcode and oupted processName and it appears it is acutally just the CFBundleName by default, so like \u0027touchHLETest\u0027 or \u0027DOABlackjack\u0027.  Fixed it to use this in the code, and I tested this outputs the correct text in touchHLE (to make this easy, I just put a log in physicalMemry that did this since I knew my app called that function, but moved it into processName after).\n\n```\nimport SwiftUI\n\nstruct ContentView: View {\n    var body: some View {\n        VStack {\n            Image(systemName: \"globe\")\n                .imageScale(.large)\n                .foregroundStyle(.tint)\n            let processName \u003d ProcessInfo.processInfo.processName;\n            Text(processName)\n        }\n        .padding()\n    }\n}\n\n#Preview {\n    ContentView()\n}\n```\n\noutputed touchHLETest to the screen",
+      "parentUuid": "706f49e2_b476294a",
+      "revId": "c5e0870b0d1fa0f72b285e18d45300a38ecdbe32",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

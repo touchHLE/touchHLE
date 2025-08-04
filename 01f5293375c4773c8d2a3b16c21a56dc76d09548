@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b5ea0fe3_79ec3868",
+        "filename": "src/frameworks/uikit/ui_view.rs",
+        "patchSetId": 78
+      },
+      "lineNbr": 380,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-08-04T20:33:41Z",
+      "side": 1,
+      "message": "nit: missing newline",
+      "revId": "01f5293375c4773c8d2a3b16c21a56dc76d09548",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c650a93c_9056d895",
+        "filename": "src/frameworks/uikit/ui_view.rs",
+        "patchSetId": 78
+      },
+      "lineNbr": 383,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-08-04T20:33:41Z",
+      "side": 1,
+      "message": "duplicate, see below",
+      "revId": "01f5293375c4773c8d2a3b16c21a56dc76d09548",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e56b9ac7_ac7b0d6b",
+        "filename": "src/frameworks/uikit/ui_view.rs",
+        "patchSetId": 78
+      },
+      "lineNbr": 589,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-08-04T20:33:41Z",
+      "side": 1,
+      "message": "please update this instead",
+      "revId": "01f5293375c4773c8d2a3b16c21a56dc76d09548",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

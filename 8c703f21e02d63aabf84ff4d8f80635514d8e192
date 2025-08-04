@@ -16,6 +16,24 @@
       "message": "\u003e The default value is false. Some subclasses of UIView, like UIScrollView, override the default value to true.\n\ncould you please override UIScrollView too?",
       "revId": "8c703f21e02d63aabf84ff4d8f80635514d8e192",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "433dc0a9_e8129d44",
+        "filename": "src/frameworks/uikit/ui_view.rs",
+        "patchSetId": 79
+      },
+      "lineNbr": 584,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2025-08-04T21:23:23Z",
+      "side": 1,
+      "message": "I fear it\u0027ll be hard to keep track of this once it gets implemented properly",
+      "parentUuid": "8ae32ed3_dde1eabd",
+      "revId": "8c703f21e02d63aabf84ff4d8f80635514d8e192",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

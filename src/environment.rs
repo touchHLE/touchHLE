@@ -1407,7 +1407,7 @@ impl Environment {
     /// back into its thread, and the new host context where the old one was.
     ///
     /// This also internally switches the currently used guest context.
-    fn switch_thread(&mut self, old_context: &mut Option<HostContext>, new_thread: ThreadId) {
+    pub fn switch_thread(&mut self, old_context: &mut Option<HostContext>, new_thread: ThreadId) {
         assert!(new_thread != self.current_thread);
         assert!(self.threads[new_thread].active);
 

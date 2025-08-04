@@ -328,6 +328,28 @@ forUndefinedKey:(id)key { // NSString*
             return;
         }
     }
+    if wait {
+        let application: id = msg_class![env; UIApplication sharedApplication];
+        let delegate: id = msg![env; application delegate];
+        let delegate_class: Class = msg![env; delegate class];
+        if env.objc.get_class_name(delegate_class) == "s3eAppDelegate" {
+            log!("Applying game-specific hack for Marmalade SDK games: ignoring performSelectorOnMainThread:SEL({}) waitUntilDone:true", sel.as_str(&env.mem));
+            let old_thread = env.current_thread;
+            if env.current_thread != 0 {
+                env.switch_thread(0);
+            }
+            if sel.as_str(&env.mem).ends_with(':') {
+                () = msg_send(env, (this, sel, arg));
+            } else {
+                assert!(arg.is_null());
+                () = msg_send(env, (this, sel));
+            }
+            if env.current_thread != old_thread {
+                env.switch_thread(old_thread);
+            }
+            return;
+        }
+    }
     // TODO: support waiting
     // This would require tail calls for message send or a switch to async model
     assert!(!wait);

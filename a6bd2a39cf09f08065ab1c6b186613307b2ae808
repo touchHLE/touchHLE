@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a8f16afc_96e17d4b",
+        "filename": "src/libc/posix_io/fcntl.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 49,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-08-05T21:40:46Z",
+      "side": 1,
+      "message": "could you please assert that the flag is what we expect here? (i assume it would be close-on-exec?)\n\nalso please add small comment with an explanation why it is safe to ignore",
+      "revId": "a6bd2a39cf09f08065ab1c6b186613307b2ae808",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

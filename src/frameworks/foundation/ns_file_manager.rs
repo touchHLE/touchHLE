@@ -341,7 +341,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (id)fileAttributesAtPath:(id)path // NSString *
               traverseLink:(bool)traverse {
     // TODO: other attributes
-    log!("Warning: NSFileManager fileAttributesAtPath:traverseLink: returns only NSFileModificationDate and NSFileSize attributes!");
+    log_once!("fileAttributesAtPath:traverseLink: returns only NSFileModificationDate and NSFileSize attributes!");
 
     let path = ns_string::to_rust_string(env, path); // TODO: avoid copy
     // TODO: traverse link
@@ -356,7 +356,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     assert!(error.is_null()); // TODO
 
     // TODO: other attributes
-    log!("Warning: NSFileManager attributesOfItemAtPath:error: returns only NSFileModificationDate and NSFileSize attributes!");
+    log_once!("attributesOfItemAtPath:error: returns only NSFileModificationDate and NSFileSize attributes!");
 
     let path = ns_string::to_rust_string(env, path); // TODO: avoid copy
     // TODO: traverse link
@@ -369,7 +369,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (id)attributesOfFileSystemForPath:(id)_path
                               error:(MutPtr<id>)error {
     // TODO: other attributes
-    log!("Warning: NSFileManager attributesOfFileSystemForPath:error: returns only NSFileSystemFreeSize attribute!");
+    log_once!("attributesOfFileSystemForPath:error: returns only NSFileSystemFreeSize attribute!");
 
     assert!(error.is_null()); // TODO
 

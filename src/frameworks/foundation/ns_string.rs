@@ -60,6 +60,7 @@ const C_STRING_FRIENDLY_ENCODINGS: &[NSStringEncoding] = &[
     NSUTF8StringEncoding,
     NSWindowsCP1252StringEncoding,
     NSMacOSRomanStringEncoding,
+    NSISOLatin1StringEncoding,
 ];
 
 pub const NSMaximumStringLength: NSUInteger = (i32::MAX - 1) as _;
@@ -109,7 +110,7 @@ impl StringHostObject {
                 let string = unsafe { String::from_utf8_unchecked(bytes.into_owned()) };
                 StringHostObject::Utf8(Cow::Owned(string))
             }
-            NSMacOSRomanStringEncoding => {
+            NSMacOSRomanStringEncoding | NSISOLatin1StringEncoding => {
                 // TODO: support non ASCII symbols
                 assert!(bytes.iter().all(|byte| byte.is_ascii()));
                 // Safety: guaranteed by above assertion
@@ -424,7 +425,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (id)dataUsingEncoding:(NSStringEncoding)encoding {
     log!("[NSString dataUsingEncoding:{:?}]", encoding);
 
-    assert!(encoding == NSUTF8StringEncoding || encoding == NSASCIIStringEncoding);
+    assert!(C_STRING_FRIENDLY_ENCODINGS.contains(&encoding), "encoding {encoding}");
 
     // TODO: refactor with UTF8String method
     let string = to_rust_string(env, this);
@@ -683,11 +684,11 @@ pub const CLASSES: ClassExports = objc_classes! {
          maxLength:(NSUInteger)buffer_size
           encoding:(NSStringEncoding)encoding {
     // TODO: other encodings
-    assert!(encoding == NSUTF8StringEncoding || encoding == NSASCIIStringEncoding || encoding == NSMacOSRomanStringEncoding);
+    assert!(C_STRING_FRIENDLY_ENCODINGS.contains(&encoding), "encoding {encoding}");
 
     let src = to_rust_string(env, this);
-    if encoding == NSASCIIStringEncoding || encoding == NSMacOSRomanStringEncoding {
-        // TODO: properly support Mac OS Roman encoding.
+    if encoding == NSASCIIStringEncoding || encoding == NSMacOSRomanStringEncoding || encoding == NSISOLatin1StringEncoding {
+        // TODO: properly support Mac OS Roman and ISO Latin 1 encoding.
         // The first 128 characters are identical to the ASCII
         assert!(src.as_bytes().iter().all(|byte| byte.is_ascii()));
     }

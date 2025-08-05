@@ -56,6 +56,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "f5115466_c7c93d86",
+        "filename": ".github/workflows/touchHLE_release.yml",
+        "patchSetId": 11
+      },
+      "lineNbr": 67,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2025-08-05T11:14:30Z",
+      "side": 1,
+      "message": "I did make a new release with the multiplatform support and all the required patches to build test app. Does it make sense to use: https://github.com/touchHLE/common-3.0-sdk/releases/latest instead of a specific release, to make it easier to manage updates in the case where we add more headers or libs?",
+      "parentUuid": "aec8433f_f2f5a45b",
+      "revId": "dec6ed969dd2a32263c8a3492ed343530de50e98",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "f993e100_16cb259a",
         "filename": ".github/workflows/touchHLE_release.yml",
         "patchSetId": 11

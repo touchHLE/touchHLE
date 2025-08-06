@@ -138,6 +138,11 @@ pub const CLASSES: ClassExports = objc_classes! {
     this
 }
 
+- (id) stretchableImageWithLeftCapWidth:(NSInteger)_leftCapWidth topCapHeight:(NSInteger)_topCapHeight {
+    log!("TODO: properly support stretchableImageWithLeftCapWidth:topCapHeight:");
+    retain(env, this)
+}
+
 // TODO: more init methods
 // TODO: more accessors
 

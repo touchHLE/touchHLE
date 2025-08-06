@@ -8,6 +8,7 @@
 #define TOUCHHLE_OBJC_SYSTEM_H
 // Objective-C base:
 typedef signed char BOOL;
+typedef unsigned long NSUInteger;
 #define false 0
 #define true 1
 typedef struct objc_selector *SEL;
@@ -21,5 +22,17 @@ id objc_msgSend(id, SEL, ...);
 }
 + (id)new;
 - (id)init;
+- (id)retain;
+- (void)release;
+- (id)autorelease;
+- (void)dealloc;
+- (NSUInteger)retainCount;
 @end
+
+@interface NSAutoreleasePool : NSObject
++ (void)addObject:(id)anObject;
+- (void)addObject:(id)anObject;
+- (void)drain;
+@end
+
 #endif // TOUCHHLE_OBJC_SYSTEM_H

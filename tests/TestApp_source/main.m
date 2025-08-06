@@ -12,6 +12,7 @@
 
 // For convenience, let's just include the other source files.
 
+#include "AutoReleasePoolTest.m"
 #include "CGAffineTransform.c"
 #import "SyncTester.h"
 

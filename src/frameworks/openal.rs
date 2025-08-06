@@ -39,13 +39,18 @@ impl State {
         &mut env.framework_state.openal
     }
 
-    fn make_current(env: &mut Environment) -> OpenAL<'_> {
+    fn try_make_current(env: &mut Environment) -> Option<OpenAL<'_>> {
         let state = &mut env.framework_state.openal;
-        state
-            .contexts
-            .get_mut(&state.current_ctx)
-            .unwrap()
-            .make_current(env.openal_manager.as_mut())
+        Some(
+            state
+                .contexts
+                .get_mut(&state.current_ctx)?
+                .make_current(env.openal_manager.as_mut()),
+        )
+    }
+
+    fn make_current(env: &mut Environment) -> OpenAL<'_> {
+        Self::try_make_current(env).unwrap()
     }
 }
 
@@ -73,12 +78,20 @@ impl ContextMap {
         self.0.contains_key(k)
     }
 
+    fn try_make_current<'s, 'm: 's>(
+        &'s mut self,
+        guest_ctx: MutPtr<GuestALCcontext>,
+        manager: &'m mut OpenALManager,
+    ) -> Option<OpenAL<'s>> {
+        Some(self.get_mut(&guest_ctx)?.make_current(manager))
+    }
+
     fn make_current<'s, 'm: 's>(
         &'s mut self,
         guest_ctx: MutPtr<GuestALCcontext>,
         manager: &'m mut OpenALManager,
     ) -> OpenAL<'s> {
-        self.get_mut(&guest_ctx).unwrap().make_current(manager)
+        self.try_make_current(guest_ctx, manager).unwrap()
     }
 }
 
@@ -303,8 +316,12 @@ fn alGetError(env: &mut Environment) -> i32 {
         return al::AL_NO_ERROR;
     }
 
-    let context = State::make_current(env);
-    let res = unsafe { context.GetError() };
+    let context = State::try_make_current(env);
+    if context.is_none() {
+        log!("alGetError() called with no current context. Ignoring and returning AL_NO_ERROR.");
+        return al::AL_NO_ERROR;
+    }
+    let res = unsafe { context.unwrap().GetError() };
     log_dbg!("alGetError() => {:#x}", res);
     res
 }

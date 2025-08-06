@@ -80,12 +80,20 @@ impl ContextMap {
         self.0.contains_key(k)
     }
 
+    fn try_make_current<'s, 'm: 's>(
+        &'s mut self,
+        guest_ctx: MutPtr<GuestALCcontext>,
+        manager: &'m mut OpenALManager,
+    ) -> Option<OpenAL<'s>> {
+        Some(self.get_mut(&guest_ctx)?.make_current(manager))
+    }
+
     fn make_current<'s, 'm: 's>(
         &'s mut self,
         guest_ctx: MutPtr<GuestALCcontext>,
         manager: &'m mut OpenALManager,
     ) -> OpenAL<'s> {
-        self.get_mut(&guest_ctx).unwrap().make_current(manager)
+        self.try_make_current(guest_ctx, manager).unwrap()
     }
 }
 
@@ -339,18 +347,28 @@ fn alcGetProcAddress(
 // === al.h ===
 
 fn alGetError(env: &mut Environment) -> i32 {
-    // Super Monkey Ball tries to use this function (rather than alcGetError) to
-    // figure out whether opening the device succeeded. This is not correct and
-    // seems to be a bug. Presumably iPhone OS doesn't mind this, but OpenAL
-    // Soft returns an error in this case, and the game skips the rest of its
-    // audio initialization.
+    // Super Monkey Ball and other apps try to use this function (rather than
+    // alcGetError) to figure out whether opening the device succeeded. This
+    // is not correct and seems to be a bug. Presumably iPhone OS doesn't mind
+    // this, but OpenAL Soft returns an error in this case, and the game skips
+    // the rest of its audio initialization.
     if State::get(env).current_ctx.is_null() {
-        log!("alGetError() called with no current context. Ignoring and returning AL_NO_ERROR for compatibility with Super Monkey Ball.");
+        log_once!(
+            "alGetError() called with no current context. Ignoring and returning AL_NO_ERROR."
+        );
         return al::AL_NO_ERROR;
     }
 
-    let context = State::make_current(env);
-    let res = unsafe { context.GetError() };
+    // Some apps will try to call this on a context that is deleted (typically
+    // from another thread), so we need to silently be ok with this.
+    let context = State::try_make_current(env);
+    if context.is_none() {
+        log_once!(
+            "alGetError() called with no current context. Ignoring and returning AL_NO_ERROR."
+        );
+        return al::AL_NO_ERROR;
+    }
+    let res = unsafe { context.unwrap().GetError() };
     log_dbg!("alGetError() => {:#x}", res);
     res
 }

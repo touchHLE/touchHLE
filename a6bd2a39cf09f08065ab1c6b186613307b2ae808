@@ -34,6 +34,24 @@
       "parentUuid": "a8f16afc_96e17d4b",
       "revId": "a6bd2a39cf09f08065ab1c6b186613307b2ae808",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d89172bc_017524f0",
+        "filename": "src/libc/posix_io/fcntl.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 49,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-08-06T19:55:36Z",
+      "side": 1,
+      "message": "So I think we should assert for cloexec right now and figure out what to do later if some app tries to set other flags.",
+      "parentUuid": "d6f6efb9_fe398fb7",
+      "revId": "a6bd2a39cf09f08065ab1c6b186613307b2ae808",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

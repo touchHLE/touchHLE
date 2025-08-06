@@ -86,7 +86,11 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 - (())dealloc {
     let current_thread = env.current_thread;
-    log_dbg!("Draining pool: {:?}, current thread {}", this, current_thread);
+    log_dbg!(
+        "Draining pool: {:?}, current thread {}",
+        this,
+        current_thread
+    );
     let host_obj: &mut NSAutoreleasePoolHostObject = env.objc.borrow_mut(this);
     // It's unclear what should happen when draining a pool on the wrong thread,
     // but we prefer to be conservative here
@@ -96,13 +100,30 @@ pub const CLASSES: ClassExports = objc_classes! {
         .foundation
         .ns_autorelease_pool
         .pool_stacks
-        .get_mut(&current_thread).unwrap();
-    let pop_res = pool_stack.pop();
-    assert!(pop_res == Some(this));
-    let objects = std::mem::take(&mut host_obj.objects);
-    env.objc.dealloc_object(this, &mut env.mem);
-    for object in objects {
-        release(env, object);
+        .get_mut(&current_thread)
+        .unwrap();
+    // NSAutoReleasePool seems to keep popping until reaches the appropriate
+    // pool object. If there are pools that are "above" it in the stack, it
+    // deallocates them as well.
+    let Some((index, _)) = pool_stack
+        .iter()
+        .enumerate()
+        .rev()
+        .find(|(_, pool)| **pool == this)
+    else {
+        panic!(
+            "Bad [{:?} (NSAutoReleasePool) release] on thread {}!",
+            this, env.current_thread
+        )
+    };
+    let to_drop: Vec<id> = pool_stack.drain(index..).collect();
+    for pool in to_drop.into_iter().rev() {
+        let host_obj: &mut NSAutoreleasePoolHostObject = env.objc.borrow_mut(pool);
+        let objects = std::mem::take(&mut host_obj.objects);
+        env.objc.dealloc_object(this, &mut env.mem);
+        for object in objects {
+            release(env, object);
+        }
     }
 }
 

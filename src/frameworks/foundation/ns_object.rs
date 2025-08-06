@@ -14,10 +14,10 @@
 //!
 //! See also: [crate::objc], especially the `objects` module.
 
-use super::ns_dictionary::dict_from_keys_and_objects;
-use super::ns_run_loop::NSDefaultRunLoopMode;
-use super::ns_string::{from_rust_string, get_static_str, to_rust_string};
+use super::ns_string::{from_rust_string, to_rust_string};
 use super::{NSTimeInterval, NSUInteger};
+use crate::frameworks::foundation::ns_run_loop::{add_perform_request, cancel_perform_requests};
+use crate::libc::semaphore::{host_destroy_semaphore, sem_wait};
 use crate::mem::MutVoidPtr;
 use crate::objc::{
     autorelease, id, msg, msg_class, msg_send, nil, objc_classes, retain, Class, ClassExports,
@@ -63,6 +63,11 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 + (bool)instancesRespondToSelector:(SEL)selector {
     env.objc.class_has_method(this, selector)
+}
+
++ (())cancelPreviousPerformRequestsWithTarget:(id)target selector:(SEL)selector object:(id)arg {
+    let run_loop: id = msg_class![env; NSRunLoop currentRunLoop];
+    cancel_perform_requests(env, run_loop, target, selector, arg);
 }
 
 + (bool)accessInstanceVariablesDirectly {
@@ -248,25 +253,8 @@ forUndefinedKey:(id)key { // NSString*
 }
 
 - (())performSelector:(SEL)sel withObject:(id)arg afterDelay:(NSTimeInterval)delay {
-    log_dbg!("performSelector:{} withObject:{:?} afterDelay:{}", sel.as_str(&env.mem), arg, delay);
-
-    let sel_key: id = get_static_str(env, "SEL");
-    let sel_str = from_rust_string(env, sel.as_str(&env.mem).to_string());
-    let arg_key: id = get_static_str(env, "arg");
-    let dict = dict_from_keys_and_objects(env, &[(sel_key, sel_str), (arg_key, arg)]);
-
-    // TODO: using timer is not the most efficient implementation, but does work
-    // Proper implementation requires a message queue in the run loop
-    let selector = env.objc.lookup_selector("_touchHLE_timerFireMethod:").unwrap();
-    let timer:id = msg_class![env; NSTimer timerWithTimeInterval:delay
-                                              target:this
-                                            selector:selector
-                                            userInfo:dict
-                                             repeats:false];
-
-    let run_loop: id = msg_class![env; NSRunLoop mainRunLoop];
-    let mode: id = get_static_str(env, NSDefaultRunLoopMode);
-    () = msg![env; run_loop addTimer:timer forMode:mode];
+    let run_loop: id = msg_class![env; NSRunLoop currentRunLoop];
+    add_perform_request(env, run_loop, this, sel, arg, Some(delay), false);
 }
 
 - (())performSelectorOnMainThread:(SEL)sel withObject:(id)arg waitUntilDone:(bool)wait {
@@ -323,34 +311,12 @@ forUndefinedKey:(id)key { // NSString*
             return;
         }
     }
-    // TODO: support waiting
-    // This would require tail calls for message send or a switch to async model
-    assert!(!wait);
 
-    // The current implementation of performSelector:withObject:afterDelay
-    // already runs on the main thread.
-    msg![env; this performSelector:sel withObject:arg afterDelay:0.0]
-}
-
-// Private method, used by performSelector:withObject:afterDelay:
-- (())_touchHLE_timerFireMethod:(id)which { // NSTimer *
-    let dict: id = msg![env; which userInfo];
-
-    let sel_key: id = get_static_str(env, "SEL");
-    let sel_str_id: id = msg![env; dict objectForKey:sel_key];
-    let sel_str = to_rust_string(env, sel_str_id);
-    let sel = env.objc.lookup_selector(&sel_str).unwrap();
-
-    let arg_key: id = get_static_str(env, "arg");
-    let arg: id = msg![env; dict objectForKey:arg_key];
-
-    if sel.as_str(&env.mem).ends_with(':') {
-        () = msg_send(env, (this, sel, arg));
-    } else {
-        if !arg.is_null() {
-            log_dbg!("Warning: performSelector:withObject:afterDelay: will send {} to {:?}, but arg {:?} will be ignored!", sel.as_str(&env.mem), this, arg);
-        }
-        () = msg_send(env, (this, sel));
+    let run_loop: id = msg_class![env; NSRunLoop mainRunLoop];
+    let sem = add_perform_request(env, run_loop, this, sel, arg, None, wait);
+    if wait {
+        sem_wait(env, sem);
+        host_destroy_semaphore(env, sem);
     }
 }
 

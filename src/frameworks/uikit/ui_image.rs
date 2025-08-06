@@ -15,7 +15,7 @@ use crate::frameworks::uikit::ui_graphics::UIGraphicsGetCurrentContext;
 use crate::fs::GuestPath;
 use crate::image::Image;
 use crate::objc::{
-    autorelease, id, msg, msg_class, nil, objc_classes, release, ClassExports, HostObject,
+    autorelease, id, msg, msg_class, nil, objc_classes, release, retain, ClassExports, HostObject,
     NSZonePtr,
 };
 
@@ -103,6 +103,11 @@ pub const CLASSES: ClassExports = objc_classes! {
     let cg_image = cg_image::from_image(env, image);
     env.objc.borrow_mut::<UIImageHostObject>(this).cg_image = cg_image;
     this
+}
+
+- (id) stretchableImageWithLeftCapWidth:(NSInteger)_leftCapWidth topCapHeight:(NSInteger)_topCapHeight {
+    log!("TODO: properly support stretchableImageWithLeftCapWidth:topCapHeight:");
+    retain(env, this)
 }
 
 // TODO: more init methods

@@ -16,6 +16,24 @@
       "message": "could you please assert that the flag is what we expect here? (i assume it would be close-on-exec?)\n\nalso please add small comment with an explanation why it is safe to ignore",
       "revId": "a6bd2a39cf09f08065ab1c6b186613307b2ae808",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d6f6efb9_fe398fb7",
+        "filename": "src/libc/posix_io/fcntl.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 49,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2025-08-06T19:41:10Z",
+      "side": 1,
+      "message": "I did a test and you can pass any flag with no error. Based on that do we want to assert? Or just have a specific warning when trying to set the cloexec flag?",
+      "parentUuid": "a8f16afc_96e17d4b",
+      "revId": "a6bd2a39cf09f08065ab1c6b186613307b2ae808",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

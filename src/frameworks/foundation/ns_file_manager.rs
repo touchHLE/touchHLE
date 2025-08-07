@@ -270,6 +270,14 @@ pub const CLASSES: ClassExports = objc_classes! {
     contents
 }
 
+- (bool)isReadableFileAtPath:(id)path { // NSString*
+    let (_, readable, _, _) = {
+        let path = ns_string::to_rust_string(env, path); // TODO: avoid copy
+        env.fs.access(GuestPath::new(&path))
+    };
+    readable
+}
+
 - (bool)isWritableFileAtPath:(id)path { // NSString*
     let (_, _, writable, _) = {
         let path = ns_string::to_rust_string(env, path); // TODO: avoid copy

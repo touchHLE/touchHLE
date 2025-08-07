@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1e275521_e164016c",
+        "filename": "src/libc/posix_io.rs",
+        "patchSetId": 4
+      },
+      "lineNbr": 81,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-08-07T20:39:54Z",
+      "side": 1,
+      "message": "you should add same comment about readability as for FileControlCommand",
+      "revId": "478681c3b574c6bf60780b850b9d1e943f88a700",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

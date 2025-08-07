@@ -20,25 +20,27 @@ pub fn main() {
 
     let toml_version = std::env::var("CARGO_PKG_VERSION").unwrap();
     let version = Command::new("git").arg("describe").arg("--always").output();
-    let version = if version.is_ok() && version.as_ref().unwrap().status.success() {
-        rerun_if_changed(&workspace_root.join(".git/HEAD"));
-        rerun_if_changed(&workspace_root.join(".git/refs"));
-        #[allow(clippy::unnecessary_unwrap)]
-        let git_version = std::str::from_utf8(&version.unwrap().stdout)
-            .unwrap()
-            .trim_end()
-            .to_string();
-        if git_version
-            .strip_prefix('v')
-            .is_some_and(|v| !v.starts_with(&toml_version))
-            || !git_version.starts_with('v')
-        {
-            println!("cargo:warning=Cargo.toml version (v{toml_version}) is not a prefix of `git describe` version ({git_version})!");
+    let version = match version.as_ref() {
+        Ok(version) if version.status.success() => {
+            rerun_if_changed(&workspace_root.join(".git/HEAD"));
+            rerun_if_changed(&workspace_root.join(".git/refs"));
+            let git_version = std::str::from_utf8(&version.stdout)
+                .unwrap()
+                .trim_end()
+                .to_string();
+            if git_version
+                .strip_prefix('v')
+                .is_some_and(|v| !v.starts_with(&toml_version))
+                || !git_version.starts_with('v')
+            {
+                println!("cargo:warning=Cargo.toml version (v{toml_version}) is not a prefix of `git describe` version ({git_version})!");
+            }
+            git_version
         }
-        git_version
-    } else {
-        rerun_if_changed(&workspace_root.join("Cargo.toml"));
-        format!("v{toml_version} (git rev. unknown)")
+        _ => {
+            rerun_if_changed(&workspace_root.join("Cargo.toml"));
+            format!("v{toml_version} (git rev. unknown)")
+        }
     };
     std::fs::write(out_dir.join("version.txt"), version).unwrap();
 }

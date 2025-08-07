@@ -52,6 +52,24 @@
       "parentUuid": "d6f6efb9_fe398fb7",
       "revId": "a6bd2a39cf09f08065ab1c6b186613307b2ae808",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "2366c3b6_4a3e999d",
+        "filename": "src/libc/posix_io/fcntl.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 49,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2025-08-07T18:07:04Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "d89172bc_017524f0",
+      "revId": "a6bd2a39cf09f08065ab1c6b186613307b2ae808",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

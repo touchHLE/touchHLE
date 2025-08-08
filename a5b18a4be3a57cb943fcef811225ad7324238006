@@ -70,6 +70,24 @@
       "parentUuid": "d8df74ae_2f48b105",
       "revId": "a5b18a4be3a57cb943fcef811225ad7324238006",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d95fd6a1_0a89ae06",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 7
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-08-08T04:11:35Z",
+      "side": 1,
+      "message": "I went ahead and added some comments to the code that explain the use of hack and even added DOABlackJack as an example where it can be used.  Based on the explanation both in the code via comments and the one above, I am again going to resolve this,",
+      "parentUuid": "9dcaf03e_d60bc33a",
+      "revId": "a5b18a4be3a57cb943fcef811225ad7324238006",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

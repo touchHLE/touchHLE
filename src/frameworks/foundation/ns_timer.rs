@@ -26,6 +26,9 @@ struct NSTimerHostObject {
     user_info: id,
     repeats: bool,
     due_by: Option<Instant>,
+    /// If the timer is currently running, so that we don't run it while it is
+    /// already running.
+    is_running: bool,
     /// Weak reference
     run_loop: id,
 }
@@ -58,6 +61,7 @@ pub const CLASSES: ClassExports = objc_classes! {
         repeats,
         due_by: Some(Instant::now().checked_add(rust_interval).unwrap()),
         run_loop: nil,
+        is_running: false
     });
     let new = env.objc.alloc_object(this, host_object, &mut env.mem);
 
@@ -119,9 +123,10 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (())invalidate {
+    let timer = env.objc.borrow_mut::<NSTimerHostObject>(this);
     // Timer might already be invalid, don't try to remove it twice.
-    if env.objc.borrow_mut::<NSTimerHostObject>(this).due_by.take().is_some() {
-        let run_loop: id = msg_class![env; NSRunLoop currentRunLoop];
+    if timer.due_by.take().is_some() {
+        let run_loop = timer.run_loop;
         ns_run_loop::remove_timer(env, run_loop, this);
     }
 }
@@ -172,12 +177,21 @@ pub(super) fn handle_timer(env: &mut Environment, timer: id) -> Option<Instant> 
         selector,
         repeats,
         due_by,
+        is_running,
         run_loop,
         ..
     } = env.objc.borrow(timer);
 
-    // invalidated timers should have already been removed from the run loop
-    let due_by = due_by.unwrap();
+    // If a timer is already running, we don't want to run it since it could
+    // cause an infinite loop.
+    if is_running {
+        return None;
+    }
+
+    // Invalidated timers should be removed from the run loop, but if a timer
+    // is invalidated from another timer earlier in the current tick of the
+    // run loop it might still be run.
+    let due_by = due_by?;
 
     let now = Instant::now();
 
@@ -220,6 +234,7 @@ pub(super) fn handle_timer(env: &mut Environment, timer: id) -> Option<Instant> 
         None
     };
     env.objc.borrow_mut::<NSTimerHostObject>(timer).due_by = new_due_by;
+    env.objc.borrow_mut::<NSTimerHostObject>(timer).is_running = true;
 
     log_dbg!(
         "Timer {:?} fired, sending {:?} message to {:?}",
@@ -232,6 +247,8 @@ pub(super) fn handle_timer(env: &mut Environment, timer: id) -> Option<Instant> 
 
     // Signature should be `- (void)timerDidFire:(NSTimer *)which`.
     let _: () = msg_send(env, (target, selector, timer));
+
+    env.objc.borrow_mut::<NSTimerHostObject>(timer).is_running = false;
 
     release(env, timer);
     release(env, pool);

@@ -52,6 +52,24 @@
       "parentUuid": "c3f166f1_1853007c",
       "revId": "a5b18a4be3a57cb943fcef811225ad7324238006",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9dcaf03e_d60bc33a",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 7
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-08-08T04:04:14Z",
+      "side": 1,
+      "message": "So, I\u0027ve done more lookig into this the past coupe of weeks and it is one of these or the combination of all of them:\n\nTODO: [0x374f9830 setClipsToBounds:true]\ntouchHLE::frameworks::uikit::ui_view: TODO: [UIView 0x374f9830 setContentMode:3] \u003d\u003e \ntouchHLE::frameworks::uikit::ui_view: TODO: [(UIView*)0x37510da0 setAutoresizesSubviews:true]\n\nbut again, I want to make it clear... I\u0027d rather have DOABlackJack take up the entire window then have those black bars at the top and bottom, so I don\u0027t want to impliment this for this game. See https://github.com/touchHLE/touchHLE/pull/482#issue-3302538799 versus the YouTube video in the previous comment.",
+      "parentUuid": "d8df74ae_2f48b105",
+      "revId": "a5b18a4be3a57cb943fcef811225ad7324238006",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

@@ -46,7 +46,6 @@ pub const CONSTANTS: ConstantExports = &[
 #[derive(Default)]
 pub struct State {
     run_loops: HashMap<ThreadId, id>,
-    have_shown_reentrancy_warning: bool,
 }
 
 struct NSRunLoopHostObject {
@@ -178,6 +177,7 @@ pub fn remove_audio_queue(env: &mut Environment, run_loop: id, queue: AudioQueue
 
 /// For use by NSTimer so it can remove itself once it's invalidated.
 pub(super) fn remove_timer(env: &mut Environment, run_loop: id, timer: id) {
+    log_dbg!("Removing timer {:?} from run loop {:?}", timer, run_loop,);
     let NSRunLoopHostObject { timers, .. } = env.objc.borrow_mut(run_loop);
 
     let mut i = 0;
@@ -327,29 +327,6 @@ pub fn run_run_loop(
         );
     }
 
-    if env.objc.borrow::<NSRunLoopHostObject>(run_loop).is_running {
-        // TODO: The code right now can't handle re-entrancy properly; a timer
-        //       callback that re-enters the run loop will cause an infite loop.
-        //       This needs to be fixed. For now, we skip execution to avoid
-        //       triggering these bugs, but this means the app can't yield
-        //       control. :(
-        log_dbg!(
-            "Run loop {:?} is already running, skipping (TODO: support run loop re-entrancy)",
-            run_loop
-        );
-        if !std::mem::replace(
-            &mut env
-                .framework_state
-                .foundation
-                .ns_run_loop
-                .have_shown_reentrancy_warning,
-            true,
-        ) {
-            // Show one-time non-dbg warning to avoid spammy log output.
-            log!("Warning: run loop re-entrancy is unimplemented but may be relied upon by this app, this warning will only be shown once");
-        }
-        return;
-    };
     env.objc
         .borrow_mut::<NSRunLoopHostObject>(run_loop)
         .is_running = true;
@@ -379,10 +356,16 @@ pub fn run_run_loop(
 
         assert!(timers_tmp.is_empty());
         timers_tmp.extend_from_slice(&env.objc.borrow::<NSRunLoopHostObject>(run_loop).timers);
+        // Retain the timers in case a timer cancels another timer
+        // (which releases it)
+        for timer in timers_tmp.iter() {
+            retain(env, *timer);
+        }
 
         for timer in timers_tmp.drain(..) {
             let next_due = ns_timer::handle_timer(env, timer);
             limit_sleep_time(&mut sleep_until, next_due);
+            release(env, timer);
         }
 
         assert!(audio_queues_tmp.is_empty());

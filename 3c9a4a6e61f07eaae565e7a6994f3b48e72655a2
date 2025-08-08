@@ -53,6 +53,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "0c4e8d24_3f52d3aa",
+        "filename": "src/frameworks/uikit/ui_view/ui_control/ui_bar_button_item.rs",
+        "patchSetId": 28
+      },
+      "lineNbr": 45,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-08-08T03:51:07Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "0652400e_27b2c602",
+      "revId": "3c9a4a6e61f07eaae565e7a6994f3b48e72655a2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "aaf95223_f9d20cf9",
@@ -66,6 +84,24 @@
       "writtenOn": "2025-07-27T20:51:08Z",
       "side": 1,
       "message": "this is useless - if not overriden, the superclass method would be called automatically.",
+      "revId": "3c9a4a6e61f07eaae565e7a6994f3b48e72655a2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "c3d3196f_1096d0db",
+        "filename": "src/frameworks/uikit/ui_view/ui_control/ui_bar_button_item.rs",
+        "patchSetId": 28
+      },
+      "lineNbr": 55,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-08-08T03:51:07Z",
+      "side": 1,
+      "message": "At some point I was trying to do stuff here, but forgot to remove it when I moved it out. Removed it.",
+      "parentUuid": "aaf95223_f9d20cf9",
       "revId": "3c9a4a6e61f07eaae565e7a6994f3b48e72655a2",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
@@ -87,6 +123,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "39916f2c_ebb85c28",
+        "filename": "src/frameworks/uikit/ui_view/ui_control/ui_bar_button_item.rs",
+        "patchSetId": 28
+      },
+      "lineNbr": 59,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-08-08T03:51:07Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "bf3975d5_f92f5d4c",
+      "revId": "3c9a4a6e61f07eaae565e7a6994f3b48e72655a2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "000b9cc3_af8822a7",
@@ -100,6 +154,24 @@
       "writtenOn": "2025-07-27T20:51:08Z",
       "side": 1,
       "message": "why do you need this?",
+      "revId": "3c9a4a6e61f07eaae565e7a6994f3b48e72655a2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b7dffe34_c8d4b532",
+        "filename": "src/frameworks/uikit/ui_view/ui_control/ui_bar_button_item.rs",
+        "patchSetId": 28
+      },
+      "lineNbr": 72,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-08-08T03:51:07Z",
+      "side": 1,
+      "message": "Not sure... Again, same as init, I wanted to make sure I was not missing something at some point, but agree that it is not needed.  Removed.",
+      "parentUuid": "000b9cc3_af8822a7",
       "revId": "3c9a4a6e61f07eaae565e7a6994f3b48e72655a2",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
@@ -156,6 +228,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "13ef8ccb_3253c7a9",
+        "filename": "src/frameworks/uikit/ui_view/ui_control/ui_bar_button_item.rs",
+        "patchSetId": 28
+      },
+      "lineNbr": 93,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-08-08T03:51:07Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "1a312d84_bdbd77df",
+      "revId": "3c9a4a6e61f07eaae565e7a6994f3b48e72655a2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "b3e59257_571588bb",
@@ -169,6 +259,24 @@
       "writtenOn": "2025-07-27T20:51:08Z",
       "side": 1,
       "message": "you should define and use a constant",
+      "revId": "3c9a4a6e61f07eaae565e7a6994f3b48e72655a2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "511c96ba_eaf04c06",
+        "filename": "src/frameworks/uikit/ui_view/ui_control/ui_bar_button_item.rs",
+        "patchSetId": 28
+      },
+      "lineNbr": 95,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-08-08T03:51:07Z",
+      "side": 1,
+      "message": "Changed this to just use UIBarButtonSystemItem::Done",
+      "parentUuid": "b3e59257_571588bb",
       "revId": "3c9a4a6e61f07eaae565e7a6994f3b48e72655a2",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
@@ -190,6 +298,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "e718ddfc_769a968b",
+        "filename": "src/frameworks/uikit/ui_view/ui_control/ui_bar_button_item.rs",
+        "patchSetId": 28
+      },
+      "lineNbr": 105,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-08-08T03:51:07Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "88906244_8a43d0f8",
+      "revId": "3c9a4a6e61f07eaae565e7a6994f3b48e72655a2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "0b7bc31f_d5f76e32",
@@ -203,6 +329,24 @@
       "writtenOn": "2025-07-27T20:51:08Z",
       "side": 1,
       "message": "why?",
+      "revId": "3c9a4a6e61f07eaae565e7a6994f3b48e72655a2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "4f00838e_4c8248ee",
+        "filename": "src/frameworks/uikit/ui_view/ui_control/ui_bar_button_item.rs",
+        "patchSetId": 28
+      },
+      "lineNbr": 117,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-08-08T03:51:07Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "0b7bc31f_d5f76e32",
       "revId": "3c9a4a6e61f07eaae565e7a6994f3b48e72655a2",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
@@ -224,6 +368,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "2f0bb890_7f3486a2",
+        "filename": "src/frameworks/uikit/ui_view/ui_control/ui_bar_button_item.rs",
+        "patchSetId": 28
+      },
+      "lineNbr": 177,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-08-08T03:51:07Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "94be7f66_18008ff7",
+      "revId": "3c9a4a6e61f07eaae565e7a6994f3b48e72655a2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "b28c91ca_f9ea9720",
@@ -237,6 +399,24 @@
       "writtenOn": "2025-07-27T20:51:08Z",
       "side": 1,
       "message": "this doesn\u0027t make any sense...",
+      "revId": "3c9a4a6e61f07eaae565e7a6994f3b48e72655a2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "daa0eff4_eef53d94",
+        "filename": "src/frameworks/uikit/ui_view/ui_toolbar.rs",
+        "patchSetId": 28
+      },
+      "lineNbr": 24,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-08-08T03:51:07Z",
+      "side": 1,
+      "message": "Agreed, it is supposed to be UIBarStyle.  Fixed that now, but since I am not doing much with that actually, I just made it an id (which is what I make everything when initiallty running a game and see it needs something before I check the Apple documentation).  This is the UIBarStyle enum whihc does return integers.  Fixed it now to use UIBarStyle.",
+      "parentUuid": "b28c91ca_f9ea9720",
       "revId": "3c9a4a6e61f07eaae565e7a6994f3b48e72655a2",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
@@ -276,6 +456,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "8983212a_61211e61",
+        "filename": "src/frameworks/uikit/ui_view/ui_toolbar.rs",
+        "patchSetId": 28
+      },
+      "lineNbr": 48,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-08-08T03:51:07Z",
+      "side": 1,
+      "message": "I changed this to use a sizeThatFits with the 44 height as well. Then calling it here rather than just abartrialty changing it.  I think this is more in line with how real iOS likely does it.",
+      "parentUuid": "e8ea2820_5d9b3b3c",
+      "revId": "3c9a4a6e61f07eaae565e7a6994f3b48e72655a2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "7ea56815_451ded70",
@@ -289,6 +487,24 @@
       "writtenOn": "2025-07-27T20:51:08Z",
       "side": 1,
       "message": "this is not how touches should be propagated to subviews...",
+      "revId": "3c9a4a6e61f07eaae565e7a6994f3b48e72655a2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "4fdb05d4_aec9848a",
+        "filename": "src/frameworks/uikit/ui_view/ui_toolbar.rs",
+        "patchSetId": 28
+      },
+      "lineNbr": 113,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-08-08T03:51:07Z",
+      "side": 1,
+      "message": "So, once https://review.gerrithub.io/c/touchHLE/touchHLE/+/1220091 is merged the labels will be the correct size based on the text.  So, indded this old method will not work.  Instead changed it to this:\n```\n    for (i, item) in items.into_iter().enumerate() {\n        let label: id \u003d msg![env; item label];\n        if label \u003d\u003d nil {\n            continue;\n        }\n\n        let frame: CGRect \u003d msg![env; label frame];\n\n        if location.x \u003e\u003d frame.origin.x\n            \u0026\u0026 location.x \u003c\u003d frame.origin.x + frame.size.width\n            \u0026\u0026 location.y \u003e\u003d frame.origin.y\n            \u0026\u0026 location.y \u003c\u003d frame.origin.y + frame.size.height\n        {\n            log!(\"UIToolbar detected tap on item {}\", i);\n\n            let target: id \u003d msg![env; item target];\n            let action: SEL \u003d msg![env; item action];\n            if target !\u003d nil {\n                () \u003d msg![env; this sendAction:action to:target forEvent:event];\n            }\n            break;\n        }\n    }\n```\nThis will correctly look at each items frame and figure out if it is the one that got tapped.  I\u0027m doing actual log here because I am not 100% on this, but in the 2 button UIToolbar rendered by DOABlackJack, it works as expected.",
+      "parentUuid": "7ea56815_451ded70",
       "revId": "3c9a4a6e61f07eaae565e7a6994f3b48e72655a2",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
@@ -310,6 +526,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "63b45ea4_6b27d0b9",
+        "filename": "src/frameworks/uikit/ui_view/ui_toolbar.rs",
+        "patchSetId": 28
+      },
+      "lineNbr": 149,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-08-08T03:51:07Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "f2bf20fd_ae95b7fc",
+      "revId": "3c9a4a6e61f07eaae565e7a6994f3b48e72655a2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "0ee021a1_53664462",
@@ -323,6 +557,24 @@
       "writtenOn": "2025-07-27T20:51:08Z",
       "side": 1,
       "message": "you probably should estimate size taking into account text of the labels",
+      "revId": "3c9a4a6e61f07eaae565e7a6994f3b48e72655a2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d2d075ec_4b1e6127",
+        "filename": "src/frameworks/uikit/ui_view/ui_toolbar.rs",
+        "patchSetId": 28
+      },
+      "lineNbr": 184,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-08-08T03:51:07Z",
+      "side": 1,
+      "message": "Did this, but it is a different commit/patch set: https://review.gerrithub.io/c/touchHLE/touchHLE/+/1220091",
+      "parentUuid": "0ee021a1_53664462",
       "revId": "3c9a4a6e61f07eaae565e7a6994f3b48e72655a2",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

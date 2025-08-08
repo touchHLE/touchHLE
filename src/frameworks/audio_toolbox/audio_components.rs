@@ -46,6 +46,7 @@ pub struct AudioComponentInstanceHostObject {
     pub render_callback: Option<AURenderCallbackStruct>,
     pub last_render_time: Option<Instant>,
     pub al_source: Option<ALuint>,
+    pub is_running_handler: bool,
 }
 impl Default for AudioComponentInstanceHostObject {
     fn default() -> Self {
@@ -74,6 +75,7 @@ impl Default for AudioComponentInstanceHostObject {
             render_callback: None,
             last_render_time: None,
             al_source: None,
+            is_running_handler: false,
         }
     }
 }

@@ -70,6 +70,7 @@ struct AudioQueueHostObject {
     al_unused_buffers: Vec<ALuint>,
     aq_is_running_proc: Option<AudioQueuePropertyListenerProc>,
     aq_is_running_user_data: Option<MutVoidPtr>,
+    is_running_handler: bool,
 }
 
 /// Track whether the audio queue is meant to be running, in order to handle
@@ -188,6 +189,7 @@ pub fn AudioQueueNewOutput(
         al_unused_buffers: Vec::new(),
         aq_is_running_proc: None,
         aq_is_running_user_data: None,
+        is_running_handler: false,
     };
 
     let aq_ref = env.mem.alloc_and_write(OpaqueAudioQueue { _filler: 0 });
@@ -759,6 +761,12 @@ pub fn handle_audio_queue(env: &mut Environment, in_aq: AudioQueueRef) {
     if !is_supported_audio_format(&host_object.format) {
         return;
     }
+    if host_object.is_running_handler {
+        // Already running, prevent infinite loop from reentrancy
+        return;
+    }
+
+    host_object.is_running_handler = true;
 
     let mut buffers_to_reuse = Vec::new();
 
@@ -830,6 +838,11 @@ pub fn handle_audio_queue(env: &mut Environment, in_aq: AudioQueueRef) {
             finish_stopping_audio_queue(env, in_aq);
         }
     }
+
+    let state = State::get(env.framework_state.as_mut());
+
+    let host_object = state.audio_queues.get_mut(&in_aq).unwrap();
+    host_object.is_running_handler = false;
 }
 
 fn AudioQueuePrime(

@@ -250,12 +250,18 @@ pub fn render_audio_unit(env: &mut Environment, audio_unit: AudioUnit) {
     let audio_components_state = &mut at_state.audio_components;
     let audio_unit_host_object = audio_components_state
         .audio_component_instances
-        .get(&audio_unit)
+        .get_mut(&audio_unit)
         .unwrap();
 
     if !audio_unit_host_object.started {
         return;
     }
+
+    if audio_unit_host_object.is_running_handler {
+        return;
+    }
+
+    audio_unit_host_object.is_running_handler = true;
 
     let input_stream_format = audio_unit_host_object.input_stream_format;
     let output_stream_format = audio_unit_host_object.output_stream_format;
@@ -428,12 +434,14 @@ pub fn render_audio_unit(env: &mut Environment, audio_unit: AudioUnit) {
 
     env.mem.free(audio_buffer_list.cast_void());
 
-    // Reborrow as mutable to update the last render time
-    audio_components::State::get(&mut env.framework_state)
+    let audio_unit_host_object = audio_components::State::get(&mut env.framework_state)
         .audio_component_instances
         .get_mut(&audio_unit)
-        .unwrap()
-        .last_render_time = Some(now);
+        .unwrap();
+    // Reborrow as mutable to update the last render time
+
+    audio_unit_host_object.last_render_time = Some(now);
+    audio_unit_host_object.is_running_handler = false;
 }
 
 pub const FUNCTIONS: FunctionExports = &[

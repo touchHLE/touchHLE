@@ -58,9 +58,6 @@ struct NSRunLoopHostObject {
     /// Strong references to `NSTimer*` in no particular order. Timers are owned
     /// by the run loop. The timer must remove itself when invalidated.
     timers: Vec<id>,
-    /// A bool flag to indicate if the run loop is running.
-    /// It is needed to deal with re-entrance issues.
-    is_running: bool,
 }
 impl HostObject for NSRunLoopHostObject {}
 
@@ -177,6 +174,7 @@ pub fn remove_audio_queue(env: &mut Environment, run_loop: id, queue: AudioQueue
 
 /// For use by NSTimer so it can remove itself once it's invalidated.
 pub(super) fn remove_timer(env: &mut Environment, run_loop: id, timer: id) {
+    log_dbg!("Removing timer {:?} from run loop {:?}", timer, run_loop,);
     let NSRunLoopHostObject { timers, .. } = env.objc.borrow_mut(run_loop);
 
     let mut i = 0;
@@ -326,25 +324,6 @@ pub fn run_run_loop(
         );
     }
 
-    if env.objc.borrow::<NSRunLoopHostObject>(run_loop).is_running {
-        // TODO: The code right now can't handle re-entrancy properly; a timer
-        //       callback that re-enters the run loop will cause an infite loop.
-        //       This needs to be fixed. For now, we skip execution to avoid
-        //       triggering these bugs, but this means the app can't yield
-        //       control. :(
-        log_dbg!(
-            "Run loop {:?} is already running, skipping (TODO: support run loop re-entrancy)",
-            run_loop
-        );
-        log_once!(
-            "Warning: run loop re-entrancy is unimplemented but may be relied upon by this app."
-        );
-        return;
-    };
-    env.objc
-        .borrow_mut::<NSRunLoopHostObject>(run_loop)
-        .is_running = true;
-
     // Temporary vectors used to track things without needing a reference to the
     // environment or to lock the object. Re-used each iteration for efficiency.
     let mut timers_tmp = Vec::new();
@@ -373,12 +352,22 @@ pub fn run_run_loop(
 
         assert!(timers_tmp.is_empty());
         timers_tmp.extend_from_slice(&env.objc.borrow::<NSRunLoopHostObject>(run_loop).timers);
+        // Retain the timers in case a timer cancels another timer
+        // (which releases it)
+        for timer in timers_tmp.iter() {
+            retain(env, *timer);
+        }
 
         for timer in timers_tmp.drain(..) {
             let next_due = ns_timer::handle_timer(env, timer);
             limit_sleep_time(&mut sleep_until, next_due);
+            release(env, timer);
         }
 
+        // TODO: We currently don't properly handle if an audio queue or audio
+        // unit gets deleted while inside another queue's handler. Fixing this
+        // would be best done by implementing a more general run loop source
+        // system that can handle invalidation.
         assert!(audio_queues_tmp.is_empty());
         audio_queues_tmp.extend_from_slice(
             &env.objc
@@ -484,10 +473,6 @@ pub fn run_run_loop(
             }
         }
     }
-
-    env.objc
-        .borrow_mut::<NSRunLoopHostObject>(run_loop)
-        .is_running = false;
 }
 
 /// Helper method for `mainRunLoop` and `currentRunLoop` NSThread class methods
@@ -504,7 +489,6 @@ fn run_loop_for_thread(env: &mut Environment, this: Class, thread_id: ThreadId) 
             audio_queues: Vec::new(),
             selector_objects: Vec::new(),
             timers: Vec::new(),
-            is_running: false,
         });
         // TODO: is it OK to allocate static object for all threads,
         // not only main one?

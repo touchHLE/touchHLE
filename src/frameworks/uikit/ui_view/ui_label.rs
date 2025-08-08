@@ -135,6 +135,25 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (id)font {
     env.objc.borrow::<UILabelHostObject>(this).font
 }
+
+- (CGSize)sizeThatFits:(CGSize)size {
+    let size_h = size.height;
+    // Ignore the size it passes and just use NSString to figure out the size
+    // TODO: word wrapping support (but there is work needed in NSString too)
+    let text: id = msg![env; this text];
+    let font: id = msg![env; this font];
+
+    let font_size: CGSize = msg![env; text sizeWithFont:font];
+    let fsize_h = font_size.height;
+    if size.height < font_size.height {
+        // TODO: Confirm multi-line behavior
+        // Does label need to scroll? or is that handled by the outside view
+        // Could also be an odd height passed in size.height
+        log!("TODO: [UILabel sizeThatFits:size] size.height: {:?} < font_size.height: {:?}", size_h, fsize_h);
+    }
+    font_size
+}
+
 - (())setFont:(id)new_font { // UIFont*
     let new_font: id = if new_font == nil {
         // reset to default

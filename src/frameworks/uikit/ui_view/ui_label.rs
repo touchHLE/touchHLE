@@ -135,6 +135,16 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (id)font {
     env.objc.borrow::<UILabelHostObject>(this).font
 }
+
+- (CGSize)sizeThatFits:(CGSize)_size {
+    // Ignore the size it passes and just use NSString to figure out the size
+    // TODO: word wrapping support (but there is work needed in NSString too)
+    let text: id = msg![env; this text];
+    let font: id = msg![env; this font];
+
+    msg![env; text sizeWithFont:font]
+}
+
 - (())setFont:(id)new_font { // UIFont*
     let new_font: id = if new_font == nil {
         // reset to default

@@ -12,7 +12,10 @@ use crate::dyld::{export_c_func, FunctionExports};
 use crate::fs::{GuestFile, GuestOpenOptions, GuestPath};
 use crate::libc::errno::{set_errno, EBADF, EINTR, EINVAL, EIO};
 use crate::libc::sys::socket::close_socket;
-use crate::mem::{ConstPtr, ConstVoidPtr, GuestISize, GuestUSize, MutPtr, MutVoidPtr, Ptr};
+use crate::libc::unistd::pid_t;
+use crate::mem::{
+    ConstPtr, ConstVoidPtr, GuestISize, GuestUSize, MutPtr, MutVoidPtr, Ptr, SafeRead,
+};
 use crate::Environment;
 use std::io::{Read, Seek, SeekFrom, Write};
 
@@ -75,6 +78,8 @@ pub const O_EXCL: OpenFlag = 0x800;
 pub type FileControlCommand = i32;
 const F_GETFD: FileControlCommand = 1;
 const F_SETFD: FileControlCommand = 2;
+const F_GETLK: FileControlCommand = 7;
+const F_SETLK: FileControlCommand = 8;
 const F_RDADVISE: FileControlCommand = 44;
 const F_NOCACHE: FileControlCommand = 48;
 
@@ -82,6 +87,25 @@ const F_NOCACHE: FileControlCommand = 48;
 /// This alias is for readability, POSIX just uses `int`.
 pub type FDFlag = i32;
 pub const FD_CLOEXEC: FDFlag = 1;
+
+/// Record Locking flags.
+/// This alias is for readability, POSIX just uses `short`
+pub type RecordLockingFlag = i16;
+pub const F_RDLCK: RecordLockingFlag = 1;
+pub const F_UNLCK: RecordLockingFlag = 2;
+pub const F_WRLCK: RecordLockingFlag = 3;
+
+#[repr(C, packed)]
+#[derive(Debug)]
+#[allow(non_camel_case_types)]
+struct flock {
+    start: off_t,
+    len: off_t,
+    pid: pid_t,
+    lock_type: i16,
+    whence: i16,
+}
+unsafe impl SafeRead for flock {}
 
 pub type FLockFlag = i32;
 pub const LOCK_SH: FLockFlag = 1;
@@ -585,6 +609,51 @@ fn fcntl(
             let file = env.libc_state.posix_io.file_for_fd(fd).unwrap();
             file.flags = flags;
         }
+        F_GETLK => {
+            let lock_ptr: MutPtr<flock> = args.start().next(env);
+            let mut lock = env.mem.read(lock_ptr);
+
+            if let Err(error_code) = validate_lock(env, fd, &lock) {
+                set_errno(env, error_code);
+                return -1;
+            }
+
+            // Since locks are never set, claim no conflict by setting lock_type
+            // to F_UNLCK. For more info check F_SETLK match arm.
+            // TODO: actually check locks set by other processes and return
+            // a conflict if it exists
+            log!(
+                "TODO: fcntl({}, F_GETLK, {:?}) called. Locking unimplemented, any conflicts will be unreported.",
+                fd,
+                lock
+            );
+            lock.lock_type = F_UNLCK;
+            env.mem.write(lock_ptr, lock);
+        }
+        F_SETLK => {
+            let lock_ptr: MutPtr<flock> = args.start().next(env);
+            let lock = env.mem.read(lock_ptr);
+
+            if let Err(error_code) = validate_lock(env, fd, &lock) {
+                set_errno(env, error_code);
+                return -1;
+            }
+
+            // POSIX locks are process based which means that any threads within
+            // a process don't conflict with its own process's locks.
+            // For example, setting a lock that conflicts with another lock set
+            // by a thread in the same process results in the lock being either:
+            // upgraded, extended, split, etc., but it will not conflict.
+            // Practically, since touchHLE supports only one process, POSIX
+            // locks don't do anything, so they can temporarily be ignored.
+            // TODO: Actually set locks when multiproccess support is added and
+            // the file system supports it.
+            log!(
+                "TODO: fcntl({}, F_SETLK, {:?}) called. Locking unimplemented, ignoring lock.",
+                fd,
+                lock
+            );
+        }
         F_NOCACHE => {
             let mut args = args.start();
             let arg: i32 = args.next(env);
@@ -715,4 +784,44 @@ pub fn is_socket(env: &mut Environment, fd: FileDescriptor) -> bool {
         .unwrap()
         .file;
     matches!(guest_file, GuestFile::Socket)
+}
+
+/// Helper function to validate lock, not part of API. Assumes fd is a valid
+/// file descriptor
+fn validate_lock(env: &mut Environment, fd: FileDescriptor, lock: &flock) -> Result<(), i32> {
+    let lock_type = lock.lock_type;
+    if !matches!(lock_type, F_RDLCK | F_UNLCK | F_WRLCK) {
+        return Err(EINVAL);
+    }
+
+    let whence = lock.whence as i32;
+    let lock_start = match whence {
+        SEEK_SET => lock.start,
+        SEEK_CUR => {
+            let file = env.libc_state.posix_io.file_for_fd(fd).unwrap();
+            let file_position = file.file.stream_position().unwrap();
+            file_position as i64 + lock.start
+        }
+        SEEK_END => {
+            let file = env.libc_state.posix_io.file_for_fd(fd).unwrap();
+            let old_position = file.file.stream_position().unwrap();
+            let size: i64 = file
+                .file
+                .seek(SeekFrom::End(0))
+                .unwrap()
+                .try_into()
+                .unwrap();
+            file.file.seek(SeekFrom::Start(old_position)).unwrap();
+            size + lock.start
+        }
+        _ => {
+            return Err(EINVAL);
+        }
+    };
+
+    if lock_start < 0 {
+        return Err(EINVAL);
+    }
+
+    Ok(())
 }

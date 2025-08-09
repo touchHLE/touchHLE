@@ -41,7 +41,7 @@ pub type pid_t = i32;
 #[allow(non_camel_case_types)]
 type gid_t = u32;
 
-fn getpid(_env: &mut Environment) -> pid_t {
+pub fn getpid(_env: &mut Environment) -> pid_t {
     // Not a real value, since touchHLE only simulates a single process.
     // PID 0 would be init, which is a bit unrealistic, so let's go with 1.
     1

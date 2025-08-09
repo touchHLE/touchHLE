@@ -141,6 +141,24 @@
       "parentUuid": "6078c820_8cc7350f",
       "revId": "5db477177eef1b5c18f467c3332b6ffba7662de5",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d9d91b15_a7ddcc58",
+        "filename": "src/frameworks/core_graphics/cg_geometry.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 195,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-08-09T03:00:21Z",
+      "side": 1,
+      "message": "Added tests in TestApp and here is the macOS test:\n```\n#import \u003cFoundation/Foundation.h\u003e\n#import \u003cCoreGraphics/CoreGraphics.h\u003e\n\nBOOL runCGRectTest(void) {\n    BOOL success \u003d YES;\n\n    // x, y, width, height\n    CGRect testRect \u003d (CGRect){ {2.0, 3.0}, {100.0, 200.0} };\n\n    success \u003d success \u0026\u0026 (CGRectGetMinX(testRect) \u003d\u003d testRect.origin.x \u0026\u0026 CGRectGetMinX(testRect) \u003d\u003d 2.0);\n    success \u003d success \u0026\u0026 (CGRectGetMaxX(testRect) \u003d\u003d testRect.origin.x + testRect.size.width \u0026\u0026 CGRectGetMaxX(testRect) \u003d\u003d 102.0);\n\n    success \u003d success \u0026\u0026 (CGRectGetMinY(testRect) \u003d\u003d testRect.origin.y \u0026\u0026 CGRectGetMinY(testRect) \u003d\u003d 3.0);\n    success \u003d success \u0026\u0026 (CGRectGetMaxY(testRect) \u003d\u003d testRect.origin.y + testRect.size.height \u0026\u0026 CGRectGetMaxY(testRect) \u003d\u003d 203.0);\n\n    success \u003d success \u0026\u0026 (CGRectGetHeight(testRect) \u003d\u003d testRect.size.height);\n    success \u003d success \u0026\u0026 (CGRectGetWidth(testRect) \u003d\u003d testRect.size.width);\n\n    return success;\n}\n\nint main(int argc, const char * argv[]) {\n    @autoreleasepool {\n        BOOL result \u003d runCGRectTest();\n        NSLog(@\"CGRect test result: %@\", result ? @\"PASS\" : @\"FAIL\");\n    }\n    return 0;\n}\n```\nclang -framework Foundation -framework CoreGraphics main.m -o CGRectTest\n./CGRectTest",
+      "parentUuid": "afebb43a_e8926cd3",
+      "revId": "5db477177eef1b5c18f467c3332b6ffba7662de5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

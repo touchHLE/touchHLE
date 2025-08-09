@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "238b3c19_8ef5ad07",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-08-09T18:01:50Z",
+      "side": 1,
+      "message": "Needs https://review.gerrithub.io/c/touchHLE/touchHLE/+/1210568 to be merged first",
+      "revId": "ba522f7962f68962db8ff0cd802bf33a752277f6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

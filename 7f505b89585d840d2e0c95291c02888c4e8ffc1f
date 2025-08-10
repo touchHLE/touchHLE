@@ -1,0 +1,106 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9138f919_20ba2981",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 34
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-08-10T14:10:54Z",
+      "side": 1,
+      "message": "Thanks for writing the tests!\n\nFew small comments to address",
+      "revId": "7f505b89585d840d2e0c95291c02888c4e8ffc1f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "13169dfb_53f478f6",
+        "filename": "tests/TestApp_source/main.c",
+        "patchSetId": 34
+      },
+      "lineNbr": 333,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-08-10T14:10:54Z",
+      "side": 1,
+      "message": "please move it under \u0027Main code\u0027 line 324 separator (so we can destinguish between headers and tests easily)",
+      "revId": "7f505b89585d840d2e0c95291c02888c4e8ffc1f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ae626dd6_a3a35f8c",
+        "filename": "tests/TestApp_source/main.c",
+        "patchSetId": 34
+      },
+      "lineNbr": 334,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-08-10T14:10:54Z",
+      "side": 1,
+      "message": "use an int instead",
+      "revId": "7f505b89585d840d2e0c95291c02888c4e8ffc1f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3c59e4f2_6c73a47c",
+        "filename": "tests/TestApp_source/main.c",
+        "patchSetId": 34
+      },
+      "lineNbr": 336,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-08-10T14:10:54Z",
+      "side": 1,
+      "message": "use CGRectMake instead https://developer.apple.com/documentation/coregraphics/cgrectmake(_:_:_:_:)?language\u003dobjc\n\n(you may need to implement it as well)",
+      "revId": "7f505b89585d840d2e0c95291c02888c4e8ffc1f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2febe568_0643c2ad",
+        "filename": "tests/TestApp_source/main.c",
+        "patchSetId": 34
+      },
+      "lineNbr": 338,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-08-10T14:10:54Z",
+      "side": 1,
+      "message": "up to you, but it\u0027s better to check an return early on failure with a decrease numeric value (this you could know right away which test failed)",
+      "revId": "7f505b89585d840d2e0c95291c02888c4e8ffc1f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b4a24844_be06231a",
+        "filename": "tests/TestApp_source/main.c",
+        "patchSetId": 34
+      },
+      "lineNbr": 346,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-08-10T14:10:54Z",
+      "side": 1,
+      "message": "does it pass clang-format?",
+      "revId": "7f505b89585d840d2e0c95291c02888c4e8ffc1f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

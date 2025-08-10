@@ -159,6 +159,24 @@
       "parentUuid": "afebb43a_e8926cd3",
       "revId": "5db477177eef1b5c18f467c3332b6ffba7662de5",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a5278330_ba2f835d",
+        "filename": "src/frameworks/core_graphics/cg_geometry.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 195,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-08-10T14:10:54Z",
+      "side": 1,
+      "message": "technically, you can build and run main.c itself on macOS, you don\u0027t need to have a separate program for that",
+      "parentUuid": "d9d91b15_a7ddcc58",
+      "revId": "5db477177eef1b5c18f467c3332b6ffba7662de5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

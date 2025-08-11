@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "e91e5311_e48938c1",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 34
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-08-11T00:21:18Z",
+      "side": 1,
+      "message": "Marked as resolved.",
+      "parentUuid": "9138f919_20ba2981",
+      "revId": "7f505b89585d840d2e0c95291c02888c4e8ffc1f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "13169dfb_53f478f6",
@@ -31,6 +49,24 @@
       "writtenOn": "2025-08-10T14:10:54Z",
       "side": 1,
       "message": "please move it under \u0027Main code\u0027 line 324 separator (so we can destinguish between headers and tests easily)",
+      "revId": "7f505b89585d840d2e0c95291c02888c4e8ffc1f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "237ec1f6_95b35327",
+        "filename": "tests/TestApp_source/main.c",
+        "patchSetId": 34
+      },
+      "lineNbr": 333,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-08-11T00:21:18Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "13169dfb_53f478f6",
       "revId": "7f505b89585d840d2e0c95291c02888c4e8ffc1f",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
@@ -52,6 +88,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "794ebc94_38c6f387",
+        "filename": "tests/TestApp_source/main.c",
+        "patchSetId": 34
+      },
+      "lineNbr": 334,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-08-11T00:21:18Z",
+      "side": 1,
+      "message": "Test in tests/TestApp_source/CGAffineTransform.c have it as a bool, changed to int though. Switched it to the return negative early and return 0 if all tests pass, so this was removed.",
+      "parentUuid": "ae626dd6_a3a35f8c",
+      "revId": "7f505b89585d840d2e0c95291c02888c4e8ffc1f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "3c59e4f2_6c73a47c",
@@ -65,6 +119,24 @@
       "writtenOn": "2025-08-10T14:10:54Z",
       "side": 1,
       "message": "use CGRectMake instead https://developer.apple.com/documentation/coregraphics/cgrectmake(_:_:_:_:)?language\u003dobjc\n\n(you may need to implement it as well)",
+      "revId": "7f505b89585d840d2e0c95291c02888c4e8ffc1f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "51482434_aae183ef",
+        "filename": "tests/TestApp_source/main.c",
+        "patchSetId": 34
+      },
+      "lineNbr": 336,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-08-11T00:21:18Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "3c59e4f2_6c73a47c",
       "revId": "7f505b89585d840d2e0c95291c02888c4e8ffc1f",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
@@ -86,6 +158,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "37b0bbd6_4fc166b1",
+        "filename": "tests/TestApp_source/main.c",
+        "patchSetId": 34
+      },
+      "lineNbr": 338,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-08-11T00:21:18Z",
+      "side": 1,
+      "message": "Yeah, I see other tests in main do it this why, I agree, like it better. Switched it.",
+      "parentUuid": "2febe568_0643c2ad",
+      "revId": "7f505b89585d840d2e0c95291c02888c4e8ffc1f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "b4a24844_be06231a",
@@ -99,6 +189,24 @@
       "writtenOn": "2025-08-10T14:10:54Z",
       "side": 1,
       "message": "does it pass clang-format?",
+      "revId": "7f505b89585d840d2e0c95291c02888c4e8ffc1f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "027c0d77_2d7a1baf",
+        "filename": "tests/TestApp_source/main.c",
+        "patchSetId": 34
+      },
+      "lineNbr": 346,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-08-11T00:21:18Z",
+      "side": 1,
+      "message": "Yes! Actually hade these all as 1-liners but clang-format (via ./dev-scripts/format.sh) is what makes these all weird.",
+      "parentUuid": "b4a24844_be06231a",
       "revId": "7f505b89585d840d2e0c95291c02888c4e8ffc1f",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

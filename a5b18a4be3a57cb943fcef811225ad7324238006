@@ -88,6 +88,24 @@
       "parentUuid": "9dcaf03e_d60bc33a",
       "revId": "a5b18a4be3a57cb943fcef811225ad7324238006",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "41702035_850416e0",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 7
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-08-11T01:30:29Z",
+      "side": 1,
+      "message": "Also looked into if this is possibly a statusBarHidden issue, and the game in question (DOA Blackjack) never calls that function as far as I can tell.",
+      "parentUuid": "d95fd6a1_0a89ae06",
+      "revId": "a5b18a4be3a57cb943fcef811225ad7324238006",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

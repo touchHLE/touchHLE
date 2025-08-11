@@ -106,6 +106,24 @@
       "parentUuid": "d95fd6a1_0a89ae06",
       "revId": "a5b18a4be3a57cb943fcef811225ad7324238006",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "a119dccd_5177845f",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 7
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-08-11T03:03:11Z",
+      "side": 1,
+      "message": "touchHLE::environment: Found sorted order [\"libgcc_s.1.dylib\", \"libstdc++.6.dylib\", \"DOABlackjack\"]\ntouchHLE::libc::cxxabi: TODO: __cxa_atexit(GuestFunction(0x374ef884), (null), 0x3748a000) (unimplemented)\ntouchHLE::libc::cxxabi: TODO: __cxa_atexit(GuestFunction(0x374ef8b8), (null), 0x3748a000) (unimplemented)\ntouchHLE::frameworks::uikit::ui_screen: status bar status false\ntouchHLE::frameworks::uikit::ui_screen: status bar status false\ntouchHLE::frameworks::uikit::ui_view: TODO: [0x374f9830 setClipsToBounds:true]\ntouchHLE::frameworks::uikit::ui_view: TODO: ignoring setExclusiveTouch:true for view 0x374f9830\ntouchHLE::frameworks::uikit::ui_view: TODO: [UIView 0x374f9830 setContentMode:3] \u003d\u003e ()\ntouchHLE::frameworks::uikit::ui_view: TODO: ignoring setExclusiveTouch:true for view 0x37510da0\ntouchHLE::frameworks::uikit::ui_view: TODO: [(UIView*)0x37510da0 setAutoresizesSubviews:true]\ntouchHLE::frameworks::uikit::ui_screen: status bar status true\n\nThis is the order of the events.  The \u0027status bar status\u0027 is in UIScreen applicationFrame so even if the functions setContentMode or others corrected the applicationFrame, it would still be broken.  Other thing I noticed is that applicationFrame is deprecated as of iOS 9 https://developer.apple.com/documentation/uikit/uiscreen/applicationframe\n\nI think touchHLE is handadling applicationFrame and the status bar correctly but this game is just broken. It\u0027s not clear to me tall how this could be fixed without this hack,",
+      "parentUuid": "41702035_850416e0",
+      "revId": "a5b18a4be3a57cb943fcef811225ad7324238006",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

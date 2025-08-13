@@ -163,8 +163,8 @@ fn handle_touches_down(env: &mut Environment, map: HashMap<FingerId, Coords>) {
         log_dbg!("Finger {:?} touch down: {:?}", finger_id, coords);
 
         let location = CGPoint {
-            x: coords.0,
-            y: coords.1,
+            x: coords.0.round(),
+            y: coords.1.round(),
         };
 
         // Check if this tap is a double tap.
@@ -379,8 +379,8 @@ fn handle_touches_move(env: &mut Environment, map: HashMap<FingerId, Coords>) {
         };
 
         let location = CGPoint {
-            x: coords.0,
-            y: coords.1,
+            x: coords.0.round(),
+            y: coords.1.round(),
         };
 
         let view = env.objc.borrow::<UITouchHostObject>(touch).view;
@@ -484,8 +484,8 @@ fn handle_touches_up(env: &mut Environment, map: HashMap<FingerId, Coords>) {
         log_dbg!("Finger {:?} touch up: {:?}", finger_id, coords);
 
         let location = CGPoint {
-            x: coords.0,
-            y: coords.1,
+            x: coords.0.round(),
+            y: coords.1.round(),
         };
 
         let view = env.objc.borrow::<UITouchHostObject>(touch).view;

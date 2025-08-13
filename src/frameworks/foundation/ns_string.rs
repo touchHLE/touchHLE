@@ -385,6 +385,53 @@ pub const CLASSES: ClassExports = objc_classes! {
     NSUTF8StringEncoding
 }
 
+- (id)initWithFormat:(id)format, // NSString*
+                     ...args {
+    let res = with_format(env, format, args.start());
+    *env.objc.borrow_mut(this) = StringHostObject::Utf8(res.into());
+    this
+}
+
+- (id)initWithFormat:(id)format // NSString*
+           arguments:(VaList)args {
+    let res = with_format(env, format, args);
+    *env.objc.borrow_mut(this) = StringHostObject::Utf8(res.into());
+    this
+}
+
+- (())appendString:(id)a_string { // NSString*
+    assert_ne!(a_string, nil);
+    // TODO: this is inefficient? append in place instead
+    let new: id = msg![env; this stringByAppendingString:a_string];
+    () = msg![env; this setString:new];
+}
+
+- (())setString:(id)a_string { // NSString*
+    assert_ne!(a_string, nil);
+    let str = to_rust_string(env, a_string);
+    let host_object = StringHostObject::Utf8(str);
+    *env.objc.borrow_mut(this) = host_object;
+}
+
+- (id)dataUsingEncoding:(NSStringEncoding)encoding
+   allowLossyConversion:(bool)lossy {
+    if lossy {
+        log!("Warning: ignoring allow lossy conversion for '{}'", to_rust_string(env, this));
+    }
+    msg![env; this dataUsingEncoding:encoding]
+}
+
+- (id)dataUsingEncoding:(NSStringEncoding)encoding {
+    assert!(encoding == NSUTF8StringEncoding || encoding == NSASCIIStringEncoding);
+
+    // TODO: refactor with UTF8String method
+    let string = to_rust_string(env, this);
+    let c_string = env.mem.alloc_and_write_cstr(string.as_bytes());
+    let length: NSUInteger = (string.len() + 1).try_into().unwrap();
+
+    msg_class![env; NSData dataWithBytesNoCopy:(c_string.cast_void()) length:length]
+}
+
 // These are the two methods that have to be overridden by subclasses, so these
 // implementations don't have to care about foreign subclasses.
 - (NSUInteger)length {
@@ -1181,13 +1228,6 @@ pub const CLASSES: ClassExports = objc_classes! {
     msg![env; new initWithString:this]
 }
 
-- (())appendString:(id)a_string { // NSString*
-    assert_ne!(a_string, nil);
-    // TODO: this is inefficient? append in place instead
-    let new: id = msg![env; this stringByAppendingString:a_string];
-    () = msg![env; this setString:new];
-}
-
 - (())deleteCharactersInRange:(NSRange)range {
     // Below implementation handles a trivial case -
     // whole string is deleted!
@@ -1221,20 +1261,6 @@ pub const CLASSES: ClassExports = objc_classes! {
     let new = msg![env; this initWithBytes:bytes length:length encoding:encoding];
     log_dbg!("initWithData:encoding: {}", to_rust_string(env, new));
     new
-}
-
-- (id)initWithFormat:(id)format, // NSString*
-                     ...args {
-    let res = with_format(env, format, args.start());
-    *env.objc.borrow_mut(this) = StringHostObject::Utf8(res.into());
-    this
-}
-
-- (id)initWithFormat:(id)format // NSString*
-           arguments:(VaList)args {
-    let res = with_format(env, format, args);
-    *env.objc.borrow_mut(this) = StringHostObject::Utf8(res.into());
-    this
 }
 
 - (id)initWithBytes:(ConstPtr<u8>)bytes
@@ -1346,25 +1372,6 @@ pub const CLASSES: ClassExports = objc_classes! {
         .next()
         .map(|c| matching_values.contains(c))
         .unwrap_or(false)
-}
-
-- (id)dataUsingEncoding:(NSStringEncoding)encoding
-   allowLossyConversion:(bool)lossy {
-    if lossy {
-        log!("Warning: ignoring allow lossy conversion for '{}'", to_rust_string(env, this));
-    }
-    msg![env; this dataUsingEncoding:encoding]
-}
-
-- (id)dataUsingEncoding:(NSStringEncoding)encoding {
-    assert!(encoding == NSUTF8StringEncoding || encoding == NSASCIIStringEncoding);
-
-    // TODO: refactor with UTF8String method
-    let string = to_rust_string(env, this);
-    let c_string = env.mem.alloc_and_write_cstr(string.as_bytes());
-    let length: NSUInteger = (string.len() + 1).try_into().unwrap();
-
-    msg_class![env; NSData dataWithBytesNoCopy:(c_string.cast_void()) length:length]
 }
 
 - (id)componentsSeparatedByCharactersInSet:(id)cset { // NSCharacterSet*
@@ -1485,13 +1492,6 @@ pub const CLASSES: ClassExports = objc_classes! {
     assert_ne!(format, nil);
     let res = with_format(env, format, args.start());
     *env.objc.borrow_mut(this) = StringHostObject::Utf8(format!("{}{}", to_rust_string(env, this), res).into());
-}
-
-- (())setString:(id)a_string { // NSString*
-    assert_ne!(a_string, nil);
-    let str = to_rust_string(env, a_string);
-    let host_object = StringHostObject::Utf8(str);
-    *env.objc.borrow_mut(this) = host_object;
 }
 
 @end

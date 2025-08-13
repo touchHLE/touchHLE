@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d8ca1703_94b047c3",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 21
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-08-13T18:20:05Z",
+      "side": 1,
+      "message": "This looks wonderful, really beautiful in its current state. Thanks for iterating on this!",
+      "revId": "1c0cabf8171f9bf6367ffd7b150382136d97efba",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

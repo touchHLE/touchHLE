@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d395901c_79dc99b0",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-08-13T18:23:56Z",
+      "side": 1,
+      "message": "Thanks for fixing that!\n\nMy main concern is - could it happen while processing other type of objects, not only timers?",
+      "revId": "1de70204e20802c1d06d2753c5d25c621ac8c49a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

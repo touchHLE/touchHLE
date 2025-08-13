@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3bb0c59a_832b3e7f",
+        "filename": "src/frameworks/foundation/ns_run_loop.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 330,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-08-13T18:23:56Z",
+      "side": 0,
+      "message": "could you please assert that env.objc.borrow::\u003cNSRunLoopHostObject\u003e(run_loop).is_running is false here?",
+      "revId": "c79c57ce379d9d45ade55385a05054d97f27eb62",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

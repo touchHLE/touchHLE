@@ -6,6 +6,7 @@
 //! `MPMoviePlayerController` etc.
 
 use crate::dyld::{ConstantExports, HostConstant};
+use crate::frameworks::core_graphics::CGRect;
 use crate::frameworks::foundation::{ns_string, ns_url, NSInteger};
 use crate::frameworks::uikit::ui_device::UIDeviceOrientation;
 use crate::objc::{
@@ -74,6 +75,10 @@ pub const CONSTANTS: ConstantExports = &[
 struct MPMoviePlayerControllerHostObject {
     // NSURL *
     content_url: id,
+    // NSWindow *
+    fake_window: id,
+    prev_window: id,
+    playing: bool,
 }
 impl HostObject for MPMoviePlayerControllerHostObject {}
 
@@ -88,6 +93,9 @@ pub const CLASSES: ClassExports = objc_classes! {
 + (id)allocWithZone:(NSZonePtr)_zone {
     let host_object = Box::new(MPMoviePlayerControllerHostObject {
         content_url: nil,
+        fake_window: nil,
+        prev_window: nil,
+        playing: false,
     });
     env.objc.alloc_object(this, host_object, &mut env.mem)
 }
@@ -159,12 +167,15 @@ pub const CLASSES: ClassExports = objc_classes! {
 // Another undocumented one! But some apps may still use it :/
 // https://stackoverflow.com/a/1390079/2241008
 - (())setOrientation:(UIDeviceOrientation)_orientation animated:(bool)_animated {
-
 }
 
 // MPMediaPlayback implementation
 - (())play {
     log!("TODO: [(MPMoviePlayerController*){:?} play]", this);
+    if env.objc.borrow::<MPMoviePlayerControllerHostObject>(this).playing {
+        return
+    }
+
     if let Some(old) = env.framework_state.media_player.movie_player.active_player {
         let _: () = msg![env; old stop];
     }
@@ -172,6 +183,20 @@ pub const CLASSES: ClassExports = objc_classes! {
     // Movie player is retained by the runtime until it is stopped
     retain(env, this);
     env.framework_state.media_player.movie_player.active_player = Some(this);
+    // Get the old window, make a new window to temporarily take over the old
+    // window (POP checks for this)
+    let application: id = msg_class![env; UIApplication sharedApplication];
+    let curr_window: id = msg![env; application keyWindow];
+
+    let screen: id = msg_class![env; UIScreen mainScreen];
+    let bounds: CGRect = msg![env; screen bounds];
+    let window: id = msg_class![env; UIWindow alloc];
+    let window: id = msg![env; window initWithFrame:bounds];
+    let host_obj = env.objc.borrow_mut::<MPMoviePlayerControllerHostObject>(this);
+    host_obj.fake_window = window;
+    host_obj.prev_window = curr_window;
+    host_obj.playing = true;
+    let _: () = msg![env; window makeKeyAndVisible];
 
     // Act as if playback immediately completed after 1 second
     // (various apps wait for this, such as BIA and Hero of Sparta).
@@ -183,6 +208,10 @@ pub const CLASSES: ClassExports = objc_classes! {
             return;
         }
     }
+    // We also need to retain until the playback notification is complete.
+    retain(env, this);
+    retain(env, curr_window);
+
     State::get(env).pending_notifications.push_back(notif);
 }
 
@@ -197,7 +226,6 @@ pub const CLASSES: ClassExports = objc_classes! {
         // 1 `play` message for the player. In that case, we want to release
         // the active player only once.
         assert!(this == env.framework_state.media_player.movie_player.active_player.take().unwrap());
-        release(env, this);
     }
 }
 
@@ -240,5 +268,19 @@ pub(super) fn handle_players(env: &mut Environment) {
         let center: id = msg_class![env; NSNotificationCenter defaultCenter];
         // TODO: should there be some user info attached?
         let _: () = msg![env; center postNotificationName:name object:object];
+        if name_str == MPMoviePlayerPlaybackDidFinishNotification {
+            let host_obj = env
+                .objc
+                .borrow_mut::<MPMoviePlayerControllerHostObject>(object);
+            let window = host_obj.fake_window;
+            let prev_window = host_obj.prev_window;
+            host_obj.fake_window = nil;
+            host_obj.prev_window = nil;
+            host_obj.playing = false;
+            let _: () = msg![env; prev_window makeKeyAndVisible];
+            release(env, object);
+            release(env, window);
+            release(env, prev_window);
+        }
     }
 }

@@ -16,6 +16,24 @@
       "message": "do we really providing those? some explanation comment maybe needed here",
       "revId": "5622c35743f3fc39d4da9ba9d9776e34a0a61daf",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "1408151d_f80ef9a2",
+        "filename": "src/objc/classes.rs",
+        "patchSetId": 10
+      },
+      "lineNbr": 846,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2025-08-14T16:18:53Z",
+      "side": 1,
+      "message": "We aren\u0027t providing those but they\u0027re needed for objc linking to work, I\u0027ll add a comment to explain.",
+      "parentUuid": "454e6d1d_1d592f79",
+      "revId": "5622c35743f3fc39d4da9ba9d9776e34a0a61daf",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

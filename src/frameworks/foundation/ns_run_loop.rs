@@ -341,11 +341,14 @@ pub fn run_run_loop(
     loop {
         let mut sleep_until = None;
 
-        let next_due = uikit::handle_events(env);
-        limit_sleep_time(&mut sleep_until, next_due);
+        // These should only occur on the main thread.
+        if is_main_run_loop {
+            let next_due = uikit::handle_events(env);
+            limit_sleep_time(&mut sleep_until, next_due);
 
-        let next_due = core_animation::recomposite_if_necessary(env, false);
-        limit_sleep_time(&mut sleep_until, next_due);
+            let next_due = core_animation::recomposite_if_necessary(env, false);
+            limit_sleep_time(&mut sleep_until, next_due);
+        }
 
         assert!(timers_tmp.is_empty());
         timers_tmp.extend_from_slice(&env.objc.borrow::<NSRunLoopHostObject>(run_loop).timers);

@@ -68,7 +68,7 @@ pub fn recomposite_if_necessary(env: &mut Environment, force: bool) -> Option<In
     if !windows.iter().any(|&window| !msg![env; window isHidden]) {
         log_dbg!("No visible windows, skipping composition");
         return None;
-    }
+    };
 
     if find_fullscreen_eagl_layer(env) != nil {
         // No composition done, EAGLContext will present directly.

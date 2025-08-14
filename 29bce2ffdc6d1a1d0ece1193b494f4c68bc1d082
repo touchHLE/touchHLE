@@ -70,6 +70,24 @@
       "parentUuid": "6faa9262_0b1b215d",
       "revId": "29bce2ffdc6d1a1d0ece1193b494f4c68bc1d082",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4909d4d8_a0cff1cb",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 11
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-08-14T15:38:46Z",
+      "side": 1,
+      "message": "I still see --dump-linking-info on the commit message",
+      "parentUuid": "1e364a9f_d76644a9",
+      "revId": "29bce2ffdc6d1a1d0ece1193b494f4c68bc1d082",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

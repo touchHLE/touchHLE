@@ -16,6 +16,24 @@
       "message": "why this got removed?",
       "revId": "6ba3c6237285e984d9203538ca759e398c057ff8",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "86369c13_bc57eb91",
+        "filename": ".github/workflows/touchHLE_release.yml",
+        "patchSetId": 19
+      },
+      "lineNbr": 180,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2025-08-14T18:22:16Z",
+      "side": 0,
+      "message": "We only need msys2 to build the sdk, the prebuilt versions link the libraries statically.",
+      "parentUuid": "004f3560_fc7a8a39",
+      "revId": "6ba3c6237285e984d9203538ca759e398c057ff8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

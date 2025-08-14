@@ -16,6 +16,24 @@
       "message": "even if it\u0027s an overkill, I guess you should add licence header here as well",
       "revId": "2fabc23099367db60380371ab27ea7f9c4719809",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "8165db7a_990cde6b",
+        "filename": "tests/StubApp_source/stub.c",
+        "patchSetId": 19
+      },
+      "lineNbr": 1,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2025-08-14T18:22:16Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "0ee96343_f8430f92",
+      "revId": "2fabc23099367db60380371ab27ea7f9c4719809",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

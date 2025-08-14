@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "004f3560_fc7a8a39",
+        "filename": ".github/workflows/touchHLE_release.yml",
+        "patchSetId": 19
+      },
+      "lineNbr": 180,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-08-14T18:11:38Z",
+      "side": 0,
+      "message": "why this got removed?",
+      "revId": "6ba3c6237285e984d9203538ca759e398c057ff8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

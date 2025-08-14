@@ -34,6 +34,24 @@
       "parentUuid": "004f3560_fc7a8a39",
       "revId": "6ba3c6237285e984d9203538ca759e398c057ff8",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "79d01424_cc8eb912",
+        "filename": ".github/workflows/touchHLE_release.yml",
+        "patchSetId": 19
+      },
+      "lineNbr": 180,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-08-14T18:36:30Z",
+      "side": 0,
+      "message": "I\u0027m not sure I understand, this part is about format checks? So it should be still relevant?",
+      "parentUuid": "86369c13_bc57eb91",
+      "revId": "6ba3c6237285e984d9203538ca759e398c057ff8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

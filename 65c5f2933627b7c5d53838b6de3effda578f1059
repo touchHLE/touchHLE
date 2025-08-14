@@ -35,6 +35,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "f579762e_304880b8",
+        "filename": "dev-docs/debugging.md",
+        "patchSetId": 12
+      },
+      "lineNbr": 22,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2025-08-14T01:20:50Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "761c16bc_a67f97c9",
+      "revId": "65c5f2933627b7c5d53838b6de3effda578f1059",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "0d6f2daf_3d52f310",
@@ -48,6 +66,24 @@
       "writtenOn": "2025-08-01T21:25:58Z",
       "side": 1,
       "message": "i wish we had some way to verify that resulting json is valid. but I assume this would require an external dependency? (which should be avoided)",
+      "revId": "65c5f2933627b7c5d53838b6de3effda578f1059",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "9f53a4e4_b138d4a5",
+        "filename": "src/objc/classes.rs",
+        "patchSetId": 12
+      },
+      "lineNbr": 835,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2025-08-14T01:20:50Z",
+      "side": 1,
+      "message": "yeah, the only practical way to do this would be pulling in an external dependency",
+      "parentUuid": "0d6f2daf_3d52f310",
       "revId": "65c5f2933627b7c5d53838b6de3effda578f1059",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

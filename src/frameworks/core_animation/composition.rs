@@ -27,6 +27,7 @@ use std::time::{Duration, Instant};
 #[derive(Default)]
 pub(super) struct State {
     texture_framebuffer: Option<(GLuint, GLuint)>,
+    is_compositing: bool,
     recomposite_next: Option<Instant>,
     fps_counter: Option<FpsCounter>,
     misc_gl_objects: Option<MiscGlObjects>,
@@ -76,6 +77,15 @@ pub fn recomposite_if_necessary(env: &mut Environment, force: bool) -> Option<In
         log_dbg!("No visible window, skipping composition");
         return None;
     };
+    if env
+        .framework_state
+        .core_animation
+        .composition
+        .is_compositing
+    {
+        log_dbg!("Already compositing, skipping composition");
+        return None;
+    }
 
     if find_fullscreen_eagl_layer(env) != nil {
         // No composition done, EAGLContext will present directly.
@@ -122,6 +132,10 @@ pub fn recomposite_if_necessary(env: &mut Environment, force: bool) -> Option<In
     } else {
         Some(now.checked_add(Duration::from_secs_f64(interval)).unwrap())
     };
+    env.framework_state
+        .core_animation
+        .composition
+        .is_compositing = true;
     env.framework_state
         .core_animation
         .composition
@@ -366,6 +380,11 @@ pub fn recomposite_if_necessary(env: &mut Environment, force: bool) -> Option<In
     }
     std::mem::drop(gles);
     window.swap_window();
+
+    env.framework_state
+        .core_animation
+        .composition
+        .is_compositing = false;
 
     new_recomposite_next
 }

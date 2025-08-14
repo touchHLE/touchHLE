@@ -104,7 +104,6 @@ pub const CLASSES: ClassExports = objc_classes! {
     // TODO: We don't currently have send any non-touch events to windows,
     // so there's no meaning in it yet.
 
-    assert!(env.framework_state.uikit.ui_view.ui_window.key_window.is_none());
     env.framework_state.uikit.ui_view.ui_window.key_window = Some(this);
 
     msg![env; this setHidden:false]

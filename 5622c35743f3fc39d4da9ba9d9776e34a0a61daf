@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "454e6d1d_1d592f79",
+        "filename": "src/objc/classes.rs",
+        "patchSetId": 10
+      },
+      "lineNbr": 846,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-08-14T09:39:14Z",
+      "side": 1,
+      "message": "do we really providing those? some explanation comment maybe needed here",
+      "revId": "5622c35743f3fc39d4da9ba9d9776e34a0a61daf",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

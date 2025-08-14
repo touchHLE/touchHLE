@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "bd79988e_14a19982",
+        "filename": ".github/workflows/touchHLE_release.yml",
+        "patchSetId": 13
+      },
+      "lineNbr": 66,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2025-08-14T01:21:20Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "73235587_e6a8d042",
+      "revId": "cb82bff309d763f9b661c0e3ed5adbfbdf183064",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "2bc897b1_c66373c3",
@@ -31,6 +49,24 @@
       "writtenOn": "2025-08-13T17:11:13Z",
       "side": 1,
       "message": "please add licence header (here and for other new files)",
+      "revId": "cb82bff309d763f9b661c0e3ed5adbfbdf183064",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "a6eaaf24_29673ad6",
+        "filename": "tests/TestApp_source/SyncTester.h",
+        "patchSetId": 13
+      },
+      "lineNbr": 1,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2025-08-14T01:21:20Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "2bc897b1_c66373c3",
       "revId": "cb82bff309d763f9b661c0e3ed5adbfbdf183064",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "453c844b_99ec79c1",
+        "filename": "tests/TestApp_source/main.m",
+        "patchSetId": 13
+      },
+      "lineNbr": 336,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2025-08-14T01:21:20Z",
+      "side": 0,
+      "message": "Done",
+      "parentUuid": "c9549b3d_47302e60",
+      "revId": "0b2c9e74e176ec08696fdd8f1c91c99a0ca0616a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "80e11759_7ef4bcfd",
@@ -31,6 +49,42 @@
       "writtenOn": "2025-08-13T17:11:13Z",
       "side": 0,
       "message": "nit: keep the empty line",
+      "revId": "0b2c9e74e176ec08696fdd8f1c91c99a0ca0616a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "7f3f69f0_d7d3041d",
+        "filename": "tests/integration.rs",
+        "patchSetId": 13
+      },
+      "lineNbr": 21,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2025-08-14T01:21:20Z",
+      "side": 0,
+      "message": "Done",
+      "parentUuid": "80e11759_7ef4bcfd",
+      "revId": "0b2c9e74e176ec08696fdd8f1c91c99a0ca0616a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "37526406_75f334bd",
+        "filename": "tests/integration.rs",
+        "patchSetId": 13
+      },
+      "lineNbr": 21,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2025-08-14T01:21:20Z",
+      "side": 0,
+      "message": "Done",
+      "parentUuid": "80e11759_7ef4bcfd",
       "revId": "0b2c9e74e176ec08696fdd8f1c91c99a0ca0616a",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

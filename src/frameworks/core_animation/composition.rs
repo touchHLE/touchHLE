@@ -29,6 +29,7 @@ use std::time::{Duration, Instant};
 #[derive(Default)]
 pub(super) struct State {
     texture_framebuffer: Option<(GLuint, GLuint)>,
+    is_compositing: bool,
     recomposite_next: Option<Instant>,
     fps_counter: Option<FpsCounter>,
     misc_gl_objects: Option<MiscGlObjects>,
@@ -67,6 +68,15 @@ pub fn recomposite_if_necessary(env: &mut Environment, force: bool) -> Option<In
     let windows = env.framework_state.uikit.ui_view.ui_window.windows.clone();
     if !windows.iter().any(|&window| !msg![env; window isHidden]) {
         log_dbg!("No visible windows, skipping composition");
+        return None;
+    };
+    if env
+        .framework_state
+        .core_animation
+        .composition
+        .is_compositing
+    {
+        log_dbg!("Already compositing, skipping composition");
         return None;
     }
 
@@ -115,6 +125,10 @@ pub fn recomposite_if_necessary(env: &mut Environment, force: bool) -> Option<In
     } else {
         Some(now.checked_add(Duration::from_secs_f64(interval)).unwrap())
     };
+    env.framework_state
+        .core_animation
+        .composition
+        .is_compositing = true;
     env.framework_state
         .core_animation
         .composition
@@ -373,6 +387,10 @@ pub fn recomposite_if_necessary(env: &mut Environment, force: bool) -> Option<In
     window.swap_window();
 
     animation_state.update_started_and_finished_animations(env);
+    env.framework_state
+        .core_animation
+        .composition
+        .is_compositing = false;
 
     new_recomposite_next
 }

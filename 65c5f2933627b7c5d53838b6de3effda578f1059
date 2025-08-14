@@ -86,6 +86,24 @@
       "parentUuid": "0d6f2daf_3d52f310",
       "revId": "65c5f2933627b7c5d53838b6de3effda578f1059",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "0880ffae_03af2e8c",
+        "filename": "src/objc/classes.rs",
+        "patchSetId": 12
+      },
+      "lineNbr": 835,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2025-08-14T15:35:40Z",
+      "side": 1,
+      "message": "and i did end up messing it up 🫠🫠🫠 oops",
+      "parentUuid": "9f53a4e4_b138d4a5",
+      "revId": "65c5f2933627b7c5d53838b6de3effda578f1059",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

@@ -16,6 +16,24 @@
       "message": "Thanks for fixing that!\n\nMy main concern is - could it happen while processing other type of objects, not only timers?",
       "revId": "1de70204e20802c1d06d2753c5d25c621ac8c49a",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "012564f3_dfbed2a1",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2025-08-14T15:12:46Z",
+      "side": 1,
+      "message": "I\u0027ve already addressed this in the design for selectors, it\u0027s already fine for UIKit events, and I\u0027ve fixed this for composition, audio queues, and audio units. \n\nUnfortunately, there\u0027s still going to be problems if a queue/unit is deleted while running another queue/unit, since we don\u0027t have any way to \"retain\" queues/units like we have for timers, and it\u0027s not super practical to use the double loop algorithm like we have for selectors. It\u0027s not super likely to happen, but it\u0027s a bit unideal.\n \nSince iOS is using sources internally for audio queues (and maybe audio units??), it can just invalidate the source when a queue/unit gets disposed, and never trigger the callback. The real solution would be to properly implement sources, which would also probably fix the stuttering audio on some games, since we could use callbacks to trigger the next buffer pull rather than pulling whenever the queue feels like it. Doing that is really far off, and requires much, much more work (we will probably want to write a socket system to handle it).",
+      "parentUuid": "d395901c_79dc99b0",
+      "revId": "1de70204e20802c1d06d2753c5d25c621ac8c49a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

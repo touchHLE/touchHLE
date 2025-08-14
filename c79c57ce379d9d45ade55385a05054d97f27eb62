@@ -16,6 +16,24 @@
       "message": "could you please assert that env.objc.borrow::\u003cNSRunLoopHostObject\u003e(run_loop).is_running is false here?",
       "revId": "c79c57ce379d9d45ade55385a05054d97f27eb62",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "bf93c709_23999825",
+        "filename": "src/frameworks/foundation/ns_run_loop.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 330,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2025-08-14T15:12:46Z",
+      "side": 0,
+      "message": "No, this would fail to allow recursion of the run loop from selectors/timers, which is explicitly allowed, occasionally used, and is the main point of this commit. (see https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/Multithreading/RunLoopManagement/RunLoopManagement.html)\n\nThere\u0027s no other use for this than to prevent reentrancy, so I removed the variable.",
+      "parentUuid": "3bb0c59a_832b3e7f",
+      "revId": "c79c57ce379d9d45ade55385a05054d97f27eb62",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

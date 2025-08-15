@@ -16,6 +16,24 @@
       "message": "Mentioned in a c ouple other places, but this now depends on https://review.gerrithub.io/c/touchHLE/touchHLE/+/1220091 so marked it as Work In Progress until that is merged.",
       "revId": "42eb269f8727cc4b6091c593e2c9fc333f95d31d",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "7c70d4b0_0a316d62",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 29
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-08-15T00:43:08Z",
+      "side": 1,
+      "message": "Actually I was thinking about this and although the bar button items (which use labels) will not render at the correct size, there is no panic or anything that will happen since these functions already exit in UIView in trunk.  Marking as Active.",
+      "parentUuid": "53b9a20a_d95e2520",
+      "revId": "42eb269f8727cc4b6091c593e2c9fc333f95d31d",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

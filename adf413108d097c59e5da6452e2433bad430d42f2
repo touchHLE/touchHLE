@@ -54,6 +54,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "74ec01b6_21f50f4c",
+        "filename": "src/dyld.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 195,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-08-16T19:18:55Z",
+      "side": 1,
+      "message": "(Such an assertion would probably go in the code that assigns SVC indices to newly linked functions.)",
+      "parentUuid": "380ae4bc_c21c2cda",
+      "revId": "adf413108d097c59e5da6452e2433bad430d42f2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "ed1a1994_2ab53477",
         "filename": "src/dyld.rs",
         "patchSetId": 2

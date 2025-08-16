@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b938f8e7_ca2c7757",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-08-16T22:35:28Z",
+      "side": 1,
+      "message": "This game already works with trunk/preview build, but needs landscape set (confirmed on macOS).",
+      "revId": "6967d720eb0a47a3d8d78418def64b54b08d8875",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

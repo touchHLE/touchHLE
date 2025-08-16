@@ -284,7 +284,7 @@ fn parse_dump_options(options: &str) -> Result<DumpingOptions, String> {
             // Dumps linked symbols, classes and selectors for the given app
             dumping_options.linking_info = true;
         } else if opt == "symbols" {
-            // Dumps touchHLE provided symbols
+            // Dumps touchHLE provided symbols and exits
             dumping_options.symbols = true;
         } else {
             return Err(format!("Unrecognized option {opt} for --dump=..."));

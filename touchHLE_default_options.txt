@@ -162,3 +162,6 @@ com.ea.fifa10inc: --landscape-left
 # FIFA 2010 WORLD CUP SOUTH AFRICA
 com.ea.fifa10wc.bv: --landscape-left
 com.ea.fifa10wc.inc: --landscape-left
+
+# Real Racing
+com.firemint.realracing: --landscape-left

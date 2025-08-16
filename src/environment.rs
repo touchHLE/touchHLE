@@ -488,11 +488,6 @@ impl Environment {
                 .dump_selectors(&env.bins[0], &env.mem, file)
                 .unwrap();
         }
-        if env.options.dumping_options.symbols {
-            let file = env.dump_file.as_mut().unwrap();
-            dyld::Dyld::dump_dyld_host_symbols(file).unwrap();
-            objc::ObjC::dump_host_class_symbols(file).unwrap();
-        }
 
         env.cpu.branch(entry_point_addr);
         Ok(env)

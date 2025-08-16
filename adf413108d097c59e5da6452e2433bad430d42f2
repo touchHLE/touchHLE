@@ -16,6 +16,57 @@
       "message": "seems reasonable to me",
       "revId": "adf413108d097c59e5da6452e2433bad430d42f2",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e72fae46_c806f9c1",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-08-16T19:17:57Z",
+      "side": 1,
+      "message": "This makes sense to me, but I have some comments. By the way, do you know roughly what iOS version apps start using this? I\u0027m guessing it\u0027s not something iOS 2.x and 3.0 apps do?",
+      "revId": "adf413108d097c59e5da6452e2433bad430d42f2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "380ae4bc_c21c2cda",
+        "filename": "src/dyld.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 195,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-08-16T19:17:57Z",
+      "side": 1,
+      "message": "It would be good to:\n\n- add a comment explaining what this means\n- add an assert somewhere that we never overflow the SVC indices into the ret mask range (even though this is very unlikely)\n- use this mask value in SVC_LAZY_LINK_RET, for consistency and to simplify the check in environment.rs",
+      "revId": "adf413108d097c59e5da6452e2433bad430d42f2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ed1a1994_2ab53477",
+        "filename": "src/dyld.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 571,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-08-16T19:17:57Z",
+      "side": 1,
+      "message": "Can we add an assert to ensure this is actually the case?",
+      "revId": "adf413108d097c59e5da6452e2433bad430d42f2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

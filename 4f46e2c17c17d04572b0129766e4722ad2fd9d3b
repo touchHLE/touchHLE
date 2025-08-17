@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "820e8be4_513f778c",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 26
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-08-17T18:46:10Z",
+      "side": 1,
+      "message": "it is already implemented https://github.com/touchHLE/touchHLE/blob/1e148437b2150ccc8d5d0fe548f9273074b1b1c8/src/frameworks/foundation/ns_string.rs#L1391",
+      "revId": "4f46e2c17c17d04572b0129766e4722ad2fd9d3b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

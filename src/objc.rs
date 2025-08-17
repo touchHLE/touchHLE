@@ -43,9 +43,8 @@ pub use selectors::{selector, SEL};
 use crate::mem::ConstVoidPtr;
 use crate::Environment;
 use classes::{ClassHostObject, FakeClass, UnimplementedClass, CLASS_LISTS};
-use messages::{
-    objc_msgSend, objc_msgSendSuper2, objc_msgSend_stret, MsgSendSignature, MsgSendSuperSignature,
-};
+pub(crate) use messages::objc_msgSend;
+use messages::{objc_msgSendSuper2, objc_msgSend_stret, MsgSendSignature, MsgSendSuperSignature};
 use methods::method_list_t;
 use objects::{objc_object, HostObjectEntry};
 use properties::{ivar_list_t, objc_copyStruct, objc_getProperty, objc_setProperty};

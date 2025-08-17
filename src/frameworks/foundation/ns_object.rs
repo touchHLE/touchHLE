@@ -20,8 +20,8 @@ use super::ns_string::{from_rust_string, get_static_str, to_rust_string};
 use super::{NSTimeInterval, NSUInteger};
 use crate::mem::MutVoidPtr;
 use crate::objc::{
-    id, msg, msg_class, msg_send, nil, objc_classes, retain, Class, ClassExports, NSZonePtr, ObjC,
-    TrivialHostObject, SEL,
+    autorelease, id, msg, msg_class, msg_send, nil, objc_classes, retain, Class, ClassExports,
+    NSZonePtr, ObjC, TrivialHostObject, SEL,
 };
 
 pub const CLASSES: ClassExports = objc_classes! {
@@ -67,6 +67,12 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 + (bool)accessInstanceVariablesDirectly {
     true
+}
+
++ (id)instanceMethodSignatureForSelector:(SEL)sel {
+    let sig = *env.objc.class_get_method_signature(this, sel).unwrap();
+    log_dbg!("instanceMethodSignatureForSelector: '{}' -> {:?}", sel.as_str(&env.mem), env.mem.cstr_at_utf8(sig));
+    msg_class![env; NSMethodSignature signatureWithObjCTypes:sig]
 }
 
 - (id)init {

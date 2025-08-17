@@ -39,6 +39,7 @@ pub(super) struct ClassHostObject {
     pub(super) is_metaclass: bool,
     pub(super) superclass: Class,
     pub(super) methods: HashMap<SEL, IMP>,
+    pub(super) guest_method_signatures: HashMap<SEL, ConstPtr<u8>>,
     /// Maps ivar name to a tuple of an offset (as pointer) and an alignment.
     /// (Alignment is used during ivar reconciliation.)
     pub(super) ivars: HashMap<String, (ConstPtr<GuestUSize>, u32)>,
@@ -363,6 +364,7 @@ impl ClassHostObject {
                     (objc.selectors[name], IMP::Host(host_imp))
                 }),
             ),
+            guest_method_signatures: HashMap::default(),
             // maybe this should be 0 for NSObject? does it matter?
             instance_start: size,
             instance_size: size,
@@ -390,6 +392,7 @@ impl ClassHostObject {
             is_metaclass,
             superclass,
             methods: HashMap::new(),
+            guest_method_signatures: HashMap::new(),
             instance_start,
             instance_size,
             ivars: HashMap::new(),
@@ -890,6 +893,7 @@ impl ObjC {
                         is_metaclass: Default::default(),
                         superclass: nil,
                         methods: Default::default(),
+                        guest_method_signatures: Default::default(),
                         instance_start: Default::default(),
                         instance_size: Default::default(),
                         ivars: Default::default(),

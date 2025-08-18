@@ -403,6 +403,11 @@ fn trunc(_env: &mut Environment, arg: f64) -> f64 {
 fn truncf(_env: &mut Environment, arg: f32) -> f32 {
     arg.trunc()
 }
+fn modf(env: &mut Environment, val: f64, iptr: MutPtr<f64>) -> f64 {
+    let ivalue = val.trunc();
+    env.mem.write(iptr, ivalue);
+    val - ivalue
+}
 fn modff(env: &mut Environment, val: f32, iptr: MutPtr<f32>) -> f32 {
     let ivalue = truncf(env, val);
     env.mem.write(iptr, ivalue);
@@ -533,6 +538,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(lroundf(_)),
     export_c_func!(trunc(_)),
     export_c_func!(truncf(_)),
+    export_c_func!(modf(_, _)),
     export_c_func!(modff(_, _)),
     export_c_func!(lrint(_)),
     export_c_func!(lrintf(_)),

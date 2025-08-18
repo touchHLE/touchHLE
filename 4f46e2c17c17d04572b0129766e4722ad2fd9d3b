@@ -16,6 +16,24 @@
       "message": "it is already implemented https://github.com/touchHLE/touchHLE/blob/1e148437b2150ccc8d5d0fe548f9273074b1b1c8/src/frameworks/foundation/ns_string.rs#L1391",
       "revId": "4f46e2c17c17d04572b0129766e4722ad2fd9d3b",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9a92d473_d3dbdb3b",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 26
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-08-18T01:29:58Z",
+      "side": 1,
+      "message": "Should it possibly just be moved? I noticed this with several other string methods not inheriting correctly to Mutable and the touchHLE_NSString subclasses. see https://review.gerrithub.io/c/touchHLE/touchHLE/+/1220166",
+      "parentUuid": "820e8be4_513f778c",
+      "revId": "4f46e2c17c17d04572b0129766e4722ad2fd9d3b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

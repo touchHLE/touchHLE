@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e1b14250_e21dae2b",
+        "filename": "src/frameworks/foundation/ns_process_info.rs",
+        "patchSetId": 45
+      },
+      "lineNbr": 60,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-08-19T17:59:11Z",
+      "side": 1,
+      "message": "change this line to \"Testing on macOS appears CFBundleName is used.\"",
+      "revId": "312eb041c176189874eefddf846b3d71f1623444",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

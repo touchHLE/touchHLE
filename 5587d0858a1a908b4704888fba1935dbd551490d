@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a5b5e3c9_a768e512",
+        "filename": "src/libc/posix_io.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 100,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-08-19T15:35:01Z",
+      "side": 1,
+      "message": "please name it `flock`",
+      "revId": "5587d0858a1a908b4704888fba1935dbd551490d",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "657ce9b4_26dc27a9",
+        "filename": "src/libc/posix_io.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 638,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-08-19T15:35:01Z",
+      "side": 1,
+      "message": "could we detect the conflict and at least log it with a warning?",
+      "revId": "5587d0858a1a908b4704888fba1935dbd551490d",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ee7b310a_e7e760dc",
+        "filename": "src/libc/posix_io.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 687,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-08-19T15:35:01Z",
+      "side": 1,
+      "message": "Have you tested that?\n\nmaybe we need to a have a test in main.c to be sure",
+      "revId": "5587d0858a1a908b4704888fba1935dbd551490d",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

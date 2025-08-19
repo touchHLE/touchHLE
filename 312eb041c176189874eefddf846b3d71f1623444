@@ -16,6 +16,24 @@
       "message": "change this line to \"Testing on macOS appears CFBundleName is used.\"",
       "revId": "312eb041c176189874eefddf846b3d71f1623444",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b793647d_98eff86d",
+        "filename": "src/frameworks/foundation/ns_process_info.rs",
+        "patchSetId": 45
+      },
+      "lineNbr": 60,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-08-19T19:37:25Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "e1b14250_e21dae2b",
+      "revId": "312eb041c176189874eefddf846b3d71f1623444",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

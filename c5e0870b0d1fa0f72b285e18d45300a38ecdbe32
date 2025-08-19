@@ -335,6 +335,24 @@
       "parentUuid": "06353d37_bef6dce1",
       "revId": "c5e0870b0d1fa0f72b285e18d45300a38ecdbe32",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c189a4e5_66c45ca4",
+        "filename": "src/frameworks/foundation/ns_process_info.rs",
+        "patchSetId": 35
+      },
+      "lineNbr": 61,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-08-19T15:56:07Z",
+      "side": 1,
+      "message": "I\u0027m glad you\u0027re starting to do test programs, but please prefer to use Objective-C and UIKit, not SwiftUI.\n\nIn any case you should add a small comment to the method explaining how you tested it and why do you think it is correct.",
+      "parentUuid": "2427957e_dc7d3604",
+      "revId": "c5e0870b0d1fa0f72b285e18d45300a38ecdbe32",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

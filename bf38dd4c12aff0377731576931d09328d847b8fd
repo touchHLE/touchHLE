@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "794fec3b_53af2379",
+        "filename": "src/frameworks/foundation/ns_process_info.rs",
+        "patchSetId": 44
+      },
+      "lineNbr": 55,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-08-19T15:56:07Z",
+      "side": 1,
+      "message": "when converting types in Rust you should nearly always prefer to use `.try_into().unwrap()` or `.into()` if applicable\n\nhere you\u0027re converting u32 to u64 which always succeed, so you should use `.into()`",
+      "revId": "bf38dd4c12aff0377731576931d09328d847b8fd",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "83e6470e_385eba96",
+        "filename": "src/frameworks/foundation/ns_process_info.rs",
+        "patchSetId": 44
+      },
+      "lineNbr": 61,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-08-19T15:56:07Z",
+      "side": 1,
+      "message": "this will leak memory (check implementation of `from_rust_string`)\n\nyou should either:\n- release `name_key` before this method returns\n- use `ns_string::get_static_str()` instead",
+      "revId": "bf38dd4c12aff0377731576931d09328d847b8fd",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "280e04b4_6ea7cb8c",
+        "filename": "src/libc/mach_host.rs",
+        "patchSetId": 44
+      },
+      "lineNbr": 28,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-08-19T15:56:07Z",
+      "side": 1,
+      "message": "they are not use in vm_statistics, they are used in host_statistics().\n\nyou should re-phrase that",
+      "revId": "bf38dd4c12aff0377731576931d09328d847b8fd",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

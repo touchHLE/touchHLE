@@ -106,6 +106,24 @@
       "parentUuid": "67a710ac_52d82307",
       "revId": "12605b4789b01dc00e7778063c034034e9e9adfb",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d117b86d_da623e43",
+        "filename": "src/frameworks/foundation/ns_process_info.rs",
+        "patchSetId": 37
+      },
+      "lineNbr": 52,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-08-19T15:56:07Z",
+      "side": 1,
+      "message": "\u003e Should I also make PHYSICAL_MEMORY const u64 as well?\n\nUp to you.\n\n\u003e What about the other const I declared to calculate PHYSICAL_MEMORY\n\nThey should stay `natural_t`\n\n\u003e which were previosuly defined as natural_t/u32 by hikari before I made them into const\n\nThis is not true. Check history of modifications of `mach_host.h`",
+      "parentUuid": "180956e0_69173b27",
+      "revId": "12605b4789b01dc00e7778063c034034e9e9adfb",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "316c3cb6_ab23376f",
+        "filename": "src/frameworks/foundation/ns_process_info.rs",
+        "patchSetId": 44
+      },
+      "lineNbr": 55,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-08-19T17:43:13Z",
+      "side": 1,
+      "message": "Makes sense. Changed to use into.",
+      "parentUuid": "794fec3b_53af2379",
+      "revId": "bf38dd4c12aff0377731576931d09328d847b8fd",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "83e6470e_385eba96",
@@ -35,6 +53,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "f052de50_c2c1a416",
+        "filename": "src/frameworks/foundation/ns_process_info.rs",
+        "patchSetId": 44
+      },
+      "lineNbr": 61,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-08-19T17:43:13Z",
+      "side": 1,
+      "message": "Changed to get_static_str",
+      "parentUuid": "83e6470e_385eba96",
+      "revId": "bf38dd4c12aff0377731576931d09328d847b8fd",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "280e04b4_6ea7cb8c",
@@ -48,6 +84,24 @@
       "writtenOn": "2025-08-19T15:56:07Z",
       "side": 1,
       "message": "they are not use in vm_statistics, they are used in host_statistics().\n\nyou should re-phrase that",
+      "revId": "bf38dd4c12aff0377731576931d09328d847b8fd",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "aa838085_a53076ad",
+        "filename": "src/libc/mach_host.rs",
+        "patchSetId": 44
+      },
+      "lineNbr": 28,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-08-19T17:43:13Z",
+      "side": 1,
+      "message": "host_statistics returns vm_statistics.  I clariifed these comments.",
+      "parentUuid": "280e04b4_6ea7cb8c",
       "revId": "bf38dd4c12aff0377731576931d09328d847b8fd",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

@@ -124,6 +124,24 @@
       "parentUuid": "180956e0_69173b27",
       "revId": "12605b4789b01dc00e7778063c034034e9e9adfb",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "c7f009ab_f11d1d4d",
+        "filename": "src/frameworks/foundation/ns_process_info.rs",
+        "patchSetId": 37
+      },
+      "lineNbr": 52,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-08-19T17:43:13Z",
+      "side": 1,
+      "message": "What I meant was, natural_t has always been u32 since the beginning of mach_thread_info.  Was only changed to be public (by you) so mach_host could use it. Regardless, I don\u0027t think there is a need to change mach_thread_info or mach_host any further at this point since the values being set are clearly within the bounds of u32.",
+      "parentUuid": "d117b86d_da623e43",
+      "revId": "12605b4789b01dc00e7778063c034034e9e9adfb",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

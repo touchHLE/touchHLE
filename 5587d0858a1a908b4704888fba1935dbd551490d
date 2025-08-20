@@ -55,6 +55,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "4234c645_6331d3d1",
+        "filename": "src/libc/posix_io.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 638,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2025-08-20T07:47:43Z",
+      "side": 1,
+      "message": "Without multiprocess support it is impossible to have a conflict occur. I added an explicit warning to make it more clear that conflicts are ignored. As well as updated the TODO to make the relation more clear. Let me know if you think that is enough.",
+      "parentUuid": "657ce9b4_26dc27a9",
+      "revId": "5587d0858a1a908b4704888fba1935dbd551490d",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "ee7b310a_e7e760dc",
         "filename": "src/libc/posix_io.rs",
         "patchSetId": 1
@@ -66,6 +84,24 @@
       "writtenOn": "2025-08-19T15:35:01Z",
       "side": 1,
       "message": "Have you tested that?\n\nmaybe we need to a have a test in main.c to be sure",
+      "revId": "5587d0858a1a908b4704888fba1935dbd551490d",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "13f1fb4d_239821da",
+        "filename": "src/libc/posix_io.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 687,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2025-08-20T07:47:43Z",
+      "side": 1,
+      "message": "Yep, I tested this in the simulator and it matches the behavior described here. I\u0027m not sure whether an actual implementation here is useful at the moment since the locks literally do nothing with a single process and we would have no good way of getting the locks without implementing improper behavior. Let me know if you disagree and think we should add the lock management behavior now.",
+      "parentUuid": "ee7b310a_e7e760dc",
       "revId": "5587d0858a1a908b4704888fba1935dbd551490d",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

@@ -70,6 +70,24 @@
       "parentUuid": "88887a2b_dca13730",
       "revId": "9ad775783aa2c07495d80b65d81cebc4c4cacc19",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "79edd5c5_bc806051",
+        "filename": "src/libc/posix_io.rs",
+        "patchSetId": 8
+      },
+      "lineNbr": 104,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2025-08-21T17:31:52Z",
+      "side": 1,
+      "message": "Hmm, I could as long as we want to use that flock struct as our lock storage. Does that make sense to do?",
+      "parentUuid": "c3880ba0_6469ee81",
+      "revId": "9ad775783aa2c07495d80b65d81cebc4c4cacc19",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

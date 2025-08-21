@@ -52,6 +52,24 @@
       "parentUuid": "390390dd_fe7c3095",
       "revId": "9ad775783aa2c07495d80b65d81cebc4c4cacc19",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c3880ba0_6469ee81",
+        "filename": "src/libc/posix_io.rs",
+        "patchSetId": 8
+      },
+      "lineNbr": 104,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-08-21T17:23:18Z",
+      "side": 1,
+      "message": "\u003e we would have to set it internally to our current pid when setting a lock\n\ncould we already do that? we have get_pid or something implemented (even if it returns a constant)",
+      "parentUuid": "88887a2b_dca13730",
+      "revId": "9ad775783aa2c07495d80b65d81cebc4c4cacc19",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

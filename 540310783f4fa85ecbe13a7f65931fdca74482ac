@@ -16,6 +16,24 @@
       "message": "I would like to know how you tested that, especially for corner cases, like `~foo/bar` or `~user` or `~`",
       "revId": "540310783f4fa85ecbe13a7f65931fdca74482ac",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e0a6f47e_c7a0334a",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 42
+      },
+      "lineNbr": 987,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-08-21T23:55:47Z",
+      "side": 1,
+      "message": "So, Could use this -\u003e\n```\n- (id)stringByExpandingTildeInPath {\n    let path \u003d to_rust_string(env, this);\n    log!(\"Path is {:?}\", path.to_string());\n\n    let new_path_str \u003d if path.starts_with(\u0027~\u0027) {\n        let path \u003d path.trim_start_matches(\u0027~\u0027);\n        assert!(!path.contains(\u0027~\u0027));\n        let guest_path \u003d env.fs.home_directory().join(path);\n        log!(\" The Guest Path {:?}\", guest_path);\n        let resolved \u003d fs::resolve_path(\u0026guest_path, None);\n        log!(\" Resolved is {:?}\", resolved);\n        format!(\"/{}\", resolved.join(\"/\"))\n    } else {\n        path.to_string()\n    };\n\n    log_dbg!(\"[(NSString *){:?} stringByExpandingTildeInPath] {} -\u003e {}\", this, path, new_path_str);\n\n    let new_string \u003d from_rust_string(env, new_path_str);\n    autorelease(env, new_string)\n}\n```\n\nFor Dead or Alive BlackJack the if statement falls through as the passed path is \"/var/mobile/Applications/00000000-0000-0000-0000-000000000000/Documents/app.sp\" (no tilde)\n\n\n For Galaxy on Fire the path passed into the function is something like \"~/Library/GOF\" which initially joins as \"/var/mobile/Applications/00000000-0000-0000-0000-000000000000//Library/GOF\" but the resolved and then format join corrects the double //\n \nI did not test for anything other than those. Doing that now...",
+      "parentUuid": "2439c20b_2eb7ca6f",
+      "revId": "540310783f4fa85ecbe13a7f65931fdca74482ac",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

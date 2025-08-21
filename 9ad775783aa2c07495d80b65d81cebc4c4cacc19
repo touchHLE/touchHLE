@@ -34,6 +34,24 @@
       "parentUuid": "f82b7a41_8377f741",
       "revId": "9ad775783aa2c07495d80b65d81cebc4c4cacc19",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "88887a2b_dca13730",
+        "filename": "src/libc/posix_io.rs",
+        "patchSetId": 8
+      },
+      "lineNbr": 104,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2025-08-21T17:05:51Z",
+      "side": 1,
+      "message": "As far as I am aware its primarily used internally in the fs in order to determine whether or not a lock is simply overlapping or conflicting (overlapping + different pid).",
+      "parentUuid": "390390dd_fe7c3095",
+      "revId": "9ad775783aa2c07495d80b65d81cebc4c4cacc19",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

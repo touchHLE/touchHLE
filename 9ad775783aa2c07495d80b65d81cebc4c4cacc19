@@ -88,6 +88,24 @@
       "parentUuid": "c3880ba0_6469ee81",
       "revId": "9ad775783aa2c07495d80b65d81cebc4c4cacc19",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0c5ca8fd_712fd168",
+        "filename": "src/libc/posix_io.rs",
+        "patchSetId": 8
+      },
+      "lineNbr": 104,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2025-08-21T17:33:47Z",
+      "side": 1,
+      "message": "I did a quick test in the sim and it seems that the lock that is set isn\u0027t modified. Not that we necessarily have to follow that.",
+      "parentUuid": "79edd5c5_bc806051",
+      "revId": "9ad775783aa2c07495d80b65d81cebc4c4cacc19",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

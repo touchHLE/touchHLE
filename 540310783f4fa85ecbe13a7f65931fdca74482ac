@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2439c20b_2eb7ca6f",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 42
+      },
+      "lineNbr": 987,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-08-21T22:01:54Z",
+      "side": 1,
+      "message": "I would like to know how you tested that, especially for corner cases, like `~foo/bar` or `~user` or `~`",
+      "revId": "540310783f4fa85ecbe13a7f65931fdca74482ac",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

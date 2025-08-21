@@ -16,6 +16,24 @@
       "message": "how this is filled? I think it should be set to the current PID on get and we should add assertions about it matching current PID on set.\n\nthis way we can be sure it doesn\u0027t get forgotten once (if?) we switch to multiprocess.",
       "revId": "9ad775783aa2c07495d80b65d81cebc4c4cacc19",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "390390dd_fe7c3095",
+        "filename": "src/libc/posix_io.rs",
+        "patchSetId": 8
+      },
+      "lineNbr": 104,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2025-08-21T17:03:55Z",
+      "side": 1,
+      "message": "You don\u0027t need to define it when setting. From my understanding we would have to set it internally to our current pid when setting a lock. Then if we get a lock and find a conflict (ie lock with overlap and different pid) the pid field on the returned lock would correspond to the pid of the process that set the conflicting lock. In theory this means that the returned lock should never equal our current process lock.",
+      "parentUuid": "f82b7a41_8377f741",
+      "revId": "9ad775783aa2c07495d80b65d81cebc4c4cacc19",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

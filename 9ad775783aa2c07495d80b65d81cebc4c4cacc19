@@ -106,6 +106,24 @@
       "parentUuid": "79edd5c5_bc806051",
       "revId": "9ad775783aa2c07495d80b65d81cebc4c4cacc19",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9ddd3f31_3f99111f",
+        "filename": "src/libc/posix_io.rs",
+        "patchSetId": 8
+      },
+      "lineNbr": 104,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-08-21T22:02:56Z",
+      "side": 1,
+      "message": "what do you mean by \"storage\" here?",
+      "parentUuid": "0c5ca8fd_712fd168",
+      "revId": "9ad775783aa2c07495d80b65d81cebc4c4cacc19",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

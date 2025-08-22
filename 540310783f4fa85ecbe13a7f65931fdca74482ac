@@ -106,6 +106,24 @@
       "parentUuid": "879a4c23_753254f6",
       "revId": "540310783f4fa85ecbe13a7f65931fdca74482ac",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "0f9b4c5e_25d162ea",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 42
+      },
+      "lineNbr": 987,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-08-22T22:45:59Z",
+      "side": 1,
+      "message": "Tested on iOS:\n```\n#import \"ViewController.h\"\n\n@implementation ViewController\n\n- (void)viewDidLoad {\n    [super viewDidLoad];\n\n    NSString *path1 \u003d @\"~/Documents\";\n    NSString *path2 \u003d @\"~user/Documents\";\n    NSString *path3 \u003d @\"~foo/bar\";\n\n    UILabel *label \u003d [[UILabel alloc] initWithFrame:self.view.bounds];\n    label.numberOfLines \u003d 0; // wrap so nothing gets cut off\n    label.text \u003d [NSString stringWithFormat:\n                  @\"%@ -\u003e %@\\n\\n%@ -\u003e %@\\n\\n%@ -\u003e %@\",\n                  path1, [path1 stringByExpandingTildeInPath],\n                  path2, [path2 stringByExpandingTildeInPath],\n                  path3, [path3 stringByExpandingTildeInPath]];\n\n    [self.view addSubview:label];\n}\n\n@end\n```\n~ and ~user (or anything else like ~foo) are treated identically, as the result of that is this:\n```\n~/Documents -\u003e /var/mobile/Containers/Data/Application/95FE1050-5628-4808-90B0-\nC1B997984184/Documents\n~user/Documents -\u003e /var/mobile/Containers/Data/Application/95FE1050-5628-4808-90B0-\nC1B997984184/Documents\n~foo/bar -\u003e /var/mobile/Containers/Data/Application/95FE1050-5628-4808-90B0-\nC1B997984184/bar\n```",
+      "parentUuid": "bde7d982_d092427b",
+      "revId": "540310783f4fa85ecbe13a7f65931fdca74482ac",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

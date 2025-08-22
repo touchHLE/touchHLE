@@ -34,6 +34,24 @@
       "parentUuid": "2439c20b_2eb7ca6f",
       "revId": "540310783f4fa85ecbe13a7f65931fdca74482ac",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5c754890_be7da4f3",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 42
+      },
+      "lineNbr": 987,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-08-22T00:17:34Z",
+      "side": 1,
+      "message": "env.fs.home_directory() returns \"\"/var/mobile/Applications/00000000-0000-0000-0000-000000000000\"  tested this with:\n```\n log!(\"Home Directory is {:?}\", env.fs.home_directory());\n```\nbecause of the way join works:\n```\n    pub fn join\u003cP: AsRef\u003cstr\u003e\u003e(\u0026self, path: P) -\u003e GuestPathBuf {\n        GuestPathBuf::from(format!(\"{}/{}\", self.as_str(), path.as_ref()))\n    }\n```\n\nEdge cases like your ~foo/bar/ or ~user would result in\n\"/var/mobile/Applications/00000000-0000-0000-0000-000000000000/foo/bar\" and \"/var/mobile/Applications/00000000-0000-0000-0000-000000000000/user\" respectively, both of whihc will be fine going through resolved (resolve_path) and then the reformatting.  Actually, this is already shown in the GOF example where // is created than corrected.\n\nI am unclear on if ~user is supposed to be the users home directory or something? and perhaps should be handled differently? I could assert on that if you want?",
+      "parentUuid": "e0a6f47e_c7a0334a",
+      "revId": "540310783f4fa85ecbe13a7f65931fdca74482ac",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

@@ -124,6 +124,24 @@
       "parentUuid": "0c5ca8fd_712fd168",
       "revId": "9ad775783aa2c07495d80b65d81cebc4c4cacc19",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "eb9024ee_01efad2a",
+        "filename": "src/libc/posix_io.rs",
+        "patchSetId": 8
+      },
+      "lineNbr": 104,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2025-08-22T09:53:09Z",
+      "side": 1,
+      "message": "I\u0027m referring to whatever data structure we would eventually use to store the locks (most likely somewhere in the filesystem). We could either directly use the flock struct or some other more rust like struct. In either case though it appears that the input lock is not modified.",
+      "parentUuid": "9ddd3f31_3f99111f",
+      "revId": "9ad775783aa2c07495d80b65d81cebc4c4cacc19",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

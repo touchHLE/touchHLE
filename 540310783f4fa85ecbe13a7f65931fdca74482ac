@@ -52,6 +52,24 @@
       "parentUuid": "e0a6f47e_c7a0334a",
       "revId": "540310783f4fa85ecbe13a7f65931fdca74482ac",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "770461eb_2edbbe2b",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 42
+      },
+      "lineNbr": 987,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-08-22T02:30:29Z",
+      "side": 1,
+      "message": "Does user matter for touchHLE? Since Each app has it\u0027s own folder in sandbox, do we need to manage users in any way?",
+      "parentUuid": "5c754890_be7da4f3",
+      "revId": "540310783f4fa85ecbe13a7f65931fdca74482ac",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

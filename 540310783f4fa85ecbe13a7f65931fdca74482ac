@@ -88,6 +88,24 @@
       "parentUuid": "770461eb_2edbbe2b",
       "revId": "540310783f4fa85ecbe13a7f65931fdca74482ac",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "bde7d982_d092427b",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 42
+      },
+      "lineNbr": 987,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-08-22T05:31:00Z",
+      "side": 1,
+      "message": "You should test on macOS or iOS and see what is returned for above cases.\n\nThe implementation should match that.",
+      "parentUuid": "879a4c23_753254f6",
+      "revId": "540310783f4fa85ecbe13a7f65931fdca74482ac",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

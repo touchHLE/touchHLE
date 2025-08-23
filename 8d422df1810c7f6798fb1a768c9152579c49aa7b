@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "209dbafd_9f7537d6",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-08-23T12:00:12Z",
+      "side": 1,
+      "message": "LGTM, but i let @abnormalmaps@gmail.com approve with +1 first",
+      "revId": "8d422df1810c7f6798fb1a768c9152579c49aa7b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b747966a_9ebd7e98",
+        "filename": "tests/integration.rs",
+        "patchSetId": 21
+      },
+      "lineNbr": 218,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-08-23T11:22:51Z",
+      "side": 1,
+      "message": "@alexander.cieslewicz@gmail.com is it what your patch here https://review.gerrithub.io/c/touchHLE/touchHLE/+/1220513 is addressing?",
+      "revId": "b512079fd6809944ebda8b379f3f1b8b67f8e59b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

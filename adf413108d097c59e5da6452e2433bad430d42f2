@@ -70,6 +70,42 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "450f935c_ba06495b",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038767
+      },
+      "writtenOn": "2025-08-23T22:36:54Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "ad330b60_f3f12a70",
+      "revId": "adf413108d097c59e5da6452e2433bad430d42f2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "27bc82f0_1c0d3a53",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038767
+      },
+      "writtenOn": "2025-08-23T22:36:54Z",
+      "side": 1,
+      "message": "I thought the ret instruction was elegant, and that my manual return was the hackiest part of the patch honestly, but I can see it becoming the default. I\u0027ll write it up in a different patch once this is merged.",
+      "parentUuid": "b3f0f967_0b3111e4",
+      "revId": "adf413108d097c59e5da6452e2433bad430d42f2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "380ae4bc_c21c2cda",
@@ -105,6 +141,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "b19f4842_d489f403",
+        "filename": "src/dyld.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 195,
+      "author": {
+        "id": 1038767
+      },
+      "writtenOn": "2025-08-23T22:36:54Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "74ec01b6_21f50f4c",
+      "revId": "adf413108d097c59e5da6452e2433bad430d42f2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "ed1a1994_2ab53477",
@@ -118,6 +172,24 @@
       "writtenOn": "2025-08-16T19:17:57Z",
       "side": 1,
       "message": "Can we add an assert to ensure this is actually the case?",
+      "revId": "adf413108d097c59e5da6452e2433bad430d42f2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b9666b5b_6dd2ff7c",
+        "filename": "src/dyld.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 571,
+      "author": {
+        "id": 1038767
+      },
+      "writtenOn": "2025-08-23T22:36:54Z",
+      "side": 1,
+      "message": "I changed the routine a bit so we can check for any binary instead.",
+      "parentUuid": "ed1a1994_2ab53477",
       "revId": "adf413108d097c59e5da6452e2433bad430d42f2",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

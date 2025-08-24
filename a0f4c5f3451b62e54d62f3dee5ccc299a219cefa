@@ -123,6 +123,24 @@
       "parentUuid": "f3f7b77a_a661cf63",
       "revId": "a0f4c5f3451b62e54d62f3dee5ccc299a219cefa",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "afb38f45_5f9ba009",
+        "filename": "src/libc/posix_io.rs",
+        "patchSetId": 10
+      },
+      "lineNbr": 662,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2025-08-24T17:58:45Z",
+      "side": 1,
+      "message": "Its based on simulator behavior. For whatever reason they don\u0027t do as detailed of a check in the getlk as setlk, which is why I put a comment there. In set look based on docs and behavior we only have to validate the lock start which changes based on the value of WHENCE and we have to assure that the lock is not \u003c 0 which is what this block accounts for.",
+      "parentUuid": "1d083849_60b978c2",
+      "revId": "a0f4c5f3451b62e54d62f3dee5ccc299a219cefa",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

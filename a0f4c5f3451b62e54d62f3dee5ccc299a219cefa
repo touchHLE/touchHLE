@@ -141,6 +141,24 @@
       "parentUuid": "1d083849_60b978c2",
       "revId": "a0f4c5f3451b62e54d62f3dee5ccc299a219cefa",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ac02f55e_f3c5859e",
+        "filename": "src/libc/posix_io.rs",
+        "patchSetId": 10
+      },
+      "lineNbr": 662,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-08-24T18:18:38Z",
+      "side": 1,
+      "message": "ok i see. could you please add this as a comment before line 661?",
+      "parentUuid": "afb38f45_5f9ba009",
+      "revId": "a0f4c5f3451b62e54d62f3dee5ccc299a219cefa",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

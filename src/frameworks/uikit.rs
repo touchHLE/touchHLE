@@ -38,6 +38,7 @@ pub struct State {
     ui_device: ui_device::State,
     ui_font: ui_font::State,
     ui_graphics: ui_graphics::State,
+    ui_image: ui_image::State,
     ui_screen: ui_screen::State,
     ui_touch: ui_touch::State,
     pub ui_view: ui_view::State,

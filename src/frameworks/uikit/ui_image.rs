@@ -15,9 +15,28 @@ use crate::frameworks::uikit::ui_graphics::UIGraphicsGetCurrentContext;
 use crate::fs::GuestPath;
 use crate::image::Image;
 use crate::objc::{
-    autorelease, id, msg, msg_class, nil, objc_classes, release, ClassExports, HostObject,
+    autorelease, id, msg, msg_class, nil, objc_classes, release, retain, ClassExports, HostObject,
     NSZonePtr,
 };
+use crate::Environment;
+use std::collections::HashMap;
+
+const CACHE_SIZE: usize = 10;
+
+#[derive(Default)]
+pub struct State {
+    /// Cache of images for `[UIImage imageNamed:]` method.
+    /// Images are explicitly retained.
+    cached_images: HashMap<String, id>,
+}
+impl State {
+    fn get(env: &Environment) -> &Self {
+        &env.framework_state.uikit.ui_image
+    }
+    fn get_mut(env: &mut Environment) -> &mut Self {
+        &mut env.framework_state.uikit.ui_image
+    }
+}
 
 struct UIImageHostObject {
     cg_image: CGImageRef,
@@ -45,11 +64,25 @@ pub const CLASSES: ClassExports = objc_classes! {
     // TODO: figure out whether this is actually correct in all cases
     let bundle: id = msg_class![env; NSBundle mainBundle];
     let path: id = msg![env; bundle pathForResource:name ofType:nil];
+    let name_str = ns_string::to_rust_string(env, name).to_string();
     if path == nil {
-        log!("Warning: [UIImage imageNamed:{:?}] => nil", ns_string::to_rust_string(env, name));
+        log!("Warning: [UIImage imageNamed:{:?}] => nil", name_str);
         return nil;
     }
-    msg![env; this imageWithContentsOfFile:path]
+    // TODO: find a better eviction policy
+    if State::get(env).cached_images.len() > CACHE_SIZE {
+        let cache = std::mem::take(&mut State::get_mut(env).cached_images);
+        log_dbg!("Evicting {} images from UIImage cache.", cache.len());
+        for (_, img) in cache {
+            release(env, img);
+        }
+    }
+    if !State::get(env).cached_images.contains_key(&name_str) {
+        let img = msg![env; this imageWithContentsOfFile:path];
+        retain(env, img);
+        State::get_mut(env).cached_images.insert(name_str.clone(), img);
+    }
+    *State::get(env).cached_images.get(&name_str).unwrap()
 }
 
 + (id)imageWithContentsOfFile:(id)path { // NSString*

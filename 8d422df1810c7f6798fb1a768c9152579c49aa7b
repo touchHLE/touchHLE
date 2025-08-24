@@ -16,6 +16,23 @@
       "message": "LGTM, but i let @abnormalmaps@gmail.com approve with +1 first",
       "revId": "8d422df1810c7f6798fb1a768c9152579c49aa7b",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "711f27db_07a81067",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2025-08-24T21:15:05Z",
+      "side": 1,
+      "message": "Hmm, I did think about doing something like this  but I didn\u0027t really like that it would exit as a result of an option that should just dump the symbols. Still, I think I\u0027d be fine if there\u0027s a comment about it exiting in options.rs",
+      "revId": "8d422df1810c7f6798fb1a768c9152579c49aa7b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

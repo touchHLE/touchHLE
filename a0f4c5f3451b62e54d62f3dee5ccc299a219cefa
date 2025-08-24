@@ -20,6 +20,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "7e82c699_0c110f48",
+        "filename": "src/libc/posix_io.rs",
+        "patchSetId": 10
+      },
+      "lineNbr": 616,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2025-08-24T16:33:27Z",
+      "side": 1,
+      "message": "This better matches the behavior from the sim. If you pass an unlock lock type it bypasses all the checks and appears to return early. It shouldn\u0027t depend on conflicts existing since an unlock lock can\u0027t have a conflict.",
+      "parentUuid": "361786b2_faeb22f2",
+      "revId": "a0f4c5f3451b62e54d62f3dee5ccc299a219cefa",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "4add41fe_065f02d4",
         "filename": "src/libc/posix_io.rs",
         "patchSetId": 10

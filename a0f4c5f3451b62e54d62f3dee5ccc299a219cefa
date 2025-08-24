@@ -105,6 +105,24 @@
       "parentUuid": "c19ac4e7_c18c7d61",
       "revId": "a0f4c5f3451b62e54d62f3dee5ccc299a219cefa",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1d083849_60b978c2",
+        "filename": "src/libc/posix_io.rs",
+        "patchSetId": 10
+      },
+      "lineNbr": 662,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-08-24T17:20:42Z",
+      "side": 1,
+      "message": "in other part `whence \u003d\u003d SEEK_SET \u0026\u0026 lock.start \u003c 0` is checked, right? why here it is different?",
+      "parentUuid": "f3f7b77a_a661cf63",
+      "revId": "a0f4c5f3451b62e54d62f3dee5ccc299a219cefa",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

@@ -51,6 +51,24 @@
       "message": "what purpose this part serves if we do not have real implementation?\n\nit seems what you can just check for the whence type and set EINVAL on error",
       "revId": "a0f4c5f3451b62e54d62f3dee5ccc299a219cefa",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c19ac4e7_c18c7d61",
+        "filename": "src/libc/posix_io.rs",
+        "patchSetId": 10
+      },
+      "lineNbr": 662,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2025-08-24T16:40:24Z",
+      "side": 1,
+      "message": "Thats what I initially had. I added the lock start check since that is something we can check right now since the lock\u0027s range is independent of actually storing the locks. We could skip this check but then we would be allowing invalid locks to be passed to fcntl. Since lock start is dependent on whence I combined them in one match.",
+      "parentUuid": "4add41fe_065f02d4",
+      "revId": "a0f4c5f3451b62e54d62f3dee5ccc299a219cefa",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

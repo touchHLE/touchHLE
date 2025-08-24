@@ -178,6 +178,24 @@
       "parentUuid": "e0a4966c_ea513277",
       "revId": "9ad775783aa2c07495d80b65d81cebc4c4cacc19",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "927cabda_a89009c4",
+        "filename": "src/libc/posix_io.rs",
+        "patchSetId": 8
+      },
+      "lineNbr": 104,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-08-24T15:05:10Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "419936bc_cb3c8493",
+      "revId": "9ad775783aa2c07495d80b65d81cebc4c4cacc19",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

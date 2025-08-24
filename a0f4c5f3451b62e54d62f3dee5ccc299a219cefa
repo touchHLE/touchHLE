@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "361786b2_faeb22f2",
+        "filename": "src/libc/posix_io.rs",
+        "patchSetId": 10
+      },
+      "lineNbr": 616,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-08-24T15:05:10Z",
+      "side": 1,
+      "message": "if we return early, the log message below would not be printed. can we remove this check?",
+      "revId": "a0f4c5f3451b62e54d62f3dee5ccc299a219cefa",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4add41fe_065f02d4",
+        "filename": "src/libc/posix_io.rs",
+        "patchSetId": 10
+      },
+      "lineNbr": 662,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-08-24T15:05:10Z",
+      "side": 1,
+      "message": "what purpose this part serves if we do not have real implementation?\n\nit seems what you can just check for the whence type and set EINVAL on error",
+      "revId": "a0f4c5f3451b62e54d62f3dee5ccc299a219cefa",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

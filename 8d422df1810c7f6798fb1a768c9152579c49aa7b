@@ -33,6 +33,24 @@
       "message": "Hmm, I did think about doing something like this  but I didn\u0027t really like that it would exit as a result of an option that should just dump the symbols. Still, I think I\u0027d be fine if there\u0027s a comment about it exiting in options.rs",
       "revId": "8d422df1810c7f6798fb1a768c9152579c49aa7b",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "2f1589b1_b264e38a",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2025-08-25T08:15:43Z",
+      "side": 1,
+      "message": "Hmm, I see what you are saying. Definitely still lean this way since I think it makes it easier to use in most situations where we\u0027d want to dump touchHLE\u0027s symbols. Added info to comment about exiting!",
+      "parentUuid": "711f27db_07a81067",
+      "revId": "8d422df1810c7f6798fb1a768c9152579c49aa7b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

@@ -16,6 +16,24 @@
       "message": "not sure if it\u0027s a correct moment to call this method, but it\u0027s probably doesn\u0027t matter that match as is just sets a bool internally",
       "revId": "9f79200817ce51db50dbcf283e485cd66840debd",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "83ed677a_d90c17a1",
+        "filename": "src/frameworks/uikit/ui_application.rs",
+        "patchSetId": 49
+      },
+      "lineNbr": 258,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-08-26T19:09:03Z",
+      "side": 1,
+      "message": "It needs to go somewhere in UIApplicationMain because in the past I tried calling `setStatusBarHidden` after the fact and it did not work. Certainly if there is an issue with where it is, it could be moved, but as you said it is such a small thing it does (set a bool) that there is not likely any future impact. I\u0027ll leave this comment open even though it has been merged,just to be safe.",
+      "parentUuid": "d8f12f11_988f3d2d",
+      "revId": "9f79200817ce51db50dbcf283e485cd66840debd",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

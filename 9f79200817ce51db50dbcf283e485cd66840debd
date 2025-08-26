@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d8f12f11_988f3d2d",
+        "filename": "src/frameworks/uikit/ui_application.rs",
+        "patchSetId": 49
+      },
+      "lineNbr": 258,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-08-26T16:40:27Z",
+      "side": 1,
+      "message": "not sure if it\u0027s a correct moment to call this method, but it\u0027s probably doesn\u0027t matter that match as is just sets a bool internally",
+      "revId": "9f79200817ce51db50dbcf283e485cd66840debd",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

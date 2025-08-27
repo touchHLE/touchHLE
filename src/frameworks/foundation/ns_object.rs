@@ -14,7 +14,7 @@
 //!
 //! See also: [crate::objc], especially the `objects` module.
 
-use super::ns_string::to_rust_string;
+use super::ns_string::{from_rust_string, to_rust_string};
 use super::{NSTimeInterval, NSUInteger};
 use crate::frameworks::foundation::ns_run_loop::{add_perform_request, cancel_perform_requests};
 use crate::libc::semaphore::{host_destroy_semaphore, sem_wait};
@@ -78,6 +78,10 @@ pub const CLASSES: ClassExports = objc_classes! {
     let name = env.objc.get_class_name(this);
     let str = from_rust_string(env, name.to_string());
     autorelease(env, str)
+}
+
++ (())initialize {
+    // Do nothing
 }
 
 - (id)init {

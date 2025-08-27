@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b71567b8_23fc1893",
+        "filename": "src/frameworks/foundation/ns_run_loop.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 344,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-08-27T22:31:37Z",
+      "side": 1,
+      "message": "not sure I get this change - on trunk we already have that? https://github.com/touchHLE/touchHLE/blob/dc5d6285a62364a0a0007cb51076f79e39e27658/src/frameworks/foundation/ns_run_loop.rs#L246",
+      "revId": "59c41f908f877f64542bae133d4c9f2a11335a08",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

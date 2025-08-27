@@ -19,6 +19,7 @@
 //! categories and dynamic class editing).
 
 use crate::dyld::{export_c_func, FunctionExports};
+use crate::objc::messages::ThreadInitializer;
 use crate::MutexId;
 use std::collections::HashMap;
 
@@ -76,6 +77,9 @@ pub struct ObjC {
     /// Mutexes used in @synchronized blocks (objc_sync_enter/exit).
     sync_mutexes: HashMap<id, MutexId>,
 
+    /// Mutexes for running the +initialize function.
+    initializer_threads: HashMap<id, ThreadInitializer>,
+
     /// Temporary storage for optional type information when sending a message.
     /// Type information isn't part of the `objc_msgSend` ABI, so an alternative
     /// channel is needed.
@@ -89,6 +93,7 @@ impl ObjC {
             objects: HashMap::new(),
             classes: HashMap::new(),
             sync_mutexes: HashMap::new(),
+            initializer_threads: HashMap::new(),
             message_type_info: None,
         }
     }

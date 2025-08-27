@@ -92,6 +92,10 @@ pub const CLASSES: ClassExports = objc_classes! {
     msg_class![env; NSMethodSignature signatureWithObjCTypes:sig]
 }
 
++ (())initialize {
+    // Do nothing
+}
+
 - (id)init {
     this
 }

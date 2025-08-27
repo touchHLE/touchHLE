@@ -50,6 +50,7 @@ extern kern_return_t thread_info(mach_port_t target_act, natural_t flavor,
 int test_AutoreleasePool(void);    // AutoReleasePoolTest.m
 int test_CGAffineTransform(void);  // CGAffineTransform.c
 int test_RespondsToSelector(void); // RespondsToSelector.m
+int test_Initialize(void);         // Initialize.m
 
 #ifndef DEFINE_ME_WHEN_BUILDING_ON_MACOS
 int test_cpp_virtual_inheritance(void); // CppVirtualInheritance.cpp
@@ -5291,6 +5292,7 @@ struct {
     FUNC_DEF(test_NSInvocation_invokeWithTarget),
     FUNC_DEF(test_NSInvocation_retainArguments),
     FUNC_DEF(test_NSInvocation_pointer),
+    FUNC_DEF(test_Initialize),
 };
 // clang-format on
 

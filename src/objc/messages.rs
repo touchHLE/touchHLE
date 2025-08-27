@@ -13,9 +13,140 @@
 
 use super::{id, nil, Class, ObjC, IMP, SEL};
 use crate::abi::{CallFromHost, GuestRet};
-use crate::mem::{ConstPtr, MutVoidPtr, SafeRead};
+use crate::environment::ThreadId;
+use crate::libc::pthread::cond::{
+    pthread_cond_broadcast, pthread_cond_destroy, pthread_cond_init, pthread_cond_t,
+    pthread_cond_wait,
+};
+use crate::libc::pthread::mutex::{
+    pthread_mutex_destroy, pthread_mutex_init, pthread_mutex_lock, pthread_mutex_t,
+    pthread_mutex_unlock,
+};
+use crate::mem::{guest_size_of, ConstPtr, MutPtr, MutVoidPtr, SafeRead};
+use crate::objc::classes::InitializationStatus;
 use crate::Environment;
 use std::any::TypeId;
+
+pub(super) struct ThreadInitializer {
+    mutex: MutPtr<pthread_mutex_t>,
+    cond: MutPtr<pthread_cond_t>,
+    tid: ThreadId,
+    waiters: u32,
+}
+
+fn maybe_initialize_class(env: &mut Environment, orig_class: id, receiver: id) {
+    let class_host_object = env.objc.get_host_object(orig_class).unwrap();
+    let Some(&super::ClassHostObject {
+        superclass,
+        is_metaclass,
+        is_initialized,
+        ..
+    }) = class_host_object.as_any().downcast_ref()
+    else {
+        // No need to initialize fake/unimplemented classes
+        return;
+    };
+
+    if !is_metaclass || is_initialized == InitializationStatus::Initialized {
+        return;
+    }
+
+    // This class is not initialized, but there might be classes above it in the
+    // hierarchy that also need to be checked, so check those first.
+    if !superclass.is_null() {
+        maybe_initialize_class(env, superclass, receiver);
+    }
+    if is_initialized == InitializationStatus::Initializing {
+        env.objc
+            .initializer_threads
+            .get_mut(&orig_class)
+            .unwrap()
+            .waiters += 1;
+        let ThreadInitializer {
+            mutex, cond, tid, ..
+        } = *env.objc.initializer_threads.get(&orig_class).unwrap();
+
+        // The current thread is already initializing, so let it call other
+        // messages while it does so.
+        if tid == env.current_thread {
+            return;
+        }
+
+        let class_host_object = env.objc.get_host_object(orig_class).unwrap();
+        let &super::ClassHostObject { is_initialized, .. } =
+            class_host_object.as_any().downcast_ref().unwrap();
+        pthread_mutex_lock(env, mutex);
+        loop {
+            if is_initialized == InitializationStatus::Initialized {
+                break;
+            }
+            pthread_cond_wait(env, cond, mutex);
+        }
+
+        let ThreadInitializer {
+            ref mut waiters, ..
+        } = *env.objc.initializer_threads.get_mut(&orig_class).unwrap();
+        *waiters -= 1;
+        if *waiters == 0 {
+            // We're the last waiter for this initialize, so clean it up on the
+            // way out.
+            pthread_cond_destroy(env, cond);
+            pthread_mutex_destroy(env, mutex);
+            env.objc.initializer_threads.remove(&orig_class);
+        }
+    } else {
+        log_dbg!(
+            "Initializing {:?} on thread {}",
+            env.objc.try_get_class_name(orig_class),
+            env.current_thread
+        );
+        let regs = *env.cpu.regs();
+
+        let mutex = env.mem.alloc(guest_size_of::<pthread_mutex_t>()).cast();
+        let cond = env.mem.alloc_and_write(MutPtr::null());
+        pthread_mutex_init(env, mutex, ConstPtr::null());
+        pthread_cond_init(env, cond, ConstPtr::null());
+        env.objc.initializer_threads.insert(
+            orig_class,
+            ThreadInitializer {
+                mutex,
+                cond,
+                tid: env.current_thread,
+                waiters: 0,
+            },
+        );
+
+        let super::ClassHostObject { is_initialized, .. } = env.objc.borrow_mut(orig_class);
+        *is_initialized = InitializationStatus::Initializing;
+        () = msg![env; receiver initialize];
+        let super::ClassHostObject { is_initialized, .. } = env.objc.borrow_mut(orig_class);
+        *is_initialized = InitializationStatus::Initialized;
+        env.cpu.regs_mut().copy_from_slice(&regs);
+        log_dbg!(
+            "Done initializing {:?} on thread {}",
+            env.objc.try_get_class_name(orig_class),
+            env.current_thread
+        );
+        if env
+            .objc
+            .initializer_threads
+            .get(&orig_class)
+            .unwrap()
+            .waiters
+            == 0
+        {
+            // Nobody ended up waiting for this initializer, so we can just
+            // destroy it.
+            pthread_cond_destroy(env, cond);
+            pthread_mutex_destroy(env, mutex);
+            env.objc.initializer_threads.remove(&orig_class);
+        } else {
+            pthread_mutex_lock(env, mutex);
+            pthread_cond_broadcast(env, cond);
+            pthread_mutex_unlock(env, mutex);
+        }
+    }
+}
 
 /// The core implementation of `objc_msgSend`, the main function of Objective-C.
 ///
@@ -42,6 +173,7 @@ fn objc_msgSend_inner(env: &mut Environment, receiver: id, selector: SEL, super2
 
     let orig_class = super2.unwrap_or_else(|| ObjC::read_isa(receiver, &env.mem));
     assert!(orig_class != nil);
+    maybe_initialize_class(env, orig_class, receiver);
 
     // Traverse the chain of superclasses to find the method implementation.
 

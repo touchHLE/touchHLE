@@ -49,8 +49,17 @@ pub(super) struct ClassHostObject {
     /// Size of the allocated memory for instances of this class or metaclass.
     /// This is always >= the value in the superclass.
     pub(super) instance_size: GuestUSize,
+    /// Checks if +initialize has been called yet.
+    pub(super) is_initialized: InitializationStatus,
 }
 impl HostObject for ClassHostObject {}
+
+#[derive(Clone, Copy, PartialEq)]
+pub(super) enum InitializationStatus {
+    NotInitialized,
+    Initializing,
+    Initialized,
+}
 
 /// Placeholder object for classes and metaclasses referenced by the app that
 /// we don't have an implementation for.
@@ -367,6 +376,7 @@ impl ClassHostObject {
             instance_start: size,
             instance_size: size,
             ivars: HashMap::default(),
+            is_initialized: InitializationStatus::NotInitialized,
         }
     }
 
@@ -393,6 +403,7 @@ impl ClassHostObject {
             instance_start,
             instance_size,
             ivars: HashMap::new(),
+            is_initialized: InitializationStatus::NotInitialized,
         };
 
         if !base_methods.is_null() {
@@ -435,7 +446,8 @@ fn substitute_classes(
         || name.starts_with("Mobclix")
         || name.starts_with("FB") // Facebook
         || name.starts_with("Flurry")
-        || name.starts_with("OpenFeint"))
+        || name.starts_with("OpenFeint")
+        || name.starts_with("FBSession"))
     {
         return None;
     }
@@ -893,6 +905,7 @@ impl ObjC {
                         instance_start: Default::default(),
                         instance_size: Default::default(),
                         ivars: Default::default(),
+                        is_initialized: InitializationStatus::NotInitialized,
                     },
                 );
                 log_dbg!(

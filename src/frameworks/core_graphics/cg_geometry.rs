@@ -222,6 +222,18 @@ fn CGRectMake(
     }
 }
 
+pub const CGRectNull: CGRect = CGRect {
+    origin: CGPoint {
+        x: f32::INFINITY,
+        y: f32::INFINITY,
+    },
+    size: CGSizeZero,
+};
+
+fn CGRectIsNull(_env: &mut Environment, rect: CGRect) -> bool {
+    rect == CGRectNull
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGPointEqualToPoint(_, _)),
     export_c_func!(CGSizeEqualToSize(_, _)),
@@ -235,6 +247,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGRectGetHeight(_)),
     export_c_func!(CGRectGetWidth(_)),
     export_c_func!(CGRectMake(_, _, _, _)),
+    export_c_func!(CGRectIsNull(_)),
 ];
 
 pub const CONSTANTS: ConstantExports = &[
@@ -249,5 +262,9 @@ pub const CONSTANTS: ConstantExports = &[
     (
         "_CGRectZero",
         HostConstant::Custom(|env| env.mem.alloc_and_write(CGRectZero).cast().cast_const()),
+    ),
+    (
+        "_CGRectNull",
+        HostConstant::Custom(|env| env.mem.alloc_and_write(CGRectNull).cast().cast_const()),
     ),
 ];

@@ -34,6 +34,24 @@
       "parentUuid": "b747966a_9ebd7e98",
       "revId": "b512079fd6809944ebda8b379f3f1b8b67f8e59b",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "92010bee_8df311a5",
+        "filename": "tests/integration.rs",
+        "patchSetId": 21
+      },
+      "lineNbr": 218,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2025-08-27T18:21:44Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "f191c221_f008e4ae",
+      "revId": "b512079fd6809944ebda8b379f3f1b8b67f8e59b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

@@ -22,9 +22,9 @@ use crate::abi::GuestFunction;
 use crate::fs::{Fs, GuestPath};
 use crate::mem::{Mem, Ptr};
 use mach_object::{
-    cpu_subtype_t, vm_prot_t, DyLib, LoadCommand, MachCommand, OFile, Symbol, SymbolIter,
-    ThreadState, N_ARM_THUMB_DEF, S_LAZY_SYMBOL_POINTERS, S_MOD_INIT_FUNC_POINTERS,
-    S_NON_LAZY_SYMBOL_POINTERS, S_SYMBOL_STUBS,
+    cpu_subtype_t, vm_prot_t, Bind, BindOpCode, BindSymbolType, DyLib, LoadCommand, MachCommand,
+    OFile, Rebase, RebaseOpCode, Symbol, SymbolIter, ThreadState, N_ARM_THUMB_DEF,
+    S_LAZY_SYMBOL_POINTERS, S_MOD_INIT_FUNC_POINTERS, S_NON_LAZY_SYMBOL_POINTERS, S_SYMBOL_STUBS,
 };
 use std::collections::HashMap;
 use std::io::{Cursor, Seek, SeekFrom};
@@ -301,6 +301,7 @@ impl MachO {
         let mut first_read_write_segment_base: Option<u32> = None;
         let mut text_segment_base: Option<u32> = None;
         let mut all_sections = Vec::new();
+        let mut all_segments = Vec::new();
         let mut sym_tab_info: Option<(u32, u32, u32, u32)> = None;
 
         // Info used for the result
@@ -373,6 +374,8 @@ impl MachO {
                         }
                     }
 
+                    // TODO: segment slide
+                    all_segments.push((vmaddr, vmsize, segname));
                     all_sections.extend_from_slice(&sections);
                 }
                 LoadCommand::SymTab {
@@ -546,10 +549,194 @@ impl MachO {
                     let entryoff: u32 = entryoff.try_into().unwrap();
                     entry_point_pc = Some(text_segment_base.unwrap() + entryoff);
                 }
-                // LoadCommand::DyldInfo is apparently a newer thing that 2008
-                // games don't have. Ignore for now? Unsure if/when iOS got it.
-                LoadCommand::DyldInfo { .. } => {
-                    log!("Warning! DyldInfo is not handled.");
+                LoadCommand::DyldInfo {
+                    rebase_off,
+                    rebase_size,
+                    bind_off,
+                    bind_size,
+                    ..
+                } => {
+                    log_dbg!(
+                        "DyldInfo rebase: {} offset, {} size; bind: {} offset, {} size",
+                        rebase_off,
+                        rebase_size,
+                        bind_off,
+                        bind_size
+                    );
+
+                    // TODO: implement slide
+                    let slide = 0;
+
+                    let rebase_iter =
+                        Rebase::parse(&bytes[rebase_off as usize..][..rebase_size as usize], 4);
+
+                    let mut rebase_sym_type: Option<BindSymbolType> = None;
+                    let mut rebase_segment_addr: Option<u32> = None;
+                    let mut rebase_segment_offset = 0usize;
+
+                    let mut do_rebase_at = |segment_addr: u32,
+                                            segment_offset: usize,
+                                            sym_type: BindSymbolType,
+                                            slide: u32| {
+                        let addr = segment_addr as usize + segment_offset;
+
+                        match sym_type {
+                            BindSymbolType::Pointer => {
+                                let location_to_fix = Ptr::from_bits(addr as u32);
+                                let old: u32 = into_mem.read(location_to_fix);
+                                log_dbg!(
+                                    "Pointer rebase at {:#x} from {:#x} to {:#x}",
+                                    addr,
+                                    old,
+                                    old + slide
+                                );
+                                into_mem.write(location_to_fix, old + slide);
+                            }
+                            _ => unimplemented!(
+                                "Unhandled DyldInfo rebase symbol type: {:?}",
+                                sym_type
+                            ),
+                        }
+                    };
+
+                    for op in rebase_iter.opcodes() {
+                        log_dbg!("Rebase op: {:?}", op);
+
+                        match op {
+                            RebaseOpCode::SetSymbolType(value) => {
+                                rebase_sym_type = Some(value);
+                            }
+                            RebaseOpCode::SetSegmentOffset {
+                                segment_index: index,
+                                segment_offset: offset,
+                            } => {
+                                rebase_segment_addr = Some(all_segments[index as usize].0);
+                                rebase_segment_offset = offset;
+                            }
+                            RebaseOpCode::Rebase { times } => {
+                                for _ in 0..times {
+                                    do_rebase_at(
+                                        rebase_segment_addr.unwrap(),
+                                        rebase_segment_offset,
+                                        rebase_sym_type.unwrap(),
+                                        slide,
+                                    );
+                                    rebase_segment_offset += 4;
+                                }
+                            }
+                            RebaseOpCode::RebaseAndAddAddress { offset } => {
+                                do_rebase_at(
+                                    rebase_segment_addr.unwrap(),
+                                    rebase_segment_offset,
+                                    rebase_sym_type.unwrap(),
+                                    slide,
+                                );
+                                rebase_segment_offset += offset as usize + 4;
+                            }
+                            RebaseOpCode::AddAddress { offset } => {
+                                rebase_segment_offset =
+                                    rebase_segment_offset.wrapping_add_signed(offset);
+                            }
+                            RebaseOpCode::RebaseAndSkipping { times, skip } => {
+                                for _ in 0..times {
+                                    do_rebase_at(
+                                        rebase_segment_addr.unwrap(),
+                                        rebase_segment_offset,
+                                        rebase_sym_type.unwrap(),
+                                        slide,
+                                    );
+                                    rebase_segment_offset += skip + 4;
+                                }
+                            }
+                            RebaseOpCode::Done => (),
+                        }
+                    }
+
+                    let bind_iter =
+                        Bind::parse(&bytes[bind_off as usize..][..bind_size as usize], 4);
+
+                    let mut symbol: Option<String> = None;
+                    let mut sym_type: Option<BindSymbolType> = None;
+                    let _addend = 0usize;
+                    let mut segment_addr: Option<u32> = None;
+                    let mut segment_offset = 0usize;
+
+                    let mut do_bind =
+                        |segment_addr: u32,
+                         segment_offset: usize,
+                         symbol: String,
+                         sym_type: BindSymbolType| {
+                            let addr = segment_addr as usize + segment_offset;
+
+                            match sym_type {
+                                BindSymbolType::Pointer => {
+                                    log_dbg!("Pointer bind: {:#x} -> {}", addr, symbol);
+                                    external_relocations.push((addr as u32, symbol));
+                                }
+                                _ => unimplemented!(
+                                    "Unhandled DyldInfo bind symbol type: {:?}",
+                                    sym_type
+                                ),
+                            }
+                        };
+
+                    for op in bind_iter.opcodes() {
+                        log_dbg!("Bind op: {:?}", op);
+
+                        match op {
+                            BindOpCode::SetDyLibrary(_) => (), // the way we resolve symbols means we don't need to care about this
+                            BindOpCode::SetSymbol { name, .. } => {
+                                symbol = Some(name);
+                            }
+                            BindOpCode::SetSymbolType(value) => {
+                                sym_type = Some(value);
+                            }
+                            BindOpCode::SetAddend(_value) => {
+                                // TODO: it seems to be unused?
+                                // addend = value;
+                            }
+                            BindOpCode::SetSegmentOffset {
+                                segment_index: index,
+                                segment_offset: offset,
+                            } => {
+                                segment_addr = Some(all_segments[index as usize].0);
+                                segment_offset = offset;
+                            }
+                            BindOpCode::AddAddress { offset } => {
+                                segment_offset = segment_offset.wrapping_add_signed(offset);
+                            }
+                            BindOpCode::Bind => {
+                                do_bind(
+                                    segment_addr.unwrap(),
+                                    segment_offset,
+                                    symbol.clone().unwrap(),
+                                    sym_type.unwrap(),
+                                );
+                                segment_offset += 4;
+                            }
+                            BindOpCode::BindAndAddAddress { offset } => {
+                                do_bind(
+                                    segment_addr.unwrap(),
+                                    segment_offset,
+                                    symbol.clone().unwrap(),
+                                    sym_type.unwrap(),
+                                );
+                                segment_offset += offset as usize + 4;
+                            }
+                            BindOpCode::BindAndSkipping { times, skip } => {
+                                for _ in 0..times {
+                                    do_bind(
+                                        segment_addr.unwrap(),
+                                        segment_offset,
+                                        symbol.clone().unwrap(),
+                                        sym_type.unwrap(),
+                                    );
+                                    segment_offset += skip + 4;
+                                }
+                            }
+                            BindOpCode::Done => (),
+                        }
+                    }
                 }
                 _ => (),
             }

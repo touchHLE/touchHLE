@@ -211,6 +211,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "dfabd476_a4e9a338",
+        "filename": "src/frameworks/uikit/ui_view/ui_control/ui_bar_button_item.rs",
+        "patchSetId": 28
+      },
+      "lineNbr": 74,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-08-30T19:07:50Z",
+      "side": 1,
+      "message": "Example where it is also used -\u003e https://github.com/touchHLE/touchHLE/blob/trunk/src/frameworks/uikit/ui_view/ui_control/ui_button.rs#L138",
+      "parentUuid": "d60331fb_3c0553bc",
+      "revId": "3c9a4a6e61f07eaae565e7a6994f3b48e72655a2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "1a312d84_bdbd77df",

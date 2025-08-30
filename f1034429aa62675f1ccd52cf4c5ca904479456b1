@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b2b5bd3f_2d42f865",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 10
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-08-30T15:26:21Z",
+      "side": 1,
+      "message": "\u003e Truly implementing pread/prwrite is challenging due to differences in\nwindows/posix file handling.\n\nCould you please elaboarate on that?\nProbably worth to add a comment to the functions themselves, not just to the commit message.",
+      "revId": "f1034429aa62675f1ccd52cf4c5ca904479456b1",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "91abba3c_02ec86bc",
+        "filename": "src/libc/posix_io.rs",
+        "patchSetId": 10
+      },
+      "lineNbr": 309,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-08-30T15:26:21Z",
+      "side": 1,
+      "message": "i\u0027m not sure why you need to save errno and set it later? (same coomment for pwrite)",
+      "revId": "f1034429aa62675f1ccd52cf4c5ca904479456b1",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

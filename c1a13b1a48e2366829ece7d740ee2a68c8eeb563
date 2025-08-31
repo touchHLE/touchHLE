@@ -16,6 +16,24 @@
       "message": "Should this say failed to execute touchHLE process?",
       "revId": "c1a13b1a48e2366829ece7d740ee2a68c8eeb563",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b8bcd284_50e2bd06",
+        "filename": "tests/integration.rs",
+        "patchSetId": 24
+      },
+      "lineNbr": 225,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2025-08-31T16:12:06Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "fcd89a77_7a7ed471",
+      "revId": "c1a13b1a48e2366829ece7d740ee2a68c8eeb563",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

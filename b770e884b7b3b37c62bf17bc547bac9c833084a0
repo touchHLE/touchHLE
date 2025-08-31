@@ -16,6 +16,24 @@
       "message": "Would it work without coroutines patch?",
       "revId": "b770e884b7b3b37c62bf17bc547bac9c833084a0",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "14c61082_f409813e",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 5
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2025-08-31T16:06:51Z",
+      "side": 1,
+      "message": "The regular ones would but the `waitUntilDone:` ones wouldn\u0027t, we\u0027d have to ignore those without coroutines.",
+      "parentUuid": "b2c3a75f_95ad69a9",
+      "revId": "b770e884b7b3b37c62bf17bc547bac9c833084a0",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

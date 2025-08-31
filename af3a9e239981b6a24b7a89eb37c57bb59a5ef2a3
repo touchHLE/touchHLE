@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "37cd5c9e_441bd2db",
+        "filename": "src/dyld.rs",
+        "patchSetId": 4
+      },
+      "lineNbr": 440,
+      "author": {
+        "id": 1038767
+      },
+      "writtenOn": "2025-08-31T23:14:08Z",
+      "side": 1,
+      "message": "Removed the handling part as it was redundant since we handle the consts by reading the section directly. Added a comment that explains why we skip it.",
+      "parentUuid": "76b4ee57_0ccfa816",
+      "revId": "af3a9e239981b6a24b7a89eb37c57bb59a5ef2a3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "255682a7_5b79daba",
@@ -35,6 +53,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "affc66f5_d1fada70",
+        "filename": "src/mach_o.rs",
+        "patchSetId": 4
+      },
+      "lineNbr": 560,
+      "author": {
+        "id": 1038767
+      },
+      "writtenOn": "2025-08-31T23:14:08Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "255682a7_5b79daba",
+      "revId": "af3a9e239981b6a24b7a89eb37c57bb59a5ef2a3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "baba28af_cf814283",
@@ -48,6 +84,24 @@
       "writtenOn": "2025-08-31T21:05:57Z",
       "side": 1,
       "message": "but so this part of the code would never be executed because of rebase_size assert above?\n\ni think right now it\u0027s enough to have that assert and remove the code which deals with rebase.",
+      "revId": "af3a9e239981b6a24b7a89eb37c57bb59a5ef2a3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "0557c807_07dc2a34",
+        "filename": "src/mach_o.rs",
+        "patchSetId": 4
+      },
+      "lineNbr": 570,
+      "author": {
+        "id": 1038767
+      },
+      "writtenOn": "2025-08-31T23:14:08Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "baba28af_cf814283",
       "revId": "af3a9e239981b6a24b7a89eb37c57bb59a5ef2a3",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

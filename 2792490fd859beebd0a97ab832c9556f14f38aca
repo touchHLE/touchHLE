@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "04760cee_e8a24cb5",
+        "filename": "src/mach_o.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 552,
+      "author": {
+        "id": 1038767
+      },
+      "writtenOn": "2025-08-31T20:53:58Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "fac311ec_e2a77d0f",
+      "revId": "2792490fd859beebd0a97ab832c9556f14f38aca",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "160592fb_0fe3a36b",

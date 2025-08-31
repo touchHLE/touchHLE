@@ -3,6 +3,23 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "fac311ec_e2a77d0f",
+        "filename": "src/mach_o.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 552,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-08-31T18:31:53Z",
+      "side": 1,
+      "message": "this comment need to be updated or removed",
+      "revId": "2792490fd859beebd0a97ab832c9556f14f38aca",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "160592fb_0fe3a36b",
         "filename": "src/mach_o.rs",
         "patchSetId": 3

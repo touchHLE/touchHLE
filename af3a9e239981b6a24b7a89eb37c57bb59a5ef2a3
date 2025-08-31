@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "76b4ee57_0ccfa816",
+        "filename": "src/dyld.rs",
+        "patchSetId": 4
+      },
+      "lineNbr": 440,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-08-31T21:05:57Z",
+      "side": 1,
+      "message": "could you please add a comment explaining why we need to deal with constants in this way?",
+      "revId": "af3a9e239981b6a24b7a89eb37c57bb59a5ef2a3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "255682a7_5b79daba",
+        "filename": "src/mach_o.rs",
+        "patchSetId": 4
+      },
+      "lineNbr": 560,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-08-31T21:05:57Z",
+      "side": 1,
+      "message": "i think you should change this TODO for clarity to somehting like \"implement rebasing\" (see my other comment below)",
+      "revId": "af3a9e239981b6a24b7a89eb37c57bb59a5ef2a3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "baba28af_cf814283",
+        "filename": "src/mach_o.rs",
+        "patchSetId": 4
+      },
+      "lineNbr": 570,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-08-31T21:05:57Z",
+      "side": 1,
+      "message": "but so this part of the code would never be executed because of rebase_size assert above?\n\ni think right now it\u0027s enough to have that assert and remove the code which deals with rebase.",
+      "revId": "af3a9e239981b6a24b7a89eb37c57bb59a5ef2a3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

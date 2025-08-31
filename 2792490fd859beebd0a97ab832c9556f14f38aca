@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "160592fb_0fe3a36b",
+        "filename": "src/mach_o.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 556,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-08-31T18:28:34Z",
+      "side": 1,
+      "message": "for the rebase opcodes, we probably need to have a real implementation too or an assertion for non-zeroed out case",
+      "revId": "2792490fd859beebd0a97ab832c9556f14f38aca",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8604cda6_0acffbcc",
+        "filename": "src/mach_o.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 568,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-08-31T18:28:34Z",
+      "side": 1,
+      "message": "maybe re-phrase that",
+      "revId": "2792490fd859beebd0a97ab832c9556f14f38aca",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

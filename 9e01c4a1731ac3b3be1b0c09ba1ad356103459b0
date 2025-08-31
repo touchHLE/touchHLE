@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "61315dd1_3853938a",
+        "filename": "src/objc/classes.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 450,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-08-31T18:57:57Z",
+      "side": 1,
+      "message": "Why this is needed if we already vilifying classes starting from FB?",
+      "revId": "9e01c4a1731ac3b3be1b0c09ba1ad356103459b0",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

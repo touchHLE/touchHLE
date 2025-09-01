@@ -187,6 +187,14 @@ pub const CLASSES: ClassExports = objc_classes! {
     };
     msg_super![env; this setBackgroundColor:color]
 }
+
+- (())setShadowColor:(id)color { // UIColor*
+    log!("TODO: [(UILabel*) {:?} setShadowColor:{:?}]", this, color);
+}
+- (())setShadowOffset:(CGSize)value {
+    log!("TODO: [(UILabel*) {:?} setShadowOffset:{:?}]", this, value);
+}
+
 - (())setOpaque:(bool)_opaque {
     // Built-in views don't have user-controlled opaqueness.
 }

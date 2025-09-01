@@ -551,15 +551,11 @@ impl MachO {
                 // Used in iOS 3.1+ apps. Also contains info about
                 // weak and lazy binds, but we already handle those.
                 LoadCommand::DyldInfo {
-                    rebase_off,
-                    rebase_size,
                     bind_off,
                     bind_size,
                     ..
                 } => {
                     // TODO: Implement rebasing once sliding support is added
-                    assert_eq!(rebase_off, 0);
-                    assert_eq!(rebase_size, 0);
 
                     let bind_opcodes = Bind::parse(
                         &bytes[bind_off as usize..][..bind_size as usize],

@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "beb17917_5fd37304",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-09-01T14:49:43Z",
+      "side": 1,
+      "message": "The current TestApp build process is a hacky mess and it wouldn\u0027t actually run on real iOS anyway. So I would suggest adding some kind of explicit check for TestApp here that bypasses the asserts instead, and a comment explaining why.",
+      "revId": "8b3ebd7cb8765e62ffc003d43c68291651647333",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

@@ -27,6 +27,7 @@
 mod bundle;
 
 pub use bundle::BundleData;
+use std::io::SeekFrom;
 
 use crate::fs::bundle::{IpaFile, IpaFileRef};
 use crate::paths;
@@ -358,7 +359,10 @@ fn handle_open_err<T, E: std::fmt::Display, P: std::fmt::Debug>(
 /// Like [File] but for the guest filesystem.
 #[derive(Debug)]
 pub enum GuestFile {
-    Directory,
+    Directory {
+        entries: Vec<String>,
+        position: usize,
+    },
     File(File),
     IpaBundleFile(IpaFile),
     ResourceFile(paths::ResourceFile),
@@ -378,15 +382,18 @@ impl GuestFile {
         GuestFile::ResourceFile(file)
     }
 
-    fn from_directory() -> GuestFile {
-        GuestFile::Directory
+    fn from_directory(entries: Vec<String>) -> GuestFile {
+        GuestFile::Directory {
+            entries,
+            position: 0,
+        }
     }
 
     pub fn sync_all(&self) -> std::io::Result<()> {
         match self {
             GuestFile::File(file) => file.sync_all(),
             GuestFile::IpaBundleFile(_) | GuestFile::ResourceFile(_) => Ok(()),
-            GuestFile::Directory => {
+            GuestFile::Directory { .. } => {
                 log!("Warning: syncing directory as a guest file.");
                 Ok(())
             }
@@ -405,7 +412,7 @@ impl GuestFile {
             GuestFile::ResourceFile(file) => {
                 panic!("Attempt to resize a read-only file: {file:?}")
             }
-            GuestFile::Directory => panic!("Attempt to resize a directory as a guest file"),
+            GuestFile::Directory { .. } => panic!("Attempt to resize a directory as a guest file"),
             _ => unimplemented!(),
         }
     }
@@ -417,7 +424,37 @@ impl Read for GuestFile {
             GuestFile::File(file) => file.read(buf),
             GuestFile::IpaBundleFile(file) => file.read(buf),
             GuestFile::ResourceFile(file) => file.get().read(buf),
-            GuestFile::Directory => panic!("Attempt to read from a directory as a guest file"),
+            GuestFile::Directory {
+                entries, position, ..
+            } => {
+                if *position >= entries.len() {
+                    return Ok(0);
+                }
+
+                let mut bytes_written = 0;
+                let mut current_pos = *position;
+
+                while current_pos < entries.len() && bytes_written < buf.len() {
+                    let entry = &entries[current_pos];
+                    let entry_with_newline = format!("{}\n", entry);
+                    let entry_bytes = entry_with_newline.as_bytes();
+
+                    let bytes_to_copy = std::cmp::min(entry_bytes.len(), buf.len() - bytes_written);
+                    buf[bytes_written..bytes_written + bytes_to_copy]
+                        .copy_from_slice(&entry_bytes[..bytes_to_copy]);
+
+                    bytes_written += bytes_to_copy;
+
+                    if bytes_to_copy == entry_bytes.len() {
+                        current_pos += 1;
+                    } else {
+                        break;
+                    }
+                }
+
+                *position = current_pos;
+                Ok(bytes_written)
+            }
             _ => unimplemented!(),
         }
     }
@@ -433,7 +470,9 @@ impl Write for GuestFile {
             GuestFile::ResourceFile(file) => {
                 panic!("Attempt to write to a read-only file: {file:?}")
             }
-            GuestFile::Directory => panic!("Attempt to write to a directory as a guest file"),
+            GuestFile::Directory { .. } => {
+                panic!("Attempt to write to a directory as a guest file")
+            }
             _ => unimplemented!(),
         }
     }
@@ -447,7 +486,7 @@ impl Write for GuestFile {
             GuestFile::ResourceFile(file) => {
                 panic!("Attempt to flush a read-only file: {file:?}")
             }
-            GuestFile::Directory => panic!("Attempt to flush a directory as a guest file"),
+            GuestFile::Directory { .. } => panic!("Attempt to flush a directory as a guest file"),
             _ => unimplemented!(),
         }
     }
@@ -459,7 +498,24 @@ impl Seek for GuestFile {
             GuestFile::File(file) => file.seek(pos),
             GuestFile::IpaBundleFile(file) => file.seek(pos),
             GuestFile::ResourceFile(file) => file.get().seek(pos),
-            GuestFile::Directory => panic!("Attempt to seek in a directory as a guest file"),
+            GuestFile::Directory {
+                position, entries, ..
+            } => match pos {
+                SeekFrom::Start(offset) => {
+                    *position = offset as usize;
+                    Ok(*position as u64)
+                }
+                SeekFrom::Current(offset) => {
+                    let new_pos = (*position as i64 + offset).max(0) as usize;
+                    *position = new_pos;
+                    Ok(*position as u64)
+                }
+                SeekFrom::End(offset) => {
+                    let new_pos = (entries.len() as i64 + offset).max(0) as usize;
+                    *position = new_pos;
+                    Ok(*position as u64)
+                }
+            },
             _ => unimplemented!(),
         }
     }
@@ -998,11 +1054,12 @@ impl Fs {
                         }
                     }
                 }
-                FsNode::Directory { .. } => {
+                FsNode::Directory { children, .. } => {
                     if write {
                         return Err(());
                     } else {
-                        return Ok(GuestFile::from_directory());
+                        let entries: Vec<String> = children.keys().cloned().collect();
+                        return Ok(GuestFile::from_directory(entries));
                     }
                 }
             }

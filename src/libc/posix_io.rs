@@ -440,7 +440,7 @@ pub fn close(env: &mut Environment, fd: FileDescriptor) -> i32 {
             // performed before closing succeed or not.
             match file.file {
                 // Closing directories requires no other actions
-                GuestFile::Directory => 0,
+                GuestFile::Directory { .. } => 0,
                 // Socket is a special case
                 GuestFile::Socket => {
                     close_socket(env, fd);

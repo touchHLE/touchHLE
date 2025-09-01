@@ -119,7 +119,7 @@ fn fstat_inner(env: &mut Environment, fd: FileDescriptor, buf: MutPtr<stat>) -> 
                 .unwrap();
             file.file.seek(SeekFrom::Start(old_pos)).unwrap();
         }
-        GuestFile::Directory => {
+        GuestFile::Directory { .. } => {
             stat.st_mode |= S_IFDIR;
 
             // TODO: st_size

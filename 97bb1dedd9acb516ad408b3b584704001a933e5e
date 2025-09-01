@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e4d6551a_9e2356d3",
+        "filename": "src/frameworks/uikit/ui_view/ui_web_view.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 28,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-09-01T19:40:54Z",
+      "side": 1,
+      "message": "we should probably log the url string with a TODO",
+      "revId": "97bb1dedd9acb516ad408b3b584704001a933e5e",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

@@ -47,6 +47,10 @@ const SO_REUSEADDR: i32 = 0x4;
 const SO_BROADCAST: i32 = 0x20;
 const SO_ERROR: i32 = 0x1007;
 
+const FIONREAD: u32 = 0x4004667f;
+const FIONBIO: u32 = 0x8004667e;
+const TOUCHHLE_SOCKET_NONBLOCKING: i32 = 0x10000;
+
 #[allow(non_camel_case_types)]
 pub type sa_family_t = u8;
 
@@ -175,10 +179,54 @@ fn socket(env: &mut Environment, domain: i32, type_: i32, protocol: i32) -> File
     fd
 }
 
-fn ioctl(env: &mut Environment, fd: i32, request: u32, _args: DotDotDot) -> i32 {
-    assert!(is_socket(env, fd));
-    log!("TODO: ioctl({} (socket), {:#x?}, ...) => -1", fd, request);
-    -1
+fn ioctl(env: &mut Environment, fd: i32, request: u32, args: DotDotDot) -> i32 {
+    if !is_socket(env, fd) {
+        set_errno(env, EBADF);
+        return -1;
+    }
+
+    match request {
+        FIONREAD => {
+            let mut va_list = args.start();
+            let bytes_ptr: MutPtr<i32> = va_list.next(env);
+            
+            let bytes_available = if let Some(socket_obj) = State::get(env).sockets.get(&fd) {
+                match &socket_obj.tcp_stream {
+                    Some(_) => {
+                        let mut buffer = [0u8; 1];
+                        match socket_obj.tcp_stream.as_ref().unwrap().peek(&mut buffer) {
+                            Ok(_) => 1,
+                            Err(_) => 0,
+                        }
+                    }
+                    None => 0,
+                }
+            } else {
+                0
+            };
+            
+            env.mem.write(bytes_ptr, bytes_available);
+            0
+        }
+        FIONBIO => {
+            let mut va_list = args.start();
+            let flag_ptr: ConstPtr<i32> = va_list.next(env);
+            let flag_value = env.mem.read(flag_ptr);
+            
+            if let Some(socket_obj) = State::get_mut(env).sockets.get_mut(&fd) {
+                if flag_value != 0 {
+                    socket_obj.options.insert(TOUCHHLE_SOCKET_NONBLOCKING);
+                } else {
+                    socket_obj.options.remove(&TOUCHHLE_SOCKET_NONBLOCKING);
+                }
+            }
+            0
+        }
+        _ => {
+            set_errno(env, EINVAL);
+            -1
+        }
+    }
 }
 
 fn getsockopt(

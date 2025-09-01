@@ -774,16 +774,12 @@ pub fn find_or_create_socket(env: &mut Environment) -> FileDescriptor {
 
 /// Helper function for socket check, not part of API
 pub fn is_socket(env: &mut Environment, fd: FileDescriptor) -> bool {
-    let guest_file = &env
-        .libc_state
-        .posix_io
-        .files
-        .get(fd_to_file_idx(fd))
-        .unwrap()
-        .as_ref()
-        .unwrap()
-        .file;
-    matches!(guest_file, GuestFile::Socket)
+    let file_idx = fd_to_file_idx(fd);
+    if let Some(Some(host_object)) = env.libc_state.posix_io.files.get(file_idx) {
+        matches!(host_object.file, GuestFile::Socket)
+    } else {
+        false
+    }
 }
 
 /// Helper function to validate lock, not part of API. Assumes fd is a valid

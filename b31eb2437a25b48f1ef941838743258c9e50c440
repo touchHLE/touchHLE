@@ -16,6 +16,23 @@
       "message": "Working on bugs for Crash Nitro Kart 2",
       "revId": "b31eb2437a25b48f1ef941838743258c9e50c440",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "446de4c0_734c6be9",
+        "filename": "src/gles/gles1_on_gl2.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 1168,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-09-01T22:32:08Z",
+      "side": 1,
+      "message": "glTexCoordPointer only supports short, float, int or double for types. Byte would be invalid. Reference https://registry.khronos.org/OpenGL-Refpages/gl2.1/xhtml/glTexCoordPointer.xml\n\nWe probably need to get the data from pointer and transform it from bytes to shorts before the gl call. @hikari@noyu.me may have a better idea for how to achieve that.",
+      "revId": "b31eb2437a25b48f1ef941838743258c9e50c440",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

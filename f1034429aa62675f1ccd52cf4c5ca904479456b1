@@ -33,6 +33,24 @@
       "message": "i\u0027m not sure why you need to save errno and set it later? (same coomment for pwrite)",
       "revId": "f1034429aa62675f1ccd52cf4c5ca904479456b1",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f91d568e_2bfb372f",
+        "filename": "src/libc/posix_io.rs",
+        "patchSetId": 10
+      },
+      "lineNbr": 309,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2025-09-02T16:01:39Z",
+      "side": 1,
+      "message": "Lets say that read causes an error, we should still try to restore the original lseek position, but if lseek fails then we would no longer return the original \"true\" error. Also with our current implementation we set errno to 0 regardless of if an error occurred or not which would cause use to lose a read errorno if it occured.",
+      "parentUuid": "91abba3c_02ec86bc",
+      "revId": "f1034429aa62675f1ccd52cf4c5ca904479456b1",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

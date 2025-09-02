@@ -764,6 +764,35 @@ fn vswprintf(
     to_write as i32
 }
 
+fn wprintf(env: &mut Environment, format: ConstPtr<wchar_t>, args: DotDotDot) -> i32 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
+    // TODO: support other locales
+    let ctype_locale = setlocale(env, LC_CTYPE, Ptr::null());
+    assert_eq!(env.mem.read(ctype_locale), b'C');
+
+    let wcstr_format = env.mem.wcstr_at(format);
+    log_dbg!("wprintf({:?} ({:?}), ...)", format, wcstr_format);
+
+    let wcstr_format_bytes = wcstr_format.as_bytes();
+    let len: GuestUSize = wcstr_format_bytes.len() as GuestUSize;
+    let res = printf_inner::<false, _>(
+        env,
+        |_mem, idx| {
+            if idx == len {
+                b'\0'
+            } else {
+                wcstr_format_bytes[idx as usize]
+            }
+        },
+        args.start(),
+    );
+
+    let _ = std::io::stdout().write_all(&res);
+    res.len().try_into().unwrap()
+}
+
 fn printf(env: &mut Environment, format: ConstPtr<u8>, args: DotDotDot) -> i32 {
     // TODO: handle errno properly
     set_errno(env, 0);
@@ -1306,6 +1335,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(sprintf(_, _, _)),
     export_c_func!(swprintf(_, _, _, _)),
     export_c_func!(vswprintf(_, _, _, _)),
+    export_c_func!(wprintf(_, _)),
     export_c_func!(printf(_, _)),
     export_c_func!(fprintf(_, _, _)),
     export_c_func!(vfprintf(_, _, _)),

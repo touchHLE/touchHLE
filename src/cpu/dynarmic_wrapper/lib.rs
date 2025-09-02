@@ -20,23 +20,12 @@ pub type touchHLE_Mem = std::ffi::c_void;
 
 #[repr(C)]
 #[allow(non_camel_case_types)]
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct touchHLE_DynarmicContext {
     pub regs: [u32; 16],
-    pub extregs: [u32; 64],
+    pub extregs: [u64; 32],
     pub cpsr: u32,
     pub fpscr: u32,
-}
-
-impl Default for touchHLE_DynarmicContext {
-    fn default() -> Self {
-        Self {
-            regs: [0; 16],
-            extregs: [0; 64],
-            cpsr: 0,
-            fpscr: 0,
-        }
-    }
 }
 
 impl touchHLE_DynarmicContext {
@@ -56,8 +45,14 @@ extern "C" {
     pub fn touchHLE_DynarmicWrapper_delete(cpu: *mut touchHLE_DynarmicWrapper);
     pub fn touchHLE_DynarmicWrapper_regs_const(cpu: *const touchHLE_DynarmicWrapper) -> *const u32;
     pub fn touchHLE_DynarmicWrapper_regs_mut(cpu: *mut touchHLE_DynarmicWrapper) -> *mut u32;
+    pub fn touchHLE_DynarmicWrapper_extregs_const(
+        cpu: *const touchHLE_DynarmicWrapper,
+    ) -> *const u32;
+    pub fn touchHLE_DynarmicWrapper_extregs_mut(cpu: *mut touchHLE_DynarmicWrapper) -> *mut u32;
     pub fn touchHLE_DynarmicWrapper_cpsr(cpu: *const touchHLE_DynarmicWrapper) -> u32;
     pub fn touchHLE_DynarmicWrapper_set_cpsr(cpu: *mut touchHLE_DynarmicWrapper, cpsr: u32);
+    pub fn touchHLE_DynarmicWrapper_fpscr(cpu: *const touchHLE_DynarmicWrapper) -> u32;
+    pub fn touchHLE_DynarmicWrapper_set_fpscr(cpu: *mut touchHLE_DynarmicWrapper, fpscr: u32);
     pub fn touchHLE_DynarmicWrapper_swap_context(
         cpu: *mut touchHLE_DynarmicWrapper,
         context: *mut touchHLE_DynarmicContext,

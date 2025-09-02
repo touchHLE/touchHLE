@@ -235,6 +235,13 @@ pub const CLASSES: ClassExports = objc_classes! {
     }
 }
 
+// NSCopying implementation
+- (id)copyWithZone:(NSZonePtr)_zone {
+    let other: id = msg_class![env; NSArray alloc];
+    let other: id = msg![env; other initWithArray:this];
+    other
+}
+
 @end
 
 // Our private subclass that is the single implementation of NSArray for the

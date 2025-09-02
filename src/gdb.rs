@@ -21,10 +21,75 @@ use std::net::TcpStream;
 use std::time::Duration;
 
 /// GDB target description XML.
+/// Copied from binutils-gdb @ gdb/features/arm/(arm-core.xml & arm-vfpv3.xml)
 const TARGET_XML: &str = r#"
 <target version="1.0">
-    <architecture>armv6</architecture>
-    <osabi>Darwin</osabi>
+<!-- Copyright (C) 2007-2025 Free Software Foundation, Inc.
+
+     Copying and distribution of this file, with or without modification,
+     are permitted in any medium without royalty provided the copyright
+     notice and this notice are preserved.  -->
+<architecture>armv7</architecture>
+<osabi>Darwin</osabi>
+<feature name="org.gnu.gdb.arm.core">
+  <reg name="r0" bitsize="32"/>
+  <reg name="r1" bitsize="32"/>
+  <reg name="r2" bitsize="32"/>
+  <reg name="r3" bitsize="32"/>
+  <reg name="r4" bitsize="32"/>
+  <reg name="r5" bitsize="32"/>
+  <reg name="r6" bitsize="32"/>
+  <reg name="r7" bitsize="32"/>
+  <reg name="r8" bitsize="32"/>
+  <reg name="r9" bitsize="32"/>
+  <reg name="r10" bitsize="32"/>
+  <reg name="r11" bitsize="32"/>
+  <reg name="r12" bitsize="32"/>
+  <reg name="sp" bitsize="32" type="data_ptr"/>
+  <reg name="lr" bitsize="32"/>
+  <reg name="pc" bitsize="32" type="code_ptr"/>
+
+  <!-- The CPSR is register 25, rather than register 16, because
+       the FPA registers historically were placed between the PC
+       and the CPSR in the "g" packet.  -->
+  <reg name="cpsr" bitsize="32" regnum="25"/>
+</feature>
+<feature name="org.gnu.gdb.arm.vfp">
+  <reg name="d0" bitsize="64" type="ieee_double"/>
+  <reg name="d1" bitsize="64" type="ieee_double"/>
+  <reg name="d2" bitsize="64" type="ieee_double"/>
+  <reg name="d3" bitsize="64" type="ieee_double"/>
+  <reg name="d4" bitsize="64" type="ieee_double"/>
+  <reg name="d5" bitsize="64" type="ieee_double"/>
+  <reg name="d6" bitsize="64" type="ieee_double"/>
+  <reg name="d7" bitsize="64" type="ieee_double"/>
+  <reg name="d8" bitsize="64" type="ieee_double"/>
+  <reg name="d9" bitsize="64" type="ieee_double"/>
+  <reg name="d10" bitsize="64" type="ieee_double"/>
+  <reg name="d11" bitsize="64" type="ieee_double"/>
+  <reg name="d12" bitsize="64" type="ieee_double"/>
+  <reg name="d13" bitsize="64" type="ieee_double"/>
+  <reg name="d14" bitsize="64" type="ieee_double"/>
+  <reg name="d15" bitsize="64" type="ieee_double"/>
+  <reg name="d16" bitsize="64" type="ieee_double"/>
+  <reg name="d17" bitsize="64" type="ieee_double"/>
+  <reg name="d18" bitsize="64" type="ieee_double"/>
+  <reg name="d19" bitsize="64" type="ieee_double"/>
+  <reg name="d20" bitsize="64" type="ieee_double"/>
+  <reg name="d21" bitsize="64" type="ieee_double"/>
+  <reg name="d22" bitsize="64" type="ieee_double"/>
+  <reg name="d23" bitsize="64" type="ieee_double"/>
+  <reg name="d24" bitsize="64" type="ieee_double"/>
+  <reg name="d25" bitsize="64" type="ieee_double"/>
+  <reg name="d26" bitsize="64" type="ieee_double"/>
+  <reg name="d27" bitsize="64" type="ieee_double"/>
+  <reg name="d28" bitsize="64" type="ieee_double"/>
+  <reg name="d29" bitsize="64" type="ieee_double"/>
+  <reg name="d30" bitsize="64" type="ieee_double"/>
+  <reg name="d31" bitsize="64" type="ieee_double"/>
+
+  <reg name="fpscr" bitsize="32" type="int" group="float"/>
+</feature>
 </target>
 "#;
 
@@ -173,6 +238,25 @@ impl GdbServer {
             }
         }
 
+        fn extregs_for_command<'b>(
+            server: &mut GdbServer,
+            env: &'b mut Environment,
+        ) -> &'b mut [u64; 32] {
+            let tid = server.thread_for_other;
+            // TID zero should mean any thread, but gdb expects it to
+            // mean the current thread.
+            let tid: usize = if tid == 0 {
+                env.current_thread
+            } else {
+                (tid - 1).try_into().unwrap()
+            };
+            if tid == env.current_thread {
+                env.cpu.extregs_mut()
+            } else {
+                &mut env.threads[tid].guest_context.as_mut().unwrap().extregs
+            }
+        }
+
         // Send reply to continue/step packet that gdb sent earlier, so it knows
         // why execution was stopped.
         match stop_reason {
@@ -251,22 +335,33 @@ impl GdbServer {
                 // Read single register by number
                 b'p' => {
                     let num = usize::from_str_radix(&p[1..], 16).unwrap();
+                    let tid = self.thread_for_other;
+                    let tid: usize = if tid == 0 {
+                        env.current_thread
+                    } else {
+                        (tid - 1).try_into().unwrap()
+                    };
                     let reg = if num < 16 {
                         let regs = regs_for_command(self, env);
                         Some(regs[num])
                     } else if num == 25 {
-                        let tid = self.thread_for_other;
-                        let tid: usize = if tid == 0 {
-                            env.current_thread
-                        } else {
-                            (tid - 1).try_into().unwrap()
-                        };
                         if tid == env.current_thread {
                             Some(env.cpu.cpsr())
                         } else {
-                            Some(env.threads[tid].guest_context.as_mut().unwrap().cpsr)
+                            Some(env.threads[tid].guest_context.as_ref().unwrap().cpsr)
                         }
-                    // TODO: FPSCR, VFP registers
+                    } else if num > 25 && num < 58 {
+                        // The vfp registers are 64 bit.
+                        let regs = extregs_for_command(self, env);
+                        let reg = u64::from_be_bytes(regs[num - 26].to_le_bytes());
+                        self.send_packet(&format!("{reg:016x}"));
+                        continue;
+                    } else if num == 58 {
+                        if tid == env.current_thread {
+                            Some(env.cpu.fpscr())
+                        } else {
+                            Some(env.threads[tid].guest_context.as_ref().unwrap().fpscr)
+                        }
                     } else {
                         None
                     };
@@ -282,8 +377,21 @@ impl GdbServer {
                 }
                 // Write single register by number
                 b'P' => {
+                    let tid = self.thread_for_other;
+                    let tid: usize = if tid == 0 {
+                        env.current_thread
+                    } else {
+                        (tid - 1).try_into().unwrap()
+                    };
                     let (num, word) = p[1..].split_once('=').unwrap();
                     let num = usize::from_str_radix(num, 16).unwrap();
+                    if num > 25 && num < 58 {
+                        let word = u64::from_str_radix(word, 16).unwrap();
+                        let regs = extregs_for_command(self, env);
+                        regs[num - 26] = word;
+                        self.send_packet("E00");
+                        continue;
+                    }
                     let word = u32::from_str_radix(word, 16).unwrap();
                     // Rust decodes in big-endian, but GDB supplies
                     // little-endian.
@@ -293,19 +401,19 @@ impl GdbServer {
                         regs[num] = word;
                         self.send_packet("OK");
                     } else if num == 25 {
-                        let tid = self.thread_for_other;
-                        let tid: usize = if tid == 0 {
-                            env.current_thread
-                        } else {
-                            (tid - 1).try_into().unwrap()
-                        };
                         if tid == env.current_thread {
                             env.cpu.set_cpsr(word);
                         } else {
                             env.threads[tid].guest_context.as_mut().unwrap().cpsr = word;
                         }
                         self.send_packet("OK");
-                    // TODO: FPSCR, VFP registers
+                    } else if num == 58 {
+                        if tid == env.current_thread {
+                            env.cpu.set_fpscr(word);
+                        } else {
+                            env.threads[tid].guest_context.as_mut().unwrap().fpscr = word;
+                        }
+                        self.send_packet("OK");
                     } else {
                         // Error 0
                         self.send_packet("E00");

@@ -550,6 +550,12 @@ pub const CLASSES: ClassExports = objc_classes! {
     release(env, object)
 }
 
+- (())replaceObjectAtIndex:(NSUInteger)index withObject:(id)obj {
+    retain(env, obj);
+    let object = std::mem::replace(&mut env.objc.borrow_mut::<ArrayHostObject>(this).array[index as usize], obj);
+    release(env, object);
+}
+
 - (())removeLastObject {
     let object = env.objc.borrow_mut::<ArrayHostObject>(this).array.pop().unwrap();
     release(env, object)

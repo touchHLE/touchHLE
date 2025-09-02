@@ -217,11 +217,33 @@ impl Cpu {
         }));
     }
 
+    #[allow(unused)]
+    pub fn extregs(&self) -> &[f64; 32] {
+        unsafe {
+            let ptr = touchHLE_DynarmicWrapper_extregs_const(self.dynarmic_wrapper);
+            &*(ptr as *const [f64; 32])
+        }
+    }
+
+    pub fn extregs_mut(&mut self) -> &mut [u64; 32] {
+        unsafe {
+            let ptr = touchHLE_DynarmicWrapper_extregs_mut(self.dynarmic_wrapper);
+            &mut *(ptr as *mut [u64; 32])
+        }
+    }
+
     pub fn cpsr(&self) -> u32 {
         unsafe { touchHLE_DynarmicWrapper_cpsr(self.dynarmic_wrapper) }
     }
     pub fn set_cpsr(&mut self, cpsr: u32) {
         unsafe { touchHLE_DynarmicWrapper_set_cpsr(self.dynarmic_wrapper, cpsr) }
+    }
+
+    pub fn fpscr(&self) -> u32 {
+        unsafe { touchHLE_DynarmicWrapper_fpscr(self.dynarmic_wrapper) }
+    }
+    pub fn set_fpscr(&mut self, fpscr: u32) {
+        unsafe { touchHLE_DynarmicWrapper_set_fpscr(self.dynarmic_wrapper, fpscr) }
     }
 
     /// Swap the current state of the CPU (registers etc) with the state stored

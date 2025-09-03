@@ -275,6 +275,7 @@ impl Mem {
         // This will hopefully get the host OS to lazily allocate the memory.
         let layout = std::alloc::Layout::new::<Bytes>();
         let bytes = unsafe { std::alloc::alloc_zeroed(layout) as *mut Bytes };
+        assert!(!bytes.is_null());
 
         let allocator = allocator::Allocator::new();
 

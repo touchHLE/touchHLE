@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "cd0e8ea5_a71d5e11",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 7
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-09-03T16:30:55Z",
+      "side": 1,
+      "message": "We don\u0027t put methods like these on the base class because they won\u0027t work properly if they\u0027re inherited by a foreign subclass (one that isn\u0027t our internal subclasses).",
+      "revId": "d8851141822fbdd4e7f470fec448f79141862504",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

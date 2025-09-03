@@ -18,10 +18,16 @@ use super::ns_dictionary::dict_from_keys_and_objects;
 use super::ns_run_loop::NSDefaultRunLoopMode;
 use super::ns_string::{from_rust_string, get_static_str, to_rust_string};
 use super::{NSTimeInterval, NSUInteger};
+<<<<<<< PATCH SET (8687e94343d3abd4dee8e75536693b4f097001b0 Add +[NSObject description:])
+use crate::frameworks::foundation::ns_run_loop::{add_perform_request, cancel_perform_requests};
+use crate::frameworks::foundation::ns_string::from_rust_string;
+use crate::libc::semaphore::{host_destroy_semaphore, sem_wait};
+=======
+>>>>>>> BASE      (383259bdcc76504c3d465e384eee2d87affaa864 Fix typos in 58b66ae)
 use crate::mem::MutVoidPtr;
 use crate::objc::{
-    id, msg, msg_class, msg_send, nil, objc_classes, retain, Class, ClassExports, NSZonePtr, ObjC,
-    TrivialHostObject, SEL,
+    autorelease, id, msg, msg_class, msg_send, nil, objc_classes, retain, Class, ClassExports,
+    NSZonePtr, ObjC, TrivialHostObject, SEL,
 };
 
 pub const CLASSES: ClassExports = objc_classes! {
@@ -69,6 +75,19 @@ pub const CLASSES: ClassExports = objc_classes! {
     true
 }
 
+<<<<<<< PATCH SET (8687e94343d3abd4dee8e75536693b4f097001b0 Add +[NSObject description:])
++ (())initialize {
+    // Do nothing
+}
+
++ (id)description {
+    let name = env.objc.get_class_name(this);
+    let str = from_rust_string(env, name.to_string());
+    autorelease(env, str)
+}
+
+=======
+>>>>>>> BASE      (383259bdcc76504c3d465e384eee2d87affaa864 Fix typos in 58b66ae)
 - (id)init {
     this
 }

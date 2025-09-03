@@ -7,9 +7,11 @@
 
 use super::ns_enumerator::{fast_enumeration_helper, NSFastEnumerationState};
 use super::ns_property_list_serialization::deserialize_plist_from_file;
-use super::{ns_keyed_unarchiver, ns_string, ns_url, NSInteger, NSNotFound, NSRange, NSUInteger};
+use super::{ns_keyed_unarchiver, ns_string, ns_url, NSNotFound, NSUInteger};
 use crate::abi::{CallFromHost, GuestFunction};
+use crate::frameworks::foundation::NSRange;
 use crate::fs::GuestPath;
+use crate::libc::stdlib::qsort::qsort_generic;
 use crate::mem::{ConstPtr, MutPtr, MutVoidPtr};
 use crate::objc::{
     autorelease, id, msg, msg_class, nil, objc_classes, release, retain, ClassExports, HostObject,
@@ -481,11 +483,21 @@ pub const CLASSES: ClassExports = objc_classes! {
                 context:(MutVoidPtr)context {
     let host_object: &mut ArrayHostObject = env.objc.borrow_mut(this);
     let mut array = std::mem::take(&mut host_object.array);
-    array.sort_by(|&a, &b| {
-        let res: NSInteger = comparator.call_from_host(env, (a, b, context));
-        res.cmp(&0)
-    });
-
+    let len = array.len().try_into().unwrap();
+    let mut user_data = (env, &mut array);
+    qsort_generic(
+        &mut user_data,
+        len,
+        &mut |(env, array), l, r| {
+            let (l, r): (usize, usize) = (l.try_into().unwrap(), r.try_into().unwrap());
+            comparator.call_from_host(env, (array[l], array[r], context))
+        },
+        &mut |(_, array), l, r| {
+            let (l, r): (usize, usize) = (l.try_into().unwrap(), r.try_into().unwrap());
+            array.swap(l, r);
+        },
+    );
+    let (env, _) = user_data;
     env.objc.borrow_mut::<ArrayHostObject>(this).array = array;
 }
 

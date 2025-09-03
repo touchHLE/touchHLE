@@ -281,6 +281,7 @@ impl Mem {
         // Right now, if aligned, will cause OOM on low end Android devices.
         // See relevant [Github's issue](https://github.com/touchHLE/touchHLE/issues/498)
         let bytes = unsafe { std::alloc::alloc_zeroed(layout) as *mut Bytes };
+        assert!(!bytes.is_null());
 
         let allocator = allocator::Allocator::new();
 

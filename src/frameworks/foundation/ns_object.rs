@@ -20,8 +20,8 @@ use super::ns_string::{from_rust_string, get_static_str, to_rust_string};
 use super::{NSTimeInterval, NSUInteger};
 use crate::mem::MutVoidPtr;
 use crate::objc::{
-    id, msg, msg_class, msg_send, nil, objc_classes, retain, Class, ClassExports, NSZonePtr, ObjC,
-    TrivialHostObject, SEL,
+    autorelease, id, msg, msg_class, msg_send, nil, objc_classes, retain, Class, ClassExports,
+    NSZonePtr, ObjC, TrivialHostObject, SEL,
 };
 
 pub const CLASSES: ClassExports = objc_classes! {
@@ -67,6 +67,16 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 + (bool)accessInstanceVariablesDirectly {
     true
+}
+
++ (id)description {
+    let name = env.objc.get_class_name(this);
+    let str = from_rust_string(env, name.to_string());
+    autorelease(env, str)
+}
+
++ (id)debugDescription {
+    msg![env; this description]
 }
 
 - (id)init {
@@ -121,7 +131,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     this == other
 }
 
-// TODO: description and debugDescription (both the instance and class method).
+// TODO: Instance description and debugDescription.
 // This is not hard to add, but before adding a fallback implementation of it,
 // we should make sure all the Foundation classes' overrides of it are there,
 // to prevent weird behavior.

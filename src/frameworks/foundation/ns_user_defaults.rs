@@ -257,6 +257,20 @@ pub const CLASSES: ClassExports = objc_classes! {
     nil
 }
 
+- (id)arrayForKey:(id)key {
+    log_dbg!("NSUserDefaults arrayForKey:{}", to_rust_string(env, key));
+    let val: id = msg![env; this objectForKey:key];
+    if val == nil {
+        return nil;
+    }
+    let val_class: Class = msg![env; val class];
+    let ns_array_class = env.objc.get_known_class("NSArray", &mut env.mem);
+    if env.objc.class_is_subclass_of(val_class, ns_array_class) {
+        return val;
+    }
+    nil
+}
+
 - (bool)synchronize {
     // Note: only app domain dict gets synchronized!
     let plist_file_path_dir = env.fs.home_directory()

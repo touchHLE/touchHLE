@@ -12,6 +12,7 @@ use super::{
 };
 use crate::abi::{CallFromHost, GuestFunction};
 use crate::fs::GuestPath;
+use crate::libc::stdlib::qsort::qsort_generic;
 use crate::mem::{ConstPtr, MutPtr, MutVoidPtr};
 use crate::objc::{
     autorelease, id, msg, msg_class, msg_send, nil, objc_classes, release, retain, ClassExports,
@@ -488,21 +489,44 @@ pub const CLASSES: ClassExports = objc_classes! {
                 context:(MutVoidPtr)context {
     let host_object: &mut ArrayHostObject = env.objc.borrow_mut(this);
     let mut array = std::mem::take(&mut host_object.array);
-    array.sort_by(|&a, &b| {
-        let res: NSComparisonResult = comparator.call_from_host(env, (a, b, context));
-        res.cmp(&0)
-    });
-
+    let len = array.len().try_into().unwrap();
+    let mut user_data = (env, &mut array);
+    qsort_generic(
+        &mut user_data,
+        len,
+        &mut |(env, array), l, r| {
+            let (l, r): (usize, usize) = (l.try_into().unwrap(), r.try_into().unwrap());
+            comparator.call_from_host(env, (array[l], array[r], context))
+        },
+        &mut |(_, array), l, r| {
+            let (l, r): (usize, usize) = (l.try_into().unwrap(), r.try_into().unwrap());
+            array.swap(l, r);
+        },
+    );
+    let (env, _) = user_data;
     env.objc.borrow_mut::<ArrayHostObject>(this).array = array;
 }
+
 - (())sortUsingSelector:(SEL)comparator {
     let host_object: &mut ArrayHostObject = env.objc.borrow_mut(this);
     let mut array = std::mem::take(&mut host_object.array);
-    array.sort_by(|&a, &b| {
-        let res: NSComparisonResult = msg_send(env, (a, comparator, b));
-        res.cmp(&0)
-    });
+    let len = array.len().try_into().unwrap();
+    let mut user_data = (env, &mut array);
+    qsort_generic(
+        &mut user_data,
+        len,
+        &mut |(env, array), l, r| {
+            let (l, r): (usize, usize) = (l.try_into().unwrap(), r.try_into().unwrap());
+            let res: NSComparisonResult = msg_send(env, (array[l], comparator, array[r]));
+            res
+        },
+        &mut |(_, array), l, r| {
+            let (l, r): (usize, usize) = (l.try_into().unwrap(), r.try_into().unwrap());
+            array.swap(l, r);
+        },
+    );
 
+    let (env, _) = user_data;
     env.objc.borrow_mut::<ArrayHostObject>(this).array = array;
 }
 

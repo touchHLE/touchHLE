@@ -16,6 +16,24 @@
       "message": "We don\u0027t put methods like these on the base class because they won\u0027t work properly if they\u0027re inherited by a foreign subclass (one that isn\u0027t our internal subclasses).",
       "revId": "d8851141822fbdd4e7f470fec448f79141862504",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e311cf85_0335194b",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 7
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-09-03T17:55:29Z",
+      "side": 1,
+      "message": "So what do I do? Duplicate these methods? Make them abstract and do nothing in the main class and the leave the implementation in the subclass?",
+      "parentUuid": "cd0e8ea5_a71d5e11",
+      "revId": "d8851141822fbdd4e7f470fec448f79141862504",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

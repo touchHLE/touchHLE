@@ -291,6 +291,11 @@ pub const CLASSES: ClassExports = objc_classes! {
     msg_class![env; _touchHLE_NSString allocWithZone:zone]
 }
 
++ (id)string {
+    let str: id = msg![env; this new];
+    autorelease(env, str)
+}
+
 + (id)stringWithString:(id)string { // NSString*
     let new: id = msg![env; this alloc];
     let new: id = msg![env; new initWithString:string];

@@ -20,8 +20,8 @@ use super::ns_string::{from_rust_string, get_static_str, to_rust_string};
 use super::{NSTimeInterval, NSUInteger};
 use crate::mem::MutVoidPtr;
 use crate::objc::{
-    id, msg, msg_class, msg_send, nil, objc_classes, retain, Class, ClassExports, NSZonePtr, ObjC,
-    TrivialHostObject, SEL,
+    autorelease, id, msg, msg_class, msg_send, nil, objc_classes, retain, Class, ClassExports,
+    NSZonePtr, ObjC, TrivialHostObject, SEL,
 };
 
 pub const CLASSES: ClassExports = objc_classes! {
@@ -67,6 +67,12 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 + (bool)accessInstanceVariablesDirectly {
     true
+}
+
++ (id)description {
+    let name = env.objc.get_class_name(this);
+    let str = from_rust_string(env, name.to_string());
+    autorelease(env, str)
 }
 
 - (id)init {

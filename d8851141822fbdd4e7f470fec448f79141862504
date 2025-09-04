@@ -70,6 +70,24 @@
       "parentUuid": "9adef876_e726cf27",
       "revId": "d8851141822fbdd4e7f470fec448f79141862504",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b90368c2_ea57ad26",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 7
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-09-04T02:36:48Z",
+      "side": 1,
+      "message": "Could reduce this to these changes:\n\n```\n-@implementation NSMutableString: NSString\n+@implementation NSMutableString: _touchHLE_NSString\n\n...\n@implementation _touchHLE_NSString: NSString\n...\n\n+- (())appendString:(id)a_string { // NSString*\n+    assert_ne!(a_string, nil);\n+    // TODO: Figure out why some games call this on NSString\n+}\n+\n+- (())setString:(id)a_string { // NSString*\n+    assert_ne!(a_string, nil);\n+    // TODO: Figure out why some games call this on NSString\n+}\n+\n```",
+      "parentUuid": "a453beac_f576ef41",
+      "revId": "d8851141822fbdd4e7f470fec448f79141862504",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

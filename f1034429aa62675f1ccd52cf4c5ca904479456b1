@@ -51,6 +51,24 @@
       "parentUuid": "91abba3c_02ec86bc",
       "revId": "f1034429aa62675f1ccd52cf4c5ca904479456b1",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "af8499cc_d150de38",
+        "filename": "src/libc/posix_io.rs",
+        "patchSetId": 10
+      },
+      "lineNbr": 309,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-09-04T22:52:37Z",
+      "side": 1,
+      "message": "In which cases lseek can fail? Could you assert that result of lseek is success instead?",
+      "parentUuid": "f91d568e_2bfb372f",
+      "revId": "f1034429aa62675f1ccd52cf4c5ca904479456b1",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

@@ -69,6 +69,24 @@
       "parentUuid": "f91d568e_2bfb372f",
       "revId": "f1034429aa62675f1ccd52cf4c5ca904479456b1",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "4d0aacf9_e73eb894",
+        "filename": "src/libc/posix_io.rs",
+        "patchSetId": 10
+      },
+      "lineNbr": 309,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2025-09-05T09:38:15Z",
+      "side": 1,
+      "message": "Should be when the offset is wrong or there is something incorrect with the structure being seeked. In theory if the first lseek succeded then the second one should as well. Either way, I implemented \"proper\" errorno setting in lseek so we no longer errno to 0. Now also assert on the restoring lseek since if something goes wrong there there\u0027s probably a bigger issue. Got rid of the geterrno.",
+      "parentUuid": "af8499cc_d150de38",
+      "revId": "f1034429aa62675f1ccd52cf4c5ca904479456b1",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

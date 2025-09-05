@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9c241321_62d01d05",
+        "filename": "src/libc/posix_io.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 381,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-09-05T22:35:39Z",
+      "side": 0,
+      "message": "it is ok to remove that only if we correctly report all of the possible errors for the function.\nis it the case here?",
+      "revId": "19b39fc1f57c5d7a8e41811cb2821fca15991e88",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

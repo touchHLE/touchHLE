@@ -87,7 +87,6 @@ unsafe impl SafeRead for cfstringStruct {}
 
 type Utf16String = Vec<u16>;
 
-/// Belongs to _touchHLE_NSString.
 enum StringHostObject {
     Utf8(Cow<'static, str>),
     /// Not necessarily well-formed UTF-16: might contain unpaired surrogates.
@@ -277,18 +276,11 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);
 
-// NSString is an abstract class. A subclass must provide:
-// - (NSUInteger)length;
-// - (unichar)characterAtIndex:(NSUInteger)index;
-// We can pick whichever subclass we want for the various alloc methods.
-// For the time being, that will always be _touchHLE_NSString.
 @implementation NSString: NSObject
 
-+ (id)allocWithZone:(NSZonePtr)zone {
-    // NSString might be subclassed by something which needs allocWithZone:
-    // to have the normal behaviour. Unimplemented: call superclass alloc then.
-    assert!(this == env.objc.get_known_class("NSString", &mut env.mem));
-    msg_class![env; _touchHLE_NSString allocWithZone:zone]
++ (id)allocWithZone:(NSZonePtr)_zone {
+    let host_object = Box::new(StringHostObject::Utf8(Cow::Borrowed("")));
+    env.objc.alloc_object(this, host_object, &mut env.mem)
 }
 
 + (id)stringWithString:(id)string { // NSString*
@@ -695,7 +687,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     // TODO: For a foreign subclass of NSString, do we have to return that
     // subclass? The signature implies this isn't the case and it's probably not
     // worth the effort, but it's an interesting question.
-    let class = env.objc.get_known_class("_touchHLE_NSString", &mut env.mem);
+    let class = env.objc.get_known_class("NSString", &mut env.mem);
 
     let component_ns_strings = components.drain(..).map(|utf16| {
         let host_object = Box::new(StringHostObject::Utf16(utf16));
@@ -778,7 +770,7 @@ pub const CLASSES: ClassExports = objc_classes! {
         }
     });
 
-    let res = msg_class![env; _touchHLE_NSString alloc];
+    let res = msg_class![env; NSString alloc];
     *env.objc.borrow_mut(res) = StringHostObject::Utf16(res_utf16);
     autorelease(env, res)
 }
@@ -792,7 +784,7 @@ pub const CLASSES: ClassExports = objc_classes! {
         }
     });
 
-    let res = msg_class![env; _touchHLE_NSString alloc];
+    let res = msg_class![env; NSString alloc];
     *env.objc.borrow_mut(res) = StringHostObject::Utf16(res_utf16);
     autorelease(env, res)
 }
@@ -866,7 +858,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     // TODO: For a foreign subclass of NSString, do we have to return that
     // subclass? The signature implies this isn't the case and it's probably not
     // worth the effort, but it's an interesting question.
-    let result_ns_string = msg_class![env; _touchHLE_NSString alloc];
+    let result_ns_string = msg_class![env; NSString alloc];
     *env.objc.borrow_mut(result_ns_string) = StringHostObject::Utf16(result);
     autorelease(env, result_ns_string)
 }
@@ -888,7 +880,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     // TODO: For a foreign subclass of NSString, do we have to return that
     // subclass? The signature implies this isn't the case and it's probably not
     // worth the effort, but it's an interesting question.
-    let class = env.objc.get_known_class("_touchHLE_NSString", &mut env.mem);
+    let class = env.objc.get_known_class("NSString", &mut env.mem);
     let host_object = Box::new(StringHostObject::Utf16(new_utf16));
     env.objc.alloc_object(class, host_object, &mut env.mem)
 }
@@ -1181,67 +1173,6 @@ pub const CLASSES: ClassExports = objc_classes! {
     autorelease(env, res)
 }
 
-@end
-
-// NSMutableString is an abstract class. A subclass must everything
-// NSString provides, plus:
-// - (void)replaceCharactersInRange:(NSRange)range withString:(NSString)string;
-// Note that it inherits from NSString, so we must ensure we override any
-// default methods that would be inappropriate for mutability.
-@implementation NSMutableString: NSString
-
-+ (id)allocWithZone:(NSZonePtr)zone {
-    // NSMutableString might be subclassed by something
-    // which needs allocWithZone: to have the normal behaviour.
-    // Unimplemented: call superclass alloc then.
-    assert!(this == env.objc.get_known_class("NSMutableString", &mut env.mem));
-    msg_class![env; _touchHLE_NSMutableString allocWithZone:zone]
-}
-
-+ (id)stringWithCapacity:(NSUInteger)capacity {
-    let new: id = msg![env; this alloc];
-    let new: id = msg![env; new initWithCapacity:capacity];
-    autorelease(env, new)
-}
-
-// NSCopying implementation
-- (id)copyWithZone:(NSZonePtr)_zone {
-    let new: id = msg_class![env; NSString alloc];
-    msg![env; new initWithString:this]
-}
-
-- (())appendString:(id)a_string { // NSString*
-    assert_ne!(a_string, nil);
-    // TODO: this is inefficient? append in place instead
-    let new: id = msg![env; this stringByAppendingString:a_string];
-    () = msg![env; this setString:new];
-}
-
-- (())deleteCharactersInRange:(NSRange)range {
-    // Below implementation handles a trivial case -
-    // whole string is deleted!
-    let location = range.location;
-    assert_eq!(location, 0); // TODO
-    let len: NSUInteger = msg![env; this length];
-    let length = range.length;
-    assert_eq!(len, length); // TODO
-    let empty = get_static_str(env, "");
-    () = msg![env; this setString:empty];
-}
-
-@end
-
-// Our private subclass that is the single implementation of NSString for the
-// time being.
-@implementation _touchHLE_NSString: NSString
-
-+ (id)allocWithZone:(NSZonePtr)_zone {
-    let host_object = Box::new(StringHostObject::Utf8(Cow::Borrowed("")));
-    env.objc.alloc_object(this, host_object, &mut env.mem)
-}
-
-// TODO: more init methods
-
 - (id)initWithData:(id)data // NSData *
           encoding:(NSStringEncoding)encoding {
     let bytes: ConstVoidPtr = msg![env; data bytes];
@@ -1466,11 +1397,83 @@ pub const CLASSES: ClassExports = objc_classes! {
         env.mem.write(contents_end_ptr, contents_end);
     }
 }
+
+@end
+
+// Inherits from NSString, so we must ensure we override any
+// default methods that would be inappropriate for mutability.
+@implementation NSMutableString: NSString
+
++ (id)allocWithZone:(NSZonePtr)_zone {
+    let host_object = Box::new(StringHostObject::Utf8(Cow::Borrowed("")));
+    env.objc.alloc_object(this, host_object, &mut env.mem)
+}
+
++ (id)stringWithCapacity:(NSUInteger)capacity {
+    let new: id = msg![env; this alloc];
+    let new: id = msg![env; new initWithCapacity:capacity];
+    autorelease(env, new)
+}
+
+// Should probably not be on NSMutableString
+// However at least 1 game (Galaxy on Fire) uses it
+// appendString is subsequently called on the result
++ (id)stringWithFormat:(id)format, // NSString*
+                       ...args {
+    let res = with_format(env, format, args.start());
+    let res = from_rust_string_mut(env, res);
+    autorelease(env, res)
+}
+
+- (id)initWithCapacity:(NSUInteger)_capacity {
+    // TODO: capacity
+    msg![env; this init]
+}
+
+// NSCopying implementation
+- (id)copyWithZone:(NSZonePtr)_zone {
+    let new: id = msg_class![env; NSString alloc];
+    msg![env; new initWithString:this]
+}
+
+- (())setString:(id)a_string { // NSString*
+    assert_ne!(a_string, nil);
+    let str = to_rust_string(env, a_string);
+    let host_object = StringHostObject::Utf8(str);
+    *env.objc.borrow_mut(this) = host_object;
+}
+
+- (())appendFormat:(id)format, // NSString*
+                   ...args {
+    assert_ne!(format, nil);
+    let res = with_format(env, format, args.start());
+    *env.objc.borrow_mut(this) = StringHostObject::Utf8(format!("{}{}", to_rust_string(env, this), res).into());
+}
+
+- (())appendString:(id)a_string { // NSString*
+    assert_ne!(a_string, nil);
+    // TODO: this is inefficient? append in place instead
+    let new: id = msg![env; this stringByAppendingString:a_string];
+    () = msg![env; this setString:new];
+}
+
+- (())deleteCharactersInRange:(NSRange)range {
+    // Below implementation handles a trivial case -
+    // whole string is deleted!
+    let location = range.location;
+    assert_eq!(location, 0); // TODO
+    let len: NSUInteger = msg![env; this length];
+    let length = range.length;
+    assert_eq!(len, length); // TODO
+    let empty = get_static_str(env, "");
+    () = msg![env; this setString:empty];
+}
+
 @end
 
 // Specialised subclass for static-lifetime strings.
 // See `get_static_str`.
-@implementation _touchHLE_NSString_Static: _touchHLE_NSString
+@implementation _touchHLE_NSString_Static: NSString
 
 + (id)allocWithZone:(NSZonePtr)_zone {
     let host_object = Box::new(StringHostObject::Utf8(Cow::Borrowed("")));
@@ -1495,34 +1498,6 @@ pub const CLASSES: ClassExports = objc_classes! {
 @end
 
 @implementation _touchHLE_NSString_CFConstantString_UTF16: _touchHLE_NSString_Static
-@end
-
-@implementation _touchHLE_NSMutableString: NSMutableString
-
-+ (id)allocWithZone:(NSZonePtr)_zone {
-    let host_object = Box::new(StringHostObject::Utf8(Cow::Borrowed("")));
-    env.objc.alloc_object(this, host_object, &mut env.mem)
-}
-
-- (id)initWithCapacity:(NSUInteger)_capacity {
-    // TODO: capacity
-    msg![env; this init]
-}
-
-- (())appendFormat:(id)format, // NSString*
-                   ...args {
-    assert_ne!(format, nil);
-    let res = with_format(env, format, args.start());
-    *env.objc.borrow_mut(this) = StringHostObject::Utf8(format!("{}{}", to_rust_string(env, this), res).into());
-}
-
-- (())setString:(id)a_string { // NSString*
-    assert_ne!(a_string, nil);
-    let str = to_rust_string(env, a_string);
-    let host_object = StringHostObject::Utf8(str);
-    *env.objc.borrow_mut(this) = host_object;
-}
-
 @end
 
 };
@@ -1596,7 +1571,14 @@ pub fn get_static_str(env: &mut Environment, from: &'static str) -> id {
 /// Shortcut for host code, roughly equivalent to
 /// `[[NSString alloc] initWithUTF8String:]` in the proper API.
 pub fn from_rust_string(env: &mut Environment, from: String) -> id {
-    let string: id = msg_class![env; _touchHLE_NSString alloc];
+    let string: id = msg_class![env; NSString alloc];
+    let host_object: &mut StringHostObject = env.objc.borrow_mut(string);
+    *host_object = StringHostObject::Utf8(Cow::Owned(from));
+    string
+}
+
+pub fn from_rust_string_mut(env: &mut Environment, from: String) -> id {
+    let string: id = msg_class![env; NSMutableString alloc];
     let host_object: &mut StringHostObject = env.objc.borrow_mut(string);
     *host_object = StringHostObject::Utf8(Cow::Owned(from));
     string
@@ -1604,7 +1586,7 @@ pub fn from_rust_string(env: &mut Environment, from: String) -> id {
 
 /// Shortcut for host code, allocs and inits with the given u16 vec.
 pub fn from_u16_vec(env: &mut Environment, from: Vec<u16>) -> id {
-    let string: id = msg_class![env; _touchHLE_NSString alloc];
+    let string: id = msg_class![env; NSString alloc];
     let host_object: &mut StringHostObject = env.objc.borrow_mut(string);
     *host_object = StringHostObject::Utf16(from);
     string

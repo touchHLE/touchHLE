@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "90faa873_1ba9fbf9",
+        "filename": "src/frameworks/uikit/ui_view/ui_label.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 190,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-09-05T22:37:46Z",
+      "side": 1,
+      "message": "nit: add an empty line before",
+      "revId": "e11c4d6bd3e86c5eb33625a60a7e60e9b9c2d510",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f843f303_a7154438",
+        "filename": "src/frameworks/uikit/ui_view/ui_label.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 193,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-09-05T22:37:46Z",
+      "side": 1,
+      "message": "nit: remove this empty line",
+      "revId": "e11c4d6bd3e86c5eb33625a60a7e60e9b9c2d510",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3d41fc9e_6afc76b3",
+        "filename": "src/frameworks/uikit/ui_view/ui_label.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 196,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-09-05T22:37:46Z",
+      "side": 1,
+      "message": "nit: add an empty line after",
+      "revId": "e11c4d6bd3e86c5eb33625a60a7e60e9b9c2d510",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

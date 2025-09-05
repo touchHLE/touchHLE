@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "cf9fb645_da2882d6",
+        "filename": "src/frameworks/openal.rs",
+        "patchSetId": 7
+      },
+      "lineNbr": 321,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-09-05T02:55:15Z",
+      "side": 1,
+      "message": "Does this get called often? May want to use log_once",
+      "revId": "20d06def577bb76b51fef4aad29185bb41e4e9d2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

@@ -16,6 +16,24 @@
       "message": "could you please add a comment saying that errno is expected to be set from downstream calls? (same for pwrite)",
       "revId": "90a339e7bdda503c701769b320e19cdebb84f1e4",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "97cccb63_52843b31",
+        "filename": "src/libc/posix_io.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 299,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2025-09-06T09:37:29Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "ff0ef968_7c1e8de4",
+      "revId": "90a339e7bdda503c701769b320e19cdebb84f1e4",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

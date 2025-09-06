@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9cc5878c_a93eabab",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 5
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-09-06T15:42:47Z",
+      "side": 1,
+      "message": "This looks good, but I think I would like to see a comment in the UIView part covering, well, roughly the same territory that the removed old comments do.",
+      "revId": "a4eb68edb8e69c52f42fe1148af2a8353a07e992",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

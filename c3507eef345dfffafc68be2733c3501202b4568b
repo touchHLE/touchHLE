@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ac0c019c_a9662a53",
+        "filename": "src/frameworks/uikit/ui_view/ui_web_view.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 36,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-09-07T09:33:00Z",
+      "side": 1,
+      "message": "can you use `Cow::from(\"(nil)\")` here?",
+      "revId": "c3507eef345dfffafc68be2733c3501202b4568b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

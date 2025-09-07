@@ -16,6 +16,24 @@
       "message": "can you use `Cow::from(\"(nil)\")` here?",
       "revId": "c3507eef345dfffafc68be2733c3501202b4568b",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "dbe965a3_0a4f89d9",
+        "filename": "src/frameworks/uikit/ui_view/ui_web_view.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 36,
+      "author": {
+        "id": 1038767
+      },
+      "writtenOn": "2025-09-07T10:30:58Z",
+      "side": 1,
+      "message": "The _request_ object prints as \"null\" already in this case, are you sure we want to print it as ``(null) \"((nil))\"``?\n\nAlternatively, we could skip the last argument if request is null",
+      "parentUuid": "ac0c019c_a9662a53",
+      "revId": "c3507eef345dfffafc68be2733c3501202b4568b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

@@ -419,7 +419,7 @@ impl GuestFile {
     }
 
     pub fn is_seekable(&self) -> bool {
-        // Due to legacy directory iteration support, directories as seekable
+        // Due to legacy directory iteration support, directories are seekable
         // https://stackoverflow.com/questions/65911066/what-does-lseek-mean-for-a-directory-file-descriptor
         !matches!(self, GuestFile::Socket)
     }

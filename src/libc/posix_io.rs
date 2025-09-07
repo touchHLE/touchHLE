@@ -411,7 +411,7 @@ pub fn pwrite(
     // Rust doesn't provide a way of writing at a specific offset on windows
     // without affecting the underlying files cursor. Rather than bringing in a
     // library that does this or dealing with the unsafe windows API directly
-    // (ReadFile + Overlapped), we can emulate the behavior with a set of seek
+    // (WriteFile + Overlapped), we can emulate the behavior with a set of seek
     // and write calls.
 
     // Errno is set by downstream lseek and write calls

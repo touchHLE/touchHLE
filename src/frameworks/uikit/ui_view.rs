@@ -508,7 +508,7 @@ pub const CLASSES: ClassExports = objc_classes! {
         .class_overrides_method_of_superclass(this_class, draw_rect_sel, ui_view_class)
         || env
             .objc
-            .class_overrides_method_of_superclass(this, draw_layer_sel, ui_view_class)
+            .class_overrides_method_of_superclass(this_class, draw_layer_sel, ui_view_class)
     {
         let layer = env.objc.borrow::<UIViewHostObject>(this).layer;
         msg![env; layer setNeedsDisplay]

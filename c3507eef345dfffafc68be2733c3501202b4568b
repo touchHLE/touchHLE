@@ -3,6 +3,23 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "84732e13_c641aace",
+        "filename": "src/frameworks/uikit/ui_view/ui_web_view.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 30,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-09-07T10:47:17Z",
+      "side": 1,
+      "message": "the correct annotation should be `NSURLRequest*`",
+      "revId": "c3507eef345dfffafc68be2733c3501202b4568b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "ac0c019c_a9662a53",
         "filename": "src/frameworks/uikit/ui_view/ui_web_view.rs",
         "patchSetId": 5
@@ -32,6 +49,41 @@
       "side": 1,
       "message": "The _request_ object prints as \"null\" already in this case, are you sure we want to print it as ``(null) \"((nil))\"``?\n\nAlternatively, we could skip the last argument if request is null",
       "parentUuid": "ac0c019c_a9662a53",
+      "revId": "c3507eef345dfffafc68be2733c3501202b4568b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "a25c2b00_0279c580",
+        "filename": "src/frameworks/uikit/ui_view/ui_web_view.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 36,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-09-07T10:47:17Z",
+      "side": 1,
+      "message": "ok i see, make sense, you could keep it as is",
+      "parentUuid": "dbe965a3_0a4f89d9",
+      "revId": "c3507eef345dfffafc68be2733c3501202b4568b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2a97a6df_787e16ac",
+        "filename": "src/frameworks/uikit/ui_view/ui_web_view.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 37,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-09-07T10:47:17Z",
+      "side": 1,
+      "message": "for url_string logging you could just use \u0027{}\u0027, not \u0027{:?}\u0027",
       "revId": "c3507eef345dfffafc68be2733c3501202b4568b",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "5ab361c8_362a2c53",
+        "filename": "src/frameworks/uikit/ui_view/ui_web_view.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 30,
+      "author": {
+        "id": 1038767
+      },
+      "writtenOn": "2025-09-07T19:22:34Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "84732e13_c641aace",
+      "revId": "c3507eef345dfffafc68be2733c3501202b4568b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "ac0c019c_a9662a53",
@@ -84,6 +102,24 @@
       "writtenOn": "2025-09-07T10:47:17Z",
       "side": 1,
       "message": "for url_string logging you could just use \u0027{}\u0027, not \u0027{:?}\u0027",
+      "revId": "c3507eef345dfffafc68be2733c3501202b4568b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "bcbc1cdd_5fa7ce79",
+        "filename": "src/frameworks/uikit/ui_view/ui_web_view.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 37,
+      "author": {
+        "id": 1038767
+      },
+      "writtenOn": "2025-09-07T19:22:34Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "2a97a6df_787e16ac",
       "revId": "c3507eef345dfffafc68be2733c3501202b4568b",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

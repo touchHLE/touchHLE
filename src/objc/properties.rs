@@ -137,7 +137,7 @@ pub(super) fn objc_getProperty(
     assert!(offset >= 4);
 
     if atomic {
-        log!("TODO: Lock when atomic is set to true in objc_getProperty");
+        log_once!("TODO: Lock when atomic is set to true in objc_getProperty");
     }
 
     let ivar: MutPtr<id> = Ptr::from_bits(this.to_bits().checked_add_signed(offset).unwrap());
@@ -165,7 +165,7 @@ pub(super) fn objc_setProperty(
     assert!(offset >= 4);
 
     if atomic {
-        log!("TODO: Lock when atomic is set to true in objc_setProperty");
+        log_once!("TODO: Lock when atomic is set to true in objc_setProperty");
     }
 
     let ivar: MutPtr<id> = Ptr::from_bits(this.to_bits().checked_add_signed(offset).unwrap());

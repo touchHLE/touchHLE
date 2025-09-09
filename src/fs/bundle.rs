@@ -5,7 +5,6 @@
  */
 //! IPA file format support, allowing it to be used as part of the guest
 //! filesystem.
-use crate::fs::{FsNode, GuestPath};
 use crate::libc::time::{calendar_date_to_timestamp, time_t, tm};
 use std::cell::RefCell;
 use std::collections::HashMap;
@@ -15,57 +14,6 @@ use std::path::{Path, PathBuf};
 use std::rc::Rc;
 use zip::result::ZipError;
 use zip::ZipArchive;
-
-/// A helper struct to build an FsNode with files and directories coming in
-/// arbitrary order. This is required, because ZIP files are allowed to store
-/// entries in arbitrary order.
-struct FsNodeBuilder {
-    root: FsNode,
-}
-
-impl FsNodeBuilder {
-    fn new() -> Self {
-        Self {
-            root: FsNode::dir(),
-        }
-    }
-
-    fn find_or_make_directory(&mut self, path: &GuestPath) -> &mut FsNode {
-        let mut current = &mut self.root;
-        for part in path.as_str().split('/') {
-            if part.is_empty() {
-                continue;
-            }
-            assert_ne!(part, "..", "unexpected .. in path: {path:?}");
-            let FsNode::Directory { children, .. } = current else {
-                panic!("expected directory, got {current:?}");
-            };
-
-            let next = children.entry(part.to_string()).or_insert_with(FsNode::dir);
-            current = next;
-        }
-        current
-    }
-
-    fn add_file(&mut self, path: &GuestPath, node: FsNode) {
-        let (parent_name, file_name) = path.parent_and_file_name().unwrap();
-        assert_ne!(file_name, "..", "unexpected .. in path: {path:?}");
-        let dir = self.find_or_make_directory(parent_name);
-        let FsNode::Directory { children, .. } = dir else {
-            panic!("expected directory, got {dir:?}");
-        };
-
-        children.insert(file_name.to_string(), node);
-    }
-
-    fn add_directory(&mut self, path: &GuestPath) {
-        self.find_or_make_directory(path);
-    }
-
-    fn build(self) -> FsNode {
-        self.root
-    }
-}
 
 /// Represents an open app bundle, either a directory or a zip file.
 pub enum BundleData {
@@ -141,42 +89,6 @@ impl BundleData {
         }
     }
 
-    pub(super) fn into_fs_node(self) -> FsNode {
-        match self {
-            BundleData::HostDirectory(path) => FsNode::from_host_dir(&path, false),
-            BundleData::Zip { zip, bundle_path } => {
-                let archive = Rc::new(RefCell::new(zip));
-                let archive_cache = Rc::new(RefCell::new(HashMap::new()));
-                let metadata_map = Rc::new(RefCell::new(HashMap::new()));
-
-                let mut archive_guard = (*archive).borrow_mut();
-
-                let mut builder = FsNodeBuilder::new();
-                for i in 0..archive_guard.len() {
-                    let file = archive_guard.by_index(i).unwrap(); // TODO: report IO error?
-                    let name = file.name();
-                    if let Some(path) = name.strip_prefix(&bundle_path) {
-                        let path = GuestPath::new(path);
-                        if file.is_dir() {
-                            builder.add_directory(path);
-                        } else {
-                            builder.add_file(
-                                path,
-                                FsNode::bundle_zip_file(IpaFileRef {
-                                    archive: archive.clone(),
-                                    archive_files_cache: archive_cache.clone(),
-                                    metadata_map: metadata_map.clone(),
-                                    index: i,
-                                }),
-                            );
-                        }
-                    }
-                }
-                builder.build()
-            }
-        }
-    }
-
     pub fn read_plist(&mut self) -> Result<Vec<u8>, String> {
         match self {
             BundleData::HostDirectory(path) => {
@@ -198,7 +110,7 @@ impl BundleData {
 }
 
 #[derive(Debug)]
-struct ArchivedFileMetadata {
+pub(super) struct ArchivedFileMetadata {
     /// Unix timestamp of file modification
     last_modified: i64,
     /// Uncompressed file size
@@ -215,10 +127,10 @@ type DecompressedFile = Rc<[u8]>;
 /// Represents a file inside an IPA bundle that can be opened.
 #[derive(Debug)]
 pub struct IpaFileRef {
-    archive: Rc<RefCell<ZipArchive<std::fs::File>>>,
-    archive_files_cache: Rc<RefCell<HashMap<usize, DecompressedFile>>>,
-    metadata_map: Rc<RefCell<HashMap<usize, ArchivedFileMetadata>>>,
-    index: usize,
+    pub(super) archive: Rc<RefCell<ZipArchive<std::fs::File>>>,
+    pub(super) archive_files_cache: Rc<RefCell<HashMap<usize, DecompressedFile>>>,
+    pub(super) metadata_map: Rc<RefCell<HashMap<usize, ArchivedFileMetadata>>>,
+    pub(super) index: usize,
 }
 
 impl IpaFileRef {

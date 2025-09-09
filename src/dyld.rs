@@ -639,16 +639,22 @@ impl Dyld {
             (stub_function_ptr, la_symbol_ptr)
         }
 
-        let bin_idx = bins
+        let bins_with_stubs: Vec<_> = bins
+            .iter()
+            .filter(|bin| bin.get_section(SectionType::SymbolStubs).is_some())
+            .collect();
+        let bin_idx = bins_with_stubs
             .iter()
             .flat_map(|bin| bin.get_section(SectionType::SymbolStubs))
             .position(|stubs| (stubs.addr..(stubs.addr + stubs.size)).contains(&svc_pc))
             .unwrap();
-        let stubs = bins[bin_idx].get_section(SectionType::SymbolStubs).unwrap();
+        let stubs = bins_with_stubs[bin_idx]
+            .get_section(SectionType::SymbolStubs)
+            .unwrap();
 
         let info = stubs.dyld_indirect_symbol_info.as_ref().unwrap();
 
-        let pic_offset = bins[bin_idx]
+        let pic_offset = bins_with_stubs[bin_idx]
             .get_section(SectionType::LazySymbolPointers)?
             .addr
             - stubs.addr;

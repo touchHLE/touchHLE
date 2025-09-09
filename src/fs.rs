@@ -24,17 +24,19 @@
 //!
 //! See also [crate::paths], which has paths for host files used by touchHLE.
 
+mod builder;
 mod bundle;
 
+pub use builder::FsBuilder;
 pub use bundle::BundleData;
 
 use crate::fs::bundle::{IpaFile, IpaFileRef};
 use crate::paths;
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 use std::fs;
 use std::fs::File;
 use std::io::{Read, Seek, Write};
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::time::UNIX_EPOCH;
 
 /// The actual location of a file outside the virtual filesystem, e.g. a host
@@ -57,98 +59,12 @@ pub enum FsError {
     ReadonlyParentDir,
 }
 
-#[derive(Debug)]
-enum FsNode {
-    File {
-        location: FileLocation,
-        writeable: bool,
-    },
-    Directory {
-        children: HashMap<String, FsNode>,
-        writeable: Option<PathBuf>,
-    },
-}
-impl FsNode {
-    fn from_host_dir(host_path: &Path, writeable: bool) -> Self {
-        let mut children = HashMap::new();
-        for entry in std::fs::read_dir(host_path).unwrap() {
-            let entry = entry.unwrap();
-            let kind = entry.file_type().unwrap();
-            let host_path = entry.path();
-            let name = entry.file_name().into_string().unwrap();
-
-            // There is no support for symlinks within the virtual filesystem,
-            // but symlinks aren't uncommon in app bundles, so we treat a
-            // symlink as if it were a copy of the file it points to.
-            let kind = if kind.is_symlink() {
-                std::fs::metadata(&host_path).unwrap().file_type()
-            } else {
-                kind
-            };
-
-            if kind.is_file() {
-                children.insert(
-                    name,
-                    FsNode::File {
-                        location: FileLocation::Path(host_path),
-                        writeable,
-                    },
-                );
-            } else if kind.is_dir() {
-                children.insert(name, FsNode::from_host_dir(&host_path, writeable));
-            } else {
-                panic!("{host_path:?} is not a symlink, file or directory");
-            }
-        }
-        FsNode::Directory {
-            children,
-            writeable: match writeable {
-                true => Some(host_path.to_owned()),
-                false => None,
-            },
-        }
-    }
-
-    // Convenience methods for constructing the read-only parts of the initial
-    // filesystem layout
-
-    fn dir() -> Self {
-        FsNode::Directory {
-            children: HashMap::new(),
-            writeable: None,
-        }
-    }
-    fn with_child(mut self, name: &str, child: FsNode) -> Self {
-        let FsNode::Directory {
-            ref mut children,
-            writeable: _,
-        } = self
-        else {
-            panic!();
-        };
-        assert!(children.insert(String::from(name), child).is_none());
-        self
-    }
-    fn bundle_zip_file(file_ref: IpaFileRef) -> Self {
-        FsNode::File {
-            location: FileLocation::IpaFileRef(file_ref),
-            writeable: false,
-        }
-    }
-    fn resource_file(name: String) -> Self {
-        FsNode::File {
-            location: FileLocation::ResourceFilePath(name),
-            writeable: false,
-        }
-    }
-}
-
 // Put well-known paths in the guest filesystem here.
 
 /// Path of the applications directory in the guest filesystem.
 pub const APPLICATIONS: &GuestPath = GuestPath::new_const("/var/mobile/Applications");
 
-/// Like [Path] but for the virtual filesystem.
+/// Like [std::path::Path] but for the virtual filesystem.
 #[repr(transparent)]
 #[derive(Debug)]
 pub struct GuestPath(str);
@@ -479,13 +395,80 @@ impl Seek for GuestFile {
     }
 }
 
+#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct FsRecordId(u32);
+
+impl FsRecordId {
+    const ROOT_PARENT: FsRecordId = FsRecordId(0);
+    const ROOT: FsRecordId = FsRecordId(1);
+}
+
+#[derive(Debug)]
+pub struct FsRecordIdGenerator(u32);
+
+impl FsRecordIdGenerator {
+    pub fn new() -> Self {
+        Self(FsRecordId::ROOT.0 + 1)
+    }
+
+    pub fn next(&mut self) -> FsRecordId {
+        let next_id = self.0;
+        self.0 += 1;
+        FsRecordId(next_id)
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub struct FsRecordKey {
+    parent_id: FsRecordId,
+    name: String,
+}
+
+#[derive(Debug)]
+enum FsRecordKind {
+    File {
+        location: FileLocation,
+        writeable: bool,
+    },
+    Directory {
+        writeable: Option<PathBuf>,
+    },
+}
+
+#[derive(Debug)]
+pub struct FsRecord {
+    id: FsRecordId,
+    kind: FsRecordKind,
+}
+
+impl FsRecord {
+    pub fn is_dir(&self) -> bool {
+        matches!(self.kind, FsRecordKind::Directory { .. })
+    }
+
+    pub fn is_file(&self) -> bool {
+        matches!(self.kind, FsRecordKind::File { .. })
+    }
+}
+
 /// The type that owns the guest filesystem and provides accessors for it.
 #[derive(Debug)]
 pub struct Fs {
-    root: FsNode,
+    id_generator: FsRecordIdGenerator,
+    records: BTreeMap<FsRecordKey, FsRecord>,
+    id_to_record_key: HashMap<FsRecordId, FsRecordKey>,
     working_directory: GuestPathBuf,
     home_directory: GuestPathBuf,
 }
+
+impl std::fmt::Display for Fs {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        writeln!(f, "Filesystem:")?;
+        self.display_record(f, FsRecordId::ROOT, 0)?;
+        Ok(())
+    }
+}
+
 impl Fs {
     /// Construct a filesystem containing a home directory for the app, its
     /// bundle and documents, and the bundled shared libraries. Returns the new
@@ -512,141 +495,28 @@ impl Fs {
         bundle_id: &str,
         read_only_mode: bool,
     ) -> (Fs, GuestPathBuf) {
-        const FAKE_UUID: &str = "00000000-0000-0000-0000-000000000000";
-
-        let home_directory = APPLICATIONS.join(FAKE_UUID);
-        let working_directory = GuestPathBuf::from("/".to_string());
-
-        let bundle_guest_path = home_directory.join(&bundle_dir_name);
-
-        let directories = ["Documents", "Library", "tmp"];
-        let host_path_directories = directories.map(|dir| {
-            if !read_only_mode {
-                let path = paths::user_data_base_path()
-                    .join(paths::SANDBOX_DIR)
-                    .join(bundle_id)
-                    .join(dir);
-                if dir == "tmp" {
-                    // We clean temporary directory for current app at startup.
-                    // This is no-op if directory doesn't exist.
-                    match std::fs::remove_dir_all(&path) {
-                        Ok(_) => {}
-                        Err(e) => {
-                            log_dbg!(
-                                "Unable to clean tmp host folder {:?} at startup: {}",
-                                path,
-                                e
-                            );
-                        }
-                    }
-                }
-                if let Err(e) = std::fs::create_dir_all(&path) {
-                    panic!("Could not create documents directory for app at {path:?}: {e:?}");
-                }
-                Some(path)
-            } else {
-                None
-            }
-        });
-
-        if !read_only_mode {
-            // Special case: Some apps may create save files at
-            // Library/Preferences at the start, thus presence of that
-            // directory is expected
-            let path = paths::user_data_base_path()
-                .join(paths::SANDBOX_DIR)
-                .join(bundle_id)
-                .join("Library")
-                .join("Preferences");
-            if let Err(e) = std::fs::create_dir_all(&path) {
-                panic!("Could not create documents sub-directory for app at {path:?}: {e:?}");
-            }
-        }
-
-        // Some Free Software libraries are bundled with touchHLE.
-        use paths::DYLIBS_DIR;
-        let usr_lib = FsNode::dir()
-            .with_child(
-                "libgcc_s.1.dylib",
-                FsNode::resource_file(format!("{DYLIBS_DIR}/libgcc_s.1.dylib")),
+        let fs = FsBuilder::new()
+            .with_root_dir()
+            .with_dylibs()
+            .with_app_bundle(
+                app_bundle,
+                bundle_dir_name.clone(),
+                bundle_id,
+                read_only_mode,
             )
-            .with_child(
-                // symlink
-                "libstdc++.6.dylib",
-                FsNode::resource_file(format!("{DYLIBS_DIR}/libstdc++.6.0.9.dylib")),
-            )
-            .with_child(
-                "libstdc++.6.0.9.dylib",
-                FsNode::resource_file(format!("{DYLIBS_DIR}/libstdc++.6.0.9.dylib")),
-            )
-            .with_child(
-                "libz.1.2.3.dylib",
-                FsNode::resource_file(format!("{DYLIBS_DIR}/libz.1.2.3.dylib")),
-            )
-            .with_child(
-                // symlink
-                "libz.1.dylib",
-                FsNode::resource_file(format!("{DYLIBS_DIR}/libz.1.2.3.dylib")),
-            )
-            .with_child(
-                // symlink
-                "libz.dylib",
-                FsNode::resource_file(format!("{DYLIBS_DIR}/libz.1.2.3.dylib")),
-            )
-            .with_child(
-                // symlink
-                "libz.1.1.3.dylib",
-                FsNode::resource_file(format!("{DYLIBS_DIR}/libz.1.2.3.dylib")),
-            );
+            .finalize();
 
-        let mut app_dir_children = HashMap::new();
-        app_dir_children.insert(bundle_dir_name, app_bundle.into_fs_node());
-        for (dir, host_path) in directories.iter().zip(host_path_directories.iter()) {
-            if let Some(host_path) = host_path {
-                app_dir_children.insert(
-                    dir.to_string(),
-                    FsNode::from_host_dir(host_path, /* writeable: */ true),
-                );
-            }
-        }
+        log_dbg!("Filesystem: {}", fs);
 
-        let root = FsNode::dir()
-            .with_child(
-                "var",
-                FsNode::dir().with_child(
-                    "mobile",
-                    FsNode::dir().with_child(
-                        "Applications",
-                        FsNode::dir().with_child(
-                            FAKE_UUID,
-                            FsNode::Directory {
-                                children: app_dir_children,
-                                writeable: None,
-                            },
-                        ),
-                    ),
-                ),
-            )
-            .with_child("usr", FsNode::dir().with_child("lib", usr_lib));
+        let bundle_guest_path = fs.home_directory.join(&bundle_dir_name);
 
-        log_dbg!("Initial filesystem layout: {:#?}", root);
-
-        let fs = Fs {
-            root,
-            working_directory,
-            home_directory,
-        };
         assert!(fs.lookup_node(&bundle_guest_path).is_some());
         (fs, bundle_guest_path)
     }
 
     /// Create a fake filesystem (see [crate::Environment::new_without_app]).
     pub fn new_fake_fs() -> Fs {
-        Fs {
-            root: FsNode::dir(),
-            working_directory: GuestPathBuf::from(String::new()),
-            home_directory: GuestPathBuf::from(String::new()),
-        }
+        FsBuilder::new().finalize()
     }
 
     /// Get the absolute path of the guest app's (sandboxed) home directory.
@@ -663,12 +533,12 @@ impl Fs {
     /// Attempts to change the working directory.
     pub fn change_working_directory(&mut self, new_path: &GuestPath) -> Result<&GuestPath, ()> {
         let resolved = resolve_path(new_path, Some(&self.working_directory));
-        if !matches!(
-            self.lookup_node_inner(&resolved),
-            Some(FsNode::Directory { .. })
-        ) {
+
+        let record = self.lookup_node_inner(&resolved).ok_or(())?;
+        if !record.is_dir() {
             return Err(());
         }
+
         let new_path = if resolved.is_empty() {
             String::from("/")
         } else {
@@ -684,23 +554,31 @@ impl Fs {
     }
 
     /// [Self::lookup_node] with a pre-resolved path.
-    fn lookup_node_inner(&self, resolved_path_components: &[&str]) -> Option<&FsNode> {
-        let mut node = &self.root;
-        for component in resolved_path_components {
-            let FsNode::Directory {
-                children,
-                writeable: _,
-            } = node
-            else {
-                return None;
-            };
-            node = children.get(*component)?
+    fn lookup_node_inner(&self, resolved_path_components: &[&str]) -> Option<&FsRecord> {
+        let mut parent_id = FsRecordId::ROOT;
+
+        let (file_name, parent_components) = resolved_path_components.split_last()?;
+
+        for &component in parent_components {
+            let record = self.records.get(&FsRecordKey {
+                parent_id,
+                name: component.to_string(),
+            })?;
+
+            match record.kind {
+                FsRecordKind::Directory { .. } => parent_id = record.id,
+                _ => return None,
+            }
         }
-        Some(node)
+
+        self.records.get(&FsRecordKey {
+            parent_id,
+            name: file_name.to_string(),
+        })
     }
 
     /// Get the node at a given path, if it exists.
-    fn lookup_node(&self, path: &GuestPath) -> Option<&FsNode> {
+    fn lookup_node(&self, path: &GuestPath) -> Option<&FsRecord> {
         self.lookup_node_inner(&resolve_path(path, Some(&self.working_directory)))
     }
 
@@ -708,26 +586,83 @@ impl Fs {
     /// together with the final path component. This is an alternative to
     /// [Self::lookup_node] useful when writing to a file, where it might not
     /// exist yet (but its parent directory does).
-    fn lookup_parent_node(&mut self, path: &GuestPath) -> Option<(&mut FsNode, String)> {
+    fn lookup_parent_node(&self, path: &GuestPath) -> Option<(&FsRecord, String)> {
         let components = resolve_path(path, Some(&self.working_directory));
         let (&final_component, parent_components) = components.split_last()?;
 
-        let mut parent = &mut self.root;
-        for &component in parent_components {
-            let FsNode::Directory {
-                children,
-                writeable: _,
-            } = parent
-            else {
-                return None;
-            };
-            parent = children.get_mut(component)?
-        }
+        let parent_record = self.lookup_node_inner(parent_components)?;
 
-        Some((parent, final_component.to_string()))
+        Some((parent_record, final_component.to_string()))
     }
 
-    /// Like [Path::exists] but for the guest filesystem.
+    /// Provide an iterator over the children of a parent record
+    pub fn get_children(
+        &self,
+        parent_id: FsRecordId,
+    ) -> impl Iterator<Item = (&String, &FsRecord)> {
+        self.records
+            .range(
+                FsRecordKey {
+                    parent_id,
+                    name: String::new(),
+                }..FsRecordKey {
+                    parent_id: FsRecordId(parent_id.0 + 1),
+                    name: String::new(),
+                },
+            )
+            .map(|(key, record)| (&key.name, record))
+    }
+
+    fn create_dir_record(
+        &mut self,
+        parent_id: FsRecordId,
+        name: String,
+        writeable: Option<PathBuf>,
+    ) -> FsRecordId {
+        assert!(self
+            .get_fs_record(parent_id)
+            .is_some_and(|record| record.is_dir()));
+        let key = FsRecordKey { parent_id, name };
+        let id = self.id_generator.next();
+        let record = FsRecord {
+            id,
+            kind: FsRecordKind::Directory { writeable },
+        };
+        self.records.insert(key.clone(), record);
+        self.id_to_record_key.insert(id, key);
+        id
+    }
+
+    fn create_file_record(
+        &mut self,
+        parent_id: FsRecordId,
+        name: String,
+        location: FileLocation,
+        writeable: bool,
+    ) -> FsRecordId {
+        assert!(self
+            .get_fs_record(parent_id)
+            .is_some_and(|record| record.is_dir()));
+        let key = FsRecordKey { parent_id, name };
+        let id = self.id_generator.next();
+        let record = FsRecord {
+            id,
+            kind: FsRecordKind::File {
+                location,
+                writeable,
+            },
+        };
+        self.records.insert(key.clone(), record);
+        self.id_to_record_key.insert(id, key);
+        id
+    }
+
+    fn get_fs_record(&self, id: FsRecordId) -> Option<&FsRecord> {
+        let record_key = self.id_to_record_key.get(&id)?;
+        self.records.get(record_key)
+    }
+
+    /// Like [std::path::Path::exists] but for the guest filesystem.
     pub fn exists(&self, path: &GuestPath) -> bool {
         self.lookup_node(path).is_some()
     }
@@ -737,34 +672,32 @@ impl Fs {
     pub fn access(&self, path: &GuestPath) -> (bool, bool, bool, bool) {
         match self.lookup_node(path) {
             None => (false, false, false, false),
-            Some(node) => match node {
-                FsNode::File {
+            Some(record) => match &record.kind {
+                FsRecordKind::File {
                     location: _,
                     writeable,
                 } => (true, true, *writeable, false),
-                FsNode::Directory {
-                    children: _,
-                    writeable,
-                } => (true, true, writeable.is_some(), true),
+                FsRecordKind::Directory { writeable } => (true, true, writeable.is_some(), true),
             },
         }
     }
 
-    /// Like [Path::is_file] but for the guest filesystem.
+    /// Like [std::path::Path::is_file] but for the guest filesystem.
     pub fn is_file(&self, path: &GuestPath) -> bool {
-        matches!(self.lookup_node(path), Some(FsNode::File { .. }))
+        self.lookup_node(path)
+            .is_some_and(|record| record.is_file())
     }
 
-    /// Like [Path::is_dir] but for the guest dirsystem.
+    /// Like [std::path::Path::is_dir] but for the guest dirsystem.
     pub fn is_dir(&self, path: &GuestPath) -> bool {
-        matches!(self.lookup_node(path), Some(FsNode::Directory { .. }))
+        self.lookup_node(path).is_some_and(|record| record.is_dir())
     }
 
     pub fn modified(&self, path: &GuestPath) -> Result<i64, ()> {
         // TODO: error handling
-        let node = self.lookup_node(path).ok_or(())?;
-        match node {
-            FsNode::File { location, .. } => match location {
+        let record = self.lookup_node(path).ok_or(())?;
+        match &record.kind {
+            FsRecordKind::File { location, .. } => match location {
                 // Note: the returned time is consistent with 'Date' and 'Time'
                 // of files inside IPA archive as reported by 7-zip.
                 // But it can be few hours off in comparison with modification
@@ -798,9 +731,9 @@ impl Fs {
 
     pub fn size(&self, path: &GuestPath) -> Result<u64, ()> {
         // TODO: error handling
-        let node = self.lookup_node(path).ok_or(())?;
-        match node {
-            FsNode::File { location, .. } => match location {
+        let record = self.lookup_node(path).ok_or(())?;
+        match &record.kind {
+            FsRecordKind::File { location, .. } => match location {
                 FileLocation::IpaFileRef(ipa_file_ref) => Ok(ipa_file_ref.get_size()),
                 FileLocation::Path(path) => {
                     fs::metadata(path).map(|meta| meta.len()).map_err(|_| ())
@@ -816,10 +749,14 @@ impl Fs {
         &self,
         path: P,
     ) -> Result<impl Iterator<Item = &str>, ()> {
-        let Some(FsNode::Directory { children, .. }) = self.lookup_node(path.as_ref()) else {
+        let Some(record) = self.lookup_node(path.as_ref()) else {
             return Err(());
         };
-        Ok(children.keys().map(|name| name.as_str()))
+        if !record.is_dir() {
+            return Err(());
+        }
+
+        Ok(self.get_children(record.id).map(|(name, _)| name.as_str()))
     }
 
     /// Recursively list the paths of files/directories in a directory.
@@ -828,33 +765,31 @@ impl Fs {
         &self,
         path: P,
     ) -> Result<Vec<GuestPathBuf>, ()> {
-        let Some(FsNode::Directory { children, .. }) = self.lookup_node(path.as_ref()) else {
+        let Some(root_record) = self.lookup_node(path.as_ref()) else {
             return Err(());
         };
+        if !root_record.is_dir() {
+            return Err(());
+        }
 
         let mut paths = Vec::new();
-        let mut component_stack: Vec<&str> = Vec::new();
-        let mut iterator_stack = vec![children.iter()];
+        let mut stack = vec![(root_record.id, String::new())];
 
-        loop {
-            let current_iterator = iterator_stack.last_mut().unwrap();
-            if let Some((next_component, next_node)) = current_iterator.next() {
-                component_stack.push(next_component);
-                paths.push(GuestPathBuf::from(component_stack.join("/")));
-                if let FsNode::Directory { children, .. } = next_node {
-                    iterator_stack.push(children.iter());
+        while let Some((current_id, current_path)) = stack.pop() {
+            for (name, record) in self.get_children(current_id) {
+                let child_path = if current_path.is_empty() {
+                    name.clone()
                 } else {
-                    component_stack.pop();
-                }
-            } else {
-                iterator_stack.pop();
-                if component_stack.pop().is_none() {
-                    break;
+                    format!("{}/{}", current_path, name)
+                };
+
+                paths.push(GuestPathBuf::from(child_path.clone()));
+
+                if record.is_dir() {
+                    stack.push((record.id, child_path));
                 }
             }
         }
-        assert!(component_stack.is_empty() && iterator_stack.is_empty());
-
         Ok(paths)
     }
 
@@ -881,8 +816,8 @@ impl Fs {
         // it would be nice to delegate to self.open_with_options, but
         // currently it wants a mutable reference to self
         let node = self.lookup_node(path.as_ref()).ok_or(())?;
-        match node {
-            FsNode::File { location, .. } => match location {
+        match &node.kind {
+            FsRecordKind::File { location, .. } => match location {
                 FileLocation::Path(host_path) => {
                     let host_file = handle_open_err(File::open(host_path), host_path);
                     Ok(GuestFile::from_host_file(host_file))
@@ -893,14 +828,15 @@ impl Fs {
                     Ok(GuestFile::from_resource_file(resource_file))
                 }
             },
-            FsNode::Directory { .. } => Err(()),
+            FsRecordKind::Directory { .. } => Err(()),
         }
     }
 
     pub fn rename<P: AsRef<GuestPath> + Copy>(&mut self, from: P, to: P) -> Result<(), ()> {
         let from_node = self.lookup_node(from.as_ref()).ok_or(())?;
-        let from_host_path = match from_node {
-            FsNode::File {
+        let from_node_id = from_node.id;
+        let from_host_path = match &from_node.kind {
+            FsRecordKind::File {
                 location: from_location,
                 writeable: from_writeable,
             } => {
@@ -923,10 +859,10 @@ impl Fs {
         }
 
         let to_node = self.lookup_node(to.as_ref()).unwrap();
-        let FsNode::File {
+        let FsRecordKind::File {
             location: to_location,
             writeable: to_writeable,
-        } = to_node
+        } = &to_node.kind
         else {
             // TODO: return EISDIR
             return Err(());
@@ -939,11 +875,15 @@ impl Fs {
         let res = fs::rename(from_host_path, to_host_path);
         if res.is_ok() {
             // Remove reference to the old from node
-            let (parent_from, component) = self.lookup_parent_node(from.as_ref()).unwrap();
-            let FsNode::Directory { children, .. } = parent_from else {
-                panic!()
+            let node_key = self.id_to_record_key.get(&from_node_id).ok_or(())?;
+
+            let (parent_from, _) = self.lookup_parent_node(from.as_ref()).unwrap();
+            if !parent_from.is_dir() {
+                panic!("Attempted to remove child from non directory.")
             };
-            children.remove(&component).unwrap();
+
+            self.records.remove(node_key);
+            self.id_to_record_key.remove(&from_node_id);
         }
         res.map_err(|_| ())
     }
@@ -965,21 +905,25 @@ impl Fs {
 
         let path = path.as_ref();
 
-        let (parent_node, new_filename) = self.lookup_parent_node(path).ok_or(())?;
-        let FsNode::Directory {
-            children,
-            writeable: dir_host_path,
-        } = parent_node
-        else {
-            return Err(());
+        let (parent_id, dir_host_path, new_filename) = {
+            let (parent_node, new_filename) = self.lookup_parent_node(path).ok_or(())?;
+            let FsRecordKind::Directory {
+                writeable: dir_host_path,
+            } = &parent_node.kind
+            else {
+                return Err(());
+            };
+            (parent_node.id, dir_host_path.clone(), new_filename)
         };
 
         // Open an existing file if possible
-
-        if let Some(existing_file) = children.get(&new_filename) {
-            match existing_file {
-                &FsNode::File {
-                    ref location,
+        if let Some(existing_file) = self.records.get(&FsRecordKey {
+            parent_id,
+            name: new_filename.clone(),
+        }) {
+            match &existing_file.kind {
+                FsRecordKind::File {
+                    location,
                     writeable,
                 } => {
                     if !writeable && (append || write) {
@@ -1001,18 +945,18 @@ impl Fs {
                             return Ok(GuestFile::File(file));
                         }
                         FileLocation::IpaFileRef(file) => {
-                            assert!(!(writeable || append || write));
+                            assert!(!(*writeable || append || write));
                             return Ok(GuestFile::from_ipa_file(file));
                         }
                         FileLocation::ResourceFilePath(name) => {
-                            assert!(!(writeable || append || write));
+                            assert!(!(*writeable || append || write));
                             let resource_file =
                                 handle_open_err(paths::ResourceFile::open(name), name);
                             return Ok(GuestFile::from_resource_file(resource_file));
                         }
                     }
                 }
-                FsNode::Directory { .. } => {
+                FsRecordKind::Directory { .. } => {
                     if write {
                         return Err(());
                     } else {
@@ -1023,7 +967,6 @@ impl Fs {
         };
 
         // Create a new file otherwise
-
         if !create {
             return Err(());
         }
@@ -1059,13 +1002,8 @@ impl Fs {
             path,
             host_path
         );
-        children.insert(
-            new_filename,
-            FsNode::File {
-                location: FileLocation::Path(host_path),
-                writeable: true,
-            },
-        );
+
+        self.create_file_record(parent_id, new_filename, FileLocation::Path(host_path), true);
         Ok(GuestFile::File(file))
     }
 
@@ -1073,14 +1011,12 @@ impl Fs {
     /// empty.
     pub fn remove<P: AsRef<GuestPath>>(&mut self, path: P) -> Result<(), ()> {
         let path = path.as_ref();
-
         let (parent_node, node_name) = self.lookup_parent_node(path).ok_or(())?;
 
         // Parent directory is not a directory
-        let FsNode::Directory {
-            children,
+        let FsRecordKind::Directory {
             writeable: dir_writeable,
-        } = parent_node
+        } = &parent_node.kind
         else {
             return Err(());
         };
@@ -1090,13 +1026,16 @@ impl Fs {
             return Err(());
         };
 
-        let Some(node) = children.get(&node_name) else {
+        let Some(record) = self.records.get(&FsRecordKey {
+            parent_id: parent_node.id,
+            name: node_name.clone(),
+        }) else {
             // There is no file/directory with this name
             return Err(());
         };
 
-        match node {
-            FsNode::File {
+        match &record.kind {
+            FsRecordKind::File {
                 location,
                 writeable,
             } => {
@@ -1118,14 +1057,12 @@ impl Fs {
                     host_path
                 );
             }
-            FsNode::Directory {
-                children,
-                writeable,
-            } => {
+            FsRecordKind::Directory { writeable } => {
                 // Directory is not empty
-                if !children.is_empty() {
+                if self.get_children(record.id).next().is_some() {
                     return Err(());
                 }
+
                 // Read-only directories can't be removed. (This is probably not
                 // correct, but it is safer for now.)
                 let Some(host_path) = writeable else {
@@ -1141,7 +1078,14 @@ impl Fs {
             }
         }
 
-        children.remove(&node_name).unwrap();
+        let parent_id = parent_node.id;
+        let record_id = record.id;
+
+        self.records.remove(&FsRecordKey {
+            parent_id,
+            name: node_name,
+        });
+        self.id_to_record_key.remove(&record_id);
 
         Ok(())
     }
@@ -1168,21 +1112,23 @@ impl Fs {
     pub fn create_dir<P: AsRef<GuestPath>>(&mut self, path: P) -> Result<(), FsError> {
         let path = path.as_ref();
 
-        let (parent_node, new_dir_name) = self
+        let (parent_record, new_dir_name) = self
             .lookup_parent_node(path)
             .ok_or(FsError::NonexistentParentDir)?;
 
         // Parent directory is not a directory
-        let FsNode::Directory {
-            children,
+        let FsRecordKind::Directory {
             writeable: dir_host_path,
-        } = parent_node
+        } = &parent_record.kind
         else {
             return Err(FsError::InvalidParentDir);
         };
 
         // There's already a file/directory with this name
-        if children.contains_key(&new_dir_name) {
+        if self.records.contains_key(&FsRecordKey {
+            parent_id: parent_record.id,
+            name: new_dir_name.clone(),
+        }) {
             return Err(FsError::AlreadyExist);
         }
 
@@ -1205,13 +1151,45 @@ impl Fs {
             path,
             host_path
         );
-        children.insert(
-            new_dir_name,
-            FsNode::Directory {
-                children: HashMap::new(),
-                writeable: Some(host_path),
-            },
-        );
+        self.create_dir_record(parent_record.id, new_dir_name, Some(host_path));
+        Ok(())
+    }
+
+    fn display_record(
+        &self,
+        f: &mut std::fmt::Formatter,
+        node_id: FsRecordId,
+        depth: usize,
+    ) -> std::fmt::Result {
+        let record = match self.get_fs_record(node_id) {
+            Some(record) => record,
+            None => return Ok(()),
+        };
+
+        let indent = "  ".repeat(depth);
+        let name = if node_id == FsRecordId::ROOT {
+            ""
+        } else {
+            self.id_to_record_key
+                .get(&node_id)
+                .map(|key| key.name.as_str())
+                .unwrap_or("?")
+        };
+
+        match &record.kind {
+            FsRecordKind::Directory { writeable } => {
+                let suffix = if writeable.is_some() { " (w)" } else { "" };
+                writeln!(f, "{indent}{name}/{suffix}")?;
+
+                for (_, child_record) in self.get_children(node_id) {
+                    self.display_record(f, child_record.id, depth + 1)?;
+                }
+            }
+            FsRecordKind::File { writeable, .. } => {
+                let suffix = if *writeable { " (w)" } else { "" };
+                writeln!(f, "{indent}{name}{suffix}")?;
+            }
+        }
         Ok(())
     }
 }

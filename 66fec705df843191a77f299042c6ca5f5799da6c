@@ -33,6 +33,24 @@
       "message": "I really don\u0027t like this name, it sounds far too much like it would be about whether the timer is valid / will fire in future, which is handled by other properties. \"is running\" conveys very little information. Would something like `in_callback` be okay? You should also update the comment to explain the circumstances in which it is set.",
       "revId": "66fec705df843191a77f299042c6ca5f5799da6c",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "3e07dea8_79a5e6d7",
+        "filename": "src/frameworks/foundation/ns_timer.rs",
+        "patchSetId": 6
+      },
+      "lineNbr": 31,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2025-09-09T20:46:57Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "96f581e1_972c553d",
+      "revId": "66fec705df843191a77f299042c6ca5f5799da6c",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

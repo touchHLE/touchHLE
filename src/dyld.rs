@@ -639,19 +639,21 @@ impl Dyld {
             (stub_function_ptr, la_symbol_ptr)
         }
 
-        let bin_idx = bins
+        let (stubs, pic_offset) = bins
             .iter()
-            .flat_map(|bin| bin.get_section(SectionType::SymbolStubs))
-            .position(|stubs| (stubs.addr..(stubs.addr + stubs.size)).contains(&svc_pc))
+            .find_map(|bin| {
+                let stubs = bin.get_section(SectionType::SymbolStubs)?;
+                if !(stubs.addr..(stubs.addr + stubs.size)).contains(&svc_pc) {
+                    return None;
+                }
+                let pic_offset = bin
+                    .get_section(SectionType::LazySymbolPointers)
+                    .map_or(0, |lazy_ptrs| lazy_ptrs.addr - stubs.addr);
+                Some((stubs, pic_offset))
+            })
             .unwrap();
-        let stubs = bins[bin_idx].get_section(SectionType::SymbolStubs).unwrap();
 
         let info = stubs.dyld_indirect_symbol_info.as_ref().unwrap();
-
-        let pic_offset = bins[bin_idx]
-            .get_section(SectionType::LazySymbolPointers)?
-            .addr
-            - stubs.addr;
 
         let offset = svc_pc - stubs.addr;
         assert!(offset % info.entry_size == 0);

@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "35f8e997_6c658a93",
+        "filename": "src/bundle.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 174,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-09-10T18:18:13Z",
+      "side": 1,
+      "message": "I think you could simplify this to just `s.as_str() \u003d\u003d Some(\"YES\")`? We don\u0027t know that other values are supported, and if it\u0027s `\"NO\"` it\u0027ll fall back to `false`, which is still the right result, right?",
+      "range": {
+        "startLine": 170,
+        "startChar": 24,
+        "endLine": 174,
+        "endChar": 25
+      },
+      "revId": "159b0b46edee9299296070e78243bdd0f82b6bab",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

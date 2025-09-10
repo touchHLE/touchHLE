@@ -70,6 +70,30 @@
       },
       "revId": "159b0b46edee9299296070e78243bdd0f82b6bab",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b78aa3f9_ea4f03a7",
+        "filename": "src/bundle.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 174,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-09-10T19:26:21Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "4eb0bd31_b53db5f1",
+      "range": {
+        "startLine": 170,
+        "startChar": 24,
+        "endLine": 174,
+        "endChar": 25
+      },
+      "revId": "159b0b46edee9299296070e78243bdd0f82b6bab",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

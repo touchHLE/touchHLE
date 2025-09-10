@@ -16,6 +16,24 @@
       "message": "What the fuck. Why is this allowed. If this is actually allowed then, uh, I think we need to be able to handle this for all boolean properties, surely? And there\u0027s probably some other types we should also support (presumably it\u0027s not just strings)? But this behaviour is probably also something that belongs somewhere in Foundation???? :(\n\nI think more research is needed...",
       "revId": "d00ae14bb5071c33a2dc86792ac7b3e9ceb6ee71",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c66aac6e_b717723e",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-09-10T16:19:51Z",
+      "side": 1,
+      "message": "If you could convert to NSString, we already have implementation for boolValue method https://github.com/touchHLE/touchHLE/blob/f41e70890a24e50893991cd1a99779c952bb6b7a/src/frameworks/foundation/ns_string.rs#L1367",
+      "parentUuid": "695afdcf_c5a1a0df",
+      "revId": "d00ae14bb5071c33a2dc86792ac7b3e9ceb6ee71",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

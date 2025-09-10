@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "695afdcf_c5a1a0df",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-09-10T16:03:16Z",
+      "side": 1,
+      "message": "What the fuck. Why is this allowed. If this is actually allowed then, uh, I think we need to be able to handle this for all boolean properties, surely? And there\u0027s probably some other types we should also support (presumably it\u0027s not just strings)? But this behaviour is probably also something that belongs somewhere in Foundation???? :(\n\nI think more research is needed...",
+      "revId": "d00ae14bb5071c33a2dc86792ac7b3e9ceb6ee71",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

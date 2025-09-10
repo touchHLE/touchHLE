@@ -158,12 +158,14 @@ impl Bundle {
         let mut image =
             Image::from_bytes(&bytes).map_err(|e| format!("Could not parse icon image: {e}"))?;
         // UIPrerenderedIcon is used to avoid iOS applying a sheen effect,
-        // otherwise iOS adds one (default value is false).
+        // should be boolean, but some apps use a string, so we check both.
+        // See https://developer.apple.com/library/archive/qa/qa1614/_index.html
+        // Default if it does not exist is NO/false.
         let add_sheen = !self
             .plist
             .get("UIPrerenderedIcon")
-            .and_then(|v| v.as_boolean())
-            .unwrap_or_default();
+            .and_then(|v| v.as_boolean().or_else(|| v.as_string().map(|s| s == "YES")))
+            .unwrap_or(false);
         // iPhone OS icons are 57px by 57px and the OS always applies a
         // 10px radius rounded corner (see e.g. documentation of
         // UIPrerenderedIcon). If the icon is larger for some reason,

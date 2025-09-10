@@ -8,8 +8,9 @@
 #![allow(non_camel_case_types)]
 
 use crate::dyld::FunctionExports;
-use crate::libc::mach_thread_info::{
-    kern_return_t, mach_msg_type_number_t, mach_port_t, natural_t, KERN_SUCCESS,
+use crate::libc::mach::core_types::natural_t;
+use crate::libc::mach::thread_info::{
+    kern_return_t, mach_msg_type_number_t, mach_port_t, KERN_SUCCESS,
 };
 use crate::mem::{guest_size_of, MutPtr, SafeRead};
 use crate::{export_c_func, Environment};

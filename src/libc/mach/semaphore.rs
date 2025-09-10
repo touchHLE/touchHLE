@@ -12,8 +12,8 @@
 use crate::dyld::FunctionExports;
 use crate::environment::Environment;
 use crate::export_c_func;
-use crate::libc::mach_init::MACH_TASK_SELF;
-use crate::libc::mach_thread_info::{kern_return_t, KERN_SUCCESS};
+use crate::libc::mach::init::MACH_TASK_SELF;
+use crate::libc::mach::thread_info::{kern_return_t, KERN_SUCCESS};
 use crate::libc::semaphore::{sem_destroy, sem_init, sem_post, sem_t, sem_wait};
 use crate::mem::MutPtr;
 

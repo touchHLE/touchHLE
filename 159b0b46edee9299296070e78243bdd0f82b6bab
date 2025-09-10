@@ -46,6 +46,30 @@
       },
       "revId": "159b0b46edee9299296070e78243bdd0f82b6bab",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4eb0bd31_b53db5f1",
+        "filename": "src/bundle.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 174,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-09-10T19:26:04Z",
+      "side": 1,
+      "message": "Assume you mean as_string? but I could not get map to work right. Condensed down as much as I could though to just check \u003d\u003d \"YES\" otherwise it fails to false",
+      "parentUuid": "cde326f2_5ca1dbe6",
+      "range": {
+        "startLine": 170,
+        "startChar": 24,
+        "endLine": 174,
+        "endChar": 25
+      },
+      "revId": "159b0b46edee9299296070e78243bdd0f82b6bab",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

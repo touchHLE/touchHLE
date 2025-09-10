@@ -7,7 +7,7 @@
 
 use super::NSTimeInterval;
 use crate::frameworks::foundation::ns_string;
-use crate::libc::mach_host::PHYSICAL_MEMORY;
+use crate::libc::mach::host::PHYSICAL_MEMORY;
 use crate::objc::{id, msg, msg_class, objc_classes, ClassExports};
 use crate::Environment;
 use std::time::Instant;

@@ -34,6 +34,24 @@
       "parentUuid": "695afdcf_c5a1a0df",
       "revId": "d00ae14bb5071c33a2dc86792ac7b3e9ceb6ee71",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "44397c71_c14457eb",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2025-09-10T17:15:33Z",
+      "side": 1,
+      "message": "https://developer.apple.com/library/archive/qa/qa1614/_index.html Seem to be just strings.",
+      "parentUuid": "c66aac6e_b717723e",
+      "revId": "d00ae14bb5071c33a2dc86792ac7b3e9ceb6ee71",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

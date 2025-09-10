@@ -22,6 +22,30 @@
       },
       "revId": "159b0b46edee9299296070e78243bdd0f82b6bab",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "cde326f2_5ca1dbe6",
+        "filename": "src/bundle.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 174,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-09-10T18:21:48Z",
+      "side": 1,
+      "message": "Ah, `.or_else(|| v.as_boolean().map(|s| s \u003d\u003d \"YES\"))` would be better.",
+      "parentUuid": "35f8e997_6c658a93",
+      "range": {
+        "startLine": 170,
+        "startChar": 24,
+        "endLine": 174,
+        "endChar": 25
+      },
+      "revId": "159b0b46edee9299296070e78243bdd0f82b6bab",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

@@ -90,6 +90,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "55405570_2c499376",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2025-09-11T16:32:44Z",
+      "side": 1,
+      "message": "I\u0027m still not convinced that logging a set once, since if different values are set we may be obscuring information. Though I\u0027ll leave that to cici or hikari to decide.",
+      "parentUuid": "5a45dc3d_b81032c9",
+      "revId": "2d201dd66b5efa69d3339b726b3618ee7d3fcfca",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "8c1f951a_1e68f43b",
         "filename": "src/objc/classes.rs",
         "patchSetId": 2

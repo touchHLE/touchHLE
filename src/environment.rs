@@ -234,32 +234,13 @@ fn generate_binary_load_order(graph: &[BinaryDependencyNode]) -> Result<Vec<usiz
 
 impl Environment {
     /// Loads the binary and sets up the emulator.
-    ///
-    /// `env_for_salvage` can be used to provide an existing environment (in
-    /// practice, the app picker's, created with [Environment::new_without_app])
-    /// that is to be destroyed. Certain components may be salvaged from the
-    /// old environment, but their states will be reset, so the result should be
-    /// "like new". This option exists because touchHLE on Android would crash
-    /// when allocating a second [mem::Mem] instance.
     pub fn new(
         bundle: bundle::Bundle,
         fs: fs::Fs,
         mut options: options::Options,
         app_args: Vec<String>,
-        env_for_salvage: Option<Environment>,
     ) -> Result<Environment, String> {
         let startup_time = Instant::now();
-
-        // Extract things to salvage from the old environment, and then drop it.
-        // This needs to be done before creating a new window, because SDL2 only
-        // allows one window at once.
-        let mem_for_salvage = if let Some(env_for_salvage) = env_for_salvage {
-            let Environment { mem, .. } = env_for_salvage;
-            // Everything other than the memory is now dropped.
-            Some(mem)
-        } else {
-            None
-        };
 
         // Certain apps need to launch in a non-portrait orientation, and this
         // should be handled before creating the window because handling of
@@ -336,11 +317,7 @@ impl Environment {
             ))
         };
 
-        let mut mem = if let Some(mem) = mem_for_salvage {
-            mem::Mem::refurbish(mem)
-        } else {
-            mem::Mem::new()
-        };
+        let mut mem = mem::Mem::new();
 
         let is_spore = bundle.bundle_identifier().starts_with("com.ea.spore");
         // We always reset this flag depending on which game is launched.

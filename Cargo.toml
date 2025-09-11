@@ -68,6 +68,8 @@ touchHLE_openal_soft_wrapper = { path = "src/audio/openal_soft_wrapper" }
 touchHLE_pvrt_decompress_wrapper = { path = "src/image/pvrt_decompress_wrapper" }
 touchHLE_stb_image_wrapper = { path = "src/image/stb_image_wrapper" }
 touchHLE_version = { path = "src/version" }
+windows-sys = { version = "0.61.0", features = ["Win32_System_Memory"] }
+libc = "0.2.175"
 
 [build-dependencies]
 cargo-license = "0.5.1"

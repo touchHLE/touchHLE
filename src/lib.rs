@@ -177,8 +177,8 @@ pub fn main<T: Iterator<Item = String>>(mut args: T) -> Result<(), String> {
         return Ok(());
     }
 
-    let (bundle_path, env_for_salvage) = if let Some(bundle_path) = bundle_path {
-        (bundle_path, None)
+    let bundle_path = if let Some(bundle_path) = bundle_path {
+        bundle_path
     } else {
         let mut options = options::Options::default();
         // Apply command-line options only (no app-specific options apply)
@@ -194,8 +194,7 @@ pub fn main<T: Iterator<Item = String>>(mut args: T) -> Result<(), String> {
         echo!(
             "No app specified, opening app picker. Use the --help flag to see command-line usage."
         );
-        let (bundle_path, env_for_salvage) = app_picker::app_picker(options, &mut option_args)?;
-        (bundle_path, Some(env_for_salvage))
+        app_picker::app_picker(options, &mut option_args)?
     };
 
     // When PowerShell does tab-completion on a directory, for some reason it
@@ -306,7 +305,7 @@ pub fn main<T: Iterator<Item = String>>(mut args: T) -> Result<(), String> {
     }
 
     let res = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-        Environment::new(bundle, fs, options.clone(), env_for_salvage)
+        Environment::new(bundle, fs, options.clone())
     }));
     let mut env = match res {
         Ok(ret) => match ret {

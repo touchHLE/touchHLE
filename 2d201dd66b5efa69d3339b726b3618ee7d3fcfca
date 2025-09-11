@@ -106,6 +106,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "00b497d5_44bb4633",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-09-11T16:41:15Z",
+      "side": 1,
+      "message": "You are probably right here, as the discussion around log_once was that it should not take in values so only makes sense in informative messages and the rare exception to report a value that was sent as NULL.",
+      "parentUuid": "55405570_2c499376",
+      "revId": "2d201dd66b5efa69d3339b726b3618ee7d3fcfca",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "8c1f951a_1e68f43b",

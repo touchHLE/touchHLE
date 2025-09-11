@@ -49,10 +49,7 @@ struct AppInfo {
     icon_ui_image: Option<id>,
 }
 
-pub fn app_picker(
-    options: Options,
-    option_args: &mut Vec<String>,
-) -> Result<(PathBuf, Environment), String> {
+pub fn app_picker(options: Options, option_args: &mut Vec<String>) -> Result<PathBuf, String> {
     let apps_dir = paths::user_data_base_path().join(paths::APPS_DIR);
 
     let apps: Result<Vec<AppInfo>, String> = if !apps_dir.is_dir() {
@@ -274,7 +271,7 @@ fn show_app_picker_gui(
     options: Options,
     option_args: &mut Vec<String>,
     mut apps: Result<Vec<AppInfo>, String>,
-) -> Result<(PathBuf, Environment), String> {
+) -> Result<PathBuf, String> {
     let icon = {
         let bytes: &[u8] = match super::branding() {
             "" => include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/res/icon.png")),
@@ -732,8 +729,7 @@ fn show_app_picker_gui(
         option_args.push("--allow-network-access".to_string());
     }
 
-    // Return the environment so some parts of it can be salvaged.
-    Ok((app_path, environment))
+    Ok(app_path)
 }
 
 const ICON_SIZE: CGSize = CGSize {

@@ -72,6 +72,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "f5b769ba_eb109592",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2025-09-11T16:30:19Z",
+      "side": 1,
+      "message": "I\u0027m assuming we\u0027d want this as a separate patch and that it would only work when the instance variable is contained within the instance\u0027s hostObject?",
+      "parentUuid": "b46c201e_c871941b",
+      "revId": "2d201dd66b5efa69d3339b726b3618ee7d3fcfca",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "8c1f951a_1e68f43b",
         "filename": "src/objc/classes.rs",
         "patchSetId": 2
@@ -83,6 +101,24 @@
       "writtenOn": "2025-07-28T21:31:50Z",
       "side": 1,
       "message": "is where are a way to assert that selector is actually starting with \"set\" ?",
+      "revId": "2d201dd66b5efa69d3339b726b3618ee7d3fcfca",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f576ef2c_16fcd1a0",
+        "filename": "src/objc/classes.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 206,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2025-09-11T16:30:19Z",
+      "side": 1,
+      "message": "Done.",
+      "parentUuid": "8c1f951a_1e68f43b",
       "revId": "2d201dd66b5efa69d3339b726b3618ee7d3fcfca",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

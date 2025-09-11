@@ -17,6 +17,7 @@
 use crate::libc::wchar::wchar_t;
 
 mod allocator;
+mod host;
 
 /// Equivalent of `usize` for guest memory.
 pub type GuestUSize = u32;
@@ -252,10 +253,7 @@ pub struct Mem {
 
 impl Drop for Mem {
     fn drop(&mut self) {
-        let layout = std::alloc::Layout::new::<Bytes>();
-        unsafe {
-            std::alloc::dealloc(self.bytes as *mut _, layout);
-        }
+        crate::mem::host::free_memory(self.bytes.cast(), std::mem::size_of::<Bytes>()).unwrap();
     }
 }
 
@@ -275,12 +273,15 @@ impl Mem {
 
     /// Create a fresh instance of guest memory.
     pub fn new() -> Mem {
-        // This will hopefully get the host OS to lazily allocate the memory.
-        let layout = std::alloc::Layout::new::<Bytes>();
-        // TODO: align memory to guest page size
-        // Right now, if aligned, will cause OOM on low end Android devices.
-        // See relevant [Github's issue](https://github.com/touchHLE/touchHLE/issues/498)
-        let bytes = unsafe { std::alloc::alloc_zeroed(layout) as *mut Bytes };
+        let size = std::mem::size_of::<Bytes>();
+
+        let ptr = crate::mem::host::allocate_memory(size).unwrap();
+
+        if ptr as usize & PAGE_SIZE_ALIGN_MASK as usize != 0 {
+            log!("WARN: Host memory is not aligned to guest's pages. This can result in reduced performance and/or incorrect behavior.");
+        }
+
+        let bytes = ptr as *mut Bytes;
 
         let allocator = allocator::Allocator::new();
 

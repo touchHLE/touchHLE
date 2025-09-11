@@ -246,20 +246,8 @@ impl Environment {
         fs: fs::Fs,
         options: options::Options,
         app_args: Vec<String>,
-        env_for_salvage: Option<Environment>,
     ) -> Result<Environment, String> {
         let startup_time = Instant::now();
-
-        // Extract things to salvage from the old environment, and then drop it.
-        // This needs to be done before creating a new window, because SDL2 only
-        // allows one window at once.
-        let mem_for_salvage = if let Some(env_for_salvage) = env_for_salvage {
-            let Environment { mem, .. } = env_for_salvage;
-            // Everything other than the memory is now dropped.
-            Some(mem)
-        } else {
-            None
-        };
 
         let window = if options.headless {
             None
@@ -304,11 +292,7 @@ impl Environment {
             ))
         };
 
-        let mut mem = if let Some(mem) = mem_for_salvage {
-            mem::Mem::refurbish(mem)
-        } else {
-            mem::Mem::new()
-        };
+        let mut mem = mem::Mem::new();
 
         let is_spore = bundle.bundle_identifier().starts_with("com.ea.spore");
         // We always reset this flag depending on which game is launched.

@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "dd75d96a_ebb02454",
+        "filename": "src/bundle.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 163,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-09-11T14:01:54Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "460fce8a_c8e3124e",
+      "revId": "348c713219a604393c4bf64ed393cfdd675b0e51",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "0db3b403_640ad5fc",
@@ -31,6 +49,30 @@
       "writtenOn": "2025-09-11T11:37:51Z",
       "side": 1,
       "message": "You can replace this with `.map(|s| s \u003d\u003d \"YES\")`.",
+      "range": {
+        "startLine": 169,
+        "startChar": 45,
+        "endLine": 169,
+        "endChar": 87
+      },
+      "revId": "348c713219a604393c4bf64ed393cfdd675b0e51",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b92d15f8_edeba3f8",
+        "filename": "src/bundle.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 169,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-09-11T14:01:54Z",
+      "side": 1,
+      "message": "Got it! On as_string map works, not the as_boolean.  That confused me but I understand now.  Done.",
+      "parentUuid": "0db3b403_640ad5fc",
       "range": {
         "startLine": 169,
         "startChar": 45,

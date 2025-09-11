@@ -1,0 +1,44 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "460fce8a_c8e3124e",
+        "filename": "src/bundle.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 163,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-09-11T11:37:51Z",
+      "side": 1,
+      "message": "The bracket placement here is confusing, I would suggest: \"Default if it does not exist is NO/false.\" (without brackets)",
+      "revId": "348c713219a604393c4bf64ed393cfdd675b0e51",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0db3b403_640ad5fc",
+        "filename": "src/bundle.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 169,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-09-11T11:37:51Z",
+      "side": 1,
+      "message": "You can replace this with `.map(|s| s \u003d\u003d \"YES\")`.",
+      "range": {
+        "startLine": 169,
+        "startChar": 45,
+        "endLine": 169,
+        "endChar": 87
+      },
+      "revId": "348c713219a604393c4bf64ed393cfdd675b0e51",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

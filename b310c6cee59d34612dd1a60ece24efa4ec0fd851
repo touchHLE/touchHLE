@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9166f0d8_cac24e37",
+        "filename": "src/mem/host.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 5,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-09-12T06:39:09Z",
+      "side": 1,
+      "message": "There should be a doc comment at the top of this file to explain its purpose. I guess in this case, it would be good to comment on what particular properties these memory allocation functions promise.",
+      "revId": "b310c6cee59d34612dd1a60ece24efa4ec0fd851",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

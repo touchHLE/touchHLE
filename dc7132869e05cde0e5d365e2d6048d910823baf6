@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5fc104eb_64534ce5",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 296,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-09-12T23:20:32Z",
+      "side": 1,
+      "message": "you could just use `let str: id \u003d msg![env; this new];`",
+      "revId": "dc7132869e05cde0e5d365e2d6048d910823baf6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

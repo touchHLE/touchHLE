@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d741b25a_38c49d73",
+        "filename": "src/frameworks/foundation/ns_user_defaults.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 267,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2025-09-13T10:33:16Z",
+      "side": 1,
+      "message": "Nit: this should be ns_array_class",
+      "revId": "b01cb070844d79d10441385a86a1dab48bd0fd4a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

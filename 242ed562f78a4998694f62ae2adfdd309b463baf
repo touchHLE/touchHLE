@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3b2bbfcc_d281a53e",
+        "filename": "src/frameworks/foundation/ns_object.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 82,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-09-13T19:19:40Z",
+      "side": 1,
+      "message": "nit: remove space between (id) and methof name",
+      "revId": "242ed562f78a4998694f62ae2adfdd309b463baf",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7cb88fcf_f03482a8",
+        "filename": "src/frameworks/foundation/ns_object.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 84,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-09-13T19:19:40Z",
+      "side": 1,
+      "message": "this should be autoreleased",
+      "revId": "242ed562f78a4998694f62ae2adfdd309b463baf",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

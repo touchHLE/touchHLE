@@ -234,8 +234,7 @@ forUndefinedKey:(id)key { // NSString*
 }
 
 - (bool)respondsToSelector:(SEL)selector {
-    let class = msg![env; this class];
-    env.objc.class_has_method(class, selector)
+    env.objc.object_has_method(&env.mem, this, selector)
 }
 
 - (id)performSelector:(SEL)sel {

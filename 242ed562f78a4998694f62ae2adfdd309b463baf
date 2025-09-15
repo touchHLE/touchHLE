@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "87c2ceb2_8bf0d1b0",
+        "filename": "src/frameworks/foundation/ns_object.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 82,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2025-09-15T06:22:11Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "3b2bbfcc_d281a53e",
+      "revId": "242ed562f78a4998694f62ae2adfdd309b463baf",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "7cb88fcf_f03482a8",
@@ -31,6 +49,24 @@
       "writtenOn": "2025-09-13T19:19:40Z",
       "side": 1,
       "message": "this should be autoreleased",
+      "revId": "242ed562f78a4998694f62ae2adfdd309b463baf",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "5dab3fd9_46059d0d",
+        "filename": "src/frameworks/foundation/ns_object.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 84,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2025-09-15T06:22:11Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "7cb88fcf_f03482a8",
       "revId": "242ed562f78a4998694f62ae2adfdd309b463baf",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

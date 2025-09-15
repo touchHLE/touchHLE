@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b59174bc_7f42e8f9",
+        "filename": "tests/TestApp_source/main.m",
+        "patchSetId": 28
+      },
+      "lineNbr": 3169,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2025-09-15T13:40:17Z",
+      "side": 1,
+      "message": "This doesn\u0027t apply anymore. Since we\u0027re linking against libc and crt I think we can just remove the comment and simply return instead of exit. We could also add argc argv if we wanted to.",
+      "range": {
+        "startLine": 3165,
+        "startChar": 0,
+        "endLine": 3169,
+        "endChar": 53
+      },
+      "revId": "086fa8d7b914b0c3ade886ebd4b5f4a5258d24c4",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

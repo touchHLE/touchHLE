@@ -34,8 +34,9 @@
 
 // Declare test functions from other files.
 
-int test_AutoreleasePool(void);   // AutoReleasePoolTest.m
-int test_CGAffineTransform(void); // CGAffineTransform.c
+int test_AutoreleasePool(void);    // AutoReleasePoolTest.m
+int test_CGAffineTransform(void);  // CGAffineTransform.c
+int test_RespondsToSelector(void); // RespondsToSelector.m
 
 // === Main code ===
 
@@ -3162,6 +3163,7 @@ struct {
     FUNC_DEF(test_CFURLHasDirectoryPath),
     FUNC_DEF(test_CGImage_JPEG),
     FUNC_DEF(test_NSMutableString_deleteCharactersInRange),
+    FUNC_DEF(test_RespondsToSelector),
 };
 // clang-format on
 

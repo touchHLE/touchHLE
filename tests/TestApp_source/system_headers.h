@@ -41,6 +41,7 @@ typedef struct _NSRange {
 + (Class)class;
 + (instancetype)alloc;
 + (instancetype)new;
++ (BOOL)respondsToSelector:(SEL)selector;
 - (instancetype)init;
 - (instancetype)retain;
 - (void)release;

@@ -33,6 +33,42 @@
       "message": "I\u0027m assuming if its not it would probably be best to simply return a warning?",
       "revId": "8c33a4c4b435efa18c600748f740b92aec1bf0bc",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "c2f7bcd4_7218b458",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 6
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2025-09-15T12:35:25Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "ee09af39_01761b9b",
+      "revId": "8c33a4c4b435efa18c600748f740b92aec1bf0bc",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1b2a7b0d_fc7fd35c",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 6
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2025-09-15T12:35:25Z",
+      "side": 1,
+      "message": "I\u0027m assuming if it\u0027s not we\u0027d probably want to just log a warning not explicitly panic?",
+      "parentUuid": "de07ed7f_314f0c3c",
+      "revId": "8c33a4c4b435efa18c600748f740b92aec1bf0bc",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

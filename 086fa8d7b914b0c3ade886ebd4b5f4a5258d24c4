@@ -22,6 +22,29 @@
       },
       "revId": "086fa8d7b914b0c3ade886ebd4b5f4a5258d24c4",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9310d1a5_feb99612",
+        "filename": "tests/integration.rs",
+        "patchSetId": 28
+      },
+      "lineNbr": 93,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2025-09-15T13:43:49Z",
+      "side": 1,
+      "message": "This is more of a personal preference, but do we need to have the sdk in its own folder? I\u0027m fine either way. If changed we need to update the docs and the sdk_path.",
+      "range": {
+        "startLine": 93,
+        "startChar": 10,
+        "endLine": 93,
+        "endChar": 26
+      },
+      "revId": "086fa8d7b914b0c3ade886ebd4b5f4a5258d24c4",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

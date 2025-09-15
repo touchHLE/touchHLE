@@ -3,6 +3,29 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "38d3176a_ac416d82",
+        "filename": ".github/workflows/touchHLE_release.yml",
+        "patchSetId": 28
+      },
+      "lineNbr": 61,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2025-09-15T13:46:23Z",
+      "side": 1,
+      "message": "I think we can simplify this to curl -L https://github.com/touchHLE/common-3.0-sdk/releases/latest/download/common-3.0.sdk-macOS-universal.tar.gz | tar xzv\n\nSame for the windows one.",
+      "range": {
+        "startLine": 61,
+        "startChar": 121,
+        "endLine": 61,
+        "endChar": 259
+      },
+      "revId": "086fa8d7b914b0c3ade886ebd4b5f4a5258d24c4",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "b59174bc_7f42e8f9",
         "filename": "tests/TestApp_source/main.m",
         "patchSetId": 28

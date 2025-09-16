@@ -347,8 +347,13 @@ pub const CLASSES: ClassExports = objc_classes! {
                        ...args {
     let res = with_format(env, format, args.start());
     let res = from_rust_string(env, res);
-    autorelease(env, res)
+    let res = autorelease(env, res);
+
+    // This will return _touchHLE_NSString or _touchHLE_NSMutableString
+    msg![env; this stringWithString:res]
 }
+
+
 
 + (id)stringWithCharacters:(ConstPtr<unichar>)characters length:(NSUInteger)length {
     let new: id = msg![env; this alloc];
@@ -388,6 +393,10 @@ pub const CLASSES: ClassExports = objc_classes! {
     // I've seen of this method was on ASCII strings, so let's just hardcode
     // UTF-8 and hope that works.
     NSUTF8StringEncoding
+}
+
+- (id)dataUsingEncoding:(NSStringEncoding)encoding {
+    msg![env; this dataUsingEncoding:encoding allowLossyConversion:false]
 }
 
 // These are the two methods that have to be overridden by subclasses, so these
@@ -1241,16 +1250,12 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 - (id)initWithFormat:(id)format, // NSString*
                      ...args {
-    let res = with_format(env, format, args.start());
-    *env.objc.borrow_mut(this) = StringHostObject::Utf8(res.into());
-    this
+    init_with_format_inner(env, this, format, args.start())
 }
 
 - (id)initWithFormat:(id)format // NSString*
            arguments:(VaList)args {
-    let res = with_format(env, format, args);
-    *env.objc.borrow_mut(this) = StringHostObject::Utf8(res.into());
-    this
+    init_with_format_inner(env, this, format, args)
 }
 
 - (id)initWithBytes:(ConstPtr<u8>)bytes
@@ -1366,21 +1371,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 - (id)dataUsingEncoding:(NSStringEncoding)encoding
    allowLossyConversion:(bool)lossy {
-    if lossy {
-        log!("Warning: ignoring allow lossy conversion for '{}'", to_rust_string(env, this));
-    }
-    msg![env; this dataUsingEncoding:encoding]
-}
-
-- (id)dataUsingEncoding:(NSStringEncoding)encoding {
-    assert!(encoding == NSUTF8StringEncoding || encoding == NSASCIIStringEncoding);
-
-    // TODO: refactor with UTF8String method
-    let string = to_rust_string(env, this);
-    let c_string = env.mem.alloc_and_write_cstr(string.as_bytes());
-    let length: NSUInteger = (string.len() + 1).try_into().unwrap();
-
-    msg_class![env; NSData dataWithBytesNoCopy:(c_string.cast_void()) length:length]
+    data_using_encoding_lossy_inner(env, this, encoding, lossy)
 }
 
 - (id)componentsSeparatedByCharactersInSet:(id)cset { // NSCharacterSet*
@@ -1496,6 +1487,26 @@ pub const CLASSES: ClassExports = objc_classes! {
     msg![env; this init]
 }
 
+- (id)initWithFormat:(id)format, // NSString*
+                     ...args {
+    init_with_format_inner(env, this, format, args.start())
+}
+
+- (id)initWithFormat:(id)format // NSString*
+           arguments:(VaList)args {
+    init_with_format_inner(env, this, format, args)
+}
+
+- (id)initWithString:(id)string { // NSString*
+    () = msg![env; this setString:string];
+    this
+}
+
+- (id)dataUsingEncoding:(NSStringEncoding)encoding
+   allowLossyConversion:(bool)lossy {
+    data_using_encoding_lossy_inner(env, this, encoding, lossy)
+}
+
 - (())appendFormat:(id)format, // NSString*
                    ...args {
     assert_ne!(format, nil);
@@ -1513,6 +1524,37 @@ pub const CLASSES: ClassExports = objc_classes! {
 @end
 
 };
+
+/// This helper is used in initWithFormat: on our private subclasses
+/// _touchHLE_NSString` and _touchHLE_NSMutableString
+fn init_with_format_inner(env: &mut Environment, this: id, format: id, args: VaList) -> id {
+    let res = with_format(env, format, args);
+    *env.objc.borrow_mut::<StringHostObject>(this) = StringHostObject::Utf8(res.into());
+    this
+}
+
+/// This helper is used in dataUsingEncoding: on our private subclasses
+/// _touchHLE_NSString` and _touchHLE_NSMutableString
+fn data_using_encoding_lossy_inner(
+    env: &mut Environment,
+    this: id,
+    encoding: NSStringEncoding,
+    lossy: bool,
+) -> id {
+    if lossy {
+        log!(
+            "Warning: ignoring allowLossyConversion for '{}'",
+            to_rust_string(env, this)
+        );
+    }
+    assert!(encoding == NSUTF8StringEncoding || encoding == NSASCIIStringEncoding);
+
+    let string = to_rust_string(env, this);
+    let c_string = env.mem.alloc_and_write_cstr(string.as_bytes());
+    let length: NSUInteger = (string.len() + 1).try_into().unwrap();
+
+    msg_class![env; NSData dataWithBytesNoCopy:(c_string.cast_void()) length:length]
+}
 
 /// For use by [crate::dyld]: Handle static strings listed in the app binary.
 /// Sets up host objects and updates `isa` fields

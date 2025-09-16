@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8829d544_19c5b6ae",
+        "filename": "src/frameworks/foundation/ns_object.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 234,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-09-16T21:54:33Z",
+      "side": 0,
+      "message": "this calling class on the object, not on the class, so I don\u0027t see the issue?",
+      "revId": "6de2be99e69e26d394ef4b486475abcb9e6e908c",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

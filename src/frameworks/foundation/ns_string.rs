@@ -343,11 +343,13 @@ pub const CLASSES: ClassExports = objc_classes! {
     autorelease(env, new)
 }
 
-+ (id)stringWithFormat:(id)format, // NSString*
-                       ...args {
-    let res = with_format(env, format, args.start());
-    let res = from_rust_string(env, res);
-    autorelease(env, res)
++ (id)stringWithFormat:(id)format, ...args {
+    let text = with_format(env, format, args.start());
+    let content: id = from_rust_string(env, text);
+
+    let new: id = msg![env; this alloc];
+    let new: id = msg![env; new initWithString:content];
+    autorelease(env, new)
 }
 
 + (id)stringWithCharacters:(ConstPtr<unichar>)characters length:(NSUInteger)length {
@@ -1239,18 +1241,12 @@ pub const CLASSES: ClassExports = objc_classes! {
     new
 }
 
-- (id)initWithFormat:(id)format, // NSString*
-                     ...args {
-    let res = with_format(env, format, args.start());
-    *env.objc.borrow_mut(this) = StringHostObject::Utf8(res.into());
-    this
+- (id)initWithFormat:(id)format, ...args {
+    init_with_format_into_host(env, this, format, args.start())
 }
 
-- (id)initWithFormat:(id)format // NSString*
-           arguments:(VaList)args {
-    let res = with_format(env, format, args);
-    *env.objc.borrow_mut(this) = StringHostObject::Utf8(res.into());
-    this
+- (id)initWithFormat:(id)format arguments:(VaList)va {
+    init_with_format_into_host(env, this, format, va)
 }
 
 - (id)initWithBytes:(ConstPtr<u8>)bytes
@@ -1364,23 +1360,13 @@ pub const CLASSES: ClassExports = objc_classes! {
         .unwrap_or(false)
 }
 
-- (id)dataUsingEncoding:(NSStringEncoding)encoding
-   allowLossyConversion:(bool)lossy {
-    if lossy {
-        log!("Warning: ignoring allow lossy conversion for '{}'", to_rust_string(env, this));
-    }
-    msg![env; this dataUsingEncoding:encoding]
+- (id)dataUsingEncoding:(NSStringEncoding)encoding {
+    data_using_encoding(env, this, encoding)
 }
 
-- (id)dataUsingEncoding:(NSStringEncoding)encoding {
-    assert!(encoding == NSUTF8StringEncoding || encoding == NSASCIIStringEncoding);
-
-    // TODO: refactor with UTF8String method
-    let string = to_rust_string(env, this);
-    let c_string = env.mem.alloc_and_write_cstr(string.as_bytes());
-    let length: NSUInteger = (string.len() + 1).try_into().unwrap();
-
-    msg_class![env; NSData dataWithBytesNoCopy:(c_string.cast_void()) length:length]
+- (id)dataUsingEncoding:(NSStringEncoding)encoding
+   allowLossyConversion:(bool)lossy {
+    data_using_encoding_lossy(env, this, encoding, lossy)
 }
 
 - (id)componentsSeparatedByCharactersInSet:(id)cset { // NSCharacterSet*
@@ -1496,6 +1482,29 @@ pub const CLASSES: ClassExports = objc_classes! {
     msg![env; this init]
 }
 
+- (id)initWithFormat:(id)format, ...args {
+    init_with_format_into_host(env, this, format, args.start())
+}
+
+- (id)initWithFormat:(id)format arguments:(VaList)va {
+    init_with_format_into_host(env, this, format, va)
+}
+
+- (id)initWithString:(id)string { // NSString*
+    let this: id = msg![env; this init];
+    () = msg![env; this setString:string];
+    this
+}
+
+- (id)dataUsingEncoding:(NSStringEncoding)encoding {
+    data_using_encoding(env, this, encoding)
+}
+
+- (id)dataUsingEncoding:(NSStringEncoding)encoding
+   allowLossyConversion:(bool)lossy {
+    data_using_encoding_lossy(env, this, encoding, lossy)
+}
+
 - (())appendFormat:(id)format, // NSString*
                    ...args {
     assert_ne!(format, nil);
@@ -1513,6 +1522,39 @@ pub const CLASSES: ClassExports = objc_classes! {
 @end
 
 };
+
+fn init_with_format_into_host(env: &mut Environment, this: id, format: id, args: VaList) -> id {
+    let s = with_format(env, format, args);
+    *env.objc.borrow_mut::<StringHostObject>(this) = StringHostObject::Utf8(s.into());
+    this
+}
+
+fn data_using_encoding(
+    env: &mut Environment,
+    this: id,
+    encoding: NSStringEncoding,
+) -> id {
+    assert!(encoding == NSUTF8StringEncoding || encoding == NSASCIIStringEncoding);
+
+    let string = to_rust_string(env, this);
+    let c_string = env.mem.alloc_and_write_cstr(string.as_bytes());
+    let length: NSUInteger = (string.len() + 1).try_into().unwrap();
+
+    msg_class![env; NSData dataWithBytesNoCopy:(c_string.cast_void()) length:length]
+}
+
+fn data_using_encoding_lossy(
+    env: &mut Environment,
+    this: id,
+    encoding: NSStringEncoding,
+    lossy: bool,
+) -> id {
+    if lossy {
+        log!("Warning: ignoring allowLossyConversion for '{}'", to_rust_string(env, this));
+    }
+    data_using_encoding(env, this, encoding)
+}
+
 
 /// For use by [crate::dyld]: Handle static strings listed in the app binary.
 /// Sets up host objects and updates `isa` fields

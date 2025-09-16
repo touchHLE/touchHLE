@@ -69,6 +69,24 @@
       "parentUuid": "de07ed7f_314f0c3c",
       "revId": "8c33a4c4b435efa18c600748f740b92aec1bf0bc",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f2ccb282_3285be54",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 6
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2025-09-16T07:22:02Z",
+      "side": 1,
+      "message": "It\u0027s fine, but if you check the page size ahead of time you can force alignment by overallocating 4kb and picking an address that aligns within that range.",
+      "parentUuid": "1b2a7b0d_fc7fd35c",
+      "revId": "8c33a4c4b435efa18c600748f740b92aec1bf0bc",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

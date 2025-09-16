@@ -16,6 +16,24 @@
       "message": "Depends on https://gerrithub.io/c/touchHLE/touchHLE/+/1222699 to be merged first",
       "revId": "92a2e89a216fbf7bd61671a30545a240af6acd3d",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "47fd97c7_43183f7c",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 4
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-09-16T23:38:24Z",
+      "side": 1,
+      "message": "Wrong patch set",
+      "parentUuid": "6c44d32b_e1c2e383",
+      "revId": "92a2e89a216fbf7bd61671a30545a240af6acd3d",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

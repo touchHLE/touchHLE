@@ -984,33 +984,49 @@ impl Environment {
                 self.current_thread
             );
         }
-        self.stack_trace_for_thread(self.current_thread);
+        // Ok to use panicking version since we catch it
+        let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            self.stack_trace_for_thread(self.current_thread, |string| echo!("{}", string));
+        }));
     }
 
-    fn stack_trace_all(&self) {
-        echo_no_panic!(
+    pub fn stack_trace_all(&self) {
+        // Ok to use panicking version since we catch it
+        let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            self.stack_trace_all_callback(|string| echo!("{}", string));
+        }));
+    }
+
+    /// Perform a stack trace on all threads, providing the strings to a
+    /// callback. Note that a newline should be appended after each call, as
+    /// they are not added itself.
+    pub fn stack_trace_all_callback<F: FnMut(String)>(&self, mut callback: F) {
+        callback(format!(
             "Attempting to produce stack trace for current thread (#{}):",
             self.current_thread
-        );
-        self.stack_trace_for_thread(self.current_thread);
+        ));
+        self.stack_trace_for_thread(self.current_thread, &mut callback);
         for tid in 0..self.threads.len() {
             if self.threads[tid].is_alive() && tid != self.current_thread {
-                echo_no_panic!("Attempting to produce stack trace for thread #{}:", tid);
-                self.stack_trace_for_thread(tid);
+                callback(format!(
+                    "Attempting to produce stack trace for thread #{}:",
+                    tid
+                ));
+                self.stack_trace_for_thread(tid, &mut callback);
             }
         }
     }
 
-    fn stack_trace_for_thread(&self, tid: usize) {
+    fn stack_trace_for_thread<F: FnMut(String)>(&self, tid: usize, mut callback: F) {
         if tid >= self.threads.len() {
-            echo_no_panic!(
+            callback(format!(
                 "Thread {} is too large ({} threads exist)!",
                 tid,
                 self.threads.len()
-            );
+            ));
         }
         let Some(stack_range) = self.threads[tid].stack.clone() else {
-            echo_no_panic!("Failed to get stack trace!");
+            callback("Failed to get stack trace!".to_string());
             return;
         };
         let (regs, cpsr) = if self.current_thread == tid {
@@ -1019,7 +1035,7 @@ impl Environment {
             (*self.cpu.regs(), self.cpu.cpsr())
         } else {
             let Some(ctx) = self.threads[tid].guest_context.as_ref() else {
-                echo_no_panic!("Failed to get registers for thread {}!", tid);
+                callback(format!("Failed to get registers for thread {}!", tid));
                 return;
             };
             (ctx.regs, ctx.cpsr)
@@ -1027,34 +1043,34 @@ impl Environment {
         let pc_nothumb = regs[cpu::Cpu::PC];
         let thumb = (cpsr & cpu::Cpu::CPSR_THUMB) == cpu::Cpu::CPSR_THUMB;
         let pc = GuestFunction::from_addr_and_thumb_flag(pc_nothumb, thumb);
-        echo_no_panic!(" 0. {:#x} (PC)", pc.addr_with_thumb_bit());
+        callback(format!(" 0. {:#x} (PC)", pc.addr_with_thumb_bit()));
         let mut lr = regs[cpu::Cpu::LR];
         let return_to_host_routine_addr = self.dyld.return_to_host_routine().addr_with_thumb_bit();
         let thread_exit_routine_addr = self.dyld.thread_exit_routine().addr_with_thumb_bit();
         if lr == return_to_host_routine_addr {
-            echo_no_panic!(" 1. [host function] (LR)");
+            callback(" 1. [host function] (LR)".to_string());
         } else if lr == thread_exit_routine_addr {
-            echo_no_panic!(" 1. [thread exit] (LR)");
+            callback(" 1. [thread exit] (LR)".to_string());
             return;
         } else {
-            echo_no_panic!(" 1. {:#x} (LR)", lr);
+            callback(format!(" 1. {:#x} (LR)", lr));
         }
         let mut i = 2;
         let mut fp: mem::ConstPtr<u8> = mem::Ptr::from_bits(regs[abi::FRAME_POINTER]);
         loop {
             if !stack_range.contains(&fp.to_bits()) {
-                echo_no_panic!("Next FP ({:?}) is outside the stack.", fp);
+                callback(format!("Next FP ({:?}) is outside the stack.", fp));
                 break;
             }
             lr = self.mem.read((fp + 4).cast());
             fp = self.mem.read(fp.cast());
             if lr == return_to_host_routine_addr {
-                echo_no_panic!("{:2}. [host function]", i);
+                callback(format!("{:2}. [host function]", i));
             } else if lr == thread_exit_routine_addr {
-                echo_no_panic!("{:2}. [thread exit]", i);
+                callback(format!("{:2}. [thread exit]", i));
                 return;
             } else {
-                echo_no_panic!("{:2}. {:#x}", i, lr);
+                callback(format!("{:2}. {:#x}", i, lr));
             }
             i += 1;
         }

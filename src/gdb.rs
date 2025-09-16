@@ -635,8 +635,7 @@ impl GdbServer {
                         let thread_block = format!("{}", env.threads[tid].blocked_by);
                         let mut thread_block_hex = String::new();
                         thread_block
-                            .as_bytes()
-                            .iter()
+                            .bytes()
                             .for_each(|b| write!(thread_block_hex, "{b:02x}").unwrap());
                         self.send_packet(thread_block_hex.as_str());
                     } else if p == "qAttached" {

@@ -16,6 +16,24 @@
       "message": "Do you have a test program to share?",
       "revId": "51596aaffc893b873a52cb1a316e8188a35949a4",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "30880ed7_1e066253",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 4
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2025-09-16T02:26:30Z",
+      "side": 1,
+      "message": "```objc\n    NSAutoreleasePool* p1 \u003d [[NSAutoreleasePool alloc] init];\n    NSString* s1 \u003d [NSString stringWithCString:\"s1\" encoding:NSUTF8StringEncoding];\n    \n    NSAutoreleasePool* p2 \u003d [[NSAutoreleasePool alloc] init];\n    NSString* s2 \u003d [NSString stringWithCString:\"s2\" encoding:NSUTF8StringEncoding];    \n    NSLog(@\"%@ %@\", s1, s2);\n\n    NSString* s3 \u003d [[NSString stringWithCString:\"s3\" encoding:NSUTF8StringEncoding] retain];\n    // Prints 2\n    NSLog(@\"s3 rc: %i\", [s3 retainCount]);\n    \n    [p1 drain];\n    \n    // Crashes\n    // NSLog(@\"%@\", s2);\n    \n    // Crashes\n    // [p2 drain];\n    \n    // Prints 1\n    NSLog(@\"s3 rc: %i\", [s3 retainCount]);\n    [s3 release];\n```",
+      "parentUuid": "d878aded_33d9cfe2",
+      "revId": "51596aaffc893b873a52cb1a316e8188a35949a4",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

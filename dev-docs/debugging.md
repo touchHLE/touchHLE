@@ -52,7 +52,7 @@ GDB provides various services on top of this, for example:
 
 * `break *0x1000` sets a breakpoint
 * `info registers` shows the content of registers
-* `backtrace` shows a backtrace (though touchHLE's own may be better)
+* `monitor backtrace` shows a backtrace (this works better than gdb's `backtrace` command)
 * `print *(float*)0x2000` evaluates a simple C-like expression
 * `layout asm` opens a disassembly view
 * `kill` will make touchHLE crash

@@ -12,9 +12,10 @@
 //!   - `include/gdb/signals.def` for the meanings of signal numbers
 //!   - `gdb/arch/arm.h` for ARMv6 register numbers
 
-use crate::cpu::CpuError;
+use crate::cpu::{Cpu, CpuError};
 use crate::environment::{Environment, ThreadState};
-use crate::mem::{GuestUSize, Ptr};
+use crate::mem::{GuestUSize, MutPtr, Ptr};
+use crate::objc::ObjC;
 use std::fmt::Write as _;
 use std::io::{BufRead, BufReader, ErrorKind, Read, Write};
 use std::net::TcpStream;
@@ -674,6 +675,52 @@ impl GdbServer {
                             // Unsupported annex or invalid offset
                             self.send_packet("E00");
                         }
+                    } else if let Some(cmd) = p.strip_prefix("qRcmd,") {
+                        // Convert the hex encoded command to a string:
+                        let mut cmd_window = cmd;
+                        let mut bytes = Vec::new();
+                        while cmd_window.len() >= 2 {
+                            let curr_byte;
+                            (curr_byte, cmd_window) = cmd_window.split_at(2);
+                            let Ok(byte) = u8::from_str_radix(curr_byte, 16) else {
+                                self.send_packet("E00");
+                                continue 'packet_loop;
+                            };
+                            bytes.push(byte);
+                        }
+                        let Ok(cmd) = str::from_utf8(bytes.as_slice()) else {
+                            self.send_packet("E00");
+                            continue 'packet_loop;
+                        };
+                        let packet_str = match self.handle_monitor_command(env, cmd) {
+                            Ok(output) => {
+                                if output.is_empty() {
+                                    "OK".to_string()
+                                } else {
+                                    let mut hex_string = "".to_string();
+                                    output
+                                        .bytes()
+                                        .for_each(|b| write!(hex_string, "{b:02x}").unwrap());
+                                    // Write newline to end
+                                    write!(hex_string, "0A").unwrap();
+                                    hex_string
+                                }
+                            }
+                            Err(mut msg) => {
+                                if msg.is_empty() {
+                                    msg.push_str("Unspecified Error.")
+                                } else {
+                                    msg.insert_str(0, "Error: ");
+                                }
+                                let mut hex_string = "".to_string();
+                                msg.bytes()
+                                    .for_each(|b| write!(hex_string, "{b:02x}").unwrap());
+                                // Write newline to end
+                                write!(hex_string, "0A").unwrap();
+                                hex_string
+                            }
+                        };
+                        self.send_packet(&packet_str);
                     } else {
                         log_dbg!("Unhandled packet.");
                         self.send_packet("");
@@ -688,6 +735,60 @@ impl GdbServer {
                     self.send_packet("");
                 }
             }
+        }
+    }
+
+    fn handle_monitor_command(
+        &mut self,
+        env: &mut Environment,
+        cmd: &str,
+    ) -> Result<String, String> {
+        fn get_next_ptr_or_reg<'a>(cpu: &Cpu, ptr_str: &'a str) -> Result<(u32, &'a str), String> {
+            let ptr_str = ptr_str.trim_start();
+            let (ptr, remaining_str) = if let Some(ptr_str) = ptr_str.strip_prefix("0x") {
+                let (ptr_str, remaining) = ptr_str.split_once(" \n").unwrap_or((ptr_str, ""));
+                let Ok(ptr) = u32::from_str_radix(ptr_str, 16) else {
+                    return Err("Pointer is not valid hexadecimal!".to_string());
+                };
+                (ptr, remaining)
+            } else if let Some(reg_str) = ptr_str.strip_prefix("$r") {
+                let (reg_str, remaining) = reg_str.split_once(" \n").unwrap_or((reg_str, ""));
+                let Ok(regnum) = reg_str.parse::<u32>() else {
+                    return Err("Invalid register number.".to_string());
+                };
+                if regnum > 16 {
+                    return Err("Invalid register number.".to_string());
+                }
+                (cpu.regs()[regnum as usize], remaining)
+            } else {
+                return Err("Expected pointer arg (starting with 0x) or register (starting with $r) to object.".to_string());
+            };
+            Ok((ptr, remaining_str))
+        }
+        log_dbg!("Running monitor command {cmd:?}");
+        // TODO: If there are many more of these commands it would be better to
+        // have a proper parser, but for now ad-hoc parsing should be fine.
+        if cmd == "bt" || cmd == "backtrace" {
+            env.stack_trace_all();
+            Ok("".to_string())
+        } else if let Some(ptr_str) = cmd.strip_prefix("classof") {
+            let (ptr, _) = get_next_ptr_or_reg(&env.cpu, ptr_str)?;
+            let obj = MutPtr::from_bits(ptr);
+            env.objc
+                .try_get_class_name(ObjC::read_isa(obj, &env.mem))
+                .map_or(Err("Not a valid object.".to_string()), |str| {
+                    Ok(str.to_string())
+                })
+        } else if let Some(ptr_str) = cmd.strip_prefix("host_obj_type") {
+            let (ptr, _) = get_next_ptr_or_reg(&env.cpu, ptr_str)?;
+            let obj = MutPtr::from_bits(ptr);
+            env.objc
+                .get_host_object(obj)
+                .map_or(Err("Not a valid object.".to_string()), |ho| {
+                    Ok(ho.type_name().to_string())
+                })
+        } else {
+            Err("Bad command.".to_string())
         }
     }
 

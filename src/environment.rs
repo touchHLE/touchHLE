@@ -900,7 +900,7 @@ impl Environment {
         self.stack_trace_for_thread(self.current_thread);
     }
 
-    fn stack_trace_all(&self) {
+    pub fn stack_trace_all(&self) {
         echo_no_panic!(
             "Attempting to produce stack trace for current thread (#{}):",
             self.current_thread

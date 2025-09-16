@@ -16,6 +16,24 @@
       "message": "this is the method what would be called",
       "revId": "c493a11ffad61b319b5fa5955350f49945a191d6",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3151bbda_cf2c5c0e",
+        "filename": "src/frameworks/foundation/ns_object.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 118,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2025-09-16T21:57:24Z",
+      "side": 1,
+      "message": "No, because there\u0027s a class override that returns the class, not the metaclass\n```\n+ (Class)class {\n    this\n}\n```",
+      "parentUuid": "ecdd5f2c_10c021ad",
+      "revId": "c493a11ffad61b319b5fa5955350f49945a191d6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

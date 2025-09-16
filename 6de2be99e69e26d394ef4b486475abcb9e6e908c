@@ -16,6 +16,24 @@
       "message": "this calling class on the object, not on the class, so I don\u0027t see the issue?",
       "revId": "6de2be99e69e26d394ef4b486475abcb9e6e908c",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "51953f36_02b39136",
+        "filename": "src/frameworks/foundation/ns_object.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 234,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2025-09-16T21:57:24Z",
+      "side": 0,
+      "message": "If you call this method on the class object, it should return if the class responds to the selectors, not the instances.",
+      "parentUuid": "8829d544_19c5b6ae",
+      "revId": "6de2be99e69e26d394ef4b486475abcb9e6e908c",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

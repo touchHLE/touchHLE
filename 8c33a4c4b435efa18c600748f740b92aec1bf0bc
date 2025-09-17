@@ -105,6 +105,24 @@
       "parentUuid": "f2ccb282_3285be54",
       "revId": "8c33a4c4b435efa18c600748f740b92aec1bf0bc",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "cfeca49b_8c3f8ae4",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 6
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2025-09-17T15:48:02Z",
+      "side": 1,
+      "message": "Removed the refurbish, the env should be auto dropped at the end of app picker.",
+      "parentUuid": "c6818d73_8449f9fd",
+      "revId": "8c33a4c4b435efa18c600748f740b92aec1bf0bc",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

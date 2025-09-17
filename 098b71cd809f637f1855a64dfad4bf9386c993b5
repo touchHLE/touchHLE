@@ -70,6 +70,24 @@
       "parentUuid": "7c33b083_e6325d50",
       "revId": "098b71cd809f637f1855a64dfad4bf9386c993b5",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9ba30214_7153bbbb",
+        "filename": "tests/common-3.0.sdk",
+        "patchSetId": 30
+      },
+      "lineNbr": 1,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2025-09-17T22:19:37Z",
+      "side": 1,
+      "message": "Oops, this is a really bad mistake on my end, that\u0027s where I put my copy of the SDK and isn\u0027t supposed to be prescriptive, sorry! It got caught up when I changed the directory structure and forgot to change the gitignore.",
+      "parentUuid": "7c33b083_e6325d50",
+      "revId": "098b71cd809f637f1855a64dfad4bf9386c993b5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

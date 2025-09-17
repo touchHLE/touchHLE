@@ -87,6 +87,24 @@
       "parentUuid": "1b2a7b0d_fc7fd35c",
       "revId": "8c33a4c4b435efa18c600748f740b92aec1bf0bc",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c6818d73_8449f9fd",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 6
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2025-09-17T12:51:06Z",
+      "side": 1,
+      "message": "I implemented page size alignment only for unix since windows is 4KiB by default. Practically speaking is it even worth it to add this complexity. Are we ever going to encounter an operating system that uses sub 4Kib pages, given that any modern architecture has a minimum 4Kib page size?",
+      "parentUuid": "f2ccb282_3285be54",
+      "revId": "8c33a4c4b435efa18c600748f740b92aec1bf0bc",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

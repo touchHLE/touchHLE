@@ -71,6 +71,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "74795d16_c886f011",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 353,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-09-17T21:57:24Z",
+      "side": 1,
+      "message": "I\u0027m not sure we really should call `stringWithString:` here, it\u0027s wasteful. The problem is that `from_rust_string` always makes an `NSString`, right? We could just add a variant of that function that makes an `NSMutableString`. I guess we can have a `from_rust_string_inner` that takes the class as a parameter.",
+      "parentUuid": "060d7a8f_f16cccc0",
+      "revId": "daf28cb942ae1cc4136d9f080ca4e066f3b42ce5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "1384e82d_621af4d1",
         "filename": "src/frameworks/foundation/ns_string.rs",
         "patchSetId": 5

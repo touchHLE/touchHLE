@@ -1,0 +1,106 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3318e99c_a5df57d5",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 5
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-09-17T20:34:15Z",
+      "side": 1,
+      "message": "Please also fix typos in the description of the commit",
+      "revId": "daf28cb942ae1cc4136d9f080ca4e066f3b42ce5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1b6d42ce_4a7d705a",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 349,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-09-17T20:34:15Z",
+      "side": 1,
+      "message": "this creates a memory leak! you need to release it before function returns",
+      "revId": "daf28cb942ae1cc4136d9f080ca4e066f3b42ce5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3d671d37_ca7c6d8c",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 351,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-09-17T20:34:15Z",
+      "side": 1,
+      "message": "An explanaiton comment is needed here. I.e. why implementation must be changed here?",
+      "revId": "daf28cb942ae1cc4136d9f080ca4e066f3b42ce5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "060d7a8f_f16cccc0",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 353,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-09-17T20:34:15Z",
+      "side": 1,
+      "message": "you could just call `stringWithString:` on `this` here",
+      "revId": "daf28cb942ae1cc4136d9f080ca4e066f3b42ce5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1384e82d_621af4d1",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 1499,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-09-17T20:34:15Z",
+      "side": 1,
+      "message": "i don\u0027t think this line is needed",
+      "revId": "daf28cb942ae1cc4136d9f080ca4e066f3b42ce5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4d5c4aff_888cd421",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 1531,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-09-17T20:34:15Z",
+      "side": 1,
+      "message": "what does it mean `_into_host` ?\n\nUsually, for shared implementaion function we use `_inner` or `_common` suffixes. I think you should do the same.\n\nAlso please write a docstring for each helper funciton.",
+      "revId": "daf28cb942ae1cc4136d9f080ca4e066f3b42ce5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

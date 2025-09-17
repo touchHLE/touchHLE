@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "992463b2_a91fb74b",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 1375,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-09-17T20:34:15Z",
+      "side": 0,
+      "message": "according to docs https://developer.apple.com/documentation/foundation/nsstring/data(using:)?language\u003dobjc, this just calls dataUsingEncoding:allowLossyConversion: with false as a second arg.\n\nyou should do that and move current implementation to that method, this way we will only need to define it at the level of NSString, not our private implementations.",
+      "revId": "1cec522cebd728f91f8ecb2111cc3cb16a93efc1",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

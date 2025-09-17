@@ -34,6 +34,24 @@
       "parentUuid": "4529672a_22e51acb",
       "revId": "098b71cd809f637f1855a64dfad4bf9386c993b5",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7c33b083_e6325d50",
+        "filename": "tests/common-3.0.sdk",
+        "patchSetId": 30
+      },
+      "lineNbr": 1,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-09-17T22:14:04Z",
+      "side": 1,
+      "message": "Anecdotally: I\u0027m complaining about this because I\u0027m checking out the patch right now, and I\u0027ve been spending minutes trying to massage the directory structure to get it to work ^^;",
+      "parentUuid": "a11545b3_9da1e73e",
+      "revId": "098b71cd809f637f1855a64dfad4bf9386c993b5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

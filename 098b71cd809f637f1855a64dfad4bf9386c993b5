@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "163edf6c_5a153fb7",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 30
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-09-17T22:27:03Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "a7a568bd_fcc76a08",
+      "revId": "098b71cd809f637f1855a64dfad4bf9386c993b5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "4529672a_22e51acb",
@@ -121,6 +139,24 @@
       "side": 1,
       "message": "Ahhh I see! That makes sense.",
       "parentUuid": "9ba30214_7153bbbb",
+      "revId": "098b71cd809f637f1855a64dfad4bf9386c993b5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "7d51db03_45bb029d",
+        "filename": "tests/common-3.0.sdk",
+        "patchSetId": 30
+      },
+      "lineNbr": 1,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-09-17T22:27:03Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "3bc4b219_e2d993db",
       "revId": "098b71cd809f637f1855a64dfad4bf9386c993b5",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

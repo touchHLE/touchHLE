@@ -52,6 +52,24 @@
       "parentUuid": "a11545b3_9da1e73e",
       "revId": "098b71cd809f637f1855a64dfad4bf9386c993b5",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "031e7143_9a3c6c80",
+        "filename": "tests/common-3.0.sdk",
+        "patchSetId": 30
+      },
+      "lineNbr": 1,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-09-17T22:17:08Z",
+      "side": 1,
+      "message": "oh my god why does one of the directories have a hyphen and one has a period. that\u0027s evil. no wonder the symlinks didn\u0027t work",
+      "parentUuid": "7c33b083_e6325d50",
+      "revId": "098b71cd809f637f1855a64dfad4bf9386c993b5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

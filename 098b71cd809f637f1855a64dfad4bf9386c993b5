@@ -16,6 +16,24 @@
       "message": "Windows isn\u0027t fond of symlinks, and personally I don\u0027t like this directory structure.\n\nCan we use the path `vendor/common-3.0.sdk` instead, and then not have any symlink or directory at that location in the repo, instead leaving it up to the user? (With it `.gitignore`\u0027d of course.)",
       "revId": "098b71cd809f637f1855a64dfad4bf9386c993b5",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a11545b3_9da1e73e",
+        "filename": "tests/common-3.0.sdk",
+        "patchSetId": 30
+      },
+      "lineNbr": 1,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-09-17T22:12:03Z",
+      "side": 1,
+      "message": "Uhh, wait we don\u0027t use the `vendor/` thing for LLVM… Okay then, this is the right location, but can you just remove this symlink and `.gitignore` it instead?",
+      "parentUuid": "4529672a_22e51acb",
+      "revId": "098b71cd809f637f1855a64dfad4bf9386c993b5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

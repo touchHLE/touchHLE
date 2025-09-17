@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "4b4957de_19a7572c",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 5
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-09-17T22:20:38Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "3318e99c_a5df57d5",
+      "revId": "daf28cb942ae1cc4136d9f080ca4e066f3b42ce5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "1b6d42ce_4a7d705a",
@@ -35,6 +53,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "5bc0ddce_85f1bbdf",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 349,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-09-17T22:20:38Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "1b6d42ce_4a7d705a",
+      "revId": "daf28cb942ae1cc4136d9f080ca4e066f3b42ce5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "3d671d37_ca7c6d8c",
@@ -48,6 +84,24 @@
       "writtenOn": "2025-09-17T20:34:15Z",
       "side": 1,
       "message": "An explanaiton comment is needed here. I.e. why implementation must be changed here?",
+      "revId": "daf28cb942ae1cc4136d9f080ca4e066f3b42ce5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "73927399_68dfc9f8",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 351,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-09-17T22:20:38Z",
+      "side": 1,
+      "message": "So, the explination is in the channel, this was always created a _touchHLE_NSString, when it needs to crate a _touchHLE_NSMutableString too.  Added the comment though.",
+      "parentUuid": "3d671d37_ca7c6d8c",
       "revId": "daf28cb942ae1cc4136d9f080ca4e066f3b42ce5",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
@@ -105,6 +159,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "a53207b2_5db6e250",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 353,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-09-17T22:20:38Z",
+      "side": 1,
+      "message": "Right, the nice thing about this is that stringWithFormat can still be implimented on the base class and does not need to be duplicated. I switched it to use stringWithString (which just uses initWithString anyway).",
+      "parentUuid": "060d7a8f_f16cccc0",
+      "revId": "daf28cb942ae1cc4136d9f080ca4e066f3b42ce5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "1384e82d_621af4d1",
@@ -122,6 +194,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "83f36ee7_c96896f5",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 1499,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-09-17T22:20:38Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "1384e82d_621af4d1",
+      "revId": "daf28cb942ae1cc4136d9f080ca4e066f3b42ce5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "4d5c4aff_888cd421",
@@ -135,6 +225,24 @@
       "writtenOn": "2025-09-17T20:34:15Z",
       "side": 1,
       "message": "what does it mean `_into_host` ?\n\nUsually, for shared implementaion function we use `_inner` or `_common` suffixes. I think you should do the same.\n\nAlso please write a docstring for each helper funciton.",
+      "revId": "daf28cb942ae1cc4136d9f080ca4e066f3b42ce5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "143cb6d8_28d400ff",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 1531,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-09-17T22:20:38Z",
+      "side": 1,
+      "message": "Just a thing I was calling it at 1 point as in this function uses the host object (and cannot be in the base abstract classes), but I changed it use inner.",
+      "parentUuid": "4d5c4aff_888cd421",
       "revId": "daf28cb942ae1cc4136d9f080ca4e066f3b42ce5",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

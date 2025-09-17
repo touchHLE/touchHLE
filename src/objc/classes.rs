@@ -435,7 +435,8 @@ fn substitute_classes(
         || name.starts_with("Mobclix")
         || name.starts_with("FB") // Facebook
         || name.starts_with("Flurry")
-        || name.starts_with("OpenFeint"))
+        || name.starts_with("OpenFeint")
+        || name.starts_with("FLStat"))
     {
         return None;
     }

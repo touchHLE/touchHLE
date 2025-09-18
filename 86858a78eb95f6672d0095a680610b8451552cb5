@@ -34,6 +34,24 @@
       "parentUuid": "3b9e2556_49844bcc",
       "revId": "86858a78eb95f6672d0095a680610b8451552cb5",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "2853d90d_691253b1",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 8
+      },
+      "lineNbr": 399,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2025-09-18T15:02:08Z",
+      "side": 1,
+      "message": "Having thought about it a bit more its probably fine. The overall change to to_rust_string could probably be included as a separate patch instead. Just thought about it in order to avoid having to refactor more later down the line.",
+      "parentUuid": "e8bce1c0_9f83f66b",
+      "revId": "86858a78eb95f6672d0095a680610b8451552cb5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

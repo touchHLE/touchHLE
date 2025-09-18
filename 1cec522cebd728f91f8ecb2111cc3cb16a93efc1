@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "bb360b36_da69e436",
+        "filename": "src/frameworks/foundation/ns_file_handle.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 73,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-09-18T21:04:08Z",
+      "side": 1,
+      "message": "this is trivial to implement for the case of file by calling readDataToEndOfFile. for other cases it\u0027s enough to have a TODO for a moment.",
+      "revId": "1cec522cebd728f91f8ecb2111cc3cb16a93efc1",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

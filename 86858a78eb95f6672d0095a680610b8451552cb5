@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3b9e2556_49844bcc",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 8
+      },
+      "lineNbr": 399,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2025-09-18T14:40:55Z",
+      "side": 1,
+      "message": "I don\u0027t think putting this on NSString is a good idea unless we also put the other method on it as well. If we have a subclassed implementation this could cause issues since the sub method wont have an implementation. If we want to make truly generic methods, I would do what abnormalmaps suggested and make the to_rust_string method support both concrete and subclasses. \n\nGeneral idea here is in the to_rust_string method check the class of the string, if its a touchHLE type, use the existing code. If its not then we\u0027d have to iterate the string based on the length, collect the units and return the constructed string instead.",
+      "revId": "86858a78eb95f6672d0095a680610b8451552cb5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

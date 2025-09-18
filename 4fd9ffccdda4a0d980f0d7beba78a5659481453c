@@ -16,6 +16,24 @@
       "message": "Thanks!\n\nI want to hold off on merging this until I can actually test it. I might need to build the SDK from source for this, I\u0027ll try that later in the week maybe.",
       "revId": "4fd9ffccdda4a0d980f0d7beba78a5659481453c",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "85462a43_3a80f38e",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 31
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-09-18T10:25:37Z",
+      "side": 1,
+      "message": "With the universal build fix, this now works flawlessly. Thank you so very very much!",
+      "parentUuid": "30edc09a_d2c81cdf",
+      "revId": "4fd9ffccdda4a0d980f0d7beba78a5659481453c",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "25a2ac2f_5512616f",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 12
+      },
+      "lineNbr": 1554,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-09-18T21:17:11Z",
+      "side": 1,
+      "message": "to_rust_string will convert string using UTF-8 encoding.\nWhile it work for UTF-8, it will not generally work for ASCII supersets such as ISOLatin1.\n\nyou should either support that encoding properly or assert ASCII subset bytes.\n\n(this is also mean that we\u0027re missing an assert for NSASCIIStringEncoding case here too)",
+      "revId": "b1521a9ce750859ee869c553775a6602e4834ec6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

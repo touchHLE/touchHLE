@@ -3,6 +3,40 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "3a699808_272a2668",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 8
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-09-18T20:16:17Z",
+      "side": 1,
+      "message": "Same comment about correct method signature applies to the commit message.\n\nMoreover, I don\u0027t think it requires that much detail in the sub section - you\u0027re just listing what was done, I can already see it from the patchest itself. It would be more useful to describe that you\u0027re fixing stringWithformat: method for NSMutableString private implementation and doing some additional refactoring.",
+      "revId": "86858a78eb95f6672d0095a680610b8451552cb5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e40ab7f3_377cec3d",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 8
+      },
+      "lineNbr": 352,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-09-18T20:16:17Z",
+      "side": 1,
+      "message": "nit: in Objective-C there is a difference between `method` and `method:` signatures - the latter one takes argument, the former one doesn\u0027t.\n\nHere the correct signature of methods is `stringWithString:` and `initWithString:`",
+      "revId": "86858a78eb95f6672d0095a680610b8451552cb5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "3b9e2556_49844bcc",
         "filename": "src/frameworks/foundation/ns_string.rs",
         "patchSetId": 8
@@ -86,6 +120,40 @@
       "side": 1,
       "message": "Yes, I think its find to leave this as is. What I mean is long term we should modify to_rust_string and then we can avoid needing to use inner functions for this stuff. Either way I agree that thats beyond the scope of this patch.",
       "parentUuid": "6eca6a44_2c16200a",
+      "revId": "86858a78eb95f6672d0095a680610b8451552cb5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b32904f0_1e7caa90",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 8
+      },
+      "lineNbr": 1529,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-09-18T20:16:17Z",
+      "side": 1,
+      "message": "please add a docstring to this helper function",
+      "revId": "86858a78eb95f6672d0095a680610b8451552cb5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a9d22891_9c7eb75a",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 8
+      },
+      "lineNbr": 1535,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-09-18T20:16:17Z",
+      "side": 1,
+      "message": "same comment about docstring",
       "revId": "86858a78eb95f6672d0095a680610b8451552cb5",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

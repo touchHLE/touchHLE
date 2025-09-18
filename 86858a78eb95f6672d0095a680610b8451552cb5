@@ -70,6 +70,24 @@
       "parentUuid": "e8bce1c0_9f83f66b",
       "revId": "86858a78eb95f6672d0095a680610b8451552cb5",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "8c8730da_a921ee41",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 8
+      },
+      "lineNbr": 399,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2025-09-18T16:16:08Z",
+      "side": 1,
+      "message": "Yes, I think its find to leave this as is. What I mean is long term we should modify to_rust_string and then we can avoid needing to use inner functions for this stuff. Either way I agree that thats beyond the scope of this patch.",
+      "parentUuid": "6eca6a44_2c16200a",
+      "revId": "86858a78eb95f6672d0095a680610b8451552cb5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

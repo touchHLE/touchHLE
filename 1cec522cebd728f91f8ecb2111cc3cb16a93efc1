@@ -16,6 +16,24 @@
       "message": "this is trivial to implement for the case of file by calling readDataToEndOfFile. for other cases it\u0027s enough to have a TODO for a moment.",
       "revId": "1cec522cebd728f91f8ecb2111cc3cb16a93efc1",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b160ec5e_e05f1d6e",
+        "filename": "src/frameworks/foundation/ns_file_handle.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 73,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-09-19T03:46:18Z",
+      "side": 1,
+      "message": "Right, so per the documentation at https://developer.apple.com/documentation/foundation/filehandle/availabledata?language\u003dobjc it just sends the whole file, so I get using `readDataToEndOfFile` but it also mentions \"Returns an empty data object if the end of file is reached.\" (which is what I implemented) so are you saying fall back to empty data as the \u0027TODO\u0027 for a non-file is fine? If you can help me with detecting if it is actually a file versus a \"communications file\" I would really appreciate it.",
+      "parentUuid": "bb360b36_da69e436",
+      "revId": "1cec522cebd728f91f8ecb2111cc3cb16a93efc1",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

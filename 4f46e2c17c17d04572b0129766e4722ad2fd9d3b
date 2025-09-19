@@ -52,6 +52,24 @@
       "parentUuid": "9a92d473_d3dbdb3b",
       "revId": "4f46e2c17c17d04572b0129766e4722ad2fd9d3b",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f6d58673_64e491ed",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 26
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-09-19T14:21:04Z",
+      "side": 1,
+      "message": "_touchHLE_NSString has lineRangeForRange: if it is needed on the other private class, _touchHLE_NSMutableString, see  https://review.gerrithub.io/c/touchHLE/touchHLE/+/1222699",
+      "parentUuid": "ca899c33_33ca8c6c",
+      "revId": "4f46e2c17c17d04572b0129766e4722ad2fd9d3b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

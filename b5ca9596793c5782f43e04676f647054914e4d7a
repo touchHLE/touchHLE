@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "568c1c1f_7f962502",
+        "filename": "src/mem.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 284,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-09-19T17:06:37Z",
+      "side": 1,
+      "message": "could it really happen?",
+      "revId": "b5ca9596793c5782f43e04676f647054914e4d7a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

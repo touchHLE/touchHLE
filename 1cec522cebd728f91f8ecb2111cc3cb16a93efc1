@@ -52,6 +52,24 @@
       "parentUuid": "b160ec5e_e05f1d6e",
       "revId": "1cec522cebd728f91f8ecb2111cc3cb16a93efc1",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d7009098_563d2dde",
+        "filename": "src/frameworks/foundation/ns_file_handle.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 73,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-09-19T05:35:56Z",
+      "side": 1,
+      "message": "Looking around NSFileHandle, I think matching on lseek is the way to go. Let me know if that is wrong. Did what I said above but I think posix_io::read could be used instead of the empty data, but in thinking about that I feel like readDataOfLength: should not panic and if it did not, it could be used here? (but this is outside of the scope of making availableData work with files and not crash with \"communication channels\" in my opinion.",
+      "parentUuid": "2af46c46_ef54904a",
+      "revId": "1cec522cebd728f91f8ecb2111cc3cb16a93efc1",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

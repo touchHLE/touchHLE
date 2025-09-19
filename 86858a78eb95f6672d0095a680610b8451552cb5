@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "6d2c8cc8_0df1a055",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 8
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-09-19T00:02:55Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "3a699808_272a2668",
+      "revId": "86858a78eb95f6672d0095a680610b8451552cb5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "e40ab7f3_377cec3d",
@@ -31,6 +49,24 @@
       "writtenOn": "2025-09-18T20:16:17Z",
       "side": 1,
       "message": "nit: in Objective-C there is a difference between `method` and `method:` signatures - the latter one takes argument, the former one doesn\u0027t.\n\nHere the correct signature of methods is `stringWithString:` and `initWithString:`",
+      "revId": "86858a78eb95f6672d0095a680610b8451552cb5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ba20ef55_07c2beab",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 8
+      },
+      "lineNbr": 352,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-09-19T00:02:55Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "e40ab7f3_377cec3d",
       "revId": "86858a78eb95f6672d0095a680610b8451552cb5",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
@@ -141,6 +177,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "7345fd3c_624dc28d",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 8
+      },
+      "lineNbr": 1529,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-09-19T00:02:55Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "b32904f0_1e7caa90",
+      "revId": "86858a78eb95f6672d0095a680610b8451552cb5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "a9d22891_9c7eb75a",
@@ -154,6 +208,24 @@
       "writtenOn": "2025-09-18T20:16:17Z",
       "side": 1,
       "message": "same comment about docstring",
+      "revId": "86858a78eb95f6672d0095a680610b8451552cb5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d8eeee10_40967047",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 8
+      },
+      "lineNbr": 1535,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-09-19T00:02:55Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "a9d22891_9c7eb75a",
       "revId": "86858a78eb95f6672d0095a680610b8451552cb5",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

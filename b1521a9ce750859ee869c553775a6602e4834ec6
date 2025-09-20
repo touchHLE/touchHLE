@@ -34,6 +34,24 @@
       "parentUuid": "25a2ac2f_5512616f",
       "revId": "b1521a9ce750859ee869c553775a6602e4834ec6",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5d41da39_5fdf3012",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 12
+      },
+      "lineNbr": 1554,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-09-20T11:51:44Z",
+      "side": 1,
+      "message": "I pushed missing assertion here https://github.com/touchHLE/touchHLE/commit/192ed4ca1ffec3db877885fa0dc25c91f93c76b1.\nplease rebase and update your code accordingly.",
+      "parentUuid": "19347093_9ca4b51c",
+      "revId": "b1521a9ce750859ee869c553775a6602e4834ec6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

@@ -70,6 +70,24 @@
       "parentUuid": "ab1e14d4_db8f2308",
       "revId": "c3984d94d2c8c6197a6d33d5fe324b8c7b96521b",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "1546165b_036265c0",
+        "filename": "touchHLE_default_options.txt",
+        "patchSetId": 12
+      },
+      "lineNbr": 176,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-09-20T15:03:11Z",
+      "side": 1,
+      "message": "Sounds good.  I agree.  In my own testing of this game on macOS and a Google Pixel 3A I did not see issues, but obviously they do exist on some devices as evidenced by that screenshot, but I\u0027m with you in not adding force-compistion for now.",
+      "parentUuid": "b8f6b506_37116646",
+      "revId": "c3984d94d2c8c6197a6d33d5fe324b8c7b96521b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

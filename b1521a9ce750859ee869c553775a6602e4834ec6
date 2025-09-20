@@ -52,6 +52,24 @@
       "parentUuid": "19347093_9ca4b51c",
       "revId": "b1521a9ce750859ee869c553775a6602e4834ec6",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "329d6e4f_2e9307e7",
+        "filename": "src/frameworks/foundation/ns_string.rs",
+        "patchSetId": 12
+      },
+      "lineNbr": 1554,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-09-20T14:27:20Z",
+      "side": 1,
+      "message": "I figured this is what you were talking about but don\u0027t think it was within the scope of this patch set simply trying to add Latin1 to correct a bug with ASCII. Thanks for that commit/patch set. I\u0027ve added Latin1 to the assert you added.",
+      "parentUuid": "5d41da39_5fdf3012",
+      "revId": "b1521a9ce750859ee869c553775a6602e4834ec6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

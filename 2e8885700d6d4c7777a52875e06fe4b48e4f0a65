@@ -34,6 +34,24 @@
       "parentUuid": "ff352025_6be3d7ac",
       "revId": "2e8885700d6d4c7777a52875e06fe4b48e4f0a65",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "5d05af9d_3a0713c2",
+        "filename": "src/frameworks/uikit/ui_view/ui_label.rs",
+        "patchSetId": 12
+      },
+      "lineNbr": 140,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-09-20T00:08:39Z",
+      "side": 1,
+      "message": "logged size passed in and the one calcualted by using sizeWithFont\n\ntouchHLE::frameworks::uikit::ui_view::ui_label: The size passed in is w: 0.0, h: 44.0\ntouchHLE::frameworks::uikit::ui_view::ui_label: The calculated size is w: 45.0, h: 19.125\ntouchHLE::frameworks::uikit::ui_view::ui_label: The size passed in is w: 0.0, h: 44.0\ntouchHLE::frameworks::uikit::ui_view::ui_label: The calculated size is w: 37.0, h: 19.125\n\nNot sure what do do with that besides maybe a check to confirm calculated_size height is less then passed size height, but again in this circumstance it will likely always be that.",
+      "parentUuid": "f99f424f_a6b76796",
+      "revId": "2e8885700d6d4c7777a52875e06fe4b48e4f0a65",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

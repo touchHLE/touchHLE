@@ -52,6 +52,24 @@
       "parentUuid": "f99f424f_a6b76796",
       "revId": "2e8885700d6d4c7777a52875e06fe4b48e4f0a65",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "64b7807a_64287611",
+        "filename": "src/frameworks/uikit/ui_view/ui_label.rs",
+        "patchSetId": 12
+      },
+      "lineNbr": 140,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-09-20T07:21:18Z",
+      "side": 1,
+      "message": "It\u0027s really not clear what the size passed to `sizeThatFits:` should be used for, but I think one obvious possibility is that you should be passing it to `sizeWithFont:constrainedToSize:`. What do you think?",
+      "parentUuid": "5d05af9d_3a0713c2",
+      "revId": "2e8885700d6d4c7777a52875e06fe4b48e4f0a65",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

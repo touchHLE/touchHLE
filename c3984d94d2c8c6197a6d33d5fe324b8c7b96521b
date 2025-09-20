@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e263f86e_bc4d1427",
+        "filename": "touchHLE_default_options.txt",
+        "patchSetId": 12
+      },
+      "lineNbr": 176,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-09-20T14:31:32Z",
+      "side": 1,
+      "message": "do you have a screenshot of those issues?",
+      "revId": "c3984d94d2c8c6197a6d33d5fe324b8c7b96521b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "52698af4_985c555f",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 8
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-09-20T11:24:25Z",
+      "side": 1,
+      "message": "finally, i committed my owm version here https://github.com/touchHLE/touchHLE/commit/8243f7b6df452fdba2abb1442d9b9c113755e456, please abandon this one",
+      "revId": "86020f2aa79c3e8b8399d454b085092dac547a39",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "dc306a6e_c8746091",
+        "filename": "src/frameworks/foundation/ns_file_handle.rs",
+        "patchSetId": 8
+      },
+      "lineNbr": 77,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-09-20T11:24:25Z",
+      "side": 1,
+      "message": "when lseek return error it doesn\u0027t give you enough informaiton about the failure reason - it can be because that file seek failed or because fd is not a file descriptor.",
+      "revId": "86020f2aa79c3e8b8399d454b085092dac547a39",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

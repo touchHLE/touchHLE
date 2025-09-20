@@ -52,6 +52,24 @@
       "parentUuid": "a5ca09c3_0ef2c986",
       "revId": "c3984d94d2c8c6197a6d33d5fe324b8c7b96521b",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b8f6b506_37116646",
+        "filename": "touchHLE_default_options.txt",
+        "patchSetId": 12
+      },
+      "lineNbr": 176,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-09-20T14:50:05Z",
+      "side": 1,
+      "message": "`--force-composition` have significant impact on the perfomance of the app.\nwe should avoid enabling it unless strictly necessary.\n\nfrom provided discussions i don\u0027t see strong evidence for that.",
+      "parentUuid": "ab1e14d4_db8f2308",
+      "revId": "c3984d94d2c8c6197a6d33d5fe324b8c7b96521b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

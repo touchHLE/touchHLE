@@ -333,10 +333,9 @@ pub const CLASSES: ClassExports = objc_classes! {
     let int_width = size.width.round() as GuestUSize;
     let int_height = size.height.round() as GuestUSize;
 
-    let need_new_context = cg_context.is_none_or(|existing| (
+    let need_new_context = cg_context.is_none_or(|existing|
             CGBitmapContextGetWidth(env, existing) != int_width ||
             CGBitmapContextGetHeight(env, existing) != int_height
-        )
     );
     let cg_context = if need_new_context {
         if let Some(old_context) = cg_context {

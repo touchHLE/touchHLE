@@ -110,7 +110,7 @@ pub fn pthread_attr_setstacksize(
     attr: MutPtr<pthread_attr_t>,
     stacksize: GuestUSize,
 ) -> i32 {
-    if attr.is_null() || stacksize < PTHREAD_STACK_MIN || stacksize % PAGE_SIZE != 0 {
+    if attr.is_null() || stacksize < PTHREAD_STACK_MIN || stacksize.is_multiple_of(PAGE_SIZE) {
         return EINVAL;
     }
     check_magic!(env, attr, MAGIC_ATTR);

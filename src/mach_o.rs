@@ -644,7 +644,7 @@ impl MachO {
                 };
                 let dyld_indirect_symbol_info = dyld_entry_size.map(|entry_size| {
                     let indirect_start = section.reserved1 as usize;
-                    assert!(size % entry_size == 0);
+                    assert!(size.is_multiple_of(entry_size));
                     let indirect_count = (size / entry_size) as usize;
                     let indirects = &mut indirect_undef_symbols[indirect_start..][..indirect_count];
                     let syms = indirects.iter_mut().map(|sym| sym.take()).collect();

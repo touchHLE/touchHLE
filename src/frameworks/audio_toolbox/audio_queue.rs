@@ -516,7 +516,7 @@ pub fn decode_buffer(
 
     match format.format_id {
         kAudioFormatAppleIMA4 => {
-            assert!(data_slice.len() % 34 == 0);
+            assert!(data_slice.len().is_multiple_of(34));
             let mut out_pcm = Vec::<u8>::with_capacity((data_slice.len() / 34) * 64 * 2);
             let packets = data_slice.chunks(34);
 
@@ -611,7 +611,7 @@ pub fn decode_buffer(
                 (2, 16) => al::AL_FORMAT_STEREO16,
                 (2, 32) => {
                     assert!((format.format_flags & kAudioFormatFlagIsSignedInteger) != 0);
-                    assert!(processed_data.len() % 4 == 0);
+                    assert!(processed_data.len().is_multiple_of(4));
                     let new_size = (processed_data.len() / 4) * 2; // size from 32-bit to 16-bit
                     let mut new_processed_data = Vec::<u8>::with_capacity(new_size);
                     for chunk in processed_data.chunks(4) {

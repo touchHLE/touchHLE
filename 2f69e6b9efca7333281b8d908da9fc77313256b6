@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "63d5a990_ba526fbd",
+        "filename": "src/libc/sysctl.rs",
+        "patchSetId": 6
+      },
+      "lineNbr": 7,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-09-23T20:34:44Z",
+      "side": 1,
+      "message": "this should be addressed",
+      "revId": "2f69e6b9efca7333281b8d908da9fc77313256b6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f9bf78f4_26e5f754",
+        "filename": "src/libc/sysctl.rs",
+        "patchSetId": 6
+      },
+      "lineNbr": 87,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-09-23T20:34:44Z",
+      "side": 1,
+      "message": "opt: use assert_eq!",
+      "revId": "2f69e6b9efca7333281b8d908da9fc77313256b6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

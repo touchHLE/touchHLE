@@ -24,6 +24,30 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "2e9511df_23338da1",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 5
+      },
+      "lineNbr": 7,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2025-09-23T19:50:31Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "3cc49148_fdc87c5d",
+      "range": {
+        "startLine": 7,
+        "startChar": 20,
+        "endLine": 7,
+        "endChar": 39
+      },
+      "revId": "c8d73211279db85370015c82318e3824b27f2b1f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "957abc93_7b324980",
@@ -37,6 +61,42 @@
       "writtenOn": "2025-09-18T21:53:53Z",
       "side": 1,
       "message": "according the docs, it should support \"Unicode General Category Cc and Cf\".\n\nThat is 65 + 161 \u003d 226 characters https://www.compart.com/en/unicode/category",
+      "revId": "c8d73211279db85370015c82318e3824b27f2b1f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "267547c6_b0f8c3c4",
+        "filename": "src/frameworks/foundation/ns_character_set.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 25,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2025-09-23T19:50:31Z",
+      "side": 1,
+      "message": "This is only a problem if we want to support longCharacterisMember:, the values here are based on what simulator actually reports.\n```\nfor (unichar c \u003d 0; c !\u003d USHRT_MAX; c++) {\n    if([[NSCharacterSet controlCharacterSet] characterIsMember:c]) {\n        printf(\"%x \", c);\n    }\n}\nif([[NSCharacterSet controlCharacterSet] characterIsMember:USHRT_MAX]) {\n    printf(\"%x \", USHRT_MAX);\n}\n```",
+      "parentUuid": "957abc93_7b324980",
+      "revId": "c8d73211279db85370015c82318e3824b27f2b1f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6b1c1274_cbe4cdb5",
+        "filename": "src/frameworks/foundation/ns_character_set.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 25,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2025-09-23T19:50:31Z",
+      "side": 1,
+      "message": "That\u0027s only a problem if/when we want to support longCharacterIsMember, this character set is based on what simulator actually reports.\n\n```\nfor (unichar c \u003d 0; c !\u003d USHRT_MAX; c++) {\n    if([[NSCharacterSet controlCharacterSet] characterIsMember:c]) {\n        printf(\"%x \", c);\n    }\n}\nif([[NSCharacterSet controlCharacterSet] characterIsMember:USHRT_MAX]) {\n    printf(\"%x \", USHRT_MAX);\n}\n```",
+      "parentUuid": "957abc93_7b324980",
       "revId": "c8d73211279db85370015c82318e3824b27f2b1f",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

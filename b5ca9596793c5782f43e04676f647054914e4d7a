@@ -16,6 +16,24 @@
       "message": "could it really happen?",
       "revId": "b5ca9596793c5782f43e04676f647054914e4d7a",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e00656b1_f859a32f",
+        "filename": "src/mem.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 284,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2025-09-23T20:06:50Z",
+      "side": 1,
+      "message": "I think I\u0027ve had this happen while trying to run ASAN on touchhle, but it\u0027s good practice regardless since it is allowed to return null.",
+      "parentUuid": "568c1c1f_7f962502",
+      "revId": "b5ca9596793c5782f43e04676f647054914e4d7a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

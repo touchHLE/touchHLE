@@ -21,7 +21,7 @@ pub fn write_ppm(path: &str, width: u32, height: u32, pixels: &[u8]) {
 /// Convert RGBA8 pixel data to RGB8 pixel data by discarding alpha component.
 /// Useful with [write_ppm] for example.
 pub fn rgba8_to_rgb8(pixels: &[u8]) -> Vec<u8> {
-    assert!(pixels.len() % 4 == 0);
+    assert!(pixels.len().is_multiple_of(4));
     let mut res = Vec::with_capacity((pixels.len() / 4) * 3);
     for rgba in pixels.chunks(4) {
         res.extend_from_slice(&rgba[..3]);

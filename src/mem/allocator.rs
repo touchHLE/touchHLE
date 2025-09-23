@@ -334,7 +334,7 @@ impl Allocator {
     }
 
     fn align(size: GuestUSize, align: GuestUSize) -> GuestUSize {
-        if size % align != 0 {
+        if size.is_multiple_of(align) {
             size + align - (size % align)
         } else {
             size

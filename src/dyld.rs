@@ -659,7 +659,7 @@ impl Dyld {
         let info = stubs.dyld_indirect_symbol_info.as_ref().unwrap();
 
         let offset = svc_pc - stubs.addr;
-        assert!(offset % info.entry_size == 0);
+        assert!(offset.is_multiple_of(info.entry_size));
         let idx = (offset / info.entry_size) as usize;
 
         let symbol = info.indirect_undef_symbols[idx].as_deref().unwrap();

@@ -107,7 +107,7 @@ pub fn prep_stack_for_start(
     //    mem.cstr_at_utf8(MutPtr::from_bits(mem.read((stack_ptr + 4).cast())))
     //);
 
-    assert!(stack_height % 4 == 0); // ensure padding worked properly
+    assert!(stack_height.is_multiple_of(4)); // ensure padding worked properly
 
     cpu.regs_mut()[Cpu::SP] = stack_ptr.to_bits();
 }

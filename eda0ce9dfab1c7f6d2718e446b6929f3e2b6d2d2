@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "95f50b66_66644040",
+        "filename": "src/frameworks/foundation/ns_object.rs",
+        "patchSetId": 7
+      },
+      "lineNbr": 82,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-09-23T20:41:29Z",
+      "side": 1,
+      "message": "have you checked what format iOS is using for that description?",
+      "revId": "eda0ce9dfab1c7f6d2718e446b6929f3e2b6d2d2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

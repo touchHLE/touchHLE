@@ -99,6 +99,24 @@
       "parentUuid": "957abc93_7b324980",
       "revId": "c8d73211279db85370015c82318e3824b27f2b1f",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c04d6785_7eb021d7",
+        "filename": "src/frameworks/foundation/ns_character_set.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 25,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-09-23T20:36:06Z",
+      "side": 1,
+      "message": "I see. This warrant at least an explanatory comment and a todo.",
+      "parentUuid": "6b1c1274_cbe4cdb5",
+      "revId": "c8d73211279db85370015c82318e3824b27f2b1f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

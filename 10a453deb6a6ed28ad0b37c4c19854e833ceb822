@@ -124,6 +124,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "57892da9_8339c6b7",
+        "filename": "src/libc/sysctl.rs",
+        "patchSetId": 4
+      },
+      "lineNbr": 34,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2025-09-24T14:12:06Z",
+      "side": 1,
+      "message": "Oops",
+      "parentUuid": "31d986de_2e9da8ee",
+      "revId": "10a453deb6a6ed28ad0b37c4c19854e833ceb822",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "ab41d533_06f798cb",

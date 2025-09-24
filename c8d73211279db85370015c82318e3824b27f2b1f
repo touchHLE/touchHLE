@@ -117,6 +117,24 @@
       "parentUuid": "6b1c1274_cbe4cdb5",
       "revId": "c8d73211279db85370015c82318e3824b27f2b1f",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ea79f132_72af6a4e",
+        "filename": "src/frameworks/foundation/ns_character_set.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 25,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2025-09-24T05:54:59Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "c04d6785_7eb021d7",
+      "revId": "c8d73211279db85370015c82318e3824b27f2b1f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

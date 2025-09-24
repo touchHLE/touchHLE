@@ -38,6 +38,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "90b06133_c82a4f4b",
+        "filename": "src/libc/sysctl.rs",
+        "patchSetId": 6
+      },
+      "lineNbr": 7,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-09-24T21:18:39Z",
+      "side": 1,
+      "message": "could you apply it then only to that type and not to the whole file? (I assume it applies to whole file here?)",
+      "parentUuid": "25d8e03a_f8fb68b1",
+      "revId": "2f69e6b9efca7333281b8d908da9fc77313256b6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "f9bf78f4_26e5f754",
         "filename": "src/libc/sysctl.rs",
         "patchSetId": 6

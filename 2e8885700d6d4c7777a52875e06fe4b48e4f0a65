@@ -124,6 +124,24 @@
       "parentUuid": "3ae8fced_f79b123d",
       "revId": "2e8885700d6d4c7777a52875e06fe4b48e4f0a65",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "54b3dc64_bbd48bc5",
+        "filename": "src/frameworks/uikit/ui_view/ui_label.rs",
+        "patchSetId": 12
+      },
+      "lineNbr": 140,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-09-26T03:16:32Z",
+      "side": 1,
+      "message": "I went ahead and added an asert to make sure the height of the generated size for text is less then the passed in size.  This makes this sade for now until we implement multiple line support or anything else.",
+      "parentUuid": "4e8314b2_e6432e19",
+      "revId": "2e8885700d6d4c7777a52875e06fe4b48e4f0a65",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

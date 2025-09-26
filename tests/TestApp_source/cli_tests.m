@@ -294,6 +294,55 @@ int test_vsnprintf() {
   return res;
 }
 
+int test_fscanf_eof_before_match(void) {
+    const char *path = "fscanf_eof_before_match.txt";
+
+    FILE *f = fopen(path, "w+");
+    if (!f) return 1;
+
+    // EOF Before any Input or Match
+    rewind(f);
+
+    int ret = fscanf(f, "abc");
+    fclose(f);
+    remove(path);
+
+    return (ret == EOF) ? 0 : 1;
+}
+
+int test_fscanf_eof_during_match(void) {
+    const char *path = "fscanf_eof_during_match.txt";
+
+    FILE *f = fopen(path, "w+");
+    if (!f) return 1;
+
+    fprintf(f, "ab");   // EOF before completing "abc"
+    rewind(f);
+
+    int ret = fscanf(f, "abc");
+    fclose(f);
+    remove(path);
+
+    return (ret == EOF) ? 0 : 1;
+}
+
+int test_fscanf_match_then_eof(void) {
+    const char *path = "fscanf_exact_then_eof.txt";
+
+    FILE *f = fopen(path, "w+");
+    if (!f) return 1;
+
+    fprintf(f, "abc"); // Match then EOF
+    rewind(f);
+
+    int ret = fscanf(f, "abc");
+    int c = fgetc(f);
+    fclose(f);
+    remove(path);
+
+    return (ret == 0 && c == EOF) ? 0 : 1;
+}
+
 int test_sscanf() {
   int a, b;
   short c, d;
@@ -3133,6 +3182,9 @@ struct {
     FUNC_DEF(test_ungetc),
     FUNC_DEF(test_fscanf),
     FUNC_DEF(test_fscanf_new),
+    FUNC_DEF(test_fscanf_eof_before_match),
+    FUNC_DEF(test_fscanf_eof_during_match),
+    FUNC_DEF(test_fscanf_match_then_eof),
     FUNC_DEF(test_CFStringFind),
     FUNC_DEF(test_strcspn),
     FUNC_DEF(test_mbstowcs),

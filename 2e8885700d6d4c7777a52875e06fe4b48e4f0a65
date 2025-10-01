@@ -178,6 +178,24 @@
       "parentUuid": "2726cbc2_9d4ab627",
       "revId": "2e8885700d6d4c7777a52875e06fe4b48e4f0a65",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "a9c34a22_ad0a0629",
+        "filename": "src/frameworks/uikit/ui_view/ui_label.rs",
+        "patchSetId": 12
+      },
+      "lineNbr": 140,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-10-01T05:28:36Z",
+      "side": 1,
+      "message": "*has new lines in the text",
+      "parentUuid": "19f2f40a_58fcc6f1",
+      "revId": "2e8885700d6d4c7777a52875e06fe4b48e4f0a65",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

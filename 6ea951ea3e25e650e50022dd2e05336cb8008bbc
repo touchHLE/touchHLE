@@ -22,6 +22,23 @@
       },
       "revId": "6ea951ea3e25e650e50022dd2e05336cb8008bbc",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f6526caf_ae2b8545",
+        "filename": "src/frameworks/foundation/ns_object.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 130,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-10-05T15:59:38Z",
+      "side": 1,
+      "message": "I guess updating this comment to only cover the instance method would be nice.",
+      "revId": "6ea951ea3e25e650e50022dd2e05336cb8008bbc",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "467fadc8_3b123d61",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1039029
+      },
+      "writtenOn": "2025-10-06T21:11:35Z",
+      "side": 1,
+      "message": "adding linux build to the release workflow, tested in github here: https://github.com/xXJSONDeruloXx/touchHLE/actions/runs/18294017547/job/52087988753?pr\u003d1",
+      "revId": "7b91c7b79863a49ecc997bea56e3240b61d0d13a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

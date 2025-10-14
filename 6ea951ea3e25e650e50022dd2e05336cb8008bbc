@@ -24,6 +24,47 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "42b60930_593a4343",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 11
+      },
+      "lineNbr": 7,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2025-10-14T23:31:59Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "0c38ffa3_1cebc16e",
+      "range": {
+        "startLine": 7,
+        "startChar": 26,
+        "endLine": 7,
+        "endChar": 27
+      },
+      "revId": "6ea951ea3e25e650e50022dd2e05336cb8008bbc",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "cc06e990_d51a3abd",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 11
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2025-10-14T23:31:59Z",
+      "side": 1,
+      "message": "Also added in debugDescription since it\u0027s the same.",
+      "revId": "6ea951ea3e25e650e50022dd2e05336cb8008bbc",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "f6526caf_ae2b8545",
@@ -37,6 +78,24 @@
       "writtenOn": "2025-10-05T15:59:38Z",
       "side": 1,
       "message": "I guess updating this comment to only cover the instance method would be nice.",
+      "revId": "6ea951ea3e25e650e50022dd2e05336cb8008bbc",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "9d143c5c_9382947e",
+        "filename": "src/frameworks/foundation/ns_object.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 130,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2025-10-14T23:31:59Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "f6526caf_ae2b8545",
       "revId": "6ea951ea3e25e650e50022dd2e05336cb8008bbc",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

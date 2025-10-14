@@ -172,6 +172,22 @@ fn run_test_app(
     Ok(())
 }
 
+/// Recursively copy a directory's content to a destination skipping symlinks
+fn copy_dir_all(source: PathBuf, destination: PathBuf) -> std::io::Result<()> {
+    std::fs::create_dir_all(&destination)?;
+    for entry in std::fs::read_dir(source)? {
+        let entry = entry?;
+        let entry_type = entry.file_type()?;
+
+        if entry_type.is_file() {
+            std::fs::copy(entry.path(), destination.join(entry.file_name()))?;
+        } else if entry_type.is_dir() {
+            copy_dir_all(entry.path(), destination.join(entry.file_name()))?;
+        }
+    }
+    Ok(())
+}
+
 #[test]
 fn test_app() -> Result<(), Box<dyn Error>> {
     let tests_dir = current_dir()?.join("tests");
@@ -290,6 +306,19 @@ fn test_app() -> Result<(), Box<dyn Error>> {
             };
         // Ensure that stubs/Frameworks/FooBarKit/ or stubs/lib/ exists
         std::fs::create_dir_all(out_path.parent().unwrap()).unwrap();
+
+        // Ideally one could provide two framwework search paths.
+        // In reality only the first matching path is used, so the stub
+        // framework needs to provide headers copied from the sdk.
+        if dylib_path.starts_with("/System/Library/Frameworks") {
+            let stub_headers = out_path.parent().unwrap().join("Headers");
+            let framework_dir = dylib_path.rsplit_once("/").unwrap().0;
+            let source_headers = tests_dir.join(format!("common-3.0.sdk/{framework_dir}/Headers"));
+
+            if source_headers.exists() {
+                copy_dir_all(source_headers, stub_headers)?;
+            }
+        }
         build_object(&tests_dir, &out_path, [stub_src_path].iter(), &compile_args).unwrap();
     }
 

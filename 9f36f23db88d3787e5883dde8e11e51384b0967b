@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b542216e_f479c6ee",
+        "filename": "src/frameworks/foundation/ns_object.rs",
+        "patchSetId": 12
+      },
+      "lineNbr": 79,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-10-15T00:53:05Z",
+      "side": 1,
+      "message": "Infinite recursion",
+      "revId": "9f36f23db88d3787e5883dde8e11e51384b0967b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

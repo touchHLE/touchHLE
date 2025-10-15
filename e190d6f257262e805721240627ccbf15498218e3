@@ -33,6 +33,24 @@
       "message": "You typo\u0027d framework in this line",
       "revId": "e190d6f257262e805721240627ccbf15498218e3",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b9bb1679_e6cf6e92",
+        "filename": "tests/integration.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 310,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2025-10-15T12:25:14Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "8e03038e_a3870ab4",
+      "revId": "e190d6f257262e805721240627ccbf15498218e3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

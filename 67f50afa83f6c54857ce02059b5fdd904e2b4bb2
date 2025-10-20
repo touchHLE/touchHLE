@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b8526e75_dc39013e",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-10-20T10:19:26Z",
+      "side": 1,
+      "message": "You will probably want to update `tests/README.md`\u0027s remarks about how well TestApp works on real iOS.",
+      "revId": "67f50afa83f6c54857ce02059b5fdd904e2b4bb2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

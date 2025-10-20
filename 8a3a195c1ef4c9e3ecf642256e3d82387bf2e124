@@ -16,6 +16,24 @@
       "message": "Whoa! I\u0027ll have to test this one on the 2nd-gen iPod touch…",
       "revId": "8a3a195c1ef4c9e3ecf642256e3d82387bf2e124",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fc80730d_e15ca544",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-10-20T10:44:24Z",
+      "side": 1,
+      "message": "Ah, I can\u0027t test it because:\n\n    ld: file is universal (5 slices) but does not contain a(n) armv6 slice: ~/Projects/2022/touchHLE/touchHLE/tests/llvm/lib/clang/12.0.0/lib/darwin/libclang_rt.ios.a file \u0027~/Projects/2022/touchHLE/touchHLE/tests/llvm/lib/clang/12.0.0/lib/darwin/libclang_rt.ios.a\u0027 for architecture armv6\n\nI don\u0027t want to prevent you merging it just because I have an old clang version though…",
+      "parentUuid": "42aaf0d5_88eab792",
+      "revId": "8a3a195c1ef4c9e3ecf642256e3d82387bf2e124",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

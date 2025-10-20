@@ -1,7 +1,7 @@
 Integration tests
 =================
 
-This directory contains integration tests written in Objective-C. They're compiled to an ARMv7 Mach-O binary and packaged into a bundle (`TestApp.app`) so that they can be run in the emulator like a normal iPhone OS app.
+This directory contains integration tests written in Objective-C. They're compiled to a fat (ARMv6 + ARMv7) Mach-O binary and packaged into a bundle (`TestApp.app`) so that they can be run in the emulator like a normal iPhone OS app.
 
 `TestApp.app` is effectively two completely different apps:
 

@@ -34,6 +34,24 @@
       "parentUuid": "b8526e75_dc39013e",
       "revId": "67f50afa83f6c54857ce02059b5fdd904e2b4bb2",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d0cab58b_276a7d02",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-10-20T14:09:24Z",
+      "side": 1,
+      "message": "On the 2nd-gen iPod touch with iOS 4.2.1, the result is “Passed 48 out of 55 tests”.\n\nYou know what, don\u0027t update the README in this commit, I can do it later.",
+      "parentUuid": "eb6cd2b1_f34d23f2",
+      "revId": "67f50afa83f6c54857ce02059b5fdd904e2b4bb2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

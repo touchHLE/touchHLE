@@ -52,6 +52,24 @@
       "parentUuid": "fc80730d_e15ca544",
       "revId": "8a3a195c1ef4c9e3ecf642256e3d82387bf2e124",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2cc37bde_a62e2223",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2025-10-20T13:55:06Z",
+      "side": 1,
+      "message": "I took another look at it. It\u0027s not so much an issue with the clang version but the fact that the macos releases bundle the clang_rt files for it which are linked by default when available. Disabling the defaultlibs seems to work and I think shouldn\u0027t cause issues, the builtins should be covered by libgcc and I don\u0027t think we require the other things it provides. Interested to see if it works on your system and hear your thoughts.",
+      "parentUuid": "008f7a03_bc54386d",
+      "revId": "8a3a195c1ef4c9e3ecf642256e3d82387bf2e124",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

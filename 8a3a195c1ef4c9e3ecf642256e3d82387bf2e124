@@ -34,6 +34,24 @@
       "parentUuid": "42aaf0d5_88eab792",
       "revId": "8a3a195c1ef4c9e3ecf642256e3d82387bf2e124",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "008f7a03_bc54386d",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-10-20T10:45:18Z",
+      "side": 1,
+      "message": "Ehh, well, this is still the clang version that the README tells you to use, so…",
+      "parentUuid": "fc80730d_e15ca544",
+      "revId": "8a3a195c1ef4c9e3ecf642256e3d82387bf2e124",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

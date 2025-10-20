@@ -16,6 +16,24 @@
       "message": "You will probably want to update `tests/README.md`\u0027s remarks about how well TestApp works on real iOS.",
       "revId": "67f50afa83f6c54857ce02059b5fdd904e2b4bb2",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "eb6cd2b1_f34d23f2",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-10-20T10:33:57Z",
+      "side": 1,
+      "message": "By the way, I tested this just now on the 3rd-gen iPod touch with iOS 5.1.1, and the result was “Passed 49 out of 55 tests”.",
+      "parentUuid": "b8526e75_dc39013e",
+      "revId": "67f50afa83f6c54857ce02059b5fdd904e2b4bb2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

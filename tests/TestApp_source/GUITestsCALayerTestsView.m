@@ -9,7 +9,7 @@
 
 #include "GUITestsCALayerTestsView.h"
 
-#define NUM_TESTS 12
+#define NUM_TESTS 18
 
 @implementation GUITestsCALayerTestsView : UIView
 
@@ -331,5 +331,121 @@ UILabel *lastTappedGlobalFrameLabel;
   [testArea.subviews objectAtIndex:1].transform = CGAffineTransformRotate(
       CGAffineTransformMakeScale(0.5, 0.5), (M_PI / 2) * (((int)floor(t)) % 4));
   [self test11Tick];
+}
+
+// CAAnimation tests
+- (void)test13 {
+  UILabel* label = [self addLabelWithFrame:CGRectMake(75, 75, 175, 175) text:[NSString stringWithUTF8String:"hello, animations!"]];
+
+  CALayer *layer = [label layer];
+  [layer setBackgroundColor:CGColorCreateGenericRGB(0.0, 0.70, 0.0, 1.0)];
+  [layer setCornerRadius:32.0];
+
+  CAMediaTimingFunction *easeInEaseOut = [CAMediaTimingFunction
+      functionWithName:[NSString stringWithUTF8String:"easeInEaseOut"]];
+
+  CABasicAnimation *animation = [CABasicAnimation
+      animationWithKeyPath:[NSString stringWithUTF8String:"opacity"]];
+  [animation setTimingFunction:easeInEaseOut];
+  [animation setDuration:3.0];
+  [animation setFromValue:[NSNumber numberWithFloat:0.0]];
+  [animation setToValue:[NSNumber numberWithFloat:1.0]];
+  [layer addAnimation:animation
+               forKey:[NSString stringWithUTF8String:"opacity_animation"]];
+}
+- (void)test14 {
+  UILabel* label = [self addLabelWithFrame:CGRectMake(75, 75, 175, 175) text:[NSString stringWithUTF8String:"hello, animations!"]];
+
+  CALayer *layer = [label layer];
+  [layer setBackgroundColor:CGColorCreateGenericRGB(0.0, 0.70, 0.0, 1.0)];
+  [layer setCornerRadius:32.0];
+
+  CABasicAnimation *animation = [CABasicAnimation
+      animationWithKeyPath:[NSString stringWithUTF8String:"backgroundColor"]];
+  [animation setDuration:4.0];
+  [animation setRepeatCount:3.5];
+  [animation setAutoreverses:true];
+  [animation setFromValue:CGColorCreateGenericRGB(0.0, 0.70, 0.0, 1.0)];
+  [animation setToValue:CGColorCreateGenericRGB(0.75, 0.00, 0.25, 1.0)];
+  [layer addAnimation:animation
+               forKey:[NSString stringWithUTF8String:"bg_animation"]];
+}
+- (void)test15 {
+  UILabel* label = [self addLabelWithFrame:CGRectMake(75, 75, 175, 175) text:[NSString stringWithUTF8String:"hello, animations!"]];
+
+  CALayer *layer = [label layer];
+  [layer setBackgroundColor:CGColorCreateGenericRGB(0.0, 0.70, 0.0, 1.0)];
+  [layer setCornerRadius:32.0];
+
+  CAMediaTimingFunction *linear = [CAMediaTimingFunction
+      functionWithName:[NSString stringWithUTF8String:"linear"]];
+
+  CABasicAnimation *animation = [CABasicAnimation
+      animationWithKeyPath:[NSString stringWithUTF8String:"hidden"]];
+  [animation setTimingFunction:linear];
+  [animation setDuration:4.0];
+  [animation setFromValue:[NSNumber numberWithBool:false]];
+  [animation setToValue:[NSNumber numberWithBool:true]];
+  [layer addAnimation:animation
+               forKey:[NSString stringWithUTF8String:"hidden"]];
+}
+- (void)test16 {
+  UILabel* label = [self addLabelWithFrame:CGRectMake(75, 75, 175, 175) text:[NSString stringWithUTF8String:"hello, animations!"]];
+
+  CALayer *layer = [label layer];
+  [layer setBackgroundColor:CGColorCreateGenericRGB(0.0, 0.70, 0.0, 1.0)];
+  [layer setCornerRadius:32.0];
+
+  CAMediaTimingFunction *easeInEaseOut = [CAMediaTimingFunction
+      functionWithName:[NSString stringWithUTF8String:"easeInEaseOut"]];
+
+  CABasicAnimation *animation = [CABasicAnimation
+      animationWithKeyPath:[NSString stringWithUTF8String:"bounds"]];
+  [animation setTimingFunction:easeInEaseOut];
+  [animation setDuration:6.0];
+  [animation setFromValue:[NSValue valueWithCGRect:CGRectMake(10, 10, 50, 10)]];
+  [animation setToValue:[NSValue valueWithCGRect:[layer bounds]]];
+  [layer addAnimation:animation
+               forKey:[NSString stringWithUTF8String:"bounds_animation"]];
+}
+- (void)test17 {
+  UILabel* label = [self addLabelWithFrame:CGRectMake(75, 75, 175, 175) text:[NSString stringWithUTF8String:"hello, animations!"]];
+
+  CALayer *layer = [label layer];
+  [layer setBackgroundColor:CGColorCreateGenericRGB(0.0, 0.70, 0.0, 1.0)];
+  [layer setCornerRadius:32.0];
+
+  CABasicAnimation *animation = [CABasicAnimation
+      animationWithKeyPath:[NSString stringWithUTF8String:"cornerRadius"]];
+  [animation setDuration:6.0];
+  [animation setFromValue:[NSNumber numberWithFloat:0.0]];
+  [animation setToValue:[NSNumber numberWithFloat:32.0]];
+  [layer addAnimation:animation
+               forKey:[NSString stringWithUTF8String:"corner_animation"]];
+}
+- (void)test18 {
+  UILabel* label = [self addLabelWithFrame:CGRectMake(75, 75, 175, 175) text:[NSString stringWithUTF8String:"hello, animations!"]];
+
+  CALayer *layer = [label layer];
+  [layer setBackgroundColor:CGColorCreateGenericRGB(0.0, 0.70, 0.0, 1.0)];
+  [layer setCornerRadius:32.0];
+
+  CAMediaTimingFunction *easeInEaseOut = [CAMediaTimingFunction
+      functionWithName:[NSString stringWithUTF8String:"easeInEaseOut"]];
+
+  CABasicAnimation *animation = [CABasicAnimation
+      animationWithKeyPath:[NSString stringWithUTF8String:"position"]];
+  [animation setTimingFunction:easeInEaseOut];
+  [animation setBeginTime:CACurrentMediaTime() + 2.0];
+  [animation setDuration:8.0];
+  [animation setFromValue:[NSValue valueWithCGPoint:CGPointMake(120, -75)]];
+  [animation setToValue:[NSValue valueWithCGPoint:[layer position]]];
+  [layer addAnimation:animation
+               forKey:[NSString stringWithUTF8String:"position_animation"]];
+
+  // Remove animation that doesn't exist
+  [layer
+      removeAnimationForKey:[NSString
+                                stringWithUTF8String:"non_existent_animation"]];
 }
 @end

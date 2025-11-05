@@ -43,6 +43,7 @@ pub const DYLIB: crate::dyld::HostDylib = crate::dyld::HostDylib {
 
 #[derive(Default)]
 pub struct State {
+    ca_media_timing_function: ca_media_timing_function::State,
     composition: composition::State,
 }
 

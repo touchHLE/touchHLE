@@ -12,7 +12,8 @@
 
 use super::ca_eagl_layer::find_fullscreen_eagl_layer;
 use super::ca_layer::CALayerHostObject;
-use crate::frameworks::core_graphics::{cg_bitmap_context, cg_color, cg_image, CGFloat, CGRect};
+use crate::frameworks::core_graphics::cg_color::CGColorHostObject;
+use crate::frameworks::core_graphics::{cg_bitmap_context, cg_image, CGFloat, CGRect};
 use crate::gles::gles11_raw as gles11; // constants only
 use crate::gles::gles11_raw::types::*;
 use crate::gles::present::{present_frame, FpsCounter};
@@ -439,10 +440,10 @@ unsafe fn composite_layer_recursive(
     };
 
     // Draw background color, if any
-    let have_background = if host_obj.background_color == nil {
+    let have_background = if host_obj.background_color.is_none() {
         false
     } else {
-        let (r, g, b, a) = cg_color::to_rgba(objc, host_obj.background_color);
+        let CGColorHostObject { r, g, b, a, .. } = host_obj.background_color.as_ref().unwrap();
         gles.Color4f(r * opacity, g * opacity, b * opacity, a * opacity);
         gles.Enable(gles11::BLEND);
         gles.BlendFunc(gles11::ONE, gles11::ONE_MINUS_SRC_ALPHA);

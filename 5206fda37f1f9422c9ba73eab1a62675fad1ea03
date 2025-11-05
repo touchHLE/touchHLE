@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "dca10526_e6d95b02",
+        "filename": "src/frameworks/core_animation/ca_layer.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 314,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-11-05T18:43:09Z",
+      "side": 1,
+      "message": "Two problems:\n\n- This is a memory leak, you need to `autorelease` it.\n- Why are you re-creating the host object from its components, can\u0027t you just directly clone it? You can add a helper function for that if you want…",
+      "revId": "5206fda37f1f9422c9ba73eab1a62675fad1ea03",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

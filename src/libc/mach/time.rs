@@ -11,9 +11,9 @@ use crate::Environment;
 use std::time::Instant;
 
 #[repr(C, packed)]
-struct struct_mach_timebase_info {
-    numerator: u32,
-    denominator: u32,
+pub struct struct_mach_timebase_info {
+    pub numerator: u32,
+    pub denominator: u32,
 }
 unsafe impl SafeRead for struct_mach_timebase_info {}
 
@@ -21,7 +21,7 @@ unsafe impl SafeRead for struct_mach_timebase_info {}
 type kern_return_t = i32;
 const KERN_SUCCESS: kern_return_t = 0;
 
-fn mach_timebase_info(
+pub fn mach_timebase_info(
     env: &mut Environment,
     info: MutPtr<struct_mach_timebase_info>,
 ) -> kern_return_t {
@@ -38,7 +38,7 @@ fn mach_timebase_info(
 /// The result of this function, multiplied by the constant from
 /// [mach_timebase_info], should be the absolute time in nanoseconds.
 /// The absolute time is a monotonic clock with an arbitrary starting point.
-fn mach_absolute_time(env: &mut Environment) -> u64 {
+pub fn mach_absolute_time(env: &mut Environment) -> u64 {
     let now = Instant::now();
     now.duration_since(env.startup_time)
         .as_nanos()

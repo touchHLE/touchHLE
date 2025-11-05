@@ -260,13 +260,11 @@ macro_rules! objc_classes {
         $(
             @implementation $class_name:ident $(: $superclass_name:ident)?
 
-            $( + ($cm_type:ty) $cm_name:ident $(:($cm_type1:ty) $cm_arg1:ident)?
-                              $($cm_namen:ident:($cm_typen:ty) $cm_argn:ident)*
+            $( + ($cm_type:ty) $cm_name:ident $(:($cm_type1:ty) $cm_arg1:ident $($($cm_namen:ident)?:($cm_typen:ty) $cm_argn:ident)*)?
                               $(, ...$cm_va_arg:ident)?
                  $cm_block:block )*
 
-            $( - ($im_type:ty) $im_name:ident $(:($im_type1:ty) $im_arg1:ident)?
-                              $($im_namen:ident:($im_typen:ty) $im_argn:ident)*
+            $( - ($im_type:ty) $im_name:ident $(:($im_type1:ty) $im_arg1:ident $($($im_namen:ident)?:($im_typen:ty) $im_argn:ident)*)?
                               $(, ...$im_va_arg:ident)?
                  $im_block:block )*
 
@@ -291,7 +289,7 @@ macro_rules! objc_classes {
                                 $crate::objc::selector!(
                                     $(($cm_type1);)?
                                     $cm_name
-                                    $(, $cm_namen)*
+                                    $($(, $($cm_namen)?)*)?
                                 ),
                                 $crate::_objc_method!(
                                     $env,
@@ -299,8 +297,7 @@ macro_rules! objc_classes {
                                     $_cmd,
                                     $cm_type,
                                     { $cm_block }
-                                    $(, $cm_type1, $cm_arg1)?
-                                    $(, $cm_typen, $cm_argn)*
+                                    $(, $cm_type1, $cm_arg1 $(, $cm_typen, $cm_argn)*)?
                                     $(, ...$cm_va_arg: $crate::abi::DotDotDot)?
                                 )
                             )
@@ -312,7 +309,7 @@ macro_rules! objc_classes {
                                 $crate::objc::selector!(
                                     $(($im_type1);)?
                                     $im_name
-                                    $(, $im_namen)*
+                                    $($(, $($im_namen)?)*)?
                                 ),
                                 $crate::_objc_method!(
                                     $env,
@@ -320,8 +317,7 @@ macro_rules! objc_classes {
                                     $_cmd,
                                     $im_type,
                                     { $im_block }
-                                    $(, $im_type1, $im_arg1)?
-                                    $(, $im_typen, $im_argn)*
+                                    $(, $im_type1, $im_arg1 $(, $im_typen, $im_argn)*)?
                                     $(, ...$im_va_arg: $crate::abi::DotDotDot)?
                                 )
                             )

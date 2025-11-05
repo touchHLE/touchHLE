@@ -12,7 +12,7 @@ use crate::frameworks::core_graphics::cg_affine_transform::{
 use crate::frameworks::core_graphics::cg_bitmap_context::{
     CGBitmapContextCreate, CGBitmapContextGetHeight, CGBitmapContextGetWidth,
 };
-use crate::frameworks::core_graphics::cg_color::{CGColorRef, CGColorRelease, CGColorRetain};
+use crate::frameworks::core_graphics::cg_color::{CGColorHostObject, CGColorRef, from_color_space_and_rgba};
 use crate::frameworks::core_graphics::cg_color_space::CGColorSpaceCreateDeviceRGB;
 use crate::frameworks::core_graphics::cg_context::{
     CGContextClearRect, CGContextRef, CGContextRelease, CGContextTranslateCTM,
@@ -41,7 +41,7 @@ pub(super) struct CALayerHostObject {
     pub(super) hidden: bool,
     pub(super) opaque: bool,
     pub(super) opacity: f32,
-    pub(super) background_color: CGColorRef,
+    pub(super) background_color: Option<CGColorHostObject>,
     pub(super) corner_radius: CGFloat,
     pub(super) needs_display: bool,
     /// `CGImageRef*`
@@ -116,7 +116,7 @@ pub const CLASSES: ClassExports = objc_classes! {
         hidden: false,
         opaque: false,
         opacity: 1.0,
-        background_color: nil, // transparency
+        background_color: None, // transparency
         corner_radius: 0.0,
         needs_display: false,
         contents: nil,
@@ -139,7 +139,6 @@ pub const CLASSES: ClassExports = objc_classes! {
         drawable_properties,
         contents,
         superlayer,
-        background_color,
         cg_context,
         ref mut sublayers,
         ..
@@ -153,8 +152,6 @@ pub const CLASSES: ClassExports = objc_classes! {
     if contents != nil {
         release(env, contents);
     }
-
-    CGColorRelease(env, background_color);
 
     if let Some(cg_context) = cg_context {
         CGContextRelease(env, cg_context);
@@ -313,13 +310,19 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (CGColorRef)backgroundColor {
-    env.objc.borrow::<CALayerHostObject>(this).background_color
+    if let Some(bg_color) = env.objc.borrow::<CALayerHostObject>(this).background_color.as_ref() {
+        from_color_space_and_rgba(env, bg_color.color_space_name, (bg_color.r, bg_color.g, bg_color.b, bg_color.a))
+    } else {
+        nil
+    }
 }
 - (())setBackgroundColor:(CGColorRef)new_color {
-    let host_obj = env.objc.borrow_mut::<CALayerHostObject>(this);
-    let old_color = std::mem::replace(&mut host_obj.background_color, new_color);
-    CGColorRetain(env, new_color);
-    CGColorRelease(env, old_color);
+    let new_color = if new_color == nil {
+        None
+    } else {
+        Some(env.objc.borrow::<CGColorHostObject>(new_color).clone())
+    };
+    env.objc.borrow_mut::<CALayerHostObject>(this).background_color = new_color;
 }
 
 - (CGFloat)cornerRadius {

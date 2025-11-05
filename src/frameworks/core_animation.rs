@@ -16,6 +16,14 @@ pub mod ca_media_timing_function;
 mod composition;
 pub use composition::recomposite_if_necessary;
 
+use crate::dyld::FunctionExports;
+use crate::environment::Environment;
+use crate::export_c_func;
+use crate::frameworks::core_foundation::time::CFTimeInterval;
+use crate::libc::mach::thread_info::KERN_SUCCESS;
+use crate::libc::mach::time::{mach_absolute_time, mach_timebase_info, struct_mach_timebase_info};
+use crate::mem::guest_size_of;
+
 pub const DYLIB: crate::dyld::HostDylib = crate::dyld::HostDylib {
     // Core Animation is considered its own framework, but it technically lives
     // in a binary called QuartzCore, which does not contain anything else of
@@ -33,10 +41,26 @@ pub const DYLIB: crate::dyld::HostDylib = crate::dyld::HostDylib {
         ca_layer::CONSTANTS,
         ca_media_timing_function::CONSTANTS,
     ],
-    function_exports: &[],
+    function_exports: &[FUNCTIONS],
 };
 
 #[derive(Default)]
 pub struct State {
     composition: composition::State,
 }
+
+pub fn CACurrentMediaTime(env: &mut Environment) -> CFTimeInterval {
+    let timebase_info_ptr = env
+        .mem
+        .alloc(guest_size_of::<struct_mach_timebase_info>())
+        .cast();
+    let return_value = mach_timebase_info(env, timebase_info_ptr);
+    assert_eq!(return_value, KERN_SUCCESS);
+    let timebase_info = env.mem.read(timebase_info_ptr);
+    env.mem.free(timebase_info_ptr.cast_void());
+    let time_abs = mach_absolute_time(env);
+    let time_ns = time_abs * timebase_info.numerator as u64 / timebase_info.denominator as u64;
+    time_ns as f64 / 1_000_000_000.0
+}
+
+pub const FUNCTIONS: FunctionExports = &[export_c_func!(CACurrentMediaTime())];

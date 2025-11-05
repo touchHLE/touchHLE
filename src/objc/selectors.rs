@@ -28,9 +28,9 @@ use crate::Environment;
 macro_rules! selector {
     // "foo"
     ($name:ident) => { stringify!($name) };
-    // "fooWithBar:", "fooWithBar:Baz" etc
-    ($_:tt; $name:ident $(, $namen:ident)*) => {
-        concat!(stringify!($name), ":", $(stringify!($namen), ":"),*)
+    // "fooWithBar:", "fooWithBar:Baz", "fooWithBar:::" etc
+    ($_:tt; $name:ident $(, $($namen:ident)?)*) => {
+        concat!(stringify!($name), ":", $($(stringify!($namen),)? ":"),*)
     }
 }
 pub use crate::selector; // #[macro_export] is weird...

@@ -303,13 +303,12 @@ where
 /// See also [msg_class], if you want to send a message to a class.
 #[macro_export]
 macro_rules! msg {
-    [$env:expr; $receiver:tt $name:ident $(: $arg1:tt)?
-                             $($namen:ident: $argn:tt)*] => {
+    [$env:expr; $receiver:tt $name:ident $(: $arg1:tt $($($namen:ident)?: $argn:tt)*)?] => {
         {
-            let sel = $crate::objc::selector!($($arg1;)? $name $(, $namen)*);
+            let sel = $crate::objc::selector!($($arg1;)? $name $($(, $($namen)?)*)?);
             let sel = $env.objc.lookup_selector(sel)
                 .expect("Unknown selector");
-            let args = ($receiver, sel, $($arg1,)? $($argn),*);
+            let args = ($receiver, sel, $($arg1, $($argn),*)?);
             $crate::objc::msg_send($env, args)
         }
     }
@@ -342,14 +341,13 @@ pub use crate::msg; // #[macro_export] is weird...
 /// ```
 #[macro_export]
 macro_rules! msg_super {
-    [$env:expr; $receiver:tt $name:ident $(: $arg1:tt)?
-                             $($namen:ident: $argn:tt)*] => {
+    [$env:expr; $receiver:tt $name:ident $(: $arg1:tt $($($namen:ident)?: $argn:tt)*)?] => {
         {
             let class = $env.objc.get_known_class(
                 _OBJC_CURRENT_CLASS,
                 &mut $env.mem
             );
-            let sel = $crate::objc::selector!($($arg1;)? $name $(, $namen)*);
+            let sel = $crate::objc::selector!($($arg1;)? $name $($(, $($namen)?)*)?);
             let sel = $env.objc.lookup_selector(sel)
                 .expect("Unknown selector");
 
@@ -362,7 +360,7 @@ macro_rules! msg_super {
                 class,
             });
 
-            let args = (super_ptr.cast_const(), sel, $($arg1,)? $($argn),*);
+            let args = (super_ptr.cast_const(), sel, $($arg1, $($argn),*)?);
             let res = $crate::objc::msg_send_super2($env, args);
 
             $env.cpu.regs_mut()[$crate::cpu::Cpu::SP] = old_sp;
@@ -387,15 +385,13 @@ pub use crate::msg_super; // #[macro_export] is weird...
 /// ```
 #[macro_export]
 macro_rules! msg_class {
-    [$env:expr; $receiver_class:ident $name:ident $(: $arg1:tt)?
-                                      $($namen:ident: $argn:tt)*] => {
+    [$env:expr; $receiver_class:ident $name:ident $(: $arg1:tt $($($namen:ident)?: $argn:tt)*)?] => {
         {
             let class = $env.objc.get_known_class(
                 stringify!($receiver_class),
                 &mut $env.mem
             );
-            $crate::objc::msg![$env; class $name $(: $arg1)?
-                                           $($namen: $argn)*]
+            $crate::objc::msg![$env; class $name $(: $arg1 $($($namen)?: $argn)*)?]
         }
     }
 }

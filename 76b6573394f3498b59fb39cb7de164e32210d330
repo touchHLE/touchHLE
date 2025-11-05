@@ -16,6 +16,24 @@
       "message": "Maybe this should call `mach_timebase_info` rather than assuming what `mach_absolute_time` returns? Not that I think we\u0027re likely to change the behaviour of the latter, but…",
       "revId": "76b6573394f3498b59fb39cb7de164e32210d330",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b275bcf0_8789ede1",
+        "filename": "src/frameworks/core_animation.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 54,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2025-11-05T18:44:10Z",
+      "side": 1,
+      "message": "The docs say \"A CFTimeInterval derived by calling mach_absolute_time() and converting the result to seconds.\" https://developer.apple.com/documentation/quartzcore/cacurrentmediatime()?language\u003dobjc",
+      "parentUuid": "2c3759c3_dcf6582b",
+      "revId": "76b6573394f3498b59fb39cb7de164e32210d330",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

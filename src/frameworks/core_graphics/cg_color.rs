@@ -27,15 +27,15 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 };
 
-struct CGColorHostObject {
-    #[allow(dead_code)]
-    color_space_name: &'static str,
+#[derive(Clone)]
+pub struct CGColorHostObject {
+    pub color_space_name: &'static str,
     // this assumes usage of CGColorSpaceGenericRGB
     // TODO: support other color spaces
-    r: CGFloat,
-    g: CGFloat,
-    b: CGFloat,
-    a: CGFloat,
+    pub r: CGFloat,
+    pub g: CGFloat,
+    pub b: CGFloat,
+    pub a: CGFloat,
 }
 impl HostObject for CGColorHostObject {}
 
@@ -101,6 +101,14 @@ pub fn from_rgba(env: &mut Environment, rgba: (CGFloat, CGFloat, CGFloat, CGFloa
 
 /// Shortcut for use by `UIColor`
 pub fn to_rgba(objc: &ObjC, color: CGColorRef) -> (CGFloat, CGFloat, CGFloat, CGFloat) {
-    let &CGColorHostObject { r, g, b, a, .. } = objc.borrow(color);
+    let &CGColorHostObject {
+        color_space_name,
+        r,
+        g,
+        b,
+        a,
+        ..
+    } = objc.borrow(color);
+    assert_eq!(color_space_name, kCGColorSpaceGenericRGB);
     (r, g, b, a)
 }

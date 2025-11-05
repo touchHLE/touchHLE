@@ -11,6 +11,7 @@
 // is built from open-source headers.
 
 #include <CoreFoundation/CFData.h>
+#include <CoreFoundation/CFDate.h>
 #include <stdbool.h>
 #include <stddef.h>
 
@@ -63,6 +64,14 @@ typedef signed long NSInteger;
 @interface NSString : NSObject
 + (instancetype)stringWithFormat:(NSString *)format, ...;
 + (instancetype)stringWithUTF8String:(const char *)string;
+@end
+
+@interface NSValue : NSObject
+@end
+
+@interface NSNumber : NSValue
++ (NSNumber *)numberWithFloat:(float)value;
++ (NSNumber *)numberWithBool:(bool)value;
 @end
 
 NSString *NSStringFromClass(Class);
@@ -144,6 +153,11 @@ CGPoint CGPointApplyAffineTransform(CGPoint, CGAffineTransform);
 CGSize CGSizeApplyAffineTransform(CGSize, CGAffineTransform);
 CGRect CGRectApplyAffineTransform(CGRect, CGAffineTransform);
 
+@interface NSValue (CGGeometryNSValueAdditions)
++ (instancetype)valueWithCGPoint:(CGPoint)point;
++ (instancetype)valueWithCGRect:(CGRect)rect;
+@end
+
 // `CGDataProvider.h`
 
 typedef struct _CGDataProvider *CGDataProviderRef;
@@ -170,17 +184,50 @@ size_t CGImageGetWidth(CGImageRef);
 size_t CGImageGetHeight(CGImageRef);
 CGDataProviderRef CGImageGetDataProvider(CGImageRef);
 
-// Core Animation
+// `CGColor.h`
 
+typedef struct _CGColor *CGColorRef;
+
+CGColorRef CGColorCreateGenericRGB(CGFloat red, CGFloat green, CGFloat blue,
+                                   CGFloat alpha);
+
+// Core Animation
+typedef NSString *CAMediaTimingFunctionName;
+
+CFTimeInterval CACurrentMediaTime();
+
+@interface CAMediaTimingFunction : NSObject
++ (instancetype)functionWithName:(CAMediaTimingFunctionName)name;
+@end
+@interface CAAnimation : NSObject
+- (void)setTimingFunction:(CAMediaTimingFunction *)timingFunction;
+- (CFTimeInterval)duration;
+- (void)setDuration:(CFTimeInterval)duration;
+- (void)setBeginTime:(CFTimeInterval)beginTime;
+- (void)setRepeatCount:(float)repeatCount;
+- (void)setAutoreverses:(bool)autoreverses;
+@end
+@interface CAPropertyAnimation : CAAnimation
++ (instancetype)animationWithKeyPath:(NSString *)path;
+@end
+@interface CABasicAnimation : CAPropertyAnimation
+- (void)setFromValue:(id)value;
+- (void)setToValue:(id)value;
+@end
 @interface CALayer : NSObject
 - (void)setAffineTransform:(CGAffineTransform)transform;
 - (void)setAnchorPoint:(CGPoint)point;
 - (void)setCornerRadius:(CGFloat)radius;
+- (CGPoint)position;
 - (void)setPosition:(CGPoint)position;
+- (CGRect)bounds;
+- (void)setBounds:(CGRect)bounds;
 - (CGPoint)convertPoint:(CGPoint)point fromLayer:(CALayer *)layer;
 - (CGPoint)convertPoint:(CGPoint)point toLayer:(CALayer *)layer;
 - (CGRect)convertRect:(CGRect)point fromLayer:(CALayer *)layer;
 - (CGRect)convertRect:(CGRect)point toLayer:(CALayer *)layer;
+- (void)addAnimation:(CAAnimation *)anim forKey:(NSString *)key;
+- (void)removeAnimationForKey:(NSString *)key;
 @end
 
 // UIKit
@@ -265,6 +312,7 @@ typedef enum {
 - (void)setAlpha:(CGFloat)alpha;
 - (BOOL)isHidden;
 - (void)setHidden:(BOOL)hidden;
+- (CALayer *)layer;
 @end
 @interface UIWindow : UIView
 - (void)makeKeyAndVisible;

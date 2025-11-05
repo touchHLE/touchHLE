@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b54ed198_979b1809",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-11-05T17:54:39Z",
+      "side": 1,
+      "message": "We\u0027re not going to merge this; the policy is that the project won\u0027t provide Linux builds. I apologise for the inconvenience and wasted effort.",
+      "revId": "165f9b11bf0c7f5aded9e3726876e1eeb3e1ac46",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "08c63b93_23367b2c",
+        "filename": "src/frameworks/core_animation/animation.rs",
+        "patchSetId": 24
+      },
+      "lineNbr": 1,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-11-05T18:48:23Z",
+      "side": 1,
+      "message": "This file is missing the license header and a doc comment at the top summarising the purpose of the module (it\u0027s also a good idea to link to documentation where relevant).",
+      "revId": "d0278e0d65e219b86ecab8bee59747bdfd69dbe5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "39bad8f6_2b67aa23",
+        "filename": "src/frameworks/core_animation/animation.rs",
+        "patchSetId": 24
+      },
+      "lineNbr": 14,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-11-05T18:48:23Z",
+      "side": 1,
+      "message": "This would be a lot neater if you can have gotten rid of the `id`s (i.e. resolved the nils and copied the content of the host objects) before calling this trait.",
+      "revId": "d0278e0d65e219b86ecab8bee59747bdfd69dbe5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

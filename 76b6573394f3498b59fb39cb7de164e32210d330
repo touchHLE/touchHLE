@@ -34,6 +34,24 @@
       "parentUuid": "2c3759c3_dcf6582b",
       "revId": "76b6573394f3498b59fb39cb7de164e32210d330",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0763efdd_afc9c67e",
+        "filename": "src/frameworks/core_animation.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 54,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-11-05T18:52:05Z",
+      "side": 1,
+      "message": "No no, that part is correct, but `mach_absolute_time` returns a value that has to be multiplied with the result of `mach_timebase_info` to get nanoseconds (and it just so happens that our implementation makes that result be 1)",
+      "parentUuid": "b275bcf0_8789ede1",
+      "revId": "76b6573394f3498b59fb39cb7de164e32210d330",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

@@ -11,6 +11,7 @@
 // is built from open-source headers.
 
 #include <CoreFoundation/CFData.h>
+#include <CoreFoundation/CFDate.h>
 #include <stdbool.h>
 #include <stddef.h>
 
@@ -26,69 +27,6 @@ typedef signed long NSInteger;
 #define nil ((id)0)
 
 // id objc_msgSend(id, SEL, ...);
-
-// Foundation
-
-@interface NSObject {
-  Class isa;
-}
-+ (Class)class;
-+ (instancetype)alloc;
-+ (instancetype)new;
-- (instancetype)init;
-- (instancetype)retain;
-- (void)release;
-- (instancetype)autorelease;
-- (void)dealloc;
-- (NSUInteger)retainCount;
-- (id)performSelector:(SEL)selector;
-- (BOOL)respondsToSelector:(SEL)selector;
-@end
-
-@interface NSAutoreleasePool : NSObject
-+ (void)addObject:(id)anObject;
-- (void)addObject:(id)anObject;
-- (void)drain;
-@end
-
-@interface NSArray<ObjectType> : NSObject
-- (NSUInteger)count;
-- (ObjectType)objectAtIndex:(NSUInteger)index;
-@end
-
-@interface NSSet<ObjectType> : NSObject
-- (ObjectType)anyObject;
-@end
-
-@interface NSString : NSObject
-+ (instancetype)stringWithFormat:(NSString *)format, ...;
-+ (instancetype)stringWithUTF8String:(const char *)string;
-@end
-
-NSString *NSStringFromClass(Class);
-
-typedef double NSTimeInterval;
-
-@interface NSProcessInfo : NSObject
-+ (instancetype)processInfo;
-- (NSTimeInterval)systemUptime;
-@end
-
-@interface NSTimer : NSObject
-+ (instancetype)timerWithTimeInterval:(NSTimeInterval)interval
-                               target:(id)target
-                             selector:(SEL)selector
-                             userInfo:(id)user_info
-                              repeats:(BOOL)repeats;
-+ (instancetype)scheduledTimerWithTimeInterval:(NSTimeInterval)interval
-                                        target:(id)target
-                                      selector:(SEL)selector
-                                      userInfo:(id)user_info
-                                       repeats:(BOOL)repeats;
-- (void)invalidate;
-@end
-
-SEL NSSelectorFromString(NSString *);
 
 // Core Graphics
 
@@ -144,6 +82,78 @@ CGPoint CGPointApplyAffineTransform(CGPoint, CGAffineTransform);
 CGSize CGSizeApplyAffineTransform(CGSize, CGAffineTransform);
 CGRect CGRectApplyAffineTransform(CGRect, CGAffineTransform);
 
+// Foundation
+
+@interface NSObject {
+  Class isa;
+}
++ (Class)class;
++ (instancetype)alloc;
++ (instancetype)new;
+- (instancetype)init;
+- (instancetype)retain;
+- (void)release;
+- (instancetype)autorelease;
+- (void)dealloc;
+- (NSUInteger)retainCount;
+- (id)performSelector:(SEL)selector;
+- (BOOL)respondsToSelector:(SEL)selector;
+@end
+
+@interface NSAutoreleasePool : NSObject
++ (void)addObject:(id)anObject;
+- (void)addObject:(id)anObject;
+- (void)drain;
+@end
+
+@interface NSArray<ObjectType> : NSObject
+- (NSUInteger)count;
+- (ObjectType)objectAtIndex:(NSUInteger)index;
+@end
+
+@interface NSSet<ObjectType> : NSObject
+- (ObjectType)anyObject;
+@end
+
+@interface NSString : NSObject
++ (instancetype)stringWithFormat:(NSString *)format, ...;
++ (instancetype)stringWithUTF8String:(const char *)string;
+@end
+
+@interface NSValue : NSObject
++ (instancetype)valueWithCGPoint:(CGPoint)point;
++ (instancetype)valueWithCGRect:(CGRect)rect;
+@end
+
+@interface NSNumber : NSValue
++ (NSNumber *) numberWithFloat:(float) value;
+@end
+
+NSString *NSStringFromClass(Class);
+
+typedef double NSTimeInterval;
+
+@interface NSProcessInfo : NSObject
++ (instancetype)processInfo;
+- (NSTimeInterval)systemUptime;
+@end
+
+@interface NSTimer : NSObject
++ (instancetype)timerWithTimeInterval:(NSTimeInterval)interval
+                               target:(id)target
+                             selector:(SEL)selector
+                             userInfo:(id)user_info
+                              repeats:(BOOL)repeats;
++ (instancetype)scheduledTimerWithTimeInterval:(NSTimeInterval)interval
+                                        target:(id)target
+                                      selector:(SEL)selector
+                                      userInfo:(id)user_info
+                                       repeats:(BOOL)repeats;
+- (void)invalidate;
+@end
+
+SEL NSSelectorFromString(NSString *);
+
 // `CGDataProvider.h`
 
 typedef struct _CGDataProvider *CGDataProviderRef;
@@ -170,17 +180,43 @@ size_t CGImageGetWidth(CGImageRef);
 size_t CGImageGetHeight(CGImageRef);
 CGDataProviderRef CGImageGetDataProvider(CGImageRef);
 
-// Core Animation
+// `CGColor.h`
 
+typedef struct _CGColor *CGColorRef;
+
+CGColorRef CGColorCreateGenericRGB(CGFloat red, CGFloat green, CGFloat blue, CGFloat alpha);
+
+// Core Animation
+typedef NSString *CAMediaTimingFunctionName;
+
+CFTimeInterval CACurrentMediaTime();
+
+@interface CAMediaTimingFunction : NSObject
++ (instancetype)functionWithName:(CAMediaTimingFunctionName)name;
+@end
+@interface CAAnimation : NSObject
+- (void)setTimingFunction:(CAMediaTimingFunction *)timingFunction;
+- (CFTimeInterval)duration;
+- (void)setDuration:(CFTimeInterval) duration;
+@end
+@interface CAPropertyAnimation : CAAnimation
++ (instancetype)animationWithKeyPath:(NSString *)path;
+@end
+@interface CABasicAnimation : CAPropertyAnimation
+- (void)setFromValue:(id)value;
+- (void)setToValue:(id)value;
+@end
 @interface CALayer : NSObject
 - (void)setAffineTransform:(CGAffineTransform)transform;
 - (void)setAnchorPoint:(CGPoint)point;
 - (void)setCornerRadius:(CGFloat)radius;
+- (CGPoint)position;
 - (void)setPosition:(CGPoint)position;
 - (CGPoint)convertPoint:(CGPoint)point fromLayer:(CALayer *)layer;
 - (CGPoint)convertPoint:(CGPoint)point toLayer:(CALayer *)layer;
 - (CGRect)convertRect:(CGRect)point fromLayer:(CALayer *)layer;
 - (CGRect)convertRect:(CGRect)point toLayer:(CALayer *)layer;
+- (void) addAnimation:(CAAnimation *) anim forKey:(NSString *) key;
 @end
 
 // UIKit
@@ -263,6 +299,7 @@ typedef enum {
 - (void)setBackgroundColor:(UIColor *)color;
 - (CGFloat)alpha;
 - (void)setAlpha:(CGFloat)alpha;
+- (CALayer *)layer;
 @end
 @interface UIWindow : UIView
 - (void)makeKeyAndVisible;

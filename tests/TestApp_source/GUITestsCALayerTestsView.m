@@ -9,7 +9,7 @@
 
 #include "GUITestsCALayerTestsView.h"
 
-#define NUM_TESTS 12
+#define NUM_TESTS 13
 
 @implementation GUITestsCALayerTestsView : UIView
 
@@ -331,5 +331,78 @@ UILabel *lastTappedGlobalFrameLabel;
   [testArea.subviews objectAtIndex:1].transform = CGAffineTransformRotate(
       CGAffineTransformMakeScale(0.5, 0.5), (M_PI / 2) * (((int)floor(t)) % 4));
   [self test11Tick];
+}
+- (void)test13 {
+  UILabel *label = [[[UILabel alloc] initWithFrame:CGRectMake(75, 75, 175, 175)]
+      autorelease];
+  label.text = [NSString stringWithUTF8String:"hello, animations!"];
+  label.textAlignment = UITextAlignmentCenter;
+  [self addSubview:label];
+
+  CALayer *layer = [label layer];
+  [layer setCornerRadius:32.0];
+
+  CAMediaTimingFunction *easeInEaseOut = [CAMediaTimingFunction
+      functionWithName:[NSString stringWithUTF8String:"easeInEaseOut"]];
+  CAMediaTimingFunction *easeOut = [CAMediaTimingFunction
+      functionWithName:[NSString stringWithUTF8String:"easeOut"]];
+
+  CABasicAnimation *animation = [CABasicAnimation
+      animationWithKeyPath:[NSString stringWithUTF8String:"opacity"]];
+  [animation setTimingFunction:easeInEaseOut];
+  [animation setDuration:3.0];
+  [animation setFromValue:[NSNumber numberWithFloat:0.0]];
+  [animation setToValue:[NSNumber numberWithFloat:1.0]];
+  [layer addAnimation:animation
+               forKey:[NSString stringWithUTF8String:"opacity_animation"]];
+
+  animation = [CABasicAnimation
+      animationWithKeyPath:[NSString stringWithUTF8String:"backgroundColor"]];
+  [animation setBeginTime:CACurrentMediaTime() + 2.0];
+  [animation setDuration:4.0];
+  [animation setFromValue:CGColorCreateGenericRGB(0.0, 0.70, 0.0, 1.0)];
+  [animation setToValue:CGColorCreateGenericRGB(0.75, 0.00, 0.25, 1.0)];
+  [layer addAnimation:animation
+               forKey:[NSString stringWithUTF8String:"bg_animation"]];
+
+  animation = [CABasicAnimation
+      animationWithKeyPath:[NSString stringWithUTF8String:"backgroundColor"]];
+  [animation setBeginTime:CACurrentMediaTime() + 6.0];
+  [animation setDuration:4.0];
+  [animation setFromValue:CGColorCreateGenericRGB(0.75, 0.00, 0.25, 1.0)];
+  [animation setToValue:CGColorCreateGenericRGB(1.0, 1.0, 1.0, 1.0)];
+  [layer addAnimation:animation
+               forKey:[NSString stringWithUTF8String:"bg_animation2"]];
+
+  animation = [CABasicAnimation
+      animationWithKeyPath:[NSString stringWithUTF8String:"bounds"]];
+  [animation setTimingFunction:easeOut];
+  [animation setDuration:6.0];
+  [animation setFromValue:[NSValue valueWithCGRect:CGRectMake(10, 10, 50, 10)]];
+  [animation setToValue:[NSValue valueWithCGRect:[layer bounds]]];
+  [layer addAnimation:animation
+               forKey:[NSString stringWithUTF8String:"bounds_animation"]];
+
+  animation = [CABasicAnimation
+      animationWithKeyPath:[NSString stringWithUTF8String:"cornerRadius"]];
+  [animation setDuration:6.0];
+  [animation setFromValue:[NSNumber numberWithFloat:0.0]];
+  [animation setToValue:[NSNumber numberWithFloat:32.0]];
+  [layer addAnimation:animation
+               forKey:[NSString stringWithUTF8String:"corner_animation"]];
+
+  animation = [CABasicAnimation
+      animationWithKeyPath:[NSString stringWithUTF8String:"position"]];
+  [animation setTimingFunction:easeOut];
+  [animation setDuration:8.0];
+  [animation setFromValue:[NSValue valueWithCGPoint:CGPointMake(120, -75)]];
+  [animation setToValue:[NSValue valueWithCGPoint:[layer position]]];
+  [layer addAnimation:animation
+               forKey:[NSString stringWithUTF8String:"position_animation"]];
+
+  // Remove animation that doesn't exist
+  [layer
+      removeAnimationForKey:[NSString
+                                stringWithUTF8String:"non_existent_animation"]];
 }
 @end

@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9cba58d1_32674ef4",
+        "filename": "src/frameworks/foundation/ns_value.rs",
+        "patchSetId": 16
+      },
+      "lineNbr": 112,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-11-05T18:35:37Z",
+      "side": 1,
+      "message": "This default doesn\u0027t seem good, I don\u0027t know what a blank `NSValue` is supposed to be, but it\u0027s surely not a CGRect. It would be unorthodox, but maybe you can skip the `allocWithZone:` here and have the `valueWithCGPoint:` (etc) methods call `alloc_object` directly…",
+      "revId": "05cf8fce71d30dfc91c784f0bd456002bb02a200",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

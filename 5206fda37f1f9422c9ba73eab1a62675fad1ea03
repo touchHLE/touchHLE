@@ -16,6 +16,24 @@
       "message": "Two problems:\n\n- This is a memory leak, you need to `autorelease` it.\n- Why are you re-creating the host object from its components, can\u0027t you just directly clone it? You can add a helper function for that if you want…",
       "revId": "5206fda37f1f9422c9ba73eab1a62675fad1ea03",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "15d9c82a_e1fce633",
+        "filename": "src/frameworks/core_animation/ca_layer.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 314,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2025-11-05T18:46:49Z",
+      "side": 1,
+      "message": "I can clone the object but I wanted to avoid having to call the class \"_touchHLE_CGColor\", although i guess it\u0027s fine if I do",
+      "parentUuid": "dca10526_e6d95b02",
+      "revId": "5206fda37f1f9422c9ba73eab1a62675fad1ea03",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

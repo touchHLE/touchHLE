@@ -16,6 +16,12 @@ pub mod ca_media_timing_function;
 mod composition;
 pub use composition::recomposite_if_necessary;
 
+use crate::dyld::FunctionExports;
+use crate::environment::Environment;
+use crate::export_c_func;
+use crate::frameworks::{core_foundation::time::CFTimeInterval};
+use crate::libc::mach::time::mach_absolute_time;
+
 pub const DYLIB: crate::dyld::HostDylib = crate::dyld::HostDylib {
     // Core Animation is considered its own framework, but it technically lives
     // in a binary called QuartzCore, which does not contain anything else of
@@ -33,10 +39,21 @@ pub const DYLIB: crate::dyld::HostDylib = crate::dyld::HostDylib {
         ca_layer::CONSTANTS,
         ca_media_timing_function::CONSTANTS,
     ],
-    function_exports: &[],
+    function_exports: &[
+        FUNCTIONS
+    ],
 };
 
 #[derive(Default)]
 pub struct State {
     composition: composition::State,
 }
+
+
+pub fn CACurrentMediaTime(env: &mut Environment) -> CFTimeInterval {
+    mach_absolute_time(env) as f64 / 1000000000.0
+}
+
+pub const FUNCTIONS: FunctionExports = &[
+    export_c_func!(CACurrentMediaTime()),
+];

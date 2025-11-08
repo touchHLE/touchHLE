@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "7c5e0588_3fb9b9e5",
+        "filename": "src/frameworks/core_animation/animation.rs",
+        "patchSetId": 24
+      },
+      "lineNbr": 1,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2025-11-08T14:18:33Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "08c63b93_23367b2c",
+      "revId": "d0278e0d65e219b86ecab8bee59747bdfd69dbe5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "39bad8f6_2b67aa23",
@@ -31,6 +49,24 @@
       "writtenOn": "2025-11-05T18:48:23Z",
       "side": 1,
       "message": "This would be a lot neater if you can have gotten rid of the `id`s (i.e. resolved the nils and copied the content of the host objects) before calling this trait.",
+      "revId": "d0278e0d65e219b86ecab8bee59747bdfd69dbe5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "04e6e5c5_93001213",
+        "filename": "src/frameworks/core_animation/animation.rs",
+        "patchSetId": 24
+      },
+      "lineNbr": 14,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2025-11-08T14:18:33Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "39bad8f6_2b67aa23",
       "revId": "d0278e0d65e219b86ecab8bee59747bdfd69dbe5",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

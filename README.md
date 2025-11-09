@@ -1,15 +1,11 @@
-# touchHLE: high-level emulator for iPhone OS apps
+# titaniumHLE: High-Level Emulation for Legacy iPhone OS Apps
 
-**touchHLE** is a high-level emulator for iPhone OS apps. It runs on modern desktop operating systems and Android, and is written in Rust.
-
-touchHLE's high-level emulation (HLE) approach differs from low-level emulation (LLE) in that it does not directly simulate the iPhone/iPod touch hardware. Instead of running iPhone OS inside emulation, touchHLE _itself_ takes the place of iPhone OS and provides its own implementations of the system frameworks (Foundation, UIKit, OpenGL ES, OpenAL, etc). The only code the [emulated CPU](https://github.com/merryhime/dynarmic) executes is the app binary and [a handful of libraries](touchHLE_dylibs/).
-
-The goal of this project is to run games from the early days of iOS:
-
-* Currently: iPhone and iPod touch apps for iPhone OS 2.x and iPhone OS 3.0.
-* Longer term: iPhone OS 3.1, iPad apps (iPhone OS 3.2), iOS 4.x, …
-* [Never](https://github.com/touchHLE/touchHLE/issues/181#issuecomment-1777098259): 64-bit iOS.
-
+titaniumHLE, a project by Gitsnup, is a high-level emulator (HLE) for iPhone OS applications. It is engineered to run on modern desktop and Android platforms, with its core written in Rust.
+titaniumHLE adopts the high-level approach, diverging significantly from traditional low-level hardware simulation (LLE) of the original iPhone/iPod touch devices. Instead of attempting to virtualize the entire iPhone OS environment, titaniumHLE itself stands in for the legacy operating system. It achieves this by providing its own robust, high-level reimplementations of the original system frameworks (such as Foundation, UIKit, OpenGL ES, and OpenAL). Consequently, the only code executed by the emulated CPU (powered by dynarmic) is the core application binary and a curated set of necessary libraries.
+The primary mission of this project is to restore and run games from the foundational era of iOS gaming:
+ * Current Focus: iPhone and iPod touch applications targeting iPhone OS 2.x and iPhone OS 3.0.
+ * Future Scope: Long-term plans include expanding support to iPhone OS 3.1, iPad apps (iPhone OS 3.2), and subsequent iOS 4.x versions.
+ * Technical Constraint: Support for 64-bit iOS titles will not be integrated into this project.
 **This does not mean that all apps for these OS versions work.** The vast majority of iPhone OS 2.x and iPhone OS 3.x apps do not currently work in touchHLE, and the ones that do work are generally games (support for other apps isn't a priority: it's more complex and less fun). This improves gradually over time with contributions from various developers. The [touchHLE app compatibility database](https://appdb.touchhle.org/) tracks which apps work in touchHLE; it is a crowdsourced effort to which anyone can contribute. **We don't take requests, so please do not ask us to support your favourite game.**
 
 If you're curious about the history and motivation behind the project, you might want to read [the original announcement](https://hikari.noyu.me/blog/2023-02-06-touchhle-anouncement-thread-tech-games-me-and-passion-projects.html). For an introduction to some of the technical details, check out [_touchHLE in depth_](https://hikari.noyu.me/blog/2023-04-13-touchhle-in-depth-1-function-calls.html).

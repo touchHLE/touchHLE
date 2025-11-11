@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7d73b267_afd3c2ce",
+        "filename": "src/frameworks/core_animation.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 63,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-11-11T17:55:15Z",
+      "side": 1,
+      "message": "…oops I didn\u0027t realise it would end up this messy. ^^;\n\nI think replacing all this with just `Instant::now().duration_since(env.startup_time).as_secs_f64()` and adding a comment about how this is supposed to match `mach_absolute_time()` and will in our implementation would be fine…",
+      "revId": "c77930f92cc4f8b8601091431056be02b72db41a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

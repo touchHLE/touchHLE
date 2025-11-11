@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d41c0004_82832a4b",
+        "filename": "src/frameworks/core_animation/ca_media_timing_function.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 99,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-11-11T18:08:51Z",
+      "side": 1,
+      "message": "Do we really need these private subclasses; can\u0027t we just call `functionWithControlPoints` directly? It doesn\u0027t seem like there\u0027s a way to detect which specific function was requested later, nor is there something we would need that for, so I\u0027m not sure what the point of them would be.",
+      "revId": "0f925ee3eb7edf52bbc86b3b2a1b4c9c22751eef",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "02665e6e_f32f303c",
+        "filename": "src/frameworks/core_animation/ca_media_timing_function.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 183,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-11-11T18:08:51Z",
+      "side": 1,
+      "message": "Rust uses `this_style` for variable names, but more importantly, this is not ease-in-ease-out.",
+      "revId": "0f925ee3eb7edf52bbc86b3b2a1b4c9c22751eef",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d4fa17c3_32796bec",
+        "filename": "src/frameworks/core_animation.rs",
+        "patchSetId": 6
+      },
+      "lineNbr": 21,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-11-11T22:34:11Z",
+      "side": 1,
+      "message": "I apologise for having to complain about this because automated tools don\u0027t know this, but:\n\n- `export_c_func` should be imported from `dyld`\n- `Environment` should be imported directly from `crate`",
+      "revId": "f576583f7de57f0916ebbf830468a32363c88baa",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

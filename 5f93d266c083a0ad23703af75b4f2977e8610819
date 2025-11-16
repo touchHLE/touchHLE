@@ -16,6 +16,24 @@
       "message": "this should return Ptr::null();",
       "revId": "5f93d266c083a0ad23703af75b4f2977e8610819",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "6adf1683_814c5d20",
+        "filename": "src/frameworks/openal.rs",
+        "patchSetId": 13
+      },
+      "lineNbr": 236,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-11-16T17:39:55Z",
+      "side": 1,
+      "message": "That is really weird, I tried this prior and as I recall it was giving a lint error or something, but seems fine now. Changed it.",
+      "parentUuid": "babf262c_1951da25",
+      "revId": "5f93d266c083a0ad23703af75b4f2977e8610819",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

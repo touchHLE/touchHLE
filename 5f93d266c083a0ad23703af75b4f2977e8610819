@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "babf262c_1951da25",
+        "filename": "src/frameworks/openal.rs",
+        "patchSetId": 13
+      },
+      "lineNbr": 236,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-11-16T11:52:35Z",
+      "side": 1,
+      "message": "this should return Ptr::null();",
+      "revId": "5f93d266c083a0ad23703af75b4f2977e8610819",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

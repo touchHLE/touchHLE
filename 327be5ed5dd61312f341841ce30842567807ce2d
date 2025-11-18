@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "48337541_838c6079",
+        "filename": "src/frameworks/openal.rs",
+        "patchSetId": 21
+      },
+      "lineNbr": 198,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-11-18T21:34:40Z",
+      "side": 1,
+      "message": "?",
+      "revId": "327be5ed5dd61312f341841ce30842567807ce2d",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

@@ -70,6 +70,24 @@
       "parentUuid": "94d59123_dc416d46",
       "revId": "47b049e1879c2e2f2286fd2ca31fe5f0b5a72d23",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "a87a546c_f28dd87d",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 14
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-11-18T12:49:18Z",
+      "side": 1,
+      "message": "So, the reason is that most of the time these functions are called on exit of the app. They can also be called multiple times. This is why log_once perhaps made sense too. However, on a real device and as seen in other functions in this file, if null is passed there is nothing to do that is beneficial. If trying to diagnose other issues though like perhaps adding some  other audio codec or something and running debug, they may be beneficial then.",
+      "parentUuid": "dc227535_fbaf6949",
+      "revId": "47b049e1879c2e2f2286fd2ca31fe5f0b5a72d23",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

@@ -52,6 +52,24 @@
       "parentUuid": "1d4e5b78_b0f83994",
       "revId": "47b049e1879c2e2f2286fd2ca31fe5f0b5a72d23",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "dc227535_fbaf6949",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 14
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-11-18T05:57:14Z",
+      "side": 1,
+      "message": "Well, can you explain why use log_dbg and not log?",
+      "parentUuid": "94d59123_dc416d46",
+      "revId": "47b049e1879c2e2f2286fd2ca31fe5f0b5a72d23",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

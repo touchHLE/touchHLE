@@ -142,6 +142,24 @@
       "parentUuid": "b3e3a9e0_e7454fba",
       "revId": "47b049e1879c2e2f2286fd2ca31fe5f0b5a72d23",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "e88d22f0_19d96148",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 14
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2025-11-19T14:34:13Z",
+      "side": 1,
+      "message": "So, after exiting with Galaxy On Fire, the following lines are each echoed 31 times:\n\ntouchHLE::frameworks::openal: alcGetContextsDevice() is called with NULL context, ignoring\ntouchHLE::frameworks::openal: alcDestroyContext() is called with NULL context, ignoring\ntouchHLE::frameworks::openal: alcCloseDevice() is called with NULL device, ignoring\n\nSo, 3 lines times 3 is 93.  Not a big deal, but this is why I used log_once instead of just log.\n\nStill better than a crash though, but wanted to add some context here.",
+      "parentUuid": "aea2c1ff_621c87a8",
+      "revId": "47b049e1879c2e2f2286fd2ca31fe5f0b5a72d23",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

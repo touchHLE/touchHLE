@@ -77,8 +77,17 @@ pub enum FingerId {
     VirtualCursor,
     ButtonToTouch(crate::options::Button),
     StickToTouch,
+    DpadToTouch,
 }
 pub type Coords = (f32, f32);
+
+struct DpadState {
+    left: bool,
+    right: bool,
+    up: bool,
+    down: bool,
+    active: bool,
+}
 
 #[derive(Debug)]
 pub enum TextInputEvent {
@@ -169,6 +178,7 @@ pub struct Window {
     app_gl_ctx_no_longer_current: bool,
     controller_ctx: sdl2::GameControllerSubsystem,
     controllers: Vec<sdl2::controller::GameController>,
+    dpad_state: DpadState,
     _sensor_ctx: sdl2::SensorSubsystem,
     accelerometer: Option<sdl2::sensor::Sensor>,
     virtual_cursor_last: Option<(f32, f32, bool, bool)>,
@@ -308,6 +318,13 @@ impl Window {
             app_gl_ctx_no_longer_current: false,
             controller_ctx,
             controllers: Vec::new(),
+            dpad_state: DpadState {
+                left: false,
+                right: false,
+                up: false,
+                down: false,
+                active: false,
+            },
             _sensor_ctx: sensor_ctx,
             accelerometer,
             virtual_cursor_last: None,
@@ -496,25 +513,99 @@ impl Window {
                     let Some(button) = translate_button(button) else {
                         continue;
                     };
-                    let Some(&(x, y)) = options.button_to_touch.get(&button) else {
-                        continue;
-                    };
-                    match event {
-                        E::ControllerButtonUp { .. } => {
-                            let coords = transform_input_coords(self, (x, y), true);
-                            Event::TouchesUp(HashMap::from([(
-                                FingerId::ButtonToTouch(button),
-                                coords,
-                            )]))
+                    // Called whenever a DPad direction is pressed or released
+                    if (button == crate::options::Button::DPadLeft
+                        || button == crate::options::Button::DPadUp
+                        || button == crate::options::Button::DPadRight
+                        || button == crate::options::Button::DPadDown)
+                        && options.dpad_to_touch.is_some()
+                    {
+                        let Some((x, y, w, h)) = options.dpad_to_touch else {
+                            continue;
+                        };
+                        // Update held state
+                        match (button, &event) {
+                            (crate::options::Button::DPadLeft,  E::ControllerButtonDown { .. }) => self.dpad_state.left  = true,
+                            (crate::options::Button::DPadLeft,  E::ControllerButtonUp   { .. }) => self.dpad_state.left  = false,
+
+                            (crate::options::Button::DPadRight, E::ControllerButtonDown { .. }) => self.dpad_state.right = true,
+                            (crate::options::Button::DPadRight, E::ControllerButtonUp   { .. }) => self.dpad_state.right = false,
+
+                            (crate::options::Button::DPadUp,    E::ControllerButtonDown { .. }) => self.dpad_state.up    = true,
+                            (crate::options::Button::DPadUp,    E::ControllerButtonUp   { .. }) => self.dpad_state.up    = false,
+
+                            (crate::options::Button::DPadDown,  E::ControllerButtonDown { .. }) => self.dpad_state.down  = true,
+                            (crate::options::Button::DPadDown,  E::ControllerButtonUp   { .. }) => self.dpad_state.down  = false,
+                            _ => unreachable!(),
                         }
-                        E::ControllerButtonDown { .. } => {
-                            let coords = transform_input_coords(self, (x, y), true);
+
+                        // Compute center
+                        let cx = x + w * 0.5;
+                        let cy = y + h * 0.5;
+
+                        // Compute combined delta
+                        let mut dx = 0.0;
+                        let mut dy = 0.0;
+
+                        if self.dpad_state.left  { dx -= 0.5 * w; }
+                        if self.dpad_state.right { dx += 0.5 * w; }
+                        if self.dpad_state.up    { dy -= 0.5 * h; }
+                        if self.dpad_state.down  { dy += 0.5 * h; }
+
+                        // Final coords: center + movement
+                        let coords = transform_input_coords(self, (cx + dx, cy + dy), true);
+
+                        // Send TouchDown if any dpad is held, TouchUp if none
+                        let any_held =
+                            self.dpad_state.left  ||
+                            self.dpad_state.right ||
+                            self.dpad_state.up    ||
+                            self.dpad_state.down;
+
+                        if !self.dpad_state.active && any_held {
+                            // New touch
+                            self.dpad_state.active = true;
                             Event::TouchesDown(HashMap::from([(
-                                FingerId::ButtonToTouch(button),
+                                FingerId::DpadToTouch,
                                 coords,
                             )]))
+                        } else if self.dpad_state.active && any_held {
+                            // Move existing touch
+                            Event::TouchesMove(HashMap::from([(
+                                FingerId::DpadToTouch,
+                                coords,
+                            )]))
+                        } else if self.dpad_state.active && !any_held {
+                            // Release touch
+                            self.dpad_state.active = false;
+                            Event::TouchesUp(HashMap::from([(
+                                FingerId::DpadToTouch,
+                                coords,
+                            )]))
+                        } else {
+                            continue;
                         }
-                        _ => unreachable!(),
+                    } else {
+                        let Some(&(x, y)) = options.button_to_touch.get(&button) else {
+                            continue;
+                        };
+                        match event {
+                            E::ControllerButtonUp { .. } => {
+                                let coords = transform_input_coords(self, (x, y), true);
+                                Event::TouchesUp(HashMap::from([(
+                                    FingerId::ButtonToTouch(button),
+                                    coords,
+                                )]))
+                            }
+                            E::ControllerButtonDown { .. } => {
+                                let coords = transform_input_coords(self, (x, y), true);
+                                Event::TouchesDown(HashMap::from([(
+                                    FingerId::ButtonToTouch(button),
+                                    coords,
+                                )]))
+                            }
+                            _ => unreachable!(),
+                        }
                     }
                 }
                 E::ControllerAxisMotion { axis, .. } => {

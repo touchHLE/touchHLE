@@ -168,7 +168,7 @@ impl Options {
                 .try_into()
                 .map_err(|_| "--stick-to-touch= requires four values".to_string())?;
 
-                self.stick_to_touch = Some((nums[0], nums[1], nums[2], nums[3]));
+            self.stick_to_touch = Some((nums[0], nums[1], nums[2], nums[3]));
         } else if let Some(values) = arg.strip_prefix("--dpad-to-touch=") {
             let nums: [f32; 4] = values
                 .split(',')

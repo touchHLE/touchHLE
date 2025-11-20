@@ -527,17 +527,33 @@ impl Window {
                         };
                         // Update held state
                         match (button, &event) {
-                            (crate::options::Button::DPadLeft,  E::ControllerButtonDown { .. }) => self.dpad_state.left  = true,
-                            (crate::options::Button::DPadLeft,  E::ControllerButtonUp   { .. }) => self.dpad_state.left  = false,
+                            (crate::options::Button::DPadLeft, E::ControllerButtonDown { .. }) => {
+                                self.dpad_state.left = true
+                            }
+                            (crate::options::Button::DPadLeft, E::ControllerButtonUp { .. }) => {
+                                self.dpad_state.left = false
+                            }
 
-                            (crate::options::Button::DPadRight, E::ControllerButtonDown { .. }) => self.dpad_state.right = true,
-                            (crate::options::Button::DPadRight, E::ControllerButtonUp   { .. }) => self.dpad_state.right = false,
+                            (crate::options::Button::DPadRight, E::ControllerButtonDown { .. }) => {
+                                self.dpad_state.right = true
+                            }
+                            (crate::options::Button::DPadRight, E::ControllerButtonUp { .. }) => {
+                                self.dpad_state.right = false
+                            }
 
-                            (crate::options::Button::DPadUp,    E::ControllerButtonDown { .. }) => self.dpad_state.up    = true,
-                            (crate::options::Button::DPadUp,    E::ControllerButtonUp   { .. }) => self.dpad_state.up    = false,
+                            (crate::options::Button::DPadUp, E::ControllerButtonDown { .. }) => {
+                                self.dpad_state.up = true
+                            }
+                            (crate::options::Button::DPadUp, E::ControllerButtonUp { .. }) => {
+                                self.dpad_state.up = false
+                            }
 
-                            (crate::options::Button::DPadDown,  E::ControllerButtonDown { .. }) => self.dpad_state.down  = true,
-                            (crate::options::Button::DPadDown,  E::ControllerButtonUp   { .. }) => self.dpad_state.down  = false,
+                            (crate::options::Button::DPadDown, E::ControllerButtonDown { .. }) => {
+                                self.dpad_state.down = true
+                            }
+                            (crate::options::Button::DPadDown, E::ControllerButtonUp { .. }) => {
+                                self.dpad_state.down = false
+                            }
                             _ => unreachable!(),
                         }
 
@@ -549,41 +565,39 @@ impl Window {
                         let mut dx = 0.0;
                         let mut dy = 0.0;
 
-                        if self.dpad_state.left  { dx -= 0.5 * w; }
-                        if self.dpad_state.right { dx += 0.5 * w; }
-                        if self.dpad_state.up    { dy -= 0.5 * h; }
-                        if self.dpad_state.down  { dy += 0.5 * h; }
+                        if self.dpad_state.left {
+                            dx -= 0.5 * w;
+                        }
+                        if self.dpad_state.right {
+                            dx += 0.5 * w;
+                        }
+                        if self.dpad_state.up {
+                            dy -= 0.5 * h;
+                        }
+                        if self.dpad_state.down {
+                            dy += 0.5 * h;
+                        }
 
                         // Final coords: center + movement
                         let coords = transform_input_coords(self, (cx + dx, cy + dy), true);
 
                         // Send TouchDown if any dpad is held, TouchUp if none
-                        let any_held =
-                            self.dpad_state.left  ||
-                            self.dpad_state.right ||
-                            self.dpad_state.up    ||
-                            self.dpad_state.down;
+                        let any_held = self.dpad_state.left
+                            || self.dpad_state.right
+                            || self.dpad_state.up
+                            || self.dpad_state.down;
 
                         if !self.dpad_state.active && any_held {
                             // New touch
                             self.dpad_state.active = true;
-                            Event::TouchesDown(HashMap::from([(
-                                FingerId::DpadToTouch,
-                                coords,
-                            )]))
+                            Event::TouchesDown(HashMap::from([(FingerId::DpadToTouch, coords)]))
                         } else if self.dpad_state.active && any_held {
                             // Move existing touch
-                            Event::TouchesMove(HashMap::from([(
-                                FingerId::DpadToTouch,
-                                coords,
-                            )]))
+                            Event::TouchesMove(HashMap::from([(FingerId::DpadToTouch, coords)]))
                         } else if self.dpad_state.active && !any_held {
                             // Release touch
                             self.dpad_state.active = false;
-                            Event::TouchesUp(HashMap::from([(
-                                FingerId::DpadToTouch,
-                                coords,
-                            )]))
+                            Event::TouchesUp(HashMap::from([(FingerId::DpadToTouch, coords)]))
                         } else {
                             continue;
                         }
@@ -615,7 +629,8 @@ impl Window {
                     let Some((x, y, w, h)) = options.stick_to_touch else {
                         continue;
                     };
-                    if axis == sdl2::controller::Axis::LeftX || axis == sdl2::controller::Axis::LeftY
+                    if axis == sdl2::controller::Axis::LeftX
+                        || axis == sdl2::controller::Axis::LeftY
                     {
                         let (stick_x, stick_y, _) = self.get_controller_stick(options, true);
                         let coords = transform_input_coords(
@@ -628,7 +643,7 @@ impl Window {
                         );
                         if stick_x.abs() < 0.1 && stick_y.abs() < 0.1 {
                             if !self.stick_active {
-                                // Ignore deadzone events when stick is inactive 
+                                // Ignore deadzone events when stick is inactive
                                 continue;
                             } else {
                                 // Release touch when stick returns to deadzone
@@ -639,10 +654,16 @@ impl Window {
                             if !self.stick_active {
                                 // New touch
                                 self.stick_active = true;
-                                Event::TouchesDown(HashMap::from([(FingerId::StickToTouch, coords)]))
+                                Event::TouchesDown(HashMap::from([(
+                                    FingerId::StickToTouch,
+                                    coords,
+                                )]))
                             } else {
                                 // Move existing touch
-                                Event::TouchesMove(HashMap::from([(FingerId::StickToTouch, coords)]))
+                                Event::TouchesMove(HashMap::from([(
+                                    FingerId::StickToTouch,
+                                    coords,
+                                )]))
                             }
                         }
                     } else {

@@ -650,22 +650,20 @@ impl Window {
                                 self.stick_active = false;
                                 Event::TouchesUp(HashMap::from([(FingerId::StickToTouch, coords)]))
                             }
-                        } else {
-                            if !self.stick_active {
-                                // New touch
-                                self.stick_active = true;
-                                Event::TouchesDown(HashMap::from([(
-                                    FingerId::StickToTouch,
-                                    coords,
-                                )]))
-                            } else {
-                                // Move existing touch
-                                Event::TouchesMove(HashMap::from([(
-                                    FingerId::StickToTouch,
-                                    coords,
-                                )]))
-                            }
-                        }
+                        } else if !self.stick_active {
+                            // New touch
+                            self.stick_active = true;
+                            Event::TouchesDown(HashMap::from([(
+                                FingerId::StickToTouch,
+                                coords,
+                            )]))
+                         } else {
+                            // Move existing touch
+                            Event::TouchesMove(HashMap::from([(
+                                FingerId::StickToTouch,
+                                coords,
+                            )]))
+                         }
                     } else {
                         continue;
                     }

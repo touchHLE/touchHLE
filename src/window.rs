@@ -179,6 +179,7 @@ pub struct Window {
     controller_ctx: sdl2::GameControllerSubsystem,
     controllers: Vec<sdl2::controller::GameController>,
     dpad_state: DpadState,
+    stick_active: bool,
     _sensor_ctx: sdl2::SensorSubsystem,
     accelerometer: Option<sdl2::sensor::Sensor>,
     virtual_cursor_last: Option<(f32, f32, bool, bool)>,
@@ -325,6 +326,7 @@ impl Window {
                 down: false,
                 active: false,
             },
+            stick_active: false,
             _sensor_ctx: sensor_ctx,
             accelerometer,
             virtual_cursor_last: None,
@@ -625,9 +627,23 @@ impl Window {
                             true,
                         );
                         if stick_x.abs() < 0.1 && stick_y.abs() < 0.1 {
-                            Event::TouchesUp(HashMap::from([(FingerId::StickToTouch, coords)]))
+                            if !self.stick_active {
+                                // Ignore deadzone events when stick is inactive 
+                                continue;
+                            } else {
+                                // Release touch when stick returns to deadzone
+                                self.stick_active = false;
+                                Event::TouchesUp(HashMap::from([(FingerId::StickToTouch, coords)]))
+                            }
                         } else {
-                            Event::TouchesDown(HashMap::from([(FingerId::StickToTouch, coords)]))
+                            if !self.stick_active {
+                                // New touch
+                                self.stick_active = true;
+                                Event::TouchesDown(HashMap::from([(FingerId::StickToTouch, coords)]))
+                            } else {
+                                // Move existing touch
+                                Event::TouchesMove(HashMap::from([(FingerId::StickToTouch, coords)]))
+                            }
                         }
                     } else {
                         continue;

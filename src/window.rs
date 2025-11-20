@@ -653,17 +653,11 @@ impl Window {
                         } else if !self.stick_active {
                             // New touch
                             self.stick_active = true;
-                            Event::TouchesDown(HashMap::from([(
-                                FingerId::StickToTouch,
-                                coords,
-                            )]))
-                         } else {
+                            Event::TouchesDown(HashMap::from([(FingerId::StickToTouch, coords)]))
+                        } else {
                             // Move existing touch
-                            Event::TouchesMove(HashMap::from([(
-                                FingerId::StickToTouch,
-                                coords,
-                            )]))
-                         }
+                            Event::TouchesMove(HashMap::from([(FingerId::StickToTouch, coords)]))
+                        }
                     } else {
                         continue;
                     }

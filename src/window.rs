@@ -76,6 +76,7 @@ pub enum FingerId {
     Touch(i64),
     VirtualCursor,
     ButtonToTouch(crate::options::Button),
+    StickToTouch,
 }
 pub type Coords = (f32, f32);
 
@@ -516,9 +517,30 @@ impl Window {
                         _ => unreachable!(),
                     }
                 }
-                E::ControllerAxisMotion { .. } => {
+                E::ControllerAxisMotion { axis, .. } => {
                     controller_updated = true;
-                    continue;
+                    let Some((x, y, w, h)) = options.stick_to_touch else {
+                        continue;
+                    };
+                    if axis == sdl2::controller::Axis::LeftX || axis == sdl2::controller::Axis::LeftY
+                    {
+                        let (stick_x, stick_y, _) = self.get_controller_stick(options, true);
+                        let coords = transform_input_coords(
+                            self,
+                            (
+                                x + ((stick_x + 1.0) / 2.0) * w,
+                                y + ((stick_y + 1.0) / 2.0) * h,
+                            ),
+                            true,
+                        );
+                        if stick_x.abs() < 0.1 && stick_y.abs() < 0.1 {
+                            Event::TouchesUp(HashMap::from([(FingerId::StickToTouch, coords)]))
+                        } else {
+                            Event::TouchesDown(HashMap::from([(FingerId::StickToTouch, coords)]))
+                        }
+                    } else {
+                        continue;
+                    }
                 }
                 E::AppWillEnterBackground { .. } => {
                     log!("Received app-will-resign-active event.");

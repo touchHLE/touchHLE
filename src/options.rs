@@ -44,6 +44,7 @@ pub struct Options {
     pub x_tilt_offset: f32,
     pub y_tilt_offset: f32,
     pub button_to_touch: HashMap<Button, (f32, f32)>,
+    pub stick_to_touch: Option<(f32, f32, f32, f32)>,
     pub stabilize_virtual_cursor: Option<(f32, f32)>,
     pub gles1_implementation: Option<GLESImplementation>,
     pub direct_memory_access: bool,
@@ -73,6 +74,7 @@ impl Default for Options {
             x_tilt_offset: 0.0,
             y_tilt_offset: 0.0,
             button_to_touch: HashMap::new(),
+            stick_to_touch: None,
             stabilize_virtual_cursor: None,
             gles1_implementation: None,
             direct_memory_access: true,
@@ -155,6 +157,29 @@ impl Options {
                 .parse()
                 .map_err(|_| "Invalid Y co-ordinate for --button-to-touch=".to_string())?;
             self.button_to_touch.insert(button, (x, y));
+        } else if let Some(values) = arg.strip_prefix("--stick-to-touch=") {
+            let (x, rest) = values
+                .split_once(',')
+                .ok_or_else(|| "--stick-to-touch= requires four values".to_string())?;
+            let (y, rest) = rest
+                .split_once(',')
+                .ok_or_else(|| "--stick-to-touch= requires four values".to_string())?;
+            let (w, h) = rest
+                .split_once(',')
+                .ok_or_else(|| "--stick-to-touch= requires four values".to_string())?;
+            let x: f32 = x
+                .parse()
+                .map_err(|_| "Invalid first X co-ordinate for --stick-to-touch=".to_string())?;
+            let y: f32 = y
+                .parse()
+                .map_err(|_| "Invalid first Y co-ordinate for --stick-to-touch=".to_string())?;
+            let w: f32 = w
+                .parse()
+                .map_err(|_| "Invalid second X co-ordinate for --stick-to-touch=".to_string())?;
+            let h: f32 = h
+                .parse()
+                .map_err(|_| "Invalid second Y co-ordinate for --stick-to-touch=".to_string())?;
+            self.stick_to_touch = Some((x, y, w, h));
         } else if let Some(value) = arg.strip_prefix("--stabilize-virtual-cursor=") {
             let (smoothing_strength, sticky_radius) = value
                 .split_once(',')

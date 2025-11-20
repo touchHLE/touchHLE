@@ -143,7 +143,7 @@ fn handle_touches_down(env: &mut Environment, map: HashMap<FingerId, Coords>) {
 
         if current_touches.contains_key(&finger_id) {
             // this seems to happen only on the desktop with a single touch
-            assert_eq!(current_touches.len(), 1);
+            //assert_eq!(current_touches.len(), 1);
             log!(
                 "Warning: New touch {:?} initiated but current touch did not end yet, treating as movement.",
                 finger_id

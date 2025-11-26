@@ -1,0 +1,106 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1c4540cd_45a8476d",
+        "filename": "src/frameworks/core_animation/animation.rs",
+        "patchSetId": 38
+      },
+      "lineNbr": 9,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-11-26T22:13:57Z",
+      "side": 1,
+      "message": "I like to add a section with a list of references here (you can see examples in some other files). Some things that might fit here:\n\n- The Core Animation Programming Guide?\n- The list of animatable properties (currently linked later in this file)\n- That page describing the algorithm for the from-value/to-value/by-value\n- Any other reference material you found helpful\n\nThough maybe moving the in-line comments up here would make things less straightforward...",
+      "revId": "5b7641c63e8c137964ac3ba71a26ed044af56ff6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5922220a_02cdb0e5",
+        "filename": "src/frameworks/core_animation/animation.rs",
+        "patchSetId": 38
+      },
+      "lineNbr": 12,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-11-26T22:13:57Z",
+      "side": 1,
+      "message": "Please import this from `crate`.",
+      "revId": "5b7641c63e8c137964ac3ba71a26ed044af56ff6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b58662f4_55ce4203",
+        "filename": "src/frameworks/core_animation/animation.rs",
+        "patchSetId": 38
+      },
+      "lineNbr": 19,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-11-26T22:13:57Z",
+      "side": 1,
+      "message": "Please import this from `crate::objc`.",
+      "revId": "5b7641c63e8c137964ac3ba71a26ed044af56ff6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "94ad95b9_7c2060a7",
+        "filename": "src/frameworks/core_animation/animation.rs",
+        "patchSetId": 38
+      },
+      "lineNbr": 22,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-11-26T22:13:57Z",
+      "side": 1,
+      "message": "You could replace this with a function.",
+      "revId": "5b7641c63e8c137964ac3ba71a26ed044af56ff6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "aac81a80_dfd9b868",
+        "filename": "src/frameworks/core_animation/animation.rs",
+        "patchSetId": 38
+      },
+      "lineNbr": 86,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-11-26T22:13:57Z",
+      "side": 1,
+      "message": "Two points:\n\n- For consistency, can\u0027t we make the `Sub` implementations also take a copy rather than a reference? (I imagine this might require making `CGColorHostObject` support `Copy`, which seems unobjectionable to me.)\n- These trait implementations will be usable throughout the entire touchHLE crate, and perhaps will be used accidentally. It would be surprising to discover they are defined here, so I think it might be a good idea to move them to the same files that define the structs involved. You could add a comment there about the fact we\u0027ve implemented these traits to simplify animation code, if you want.",
+      "revId": "5b7641c63e8c137964ac3ba71a26ed044af56ff6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b56ea564_e4aa4e17",
+        "filename": "src/frameworks/core_animation/animation.rs",
+        "patchSetId": 38
+      },
+      "lineNbr": 283,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-11-26T22:13:57Z",
+      "side": 1,
+      "message": "Old TODO that should be removed now?",
+      "revId": "5b7641c63e8c137964ac3ba71a26ed044af56ff6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

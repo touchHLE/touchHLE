@@ -18,6 +18,7 @@ pub mod ui_web_view;
 pub mod ui_window;
 
 use super::ui_graphics::{UIGraphicsPopContext, UIGraphicsPushContext};
+use crate::frameworks::core_animation::ca_layer;
 use crate::frameworks::core_graphics::cg_affine_transform::CGAffineTransform;
 use crate::frameworks::core_graphics::cg_color::CGColorRef;
 use crate::frameworks::core_graphics::cg_context::{CGContextClearRect, CGContextRef};
@@ -87,6 +88,8 @@ fn init_common(env: &mut Environment, this: id) -> id {
     // CALayer is not opaque by default, but UIView is
     () = msg![env; layer setDelegate:this];
     () = msg![env; layer setOpaque:true];
+
+    ca_layer::set_use_implicit_animations(env, layer, false);
 
     env.objc.borrow_mut::<UIViewHostObject>(this).layer = layer;
 

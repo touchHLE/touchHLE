@@ -9,7 +9,7 @@
 
 #include "GUITestsCALayerTestsView.h"
 
-#define NUM_TESTS 18
+#define NUM_TESTS 20
 
 @implementation GUITestsCALayerTestsView : UIView
 
@@ -19,6 +19,7 @@ NSUInteger testNum;
 UIView *lastTappedView;
 UILabel *lastTappedLocalFrameLabel;
 UILabel *lastTappedGlobalFrameLabel;
+CALayer *sublayer;
 
 - (instancetype)initWithFrame:(CGRect)frame {
   [super initWithFrame:frame];
@@ -459,5 +460,59 @@ UILabel *lastTappedGlobalFrameLabel;
   [layer
       removeAnimationForKey:[NSString
                                 stringWithUTF8String:"non_existent_animation"]];
+}
+
+// Test CATransaction and implicit animations with UIButton
+- (void)test19 {
+  sublayer = [CALayer new];
+  [sublayer setFrame:CGRectMake(50, 50, 200, 200)];
+  [sublayer setBackgroundColor:CGColorCreateGenericRGB(0.0, 0.70, 0.0, 1.0)];
+  [testArea.layer addSublayer:sublayer];
+
+  UIButton *button = [UIButton buttonWithType:UIButtonTypeRoundedRect];
+  [button setFrame:CGRectMake(40, 300, 240, 40)];
+  [button setTitle:[NSString stringWithUTF8String:"Click me"]
+          forState:UIControlStateNormal];
+  [button addTarget:self
+                action:@selector(test19ButtonClicked)
+      forControlEvents:UIControlEventTouchUpInside];
+  [self addSubview:button];
+  [button layoutSubviews]; // FIXME: workaround for touchHLE not calling this
+}
+- (void)test19ButtonClicked {
+  CAMediaTimingFunction *easeInEaseOut = [CAMediaTimingFunction
+      functionWithName:[NSString stringWithUTF8String:"easeInEaseOut"]];
+
+  [CATransaction begin];
+  [CATransaction setAnimationDuration:1];
+  [CATransaction setAnimationTimingFunction:easeInEaseOut];
+
+  CGPoint position = [sublayer position];
+  position.y += 25;
+  [sublayer setPosition:position];
+
+  [CATransaction commit];
+}
+
+// Test CATransaction and implicit animations with UIButton
+// this time without initializing an explicit CATransaction
+- (void)test20 {
+  sublayer = [CALayer new];
+  [sublayer setFrame:CGRectMake(50, 50, 200, 200)];
+  [sublayer setBackgroundColor:CGColorCreateGenericRGB(0.0, 0.70, 0.0, 1.0)];
+  [testArea.layer addSublayer:sublayer];
+
+  UIButton *button = [UIButton buttonWithType:UIButtonTypeRoundedRect];
+  [button setFrame:CGRectMake(40, 300, 240, 40)];
+  [button setTitle:[NSString stringWithUTF8String:"Click me too"]
+          forState:UIControlStateNormal];
+  [button addTarget:self
+                action:@selector(test20ButtonClicked)
+      forControlEvents:UIControlEventTouchUpInside];
+  [self addSubview:button];
+  [button layoutSubviews]; // FIXME: workaround for touchHLE not calling this
+}
+- (void)test20ButtonClicked {
+  [sublayer setBounds:CGRectMake(10, 10, 50, 10)];
 }
 @end

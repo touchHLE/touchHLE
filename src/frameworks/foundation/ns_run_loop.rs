@@ -13,6 +13,7 @@ use crate::dyld::{ConstantExports, HostConstant};
 use crate::environment::ThreadId;
 use crate::frameworks::audio_toolbox::audio_queue::{handle_audio_queue, AudioQueueRef};
 use crate::frameworks::audio_toolbox::audio_unit::{render_audio_unit, AudioUnit};
+use crate::frameworks::core_animation::ca_transaction;
 use crate::frameworks::core_foundation::cf_run_loop::{
     kCFRunLoopCommonModes, kCFRunLoopDefaultMode, CFRunLoopRef,
 };
@@ -224,6 +225,13 @@ pub fn run_run_loop(
 
     loop {
         let mut sleep_until = None;
+
+        // Commit implicit CATransactions
+        // From the CATransaction docs:
+        //  "Implicit transactions are created automatically when the layer
+        //  tree is modified by a thread without an active transaction and are
+        //  committed automatically when the thread’s runloop next iterates."
+        ca_transaction::State::commit_implicit_transaction(env);
 
         // We want to process those only on the main run loop
         if is_main_run_loop {

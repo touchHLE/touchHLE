@@ -15,6 +15,7 @@ pub mod ca_media_timing_function;
 
 mod animation;
 mod composition;
+mod ca_transaction;
 
 pub use composition::recomposite_if_necessary;
 
@@ -34,11 +35,13 @@ pub const DYLIB: crate::dyld::HostDylib = crate::dyld::HostDylib {
         ca_eagl_layer::CLASSES,
         ca_layer::CLASSES,
         ca_media_timing_function::CLASSES,
+        ca_transaction::CLASSES,
     ],
     constant_exports: &[
         ca_animation::CONSTANTS,
         ca_layer::CONSTANTS,
         ca_media_timing_function::CONSTANTS,
+        ca_transaction::CONSTANTS,
     ],
     function_exports: &[FUNCTIONS],
 };
@@ -46,6 +49,7 @@ pub const DYLIB: crate::dyld::HostDylib = crate::dyld::HostDylib {
 #[derive(Default)]
 pub struct State {
     ca_media_timing_function: ca_media_timing_function::State,
+    ca_transaction: ca_transaction::State,
     composition: composition::State,
 }
 

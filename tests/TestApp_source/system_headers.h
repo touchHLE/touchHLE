@@ -226,6 +226,18 @@ CFTimeInterval CACurrentMediaTime();
 - (void)addAnimation:(CAAnimation *)anim forKey:(NSString *)key;
 - (void)removeAnimationForKey:(NSString *)key;
 @end
+@interface CATransaction : NSObject
++ (void)setValue:(id)value forKey:(NSString *)key;
++ (id)valueForKey:(NSString *)key;
++ (void)begin;
++ (void)commit;
++ (bool)disableActions;
++ (void)setDisableActions:(bool)flag;
++ (CFTimeInterval)animationDuration;
++ (void)setAnimationDuration:(CFTimeInterval)duration;
++ (id) animationTimingFunction;
++ (void)setAnimationTimingFunction:(CAMediaTimingFunction *)animation_timing_function;
+@end
 
 // UIKit
 

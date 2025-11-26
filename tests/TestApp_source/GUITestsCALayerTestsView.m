@@ -9,7 +9,7 @@
 
 #include "GUITestsCALayerTestsView.h"
 
-#define NUM_TESTS 18
+#define NUM_TESTS 19
 
 @implementation GUITestsCALayerTestsView : UIView
 
@@ -463,5 +463,32 @@ UILabel *lastTappedGlobalFrameLabel;
   [layer
       removeAnimationForKey:[NSString
                                 stringWithUTF8String:"non_existent_animation"]];
+}
+
+// Test CATransaction and implicit animations with UIButton
+-(void)test19 {
+    UIButton *button = [UIButton buttonWithType:UIButtonTypeRoundedRect];
+    [button setFrame:CGRectMake(75, 75, 175, 50)];
+    [button setTitle:[NSString stringWithUTF8String:"Click me"] forState:UIControlStateNormal];
+    [button addTarget:self action:@selector(test19ButtonClicked:) forControlEvents:UIControlEventTouchUpInside];
+    [self addSubview:button];
+
+    CALayer *layer = [button layer];
+    [layer setCornerRadius:32.0];
+}
+-(void)test19ButtonClicked:(UIButton *)sender {
+    CAMediaTimingFunction *easeInEaseOut = [CAMediaTimingFunction
+        functionWithName:[NSString stringWithUTF8String:"easeInEaseOut"]];
+
+    [CATransaction begin];
+    [CATransaction setAnimationDuration:1];
+    [CATransaction setAnimationTimingFunction:easeInEaseOut];
+
+    CALayer *layer = [sender layer];
+    CGPoint position = [layer position];
+    position.y += 25;
+    [layer setPosition:position];
+
+    [CATransaction commit];
 }
 @end

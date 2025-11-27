@@ -178,3 +178,7 @@ com.pangea.bug2: --ignore-gl-errors
 # Rayman 2
 # Stick = Move, A = Jump, X = Shoot/Skip cutscene, Y = First-person, B = Dive
 com.gameloft.Rayman2: --stick-to-touch=22,210,90,100 --button-to-touch=A,376,280 --button-to-touch=X,435,220 --button-to-touch=Y,22,88 --button-to-touch=B,448,144 --button-to-touch=Start,16,16
+
+# Casper
+# (force composition fixes graphical issues)
+com.mastertronic.casper: --force-composition

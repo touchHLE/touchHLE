@@ -178,6 +178,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "63cb0ea9_262ec720",
+        "filename": "src/frameworks/core_animation/animation.rs",
+        "patchSetId": 38
+      },
+      "lineNbr": 86,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-11-27T12:04:14Z",
+      "side": 1,
+      "message": "Copying is fine though, the CGGeometry types are designed for copying, and CGColor would be fine being copied too.",
+      "parentUuid": "6174db09_a576c96d",
+      "revId": "5b7641c63e8c137964ac3ba71a26ed044af56ff6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "b56ea564_e4aa4e17",
         "filename": "src/frameworks/core_animation/animation.rs",
         "patchSetId": 38

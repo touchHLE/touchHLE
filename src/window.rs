@@ -523,37 +523,16 @@ impl Window {
                         && options.dpad_to_touch.is_some()
                     {
                         let Some((x, y, w, h)) = options.dpad_to_touch else {
-                            continue;
+                            unreachable!();
                         };
+
                         // Update held state
-                        match (button, &event) {
-                            (crate::options::Button::DPadLeft, E::ControllerButtonDown { .. }) => {
-                                self.dpad_state.left = true
-                            }
-                            (crate::options::Button::DPadLeft, E::ControllerButtonUp { .. }) => {
-                                self.dpad_state.left = false
-                            }
-
-                            (crate::options::Button::DPadRight, E::ControllerButtonDown { .. }) => {
-                                self.dpad_state.right = true
-                            }
-                            (crate::options::Button::DPadRight, E::ControllerButtonUp { .. }) => {
-                                self.dpad_state.right = false
-                            }
-
-                            (crate::options::Button::DPadUp, E::ControllerButtonDown { .. }) => {
-                                self.dpad_state.up = true
-                            }
-                            (crate::options::Button::DPadUp, E::ControllerButtonUp { .. }) => {
-                                self.dpad_state.up = false
-                            }
-
-                            (crate::options::Button::DPadDown, E::ControllerButtonDown { .. }) => {
-                                self.dpad_state.down = true
-                            }
-                            (crate::options::Button::DPadDown, E::ControllerButtonUp { .. }) => {
-                                self.dpad_state.down = false
-                            }
+                        let pressed = matches!(event, E::ControllerButtonDown { .. });
+                        match button {
+                            crate::options::Button::DPadLeft => self.dpad_state.left = pressed,
+                            crate::options::Button::DPadRight => self.dpad_state.right = pressed,
+                            crate::options::Button::DPadUp => self.dpad_state.up = pressed,
+                            crate::options::Button::DPadDown => self.dpad_state.down = pressed,
                             _ => unreachable!(),
                         }
 
@@ -641,7 +620,7 @@ impl Window {
                             ),
                             true,
                         );
-                        if stick_x.abs() < 0.1 && stick_y.abs() < 0.1 {
+                        if stick_x.abs() < options.deadzone && stick_y.abs() < options.deadzone {
                             if !self.stick_active {
                                 // Ignore deadzone events when stick is inactive
                                 continue;

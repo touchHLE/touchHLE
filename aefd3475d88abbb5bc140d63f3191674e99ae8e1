@@ -16,6 +16,24 @@
       "message": "Should be reimplemented on top of CALayer animations",
       "revId": "aefd3475d88abbb5bc140d63f3191674e99ae8e1",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "21845996_20573c1e",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 22
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2025-11-27T18:45:13Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "5f9b2d17_d0310397",
+      "revId": "aefd3475d88abbb5bc140d63f3191674e99ae8e1",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

@@ -16,6 +16,24 @@
       "message": "LGTM overall, but I would like to have a second look from hikari\n\nBasically, we need to decide if using timers like this is OK",
       "revId": "39b5958cd07faf3b6d6a38f5d22e15462ce099c9",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "e2233f74_7a8ae5b6",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 16
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2025-11-27T18:45:13Z",
+      "side": 1,
+      "message": "No more timers",
+      "parentUuid": "5422ecbf_19a450fc",
+      "revId": "39b5958cd07faf3b6d6a38f5d22e15462ce099c9",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "198865fe_838fc8ec",
+        "filename": "src/frameworks/core_animation/animation.rs",
+        "patchSetId": 38
+      },
+      "lineNbr": 9,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2025-11-27T10:51:17Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "1c4540cd_45a8476d",
+      "revId": "5b7641c63e8c137964ac3ba71a26ed044af56ff6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "5922220a_02cdb0e5",
@@ -31,6 +49,24 @@
       "writtenOn": "2025-11-26T22:13:57Z",
       "side": 1,
       "message": "Please import this from `crate`.",
+      "revId": "5b7641c63e8c137964ac3ba71a26ed044af56ff6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "61890f1a_e2ece72a",
+        "filename": "src/frameworks/core_animation/animation.rs",
+        "patchSetId": 38
+      },
+      "lineNbr": 12,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2025-11-27T10:51:17Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "5922220a_02cdb0e5",
       "revId": "5b7641c63e8c137964ac3ba71a26ed044af56ff6",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
@@ -52,6 +88,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "04730e03_48e710ec",
+        "filename": "src/frameworks/core_animation/animation.rs",
+        "patchSetId": 38
+      },
+      "lineNbr": 19,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2025-11-27T10:51:17Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "b58662f4_55ce4203",
+      "revId": "5b7641c63e8c137964ac3ba71a26ed044af56ff6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "94ad95b9_7c2060a7",
@@ -65,6 +119,24 @@
       "writtenOn": "2025-11-26T22:13:57Z",
       "side": 1,
       "message": "You could replace this with a function.",
+      "revId": "5b7641c63e8c137964ac3ba71a26ed044af56ff6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "11fa7232_f17de1ea",
+        "filename": "src/frameworks/core_animation/animation.rs",
+        "patchSetId": 38
+      },
+      "lineNbr": 22,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2025-11-27T10:51:17Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "94ad95b9_7c2060a7",
       "revId": "5b7641c63e8c137964ac3ba71a26ed044af56ff6",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
@@ -88,6 +160,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "6174db09_a576c96d",
+        "filename": "src/frameworks/core_animation/animation.rs",
+        "patchSetId": 38
+      },
+      "lineNbr": 86,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2025-11-27T10:51:17Z",
+      "side": 1,
+      "message": "Rust is being incredibly dumb and expects people to write separate implementations for A + B, \u0026A + B, A + \u0026B and \u0026A + \u0026B. Internally they do it through a macro, which they dont expose for everyone else to use, so I resorted to implementing just what i needed, which i try having it be adding references so we can avoid copying everything, however this means that i now need to add \u0026 everywhere i want to operate with these structs :( \nNot too sure how this should be approached.",
+      "parentUuid": "aac81a80_dfd9b868",
+      "revId": "5b7641c63e8c137964ac3ba71a26ed044af56ff6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "b56ea564_e4aa4e17",
         "filename": "src/frameworks/core_animation/animation.rs",
         "patchSetId": 38
@@ -99,6 +189,24 @@
       "writtenOn": "2025-11-26T22:13:57Z",
       "side": 1,
       "message": "Old TODO that should be removed now?",
+      "revId": "5b7641c63e8c137964ac3ba71a26ed044af56ff6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "92cc649a_f6a0a792",
+        "filename": "src/frameworks/core_animation/animation.rs",
+        "patchSetId": 38
+      },
+      "lineNbr": 283,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2025-11-27T10:51:17Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "b56ea564_e4aa4e17",
       "revId": "5b7641c63e8c137964ac3ba71a26ed044af56ff6",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

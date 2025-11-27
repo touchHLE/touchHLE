@@ -146,8 +146,8 @@ com.gameloft.SkateNation: --landscape-left --button-to-touch=DPadLeft,45,237 --b
 
 # Metal Gear Solid Touch
 # (we need to force Japanese language)
-com.konami.mgst: --preferred-languages=ja --landscape-left
-com.konami-europe.mgst: --preferred-languages=ja --landscape-left
+com.konami.mgst: --landscape-left
+com.konami-europe.mgst: --landscape-left
 
 # Dark Nebula
 com.1337gamedesign.DarkNebula: --x-tilt-offset=-14

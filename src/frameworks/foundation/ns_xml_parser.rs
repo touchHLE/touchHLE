@@ -149,7 +149,7 @@ pub const CLASSES: ClassExports = objc_classes! {
                 }
             }
             Event::Text(e) => {
-                let text = e.unescape().unwrap().into_owned();
+                let text = e.decode().unwrap().to_string();
                 // FIXME: skipping the end of the parsed string?
                 if text != "\0" {
                     let sel: SEL = env
@@ -214,7 +214,7 @@ pub const CLASSES: ClassExports = objc_classes! {
                         .register_host_selector("parser:foundCharacters:".to_string(), &mut env.mem);
                     let responds: bool = msg![env; delegate respondsToSelector:sel];
                     if responds {
-                        let text = e.escape().unwrap().unescape().unwrap().to_string();
+                        let text = e.escape().unwrap().decode().unwrap().to_string();
                         let text = from_rust_string(env, text);
                         let text = autorelease(env, text);
                         () = msg![env; delegate parser:this foundCharacters:text];
@@ -222,7 +222,7 @@ pub const CLASSES: ClassExports = objc_classes! {
                 }
             }
             Event::Comment(e) => {
-                let comment = e.unescape().unwrap().into_owned();
+                let comment = e.decode().unwrap().to_string();
                 let sel: SEL = env
                     .objc
                     .register_host_selector("parser:foundComment:".to_string(), &mut env.mem);

@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "272be1a3_e0df74dc",
+        "filename": "src/options.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 172,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-11-27T18:18:47Z",
+      "side": 1,
+      "message": "for which game it will be used? \nit feels like it\u0027s better to separate to a different patchset (split between stick-to-touch and dpad-to-touch)",
+      "revId": "611d08de554fbe57fd8c77345bcb55aa4ac63dc3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "de59e047_12d6d38e",
+        "filename": "touchHLE_default_options.txt",
+        "patchSetId": 2
+      },
+      "lineNbr": 178,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-11-27T18:18:47Z",
+      "side": 1,
+      "message": "you need to fix merge conflicts",
+      "revId": "611d08de554fbe57fd8c77345bcb55aa4ac63dc3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

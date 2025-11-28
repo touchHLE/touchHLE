@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "417c5458_58c7bcf4",
+        "filename": "src/options.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 172,
+      "author": {
+        "id": 1039110
+      },
+      "writtenOn": "2025-11-28T18:21:43Z",
+      "side": 1,
+      "message": "Stick-to-touch is for games that use a virtual pull-to-move analog stick, like Resident Evil 4 mobile edition, Rayman 2.\n\nDpad-to-touch is for games that use a virtual dpad like Earthworm Jim. Previously, these games had individual mappings for up/down/left/right which meant diagonals couldn\u0027t be input on a controller.\n\nI\u0027d prefer to try and resolve any issues and try to get them in at the same time because I\u0027m not very experienced with Gerrit and opening this has been a PITA, no offense",
+      "parentUuid": "272be1a3_e0df74dc",
+      "revId": "611d08de554fbe57fd8c77345bcb55aa4ac63dc3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "de59e047_12d6d38e",
@@ -31,6 +49,24 @@
       "writtenOn": "2025-11-27T18:18:47Z",
       "side": 1,
       "message": "you need to fix merge conflicts",
+      "revId": "611d08de554fbe57fd8c77345bcb55aa4ac63dc3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "2522a77b_62b57105",
+        "filename": "touchHLE_default_options.txt",
+        "patchSetId": 2
+      },
+      "lineNbr": 178,
+      "author": {
+        "id": 1039110
+      },
+      "writtenOn": "2025-11-28T18:21:43Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "de59e047_12d6d38e",
       "revId": "611d08de554fbe57fd8c77345bcb55aa4ac63dc3",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

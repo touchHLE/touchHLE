@@ -5,7 +5,7 @@
  */
 //! EAGL.
 
-use crate::dyld::{ConstantExports, HostConstant};
+use crate::dyld::{export_c_func, ConstantExports, FunctionExports, HostConstant};
 use crate::frameworks::core_animation::ca_eagl_layer::{
     find_fullscreen_eagl_layer, get_pixels_vec_for_presenting, present_pixels,
 };
@@ -19,6 +19,7 @@ use crate::mem::MutPtr;
 use crate::objc::{id, msg, nil, objc_classes, release, retain, ClassExports, HostObject};
 use crate::options::Options;
 use crate::window::Window;
+use crate::Environment;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
@@ -736,3 +737,23 @@ unsafe fn present_renderbuffer(gles: &mut dyn GLES, window: &mut Window) {
 
     //{ let err = gl21::GetError(); if err != 0 { panic!("{:#x}", err); } }
 }
+
+pub fn EAGLGetVersion(env: &mut Environment, major: MutPtr<u32>, minor: MutPtr<u32>) {
+    let version_major: u32 = 1;
+    let version_minor: u32 = 1;
+
+    if !major.is_null() {
+        env.mem.write(major, version_major);
+    }
+    if !minor.is_null() {
+        env.mem.write(minor, version_minor);
+    }
+
+    log!(
+        "EAGLGetVersion called: major={}, minor={}",
+        version_major,
+        version_minor
+    );
+}
+
+pub const FUNCTIONS: FunctionExports = &[export_c_func!(EAGLGetVersion(_, _))];

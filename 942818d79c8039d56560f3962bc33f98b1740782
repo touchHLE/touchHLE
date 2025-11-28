@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "bdd0dfce_d294e9a8",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1039111
+      },
+      "writtenOn": "2025-11-28T07:18:55Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "d19c59b9_bd2312a4",
+      "revId": "942818d79c8039d56560f3962bc33f98b1740782",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "2e389956_98c3be30",
@@ -31,6 +49,24 @@
       "writtenOn": "2025-11-27T22:48:18Z",
       "side": 1,
       "message": "please remove this line",
+      "revId": "942818d79c8039d56560f3962bc33f98b1740782",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "bdb17d76_4059b550",
+        "filename": "touchHLE_default_options.txt",
+        "patchSetId": 1
+      },
+      "lineNbr": 148,
+      "author": {
+        "id": 1039111
+      },
+      "writtenOn": "2025-11-28T07:18:55Z",
+      "side": 1,
+      "message": "Oh, right! Fixed in PS 2.",
+      "parentUuid": "2e389956_98c3be30",
       "revId": "942818d79c8039d56560f3962bc33f98b1740782",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

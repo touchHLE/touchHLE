@@ -34,6 +34,24 @@
       "parentUuid": "3081ad3b_88a20d1f",
       "revId": "b71b6d78b3ba2ea2f020f3ef5ed3e94c7d2dc136",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "aa72a64e_dc10fd13",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-11-29T18:31:02Z",
+      "side": 1,
+      "message": "Yes, so in order to submit you (or someone else) need to set Verified +1. In practice it usually mean that you certified that code compiles, tests passes and linter is happy with the code.\n\nOnce you recieved +2 and set verfied +1, you\u0027ll be able to submit. Once submitted, Gerrit will sync the code to Github repo as well.\n\nUsually we let authors to submit their patchsets by themselves. On some occations, we can submit it ourselves.",
+      "parentUuid": "5b7f7dcd_5037f5ce",
+      "revId": "b71b6d78b3ba2ea2f020f3ef5ed3e94c7d2dc136",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

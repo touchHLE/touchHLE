@@ -70,6 +70,23 @@
       "parentUuid": "aa72a64e_dc10fd13",
       "revId": "b71b6d78b3ba2ea2f020f3ef5ed3e94c7d2dc136",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d5508748_d40a9b3d",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-11-29T19:05:05Z",
+      "side": 1,
+      "message": "@ritobroto04@gmail.com Congrats on your first merged submission!\n\nDo you want to be part of touchHLE discord and have access to dev-only channels? If yes, please send me your Discord nick to my email, i\u0027ll add you",
+      "revId": "b71b6d78b3ba2ea2f020f3ef5ed3e94c7d2dc136",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ],
   "submitRequirementResults": [

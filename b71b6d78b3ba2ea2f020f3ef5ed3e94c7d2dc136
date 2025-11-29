@@ -16,6 +16,24 @@
       "message": "@ritobroto04@gmail.com do you need help in submitting this patchset?",
       "revId": "b71b6d78b3ba2ea2f020f3ef5ed3e94c7d2dc136",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5b7f7dcd_5037f5ce",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1039111
+      },
+      "writtenOn": "2025-11-29T17:54:06Z",
+      "side": 1,
+      "message": "Oh, is there another step that I\u0027ve missed? I’m sorry if I have, I’m not very familiar with Gerrit. The last time I used it at LibreOffice, the reviewers would merge the patch after a +2 review.",
+      "parentUuid": "3081ad3b_88a20d1f",
+      "revId": "b71b6d78b3ba2ea2f020f3ef5ed3e94c7d2dc136",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

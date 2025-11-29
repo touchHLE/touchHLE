@@ -108,11 +108,6 @@ com.ea.candcra.row: --landscape-left
 # (force composition fixes black boxes on Android Adreno GPUs)
 com.chillingo.defenderchronicles: --landscape-left --force-composition
 
-# SimCity
-# (we neeed to force language to avoid a crash)
-com.ea.simcitybv: --preferred-languages=en
-com.ea.simcityinc: --preferred-languages=en
-
 # Tom Clancy's Splinter Cell: Conviction
 # Note: "Force composition" flag is needed to fix broken render after the first level.
 com.gameloft.SplinterCell: --force-composition

@@ -22,6 +22,7 @@ pub const EBUSY: i32 = 16;
 pub const EEXIST: i32 = 17;
 pub const EINVAL: i32 = 22;
 pub const ESPIPE: i32 = 29;
+pub const EAGAIN: i32 = 35;
 #[allow(dead_code)]
 pub const EPROTONOSUPPORT: i32 = 43;
 pub const ECONNRESET: i32 = 54;

@@ -47,6 +47,9 @@ pub const NSMacOSRomanStringEncoding: NSUInteger = 30;
 pub const NSUTF16StringEncoding: NSUInteger = NSUnicodeStringEncoding;
 pub const NSUTF16BigEndianStringEncoding: NSUInteger = 0x90000100;
 pub const NSUTF16LittleEndianStringEncoding: NSUInteger = 0x94000100;
+pub const NSUTF32StringEncoding: NSUInteger = 0x8c000100;
+pub const NSUTF32BigEndianStringEncoding: NSUInteger = 0x98000100;
+pub const NSUTF32LittleEndianStringEncoding: NSUInteger = 0x9c000100;
 
 pub type NSStringCompareOptions = NSUInteger;
 pub const NSCaseInsensitiveSearch: NSUInteger = 1;
@@ -87,12 +90,14 @@ struct cfstringStruct {
 unsafe impl SafeRead for cfstringStruct {}
 
 type Utf16String = Vec<u16>;
+type Utf32String = Vec<u32>;
 
 /// Belongs to _touchHLE_NSString.
 enum StringHostObject {
     Utf8(Cow<'static, str>),
     /// Not necessarily well-formed UTF-16: might contain unpaired surrogates.
     Utf16(Utf16String),
+    Utf32(Utf32String),
 }
 impl HostObject for StringHostObject {}
 impl StringHostObject {
@@ -166,6 +171,37 @@ impl StringHostObject {
                         .collect()
                 })
             }
+            NSUTF32StringEncoding
+            | NSUTF32BigEndianStringEncoding
+            | NSUTF32LittleEndianStringEncoding => {
+                assert!(bytes.len().is_multiple_of(4));
+
+                let is_big_endian = match encoding {
+                    NSUTF32LittleEndianStringEncoding => false,
+                    NSUTF32BigEndianStringEncoding => true,
+                    NSUTF32StringEncoding => match &bytes[0..4] {
+                        [0x00, 0x00, 0xFE, 0xFF] => true,
+                        [0xFF, 0xFE, 0x00, 0x00] => false,
+                        // Assuming NSUTF32LittleEndianStringEncoding if no BOM
+                        // is present
+                        _ => false,
+                    },
+                    _ => unreachable!(),
+                };
+                // TODO: Should the BOM be stripped? Always/sometimes/never?
+
+                StringHostObject::Utf32(if is_big_endian {
+                    bytes
+                        .chunks(4)
+                        .map(|chunk| u32::from_be_bytes(chunk.try_into().unwrap()))
+                        .collect()
+                } else {
+                    bytes
+                        .chunks(4)
+                        .map(|chunk| u32::from_le_bytes(chunk.try_into().unwrap()))
+                        .collect()
+                })
+            }
             _ => panic!("Unimplemented encoding: {encoding:#x}"),
         }
     }
@@ -173,6 +209,7 @@ impl StringHostObject {
         match self {
             StringHostObject::Utf8(utf8) => Ok(utf8.clone()),
             StringHostObject::Utf16(utf16) => Ok(Cow::Owned(String::from_utf16(utf16)?)),
+            StringHostObject::Utf32(utf32) => Ok(Cow::Owned(Self::string_from_utf32(utf32))),
         }
     }
     /// Mutate the object, converting to UTF-16 if the string was not already
@@ -180,7 +217,7 @@ impl StringHostObject {
     /// [true] if a conversion happened.
     fn convert_to_utf16_inplace(&mut self) -> (&mut Utf16String, bool) {
         let converted = match self {
-            Self::Utf8(_) => {
+            Self::Utf8(_) | Self::Utf32(_) => {
                 *self = Self::Utf16(self.iter_code_units().collect());
                 true
             }
@@ -196,13 +233,57 @@ impl StringHostObject {
         match self {
             StringHostObject::Utf8(utf8) => CodeUnitIterator::Utf8(utf8.encode_utf16()),
             StringHostObject::Utf16(utf16) => CodeUnitIterator::Utf16(utf16.iter()),
+            StringHostObject::Utf32(utf32) => CodeUnitIterator::Utf32(Utf32ToUtf16Iter::new(utf32)),
         }
+    }
+    fn string_from_utf32(utf32: &Utf32String) -> String {
+        utf32
+            .iter()
+            .map(|&cp| char::from_u32(cp).unwrap())
+            .collect()
+    }
+}
+
+#[derive(Clone)]
+struct Utf32ToUtf16Iter<'a> {
+    iter: std::slice::Iter<'a, u32>,
+    extra: u16,
+}
+
+impl<'a> Utf32ToUtf16Iter<'a> {
+    pub fn new(slice: &'a [u32]) -> Self {
+        Self {
+            iter: slice.iter(),
+            extra: 0,
+        }
+    }
+}
+
+impl<'a> Iterator for Utf32ToUtf16Iter<'a> {
+    type Item = u16;
+
+    fn next(&mut self) -> Option<u16> {
+        if self.extra != 0 {
+            let tmp = self.extra;
+            self.extra = 0;
+            return Some(tmp);
+        }
+
+        self.iter.next().map(|&c| {
+            let mut buf = [0; 2];
+            let n = char::from_u32(c).unwrap().encode_utf16(&mut buf).len();
+            if n == 2 {
+                self.extra = buf[1];
+            }
+            buf[0]
+        })
     }
 }
 
 enum CodeUnitIterator<'a> {
     Utf8(std::str::EncodeUtf16<'a>),
     Utf16(std::slice::Iter<'a, u16>),
+    Utf32(Utf32ToUtf16Iter<'a>),
 }
 impl Iterator for CodeUnitIterator<'_> {
     type Item = u16;
@@ -211,6 +292,7 @@ impl Iterator for CodeUnitIterator<'_> {
         match self {
             CodeUnitIterator::Utf8(iter) => iter.next(),
             CodeUnitIterator::Utf16(iter) => iter.next().copied(),
+            CodeUnitIterator::Utf32(iter) => iter.next(),
         }
     }
 }
@@ -219,6 +301,7 @@ impl Clone for CodeUnitIterator<'_> {
         match self {
             CodeUnitIterator::Utf8(iter) => CodeUnitIterator::Utf8(iter.clone()),
             CodeUnitIterator::Utf16(iter) => CodeUnitIterator::Utf16(iter.clone()),
+            CodeUnitIterator::Utf32(iter) => CodeUnitIterator::Utf32(iter.clone()),
         }
     }
 }
@@ -738,11 +821,14 @@ pub const CLASSES: ClassExports = objc_classes! {
             string.as_bytes().to_vec()
         },
         NSUTF16LittleEndianStringEncoding => string.encode_utf16().flat_map(u16::to_le_bytes).collect(),
+        NSUTF32LittleEndianStringEncoding => string.chars().flat_map(|c| (c as u32).to_le_bytes()).collect(),
+        NSUTF32BigEndianStringEncoding => string.chars().flat_map(|c| (c as u32).to_be_bytes()).collect(),
         _ => unimplemented!("{}", encoding),
     };
     let null_size: GuestUSize = match encoding {
         NSUTF8StringEncoding | NSASCIIStringEncoding | NSMacOSRomanStringEncoding | NSISOLatin1StringEncoding => 1,
         NSUTF16LittleEndianStringEncoding => 2,
+        NSUTF32LittleEndianStringEncoding | NSUTF32BigEndianStringEncoding => 4,
         _ => unimplemented!()
     };
     let bytes_size = bytes.len() as GuestUSize;
@@ -1498,9 +1584,28 @@ pub const CLASSES: ClassExports = objc_classes! {
     init_with_format_inner(env, this, format, args)
 }
 
+- (id)initWithBytes:(ConstPtr<u8>)bytes
+             length:(NSUInteger)len
+           encoding:(NSStringEncoding)encoding {
+    // TODO: error handling
+    let slice = env.mem.bytes_at(bytes, len);
+    let host_object = StringHostObject::decode(Cow::Borrowed(slice), encoding);
+
+    *env.objc.borrow_mut(this) = host_object;
+
+    this
+}
+
 - (id)initWithString:(id)string { // NSString*
     () = msg![env; this setString:string];
     this
+}
+
+- (id)initWithCString:(ConstPtr<u8>)c_string
+             encoding:(NSStringEncoding)encoding {
+    assert!(C_STRING_FRIENDLY_ENCODINGS.contains(&encoding), "encoding {encoding}");
+    let len: NSUInteger = env.mem.cstr_at(c_string).len().try_into().unwrap();
+    msg![env; this initWithBytes:c_string length:len encoding:encoding]
 }
 
 - (id)dataUsingEncoding:(NSStringEncoding)encoding

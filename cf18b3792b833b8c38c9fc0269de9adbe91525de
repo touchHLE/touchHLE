@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7fe07b52_9a3c047c",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 3
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1039110
+      },
+      "writtenOn": "2025-11-30T14:58:44Z",
+      "side": 1,
+      "message": "I\u0027ll probably go ahead and remove the filesystem changes here since it seems like someone else was working on a proper implementation (and it\u0027s not as big a deal for game playability): https://gerrithub.io/c/touchHLE/touchHLE/+/1221698/1/src/fs.rs\n\nThen this patch will just be about the GL_BYTE array translation",
+      "revId": "cf18b3792b833b8c38c9fc0269de9adbe91525de",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

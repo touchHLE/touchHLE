@@ -38,6 +38,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "65a538be_a5a2cadb",
+        "filename": "src/options.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 172,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-11-30T11:13:02Z",
+      "side": 1,
+      "message": "Thanks for explanations!\n\nGerrit is what we use for the reviews for touchHLE project and you\u0027ll need to get more comfortable with it if you plan to contribute more :) I suggest this guide https://gerrit-review.googlesource.com/Documentation/intro-gerrit-walkthrough-github.html\n\nFor the scope of this patchset it probably not required to split in 2, but i let @hikari@noyu.me to review and approve",
+      "parentUuid": "417c5458_58c7bcf4",
+      "revId": "611d08de554fbe57fd8c77345bcb55aa4ac63dc3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "de59e047_12d6d38e",
         "filename": "touchHLE_default_options.txt",
         "patchSetId": 2

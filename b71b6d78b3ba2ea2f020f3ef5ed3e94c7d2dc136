@@ -87,6 +87,24 @@
       "message": "@ritobroto04@gmail.com Congrats on your first merged submission!\n\nDo you want to be part of touchHLE discord and have access to dev-only channels? If yes, please send me your Discord nick to my email, i\u0027ll add you",
       "revId": "b71b6d78b3ba2ea2f020f3ef5ed3e94c7d2dc136",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f34f8712_a54eddb2",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1039111
+      },
+      "writtenOn": "2025-11-30T09:51:29Z",
+      "side": 1,
+      "message": "Thanks, and sure, that\u0027d be great!",
+      "parentUuid": "d5508748_d40a9b3d",
+      "revId": "b71b6d78b3ba2ea2f020f3ef5ed3e94c7d2dc136",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ],
   "submitRequirementResults": [

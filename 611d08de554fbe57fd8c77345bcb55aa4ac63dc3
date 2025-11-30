@@ -54,6 +54,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "e95eb953_3160da0a",
+        "filename": "src/options.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 172,
+      "author": {
+        "id": 1039110
+      },
+      "writtenOn": "2025-11-30T14:46:00Z",
+      "side": 1,
+      "message": "Sounds good. For future reference I\u0027ll try to split patches up into individual components",
+      "parentUuid": "65a538be_a5a2cadb",
+      "revId": "611d08de554fbe57fd8c77345bcb55aa4ac63dc3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "de59e047_12d6d38e",

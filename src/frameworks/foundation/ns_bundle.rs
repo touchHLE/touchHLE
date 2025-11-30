@@ -158,6 +158,41 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 - (id)pathForResource:(id)name // NSString*
                ofType:(id)extension // NSString*
+          inDirectory:(id)directory // NSString*
+      forLocalization:(id)localizationName { // NSString*
+    assert!(name != nil); // TODO
+
+    // TODO: cache result of lookups
+
+    let path = path_for_resource_helper(env, this, name, nil, directory, extension);
+    if path != nil {
+        return path;
+    }
+
+    let lang_code = ns_string::to_rust_string(env, localizationName); // TODO: avoid copy
+    if let Some(&(_, lprojs)) = LANG_ID_TO_LANG_PROJ.iter().find(|&&(code, _)| code == lang_code) {
+        for lproj in lprojs {
+            let lproj: id = ns_string::get_static_str(env, lproj);
+            let localized_path = path_for_resource_helper(env, this, name, lproj, directory, extension);
+            if localized_path != nil {
+                return localized_path;
+            }
+        }
+    } else {
+        log!("TODO: language code {:?} isn't mapped to a language name, falling back to English", lang_code);
+
+        for lproj in ["English.lproj", "en.lproj"] {
+            let lproj: id = ns_string::get_static_str(env, lproj);
+            let path = path_for_resource_helper(env, this, name, lproj, directory, extension);
+            if path != nil {
+                return path;
+            }
+        }
+    }
+    nil
+}
+- (id)pathForResource:(id)name // NSString*
+               ofType:(id)extension // NSString*
           inDirectory:(id)directory { // NSString*
     assert!(name != nil); // TODO
 

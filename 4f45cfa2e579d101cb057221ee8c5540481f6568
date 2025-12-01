@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d4078b26_e0b2005e",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-12-01T22:18:00Z",
+      "side": 1,
+      "message": "Have you checked if this fixies this issue as well https://github.com/touchHLE/touchHLE/issues/387 ?",
+      "revId": "4f45cfa2e579d101cb057221ee8c5540481f6568",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

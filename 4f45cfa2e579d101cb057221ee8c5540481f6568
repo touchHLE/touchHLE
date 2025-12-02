@@ -16,6 +16,24 @@
       "message": "Have you checked if this fixies this issue as well https://github.com/touchHLE/touchHLE/issues/387 ?",
       "revId": "4f45cfa2e579d101cb057221ee8c5540481f6568",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "127cdb58_6a038cfa",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1039111
+      },
+      "writtenOn": "2025-12-02T15:19:40Z",
+      "side": 1,
+      "message": "I just tested it, and yes, it does fix that issue. I’ll update the patch to remove the lines from touchHLE_default_options.txt.\n\nAs an aside, I think that issue might be mis-titled. I tried running it in French even without this patch, and the game loads correctly (although it still crashes on exit). It may be that the crash occurs only with unsupported languages, not simply any non-English language.",
+      "parentUuid": "d4078b26_e0b2005e",
+      "revId": "4f45cfa2e579d101cb057221ee8c5540481f6568",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

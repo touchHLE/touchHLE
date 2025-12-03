@@ -401,7 +401,7 @@ pub struct GLES1OnGL2 {
     needs_translation: [NeedsTranslationType; ARRAYS.len()],
     translation_texture_units: HashSet<GLenum>,
     fixed_point_translation_buffers: [Vec<GLfloat>; ARRAYS.len()],
-    byte_translation_buffers: [Vec<GLushort>; ARRAYS.len()],
+    byte_translation_buffers: [Vec<GLshort>; ARRAYS.len()],
 }
 impl GLES1OnGL2 {
     /// If any arrays with fixed-point data are in use at the time of a draw
@@ -543,18 +543,21 @@ impl GLES1OnGL2 {
                 NeedsTranslationType::FromByte => {
                     let buffer = &mut self.byte_translation_buffers[i];
                     buffer.clear();
-                    buffer.resize(count as usize * size as usize, 0);
+                    buffer.resize(((first + count) * size).try_into().unwrap(), 0);
+                    {
+                        assert!(first >= 0 && count >= 0 && size >= 0 && stride >= 0);
+                        let first = first as usize;
+                        let count = count as usize;
+                        let size = size as usize;
+                        let stride = stride as usize;
+                        for j in first..(first + count) {
+                            let vector_ptr: *const GLvoid = pointer.add(j * stride);
+                            let vector_ptr: *const GLbyte = vector_ptr.cast();
 
-                    let first = first as usize;
-                    let count = count as usize;
-                    let size = size as usize;
-                    let stride = stride as usize;
-
-                    for j in 0..count {
-                        let vector_ptr: *const GLbyte = pointer.add((first + j) * stride).cast();
-                        for k in 0..size {
-                            buffer[j * size + k] =
-                                ((vector_ptr.add(k).read_unaligned() as i16) << 8) as u16;
+                            for k in 0..size {
+                                let v: GLbyte = vector_ptr.add(k).read_unaligned();
+                                buffer[j * size + k] = v as GLshort;
+                            }
                         }
                     }
 

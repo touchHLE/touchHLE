@@ -431,10 +431,7 @@ impl Read for GuestFile {
             GuestFile::File(file) => file.read(buf),
             GuestFile::IpaBundleFile(file) => file.read(buf),
             GuestFile::ResourceFile(file) => file.get().read(buf),
-            GuestFile::Directory => Err(std::io::Error::new(
-                std::io::ErrorKind::IsADirectory,
-                "Attempt to read a directory as a guest file",
-            )),
+            GuestFile::Directory => panic!("Attempt to read from a directory as a guest file"),
             _ => unimplemented!(),
         }
     }
@@ -476,10 +473,7 @@ impl Seek for GuestFile {
             GuestFile::File(file) => file.seek(pos),
             GuestFile::IpaBundleFile(file) => file.seek(pos),
             GuestFile::ResourceFile(file) => file.get().seek(pos),
-            GuestFile::Directory => Err(std::io::Error::new(
-                std::io::ErrorKind::IsADirectory,
-                "Attempt to read a directory as a guest file",
-            )),
+            GuestFile::Directory => panic!("Attempt to seek in a directory as a guest file"),
             _ => unimplemented!(),
         }
     }

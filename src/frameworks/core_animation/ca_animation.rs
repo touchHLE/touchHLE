@@ -64,8 +64,9 @@ pub const CONSTANTS: ConstantExports = &[
 ];
 
 struct CAAnimationHostObject {
-    delegate: id,        // CAAnimationDelegate*
+    removed_on_completion: bool,
     timing_function: id, // CAMediaTimingFunction*
+    delegate: id,        // CAAnimationDelegate*
     autoreverses: bool,
     repeat_count: f32,
     begin_time: CFTimeInterval,
@@ -76,8 +77,9 @@ impl HostObject for CAAnimationHostObject {}
 impl Default for CAAnimationHostObject {
     fn default() -> Self {
         Self {
-            delegate: Default::default(),
+            removed_on_completion: true,
             timing_function: Default::default(),
+            delegate: Default::default(),
             autoreverses: Default::default(),
             repeat_count: Default::default(),
             begin_time: Default::default(),
@@ -125,6 +127,14 @@ pub const CLASSES: ClassExports = objc_classes! {
     let default_timing_function: id = msg_class![env; CAMediaTimingFunction functionWithName: default_timing_function_name];
     () = msg![env; this setTimingFunction: default_timing_function];
     this
+}
+
+- (())setRemovedOnCompletion:(bool)removed_on_completion {
+    log_dbg!("[(CAAnimation*){:?} setRemovedOnCompletion:{:?}]", this, removed_on_completion);
+    env.objc.borrow_mut::<CAAnimationHostObject>(this).removed_on_completion = removed_on_completion;
+}
+- (bool)isRemovedOnCompletion {
+    env.objc.borrow::<CAAnimationHostObject>(this).removed_on_completion
 }
 
 - (())setDelegate:(id)delegate { // CAAnimationDelegate*

@@ -15,10 +15,10 @@ use crate::objc::{
 use crate::{impl_HostObject_with_superclass, msg_class, msg_super};
 
 type CATransitionType = id; // NSString*
-const kCATransitionFade: &str = "kCATransitionFade";
-const kCATransitionMoveIn: &str = "kCATransitionMoveIn";
-const kCATransitionPush: &str = "kCATransitionPush";
-const kCATransitionReveal: &str = "kCATransitionReveal";
+const kCATransitionFade: &str = "fade";
+const kCATransitionMoveIn: &str = "moveIn";
+const kCATransitionPush: &str = "push";
+const kCATransitionReveal: &str = "reveal";
 
 pub type CAMediaTimingFillMode = id; // NSString*
 pub const kCAFillModeBackwards: &str = "backwards";

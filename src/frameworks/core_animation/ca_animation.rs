@@ -47,19 +47,16 @@ pub const CONSTANTS: ConstantExports = &[
     // `CAMediaTimingFillMode` values.
     (
         "_kCAFillModeBackwards",
-        HostConstant::NSString(kCAFillModeBackwards)
+        HostConstant::NSString(kCAFillModeBackwards),
     ),
-    (
-        "_kCAFillModeBoth",
-        HostConstant::NSString(kCAFillModeBoth)
-    ),
+    ("_kCAFillModeBoth", HostConstant::NSString(kCAFillModeBoth)),
     (
         "_kCAFillModeForwards",
-        HostConstant::NSString(kCAFillModeForwards)
+        HostConstant::NSString(kCAFillModeForwards),
     ),
     (
         "_kCAFillModeRemoved",
-        HostConstant::NSString(kCAFillModeRemoved)
+        HostConstant::NSString(kCAFillModeRemoved),
     ),
 ];
 
@@ -113,6 +110,11 @@ pub const CLASSES: ClassExports = objc_classes! {
 + (id)allocWithZone:(NSZonePtr)_zone {
     let host_object = Box::<CAAnimationHostObject>::default();
     env.objc.alloc_object(this, host_object, &mut env.mem)
+}
+
++ (id)animation {
+    let object = msg![env; this new];
+    autorelease(env, object)
 }
 
 - (id)init {
@@ -290,10 +292,6 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 
 @implementation CATransition : CAAnimation
-
-+ (id)animation {
-    msg![env; this new]
-}
 
 + (id)allocWithZone:(NSZonePtr)_zone {
     let host_object = Box::<CABasicAnimationHostObject>::default();

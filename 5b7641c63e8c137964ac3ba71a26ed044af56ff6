@@ -214,6 +214,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "4a836d23_0a25053c",
+        "filename": "src/frameworks/core_animation/animation.rs",
+        "patchSetId": 38
+      },
+      "lineNbr": 86,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-12-04T01:51:18Z",
+      "side": 1,
+      "message": "The CGGeometry types are *meant* to be copied!",
+      "parentUuid": "0e350057_0bb82d32",
+      "revId": "5b7641c63e8c137964ac3ba71a26ed044af56ff6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "b56ea564_e4aa4e17",
         "filename": "src/frameworks/core_animation/animation.rs",
         "patchSetId": 38

@@ -115,6 +115,10 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.alloc_object(this, host_object, &mut env.mem)
 }
 
++ (id)animation {
+    msg![env; this new]
+}
+
 - (id)init {
     let default_timing_function_name: id = get_static_str(env, kCAMediaTimingFunctionDefault);
     let default_timing_function: id = msg_class![env; CAMediaTimingFunction functionWithName: default_timing_function_name];
@@ -290,10 +294,6 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 
 @implementation CATransition : CAAnimation
-
-+ (id)animation {
-    msg![env; this new]
-}
 
 + (id)allocWithZone:(NSZonePtr)_zone {
     let host_object = Box::<CABasicAnimationHostObject>::default();

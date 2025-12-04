@@ -20,8 +20,14 @@ const kCATransitionMoveIn: &str = "kCATransitionMoveIn";
 const kCATransitionPush: &str = "kCATransitionPush";
 const kCATransitionReveal: &str = "kCATransitionReveal";
 
-/// `CATransitionType` values.
+pub type CAMediaTimingFillMode = id; // NSString*
+pub const kCAFillModeBackwards: &str = "backwards";
+pub const kCAFillModeBoth: &str = "both";
+pub const kCAFillModeForwards: &str = "forwards";
+pub const kCAFillModeRemoved: &str = "removed";
+
 pub const CONSTANTS: ConstantExports = &[
+    // `CATransitionType` values.
     (
         "_kCATransitionFade",
         HostConstant::NSString(kCATransitionFade),
@@ -38,9 +44,25 @@ pub const CONSTANTS: ConstantExports = &[
         "_kCATransitionReveal",
         HostConstant::NSString(kCATransitionReveal),
     ),
+    // `CAMediaTimingFillMode` values.
+    (
+        "_kCAFillModeBackwards",
+        HostConstant::NSString(kCAFillModeBackwards)
+    ),
+    (
+        "_kCAFillModeBoth",
+        HostConstant::NSString(kCAFillModeBoth)
+    ),
+    (
+        "_kCAFillModeForwards",
+        HostConstant::NSString(kCAFillModeForwards)
+    ),
+    (
+        "_kCAFillModeRemoved",
+        HostConstant::NSString(kCAFillModeRemoved)
+    ),
 ];
 
-#[derive(Default)]
 struct CAAnimationHostObject {
     delegate: id,        // CAAnimationDelegate*
     timing_function: id, // CAMediaTimingFunction*
@@ -48,8 +70,22 @@ struct CAAnimationHostObject {
     repeat_count: f32,
     begin_time: CFTimeInterval,
     duration: CFTimeInterval,
+    fill_mode: &'static str,
 }
 impl HostObject for CAAnimationHostObject {}
+impl Default for CAAnimationHostObject {
+    fn default() -> Self {
+        Self {
+            delegate: Default::default(),
+            timing_function: Default::default(),
+            autoreverses: Default::default(),
+            repeat_count: Default::default(),
+            begin_time: Default::default(),
+            duration: Default::default(),
+            fill_mode: kCAFillModeRemoved,
+        }
+    }
+}
 
 #[derive(Default)]
 struct CAPropertyAnimationHostObject {
@@ -135,6 +171,23 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 - (CFTimeInterval)duration {
     env.objc.borrow::<CAAnimationHostObject>(this).duration
+}
+
+- (())setFillMode:(CAMediaTimingFillMode)fill_mode {
+    let fill_mode_str = to_rust_string(env, fill_mode);
+    log_dbg!("[(CAAnimation*){:?} setFillMode:{:?} ({})]", this, fill_mode, fill_mode_str);
+    let fill_mode_str = match &*fill_mode_str {
+        kCAFillModeBackwards => kCAFillModeBackwards,
+        kCAFillModeBoth => kCAFillModeBoth,
+        kCAFillModeForwards => kCAFillModeForwards ,
+        kCAFillModeRemoved => kCAFillModeRemoved ,
+        _ => panic!("Unknown fill mode \"{}\"", fill_mode_str)
+    };
+    env.objc.borrow_mut::<CAAnimationHostObject>(this).fill_mode = fill_mode_str;
+}
+- (CAMediaTimingFillMode)fillMode {
+    let fill_mode = env.objc.borrow::<CAAnimationHostObject>(this).fill_mode;
+    get_static_str(env, fill_mode)
 }
 
 - (())dealloc {

@@ -8,8 +8,6 @@
 //! Useful resources:
 //! - [UITextFieldDelegate overview](https://developer.apple.com/documentation/uikit/uitextfielddelegate?language=objc)
 
-use sdl2_sys::{SDL_StartTextInput, SDL_StopTextInput};
-
 use crate::dyld::{ConstantExports, HostConstant};
 use crate::frameworks::core_graphics::{CGPoint, CGRect};
 use crate::frameworks::foundation::ns_string::to_rust_string;
@@ -246,7 +244,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     let _: () = msg![env; center postNotificationName:name object:this userInfo:nil];
 
     env.framework_state.uikit.ui_responder.first_responder = this;
-    unsafe { SDL_StartTextInput(); }
+    env.window().start_text_input();
 
     let name = ns_string::get_static_str(env, UIKeyboardDidShowNotification);
     // TODO: userInfo
@@ -283,7 +281,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     let _: () = msg![env; center postNotificationName:name object:this userInfo:nil];
 
     env.framework_state.uikit.ui_responder.first_responder = nil;
-    unsafe { SDL_StopTextInput(); }
+    env.window().stop_text_input();
 
     let name = ns_string::get_static_str(env, UIKeyboardDidHideNotification);
     // TODO: userInfo

@@ -10,8 +10,8 @@ use crate::dyld::{ConstantExports, HostConstant};
 use crate::frameworks::core_foundation::cf_locale::kCFLocaleCountryCode;
 use crate::objc::{id, nil, objc_classes, release, retain, ClassExports, HostObject, NSZonePtr};
 use crate::options::Options;
+use crate::window::{get_preferred_country_codes, get_preferred_language_codes};
 use crate::Environment;
-use std::ffi::CStr;
 
 const NSLocaleCountryCode: &str = "NSLocaleCountryCode";
 
@@ -40,32 +40,7 @@ fn get_preferred_languages(options: &Options) -> Vec<String> {
         return preferred_languages.clone();
     }
 
-    // Unfortunately Rust-SDL2 doesn't provide a wrapper for this yet.
-    let languages = unsafe {
-        let mut languages = Vec::new();
-        let locales_raw = sdl2_sys::SDL_GetPreferredLocales();
-        if !locales_raw.is_null() {
-            for i in 0.. {
-                let sdl2_sys::SDL_Locale { language, country } = locales_raw.offset(i).read();
-                if language.is_null() && country.is_null() {
-                    // Terminator
-                    break;
-                }
-
-                // The country code is ignored because many iPhone OS games
-                // (e.g. Super Monkey Ball and Wolfenstein RPG) don't seem to be
-                // able to handle it and fall back to English, so providing it
-                // does more harm than good. It's also often unhelpful anyway:
-                // on macOS, the country code seems to just be the system
-                // region, rather than reflecting a preference for
-                // e.g. US vs UK English.
-                languages.push(CStr::from_ptr(language).to_str().unwrap().to_string());
-            }
-            sdl2_sys::SDL_free(locales_raw.cast());
-        }
-        languages
-    };
-
+    let languages = get_preferred_language_codes();
     if languages.is_empty() {
         let lang = "en".to_string();
         log!("The app requested your preferred languages. No information could be retrieved, so {:?} (English) will be reported.", lang);
@@ -77,28 +52,7 @@ fn get_preferred_languages(options: &Options) -> Vec<String> {
 }
 
 fn get_preferred_countries() -> Vec<String> {
-    // Unfortunately Rust-SDL2 doesn't provide a wrapper for this yet.
-    let countries = unsafe {
-        let mut countries = Vec::new();
-        let locales_raw = sdl2_sys::SDL_GetPreferredLocales();
-        if !locales_raw.is_null() {
-            for i in 0.. {
-                let sdl2_sys::SDL_Locale { language, country } = locales_raw.offset(i).read();
-                if language.is_null() && country.is_null() {
-                    // Terminator
-                    break;
-                }
-
-                // country can be NULL
-                if !country.is_null() {
-                    countries.push(CStr::from_ptr(country).to_str().unwrap().to_string());
-                }
-            }
-            sdl2_sys::SDL_free(locales_raw.cast());
-        }
-        countries
-    };
-
+    let countries = get_preferred_country_codes();
     if countries.is_empty() {
         let country = "US".to_string();
         log!("The app requested your current locale. No country information could be retrieved, so {:?} will be reported.", country);

@@ -1220,6 +1220,13 @@ impl Window {
             false => self.video_ctx.disable_screen_saver(),
         }
     }
+
+    pub fn start_text_input(&self) {
+        self.video_ctx.text_input().start();
+    }
+    pub fn stop_text_input(&self) {
+        self.video_ctx.text_input().stop();
+    }
 }
 
 pub fn open_url(url: &str) -> Result<(), String> {
@@ -1301,4 +1308,16 @@ pub fn get_battery_status() -> (i32, BatteryState) {
             SDL_PowerState::SDL_POWERSTATE_CHARGED => BatteryState::Full,
         },
     )
+}
+
+pub fn get_preferred_language_codes() -> Vec<String> {
+    sdl2::locale::get_preferred_locales()
+        .map(|loc| loc.lang)
+        .collect()
+}
+
+pub fn get_preferred_country_codes() -> Vec<String> {
+    sdl2::locale::get_preferred_locales()
+        .filter_map(|loc| loc.country)
+        .collect()
 }

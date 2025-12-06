@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "79f00005_1c37860b",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 43
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-12-06T00:39:00Z",
+      "side": 1,
+      "message": "Looks good overall, I guess I\u0027m willing to merge this.",
+      "revId": "9d8e6927ffe8c04bef707171392dbb9b8be8f126",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ed562341_b6ce1d57",
+        "filename": "src/frameworks/core_animation/animation.rs",
+        "patchSetId": 43
+      },
+      "lineNbr": 70,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-12-06T00:39:00Z",
+      "side": 1,
+      "message": "I was going to complain about this, but it does seem like the begin time 0 actually behaves like CACurrentMediaTime from what I could find when googling. Is there a way to retrieve animations after they\u0027re added to a layer? If not, then we probably don\u0027t need to worry.",
+      "revId": "9d8e6927ffe8c04bef707171392dbb9b8be8f126",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "eab49b8e_f001b694",
+        "filename": "src/frameworks/core_animation/ca_animation.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 119,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-12-07T23:23:50Z",
+      "side": 1,
+      "message": "Should be autoreleased",
+      "revId": "c2f6d4e2a643ecdbb512f70c74c17d04dd09dc03",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

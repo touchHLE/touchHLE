@@ -33,6 +33,24 @@
       "message": "I was going to complain about this, but it does seem like the begin time 0 actually behaves like CACurrentMediaTime from what I could find when googling. Is there a way to retrieve animations after they\u0027re added to a layer? If not, then we probably don\u0027t need to worry.",
       "revId": "9d8e6927ffe8c04bef707171392dbb9b8be8f126",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3105f167_108c6d77",
+        "filename": "src/frameworks/core_animation/animation.rs",
+        "patchSetId": 43
+      },
+      "lineNbr": 70,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2025-12-07T10:39:06Z",
+      "side": 1,
+      "message": "you can retrieve animations by either using animationForKey: or simply by keeping holding a reference to the animation after adding the animation to the layer, i guess i should be moving this value to a host object variable",
+      "parentUuid": "ed562341_b6ce1d57",
+      "revId": "9d8e6927ffe8c04bef707171392dbb9b8be8f126",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

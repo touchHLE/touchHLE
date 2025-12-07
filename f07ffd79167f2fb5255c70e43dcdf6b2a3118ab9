@@ -16,6 +16,24 @@
       "message": "Perhaps `pushd` here and then `popd` after, so that it won\u0027t mess up your current directory if used from the command-line?",
       "revId": "f07ffd79167f2fb5255c70e43dcdf6b2a3118ab9",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "408e243e_abdfef2c",
+        "filename": "tests/make-ipa.sh",
+        "patchSetId": 3
+      },
+      "lineNbr": 3,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2025-12-07T23:47:38Z",
+      "side": 1,
+      "message": "I\u0027m not sure if I\u0027m understanding correctly, but as it is, running `tests/make-ipa.sh` doesn\u0027t change your working directory",
+      "parentUuid": "c4e516d7_4ecbd079",
+      "revId": "f07ffd79167f2fb5255c70e43dcdf6b2a3118ab9",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

@@ -34,6 +34,24 @@
       "parentUuid": "c4e516d7_4ecbd079",
       "revId": "f07ffd79167f2fb5255c70e43dcdf6b2a3118ab9",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "530cc012_ea32cc54",
+        "filename": "tests/make-ipa.sh",
+        "patchSetId": 3
+      },
+      "lineNbr": 3,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-12-07T23:50:36Z",
+      "side": 1,
+      "message": "Oh right, because it happens in its own shell. It would only be a problem if `source` were used…",
+      "parentUuid": "408e243e_abdfef2c",
+      "revId": "f07ffd79167f2fb5255c70e43dcdf6b2a3118ab9",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

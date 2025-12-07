@@ -87,6 +87,24 @@
       "parentUuid": "0037faf5_4cd66f95",
       "revId": "9d8e6927ffe8c04bef707171392dbb9b8be8f126",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b86ee103_d8e6b915",
+        "filename": "src/frameworks/core_animation/animation.rs",
+        "patchSetId": 43
+      },
+      "lineNbr": 70,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2025-12-07T21:08:39Z",
+      "side": 1,
+      "message": "beginTime isn\u0027t altered, changed started:bool to started_at: Option\u003cCFTimeInterval\u003e and used for that purpose",
+      "parentUuid": "a6f5bb19_392609a8",
+      "revId": "9d8e6927ffe8c04bef707171392dbb9b8be8f126",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

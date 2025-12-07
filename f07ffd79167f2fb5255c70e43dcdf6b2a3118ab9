@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c4e516d7_4ecbd079",
+        "filename": "tests/make-ipa.sh",
+        "patchSetId": 3
+      },
+      "lineNbr": 3,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-12-07T23:45:21Z",
+      "side": 1,
+      "message": "Perhaps `pushd` here and then `popd` after, so that it won\u0027t mess up your current directory if used from the command-line?",
+      "revId": "f07ffd79167f2fb5255c70e43dcdf6b2a3118ab9",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

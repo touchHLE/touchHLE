@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "37cab948_327897cf",
+        "filename": "src/libc/pthread/key.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 58,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-12-09T22:44:05Z",
+      "side": 1,
+      "message": "\u003e wrap around to u32::MAX, keys.get will handle it\n\ncould you pleas elaborate how this is working here?",
+      "revId": "92f7abf694fbe567cc5c365145ac8489548a88db",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

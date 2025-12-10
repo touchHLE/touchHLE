@@ -21,10 +21,10 @@ use crate::frameworks::{core_animation, media_player, uikit};
 use crate::libc::semaphore::{host_create_semaphore, sem_post, sem_t};
 use crate::mem::MutPtr;
 use crate::objc::{
-    id, msg, msg_send, objc_classes, release, retain, Class, ClassExports, HostObject, SEL,
+    id, msg, msg_send, nil, objc_classes, release, retain, Class, ClassExports, HostObject, SEL,
 };
 use crate::Environment;
-use std::collections::{HashMap, VecDeque};
+use std::collections::VecDeque;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 /// `NSString*`
@@ -45,8 +45,8 @@ pub const CONSTANTS: ConstantExports = &[
 ];
 
 #[derive(Default)]
-pub struct State {
-    run_loops: HashMap<ThreadId, id>,
+pub struct ThreadLocalState {
+    run_loop: id,
 }
 
 struct NSRunLoopHostObject {
@@ -482,12 +482,12 @@ pub fn run_run_loop(
 
 /// Helper method for `mainRunLoop` and `currentRunLoop` NSThread class methods
 fn run_loop_for_thread(env: &mut Environment, this: Class, thread_id: ThreadId) -> id {
-    if let std::collections::hash_map::Entry::Vacant(e) = env
+    if env.threads[thread_id]
         .framework_state
         .foundation
         .ns_run_loop
-        .run_loops
-        .entry(thread_id)
+        .run_loop
+        == nil
     {
         let host_object = Box::new(NSRunLoopHostObject {
             audio_units: Vec::new(),
@@ -500,12 +500,15 @@ fn run_loop_for_thread(env: &mut Environment, this: Class, thread_id: ThreadId) 
         let new = env
             .objc
             .alloc_static_object(this, host_object, &mut env.mem);
-        e.insert(new);
+        env.threads[thread_id]
+            .framework_state
+            .foundation
+            .ns_run_loop
+            .run_loop = new;
     }
-    *env.framework_state
+    env.threads[thread_id]
+        .framework_state
         .foundation
         .ns_run_loop
-        .run_loops
-        .get(&thread_id)
-        .unwrap()
+        .run_loop
 }

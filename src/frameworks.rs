@@ -57,4 +57,5 @@ pub struct State {
 #[derive(Default)]
 pub struct ThreadLocalState {
     core_animation: core_animation::ThreadLocalState,
+    foundation: foundation::ThreadLocalState,
 }

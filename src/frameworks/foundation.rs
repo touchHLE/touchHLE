@@ -130,11 +130,15 @@ pub struct State {
     ns_notification_center: ns_notification_center::State,
     ns_null: ns_null::State,
     ns_process_info: ns_process_info::State,
-    ns_run_loop: ns_run_loop::State,
     ns_string: ns_string::State,
     ns_thread: ns_thread::State,
     ns_time_zone: ns_time_zone::State,
     ns_user_defaults: ns_user_defaults::State,
+}
+
+#[derive(Default)]
+pub struct ThreadLocalState {
+    ns_run_loop: ns_run_loop::ThreadLocalState,
 }
 
 pub type NSInteger = i32;

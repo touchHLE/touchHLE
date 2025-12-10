@@ -703,7 +703,7 @@ fn add_default_implied_basic_animation(
     let animation = msg_class![env; CABasicAnimation animationWithKeyPath:key_path];
     () = msg![env; animation setFromValue: from_value];
     () = msg![env; animation setToValue: to_value];
-    ca_transaction::State::add_animation(env, layer, animation);
+    ca_transaction::ThreadLocalState::add_animation(env, layer, animation);
 }
 
 pub fn set_use_implicit_animations(env: &mut Environment, layer: id, enable: bool) {

@@ -343,7 +343,7 @@ pub fn run_run_loop(
         //  "Implicit transactions are created automatically when the layer
         //  tree is modified by a thread without an active transaction and are
         //  committed automatically when the thread’s runloop next iterates."
-        ca_transaction::State::commit_implicit_transaction(env);
+        ca_transaction::ThreadLocalState::commit_implicit_transaction(env);
 
         // We want to process those only on the main run loop
         if is_main_run_loop {

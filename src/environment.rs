@@ -34,6 +34,8 @@ pub struct Thread {
     /// If this is not [ThreadBlock::NotBlocked], the thread is not executing
     /// until a certain condition is fufilled.
     pub blocked_by: ThreadBlock,
+    /// Container for thread local state of various child modules
+    pub thread_local_framework_state: frameworks::ThreadLocalState,
     /// Set to [true] when a thread is running its startup routine (i.e. the
     /// function pointer passed to `pthread_create`). When it returns to the
     /// host, it should become inactive.
@@ -378,6 +380,7 @@ impl Environment {
             in_host_function: false,
             context: None,
             stack: Some(mem::Mem::MAIN_THREAD_STACK_LOW_END..=0u32.wrapping_sub(1)),
+            thread_local_framework_state: Default::default(),
         };
 
         let mut env = Environment {
@@ -556,6 +559,7 @@ impl Environment {
             in_host_function: false,
             context: None,
             stack: Some(mem::Mem::MAIN_THREAD_STACK_LOW_END..=0u32.wrapping_sub(1)),
+            thread_local_framework_state: Default::default(),
         };
 
         let mut env = Environment {
@@ -742,6 +746,7 @@ impl Environment {
             in_host_function: false,
             context: Some(Box::new(cpu::CpuContext::new())),
             stack: Some(stack_alloc.to_bits()..=(stack_high_addr - 1)),
+            thread_local_framework_state: Default::default(),
         });
         let new_thread_id = self.threads.len() - 1;
 
@@ -758,6 +763,10 @@ impl Environment {
         context.regs[cpu::Cpu::LR] = self.dyld.thread_exit_routine().addr_with_thumb_bit();
 
         new_thread_id
+    }
+
+    pub fn get_tl_framework_state(&mut self) -> &mut frameworks::ThreadLocalState {
+        &mut self.threads[self.current_thread].thread_local_framework_state
     }
 
     /// Put the current thread to sleep for some duration, running other threads

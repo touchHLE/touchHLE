@@ -115,7 +115,6 @@ pub const DYLIB: crate::dyld::HostDylib = crate::dyld::HostDylib {
 
 #[derive(Default)]
 pub struct State {
-    ns_autorelease_pool: ns_autorelease_pool::State,
     ns_bundle: ns_bundle::State,
     ns_file_manager: ns_file_manager::State,
     ns_locale: ns_locale::State,
@@ -129,6 +128,7 @@ pub struct State {
 
 #[derive(Default)]
 pub struct ThreadLocalState {
+    ns_autorelease_pool: ns_autorelease_pool::ThreadLocalState,
     ns_run_loop: ns_run_loop::ThreadLocalState,
 }
 

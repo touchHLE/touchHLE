@@ -20,7 +20,9 @@ pub mod ui_window;
 use core::panic;
 
 use super::ui_graphics::{UIGraphicsPopContext, UIGraphicsPushContext};
-use crate::frameworks::core_animation::ca_animation::{CAMediaTimingFillMode, kCAFillModeBackwards};
+use crate::frameworks::core_animation::ca_animation::{
+    kCAFillModeBackwards, CAMediaTimingFillMode,
+};
 use crate::frameworks::core_animation::ca_media_timing_function::{
     kCAMediaTimingFunctionEaseIn, kCAMediaTimingFunctionEaseInEaseOut,
     kCAMediaTimingFunctionEaseOut, kCAMediaTimingFunctionLinear,
@@ -249,7 +251,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     log_dbg!("[UIView commitAnimations]");
 
     // TODO: What if there's interleaved UIView animations and CATransactions?
-    let animations = ca_transaction::State::get_current_transaction(env).unwrap().get_animations();
+    let animations = ca_transaction::ThreadLocalState::get_current_transaction(env).unwrap().get_animations();
 
     // TODO: I believe the delegate should be called even if the animation
     // block is committed with no animations?

@@ -11,37 +11,37 @@ use crate::frameworks::core_animation::ca_media_timing_function::kCAMediaTimingF
 use crate::frameworks::core_foundation::time::CFTimeInterval;
 use crate::frameworks::foundation::ns_string::{get_static_str, to_rust_string};
 use crate::objc::{id, nil, objc_classes, release, retain, ClassExports};
+use crate::Environment;
 use crate::{msg, msg_class};
-use crate::{Environment, ThreadId};
 
 #[derive(Default)]
-pub struct State {
-    // TODO: Clean up state from threads that finish
-    transactions: HashMap<ThreadId, ThreadState>,
+pub struct ThreadLocalState {
+    implicit_transaction: Option<Transaction>,
+    explicit_transactions: Vec<Transaction>,
 }
-impl State {
-    pub fn get(env: &mut Environment) -> &State {
-        &env.framework_state.core_animation.ca_transaction
+impl ThreadLocalState {
+    pub fn get(env: &mut Environment) -> &ThreadLocalState {
+        &env.get_tl_framework_state().core_animation.ca_transaction
     }
 
-    pub fn get_mut(env: &mut Environment) -> &mut State {
-        &mut env.framework_state.core_animation.ca_transaction
+    pub fn get_mut(env: &mut Environment) -> &mut ThreadLocalState {
+        &mut env.get_tl_framework_state().core_animation.ca_transaction
     }
 
     pub fn get_current_transaction(env: &mut Environment) -> Option<&Transaction> {
-        let current_thread = env.current_thread;
-        State::get(env)
-            .transactions
-            .get(&current_thread)
-            .and_then(|t| t.get_current_transaction())
+        let thread_state = ThreadLocalState::get(env);
+        thread_state
+            .explicit_transactions
+            .last()
+            .or(thread_state.implicit_transaction.as_ref())
     }
 
-    fn get_current_transaction_mut(env: &mut Environment) -> Option<&mut Transaction> {
-        let current_thread = env.current_thread;
-        State::get_mut(env)
-            .transactions
-            .get_mut(&current_thread)
-            .and_then(|t| t.get_current_transaction_mut())
+    pub fn get_current_transaction_mut(env: &mut Environment) -> Option<&mut Transaction> {
+        let thread_state = ThreadLocalState::get_mut(env);
+        thread_state
+            .explicit_transactions
+            .last_mut()
+            .or(thread_state.implicit_transaction.as_mut())
     }
 
     pub fn add_animation(env: &mut Environment, layer: id, animation: id) {
@@ -53,68 +53,37 @@ impl State {
         retain(env, layer);
         retain(env, animation);
         assert!(env.objc.class_is_subclass_of(anim_class, ca_animation));
-        if let Some(transaction) = State::get_current_transaction_mut(env) {
+        if let Some(transaction) = ThreadLocalState::get_current_transaction_mut(env) {
             transaction.add_animation(layer, animation);
         } else {
             let mut transaction = Transaction::new(env);
             transaction.add_animation(layer, animation);
-            let thread_state = State::get_current_thread_state_mut(env);
+            let thread_state = ThreadLocalState::get_mut(env);
             assert!(thread_state.implicit_transaction.is_none());
             thread_state.implicit_transaction = Some(transaction);
         };
     }
 
     pub fn commit_implicit_transaction(env: &mut Environment) {
-        let state = State::get_current_thread_state_mut(env);
+        let state = ThreadLocalState::get_mut(env);
         assert!(state.explicit_transactions.is_empty()); // TODO: Verify what should happen
         if let Some(transaction) = std::mem::take(&mut state.implicit_transaction) {
             transaction.commit(env);
         }
     }
 
-    fn get_current_thread_state_mut(env: &mut Environment) -> &mut ThreadState {
-        let current_thread = env.current_thread;
-        State::get_mut(env)
-            .transactions
-            .entry(current_thread)
-            .or_default()
-    }
-
     fn push_explicit_transaction(env: &mut Environment) {
         let transaction = Transaction::new(env);
-        State::get_current_thread_state_mut(env)
+        ThreadLocalState::get_mut(env)
             .explicit_transactions
             .push(transaction);
     }
 
     fn pop_explicit_transaction(env: &mut Environment) -> Transaction {
-        let current_thread = env.current_thread;
-        State::get_mut(env)
-            .transactions
-            .get_mut(&current_thread)
-            .unwrap()
+        ThreadLocalState::get_mut(env)
             .explicit_transactions
             .pop()
             .unwrap()
-    }
-}
-
-#[derive(Default)]
-struct ThreadState {
-    implicit_transaction: Option<Transaction>,
-    explicit_transactions: Vec<Transaction>,
-}
-impl ThreadState {
-    fn get_current_transaction(&self) -> Option<&Transaction> {
-        self.explicit_transactions
-            .last()
-            .or(self.implicit_transaction.as_ref())
-    }
-
-    fn get_current_transaction_mut(&mut self) -> Option<&mut Transaction> {
-        self.explicit_transactions
-            .last_mut()
-            .or(self.implicit_transaction.as_mut())
     }
 }
 
@@ -200,14 +169,14 @@ pub const CLASSES: ClassExports = objc_classes! {
     match &*key_string  {
         kCATransactionAnimationDuration => {
             let value: CFTimeInterval = msg![env; value doubleValue];
-            State::get_current_transaction_mut(env).unwrap().animation_duration = value;
+            ThreadLocalState::get_current_transaction_mut(env).unwrap().animation_duration = value;
         },
         kCATransactionDisableActions => {
             let value: bool = msg![env; value boolValue];
-            State::get_current_transaction_mut(env).unwrap().disable_actions = value;
+            ThreadLocalState::get_current_transaction_mut(env).unwrap().disable_actions = value;
         },
         kCATransactionAnimationTimingFunction => {
-            let transaction = State::get_current_transaction_mut(env).unwrap();
+            let transaction = ThreadLocalState::get_current_transaction_mut(env).unwrap();
             let old_value = std::mem::replace(&mut transaction.animation_timing_function, value);
             retain(env, value);
             release(env, old_value);
@@ -216,7 +185,7 @@ pub const CLASSES: ClassExports = objc_classes! {
             unimplemented!();
         },
         _ => {
-            let transaction = State::get_current_transaction_mut(env).unwrap();
+            let transaction = ThreadLocalState::get_current_transaction_mut(env).unwrap();
             let old_value = transaction.data.insert(key_string.to_string(), value).unwrap_or(nil);
             retain(env, value);
             release(env, old_value);
@@ -227,21 +196,21 @@ pub const CLASSES: ClassExports = objc_classes! {
     let key_string = to_rust_string(env, key);
     let value = match &*key_string {
         kCATransactionAnimationDuration => {
-            let animation_duration = State::get_current_transaction(env).unwrap().animation_duration;
+            let animation_duration = ThreadLocalState::get_current_transaction(env).unwrap().animation_duration;
             msg_class![env; NSNumber numberWithDouble:animation_duration]
         },
         kCATransactionDisableActions => {
-            let disable_actions = State::get_current_transaction(env).unwrap().disable_actions;
+            let disable_actions = ThreadLocalState::get_current_transaction(env).unwrap().disable_actions;
             msg_class![env; NSNumber numberWithBool:disable_actions]
         },
         kCATransactionAnimationTimingFunction => {
-            State::get_current_transaction(env).unwrap().animation_timing_function
+            ThreadLocalState::get_current_transaction(env).unwrap().animation_timing_function
         },
         kCATransactionCompletionBlock => {
             unimplemented!()
         },
         _ => {
-            State::get_current_transaction(env).unwrap().data.get(&*key_string).cloned().unwrap_or(nil)
+            ThreadLocalState::get_current_transaction(env).unwrap().data.get(&*key_string).cloned().unwrap_or(nil)
         }
     };
     log_dbg!("[CATransaction valueForKey:{:?} ({})] => {:?}", key, key_string, value);
@@ -250,12 +219,12 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 + (())begin {
     log_dbg!("[CATransaction begin]");
-    State::push_explicit_transaction(env);
+    ThreadLocalState::push_explicit_transaction(env);
 }
 
 + (())commit {
     log_dbg!("[CATransaction commit]");
-    State::pop_explicit_transaction(env).commit(env);
+    ThreadLocalState::pop_explicit_transaction(env).commit(env);
 }
 
 + (bool)disableActions {

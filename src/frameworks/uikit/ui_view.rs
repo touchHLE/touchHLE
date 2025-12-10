@@ -251,7 +251,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     log_dbg!("[UIView commitAnimations]");
 
     // TODO: What if there's interleaved UIView animations and CATransactions?
-    let animations = ca_transaction::State::get_current_transaction(env).unwrap().get_animations();
+    let animations = ca_transaction::ThreadLocalState::get_current_transaction(env).unwrap().get_animations();
 
     // TODO: I believe the delegate should be called even if the animation
     // block is committed with no animations?

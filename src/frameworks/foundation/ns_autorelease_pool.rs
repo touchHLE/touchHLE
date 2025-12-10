@@ -7,16 +7,15 @@
 
 use crate::objc::{id, msg, objc_classes, release, ClassExports, HostObject, NSZonePtr};
 use crate::{Environment, ThreadId};
-use std::collections::HashMap;
 use std::num::NonZeroU32;
 
 #[derive(Default)]
-pub struct State {
-    pool_stacks: HashMap<ThreadId, Vec<id>>,
+pub struct ThreadLocalState {
+    pool_stack: Option<Vec<id>>,
 }
-impl State {
+impl ThreadLocalState {
     fn get(env: &mut Environment) -> &mut Self {
-        &mut env.framework_state.foundation.ns_autorelease_pool
+        &mut env.get_tl_framework_state().foundation.ns_autorelease_pool
     }
 }
 
@@ -43,9 +42,9 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 + (())addObject:(id)obj {
     let current_thread = env.current_thread;
-    if let Some(current_pool) = State::get(env)
-        .pool_stacks
-        .get(&current_thread)
+    if let Some(current_pool) = ThreadLocalState::get(env)
+        .pool_stack
+        .as_ref()
         .and_then(|pool_stack| pool_stack.last().copied())
     {
         msg![env; current_pool addObject:obj]
@@ -60,9 +59,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 - (id)init {
     let current_thread = env.current_thread;
-    let pool_stack = State::get(env).pool_stacks
-        .entry(current_thread)
-        .or_default();
+    let pool_stack = ThreadLocalState::get(env).pool_stack.get_or_insert_default();
     pool_stack.push(this);
     log_dbg!("New pool: {:?}, current thread {}", this, current_thread);
     this
@@ -96,13 +93,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     // It's unclear what should happen when draining a pool on the wrong thread,
     // but we prefer to be conservative here
     assert_eq!(host_obj.original_thread, current_thread);
-    let pool_stack = &mut env
-        .framework_state
-        .foundation
-        .ns_autorelease_pool
-        .pool_stacks
-        .get_mut(&current_thread)
-        .unwrap();
+    let pool_stack = ThreadLocalState::get(env).pool_stack.as_mut().unwrap();
     // NSAutoReleasePool seems to keep popping until reaches the appropriate
     // pool object. If there are pools that are "above" it in the stack, it
     // deallocates them as well.

@@ -52,3 +52,8 @@ pub struct State {
     opengles: opengles::State,
     uikit: uikit::State,
 }
+
+/// Container for thread local state of various child modules
+#[derive(Default)]
+pub struct ThreadLocalState {
+}

@@ -16,6 +16,24 @@
       "message": "\u003e wrap around to u32::MAX, keys.get will handle it\n\ncould you pleas elaborate how this is working here?",
       "revId": "92f7abf694fbe567cc5c365145ac8489548a88db",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fadfb304_38553e15",
+        "filename": "src/libc/pthread/key.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 58,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2025-12-10T14:30:53Z",
+      "side": 1,
+      "message": "I think its because of max keys being 512 a wrap around would result in an index that doesnt exist. I think for readability it would make more sense to use a checked sub and just early return.",
+      "parentUuid": "37cab948_327897cf",
+      "revId": "92f7abf694fbe567cc5c365145ac8489548a88db",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

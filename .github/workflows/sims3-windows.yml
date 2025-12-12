@@ -1,0 +1,55 @@
+name: Sims 3 Ambitions - Windows x64
+
+on:
+  push:
+    branches:
+      - sims3-ambitions
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-windows:
+    runs-on: windows-2022
+
+    steps:
+      - name: Checkout our fork
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Download Boost 1.81
+        shell: pwsh
+        run: |
+          curl.exe -L -o boost.7z https://archives.boost.io/release/1.81.0/source/boost_1_81_0.7z
+          7z x boost.7z -ovendor -y
+          Rename-Item vendor\boost_1_81_0 boost
+
+      - name: Download CMake
+        shell: pwsh
+        run: |
+          curl.exe -L -o cmake.zip https://github.com/Kitware/CMake/releases/download/v3.31.6/cmake-3.31.6-windows-x86_64.zip
+          7z x cmake.zip -ovendor -y
+          Rename-Item vendor\cmake-3.31.6-windows-x86_64 cmake
+
+      - name: Build touchHLE.exe
+        shell: pwsh
+        env:
+          CMAKE: ${{ github.workspace }}\vendor\cmake\bin\cmake.exe
+        run: cargo build --release --bin touchHLE
+
+      - name: Create Windows bundle
+        shell: bash
+        run: |
+          cd dev-scripts
+          ./make-windows-bundle.sh ../target/release/touchHLE.exe
+          mv touchHLE_windows_bundle/ ..
+
+      - name: Upload Windows executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: Sims3Ambitions-Windows-x64
+          path: touchHLE_windows_bundle/
+          if-no-files-found: error

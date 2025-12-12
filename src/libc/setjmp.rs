@@ -12,7 +12,27 @@
 use crate::abi::GuestFunction;
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::mem::{MutPtr, SafeRead};
-use crate::{abi, Environment};
+use crate::{abi, Environment, ThreadId};
+use std::collections::HashMap;
+
+#[derive(Default)]
+pub struct State {
+    contexts: HashMap<ThreadId, MutPtr<u32>>,
+}
+
+impl State {
+    fn top(&self, thread: ThreadId) -> MutPtr<u32> {
+        self.contexts.get(&thread).copied().unwrap_or_default()
+    }
+
+    fn set_top(&mut self, thread: ThreadId, context: MutPtr<u32>) {
+        if context.is_null() {
+            self.contexts.remove(&thread);
+        } else {
+            self.contexts.insert(thread, context);
+        }
+    }
+}
 
 // Below apps are Fuse powered ones, this engine is using setjmp/longjmp for
 // a custom "fibers" implementation. It _does not_ jump across host stack
@@ -89,4 +109,48 @@ fn longjmp(env: &mut Environment, jmp_buf: MutPtr<JmpBuf>, status: u32) {
         .branch(GuestFunction::from_addr_with_thumb_bit(buf.lr));
 }
 
-pub const FUNCTIONS: FunctionExports = &[export_c_func!(setjmp(_)), export_c_func!(longjmp(_, _))];
+#[allow(non_snake_case)]
+fn _Unwind_SjLj_Register(env: &mut Environment, context: MutPtr<u32>) {
+    assert!(!context.is_null());
+    let previous = env.libc_state.setjmp.top(env.current_thread);
+    env.mem.write(context, previous.to_bits());
+    env.libc_state.setjmp.set_top(env.current_thread, context);
+}
+
+#[allow(non_snake_case)]
+fn _Unwind_SjLj_Unregister(env: &mut Environment, context: MutPtr<u32>) {
+    assert_eq!(env.libc_state.setjmp.top(env.current_thread), context);
+    let previous = env.mem.read(context);
+    env.libc_state
+        .setjmp
+        .set_top(env.current_thread, MutPtr::from_bits(previous));
+}
+
+pub const FUNCTIONS: FunctionExports = &[
+    export_c_func!(setjmp(_)),
+    export_c_func!(longjmp(_, _)),
+    export_c_func!(_Unwind_SjLj_Register(_)),
+    export_c_func!(_Unwind_SjLj_Unregister(_)),
+];
+
+#[cfg(test)]
+mod tests {
+    use super::State;
+    use crate::mem::MutPtr;
+
+    #[test]
+    fn unwind_context_stacks_are_thread_local() {
+        let mut state = State::default();
+        let first = MutPtr::<u32>::from_bits(0x1000);
+        let second = MutPtr::<u32>::from_bits(0x2000);
+        assert!(state.top(0).is_null());
+        assert!(state.top(1).is_null());
+        state.set_top(0, first);
+        state.set_top(1, second);
+        assert_eq!(state.top(0), first);
+        assert_eq!(state.top(1), second);
+        state.set_top(0, MutPtr::null());
+        assert!(state.top(0).is_null());
+        assert_eq!(state.top(1), second);
+    }
+}

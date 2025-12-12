@@ -71,7 +71,10 @@ impl Bundle {
     }
 
     pub fn bundle_identifier(&self) -> &str {
-        self.plist["CFBundleIdentifier"].as_string().unwrap()
+        self.plist
+            .get("CFBundleIdentifier")
+            .and_then(|value| value.as_string())
+            .unwrap_or("")
     }
 
     pub fn bundle_version(&self) -> &str {

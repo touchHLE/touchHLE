@@ -59,6 +59,7 @@ const kAudioFileCAFType: AudioFileTypeID = fourcc(b"caff");
 
 /// Usually a FourCC.
 type AudioFilePropertyID = u32;
+const kAudioFilePropertyFileFormat: AudioFilePropertyID = fourcc(b"ffmt");
 pub const kAudioFilePropertyDataFormat: AudioFilePropertyID = fourcc(b"dfmt");
 const kAudioFilePropertyAudioDataByteCount: AudioFilePropertyID = fourcc(b"bcnt");
 const kAudioFilePropertyAudioDataPacketCount: AudioFilePropertyID = fourcc(b"pcnt");
@@ -221,6 +222,7 @@ pub fn AudioFileOpenWithCallbacks(
 
 fn property_size(property_id: AudioFilePropertyID) -> GuestUSize {
     match property_id {
+        kAudioFilePropertyFileFormat => guest_size_of::<u32>(),
         kAudioFilePropertyDataFormat => guest_size_of::<AudioStreamBasicDescription>(),
         kAudioFilePropertyAudioDataByteCount => guest_size_of::<u64>(),
         kAudioFilePropertyAudioDataPacketCount => guest_size_of::<u64>(),
@@ -283,6 +285,13 @@ pub fn AudioFileGetProperty(
         .unwrap();
 
     match in_property_id {
+        kAudioFilePropertyFileFormat => {
+            if let Some(file_type) = host_object.audio_file.file_type() {
+                env.mem.write(out_property_data.cast(), file_type);
+            } else {
+                return kAudioFileUnsupportedFileTypeError;
+            }
+        }
         kAudioFilePropertyDataFormat => {
             let audio::AudioDescription {
                 sample_rate,

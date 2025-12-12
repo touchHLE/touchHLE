@@ -1,8 +1,9 @@
-name: Sims 3 Ambitions - Windows x64
+name: Sims 3 Compatibility - Windows x64
 
 on:
   push:
     branches:
+      - trunk
       - sims3-ambitions
   workflow_dispatch:
 
@@ -50,6 +51,6 @@ jobs:
       - name: Upload Windows executable
         uses: actions/upload-artifact@v4
         with:
-          name: Sims3Ambitions-Windows-x64
+          name: Sims3-Windows-x64
           path: touchHLE_windows_bundle/
           if-no-files-found: error

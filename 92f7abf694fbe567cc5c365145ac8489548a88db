@@ -34,6 +34,24 @@
       "parentUuid": "37cab948_327897cf",
       "revId": "92f7abf694fbe567cc5c365145ac8489548a88db",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6c7fa47a_417e11f1",
+        "filename": "src/libc/pthread/key.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 58,
+      "author": {
+        "id": 1039111
+      },
+      "writtenOn": "2025-12-12T15:58:45Z",
+      "side": 1,
+      "message": "Yes, what they said.\nThe original code used checked_sub and would have panicked on an underflow if 0 was passed. This patchset uses wrapping_sub instead, to wrap around to u32::MAX without panicking, and keys.get safely handles that since it’s a HashMap lookup rather than an array index. The intent was mostly to remove the (minor) possibility of a panic.\nRegardless, if a checked-sub + match + early return seems better, please let me know and I\u0027ll send a new patchset.",
+      "parentUuid": "fadfb304_38553e15",
+      "revId": "92f7abf694fbe567cc5c365145ac8489548a88db",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

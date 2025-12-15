@@ -1122,7 +1122,31 @@ fn AudioQueueCreateTimeline(
     0
 }
 
+fn AudioQueueDisposeTimeline(
+    env: &mut Environment,
+    in_aq: AudioQueueRef,
+    in_timeline: AudioQueueTimelineRef,
+) -> OSStatus {
+    return_if_null!(in_aq);
+    return_if_null!(in_timeline);
+
+    let Some(queue) = State::get(&mut env.framework_state)
+        .audio_queues
+        .get_mut(&in_aq)
+    else {
+        return crate::frameworks::carbon_core::paramErr;
+    };
+    let Some(index) = queue.timelines.iter().position(|&t| t == in_timeline) else {
+        return crate::frameworks::carbon_core::paramErr;
+    };
+
+    queue.timelines.swap_remove(index);
+    env.mem.free(in_timeline.cast());
+    0
+}
+
 pub const FUNCTIONS: FunctionExports = &[
+    export_c_func!(AudioQueueDisposeTimeline(_, _)),
     export_c_func!(AudioQueueCreateTimeline(_, _)),
     export_c_func!(AudioQueueNewOutput(_, _, _, _, _, _, _)),
     export_c_func!(AudioQueueGetParameter(_, _, _)),

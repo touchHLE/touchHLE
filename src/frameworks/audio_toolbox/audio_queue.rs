@@ -118,6 +118,7 @@ type AudioQueueParameterValue = f32;
 
 pub type AudioQueuePropertyID = u32;
 pub const kAudioQueueProperty_IsRunning: AudioQueuePropertyID = fourcc(b"aqrn");
+const kAudioQueueProperty_StreamDescription: AudioQueuePropertyID = fourcc(b"aqft");
 
 /// (*void)(void *in_user_data, AudioQueueRef in_aq, AudioQueuePropertyID in_id)
 type AudioQueuePropertyListenerProc = GuestFunction;
@@ -409,6 +410,7 @@ fn AudioQueueRemovePropertyListener(
 fn property_size(property_id: AudioQueuePropertyID) -> GuestUSize {
     match property_id {
         kAudioQueueProperty_IsRunning => guest_size_of::<u32>(),
+        kAudioQueueProperty_StreamDescription => guest_size_of::<AudioStreamBasicDescription>(),
         _ => unimplemented!("Unimplemented property ID: {}", debug_fourcc(property_id)),
     }
 }
@@ -453,6 +455,9 @@ fn AudioQueueGetProperty(
                 AudioQueueIsRunning::Stopped => 0,
             };
             env.mem.write(out_property_data.cast(), is_running);
+        }
+        kAudioQueueProperty_StreamDescription => {
+            env.mem.write(out_property_data.cast(), host_object.format);
         }
         _ => unreachable!(),
     }

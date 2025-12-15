@@ -16,6 +16,7 @@ use super::{
 };
 use crate::mach_o::MachO;
 use crate::mem::{guest_size_of, ConstPtr, ConstVoidPtr, GuestUSize, Mem, Ptr, SafeRead};
+use crate::Environment;
 use std::collections::{HashMap, VecDeque};
 
 /// Generic pointer to an Objective-C class or metaclass.
@@ -937,4 +938,24 @@ impl ObjC {
             None
         }
     }
+}
+
+/// Standard Objective-C runtime function for getting a class by name.
+/// If the class doesn't exist yet, it will create an [UnimplementedClass]
+/// placeholder instead.
+pub(super) fn objc_getClass(env: &mut Environment, name: ConstPtr<u8>) -> Class {
+    if name.is_null() {
+        return nil;
+    }
+    let name = env.mem.cstr_at_utf8(name).unwrap().to_string();
+    // Use link_class to ensure missing classes are created as placeholders
+    env.objc.link_class(&name, /* is_metaclass: */ false, &mut env.mem)
+}
+
+/// Standard Objective-C runtime function for getting the class of an object.
+pub(super) fn object_getClass(env: &mut Environment, obj: id) -> Class {
+    if obj == nil {
+        return nil;
+    }
+    ObjC::read_isa(obj, &env.mem)
 }

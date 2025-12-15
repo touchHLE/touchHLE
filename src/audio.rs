@@ -368,3 +368,25 @@ impl AudioFile {
         }
     }
 }
+
+#[cfg(test)]
+mod audio_file_type_tests {
+    use super::detect_audio_file_type;
+
+    #[test]
+    fn identifies_supported_containers() {
+        assert_eq!(
+            detect_audio_file_type(b"RIFF\0\0\0\0WAVEfmt "),
+            Some(u32::from_be_bytes(*b"WAVE"))
+        );
+        assert_eq!(
+            detect_audio_file_type(b"\0\0\0\x18ftypM4A "),
+            Some(u32::from_be_bytes(*b"m4af"))
+        );
+        assert_eq!(
+            detect_audio_file_type(b"ID3\0\0"),
+            Some(u32::from_be_bytes(*b"MPG3"))
+        );
+        assert_eq!(detect_audio_file_type(b"unknown"), None);
+    }
+}

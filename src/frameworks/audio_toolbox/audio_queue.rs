@@ -893,6 +893,9 @@ pub fn AudioQueueStart(
         .unwrap();
 
     host_object.is_running = AudioQueueIsRunning::Running;
+    if host_object.clock_started.is_none() {
+        host_object.clock_started = Some(Instant::now());
+    }
 
     if is_supported_audio_format(&host_object.format) {
         let al_source = host_object.al_source.unwrap();
@@ -920,6 +923,9 @@ pub fn AudioQueuePause(env: &mut Environment, in_aq: AudioQueueRef) -> OSStatus 
     let host_object = state.audio_queues.get_mut(&in_aq).unwrap();
     // FIXME: is this correct? is it notifiable?
     host_object.is_running = AudioQueueIsRunning::Stopped;
+    if let Some(started) = host_object.clock_started.take() {
+        host_object.clock_elapsed += started.elapsed();
+    }
     if let Some(al_source) = host_object.al_source {
         unsafe { al::alSourcePause(al_source) };
         assert!(unsafe { al::alGetError() } == 0);
@@ -938,6 +944,12 @@ fn finish_stopping_audio_queue(env: &mut Environment, in_aq: AudioQueueRef) {
         .get_mut(&in_aq)
         .unwrap()
         .is_running = AudioQueueIsRunning::Stopped;
+    let host_object = State::get(&mut env.framework_state)
+        .audio_queues
+        .get_mut(&in_aq)
+        .unwrap();
+    host_object.clock_started = None;
+    host_object.clock_elapsed = Duration::ZERO;
     notify_aq_is_running(env, in_aq);
 }
 
@@ -984,6 +996,12 @@ fn AudioQueueReset(env: &mut Environment, in_aq: AudioQueueRef) -> OSStatus {
     log_dbg!("Resetting queue {:?}.", in_aq);
 
     let host_object = state.audio_queues.get_mut(&in_aq).unwrap();
+    host_object.clock_elapsed = Duration::ZERO;
+    host_object.clock_started = if host_object.is_running == AudioQueueIsRunning::Running {
+        Some(Instant::now())
+    } else {
+        None
+    };
 
     if let Some(al_source) = host_object.al_source {
         unsafe {

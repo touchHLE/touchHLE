@@ -31,6 +31,7 @@ use crate::mem::{
 use crate::objc::msg;
 use crate::Environment;
 use std::collections::{HashMap, VecDeque};
+use std::time::{Duration, Instant};
 
 #[derive(Default)]
 pub struct State {
@@ -60,6 +61,9 @@ struct AudioQueueHostObject {
     aq_is_running_proc: Option<AudioQueuePropertyListenerProc>,
     aq_is_running_user_data: Option<MutVoidPtr>,
     is_running_handler: bool,
+    timelines: Vec<AudioQueueTimelineRef>,
+    clock_elapsed: Duration,
+    clock_started: Option<Instant>,
 }
 
 /// Track whether the audio queue is meant to be running, in order to handle
@@ -80,6 +84,13 @@ pub struct OpaqueAudioQueue {
 unsafe impl SafeRead for OpaqueAudioQueue {}
 
 pub type AudioQueueRef = MutPtr<OpaqueAudioQueue>;
+
+#[repr(C, packed)]
+pub struct OpaqueAudioQueueTimeline {
+    _filler: u8,
+}
+unsafe impl SafeRead for OpaqueAudioQueueTimeline {}
+pub type AudioQueueTimelineRef = MutPtr<OpaqueAudioQueueTimeline>;
 
 #[repr(C, packed)]
 pub struct AudioQueueBuffer {
@@ -179,6 +190,9 @@ pub fn AudioQueueNewOutput(
         aq_is_running_proc: None,
         aq_is_running_user_data: None,
         is_running_handler: false,
+        timelines: Vec::new(),
+        clock_elapsed: Duration::ZERO,
+        clock_started: None,
     };
 
     let aq_ref = env.mem.alloc_and_write(OpaqueAudioQueue { _filler: 0 });
@@ -1049,6 +1063,9 @@ pub fn AudioQueueDispose(
 
     env.mem.free(in_aq.cast());
 
+    for timeline in host_object.timelines {
+        env.mem.free(timeline.cast());
+    }
     for buffer_ptr in host_object.buffers {
         let buffer = env.mem.read(buffer_ptr);
         env.mem.free(buffer.audio_data);

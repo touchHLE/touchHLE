@@ -18,7 +18,7 @@ use crate::frameworks::carbon_core::OSStatus;
 use crate::frameworks::core_audio_types::{
     debug_fourcc, fourcc, kAudioFormatAppleIMA4, kAudioFormatFlagIsBigEndian,
     kAudioFormatFlagIsFloat, kAudioFormatFlagIsPacked, kAudioFormatFlagIsSignedInteger,
-    kAudioFormatLinearPCM, AudioStreamBasicDescription,
+    kAudioFormatLinearPCM, AudioStreamBasicDescription, AudioTimeStamp, SMPTETime,
 };
 use crate::frameworks::core_foundation::cf_run_loop::{
     kCFRunLoopCommonModes, CFRunLoopGetMain, CFRunLoopMode, CFRunLoopRef,
@@ -1145,7 +1145,63 @@ fn AudioQueueDisposeTimeline(
     0
 }
 
+fn AudioQueueGetCurrentTime(
+    env: &mut Environment,
+    in_aq: AudioQueueRef,
+    in_timeline: AudioQueueTimelineRef,
+    out_timestamp: MutPtr<AudioTimeStamp>,
+    out_discontinuity: MutPtr<u8>,
+) -> OSStatus {
+    return_if_null!(in_aq);
+
+    let Some(queue) = State::get(&mut env.framework_state)
+        .audio_queues
+        .get(&in_aq)
+    else {
+        return crate::frameworks::carbon_core::paramErr;
+    };
+    if !in_timeline.is_null() && !queue.timelines.contains(&in_timeline) {
+        return crate::frameworks::carbon_core::paramErr;
+    }
+
+    let elapsed = queue.clock_elapsed
+        + queue
+            .clock_started
+            .map(|start| start.elapsed())
+            .unwrap_or(Duration::ZERO);
+    let sample_time = elapsed.as_secs_f64() * queue.format.sample_rate;
+    if !out_timestamp.is_null() {
+        env.mem.write(
+            out_timestamp,
+            AudioTimeStamp {
+                sample_time,
+                host_time: 0,
+                rate_scalar: 0.0,
+                world_clock_type: 0,
+                SMPTE_time: SMPTETime {
+                    subframes: 0,
+                    subframe_divisor: 0,
+                    counter: 0,
+                    type_: 0,
+                    flags: 0,
+                    hours: 0,
+                    minutes: 0,
+                    seconds: 0,
+                    frames: 0,
+                },
+                flags: 1,
+                _reserved: 0,
+            },
+        );
+    }
+    if !out_discontinuity.is_null() {
+        env.mem.write(out_discontinuity, 0u8);
+    }
+    0
+}
+
 pub const FUNCTIONS: FunctionExports = &[
+    export_c_func!(AudioQueueGetCurrentTime(_, _, _, _)),
     export_c_func!(AudioQueueDisposeTimeline(_, _)),
     export_c_func!(AudioQueueCreateTimeline(_, _)),
     export_c_func!(AudioQueueNewOutput(_, _, _, _, _, _, _)),

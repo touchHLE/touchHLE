@@ -1098,7 +1098,32 @@ pub fn AudioQueueDispose(
     0 // success
 }
 
+fn AudioQueueCreateTimeline(
+    env: &mut Environment,
+    in_aq: AudioQueueRef,
+    out_timeline: MutPtr<AudioQueueTimelineRef>,
+) -> OSStatus {
+    return_if_null!(in_aq);
+    return_if_null!(out_timeline);
+
+    let Some(queue) = State::get(&mut env.framework_state)
+        .audio_queues
+        .get_mut(&in_aq)
+    else {
+        return crate::frameworks::carbon_core::paramErr;
+    };
+
+    let timeline = env
+        .mem
+        .alloc_and_write(OpaqueAudioQueueTimeline { _filler: 0 });
+    queue.timelines.push(timeline);
+    env.mem.write(out_timeline, timeline);
+    log_dbg!("AudioQueueCreateTimeline({:?}) => {:?}", in_aq, timeline);
+    0
+}
+
 pub const FUNCTIONS: FunctionExports = &[
+    export_c_func!(AudioQueueCreateTimeline(_, _)),
     export_c_func!(AudioQueueNewOutput(_, _, _, _, _, _, _)),
     export_c_func!(AudioQueueGetParameter(_, _, _)),
     export_c_func!(AudioQueueSetParameter(_, _, _)),

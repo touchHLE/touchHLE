@@ -16,6 +16,40 @@
       "message": "Working on bugs for Crash Nitro Kart 2",
       "revId": "502e84fa68e3e14dba2a1f2bc9f349dea4043d5a",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "90dfca80_be61d71f",
+        "filename": "src/fs.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 428,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-12-24T23:25:20Z",
+      "side": 1,
+      "message": "you can remove `..` as pattern mathcing is exhaustive here",
+      "revId": "502e84fa68e3e14dba2a1f2bc9f349dea4043d5a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0cc21a74_ce06a46a",
+        "filename": "src/fs.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 1061,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-12-24T23:25:20Z",
+      "side": 1,
+      "message": "What will happen if directory contents changes after it was opened as fd?",
+      "revId": "502e84fa68e3e14dba2a1f2bc9f349dea4043d5a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

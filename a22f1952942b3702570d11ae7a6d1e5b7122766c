@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e5cd443f_8796e67a",
+        "filename": "src/objc/classes.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 200,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-12-24T22:44:11Z",
+      "side": 1,
+      "message": "I feel like this doesn\u0027t belong in `src/objc/classes.rs`, but it might be an awkward fit in `src/objc/properties.rs`? Shrug.",
+      "revId": "a22f1952942b3702570d11ae7a6d1e5b7122766c",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

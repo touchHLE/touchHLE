@@ -226,9 +226,11 @@ pub const CLASSES: ClassExports = objc_classes! {
 // Undocumented classes used in NIBs
 @implementation UICGColor: UIColor
 @end
+@implementation UICachedDeviceWhiteColor: UIColor
+@end
 @implementation UIDeviceRGBColor: UIColor
 @end
-
+    
 // Special subclass for standard colors with a static lifetime.
 // See `get_standard_color`.
 @implementation _touchHLE_UIColor_Static: UIColor

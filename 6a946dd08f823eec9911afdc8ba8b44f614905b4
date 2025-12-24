@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "351a1053_9af1fef4",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 3
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2025-12-24T22:49:13Z",
+      "side": 1,
+      "message": "This should be mentioned in `OPTIONS_HELP.txt`",
+      "revId": "6a946dd08f823eec9911afdc8ba8b44f614905b4",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

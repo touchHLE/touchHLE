@@ -52,6 +52,24 @@
       "parentUuid": "fadfb304_38553e15",
       "revId": "92f7abf694fbe567cc5c365145ac8489548a88db",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "465929bf_76193c95",
+        "filename": "src/libc/pthread/key.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 58,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-12-24T23:15:07Z",
+      "side": 1,
+      "message": "Does passing a 0 here is legimate use-case?\n\nOtherwise, what does iOS/macOS do here? Does it crash?",
+      "parentUuid": "6c7fa47a_417e11f1",
+      "revId": "92f7abf694fbe567cc5c365145ac8489548a88db",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

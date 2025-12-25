@@ -16,6 +16,23 @@
       "message": "Merged as https://github.com/touchHLE/touchHLE/commit/542dae74037851c8a6d5424efdd12e5dc99771e8 with small changes",
       "revId": "249c76ffb5be4ae0003c53ab2bcac6433bedd69e",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0bbfc15d_7bacf7ae",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 4
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-12-25T18:19:00Z",
+      "side": 1,
+      "message": "@celerizer@gmail.com congrats on your first code contribution!\n\nIf you want to have access to dev only channels in our Discord, please mail me your Discord\u0027s nickname, I\u0027ll add you.",
+      "revId": "249c76ffb5be4ae0003c53ab2bcac6433bedd69e",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

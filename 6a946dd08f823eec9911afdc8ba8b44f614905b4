@@ -16,6 +16,24 @@
       "message": "This should be mentioned in `OPTIONS_HELP.txt`",
       "revId": "6a946dd08f823eec9911afdc8ba8b44f614905b4",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "199dd9f7_0534ed05",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 3
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-12-25T18:15:27Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "351a1053_9af1fef4",
+      "revId": "6a946dd08f823eec9911afdc8ba8b44f614905b4",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

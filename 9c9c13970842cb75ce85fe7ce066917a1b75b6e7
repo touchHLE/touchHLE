@@ -16,6 +16,24 @@
       "message": "This assert is still making sense - we should not recieve touch down for a finger which is already in touch down state. The assert tolerate this situation on desktop with a single touch, but in general we should not have it.",
       "revId": "9c9c13970842cb75ce85fe7ce066917a1b75b6e7",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "da294419_7e9b2079",
+        "filename": "src/frameworks/uikit/ui_touch.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 146,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2025-12-25T18:15:27Z",
+      "side": 0,
+      "message": "I decided to keep the assert for now",
+      "parentUuid": "6523a50c_ad0a4d0c",
+      "revId": "9c9c13970842cb75ce85fe7ce066917a1b75b6e7",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

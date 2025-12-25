@@ -134,6 +134,35 @@ Game controller options:
         such that sharp movements take about half a second to complete, while
         movements within a 10px radius will be completely ignored.
 
+    --stick-to-touch=...
+        Defines a region on the screen in which a simulated touch slides
+        around relative to the left analog stick. This is useful for games
+        which use analog movement controls.
+
+        This is four parts separated by commas: x,y,w,h. The co-ordinates
+        are floating-point (decimal) numbers. 0,0 is the top-left corner. The
+        bottom-right corner is 320,480 if the app is in portrait, and 480,320
+        if the app is in landscape.
+
+        For example, --stick-to-touch=10,10,100,100 will map the left analog
+        stick to control a touch within a 100x100 pixel region starting at
+        (10,10) on the screen.
+
+    --dpad-to-touch=...
+        Defines a region on the screen in which a simulated touch mimics an
+        8-directional pad. This is useful for games where diagonals are used.
+
+        This is four parts separated by commas: x,y,w,h. The co-ordinates
+        are floating-point (decimal) numbers. 0,0 is the top-left corner. The
+        bottom-right corner is 320,480 if the app is in portrait, and 480,320
+        if the app is in landscape.
+
+        For example, --dpad-to-touch=10,10,50,50 will simulate an 8-directional
+        D-pad within a 50x50 pixel region starting at (10,10) on the screen.
+
+        Note that this option takes precedence over any DPad buttons defined
+        with `--button-to-touch`.
+
 Graphics driver options:
     --gles1=...
         Force touchHLE to use a particular OpenGL ES 1.1 implementation.

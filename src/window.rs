@@ -76,8 +76,18 @@ pub enum FingerId {
     Touch(i64),
     VirtualCursor,
     ButtonToTouch(crate::options::Button),
+    StickToTouch,
+    DpadToTouch,
 }
 pub type Coords = (f32, f32);
+
+struct DpadState {
+    left: bool,
+    right: bool,
+    up: bool,
+    down: bool,
+    active: bool,
+}
 
 #[derive(Debug)]
 pub enum TextInputEvent {
@@ -168,6 +178,8 @@ pub struct Window {
     app_gl_ctx_no_longer_current: bool,
     controller_ctx: sdl2::GameControllerSubsystem,
     controllers: Vec<sdl2::controller::GameController>,
+    dpad_state: DpadState,
+    stick_active: bool,
     _sensor_ctx: sdl2::SensorSubsystem,
     accelerometer: Option<sdl2::sensor::Sensor>,
     virtual_cursor_last: Option<(f32, f32, bool, bool)>,
@@ -307,6 +319,14 @@ impl Window {
             app_gl_ctx_no_longer_current: false,
             controller_ctx,
             controllers: Vec::new(),
+            dpad_state: DpadState {
+                left: false,
+                right: false,
+                up: false,
+                down: false,
+                active: false,
+            },
+            stick_active: false,
             _sensor_ctx: sensor_ctx,
             accelerometer,
             virtual_cursor_last: None,
@@ -495,30 +515,131 @@ impl Window {
                     let Some(button) = translate_button(button) else {
                         continue;
                     };
-                    let Some(&(x, y)) = options.button_to_touch.get(&button) else {
-                        continue;
-                    };
-                    match event {
-                        E::ControllerButtonUp { .. } => {
-                            let coords = transform_input_coords(self, (x, y), true);
-                            Event::TouchesUp(HashMap::from([(
-                                FingerId::ButtonToTouch(button),
-                                coords,
-                            )]))
+                    // Called whenever a DPad direction is pressed or released
+                    if (button == crate::options::Button::DPadLeft
+                        || button == crate::options::Button::DPadUp
+                        || button == crate::options::Button::DPadRight
+                        || button == crate::options::Button::DPadDown)
+                        && options.dpad_to_touch.is_some()
+                    {
+                        let Some((x, y, w, h)) = options.dpad_to_touch else {
+                            unreachable!();
+                        };
+
+                        // Update held state
+                        let pressed = matches!(event, E::ControllerButtonDown { .. });
+                        match button {
+                            crate::options::Button::DPadLeft => self.dpad_state.left = pressed,
+                            crate::options::Button::DPadRight => self.dpad_state.right = pressed,
+                            crate::options::Button::DPadUp => self.dpad_state.up = pressed,
+                            crate::options::Button::DPadDown => self.dpad_state.down = pressed,
+                            _ => unreachable!(),
                         }
-                        E::ControllerButtonDown { .. } => {
-                            let coords = transform_input_coords(self, (x, y), true);
-                            Event::TouchesDown(HashMap::from([(
-                                FingerId::ButtonToTouch(button),
-                                coords,
-                            )]))
+
+                        // Compute center
+                        let cx = x + w * 0.5;
+                        let cy = y + h * 0.5;
+
+                        // Compute combined delta
+                        let mut dx = 0.0;
+                        let mut dy = 0.0;
+
+                        if self.dpad_state.left {
+                            dx -= 0.5 * w;
                         }
-                        _ => unreachable!(),
+                        if self.dpad_state.right {
+                            dx += 0.5 * w;
+                        }
+                        if self.dpad_state.up {
+                            dy -= 0.5 * h;
+                        }
+                        if self.dpad_state.down {
+                            dy += 0.5 * h;
+                        }
+
+                        // Final coords: center + movement
+                        let coords = transform_input_coords(self, (cx + dx, cy + dy), true);
+
+                        // Send TouchDown if any dpad is held, TouchUp if none
+                        let any_held = self.dpad_state.left
+                            || self.dpad_state.right
+                            || self.dpad_state.up
+                            || self.dpad_state.down;
+
+                        if !self.dpad_state.active && any_held {
+                            // New touch
+                            self.dpad_state.active = true;
+                            Event::TouchesDown(HashMap::from([(FingerId::DpadToTouch, coords)]))
+                        } else if self.dpad_state.active && any_held {
+                            // Move existing touch
+                            Event::TouchesMove(HashMap::from([(FingerId::DpadToTouch, coords)]))
+                        } else if self.dpad_state.active && !any_held {
+                            // Release touch
+                            self.dpad_state.active = false;
+                            Event::TouchesUp(HashMap::from([(FingerId::DpadToTouch, coords)]))
+                        } else {
+                            continue;
+                        }
+                    } else {
+                        let Some(&(x, y)) = options.button_to_touch.get(&button) else {
+                            continue;
+                        };
+                        match event {
+                            E::ControllerButtonUp { .. } => {
+                                let coords = transform_input_coords(self, (x, y), true);
+                                Event::TouchesUp(HashMap::from([(
+                                    FingerId::ButtonToTouch(button),
+                                    coords,
+                                )]))
+                            }
+                            E::ControllerButtonDown { .. } => {
+                                let coords = transform_input_coords(self, (x, y), true);
+                                Event::TouchesDown(HashMap::from([(
+                                    FingerId::ButtonToTouch(button),
+                                    coords,
+                                )]))
+                            }
+                            _ => unreachable!(),
+                        }
                     }
                 }
-                E::ControllerAxisMotion { .. } => {
+                E::ControllerAxisMotion { axis, .. } => {
                     controller_updated = true;
-                    continue;
+                    let Some((x, y, w, h)) = options.stick_to_touch else {
+                        continue;
+                    };
+                    if axis == sdl2::controller::Axis::LeftX
+                        || axis == sdl2::controller::Axis::LeftY
+                    {
+                        let (stick_x, stick_y, _) = self.get_controller_stick(options, true);
+                        let coords = transform_input_coords(
+                            self,
+                            (
+                                x + ((stick_x + 1.0) / 2.0) * w,
+                                y + ((stick_y + 1.0) / 2.0) * h,
+                            ),
+                            true,
+                        );
+                        if stick_x.abs() < options.deadzone && stick_y.abs() < options.deadzone {
+                            if !self.stick_active {
+                                // Ignore deadzone events when stick is inactive
+                                continue;
+                            } else {
+                                // Release touch when stick returns to deadzone
+                                self.stick_active = false;
+                                Event::TouchesUp(HashMap::from([(FingerId::StickToTouch, coords)]))
+                            }
+                        } else if !self.stick_active {
+                            // New touch
+                            self.stick_active = true;
+                            Event::TouchesDown(HashMap::from([(FingerId::StickToTouch, coords)]))
+                        } else {
+                            // Move existing touch
+                            Event::TouchesMove(HashMap::from([(FingerId::StickToTouch, coords)]))
+                        }
+                    } else {
+                        continue;
+                    }
                 }
                 E::AppWillEnterBackground { .. } => {
                     log!("Received app-will-resign-active event.");

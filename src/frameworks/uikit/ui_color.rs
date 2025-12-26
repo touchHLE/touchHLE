@@ -226,6 +226,8 @@ pub const CLASSES: ClassExports = objc_classes! {
 // Undocumented classes used in NIBs
 @implementation UICGColor: UIColor
 @end
+@implementation UICachedDeviceWhiteColor: UIColor
+@end
 @implementation UIDeviceRGBColor: UIColor
 @end
 

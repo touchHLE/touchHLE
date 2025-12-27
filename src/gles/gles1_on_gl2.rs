@@ -98,6 +98,7 @@ struct ArrayStateBackup {
     size: Option<GLint>,
     stride: GLsizei,
     pointer: *const GLvoid,
+    buffer_binding: GLuint,
 }
 
 /// List of arrays shared by OpenGL ES 1.1 and OpenGL 2.1.
@@ -439,11 +440,6 @@ impl GLES1OnGL2 {
 
             let mut buffer_binding = 0;
             gl21::GetIntegerv(array_info.buffer_binding, &mut buffer_binding);
-            if buffer_binding != 0 {
-                // TODO: translation for bound array buffers
-                todo!("TODO: GLES1-on-GL2 layer does not support buffer bindings yet. (Try OpenGL ES on Android.)");
-            }
-            assert!(buffer_binding == 0);
 
             // Get and back up data
 
@@ -454,19 +450,29 @@ impl GLES1OnGL2 {
             });
             let mut stride: GLsizei = 0;
             gl21::GetIntegerv(array_info.stride, &mut stride);
-            let mut pointer: *mut GLvoid = std::ptr::null_mut();
-            // The second argument to glGetPointerv must be a mutable pointer,
-            // but gl_generator generates the wrong signature by mistake, see
-            // https://github.com/brendanzab/gl-rs/issues/541
-            #[allow(clippy::unnecessary_mut_passed)]
-            gl21::GetPointerv(array_info.pointer, &mut pointer);
-            let pointer = pointer.cast_const();
+            let old_pointer = {
+                let mut pointer: *mut GLvoid = std::ptr::null_mut();
+                // The second argument to glGetPointerv must be a mutable
+                // pointer, but gl_generator generates the wrong signature
+                // by mistake, see https://github.com/brendanzab/gl-rs/issues/541
+                #[allow(clippy::unnecessary_mut_passed)]
+                gl21::GetPointerv(array_info.pointer, &mut pointer);
+                pointer.cast_const()
+            };
 
             backups[i] = Some(ArrayStateBackup {
                 size,
                 stride,
-                pointer,
+                pointer: old_pointer,
+                buffer_binding: buffer_binding.try_into().unwrap(),
             });
+
+            let pointer = if buffer_binding != 0 {
+                let mapped_buffer = gl21::MapBuffer(gl21::ARRAY_BUFFER, gl21::READ_ONLY);
+                mapped_buffer.cast()
+            } else {
+                old_pointer
+            };
 
             // Create translated array and substitute pointer
 
@@ -500,6 +506,11 @@ impl GLES1OnGL2 {
                 }
             }
 
+            if buffer_binding != 0 {
+                gl21::UnmapBuffer(gl21::ARRAY_BUFFER);
+                gl21::BindBuffer(gl21::ARRAY_BUFFER, 0);
+            }
+
             let buffer_ptr: *const GLfloat = buffer.as_ptr();
             let buffer_ptr: *const GLvoid = buffer_ptr.cast();
             match array_info.name {
@@ -531,10 +542,15 @@ impl GLES1OnGL2 {
                 size,
                 stride,
                 pointer,
+                buffer_binding,
             }) = backup
             else {
                 continue;
             };
+
+            if buffer_binding != 0 {
+                gl21::BindBuffer(gl21::ARRAY_BUFFER, buffer_binding);
+            }
 
             match array_info.name {
                 gl21::COLOR_ARRAY => {

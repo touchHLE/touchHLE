@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "a4a6ad8d_a5341eb4",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 3
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-01-03T22:52:43Z",
+      "side": 1,
+      "message": "Please write tests to justified each addressed TODO/fix.\n\nYou can check how it is already done for test_fscanf. You\u0027ll probably need to add several different test files for different EOF conditions.\n\n(If you\u0027re on macOS, you could run tests similar to \"Sanity check tests\" step from CI locally)",
+      "revId": "eaf1c3b9b220fe12ba485c1f9e10eb6e272a70cc",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3d6f3814_1f92f6ab",
+        "filename": "src/libc/stdio/printf.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 797,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-01-03T22:52:43Z",
+      "side": 1,
+      "message": "i\u0027m confused, why this is needed?",
+      "revId": "eaf1c3b9b220fe12ba485c1f9e10eb6e272a70cc",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

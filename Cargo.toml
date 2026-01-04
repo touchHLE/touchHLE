@@ -44,7 +44,8 @@ mach_object = "0.1.17"
 plist = "1.8.0"
 zip = { version = "0.6.4", default-features = false, features = ["deflate"] }
 rusttype = "0.9.3"
-# While most Symphonia codecs are (likely) unpatented/have freely licenseable 
+owned_ttf_parser = "0.15.2"
+# While most Symphonia codecs are (likely) unpatented/have freely licenseable
 # patents as of 2024, all of the AAC profiles except AAC-LC (likely) have 
 # active patent claims. The "aac" feature only enables AAC-LC, so it's should 
 # be ok.
@@ -60,8 +61,8 @@ encoding_rs = "0.8.35"
 # behind this, but the actual HIDAPI is not used by touchHLE (see window.rs).
 # Note that the submodule in vendor/SDL2/ must use exactly the same revision of
 # SDL2 that rust-sdl2 uses, so that the Android JNI interface matches.
-sdl2 = { git = "https://github.com/touchHLE/rust-sdl2", tag = "touchHLE-3", features = ["hidapi"] }
-sdl2-sys = { git = "https://github.com/touchHLE/rust-sdl2", tag = "touchHLE-3" }
+sdl2 = { path = "../../rust-sdl2", features = ["hidapi"] }
+sdl2-sys = { path = "../../rust-sdl2/sdl2-sys" }
 touchHLE_dynarmic_wrapper = { path = "src/cpu/dynarmic_wrapper" }
 touchHLE_gl_bindings = { path = "src/gles/gl_bindings" }
 touchHLE_openal_soft_wrapper = { path = "src/audio/openal_soft_wrapper" }

@@ -25,6 +25,7 @@ use touchHLE_stb_image_wrapper::*;
 pub struct Image {
     pixels: PixelStore,
     dimensions: (u32, u32),
+    bytes_per_pixel: u32,
 }
 
 enum PixelStore {
@@ -88,16 +89,18 @@ impl Image {
         Ok(Image {
             pixels: PixelStore::StbImage(pixels),
             dimensions: (width, height),
+            bytes_per_pixel: 4,
         })
     }
 
     /// TODO: This shouldn't really exist, it's a workaround for `CGImage`
     /// relying on this type and should be removed once it can be refactored.
-    pub fn from_pixel_vec(pixels: Vec<u8>, dimensions: (u32, u32)) -> Image {
-        assert!(dimensions.0 as usize * 4 * dimensions.1 as usize == pixels.len());
+    pub fn from_pixel_vec(pixels: Vec<u8>, dimensions: (u32, u32), bpp: u32) -> Image {
+        assert!(dimensions.0 as usize * bpp as usize * dimensions.1 as usize == pixels.len());
         Image {
             pixels: PixelStore::Vec(pixels),
             dimensions,
+            bytes_per_pixel: bpp,
         }
     }
 
@@ -222,7 +225,7 @@ impl Clone for Image {
     fn clone(&self) -> Image {
         // Note: implicitly converts pixel storage from StbImage to Vec
         // (if needed)
-        Image::from_pixel_vec(self.pixels().to_vec(), self.dimensions)
+        Image::from_pixel_vec(self.pixels().to_vec(), self.dimensions, self.bytes_per_pixel)
     }
 }
 

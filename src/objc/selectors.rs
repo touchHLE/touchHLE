@@ -104,6 +104,20 @@ impl ObjC {
         {
             for method_list in [template.class_methods, template.instance_methods] {
                 for &(name, _imp) in method_list {
+                    // handle cases like functionWithControlPoints::::
+                    // where multiple objc arguments without verb exist,
+                    // which rust macro can't handle
+                    let sanitized_name = name
+                        .split(':')
+                        .map(|c| if c.starts_with('_') {""} else {c})
+                        .collect::<Vec<&str>>()
+                        .join(":");
+                    if sanitized_name.as_str() != name {
+                        if !self.selectors.contains_key(sanitized_name.as_str()) {
+                            let sel = SEL(mem.alloc_and_write_cstr(sanitized_name.as_str().as_bytes()).cast_const());
+                            self.selectors.insert(sanitized_name.as_str().to_string(), sel);
+                        }
+                    }
                     if self.selectors.contains_key(name) {
                         continue;
                     }

@@ -33,6 +33,24 @@
       "message": "i\u0027m confused, why this is needed?",
       "revId": "eaf1c3b9b220fe12ba485c1f9e10eb6e272a70cc",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8618c77f_a80f0d88",
+        "filename": "src/libc/stdio/printf.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 797,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2026-01-04T00:23:19Z",
+      "side": 1,
+      "message": "Probably not technically needed but there is a mismatch here and I’m just setting it back 1 byte so that anything else that could read the stream would still read that character. If you want me to just leave this as it was, I can.",
+      "parentUuid": "3d6f3814_1f92f6ab",
+      "revId": "eaf1c3b9b220fe12ba485c1f9e10eb6e272a70cc",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

@@ -227,6 +227,7 @@ pub fn recomposite_if_necessary(env: &mut Environment, force: bool) -> Option<In
             let mut image = Image::from_pixel_vec(
                 vec![255u8; dimension * dimension * 4],
                 (dimension as _, dimension as _),
+                4,
             );
             image.round_corners(dimension as _, /* four_corners: */ false, /* add_sheen: */ false);
 

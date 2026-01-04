@@ -953,6 +953,12 @@ pub(super) fn objc_getClass(env: &mut Environment, name: ConstPtr<u8>) -> Class 
     env.objc.link_class(&name, /* is_metaclass: */ false, &mut env.mem)
 }
 
+/// Standard Objective-C runtime function for getting a class's superclass.
+pub(super) fn class_getSuperclass(env: &mut Environment, class: Class) -> Class {
+    let obj: &ClassHostObject = env.objc.get_host_object(class.cast()).unwrap().as_any().downcast_ref().unwrap();
+    obj.superclass
+}
+
 /// Standard Objective-C runtime function for getting the class of an object.
 pub(super) fn object_getClass(env: &mut Environment, obj: id) -> Class {
     if obj == nil {

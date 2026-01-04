@@ -191,6 +191,14 @@ pub const CLASSES: ClassExports = objc_classes! {
     log!("TODO: ignoring setApplicationIconBadgeNumber:{}", bn);
 }
 
+- (NSInteger)applicationIconBadgeNumber {
+    log!("TODO: ignoring applicationIconBadgeNumber");
+    0
+}
+
+- (())setApplicationSupportsShakeToEdit:(bool)enable {
+    log!("TODO: ignoring setApplicationSupportsShakeToEdit:{}",enable);
+}
 // UIResponder implementation
 // From the Apple UIView docs regarding [UIResponder nextResponder]:
 // "The shared UIApplication object normally returns nil, but it returns its

@@ -649,10 +649,15 @@ impl ObjC {
                 .unwrap()
                 .as_any()
                 .downcast_ref();
-            let Some(ClassHostObject { superclass, .. }) = class_host_object else {
+            let Some(ClassHostObject { superclass, methods, ivars, .. }) = class_host_object else {
                 // Skip FakeClass or UnimplementedClass
                 continue;
             };
+
+            if methods.is_empty() && ivars.is_empty() {
+                // Skip classes with no methods or attributes, these seem to be loading with null superclass?
+                continue;
+            }
 
             if *superclass != nil {
                 inverted_inheritance

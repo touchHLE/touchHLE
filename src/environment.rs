@@ -23,6 +23,7 @@ use std::time::{Duration, Instant};
 
 use crate::libc::pthread::cond::pthread_cond_t;
 pub use mutex::{MutexId, MutexType, PTHREAD_MUTEX_DEFAULT};
+use crate::dyld::HostFn;
 
 /// Index into the [Vec] of threads. Thread 0 is always the main thread.
 pub type ThreadId = usize;
@@ -1030,7 +1031,10 @@ impl Environment {
                             let was_in_host_function =
                                 self.threads[self.current_thread].in_host_function;
                             self.threads[self.current_thread].in_host_function = true;
-                            f.call_from_guest(self);
+                            match f {
+                                HostFn::Function(f) => {f.call_from_guest(self)}
+                                HostFn::Imp(f) => {f.call_from_guest(self)}
+                            }
                             self.threads[self.current_thread].in_host_function =
                                 was_in_host_function;
 

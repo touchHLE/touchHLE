@@ -16,9 +16,11 @@
 use crate::paths;
 use rusttype::{Point, Scale};
 use std::io::Read;
+use owned_ttf_parser::{AsFaceRef, GlyphId, Rect, Tag};
 
 pub struct Font {
     font: rusttype::Font<'static>,
+    inner_font: owned_ttf_parser::OwnedFace,
 }
 
 pub enum TextAlignment {
@@ -74,15 +76,20 @@ impl Font {
             .and_then(|mut f| f.get().read_to_end(&mut bytes).map_err(|e| e.to_string()))
         {
             panic!(
-                "Couldn't read bundled font file {path:?}: {e}. Perhaps the directory is missing?"
+                "Couldn't read bundled font file {:?}: {}. Perhaps the directory is missing?",
+                path, e
             );
         }
 
-        let Some(font) = rusttype::Font::try_from_vec(bytes) else {
-            panic!("Couldn't parse bundled font file {path:?}. This probably means the file is corrupt. Try re-downloading it.");
+        let Some(font) = rusttype::Font::try_from_vec(bytes.clone()) else {
+            panic!("Couldn't parse bundled font file {:?}. This probably means the file is corrupt. Try re-downloading it.", path);
         };
 
-        Font { font }
+        let Ok(inner_font) = owned_ttf_parser::OwnedFace::from_vec(bytes, 0) else {
+            panic!("Couldn't parse bundled font file {:?}. This probably means the file is corrupt. Try re-downloading it.", path);
+        };
+
+        Font { font, inner_font }
     }
 
     pub fn mono_regular() -> Font {
@@ -315,6 +322,45 @@ impl Font {
 
         (width, height)
     }
+    
+    pub fn get_raw_table(&self, tag: u32) -> Vec<u8> {
+        let tag = Tag::from_bytes_lossy(&tag.to_be_bytes());
+        self.inner_font.as_face_ref().table_data(tag).unwrap().to_vec()
+    }
+    
+    pub fn name(&self) -> String {
+        String::from_utf8(self.inner_font.as_face_ref().names().get(0).unwrap().name.to_vec()).unwrap()
+    }
+
+    pub fn glyph_size(&self, glyph: GlyphId) -> Rect {
+        self.inner_font.as_face_ref().glyph_bounding_box(glyph).or_else(|| {
+            self.inner_font.as_face_ref().glyph_bounding_box(self.get_glyph('a').unwrap())
+        }).unwrap()
+    }
+
+    pub fn get_glyph(&self, char: char) -> Option<GlyphId> {
+        self.inner_font.as_face_ref().glyph_index(char)
+    }
+
+    pub fn advance_unscaled(&self, glyph_id: u16) -> i32 {
+        self.inner_font.as_face_ref().glyph_hor_advance(GlyphId(glyph_id)).unwrap() as i32
+    }
+
+    pub fn units_per_em(&self) -> u16 {
+        self.inner_font.as_face_ref().units_per_em()
+    }
+
+    pub fn ascent_unscaled(&self) -> i32 {
+        self.inner_font.as_face_ref().ascender() as i32
+    }
+
+    pub fn descent_unscaled(&self) -> i32 {
+        self.inner_font.as_face_ref().descender() as i32
+    }
+
+    pub fn cap_height(&self) -> i32 {
+        self.inner_font.as_face_ref().height() as i32
+    }
 
     /// Draw text. Calls the provided callback for each glyph that is to be
     /// drawn. Assumes y starts at the bottom-left corner and points upwards.
@@ -402,5 +448,86 @@ impl Font {
             }
             line_y += line_height + line_gap;
         }
+    }
+    
+    /// Draw glyph. Calls the provided callback for each glyph that is to be
+    /// drawn. Assumes y starts at the bottom-left corner and points upwards.
+    pub fn draw_glyphs<F: FnMut(RasterGlyph)>(
+        &self,
+        font_size: f32,
+        glyphs: &[GlyphId],
+        origin: (f32, f32),
+        wrap: Option<(f32, WrapMode)>,
+        alignment: TextAlignment,
+        mut draw_glyph: F,
+    ) {
+        // TODO: This code has gone through a rather traumatic series of y sign
+        //       flips and might benefit from refactoring for clarity?
+
+        let mut line_y = self.font.v_metrics(scale(font_size)).ascent;
+        let (line_height, line_gap) = self.line_height_and_gap(font_size);
+
+        // RustType requires a "draw pixel" callback that will be called for
+        // each pixel in the glyph's bounding box, in left-to-right
+        // top-to-bottom order. This is unfortunately incompatible with
+        // touchHLE's code which needs to be able to sample the pixels in any
+        // order in order to support rotation. This is worked around by creating
+        // a temporary bitmap for the glyph, and then the caller of this
+        // function can provide a "draw glyph" callback that can do whatever it
+        // wants with this bitmap.
+        // TODO: Do we need to increase the font size when scale transforms are
+        //       used, to avoid blurry text?
+        let mut glyph_bitmap: Vec<f32> = Vec::new();
+        let mut cumulative_x = 0.0;
+
+        for &glyph in glyphs {
+            let positioned_glyph = self.font
+                .glyph(glyph)
+                .scaled(scale(font_size))
+                .positioned(Point {
+                    x: origin.0 + cumulative_x,
+                    y: 0.0,
+                });
+            let Some(glyph_bounds) = positioned_glyph.pixel_bounding_box() else {
+                continue;
+            };
+            // y needs to be flipped to point up
+            let glyph_height = glyph_bounds.height();
+            let x_offset = glyph_bounds.min.x;
+            let y_offset = ((origin.1 + line_y).round() as i32) + glyph_bounds.max.y;
+
+            // TODO: Refactor this method to support y clipping too.
+            // It's not mandatory since the caller can do it, but it would
+            // be more efficient.
+            if let Some((wrap_width, _)) = wrap {
+                if glyph_bounds.min.x as f32 > origin.0 + wrap_width {
+                    // Avoid wasting effort on glyphs that are entirely
+                    // clipped. Partial clipping is the responsibility of
+                    // the draw_glyph implementation.
+                    continue;
+                }
+            }
+
+            let glyph_bitmap_bounds = (
+                glyph_bounds.width() as usize,
+                glyph_bounds.height() as usize,
+            );
+            glyph_bitmap.clear();
+            glyph_bitmap.resize(glyph_bitmap_bounds.0 * glyph_bitmap_bounds.1, 0.0);
+
+            positioned_glyph.draw(|x, y, coverage| {
+                glyph_bitmap[y as usize * glyph_bitmap_bounds.0 + x as usize] = coverage;
+            });
+
+            let raster_glyph = RasterGlyph {
+                origin: (x_offset as f32, y_offset as f32 - glyph_height as f32),
+                dimensions: (glyph_bitmap_bounds.0 as _, glyph_bitmap_bounds.1 as _),
+                pixels: &glyph_bitmap,
+            };
+
+            draw_glyph(raster_glyph);
+            cumulative_x += glyph_bounds.width() as f32;
+        }
+        line_y += line_height + line_gap;
     }
 }

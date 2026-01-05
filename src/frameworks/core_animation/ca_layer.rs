@@ -242,6 +242,9 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (())setBounds:(CGRect)bounds {
     env.objc.borrow_mut::<CALayerHostObject>(this).bounds = bounds;
 }
+- (())setMasksToBounds:(bool)masksToBounds {
+    log!("Ignoring [(CALayer*){:?} setMasksToBounds:{:?}]", this, masksToBounds);
+}
 - (CGPoint)position {
     env.objc.borrow::<CALayerHostObject>(this).position
 }

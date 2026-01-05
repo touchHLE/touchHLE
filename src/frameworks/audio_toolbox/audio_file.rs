@@ -219,6 +219,49 @@ pub fn AudioFileOpenWithCallbacks(
     0 // success
 }
 
+pub fn _AudioFileOpenFromVec(
+    env: &mut Environment,
+    data_vec: Vec<u8>,
+    in_file_type_hint: AudioFileTypeID,
+    out_audio_file: MutPtr<AudioFileID>,
+) -> OSStatus {
+    // The hint is optional and is supposed to only be used for certain file
+    // formats that can't be uniquely identified, which we don't support so far.
+    if in_file_type_hint != 0 {
+        log!("Ignoring file type hint for AudioFileOpenWithCallbacks()");
+    }
+
+    // TODO: We're just reading in the whole file at once and parsing it here,
+    // this should change when streaming parsing is implemented.
+    let size: u32 = data_vec.len() as u32;
+
+    assert!(
+        size != 0,
+        "0 byte size of file for AudioFileOpenWithCallbacks(), likely bad!"
+    );
+
+    let Ok(audio_file) = audio::AudioFile::read_from_vec(data_vec) else {
+        log!("Warning: AudioFileOpenWithCallbacks() failed parse",);
+        return kAudioFileUnsupportedFileTypeError;
+    };
+    let guest_audio_file = env.mem.alloc_and_write(OpaqueAudioFileID { _filler: 0 });
+
+    let host_object = AudioFileHostObject { audio_file };
+
+    State::get(&mut env.framework_state)
+        .audio_files
+        .insert(guest_audio_file, host_object);
+
+    env.mem.write(out_audio_file, guest_audio_file);
+
+    log_dbg!(
+        "AudioFileOpenWithCallbacks() opened, new audio file handle: {:?}",
+        guest_audio_file
+    );
+
+    0 // success
+}
+
 fn property_size(property_id: AudioFilePropertyID) -> GuestUSize {
     match property_id {
         kAudioFilePropertyDataFormat => guest_size_of::<AudioStreamBasicDescription>(),

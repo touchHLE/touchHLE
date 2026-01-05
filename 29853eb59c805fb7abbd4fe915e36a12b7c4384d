@@ -36,6 +36,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "2b5d1381_a01e6ecd",
+        "filename": "src/frameworks/uikit/ui_application.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 194,
+      "author": {
+        "id": 1039176
+      },
+      "writtenOn": "2026-01-05T13:10:40Z",
+      "side": 1,
+      "message": "Hi @ciciplusplus@gmail.com It\u0027s not been resolved in the latest patchset, additionally the tests (which I did not know checked for that) helped me detect a couple of double definitions. Thanks!",
+      "parentUuid": "6e59ca78_50958703",
+      "revId": "29853eb59c805fb7abbd4fe915e36a12b7c4384d",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "9d2fad98_b07a302f",
@@ -49,6 +67,24 @@
       "writtenOn": "2026-01-05T12:44:18Z",
       "side": 1,
       "message": "please add a newline after",
+      "revId": "29853eb59c805fb7abbd4fe915e36a12b7c4384d",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "30f8c34c_8ecc3f31",
+        "filename": "src/frameworks/uikit/ui_application.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 201,
+      "author": {
+        "id": 1039176
+      },
+      "writtenOn": "2026-01-05T13:10:40Z",
+      "side": 1,
+      "message": "Hi @ciciplusplus@gmail.com this has been solved in the latest patchset. Thanks!",
+      "parentUuid": "9d2fad98_b07a302f",
       "revId": "29853eb59c805fb7abbd4fe915e36a12b7c4384d",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

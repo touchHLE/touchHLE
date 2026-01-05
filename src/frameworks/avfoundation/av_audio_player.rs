@@ -8,11 +8,7 @@
 //! Implemented using Audio Queue Services based on [the PlayingAudio example](https://developer.apple.com/library/archive/documentation/MusicAudio/Conceptual/AudioQueueProgrammingGuide/AQPlayback/PlayingAudio.html)
 
 use crate::dyld::HostFunction;
-use crate::frameworks::audio_toolbox::audio_file::{
-    self, kAudioFilePropertyDataFormat, kAudioFilePropertyPacketSizeUpperBound,
-    kAudioFileReadPermission, AudioFileClose, AudioFileGetProperty, AudioFileID, AudioFileOpenURL,
-    AudioFileReadPackets,
-};
+use crate::frameworks::audio_toolbox::audio_file::{self, kAudioFilePropertyDataFormat, kAudioFilePropertyPacketSizeUpperBound, kAudioFileReadPermission, AudioFileClose, AudioFileGetProperty, AudioFileID, AudioFileOpenURL, AudioFileReadPackets, _AudioFileOpenFromVec};
 use crate::frameworks::audio_toolbox::audio_queue::{
     kAudioQueueParam_Volume, AudioQueueAllocateBuffer, AudioQueueBufferRef, AudioQueueDispose,
     AudioQueueEnqueueBuffer, AudioQueueGetParameter, AudioQueueNewOutput, AudioQueueOutputCallback,
@@ -29,6 +25,7 @@ use crate::objc::{
 };
 use crate::objc_classes;
 use crate::Environment;
+use crate::frameworks::foundation::ns_data::to_rust_slice;
 
 const kNumberBuffers: usize = 3;
 
@@ -78,6 +75,30 @@ pub const CLASSES: ClassExports = objc_classes! {
         num_of_loops: 0
     });
     env.objc.alloc_object(this, host_object, &mut env.mem)
+}
+
+- (id)initWithData:(id)data // NSData*
+             error:(MutPtr<id>)outError { // NSError**
+    log!("Calling initWithData({:?})", data);
+    let bytes = to_rust_slice(env, data).to_vec();
+
+    // Check for errors. Return nil and write them to error if there are
+    let tmp_afi_ptr: MutPtr<AudioFileID> = env.mem.alloc(guest_size_of::<AudioFileID>()).cast();
+    let status = _AudioFileOpenFromVec(env, bytes, 0, tmp_afi_ptr);
+    let audio_file_id = env.mem.read(tmp_afi_ptr);
+    env.objc.borrow_mut::<AVAudioPlayerHostObject>(this).audio_file_id = Some(audio_file_id);
+    env.mem.free(tmp_afi_ptr.cast());
+    if status != 0 {
+        if !outError.is_null() {
+            let domain = ns_string::get_static_str(env, NSOSStatusErrorDomain);
+            let error = msg_class![env; NSError alloc];
+            let error = msg![env; error initWithDomain:domain code:status userInfo:nil];
+            env.mem.write(outError, error);
+        }
+        return nil;
+    }
+
+    this
 }
 
 - (id)initWithContentsOfURL:(id)url // NSURL*

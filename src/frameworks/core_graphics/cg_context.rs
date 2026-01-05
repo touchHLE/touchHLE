@@ -169,6 +169,14 @@ fn CGContextClipToRect(env: &mut Environment, context: CGContextRef, rect: CGRec
         // All good, clipping is not needed!
         return;
     }
+    if env
+        .bundle
+        .bundle_identifier()
+        .starts_with("com.ea.causeofdeath")
+    {
+        log_dbg!("Ignoring CGContextClipToRect for Cause of Death.");
+        return;
+    }
     todo!();
 }
 

@@ -16,6 +16,24 @@
       "message": "This ns_data would be autoreleased, meaning that it could be freed before the provider. \n\nYou should use the variant of provider creation which retains the data, e.g. CGDataProviderCreateWithCFData",
       "revId": "3ba789806a6c16928506ceca9debc157b0235942",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5c5537a2_13cfb77a",
+        "filename": "src/frameworks/core_graphics/cg_data_provider.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 104,
+      "author": {
+        "id": 1039176
+      },
+      "writtenOn": "2026-01-05T13:59:49Z",
+      "side": 1,
+      "message": "Hi @ciciplusplus@gmail.com I believe the latest update should fix it",
+      "parentUuid": "a08cd9f6_3eb6d355",
+      "revId": "3ba789806a6c16928506ceca9debc157b0235942",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

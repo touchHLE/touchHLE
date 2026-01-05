@@ -26,7 +26,7 @@ use crate::cpu::Cpu;
 use crate::frameworks::foundation::ns_string;
 use crate::mach_o::{MachO, SectionType};
 use crate::mem::{ConstVoidPtr, GuestUSize, Mem, MutPtr, Ptr};
-use crate::objc::{nil, ClassExports, ObjC};
+use crate::objc::{nil, ClassExports, HostIMP, ObjC};
 use crate::Environment;
 use std::collections::HashMap;
 
@@ -222,12 +222,28 @@ fn write_return_to_host_routine(mem: &mut Mem, svc: u32) -> GuestFunction {
     assert!(!ptr.is_thumb());
     ptr
 }
+
+
+pub enum HostFn {
+    Function(HostFunction),
+    Imp(&'static dyn HostIMP),
+}
+
+impl Clone for HostFn {
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+
+impl Copy for HostFn {
+}
+
 pub struct Dyld {
     /// List of host functions that have been "linked" and had SVCs assigned.
     ///
     /// The `&'static str` part here is purely for debugging and could be
     /// removed in release builds if it's ever necessary.
-    linked_host_functions: Vec<(&'static str, HostFunction)>,
+    linked_host_functions: Vec<(&'static str, HostFn)>,
     return_to_host_routine: Option<GuestFunction>,
     thread_exit_routine: Option<GuestFunction>,
     constants_to_link_later: Vec<(MutPtr<ConstVoidPtr>, &'static HostConstant)>,
@@ -638,10 +654,10 @@ impl Dyld {
         cpu: &mut Cpu,
         svc_pc: u32,
         svc: u32,
-    ) -> Option<HostFunction> {
+    ) -> Option<HostFn> {
         match svc {
             Self::SVC_LAZY_LINK | Self::SVC_LAZY_LINK_RET_FLAG => {
-                self.do_lazy_link(bins, mem, cpu, svc_pc)
+                self.do_lazy_link(bins, mem, cpu, svc_pc).map(HostFn::Function)
             }
             Self::SVC_THREAD_EXIT | Self::SVC_RETURN_TO_HOST => unreachable!(), // don't handle here
             Self::SVC_LINKED_FUNCTIONS_BASE.. => {
@@ -769,7 +785,7 @@ impl Dyld {
                 assert!(svc < Self::SVC_LAZY_LINK_RET_FLAG);
                 svc |= Self::SVC_LAZY_LINK_RET_FLAG;
             }
-            self.linked_host_functions.push((symbol, f));
+            self.linked_host_functions.push((symbol, HostFn::Function(f)));
 
             // Rewrite stub function to call this host function
             let stub_function_ptr: MutPtr<u32> = Ptr::from_bits(svc_pc);
@@ -856,9 +872,29 @@ impl Dyld {
         // Allocate an SVC ID for this host function
         let idx: u32 = self.linked_host_functions.len().try_into().unwrap();
         let svc = idx + Self::SVC_LINKED_FUNCTIONS_BASE;
-        self.linked_host_functions.push((symbol, f));
+        self.linked_host_functions.push((symbol, HostFn::Function(f)));
 
         // Create guest function to call this host function
+        let function_ptr = mem.alloc(8);
+        let function_ptr: MutPtr<u32> = function_ptr.cast();
+        mem.write(function_ptr + 0, encode_a32_svc(svc));
+        mem.write(function_ptr + 1, encode_a32_ret());
+
+        GuestFunction::from_addr_with_thumb_bit(function_ptr.to_bits())
+    }
+
+    pub fn create_guest_hostimp(
+        &mut self,
+        mem: &mut Mem,
+        symbol: &'static str,
+        f: &'static dyn HostIMP,
+    ) -> GuestFunction {
+        // Allocate an SVC ID for this host implementation
+        let idx: u32 = self.linked_host_functions.len().try_into().unwrap();
+        let svc = idx + Self::SVC_LINKED_FUNCTIONS_BASE;
+        self.linked_host_functions.push((symbol, HostFn::Imp(f)));
+
+        // Create guest function to call this host implementation
         let function_ptr = mem.alloc(8);
         let function_ptr: MutPtr<u32> = function_ptr.cast();
         mem.write(function_ptr + 0, encode_a32_svc(svc));

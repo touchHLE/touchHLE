@@ -255,9 +255,21 @@ impl State {
                     _ => panic!("Attempted to animate on key {:?}", key_path),
                 }
             } else if animation_class_name == "CAKeyframeAnimation" {
-                log!("CAKeyframeAnimation");
-                log!("KeyPath: {key_path:?}");
                 let key_times: id = msg![env; animation keyTimes];
+                if key_times == nil {
+                    log!("CAKeyframeAnimation has NIL key_times!");
+                    return presentation;
+                }
+                let key_times_class = ObjC::read_isa(key_times, &env.mem);
+                if key_times_class == nil {
+                    log!("CAKeyframeAnimation has key_times with NIL class?");
+                    return presentation;
+                }
+                let key_times_class_name = env.objc.get_class_name(key_times_class);
+                if !["NSArray", "NSMutableArray"].iter().any(|cn| key_times_class_name.ends_with(cn)) {
+                    log!("CAKeyframeAnimation has mismatched class {key_times_class_name} where NSArray is expected, memory corruption?");
+                    return presentation;
+                }
                 let key_times: Vec<f32> = ns_array::to_vec(env, key_times).iter().map(|&id| -> f32 { msg![env; id floatValue] }).collect();
                 let (point_a_index, point_a) = key_times
                     .clone()
@@ -287,7 +299,6 @@ impl State {
                         } else {
                             values[point_b_index]
                         };
-                        log!("New scale value: {interp_value}");
                         ca_transform::set_scale(&mut presentation.transform, interp_value, interp_value, 1f32);
                         presentation.affine_transform = CGAffineTransform::make_scale(interp_value, interp_value).translate(presentation.affine_transform.tx,presentation.affine_transform.ty);
                     }
@@ -309,7 +320,6 @@ impl State {
                             "z" => ca_transform::z_translation_index,
                             _ => panic!("Unknown path in transform.translation: {translation_axis}")
                         };
-                        log!("New translation {translation_axis} value: {interp_value}");
 
                         presentation.transform[translation_matrix_index] = interp_value;
                         match *translation_axis {

@@ -50,6 +50,24 @@
       "message": "What will happen if directory contents changes after it was opened as fd?",
       "revId": "502e84fa68e3e14dba2a1f2bc9f349dea4043d5a",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6bff0ddc_a70e88ca",
+        "filename": "src/fs.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 1061,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2026-01-05T20:50:55Z",
+      "side": 1,
+      "message": "It might be worth, basing it on top of something like this: https://review.gerrithub.io/c/touchHLE/touchHLE/+/1222248\n\nThat way we can just look up by an id, but that change is quite major.",
+      "parentUuid": "0cc21a74_ce06a46a",
+      "revId": "502e84fa68e3e14dba2a1f2bc9f349dea4043d5a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

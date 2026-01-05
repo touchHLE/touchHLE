@@ -724,3 +724,8 @@ fn mutable_copy_inner(env: &mut Environment, arr: id) -> id {
     env.objc.borrow_mut::<ArrayHostObject>(mut_arr).array = array;
     mut_arr
 }
+
+pub fn to_vec(env: &Environment, arr: id) -> Vec<id> {
+    let host = env.objc.borrow::<ArrayHostObject>(arr);
+    host.array.to_vec()
+}

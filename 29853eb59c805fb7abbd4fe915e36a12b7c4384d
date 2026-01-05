@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6e59ca78_50958703",
+        "filename": "src/frameworks/uikit/ui_application.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 194,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-01-05T12:44:18Z",
+      "side": 1,
+      "message": "This method is already implemented, see above.\n\n\nDoes this patchset actually passes the tests?",
+      "revId": "29853eb59c805fb7abbd4fe915e36a12b7c4384d",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9d2fad98_b07a302f",
+        "filename": "src/frameworks/uikit/ui_application.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 201,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-01-05T12:44:18Z",
+      "side": 1,
+      "message": "please add a newline after",
+      "revId": "29853eb59c805fb7abbd4fe915e36a12b7c4384d",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

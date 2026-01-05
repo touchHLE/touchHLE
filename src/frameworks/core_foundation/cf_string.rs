@@ -429,6 +429,7 @@ fn CFStringFindWithOptions(
 }
 
 pub const FUNCTIONS: FunctionExports = &[
+    export_c_func!(CFStringFindWithOptions(_, _, _, _, _)),
     export_c_func!(CFStringAppend(_, _)),
     export_c_func!(CFStringAppendCString(_, _, _)),
     export_c_func!(CFStringAppendFormat(_, _, _, _)),

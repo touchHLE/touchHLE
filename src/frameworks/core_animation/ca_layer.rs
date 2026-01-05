@@ -190,6 +190,11 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (id)superlayer {
     env.objc.borrow::<CALayerHostObject>(this).superlayer
 }
+
+- (()) addAnimation:(id)anim
+             forKey:(id)key {
+    log!("Ignoring CALayer({:?}) addAnimation:{:?} forKey:{:?}", this, anim, key);
+}
 // TODO: sublayers accessors
 
 - (())addSublayer:(id)layer {
@@ -241,6 +246,9 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 - (())setBounds:(CGRect)bounds {
     env.objc.borrow_mut::<CALayerHostObject>(this).bounds = bounds;
+}
+- (())setMasksToBounds:(bool)masksToBounds {
+    log!("Ignoring [(CALayer*){:?} setMasksToBounds:{:?}]", this, masksToBounds);
 }
 - (CGPoint)position {
     env.objc.borrow::<CALayerHostObject>(this).position

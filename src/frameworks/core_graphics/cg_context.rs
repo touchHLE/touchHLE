@@ -45,6 +45,8 @@ pub const CLASSES: ClassExports = objc_classes! {
 pub(super) struct CGContextHostObject {
     pub(super) subclass: CGContextSubclass,
     pub(super) rgb_fill_color: (CGFloat, CGFloat, CGFloat, CGFloat),
+    pub(super) rgb_stroke_color: (CGFloat, CGFloat, CGFloat, CGFloat),
+    pub(super) line_width: CGFloat,
     /// Current transform.
     pub(super) transform: CGAffineTransform,
     // TODO: keep more states saved once they are implemented

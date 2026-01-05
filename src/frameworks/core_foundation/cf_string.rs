@@ -381,6 +381,53 @@ fn find_utf16_range(
     None
 }
 
+fn CFStringFindWithOptions(
+    env: &mut Environment,
+    string: CFStringRef,
+    to_find: CFStringRef,
+    search_range: CFRange,
+    options: CFStringCompareFlags,
+    result: MutPtr<CFRange>,
+) -> bool {
+    assert_eq!(
+        options & !(1 | 4 | 8),
+        0,
+        "Unsupported CFStringFindWithOptions flags: {options:#x}"
+    );
+
+    let start: usize = search_range.location.try_into().unwrap();
+    let length: usize = search_range.length.try_into().unwrap();
+    let string_length: usize = CFStringGetLength(env, string).try_into().unwrap();
+    assert!(start <= string_length && length <= string_length - start);
+
+    let needle_length: usize = CFStringGetLength(env, to_find).try_into().unwrap();
+    if needle_length == 0 || needle_length > length {
+        return false;
+    }
+
+    let haystack: Vec<u16> = (start..start + length)
+        .map(|i| CFStringGetCharacterAtIndex(env, string, i.try_into().unwrap()))
+        .collect();
+    let needle: Vec<u16> = (0..needle_length)
+        .map(|i| CFStringGetCharacterAtIndex(env, to_find, i.try_into().unwrap()))
+        .collect();
+
+    let Some(position) = find_utf16_range(&haystack, &needle, options) else {
+        return false;
+    };
+
+    if !result.is_null() {
+        env.mem.write(
+            result,
+            CFRange {
+                location: (start + position).try_into().unwrap(),
+                length: needle_length.try_into().unwrap(),
+            },
+        );
+    }
+    true
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CFStringAppend(_, _)),
     export_c_func!(CFStringAppendCString(_, _, _)),

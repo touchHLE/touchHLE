@@ -20,6 +20,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "b8cb7f9e_39955685",
+        "filename": "src/frameworks/uikit/ui_application.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 194,
+      "author": {
+        "id": 1039176
+      },
+      "writtenOn": "2026-01-05T13:01:31Z",
+      "side": 1,
+      "message": "Hi @ciciplusplus@gmail.com I didn\u0027t realize when I was rebasing my patches that it was already implemented at some point. However, this seems to compile regardless. Probably the method is being overridden when the macro is executed? Will remove on next update as soon as I figure out how to do that on gerrit.",
+      "parentUuid": "6e59ca78_50958703",
+      "revId": "29853eb59c805fb7abbd4fe915e36a12b7c4384d",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "9d2fad98_b07a302f",
         "filename": "src/frameworks/uikit/ui_application.rs",
         "patchSetId": 1

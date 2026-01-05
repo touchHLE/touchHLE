@@ -18,6 +18,7 @@ use crate::mach_o::MachO;
 use crate::mem::{guest_size_of, ConstPtr, ConstVoidPtr, GuestUSize, Mem, Ptr, SafeRead};
 use crate::Environment;
 use std::collections::{HashMap, VecDeque};
+use crate::abi::GuestFunction;
 
 /// Generic pointer to an Objective-C class or metaclass.
 ///
@@ -965,4 +966,68 @@ pub(super) fn object_getClass(env: &mut Environment, obj: id) -> Class {
         return nil;
     }
     ObjC::read_isa(obj, &env.mem)
+}
+
+/// Opaque type that represents method of a class. 
+/// Currently represented by combination of a class and a selector name.
+pub(super) struct MethodRef(Class, SEL);
+unsafe impl SafeRead for MethodRef {}
+
+/// Standard Objective-C runtime function for getting 
+/// an opaque pointer to a class instance method.
+pub(super) fn class_getInstanceMethod(env: &mut Environment, class: Class, name: SEL) -> ConstPtr<MethodRef> {
+    let obj: &ClassHostObject = env.objc.get_host_object(class.cast()).unwrap().as_any().downcast_ref().unwrap();
+    let opt = obj.methods.iter().find(|&(method, _i)| method.eq(&name));
+    let str_name = name.as_str(&env.mem);
+    if let None = opt {
+        if obj.superclass != nil {
+            return class_getInstanceMethod(env, obj.superclass, name);
+        }
+        log!("Method {}::{} not found!", obj.name, str_name);
+        return ConstPtr::null();
+    }
+    env.mem.alloc_and_write(MethodRef(class, name)).cast_const()
+}
+
+/// Standard Objective-C runtime function for getting 
+/// a function pointer to a class instance method.
+pub(super) fn method_getImplementation(env: &mut Environment, method: ConstPtr<MethodRef>) -> ConstVoidPtr {
+    let method = env.mem.read(method);
+    get_implementation_ptr(env, method)
+}
+
+fn get_implementation_ptr(env: &mut Environment, method: MethodRef) -> ConstVoidPtr {
+    let (class, name) = (method.0, method.1);
+    let obj: &ClassHostObject = env.objc.get_host_object(class.cast()).unwrap().as_any().downcast_ref().unwrap();
+    let opt = obj.methods.iter().find(|&(method, _i)| method.eq(&name));
+    let str_name = name.as_str(&env.mem);
+    let ptr = match opt {
+        None => {
+            panic!("Method {}::{} not found!", obj.name, str_name)
+        }
+        Some((_, imp)) => {
+            match imp {
+                IMP::Host(host_implementation) => {
+                    env.dyld.create_guest_hostimp(&mut env.mem, "HostFN", *host_implementation).to_ptr()
+                }
+                IMP::Guest(guest_implementation) => {
+                    guest_implementation.to_ptr()
+                }
+            }
+        }
+    };
+    log_dbg!("Returning pointer to: {:#x}", ptr.to_bits());
+    ptr
+}
+
+/// Standard Objective-C runtime function for replacing a 
+/// class instance method with a custom implementation.
+pub(super) fn method_setImplementation(env: &mut Environment, method: ConstPtr<MethodRef>, imp: ConstVoidPtr) -> ConstVoidPtr {
+    let method = env.mem.read(method);
+    let (class, name) = (method.0, method.1);
+    let old = get_implementation_ptr(env, method);
+    let obj: &mut ClassHostObject = env.objc.borrow_mut(class.cast());
+    obj.methods.remove(&name);
+    obj.methods.insert(name, IMP::Guest(GuestFunction::from_addr_with_thumb_bit(imp.to_bits())));
+    old
 }

@@ -5,6 +5,7 @@ on:
     branches: [ "trunk" ]
   pull_request:
     branches: [ "trunk" ]
+  create: # for tags
 
 env:
   CARGO_TERM_COLOR: always
@@ -15,9 +16,13 @@ jobs:
     runs-on: macos-latest
 
     steps:
-      - uses: actions/checkout@v3
+      # actions/checkout really doesn't work well with git-describe for some
+      # reason (most likely it strips the annotation off the tag somehow).
+      - name: Checkout touchHLE
+        uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # touchHLE's git-describe versioning needs tag history
+          fetch-depth: 0
+          fetch-tags: true
       - name: Install clang-format
         run: brew install clang-format
       - name: Check formatting
@@ -65,6 +70,9 @@ jobs:
         run: cargo test --target x86_64-apple-darwin
         env:
           CMAKE: ${{ github.workspace }}/vendor/cmake/bin/cmake
+      # This step ensures that our non-iOS-specific tests are passing on macOS itself!
+      - name: Sanity check tests
+        run: cc tests/TestApp_source/cli_tests.m tests/TestApp_source/CGAffineTransform.c tests/TestApp_source/SyncTester.m -framework CoreFoundation -framework CoreGraphics -DDEFINE_ME_WHEN_BUILDING_ON_MACOS -DTestApp_cli_tests_main=main -ObjC && ./a.out
       - name: Build
         run: cargo build --target x86_64-apple-darwin --release
         env:
@@ -85,9 +93,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+    # actions/checkout really doesn't work well with git-describe for some
+    # reason (most likely it strips the annotation off the tag somehow).
+    - name: Checkout touchHLE
+      uses: actions/checkout@v4
       with:
-        fetch-depth: 0 # touchHLE's git-describe versioning needs tag history
+        fetch-depth: 0
+        fetch-tags: true
     - name: Check formatting
       run: dev-scripts/format.sh --check
     - name: Get Submodules
@@ -176,9 +188,13 @@ jobs:
     runs-on: windows-latest
 
     steps:
-    - uses: actions/checkout@v3
+    # actions/checkout really doesn't work well with git-describe for some
+    # reason (most likely it strips the annotation off the tag somehow).
+    - name: Checkout touchHLE
+      uses: actions/checkout@v4
       with:
-        fetch-depth: 0 # touchHLE's git-describe versioning needs tag history
+        fetch-depth: 0
+        fetch-tags: true
     # Apparently the Windows runner already has clang-format? That's nice.
     - name: Check formatting
       shell: bash # no command output without this

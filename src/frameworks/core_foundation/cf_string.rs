@@ -339,6 +339,48 @@ fn CFStringGetPascalString(
     )
 }
 
+fn find_utf16_range(
+    haystack: &[u16],
+    needle: &[u16],
+    options: CFStringCompareFlags,
+) -> Option<usize> {
+    if needle.is_empty() || needle.len() > haystack.len() {
+        return None;
+    }
+
+    let backwards = options & 4 != 0;
+    let anchored = options & 8 != 0;
+    let case_insensitive = options & 1 != 0;
+    let last = haystack.len() - needle.len();
+
+    for offset in 0..=last {
+        let position = if backwards { last - offset } else { offset };
+        let found = haystack[position..position + needle.len()]
+            .iter()
+            .zip(needle)
+            .all(|(&a, &b)| {
+                if a == b {
+                    return true;
+                }
+                if !case_insensitive {
+                    return false;
+                }
+                let (Some(a), Some(b)) = (char::from_u32(a.into()), char::from_u32(b.into()))
+                else {
+                    return false;
+                };
+                a.to_lowercase().eq(b.to_lowercase())
+            });
+        if found {
+            return Some(position);
+        }
+        if anchored {
+            break;
+        }
+    }
+    None
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CFStringAppend(_, _)),
     export_c_func!(CFStringAppendCString(_, _, _)),

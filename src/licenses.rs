@@ -6,7 +6,7 @@
 //! Prints copyright, authorship and license information.
 
 const MAIN_COPYRIGHT: &str = "
-touchHLE © 2023–2025 touchHLE project contributors.
+touchHLE © 2023–2026 touchHLE project contributors.
 ";
 
 const MAIN_LICENSE: &str = "

@@ -122,7 +122,7 @@ pub fn main<T: Iterator<Item = String>>(mut args: T) -> Result<(), String> {
         if branding().is_empty() { "" } else { " " },
         VERSION,
     );
-    if GITHUB_RUN_ID.is_some() {
+    if GITHUB_RUN_ID.is_some() && !branding().is_empty() {
         echo!(
             "Built from branch {:?} of {:?} by GitHub Actions workflow run {}/{}/actions/runs/{}.",
             GITHUB_REF_NAME.unwrap(),

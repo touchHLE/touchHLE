@@ -322,7 +322,7 @@ forUndefinedKey:(id)key { // NSString*
     msg![env; this performSelector:sel withObject:arg afterDelay:0.0]
 }
 
-// Private method, used by performSelectorOnMainThread:withObject:waitUntilDone:
+// Private method, used by performSelector:withObject:afterDelay:
 - (())_touchHLE_timerFireMethod:(id)which { // NSTimer *
     let dict: id = msg![env; which userInfo];
 
@@ -337,7 +337,9 @@ forUndefinedKey:(id)key { // NSString*
     if sel.as_str(&env.mem).ends_with(':') {
         () = msg_send(env, (this, sel, arg));
     } else {
-        assert!(arg.is_null());
+        if !arg.is_null() {
+            log_dbg!("Warning: performSelector:withObject:afterDelay: will send {} to {:?}, but arg {:?} will be ignored!", sel.as_str(&env.mem), this, arg);
+        }
         () = msg_send(env, (this, sel));
     }
 }

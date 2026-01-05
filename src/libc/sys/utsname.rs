@@ -44,7 +44,7 @@ fn uname(env: &mut Environment, name: MutPtr<utsname>) -> i32 {
     let version = b"7A341\0";
     uts_name.version[..version.len()].copy_from_slice(version);
     // Same as sysctlbyname 'hw.machine'
-    let machine = b"iPhone1\0";
+    let machine = b"iPhone1,1\0";
     uts_name.machine[..machine.len()].copy_from_slice(machine);
 
     0 // Success

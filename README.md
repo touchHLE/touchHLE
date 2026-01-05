@@ -34,8 +34,8 @@ Input methods:
 
 - For simulated touch input, there are four options:
   - Mouse/trackpad input (tap/hold/drag by pressing the left mouse button)
-  - Virtual cursor using a game controller (move the cursor with the right analog stick , and tap/hold/drag by pressing the stick or the right shoulder button)
-  - Mapping of game controller buttons (see the description of `--button-to-touch=` in `OPTIONS_HELP.txt`)
+  - Virtual cursor using a game controller (move the cursor with the right analog stick, and tap/hold/drag by pressing the stick or the right shoulder button)
+  - Mapping of game controller buttons or the left analog stick to specific on-screen locations (see the descriptions of `--button-to-touch=`, `--dpad-to-touch=` and `--stick-to-touch=` in `OPTIONS_HELP.txt`)
   - Real touch input, if you're on a device that has a touch screen
 - For simulated accelerometer input, there are three options:
   - Tilt control simulation using the left analog stick of a game controller
@@ -87,6 +87,25 @@ If you're a Windows user and unfamiliar with the command line, these instruction
 3. Click “Open with PowerShell”.
 4. Type `.\touchHLE.exe "YourAppNameHere.ipa"` (or `.app` as appropriate) and press Enter. If you want to specify options, add a space after the app name (outside the quotes) and then type the options, separated by spaces.
 
+## Local multiplayer support
+
+touchHLE provides limited support for local multiplayer via Wi-Fi in some games. At the moment of writing it is supported in Asphalt 4 and N.O.V.A.
+
+Real iOS devices could also join/host games!
+
+**Usage:**
+1. Install touchHLE on 2+ devices connected to the same Wi-Fi network.
+2. **Important:** Ensure touchHLE is whitelisted in your OS firewall/network settings.
+3. Enable "Network access" in Quick options or via `--allow-network-access`.
+4. Start/join multiplayer in the game.
+
+**FAQs:**
+* **Tunneling over Internet/VPN:** Not officially supported, but might work.
+* **Bluetooth:** Not supported.
+
+**Known issues:**
+* On macOS you may need to launch touchHLE from terminal as otherwise OS will block network connections.
+
 ## Other stuff
 
 Any data saved by the app (e.g. **saved games**) are stored in the `touchHLE_sandbox` folder.
@@ -99,7 +118,7 @@ See the `CONTRIBUTING.md` file in the git repo if you want to contribute. If you
 
 # License
 
-touchHLE © 2023–2025 touchHLE project contributors.
+touchHLE © 2023–2026 touchHLE project contributors.
 
 The source code of touchHLE itself (not its dependencies) is licensed under the Mozilla Public License, version 2.0.
 

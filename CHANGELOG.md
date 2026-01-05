@@ -13,7 +13,7 @@ Changes are categorised as follows:
 * Usability: changes to features of the emulator unrelated to the above, e.g. new input methods.
 * Other: when none of the above seem to fit.
 
-## Next
+## v0.2.3 (2026-01-02)
 
 Compatibility:
 
@@ -63,9 +63,12 @@ Compatibility:
   - UITextField now supports real text input with a keyboard. On Windows/macOS physical keyboard is used, on Android it's done via a system soft keyboard. (@ciciplusplus)
   - UIScrollView and UITextView partial implementations. (@Skryptonyte, @ciciplusplus)
   - Core Animation and UIKit now support affine transforms, allowing UI elements to be rotated, a feature needed by [several games](https://github.com/touchHLE/touchHLE/issues/388). Note however that auto-rotation is not yet supported. (@hikari-no-yume)
+  - Partial support for Core Animation explicit animations has been added. (@alborrajo)
   - The libz dynamic library is now available, [compiled from source](https://github.com/touchHLE/zlib-dylib) using a [clean open-source toolchain](https://github.com/touchHLE/common-3.0-sdk). (@acieslewicz)
   - ALAC and Microsoft IMA ADPCM are now supported in Audio Toolbox, with the same caveats as other compressed codecs. (@abnormalmaps)
-  - Improved compatibility for iOS 3.1+ apps. (@bognarit80)
+  - Switched to ARMv7 rather than ARMv6 versions of libstdc++ and libgcc. (@acieslewicz)
+  - Added support for certain iPhone OS 3.1 binary format changes (iPhone OS 3.1 apps are still considered unsupported). (@bognarit80)
+  - Limited support for local multiplayer via Wi-Fi in some games. (@ciciplusplus)
 
 Usability:
 
@@ -78,7 +81,9 @@ Usability:
 - macOS builds and releases of touchHLE now come as an application bundle (`.app` directory) rather than as a bare “Unix executable” file. This should fix problems some users encountered with running touchHLE outside of a terminal, and allows putting touchHLE in the Applications folder like a normal graphical app. To support this, user data (apps, options, etc) is now stored in “Application Support” rather than the current directory, and the bundled files (fonts, dylibs, etc) are now part of the app bundle. If you prefer the old layout, you can still get it if you move all the files out of the bundle. (@hikari-no-yume)
 - The “File manager” button on Android now works more reliably, especially the first time it is tapped. (@hikari-no-yume)
 - The new `--force-composition=` option has been added, which is a workaround that may solve rendering issues in some games, at the cost of performance. For some games it is applied by the default options. (@ciciplusplus)
+- Most errors causing touchHLE to crash now produce a graphical message box, rather than the error message only being found in the log. (@abnormalmaps)
 - touchHLE now writes log messages to a file on all platforms, not just on Android. The file has been renamed from `log.txt` to `touchHLE_log.txt`. (@hikari-no-yume)
+- Two new options for input handling of analog stick (`--stick-to-touch=`) and 8-directional DPad (`--dpad-to-touch=`) via a game controller. (@celerizer)
 
 Quality:
 

@@ -98,6 +98,7 @@ struct ArrayStateBackup {
     size: Option<GLint>,
     stride: GLsizei,
     pointer: *const GLvoid,
+    buffer_binding: GLuint,
 }
 
 /// List of arrays shared by OpenGL ES 1.1 and OpenGL 2.1.
@@ -439,11 +440,6 @@ impl GLES1OnGL2 {
 
             let mut buffer_binding = 0;
             gl21::GetIntegerv(array_info.buffer_binding, &mut buffer_binding);
-            if buffer_binding != 0 {
-                // TODO: translation for bound array buffers
-                todo!("TODO: GLES1-on-GL2 layer does not support buffer bindings yet. (Try OpenGL ES on Android.)");
-            }
-            assert!(buffer_binding == 0);
 
             // Get and back up data
 
@@ -454,19 +450,31 @@ impl GLES1OnGL2 {
             });
             let mut stride: GLsizei = 0;
             gl21::GetIntegerv(array_info.stride, &mut stride);
-            let mut pointer: *mut GLvoid = std::ptr::null_mut();
-            // The second argument to glGetPointerv must be a mutable pointer,
-            // but gl_generator generates the wrong signature by mistake, see
-            // https://github.com/brendanzab/gl-rs/issues/541
-            #[allow(clippy::unnecessary_mut_passed)]
-            gl21::GetPointerv(array_info.pointer, &mut pointer);
-            let pointer = pointer.cast_const();
+            let old_pointer = {
+                let mut pointer: *mut GLvoid = std::ptr::null_mut();
+                // The second argument to glGetPointerv must be a mutable
+                // pointer, but gl_generator generates the wrong signature
+                // by mistake, see https://github.com/brendanzab/gl-rs/issues/541
+                #[allow(clippy::unnecessary_mut_passed)]
+                gl21::GetPointerv(array_info.pointer, &mut pointer);
+                pointer.cast_const()
+            };
 
             backups[i] = Some(ArrayStateBackup {
                 size,
                 stride,
-                pointer,
+                pointer: old_pointer,
+                buffer_binding: buffer_binding.try_into().unwrap(),
             });
+
+            let pointer = if buffer_binding != 0 {
+                let mapped_buffer = gl21::MapBuffer(gl21::ARRAY_BUFFER, gl21::READ_ONLY);
+                assert!(!mapped_buffer.is_null());
+                // in this case the old_pointer is actually an offest!
+                mapped_buffer.add(old_pointer as usize)
+            } else {
+                old_pointer
+            };
 
             // Create translated array and substitute pointer
 
@@ -500,6 +508,11 @@ impl GLES1OnGL2 {
                 }
             }
 
+            if buffer_binding != 0 {
+                gl21::UnmapBuffer(gl21::ARRAY_BUFFER);
+                gl21::BindBuffer(gl21::ARRAY_BUFFER, 0);
+            }
+
             let buffer_ptr: *const GLfloat = buffer.as_ptr();
             let buffer_ptr: *const GLvoid = buffer_ptr.cast();
             match array_info.name {
@@ -531,10 +544,15 @@ impl GLES1OnGL2 {
                 size,
                 stride,
                 pointer,
+                buffer_binding,
             }) = backup
             else {
                 continue;
             };
+
+            if buffer_binding != 0 {
+                gl21::BindBuffer(gl21::ARRAY_BUFFER, buffer_binding);
+            }
 
             match array_info.name {
                 gl21::COLOR_ARRAY => {
@@ -1243,63 +1261,69 @@ impl GLES for GLES1OnGL2 {
         .contains(&mode));
         assert!(type_ == gl21::UNSIGNED_BYTE || type_ == gl21::UNSIGNED_SHORT);
 
-        let fixed_point_arrays_state_backup = if self
-            .pointer_is_fixed_point
-            .iter()
-            .any(|&is_fixed| is_fixed)
-        {
-            // Scan the index buffer to find the range of data that may need
-            // fixed-point translation.
-            // TODO: Would it be more efficient to turn this into a
-            // non-indexed draw-call instead?
+        let fixed_point_arrays_state_backup =
+            if self.pointer_is_fixed_point.iter().any(|&is_fixed| is_fixed) {
+                // Scan the index buffer to find the range of data that may need
+                // fixed-point translation.
+                // TODO: Would it be more efficient to turn this into a
+                // non-indexed draw-call instead?
 
-            let mut index_buffer_binding = 0;
-            gl21::GetIntegerv(
-                gl21::ELEMENT_ARRAY_BUFFER_BINDING,
-                &mut index_buffer_binding,
-            );
-            if index_buffer_binding != 0 {
-                // TODO: translation for bound index array buffers
-                todo!("TODO: GLES1-on-GL2 layer does not support buffer bindings yet. (Try OpenGL ES on Android.)");
-            }
+                let mut index_buffer_binding = 0;
+                gl21::GetIntegerv(
+                    gl21::ELEMENT_ARRAY_BUFFER_BINDING,
+                    &mut index_buffer_binding,
+                );
+                let indices = if index_buffer_binding != 0 {
+                    let mapped_buffer =
+                        gl21::MapBuffer(gl21::ELEMENT_ARRAY_BUFFER, gl21::READ_ONLY);
+                    assert!(!mapped_buffer.is_null());
+                    // in this case the indices is actually an offest!
+                    mapped_buffer.add(indices as usize)
+                } else {
+                    indices
+                };
 
-            let mut first = usize::MAX;
-            let mut last = usize::MIN;
-            assert!(count >= 0);
-            match type_ {
-                gl21::UNSIGNED_BYTE => {
-                    let indices_ptr: *const GLubyte = indices.cast();
-                    for i in 0..(count as usize) {
-                        let index = indices_ptr.add(i).read_unaligned();
-                        first = first.min(index as usize);
-                        last = last.max(index as usize);
+                let mut first = usize::MAX;
+                let mut last = usize::MIN;
+                assert!(count >= 0);
+                match type_ {
+                    gl21::UNSIGNED_BYTE => {
+                        let indices_ptr: *const GLubyte = indices.cast();
+                        for i in 0..(count as usize) {
+                            let index = indices_ptr.add(i).read_unaligned();
+                            first = first.min(index as usize);
+                            last = last.max(index as usize);
+                        }
                     }
-                }
-                gl21::UNSIGNED_SHORT => {
-                    let indices_ptr: *const GLushort = indices.cast();
-                    for i in 0..(count as usize) {
-                        let index = indices_ptr.add(i).read_unaligned();
-                        first = first.min(index as usize);
-                        last = last.max(index as usize);
+                    gl21::UNSIGNED_SHORT => {
+                        let indices_ptr: *const GLushort = indices.cast();
+                        for i in 0..(count as usize) {
+                            let index = indices_ptr.add(i).read_unaligned();
+                            first = first.min(index as usize);
+                            last = last.max(index as usize);
+                        }
                     }
+                    _ => unreachable!(),
                 }
-                _ => unreachable!(),
-            }
 
-            let (first, count) = if first == usize::MAX && last == usize::MIN {
-                assert!(count == 0);
-                (0, 0)
+                let (first, count) = if first == usize::MAX && last == usize::MIN {
+                    assert!(count == 0);
+                    (0, 0)
+                } else {
+                    (
+                        first.try_into().unwrap(),
+                        (last + 1 - first).try_into().unwrap(),
+                    )
+                };
+
+                if index_buffer_binding != 0 {
+                    gl21::UnmapBuffer(gl21::ELEMENT_ARRAY_BUFFER);
+                }
+
+                Some(self.translate_fixed_point_arrays(first, count))
             } else {
-                (
-                    first.try_into().unwrap(),
-                    (last + 1 - first).try_into().unwrap(),
-                )
+                None
             };
-
-            Some(self.translate_fixed_point_arrays(first, count))
-        } else {
-            None
-        };
 
         gl21::DrawElements(mode, count, type_, indices);
 

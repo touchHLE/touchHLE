@@ -7,6 +7,7 @@
 
 use super::cg_affine_transform::CGAffineTransform;
 use super::cg_image::CGImageRef;
+use super::CGPoint;
 use super::{cg_bitmap_context, CGFloat, CGRect};
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::frameworks::core_foundation::{CFRelease, CFRetain, CFTypeRef};
@@ -42,11 +43,22 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 };
 
+#[derive(Default)]
+pub(super) struct CGContextPath {
+    pub(super) subpaths: Vec<CGPathSubpath>,
+}
+
+pub(super) struct CGPathSubpath {
+    pub(super) points: Vec<CGPoint>,
+    pub(super) closed: bool,
+}
+
 pub(super) struct CGContextHostObject {
     pub(super) subclass: CGContextSubclass,
     pub(super) rgb_fill_color: (CGFloat, CGFloat, CGFloat, CGFloat),
     pub(super) rgb_stroke_color: (CGFloat, CGFloat, CGFloat, CGFloat),
     pub(super) line_width: CGFloat,
+    pub(super) path: CGContextPath,
     /// Current transform.
     pub(super) transform: CGAffineTransform,
     // TODO: keep more states saved once they are implemented

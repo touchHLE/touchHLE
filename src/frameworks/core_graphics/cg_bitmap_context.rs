@@ -412,6 +412,22 @@ impl CGBitmapContextDrawer<'_> {
             self.rgb_fill_color.3, // alpha is always linear
         )
     }
+    pub fn convert_color(
+        &self,
+        color: (CGFloat, CGFloat, CGFloat, CGFloat),
+    ) -> (CGFloat, CGFloat, CGFloat, CGFloat) {
+        let mult = match self.bitmap_info.alpha_info {
+            kCGImageAlphaPremultipliedLast | kCGImageAlphaPremultipliedFirst => color.3,
+            _ => 1.0,
+        };
+        (
+            gamma_decode(color.0 * mult),
+            gamma_decode(color.1 * mult),
+            gamma_decode(color.2 * mult),
+            color.3,
+        )
+    }
+
     /// Set the pixel at `coords` to `color`. `color` must be linear RGB, not
     /// sRGB! Note that `coords` are absolute: you must do transformation
     /// yourself.

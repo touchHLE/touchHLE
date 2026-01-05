@@ -45,6 +45,7 @@ use crate::Environment;
 use classes::{
     ClassHostObject, FakeClass, UnimplementedClass, objc_getClass, object_getClass,
     class_getSuperclass,
+    class_getInstanceMethod, method_getImplementation, method_setImplementation,
 };
 use messages::{
     objc_msgSend, objc_msgSendSuper2, objc_msgSend_stret, MsgSendSignature, MsgSendSuperSignature,

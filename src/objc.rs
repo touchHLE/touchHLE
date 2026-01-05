@@ -42,7 +42,10 @@ pub use selectors::{selector, SEL};
 
 use crate::mem::ConstVoidPtr;
 use crate::Environment;
-use classes::{ClassHostObject, FakeClass, UnimplementedClass, objc_getClass, object_getClass};
+use classes::{
+    ClassHostObject, FakeClass, UnimplementedClass, objc_getClass, object_getClass,
+    class_getSuperclass,
+};
 use messages::{
     objc_msgSend, objc_msgSendSuper2, objc_msgSend_stret, MsgSendSignature, MsgSendSuperSignature,
 };
@@ -137,5 +140,6 @@ const FUNCTIONS: FunctionExports = &[
     export_c_func!(sel_registerName(_)),
     export_c_func!(objc_getClass(_)),
     export_c_func!(object_getClass(_)),
+    export_c_func!(class_getSuperclass(_)),
     export_c_func!(_Block_object_dispose(_, _)),
 ];

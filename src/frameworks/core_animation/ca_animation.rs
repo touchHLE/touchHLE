@@ -5,21 +5,25 @@
  */
 //! `CAAnimation` and its subclasses
 
-use crate::dyld::{ConstantExports, HostConstant};
+use crate::dyld::{ConstantExports, FunctionExports, HostConstant};
 use crate::frameworks::core_animation::ca_media_timing_function::kCAMediaTimingFunctionDefault;
 use crate::frameworks::core_foundation::time::CFTimeInterval;
 use crate::frameworks::foundation::ns_string::{get_static_str, to_rust_string};
 use crate::objc::{
     autorelease, id, msg, nil, objc_classes, release, retain, ClassExports, HostObject, NSZonePtr,
 };
-use crate::Environment;
+use crate::{export_c_func, Environment};
 use crate::{impl_HostObject_with_superclass, msg_class, msg_super};
+use crate::libc::mach::time::mach_absolute_time;
 
 type CATransitionType = id; // NSString*
 const kCATransitionFade: &str = "fade";
 const kCATransitionMoveIn: &str = "moveIn";
 const kCATransitionPush: &str = "push";
 const kCATransitionReveal: &str = "reveal";
+
+pub type CAAnimationCalculationModeType = id; // NSString*
+pub const kCAAnimationLinear: &str = "kCAAnimationLinear";
 
 pub type CAMediaTimingFillMode = id; // NSString*
 pub const kCAFillModeBackwards: &str = "backwards";
@@ -44,6 +48,11 @@ pub const CONSTANTS: ConstantExports = &[
     (
         "_kCATransitionReveal",
         HostConstant::NSString(kCATransitionReveal),
+    ),
+    // `CAAnimationCalculationMode` values.
+    (
+        "_kCAAnimationLinear",
+        HostConstant::NSString(kCAAnimationLinear),
     ),
     // `CAMediaTimingFillMode` values.
     (
@@ -70,6 +79,7 @@ struct CAAnimationHostObject {
     begin_time: CFTimeInterval,
     duration: CFTimeInterval,
     fill_mode: &'static str,
+    calculation_mode: &'static str,
     started_at: Option<CFTimeInterval>,
 }
 impl HostObject for CAAnimationHostObject {}
@@ -85,6 +95,7 @@ impl Default for CAAnimationHostObject {
             duration: Default::default(),
             fill_mode: kCAFillModeRemoved,
             started_at: None,
+            calculation_mode: kCAAnimationLinear,
         }
     }
 }
@@ -102,8 +113,18 @@ struct CABasicAnimationHostObject {
     from_value: id,
     to_value: id,
     by_value: id,
+    animation_name: id,
 }
 impl_HostObject_with_superclass!(CABasicAnimationHostObject);
+
+#[derive(Default)]
+pub struct CAKeyframeAnimationHostObject {
+    superclass: CAPropertyAnimationHostObject,
+    duration: CFTimeInterval,
+    keyTimes: id, // NSArray<NSNumber>
+    values: id, // NSArray
+}
+impl_HostObject_with_superclass!(CAKeyframeAnimationHostObject);
 
 pub const CLASSES: ClassExports = objc_classes! {
 
@@ -205,6 +226,19 @@ pub const CLASSES: ClassExports = objc_classes! {
     get_static_str(env, fill_mode)
 }
 
+- (())setCalculationMode:(CAAnimationCalculationModeType)mode {
+    let calculation_mode_str = to_rust_string(env, mode);
+    let calculation_mode_str = match &*calculation_mode_str {
+        kCAAnimationLinear => kCAAnimationLinear,
+        _ => panic!("Unknown calculation mode \"{}\"", calculation_mode_str)
+    };
+    env.objc.borrow_mut::<CAAnimationHostObject>(this).calculation_mode = calculation_mode_str;
+}
+- (CAAnimationCalculationModeType)calculationMode {
+    let calculation_mode = env.objc.borrow::<CAAnimationHostObject>(this).calculation_mode;
+    get_static_str(env, calculation_mode)
+}
+
 - (())dealloc {
     let &CAAnimationHostObject { delegate, timing_function, .. } = env.objc.borrow(this);
     if delegate != nil {
@@ -289,6 +323,35 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.borrow::<CABasicAnimationHostObject>(this).by_value
 }
 
+// Cause of Death expects to be able to write to "animation-name"
+// Currently we have no way to either declare an ivar
+// or declare a setter with a non-identifier name
+- (())setValue:(id)value
+       forKey:(id)key { // NSString*
+    let key_string = to_rust_string(env, key); // TODO: avoid copy?
+    if key_string == "animation-name" {
+        let value_string = to_rust_string(env, value);
+        log!("setting \"animation-name\" to \"{}\" on CABasicAnimation({:?})!", value_string, this);
+        env.objc.borrow_mut::<CABasicAnimationHostObject>(this).animation_name = value;
+        return;
+    }
+    msg_super![env; this setValue:value forKey:key]
+}
+
+- (id) valueForKey:(id)key {
+    let key_string = to_rust_string(env, key); // TODO: avoid copy?
+    if key_string == "animation-name" {
+        return env.objc.borrow::<CABasicAnimationHostObject>(this).animation_name;
+    }
+    msg_super![env; this valueForKey:key]
+}
+
+- (()) setBeginTime: (f32) beginTime {
+    log!("Ignoring setBeginTime: {}", beginTime);
+    // Apple docs does not mention beginTime in any
+    // class of CABasicAnimation but Cause of Death calls it?
+}
+
 - (())dealloc {
     let &CABasicAnimationHostObject { from_value, to_value, .. } = env.objc.borrow(this);
     if from_value != nil {
@@ -301,6 +364,37 @@ pub const CLASSES: ClassExports = objc_classes! {
     msg_super![env; this dealloc]
 }
 
+@end
+
+
+@implementation CAKeyframeAnimation : CAPropertyAnimation
++ (id)allocWithZone:(NSZonePtr)_zone {
+    let host_object = Box::<CAKeyframeAnimationHostObject>::default();
+    env.objc.alloc_object(this, host_object, &mut env.mem)
+}
+
+- (CFTimeInterval) duration {
+    env.objc.borrow::<CAKeyframeAnimationHostObject>(this).duration
+}
+- (()) setDuration:(CFTimeInterval)duration {
+    env.objc.borrow_mut::<CAKeyframeAnimationHostObject>(this).duration = duration
+}
+
+- (())setValues:(id)values {
+    env.objc.borrow_mut::<CAKeyframeAnimationHostObject>(this).values = values;
+}
+
+- (())setKeyTimes:(id)keyTimes { // NSArray<NSNumber*>*
+    env.objc.borrow_mut::<CAKeyframeAnimationHostObject>(this).keyTimes = keyTimes;
+}
+
+- (id)values { // NSArray
+    env.objc.borrow_mut::<CAKeyframeAnimationHostObject>(this).values
+}
+
+- (id)keyTimes { // NSArray<NSNumber*>*
+    env.objc.borrow_mut::<CAKeyframeAnimationHostObject>(this).keyTimes
+}
 @end
 
 

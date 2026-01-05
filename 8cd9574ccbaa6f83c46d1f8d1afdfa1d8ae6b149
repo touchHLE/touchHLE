@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "17565c9c_5048bfbb",
+        "filename": "src/objc.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 54,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-01-05T13:01:09Z",
+      "side": 1,
+      "message": "please import it via `use classes::{..}` above",
+      "revId": "8cd9574ccbaa6f83c46d1f8d1afdfa1d8ae6b149",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a2991eae_0d3031bf",
+        "filename": "src/objc/classes.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 958,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-01-05T13:01:09Z",
+      "side": 1,
+      "message": "I\u0027m a bit surprised to see all of that downcasting. Are all of them necessary?",
+      "revId": "8cd9574ccbaa6f83c46d1f8d1afdfa1d8ae6b149",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

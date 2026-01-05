@@ -30,6 +30,7 @@ use crate::objc::{
 };
 use crate::Environment;
 use std::collections::{HashMap, HashSet};
+use crate::frameworks::core_animation::ca_transform::CATransform3D;
 
 #[derive(Clone)]
 pub(super) struct CALayerHostObject {
@@ -41,6 +42,7 @@ pub(super) struct CALayerHostObject {
     superlayer: id,
     pub(super) bounds: CGRect,
     pub(super) position: CGPoint,
+    pub(super) zPosition: CGFloat,
     pub(super) anchor_point: CGPoint,
     pub(super) affine_transform: CGAffineTransform,
     pub(super) hidden: bool,
@@ -49,6 +51,7 @@ pub(super) struct CALayerHostObject {
     pub(super) background_color: Option<CGColorHostObject>,
     pub(super) corner_radius: CGFloat,
     pub(super) needs_display: bool,
+    pub(super) transform: CATransform3D,
     /// `CGImageRef*`
     pub(super) contents: id,
     /// For CAEAGLLayer only
@@ -118,6 +121,7 @@ pub const CLASSES: ClassExports = objc_classes! {
             size: CGSize { width: 0.0, height: 0.0 }
         },
         position: CGPoint { x: 0.0, y: 0.0 },
+        zPosition: 0.0,
         anchor_point: CGPoint { x: 0.5, y: 0.5 },
         affine_transform: CGAffineTransformIdentity,
         hidden: false,
@@ -126,6 +130,7 @@ pub const CLASSES: ClassExports = objc_classes! {
         background_color: None, // transparency
         corner_radius: 0.0,
         needs_display: false,
+        transform: CATransform3D::identity(),
         contents: nil,
         drawable_properties: nil,
         presented_pixels: None,
@@ -242,6 +247,12 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 - (())setPosition:(CGPoint)position {
     env.objc.borrow_mut::<CALayerHostObject>(this).position = position;
+}
+- (CGFloat)zPosition {
+    env.objc.borrow::<CALayerHostObject>(this).zPosition
+}
+- (())setZPosition:(CGFloat)zPosition {
+    env.objc.borrow_mut::<CALayerHostObject>(this).zPosition = zPosition;
 }
 - (CGPoint)anchorPoint {
     env.objc.borrow::<CALayerHostObject>(this).anchor_point
@@ -424,6 +435,15 @@ pub const CLASSES: ClassExports = objc_classes! {
     CGContextTranslateCTM(env, cg_context, origin.x, origin.y);
 }
 
+// CATransform3D
+- (CATransform3D)transform {
+    env.objc.borrow::<CALayerHostObject>(this).transform
+}
+
+- (())setTransform:(CATransform3D)new_transform {
+    env.objc.borrow_mut::<CALayerHostObject>(this).transform = new_transform;
+}
+
 // CGImageRef*
 - (id)contents {
     env.objc.borrow::<CALayerHostObject>(this).contents
@@ -530,6 +550,14 @@ pub const CLASSES: ClassExports = objc_classes! {
     if let Some(anim) = env.objc.borrow_mut::<CALayerHostObject>(this).animations.remove(&*key_string) {
         release(env, anim);
     };
+}
+
+- (()) removeAllAnimations {
+    let animations = env.objc.borrow::<CALayerHostObject>(this).animations.iter().map(|(_, anim)| *anim).collect::<Vec<id>>();
+    env.objc.borrow_mut::<CALayerHostObject>(this).animations.clear();
+    for anim in animations {
+        release(env, anim);
+    }
 }
 
 // TODO: more

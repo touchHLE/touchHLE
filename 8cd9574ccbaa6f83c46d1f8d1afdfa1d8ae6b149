@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "3e225e88_ac91484b",
+        "filename": "src/objc.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 54,
+      "author": {
+        "id": 1039176
+      },
+      "writtenOn": "2026-01-05T13:41:48Z",
+      "side": 1,
+      "message": "Done, also fixed in the other changes that touch objc.rs",
+      "parentUuid": "17565c9c_5048bfbb",
+      "revId": "8cd9574ccbaa6f83c46d1f8d1afdfa1d8ae6b149",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "a2991eae_0d3031bf",
@@ -31,6 +49,24 @@
       "writtenOn": "2026-01-05T13:01:09Z",
       "side": 1,
       "message": "I\u0027m a bit surprised to see all of that downcasting. Are all of them necessary?",
+      "revId": "8cd9574ccbaa6f83c46d1f8d1afdfa1d8ae6b149",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a26b7e56_b36d7d8c",
+        "filename": "src/objc/classes.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 958,
+      "author": {
+        "id": 1039176
+      },
+      "writtenOn": "2026-01-05T13:41:48Z",
+      "side": 1,
+      "message": "Hi @ciciplusplus@gmail.com, AFAICT it is. This is more or less the same as is done in src/objc/messages.rs:54, I\u0027ve tried to remove some of the downcast and as_any and everything fails. I\u0027ve not found references in code where this can be done with less downcasting, but my Rust-fu is not all that sharp.",
+      "parentUuid": "a2991eae_0d3031bf",
       "revId": "8cd9574ccbaa6f83c46d1f8d1afdfa1d8ae6b149",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

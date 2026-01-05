@@ -54,6 +54,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "1b86b966_d01f048b",
+        "filename": "src/frameworks/uikit/ui_application.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 194,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-01-05T13:25:49Z",
+      "side": 1,
+      "message": "Yes, it was not about the compilation, but about the tests. We have test to detect double definitions.",
+      "parentUuid": "2b5d1381_a01e6ecd",
+      "revId": "29853eb59c805fb7abbd4fe915e36a12b7c4384d",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "9d2fad98_b07a302f",

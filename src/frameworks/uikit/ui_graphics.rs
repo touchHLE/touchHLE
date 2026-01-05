@@ -6,11 +6,18 @@
 //! `UIGraphics.h`
 
 use crate::dyld::{export_c_func, FunctionExports};
+use crate::frameworks::core_graphics::cg_bitmap_context::{CGBitmapContextCreate, CGBitmapContextCreateImage};
+use crate::frameworks::core_graphics::cg_color_space::CGColorSpaceCreateDeviceRGB;
 use crate::frameworks::core_graphics::cg_context::{
     CGContextRef, CGContextRelease, CGContextRetain,
 };
-use crate::objc::nil;
-use crate::Environment;
+use crate::frameworks::core_graphics::cg_image::{kCGImageAlphaPremultipliedLast, kCGImageByteOrder32Big};
+use crate::frameworks::core_graphics::CGSize;
+use crate::mem::{GuestUSize, MutVoidPtr};
+use crate::objc::{id, nil};
+use crate::{msg_class, Environment};
+
+pub type UIImageRef = id;
 
 #[derive(Default)]
 pub(super) struct State {
@@ -38,9 +45,32 @@ pub fn UIGraphicsGetCurrentContext(env: &mut Environment) -> CGContextRef {
         .copied()
         .unwrap_or(nil)
 }
+pub fn UIGraphicsBeginImageContext(env: &mut Environment, size: CGSize) {
+    let width = size.width as GuestUSize;
+    let height = size.height as GuestUSize;
+    let color_space = CGColorSpaceCreateDeviceRGB(env);
+    let context = CGBitmapContextCreate(
+        env, MutVoidPtr::null(), width, height, 8, width * 4,
+        color_space,
+        kCGImageByteOrder32Big | kCGImageAlphaPremultipliedLast,
+    );
+    UIGraphicsPushContext(env, context);
+}
+pub fn UIGraphicsEndImageContext(env: &mut Environment) {
+    UIGraphicsPopContext(env);
+}
+
+pub fn UIGraphicsGetImageFromCurrentImageContext(env: &mut Environment) -> UIImageRef {
+    let Some(&context) = env.framework_state.uikit.ui_graphics.context_stack.last() else { return nil; };
+    let cgimage_ref = CGBitmapContextCreateImage(env, context);
+    msg_class![env; UIImage imageWithCGImage: cgimage_ref]
+}
 
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(UIGraphicsPushContext(_)),
     export_c_func!(UIGraphicsPopContext()),
     export_c_func!(UIGraphicsGetCurrentContext()),
+    export_c_func!(UIGraphicsBeginImageContext(_)),
+    export_c_func!(UIGraphicsEndImageContext()),
+    export_c_func!(UIGraphicsGetImageFromCurrentImageContext()),
 ];

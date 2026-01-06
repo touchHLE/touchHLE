@@ -34,6 +34,24 @@
       "parentUuid": "532cbb27_4371e040",
       "revId": "78b2fbb44534d003dfdd315bdc95dc6c4109d135",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9ac46f75_0c97e7ec",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 8
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-01-06T11:35:12Z",
+      "side": 1,
+      "message": "In order to submit a patch set (PS), following should occur:\n\n- PS should recieve +2 code review\n- Verified +1 should be set (on practice this means that author checked that code compiles, tests passes and lint/clippy doesn\u0027t complain)\n- There are no merge conflicts with the trunk",
+      "parentUuid": "b6f10a6d_81dbba21",
+      "revId": "78b2fbb44534d003dfdd315bdc95dc6c4109d135",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

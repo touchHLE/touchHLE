@@ -16,6 +16,24 @@
       "message": "Do you need help in submitting this patch set?",
       "revId": "78b2fbb44534d003dfdd315bdc95dc6c4109d135",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b6f10a6d_81dbba21",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 8
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1039176
+      },
+      "writtenOn": "2026-01-06T02:00:56Z",
+      "side": 1,
+      "message": "Yes, sorry, I am hopelessly lost on how Gerrit works :( what should be the next steps?",
+      "parentUuid": "532cbb27_4371e040",
+      "revId": "78b2fbb44534d003dfdd315bdc95dc6c4109d135",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

@@ -178,6 +178,7 @@ impl Font {
         v_metrics.descent
     }
 
+    #[allow(unused)]
     pub fn line_gap(&self, font_size: f32) -> f32 {
         let v_metrics = self.v_metrics_scaled(font_size);
         v_metrics.line_gap

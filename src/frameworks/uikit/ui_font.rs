@@ -165,7 +165,14 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (CGFloat)leading {
     let host_object = env.objc.borrow::<UIFontHostObject>(this);
     let font = env.framework_state.uikit.ui_font.get_font_by_kind(host_object.kind);
-    font.line_gap(host_object.size)
+    // This _mostly_ lines up with what is reported on actual devices. It
+    // seems there's variance between what apple and rusttype report for
+    // leading/descent values, which is probably to be expected.
+    //
+    // As for what the 1.575 is doing here, I don't know. It's probably not
+    // the right value, it's just (close) to a linear regression of size/leading
+    // for Liberation Sans, and it mostly makes it work.
+    (font.ascent(host_object.size) - font.descent(host_object.size) + font.line_gap(host_object.size) + 1.575).round()
 }
 
 - (CGFloat)lineHeight {

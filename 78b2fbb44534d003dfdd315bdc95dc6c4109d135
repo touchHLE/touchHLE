@@ -70,6 +70,24 @@
       "parentUuid": "9ac46f75_0c97e7ec",
       "revId": "78b2fbb44534d003dfdd315bdc95dc6c4109d135",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b131cd68_13e382bb",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 8
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1039176
+      },
+      "writtenOn": "2026-01-07T13:32:11Z",
+      "side": 1,
+      "message": "Hi @ciciplusplus@gmail.com, yes it\u0027s clear enough, thanks! I\u0027ll be working this weekend on getting it up to standards.\nBtw, is there a docker for ensuring this compiles corretly on Android/etc? I don\u0027t want to bombard the Github CI by uploading, checking for breakage and repeating.",
+      "parentUuid": "307b77a3_e483306d",
+      "revId": "78b2fbb44534d003dfdd315bdc95dc6c4109d135",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

@@ -88,6 +88,24 @@
       "parentUuid": "307b77a3_e483306d",
       "revId": "78b2fbb44534d003dfdd315bdc95dc6c4109d135",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "cae926d5_6bc9220f",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 8
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-01-07T22:34:23Z",
+      "side": 1,
+      "message": "Good!\n\nFor tests and linting you could running it locally:\n`cargo tests` for tests and `cargo fmt \u0026\u0026 ./dev-scripts/lint.sh` for linintg\n\nOtherwise, you own fork of touchHLE is capable to produce build artifacts with Github CI if you want to!\n\nThis particular patchset is trivial enough, i think checking just for linting should be enough in order to submit.",
+      "parentUuid": "b131cd68_13e382bb",
+      "revId": "78b2fbb44534d003dfdd315bdc95dc6c4109d135",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

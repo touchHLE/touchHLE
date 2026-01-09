@@ -213,7 +213,19 @@ fn CGContextBeginPath(env: &mut Environment, context: CGContextRef) {
         .clear();
 }
 
+fn CGContextMoveToPoint(env: &mut Environment, context: CGContextRef, x: CGFloat, y: CGFloat) {
+    env.objc
+        .borrow_mut::<CGContextHostObject>(context)
+        .path
+        .subpaths
+        .push(CGPathSubpath {
+            points: vec![CGPoint { x, y }],
+            closed: false,
+        });
+}
+
 pub const FUNCTIONS: FunctionExports = &[
+    export_c_func!(CGContextMoveToPoint(_, _, _)),
     export_c_func!(CGContextBeginPath(_)),
     export_c_func!(CGContextRetain(_)),
     export_c_func!(CGContextRelease(_)),

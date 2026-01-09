@@ -244,7 +244,7 @@ impl Environment {
     pub fn new(
         bundle: bundle::Bundle,
         fs: fs::Fs,
-        options: options::Options,
+        mut options: options::Options,
         app_args: Vec<String>,
         env_for_salvage: Option<Environment>,
     ) -> Result<Environment, String> {
@@ -260,6 +260,35 @@ impl Environment {
         } else {
             None
         };
+
+        // Certain apps need to launch in a non-portrait orientation, and this
+        // should be handled before creating the window because handling of
+        // window rotation after-the-fact is somewhat glitchy.
+        // This also ensures the splash screen is correctly oriented.
+        if options.initial_orientation == window::DeviceOrientation::Portrait {
+            if let Some(&non_portrait_orientation) = bundle
+                .supported_interface_orientations()
+                .iter()
+                .find(|&&o| o != "UIInterfaceOrientationPortrait")
+            {
+                // TODO: Overwriting the options might not be ideal; do we need
+                //       to distinguish this kind of orientation change from
+                //       others?
+                options.initial_orientation = match non_portrait_orientation {
+                    // UIInterfaceOrientation values are flipped relative to
+                    // (UI)DeviceOrientation values (content has to rotate in
+                    // the opposite direction to how the device rotates).
+                    "UIInterfaceOrientationLandscapeLeft" => {
+                        window::DeviceOrientation::LandscapeRight
+                    }
+                    "UIInterfaceOrientationLandscapeRight" => {
+                        window::DeviceOrientation::LandscapeLeft
+                    }
+                    other => unimplemented!("Unsupported startup orientation: {:?}", other),
+                };
+                log!("App needs non-portrait user interface orientation {:?}, applying device orientation {:?}.", non_portrait_orientation, options.initial_orientation);
+            }
+        }
 
         let window = if options.headless {
             None

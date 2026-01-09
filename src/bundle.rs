@@ -183,4 +183,25 @@ impl Bundle {
             .get("NSMainNibFile")
             .map(|v| v.as_string().unwrap())
     }
+
+    pub fn supported_interface_orientations(&self) -> Vec<&str> {
+        // UIInterfaceOrientation (iPhone OS 2.0) is a single string.
+        // UISupportedInterfaceOrientations (iOS 3.2) is an array of strings and
+        // takes precedence.
+        self.plist
+            .get("UISupportedInterfaceOrientations")
+            .map(|v| {
+                v.as_array()
+                    .unwrap()
+                    .iter()
+                    .map(|o| o.as_string().unwrap())
+                    .collect()
+            })
+            .unwrap_or_else(|| {
+                vec![self
+                    .plist
+                    .get("UIInterfaceOrientation")
+                    .map_or("UIInterfaceOrientationPortrait", |o| o.as_string().unwrap())]
+            })
+    }
 }

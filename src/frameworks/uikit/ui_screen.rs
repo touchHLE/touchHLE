@@ -41,7 +41,9 @@ pub const CLASSES: ClassExports = objc_classes! {
 // TODO: more accessors
 
 - (CGRect)bounds {
-    // TODO: once rotation is supported, this must change with the rotation!
+    // While Apple's documentation says this changes with the interface
+    // orientation, https://useyourloaf.com/blog/uiscreen-bounds-in-ios-8/ says
+    // ths wasn't the case prior to iOS 8.
     CGRect {
         origin: CGPoint { x: 0.0, y: 0.0 },
         size: CGSize { width: 320.0, height: 480.0 },
@@ -49,6 +51,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (CGRect)applicationFrame {
+    // FIXME: Does this change depending on the status bar orientation?
     let mut bounds: CGRect = msg![env; this bounds];
     const STATUS_BAR_HEIGHT: f32 = 20.0;
     if !env.framework_state.uikit.ui_application.status_bar_hidden {

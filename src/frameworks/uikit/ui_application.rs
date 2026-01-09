@@ -30,7 +30,19 @@ struct UIApplicationHostObject {
 }
 impl HostObject for UIApplicationHostObject {}
 
-type UIInterfaceOrientation = UIDeviceOrientation;
+pub type UIInterfaceOrientation = UIDeviceOrientation;
+#[allow(unused)]
+pub const UIInterfaceOrientationPortrait: UIInterfaceOrientation = UIDeviceOrientationPortrait;
+#[allow(unused)]
+pub const UIInterfaceOrientationPortraitUpsideDown: UIInterfaceOrientation =
+    UIDeviceOrientationPortraitUpsideDown;
+// These are intentionally swapped and documented as such (the UI on the device
+// rotates in the opposite direction to how the device is rotated).
+pub const UIInterfaceOrientationLandscapeLeft: UIInterfaceOrientation =
+    UIDeviceOrientationLandscapeRight;
+pub const UIInterfaceOrientationLandscapeRight: UIInterfaceOrientation =
+    UIDeviceOrientationLandscapeLeft;
+
 type UIRemoteNotificationType = NSUInteger;
 
 pub const CLASSES: ClassExports = objc_classes! {

@@ -205,7 +205,16 @@ fn CGContextSetInterpolationQuality(
     );
 }
 
+fn CGContextBeginPath(env: &mut Environment, context: CGContextRef) {
+    env.objc
+        .borrow_mut::<CGContextHostObject>(context)
+        .path
+        .subpaths
+        .clear();
+}
+
 pub const FUNCTIONS: FunctionExports = &[
+    export_c_func!(CGContextBeginPath(_)),
     export_c_func!(CGContextRetain(_)),
     export_c_func!(CGContextRelease(_)),
     export_c_func!(CGContextSetRGBFillColor(_, _, _, _, _)),

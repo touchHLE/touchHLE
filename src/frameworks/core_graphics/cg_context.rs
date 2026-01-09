@@ -256,7 +256,28 @@ fn CGContextClosePath(env: &mut Environment, context: CGContextRef) {
     }
 }
 
+fn CGContextAddRect(env: &mut Environment, context: CGContextRef, rect: CGRect) {
+    let x = rect.origin.x;
+    let y = rect.origin.y;
+    let w = rect.size.width;
+    let h = rect.size.height;
+    env.objc
+        .borrow_mut::<CGContextHostObject>(context)
+        .path
+        .subpaths
+        .push(CGPathSubpath {
+            points: vec![
+                CGPoint { x, y },
+                CGPoint { x: x + w, y },
+                CGPoint { x: x + w, y: y + h },
+                CGPoint { x, y: y + h },
+            ],
+            closed: true,
+        });
+}
+
 pub const FUNCTIONS: FunctionExports = &[
+    export_c_func!(CGContextAddRect(_, _)),
     export_c_func!(CGContextClosePath(_)),
     export_c_func!(CGContextAddLineToPoint(_, _, _)),
     export_c_func!(CGContextMoveToPoint(_, _, _)),

@@ -276,7 +276,32 @@ fn CGContextAddRect(env: &mut Environment, context: CGContextRef, rect: CGRect) 
         });
 }
 
+fn CGContextAddEllipseInRect(env: &mut Environment, context: CGContextRef, rect: CGRect) {
+    let cx = rect.origin.x + rect.size.width / 2.0;
+    let cy = rect.origin.y + rect.size.height / 2.0;
+    let rx = rect.size.width / 2.0;
+    let ry = rect.size.height / 2.0;
+    let points = (0..64)
+        .map(|i| {
+            let theta = i as CGFloat * std::f32::consts::TAU / 64.0;
+            CGPoint {
+                x: cx + rx * theta.cos(),
+                y: cy + ry * theta.sin(),
+            }
+        })
+        .collect();
+    env.objc
+        .borrow_mut::<CGContextHostObject>(context)
+        .path
+        .subpaths
+        .push(CGPathSubpath {
+            points,
+            closed: true,
+        });
+}
+
 pub const FUNCTIONS: FunctionExports = &[
+    export_c_func!(CGContextAddEllipseInRect(_, _)),
     export_c_func!(CGContextAddRect(_, _)),
     export_c_func!(CGContextClosePath(_)),
     export_c_func!(CGContextAddLineToPoint(_, _, _)),

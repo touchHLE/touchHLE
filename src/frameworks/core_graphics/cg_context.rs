@@ -224,7 +224,28 @@ fn CGContextMoveToPoint(env: &mut Environment, context: CGContextRef, x: CGFloat
         });
 }
 
+fn CGContextAddLineToPoint(env: &mut Environment, context: CGContextRef, x: CGFloat, y: CGFloat) {
+    let path = &mut env.objc.borrow_mut::<CGContextHostObject>(context).path;
+    if let Some(last) = path.subpaths.last_mut() {
+        if last.closed {
+            let start = last.points[0];
+            path.subpaths.push(CGPathSubpath {
+                points: vec![start, CGPoint { x, y }],
+                closed: false,
+            });
+        } else {
+            last.points.push(CGPoint { x, y });
+        }
+    } else {
+        path.subpaths.push(CGPathSubpath {
+            points: vec![CGPoint { x, y }],
+            closed: false,
+        });
+    }
+}
+
 pub const FUNCTIONS: FunctionExports = &[
+    export_c_func!(CGContextAddLineToPoint(_, _, _)),
     export_c_func!(CGContextMoveToPoint(_, _, _)),
     export_c_func!(CGContextBeginPath(_)),
     export_c_func!(CGContextRetain(_)),

@@ -16,6 +16,24 @@
       "message": "A class having no methods is not in and of itself a problem and this doesn\u0027t seem directly related to the null superclass problem.",
       "revId": "a16b54bacfa88029c6aa1c87e9a66ebeae6ea589",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "358d4f5c_e7a65167",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 6
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1039176
+      },
+      "writtenOn": "2026-01-09T02:34:13Z",
+      "side": 1,
+      "message": "@hikari@noyu.me I would have to re-examine without this commit but I seem to remember classes with no methods or ivars caused an issue down the line, the comment about null superclasses was not related to the issue itself and just a side mention.",
+      "parentUuid": "a6313305_16f2156d",
+      "revId": "a16b54bacfa88029c6aa1c87e9a66ebeae6ea589",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

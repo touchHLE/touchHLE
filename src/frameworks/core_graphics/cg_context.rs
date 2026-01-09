@@ -300,7 +300,33 @@ fn CGContextAddEllipseInRect(env: &mut Environment, context: CGContextRef, rect:
         });
 }
 
+fn CGContextDrawPath(env: &mut Environment, context: CGContextRef, mode: i32) {
+    let paths = std::mem::take(
+        &mut env
+            .objc
+            .borrow_mut::<CGContextHostObject>(context)
+            .path
+            .subpaths,
+    );
+    match mode {
+        0 => cg_bitmap_context::draw_path(env, context, &paths, false, false),
+        1 => cg_bitmap_context::draw_path(env, context, &paths, false, true),
+        2 => cg_bitmap_context::draw_path(env, context, &paths, true, false),
+        3 | 4 => {
+            cg_bitmap_context::draw_path(env, context, &paths, false, mode == 4);
+            cg_bitmap_context::draw_path(env, context, &paths, true, false);
+        }
+        _ => unimplemented!("CGContextDrawPath mode {}", mode),
+    }
+}
+
+fn CGContextFillPath(env: &mut Environment, context: CGContextRef) {
+    CGContextDrawPath(env, context, 0);
+}
+
 pub const FUNCTIONS: FunctionExports = &[
+    export_c_func!(CGContextFillPath(_)),
+    export_c_func!(CGContextDrawPath(_, _)),
     export_c_func!(CGContextAddEllipseInRect(_, _)),
     export_c_func!(CGContextAddRect(_, _)),
     export_c_func!(CGContextClosePath(_)),

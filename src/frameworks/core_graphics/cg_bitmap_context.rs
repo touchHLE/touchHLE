@@ -9,6 +9,7 @@ use super::cg_affine_transform::{CGAffineTransform, CGAffineTransformIdentity};
 use super::cg_color_space::{
     kCGColorSpaceGenericGray, kCGColorSpaceGenericRGB, CGColorSpaceHostObject, CGColorSpaceRef,
 };
+use super::cg_context::CGPathSubpath;
 use super::cg_context::{CGContextHostObject, CGContextRef, CGContextSubclass};
 use super::cg_image::{
     self, kCGBitmapAlphaInfoMask, kCGBitmapByteOrderMask, kCGImageAlphaFirst, kCGImageAlphaLast,
@@ -656,6 +657,133 @@ pub fn get_data(objc: &ObjC, context: CGContextRef) -> (GuestUSize, GuestUSize, 
     let host_obj = objc.borrow::<CGContextHostObject>(context);
     let CGContextSubclass::CGBitmapContext(bitmap_data) = host_obj.subclass;
     (bitmap_data.width, bitmap_data.height, bitmap_data.data)
+}
+
+pub(super) fn draw_path(
+    env: &mut Environment,
+    context: CGContextRef,
+    paths: &[CGPathSubpath],
+    stroke: bool,
+    even_odd: bool,
+) {
+    let context_data = env.objc.borrow::<CGContextHostObject>(context);
+    let transform = context_data.transform;
+    let stroke_color = context_data.rgb_stroke_color;
+    let line_radius = (context_data.line_width.max(0.0) * 0.5).max(0.5);
+    let paths: Vec<(Vec<CGPoint>, bool)> = paths
+        .iter()
+        .map(|p| {
+            (
+                p.points
+                    .iter()
+                    .map(|&v| transform.apply_to_point(v))
+                    .collect(),
+                p.closed,
+            )
+        })
+        .collect();
+    let mut drawer = CGBitmapContextDrawer::new(&env.objc, &mut env.mem, context);
+    let color = if stroke {
+        drawer.convert_color(stroke_color)
+    } else {
+        drawer.rgb_fill_color()
+    };
+    let width = drawer.width() as i32;
+    let height = drawer.height() as i32;
+    if stroke {
+        for (points, closed) in &paths {
+            if points.len() < 2 {
+                continue;
+            }
+            let segments = points.len() - 1 + usize::from(*closed);
+            for i in 0..segments {
+                let a = points[i];
+                let b = points[(i + 1) % points.len()];
+                let dx = b.x - a.x;
+                let dy = b.y - a.y;
+                let d2 = dx * dx + dy * dy;
+                let x0 = ((a.x.min(b.x) - line_radius).floor() as i32).max(0);
+                let x1 = ((a.x.max(b.x) + line_radius).ceil() as i32).min(width - 1);
+                let y0 = ((a.y.min(b.y) - line_radius).floor() as i32).max(0);
+                let y1 = ((a.y.max(b.y) + line_radius).ceil() as i32).min(height - 1);
+                for y in y0..=y1 {
+                    for x in x0..=x1 {
+                        let px = x as f32 + 0.5;
+                        let py = y as f32 + 0.5;
+                        let t = if d2 == 0.0 {
+                            0.0
+                        } else {
+                            (((px - a.x) * dx + (py - a.y) * dy) / d2).clamp(0.0, 1.0)
+                        };
+                        let ex = px - a.x - dx * t;
+                        let ey = py - a.y - dy * t;
+                        if ex * ex + ey * ey <= line_radius * line_radius {
+                            drawer.put_pixel((x, y), color, true);
+                        }
+                    }
+                }
+            }
+        }
+    } else {
+        let all: Vec<CGPoint> = paths.iter().flat_map(|(p, _)| p.iter().copied()).collect();
+        if all.is_empty() {
+            return;
+        }
+        let x0 = (all
+            .iter()
+            .map(|p| p.x)
+            .fold(f32::INFINITY, f32::min)
+            .floor() as i32)
+            .max(0);
+        let x1 = (all
+            .iter()
+            .map(|p| p.x)
+            .fold(f32::NEG_INFINITY, f32::max)
+            .ceil() as i32)
+            .min(width - 1);
+        let y0 = (all
+            .iter()
+            .map(|p| p.y)
+            .fold(f32::INFINITY, f32::min)
+            .floor() as i32)
+            .max(0);
+        let y1 = (all
+            .iter()
+            .map(|p| p.y)
+            .fold(f32::NEG_INFINITY, f32::max)
+            .ceil() as i32)
+            .min(height - 1);
+        for y in y0..=y1 {
+            for x in x0..=x1 {
+                let px = x as f32 + 0.5;
+                let py = y as f32 + 0.5;
+                let mut winding = 0_i32;
+                for (points, _) in &paths {
+                    if points.len() < 3 {
+                        continue;
+                    }
+                    for i in 0..points.len() {
+                        let a = points[i];
+                        let b = points[(i + 1) % points.len()];
+                        let cross = (b.x - a.x) * (py - a.y) - (px - a.x) * (b.y - a.y);
+                        if a.y <= py && b.y > py && cross > 0.0 {
+                            winding += 1;
+                        }
+                        if a.y > py && b.y <= py && cross < 0.0 {
+                            winding -= 1;
+                        }
+                    }
+                }
+                if if even_odd {
+                    winding % 2 != 0
+                } else {
+                    winding != 0
+                } {
+                    drawer.put_pixel((x, y), color, true);
+                }
+            }
+        }
+    }
 }
 
 pub const FUNCTIONS: FunctionExports = &[

@@ -244,7 +244,20 @@ fn CGContextAddLineToPoint(env: &mut Environment, context: CGContextRef, x: CGFl
     }
 }
 
+fn CGContextClosePath(env: &mut Environment, context: CGContextRef) {
+    if let Some(last) = env
+        .objc
+        .borrow_mut::<CGContextHostObject>(context)
+        .path
+        .subpaths
+        .last_mut()
+    {
+        last.closed = true;
+    }
+}
+
 pub const FUNCTIONS: FunctionExports = &[
+    export_c_func!(CGContextClosePath(_)),
     export_c_func!(CGContextAddLineToPoint(_, _, _)),
     export_c_func!(CGContextMoveToPoint(_, _, _)),
     export_c_func!(CGContextBeginPath(_)),

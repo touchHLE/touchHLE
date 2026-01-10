@@ -49,6 +49,7 @@ pub(super) struct CALayerHostObject {
     pub(super) background_color: Option<CGColorHostObject>,
     pub(super) corner_radius: CGFloat,
     pub(super) needs_display: bool,
+    pub(super) set_needs_display_on_bounds_change: bool,
     /// `CGImageRef*`
     pub(super) contents: id,
     /// For CAEAGLLayer only
@@ -126,6 +127,7 @@ pub const CLASSES: ClassExports = objc_classes! {
         background_color: None, // transparency
         corner_radius: 0.0,
         needs_display: false,
+        set_needs_display_on_bounds_change: false,
         contents: nil,
         drawable_properties: nil,
         presented_pixels: None,
@@ -235,7 +237,11 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.borrow::<CALayerHostObject>(this).bounds
 }
 - (())setBounds:(CGRect)bounds {
-    env.objc.borrow_mut::<CALayerHostObject>(this).bounds = bounds;
+    let host_object = env.objc.borrow_mut::<CALayerHostObject>(this);
+    host_object.bounds = bounds;
+    if host_object.set_needs_display_on_bounds_change {
+        () = msg![env; this setNeedsDisplay];
+    }
 }
 - (CGPoint)position {
     env.objc.borrow::<CALayerHostObject>(this).position
@@ -349,6 +355,14 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (())setNeedsDisplay {
     env.objc.borrow_mut::<CALayerHostObject>(this).needs_display = true;
 }
+
+- (bool)needsDisplayOnBoundsChange {
+    env.objc.borrow::<CALayerHostObject>(this).set_needs_display_on_bounds_change
+}
+- (())setNeedsDisplayOnBoundsChange:(bool)value {
+    env.objc.borrow_mut::<CALayerHostObject>(this).set_needs_display_on_bounds_change = value;
+}
+
 // TODO: support setNeedsDisplayInRect:
 - (())displayIfNeeded {
     let &mut CALayerHostObject {

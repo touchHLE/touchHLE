@@ -59,7 +59,6 @@ pub const CLASSES: ClassExports = objc_classes! {
     let host_obj = env.objc.borrow_mut::<NSNotificationCenterHostObject>(this);
     let observers = std::mem::take(&mut host_obj.observers);
     for observer in observers.values().flatten() {
-        release(env, observer.observer);
         release(env, observer.object);
     }
     env.objc.dealloc_object(this, &mut env.mem);
@@ -90,8 +89,24 @@ pub const CLASSES: ClassExports = objc_classes! {
         object,
     );
 
-    retain(env, observer);
-    retain(env, object); // TODO: is it correct that this is retained?
+    // When adding an observer, only the object is retained so it doesn't get
+    // deallocated before the notification is delivered. Some apps, such as
+    // Dungeon Hunter 2, rely on this being the case.
+    // The observer is not retained to avoid retain cycles.
+    // https://stackoverflow.com/a/36582937
+    // While not explicitly stated by the documentation, there's a paragraph
+    // that hints at this behavior:
+    // "If your app targets iOS 9.0 and later or macOS 10.11 and later, you do
+    // not need to unregister an observer that you created with this function.
+    // If you forget or are unable to remove an observer, the system cleans up
+    // the next time it would have posted to it."
+    // https://developer.apple.com/documentation/foundation/notificationcenter/addobserver(_:selector:name:object:)?language=objc
+    // Implying that prior to these versions, it's unsafe to not remove an
+    // observer. It's been observed that some apps expect and rely on this
+    // behavior, such as Marmalade SDK games that use the Movie Player
+    // (Pandemonium and COD Zombies, for example).
+
+    retain(env, object);
 
     let host_obj = env.objc.borrow_mut::<NSNotificationCenterHostObject>(this);
     host_obj.observers.entry(name).or_default().push(Observer {
@@ -142,7 +157,6 @@ pub const CLASSES: ClassExports = objc_classes! {
     };
 
     for removed_observer in removed_observers {
-        release(env, removed_observer.observer);
         release(env, removed_observer.object);
     }
 }

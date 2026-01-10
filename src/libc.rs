@@ -72,6 +72,7 @@ pub const DYLIB: crate::dyld::HostDylib = crate::dyld::HostDylib {
         netdb::FUNCTIONS,
         posix_io::FUNCTIONS,
         posix_io::stat::FUNCTIONS,
+        posix_io::statvfs::FUNCTIONS,
         pthread::cond::FUNCTIONS,
         pthread::key::FUNCTIONS,
         pthread::mutex::FUNCTIONS,

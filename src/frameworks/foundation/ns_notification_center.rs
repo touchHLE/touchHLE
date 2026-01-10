@@ -59,7 +59,6 @@ pub const CLASSES: ClassExports = objc_classes! {
     let host_obj = env.objc.borrow_mut::<NSNotificationCenterHostObject>(this);
     let observers = std::mem::take(&mut host_obj.observers);
     for observer in observers.values().flatten() {
-        release(env, observer.observer);
         release(env, observer.object);
     }
     env.objc.dealloc_object(this, &mut env.mem);
@@ -90,7 +89,6 @@ pub const CLASSES: ClassExports = objc_classes! {
         object,
     );
 
-    retain(env, observer);
     retain(env, object); // TODO: is it correct that this is retained?
 
     let host_obj = env.objc.borrow_mut::<NSNotificationCenterHostObject>(this);
@@ -142,7 +140,6 @@ pub const CLASSES: ClassExports = objc_classes! {
     };
 
     for removed_observer in removed_observers {
-        release(env, removed_observer.observer);
         release(env, removed_observer.object);
     }
 }

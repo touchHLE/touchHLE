@@ -6,6 +6,7 @@
 //! POSIX I/O functions (`fcntl.h`, parts of `unistd.h`, etc)
 
 pub mod stat;
+pub mod statvfs;
 
 use crate::abi::DotDotDot;
 use crate::dyld::{export_c_func, FunctionExports};

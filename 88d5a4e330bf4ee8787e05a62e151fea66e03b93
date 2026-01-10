@@ -24,6 +24,30 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "3feb96a5_a99cf504",
+        "filename": "src/cpu.rs",
+        "patchSetId": 40
+      },
+      "lineNbr": 221,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2026-01-10T19:12:58Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "3380aa34_78c8aa0a",
+      "range": {
+        "startLine": 221,
+        "startChar": 16,
+        "endLine": 221,
+        "endChar": 57
+      },
+      "revId": "88d5a4e330bf4ee8787e05a62e151fea66e03b93",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "64d046f2_89173635",
@@ -73,6 +97,24 @@
       "side": 1,
       "message": "Right, we `take` it whenever we switch a thread, so boxing it makes sense I guess.",
       "parentUuid": "a3936f64_586d3442",
+      "revId": "88d5a4e330bf4ee8787e05a62e151fea66e03b93",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "814805e4_e1acee0e",
+        "filename": "src/environment.rs",
+        "patchSetId": 40
+      },
+      "lineNbr": 65,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2026-01-10T19:12:58Z",
+      "side": 1,
+      "message": "the fpu registers make it relatively big, since they\u0027re 32 doubles large",
+      "parentUuid": "64d046f2_89173635",
       "revId": "88d5a4e330bf4ee8787e05a62e151fea66e03b93",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

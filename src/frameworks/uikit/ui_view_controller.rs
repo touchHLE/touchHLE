@@ -184,6 +184,17 @@ pub const CLASSES: ClassExports = objc_classes! {
     interface_orientation == UIInterfaceOrientationPortrait
 }
 
+// UIResponder implementation
+// From the Apple UIView docs regarding [UIResponder nextResponder]:
+// "UIViewController similarly implements the method
+// and returns its view’s superview."
+- (id)nextResponder {
+    let view = msg![env; this view];
+    let next_responder = msg![env; view superview];
+    log_dbg!("[(UIView*){:?} nextResponder] => {:?}", this, next_responder);
+    next_responder
+}
+
 @end
 
 };

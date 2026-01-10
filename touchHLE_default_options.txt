@@ -207,3 +207,7 @@ com.mrgoodliving.TikiTowers: --landscape-left
 
 # Resident Evil Degeneration
 jp.co.capcom.residentevil.en: --landscape-left --stabilize-virtual-cursor=0.1,10 --button-to-touch=A,430,280 --button-to-touch=B,440,200 --button-to-touch=Y,440,100 --button-to-touch=Start,30,30 --dpad-to-touch=25,200,95,100 --stick-to-touch=25,200,95,100
+
+# COD Zombies
+# DPad/Stick = Move, Left shoulder = Knife, A = Shoot, B = Aim, X = Reload, Y = Grenade, Start = Pause
+com.activision.callofduty: --x-tilt-offset=-10 --dpad-to-touch=30,215,80,80 --stick-to-touch=30,215,80,80 --button-to-touch=A,387,210 --button-to-touch=B,455,185 --button-to-touch=X,455,25 --button-to-touch=Y,440,95 --button-to-touch=LeftShoulder,240,310 --button-to-touch=Start,20,25

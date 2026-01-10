@@ -55,16 +55,6 @@ pub const CLASSES: ClassExports = objc_classes! {
     }
 }
 
-- (())dealloc {
-    let host_obj = env.objc.borrow_mut::<NSNotificationCenterHostObject>(this);
-    let observers = std::mem::take(&mut host_obj.observers);
-    for observer in observers.values().flatten() {
-        release(env, observer.observer);
-        release(env, observer.object);
-    }
-    env.objc.dealloc_object(this, &mut env.mem);
-}
-
 - (())addObserver:(id)observer
          selector:(SEL)selector
              name:(NSNotificationName)name
@@ -89,9 +79,6 @@ pub const CLASSES: ClassExports = objc_classes! {
         name,
         object,
     );
-
-    retain(env, observer);
-    retain(env, object); // TODO: is it correct that this is retained?
 
     let host_obj = env.objc.borrow_mut::<NSNotificationCenterHostObject>(this);
     host_obj.observers.entry(name).or_default().push(Observer {
@@ -124,27 +111,6 @@ pub const CLASSES: ClassExports = objc_classes! {
         name,
         object,
     );
-
-    // TODO: is this the correct behaviour, can an observer be registered
-    // several times?
-    let mut removed_observers = Vec::new();
-
-    let host_obj = env.objc.borrow_mut::<NSNotificationCenterHostObject>(this);
-    if let Some(ref name) = name {
-        let Some(observers) = host_obj.observers.get_mut(name) else {
-            return;
-        };
-        remove_observers_internal(observers, &mut removed_observers, observer, object);
-    } else {
-        for observers in host_obj.observers.values_mut() {
-            remove_observers_internal(observers, &mut removed_observers, observer, object);
-        }
-    };
-
-    for removed_observer in removed_observers {
-        release(env, removed_observer.observer);
-        release(env, removed_observer.object);
-    }
 }
 
 - (())postNotification:(id)notification {
@@ -210,21 +176,3 @@ pub const CLASSES: ClassExports = objc_classes! {
 @end
 
 };
-
-/// A helper function to populate `removed_observers` with observers
-/// removed from `observers` based on `observer` and `object` criteria.
-fn remove_observers_internal(
-    observers: &mut Vec<Observer>,
-    removed_observers: &mut Vec<Observer>,
-    observer: id,
-    object: id,
-) {
-    let mut i = 0;
-    while i < observers.len() {
-        if observers[i].observer == observer && (object == nil || object == observers[i].object) {
-            removed_observers.push(observers.swap_remove(i));
-        } else {
-            i += 1;
-        }
-    }
-}

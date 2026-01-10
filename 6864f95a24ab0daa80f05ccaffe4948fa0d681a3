@@ -16,6 +16,24 @@
       "message": "There\u0027s no switch here, comment outdated?",
       "revId": "6864f95a24ab0daa80f05ccaffe4948fa0d681a3",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "a8ae7663_9731b555",
+        "filename": "src/environment.rs",
+        "patchSetId": 38
+      },
+      "lineNbr": 731,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2026-01-10T18:57:01Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "015f27fe_512b8f0f",
+      "revId": "6864f95a24ab0daa80f05ccaffe4948fa0d681a3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

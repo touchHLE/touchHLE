@@ -1,0 +1,44 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3380aa34_78c8aa0a",
+        "filename": "src/cpu.rs",
+        "patchSetId": 40
+      },
+      "lineNbr": 221,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-01-10T19:05:08Z",
+      "side": 1,
+      "message": "This cast should be completely redundant, right?",
+      "range": {
+        "startLine": 221,
+        "startChar": 16,
+        "endLine": 221,
+        "endChar": 57
+      },
+      "revId": "88d5a4e330bf4ee8787e05a62e151fea66e03b93",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "64d046f2_89173635",
+        "filename": "src/environment.rs",
+        "patchSetId": 40
+      },
+      "lineNbr": 65,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-01-10T19:05:08Z",
+      "side": 1,
+      "message": "Why are we boxing this; isn\u0027t it a pretty small struct?",
+      "revId": "88d5a4e330bf4ee8787e05a62e151fea66e03b93",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

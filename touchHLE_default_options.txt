@@ -211,3 +211,7 @@ jp.co.capcom.residentevil.en: --landscape-left --stabilize-virtual-cursor=0.1,10
 # COD Zombies
 # DPad/Stick = Move, Left shoulder = Knife, A = Shoot, B = Aim, X = Reload, Y = Grenade, Start = Pause
 com.activision.callofduty: --x-tilt-offset=-10 --dpad-to-touch=30,215,80,80 --stick-to-touch=30,215,80,80 --button-to-touch=A,387,210 --button-to-touch=B,455,185 --button-to-touch=X,455,25 --button-to-touch=Y,440,95 --button-to-touch=LeftShoulder,240,310 --button-to-touch=Start,20,25
+
+# Pandemonium
+# DPad/Stick = Move, Up = Switch Character, X = Fargus Attack, A = Fire, B = Jump, LeftShoulder = Switch Camera, Start = Pause
+com.ea.pandyinc: --landscape-left --button-to-touch=DPadLeft,50,230 --button-to-touch=DPadRight,160,230 --button-to-touch=DPadDown,110,290 --button-to-touch=X,295,295 --button-to-touch=A,360,280 --button-to-touch=B,450,255 --button-to-touch=Start,445,15 --button-to-touch=LeftShoulder,15,15 --button-to-touch=DPadUp,240,40

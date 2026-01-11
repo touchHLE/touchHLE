@@ -1,5 +1,23 @@
 {
-  "comments": [],
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "94f85bf0_4f7aafcb",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 4
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-01-11T10:54:17Z",
+      "side": 1,
+      "message": "@morbidlyobeseunicorn666@gmail.com Congrats on your first merged submission!\n\nDo you want to be part of touchHLE discord and have access to dev-only channels? If yes, please send me your Discord nick to my email, i\u0027ll add you",
+      "revId": "868b7085cef061e856433eeb647f4367c01c0610",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ],
   "submitRequirementResults": [
     {
       "submitRequirement": {

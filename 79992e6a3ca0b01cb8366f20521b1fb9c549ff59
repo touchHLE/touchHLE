@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "06749a9b_f7396c4d",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 28
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-01-11T11:02:35Z",
+      "side": 1,
+      "message": "You should also add corosensei mention to Thanks section of the README.\n\nIt would be also nice to add a section to dev doc explaining how coroutines works and what gotchas one should keep in mind (like the fact that we need to patch Android SDl2 project to increase stack size). This could be FAR",
+      "revId": "79992e6a3ca0b01cb8366f20521b1fb9c549ff59",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "12d7ce5f_10657fc3",
+        "filename": "Cargo.toml",
+        "patchSetId": 28
+      },
+      "lineNbr": 71,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-01-11T11:02:35Z",
+      "side": 1,
+      "message": "Why not use last availible version, v0.3.2 https://github.com/Amanieu/corosensei/releases/tag/v0.3.2 ?",
+      "revId": "79992e6a3ca0b01cb8366f20521b1fb9c549ff59",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

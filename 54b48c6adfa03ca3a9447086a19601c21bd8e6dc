@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c3bc13a2_217aaccf",
+        "filename": "src/gles/gles_generic.rs",
+        "patchSetId": 36
+      },
+      "lineNbr": 41,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-01-11T13:32:58Z",
+      "side": 1,
+      "message": "i wonder if in the future we would actually need to support multiple context existing at the same time, like gles1 and gles2",
+      "revId": "54b48c6adfa03ca3a9447086a19601c21bd8e6dc",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

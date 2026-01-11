@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "299fd6e2_d6b88924",
+        "filename": "src/frameworks/openal.rs",
+        "patchSetId": 38
+      },
+      "lineNbr": 352,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-01-11T10:36:40Z",
+      "side": 1,
+      "message": "This function doesn\u0027t exist anymore, so this code wouldn\u0027t compile.\nPerhaps you meant to use try_get_context! macro here?",
+      "revId": "0d8d8657c5f11a12f9630b248e1ccfc84c8ee556",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

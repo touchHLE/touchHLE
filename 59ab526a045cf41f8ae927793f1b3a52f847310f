@@ -16,6 +16,24 @@
       "message": "How did you figure that out?\n\nAccording to this https://medium.com/@at_underscore/uifont-explained-visually-7de1a9c9f7a1, it seems that lineHeight \u003d ascender + descender",
       "revId": "59ab526a045cf41f8ae927793f1b3a52f847310f",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b95a9f4f_3f292e73",
+        "filename": "src/frameworks/uikit/ui_font.rs",
+        "patchSetId": 4
+      },
+      "lineNbr": 157,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2026-01-12T23:18:39Z",
+      "side": 1,
+      "message": "Yes but, according this you have to account for leading: https://medium.com/@gauravk92/youre-vertically-centering-uilabels-wrong-5a7beaf73210\n\nThe only thing im not sure about is if it should be - descender, but the docs say that if the descender goes below the baseline its negative.",
+      "parentUuid": "85c10f40_ac36fa8c",
+      "revId": "59ab526a045cf41f8ae927793f1b3a52f847310f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

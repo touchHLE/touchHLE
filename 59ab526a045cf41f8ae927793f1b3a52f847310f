@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "85c10f40_ac36fa8c",
+        "filename": "src/frameworks/uikit/ui_font.rs",
+        "patchSetId": 4
+      },
+      "lineNbr": 157,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-01-12T19:57:03Z",
+      "side": 1,
+      "message": "How did you figure that out?\n\nAccording to this https://medium.com/@at_underscore/uifont-explained-visually-7de1a9c9f7a1, it seems that lineHeight \u003d ascender + descender",
+      "revId": "59ab526a045cf41f8ae927793f1b3a52f847310f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

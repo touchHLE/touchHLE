@@ -37,6 +37,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "3e1d9dea_c6aa1ae9",
+        "filename": "src/frameworks/uikit/ui_font.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 154,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2026-01-14T23:16:56Z",
+      "side": 1,
+      "message": "At least according to this, they do work then same way. I think they all boil down to Core Text at the end of the day. https://stackoverflow.com/questions/33278645/why-is-lineheight-of-uifont-larger-than-font-size",
+      "parentUuid": "6d75553a_f3ad3340",
+      "revId": "74cb92c8148c0574a8c895a63b2a4b0485378619",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "b2777b6a_b159dfe2",
         "filename": "src/frameworks/uikit/ui_font.rs",
         "patchSetId": 5
@@ -48,6 +66,24 @@
       "writtenOn": "2026-01-14T22:14:14Z",
       "side": 1,
       "message": "I\u0027m double checking this logic, and I\u0027m not sure - if descender is negative, you\u0027re actually increasing lineHeight ?",
+      "revId": "74cb92c8148c0574a8c895a63b2a4b0485378619",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "31f1d737_cedab894",
+        "filename": "src/frameworks/uikit/ui_font.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 159,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2026-01-14T23:16:56Z",
+      "side": 1,
+      "message": "Yes, so some interfaces seem to return a positive and others a negative descended. At least in ui font the descender is negative below the base line. So we need: (height above baseline -\u003e ascender) + (height below baseline -\u003e descender) + leading. Since a descender below the baseline is negative to get the height of the descender we need -1 * descender",
+      "parentUuid": "b2777b6a_b159dfe2",
       "revId": "74cb92c8148c0574a8c895a63b2a4b0485378619",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

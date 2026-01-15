@@ -14,12 +14,12 @@ use crate::frameworks::foundation::ns_string::get_static_str;
 use crate::frameworks::foundation::NSUInteger;
 use crate::gles::gles11_raw as gles11; // constants only
 use crate::gles::gles11_raw::types::*;
-use crate::gles::present::{present_frame, FpsCounter};
+use crate::gles::present::{present_frame, FpsCounter, TextureCoordinates};
 use crate::gles::{create_gles1_ctx, gles1_on_gl2, GLES};
 use crate::mem::MutPtr;
 use crate::objc::{id, msg, nil, objc_classes, release, retain, ClassExports, HostObject};
 use crate::options::Options;
-use crate::window::Window;
+use crate::window::{DeviceOrientation, Window};
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
@@ -551,7 +551,8 @@ unsafe fn present_renderbuffer(gles: &mut dyn GLES, window: &mut Window) {
     // rotated, scaled or letterboxed as appropriate.
 
     let renderbuffer: GLuint = get_int(gles, gles11::RENDERBUFFER_BINDING_OES) as _;
-    let (width, height) = get_renderbuffer_size(gles);
+    let (render_width, render_height) = get_renderbuffer_size(gles);
+    let (texture_width, texture_height) = to_pot_texture_dim(render_width as _, render_height as _);
 
     // To avoid confusing the guest app, we need to be able to undo any
     // state changes we make.
@@ -573,15 +574,43 @@ unsafe fn present_renderbuffer(gles: &mut dyn GLES, window: &mut Window) {
     let mut texture: GLuint = 0;
     gles.GenTextures(1, &mut texture);
     gles.BindTexture(gles11::TEXTURE_2D, texture);
-    gles.CopyTexImage2D(
+    gles.TexImage2D(
         gles11::TEXTURE_2D,
         0,
-        gles11::RGB as _,
+        gles11::RGBA as _,
+        texture_width as _,
+        texture_height as _,
+        0,
+        gles11::RGBA,
+        gles11::UNSIGNED_BYTE,
+        std::ptr::null(),
+    );
+
+    // The NPOT source framebuffer is always an unrotated, portrait texture.
+    // When copying to the POT render texture, we need to accommodate for this
+    // by adjusting both texture coordinates, and where in the POT texture
+    // it ends up so we don't sample from uninitialized pixels.
+    let (xoffset, yoffset) = match window.current_rotation() {
+        // No offset needed as the source matches the target.
+        DeviceOrientation::Portrait => (0, 0),
+        // With a landscape left orientation, the top left corner of the screen
+        // is rotated to the bottom left corner, so we need to shift the texture
+        // to the top left corner of the POT target.
+        DeviceOrientation::LandscapeLeft => (0, texture_height.abs_diff(render_height as _)),
+        // With landscape right, the bottom right corner is sampled as 0,0,
+        // so we need to shift the texture to the bottom right
+        DeviceOrientation::LandscapeRight => (texture_width.abs_diff(render_width as _), 0),
+    };
+
+    gles.CopyTexSubImage2D(
+        gles11::TEXTURE_2D,
+        0,
+        xoffset as _,
+        yoffset as _,
         0,
         0,
-        width,
-        height,
-        0,
+        render_width as _,
+        render_height as _,
     );
     // The texture will not have any mip levels so we must ensure the filter
     // does not use them, else rendering will fail.
@@ -666,6 +695,13 @@ unsafe fn present_renderbuffer(gles: &mut dyn GLES, window: &mut Window) {
         window.viewport(),
         window.rotation_matrix(),
         window.virtual_cursor_visible_at(),
+        Some(&TextureCoordinates::normalized(
+            render_width as _,
+            render_height as _,
+            texture_width,
+            texture_height,
+            window.current_rotation(),
+        )),
     );
 
     // Clean up the texture
@@ -742,4 +778,10 @@ unsafe fn present_renderbuffer(gles: &mut dyn GLES, window: &mut Window) {
     gles.BindFramebufferOES(gles11::FRAMEBUFFER_OES, old_framebuffer);
 
     //{ let err = gl21::GetError(); if err != 0 { panic!("{:#x}", err); } }
+}
+
+fn to_pot_texture_dim(width: u32, height: u32) -> (u32, u32) {
+    let width = width.next_power_of_two();
+    let height = height.next_power_of_two();
+    (width, height)
 }

@@ -194,6 +194,21 @@ pub fn recomposite_if_necessary(env: &mut Environment, force: bool) -> Option<In
                 gles11::LINEAR as _,
             );
 
+            // iOS and PowerVR only support NPOT texture with CLAMP_TO_EDGE
+            // It doesn't matter for texture data from an image, we don't
+            // want to deal with striping from NPOT to POT conversion.
+            gles.TexParameteri(
+                gles11::TEXTURE_2D,
+                gles11::TEXTURE_WRAP_S,
+                gles11::CLAMP_TO_EDGE as _,
+            );
+
+            gles.TexParameteri(
+                gles11::TEXTURE_2D,
+                gles11::TEXTURE_WRAP_T,
+                gles11::CLAMP_TO_EDGE as _,
+            );
+
             gles.GenFramebuffersOES(1, &mut framebuffer);
             gles.BindFramebufferOES(gles11::FRAMEBUFFER_OES, framebuffer);
             gles.FramebufferTexture2DOES(
@@ -367,6 +382,7 @@ pub fn recomposite_if_necessary(env: &mut Environment, force: bool) -> Option<In
             present_frame_args.0,
             present_frame_args.1,
             present_frame_args.2,
+            None,
         );
     }
     env.window().swap_window();
@@ -723,5 +739,19 @@ unsafe fn upload_rgba8_pixels(gles: &mut dyn GLES, pixels: &[u8], dimensions: (u
         gles11::TEXTURE_2D,
         gles11::TEXTURE_MAG_FILTER,
         gles11::LINEAR as _,
+    );
+
+    // iOS and PowerVR only support NPOT texture with CLAMP_TO_EDGE
+    // It doesn't matter for texture data from an image, we don't
+    // want to deal with striping from NPOT to POT conversion.
+    gles.TexParameteri(
+        gles11::TEXTURE_2D,
+        gles11::TEXTURE_WRAP_S,
+        gles11::CLAMP_TO_EDGE as _,
+    );
+    gles.TexParameteri(
+        gles11::TEXTURE_2D,
+        gles11::TEXTURE_WRAP_T,
+        gles11::CLAMP_TO_EDGE as _,
     );
 }

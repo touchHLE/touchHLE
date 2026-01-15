@@ -1175,8 +1175,24 @@ impl Window {
                 gles11::LINEAR as _,
             );
 
+            // iOS and PowerVR only support NPOT texture with CLAMP_TO_EDGE
+            // It doesn't matter for texture data from an image like the
+            // splash screen, we don't want to deal with striping from
+            // NPOT to POT conversion.
+            gl_ctx.TexParameteri(
+                gles11::TEXTURE_2D,
+                gles11::TEXTURE_WRAP_S,
+                gles11::CLAMP_TO_EDGE as _,
+            );
+
+            gl_ctx.TexParameteri(
+                gles11::TEXTURE_2D,
+                gles11::TEXTURE_WRAP_T,
+                gles11::CLAMP_TO_EDGE as _,
+            );
+
             present_frame(
-                gl_ctx, viewport, matrix, /* virtual_cursor_visible_at: */ None,
+                gl_ctx, viewport, matrix, /* virtual_cursor_visible_at: */ None, None,
             );
 
             gl_ctx.DeleteTextures(1, &texture);

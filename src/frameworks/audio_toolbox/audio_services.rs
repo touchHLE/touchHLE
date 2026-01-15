@@ -18,6 +18,19 @@ type SystemSoundID = u32;
 const kAudioServicesUnsupportedPropertyError: OSStatus = fourcc(b"pty?") as _;
 const kSystemSoundID_Vibrate: SystemSoundID = 0x00000FFF;
 
+fn AudioServicesAddSystemSoundCompletion(
+    _env: &mut Environment,
+    _in_system_sound_id: SystemSoundID,
+    _in_run_loop: crate::mem::ConstVoidPtr,
+    _in_run_loop_mode: crate::mem::ConstVoidPtr,
+    _in_completion_proc: crate::mem::ConstVoidPtr,
+    _in_client_data: crate::mem::ConstVoidPtr,
+) -> OSStatus {
+    assert_eq!(_in_system_sound_id, kSystemSoundID_Vibrate);
+    println!("TODO: vibration (AudioServicesAddSystemSoundCompletion)");
+    OSStatus::from(0)
+}
+
 fn AudioServicesGetProperty(
     _env: &mut Environment,
     in_property_id: AudioServicesPropertyID,
@@ -41,7 +54,17 @@ fn AudioServicesPlaySystemSound(_env: &mut Environment, in_system_sound_id: Syst
     // TODO: implement other system sounds
 }
 
+fn AudioServicesRemoveSystemSoundCompletion(
+    _env: &mut Environment,
+    _in_system_sound_id: SystemSoundID,
+) {
+    assert_eq!(_in_system_sound_id, kSystemSoundID_Vibrate);
+    println!("TODO: vibration (AudioServicesRemoveSystemSoundCompletion)");
+}
+
 pub const FUNCTIONS: FunctionExports = &[
+    export_c_func!(AudioServicesAddSystemSoundCompletion(_, _, _, _, _)),
     export_c_func!(AudioServicesGetProperty(_, _, _, _, _)),
     export_c_func!(AudioServicesPlaySystemSound(_)),
+    export_c_func!(AudioServicesRemoveSystemSoundCompletion(_)),
 ];

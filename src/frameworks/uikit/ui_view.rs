@@ -657,7 +657,9 @@ pub const CLASSES: ClassExports = objc_classes! {
                  toView:(id)other { // UIView*
     if other == nil {
         let window: id = msg![env; this window];
-        assert!(window != nil);
+        if window == nil {
+          return point;
+        }
         return msg![env; this convertPoint:point toView:window]
     }
     let this_layer = env.objc.borrow::<UIViewHostObject>(this).layer;

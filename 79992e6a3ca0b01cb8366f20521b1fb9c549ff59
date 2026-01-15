@@ -69,6 +69,24 @@
       "parentUuid": "12d7ce5f_10657fc3",
       "revId": "79992e6a3ca0b01cb8366f20521b1fb9c549ff59",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "436a96e3_89965b47",
+        "filename": "Cargo.toml",
+        "patchSetId": 28
+      },
+      "lineNbr": 71,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-01-15T18:13:20Z",
+      "side": 1,
+      "message": "\u003e I\u0027ll still have to check if it works well on android, so hold off for a day or so (or check yourself)\n\nI tested few games on Android, it seems to work well.\nThough there are still issues with black screen in BIA and HoS on movie play.",
+      "parentUuid": "9fd5caf8_e9d042ac",
+      "revId": "79992e6a3ca0b01cb8366f20521b1fb9c549ff59",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

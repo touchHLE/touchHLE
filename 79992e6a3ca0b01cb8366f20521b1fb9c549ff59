@@ -20,6 +20,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "b0e7b29e_db860759",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 28
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2026-01-15T02:13:37Z",
+      "side": 1,
+      "message": "First part done, second part will be done later",
+      "parentUuid": "06749a9b_f7396c4d",
+      "revId": "79992e6a3ca0b01cb8366f20521b1fb9c549ff59",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "12d7ce5f_10657fc3",
         "filename": "Cargo.toml",
         "patchSetId": 28
@@ -31,6 +49,24 @@
       "writtenOn": "2026-01-11T11:02:35Z",
       "side": 1,
       "message": "Why not use last availible version, v0.3.2 https://github.com/Amanieu/corosensei/releases/tag/v0.3.2 ?",
+      "revId": "79992e6a3ca0b01cb8366f20521b1fb9c549ff59",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9fd5caf8_e9d042ac",
+        "filename": "Cargo.toml",
+        "patchSetId": 28
+      },
+      "lineNbr": 71,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2026-01-15T02:13:37Z",
+      "side": 1,
+      "message": "because that was the version i used when i made this patch :v \n\nI\u0027ll still have to check if it works well on android, so hold off for a day or so (or check yourself)",
+      "parentUuid": "12d7ce5f_10657fc3",
       "revId": "79992e6a3ca0b01cb8366f20521b1fb9c549ff59",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

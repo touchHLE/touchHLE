@@ -16,6 +16,24 @@
       "message": "i wonder if in the future we would actually need to support multiple context existing at the same time, like gles1 and gles2",
       "revId": "54b48c6adfa03ca3a9447086a19601c21bd8e6dc",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "5bd2b62c_2ae18229",
+        "filename": "src/gles/gles_generic.rs",
+        "patchSetId": 36
+      },
+      "lineNbr": 41,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2026-01-15T02:22:05Z",
+      "side": 1,
+      "message": "We shouldn\u0027t, the docs seem to imply that there can only be one type of context active at a time.",
+      "parentUuid": "c3bc13a2_217aaccf",
+      "revId": "54b48c6adfa03ca3a9447086a19601c21bd8e6dc",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "71d750e8_c05eee22",
+        "filename": "src/frameworks/openal.rs",
+        "patchSetId": 39
+      },
+      "lineNbr": 363,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-01-15T18:11:49Z",
+      "side": 1,
+      "message": "Do you know if real iOS would report NO_ERROR as well in that case?",
+      "revId": "5874cb0d97f3c7a45c265aed2cda0cecc98a2cea",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

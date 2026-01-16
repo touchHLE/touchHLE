@@ -55,6 +55,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "37b82a46_043f4d0a",
+        "filename": "src/frameworks/uikit/ui_font.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 154,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-01-16T19:00:01Z",
+      "side": 1,
+      "message": "FYI https://web.archive.org/web/20240722200446/http://www.zsiegel.com/2012/10/23/Core-Text-Calculating-line-heights",
+      "parentUuid": "3e1d9dea_c6aa1ae9",
+      "revId": "74cb92c8148c0574a8c895a63b2a4b0485378619",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "b2777b6a_b159dfe2",
         "filename": "src/frameworks/uikit/ui_font.rs",
         "patchSetId": 5

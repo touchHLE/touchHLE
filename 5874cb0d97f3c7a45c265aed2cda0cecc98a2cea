@@ -1,6 +1,40 @@
 {
   "comments": [
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "fa6d8fc8_a141373d",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 39
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-01-16T15:54:32Z",
+      "side": 1,
+      "message": "Looks pretty good overall, I think I\u0027ll merge this after the next round. Sorry for how long this has taken.",
+      "revId": "5874cb0d97f3c7a45c265aed2cda0cecc98a2cea",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e9024d6c_b242a903",
+        "filename": "src/audio/openal.rs",
+        "patchSetId": 39
+      },
+      "lineNbr": 77,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-01-16T15:54:32Z",
+      "side": 1,
+      "message": "I don\u0027t understand this comment, maybe it is a leftover from some previous version of the patch.",
+      "revId": "5874cb0d97f3c7a45c265aed2cda0cecc98a2cea",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "71d750e8_c05eee22",
@@ -14,6 +48,29 @@
       "writtenOn": "2026-01-15T18:11:49Z",
       "side": 1,
       "message": "Do you know if real iOS would report NO_ERROR as well in that case?",
+      "revId": "5874cb0d97f3c7a45c265aed2cda0cecc98a2cea",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "bc524228_696c319b",
+        "filename": "src/frameworks/openal.rs",
+        "patchSetId": 39
+      },
+      "lineNbr": 371,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-01-16T15:54:32Z",
+      "side": 1,
+      "message": "This really feels like it should be a `match` statement.",
+      "range": {
+        "startLine": 364,
+        "startChar": 4,
+        "endLine": 371,
+        "endChar": 39
+      },
       "revId": "5874cb0d97f3c7a45c265aed2cda0cecc98a2cea",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

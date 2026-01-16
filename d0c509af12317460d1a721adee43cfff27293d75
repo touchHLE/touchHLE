@@ -87,6 +87,24 @@
       "parentUuid": "3bbc2076_8b5e950a",
       "revId": "d0c509af12317460d1a721adee43cfff27293d75",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8d8ac48c_458294c2",
+        "filename": "src/frameworks/openal.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 53,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-01-16T15:56:38Z",
+      "side": 1,
+      "message": "Actually, why isn\u0027t this all in `State`? I\u0027m not sure why we need `ContextMap` at all…",
+      "parentUuid": "86f8baaf_3cb3d91e",
+      "revId": "d0c509af12317460d1a721adee43cfff27293d75",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

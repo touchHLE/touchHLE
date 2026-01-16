@@ -3,6 +3,23 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "c9f592a4_96da5ef3",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 16
+      },
+      "lineNbr": 8,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-01-16T14:09:40Z",
+      "side": 1,
+      "message": "It would probably be good to mention in the commit message body that you have removed the refurbishing mechanism and why.",
+      "revId": "15b7e27726e1573d1a30fae137a3ca1024ab370b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "dceb7ee4_d9aa0da1",
         "filename": "src/mem/host.rs",
         "patchSetId": 16

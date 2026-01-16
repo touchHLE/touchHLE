@@ -16,6 +16,24 @@
       "message": "Assuming that we should not retain an observer, it doesn\u0027t mean that object should not be retained.\n\nImaging the following scenario:\n1. App retains observer.\n2. [NSNotificationCenter addObserver:observer ... object:object] is called\n3. App releases the object.\n4. During delivery of notification to the observer the object would be deallocated.\n\nThis will create a problem (and it seems to occur in the DungeonHunter 2 iOS version).\n\nI think we should keep retaining the object.",
       "revId": "f466702f5a3aff042af577de29b2d58ac2ccb4ca",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "e4af6e85_7bf5fa58",
+        "filename": "src/frameworks/foundation/ns_notification_center.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 94,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2026-01-16T10:24:11Z",
+      "side": 0,
+      "message": "Done",
+      "parentUuid": "a52b50be_3a02a1d9",
+      "revId": "f466702f5a3aff042af577de29b2d58ac2ccb4ca",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "90552254_aa7abee6",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 45
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-01-16T15:43:03Z",
+      "side": 1,
+      "message": "You haven\u0027t actually implemented the feature…",
+      "revId": "b76434d875673f04294dd5f50f697c97653c496c",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "67963f36_2fecda59",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 45
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-01-16T15:43:03Z",
+      "side": 1,
+      "message": "You haven\u0027t actually implemented the feature…",
+      "revId": "b76434d875673f04294dd5f50f697c97653c496c",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

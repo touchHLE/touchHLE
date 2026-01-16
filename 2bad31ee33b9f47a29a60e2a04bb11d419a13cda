@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3d301c72_e6c07e7d",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 14
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-01-16T01:15:00Z",
+      "side": 1,
+      "message": "For v0.3.0 we\u0027re going to do the scary things like supporting coroutines, so maybe we can merge this too.",
+      "revId": "2bad31ee33b9f47a29a60e2a04bb11d419a13cda",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a09e5165_13faf6a4",
+        "filename": "src/mem/host.rs",
+        "patchSetId": 14
+      },
+      "lineNbr": 14,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-01-16T01:15:00Z",
+      "side": 1,
+      "message": "Do such hosts even exist? I\u0027ve never heard of a modern target with pages _smaller_ than 4KiB, the interesting stuff is new targets that have _larger_ ones…",
+      "revId": "2bad31ee33b9f47a29a60e2a04bb11d419a13cda",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

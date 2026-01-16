@@ -16,6 +16,24 @@
       "message": "I feel like this doesn\u0027t belong in `src/objc/classes.rs`, but it might be an awkward fit in `src/objc/properties.rs`? Shrug.",
       "revId": "a22f1952942b3702570d11ae7a6d1e5b7122766c",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f85b1067_5dd1c18c",
+        "filename": "src/objc/classes.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 200,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2026-01-16T00:11:10Z",
+      "side": 1,
+      "message": "I moved it over, I think it does make more sense that way.",
+      "parentUuid": "e5cd443f_8796e67a",
+      "revId": "a22f1952942b3702570d11ae7a6d1e5b7122766c",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

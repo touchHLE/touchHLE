@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "cbe76c05_1d29200c",
+        "filename": "tests/TestApp_source/cli_tests.m",
+        "patchSetId": 5
+      },
+      "lineNbr": 310,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-01-16T18:11:30Z",
+      "side": 1,
+      "message": "Please following what is done for the most of other tests: use decreasing numbers stating from -1 to report failures. (your tests are always returning 1 on failure)",
+      "revId": "73715519b30f5443201e5f86ffcab8def5226cbf",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "66df7a2f_6b4735de",
+        "filename": "tests/TestApp_source/cli_tests.m",
+        "patchSetId": 5
+      },
+      "lineNbr": 3187,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-01-16T18:11:30Z",
+      "side": 1,
+      "message": "All of thosen new tests are failing for me on macOS after running `cargo test`\n\nMoreover, test_sscanf and test_swscanf are now failing too.\n\nHave you run the tests yourself?",
+      "revId": "73715519b30f5443201e5f86ffcab8def5226cbf",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

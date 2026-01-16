@@ -33,6 +33,24 @@
       "message": "Do such hosts even exist? I\u0027ve never heard of a modern target with pages _smaller_ than 4KiB, the interesting stuff is new targets that have _larger_ ones…",
       "revId": "2bad31ee33b9f47a29a60e2a04bb11d419a13cda",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "62a7f991_43ed9fe1",
+        "filename": "src/mem/host.rs",
+        "patchSetId": 14
+      },
+      "lineNbr": 14,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2026-01-16T01:34:31Z",
+      "side": 1,
+      "message": "If you go old enough, but for us practically speaking I dont think so. I brought that concern up previously, but added it just in case. Happy to remove it since it makes everything simpler.",
+      "parentUuid": "a09e5165_13faf6a4",
+      "revId": "2bad31ee33b9f47a29a60e2a04bb11d419a13cda",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

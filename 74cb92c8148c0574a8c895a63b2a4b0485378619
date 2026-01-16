@@ -73,6 +73,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "0f76635d_7228ceb7",
+        "filename": "src/frameworks/uikit/ui_font.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 154,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2026-01-16T19:05:08Z",
+      "side": 1,
+      "message": "Yep, I saw that one, from what I can tell the Core Text descent op returns a positive value, when below the baseline.",
+      "parentUuid": "37b82a46_043f4d0a",
+      "revId": "74cb92c8148c0574a8c895a63b2a4b0485378619",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "b2777b6a_b159dfe2",
         "filename": "src/frameworks/uikit/ui_font.rs",
         "patchSetId": 5

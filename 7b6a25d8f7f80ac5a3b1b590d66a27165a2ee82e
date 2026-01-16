@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "513d453f_04f265b4",
+        "filename": "src/libc/semaphore.rs",
+        "patchSetId": 33
+      },
+      "lineNbr": 183,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-01-16T18:24:58Z",
+      "side": 1,
+      "message": "please separate those changes to their own commit, it will be easier to review/merge. (as you\u0027re alos using those functions on other ps)",
+      "revId": "7b6a25d8f7f80ac5a3b1b590d66a27165a2ee82e",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

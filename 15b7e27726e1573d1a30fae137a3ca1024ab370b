@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "dceb7ee4_d9aa0da1",
+        "filename": "src/mem/host.rs",
+        "patchSetId": 16
+      },
+      "lineNbr": 45,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-01-16T14:08:30Z",
+      "side": 1,
+      "message": "Please write KiB and not KB here. I don\u0027t think there\u0027s many places where we use these units but I want to be consistent.",
+      "revId": "15b7e27726e1573d1a30fae137a3ca1024ab370b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

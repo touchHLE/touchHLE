@@ -51,6 +51,24 @@
       "message": "Could you please add a comment explaining why oberserver is not retained?\nit would be also nice to add link to apple\u0027s docs or stackoverflow question with more explanations",
       "revId": "f466702f5a3aff042af577de29b2d58ac2ccb4ca",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "05a8db10_d5430e23",
+        "filename": "src/frameworks/foundation/ns_notification_center.rs",
+        "patchSetId": 4
+      },
+      "lineNbr": 93,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2026-01-17T15:18:16Z",
+      "side": 0,
+      "message": "Done",
+      "parentUuid": "39904f1c_e4b8992d",
+      "revId": "f466702f5a3aff042af577de29b2d58ac2ccb4ca",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

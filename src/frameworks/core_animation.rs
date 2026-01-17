@@ -9,6 +9,7 @@
 //! - Apple's [Core Animation Programming Guide](https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/CoreAnimation_guide/Introduction/Introduction.html)
 
 pub mod ca_animation;
+pub mod ca_display_link;
 pub mod ca_eagl_layer;
 pub mod ca_layer;
 pub mod ca_media_timing_function;
@@ -32,6 +33,7 @@ pub const DYLIB: crate::dyld::HostDylib = crate::dyld::HostDylib {
     aliases: &[],
     class_exports: &[
         ca_animation::CLASSES,
+        ca_display_link::CLASSES,
         ca_eagl_layer::CLASSES,
         ca_layer::CLASSES,
         ca_media_timing_function::CLASSES,

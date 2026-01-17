@@ -13,14 +13,14 @@ use crate::dyld::{ConstantExports, HostConstant};
 use crate::environment::ThreadId;
 use crate::frameworks::audio_toolbox::audio_queue::{handle_audio_queue, AudioQueueRef};
 use crate::frameworks::audio_toolbox::audio_unit::{render_audio_unit, AudioUnit};
-use crate::frameworks::core_animation::ca_transaction;
+use crate::frameworks::core_animation::{ca_display_link, ca_transaction};
 use crate::frameworks::core_foundation::cf_run_loop::{
     kCFRunLoopCommonModes, kCFRunLoopDefaultMode, CFRunLoopRef,
 };
 use crate::frameworks::{core_animation, media_player, uikit};
 use crate::objc::{id, msg, objc_classes, release, retain, Class, ClassExports, HostObject};
 use crate::Environment;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 /// `NSString*`
@@ -53,6 +53,8 @@ struct NSRunLoopHostObject {
     /// Strong references to `NSTimer*` in no particular order. Timers are owned
     /// by the run loop. The timer must remove itself when invalidated.
     timers: Vec<id>,
+    /// Strong references to `CADisplayLink*`
+    display_links: HashMap<id, HashSet<NSRunLoopMode>>,
 }
 impl HostObject for NSRunLoopHostObject {}
 
@@ -182,6 +184,78 @@ pub(super) fn remove_timer(env: &mut Environment, run_loop: id, timer: id) {
     }
 }
 
+/// For use by CADisplayLink.
+pub fn add_display_link_for_mode(
+    env: &mut Environment,
+    run_loop: id,
+    display_link: id,
+    mode: NSRunLoopMode,
+) {
+    let default_mode = ns_string::get_static_str(env, NSDefaultRunLoopMode);
+    let common_modes = ns_string::get_static_str(env, NSRunLoopCommonModes);
+    // TODO: handle other modes
+    assert!(
+        msg![env; mode isEqualToString:default_mode]
+            || msg![env; mode isEqualToString:common_modes]
+    );
+    if !env
+        .objc
+        .borrow_mut::<NSRunLoopHostObject>(run_loop)
+        .display_links
+        .contains_key(&display_link)
+    {
+        retain(env, display_link);
+    }
+    env.objc
+        .borrow_mut::<NSRunLoopHostObject>(run_loop)
+        .display_links
+        .entry(display_link)
+        .or_default()
+        .insert(mode);
+}
+
+pub fn remove_display_link_for_mode(
+    env: &mut Environment,
+    run_loop: id,
+    display_link: id,
+    mode: NSRunLoopMode,
+) {
+    let display_links = &mut env
+        .objc
+        .borrow_mut::<NSRunLoopHostObject>(run_loop)
+        .display_links;
+    let display_link_modes = display_links.get_mut(&display_link).unwrap();
+    display_link_modes.remove(&mode);
+    if display_link_modes.is_empty() {
+        display_links.remove(&display_link);
+        release(env, display_link);
+    }
+}
+
+pub fn remove_display_link(env: &mut Environment, run_loop: id, display_link: id) {
+    if env
+        .objc
+        .borrow_mut::<NSRunLoopHostObject>(run_loop)
+        .display_links
+        .remove(&display_link)
+        .is_some()
+    {
+        release(env, display_link);
+    }
+}
+
+pub fn remove_display_link_from_all_run_loops(env: &mut Environment, display_link: id) {
+    for (_thread_id, run_loop) in env
+        .framework_state
+        .foundation
+        .ns_run_loop
+        .run_loops
+        .to_owned()
+    {
+        remove_display_link(env, run_loop, display_link);
+    }
+}
+
 /// Run the run loop for just a single iteration. This is a special mode just
 /// for the app picker, since we don't have `runMode:beforeDate:` yet.
 /// (TODO: implement those to replace this.)
@@ -259,6 +333,16 @@ pub fn run_run_loop(
             let next_due = ns_timer::handle_timer(env, timer);
             limit_sleep_time(&mut sleep_until, next_due);
             release(env, timer);
+        }
+
+        for (ca_display_link, _) in env
+            .objc
+            .borrow::<NSRunLoopHostObject>(run_loop)
+            .display_links
+            .to_owned()
+            .iter()
+        {
+            ca_display_link::trigger_display_link(env, *ca_display_link);
         }
 
         // TODO: We currently don't properly handle if an audio queue or audio
@@ -343,6 +427,7 @@ fn run_loop_for_thread(env: &mut Environment, this: Class, thread_id: ThreadId) 
             audio_units: Vec::new(),
             audio_queues: Vec::new(),
             timers: Vec::new(),
+            display_links: HashMap::new(),
         });
         // TODO: is it OK to allocate static object for all threads,
         // not only main one?

@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5b782369_f0945fa9",
+        "filename": "src/libc/posix_io/statvfs.rs",
+        "patchSetId": 8
+      },
+      "lineNbr": 41,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-01-17T20:00:16Z",
+      "side": 1,
+      "message": "I would suggest we copy the values from our statfs() implementation where possible. @alexander.cieslewicz@gmail.com may have opinions here?",
+      "revId": "9486003b73adb613aeb84a14028100dddfb68725",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

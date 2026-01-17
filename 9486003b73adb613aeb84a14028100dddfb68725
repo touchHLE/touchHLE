@@ -34,6 +34,24 @@
       "parentUuid": "5b782369_f0945fa9",
       "revId": "9486003b73adb613aeb84a14028100dddfb68725",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b57313c4_0cd86ef7",
+        "filename": "src/libc/posix_io/statvfs.rs",
+        "patchSetId": 8
+      },
+      "lineNbr": 41,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-01-17T20:58:48Z",
+      "side": 1,
+      "message": "Specifically I would like it if we don\u0027t copy-paste the hardcoded values and actually, like, call the same internal function in both cases or something like that.",
+      "parentUuid": "fa6f7815_5fae1bf2",
+      "revId": "9486003b73adb613aeb84a14028100dddfb68725",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

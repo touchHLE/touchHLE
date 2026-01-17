@@ -33,6 +33,24 @@
       "message": "This should reflect the name of the property (drop set_ prefix)",
       "revId": "ba3369b83e9fc3fffe2c93037b1984f7ea8782f6",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "950dc92d_03a30f68",
+        "filename": "src/frameworks/core_animation/ca_layer.rs",
+        "patchSetId": 4
+      },
+      "lineNbr": 52,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2026-01-17T19:39:44Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "cc438f7d_dcbf4f9c",
+      "revId": "ba3369b83e9fc3fffe2c93037b1984f7ea8782f6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

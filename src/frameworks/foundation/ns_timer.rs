@@ -159,6 +159,13 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 };
 
+/// For use by `CADisplayLink`
+pub fn set_time_interval(env: &mut Environment, timer: id, interval: NSTimeInterval) {
+    let host_object = env.objc.borrow_mut::<NSTimerHostObject>(timer);
+    host_object.ns_interval = interval;
+    host_object.rust_interval = Duration::from_secs_f64(interval);
+}
+
 /// For use by `NSRunLoop`
 pub(super) fn set_run_loop(env: &mut Environment, timer: id, run_loop: id) {
     let host_object = env.objc.borrow_mut::<NSTimerHostObject>(timer);

@@ -52,6 +52,24 @@
       "parentUuid": "fa6f7815_5fae1bf2",
       "revId": "9486003b73adb613aeb84a14028100dddfb68725",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "94f26828_6405a1a9",
+        "filename": "src/libc/posix_io/statvfs.rs",
+        "patchSetId": 8
+      },
+      "lineNbr": 41,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2026-01-17T21:52:09Z",
+      "side": 1,
+      "message": "For what it\u0027s worth. The docs say that statvfs is implemented as a wrapper around statfs. Since we know have the windows and libc deps included maybe it\u0027s we can report the live stats from the sandbox dir. Though that\u0027s probably for later.",
+      "parentUuid": "b57313c4_0cd86ef7",
+      "revId": "9486003b73adb613aeb84a14028100dddfb68725",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

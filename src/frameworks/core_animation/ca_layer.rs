@@ -274,8 +274,6 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 - (())setFrame:(CGRect)frame {
     let CALayerHostObject {
-        bounds,
-        position,
         anchor_point,
         affine_transform,
         ..
@@ -293,14 +291,17 @@ pub const CLASSES: ClassExports = objc_classes! {
         size: frame.size
     }).size;
     let transformed_offset = inverse_transform.apply_to_point(CGPoint { x: 0.0, y: 0.0 });
-    *position = CGPoint {
+
+    let new_position = CGPoint {
         x: frame.origin.x + transformed_offset.x,
         y: frame.origin.y + transformed_offset.y,
     };
-    *bounds = CGRect {
+    () = msg![env; this setPosition:new_position];
+    let new_bounds = CGRect {
         origin: CGPoint { x: 0.0, y: 0.0 },
         size: transformed_size,
     };
+    () = msg![env; this setBounds:new_bounds];
 }
 
 - (bool)isHidden {

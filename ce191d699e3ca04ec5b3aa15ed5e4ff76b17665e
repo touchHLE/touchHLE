@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "1b8c3e45_7a2d99dc",
+        "filename": "src/frameworks/media_player/movie_player.rs",
+        "patchSetId": 30
+      },
+      "lineNbr": 138,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2026-01-18T00:06:55Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "4703a69c_bd634803",
+      "revId": "ce191d699e3ca04ec5b3aa15ed5e4ff76b17665e",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "d3f395dd_5c8dc42c",
@@ -37,6 +55,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "532be905_82b23242",
+        "filename": "src/frameworks/media_player/movie_player.rs",
+        "patchSetId": 30
+      },
+      "lineNbr": 157,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2026-01-18T00:06:55Z",
+      "side": 1,
+      "message": "I\u0027ll double check in a bit, i don\u0027t remember off the top of my head",
+      "parentUuid": "d3f395dd_5c8dc42c",
+      "revId": "ce191d699e3ca04ec5b3aa15ed5e4ff76b17665e",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "5cf93c6c_4c5862bf",
         "filename": "src/frameworks/media_player/movie_player.rs",
         "patchSetId": 30
@@ -48,6 +84,24 @@
       "writtenOn": "2026-01-16T18:24:09Z",
       "side": 1,
       "message": "ugh i really don\u0027t like adding such delays",
+      "revId": "ce191d699e3ca04ec5b3aa15ed5e4ff76b17665e",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "e34af95f_07464549",
+        "filename": "src/frameworks/media_player/movie_player.rs",
+        "patchSetId": 30
+      },
+      "lineNbr": 172,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2026-01-18T00:06:55Z",
+      "side": 1,
+      "message": "Honestly i hate it as well, but some apps (at least BIA, HOS, and spore origins i think?) do use an actual usleep call (not as long as 1 second, but it\u0027s better to be safe here).",
+      "parentUuid": "5cf93c6c_4c5862bf",
       "revId": "ce191d699e3ca04ec5b3aa15ed5e4ff76b17665e",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

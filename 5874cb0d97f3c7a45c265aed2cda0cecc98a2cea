@@ -35,6 +35,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "2e6d154a_df723ca0",
+        "filename": "src/audio/openal.rs",
+        "patchSetId": 39
+      },
+      "lineNbr": 77,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2026-01-18T00:25:01Z",
+      "side": 1,
+      "message": "For OpenGL, we want avoid changing the current context to itself since context changes are expensive, so we manually check first. We don\u0027t do this with OpenAL since OpenALsoft checks itself.",
+      "parentUuid": "e9024d6c_b242a903",
+      "revId": "5874cb0d97f3c7a45c265aed2cda0cecc98a2cea",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "71d750e8_c05eee22",
@@ -65,6 +83,30 @@
       "writtenOn": "2026-01-16T15:54:32Z",
       "side": 1,
       "message": "This really feels like it should be a `match` statement.",
+      "range": {
+        "startLine": 364,
+        "startChar": 4,
+        "endLine": 371,
+        "endChar": 39
+      },
+      "revId": "5874cb0d97f3c7a45c265aed2cda0cecc98a2cea",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "a543815d_ea9475cd",
+        "filename": "src/frameworks/openal.rs",
+        "patchSetId": 39
+      },
+      "lineNbr": 371,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2026-01-18T00:25:01Z",
+      "side": 1,
+      "message": "Replaced it with try_make_current, hope that\u0027s ok.",
+      "parentUuid": "bc524228_696c319b",
       "range": {
         "startLine": 364,
         "startChar": 4,

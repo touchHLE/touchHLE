@@ -16,6 +16,24 @@
       "message": "this is suspicious, as retain count would +2 here.",
       "revId": "3eeb621252b15fffa79fad3c63d7d06b7787b3af",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9596f011_fcf29812",
+        "filename": "src/frameworks/media_player/movie_player.rs",
+        "patchSetId": 33
+      },
+      "lineNbr": 103,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2026-01-18T20:50:49Z",
+      "side": 1,
+      "message": "The notification firing causes a release, so it gets bumped back down",
+      "parentUuid": "c1464039_243d7426",
+      "revId": "3eeb621252b15fffa79fad3c63d7d06b7787b3af",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

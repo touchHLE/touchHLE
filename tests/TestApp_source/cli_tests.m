@@ -1138,8 +1138,8 @@ int test_thread_suspend_resume() {
 }
 
 int done = 0, done2 = 0;
-pthread_mutex_t m;
-pthread_cond_t c, c2;
+pthread_mutex_t m, m_static;
+pthread_cond_t c, c2, c_static, c2_static;
 
 void thr_exit() {
   pthread_mutex_lock(&m);
@@ -1190,6 +1190,30 @@ int test_cond_var() {
   done = 1;
   pthread_cond_broadcast(&c);
   pthread_mutex_unlock(&m);
+  pthread_join(p1, NULL);
+  pthread_join(p2, NULL);
+  pthread_join(p3, NULL);
+
+  return done == 1 ? 0 : -1;
+}
+
+int test_cond_var_static() {
+  pthread_t p;
+
+  pthread_create(&p, NULL, child, NULL);
+  thr_join();
+
+  // Should wake up all threads
+  pthread_t p1, p2, p3;
+  pthread_cond_init(&c2_static, NULL);
+  pthread_create(&p1, NULL, child, NULL);
+  pthread_create(&p2, NULL, child, NULL);
+  pthread_create(&p3, NULL, child, NULL);
+  usleep(100);
+  pthread_mutex_lock(&m_static);
+  done = 1;
+  pthread_cond_broadcast(&c_static);
+  pthread_mutex_unlock(&m_static);
   pthread_join(p1, NULL);
   pthread_join(p2, NULL);
   pthread_join(p3, NULL);
@@ -4309,6 +4333,7 @@ struct {
     FUNC_DEF(test_open),
     FUNC_DEF(test_close),
     FUNC_DEF(test_cond_var),
+    FUNC_DEF(test_cond_var_static),
     FUNC_DEF(test_pthread_mutex_normal),
     FUNC_DEF(test_pthread_mutex_recursive_trylock),
     FUNC_DEF(test_CFMutableDictionary_NullCallbacks),

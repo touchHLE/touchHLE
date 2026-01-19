@@ -6,6 +6,7 @@
 //! `mach_time.h`
 
 use crate::dyld::{export_c_func, FunctionExports};
+use crate::libc::mach::core_types::{kern_return_t, KERN_SUCCESS};
 use crate::mem::{MutPtr, SafeRead};
 use crate::Environment;
 use std::time::Instant;
@@ -16,10 +17,6 @@ struct struct_mach_timebase_info {
     denominator: u32,
 }
 unsafe impl SafeRead for struct_mach_timebase_info {}
-
-#[allow(non_camel_case_types)]
-type kern_return_t = i32;
-const KERN_SUCCESS: kern_return_t = 0;
 
 fn mach_timebase_info(
     env: &mut Environment,

@@ -6,6 +6,29 @@
 //! Core mach types
 
 #![allow(non_camel_case_types)]
+
+use crate::mem::{MutPtr, SafeRead};
+
+pub type kern_return_t = i32;
+
 pub type natural_t = u32;
 pub type integer_t = i32;
 pub type boolean_t = i32;
+
+pub type task = std::ffi::c_void;
+pub type task_t = MutPtr<task>;
+
+pub type vm_size_t = natural_t;
+
+pub type policy_t = i32;
+
+pub type mach_msg_type_number_t = natural_t;
+
+#[repr(C, packed)]
+pub struct time_value_t {
+    pub seconds: integer_t,
+    pub microseconds: integer_t,
+}
+unsafe impl SafeRead for time_value_t {}
+
+pub const KERN_SUCCESS: kern_return_t = 0;

@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8b95cec7_15c4ca09",
+        "filename": "src/frameworks/uikit/ui_font.rs",
+        "patchSetId": 21
+      },
+      "lineNbr": 161,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2026-01-19T19:33:21Z",
+      "side": 1,
+      "message": "I feel like something wrong is going on here. I could see the leading being scaled in some way, but in my mind it make no sense for the gap be \u003e than the height of the text itself. Do the descender and ascender need to be scaled separately?",
+      "range": {
+        "startLine": 161,
+        "startChar": 4,
+        "endLine": 161,
+        "endChar": 118
+      },
+      "revId": "fccc936288d4e581fb392c89514d17dac2a6aff4",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

@@ -1183,16 +1183,95 @@ int test_cond_var() {
     return -1;
 
   // Should wake up all threads
+  int result;
   pthread_t p1, p2, p3;
-  pthread_cond_init(&c2, NULL);
+  result = pthread_cond_init(&c2, NULL);
+  if (result != 0)
+    return -2;
   pthread_create(&p1, NULL, child2, NULL);
   pthread_create(&p2, NULL, child2, NULL);
   pthread_create(&p3, NULL, child2, NULL);
   usleep(100);
-  pthread_mutex_lock(&m);
+  result = pthread_mutex_lock(&m);
+  if (result != 0)
+    return -3;
   done2 = 1;
-  pthread_cond_broadcast(&c2);
-  pthread_mutex_unlock(&m);
+  result = pthread_cond_broadcast(&c2);
+  if (result != 0)
+    return -4;
+  result = pthread_mutex_unlock(&m);
+  if (result != 0)
+    return -5;
+  pthread_join(p1, NULL);
+  pthread_join(p2, NULL);
+  pthread_join(p3, NULL);
+
+  return 0;
+}
+
+pthread_mutex_t m_static = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t c_static = PTHREAD_COND_INITIALIZER, c2_static = PTHREAD_COND_INITIALIZER;
+
+void thr_exit_static() {
+  pthread_mutex_lock(&m_static);
+  done = 1;
+  pthread_cond_signal(&c_static);
+  pthread_mutex_unlock(&m_static);
+}
+
+void *child_static(void *arg) {
+  thr_exit_static();
+  return NULL;
+}
+
+void *child2_static(void *arg) {
+  pthread_mutex_lock(&m_static);
+  while (done2 == 0) {
+    pthread_cond_wait(&c2_static, &m_static);
+  }
+  pthread_mutex_unlock(&m_static);
+  return NULL;
+}
+
+void thr_join_static() {
+  pthread_mutex_lock(&m_static);
+  while (done == 0) {
+    pthread_cond_wait(&c_static, &m_static);
+  }
+  pthread_mutex_unlock(&m_static);
+}
+
+int test_cond_var_static() {
+  pthread_t p;
+  done = 0;
+  done2 = 0;
+
+  // We test that statically allocated cond vars and mutexes work
+  // by using them without calling pthread_mutex_init and pthread_cond_init
+
+  pthread_create(&p, NULL, child_static, NULL);
+  thr_join_static();
+
+  if (done != 1)
+    return -1;
+
+  // Should wake up all threads
+  int result;
+  pthread_t p1, p2, p3;
+  pthread_create(&p1, NULL, child2_static, NULL);
+  pthread_create(&p2, NULL, child2_static, NULL);
+  pthread_create(&p3, NULL, child2_static, NULL);
+  usleep(100);
+  result = pthread_mutex_lock(&m_static);
+  if (result != 0)
+    return -2;
+  done2 = 1;
+  result = pthread_cond_broadcast(&c2_static);
+  if (result != 0)
+    return -3;
+  result = pthread_mutex_unlock(&m_static);
+  if (result != 0)
+    return -4;
   pthread_join(p1, NULL);
   pthread_join(p2, NULL);
   pthread_join(p3, NULL);
@@ -4312,6 +4391,7 @@ struct {
     FUNC_DEF(test_open),
     FUNC_DEF(test_close),
     FUNC_DEF(test_cond_var),
+    FUNC_DEF(test_cond_var_static),
     FUNC_DEF(test_pthread_mutex_normal),
     FUNC_DEF(test_pthread_mutex_recursive_trylock),
     FUNC_DEF(test_CFMutableDictionary_NullCallbacks),

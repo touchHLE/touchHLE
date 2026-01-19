@@ -126,6 +126,19 @@ pub fn pthread_attr_setstacksize(
     env.mem.write(attr, attr_copy);
     0 // success
 }
+fn pthread_attr_setinheritsched(
+    env: &mut Environment,
+    attr: MutPtr<pthread_attr_t>,
+    inheritsched: i32,
+) -> i32 {
+    check_magic!(env, attr, MAGIC_ATTR);
+    log!(
+        "TODO: pthread_attr_setinheritsched({:?}, {})",
+        attr,
+        inheritsched
+    );
+    0 // success
+}
 fn pthread_attr_setschedpolicy(
     env: &mut Environment,
     attr: MutPtr<pthread_attr_t>,
@@ -367,6 +380,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(pthread_attr_setdetachstate(_, _)),
     export_c_func!(pthread_attr_getstacksize(_, _)),
     export_c_func!(pthread_attr_setstacksize(_, _)),
+    export_c_func!(pthread_attr_setinheritsched(_, _)),
     export_c_func!(pthread_attr_setschedpolicy(_, _)),
     export_c_func!(pthread_attr_setschedparam(_, _)),
     export_c_func!(pthread_attr_destroy(_)),

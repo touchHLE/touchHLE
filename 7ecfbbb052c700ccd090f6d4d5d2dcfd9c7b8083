@@ -1,0 +1,44 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ea16faa9_43a21c31",
+        "filename": "src/frameworks/audio_toolbox/audio_queue.rs",
+        "patchSetId": 43
+      },
+      "lineNbr": 14,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-01-19T02:55:21Z",
+      "side": 1,
+      "message": "```suggestion\nuse crate::audio::openal as al;\nuse crate::audio::openal::al_types::*;\nuse crate::audio::openal::{OpenAL, OpenALManager};\n```",
+      "range": {
+        "startLine": 13,
+        "startChar": 0,
+        "endLine": 14,
+        "endChar": 55
+      },
+      "revId": "7ecfbbb052c700ccd090f6d4d5d2dcfd9c7b8083",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "bb3e9f19_11870a11",
+        "filename": "src/frameworks/openal.rs",
+        "patchSetId": 43
+      },
+      "lineNbr": 22,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-01-19T02:55:21Z",
+      "side": 1,
+      "message": "Having a later `use` depend on an earlier `use` like this is kind of disorienting, I\u0027d much prefer this just be merged with the `use` on line 17.",
+      "revId": "7ecfbbb052c700ccd090f6d4d5d2dcfd9c7b8083",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

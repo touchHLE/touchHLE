@@ -139,7 +139,7 @@ pub enum ThreadBlock {
     // Thread is waiting on a semaphore.
     Semaphore(MutPtr<sem_t>),
     // Thread is wating on a condition variable
-    Condition(pthread_cond_t),
+    Condition(MutPtr<pthread_cond_t>),
     // Thread is waiting for another thread to finish (joining).
     Joining(ThreadId, MutPtr<MutVoidPtr>),
     // Deferred guest-to-host return

@@ -6,9 +6,9 @@
 //! Mach VM functions
 
 use crate::dyld::{export_c_func, FunctionExports};
+use crate::libc::mach::core_types::{kern_return_t, KERN_SUCCESS};
 use crate::libc::mach::init::MACH_TASK_SELF;
 use crate::libc::mach::port::mach_port_t;
-use crate::libc::mach::thread_info::{kern_return_t, KERN_SUCCESS};
 use crate::mem::{MutPtr, Ptr, PAGE_SIZE, PAGE_SIZE_ALIGN_MASK};
 use crate::Environment;
 use std::collections::HashMap;

@@ -15,18 +15,15 @@
 // TODO: implement port rights
 
 use crate::dyld::{export_c_func, FunctionExports};
-use crate::libc::mach::core_types::natural_t;
+use crate::libc::mach::core_types::{kern_return_t, mach_msg_type_name_t, natural_t, KERN_SUCCESS};
 use crate::libc::mach::init::MACH_TASK_SELF;
 use crate::libc::mach::port::mach_port_t;
-use crate::libc::mach::thread_info::{kern_return_t, KERN_SUCCESS};
 use crate::mem::MutPtr;
 use crate::Environment;
 
 type ipc_space_t = mach_port_t;
 type mach_port_name_t = natural_t;
 type mach_port_right_t = natural_t;
-
-type mach_msg_type_name_t = u32;
 
 fn mach_port_allocate(
     _env: &mut Environment,

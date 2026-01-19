@@ -8,11 +8,12 @@
 use super::NSTimeInterval;
 use crate::dyld::HostFunction;
 use crate::frameworks::core_foundation::CFTypeRef;
+use crate::frameworks::foundation::NSUInteger;
 use crate::libc::pthread::thread::{
-    pthread_attr_init, pthread_attr_setdetachstate, pthread_attr_t, pthread_create, pthread_self,
-    pthread_t, PTHREAD_CREATE_DETACHED,
+    pthread_attr_init, pthread_attr_setdetachstate, pthread_attr_setstacksize, pthread_attr_t,
+    pthread_create, pthread_self, pthread_t, PTHREAD_CREATE_DETACHED,
 };
-use crate::mem::{guest_size_of, MutPtr};
+use crate::mem::{guest_size_of, Mem, MutPtr};
 use crate::objc::{
     id, msg_send, nil, objc_classes, release, retain, todo_objc_setter, Class, ClassExports,
     HostObject, NSZonePtr, SEL,
@@ -41,6 +42,7 @@ struct NSThreadHostObject {
     thread_dictionary: id,
     owned: bool,
     finished: bool,
+    stack_size: NSUInteger,
 }
 impl HostObject for NSThreadHostObject {}
 
@@ -58,6 +60,7 @@ pub const CLASSES: ClassExports = objc_classes! {
         thread_dictionary: nil,
         owned: false,
         finished: false,
+        stack_size: Mem::SECONDARY_THREAD_DEFAULT_STACK_SIZE,
     });
     env.objc.alloc_object(this, host_object, &mut env.mem)
 }
@@ -142,6 +145,8 @@ pub const CLASSES: ClassExports = objc_classes! {
     let attr: MutPtr<pthread_attr_t> = env.mem.alloc(guest_size_of::<pthread_attr_t>()).cast();
     pthread_attr_init(env, attr);
 
+    let stack_size = env.objc.borrow::<NSThreadHostObject>(this).stack_size;
+    pthread_attr_setstacksize(env, attr, stack_size);
     pthread_attr_setdetachstate(env, attr, PTHREAD_CREATE_DETACHED);
     let thread_ptr: MutPtr<pthread_t> = env.mem.alloc(guest_size_of::<pthread_t>()).cast();
 
@@ -189,6 +194,18 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (bool)setThreadPriority:(f64)priority {
     todo_objc_setter!(this, priority);
     true
+}
+
+// "To change the stack size, you must set this property before starting your
+// thread. Setting the stack size after the thread has started changes the
+// attribute size (which is reflected by the stackSize method), but it does
+// not affect the actual number of pages set aside for the thread."
+// https://developer.apple.com/documentation/foundation/thread/stacksize?language=objc
+- (NSUInteger)stackSize {
+    env.objc.borrow::<NSThreadHostObject>(this).stack_size
+}
+- (())setStackSize:(NSUInteger)size {
+    env.objc.borrow_mut::<NSThreadHostObject>(this).stack_size = size;
 }
 
 - (bool)isFinished {

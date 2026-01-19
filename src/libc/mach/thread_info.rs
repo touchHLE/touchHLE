@@ -11,34 +11,24 @@
 
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::environment::ThreadBlock;
-use crate::libc::mach::core_types::{boolean_t, integer_t, natural_t};
+use crate::libc::mach::core_types::{
+    boolean_t, integer_t, kern_return_t, mach_msg_type_number_t, natural_t, policy_t, time_value_t,
+    KERN_SUCCESS,
+};
 use crate::libc::mach::port::{mach_port_t, MACH_PORT_DEAD, MACH_PORT_NULL};
 use crate::mem::{guest_size_of, MutPtr, SafeRead};
 use crate::Environment;
-
-// TODO: Move these common definitions into separate modules
-pub type kern_return_t = i32;
-pub const KERN_SUCCESS: kern_return_t = 0;
 
 pub type thread_inspect_t = mach_port_t;
 type thread_flavor_t = natural_t;
 type thread_info_t = MutPtr<integer_t>;
 pub type thread_state_flavor_t = i32;
 pub type thread_state_t = MutPtr<natural_t>;
-pub type mach_msg_type_number_t = natural_t;
 
-type policy_t = i32;
 const POLICY_TIMESHARE: policy_t = 1;
 
 const THREAD_BASIC_INFO: thread_flavor_t = 3;
 const THREAD_SCHED_TIMESHARE_INFO: thread_flavor_t = 10;
-
-#[repr(C, packed)]
-struct time_value_t {
-    seconds: integer_t,
-    microseconds: integer_t,
-}
-unsafe impl SafeRead for time_value_t {}
 
 #[repr(C, packed)]
 struct thread_basic_info {

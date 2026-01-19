@@ -8,6 +8,7 @@
 use crate::abi::GuestFunction;
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::libc::errno::{EDEADLK, EINVAL, ESRCH};
+use crate::libc::mach::port::mach_port_t;
 use crate::mem::{
     self, ConstPtr, ConstVoidPtr, GuestUSize, MutPtr, MutVoidPtr, Ptr, SafeRead, PAGE_SIZE,
 };
@@ -345,9 +346,6 @@ fn pthread_setcanceltype(_env: &mut Environment, type_: i32, oldtype: MutPtr<i32
 fn pthread_testcancel(_env: &mut Environment) {
     log!("TODO: pthread_testcancel()");
 }
-
-#[allow(non_camel_case_types)]
-type mach_port_t = u32;
 
 /// Undocumented Darwin function that returns a `mach_port_t`, which in practice
 /// is used by apps as a unique thread ID.

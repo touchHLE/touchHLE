@@ -29,8 +29,7 @@
 //! - If you want to go deeper, check out "Chapter 4: Inter Process Communication" of [The GNU Mach Reference Manual](https://www.gnu.org/software/hurd/gnumach-doc/mach.pdf).
 
 use crate::dyld::{export_c_func, FunctionExports};
-use crate::libc::mach::core_types::{boolean_t, integer_t, natural_t};
-use crate::libc::mach::thread_info::{kern_return_t, KERN_SUCCESS};
+use crate::libc::mach::core_types::{boolean_t, integer_t, kern_return_t, natural_t, KERN_SUCCESS};
 use crate::mem::MutVoidPtr;
 use crate::Environment;
 

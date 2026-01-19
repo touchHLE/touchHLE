@@ -140,8 +140,8 @@ pub enum ThreadBlock {
     Mutex(MutexId),
     // Thread is waiting on a semaphore.
     Semaphore(MutPtr<sem_t>),
-    // Thread is waiting on a condition variable
-    Condition(pthread_cond_t),
+    // Thread is wating on a condition variable
+    Condition(MutPtr<pthread_cond_t>),
     // Thread is waiting for another thread to finish (joining).
     Joining(ThreadId, MutPtr<MutVoidPtr>),
     // Thread has hit a cpu error, and is waiting to be debugged.

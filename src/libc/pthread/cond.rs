@@ -7,8 +7,9 @@
 
 use super::mutex::pthread_mutex_t;
 use crate::dyld::FunctionExports;
+use crate::libc::errno::EINVAL;
 use crate::libc::pthread::mutex::pthread_mutex_unlock;
-use crate::mem::{ConstPtr, MutPtr, SafeRead};
+use crate::mem::{ConstPtr, MutPtr, Ptr, SafeRead};
 use crate::{export_c_func, Environment};
 use std::collections::{HashMap, VecDeque};
 
@@ -18,17 +19,24 @@ use crate::environment::{MutexId, ThreadBlock, ThreadId};
 pub struct pthread_condattr_t {}
 unsafe impl SafeRead for pthread_condattr_t {}
 
-#[repr(C, packed)]
-pub struct OpaqueCond {
-    _unused: i32,
-}
-unsafe impl SafeRead for OpaqueCond {}
+/// Arbitrarily-chosen magic number for `pthread_cond_t` (not Apple's).
+const MAGIC_COND: u32 = u32::from_be_bytes(*b"COND");
+/// Magic number used by `PTHREAD_COND_INITIALIZER`. This is part of the ABI!
+const MAGIC_COND_STATIC: u32 = 0x3CB0B1BB;
 
-pub type pthread_cond_t = MutPtr<OpaqueCond>;
+/// Apple's implementation is a 4-byte magic number followed by an 24-byte
+/// opaque region. We only have to match the size theirs has.
+#[repr(C, packed)]
+pub struct pthread_cond_t {
+    /// Magic number (must be [MAGIC_COND])
+    magic: u32,
+    _unused: [u32; 6],
+}
+unsafe impl SafeRead for pthread_cond_t {}
 
 #[derive(Default)]
 pub struct State {
-    pub condition_variables: HashMap<pthread_cond_t, CondHostObject>,
+    pub condition_variables: HashMap<MutPtr<pthread_cond_t>, CondHostObject>,
 }
 impl State {
     fn get(env: &Environment) -> &Self {
@@ -51,12 +59,15 @@ pub fn pthread_cond_init(
     attr: ConstPtr<pthread_condattr_t>,
 ) -> i32 {
     assert!(attr.is_null());
-    let opaque = env.mem.alloc_and_write(OpaqueCond { _unused: 0 });
+    let opaque = pthread_cond_t {
+        magic: MAGIC_COND,
+        _unused: [0; 6],
+    };
     env.mem.write(cond, opaque);
 
-    assert!(!State::get(env).condition_variables.contains_key(&opaque));
+    assert!(!State::get(env).condition_variables.contains_key(&cond));
     State::get_mut(env).condition_variables.insert(
-        opaque,
+        cond,
         CondHostObject {
             waiting: VecDeque::new(),
             waking: VecDeque::new(),
@@ -66,11 +77,35 @@ pub fn pthread_cond_init(
     0 // success
 }
 
+fn check_or_register_cond(env: &mut Environment, cond: MutPtr<pthread_cond_t>) -> Result<(), i32> {
+    let magic: u32 = env.mem.read(cond.cast());
+    // This is a statically-initialized cond, we need to register it, and
+    // change the magic number in the process.
+    if magic == MAGIC_COND_STATIC {
+        log_dbg!(
+            "Detected statically-initialized cond at {:?}, registering.",
+            cond
+        );
+        pthread_cond_init(env, cond, Ptr::null());
+        Ok(())
+    } else if magic == MAGIC_COND {
+        Ok(())
+    } else {
+        Err(EINVAL)
+    }
+}
+
 pub fn pthread_cond_wait(
     env: &mut Environment,
     cond: MutPtr<pthread_cond_t>,
     mutex: MutPtr<pthread_mutex_t>,
 ) -> i32 {
+    match check_or_register_cond(env, cond) {
+        Ok(_) => {}
+        Err(e) => {
+            return e;
+        }
+    };
     let res = pthread_mutex_unlock(env, mutex);
     assert_eq!(res, 0);
     log_dbg!(
@@ -80,10 +115,9 @@ pub fn pthread_cond_wait(
     );
     let current_thread = env.current_thread;
     let mutex = env.mem.read(mutex).mutex_id;
-    let cond_var = env.mem.read(cond);
     let host_object = State::get_mut(env)
         .condition_variables
-        .get_mut(&cond_var)
+        .get_mut(&cond)
         .unwrap();
     // The mutex used must be the same as the currently waiting mutex, or there
     // must be no other waiters.
@@ -93,15 +127,20 @@ pub fn pthread_cond_wait(
     );
     host_object.curr_mutex = Some(mutex);
     host_object.waiting.push_back(current_thread);
-    env.yield_thread(ThreadBlock::Condition(cond_var));
+    env.yield_thread(ThreadBlock::Condition(cond));
     0 // success
 }
 
 pub fn pthread_cond_signal(env: &mut Environment, cond: MutPtr<pthread_cond_t>) -> i32 {
-    let cond_var = env.mem.read(cond);
+    match check_or_register_cond(env, cond) {
+        Ok(_) => {}
+        Err(e) => {
+            return e;
+        }
+    };
     let host_object = State::get_mut(env)
         .condition_variables
-        .get_mut(&cond_var)
+        .get_mut(&cond)
         .unwrap();
     if let Some(tid) = host_object.waiting.pop_front() {
         host_object.waking.push_back(tid);
@@ -122,7 +161,12 @@ pub fn pthread_cond_signal(env: &mut Environment, cond: MutPtr<pthread_cond_t>) 
 }
 
 pub fn pthread_cond_broadcast(env: &mut Environment, cond: MutPtr<pthread_cond_t>) -> i32 {
-    let cond_var = env.mem.read(cond);
+    match check_or_register_cond(env, cond) {
+        Ok(_) => {}
+        Err(e) => {
+            return e;
+        }
+    };
     log_dbg!(
         "Thread {} unblocks one thread waiting on condition variable {:?}",
         env.current_thread,
@@ -130,20 +174,24 @@ pub fn pthread_cond_broadcast(env: &mut Environment, cond: MutPtr<pthread_cond_t
     );
     let host_object = State::get_mut(env)
         .condition_variables
-        .get_mut(&cond_var)
+        .get_mut(&cond)
         .unwrap();
     host_object.waking.extend(host_object.waiting.drain(..));
     0 // success
 }
 
 pub fn pthread_cond_destroy(env: &mut Environment, cond: MutPtr<pthread_cond_t>) -> i32 {
-    let cond_var = env.mem.read(cond);
+    match check_or_register_cond(env, cond) {
+        Ok(_) => {}
+        Err(e) => {
+            return e;
+        }
+    };
     let old_object = State::get_mut(env)
         .condition_variables
-        .remove(&cond_var)
+        .remove(&cond)
         .unwrap();
     assert!(old_object.waiting.is_empty() && old_object.waking.is_empty());
-    env.mem.free(cond_var.cast());
     0 // success
 }
 

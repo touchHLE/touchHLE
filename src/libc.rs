@@ -63,6 +63,7 @@ pub const DYLIB: crate::dyld::HostDylib = crate::dyld::HostDylib {
         libkern::os_atomic::FUNCTIONS,
         mach::arm::task::FUNCTIONS,
         mach::arm::thread_act::FUNCTIONS,
+        libkern::task::FUNCTIONS,
         mach::host::FUNCTIONS,
         mach::init::FUNCTIONS,
         mach::mach_port::FUNCTIONS,

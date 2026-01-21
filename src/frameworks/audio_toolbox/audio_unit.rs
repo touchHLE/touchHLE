@@ -327,9 +327,12 @@ pub fn render_audio_unit(env: &mut Environment, audio_unit: AudioUnit) {
     // Calculate number of frames by checking how much time passed since
     // the last render. Limit to 100ms to prevent delay from adding up
     // if it's been too long since the last render.
+    // Ace Combat Xi relies on it being 2048 frames (at 48000Hz, 42ms) or under
+    // If it's higher, flawed game logic causes it to call memset in a loop for
+    // every frame over 2048 until it reaches the provided frame number.
     // TODO: Verify if this behavior is right
     let elapsed_time = now.duration_since(audio_unit_host_object.last_render_time.unwrap());
-    let number_frames = (elapsed_time.as_secs_f64().min(0.1) * sample_rate) as u32;
+    let number_frames = ((elapsed_time.as_secs_f64() * sample_rate) as u32).min(2048);
 
     let bytes_per_channel = stream_format.bits_per_channel / 8;
     let actual_bytes_per_frame = stream_format.channels_per_frame * bytes_per_channel;

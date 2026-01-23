@@ -68,6 +68,24 @@
       "parentUuid": "0cc21a74_ce06a46a",
       "revId": "502e84fa68e3e14dba2a1f2bc9f349dea4043d5a",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9ff7ee60_5172d4e2",
+        "filename": "src/fs.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 1061,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-01-23T22:37:54Z",
+      "side": 1,
+      "message": "In principle, I think we can accept this ps if you add an assertion that directory is read-only (this will guarantee that contents will not change). It would be nice to see some tests as well.\n\n@alexander.cieslewicz@gmail.com i would like to avoid introducing additional complexity for now.",
+      "parentUuid": "6bff0ddc_a70e88ca",
+      "revId": "502e84fa68e3e14dba2a1f2bc9f349dea4043d5a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

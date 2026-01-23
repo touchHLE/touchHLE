@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "dc06fdb5_d307b338",
+        "filename": "tests/TestApp_source/cli_tests.m",
+        "patchSetId": 28
+      },
+      "lineNbr": 39,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-01-23T23:44:15Z",
+      "side": 1,
+      "message": "You need to update `Sanity check tests` to include this file as well, or CI will fail.",
+      "revId": "23da238a4d14db56a08a838aed4abf10d6cfa2c5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

@@ -51,7 +51,9 @@ rusttype = "0.9.3"
 # (The above statements should not understood as legal claims/advice.)
 symphonia = { version = "0.5.3", default-features = false, features = ["adpcm", "wav", "aac", "isomp4", "mp3", "alac"] }
 quick-xml = "0.38.4"
-md5 = "0.7.0"
+digest = "0.10.7"
+md-5 = "0.10.6"
+sha1 = "0.10.6"
 yore = "1.1.0"
 encoding_rs = "0.8.35"
 # We currently use a fork of rust-sdl2 because we need a fix for Android builds

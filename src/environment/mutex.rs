@@ -152,9 +152,9 @@ impl Environment {
         if locking_thread == current_thread {
             match mutex.type_ {
                 MutexType::PTHREAD_MUTEX_NORMAL => {
-                    // This case would be a deadlock, we may as well panic.
-                    panic!(
-                        "Attempted to lock non-error-checking mutex #{mutex_id} for thread {current_thread}, already locked by same thread!",
+                    // This case would be a deadlock, but Ace Combat Xi does it
+                    log!(
+                        "WARNING: Locking non-error-checking mutex #{mutex_id} for thread {current_thread}, already locked by same thread!",
                     );
                 }
                 MutexType::PTHREAD_MUTEX_ERRORCHECK => {

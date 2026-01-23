@@ -210,9 +210,9 @@ impl Environment {
         if locking_thread != current_thread {
             match mutex.type_ {
                 MutexType::PTHREAD_MUTEX_NORMAL => {
-                    // This case is undefined, we may as well panic.
-                    panic!(
-                        "Attempted to unlock non-error-checking mutex #{mutex_id} for thread {current_thread}, locked by different thread {locking_thread}!",
+                    // This case is undefined, however, Ace Combat Xi does this.
+                    log!(
+                        "WARNING: Unlocking non-error-checking mutex #{mutex_id} for thread {current_thread}, locked by different thread {locking_thread}!",
                     );
                 }
                 MutexType::PTHREAD_MUTEX_ERRORCHECK | MutexType::PTHREAD_MUTEX_RECURSIVE => {

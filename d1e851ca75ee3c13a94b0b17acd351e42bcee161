@@ -16,6 +16,24 @@
       "message": "Do you mind to write a test in cli_tests?\nIt should make this fix evident enough to merge",
       "revId": "d1e851ca75ee3c13a94b0b17acd351e42bcee161",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d0faccbb_6190c78c",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 27
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2026-01-23T21:58:06Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "388543e0_a38d0fa6",
+      "revId": "d1e851ca75ee3c13a94b0b17acd351e42bcee161",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

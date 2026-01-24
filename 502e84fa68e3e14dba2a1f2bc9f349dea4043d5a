@@ -86,6 +86,24 @@
       "parentUuid": "6bff0ddc_a70e88ca",
       "revId": "502e84fa68e3e14dba2a1f2bc9f349dea4043d5a",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "61bc0be0_effb8634",
+        "filename": "src/fs.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 1061,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-01-24T00:31:25Z",
+      "side": 1,
+      "message": "Opening a directory and then creating/renaming/deleting files in it seems like it must be pretty uncommon. Simply cloning a list of the files is probably fine even for mutable directories? We could, I guess, `log!()` something as a warning just in case…",
+      "parentUuid": "9ff7ee60_5172d4e2",
+      "revId": "502e84fa68e3e14dba2a1f2bc9f349dea4043d5a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

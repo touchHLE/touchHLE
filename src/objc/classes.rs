@@ -932,6 +932,11 @@ impl ObjC {
             .expect("Could not get class name!")
     }
 
+    pub fn get_superclass(&self, class: Class) -> Class {
+        let &ClassHostObject { superclass, .. } = self.borrow(class);
+        superclass
+    }
+
     pub fn try_get_class_name(&self, class: Class) -> Option<&str> {
         let host_object = self.get_host_object(class)?;
         if let Some(ClassHostObject { name, .. }) = host_object.as_any().downcast_ref() {

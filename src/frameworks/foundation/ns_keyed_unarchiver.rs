@@ -18,7 +18,7 @@ use crate::frameworks::foundation::{NSInteger, NSUInteger};
 use crate::frameworks::uikit::ui_geometry::{
     CGPointFromString, CGRectFromString, CGSizeFromString,
 };
-use crate::mem::{ConstVoidPtr, GuestUSize, MutVoidPtr};
+use crate::mem::{ConstPtr, ConstVoidPtr, GuestUSize, MutPtr, MutVoidPtr};
 use crate::objc::{
     autorelease, id, msg, msg_class, nil, objc_classes, release, retain, ClassExports, HostObject,
     NSZonePtr,
@@ -195,6 +195,19 @@ pub const CLASSES: ClassExports = objc_classes! {
     // on behalf of the caller
     retain(env, object);
     autorelease(env, object)
+}
+
+- (ConstPtr<u8>)decodeBytesForKey:(id)key returnedLength:(MutPtr<NSUInteger>)length {
+    let data = get_value_to_decode_for_key(env, this, key)
+        .and_then(|value| value.as_data())
+        .map_or(Vec::new(), |data| data.to_vec());
+    let len: GuestUSize = data.len().try_into().unwrap();
+    let guest_bytes: MutVoidPtr = env.mem.alloc(len);
+    env.mem
+        .bytes_at_mut(guest_bytes.cast(), len)
+        .copy_from_slice(data.as_slice());
+    env.mem.write(length, len);
+    guest_bytes.cast().cast_const()
 }
 
 - (bool)containsValueForKey:(id)key { // NSString*

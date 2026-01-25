@@ -20,6 +20,23 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "70c0d3a9_258cf4d7",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-01-25T23:19:22Z",
+      "side": 1,
+      "message": "I tested myself and the main conclusion is: even if fseek is allowed, fread will return 0 and set EISDIR errno on attempt to read the directory.\n\nThe tests with different Gameloft\u0027s apps strongly suggest that seeking/reading the directory is a mistake rather than an intended behaviour.\n\nFor now I implemented this improvement https://github.com/touchHLE/touchHLE/commit/4256099917ac9aada4db1055ce939ffaed71009d which would return errors instead of panicking. It is _still_ not on par with iOS, but would do for now.\n\nRegarding this patch set, we couldn\u0027t accept it in the current state (for above reasons), but please free to test CBNK2 on preview builds and see if any follow ups are needed.",
+      "revId": "502e84fa68e3e14dba2a1f2bc9f349dea4043d5a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "90dfca80_be61d71f",
         "filename": "src/fs.rs",
         "patchSetId": 1
@@ -102,6 +119,24 @@
       "side": 1,
       "message": "Opening a directory and then creating/renaming/deleting files in it seems like it must be pretty uncommon. Simply cloning a list of the files is probably fine even for mutable directories? We could, I guess, `log!()` something as a warning just in case…",
       "parentUuid": "9ff7ee60_5172d4e2",
+      "revId": "502e84fa68e3e14dba2a1f2bc9f349dea4043d5a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b737dd96_24a6561a",
+        "filename": "src/fs.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 1061,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-01-25T23:19:22Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "61bc0be0_effb8634",
       "revId": "502e84fa68e3e14dba2a1f2bc9f349dea4043d5a",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

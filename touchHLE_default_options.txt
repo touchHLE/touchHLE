@@ -200,3 +200,7 @@ com.unity3d.3Dworld: --landscape-left --force-composition
 
 # Zombieville
 com.KelliNoda.Zombieville: --landscape-left --force-composition
+
+# Ace Combat Xi
+# Start: Pause, DPad: Pitch/Yaw, Left stick: Pitch/Roll, Left shoulder button: Throttle, X: Brake, Y: Objective, B: Missile, A: Gun
+com.namconetworks.AceCombatXi: --landscape-left --y-tilt-offset=45 --button-to-touch=Start,195,310 --dpad-to-touch=15,150,75,75 --button-to-touch=LeftShoulder,33,263 --button-to-touch=X,115,295  --button-to-touch=Y,355,230 --button-to-touch=B,440,260 --button-to-touch=A,355,300

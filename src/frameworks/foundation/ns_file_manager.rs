@@ -162,14 +162,6 @@ pub const CLASSES: ClassExports = objc_classes! {
                 contents:(id)data // NSData*
               attributes:(id)attributes { // NSDictionary*
     assert!(attributes == nil); // TODO
-
-    let path_str = ns_string::to_rust_string(env, path); // TODO: avoid copy
-    // createFileAtPath: returns true if there's already a file at a given path.
-    // If there's a directory, that's an error, though.
-    if env.fs.is_file(GuestPath::new(&path_str)) {
-        return true;
-    }
-
     if data == nil {
         let empty: id = msg_class![env; NSData new];
         let res: bool = msg![env; empty writeToFile:path atomically:false];

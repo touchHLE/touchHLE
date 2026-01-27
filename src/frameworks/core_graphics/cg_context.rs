@@ -260,6 +260,13 @@ fn CGContextSetBlendMode(_env: &mut Environment, context: CGContextRef, blend_mo
     log_dbg!("CGContextSetBlendMode({:?}, {:?})", context, blend_mode); // log_dbg used because this function is called way too much!
 }
 
+fn CGContextGetUserSpaceToDeviceSpaceTransform(
+    env: &mut Environment,
+    context: CGContextRef,
+) -> CGAffineTransform {
+    CGContextGetCTM(env, context)
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGContextRetain(_)),
     export_c_func!(CGContextRelease(_)),
@@ -280,4 +287,5 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGContextSetInterpolationQuality(_, _)),
     export_c_func!(CGContextSetAlpha(_, _)),
     export_c_func!(CGContextSetBlendMode(_, _)),
+    export_c_func!(CGContextGetUserSpaceToDeviceSpaceTransform(_)),
 ];

@@ -50,6 +50,7 @@ pub(super) struct CGContextHostObject {
     pub(super) transform: CGAffineTransform,
     // TODO: keep more states saved once they are implemented
     pub(super) state_stack: Vec<((CGFloat, CGFloat, CGFloat, CGFloat), CGAffineTransform)>,
+    pub(super) alpha: CGFloat,
 }
 impl HostObject for CGContextHostObject {}
 
@@ -197,6 +198,11 @@ fn CGContextSetInterpolationQuality(
     );
 }
 
+fn CGContextSetAlpha(env: &mut Environment, context: CGContextRef, alpha: CGFloat) {
+    let host_obj = env.objc.borrow_mut::<CGContextHostObject>(context);
+    host_obj.alpha = alpha;
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGContextRetain(_)),
     export_c_func!(CGContextRelease(_)),
@@ -215,4 +221,5 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGContextSaveGState(_)),
     export_c_func!(CGContextRestoreGState(_)),
     export_c_func!(CGContextSetInterpolationQuality(_, _)),
+    export_c_func!(CGContextSetAlpha(_, _)),
 ];

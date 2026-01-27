@@ -84,6 +84,7 @@ pub fn CGBitmapContextCreate(
         rgb_fill_color: (0.0, 0.0, 0.0, 0.0),
         transform: CGAffineTransformIdentity,
         state_stack: Vec::new(),
+        alpha: 1.0,
     };
     let isa = env
         .objc
@@ -587,6 +588,8 @@ pub(super) fn draw_image(
 
     let mut drawer = CGBitmapContextDrawer::new(&env.objc, &mut env.mem, context);
 
+    let ctx_alpha: CGFloat = env.objc.borrow::<CGContextHostObject>(context).alpha;
+
     //let _ = std::fs::write(
     //  format!(
     //      "image-{:?}-{:?}.data",
@@ -614,8 +617,10 @@ pub(super) fn draw_image(
         // Image is in top-to-bottom order, but the bitmap is bottom-to-top
         let texel_y = (image_height as f32 * (1.0 - texel_y)) as i32;
         // FIXME: might need alpha format conversion here
-        if let Some(color) = image.get_pixel((texel_x, texel_y)) {
-            drawer.put_pixel((x, y), color, /* blend: */ true)
+        if let Some((r, g, b, a)) = image.get_pixel((texel_x, texel_y)) {
+            // Apply CGContext alpha
+            let a = (a * ctx_alpha).max(0.0).min(1.0);
+            drawer.put_pixel((x, y), (r, g, b, a), /* blend: */ true)
         }
     }
 

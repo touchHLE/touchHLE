@@ -14,6 +14,7 @@ pub mod ui_image_view;
 pub mod ui_label;
 pub mod ui_picker_view;
 pub mod ui_scroll_view;
+pub mod ui_toolbar;
 pub mod ui_web_view;
 pub mod ui_window;
 
@@ -485,6 +486,10 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 // TODO: support setNeedsDisplayInRect:
+- (())setNeedsLayout {
+    () = msg![env; this layoutSubviews];
+}
+
 - (())setNeedsDisplay {
     // UIView has a method called drawRect: that subclasses override if they
     // need custom drawing. touchHLE's UIView (a CALayerDelegate) provides
@@ -536,7 +541,8 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 - (())setFrame:(CGRect)frame {
     let layer = env.objc.borrow::<UIViewHostObject>(this).layer;
-    msg![env; layer setFrame:frame]
+    () = msg![env; layer setFrame:frame];
+    () = msg![env; this setNeedsLayout];
 }
 - (CGAffineTransform)transform {
     let layer = env.objc.borrow::<UIViewHostObject>(this).layer;

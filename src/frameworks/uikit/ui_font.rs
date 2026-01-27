@@ -301,7 +301,8 @@ pub fn draw_font_glyph(
         ));
         let (r, g, b, a) = fill_color;
         let (r, g, b, a) = (r * coverage, g * coverage, b * coverage, a * coverage);
-        drawer.put_pixel((x, y), (r, g, b, a), /* blend: */ true);
+        let blend_mode = drawer.blend_mode;
+        drawer.put_pixel((x, y), (r, g, b, a), blend_mode);
     }
 }
 

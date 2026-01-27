@@ -24,6 +24,36 @@ use crate::objc::{objc_classes, ClassExports, HostObject};
 use crate::Environment;
 
 type CGInterpolationQuality = i32;
+pub type CGBlendMode = i32;
+
+pub const kCGBlendModeNormal: CGBlendMode = 0;
+pub const kCGBlendModeMultiply: CGBlendMode = 1;
+pub const kCGBlendModeScreen: CGBlendMode = 2;
+pub const kCGBlendModeOverlay: CGBlendMode = 3;
+pub const kCGBlendModeDarken: CGBlendMode = 4;
+pub const kCGBlendModeLighten: CGBlendMode = 5;
+pub const kCGBlendModeColorDodge: CGBlendMode = 6;
+pub const kCGBlendModeColorBurn: CGBlendMode = 7;
+pub const kCGBlendModeSoftLight: CGBlendMode = 8;
+pub const kCGBlendModeHardLight: CGBlendMode = 9;
+pub const kCGBlendModeDifference: CGBlendMode = 10;
+pub const kCGBlendModeExclusion: CGBlendMode = 11;
+pub const kCGBlendModeHue: CGBlendMode = 12;
+pub const kCGBlendModeSaturation: CGBlendMode = 13;
+pub const kCGBlendModeColor: CGBlendMode = 14;
+pub const kCGBlendModeLuminosity: CGBlendMode = 15;
+pub const kCGBlendModeClear: CGBlendMode = 16;
+pub const kCGBlendModeCopy: CGBlendMode = 17;
+pub const kCGBlendModeSourceIn: CGBlendMode = 18;
+pub const kCGBlendModeSourceOut: CGBlendMode = 19;
+pub const kCGBlendModeSourceAtop: CGBlendMode = 20;
+pub const kCGBlendModeDestinationOver: CGBlendMode = 21;
+pub const kCGBlendModeDestinationIn: CGBlendMode = 22;
+pub const kCGBlendModeDestinationOut: CGBlendMode = 23;
+pub const kCGBlendModeDestinationAtop: CGBlendMode = 24;
+pub const kCGBlendModeXOR: CGBlendMode = 25;
+pub const kCGBlendModePlusDarker: CGBlendMode = 26;
+pub const kCGBlendModePlusLighter: CGBlendMode = 27;
 
 type CGTextDrawingMode = i32;
 const kCGTextFill: CGTextDrawingMode = 0;
@@ -54,10 +84,12 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 // TODO: keep more states saved once they are implemented
 type ContextState = (
-    (CGFloat, CGFloat, CGFloat, CGFloat),
-    CGAffineTransform,
-    CGFontRef,
-    CGFloat,
+    (CGFloat, CGFloat, CGFloat, CGFloat), // rgb_fill_color
+    CGAffineTransform,                    // transform
+    CGFontRef,                            // font
+    CGFloat,                              // font_size
+    CGFloat,                              // alpha
+    CGBlendMode,                          // blend_mode
 );
 
 pub(super) struct CGContextHostObject {
@@ -68,6 +100,8 @@ pub(super) struct CGContextHostObject {
     /// Current transform.
     pub(super) transform: CGAffineTransform,
     pub(super) state_stack: Vec<ContextState>,
+    pub(super) alpha: CGFloat,
+    pub(super) blend_mode: CGBlendMode,
 }
 impl HostObject for CGContextHostObject {}
 
@@ -196,6 +230,8 @@ fn CGContextSaveGState(env: &mut Environment, context: CGContextRef) {
         host_obj.transform,
         host_obj.font,
         host_obj.font_size,
+        host_obj.alpha,
+        host_obj.blend_mode,
     ));
     CGFontRetain(env, env.objc.borrow::<CGContextHostObject>(context).font);
 }
@@ -208,11 +244,35 @@ fn CGContextRestoreGState(env: &mut Environment, context: CGContextRef) {
     // retained on the set
     CGFontRelease(env, env.objc.borrow::<CGContextHostObject>(context).font);
     let host_obj = env.objc.borrow_mut::<CGContextHostObject>(context);
+
     let state = host_obj.state_stack.pop().unwrap();
+
+    if host_obj.alpha != state.4 {
+        log_dbg!(
+            "{} -> CGContextRestoreGState({:?}, alpha: {})",
+            host_obj.alpha,
+            context,
+            state.4
+        );
+    }
+
+    if host_obj.blend_mode != state.5 {
+        log_dbg!(
+            "{} / {} -> CGContextRestoreGState({:?}, blend_mode: {} / {})",
+            host_obj.blend_mode,
+            blend_mode_name(host_obj.blend_mode),
+            context,
+            state.5,
+            blend_mode_name(state.5)
+        );
+    }
+
     host_obj.rgb_fill_color = state.0;
     host_obj.transform = state.1;
     host_obj.font = state.2;
     host_obj.font_size = state.3;
+    host_obj.alpha = state.4;
+    host_obj.blend_mode = state.5;
 }
 
 fn CGContextSetInterpolationQuality(
@@ -288,6 +348,74 @@ fn CGContextShowGlyphsAtPoint(
     });
 }
 
+pub fn CGContextSetAlpha(env: &mut Environment, context: CGContextRef, alpha: CGFloat) {
+    let host_obj = env.objc.borrow_mut::<CGContextHostObject>(context);
+    if host_obj.alpha != alpha {
+        let old_alpha = host_obj.alpha;
+        host_obj.alpha = alpha;
+        log_dbg!(
+            "{} -> CGContextSetAlpha({:?}, {})",
+            old_alpha,
+            context,
+            alpha
+        );
+    }
+}
+
+pub fn CGContextSetBlendMode(
+    env: &mut Environment,
+    context: CGContextRef,
+    blend_mode: CGBlendMode,
+) {
+    let host_obj = env.objc.borrow_mut::<CGContextHostObject>(context);
+    if host_obj.blend_mode != blend_mode {
+        let old_blend_mode = host_obj.blend_mode;
+        host_obj.blend_mode = blend_mode;
+        log_dbg!(
+            "{} / {} -> CGContextSetBlendMode({:?}, {} / {})",
+            old_blend_mode,
+            blend_mode_name(old_blend_mode),
+            context,
+            blend_mode,
+            blend_mode_name(blend_mode)
+        );
+    }
+}
+
+pub(super) fn blend_mode_name(mode: CGBlendMode) -> &'static str {
+    match mode {
+        kCGBlendModeNormal => "Normal",
+        kCGBlendModeMultiply => "Multiply",
+        kCGBlendModeScreen => "Screen",
+        kCGBlendModeOverlay => "Overlay",
+        kCGBlendModeDarken => "Darken",
+        kCGBlendModeLighten => "Lighten",
+        kCGBlendModeColorDodge => "ColorDodge",
+        kCGBlendModeColorBurn => "ColorBurn",
+        kCGBlendModeSoftLight => "SoftLight",
+        kCGBlendModeHardLight => "HardLight",
+        kCGBlendModeDifference => "Difference",
+        kCGBlendModeExclusion => "Exclusion",
+        kCGBlendModeHue => "Hue",
+        kCGBlendModeSaturation => "Saturation",
+        kCGBlendModeColor => "Color",
+        kCGBlendModeLuminosity => "Luminosity",
+        kCGBlendModeClear => "Clear",
+        kCGBlendModeCopy => "Copy",
+        kCGBlendModeSourceIn => "SourceIn",
+        kCGBlendModeSourceOut => "SourceOut",
+        kCGBlendModeSourceAtop => "SourceAtop",
+        kCGBlendModeDestinationOver => "DestinationOver",
+        kCGBlendModeDestinationIn => "DestinationIn",
+        kCGBlendModeDestinationOut => "DestinationOut",
+        kCGBlendModeDestinationAtop => "DestinationAtop",
+        kCGBlendModeXOR => "XOR",
+        kCGBlendModePlusDarker => "PlusDarker",
+        kCGBlendModePlusLighter => "PlusLighter",
+        _ => "Unknown",
+    }
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGContextRetain(_)),
     export_c_func!(CGContextRelease(_)),
@@ -311,4 +439,6 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGContextSetFontSize(_, _)),
     export_c_func!(CGContextSetTextDrawingMode(_, _)),
     export_c_func!(CGContextShowGlyphsAtPoint(_, _, _, _, _)),
+    export_c_func!(CGContextSetAlpha(_, _)),
+    export_c_func!(CGContextSetBlendMode(_, _)),
 ];

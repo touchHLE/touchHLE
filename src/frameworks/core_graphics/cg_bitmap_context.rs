@@ -9,7 +9,12 @@ use super::cg_affine_transform::{CGAffineTransform, CGAffineTransformIdentity};
 use super::cg_color_space::{
     kCGColorSpaceGenericGray, kCGColorSpaceGenericRGB, CGColorSpaceHostObject, CGColorSpaceRef,
 };
-use super::cg_context::{CGContextHostObject, CGContextRef, CGContextSubclass};
+use super::cg_context::{
+    kCGBlendModeClear, kCGBlendModeCopy, kCGBlendModeDestinationAtop, kCGBlendModeDestinationIn,
+    kCGBlendModeDestinationOut, kCGBlendModeDestinationOver, kCGBlendModeNormal,
+    kCGBlendModePlusLighter, kCGBlendModeSourceAtop, kCGBlendModeSourceIn, kCGBlendModeSourceOut,
+    kCGBlendModeXOR, CGBlendMode, CGContextHostObject, CGContextRef, CGContextSubclass,
+};
 use super::cg_image::{
     self, kCGBitmapAlphaInfoMask, kCGBitmapByteOrderMask, kCGImageAlphaFirst, kCGImageAlphaLast,
     kCGImageAlphaNone, kCGImageAlphaNoneSkipFirst, kCGImageAlphaNoneSkipLast, kCGImageAlphaOnly,
@@ -27,8 +32,8 @@ use crate::Environment;
 pub(super) struct CGBitmapContextData {
     pub(super) data: MutVoidPtr,
     pub(super) data_is_owned: bool,
-    width: GuestUSize,
-    height: GuestUSize,
+    pub(super) width: GuestUSize,
+    pub(super) height: GuestUSize,
     bits_per_component: GuestUSize,
     bytes_per_row: GuestUSize,
     color_space: &'static str,
@@ -84,6 +89,8 @@ pub fn CGBitmapContextCreate(
         rgb_fill_color: (0.0, 0.0, 0.0, 0.0),
         transform: CGAffineTransformIdentity,
         state_stack: Vec::new(),
+        alpha: 1.0,
+        blend_mode: kCGBlendModeNormal,
     };
     let isa = env
         .objc
@@ -209,38 +216,6 @@ fn get_pixels<'a>(data: &CGBitmapContextData, mem: &'a mut Mem) -> &'a mut [u8] 
     mem.bytes_at_mut(data.data.cast(), pixel_data_size)
 }
 
-fn blend_alpha(bg: f32, fg: f32) -> f32 {
-    // Alpha is blended the same way in
-    // premultiplied and straight representation.
-    fg + bg * (1.0 - fg)
-}
-
-/// Blends two RGBA non gamma-encoded values, with straight alpha.
-fn blend_straight(bg: (f32, f32, f32, f32), fg: (f32, f32, f32, f32)) -> (f32, f32, f32, f32) {
-    if fg.3 == 0.0 {
-        // If fg.3 == 0.0 we attempt to blend fully transparent color.
-        bg
-    } else {
-        let new_a = blend_alpha(bg.3, fg.3); // Can't be 0 if fg.3 != 0
-        (
-            (fg.0 * fg.3 + bg.0 * bg.3 * (1.0 - fg.3)) / new_a,
-            (fg.1 * fg.3 + bg.1 * bg.3 * (1.0 - fg.3)) / new_a,
-            (fg.2 * fg.3 + bg.2 * bg.3 * (1.0 - fg.3)) / new_a,
-            new_a,
-        )
-    }
-}
-
-/// Blends two RGBA non gamma-encoded values, with premultiplied alpha.
-fn blend_premultiplied(bg: (f32, f32, f32, f32), fg: (f32, f32, f32, f32)) -> (f32, f32, f32, f32) {
-    (
-        fg.0 + bg.0 * (1.0 - fg.3),
-        fg.1 + bg.1 * (1.0 - fg.3),
-        fg.2 + bg.2 * (1.0 - fg.3),
-        blend_alpha(bg.3, fg.3),
-    )
-}
-
 /// per component offsets (r, g, b, a)
 fn pixel_offsets(data: &CGBitmapContextData) -> (usize, usize, usize, Option<usize>) {
     match data.color_space {
@@ -303,7 +278,7 @@ fn put_pixel(
     pixels: &mut [u8],
     coords: (i32, i32),
     pixel: (CGFloat, CGFloat, CGFloat, CGFloat),
-    blend: bool,
+    blend_mode: CGBlendMode,
 ) {
     let (x, y) = coords;
     if x < 0 || y < 0 {
@@ -321,21 +296,100 @@ fn put_pixel(
     let pixel_size = bytes_per_pixel(data);
     let first_component_idx = (y * data.bytes_per_row + x * pixel_size) as usize;
 
-    let bg_pixel = get_pixel(data, pixels, first_component_idx);
+    let bg = get_pixel(data, pixels, first_component_idx);
+    let fg = pixel;
 
     // Blending like this must be done in linear RGB, so this must come before
     // gamma encoding.
-    let (r, g, b, a) = if blend {
-        match data.alpha_info {
-            kCGImageAlphaLast | kCGImageAlphaFirst => blend_straight(bg_pixel, pixel),
-            kCGImageAlphaPremultipliedLast | kCGImageAlphaPremultipliedFirst => {
-                blend_premultiplied(bg_pixel, pixel)
-            }
-            kCGImageAlphaOnly => (pixel.0, pixel.1, pixel.2, blend_alpha(bg_pixel.3, pixel.3)),
-            _ => pixel,
-        }
+
+    // Core Graphics blend modes:
+    // https://developer.apple.com/documentation/coregraphics/cgblendmode
+    //
+    // Reference for Porter-Duff compositing:
+    // - W3C specification: https://www.w3.org/TR/compositing-1/#porterduffcompositingoperators
+    //
+    // Note: The current implementation only supports some Porter-Duff modes.
+    // For many modes, CG applies them differently depending on whether the
+    // context has an alpha channel or not.
+
+    let is_premultiplied = matches!(
+        data.alpha_info,
+        kCGImageAlphaPremultipliedLast | kCGImageAlphaPremultipliedFirst
+    );
+
+    // To simplify, we'll convert both to premultiplied if they aren't already.
+    // NOTE: The input `pixel` (fg) is expected to already be premultiplied.
+    let bg = if is_premultiplied {
+        bg
     } else {
-        pixel
+        (bg.0 * bg.3, bg.1 * bg.3, bg.2 * bg.3, bg.3)
+    };
+
+    let res = match blend_mode {
+        kCGBlendModeClear => (0.0, 0.0, 0.0, 0.0),
+        kCGBlendModeCopy => fg,
+        kCGBlendModeSourceIn => (fg.0 * bg.3, fg.1 * bg.3, fg.2 * bg.3, fg.3 * bg.3),
+        kCGBlendModeSourceOut => (
+            fg.0 * (1.0 - bg.3),
+            fg.1 * (1.0 - bg.3),
+            fg.2 * (1.0 - bg.3),
+            fg.3 * (1.0 - bg.3),
+        ),
+        kCGBlendModeSourceAtop => (
+            fg.0 * bg.3 + bg.0 * (1.0 - fg.3),
+            fg.1 * bg.3 + bg.1 * (1.0 - fg.3),
+            fg.2 * bg.3 + bg.2 * (1.0 - fg.3),
+            bg.3,
+        ),
+        kCGBlendModeDestinationOver => (
+            fg.0 * (1.0 - bg.3) + bg.0,
+            fg.1 * (1.0 - bg.3) + bg.1,
+            fg.2 * (1.0 - bg.3) + bg.2,
+            fg.3 * (1.0 - bg.3) + bg.3,
+        ),
+        kCGBlendModeDestinationIn => (bg.0 * fg.3, bg.1 * fg.3, bg.2 * fg.3, bg.3 * fg.3),
+        kCGBlendModeDestinationOut => (
+            bg.0 * (1.0 - fg.3),
+            bg.1 * (1.0 - fg.3),
+            bg.2 * (1.0 - fg.3),
+            bg.3 * (1.0 - fg.3),
+        ),
+        kCGBlendModeDestinationAtop => (
+            fg.0 * (1.0 - bg.3) + bg.0 * fg.3,
+            fg.1 * (1.0 - bg.3) + bg.1 * fg.3,
+            fg.2 * (1.0 - bg.3) + bg.2 * fg.3,
+            fg.3,
+        ),
+        kCGBlendModeXOR => (
+            fg.0 * (1.0 - bg.3) + bg.0 * (1.0 - fg.3),
+            fg.1 * (1.0 - bg.3) + bg.1 * (1.0 - fg.3),
+            fg.2 * (1.0 - bg.3) + bg.2 * (1.0 - fg.3),
+            fg.3 * (1.0 - bg.3) + bg.3 * (1.0 - fg.3),
+        ),
+        kCGBlendModePlusLighter => (
+            (fg.0 + bg.0).min(1.0),
+            (fg.1 + bg.1).min(1.0),
+            (fg.2 + bg.2).min(1.0),
+            (fg.3 + bg.3).min(1.0),
+        ),
+        _ => {
+            // Covers kCGBlendModeNormal (SourceOver)
+            (
+                fg.0 + bg.0 * (1.0 - fg.3),
+                fg.1 + bg.1 * (1.0 - fg.3),
+                fg.2 + bg.2 * (1.0 - fg.3),
+                fg.3 + bg.3 * (1.0 - fg.3),
+            )
+        }
+    };
+
+    // Convert back if the context is not premultiplied.
+    let (r, g, b, a) = if is_premultiplied {
+        res
+    } else if res.3 == 0.0 {
+        (0.0, 0.0, 0.0, 0.0)
+    } else {
+        (res.0 / res.3, res.1 / res.3, res.2 / res.3, res.3)
     };
 
     // Alpha is always linear.
@@ -359,10 +413,12 @@ fn put_pixel(
 /// Abstract interface for use by host code that wants to draw in a bitmap
 /// context.
 pub struct CGBitmapContextDrawer<'a> {
-    bitmap_info: CGBitmapContextData,
-    rgb_fill_color: (CGFloat, CGFloat, CGFloat, CGFloat),
-    transform: CGAffineTransform,
-    pixels: &'a mut [u8],
+    pub(super) bitmap_info: CGBitmapContextData,
+    pub(super) rgb_fill_color: (CGFloat, CGFloat, CGFloat, CGFloat),
+    pub(super) transform: CGAffineTransform,
+    pub alpha: CGFloat,
+    pub blend_mode: CGBlendMode,
+    pub(super) pixels: &'a mut [u8],
 }
 impl CGBitmapContextDrawer<'_> {
     pub fn new<'a>(
@@ -374,6 +430,8 @@ impl CGBitmapContextDrawer<'_> {
             subclass: CGContextSubclass::CGBitmapContext(bitmap_info),
             rgb_fill_color,
             transform,
+            alpha,
+            blend_mode,
             ..
         } = objc.borrow(context);
 
@@ -383,6 +441,8 @@ impl CGBitmapContextDrawer<'_> {
             bitmap_info,
             rgb_fill_color,
             transform,
+            alpha,
+            blend_mode,
             pixels,
         }
     }
@@ -394,21 +454,13 @@ impl CGBitmapContextDrawer<'_> {
         self.bitmap_info.height
     }
     /// Get the current fill color. The returned color is linear RGB, not sRGB.
-    /// It has premultiplied alpha if the context does.
+    /// It always has premultiplied alpha.
     pub fn rgb_fill_color(&self) -> (CGFloat, CGFloat, CGFloat, CGFloat) {
-        let multiply_by = match self.bitmap_info.alpha_info {
-            kCGImageAlphaPremultipliedLast | kCGImageAlphaPremultipliedFirst => {
-                self.rgb_fill_color.3
-            }
-            _ => 1.0,
-        };
-        // Multiplying before decoding matches the Simulator's output.
-        (
-            gamma_decode(self.rgb_fill_color.0 * multiply_by),
-            gamma_decode(self.rgb_fill_color.1 * multiply_by),
-            gamma_decode(self.rgb_fill_color.2 * multiply_by),
-            self.rgb_fill_color.3, // alpha is always linear
-        )
+        let alpha = self.rgb_fill_color.3 * self.alpha;
+        let r = gamma_decode(self.rgb_fill_color.0) * alpha;
+        let g = gamma_decode(self.rgb_fill_color.1) * alpha;
+        let b = gamma_decode(self.rgb_fill_color.2) * alpha;
+        (r, g, b, alpha)
     }
     /// Set the pixel at `coords` to `color`. `color` must be linear RGB, not
     /// sRGB! Note that `coords` are absolute: you must do transformation
@@ -417,9 +469,9 @@ impl CGBitmapContextDrawer<'_> {
         &mut self,
         coords: (i32, i32),
         color: (CGFloat, CGFloat, CGFloat, CGFloat),
-        blend: bool,
+        blend_mode: CGBlendMode,
     ) {
-        put_pixel(&self.bitmap_info, self.pixels, coords, color, blend)
+        put_pixel(&self.bitmap_info, self.pixels, coords, color, blend_mode)
     }
 
     /// Takes a [CGRect] and applies the current transform to it, and iterates
@@ -490,6 +542,8 @@ fn test_iter_transformed_pixels() {
             },
             rgb_fill_color: (0.0, 0.0, 0.0, 0.0),
             transform,
+            alpha: 1.0,
+            blend_mode: kCGBlendModeNormal,
             pixels: &mut [],
         }
     }
@@ -565,14 +619,14 @@ fn test_iter_transformed_pixels() {
 /// `CGContextClearRect` (`clear` == [true]) for `CGBitmapContext`.
 pub(super) fn fill_rect(env: &mut Environment, context: CGContextRef, rect: CGRect, clear: bool) {
     let mut drawer = CGBitmapContextDrawer::new(&env.objc, &mut env.mem, context);
-    let color = if clear {
-        (0.0, 0.0, 0.0, 0.0)
+    let (color, blend_mode) = if clear {
+        ((0.0, 0.0, 0.0, 0.0), kCGBlendModeCopy)
     } else {
-        drawer.rgb_fill_color()
+        (drawer.rgb_fill_color(), drawer.blend_mode)
     };
     // TODO: correct anti-aliasing
     for ((x, y), _) in drawer.iter_transformed_pixels(rect) {
-        drawer.put_pixel((x, y), color, /* blend: */ !clear)
+        drawer.put_pixel((x, y), color, blend_mode)
     }
 }
 
@@ -586,6 +640,8 @@ pub(super) fn draw_image(
     let image = cg_image::borrow_image(&env.objc, image);
 
     let mut drawer = CGBitmapContextDrawer::new(&env.objc, &mut env.mem, context);
+
+    let ctx_alpha: CGFloat = env.objc.borrow::<CGContextHostObject>(context).alpha;
 
     //let _ = std::fs::write(
     //  format!(
@@ -613,9 +669,12 @@ pub(super) fn draw_image(
         let texel_x = (image_width as f32 * texel_x) as i32;
         // Image is in top-to-bottom order, but the bitmap is bottom-to-top
         let texel_y = (image_height as f32 * (1.0 - texel_y)) as i32;
-        // FIXME: might need alpha format conversion here
-        if let Some(color) = image.get_pixel((texel_x, texel_y)) {
-            drawer.put_pixel((x, y), color, /* blend: */ true)
+        if let Some((r, g, b, a)) = image.get_pixel((texel_x, texel_y)) {
+            // Apply CGContext alpha
+            let a = (a * ctx_alpha).clamp(0.0, 1.0);
+            // Image data is already premultiplied, just scale by global alpha.
+            let (r, g, b) = (r * ctx_alpha, g * ctx_alpha, b * ctx_alpha);
+            drawer.put_pixel((x, y), (r, g, b, a), drawer.blend_mode)
         }
     }
 

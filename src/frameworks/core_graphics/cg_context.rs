@@ -19,6 +19,44 @@ use crate::objc::{objc_classes, ClassExports, HostObject};
 use crate::Environment;
 
 type CGInterpolationQuality = i32;
+pub type CGBlendMode = i32;
+
+pub const kCGBlendModeNormal: CGBlendMode = 0;
+pub const kCGBlendModeMultiply: CGBlendMode = 1;
+pub const kCGBlendModeScreen: CGBlendMode = 2;
+pub const kCGBlendModeOverlay: CGBlendMode = 3;
+pub const kCGBlendModeDarken: CGBlendMode = 4;
+pub const kCGBlendModeLighten: CGBlendMode = 5;
+pub const kCGBlendModeColorDodge: CGBlendMode = 6;
+pub const kCGBlendModeColorBurn: CGBlendMode = 7;
+pub const kCGBlendModeSoftLight: CGBlendMode = 8;
+pub const kCGBlendModeHardLight: CGBlendMode = 9;
+pub const kCGBlendModeDifference: CGBlendMode = 10;
+pub const kCGBlendModeExclusion: CGBlendMode = 11;
+pub const kCGBlendModeHue: CGBlendMode = 12;
+pub const kCGBlendModeSaturation: CGBlendMode = 13;
+pub const kCGBlendModeColor: CGBlendMode = 14;
+pub const kCGBlendModeLuminosity: CGBlendMode = 15;
+pub const kCGBlendModeClear: CGBlendMode = 16;
+pub const kCGBlendModeCopy: CGBlendMode = 17;
+pub const kCGBlendModeSourceIn: CGBlendMode = 18;
+pub const kCGBlendModeSourceOut: CGBlendMode = 19;
+pub const kCGBlendModeSourceAtop: CGBlendMode = 20;
+pub const kCGBlendModeDestinationOver: CGBlendMode = 21;
+pub const kCGBlendModeDestinationIn: CGBlendMode = 22;
+pub const kCGBlendModeDestinationOut: CGBlendMode = 23;
+pub const kCGBlendModeDestinationAtop: CGBlendMode = 24;
+pub const kCGBlendModeXOR: CGBlendMode = 25;
+pub const kCGBlendModePlusDarker: CGBlendMode = 26;
+pub const kCGBlendModePlusLighter: CGBlendMode = 27;
+
+#[allow(non_camel_case_types)]
+pub(super) struct _touchHLE_CGContextState {
+    rgb_fill_color: (CGFloat, CGFloat, CGFloat, CGFloat),
+    transform: CGAffineTransform,
+    alpha: CGFloat,
+    blend_mode: CGBlendMode,
+}
 
 pub const CLASSES: ClassExports = objc_classes! {
 
@@ -49,7 +87,9 @@ pub(super) struct CGContextHostObject {
     /// Current transform.
     pub(super) transform: CGAffineTransform,
     // TODO: keep more states saved once they are implemented
-    pub(super) state_stack: Vec<((CGFloat, CGFloat, CGFloat, CGFloat), CGAffineTransform)>,
+    pub(super) state_stack: Vec<_touchHLE_CGContextState>,
+    pub(super) alpha: CGFloat,
+    pub(super) blend_mode: CGBlendMode,
 }
 impl HostObject for CGContextHostObject {}
 
@@ -173,16 +213,48 @@ pub fn CGContextDrawImage(
 
 fn CGContextSaveGState(env: &mut Environment, context: CGContextRef) {
     let host_obj = env.objc.borrow_mut::<CGContextHostObject>(context);
-    host_obj
-        .state_stack
-        .push((host_obj.rgb_fill_color, host_obj.transform));
+
+    host_obj.state_stack.push(_touchHLE_CGContextState {
+        rgb_fill_color: host_obj.rgb_fill_color,
+        transform: host_obj.transform,
+        alpha: host_obj.alpha,
+        blend_mode: host_obj.blend_mode,
+    });
 }
 
 fn CGContextRestoreGState(env: &mut Environment, context: CGContextRef) {
     let host_obj = env.objc.borrow_mut::<CGContextHostObject>(context);
-    let state = host_obj.state_stack.pop().unwrap();
-    host_obj.rgb_fill_color = state.0;
-    host_obj.transform = state.1;
+
+    let state = host_obj
+        .state_stack
+        .pop()
+        .expect("CGContextRestoreGState called with empty state stack");
+
+    host_obj.rgb_fill_color = state.rgb_fill_color;
+    host_obj.transform = state.transform;
+
+    if host_obj.alpha != state.alpha {
+        let old_alpha = host_obj.alpha;
+        host_obj.alpha = state.alpha;
+        log!(
+            "{} -> CGContextRestoreGState({:?}, alpha: {})",
+            old_alpha,
+            context,
+            state.alpha
+        );
+    }
+    if host_obj.blend_mode != state.blend_mode {
+        let old_blend_mode = host_obj.blend_mode;
+        host_obj.blend_mode = state.blend_mode;
+        log!(
+            "{} / {} -> CGContextRestoreGState({:?}, blend_mode: {} / {})",
+            old_blend_mode,
+            blend_mode_name(old_blend_mode),
+            context,
+            state.blend_mode,
+            blend_mode_name(state.blend_mode)
+        );
+    }
 }
 
 fn CGContextSetInterpolationQuality(
@@ -195,6 +267,71 @@ fn CGContextSetInterpolationQuality(
         context,
         quality
     );
+}
+
+pub fn CGContextSetAlpha(env: &mut Environment, context: CGContextRef, alpha: CGFloat) {
+    let host_obj = env.objc.borrow_mut::<CGContextHostObject>(context);
+    if host_obj.alpha != alpha {
+        let old_alpha = host_obj.alpha;
+        host_obj.alpha = alpha;
+        log!(
+            "{} -> CGContextSetAlpha({:?}, {})",
+            old_alpha,
+            context,
+            alpha
+        );
+    }
+}
+
+pub fn CGContextSetBlendMode(env: &mut Environment, context: CGContextRef, blend_mode: CGBlendMode) {
+    let host_obj = env.objc.borrow_mut::<CGContextHostObject>(context);
+    if host_obj.blend_mode != blend_mode {
+        let old_blend_mode = host_obj.blend_mode;
+        host_obj.blend_mode = blend_mode;
+        log!(
+            "{} / {} -> CGContextSetBlendMode({:?}, {} / {})",
+            old_blend_mode,
+            blend_mode_name(old_blend_mode),
+            context,
+            blend_mode,
+            blend_mode_name(blend_mode)
+        );
+    }
+}
+
+// Helper function for logging CGBlendMode
+pub fn blend_mode_name(mode: CGBlendMode) -> &'static str {
+    match mode {
+        kCGBlendModeNormal => "Normal",
+        kCGBlendModeMultiply => "Multiply",
+        kCGBlendModeScreen => "Screen",
+        kCGBlendModeOverlay => "Overlay",
+        kCGBlendModeDarken => "Darken",
+        kCGBlendModeLighten => "Lighten",
+        kCGBlendModeColorDodge => "ColorDodge",
+        kCGBlendModeColorBurn => "ColorBurn",
+        kCGBlendModeSoftLight => "SoftLight",
+        kCGBlendModeHardLight => "HardLight",
+        kCGBlendModeDifference => "Difference",
+        kCGBlendModeExclusion => "Exclusion",
+        kCGBlendModeHue => "Hue",
+        kCGBlendModeSaturation => "Saturation",
+        kCGBlendModeColor => "Color",
+        kCGBlendModeLuminosity => "Luminosity",
+        kCGBlendModeClear => "Clear",
+        kCGBlendModeCopy => "Copy",
+        kCGBlendModeSourceIn => "SourceIn",
+        kCGBlendModeSourceOut => "SourceOut",
+        kCGBlendModeSourceAtop => "SourceAtop",
+        kCGBlendModeDestinationOver => "DestinationOver",
+        kCGBlendModeDestinationIn => "DestinationIn",
+        kCGBlendModeDestinationOut => "DestinationOut",
+        kCGBlendModeDestinationAtop => "DestinationAtop",
+        kCGBlendModeXOR => "XOR",
+        kCGBlendModePlusDarker => "PlusDarker",
+        kCGBlendModePlusLighter => "PlusLighter",
+        _ => "Unknown",
+    }
 }
 
 pub const FUNCTIONS: FunctionExports = &[
@@ -215,4 +352,6 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGContextSaveGState(_)),
     export_c_func!(CGContextRestoreGState(_)),
     export_c_func!(CGContextSetInterpolationQuality(_, _)),
+    export_c_func!(CGContextSetAlpha(_, _)),
+    export_c_func!(CGContextSetBlendMode(_, _)),
 ];

@@ -5,6 +5,7 @@
  */
 //! `CGContext.h`
 
+use crate::abi::GuestArg;
 use super::cg_affine_transform::CGAffineTransform;
 use super::cg_image::CGImageRef;
 use super::{cg_bitmap_context, cg_color, CGFloat, CGRect};
@@ -59,6 +60,58 @@ pub(super) enum CGContextSubclass {
 }
 
 pub type CGContextRef = CFTypeRef;
+
+#[repr(i32)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum CGBlendMode {
+    Normal = 0,
+    Multiply = 1,
+    Screen = 2,
+    Overlay = 3,
+    Darken = 4,
+    Lighten = 5,
+    ColorDodge = 6,
+    ColorBurn = 7,
+    SoftLight = 8,
+    HardLight = 9,
+    Difference = 10,
+    Exclusion = 11,
+}
+
+impl GuestArg for CGBlendMode {
+    const REG_COUNT: usize = 1;
+
+    fn from_regs(regs: &[u32]) -> Self {
+        let raw = regs[0] as i32;
+        CGBlendMode::try_from(raw).unwrap_or(CGBlendMode::Normal)
+    }
+
+    fn to_regs(self, regs: &mut [u32]) {
+        regs[0] = self as i32 as u32;
+    }
+}
+
+impl TryFrom<i32> for CGBlendMode {
+    type Error = &'static str;
+
+    fn try_from(value: i32) -> Result<Self, Self::Error> {
+        match value {
+            0 => Ok(CGBlendMode::Normal),
+            1 => Ok(CGBlendMode::Multiply),
+            2 => Ok(CGBlendMode::Screen),
+            3 => Ok(CGBlendMode::Overlay),
+            4 => Ok(CGBlendMode::Darken),
+            5 => Ok(CGBlendMode::Lighten),
+            6 => Ok(CGBlendMode::ColorDodge),
+            7 => Ok(CGBlendMode::ColorBurn),
+            8 => Ok(CGBlendMode::SoftLight),
+            9 => Ok(CGBlendMode::HardLight),
+            10 => Ok(CGBlendMode::Difference),
+            11 => Ok(CGBlendMode::Exclusion),
+            _ => Err("Value is not a valid blend mode!"),
+        }
+    }
+}
 
 pub fn CGContextRelease(env: &mut Environment, c: CGContextRef) {
     if !c.is_null() {
@@ -203,6 +256,10 @@ fn CGContextSetAlpha(env: &mut Environment, context: CGContextRef, alpha: CGFloa
     host_obj.alpha = alpha;
 }
 
+fn CGContextSetBlendMode(_env: &mut Environment, context: CGContextRef, blend_mode: CGBlendMode) {
+    log_dbg!("CGContextSetBlendMode({:?}, {:?})", context, blend_mode); // log_dbg used because this function is called way too much!
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGContextRetain(_)),
     export_c_func!(CGContextRelease(_)),
@@ -222,4 +279,5 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGContextRestoreGState(_)),
     export_c_func!(CGContextSetInterpolationQuality(_, _)),
     export_c_func!(CGContextSetAlpha(_, _)),
+    export_c_func!(CGContextSetBlendMode(_, _)),
 ];

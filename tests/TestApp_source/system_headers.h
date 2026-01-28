@@ -106,6 +106,25 @@ typedef double NSTimeInterval;
 - (void)invalidate;
 @end
 
+@interface NSData : NSObject
+@end
+
+@interface NSCoder : NSObject
+- (void)encodeBytes:(const uint8_t *)bytes
+             length:(NSUInteger)length
+             forKey:(NSString *)key;
+- (const uint8_t *)decodeBytesForKey:(NSString *)key
+                      returnedLength:(NSUInteger *)lengthp;
+@end
+
+@interface NSKeyedArchiver : NSCoder
++ (NSData *)archivedDataWithRootObject:(id)rootObject;
+@end
+
+@interface NSKeyedUnarchiver : NSCoder
++ (id)unarchiveObjectWithData:(NSData *)data;
+@end
+
 SEL NSSelectorFromString(NSString *);
 
 // Core Graphics

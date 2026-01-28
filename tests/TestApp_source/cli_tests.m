@@ -3262,6 +3262,79 @@ int test_strftime() {
   return 0;
 }
 
+@interface CharBufferObject : NSObject {
+@public
+  char *buffer;
+  NSUInteger length;
+
+  char *badKeyBuffer;
+  NSUInteger badKeyLength;
+}
+@end
+
+@implementation CharBufferObject
+- (instancetype)initWithBytes:(const char *)b length:(NSUInteger)l {
+  self = [super init];
+  length = l;
+  buffer = b;
+  badKeyLength = -1;
+  badKeyBuffer = b;
+  return self;
+}
+
+- (void)dealloc {
+  free(buffer);
+}
+
+- (void)encodeWithCoder:(NSCoder *)coder {
+  [coder encodeBytes:buffer
+              length:length
+              forKey:[NSString stringWithUTF8String:"buffer"]];
+}
+
+- (instancetype)initWithCoder:(NSCoder *)coder {
+  self = [super init];
+  char *temp_buffer =
+      [coder decodeBytesForKey:[NSString stringWithUTF8String:"buffer"]
+                returnedLength:&length];
+  buffer = malloc(length);
+  memcpy(buffer, temp_buffer, length);
+
+  badKeyBuffer =
+      [coder decodeBytesForKey:[NSString stringWithUTF8String:"badKey"]
+                returnedLength:&badKeyLength];
+
+  return self;
+}
+@end
+
+int test_NSKeyedArchiver_NSKeyedUnarchiver() {
+  NSAutoreleasePool *pool = [NSAutoreleasePool new];
+  char buffer[100];
+  for (char i = 0; i < 100; i++) {
+    buffer[i] = i;
+  }
+  CharBufferObject *obj = [[CharBufferObject alloc] initWithBytes:buffer
+                                                           length:100];
+  NSData *archivedData = [NSKeyedArchiver archivedDataWithRootObject:obj];
+  CharBufferObject *unarchivedObj =
+      [NSKeyedUnarchiver unarchiveObjectWithData:archivedData];
+  if (unarchivedObj->length != obj->length) {
+    return -1;
+  }
+  if (memcmp(unarchivedObj->buffer, obj->buffer, 100) != 0) {
+    return -2;
+  }
+  if (unarchivedObj->badKeyLength != 0) {
+    return -3;
+  }
+  if (unarchivedObj->badKeyBuffer != NULL) {
+    return -4;
+  }
+  [pool drain];
+  return 0;
+}
+
 // clang-format off
 #define FUNC_DEF(func)                                                         \
   { &func, #func }
@@ -3332,6 +3405,7 @@ struct {
     FUNC_DEF(test_strptime),
     FUNC_DEF(test_strftime),
     FUNC_DEF(test_RespondsToSelector),
+    FUNC_DEF(test_NSKeyedArchiver_NSKeyedUnarchiver),
 };
 // clang-format on
 

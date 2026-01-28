@@ -3127,6 +3127,60 @@ int test_NSMutableString_deleteCharactersInRange() {
   return 0;
 }
 
+@interface CharBufferObject : NSObject {
+@public
+  char *buffer;
+  NSUInteger length;
+}
+@end
+
+@implementation CharBufferObject
+- (instancetype)initWithBytes:(const char *)b length:(NSUInteger)l {
+  self = [super init];
+  length = l;
+  buffer = b;
+  return self;
+}
+
+- (void)dealloc {
+  free(buffer);
+}
+
+- (void)encodeWithCoder:(NSCoder *)coder {
+  [coder encodeBytes:buffer
+              length:length
+              forKey:[NSString stringWithUTF8String:"buffer"]];
+}
+
+- (instancetype)initWithCoder:(NSCoder *)coder {
+  self = [super init];
+  buffer = [coder decodeBytesForKey:[NSString stringWithUTF8String:"buffer"]
+                     returnedLength:&length];
+  return self;
+}
+@end
+
+int test_NSKeyedArchiver_NSKeyedUnarchiver() {
+  NSAutoreleasePool *pool = [NSAutoreleasePool new];
+  char buffer[100];
+  for (char i = 0; i < 100; i++) {
+    buffer[i] = i;
+  }
+  CharBufferObject *obj = [[CharBufferObject alloc] initWithBytes:buffer
+                                                           length:100];
+  NSData *archivedData = [NSKeyedArchiver archivedDataWithRootObject:obj];
+  CharBufferObject *unarchivedObj =
+      [NSKeyedUnarchiver unarchiveObjectWithData:archivedData];
+  if (unarchivedObj->length != obj->length) {
+    return -1;
+  }
+  if (memcmp(unarchivedObj->buffer, obj->buffer, 100) != 0) {
+    return -2;
+  }
+  [pool drain];
+  return 0;
+}
+
 // clang-format off
 #define FUNC_DEF(func)                                                         \
   { &func, #func }
@@ -3194,6 +3248,7 @@ struct {
     FUNC_DEF(test_CFURLHasDirectoryPath),
     FUNC_DEF(test_CGImage_JPEG),
     FUNC_DEF(test_NSMutableString_deleteCharactersInRange),
+    FUNC_DEF(test_NSKeyedArchiver_NSKeyedUnarchiver),
 };
 // clang-format on
 

@@ -5,11 +5,11 @@
  */
 //! `NSDate`.
 
-use super::ns_string::from_rust_ordering;
+use super::ns_string::{from_rust_string, from_rust_ordering};
 use super::{NSComparisonResult, NSTimeInterval};
-use crate::frameworks::core_foundation::time::{apple_epoch, SECS_FROM_UNIX_TO_APPLE_EPOCHS};
+use crate::frameworks::core_foundation::time::{apple_epoch, CFAbsoluteTimeGetGregorianDate, SECS_FROM_UNIX_TO_APPLE_EPOCHS};
 use crate::objc::{
-    autorelease, id, msg, msg_class, objc_classes, release, ClassExports, HostObject, NSZonePtr,
+    autorelease, id, msg, msg_class, nil, objc_classes, release, ClassExports, HostObject, NSZonePtr,
 };
 
 use crate::frameworks::foundation::ns_keyed_unarchiver::decode_current_date;
@@ -195,6 +195,24 @@ pub const CLASSES: ClassExports = objc_classes! {
     let host_object = env.objc.borrow::<NSDateHostObject>(this);
     let another_date_host_object = env.objc.borrow::<NSDateHostObject>(anotherDate);
     from_rust_ordering(host_object.time_interval.total_cmp(&another_date_host_object.time_interval))
+}
+
+- (id)description {
+    let time_interval = env.objc.borrow::<NSDateHostObject>(this).time_interval;
+    let greg_date = CFAbsoluteTimeGetGregorianDate(env, time_interval, nil);
+
+    let year = greg_date.year;
+    let month = greg_date.month;
+    let day = greg_date.day;
+    let hours = greg_date.hours;
+    let minutes = greg_date.minutes;
+    let seconds = greg_date.seconds as i32;
+    let desc = format!(
+        "{:04}-{:02}-{:02} {:02}:{:02}:{:02} +0000",
+        year, month, day, hours, minutes, seconds
+    );
+    let desc_str = from_rust_string(env, desc);
+    autorelease(env, desc_str)
 }
 
 @end

@@ -18,10 +18,12 @@ use crate::Environment;
 pub mod ns_array;
 pub mod ns_autorelease_pool;
 pub mod ns_bundle;
+pub mod ns_calendar;
 pub mod ns_character_set;
 pub mod ns_coder;
 pub mod ns_data;
 pub mod ns_date;
+pub mod ns_date_components;
 pub mod ns_date_formatter;
 pub mod ns_dictionary;
 pub mod ns_enumerator;
@@ -61,10 +63,12 @@ pub const DYLIB: crate::dyld::HostDylib = crate::dyld::HostDylib {
         ns_array::CLASSES,
         ns_autorelease_pool::CLASSES,
         ns_bundle::CLASSES,
+        ns_calendar::CLASSES,
         ns_character_set::CLASSES,
         ns_coder::CLASSES,
         ns_data::CLASSES,
         ns_date::CLASSES,
+        ns_date_components::CLASSES,
         ns_date_formatter::CLASSES,
         ns_dictionary::CLASSES,
         ns_enumerator::CLASSES,
@@ -115,6 +119,7 @@ pub const DYLIB: crate::dyld::HostDylib = crate::dyld::HostDylib {
 pub struct State {
     ns_autorelease_pool: ns_autorelease_pool::State,
     ns_bundle: ns_bundle::State,
+    ns_calendar: ns_calendar::State,
     ns_file_manager: ns_file_manager::State,
     ns_locale: ns_locale::State,
     ns_notification_center: ns_notification_center::State,
@@ -169,6 +174,16 @@ pub const NSOrderedDescending: NSComparisonResult = 1;
 
 /// Number of seconds.
 pub type NSTimeInterval = f64;
+
+// NSCalendar unit flags
+pub type NSCalendarUnit = NSUInteger;
+pub const NSYearCalendarUnit: NSCalendarUnit = 1 << 0;
+pub const NSMonthCalendarUnit: NSCalendarUnit = 1 << 1;
+pub const NSDayCalendarUnit: NSCalendarUnit = 1 << 2;
+pub const NSHourCalendarUnit: NSCalendarUnit = 1 << 3;
+pub const NSMinuteCalendarUnit: NSCalendarUnit = 1 << 4;
+pub const NSSecondCalendarUnit: NSCalendarUnit = 1 << 5;
+pub const NSWeekdayCalendarUnit: NSCalendarUnit = 1 << 6;
 
 /// UTF-16 code unit.
 #[allow(non_camel_case_types)]

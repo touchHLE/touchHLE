@@ -26,6 +26,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "9c87fc60_a5414230",
+        "filename": "src/frameworks/audio_toolbox/audio_queue.rs",
+        "patchSetId": 43
+      },
+      "lineNbr": 14,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-02-01T23:03:27Z",
+      "side": 1,
+      "message": "@hikari@noyu.me is it a blocker for merging?\n\nIf it\u0027s just about imports and you don\u0027t have any comments about funcitonal part, I can fix it myself once this ps is merged.",
+      "parentUuid": "ea16faa9_43a21c31",
+      "range": {
+        "startLine": 13,
+        "startChar": 0,
+        "endLine": 14,
+        "endChar": 55
+      },
+      "revId": "7ecfbbb052c700ccd090f6d4d5d2dcfd9c7b8083",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "bb3e9f19_11870a11",
         "filename": "src/frameworks/openal.rs",
         "patchSetId": 43
@@ -37,6 +61,24 @@
       "writtenOn": "2026-01-19T02:55:21Z",
       "side": 1,
       "message": "Having a later `use` depend on an earlier `use` like this is kind of disorienting, I\u0027d much prefer this just be merged with the `use` on line 17.",
+      "revId": "7ecfbbb052c700ccd090f6d4d5d2dcfd9c7b8083",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d22e376c_de2ada09",
+        "filename": "src/frameworks/openal.rs",
+        "patchSetId": 43
+      },
+      "lineNbr": 22,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-02-01T23:03:27Z",
+      "side": 1,
+      "message": "Same comment as above.",
+      "parentUuid": "bb3e9f19_11870a11",
       "revId": "7ecfbbb052c700ccd090f6d4d5d2dcfd9c7b8083",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

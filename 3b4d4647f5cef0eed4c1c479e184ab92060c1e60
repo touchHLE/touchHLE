@@ -38,6 +38,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "58965ad8_e22b2787",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-02-01T22:56:23Z",
+      "side": 1,
+      "message": "i think it would be easier for review to merge 3 NSKeyedUnarchiver related commits into one. (but it\u0027s up to you)",
+      "parentUuid": "5dd67d46_c0ea1017",
+      "revId": "3b4d4647f5cef0eed4c1c479e184ab92060c1e60",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "e7c4ca3e_1325927d",
         "filename": "src/frameworks/foundation/ns_keyed_archiver.rs",
         "patchSetId": 2
@@ -137,6 +155,24 @@
       "side": 1,
       "message": "If object is an instance of a class, [object class] returns its Class. If object is a class, [object class] also returns its Class, which is itself. That way to determine if the object behind id is a class or an instance, you can compare it against what\u0027s returned by the class selector",
       "parentUuid": "e2be46d5_e0675fff",
+      "revId": "3b4d4647f5cef0eed4c1c479e184ab92060c1e60",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6d19a9ef_57205307",
+        "filename": "src/frameworks/foundation/ns_keyed_archiver.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 163,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-02-01T22:56:23Z",
+      "side": 1,
+      "message": "This deserves an explanatory comment in the code.",
+      "parentUuid": "74c6e88b_c16105fd",
       "revId": "3b4d4647f5cef0eed4c1c479e184ab92060c1e60",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "77c89906_43855a3d",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-02-01T22:52:34Z",
+      "side": 1,
+      "message": "Could you please split the patchset in 2: for NSCalendar and for NSDate parts?\n\nI\u0027m nearly happy about NSDate description part to be merged.",
+      "revId": "3382ff3a5e241d6b50a77f9fde611f68585d46a8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "22d35793_f5723bd1",
+        "filename": "src/frameworks/foundation/ns_calendar.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 59,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-02-01T22:52:34Z",
+      "side": 1,
+      "message": "can you attempt to implement that for real?\n\nit seems like only weekday portion is needed for the game",
+      "revId": "3382ff3a5e241d6b50a77f9fde611f68585d46a8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6d1e0fad_969f16be",
+        "filename": "src/frameworks/foundation/ns_date.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 211,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-02-01T22:52:34Z",
+      "side": 1,
+      "message": "are you sure about seconds formatting? also, you need to add a TODO comment about +0000 part",
+      "revId": "3382ff3a5e241d6b50a77f9fde611f68585d46a8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

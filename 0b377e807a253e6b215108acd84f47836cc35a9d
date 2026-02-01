@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "be34cb54_f10fdc05",
+        "filename": "src/frameworks/media_player/movie_player.rs",
+        "patchSetId": 38
+      },
+      "lineNbr": 230,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-02-01T22:59:29Z",
+      "side": 1,
+      "message": "This will crash if movie_player is stopped before this notification is processed (stop method does call the release).\n\nThis need to be fixed.\n\nIf we have a guarantee that MPMoviePlayerPlaybackDidFinishNotification would always be delivered, you can move release from stop to here.",
+      "revId": "0b377e807a253e6b215108acd84f47836cc35a9d",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

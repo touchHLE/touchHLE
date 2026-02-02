@@ -56,6 +56,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "643a147b_b3f2a0b7",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2026-02-02T18:44:12Z",
+      "side": 1,
+      "message": "I believe the commits are independent and unrelated enough for them to be separate. Besides the tests, which of course should come after the other two commits, the NSKeyedArchiver and NSKeyedUnarchiver commit stand on their own and dont really require eachother in any order",
+      "parentUuid": "58965ad8_e22b2787",
+      "revId": "3b4d4647f5cef0eed4c1c479e184ab92060c1e60",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "e7c4ca3e_1325927d",
         "filename": "src/frameworks/foundation/ns_keyed_archiver.rs",
         "patchSetId": 2
@@ -173,6 +191,24 @@
       "side": 1,
       "message": "This deserves an explanatory comment in the code.",
       "parentUuid": "74c6e88b_c16105fd",
+      "revId": "3b4d4647f5cef0eed4c1c479e184ab92060c1e60",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ace944a6_0751ff7a",
+        "filename": "src/frameworks/foundation/ns_keyed_archiver.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 163,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2026-02-02T18:44:12Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "6d19a9ef_57205307",
       "revId": "3b4d4647f5cef0eed4c1c479e184ab92060c1e60",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

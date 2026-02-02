@@ -16,6 +16,24 @@
       "message": "does it pass on the real device?",
       "revId": "52c6daf9f1ea504225f9e5af241266893d0caaad",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "c69b5324_f82860db",
+        "filename": "tests/TestApp_source/cli_tests.m",
+        "patchSetId": 2
+      },
+      "lineNbr": 3163,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2026-02-02T18:44:06Z",
+      "side": 1,
+      "message": "It does",
+      "parentUuid": "aa6ad573_bbe9b94e",
+      "revId": "52c6daf9f1ea504225f9e5af241266893d0caaad",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

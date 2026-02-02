@@ -16,6 +16,24 @@
       "message": "This creates a memory leak!\n\nDocs for the method suggest that there is an intenal buffer, pointer to which is returned here and the buffer is deallocated with the object.",
       "revId": "fd15977106d5f31f1636789a05b1a74fa9ec659f",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f8de4078_ccd3728d",
+        "filename": "src/frameworks/foundation/ns_keyed_unarchiver.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 205,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2026-02-02T18:44:16Z",
+      "side": 1,
+      "message": "Nice catch, \"owned by the receiver\" made me think it was owned by the caller.",
+      "parentUuid": "07e8e8d6_07d40829",
+      "revId": "fd15977106d5f31f1636789a05b1a74fa9ec659f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

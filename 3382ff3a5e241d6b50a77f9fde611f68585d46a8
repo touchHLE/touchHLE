@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "abbb46be_fe60ef0e",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1039141
+      },
+      "writtenOn": "2026-02-02T16:48:41Z",
+      "side": 1,
+      "message": "I have split the patchset into two separate commits",
+      "parentUuid": "77c89906_43855a3d",
+      "revId": "3382ff3a5e241d6b50a77f9fde611f68585d46a8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "22d35793_f5723bd1",
@@ -35,6 +53,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "75899e71_43b6ff54",
+        "filename": "src/frameworks/foundation/ns_calendar.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 59,
+      "author": {
+        "id": 1039141
+      },
+      "writtenOn": "2026-02-02T16:48:41Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "22d35793_f5723bd1",
+      "revId": "3382ff3a5e241d6b50a77f9fde611f68585d46a8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "6d1e0fad_969f16be",
@@ -48,6 +84,24 @@
       "writtenOn": "2026-02-01T22:52:34Z",
       "side": 1,
       "message": "are you sure about seconds formatting? also, you need to add a TODO comment about +0000 part",
+      "revId": "3382ff3a5e241d6b50a77f9fde611f68585d46a8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "552da003_2bcb6d42",
+        "filename": "src/frameworks/foundation/ns_date.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 211,
+      "author": {
+        "id": 1039141
+      },
+      "writtenOn": "2026-02-02T16:48:41Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "6d1e0fad_969f16be",
       "revId": "3382ff3a5e241d6b50a77f9fde611f68585d46a8",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

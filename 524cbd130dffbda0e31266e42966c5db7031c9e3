@@ -16,6 +16,24 @@
       "message": "why do you think there are several temporary buffers and not just one?",
       "revId": "524cbd130dffbda0e31266e42966c5db7031c9e3",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "754e7dfe_2f2ccfb6",
+        "filename": "src/frameworks/foundation/ns_keyed_unarchiver.rs",
+        "patchSetId": 4
+      },
+      "lineNbr": 60,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2026-02-03T13:05:56Z",
+      "side": 1,
+      "message": "While I assume that most apps will make a copy of the buffer immediately, if there\u0027s just one buffer and the app defers the copying, the buffer might get overwritten if there\u0027s multiple byte arrays to decode in the archive. This could be a problem or not. Storing all the buffers would avoid the issue entirely and while we might be using more memory while decoding, archives are probably small enough and archivers short lived enough for this not to be a problem. Even if it becomes a problem itd be easier to diagnose than a buffer getting silently overwritten",
+      "parentUuid": "509da77a_7efed329",
+      "revId": "524cbd130dffbda0e31266e42966c5db7031c9e3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

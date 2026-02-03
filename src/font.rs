@@ -326,7 +326,7 @@ impl Font {
     }
 
     /// Draw text. Calls the provided callback for each glyph that is to be
-    /// drawn. Assumes y starts at the bottom-left corner and points upwards.
+    /// drawn. Assumes y starts at the top-left corner and points downwards.
     /// Used by UIKit for font rendering.
     pub fn draw<F: FnMut(RasterGlyph)>(
         &self,
@@ -337,12 +337,9 @@ impl Font {
         alignment: TextAlignment,
         mut draw_glyph: F,
     ) {
-        // TODO: This code has gone through a rather traumatic series of y sign
-        //       flips and might benefit from refactoring for clarity?
-
         let lines = self.break_lines(font_size, text, wrap);
 
-        let mut line_y = self.font.v_metrics(scale(font_size)).ascent;
+        let mut baseline = origin.1 + self.font.v_metrics(scale(font_size)).ascent;
         let (line_height, line_gap) = self.line_height_and_gap(font_size);
 
         // RustType requires a "draw pixel" callback that will be called for
@@ -357,27 +354,24 @@ impl Font {
         //       used, to avoid blurry text?
         let mut glyph_bitmap: Vec<f32> = Vec::new();
 
-        for (line_width, line_text) in lines {
+        for (line_width, line_text) in lines.iter() {
             let line_x_offset = match alignment {
                 TextAlignment::Left => 0.0,
                 TextAlignment::Center => -line_width / 2.0,
                 TextAlignment::Right => -line_width,
             };
+
             for glyph in self.font.layout(
                 line_text,
                 scale(font_size),
                 Point {
                     x: origin.0 + line_x_offset,
-                    y: 0.0,
+                    y: baseline,
                 },
             ) {
                 let Some(glyph_bounds) = glyph.pixel_bounding_box() else {
                     continue;
                 };
-                // y needs to be flipped to point up
-                let glyph_height = glyph_bounds.height();
-                let x_offset = glyph_bounds.min.x;
-                let y_offset = ((origin.1 + line_y).round() as i32) + glyph_bounds.max.y;
 
                 // TODO: Refactor this method to support y clipping too.
                 // It's not mandatory since the caller can do it, but it would
@@ -403,14 +397,14 @@ impl Font {
                 });
 
                 let raster_glyph = RasterGlyph {
-                    origin: (x_offset as f32, y_offset as f32 - glyph_height as f32),
-                    dimensions: (glyph_bitmap_bounds.0 as _, glyph_bitmap_bounds.1 as _),
+                    origin: (glyph_bounds.min.x as f32, glyph_bounds.min.y as f32),
+                    dimensions: (glyph_bitmap_bounds.0 as i32, glyph_bitmap_bounds.1 as i32),
                     pixels: &glyph_bitmap,
                 };
 
                 draw_glyph(raster_glyph);
             }
-            line_y += line_height + line_gap;
+            baseline += line_height + line_gap;
         }
     }
 

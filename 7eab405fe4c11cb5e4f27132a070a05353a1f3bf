@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2976e8cf_3d296a4b",
+        "filename": "src/frameworks/foundation/ns_calendar.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 53,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-02-03T12:31:09Z",
+      "side": 1,
+      "message": "you don\u0027t need to define this method, it\u0027s inherited from NSObject",
+      "revId": "7eab405fe4c11cb5e4f27132a070a05353a1f3bf",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c86180ac_b635dab9",
+        "filename": "src/frameworks/foundation/ns_date_components.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 30,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-02-03T12:31:09Z",
+      "side": 1,
+      "message": "same comment (but your the metaclass)",
+      "revId": "7eab405fe4c11cb5e4f27132a070a05353a1f3bf",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a88569fe_8f3bb742",
+        "filename": "src/frameworks/foundation/ns_date_components.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 35,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-02-03T12:31:09Z",
+      "side": 1,
+      "message": "same comment",
+      "revId": "7eab405fe4c11cb5e4f27132a070a05353a1f3bf",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

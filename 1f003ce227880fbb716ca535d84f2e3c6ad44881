@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "681079c7_ad9b8e23",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-02-03T12:29:00Z",
+      "side": 1,
+      "message": "It doesn\u0027t look like a stub to me, please update commit description accordingly",
+      "revId": "1f003ce227880fbb716ca535d84f2e3c6ad44881",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

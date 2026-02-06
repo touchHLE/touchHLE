@@ -20,6 +20,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "c70755c3_1a568218",
+        "filename": "src/dyld.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 427,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-02-06T22:31:09Z",
+      "side": 1,
+      "message": "Hhhhm, this is very good call, maybe I overcomplicated it for what it is worth...\n\nI removed the changed in dyld and only applied slide before MachO. It seems to work??",
+      "parentUuid": "c49208f4_0335bdb6",
+      "revId": "6945a6c274ef84a6a650b3d0a22b9e72ea73332b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "9b24d14a_d620e3a7",
         "filename": "src/dyld.rs",
         "patchSetId": 2
@@ -31,6 +49,24 @@
       "writtenOn": "2026-02-06T21:49:01Z",
       "side": 1,
       "message": "This is suspicious, should it really not be matching line 802?",
+      "revId": "6945a6c274ef84a6a650b3d0a22b9e72ea73332b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "59738771_28c3b579",
+        "filename": "src/dyld.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 808,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-02-06T22:31:09Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "9b24d14a_d620e3a7",
       "revId": "6945a6c274ef84a6a650b3d0a22b9e72ea73332b",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },

@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "719e3b07_d8c2c010",
+        "filename": "src/frameworks/foundation/ns_keyed_unarchiver.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 213,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-02-06T18:50:47Z",
+      "side": 1,
+      "message": "What does it mean to return an empty vector here? It seems like this will silenlty ignore an error.\n\nEither unwrap as other methods or verify the behaviour with a test.",
+      "revId": "ceffc27376c155ad00e8d0bd53750defc6922de6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

@@ -37,6 +37,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "a874a443_b2b75e47",
+        "filename": "src/frameworks/foundation/ns_keyed_unarchiver.rs",
+        "patchSetId": 6
+      },
+      "lineNbr": 210,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2026-02-06T19:17:24Z",
+      "side": 1,
+      "message": "Is it worth doing? None of the other methods do it and it\u0027d crash anyways when get_value_to_decode_key calls to_rust_string",
+      "parentUuid": "d082e9a5_cba32a35",
+      "revId": "1212ef064e3aa225c6ee3e4099d052075f253b0e",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "a45ad311_0371ee30",
         "filename": "src/frameworks/foundation/ns_keyed_unarchiver.rs",
         "patchSetId": 6
@@ -48,6 +66,24 @@
       "writtenOn": "2026-02-06T19:12:28Z",
       "side": 1,
       "message": "does the length get written in this case? worth adding a test case in cli_tests",
+      "revId": "1212ef064e3aa225c6ee3e4099d052075f253b0e",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "2b9c7639_db10fa85",
+        "filename": "src/frameworks/foundation/ns_keyed_unarchiver.rs",
+        "patchSetId": 6
+      },
+      "lineNbr": 214,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2026-02-06T19:17:24Z",
+      "side": 1,
+      "message": "I\u0027ve verified it in a real device. Added a test case to the tests commit",
+      "parentUuid": "a45ad311_0371ee30",
       "revId": "1212ef064e3aa225c6ee3e4099d052075f253b0e",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

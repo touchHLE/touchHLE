@@ -34,6 +34,24 @@
       "parentUuid": "509da77a_7efed329",
       "revId": "524cbd130dffbda0e31266e42966c5db7031c9e3",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4b57451e_d750c2a4",
+        "filename": "src/frameworks/foundation/ns_keyed_unarchiver.rs",
+        "patchSetId": 4
+      },
+      "lineNbr": 60,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-02-06T17:17:39Z",
+      "side": 1,
+      "message": "Thanks! You explanations makes sense, but what real iOS does?",
+      "parentUuid": "754e7dfe_2f2ccfb6",
+      "revId": "524cbd130dffbda0e31266e42966c5db7031c9e3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

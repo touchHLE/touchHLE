@@ -88,6 +88,24 @@
       "parentUuid": "97d2e18f_832050b3",
       "revId": "524cbd130dffbda0e31266e42966c5db7031c9e3",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d00f12c3_1e386ca2",
+        "filename": "src/frameworks/foundation/ns_keyed_unarchiver.rs",
+        "patchSetId": 4
+      },
+      "lineNbr": 60,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2026-02-06T18:38:36Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "d730e7e6_2e7c1bc3",
+      "revId": "524cbd130dffbda0e31266e42966c5db7031c9e3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

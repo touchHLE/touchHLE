@@ -16,6 +16,24 @@
       "message": "What does it mean to return an empty vector here? It seems like this will silenlty ignore an error.\n\nEither unwrap as other methods or verify the behaviour with a test.",
       "revId": "ceffc27376c155ad00e8d0bd53750defc6922de6",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "85c69931_6b294b08",
+        "filename": "src/frameworks/foundation/ns_keyed_unarchiver.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 213,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2026-02-06T19:06:25Z",
+      "side": 1,
+      "message": "I don\u0027t know what possessed me that night. Nice catch, it\u0027s supposed to return a null pointer.",
+      "parentUuid": "719e3b07_d8c2c010",
+      "revId": "ceffc27376c155ad00e8d0bd53750defc6922de6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "14eac523_46ae5de3",
+        "filename": "src/mach_o.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 564,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-02-06T21:49:01Z",
+      "side": 0,
+      "message": "Does this commit really implement the thing the warning is about? I don\u0027t know enough about this topic…",
+      "revId": "9b6ecec732a0f5abac6e3d4231c59bfe532478cb",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

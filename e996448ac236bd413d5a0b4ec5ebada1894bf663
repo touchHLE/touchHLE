@@ -1,0 +1,89 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8108f7b0_50f1bbd7",
+        "filename": "src/frameworks/foundation/ns_calendar.rs",
+        "patchSetId": 6
+      },
+      "lineNbr": 6,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-02-06T17:09:45Z",
+      "side": 1,
+      "message": "nit: add a blank line",
+      "revId": "e996448ac236bd413d5a0b4ec5ebada1894bf663",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e173e5a7_a82f4f0d",
+        "filename": "src/frameworks/foundation/ns_calendar.rs",
+        "patchSetId": 6
+      },
+      "lineNbr": 17,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-02-06T17:09:45Z",
+      "side": 1,
+      "message": "how did you get those values? it seems incorrect to me",
+      "revId": "e996448ac236bd413d5a0b4ec5ebada1894bf663",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c065622a_d8b96581",
+        "filename": "src/frameworks/foundation/ns_calendar.rs",
+        "patchSetId": 6
+      },
+      "lineNbr": 71,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-02-06T17:09:45Z",
+      "side": 1,
+      "message": "What is the type of the calendar which you\u0027re assuming here? It need to be clearly stated and ideally asserted against (e.g. implmentation of this method is not correct for other types of NSCalendars)",
+      "revId": "e996448ac236bd413d5a0b4ec5ebada1894bf663",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "87026367_977d3fc5",
+        "filename": "src/frameworks/foundation/ns_calendar.rs",
+        "patchSetId": 6
+      },
+      "lineNbr": 73,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-02-06T17:09:45Z",
+      "side": 1,
+      "message": "Can you please add some tests for this calculations?\n\nEither extract it to helper method and test it (as in the time.rs) or write an integration test in cli_tests.",
+      "revId": "e996448ac236bd413d5a0b4ec5ebada1894bf663",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a2f12f04_75be1abb",
+        "filename": "src/frameworks/foundation/ns_date_components.rs",
+        "patchSetId": 6
+      },
+      "lineNbr": 6,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-02-06T17:09:45Z",
+      "side": 1,
+      "message": "nit: add a blank line",
+      "revId": "e996448ac236bd413d5a0b4ec5ebada1894bf663",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

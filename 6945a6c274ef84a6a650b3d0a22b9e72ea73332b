@@ -52,6 +52,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "574c5f7c_edbdace3",
+        "filename": "src/environment.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 541,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-02-06T21:54:44Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "71ffbaee_9c2e8d79",
+      "revId": "6945a6c274ef84a6a650b3d0a22b9e72ea73332b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "e1f1ba3b_8f39d77f",
@@ -65,6 +83,24 @@
       "writtenOn": "2026-02-06T21:49:01Z",
       "side": 1,
       "message": "That function no longer exists.",
+      "revId": "6945a6c274ef84a6a650b3d0a22b9e72ea73332b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "2133d7ed_093472f4",
+        "filename": "src/mach_o.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 55,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-02-06T21:54:44Z",
+      "side": 1,
+      "message": "Right, done",
+      "parentUuid": "e1f1ba3b_8f39d77f",
       "revId": "6945a6c274ef84a6a650b3d0a22b9e72ea73332b",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

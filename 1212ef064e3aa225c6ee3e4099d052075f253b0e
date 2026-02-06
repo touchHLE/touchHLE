@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "4a62be19_99e3caaf",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 6
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-02-06T19:12:28Z",
+      "side": 1,
+      "message": "It is close to get merged, few small things",
+      "revId": "1212ef064e3aa225c6ee3e4099d052075f253b0e",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d082e9a5_cba32a35",
+        "filename": "src/frameworks/foundation/ns_keyed_unarchiver.rs",
+        "patchSetId": 6
+      },
+      "lineNbr": 210,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-02-06T19:12:28Z",
+      "side": 1,
+      "message": "please add an assert for the key not being nil",
+      "revId": "1212ef064e3aa225c6ee3e4099d052075f253b0e",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a45ad311_0371ee30",
+        "filename": "src/frameworks/foundation/ns_keyed_unarchiver.rs",
+        "patchSetId": 6
+      },
+      "lineNbr": 214,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-02-06T19:12:28Z",
+      "side": 1,
+      "message": "does the length get written in this case? worth adding a test case in cli_tests",
+      "revId": "1212ef064e3aa225c6ee3e4099d052075f253b0e",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

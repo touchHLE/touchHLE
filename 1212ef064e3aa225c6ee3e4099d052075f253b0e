@@ -55,6 +55,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "1f8dba48_05d808e9",
+        "filename": "src/frameworks/foundation/ns_keyed_unarchiver.rs",
+        "patchSetId": 6
+      },
+      "lineNbr": 210,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-02-06T19:18:42Z",
+      "side": 1,
+      "message": "It is mentioned in the docs. I think it\u0027s preferqble to crash earlier",
+      "parentUuid": "a874a443_b2b75e47",
+      "revId": "1212ef064e3aa225c6ee3e4099d052075f253b0e",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "a45ad311_0371ee30",
         "filename": "src/frameworks/foundation/ns_keyed_unarchiver.rs",
         "patchSetId": 6
@@ -84,6 +102,24 @@
       "side": 1,
       "message": "I\u0027ve verified it in a real device. Added a test case to the tests commit",
       "parentUuid": "a45ad311_0371ee30",
+      "revId": "1212ef064e3aa225c6ee3e4099d052075f253b0e",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "26dac591_7426f04f",
+        "filename": "src/frameworks/foundation/ns_keyed_unarchiver.rs",
+        "patchSetId": 6
+      },
+      "lineNbr": 214,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-02-06T19:18:42Z",
+      "side": 1,
+      "message": "Thanks!",
+      "parentUuid": "2b9c7639_db10fa85",
       "revId": "1212ef064e3aa225c6ee3e4099d052075f253b0e",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

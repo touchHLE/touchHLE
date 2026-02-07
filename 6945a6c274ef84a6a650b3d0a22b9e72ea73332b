@@ -38,6 +38,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "7a4d4075_798e7e70",
+        "filename": "src/dyld.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 427,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-02-07T11:52:33Z",
+      "side": 1,
+      "message": "I tested about 50 games on macOS, all are working as before. I think it is safe to say that there are no regressions.",
+      "parentUuid": "c70755c3_1a568218",
+      "revId": "6945a6c274ef84a6a650b3d0a22b9e72ea73332b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "9b24d14a_d620e3a7",
         "filename": "src/dyld.rs",
         "patchSetId": 2

@@ -16,6 +16,24 @@
       "message": "please fix formatting",
       "revId": "ea245b043a61a51a343b4006d0022695a204d5ee",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "99fc42af_168158df",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 10
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2026-02-07T10:37:06Z",
+      "side": 1,
+      "message": ":vanish:",
+      "parentUuid": "140ca8f7_976ad5d7",
+      "revId": "ea245b043a61a51a343b4006d0022695a204d5ee",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

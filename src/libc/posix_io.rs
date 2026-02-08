@@ -117,6 +117,13 @@ pub const LOCK_NB: FLockFlag = 4;
 #[allow(dead_code)]
 pub const LOCK_UN: FLockFlag = 8;
 
+#[repr(C, packed)]
+struct iovec {
+    iov_base: ConstPtr<u8>,
+    iov_len: GuestUSize,
+}
+unsafe impl SafeRead for iovec {}
+
 fn open(env: &mut Environment, path: ConstPtr<u8>, flags: i32, _args: DotDotDot) -> FileDescriptor {
     // TODO: handle errno properly
     set_errno(env, 0);
@@ -441,6 +448,26 @@ pub fn pwrite(
     assert!(lseek(env, fd, original_position, SEEK_SET) != -1);
 
     bytes_written
+}
+
+fn writev(
+    env: &mut Environment,
+    fd: FileDescriptor,
+    iov: ConstPtr<iovec>,
+    iovcnt: i32,
+) -> GuestISize {
+    let mut i = 0;
+    let mut written_bytes: GuestISize = 0;
+    while i != iovcnt {
+        let iovec = env.mem.read(iov + i as u32);
+        let bytes_written = write(env, fd, iovec.iov_base.cast(), iovec.iov_len);
+        if bytes_written == -1 {
+            return -1;
+        }
+        written_bytes += bytes_written;
+        i += 1
+    }
+    written_bytes
 }
 
 #[allow(non_camel_case_types)]
@@ -882,6 +909,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(pread(_, _, _, _)),
     export_c_func!(write(_, _, _)),
     export_c_func!(pwrite(_, _, _, _)),
+    export_c_func!(writev(_, _, _)),
     export_c_func!(lseek(_, _, _)),
     export_c_func!(close(_)),
     export_c_func!(rename(_, _)),

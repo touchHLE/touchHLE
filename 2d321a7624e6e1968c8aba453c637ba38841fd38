@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5f5c7e2a_18ef60aa",
+        "filename": "src/frameworks/foundation/ns_calendar.rs",
+        "patchSetId": 7
+      },
+      "lineNbr": 24,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-02-08T20:19:54Z",
+      "side": 1,
+      "message": "Is it something defined in the SDK?\n\nIf yes, please point me to the docs. (i\u0027m only aware about https://developer.apple.com/documentation/foundation/nsgregoriancalendar?language\u003dobjc and if you use that you should define _NSGregorianCalendar and properly back it with a host constant, you could find examples across codebase, e.g see NSLocale constants).\n\nIf not, you should cleary indicate that with a prefix, see https://github.com/touchHLE/touchHLE/blob/trunk/dev-docs/code-style.md",
+      "revId": "2d321a7624e6e1968c8aba453c637ba38841fd38",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fdecf78e_d9f5c5ee",
+        "filename": "src/frameworks/foundation/ns_calendar.rs",
+        "patchSetId": 7
+      },
+      "lineNbr": 162,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-02-08T20:19:54Z",
+      "side": 1,
+      "message": "i would like to see a test about modern date too, like today",
+      "revId": "2d321a7624e6e1968c8aba453c637ba38841fd38",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

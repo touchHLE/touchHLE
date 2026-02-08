@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "d9344036_f55d0ec1",
+        "filename": "src/frameworks/foundation/ns_calendar.rs",
+        "patchSetId": 6
+      },
+      "lineNbr": 6,
+      "author": {
+        "id": 1039141
+      },
+      "writtenOn": "2026-02-08T17:00:18Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "8108f7b0_50f1bbd7",
+      "revId": "e996448ac236bd413d5a0b4ec5ebada1894bf663",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "e173e5a7_a82f4f0d",
@@ -31,6 +49,24 @@
       "writtenOn": "2026-02-06T17:09:45Z",
       "side": 1,
       "message": "how did you get those values? it seems incorrect to me",
+      "revId": "e996448ac236bd413d5a0b4ec5ebada1894bf663",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "fcf7164a_dc20cfb3",
+        "filename": "src/frameworks/foundation/ns_calendar.rs",
+        "patchSetId": 6
+      },
+      "lineNbr": 17,
+      "author": {
+        "id": 1039141
+      },
+      "writtenOn": "2026-02-08T17:00:18Z",
+      "side": 1,
+      "message": "i updated them with the correct values as per the CFCalendarUnit constants declared in CFCalendar.h",
+      "parentUuid": "e173e5a7_a82f4f0d",
       "revId": "e996448ac236bd413d5a0b4ec5ebada1894bf663",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
@@ -52,6 +88,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "8f04e533_c322e6f0",
+        "filename": "src/frameworks/foundation/ns_calendar.rs",
+        "patchSetId": 6
+      },
+      "lineNbr": 71,
+      "author": {
+        "id": 1039141
+      },
+      "writtenOn": "2026-02-08T17:00:18Z",
+      "side": 1,
+      "message": "set as Gregorian calendar",
+      "parentUuid": "c065622a_d8b96581",
+      "revId": "e996448ac236bd413d5a0b4ec5ebada1894bf663",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "87026367_977d3fc5",
@@ -69,6 +123,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "37d678e3_618a5ce4",
+        "filename": "src/frameworks/foundation/ns_calendar.rs",
+        "patchSetId": 6
+      },
+      "lineNbr": 73,
+      "author": {
+        "id": 1039141
+      },
+      "writtenOn": "2026-02-08T17:00:18Z",
+      "side": 1,
+      "message": "done, i added it down",
+      "parentUuid": "87026367_977d3fc5",
+      "revId": "e996448ac236bd413d5a0b4ec5ebada1894bf663",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "a2f12f04_75be1abb",
@@ -82,6 +154,24 @@
       "writtenOn": "2026-02-06T17:09:45Z",
       "side": 1,
       "message": "nit: add a blank line",
+      "revId": "e996448ac236bd413d5a0b4ec5ebada1894bf663",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "36c18fd5_8815da20",
+        "filename": "src/frameworks/foundation/ns_date_components.rs",
+        "patchSetId": 6
+      },
+      "lineNbr": 6,
+      "author": {
+        "id": 1039141
+      },
+      "writtenOn": "2026-02-08T17:00:18Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "a2f12f04_75be1abb",
       "revId": "e996448ac236bd413d5a0b4ec5ebada1894bf663",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

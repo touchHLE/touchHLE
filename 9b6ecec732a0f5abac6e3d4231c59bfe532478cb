@@ -16,6 +16,24 @@
       "message": "Does this commit really implement the thing the warning is about? I don\u0027t know enough about this topic…",
       "revId": "9b6ecec732a0f5abac6e3d4231c59bfe532478cb",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8ae85507_aef43704",
+        "filename": "src/mach_o.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 564,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-02-08T10:38:48Z",
+      "side": 0,
+      "message": "I think the comment was not very correct - rebasing was implemented, but not sliding.",
+      "parentUuid": "14eac523_46ae5de3",
+      "revId": "9b6ecec732a0f5abac6e3d4231c59bfe532478cb",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

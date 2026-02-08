@@ -8,15 +8,18 @@
 //! This is toll-free bridged to `NSURL` in Apple's implementation. Here it is
 //! the same type.
 
+use std::collections::HashSet;
+
 use super::cf_allocator::{kCFAllocatorDefault, CFAllocatorRef};
 use super::CFIndex;
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::frameworks::core_foundation::cf_string::{
-    kCFStringEncodingASCII, CFStringConvertEncodingToNSStringEncoding, CFStringEncoding,
-    CFStringRef,
+    kCFStringEncodingASCII, kCFStringEncodingUTF8, CFStringConvertEncodingToNSStringEncoding,
+    CFStringEncoding, CFStringRef,
 };
+use crate::frameworks::core_foundation::CFRetain;
 use crate::frameworks::foundation::ns_string::{
-    get_static_str, to_rust_string, NSUTF8StringEncoding,
+    from_rust_string, get_static_str, to_rust_string, NSUTF8StringEncoding,
 };
 use crate::frameworks::foundation::NSUInteger;
 use crate::mem::{ConstPtr, MutPtr, Ptr};
@@ -31,6 +34,10 @@ const kCFURLPOSIXPathStyle: CFURLPathStyle = 0;
 const kCFURLHFSPathStyle: CFURLPathStyle = 1;
 #[allow(dead_code)]
 const kCFURLWindowsPathStyle: CFURLPathStyle = 2;
+
+const LEGAL_URI_CHARACTERS: &str =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~";
+const RESERVED_URI_CHARACTERS: &str = ":/?#[]@!$&'()*+,;=";
 
 pub fn CFURLGetFileSystemRepresentation(
     env: &mut Environment,
@@ -123,6 +130,59 @@ fn CFURLCreateWithFileSystemPath(
     msg![env; url initFileURLWithPath:file_path isDirectory:is_directory]
 }
 
+fn CFURLCreateStringByAddingPercentEscapes(
+    env: &mut Environment,
+    allocator: CFAllocatorRef,
+    original_string_ref: CFStringRef,
+    characters_to_leave_unescaped: CFStringRef,
+    legal_url_characters_to_be_escaped: CFStringRef,
+    encoding: CFStringEncoding,
+) -> CFStringRef {
+    assert!(allocator.is_null() || allocator == kCFAllocatorDefault); // unimplemented
+    assert_eq!(encoding, kCFStringEncodingUTF8); // TODO
+    let original_string = to_rust_string(env, original_string_ref);
+    assert!(!original_string.contains("%")); // TODO: Handle escaped chars?
+    let characters_to_leave_unescaped = if characters_to_leave_unescaped.is_null() {
+        ""
+    } else {
+        &to_rust_string(env, characters_to_leave_unescaped)
+    };
+    let legal_url_characters_to_be_escaped = if legal_url_characters_to_be_escaped.is_null() {
+        ""
+    } else {
+        &to_rust_string(env, legal_url_characters_to_be_escaped)
+    };
+    let mut legal_characters = LEGAL_URI_CHARACTERS
+        .chars()
+        .chain(RESERVED_URI_CHARACTERS.chars())
+        .chain(characters_to_leave_unescaped.chars())
+        .collect::<HashSet<char>>();
+    for value in legal_url_characters_to_be_escaped.chars() {
+        legal_characters.remove(&value);
+    }
+    let escaped = original_string
+        .chars()
+        .map(|c| {
+            if legal_characters.contains(&c) {
+                c.to_string()
+            } else {
+                format!("%{:02X}", c as u32)
+            }
+        })
+        .collect::<String>();
+    if escaped == original_string {
+        // From the docs:
+        // If it does not need to be modified (no percent escape sequences are
+        // missing), this function may merely return originalString with its
+        // reference count incremented.
+        CFRetain(env, original_string_ref)
+    } else {
+        // TODO: Create NSURL directly if possible, to avoid the extra copy
+        let escaped: id = from_rust_string(env, escaped);
+        msg_class![env; NSURL URLWithString:escaped]
+    }
+}
+
 pub fn CFURLCopyPathExtension(env: &mut Environment, url: CFURLRef) -> CFStringRef {
     let path = msg![env; url path];
     let ext = msg![env; path pathExtension];
@@ -187,6 +247,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CFURLCreateFromFileSystemRepresentation(_, _, _, _)),
     export_c_func!(CFURLCreateWithBytes(_, _, _, _, _)),
     export_c_func!(CFURLCreateWithFileSystemPath(_, _, _, _)),
+    export_c_func!(CFURLCreateStringByAddingPercentEscapes(_, _, _, _, _)),
     export_c_func!(CFURLCopyPathExtension(_)),
     export_c_func!(CFURLCopyFileSystemPath(_, _)),
     export_c_func!(CFURLCreateCopyAppendingPathComponent(_, _, _, _)),

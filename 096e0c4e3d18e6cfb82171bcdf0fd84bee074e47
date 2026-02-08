@@ -16,6 +16,24 @@
       "message": "It seems like the `sha1` crate is from the RustCrypto ecosystem whereas the `md5` crate it its own separate thing. Would you consider pulling in their `md-5` crate instead? Then the weight of the RustCrypto stuff is at least shared :)\n\nAlso: we usually add packages we rely on to the thanks section of the README. If you do this, you could replace the mention of md5 with a mention of RustCrypto.",
       "revId": "096e0c4e3d18e6cfb82171bcdf0fd84bee074e47",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "0cd0e457_8b8dc09a",
+        "filename": "src/libc/crypto.rs",
+        "patchSetId": 4
+      },
+      "lineNbr": 18,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2026-02-08T22:04:46Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "3ece91c1_f522fc32",
+      "revId": "096e0c4e3d18e6cfb82171bcdf0fd84bee074e47",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

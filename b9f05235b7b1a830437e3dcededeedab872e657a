@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "85a03176_6c7ce5a0",
+        "filename": "src/frameworks/foundation/ns_run_loop.rs",
+        "patchSetId": 6
+      },
+      "lineNbr": 347,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-02-08T23:44:40Z",
+      "side": 1,
+      "message": "- This probably needs to have the same behaviour as NSTimer or `recomposite_if_necessary` where it runs at at most 60fps. It shouldn\u0027t trigger every run-loop iteration.\n- Can we move the CADisplayLink handling to before the `recomposite_if_necessary`, to avoid adding a one-frame delay to rendering? I guess `NSTimer` has the same problem though… maybe we should move both up?",
+      "revId": "b9f05235b7b1a830437e3dcededeedab872e657a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

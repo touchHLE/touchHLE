@@ -51,6 +51,24 @@
       "message": "Does DySymTab never get used by dylibs or something? Is it because they\u0027re using DyldInfo instead? You aren\u0027t offsetting any of the addrs from it.\n\nIf you could quickly hack something to debug-print all the `MachCommand`s used by the dylibs that would be helpful.",
       "revId": "3d7dbb17d2c4c503a829313759d6f2e28ebafb6d",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "206aba28_003e23ca",
+        "filename": "src/mach_o.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 431,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-02-08T19:57:17Z",
+      "side": 1,
+      "message": "So:\n\nfor \"libstdc++.6.dylib\", `DySymTab { ilocalsym: 0, nlocalsym: 828, iextdefsym: 828, nextdefsym: 3474, iundefsym: 4302, nundefsym: 104, tocoff: 0, ntoc: 0, modtaboff: 0, nmodtab: 0, extrefsymoff: 0, nextrefsyms: 0, indirectsymoff: 509852, nindirectsyms: 508, extreloff: 0, nextrel: 0, locreloff: 0, nlocrel: 0 }`\nfor \"libgcc_s.1.dylib\", `DySymTab { ilocalsym: 0, nlocalsym: 1, iextdefsym: 1, nextdefsym: 149, iundefsym: 150, nundefsym: 16, tocoff: 0, ntoc: 0, modtaboff: 0, nmodtab: 0, extrefsymoff: 0, nextrefsyms: 0, indirectsymoff: 45824, nindirectsyms: 34, extreloff: 0, nextrel: 0, locreloff: 0, nlocrel: 0 }`\n\nWe only care about indirectsyms (indirectsymoff and nindirectsyms) and extrels (extreloff and nextrel).\n\nFor indirectsyms we only extract strings (so slideing doesn\u0027t really matter), for extrels both extreloff and nextrel are zeros for above libs.\n\nI added an assert about slide being zero for extrels (so we can deal with that in the future).",
+      "parentUuid": "35b260ba_7ac4ed0d",
+      "revId": "3d7dbb17d2c4c503a829313759d6f2e28ebafb6d",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

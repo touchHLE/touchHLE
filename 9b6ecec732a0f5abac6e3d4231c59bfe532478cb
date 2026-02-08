@@ -34,6 +34,24 @@
       "parentUuid": "14eac523_46ae5de3",
       "revId": "9b6ecec732a0f5abac6e3d4231c59bfe532478cb",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "28350a13_d19a894f",
+        "filename": "src/mach_o.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 564,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-02-08T13:02:55Z",
+      "side": 0,
+      "message": "Acknowledged",
+      "parentUuid": "8ae85507_aef43704",
+      "revId": "9b6ecec732a0f5abac6e3d4231c59bfe532478cb",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

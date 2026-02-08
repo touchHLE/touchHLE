@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "43f6b052_9dbe3850",
+        "filename": "src/environment.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 375,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-02-08T13:02:55Z",
+      "side": 1,
+      "message": "- You aren\u0027t handling the symlinks/aliases of the dylib names here\n- This will probably never happen, but you probably should check for the `/usr/lib/` prefix in case there is somehow a dylib with the same name inside the app bundle or something.",
+      "revId": "3d7dbb17d2c4c503a829313759d6f2e28ebafb6d",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "35b260ba_7ac4ed0d",
+        "filename": "src/mach_o.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 431,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-02-08T13:02:55Z",
+      "side": 1,
+      "message": "Does DySymTab never get used by dylibs or something? Is it because they\u0027re using DyldInfo instead? You aren\u0027t offsetting any of the addrs from it.\n\nIf you could quickly hack something to debug-print all the `MachCommand`s used by the dylibs that would be helpful.",
+      "revId": "3d7dbb17d2c4c503a829313759d6f2e28ebafb6d",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

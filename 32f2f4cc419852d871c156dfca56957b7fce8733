@@ -1,0 +1,106 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fc51aec7_1100808b",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 9
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-02-09T19:47:51Z",
+      "side": 1,
+      "message": "I should ask, are you using any LLM to submit your patch sets?",
+      "revId": "32f2f4cc419852d871c156dfca56957b7fce8733",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6663751d_d895fa03",
+        "filename": "src/frameworks/foundation/ns_calendar.rs",
+        "patchSetId": 9
+      },
+      "lineNbr": 51,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-02-09T19:47:51Z",
+      "side": 1,
+      "message": "I only see this being used in the setter/getter. What is actual functionality of this field?",
+      "revId": "32f2f4cc419852d871c156dfca56957b7fce8733",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0ef49429_119d8b45",
+        "filename": "src/frameworks/foundation/ns_calendar.rs",
+        "patchSetId": 9
+      },
+      "lineNbr": 101,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-02-09T19:47:51Z",
+      "side": 1,
+      "message": "have you tested this behavior?",
+      "revId": "32f2f4cc419852d871c156dfca56957b7fce8733",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4169a31b_b163eb89",
+        "filename": "src/frameworks/foundation/ns_calendar.rs",
+        "patchSetId": 9
+      },
+      "lineNbr": 133,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-02-09T19:47:51Z",
+      "side": 1,
+      "message": "add TODO for the opts",
+      "revId": "32f2f4cc419852d871c156dfca56957b7fce8733",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7f686102_fbf4b18a",
+        "filename": "src/frameworks/foundation/ns_calendar.rs",
+        "patchSetId": 9
+      },
+      "lineNbr": 147,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-02-09T19:47:51Z",
+      "side": 1,
+      "message": "what about weekday? can you assert that it is 0?",
+      "revId": "32f2f4cc419852d871c156dfca56957b7fce8733",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1b47d996_844b2ee8",
+        "filename": "src/frameworks/foundation/ns_calendar.rs",
+        "patchSetId": 9
+      },
+      "lineNbr": 151,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-02-09T19:47:51Z",
+      "side": 1,
+      "message": "you don\u0027t need to have a temp variable here",
+      "revId": "32f2f4cc419852d871c156dfca56957b7fce8733",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

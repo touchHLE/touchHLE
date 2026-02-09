@@ -16,6 +16,24 @@
       "message": "DOA Blackjack has this problem and I thought the magic constant of 1.575 was the real mystery of this change.  I played with this a bit and found one what seemed to work without that. See https://review.gerrithub.io/c/touchHLE/touchHLE/+/1230838",
       "revId": "9ef0c0f5caecc8706c02eb6e5e6bd39c35847d53",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8496266e_fe17100d",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 25
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2026-02-09T02:52:27Z",
+      "side": 1,
+      "message": "Please try my change with whatever game/app this was made for to see if it works.",
+      "parentUuid": "eaa0134a_5d6b6b35",
+      "revId": "9ef0c0f5caecc8706c02eb6e5e6bd39c35847d53",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

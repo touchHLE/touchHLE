@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "7e84015b_a2ee72bb",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 9
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1039141
+      },
+      "writtenOn": "2026-02-09T20:46:36Z",
+      "side": 1,
+      "message": "Honestly this patch gradually felt a bit more challenging than I expected it to be, hence I did use some assistance from LLM to help me understand and interpret documentation, then i wrote the code myself accordingly. Admittedly, i initially intended for this patch to just be a stub so it could finally get Fishing Kings to boot and reach a playable state, but i did rush myself into thinking I could fully implement it for real. but i completely get that i shouldn\u0027t be using LLMs for any future contributions to this project, hence i suppose it would be best if i abandon these updated changes now since it does seem incorrect and revert to a stub implementation, at least until i sharpen up my rust/obj-c and research this further",
+      "parentUuid": "fc51aec7_1100808b",
+      "revId": "32f2f4cc419852d871c156dfca56957b7fce8733",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "6663751d_d895fa03",

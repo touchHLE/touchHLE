@@ -16,6 +16,24 @@
       "message": "please change string value to \"NSGregorianCalendar\"",
       "revId": "6b3c84cadfbcc2ec89cc4ab41e6a67d83c8a49ca",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b91f981f_0dabcd72",
+        "filename": "src/frameworks/foundation/ns_calendar.rs",
+        "patchSetId": 8
+      },
+      "lineNbr": 24,
+      "author": {
+        "id": 1039141
+      },
+      "writtenOn": "2026-02-09T17:04:36Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "44a86bcc_1b2ee8c3",
+      "revId": "6b3c84cadfbcc2ec89cc4ab41e6a67d83c8a49ca",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

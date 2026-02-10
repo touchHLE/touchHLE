@@ -354,6 +354,11 @@ forUndefinedKey:(id)key { // NSString*
     }
 }
 
+// UINibLoadingAdditions protocol
+- (())awakeFromNib {
+    // no-op
+}
+
 @end
 
 };

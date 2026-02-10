@@ -351,10 +351,10 @@ fn load_nib_file(env: &mut Environment, ui_nib: id, path: GuestPathBuf) -> Resul
     // UINibObjectsKey, UINibTopLevelObjectsKey and UINibVisibleWindowsKey.
     // Each corresponds to an NSArray.
 
-    // We don't need to do anything with the list of objects, but deserializing
-    // it ensures everything else is deserialized.
+    // Deserializing the list of objects
+    // ensures everything else is deserialized.
     let objects_key = get_static_str(env, "UINibObjectsKey");
-    let _objects: id = msg![env; unarchiver decodeObjectForKey:objects_key];
+    let objects: id = msg![env; unarchiver decodeObjectForKey:objects_key];
 
     // Connect all the outlets with UIRuntimeOutletConnection
     let conns_key = get_static_str(env, "UINibConnectionsKey");
@@ -363,6 +363,16 @@ fn load_nib_file(env: &mut Environment, ui_nib: id, path: GuestPathBuf) -> Resul
     for i in 0..conns_count {
         let conn: id = msg![env; conns objectAtIndex:i];
         () = msg![env; conn connect];
+    }
+
+    // Sending awakeFromNib for all objects
+    let enumerator: id = msg![env; objects objectEnumerator];
+    loop {
+        let next: id = msg![env; enumerator nextObject];
+        if next == nil {
+            break;
+        }
+        () = msg![env; next awakeFromNib];
     }
 
     // Make visible windows visible

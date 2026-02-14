@@ -242,13 +242,6 @@ pub struct Mem {
     null_segment_size: VAddr,
 
     allocator: allocator::Allocator,
-
-    /// The flag to control if memory is zeroed out on free (`true`, default)
-    /// or on alloc (`false`).
-    ///
-    /// Right now only one game, Spore Origin, is setting this value to `false`
-    /// via a game-specific hack. See [crate::Environment] for more info.
-    pub(super) zero_memory_on_free: bool,
 }
 
 impl Drop for Mem {
@@ -293,7 +286,6 @@ impl Mem {
             bytes,
             null_segment_size: 0,
             allocator,
-            zero_memory_on_free: true,
         }
     }
 
@@ -510,9 +502,6 @@ impl Mem {
     /// Allocate `size` bytes.
     pub fn alloc(&mut self, size: GuestUSize) -> MutVoidPtr {
         let ptr = Ptr::from_bits(self.allocator.alloc(size));
-        if !self.zero_memory_on_free {
-            self.bytes_at_mut(ptr.cast(), size).fill(0);
-        }
         log_dbg!("Allocated {:?} ({:#x} bytes)", ptr, size);
         ptr
     }
@@ -547,9 +536,6 @@ impl Mem {
     /// Free an allocation made with one of the `alloc` methods on this type.
     pub fn free(&mut self, ptr: MutVoidPtr) {
         let size = self.allocator.free(ptr.to_bits());
-        if self.zero_memory_on_free {
-            self.bytes_at_mut(ptr.cast(), size).fill(0);
-        }
         log_dbg!("Freed {:?} ({:#x} bytes)", ptr, size);
     }
 

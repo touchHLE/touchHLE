@@ -16,6 +16,24 @@
       "message": "Can you pass to a second level after the tutorial and customization screen?",
       "revId": "9eaec05433420ae79ff42c09e3c5362c10c96f24",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "16120dad_c2e585fc",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2026-02-14T05:30:31Z",
+      "side": 1,
+      "message": "Yep, got into level 2 with the bigger creatures.",
+      "parentUuid": "5f6223fb_87cdf962",
+      "revId": "9eaec05433420ae79ff42c09e3c5362c10c96f24",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

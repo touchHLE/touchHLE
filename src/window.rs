@@ -445,7 +445,7 @@ impl Window {
             let (out_w, out_h) = window.size_unrotated_unscaled();
             let out_x = (x + 0.5) * out_w as f32;
             let out_y = (y + 0.5) * out_h as f32;
-            (out_x, out_y)
+            (out_x.round(), out_y.round())
         }
         fn transform_virt_accel_coords(window: &Window, (in_x, in_y): (i32, i32)) -> (f32, f32) {
             let (_, _, vw, vh) = window.viewport();
@@ -747,7 +747,7 @@ impl Window {
                     let curr_timestamp = timestamp;
                     let abs_coords = finger_absolute_coords(self, (x, y));
                     let coords = transform_input_coords(self, abs_coords, false);
-                    log_dbg!("Finger event x {}, y {}, coords {:?}", x, y, coords);
+                    log!("Finger event x {}, y {}, coords {:?}", x, y, coords);
                     let mut map = HashMap::from([(FingerId::Touch(finger_id), coords)]);
                     while let Some(next) = self.event_pump.poll_event() {
                         match next {

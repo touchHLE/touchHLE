@@ -34,6 +34,41 @@
       "parentUuid": "5f6223fb_87cdf962",
       "revId": "9eaec05433420ae79ff42c09e3c5362c10c96f24",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "eb2a70fd_3c8c10f5",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-02-14T06:36:36Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "16120dad_c2e585fc",
+      "revId": "9eaec05433420ae79ff42c09e3c5362c10c96f24",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "088fe040_c5e1f3da",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-02-14T06:36:36Z",
+      "side": 1,
+      "message": "Nice job!\n\nI let hikari confim if we want to remove zero on alloc",
+      "revId": "9eaec05433420ae79ff42c09e3c5362c10c96f24",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

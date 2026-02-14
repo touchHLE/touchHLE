@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5f6223fb_87cdf962",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-02-14T05:22:55Z",
+      "side": 1,
+      "message": "Can you pass to a second level after the tutorial and customization screen?",
+      "revId": "9eaec05433420ae79ff42c09e3c5362c10c96f24",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

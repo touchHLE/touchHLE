@@ -69,6 +69,23 @@
       "message": "Nice job!\n\nI let hikari confim if we want to remove zero on alloc",
       "revId": "9eaec05433420ae79ff42c09e3c5362c10c96f24",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "011a861f_cecea646",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-02-15T12:44:12Z",
+      "side": 1,
+      "message": "This makes the \"game specific hack\" just be the default behaviour, right?\n\nI don\u0027t like this for two reasons:\n- I prefer zeroing on free to catch memory bugs\n- returning un-zeroed memory is only *sometimes* what the iOS allocator does, the behaviour depends on the allocation size",
+      "revId": "9eaec05433420ae79ff42c09e3c5362c10c96f24",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

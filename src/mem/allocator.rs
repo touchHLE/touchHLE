@@ -183,8 +183,9 @@ mod collections {
     }
     impl ChunkMap {
         #[inline(always)]
-        pub fn insert(&mut self, Chunk { base, size }: Chunk) {
-            assert!(self.chunks.insert(base, size).is_none());
+        pub fn insert(&mut self, chunk: Chunk) {
+            assert!(self.overlapping_chunks(chunk).next().is_none());
+            assert!(self.chunks.insert(chunk.base, chunk.size).is_none());
         }
         #[inline(always)]
         pub fn remove_with_base(&mut self, base: VAddr) -> Option<Chunk> {
@@ -410,6 +411,11 @@ impl HeapAllocator {
             unused_chunks,
             external_chunks: Default::default(),
         }
+    }
+
+    pub fn grow(&mut self, chunk: Chunk) {
+        assert!(self.used_chunks.overlapping_chunks(chunk).next().is_none());
+        self.unused_chunks.insert(chunk);
     }
 
     pub fn alloc(&mut self, size: GuestUSize) -> Option<VAddr> {

@@ -277,8 +277,9 @@ impl Mem {
     /// iPhone OS secondary thread stack size.
     pub const SECONDARY_THREAD_DEFAULT_STACK_SIZE: GuestUSize = 512 * 1024;
 
-    /// This is arbitrarily set to 256 MB, eventually the heap should grow.
-    pub const HEAP_SIZE: GuestUSize = 256 * 1024 * 1024;
+    /// Base heap size as well as size the heap grows by.
+    /// TODO: This is probably not optimal, need to figure out better size.
+    pub const HEAP_SIZE: GuestUSize = PAGE_SIZE * 1024;
 
     /// This is the maximum allocation for the heap. Anything else is
     /// deferred to the vm allocator.
@@ -539,12 +540,20 @@ impl Mem {
 
             ptr
         } else {
-            match self.heap_allocator().alloc(size) {
-                None => {
-                    panic!("Could not find large enough chunk to allocate {size:#x} bytes")
-                }
-                Some(address) => Ptr::from_bits(address),
-            }
+            let address = self
+                .heap_allocator()
+                .alloc(size)
+                .or_else(|| {
+                    log!("Failed to allocate, attempting to grow heap");
+                    let new_chunk = self
+                        .vm_allocator
+                        .allocate(None, Self::HEAP_SIZE)
+                        .expect("Failed to allocate memory for heap.");
+                    self.heap_allocator().grow(new_chunk);
+                    self.heap_allocator().alloc(size)
+                })
+                .expect("Could not find large enough chunk to allocate {size:#x} bytes");
+            Ptr::from_bits(address)
         };
         if !self.zero_memory_on_free {
             self.bytes_at_mut(ptr.cast(), size).fill(0);

@@ -86,6 +86,24 @@
       "message": "This makes the \"game specific hack\" just be the default behaviour, right?\n\nI don\u0027t like this for two reasons:\n- I prefer zeroing on free to catch memory bugs\n- returning un-zeroed memory is only *sometimes* what the iOS allocator does, the behaviour depends on the allocation size",
       "revId": "9eaec05433420ae79ff42c09e3c5362c10c96f24",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "973fd55e_2bc39494",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2026-02-16T06:53:29Z",
+      "side": 1,
+      "message": "Hmm, I understand your point. I think it\u0027s worth revisiting once we can handle the zeroing variable, perhaps having it as a build flag. In either case, I\u0027ve adjusted the patch to simply include the fixes to the issues that came up.",
+      "parentUuid": "011a861f_cecea646",
+      "revId": "9eaec05433420ae79ff42c09e3c5362c10c96f24",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

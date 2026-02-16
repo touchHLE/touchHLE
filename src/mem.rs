@@ -536,12 +536,20 @@ impl Mem {
 
             ptr
         } else {
-            match self.heap_allocator().alloc(size) {
-                None => {
-                    panic!("Could not find large enough chunk to allocate {size:#x} bytes")
-                }
-                Some(address) => Ptr::from_bits(address),
-            }
+            let address = self
+                .heap_allocator()
+                .alloc(size)
+                .or_else(|| {
+                    log!("Failed to allocate, attempting to grow heap");
+                    let new_chunk = self
+                        .vm_allocator
+                        .allocate(None, Self::HEAP_SIZE)
+                        .expect("Failed to allocate memory for heap.");
+                    self.heap_allocator().grow(new_chunk);
+                    self.heap_allocator().alloc(size)
+                })
+                .expect("Could not find large enough chunk to allocate {size:#x} bytes");
+            Ptr::from_bits(address)
         };
         if !self.zero_memory_on_free {
             self.bytes_at_mut(ptr.cast(), size).fill(0);

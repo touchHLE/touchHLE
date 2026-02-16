@@ -275,8 +275,9 @@ impl Mem {
     /// iPhone OS secondary thread stack size.
     pub const SECONDARY_THREAD_DEFAULT_STACK_SIZE: GuestUSize = 512 * 1024;
 
-    /// This is arbitrarily set to 256 MiB, eventually the heap should grow.
-    pub const HEAP_SIZE: GuestUSize = 256 * 1024 * 1024;
+    /// Size of chunks requested by the heap from the VM allocator.
+    /// This is set to 2MiB based on the original jemalloc paper.
+    pub const HEAP_CHUNK_SIZE: GuestUSize = 2 * 1024 * 1024;
 
     /// This is the maximum allocation for the heap. Anything else is deferred
     /// to the vm allocator. This is set to 15 KiB according to:
@@ -329,7 +330,7 @@ impl Mem {
 
     fn heap_allocator(&mut self) -> &mut HeapAllocator {
         self.heap_allocator.get_or_insert_with(|| {
-            let Some(heap) = self.vm_allocator.allocate(None, Self::HEAP_SIZE) else {
+            let Some(heap) = self.vm_allocator.allocate(None, Self::HEAP_CHUNK_SIZE) else {
                 panic!("Failed to allocate heap space");
             };
             HeapAllocator::new(heap.base, heap.size.get())
@@ -536,11 +537,21 @@ impl Mem {
 
             ptr
         } else {
-            match self.heap_allocator().alloc(size) {
-                None => {
-                    panic!("Could not find large enough chunk to allocate {size:#x} bytes")
+            if let Some(addr) = self.heap_allocator().alloc(size) {
+                Ptr::from_bits(addr)
+            } else {
+                log!("Failed to allocate, attempting to grow heap");
+                let new_chunk = self
+                    .vm_allocator
+                    .allocate(None, Self::HEAP_CHUNK_SIZE)
+                    .expect("Failed to allocate memory for heap.");
+                self.heap_allocator().grow(new_chunk);
+                match self.heap_allocator().alloc(size) {
+                    None => {
+                        panic!("Could not find large enough chunk to allocate {size:#x} bytes")
+                    }
+                    Some(address) => Ptr::from_bits(address),
                 }
-                Some(address) => Ptr::from_bits(address),
             }
         };
         if !self.zero_memory_on_free {

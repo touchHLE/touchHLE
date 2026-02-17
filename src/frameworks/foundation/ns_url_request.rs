@@ -10,7 +10,7 @@ use crate::frameworks::foundation::ns_string::to_rust_string;
 use crate::objc::{
     autorelease, id, nil, objc_classes, release, ClassExports, HostObject, NSZonePtr,
 };
-use crate::{msg, msg_class};
+use crate::{msg, msg_class, todo_objc_setter};
 
 type NSURLRequestCachePolicy = NSUInteger;
 const NSURLRequestUseProtocolCachePolicy: NSURLRequestCachePolicy = 0;
@@ -182,6 +182,10 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 - (())setTimeoutInterval:(NSTimeInterval)timeout_interval {
     env.objc.borrow_mut::<NSURLRequestHostObject>(this).timeout_interval = timeout_interval;
+}
+
+- (())setHTTPShouldHandleCookies:(bool)should_handle_cookies {
+    todo_objc_setter!(this, should_handle_cookies);
 }
 
 @end

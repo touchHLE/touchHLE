@@ -252,7 +252,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     }
     let ns_number_class = env.objc.get_known_class("NSNumber", &mut env.mem);
     if env.objc.class_is_subclass_of(val_class, ns_number_class) {
-        todo!();
+        return msg![env; val description];
     }
     nil
 }

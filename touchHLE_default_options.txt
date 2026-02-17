@@ -194,7 +194,3 @@ com.gameloft.BIA: --landscape-left
 # Hero of Sparta II
 # Stick = Move, A = Jump, B = Quick attack, X = Block, Y = Weapon select, LeftShoulder = Focus kill
 com.gameloft.HOS2: --stick-to-touch=28,206,84,84 --button-to-touch=Start,25,25 --button-to-touch=B,394,234 --button-to-touch=A,456,190 --button-to-touch=X,350,294 --button-to-touch=Y,434,22 --button-to-touch=LeftShoulder,446,286
-
-# Star Battalion
-com.gameloft.starfighter: --skip-objc-type-checks
-com.gameloft.starfighteriPad: --skip-objc-type-checks

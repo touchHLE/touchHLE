@@ -15,8 +15,8 @@ use crate::libc::pthread::thread::{
 };
 use crate::mem::{guest_size_of, Mem, MutPtr};
 use crate::objc::{
-    id, msg_send, nil, objc_classes, release, retain, todo_objc_setter, Class, ClassExports,
-    HostObject, NSZonePtr, SEL,
+    id, msg_send, msg_send_no_type_checking, nil, objc_classes, release, retain, todo_objc_setter,
+    Class, ClassExports, HostObject, NSZonePtr, SEL,
 };
 use crate::Environment;
 use crate::{msg, msg_class};
@@ -43,6 +43,7 @@ struct NSThreadHostObject {
     owned: bool,
     finished: bool,
     stack_size: NSUInteger,
+    type_checking: bool,
 }
 impl HostObject for NSThreadHostObject {}
 
@@ -61,6 +62,7 @@ pub const CLASSES: ClassExports = objc_classes! {
         owned: false,
         finished: false,
         stack_size: Mem::SECONDARY_THREAD_DEFAULT_STACK_SIZE,
+        type_checking: false,
     });
     env.objc.alloc_object(this, host_object, &mut env.mem)
 }
@@ -109,18 +111,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 + (())detachNewThreadSelector:(SEL)selector
                      toTarget:(id)target
                    withObject:(id)object {
-    let new: id = msg_class![env; NSThread alloc];
-    let new: id = msg![env; new initWithTarget:target
-                                      selector:selector
-                                        object:object];
-
-    // We own this thread and need to release it after it's finished
-    env.objc.borrow_mut::<NSThreadHostObject>(new).owned = true;
-
-    // redundant with `start`, but we do it for the sake of completeness
-    env.framework_state.foundation.ns_thread.is_multi_threaded = true;
-
-    msg![env; new start]
+    detach_new_thread_inner(env, selector, target, object, /* type_checking: */ true)
 }
 
 - (id)initWithTarget:(id)target
@@ -167,9 +158,14 @@ pub const CLASSES: ClassExports = objc_classes! {
         target,
         selector,
         object,
+        type_checking,
         ..
     } = env.objc.borrow(this);
-    () = msg_send(env, (target, selector.unwrap(), object));
+    if type_checking {
+        () = msg_send(env, (target, selector.unwrap(), object));
+    } else {
+        () = msg_send_no_type_checking(env, (target, selector.unwrap(), object));
+    }
 }
 
 - (id)threadDictionary {
@@ -267,4 +263,27 @@ pub fn _touchHLE_NSThreadInvocationHelper(env: &mut Environment, ns_thread_obj: 
     }
 
     // TODO: NSThread exit
+}
+
+pub fn detach_new_thread_inner(
+    env: &mut Environment,
+    selector: SEL,
+    target: id,
+    object: id,
+    type_checking: bool,
+) {
+    let new: id = msg_class![env; NSThread alloc];
+    let new: id = msg![env; new initWithTarget:target
+                                      selector:selector
+                                        object:object];
+
+    // We own this thread and need to release it after it's finished
+    env.objc.borrow_mut::<NSThreadHostObject>(new).owned = true;
+
+    env.objc.borrow_mut::<NSThreadHostObject>(new).type_checking = type_checking;
+
+    // Redundant with `start`, but we do it for the sake of completeness
+    env.framework_state.foundation.ns_thread.is_multi_threaded = true;
+
+    msg![env; new start]
 }

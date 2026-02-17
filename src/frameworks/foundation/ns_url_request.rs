@@ -6,13 +6,14 @@
 //! `NSURLRequest and NSMutableURLRequest`.
 
 use super::{ns_string, NSTimeInterval, NSUInteger};
+use crate::environment::Environment;
 use crate::frameworks::foundation::ns_string::to_rust_string;
 use crate::objc::{
-    autorelease, id, nil, objc_classes, release, ClassExports, HostObject, NSZonePtr,
+    autorelease, id, nil, objc_classes, release, retain, ClassExports, HostObject, NSZonePtr,
 };
 use crate::{msg, msg_class, todo_objc_setter};
 
-type NSURLRequestCachePolicy = NSUInteger;
+pub type NSURLRequestCachePolicy = NSUInteger;
 const NSURLRequestUseProtocolCachePolicy: NSURLRequestCachePolicy = 0;
 
 struct NSURLRequestHostObject {
@@ -191,3 +192,11 @@ pub const CLASSES: ClassExports = objc_classes! {
 @end
 
 };
+
+pub fn replace_all_http_header_fields(env: &mut Environment, request: id, http_header_fields: id) {
+    let host_object = env.objc.borrow_mut::<NSURLRequestHostObject>(request);
+    let old_http_header_fields =
+        std::mem::replace(&mut host_object.http_header_fields, http_header_fields);
+    retain(env, http_header_fields);
+    release(env, old_http_header_fields);
+}

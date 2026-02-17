@@ -16,6 +16,24 @@
       "message": "Can you add a comment here about why we\u0027re rounding?",
       "revId": "96aa2c7bdfa4fcad97f3f300df6bfd48047e3763",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "151b03c8_0d593350",
+        "filename": "src/window.rs",
+        "patchSetId": 4
+      },
+      "lineNbr": 448,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2026-02-17T03:21:04Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "4107c575_9e477222",
+      "revId": "96aa2c7bdfa4fcad97f3f300df6bfd48047e3763",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

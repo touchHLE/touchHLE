@@ -278,6 +278,14 @@ Other options:
     --allow-network-access
         Allow apps running in touchHLE to access the Internet and the local network.
 
+    --network-address-remap=...
+        Forces apps that access a certain network address to connect to a different
+        one. 
+
+        For example, --network-address-remap=example.com,127.0.0.1 would have an app
+        that would normally connect to example.com to open a connection to localhost
+        instead.
+
     --ignore-gl-errors
         Ignore host OpenGL errors as queried by glGetError function.
         This only affects return value of glGetError as seen by the guest

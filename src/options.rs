@@ -57,6 +57,7 @@ pub struct Options {
     pub fps_limit: Option<f64>,
     pub force_composition: bool,
     pub network_access: bool,
+    pub network_address_remappings: HashMap<String, String>,
     pub popup_errors: bool,
     pub dumping_options: DumpingOptions,
     pub dumping_file: PathBuf,
@@ -90,6 +91,7 @@ impl Default for Options {
             fps_limit: Some(60.0), // Original iPhone is 60Hz and uses v-sync,
             force_composition: false,
             network_access: false,
+            network_address_remappings: Default::default(),
             popup_errors: true,
             dumping_options: Default::default(),
             dumping_file: crate::paths::user_data_base_path().join("DUMP.txt"),
@@ -242,6 +244,12 @@ impl Options {
             self.force_composition = true;
         } else if arg == "--allow-network-access" {
             self.network_access = true;
+        } else if let Some(value) = arg.strip_prefix("--network-address-remap=") {
+            let (original, remap) = value
+                .split_once(",")
+                .ok_or_else(|| format!("Invalid network address remapping {}", value))?;
+            self.network_address_remappings
+                .insert(original.to_owned(), remap.to_owned());
         } else if arg == "--no-error-popup" {
             self.popup_errors = false;
         } else if let Some(values) = arg.strip_prefix("--dump=") {

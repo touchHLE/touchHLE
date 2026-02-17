@@ -100,6 +100,7 @@ pub const CLASSES: ClassExports = objc_classes! {
         log_dbg!("Opening NSURLConnection to {}", description);
         let hostname = msg![env; request_url host];
         let hostname = to_rust_string(env, hostname);
+        let hostname = env.options.network_address_remappings.get(&*hostname).map(|remap| remap.to_string()).unwrap_or_else(|| hostname.to_string());
         let port = msg![env; request_url port];
         let port: u16 = if port == nil {
             let scheme = msg![env; request_url scheme];

@@ -5,6 +5,8 @@
  */
 //! `NSURL`.
 
+use url::Url;
+
 use super::ns_string::{from_rust_string, get_static_str, to_rust_string, NSUTF8StringEncoding};
 use super::NSUInteger;
 use crate::fs::{GuestPath, GuestPathBuf};
@@ -158,6 +160,46 @@ pub const CLASSES: ClassExports = objc_classes! {
         unimplemented!(); // TODO
     };
     this
+}
+
+- (id)scheme {
+    let &NSURLHostObject::OtherURL { ns_string } = env.objc.borrow(this) else {
+        unimplemented!(); // TODO
+    };
+    let url_string = to_rust_string(env, ns_string);
+    let url = Url::parse(&url_string).unwrap();
+    from_rust_string(env, url.scheme().to_string())
+}
+
+- (id)host {
+    let &NSURLHostObject::OtherURL { ns_string } = env.objc.borrow(this) else {
+        unimplemented!(); // TODO
+    };
+    let url_string = to_rust_string(env, ns_string);
+    let url = Url::parse(&url_string).unwrap();
+    from_rust_string(env, url.host().unwrap().to_string())
+}
+
+- (id)port {
+    let &NSURLHostObject::OtherURL { ns_string } = env.objc.borrow(this) else {
+        unimplemented!(); // TODO
+    };
+    let url_string = to_rust_string(env, ns_string);
+    let url = Url::parse(&url_string).unwrap();
+    if let Some(port) = url.port() {
+        msg_class![env; NSNumber numberWithUnsignedShort:port]
+    } else {
+        nil
+    }
+}
+
+- (id)path {
+    let &NSURLHostObject::OtherURL { ns_string } = env.objc.borrow(this) else {
+        unimplemented!(); // TODO
+    };
+    let url_string = to_rust_string(env, ns_string);
+    let url = Url::parse(&url_string).unwrap();
+    from_rust_string(env, url.path().to_string())
 }
 
 - (bool)getFileSystemRepresentation:(MutPtr<u8>)buffer

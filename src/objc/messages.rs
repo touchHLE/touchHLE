@@ -30,7 +30,13 @@ use std::any::TypeId;
 /// by the method implementation. We are relying on CallFromGuest not
 /// overwriting it.
 #[allow(non_snake_case)]
-fn objc_msgSend_inner(env: &mut Environment, receiver: id, selector: SEL, super2: Option<Class>) {
+fn objc_msgSend_inner(
+    env: &mut Environment,
+    receiver: id,
+    selector: SEL,
+    super2: Option<Class>,
+    tolerate_type_mismatch: bool,
+) {
     let message_type_info = env.objc.message_type_info.take();
 
     if receiver == nil {
@@ -91,27 +97,30 @@ fn objc_msgSend_inner(env: &mut Environment, receiver: id, selector: SEL, super2
             if let Some(imp) = methods.get(&selector) {
                 match imp {
                     IMP::Host(host_imp) => {
-                        if env.options.objc_type_checks {
-                            // TODO: do type checks when calling GuestIMPs too.
-                            // That requires using Objective-C type strings,
-                            // rather than Rust types, and should probably
-                            // warn rather than panicking,
-                            // because apps might rely on type punning.
-                            if let Some((sent_type_id, sent_type_desc)) = message_type_info {
-                                let (expected_type_id, expected_type_desc) = host_imp.type_info();
-                                if sent_type_id != expected_type_id {
-                                    panic!(
-                                        "\
+                        // TODO: do type checks when calling GuestIMPs too.
+                        // That requires using Objective-C type strings,
+                        // rather than Rust types, and should probably
+                        // warn rather than panicking,
+                        // because apps might rely on type punning.
+                        if let Some((sent_type_id, sent_type_desc)) = message_type_info {
+                            let (expected_type_id, expected_type_desc) = host_imp.type_info();
+                            if sent_type_id != expected_type_id {
+                                let msg = format!(
+                                    "\
 Type mismatch when sending message {} to {:?}!
 - Message has type: {:?} / {}
 - Method expects type: {:?} / {}",
-                                        selector.as_str(&env.mem),
-                                        receiver,
-                                        sent_type_id,
-                                        sent_type_desc,
-                                        expected_type_id,
-                                        expected_type_desc
-                                    );
+                                    selector.as_str(&env.mem),
+                                    receiver,
+                                    sent_type_id,
+                                    sent_type_desc,
+                                    expected_type_id,
+                                    expected_type_desc
+                                );
+                                if tolerate_type_mismatch {
+                                    log!("Warning: {}", msg);
+                                } else {
+                                    panic!("{}", msg);
                                 }
                             }
                         }
@@ -162,7 +171,16 @@ Type mismatch when sending message {} to {:?}!
 /// Standard variant of `objc_msgSend`. See [objc_msgSend_inner].
 #[allow(non_snake_case)]
 pub(super) fn objc_msgSend(env: &mut Environment, receiver: id, selector: SEL) {
-    objc_msgSend_inner(env, receiver, selector, /* super2: */ None)
+    objc_msgSend_inner(
+        env, receiver, selector, /* super2: */ None, /* tolerate_type_mismatch: */ false,
+    )
+}
+
+#[allow(non_snake_case)]
+pub(crate) fn _touchHLE_objc_msgSend_tolerant(env: &mut Environment, receiver: id, selector: SEL) {
+    objc_msgSend_inner(
+        env, receiver, selector, /* super2: */ None, /* tolerate_type_mismatch: */ true,
+    )
 }
 
 /// Variant of `objc_msgSend` for methods that return a struct via a pointer.
@@ -180,7 +198,9 @@ pub(super) fn objc_msgSend_stret(
     receiver: id,
     selector: SEL,
 ) {
-    objc_msgSend_inner(env, receiver, selector, /* super2: */ None)
+    objc_msgSend_inner(
+        env, receiver, selector, /* super2: */ None, /* tolerate_type_mismatch: */ false,
+    )
 }
 
 #[repr(C, packed)]
@@ -214,7 +234,13 @@ pub(super) fn objc_msgSendSuper2(
     // Rewrite first argument to match the normal ABI.
     crate::abi::write_next_arg(&mut 0, env.cpu.regs_mut(), &mut env.mem, receiver);
 
-    objc_msgSend_inner(env, receiver, selector, /* super2: */ Some(class))
+    objc_msgSend_inner(
+        env,
+        receiver,
+        selector,
+        /* super2: */ Some(class),
+        /* tolerate_type_mismatch: */ false,
+    )
 }
 
 /// Trait that assists with type-checking of [msg_send]'s arguments.
@@ -255,6 +281,19 @@ where
     } else {
         (objc_msgSend as fn(&mut Environment, id, SEL)).call_from_host(env, args)
     }
+}
+
+pub fn msg_send_no_type_checking<R, P>(env: &mut Environment, args: P) -> R
+where
+    fn(&mut Environment, id, SEL): CallFromHost<R, P>,
+    fn(&mut Environment, MutVoidPtr, id, SEL): CallFromHost<R, P>,
+    (R, P): MsgSendSignature,
+    R: GuestRet,
+{
+    // Provide type info for dynamic type checking.
+    env.objc.message_type_info = Some(<(R, P) as MsgSendSignature>::type_info());
+    assert!(R::SIZE_IN_MEM.is_none());
+    (_touchHLE_objc_msgSend_tolerant as fn(&mut Environment, id, SEL)).call_from_host(env, args)
 }
 
 /// Counterpart of [MsgSendSignature] for [msg_send_super2].

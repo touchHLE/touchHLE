@@ -18,10 +18,11 @@ use super::ns_dictionary::dict_from_keys_and_objects;
 use super::ns_run_loop::NSDefaultRunLoopMode;
 use super::ns_string::{from_rust_string, get_static_str, to_rust_string};
 use super::{NSTimeInterval, NSUInteger};
+use crate::frameworks::foundation::ns_thread::detach_new_thread_inner;
 use crate::mem::MutVoidPtr;
 use crate::objc::{
-    autorelease, id, msg, msg_class, msg_send, nil, objc_classes, retain, Class, ClassExports,
-    NSZonePtr, ObjC, TrivialHostObject, SEL,
+    autorelease, id, msg, msg_class, msg_send, msg_send_no_type_checking, nil, objc_classes,
+    retain, Class, ClassExports, NSZonePtr, ObjC, TrivialHostObject, SEL,
 };
 
 pub const CLASSES: ClassExports = objc_classes! {
@@ -230,35 +231,25 @@ forUndefinedKey:(id)key { // NSString*
 
 - (id)performSelector:(SEL)sel {
     assert!(!sel.is_null());
-    msg_send(env, (this, sel))
+    msg_send_no_type_checking(env, (this, sel))
 }
 
 - (id)performSelector:(SEL)sel
            withObject:(id)o1 {
     assert!(!sel.is_null());
-    msg_send(env, (this, sel, o1))
+    msg_send_no_type_checking(env, (this, sel, o1))
 }
 
 - (id)performSelector:(SEL)sel
            withObject:(id)o1
            withObject:(id)o2 {
     assert!(!sel.is_null());
-    msg_send(env, (this, sel, o1, o2))
+    msg_send_no_type_checking(env, (this, sel, o1, o2))
 }
 
 - (())performSelectorInBackground:(SEL)sel
                        withObject:(id)arg {
-    if env.options.objc_type_checks {
-        // `performSelectorInBackground:withObject:` allow for single argument
-        // or no arguments. In our current implementation, we are re-using
-        // `NSThread detachNewThreadSelector:toTarget:withObject:` which is
-        // expected to have only one argument in the selector.
-        //
-        // Note that above mismatch is not an issue in the case of skipping
-        // type checks, thus the assert is guarded by an if statement.
-        assert!(sel.as_str(&env.mem).ends_with(':')); // TODO
-    }
-    msg_class![env; NSThread detachNewThreadSelector:sel toTarget:this withObject:arg]
+    detach_new_thread_inner(env, sel, this, arg, /* tolerate_type_mismatch: */ true)
 }
 
 - (())performSelector:(SEL)sel withObject:(id)arg afterDelay:(NSTimeInterval)delay {

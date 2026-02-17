@@ -61,7 +61,6 @@ pub struct Options {
     pub dumping_options: DumpingOptions,
     pub dumping_file: PathBuf,
     pub ignore_gl_errors: bool,
-    pub objc_type_checks: bool,
 }
 
 impl Default for Options {
@@ -94,7 +93,6 @@ impl Default for Options {
             dumping_options: Default::default(),
             dumping_file: crate::paths::user_data_base_path().join("DUMP.txt"),
             ignore_gl_errors: false,
-            objc_type_checks: true,
         }
     }
 }
@@ -250,8 +248,6 @@ impl Options {
             self.dumping_file = crate::paths::user_data_base_path().join(path);
         } else if arg == "--ignore-gl-errors" {
             self.ignore_gl_errors = true;
-        } else if arg == "--skip-objc-type-checks" {
-            self.objc_type_checks = false;
         } else {
             return Ok(false);
         };

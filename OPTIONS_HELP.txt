@@ -283,9 +283,3 @@ Other options:
         This only affects return value of glGetError as seen by the guest
         and nothing else. Should be enabled only for apps which really
         need this behaviour.
-
-    --skip-objc-type-checks
-        Skip type checks when calling Objective-C methods. Generally, this
-        should be disabled as a host type check failure usually indicates
-        a bug in touchHLE. Though, some apps may rely on type punning,
-        thus the need for this option arises.

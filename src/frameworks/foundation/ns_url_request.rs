@@ -107,8 +107,20 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (id)URL {
     env.objc.borrow::<NSURLRequestHostObject>(this).url
 }
+- (id)HTTPMethod {
+    env.objc.borrow::<NSURLRequestHostObject>(this).http_method
+}
 - (id)HTTPBody {
     env.objc.borrow::<NSURLRequestHostObject>(this).http_body
+}
+- (id)allHTTPHeaderFields {
+    env.objc.borrow::<NSURLRequestHostObject>(this).http_header_fields
+}
+- (NSURLRequestCachePolicy)cachePolicy {
+    env.objc.borrow::<NSURLRequestHostObject>(this).cache_policy
+}
+- (NSTimeInterval)timeoutInterval {
+    env.objc.borrow::<NSURLRequestHostObject>(this).timeout_interval
 }
 
 - (())dealloc {
@@ -130,6 +142,15 @@ pub const CLASSES: ClassExports = objc_classes! {
 @end
 
 @implementation NSMutableURLRequest: NSURLRequest
+
+- (())setURL:(id)url { // NSURL *
+    let url_copy = msg![env; url copy];
+
+    let host_obj = env.objc.borrow_mut::<NSURLRequestHostObject>(this);
+    let old_url = std::mem::replace(&mut host_obj.url, url_copy);
+    release(env, old_url);
+    // No need to retain url as we made a copy
+}
 
 - (())setHTTPMethod:(id)http_method { // NSString *
     let http_method_copy = msg![env; http_method copy];
@@ -154,6 +175,13 @@ pub const CLASSES: ClassExports = objc_classes! {
     log_dbg!("[(NSURLRequest*){:?} setValue:'{}' forHTTPHeaderField:'{}']", this, to_rust_string(env, value), to_rust_string(env, field));
     let http_header_fields = env.objc.borrow_mut::<NSURLRequestHostObject>(this).http_header_fields;
     () = msg![env; http_header_fields setObject:value forKey:field];
+}
+
+- (())setCachePolicy:(NSURLRequestCachePolicy)cache_policy {
+    env.objc.borrow_mut::<NSURLRequestHostObject>(this).cache_policy = cache_policy;
+}
+- (())setTimeoutInterval:(NSTimeInterval)timeout_interval {
+    env.objc.borrow_mut::<NSURLRequestHostObject>(this).timeout_interval = timeout_interval;
 }
 
 @end

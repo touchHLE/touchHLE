@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "c8891da8_a48a25e6",
+        "filename": "src/frameworks/foundation/ns_keyed_archiver.rs",
+        "patchSetId": 7
+      },
+      "lineNbr": 61,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2026-02-18T22:50:26Z",
+      "side": 1,
+      "message": "I have no idea why this has been working. Fixed",
+      "parentUuid": "8e29d861_e9478447",
+      "revId": "4f28f65f051761720127ed023942c02f3f1a0dbf",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "eaa0c518_003c8459",
@@ -31,6 +49,24 @@
       "writtenOn": "2026-02-18T21:39:13Z",
       "side": 1,
       "message": "where it is implemented?",
+      "revId": "4f28f65f051761720127ed023942c02f3f1a0dbf",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "6794f872_e2b30935",
+        "filename": "src/frameworks/foundation/ns_keyed_archiver.rs",
+        "patchSetId": 7
+      },
+      "lineNbr": 187,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2026-02-18T22:50:26Z",
+      "side": 1,
+      "message": "It\u0027s part of the NSCoding protocol. Classes, client app classes too, whose instances can be serialized into an archive must implement it",
+      "parentUuid": "eaa0c518_003c8459",
       "revId": "4f28f65f051761720127ed023942c02f3f1a0dbf",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

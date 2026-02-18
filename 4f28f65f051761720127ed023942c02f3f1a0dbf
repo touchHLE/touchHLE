@@ -87,6 +87,24 @@
       "parentUuid": "6794f872_e2b30935",
       "revId": "4f28f65f051761720127ed023942c02f3f1a0dbf",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "a080e7c2_ef293ce9",
+        "filename": "src/frameworks/foundation/ns_keyed_archiver.rs",
+        "patchSetId": 7
+      },
+      "lineNbr": 187,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2026-02-18T23:11:10Z",
+      "side": 1,
+      "message": "Of course, however, if the client app encodes only custom objects, and not built ins, like Ace Combat Xi does, it\u0027ll be able to archive them. We can implement them bit by bit as they\u0027re needed.",
+      "parentUuid": "1798fe7d_4e21a889",
+      "revId": "4f28f65f051761720127ed023942c02f3f1a0dbf",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

@@ -69,6 +69,24 @@
       "parentUuid": "eaa0c518_003c8459",
       "revId": "4f28f65f051761720127ed023942c02f3f1a0dbf",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1798fe7d_4e21a889",
+        "filename": "src/frameworks/foundation/ns_keyed_archiver.rs",
+        "patchSetId": 7
+      },
+      "lineNbr": 187,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-02-18T23:05:08Z",
+      "side": 1,
+      "message": "The NSCoder protocol defines initWithCoder: and encodeWithCoder: methods.\nFor each class there we already provide initWithCoder: we should provide encodeWithCoder: as well. If not how this would work?",
+      "parentUuid": "6794f872_e2b30935",
+      "revId": "4f28f65f051761720127ed023942c02f3f1a0dbf",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

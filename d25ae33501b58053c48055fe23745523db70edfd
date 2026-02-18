@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c4b50631_29d5818c",
+        "filename": "src/frameworks/foundation/ns_keyed_archiver.rs",
+        "patchSetId": 8
+      },
+      "lineNbr": 57,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-02-18T23:05:08Z",
+      "side": 1,
+      "message": "nit: // NSCoding * after {, not before",
+      "revId": "d25ae33501b58053c48055fe23745523db70edfd",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6a66c865_f47ec759",
+        "filename": "src/frameworks/foundation/ns_keyed_archiver.rs",
+        "patchSetId": 8
+      },
+      "lineNbr": 67,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-02-18T23:05:08Z",
+      "side": 1,
+      "message": "nit: multiline, same comment about the trailing annotation",
+      "revId": "d25ae33501b58053c48055fe23745523db70edfd",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1b809bb0_a3a31b22",
+        "filename": "src/frameworks/foundation/ns_keyed_archiver.rs",
+        "patchSetId": 8
+      },
+      "lineNbr": 72,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-02-18T23:05:08Z",
+      "side": 1,
+      "message": "nit: multiline, same comment about the trailing annotation",
+      "revId": "d25ae33501b58053c48055fe23745523db70edfd",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8e29d861_e9478447",
+        "filename": "src/frameworks/foundation/ns_keyed_archiver.rs",
+        "patchSetId": 7
+      },
+      "lineNbr": 61,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-02-18T21:39:13Z",
+      "side": 1,
+      "message": "how this is suppose to work if you\u0027re releasing the instance??",
+      "revId": "4f28f65f051761720127ed023942c02f3f1a0dbf",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "eaa0c518_003c8459",
+        "filename": "src/frameworks/foundation/ns_keyed_archiver.rs",
+        "patchSetId": 7
+      },
+      "lineNbr": 187,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-02-18T21:39:13Z",
+      "side": 1,
+      "message": "where it is implemented?",
+      "revId": "4f28f65f051761720127ed023942c02f3f1a0dbf",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

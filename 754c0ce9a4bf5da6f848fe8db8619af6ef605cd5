@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f62c65c3_a6517f6c",
+        "filename": "src/frameworks/foundation/ns_keyed_archiver.rs",
+        "patchSetId": 10
+      },
+      "lineNbr": 166,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-02-22T22:43:49Z",
+      "side": 1,
+      "message": "there is too many shadowing of a `class` variable going here...\ncould you please rename it to `current_class` or `curr_class` ?",
+      "revId": "754c0ce9a4bf5da6f848fe8db8619af6ef605cd5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

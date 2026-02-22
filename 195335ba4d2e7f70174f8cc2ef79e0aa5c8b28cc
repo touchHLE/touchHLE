@@ -20,6 +20,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "52ad0d84_e66708e5",
+        "filename": "src/frameworks/foundation/ns_thread.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-02-22T21:45:02Z",
+      "side": 1,
+      "message": "Same reason as for other changes: the app in question uses `performSelectorInBackground:withObject:` to send a `stopAnimating` message to an instance of UIActivityIndicator class. Our implementation of performSelectorInBackground: is using detach_new_thread_inner.\n\nI tought that by default we should still strictly type check, that\u0027s why there is type_checking boolean.",
+      "parentUuid": "8d9b98fb_373cf234",
+      "revId": "195335ba4d2e7f70174f8cc2ef79e0aa5c8b28cc",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "53eb1283_425daa2e",
         "filename": "src/objc/messages.rs",
         "patchSetId": 1
@@ -37,6 +55,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "5c220403_cd346e89",
+        "filename": "src/objc/messages.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 180,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-02-22T21:45:02Z",
+      "side": 1,
+      "message": "Do you have a proposal for a better name?",
+      "parentUuid": "53eb1283_425daa2e",
+      "revId": "195335ba4d2e7f70174f8cc2ef79e0aa5c8b28cc",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "984e3d19_ecd8dfb7",
         "filename": "src/objc/messages.rs",
         "patchSetId": 1
@@ -48,6 +84,24 @@
       "writtenOn": "2026-02-22T21:03:35Z",
       "side": 1,
       "message": "Same comment about the name here.",
+      "revId": "195335ba4d2e7f70174f8cc2ef79e0aa5c8b28cc",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "5481dcc8_17c0ed7f",
+        "filename": "src/objc/messages.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 290,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-02-22T21:45:02Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "984e3d19_ecd8dfb7",
       "revId": "195335ba4d2e7f70174f8cc2ef79e0aa5c8b28cc",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

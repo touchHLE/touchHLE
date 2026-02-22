@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "53752524_d09296b1",
+        "filename": "src/frameworks/foundation/ns_keyed_archiver.rs",
+        "patchSetId": 10
+      },
+      "lineNbr": 10,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2026-02-22T22:56:41Z",
+      "side": 1,
+      "message": "nib files are in the same format as files produced by NSKeyedArchiver by default, so i assumed it\u0027d still apply. Still, changed it to \"simple archive file\" instead.",
+      "parentUuid": "0f640adf_70b48aad",
+      "revId": "754c0ce9a4bf5da6f848fe8db8619af6ef605cd5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "cf9a7990_af3d8601",
@@ -35,6 +53,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "5f5aeff8_5bf960f5",
+        "filename": "src/frameworks/foundation/ns_keyed_archiver.rs",
+        "patchSetId": 10
+      },
+      "lineNbr": 46,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2026-02-22T22:56:41Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "cf9a7990_af3d8601",
+      "revId": "754c0ce9a4bf5da6f848fe8db8619af6ef605cd5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "f62c65c3_a6517f6c",
@@ -48,6 +84,24 @@
       "writtenOn": "2026-02-22T22:43:49Z",
       "side": 1,
       "message": "there is too many shadowing of a `class` variable going here...\ncould you please rename it to `current_class` or `curr_class` ?",
+      "revId": "754c0ce9a4bf5da6f848fe8db8619af6ef605cd5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "53cbfc42_bf622d83",
+        "filename": "src/frameworks/foundation/ns_keyed_archiver.rs",
+        "patchSetId": 10
+      },
+      "lineNbr": 166,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2026-02-22T22:56:41Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "f62c65c3_a6517f6c",
       "revId": "754c0ce9a4bf5da6f848fe8db8619af6ef605cd5",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

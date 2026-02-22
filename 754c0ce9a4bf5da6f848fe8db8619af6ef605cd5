@@ -3,6 +3,40 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "0f640adf_70b48aad",
+        "filename": "src/frameworks/foundation/ns_keyed_archiver.rs",
+        "patchSetId": 10
+      },
+      "lineNbr": 10,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-02-22T22:45:54Z",
+      "side": 1,
+      "message": "nit: does nib file mention is relevant here? you may want to re-write this comment for clarity. (it was making sense for NSKeyedUnarchiver, but here the intention is less clear)",
+      "revId": "754c0ce9a4bf5da6f848fe8db8619af6ef605cd5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "cf9a7990_af3d8601",
+        "filename": "src/frameworks/foundation/ns_keyed_archiver.rs",
+        "patchSetId": 10
+      },
+      "lineNbr": 46,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-02-22T22:45:54Z",
+      "side": 1,
+      "message": "please add an explanatory comment here",
+      "revId": "754c0ce9a4bf5da6f848fe8db8619af6ef605cd5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "f62c65c3_a6517f6c",
         "filename": "src/frameworks/foundation/ns_keyed_archiver.rs",
         "patchSetId": 10

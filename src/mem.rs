@@ -363,7 +363,6 @@ impl Mem {
         id
     }
 
-    #[allow(dead_code)]
     pub fn destroy_allocator(&mut self, allocator: AllocatorID) {
         assert_ne!(
             allocator,

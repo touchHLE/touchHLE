@@ -19,6 +19,7 @@
 #include <fcntl.h>
 #include <fenv.h>
 #include <locale.h>
+#include <malloc/malloc.h>
 #include <math.h>
 #include <pthread.h>
 #include <semaphore.h>
@@ -3335,6 +3336,20 @@ int test_NSKeyedArchiver_NSKeyedUnarchiver() {
   return 0;
 }
 
+int test_malloc_zones() {
+  // Primarily testing that these succeed. If there is no check
+  // assume that in failure touchHLE would panic.
+  malloc_zone_t *zone = malloc_create_zone(0, 0);
+  void *p = malloc_zone_malloc(zone, 128);
+  if (malloc_zone_size(zone, p) != 128) {
+    return -1;
+  }
+  malloc_zone_free(zone, p);
+  malloc_destroy_zone(zone);
+
+  return 0;
+}
+
 // clang-format off
 #define FUNC_DEF(func)                                                         \
   { &func, #func }
@@ -3406,6 +3421,7 @@ struct {
     FUNC_DEF(test_strftime),
     FUNC_DEF(test_RespondsToSelector),
     FUNC_DEF(test_NSKeyedArchiver_NSKeyedUnarchiver),
+    FUNC_DEF(test_malloc_zones)
 };
 // clang-format on
 

@@ -11,6 +11,7 @@
 mod mutex;
 
 use crate::abi::{CallFromHost, GuestFunction, GuestRet};
+use crate::libc::malloc::MallocZones;
 use crate::libc::semaphore::sem_t;
 use crate::mem::{GuestUSize, MutPtr, MutVoidPtr};
 use crate::{
@@ -95,6 +96,7 @@ pub struct Environment {
     /// The window is only absent when running in headless mode.
     pub window: Option<window::Window>,
     pub mem: mem::Mem,
+    pub malloc_zones: MallocZones,
     /// Loaded binaries. Index `0` is always the app binary, other entries are
     /// dynamic libraries.
     pub bins: Vec<mach_o::MachO>,
@@ -441,6 +443,7 @@ impl Environment {
             fs,
             window,
             mem,
+            malloc_zones: Default::default(),
             bins,
             objc,
             dyld,
@@ -624,6 +627,7 @@ impl Environment {
             fs,
             window,
             mem,
+            malloc_zones: Default::default(),
             bins,
             objc,
             dyld,

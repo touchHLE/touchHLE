@@ -239,6 +239,12 @@ mod collections {
                 }
             }
         }
+
+        pub fn iter(&self) -> impl Iterator<Item = Chunk> + '_ {
+            self.chunks
+                .iter()
+                .map(|(&base, &size)| Chunk { base, size })
+        }
     }
 
     #[derive(Debug)]
@@ -395,6 +401,7 @@ use collections::{ChunkMap, SizeBucketedChunkMap};
 pub struct HeapAllocator {
     used_chunks: ChunkMap,
     unused_chunks: SizeBucketedChunkMap,
+    heap_chunks: Vec<Chunk>,
     // These are chunks that are managed by an external allocator
     external_chunks: ChunkMap,
 }
@@ -409,6 +416,16 @@ impl HeapAllocator {
         HeapAllocator {
             used_chunks: Default::default(),
             unused_chunks,
+            heap_chunks: vec![allocation_space],
+            external_chunks: Default::default(),
+        }
+    }
+
+    pub fn new_empty() -> HeapAllocator {
+        HeapAllocator {
+            used_chunks: Default::default(),
+            unused_chunks: SizeBucketedChunkMap::new(MIN_CHUNK_SIZE),
+            heap_chunks: Default::default(),
             external_chunks: Default::default(),
         }
     }
@@ -416,6 +433,7 @@ impl HeapAllocator {
     pub fn grow(&mut self, chunk: Chunk) {
         assert!(self.used_chunks.overlapping_chunks(chunk).next().is_none());
         self.unused_chunks.insert(chunk);
+        self.heap_chunks.push(chunk);
     }
 
     pub fn alloc(&mut self, size: GuestUSize) -> Option<VAddr> {
@@ -477,6 +495,14 @@ impl HeapAllocator {
         }
 
         freed.size.get()
+    }
+
+    /// Returns an iterator over the heap and external chunks
+    pub(super) fn managed_chunks(&self) -> impl Iterator<Item = Chunk> + '_ {
+        self.heap_chunks
+            .iter()
+            .copied()
+            .chain(self.external_chunks.iter())
     }
 }
 

@@ -14,9 +14,11 @@
 //! Relevant Apple documentation:
 //! * [Memory Usage Performance Guidelines](https://developer.apple.com/library/archive/documentation/Performance/Conceptual/ManagingMemory/ManagingMemory.html)
 
+use std::{cell::OnceCell, collections::HashMap};
+
 use crate::{
     libc::wchar::wchar_t,
-    mem::allocator::{Chunk, HeapAllocator},
+    mem::allocator::{Chunk, HeapAllocator, VMAllocator},
 };
 
 mod allocator;
@@ -212,6 +214,8 @@ type Bytes = [u8; 1 << 32];
 pub const PAGE_SIZE: GuestUSize = 4096;
 pub const PAGE_SIZE_ALIGN_MASK: GuestUSize = 0xfff;
 
+pub type AllocatorID = u32;
+
 /// The type that owns the guest memory and provides accessors for it.
 pub struct Mem {
     /// This array is 4GiB in size so that it can cover the entire 32-bit
@@ -244,8 +248,10 @@ pub struct Mem {
     /// range.
     null_segment_size: VAddr,
 
-    heap_allocator: Option<allocator::HeapAllocator>,
-    vm_allocator: allocator::VMAllocator,
+    allocator_id: AllocatorID,
+    default_allocator: OnceCell<AllocatorID>,
+    heap_allocators: HashMap<AllocatorID, HeapAllocator>,
+    vm_allocator: VMAllocator,
 
     /// The flag to control if memory is zeroed out on free (`true`, default)
     /// or on alloc (`false`).
@@ -301,13 +307,15 @@ impl Mem {
 
         let bytes = ptr as *mut Bytes;
 
-        let vm_allocator = allocator::VMAllocator::new(0, Self::MAIN_THREAD_STACK_LOW_END);
+        let vm_allocator = VMAllocator::new(0, Self::MAIN_THREAD_STACK_LOW_END);
 
         Mem {
             bytes,
             null_segment_size: 0,
+            allocator_id: Default::default(),
+            default_allocator: Default::default(),
+            heap_allocators: Default::default(),
             vm_allocator,
-            heap_allocator: None,
             zero_memory_on_free: true,
         }
     }
@@ -331,12 +339,50 @@ impl Mem {
         self.null_segment_size
     }
 
-    fn heap_allocator(&mut self) -> &mut HeapAllocator {
-        self.heap_allocator.get_or_insert_with(|| {
-            let Some(heap) = self.vm_allocator.allocate(None, Self::HEAP_SIZE) else {
-                panic!("Failed to allocate heap space");
+    pub fn default_allocator(&mut self) -> AllocatorID {
+        if self.default_allocator.get().is_none() {
+            let id = self.create_allocator(Self::HEAP_SIZE);
+            self.default_allocator.set(id).unwrap();
+        }
+
+        *self.default_allocator.get().unwrap()
+    }
+
+    pub fn create_allocator(&mut self, start_size: GuestUSize) -> AllocatorID {
+        let allocator = if start_size == 0 {
+            HeapAllocator::new_empty()
+        } else {
+            let Some(heap) = self.vm_allocator.allocate(None, start_size) else {
+                panic!("Failed to allocate space for heap");
             };
-            allocator::HeapAllocator::new(heap.base, heap.size.get())
+            HeapAllocator::new(heap.base, heap.size.get())
+        };
+
+        let id = self.next_allocator_id();
+        assert!(self.heap_allocators.insert(id, allocator).is_none());
+        id
+    }
+
+    #[allow(dead_code)]
+    pub fn destroy_allocator(&mut self, allocator: AllocatorID) {
+        assert_ne!(
+            allocator,
+            self.default_allocator(),
+            "Attempted to delete default zone"
+        );
+
+        if let Some(allocator) = self.heap_allocators.remove(&allocator) {
+            for chunk in allocator.managed_chunks() {
+                self.vm_allocator.deallocate(chunk.base, chunk.size.get());
+            }
+        } else {
+            panic!("Attempted to destroy non-existant allocator-{allocator}");
+        }
+    }
+
+    fn get_allocator(&mut self, allocator: AllocatorID) -> &mut HeapAllocator {
+        self.heap_allocators.get_mut(&allocator).unwrap_or_else(|| {
+            panic!("Attempted to allocate with allocator-{allocator} which does not exist",)
         })
     }
 
@@ -532,16 +578,22 @@ impl Mem {
 
     /// Allocate `size` bytes.
     pub fn alloc(&mut self, size: GuestUSize) -> MutVoidPtr {
+        let allocator = self.default_allocator();
+        self.alloc_in(allocator, size)
+    }
+
+    /// Allocate `size` bytes in `allocator`
+    pub fn alloc_in(&mut self, allocator: AllocatorID, size: GuestUSize) -> MutVoidPtr {
         let ptr = if size > Self::MAX_HEAP_ALLOCATION_SIZE {
             let ptr = self.alloc_paged(size);
 
-            self.heap_allocator()
+            self.get_allocator(allocator)
                 .add_external_allocation(Chunk::new(ptr.to_bits(), size));
 
             ptr
         } else {
             let address = self
-                .heap_allocator()
+                .get_allocator(allocator)
                 .alloc(size)
                 .or_else(|| {
                     log!("Failed to allocate, attempting to grow heap");
@@ -549,8 +601,8 @@ impl Mem {
                         .vm_allocator
                         .allocate(None, Self::HEAP_SIZE)
                         .expect("Failed to allocate memory for heap.");
-                    self.heap_allocator().grow(new_chunk);
-                    self.heap_allocator().alloc(size)
+                    self.get_allocator(allocator).grow(new_chunk);
+                    self.get_allocator(allocator).alloc(size)
                 })
                 .expect("Could not find large enough chunk to allocate {size:#x} bytes");
             Ptr::from_bits(address)
@@ -589,28 +641,61 @@ impl Mem {
     }
 
     pub fn malloc_size(&mut self, ptr: ConstVoidPtr) -> GuestUSize {
-        self.heap_allocator().find_allocated_size(ptr.to_bits())
+        let allocator = self.default_allocator();
+        self.malloc_size_in(allocator, ptr)
+    }
+
+    pub fn malloc_size_in(&mut self, allocator: AllocatorID, ptr: ConstVoidPtr) -> GuestUSize {
+        self.get_allocator(allocator)
+            .find_allocated_size(ptr.to_bits())
     }
 
     pub fn realloc(&mut self, old_ptr: MutVoidPtr, size: GuestUSize) -> MutVoidPtr {
+        let allocator = self.default_allocator();
+        self.realloc_in(allocator, old_ptr, size)
+    }
+
+    pub fn realloc_in(
+        &mut self,
+        allocator: AllocatorID,
+        old_ptr: MutVoidPtr,
+        size: GuestUSize,
+    ) -> MutVoidPtr {
         if old_ptr.is_null() {
             return self.alloc(size);
         }
         // TODO: for a moment we always assume that we do not have enough size
         //       to realloc inplace
-        let old_size = self.heap_allocator().find_allocated_size(old_ptr.to_bits());
+        let old_size = self
+            .get_allocator(allocator)
+            .find_allocated_size(old_ptr.to_bits());
         if old_size >= size {
             return old_ptr;
         }
-        let new_ptr = self.alloc(size);
+        let new_ptr = self.alloc_in(allocator, size);
         self.memmove(new_ptr, old_ptr.cast_const(), old_size);
-        self.free(old_ptr);
+        self.free_in(allocator, old_ptr);
         new_ptr
     }
 
     /// Free an allocation made with one of the `alloc` methods on this type.
     pub fn free(&mut self, ptr: MutVoidPtr) {
-        let size = self.heap_allocator().free(ptr.to_bits());
+        let allocator = self.default_allocator();
+        self.free_in(allocator, ptr);
+    }
+
+    /// Free an allocation made with one of the `alloc` methods in `allocator`.
+    pub fn free_in(&mut self, allocator: AllocatorID, ptr: MutVoidPtr) {
+        let size = self
+            .heap_allocators
+            .get_mut(&allocator)
+            .unwrap_or_else(|| {
+                panic!(
+                    "Attempted to allocate in zone {:?} which does not exist",
+                    allocator
+                )
+            })
+            .free(ptr.to_bits());
 
         if size > Self::MAX_HEAP_ALLOCATION_SIZE {
             self.vm_allocator.deallocate(ptr.to_bits(), size);
@@ -677,5 +762,14 @@ impl Mem {
     /// memory allocator.
     pub fn reserve(&mut self, base: VAddr, size: GuestUSize) {
         self.vm_allocator.allocate(Some(base), size);
+    }
+
+    fn next_allocator_id(&mut self) -> AllocatorID {
+        let id = self.allocator_id;
+        self.allocator_id = self
+            .allocator_id
+            .checked_add(1)
+            .expect("Exhausted allocator ids.");
+        id
     }
 }

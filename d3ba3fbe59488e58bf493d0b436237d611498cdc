@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f8fb7d4a_f0686e89",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 48
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-02-28T16:39:28Z",
+      "side": 1,
+      "message": "Merged here with proposed formatting modifications https://github.com/touchHLE/touchHLE/commit/d3ba3fbe59488e58bf493d0b436237d611498cdc",
+      "revId": "d3ba3fbe59488e58bf493d0b436237d611498cdc",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

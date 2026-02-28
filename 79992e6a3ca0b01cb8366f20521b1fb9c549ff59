@@ -105,6 +105,24 @@
       "parentUuid": "9fd5caf8_e9d042ac",
       "revId": "79992e6a3ca0b01cb8366f20521b1fb9c549ff59",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f7f2b889_7e6228de",
+        "filename": "Cargo.toml",
+        "patchSetId": 28
+      },
+      "lineNbr": 71,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-02-28T16:46:39Z",
+      "side": 1,
+      "message": "I have a fix here for black screens issues https://review.gerrithub.io/c/touchHLE/touchHLE/+/1232424, please check",
+      "parentUuid": "436a96e3_89965b47",
+      "revId": "79992e6a3ca0b01cb8366f20521b1fb9c549ff59",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

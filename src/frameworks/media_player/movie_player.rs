@@ -14,6 +14,7 @@ use crate::objc::{
 };
 use crate::Environment;
 use std::collections::VecDeque;
+use std::time::{Duration, Instant};
 
 #[derive(Default)]
 pub struct State {
@@ -23,7 +24,7 @@ pub struct State {
     /// handle it if that notification happens immediately. This queue lets us
     /// delay such notifications until the app next returns to the run loop,
     /// which seems to be late enough.
-    pending_notifications: VecDeque<(&'static str, id)>,
+    pending_notifications: VecDeque<(&'static str, id, Instant)>,
 }
 impl State {
     fn get(env: &mut Environment) -> &mut Self {
@@ -104,7 +105,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 
     // Act as if loading immediately completed (Spore Origins waits for this).
     State::get(env).pending_notifications.push_back(
-        (MPMoviePlayerContentPreloadDidFinishNotification, this)
+        (MPMoviePlayerContentPreloadDidFinishNotification, this, Instant::now())
     );
 
     this
@@ -147,19 +148,8 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 // Apparently an undocumented, private API, but Spore Origins uses it.
 - (())setMovieControlMode:(NSInteger)_mode {
-    // Game-specific hack :(
-    // Spore Origins subscribes to the playback finished notification 0.2s after
-    // starting playback, so it misses the notification we send. When it
-    // subscribes, it also calls this method, so this is an opportunity to send
-    // the notification again.
-    if env.bundle.bundle_identifier().starts_with("com.ea.spore") {
-        log!("Applying game-specific hack for Spore Origins: sending MPMoviePlayerPlaybackDidFinishNotification again.");
-        State::get(env).pending_notifications.push_back(
-            (MPMoviePlayerPlaybackDidFinishNotification, this)
-        );
-    }
     // As this is undocumented and we don't have real video playback yet, let's
-    // ignore it otherwise.
+    // ignore it.
 }
 
 // Another undocumented one! But some apps may still use it :/
@@ -179,10 +169,17 @@ pub const CLASSES: ClassExports = objc_classes! {
     retain(env, this);
     env.framework_state.media_player.movie_player.active_player = Some(this);
 
-    // Act as if playback immediately completed (various apps wait for this).
-    State::get(env).pending_notifications.push_back(
-        (MPMoviePlayerPlaybackDidFinishNotification, this)
-    );
+    // Act as if playback immediately completed after 1 second
+    // (various apps wait for this, such as BIA and Hero of Sparta).
+    let notif = (MPMoviePlayerPlaybackDidFinishNotification, this, Instant::now().checked_add(Duration::from_millis(1000)).unwrap());
+    for (name, obj, _) in &mut State::get(env).pending_notifications {
+        // De-duplicate similar notifications. This can happen if app is calling
+        // `play` twice on the same player object (case of NOVA2).
+        if *name == MPMoviePlayerPlaybackDidFinishNotification && *obj == this {
+            return;
+        }
+    }
+    State::get(env).pending_notifications.push_back(notif);
 }
 
 - (())pause {
@@ -192,9 +189,9 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (())stop {
     log!("TODO: [(MPMoviePlayerController*){:?} stop]", this);
     if env.framework_state.media_player.movie_player.active_player.is_some() {
-        // Some application may send 2 `stop` messages for each 1 `play`
-        // message for the player. In that case, we want to release the active
-        // player only on the first one.
+        // Some applications (like NOVA2) may send 2 `stop` messages for each
+        // 1 `play` message for the player. In that case, we want to release
+        // the active player only once.
         assert!(this == env.framework_state.media_player.movie_player.active_player.take().unwrap());
         release(env, this);
     }
@@ -222,9 +219,20 @@ pub const CLASSES: ClassExports = objc_classes! {
 /// For use by `NSRunLoop` via [super::handle_players]: check movie players'
 /// status, send notifications if necessary.
 pub(super) fn handle_players(env: &mut Environment) {
-    while let Some(notif) = State::get(env).pending_notifications.pop_front() {
-        let (name, object) = notif;
-        let name = ns_string::get_static_str(env, name);
+    let mut notifs_to_run = Vec::new();
+    let pending_notifs = &mut State::get(env).pending_notifications;
+    let mut i = 0;
+    while i < pending_notifs.len() {
+        let (name_str, object, time) = pending_notifs[i];
+        if Instant::now() >= time {
+            notifs_to_run.push((name_str, object));
+            pending_notifs.swap_remove_back(i);
+        } else {
+            i += 1;
+        }
+    }
+    for (name_str, object) in notifs_to_run {
+        let name = ns_string::get_static_str(env, name_str);
         let center: id = msg_class![env; NSNotificationCenter defaultCenter];
         // TODO: should there be some user info attached?
         let _: () = msg![env; center postNotificationName:name object:object];

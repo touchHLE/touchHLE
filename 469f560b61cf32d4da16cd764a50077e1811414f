@@ -16,6 +16,24 @@
       "message": "Perhaps it make more sense to apply the round to transform_input_coords?",
       "revId": "469f560b61cf32d4da16cd764a50077e1811414f",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "da99810d_7c6d4d69",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 34
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2026-03-02T04:14:45Z",
+      "side": 1,
+      "message": "I ended up implementing this in e8e6c1c, so I think this can be closed.",
+      "parentUuid": "bd6e4694_90ff67db",
+      "revId": "469f560b61cf32d4da16cd764a50077e1811414f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

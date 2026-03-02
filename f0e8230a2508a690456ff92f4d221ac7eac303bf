@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0448734b_3864725a",
+        "filename": "src/libc/posix_io.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 461,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-03-02T15:35:35Z",
+      "side": 1,
+      "message": "please use `i \u003c iovcnt` instead",
+      "revId": "f0e8230a2508a690456ff92f4d221ac7eac303bf",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a0c8c87f_85fd5e34",
+        "filename": "src/libc/posix_io.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 462,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-03-02T15:35:35Z",
+      "side": 1,
+      "message": "there are writev() specific errnos which need to be handled (or at least asserted against)",
+      "revId": "f0e8230a2508a690456ff92f4d221ac7eac303bf",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

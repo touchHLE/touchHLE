@@ -37,6 +37,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "3c398840_9fc633b3",
+        "filename": "src/mem.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 604,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2026-03-02T19:21:28Z",
+      "side": 1,
+      "message": "My thinking was to have the vm allocations have a separate free interface, and leave this one purely for heap allocations (mostly due to vm de-allocations having different semantics). I haven\u0027t implement a paged free yet, as we haven\u0027t implemented the interfaces that would use those yet. I probably should adjust the comment to make that more clear. Let me know what you think.",
+      "parentUuid": "084a6e5a_a2e61aa8",
+      "revId": "5e24e529da535eaa00276177934bc3e91c7cf0c8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "70615efc_b02668d0",
         "filename": "src/mem.rs",
         "patchSetId": 1

@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "24e5c155_237c309b",
+        "filename": "src/mem.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 17,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-03-02T17:24:50Z",
+      "side": 1,
+      "message": "touchHLE style is to have two separate use statements, one for each module. We don\u0027t have a linter rule for it, sorry…",
+      "revId": "5e24e529da535eaa00276177934bc3e91c7cf0c8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "084a6e5a_a2e61aa8",
+        "filename": "src/mem.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 604,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-03-02T17:24:50Z",
+      "side": 1,
+      "message": "Won\u0027t this fail if it\u0027s not a heap allocation?",
+      "revId": "5e24e529da535eaa00276177934bc3e91c7cf0c8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "70615efc_b02668d0",
+        "filename": "src/mem.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 606,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-03-02T17:24:50Z",
+      "side": 1,
+      "message": "VM allocations can be smaller than the max heap allocation size.",
+      "revId": "5e24e529da535eaa00276177934bc3e91c7cf0c8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

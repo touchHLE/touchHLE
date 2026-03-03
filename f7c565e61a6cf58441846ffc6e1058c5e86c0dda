@@ -16,6 +16,24 @@
       "message": "Since we already use `stb_image` for reading images, I would prefer we use `stb_image_write` for writing images. You can extend our existing wrapper.",
       "revId": "f7c565e61a6cf58441846ffc6e1058c5e86c0dda",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "62524b81_2e6e2fd7",
+        "filename": "Cargo.toml",
+        "patchSetId": 19
+      },
+      "lineNbr": 76,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2026-03-03T00:52:23Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "624648e4_9b02faeb",
+      "revId": "f7c565e61a6cf58441846ffc6e1058c5e86c0dda",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

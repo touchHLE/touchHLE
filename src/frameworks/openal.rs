@@ -225,12 +225,25 @@ fn alcCreateContext(
     State::get(env).contexts.insert(guest_res, ctx);
     guest_res
 }
+
 fn alcDestroyContext(env: &mut Environment, context: MutPtr<GuestALCcontext>) {
     if context.is_null() {
         log!("alcDestroyContext() is called with NULL context, ignoring");
         return;
     }
-    let _host_context = State::get(env).contexts.remove(&context).unwrap();
+
+    let state = State::get(env);
+
+    let Some(_host_context) = state.contexts.remove(&context) else {
+        // Don’t crash on shutdown / double-destroy.
+        log!(
+            "alcDestroyContext({:?}) called for unknown/already-destroyed context, ignoring",
+            context
+        );
+
+        return;
+    };
+
     env.mem.free(context.cast());
     log!("alcDestroyContext({:?})", context);
 }
@@ -275,14 +288,34 @@ fn alcGetContextsDevice(
         log!("alcGetContextsDevice() is called with NULL context, ignoring");
         return Ptr::null();
     }
-    let host_context = State::get(env).contexts.get(&context).unwrap();
+
+    let state = State::get(env);
+
+    let Some(host_context) = state.contexts.get(&context) else {
+        log!("alcGetContextsDevice(): unknown guest context {:?}, returning NULL", context);
+        return Ptr::null();
+    };
+
     let host_device = host_context.GetContextsDevice();
-    *State::get(env)
+
+    if host_device.is_null() {
+        log!("alcGetContextsDevice(): host device is NULL, ignoring");
+        return Ptr::null();
+    }
+
+    let Some((&guest_device, _)) = state
         .devices
         .iter()
-        .find(|(&_guest, &host)| host == host_device)
-        .unwrap()
-        .0
+        .find(|(_guest, &host)| host == host_device)
+    else {
+        log!(
+            "alcGetContextsDevice(): host device {:?} not found in mapping (shutdown race?), returning NULL",
+            host_device
+        );
+        return Ptr::null();
+    };
+
+    guest_device
 }
 
 fn alcGetProcAddress(

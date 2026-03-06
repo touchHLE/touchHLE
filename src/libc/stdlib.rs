@@ -258,12 +258,12 @@ fn setenv(env: &mut Environment, name: ConstPtr<u8>, value: ConstPtr<u8>, overwr
     0 // success
 }
 
-fn exit(env: &mut Environment, exit_code: i32) {
+fn exit(env: &mut Environment, _exit_code: i32) {
     // TODO: handle errno properly
     set_errno(env, 0);
 
-    echo!("App called exit(), exiting.");
-    std::process::exit(exit_code);
+    echo!("App called exit(), returning to app picker.");
+    env.return_to_picker = true;
 }
 
 fn bsearch(

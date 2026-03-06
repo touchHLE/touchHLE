@@ -433,7 +433,7 @@ pub(super) fn exit(env: &mut Environment) {
         let _: () = msg![env; pool drain];
     };
 
-    std::process::exit(0);
+    env.return_to_picker = true;
 }
 
 /// App life-cycle notifications

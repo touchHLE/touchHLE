@@ -157,6 +157,8 @@ pub enum Event {
     /// User pressed F12, requesting that execution be paused and the debugger
     /// take over.
     EnterDebugger,
+    /// User pressed Esc (on desktop) or Home (on Android).
+    HomeButton,
     TextInput(TextInputEvent),
 }
 
@@ -811,6 +813,20 @@ impl Window {
                     // the event but it's stuck in the queue.
                     echo!("F12 pressed, EnterDebugger event queued.");
                     Event::EnterDebugger
+                }
+                E::KeyDown {
+                    keycode: Some(sdl2::keyboard::Keycode::Escape),
+                    ..
+                } if env::consts::OS != "android" => {
+                    echo!("Esc pressed, HomeButton event queued.");
+                    Event::HomeButton
+                }
+                E::KeyDown {
+                    keycode: Some(sdl2::keyboard::Keycode::AcBack),
+                    ..
+                } if env::consts::OS == "android" => {
+                    echo!("Back button pressed, HomeButton event queued.");
+                    Event::HomeButton
                 }
                 E::KeyDown {
                     keycode: Some(sdl2::keyboard::Keycode::Backspace),

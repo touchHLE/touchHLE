@@ -382,6 +382,31 @@ pub fn CGContextSetBlendMode(
     }
 }
 
+pub fn CGContextGetUserSpaceToDeviceSpaceTransform(
+    env: &mut Environment,
+    context: CGContextRef,
+) -> CGAffineTransform {
+    let ctm = CGContextGetCTM(env, context);
+    let host_obj = env.objc.borrow::<CGContextHostObject>(context);
+    #[allow(unreachable_patterns)]
+    match &host_obj.subclass {
+        CGContextSubclass::CGBitmapContext(data) => {
+            let height = data.height as CGFloat;
+            let flip = CGAffineTransform {
+                a: 1.0,
+                b: 0.0,
+                c: 0.0,
+                d: -1.0,
+                tx: 0.0,
+                ty: height,
+            };
+            flip.concat(ctm)
+        }
+        _ => ctm,
+    }
+}
+
+// Helper function for logging CGBlendMode
 pub(super) fn blend_mode_name(mode: CGBlendMode) -> &'static str {
     match mode {
         kCGBlendModeNormal => "Normal",
@@ -441,4 +466,5 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGContextShowGlyphsAtPoint(_, _, _, _, _)),
     export_c_func!(CGContextSetAlpha(_, _)),
     export_c_func!(CGContextSetBlendMode(_, _)),
+    export_c_func!(CGContextGetUserSpaceToDeviceSpaceTransform(_)),
 ];

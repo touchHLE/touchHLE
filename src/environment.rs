@@ -114,6 +114,10 @@ pub struct Environment {
     /// Set to [true] when created using [Environment::new_without_app].
     /// In practice, this means we are in the app picker.
     pub is_fake: bool,
+    /// Set to [true] to signal a return to the app picker or termination.
+    pub return_to_picker: bool,
+    /// Set to [true] to signal that the entire application should quit.
+    pub should_quit: bool,
     pub dump_file: Option<std::fs::File>,
 }
 
@@ -457,6 +461,8 @@ impl Environment {
             gdb_server: None,
             env_vars: Default::default(),
             is_fake: false,
+            return_to_picker: false,
+            should_quit: false,
             dump_file: None,
         };
 
@@ -641,6 +647,8 @@ impl Environment {
             gdb_server: None,
             env_vars: Default::default(),
             is_fake: true,
+            return_to_picker: false,
+            should_quit: false,
             dump_file: None,
         };
 
@@ -1015,6 +1023,10 @@ impl Environment {
     /// connected. Returns [true] if the CPU should step and then resume
     /// debugging, or [false] if it should resume normal execution.
     fn debug_cpu_error(&mut self, error: cpu::CpuError) -> bool {
+        if self.return_to_picker {
+            return false;
+        }
+
         if matches!(error, cpu::CpuError::UndefinedInstruction)
             || matches!(error, cpu::CpuError::Breakpoint)
         {
@@ -1143,6 +1155,10 @@ impl Environment {
                             self.threads[self.current_thread].in_host_function =
                                 was_in_host_function;
 
+                            if self.return_to_picker {
+                                return ThreadNextAction::ReturnToHost;
+                            }
+
                             // On entry_size 4 return here since there's
                             // no space to add a ret after the svc call
                             if svc & dyld::Dyld::SVC_LAZY_LINK_RET_FLAG != 0 {
@@ -1200,6 +1216,7 @@ impl Environment {
                     },
                 );
                 match self.handle_cpu_state(state, initial_thread, root) {
+                    _ if self.return_to_picker => return,
                     ThreadNextAction::Continue => {
                         if step_and_debug {
                             step_and_debug = self.gdb_server.as_mut().unwrap().wait_for_debugger(
@@ -1215,6 +1232,10 @@ impl Environment {
                         step_and_debug = self.debug_cpu_error(e);
                     }
                 }
+            }
+
+            if self.return_to_picker {
+                return;
             }
 
             // To maintain responsiveness when moving the window and so on, we

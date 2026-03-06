@@ -570,6 +570,9 @@ fn show_app_picker_gui(
     // process exits.
     let app_path = loop {
         run_run_loop_single_iteration(env, main_run_loop);
+        if env.should_quit {
+            std::process::exit(0);
+        }
         let host_obj = env.objc.borrow_mut::<AppPickerDelegateHostObject>(delegate);
         let icon_tapped = std::mem::take(&mut host_obj.icon_tapped);
         if icon_tapped != nil {

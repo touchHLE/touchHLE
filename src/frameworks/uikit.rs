@@ -110,6 +110,7 @@ pub fn handle_events(env: &mut Environment) -> Option<Instant> {
         match event {
             Event::Quit => {
                 echo!("User requested quit, exiting.");
+                env.should_quit = true;
                 ui_application::exit(env);
             }
             Event::TouchesDown(..) | Event::TouchesMove(..) | Event::TouchesUp(..) => {
@@ -146,6 +147,10 @@ pub fn handle_events(env: &mut Environment) -> Option<Instant> {
                 } else {
                     log!("Ignoring EnterDebugger event: no debugger connected.");
                 }
+            }
+            Event::HomeButton => {
+                log!("Handling HomeButton event: returning to app picker.");
+                env.return_to_picker = true;
             }
             Event::TextInput(text_event) => {
                 let responder = env.framework_state.uikit.ui_responder.first_responder;

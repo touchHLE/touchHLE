@@ -182,6 +182,32 @@ pub fn main<T: Iterator<Item = String>>(mut args: T) -> Result<(), String> {
         return Ok(());
     }
 
+    loop {
+        if !run_app_session(
+            bundle_path.clone(),
+            just_info,
+            &option_args,
+            &options,
+            &app_args,
+        )? {
+            break Ok(());
+        }
+        echo!("Returning to app picker.");
+    }
+}
+
+/// Run an app or the app picker.
+/// Returns `true` if it should return to the picker afterwards.
+fn run_app_session(
+    bundle_path: Option<PathBuf>,
+    just_info: bool,
+    option_args: &[String],
+    options: &options::Options,
+    app_args: &Option<Vec<String>>,
+) -> Result<bool, String> {
+    let mut option_args = option_args.to_vec();
+    let mut options = options.clone();
+
     let bundle_path = if let Some(bundle_path) = bundle_path {
         bundle_path
     } else {
@@ -281,7 +307,7 @@ pub fn main<T: Iterator<Item = String>>(mut args: T) -> Result<(), String> {
     }
 
     if just_info {
-        return Ok(());
+        return Ok(false);
     }
 
     // Apply options from files
@@ -332,13 +358,18 @@ pub fn main<T: Iterator<Item = String>>(mut args: T) -> Result<(), String> {
     echo!();
 
     // Apply command-line options
-    for option_arg in option_args {
-        let parse_result = options.parse_argument(&option_arg);
+    for option_arg in &option_args {
+        let parse_result = options.parse_argument(option_arg);
         assert!(parse_result == Ok(true));
     }
 
     let res = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-        Environment::new(bundle, fs, options.clone(), app_args.unwrap_or_default())
+        Environment::new(
+            bundle,
+            fs,
+            options.clone(),
+            app_args.clone().unwrap_or_default(),
+        )
     }));
     let mut env = match res {
         Ok(ret) => match ret {
@@ -370,8 +401,18 @@ pub fn main<T: Iterator<Item = String>>(mut args: T) -> Result<(), String> {
     let res = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
         env.run();
     }));
+
+    if env.should_quit {
+        return Ok(false);
+    }
+
+    let mut returned_to_picker = false;
     match res {
-        Ok(_) => Ok(()),
+        Ok(_) => {
+            if env.return_to_picker {
+                returned_to_picker = true;
+            }
+        }
         Err(e) => {
             if options.popup_errors {
                 let error_string = if let Some(s) = e.downcast_ref::<&str>() {
@@ -386,4 +427,6 @@ pub fn main<T: Iterator<Item = String>>(mut args: T) -> Result<(), String> {
             std::panic::resume_unwind(e)
         }
     }
+
+    Ok(returned_to_picker)
 }

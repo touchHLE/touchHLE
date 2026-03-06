@@ -289,6 +289,10 @@ pub fn run_run_loop(
             media_player::handle_players(env);
         }
 
+        if env.return_to_picker {
+            break;
+        }
+
         // Unfortunately, touchHLE has to poll for certain things repeatedly;
         // it can't just wait until the next event appears.
         //

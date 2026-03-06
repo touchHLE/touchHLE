@@ -18,6 +18,7 @@ use crate::libc::wchar::wchar_t;
 use crate::mem::{ConstPtr, GuestUSize, Mem, MutPtr, MutVoidPtr, Ptr};
 use crate::objc::{id, msg, nil};
 use crate::Environment;
+use std::cell::Cell;
 use std::collections::HashSet;
 use std::io::Write;
 
@@ -713,7 +714,14 @@ fn sscanf_common(
 ) -> i32 {
     sscanf_common_generic(
         env,
-        |env, s, idx| Ok(env.mem.read(s + idx)),
+        |env, s, idx| {
+            let c = env.mem.read(s + idx);
+            if c == b'\0' {
+                Err(())
+            } else {
+                Ok(c)
+            }
+        },
         |_, _, _| (),
         src.cast_mut(),
         format,
@@ -758,6 +766,7 @@ where
     let mut format_char_idx = 0;
 
     let mut matched_args = 0;
+    let mut input_failure = false;
 
     'outer: loop {
         let c = env.mem.read(format + format_char_idx);
@@ -767,20 +776,35 @@ where
             break;
         }
         if c != b'%' {
-            let mut cc: u8 = getc_fn(env, subject, src_char_idx).unwrap().into(); // TODO: EOF
+            let x = getc_fn(env, subject, src_char_idx);
+            if x.is_err() {
+                input_failure = true;
+                break 'outer;
+            }
+            let mut cc: u8 = x.unwrap().into();
             if isspace(env, format + format_char_idx - 1) {
                 // "any single whitespace character in the format string
                 // consumes all available consecutive whitespace characters
                 // from the input"
                 while isspace_inner(cc) {
                     src_char_idx += 1;
-                    cc = getc_fn(env, subject, src_char_idx).unwrap().into(); // TODO: EOF
+                    let x = getc_fn(env, subject, src_char_idx);
+                    if x.is_err() {
+                        // EOF reached while skipping whitespace.
+                        // This is an input failure if no assignments yet,
+                        // otherwise just an orderly stop.
+                        input_failure = true;
+                        break 'outer;
+                    }
+                    cc = x.unwrap().into();
                 }
                 // backtrack one
                 ungetc_fn(env, subject, cc);
                 continue;
             }
             if c != cc {
+                // matching failure
+                ungetc_fn(env, subject, cc);
                 return matched_args;
             }
             src_char_idx += 1;
@@ -829,6 +853,7 @@ where
             // skip whitespaces
             let x = getc_fn(env, subject, src_char_idx);
             if x.is_err() {
+                input_failure = true;
                 break 'outer;
             }
             let mut cc: u8 = x.unwrap().into();
@@ -836,6 +861,7 @@ where
                 src_char_idx += 1;
                 let x = getc_fn(env, subject, src_char_idx);
                 if x.is_err() {
+                    input_failure = true;
                     break 'outer;
                 }
                 cc = x.unwrap().into();
@@ -853,6 +879,8 @@ where
                     0
                 };
 
+                let eof_occurred = Cell::new(false);
+
                 match length_modifier {
                     Some(lm) => {
                         match lm {
@@ -860,7 +888,13 @@ where
                                 // signed short*
                                 let res = str_to_int_inner_generic(
                                     env,
-                                    &getc_fn,
+                                    |env, sub, idx| {
+                                        let res = getc_fn(env, sub, idx);
+                                        if res.is_err() {
+                                            eof_occurred.set(true);
+                                        }
+                                        res
+                                    },
                                     &ungetc_fn,
                                     subject,
                                     src_char_idx,
@@ -874,8 +908,14 @@ where
                                         src_char_idx += len;
                                         let c_int_ptr: ConstPtr<i16> = args.next(env);
                                         env.mem.write(c_int_ptr.cast_mut(), val);
+                                        matched_args += 1;
                                     }
-                                    Err(_) => break,
+                                    Err(()) => {
+                                        if eof_occurred.get() {
+                                            input_failure = true;
+                                        }
+                                        break 'outer;
+                                    }
                                 }
                             }
                             _ => unimplemented!(),
@@ -884,7 +924,13 @@ where
                     _ => {
                         let res = str_to_int_inner_generic(
                             env,
-                            &getc_fn,
+                            |env, sub, idx| {
+                                let res = getc_fn(env, sub, idx);
+                                if res.is_err() {
+                                    eof_occurred.set(true);
+                                }
+                                res
+                            },
                             &ungetc_fn,
                             subject,
                             src_char_idx,
@@ -898,30 +944,56 @@ where
                                 src_char_idx += len;
                                 let c_int_ptr: ConstPtr<i32> = args.next(env);
                                 env.mem.write(c_int_ptr.cast_mut(), val);
+                                matched_args += 1;
                             }
-                            Err(_) => break,
+                            Err(()) => {
+                                if eof_occurred.get() {
+                                    input_failure = true;
+                                }
+                                break 'outer;
+                            }
                         }
                     }
                 }
             }
             b'f' => {
                 assert_eq!(max_width, 0); // TODO
-                let res = atof_inner_generic(env, &getc_fn, &ungetc_fn, subject, src_char_idx);
+                let eof_occurred = Cell::new(false);
+                let res = atof_inner_generic(
+                    env,
+                    |env, sub, idx| {
+                        let res = getc_fn(env, sub, idx);
+                        if res.is_err() {
+                            eof_occurred.set(true);
+                        }
+                        res
+                    },
+                    &ungetc_fn,
+                    subject,
+                    src_char_idx,
+                );
                 let val = match res {
                     Ok((val, len)) => {
                         src_char_idx += len;
                         val
                     }
-                    Err(_) => break,
+                    Err(_) => {
+                        if eof_occurred.get() {
+                            input_failure = true;
+                        }
+                        break 'outer;
+                    }
                 };
                 match length_modifier {
                     None => {
                         let c_int_ptr: ConstPtr<f32> = args.next(env);
                         env.mem.write(c_int_ptr.cast_mut(), val as f32);
+                        matched_args += 1;
                     }
                     Some("l") => {
                         let c_int_ptr: ConstPtr<f64> = args.next(env);
                         env.mem.write(c_int_ptr.cast_mut(), val);
+                        matched_args += 1;
                     }
                     Some(modifier) => {
                         unimplemented!("Length formater '{}' for f", modifier)
@@ -935,9 +1007,16 @@ where
                     b'u' => 10,
                     _ => unreachable!(),
                 };
+                let eof_occurred = Cell::new(false);
                 let res = str_to_int_inner_generic(
                     env,
-                    &getc_fn,
+                    |env, sub, idx| {
+                        let res = getc_fn(env, sub, idx);
+                        if res.is_err() {
+                            eof_occurred.set(true);
+                        }
+                        res
+                    },
                     &ungetc_fn,
                     subject,
                     src_char_idx,
@@ -951,8 +1030,14 @@ where
                         src_char_idx += len;
                         let c_u32_ptr: ConstPtr<u32> = args.next(env);
                         env.mem.write(c_u32_ptr.cast_mut(), val);
+                        matched_args += 1;
                     }
-                    Err(_) => break,
+                    Err(()) => {
+                        if eof_occurred.get() {
+                            input_failure = true;
+                        }
+                        break 'outer;
+                    }
                 }
             }
             b'[' => {
@@ -989,22 +1074,36 @@ where
                 let mut dst_ptr: MutPtr<u8> = args.next(env);
                 let mut matched = false;
                 // Consume `src` while chars are not in the set
-                let mut cc = getc_fn(env, subject, src_char_idx).unwrap().into(); // TODO: EOF
+                let x = getc_fn(env, subject, src_char_idx);
+                if x.is_err() {
+                    input_failure = true;
+                    break 'outer;
+                }
+                let mut cc = x.unwrap().into();
                 src_char_idx += 1;
+                let mut eof_reached = false;
                 while set.contains(&cc) ^ inverted && cc != b'\0' {
                     matched = true;
                     env.mem.write(dst_ptr, cc);
                     dst_ptr += 1;
-                    cc = getc_fn(env, subject, src_char_idx).unwrap().into(); // TODO: EOF
+                    let x = getc_fn(env, subject, src_char_idx);
+                    if x.is_err() {
+                        eof_reached = true;
+                        break;
+                    }
+                    cc = x.unwrap().into();
                     src_char_idx += 1;
                 }
-                // we need to backtrack one position
-                ungetc_fn(env, subject, cc);
-                src_char_idx -= 1;
+                if !eof_reached {
+                    // we need to backtrack one position
+                    ungetc_fn(env, subject, cc);
+                    src_char_idx -= 1;
+                }
                 if matched {
                     env.mem.write(dst_ptr, b'\0');
+                    matched_args += 1;
                 } else {
-                    matched_args -= 1;
+                    break 'outer;
                 }
             }
             b's' => {
@@ -1012,6 +1111,7 @@ where
                 assert!(length_modifier.is_none());
                 let orig_dst_ptr: MutPtr<u8> = args.next(env);
                 let mut dst_ptr: MutPtr<u8> = orig_dst_ptr;
+                let mut matched = false;
                 loop {
                     let x = getc_fn(env, subject, src_char_idx);
                     if x.is_err() {
@@ -1019,9 +1119,7 @@ where
                     }
                     let cc: u8 = x.unwrap().into();
                     if !isspace_inner(cc) {
-                        if cc == b'\0' {
-                            break;
-                        }
+                        matched = true;
                         env.mem.write(dst_ptr, cc);
                         src_char_idx += 1;
                         dst_ptr += 1;
@@ -1030,7 +1128,12 @@ where
                         break;
                     }
                 }
+                if !matched {
+                    input_failure = true;
+                    break 'outer;
+                }
                 env.mem.write(dst_ptr, b'\0');
+                matched_args += 1;
                 log_dbg!(
                     "sscanf_common_generic read %s '{:?}'",
                     env.mem.cstr_at_utf8(orig_dst_ptr)
@@ -1039,10 +1142,11 @@ where
             // TODO: more specifiers
             _ => unimplemented!("Format character '{}'", specifier as char),
         }
-
-        matched_args += 1;
     }
 
+    if matched_args == 0 && input_failure {
+        return EOF;
+    }
     matched_args
 }
 

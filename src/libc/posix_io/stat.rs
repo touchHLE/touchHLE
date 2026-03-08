@@ -166,8 +166,14 @@ fn stat(env: &mut Environment, path: ConstPtr<u8>, buf: MutPtr<stat>) -> i32 {
     result
 }
 
+fn lstat(env: &mut Environment, path: ConstPtr<u8>, buf: MutPtr<stat>) -> i32 {
+    log_once!("Warning: lstat() is implemented as stat() (symbolic links are unsupported for now)");
+    stat(env, path, buf)
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(mkdir(_, _)),
     export_c_func!(fstat(_, _)),
     export_c_func!(stat(_, _)),
+    export_c_func!(lstat(_, _)),
 ];

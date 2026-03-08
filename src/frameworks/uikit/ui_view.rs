@@ -25,8 +25,8 @@ use crate::frameworks::core_graphics::{CGFloat, CGPoint, CGRect, CGSize};
 use crate::frameworks::foundation::ns_string::get_static_str;
 use crate::frameworks::foundation::{ns_array, NSInteger, NSUInteger};
 use crate::objc::{
-    autorelease, id, msg, msg_class, nil, objc_classes, release, retain, Class, ClassExports,
-    HostObject, NSZonePtr, ObjC,
+    autorelease, id, msg, msg_class, nil, objc_classes, release, retain, todo_objc_setter, Class,
+    ClassExports, HostObject, NSZonePtr, ObjC,
 };
 use crate::Environment;
 
@@ -452,7 +452,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (())setClipsToBounds:(bool)clips {
-    log!("TODO: [{:?} setClipsToBounds:{}]", this, clips);
+    todo_objc_setter!(this, clips);
 }
 
 - (bool)isOpaque {
@@ -548,7 +548,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (())setContentMode:(NSInteger)content_mode { // should be UIViewContentMode
-    log!("TODO: [UIView {:?} setContentMode:{:?}] => ()", this, content_mode);
+    todo_objc_setter!(this, content_mode);
 }
 
 - (bool)clearsContextBeforeDrawing {
@@ -688,10 +688,10 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (())setAutoresizingMask:(NSUInteger)mask {
-    log!("TODO: [(UIView*){:?} setAutoresizingMask:{}]", this, mask);
+    todo_objc_setter!(this, mask);
 }
 - (())setAutoresizesSubviews:(bool)enabled {
-    log!("TODO: [(UIView*){:?} setAutoresizesSubviews:{}]", this, enabled);
+    todo_objc_setter!(this, enabled);
 }
 
 - (CGSize)sizeThatFits:(CGSize)size {

@@ -281,12 +281,20 @@ fn CGRectGetMinX(_env: &mut Environment, rect: CGRect) -> CGFloat {
     rect.origin.x
 }
 
+fn CGRectGetMidX(_env: &mut Environment, rect: CGRect) -> CGFloat {
+    rect.origin.x + rect.size.width / 2.0
+}
+
 fn CGRectGetMaxX(_env: &mut Environment, rect: CGRect) -> CGFloat {
     rect.origin.x + rect.size.width
 }
 
 fn CGRectGetMinY(_env: &mut Environment, rect: CGRect) -> CGFloat {
     rect.origin.y
+}
+
+fn CGRectGetMidY(_env: &mut Environment, rect: CGRect) -> CGFloat {
+    rect.origin.y + rect.size.height / 2.0
 }
 
 fn CGRectGetMaxY(_env: &mut Environment, rect: CGRect) -> CGFloat {
@@ -326,6 +334,37 @@ fn CGRectIsNull(_env: &mut Environment, rect: CGRect) -> bool {
     rect == CGRectNull
 }
 
+fn CGRectOffset(_env: &mut Environment, rect: CGRect, dx: CGFloat, dy: CGFloat) -> CGRect {
+    assert!(rect != CGRectNull); // TODO
+    CGRect {
+        origin: CGPoint {
+            x: rect.origin.x + dx,
+            y: rect.origin.y + dy,
+        },
+        size: rect.size,
+    }
+}
+
+fn CGRectInset(_env: &mut Environment, rect: CGRect, dx: CGFloat, dy: CGFloat) -> CGRect {
+    let res = CGRect {
+        origin: CGPoint {
+            x: rect.origin.x + dx,
+            y: rect.origin.y + dy,
+        },
+        size: CGSize {
+            width: rect.size.width - 2.0 * dx,
+            height: rect.size.height - 2.0 * dy,
+        },
+    };
+    assert!(res.size.width >= 0.0); // TODO return a null rectangle
+    assert!(res.size.height >= 0.0); // TODO return a null rectangle
+
+    // center invariant
+    assert!(rect.origin.x + rect.size.width / 2.0 == res.origin.x + res.size.width / 2.0);
+    assert!(rect.origin.y + rect.size.height / 2.0 == res.origin.y + res.size.height / 2.0);
+    res
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGPointEqualToPoint(_, _)),
     export_c_func!(CGSizeEqualToSize(_, _)),
@@ -333,13 +372,17 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGRectContainsPoint(_, _)),
     export_c_func!(CGRectIntersectsRect(_, _)),
     export_c_func!(CGRectGetMinX(_)),
+    export_c_func!(CGRectGetMidX(_)),
     export_c_func!(CGRectGetMaxX(_)),
     export_c_func!(CGRectGetMinY(_)),
+    export_c_func!(CGRectGetMidY(_)),
     export_c_func!(CGRectGetMaxY(_)),
     export_c_func!(CGRectGetHeight(_)),
     export_c_func!(CGRectGetWidth(_)),
     export_c_func!(CGRectMake(_, _, _, _)),
     export_c_func!(CGRectIsNull(_)),
+    export_c_func!(CGRectOffset(_, _, _)),
+    export_c_func!(CGRectInset(_, _, _)),
 ];
 
 pub const CONSTANTS: ConstantExports = &[

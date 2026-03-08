@@ -7,7 +7,7 @@
 
 use crate::abi::GuestFunction;
 use crate::dyld::FunctionExports;
-use crate::fs::GuestPath;
+use crate::fs::{FsNodeType, GuestPath};
 use crate::libc::errno::set_errno;
 use crate::mem::{guest_size_of, ConstPtr, MutPtr, Ptr, SafeRead};
 use crate::{export_c_func, impl_GuestRet_for_large_struct, Environment};
@@ -25,6 +25,10 @@ unsafe impl SafeRead for DIR {}
 // While early iOS is 32-bit system, underling file system uses 64-bit inodes!
 pub const MAXPATHLEN: usize = 1024;
 
+type DirentFileType = u8;
+const DT_DIR: DirentFileType = 4;
+const DT_REG: DirentFileType = 8;
+
 #[allow(non_camel_case_types)]
 #[derive(Debug)]
 #[repr(C, packed)]
@@ -41,7 +45,7 @@ impl_GuestRet_for_large_struct!(dirent);
 
 #[derive(Default)]
 pub struct State {
-    open_dirs: HashMap<MutPtr<DIR>, Vec<String>>,
+    open_dirs: HashMap<MutPtr<DIR>, Vec<(String, FsNodeType)>>,
     read_dirs: HashMap<MutPtr<DIR>, Vec<MutPtr<dirent>>>,
 }
 impl State {
@@ -61,8 +65,8 @@ fn opendir(env: &mut Environment, filename: ConstPtr<u8>) -> MutPtr<DIR> {
     if is_dir {
         let dir = env.mem.alloc_and_write(DIR { idx: 0 });
         log_dbg!("opendir: new DIR ptr: {:?}", dir);
-        let iter = env.fs.enumerate(guest_path).unwrap();
-        let vec = iter.map(|str| str.to_string()).collect();
+        let iter = env.fs.enumerate_with_types(guest_path).unwrap();
+        let vec = iter.map(|(str, type_)| (str.to_string(), type_)).collect();
         assert!(!State::get_mut(env).open_dirs.contains_key(&dir));
         State::get_mut(env).open_dirs.insert(dir, vec);
         assert!(!State::get_mut(env).read_dirs.contains_key(&dir));
@@ -86,18 +90,22 @@ fn readdir(env: &mut Environment, dirp: MutPtr<DIR>) -> MutPtr<dirent> {
         dir.idx,
         vec.get(dir.idx)
     );
-    if let Some(str) = vec.get(dir.idx) {
+    if let Some((str, type_)) = vec.get(dir.idx) {
         dir.idx += 1;
         env.mem.write(dirp, dir);
 
         let len = str.len();
+        let d_type = match type_ {
+            FsNodeType::File => DT_REG,
+            FsNodeType::Directory => DT_DIR,
+        };
         // TODO: fill other fields
         let mut dirent = dirent {
             d_ino: 0,
             d_seekoff: 0,
             d_reclen: 0,
             d_namlen: len as u16,
-            d_type: 0,
+            d_type,
             d_name: [b'\0'; MAXPATHLEN],
         };
         dirent.d_name[..len].copy_from_slice(str.as_bytes());

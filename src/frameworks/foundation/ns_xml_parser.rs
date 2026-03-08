@@ -18,8 +18,8 @@ use super::NSUInteger;
 use crate::environment::Environment;
 use crate::mem::ConstVoidPtr;
 use crate::objc::{
-    autorelease, id, msg, msg_class, nil, objc_classes, release, retain, ClassExports, HostObject,
-    NSZonePtr, SEL,
+    autorelease, id, msg, msg_class, nil, objc_classes, release, retain, todo_objc_setter,
+    ClassExports, HostObject, NSZonePtr, SEL,
 };
 use quick_xml::events::{BytesStart, Event};
 use quick_xml::reader::Reader;
@@ -70,14 +70,14 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (())setShouldResolveExternalEntities:(bool)should {
-    log_dbg!("TODO: setShouldResolveExternalEntities:{}", should);
+    todo_objc_setter!(this, should);
 }
 - (())setShouldProcessNamespaces:(bool)should {
-    log_dbg!("TODO: setShouldProcessNamespaces:{}", should);
+    todo_objc_setter!(this, should);
     assert!(!should);
 }
 - (())setShouldReportNamespacePrefixes:(bool)should {
-    log_dbg!("TODO: setShouldReportNamespacePrefixes:{}", should);
+    todo_objc_setter!(this, should);
     assert!(!should);
 }
 

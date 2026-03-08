@@ -24,6 +24,18 @@ typedef signed char BOOL;
 typedef unsigned long NSUInteger;
 typedef signed long NSInteger;
 
+typedef struct _NSRange {
+  NSUInteger location;
+  NSUInteger length;
+} NSRange;
+
+static inline NSRange NSMakeRange(NSUInteger loc, NSUInteger len) {
+  NSRange r;
+  r.location = loc;
+  r.length = len;
+  return r;
+}
+
 #define nil ((id)0)
 
 // id objc_msgSend(id, SEL, ...);
@@ -36,6 +48,7 @@ typedef signed long NSInteger;
 + (Class)class;
 + (instancetype)alloc;
 + (instancetype)new;
++ (BOOL)respondsToSelector:(SEL)selector;
 - (instancetype)init;
 - (instancetype)retain;
 - (void)release;
@@ -53,6 +66,8 @@ typedef signed long NSInteger;
 @end
 
 @interface NSArray<ObjectType> : NSObject
++ (instancetype)array;
++ (instancetype)arrayWithObjects:(ObjectType)firstObj, ...;
 - (NSUInteger)count;
 - (ObjectType)objectAtIndex:(NSUInteger)index;
 @end
@@ -61,9 +76,25 @@ typedef signed long NSInteger;
 - (ObjectType)anyObject;
 @end
 
+typedef enum {
+  NSCaseInsensitiveSearch = 1,
+} NSStringCompareOptions;
+
 @interface NSString : NSObject
 + (instancetype)stringWithFormat:(NSString *)format, ...;
 + (instancetype)stringWithUTF8String:(const char *)string;
++ (NSString *)pathWithComponents:(NSArray *)components;
+- (NSString *)stringByReplacingOccurrencesOfString:(NSString *)target
+                                        withString:(NSString *)replacement;
+- (NSString *)stringByReplacingOccurrencesOfString:(NSString *)target
+                                        withString:(NSString *)replacement
+                                           options:
+                                               (NSStringCompareOptions)options
+                                             range:(NSRange)range;
+- (BOOL)isEqualToString:(NSString *)other;
+@end
+@interface NSMutableString : NSString
+- (void)deleteCharactersInRange:(NSRange)range;
 @end
 
 @interface NSValue : NSObject
@@ -95,6 +126,25 @@ typedef double NSTimeInterval;
                                       userInfo:(id)user_info
                                        repeats:(BOOL)repeats;
 - (void)invalidate;
+@end
+
+@interface NSData : NSObject
+@end
+
+@interface NSCoder : NSObject
+- (void)encodeBytes:(const uint8_t *)bytes
+             length:(NSUInteger)length
+             forKey:(NSString *)key;
+- (const uint8_t *)decodeBytesForKey:(NSString *)key
+                      returnedLength:(NSUInteger *)lengthp;
+@end
+
+@interface NSKeyedArchiver : NSCoder
++ (NSData *)archivedDataWithRootObject:(id)rootObject;
+@end
+
+@interface NSKeyedUnarchiver : NSCoder
++ (id)unarchiveObjectWithData:(NSData *)data;
 @end
 
 SEL NSSelectorFromString(NSString *);

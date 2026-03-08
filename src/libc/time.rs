@@ -6,9 +6,12 @@
 //! `time.h` (C) and `sys/time.h` (POSIX)
 
 use crate::dyld::{export_c_func, FunctionExports};
+use crate::libc::clocale::{setlocale, LC_CTYPE};
 use crate::libc::errno::set_errno;
-use crate::mem::{guest_size_of, ConstPtr, MutPtr, Ptr, SafeRead};
+use crate::libc::stdio::printf::{isspace, isspace_inner};
+use crate::mem::{guest_size_of, ConstPtr, GuestUSize, MutPtr, Ptr, SafeRead};
 use crate::Environment;
+use std::ops::Range;
 use std::time::{Duration, Instant, SystemTime};
 
 #[derive(Default)]
@@ -524,6 +527,203 @@ fn nanosleep(env: &mut Environment, rqtp: ConstPtr<timespec>, _rmtp: MutPtr<time
     0 // success
 }
 
+fn strptime(
+    env: &mut Environment,
+    buffer: ConstPtr<u8>,
+    format: ConstPtr<u8>,
+    time_ptr: MutPtr<tm>,
+) -> MutPtr<u8> {
+    log_dbg!(
+        "strptime({:?}, {:?})",
+        env.mem.cstr_at_utf8(buffer),
+        env.mem.cstr_at_utf8(format)
+    );
+
+    let mut time_val = env.mem.read(time_ptr);
+
+    let mut conversation_failed = false;
+    let mut buffer_char_idx = 0;
+    let mut format_char_idx = 0;
+    loop {
+        let c = env.mem.read(format + format_char_idx);
+        format_char_idx += 1;
+
+        if c == b'\0' {
+            break;
+        }
+        if c != b'%' {
+            let mut cc = env.mem.read(buffer + buffer_char_idx);
+            if isspace(env, format + format_char_idx - 1) {
+                // "All ordinary characters are matched exactly with the buffer
+                // , where white space in the format string will match any
+                // amount of white space in the buffer."
+                while isspace_inner(cc) {
+                    buffer_char_idx += 1;
+                    cc = env.mem.read(buffer + buffer_char_idx);
+                }
+                continue;
+            }
+            if c != cc {
+                conversation_failed = true;
+                break;
+            }
+            buffer_char_idx += 1;
+            continue;
+        }
+
+        let specifier = env.mem.read(format + format_char_idx);
+        format_char_idx += 1;
+
+        let mut parse_2_digits = |range: Range<i32>| -> Result<i32, ()> {
+            let mut num: i32 = 0;
+            let mut chars_count = 0;
+            while let c @ b'0'..=b'9' = env.mem.read(buffer + buffer_char_idx) {
+                if chars_count >= 2 {
+                    break;
+                }
+                num = num * 10 + (c - b'0') as i32;
+                buffer_char_idx += 1;
+                chars_count += 1;
+            }
+            if chars_count != 2 {
+                Err(())
+            } else {
+                assert!(range.contains(&num));
+                Ok(num)
+            }
+        };
+
+        match specifier {
+            b'H' => match parse_2_digits(0..24) {
+                Ok(hour) => {
+                    time_val.tm_hour = hour;
+                }
+                Err(_) => {
+                    conversation_failed = true;
+                    break;
+                }
+            },
+            b'M' => match parse_2_digits(0..60) {
+                Ok(minute) => {
+                    time_val.tm_min = minute;
+                }
+                Err(_) => {
+                    conversation_failed = true;
+                    break;
+                }
+            },
+            b'S' => match parse_2_digits(0..61) {
+                Ok(second) => {
+                    time_val.tm_sec = second;
+                }
+                Err(_) => {
+                    conversation_failed = true;
+                    break;
+                }
+            },
+            _ => unimplemented!(
+                "Format character '{}'. Formatted up to index {}",
+                specifier as char,
+                format_char_idx
+            ),
+        }
+    }
+
+    env.mem.write(time_ptr, time_val);
+
+    if conversation_failed {
+        Ptr::null()
+    } else {
+        (buffer + buffer_char_idx).cast_mut()
+    }
+}
+
+fn strftime(
+    env: &mut Environment,
+    s: MutPtr<u8>,
+    max_size: GuestUSize,
+    format: ConstPtr<u8>,
+    time_ptr: ConstPtr<tm>,
+) -> GuestUSize {
+    log_dbg!(
+        "strftime({:?}, {}, {:?}, {:?})",
+        s,
+        max_size,
+        env.mem.cstr_at_utf8(format),
+        time_ptr
+    );
+
+    // TODO: support other locales
+    let ctype_locale = setlocale(env, LC_CTYPE, Ptr::null());
+    assert_eq!(env.mem.read(ctype_locale), b'C');
+
+    let time_val = env.mem.read(time_ptr);
+
+    let mut res = Vec::<u8>::new();
+
+    let mut format_char_idx = 0;
+    loop {
+        let c = env.mem.read(format + format_char_idx);
+        format_char_idx += 1;
+
+        if c == b'\0' {
+            break;
+        }
+        if c != b'%' {
+            res.push(c);
+            continue;
+        }
+
+        let specifier = env.mem.read(format + format_char_idx);
+        format_char_idx += 1;
+
+        match specifier {
+            b'm' => {
+                let month = time_val.tm_mon + 1;
+                assert!((1..=12).contains(&month));
+                let formatted_month = format!("{:02}", month);
+                res.extend_from_slice(formatted_month.as_bytes());
+            }
+            b'd' => {
+                let day = time_val.tm_mday; // from 1
+                assert!((1..=31).contains(&day));
+                let formatted_day = format!("{:02}", day);
+                res.extend_from_slice(formatted_day.as_bytes());
+            }
+            b'H' => {
+                let hour = time_val.tm_hour;
+                assert!((0..24).contains(&hour));
+                let formatted_hour = format!("{:02}", hour);
+                res.extend_from_slice(formatted_hour.as_bytes());
+            }
+            b'M' => {
+                let minute = time_val.tm_min;
+                assert!((0..60).contains(&minute));
+                let formatted_minute = format!("{:02}", minute);
+                res.extend_from_slice(formatted_minute.as_bytes());
+            }
+            _ => unimplemented!(
+                "Format character '{}'. Formatted up to index {}",
+                specifier as char,
+                format_char_idx
+            ),
+        }
+    }
+
+    let middle = if ((max_size - 1) as usize) < res.len() {
+        &res[..(max_size - 1) as usize]
+    } else {
+        &res[..]
+    };
+
+    let dest_slice = env.mem.bytes_at_mut(s, max_size);
+    for (i, &byte) in middle.iter().chain(b"\0".iter()).enumerate() {
+        dest_slice[i] = byte;
+    }
+
+    res.len().try_into().unwrap()
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(clock()),
     export_c_func!(time(_)),
@@ -535,4 +735,6 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(localtime(_)),
     export_c_func!(gettimeofday(_, _)),
     export_c_func!(nanosleep(_, _)),
+    export_c_func!(strptime(_, _, _)),
+    export_c_func!(strftime(_, _, _, _)),
 ];

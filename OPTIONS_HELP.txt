@@ -30,6 +30,17 @@ View options:
 
         This is a natural number that is at least 1.
 
+Device options:
+    --device-family=...
+        Specifies which device family should be emulated: iPhone or iPad.
+        This only work if running app does support selected family
+        (or the option will be ignored).
+
+        If omitted, suitable device family would be deduced from application
+        bundle itself, falling back to iPhone if needed.
+
+        Accepted values are "iphone" and "ipad" respectively.
+
 Game controller options:
     --deadzone=...
         Configures the size of the \"dead zone\" for analog stick inputs.

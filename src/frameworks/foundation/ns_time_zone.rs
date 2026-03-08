@@ -53,6 +53,10 @@ pub const CLASSES: ClassExports = objc_classes! {
     this
 }
 
+- (id)name {
+    env.objc.borrow_mut::<NSTimeZoneHostObject>(this).time_zone
+}
+
 - (NSInteger)secondsFromGMT {
     // TODO: respect timezone
     0

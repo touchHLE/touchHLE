@@ -13,7 +13,7 @@
 //! will be needed for the runtime of the app.
 
 use crate::gles::present::present_frame;
-use crate::gles::{create_gles1_ctx, GLES};
+use crate::gles::{create_gles1_ctx, GLESContext, GLES};
 use crate::image::Image;
 use crate::matrix::Matrix;
 use crate::options::Options;
@@ -28,18 +28,63 @@ use std::num::NonZeroU32;
 use std::ptr::null_mut;
 use std::time::{Duration, Instant};
 
+#[allow(non_camel_case_types)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
+pub enum DeviceFamily {
+    iPhone,
+    iPad,
+}
+impl std::fmt::Display for DeviceFamily {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        std::fmt::Debug::fmt(self, f)
+    }
+}
+impl DeviceFamily {
+    pub fn portrait_size(&self) -> (u32, u32) {
+        match self {
+            DeviceFamily::iPhone => (320, 480),
+            DeviceFamily::iPad => (768, 1024),
+        }
+    }
+}
+impl TryFrom<u64> for DeviceFamily {
+    type Error = ();
+    fn try_from(value: u64) -> Result<Self, Self::Error> {
+        match value {
+            1 => Ok(DeviceFamily::iPhone),
+            2 => Ok(DeviceFamily::iPad),
+            _ => Err(()),
+        }
+    }
+}
+impl TryFrom<&str> for DeviceFamily {
+    type Error = ();
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        match value {
+            "iphone" => Ok(DeviceFamily::iPhone),
+            "ipad" => Ok(DeviceFamily::iPad),
+            _ => Err(()),
+        }
+    }
+}
+
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum DeviceOrientation {
     Portrait,
     LandscapeLeft,
     LandscapeRight,
 }
-fn size_for_orientation(orientation: DeviceOrientation, scale_hack: NonZeroU32) -> (u32, u32) {
+fn size_for_orientation(
+    family: DeviceFamily,
+    orientation: DeviceOrientation,
+    scale_hack: NonZeroU32,
+) -> (u32, u32) {
+    let (width, height) = family.portrait_size();
     let scale_hack = scale_hack.get();
     match orientation {
-        DeviceOrientation::Portrait => (320 * scale_hack, 480 * scale_hack),
-        DeviceOrientation::LandscapeLeft => (480 * scale_hack, 320 * scale_hack),
-        DeviceOrientation::LandscapeRight => (480 * scale_hack, 320 * scale_hack),
+        DeviceOrientation::Portrait => (width * scale_hack, height * scale_hack),
+        DeviceOrientation::LandscapeLeft => (height * scale_hack, width * scale_hack),
+        DeviceOrientation::LandscapeRight => (height * scale_hack, width * scale_hack),
     }
 }
 fn rotate_fullscreen_size(orientation: DeviceOrientation, screen_size: (u32, u32)) -> (u32, u32) {
@@ -132,6 +177,12 @@ pub enum GLVersion {
 
 pub struct GLContext(sdl2::video::GLContext);
 
+impl GLContext {
+    pub fn is_current(&self) -> bool {
+        self.0.is_current()
+    }
+}
+
 fn surface_from_image(image: &Image) -> Surface<'_> {
     let src_pixels = image.pixels();
     let (width, height) = image.dimensions();
@@ -172,10 +223,10 @@ pub struct Window {
     /// [Self::rotatable_fullscreen] returns [true].
     fullscreen: bool,
     scale_hack: NonZeroU32,
-    internal_gl_ctx: Option<Box<dyn GLES>>,
+    internal_gl_ins: Option<Box<dyn GLESContext>>,
     splash_image: Option<Image>,
+    device_family: DeviceFamily,
     device_orientation: DeviceOrientation,
-    app_gl_ctx_no_longer_current: bool,
     controller_ctx: sdl2::GameControllerSubsystem,
     controllers: Vec<sdl2::controller::GameController>,
     dpad_state: DpadState,
@@ -231,6 +282,7 @@ impl Window {
         let scale_hack = options.scale_hack;
         // TODO: some apps specify their orientation in Info.plist, we could use
         // that here.
+        let device_family = options.device_family.unwrap_or(DeviceFamily::iPhone);
         let device_orientation = options.initial_orientation;
         let fullscreen = options.fullscreen;
 
@@ -256,7 +308,8 @@ impl Window {
                 .unwrap();
             window
         } else {
-            let (width, height) = size_for_orientation(device_orientation, scale_hack);
+            let (width, height) =
+                size_for_orientation(device_family, device_orientation, scale_hack);
             let window = video_ctx
                 .window(title, width, height)
                 .position_centered()
@@ -313,10 +366,10 @@ impl Window {
             viewport_y_offset: 0,
             fullscreen,
             scale_hack,
-            internal_gl_ctx: None,
+            internal_gl_ins: None,
             splash_image: launch_image,
+            device_family,
             device_orientation,
-            app_gl_ctx_no_longer_current: false,
             controller_ctx,
             controllers: Vec::new(),
             dpad_state: DpadState {
@@ -338,10 +391,12 @@ impl Window {
         // (see src/frameworks/core_animation/composition.rs). OpenGL ES is used
         // because SDL2 won't let us use more than one graphics API in the same
         // window, and we also need OpenGL ES for the app's own rendering.
-        let gl_ctx = create_gles1_ctx(&mut window, options);
-        gl_ctx.make_current(&window);
-        log!("Driver info: {}", unsafe { gl_ctx.driver_description() });
-        window.internal_gl_ctx = Some(gl_ctx);
+        let mut gl_ins = create_gles1_ctx(&mut window, options);
+        {
+            let gl_ctx = gl_ins.make_current(&mut window);
+            log!("Driver info: {}", unsafe { gl_ctx.driver_description() });
+        }
+        window.internal_gl_ins = Some(gl_ins);
 
         if window.splash_image.is_some() {
             window.display_splash();
@@ -371,8 +426,11 @@ impl Window {
             independent_of_viewport: bool,
         ) -> (f32, f32) {
             let (vx, vy, vw, vh) = if independent_of_viewport {
-                let (width, height) =
-                    size_for_orientation(window.device_orientation, NonZeroU32::new(1).unwrap());
+                let (width, height) = size_for_orientation(
+                    window.device_family,
+                    window.device_orientation,
+                    NonZeroU32::new(1).unwrap(),
+                );
                 (0, 0, width, height)
             } else {
                 window.viewport()
@@ -387,7 +445,8 @@ impl Window {
             let (out_w, out_h) = window.size_unrotated_unscaled();
             let out_x = (x + 0.5) * out_w as f32;
             let out_y = (y + 0.5) * out_h as f32;
-            (out_x, out_y)
+            // Round to match touch precision of official devices.
+            (out_x.round(), out_y.round())
         }
         fn transform_virt_accel_coords(window: &Window, (in_x, in_y): (i32, i32)) -> (f32, f32) {
             let (_, _, vw, vh) = window.viewport();
@@ -1108,28 +1167,23 @@ impl Window {
         self.window.gl_make_current(&gl_ctx.0).unwrap();
     }
 
-    /// Retrieve and reset the flag that indicates if the current OpenGL context
-    /// was changed to one outside of the control of the guest app.
-    ///
-    /// This should be checked before making OpenGL calls on behalf of the guest
-    /// app, so its context can be restored.
-    pub fn is_app_gl_ctx_no_longer_current(&mut self) -> bool {
-        let value = self.app_gl_ctx_no_longer_current;
-        self.app_gl_ctx_no_longer_current = false;
-        value
-    }
-
     /// Make the internal OpenGL ES context (for splash screen and UI rendering)
     /// current.
-    pub fn make_internal_gl_ctx_current(&mut self) {
-        self.app_gl_ctx_no_longer_current = true;
-        self.internal_gl_ctx.as_ref().unwrap().make_current(self);
-    }
-
-    /// Get the internal OpenGL ES context (for splash screen and UI rendering).
-    /// This does not ensure the context is current.
-    pub fn get_internal_gl_ctx(&mut self) -> &mut dyn GLES {
-        self.internal_gl_ctx.as_deref_mut().unwrap()
+    #[must_use]
+    pub fn make_internal_gl_ctx_current<'win>(&'win mut self) -> Box<dyn GLES + 'win> {
+        // The invariant is held up here - since the instance we return is
+        // bound to the lifetime of window, it can't outlive the internal GL
+        // context and can't outlive the window.
+        let gl_ins = unsafe {
+            self.internal_gl_ins
+                .as_mut()
+                .unwrap()
+                .make_current_unchecked_for_window(
+                    &mut |gl_ctx| self.window.gl_make_current(&gl_ctx.0).unwrap(),
+                    &mut |s| self.video_ctx.gl_get_proc_address(s) as *const _,
+                )
+        };
+        gl_ins
     }
 
     fn display_splash(&mut self) {
@@ -1141,14 +1195,20 @@ impl Window {
         let (vx, vy, vw, vh) = self.viewport();
         let viewport = (vx, vy + self.viewport_y_offset(), vw, vh);
 
-        self.make_internal_gl_ctx_current();
-
         let image = self.splash_image.as_ref().unwrap();
-        let gl_ctx = self.internal_gl_ctx.as_deref_mut().unwrap();
-
-        use crate::gles::gles11_raw as gles11; // constants only
 
         unsafe {
+            let mut gl_ctx = self
+                .internal_gl_ins
+                .as_mut()
+                .unwrap()
+                .make_current_unchecked_for_window(
+                    &mut |gl_ctx| self.window.gl_make_current(&gl_ctx.0).unwrap(),
+                    &mut |s| self.video_ctx.gl_get_proc_address(s) as *const _,
+                );
+
+            use crate::gles::gles11_raw as gles11; // constants only
+
             let mut texture = 0;
             gl_ctx.GenTextures(1, &mut texture);
             gl_ctx.BindTexture(gles11::TEXTURE_2D, texture);
@@ -1176,7 +1236,10 @@ impl Window {
             );
 
             present_frame(
-                gl_ctx, viewport, matrix, /* virtual_cursor_visible_at: */ None,
+                gl_ctx.as_mut(),
+                viewport,
+                matrix,
+                /* virtual_cursor_visible_at: */ None,
             );
 
             gl_ctx.DeleteTextures(1, &texture);
@@ -1209,7 +1272,7 @@ impl Window {
                 set_sdl2_orientation(new_orientation);
                 rotate_fullscreen_size(new_orientation, self.window.size())
             } else {
-                size_for_orientation(new_orientation, self.scale_hack)
+                size_for_orientation(self.device_family, new_orientation, self.scale_hack)
             };
 
             // macOS quirk: when resizing the window, the new framebuffer's size
@@ -1257,6 +1320,10 @@ impl Window {
         }
     }
 
+    pub fn device_family(&self) -> DeviceFamily {
+        self.device_family
+    }
+
     /// Returns the current device orientation
     pub fn current_rotation(&self) -> DeviceOrientation {
         self.device_orientation
@@ -1267,7 +1334,11 @@ impl Window {
     /// The aspect ratio, scale and orientation reflect the guest app's view of
     /// the world.
     pub fn size_unrotated_unscaled(&self) -> (u32, u32) {
-        size_for_orientation(DeviceOrientation::Portrait, NonZeroU32::new(1).unwrap())
+        size_for_orientation(
+            self.device_family,
+            DeviceOrientation::Portrait,
+            NonZeroU32::new(1).unwrap(),
+        )
     }
 
     /// Get the region of the on-screen window (x, y, width, height) used to
@@ -1277,7 +1348,7 @@ impl Window {
     /// the world, but the scale and orientation might not.
     pub fn viewport(&self) -> (u32, u32, u32, u32) {
         let (app_width, app_height) =
-            size_for_orientation(self.device_orientation, self.scale_hack);
+            size_for_orientation(self.device_family, self.device_orientation, self.scale_hack);
         if !self.fullscreen && !Self::rotatable_fullscreen() {
             return (0, 0, app_width, app_height);
         }

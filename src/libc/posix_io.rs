@@ -6,11 +6,12 @@
 //! POSIX I/O functions (`fcntl.h`, parts of `unistd.h`, etc)
 
 pub mod stat;
+pub mod statvfs;
 
 use crate::abi::DotDotDot;
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::fs::{GuestFile, GuestOpenOptions, GuestPath};
-use crate::libc::errno::{set_errno, EBADF, EINTR, EINVAL, EIO, EOVERFLOW, ESPIPE};
+use crate::libc::errno::{set_errno, EBADF, EINTR, EINVAL, EIO, EISDIR, EOVERFLOW, ESPIPE};
 use crate::libc::sys::socket::close_socket;
 use crate::libc::unistd::pid_t;
 use crate::mem::{
@@ -276,15 +277,26 @@ pub fn read(
             bytes_read.try_into().unwrap()
         }
         Err(e) => {
-            // TODO: set errno
+            let res = match e.kind() {
+                std::io::ErrorKind::IsADirectory => {
+                    set_errno(env, EISDIR);
+                    // the returned value was validated on iOS
+                    0
+                }
+                _ => {
+                    // TODO: set errno
+                    -1
+                }
+            };
             log!(
-                "Warning: read({:?}, {:?}, {:#x}) encountered error {:?}, returning -1",
+                "Warning: read({:?}, {:?}, {:#x}) encountered error {:?}, returning {}",
                 fd,
                 buffer,
                 size,
                 e,
+                res,
             );
-            -1
+            res
         }
     }
 }
@@ -456,8 +468,26 @@ pub fn lseek(env: &mut Environment, fd: FileDescriptor, offset: off_t, whence: i
 
     let start_position = match whence {
         SEEK_SET => 0,
-        SEEK_CUR => file.file.stream_position().unwrap(),
-        SEEK_END => file.file.stream_len().unwrap(),
+        SEEK_CUR => match file.file.stream_position() {
+            Ok(pos) => pos,
+            Err(seek_error) => {
+                match seek_error.kind() {
+                    std::io::ErrorKind::IsADirectory => set_errno(env, EISDIR),
+                    _ => unimplemented!("Unexpected seek error {:?}", seek_error),
+                }
+                return -1;
+            }
+        },
+        SEEK_END => match file.file.stream_len() {
+            Ok(len) => len,
+            Err(seek_error) => {
+                match seek_error.kind() {
+                    std::io::ErrorKind::IsADirectory => set_errno(env, EISDIR),
+                    _ => unimplemented!("Unexpected seek error {:?}", seek_error),
+                }
+                return -1;
+            }
+        },
         _ => {
             log!(
                 "Warning: lseek({:?}, {:#x}, {}) => -1. Called with invalid \"whence\".",
@@ -513,6 +543,7 @@ pub fn lseek(env: &mut Environment, fd: FileDescriptor, offset: off_t, whence: i
         Err(seek_error) => {
             match seek_error.kind() {
                 std::io::ErrorKind::InvalidInput => set_errno(env, EINVAL),
+                std::io::ErrorKind::IsADirectory => set_errno(env, EISDIR),
                 _ => unimplemented!("Unexpected seek error {:?}", seek_error),
             }
             log!(

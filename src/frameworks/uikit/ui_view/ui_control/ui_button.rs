@@ -12,7 +12,7 @@ use crate::frameworks::foundation::NSInteger;
 use crate::frameworks::uikit::ui_font::UITextAlignmentCenter;
 use crate::objc::{
     autorelease, id, impl_HostObject_with_superclass, msg, msg_class, msg_super, nil, objc_classes,
-    release, retain, ClassExports, HostObject, NSZonePtr,
+    release, retain, todo_objc_setter, ClassExports, HostObject, NSZonePtr,
 };
 use crate::Environment;
 use std::collections::HashMap;
@@ -288,10 +288,10 @@ pub const CLASSES: ClassExports = objc_classes! {
     update(env, this);
 }
 - (())setAdjustsImageWhenHighlighted:(bool)adjusts {
-    log!("TODO: [(UIButton*){:?} setAdjustsImageWhenHighlighted:{}]", this, adjusts);
+    todo_objc_setter!(this, adjusts);
 }
 - (())setShowsTouchWhenHighlighted:(bool)shows {
-    log!("TODO: [(UIButton*){:?} setShowsTouchWhenHighlighted:{}]", this, shows);
+    todo_objc_setter!(this, shows);
 }
 - (())setFont:(id)font { // UIFont*
     let label = env.objc.borrow_mut::<UIButtonHostObject>(this).title_label;

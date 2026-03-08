@@ -8,6 +8,7 @@
 // runs these automatically.
 
 #include <CoreFoundation/CFBase.h>
+#include <CoreFoundation/CFBundle.h>
 #include <CoreFoundation/CFDictionary.h>
 #include <CoreFoundation/CFNumber.h>
 #include <CoreFoundation/CFString.h>
@@ -27,6 +28,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/types.h>
+#include <time.h>
 #include <unistd.h>
 #include <wchar.h>
 
@@ -34,8 +37,9 @@
 
 // Declare test functions from other files.
 
-int test_AutoreleasePool(void);   // AutoReleasePoolTest.m
-int test_CGAffineTransform(void); // CGAffineTransform.c
+int test_AutoreleasePool(void);    // AutoReleasePoolTest.m
+int test_CGAffineTransform(void);  // CGAffineTransform.c
+int test_RespondsToSelector(void); // RespondsToSelector.m
 
 // === Main code ===
 
@@ -404,8 +408,6 @@ int test_swscanf() {
     return -2;
   return 0;
 }
-
-int test_errno() { return (errno == 0) ? 0 : -1; }
 
 int test_realloc() {
   void *ptr = realloc(NULL, 32);
@@ -1019,17 +1021,31 @@ int test_setlocale() {
   return 0;
 }
 
+const int PATH_BUF_SIZE = 256;
+// static array for path: not great, not terrible
+char path[PATH_BUF_SIZE];
+
+const char *path_test_app() {
 #ifdef DEFINE_ME_WHEN_BUILDING_ON_MACOS
-// assume project dir as cwd
-const char *path_test_app = "./tests/TestApp.app";
+  // assume project dir as cwd
+  return "./tests/TestApp.app";
 #else
-const char *path_test_app = "/var/mobile/Applications/"
-                            "00000000-0000-0000-0000-000000000000/TestApp.app";
+  bzero(path, PATH_BUF_SIZE);
+  CFBundleRef mainBundle = CFBundleGetMainBundle();
+  CFURLRef bundleURL = CFBundleCopyBundleURL(mainBundle);
+  CFURLGetFileSystemRepresentation(bundleURL,
+                                   true, // Resolve against base (absolute path)
+                                   (UInt8 *)path, // Output buffer
+                                   PATH_BUF_SIZE  // Buffer size
+  );
+  CFRelease(bundleURL);
+  return path;
 #endif
+}
 
 int test_dirent() {
   struct dirent *dp;
-  DIR *dirp = opendir(path_test_app);
+  DIR *dirp = opendir(path_test_app());
   if (dirp == NULL) {
     return -1;
   }
@@ -1055,7 +1071,7 @@ int test_dirent() {
 
 int test_scandir() {
   struct dirent **namelist;
-  int n = scandir(path_test_app, &namelist, NULL, NULL);
+  int n = scandir(path_test_app(), &namelist, NULL, NULL);
   if (n < 0) {
     return -1;
   }
@@ -1077,6 +1093,23 @@ int test_scandir() {
       return -2;
     }
   }
+  return 0;
+}
+
+int test_read_directory_as_fd() {
+  FILE *dir_stream = fopen(path_test_app(), "r");
+  if (dir_stream == NULL) {
+    return -1;
+  }
+  char buffer[1024];
+  size_t bytes_read = fread(buffer, 1, 4, dir_stream);
+  if (bytes_read != 0) {
+    return -2;
+  }
+  if (errno != EISDIR) {
+    return -3;
+  }
+  fclose(dir_stream);
   return 0;
 }
 
@@ -1111,7 +1144,7 @@ int test_swprintf() {
 
 int test_realpath() {
   char buf[256];
-  if (chdir(path_test_app))
+  if (chdir(path_test_app()))
     return -1;
   // absolute path
   char *res = realpath("/usr", buf);
@@ -3070,6 +3103,497 @@ int test_CFURLHasDirectoryPath() {
   return 0;
 }
 
+int test_NSMutableString_deleteCharactersInRange() {
+  NSAutoreleasePool *pool = [NSAutoreleasePool new];
+  NSMutableString *str = [NSMutableString stringWithUTF8String:"abc"];
+  NSRange r1 = {0, 3};
+  [str deleteCharactersInRange:r1];
+  NSString *expected = [NSString stringWithUTF8String:""];
+  if (!CFEqual(str, expected)) {
+    return -1;
+  }
+  str = [NSMutableString stringWithUTF8String:"abc"];
+  NSRange r2 = {1, 1};
+  [str deleteCharactersInRange:r2];
+  expected = [NSString stringWithUTF8String:"ac"];
+  if (!CFEqual(str, expected)) {
+    return -2;
+  }
+  str = [NSMutableString stringWithUTF8String:"abc"];
+  NSRange r3 = {0, 2};
+  [str deleteCharactersInRange:r3];
+  expected = [NSString stringWithUTF8String:"c"];
+  if (!CFEqual(str, expected)) {
+    return -3;
+  }
+  [pool drain];
+  return 0;
+}
+
+int test_NSString_stringByReplacingOccurrencesOfString() {
+  NSAutoreleasePool *pool = [NSAutoreleasePool new];
+
+  // Simple replacement
+  NSString *str = [NSString stringWithUTF8String:"hello world"];
+  NSString *target = [NSString stringWithUTF8String:"world"];
+  NSString *replacement = [NSString stringWithUTF8String:"touchHLE"];
+  NSString *res = [str stringByReplacingOccurrencesOfString:target
+                                                 withString:replacement];
+  NSString *expected = [NSString stringWithUTF8String:"hello touchHLE"];
+  if (![res isEqualToString:expected]) {
+    [pool drain];
+    return -1;
+  }
+
+  // Multiple occurrences
+  str = [NSString stringWithUTF8String:"aaa"];
+  target = [NSString stringWithUTF8String:"a"];
+  replacement = [NSString stringWithUTF8String:"b"];
+  res = [str stringByReplacingOccurrencesOfString:target
+                                       withString:replacement];
+  expected = [NSString stringWithUTF8String:"bbb"];
+  if (![res isEqualToString:expected]) {
+    [pool drain];
+    return -2;
+  }
+
+  // Overlapping occurrences (should not be replaced multiple times)
+  str = [NSString stringWithUTF8String:"aaaa"];
+  target = [NSString stringWithUTF8String:"aa"];
+  replacement = [NSString stringWithUTF8String:"b"];
+  res = [str stringByReplacingOccurrencesOfString:target
+                                       withString:replacement];
+  expected = [NSString stringWithUTF8String:"bb"];
+  if (![res isEqualToString:expected]) {
+    [pool drain];
+    return -3;
+  }
+
+  // No occurrences
+  str = [NSString stringWithUTF8String:"hello"];
+  target = [NSString stringWithUTF8String:"world"];
+  replacement = [NSString stringWithUTF8String:"!"];
+  res = [str stringByReplacingOccurrencesOfString:target
+                                       withString:replacement];
+  expected = [NSString stringWithUTF8String:"hello"];
+  if (![res isEqualToString:expected]) {
+    [pool drain];
+    return -4;
+  }
+
+  // Replace with empty string
+  str = [NSString stringWithUTF8String:"hello world"];
+  target = [NSString stringWithUTF8String:"world"];
+  replacement = [NSString stringWithUTF8String:""];
+  res = [str stringByReplacingOccurrencesOfString:target
+                                       withString:replacement];
+  expected = [NSString stringWithUTF8String:"hello "];
+  if (![res isEqualToString:expected]) {
+    [pool drain];
+    return -5;
+  }
+
+  // Replace whole string
+  str = [NSString stringWithUTF8String:"hello"];
+  target = [NSString stringWithUTF8String:"hello"];
+  replacement = [NSString stringWithUTF8String:"world"];
+  res = [str stringByReplacingOccurrencesOfString:target
+                                       withString:replacement];
+  expected = [NSString stringWithUTF8String:"world"];
+  if (![res isEqualToString:expected]) {
+    [pool drain];
+    return -6;
+  }
+
+  // Empty target (macOS behavior: returns original string)
+  str = [NSString stringWithUTF8String:"hello"];
+  target = [NSString stringWithUTF8String:""];
+  replacement = [NSString stringWithUTF8String:"!"];
+  res = [str stringByReplacingOccurrencesOfString:target
+                                       withString:replacement];
+  expected = [NSString stringWithUTF8String:"hello"];
+  if (![res isEqualToString:expected]) {
+    [pool drain];
+    return -7;
+  }
+
+  // Source, target and replacement empty
+  str = [NSString stringWithUTF8String:""];
+  target = [NSString stringWithUTF8String:""];
+  replacement = [NSString stringWithUTF8String:""];
+  res = [str stringByReplacingOccurrencesOfString:target
+                                       withString:replacement];
+  expected = [NSString stringWithUTF8String:""];
+  if (![res isEqualToString:expected]) {
+    [pool drain];
+    return -8;
+  }
+
+  [pool drain];
+  return 0;
+}
+
+int test_NSString_stringByReplacingOccurrencesOfString_options_range() {
+  NSAutoreleasePool *pool = [NSAutoreleasePool new];
+
+  // Case insensitive replacement
+  NSString *str = [NSString stringWithUTF8String:"Hello HELLO hello"];
+  NSString *target = [NSString stringWithUTF8String:"hello"];
+  NSString *replacement = [NSString stringWithUTF8String:"hi"];
+  NSRange range = NSMakeRange(0, 17);
+  NSString *res =
+      [str stringByReplacingOccurrencesOfString:target
+                                     withString:replacement
+                                        options:NSCaseInsensitiveSearch
+                                          range:range];
+  NSString *expected = [NSString stringWithUTF8String:"hi hi hi"];
+  if (![res isEqualToString:expected]) {
+    [pool drain];
+    return -1;
+  }
+
+  // Replacement within a range
+  str = [NSString stringWithUTF8String:"[hello] hello [hello]"];
+  target = [NSString stringWithUTF8String:"hello"];
+  replacement = [NSString stringWithUTF8String:"hi"];
+  range = NSMakeRange(7, 7); // Only the middle "hello"
+  res = [str stringByReplacingOccurrencesOfString:target
+                                       withString:replacement
+                                          options:0
+                                            range:range];
+  expected = [NSString stringWithUTF8String:"[hello] hi [hello]"];
+  if (![res isEqualToString:expected]) {
+    [pool drain];
+    return -2;
+  }
+
+  // Case insensitive within a range
+  str = [NSString stringWithUTF8String:"AAA aaa AAA"];
+  target = [NSString stringWithUTF8String:"AAA"];
+  replacement = [NSString stringWithUTF8String:"B"];
+  range = NSMakeRange(0, 7); // "AAA aaa"
+  res = [str stringByReplacingOccurrencesOfString:target
+                                       withString:replacement
+                                          options:NSCaseInsensitiveSearch
+                                            range:range];
+  expected = [NSString stringWithUTF8String:"B B AAA"];
+  if (![res isEqualToString:expected]) {
+    [pool drain];
+    return -3;
+  }
+
+  // Range at the end
+  str = [NSString stringWithUTF8String:"hello hello"];
+  target = [NSString stringWithUTF8String:"hello"];
+  replacement = [NSString stringWithUTF8String:"world"];
+  range = NSMakeRange(6, 5);
+  res = [str stringByReplacingOccurrencesOfString:target
+                                       withString:replacement
+                                          options:0
+                                            range:range];
+  expected = [NSString stringWithUTF8String:"hello world"];
+  if (![res isEqualToString:expected]) {
+    [pool drain];
+    return -4;
+  }
+
+  // Empty range
+  str = [NSString stringWithUTF8String:"hello"];
+  target = [NSString stringWithUTF8String:"hello"];
+  replacement = [NSString stringWithUTF8String:"world"];
+  range = NSMakeRange(2, 0);
+  res = [str stringByReplacingOccurrencesOfString:target
+                                       withString:replacement
+                                          options:0
+                                            range:range];
+  expected = [NSString stringWithUTF8String:"hello"];
+  if (![res isEqualToString:expected]) {
+    [pool drain];
+    return -5;
+  }
+
+  [pool drain];
+  return 0;
+}
+
+int test_NSString_pathWithComponents() {
+  NSAutoreleasePool *pool = [NSAutoreleasePool new];
+
+  // Absolute path
+  NSArray *components =
+      [NSArray arrayWithObjects:[NSString stringWithUTF8String:"/"],
+                                [NSString stringWithUTF8String:"a"],
+                                [NSString stringWithUTF8String:"b"], nil];
+  NSString *res = [NSString pathWithComponents:components];
+  NSString *expected = [NSString stringWithUTF8String:"/a/b"];
+  if (![res isEqualToString:expected]) {
+    [pool drain];
+    return -1;
+  }
+
+  // Relative path
+  components =
+      [NSArray arrayWithObjects:[NSString stringWithUTF8String:"a"],
+                                [NSString stringWithUTF8String:"b"], nil];
+  res = [NSString pathWithComponents:components];
+  expected = [NSString stringWithUTF8String:"a/b"];
+  if (![res isEqualToString:expected]) {
+    [pool drain];
+    return -2;
+  }
+
+  // No redundant slashes
+  components =
+      [NSArray arrayWithObjects:[NSString stringWithUTF8String:"a/"],
+                                [NSString stringWithUTF8String:"/b"], nil];
+  res = [NSString pathWithComponents:components];
+  expected = [NSString stringWithUTF8String:"a/b"];
+  if (![res isEqualToString:expected]) {
+    [pool drain];
+    return -3;
+  }
+
+  // Single component
+  components =
+      [NSArray arrayWithObjects:[NSString stringWithUTF8String:"a"], nil];
+  res = [NSString pathWithComponents:components];
+  expected = [NSString stringWithUTF8String:"a"];
+  if (![res isEqualToString:expected]) {
+    [pool drain];
+    return -4;
+  }
+
+  // Empty array
+  components = [NSArray array];
+  res = [NSString pathWithComponents:components];
+  expected = [NSString stringWithUTF8String:""];
+  if (![res isEqualToString:expected]) {
+    [pool drain];
+    return -5;
+  }
+
+  // Empty strings inside components
+  components =
+      [NSArray arrayWithObjects:[NSString stringWithUTF8String:"a"],
+                                [NSString stringWithUTF8String:""],
+                                [NSString stringWithUTF8String:""],
+                                [NSString stringWithUTF8String:"b"], nil];
+  res = [NSString pathWithComponents:components];
+  expected = [NSString stringWithUTF8String:"a/b"];
+  if (![res isEqualToString:expected]) {
+    [pool drain];
+    return -6;
+  }
+
+  [pool drain];
+  return 0;
+}
+
+int test_strptime() {
+  struct tm tm;
+  memset(&tm, 0, sizeof(struct tm));
+  char *res = strptime("12:34:56,", "%H:%M:%S,", &tm);
+  if (res == NULL || *res != '\0') {
+    return -1;
+  }
+  if (tm.tm_hour != 12 || tm.tm_min != 34 || tm.tm_sec != 56) {
+    return -2;
+  }
+
+  memset(&tm, 0, sizeof(struct tm));
+  res = strptime("01:02:03,", "%H:%M:%S,", &tm);
+  if (res == NULL || *res != '\0') {
+    return -3;
+  }
+  if (tm.tm_hour != 1 || tm.tm_min != 2 || tm.tm_sec != 3) {
+    return -4;
+  }
+
+  memset(&tm, 0, sizeof(struct tm));
+  res = strptime("invalid", "%H:%M:%S,", &tm);
+  if (res != NULL) {
+    return -5;
+  }
+
+  memset(&tm, 0, sizeof(struct tm));
+  res = strptime("12:34:56,extra", "%H:%M:%S,", &tm);
+  if (res == NULL || strcmp(res, "extra") != 0) {
+    return -6;
+  }
+  if (tm.tm_hour != 12 || tm.tm_min != 34 || tm.tm_sec != 56) {
+    return -7;
+  }
+
+  memset(&tm, 0, sizeof(struct tm));
+  res = strptime("12   :34: 56", "%H : %M : %S", &tm);
+  if (res == NULL || *res != '\0') {
+    return -8;
+  }
+  if (tm.tm_hour != 12 || tm.tm_min != 34 || tm.tm_sec != 56) {
+    return -9;
+  }
+
+  memset(&tm, 0, sizeof(struct tm));
+  res = strptime("12:34:56", "%H :%M :%S", &tm);
+  if (res == NULL || *res != '\0') {
+    return -10;
+  }
+  if (tm.tm_hour != 12 || tm.tm_min != 34 || tm.tm_sec != 56) {
+    return -11;
+  }
+
+  memset(&tm, 0, sizeof(struct tm));
+  res = strptime("12\t\n :34\f:56", "%H :%M :%S", &tm);
+  if (res == NULL || *res != '\0') {
+    return -12;
+  }
+  if (tm.tm_hour != 12 || tm.tm_min != 34 || tm.tm_sec != 56) {
+    return -13;
+  }
+
+  memset(&tm, 0, sizeof(struct tm));
+  res = strptime("  12:34:56  ", " %H:%M:%S ", &tm);
+  if (res == NULL || *res != '\0') {
+    return -14;
+  }
+  if (tm.tm_hour != 12 || tm.tm_min != 34 || tm.tm_sec != 56) {
+    return -15;
+  }
+
+  memset(&tm, 0, sizeof(struct tm));
+  res = strptime("XX:34:56", "%H:%M:%S", &tm);
+  if (res != NULL) {
+    return -16;
+  }
+
+  memset(&tm, 0, sizeof(struct tm));
+  res = strptime("12:XX:56", "%H:%M:%S", &tm);
+  if (res != NULL) {
+    return -17;
+  }
+
+  memset(&tm, 0, sizeof(struct tm));
+  res = strptime("12:34:XX", "%H:%M:%S", &tm);
+  if (res != NULL) {
+    return -18;
+  }
+
+  memset(&tm, 0, sizeof(struct tm));
+  res = strptime("10\r\n", "%H:%M:%S,", &tm);
+  if (res != NULL) {
+    return -19;
+  }
+
+  return 0;
+}
+
+int test_strftime() {
+  struct tm tm;
+  char buf[64];
+  memset(&tm, 0, sizeof(struct tm));
+  tm.tm_mon = 0; // January
+  tm.tm_mday = 31;
+  tm.tm_hour = 12;
+  tm.tm_min = 34;
+
+  size_t res = strftime(buf, sizeof(buf), "%m/%d     %H:%M", &tm);
+  if (res == 0) {
+    return -1;
+  }
+  if (strcmp(buf, "01/31     12:34") != 0) {
+    return -2;
+  }
+
+  memset(&tm, 0, sizeof(struct tm));
+  tm.tm_mon = 10; // November
+  tm.tm_mday = 5;
+  tm.tm_hour = 9;
+  tm.tm_min = 7;
+
+  res = strftime(buf, sizeof(buf), "%m/%d     %H:%M", &tm);
+  if (res == 0) {
+    return -3;
+  }
+  if (strcmp(buf, "11/05     09:07") != 0) {
+    return -4;
+  }
+
+  return 0;
+}
+
+@interface CharBufferObject : NSObject {
+@public
+  char *buffer;
+  NSUInteger length;
+
+  char *badKeyBuffer;
+  NSUInteger badKeyLength;
+}
+@end
+
+@implementation CharBufferObject
+- (instancetype)initWithBytes:(const char *)b length:(NSUInteger)l {
+  self = [super init];
+  length = l;
+  buffer = b;
+  badKeyLength = -1;
+  badKeyBuffer = b;
+  return self;
+}
+
+- (void)dealloc {
+  free(buffer);
+}
+
+- (void)encodeWithCoder:(NSCoder *)coder {
+  [coder encodeBytes:buffer
+              length:length
+              forKey:[NSString stringWithUTF8String:"buffer"]];
+}
+
+- (instancetype)initWithCoder:(NSCoder *)coder {
+  self = [super init];
+  char *temp_buffer =
+      [coder decodeBytesForKey:[NSString stringWithUTF8String:"buffer"]
+                returnedLength:&length];
+  buffer = malloc(length);
+  memcpy(buffer, temp_buffer, length);
+
+  badKeyBuffer =
+      [coder decodeBytesForKey:[NSString stringWithUTF8String:"badKey"]
+                returnedLength:&badKeyLength];
+
+  return self;
+}
+@end
+
+int test_NSKeyedArchiver_NSKeyedUnarchiver() {
+  NSAutoreleasePool *pool = [NSAutoreleasePool new];
+  char buffer[100];
+  for (char i = 0; i < 100; i++) {
+    buffer[i] = i;
+  }
+  CharBufferObject *obj = [[CharBufferObject alloc] initWithBytes:buffer
+                                                           length:100];
+  NSData *archivedData = [NSKeyedArchiver archivedDataWithRootObject:obj];
+  CharBufferObject *unarchivedObj =
+      [NSKeyedUnarchiver unarchiveObjectWithData:archivedData];
+  if (unarchivedObj->length != obj->length) {
+    return -1;
+  }
+  if (memcmp(unarchivedObj->buffer, obj->buffer, 100) != 0) {
+    return -2;
+  }
+  if (unarchivedObj->badKeyLength != 0) {
+    return -3;
+  }
+  if (unarchivedObj->badKeyBuffer != NULL) {
+    return -4;
+  }
+  [pool drain];
+  return 0;
+}
+
 // clang-format off
 #define FUNC_DEF(func)                                                         \
   { &func, #func }
@@ -3080,9 +3604,9 @@ struct {
 #ifndef DEFINE_ME_WHEN_BUILDING_ON_MACOS
     // below tests are failing on macOS,
     // so we skip them
-    FUNC_DEF(test_errno),
     FUNC_DEF(test_getcwd_chdir),
     FUNC_DEF(test_synchronized),
+    FUNC_DEF(test_read_directory_as_fd),
 #endif
     FUNC_DEF(test_qsort),
     FUNC_DEF(test_vsnprintf),
@@ -3136,6 +3660,14 @@ struct {
     FUNC_DEF(test_CGGeometry),
     FUNC_DEF(test_CFURLHasDirectoryPath),
     FUNC_DEF(test_CGImage_JPEG),
+    FUNC_DEF(test_NSMutableString_deleteCharactersInRange),
+    FUNC_DEF(test_NSString_stringByReplacingOccurrencesOfString),
+    FUNC_DEF(test_NSString_stringByReplacingOccurrencesOfString_options_range),
+    FUNC_DEF(test_NSString_pathWithComponents),
+    FUNC_DEF(test_strptime),
+    FUNC_DEF(test_strftime),
+    FUNC_DEF(test_RespondsToSelector),
+    FUNC_DEF(test_NSKeyedArchiver_NSKeyedUnarchiver),
 };
 // clang-format on
 

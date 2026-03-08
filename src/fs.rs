@@ -51,10 +51,19 @@ enum FileLocation {
 
 #[derive(Debug)]
 pub enum FsError {
+    AccessDenied,
     AlreadyExist,
+    DirectoryNotEmpty,
+    DoesNotExist,
     InvalidParentDir,
     NonexistentParentDir,
     ReadonlyParentDir,
+}
+
+#[derive(Debug)]
+pub enum FsNodeType {
+    File,
+    Directory,
 }
 
 #[derive(Debug)]
@@ -431,7 +440,10 @@ impl Read for GuestFile {
             GuestFile::File(file) => file.read(buf),
             GuestFile::IpaBundleFile(file) => file.read(buf),
             GuestFile::ResourceFile(file) => file.get().read(buf),
-            GuestFile::Directory => panic!("Attempt to read from a directory as a guest file"),
+            GuestFile::Directory => Err(std::io::Error::new(
+                std::io::ErrorKind::IsADirectory,
+                "Attempt to read from a directory as a guest file",
+            )),
             _ => unimplemented!(),
         }
     }
@@ -473,7 +485,17 @@ impl Seek for GuestFile {
             GuestFile::File(file) => file.seek(pos),
             GuestFile::IpaBundleFile(file) => file.seek(pos),
             GuestFile::ResourceFile(file) => file.get().seek(pos),
-            GuestFile::Directory => panic!("Attempt to seek in a directory as a guest file"),
+            GuestFile::Directory => {
+                // Note: directories as supposed to be seekable on iOS! https://stackoverflow.com/questions/65911066/what-does-lseek-mean-for-a-directory-file-descriptor
+                // As far as I can (f)tell, apps are really not using that
+                // properly and returning -1 on fseek/ftell is fine.
+                // TODO: implement seeking properly and return "cookie" values
+                log!("Warning: Seeking a directory as a guest file!");
+                Err(std::io::Error::new(
+                    std::io::ErrorKind::IsADirectory,
+                    "Attempt to seek a directory as a guest file",
+                ))
+            }
             _ => unimplemented!(),
         }
     }
@@ -822,6 +844,25 @@ impl Fs {
         Ok(children.keys().map(|name| name.as_str()))
     }
 
+    /// Similar to [Fs::enumerate], but also returns fs node type.
+    pub fn enumerate_with_types<P: AsRef<GuestPath>>(
+        &self,
+        path: P,
+    ) -> Result<impl Iterator<Item = (&str, FsNodeType)>, ()> {
+        let Some(FsNode::Directory { children, .. }) = self.lookup_node(path.as_ref()) else {
+            return Err(());
+        };
+        Ok(children.iter().map(|(name, node)| {
+            (
+                name.as_str(),
+                match node {
+                    FsNode::File { .. } => FsNodeType::File,
+                    FsNode::Directory { .. } => FsNodeType::Directory,
+                },
+            )
+        }))
+    }
+
     /// Recursively list the paths of files/directories in a directory.
     /// The base path (`path`) is not included in the returned paths.
     pub fn enumerate_recursive<P: AsRef<GuestPath>>(
@@ -1071,10 +1112,12 @@ impl Fs {
 
     /// Removes a file or a directory. If the node is a directory, it must be
     /// empty.
-    pub fn remove<P: AsRef<GuestPath>>(&mut self, path: P) -> Result<(), ()> {
+    pub fn remove<P: AsRef<GuestPath>>(&mut self, path: P) -> Result<(), FsError> {
         let path = path.as_ref();
 
-        let (parent_node, node_name) = self.lookup_parent_node(path).ok_or(())?;
+        let (parent_node, node_name) = self
+            .lookup_parent_node(path)
+            .ok_or(FsError::NonexistentParentDir)?;
 
         // Parent directory is not a directory
         let FsNode::Directory {
@@ -1082,17 +1125,17 @@ impl Fs {
             writeable: dir_writeable,
         } = parent_node
         else {
-            return Err(());
+            return Err(FsError::InvalidParentDir);
         };
 
         if !dir_writeable.is_some() {
             log!("Warning: attempt to delete file or directroy at path {:?}, but parent directory is read-only", path);
-            return Err(());
+            return Err(FsError::ReadonlyParentDir);
         };
 
         let Some(node) = children.get(&node_name) else {
             // There is no file/directory with this name
-            return Err(());
+            return Err(FsError::DoesNotExist);
         };
 
         match node {
@@ -1103,7 +1146,7 @@ impl Fs {
                 // Read-only files can't be removed. (This is probably not
                 // correct, but it is safer for now.)
                 if !writeable {
-                    return Err(());
+                    return Err(FsError::AccessDenied);
                 }
 
                 let host_path = match location {
@@ -1124,12 +1167,12 @@ impl Fs {
             } => {
                 // Directory is not empty
                 if !children.is_empty() {
-                    return Err(());
+                    return Err(FsError::DirectoryNotEmpty);
                 }
                 // Read-only directories can't be removed. (This is probably not
                 // correct, but it is safer for now.)
                 let Some(host_path) = writeable else {
-                    return Err(());
+                    return Err(FsError::AccessDenied);
                 };
 
                 handle_open_err(std::fs::remove_dir(host_path), host_path);

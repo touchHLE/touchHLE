@@ -130,6 +130,7 @@ pub use crate::impl_HostObject_with_superclass; // #[macro_export] is weird...
 pub trait AnyHostObject: HostObject {
     fn as_any<'a>(&'a self) -> &'a (dyn Any + 'static);
     fn as_any_mut<'a>(&'a mut self) -> &'a mut (dyn Any + 'static);
+    fn type_name(&self) -> &'static str;
 }
 impl<T: HostObject> AnyHostObject for T {
     fn as_any<'a>(&'a self) -> &'a (dyn Any + 'static) {
@@ -137,6 +138,9 @@ impl<T: HostObject> AnyHostObject for T {
     }
     fn as_any_mut<'a>(&'a mut self) -> &'a mut (dyn Any + 'static) {
         self
+    }
+    fn type_name(&self) -> &'static str {
+        std::any::type_name::<T>()
     }
 }
 
@@ -245,7 +249,11 @@ impl super::ObjC {
             } else if let Some(next) = host_object.as_superclass() {
                 host_object = next;
             } else {
-                panic!();
+                panic!(
+                    "Could not find host object with type {:?}, found {:?} for {object:?}",
+                    std::any::type_name::<T>(),
+                    host_object.type_name(),
+                );
             }
         }
     }
@@ -267,7 +275,12 @@ impl super::ObjC {
             } else if let Some(next) = host_object.as_superclass_mut() {
                 host_object = next;
             } else {
-                panic!();
+                let host_object: &Aho = &*self.objects.get(&object).unwrap().host_object;
+                panic!(
+                    "Could not find host object with type {:?}, found {:?} for {object:?}",
+                    std::any::type_name::<T>(),
+                    host_object.type_name(),
+                );
             }
         }
     }

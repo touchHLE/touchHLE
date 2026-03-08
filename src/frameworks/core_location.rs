@@ -44,6 +44,13 @@ const CLASSES: ClassExports = objc_classes! {
     false
 }
 
+- (())startUpdatingHeading {
+    // TODO
+}
+- (())stopUpdatingHeading {
+    // TODO
+}
+
 - (())startUpdatingLocation {
     // TODO
 }

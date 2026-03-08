@@ -178,6 +178,21 @@ pub fn sem_unlink(env: &mut Environment, name: ConstPtr<u8>) -> i32 {
     0 // success
 }
 
+#[allow(unused)]
+/// Shortcut for host code to make an unnamed semaphore. Destroy with
+/// host_destroy_semaphore, not sem_destroy
+pub fn host_create_semaphore(env: &mut Environment, value: u32) -> MutPtr<sem_t> {
+    let sem: MutPtr<sem_t> = env.mem.alloc_and_write(0);
+    sem_init(env, sem, 0, value);
+    sem
+}
+
+#[allow(unused)]
+pub fn host_destroy_semaphore(env: &mut Environment, sem: MutPtr<sem_t>) {
+    sem_destroy(env, sem);
+    env.mem.free(sem.cast());
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(sem_init(_, _, _)),
     export_c_func!(sem_destroy(_)),

@@ -15,6 +15,7 @@ use crate::dyld::{export_c_func, FunctionExports};
 use crate::objc::id;
 use crate::Environment;
 
+pub mod _nib_archive_decoder;
 pub mod ns_array;
 pub mod ns_autorelease_pool;
 pub mod ns_bundle;
@@ -29,6 +30,7 @@ pub mod ns_error;
 pub mod ns_exception;
 pub mod ns_file_handle;
 pub mod ns_file_manager;
+pub mod ns_keyed_archiver;
 pub mod ns_keyed_unarchiver;
 pub mod ns_locale;
 pub mod ns_lock;
@@ -58,6 +60,7 @@ pub const DYLIB: crate::dyld::HostDylib = crate::dyld::HostDylib {
     path: "/System/Library/Frameworks/Foundation.framework/Foundation",
     aliases: &[],
     class_exports: &[
+        _nib_archive_decoder::CLASSES,
         ns_array::CLASSES,
         ns_autorelease_pool::CLASSES,
         ns_bundle::CLASSES,
@@ -71,6 +74,7 @@ pub const DYLIB: crate::dyld::HostDylib = crate::dyld::HostDylib {
         ns_error::CLASSES,
         ns_file_handle::CLASSES,
         ns_file_manager::CLASSES,
+        ns_keyed_archiver::CLASSES,
         ns_keyed_unarchiver::CLASSES,
         ns_locale::CLASSES,
         ns_lock::CLASSES,

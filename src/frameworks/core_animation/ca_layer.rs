@@ -25,8 +25,8 @@ use crate::frameworks::core_graphics::{CGFloat, CGPoint, CGRect, CGSize};
 use crate::frameworks::foundation::ns_string::{self, to_rust_string};
 use crate::mem::{GuestUSize, Ptr};
 use crate::objc::{
-    autorelease, id, msg, msg_class, nil, objc_classes, release, retain, ClassExports, HostObject,
-    ObjC,
+    autorelease, id, msg, msg_class, nil, objc_classes, release, retain, todo_objc_setter,
+    ClassExports, HostObject, ObjC,
 };
 use crate::Environment;
 use std::collections::{HashMap, HashSet};
@@ -49,6 +49,7 @@ pub(super) struct CALayerHostObject {
     pub(super) background_color: Option<CGColorHostObject>,
     pub(super) corner_radius: CGFloat,
     pub(super) needs_display: bool,
+    pub(super) needs_display_on_bounds_change: bool,
     /// `CGImageRef*`
     pub(super) contents: id,
     /// For CAEAGLLayer only
@@ -126,6 +127,7 @@ pub const CLASSES: ClassExports = objc_classes! {
         background_color: None, // transparency
         corner_radius: 0.0,
         needs_display: false,
+        needs_display_on_bounds_change: false,
         contents: nil,
         drawable_properties: nil,
         presented_pixels: None,
@@ -235,7 +237,11 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.borrow::<CALayerHostObject>(this).bounds
 }
 - (())setBounds:(CGRect)bounds {
-    env.objc.borrow_mut::<CALayerHostObject>(this).bounds = bounds;
+    let host_object = env.objc.borrow_mut::<CALayerHostObject>(this);
+    host_object.bounds = bounds;
+    if host_object.needs_display_on_bounds_change {
+        () = msg![env; this setNeedsDisplay];
+    }
 }
 - (CGPoint)position {
     env.objc.borrow::<CALayerHostObject>(this).position
@@ -268,8 +274,6 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 - (())setFrame:(CGRect)frame {
     let CALayerHostObject {
-        bounds,
-        position,
         anchor_point,
         affine_transform,
         ..
@@ -287,14 +291,17 @@ pub const CLASSES: ClassExports = objc_classes! {
         size: frame.size
     }).size;
     let transformed_offset = inverse_transform.apply_to_point(CGPoint { x: 0.0, y: 0.0 });
-    *position = CGPoint {
+
+    let new_position = CGPoint {
         x: frame.origin.x + transformed_offset.x,
         y: frame.origin.y + transformed_offset.y,
     };
-    *bounds = CGRect {
+    () = msg![env; this setPosition:new_position];
+    let new_bounds = CGRect {
         origin: CGPoint { x: 0.0, y: 0.0 },
         size: transformed_size,
     };
+    () = msg![env; this setBounds:new_bounds];
 }
 
 - (bool)isHidden {
@@ -349,6 +356,14 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (())setNeedsDisplay {
     env.objc.borrow_mut::<CALayerHostObject>(this).needs_display = true;
 }
+
+- (bool)needsDisplayOnBoundsChange {
+    env.objc.borrow::<CALayerHostObject>(this).needs_display_on_bounds_change
+}
+- (())setNeedsDisplayOnBoundsChange:(bool)value {
+    env.objc.borrow_mut::<CALayerHostObject>(this).needs_display_on_bounds_change = value;
+}
+
 // TODO: support setNeedsDisplayInRect:
 - (())displayIfNeeded {
     let &mut CALayerHostObject {
@@ -437,15 +452,15 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (())setEdgeAntialiasingMask:(u32)mask {
-    log!("TODO: [(CALayer*){:?} setEdgeAntialiasingMask: {}]", this, mask); // TODO
+    todo_objc_setter!(this, mask);
 }
 
 - (())setMagnificationFilter:(id)filter {
-    log!("TODO: [(CALayer*){:?} setMagnificationFilter: {}]", this, ns_string::to_rust_string(env, filter)); // TODO
+    todo_objc_setter!(this, ns_string::to_rust_string(env, filter));
 }
 
 - (())setMinificationFilter:(id)filter {
-    log!("TODO: [(CALayer*){:?} setMinificationFilter: {}]", this, ns_string::to_rust_string(env, filter)); // TODO
+    todo_objc_setter!(this, ns_string::to_rust_string(env, filter));
 }
 
 - (bool)containsPoint:(CGPoint)point {

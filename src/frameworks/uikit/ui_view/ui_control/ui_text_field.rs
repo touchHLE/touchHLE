@@ -19,7 +19,8 @@ use crate::frameworks::uikit::ui_view::ui_window::{
 };
 use crate::impl_HostObject_with_superclass;
 use crate::objc::{
-    id, msg, msg_class, msg_super, nil, objc_classes, release, ClassExports, NSZonePtr, SEL,
+    id, msg, msg_class, msg_super, nil, objc_classes, release, todo_objc_setter, ClassExports,
+    NSZonePtr, SEL,
 };
 use crate::Environment;
 
@@ -29,7 +30,6 @@ pub type UIReturnKeyType = NSInteger;
 type UITextAutocapitalizationType = NSInteger;
 type UITextAutocorrectionType = NSInteger;
 
-// TODO: Actually send notification on text change
 const UITextFieldTextDidChangeNotification: &str = "UITextFieldTextDidChangeNotification";
 
 /// `NSNotificationName` values.
@@ -132,6 +132,16 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (())setText:(id)text { // NSString*
     let text_label = env.objc.borrow_mut::<UITextFieldHostObject>(this).text_label;
     () = msg![env; text_label setText:text];
+
+    // This will work only if all the text changes will call setText:!
+    // This is the case right now.
+    // (see `handle_text` and `handle_backspace` helper functions below)
+    // TODO: actually check if setText: send this notif on each change
+    // (e.g. does it send the notif if text hasn't changed)
+    let center: id = msg_class![env; NSNotificationCenter defaultCenter];
+    let name = ns_string::get_static_str(env, UITextFieldTextDidChangeNotification);
+    // TODO: userInfo
+    let _: () = msg![env; center postNotificationName:name object:this userInfo:nil];
 }
 
 - (())setTextColor:(id)color { // UIColor*
@@ -150,23 +160,23 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (())setClearsOnBeginEditing:(bool)clear {
-    log!("TODO: setClearsOnBeginEditing:{}", clear);
+    todo_objc_setter!(this, clear);
 }
 
 - (())setClearButtonMode:(NSInteger)mode {
-    log!("TODO: setClearButtonMode:{}", mode);
+    todo_objc_setter!(this, mode);
 }
 
 - (())setSecureTextEntry:(bool)secure {
-    log!("TODO: setSecureTextEntry:{}", secure);
+    todo_objc_setter!(this, secure);
 }
 
 - (())setPlaceholder:(id)placeholder { // NSString*
-    log!("TODO: setPlaceholder:'{}'", to_rust_string(env, placeholder));
+    todo_objc_setter!(this, to_rust_string(env, placeholder));
 }
 
 - (())setPosition:(CGPoint)position {
-    log!("TODO: setPosition:'{}'", position);
+    todo_objc_setter!(this, position);
 }
 
 // weak/non-retaining
@@ -181,25 +191,25 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 // UITextInputTraits implementation
 - (())setAutocapitalizationType:(UITextAutocapitalizationType)type_ {
-    log!("TODO: setAutocapitalizationType:{}", type_);
+    todo_objc_setter!(this, type_);
 }
 - (())setAutocorrectionType:(UITextAutocorrectionType)type_ {
-    log!("TODO: setAutocorrectionType:{}", type_);
+    todo_objc_setter!(this, type_);
 }
 - (())setReturnKeyType:(UIReturnKeyType)type_ {
-    log!("TODO: setReturnKeyType:{}", type_);
+    todo_objc_setter!(this, type_);
 }
 - (())setKeyboardAppearance:(UIKeyboardAppearance)appearance {
-    log!("TODO: setKeyboardAppearance:{}", appearance);
+    todo_objc_setter!(this, appearance);
 }
 - (())setKeyboardType:(UIKeyboardType)type_ {
-    log!("TODO: setKeyboardType:{}", type_);
+    todo_objc_setter!(this, type_);
 }
 - (())setBorderStyle:(NSInteger)style {
-    log!("TODO: setBorderStyle:{}", style);
+    todo_objc_setter!(this, style);
 }
 - (())setEnablesReturnKeyAutomatically:(bool)enables {
-    log!("TODO: setEnablesReturnKeyAutomatically:{}", enables);
+    todo_objc_setter!(this, enables);
 }
 
 - (())touchesBegan:(id)_touches // NSSet* of UITouch*

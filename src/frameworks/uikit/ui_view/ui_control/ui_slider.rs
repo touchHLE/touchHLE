@@ -6,7 +6,7 @@
 //! `UISlider`.
 
 use crate::frameworks::core_graphics::CGRect;
-use crate::objc::{id, msg_super, objc_classes, ClassExports};
+use crate::objc::{id, msg_super, objc_classes, todo_objc_setter, ClassExports};
 
 pub const CLASSES: ClassExports = objc_classes! {
 
@@ -25,6 +25,12 @@ pub const CLASSES: ClassExports = objc_classes! {
     msg_super![env; this initWithCoder:coder]
 }
 
+- (())setMinimumValueImage:(id)img { // UIImage *
+    todo_objc_setter!(this, img);
+}
+- (())setMaximumValueImage:(id)img { // UIImage *
+    todo_objc_setter!(this, img);
+}
 
 // TODO: all of it
 

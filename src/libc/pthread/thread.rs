@@ -38,6 +38,13 @@ pub struct pthread_attr_t {
 }
 unsafe impl SafeRead for pthread_attr_t {}
 
+#[derive(Copy, Clone, Debug)]
+#[repr(C, packed)]
+struct sched_param {
+    sched_priority: i32,
+}
+unsafe impl SafeRead for sched_param {}
+
 const DEFAULT_ATTR: pthread_attr_t = pthread_attr_t {
     magic: MAGIC_ATTR,
     detachstate: PTHREAD_CREATE_JOINABLE,
@@ -117,6 +124,46 @@ pub fn pthread_attr_setstacksize(
     let mut attr_copy = env.mem.read(attr);
     attr_copy.stacksize = stacksize;
     env.mem.write(attr, attr_copy);
+    0 // success
+}
+fn pthread_attr_setinheritsched(
+    env: &mut Environment,
+    attr: MutPtr<pthread_attr_t>,
+    inheritsched: i32,
+) -> i32 {
+    check_magic!(env, attr, MAGIC_ATTR);
+    log!(
+        "TODO: pthread_attr_setinheritsched({:?}, {})",
+        attr,
+        inheritsched
+    );
+    0 // success
+}
+fn pthread_attr_setschedpolicy(
+    env: &mut Environment,
+    attr: MutPtr<pthread_attr_t>,
+    policy: i32,
+) -> i32 {
+    check_magic!(env, attr, MAGIC_ATTR);
+    log!(
+        "TODO: pthread_attr_setschedpolicy({:?}, {}) (ignored)",
+        attr,
+        policy
+    );
+    0 // success
+}
+fn pthread_attr_setschedparam(
+    env: &mut Environment,
+    attr: MutPtr<pthread_attr_t>,
+    param: ConstPtr<sched_param>,
+) -> i32 {
+    check_magic!(env, attr, MAGIC_ATTR);
+    let sched_param = env.mem.read(param);
+    log!(
+        "TODO: pthread_attr_setschedparam({:?}, {:?}) (ignored)",
+        attr,
+        sched_param
+    );
     0 // success
 }
 fn pthread_attr_destroy(env: &mut Environment, attr: MutPtr<pthread_attr_t>) -> i32 {
@@ -333,6 +380,9 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(pthread_attr_setdetachstate(_, _)),
     export_c_func!(pthread_attr_getstacksize(_, _)),
     export_c_func!(pthread_attr_setstacksize(_, _)),
+    export_c_func!(pthread_attr_setinheritsched(_, _)),
+    export_c_func!(pthread_attr_setschedpolicy(_, _)),
+    export_c_func!(pthread_attr_setschedparam(_, _)),
     export_c_func!(pthread_attr_destroy(_)),
     export_c_func!(pthread_create(_, _, _, _)),
     export_c_func!(pthread_equal(_, _)),

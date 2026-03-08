@@ -11,10 +11,13 @@
 use crate::frameworks::core_graphics::CGRect;
 use crate::frameworks::foundation::ns_objc_runtime::NSStringFromClass;
 use crate::frameworks::foundation::ns_string::{from_rust_string, get_static_str, to_rust_string};
+use crate::frameworks::uikit::ui_application::{
+    UIInterfaceOrientation, UIInterfaceOrientationPortrait,
+};
 use crate::frameworks::uikit::ui_view::set_view_controller;
 use crate::objc::{
-    id, msg, msg_class, nil, objc_classes, release, retain, Class, ClassExports, HostObject,
-    NSZonePtr,
+    id, msg, msg_class, nil, objc_classes, release, retain, todo_objc_setter, Class, ClassExports,
+    HostObject, NSZonePtr,
 };
 use crate::Environment;
 
@@ -167,14 +170,36 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (())setTitle:(id)title { // NSString *
-    log!("TODO: [(UIViewController*){:?} setTitle:{}]", this, to_rust_string(env, title)); // TODO
+    todo_objc_setter!(this, to_rust_string(env, title));
 }
 - (())setEditing:(bool)editing {
-    log!("TODO: [(UIViewController*){:?} setEditing:{}]", this, editing); // TODO
+    todo_objc_setter!(this, editing);
+}
+- (())setWantsFullScreenLayout:(bool)wants {
+    todo_objc_setter!(this, wants);
 }
 
 - (())dismissModalViewControllerAnimated:(bool)animated {
     log!("TODO: [(UIViewController*){:?} dismissModalViewControllerAnimated:{}]", this, animated); // TODO
+}
+- (())dismissMoviePlayerViewControllerAnimated {
+    log!("TODO: [(UIViewController*){:?} dismissMoviePlayerViewControllerAnimated]", this); // TODO
+}
+
+- (bool)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interface_orientation {
+    interface_orientation == UIInterfaceOrientationPortrait
+}
+
+// UIResponder implementation
+// From the Apple UIView docs regarding [UIResponder nextResponder]:
+// "UIViewController similarly implements the method
+// and returns its view’s superview."
+// https://developer.apple.com/documentation/uikit/uiresponder/next?language=objc
+- (id)nextResponder {
+    let view = msg![env; this view];
+    let next_responder = msg![env; view superview];
+    log_dbg!("[(UIView*){:?} nextResponder] => {:?}", this, next_responder);
+    next_responder
 }
 
 @end

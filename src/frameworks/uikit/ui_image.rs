@@ -10,6 +10,7 @@ use crate::frameworks::core_graphics::cg_image::{
     self, CGImageGetHeight, CGImageGetWidth, CGImageRef, CGImageRelease, CGImageRetain,
 };
 use crate::frameworks::core_graphics::{CGFloat, CGPoint, CGRect, CGSize};
+use crate::frameworks::foundation::ns_string::get_static_str;
 use crate::frameworks::foundation::{ns_data, ns_string, NSInteger};
 use crate::frameworks::uikit::ui_graphics::UIGraphicsGetCurrentContext;
 use crate::fs::GuestPath;
@@ -138,7 +139,8 @@ pub const CLASSES: ClassExports = objc_classes! {
     this
 }
 
-- (id) stretchableImageWithLeftCapWidth:(NSInteger)_leftCapWidth topCapHeight:(NSInteger)_topCapHeight {
+- (id)stretchableImageWithLeftCapWidth:(NSInteger)_leftCapWidth
+                          topCapHeight:(NSInteger)_topCapHeight {
     log!("TODO: properly support stretchableImageWithLeftCapWidth:topCapHeight:");
     retain(env, this)
 }
@@ -165,6 +167,11 @@ pub const CLASSES: ClassExports = objc_classes! {
     }
 }
 
+- (CGFloat)scale {
+    // TODO: support other scales, such as @2x
+    1.0
+}
+
 - (())drawInRect:(CGRect)rect {
     let context = UIGraphicsGetCurrentContext(env);
     let image = env.objc.borrow::<UIImageHostObject>(this).cg_image;
@@ -182,6 +189,25 @@ pub const CLASSES: ClassExports = objc_classes! {
         }
     };
     CGContextDrawImage(env, context, rect, image);
+}
+
+@end
+
+// Undocumented class used in NIBs
+// TODO: It's not clear _why_ placeholder is needed?
+@implementation UIImageNibPlaceholder: UIImage
+
+// NSCoding implementation
+- (id)initWithCoder:(id)coder {
+    release(env, this);
+
+    // TODO: decode other attributes
+    let key_ns_string = get_static_str(env, "UIResourceName");
+    let resource_name: id = msg![env; coder decodeObjectForKey:key_ns_string];
+
+    let res = msg_class![env; UIImage imageNamed:resource_name];
+    // TODO: It is not clear if we need to additionally retain here?
+    retain(env, res)
 }
 
 @end

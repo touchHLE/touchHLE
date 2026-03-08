@@ -9,7 +9,8 @@ use crate::dyld::{ConstantExports, HostConstant};
 use crate::frameworks::foundation::{ns_string, ns_url, NSInteger};
 use crate::frameworks::uikit::ui_device::UIDeviceOrientation;
 use crate::objc::{
-    id, msg, msg_class, nil, objc_classes, release, retain, ClassExports, HostObject, NSZonePtr,
+    id, msg, msg_class, nil, objc_classes, release, retain, todo_objc_setter, ClassExports,
+    HostObject, NSZonePtr,
 };
 use crate::Environment;
 use std::collections::VecDeque;
@@ -31,6 +32,10 @@ impl State {
 }
 
 type MPMovieScalingMode = NSInteger;
+type MPMovieControlStyle = NSInteger;
+
+type MPMoviePlaybackState = NSInteger;
+const MPMoviePlaybackStateStopped: MPMoviePlaybackState = 0;
 
 // Values might not be correct, but as these are linked symbol constants, it
 // shouldn't matter.
@@ -42,8 +47,10 @@ pub const MPMoviePlayerContentPreloadDidFinishNotification: &str =
 pub const MPMoviePlayerScalingModeDidChangeNotification: &str =
     "MPMoviePlayerScalingModeDidChangeNotification";
 // TODO: More notifications?
+const MPMoviePlayerPlaybackDidFinishReasonUserInfoKey: &str =
+    "MPMoviePlayerPlaybackDidFinishReasonUserInfoKey";
 
-/// `NSNotificationName` values.
+/// `NSNotificationName` values and other constants.
 pub const CONSTANTS: ConstantExports = &[
     (
         "_MPMoviePlayerPlaybackDidFinishNotification",
@@ -56,6 +63,10 @@ pub const CONSTANTS: ConstantExports = &[
     (
         "_MPMoviePlayerScalingModeDidChangeNotification",
         HostConstant::NSString(MPMoviePlayerScalingModeDidChangeNotification),
+    ),
+    (
+        "_MPMoviePlayerPlaybackDidFinishReasonUserInfoKey",
+        HostConstant::NSString(MPMoviePlayerPlaybackDidFinishReasonUserInfoKey),
     ),
 ];
 
@@ -110,12 +121,28 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.borrow::<MPMoviePlayerControllerHostObject>(this).content_url
 }
 
-- (())setBackgroundColor:(id)_color { // UIColor*
-    // TODO
+- (())setBackgroundColor:(id)color { // UIColor*
+    todo_objc_setter!(this, color);
+}
+- (())setScalingMode:(MPMovieScalingMode)mode {
+    todo_objc_setter!(this, mode);
+}
+- (())setUseApplicationAudioSession:(bool)use_session {
+    todo_objc_setter!(this, use_session);
+}
+- (())setControlStyle:(MPMovieControlStyle)style {
+    todo_objc_setter!(this, style);
+}
+- (())setFullscreen:(bool)fullsreen {
+    todo_objc_setter!(this, fullsreen);
 }
 
-- (())setScalingMode:(MPMovieScalingMode)_mode {
-    // TODO
+- (id)view {
+    nil // TODO
+}
+
+- (MPMoviePlaybackState)playbackState {
+    MPMoviePlaybackStateStopped // TODO
 }
 
 // Apparently an undocumented, private API, but Spore Origins uses it.
@@ -158,10 +185,34 @@ pub const CLASSES: ClassExports = objc_classes! {
     );
 }
 
+- (())pause {
+    log!("TODO: [(MPMoviePlayerController*){:?} pause]", this);
+}
+
 - (())stop {
     log!("TODO: [(MPMoviePlayerController*){:?} stop]", this);
-    assert!(this == env.framework_state.media_player.movie_player.active_player.take().unwrap());
+    if env.framework_state.media_player.movie_player.active_player.is_some() {
+        // Some application may send 2 `stop` messages for each 1 `play`
+        // message for the player. In that case, we want to release the active
+        // player only on the first one.
+        assert!(this == env.framework_state.media_player.movie_player.active_player.take().unwrap());
+        release(env, this);
+    }
+}
+
+@end
+
+@implementation MPMoviePlayerViewController: UIViewController
+
+- (id)initWithContentURL:(id)url {
+    log!(
+        "TODO: [(MPMoviePlayerViewController*){:?} initWithContentURL:{:?} ({:?})] -> nil",
+        this,
+        url,
+        ns_url::to_rust_path(env, url),
+    );
     release(env, this);
+    nil // TODO
 }
 
 @end

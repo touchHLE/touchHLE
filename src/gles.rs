@@ -72,16 +72,17 @@ mod util;
 use touchHLE_gl_bindings::gl21compat as gl21compat_raw;
 pub use touchHLE_gl_bindings::gles11 as gles11_raw;
 
-use gles1_native::GLES1Native;
-use gles1_on_gl2::GLES1OnGL2;
+use gles1_native::GLES1NativeContext;
+use gles1_on_gl2::GLES1OnGL2Context;
+pub use gles_generic::GLESContext;
 pub use gles_generic::GLES;
 
 /// Labels for [GLES] implementations and an abstraction for constructing them.
 #[derive(Copy, Clone)]
 pub enum GLESImplementation {
-    /// [GLES1Native].
+    /// [gles1_native::GLES1Native].
     GLES1Native,
-    /// [GLES1OnGL2].
+    /// [gles1_on_gl2::GLES1OnGL2].
     GLES1OnGL2,
 }
 impl GLESImplementation {
@@ -96,21 +97,24 @@ impl GLESImplementation {
             _ => Err(()),
         }
     }
-    /// See [GLES::description].
+    /// See [GLESContext::description].
     pub fn description(self) -> &'static str {
         match self {
-            Self::GLES1Native => GLES1Native::description(),
-            Self::GLES1OnGL2 => GLES1OnGL2::description(),
+            Self::GLES1Native => GLES1NativeContext::description(),
+            Self::GLES1OnGL2 => GLES1OnGL2Context::description(),
         }
     }
-    /// See [GLES::new].
-    pub fn construct(self, window: &mut crate::window::Window) -> Result<Box<dyn GLES>, String> {
-        fn boxer<T: GLES + 'static>(ctx: T) -> Box<dyn GLES> {
+    /// See [GLESContext::new].
+    pub fn construct(
+        self,
+        window: &mut crate::window::Window,
+    ) -> Result<Box<dyn GLESContext>, String> {
+        fn boxer<T: GLESContext + 'static>(ctx: T) -> Box<dyn GLESContext> {
             Box::new(ctx)
         }
         match self {
-            Self::GLES1Native => GLES1Native::new(window).map(boxer),
-            Self::GLES1OnGL2 => GLES1OnGL2::new(window).map(boxer),
+            Self::GLES1Native => GLES1NativeContext::new(window).map(boxer),
+            Self::GLES1OnGL2 => GLES1OnGL2Context::new(window).map(boxer),
         }
     }
 }
@@ -120,7 +124,7 @@ impl GLESImplementation {
 pub fn create_gles1_ctx(
     window: &mut crate::window::Window,
     options: &crate::options::Options,
-) -> Box<dyn GLES> {
+) -> Box<dyn GLESContext> {
     log!("Creating an OpenGL ES 1.1 context:");
     let list = if let Some(ref preference) = options.gles1_implementation {
         std::slice::from_ref(preference)

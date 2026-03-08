@@ -24,26 +24,26 @@ pub struct fsid_t {
 #[derive(Debug)]
 #[repr(C, packed)]
 pub struct statfs {
-    f_bsize: u32,
-    f_iosize: i32,
-    f_blocks: u64,
-    f_bfree: u64,
-    f_bavail: u64,
-    f_files: u64,
-    f_ffree: u64,
-    f_fsid: fsid_t,
-    f_owner: uid_t,
-    f_type: u32,
-    f_flags: u32,
-    f_fssubtype: u32,
-    f_fstypename: [u8; MFSTYPENAMELEN],
-    f_mntonname: [u8; MAXPATHLEN],
-    f_mntfromname: [u8; MAXPATHLEN],
-    f_reserved: [u32; 8],
+    pub f_bsize: u32,
+    pub f_iosize: i32,
+    pub f_blocks: u64,
+    pub f_bfree: u64,
+    pub f_bavail: u64,
+    pub f_files: u64,
+    pub f_ffree: u64,
+    pub f_fsid: fsid_t,
+    pub f_owner: uid_t,
+    pub f_type: u32,
+    pub f_flags: u32,
+    pub f_fssubtype: u32,
+    pub f_fstypename: [u8; MFSTYPENAMELEN],
+    pub f_mntonname: [u8; MAXPATHLEN],
+    pub f_mntfromname: [u8; MAXPATHLEN],
+    pub f_reserved: [u32; 8],
 }
 unsafe impl SafeRead for statfs {}
 
-fn statfs(env: &mut Environment, path: ConstPtr<u8>, buf: MutPtr<statfs>) -> i32 {
+pub fn statfs_inner(env: &mut Environment, path: ConstPtr<u8>) -> (i32, statfs) {
     // FIXME does directory matter?
     assert!(env
         .mem
@@ -74,8 +74,13 @@ fn statfs(env: &mut Environment, path: ConstPtr<u8>, buf: MutPtr<statfs>) -> i32
     statfs.f_fstypename[..3].copy_from_slice(b"hfs");
     statfs.f_mntonname[..1].copy_from_slice(b"/");
     statfs.f_mntfromname[..12].copy_from_slice(b"/dev/disk0s2");
+    (0, statfs)
+}
+
+fn statfs(env: &mut Environment, path: ConstPtr<u8>, buf: MutPtr<statfs>) -> i32 {
+    let (ret, statfs) = statfs_inner(env, path);
     env.mem.write(buf, statfs);
-    0 // success
+    ret
 }
 
 pub const FUNCTIONS: FunctionExports = &[export_c_func!(statfs(_, _))];

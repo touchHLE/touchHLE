@@ -15,7 +15,7 @@ use crate::objc::{
     NSZonePtr,
 };
 use crate::window::DeviceOrientation;
-use crate::Environment;
+use crate::{todo_objc_setter, Environment};
 
 #[derive(Default)]
 pub struct State {
@@ -44,6 +44,8 @@ pub const UIInterfaceOrientationLandscapeRight: UIInterfaceOrientation =
     UIDeviceOrientationLandscapeLeft;
 
 type UIRemoteNotificationType = NSUInteger;
+type UIStatusBarAnimation = NSInteger;
+type UIStatusBarStyle = NSInteger;
 
 pub const CLASSES: ClassExports = objc_classes! {
 
@@ -101,6 +103,15 @@ pub const CLASSES: ClassExports = objc_classes! {
                 animated:(bool)_animated {
     // TODO: animation
     msg![env; this setStatusBarHidden:hidden]
+}
+- (())setStatusBarHidden:(bool)hidden
+           withAnimation:(UIStatusBarAnimation)_animation {
+    // TODO: animation
+    msg![env; this setStatusBarHidden:hidden]
+}
+
+- (())setStatusBarStyle:(UIStatusBarStyle)style {
+    todo_objc_setter!(this, style);
 }
 
 - (UIInterfaceOrientation)statusBarOrientation {
@@ -249,7 +260,8 @@ pub(super) fn UIApplicationMain(
         };
         let ui_application: id = msg![env; principal_class new];
 
-        if let Some(main_nib_filename) = env.bundle.main_nib_filename() {
+        let device_family = env.options.device_family;
+        if let Some(main_nib_filename) = env.bundle.main_nib_filename(device_family) {
             let ns_main_nib_filename = from_rust_string(env, main_nib_filename.to_string());
             // We need to check first if main nib file exists,
             // as `UINib nibWithNibName:bundle:` will crash on nonexistent
@@ -265,7 +277,7 @@ pub(super) fn UIApplicationMain(
             } else {
                 log!(
                     "Warning: couldn't load main nib file {:?}",
-                    env.bundle.main_nib_filename()
+                    env.bundle.main_nib_filename(device_family)
                 );
             }
         }
@@ -284,13 +296,19 @@ pub(super) fn UIApplicationMain(
                 .delegate_is_retained = true;
             retain(env, delegate);
         } else {
-            // We have to construct the delegate.
             assert!(delegate_class_name != nil);
-            let name = ns_string::to_rust_string(env, delegate_class_name);
-            let class = env.objc.get_known_class(&name, &mut env.mem);
-            let delegate: id = msg![env; class new];
-            let _: () = msg![env; ui_application setDelegate:delegate];
-            assert!(delegate != nil);
+            if msg![env; delegate_class_name isEqual:principal_class_name] {
+                // If same non-nil class name is used for both principal and
+                // delegate, it means that app is using itself as a delegate
+                let _: () = msg![env; ui_application setDelegate:ui_application];
+            } else {
+                // We have to construct the delegate.
+                let name = ns_string::to_rust_string(env, delegate_class_name);
+                let class = env.objc.get_known_class(&name, &mut env.mem);
+                let delegate: id = msg![env; class new];
+                let _: () = msg![env; ui_application setDelegate:delegate];
+                assert!(delegate != nil);
+            }
         };
         // We can't hang on to the delegate, the guest app may change it at any
         // time.

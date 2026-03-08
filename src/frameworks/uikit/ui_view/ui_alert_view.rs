@@ -14,6 +14,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 (env, this, _cmd);
 
 @implementation UIAlertView: UIView
+
 - (id)initWithTitle:(id)title
                       message:(id)message
                      delegate:(id)delegate
@@ -28,9 +29,15 @@ pub const CLASSES: ClassExports = objc_classes! {
 
     msg_super![env; this init]
 }
+
+- (())addButtonWithTitle:(id)title {
+    log!("TODO: [(UIAlertView *){:?} addButtonWithTitle:{}]", this, ns_string::to_rust_string(env, title));
+}
+
 - (())show {
     log!("TODO: [(UIAlertView*){:?} show]", this);
 }
+
 @end
 
 };

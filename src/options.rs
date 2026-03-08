@@ -6,7 +6,7 @@
 //! Parsing and management of user-configurable options, e.g. for input methods.
 
 use crate::gles::GLESImplementation;
-use crate::window::DeviceOrientation;
+use crate::window::{DeviceFamily, DeviceOrientation};
 use std::collections::HashMap;
 use std::io::{BufRead, BufReader, Read};
 use std::net::{SocketAddr, ToSocketAddrs};
@@ -35,6 +35,7 @@ pub enum Button {
 #[derive(Clone)]
 pub struct Options {
     pub fullscreen: bool,
+    pub device_family: Option<DeviceFamily>,
     pub initial_orientation: DeviceOrientation,
     pub scale_hack: NonZeroU32,
     pub deadzone: f32,
@@ -66,6 +67,7 @@ impl Default for Options {
     fn default() -> Self {
         Options {
             fullscreen: false,
+            device_family: None,
             initial_orientation: DeviceOrientation::Portrait,
             scale_hack: NonZeroU32::new(1).unwrap(),
             analog_stick_tilt_controls: true,
@@ -116,6 +118,10 @@ impl Options {
             self.initial_orientation = DeviceOrientation::LandscapeLeft;
         } else if arg == "--landscape-right" {
             self.initial_orientation = DeviceOrientation::LandscapeRight;
+        } else if let Some(value) = arg.strip_prefix("--device-family=") {
+            let parsed =
+                DeviceFamily::try_from(value).map_err(|_| "Invalid device family".to_string())?;
+            self.device_family = Some(parsed);
         } else if let Some(value) = arg.strip_prefix("--scale-hack=") {
             self.scale_hack = value
                 .parse()

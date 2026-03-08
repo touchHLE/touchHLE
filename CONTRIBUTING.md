@@ -22,6 +22,8 @@ $ cd touchHLE
 
 touchHLE uses Gerrit for code review. [The touchHLE repo on GerritHub](https://review.gerrithub.io/admin/repos/touchHLE/touchHLE) is where you can submit patches.
 
+If you're unfamiliar with Gerrit or GerritHub, please read [Working with Gerrit: An example](https://gerrithub.io/Documentation/intro-gerrit-walkthrough.html) first to get an overview of the expected workflow.
+
 Log into GerritHub with your GitHub account. (If that fails with some server error, try again in a few hours; there are some reliability issues.) If it's your first time using GerritHub, you can then [go to “GitHub” &gt; “Profile” in the Gerrit UI](https://review.gerrithub.io/plugins/github-plugin/static/account.html) to set up your profile and import your SSH keys. It is recommended to provide a “Full name”, which is just a display name and does not have to be your legal name.
 
 You can then add GerritHub as a “remote” (replace `your-github-username-here` with your username):
@@ -36,7 +38,7 @@ Gerrit requires your commit messages to have a `Change-Id:` line in them. Gerrit
 $ (f=`git rev-parse --git-dir`/hooks/commit-msg ; mkdir -p $(dirname $f) ; curl -Lo $f https://review.gerrithub.io/tools/hooks/commit-msg ; chmod +x $f)
 ```
 
-### Submitting changes
+### Pushing changes
 
 Make a local branch based on `trunk` with your changes. Try to avoid bundling unrelated changes in one commit. If you make a mistake in a commit that hasn't been merged yet, please fix it by modifying the original commit (e.g. using `git commit --amend --reset-author`), rather than by adding a separate commit.
 
@@ -52,6 +54,18 @@ If you're submitting a large number of changes with a common theme, e.g. improvi
 
 Please also see the following guidelines for what to do with code changes.
 
+### Submitting changes
+
+In order to submit a patch set (PS) on the GerritHub, following conditions should be met:
+
+- PS should receive a +2 code review
+- Verified +1 should be set (on practice this means that author checked that code compiles, tests passes and lint/clippy doesn't complain)
+- There are no merge conflicts with the trunk
+
+Once met, a `Submit` button should be visible in the GerritHub UI.
+On click, the changes would be accepted to the trunk of the repo and automatically synced to the GitHub as well.
+If you reached that stage - congrats! Your first contribution is accepted ;)
+
 ## Code contributions
 
 The developer documentation can be found in [the `dev-docs` directory](dev-docs/) and throughout the codebase. At a minimum, you'll probably want to read [the building guide](dev-docs/building.md) and [the coding style guide](dev-docs/code-style.md).
@@ -61,6 +75,10 @@ Please run [`dev-scripts/format.sh`](dev-scripts/format.sh) and [`dev-scripts/li
 You should also run `cargo test`. [Building the integration tests requires downloading LLVM and a custom toolchain](tests/README.md), so it's understandable if you want to skip them (`cargo test -- --skip test_app`) and let the GitHub Actions CI catch any issues when you submit your pull request. Alternatively, you can download a pre-built version of the integration tests app (TestApp) from GitHub Actions CI and run it in touchHLE.
 
 If you're going to open a pull request with non-trivial changes, please talk to us first so we can figure out if we're likely to accept them. It would be a shame if your effort had to be wasted.
+
+Avoid sending everything as big commit(s) - we prefer to have smaller self-mergeable commits which could be reviewed and submitted independently.
+
+Please also understand that we maintain a certain code quality standards and your contribution would be accepted _only_ if it does meet them. If your don't have time or willingness to be involved in the review process to attain those, please avoid contributing. You could check [past merged patch sets](https://review.gerrithub.io/q/project:touchHLE/touchHLE+status:merged) to get an idea what is expected.
 
 ### Copyright and reverse engineering
 

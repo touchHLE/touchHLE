@@ -11,6 +11,7 @@
 mod mutex;
 
 use crate::abi::{CallFromHost, GuestFunction, GuestRet};
+use crate::audio::openal::OpenALManager;
 use crate::libc::semaphore::sem_t;
 use crate::mem::{GuestUSize, MutPtr, MutVoidPtr};
 use crate::{
@@ -22,6 +23,7 @@ use std::net::TcpListener;
 use std::time::{Duration, Instant};
 
 use crate::libc::pthread::cond::pthread_cond_t;
+use crate::window::DeviceFamily;
 pub use mutex::{MutexId, MutexType, PTHREAD_MUTEX_DEFAULT};
 
 /// Index into the [Vec] of threads. Thread 0 is always the main thread.
@@ -62,7 +64,7 @@ pub struct Thread {
     /// When a thread is currently executing, its state is stored directly in
     /// the CPU, rather than in a context object. In that case, this field is
     /// None. See also: [std::mem::take] and [cpu::Cpu::swap_context].
-    context: Option<cpu::CpuContext>,
+    context: Option<Box<cpu::CpuContext>>,
     /// Address range of this thread's stack, used to check if addresses are in
     /// range while producing a stack trace.
     stack: Option<std::ops::RangeInclusive<u32>>,
@@ -93,6 +95,7 @@ pub struct Environment {
     pub fs: fs::Fs,
     /// The window is only absent when running in headless mode.
     pub window: Option<window::Window>,
+    pub openal_manager: OpenALManager,
     pub mem: mem::Mem,
     /// Loaded binaries. Index `0` is always the app binary, other entries are
     /// dynamic libraries.
@@ -234,32 +237,13 @@ fn generate_binary_load_order(graph: &[BinaryDependencyNode]) -> Result<Vec<usiz
 
 impl Environment {
     /// Loads the binary and sets up the emulator.
-    ///
-    /// `env_for_salvage` can be used to provide an existing environment (in
-    /// practice, the app picker's, created with [Environment::new_without_app])
-    /// that is to be destroyed. Certain components may be salvaged from the
-    /// old environment, but their states will be reset, so the result should be
-    /// "like new". This option exists because touchHLE on Android would crash
-    /// when allocating a second [mem::Mem] instance.
     pub fn new(
         bundle: bundle::Bundle,
         fs: fs::Fs,
         mut options: options::Options,
         app_args: Vec<String>,
-        env_for_salvage: Option<Environment>,
     ) -> Result<Environment, String> {
         let startup_time = Instant::now();
-
-        // Extract things to salvage from the old environment, and then drop it.
-        // This needs to be done before creating a new window, because SDL2 only
-        // allows one window at once.
-        let mem_for_salvage = if let Some(env_for_salvage) = env_for_salvage {
-            let Environment { mem, .. } = env_for_salvage;
-            // Everything other than the memory is now dropped.
-            Some(mem)
-        } else {
-            None
-        };
 
         // Certain apps need to launch in a non-portrait orientation, and this
         // should be handled before creating the window because handling of
@@ -284,11 +268,42 @@ impl Environment {
                     "UIInterfaceOrientationLandscapeRight" => {
                         window::DeviceOrientation::LandscapeLeft
                     }
+                    // This appears to be an older way set the orientation.
+                    // From testing, it seems to correspond to left.
+                    "UIInterfaceOrientationLandscape" => window::DeviceOrientation::LandscapeLeft,
                     other => unimplemented!("Unsupported startup orientation: {:?}", other),
                 };
                 log!("App needs non-portrait user interface orientation {:?}, applying device orientation {:?}.", non_portrait_orientation, options.initial_orientation);
             }
         }
+
+        let device_family_override = options.device_family;
+        let device_family_array = bundle.device_family_array();
+        let device_family = match device_family_array.len() {
+            // iPhone only or iPad only
+            1 => {
+                let only_supported = device_family_array[0];
+                if let Some(dfo) = device_family_override {
+                    if dfo != only_supported {
+                        log!("Warning: User-defined {:?} device family override is not supported by the app! ignoring", dfo);
+                    }
+                }
+                only_supported
+            }
+            // iPhone and iPad
+            2 => {
+                if let Some(dfo) = device_family_override {
+                    assert!(device_family_array.contains(&dfo));
+                    dfo
+                } else {
+                    assert!(device_family_array.contains(&DeviceFamily::iPhone));
+                    DeviceFamily::iPhone
+                }
+            }
+            _ => unreachable!(),
+        };
+        log!("{:?} device family is chosen.", device_family);
+        options.device_family = Some(device_family);
 
         let window = if options.headless {
             None
@@ -333,11 +348,7 @@ impl Environment {
             ))
         };
 
-        let mut mem = if let Some(mem) = mem_for_salvage {
-            mem::Mem::refurbish(mem)
-        } else {
-            mem::Mem::new()
-        };
+        let mut mem = mem::Mem::new();
 
         let is_spore = bundle.bundle_identifier().starts_with("com.ea.spore");
         // We always reset this flag depending on which game is launched.
@@ -345,17 +356,43 @@ impl Environment {
         if is_spore {
             log!("Applying game-specific hack for Spore Origins: zeroing memory on alloc instead of free.");
         }
-
-        let executable = mach_o::MachO::load_from_file(bundle.executable_path(), &fs, &mut mem)
-            .map_err(|e| format!("Could not load executable: {e}"))?;
+        let executable = mach_o::MachO::load_from_file(
+            bundle.executable_path(),
+            &fs,
+            &mut mem,
+            /* slide: */ 0,
+        )
+        .map_err(|e| format!("Could not load executable: {e}"))?;
 
         let mut dylibs = Vec::new();
         for dylib in &executable.dynamic_libraries {
             // There are some Free Software libraries bundled with touchHLE and
             // exposed via the guest file system (see Fs::new()).
-            if fs.is_file(fs::GuestPath::new(dylib)) {
-                let dylib = mach_o::MachO::load_from_file(fs::GuestPath::new(dylib), &fs, &mut mem)
-                    .map_err(|e| format!("Could not load bundled dylib: {e}"))?;
+            let dylib_path = fs::GuestPath::new(dylib);
+            if fs.is_file(dylib_path) {
+                // We use hardcoded slide values for libgcc and libstdc++
+                // based on base addresses of those dylibs prior to iOS 3.1
+                // TODO: implement some kind of ASLR instead of hardcoding
+                assert!(dylib_path.as_str().starts_with("/usr/lib/"));
+                let name = dylib_path.file_name().unwrap();
+                let dylib_slide = match name {
+                    "libstdc++.6.dylib" | "libstdc++.6.0.9.dylib" => 0x3748a000,
+                    "libgcc_s.1.dylib" => 0x30000000,
+                    "libz.1.dylib" | "libz.1.2.3.dylib" | "libz.dylib" | "libz.1.1.3.dylib" => {
+                        // We build `libz` from sources with our OSS toolchain,
+                        // the base address is already set and sliding is not
+                        // needed.
+                        0
+                    }
+                    _ => unimplemented!("Unknown binary slide for {}", name),
+                };
+                let dylib = mach_o::MachO::load_from_file(
+                    fs::GuestPath::new(dylib),
+                    &fs,
+                    &mut mem,
+                    dylib_slide,
+                )
+                .map_err(|e| format!("Could not load bundled dylib: {e}"))?;
                 dylibs.push(dylib);
             // Otherwise, look for it in our host implementations.
             } else if !crate::dyld::DYLIB_LIST
@@ -405,6 +442,7 @@ impl Environment {
             bundle,
             fs,
             window,
+            openal_manager: OpenALManager::new()?,
             mem,
             bins,
             objc,
@@ -501,6 +539,11 @@ impl Environment {
             let count = section.size / 4;
             for i in 0..count {
                 let func = env.mem.read(base + i);
+                log_dbg!(
+                    "Calling static initializer at {:?} from {:?}",
+                    func,
+                    (base + i)
+                );
                 () = func.call_from_host(&mut env, ());
             }
             log_dbg!("Static initialization done");
@@ -583,6 +626,7 @@ impl Environment {
             bundle,
             fs,
             window,
+            openal_manager: OpenALManager::new()?,
             mem,
             bins,
             objc,
@@ -655,7 +699,21 @@ impl Environment {
         frames
     }
 
-    fn stack_trace(&self) {
+    fn dump_all_regs(&self) {
+        echo!(
+            "Dumping registers for current thread (#{})",
+            self.current_thread
+        );
+        self.cpu.dump_regs();
+        for (tid, thread) in self.threads.iter().enumerate() {
+            if thread.active && tid != self.current_thread {
+                echo!("Dumping registers for thread #{}", tid);
+                cpu::Cpu::echo_regs(&thread.context.as_ref().unwrap().regs);
+            }
+        }
+    }
+
+    fn stack_trace_current(&self) {
         if self.current_thread == 0 {
             echo!("Attempting to produce stack trace for main thread:");
         } else {
@@ -664,12 +722,37 @@ impl Environment {
                 self.current_thread
             );
         }
-        let stack_range = self.threads[self.current_thread].stack.clone().unwrap();
+        self.stack_trace_for_thread(self.current_thread);
+    }
+
+    fn stack_trace_all(&self) {
         echo!(
-            " 0. {:#x} (PC)",
-            self.cpu.pc_with_thumb_bit().addr_with_thumb_bit()
+            "Attempting to produce stack trace for current thread (#{}):",
+            self.current_thread
         );
-        let regs = self.cpu.regs();
+        self.stack_trace_for_thread(self.current_thread);
+        for tid in 0..self.threads.len() {
+            if self.threads[tid].active && tid != self.current_thread {
+                echo!("Attempting to produce stack trace for thread #{}:", tid);
+                self.stack_trace_for_thread(tid);
+            }
+        }
+    }
+
+    fn stack_trace_for_thread(&self, tid: usize) {
+        let stack_range = self.threads[tid].stack.clone().unwrap();
+        let (regs, cpsr) = if self.current_thread == tid {
+            // Current thread is not stored in context since it is used by cpu,
+            // get it from cpu.
+            (*self.cpu.regs(), self.cpu.cpsr())
+        } else {
+            let ctx = self.threads[tid].context.as_ref().unwrap();
+            (ctx.regs, ctx.cpsr)
+        };
+        let pc_nothumb = regs[cpu::Cpu::PC];
+        let thumb = (cpsr & cpu::Cpu::CPSR_THUMB) == cpu::Cpu::CPSR_THUMB;
+        let pc = GuestFunction::from_addr_and_thumb_flag(pc_nothumb, thumb);
+        echo!(" 0. {:#x} (PC)", pc.addr_with_thumb_bit());
         let mut lr = regs[cpu::Cpu::LR];
         let return_to_host_routine_addr = self.dyld.return_to_host_routine().addr_with_thumb_bit();
         let thread_exit_routine_addr = self.dyld.thread_exit_routine().addr_with_thumb_bit();
@@ -721,25 +804,22 @@ impl Environment {
             return_value: None,
             in_start_routine: true,
             in_host_function: false,
-            context: Some(cpu::CpuContext::new()),
+            context: Some(Box::new(cpu::CpuContext::new())),
             stack: Some(stack_alloc.to_bits()..=(stack_high_addr - 1)),
         });
         let new_thread_id = self.threads.len() - 1;
 
         log_dbg!("Created new thread {} with stack {:#x}–{:#x}, will execute function {:?} with data {:?}", new_thread_id, stack_alloc.to_bits(), (stack_high_addr - 1), start_routine, user_data);
 
-        let old_thread = self.current_thread;
+        // Set up the registers for the new thread
+        let context = self.threads[new_thread_id].context.as_mut().unwrap();
+        context.regs[cpu::Cpu::SP] = stack_high_addr;
+        context.regs[0] = user_data.to_bits();
 
-        // Switch to the new context (all zeroes) and set up the registers
-        // (which we can only do by switching). The original thread's state
-        // should be the same as before.
-        self.switch_thread(new_thread_id);
-        self.cpu.set_cpsr(cpu::Cpu::CPSR_USER_MODE);
-        self.cpu.regs_mut()[cpu::Cpu::SP] = stack_high_addr;
-        self.cpu.regs_mut()[0] = user_data.to_bits();
-        self.cpu
-            .branch_with_link(start_routine, self.dyld.thread_exit_routine());
-        self.switch_thread(old_thread);
+        context.cpsr =
+            cpu::Cpu::CPSR_USER_MODE | ((start_routine.is_thumb() as u32) * cpu::Cpu::CPSR_THUMB);
+        context.regs[cpu::Cpu::PC] = start_routine.addr_without_thumb_bit();
+        context.regs[cpu::Cpu::LR] = self.dyld.thread_exit_routine().addr_with_thumb_bit();
 
         new_thread_id
     }
@@ -894,8 +974,8 @@ impl Environment {
         let res = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| self.run_inner(true)));
         if let Err(e) = res {
             echo!("Register state immediately after panic:");
-            self.cpu.dump_regs();
-            self.stack_trace();
+            self.dump_all_regs();
+            self.stack_trace_all();
             std::panic::resume_unwind(e);
         }
     }
@@ -972,7 +1052,7 @@ impl Environment {
     pub fn enter_debugger(&mut self, reason: Option<cpu::CpuError>) -> bool {
         // GDB doesn't seem to manage to produce a useful stack trace, so
         // let's print our own.
-        self.stack_trace();
+        self.stack_trace_current();
         self.gdb_server
             .as_mut()
             .unwrap()

@@ -6,14 +6,14 @@ These are impractical to reimplement, but they are Free Software.
 
 * Alias: `libstdc++.6.dylib`
 * License: GNU GPL v2 or later (see `COPYING.libstdc++`)
-* Binary origin: `/usr/lib/` of iPhone OS 3.0.1 for the iPhone 3GS, build 7A400
-* Source code: <https://github.com/apple-oss-distributions/libstdcxx/tree/libstdcxx-37.11>
+* Binary origin: `/usr/lib/` of `iPhoneOS4.0.sdk` from `xcode_3.2.3_and_ios_sdk_4.0.1.dmg`
+* Source code: <https://github.com/apple-oss-distributions/libstdcxx/tree/libstdcxx-39>
 
 ## `libgcc_s.1.dylib`
 
 * License: GNU GPLv2 or later (see `COPYING.libgcc`)
-* Binary origin: `/usr/lib/` of iPhone OS 3.0.1 for the iPhone 3GS, build 7A400
-* Source code: <https://github.com/apple-oss-distributions/gcc/tree/gcc-5572.10.2>
+* Binary origin: `/usr/lib/` of `iPhoneOS4.0.sdk` from `xcode_3.2.3_and_ios_sdk_4.0.1.dmg`
+* Source code: <https://github.com/apple-oss-distributions/gcc/tree/gcc-5664>
 
 ## `libz.1.2.3.dylib`
 

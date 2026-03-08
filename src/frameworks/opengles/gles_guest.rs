@@ -19,8 +19,7 @@ use touchHLE_gl_bindings::gles11::{
 
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::frameworks::opengles::eagl::EAGLContextHostObject;
-use crate::gles::gles11_raw as gles11; // constants only
-use crate::gles::GLES;
+use crate::gles::{gles11_raw as gles11, GLES}; // constants only
 use crate::mem::{ConstPtr, ConstVoidPtr, GuestISize, GuestUSize, Mem, MutPtr, MutVoidPtr, Ptr};
 use crate::objc::nil;
 use crate::Environment;
@@ -79,7 +78,7 @@ where
         return U::default();
     }
 
-    let gles = super::sync_context(
+    let mut gles = super::sync_context(
         &mut env.framework_state.opengles,
         &mut env.objc,
         env.window
@@ -89,7 +88,7 @@ where
     );
 
     //panic_on_gl_errors(&mut *gles);
-    let res = f(gles, &mut env.mem);
+    let res = f(gles.as_mut(), &mut env.mem);
     //panic_on_gl_errors(&mut *gles);
     #[allow(clippy::let_and_return)]
     res
@@ -104,7 +103,7 @@ fn with_ctx_and_mem_no_skip<T, U>(env: &mut Environment, f: T) -> U
 where
     T: FnOnce(&mut dyn GLES, &mut Mem) -> U,
 {
-    let gles = super::sync_context(
+    let mut gles = super::sync_context(
         &mut env.framework_state.opengles,
         &mut env.objc,
         env.window
@@ -113,9 +112,9 @@ where
         env.current_thread,
     );
 
-    //panic_on_gl_errors(&mut *gles);
-    let res = f(gles, &mut env.mem);
-    //panic_on_gl_errors(&mut *gles);
+    //panic_on_gl_errors(&mut **gles);
+    let res = f(gles.as_mut(), &mut env.mem);
+    //panic_on_gl_errors(&mut **gles);
     #[allow(clippy::let_and_return)]
     res
 }
@@ -212,6 +211,13 @@ fn glGetIntegerv(env: &mut Environment, pname: GLenum, params: MutPtr<GLint>) {
                 // According to [OES_framebuffer_object](https://registry.khronos.org/OpenGL/extensions/OES/OES_framebuffer_object.txt),
                 // MAX_COLOR_ATTACHMENTS_OES is not supported in the extension,
                 // but we return 1 to match the real device.
+                mem.write(params, 1 as _);
+            }
+            // MAX_SAMPLES or MAX_SAMPLES_ANGLE
+            0x8d57 => {
+                // TODO: handle GetBooleanv and GetFloatv as well
+                // 1 is an initial value
+                // TODO: This is an OpenGL ES 2.0 extension, not supported yet
                 mem.write(params, 1 as _);
             }
             _ => {
@@ -407,6 +413,9 @@ fn glStencilOp(env: &mut Environment, sfail: GLenum, dpfail: GLenum, dppass: GLe
 }
 fn glStencilMask(env: &mut Environment, mask: GLuint) {
     with_ctx_and_mem(env, |gles, _mem| unsafe { gles.StencilMask(mask) });
+}
+fn glLogicOp(env: &mut Environment, opcode: GLenum) {
+    with_ctx_and_mem(env, |gles, _mem| unsafe { gles.LogicOp(opcode) });
 }
 // Points
 fn glPointSize(env: &mut Environment, size: GLfloat) {
@@ -1186,6 +1195,31 @@ fn glTexEnviv(env: &mut Environment, target: GLenum, pname: GLenum, params: Cons
     })
 }
 
+fn glMultiTexCoord4f(
+    env: &mut Environment,
+    target: GLenum,
+    s: GLfloat,
+    t: GLfloat,
+    r: GLfloat,
+    q: GLfloat,
+) {
+    with_ctx_and_mem(env, |gles, _mem| unsafe {
+        gles.MultiTexCoord4f(target, s, t, r, q)
+    })
+}
+fn glMultiTexCoord4x(
+    env: &mut Environment,
+    target: GLenum,
+    s: GLfixed,
+    t: GLfixed,
+    r: GLfixed,
+    q: GLfixed,
+) {
+    with_ctx_and_mem(env, |gles, _mem| unsafe {
+        gles.MultiTexCoord4x(target, s, t, r, q)
+    })
+}
+
 // OES_framebuffer_object
 fn glGenFramebuffersOES(env: &mut Environment, n: GLsizei, framebuffers: MutPtr<GLuint>) {
     with_ctx_and_mem(env, |gles, mem| {
@@ -1478,6 +1512,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(glStencilFunc(_, _, _)),
     export_c_func!(glStencilOp(_, _, _)),
     export_c_func!(glStencilMask(_)),
+    export_c_func!(glLogicOp(_)),
     // Points
     export_c_func!(glPointSize(_)),
     export_c_func!(glPointSizex(_)),
@@ -1574,6 +1609,8 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(glTexEnvfv(_, _, _)),
     export_c_func!(glTexEnvxv(_, _, _)),
     export_c_func!(glTexEnviv(_, _, _)),
+    export_c_func!(glMultiTexCoord4f(_, _, _, _, _)),
+    export_c_func!(glMultiTexCoord4x(_, _, _, _, _)),
     // OES_framebuffer_object
     export_c_func!(glGenFramebuffersOES(_, _)),
     export_c_func!(glGenRenderbuffersOES(_, _)),

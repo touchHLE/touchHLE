@@ -58,7 +58,16 @@ fn wmemcpy(
     src: ConstPtr<wchar_t>,
     size: GuestUSize,
 ) -> MutPtr<wchar_t> {
-    GenericChar::<wchar_t>::memcpy(env, dest, src, size)
+    GenericChar::<wchar_t>::memcpy(env, dest, src, size, GuestUSize::MAX)
+}
+fn __wmemcpy_chk(
+    env: &mut Environment,
+    dest: MutPtr<wchar_t>,
+    src: ConstPtr<wchar_t>,
+    size: GuestUSize,
+    dest_size: GuestUSize,
+) -> MutPtr<wchar_t> {
+    GenericChar::<wchar_t>::memcpy(env, dest, src, size, dest_size)
 }
 fn wmemmove(
     env: &mut Environment,
@@ -66,7 +75,16 @@ fn wmemmove(
     src: ConstPtr<wchar_t>,
     size: GuestUSize,
 ) -> MutPtr<wchar_t> {
-    GenericChar::<wchar_t>::memmove(env, dest, src, size)
+    GenericChar::<wchar_t>::memmove(env, dest, src, size, GuestUSize::MAX)
+}
+fn __wmemmove_chk(
+    env: &mut Environment,
+    dest: MutPtr<wchar_t>,
+    src: ConstPtr<wchar_t>,
+    size: GuestUSize,
+    dest_size: GuestUSize,
+) -> MutPtr<wchar_t> {
+    GenericChar::<wchar_t>::memmove(env, dest, src, size, dest_size)
 }
 fn wmemchr(
     env: &mut Environment,
@@ -106,7 +124,16 @@ fn wcsncpy(
     src: ConstPtr<wchar_t>,
     size: GuestUSize,
 ) -> MutPtr<wchar_t> {
-    GenericChar::<wchar_t>::strncpy(env, dest, src, size)
+    GenericChar::<wchar_t>::strncpy(env, dest, src, size, GuestUSize::MAX)
+}
+fn __wcsncpy_chk(
+    env: &mut Environment,
+    dest: MutPtr<wchar_t>,
+    src: ConstPtr<wchar_t>,
+    size: GuestUSize,
+    dest_size: GuestUSize,
+) -> MutPtr<wchar_t> {
+    GenericChar::<wchar_t>::strncpy(env, dest, src, size, dest_size)
 }
 fn wcsdup(env: &mut Environment, src: ConstPtr<wchar_t>) -> MutPtr<wchar_t> {
     GenericChar::<wchar_t>::strdup(env, src)
@@ -158,7 +185,9 @@ pub const FUNCTIONS: FunctionExports = &[
     // Functions shared with string.rs
     export_c_func!(wmemset(_, _, _)),
     export_c_func!(wmemcpy(_, _, _)),
+    export_c_func!(__wmemcpy_chk(_, _, _, _)),
     export_c_func!(wmemmove(_, _, _)),
+    export_c_func!(__wmemmove_chk(_, _, _, _)),
     export_c_func!(wmemchr(_, _, _)),
     export_c_func!(wmemcmp(_, _, _)),
     export_c_func!(wcslen(_)),
@@ -166,6 +195,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(wcscat(_, _)),
     export_c_func!(wcscspn(_, _)),
     export_c_func!(wcsncpy(_, _, _)),
+    export_c_func!(__wcsncpy_chk(_, _, _, _)),
     export_c_func!(wcsdup(_)),
     export_c_func!(wcscmp(_, _)),
     export_c_func!(wcsncmp(_, _, _)),

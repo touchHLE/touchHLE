@@ -206,3 +206,28 @@ pub(super) fn objc_copyStruct(
     // TODO: implement atomic support
     env.mem.memmove(dest, src, size);
 }
+
+/// Logs a placeholder message for an unimplemented ObjC setter
+///
+/// This macro must be used inside [crate::_objc_method],
+/// as it relies on constants for the current class and selector
+/// set by it and [crate::objc::objc_classes]
+#[macro_export]
+macro_rules! todo_objc_setter {
+    ($this:ident, $($arg:tt)+) => {
+        const _: () = {
+            let bytes = _OBJC_CURRENT_SELECTOR.as_bytes();
+            let starts_with_set =
+                bytes.len() > 3 && bytes[0] == b's' && bytes[1] == b'e' && bytes[2] == b't';
+            assert!(starts_with_set, "Selector does not start with set.");
+        };
+        log!(
+            "TODO: [({}*) {:?} {}:{:?}]",
+            _OBJC_CURRENT_CLASS,
+            $this,
+            _OBJC_CURRENT_SELECTOR,
+            $($arg)+
+        );
+    };
+}
+pub use crate::todo_objc_setter;

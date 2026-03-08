@@ -13,6 +13,7 @@
 
 use crate::fs::{BundleData, Fs, GuestPath, GuestPathBuf};
 use crate::image::Image;
+use crate::window::DeviceFamily;
 use plist::dictionary::Dictionary;
 use plist::Value;
 use std::io::Cursor;
@@ -103,13 +104,36 @@ impl Bundle {
     }
 
     pub fn display_name(&self) -> &str {
-        self.plist["CFBundleDisplayName"].as_string().unwrap()
+        if let Some(display_name) = self.plist.get("CFBundleDisplayName") {
+            display_name.as_string().unwrap()
+        } else {
+            ""
+        }
     }
 
     pub fn minimum_os_version(&self) -> Option<&str> {
         self.plist
             .get("MinimumOSVersion")
             .map(|v| v.as_string().unwrap())
+    }
+
+    pub fn required_device_capabilities(&self) -> Vec<&str> {
+        self.plist
+            .get("UIRequiredDeviceCapabilities")
+            .map(|v| {
+                if let Some(dict) = v.as_dictionary() {
+                    // TODO: support undesired capabilities
+                    assert!(dict.values().all(|x| x.as_boolean().unwrap()));
+                    dict.keys().map(|o| o.as_str()).collect()
+                } else {
+                    v.as_array()
+                        .unwrap()
+                        .iter()
+                        .map(|o| o.as_string().unwrap())
+                        .collect()
+                }
+            })
+            .unwrap_or_default()
     }
 
     pub fn executable_path(&self) -> GuestPathBuf {
@@ -178,14 +202,25 @@ impl Bundle {
         Ok(image)
     }
 
-    pub fn main_nib_filename(&self) -> Option<&str> {
+    pub fn main_nib_filename(&self, device_family: Option<DeviceFamily>) -> Option<&str> {
+        // TODO: extend this logic for all device-specific keys
+        if let Some(device_family) = device_family {
+            if device_family == DeviceFamily::iPad && self.plist.get("NSMainNibFile~ipad").is_some()
+            {
+                return self
+                    .plist
+                    .get("NSMainNibFile~ipad")
+                    .map(|v| v.as_string().unwrap());
+            }
+        }
         self.plist
             .get("NSMainNibFile")
             .map(|v| v.as_string().unwrap())
     }
 
     pub fn supported_interface_orientations(&self) -> Vec<&str> {
-        // UIInterfaceOrientation (iPhone OS 2.0) is a single string.
+        // UIInterfaceOrientation (iPhone OS 2.0) is a single string
+        // (or a comma separated list of strings).
         // UISupportedInterfaceOrientations (iOS 3.2) is an array of strings and
         // takes precedence.
         self.plist
@@ -198,10 +233,30 @@ impl Bundle {
                     .collect()
             })
             .unwrap_or_else(|| {
-                vec![self
+                if let Some(v) = self
                     .plist
-                    .get("UIInterfaceOrientation")
-                    .map_or("UIInterfaceOrientationPortrait", |o| o.as_string().unwrap())]
+                    .get("UIInterfaceOrientation") {
+                    let str = v.as_string().unwrap();
+                    if str.contains(',') {
+                        log!("UIInterfaceOrientation is a comma separated list of strings ({}), splitting!", str);
+                    }
+                    str.split(',').collect()
+                } else {
+                    vec!["UIInterfaceOrientationPortrait"]
+                }
             })
+    }
+
+    pub fn device_family_array(&self) -> Vec<DeviceFamily> {
+        self.plist
+            .get("UIDeviceFamily")
+            .map(|v| {
+                v.as_array()
+                    .unwrap()
+                    .iter()
+                    .map(|o| DeviceFamily::try_from(o.as_unsigned_integer().unwrap()).unwrap())
+                    .collect()
+            })
+            .unwrap_or_else(|| vec![DeviceFamily::iPhone])
     }
 }

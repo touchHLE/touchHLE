@@ -363,7 +363,33 @@ fn CGContextAddCurveToPoint(
     }
 }
 
+fn CGContextAddQuadCurveToPoint(
+    env: &mut Environment,
+    context: CGContextRef,
+    cpx: CGFloat,
+    cpy: CGFloat,
+    x: CGFloat,
+    y: CGFloat,
+) {
+    let path = &mut env.objc.borrow_mut::<CGContextHostObject>(context).path;
+    let Some(last) = path.subpaths.last_mut() else {
+        return;
+    };
+    let Some(start) = last.points.last().copied() else {
+        return;
+    };
+    for i in 1..=16 {
+        let t = i as CGFloat / 16.0;
+        let u = 1.0 - t;
+        last.points.push(CGPoint {
+            x: u * u * start.x + 2.0 * u * t * cpx + t * t * x,
+            y: u * u * start.y + 2.0 * u * t * cpy + t * t * y,
+        });
+    }
+}
+
 pub const FUNCTIONS: FunctionExports = &[
+    export_c_func!(CGContextAddQuadCurveToPoint(_, _, _, _, _)),
     export_c_func!(CGContextAddCurveToPoint(_, _, _, _, _, _, _)),
     export_c_func!(CGContextFillPath(_)),
     export_c_func!(CGContextDrawPath(_, _)),

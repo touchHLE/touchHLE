@@ -392,7 +392,12 @@ fn CGContextEOFillPath(env: &mut Environment, context: CGContextRef) {
     CGContextDrawPath(env, context, 1);
 }
 
+fn CGContextStrokePath(env: &mut Environment, context: CGContextRef) {
+    CGContextDrawPath(env, context, 2);
+}
+
 pub const FUNCTIONS: FunctionExports = &[
+    export_c_func!(CGContextStrokePath(_)),
     export_c_func!(CGContextEOFillPath(_)),
     export_c_func!(CGContextAddQuadCurveToPoint(_, _, _, _, _)),
     export_c_func!(CGContextAddCurveToPoint(_, _, _, _, _, _, _)),

@@ -426,7 +426,17 @@ fn CGContextSetRGBStrokeColor(
         .rgb_stroke_color = (r, g, b, a);
 }
 
+fn CGContextSetStrokeColorWithColor(
+    env: &mut Environment,
+    context: CGContextRef,
+    color: CGColorRef,
+) {
+    let (r, g, b, a) = cg_color::to_rgba(&env.objc, color);
+    CGContextSetRGBStrokeColor(env, context, r, g, b, a);
+}
+
 pub const FUNCTIONS: FunctionExports = &[
+    export_c_func!(CGContextSetStrokeColorWithColor(_, _)),
     export_c_func!(CGContextSetRGBStrokeColor(_, _, _, _, _)),
     export_c_func!(CGContextSetGrayStrokeColor(_, _, _)),
     export_c_func!(CGContextSetLineWidth(_, _)),

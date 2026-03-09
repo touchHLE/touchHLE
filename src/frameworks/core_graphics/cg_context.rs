@@ -413,7 +413,21 @@ fn CGContextSetGrayStrokeColor(
         .rgb_stroke_color = (gray, gray, gray, alpha);
 }
 
+fn CGContextSetRGBStrokeColor(
+    env: &mut Environment,
+    context: CGContextRef,
+    r: CGFloat,
+    g: CGFloat,
+    b: CGFloat,
+    a: CGFloat,
+) {
+    env.objc
+        .borrow_mut::<CGContextHostObject>(context)
+        .rgb_stroke_color = (r, g, b, a);
+}
+
 pub const FUNCTIONS: FunctionExports = &[
+    export_c_func!(CGContextSetRGBStrokeColor(_, _, _, _, _)),
     export_c_func!(CGContextSetGrayStrokeColor(_, _, _)),
     export_c_func!(CGContextSetLineWidth(_, _)),
     export_c_func!(CGContextStrokePath(_)),

@@ -402,7 +402,19 @@ fn CGContextSetLineWidth(env: &mut Environment, context: CGContextRef, width: CG
         .line_width = width;
 }
 
+fn CGContextSetGrayStrokeColor(
+    env: &mut Environment,
+    context: CGContextRef,
+    gray: CGFloat,
+    alpha: CGFloat,
+) {
+    env.objc
+        .borrow_mut::<CGContextHostObject>(context)
+        .rgb_stroke_color = (gray, gray, gray, alpha);
+}
+
 pub const FUNCTIONS: FunctionExports = &[
+    export_c_func!(CGContextSetGrayStrokeColor(_, _, _)),
     export_c_func!(CGContextSetLineWidth(_, _)),
     export_c_func!(CGContextStrokePath(_)),
     export_c_func!(CGContextEOFillPath(_)),

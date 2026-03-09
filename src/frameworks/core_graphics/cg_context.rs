@@ -396,7 +396,14 @@ fn CGContextStrokePath(env: &mut Environment, context: CGContextRef) {
     CGContextDrawPath(env, context, 2);
 }
 
+fn CGContextSetLineWidth(env: &mut Environment, context: CGContextRef, width: CGFloat) {
+    env.objc
+        .borrow_mut::<CGContextHostObject>(context)
+        .line_width = width;
+}
+
 pub const FUNCTIONS: FunctionExports = &[
+    export_c_func!(CGContextSetLineWidth(_, _)),
     export_c_func!(CGContextStrokePath(_)),
     export_c_func!(CGContextEOFillPath(_)),
     export_c_func!(CGContextAddQuadCurveToPoint(_, _, _, _, _)),

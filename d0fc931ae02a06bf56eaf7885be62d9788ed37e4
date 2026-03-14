@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "1e41df75_e2cf47cc",
+        "filename": "README.md",
+        "patchSetId": 39
+      },
+      "lineNbr": 136,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-03-14T22:27:06Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "362de059_7053ebb4",
+      "revId": "d0fc931ae02a06bf56eaf7885be62d9788ed37e4",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "b2180f97_fcd2515e",
@@ -31,6 +49,24 @@
       "writtenOn": "2026-03-05T12:44:25Z",
       "side": 1,
       "message": "this comment is duplicated with the one just few lines above",
+      "revId": "d0fc931ae02a06bf56eaf7885be62d9788ed37e4",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "0aab565c_f41e2f8f",
+        "filename": "src/environment.rs",
+        "patchSetId": 39
+      },
+      "lineNbr": 461,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-03-14T22:27:06Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "b2180f97_fcd2515e",
       "revId": "d0fc931ae02a06bf56eaf7885be62d9788ed37e4",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

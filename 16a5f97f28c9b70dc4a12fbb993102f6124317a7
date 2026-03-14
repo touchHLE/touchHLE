@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ddd9c50d_74aac8b3",
+        "filename": "src/mem.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 600,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-03-14T23:20:10Z",
+      "side": 1,
+      "message": "I don\u0027t think this comment is clear enough. The same applies to `alloc` vs `alloc_paged`. It really needs to be clear that the former is the generic allocation function, equivalent to C `malloc`, and the latter is a totally different thing. It feels too easy to mismatch alloc and free.\n\nI almost wonder if these methods shouldn\u0027t even be on the same type. Or perhaps we need a prefix like `vm_` rather than the `_paged` suffix…",
+      "revId": "16a5f97f28c9b70dc4a12fbb993102f6124317a7",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

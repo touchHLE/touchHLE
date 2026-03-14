@@ -1,0 +1,78 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5c78153e_35fddd6f",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 22
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-03-14T22:57:20Z",
+      "side": 1,
+      "message": "Just want to say I appreciate this contribution a lot! I think it\u0027s close to ready, just some little things…",
+      "revId": "8365b444e0e5dda7ae1e0d19293d3627f6115cf0",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0b028aeb_16af7a29",
+        "filename": "CHANGELOG.md",
+        "patchSetId": 22
+      },
+      "lineNbr": 38,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-03-14T22:57:20Z",
+      "side": 1,
+      "message": "I think this should be a subheading under “API support improvements”, but that\u0027s a nitpick.",
+      "revId": "8365b444e0e5dda7ae1e0d19293d3627f6115cf0",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1e2dc460_ffbac183",
+        "filename": "src/frameworks/uikit/ui_image.rs",
+        "patchSetId": 22
+      },
+      "lineNbr": 232,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-03-14T22:57:20Z",
+      "side": 1,
+      "message": "There\u0027s a lot of nested `if`s in this function. It could probably be nicer to read by using the early return style? If the completion handler needs to be called, I guess you can do that by moving everything but that part into a helper function called by this one.",
+      "revId": "8365b444e0e5dda7ae1e0d19293d3627f6115cf0",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9cbeef39_cac5f82d",
+        "filename": "src/frameworks/uikit/ui_image.rs",
+        "patchSetId": 22
+      },
+      "lineNbr": 271,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-03-14T22:57:20Z",
+      "side": 1,
+      "message": "All this stuff should be in a method on `Image` in `src/image.rs`; the stb stuff is considered private to that module.",
+      "range": {
+        "startLine": 241,
+        "startChar": 12,
+        "endLine": 271,
+        "endChar": 0
+      },
+      "revId": "8365b444e0e5dda7ae1e0d19293d3627f6115cf0",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

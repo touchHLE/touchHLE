@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "de132774_a6a6a9e8",
+        "filename": "tests/TestApp_source/cli_tests.m",
+        "patchSetId": 5
+      },
+      "lineNbr": 310,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2026-03-15T05:45:54Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "cbe76c05_1d29200c",
+      "revId": "73715519b30f5443201e5f86ffcab8def5226cbf",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "66df7a2f_6b4735de",
@@ -31,6 +49,24 @@
       "writtenOn": "2026-01-16T18:11:30Z",
       "side": 1,
       "message": "All of thosen new tests are failing for me on macOS after running `cargo test`\n\nMoreover, test_sscanf and test_swscanf are now failing too.\n\nHave you run the tests yourself?",
+      "revId": "73715519b30f5443201e5f86ffcab8def5226cbf",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "de612173_2771e787",
+        "filename": "tests/TestApp_source/cli_tests.m",
+        "patchSetId": 5
+      },
+      "lineNbr": 3187,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2026-03-15T05:45:54Z",
+      "side": 1,
+      "message": "Was having some trouble running tests.  I\u0027ve reverted back to CMake 3 and can now run them. All passed.\n\nDone",
+      "parentUuid": "66df7a2f_6b4735de",
       "revId": "73715519b30f5443201e5f86ffcab8def5226cbf",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

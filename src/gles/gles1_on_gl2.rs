@@ -1893,6 +1893,33 @@ impl GLES for GLES1OnGL2<'_> {
         }
     }
 
+    unsafe fn MultiTexCoord4f(
+        &mut self,
+        target: GLenum,
+        s: GLfloat,
+        t: GLfloat,
+        r: GLfloat,
+        q: GLfloat,
+    ) {
+        gl21::MultiTexCoord4f(target, s, t, r, q)
+    }
+    unsafe fn MultiTexCoord4x(
+        &mut self,
+        target: GLenum,
+        s: GLfixed,
+        t: GLfixed,
+        r: GLfixed,
+        q: GLfixed,
+    ) {
+        gl21::MultiTexCoord4f(
+            target,
+            fixed_to_float(s),
+            fixed_to_float(t),
+            fixed_to_float(r),
+            fixed_to_float(q),
+        )
+    }
+
     // Matrix stack operations
     unsafe fn MatrixMode(&mut self, mode: GLenum) {
         assert!(mode == gl21::MODELVIEW || mode == gl21::PROJECTION || mode == gl21::TEXTURE);

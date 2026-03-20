@@ -18,7 +18,7 @@ use crate::frameworks::foundation::{NSInteger, NSUInteger};
 use crate::frameworks::uikit::ui_geometry::{
     CGPointFromString, CGRectFromString, CGSizeFromString,
 };
-use crate::mem::{ConstVoidPtr, GuestUSize, MutVoidPtr};
+use crate::mem::{ConstPtr, ConstVoidPtr, GuestUSize, MutPtr, MutVoidPtr};
 use crate::objc::{
     autorelease, id, msg, msg_class, nil, objc_classes, release, retain, ClassExports, HostObject,
     NSZonePtr,
@@ -41,6 +41,10 @@ struct NSKeyedUnarchiverHostObject {
     already_unarchived: Vec<Option<id>>,
     /// Something responding to NSKeyedUnarchiverDelegate
     delegate: id,
+    /// Stores the buffers decoded by `decodeBytesForKey:returnedLength:`
+    /// Instead of reusing the same buffer, we allocate different ones that get
+    /// freed on dealloc. A similar behavior has been observed in real iOS.
+    temporary_buffers: Vec<MutVoidPtr>,
 }
 impl HostObject for NSKeyedUnarchiverHostObject {}
 
@@ -55,7 +59,8 @@ pub const CLASSES: ClassExports = objc_classes! {
         plist: Dictionary::new(),
         current_key: None,
         already_unarchived: Vec::new(),
-        delegate: nil
+        delegate: nil,
+        temporary_buffers: Vec::new(),
     });
     env.objc.alloc_object(this, unarchiver, &mut env.mem)
 }
@@ -108,9 +113,14 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (())dealloc {
     let host_obj = borrow_host_obj(env, this);
     let already_unarchived = std::mem::take(&mut host_obj.already_unarchived);
+    let temporary_buffers = std::mem::take(&mut host_obj.temporary_buffers);
 
     for &object in already_unarchived.iter().flatten() {
         release(env, object);
+    }
+
+    for &buffer in temporary_buffers.iter() {
+        env.mem.free(buffer);
     }
 
     env.objc.dealloc_object(this, &mut env.mem)
@@ -195,6 +205,26 @@ pub const CLASSES: ClassExports = objc_classes! {
     // on behalf of the caller
     retain(env, object);
     autorelease(env, object)
+}
+
+- (ConstPtr<u8>)decodeBytesForKey:(id)key returnedLength:(MutPtr<NSUInteger>)length {
+    assert!(key != nil);
+    let Some(data) = get_value_to_decode_for_key(env, this, key)
+        .and_then(|value| value.as_data())
+        .map(|data| data.to_vec()) else {
+            env.mem.write(length, 0);
+            return ConstPtr::null();
+    };
+    let len: GuestUSize = data.len().try_into().unwrap();
+    let guest_bytes: MutVoidPtr = env.mem.alloc(len);
+    env.objc.borrow_mut::<NSKeyedUnarchiverHostObject>(this)
+        .temporary_buffers
+        .push(guest_bytes);
+    env.mem
+        .bytes_at_mut(guest_bytes.cast(), len)
+        .copy_from_slice(data.as_slice());
+    env.mem.write(length, len);
+    guest_bytes.cast().cast_const()
 }
 
 - (bool)containsValueForKey:(id)key { // NSString*

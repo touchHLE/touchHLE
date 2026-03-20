@@ -87,6 +87,17 @@ pub fn pthread_attr_init(env: &mut Environment, attr: MutPtr<pthread_attr_t>) ->
     env.mem.write(attr, DEFAULT_ATTR);
     0 // success
 }
+fn pthread_attr_getdetachstate(
+    env: &mut Environment,
+    attr: MutPtr<pthread_attr_t>,
+    detachstate_ptr: MutPtr<DetachState>,
+) -> i32 {
+    check_magic!(env, attr, MAGIC_ATTR);
+    let detachstate = env.mem.read(attr).detachstate;
+    assert!(detachstate == PTHREAD_CREATE_JOINABLE || detachstate == PTHREAD_CREATE_DETACHED);
+    env.mem.write(detachstate_ptr, detachstate);
+    0 // success
+}
 pub fn pthread_attr_setdetachstate(
     env: &mut Environment,
     attr: MutPtr<pthread_attr_t>,
@@ -124,6 +135,19 @@ pub fn pthread_attr_setstacksize(
     let mut attr_copy = env.mem.read(attr);
     attr_copy.stacksize = stacksize;
     env.mem.write(attr, attr_copy);
+    0 // success
+}
+fn pthread_attr_setinheritsched(
+    env: &mut Environment,
+    attr: MutPtr<pthread_attr_t>,
+    inheritsched: i32,
+) -> i32 {
+    check_magic!(env, attr, MAGIC_ATTR);
+    log!(
+        "TODO: pthread_attr_setinheritsched({:?}, {})",
+        attr,
+        inheritsched
+    );
     0 // success
 }
 fn pthread_attr_setschedpolicy(
@@ -364,9 +388,11 @@ fn pthread_setschedparam(
 
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(pthread_attr_init(_)),
+    export_c_func!(pthread_attr_getdetachstate(_, _)),
     export_c_func!(pthread_attr_setdetachstate(_, _)),
     export_c_func!(pthread_attr_getstacksize(_, _)),
     export_c_func!(pthread_attr_setstacksize(_, _)),
+    export_c_func!(pthread_attr_setinheritsched(_, _)),
     export_c_func!(pthread_attr_setschedpolicy(_, _)),
     export_c_func!(pthread_attr_setschedparam(_, _)),
     export_c_func!(pthread_attr_destroy(_)),

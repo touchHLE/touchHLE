@@ -322,6 +322,23 @@ pub trait GLES {
     unsafe fn TexEnvxv(&mut self, target: GLenum, pname: GLenum, params: *const GLfixed);
     unsafe fn TexEnviv(&mut self, target: GLenum, pname: GLenum, params: *const GLint);
 
+    unsafe fn MultiTexCoord4f(
+        &mut self,
+        target: GLenum,
+        s: GLfloat,
+        t: GLfloat,
+        r: GLfloat,
+        q: GLfloat,
+    );
+    unsafe fn MultiTexCoord4x(
+        &mut self,
+        target: GLenum,
+        s: GLfixed,
+        t: GLfixed,
+        r: GLfixed,
+        q: GLfixed,
+    );
+
     // Matrix stack operations
     unsafe fn MatrixMode(&mut self, mode: GLenum);
     unsafe fn LoadIdentity(&mut self);

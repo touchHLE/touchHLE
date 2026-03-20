@@ -7,6 +7,7 @@
 
 use crate::frameworks::core_graphics::cg_image::CGImageRef;
 use crate::frameworks::core_graphics::{CGPoint, CGRect, CGSize};
+use crate::frameworks::foundation::ns_string::get_static_str;
 use crate::frameworks::foundation::NSTimeInterval;
 use crate::objc::{
     id, impl_HostObject_with_superclass, msg, msg_super, objc_classes, release, retain,
@@ -49,7 +50,17 @@ pub const CLASSES: ClassExports = objc_classes! {
     msg_super![env; this dealloc]
 }
 
-// TODO: initWithCoder:
+// NSCoding implementation
+- (id)initWithCoder:(id)coder {
+    let this: id = msg_super![env; this initWithCoder:coder];
+
+    let key_ns_string = get_static_str(env, "UIImage");
+    let image: id = msg![env; coder decodeObjectForKey:key_ns_string];
+
+    () = msg![env; this setImage:image];
+
+    this
+}
 
 - (id)initWithImage:(id)image { // UIImage*
     let size: CGSize = msg![env; image size];

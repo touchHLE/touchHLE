@@ -75,7 +75,7 @@ jobs:
           CMAKE: ${{ github.workspace }}/vendor/cmake/bin/cmake
       # This step ensures that our non-iOS-specific tests are passing on macOS itself!
       - name: Sanity check tests
-        run: cc tests/TestApp_source/cli_tests.m tests/TestApp_source/CGAffineTransform.c tests/TestApp_source/SyncTester.m -framework CoreFoundation -framework Foundation -framework CoreGraphics -DDEFINE_ME_WHEN_BUILDING_ON_MACOS -DTestApp_cli_tests_main=main -ObjC && ./a.out
+        run: cc tests/TestApp_source/cli_tests.m tests/TestApp_source/CGAffineTransform.c tests/TestApp_source/SyncTester.m tests/TestApp_source/RespondsToSelector.m -framework CoreFoundation -framework Foundation -framework CoreGraphics -DDEFINE_ME_WHEN_BUILDING_ON_MACOS -DTestApp_cli_tests_main=main -ObjC && ./a.out
       - name: Build
         run: cargo build --target x86_64-apple-darwin --release
         env:

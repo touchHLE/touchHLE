@@ -343,8 +343,6 @@ fn handle_touches_move(env: &mut Environment, map: HashMap<FingerId, Coords>) {
             continue;
         };
 
-        log_dbg!("Finger {:?} touch move: {:?}", finger_id, coords);
-
         let location = CGPoint {
             x: coords.0,
             y: coords.1,
@@ -352,6 +350,13 @@ fn handle_touches_move(env: &mut Environment, map: HashMap<FingerId, Coords>) {
 
         let view = env.objc.borrow::<UITouchHostObject>(touch).view;
         let host_object = env.objc.borrow_mut::<UITouchHostObject>(touch);
+
+        if host_object.location == location {
+            continue;
+        }
+
+        log_dbg!("Finger {:?} touch move: {:?}", finger_id, coords);
+
         host_object.previous_location = host_object.location;
         host_object.location = location;
         host_object.timestamp = timestamp;

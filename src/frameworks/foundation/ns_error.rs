@@ -12,7 +12,10 @@ use crate::objc_classes;
 /// `NSString*`
 pub type NSErrorDomain = id;
 
+pub const NSCocoaErrorDomain: &str = "NSCocoaErrorDomain";
 pub const NSOSStatusErrorDomain: &str = "NSOSStatusErrorDomain";
+
+pub const NSFileReadNoSuchFileError: NSInteger = 260;
 
 struct ErrorHostObject {
     domain: NSErrorDomain,
@@ -69,6 +72,10 @@ pub const CONSTANTS: ConstantExports = &[
     (
         "_NSLocalizedDescriptionKey",
         HostConstant::NSString("NSLocalizedDescriptionKey"),
+    ),
+    (
+        "_NSCocoaErrorDomain",
+        HostConstant::NSString(NSCocoaErrorDomain),
     ),
     (
         "_NSOSStatusErrorDomain",

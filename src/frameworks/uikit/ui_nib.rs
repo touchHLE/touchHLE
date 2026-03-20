@@ -13,6 +13,7 @@ use crate::frameworks::foundation::ns_string::{get_static_str, to_rust_string};
 use crate::frameworks::foundation::{ns_string, NSUInteger};
 use crate::frameworks::uikit::ui_view::ui_control::UIControlEvents;
 use crate::fs::GuestPathBuf;
+use crate::mem::ConstVoidPtr;
 use crate::objc::{
     autorelease, id, impl_HostObject_with_superclass, msg, msg_class, msg_super, nil, objc_classes,
     release, retain, Class, ClassExports, HostObject,
@@ -326,7 +327,8 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 /// Takes a [GuestPathBuf] where a nib file is located and deserializes it.
 /// Returns an empty [Err] if the file couldn't be loaded or an [Ok] wrapping
-/// an NSKeyedUnarchiver.
+/// an instance of NSCoder (NSKeyedUnarchiver or _touchHLE_NIBArchiveDecoder
+/// depending on the NIB file format).
 /// The unarchiver should later be manually [release]d
 fn load_nib_file(env: &mut Environment, ui_nib: id, path: GuestPathBuf) -> Result<id, ()> {
     let path = ns_string::from_rust_string(env, path.as_str().to_string());
@@ -339,8 +341,16 @@ fn load_nib_file(env: &mut Environment, ui_nib: id, path: GuestPathBuf) -> Resul
         return Err(());
     };
 
-    let unarchiver = msg_class![env; NSKeyedUnarchiver alloc];
-    let unarchiver = msg![env; unarchiver initForReadingWithData:ns_data];
+    let len: NSUInteger = msg![env; ns_data length];
+    assert!(len >= 10);
+    let bytes: ConstVoidPtr = msg![env; ns_data bytes];
+    let unarchiver = if env.mem.bytes_at(bytes.cast(), 10) == b"NIBArchive" {
+        let decoder: id = msg_class![env; _touchHLE_NIBArchiveDecoder alloc];
+        msg![env; decoder _touchHLE_initForReadingWithData:ns_data]
+    } else {
+        let unarchiver = msg_class![env; NSKeyedUnarchiver alloc];
+        msg![env; unarchiver initForReadingWithData:ns_data]
+    };
 
     // ui_nib will hold a file's owner,
     // which will replace corresponding UIProxyObject
@@ -351,10 +361,10 @@ fn load_nib_file(env: &mut Environment, ui_nib: id, path: GuestPathBuf) -> Resul
     // UINibObjectsKey, UINibTopLevelObjectsKey and UINibVisibleWindowsKey.
     // Each corresponds to an NSArray.
 
-    // We don't need to do anything with the list of objects, but deserializing
-    // it ensures everything else is deserialized.
+    // Deserializing the list of objects
+    // ensures everything else is deserialized.
     let objects_key = get_static_str(env, "UINibObjectsKey");
-    let _objects: id = msg![env; unarchiver decodeObjectForKey:objects_key];
+    let objects: id = msg![env; unarchiver decodeObjectForKey:objects_key];
 
     // Connect all the outlets with UIRuntimeOutletConnection
     let conns_key = get_static_str(env, "UINibConnectionsKey");
@@ -363,6 +373,16 @@ fn load_nib_file(env: &mut Environment, ui_nib: id, path: GuestPathBuf) -> Resul
     for i in 0..conns_count {
         let conn: id = msg![env; conns objectAtIndex:i];
         () = msg![env; conn connect];
+    }
+
+    // Sending awakeFromNib for all objects
+    let enumerator: id = msg![env; objects objectEnumerator];
+    loop {
+        let next: id = msg![env; enumerator nextObject];
+        if next == nil {
+            break;
+        }
+        () = msg![env; next awakeFromNib];
     }
 
     // Make visible windows visible

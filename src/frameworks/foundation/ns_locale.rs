@@ -9,7 +9,6 @@ use super::{ns_array, ns_string};
 use crate::dyld::{ConstantExports, HostConstant};
 use crate::frameworks::core_foundation::cf_locale::kCFLocaleCountryCode;
 use crate::objc::{id, nil, objc_classes, release, retain, ClassExports, HostObject, NSZonePtr};
-use crate::options::Options;
 use crate::window::{get_preferred_country_codes, get_preferred_language_codes};
 use crate::Environment;
 
@@ -34,13 +33,14 @@ impl State {
 
 /// Use `msg_class![env; NSLocale preferredLanguages]` rather than calling this
 /// directly, because it may be slow and there is no caching.
-fn get_preferred_languages(options: &Options) -> Vec<String> {
+fn get_preferred_languages(env: &mut Environment) -> Vec<String> {
+    let options = env.options.as_ref();
     if let Some(ref preferred_languages) = options.preferred_languages {
         log!("The app requested your preferred languages. {:?} will reported based on your --preferred-languages= option.", preferred_languages);
         return preferred_languages.clone();
     }
 
-    let languages = get_preferred_language_codes();
+    let languages = get_preferred_language_codes(env);
     if languages.is_empty() {
         let lang = "en".to_string();
         log!("The app requested your preferred languages. No information could be retrieved, so {:?} (English) will be reported.", lang);
@@ -51,8 +51,8 @@ fn get_preferred_languages(options: &Options) -> Vec<String> {
     }
 }
 
-fn get_preferred_countries() -> Vec<String> {
-    let countries = get_preferred_country_codes();
+fn get_preferred_countries(env: &mut Environment) -> Vec<String> {
+    let countries = get_preferred_country_codes(env);
     if countries.is_empty() {
         let country = "US".to_string();
         log!("The app requested your current locale. No country information could be retrieved, so {:?} will be reported.", country);
@@ -93,7 +93,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     if let Some(existing) = State::get(env).preferred_languages {
         existing
     } else {
-        let langs = get_preferred_languages(&env.options);
+        let langs = get_preferred_languages(env);
         let lang_ns_strings = langs.into_iter().map(|lang| ns_string::from_rust_string(env, lang)).collect();
         let new = ns_array::from_vec(env, lang_ns_strings);
         State::get(env).preferred_languages = Some(new);
@@ -105,9 +105,9 @@ pub const CLASSES: ClassExports = objc_classes! {
     if let Some(locale) = State::get(env).current_locale {
         locale
     } else {
-        let countries = get_preferred_countries();
+        let countries = get_preferred_countries(env);
         let country_code = ns_string::from_rust_string(env, countries[0].clone());
-        let languages = get_preferred_languages(&env.options);
+        let languages = get_preferred_languages(env);
         let language_code = ns_string::from_rust_string(env, languages[0].clone());
         let host_object = NSLocaleHostObject {
             country_code,

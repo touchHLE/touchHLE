@@ -30,7 +30,6 @@ pub type UIReturnKeyType = NSInteger;
 type UITextAutocapitalizationType = NSInteger;
 type UITextAutocorrectionType = NSInteger;
 
-// TODO: Actually send notification on text change
 const UITextFieldTextDidChangeNotification: &str = "UITextFieldTextDidChangeNotification";
 
 /// `NSNotificationName` values.
@@ -133,6 +132,16 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (())setText:(id)text { // NSString*
     let text_label = env.objc.borrow_mut::<UITextFieldHostObject>(this).text_label;
     () = msg![env; text_label setText:text];
+
+    // This will work only if all the text changes will call setText:!
+    // This is the case right now.
+    // (see `handle_text` and `handle_backspace` helper functions below)
+    // TODO: actually check if setText: send this notif on each change
+    // (e.g. does it send the notif if text hasn't changed)
+    let center: id = msg_class![env; NSNotificationCenter defaultCenter];
+    let name = ns_string::get_static_str(env, UITextFieldTextDidChangeNotification);
+    // TODO: userInfo
+    let _: () = msg![env; center postNotificationName:name object:this userInfo:nil];
 }
 
 - (())setTextColor:(id)color { // UIColor*
@@ -245,7 +254,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     let _: () = msg![env; center postNotificationName:name object:this userInfo:nil];
 
     env.framework_state.uikit.ui_responder.first_responder = this;
-    env.window().start_text_input();
+    env.on_parent_stack_in_coroutine(|window, _| window.start_text_input());
 
     let name = ns_string::get_static_str(env, UIKeyboardDidShowNotification);
     // TODO: userInfo
@@ -282,7 +291,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     let _: () = msg![env; center postNotificationName:name object:this userInfo:nil];
 
     env.framework_state.uikit.ui_responder.first_responder = nil;
-    env.window().stop_text_input();
+    env.on_parent_stack_in_coroutine(|window, _| window.stop_text_input());
 
     let name = ns_string::get_static_str(env, UIKeyboardDidHideNotification);
     // TODO: userInfo

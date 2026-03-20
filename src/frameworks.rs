@@ -29,6 +29,7 @@ pub mod core_audio_types;
 pub mod core_foundation;
 pub mod core_graphics;
 pub mod core_location;
+pub mod core_motion;
 pub mod foundation;
 pub mod game_kit;
 pub mod media_player;

@@ -18,10 +18,11 @@ use super::ns_dictionary::dict_from_keys_and_objects;
 use super::ns_run_loop::NSDefaultRunLoopMode;
 use super::ns_string::{from_rust_string, get_static_str, to_rust_string};
 use super::{NSTimeInterval, NSUInteger};
+use crate::frameworks::foundation::ns_thread::detach_new_thread_inner;
 use crate::mem::MutVoidPtr;
 use crate::objc::{
-    autorelease, id, msg, msg_class, msg_send, nil, objc_classes, retain, Class, ClassExports,
-    NSZonePtr, ObjC, TrivialHostObject, SEL,
+    autorelease, id, msg, msg_class, msg_send, msg_send_no_type_checking, nil, objc_classes,
+    retain, Class, ClassExports, NSZonePtr, ObjC, TrivialHostObject, SEL,
 };
 
 pub const CLASSES: ClassExports = objc_classes! {
@@ -225,26 +226,30 @@ forUndefinedKey:(id)key { // NSString*
 }
 
 - (bool)respondsToSelector:(SEL)selector {
-    let class = msg![env; this class];
-    env.objc.class_has_method(class, selector)
+    env.objc.object_has_method(&env.mem, this, selector)
 }
 
 - (id)performSelector:(SEL)sel {
     assert!(!sel.is_null());
-    msg_send(env, (this, sel))
+    msg_send_no_type_checking(env, (this, sel))
 }
 
 - (id)performSelector:(SEL)sel
            withObject:(id)o1 {
     assert!(!sel.is_null());
-    msg_send(env, (this, sel, o1))
+    msg_send_no_type_checking(env, (this, sel, o1))
 }
 
 - (id)performSelector:(SEL)sel
            withObject:(id)o1
            withObject:(id)o2 {
     assert!(!sel.is_null());
-    msg_send(env, (this, sel, o1, o2))
+    msg_send_no_type_checking(env, (this, sel, o1, o2))
+}
+
+- (())performSelectorInBackground:(SEL)sel
+                       withObject:(id)arg {
+    detach_new_thread_inner(env, sel, this, arg, /* tolerate_type_mismatch: */ true)
 }
 
 - (())performSelector:(SEL)sel withObject:(id)arg afterDelay:(NSTimeInterval)delay {
@@ -352,6 +357,11 @@ forUndefinedKey:(id)key { // NSString*
         }
         () = msg_send(env, (this, sel));
     }
+}
+
+// UINibLoadingAdditions protocol
+- (())awakeFromNib {
+    // no-op
 }
 
 @end

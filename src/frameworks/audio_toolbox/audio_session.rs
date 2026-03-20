@@ -204,6 +204,22 @@ fn AudioSessionAddPropertyListener(
     );
     result
 }
+fn AudioSessionRemovePropertyListenerWithUserData(
+    _env: &mut Environment,
+    in_property_id: AudioSessionPropertyID,
+    in_listener: AudioSessionPropertyListener,
+    in_client_data: MutVoidPtr,
+) -> OSStatus {
+    let result = 0; // success
+    log!(
+        "TODO: AudioSessionRemovePropertyListenerWithUserData({:?}, {:?}, {:?}) -> {}",
+        in_property_id,
+        in_listener,
+        in_client_data,
+        result
+    );
+    result
+}
 
 /// Helper function to get AudioSession Property size by id
 fn get_audio_session_property_size(in_ID: AudioSessionPropertyID) -> GuestUSize {
@@ -225,4 +241,5 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(AudioSessionSetProperty(_, _, _)),
     export_c_func!(AudioSessionSetActive(_)),
     export_c_func!(AudioSessionAddPropertyListener(_, _, _)),
+    export_c_func!(AudioSessionRemovePropertyListenerWithUserData(_, _, _)),
 ];

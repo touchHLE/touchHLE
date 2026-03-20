@@ -642,6 +642,27 @@ impl GLES for GLES1Native<'_> {
         gles11::TexEnviv(target, pname, params)
     }
 
+    unsafe fn MultiTexCoord4f(
+        &mut self,
+        target: GLenum,
+        s: GLfloat,
+        t: GLfloat,
+        r: GLfloat,
+        q: GLfloat,
+    ) {
+        gles11::MultiTexCoord4f(target, s, t, r, q)
+    }
+    unsafe fn MultiTexCoord4x(
+        &mut self,
+        target: GLenum,
+        s: GLfixed,
+        t: GLfixed,
+        r: GLfixed,
+        q: GLfixed,
+    ) {
+        gles11::MultiTexCoord4x(target, s, t, r, q)
+    }
+
     // Matrix stack operations
     unsafe fn MatrixMode(&mut self, mode: GLenum) {
         gles11::MatrixMode(mode)

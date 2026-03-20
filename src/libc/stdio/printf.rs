@@ -1220,7 +1220,7 @@ pub fn isspace(env: &mut Environment, src: ConstPtr<u8>) -> bool {
     let c = env.mem.read(src);
     isspace_inner(c)
 }
-fn isspace_inner(c: u8) -> bool {
+pub fn isspace_inner(c: u8) -> bool {
     // Rust's definition of whitespace excludes vertical tab, unlike C's
     c.is_ascii_whitespace() || c == b'\x0b'
 }

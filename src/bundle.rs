@@ -114,6 +114,25 @@ impl Bundle {
             .map(|v| v.as_string().unwrap())
     }
 
+    pub fn required_device_capabilities(&self) -> Vec<&str> {
+        self.plist
+            .get("UIRequiredDeviceCapabilities")
+            .map(|v| {
+                if let Some(dict) = v.as_dictionary() {
+                    // TODO: support undesired capabilities
+                    assert!(dict.values().all(|x| x.as_boolean().unwrap()));
+                    dict.keys().map(|o| o.as_str()).collect()
+                } else {
+                    v.as_array()
+                        .unwrap()
+                        .iter()
+                        .map(|o| o.as_string().unwrap())
+                        .collect()
+                }
+            })
+            .unwrap_or_default()
+    }
+
     pub fn executable_path(&self) -> GuestPathBuf {
         // FIXME: Is this key optional? All iPhone apps seem to have it.
         self.path
@@ -180,7 +199,17 @@ impl Bundle {
         Ok(image)
     }
 
-    pub fn main_nib_filename(&self) -> Option<&str> {
+    pub fn main_nib_filename(&self, device_family: Option<DeviceFamily>) -> Option<&str> {
+        // TODO: extend this logic for all device-specific keys
+        if let Some(device_family) = device_family {
+            if device_family == DeviceFamily::iPad && self.plist.get("NSMainNibFile~ipad").is_some()
+            {
+                return self
+                    .plist
+                    .get("NSMainNibFile~ipad")
+                    .map(|v| v.as_string().unwrap());
+            }
+        }
         self.plist
             .get("NSMainNibFile")
             .map(|v| v.as_string().unwrap())

@@ -48,6 +48,7 @@ pub const DYLIB: crate::dyld::HostDylib = crate::dyld::HostDylib {
         cf_run_loop::CONSTANTS,
     ],
     function_exports: &[
+        FUNCTIONS,
         cf_array::FUNCTIONS,
         cf_dictionary::FUNCTIONS,
         cf_bundle::FUNCTIONS,
@@ -73,8 +74,12 @@ pub type CFOptionFlags = u32;
 pub type CFComparisonResult = CFIndex;
 
 use crate::abi::GuestArg;
-use crate::impl_GuestRet_for_large_struct;
+use crate::dyld::FunctionExports;
+use crate::environment::Environment;
+use crate::frameworks::foundation::ns_string::to_rust_string;
 use crate::mem::SafeRead;
+use crate::objc::id;
+use crate::{export_c_func, impl_GuestRet_for_large_struct, msg};
 
 pub const kCFNotFound: CFIndex = -1;
 
@@ -101,3 +106,15 @@ impl GuestArg for CFRange {
         self.length.to_regs(&mut regs[1..2]);
     }
 }
+
+fn CFShow(env: &mut Environment, obj: CFTypeRef) {
+    // TODO: support opaque types
+    // TODO: use description callbacks if defined
+    let description: id = msg![env; obj description];
+    // The output should be printed to stderr without any prefix,
+    // but CFShow() is meant to be used for debugging purposes,
+    // so just logging with CF module prefix should be fine too.
+    log!("{}", to_rust_string(env, description));
+}
+
+const FUNCTIONS: FunctionExports = &[export_c_func!(CFShow(_))];

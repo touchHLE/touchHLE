@@ -12,8 +12,8 @@ use crate::abi::{CallFromHost, GuestFunction};
 use crate::audio::decode_ima4;
 use crate::audio::openal as al;
 use crate::audio::openal::al_types::*;
+use crate::audio::openal::{OpenAL, OpenALManager};
 use crate::dyld::{export_c_func, FunctionExports};
-use crate::frameworks::audio_toolbox::ContextManager;
 use crate::frameworks::carbon_core::OSStatus;
 use crate::frameworks::core_audio_types::{
     debug_fourcc, fourcc, kAudioFormatAppleIMA4, kAudioFormatFlagIsBigEndian,
@@ -39,6 +39,18 @@ pub struct State {
 impl State {
     fn get(framework_state: &mut crate::frameworks::State) -> &mut Self {
         &mut framework_state.audio_toolbox.audio_queue
+    }
+    fn get_with_context<'s, 'm: 's>(
+        framework_state: &'s mut crate::frameworks::State,
+        manager: &'m mut OpenALManager,
+    ) -> (&'s mut Self, OpenAL<'s>) {
+        (
+            &mut framework_state.audio_toolbox.audio_queue,
+            framework_state
+                .audio_toolbox
+                .al_context
+                .make_al_context_current(manager),
+        )
     }
 }
 
@@ -238,15 +250,20 @@ pub fn AudioQueueSetParameter(
         host_object.volume
     );
     if let Some(al_source) = host_object.al_source {
-        let _context_manager = env.framework_state.audio_toolbox.make_al_context_current();
+        let context = env
+            .framework_state
+            .audio_toolbox
+            .make_al_context_current(&mut env.openal_manager);
+
         // If not clamped, OpenAL generates an error.
         // While Apple's docs states that this range is expected,
         // setting outside of range values do not generate errors
         // (tested on both macOS and iOS).
         let in_value = in_value.clamp(0.0, 1.0);
+
         unsafe {
-            al::alSourcef(al_source, al::AL_MAX_GAIN, in_value);
-            assert!(al::alGetError() == 0);
+            context.Sourcef(al_source, al::AL_MAX_GAIN, in_value);
+            assert!(context.GetError() == 0);
         }
     }
 
@@ -616,19 +633,14 @@ pub fn decode_buffer(
 
 /// Ensure an audio queue has an OpenAL source and at least one queued OpenAL
 /// buffer.
-fn prime_audio_queue(
-    env: &mut Environment,
-    in_aq: AudioQueueRef,
-    context_manager: Option<ContextManager>,
-) -> ContextManager {
-    let context_manager = context_manager
-        .unwrap_or_else(|| env.framework_state.audio_toolbox.make_al_context_current());
+fn prime_audio_queue(env: &mut Environment, in_aq: AudioQueueRef) {
+    let (state, context) =
+        State::get_with_context(&mut env.framework_state, &mut env.openal_manager);
 
-    let state = State::get(&mut env.framework_state);
     let host_object = state.audio_queues.get_mut(&in_aq).unwrap();
 
     if !is_supported_audio_format(&host_object.format) {
-        return context_manager;
+        return;
     }
 
     if host_object.al_source.is_none() {
@@ -639,9 +651,9 @@ fn prime_audio_queue(
         let volume = host_object.volume.clamp(0.0, 1.0);
         let mut al_source = 0;
         unsafe {
-            al::alGenSources(1, &mut al_source);
-            al::alSourcef(al_source, al::AL_MAX_GAIN, volume);
-            assert!(al::alGetError() == 0);
+            context.GenSources(1, &mut al_source);
+            context.Sourcef(al_source, al::AL_MAX_GAIN, volume);
+            assert!(context.GetError() == 0);
         };
         host_object.al_source = Some(al_source);
     }
@@ -651,13 +663,13 @@ fn prime_audio_queue(
         let mut al_buffers_queued = 0;
         let mut al_buffers_processed = 0;
         unsafe {
-            al::alGetSourcei(al_source, al::AL_BUFFERS_QUEUED, &mut al_buffers_queued);
-            al::alGetSourcei(
+            context.GetSourcei(al_source, al::AL_BUFFERS_QUEUED, &mut al_buffers_queued);
+            context.GetSourcei(
                 al_source,
                 al::AL_BUFFERS_PROCESSED,
                 &mut al_buffers_processed,
             );
-            assert!(al::alGetError() == 0);
+            assert!(context.GetError() == 0);
         }
         let al_buffers_queued: usize = al_buffers_queued.try_into().unwrap();
         let al_buffers_processed: usize = al_buffers_processed.try_into().unwrap();
@@ -681,8 +693,8 @@ fn prime_audio_queue(
 
         let next_al_buffer = host_object.al_unused_buffers.pop().unwrap_or_else(|| {
             let mut al_buffer = 0;
-            unsafe { al::alGenBuffers(1, &mut al_buffer) };
-            assert!(unsafe { al::alGetError() } == 0);
+            unsafe { context.GenBuffers(1, &mut al_buffer) };
+            assert!(unsafe { context.GetError() } == 0);
             al_buffer
         });
 
@@ -693,7 +705,7 @@ fn prime_audio_queue(
             next_buffer.audio_data_byte_size,
         );
         unsafe {
-            al::alBufferData(
+            context.BufferData(
                 next_al_buffer,
                 al_format,
                 data.as_ptr() as *const ALvoid,
@@ -701,23 +713,21 @@ fn prime_audio_queue(
                 al_frequency,
             )
         };
-        unsafe { al::alSourceQueueBuffers(al_source, 1, &next_al_buffer) };
-        assert!(unsafe { al::alGetError() } == 0);
+        unsafe { context.SourceQueueBuffers(al_source, 1, &next_al_buffer) };
+        assert!(unsafe { context.GetError() } == 0);
     }
-
-    context_manager
 }
 
-fn unqueue_buffers<F: FnMut(ALuint)>(al_source: ALuint, mut callback: F) {
+fn unqueue_buffers<F: FnMut(ALuint)>(al_source: ALuint, context: &OpenAL<'_>, mut callback: F) {
     loop {
         let mut al_buffers_processed = 0;
         unsafe {
-            al::alGetSourcei(
+            context.GetSourcei(
                 al_source,
                 al::AL_BUFFERS_PROCESSED,
                 &mut al_buffers_processed,
             );
-            assert!(al::alGetError() == 0);
+            assert!(context.GetError() == 0);
         }
         if al_buffers_processed == 0 {
             break;
@@ -725,8 +735,8 @@ fn unqueue_buffers<F: FnMut(ALuint)>(al_source: ALuint, mut callback: F) {
 
         let mut al_buffer = 0;
         unsafe {
-            al::alSourceUnqueueBuffers(al_source, 1, &mut al_buffer);
-            assert!(al::alGetError() == 0);
+            context.SourceUnqueueBuffers(al_source, 1, &mut al_buffer);
+            assert!(context.GetError() == 0);
         }
 
         callback(al_buffer);
@@ -739,9 +749,8 @@ pub fn handle_audio_queue(env: &mut Environment, in_aq: AudioQueueRef) {
     // Collect used buffers and call the user callback so the app can provide
     // new buffers.
 
-    let context_manager = env.framework_state.audio_toolbox.make_al_context_current();
-
-    let state = State::get(&mut env.framework_state);
+    let (state, context) =
+        State::get_with_context(&mut env.framework_state, &mut env.openal_manager);
 
     let host_object = state.audio_queues.get_mut(&in_aq).unwrap();
     let Some(al_source) = host_object.al_source else {
@@ -759,7 +768,7 @@ pub fn handle_audio_queue(env: &mut Environment, in_aq: AudioQueueRef) {
 
     let mut buffers_to_reuse = Vec::new();
 
-    unqueue_buffers(al_source, |al_buffer| {
+    unqueue_buffers(al_source, &context, |al_buffer| {
         host_object.al_unused_buffers.push(al_buffer);
         let buffer_ref = host_object.buffer_queue.pop_front().unwrap();
         buffers_to_reuse.push(buffer_ref);
@@ -786,20 +795,25 @@ pub fn handle_audio_queue(env: &mut Environment, in_aq: AudioQueueRef) {
 
     // Push new buffers etc.
 
-    let _context_manager = prime_audio_queue(env, in_aq, Some(context_manager));
+    prime_audio_queue(env, in_aq);
+
+    let context = env
+        .framework_state
+        .audio_toolbox
+        .make_al_context_current(&mut env.openal_manager);
 
     if is_running != AudioQueueIsRunning::Stopped {
         unsafe {
             let mut al_source_state = 0;
-            al::alGetSourcei(al_source, al::AL_SOURCE_STATE, &mut al_source_state);
-            assert!(al::alGetError() == 0);
+            context.GetSourcei(al_source, al::AL_SOURCE_STATE, &mut al_source_state);
+            assert!(context.GetError() == 0);
             // Source probably ran out data and needs restarting
             // TODO: We currently have to do this even when touchHLE is not
             // lagging, because we're not ensuring OpenAL always has at least
             // one buffer it hasn't processed yet. We need to change our queue
             // handling.
             if al_source_state == al::AL_STOPPED {
-                al::alSourcePlay(al_source);
+                context.SourcePlay(al_source);
                 log_dbg!("Restarted OpenAL source for queue {:?}", in_aq);
             }
         }
@@ -808,8 +822,8 @@ pub fn handle_audio_queue(env: &mut Environment, in_aq: AudioQueueRef) {
     if is_running == AudioQueueIsRunning::Stopping {
         let mut al_source_state = 0;
         unsafe {
-            al::alGetSourcei(al_source, al::AL_SOURCE_STATE, &mut al_source_state);
-            assert!(al::alGetError() == 0);
+            context.GetSourcei(al_source, al::AL_SOURCE_STATE, &mut al_source_state);
+            assert!(context.GetError() == 0);
         }
 
         // If OpenAL still says the source is stopped, it must have run out of
@@ -838,7 +852,7 @@ fn AudioQueuePrime(
     return_if_null!(in_aq);
 
     assert!(out_number_of_frames_prepared.is_null()); // TODO
-    let _context_manager = prime_audio_queue(env, in_aq, None);
+    prime_audio_queue(env, in_aq);
     0 // success
 }
 
@@ -868,19 +882,19 @@ pub fn AudioQueueStart(
 
     assert!(in_device_start_time.is_null()); // TODO
 
-    let _context_manager = prime_audio_queue(env, in_aq, None);
+    prime_audio_queue(env, in_aq);
 
-    let host_object = State::get(&mut env.framework_state)
-        .audio_queues
-        .get_mut(&in_aq)
-        .unwrap();
+    let (state, context) =
+        State::get_with_context(&mut env.framework_state, &mut env.openal_manager);
+
+    let host_object = state.audio_queues.get_mut(&in_aq).unwrap();
 
     host_object.is_running = AudioQueueIsRunning::Running;
 
     if is_supported_audio_format(&host_object.format) {
         let al_source = host_object.al_source.unwrap();
-        unsafe { al::alSourcePlay(al_source) };
-        assert!(unsafe { al::alGetError() } == 0);
+        unsafe { context.SourcePlay(al_source) };
+        assert!(unsafe { context.GetError() } == 0);
     } else {
         log!(
             "AudioQueueStart: Unsupported format {:?}",
@@ -896,16 +910,15 @@ pub fn AudioQueueStart(
 pub fn AudioQueuePause(env: &mut Environment, in_aq: AudioQueueRef) -> OSStatus {
     return_if_null!(in_aq);
 
-    let _context_manager = env.framework_state.audio_toolbox.make_al_context_current();
-
-    let state = State::get(&mut env.framework_state);
+    let (state, context) =
+        State::get_with_context(&mut env.framework_state, &mut env.openal_manager);
 
     let host_object = state.audio_queues.get_mut(&in_aq).unwrap();
     // FIXME: is this correct? is it notifiable?
     host_object.is_running = AudioQueueIsRunning::Stopped;
     if let Some(al_source) = host_object.al_source {
-        unsafe { al::alSourcePause(al_source) };
-        assert!(unsafe { al::alGetError() } == 0);
+        unsafe { context.SourcePause(al_source) };
+        assert!(unsafe { context.GetError() } == 0);
     }
 
     0 // success
@@ -930,13 +943,13 @@ pub fn AudioQueueStop(env: &mut Environment, in_aq: AudioQueueRef, in_immediate:
     if in_immediate {
         log_dbg!("Performing immediate AudioQueueStop for {:?}.", in_aq);
 
-        let _context_manager = env.framework_state.audio_toolbox.make_al_context_current();
+        let (state, context) =
+            State::get_with_context(&mut env.framework_state, &mut env.openal_manager);
 
-        let state = State::get(&mut env.framework_state);
         let host_object = state.audio_queues.get_mut(&in_aq).unwrap();
         if let Some(al_source) = host_object.al_source {
-            unsafe { al::alSourceStop(al_source) };
-            assert!(unsafe { al::alGetError() } == 0);
+            unsafe { context.SourceStop(al_source) };
+            assert!(unsafe { context.GetError() } == 0);
         };
 
         finish_stopping_audio_queue(env, in_aq);
@@ -960,9 +973,8 @@ pub fn AudioQueueStop(env: &mut Environment, in_aq: AudioQueueRef, in_immediate:
 fn AudioQueueReset(env: &mut Environment, in_aq: AudioQueueRef) -> OSStatus {
     return_if_null!(in_aq);
 
-    let _context_manager = env.framework_state.audio_toolbox.make_al_context_current();
-
-    let state = State::get(&mut env.framework_state);
+    let (state, context) =
+        State::get_with_context(&mut env.framework_state, &mut env.openal_manager);
 
     log_dbg!("Resetting queue {:?}.", in_aq);
 
@@ -971,18 +983,18 @@ fn AudioQueueReset(env: &mut Environment, in_aq: AudioQueueRef) -> OSStatus {
     if let Some(al_source) = host_object.al_source {
         unsafe {
             let mut al_source_state = 0;
-            al::alGetSourcei(al_source, al::AL_SOURCE_STATE, &mut al_source_state);
-            assert!(al::alGetError() == 0);
+            context.GetSourcei(al_source, al::AL_SOURCE_STATE, &mut al_source_state);
+            assert!(context.GetError() == 0);
             if al_source_state != al::AL_STOPPED {
                 // If the source is not already stopped, it must be stopped in
                 // order to be able to clear its buffer queue. Note that the
                 // audio queue may still be considered "running".
-                al::alSourceStop(al_source);
-                assert!(al::alGetError() == 0);
+                context.SourceStop(al_source);
+                assert!(context.GetError() == 0);
             }
         }
 
-        unqueue_buffers(al_source, |al_buffer| {
+        unqueue_buffers(al_source, &context, |al_buffer| {
             host_object.al_unused_buffers.push(al_buffer);
             host_object.buffer_queue.pop_front().unwrap();
         });
@@ -1039,7 +1051,8 @@ pub fn AudioQueueDispose(
 
     assert!(in_immediate); // TODO
 
-    let state = State::get(&mut env.framework_state);
+    let (state, context) =
+        State::get_with_context(&mut env.framework_state, &mut env.openal_manager);
 
     let mut host_object = state.audio_queues.remove(&in_aq).unwrap();
     log_dbg!("Disposing of audio queue {:?}", in_aq);
@@ -1053,23 +1066,21 @@ pub fn AudioQueueDispose(
     }
 
     if let Some(al_source) = host_object.al_source {
-        let _context_manager = env.framework_state.audio_toolbox.make_al_context_current();
-
         unsafe {
-            al::alSourceStop(al_source);
-            assert!(al::alGetError() == 0);
+            context.SourceStop(al_source);
+            assert!(context.GetError() == 0);
         }
 
-        unqueue_buffers(al_source, |al_buffer| {
+        unqueue_buffers(al_source, &context, |al_buffer| {
             host_object.al_unused_buffers.push(al_buffer)
         });
 
         unsafe {
-            al::alDeleteBuffers(
+            context.DeleteBuffers(
                 host_object.al_unused_buffers.len().try_into().unwrap(),
                 host_object.al_unused_buffers.as_ptr(),
             );
-            assert!(al::alGetError() == 0);
+            assert!(context.GetError() == 0);
         }
     }
 

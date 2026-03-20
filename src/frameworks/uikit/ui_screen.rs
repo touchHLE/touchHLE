@@ -5,7 +5,7 @@
  */
 //! `UIScreen`.
 
-use crate::frameworks::core_graphics::{CGPoint, CGRect, CGSize};
+use crate::frameworks::core_graphics::{CGFloat, CGPoint, CGRect, CGSize};
 use crate::objc::{id, msg, objc_classes, ClassExports, TrivialHostObject};
 
 #[derive(Default)]
@@ -60,6 +60,11 @@ pub const CLASSES: ClassExports = objc_classes! {
         bounds.size.height -= STATUS_BAR_HEIGHT;
     }
     bounds
+}
+
+- (CGFloat)scale {
+    // TODO: support retina
+    1.0
 }
 
 @end

@@ -13,6 +13,7 @@ use crate::frameworks::core_foundation::cf_bundle::{
 use crate::frameworks::foundation::ns_string::from_rust_string;
 use crate::objc::{
     autorelease, id, msg, msg_class, nil, objc_classes, release, retain, ClassExports, HostObject,
+    NSZonePtr,
 };
 use crate::Environment;
 use std::collections::{HashMap, HashSet};
@@ -65,22 +66,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     if let Some(bundle) = env.framework_state.foundation.ns_bundle.main_bundle {
         bundle
     } else {
-        let bundle_path = env.bundle.bundle_path().as_str().to_string();
-        let bundle_path = ns_string::from_rust_string(env, bundle_path);
-        let bundle_identifier = env.bundle.bundle_identifier().to_string();
-        let bundle_identifier = ns_string::from_rust_string(env, bundle_identifier);
-        let host_object = NSBundleHostObject {
-            bundle: None,
-            bundle_path,
-            bundle_identifier,
-            bundle_url: None,
-            info_dictionary: None,
-        };
-        let new = env.objc.alloc_object(
-            this,
-            Box::new(host_object),
-            &mut env.mem
-        );
+        let new = msg_class![env; _touchHLE_NSBundle_Static alloc];
         env.framework_state.foundation.ns_bundle.main_bundle = Some(new);
         new
    }
@@ -312,6 +298,36 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 // TODO: constructors, more accessors
+
+@end
+
+// Private static implementation of NSBundle, used for the main bundle
+// allocation. This is needed because some apps (e.g. Ovenbreak)
+// attempts to release it.
+@implementation _touchHLE_NSBundle_Static: NSBundle
+
++ (id)allocWithZone:(NSZonePtr)_zone {
+    let bundle_path = env.bundle.bundle_path().as_str().to_string();
+    let bundle_path = ns_string::from_rust_string(env, bundle_path);
+    let bundle_identifier = env.bundle.bundle_identifier().to_string();
+    let bundle_identifier = ns_string::from_rust_string(env, bundle_identifier);
+    let host_object = NSBundleHostObject {
+        bundle: None,
+        bundle_path,
+        bundle_identifier,
+        bundle_url: None,
+        info_dictionary: None,
+    };
+    env.objc.alloc_object(
+        this,
+        Box::new(host_object),
+        &mut env.mem
+    )
+}
+
+- (id) retain { this }
+- (()) release {}
+- (id) autorelease { this }
 
 @end
 

@@ -1195,6 +1195,31 @@ fn glTexEnviv(env: &mut Environment, target: GLenum, pname: GLenum, params: Cons
     })
 }
 
+fn glMultiTexCoord4f(
+    env: &mut Environment,
+    target: GLenum,
+    s: GLfloat,
+    t: GLfloat,
+    r: GLfloat,
+    q: GLfloat,
+) {
+    with_ctx_and_mem(env, |gles, _mem| unsafe {
+        gles.MultiTexCoord4f(target, s, t, r, q)
+    })
+}
+fn glMultiTexCoord4x(
+    env: &mut Environment,
+    target: GLenum,
+    s: GLfixed,
+    t: GLfixed,
+    r: GLfixed,
+    q: GLfixed,
+) {
+    with_ctx_and_mem(env, |gles, _mem| unsafe {
+        gles.MultiTexCoord4x(target, s, t, r, q)
+    })
+}
+
 // OES_framebuffer_object
 fn glGenFramebuffersOES(env: &mut Environment, n: GLsizei, framebuffers: MutPtr<GLuint>) {
     with_ctx_and_mem(env, |gles, mem| {
@@ -1584,6 +1609,8 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(glTexEnvfv(_, _, _)),
     export_c_func!(glTexEnvxv(_, _, _)),
     export_c_func!(glTexEnviv(_, _, _)),
+    export_c_func!(glMultiTexCoord4f(_, _, _, _, _)),
+    export_c_func!(glMultiTexCoord4x(_, _, _, _, _)),
     // OES_framebuffer_object
     export_c_func!(glGenFramebuffersOES(_, _)),
     export_c_func!(glGenRenderbuffersOES(_, _)),

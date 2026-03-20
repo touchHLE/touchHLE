@@ -112,6 +112,9 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (())setDelegate:(id)delegate {
     todo_objc_setter!(this, delegate);
 }
+- (())setMeteringEnabled:(bool)enabled {
+    todo_objc_setter!(this, enabled);
+}
 
 - (f32)volume {
     let aq_ref = env.objc.borrow_mut::<AVAudioPlayerHostObject>(this).audio_queue;

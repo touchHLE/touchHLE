@@ -10,18 +10,20 @@ use super::ns_property_list_serialization::{
     deserialize_plist_from_file, NSPropertyListBinaryFormat_v1_0,
 };
 use super::ns_string::{from_rust_string, get_static_str, to_rust_string};
-use super::{ns_array, ns_keyed_unarchiver, ns_string, ns_url, NSUInteger};
+use super::{ns_array, ns_keyed_unarchiver, ns_string, ns_url, NSUInteger, _nib_archive_decoder};
 use crate::abi::{CallFromHost, GuestFunction, VaList};
 use crate::frameworks::core_foundation::{CFHashCode, CFIndex};
 use crate::frameworks::foundation::ns_enumerator::{
     fast_enumeration_helper, NSFastEnumerationState,
 };
-use crate::frameworks::foundation::ns_file_manager::{NSFileModificationDate, NSFileSize};
+use crate::frameworks::foundation::ns_file_manager::{
+    NSFileModificationDate, NSFileSize, NSFileType,
+};
 use crate::fs::GuestPath;
 use crate::mem::{ConstPtr, MutPtr, Ptr, SafeRead};
 use crate::objc::{
-    autorelease, id, msg, msg_class, nil, objc_classes, release, retain, ClassExports, HostObject,
-    NSZonePtr,
+    autorelease, id, msg, msg_class, nil, objc_classes, release, retain, Class, ClassExports,
+    HostObject, NSZonePtr,
 };
 use crate::{impl_HostObject_with_superclass, Environment};
 use std::collections::hash_map::Entry;
@@ -491,6 +493,10 @@ pub const CLASSES: ClassExports = objc_classes! {
         0
     }
 }
+- (id)fileType {
+    let file_type_key = get_static_str(env, NSFileType);
+    msg![env; this objectForKey:file_type_key]
+}
 
 @end
 
@@ -672,20 +678,29 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 // NSCoding implementation
 - (id)initWithCoder:(id)coder {
-    // It seems that every NSDictionary item in an NSKeyedArchiver plist
-    // looks like:
-    // {
-    //   "$class" => (uid of NSArray class goes here),
-    //   "NS.keys" => [
-    //     // keys here
-    //   ]
-    //   "NS.objects" => [
-    //     // objects here
-    //   ]
-    // }
+    let class: Class = msg![env; coder class];
+    let keyed_unarch_class: Class = msg_class![env; NSKeyedUnarchiver class];
+    let nib_archive_class: Class = msg_class![env; _touchHLE_NIBArchiveDecoder class];
+    let tuples = if env.objc.class_is_subclass_of(class, keyed_unarch_class) {
+        // It seems that every NSDictionary item in an NSKeyedArchiver plist
+        // looks like:
+        // {
+        //   "$class" => (uid of NSDictionary class goes here),
+        //   "NS.keys" => [
+        //     // keys here
+        //   ]
+        //   "NS.objects" => [
+        //     // objects here
+        //   ]
+        // }
+        ns_keyed_unarchiver::decode_current_dict(env, coder)
+    } else if env.objc.class_is_subclass_of(class, nib_archive_class) {
+        _nib_archive_decoder::decode_current_dict(env, coder)
+    } else {
+        unimplemented!()
+    };
+
     release(env, this);
-    // FIXME: What if it's not an NSKeyedUnarchiver?
-    let tuples = ns_keyed_unarchiver::decode_current_dict(env, coder);
     let dict = dict_from_keys_and_objects(env, &tuples);
 
     let mut_dict = msg![env; dict mutableCopy];
@@ -708,6 +723,24 @@ pub const CLASSES: ClassExports = objc_classes! {
     let res = host_obj.lookup(env, key);
     *env.objc.borrow_mut(this) = host_obj;
     res
+}
+
+// NSFastEnumeration implementation
+- (NSUInteger)countByEnumeratingWithState:(MutPtr<NSFastEnumerationState>)state
+                                  objects:(MutPtr<id>)stackbuf
+                                    count:(NSUInteger)len {
+    // TODO: check that dict wasn't mutated!
+    // We assume that order in which objects are reported is consistent
+    // between calls!
+    let objects: id = msg![env; this allKeys];
+    let count: NSUInteger = msg![env; objects count];
+    fast_enumeration_helper(env, this, |env, idx| {
+        if idx < count {
+            msg![env; objects objectAtIndex:idx]
+        } else {
+            nil
+        }
+    }, state, stackbuf, len)
 }
 
 // NSCopying implementation
@@ -787,6 +820,23 @@ pub const CLASSES: ClassExports = objc_classes! {
     }
     let res = ns_array::from_vec(env, values);
     autorelease(env, res)
+}
+
+- (id)allKeysForObject:(id)obj {
+    let res: id = msg_class![env; NSMutableArray new];
+
+    let host_obj: DictionaryHostObject = std::mem::take(env.objc.borrow_mut(this));
+    host_obj.map.values().flatten().for_each(|&(key, value)| {
+        let equal = msg![env; obj isEqual:value];
+        if equal {
+            () = msg![env; res addObject:key];
+        }
+    });
+    *env.objc.borrow_mut(this) = host_obj;
+
+    let res_imm = msg![env; res copy];
+    release(env, res);
+    autorelease(env, res_imm)
 }
 
 - (id)objectEnumerator { // NSEnumerator*

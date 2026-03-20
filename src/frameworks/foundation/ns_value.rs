@@ -6,7 +6,7 @@
 //! The `NSValue` class cluster, including `NSNumber`.
 
 use super::ns_string::{from_rust_ordering, from_rust_string};
-use super::{NSComparisonResult, NSOrderedSame, NSUInteger};
+use super::{NSComparisonResult, NSOrderedSame, NSUInteger, _nib_archive_decoder};
 use crate::frameworks::core_foundation::cf_number::{
     kCFNumberCharType, kCFNumberFloat32Type, kCFNumberFloatType, kCFNumberIntType,
     kCFNumberSInt16Type, kCFNumberSInt32Type, kCFNumberSInt8Type, kCFNumberShortType, CFNumberType,
@@ -15,8 +15,8 @@ use crate::frameworks::core_graphics::{CGPoint, CGRect, CGSize};
 use crate::frameworks::foundation::NSInteger;
 use crate::mem::{ConstVoidPtr, MutVoidPtr};
 use crate::objc::{
-    autorelease, id, msg, msg_class, objc_classes, retain, Class, ClassExports, HostObject,
-    NSZonePtr,
+    autorelease, id, msg, msg_class, objc_classes, release, retain, Class, ClassExports,
+    HostObject, NSZonePtr,
 };
 use crate::Environment;
 use std::cmp::Ordering;
@@ -42,6 +42,7 @@ macro_rules! impl_AsValue {
                 NSNumberHostObject::Float(x) => *x as _,
                 NSNumberHostObject::Double(x) => *x as _,
                 NSNumberHostObject::Short(x) => *x as _,
+                NSNumberHostObject::UnsignedShort(x) => *x as _,
                 NSNumberHostObject::Char(x) => *x as _,
             }
         }
@@ -58,6 +59,7 @@ pub(super) enum NSNumberHostObject {
     Float(f32),
     Double(f64),
     Short(i16),
+    UnsignedShort(u16),
     Char(i8),
 }
 impl HostObject for NSNumberHostObject {}
@@ -73,6 +75,7 @@ impl NSNumberHostObject {
             NSNumberHostObject::Float(x) => *x != 0.0,
             NSNumberHostObject::Double(x) => *x != 0.0,
             NSNumberHostObject::Short(x) => *x != 0,
+            NSNumberHostObject::UnsignedShort(x) => *x != 0,
             NSNumberHostObject::Char(x) => *x != 0,
         }
     }
@@ -89,6 +92,7 @@ impl NSNumberHostObject {
     impl_AsValue!(as_float, f32);
     impl_AsValue!(as_double, f64);
     impl_AsValue!(as_short, i16);
+    impl_AsValue!(as_unsigned_short, u16);
     impl_AsValue!(as_char, i8);
     impl_AsValue!(as_i128, i128);
 }
@@ -252,6 +256,14 @@ pub const CLASSES: ClassExports = objc_classes! {
     autorelease(env, new)
 }
 
++ (id)numberWithUnsignedShort:(u16)value {
+    // TODO: for greater efficiency we could return a static-lifetime value
+
+    let new: id = msg![env; this alloc];
+    let new: id = msg![env; new initWithUnsignedShort:value];
+    autorelease(env, new)
+}
+
 + (id)numberWithChar:(i8)value {
     // TODO: for greater efficiency we could return a static-lifetime value
 
@@ -261,6 +273,19 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 // TODO: types other than booleans and long longs
+
+// NSCoding implementation
+- (id)initWithCoder:(id)coder {
+    let class: Class = msg![env; coder class];
+    let nib_archive_class: Class = msg_class![env; _touchHLE_NIBArchiveDecoder class];
+    let new_num = if env.objc.class_is_subclass_of(class, nib_archive_class) {
+        _nib_archive_decoder::decode_current_number(env, coder)
+    } else {
+        unimplemented!();
+    };
+    release(env, this);
+    new_num
+}
 
 - (id)initWithBool:(bool)value {
     *env.objc.borrow_mut(this) = NSNumberHostObject::Bool(value);
@@ -309,6 +334,11 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 - (id)initWithShort:(i16)value {
     *env.objc.borrow_mut(this) = NSNumberHostObject::Short(value);
+    this
+}
+
+- (id)initWithUnsignedShort:(u16)value {
+    *env.objc.borrow_mut(this) = NSNumberHostObject::UnsignedShort(value);
     this
 }
 
@@ -361,6 +391,10 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.borrow::<NSNumberHostObject>(this).as_short()
 }
 
+- (u16)unsignedShortValue {
+    env.objc.borrow::<NSNumberHostObject>(this).as_unsigned_short()
+}
+
 - (i8)charValue {
     env.objc.borrow::<NSNumberHostObject>(this).as_char()
 }
@@ -375,6 +409,7 @@ pub const CLASSES: ClassExports = objc_classes! {
         NSNumberHostObject::Float(value) => from_rust_string(env, value.to_string()),
         NSNumberHostObject::Double(value) => from_rust_string(env, value.to_string()),
         NSNumberHostObject::Short(value) => from_rust_string(env, value.to_string()),
+        NSNumberHostObject::UnsignedShort(value) => from_rust_string(env, value.to_string()),
         NSNumberHostObject::Char(value) => from_rust_string(env, value.to_string()),
     };
     autorelease(env, desc)
@@ -394,6 +429,7 @@ pub const CLASSES: ClassExports = objc_classes! {
         NSNumberHostObject::Float(value) => value.to_bits() as u64,
         NSNumberHostObject::Double(value) => value.to_bits(),
         NSNumberHostObject::Short(value) => *value as u64,
+        NSNumberHostObject::UnsignedShort(value) => *value as u64,
         NSNumberHostObject::Char(value) => *value as u64,
     };
     super::hash_helper(&value)

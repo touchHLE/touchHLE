@@ -28,7 +28,6 @@
 #[macro_use]
 mod log;
 mod abi;
-mod app_picker;
 mod audio;
 mod bundle;
 mod cpu;
@@ -199,7 +198,9 @@ pub fn main<T: Iterator<Item = String>>(mut args: T) -> Result<(), String> {
         echo!(
             "No app specified, opening app picker. Use the --help flag to see command-line usage."
         );
-        app_picker::app_picker(options, &mut option_args)?
+        let (bundle_path, mut extra_options) = environment::app_picker::app_picker(options)?;
+        option_args.append(&mut extra_options);
+        bundle_path
     };
 
     // When PowerShell does tab-completion on a directory, for some reason it
@@ -224,6 +225,8 @@ pub fn main<T: Iterator<Item = String>>(mut args: T) -> Result<(), String> {
 
     let app_id = bundle.bundle_identifier();
     let minimum_os_version = bundle.minimum_os_version();
+    let required_device_capabilities = bundle.required_device_capabilities();
+    let device_family = bundle.device_family_array();
 
     echo!("App bundle info:");
     echo!("- Display name: {}", bundle.display_name());
@@ -238,6 +241,26 @@ pub fn main<T: Iterator<Item = String>>(mut args: T) -> Result<(), String> {
         "- Minimum OS version: {}",
         minimum_os_version.unwrap_or("(not specified)")
     );
+    echo!(
+        "- Required device capabilities: {}",
+        if !required_device_capabilities.is_empty() {
+            required_device_capabilities.join(", ")
+        } else {
+            "(not specified)".to_string()
+        }
+    );
+    echo!(
+        "- Device family: {}",
+        if !device_family.is_empty() {
+            device_family
+                .iter()
+                .map(|x| x.to_string())
+                .collect::<Vec<_>>()
+                .join(", ")
+        } else {
+            "(not specified)".to_string()
+        }
+    );
     echo!();
 
     if let Some(version) = minimum_os_version {
@@ -247,9 +270,15 @@ pub fn main<T: Iterator<Item = String>>(mut args: T) -> Result<(), String> {
             .map_or(minor_etc, |(minor, _etc)| minor);
         let major: u32 = major.parse().unwrap();
         let minor: u32 = minor.parse().unwrap();
-        if major > 3 || (major == 3 && minor > 0) {
-            echo!("Warning: app requires OS version {}. Only iPhone OS 2.x and iPhone OS 3.0 apps are currently supported.", version);
+        if major > 4 || (major == 4 && minor > 0) {
+            echo!("Warning: app requires OS version {}. Only apps for iOS 4.0 and earlier are currently supported.", version);
         }
+    }
+
+    if required_device_capabilities.contains(&"opengles-2")
+        || required_device_capabilities.contains(&"opengles-3")
+    {
+        echo!("Warning: app requires OpenGL ES 2.0+ support. Only OpenGL ES 1.1 is currently supported.");
     }
 
     if just_info {
@@ -312,7 +341,7 @@ pub fn main<T: Iterator<Item = String>>(mut args: T) -> Result<(), String> {
     let res = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
         Environment::new(bundle, fs, options.clone(), app_args.unwrap_or_default())
     }));
-    let mut env = match res {
+    let env = match res {
         Ok(ret) => match ret {
             Ok(env) => env,
             Err(e) => {
@@ -336,26 +365,6 @@ pub fn main<T: Iterator<Item = String>>(mut args: T) -> Result<(), String> {
             std::panic::resume_unwind(e)
         }
     };
-
-    // We can set the parent window after the environment is set up, so this
-    // panic-catch is seperate.
-    let res = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-        env.run();
-    }));
-    match res {
-        Ok(_) => Ok(()),
-        Err(e) => {
-            if options.popup_errors {
-                let error_string = if let Some(s) = e.downcast_ref::<&str>() {
-                    s
-                } else if let Some(s) = e.downcast_ref::<String>() {
-                    s
-                } else {
-                    "(non-string payload)"
-                };
-                window::show_error_messagebox(env.window.as_ref(), error_string);
-            }
-            std::panic::resume_unwind(e)
-        }
-    }
+    env.run();
+    Ok(())
 }

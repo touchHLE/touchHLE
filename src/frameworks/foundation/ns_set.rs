@@ -42,10 +42,22 @@ pub const CLASSES: ClassExports = objc_classes! {
     msg_class![env; _touchHLE_NSSet allocWithZone:zone]
 }
 
++ (id)set {
+    let set: id = msg![env; this new];
+    autorelease(env, set)
+}
+
 + (id)setWithObject:(id)object {
     assert!(object != nil);
     let new: id = msg![env; this alloc];
     let new: id = msg![env; new initWithObject:object];
+    autorelease(env, new)
+}
+
++ (id)setWithObjects:(id)first_obj, ...args {
+    assert!(this == env.objc.get_known_class("NSSet", &mut env.mem));
+    let new: id = msg![env; this alloc];
+    env.objc.borrow_mut::<SetHostObject>(new).dict = set_from_objects(env, first_obj, args);
     autorelease(env, new)
 }
 
@@ -84,6 +96,13 @@ pub const CLASSES: ClassExports = objc_classes! {
     msg_class![env; _touchHLE_NSMutableSet allocWithZone:zone]
 }
 
++ (id)setWithObjects:(id)first_obj, ...args {
+    assert!(this == env.objc.get_known_class("NSMutableSet", &mut env.mem));
+    let new: id = msg![env; this alloc];
+    env.objc.borrow_mut::<SetHostObject>(new).dict = set_from_objects(env, first_obj, args);
+    autorelease(env, new)
+}
+
 // NSCopying implementation
 - (id)copyWithZone:(NSZonePtr)_zone {
     todo!(); // TODO: this should produce an immutable copy
@@ -100,12 +119,6 @@ pub const CLASSES: ClassExports = objc_classes! {
         dict: Default::default(),
     });
     env.objc.alloc_object(this, host_object, &mut env.mem)
-}
-
-+ (id)setWithObjects:(id)first_obj, ...args {
-    let new: id = msg![env; this alloc];
-    env.objc.borrow_mut::<SetHostObject>(new).dict = set_from_objects(env, first_obj, args);
-    autorelease(env, new)
 }
 
 - (id)initWithObject:(id)object {
@@ -182,12 +195,6 @@ pub const CLASSES: ClassExports = objc_classes! {
         dict: Default::default(),
     });
     env.objc.alloc_object(this, host_object, &mut env.mem)
-}
-
-+ (id)setWithObjects:(id)first_obj, ...args {
-    let new: id = msg![env; this alloc];
-    env.objc.borrow_mut::<SetHostObject>(new).dict = set_from_objects(env, first_obj, args);
-    autorelease(env, new)
 }
 
 - (id)initWithObject:(id)object {

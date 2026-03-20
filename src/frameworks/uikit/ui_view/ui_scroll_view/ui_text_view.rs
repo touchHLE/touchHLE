@@ -8,6 +8,7 @@
 use crate::frameworks::core_graphics::cg_context::CGContextSetRGBFillColor;
 use crate::frameworks::core_graphics::cg_geometry::CGPointZero;
 use crate::frameworks::core_graphics::{CGFloat, CGPoint, CGRect, CGSize};
+use crate::frameworks::foundation::NSUInteger;
 use crate::frameworks::uikit::ui_color;
 use crate::frameworks::uikit::ui_font::{
     UILineBreakModeTailTruncation, UITextAlignment, UITextAlignmentLeft,
@@ -19,6 +20,8 @@ use crate::objc::{
     retain, todo_objc_setter, ClassExports, NSZonePtr,
 };
 use crate::Environment;
+
+type UIDataDetectorTypes = NSUInteger;
 
 pub struct UITextViewHostObject {
     superclass: super::UIScrollViewHostObject,
@@ -181,6 +184,10 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 - (())setReturnKeyType:(UIReturnKeyType)type_ {
     todo_objc_setter!(this, type_);
+}
+
+- (())setDataDetectorTypes:(UIDataDetectorTypes)types {
+    todo_objc_setter!(this, types);
 }
 
 - (())drawRect:(CGRect)_rect {

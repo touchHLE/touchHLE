@@ -22,7 +22,7 @@ jobs:
         shell: bash # windows :)
         run: |
           mkdir -p "$GITHUB_WORKSPACE"
-          git clone https://github.com/touchHLE/touchHLE "$GITHUB_WORKSPACE"
+          git clone https://github.com/hr56g45678888eh-arch/PolarHLE "$GITHUB_WORKSPACE"
           cd "$GITHUB_WORKSPACE"
           git fetch origin "$GITHUB_REF"
           git checkout "$GITHUB_SHA" # avoid race condition if branch/tag changes
@@ -102,7 +102,7 @@ jobs:
       shell: bash # windows :)
       run: |
         mkdir -p "$GITHUB_WORKSPACE"
-        git clone https://github.com/touchHLE/touchHLE "$GITHUB_WORKSPACE"
+        git clone https://github.com/hr56g45678888eh-arch/PolarHLE "$GITHUB_WORKSPACE"
         cd "$GITHUB_WORKSPACE"
         git fetch origin "$GITHUB_REF"
         git checkout "$GITHUB_SHA" # avoid race condition if branch/tag changes
@@ -200,7 +200,7 @@ jobs:
       shell: bash # windows :)
       run: |
         mkdir -p "$GITHUB_WORKSPACE"
-        git clone https://github.com/touchHLE/touchHLE "$GITHUB_WORKSPACE"
+        git clone https://github.com/hr56g45678888eh-arch/PolarHLE "$GITHUB_WORKSPACE"
         cd "$GITHUB_WORKSPACE"
         git fetch origin "$GITHUB_REF"
         git checkout "$GITHUB_SHA" # avoid race condition if branch/tag changes

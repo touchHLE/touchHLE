@@ -570,7 +570,8 @@ impl GLES for GLES1Native<'_> {
         // OES_compressed_paletted_texture is in the common profile of OpenGL ES
         // 1.1, so we can reasonably assume it's supported.
         if PalettedTextureFormat::get_info(internalformat).is_none() {
-            unimplemented!("CompressedTexImage2D internalformat: {:#x}", internalformat);
+            log_dbg!("Unsupported CompressedTexImage2D internalformat: {:#x}", internalformat);
+            return;
         }
         log_dbg!("Directly supported texture format: {:#x}", internalformat);
         gles11::CompressedTexImage2D(
@@ -837,3 +838,4 @@ impl GLES for GLES1Native<'_> {
         gles11::UnmapBufferOES(target)
     }
 }
+

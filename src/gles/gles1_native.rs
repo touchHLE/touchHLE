@@ -838,4 +838,3 @@ impl GLES for GLES1Native<'_> {
         gles11::UnmapBufferOES(target)
     }
 }
-

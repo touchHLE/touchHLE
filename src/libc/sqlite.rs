@@ -17,10 +17,8 @@ fn sqlite3_open(
     pp_db: MutPtr<MutVoidPtr>,
 ) -> i32 {
     log!("sqlite3_open called (STUB)");
-
-    // Write a dummy pointer to prevent the app from seeing NULL.
+    // Записываем фиктивный адрес в указатель
     env.mem.write(pp_db, Ptr::from_bits(0xBAADF00D));
-
     SQLITE_OK
 }
 
@@ -30,7 +28,6 @@ fn sqlite3_close(_env: &mut Environment, _db: MutVoidPtr) -> i32 {
 }
 
 pub const FUNCTIONS: crate::dyld::FunctionExports = &[
-    // 3 аргумента у open, 2 аргумента у close (env + db)
     export_c_func!(sqlite3_open(_, _, _)),
     export_c_func!(sqlite3_close(_, _)),
 ];

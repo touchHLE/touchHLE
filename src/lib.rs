@@ -27,12 +27,14 @@ mod image;
 pub mod libc {
     pub mod clocale;
     pub mod ctype;
+    pub mod dirent; 
     pub mod errno;
     pub mod mach;
+    pub mod netdb;
     pub mod posix_io;
     pub mod pthread;
     pub mod semaphore;
-    pub mod sqlite; // Наш новый модуль
+    pub mod sqlite; 
     pub mod stdio;
     pub mod stdlib;
     pub mod string;
@@ -43,7 +45,7 @@ pub mod libc {
 
     pub mod generic_char;
     
-    // Реэкспорты для совместимости
+    // Реэкспорты для того, чтобы другие файлы видели эти типы через crate::libc
     pub use crate::dyld::DYLIB;
     pub use crate::environment::State;
 }
@@ -58,7 +60,8 @@ mod paths;
 mod stack;
 mod window;
 
-// Нужно для pthread/mutex.rs
+// Импорты, необходимые для работы main() и других модулей
+use std::path::PathBuf;
 pub use environment::{Environment, MutexId, MutexType, ThreadId, PTHREAD_MUTEX_DEFAULT};
 
 pub use touchHLE_version::*;
@@ -112,7 +115,7 @@ pub fn main<T: Iterator<Item = String>>(mut args: T) -> Result<(), String> {
         } else if arg == "--args" {
             app_args = Some(Vec::new());
         } else if options.parse_argument(&arg)? {
-            // Handled
+            // Option handled
         } else if bundle_path.is_none() {
             bundle_path = Some(PathBuf::from(arg));
         }
@@ -139,4 +142,3 @@ pub fn main<T: Iterator<Item = String>>(mut args: T) -> Result<(), String> {
     env.run();
     Ok(())
 }
-

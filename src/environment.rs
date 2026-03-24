@@ -103,7 +103,7 @@ pub struct Environment {
     pub cpu: NullableBox<cpu::Cpu>,
     pub current_thread: ThreadId,
     pub threads: Vec<Thread>,
-    pub libc_state: NullableBox<libc::State>,
+    pub libc_state: NullableBox<crate::libc::State>,
     pub framework_state: NullableBox<frameworks::State>,
     pub mutex_state: NullableBox<mutex::MutexState>,
     pub options: NullableBox<options::Options>,

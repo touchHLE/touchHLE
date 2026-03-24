@@ -341,14 +341,14 @@ fn system(env: &mut Environment, cmd: ConstPtr<u8>) -> i32 {
     todo!()
 }
 
-// Реализация обработчика ассертов для игр
+// Исправленный обработчик ассертов
 fn ___assert_rtn(
     env: &mut Environment,
     func: ConstPtr<u8>,
     file: ConstPtr<u8>,
     line: i32,
     msg: ConstPtr<u8>,
-) {
+) -> () {
     let func_str = env.mem.cstr_at_utf8(func).unwrap_or("unknown_func");
     let file_str = env.mem.cstr_at_utf8(file).unwrap_or("unknown_file");
     let msg_str = env.mem.cstr_at_utf8(msg).unwrap_or("no message");
@@ -389,8 +389,8 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(mbstowcs(_, _, _)),
     export_c_func!(wcstombs(_, _, _)),
     export_c_func!(system(_)),
-    // Регистрируем наш ассерт
-    export_c_func_aliased!("___assert_rtn", ___assert_rtn(_, _, _, _, _)),
+    // Исправленный экспорт (4 аргумента для функции)
+    export_c_func_aliased!("___assert_rtn", ___assert_rtn(_, _, _, _)),
 ];
 
 pub fn atof_inner(env: &mut Environment, s: ConstPtr<u8>) -> Result<(f64, u32), <f64 as FromStr>::Err> {
@@ -566,3 +566,4 @@ where
     };
     Ok((res, whitespace_len + len))
 }
+

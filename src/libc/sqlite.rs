@@ -20,13 +20,10 @@ unsafe impl SafeRead for Sqlite3 {}
 pub fn sqlite3_open(
     env: &mut Environment,
     filename: ConstPtr<u8>,
-    pp_db: MutPtr<Sqlite3Ptr>,
+    _pp_db: MutPtr<Sqlite3Ptr>,
 ) -> i32 {
     let name = env.mem.cstr_at_utf8(filename).unwrap_or("unknown");
     log!("sqlite3_open({:?})", name);
-    
-    // В реальной имплементации здесь должна быть логика открытия файла.
-    // Пока возвращаем заглушку (SQLITE_OK = 0)
     0
 }
 

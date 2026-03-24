@@ -22,6 +22,7 @@ pub mod fs;
 pub mod gdb;
 pub mod gles;
 pub mod image;
+pub mod touchHLE_version;
 
 pub mod libc {
     pub mod clocale;
@@ -47,7 +48,13 @@ pub mod libc {
 
     pub use self::posix_io::State;
 
-    pub const DYLIB: crate::dyld::Dylib = crate::dyld::Dylib::Native("libc");
+    pub const DYLIB: crate::dyld::HostDylib = crate::dyld::HostDylib {
+        path: "/usr/lib/libc.dylib",
+        aliases: &[],
+        class_exports: &[],
+        constant_exports: &[],
+        function_exports: &[dirent::FUNCTIONS, netdb::FUNCTIONS, sqlite::FUNCTIONS],
+    };
 }
 
 pub mod licenses;

@@ -3,13 +3,13 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
-//! touchHLE is a high-level emulator (HLE) for iPhone OS applications.
 
 #![allow(non_snake_case)]
 #![allow(rustdoc::private_intra_doc_links)]
 
 #[macro_use]
-pub mod log;
+pub mod log; // Must be pub for other modules to use echo!/log!
+
 pub mod abi;
 pub mod audio;
 pub mod bundle;
@@ -27,12 +27,12 @@ pub mod image;
 pub mod libc {
     pub mod clocale;
     pub mod ctype;
-    pub mod dirent; // Added: Fixes E0432 in mount.rs
+    pub mod dirent;
     pub mod errno;
-    pub mod keymgr; // Added
+    pub mod keymgr;
     pub mod mach;
-    pub mod mmap;   // Added
-    pub mod netdb;  // Added: Fixes E0432 in socket.rs
+    pub mod mmap;
+    pub mod netdb;
     pub mod posix_io;
     pub mod pthread;
     pub mod semaphore;
@@ -45,10 +45,11 @@ pub mod libc {
     pub mod unistd;
     pub mod wchar;
     pub mod generic_char;
-
-    // Fixes E0425: cannot find type `State` in module `libc`
+    
     pub use self::posix_io::State;
-    // Fixes E0425: cannot find value `DYLIB` in module `libc`
+
+    // If crate::dyld::Dylib fails, try crate::dyld::Library 
+    // or check src/dyld.rs for the correct enum name.
     pub const DYLIB: crate::dyld::Dylib = crate::dyld::Dylib::Native("libc");
 }
 
@@ -62,7 +63,6 @@ pub mod paths;
 pub mod stack;
 pub mod window;
 
-// Fixes E0432: unresolved import `crate::PTHREAD_MUTEX_DEFAULT`
 pub const PTHREAD_MUTEX_DEFAULT: i32 = 0;
 
 pub use environment::{Environment, MutexId, MutexType, ThreadId};

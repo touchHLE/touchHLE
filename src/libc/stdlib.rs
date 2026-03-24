@@ -341,14 +341,14 @@ fn system(env: &mut Environment, cmd: ConstPtr<u8>) -> i32 {
     todo!()
 }
 
-// Исправленный обработчик ассертов
+// Исправлено: Удалено избыточное `-> ()`
 fn ___assert_rtn(
     env: &mut Environment,
     func: ConstPtr<u8>,
     file: ConstPtr<u8>,
     line: i32,
     msg: ConstPtr<u8>,
-) -> () {
+) {
     let func_str = env.mem.cstr_at_utf8(func).unwrap_or("unknown_func");
     let file_str = env.mem.cstr_at_utf8(file).unwrap_or("unknown_file");
     let msg_str = env.mem.cstr_at_utf8(msg).unwrap_or("no message");
@@ -389,7 +389,6 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(mbstowcs(_, _, _)),
     export_c_func!(wcstombs(_, _, _)),
     export_c_func!(system(_)),
-    // Исправленный экспорт (4 аргумента для функции)
     export_c_func_aliased!("___assert_rtn", ___assert_rtn(_, _, _, _)),
 ];
 
@@ -451,7 +450,7 @@ where
                 ungetc_fn(env, subject, maybe_sign);
             }
             curr = getc_fn(env, subject, offset + whitespace_len + len)?.into();
-            while (curr as char).is_ascii_digit() {
+            while (curr as char).is_digit(10) {
                 chars.push(curr);
                 len += 1;
                 curr = getc_fn(env, subject, offset + whitespace_len + len)?.into();
@@ -478,6 +477,8 @@ fn strtol_inner(env: &mut Environment, str: ConstPtr<u8>, base: u32) -> Result<(
     )
 }
 
+// Добавлен атрибут для подавления ошибки Clippy о количестве аргументов
+#[allow(clippy::too_many_arguments)]
 pub fn str_to_int_inner_generic<T, U, Q, F1, F2, F3, F4>(
     env: &mut Environment,
     getc_fn: F1,

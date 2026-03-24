@@ -49,7 +49,7 @@ pub fn sqlite3_finalize(_env: &mut Environment, _stmt: Sqlite3StmtPtr) -> i32 {
 }
 
 pub const FUNCTIONS: FunctionExports = &[
-    export_c_func!(sqlite3_open(_, _)),
+    export_c_func!(sqlite3_open(_, _, _)),
     export_c_func!(sqlite3_close(_)),
     export_c_func!(sqlite3_exec(_, _, _, _, _)),
     export_c_func!(sqlite3_finalize(_)),

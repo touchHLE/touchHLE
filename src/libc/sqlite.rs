@@ -18,14 +18,14 @@ fn sqlite3_open(
 ) -> i32 {
     log!("sqlite3_open called (STUB)");
 
-    // Use from_bits for touchHLE VAddr pointers.
+    // Write a dummy pointer value.
     env.mem.write(pp_db, Ptr::from_bits(0xBAADF00D));
 
     SQLITE_OK
 }
 
-fn sqlite3_close(_env: &mut Environment, db: MutVoidPtr) -> i32 {
-    log!("sqlite3_close({:?}) called (STUB)", db);
+fn sqlite3_close(_env: &mut Environment, _db: MutVoidPtr) -> i32 {
+    log!("sqlite3_close called (STUB)");
     SQLITE_OK
 }
 

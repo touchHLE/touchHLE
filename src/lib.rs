@@ -4,6 +4,10 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 //! touchHLE is a high-level emulator (HLE) for iPhone OS applications.
+//!
+//! In various places, the terms "guest" and "host" are used to distinguish
+//! between the emulated application (the "guest") and the emulator itself (the
+//! "host"), and more generally, their different environments.
 
 #![allow(non_snake_case)]
 #![allow(rustdoc::private_intra_doc_links)]
@@ -24,20 +28,26 @@ mod gdb;
 mod gles;
 mod image;
 
-// Libc modules section. 
-// Only include modules that have corresponding .rs files in src/libc/
+// Секция модулей libc. Здесь мы регистрируем файлы из папки src/libc/
 pub mod libc {
     pub mod clocale;
     pub mod ctype;
     pub mod errno;
+    pub mod mach;
     pub mod posix_io;
-    pub mod sqlite; // Our new stub module
+    pub mod pthread;
+    pub mod semaphore;
+    pub mod sqlite; // Твой новый файл src/libc/sqlite.rs
     pub mod stdio;
     pub mod stdlib;
     pub mod string;
+    pub mod sys;
+    pub mod time;
+    pub mod unistd;
     pub mod wchar;
-    
-    // Core re-exports needed by the emulator
+
+    pub mod generic_char;
+    // Реэкспорты для устранения ошибок в environment.rs
     pub use crate::dyld::DYLIB;
     pub use crate::environment::State;
 }
@@ -52,7 +62,7 @@ mod paths;
 mod stack;
 mod window;
 
-use environment::{Environment, MutexId, MutexType, ThreadId, PTHREAD_MUTEX_DEFAULT};
+use environment::{Environment, MutexId, MutexType, ThreadId};
 use std::path::PathBuf;
 
 pub use touchHLE_version::*;
@@ -85,6 +95,13 @@ pub extern "C" fn SDL_main(
     0
 }
 
+const USAGE: &str = "\
+Usage:
+    touchHLE [PATH] [OPTIONS]
+
+PATH should be a path to a .app bundle or .ipa file.
+";
+
 pub fn main<T: Iterator<Item = String>>(mut args: T) -> Result<(), String> {
     echo!(
         "touchHLE {}{}{} — https://touchhle.org/",
@@ -94,7 +111,7 @@ pub fn main<T: Iterator<Item = String>>(mut args: T) -> Result<(), String> {
     );
     echo!();
 
-    let _ = args.next().unwrap(); 
+    let _ = args.next().unwrap(); // skip argv[0]
 
     let mut bundle_path: Option<PathBuf> = None;
     let mut options = options::Options::default();
@@ -121,6 +138,7 @@ pub fn main<T: Iterator<Item = String>>(mut args: T) -> Result<(), String> {
 
     let bundle_data = fs::BundleData::open_any(&bundle_path)
         .map_err(|e| format!("Could not open app bundle: {e}"))?;
+    
     let (bundle, fs) = bundle::Bundle::new_bundle_and_fs_from_host_path(
         bundle_data,
         false,

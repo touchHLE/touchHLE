@@ -1,14 +1,12 @@
 /*
  * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ * License, v. 2.0.
  */
 
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::mem::{ConstPtr, MutPtr, SafeRead};
 use crate::Environment;
 
-// Типы SQLite (просто указатели для гостевой системы)
 pub type Sqlite3Ptr = MutPtr<u32>;
 pub type Sqlite3StmtPtr = MutPtr<u32>;
 

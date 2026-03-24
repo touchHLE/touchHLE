@@ -23,7 +23,7 @@ use std::io::{Read, Seek, SeekFrom, Write};
 #[derive(Default)]
 pub struct State {
     /// File descriptors _other than stdin, stdout, and stderr_
-    files: Vec<Option<PosixFileHostObject>>,
+    pub files: Vec<Option<PosixFileHostObject>>,
 }
 impl State {
     fn file_for_fd(&mut self, fd: FileDescriptor) -> Option<&mut PosixFileHostObject> {
@@ -33,7 +33,7 @@ impl State {
     }
 }
 
-struct PosixFileHostObject {
+pub struct PosixFileHostObject {
     file: GuestFile,
     needs_flush: bool,
     reached_eof: bool,
@@ -274,10 +274,11 @@ pub fn read(
                     bytes_read,
                 );
             }
-            bytes_read.try_into().unwrap()
+            let res: GuestISize = bytes_read.try_into().unwrap();
+            res
         }
         Err(e) => {
-            let res = match e.kind() {
+            let res: GuestISize = match e.kind() {
                 std::io::ErrorKind::IsADirectory => {
                     set_errno(env, EISDIR);
                     // the returned value was validated on iOS
@@ -397,7 +398,8 @@ pub fn write(
                     bytes_written,
                 );
             }
-            bytes_written.try_into().unwrap()
+            let res: GuestISize = bytes_written.try_into().unwrap();
+            res
         }
         Err(e) => {
             // TODO: set errno
@@ -466,7 +468,7 @@ pub fn lseek(env: &mut Environment, fd: FileDescriptor, offset: off_t, whence: i
         return -1;
     }
 
-    let start_position = match whence {
+    let start_position: u64 = match whence {
         SEEK_SET => 0,
         SEEK_CUR => match file.file.stream_position() {
             Ok(pos) => pos,
@@ -531,7 +533,7 @@ pub fn lseek(env: &mut Environment, fd: FileDescriptor, offset: off_t, whence: i
         return -1;
     }
 
-    let res = match file.file.seek(SeekFrom::Start(seek_position)) {
+    let res: off_t = match file.file.seek(SeekFrom::Start(seek_position)) {
         Ok(new_offset) => {
             // TODO: this side-effect should be tightened to `fseek`
             // "A successful call to the fseek() function clears
@@ -841,7 +843,7 @@ fn fsync(env: &mut Environment, fd: FileDescriptor) -> i32 {
     match file.file.sync_all() {
         Ok(()) => 0,
         Err(error) => {
-            match error.kind() {
+            let res: i32 = match error.kind() {
                 std::io::ErrorKind::PermissionDenied => {
                     log!(
                         "Warning: fsync({:?}) sync failed with error: {:?}, returning 0 to match expected behavior",
@@ -850,17 +852,26 @@ fn fsync(env: &mut Environment, fd: FileDescriptor) -> i32 {
                     );
                     return 0;
                 }
-                std::io::ErrorKind::Unsupported => set_errno(env, EINVAL),
-                std::io::ErrorKind::Interrupted => set_errno(env, EINTR),
-                _ => set_errno(env, EIO),
-            }
+                std::io::ErrorKind::Unsupported => {
+                    set_errno(env, EINVAL);
+                    -1
+                }
+                std::io::ErrorKind::Interrupted => {
+                    set_errno(env, EINTR);
+                    -1
+                }
+                _ => {
+                    set_errno(env, EIO);
+                    -1
+                }
+            };
 
             log!(
                 "Warning: fsync({:?}) sync failed with error: {:?}, returning -1",
                 fd,
                 error
             );
-            -1
+            res
         }
     }
 }
@@ -900,7 +911,7 @@ fn find_or_create_fd(env: &mut Environment, host_object: PosixFileHostObject) ->
         .posix_io
         .files
         .iter()
-        .position(|f| f.is_none())
+        .position(|f: &Option<PosixFileHostObject>| f.is_none())
     {
         env.libc_state.posix_io.files[free_idx] = Some(host_object);
         free_idx
@@ -951,7 +962,7 @@ fn validate_lock(env: &mut Environment, fd: FileDescriptor, lock: &flock) -> Res
         SEEK_CUR => {
             let file = env.libc_state.posix_io.file_for_fd(fd).unwrap();
             let file_position = file.file.stream_position().unwrap();
-            file_position as i64 + lock.start
+            (file_position as i64) + lock.start
         }
         SEEK_END => {
             let file = env.libc_state.posix_io.file_for_fd(fd).unwrap();
@@ -969,3 +980,4 @@ fn validate_lock(env: &mut Environment, fd: FileDescriptor, lock: &flock) -> Res
 
     Ok(())
 }
+

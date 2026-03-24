@@ -24,16 +24,17 @@ mod gdb;
 mod gles;
 mod image;
 
-// Секция модулей libc. 
-// Я оставил только те, что обычно есть в базовой версии.
+// Секция модулей libc. Подключаем только те файлы, что есть в папке src/libc/
 pub mod libc {
+    pub mod clocale;
+    pub mod ctype;
+    pub mod errno;
+    pub mod posix_io;
+    pub mod sqlite; // Наша новая заглушка
     pub mod stdio;
     pub mod stdlib;
     pub mod string;
-    pub mod sqlite; // Наш новый файл
-    pub mod errno;
-    // Если сборка снова скажет, что какого-то файла нет (например, errno), 
-    // просто удали соответствующую строку "pub mod ...;"
+    pub mod wchar;
 }
 
 mod licenses;
@@ -91,8 +92,6 @@ pub fn main<T: Iterator<Item = String>>(mut args: T) -> Result<(), String> {
     let _ = args.next().unwrap(); // skip argv[0]
 
     let mut bundle_path: Option<PathBuf> = None;
-    let mut just_info = false;
-    let mut option_args = Vec::new();
     let mut options = options::Options::default();
     let mut app_args = None::<Vec<String>>;
 
@@ -102,19 +101,16 @@ pub fn main<T: Iterator<Item = String>>(mut args: T) -> Result<(), String> {
         } else if arg == "--args" {
             app_args = Some(Vec::new());
         } else if options.parse_argument(&arg)? {
-            option_args.push(arg);
+            // Аргумент обработан опциями
         } else if bundle_path.is_none() {
             bundle_path = Some(PathBuf::from(arg));
-        } else if arg == "--info" {
-            just_info = true;
         }
     }
 
     let bundle_path = if let Some(bundle_path) = bundle_path {
         bundle_path
     } else {
-        let (path, mut extra) = environment::app_picker::app_picker(options.clone())?;
-        option_args.append(&mut extra);
+        let (path, _) = environment::app_picker::app_picker(options.clone())?;
         path
     };
 
@@ -125,15 +121,9 @@ pub fn main<T: Iterator<Item = String>>(mut args: T) -> Result<(), String> {
         false,
     ).map_err(|e| e.to_string())?;
 
-    if just_info {
-        echo!("App name: {}", bundle.display_name());
-        return Ok(());
-    }
-
     let env = Environment::new(bundle, fs, options, app_args.unwrap_or_default())
         .map_err(|e| e.to_string())?;
     
     env.run();
     Ok(())
 }
-

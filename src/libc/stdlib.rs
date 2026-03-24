@@ -341,7 +341,7 @@ fn system(env: &mut Environment, cmd: ConstPtr<u8>) -> i32 {
     todo!()
 }
 
-// Исправлено: Удалено избыточное `-> ()`
+// Исправлено: Удалено избыточное -> ()
 fn ___assert_rtn(
     env: &mut Environment,
     func: ConstPtr<u8>,
@@ -450,7 +450,9 @@ where
                 ungetc_fn(env, subject, maybe_sign);
             }
             curr = getc_fn(env, subject, offset + whitespace_len + len)?.into();
-            while (curr as char).is_digit(10) {
+            
+            // Исправлено: заменено is_digit(10) на is_ascii_digit()
+            while (curr as char).is_ascii_digit() {
                 chars.push(curr);
                 len += 1;
                 curr = getc_fn(env, subject, offset + whitespace_len + len)?.into();
@@ -477,7 +479,6 @@ fn strtol_inner(env: &mut Environment, str: ConstPtr<u8>, base: u32) -> Result<(
     )
 }
 
-// Добавлен атрибут для подавления ошибки Clippy о количестве аргументов
 #[allow(clippy::too_many_arguments)]
 pub fn str_to_int_inner_generic<T, U, Q, F1, F2, F3, F4>(
     env: &mut Environment,

@@ -24,16 +24,18 @@ mod gdb;
 mod gles;
 mod image;
 
-// Секция модулей libc - ОСТАВЛЯЕМ ТОЛЬКО ТЕ, ЧТО ЕСТЬ В ПАПКЕ src/libc/
+// Секция модулей libc. Включаем только существующие файлы.
 pub mod libc {
+    pub mod clocale;
+    pub mod ctype;
+    pub mod errno;
+    pub mod posix_io;
+    pub mod sqlite; // Наш новый модуль
+    pub mod stdarg;
     pub mod stdio;
     pub mod stdlib;
     pub mod string;
-    pub mod sqlite;   // Наш новый файл заглушек
-    pub mod posix_io; // Этот модуль обычно есть в touchHLE для работы с файлами
-    pub mod wchar;    // Часто используется в связке со stdlib
-    pub mod clocale;
-    pub mod errno;
+    pub mod wchar;
 }
 
 mod licenses;
@@ -79,13 +81,6 @@ pub extern "C" fn SDL_main(
     0
 }
 
-const USAGE: &str = "\
-Usage:
-    touchHLE [PATH] [OPTIONS]
-
-PATH should be a path to a .app bundle or .ipa file.
-";
-
 pub fn main<T: Iterator<Item = String>>(mut args: T) -> Result<(), String> {
     echo!(
         "touchHLE {}{}{} — https://touchhle.org/",
@@ -93,7 +88,8 @@ pub fn main<T: Iterator<Item = String>>(mut args: T) -> Result<(), String> {
         if branding().is_empty() { "" } else { " " },
         VERSION,
     );
-    
+    echo!();
+
     let _ = args.next().unwrap(); // skip argv[0]
 
     let mut bundle_path: Option<PathBuf> = None;
@@ -107,22 +103,13 @@ pub fn main<T: Iterator<Item = String>>(mut args: T) -> Result<(), String> {
             app_args.push(arg);
         } else if arg == "--args" {
             app_args = Some(Vec::new());
-        } else if arg == "--help" {
-            echo!("{}", USAGE);
-            return Ok(());
-        } else if arg == "--info" {
-            just_info = true;
         } else if options.parse_argument(&arg)? {
             option_args.push(arg);
         } else if bundle_path.is_none() {
             bundle_path = Some(PathBuf::from(arg));
+        } else if arg == "--info" {
+            just_info = true;
         }
-    }
-
-    if options.dumping_options.symbols {
-        let mut file = std::fs::File::create(&options.dumping_file).map_err(|e| e.to_string())?;
-        dyld::Dyld::dump_host_symbols(&mut file).unwrap();
-        return Ok(());
     }
 
     let bundle_path = if let Some(bundle_path) = bundle_path {
@@ -135,23 +122,19 @@ pub fn main<T: Iterator<Item = String>>(mut args: T) -> Result<(), String> {
 
     let bundle_data = fs::BundleData::open_any(&bundle_path)
         .map_err(|e| format!("Could not open app bundle: {e}"))?;
-    
-    let (bundle, fs) = bundle::Bundle::new_bundle_and_fs_from_host_path(bundle_data, false)
-        .map_err(|e| e.to_string())?;
+    let (bundle, fs) = bundle::Bundle::new_bundle_and_fs_from_host_path(
+        bundle_data,
+        false,
+    ).map_err(|e| e.to_string())?;
 
     if just_info {
-        echo!("App: {}", bundle.display_name());
+        echo!("App name: {}", bundle.display_name());
         return Ok(());
-    }
-
-    for option_arg in option_args {
-        options.parse_argument(&option_arg)?;
     }
 
     let env = Environment::new(bundle, fs, options, app_args.unwrap_or_default())
         .map_err(|e| e.to_string())?;
-        
+    
     env.run();
     Ok(())
 }
-

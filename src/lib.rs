@@ -22,7 +22,6 @@ pub mod fs;
 pub mod gdb;
 pub mod gles;
 pub mod image;
-pub mod touchHLE_version;
 
 pub mod libc {
     pub mod clocale;

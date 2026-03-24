@@ -24,13 +24,13 @@ mod gdb;
 mod gles;
 mod image;
 
-// Секция модулей libc. Подключаем только те файлы, что есть в папке src/libc/
+// Libc modules section. Only include existing files.
 pub mod libc {
     pub mod clocale;
     pub mod ctype;
     pub mod errno;
     pub mod posix_io;
-    pub mod sqlite; // Наша новая заглушка
+    pub mod sqlite; // Our new stub module
     pub mod stdio;
     pub mod stdlib;
     pub mod string;
@@ -101,7 +101,7 @@ pub fn main<T: Iterator<Item = String>>(mut args: T) -> Result<(), String> {
         } else if arg == "--args" {
             app_args = Some(Vec::new());
         } else if options.parse_argument(&arg)? {
-            // Аргумент обработан опциями
+            // Option handled
         } else if bundle_path.is_none() {
             bundle_path = Some(PathBuf::from(arg));
         }

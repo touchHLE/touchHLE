@@ -9,26 +9,30 @@
 #![allow(rustdoc::private_intra_doc_links)]
 
 #[macro_use]
-mod log;
-mod abi;
-mod audio;
-mod bundle;
-mod cpu;
-mod debug;
-mod dyld;
-mod environment;
-mod font;
-mod frameworks;
-mod fs;
-mod gdb;
-mod gles;
-mod image;
+pub mod log;
+pub mod abi;
+pub mod audio;
+pub mod bundle;
+pub mod cpu;
+pub mod debug;
+pub mod dyld;
+pub mod environment;
+pub mod font;
+pub mod frameworks;
+pub mod fs;
+pub mod gdb;
+pub mod gles;
+pub mod image;
 
 pub mod libc {
     pub mod clocale;
     pub mod ctype;
+    pub mod dirent; // Added: Fixes E0432 in mount.rs
     pub mod errno;
+    pub mod keymgr; // Added
     pub mod mach;
+    pub mod mmap;   // Added
+    pub mod netdb;  // Added: Fixes E0432 in socket.rs
     pub mod posix_io;
     pub mod pthread;
     pub mod semaphore;
@@ -40,21 +44,28 @@ pub mod libc {
     pub mod time;
     pub mod unistd;
     pub mod wchar;
-    
     pub mod generic_char;
+
+    // Fixes E0425: cannot find type `State` in module `libc`
+    pub use self::posix_io::State;
+    // Fixes E0425: cannot find value `DYLIB` in module `libc`
+    pub const DYLIB: crate::dyld::Dylib = crate::dyld::Dylib::Native("libc");
 }
 
-mod licenses;
-mod mach_o;
-mod matrix;
-mod mem;
-mod objc;
-mod options;
-mod paths;
-mod stack;
-mod window;
+pub mod licenses;
+pub mod mach_o;
+pub mod matrix;
+pub mod mem;
+pub mod objc;
+pub mod options;
+pub mod paths;
+pub mod stack;
+pub mod window;
 
-use environment::{Environment, MutexId, MutexType, ThreadId};
+// Fixes E0432: unresolved import `crate::PTHREAD_MUTEX_DEFAULT`
+pub const PTHREAD_MUTEX_DEFAULT: i32 = 0;
+
+pub use environment::{Environment, MutexId, MutexType, ThreadId};
 use std::path::PathBuf;
 
 pub use touchHLE_version::*;

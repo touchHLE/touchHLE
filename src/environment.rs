@@ -87,9 +87,6 @@ impl std::fmt::Debug for Thread {
 /// The struct containing the entire emulator state. Methods are provided for
 /// execution and management of threads.
 pub struct Environment {
-    pub libc_state: NullableBox<libc::State>,
-    // другие поля...
-}
     /// Reference point for various timing functions.
     pub startup_time: Instant,
     pub bundle: NullableBox<bundle::Bundle>,
@@ -106,7 +103,7 @@ pub struct Environment {
     pub cpu: NullableBox<cpu::Cpu>,
     pub current_thread: ThreadId,
     pub threads: Vec<Thread>,
-    pub libc_state: NullableBox<crate::libc::State>,
+    pub libc_state: NullableBox<libc::State>,
     pub framework_state: NullableBox<frameworks::State>,
     pub mutex_state: NullableBox<mutex::MutexState>,
     pub options: NullableBox<options::Options>,

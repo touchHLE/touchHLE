@@ -27,15 +27,12 @@ mod image;
 pub mod libc {
     pub mod clocale;
     pub mod ctype;
-    pub mod dirent; // Добавлено: нужно для mount.rs
     pub mod errno;
     pub mod mach;
-    pub mod netdb;  // Добавлено: нужно для socket.rs
     pub mod posix_io;
     pub mod pthread;
     pub mod semaphore;
-    pub mod sqlite; 
-    pub mod stat;
+    pub mod sqlite; // Наш новый модуль
     pub mod stdio;
     pub mod stdlib;
     pub mod string;
@@ -46,7 +43,7 @@ pub mod libc {
 
     pub mod generic_char;
     
-    // Реэкспорты, которые ищут файлы внутри libc и за её пределами
+    // Реэкспорты для совместимости
     pub use crate::dyld::DYLIB;
     pub use crate::environment::State;
 }
@@ -61,7 +58,7 @@ mod paths;
 mod stack;
 mod window;
 
-// Реэкспорты для корневого модуля (нужны для pthread/mutex.rs)
+// Нужно для pthread/mutex.rs
 pub use environment::{Environment, MutexId, MutexType, ThreadId, PTHREAD_MUTEX_DEFAULT};
 
 pub use touchHLE_version::*;
@@ -142,3 +139,4 @@ pub fn main<T: Iterator<Item = String>>(mut args: T) -> Result<(), String> {
     env.run();
     Ok(())
 }
+

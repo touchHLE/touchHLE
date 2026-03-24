@@ -24,17 +24,33 @@ mod gdb;
 mod gles;
 mod image;
 
-// Libc modules section. Only include existing files.
+// Libc modules section. 
+// We must include all modules used by the emulator.
 pub mod libc {
     pub mod clocale;
     pub mod ctype;
+    pub mod dirent;
     pub mod errno;
+    pub mod fcntl;
+    pub mod mach;
+    pub mod mman;
     pub mod posix_io;
+    pub mod pthread;
+    pub mod semaphore;
     pub mod sqlite; // Our new stub module
+    pub mod stat;
     pub mod stdio;
     pub mod stdlib;
     pub mod string;
+    pub mod sys;
+    pub mod time;
+    pub mod unistd;
     pub mod wchar;
+    
+    // Support for generic_char and State/DYLIB
+    pub mod generic_char;
+    pub use crate::dyld::DYLIB;
+    pub use crate::environment::State;
 }
 
 mod licenses;
@@ -89,7 +105,7 @@ pub fn main<T: Iterator<Item = String>>(mut args: T) -> Result<(), String> {
     );
     echo!();
 
-    let _ = args.next().unwrap(); // skip argv[0]
+    let _ = args.next().unwrap(); 
 
     let mut bundle_path: Option<PathBuf> = None;
     let mut options = options::Options::default();
@@ -101,7 +117,7 @@ pub fn main<T: Iterator<Item = String>>(mut args: T) -> Result<(), String> {
         } else if arg == "--args" {
             app_args = Some(Vec::new());
         } else if options.parse_argument(&arg)? {
-            // Option handled
+            // Handled
         } else if bundle_path.is_none() {
             bundle_path = Some(PathBuf::from(arg));
         }

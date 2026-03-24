@@ -1,14 +1,5 @@
-/*
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- */
-
-#![allow(non_snake_case)]
-#![allow(rustdoc::private_intra_doc_links)]
-
 #[macro_use]
-pub mod log; 
+pub mod log;
 
 pub mod abi;
 pub mod audio;
@@ -27,16 +18,16 @@ pub mod image;
 pub mod libc {
     pub mod clocale;
     pub mod ctype;
-    pub mod dirent;   // Fixes mount.rs:9
+    pub mod dirent;
     pub mod errno;
     pub mod keymgr;
     pub mod mach;
     pub mod mmap;
-    pub mod netdb;    // Fixes socket.rs:34
+    pub mod netdb;
     pub mod posix_io;
     pub mod pthread;
     pub mod semaphore;
-    pub mod sqlite; 
+    pub mod sqlite;
     pub mod stdio;
     pub mod stdlib;
     pub mod string;
@@ -45,12 +36,8 @@ pub mod libc {
     pub mod unistd;
     pub mod wchar;
     pub mod generic_char;
-    
-    // Fixes environment.rs:106 (cannot find type State)
-    pub use self::posix_io::State;
 
-    // Fixes dylib_list.rs:15 (cannot find value DYLIB)
-    // In touchHLE, the type is usually 'Library', not 'Dylib'
+    pub use self::posix_io::State;
     pub const DYLIB: crate::dyld::Library = crate::dyld::Library::Native("libc");
 }
 
@@ -64,12 +51,6 @@ pub mod paths;
 pub mod stack;
 pub mod window;
 
-// Fixes mutex.rs:14 (unresolved import PTHREAD_MUTEX_DEFAULT)
 pub const PTHREAD_MUTEX_DEFAULT: i32 = 0;
 
 pub use environment::{Environment, MutexId, MutexType, ThreadId};
-use std::path::PathBuf;
-
-pub use touchHLE_version::*;
-
-// ... [Keep your SDL_main and main functions here] ...

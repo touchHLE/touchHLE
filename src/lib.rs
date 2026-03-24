@@ -4,10 +4,6 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 //! touchHLE is a high-level emulator (HLE) for iPhone OS applications.
-//!
-//! In various places, the terms "guest" and "host" are used to distinguish
-//! between the emulated application (the "guest") and the emulator itself (the
-//! "host"), and more generally, their different environments.
 
 #![allow(non_snake_case)]
 #![allow(rustdoc::private_intra_doc_links)]
@@ -28,16 +24,18 @@ mod gdb;
 mod gles;
 mod image;
 
-// Секция модулей libc. Здесь мы регистрируем файлы из папки src/libc/
 pub mod libc {
     pub mod clocale;
     pub mod ctype;
+    pub mod dirent; // Добавлено: нужно для mount.rs
     pub mod errno;
     pub mod mach;
+    pub mod netdb;  // Добавлено: нужно для socket.rs
     pub mod posix_io;
     pub mod pthread;
     pub mod semaphore;
-    pub mod sqlite; // Твой новый файл src/libc/sqlite.rs
+    pub mod sqlite; 
+    pub mod stat;
     pub mod stdio;
     pub mod stdlib;
     pub mod string;
@@ -47,7 +45,8 @@ pub mod libc {
     pub mod wchar;
 
     pub mod generic_char;
-    // Реэкспорты для устранения ошибок в environment.rs
+    
+    // Реэкспорты, которые ищут файлы внутри libc и за её пределами
     pub use crate::dyld::DYLIB;
     pub use crate::environment::State;
 }
@@ -62,8 +61,8 @@ mod paths;
 mod stack;
 mod window;
 
-use environment::{Environment, MutexId, MutexType, ThreadId};
-use std::path::PathBuf;
+// Реэкспорты для корневого модуля (нужны для pthread/mutex.rs)
+pub use environment::{Environment, MutexId, MutexType, ThreadId, PTHREAD_MUTEX_DEFAULT};
 
 pub use touchHLE_version::*;
 
@@ -95,13 +94,6 @@ pub extern "C" fn SDL_main(
     0
 }
 
-const USAGE: &str = "\
-Usage:
-    touchHLE [PATH] [OPTIONS]
-
-PATH should be a path to a .app bundle or .ipa file.
-";
-
 pub fn main<T: Iterator<Item = String>>(mut args: T) -> Result<(), String> {
     echo!(
         "touchHLE {}{}{} — https://touchhle.org/",
@@ -111,7 +103,7 @@ pub fn main<T: Iterator<Item = String>>(mut args: T) -> Result<(), String> {
     );
     echo!();
 
-    let _ = args.next().unwrap(); // skip argv[0]
+    let _ = args.next().unwrap(); 
 
     let mut bundle_path: Option<PathBuf> = None;
     let mut options = options::Options::default();
@@ -123,7 +115,7 @@ pub fn main<T: Iterator<Item = String>>(mut args: T) -> Result<(), String> {
         } else if arg == "--args" {
             app_args = Some(Vec::new());
         } else if options.parse_argument(&arg)? {
-            // Option handled
+            // Handled
         } else if bundle_path.is_none() {
             bundle_path = Some(PathBuf::from(arg));
         }

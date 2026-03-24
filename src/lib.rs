@@ -7,12 +7,12 @@
 #[macro_use]
 pub mod log;
 
-// --- Essential Modules ---
+// --- CORE MODULES ---
 pub mod abi;
 pub mod cpu;
 pub mod dyld;
-pub mod environment;
-pub mod frameworks;
+pub mod environment; 
+pub mod frameworks;  
 pub mod fs;
 pub mod libc;
 pub mod mach_o;
@@ -20,15 +20,17 @@ pub mod mem;
 pub mod objc;
 pub mod paths;
 
-// --- Re-exports and Type Aliases ---
+// --- RE-EXPORTS ---
+// This fixes the "no Environment in root" and "no ThreadId" errors
 pub use crate::environment::Environment;
 
-// Resolves E0432: unresolved import `crate::ThreadId`
+// Check your environment.rs to see where ThreadId and MutexId are actually defined.
+// These are common placeholders:
 pub type ThreadId = std::thread::ThreadId;
-pub type MutexId = u32; 
+pub type MutexId = u32;
 pub const PTHREAD_MUTEX_DEFAULT: i32 = 0;
 
-// --- State Definitions ---
+// --- STATE ---
 
 #[derive(Default)]
 pub struct LibcState {
@@ -36,12 +38,11 @@ pub struct LibcState {
     pub errno: i32,
 }
 
-// --- Macros (Resolves unused macro warnings) ---
+// --- LOGGING MACROS (Fixes unused macro warnings) ---
 
 #[macro_export]
 macro_rules! log_no_panic {
     ($($arg:tt)*) => {
-        // Implementation for logging that won't panic
         println!("[LOG] {}", format_args!($($arg)*));
     };
 }
@@ -54,5 +55,6 @@ macro_rules! echo_no_panic {
 }
 
 pub fn step(env: &mut Environment) {
+    // Note: If Cpu is a trait, use 'dyn'
     env.cpu.step(&mut env.mem);
 }

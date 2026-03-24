@@ -7,61 +7,52 @@
 #[macro_use]
 pub mod log;
 
+// --- Essential Modules ---
 pub mod abi;
 pub mod cpu;
 pub mod dyld;
+pub mod environment;
+pub mod frameworks;
 pub mod fs;
 pub mod libc;
+pub mod mach_o;
 pub mod mem;
+pub mod objc;
+pub mod paths;
 
-use crate::cpu::Cpu;
-use crate::fs::FileSystem;
-use crate::mem::Memory;
+// --- Re-exports and Type Aliases ---
+pub use crate::environment::Environment;
 
-/// Главная структура окружения эмулятора
-pub struct Environment {
-    pub cpu: Box<dyn Cpu>,
-    pub mem: Memory,
-    pub fs: FileSystem,
-    pub libc_state: LibcState,
-}
+// Resolves E0432: unresolved import `crate::ThreadId`
+pub type ThreadId = std::thread::ThreadId;
+pub type MutexId = u32; 
+pub const PTHREAD_MUTEX_DEFAULT: i32 = 0;
 
-impl Environment {
-    pub fn new(cpu: Box<dyn Cpu>, mem: Memory, fs: FileSystem) -> Self {
-        Self {
-            cpu,
-            mem,
-            fs,
-            libc_state: LibcState::default(),
-        }
-    }
-}
+// --- State Definitions ---
 
-/// Состояние стандартной библиотеки C и системных вызовов
 #[derive(Default)]
 pub struct LibcState {
     pub posix_io: libc::posix_io::State,
     pub errno: i32,
-    // Сюда можно добавить состояние для malloc, сетей и т.д.
+}
+
+// --- Macros (Resolves unused macro warnings) ---
+
+#[macro_export]
+macro_rules! log_no_panic {
+    ($($arg:tt)*) => {
+        // Implementation for logging that won't panic
+        println!("[LOG] {}", format_args!($($arg)*));
+    };
+}
+
+#[macro_export]
+macro_rules! echo_no_panic {
+    ($($arg:tt)*) => {
+        println!("[ECHO] {}", format_args!($($arg)*));
+    };
 }
 
 pub fn step(env: &mut Environment) {
     env.cpu.step(&mut env.mem);
 }
-
-// Вспомогательные макросы для логирования (если они не вынесены в log.rs)
-#[macro_export]
-macro_rules! log {
-    ($($arg:tt)*) => {
-        println!("[INFO] {}", format_args!($($arg)*));
-    };
-}
-
-#[macro_export]
-macro_rules! log_dbg {
-    ($($arg:tt)*) => {
-        #[cfg(debug_assertions)]
-        println!("[DEBUG] {}", format_args!($($arg)*));
-    };
-}
-

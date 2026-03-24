@@ -3,11 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
-//! Our implementations of various things that Apple's libSystem would provide.
-//! On other platforms these are part of the "libc", so let's call it that.
-//!
-//! Useful resources:
-//! - Apple's [iOS Manual Pages](https://developer.apple.com/library/archive/documentation/System/Conceptual/ManPages_iPhoneOS/) (contains what would be `man` pages if iOS had a command line)
+//! Implementations of various things that Apple's libSystem would provide.
 
 mod generic_char;
 
@@ -103,18 +99,18 @@ pub const DYLIB: crate::dyld::HostDylib = crate::dyld::HostDylib {
 /// Container for state of various child modules
 #[derive(Default)]
 pub struct State {
-    dirent: dirent::State,
-    keymgr: keymgr::State,
-    math: math::State,
-    posix_io: posix_io::State,
+    pub dirent: dirent::State,
+    pub keymgr: keymgr::State,
+    pub math: math::State,
+    pub posix_io: posix_io::State,
     pub pthread: pthread::State,
     pub semaphore: semaphore::State,
     pub socket: sys::socket::State,
-    stdlib: stdlib::State,
-    string: string::State,
-    stdio: stdio::State,
-    time: time::State,
-    errno: errno::State,
-    clocale: clocale::State,
-    mmap: mmap::State,
+    pub stdlib: stdlib::State,
+    pub string: string::State,
+    pub stdio: stdio::State,
+    pub time: time::State,
+    pub errno: errno::State,
+    pub clocale: clocale::State,
+    pub mmap: mmap::State,
 }

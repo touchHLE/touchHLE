@@ -24,18 +24,16 @@ mod gdb;
 mod gles;
 mod image;
 
-// Секция модулей libc. Включаем только существующие файлы.
+// Секция модулей libc. 
+// Я оставил только те, что обычно есть в базовой версии.
 pub mod libc {
-    pub mod clocale;
-    pub mod ctype;
-    pub mod errno;
-    pub mod posix_io;
-    pub mod sqlite; // Наш новый модуль
-    pub mod stdarg;
     pub mod stdio;
     pub mod stdlib;
     pub mod string;
-    pub mod wchar;
+    pub mod sqlite; // Наш новый файл
+    pub mod errno;
+    // Если сборка снова скажет, что какого-то файла нет (например, errno), 
+    // просто удали соответствующую строку "pub mod ...;"
 }
 
 mod licenses;
@@ -138,3 +136,4 @@ pub fn main<T: Iterator<Item = String>>(mut args: T) -> Result<(), String> {
     env.run();
     Ok(())
 }
+

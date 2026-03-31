@@ -70,6 +70,24 @@
       "parentUuid": "f370a4cc_683ee780",
       "revId": "ea74d3c7e9d603edc5fe79f4fec60276788b65ed",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0fff0727_dba4ca78",
+        "filename": "src/libc/pthread/cond.rs",
+        "patchSetId": 10
+      },
+      "lineNbr": 76,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-03-31T23:51:00Z",
+      "side": 1,
+      "message": "could you please add that as a comment to the test itself?",
+      "parentUuid": "08b1bc58_52f0446f",
+      "revId": "ea74d3c7e9d603edc5fe79f4fec60276788b65ed",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

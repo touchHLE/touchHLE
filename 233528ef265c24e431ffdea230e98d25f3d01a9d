@@ -38,6 +38,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "58291401_7a46b37b",
+        "filename": "src/libc/mach/core_types.rs",
+        "patchSetId": 10
+      },
+      "lineNbr": 6,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-03-31T22:50:43Z",
+      "side": 1,
+      "message": "please check sdk headers then, we generallly try to mimic their layout",
+      "parentUuid": "370c19b2_4268647b",
+      "revId": "233528ef265c24e431ffdea230e98d25f3d01a9d",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "00380eb2_d2e777d9",
         "filename": "vendor/dynarmic",
         "patchSetId": 10

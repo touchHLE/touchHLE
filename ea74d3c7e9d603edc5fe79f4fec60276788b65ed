@@ -52,6 +52,24 @@
       "parentUuid": "ea81dbfd_d1867baa",
       "revId": "ea74d3c7e9d603edc5fe79f4fec60276788b65ed",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "08b1bc58_52f0446f",
+        "filename": "src/libc/pthread/cond.rs",
+        "patchSetId": 10
+      },
+      "lineNbr": 76,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2026-03-31T23:41:13Z",
+      "side": 1,
+      "message": "By not calling pthread_mutex_init and pthread_cond_init, the cond and mutex are initialized statically. If I run the test without this patchset, the test fails.",
+      "parentUuid": "f370a4cc_683ee780",
+      "revId": "ea74d3c7e9d603edc5fe79f4fec60276788b65ed",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

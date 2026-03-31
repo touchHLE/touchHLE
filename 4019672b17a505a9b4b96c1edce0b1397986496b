@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "16e2cbc1_74227bf6",
+        "filename": "src/libc/libkern/task.rs",
+        "patchSetId": 10
+      },
+      "lineNbr": 35,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-03-31T21:36:11Z",
+      "side": 1,
+      "message": "this is wrong, task_name_t is a mach_port_t",
+      "revId": "4019672b17a505a9b4b96c1edce0b1397986496b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c204c0ea_6f915adc",
+        "filename": "src/libc/libkern/task.rs",
+        "patchSetId": 10
+      },
+      "lineNbr": 68,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-03-31T21:36:11Z",
+      "side": 1,
+      "message": "why some values are in hex and other are integers?",
+      "revId": "4019672b17a505a9b4b96c1edce0b1397986496b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

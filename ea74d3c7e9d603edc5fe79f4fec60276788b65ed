@@ -34,6 +34,24 @@
       "parentUuid": "56e7e945_2adbdeda",
       "revId": "ea74d3c7e9d603edc5fe79f4fec60276788b65ed",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f370a4cc_683ee780",
+        "filename": "src/libc/pthread/cond.rs",
+        "patchSetId": 10
+      },
+      "lineNbr": 76,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-03-31T22:53:29Z",
+      "side": 1,
+      "message": "could you point me to the place where the static initilization is happening in the test? or, equivalently, was this test failing before your changes?",
+      "parentUuid": "ea81dbfd_d1867baa",
+      "revId": "ea74d3c7e9d603edc5fe79f4fec60276788b65ed",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

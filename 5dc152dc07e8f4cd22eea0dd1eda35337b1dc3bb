@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "daeec89e_c9a2190c",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 24
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-04-01T14:58:34Z",
+      "side": 1,
+      "message": "I let hikari decide if it passes the bar.\n\nMy preference is to have a proper performSelector on main thread implementation.",
+      "revId": "5dc152dc07e8f4cd22eea0dd1eda35337b1dc3bb",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

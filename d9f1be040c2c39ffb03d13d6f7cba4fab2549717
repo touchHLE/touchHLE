@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b6add4dc_218fdcbd",
+        "filename": "src/environment/mutex.rs",
+        "patchSetId": 12
+      },
+      "lineNbr": 172,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-04-01T11:35:15Z",
+      "side": 1,
+      "message": "please add a test case proving this is an intended behavior",
+      "revId": "d9f1be040c2c39ffb03d13d6f7cba4fab2549717",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

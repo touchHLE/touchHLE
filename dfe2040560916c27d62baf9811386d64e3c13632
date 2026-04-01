@@ -122,6 +122,24 @@
       "parentUuid": "de1009e9_dc4b1957",
       "revId": "dfe2040560916c27d62baf9811386d64e3c13632",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b6773fdc_787e5fab",
+        "filename": "src/libc/libkern/task.rs",
+        "patchSetId": 12
+      },
+      "lineNbr": 73,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2026-04-01T15:33:24Z",
+      "side": 1,
+      "message": "```c\n  uint32_t suspend_count;\n  uint32_t virtual_size;\n  uint32_t resident_size;\n  uint64_t user_time;\n  uint64_t system_time;\n  uint32_t policy;\n\n  uint32_t task_info_cnt_out \u003d 8;\n\n  task_info(mach_task_self(), 4, \u0026suspend_count, \u0026task_info_cnt_out);\n\n  uint32_t\tfree_count\t;\n  uint32_t\tactive_count\t;\n  uint32_t\tinactive_count\t;\n  uint32_t\twire_count\t;\n  uint32_t\tzero_fill_count\t;\n  uint32_t\treactivations\t;\n  uint32_t\tpageins\t;\n  uint32_t\tpageouts\t;\n  uint32_t\tfaults\t;\n  uint32_t\tcow_faults\t;\n  uint32_t\tlookups\t;\n  uint32_t\thits\t;\n  uint32_t\tpurgeable_count\t;\n  uint32_t\tpurges\t;\n  uint32_t\tspeculative_count\t;\n\n  uint32_t host_info_cnt_out \u003d 15;\n\n  host_statistics(mach_host_self(), 2, \u0026free_count, \u0026host_info_cnt_out);\n\n  uint32_t sysctl_name[2] \u003d { 6, 24 }; // CTL_HW, HW_MEMSIZE\n  uint32_t hw_memsize;\n  uint32_t sizeof_hw_memsize \u003d sizeof(hw_memsize);\n\n  sysctl(sysctl_name, 2, \u0026hw_memsize, \u0026sizeof_hw_memsize, NULL, 0);\n\n  char buffer[10000];\n  snprintf(buffer, sizeof(buffer),\n           \"suspend_count: %u\\n\"\n           \"virtual_size: %u\\n\"\n           \"resident_size: %u\\n\"\n            \"user_time: %llu\\n\"\n            \"system_time: %llu\\n\"\n            \"policy: %u\\n\"\n            \"task_info_cnt_out: %u\\n\\n\"\n            \"free_count: %u\\n\"\n            \"active_count: %u\\n\"\n            \"inactive_count: %u\\n\"\n            \"wire_count: %u\\n\"\n            \"zero_fill_count: %u\\n\"\n            \"reactivations: %u\\n\"\n            \"pageins: %u\\n\"\n            \"pageouts: %u\\n\"\n            \"faults: %u\\n\"\n            \"cow_faults: %u\\n\"\n            \"lookups: %u\\n\"\n            \"hits: %u\\n\"\n            \"purgeable_count: %u\\n\"\n            \"purges: %u\\n\"\n            \"speculative_count: %u\\n\"\n            \"host_info_cnt_out: %u\\n\\n\"\n            \"hw_memsize: %u\\n\"\n            \"sizeof_hw_memsize: %u\\n\",\n            suspend_count,\n            virtual_size,\n            resident_size,\n            user_time,\n            system_time,\n            policy,\n            task_info_cnt_out,\n            free_count,\n            active_count,\n            inactive_count,\n            wire_count,\n            zero_fill_count,\n            reactivations,\n            pageins,\n            pageouts,\n            faults,\n            cow_faults,\n            lookups,\n            hits,\n            purgeable_count,\n            purges,\n            speculative_count,\n            host_info_cnt_out,\n            hw_memsize,\n            sizeof_hw_memsize);\n\n  puts(buffer);\n```",
+      "parentUuid": "fd31ecd3_df492173",
+      "revId": "dfe2040560916c27d62baf9811386d64e3c13632",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

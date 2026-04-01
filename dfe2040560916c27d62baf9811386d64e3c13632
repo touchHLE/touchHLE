@@ -104,6 +104,24 @@
       "parentUuid": "9f816a73_41174b6f",
       "revId": "dfe2040560916c27d62baf9811386d64e3c13632",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fd31ecd3_df492173",
+        "filename": "src/libc/libkern/task.rs",
+        "patchSetId": 12
+      },
+      "lineNbr": 73,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-04-01T15:23:53Z",
+      "side": 1,
+      "message": "Could you please share your test program? I would like to see what my device would output here.",
+      "parentUuid": "de1009e9_dc4b1957",
+      "revId": "dfe2040560916c27d62baf9811386d64e3c13632",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "efb823df_dd99018a",
+        "filename": "src/libc/libkern/task.rs",
+        "patchSetId": 12
+      },
+      "lineNbr": 17,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-04-01T11:47:11Z",
+      "side": 1,
+      "message": "export function should be imported via dyld",
+      "revId": "dfe2040560916c27d62baf9811386d64e3c13632",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d9072219_a3f4e746",
+        "filename": "src/libc/libkern/task.rs",
+        "patchSetId": 12
+      },
+      "lineNbr": 57,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-04-01T11:47:11Z",
+      "side": 1,
+      "message": "the better assert would be expected \u003c\u003d available (check how it is done for thread_get_state for example)",
+      "revId": "dfe2040560916c27d62baf9811386d64e3c13632",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9f816a73_41174b6f",
+        "filename": "src/libc/libkern/task.rs",
+        "patchSetId": 12
+      },
+      "lineNbr": 73,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-04-01T11:47:11Z",
+      "side": 1,
+      "message": "is it a known constant or some arbitrary value?",
+      "revId": "dfe2040560916c27d62baf9811386d64e3c13632",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

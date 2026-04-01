@@ -54,6 +54,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "ea4ccab1_d5dd7d6d",
+        "filename": "src/libc/mach/core_types.rs",
+        "patchSetId": 10
+      },
+      "lineNbr": 6,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2026-04-01T00:09:21Z",
+      "side": 1,
+      "message": "In that case i\u0027ll be dropping this change and replacing it with modules that resemble the SDK layout.",
+      "parentUuid": "58291401_7a46b37b",
+      "revId": "233528ef265c24e431ffdea230e98d25f3d01a9d",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "00380eb2_d2e777d9",

@@ -140,6 +140,24 @@
       "parentUuid": "fd31ecd3_df492173",
       "revId": "dfe2040560916c27d62baf9811386d64e3c13632",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "95caff02_eafb6746",
+        "filename": "src/libc/libkern/task.rs",
+        "patchSetId": 12
+      },
+      "lineNbr": 73,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-04-01T15:34:49Z",
+      "side": 1,
+      "message": "thanks, but I mean, do you have a binary to run? you can share in discord",
+      "parentUuid": "b6773fdc_787e5fab",
+      "revId": "dfe2040560916c27d62baf9811386d64e3c13632",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

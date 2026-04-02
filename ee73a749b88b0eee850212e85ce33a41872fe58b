@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e5c97b31_6b7f978f",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 24
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-04-02T13:46:13Z",
+      "side": 1,
+      "message": "will approve once 2 other patches are merged",
+      "revId": "ee73a749b88b0eee850212e85ce33a41872fe58b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c7356add_2268cd87",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 24
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-04-02T13:46:13Z",
+      "side": 1,
+      "message": "will approve once 2 other patches merged",
+      "revId": "ee73a749b88b0eee850212e85ce33a41872fe58b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

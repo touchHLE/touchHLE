@@ -16,6 +16,24 @@
       "message": "This is already defined here: https://github.com/touchHLE/touchHLE/blob/trunk/src/libc/mach/host.rs#L21",
       "revId": "d5891af69651a44172f41e84d20f50d98f51f969",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3943a6dd_3efb4a66",
+        "filename": "src/libc/mach/arm/vm_types.rs",
+        "patchSetId": 13
+      },
+      "lineNbr": 10,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2026-04-02T18:36:20Z",
+      "side": 1,
+      "message": "I\u0027m not saying you should remove this file, perhaps correct host.rs to pull this type from here would make more sense.",
+      "parentUuid": "006749ee_270b9fff",
+      "revId": "d5891af69651a44172f41e84d20f50d98f51f969",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

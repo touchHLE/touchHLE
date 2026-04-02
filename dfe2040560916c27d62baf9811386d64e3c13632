@@ -158,6 +158,24 @@
       "parentUuid": "b6773fdc_787e5fab",
       "revId": "dfe2040560916c27d62baf9811386d64e3c13632",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c66c6f1d_3ede1f66",
+        "filename": "src/libc/libkern/task.rs",
+        "patchSetId": 12
+      },
+      "lineNbr": 73,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-04-02T13:35:19Z",
+      "side": 1,
+      "message": "Okqy I don\u0027t really get this test... Why you\u0027re passing a stack pointer instead of the defining a proper struct var and printing their fields?\n\nSome randmon example from the internet https://gist.github.com/mikbe/1073620#file-foo-c-L43",
+      "parentUuid": "95caff02_eafb6746",
+      "revId": "dfe2040560916c27d62baf9811386d64e3c13632",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

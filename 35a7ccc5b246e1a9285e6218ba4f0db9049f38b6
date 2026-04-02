@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5e0eb947_18dd400c",
+        "filename": "src/libc/pthread/cond.rs",
+        "patchSetId": 12
+      },
+      "lineNbr": 28,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-04-02T13:45:38Z",
+      "side": 1,
+      "message": "I think we should match sizes of the struct, similar to pthread_attr_t ?\nAlso, please add a similar explanatory comment",
+      "revId": "35a7ccc5b246e1a9285e6218ba4f0db9049f38b6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

@@ -16,6 +16,24 @@
       "message": "Sorry, I\u0027m still confused by those declarations.\n\nShould it rather be:\n\n```\npthread_mutex_t m_static \u003d PTHREAD_MUTEX_INITIALIZER;\npthread_cond_t c_static \u003d PTHREAD_COND_INITIALIZER;\npthread_cond_t c2_static \u003d PTHREAD_COND_INITIALIZER;\n```\n\n?",
       "revId": "1796004cab6ce735e661ba181d247397103c2e69",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "1c95d013_f1f51a5a",
+        "filename": "tests/TestApp_source/cli_tests.m",
+        "patchSetId": 17
+      },
+      "lineNbr": 1142,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2026-04-04T14:38:20Z",
+      "side": 1,
+      "message": "True, or else the cond wouldnt have the right magic number and the mutex and cond functions would just return EINVAL when called.",
+      "parentUuid": "63aefb0d_79637a01",
+      "revId": "1796004cab6ce735e661ba181d247397103c2e69",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

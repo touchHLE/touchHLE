@@ -16,6 +16,24 @@
       "message": "anything preventing to merge that (apart from merge conflict)?",
       "revId": "864cd14f5f2b539a7c19d76a7b60892ceeb033b1",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "587468b5_72d09f59",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 6
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2026-04-04T15:49:02Z",
+      "side": 1,
+      "message": "Not really. I wanted to refactor some of the font drawing and layouts so that we could have an internal mapping of char to glyph instead of handling it here, but just didn\u0027t get around to it.",
+      "parentUuid": "59d9a22b_7a1aab8c",
+      "revId": "864cd14f5f2b539a7c19d76a7b60892ceeb033b1",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

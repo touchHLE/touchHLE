@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "13a62e04_aee9ecc5",
+        "filename": "src/libc/pthread/cond.rs",
+        "patchSetId": 13
+      },
+      "lineNbr": 195,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2026-04-04T13:37:47Z",
+      "side": 1,
+      "message": "Oops",
+      "parentUuid": "5aa05f51_f22e1232",
+      "revId": "faf86cf59062c9c1847a4ff336f548e217d7e50c",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "f9b52613_7ebe4b93",
@@ -31,6 +49,24 @@
       "writtenOn": "2026-04-04T12:48:37Z",
       "side": 1,
       "message": "I\u0027m confused - child will not access c_static so what are you really testing here?",
+      "revId": "faf86cf59062c9c1847a4ff336f548e217d7e50c",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b0c1f8eb_9e1340b7",
+        "filename": "tests/TestApp_source/cli_tests.m",
+        "patchSetId": 13
+      },
+      "lineNbr": 1212,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2026-04-04T13:37:47Z",
+      "side": 1,
+      "message": "The only purpose of this test was to check if statically allocated mutexes and conds could be used without calling their init functions. For that i copied the test right above and changed the variables to the `_static` ones. I missed making a child function that also uses the static variables, fixed.",
+      "parentUuid": "f9b52613_7ebe4b93",
       "revId": "faf86cf59062c9c1847a4ff336f548e217d7e50c",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

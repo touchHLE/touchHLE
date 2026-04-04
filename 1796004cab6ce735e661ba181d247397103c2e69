@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "63aefb0d_79637a01",
+        "filename": "tests/TestApp_source/cli_tests.m",
+        "patchSetId": 17
+      },
+      "lineNbr": 1142,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-04-04T14:17:18Z",
+      "side": 1,
+      "message": "Sorry, I\u0027m still confused by those declarations.\n\nShould it rather be:\n\n```\npthread_mutex_t m_static \u003d PTHREAD_MUTEX_INITIALIZER;\npthread_cond_t c_static \u003d PTHREAD_COND_INITIALIZER;\npthread_cond_t c2_static \u003d PTHREAD_COND_INITIALIZER;\n```\n\n?",
+      "revId": "1796004cab6ce735e661ba181d247397103c2e69",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

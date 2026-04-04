@@ -176,6 +176,24 @@
       "parentUuid": "95caff02_eafb6746",
       "revId": "dfe2040560916c27d62baf9811386d64e3c13632",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "62fe5d99_ebe6e2c2",
+        "filename": "src/libc/libkern/task.rs",
+        "patchSetId": 12
+      },
+      "lineNbr": 73,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2026-04-04T12:30:50Z",
+      "side": 1,
+      "message": "Since the fields in the stack are in the same order as they\u0027re in the struct, I get similar values for policy if i run a test with a struct defined",
+      "parentUuid": "c66c6f1d_3ede1f66",
+      "revId": "dfe2040560916c27d62baf9811386d64e3c13632",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

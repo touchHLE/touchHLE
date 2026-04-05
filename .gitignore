@@ -6,12 +6,14 @@
 touchHLE_log.txt
 touchHLE_wallpaper.*
 
-# Xcode (integration testing app)
-
-*.pbxuser
-!default.pbxuser
-*.mode1v3
-!default.mode1v3
+# Xcode Project (Modern/Deeply Nested)
+**/*.xcodeproj/xcuserdata/
+**/*.xcworkspace/xcuserdata/
+**/.swiftpm/xcode/xcuserdata/
+**/*.xcworkspace/xcshareddata/IDEWorkspaceChecks.plist
+**/*.xcworkspace/xcshareddata/*.xccheckout
+**/*.xcworkspace/xcshareddata/*.xcscmblueprint
+**/*.playground/**/timeline.xctimeline
 
 # Android
 

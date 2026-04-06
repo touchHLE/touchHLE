@@ -16,6 +16,24 @@
       "message": "hhhm let\u0027s add all *.o files under TestApp.app? we may have more c++ tests later",
       "revId": "56e2d9b7a523dd82cace1e7d4bd6eb3be907eb16",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "8aec3eaf_34406785",
+        "filename": "tests/.gitignore",
+        "patchSetId": 1
+      },
+      "lineNbr": 2,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2026-04-06T15:30:40Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "a14d10ef_cf590469",
+      "revId": "56e2d9b7a523dd82cace1e7d4bd6eb3be907eb16",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

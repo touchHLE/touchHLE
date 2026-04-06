@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a14d10ef_cf590469",
+        "filename": "tests/.gitignore",
+        "patchSetId": 1
+      },
+      "lineNbr": 2,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-04-06T15:28:34Z",
+      "side": 1,
+      "message": "hhhm let\u0027s add all *.o files under TestApp.app? we may have more c++ tests later",
+      "revId": "56e2d9b7a523dd82cace1e7d4bd6eb3be907eb16",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

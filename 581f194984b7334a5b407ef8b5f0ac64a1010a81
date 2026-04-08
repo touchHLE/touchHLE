@@ -16,6 +16,24 @@
       "message": "Could it create any issues in the future if we deverge too much from the original template?",
       "revId": "581f194984b7334a5b407ef8b5f0ac64a1010a81",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "41d45af4_a99de92e",
+        "filename": "android/app/build.gradle.kts",
+        "patchSetId": 8
+      },
+      "lineNbr": 6,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2026-04-08T16:42:30Z",
+      "side": 1,
+      "message": "It shouldn\u0027t, the languages are interchangeable so if we would need something it would be possible to bring it over.",
+      "parentUuid": "99a9bbb1_e31c7411",
+      "revId": "581f194984b7334a5b407ef8b5f0ac64a1010a81",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

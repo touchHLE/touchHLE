@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "99a9bbb1_e31c7411",
+        "filename": "android/app/build.gradle.kts",
+        "patchSetId": 8
+      },
+      "lineNbr": 6,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-04-08T13:19:02Z",
+      "side": 1,
+      "message": "Could it create any issues in the future if we deverge too much from the original template?",
+      "revId": "581f194984b7334a5b407ef8b5f0ac64a1010a81",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

@@ -304,7 +304,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 // Private static implementation of NSBundle, used for the main bundle
 // allocation. This is needed because some apps (e.g. Ovenbreak)
 // attempts to release it.
-@implementation _touchHLE_NSBundle_Static: NSBundle
+@implementation pathsForResourcesOfType:inDirectory: NSBundle
 
 + (id)allocWithZone:(NSZonePtr)_zone {
     let bundle_path = env.bundle.bundle_path().as_str().to_string();

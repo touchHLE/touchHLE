@@ -50,7 +50,9 @@ fn objc_msgSend_inner(
         env.cpu.regs_mut()[0..2].fill(0);
         return;
     }
-
+	
+	log!("[{:?} {}]", receiver, selector.as_str(&env.mem)); //This will print every ObjC message sent, and the last one before the crash will be the culprit. Rebuild and run, then share the last 20 lines of output before the panic. We can remove it once we identify the issue.
+	
     let orig_class = super2.unwrap_or_else(|| ObjC::read_isa(receiver, &env.mem));
     assert!(orig_class != nil);
 

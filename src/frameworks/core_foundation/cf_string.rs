@@ -31,6 +31,7 @@ pub const kCFStringEncodingUTF16: CFStringEncoding = kCFStringEncodingUnicode;
 pub const kCFStringEncodingUTF16BE: CFStringEncoding = 0x10000100;
 pub const kCFStringEncodingUTF16LE: CFStringEncoding = 0x14000100;
 pub const kCFStringEncodingISOLatin1: CFStringEncoding = 0x0201;
+pub const kCFStringEncodingDOSKorean: CFStringEncoding = 0x0422;
 
 fn CFStringAppend(
     env: &mut Environment,
@@ -77,6 +78,7 @@ pub fn CFStringConvertEncodingToNSStringEncoding(
         kCFStringEncodingUTF16BE => ns_string::NSUTF16BigEndianStringEncoding,
         kCFStringEncodingUTF16LE => ns_string::NSUTF16LittleEndianStringEncoding,
         kCFStringEncodingISOLatin1 => ns_string::NSISOLatin1StringEncoding,
+		kCFStringEncodingDOSKorean => ns_string::NSKoreanEUCStringEncoding,
         _ => unimplemented!("Unhandled: CFStringEncoding {:#x}", encoding),
     }
 }
@@ -92,6 +94,7 @@ fn CFStringConvertNSStringEncodingToEncoding(
         ns_string::NSUTF16BigEndianStringEncoding => kCFStringEncodingUTF16BE,
         ns_string::NSUTF16LittleEndianStringEncoding => kCFStringEncodingUTF16LE,
         ns_string::NSISOLatin1StringEncoding => kCFStringEncodingISOLatin1,
+		ns_string::NSKoreanEUCStringEncoding => kCFStringEncodingDOSKorean,
         _ => unimplemented!("Unhandled: NSStringEncoding {:#x}", encoding),
     }
 }

@@ -328,8 +328,9 @@ pub(super) fn UIApplicationMain(
             delegate,
             "application:didFinishLaunchingWithOptions:",
         ) {
-            let empty_dict: id = msg_class![env; NSDictionary dictionary];
-            () = msg![env; delegate application:ui_application didFinishLaunchingWithOptions:empty_dict];
+            log!("Calling application:didFinishLaunchingWithOptions:"); // add this
+			let empty_dict: id = msg_class![env; NSDictionary dictionary];
+			() = msg![env; delegate application:ui_application didFinishLaunchingWithOptions:empty_dict];
         } else if env.objc.object_has_method_named(
             &env.mem,
             delegate,

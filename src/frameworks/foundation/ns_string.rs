@@ -47,6 +47,7 @@ pub const NSMacOSRomanStringEncoding: NSUInteger = 30;
 pub const NSUTF16StringEncoding: NSUInteger = NSUnicodeStringEncoding;
 pub const NSUTF16BigEndianStringEncoding: NSUInteger = 0x90000100;
 pub const NSUTF16LittleEndianStringEncoding: NSUInteger = 0x94000100;
+pub const NSKoreanEUCStringEncoding: NSUInteger = 2360;
 
 pub type NSStringCompareOptions = NSUInteger;
 pub const NSCaseInsensitiveSearch: NSUInteger = 1;
@@ -61,6 +62,7 @@ const C_STRING_FRIENDLY_ENCODINGS: &[NSStringEncoding] = &[
     NSWindowsCP1252StringEncoding,
     NSMacOSRomanStringEncoding,
     NSISOLatin1StringEncoding,
+	NSKoreanEUCStringEncoding,
 ];
 
 pub const NSMaximumStringLength: NSUInteger = (i32::MAX - 1) as _;
@@ -133,6 +135,13 @@ impl StringHostObject {
                 log_dbg!("ShiftJIS decoded {:?}", cow);
                 StringHostObject::Utf8(Cow::Owned(cow.to_string()))
             }
+			NSKoreanEUCStringEncoding => {
+				let (cow, encoding_used, had_errors) = encoding_rs::EUC_KR.decode(&bytes);
+				assert_eq!(encoding_used, encoding_rs::EUC_KR);
+				assert!(!had_errors);
+				log_dbg!("EUC-KR decoded {:?}", cow);
+				StringHostObject::Utf8(Cow::Owned(cow.to_string()))
+			}
             NSUTF16StringEncoding
             | NSUTF16BigEndianStringEncoding
             | NSUTF16LittleEndianStringEncoding => {

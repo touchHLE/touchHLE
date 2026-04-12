@@ -40,6 +40,9 @@ fun join(prefix: String, separator: String, branding: String): String {
 android {
     ndkVersion = "25.2.9519653"
     compileSdk = 31
+    buildFeatures {
+        buildConfig = true
+    }
     defaultConfig {
         val branding = getTouchHLEBranding()
         applicationId = "org.touchhle.android"
@@ -99,6 +102,12 @@ android {
         }
         tasks.named("merge${variantName}Assets").configure {
             dependsOn("externalNativeBuild${variantName}")
+        }
+    }
+
+    sourceSets {
+        getByName("main") {
+            java.srcDir("${rootDir.parentFile}/vendor/SDL/android-project/app/src/main/java")
         }
     }
 

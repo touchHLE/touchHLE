@@ -102,6 +102,12 @@ android {
         }
     }
 
+    sourceSets {
+        getByName("main") {
+            java.srcDir("${rootDir.parentFile}/vendor/SDL/android-project/app/src/main/java")
+        }
+    }
+
     if (!project.hasProperty("EXCLUDE_NATIVE_LIBS")) {
         sourceSets {
             getByName("main") {

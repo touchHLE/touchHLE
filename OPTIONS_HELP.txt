@@ -283,3 +283,14 @@ Other options:
         This only affects return value of glGetError as seen by the guest
         and nothing else. Should be enabled only for apps which really
         need this behaviour.
+
+    --zero-stack-after-guest-to-host-call=<bytes>
+        After a guest-to-host call returns, zero out the given number of
+        bytes immediately below the current stack pointer (i.e. the unused
+        scratch region of the guest's full-descending stack).
+        This option exists because a guest-to-host call leaves that region
+        untouched, whereas a real call on iOS could leave it in a "dirty"
+        state. This can make a difference for apps that store data on the
+        stack and branch based on the stack's content. There is normally
+        no reason to enable this option. The number of bytes must be
+        chosen carefully on a per-app basis.

@@ -106,6 +106,7 @@ android {
         sourceSets {
             getByName("main") {
                 jniLibs.srcDir("${projectDir}/jniLibs")
+                java.srcDir("${rootDir.parentFile}/vendor/SDL/android-project/app/src/main/java")
             }
         }
         externalNativeBuild {

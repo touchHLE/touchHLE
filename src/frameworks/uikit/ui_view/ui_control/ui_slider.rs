@@ -19,6 +19,27 @@ pub const CLASSES: ClassExports = objc_classes! {
     msg_super![env; this initWithFrame:frame]
 }
 
+- (())setContinuous:(bool)_continuous {
+    log_dbg!("[(UISlider*){:?} setContinuous:{}] stub", this, _continuous);
+}
+
+- (())setMinimumValue:(f32)value {
+    log_dbg!("[(UISlider*){:?} setMinimumValue:{}] stub", this, value);
+}
+
+- (())setMaximumValue:(f32)value {
+    log_dbg!("[(UISlider*){:?} setMaximumValue:{}] stub", this, value);
+}
+
+- (())setValue:(f32)value {
+    log_dbg!("[(UISlider*){:?} setValue:{}] stub", this, value);
+}
+
+- (f32)value {
+    log_dbg!("[(UISlider*){:?} value] stub", this);
+    0.0
+}
+
 // NSCoding implementation
 - (id)initWithCoder:(id)coder {
     log!("[(UISlider*){:?} initWithCoder:{:?}] TODO: Implement UISlider. The control won't be rendered.", this, coder);

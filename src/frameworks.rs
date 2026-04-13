@@ -35,6 +35,7 @@ pub mod game_kit;
 pub mod media_player;
 pub mod openal;
 pub mod opengles;
+pub mod security;
 pub mod store_kit;
 pub mod system_configuration;
 pub mod uikit;

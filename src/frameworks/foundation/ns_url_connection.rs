@@ -6,12 +6,21 @@
 //! `NSURLConnection`.
 
 use crate::objc::{autorelease, id, msg, nil, objc_classes, release, ClassExports};
+use crate::msg_class;
 
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);
 
 @implementation NSURLConnection: NSObject
+
++ (id)sendSynchronousRequest:(id)_request
+           returningResponse:(id)_response
+                       error:(id)_error {
+    // Return empty NSData so callers don't crash on nil
+    let data: id = msg_class![env; NSData data];
+    data
+}
 
 + (id)connectionWithRequest:(id)request // NSURLRequest *
                    delegate:(id)delegate {

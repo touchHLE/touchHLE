@@ -10,7 +10,7 @@
 
 use super::cf_allocator::{kCFAllocatorDefault, CFAllocatorRef};
 use super::CFIndex;
-use crate::dyld::{export_c_func, FunctionExports};
+use crate::dyld::{export_c_func, ConstantExports, FunctionExports, HostConstant};
 use crate::frameworks::core_foundation::cf_string::{
     kCFStringEncodingASCII, CFStringConvertEncodingToNSStringEncoding, CFStringEncoding,
     CFStringRef,
@@ -23,6 +23,8 @@ use crate::mem::{ConstPtr, MutPtr, Ptr};
 use crate::objc::{id, msg, msg_class, release};
 use crate::Environment;
 
+
+
 pub type CFURLRef = super::CFTypeRef;
 
 type CFURLPathStyle = CFIndex;
@@ -31,6 +33,17 @@ const kCFURLPOSIXPathStyle: CFURLPathStyle = 0;
 const kCFURLHFSPathStyle: CFURLPathStyle = 1;
 #[allow(dead_code)]
 const kCFURLWindowsPathStyle: CFURLPathStyle = 2;
+
+pub const CONSTANTS: ConstantExports = &[
+    (
+        "_kCFURLFileLength",
+        HostConstant::Custom(|env| {
+            // kCFURLFileLength is a CFString constant used as a property key.
+            // We allocate a dummy non-null pointer so the guest can use it.
+            env.mem.alloc_and_write(0u32).cast().cast_const()
+        }),
+    ),
+];
 
 pub fn CFURLGetFileSystemRepresentation(
     env: &mut Environment,

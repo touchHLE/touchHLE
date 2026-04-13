@@ -27,6 +27,7 @@ pub mod cf_preferences;
 pub mod cf_run_loop;
 pub mod cf_run_loop_timer;
 pub mod cf_socket;
+pub mod cf_stream;
 pub mod cf_string;
 pub mod cf_type;
 pub mod cf_url;
@@ -37,6 +38,7 @@ pub const DYLIB: crate::dyld::HostDylib = crate::dyld::HostDylib {
     aliases: &[],
     class_exports: &[
         cf_run_loop_timer::CLASSES, // Special internal classes.
+		cf_stream::CLASSES,
     ],
     constant_exports: &[
         cf_allocator::CONSTANTS,
@@ -46,6 +48,7 @@ pub const DYLIB: crate::dyld::HostDylib = crate::dyld::HostDylib {
         cf_number::CONSTANTS,
         cf_preferences::CONSTANTS,
         cf_run_loop::CONSTANTS,
+		cf_url::CONSTANTS, 
     ],
     function_exports: &[
         FUNCTIONS,
@@ -59,6 +62,7 @@ pub const DYLIB: crate::dyld::HostDylib = crate::dyld::HostDylib {
         cf_preferences::FUNCTIONS,
         cf_run_loop::FUNCTIONS,
         cf_run_loop_timer::FUNCTIONS,
+		cf_stream::FUNCTIONS,
         cf_string::FUNCTIONS,
         cf_type::FUNCTIONS,
         cf_url::FUNCTIONS,

@@ -1323,6 +1323,9 @@ pub const CLASSES: ClassExports = objc_classes! {
              length:(NSUInteger)len
            encoding:(NSStringEncoding)encoding {
     // TODO: error handling
+    if bytes.is_null() || len == 0 {
+        return nil;
+    }
     let slice = env.mem.bytes_at(bytes, len);
     let host_object = StringHostObject::decode(Cow::Borrowed(slice), encoding);
 
@@ -1377,7 +1380,10 @@ pub const CLASSES: ClassExports = objc_classes! {
     // TODO: avoid copy?
     let path = to_rust_string(env, path);
     let Ok(bytes) = env.fs.read(GuestPath::new(&path)) else {
-        assert!(error.is_null()); // TODO: error handling
+        if !error.is_null() {
+            // TODO: proper NSError creation
+            env.mem.write(error, crate::objc::nil);
+        }
         return nil;
     };
 
@@ -1531,6 +1537,9 @@ pub const CLASSES: ClassExports = objc_classes! {
              length:(NSUInteger)len
            encoding:(NSStringEncoding)encoding {
     // TODO: error handling
+    if bytes.is_null() || len == 0 {
+        return nil;
+    }
     let slice = env.mem.bytes_at(bytes, len);
     let host_object = StringHostObject::decode(Cow::Borrowed(slice), encoding);
 

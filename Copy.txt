@@ -1,0 +1,164 @@
+set RUST_LOG=touchHLE=debug
+cargo run > out.txt 2>&1
+type out.txt
+
+fn CFReadStreamHasBytesAvailable(env: &mut Environment, stream: CFReadStreamRef) -> bool {
+    let host_obj = env.objc.borrow::<CFReadStreamHostObject>(stream);
+    // Return true if the stream is open, indicating bytes are available.
+    let available = host_obj.file.is_some();
+    log!("CFReadStreamHasBytesAvailable({:?}) -> {}", stream, available);
+    available
+}
+
+
+
+fn CFURLCreatePropertyFromResource(
+    env: &mut Environment,
+    _url: id,
+    _property: id,
+    _error_code: id,
+) -> id {
+    // Return a non-zero file size so the caller proceeds normally.
+    // The actual size doesn't matter for Zenonia's usage.
+    log!("TODO: CFURLCreatePropertyFromResource - returning dummy size 4096");
+    let file_size: i32 = 4096;
+    let ns_number: id = msg_class![env; NSNumber numberWithInt:file_size];
+    msg![env; ns_number retain]
+}
+
+
+
+
+PS C:\Projects\touchHLE_Zenonia> Get-Content src\frameworks\core_foundation\cf_stream.rs | Select-Object -Skip 55 -First 30
+
+fn CFReadStreamOpen(env: &mut Environment, stream: CFReadStreamRef) -> bool {
+    log!("CFReadStreamOpen called, stream={:?}", stream);
+    let host_obj = env.objc.borrow_mut::<CFReadStreamHostObject>(stream);
+    if host_obj.file.is_some() {
+        return true;
+    }
+    let path = host_obj.path.clone();
+    let guest_path = crate::fs::GuestPath::new(&path);
+    match env.fs.open(guest_path) {
+        Ok(guest_file) => {
+            // Extract the underlying std::fs::File from GuestFile
+            match env.fs.open(guest_path) {
+                                Ok(guest_file) => {
+                                let host_obj = env.objc.borrow_mut::<CFReadStreamHostObject>(stream);
+                                log!("CFReadStreamOpen('{}') => success", path);
+                                host_obj.file = Some(guest_file);
+                                true
+                        }
+                                Err(()) => {
+                                        log!("CFReadStreamOpen('{}') failed: not found in guest fs", path);
+                                        false
+                                }
+                        }
+        }
+        Err(()) => {
+            log!("CFReadStreamOpen('{}') failed: not found in guest fs", path);
+            false
+        }
+    }
+PS C:\Projects\touchHLE_Zenonia> Get-ChildItem -Path src -Recurse -Filter "*.rs" | Select-String -Pattern "CFReadStreamHasBytesAvailable|CFURLCreatePropertyFromResource"
+
+src\frameworks\core_foundation\cf_stream.rs:151:fn CFURLCreatePropertyFromResource(
+src\frameworks\core_foundation\cf_stream.rs:159:    log!("TODO: CFURLCreatePropertyFromResource - returning dummy size
+4096");
+src\frameworks\core_foundation\cf_stream.rs:165:fn CFReadStreamHasBytesAvailable(env: &mut Environment, stream:
+CFReadStreamRef) -> bool {
+src\frameworks\core_foundation\cf_stream.rs:169:    log!("CFReadStreamHasBytesAvailable({:?}) -> {}", stream,
+available);
+src\frameworks\core_foundation\cf_stream.rs:181:    export_c_func!(CFURLCreatePropertyFromResource(_, _, _)),
+src\frameworks\core_foundation\cf_stream.rs:182:        export_c_func!(CFReadStreamHasBytesAvailable(_)),
+
+
+I did this command on cmd
+tar -xf "touchHLE_apps\ZENONIA 3 v1.2.1.ipa" -O Payload/zenonia3.app/TouchOemIME.pzx > TouchOemIME.pzx
+dir TouchOemIME.pzx 
+
+
+and it says 
+The file is 12,320 bytes but we're only reading 4096 bytes because CFURLCreatePropertyFromResource returns a dummy size of 4096! The game uses that size to allocate its read buffer, reads only 4096 bytes of a 12,320 byte file, and then crashes trying to parse the incomplete data.
+
+so I change this 
+fn CFURLCreatePropertyFromResource(
+    env: &mut Environment,
+    _url: id,
+    _property: id,
+    _error_code: id,
+) -> id {
+    // Return a non-zero file size so the caller proceeds normally.
+    // The actual size doesn't matter for Zenonia's usage.
+    log!("TODO: CFURLCreatePropertyFromResource - returning dummy size 4096");
+    let file_size: i32 = 4096;
+    let ns_number: id = msg_class![env; NSNumber numberWithInt:file_size];
+    msg![env; ns_number retain]
+}
+
+to
+
+fn CFURLCreatePropertyFromResource(
+    env: &mut Environment,
+    url: id,
+    _property: id,
+    _error_code: id,
+) -> id {
+    // Get the real file size from the URL's path
+    use crate::frameworks::foundation::ns_string::to_rust_string;
+    use crate::frameworks::foundation::ns_url::to_rust_path;
+    let path: id = msg![env; url path];
+    let path_str = to_rust_string(env, path);
+    let file_size: i32 = match env.fs.read(crate::fs::GuestPath::new(&path_str)) {
+        Ok(bytes) => bytes.len() as i32,
+        Err(()) => {
+            log!("CFURLCreatePropertyFromResource: could not get size for {}", path_str);
+            4096
+        }
+    };
+    log!("CFURLCreatePropertyFromResource: real size {} for {}", file_size, path_str);
+    let ns_number: id = msg_class![env; NSNumber numberWithInt:file_size];
+    msg![env; ns_number retain]
+}
+
+but now it went back to this error
+
+touchHLE::frameworks::core_foundation::cf_stream: CFReadStreamCreateWithFile('/var/mobile/Applications/00000000-0000-0000-0000-000000000000/Zenonia.app/com/light80x50.zt1') -> 0x3000f6b0
+touchHLE::objc::messages: [0x3000f630 release]
+touchHLE::objc::messages: [0x3000f630 dealloc]
+touchHLE::objc::messages: [0x3000f640 release]
+touchHLE::objc::messages: [0x3000f640 dealloc]
+
+thread 'main' (6740) panicked at src\objc\objects.rs:268:77:
+called `Option::unwrap()` on a `None` value
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+Register state immediately after panic:
+Dumping registers for current thread (#0)
+         R0: 0x00000000  R1: 0x00000000  R2: 0x00000000  R3: 0xfffffc08
+         R4: 0x3000f640  R5: 0x3000f670  R6: 0x3000f630  R7: 0xfffffc24
+         R8: 0x000774cc  R9: 0x42673792 R10: 0x3000f6b0 R11: 0xfffffc2c
+        R12: 0x000003e1  SP: 0xfffffb40  LR: 0x0002df1d  PC: 0x00070194
+Attempting to produce stack trace for current thread (#0):
+ 0. 0x70194 (PC)
+ 1. 0x2df1d (LR)
+ 2. 0x1650d
+ 3. 0x165c9
+ 4. 0x3b25d
+ 5. 0x3b2eb
+ 6. 0x4bb15
+ 7. 0x4c15f
+ 8. 0x4c1b9
+ 9. 0x3eb89
+10. 0x16733
+11. 0x16449
+12. 0x163fb
+13. 0x16851
+14. 0x163cb
+15. 0x2c3b5
+16. [host function]
+17. [host function]
+18. 0x209c
+Next FP ((null)) is outside the stack.
+error: process didn't exit successfully: `target\debug\touchHLE.exe` (exit code: 101)
+
+C:\Projects\touchHLE_Zenonia>

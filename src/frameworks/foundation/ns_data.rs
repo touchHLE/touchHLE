@@ -29,6 +29,11 @@ pub const CLASSES: ClassExports = objc_classes! {
 // NSData doesn't seem to be an abstract class?
 @implementation NSData: NSObject
 
++ (id)data {
+    let new: id = msg![env; this alloc];
+    autorelease(env, new)
+}
+
 + (id)allocWithZone:(NSZonePtr)_zone {
     let host_object = Box::new(NSDataHostObject {
         bytes: Ptr::null(),

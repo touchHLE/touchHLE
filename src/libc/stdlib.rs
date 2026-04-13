@@ -278,6 +278,20 @@ fn exit(env: &mut Environment, exit_code: i32) {
     std::process::exit(exit_code);
 }
 
+fn __assert_rtn(
+    env: &mut Environment,
+    func: ConstPtr<u8>,
+    file: ConstPtr<u8>,
+    line: i32,
+    expr: ConstPtr<u8>,
+) {
+    let func_str = env.mem.cstr_at_utf8(func).unwrap_or("?");
+    let file_str = env.mem.cstr_at_utf8(file).unwrap_or("?");
+    let expr_str = env.mem.cstr_at_utf8(expr).unwrap_or("?");
+    log!("__assert_rtn: assertion failed: {} ({}:{} in {})", expr_str, file_str, line, func_str);
+    // Don't panic — just log and return so the game can continue
+}
+
 fn bsearch(
     env: &mut Environment,
     key: ConstVoidPtr,
@@ -526,6 +540,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(setenv(_, _, _)),
     export_c_func!(unsetenv(_)),
     export_c_func!(exit(_)),
+	export_c_func!(__assert_rtn(_, _, _, _)),
     export_c_func!(bsearch(_, _, _, _, _)),
     export_c_func!(strtof(_, _)),
     export_c_func!(strtoul(_, _, _)),

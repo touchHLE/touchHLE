@@ -215,7 +215,7 @@ pub fn open_direct(env: &mut Environment, path: ConstPtr<u8>, flags: i32) -> Fil
         // TODO: Handle possible errors
         flock(env, res, LOCK_SH);
     }
-    log_dbg!(
+    log!(
         "open({:?} {:?}, {:#x}) => {:?}",
         path,
         path_string,

@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "8d999df9_2ff7355b",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 41
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-04-27T18:25:50Z",
+      "side": 1,
+      "message": "Looks good to me overall, but:",
+      "revId": "437ceffb7d2aa2243f341749104a2c335f2cd400",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "bb33b731_ce07b78e",
+        "filename": "src/frameworks/foundation/ns_run_loop.rs",
+        "patchSetId": 41
+      },
+      "lineNbr": 289,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-04-27T18:25:50Z",
+      "side": 1,
+      "message": "`swap_remove` is efficient, but re-ordering other queued requests is probably bad? Hell of an edge case, but…",
+      "revId": "437ceffb7d2aa2243f341749104a2c335f2cd400",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3be4f909_0acd7021",
+        "filename": "src/frameworks/foundation/ns_run_loop.rs",
+        "patchSetId": 41
+      },
+      "lineNbr": 422,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-04-27T18:25:50Z",
+      "side": 1,
+      "message": "ditto",
+      "revId": "437ceffb7d2aa2243f341749104a2c335f2cd400",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

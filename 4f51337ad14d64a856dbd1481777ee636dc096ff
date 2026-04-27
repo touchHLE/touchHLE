@@ -33,6 +33,24 @@
       "message": "What about using Optional here as well?",
       "revId": "4f51337ad14d64a856dbd1481777ee636dc096ff",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "49fc6506_78b50116",
+        "filename": "src/frameworks/foundation/ns_run_loop.rs",
+        "patchSetId": 40
+      },
+      "lineNbr": 71,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2026-04-27T21:30:31Z",
+      "side": 1,
+      "message": "The main reason i didn\u0027t want to was because we don\u0027t have a non-null pointer, i\u0027ll probably add one since it seems like it\u0027ll probably be generally useful",
+      "parentUuid": "d7739970_f2745f17",
+      "revId": "4f51337ad14d64a856dbd1481777ee636dc096ff",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

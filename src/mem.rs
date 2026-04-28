@@ -18,6 +18,7 @@ mod allocator;
 mod host;
 
 pub use allocator::{HeapAllocator, VMAllocError};
+use std::num::NonZeroU32;
 
 use crate::libc::wchar::wchar_t;
 use crate::mem::allocator::VMAllocator;
@@ -28,6 +29,9 @@ pub type GuestUSize = u32;
 /// Equivalent of `isize` for guest memory.
 pub type GuestISize = i32;
 
+/// Nonzero version of [GuestUSize].
+pub type NonZeroGuestUSize = NonZeroU32;
+
 /// [std::mem::size_of], but returning a [GuestUSize].
 pub const fn guest_size_of<T: Sized>() -> GuestUSize {
     assert!(std::mem::size_of::<T>() <= u32::MAX as usize);
@@ -36,6 +40,9 @@ pub const fn guest_size_of<T: Sized>() -> GuestUSize {
 
 /// Internal type for representing an untyped virtual address.
 type VAddr = GuestUSize;
+
+/// Internal type for representing an untyped virtual address.
+type NonZeroVAddr = NonZeroGuestUSize;
 
 /// Pointer type for guest memory, or the "guest pointer" type.
 ///
@@ -100,6 +107,10 @@ impl<T, const MUT: bool> Ptr<T, MUT> {
 
     pub fn is_null(self) -> bool {
         self.to_bits() == 0
+    }
+
+    pub fn non_null(self) -> Option<NonNullPtr<T>> {
+        NonNullPtr::try_from_bits(self.0)
     }
 }
 
@@ -166,6 +177,79 @@ impl<T, const MUT: bool> std::ops::Sub<GuestUSize> for Ptr<T, MUT> {
 impl<T, const MUT: bool> std::ops::SubAssign<GuestUSize> for Ptr<T, MUT> {
     fn sub_assign(&mut self, rhs: GuestUSize) {
         *self = *self - rhs;
+    }
+}
+
+/// Non-null pointer type for guest memory, similar to [std::ptr::NonNull].
+/// You should use this wrapped in [Option] when storing types instead of
+/// storing null pointers.
+///
+/// You can convert to this type using [Ptr::non_null] (where null pointers
+/// will become [None] and other pointers will becone [Some], and convert back
+/// using [Self::const_ptr] and [Self::mut_ptr].
+#[repr(transparent)]
+pub struct NonNullPtr<T>(NonZeroVAddr, std::marker::PhantomData<T>);
+
+#[allow(unused)]
+pub type NonNullVoidPtr = NonNullPtr<std::ffi::c_void>;
+
+// #[derive(...)] doesn't work for this type because it expects T to have the
+// trait we want implemented
+impl<T> Clone for NonNullPtr<T> {
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+impl<T> Copy for NonNullPtr<T> {}
+impl<T> PartialEq for NonNullPtr<T> {
+    fn eq(&self, other: &Self) -> bool {
+        self.0 == other.0
+    }
+}
+impl<T> Eq for NonNullPtr<T> {}
+impl<T> std::hash::Hash for NonNullPtr<T> {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.0.hash(state);
+    }
+}
+
+#[allow(unused)]
+impl<T> NonNullPtr<T> {
+    pub fn to_bits(self) -> VAddr {
+        self.0.into()
+    }
+    pub fn try_from_bits(bits: VAddr) -> Option<Self> {
+        if bits == 0 {
+            None
+        } else {
+            Some(Self(bits.try_into().unwrap(), std::marker::PhantomData))
+        }
+    }
+
+    pub fn from_bits(bits: VAddr) -> Self {
+        Self::try_from_bits(bits).expect("Tried to create a NonNullPtr with a null value!")
+    }
+
+    pub fn cast<U>(self) -> NonNullPtr<U> {
+        NonNullPtr::<U>::try_from_bits(self.to_bits()).unwrap()
+    }
+
+    pub fn cast_void(self) -> NonNullPtr<std::ffi::c_void> {
+        self.cast()
+    }
+
+    pub fn mut_ptr(self) -> MutPtr<T> {
+        MutPtr::from_bits(self.0.into())
+    }
+
+    pub fn const_ptr(self) -> MutPtr<T> {
+        MutPtr::from_bits(self.0.into())
+    }
+}
+
+impl<T> std::fmt::Debug for NonNullPtr<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:#x}", self.to_bits())
     }
 }
 

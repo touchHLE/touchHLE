@@ -19,7 +19,7 @@ use crate::frameworks::core_foundation::cf_run_loop::{
 };
 use crate::frameworks::{core_animation, media_player, uikit};
 use crate::libc::semaphore::{host_create_semaphore, sem_post, sem_t};
-use crate::mem::MutPtr;
+use crate::mem::NonNullPtr;
 use crate::objc::{
     id, msg, msg_send, nil, objc_classes, release, retain, Class, ClassExports, HostObject, SEL,
 };
@@ -69,7 +69,7 @@ struct ObjectSelectorSource {
     argument: id,
     due_by: Option<Instant>,
     // Used for waitUntilDone:, (uses NULL if not waiting)
-    semaphore: MutPtr<sem_t>,
+    semaphore: Option<NonNullPtr<sem_t>>,
 }
 
 pub const CLASSES: ClassExports = objc_classes! {
@@ -214,15 +214,15 @@ pub(super) fn add_perform_request(
     argument: id,
     delay: Option<f64>,
     should_sync: bool,
-) -> MutPtr<sem_t> {
+) -> Option<NonNullPtr<sem_t>> {
     log_dbg!(
         "Adding object selector request {target:?} {:?} {argument:?} on run loop {run_loop:?}",
         selector.as_str(env.mem.as_mut())
     );
     let semaphore = if should_sync {
-        host_create_semaphore(env, 0)
+        host_create_semaphore(env, 0).non_null()
     } else {
-        MutPtr::null()
+        None
     };
     retain(env, target);
     retain(env, argument);
@@ -282,8 +282,8 @@ pub(super) fn cancel_perform_requests(
             } = obj;
             release(env, target);
             release(env, argument);
-            if !semaphore.is_null() {
-                sem_post(env, semaphore);
+            if let Some(sem) = semaphore {
+                sem_post(env, sem.mut_ptr());
             }
         } else {
             new_selector_objects.push_back(obj);
@@ -425,8 +425,8 @@ pub fn run_run_loop(
                     release(env, target);
                     release(env, argument);
 
-                    if !semaphore.is_null() {
-                        sem_post(env, semaphore);
+                    if let Some(sem) = semaphore {
+                        sem_post(env, sem.mut_ptr());
                     }
                 }
                 None => {

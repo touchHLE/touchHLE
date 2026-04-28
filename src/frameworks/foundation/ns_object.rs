@@ -337,9 +337,9 @@ forUndefinedKey:(id)key { // NSString*
 
     let run_loop: id = msg_class![env; NSRunLoop mainRunLoop];
     let sem = add_perform_request(env, run_loop, this, sel, arg, None, wait);
-    if wait {
-        sem_wait(env, sem);
-        host_destroy_semaphore(env, sem);
+    if let Some(sem) = sem {
+        sem_wait(env, sem.mut_ptr());
+        host_destroy_semaphore(env, sem.mut_ptr());
     }
 }
 

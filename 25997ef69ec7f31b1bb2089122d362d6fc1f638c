@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "81489197_a5eb0666",
+        "filename": "tests/TestApp_source/cli_tests.m",
+        "patchSetId": 38
+      },
+      "lineNbr": 5295,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-04-29T22:02:54Z",
+      "side": 1,
+      "message": "you also need to update sanity check tests on macOS build to include the new .m file, or Github CI will fail",
+      "revId": "25997ef69ec7f31b1bb2089122d362d6fc1f638c",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

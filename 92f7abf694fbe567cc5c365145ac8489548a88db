@@ -1,6 +1,23 @@
 {
   "comments": [
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "a9de5320_d2f461b3",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 3
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-05-01T14:27:44Z",
+      "side": 1,
+      "message": "Merged with small modification here https://github.com/touchHLE/touchHLE/commit/0ae5744a2c6c0061f9ac0f895d4924d2639a0caf",
+      "revId": "92f7abf694fbe567cc5c365145ac8489548a88db",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "37cab948_327897cf",
@@ -68,6 +85,24 @@
       "side": 1,
       "message": "Does passing a 0 here is legimate use-case?\n\nOtherwise, what does iOS/macOS do here? Does it crash?",
       "parentUuid": "6c7fa47a_417e11f1",
+      "revId": "92f7abf694fbe567cc5c365145ac8489548a88db",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "a040d12b_04e8cc2e",
+        "filename": "src/libc/pthread/key.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 58,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-05-01T14:27:44Z",
+      "side": 1,
+      "message": "I decided to rollback those modifications to panicking one as there is no enough evidence that implemented behaviour corresponds to the iOS one.",
+      "parentUuid": "465929bf_76193c95",
       "revId": "92f7abf694fbe567cc5c365145ac8489548a88db",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

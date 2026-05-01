@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "0022f723_bc71b37d",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1039141
+      },
+      "writtenOn": "2026-05-01T20:29:28Z",
+      "side": 1,
+      "message": "seems like my username credited twice mistakenly",
+      "revId": "81633fd6d3b39dd4b391b84d1d58d6cab180c4f5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

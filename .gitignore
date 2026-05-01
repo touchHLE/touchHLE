@@ -20,6 +20,10 @@ android/app/src/main/jniLibs
 android/app/build
 android/build
 
+# macOS
+
+.DS_Store
+
 # Default developer dump file
 
 DUMP.txt

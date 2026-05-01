@@ -32,7 +32,7 @@ Compatibility:
   - [Asphalt 6](https://appdb.touchhle.org/apps/1217) (@ciciplusplus)
   - [World of Goo](https://appdb.touchhle.org/apps/1210) (@ciciplusplus)
 - API support improvements:
-  - Various small contributions. (@hikari-no-yume, @ciciplusplus, @zazatree, @abnormalmaps, @alborrajo, @acieslewicz, @zazatree)
+  - Various small contributions. (@hikari-no-yume, @ciciplusplus, @zazatree, @abnormalmaps, @alborrajo, @acieslewicz)
   - Several changes have been made to fix certain apps and games that should appear in landscape, but previously were displayed stretched, cropped and/or un-rotated:
     - If an app requires a landscape orientation in the `UIInterfaceOrientation` or `UISupportedInterfaceOrientations` keys of its `Info.plist`, touchHLE will now rotate the virtual device at startup. (@hikari-no-yume)
     - If an app overrides the `shouldAutorotateToInterfaceOrientation:` method in a `UIViewController`, and the virtual device is in a landscape orientation, touchHLE will now apply a rotation transform to the root view when it is added to a window. (@hikari-no-yume)

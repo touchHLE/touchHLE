@@ -876,6 +876,31 @@ fn ftruncate(env: &mut Environment, fd: FileDescriptor, len: off_t) -> i32 {
     }
 }
 
+fn truncate(env: &mut Environment, path_ptr: ConstPtr<u8>, len: off_t) -> i32 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
+    let path_string = match env.mem.cstr_at_utf8(path_ptr) {
+        Ok(s) => s.to_owned(),
+        Err(_) => {
+            return -1; // TODO: set errno
+        }
+    };
+
+    let fd = open_direct(env, path_ptr, O_WRONLY);
+    if fd < 0 {
+        log_dbg!("truncate('{}', {}) => -1", path_string, len);
+        return -1;
+    }
+
+    let res = ftruncate(env, fd, len);
+
+    close(env, fd);
+
+    log_dbg!("truncate('{}', {}) => {}", path_string, len, res);
+    res
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(open(_, _, _)),
     export_c_func!(read(_, _, _)),
@@ -891,6 +916,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(flock(_, _)),
     export_c_func!(fsync(_)),
     export_c_func!(ftruncate(_, _)),
+    export_c_func!(truncate(_, _)),
 ];
 
 /// Helper function, not part of API

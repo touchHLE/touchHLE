@@ -6,4 +6,20 @@
  * Parts of this file are derived from SDL 2's Android project template, which
  * has a different license. Please see vendor/SDL/LICENSE.txt for details.
  */
+pluginManagement {
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
 include(":app")

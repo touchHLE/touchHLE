@@ -9,9 +9,9 @@
 import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
 
 plugins {
-    id("com.android.application")
-    id("com.github.willir.rust.cargo-ndk-android")
-    id("org.jetbrains.kotlin.android")
+    id("com.android.application") version("8.10.1")
+    id("com.github.willir.rust.cargo-ndk-android") version("0.3.4")
+    id("org.jetbrains.kotlin.android") version("2.0.21")
 }
 
 fun runTouchHLEVersionTool(wantBranding: Boolean): String {

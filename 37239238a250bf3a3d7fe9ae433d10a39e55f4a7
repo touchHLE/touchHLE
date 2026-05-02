@@ -16,6 +16,24 @@
       "message": "name of the method is setActive:error:, you should fix the commit message",
       "revId": "37239238a250bf3a3d7fe9ae433d10a39e55f4a7",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "0b90f5e0_c7a6798e",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1039141
+      },
+      "writtenOn": "2026-05-02T15:30:51Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "97449e1a_16707961",
+      "revId": "37239238a250bf3a3d7fe9ae433d10a39e55f4a7",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

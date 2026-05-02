@@ -60,6 +60,17 @@ pub const CLASSES: ClassExports = objc_classes! {
     true
 }
 
+- (bool)setActive:(bool)active
+            error:(MutPtr<id>)error { // NSError **
+    log!(
+        "TODO: [(AVAudioSession *){:?} setActive:{} error:{:?}] -> true",
+        this,
+        active,
+        error
+    );
+    true
+}
+
 @end
 
 };

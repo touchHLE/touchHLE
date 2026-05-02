@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2bf1e7f5_07019361",
+        "filename": "src/libc/posix_io.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 893,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-05-02T19:10:03Z",
+      "side": 1,
+      "message": "Perhaps this should call ftruncate() instead? It probably doesn\u0027t matter much, but…",
+      "revId": "5270c41334210113ab1fbfcd01fed3b557daeb73",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

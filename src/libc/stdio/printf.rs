@@ -791,7 +791,14 @@ fn sscanf_common(
 ) -> i32 {
     sscanf_common_generic(
         env,
-        |env, s, idx| Ok(env.mem.read(s + idx)),
+        |env, s, idx| {
+            let c = env.mem.read(s + idx);
+            if c == b'\0' {
+                Err(())
+            } else {
+                Ok(c)
+            }
+        },
         |_, _, _| (),
         src.cast_mut(),
         format,
@@ -845,20 +852,29 @@ where
             break;
         }
         if c != b'%' {
-            let mut cc: u8 = getc_fn(env, subject, src_char_idx).unwrap().into(); // TODO: EOF
+            let x = getc_fn(env, subject, src_char_idx);
+            if x.is_err() {
+                break 'outer;
+            }
+            let mut cc: u8 = x.unwrap().into();
             if isspace(env, format + format_char_idx - 1) {
                 // "any single whitespace character in the format string
                 // consumes all available consecutive whitespace characters
                 // from the input"
                 while isspace_inner(cc) {
                     src_char_idx += 1;
-                    cc = getc_fn(env, subject, src_char_idx).unwrap().into(); // TODO: EOF
+                    let x = getc_fn(env, subject, src_char_idx);
+                    if x.is_err() {
+                        break 'outer;
+                    }
+                    cc = x.unwrap().into();
                 }
                 // backtrack one
                 ungetc_fn(env, subject, cc);
                 continue;
             }
             if c != cc {
+                ungetc_fn(env, subject, cc);
                 return matched_args;
             }
             src_char_idx += 1;
@@ -952,8 +968,9 @@ where
                                         src_char_idx += len;
                                         let c_int_ptr: ConstPtr<i16> = args.next(env);
                                         env.mem.write(c_int_ptr.cast_mut(), val);
+                                        matched_args += 1;
                                     }
-                                    Err(_) => break,
+                                    Err(_) => break 'outer,
                                 }
                             }
                             _ => unimplemented!(),
@@ -976,8 +993,9 @@ where
                                 src_char_idx += len;
                                 let c_int_ptr: ConstPtr<i32> = args.next(env);
                                 env.mem.write(c_int_ptr.cast_mut(), val);
+                                matched_args += 1;
                             }
-                            Err(_) => break,
+                            Err(_) => break 'outer,
                         }
                     }
                 }
@@ -990,16 +1008,18 @@ where
                         src_char_idx += len;
                         val
                     }
-                    Err(_) => break,
+                    Err(_) => break 'outer,
                 };
                 match length_modifier {
                     None => {
                         let c_int_ptr: ConstPtr<f32> = args.next(env);
                         env.mem.write(c_int_ptr.cast_mut(), val as f32);
+                        matched_args += 1;
                     }
                     Some("l") => {
                         let c_int_ptr: ConstPtr<f64> = args.next(env);
                         env.mem.write(c_int_ptr.cast_mut(), val);
+                        matched_args += 1;
                     }
                     Some(modifier) => {
                         unimplemented!("Length formater '{}' for f", modifier)
@@ -1029,8 +1049,9 @@ where
                         src_char_idx += len;
                         let c_u32_ptr: ConstPtr<u32> = args.next(env);
                         env.mem.write(c_u32_ptr.cast_mut(), val);
+                        matched_args += 1;
                     }
-                    Err(_) => break,
+                    Err(_) => break 'outer,
                 }
             }
             b'[' => {
@@ -1067,29 +1088,42 @@ where
                 let mut matched = false;
                 // Consume `src` while chars are in the set
                 // (or not in the set if inverted)
-                let mut cc = getc_fn(env, subject, src_char_idx).unwrap().into(); // TODO: EOF
+                let x = getc_fn(env, subject, src_char_idx);
+                if x.is_err() {
+                    break 'outer;
+                }
+                let mut cc: u8 = x.unwrap().into();
                 src_char_idx += 1;
                 let mut match_count = 0;
+                let mut break_reached = false;
                 while set.contains(&cc) ^ inverted && cc != b'\0' {
                     matched = true;
                     env.mem.write(dst_ptr, cc);
                     dst_ptr += 1;
                     match_count += 1;
                     if max_width > 0 && match_count == max_width {
+                        break_reached = true;
                         break;
                     }
-                    cc = getc_fn(env, subject, src_char_idx).unwrap().into(); // TODO: EOF
-                    src_char_idx += 1;
+                    let x = getc_fn(env, subject, src_char_idx);
+                    if let Ok(next_cc) = x {
+                        cc = next_cc.into();
+                        src_char_idx += 1;
+                    } else {
+                        break_reached = true;
+                        break;
+                    }
                 }
-                if !(set.contains(&cc) ^ inverted && cc != b'\0') {
+                if !break_reached {
                     // We need to backtrack one position
                     ungetc_fn(env, subject, cc);
                     src_char_idx -= 1;
                 }
                 if matched {
                     env.mem.write(dst_ptr, b'\0');
+                    matched_args += 1;
                 } else {
-                    matched_args -= 1;
+                    break 'outer;
                 }
             }
             b's' => {
@@ -1097,25 +1131,29 @@ where
                 assert!(length_modifier.is_none());
                 let orig_dst_ptr: MutPtr<u8> = args.next(env);
                 let mut dst_ptr: MutPtr<u8> = orig_dst_ptr;
+                let mut matched = false;
                 loop {
                     let x = getc_fn(env, subject, src_char_idx);
-                    if x.is_err() {
-                        break;
-                    }
-                    let cc: u8 = x.unwrap().into();
-                    if !isspace_inner(cc) {
-                        if cc == b'\0' {
+                    if let Ok(cc) = x {
+                        let cc: u8 = cc.into();
+                        if !isspace_inner(cc) {
+                            matched = true;
+                            env.mem.write(dst_ptr, cc);
+                            src_char_idx += 1;
+                            dst_ptr += 1;
+                        } else {
+                            ungetc_fn(env, subject, cc);
                             break;
                         }
-                        env.mem.write(dst_ptr, cc);
-                        src_char_idx += 1;
-                        dst_ptr += 1;
                     } else {
-                        ungetc_fn(env, subject, cc);
                         break;
                     }
                 }
+                if !matched {
+                    break 'outer;
+                }
                 env.mem.write(dst_ptr, b'\0');
+                matched_args += 1;
                 log_dbg!(
                     "sscanf_common_generic read %s '{:?}'",
                     env.mem.cstr_at_utf8(orig_dst_ptr)
@@ -1124,10 +1162,15 @@ where
             // TODO: more specifiers
             _ => unimplemented!("Format character '{}'", specifier as char),
         }
-
-        matched_args += 1;
     }
 
+    if matched_args == 0 {
+        if let Ok(cc) = getc_fn(env, subject, src_char_idx) {
+            ungetc_fn(env, subject, cc.into());
+        } else {
+            return EOF;
+        }
+    }
     matched_args
 }
 

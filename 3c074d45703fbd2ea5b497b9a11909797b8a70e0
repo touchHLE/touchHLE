@@ -16,6 +16,24 @@
       "message": "I totally support this patch, but some general advice. You should globally ignore .DS_Store files!\n\t\ntouch ~/.gitignore_global\necho \".DS_Store\" \u003e\u003e ~/.gitignore_global\ngit config --global core.excludesfile ~/.gitignore_global",
       "revId": "3c074d45703fbd2ea5b497b9a11909797b8a70e0",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "4b478c2b_81b10b2c",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1039141
+      },
+      "writtenOn": "2026-05-02T12:24:55Z",
+      "side": 1,
+      "message": "Thanks for the tip, definitely seems like the better solution to this with all my local repos. Though this patch could be good for any future contributors so they don\u0027t have to rely on their own global config.",
+      "parentUuid": "d353f231_9f1bffbc",
+      "revId": "3c074d45703fbd2ea5b497b9a11909797b8a70e0",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

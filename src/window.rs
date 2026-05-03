@@ -455,7 +455,12 @@ impl Window {
             let out_x = (x + 0.5) * out_w as f32;
             let out_y = (y + 0.5) * out_h as f32;
             // Round to match touch precision of official devices.
-            (out_x.round(), out_y.round())
+            let out_x = out_x.round();
+            let out_y = out_y.round();
+            // Clamp to valid coordinate range [0, size).
+            let out_x = out_x.clamp(0.0, out_w as f32 - 1.0);
+            let out_y = out_y.clamp(0.0, out_h as f32 - 1.0);
+            (out_x, out_y)
         }
         fn transform_virt_accel_coords(window: &Window, (in_x, in_y): (i32, i32)) -> (f32, f32) {
             let (_, _, vw, vh) = window.viewport();

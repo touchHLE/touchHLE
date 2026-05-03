@@ -970,3 +970,11 @@ pub(super) fn class_getSuperclass(env: &mut Environment, cls: Class) -> Class {
         env.objc.borrow::<ClassHostObject>(cls).superclass
     }
 }
+
+pub(super) fn class_getInstanceSize(env: &mut Environment, cls: Class) -> GuestUSize {
+    if cls == nil {
+        0
+    } else {
+        env.objc.borrow::<ClassHostObject>(cls).instance_size
+    }
+}

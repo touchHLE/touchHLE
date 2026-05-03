@@ -16,6 +16,24 @@
       "message": "Perhaps this should call ftruncate() instead? It probably doesn\u0027t matter much, but…",
       "revId": "5270c41334210113ab1fbfcd01fed3b557daeb73",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "83410e6b_ab443f53",
+        "filename": "src/libc/posix_io.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 893,
+      "author": {
+        "id": 1039438
+      },
+      "writtenOn": "2026-05-03T13:00:15Z",
+      "side": 1,
+      "message": "Ah! Updated now.\n\nBtw what I\u0027m using to test is \"The Game of Life Classic Edition\" which uses truncate() after choosing a language.",
+      "parentUuid": "2bf1e7f5_07019361",
+      "revId": "5270c41334210113ab1fbfcd01fed3b557daeb73",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

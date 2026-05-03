@@ -121,12 +121,21 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (id)initWithContentsOfURL:(id)url { // NSURL *
-    let path: id = msg![env; url absoluteString];
-    let path = to_rust_string(env, path);
-    // TODO: file URL case
-    assert!(path.starts_with("http"));
-    log!("TODO: ignoring [(NSData*){:?} initWithContentsOfURL:{:?}]", this, path);
-    // TODO: actually load data once we have proper network support
+    // TODO: load data for network URLs once network support exists
+    if url == nil {
+        release(env, this);
+        return nil;
+    }
+
+    if msg![env; url isFileURL] {
+        let path: id = msg![env; url path];
+        return msg![env; this initWithContentsOfFile:path];
+    }
+
+    let description: id = msg![env; url description];
+    let description = to_rust_string(env, description);
+    log!("TODO: ignoring network URL in [(NSData*){:?} initWithContentsOfURL:{:?}]", this, description);
+    release(env, this);
     nil
 }
 

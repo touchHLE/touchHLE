@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "80d9c872_91bd2955",
+        "filename": "src/frameworks/game_kit/gk_leaderboard.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 16,
+      "author": {
+        "id": 1039141
+      },
+      "writtenOn": "2026-05-03T19:34:04Z",
+      "side": 1,
+      "message": "This was a confusion on my part. fixed the mistake with a simple init returning nil instead",
+      "parentUuid": "c6b041a3_7ad25900",
+      "revId": "9434f7b560053cbac8ac402ada5fba7dafcb2b29",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "e99d8575_87a74f87",
@@ -31,6 +49,24 @@
       "writtenOn": "2026-05-03T18:33:43Z",
       "side": 1,
       "message": "just return nil here for the stub",
+      "revId": "9434f7b560053cbac8ac402ada5fba7dafcb2b29",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "a3964e6b_99af5fc5",
+        "filename": "src/frameworks/game_kit/gk_leaderboard.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 18,
+      "author": {
+        "id": 1039141
+      },
+      "writtenOn": "2026-05-03T19:34:04Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "e99d8575_87a74f87",
       "revId": "9434f7b560053cbac8ac402ada5fba7dafcb2b29",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

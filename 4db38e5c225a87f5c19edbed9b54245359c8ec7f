@@ -16,6 +16,24 @@
       "message": "this symlink is useful to modify rust code directly from Android Studio",
       "revId": "4db38e5c225a87f5c19edbed9b54245359c8ec7f",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f3bb9657_0b008845",
+        "filename": "android/src",
+        "patchSetId": 3
+      },
+      "lineNbr": 1,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2026-05-04T17:08:50Z",
+      "side": 0,
+      "message": "Hmm, didn\u0027t think about that use case. What would you think of adding this to settings.gradle.kts instead:\n```kotlin\ninclude(\":touchhle\")\nproject(\":touchhle\").projectDir \u003d file(\"${rootDir.parentFile}/src\")\n```\nIf that doesn\u0027t work I can re-add that symlink.",
+      "parentUuid": "b9f2a786_9cc86e09",
+      "revId": "4db38e5c225a87f5c19edbed9b54245359c8ec7f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

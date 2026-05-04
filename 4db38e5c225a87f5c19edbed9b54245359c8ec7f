@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b9f2a786_9cc86e09",
+        "filename": "android/src",
+        "patchSetId": 3
+      },
+      "lineNbr": 1,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-05-04T08:47:31Z",
+      "side": 0,
+      "message": "this symlink is useful to modify rust code directly from Android Studio",
+      "revId": "4db38e5c225a87f5c19edbed9b54245359c8ec7f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

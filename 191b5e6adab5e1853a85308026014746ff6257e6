@@ -36,6 +36,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "149de28c_f9a4fc88",
+        "filename": "src/objc/messages.rs",
+        "patchSetId": 39
+      },
+      "lineNbr": 46,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-05-05T21:53:46Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "9918955b_356c485f",
+      "revId": "191b5e6adab5e1853a85308026014746ff6257e6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "e26ebf84_97357b15",

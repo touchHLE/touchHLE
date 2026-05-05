@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "e08705c7_4d18f872",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 31
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2026-05-05T21:56:19Z",
+      "side": 1,
+      "message": "Unfortunately there\u0027s no way to separate updating the SDK and SDL, so i ended up merging them.",
+      "revId": "b5c4c366a4c0630d19bf4d37e94a01559d4cd097",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

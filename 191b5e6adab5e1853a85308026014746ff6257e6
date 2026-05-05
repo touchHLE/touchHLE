@@ -20,6 +20,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "9918955b_356c485f",
+        "filename": "src/objc/messages.rs",
+        "patchSetId": 39
+      },
+      "lineNbr": 46,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2026-05-05T19:17:31Z",
+      "side": 1,
+      "message": "I\u0027m not convinced, this will get sent **every** time a fake/unimplemented class receives **any** message, not just the first one, which seems too spammy.\n\nWith the changes this also includes every instance getting sent a message. We could special case and add a flag for fake/unimplemented classes, but i don\u0027t really see the point tbh.",
+      "parentUuid": "cb0916ab_c15d0440",
+      "revId": "191b5e6adab5e1853a85308026014746ff6257e6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "e26ebf84_97357b15",
         "filename": "src/objc/messages.rs",
         "patchSetId": 39
@@ -31,6 +49,24 @@
       "writtenOn": "2026-05-05T10:06:35Z",
       "side": 1,
       "message": "I\u0027m not sure how/why this would happen?",
+      "revId": "191b5e6adab5e1853a85308026014746ff6257e6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d460973f_3cf3165b",
+        "filename": "src/objc/messages.rs",
+        "patchSetId": 39
+      },
+      "lineNbr": 76,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2026-05-05T19:17:31Z",
+      "side": 1,
+      "message": "+initialize is allowed to call other messages during +initialize, see from the test\n```objc\n@implementation Initalize : NSObject\nstatic bool did_init \u003d false;\n+ (void)initialize {\n  [self another];\n}\n+ (bool)checkInitialize {\n  return did_init;\n}\n\n// Make sure that we can call other messages inside initialize\n+ (void)another {\n  did_init \u003d true;\n}\n@end\n\n```",
+      "parentUuid": "e26ebf84_97357b15",
       "revId": "191b5e6adab5e1853a85308026014746ff6257e6",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

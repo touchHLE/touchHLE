@@ -254,8 +254,8 @@ fn fgetc(env: &mut Environment, file_ptr: MutPtr<FILE>) -> i32 {
             if bytes_read < 1 {
                 EOF
             } else {
-                let buf: MutPtr<i32> = buffer.cast();
-                env.mem.read(buf)
+                let buf: MutPtr<u8> = buffer.cast();
+                env.mem.read(buf) as i32
             }
         }
     }

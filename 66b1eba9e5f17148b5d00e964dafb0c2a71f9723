@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "923bdfed_65b2a62d",
+        "filename": "src/libc/stdio.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 203,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-05-07T20:11:22Z",
+      "side": 1,
+      "message": "could you split it out to another patchset? I don\u0027t see how this is related to calloc",
+      "revId": "66b1eba9e5f17148b5d00e964dafb0c2a71f9723",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

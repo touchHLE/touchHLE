@@ -16,6 +16,24 @@
       "message": "i believe it was intentional",
       "revId": "069073e30e26ecc00df07768408573635f327708",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "a6a03c1f_e5526e12",
+        "filename": "src/mem.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 514,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2026-05-07T20:59:09Z",
+      "side": 0,
+      "message": "Acknowledged",
+      "parentUuid": "dd0b19ab_f0e50b57",
+      "revId": "069073e30e26ecc00df07768408573635f327708",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

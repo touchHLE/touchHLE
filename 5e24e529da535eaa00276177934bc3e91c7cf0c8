@@ -89,6 +89,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "6c6c018a_0c1351ed",
+        "filename": "src/mem.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 604,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-05-08T17:52:40Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "21dbef9c_2feb1d01",
+      "revId": "5e24e529da535eaa00276177934bc3e91c7cf0c8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "70615efc_b02668d0",
@@ -102,6 +120,24 @@
       "writtenOn": "2026-03-02T17:24:50Z",
       "side": 1,
       "message": "VM allocations can be smaller than the max heap allocation size.",
+      "revId": "5e24e529da535eaa00276177934bc3e91c7cf0c8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "052892ca_6d941fe3",
+        "filename": "src/mem.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 606,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-05-08T17:52:40Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "70615efc_b02668d0",
       "revId": "5e24e529da535eaa00276177934bc3e91c7cf0c8",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

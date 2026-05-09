@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "a53603de_8c4a8e67",
+        "filename": "src/libc/mach/vm_map.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 35,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2026-05-09T23:07:32Z",
+      "side": 1,
+      "message": "Yep, good catch.",
+      "parentUuid": "de1d0fe7_18675b4f",
+      "revId": "f13723c8c34ae5c7c1e998fe89181d89656c6b78",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "29661f42_af33f776",
@@ -35,6 +53,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "5426294f_45f4f740",
+        "filename": "src/libc/sys/mman.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 59,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2026-05-09T23:07:32Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "29661f42_af33f776",
+      "revId": "f13723c8c34ae5c7c1e998fe89181d89656c6b78",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "132589c4_07635d9d",
@@ -48,6 +84,24 @@
       "writtenOn": "2026-05-09T21:50:49Z",
       "side": 1,
       "message": "is it expected to still call free here and not vm_free?",
+      "revId": "f13723c8c34ae5c7c1e998fe89181d89656c6b78",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d0ea7951_19e06a0c",
+        "filename": "src/libc/sys/mman.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 95,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2026-05-09T23:07:32Z",
+      "side": 1,
+      "message": "Yep!",
+      "parentUuid": "132589c4_07635d9d",
       "revId": "f13723c8c34ae5c7c1e998fe89181d89656c6b78",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

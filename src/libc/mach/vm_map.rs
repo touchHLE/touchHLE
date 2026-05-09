@@ -9,7 +9,7 @@ use crate::dyld::{export_c_func, FunctionExports};
 use crate::libc::mach::init::MACH_TASK_SELF;
 use crate::libc::mach::port::mach_port_t;
 use crate::libc::mach::thread_info::{kern_return_t, KERN_SUCCESS};
-use crate::mem::{MutPtr, Ptr, PAGE_SIZE, PAGE_SIZE_ALIGN_MASK};
+use crate::mem::{MutPtr, Ptr, PAGE_SIZE_ALIGN_MASK};
 use crate::Environment;
 use std::collections::HashMap;
 
@@ -31,17 +31,11 @@ pub fn vm_allocate(
     flags: i32, // in other docs it is defined as `anywhere: boolean_t`
 ) -> kern_return_t {
     assert_eq!(target_task, MACH_TASK_SELF);
-    assert_eq!(flags, 1); // TRUE
+    assert!(flags == 0 || flags == 1);
 
-    // `size is always rounded up to an integral number of pages`
-    let new_size = if !size.is_multiple_of(PAGE_SIZE) {
-        size + PAGE_SIZE - (size % PAGE_SIZE)
-    } else {
-        size
-    };
-    // TODO: implement and use VM allocator instead
-    log_once!("TODO: vm_allocate() is implemented atop of standard allocator.");
-    let allocated = env.mem.alloc(new_size);
+    let address = (flags == 0).then(|| env.mem.read(address_ptr));
+
+    let allocated = env.mem.vm_alloc(address, size).unwrap();
     let address = allocated.to_bits();
     assert!(address & PAGE_SIZE_ALIGN_MASK == 0);
     env.mem.write(address_ptr, address);
@@ -61,14 +55,12 @@ fn vm_deallocate(
     size: mach_vm_size_t,
 ) -> kern_return_t {
     assert_eq!(target_task, MACH_TASK_SELF);
-    // TODO: implement and use VM (de)allocator instead
-    log_once!("TODO: vm_deallocate() is implemented atop of standard allocator.");
 
     assert_eq!(
         *env.libc_state.mach_vm.allocations.get(&address).unwrap(),
         size
     );
-    env.mem.free(Ptr::from_bits(address));
+    env.mem.vm_free(Ptr::from_bits(address), size);
     env.libc_state.mach_vm.allocations.remove(&address);
 
     KERN_SUCCESS

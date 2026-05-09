@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "19b3c55f_a6a457d2",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-05-09T15:59:43Z",
+      "side": 1,
+      "message": "@36492797+JCR64@users.noreply.github.com congratulations on your first merged contributions! \n\nif you want to have access to dev only channels in our Discord, please mail me your Discord nickname :)",
+      "revId": "1f6fb7c6528df391bcad97e96413a484e942cd30",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

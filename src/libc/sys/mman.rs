@@ -49,8 +49,7 @@ fn mmap(
     );
 
     assert_eq!(offset, 0);
-    // TODO: use vm_allocate() instead
-    let ptr = env.mem.calloc(len);
+    let ptr = env.mem.vm_alloc(None, len);
 
     if (flags & MAP_ANON) != 0 {
         assert!(ptr.to_bits() & PAGE_SIZE_ALIGN_MASK == 0);

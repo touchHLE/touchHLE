@@ -3,6 +3,23 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "de1d0fe7_18675b4f",
+        "filename": "src/libc/mach/vm_map.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 35,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-05-09T21:50:49Z",
+      "side": 1,
+      "message": "I don\u0027t get this... shouldn\u0027t you read from the `address_ptr` to get the `address` instead?",
+      "revId": "f13723c8c34ae5c7c1e998fe89181d89656c6b78",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "29661f42_af33f776",
         "filename": "src/libc/sys/mman.rs",
         "patchSetId": 3
@@ -14,6 +31,23 @@
       "writtenOn": "2026-05-09T21:36:59Z",
       "side": 1,
       "message": "could you address that one as well now?",
+      "revId": "f13723c8c34ae5c7c1e998fe89181d89656c6b78",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "132589c4_07635d9d",
+        "filename": "src/libc/sys/mman.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 95,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-05-09T21:50:49Z",
+      "side": 1,
+      "message": "is it expected to still call free here and not vm_free?",
       "revId": "f13723c8c34ae5c7c1e998fe89181d89656c6b78",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

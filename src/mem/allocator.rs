@@ -477,6 +477,12 @@ impl HeapAllocator {
     }
 }
 
+#[derive(Debug)]
+pub enum VMAllocError {
+    InvalidAddress,
+    NoSpace,
+}
+
 /// Virtual Memory Allocator which handles allocation with page granularity
 #[derive(Debug)]
 pub struct VMAllocator {
@@ -497,14 +503,18 @@ impl VMAllocator {
         }
     }
 
-    pub fn allocate(&mut self, address: Option<VAddr>, size: GuestUSize) -> Option<Chunk> {
+    pub fn allocate(
+        &mut self,
+        address: Option<VAddr>,
+        size: GuestUSize,
+    ) -> Result<Chunk, VMAllocError> {
         let size = size.next_multiple_of(PAGE_SIZE);
         match address {
             Some(address) => {
                 let address = address & !(PAGE_SIZE - 1);
                 self.allocate_at(address, size)
             }
-            None => self.allocate_any(size),
+            None => self.allocate_any(size).ok_or(VMAllocError::NoSpace),
         }
     }
 
@@ -535,7 +545,7 @@ impl VMAllocator {
         self.unused_chunks.insert(combined);
     }
 
-    fn allocate_at(&mut self, address: VAddr, size: GuestUSize) -> Option<Chunk> {
+    fn allocate_at(&mut self, address: VAddr, size: GuestUSize) -> Result<Chunk, VMAllocError> {
         assert!(address.is_multiple_of(PAGE_SIZE));
         assert!(size.is_multiple_of(PAGE_SIZE) && size >= PAGE_SIZE);
         let chunk = Chunk::new(address, size);
@@ -543,9 +553,10 @@ impl VMAllocator {
         let to_trisect = self
             .unused_chunks
             .iter()
-            .find(|unused_chunk| unused_chunk.trisect_by(chunk).is_some())?;
+            .find(|unused_chunk| unused_chunk.contains(address))
+            .ok_or(VMAllocError::InvalidAddress)?;
 
-        let (before, after) = to_trisect.difference(chunk);
+        let (before, after) = to_trisect.trisect_by(chunk).ok_or(VMAllocError::NoSpace)?;
         self.unused_chunks.remove_with_base(to_trisect.base);
         if let Some(before) = before {
             self.unused_chunks.insert(before);
@@ -555,7 +566,7 @@ impl VMAllocator {
         }
         self.used_chunks.insert(chunk);
 
-        Some(chunk)
+        Ok(chunk)
     }
 
     fn allocate_any(&mut self, size: GuestUSize) -> Option<Chunk> {

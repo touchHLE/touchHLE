@@ -14,11 +14,13 @@
 //! Relevant Apple documentation:
 //! * [Memory Usage Performance Guidelines](https://developer.apple.com/library/archive/documentation/Performance/Conceptual/ManagingMemory/ManagingMemory.html)
 
-use crate::libc::wchar::wchar_t;
-use crate::mem::allocator::{Chunk, HeapAllocator, VMAllocator};
-
 mod allocator;
 mod host;
+
+pub use allocator::VMAllocError;
+
+use crate::libc::wchar::wchar_t;
+use crate::mem::allocator::{Chunk, HeapAllocator, VMAllocator};
 
 /// Equivalent of `usize` for guest memory.
 pub type GuestUSize = u32;
@@ -319,7 +321,9 @@ impl Mem {
         //        this, along with removing this special case.
         assert!(self.null_segment_size == 0);
         assert!(new_null_segment_size.is_multiple_of(PAGE_SIZE));
-        self.vm_allocator.allocate(Some(0), new_null_segment_size);
+        self.vm_allocator
+            .allocate(Some(0), new_null_segment_size)
+            .unwrap();
         self.null_segment_size = new_null_segment_size;
     }
 
@@ -329,7 +333,7 @@ impl Mem {
 
     fn heap_allocator(&mut self) -> &mut HeapAllocator {
         self.heap_allocator.get_or_insert_with(|| {
-            let Some(heap) = self.vm_allocator.allocate(None, Self::HEAP_SIZE) else {
+            let Ok(heap) = self.vm_allocator.allocate(None, Self::HEAP_SIZE) else {
                 panic!("Failed to allocate heap space");
             };
             HeapAllocator::new(heap.base, heap.size.get())
@@ -529,7 +533,7 @@ impl Mem {
     /// Allocate `size` bytes.
     pub fn alloc(&mut self, size: GuestUSize) -> MutVoidPtr {
         let ptr = if size > Self::MAX_HEAP_ALLOCATION_SIZE {
-            let ptr = self.vm_alloc(size);
+            let ptr = self.vm_alloc(None, size).unwrap();
 
             self.heap_allocator()
                 .add_external_allocation(Chunk::new(ptr.to_bits(), size));
@@ -552,13 +556,12 @@ impl Mem {
 
     /// Allocate `size` bytes using the virtual memory allocator.
     /// All allocations are page aligned, page sized and zeroed.
-    pub fn vm_alloc(&mut self, size: GuestUSize) -> MutVoidPtr {
-        let allocation = match self.vm_allocator.allocate(None, size) {
-            None => {
-                panic!("Could not find large enough chunk to allocate {size:#x} bytes")
-            }
-            Some(chunk) => chunk,
-        };
+    pub fn vm_alloc(
+        &mut self,
+        address: Option<VAddr>,
+        size: GuestUSize,
+    ) -> Result<MutVoidPtr, VMAllocError> {
+        let allocation = self.vm_allocator.allocate(address, size)?;
 
         let ptr = Ptr::from_bits(allocation.base);
 
@@ -566,7 +569,7 @@ impl Mem {
         // TODO: Can this be done with vm_advise/equivalents
         self.bytes_at_mut(ptr.cast(), allocation.size.get()).fill(0);
 
-        ptr
+        Ok(ptr)
     }
 
     /// Allocate `size` bytes initialized to 0.
@@ -671,6 +674,6 @@ impl Mem {
     /// Permanently mark a region of address space as being unusable to the
     /// memory allocator.
     pub fn reserve(&mut self, base: VAddr, size: GuestUSize) {
-        self.vm_allocator.allocate(Some(base), size);
+        self.vm_allocator.allocate(Some(base), size).unwrap();
     }
 }

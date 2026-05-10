@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "11561def_aa977767",
+        "filename": "src/libc/mach/vm_map.rs",
+        "patchSetId": 4
+      },
+      "lineNbr": 35,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-05-10T10:02:34Z",
+      "side": 1,
+      "message": "unless i misunderstand your intentions, this looks wrong as then_some() is always evauated https://doc.rust-lang.org/std/primitive.bool.html#method.then_some. i think then() should be used instead?",
+      "revId": "1e7424009f3f9efaf538866f57a0e3883017b429",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d43a5519_0e094e6a",
+        "filename": "src/mem/allocator.rs",
+        "patchSetId": 4
+      },
+      "lineNbr": 482,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-05-10T10:02:34Z",
+      "side": 1,
+      "message": "nit: maybe rename to AddressUnavailable ?",
+      "revId": "1e7424009f3f9efaf538866f57a0e3883017b429",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

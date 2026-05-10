@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5475df70_c83100e6",
+        "filename": "src/libc/mach/vm_map.rs",
+        "patchSetId": 4
+      },
+      "lineNbr": 34,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-05-10T10:02:34Z",
+      "side": 0,
+      "message": "i think you should assert only for flag \u003d\u003d 1 or flag \u003d\u003d 0, as other cases are not handled yet?",
+      "revId": "1f6fb7c6528df391bcad97e96413a484e942cd30",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c6f30424_bbddb9ef",
+        "filename": "src/libc/sys/mman.rs",
+        "patchSetId": 4
+      },
+      "lineNbr": 66,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-05-10T10:02:34Z",
+      "side": 0,
+      "message": "is this an expected change?",
+      "revId": "1f6fb7c6528df391bcad97e96413a484e942cd30",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

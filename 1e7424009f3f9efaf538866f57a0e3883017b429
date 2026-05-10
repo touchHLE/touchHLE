@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "5a49382c_08ae0faa",
+        "filename": "src/libc/mach/vm_map.rs",
+        "patchSetId": 4
+      },
+      "lineNbr": 35,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2026-05-10T13:45:37Z",
+      "side": 1,
+      "message": "Didn\u0027t realize it was eager, was trying to avoid using a closure😅.",
+      "parentUuid": "11561def_aa977767",
+      "revId": "1e7424009f3f9efaf538866f57a0e3883017b429",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "d43a5519_0e094e6a",
@@ -31,6 +49,24 @@
       "writtenOn": "2026-05-10T10:02:34Z",
       "side": 1,
       "message": "nit: maybe rename to AddressUnavailable ?",
+      "revId": "1e7424009f3f9efaf538866f57a0e3883017b429",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "1a5dfa1e_f23c60d8",
+        "filename": "src/mem/allocator.rs",
+        "patchSetId": 4
+      },
+      "lineNbr": 482,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2026-05-10T13:45:37Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "d43a5519_0e094e6a",
       "revId": "1e7424009f3f9efaf538866f57a0e3883017b429",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

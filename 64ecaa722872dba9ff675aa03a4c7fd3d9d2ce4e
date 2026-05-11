@@ -16,6 +16,24 @@
       "message": "We already link the spec in the other file, so I\u0027d rather not link it again here, but having the mention of the section this is from seems harmless.",
       "revId": "64ecaa722872dba9ff675aa03a4c7fd3d9d2ce4e",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fc2ea4fe_aa86e5ec",
+        "filename": "src/audio/openal_soft_wrapper/lib.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 63,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2026-05-11T16:20:00Z",
+      "side": 1,
+      "message": "Right, and actually the spec itself does not specify the actual values. Those were taken directly from the code (vendor/openal-soft/include/AL/alc.h).  Just seemed easier to link the spec again here and section because the alternative was just copying the descriptions of each error in the code.\n\nAlso, note we are not directly using all these errors in the touchHLE code yet. Only ALC_INVALID_DEVICE for the moment, but I felt like it did not make sense to just add that one. Eventually we may use the other errors and wanted to set a precedent of where they belong.",
+      "parentUuid": "8da1cffa_45a9d197",
+      "revId": "64ecaa722872dba9ff675aa03a4c7fd3d9d2ce4e",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

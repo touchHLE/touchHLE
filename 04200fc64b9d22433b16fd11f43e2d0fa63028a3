@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "949ace0a_0801fd53",
+        "filename": "src/mem.rs",
+        "patchSetId": 7
+      },
+      "lineNbr": 665,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-05-11T14:32:16Z",
+      "side": 1,
+      "message": "Hmm, there\u0027s nothing wrong with using .take() in principle, but I am surprised we can\u0027t get a mutable reference here? Is the unwrap_or_else idiom the problem?",
+      "revId": "04200fc64b9d22433b16fd11f43e2d0fa63028a3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

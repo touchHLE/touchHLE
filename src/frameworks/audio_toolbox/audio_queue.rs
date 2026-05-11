@@ -70,6 +70,7 @@ struct AudioQueueHostObject {
     aq_is_running_proc: Option<AudioQueuePropertyListenerProc>,
     aq_is_running_user_data: Option<MutVoidPtr>,
     is_running_handler: bool,
+    dispose_when_stopped: bool,
 }
 
 /// Track whether the audio queue is meant to be running, in order to handle
@@ -187,6 +188,7 @@ pub fn AudioQueueNewOutput(
         aq_is_running_proc: None,
         aq_is_running_user_data: None,
         is_running_handler: false,
+        dispose_when_stopped: false,
     };
 
     let aq_ref = env.mem.alloc_and_write(OpaqueAudioQueue { _filler: 0 });
@@ -766,6 +768,48 @@ fn unqueue_buffers<F: FnMut(ALuint)>(al_source: ALuint, context: &OpenAL<'_>, mu
     }
 }
 
+// Helper function to dispose of audio queue immediately
+fn dispose_audio_queue_now(env: &mut Environment, in_aq: AudioQueueRef) -> OSStatus {
+    let (state, context) =
+        State::get_with_context(&mut env.framework_state, &mut env.openal_manager);
+
+    let mut host_object = state.audio_queues.remove(&in_aq).unwrap();
+    log_dbg!("Disposing of audio queue {:?}", in_aq);
+
+    env.mem.free(in_aq.cast());
+
+    for buffer_ptr in host_object.buffers {
+        let buffer = env.mem.read(buffer_ptr);
+        env.mem.free(buffer.audio_data);
+        env.mem.free(buffer_ptr.cast());
+    }
+
+    if let Some(al_source) = host_object.al_source {
+        unsafe {
+            context.SourceStop(al_source);
+            assert!(context.GetError() == 0);
+        }
+
+        unqueue_buffers(al_source, &context, |al_buffer| {
+            host_object.al_unused_buffers.push(al_buffer)
+        });
+
+        unsafe {
+            context.DeleteBuffers(
+                host_object.al_unused_buffers.len().try_into().unwrap(),
+                host_object.al_unused_buffers.as_ptr(),
+            );
+            assert!(context.GetError() == 0);
+            context.DeleteSources(1, &al_source);
+            assert!(context.GetError() == 0);
+        }
+    }
+
+    ns_run_loop::remove_audio_queue(env, host_object.run_loop, in_aq);
+
+    0 // success
+}
+
 /// For use by `NSRunLoop`: check the status of an audio queue, recycle buffers,
 /// call callbacks, push new buffers etc.
 pub fn handle_audio_queue(env: &mut Environment, in_aq: AudioQueueRef) {
@@ -814,6 +858,13 @@ pub fn handle_audio_queue(env: &mut Environment, in_aq: AudioQueueRef) {
         );
 
         let () = callback_proc.call_from_host(env, (callback_user_data, in_aq, buffer_ref));
+
+        if !State::get(&mut env.framework_state)
+            .audio_queues
+            .contains_key(&in_aq)
+        {
+            return;
+        }
     }
 
     // Push new buffers etc.
@@ -825,7 +876,7 @@ pub fn handle_audio_queue(env: &mut Environment, in_aq: AudioQueueRef) {
         .audio_toolbox
         .make_al_context_current(&mut env.openal_manager);
 
-    if is_running != AudioQueueIsRunning::Stopped {
+    if is_running == AudioQueueIsRunning::Running {
         unsafe {
             let mut al_source_state = 0;
             context.GetSourcei(al_source, al::AL_SOURCE_STATE, &mut al_source_state);
@@ -857,6 +908,13 @@ pub fn handle_audio_queue(env: &mut Environment, in_aq: AudioQueueRef) {
                 in_aq
             );
             finish_stopping_audio_queue(env, in_aq);
+
+            if !State::get(&mut env.framework_state)
+                .audio_queues
+                .contains_key(&in_aq)
+            {
+                return;
+            }
         }
     }
 
@@ -959,12 +1017,30 @@ fn finish_stopping_audio_queue(env: &mut Environment, in_aq: AudioQueueRef) {
     // of an asynchronous stop, where the audio queue stopping is triggered by
     // the OpenAL queue stopping.
     AudioQueueReset(env, in_aq);
-    State::get(&mut env.framework_state)
-        .audio_queues
-        .get_mut(&in_aq)
-        .unwrap()
-        .is_running = AudioQueueIsRunning::Stopped;
+
+    let (is_running_handler, dispose_when_stopped) = {
+        let host_object = State::get(&mut env.framework_state)
+            .audio_queues
+            .get_mut(&in_aq)
+            .unwrap();
+        host_object.is_running = AudioQueueIsRunning::Stopped;
+        (
+            host_object.is_running_handler,
+            host_object.dispose_when_stopped,
+        )
+    };
+
     notify_aq_is_running(env, in_aq);
+
+    if dispose_when_stopped {
+        if is_running_handler {
+            log_dbg!(
+                "Completing deferred AudioQueueDispose for queue {:?}.",
+                in_aq
+            );
+        }
+        dispose_audio_queue_now(env, in_aq);
+    }
 }
 
 pub fn AudioQueueStop(env: &mut Environment, in_aq: AudioQueueRef, in_immediate: bool) -> OSStatus {
@@ -1079,44 +1155,28 @@ pub fn AudioQueueDispose(
 ) -> OSStatus {
     return_if_null!(in_aq);
 
-    assert!(in_immediate); // TODO
+    if in_immediate {
+        dispose_audio_queue_now(env, in_aq)
+    } else {
+        let host_object = State::get(&mut env.framework_state)
+            .audio_queues
+            .get_mut(&in_aq)
+            .unwrap();
 
-    let (state, context) =
-        State::get_with_context(&mut env.framework_state, &mut env.openal_manager);
+        host_object.dispose_when_stopped = true;
 
-    let mut host_object = state.audio_queues.remove(&in_aq).unwrap();
-    log_dbg!("Disposing of audio queue {:?}", in_aq);
-
-    env.mem.free(in_aq.cast());
-
-    for buffer_ptr in host_object.buffers {
-        let buffer = env.mem.read(buffer_ptr);
-        env.mem.free(buffer.audio_data);
-        env.mem.free(buffer_ptr.cast());
-    }
-
-    if let Some(al_source) = host_object.al_source {
-        unsafe {
-            context.SourceStop(al_source);
-            assert!(context.GetError() == 0);
-        }
-
-        unqueue_buffers(al_source, &context, |al_buffer| {
-            host_object.al_unused_buffers.push(al_buffer)
-        });
-
-        unsafe {
-            context.DeleteBuffers(
-                host_object.al_unused_buffers.len().try_into().unwrap(),
-                host_object.al_unused_buffers.as_ptr(),
+        if host_object.is_running != AudioQueueIsRunning::Stopped {
+            log_dbg!(
+                "Deferring AudioQueueDispose for {:?} until queue stops.",
+                in_aq
             );
-            assert!(context.GetError() == 0);
+            host_object.is_running = AudioQueueIsRunning::Stopping;
+            0 // success (async)
+        } else {
+            // Already stopped, dispose immediately.
+            dispose_audio_queue_now(env, in_aq)
         }
     }
-
-    ns_run_loop::remove_audio_queue(env, host_object.run_loop, in_aq);
-
-    0 // success
 }
 
 pub const FUNCTIONS: FunctionExports = &[

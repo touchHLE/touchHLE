@@ -221,3 +221,7 @@ com.madfingergames.Samurai: --force-composition
 
 # NEX
 com.StarByte.NEX: --landscape-left --force-composition
+
+# Galaxy on Fire
+# In Game controls A = Weapon Select, X = Boost, B = Fire, Y = Missle, Start = Pause
+www.fishlabs.net.GalaxyOnFire: --landscape-right --button-to-touch=A,427,274 --button-to-touch=X,380,254 --button-to-touch=Y,124,291 --button-to-touch=B,444,221 --button-to-touch=Start,444,20

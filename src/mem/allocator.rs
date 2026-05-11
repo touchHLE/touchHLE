@@ -402,11 +402,24 @@ pub struct HeapAllocator {
 }
 
 impl HeapAllocator {
-    pub fn new(base: VAddr, size: GuestUSize) -> HeapAllocator {
-        let allocation_space = Chunk::new(base, size);
+    /// Size of chunks requested by the heap from the VM allocator.
+    /// This is set to 2MiB based on the original jemalloc paper.
+    pub const HEAP_CHUNK_SIZE: GuestUSize = 2 * 1024 * 1024;
 
+    /// This is the maximum allocation for the heap. Anything else is deferred
+    /// to the vm allocator. This is set to 15 KiB according to:
+    /// <https://www.cocoawithlove.com/2010/05/look-at-how-malloc-works-on-mac.html>
+    pub const HEAP_ALLOCATION_THRESHOLD: GuestUSize = (15 * 1024) - 1;
+
+    pub fn new(vm: &mut VMAllocator, size: GuestUSize) -> HeapAllocator {
         let mut unused_chunks = SizeBucketedChunkMap::new(MIN_CHUNK_SIZE);
-        unused_chunks.insert(allocation_space);
+
+        if size > 0 {
+            let base_chunk = vm
+                .allocate(None, size)
+                .expect("Failed to allocate heap space");
+            unused_chunks.insert(base_chunk);
+        }
 
         HeapAllocator {
             used_chunks: Default::default(),
@@ -415,15 +428,24 @@ impl HeapAllocator {
         }
     }
 
-    pub fn alloc(&mut self, size: GuestUSize) -> Option<VAddr> {
+    pub fn alloc(&mut self, vm: &mut VMAllocator, size: GuestUSize) -> Option<Chunk> {
         let size = size.max(MIN_CHUNK_SIZE);
         let size = Self::align(size, MIN_CHUNK_SIZE);
 
-        let alloc = self.unused_chunks.allocate(size)?;
+        let alloc = if size > Self::HEAP_ALLOCATION_THRESHOLD {
+            let alloc = vm.allocate(None, size).ok()?;
+            self.external_chunks.insert(alloc);
+            alloc
+        } else {
+            let alloc = self.unused_chunks.allocate(size).or_else(|| {
+                self.grow(vm);
+                self.unused_chunks.allocate(size)
+            })?;
+            self.used_chunks.insert(alloc);
+            alloc
+        };
 
-        self.used_chunks.insert(alloc);
-
-        Some(alloc.base)
+        Some(alloc)
     }
 
     fn align(size: GuestUSize, align: GuestUSize) -> GuestUSize {
@@ -445,15 +467,11 @@ impl HeapAllocator {
         size.get()
     }
 
-    /// Add a chunk that was allocated by an external allocator
-    pub fn add_external_allocation(&mut self, chunk: Chunk) {
-        self.external_chunks.insert(chunk);
-    }
-
     /// Returns the size of the freed chunk so it can be zeroed if desired
     #[must_use]
-    pub fn free(&mut self, base: VAddr) -> GuestUSize {
+    pub fn free(&mut self, vm: &mut VMAllocator, base: VAddr) -> GuestUSize {
         if let Some(freed) = self.external_chunks.remove_with_base(base) {
+            vm.deallocate(freed.base, freed.size.get());
             return freed.size.get();
         }
 
@@ -474,6 +492,15 @@ impl HeapAllocator {
         }
 
         freed.size.get()
+    }
+
+    fn grow(&mut self, vm: &mut VMAllocator) {
+        log!("Attempting to grow heap.");
+        let chunk = vm
+            .allocate(None, Self::HEAP_CHUNK_SIZE)
+            .expect("Failed to allocate memory for heap.");
+
+        self.unused_chunks.insert(chunk);
     }
 }
 
@@ -518,7 +545,7 @@ impl VMAllocator {
         }
     }
 
-    pub fn deallocate(&mut self, address: VAddr, size: GuestUSize) {
+    pub fn deallocate(&mut self, address: VAddr, size: GuestUSize) -> Chunk {
         // From testing vm_deallocate you can deallocate anything as long as
         // the memory is not protected. Since we have no permissions we can
         // always succeed
@@ -543,6 +570,7 @@ impl VMAllocator {
         }
 
         self.unused_chunks.insert(combined);
+        freed
     }
 
     fn allocate_at(&mut self, address: VAddr, size: GuestUSize) -> Result<Chunk, VMAllocError> {

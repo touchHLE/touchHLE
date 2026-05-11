@@ -17,10 +17,10 @@
 mod allocator;
 mod host;
 
-pub use allocator::VMAllocError;
+pub use allocator::{HeapAllocator, VMAllocError};
 
 use crate::libc::wchar::wchar_t;
-use crate::mem::allocator::{HeapAllocator, VMAllocator};
+use crate::mem::allocator::VMAllocator;
 
 /// Equivalent of `usize` for guest memory.
 pub type GuestUSize = u32;
@@ -302,6 +302,16 @@ impl Mem {
         }
     }
 
+    pub fn create_heap(&mut self, size: GuestUSize) -> HeapAllocator {
+        HeapAllocator::new(&mut self.vm_allocator, size)
+    }
+
+    pub fn destroy_heap(&mut self, heap: HeapAllocator) {
+        for chunk in heap.into_vm_chunks() {
+            self.vm_free(Ptr::from_bits(chunk.base), chunk.size.get());
+        }
+    }
+
     /// Sets up the null segment of the given size. There's no reason to call
     /// this outside of binary loading, and it won't be respected even if you
     /// do. The size must not have been set already, and must be page aligned.
@@ -513,15 +523,24 @@ impl Mem {
             .copy_within(src..src.checked_add(size).unwrap(), dest)
     }
 
-    /// Allocate `size` bytes.
+    /// Allocate `size` bytes in the default heap.
     pub fn alloc(&mut self, size: GuestUSize) -> MutVoidPtr {
-        let alloc =
-            match self.with_default_heap(|mem, heap| heap.alloc(&mut mem.vm_allocator, size)) {
-                None => {
-                    panic!("Could not find large enough chunk to allocate {size:#x} bytes")
-                }
-                Some(alloc) => alloc,
-            };
+        self.alloc_in_heap(None, size)
+    }
+
+    /// Allocate `size` bytes in `heap`.
+    pub fn alloc_in_heap(
+        &mut self,
+        heap: Option<&mut HeapAllocator>,
+        size: GuestUSize,
+    ) -> MutVoidPtr {
+        let (vm, heap) = self.allocators_mut(heap);
+        let alloc = match heap.alloc(vm, size) {
+            None => {
+                panic!("Could not find large enough chunk to allocate {size:#x} bytes")
+            }
+            Some(alloc) => alloc,
+        };
         let ptr = Ptr::from_bits(alloc.base);
 
         if !self.zero_memory_on_free && alloc.size.get() <= HeapAllocator::HEAP_ALLOCATION_THRESHOLD
@@ -557,31 +576,58 @@ impl Mem {
         ptr
     }
 
+    /// Get size of allocation at `ptr` in the default heap.
     pub fn malloc_size(&mut self, ptr: ConstVoidPtr) -> GuestUSize {
-        self.with_default_heap(|_, heap| heap.find_allocated_size(ptr.to_bits()))
+        self.malloc_size_in_heap(None, ptr)
     }
 
+    /// Get size of allocation at `ptr` in `heap`.
+    pub fn malloc_size_in_heap(
+        &mut self,
+        heap: Option<&mut HeapAllocator>,
+        ptr: ConstVoidPtr,
+    ) -> GuestUSize {
+        let (_, heap) = self.allocators_mut(heap);
+        heap.find_allocated_size(ptr.to_bits())
+    }
+
+    /// Resize allocation at `old_ptr` to `size` bytes in the default heap.
     pub fn realloc(&mut self, old_ptr: MutVoidPtr, size: GuestUSize) -> MutVoidPtr {
+        self.realloc_in_heap(None, old_ptr, size)
+    }
+
+    /// Resize allocation at `old_ptr` to `size` bytes in `heap`.
+    pub fn realloc_in_heap(
+        &mut self,
+        mut heap: Option<&mut HeapAllocator>,
+        old_ptr: MutVoidPtr,
+        size: GuestUSize,
+    ) -> MutVoidPtr {
         if old_ptr.is_null() {
-            return self.alloc(size);
+            return self.alloc_in_heap(heap, size);
         }
         // TODO: for a moment we always assume that we do not have enough size
         //       to realloc inplace
-        let old_size = self.malloc_size(old_ptr.cast_const());
+        let old_size = self.malloc_size_in_heap(heap.as_deref_mut(), old_ptr.cast_const());
         if old_size >= size {
             return old_ptr;
         }
-        let new_ptr = self.alloc(size);
+        let new_ptr = self.alloc_in_heap(heap.as_deref_mut(), size);
         self.memmove(new_ptr, old_ptr.cast_const(), old_size);
-        self.free(old_ptr);
+        self.free_in_heap(heap, old_ptr);
         new_ptr
     }
 
     /// Free allocations made with non vm prefixed `alloc` methods on
-    /// this type.
+    /// this type in the default heap.
     pub fn free(&mut self, ptr: MutVoidPtr) {
-        let size =
-            self.with_default_heap(|mem, heap| heap.free(&mut mem.vm_allocator, ptr.to_bits()));
+        self.free_in_heap(None, ptr);
+    }
+
+    /// Free an allocation made with one of the `alloc` methods in `heap`.
+    pub fn free_in_heap(&mut self, heap: Option<&mut HeapAllocator>, ptr: MutVoidPtr) {
+        let (vm, heap) = self.allocators_mut(heap);
+        let size = heap.free(vm, ptr.to_bits());
 
         if size > HeapAllocator::HEAP_ALLOCATION_THRESHOLD {
             // VM allocations are always 0 initialized.
@@ -661,12 +707,18 @@ impl Mem {
         self.vm_allocator.allocate(Some(base), size).unwrap();
     }
 
-    fn with_default_heap<R>(&mut self, f: impl FnOnce(&mut Self, &mut HeapAllocator) -> R) -> R {
-        let mut heap = self.heap_allocator.take().unwrap_or_else(|| {
-            HeapAllocator::new(&mut self.vm_allocator, HeapAllocator::HEAP_CHUNK_SIZE)
+    /// Returns a mutable references to the vm allocator and either the
+    /// provided heap or the default heap if no heap is provided.
+    fn allocators_mut<'a>(
+        &'a mut self,
+        heap: Option<&'a mut HeapAllocator>,
+    ) -> (&'a mut VMAllocator, &'a mut HeapAllocator) {
+        let vm = &mut self.vm_allocator;
+        let heap = heap.unwrap_or_else(|| {
+            self.heap_allocator
+                .get_or_insert_with(|| HeapAllocator::new(vm, HeapAllocator::HEAP_CHUNK_SIZE))
         });
-        let result = f(self, &mut heap);
-        self.heap_allocator = Some(heap);
-        result
+
+        (vm, heap)
     }
 }

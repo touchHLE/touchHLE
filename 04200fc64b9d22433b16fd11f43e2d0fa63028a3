@@ -88,6 +88,24 @@
       "parentUuid": "d1c9f912_9fa5215e",
       "revId": "04200fc64b9d22433b16fd11f43e2d0fa63028a3",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "dd5248cf_c740777b",
+        "filename": "src/mem.rs",
+        "patchSetId": 7
+      },
+      "lineNbr": 665,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2026-05-11T23:09:34Z",
+      "side": 1,
+      "message": "I was thinking about the existing alloc, realloc, etc. Though having thought about it I think we should be able to do it with the mut either way.",
+      "parentUuid": "137c40ae_efe53f52",
+      "revId": "04200fc64b9d22433b16fd11f43e2d0fa63028a3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ],
   "submitRequirementResults": [

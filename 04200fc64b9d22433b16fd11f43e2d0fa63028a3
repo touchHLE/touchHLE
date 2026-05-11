@@ -124,6 +124,24 @@
       "parentUuid": "dd5248cf_c740777b",
       "revId": "04200fc64b9d22433b16fd11f43e2d0fa63028a3",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3b62b0f5_9fdab7a1",
+        "filename": "src/mem.rs",
+        "patchSetId": 7
+      },
+      "lineNbr": 665,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2026-05-11T23:25:00Z",
+      "side": 1,
+      "message": "For sure, definitely want to avoid that.",
+      "parentUuid": "6a618159_7dc07f19",
+      "revId": "04200fc64b9d22433b16fd11f43e2d0fa63028a3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ],
   "submitRequirementResults": [

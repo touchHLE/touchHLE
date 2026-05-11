@@ -243,6 +243,20 @@ mod collections {
         }
     }
 
+    impl IntoIterator for ChunkMap {
+        type Item = Chunk;
+        type IntoIter = std::iter::Map<
+            std::collections::btree_map::IntoIter<VAddr, NonZeroU32>,
+            fn((VAddr, NonZeroU32)) -> Self::Item,
+        >;
+
+        fn into_iter(self) -> Self::IntoIter {
+            self.chunks
+                .into_iter()
+                .map(|(base, size)| Chunk { base, size })
+        }
+    }
+
     #[derive(Debug)]
     pub struct SizeBucketedChunkMap {
         min_chunk_size: u32,
@@ -399,6 +413,7 @@ pub struct HeapAllocator {
     unused_chunks: SizeBucketedChunkMap,
     // These are chunks that are managed by an external allocator
     external_chunks: ChunkMap,
+    backing_chunks: Vec<Chunk>,
 }
 
 impl HeapAllocator {
@@ -413,11 +428,13 @@ impl HeapAllocator {
 
     pub fn new(vm: &mut VMAllocator, size: GuestUSize) -> HeapAllocator {
         let mut unused_chunks = SizeBucketedChunkMap::new(MIN_CHUNK_SIZE);
+        let mut backing_chunks = Vec::new();
 
         if size > 0 {
             let base_chunk = vm
                 .allocate(None, size)
                 .expect("Failed to allocate heap space");
+            backing_chunks.push(base_chunk);
             unused_chunks.insert(base_chunk);
         }
 
@@ -425,6 +442,7 @@ impl HeapAllocator {
             used_chunks: Default::default(),
             unused_chunks,
             external_chunks: Default::default(),
+            backing_chunks,
         }
     }
 
@@ -494,12 +512,19 @@ impl HeapAllocator {
         freed.size.get()
     }
 
+    /// Consume the allocator returning an iterator over the managed
+    /// virtual memory chunks
+    pub fn into_vm_chunks(self) -> impl Iterator<Item = Chunk> {
+        self.external_chunks.into_iter().chain(self.backing_chunks)
+    }
+
     fn grow(&mut self, vm: &mut VMAllocator) {
         log!("Attempting to grow heap.");
         let chunk = vm
             .allocate(None, Self::HEAP_CHUNK_SIZE)
             .expect("Failed to allocate memory for heap.");
 
+        self.backing_chunks.push(chunk);
         self.unused_chunks.insert(chunk);
     }
 }

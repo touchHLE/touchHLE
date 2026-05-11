@@ -52,6 +52,24 @@
       "parentUuid": "fc2ea4fe_aa86e5ec",
       "revId": "64ecaa722872dba9ff675aa03a4c7fd3d9d2ce4e",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "848ec72a_ddb9aeed",
+        "filename": "src/audio/openal_soft_wrapper/lib.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 63,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2026-05-11T22:20:03Z",
+      "side": 1,
+      "message": "...and that comment was too long. Tweaked it down to 78 chars!\n\nAlso, https://review.gerrithub.io/c/touchHLE/touchHLE/+/1220167 had some of the changes for openal.rs in it that this commit/patch was dependent on (done before the work to track duplicate logs (mostly on exit) that this fixes). Moved that out of there and into this change.",
+      "parentUuid": "917ce4a3_166330dd",
+      "revId": "64ecaa722872dba9ff675aa03a4c7fd3d9d2ce4e",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

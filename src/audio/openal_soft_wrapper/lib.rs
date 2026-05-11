@@ -58,6 +58,13 @@ pub mod alc_defines {
     pub const ALC_SYNC: ALCint = 0x1009;
     pub const ALC_MONO_SOURCES: ALCint = 0x1010;
     pub const ALC_STEREO_SOURCES: ALCint = 0x1011;
+
+    // Errors (See descriptions in Section 6.3.6 of OpenAL 1.1 specification)
+    pub const ALC_INVALID_DEVICE: ALCenum = 0xA001;
+    pub const ALC_INVALID_CONTEXT: ALCenum = 0xA002;
+    pub const ALC_INVALID_ENUM: ALCenum = 0xA003;
+    pub const ALC_INVALID_VALUE: ALCenum = 0xA004;
+    pub const ALC_OUT_OF_MEMORY: ALCenum = 0xA005;
 }
 
 extern "C" {

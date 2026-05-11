@@ -25,6 +25,7 @@ pub mod keymgr;
 pub mod libkern;
 pub mod mach;
 pub mod mach_o;
+pub mod malloc;
 pub mod math;
 pub mod net;
 pub mod netdb;
@@ -73,6 +74,7 @@ pub const DYLIB: crate::dyld::HostDylib = crate::dyld::HostDylib {
         mach::time::FUNCTIONS,
         mach::vm_map::FUNCTIONS,
         mach_o::FUNCTIONS,
+        malloc::FUNCTIONS,
         math::FUNCTIONS,
         net::if_::FUNCTIONS,
         netdb::FUNCTIONS,
@@ -124,5 +126,6 @@ pub struct State {
     errno: errno::State,
     clocale: clocale::State,
     mach_vm: mach::vm_map::State,
+    malloc: malloc::State,
     mman: sys::mman::State,
 }

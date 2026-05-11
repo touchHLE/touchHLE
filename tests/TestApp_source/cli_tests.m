@@ -21,6 +21,7 @@
 #include <locale.h>
 #include <mach/kern_return.h>
 #include <mach/thread_info.h>
+#include <malloc/malloc.h>
 #include <math.h>
 #include <pthread.h>
 #include <semaphore.h>
@@ -5464,6 +5465,27 @@ int test_NSNumber_stringValue() {
   return 0;
 }
 
+int test_malloc_zones() {
+  malloc_zone_t *zone = malloc_create_zone(0, 0);
+  unsigned char *p = malloc_zone_malloc(zone, 128);
+  if (malloc_zone_size(zone, p) != 128) {
+    return -1;
+  }
+
+  memset(p, 0xAB, 128);
+  for (int i = 0; i < 128; i++) {
+      if (p[i] != 0xAB) {
+          malloc_zone_free(zone, p);
+          malloc_destroy_zone(zone);
+          return -2;
+      }
+  }
+  malloc_zone_free(zone, p);
+  malloc_destroy_zone(zone);
+
+  return 0;
+}
+
 // clang-format off
 #define FUNC_DEF(func)                                                         \
   { &func, #func }
@@ -5565,6 +5587,7 @@ struct {
     FUNC_DEF(test_NSInvocation_retainArguments),
     FUNC_DEF(test_NSInvocation_pointer),
     FUNC_DEF(test_Initialize),
+    FUNC_DEF(test_malloc_zones),
 };
 // clang-format on
 

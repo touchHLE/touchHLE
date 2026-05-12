@@ -31,6 +31,10 @@ impl State {
             .get_mut(fd_to_file_idx(fd))
             .and_then(|file_or_none| file_or_none.as_mut())
     }
+
+    pub(crate) fn is_fd_open(&mut self, fd: FileDescriptor) -> bool {
+        self.files.get(fd_to_file_idx(fd)).is_some()
+    }
 }
 
 struct PosixFileHostObject {

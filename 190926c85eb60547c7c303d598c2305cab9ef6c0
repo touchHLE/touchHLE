@@ -1,0 +1,73 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c39b03fe_8b8ebdba",
+        "filename": "src/window.rs",
+        "patchSetId": 32
+      },
+      "lineNbr": 107,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2026-05-12T19:17:09Z",
+      "side": 1,
+      "message": "I don\u0027t think this comment applies anymore",
+      "range": {
+        "startLine": 107,
+        "startChar": 4,
+        "endLine": 107,
+        "endChar": 56
+      },
+      "revId": "190926c85eb60547c7c303d598c2305cab9ef6c0",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "af9b1c5c_08cc4ad9",
+        "filename": "src/window.rs",
+        "patchSetId": 32
+      },
+      "lineNbr": 264,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2026-05-12T19:17:09Z",
+      "side": 1,
+      "message": "This page doesn\u0027t exist yet, perhaps leave the old link?",
+      "range": {
+        "startLine": 264,
+        "startChar": 20,
+        "endLine": 264,
+        "endChar": 59
+      },
+      "revId": "190926c85eb60547c7c303d598c2305cab9ef6c0",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "df803796_b7f7341f",
+        "filename": "src/window.rs",
+        "patchSetId": 32
+      },
+      "lineNbr": 1499,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2026-05-12T19:17:09Z",
+      "side": 1,
+      "message": "Does it make sense to implement this as the Iterator Trait instead?",
+      "range": {
+        "startLine": 1486,
+        "startChar": 4,
+        "endLine": 1499,
+        "endChar": 5
+      },
+      "revId": "190926c85eb60547c7c303d598c2305cab9ef6c0",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

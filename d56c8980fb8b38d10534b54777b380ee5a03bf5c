@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "729700dc_4764d755",
+        "filename": "android/gradle/wrapper/gradle-wrapper.properties",
+        "patchSetId": 32
+      },
+      "lineNbr": 6,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2026-05-12T19:17:09Z",
+      "side": 0,
+      "message": "I don\u0027t think this should be removed.",
+      "range": {
+        "startLine": 1,
+        "startChar": 0,
+        "endLine": 6,
+        "endChar": 73
+      },
+      "revId": "d56c8980fb8b38d10534b54777b380ee5a03bf5c",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

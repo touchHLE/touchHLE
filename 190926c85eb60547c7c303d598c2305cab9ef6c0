@@ -24,6 +24,30 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "67c01067_51f9d240",
+        "filename": "src/window.rs",
+        "patchSetId": 32
+      },
+      "lineNbr": 107,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2026-05-12T20:10:59Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "c39b03fe_8b8ebdba",
+      "range": {
+        "startLine": 107,
+        "startChar": 4,
+        "endLine": 107,
+        "endChar": 56
+      },
+      "revId": "190926c85eb60547c7c303d598c2305cab9ef6c0",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "af9b1c5c_08cc4ad9",
@@ -47,6 +71,30 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "324863d4_70efc4e9",
+        "filename": "src/window.rs",
+        "patchSetId": 32
+      },
+      "lineNbr": 264,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2026-05-12T20:10:59Z",
+      "side": 1,
+      "message": "Fixed the link.",
+      "parentUuid": "af9b1c5c_08cc4ad9",
+      "range": {
+        "startLine": 264,
+        "startChar": 20,
+        "endLine": 264,
+        "endChar": 59
+      },
+      "revId": "190926c85eb60547c7c303d598c2305cab9ef6c0",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "df803796_b7f7341f",
@@ -60,6 +108,30 @@
       "writtenOn": "2026-05-12T19:17:09Z",
       "side": 1,
       "message": "Does it make sense to implement this as the Iterator Trait instead?",
+      "range": {
+        "startLine": 1486,
+        "startChar": 4,
+        "endLine": 1499,
+        "endChar": 5
+      },
+      "revId": "190926c85eb60547c7c303d598c2305cab9ef6c0",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0d1f8270_118c105b",
+        "filename": "src/window.rs",
+        "patchSetId": 32
+      },
+      "lineNbr": 1499,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2026-05-12T20:10:59Z",
+      "side": 1,
+      "message": "Personally I tend to prefer splitting iterator and backing storage since you need a mutable reference for an iterator, but if it\u0027s unacceptable then I can change it.",
+      "parentUuid": "df803796_b7f7341f",
       "range": {
         "startLine": 1486,
         "startChar": 4,

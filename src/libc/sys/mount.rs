@@ -8,6 +8,7 @@
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::libc::dirent::MAXPATHLEN;
 use crate::libc::posix_io::stat::uid_t;
+use crate::libc::posix_io::FileDescriptor;
 use crate::mem::{ConstPtr, MutPtr, SafeRead};
 use crate::Environment;
 
@@ -43,13 +44,7 @@ pub struct statfs {
 }
 unsafe impl SafeRead for statfs {}
 
-pub fn statfs_inner(env: &mut Environment, path: ConstPtr<u8>) -> (i32, statfs) {
-    // FIXME does directory matter?
-    assert!(env
-        .mem
-        .cstr_at_utf8(path)
-        .is_ok_and(|path| path.starts_with(env.fs.home_directory().join("Documents").as_str())));
-
+fn fake_statfs() -> statfs {
     // Values are taken from a test run of iOS 4.3 Simulator
     let mut statfs = statfs {
         f_bsize: 4096,
@@ -74,7 +69,17 @@ pub fn statfs_inner(env: &mut Environment, path: ConstPtr<u8>) -> (i32, statfs) 
     statfs.f_fstypename[..3].copy_from_slice(b"hfs");
     statfs.f_mntonname[..1].copy_from_slice(b"/");
     statfs.f_mntfromname[..12].copy_from_slice(b"/dev/disk0s2");
-    (0, statfs)
+    statfs
+}
+
+pub fn statfs_inner(env: &mut Environment, path: ConstPtr<u8>) -> (i32, statfs) {
+    // FIXME does directory matter?
+    assert!(env
+        .mem
+        .cstr_at_utf8(path)
+        .is_ok_and(|path| path.starts_with(env.fs.home_directory().join("Documents").as_str())));
+
+    (0, fake_statfs())
 }
 
 fn statfs(env: &mut Environment, path: ConstPtr<u8>, buf: MutPtr<statfs>) -> i32 {
@@ -83,4 +88,11 @@ fn statfs(env: &mut Environment, path: ConstPtr<u8>, buf: MutPtr<statfs>) -> i32
     ret
 }
 
-pub const FUNCTIONS: FunctionExports = &[export_c_func!(statfs(_, _))];
+fn fstatfs(env: &mut Environment, fd: FileDescriptor, buf: MutPtr<statfs>) -> i32 {
+    env.mem.write(buf, fake_statfs());
+    log!("TODO: fstatfs({fd}, {buf:?}) -> 0");
+    0
+}
+
+pub const FUNCTIONS: FunctionExports =
+    &[export_c_func!(statfs(_, _)), export_c_func!(fstatfs(_, _))];

@@ -70,6 +70,30 @@
       },
       "revId": "d56c8980fb8b38d10534b54777b380ee5a03bf5c",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d6a5f646_97eefed6",
+        "filename": "android/gradle/wrapper/gradle-wrapper.properties",
+        "patchSetId": 32
+      },
+      "lineNbr": 6,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2026-05-12T21:03:41Z",
+      "side": 0,
+      "message": "no idea why copy and paste decided not to work. anyways, fixed.",
+      "parentUuid": "4f1255b4_f4d5d266",
+      "range": {
+        "startLine": 1,
+        "startChar": 0,
+        "endLine": 6,
+        "endChar": 73
+      },
+      "revId": "d56c8980fb8b38d10534b54777b380ee5a03bf5c",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

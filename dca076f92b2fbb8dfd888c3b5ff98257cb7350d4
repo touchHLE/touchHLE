@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9ddeb059_2165d4d0",
+        "filename": "src/libc/posix_io.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 36,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-05-13T11:23:54Z",
+      "side": 1,
+      "message": "could you make a helper function instead of exposing the host object?",
+      "revId": "dca076f92b2fbb8dfd888c3b5ff98257cb7350d4",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4ee76edc_e266c979",
+        "filename": "src/libc/sys/mount.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 76,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-05-13T11:23:54Z",
+      "side": 1,
+      "message": "this is missing a comment that it\u0027s a helper and mot part of the API. Also can the return type be documented? \n\n(yes, I know it was like this before your changes, but as you\u0027re adding a similar _inner function, it\u0027s time to fix them both)",
+      "revId": "dca076f92b2fbb8dfd888c3b5ff98257cb7350d4",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c86b9e0c_803d92e1",
+        "filename": "src/libc/sys/mount.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 92,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-05-13T11:23:54Z",
+      "side": 1,
+      "message": "same comment as above\n\nAlso, do you really need to have this function defined? if it\u0027s only used once, you could just move that the body there?",
+      "revId": "dca076f92b2fbb8dfd888c3b5ff98257cb7350d4",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

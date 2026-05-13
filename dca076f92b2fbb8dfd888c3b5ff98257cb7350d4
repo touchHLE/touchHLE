@@ -104,6 +104,24 @@
       "parentUuid": "c86b9e0c_803d92e1",
       "revId": "dca076f92b2fbb8dfd888c3b5ff98257cb7350d4",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "663a4e70_a6446d3c",
+        "filename": "src/libc/sys/mount.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 92,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-05-13T23:25:48Z",
+      "side": 1,
+      "message": "Yes, I think it is preferable to merge those. Right now the existance of fstatfs_inner() is not really justified.",
+      "parentUuid": "dd59d6e7_396eabf9",
+      "revId": "dca076f92b2fbb8dfd888c3b5ff98257cb7350d4",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

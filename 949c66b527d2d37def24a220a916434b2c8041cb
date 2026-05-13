@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c4f156d9_0a9b3032",
+        "filename": "src/libc/sys/mount.rs",
+        "patchSetId": 9
+      },
+      "lineNbr": 77,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-05-13T23:25:48Z",
+      "side": 1,
+      "message": "in which cases we expect this function to fail?",
+      "revId": "949c66b527d2d37def24a220a916434b2c8041cb",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b8acfeac_a4c92c8c",
+        "filename": "src/libc/sys/mount.rs",
+        "patchSetId": 9
+      },
+      "lineNbr": 103,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-05-13T23:25:48Z",
+      "side": 1,
+      "message": "why fstatfs here?",
+      "revId": "949c66b527d2d37def24a220a916434b2c8041cb",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

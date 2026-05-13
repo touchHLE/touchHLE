@@ -216,7 +216,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     let toPath = ns_string::to_rust_string(env, toPath); // TODO: avoid copy
     match env.fs.rename(GuestPath::new(&path), GuestPath::new(&toPath)) {
         Ok(()) => true,
-        Err(()) => {
+        Err(_) => {
             if !error.is_null() {
                todo!(); // TODO: create an NSError if requested
             }

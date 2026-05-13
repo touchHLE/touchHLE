@@ -18,6 +18,10 @@ type vm_purgable_t = i32;
 type mach_vm_address_t = u32;
 type mach_vm_size_t = u32;
 
+const VM_FLAGS_ANYWHERE: i32 = 0x1;
+const VM_FLAGS_PURGABLE: i32 = 0x2;
+const VM_TAG_MASK: i32 = 0xFF00_0000u32 as i32;
+
 #[derive(Default)]
 pub struct State {
     /// Keeping track of `vm_allocate` allocations
@@ -29,12 +33,25 @@ pub fn vm_allocate(
     target_task: vm_map_t,
     address_ptr: MutPtr<mach_vm_address_t>,
     size: mach_vm_size_t,
-    flags: i32, // in other docs it is defined as `anywhere: boolean_t`
+    flags: i32,
 ) -> kern_return_t {
     assert_eq!(target_task, MACH_TASK_SELF);
-    assert!(flags == 0 || flags == 1);
+    // TODO: support more flags, this list is not complete
+    assert_eq!(
+        flags & !(VM_FLAGS_ANYWHERE | VM_FLAGS_PURGABLE | VM_TAG_MASK),
+        0
+    );
 
-    let address = (flags == 0).then(|| env.mem.read(address_ptr));
+    let tag = (flags >> 24) as u8;
+    if tag != 0 {
+        log!("TODO: vm_allocate({target_task:#x}, {address_ptr:?}, {size}, {flags:#x}) called. Tag: {tag} currently not supported.");
+    }
+
+    if flags & VM_FLAGS_PURGABLE == VM_FLAGS_PURGABLE {
+        log!("TODO: vm_allocate({target_task:#x}, {address_ptr:?}, {size}, {flags:#x}) called. VM_FLAGS_PURGABLE currently not supported.");
+    }
+
+    let address = (flags & VM_FLAGS_ANYWHERE == 0).then(|| env.mem.read(address_ptr));
 
     let allocated = env.mem.vm_alloc(address, size).unwrap();
     let address = allocated.to_bits();

@@ -221,3 +221,7 @@ com.madfingergames.Samurai: --force-composition
 
 # NEX
 com.StarByte.NEX: --landscape-left --force-composition
+
+# Krazy Kart Racing
+# Stick = Move, A = Jump, X = Item, Left Shoulder = Brake, Start = Pause
+com.polarbit.KrazyRacers: --landscape-left --stick-to-touch=25,260,168,30 --button-to-touch=A,240,120 --button-to-touch=X,430,278 --button-to-touch=LeftShoulder,450,222 --button-to-touch=Start,455,23

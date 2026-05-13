@@ -10,8 +10,11 @@ pub mod statvfs;
 
 use crate::abi::DotDotDot;
 use crate::dyld::{export_c_func, FunctionExports};
-use crate::fs::{GuestFile, GuestOpenOptions, GuestPath};
-use crate::libc::errno::{set_errno, EBADF, EINTR, EINVAL, EIO, EISDIR, EOVERFLOW, ESPIPE};
+use crate::fs::{FsError, GuestFile, GuestOpenOptions, GuestPath};
+use crate::libc::errno::{
+    set_errno, EACCES, EBADF, EEXIST, EFAULT, EINTR, EINVAL, EIO, EISDIR, ENOENT, ENOTDIR,
+    EOVERFLOW, ESPIPE,
+};
 use crate::libc::sys::socket::close_socket;
 use crate::libc::unistd::pid_t;
 use crate::mem::{
@@ -144,12 +147,11 @@ pub fn open_direct(env: &mut Environment, path: ConstPtr<u8>, flags: i32) -> Fil
                 | O_EXCL)
             == 0
     );
-    // TODO: exclusive mode not implemented yet
-    assert!(flags & O_EXCL == 0);
 
     if path.is_null() {
         log_dbg!("open({:?}, {:#x}) => -1", path, flags);
-        return -1; // TODO: set errno to EFAULT
+        set_errno(env, EFAULT);
+        return -1;
     }
 
     // TODO: respect the mode (in the variadic arguments) when creating a file
@@ -178,6 +180,9 @@ pub fn open_direct(env: &mut Environment, path: ConstPtr<u8>, flags: i32) -> Fil
     }
     if (flags & O_TRUNC) != 0 {
         options.truncate();
+    }
+    if (flags & O_EXCL) != 0 {
+        options.exclusive();
     }
 
     let path_string = match env.mem.cstr_at_utf8(path) {
@@ -210,8 +215,20 @@ pub fn open_direct(env: &mut Environment, path: ConstPtr<u8>, flags: i32) -> Fil
 
             find_or_create_fd(env, host_object)
         }
-        Err(()) => {
-            // TODO: set errno
+        Err(error) => {
+            log!("Warning: open({path:?}, {flags:#x}) failed with: {error:?}, returning -1");
+            let errno = match error {
+                FsError::AccessDenied => EACCES,
+                FsError::AlreadyExist => EEXIST,
+                FsError::DoesNotExist => ENOENT,
+                FsError::InvalidParentDir => ENOTDIR,
+                FsError::IsDirectory => EISDIR,
+                FsError::NonexistentParentDir => ENOENT,
+                FsError::ReadonlyParentDir => EACCES,
+                FsError::IoError(_) => EIO,
+                _ => unimplemented!(),
+            };
+            set_errno(env, errno);
             -1
         }
     };

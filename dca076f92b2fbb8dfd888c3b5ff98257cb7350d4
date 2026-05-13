@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "b90159f4_53c935a1",
+        "filename": "src/libc/posix_io.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 36,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2026-05-13T15:36:57Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "9ddeb059_2165d4d0",
+      "revId": "dca076f92b2fbb8dfd888c3b5ff98257cb7350d4",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "4ee76edc_e266c979",
@@ -35,6 +53,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "624385fa_ec6d3040",
+        "filename": "src/libc/sys/mount.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 76,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2026-05-13T15:36:57Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "4ee76edc_e266c979",
+      "revId": "dca076f92b2fbb8dfd888c3b5ff98257cb7350d4",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "c86b9e0c_803d92e1",
@@ -48,6 +84,24 @@
       "writtenOn": "2026-05-13T11:23:54Z",
       "side": 1,
       "message": "same comment as above\n\nAlso, do you really need to have this function defined? if it\u0027s only used once, you could just move that the body there?",
+      "revId": "dca076f92b2fbb8dfd888c3b5ff98257cb7350d4",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "dd59d6e7_396eabf9",
+        "filename": "src/libc/sys/mount.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 92,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2026-05-13T15:36:57Z",
+      "side": 1,
+      "message": "I thought about this as well, but if we every need to implement fstatvfs then we\u0027ll need the helper regardless. I can merge them if preferable.",
+      "parentUuid": "c86b9e0c_803d92e1",
       "revId": "dca076f92b2fbb8dfd888c3b5ff98257cb7350d4",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

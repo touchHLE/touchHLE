@@ -11,11 +11,22 @@ use crate::libc::mach::port::mach_port_t;
 use crate::libc::mach::thread_info::{kern_return_t, KERN_SUCCESS};
 use crate::mem::{MutPtr, Ptr, PAGE_SIZE_ALIGN_MASK};
 use crate::Environment;
+use bitflags::bitflags;
 use std::collections::HashMap;
 
 type vm_map_t = mach_port_t;
 type mach_vm_address_t = u32;
 type mach_vm_size_t = u32;
+
+bitflags! {
+    #[derive(Debug, Clone, Copy)]
+    pub struct VmFlags : i32 {
+        const ANYWHERE = 0x1;
+        const PURGABLE = 0x2;
+    }
+}
+
+const VM_TAG_MASK: i32 = 0xFF00_0000u32 as i32;
 
 #[derive(Default)]
 pub struct State {
@@ -28,12 +39,24 @@ pub fn vm_allocate(
     target_task: vm_map_t,
     address_ptr: MutPtr<mach_vm_address_t>,
     size: mach_vm_size_t,
-    flags: i32, // in other docs it is defined as `anywhere: boolean_t`
+    flags: i32,
 ) -> kern_return_t {
     assert_eq!(target_task, MACH_TASK_SELF);
-    assert!(flags == 0 || flags == 1);
+    const HANDLED_FLAGS: VmFlags = VmFlags::ANYWHERE;
 
-    let address = (flags == 0).then(|| env.mem.read(address_ptr));
+    let tag = (flags >> 24) as u8;
+    let flags = VmFlags::from_bits(flags & !VM_TAG_MASK).unwrap();
+
+    let unhandled = flags.difference(HANDLED_FLAGS);
+    if !unhandled.is_empty() {
+        log!("Warning: vm_allocate ignoring flags {unhandled:?}");
+    }
+
+    if tag != 0 {
+        log_dbg!("Ignoring vm_allocate tag {tag}");
+    }
+
+    let address = (!flags.contains(VmFlags::ANYWHERE)).then(|| env.mem.read(address_ptr));
 
     let allocated = env.mem.vm_alloc(address, size).unwrap();
     let address = allocated.to_bits();

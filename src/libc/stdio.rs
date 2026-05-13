@@ -5,10 +5,7 @@
  */
 //! `stdio.h`
 
-use super::posix_io::{
-    self, off_t, O_APPEND, O_CREAT, O_RDONLY, O_RDWR, O_TRUNC, O_WRONLY, STDERR_FILENO,
-    STDIN_FILENO, STDOUT_FILENO,
-};
+use super::posix_io::{self, off_t, OpenFlags, STDERR_FILENO, STDIN_FILENO, STDOUT_FILENO};
 use crate::dyld::{export_c_func, ConstantExports, FunctionExports, HostConstant};
 use crate::fs::GuestPath;
 use crate::libc::errno::{set_errno, EBUSY};
@@ -142,12 +139,12 @@ fn fopen(env: &mut Environment, filename: ConstPtr<u8>, mode: ConstPtr<u8>) -> M
     }
 
     let flags = match (basic_mode, plus) {
-        (b'r', false) => O_RDONLY,
-        (b'r', true) => O_RDWR,
-        (b'w', false) => O_WRONLY | O_CREAT | O_TRUNC,
-        (b'w', true) => O_RDWR | O_CREAT | O_TRUNC,
-        (b'a', false) => O_WRONLY | O_APPEND | O_CREAT,
-        (b'a', true) => O_RDWR | O_APPEND | O_CREAT,
+        (b'r', false) => OpenFlags::RDONLY,
+        (b'r', true) => OpenFlags::RDWR,
+        (b'w', false) => OpenFlags::WRONLY | OpenFlags::CREAT | OpenFlags::TRUNC,
+        (b'w', true) => OpenFlags::RDWR | OpenFlags::CREAT | OpenFlags::TRUNC,
+        (b'a', false) => OpenFlags::WRONLY | OpenFlags::APPEND | OpenFlags::CREAT,
+        (b'a', true) => OpenFlags::RDWR | OpenFlags::APPEND | OpenFlags::CREAT,
         _ => unreachable!(),
     };
 

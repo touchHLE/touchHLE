@@ -27,7 +27,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 + (id)fileHandleForReadingAtPath:(id)path { // NSString*
     log_dbg!("fileHandleForReadingAtPath {}", ns_string::to_rust_string(env, path));
     let path_str: ConstPtr<u8> = msg![env; path UTF8String];
-    match posix_io::open_direct(env, path_str, posix_io::O_RDONLY) {
+    match posix_io::open_direct(env, path_str, posix_io::OpenFlags::O_RDONLY) {
         -1 => nil,
         fd => {
             let host_object = Box::new(NSFileHandleHostObject {
@@ -42,7 +42,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 + (id)fileHandleForWritingAtPath:(id)path { // NSString*
     log_dbg!("fileHandleForWritingAtPath {}", ns_string::to_rust_string(env, path));
     let path_str: ConstPtr<u8> = msg![env; path UTF8String];
-    match posix_io::open_direct(env, path_str, posix_io::O_WRONLY) {
+    match posix_io::open_direct(env, path_str, posix_io::OpenFlags::O_WRONLY) {
         -1 => nil,
         fd => {
             let host_object = Box::new(NSFileHandleHostObject {
@@ -57,7 +57,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 + (id)fileHandleForUpdatingAtPath:(id)path { // NSString*
     log_dbg!("fileHandleForUpdatingAtPath {}", ns_string::to_rust_string(env, path));
     let path_str: ConstPtr<u8> = msg![env; path UTF8String];
-    match posix_io::open_direct(env, path_str, posix_io::O_RDWR) {
+    match posix_io::open_direct(env, path_str, posix_io::OpenFlags::O_RDWR) {
         -1 => nil,
         fd => {
             let host_object = Box::new(NSFileHandleHostObject {

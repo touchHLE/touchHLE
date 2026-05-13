@@ -18,6 +18,7 @@ use crate::mem::{
     ConstPtr, ConstVoidPtr, GuestISize, GuestUSize, MutPtr, MutVoidPtr, Ptr, SafeRead,
 };
 use crate::Environment;
+use bitflags::{bitflags, bitflags_match, Flags};
 use std::io::{Read, Seek, SeekFrom, Write};
 
 #[derive(Default)]
@@ -58,21 +59,22 @@ pub const STDOUT_FILENO: FileDescriptor = 1;
 pub const STDERR_FILENO: FileDescriptor = 2;
 const NORMAL_FILENO_BASE: FileDescriptor = STDERR_FILENO + 1;
 
-/// Flags bitfield for `open`. This alias is for readability, POSIX just uses
-/// `int`.
-pub type OpenFlag = i32;
-pub const O_RDONLY: OpenFlag = 0x0;
-pub const O_WRONLY: OpenFlag = 0x1;
-pub const O_RDWR: OpenFlag = 0x2;
-pub const O_ACCMODE: OpenFlag = O_RDWR | O_WRONLY | O_RDONLY;
-
-pub const O_NONBLOCK: OpenFlag = 0x4;
-pub const O_APPEND: OpenFlag = 0x8;
-pub const O_SHLOCK: OpenFlag = 0x10;
-pub const O_NOFOLLOW: OpenFlag = 0x100;
-pub const O_CREAT: OpenFlag = 0x200;
-pub const O_TRUNC: OpenFlag = 0x400;
-pub const O_EXCL: OpenFlag = 0x800;
+bitflags! {
+    #[derive(Debug, Clone, Copy, PartialEq)]
+    pub struct OpenFlags: i32 {
+        const O_RDONLY = 0x0;
+        const O_WRONLY = 0x1;
+        const O_RDWR = 0x2;
+        const O_NONBLOCK = 0x4;
+        const O_APPEND = 0x8;
+        const O_SHLOCK = 0x10;
+        const O_NOFOLLOW = 0x100;
+        const O_CREAT = 0x200;
+        const O_TRUNC = 0x400;
+        const O_EXCL = 0x800;
+        const O_ACCMODE = Self::O_RDWR.bits() | Self::O_WRONLY.bits() | Self::O_RDONLY.bits();
+    }
+}
 
 /// File control command flags.
 /// This alias is for readability, POSIX just uses `int`.
@@ -108,40 +110,29 @@ struct flock {
 }
 unsafe impl SafeRead for flock {}
 
-pub type FLockFlag = i32;
-pub const LOCK_SH: FLockFlag = 1;
-#[allow(dead_code)]
-pub const LOCK_EX: FLockFlag = 2;
-#[allow(dead_code)]
-pub const LOCK_NB: FLockFlag = 4;
-#[allow(dead_code)]
-pub const LOCK_UN: FLockFlag = 8;
+bitflags! {
+    #[derive(Debug, Clone, Copy)]
+    pub struct FLockFlags: i32 {
+        const LOCK_SH = 1;
+        const LOCK_EX = 2;
+        const LOCK_NB = 4;
+        const LOCK_UN = 8;
+    }
+}
 
 fn open(env: &mut Environment, path: ConstPtr<u8>, flags: i32, _args: DotDotDot) -> FileDescriptor {
     // TODO: handle errno properly
     set_errno(env, 0);
 
     // TODO: parse variadic arguments and pass them on (file creation mode)
-    self::open_direct(env, path, flags)
+    self::open_direct(env, path, OpenFlags::from_bits_retain(flags))
 }
 
 /// Special extension for host code: [open] without the [DotDotDot].
-pub fn open_direct(env: &mut Environment, path: ConstPtr<u8>, flags: i32) -> FileDescriptor {
-    // TODO: support more flags, this list is not complete
-    assert!(
-        flags
-            & !(O_ACCMODE
-                | O_NONBLOCK
-                | O_APPEND
-                | O_SHLOCK
-                | O_NOFOLLOW
-                | O_CREAT
-                | O_TRUNC
-                | O_EXCL)
-            == 0
-    );
+pub fn open_direct(env: &mut Environment, path: ConstPtr<u8>, flags: OpenFlags) -> FileDescriptor {
+    assert!(!flags.contains_unknown_bits());
     // TODO: exclusive mode not implemented yet
-    assert!(flags & O_EXCL == 0);
+    assert!(!flags.contains(OpenFlags::O_EXCL));
 
     if path.is_null() {
         log_dbg!("open({:?}, {:#x}) => -1", path, flags);
@@ -152,27 +143,27 @@ pub fn open_direct(env: &mut Environment, path: ConstPtr<u8>, flags: i32) -> Fil
     // Note: NONBLOCK flag is ignored, assumption is all file I/O is fast
     let mut needs_flush = false;
     let mut options = GuestOpenOptions::new();
-    match flags & O_ACCMODE {
-        O_RDONLY => {
+    bitflags_match!(flags.intersection(OpenFlags::O_ACCMODE), {
+        OpenFlags::O_RDONLY => {
             options.read();
         }
-        O_WRONLY => {
+        OpenFlags::O_WRONLY => {
             options.write();
             needs_flush = true;
         }
-        O_RDWR => {
+        OpenFlags::O_RDWR => {
             options.read().write();
             needs_flush = true;
         }
         _ => panic!(),
-    };
-    if (flags & O_APPEND) != 0 {
+    });
+    if flags.contains(OpenFlags::O_APPEND) {
         options.append();
     }
-    if (flags & O_CREAT) != 0 {
+    if flags.contains(OpenFlags::O_CREAT) {
         options.create();
     }
-    if (flags & O_TRUNC) != 0 {
+    if flags.contains(OpenFlags::O_TRUNC) {
         options.truncate();
     }
 
@@ -189,7 +180,7 @@ pub fn open_direct(env: &mut Environment, path: ConstPtr<u8>, flags: i32) -> Fil
         }
     };
     // TODO: symlinks don't exist in the FS yet, so we can't "not follow" them.
-    if flags & O_NOFOLLOW != 0 {
+    if flags.contains(OpenFlags::O_NOFOLLOW) {
         log!("Ignoring O_NOFOLLOW when opening {:?}", path_string);
     }
     let res = match env
@@ -211,9 +202,9 @@ pub fn open_direct(env: &mut Environment, path: ConstPtr<u8>, flags: i32) -> Fil
             -1
         }
     };
-    if res != -1 && (flags & O_SHLOCK) != 0 {
+    if res != -1 && flags.contains(OpenFlags::O_SHLOCK) {
         // TODO: Handle possible errors
-        flock(env, res, LOCK_SH);
+        flock(env, res, FLockFlags::LOCK_SH.bits());
     }
     log_dbg!(
         "open({:?} {:?}, {:#x}) => {:?}",
@@ -820,10 +811,12 @@ fn fcntl(
     0 // success
 }
 
-fn flock(env: &mut Environment, fd: FileDescriptor, operation: FLockFlag) -> i32 {
+fn flock(env: &mut Environment, fd: FileDescriptor, operation: i32) -> i32 {
     // TODO: handle errno properly
     set_errno(env, 0);
 
+    let operation = FLockFlags::from_bits_retain(operation);
+    assert!(!operation.contains_unknown_bits());
     log!("TODO: flock({:?}, {:?})", fd, operation);
     0
 }
@@ -887,7 +880,7 @@ fn truncate(env: &mut Environment, path_ptr: ConstPtr<u8>, len: off_t) -> i32 {
         }
     };
 
-    let fd = open_direct(env, path_ptr, O_WRONLY);
+    let fd = open_direct(env, path_ptr, OpenFlags::O_WRONLY);
     if fd < 0 {
         log_dbg!("truncate('{}', {}) => -1", path_string, len);
         return -1;

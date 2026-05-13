@@ -9,6 +9,7 @@ use super::{close, off_t, open_direct, FileDescriptor};
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::fs::{FsError, GuestFile, GuestPath};
 use crate::libc::errno::{set_errno, EACCES, EBADF, EEXIST, ENOENT};
+use crate::libc::posix_io::OpenFlags;
 use crate::libc::time::timespec;
 use crate::mem::{ConstPtr, MutPtr, SafeRead};
 use crate::Environment;
@@ -146,7 +147,7 @@ fn stat(env: &mut Environment, path: ConstPtr<u8>, buf: MutPtr<stat>) -> i32 {
         }
 
         // Open and reuse fstat implementation
-        let fd = open_direct(env, path, 0);
+        let fd = open_direct(env, path, OpenFlags::empty());
         if fd == -1 {
             return -1; // TODO: Set errno
         }

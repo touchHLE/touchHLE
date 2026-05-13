@@ -60,9 +60,9 @@ checksum = "bef38d45163c2f1dde094a7dfd33ccf595c92905c8f8f4fdc18d06fb1037718a"
 
 [[package]]
 name = "bitflags"
-version = "2.11.0"
+version = "2.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "843867be96c8daad0d758b57df9392b6d8d271134fce549de6ce169ff98a92af"
+checksum = "c4512299f36f043ab09a583e57bceb5a5aab7a73db1805848e8fef3c9e8c78b3"
 
 [[package]]
 name = "block-buffer"
@@ -835,7 +835,7 @@ version = "0.6.0-alpha.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "63d085a04fae2e73a2fb234d8cdd9d5025660534726388b73b4b3d2da8e3da7c"
 dependencies = [
- "bitflags 2.11.0",
+ "bitflags 2.11.1",
  "bytemuck",
  "lazy_static",
  "log",
@@ -992,6 +992,7 @@ dependencies = [
 name = "touchHLE"
 version = "0.2.3"
 dependencies = [
+ "bitflags 2.11.1",
  "cargo-license",
  "cc",
  "cmake",

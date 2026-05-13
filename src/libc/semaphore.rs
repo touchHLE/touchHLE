@@ -8,7 +8,7 @@
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::libc::errno::set_errno;
 use crate::libc::posix_io::stat::mode_t;
-use crate::libc::posix_io::{O_CREAT, O_EXCL};
+use crate::libc::posix_io::OpenFlags;
 use crate::mem::{ConstPtr, MutPtr};
 use crate::{Environment, ThreadId};
 use std::cell::RefCell;
@@ -92,7 +92,7 @@ pub fn sem_open(
     let sem_name_str = sem_name.to_string();
     let host_sem_rc =
         if let Some(existing_host_sem_rc) = State::get(env).named_semaphores.get(sem_name) {
-            if (oflag & O_EXCL) == 0 {
+            if (oflag & OpenFlags::O_EXCL.bits()) == 0 {
                 // TODO: set errno
                 return SEM_FAILED;
             }
@@ -102,7 +102,7 @@ pub fn sem_open(
             }
             existing_host_sem_rc.clone()
         } else {
-            if (oflag & O_CREAT) == 0 {
+            if (oflag & OpenFlags::O_CREAT.bits()) == 0 {
                 // TODO: set errno
                 return SEM_FAILED;
             }

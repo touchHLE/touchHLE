@@ -8,6 +8,8 @@
 pub mod stat;
 pub mod statvfs;
 
+use libc::EFAULT;
+
 use crate::abi::DotDotDot;
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::fs::{GuestFile, GuestOpenOptions, GuestPath};
@@ -145,7 +147,8 @@ pub fn open_direct(env: &mut Environment, path: ConstPtr<u8>, flags: i32) -> Fil
 
     if path.is_null() {
         log_dbg!("open({:?}, {:#x}) => -1", path, flags);
-        return -1; // TODO: set errno to EFAULT
+        set_errno(env, EFAULT);
+        return -1;
     }
 
     // TODO: respect the mode (in the variadic arguments) when creating a file
@@ -174,6 +177,9 @@ pub fn open_direct(env: &mut Environment, path: ConstPtr<u8>, flags: i32) -> Fil
     }
     if (flags & O_TRUNC) != 0 {
         options.truncate();
+    }
+    if (flags & O_EXCL) != 0 {
+        options.exclusive();
     }
 
     let path_string = match env.mem.cstr_at_utf8(path) {
@@ -206,8 +212,9 @@ pub fn open_direct(env: &mut Environment, path: ConstPtr<u8>, flags: i32) -> Fil
 
             find_or_create_fd(env, host_object)
         }
-        Err(()) => {
-            // TODO: set errno
+        Err(error) => {
+            set_errno(env, error);
+            log_dbg!("open({:?}, {:#x}) => -1", path, flags);
             -1
         }
     };

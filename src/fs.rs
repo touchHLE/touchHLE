@@ -29,6 +29,7 @@ mod bundle;
 pub use bundle::BundleData;
 
 use crate::fs::bundle::{IpaFile, IpaFileRef};
+use crate::libc::errno::{EACCES, EEXIST, EIO, EISDIR, ENOENT, ENOTDIR};
 use crate::paths;
 use std::collections::HashMap;
 use std::fs;
@@ -316,6 +317,7 @@ pub struct GuestOpenOptions {
     append: bool,
     create: bool,
     truncate: bool,
+    exclusive: bool,
 }
 impl GuestOpenOptions {
     pub fn new() -> GuestOpenOptions {
@@ -325,6 +327,7 @@ impl GuestOpenOptions {
             append: false,
             create: false,
             truncate: false,
+            exclusive: false,
         }
     }
     pub fn read(&mut self) -> &mut Self {
@@ -345,6 +348,10 @@ impl GuestOpenOptions {
     }
     pub fn truncate(&mut self) -> &mut Self {
         self.truncate = true;
+        self
+    }
+    pub fn exclusive(&mut self) -> &mut Self {
+        self.exclusive = true;
         self
     }
 }
@@ -908,12 +915,12 @@ impl Fs {
     }
 
     /// Like [std::fs::write] but for the guest filesystem.
-    pub fn write<P: AsRef<GuestPath>>(&mut self, path: P, data: &[u8]) -> Result<(), ()> {
+    pub fn write<P: AsRef<GuestPath>>(&mut self, path: P, data: &[u8]) -> Result<(), i32> {
         let mut options = GuestOpenOptions::new();
         options.write().create().truncate();
         self.open_with_options(path, options)?
             .write_all(data)
-            .map_err(|_| ())
+            .map_err(|_| EIO)
     }
 
     /// Like [File::open] but for the guest filesystem.
@@ -938,16 +945,15 @@ impl Fs {
         }
     }
 
-    pub fn rename<P: AsRef<GuestPath> + Copy>(&mut self, from: P, to: P) -> Result<(), ()> {
-        let from_node = self.lookup_node(from.as_ref()).ok_or(())?;
+    pub fn rename<P: AsRef<GuestPath> + Copy>(&mut self, from: P, to: P) -> Result<(), i32> {
+        let from_node = self.lookup_node(from.as_ref()).ok_or(ENOENT)?;
         let from_host_path = match from_node {
             FsNode::File {
                 location: from_location,
                 writeable: from_writeable,
             } => {
                 let FileLocation::Path(from_host_path) = from_location else {
-                    // TODO: return EISDIR
-                    return Err(());
+                    return Err(EISDIR);
                 };
                 assert!(from_writeable); // TODO: return errno
                                          // TODO: avoid copy?
@@ -969,12 +975,10 @@ impl Fs {
             writeable: to_writeable,
         } = to_node
         else {
-            // TODO: return EISDIR
-            return Err(());
+            return Err(EISDIR);
         };
         let FileLocation::Path(to_host_path) = to_location else {
-            // TODO: return EACCES
-            return Err(());
+            return Err(EACCES);
         };
         assert!(to_writeable); // TODO: return errno
         let res = fs::rename(from_host_path, to_host_path);
@@ -986,7 +990,7 @@ impl Fs {
             };
             children.remove(&component).unwrap();
         }
-        res.map_err(|_| ())
+        res.map_err(|_| EIO)
     }
 
     /// Like [File::options] but for the guest filesystem.
@@ -994,30 +998,36 @@ impl Fs {
         &mut self,
         path: P,
         options: GuestOpenOptions,
-    ) -> Result<GuestFile, ()> {
+    ) -> Result<GuestFile, i32> {
         let GuestOpenOptions {
             read,
             write,
             append,
             create,
             truncate,
+            exclusive,
         } = options;
         assert!((!truncate && !create) || write || append);
 
         let path = path.as_ref();
 
-        let (parent_node, new_filename) = self.lookup_parent_node(path).ok_or(())?;
+        let (parent_node, new_filename) = self.lookup_parent_node(path).ok_or(ENOENT)?;
         let FsNode::Directory {
             children,
             writeable: dir_host_path,
         } = parent_node
         else {
-            return Err(());
+            return Err(ENOTDIR);
         };
 
         // Open an existing file if possible
-
         if let Some(existing_file) = children.get(&new_filename) {
+            if create && exclusive {
+                // TODO: This should also return an error if the last
+                // component is a symlink, but the FS currently doesn't
+                // have symlinks
+                return Err(EEXIST);
+            }
             match existing_file {
                 &FsNode::File {
                     ref location,
@@ -1025,7 +1035,7 @@ impl Fs {
                 } => {
                     if !writeable && (append || write) {
                         log!("Warning: attempt to write to read-only file {:?}", path);
-                        return Err(());
+                        return Err(EACCES);
                     }
                     match location {
                         FileLocation::Path(host_path) => {
@@ -1055,7 +1065,7 @@ impl Fs {
                 }
                 FsNode::Directory { .. } => {
                     if write {
-                        return Err(());
+                        return Err(EISDIR);
                     } else {
                         return Ok(GuestFile::from_directory());
                     }
@@ -1064,9 +1074,8 @@ impl Fs {
         };
 
         // Create a new file otherwise
-
         if !create {
-            return Err(());
+            return Err(ENOENT);
         }
 
         let Some(dir_host_path) = dir_host_path else {
@@ -1074,7 +1083,7 @@ impl Fs {
                 "Warning: attempt to create file at path {:?}, but directory is read-only",
                 path
             );
-            return Err(());
+            return Err(EACCES);
         };
 
         for c in new_filename.chars() {

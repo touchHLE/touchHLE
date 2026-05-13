@@ -23,6 +23,7 @@ pub const EDEADLK: i32 = 11;
 pub const EACCES: i32 = 13;
 pub const EBUSY: i32 = 16;
 pub const EEXIST: i32 = 17;
+pub const ENOTDIR: i32 = 20;
 pub const EISDIR: i32 = 21;
 pub const EINVAL: i32 = 22;
 pub const ESPIPE: i32 = 29;

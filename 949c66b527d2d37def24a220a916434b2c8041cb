@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "e4dd9e3b_32b746d6",
+        "filename": "src/libc/sys/mount.rs",
+        "patchSetId": 9
+      },
+      "lineNbr": 77,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2026-05-14T00:38:17Z",
+      "side": 1,
+      "message": "Its mostly path parsing issues, I added one of the failing cases.",
+      "parentUuid": "c4f156d9_0a9b3032",
+      "revId": "949c66b527d2d37def24a220a916434b2c8041cb",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "b8acfeac_a4c92c8c",
@@ -31,6 +49,24 @@
       "writtenOn": "2026-05-13T23:25:48Z",
       "side": 1,
       "message": "why fstatfs here?",
+      "revId": "949c66b527d2d37def24a220a916434b2c8041cb",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "a2c4513f_87c94472",
+        "filename": "src/libc/sys/mount.rs",
+        "patchSetId": 9
+      },
+      "lineNbr": 103,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2026-05-14T00:38:17Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "b8acfeac_a4c92c8c",
       "revId": "949c66b527d2d37def24a220a916434b2c8041cb",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

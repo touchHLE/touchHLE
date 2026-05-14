@@ -34,6 +34,24 @@
       "parentUuid": "cf30d64b_c32d9c12",
       "revId": "8382cfb5566397090528f75dc5f9e9192aa4af5a",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "70e6d734_f5457fce",
+        "filename": "src/fs.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 32,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-05-14T21:12:55Z",
+      "side": 1,
+      "message": "i don\u0027t think our internal file system should have any knowledge about guest libc errnos, this is not a good separation of concerns. i think i would prefer to do it how it is done for mkdir()",
+      "parentUuid": "1619133e_6f80a370",
+      "revId": "8382cfb5566397090528f75dc5f9e9192aa4af5a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

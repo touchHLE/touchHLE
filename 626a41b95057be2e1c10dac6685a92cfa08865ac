@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1cd17b1d_beac91e0",
+        "filename": "src/libc/mach/vm_map.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 23,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-05-14T10:15:41Z",
+      "side": 1,
+      "message": "why do you need to define the constant as u32, but then convert to u32?\nalso, not seeing there this mask is actually used, apart from the assert?",
+      "revId": "626a41b95057be2e1c10dac6685a92cfa08865ac",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

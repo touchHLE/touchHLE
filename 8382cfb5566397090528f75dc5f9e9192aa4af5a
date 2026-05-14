@@ -16,6 +16,24 @@
       "message": "general comment: errno constant should not leak here, see FsError below how this shall be done.",
       "revId": "8382cfb5566397090528f75dc5f9e9192aa4af5a",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1619133e_6f80a370",
+        "filename": "src/fs.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 32,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2026-05-14T17:30:33Z",
+      "side": 1,
+      "message": "I left these but instead provided a function that converts the FsError to an errno. Thoughts?",
+      "parentUuid": "cf30d64b_c32d9c12",
+      "revId": "8382cfb5566397090528f75dc5f9e9192aa4af5a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

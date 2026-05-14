@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "cf30d64b_c32d9c12",
+        "filename": "src/fs.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 32,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-05-14T10:34:18Z",
+      "side": 1,
+      "message": "general comment: errno constant should not leak here, see FsError below how this shall be done.",
+      "revId": "8382cfb5566397090528f75dc5f9e9192aa4af5a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

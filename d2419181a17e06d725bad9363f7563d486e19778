@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "27883025_f594475e",
+        "filename": "src/fs.rs",
+        "patchSetId": 4
+      },
+      "lineNbr": 59,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2026-05-14T17:28:55Z",
+      "side": 1,
+      "message": "I\u0027m not sure if this is the best option here, interested to hear your thoughts.",
+      "range": {
+        "startLine": 59,
+        "startChar": 21,
+        "endLine": 59,
+        "endChar": 23
+      },
+      "revId": "d2419181a17e06d725bad9363f7563d486e19778",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

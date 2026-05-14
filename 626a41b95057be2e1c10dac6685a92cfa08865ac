@@ -52,6 +52,24 @@
       "parentUuid": "1fa49f4e_7b47d3b5",
       "revId": "626a41b95057be2e1c10dac6685a92cfa08865ac",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "49fbe016_a3bc2fb8",
+        "filename": "src/libc/mach/vm_map.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 23,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2026-05-14T17:26:23Z",
+      "side": 1,
+      "message": "Per discussion removed the flags since not actually needed. Cleaned up naming and comments.",
+      "parentUuid": "4816475a_6e9f9253",
+      "revId": "626a41b95057be2e1c10dac6685a92cfa08865ac",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

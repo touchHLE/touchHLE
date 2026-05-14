@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fd98df6f_681f36f5",
+        "filename": "src/window.rs",
+        "patchSetId": 34
+      },
+      "lineNbr": 1434,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2026-05-14T01:27:28Z",
+      "side": 1,
+      "message": "Out of curiosity, does locales need to be defined on window? As in is it related to how the coroutines handle it?",
+      "range": {
+        "startLine": 1434,
+        "startChar": 11,
+        "endLine": 1434,
+        "endChar": 18
+      },
+      "revId": "25113787476ad14556110d88ac144a425b3847d2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

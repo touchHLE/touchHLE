@@ -34,6 +34,24 @@
       "parentUuid": "1cd17b1d_beac91e0",
       "revId": "626a41b95057be2e1c10dac6685a92cfa08865ac",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4816475a_6e9f9253",
+        "filename": "src/libc/mach/vm_map.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 23,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-05-14T16:56:10Z",
+      "side": 1,
+      "message": "Okay I see, thanks. I think it it ok to use `u32 as i32;`, just add a small coment explaining that.",
+      "parentUuid": "1fa49f4e_7b47d3b5",
+      "revId": "626a41b95057be2e1c10dac6685a92cfa08865ac",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

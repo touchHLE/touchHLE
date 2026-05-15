@@ -22,6 +22,30 @@
       },
       "revId": "fccc936288d4e581fb392c89514d17dac2a6aff4",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "140ceeb7_7ec9a0fc",
+        "filename": "src/frameworks/uikit/ui_font.rs",
+        "patchSetId": 21
+      },
+      "lineNbr": 161,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2026-05-15T15:41:25Z",
+      "side": 1,
+      "message": "Right now, not having this fix in, text is experiencing massive clipping. With this fix in place the clipping no longer occurs and the text displays correctly.",
+      "parentUuid": "8b95cec7_15c4ca09",
+      "range": {
+        "startLine": 161,
+        "startChar": 4,
+        "endLine": 161,
+        "endChar": 118
+      },
+      "revId": "fccc936288d4e581fb392c89514d17dac2a6aff4",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

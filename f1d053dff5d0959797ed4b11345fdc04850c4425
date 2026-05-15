@@ -70,6 +70,24 @@
       "parentUuid": "e78c31f5_dd24d289",
       "revId": "f1d053dff5d0959797ed4b11345fdc04850c4425",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e0d043e2_0384bec2",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 21
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2026-05-15T17:35:03Z",
+      "side": 1,
+      "message": "Decided to create one for current state, because even with the 2 patches, there are major text rendering issues on android that will keep it a 3 there. So, makes sense to get the game in the appdb in current state on macOS ahead of the patches being merged.  Can follow up with an Android one later.\n\nhttps://appdb.touchhle.org/apps/1260?show_unapproved\u003d1",
+      "parentUuid": "958f9d54_ef3448d5",
+      "revId": "f1d053dff5d0959797ed4b11345fdc04850c4425",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

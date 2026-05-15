@@ -22,6 +22,30 @@
       },
       "revId": "25113787476ad14556110d88ac144a425b3847d2",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "81355503_d0d0f960",
+        "filename": "src/window.rs",
+        "patchSetId": 34
+      },
+      "lineNbr": 1434,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2026-05-15T14:33:30Z",
+      "side": 1,
+      "message": "Hikari has said (and I would agree that) functions that call into SDL should always be in `window` regardless of whether it actually has anything to do with windowing specifically.",
+      "parentUuid": "fd98df6f_681f36f5",
+      "range": {
+        "startLine": 1434,
+        "startChar": 11,
+        "endLine": 1434,
+        "endChar": 18
+      },
+      "revId": "25113787476ad14556110d88ac144a425b3847d2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

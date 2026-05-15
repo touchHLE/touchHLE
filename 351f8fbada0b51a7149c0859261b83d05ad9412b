@@ -22,6 +22,30 @@
       },
       "revId": "351f8fbada0b51a7149c0859261b83d05ad9412b",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "2c0476a2_17fdd2b9",
+        "filename": "Cargo.toml",
+        "patchSetId": 34
+      },
+      "lineNbr": 67,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2026-05-15T14:33:30Z",
+      "side": 0,
+      "message": "Done",
+      "parentUuid": "0dd897db_9c4fd1f6",
+      "range": {
+        "startLine": 66,
+        "startChar": 0,
+        "endLine": 67,
+        "endChar": 70
+      },
+      "revId": "351f8fbada0b51a7149c0859261b83d05ad9412b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

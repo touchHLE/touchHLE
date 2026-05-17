@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "de4f9fc8_95640758",
+        "filename": "src/font.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 403,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-05-17T16:18:18Z",
+      "side": 0,
+      "message": "Can we restore this part?",
+      "revId": "9db7b4310ed48b50e3f5bda8156265b0676d1c40",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

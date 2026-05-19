@@ -14,6 +14,7 @@ pub mod ui_image_view;
 pub mod ui_label;
 pub mod ui_picker_view;
 pub mod ui_scroll_view;
+pub mod ui_toolbar;
 pub mod ui_web_view;
 pub mod ui_window;
 
@@ -483,6 +484,15 @@ pub const CLASSES: ClassExports = objc_classes! {
     let color: CGColorRef = msg![env; color CGColor];
     let layer = env.objc.borrow::<UIViewHostObject>(this).layer;
     msg![env; layer setBackgroundColor:color]
+}
+
+- (())setNeedsLayout {
+    // Invalidates the current layout of the receiver
+    // and triggers a layout update during the next update cycle.
+
+    // TODO: Actually implement a proper dirty layout flag
+    // instead of directly calling layoutSubviews (but this works for now)
+    () = msg![env; this layoutSubviews];
 }
 
 // TODO: support setNeedsDisplayInRect:

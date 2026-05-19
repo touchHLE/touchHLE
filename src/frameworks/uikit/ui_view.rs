@@ -14,6 +14,7 @@ pub mod ui_image_view;
 pub mod ui_label;
 pub mod ui_picker_view;
 pub mod ui_scroll_view;
+pub mod ui_toolbar;
 pub mod ui_web_view;
 pub mod ui_window;
 
@@ -483,6 +484,11 @@ pub const CLASSES: ClassExports = objc_classes! {
     let color: CGColorRef = msg![env; color CGColor];
     let layer = env.objc.borrow::<UIViewHostObject>(this).layer;
     msg![env; layer setBackgroundColor:color]
+}
+
+- (())setNeedsLayout {
+    // TODO: This should run syncrousnly on the next draw call, not right away
+    () = msg![env; this layoutSubviews];
 }
 
 // TODO: support setNeedsDisplayInRect:

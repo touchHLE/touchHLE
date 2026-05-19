@@ -33,6 +33,11 @@ const CLASSES: ClassExports = objc_classes! {
     // method. (All devices have accelerometer, but only some do have gyro).
     false
 }
+- (bool)isAccelerometerAvailable {
+    // According to https://developer.apple.com/documentation/coremotion/getting-raw-accelerometer-events?language=objc
+    // every iOS device has an accelerometer.
+    true
+}
 
 @end
 

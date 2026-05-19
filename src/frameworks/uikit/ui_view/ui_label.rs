@@ -135,6 +135,34 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (id)font {
     env.objc.borrow::<UILabelHostObject>(this).font
 }
+
+- (CGSize)sizeThatFits:(CGSize)size {
+    let text: id = msg![env; this text];
+    if text == nil {
+        return CGSize { width: 0.0, height: 0.0 };
+    }
+    let font: id = msg![env; this font];
+    let number_of_lines = env.objc.borrow::<UILabelHostObject>(this).number_of_lines;
+
+    let mut calculated_size: CGSize = if number_of_lines == 1 {
+        msg![env; text sizeWithFont:font]
+    } else {
+        msg![env; text sizeWithFont:font
+                  constrainedToSize:size
+                      lineBreakMode:(env.objc.borrow::<UILabelHostObject>(this).line_break_mode)]
+    };
+
+    if number_of_lines > 0 {
+        let line_height: CGFloat = msg![env; font lineHeight];
+        let max_height = (number_of_lines as CGFloat) * line_height;
+        if calculated_size.height > max_height {
+            calculated_size.height = max_height;
+        }
+    }
+
+    calculated_size
+}
+
 - (())setFont:(id)new_font { // UIFont*
     let new_font: id = if new_font == nil {
         // reset to default
@@ -231,9 +259,6 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 - (())setNumberOfLines:(NSInteger)number {
     env.objc.borrow_mut::<UILabelHostObject>(this).number_of_lines = number;
-    if number != 0 && number != 1 {
-        log!("TODO: UILabel numberOfLines > 1 (label {:?})", this);
-    }
     () = msg![env; this setNeedsDisplay];
 }
 
@@ -254,17 +279,9 @@ pub const CLASSES: ClassExports = objc_classes! {
     let (r, g, b, a) = ui_color::get_rgba(&env.objc, text_color);
     CGContextSetRGBFillColor(env, context, r, g, b, a);
 
-    // TODO: handle line counts other than 0 and 1 properly. 0 = unlimited
-    // (note the log message in setNumberOfLines:)
     let single_line = number_of_lines == 1;
 
-    let calculated_size: CGSize = if single_line {
-        msg![env; text sizeWithFont:font]
-    } else {
-        msg![env; text sizeWithFont:font
-                  constrainedToSize:(bounds.size)
-                      lineBreakMode:line_break_mode]
-    };
+    let calculated_size: CGSize = msg![env; this sizeThatFits:(bounds.size)];
 
     // UILabel always vertically centers text
     // (TODO: check whether this is actually a UILabel thing, or a property of

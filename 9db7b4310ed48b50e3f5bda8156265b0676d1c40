@@ -34,6 +34,24 @@
       "parentUuid": "de4f9fc8_95640758",
       "revId": "9db7b4310ed48b50e3f5bda8156265b0676d1c40",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c728b3d4_2f58c96f",
+        "filename": "src/font.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 403,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-05-19T11:30:30Z",
+      "side": 0,
+      "message": "The way it\u0027s incremented with each step. It makes it easier to compare the new implementation to the old one, and I don\u0027t think the new approach has much benefit.",
+      "parentUuid": "0b317531_463f5b34",
+      "revId": "9db7b4310ed48b50e3f5bda8156265b0676d1c40",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

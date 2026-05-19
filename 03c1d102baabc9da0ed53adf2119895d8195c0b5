@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "3f7d2f87_46eb18a1",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 11
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2026-05-19T02:25:52Z",
+      "side": 1,
+      "message": "Just some context here...\n\nI looked at it months ago but was again reviewing setNeedsLayout/layoutIfNeeded/layoutSubviews and basically how one would address https://github.com/touchHLE/touchHLE/issues/421 and started some work to implement it here, but was doing it poorly. Decided to actually just call `layoutSubviews` directly since I don\u0027t think this is the correct patch to fix that issue.  Had it in WIP while looking at this (moved it out now).\n\nEven with this patch there is only 7 instances in the code where we call `layoutSubviews` directly.",
+      "revId": "03c1d102baabc9da0ed53adf2119895d8195c0b5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

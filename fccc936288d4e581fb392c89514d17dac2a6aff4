@@ -46,6 +46,30 @@
       },
       "revId": "fccc936288d4e581fb392c89514d17dac2a6aff4",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d299ede3_8aa96277",
+        "filename": "src/frameworks/uikit/ui_font.rs",
+        "patchSetId": 21
+      },
+      "lineNbr": 161,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2026-05-19T03:45:19Z",
+      "side": 1,
+      "message": "@alexander.cieslewicz@gmail.com https://www.cocoanetics.com/2010/02/understanding-uifont/ explains this",
+      "parentUuid": "140ceeb7_7ec9a0fc",
+      "range": {
+        "startLine": 161,
+        "startChar": 4,
+        "endLine": 161,
+        "endChar": 118
+      },
+      "revId": "fccc936288d4e581fb392c89514d17dac2a6aff4",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

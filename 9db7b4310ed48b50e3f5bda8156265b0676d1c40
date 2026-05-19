@@ -16,6 +16,24 @@
       "message": "Can we restore this part?",
       "revId": "9db7b4310ed48b50e3f5bda8156265b0676d1c40",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0b317531_463f5b34",
+        "filename": "src/font.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 403,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2026-05-19T05:55:20Z",
+      "side": 0,
+      "message": "Is it the way its calculated, the naming: baseline vs line_y, or both that matter here?",
+      "parentUuid": "de4f9fc8_95640758",
+      "revId": "9db7b4310ed48b50e3f5bda8156265b0676d1c40",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

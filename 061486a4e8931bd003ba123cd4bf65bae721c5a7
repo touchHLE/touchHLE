@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "41fb65e2_72471641",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-05-19T22:13:08Z",
+      "side": 1,
+      "message": "Is there some app that tests for this and yet doesn\u0027t actually use the Core Motion framework to get accelerometer updates?",
+      "revId": "061486a4e8931bd003ba123cd4bf65bae721c5a7",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

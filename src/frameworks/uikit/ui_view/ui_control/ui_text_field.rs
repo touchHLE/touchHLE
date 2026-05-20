@@ -9,7 +9,7 @@
 //! - [UITextFieldDelegate overview](https://developer.apple.com/documentation/uikit/uitextfielddelegate?language=objc)
 
 use crate::dyld::{ConstantExports, HostConstant};
-use crate::frameworks::core_graphics::{CGPoint, CGRect};
+use crate::frameworks::core_graphics::{CGFloat, CGPoint, CGRect};
 use crate::frameworks::foundation::ns_string::to_rust_string;
 use crate::frameworks::foundation::{ns_string, NSInteger, NSRange, NSUInteger};
 use crate::frameworks::uikit::ui_font::{UITextAlignment, UITextAlignmentLeft};
@@ -157,6 +157,11 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (())setFont:(id)new_font { // UIFont*
     let text_label = env.objc.borrow_mut::<UITextFieldHostObject>(this).text_label;
     msg![env; text_label setFont:new_font]
+}
+
+- (())setMinimumFontSize:(CGFloat)size {
+    let text_label = env.objc.borrow_mut::<UITextFieldHostObject>(this).text_label;
+    () = msg![env; text_label setMinimumFontSize:size];
 }
 
 - (())setClearsOnBeginEditing:(bool)clear {

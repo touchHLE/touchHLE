@@ -16,6 +16,24 @@
       "message": "Is there some app that tests for this and yet doesn\u0027t actually use the Core Motion framework to get accelerometer updates?",
       "revId": "061486a4e8931bd003ba123cd4bf65bae721c5a7",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b66ff74e_6ffae5e8",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1039141
+      },
+      "writtenOn": "2026-05-20T13:56:25Z",
+      "side": 1,
+      "message": "no I’m not really aware of any app that checks it and then ignores Core Motion, as the one I’m testing (Adventures of Tintin) does use it for accelerometer updates/data. I’m only pushing this change for now since the app needs other major implementations/fixes first and this is just a minor API contribution from my side \n\nAs I understand it, isAccelerometerAvailable needs to return true to match normal iOS behavior. If false is returned then the app throws ‘ERROR - no motion-sensing hardware accessable at all. something is seriously wrong!’",
+      "parentUuid": "41fb65e2_72471641",
+      "revId": "061486a4e8931bd003ba123cd4bf65bae721c5a7",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

@@ -15,6 +15,7 @@ use crate::libc::wchar::wchar_t;
 use crate::mem::{ConstPtr, ConstVoidPtr, GuestUSize, MutPtr, MutVoidPtr, Ptr, SafeRead};
 use crate::{impl_GuestRet_for_large_struct, Environment};
 use std::str::FromStr;
+use std::time::SystemTime;
 
 pub mod qsort;
 
@@ -188,6 +189,17 @@ const RAND_MAX: i32 = i32::MAX;
 fn srand(env: &mut Environment, seed: u32) {
     env.libc_state.stdlib.rand = seed;
 }
+
+// BSD's rand() seed function — we just use host system time,
+// good enough for games that want fresh "fake" randomness each run.
+fn sranddev(env: &mut Environment) {
+    let nanos = SystemTime::now()
+        .duration_since(SystemTime::UNIX_EPOCH)
+        .map(|d| d.as_nanos() as u64)
+        .unwrap_or(0);
+    env.libc_state.stdlib.rand = (nanos as u32) ^ ((nanos >> 32) as u32);
+}
+
 fn rand(env: &mut Environment) -> i32 {
     env.libc_state.stdlib.rand = prng(env.libc_state.stdlib.rand);
     (env.libc_state.stdlib.rand as i32) & RAND_MAX
@@ -535,6 +547,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(atof(_)),
     export_c_func!(strtod(_, _)),
     export_c_func!(srand(_)),
+    export_c_func!(sranddev()),
     export_c_func!(rand()),
     export_c_func!(srandom(_)),
     export_c_func!(random()),

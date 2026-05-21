@@ -963,6 +963,16 @@ int test_valloc() {
   if (ptr == NULL)
     return -3;
   free(ptr);
+}
+
+int test_sranddev() {
+  srand(1);
+  int r1 = rand();
+  sranddev();
+  int r2 = rand();
+  if (r1 == r2) {
+    return -1;
+  }
   return 0;
 }
 
@@ -6384,6 +6394,7 @@ struct {
     FUNC_DEF(test_swscanf),
     FUNC_DEF(test_realloc),
     FUNC_DEF(test_valloc),
+    FUNC_DEF(test_sranddev),
     FUNC_DEF(test_atof),
     FUNC_DEF(test_strtof),
     FUNC_DEF(test_sem),

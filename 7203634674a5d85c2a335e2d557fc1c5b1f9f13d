@@ -16,6 +16,24 @@
       "message": "Why do you have an `a.out` file in the touchHLE repo?",
       "revId": "7203634674a5d85c2a335e2d557fc1c5b1f9f13d",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "36603c8e_1c730e41",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2026-05-21T23:54:20Z",
+      "side": 1,
+      "message": "It’s from running cli_tests.\n\nhttps://github.com/touchHLE/touchHLE/blob/trunk/.github/workflows/touchHLE_release.yml#L78",
+      "parentUuid": "75d0ef99_6d05b2cb",
+      "revId": "7203634674a5d85c2a335e2d557fc1c5b1f9f13d",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

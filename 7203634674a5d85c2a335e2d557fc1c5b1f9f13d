@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "75d0ef99_6d05b2cb",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-05-21T22:59:23Z",
+      "side": 1,
+      "message": "Why do you have an `a.out` file in the touchHLE repo?",
+      "revId": "7203634674a5d85c2a335e2d557fc1c5b1f9f13d",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

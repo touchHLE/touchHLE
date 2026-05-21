@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "71c05e27_d03a1266",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 35
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-05-21T21:38:31Z",
+      "side": 1,
+      "message": "Switching to SDL3 scares me... How well it was already tested across all platforms what we claim to support macOS/Win/Android?",
+      "revId": "d6437e3a42ba265e51f6df4f6f7287a25233c68d",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

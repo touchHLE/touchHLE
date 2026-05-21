@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6635a4e5_130b4a3f",
+        "filename": "src/libc/malloc.rs",
+        "patchSetId": 10
+      },
+      "lineNbr": 171,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-05-21T21:29:11Z",
+      "side": 1,
+      "message": "if it\u0027s used only by malloc_zone_t::new, why not declare it as nested helper there ?\n\notherwise, move it to dyld?",
+      "revId": "b1427eb817d0e69882124343356ef6d8dda0e58a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b90c678b_dd5e92eb",
+        "filename": "src/mem.rs",
+        "patchSetId": 10
+      },
+      "lineNbr": 532,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-05-21T21:29:11Z",
+      "side": 1,
+      "message": "What does _in suffix stands for?",
+      "revId": "b1427eb817d0e69882124343356ef6d8dda0e58a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

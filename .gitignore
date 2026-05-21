@@ -24,6 +24,7 @@ android/build
 
 .DS_Store
 
-# Default developer dump file
+# Developer files
 
 DUMP.txt
+a.out

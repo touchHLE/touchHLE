@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "863a0c5e_1bfcd744",
+        "filename": "src/frameworks/uikit/ui_view/ui_control/ui_text_field.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 162,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-05-21T21:36:10Z",
+      "side": 1,
+      "message": "could you move it near setAdjustsFontSizeToFitWidth: ? (those methods are related)",
+      "revId": "2049cda194cacdfece058a23041710694fdc054d",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

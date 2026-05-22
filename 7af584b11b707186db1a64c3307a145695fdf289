@@ -16,6 +16,24 @@
       "message": "I guess I\u0027m curious how this improves compatibility, because it is just NSObject subclasses with no methods implemented?",
       "revId": "7af584b11b707186db1a64c3307a145695fdf289",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d75a8121_48f678c9",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1039141
+      },
+      "writtenOn": "2026-05-22T10:58:34Z",
+      "side": 1,
+      "message": "I’m mainly adding this so Bailout Wars can use the MPMediaPlaylist stub to finally work.  According to docs here https://developer.apple.com/documentation/mediaplayer/mpmediaplaylist?language\u003dobjc , that class inherits  MPMediaPlaylist → MPMediaItemCollection → MPMediaEntity → NSObject, as it would need those superclasses registered  too once implemented. I kept them as empty stubs for now, same as the other Media Player stubs.",
+      "parentUuid": "0e40bca6_19861937",
+      "revId": "7af584b11b707186db1a64c3307a145695fdf289",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ],
   "submitRequirementResults": [

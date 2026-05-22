@@ -36,6 +36,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "95c4f035_3747c9ef",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1039141
+      },
+      "writtenOn": "2026-05-22T10:04:44Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "b66ff74e_6ffae5e8",
+      "revId": "061486a4e8931bd003ba123cd4bf65bae721c5a7",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "c7b12bfe_3b9e3117",
@@ -49,6 +67,24 @@
       "writtenOn": "2026-05-21T21:32:51Z",
       "side": 1,
       "message": "While it is true that accelometer is present on every iOS device, this methods can still return false if device is not ready to produce accelerometer data (see `Check for the availability of accelerometer data` in the doc link you\u0027ve linked :) )\n\nI think it is OK to always return `true` here, but you should rewrite comment mentioning above point.",
+      "revId": "061486a4e8931bd003ba123cd4bf65bae721c5a7",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "0ce1011e_0631a93f",
+        "filename": "src/frameworks/core_motion.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 38,
+      "author": {
+        "id": 1039141
+      },
+      "writtenOn": "2026-05-22T10:04:44Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "c7b12bfe_3b9e3117",
       "revId": "061486a4e8931bd003ba123cd4bf65bae721c5a7",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

@@ -6464,6 +6464,104 @@ int test_fcvt() {
   return 0;
 }
 
+#ifndef DEFINE_ME_WHEN_BUILDING_ON_MACOS
+// touchHLE stores temporary files in the app's sandbox. On macOS, tmpfile()
+// uses a shared directory whose contents may change independently of this test.
+static int tempfile_directory_entry_count(void) {
+  const char *home = getenv("HOME");
+  if (home == NULL)
+    return -1;
+
+  char tmp_dir[1024];
+  int len = snprintf(tmp_dir, sizeof(tmp_dir), "%s/tmp", home);
+  if (len < 0 || (size_t)len >= sizeof(tmp_dir))
+    return -1;
+
+  DIR *dir = opendir(tmp_dir);
+  if (dir == NULL)
+    return -1;
+
+  int count = 0;
+  errno = 0;
+  while (readdir(dir) != NULL)
+    count++;
+  int read_error = errno;
+  if (closedir(dir) != 0 || read_error != 0)
+    return -1;
+  return count;
+}
+#endif
+
+int test_tempfile() {
+#ifndef DEFINE_ME_WHEN_BUILDING_ON_MACOS
+  int entries_before = tempfile_directory_entry_count();
+  if (entries_before < 0)
+    return -1;
+#endif
+
+  FILE *files[2] = {NULL, NULL};
+  const unsigned char contents[2][5] = {{'a', '\0', '\n', 0xff, 'z'},
+                                        {'b', '\0', '\n', 0xfe, 'y'}};
+  unsigned char buffer[sizeof(contents[0])];
+  int result = 0;
+
+  for (int i = 0; i < 2; i++) {
+    files[i] = tmpfile();
+    if (files[i] == NULL) {
+      result = -2;
+      goto cleanup;
+    }
+    // Each stream starts empty and positioned at its beginning.
+    if (ftell(files[i]) != 0 || fgetc(files[i]) != EOF || !feof(files[i])) {
+      result = -3;
+      goto cleanup;
+    }
+    if (fseek(files[i], 0, SEEK_SET) != 0 || feof(files[i])) {
+      result = -4;
+      goto cleanup;
+    }
+    // Flush before creating the next stream so buffered I/O cannot hide an
+    // accidental reuse or truncation of the first file.
+    if (fwrite(contents[i], 1, sizeof(contents[i]), files[i]) !=
+            sizeof(contents[i]) ||
+        fflush(files[i]) != 0) {
+      result = -5;
+      goto cleanup;
+    }
+  }
+
+  for (int i = 0; i < 2; i++) {
+    if (fseek(files[i], 0, SEEK_SET) != 0 ||
+        fread(buffer, 1, sizeof(buffer), files[i]) != sizeof(buffer) ||
+        memcmp(buffer, contents[i], sizeof(buffer)) != 0) {
+      result = -6;
+      goto cleanup;
+    }
+    if (fgetc(files[i]) != EOF || !feof(files[i])) {
+      result = -7;
+      goto cleanup;
+    }
+    // Closing the first stream must leave the second stream usable.
+    int close_result = fclose(files[i]);
+    files[i] = NULL;
+    if (close_result != 0) {
+      result = -8;
+      goto cleanup;
+    }
+  }
+
+cleanup:
+  for (int i = 0; i < 2; i++) {
+    if (files[i] != NULL)
+      fclose(files[i]);
+  }
+#ifndef DEFINE_ME_WHEN_BUILDING_ON_MACOS
+  if (result == 0 && tempfile_directory_entry_count() != entries_before)
+    result = -9;
+#endif
+  return result;
+}
+
 // clang-format off
 #define FUNC_DEF(func)                                                         \
   { &func, #func }
@@ -6580,6 +6678,7 @@ struct {
     FUNC_DEF(test_malloc_zone_basic),
     FUNC_DEF(test_malloc_zone_struct_dispatch),
     FUNC_DEF(test_fcvt),
+    FUNC_DEF(test_tempfile),
 };
 // clang-format on
 

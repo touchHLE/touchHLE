@@ -6,17 +6,18 @@
 //! `stdio.h`
 
 use super::posix_io::{
-    self, off_t, O_APPEND, O_CREAT, O_RDONLY, O_RDWR, O_TRUNC, O_WRONLY, STDERR_FILENO,
+    self, off_t, O_APPEND, O_CREAT, O_EXCL, O_RDONLY, O_RDWR, O_TRUNC, O_WRONLY, STDERR_FILENO,
     STDIN_FILENO, STDOUT_FILENO,
 };
 use crate::dyld::{export_c_func, ConstantExports, FunctionExports, HostConstant};
 use crate::fs::GuestPath;
-use crate::libc::errno::{set_errno, EBUSY};
+use crate::libc::errno::{get_errno, set_errno, EBUSY, EEXIST};
 use crate::libc::string::strlen;
 use crate::mem::{ConstPtr, ConstVoidPtr, GuestUSize, Mem, MutPtr, MutVoidPtr, Ptr, SafeRead};
 use crate::Environment;
 
 use crate::environment::{ThreadBlock, ThreadId};
+use crate::libc::mach::time::mach_absolute_time;
 use std::collections::HashMap;
 use std::io::Write;
 
@@ -620,6 +621,40 @@ fn setbuf(env: &mut Environment, file_ptr: MutPtr<FILE>, buf: ConstPtr<u8>) {
     );
 }
 
+fn tmpfile(env: &mut Environment) -> MutPtr<FILE> {
+    // TODO: use `/tmp` instead of app specific tmp location
+    let tmp_dir = env.fs.home_directory().join("tmp");
+    let time = mach_absolute_time(env);
+    let file = tmp_dir.join(time.to_string());
+    log_dbg!("tmpfile {:?}", file);
+    let tmp_filename = env.mem.alloc_and_write_cstr(file.as_str().as_bytes());
+    let res = match posix_io::open_direct(env, tmp_filename.cast_const(), O_RDWR | O_CREAT | O_EXCL)
+    {
+        -1 => {
+            assert!(get_errno(env) != EEXIST); // TODO
+            Ptr::null()
+        }
+        fd => {
+            let res = env.mem.alloc_and_write(FILE { fd });
+            assert!(!State::get_mut(env).file_streams.contains_key(&res));
+            State::get_mut(env).file_streams.insert(
+                res,
+                FILEHostObject {
+                    pushbacks: Vec::new(),
+                    lock_count: 0,
+                    owning_thread: None,
+                },
+            );
+            res
+        }
+    };
+    assert!(!res.is_null());
+    // Unlinking the file immediately.
+    env.fs.remove(&file).unwrap();
+    env.mem.free(tmp_filename.cast());
+    res
+}
+
 // POSIX-specific functions
 
 fn fileno(env: &mut Environment, file_ptr: MutPtr<FILE>) -> posix_io::FileDescriptor {
@@ -739,6 +774,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(putchar(_)),
     export_c_func!(remove(_)),
     export_c_func!(setbuf(_, _)),
+    export_c_func!(tmpfile()),
     // POSIX-specific functions
     export_c_func!(fileno(_)),
     export_c_func!(flockfile(_)),

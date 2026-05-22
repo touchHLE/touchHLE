@@ -64,11 +64,18 @@ impl State {
     }
 }
 
-/// Helper function, not a part of libc errno
+/// Helper functions, not a part of libc errno
 pub fn set_errno(env: &mut Environment, val: i32) {
     env.libc_state
         .errno
         .set_errno_for_thread(&mut env.mem, env.current_thread, val);
+}
+pub fn get_errno(env: &mut Environment) -> i32 {
+    let ptr = env
+        .libc_state
+        .errno
+        .errno_ptr_for_thread(&mut env.mem, env.current_thread);
+    env.mem.read(ptr)
 }
 
 fn __error(env: &mut Environment) -> MutPtr<i32> {

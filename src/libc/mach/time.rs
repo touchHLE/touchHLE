@@ -38,7 +38,7 @@ fn mach_timebase_info(
 /// The result of this function, multiplied by the constant from
 /// [mach_timebase_info], should be the absolute time in nanoseconds.
 /// The absolute time is a monotonic clock with an arbitrary starting point.
-fn mach_absolute_time(env: &mut Environment) -> u64 {
+pub fn mach_absolute_time(env: &mut Environment) -> u64 {
     let now = Instant::now();
     now.duration_since(env.startup_time)
         .as_nanos()

@@ -69,6 +69,24 @@
       "parentUuid": "b90c678b_dd5e92eb",
       "revId": "b1427eb817d0e69882124343356ef6d8dda0e58a",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e56e5d23_7c8ebba6",
+        "filename": "src/mem.rs",
+        "patchSetId": 10
+      },
+      "lineNbr": 532,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-05-24T14:09:34Z",
+      "side": 1,
+      "message": "Yes I think `alloc_in_heap` is better here.\n\n(I was initially thought _in stands for _inner, so it was confusing)",
+      "parentUuid": "4fa045de_5c006c46",
+      "revId": "b1427eb817d0e69882124343356ef6d8dda0e58a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

@@ -24,7 +24,7 @@ use sdl2::surface::Surface;
 use sdl2_sys::SDL_PowerState;
 use std::collections::{HashMap, VecDeque};
 use std::env;
-use std::f32::consts::FRAC_PI_2;
+use std::f32::consts::{FRAC_PI_2, PI};
 use std::num::NonZeroU32;
 use std::ptr::null_mut;
 use std::time::{Duration, Instant};
@@ -72,6 +72,7 @@ impl TryFrom<&str> for DeviceFamily {
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum DeviceOrientation {
     Portrait,
+    PortraitUpsideDown,
     LandscapeLeft,
     LandscapeRight,
 }
@@ -84,6 +85,7 @@ fn size_for_orientation(
     let scale_hack = scale_hack.get();
     match orientation {
         DeviceOrientation::Portrait => (width * scale_hack, height * scale_hack),
+        DeviceOrientation::PortraitUpsideDown => (width * scale_hack, height * scale_hack),
         DeviceOrientation::LandscapeLeft => (height * scale_hack, width * scale_hack),
         DeviceOrientation::LandscapeRight => (height * scale_hack, width * scale_hack),
     }
@@ -95,7 +97,9 @@ fn rotate_fullscreen_size(orientation: DeviceOrientation, screen_size: (u32, u32
         (screen_size.1, screen_size.0)
     };
     match orientation {
-        DeviceOrientation::Portrait => (short_side, long_side),
+        DeviceOrientation::Portrait | DeviceOrientation::PortraitUpsideDown => {
+            (short_side, long_side)
+        }
         DeviceOrientation::LandscapeLeft | DeviceOrientation::LandscapeRight => {
             (long_side, short_side)
         }
@@ -110,6 +114,7 @@ fn set_sdl2_orientation(orientation: DeviceOrientation) {
             DeviceOrientation::Portrait => "Portrait",
             // The inversion is deliberate. These probably correspond to
             // iPhone OS content orientations?
+            DeviceOrientation::PortraitUpsideDown => "PortraitUpsideDown",
             DeviceOrientation::LandscapeLeft => "LandscapeRight",
             DeviceOrientation::LandscapeRight => "LandscapeLeft",
         },
@@ -1397,6 +1402,7 @@ impl Window {
     pub fn rotation_matrix(&self) -> Matrix<2> {
         match self.device_orientation {
             DeviceOrientation::Portrait => Matrix::identity(),
+            DeviceOrientation::PortraitUpsideDown => Matrix::z_rotation(PI),
             DeviceOrientation::LandscapeLeft => Matrix::z_rotation(-FRAC_PI_2),
             DeviceOrientation::LandscapeRight => Matrix::z_rotation(FRAC_PI_2),
         }

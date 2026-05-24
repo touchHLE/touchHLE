@@ -16,6 +16,24 @@
       "message": "please keep the link to the docs",
       "revId": "692488131d98b5560f42cf2f0d2741ed2f7f30f8",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "0105a423_77118a36",
+        "filename": "src/frameworks/core_motion.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 37,
+      "author": {
+        "id": 1039141
+      },
+      "writtenOn": "2026-05-24T14:58:35Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "671d2976_5bf8123c",
+      "revId": "692488131d98b5560f42cf2f0d2741ed2f7f30f8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

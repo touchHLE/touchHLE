@@ -15,10 +15,10 @@ use crate::frameworks::core_graphics::cg_affine_transform::CGAffineTransform;
 use crate::frameworks::core_graphics::{CGPoint, CGRect};
 use crate::frameworks::foundation::ns_string;
 use crate::frameworks::uikit::ui_application::{
-    UIInterfaceOrientationLandscapeLeft, UIInterfaceOrientationLandscapeRight,
+    UIInterfaceOrientationLandscapeLeft, UIInterfaceOrientationLandscapeRight
 };
 use crate::frameworks::uikit::ui_device::{
-    UIDeviceOrientationLandscapeLeft, UIDeviceOrientationLandscapeRight,
+    UIDeviceOrientationLandscapeLeft, UIDeviceOrientationLandscapeRight, UIDeviceOrientationPortraitUpsideDown
 };
 use crate::objc::{id, msg, msg_class, msg_super, nil, objc_classes, ClassExports};
 
@@ -174,6 +174,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     //        Info.plist UIInterfaceOrientation etc). It's not clear if these
     //        are really equivalent and should all trigger autorotation.
     if let Some(orientation) = match env.window.as_ref().unwrap().current_rotation() {
+        crate::window::DeviceOrientation::PortraitUpsideDown => Some(UIDeviceOrientationPortraitUpsideDown),
         crate::window::DeviceOrientation::LandscapeLeft => Some(UIDeviceOrientationLandscapeLeft),
         crate::window::DeviceOrientation::LandscapeRight => Some(UIDeviceOrientationLandscapeRight),
         // Portrait is the default so we don't do anything here.

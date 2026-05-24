@@ -143,6 +143,7 @@ struct AppPickerDelegateHostObject {
     scale_hack3: bool,
     scale_hack4: bool,
     orientation_default: bool,
+    orientation_portrait_upside_down: bool,
     orientation_landscape_left: bool,
     orientation_landscape_right: bool,
     analog_stick_tilt_controls: Option<bool>,
@@ -214,6 +215,9 @@ const CLASSES: ClassExports = objc_classes! {
 }
 - (())orientationDefault {
     env.objc.borrow_mut::<AppPickerDelegateHostObject>(this).orientation_default = true;
+}
+- (())orientationPortraitUpsideDown {
+    env.objc.borrow_mut::<AppPickerDelegateHostObject>(this).orientation_portrait_upside_down = true;
 }
 - (())orientationLandscapeLeft {
     env.objc.borrow_mut::<AppPickerDelegateHostObject>(this).orientation_landscape_left = true;
@@ -553,6 +557,7 @@ fn app_picker_inner(
             value.map_or(0, |v| match v {
                 DeviceOrientation::LandscapeLeft => 1,
                 DeviceOrientation::LandscapeRight => 2,
+                DeviceOrientation::PortraitUpsideDown => 3,
                 _ => panic!(),
             }),
         );
@@ -684,6 +689,13 @@ fn app_picker_inner(
                 &quick_options_stuff.orientation_buttons,
                 quick_options_orientation,
             );
+        } else if std::mem::take(&mut host_obj.orientation_portrait_upside_down) {
+            quick_options_orientation = Some(DeviceOrientation::PortraitUpsideDown);
+            update_orientation_buttons(
+                env,
+                &quick_options_stuff.orientation_buttons,
+                quick_options_orientation,
+            );
         } else if std::mem::take(&mut host_obj.orientation_landscape_left) {
             quick_options_orientation = Some(DeviceOrientation::LandscapeLeft);
             update_orientation_buttons(
@@ -719,6 +731,7 @@ fn app_picker_inner(
             match orientation {
                 DeviceOrientation::LandscapeLeft => "--landscape-left",
                 DeviceOrientation::LandscapeRight => "--landscape-right",
+                DeviceOrientation::PortraitUpsideDown => "--upside-down",
                 _ => todo!(),
             }
             .to_string(),
@@ -1250,7 +1263,7 @@ fn change_copyright_page(
 struct QuickOptionsStuff {
     main_view: id,
     scale_hack_buttons: [id; 5],
-    orientation_buttons: [id; 3],
+    orientation_buttons: [id; 4],
 }
 
 fn setup_quick_options(
@@ -1328,6 +1341,7 @@ fn setup_quick_options(
             ("Default", "orientationDefault"),
             ("←", "orientationLandscapeLeft"),
             ("→", "orientationLandscapeRight"),
+            ("↓", "orientationPortraitUpsideDown"),
         ]),
         RowKind::Label("Network access"),
         RowKind::Switch("network:", false),

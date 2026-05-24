@@ -16,6 +16,24 @@
       "message": "Switching to SDL3 scares me... How well it was already tested across all platforms what we claim to support macOS/Win/Android?",
       "revId": "d6437e3a42ba265e51f6df4f6f7287a25233c68d",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6ce3124e_ad3d1a22",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 35
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2026-05-24T05:45:21Z",
+      "side": 1,
+      "message": "I\u0027ve done some testing on Windows and there are a few regressions I\u0027ve found. For some reason it tries to use the native gles context which seems to be missing functions or have broken implementations. I haven\u0027t done a deep dive into why thats happening yet though.",
+      "parentUuid": "71c05e27_d03a1266",
+      "revId": "d6437e3a42ba265e51f6df4f6f7287a25233c68d",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

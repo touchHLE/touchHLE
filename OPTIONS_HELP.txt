@@ -8,11 +8,13 @@ View options:
         in use, the result may be a bit blurry. An internal resolution larger
         than your screen's is possible, in which case the output is downscaled.
 
+    --upside-down
     --landscape-left
     --landscape-right
         Changes the orientation the virtual device will have at startup.
         The default is portrait.
 
+        --upside-down means rotate 180° from portrait
         --landscape-left means rotate 90° counterclockwise from portrait.
         --landscape-right means rotate 90° clockwise from portrait.
 

@@ -20,6 +20,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "ea4cc589_ffa18d5c",
+        "filename": "src/fs.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 52,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2026-05-24T04:37:00Z",
+      "side": 1,
+      "message": "Its because debug print is not enough to count the inner std::io::Error to be used. I could move it inside HostError, if that is preferable.",
+      "parentUuid": "7089aa58_5f0422dd",
+      "revId": "eea936be0e98b530b265fb2e31c8116d7538a1f8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "ac1ba598_c44550c5",
         "filename": "src/fs.rs",
         "patchSetId": 5
@@ -37,6 +55,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "b31aa3cb_0e35c5e5",
+        "filename": "src/fs.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 997,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2026-05-24T04:37:00Z",
+      "side": 1,
+      "message": "I don\u0027t think this is reasonable to do here. If the we have an error here, something went wrong on the host side and I don\u0027t that\u0027s really mapable to the Guest file system. The way I\u0027ve been thinking about it is that HostError is essentially an IO error. If you have other thoughts let me know.",
+      "parentUuid": "ac1ba598_c44550c5",
+      "revId": "eea936be0e98b530b265fb2e31c8116d7538a1f8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "ba77aff3_c9119e60",
         "filename": "src/libc/errno.rs",
         "patchSetId": 5
@@ -48,6 +84,24 @@
       "writtenOn": "2026-05-15T11:43:27Z",
       "side": 1,
       "message": "please update strerror as well (see TODO comment above)",
+      "revId": "eea936be0e98b530b265fb2e31c8116d7538a1f8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "e9f7d4bc_7d55b97e",
+        "filename": "src/libc/errno.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 24,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2026-05-24T04:37:00Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "ba77aff3_c9119e60",
       "revId": "eea936be0e98b530b265fb2e31c8116d7538a1f8",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

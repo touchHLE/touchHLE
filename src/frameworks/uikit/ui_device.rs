@@ -18,7 +18,6 @@ pub type UIDeviceOrientation = NSInteger;
 #[allow(dead_code)]
 pub const UIDeviceOrientationUnknown: UIDeviceOrientation = 0;
 pub const UIDeviceOrientationPortrait: UIDeviceOrientation = 1;
-#[allow(dead_code)]
 pub const UIDeviceOrientationPortraitUpsideDown: UIDeviceOrientation = 2;
 pub const UIDeviceOrientationLandscapeLeft: UIDeviceOrientation = 3;
 pub const UIDeviceOrientationLandscapeRight: UIDeviceOrientation = 4;
@@ -112,6 +111,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (UIDeviceOrientation)orientation {
     match env.window().current_rotation() {
         DeviceOrientation::Portrait => UIDeviceOrientationPortrait,
+        DeviceOrientation::PortraitUpsideDown => UIDeviceOrientationPortraitUpsideDown,
         DeviceOrientation::LandscapeLeft => UIDeviceOrientationLandscapeLeft,
         DeviceOrientation::LandscapeRight => UIDeviceOrientationLandscapeRight
     }
@@ -119,6 +119,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (())setOrientation:(UIDeviceOrientation)orientation {
     env.on_parent_stack_in_coroutine(|window, _| {window.rotate_device(match orientation {
         UIDeviceOrientationPortrait => DeviceOrientation::Portrait,
+        UIDeviceOrientationPortraitUpsideDown => DeviceOrientation::PortraitUpsideDown,
         UIDeviceOrientationLandscapeLeft => DeviceOrientation::LandscapeLeft,
         UIDeviceOrientationLandscapeRight => DeviceOrientation::LandscapeRight,
         _ => unimplemented!("Orientation {} not handled yet", orientation),

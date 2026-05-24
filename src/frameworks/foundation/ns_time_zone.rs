@@ -85,6 +85,11 @@ pub const CLASSES: ClassExports = objc_classes! {
     0
 }
 
+// NSCopying implementation
+- (id)copyWithZone:(NSZonePtr)_zone {
+    retain(env, this)
+}
+
 @end
 
 };

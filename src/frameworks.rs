@@ -33,6 +33,7 @@ pub mod core_motion;
 pub mod foundation;
 pub mod game_kit;
 pub mod media_player;
+pub mod message_ui;
 pub mod openal;
 pub mod opengles;
 pub mod store_kit;

@@ -15,6 +15,7 @@ use std::time::Instant;
 pub mod ui_accelerometer;
 pub mod ui_activity_indicator_view;
 pub mod ui_application;
+pub mod ui_bar_button_item;
 pub mod ui_color;
 pub mod ui_device;
 pub mod ui_event;
@@ -38,6 +39,7 @@ pub const DYLIB: crate::dyld::HostDylib = crate::dyld::HostDylib {
         ui_accelerometer::CLASSES,
         ui_activity_indicator_view::CLASSES,
         ui_application::CLASSES,
+        ui_bar_button_item::CLASSES,
         ui_color::CLASSES,
         ui_device::CLASSES,
         ui_event::CLASSES,
@@ -62,6 +64,7 @@ pub const DYLIB: crate::dyld::HostDylib = crate::dyld::HostDylib {
         ui_view::ui_picker_view::CLASSES,
         ui_view::ui_scroll_view::CLASSES,
         ui_view::ui_scroll_view::ui_text_view::CLASSES,
+        ui_view::ui_toolbar::CLASSES,
         ui_view::ui_web_view::CLASSES,
         ui_view::ui_window::CLASSES,
         ui_view_controller::CLASSES,

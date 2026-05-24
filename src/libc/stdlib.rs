@@ -23,6 +23,7 @@ pub struct State {
     rand: u32,
     random: u32,
     arc4random: u32,
+    rand48_state: u64,
 }
 
 // Sizes of zero are implementation-defined. macOS will happily give you back
@@ -212,6 +213,37 @@ fn random(env: &mut Environment) -> i32 {
 fn arc4random(env: &mut Environment) -> u32 {
     env.libc_state.stdlib.arc4random = prng(env.libc_state.stdlib.arc4random);
     env.libc_state.stdlib.arc4random
+}
+
+// https://pubs.opengroup.org/onlinepubs/9699919799/functions/drand48.html
+
+fn srand48(env: &mut Environment, seed: i32) {
+    env.libc_state.stdlib.rand48_state = ((seed as u64) << 16) | 0x330E;
+}
+
+fn advance_rand48(state: u64) -> u64 {
+    const A: u64 = 0x5DEECE66D;
+    const C: u64 = 0xB;
+    const MASK: u64 = (1 << 48) - 1;
+    A.wrapping_mul(state).wrapping_add(C) & MASK
+}
+
+fn lrand48(env: &mut Environment) -> i32 {
+    let new_state = advance_rand48(env.libc_state.stdlib.rand48_state);
+    env.libc_state.stdlib.rand48_state = new_state;
+    (new_state >> 17) as i32
+}
+
+fn mrand48(env: &mut Environment) -> i32 {
+    let new_state = advance_rand48(env.libc_state.stdlib.rand48_state);
+    env.libc_state.stdlib.rand48_state = new_state;
+    (new_state >> 16) as i32
+}
+
+fn drand48(env: &mut Environment) -> f64 {
+    let new_state = advance_rand48(env.libc_state.stdlib.rand48_state);
+    env.libc_state.stdlib.rand48_state = new_state;
+    new_state as f64 / (1u64 << 48) as f64
 }
 
 #[allow(non_camel_case_types)]
@@ -554,6 +586,10 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(mbstowcs(_, _, _)),
     export_c_func!(wcstombs(_, _, _)),
     export_c_func!(system(_)),
+    export_c_func!(srand48(_)),
+    export_c_func!(lrand48()),
+    export_c_func!(mrand48()),
+    export_c_func!(drand48()),
 ];
 
 /// A simple wrapper around [atof_inner_generic] for the case of C string.

@@ -729,10 +729,15 @@ impl GLES for GLES1OnGL2<'_> {
                 "Tolerating glEnableClientState({:#x}) of a capability",
                 array
             );
+            gl21::EnableClientState(array);
+        } else if ARRAYS.iter().any(|&ArrayInfo { name, .. }| name == array) {
+            gl21::EnableClientState(array);
         } else {
-            assert!(ARRAYS.iter().any(|&ArrayInfo { name, .. }| name == array));
+            log_dbg!(
+                "Tolerating UNKNOWN/UNSUPPORTED array in EnableClientState: {:#x}", 
+                array
+            );
         }
-        gl21::EnableClientState(array);
     }
     unsafe fn DisableClientState(&mut self, array: GLenum) {
         if CAPABILITIES.contains(&array) {
@@ -740,10 +745,15 @@ impl GLES for GLES1OnGL2<'_> {
                 "Tolerating glDisableClientState({:#x}) of a capability",
                 array
             );
+            gl21::DisableClientState(array);
+        } else if ARRAYS.iter().any(|&ArrayInfo { name, .. }| name == array) {
+            gl21::DisableClientState(array);
         } else {
-            assert!(ARRAYS.iter().any(|&ArrayInfo { name, .. }| name == array));
+            log_dbg!(
+                "Tolerating UNKNOWN/UNSUPPORTED array in DisableClientState: {:#x}", 
+                array
+            );
         }
-        gl21::DisableClientState(array);
     }
     unsafe fn GetBooleanv(&mut self, pname: GLenum, params: *mut GLboolean) {
         let (type_, _count) = GET_PARAMS.get_type_info(pname);
@@ -1303,6 +1313,32 @@ impl GLES for GLES1OnGL2<'_> {
             assert!(type_ == gl21::SHORT || type_ == gl21::FLOAT);
             self.state.pointer_is_fixed_point[3] = false;
             gl21::VertexPointer(size, type_, stride, pointer)
+        }
+    }
+
+    // https://registry.khronos.org/OpenGL/extensions/OES/OES_point_size_array.txt
+    unsafe fn PointSizePointerOES(
+        &mut self,
+        type_: GLenum,
+        _stride: GLsizei,
+        pointer: *const GLvoid,
+    ) {
+        if pointer.is_null() {
+            log_dbg!("glPointSizePointerOES called with null pointer");
+            return;
+        }
+
+        if type_ == gl21::FLOAT {
+            let first_size = *(pointer as *const GLfloat);
+            log_dbg!("TODO: glPointSizePointerOES only reads first element, per-vertex point sizes not supported");
+            gl21::PointSize(first_size);
+        } else if type_ == super::gles11_raw::FIXED {
+            let first_size_fixed = *(pointer as *const GLfixed);
+            let first_size = super::util::fixed_to_float(first_size_fixed);
+            log_dbg!("TODO: glPointSizePointerOES only reads first element, per-vertex point sizes not supported");
+            gl21::PointSize(first_size);
+        } else {
+            log_dbg!("Stubbed glPointSizePointerOES called with unknown type {:#x}", type_);
         }
     }
 

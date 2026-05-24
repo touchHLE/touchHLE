@@ -38,6 +38,18 @@ pub const CLASSES: ClassExports = objc_classes! {
     log!("TODO: [(UIWebView*) {:?} loadRequest:{:?} ({})]", this, request, url_string);
 }
 
+- (())loadData:(id)_data // NSData*
+       MIMEType:(id)mime_type // NSString*
+textEncodingName:(id)_encoding // NSString*
+         baseURL:(id)_base_url { // NSURL*
+    let mime = if mime_type != nil {
+        to_rust_string(env, mime_type)
+    } else {
+        Cow::default()
+    };
+    log!("TODO: [(UIWebView*) {:?} loadData:MIMEType:{} textEncodingName:baseURL:]", this, mime);
+}
+
 @end
 
 };

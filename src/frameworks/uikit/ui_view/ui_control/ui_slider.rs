@@ -25,6 +25,16 @@ pub const CLASSES: ClassExports = objc_classes! {
     msg_super![env; this initWithCoder:coder]
 }
 
+- (())setMinimumValue:(f32)value {
+    todo_objc_setter!(this, value);
+}
+- (())setMaximumValue:(f32)value {
+    todo_objc_setter!(this, value);
+}
+- (())setValue:(f32)value {
+    todo_objc_setter!(this, value);
+}
+
 - (())setMinimumValueImage:(id)img { // UIImage *
     todo_objc_setter!(this, img);
 }

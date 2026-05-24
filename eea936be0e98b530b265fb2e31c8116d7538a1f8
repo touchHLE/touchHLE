@@ -38,6 +38,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "de68bcca_94bd66da",
+        "filename": "src/fs.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 52,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-05-24T14:01:07Z",
+      "side": 1,
+      "message": "yes i think it\u0027s preferable to move new the cause",
+      "parentUuid": "ea4cc589_ffa18d5c",
+      "revId": "eea936be0e98b530b265fb2e31c8116d7538a1f8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "ac1ba598_c44550c5",
         "filename": "src/fs.rs",
         "patchSetId": 5
@@ -67,6 +85,24 @@
       "side": 1,
       "message": "I don\u0027t think this is reasonable to do here. If the we have an error here, something went wrong on the host side and I don\u0027t that\u0027s really mapable to the Guest file system. The way I\u0027ve been thinking about it is that HostError is essentially an IO error. If you have other thoughts let me know.",
       "parentUuid": "ac1ba598_c44550c5",
+      "revId": "eea936be0e98b530b265fb2e31c8116d7538a1f8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6e695a8f_f48f8134",
+        "filename": "src/fs.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 997,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-05-24T14:01:07Z",
+      "side": 1,
+      "message": "I think it really depends on the kind of sub-error we\u0027re getting here (and in other funcitons).\n\nCould you please add an explanatory comment to the defenition of HostError in the enum?",
+      "parentUuid": "b31aa3cb_0e35c5e5",
       "revId": "eea936be0e98b530b265fb2e31c8116d7538a1f8",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },

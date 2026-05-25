@@ -72,6 +72,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "7e3f1c01_46a76209",
+        "filename": "src/fs.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 52,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2026-05-25T03:18:08Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "e114e709_658670fd",
+      "revId": "eea936be0e98b530b265fb2e31c8116d7538a1f8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "ac1ba598_c44550c5",
@@ -121,6 +139,24 @@
       "side": 1,
       "message": "I think it really depends on the kind of sub-error we\u0027re getting here (and in other funcitons).\n\nCould you please add an explanatory comment to the defenition of HostError in the enum?",
       "parentUuid": "b31aa3cb_0e35c5e5",
+      "revId": "eea936be0e98b530b265fb2e31c8116d7538a1f8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1963e27b_6a0e9d75",
+        "filename": "src/fs.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 997,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2026-05-25T03:18:08Z",
+      "side": 1,
+      "message": "I added a comment, let me know if that is not what you\u0027re looking for.\nI\u0027ve thought about this a bit, and I still disagree on the mapping. IMO the FsErrors should point to an issue in the VFS. If something does go wrong on the host side that probably means something in the VFS is referencing an invalid host location, and I don\u0027t think we should mask it as a normal VFS error.",
+      "parentUuid": "6e695a8f_f48f8134",
       "revId": "eea936be0e98b530b265fb2e31c8116d7538a1f8",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },

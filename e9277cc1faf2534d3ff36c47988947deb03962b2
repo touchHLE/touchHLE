@@ -86,6 +86,24 @@
       "message": "👍 thanks for writng a test.\n\nconsider also to write a test case which really exercise the core of zoned allocations (like current test could be written against normal alloc too)",
       "revId": "e9277cc1faf2534d3ff36c47988947deb03962b2",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0352df4a_8895715a",
+        "filename": "tests/TestApp_source/cli_tests.m",
+        "patchSetId": 11
+      },
+      "lineNbr": 5991,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2026-05-25T03:54:51Z",
+      "side": 1,
+      "message": "Unfortunately it\u0027s still a bit tricky to do some more detailed checks since we are still missing some implementations and AFAIK we don\u0027t have a way of checking if an allocation exists yet (should probably be a separate patch). I did add a test that covers using the zone struct function dispatch.",
+      "parentUuid": "5d1d1e6c_29607a45",
+      "revId": "e9277cc1faf2534d3ff36c47988947deb03962b2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

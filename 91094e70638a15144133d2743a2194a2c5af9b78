@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "96f0cd1c_d7fcbb06",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-05-25T19:07:36Z",
+      "side": 1,
+      "message": "Thanks for merging the patches!",
+      "revId": "91094e70638a15144133d2743a2194a2c5af9b78",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fa84c2d3_f66565bf",
+        "filename": "src/frameworks/uikit/ui_application.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 128,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-05-25T19:07:36Z",
+      "side": 1,
+      "message": "A case was missed here.",
+      "revId": "91094e70638a15144133d2743a2194a2c5af9b78",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "bf307e61_02c16ec7",
+        "filename": "src/frameworks/uikit/ui_device.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 21,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-05-25T19:07:36Z",
+      "side": 1,
+      "message": "This allow can be removed now.",
+      "revId": "91094e70638a15144133d2743a2194a2c5af9b78",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c2b9a176_2077dffb",
+        "filename": "src/frameworks/uikit/ui_device.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 122,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-05-25T19:07:36Z",
+      "side": 1,
+      "message": "A case was missed here.",
+      "revId": "91094e70638a15144133d2743a2194a2c5af9b78",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

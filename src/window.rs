@@ -24,7 +24,7 @@ use sdl2::surface::Surface;
 use sdl2_sys::SDL_PowerState;
 use std::collections::{HashMap, VecDeque};
 use std::env;
-use std::f32::consts::FRAC_PI_2;
+use std::f32::consts::{FRAC_PI_2, PI};
 use std::num::NonZeroU32;
 use std::ptr::null_mut;
 use std::time::{Duration, Instant};
@@ -97,7 +97,9 @@ fn rotate_fullscreen_size(orientation: DeviceOrientation, screen_size: (u32, u32
         (screen_size.1, screen_size.0)
     };
     match orientation {
-        DeviceOrientation::Portrait | DeviceOrientation::PortraitUpsideDown => (short_side, long_side),
+        DeviceOrientation::Portrait | DeviceOrientation::PortraitUpsideDown => {
+            (short_side, long_side)
+        }
         DeviceOrientation::LandscapeLeft | DeviceOrientation::LandscapeRight => {
             (long_side, short_side)
         }
@@ -1400,7 +1402,7 @@ impl Window {
     pub fn rotation_matrix(&self) -> Matrix<2> {
         match self.device_orientation {
             DeviceOrientation::Portrait => Matrix::identity(),
-            DeviceOrientation::PortraitUpsideDown => Matrix::identity(),
+            DeviceOrientation::PortraitUpsideDown => Matrix::z_rotation(PI),
             DeviceOrientation::LandscapeLeft => Matrix::z_rotation(-FRAC_PI_2),
             DeviceOrientation::LandscapeRight => Matrix::z_rotation(FRAC_PI_2),
         }

@@ -15,10 +15,12 @@ use crate::frameworks::core_graphics::cg_affine_transform::CGAffineTransform;
 use crate::frameworks::core_graphics::{CGPoint, CGRect};
 use crate::frameworks::foundation::ns_string;
 use crate::frameworks::uikit::ui_application::{
-    UIInterfaceOrientationLandscapeLeft, UIInterfaceOrientationLandscapeRight
+    UIInterfaceOrientationLandscapeLeft, UIInterfaceOrientationLandscapeRight,
+    UIInterfaceOrientationPortraitUpsideDown,
 };
 use crate::frameworks::uikit::ui_device::{
-    UIDeviceOrientationLandscapeLeft, UIDeviceOrientationLandscapeRight, UIDeviceOrientationPortraitUpsideDown
+    UIDeviceOrientationLandscapeLeft, UIDeviceOrientationLandscapeRight,
+    UIDeviceOrientationPortraitUpsideDown,
 };
 use crate::objc::{id, msg, msg_class, msg_super, nil, objc_classes, ClassExports};
 
@@ -187,6 +189,7 @@ pub const CLASSES: ClassExports = objc_classes! {
         if should {
             log_dbg!("App requested autorotation; applying orientation transform to view {:?}.", view);
             let transform = match orientation {
+                UIInterfaceOrientationPortraitUpsideDown => CGAffineTransform::make_rotation(-std::f32::consts::PI),
                 UIInterfaceOrientationLandscapeLeft => CGAffineTransform::make_rotation(-std::f32::consts::FRAC_PI_2),
                 UIInterfaceOrientationLandscapeRight => CGAffineTransform::make_rotation(std::f32::consts::FRAC_PI_2),
                 _ => unimplemented!(),

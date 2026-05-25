@@ -143,6 +143,7 @@ struct AppPickerDelegateHostObject {
     scale_hack3: bool,
     scale_hack4: bool,
     orientation_default: bool,
+    orientation_portrait_upside_down: bool,
     orientation_landscape_left: bool,
     orientation_landscape_right: bool,
     analog_stick_tilt_controls: Option<bool>,
@@ -214,6 +215,9 @@ const CLASSES: ClassExports = objc_classes! {
 }
 - (())orientationDefault {
     env.objc.borrow_mut::<AppPickerDelegateHostObject>(this).orientation_default = true;
+}
+- (())orientationPortraitUpsideDown {
+    env.objc.borrow_mut::<AppPickerDelegateHostObject>(this).orientation_portrait_upside_down = true;
 }
 - (())orientationLandscapeLeft {
     env.objc.borrow_mut::<AppPickerDelegateHostObject>(this).orientation_landscape_left = true;
@@ -679,6 +683,13 @@ fn app_picker_inner(
             );
         } else if std::mem::take(&mut host_obj.orientation_default) {
             quick_options_orientation = None;
+            update_orientation_buttons(
+                env,
+                &quick_options_stuff.orientation_buttons,
+                quick_options_orientation,
+            );
+        } else if std::mem::take(&mut host_obj.orientation_portrait_upside_down) {
+            quick_options_orientation = Some(DeviceOrientation::PortraitUpsideDown);
             update_orientation_buttons(
                 env,
                 &quick_options_stuff.orientation_buttons,

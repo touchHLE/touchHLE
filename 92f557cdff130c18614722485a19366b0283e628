@@ -16,6 +16,24 @@
       "message": "These are wildly different ratios and no attempt is made to establish a relationship between them or explain why one might exist.",
       "revId": "92f557cdff130c18614722485a19366b0283e628",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "acd406f1_2482043b",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2026-05-25T22:02:44Z",
+      "side": 1,
+      "message": "As I explained in the channel, just using units_per_em to determine TrueType front vs Open Type.  I\u0027m not claiming there is any relationship between 2048:1000 and 1.125:1.0 because there is not.  Scale::uniform still makes the font the correct pixel height (and it\u0027s not taking in the em, we are just using it to determine if we should apply the 1.125 or not). This change makes it so the example of Mirror\u0027s Edge (and likely other games) works as expected.",
+      "parentUuid": "fba3f6b3_15000a5e",
+      "revId": "92f557cdff130c18614722485a19366b0283e628",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

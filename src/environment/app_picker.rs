@@ -557,6 +557,7 @@ fn app_picker_inner(
             value.map_or(0, |v| match v {
                 DeviceOrientation::LandscapeLeft => 1,
                 DeviceOrientation::LandscapeRight => 2,
+                DeviceOrientation::PortraitUpsideDown => 3,
                 _ => panic!(),
             }),
         );
@@ -730,6 +731,7 @@ fn app_picker_inner(
             match orientation {
                 DeviceOrientation::LandscapeLeft => "--landscape-left",
                 DeviceOrientation::LandscapeRight => "--landscape-right",
+                DeviceOrientation::PortraitUpsideDown => "--upside-down",
                 _ => todo!(),
             }
             .to_string(),
@@ -1261,7 +1263,7 @@ fn change_copyright_page(
 struct QuickOptionsStuff {
     main_view: id,
     scale_hack_buttons: [id; 5],
-    orientation_buttons: [id; 3],
+    orientation_buttons: [id; 4],
 }
 
 fn setup_quick_options(
@@ -1339,6 +1341,7 @@ fn setup_quick_options(
             ("Default", "orientationDefault"),
             ("←", "orientationLandscapeLeft"),
             ("→", "orientationLandscapeRight"),
+            ("↓", "orientationPortraitUpsideDown"),
         ]),
         RowKind::Label("Network access"),
         RowKind::Switch("network:", false),

@@ -33,11 +33,12 @@ pub enum WrapMode {
     Char,
 }
 
-fn scale(font_size: f32) -> Scale {
+fn scale(font_size: f32, units_per_em: u16) -> Scale {
+    // For TrueType Fonts units per em is 2048 and 1000 for OpenType fonts
     // iPhone OS's interpretation of font size is slightly different, reason
     // unknown. This is not the same as the Windows pt vs Mac pt issue.
     // This scale factor has been eyeball'd, it's not exact.
-    Scale::uniform(font_size * 1.125)
+    Scale::uniform(font_size * if units_per_em == 2048 { 1.125 } else { 1.0 })
 }
 
 /// Helper for [Font::draw], used for the `draw_glyph` callback.
@@ -155,21 +156,21 @@ impl Font {
     }
 
     pub fn ascent(&self, font_size: f32) -> f32 {
-        let v_metrics = self.font.v_metrics(scale(font_size));
+        let v_metrics = self.font.v_metrics(scale(font_size, self.units_per_em()));
         v_metrics.ascent
     }
     pub fn descent(&self, font_size: f32) -> f32 {
-        let v_metrics = self.font.v_metrics(scale(font_size));
+        let v_metrics = self.font.v_metrics(scale(font_size, self.units_per_em()));
         v_metrics.descent
     }
 
     pub fn line_gap(&self, font_size: f32) -> f32 {
-        let v_metrics = self.font.v_metrics(scale(font_size));
+        let v_metrics = self.font.v_metrics(scale(font_size, self.units_per_em()));
         v_metrics.line_gap
     }
 
     fn line_height_and_gap(&self, font_size: f32) -> (f32, f32) {
-        let v_metrics = self.font.v_metrics(scale(font_size));
+        let v_metrics = self.font.v_metrics(scale(font_size, self.units_per_em()));
         (v_metrics.ascent - v_metrics.descent, v_metrics.line_gap)
     }
 
@@ -178,7 +179,10 @@ impl Font {
         let mut line_x_min: f32 = 0.0;
         let mut line_x_max: f32 = 0.0;
 
-        for glyph in self.font.layout(line, scale(font_size), Default::default()) {
+        for glyph in self
+            .font
+            .layout(line, scale(font_size, self.units_per_em()), Default::default())
+        {
             let position = glyph.position();
             let h_metrics = glyph.unpositioned().h_metrics();
 
@@ -356,7 +360,10 @@ impl Font {
 
         let lines = self.break_lines(font_size, text, wrap);
 
-        let mut line_y = self.font.v_metrics(scale(font_size)).ascent;
+        let mut line_y = self
+            .font
+            .v_metrics(scale(font_size, self.units_per_em()))
+            .ascent;
         let (line_height, line_gap) = self.line_height_and_gap(font_size);
 
         // RustType requires a "draw pixel" callback that will be called for
@@ -379,7 +386,7 @@ impl Font {
             };
             for glyph in self.font.layout(
                 line_text,
-                scale(font_size),
+                scale(font_size, self.units_per_em()),
                 Point {
                     x: origin.0 + line_x_offset,
                     y: 0.0,
@@ -453,13 +460,14 @@ impl Font {
             y: 0.0,
         };
         // This code is adapted from documentation of [rusttype::Font::layout].
+        let units_per_em = self.units_per_em();
         let iter = self
             .font
             .glyphs_for(glyphs.into_iter())
             .scan((None, 0.0), |(last, x), g| {
-                let g = g.scaled(scale(font_size));
+                let g = g.scaled(scale(font_size, units_per_em));
                 if let Some(last) = last {
-                    *x += self.font.pair_kerning(scale(font_size), *last, g.id());
+                    *x += self.font.pair_kerning(scale(font_size, units_per_em), *last, g.id());
                 }
                 let w = g.h_metrics().advance_width;
                 let next = g.positioned(start + vector(*x, 0.0));

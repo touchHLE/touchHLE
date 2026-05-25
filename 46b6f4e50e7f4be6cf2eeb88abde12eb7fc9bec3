@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7af479ba_31eb12f2",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-05-25T18:53:52Z",
+      "side": 1,
+      "message": "Hey, the Change-Id in the commit message is what Gerrit uses to track which review the commit belongs to. Because you\u0027ve included all three Change-Id\u0027s here, it\u0027s using the last one. You probably want to remove the last two ones and their messages, then push, so it updates the original patch. Then you can choose the “Abandon” option on the two reviews that are now redundant.",
+      "revId": "46b6f4e50e7f4be6cf2eeb88abde12eb7fc9bec3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

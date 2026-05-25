@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "56c18b43_606485a6",
+        "filename": "src/dyld.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 872,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2026-05-25T03:28:46Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "60274f18_3393560e",
+      "revId": "e9277cc1faf2534d3ff36c47988947deb03962b2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "3c20a1fc_f10349ed",
@@ -31,6 +49,24 @@
       "writtenOn": "2026-05-24T14:09:34Z",
       "side": 1,
       "message": "now, as we have 2 flavors of each funciton, could you please update/create doc strings as well for all of the impacted/created ones? (you already did that for alloc_* and free_*)",
+      "revId": "e9277cc1faf2534d3ff36c47988947deb03962b2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "02b23dca_d94d4bcf",
+        "filename": "src/mem.rs",
+        "patchSetId": 11
+      },
+      "lineNbr": 579,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2026-05-25T03:28:46Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "3c20a1fc_f10349ed",
       "revId": "e9277cc1faf2534d3ff36c47988947deb03962b2",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },

@@ -34,6 +34,23 @@
       "parentUuid": "71c05e27_d03a1266",
       "revId": "d6437e3a42ba265e51f6df4f6f7287a25233c68d",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "36f82c36_6620fa2b",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 35
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2026-05-25T23:15:42Z",
+      "side": 1,
+      "message": "SDL3 supports creating a gl context via WGL, which seems to be incomplete. Can work around this by using this hint https://wiki.libsdl.org/SDL3/SDL_HINT_OPENGL_ES_DRIVER.\n\nThis seems like it should work: https://wiki.libsdl.org/SDL3/SDL_HINT_VIDEO_FORCE_EGL. But it doesn\u0027t for some reason?",
+      "revId": "d6437e3a42ba265e51f6df4f6f7287a25233c68d",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

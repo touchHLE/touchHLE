@@ -50,6 +50,59 @@
       "message": "Hi, thanks for opening this patch set!\n\nCould you please tell us how you tested it?",
       "revId": "8b474ccf5f1b5c29a3ab5369be52a045aa49c985",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "bef1c5dc_631db191",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1039550
+      },
+      "writtenOn": "2026-05-25T01:13:35Z",
+      "side": 1,
+      "message": "Hi, thanks for the review!\n\nI used the app Ricky version 2.3 for iOS 3 (com.nabilchatbi.Ricky). The app would not boot without upside down portrait mode, but after adding it the app manages to get to the boot screen before crashing again.\n\nI also tested with the --portrait-upside-down flag after adding it.",
+      "parentUuid": "08674567_b1fcd36f",
+      "revId": "8b474ccf5f1b5c29a3ab5369be52a045aa49c985",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "c375efb7_02a9578c",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1039550
+      },
+      "writtenOn": "2026-05-25T01:13:35Z",
+      "side": 1,
+      "message": "Added the requested changes! Please let me know if I missed anything",
+      "revId": "8b474ccf5f1b5c29a3ab5369be52a045aa49c985",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "cdda3a2e_a20fe52e",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1039550
+      },
+      "writtenOn": "2026-05-25T01:13:35Z",
+      "side": 1,
+      "message": "Hi, thanks for the review!\n\nAdded the requested changes!",
+      "parentUuid": "40b8f7de_0cfee5fc",
+      "revId": "8b474ccf5f1b5c29a3ab5369be52a045aa49c985",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

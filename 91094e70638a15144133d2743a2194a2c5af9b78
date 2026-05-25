@@ -55,6 +55,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "2d548e21_574713d5",
+        "filename": "src/frameworks/uikit/ui_application.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 128,
+      "author": {
+        "id": 1039550
+      },
+      "writtenOn": "2026-05-25T20:05:50Z",
+      "side": 1,
+      "message": "Added!",
+      "parentUuid": "fa84c2d3_f66565bf",
+      "revId": "91094e70638a15144133d2743a2194a2c5af9b78",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "bf307e61_02c16ec7",
         "filename": "src/frameworks/uikit/ui_device.rs",
         "patchSetId": 2
@@ -90,6 +108,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "89813c02_a639c051",
+        "filename": "src/frameworks/uikit/ui_device.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 21,
+      "author": {
+        "id": 1039550
+      },
+      "writtenOn": "2026-05-25T20:05:50Z",
+      "side": 1,
+      "message": "Removed!",
+      "parentUuid": "bf307e61_02c16ec7",
+      "revId": "91094e70638a15144133d2743a2194a2c5af9b78",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "c2b9a176_2077dffb",
         "filename": "src/frameworks/uikit/ui_device.rs",
         "patchSetId": 2
@@ -118,6 +154,24 @@
       "writtenOn": "2026-05-25T20:04:08Z",
       "side": 1,
       "message": "Acknowledged",
+      "parentUuid": "c2b9a176_2077dffb",
+      "revId": "91094e70638a15144133d2743a2194a2c5af9b78",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "76976c85_e0513eab",
+        "filename": "src/frameworks/uikit/ui_device.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 122,
+      "author": {
+        "id": 1039550
+      },
+      "writtenOn": "2026-05-25T20:05:50Z",
+      "side": 1,
+      "message": "Added!",
       "parentUuid": "c2b9a176_2077dffb",
       "revId": "91094e70638a15144133d2743a2194a2c5af9b78",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"

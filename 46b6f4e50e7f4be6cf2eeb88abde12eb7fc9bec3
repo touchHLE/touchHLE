@@ -33,6 +33,24 @@
       "message": "Hi @hikari@noyu.me, I merged the previous patch sets into this patch here. I\u0027m new to Gerrit so I\u0027m not sure if I missed any steps 😅 if I did please let me know and I can try to fix things up!",
       "revId": "46b6f4e50e7f4be6cf2eeb88abde12eb7fc9bec3",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "18281b45_0c1de805",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1039550
+      },
+      "writtenOn": "2026-05-25T18:56:45Z",
+      "side": 1,
+      "message": "Just saw your previous message, resolving this one!",
+      "parentUuid": "6a20ee7b_c0370124",
+      "revId": "46b6f4e50e7f4be6cf2eeb88abde12eb7fc9bec3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

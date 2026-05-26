@@ -18,6 +18,8 @@ use crate::objc::{
 use crate::Environment;
 use std::collections::{HashMap, HashSet};
 
+use crate::fs::{GuestPath, FsNodeType};
+
 // Should be ISO 639-1 (or ISO 639-2) compliant
 // Legacy projects use language names while newer ones use language code lprojs
 // TODO: complete this list or use some crate for mapping
@@ -307,6 +309,68 @@ pub const CLASSES: ClassExports = objc_classes! {
 
     let preferred_localizations = CFBundleCopyPreferredLocalizationsFromArray(env, loc_array);
     autorelease(env, preferred_localizations)
+}
+
+// https://developer.apple.com/documentation/foundation/bundle/paths(forresourcesoftype:indirectory:)-swift.method?language=objc
+- (id)pathsForResourcesOfType:(id)extension
+                  inDirectory:(id)subpath {
+    let resource_path: id = msg![env; this resourcePath];
+    let mut dir_path = ns_string::to_rust_string(env, resource_path).into_owned();
+
+    if subpath != nil {
+        let sub = ns_string::to_rust_string(env, subpath);
+        if !sub.is_empty() {
+            dir_path.push('/');
+            dir_path.push_str(&sub);
+        }
+    }
+
+    let target_ext = if extension != nil {
+        let ext_str = ns_string::to_rust_string(env, extension);
+        let ext_trimmed = ext_str.trim_start_matches('.').to_lowercase();
+
+        if ext_trimmed.is_empty() {
+            None
+        } else {
+            Some(ext_trimmed)
+        }
+    } else {
+        None
+    };
+
+    let mut found_paths: Vec<String> = Vec::new();
+    let guest_path = GuestPath::new(&dir_path);
+
+    match env.fs.enumerate_with_types(guest_path) {
+        Ok(entries) => {
+            for (name, node_type) in entries {
+                if matches!(node_type, FsNodeType::File) {
+                    let keep = match &target_ext {
+                        Some(ext) => name.to_lowercase().ends_with(&format!(".{}", ext)),
+                        None => true,
+                    };
+                    if keep {
+                        let clean_path = format!("{}/{}", dir_path, name).replace("//", "/");
+                        found_paths.push(clean_path);
+                    }
+                }
+            }
+        }
+        Err(_) => {
+            log!("Failed to read guest directory {:?}", dir_path);
+        }
+    }
+
+    let array: id = msg_class![env; NSMutableArray new];
+    for path_str in &found_paths {
+        let path_ns: id = ns_string::from_rust_string(env, path_str.to_string());
+        let path_ns = autorelease(env, path_ns);
+        let _: () = msg![env; array addObject:path_ns];
+    }
+
+    log_dbg!("[(NSBundle*) {:?} pathsForResourcesOfType:{:?} inDirectory:{:?}] found {} files", this, extension, subpath, found_paths.len());
+
+    autorelease(env, array)
 }
 
 // TODO: constructors, more accessors

@@ -48,6 +48,13 @@ fn calloc(env: &mut Environment, count: GuestUSize, size: GuestUSize) -> MutVoid
     env.mem.calloc(total)
 }
 
+fn valloc(env: &mut Environment, size: GuestUSize) -> MutVoidPtr {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
+    env.mem.valloc(size)
+}
+
 fn realloc(env: &mut Environment, ptr: MutVoidPtr, size: GuestUSize) -> MutVoidPtr {
     // TODO: handle errno properly
     set_errno(env, 0);
@@ -527,6 +534,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(malloc(_)),
     export_c_func!(malloc_size(_)),
     export_c_func!(calloc(_, _)),
+    export_c_func!(valloc(_)),
     export_c_func!(realloc(_, _)),
     export_c_func!(free(_)),
     export_c_func!(atexit(_)),

@@ -104,6 +104,24 @@
       "parentUuid": "5d1d1e6c_29607a45",
       "revId": "e9277cc1faf2534d3ff36c47988947deb03962b2",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b65f5eed_8cdcca3c",
+        "filename": "tests/TestApp_source/cli_tests.m",
+        "patchSetId": 11
+      },
+      "lineNbr": 5991,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-05-26T22:40:15Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "0352df4a_8895715a",
+      "revId": "e9277cc1faf2534d3ff36c47988947deb03962b2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

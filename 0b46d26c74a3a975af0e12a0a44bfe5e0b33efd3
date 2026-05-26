@@ -1,0 +1,89 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "bc4d0ac9_4430e686",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-05-26T22:51:03Z",
+      "side": 1,
+      "message": "General comment, how you tested those new functions?",
+      "revId": "0b46d26c74a3a975af0e12a0a44bfe5e0b33efd3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e61b71c8_56719b00",
+        "filename": "src/libc/stdlib.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 26,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-05-26T22:51:03Z",
+      "side": 1,
+      "message": "if you\u0027re using only 48 bits, it requires an explanatory comment",
+      "revId": "0b46d26c74a3a975af0e12a0a44bfe5e0b33efd3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "61ac1a90_60c01c56",
+        "filename": "src/libc/stdlib.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 224,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-05-26T22:51:03Z",
+      "side": 1,
+      "message": "if it\u0027s not a part of libc API, it should have a comment.",
+      "revId": "0b46d26c74a3a975af0e12a0a44bfe5e0b33efd3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "28f2bba2_008085d0",
+        "filename": "src/libc/stdlib.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 225,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-05-26T22:51:03Z",
+      "side": 1,
+      "message": "we usually define constants outside of functions. also, can the names be more meaningful?",
+      "revId": "0b46d26c74a3a975af0e12a0a44bfe5e0b33efd3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2c5b7a50_fc435835",
+        "filename": "src/libc/stdlib.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 246,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-05-26T22:51:03Z",
+      "side": 1,
+      "message": "it seems that masks are applied incosistenly. could they be unified?",
+      "revId": "0b46d26c74a3a975af0e12a0a44bfe5e0b33efd3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

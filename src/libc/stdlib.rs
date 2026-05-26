@@ -23,6 +23,10 @@ pub struct State {
     rand: u32,
     random: u32,
     arc4random: u32,
+
+    // We store the 48 bit rand48_state in the low 48 bits of the u64.
+    // We use a u64 since rust does not have a u48 type.
+    rand48_state: u64,
 }
 
 // Sizes of zero are implementation-defined. macOS will happily give you back
@@ -212,6 +216,45 @@ fn random(env: &mut Environment) -> i32 {
 fn arc4random(env: &mut Environment) -> u32 {
     env.libc_state.stdlib.arc4random = prng(env.libc_state.stdlib.arc4random);
     env.libc_state.stdlib.arc4random
+}
+
+// https://pubs.opengroup.org/onlinepubs/9699919799/functions/drand48.html
+
+const RAND48_MULTIPLIER: u64 = 0x5DEECE66D;
+const RAND48_INCREMENT: u64 = 0xB;
+const RAND48_MASK: u64 = 0x0000_FFFF_FFFF_FFFF; // (1 << 48) - 1
+const RAND48_SEED_LOW: u64 = 0x330E; // low order bits for srand48
+const RAND48_MODULUS_F64: f64 = (1u64 << 48) as f64;
+
+fn srand48(env: &mut Environment, seed: i32) {
+    let state = (((seed as u32 as u64) << 16) | RAND48_SEED_LOW) & RAND48_MASK;
+    env.libc_state.stdlib.rand48_state = state;
+}
+
+fn advance_rand48(state: u64) -> u64 {
+    // Xn+1 = (a*Xn + c) mod 2^48
+    (RAND48_MULTIPLIER.wrapping_mul(state).wrapping_add(RAND48_INCREMENT)) & RAND48_MASK
+}
+
+fn lrand48(env: &mut Environment) -> i32 {
+    let new_state = advance_rand48(env.libc_state.stdlib.rand48_state);
+    env.libc_state.stdlib.rand48_state = new_state;
+    // return top 31 bits (bits 47..17)
+    (new_state >> 17) as i32
+}
+
+fn mrand48(env: &mut Environment) -> i32 {
+    let new_state = advance_rand48(env.libc_state.stdlib.rand48_state);
+    env.libc_state.stdlib.rand48_state = new_state;
+    // return top 32 bits (bits 47..16)
+    (new_state >> 16) as i32
+}
+
+fn drand48(env: &mut Environment) -> f64 {
+    let new_state = advance_rand48(env.libc_state.stdlib.rand48_state);
+    env.libc_state.stdlib.rand48_state = new_state;
+    // scale full 48 bit state to [0.0, 1.0)
+    new_state as f64 / RAND48_MODULUS_F64
 }
 
 #[allow(non_camel_case_types)]
@@ -554,6 +597,10 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(mbstowcs(_, _, _)),
     export_c_func!(wcstombs(_, _, _)),
     export_c_func!(system(_)),
+    export_c_func!(srand48(_)),
+    export_c_func!(lrand48()),
+    export_c_func!(mrand48()),
+    export_c_func!(drand48()),
 ];
 
 /// A simple wrapper around [atof_inner_generic] for the case of C string.

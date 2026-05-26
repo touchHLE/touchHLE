@@ -729,10 +729,15 @@ impl GLES for GLES1OnGL2<'_> {
                 "Tolerating glEnableClientState({:#x}) of a capability",
                 array
             );
+            gl21::EnableClientState(array);
+        } else if ARRAYS.iter().any(|&ArrayInfo { name, .. }| name == array) {
+            gl21::EnableClientState(array);
         } else {
-            assert!(ARRAYS.iter().any(|&ArrayInfo { name, .. }| name == array));
+            log_dbg!(
+                "Tolerating UNKNOWN/UNSUPPORTED array in EnableClientState: {:#x}",
+                array
+            );
         }
-        gl21::EnableClientState(array);
     }
     unsafe fn DisableClientState(&mut self, array: GLenum) {
         if CAPABILITIES.contains(&array) {
@@ -740,10 +745,15 @@ impl GLES for GLES1OnGL2<'_> {
                 "Tolerating glDisableClientState({:#x}) of a capability",
                 array
             );
+            gl21::DisableClientState(array);
+        } else if ARRAYS.iter().any(|&ArrayInfo { name, .. }| name == array) {
+            gl21::DisableClientState(array);
         } else {
-            assert!(ARRAYS.iter().any(|&ArrayInfo { name, .. }| name == array));
+            log_dbg!(
+                "Tolerating UNKNOWN/UNSUPPORTED array in DisableClientState: {:#x}",
+                array
+            );
         }
-        gl21::DisableClientState(array);
     }
     unsafe fn GetBooleanv(&mut self, pname: GLenum, params: *mut GLboolean) {
         let (type_, _count) = GET_PARAMS.get_type_info(pname);

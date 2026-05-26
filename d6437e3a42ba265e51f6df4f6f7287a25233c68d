@@ -69,6 +69,24 @@
       "parentUuid": "36f82c36_6620fa2b",
       "revId": "d6437e3a42ba265e51f6df4f6f7287a25233c68d",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "109cc7fe_41f5be57",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 35
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2026-05-26T00:54:07Z",
+      "side": 1,
+      "message": "It seems the issue is with the API AMD provides. On Nvidia, GL through WGL works perfectly, Intel is untested.",
+      "parentUuid": "dbc0296c_a904238c",
+      "revId": "d6437e3a42ba265e51f6df4f6f7287a25233c68d",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

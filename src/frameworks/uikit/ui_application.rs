@@ -113,6 +113,11 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (())setStatusBarStyle:(UIStatusBarStyle)style {
     todo_objc_setter!(this, style);
 }
+- (())setStatusBarStyle:(UIStatusBarStyle)style
+               animated:(bool)_animated {
+    // TODO: animation
+    msg![env; this setStatusBarStyle:style]
+}
 
 - (UIInterfaceOrientation)statusBarOrientation {
     match env.window().current_rotation() {

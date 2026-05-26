@@ -38,6 +38,38 @@ pub const CLASSES: ClassExports = objc_classes! {
     log!("TODO: [(UIWebView*) {:?} loadRequest:{:?} ({})]", this, request, url_string);
 }
 
+- (())loadData:(id)_data // NSData*
+       MIMEType:(id)mime_type // NSString*
+textEncodingName:(id)_encoding // NSString*
+         baseURL:(id)_base_url { // NSURL*
+    let mime = if mime_type != nil {
+        to_rust_string(env, mime_type)
+    } else {
+        Cow::default()
+    };
+    let encoding = if _encoding != nil {
+        to_rust_string(env, _encoding)
+    } else {
+        Cow::default()
+    };
+    let base_url_string = if _base_url != nil {
+        let desc = msg![env; _base_url description];
+        to_rust_string(env, desc)
+    } else {
+        Cow::default()
+    };
+    let data_len: u32 = if _data != nil {
+        msg![env; _data length]
+    } else {
+        0
+    };
+
+    log!(
+        "TODO: [(UIWebView*) {:?} loadData:{:?} ({} bytes) MIMEType:{:?} ({}) textEncodingName:{:?} ({}) baseURL:{:?} ({})]",
+        this, _data, data_len, mime_type, mime, _encoding, encoding, _base_url, base_url_string
+    );
+}
+
 @end
 
 };

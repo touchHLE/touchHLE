@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "df86bb4a_b1dcaf2a",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-05-26T22:53:49Z",
+      "side": 1,
+      "message": "This is not an implementation, but a stub, the commit message should reflect that",
+      "revId": "1b674ab7faacc50f9e98b5a43db376f7101d3d5d",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "315bf688_6a2e226d",
+        "filename": "src/frameworks/uikit/ui_view/ui_web_view.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 50,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-05-26T22:53:49Z",
+      "side": 1,
+      "message": "you should print all arguments in the log message",
+      "revId": "1b674ab7faacc50f9e98b5a43db376f7101d3d5d",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

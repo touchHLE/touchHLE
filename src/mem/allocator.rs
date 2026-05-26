@@ -448,6 +448,16 @@ impl HeapAllocator {
         Some(alloc)
     }
 
+    /// Special case for valloc().
+    /// This does not respect [Self::HEAP_ALLOCATION_THRESHOLD]!
+    pub fn valloc(&mut self, vm: &mut VMAllocator, size: GuestUSize) -> Option<Chunk> {
+        assert!(size > 0); // TODO
+        let size = size.next_multiple_of(PAGE_SIZE);
+        let alloc = vm.allocate(None, size).ok()?;
+        self.external_chunks.insert(alloc);
+        Some(alloc)
+    }
+
     fn align(size: GuestUSize, align: GuestUSize) -> GuestUSize {
         if !size.is_multiple_of(align) {
             size + align - (size % align)

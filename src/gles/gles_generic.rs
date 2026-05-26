@@ -204,6 +204,12 @@ pub trait GLES {
         stride: GLsizei,
         pointer: *const GLvoid,
     );
+    unsafe fn PointSizePointerOES(
+        &mut self,
+        type_: GLenum,
+        stride: GLsizei,
+        pointer: *const GLvoid,
+    );
 
     // Drawing
     unsafe fn DrawArrays(&mut self, mode: GLenum, first: GLint, count: GLsizei);

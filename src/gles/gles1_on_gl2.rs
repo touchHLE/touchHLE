@@ -1306,6 +1306,32 @@ impl GLES for GLES1OnGL2<'_> {
         }
     }
 
+    // https://registry.khronos.org/OpenGL/extensions/OES/OES_point_size_array.txt
+    unsafe fn PointSizePointerOES(
+        &mut self,
+        type_: GLenum,
+        _stride: GLsizei,
+        pointer: *const GLvoid,
+    ) {
+        if pointer.is_null() {
+            log_dbg!("glPointSizePointerOES called with null pointer");
+            return;
+        }
+
+        if type_ == gl21::FLOAT {
+            let first_size = *(pointer as *const GLfloat);
+            log_dbg!("TODO: glPointSizePointerOES only reads first element, per-vertex point sizes not supported");
+            gl21::PointSize(first_size);
+        } else if type_ == super::gles11_raw::FIXED {
+            let first_size_fixed = *(pointer as *const GLfixed);
+            let first_size = super::util::fixed_to_float(first_size_fixed);
+            log_dbg!("TODO: glPointSizePointerOES only reads first element, per-vertex point sizes not supported");
+            gl21::PointSize(first_size);
+        } else {
+            log_dbg!("Stubbed glPointSizePointerOES called with unknown type {:#x}", type_);
+        }
+    }
+
     // Drawing
     unsafe fn DrawArrays(&mut self, mode: GLenum, first: GLint, count: GLsizei) {
         assert!([

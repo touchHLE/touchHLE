@@ -9,6 +9,7 @@
 //! but here it is the same type.
 
 use super::cf_array::CFArrayRef;
+use super::cf_dictionary::CFDictionaryRef;
 use super::cf_string::CFStringRef;
 use super::cf_url::CFURLRef;
 use super::CFTypeRef;
@@ -29,6 +30,10 @@ pub type CFBundleRef = CFTypeRef;
 
 fn CFBundleGetMainBundle(env: &mut Environment) -> CFBundleRef {
     msg_class![env; NSBundle mainBundle]
+}
+
+fn CFBundleGetInfoDictionary(env: &mut Environment, bundle: CFBundleRef) -> CFDictionaryRef {
+    msg![env; bundle infoDictionary]
 }
 
 fn CFBundleGetValueForInfoDictionaryKey(
@@ -178,6 +183,7 @@ fn CFBundleCopyLocalizedString(
 
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CFBundleGetMainBundle()),
+    export_c_func!(CFBundleGetInfoDictionary(_)),
     export_c_func!(CFBundleGetValueForInfoDictionaryKey(_, _)),
     export_c_func!(CFBundleGetVersionNumber(_)),
     export_c_func!(CFBundleCopyBundleURL(_)),

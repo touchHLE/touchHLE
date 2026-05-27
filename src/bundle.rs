@@ -156,7 +156,30 @@ impl Bundle {
     }
 
     fn icon_path(&self) -> GuestPathBuf {
-        if let Some(filename) = self.plist.get("CFBundleIconFile") {
+        // TODO: Fix this to what an actual iOS device does,
+        // including Retina icons and such when we get there.
+        // Reference: https://developer.apple.com/library/archive/qa/qa1686/_index.html
+        // We check for the icon in the following order:
+        // CFBundleIconFile (adds .png if not present),
+        // (Using CFBundleIconsFiles case-insensitive) *Icon.png, *Icon-72.png,
+        // First in CFBundleIconFiles (adds .png if not present),
+        // Failsafe Icon.png
+        if let Some(filename) = self.plist.get("CFBundleIconFile").or_else(|| {
+            self.plist
+                .get("CFBundleIconFiles")
+                .and_then(|v| v.as_array())
+                .and_then(|a| {
+                    ["icon.png", "icon-72.png"]
+                        .iter()
+                        .find_map(|icon| {
+                            a.iter().find(|v| {
+                                v.as_string()
+                                    .is_some_and(|s| s.to_lowercase().ends_with(*icon))
+                            })
+                        })
+                        .or_else(|| a.first())
+                })
+        }) {
             if filename
                 .as_string()
                 .unwrap()

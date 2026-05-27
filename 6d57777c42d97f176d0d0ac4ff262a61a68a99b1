@@ -33,6 +33,24 @@
       "message": "Would be nice if we can check which should take precedence (CFBundleIconFile vs CFBundleIconFiles). That\u0027s not documented and frankly it probably doesn\u0027t matter, but it would be nice to know.",
       "revId": "6d57777c42d97f176d0d0ac4ff262a61a68a99b1",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8a20d6dc_a32eb403",
+        "filename": "src/bundle.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 164,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2026-05-27T22:57:42Z",
+      "side": 1,
+      "message": "Agreed. I just took the first one. The app I looked only had one.\n\nhttps://developer.apple.com/design/human-interface-guidelines/images\nTalks about @2x and even @3x for iOS, which does include icons.\nShould we default to taking the highest quality?",
+      "parentUuid": "b612a496_eed00d0b",
+      "revId": "6d57777c42d97f176d0d0ac4ff262a61a68a99b1",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

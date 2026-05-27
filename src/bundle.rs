@@ -156,7 +156,12 @@ impl Bundle {
     }
 
     fn icon_path(&self) -> GuestPathBuf {
-        if let Some(filename) = self.plist.get("CFBundleIconFile") {
+        if let Some(filename) = self.plist.get("CFBundleIconFile").or_else(|| {
+            self.plist
+                .get("CFBundleIconFiles")
+                .and_then(|v| v.as_array())
+                .and_then(|a| a.first())
+        }) {
             if filename
                 .as_string()
                 .unwrap()

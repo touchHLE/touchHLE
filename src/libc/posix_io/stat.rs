@@ -128,7 +128,7 @@ fn fstat(env: &mut Environment, fd: FileDescriptor, buf: MutPtr<stat>) -> i32 {
     // TODO: handle errno properly
     set_errno(env, 0);
 
-    log!("Warning: fstat() call, this function is mostly unimplemented");
+    log_once!("Warning: fstat() call, this function is mostly unimplemented");
     let result = fstat_inner(env, fd, buf);
     log_dbg!("fstat({:?}, {:?}) -> {}", fd, buf, result);
     result
@@ -138,7 +138,7 @@ fn stat(env: &mut Environment, path: ConstPtr<u8>, buf: MutPtr<stat>) -> i32 {
     // TODO: handle errno properly
     set_errno(env, 0);
 
-    log!("Warning: stat() call, this function is mostly unimplemented");
+    log_once!("Warning: stat() call, this function is mostly unimplemented");
 
     fn do_stat(env: &mut Environment, path: ConstPtr<u8>, buf: MutPtr<stat>) -> i32 {
         if path.is_null() {

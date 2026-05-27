@@ -51,6 +51,24 @@
       "parentUuid": "b612a496_eed00d0b",
       "revId": "6d57777c42d97f176d0d0ac4ff262a61a68a99b1",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a357f72d_0a6cd9d8",
+        "filename": "src/bundle.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 164,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2026-05-27T23:03:09Z",
+      "side": 1,
+      "message": "Just to note, seems like @3x does not come until iOS 8.0 so most apps/games we will support in the near future likely will not have that.",
+      "parentUuid": "8a20d6dc_a32eb403",
+      "revId": "6d57777c42d97f176d0d0ac4ff262a61a68a99b1",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

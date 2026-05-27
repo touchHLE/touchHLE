@@ -69,6 +69,24 @@
       "parentUuid": "8a20d6dc_a32eb403",
       "revId": "6d57777c42d97f176d0d0ac4ff262a61a68a99b1",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "8e50f40f_e35f8536",
+        "filename": "src/bundle.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 164,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2026-05-27T23:47:36Z",
+      "side": 1,
+      "message": "Alright, pushed a change.  It changes the logic to try and find the highest quality icon in CFBundleIconFiles, otherwise defaults to the first there and if that doesn\u0027t exist it then checks CFBundleIconFile and lastly Icon.png fall back remains un-changed.",
+      "parentUuid": "a357f72d_0a6cd9d8",
+      "revId": "6d57777c42d97f176d0d0ac4ff262a61a68a99b1",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

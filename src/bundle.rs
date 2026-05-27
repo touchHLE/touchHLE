@@ -155,8 +155,49 @@ impl Bundle {
             .unwrap_or(false)
     }
 
+    fn find_icon(icon_files: &Vec<PlistValue>) -> Option<&PlistValue> {
+        ["Icon", "Icon-72"] // Icon for iPhone, Icon-72 for iPad
+            .iter()
+            .find_map(|icon| {
+                icon_files.iter().find(|found_icon| {
+                    found_icon
+                        .as_string()
+                        .is_some_and(|s| s.trim_end_matches(".png") == *icon)
+                })
+            })
+            .or_else(|| icon_files.first())
+    }
+
     fn icon_path(&self) -> GuestPathBuf {
-        if let Some(filename) = self.plist.get("CFBundleIconFile") {
+        // TODO: Fix this to what an actual iOS device does,
+        // including Retina icons and such when we get there.
+        // Reference: https://developer.apple.com/library/archive/qa/qa1686/_index.html
+        // We check for the icon in the following order:
+        // 1. CFBundleIconFile,
+        // 2. CFBundleIconFiles for Icon, Icon-72,
+        // 3. First in CFBundleIconFiles,
+        // 4. CFBundleIcons -> CFBundlePrimaryIcon -> CFundleIconFiles
+        // for Icon, Icon-72,
+        // 5. First in CFBundleIcons -> CFBundlePrimaryIcon -> CFundleIconFiles
+        // 6. Failsafe Icon.png
+        if let Some(filename) = self
+            .plist
+            .get("CFBundleIconFile") // Below iOS 3.2
+            .or_else(|| {
+                self.plist
+                    .get("CFBundleIconFiles") // Added in iOS 3.2
+                    .and_then(|v| v.as_array())
+                    .and_then(find_icon)
+            })
+            .or_else(|| {
+                self.plist
+                    .get("CFBundleIcons") // Added in iOS 5.0
+                    .and_then(|v| v.get("CFBundlePrimaryIcon"))
+                    .and_then(|v| v.get("CFBundleIconFiles"))
+                    .and_then(|v| v.as_array())
+                    .and_then(find_icon)
+            })
+        {
             if filename
                 .as_string()
                 .unwrap()

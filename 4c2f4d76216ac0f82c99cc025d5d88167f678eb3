@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1976f1e0_7e9f7f98",
+        "filename": "src/frameworks/core_audio_types.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 45,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-05-27T19:59:56Z",
+      "side": 1,
+      "message": "Is it an idiomatic way to compare floats in Rust?",
+      "revId": "4c2f4d76216ac0f82c99cc025d5d88167f678eb3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2e099b1a_dcf57fcc",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 4
+      },
+      "lineNbr": 7,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-05-27T16:49:14Z",
+      "side": 1,
+      "message": "First line of the commit message should be at most 72 characters, please condense this.",
+      "revId": "459bde1d3cbf69ff7d0723039968948abc80a3c8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

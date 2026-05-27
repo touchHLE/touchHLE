@@ -35,6 +35,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "ee0127e5_f935df86",
+        "filename": "src/libc/stdlib.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 26,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-05-27T19:22:43Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "e61b71c8_56719b00",
+      "revId": "0b46d26c74a3a975af0e12a0a44bfe5e0b33efd3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "61ac1a90_60c01c56",
@@ -48,6 +66,24 @@
       "writtenOn": "2026-05-26T22:51:03Z",
       "side": 1,
       "message": "if it\u0027s not a part of libc API, it should have a comment.",
+      "revId": "0b46d26c74a3a975af0e12a0a44bfe5e0b33efd3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4b4ff7e9_57d3cac7",
+        "filename": "src/libc/stdlib.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 224,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-05-27T19:22:43Z",
+      "side": 1,
+      "message": "What i mean is that the comment about funciton itself should explain that is is not a prt of API, but a helper",
+      "parentUuid": "61ac1a90_60c01c56",
       "revId": "0b46d26c74a3a975af0e12a0a44bfe5e0b33efd3",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
@@ -83,6 +119,24 @@
       "side": 1,
       "message": "If the constant is only needed within this function and isn\u0027t part of the API, I see no reason why it can\u0027t be inside the function.",
       "parentUuid": "28f2bba2_008085d0",
+      "revId": "0b46d26c74a3a975af0e12a0a44bfe5e0b33efd3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "75aa77cb_aa23ac42",
+        "filename": "src/libc/stdlib.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 225,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-05-27T19:22:43Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "ed596ddc_4602b58e",
       "revId": "0b46d26c74a3a975af0e12a0a44bfe5e0b33efd3",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },

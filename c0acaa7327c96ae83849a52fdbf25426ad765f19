@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1622bcd5_5e389527",
+        "filename": "src/libc/stdlib.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 230,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-05-27T19:22:43Z",
+      "side": 1,
+      "message": "why do you need to do `as u32 as u64` here?",
+      "revId": "c0acaa7327c96ae83849a52fdbf25426ad765f19",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

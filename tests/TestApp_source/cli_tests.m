@@ -5991,7 +5991,7 @@ int test_NSNotificationCenter_addObserver_nilName_removeObserver() {
 int test_malloc_zone_basic() {
   malloc_zone_t *zone = malloc_create_zone(0, 0);
   unsigned char *p = malloc_zone_malloc(zone, 128);
-  if (malloc_zone_size(zone, p) != 128) {
+  if (zone->size(zone, p) != 128) {
     return -1;
   }
 

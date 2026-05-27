@@ -155,6 +155,8 @@ fn malloc_zone_size(
     with_zone(env, zone, |mem, heap| mem.malloc_size_in_heap(heap, ptr))
 }
 
+/// Not a part of the API. However as such a function needs to be accessible in
+/// the zone struct, it has to be exported.
 fn malloc_set_zone_name(env: &mut Environment, zone: MutPtr<malloc_zone_t>, name: ConstPtr<u8>) {
     let name = strdup(env, name).cast_const();
     let mut zone_data = env.mem.read(zone);

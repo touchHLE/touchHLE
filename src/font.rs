@@ -20,6 +20,7 @@ use std::io::Read;
 
 pub struct Font {
     font: rusttype::Font<'static>,
+    scale_factor: f32,
 }
 
 pub enum TextAlignment {
@@ -32,13 +33,6 @@ pub enum TextAlignment {
 pub enum WrapMode {
     Word,
     Char,
-}
-
-fn scale(font_size: f32) -> Scale {
-    // iPhone OS's interpretation of font size is slightly different, reason
-    // unknown. This is not the same as the Windows pt vs Mac pt issue.
-    // This scale factor has been eyeball'd, it's not exact.
-    Scale::uniform(font_size * 1.125)
 }
 
 /// Helper for [Font::draw], used for the `draw_glyph` callback.
@@ -68,6 +62,14 @@ impl RasterGlyph<'_> {
 }
 
 impl Font {
+    fn scale(&self, font_size: f32) -> Scale {
+        Scale::uniform(font_size * self.scale_factor)
+    }
+
+    fn v_metrics_scaled(&self, font_size: f32) -> rusttype::VMetrics {
+        self.font.v_metrics(self.scale(font_size))
+    }
+
     pub fn glyph_id_for_char(&self, c: u16) -> GlyphId {
         self.font.glyph(char::from_u32(c as u32).unwrap()).id()
     }
@@ -87,7 +89,14 @@ impl Font {
             panic!("Couldn't parse bundled font file {path:?}. This probably means the file is corrupt. Try re-downloading it.");
         };
 
-        Font { font }
+        Font {
+            font,
+            // TODO: Make this a lookup based on the actual font
+            // iPhone OS's interpretation of font size is slightly different,
+            // when substituting Helvetica with our Liberation font.
+            // This scale factor has been eyeball'd, it's not exact.
+            scale_factor: 1.125,
+        }
     }
 
     pub fn from_vec(bytes: Vec<u8>) -> Font {
@@ -95,7 +104,10 @@ impl Font {
             panic!("Couldn't parse font bytes.");
         };
 
-        Font { font }
+        Font {
+            font,
+            scale_factor: 1.0, // No scale factor
+        }
     }
 
     pub fn mono_regular() -> Font {
@@ -156,16 +168,16 @@ impl Font {
     }
 
     pub fn ascent(&self, font_size: f32) -> f32 {
-        let v_metrics = self.font.v_metrics(scale(font_size));
+        let v_metrics = self.v_metrics_scaled(font_size);
         v_metrics.ascent
     }
     pub fn descent(&self, font_size: f32) -> f32 {
-        let v_metrics = self.font.v_metrics(scale(font_size));
+        let v_metrics = self.v_metrics_scaled(font_size);
         v_metrics.descent
     }
 
     pub fn line_gap(&self, font_size: f32) -> f32 {
-        let v_metrics = self.font.v_metrics(scale(font_size));
+        let v_metrics = self.v_metrics_scaled(font_size);
         v_metrics.line_gap
     }
 
@@ -191,7 +203,7 @@ impl Font {
     }
 
     fn line_height_and_gap(&self, font_size: f32) -> (f32, f32) {
-        let v_metrics = self.font.v_metrics(scale(font_size));
+        let v_metrics = self.v_metrics_scaled(font_size);
         (v_metrics.ascent - v_metrics.descent, v_metrics.line_gap)
     }
 
@@ -200,7 +212,10 @@ impl Font {
         let mut line_x_min: f32 = 0.0;
         let mut line_x_max: f32 = 0.0;
 
-        for glyph in self.font.layout(line, scale(font_size), Default::default()) {
+        for glyph in self
+            .font
+            .layout(line, self.scale(font_size), Default::default())
+        {
             let position = glyph.position();
             let h_metrics = glyph.unpositioned().h_metrics();
 
@@ -378,7 +393,7 @@ impl Font {
 
         let lines = self.break_lines(font_size, text, wrap);
 
-        let mut line_y = self.font.v_metrics(scale(font_size)).ascent;
+        let mut line_y = self.v_metrics_scaled(font_size).ascent;
         let (line_height, line_gap) = self.line_height_and_gap(font_size);
 
         // RustType requires a "draw pixel" callback that will be called for
@@ -401,7 +416,7 @@ impl Font {
             };
             for glyph in self.font.layout(
                 line_text,
-                scale(font_size),
+                self.scale(font_size),
                 Point {
                     x: origin.0 + line_x_offset,
                     y: 0.0,
@@ -479,9 +494,9 @@ impl Font {
             .font
             .glyphs_for(glyphs.into_iter())
             .scan((None, 0.0), |(last, x), g| {
-                let g = g.scaled(scale(font_size));
+                let g = g.scaled(self.scale(font_size));
                 if let Some(last) = last {
-                    *x += self.font.pair_kerning(scale(font_size), *last, g.id());
+                    *x += self.font.pair_kerning(self.scale(font_size), *last, g.id());
                 }
                 let w = g.h_metrics().advance_width;
                 let next = g.positioned(start + vector(*x, 0.0));

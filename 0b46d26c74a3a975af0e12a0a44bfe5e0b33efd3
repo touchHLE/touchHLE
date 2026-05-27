@@ -71,6 +71,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "ed596ddc_4602b58e",
+        "filename": "src/libc/stdlib.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 225,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-05-27T00:04:19Z",
+      "side": 1,
+      "message": "If the constant is only needed within this function and isn\u0027t part of the API, I see no reason why it can\u0027t be inside the function.",
+      "parentUuid": "28f2bba2_008085d0",
+      "revId": "0b46d26c74a3a975af0e12a0a44bfe5e0b33efd3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "2c5b7a50_fc435835",
         "filename": "src/libc/stdlib.rs",
         "patchSetId": 1

@@ -3,6 +3,23 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "7c7f8659_63e768bf",
+        "filename": "src/gles/gles1_native.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 402,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-05-27T00:32:27Z",
+      "side": 1,
+      "message": "Why has this been stubbed, there\u0027s a real implementation you could use…",
+      "revId": "c8d4d518cd0a6c7bcac18928dbbb5d5ed2a3c8d3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "e93cb674_b56f005b",
         "filename": "src/gles/gles1_on_gl2.rs",
         "patchSetId": 1

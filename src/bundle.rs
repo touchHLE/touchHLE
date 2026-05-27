@@ -156,7 +156,27 @@ impl Bundle {
     }
 
     fn icon_path(&self) -> GuestPathBuf {
-        if let Some(filename) = self.plist.get("CFBundleIconFile") {
+        if let Some(filename) = self
+            .plist
+            .get("CFBundleIconFiles")
+            .and_then(|v| v.as_array())
+            .and_then(|a| {
+                // List created using icon sizes listed here
+                // https://developer.apple.com/library/archive/qa/qa1686/_index.html
+                // Prefer high quality icons or just get the first one
+                ["72@2x", "@2x", "72"]
+                    .iter()
+                    .find_map(|pref| {
+                        a.iter().find(|v| {
+                            v.as_string().is_some_and(|s| {
+                                s.to_lowercase().trim_end_matches(".png").ends_with(*pref)
+                            })
+                        })
+                    })
+                    .or_else(|| a.first())
+            })
+            .or_else(|| self.plist.get("CFBundleIconFile"))
+        {
             if filename
                 .as_string()
                 .unwrap()

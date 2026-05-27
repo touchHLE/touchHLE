@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e93cb674_b56f005b",
+        "filename": "src/gles/gles1_on_gl2.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 1322,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-05-27T00:31:39Z",
+      "side": 1,
+      "message": "This is very unsafe, the pointer might not be a pointer and instead might be an offset depending on the array buffer binding state. You should look at how we do at-draw-call-time translation for the other arrays. Doing this at call time would also be wise because otherwise you\u0027ve removed the ability for the point size to change between draws and for disabling and enabling the point size array to do anything.",
+      "revId": "c8d4d518cd0a6c7bcac18928dbbb5d5ed2a3c8d3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

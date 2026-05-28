@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "91227305_db7a420d",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 12
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2026-05-28T19:47:22Z",
+      "side": 1,
+      "message": "So after taking the time to fully read through https://developer.apple.com/library/archive/qa/qa1686/_index.html, I made some changes.\n\nFirst. it mentions Important: When specifying the name of each image, it is best to omit any extensions. Omitting the extension lets the system automatically detect high-resolution (@2x or @3x) variants of the image using the standard-resolution image filename. If you include extensions, you must specify all image files (including the high-resolution variants) explicitly.\n\nSo, relying on .png when trying to find the icon in the arrays is bad.\n\nSecond, I made this code compliant through iOS 6.1 officially, by using the CFBundleIcons key as well.",
+      "revId": "9e3177c100ca5b0750fe30d0741743e071a83814",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

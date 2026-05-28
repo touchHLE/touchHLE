@@ -16,6 +16,24 @@
       "message": "The suffix-checking code hasn\u0027t been removed, and there\u0027s no reason this logic should be case-insensitive; iOS has a case-sensitive filesystem.",
       "revId": "8a0470b14467d19e9a679ac710bdadafc2bd6dd2",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "cbda5f46_04347d39",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 9
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2026-05-28T18:45:47Z",
+      "side": 1,
+      "message": "Sorry, I was still trying to be a little bit loose on the match, but if you want it to be specific Icon.png and Icon-72.png, you got it! I also made a small change to call the parsed array icon_files to the code is a little easier to read.",
+      "parentUuid": "f5a28c42_35b74bbf",
+      "revId": "8a0470b14467d19e9a679ac710bdadafc2bd6dd2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

@@ -16,6 +16,24 @@
       "message": "We don\u0027t support anything newer than iOS 4, do we really need to support iOS 5\u0027s way?",
       "revId": "c8b38e0dc8f8b82f395579e2cf5012c5545860f3",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "fa6f26a8_c934b8f0",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 14
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2026-05-28T20:30:33Z",
+      "side": 1,
+      "message": "It was really just a few lines of code... but it\u0027s your call, so no iOS 5 way support yet.  Removed it.  Left the find_icon helper though.",
+      "parentUuid": "d244bd61_04a06fab",
+      "revId": "c8b38e0dc8f8b82f395579e2cf5012c5545860f3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

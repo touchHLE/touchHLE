@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f5a28c42_35b74bbf",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 9
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-05-28T18:00:55Z",
+      "side": 1,
+      "message": "The suffix-checking code hasn\u0027t been removed, and there\u0027s no reason this logic should be case-insensitive; iOS has a case-sensitive filesystem.",
+      "revId": "8a0470b14467d19e9a679ac710bdadafc2bd6dd2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

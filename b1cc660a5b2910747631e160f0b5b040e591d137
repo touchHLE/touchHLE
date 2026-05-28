@@ -34,6 +34,24 @@
       "parentUuid": "a60fbf07_46bc2d5f",
       "revId": "b1cc660a5b2910747631e160f0b5b040e591d137",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2e48b0e5_8e4bb503",
+        "filename": "src/bundle.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 167,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2026-05-28T00:37:02Z",
+      "side": 1,
+      "message": "Also, just to clarify, all the apps I looked at did include the suffixes in the list. They refer to an actual file name (maybe not including the png as was already corrected in this function)",
+      "parentUuid": "a448f0bb_a74f86b5",
+      "revId": "b1cc660a5b2910747631e160f0b5b040e591d137",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

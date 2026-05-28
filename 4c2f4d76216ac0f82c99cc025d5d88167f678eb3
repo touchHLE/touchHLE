@@ -16,6 +16,24 @@
       "message": "Is it an idiomatic way to compare floats in Rust?",
       "revId": "4c2f4d76216ac0f82c99cc025d5d88167f678eb3",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "198e30be_a9544014",
+        "filename": "src/frameworks/core_audio_types.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 45,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2026-05-28T23:31:18Z",
+      "side": 1,
+      "message": "In general it\u0027s a better way to compare floats. If an application uses some math to reach a specific sample rate, it can cause strict equality to fail.",
+      "parentUuid": "1976f1e0_7e9f7f98",
+      "revId": "4c2f4d76216ac0f82c99cc025d5d88167f678eb3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

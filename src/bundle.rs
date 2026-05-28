@@ -227,10 +227,20 @@ impl Bundle {
         // UIPrerenderedIcon is used to avoid iOS applying a sheen effect,
         // should be boolean, but some apps use a string, so we check both.
         // See https://developer.apple.com/library/archive/qa/qa1614/_index.html
+        // In iOS 5+ this key moved under CFBundleIcons -> CFBundlePrimaryIcon;
+        // we check the pre-iOS-5 top-level key first, then the new location.
         // Default if it does not exist is NO/false.
         let add_sheen = !self
             .plist
             .get("UIPrerenderedIcon")
+            .or_else(|| {
+                self.plist
+                    .get("CFBundleIcons")
+                    .and_then(|v| v.as_dictionary())
+                    .and_then(|d| d.get("CFBundlePrimaryIcon"))
+                    .and_then(|v| v.as_dictionary())
+                    .and_then(|d| d.get("UIPrerenderedIcon"))
+            })
             .and_then(|v| v.as_boolean().or(v.as_string().map(|s| s == "YES")))
             .unwrap_or(false);
         // iPhone OS icons are 57px by 57px and the OS always applies a

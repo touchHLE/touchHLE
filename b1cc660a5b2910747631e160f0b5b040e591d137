@@ -70,6 +70,24 @@
       "parentUuid": "2e48b0e5_8e4bb503",
       "revId": "b1cc660a5b2910747631e160f0b5b040e591d137",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "4c163b03_a909005e",
+        "filename": "src/bundle.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 167,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2026-05-28T01:17:39Z",
+      "side": 1,
+      "message": "In the code it\u0027s 72@2x, 2x, 72 which is the correct order, I just typed it wrong here.",
+      "parentUuid": "e5eea16c_0ab9124e",
+      "revId": "b1cc660a5b2910747631e160f0b5b040e591d137",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

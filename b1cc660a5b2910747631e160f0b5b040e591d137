@@ -16,6 +16,24 @@
       "message": "I looked at that page…\n\n- It seems like on iOS 6.1 and earlier, the 57px (iPhone) and 72px (iPad) home screen icons are the only ones that are required. I would suggest that we only bother checking for those.\n\n- I don\u0027t know if these @2x/@3x suffixes will actually appear in the list? They only appear in the actual filenames on disk.\n\n- Are you sure these are actually suffixes that can be matched against, and are you sure they don\u0027t need a dash in front of them?",
       "revId": "b1cc660a5b2910747631e160f0b5b040e591d137",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a448f0bb_a74f86b5",
+        "filename": "src/bundle.rs",
+        "patchSetId": 3
+      },
+      "lineNbr": 167,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2026-05-28T00:23:53Z",
+      "side": 1,
+      "message": "- So, right, I mentioned the @3x thing in the other comment thread. Could remove the ones above iOS 6.1 if you want me too, I agree we really don\u0027t care but figured it does not really add much to the list so included them.\n- I checked a few apps and this definitely seems to be correct.  The dash is not needed since it\u0027s checking the end right before the .png, and I\u0027m not sure all developers would even have it and we might miss a good icon.  Case in point Micheal Jackson: The Experience only has one icon in CFBundleIconFiles called MJ_icon_57.png",
+      "parentUuid": "a60fbf07_46bc2d5f",
+      "revId": "b1cc660a5b2910747631e160f0b5b040e591d137",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

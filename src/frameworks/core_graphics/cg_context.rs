@@ -323,6 +323,13 @@ fn CGContextSetShouldSmoothFonts(_env: &mut Environment, context: CGContextRef, 
     );
 }
 
+fn CGContextSetAlpha(_env: &mut Environment, context: CGContextRef, alpha: CGFloat) {
+    // Since 1.0 is the default value for alpha, we can just ignore it
+    if alpha != 1.0 {
+        log!("TODO: CGContextSetAlpha({:?}, {:?})", context, alpha);
+    }
+}
+
 fn CGContextSetFont(env: &mut Environment, context: CGContextRef, font: CGFontRef) {
     CGFontRetain(env, font);
     let old_font = env.objc.borrow_mut::<CGContextHostObject>(context).font;
@@ -453,6 +460,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGContextSetInterpolationQuality(_, _)),
     export_c_func!(CGContextSetAllowsAntialiasing(_, _)),
     export_c_func!(CGContextSetShouldSmoothFonts(_, _)),
+    export_c_func!(CGContextSetAlpha(_, _)),
     export_c_func!(CGContextSetFont(_, _)),
     export_c_func!(CGContextSetFontSize(_, _)),
     export_c_func!(CGContextSetTextDrawingMode(_, _)),

@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "4012e158_95c71c73",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1039550
+      },
+      "writtenOn": "2026-05-30T01:09:53Z",
+      "side": 1,
+      "message": "Tested using:\n\ncom.nabilchatbi.Ricky -\u003e version v2.0.1",
+      "revId": "2aea5b12d4d9c5d72107e049ced93295aaa3ad95",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

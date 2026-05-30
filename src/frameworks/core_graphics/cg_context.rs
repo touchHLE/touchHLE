@@ -238,6 +238,18 @@ pub fn CGContextGetCTM(env: &mut Environment, context: CGContextRef) -> CGAffine
     log_dbg!("CGContextGetCTM() => {:?}", res);
     res
 }
+pub fn CGContextGetUserSpaceToDeviceSpaceTransform(
+    env: &mut Environment,
+    context: CGContextRef,
+) -> CGAffineTransform {
+    let ctm = CGContextGetCTM(env, context);
+    let host_obj = env.objc.borrow::<CGContextHostObject>(context);
+    match &host_obj.subclass {
+        CGContextSubclass::CGBitmapContext(_) => CGAffineTransform::make_scale(1.0, -1.0)
+            .translate(0.0, CGBitmapContextGetHeight(env, context) as CGFloat)
+            .concat(ctm),
+    }
+}
 pub fn CGContextRotateCTM(env: &mut Environment, context: CGContextRef, angle: CGFloat) {
     log_dbg!("CGContextRotateCTM({:?})", angle);
     let host_obj = env.objc.borrow_mut::<CGContextHostObject>(context);
@@ -451,6 +463,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGContextClipToRect(_, _)),
     export_c_func!(CGContextConcatCTM(_, _)),
     export_c_func!(CGContextGetCTM(_)),
+    export_c_func!(CGContextGetUserSpaceToDeviceSpaceTransform(_)),
     export_c_func!(CGContextRotateCTM(_, _)),
     export_c_func!(CGContextScaleCTM(_, _, _)),
     export_c_func!(CGContextTranslateCTM(_, _, _)),

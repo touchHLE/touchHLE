@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "523408c0_25c6f0e1",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2026-05-30T06:08:31Z",
+      "side": 1,
+      "message": "Take a look at https://review.gerrithub.io/c/touchHLE/touchHLE/+/1230837 as it fully implements UIBarItem/UIBarButtonItem and UIToolbar",
+      "revId": "7189fcaba1191d1c6a6fd9e58e34a82588958d5c",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

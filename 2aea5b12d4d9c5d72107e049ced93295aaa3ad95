@@ -16,6 +16,23 @@
       "message": "Tested using:\n\ncom.nabilchatbi.Ricky -\u003e version v2.0.1",
       "revId": "2aea5b12d4d9c5d72107e049ced93295aaa3ad95",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "22236677_7ab4a37f",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2026-05-30T06:05:10Z",
+      "side": 1,
+      "message": "Nice commit, I used this as a basis to correct the UIBarItem: NSOBject, UIBarButtonItem: UIBarItem struture in https://review.gerrithub.io/c/touchHLE/touchHLE/+/1230837 with a couple of changes, like UIBarButtonItem should actually still not be in ui_view folder.\nTry using that commit in your game instead as it should properly implement the UIToolbar completely rather than just be a stub",
+      "revId": "2aea5b12d4d9c5d72107e049ced93295aaa3ad95",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

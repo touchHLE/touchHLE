@@ -34,11 +34,67 @@ pub type CGBlendMode = i32;
 pub const kCGBlendModeNormal: CGBlendMode = 0;
 pub const kCGBlendModeMultiply: CGBlendMode = 1;
 pub const kCGBlendModeScreen: CGBlendMode = 2;
-#[allow(unused)]
 pub const kCGBlendModeOverlay: CGBlendMode = 3;
 pub const kCGBlendModeDarken: CGBlendMode = 4;
 pub const kCGBlendModeLighten: CGBlendMode = 5;
+pub const kCGBlendModeColorDodge: CGBlendMode = 6;
+pub const kCGBlendModeColorBurn: CGBlendMode = 7;
+pub const kCGBlendModeSoftLight: CGBlendMode = 8;
+pub const kCGBlendModeHardLight: CGBlendMode = 9;
+pub const kCGBlendModeDifference: CGBlendMode = 10;
+pub const kCGBlendModeExclusion: CGBlendMode = 11;
+pub const kCGBlendModeHue: CGBlendMode = 12;
+pub const kCGBlendModeSaturation: CGBlendMode = 13;
+pub const kCGBlendModeColor: CGBlendMode = 14;
+pub const kCGBlendModeLuminosity: CGBlendMode = 15;
+pub const kCGBlendModeClear: CGBlendMode = 16;
 pub const kCGBlendModeCopy: CGBlendMode = 17;
+pub const kCGBlendModeSourceIn: CGBlendMode = 18;
+pub const kCGBlendModeSourceOut: CGBlendMode = 19;
+pub const kCGBlendModeSourceAtop: CGBlendMode = 20;
+pub const kCGBlendModeDestinationOver: CGBlendMode = 21;
+pub const kCGBlendModeDestinationIn: CGBlendMode = 22;
+pub const kCGBlendModeDestinationOut: CGBlendMode = 23;
+pub const kCGBlendModeDestinationAtop: CGBlendMode = 24;
+pub const kCGBlendModeXOR: CGBlendMode = 25;
+pub const kCGBlendModePlusDarker: CGBlendMode = 26;
+pub const kCGBlendModePlusLighter: CGBlendMode = 27;
+
+// Helper function for logging blend modes
+// It also allowes us to define blend mode conststs we are not using yet!
+pub(super) fn blend_mode_name(mode: CGBlendMode) -> &'static str {
+    match mode {
+        kCGBlendModeNormal => "Normal",
+        kCGBlendModeMultiply => "Multiply",
+        kCGBlendModeScreen => "Screen",
+        kCGBlendModeOverlay => "Overlay",
+        kCGBlendModeDarken => "Darken",
+        kCGBlendModeLighten => "Lighten",
+        kCGBlendModeColorDodge => "ColorDodge",
+        kCGBlendModeColorBurn => "ColorBurn",
+        kCGBlendModeSoftLight => "SoftLight",
+        kCGBlendModeHardLight => "HardLight",
+        kCGBlendModeDifference => "Difference",
+        kCGBlendModeExclusion => "Exclusion",
+        kCGBlendModeHue => "Hue",
+        kCGBlendModeSaturation => "Saturation",
+        kCGBlendModeColor => "Color",
+        kCGBlendModeLuminosity => "Luminosity",
+        kCGBlendModeClear => "Clear",
+        kCGBlendModeCopy => "Copy",
+        kCGBlendModeSourceIn => "SourceIn",
+        kCGBlendModeSourceOut => "SourceOut",
+        kCGBlendModeSourceAtop => "SourceAtop",
+        kCGBlendModeDestinationOver => "DestinationOver",
+        kCGBlendModeDestinationIn => "DestinationIn",
+        kCGBlendModeDestinationOut => "DestinationOut",
+        kCGBlendModeDestinationAtop => "DestinationAtop",
+        kCGBlendModeXOR => "XOR",
+        kCGBlendModePlusDarker => "PlusDarker",
+        kCGBlendModePlusLighter => "PlusLighter",
+        _ => "Unknown",
+    }
+}
 
 pub const CLASSES: ClassExports = objc_classes! {
 

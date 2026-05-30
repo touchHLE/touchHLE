@@ -10,9 +10,9 @@ use super::cg_color_space::{
     kCGColorSpaceGenericGray, kCGColorSpaceGenericRGB, CGColorSpaceHostObject, CGColorSpaceRef,
 };
 use super::cg_context::{
-    kCGBlendModeCopy, kCGBlendModeDarken, kCGBlendModeLighten, kCGBlendModeMultiply,
-    kCGBlendModeNormal, kCGBlendModeScreen, CGBlendMode, CGContextHostObject, CGContextRef,
-    CGContextSubclass,
+    blend_mode_name, kCGBlendModeCopy, kCGBlendModeDarken, kCGBlendModeLighten, kCGBlendModeMultiply,
+    kCGBlendModeNormal, kCGBlendModeScreen, kCGBlendModeSourceIn, kCGBlendModeSourceOut,
+    CGBlendMode, CGContextHostObject, CGContextRef, CGContextSubclass,
 };
 use super::cg_image::{
     self, kCGBitmapAlphaInfoMask, kCGBitmapByteOrderMask, kCGImageAlphaFirst, kCGImageAlphaLast,
@@ -248,38 +248,80 @@ fn blend_premultiplied(
     fg: (f32, f32, f32, f32),
     blend_mode: CGBlendMode,
 ) -> (f32, f32, f32, f32) {
-    if blend_mode == kCGBlendModeCopy {
-        return fg;
-    }
-    // Blend
-    let blend_res = match blend_mode {
-        kCGBlendModeNormal => (bg.3 * fg.0, bg.3 * fg.1, bg.3 * fg.2),
-        kCGBlendModeMultiply => (bg.0 * fg.0, bg.1 * fg.1, bg.2 * fg.2),
-        kCGBlendModeScreen => (
-            fg.3 * bg.0 + bg.3 * fg.0 - bg.0 * fg.0,
-            fg.3 * bg.1 + bg.3 * fg.1 - bg.1 * fg.1,
-            fg.3 * bg.2 + bg.3 * fg.2 - bg.2 * fg.2,
-        ),
-        kCGBlendModeDarken => (
-            (fg.3 * bg.0).min(bg.3 * fg.0),
-            (fg.3 * bg.1).min(bg.3 * fg.1),
-            (fg.3 * bg.2).min(bg.3 * fg.2),
-        ),
-        kCGBlendModeLighten => (
-            (fg.3 * bg.0).max(bg.3 * fg.0),
-            (fg.3 * bg.1).max(bg.3 * fg.1),
-            (fg.3 * bg.2).max(bg.3 * fg.2),
-        ),
-        _ => unimplemented!("blend mode {}", blend_mode),
-    };
-    // Compose
     let neg_bg_a = 1.0 - bg.3;
     let neg_fg_a = 1.0 - fg.3;
+    let standard_alpha = fg.3 + bg.3 * neg_fg_a;
+
+     if blend_mode == kCGBlendModeCopy {
+        return fg;
+    }
+    
+    // Blend
+    let (blend_res, keep_fg_out, keep_bg_out, new_a) = match blend_mode {
+        kCGBlendModeNormal => (
+            (bg.3 * fg.0, bg.3 * fg.1, bg.3 * fg.2),
+            true,
+            true,
+            standard_alpha,
+        ),
+        kCGBlendModeMultiply => (
+            (bg.0 * fg.0, bg.1 * fg.1, bg.2 * fg.2),
+            true,
+            true,
+            standard_alpha,
+        ),
+        kCGBlendModeScreen => (
+            (
+                fg.3 * bg.0 + bg.3 * fg.0 - bg.0 * fg.0,
+                fg.3 * bg.1 + bg.3 * fg.1 - bg.1 * fg.1,
+                fg.3 * bg.2 + bg.3 * fg.2 - bg.2 * fg.2,
+            ),
+            true,
+            true,
+            standard_alpha,
+        ),
+        kCGBlendModeDarken => (
+            (
+                (fg.3 * bg.0).min(bg.3 * fg.0),
+                (fg.3 * bg.1).min(bg.3 * fg.1),
+                (fg.3 * bg.2).min(bg.3 * fg.2),
+            ),
+            true,
+            true,
+            standard_alpha,
+        ),
+        kCGBlendModeLighten => (
+            (
+                (fg.3 * bg.0).max(bg.3 * fg.0),
+                (fg.3 * bg.1).max(bg.3 * fg.1),
+                (fg.3 * bg.2).max(bg.3 * fg.2),
+            ),
+            true,
+            true,
+            standard_alpha,
+        ),
+        kCGBlendModeSourceIn => (
+            (bg.3 * fg.0, bg.3 * fg.1, bg.3 * fg.2),
+            false,
+            false,
+            fg.3 * bg.3,
+        ),
+        kCGBlendModeSourceOut => ((0.0, 0.0, 0.0), true, false, fg.3 * neg_bg_a),
+        _ => unimplemented!(
+            "blend mode {} / {}",
+            blend_mode,
+            blend_mode_name(blend_mode)
+        ),
+    };
+
+    // Compose
+    let fg_out = if keep_fg_out { neg_bg_a } else { 0.0 };
+    let bg_out = if keep_bg_out { neg_fg_a } else { 0.0 };
     (
-        fg.0 * neg_bg_a + blend_res.0 + bg.0 * neg_fg_a,
-        fg.1 * neg_bg_a + blend_res.1 + bg.1 * neg_fg_a,
-        fg.2 * neg_bg_a + blend_res.2 + bg.2 * neg_fg_a,
-        fg.3 + bg.3 * neg_fg_a,
+        fg.0 * fg_out + blend_res.0 + bg.0 * bg_out,
+        fg.1 * fg_out + blend_res.1 + bg.1 * bg_out,
+        fg.2 * fg_out + blend_res.2 + bg.2 * bg_out,
+        new_a,
     )
 }
 

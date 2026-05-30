@@ -9,6 +9,7 @@
 //! - Apple's [View Programming Guide for iOS](https://developer.apple.com/library/archive/documentation/WindowsViews/Conceptual/ViewPG_iPhoneOS/Introduction/Introduction.html)
 
 pub mod ui_alert_view;
+pub mod ui_bar_button_item;
 pub mod ui_control;
 pub mod ui_image_view;
 pub mod ui_label;

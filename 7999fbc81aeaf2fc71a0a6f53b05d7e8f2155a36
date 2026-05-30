@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "340c582a_a918f437",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 16
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2026-05-30T17:49:44Z",
+      "side": 1,
+      "message": "The reason to only add SourceIn and SourceOut is that DOA Blackjack uses them and I tested this code with it.\n\nPrevious versions of this commit/patch implemented other blend modes as well, but decided to simplify it for just the ones used by this app and what was already implemented with the initial CGContextSetBlendMode function for now so I am not adding anything I am not able to directly test for correctness/completeness.",
+      "revId": "7999fbc81aeaf2fc71a0a6f53b05d7e8f2155a36",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

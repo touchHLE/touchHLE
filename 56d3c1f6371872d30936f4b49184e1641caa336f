@@ -102,6 +102,23 @@
       "message": "Same thing here, we do not use Rust `enum`s for C `enum`s, please rewrite this.",
       "revId": "56d3c1f6371872d30936f4b49184e1641caa336f",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a0784f5c_09312307",
+        "filename": "src/frameworks/uikit/ui_view/ui_toolbar.rs",
+        "patchSetId": 16
+      },
+      "lineNbr": 30,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-05-31T11:24:59Z",
+      "side": 1,
+      "message": "Silently rewriting unexpected values inside `GuestArg` and `GuestRet` is horrible, please never do that.",
+      "revId": "56d3c1f6371872d30936f4b49184e1641caa336f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

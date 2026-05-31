@@ -628,6 +628,15 @@ impl Fs {
                 // symlink
                 "libz.1.1.3.dylib",
                 FsNode::resource_file(format!("{DYLIBS_DIR}/libz.1.2.3.dylib")),
+            )
+            .with_child(
+                "libsqlite3.dylib",
+                FsNode::resource_file(format!("{DYLIBS_DIR}/libsqlite3.dylib")),
+            )
+            .with_child(
+                // symlink
+                "libsqlite3.0.dylib",
+                FsNode::resource_file(format!("{DYLIBS_DIR}/libsqlite3.dylib")),
             );
 
         let mut app_dir_children = HashMap::new();

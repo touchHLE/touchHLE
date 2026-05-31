@@ -55,6 +55,23 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "5273c671_4d84b434",
+        "filename": "src/frameworks/uikit/ui_bar_button_item.rs",
+        "patchSetId": 16
+      },
+      "lineNbr": 199,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-05-31T11:34:00Z",
+      "side": 1,
+      "message": "Shouldn\u0027t this be an `Option`? Most `UIBarButtonItem`s won\u0027t have any `UIBarSystemItem`, right?",
+      "revId": "56d3c1f6371872d30936f4b49184e1641caa336f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "f866b50c_9e641056",
         "filename": "src/frameworks/uikit/ui_bar_button_item.rs",
         "patchSetId": 16
@@ -83,6 +100,23 @@
       "writtenOn": "2026-05-31T11:17:11Z",
       "side": 1,
       "message": "ditto",
+      "revId": "56d3c1f6371872d30936f4b49184e1641caa336f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "89b8f867_8db79154",
+        "filename": "src/frameworks/uikit/ui_bar_button_item.rs",
+        "patchSetId": 16
+      },
+      "lineNbr": 302,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-05-31T11:34:00Z",
+      "side": 1,
+      "message": "I don\u0027t see any attempt here to handle the icons, which is the whole point of `UIBarButtonSystemItem`, nor is there any kind of acknowledgment that the support is missing? Frankly, I would be more comfortable leaving the unsupported system items as `unimplemented!()`… They won\u0027t even show up with the right names, as you\u0027re just using enum member names.",
       "revId": "56d3c1f6371872d30936f4b49184e1641caa336f",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },

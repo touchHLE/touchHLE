@@ -38,6 +38,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "b555ae90_d1bed599",
+        "filename": "src/frameworks/uikit.rs",
+        "patchSetId": 16
+      },
+      "lineNbr": 18,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2026-05-31T15:44:31Z",
+      "side": 1,
+      "message": "There is UITabBarItem too.",
+      "parentUuid": "77a7ab67_afcc4260",
+      "revId": "56d3c1f6371872d30936f4b49184e1641caa336f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "56eecdfe_70ef6564",
         "filename": "src/frameworks/uikit/ui_bar_button_item.rs",
         "patchSetId": 16
@@ -83,6 +101,24 @@
       "writtenOn": "2026-05-31T11:17:11Z",
       "side": 1,
       "message": "Why is it called zero?",
+      "revId": "56d3c1f6371872d30936f4b49184e1641caa336f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b321c9b8_a6a351b1",
+        "filename": "src/frameworks/uikit/ui_bar_button_item.rs",
+        "patchSetId": 16
+      },
+      "lineNbr": 211,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2026-05-31T15:44:31Z",
+      "side": 1,
+      "message": "Because it’s a frame that starts at zero and has a zero width that label will resize based on actual text width and also re-position in the toolbar. What is your suggestion for a better name?",
+      "parentUuid": "f866b50c_9e641056",
       "revId": "56d3c1f6371872d30936f4b49184e1641caa336f",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },

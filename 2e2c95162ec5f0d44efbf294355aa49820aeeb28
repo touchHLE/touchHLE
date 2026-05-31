@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0128b1c0_9a903fc0",
+        "filename": "src/frameworks/foundation/ns_scanner.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 97,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2026-05-31T02:36:02Z",
+      "side": 1,
+      "message": "Nit: Can you put a : after TODO?",
+      "range": {
+        "startLine": 97,
+        "startChar": 33,
+        "endLine": 97,
+        "endChar": 38
+      },
+      "revId": "2e2c95162ec5f0d44efbf294355aa49820aeeb28",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

@@ -33,6 +33,24 @@
       "message": "Nice commit, I used this as a basis to correct the UIBarItem: NSOBject, UIBarButtonItem: UIBarItem struture in https://review.gerrithub.io/c/touchHLE/touchHLE/+/1230837 with a couple of changes, like UIBarButtonItem should actually still not be in ui_view folder.\nTry using that commit in your game instead as it should properly implement the UIToolbar completely rather than just be a stub",
       "revId": "2aea5b12d4d9c5d72107e049ced93295aaa3ad95",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "41c7d304_a8229892",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1039550
+      },
+      "writtenOn": "2026-05-31T04:07:09Z",
+      "side": 1,
+      "message": "Hi @apexad@icloud.com, thanks for taking a look!\n\nI tested the game with your commit. After adding a stub for the \u0027initWithCustomView()custom_view\u0027 function locally based off your commit the game goes from crashing at the title screen to having the game being playable! Nice work!\n\nI\u0027ll go ahead and close my changes since they overlap with yours",
+      "parentUuid": "22236677_7ab4a37f",
+      "revId": "2aea5b12d4d9c5d72107e049ced93295aaa3ad95",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ],
   "submitRequirementResults": [

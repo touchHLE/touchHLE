@@ -88,7 +88,7 @@ pub fn decode_symphonia_to_pcm(file: Cursor<Vec<u8>>) -> Result<SymphoniaDecoded
                 Err(_) => return Err(()),
             };
 
-            if packet.track_id() != track_id {
+            if packet.track_id != track_id {
                 continue;
             }
             let Ok(decoded_packet) = decoder.decode(&packet) else {

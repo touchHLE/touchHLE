@@ -46,12 +46,12 @@ rusttype = "0.9.3"
 # Needed so we can access underlying OwnedFace from rusttype
 # (bump version if rusttype is updated!)
 owned_ttf_parser = "0.15.2"
-# While most Symphonia codecs are (likely) unpatented/have freely licenseable 
-# patents as of 2024, all of the AAC profiles except AAC-LC (likely) have 
-# active patent claims. The "aac" feature only enables AAC-LC, so it's should 
+# While most Symphonia codecs are (likely) unpatented/have freely licenseable
+# patents as of 2024, all of the AAC profiles except AAC-LC (likely) have
+# active patent claims. The "aac" feature only enables AAC-LC, so it's should
 # be ok.
 # (The above statements should not understood as legal claims/advice.)
-symphonia = { version = "0.6.0-alpha.1", default-features = false, features = [
+symphonia = { version = "0.6.0", default-features = false, features = [
     # formats
     "caf", "isomp4", "wav",
     # codecs

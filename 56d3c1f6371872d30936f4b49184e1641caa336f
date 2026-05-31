@@ -54,6 +54,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "3e183370_8c364873",
+        "filename": "src/frameworks/uikit.rs",
+        "patchSetId": 16
+      },
+      "lineNbr": 18,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2026-05-31T22:34:20Z",
+      "side": 1,
+      "message": "Marked as resolved.",
+      "parentUuid": "b555ae90_d1bed599",
+      "revId": "56d3c1f6371872d30936f4b49184e1641caa336f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "56eecdfe_70ef6564",
@@ -71,6 +89,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "4f0dc931_977f91c4",
+        "filename": "src/frameworks/uikit/ui_bar_button_item.rs",
+        "patchSetId": 16
+      },
+      "lineNbr": 65,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2026-05-31T22:34:20Z",
+      "side": 1,
+      "message": "So, to my understanding the normal touchHLE convention is consts and matches? if that is wrong, please let me know what I should follow, but did it this way now.",
+      "parentUuid": "56eecdfe_70ef6564",
+      "revId": "56d3c1f6371872d30936f4b49184e1641caa336f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "5273c671_4d84b434",
@@ -84,6 +120,24 @@
       "writtenOn": "2026-05-31T11:34:00Z",
       "side": 1,
       "message": "Shouldn\u0027t this be an `Option`? Most `UIBarButtonItem`s won\u0027t have any `UIBarSystemItem`, right?",
+      "revId": "56d3c1f6371872d30936f4b49184e1641caa336f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "3288417d_e2ebca18",
+        "filename": "src/frameworks/uikit/ui_bar_button_item.rs",
+        "patchSetId": 16
+      },
+      "lineNbr": 199,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2026-05-31T22:34:20Z",
+      "side": 1,
+      "message": "Marked as resolved.",
+      "parentUuid": "5273c671_4d84b434",
       "revId": "56d3c1f6371872d30936f4b49184e1641caa336f",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
@@ -159,6 +213,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "193c4d6f_1692148c",
+        "filename": "src/frameworks/uikit/ui_bar_button_item.rs",
+        "patchSetId": 16
+      },
+      "lineNbr": 211,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2026-05-31T22:34:20Z",
+      "side": 1,
+      "message": "Changed to `init_frame`",
+      "parentUuid": "d461a887_0dbe3a4f",
+      "revId": "56d3c1f6371872d30936f4b49184e1641caa336f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "49b682ab_ea75891f",
@@ -172,6 +244,24 @@
       "writtenOn": "2026-05-31T11:17:11Z",
       "side": 1,
       "message": "ditto",
+      "revId": "56d3c1f6371872d30936f4b49184e1641caa336f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "a1bbedd5_6a089468",
+        "filename": "src/frameworks/uikit/ui_bar_button_item.rs",
+        "patchSetId": 16
+      },
+      "lineNbr": 231,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2026-05-31T22:34:20Z",
+      "side": 1,
+      "message": "Marked as resolved.",
+      "parentUuid": "49b682ab_ea75891f",
       "revId": "56d3c1f6371872d30936f4b49184e1641caa336f",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
@@ -211,6 +301,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "afc752f2_bc58409a",
+        "filename": "src/frameworks/uikit/ui_bar_button_item.rs",
+        "patchSetId": 16
+      },
+      "lineNbr": 302,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2026-05-31T22:34:20Z",
+      "side": 1,
+      "message": "I decided to go with a slightly different approach. Flexible and Fixed Space are ignored here because it\u0027s calculated later anyway. The others we just do nothing with them as well but log out that it will be invisible.  This really should be fine for any games.  Non-game apps may use them for functional purposes though, but I think there are very few non-game apps touchHLE uses care about.",
+      "parentUuid": "7e6c6c1d_dae39468",
+      "revId": "56d3c1f6371872d30936f4b49184e1641caa336f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "6099fd8d_0dc77557",
@@ -224,6 +332,42 @@
       "writtenOn": "2026-05-31T11:17:11Z",
       "side": 1,
       "message": "Same thing here, we do not use Rust `enum`s for C `enum`s, please rewrite this.",
+      "revId": "56d3c1f6371872d30936f4b49184e1641caa336f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "3ca7b299_c8f8c581",
+        "filename": "src/frameworks/uikit/ui_view/ui_toolbar.rs",
+        "patchSetId": 16
+      },
+      "lineNbr": 21,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2026-05-31T22:34:20Z",
+      "side": 1,
+      "message": "Marked as resolved.",
+      "parentUuid": "6099fd8d_0dc77557",
+      "revId": "56d3c1f6371872d30936f4b49184e1641caa336f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "55310261_a1d733da",
+        "filename": "src/frameworks/uikit/ui_view/ui_toolbar.rs",
+        "patchSetId": 16
+      },
+      "lineNbr": 21,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2026-05-31T22:34:20Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "6099fd8d_0dc77557",
       "revId": "56d3c1f6371872d30936f4b49184e1641caa336f",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
@@ -259,6 +403,24 @@
       "side": 1,
       "message": "Was this AI-generated?",
       "parentUuid": "a0784f5c_09312307",
+      "revId": "56d3c1f6371872d30936f4b49184e1641caa336f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "69b00cd9_8301017e",
+        "filename": "src/frameworks/uikit/ui_view/ui_toolbar.rs",
+        "patchSetId": 16
+      },
+      "lineNbr": 30,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2026-05-31T22:34:20Z",
+      "side": 1,
+      "message": "I don\u0027t recall using AI to help with that, I think rust itself makes suggestions for using GuestArg and GuestRet, and some parts of touchHLE do use them, but not in this way. More importantly, I do agree it is some overly complex junk that has stuck around in this patch written awhile ago when I did not know what I was doing at all, from a rust standpoint or touchHLE.  Removed it all and now just defining a type and using consts and match where needed.",
+      "parentUuid": "7ef8d9e8_f3f8134c",
       "revId": "56d3c1f6371872d30936f4b49184e1641caa336f",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

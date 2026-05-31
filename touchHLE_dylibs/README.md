@@ -20,7 +20,7 @@ These are impractical to reimplement, but they are Free Software.
 * Aliases: `libz.1.1.3.dylib`, `libz.1.dylib`, `libz.dylib`
 * License: zlib License (see `COPYING.libz`)
 * Binary origin: compilation of zlib source code
-* Build code: <https://github.com/touchHLE/zlib-dylib>
+* Build code: <https://github.com/touchHLE/zlib-dylib/tree/v0.3.0>
 * Source code: <https://github.com/apple-oss-distributions/zlib/tree/zlib-23.0.1>
 
 ## Original Apple license acknowledgements

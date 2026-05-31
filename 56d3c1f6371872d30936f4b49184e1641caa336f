@@ -1,0 +1,89 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a2285bdd_c4d82462",
+        "filename": "src/frameworks/uikit.rs",
+        "patchSetId": 16
+      },
+      "lineNbr": 18,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-05-31T11:17:11Z",
+      "side": 1,
+      "message": "This shouldn\u0027t be a top-level module; as a subclass of `UIBarItem`, `UIBarButtonItem`\u0027s file should be inside the `ui_bar_item` module. (You could perhaps put both classes in the same file if that seems like a good idea, I leave that up to you.)",
+      "revId": "56d3c1f6371872d30936f4b49184e1641caa336f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "56eecdfe_70ef6564",
+        "filename": "src/frameworks/uikit/ui_bar_button_item.rs",
+        "patchSetId": 16
+      },
+      "lineNbr": 65,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-05-31T11:17:11Z",
+      "side": 1,
+      "message": "We do not use Rust `enum`s for C `enum`s. Please throw away all of this and follow the normal touchHLE convention.",
+      "revId": "56d3c1f6371872d30936f4b49184e1641caa336f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f866b50c_9e641056",
+        "filename": "src/frameworks/uikit/ui_bar_button_item.rs",
+        "patchSetId": 16
+      },
+      "lineNbr": 211,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-05-31T11:17:11Z",
+      "side": 1,
+      "message": "Why is it called zero?",
+      "revId": "56d3c1f6371872d30936f4b49184e1641caa336f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "49b682ab_ea75891f",
+        "filename": "src/frameworks/uikit/ui_bar_button_item.rs",
+        "patchSetId": 16
+      },
+      "lineNbr": 231,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-05-31T11:17:11Z",
+      "side": 1,
+      "message": "ditto",
+      "revId": "56d3c1f6371872d30936f4b49184e1641caa336f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6099fd8d_0dc77557",
+        "filename": "src/frameworks/uikit/ui_view/ui_toolbar.rs",
+        "patchSetId": 16
+      },
+      "lineNbr": 21,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-05-31T11:17:11Z",
+      "side": 1,
+      "message": "Same thing here, we do not use Rust `enum`s for C `enum`s, please rewrite this.",
+      "revId": "56d3c1f6371872d30936f4b49184e1641caa336f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

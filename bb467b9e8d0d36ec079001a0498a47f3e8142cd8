@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "252d9f20_a9804956",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1039550
+      },
+      "writtenOn": "2026-05-31T22:30:57Z",
+      "side": 1,
+      "message": "Tested with Karma Art v1.5 (com.stylem.Karma)",
+      "revId": "bb467b9e8d0d36ec079001a0498a47f3e8142cd8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

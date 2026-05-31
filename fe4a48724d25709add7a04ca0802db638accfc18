@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "cc3f509c_bad1dea4",
+        "filename": "src/frameworks/uikit/ui_bar_button_item.rs",
+        "patchSetId": 17
+      },
+      "lineNbr": 18,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-05-31T23:17:14Z",
+      "side": 1,
+      "message": "Should be an alias of `NSInteger` per docs.",
+      "revId": "fe4a48724d25709add7a04ca0802db638accfc18",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "048dac47_074e54d1",
+        "filename": "src/frameworks/uikit/ui_bar_button_item.rs",
+        "patchSetId": 17
+      },
+      "lineNbr": 23,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-05-31T23:17:14Z",
+      "side": 1,
+      "message": "Also should be an alias of `NSInteger` per docs.",
+      "revId": "fe4a48724d25709add7a04ca0802db638accfc18",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

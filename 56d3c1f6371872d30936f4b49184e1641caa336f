@@ -74,6 +74,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "2e2f4c16_3a7d52a4",
+        "filename": "src/frameworks/uikit.rs",
+        "patchSetId": 16
+      },
+      "lineNbr": 18,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-05-31T23:17:14Z",
+      "side": 1,
+      "message": "The file still hasn\u0027t been moved, though?",
+      "parentUuid": "3e183370_8c364873",
+      "revId": "56d3c1f6371872d30936f4b49184e1641caa336f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "56eecdfe_70ef6564",
         "filename": "src/frameworks/uikit/ui_bar_button_item.rs",
         "patchSetId": 16
@@ -103,6 +121,24 @@
       "side": 1,
       "message": "So, to my understanding the normal touchHLE convention is consts and matches? if that is wrong, please let me know what I should follow, but did it this way now.",
       "parentUuid": "56eecdfe_70ef6564",
+      "revId": "56d3c1f6371872d30936f4b49184e1641caa336f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0ae102d4_209726d4",
+        "filename": "src/frameworks/uikit/ui_bar_button_item.rs",
+        "patchSetId": 16
+      },
+      "lineNbr": 65,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-05-31T23:17:14Z",
+      "side": 1,
+      "message": "Yes, that\u0027s right. C\u0027s `enum` types are effectively just integers with named constants for each member, whereas Rust `enum`s have a limited set of valid values, so there\u0027s either a UB problem or a validation problem when using the latter to model the former. The naming difference is also awkward. So indeed we just use a type alias and a bunch of constants, and then `match` on them where appropriate. One nice advantage of this approach is that we don\u0027t need to implement `GuestRet`/`GuestArg` etc, they\u0027re re-used because of the type alias.",
+      "parentUuid": "4f0dc931_977f91c4",
       "revId": "56d3c1f6371872d30936f4b49184e1641caa336f",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
@@ -231,6 +267,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "17897641_f588426c",
+        "filename": "src/frameworks/uikit/ui_bar_button_item.rs",
+        "patchSetId": 16
+      },
+      "lineNbr": 211,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-05-31T23:17:14Z",
+      "side": 1,
+      "message": "Sounds good, thanks!",
+      "parentUuid": "193c4d6f_1692148c",
+      "revId": "56d3c1f6371872d30936f4b49184e1641caa336f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "49b682ab_ea75891f",
@@ -315,6 +369,24 @@
       "side": 1,
       "message": "I decided to go with a slightly different approach. Flexible and Fixed Space are ignored here because it\u0027s calculated later anyway. The others we just do nothing with them as well but log out that it will be invisible.  This really should be fine for any games.  Non-game apps may use them for functional purposes though, but I think there are very few non-game apps touchHLE uses care about.",
       "parentUuid": "7e6c6c1d_dae39468",
+      "revId": "56d3c1f6371872d30936f4b49184e1641caa336f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "24a755df_3376d563",
+        "filename": "src/frameworks/uikit/ui_bar_button_item.rs",
+        "patchSetId": 16
+      },
+      "lineNbr": 302,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-05-31T23:17:14Z",
+      "side": 1,
+      "message": "Having outright invisible buttons seems very bad? Won\u0027t it make things unusable?",
+      "parentUuid": "afc752f2_bc58409a",
       "revId": "56d3c1f6371872d30936f4b49184e1641caa336f",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },

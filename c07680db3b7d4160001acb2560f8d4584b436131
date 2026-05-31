@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "be711034_7adeaa67",
+        "filename": "src/frameworks/core_graphics/cg_context.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 259,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-05-31T23:38:03Z",
+      "side": 1,
+      "message": "Please panic with `unimplemented!()` here.",
+      "revId": "c07680db3b7d4160001acb2560f8d4584b436131",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

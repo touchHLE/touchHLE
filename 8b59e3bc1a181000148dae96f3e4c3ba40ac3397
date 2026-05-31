@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5d470724_c46a3742",
+        "filename": "touchHLE_dylibs/README.md",
+        "patchSetId": 1
+      },
+      "lineNbr": 30,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-05-31T22:14:54Z",
+      "side": 1,
+      "message": "comparing with libz above, what about license and actual source code?",
+      "revId": "8b59e3bc1a181000148dae96f3e4c3ba40ac3397",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

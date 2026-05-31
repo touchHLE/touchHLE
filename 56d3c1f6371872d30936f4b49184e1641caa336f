@@ -125,6 +125,42 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "d461a887_0dbe3a4f",
+        "filename": "src/frameworks/uikit/ui_bar_button_item.rs",
+        "patchSetId": 16
+      },
+      "lineNbr": 211,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-05-31T17:03:35Z",
+      "side": 1,
+      "message": "What bothers me is that it\u0027s not all-zeroes. `frame` would be fine.",
+      "parentUuid": "b321c9b8_a6a351b1",
+      "revId": "56d3c1f6371872d30936f4b49184e1641caa336f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "bfa95628_1c3ac428",
+        "filename": "src/frameworks/uikit/ui_bar_button_item.rs",
+        "patchSetId": 16
+      },
+      "lineNbr": 211,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-05-31T17:03:35Z",
+      "side": 1,
+      "message": "The thing that bothers me is that it\u0027s not all-zeroes.\n\nI tend to name things like this just `frame`. Same comment for the other instance.",
+      "parentUuid": "b321c9b8_a6a351b1",
+      "revId": "56d3c1f6371872d30936f4b49184e1641caa336f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "49b682ab_ea75891f",
         "filename": "src/frameworks/uikit/ui_bar_button_item.rs",
         "patchSetId": 16

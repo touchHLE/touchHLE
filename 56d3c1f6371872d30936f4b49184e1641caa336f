@@ -123,6 +123,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "7e6c6c1d_dae39468",
+        "filename": "src/frameworks/uikit/ui_bar_button_item.rs",
+        "patchSetId": 16
+      },
+      "lineNbr": 302,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-05-31T11:36:00Z",
+      "side": 1,
+      "message": "Oh, wait, for a *button bar* there aren\u0027t any icons, right? My bad.\n\nIn that case I think you just need a `match` to give more appropriate names.",
+      "parentUuid": "89b8f867_8db79154",
+      "revId": "56d3c1f6371872d30936f4b49184e1641caa336f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "6099fd8d_0dc77557",
         "filename": "src/frameworks/uikit/ui_view/ui_toolbar.rs",
         "patchSetId": 16

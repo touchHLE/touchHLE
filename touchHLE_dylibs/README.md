@@ -23,6 +23,14 @@ These are impractical to reimplement, but they are Free Software.
 * Build code: <https://github.com/touchHLE/zlib-dylib>
 * Source code: <https://github.com/apple-oss-distributions/zlib/tree/zlib-23.0.1>
 
+## `libsqlite3.dylib`
+
+* Alias: `libsqlite3.0.dylib`
+* License: public domain (see `COPYING.libsqlite3`)
+* Binary origin: compilation of SQLite source code
+* Build code: <https://github.com/touchHLE/sqlite-dylib>
+* Source code: <https://github.com/sqlite/sqlite/tree/version-3.6.10>
+
 ## Original Apple license acknowledgements
 
 > **Free Software Foundation** ( libgcc, libstdc++ )

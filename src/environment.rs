@@ -405,6 +405,12 @@ impl Environment {
                         // needed.
                         0
                     }
+                    "libsqlite3.dylib" | "libsqlite3.0.dylib" => {
+                        // We build `libsqlite3` from sources with our OSS
+                        // toolchain, the base address is already set and
+                        // sliding is not needed.
+                        0
+                    }
                     _ => unimplemented!("Unknown binary slide for {}", name),
                 };
                 let dylib = mach_o::MachO::load_from_file(

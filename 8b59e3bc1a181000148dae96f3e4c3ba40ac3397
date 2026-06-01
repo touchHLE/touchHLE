@@ -16,6 +16,24 @@
       "message": "comparing with libz above, what about license and actual source code?",
       "revId": "8b59e3bc1a181000148dae96f3e4c3ba40ac3397",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9e72f2c2_1e506b94",
+        "filename": "touchHLE_dylibs/README.md",
+        "patchSetId": 1
+      },
+      "lineNbr": 30,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2026-06-01T01:46:30Z",
+      "side": 1,
+      "message": "I added a source link to the original, but the build also has the sources. There technically isn\u0027t a license since sqlite is public domain. In theory I could copy their disclaimer from their newer versions, but I\u0027m not sure how useful that would be.",
+      "parentUuid": "5d470724_c46a3742",
+      "revId": "8b59e3bc1a181000148dae96f3e4c3ba40ac3397",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

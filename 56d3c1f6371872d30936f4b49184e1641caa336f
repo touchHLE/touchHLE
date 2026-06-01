@@ -90,6 +90,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "353cab5f_8eb3d9cb",
+        "filename": "src/frameworks/uikit.rs",
+        "patchSetId": 16
+      },
+      "lineNbr": 18,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2026-06-01T00:27:43Z",
+      "side": 1,
+      "message": "Apologize for resolving this when I did not do it.  Seemed to have only read the 2nd comment here and not the first. Done now.",
+      "parentUuid": "2e2f4c16_3a7d52a4",
+      "revId": "56d3c1f6371872d30936f4b49184e1641caa336f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "56eecdfe_70ef6564",
@@ -139,6 +157,24 @@
       "side": 1,
       "message": "Yes, that\u0027s right. C\u0027s `enum` types are effectively just integers with named constants for each member, whereas Rust `enum`s have a limited set of valid values, so there\u0027s either a UB problem or a validation problem when using the latter to model the former. The naming difference is also awkward. So indeed we just use a type alias and a bunch of constants, and then `match` on them where appropriate. One nice advantage of this approach is that we don\u0027t need to implement `GuestRet`/`GuestArg` etc, they\u0027re re-used because of the type alias.",
       "parentUuid": "4f0dc931_977f91c4",
+      "revId": "56d3c1f6371872d30936f4b49184e1641caa336f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "249c5560_535379c9",
+        "filename": "src/frameworks/uikit/ui_bar_button_item.rs",
+        "patchSetId": 16
+      },
+      "lineNbr": 65,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2026-06-01T00:27:43Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "0ae102d4_209726d4",
       "revId": "56d3c1f6371872d30936f4b49184e1641caa336f",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
@@ -387,6 +423,24 @@
       "side": 1,
       "message": "Having outright invisible buttons seems very bad? Won\u0027t it make things unusable?",
       "parentUuid": "afc752f2_bc58409a",
+      "revId": "56d3c1f6371872d30936f4b49184e1641caa336f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "234263da_4a1eac23",
+        "filename": "src/frameworks/uikit/ui_bar_button_item.rs",
+        "patchSetId": 16
+      },
+      "lineNbr": 302,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2026-06-01T00:27:43Z",
+      "side": 1,
+      "message": "Did non Spaces for SystemItems as unimplemented for now.",
+      "parentUuid": "24a755df_3376d563",
       "revId": "56d3c1f6371872d30936f4b49184e1641caa336f",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },

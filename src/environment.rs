@@ -372,10 +372,21 @@ impl Environment {
         let mut mem = mem::Mem::new();
 
         let is_spore = bundle.bundle_identifier().starts_with("com.ea.spore");
+        let is_critter_crunch = bundle
+            .bundle_identifier()
+            .starts_with("com.capybaragames.CritterCrunch")
+            || bundle
+                .bundle_identifier()
+                .starts_with("com.go.starwave.CritterCrunch");
         // We always reset this flag depending on which game is launched.
-        mem.zero_memory_on_free = !is_spore;
+        mem.zero_memory_on_free = !is_spore && !is_critter_crunch;
         if is_spore {
             log!("Applying game-specific hack for Spore Origins: zeroing memory on alloc instead of free.");
+        }
+        if is_critter_crunch {
+            // Without this hack, every time a critter 'explodes',
+            // the game crashes with a null page access error.
+            log!("Applying game-specific hack for Critter Crunch: zeroing memory on alloc instead of free.");
         }
         let executable = mach_o::MachO::load_from_file(
             bundle.executable_path(),

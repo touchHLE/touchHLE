@@ -16,6 +16,23 @@
       "message": "Tested with Trace v1.1 (com.yourcompany.Trace)\n\nNote: this makes it so the app can go to the menu and level select, but will crash when a level is selected. If the sound is turned off via the in-game setting then the levels will launch and the levels can be played.",
       "revId": "4a950ccf4de04c991023efe9343874589a7340f6",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5b7cd002_3fd8e0b6",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-06-02T17:10:09Z",
+      "side": 1,
+      "message": "@matthew.carvalho.dagenais@gmail.com congratulations on your second merged contribution!\n\nif you want to have access to dev only channels in our Discord, please mail me your Discord nickname :)",
+      "revId": "4a950ccf4de04c991023efe9343874589a7340f6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ],
   "submitRequirementResults": [

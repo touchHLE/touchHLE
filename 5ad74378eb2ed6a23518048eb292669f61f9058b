@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "704b0b4a_a9559fe4",
+        "filename": "src/environment.rs",
+        "patchSetId": 4
+      },
+      "lineNbr": 49,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-06-03T13:44:06Z",
+      "side": 1,
+      "message": "I think we could rename this to just `framework_state`, since its purpose should be obvious from the context. This thought prompted by what https://review.gerrithub.io/c/touchHLE/touchHLE/+/1227965/4/src/frameworks/foundation/ns_run_loop.rs#327 looks like…",
+      "revId": "5ad74378eb2ed6a23518048eb292669f61f9058b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

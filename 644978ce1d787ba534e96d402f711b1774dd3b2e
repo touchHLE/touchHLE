@@ -1,0 +1,67 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e4458759_7fa81927",
+        "filename": "src/frameworks/core_animation/ca_layer.rs",
+        "patchSetId": 17
+      },
+      "lineNbr": 248,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-06-03T13:20:02Z",
+      "side": 1,
+      "message": "Nitpick: there shouldn\u0027t be a space here, same deal on lines 249, 264 etc (several more instances in this file, search for `: `).",
+      "range": {
+        "startLine": 248,
+        "startChar": 69,
+        "endLine": 248,
+        "endChar": 70
+      },
+      "revId": "644978ce1d787ba534e96d402f711b1774dd3b2e",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a087d4a5_c7a629e5",
+        "filename": "src/frameworks/core_animation/ca_layer.rs",
+        "patchSetId": 17
+      },
+      "lineNbr": 284,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-06-03T13:20:02Z",
+      "side": 1,
+      "message": "Although `affineTransform` isn\u0027t on the list of animatable properties, I think it\u0027s implemented by passing through to `transform`, which *is* on the list, so I would imagine that changes to it can result in animation. If you want to just put a TODO here (triggered when implicit animations are in use?) that\u0027s probably fine.",
+      "revId": "644978ce1d787ba534e96d402f711b1774dd3b2e",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "685e2976_4dd89c71",
+        "filename": "src/frameworks/core_animation/ca_layer.rs",
+        "patchSetId": 17
+      },
+      "lineNbr": 699,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-06-03T13:20:02Z",
+      "side": 1,
+      "message": "This looks like a leftover of some attempt to make this generic, but the operands to `setFromValue:` and `setToValue:` can only be an `id` (`NSValue*`), right?",
+      "range": {
+        "startLine": 696,
+        "startChar": 0,
+        "endLine": 699,
+        "endChar": 26
+      },
+      "revId": "644978ce1d787ba534e96d402f711b1774dd3b2e",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

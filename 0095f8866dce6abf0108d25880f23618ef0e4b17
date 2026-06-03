@@ -3,6 +3,23 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "2851861f_bca70545",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 53
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-06-03T13:35:01Z",
+      "side": 1,
+      "message": "Code makes sense to me…",
+      "revId": "0095f8866dce6abf0108d25880f23618ef0e4b17",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "a5596ca5_6cdf091c",
         "filename": "src/frameworks/uikit/ui_view.rs",
         "patchSetId": 53
@@ -38,6 +55,41 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "d65c4a90_194aa659",
+        "filename": "src/frameworks/uikit/ui_view.rs",
+        "patchSetId": 53
+      },
+      "lineNbr": 46,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-06-03T13:35:01Z",
+      "side": 1,
+      "message": "Can we add a comment about the fact these are touchHLE internal things and what they\u0027re being used for?\n\nAlso, I would suggest removing the `_` prefix, because that has a special meaning in Rust (for class names etc it\u0027s fine because they\u0027re not Rust identifiers; likewise keeping the `_` inside the string seems fine, just not in the actual name of the constant).",
+      "parentUuid": "4306986e_6e0c54bd",
+      "revId": "0095f8866dce6abf0108d25880f23618ef0e4b17",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fe92a31f_fee6fa7a",
+        "filename": "src/frameworks/uikit/ui_view.rs",
+        "patchSetId": 53
+      },
+      "lineNbr": 244,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-06-03T13:35:01Z",
+      "side": 1,
+      "message": "This doesn\u0027t seem very efficient. Since we don\u0027t expose any way to enable/disable implicit animations on a per-layer basis, maybe you could just add a global flag somewhere that we test alongside the per-layer flag? Hell, maybe this could be a magic property of the current transaction? (Not sure if that one makes sense given the nested blocks thing… ah, could we use the nested block count as the flag?)",
+      "revId": "0095f8866dce6abf0108d25880f23618ef0e4b17",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "a4b3bb77_ee24590f",
         "filename": "src/frameworks/uikit/ui_view.rs",
         "patchSetId": 53
@@ -67,6 +119,74 @@
       "side": 1,
       "message": "It\u0027d panic. The docs don\u0027t specify what should happen if this is called without beginning animations and I haven\u0027t tested what\u0027d happen in an app.",
       "parentUuid": "a4b3bb77_ee24590f",
+      "revId": "0095f8866dce6abf0108d25880f23618ef0e4b17",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fe592196_2cee9522",
+        "filename": "src/frameworks/uikit/ui_view.rs",
+        "patchSetId": 53
+      },
+      "lineNbr": 275,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-06-03T13:35:01Z",
+      "side": 1,
+      "message": "So we\u0027re temporarily storing this state in the transaction, and then we copy it over to the delegate upon commit?",
+      "revId": "0095f8866dce6abf0108d25880f23618ef0e4b17",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3c727526_d5fbc68b",
+        "filename": "src/frameworks/uikit/ui_view.rs",
+        "patchSetId": 53
+      },
+      "lineNbr": 955,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-06-03T13:35:01Z",
+      "side": 1,
+      "message": "Same newlines comment as below.",
+      "revId": "0095f8866dce6abf0108d25880f23618ef0e4b17",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5ec25a2a_9832438f",
+        "filename": "src/frameworks/uikit/ui_view.rs",
+        "patchSetId": 53
+      },
+      "lineNbr": 963,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-06-03T13:35:01Z",
+      "side": 1,
+      "message": "Same newlines comment as below.",
+      "revId": "0095f8866dce6abf0108d25880f23618ef0e4b17",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "880e3f18_10dc5cfa",
+        "filename": "src/frameworks/uikit/ui_view.rs",
+        "patchSetId": 53
+      },
+      "lineNbr": 982,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-06-03T13:35:01Z",
+      "side": 1,
+      "message": "Can you add newlines between the commas so this isn\u0027t such a long line? (Sorry about `cargo fmt` still not working on objc blocks…)",
       "revId": "0095f8866dce6abf0108d25880f23618ef0e4b17",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

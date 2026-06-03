@@ -16,6 +16,24 @@
       "message": "This is an important UI element, I don\u0027t think there is a good case for stubbing it. We have enough of UIKit implemented now that implementing UIAlertView and UIActionSheet for real ought to be trivial more or less.",
       "revId": "450b9e6c52e49ab4c35d47a0326fbe42aae0b87b",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "c57c03a8_e751228d",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1039141
+      },
+      "writtenOn": "2026-06-03T18:45:12Z",
+      "side": 1,
+      "message": "That makes sense, since that\u0027s the case I\u0027ll abandon this stub patch and perhaps look into implementing it for real in a future separate patch hopefully",
+      "parentUuid": "b64a9b02_201c622e",
+      "revId": "450b9e6c52e49ab4c35d47a0326fbe42aae0b87b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

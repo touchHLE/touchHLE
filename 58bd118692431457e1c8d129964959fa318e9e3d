@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "abb1c52d_09701caa",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1039550
+      },
+      "writtenOn": "2026-06-04T23:01:52Z",
+      "side": 1,
+      "message": "Tested with Rat on a Snowboard v1.01 (com.donutgames.ratonasnowboard)\n\nThis makes this version of the game fully playable",
+      "revId": "58bd118692431457e1c8d129964959fa318e9e3d",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

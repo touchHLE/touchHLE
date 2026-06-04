@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "873b9fad_74fc00d5",
+        "filename": "touchHLE_dylibs/COPYING.libsqlite3",
+        "patchSetId": 4
+      },
+      "lineNbr": 43,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-06-04T15:47:24Z",
+      "side": 1,
+      "message": "Should we drop this part? It\u0027s not relevant to the output of the build process, right?",
+      "revId": "a4b86e58fab6741534709404fb6e5481bd2bb33e",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

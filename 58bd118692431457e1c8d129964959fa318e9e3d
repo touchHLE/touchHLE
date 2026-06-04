@@ -16,6 +16,23 @@
       "message": "Tested with Rat on a Snowboard v1.01 (com.donutgames.ratonasnowboard)\n\nThis makes this version of the game fully playable",
       "revId": "58bd118692431457e1c8d129964959fa318e9e3d",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "3cc4e70e_448cbc42",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2026-06-04T23:28:46Z",
+      "side": 1,
+      "message": "This is wrong. UIPasteboard is in UIKit and already exists in touchHLE. See https://review.gerrithub.io/c/touchHLE/touchHLE/+/1237839/",
+      "revId": "58bd118692431457e1c8d129964959fa318e9e3d",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

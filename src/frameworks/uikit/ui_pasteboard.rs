@@ -5,7 +5,7 @@
  */
 //! `UIPasteboard`.
 
-use crate::objc::{objc_classes, ClassExports};
+use crate::objc::{id, objc_classes, ClassExports};
 
 pub const CLASSES: ClassExports = objc_classes! {
 
@@ -13,6 +13,23 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 @implementation UIPasteboard: NSObject
 // TODO
+
++ (id)pasteboardWithName:(id)pasteboardName
+        create:(bool) create {
+    log!("TODO: [(UIPasteboard*){:?} pasteboardWithName:{:?} create:{:?} ]", this, pasteboardName, create);
+    this
+}
+
++ (id)string {
+    log!("TODO: UIPasteboard string parameter");
+    this
+}
+
++ (id)length {
+    log!("TODO: UIPasteboard length parameter");
+    this
+}
+
 @end
 
 };

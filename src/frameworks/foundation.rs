@@ -32,6 +32,7 @@ pub mod ns_file_handle;
 pub mod ns_file_manager;
 pub mod ns_index_path;
 pub mod ns_invocation;
+pub mod ns_invocation_operation;
 pub mod ns_keyed_archiver;
 pub mod ns_keyed_unarchiver;
 pub mod ns_locale;
@@ -43,6 +44,7 @@ pub mod ns_notification_center;
 pub mod ns_null;
 pub mod ns_objc_runtime;
 pub mod ns_object;
+pub mod ns_operation_queue;
 pub mod ns_process_info;
 pub mod ns_property_list_serialization;
 pub mod ns_run_loop;
@@ -78,6 +80,7 @@ pub const DYLIB: crate::dyld::HostDylib = crate::dyld::HostDylib {
         ns_file_handle::CLASSES,
         ns_file_manager::CLASSES,
         ns_index_path::CLASSES,
+        ns_invocation_operation::CLASSES,
         ns_invocation::CLASSES,
         ns_keyed_archiver::CLASSES,
         ns_keyed_unarchiver::CLASSES,
@@ -88,6 +91,7 @@ pub const DYLIB: crate::dyld::HostDylib = crate::dyld::HostDylib {
         ns_null::CLASSES,
         ns_method_signature::CLASSES,
         ns_object::CLASSES,
+        ns_operation_queue::CLASSES,
         ns_process_info::CLASSES,
         ns_property_list_serialization::CLASSES,
         ns_run_loop::CLASSES,

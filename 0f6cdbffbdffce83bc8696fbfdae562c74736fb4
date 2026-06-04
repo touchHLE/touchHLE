@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "8f348fc5_e3fd9e2f",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2026-06-04T01:50:56Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "237e48b7_8f00ce01",
+      "revId": "0f6cdbffbdffce83bc8696fbfdae562c74736fb4",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "ab432f2e_2a2b1082",
@@ -31,6 +49,24 @@
       "writtenOn": "2026-06-03T13:05:42Z",
       "side": 1,
       "message": "There needs to be license info here.",
+      "revId": "0f6cdbffbdffce83bc8696fbfdae562c74736fb4",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "045b8ae0_869b1c04",
+        "filename": "touchHLE_dylibs/README.md",
+        "patchSetId": 2
+      },
+      "lineNbr": 28,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2026-06-04T01:50:56Z",
+      "side": 1,
+      "message": "The newest thing in their repo. Hope that works for this.",
+      "parentUuid": "ab432f2e_2a2b1082",
       "revId": "0f6cdbffbdffce83bc8696fbfdae562c74736fb4",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "95101807_83e65369",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 19
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-06-05T22:18:32Z",
+      "side": 1,
+      "message": "Thanks for the changes, this looks better now. I will need to come back to look more closely at this later… if I forget, ping me in a few days.",
+      "revId": "fadbb5d4d2faa7e9aa988d913531de7797423f0f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

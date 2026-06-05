@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "c9a20a19_40191b9d",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 6
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-06-05T21:51:58Z",
+      "side": 1,
+      "message": "Decided to revert to Patchset 4 and tweak the way we display the license myself in 54d0ebeb7e99f7833edec75bf2f3ee17f4261e18.\n\nThanks!!",
+      "revId": "dcd93c7f0e66a4387d5a4b05288805bb14dcdb97",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

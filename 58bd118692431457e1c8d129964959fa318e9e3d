@@ -87,6 +87,24 @@
       "parentUuid": "f412d069_315d3874",
       "revId": "58bd118692431457e1c8d129964959fa318e9e3d",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "477d6b8c_617f2de4",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2026-06-05T23:25:52Z",
+      "side": 1,
+      "message": "At least split the foundation and the UIKit stuff as maintainers tend to frown upon that. From there it will be up to them.",
+      "parentUuid": "eff1b359_2d30e90e",
+      "revId": "58bd118692431457e1c8d129964959fa318e9e3d",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

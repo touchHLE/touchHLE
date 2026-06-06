@@ -16,6 +16,24 @@
       "message": "Can you add a test that doesn\u0027t have any explicit CATransaction involved?",
       "revId": "5ed14cd425659496cdba068351d1a0f0cce813ae",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "0d1ff962_4de1fbaf",
+        "filename": "tests/TestApp_source/GUITestsCALayerTestsView.m",
+        "patchSetId": 17
+      },
+      "lineNbr": 480,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2026-06-06T15:48:00Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "85a802d4_24a6b968",
+      "revId": "5ed14cd425659496cdba068351d1a0f0cce813ae",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

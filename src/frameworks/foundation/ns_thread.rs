@@ -41,6 +41,7 @@ struct NSThreadHostObject {
     /// `NSMutableDictionary*`
     thread_dictionary: id,
     owned: bool,
+    executing: bool,
     finished: bool,
     stack_size: NSUInteger,
     tolerate_type_mismatch: bool,
@@ -60,6 +61,7 @@ pub const CLASSES: ClassExports = objc_classes! {
         object: nil,
         thread_dictionary: nil,
         owned: false,
+        executing: false,
         finished: false,
         stack_size: Mem::SECONDARY_THREAD_DEFAULT_STACK_SIZE,
         tolerate_type_mismatch: false,
@@ -145,7 +147,9 @@ pub const CLASSES: ClassExports = objc_classes! {
     let attr: MutPtr<pthread_attr_t> = env.mem.alloc(guest_size_of::<pthread_attr_t>()).cast();
     pthread_attr_init(env, attr);
 
-    let stack_size = env.objc.borrow::<NSThreadHostObject>(this).stack_size;
+    let host_object = env.objc.borrow_mut::<NSThreadHostObject>(this);
+    host_object.executing = true;
+    let stack_size = host_object.stack_size;
     pthread_attr_setstacksize(env, attr, stack_size);
     pthread_attr_setdetachstate(env, attr, PTHREAD_CREATE_DETACHED);
     let thread_ptr: MutPtr<pthread_t> = env.mem.alloc(guest_size_of::<pthread_t>()).cast();
@@ -217,6 +221,10 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.borrow_mut::<NSThreadHostObject>(this).stack_size = size;
 }
 
+- (bool)isExecuting {
+    env.objc.borrow::<NSThreadHostObject>(this).executing
+}
+
 - (bool)isFinished {
     env.objc.borrow::<NSThreadHostObject>(this).finished
 }
@@ -250,9 +258,9 @@ pub fn _touchHLE_NSThreadInvocationHelper(env: &mut Environment, ns_thread_obj: 
 
     () = msg![env; ns_thread_obj main];
 
-    env.objc
-        .borrow_mut::<NSThreadHostObject>(ns_thread_obj)
-        .finished = true;
+    let host_object = env.objc.borrow_mut::<NSThreadHostObject>(ns_thread_obj);
+    host_object.executing = false;
+    host_object.finished = true;
 
     let &NSThreadHostObject {
         target,

@@ -41,6 +41,30 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "27ca5a72_9526c7e4",
+        "filename": "src/frameworks/core_animation/ca_layer.rs",
+        "patchSetId": 17
+      },
+      "lineNbr": 248,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2026-06-06T15:47:41Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "e4458759_7fa81927",
+      "range": {
+        "startLine": 248,
+        "startChar": 69,
+        "endLine": 248,
+        "endChar": 70
+      },
+      "revId": "644978ce1d787ba534e96d402f711b1774dd3b2e",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "a087d4a5_c7a629e5",
@@ -58,6 +82,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "ee54787d_1000e78e",
+        "filename": "src/frameworks/core_animation/ca_layer.rs",
+        "patchSetId": 17
+      },
+      "lineNbr": 284,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2026-06-06T15:47:41Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "a087d4a5_c7a629e5",
+      "revId": "644978ce1d787ba534e96d402f711b1774dd3b2e",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "685e2976_4dd89c71",
@@ -71,6 +113,30 @@
       "writtenOn": "2026-06-03T13:20:02Z",
       "side": 1,
       "message": "This looks like a leftover of some attempt to make this generic, but the operands to `setFromValue:` and `setToValue:` can only be an `id` (`NSValue*`), right?",
+      "range": {
+        "startLine": 696,
+        "startChar": 0,
+        "endLine": 699,
+        "endChar": 26
+      },
+      "revId": "644978ce1d787ba534e96d402f711b1774dd3b2e",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "187bdcc9_fc9e553e",
+        "filename": "src/frameworks/core_animation/ca_layer.rs",
+        "patchSetId": 17
+      },
+      "lineNbr": 699,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2026-06-06T15:47:41Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "685e2976_4dd89c71",
       "range": {
         "startLine": 696,
         "startChar": 0,

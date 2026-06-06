@@ -71,6 +71,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "5c1a7fda_a810dc9c",
+        "filename": "src/frameworks/uikit/ui_view.rs",
+        "patchSetId": 53
+      },
+      "lineNbr": 46,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2026-06-06T15:48:14Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "d65c4a90_194aa659",
+      "revId": "0095f8866dce6abf0108d25880f23618ef0e4b17",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "fe92a31f_fee6fa7a",
@@ -84,6 +102,24 @@
       "writtenOn": "2026-06-03T13:35:01Z",
       "side": 1,
       "message": "This doesn\u0027t seem very efficient. Since we don\u0027t expose any way to enable/disable implicit animations on a per-layer basis, maybe you could just add a global flag somewhere that we test alongside the per-layer flag? Hell, maybe this could be a magic property of the current transaction? (Not sure if that one makes sense given the nested blocks thing… ah, could we use the nested block count as the flag?)",
+      "revId": "0095f8866dce6abf0108d25880f23618ef0e4b17",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "2d12f254_c091dd1e",
+        "filename": "src/frameworks/uikit/ui_view.rs",
+        "patchSetId": 53
+      },
+      "lineNbr": 244,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2026-06-06T15:48:14Z",
+      "side": 1,
+      "message": "I\u0027m not sure that would do. CALayer use implicit animations by default, however, layers used by UIView\u0027s don\u0027t, and only have them enabled when there\u0027s an active UIView animation block active (not CATransaction). Using the UIView animation block count as a flag in CALayer would be mixing two different realms.",
+      "parentUuid": "fe92a31f_fee6fa7a",
       "revId": "0095f8866dce6abf0108d25880f23618ef0e4b17",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
@@ -142,6 +178,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "9f21f413_765a4621",
+        "filename": "src/frameworks/uikit/ui_view.rs",
+        "patchSetId": 53
+      },
+      "lineNbr": 275,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2026-06-06T15:48:14Z",
+      "side": 1,
+      "message": "Yes. Since we\u0027re already doing something similar when comitting CATransactions, i decided not to overcomplicate and do it the same way, this time with custom touchHLE specific keys, for UIView aniamtions, which are built on top of CATransactions. Although I\u0027m not too sure if this is the most adecuate since I don\u0027t know how much overhead this has.",
+      "parentUuid": "fe592196_2cee9522",
+      "revId": "0095f8866dce6abf0108d25880f23618ef0e4b17",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "3c727526_d5fbc68b",
         "filename": "src/frameworks/uikit/ui_view.rs",
         "patchSetId": 53
@@ -153,6 +207,24 @@
       "writtenOn": "2026-06-03T13:35:01Z",
       "side": 1,
       "message": "Same newlines comment as below.",
+      "revId": "0095f8866dce6abf0108d25880f23618ef0e4b17",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "c2267fbc_671c24d1",
+        "filename": "src/frameworks/uikit/ui_view.rs",
+        "patchSetId": 53
+      },
+      "lineNbr": 955,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2026-06-06T15:48:14Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "3c727526_d5fbc68b",
       "revId": "0095f8866dce6abf0108d25880f23618ef0e4b17",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
@@ -174,6 +246,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "2a4617b3_1749ee64",
+        "filename": "src/frameworks/uikit/ui_view.rs",
+        "patchSetId": 53
+      },
+      "lineNbr": 963,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2026-06-06T15:48:14Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "5ec25a2a_9832438f",
+      "revId": "0095f8866dce6abf0108d25880f23618ef0e4b17",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "880e3f18_10dc5cfa",
@@ -187,6 +277,24 @@
       "writtenOn": "2026-06-03T13:35:01Z",
       "side": 1,
       "message": "Can you add newlines between the commas so this isn\u0027t such a long line? (Sorry about `cargo fmt` still not working on objc blocks…)",
+      "revId": "0095f8866dce6abf0108d25880f23618ef0e4b17",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "9f470347_cf892a41",
+        "filename": "src/frameworks/uikit/ui_view.rs",
+        "patchSetId": 53
+      },
+      "lineNbr": 982,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2026-06-06T15:48:14Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "880e3f18_10dc5cfa",
       "revId": "0095f8866dce6abf0108d25880f23618ef0e4b17",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

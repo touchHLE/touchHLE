@@ -34,6 +34,24 @@
       "parentUuid": "836f594e_75d7fd59",
       "revId": "59ca44ddfc11e604dd8660d0f285c890ab865a04",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "841c0b46_e9959d2a",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-06-07T22:45:28Z",
+      "side": 1,
+      "message": "Until very recently there was `ima4` ADPCM support for audio files, and I want to restore it, I\u0027m not happy that it was a casualty of fixing AAC in CAF or whatever it was. That has many frames per packet. You could revert to the older audio file code in order to test against it (Super Monkey Ball is an example of a game that uses `ima4`).",
+      "parentUuid": "e79ac714_27e0ac17",
+      "revId": "59ca44ddfc11e604dd8660d0f285c890ab865a04",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

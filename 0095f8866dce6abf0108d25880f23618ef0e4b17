@@ -144,6 +144,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "1505dab7_466c91d0",
+        "filename": "src/frameworks/uikit/ui_view.rs",
+        "patchSetId": 53
+      },
+      "lineNbr": 244,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-06-07T23:07:56Z",
+      "side": 1,
+      "message": "A cute way to make this conceptually cleaner would be to ask the layer delegate (which is the view if it was created by a view) whether implicit animations are enabled. After all, that\u0027s how disabling/enabling implicit animations *presumably* works in real iOS (I suspect `CALayerDelegate`\u0027s `actionForLayer:forKey:` is involved).\n\nBut adding a method call to an optional special touchHLE private selector on the delegate feels like… a bit much. I would suggest maybe just having a function like `uikit::is_implicit_animation_enabled(env, layer)` (and it could check if `layer` belongs to a `UIView`?)",
+      "parentUuid": "9f528afe_6c2c7b8d",
+      "revId": "0095f8866dce6abf0108d25880f23618ef0e4b17",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "a4b3bb77_ee24590f",
         "filename": "src/frameworks/uikit/ui_view.rs",
         "patchSetId": 53

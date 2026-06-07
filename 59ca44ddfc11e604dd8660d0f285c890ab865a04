@@ -16,6 +16,24 @@
       "message": "how you tested/figured that out?",
       "revId": "59ca44ddfc11e604dd8660d0f285c890ab865a04",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "e79ac714_27e0ac17",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1039141
+      },
+      "writtenOn": "2026-06-07T14:08:33Z",
+      "side": 1,
+      "message": "from what I understood, frames_per_packet is currently fixed at 1 since only linear PCM is implemented for now in AudioFile. I tested this change\u0027s logic by using a higher value (temporary test code): \n```\nlet test_frames_per_packet: u64 \u003d 4;\nlet packet_count \u003d audio_host_object.audio_file.packet_count();\nlet frame_count: i64 \u003d (packet_count * test_frames_per_packet)\n    .try_into()\n    .unwrap();\nlog!(\n    \"TEST: packet_count\u003d{}, real_fpp\u003d{}, test_fpp\u003d{}, frame_count\u003d{}\",\n    packet_count,\n    audio_desc.frames_per_packet,\n    test_frames_per_packet,\n    frame_count\n);\n```\nI kept the packet_count * frames_per_packet logic there so that it works for any future formats have have frames_per_packet \u003e 1. Do you reckon I should just return packet_count directly and get rid of this until then?",
+      "parentUuid": "836f594e_75d7fd59",
+      "revId": "59ca44ddfc11e604dd8660d0f285c890ab865a04",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

@@ -122,6 +122,24 @@
       "message": "we should merge a real implementation https://review.gerrithub.io/c/touchHLE/touchHLE/+/1218231 instead of stubs...",
       "revId": "58bd118692431457e1c8d129964959fa318e9e3d",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "eb01cd7b_0eede75d",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1039550
+      },
+      "writtenOn": "2026-06-07T02:31:54Z",
+      "side": 1,
+      "message": "Hi @ciciplusplus@gmail.com, thanks for the feedback!\n\nI\u0027ll keep this in mind going forward. I\u0027m also going to go ahead and close these changes since most of it is a duplicate of the change you listed + I\u0027ll need to heavily rework the rest.",
+      "parentUuid": "01360df5_f959615f",
+      "revId": "58bd118692431457e1c8d129964959fa318e9e3d",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

@@ -126,6 +126,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "9f528afe_6c2c7b8d",
+        "filename": "src/frameworks/uikit/ui_view.rs",
+        "patchSetId": 53
+      },
+      "lineNbr": 244,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-06-07T23:01:20Z",
+      "side": 1,
+      "message": "Well, as a practical matter, `UIView`s are the only actual users of `set_use_implicit_animations(…, false)`, right? It is indeed unclean, but I feel like individually modifying the state of all UIViews with an O(n) loop is worse.",
+      "parentUuid": "2d12f254_c091dd1e",
+      "revId": "0095f8866dce6abf0108d25880f23618ef0e4b17",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "a4b3bb77_ee24590f",
         "filename": "src/frameworks/uikit/ui_view.rs",
         "patchSetId": 53

@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "15ff03f0_ccc573e1",
+        "filename": "tests/TestApp_source/GUITestsCALayerTestsView.m",
+        "patchSetId": 18
+      },
+      "lineNbr": 517,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-06-07T22:57:46Z",
+      "side": 1,
+      "message": "You just forgot to remove this line, right…?",
+      "revId": "d5371b3a9d5b59c29bd372795f75a26d610e9f1a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3bff0b93_5f77f61d",
+        "filename": "tests/TestApp_source/GUITestsCALayerTestsView.m",
+        "patchSetId": 18
+      },
+      "lineNbr": 520,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-06-07T22:57:46Z",
+      "side": 1,
+      "message": "This would be a nice opportunity to test some other property instead of `position`.",
+      "revId": "d5371b3a9d5b59c29bd372795f75a26d610e9f1a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

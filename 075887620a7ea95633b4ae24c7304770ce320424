@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "88432de4_b7f403f0",
+        "filename": "src/frameworks/foundation/ns_autorelease_pool.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 45,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-06-07T22:53:42Z",
+      "side": 1,
+      "message": "Can you wrap this onto several lines, similar to the code it replaces? It\u0027s a bit long. (Mandatory apology for lack of rustfmt support…)",
+      "revId": "075887620a7ea95633b4ae24c7304770ce320424",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

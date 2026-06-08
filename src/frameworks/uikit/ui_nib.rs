@@ -152,6 +152,9 @@ pub const CLASSES: ClassExports = objc_classes! {
         // a file owner! Thus, we must retain it on behalf of the coder.
         retain(env, file_owner);
         file_owner
+    } else if id == "IBFirstResponder" {
+        release(env, this);
+        nil
     } else {
         log!("TODO: UIProxyObject replacement for {}, instance {:?} left unreplaced", id, this);
         this

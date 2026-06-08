@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a202bf44_3ecc01ec",
+        "filename": "src/objc/methods.rs",
+        "patchSetId": 50
+      },
+      "lineNbr": 351,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2026-06-08T02:12:58Z",
+      "side": 1,
+      "message": "I think it would be better to have this be a method on GuestArg, which would give us the ability to handle pointers and structs.",
+      "range": {
+        "startLine": 311,
+        "startChar": 0,
+        "endLine": 351,
+        "endChar": 2
+      },
+      "revId": "705d27b89008140912396892f66710c33fb959a3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

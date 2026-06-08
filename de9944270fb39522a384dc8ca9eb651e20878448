@@ -22,6 +22,30 @@
       },
       "revId": "de9944270fb39522a384dc8ca9eb651e20878448",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "169a1db2_3e604332",
+        "filename": "src/frameworks/uikit/ui_view/ui_label.rs",
+        "patchSetId": 62
+      },
+      "lineNbr": 248,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2026-06-08T03:17:28Z",
+      "side": 1,
+      "message": "This is correct, and per the docs things like UILabel implement sizeThatFits which is used by sizeToFit which should never be overridden. See https://review.gerrithub.io/c/touchHLE/touchHLE/+/1220091",
+      "parentUuid": "d112c44e_d2f8f7de",
+      "range": {
+        "startLine": 245,
+        "startChar": 1,
+        "endLine": 248,
+        "endChar": 1
+      },
+      "revId": "de9944270fb39522a384dc8ca9eb651e20878448",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

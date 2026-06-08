@@ -147,6 +147,10 @@ com.konami-europe.mgst: --landscape-left
 # Dark Nebula
 com.1337gamedesign.DarkNebula: --x-tilt-offset=-14
 
+# Tilt to Live
+com.OneManLeft.TiltToLive: --landscape-left
+com.onemanleft.tilttolivehd: --landscape-left
+
 # Crash Bandicoot Nitro Kart 2
 com.activision.CBNK2: --landscape-left
 

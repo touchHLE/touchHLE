@@ -18,8 +18,8 @@ use super::NSUInteger;
 use crate::environment::Environment;
 use crate::mem::ConstVoidPtr;
 use crate::objc::{
-    autorelease, id, msg, msg_class, nil, objc_classes, release, retain, todo_objc_setter,
-    ClassExports, HostObject, NSZonePtr, SEL,
+    autorelease, id, msg, msg_class, nil, objc_classes, release, retain, ClassExports, HostObject,
+    NSZonePtr, SEL,
 };
 use quick_xml::events::{BytesStart, Event};
 use quick_xml::reader::Reader;
@@ -30,6 +30,9 @@ struct NSXMLParserHostObject {
     /// An object conforming to NSXMLParserDelegateEventAdditions category
     /// or NSXMLParserDelegate protocol (which is equivalent)
     delegate: id,
+    should_resolve_external_entities: bool,
+    should_process_namespaces: bool,
+    should_report_namespace_prefixes: bool,
 }
 impl HostObject for NSXMLParserHostObject {}
 
@@ -43,6 +46,9 @@ pub const CLASSES: ClassExports = objc_classes! {
     let host_object = Box::new(NSXMLParserHostObject {
         data: nil,
         delegate: nil,
+        should_resolve_external_entities: false,
+        should_process_namespaces: false,
+        should_report_namespace_prefixes: false,
     });
     env.objc.alloc_object(this, host_object, &mut env.mem)
 }
@@ -74,15 +80,22 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (())setShouldResolveExternalEntities:(bool)should {
-    todo_objc_setter!(this, should);
+    env.objc.borrow_mut::<NSXMLParserHostObject>(this).should_resolve_external_entities = should;
+}
+- (bool)shouldResolveExternalEntities {
+    env.objc.borrow::<NSXMLParserHostObject>(this).should_resolve_external_entities
 }
 - (())setShouldProcessNamespaces:(bool)should {
-    todo_objc_setter!(this, should);
-    assert!(!should);
+    env.objc.borrow_mut::<NSXMLParserHostObject>(this).should_process_namespaces = should;
+}
+- (bool)shouldProcessNamespaces {
+    env.objc.borrow::<NSXMLParserHostObject>(this).should_process_namespaces
 }
 - (())setShouldReportNamespacePrefixes:(bool)should {
-    todo_objc_setter!(this, should);
-    assert!(!should);
+    env.objc.borrow_mut::<NSXMLParserHostObject>(this).should_report_namespace_prefixes = should;
+}
+- (bool)shouldReportNamespacePrefixes {
+    env.objc.borrow::<NSXMLParserHostObject>(this).should_report_namespace_prefixes
 }
 
 - (bool)parse {

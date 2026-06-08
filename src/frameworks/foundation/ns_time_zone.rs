@@ -90,6 +90,11 @@ pub const CLASSES: ClassExports = objc_classes! {
     0
 }
 
+- (NSInteger)secondsFromGMTForDate:(id)_aDate {
+    // TODO: respect timezone and date
+    0
+}
+
 // NSCopying implementation
 - (id)copyWithZone:(NSZonePtr)_zone {
     retain(env, this)

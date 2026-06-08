@@ -17,7 +17,7 @@ use crate::dyld::{export_c_func, FunctionExports};
 use crate::frameworks::foundation::{ns_string, unichar, NSNotFound, NSRange, NSUInteger};
 use crate::libc::string::strlen;
 use crate::mem::{ConstPtr, GuestUSize, MutPtr};
-use crate::objc::{id, msg, msg_class};
+use crate::objc::{id, msg, msg_class, release};
 use crate::Environment;
 
 pub type CFStringRef = super::CFTypeRef;
@@ -51,6 +51,19 @@ fn CFStringAppendCString(
     // TODO: avoid copying
     let to_append: id = msg_class![env; NSString stringWithCString:c_string encoding:encoding];
     msg![env; string appendString:to_append]
+}
+
+fn CFStringAppendCharacters(
+    env: &mut Environment,
+    string: CFMutableStringRef,
+    chars: ConstPtr<unichar>,
+    num_chars: CFIndex,
+) {
+    let length: NSUInteger = num_chars.try_into().unwrap();
+    let to_append: id = msg_class![env; NSString alloc];
+    let to_append: id = msg![env; to_append initWithCharacters:chars length:length];
+    () = msg![env; string appendString:to_append];
+    release(env, to_append);
 }
 
 fn CFStringAppendFormat(
@@ -436,6 +449,7 @@ fn CFStringNormalize(
 
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CFStringAppend(_, _)),
+    export_c_func!(CFStringAppendCharacters(_, _, _)),
     export_c_func!(CFStringAppendCString(_, _, _)),
     export_c_func!(CFStringAppendFormat(_, _, _, _)),
     export_c_func!(CFStringConvertEncodingToNSStringEncoding(_)),

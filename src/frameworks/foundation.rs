@@ -19,10 +19,12 @@ pub mod _nib_archive_decoder;
 pub mod ns_array;
 pub mod ns_autorelease_pool;
 pub mod ns_bundle;
+pub mod ns_calendar;
 pub mod ns_character_set;
 pub mod ns_coder;
 pub mod ns_data;
 pub mod ns_date;
+pub mod ns_date_components;
 pub mod ns_date_formatter;
 pub mod ns_dictionary;
 pub mod ns_enumerator;
@@ -41,6 +43,7 @@ pub mod ns_method_signature;
 pub mod ns_notification;
 pub mod ns_notification_center;
 pub mod ns_null;
+pub mod ns_number_formatter;
 pub mod ns_objc_runtime;
 pub mod ns_object;
 pub mod ns_process_info;
@@ -48,6 +51,7 @@ pub mod ns_property_list_serialization;
 pub mod ns_run_loop;
 pub mod ns_scanner;
 pub mod ns_set;
+pub mod ns_sort_descriptor;
 pub mod ns_string;
 pub mod ns_thread;
 pub mod ns_time_zone;
@@ -67,10 +71,12 @@ pub const DYLIB: crate::dyld::HostDylib = crate::dyld::HostDylib {
         ns_array::CLASSES,
         ns_autorelease_pool::CLASSES,
         ns_bundle::CLASSES,
+        ns_calendar::CLASSES,
         ns_character_set::CLASSES,
         ns_coder::CLASSES,
         ns_data::CLASSES,
         ns_date::CLASSES,
+        ns_date_components::CLASSES,
         ns_date_formatter::CLASSES,
         ns_dictionary::CLASSES,
         ns_enumerator::CLASSES,
@@ -87,12 +93,14 @@ pub const DYLIB: crate::dyld::HostDylib = crate::dyld::HostDylib {
         ns_notification_center::CLASSES,
         ns_null::CLASSES,
         ns_method_signature::CLASSES,
+        ns_number_formatter::CLASSES,
         ns_object::CLASSES,
         ns_process_info::CLASSES,
         ns_property_list_serialization::CLASSES,
         ns_run_loop::CLASSES,
         ns_scanner::CLASSES,
         ns_set::CLASSES,
+        ns_sort_descriptor::CLASSES,
         ns_string::CLASSES,
         ns_thread::CLASSES,
         ns_timer::CLASSES,
@@ -125,6 +133,7 @@ pub const DYLIB: crate::dyld::HostDylib = crate::dyld::HostDylib {
 pub struct State {
     ns_autorelease_pool: ns_autorelease_pool::State,
     ns_bundle: ns_bundle::State,
+    ns_calendar: ns_calendar::State,
     ns_file_manager: ns_file_manager::State,
     ns_locale: ns_locale::State,
     ns_notification_center: ns_notification_center::State,

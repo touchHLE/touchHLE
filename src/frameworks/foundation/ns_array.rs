@@ -478,6 +478,14 @@ pub const CLASSES: ClassExports = objc_classes! {
     autorelease(env, new)
 }
 
+- (id)sortedArrayUsingDescriptors:(id)sort_descriptors { // NSArray<NSSortDescriptor *> *
+    let new = msg![env; this mutableCopy];
+    () = msg![env; new sortUsingDescriptors:sort_descriptors];
+    let new_imm = msg![env; new copy];
+    release(env, new);
+    autorelease(env, new_imm)
+}
+
 @end
 
 // Special variant for use by CFArray with NULL callbacks: objects aren't
@@ -631,6 +639,10 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.borrow_mut::<ArrayHostObject>(this).array = array;
 }
 
+- (())sortUsingDescriptors:(id)sort_descriptors { // NSArray<NSSortDescriptor *> *
+    sort_using_descriptors(env, this, sort_descriptors);
+}
+
 // NSFastEnumeration implementation
 - (NSUInteger)countByEnumeratingWithState:(MutPtr<NSFastEnumerationState>)state
                                   objects:(MutPtr<id>)stackbuf
@@ -681,8 +693,7 @@ pub const CLASSES: ClassExports = objc_classes! {
             to_remove.push(i);
         }
     }
-    // TODO: runtime here is O(n^2), it could be O(n) instead
-    for i in to_remove {
+    for i in to_remove.into_iter().rev() {
         () = msg![env; this removeObjectAtIndex:i];
     }
 }
@@ -824,6 +835,38 @@ fn mutable_copy_inner(env: &mut Environment, arr: id) -> id {
     }
     env.objc.borrow_mut::<ArrayHostObject>(mut_arr).array = array;
     mut_arr
+}
+
+fn sort_using_descriptors(env: &mut Environment, arr: id, sort_descriptors: id) {
+    let host_object: &mut ArrayHostObject = env.objc.borrow_mut(arr);
+    let mut array = std::mem::take(&mut host_object.array);
+    let descriptors_count: NSUInteger = msg![env; sort_descriptors count];
+    let len = array.len().try_into().unwrap();
+    let mut user_data = (env, &mut array);
+    qsort_generic(
+        &mut user_data,
+        len,
+        &mut |(env, array), l, r| {
+            let (l, r): (usize, usize) = (l.try_into().unwrap(), r.try_into().unwrap());
+            for idx in 0..descriptors_count {
+                let descriptor: id = msg![env; sort_descriptors objectAtIndex:idx];
+                let left = array[l];
+                let right = array[r];
+                let res: NSComparisonResult =
+                    msg![env; descriptor compareObject:left toObject:right];
+                if res != 0 {
+                    return res;
+                }
+            }
+            0
+        },
+        &mut |(_, array), l, r| {
+            let (l, r): (usize, usize) = (l.try_into().unwrap(), r.try_into().unwrap());
+            array.swap(l, r);
+        },
+    );
+    let (env, _) = user_data;
+    env.objc.borrow_mut::<ArrayHostObject>(arr).array = array;
 }
 
 fn init_with_coder_inner(env: &mut Environment, arr: id, coder: id) -> id {

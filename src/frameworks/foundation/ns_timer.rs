@@ -128,6 +128,12 @@ pub const CLASSES: ClassExports = objc_classes! {
     // Timer might already be invalid, don't try to remove it twice.
     if timer.due_by.take().is_some() {
         let run_loop = timer.run_loop;
+        // Some apps continue messaging a scheduled timer while unwinding the
+        // same cleanup path that invalidated it. Keep the timer alive until the
+        // surrounding autorelease pool drains, even if the run loop owned the
+        // last strong reference.
+        retain(env, this);
+        autorelease(env, this);
         ns_run_loop::remove_timer(env, run_loop, this);
     }
 }

@@ -64,6 +64,12 @@ pub const CLASSES: ClassExports = objc_classes! {
     msg![env; main_bundle objectForInfoDictionaryKey:name_key]
 }
 
+- (id)environment {
+    assert_process_info_singleton(env, this); // TODO
+    log!("TODO: [NSProcessInfo environment] returning empty dictionary");
+    msg_class![env; NSDictionary dictionary]
+}
+
 @end
 
 };

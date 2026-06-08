@@ -62,6 +62,17 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 @implementation NSBundle: NSObject
 
++ (id)allocWithZone:(NSZonePtr)_zone {
+    let host_object = NSBundleHostObject {
+        bundle: None,
+        bundle_path: nil,
+        bundle_identifier: nil,
+        bundle_url: None,
+        info_dictionary: None,
+    };
+    env.objc.alloc_object(this, Box::new(host_object), &mut env.mem)
+}
+
 + (id)mainBundle {
     if let Some(bundle) = env.framework_state.foundation.ns_bundle.main_bundle {
         bundle
@@ -77,14 +88,34 @@ pub const CLASSES: ClassExports = objc_classes! {
     autorelease(env, preferredLocalizations)
 }
 
++ (id)bundleWithPath:(id)path {
+    let file_manager: id = msg_class![env; NSFileManager defaultManager];
+    let exists: bool = msg![env; file_manager fileExistsAtPath:path];
+    if !exists {
+        return nil;
+    }
+
+    let bundle: id = msg![env; this alloc];
+    let bundle: id = msg![env; bundle initWithPath:path];
+    autorelease(env, bundle)
+}
+
+- (id)initWithPath:(id)path {
+    let path: id = msg![env; path copy];
+    env.objc.borrow_mut::<NSBundleHostObject>(this).bundle_path = path;
+    this
+}
+
 - (())dealloc {
     let &NSBundleHostObject {
         bundle: _,
-        bundle_path: _, // FIXME?
-        bundle_identifier: _, // FIXME?
+        bundle_path,
+        bundle_identifier,
         bundle_url,
         info_dictionary,
     } = env.objc.borrow(this);
+    release(env, bundle_path);
+    release(env, bundle_identifier);
     if let Some(bundle_url) = bundle_url {
         release(env, bundle_url);
     }

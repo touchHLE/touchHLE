@@ -361,6 +361,19 @@ pub const CLASSES: ClassExports = objc_classes! {
     autorelease(env, new)
 }
 
++ (id)stringWithContentsOfFile:(id)path // NSString*
+                  usedEncoding:(MutPtr<NSStringEncoding>)used_encoding
+                         error:(MutPtr<id>)error { // NSError**
+    assert!(error.is_null()); // TODO: error handling
+    if !used_encoding.is_null() {
+        let encoding = msg_class![env; NSString defaultCStringEncoding];
+        env.mem.write(used_encoding, encoding);
+    }
+    let new: id = msg![env; this alloc];
+    let new: id = msg![env; new initWithContentsOfFile:path];
+    autorelease(env, new)
+}
+
 + (id)stringWithFormat:(id)format, // NSString*
                        ...args {
     let res = with_format(env, format, args.start());
@@ -1356,6 +1369,19 @@ pub const CLASSES: ClassExports = objc_classes! {
     this
 }
 
+- (id)initWithBytesNoCopy:(MutPtr<u8>)bytes
+                   length:(NSUInteger)len
+                 encoding:(NSStringEncoding)encoding
+             freeWhenDone:(bool)free_when_done {
+    let slice = env.mem.bytes_at(bytes.cast_const(), len);
+    let host_object = StringHostObject::decode(Cow::Borrowed(slice), encoding);
+    *env.objc.borrow_mut(this) = host_object;
+    if free_when_done {
+        env.mem.free(bytes.cast());
+    }
+    this
+}
+
 - (id)initWithCharacters:(ConstPtr<unichar>)characters length:(NSUInteger)len {
     assert!(!characters.is_null());
     let num_bytes = len * 2;
@@ -1561,6 +1587,19 @@ pub const CLASSES: ClassExports = objc_classes! {
 
     *env.objc.borrow_mut(this) = host_object;
 
+    this
+}
+
+- (id)initWithBytesNoCopy:(MutPtr<u8>)bytes
+                   length:(NSUInteger)len
+                 encoding:(NSStringEncoding)encoding
+             freeWhenDone:(bool)free_when_done {
+    let slice = env.mem.bytes_at(bytes.cast_const(), len);
+    let host_object = StringHostObject::decode(Cow::Borrowed(slice), encoding);
+    *env.objc.borrow_mut(this) = host_object;
+    if free_when_done {
+        env.mem.free(bytes.cast());
+    }
     this
 }
 

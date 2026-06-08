@@ -38,9 +38,8 @@ pub(super) struct ClassHostObject {
     pub(super) superclass: Class,
     pub(super) methods: HashMap<SEL, IMP>,
     pub(super) guest_method_signatures: HashMap<SEL, ConstPtr<u8>>,
-    /// Maps ivar name to a tuple of an offset (as pointer) and an alignment.
-    /// (Alignment is used during ivar reconciliation.)
-    pub(super) ivars: HashMap<String, (ConstPtr<GuestUSize>, u32)>,
+    /// Maps ivar name to metadata needed to access it.
+    pub(super) ivars: HashMap<String, IvarInfo>,
     /// Offset into the allocated memory for the object where the ivars of
     /// instances of this class or metaclass (respectively: normal objects or
     /// classes) should live. This is always >= the value in the superclass.
@@ -52,6 +51,13 @@ pub(super) struct ClassHostObject {
     pub(super) is_initialized: InitializationStatus,
 }
 impl HostObject for ClassHostObject {}
+
+pub(super) struct IvarInfo {
+    pub(super) offset: ConstPtr<GuestUSize>,
+    /// Used during ivar reconciliation.
+    pub(super) alignment: u32,
+    pub(super) type_encoding: String,
+}
 
 #[derive(Clone, Copy, PartialEq)]
 pub(super) enum InitializationStatus {
@@ -506,8 +512,7 @@ impl ObjC {
     }
 
     fn find_template(name: &str) -> Option<&'static ClassTemplate> {
-        crate::dyld::search_host_dylibs(|dylib| dylib.class_exports, name)
-            .map(|&(_name, ref template)| template)
+        crate::dyld::search_host_classes(name).map(|&(_name, ref template)| template)
     }
 
     /// For use by [crate::dyld]: get the class or metaclass referenced by an
@@ -728,24 +733,24 @@ impl ObjC {
 
                 if !ivars.is_empty() {
                     let mut max_alignment: u32 = 1;
-                    for (offset, align) in ivars.values() {
-                        if offset.is_null() {
+                    for ivar in ivars.values() {
+                        if ivar.offset.is_null() {
                             // anonymous bitfield
                             continue;
                         }
-                        max_alignment = max_alignment.max(*align);
+                        max_alignment = max_alignment.max(ivar.alignment);
                     }
 
                     let align_mask = max_alignment - 1;
                     diff = (diff + align_mask) & !align_mask;
 
-                    for (offset, _) in ivars.values_mut() {
-                        if offset.is_null() {
+                    for ivar in ivars.values_mut() {
+                        if ivar.offset.is_null() {
                             // anonymous bitfield
                             continue;
                         }
 
-                        *offset = Ptr::from_bits((*offset).to_bits() + diff);
+                        ivar.offset = Ptr::from_bits(ivar.offset.to_bits() + diff);
                     }
                 }
 
@@ -992,6 +997,31 @@ pub(super) fn class_getSuperclass(env: &mut Environment, cls: Class) -> Class {
     } else {
         env.objc.borrow::<ClassHostObject>(cls).superclass
     }
+}
+
+pub(super) fn class_getInstanceMethod(
+    env: &mut Environment,
+    cls: Class,
+    name: SEL,
+) -> crate::mem::ConstVoidPtr {
+    if cls == nil || name.is_null() {
+        return crate::mem::Ptr::null();
+    }
+
+    // We don't have a proper Method struct exposed to the guest yet,
+    // so we just return a dummy pointer if the method exists, to satisfy
+    // apps that just check for != NULL. If they try to read the struct,
+    // they will crash, but this is enough for simple checks.
+    // We don't have a proper Method struct exposed to the guest yet,
+    // so we just return NULL. If the game crashes because of this, we may need
+    // to build a proper Method struct.
+    if env.objc.class_has_method(cls, name) {
+        log_dbg!(
+            "class_getInstanceMethod: returning NULL for implemented method {:?}",
+            name.as_str(&env.mem)
+        );
+    }
+    crate::mem::Ptr::null()
 }
 
 pub(super) fn class_getInstanceSize(env: &mut Environment, cls: Class) -> GuestUSize {

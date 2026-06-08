@@ -104,7 +104,7 @@ impl ObjC {
         {
             for method_list in [template.class_methods, template.instance_methods] {
                 for &(name, _imp) in method_list {
-                    if self.selectors.contains_key(name) {
+                    if self.selectors.contains_key::<str>(name) {
                         continue;
                     }
                     let sel = SEL(mem.alloc_and_write_cstr(name.as_bytes()).cast_const());

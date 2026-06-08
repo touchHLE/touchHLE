@@ -46,8 +46,8 @@ pub use selectors::{selector, SEL};
 use crate::mem::ConstVoidPtr;
 use crate::Environment;
 use classes::{
-    class_getInstanceSize, class_getProperty, class_getSuperclass, objc_getClass, ClassHostObject,
-    FakeClass, UnimplementedClass,
+    class_getInstanceMethod, class_getInstanceSize, class_getProperty, class_getSuperclass,
+    objc_getClass, ClassHostObject, FakeClass, IvarInfo, UnimplementedClass,
 };
 pub(crate) use messages::objc_msgSend;
 use messages::{objc_msgSendSuper2, objc_msgSend_stret, MsgSendSignature, MsgSendSuperSignature};
@@ -135,6 +135,7 @@ fn _Block_object_dispose(_env: &mut Environment, object: ConstVoidPtr, flags: i3
 }
 
 const FUNCTIONS: FunctionExports = &[
+    export_c_func!(class_getInstanceMethod(_, _)),
     export_c_func!(class_getInstanceSize(_)),
     export_c_func!(class_getSuperclass(_)),
     export_c_func!(class_getProperty(_, _)),

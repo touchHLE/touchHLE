@@ -14,7 +14,7 @@
 //!
 //! See also: [crate::frameworks::foundation::ns_object].
 
-use super::{id, msg, nil, release, retain, Class, ClassHostObject, ObjC, SEL};
+use super::{id, msg, nil, release, retain, Class, ClassHostObject, IvarInfo, ObjC, SEL};
 use crate::mem::{
     guest_size_of, ConstPtr, ConstVoidPtr, GuestISize, GuestUSize, Mem, MutPtr, MutVoidPtr, Ptr,
     SafeRead,
@@ -59,12 +59,21 @@ impl ClassHostObject {
             let ivar_t {
                 offset,
                 name,
+                type_,
                 alignment,
                 ..
             } = mem.read(ivar_ptr);
 
             let name_string = mem.cstr_at_utf8(name).unwrap().into();
-            self.ivars.insert(name_string, (offset, alignment));
+            let type_encoding = mem.cstr_at_utf8(type_).unwrap().into();
+            self.ivars.insert(
+                name_string,
+                IvarInfo {
+                    offset,
+                    alignment,
+                    type_encoding,
+                },
+            );
         }
     }
 }
@@ -78,7 +87,7 @@ impl ObjC {
         mem: &Mem,
         obj: id,
         name: &String,
-    ) -> Option<MutPtr<GuestUSize>> {
+    ) -> Option<(MutPtr<GuestUSize>, String)> {
         let mut class = ObjC::read_isa(obj, mem);
         loop {
             let &ClassHostObject {
@@ -86,10 +95,10 @@ impl ObjC {
                 ref ivars,
                 ..
             } = self.borrow(class);
-            if let Some((ivar_offset_ptr, _)) = ivars.get(name) {
-                let ivar_offset = mem.read(*ivar_offset_ptr);
+            if let Some(ivar) = ivars.get(name) {
+                let ivar_offset = mem.read(ivar.offset);
                 let ivar_ptr = MutVoidPtr::from_bits(obj.to_bits() + ivar_offset);
-                return Some(ivar_ptr.cast());
+                return Some((ivar_ptr.cast(), ivar.type_encoding.clone()));
             } else if superclass == nil {
                 return None;
             } else {
@@ -107,7 +116,10 @@ impl ObjC {
                 ref ivars,
                 ..
             } = self.borrow(class);
-            let mut class_ivars_strings = ivars.keys().cloned().collect();
+            let mut class_ivars_strings = ivars
+                .iter()
+                .map(|(name, ivar)| format!("{}: {}", name, ivar.type_encoding))
+                .collect();
             ivars_strings.append(&mut class_ivars_strings);
             if superclass == nil {
                 break;

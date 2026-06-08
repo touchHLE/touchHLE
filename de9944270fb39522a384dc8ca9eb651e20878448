@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d112c44e_d2f8f7de",
+        "filename": "src/frameworks/uikit/ui_view/ui_label.rs",
+        "patchSetId": 62
+      },
+      "lineNbr": 248,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2026-06-08T02:24:50Z",
+      "side": 1,
+      "message": "sizetofit is a uiview method",
+      "range": {
+        "startLine": 245,
+        "startChar": 1,
+        "endLine": 248,
+        "endChar": 1
+      },
+      "revId": "de9944270fb39522a384dc8ca9eb651e20878448",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

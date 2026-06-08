@@ -112,7 +112,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (id)initWithAPI:(EAGLRenderingAPI)api sharegroup:(id)group {
     if api != kEAGLRenderingAPIOpenGLES1 {
         log!(
-            "TODO: App requested EAGL initWithAPI:{} sharegroup:{:?}, returning nil as we only support API 1 for now",
+            "Warning: App requested EAGL initWithAPI:{} sharegroup:{:?}, but we only support API 1. Returning nil so the app can fallback.",
             api,
             group
         );
@@ -154,7 +154,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (id)initWithAPI:(EAGLRenderingAPI)api {
     if api != kEAGLRenderingAPIOpenGLES1 {
         log!(
-            "TODO: App requested EAGL initWithAPI:{}, returning nil as we only support API 1 for now",
+            "Warning: App requested EAGL initWithAPI:{}, but we only support API 1. Returning nil so the app can fallback.",
             api
         );
         return nil;

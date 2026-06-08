@@ -17,7 +17,7 @@ use touchHLE_gl_bindings::gles11::{
     WRITE_ONLY_OES,
 };
 
-use crate::dyld::{export_c_func, FunctionExports};
+use crate::dyld::{export_c_func, export_c_func_aliased, FunctionExports};
 use crate::frameworks::opengles::eagl::EAGLContextHostObject;
 use crate::gles::{gles11_raw as gles11, GLES}; // constants only
 use crate::mem::{ConstPtr, ConstVoidPtr, GuestISize, GuestUSize, Mem, MutPtr, MutVoidPtr, Ptr};
@@ -1467,6 +1467,248 @@ unsafe fn restore_fog_state_values(gles: &mut dyn GLES, from_backup: Option<(f32
     }
 }
 
+// =============================================================================
+// OpenGL ES 2.0 stub functions
+//
+// These are stub implementations for GLES 2.0 functions that some apps call.
+// Since touchHLE only supports GLES 1.1, these return dummy/failure values
+// to prevent a hard crash, while logging warnings.
+// =============================================================================
+
+fn glCreateShader(_env: &mut Environment, _type: GLenum) -> GLuint {
+    log!(
+        "Warning: glCreateShader({:#x}) called but GLES 2.0 is not supported, returning 0",
+        _type
+    );
+    0
+}
+fn glCreateProgram(_env: &mut Environment) -> GLuint {
+    log!("Warning: glCreateProgram() called but GLES 2.0 is not supported, returning 0");
+    0
+}
+fn glShaderSource(
+    _env: &mut Environment,
+    _shader: GLuint,
+    _count: GLsizei,
+    _string: ConstPtr<ConstPtr<u8>>,
+    _length: ConstPtr<GLint>,
+) {
+    log!("Warning: glShaderSource() called but GLES 2.0 is not supported");
+}
+fn glCompileShader(_env: &mut Environment, _shader: GLuint) {
+    log!(
+        "Warning: glCompileShader({}) called but GLES 2.0 is not supported",
+        _shader
+    );
+}
+fn glAttachShader(_env: &mut Environment, _program: GLuint, _shader: GLuint) {
+    log!(
+        "Warning: glAttachShader({}, {}) called but GLES 2.0 is not supported",
+        _program,
+        _shader
+    );
+}
+fn glDetachShader(_env: &mut Environment, _program: GLuint, _shader: GLuint) {
+    log!(
+        "Warning: glDetachShader({}, {}) called but GLES 2.0 is not supported",
+        _program,
+        _shader
+    );
+}
+fn glLinkProgram(_env: &mut Environment, _program: GLuint) {
+    log!(
+        "Warning: glLinkProgram({}) called but GLES 2.0 is not supported",
+        _program
+    );
+}
+fn glUseProgram(_env: &mut Environment, _program: GLuint) {
+    log!(
+        "Warning: glUseProgram({}) called but GLES 2.0 is not supported",
+        _program
+    );
+}
+fn glDeleteShader(_env: &mut Environment, _shader: GLuint) {
+    log!(
+        "Warning: glDeleteShader({}) called but GLES 2.0 is not supported",
+        _shader
+    );
+}
+fn glDeleteProgram(_env: &mut Environment, _program: GLuint) {
+    log!(
+        "Warning: glDeleteProgram({}) called but GLES 2.0 is not supported",
+        _program
+    );
+}
+fn glGetShaderiv(_env: &mut Environment, _shader: GLuint, pname: GLenum, params: MutPtr<GLint>) {
+    log!(
+        "Warning: glGetShaderiv({}, {:#x}) called but GLES 2.0 is not supported",
+        _shader,
+        pname
+    );
+    // GL_COMPILE_STATUS = 0x8B81, return GL_TRUE (1) to pretend compilation succeeded
+    let val = if pname == 0x8B81 { 1 } else { 0 };
+    _env.mem.write(params, val);
+}
+fn glGetProgramiv(_env: &mut Environment, _program: GLuint, pname: GLenum, params: MutPtr<GLint>) {
+    log!(
+        "Warning: glGetProgramiv({}, {:#x}) called but GLES 2.0 is not supported",
+        _program,
+        pname
+    );
+    // GL_LINK_STATUS = 0x8B82, return GL_TRUE (1) to pretend linking succeeded
+    let val = if pname == 0x8B82 { 1 } else { 0 };
+    _env.mem.write(params, val);
+}
+fn glGetShaderInfoLog(
+    _env: &mut Environment,
+    _shader: GLuint,
+    _buf_size: GLsizei,
+    _length: MutPtr<GLsizei>,
+    _info_log: MutPtr<u8>,
+) {
+    log!("Warning: glGetShaderInfoLog() called but GLES 2.0 is not supported");
+    // Write empty string and length 0
+    if !_length.is_null() {
+        _env.mem.write(_length, 0);
+    }
+    if !_info_log.is_null() && _buf_size > 0 {
+        _env.mem.write(_info_log, 0);
+    }
+}
+fn glGetProgramInfoLog(
+    _env: &mut Environment,
+    _program: GLuint,
+    _buf_size: GLsizei,
+    _length: MutPtr<GLsizei>,
+    _info_log: MutPtr<u8>,
+) {
+    log!("Warning: glGetProgramInfoLog() called but GLES 2.0 is not supported");
+    if !_length.is_null() {
+        _env.mem.write(_length, 0);
+    }
+    if !_info_log.is_null() && _buf_size > 0 {
+        _env.mem.write(_info_log, 0);
+    }
+}
+fn glGetUniformLocation(_env: &mut Environment, _program: GLuint, _name: ConstPtr<u8>) -> GLint {
+    log!("Warning: glGetUniformLocation() called but GLES 2.0 is not supported");
+    -1 // -1 means uniform not found
+}
+fn glGetAttribLocation(_env: &mut Environment, _program: GLuint, _name: ConstPtr<u8>) -> GLint {
+    log!("Warning: glGetAttribLocation() called but GLES 2.0 is not supported");
+    -1
+}
+fn glBindAttribLocation(
+    _env: &mut Environment,
+    _program: GLuint,
+    _index: GLuint,
+    _name: ConstPtr<u8>,
+) {
+    log!("Warning: glBindAttribLocation() called but GLES 2.0 is not supported");
+}
+fn glUniform1i(_env: &mut Environment, _location: GLint, _v0: GLint) {
+    log!("Warning: glUniform1i() called but GLES 2.0 is not supported");
+}
+fn glUniform1f(_env: &mut Environment, _location: GLint, _v0: GLfloat) {
+    log!("Warning: glUniform1f() called but GLES 2.0 is not supported");
+}
+fn glUniform2f(_env: &mut Environment, _location: GLint, _v0: GLfloat, _v1: GLfloat) {
+    log!("Warning: glUniform2f() called but GLES 2.0 is not supported");
+}
+fn glUniform3f(_env: &mut Environment, _location: GLint, _v0: GLfloat, _v1: GLfloat, _v2: GLfloat) {
+    log!("Warning: glUniform3f() called but GLES 2.0 is not supported");
+}
+fn glUniform4f(
+    _env: &mut Environment,
+    _location: GLint,
+    _v0: GLfloat,
+    _v1: GLfloat,
+    _v2: GLfloat,
+    _v3: GLfloat,
+) {
+    log!("Warning: glUniform4f() called but GLES 2.0 is not supported");
+}
+fn glUniform1fv(
+    _env: &mut Environment,
+    _location: GLint,
+    _count: GLsizei,
+    _value: ConstPtr<GLfloat>,
+) {
+    log!("Warning: glUniform1fv() called but GLES 2.0 is not supported");
+}
+fn glUniform2fv(
+    _env: &mut Environment,
+    _location: GLint,
+    _count: GLsizei,
+    _value: ConstPtr<GLfloat>,
+) {
+    log!("Warning: glUniform2fv() called but GLES 2.0 is not supported");
+}
+fn glUniform3fv(
+    _env: &mut Environment,
+    _location: GLint,
+    _count: GLsizei,
+    _value: ConstPtr<GLfloat>,
+) {
+    log!("Warning: glUniform3fv() called but GLES 2.0 is not supported");
+}
+fn glUniform4fv(
+    _env: &mut Environment,
+    _location: GLint,
+    _count: GLsizei,
+    _value: ConstPtr<GLfloat>,
+) {
+    log!("Warning: glUniform4fv() called but GLES 2.0 is not supported");
+}
+fn glUniformMatrix4fv(
+    _env: &mut Environment,
+    _location: GLint,
+    _count: GLsizei,
+    _transpose: GLboolean,
+    _value: ConstPtr<GLfloat>,
+) {
+    log!("Warning: glUniformMatrix4fv() called but GLES 2.0 is not supported");
+}
+fn glEnableVertexAttribArray(_env: &mut Environment, _index: GLuint) {
+    log!(
+        "Warning: glEnableVertexAttribArray({}) called but GLES 2.0 is not supported",
+        _index
+    );
+}
+fn glDisableVertexAttribArray(_env: &mut Environment, _index: GLuint) {
+    log!(
+        "Warning: glDisableVertexAttribArray({}) called but GLES 2.0 is not supported",
+        _index
+    );
+}
+fn glVertexAttribPointer(
+    _env: &mut Environment,
+    _index: GLuint,
+    _size: GLint,
+    _type_: GLenum,
+    _normalized: GLboolean,
+    _stride: GLsizei,
+    _pointer: ConstVoidPtr,
+) {
+    log!("Warning: glVertexAttribPointer() called but GLES 2.0 is not supported");
+}
+fn glVertexAttrib4f(
+    _env: &mut Environment,
+    _index: GLuint,
+    _x: GLfloat,
+    _y: GLfloat,
+    _z: GLfloat,
+    _w: GLfloat,
+) {
+    log!("Warning: glVertexAttrib4f() called but GLES 2.0 is not supported");
+}
+fn glValidateProgram(_env: &mut Environment, _program: GLuint) {
+    log!(
+        "Warning: glValidateProgram({}) called but GLES 2.0 is not supported",
+        _program
+    );
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     // Generic state manipulation
     export_c_func!(glGetError()),
@@ -1613,23 +1855,86 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(glMultiTexCoord4x(_, _, _, _, _)),
     // OES_framebuffer_object
     export_c_func!(glGenFramebuffersOES(_, _)),
+    export_c_func_aliased!("glGenFramebuffers", glGenFramebuffersOES(_, _)),
     export_c_func!(glGenRenderbuffersOES(_, _)),
+    export_c_func_aliased!("glGenRenderbuffers", glGenRenderbuffersOES(_, _)),
     export_c_func!(glIsFramebufferOES(_)),
+    export_c_func_aliased!("glIsFramebuffer", glIsFramebufferOES(_)),
     export_c_func!(glIsRenderbufferOES(_)),
+    export_c_func_aliased!("glIsRenderbuffer", glIsRenderbufferOES(_)),
     export_c_func!(glBindFramebufferOES(_, _)),
+    export_c_func_aliased!("glBindFramebuffer", glBindFramebufferOES(_, _)),
     export_c_func!(glBindRenderbufferOES(_, _)),
+    export_c_func_aliased!("glBindRenderbuffer", glBindRenderbufferOES(_, _)),
     export_c_func!(glRenderbufferStorageOES(_, _, _, _)),
+    export_c_func_aliased!(
+        "glRenderbufferStorage",
+        glRenderbufferStorageOES(_, _, _, _)
+    ),
     export_c_func!(glFramebufferRenderbufferOES(_, _, _, _)),
+    export_c_func_aliased!(
+        "glFramebufferRenderbuffer",
+        glFramebufferRenderbufferOES(_, _, _, _)
+    ),
     export_c_func!(glFramebufferTexture2DOES(_, _, _, _, _)),
+    export_c_func_aliased!(
+        "glFramebufferTexture2D",
+        glFramebufferTexture2DOES(_, _, _, _, _)
+    ),
     export_c_func!(glGetFramebufferAttachmentParameterivOES(_, _, _, _)),
+    export_c_func_aliased!(
+        "glGetFramebufferAttachmentParameteriv",
+        glGetFramebufferAttachmentParameterivOES(_, _, _, _)
+    ),
     export_c_func!(glGetRenderbufferParameterivOES(_, _, _)),
+    export_c_func_aliased!(
+        "glGetRenderbufferParameteriv",
+        glGetRenderbufferParameterivOES(_, _, _)
+    ),
     export_c_func!(glCheckFramebufferStatusOES(_)),
+    export_c_func_aliased!("glCheckFramebufferStatus", glCheckFramebufferStatusOES(_)),
     export_c_func!(glDeleteFramebuffersOES(_, _)),
+    export_c_func_aliased!("glDeleteFramebuffers", glDeleteFramebuffersOES(_, _)),
     export_c_func!(glDeleteRenderbuffersOES(_, _)),
+    export_c_func_aliased!("glDeleteRenderbuffers", glDeleteRenderbuffersOES(_, _)),
     export_c_func!(glGenerateMipmapOES(_)),
+    export_c_func_aliased!("glGenerateMipmap", glGenerateMipmapOES(_)),
     export_c_func!(glGetBufferParameteriv(_, _, _)),
     export_c_func!(glMapBufferOES(_, _)),
     export_c_func!(glUnmapBufferOES(_)),
+    // OpenGL ES 2.0 stubs
+    export_c_func!(glCreateShader(_)),
+    export_c_func!(glCreateProgram()),
+    export_c_func!(glShaderSource(_, _, _, _)),
+    export_c_func!(glCompileShader(_)),
+    export_c_func!(glAttachShader(_, _)),
+    export_c_func!(glDetachShader(_, _)),
+    export_c_func!(glLinkProgram(_)),
+    export_c_func!(glUseProgram(_)),
+    export_c_func!(glDeleteShader(_)),
+    export_c_func!(glDeleteProgram(_)),
+    export_c_func!(glGetShaderiv(_, _, _)),
+    export_c_func!(glGetProgramiv(_, _, _)),
+    export_c_func!(glGetShaderInfoLog(_, _, _, _)),
+    export_c_func!(glGetProgramInfoLog(_, _, _, _)),
+    export_c_func!(glGetUniformLocation(_, _)),
+    export_c_func!(glGetAttribLocation(_, _)),
+    export_c_func!(glBindAttribLocation(_, _, _)),
+    export_c_func!(glUniform1i(_, _)),
+    export_c_func!(glUniform1f(_, _)),
+    export_c_func!(glUniform2f(_, _, _)),
+    export_c_func!(glUniform3f(_, _, _, _)),
+    export_c_func!(glUniform4f(_, _, _, _, _)),
+    export_c_func!(glUniform1fv(_, _, _)),
+    export_c_func!(glUniform2fv(_, _, _)),
+    export_c_func!(glUniform3fv(_, _, _)),
+    export_c_func!(glUniform4fv(_, _, _)),
+    export_c_func!(glUniformMatrix4fv(_, _, _, _)),
+    export_c_func!(glEnableVertexAttribArray(_)),
+    export_c_func!(glDisableVertexAttribArray(_)),
+    export_c_func!(glVertexAttribPointer(_, _, _, _, _, _)),
+    export_c_func!(glVertexAttrib4f(_, _, _, _, _)),
+    export_c_func!(glValidateProgram(_)),
 ];
 
 fn _get_currently_bound_buffer_object_name(env: &mut Environment, target: GLenum) -> GLuint {

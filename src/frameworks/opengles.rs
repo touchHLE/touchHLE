@@ -37,7 +37,7 @@ impl State {
     }
 }
 
-fn sync_context<'objc, 'win: 'objc>(
+pub fn sync_context<'objc, 'win: 'objc>(
     state: &mut State,
     objc: &'objc mut crate::objc::ObjC,
     window: &'win mut crate::window::Window,

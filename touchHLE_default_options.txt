@@ -277,3 +277,6 @@ com.madfingergames.Samurai: --force-composition
 
 # NEX
 com.StarByte.NEX: --landscape-left --force-composition
+
+# Angry Birds HD
+com.chillingo.angrybirdsipad: --landscape-left

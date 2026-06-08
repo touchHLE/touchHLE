@@ -52,6 +52,24 @@
       "parentUuid": "e79ac714_27e0ac17",
       "revId": "59ca44ddfc11e604dd8660d0f285c890ab865a04",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "920f7601_96325b96",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1039141
+      },
+      "writtenOn": "2026-06-08T17:32:01Z",
+      "side": 1,
+      "message": "sure that sounds like a good idea to test, though I don\u0027t think SMB loads the audio files through ExtAudioFile. I\u0027ll have to look into this further and see how to go about that with the base API it uses instead. Still have lots to learn though, so I need some time before I can get back to you on this. thanks nonetheless!",
+      "parentUuid": "841c0b46_e9959d2a",
+      "revId": "59ca44ddfc11e604dd8660d0f285c890ab865a04",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

@@ -15,26 +15,58 @@ use crate::Environment;
 
 fn __cxa_atexit(
     _env: &mut Environment,
-    func: GuestFunction, // void (*func)(void *)
-    p: MutVoidPtr,
-    d: MutVoidPtr,
+    _func: GuestFunction, // void (*func)(void *)
+    _p: MutVoidPtr,
+    _d: MutVoidPtr,
 ) -> i32 {
-    // TODO: when this is implemented, make sure it's properly compatible with
-    // C atexit.
-    log!(
-        "TODO: __cxa_atexit({:?}, {:?}, {:?}) (unimplemented)",
-        func,
-        p,
-        d
-    );
     0 // success
 }
 
-fn __cxa_finalize(_env: &mut Environment, d: MutVoidPtr) {
-    log!("TODO: __cxa_finalize({:?}) (unimplemented)", d);
+fn __cxa_finalize(_env: &mut Environment, _d: MutVoidPtr) {}
+
+fn _Unwind_SjLj_Register(_env: &mut Environment, _data: MutVoidPtr) {
+    log_dbg!("TODO: _Unwind_SjLj_Register({:?}) (stub)", _data);
+}
+
+fn _Unwind_SjLj_Unregister(_env: &mut Environment, _data: MutVoidPtr) {
+    log_dbg!("TODO: _Unwind_SjLj_Unregister({:?}) (stub)", _data);
+}
+
+fn xmlReadFile(
+    _env: &mut Environment,
+    _filename: crate::mem::ConstPtr<u8>,
+    _encoding: crate::mem::ConstPtr<u8>,
+    _options: i32,
+) -> MutVoidPtr {
+    log_dbg!("TODO: xmlReadFile (stub)");
+    crate::mem::Ptr::null()
+}
+
+fn xmlDocGetRootElement(_env: &mut Environment, _doc: MutVoidPtr) -> MutVoidPtr {
+    log_dbg!("TODO: xmlDocGetRootElement (stub)");
+    crate::mem::Ptr::null()
+}
+
+fn xmlFreeDoc(_env: &mut Environment, _doc: MutVoidPtr) {
+    log_dbg!("TODO: xmlFreeDoc (stub)");
+}
+
+fn xmlCleanupMemory(_env: &mut Environment) {
+    log_dbg!("TODO: xmlCleanupMemory (stub)");
+}
+
+fn xmlFree(_env: &mut Environment, _ptr: MutVoidPtr) {
+    log_dbg!("TODO: xmlFree (stub)");
 }
 
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(__cxa_atexit(_, _, _)),
     export_c_func!(__cxa_finalize(_)),
+    export_c_func!(_Unwind_SjLj_Register(_)),
+    export_c_func!(_Unwind_SjLj_Unregister(_)),
+    export_c_func!(xmlReadFile(_, _, _)),
+    export_c_func!(xmlDocGetRootElement(_)),
+    export_c_func!(xmlFreeDoc(_)),
+    export_c_func!(xmlCleanupMemory()),
+    export_c_func!(xmlFree(_)),
 ];

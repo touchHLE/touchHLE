@@ -51,19 +51,18 @@ enum FileLocation {
 
 #[derive(Debug)]
 pub enum FsError {
-    AccessDenied,
     AlreadyExist,
-    DirectoryNotEmpty,
     DoesNotExist,
-    /// Error occured during host side FS operations.
-    IoError(#[allow(dead_code)] std::io::Error),
+    AccessDenied,
     InvalidParentDir,
     IsDirectory,
     NonexistentParentDir,
     ReadonlyParentDir,
+    IoError(std::io::ErrorKind),
 }
 
-#[derive(Debug)]
+/// The type of a node in the guest filesystem.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum FsNodeType {
     File,
     Directory,
@@ -311,7 +310,6 @@ pub fn resolve_path<'a>(path: &'a GuestPath, relative_to: Option<&'a GuestPath>)
 }
 
 /// Like [std::fs::OpenOptions] but for the guest filesystem.
-/// TODO: `create_new`.
 #[derive(Debug)]
 pub struct GuestOpenOptions {
     read: bool,
@@ -319,6 +317,7 @@ pub struct GuestOpenOptions {
     append: bool,
     create: bool,
     truncate: bool,
+    /// Like `O_EXCL`: fail if the file already exists.
     exclusive: bool,
 }
 impl GuestOpenOptions {
@@ -449,10 +448,7 @@ impl Read for GuestFile {
             GuestFile::File(file) => file.read(buf),
             GuestFile::IpaBundleFile(file) => file.read(buf),
             GuestFile::ResourceFile(file) => file.get().read(buf),
-            GuestFile::Directory => Err(std::io::Error::new(
-                std::io::ErrorKind::IsADirectory,
-                "Attempt to read from a directory as a guest file",
-            )),
+            GuestFile::Directory => panic!("Attempt to read from a directory as a guest file"),
             _ => unimplemented!(),
         }
     }
@@ -476,10 +472,9 @@ impl Write for GuestFile {
     fn flush(&mut self) -> std::io::Result<()> {
         match self {
             GuestFile::File(file) => file.flush(),
-            GuestFile::IpaBundleFile(file) => Err(std::io::Error::new(
-                std::io::ErrorKind::ReadOnlyFilesystem,
-                format!("Attempt to flush a read-only file: {file:?}"),
-            )),
+            GuestFile::IpaBundleFile(file) => {
+                panic!("Attempt to flush a read-only file: {file:?}")
+            }
             GuestFile::ResourceFile(file) => {
                 panic!("Attempt to flush a read-only file: {file:?}")
             }
@@ -495,17 +490,7 @@ impl Seek for GuestFile {
             GuestFile::File(file) => file.seek(pos),
             GuestFile::IpaBundleFile(file) => file.seek(pos),
             GuestFile::ResourceFile(file) => file.get().seek(pos),
-            GuestFile::Directory => {
-                // Note: directories as supposed to be seekable on iOS! https://stackoverflow.com/questions/65911066/what-does-lseek-mean-for-a-directory-file-descriptor
-                // As far as I can (f)tell, apps are really not using that
-                // properly and returning -1 on fseek/ftell is fine.
-                // TODO: implement seeking properly and return "cookie" values
-                log!("Warning: Seeking a directory as a guest file!");
-                Err(std::io::Error::new(
-                    std::io::ErrorKind::IsADirectory,
-                    "Attempt to seek a directory as a guest file",
-                ))
-            }
+            GuestFile::Directory => panic!("Attempt to seek in a directory as a guest file"),
             _ => unimplemented!(),
         }
     }
@@ -612,6 +597,15 @@ impl Fs {
                 FsNode::resource_file(format!("{DYLIBS_DIR}/libstdc++.6.0.9.dylib")),
             )
             .with_child(
+                "libsqlite3.dylib",
+                FsNode::resource_file(format!("{DYLIBS_DIR}/libsqlite3.dylib")),
+            )
+            .with_child(
+                // symlink
+                "libsqlite3.0.dylib",
+                FsNode::resource_file(format!("{DYLIBS_DIR}/libsqlite3.dylib")),
+            )
+            .with_child(
                 "libz.1.2.3.dylib",
                 FsNode::resource_file(format!("{DYLIBS_DIR}/libz.1.2.3.dylib")),
             )
@@ -629,15 +623,6 @@ impl Fs {
                 // symlink
                 "libz.1.1.3.dylib",
                 FsNode::resource_file(format!("{DYLIBS_DIR}/libz.1.2.3.dylib")),
-            )
-            .with_child(
-                "libsqlite3.dylib",
-                FsNode::resource_file(format!("{DYLIBS_DIR}/libsqlite3.dylib")),
-            )
-            .with_child(
-                // symlink
-                "libsqlite3.0.dylib",
-                FsNode::resource_file(format!("{DYLIBS_DIR}/libsqlite3.dylib")),
             );
 
         let mut app_dir_children = HashMap::new();
@@ -863,7 +848,7 @@ impl Fs {
         Ok(children.keys().map(|name| name.as_str()))
     }
 
-    /// Similar to [Fs::enumerate], but also returns fs node type.
+    /// Get an iterator over (name, type) pairs for entries in a directory.
     pub fn enumerate_with_types<P: AsRef<GuestPath>>(
         &self,
         path: P,
@@ -872,13 +857,11 @@ impl Fs {
             return Err(());
         };
         Ok(children.iter().map(|(name, node)| {
-            (
-                name.as_str(),
-                match node {
-                    FsNode::File { .. } => FsNodeType::File,
-                    FsNode::Directory { .. } => FsNodeType::Directory,
-                },
-            )
+            let node_type = match node {
+                FsNode::File { .. } => FsNodeType::File,
+                FsNode::Directory { .. } => FsNodeType::Directory,
+            };
+            (name.as_str(), node_type)
         }))
     }
 
@@ -927,12 +910,13 @@ impl Fs {
     }
 
     /// Like [std::fs::write] but for the guest filesystem.
-    pub fn write<P: AsRef<GuestPath>>(&mut self, path: P, data: &[u8]) -> Result<(), FsError> {
+    pub fn write<P: AsRef<GuestPath>>(&mut self, path: P, data: &[u8]) -> Result<(), ()> {
         let mut options = GuestOpenOptions::new();
         options.write().create().truncate();
-        self.open_with_options(path, options)?
+        self.open_with_options(path, options)
+            .map_err(|_| ())?
             .write_all(data)
-            .map_err(FsError::IoError)
+            .map_err(|_| ())
     }
 
     /// Like [File::open] but for the guest filesystem.
@@ -957,17 +941,16 @@ impl Fs {
         }
     }
 
-    pub fn rename<P: AsRef<GuestPath> + Copy>(&mut self, from: P, to: P) -> Result<(), FsError> {
-        let from_node = self
-            .lookup_node(from.as_ref())
-            .ok_or(FsError::DoesNotExist)?;
+    pub fn rename<P: AsRef<GuestPath> + Copy>(&mut self, from: P, to: P) -> Result<(), ()> {
+        let from_node = self.lookup_node(from.as_ref()).ok_or(())?;
         let from_host_path = match from_node {
             FsNode::File {
                 location: from_location,
                 writeable: from_writeable,
             } => {
                 let FileLocation::Path(from_host_path) = from_location else {
-                    return Err(FsError::IsDirectory);
+                    // TODO: return EISDIR
+                    return Err(());
                 };
                 assert!(from_writeable); // TODO: return errno
                                          // TODO: avoid copy?
@@ -980,7 +963,7 @@ impl Fs {
             // In case target guest node do not exist, we need to create one
             let mut options = GuestOpenOptions::new();
             options.write().create().truncate();
-            self.open_with_options(to, options)?;
+            self.open_with_options(to, options).map_err(|_| ())?;
         }
 
         let to_node = self.lookup_node(to.as_ref()).unwrap();
@@ -989,10 +972,12 @@ impl Fs {
             writeable: to_writeable,
         } = to_node
         else {
-            return Err(FsError::IsDirectory);
+            // TODO: return EISDIR
+            return Err(());
         };
         let FileLocation::Path(to_host_path) = to_location else {
-            return Err(FsError::AccessDenied);
+            // TODO: return EACCES
+            return Err(());
         };
         assert!(to_writeable); // TODO: return errno
         let res = fs::rename(from_host_path, to_host_path);
@@ -1004,7 +989,7 @@ impl Fs {
             };
             children.remove(&component).unwrap();
         }
-        res.map_err(FsError::IoError)
+        res.map_err(|_| ())
     }
 
     /// Like [File::options] but for the guest filesystem.
@@ -1025,22 +1010,21 @@ impl Fs {
 
         let path = path.as_ref();
 
-        let (parent_node, new_filename) =
-            self.lookup_parent_node(path).ok_or(FsError::DoesNotExist)?;
+        let (parent_node, new_filename) = self
+            .lookup_parent_node(path)
+            .ok_or(FsError::NonexistentParentDir)?;
         let FsNode::Directory {
             children,
             writeable: dir_host_path,
         } = parent_node
         else {
-            return Err(FsError::NonexistentParentDir);
+            return Err(FsError::InvalidParentDir);
         };
 
         // Open an existing file if possible
+
         if let Some(existing_file) = children.get(&new_filename) {
-            if create && exclusive {
-                // TODO: This should also return an error if the last
-                // component is a symlink, but the FS currently doesn't
-                // have symlinks
+            if exclusive {
                 return Err(FsError::AlreadyExist);
             }
             match existing_file {
@@ -1089,6 +1073,7 @@ impl Fs {
         };
 
         // Create a new file otherwise
+
         if !create {
             return Err(FsError::DoesNotExist);
         }
@@ -1098,7 +1083,7 @@ impl Fs {
                 "Warning: attempt to create file at path {:?}, but directory is read-only",
                 path
             );
-            return Err(FsError::AccessDenied);
+            return Err(FsError::ReadonlyParentDir);
         };
 
         for c in new_filename.chars() {
@@ -1109,16 +1094,19 @@ impl Fs {
 
         let host_path = dir_host_path.join(&new_filename);
 
-        let file = handle_open_err(
-            File::options()
-                .read(read)
-                .write(write)
-                .append(append)
-                .create(create)
-                .truncate(truncate)
-                .open(&host_path),
-            &host_path,
-        );
+        let file = File::options()
+            .read(read)
+            .write(write)
+            .append(append)
+            .create(create)
+            .create_new(exclusive)
+            .truncate(truncate)
+            .open(&host_path)
+            .map_err(|e| match e.kind() {
+                std::io::ErrorKind::AlreadyExists => FsError::AlreadyExist,
+                std::io::ErrorKind::PermissionDenied => FsError::AccessDenied,
+                _ => FsError::IoError(e.kind()),
+            })?;
         log_dbg!(
             "Created file at path {:?} (host path: {:?})",
             path,
@@ -1139,9 +1127,8 @@ impl Fs {
     pub fn remove<P: AsRef<GuestPath>>(&mut self, path: P) -> Result<(), FsError> {
         let path = path.as_ref();
 
-        let (parent_node, node_name) = self
-            .lookup_parent_node(path)
-            .ok_or(FsError::NonexistentParentDir)?;
+        let (parent_node, node_name) =
+            self.lookup_parent_node(path).ok_or(FsError::DoesNotExist)?;
 
         // Parent directory is not a directory
         let FsNode::Directory {
@@ -1191,7 +1178,7 @@ impl Fs {
             } => {
                 // Directory is not empty
                 if !children.is_empty() {
-                    return Err(FsError::DirectoryNotEmpty);
+                    return Err(FsError::IsDirectory);
                 }
                 // Read-only directories can't be removed. (This is probably not
                 // correct, but it is safer for now.)

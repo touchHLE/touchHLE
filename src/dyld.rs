@@ -28,6 +28,7 @@ use crate::mach_o::{MachO, SectionType};
 use crate::mem::{ConstVoidPtr, GuestUSize, Mem, MutPtr, MutVoidPtr, Ptr};
 use crate::objc::{nil, ClassExports, ObjC};
 use crate::Environment;
+use std::cell::RefCell;
 use std::collections::HashMap;
 
 pub use dylib_list::DYLIB_LIST;
@@ -166,34 +167,66 @@ pub enum HostConstant {
 /// See also [FunctionExports], [ClassExports].
 pub type ConstantExports = &'static [(&'static str, HostConstant)];
 
-/// Search the list of [HostDylib]s for a class/constant/function by its symbol.
-///
-/// Example usage: `search_host_dylibs(|dylib| dylib.function_exports, "_foo")`
-pub fn search_host_dylibs<T, F>(get_exports: F, symbol: &str) -> Option<&'static (&'static str, T)>
-where
-    F: Fn(&HostDylib) -> &'static [&'static [(&'static str, T)]],
-{
-    // TODO: In general, we should rarely if ever need to search the full set
-    //       of dylibs for a symbol. Now that we know which symbols belong to
-    //       which libraries, we should at least only search libraries that are
-    //       referenced by the app and currently "loaded". We probably should
-    //       also implement the Mach-O two-level symbol namespacing eventually.
-    DYLIB_LIST
-        .iter()
-        .copied()
-        .map(get_exports)
-        .find_map(|lists| search_lists(lists, symbol))
+thread_local! {
+    static HOST_FUNCTIONS: RefCell<Option<HashMap<&'static str, &'static (&'static str, HostFunction)>>> = RefCell::new(None);
+    static HOST_CONSTANTS: RefCell<Option<HashMap<&'static str, &'static (&'static str, HostConstant)>>> = RefCell::new(None);
+    static HOST_CLASSES: RefCell<Option<HashMap<&'static str, &'static (&'static str, crate::objc::ClassTemplate)>>> = RefCell::new(None);
 }
 
-/// Helper for working with [ClassExports]/[ConstantExports]/[FunctionExports].
-fn search_lists<T>(
-    lists: &'static [&'static [(&'static str, T)]],
+pub fn search_host_classes(
     symbol: &str,
-) -> Option<&'static (&'static str, T)> {
-    lists
-        .iter()
-        .flat_map(|&n| n)
-        .find(|&(sym, _)| *sym == symbol)
+) -> Option<&'static (&'static str, crate::objc::ClassTemplate)> {
+    HOST_CLASSES.with(|cache| {
+        let mut b = cache.borrow_mut();
+        let map = b.get_or_insert_with(|| {
+            let mut m = HashMap::new();
+            for dylib in DYLIB_LIST {
+                for list in dylib.class_exports {
+                    for item in *list {
+                        m.insert(item.0, item);
+                    }
+                }
+            }
+            m
+        });
+        map.get(symbol).copied()
+    })
+}
+
+pub fn search_host_functions(symbol: &str) -> Option<&'static (&'static str, HostFunction)> {
+    HOST_FUNCTIONS.with(|cache| {
+        let mut b = cache.borrow_mut();
+        let map = b.get_or_insert_with(|| {
+            let mut m = HashMap::new();
+            for dylib in DYLIB_LIST {
+                for list in dylib.function_exports {
+                    for item in *list {
+                        m.insert(item.0, item);
+                    }
+                }
+            }
+            m
+        });
+        map.get(symbol).copied()
+    })
+}
+
+pub fn search_host_constants(symbol: &str) -> Option<&'static (&'static str, HostConstant)> {
+    HOST_CONSTANTS.with(|cache| {
+        let mut b = cache.borrow_mut();
+        let map = b.get_or_insert_with(|| {
+            let mut m = HashMap::new();
+            for dylib in DYLIB_LIST {
+                for list in dylib.constant_exports {
+                    for item in *list {
+                        m.insert(item.0, item);
+                    }
+                }
+            }
+            m
+        });
+        map.get(symbol).copied()
+    })
 }
 
 fn encode_a32_svc(imm: u32) -> u32 {
@@ -338,7 +371,7 @@ impl Dyld {
                 ","
             };
             let symbol = symbol.as_ref().unwrap();
-            if let Some(&(_, _)) = search_host_dylibs(|dylib| dylib.function_exports, symbol) {
+            if let Some(&(_, _)) = search_host_functions(symbol) {
                 writeln!(
                     file,
                     "        {{ \"symbol\": \"{symbol}\", \"linked_to\": \"host\"}}{comma}"
@@ -496,9 +529,7 @@ impl Dyld {
             {
                 // Often used for C++ RTTI
                 Ptr::from_bits(external_addr)
-            } else if let Some((symbol, _)) =
-                search_host_dylibs(|dylib| dylib.function_exports, name)
-            {
+            } else if let Some((symbol, _)) = search_host_functions(name) {
                 // We want the same symbol name to always point to the same
                 // function.
                 let trampoline_ptr = self
@@ -511,7 +542,7 @@ impl Dyld {
                     trampoline_ptr
                 );
                 trampoline_ptr
-            } else if search_host_dylibs(|dylib| dylib.constant_exports, name).is_some() {
+            } else if search_host_constants(name).is_some() {
                 // Skip the constants from DYLD_INFO because we already
                 // handle the consts when reading the __nl_symbol_ptr section
                 continue;
@@ -567,7 +598,7 @@ impl Dyld {
                 }
             }
 
-            if let Some((symbol, _)) = search_host_dylibs(|dylib| dylib.function_exports, symbol) {
+            if let Some((symbol, _)) = search_host_functions(symbol) {
                 // We want the same symbol name to always point to the same
                 // function. It could point to a specific stub entry, but it's
                 // easier to just create a new function and point all the stub
@@ -585,8 +616,7 @@ impl Dyld {
                 log_dbg!("{:?}", self.non_lazy_host_functions);
                 continue;
             }
-            if let Some((_, template)) = search_host_dylibs(|dylib| dylib.constant_exports, symbol)
-            {
+            if let Some((_, template)) = search_host_constants(symbol) {
                 // Delay linking of constant until we have a `&mut Environment`,
                 // that makes it much easier to build NSString objects etc.
                 self.constants_to_link_later.push((ptr_ptr, template));
@@ -760,7 +790,7 @@ impl Dyld {
             return None;
         }
 
-        if let Some(&(symbol, f)) = search_host_dylibs(|dylib| dylib.function_exports, symbol) {
+        if let Some(&(symbol, f)) = search_host_functions(symbol) {
             // Allocate an SVC ID for this host function
             let idx: u32 = self.linked_host_functions.len().try_into().unwrap();
             let mut svc = idx + Self::SVC_LINKED_FUNCTIONS_BASE;
@@ -833,12 +863,12 @@ impl Dyld {
 
     /// Internal [Self::create_proc_address] that doesn't invalidate the cache.
     /// For use before a [Cpu] is available.
-    fn create_proc_address_no_inval(
+    pub fn create_proc_address_no_inval(
         &mut self,
         mem: &mut Mem,
         symbol: &str,
     ) -> Result<GuestFunction, ()> {
-        let &(symbol, f) = search_host_dylibs(|dylib| dylib.function_exports, symbol).ok_or(())?;
+        let &(symbol, f) = search_host_functions(symbol).ok_or(())?;
         if let Some(&cached_fn) = self.non_lazy_host_functions.get(symbol) {
             return Ok(cached_fn);
         }

@@ -216,7 +216,11 @@ pub fn open_direct(env: &mut Environment, path: ConstPtr<u8>, flags: i32) -> Fil
             find_or_create_fd(env, host_object)
         }
         Err(error) => {
-            log!("Warning: open({path:?}, {flags:#x}) failed with: {error:?}, returning -1");
+            if matches!(error, FsError::DoesNotExist | FsError::NonexistentParentDir) {
+                log_dbg!("open({path:?}, {flags:#x}) failed with: {error:?}, returning -1");
+            } else {
+                log!("Warning: open({path:?}, {flags:#x}) failed with: {error:?}, returning -1");
+            }
             let errno = match error {
                 FsError::AccessDenied => EACCES,
                 FsError::AlreadyExist => EEXIST,
@@ -225,8 +229,12 @@ pub fn open_direct(env: &mut Environment, path: ConstPtr<u8>, flags: i32) -> Fil
                 FsError::IsDirectory => EISDIR,
                 FsError::NonexistentParentDir => ENOENT,
                 FsError::ReadonlyParentDir => EACCES,
-                FsError::IoError(_) => EIO,
-                _ => unimplemented!(),
+                FsError::IoError(kind) => match kind {
+                    std::io::ErrorKind::NotFound => ENOENT,
+                    std::io::ErrorKind::PermissionDenied => EACCES,
+                    std::io::ErrorKind::AlreadyExists => EEXIST,
+                    _ => EIO,
+                },
             };
             set_errno(env, errno);
             -1
@@ -770,7 +778,7 @@ fn fcntl(
             let flags: i32 = args.start().next(env);
             assert!(matches!(flags, FD_CLOEXEC | 0));
             if flags & FD_CLOEXEC == FD_CLOEXEC {
-                log!(
+                log_dbg!(
                     "TODO: fcntl({}, F_SETFD, {}) called. CLOEXEC currently not supported.",
                     fd,
                     flags
@@ -792,7 +800,7 @@ fn fcntl(
             // to F_UNLCK. For more info check F_SETLK match arm.
             // TODO: actually check locks set by other processes and return
             // a conflict if it exists
-            log!(
+            log_dbg!(
                 "TODO: fcntl({}, F_GETLK, {:?}) called. Locking unimplemented, any conflicts will be unreported.",
                 fd,
                 lock
@@ -818,7 +826,7 @@ fn fcntl(
             // locks don't do anything, so they can temporarily be ignored.
             // TODO: Actually set locks when multiproccess support is added and
             // the file system supports it.
-            log!(
+            log_dbg!(
                 "TODO: fcntl({}, F_SETLK, {:?}) called. Locking unimplemented, ignoring lock.",
                 fd,
                 lock

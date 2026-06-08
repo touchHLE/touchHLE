@@ -66,7 +66,8 @@ fn opendir(env: &mut Environment, filename: ConstPtr<u8>) -> MutPtr<DIR> {
         let dir = env.mem.alloc_and_write(DIR { idx: 0 });
         log_dbg!("opendir: new DIR ptr: {:?}", dir);
         let iter = env.fs.enumerate_with_types(guest_path).unwrap();
-        let vec = iter.map(|(str, type_)| (str.to_string(), type_)).collect();
+        let vec: Vec<(String, FsNodeType)> =
+            iter.map(|(str, type_)| (str.to_string(), type_)).collect();
         assert!(!State::get_mut(env).open_dirs.contains_key(&dir));
         State::get_mut(env).open_dirs.insert(dir, vec);
         assert!(!State::get_mut(env).read_dirs.contains_key(&dir));
@@ -94,7 +95,7 @@ fn readdir(env: &mut Environment, dirp: MutPtr<DIR>) -> MutPtr<dirent> {
         dir.idx += 1;
         env.mem.write(dirp, dir);
 
-        let len = str.len();
+        let len: usize = str.len();
         let d_type = match type_ {
             FsNodeType::File => DT_REG,
             FsNodeType::Directory => DT_DIR,

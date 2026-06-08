@@ -54,7 +54,7 @@ enum SysCtlNamePath {
 // Reference https://www.mail-archive.com/misc@openbsd.org/msg80988.html
 static SYSCTL_VALUES: [(SysCtlNamePath, &str, SysInfoType); 18] = [
     // Generic CPU, I/O
-    (SysCtlNamePath::Length2(CTL_HW, HW_MACHINE), "hw.machine", SysInfoType::String(b"iPhone1,1")),
+    (SysCtlNamePath::Length2(CTL_HW, HW_MACHINE), "hw.machine", SysInfoType::String(b"iPhone3,1")),
     (SysCtlNamePath::Length2(CTL_HW, HW_MODEL), "hw.model", SysInfoType::String(b"M68AP")),
     (SysCtlNamePath::Length2(CTL_HW, HW_NCPU), "hw.ncpu", SysInfoType::Int32(1)),
     (SysCtlNamePath::Undefined, "hw.cputype", SysInfoType::Int32(12)),

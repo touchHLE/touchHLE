@@ -1545,7 +1545,8 @@ fn glGetShaderiv(_env: &mut Environment, _shader: GLuint, pname: GLenum, params:
         _shader,
         pname
     );
-    // GL_COMPILE_STATUS = 0x8B81, return GL_TRUE (1) to pretend compilation succeeded
+    // GL_COMPILE_STATUS = 0x8B81
+    // return GL_TRUE (1) to pretend compilation succeeded
     let val = if pname == 0x8B81 { 1 } else { 0 };
     _env.mem.write(params, val);
 }

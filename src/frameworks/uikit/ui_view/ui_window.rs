@@ -63,13 +63,15 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 - (())setRootViewController:(id)view_controller {
     log_dbg!("[(UIWindow*){:?} setRootViewController:{:?}]", this, view_controller);
-    // Setting the root view controller installs its view as the content view of the window.
+    // Setting the root view controller installs its view
+    // as the content view of the window.
     if view_controller != nil {
         let view: id = msg![env; view_controller view];
         () = msg![env; this addSubview:view];
     }
 
-    // We don't have a dedicated rootViewController property in our HostObject yet,
+    // We don't have a dedicated rootViewController property
+    // in our HostObject yet,
     // but storing it in UIViewHostObject's view_controller works for now.
     env.objc.borrow_mut::<UIViewHostObject>(this).view_controller = view_controller;
 }

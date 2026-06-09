@@ -153,6 +153,13 @@ This distribution of touchHLE includes binaries for zlib (libz), available under
 the following license:
 ";
 
+// We have a COPYING file for SQLite, but as the main source and resulting
+// binary are simply Public Domain, we can save some space here.
+const INTERNAL_SQLITE3_DYLIB_DESCRIPTION: &str = "
+This distribution of touchHLE includes binaries for SQLite (libsqlite3),
+available under Public Domain.
+";
+
 const INTERNAL_LIBERATION_FONTS_DESCRIPTION: &str = "
 This distribution of touchHLE includes Liberation Sans fonts, available under
 the following license:
@@ -238,6 +245,8 @@ fn print(out: &mut String, resources_are_external_files: bool) -> Result<(), std
             "{}",
             read_bundled_file(&format!("{}/COPYING.libz", crate::paths::DYLIBS_DIR))
         )?;
+        divider(out)?;
+        writeln!(out, "{INTERNAL_SQLITE3_DYLIB_DESCRIPTION}")?;
         divider(out)?;
         writeln!(out, "{INTERNAL_LIBERATION_FONTS_DESCRIPTION}")?;
         writeln!(

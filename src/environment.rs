@@ -25,9 +25,10 @@ use std::cell::Cell;
 use std::collections::{HashMap, VecDeque};
 use std::net::TcpListener;
 use std::rc::Rc;
-use std::time::{Duration, Instant};
+use std::time::{Duration, Instant, SystemTime};
 
 use crate::libc::pthread::cond::pthread_cond_t;
+use crate::libc::stdio::FILE;
 use crate::window::DeviceFamily;
 use corosensei::{Coroutine, Yielder};
 pub use mutex::{MutexId, MutexType, PTHREAD_MUTEX_DEFAULT};
@@ -45,6 +46,8 @@ pub struct Thread {
     /// If this is not [ThreadBlock::NotBlocked], the thread is not executing
     /// until a certain condition is fufilled.
     pub blocked_by: ThreadBlock,
+    /// Container for thread local state of various child modules
+    pub framework_state: frameworks::ThreadLocalState,
     /// After a secondary thread finishes, this is set to the returned value.
     return_value: Option<MutVoidPtr>,
     /// Context object containing the CPU state for this thread.
@@ -53,7 +56,7 @@ pub struct Thread {
     /// When a thread is currently executing, its state is stored directly in
     /// the CPU, rather than in a context object. In that case, this field is
     /// None. See also: [std::mem::take] and [cpu::Cpu::swap_context].
-    guest_context: Option<Box<cpu::CpuContext>>,
+    pub guest_context: Option<Box<cpu::CpuContext>>,
     /// The coroutine associated with this thread.
     ///
     /// In more typical rust, this is equivalent to to a [std::future::Future].
@@ -65,7 +68,7 @@ pub struct Thread {
     host_context: Option<HostContext>,
     /// Address range of this thread's stack, used to check if addresses are in
     /// range while producing a stack trace.
-    stack: Option<std::ops::RangeInclusive<u32>>,
+    pub stack: Option<std::ops::RangeInclusive<u32>>,
 }
 
 impl Thread {
@@ -130,7 +133,7 @@ enum ThreadNextAction {
 }
 
 /// If/what a thread is blocked by.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum ThreadBlock {
     // Default state. (thread is not blocked)
     NotBlocked,
@@ -140,12 +143,18 @@ pub enum ThreadBlock {
     Mutex(MutexId),
     // Thread is waiting on a semaphore.
     Semaphore(MutPtr<sem_t>),
-    // Thread is wating on a condition variable
-    Condition(pthread_cond_t),
+    // Thread is waiting on a condition variable
+    Condition(MutPtr<pthread_cond_t>, Option<Duration>),
     // Thread is waiting for another thread to finish (joining).
     Joining(ThreadId, MutPtr<MutVoidPtr>),
     // Thread has hit a cpu error, and is waiting to be debugged.
     WaitingForDebugger(Option<cpu::CpuError>),
+    // Thread is suspended. We keep a suspend count and a previous thread state
+    // (boxed to avoid cyclic dependency), which would be restored upon
+    // resuming.
+    Suspended(usize, Box<ThreadBlock>),
+    // Thread is waiting on a FILE object lock.
+    FileObjectLock(MutPtr<FILE>),
 }
 
 struct BinaryDependencyNode {
@@ -273,6 +282,9 @@ impl Environment {
                     // UIInterfaceOrientation values are flipped relative to
                     // (UI)DeviceOrientation values (content has to rotate in
                     // the opposite direction to how the device rotates).
+                    "UIInterfaceOrientationPortraitUpsideDown" => {
+                        window::DeviceOrientation::PortraitUpsideDown
+                    }
                     "UIInterfaceOrientationLandscapeLeft" => {
                         window::DeviceOrientation::LandscapeRight
                     }
@@ -362,10 +374,21 @@ impl Environment {
         let mut mem = mem::Mem::new();
 
         let is_spore = bundle.bundle_identifier().starts_with("com.ea.spore");
+        let is_critter_crunch = bundle
+            .bundle_identifier()
+            .starts_with("com.capybaragames.CritterCrunch")
+            || bundle
+                .bundle_identifier()
+                .starts_with("com.go.starwave.CritterCrunch");
         // We always reset this flag depending on which game is launched.
-        mem.zero_memory_on_free = !is_spore;
+        mem.zero_memory_on_free = !is_spore && !is_critter_crunch;
         if is_spore {
             log!("Applying game-specific hack for Spore Origins: zeroing memory on alloc instead of free.");
+        }
+        if is_critter_crunch {
+            // Without this hack, every time a critter 'explodes',
+            // the game crashes with a null page access error.
+            log!("Applying game-specific hack for Critter Crunch: zeroing memory on alloc instead of free.");
         }
         let executable = mach_o::MachO::load_from_file(
             bundle.executable_path(),
@@ -393,6 +416,12 @@ impl Environment {
                         // We build `libz` from sources with our OSS toolchain,
                         // the base address is already set and sliding is not
                         // needed.
+                        0
+                    }
+                    "libsqlite3.dylib" | "libsqlite3.0.dylib" => {
+                        // We build `libsqlite3` from sources with our OSS
+                        // toolchain, the base address is already set and
+                        // sliding is not needed.
                         0
                     }
                     _ => unimplemented!("Unknown binary slide for {}", name),
@@ -532,6 +561,7 @@ impl Environment {
             guest_context: None,
             host_context: Some(main_thread_init_routine),
             stack: Some(mem::Mem::MAIN_THREAD_STACK_LOW_END..=0u32.wrapping_sub(1)),
+            framework_state: Default::default(),
         };
 
         let mut env = Environment {
@@ -666,6 +696,7 @@ impl Environment {
             guest_context: None,
             host_context: None,
             stack: Some(mem::Mem::MAIN_THREAD_STACK_LOW_END..=0u32.wrapping_sub(1)),
+            framework_state: Default::default(),
         };
 
         let mut env = Environment {
@@ -834,7 +865,11 @@ impl Environment {
         self.cpu.dump_regs();
         for (tid, thread) in self.threads.iter().enumerate() {
             if thread.active && tid != self.current_thread {
-                echo_no_panic!("Dumping registers for thread #{}", tid);
+                echo_no_panic!(
+                    "Dumping registers for thread #{} (blocked by {:?})",
+                    tid,
+                    thread.blocked_by
+                );
                 let Some(ctx) = thread.guest_context.as_ref() else {
                     echo_no_panic!("Could not get registers for thread {}!", tid);
                     return;
@@ -976,6 +1011,7 @@ impl Environment {
             guest_context: Some(Box::new(cpu::CpuContext::new())),
             host_context: Some(thread_routine),
             stack: Some(stack_alloc.to_bits()..=(stack_high_addr - 1)),
+            framework_state: Default::default(),
         });
 
         let new_thread_id = self.threads.len() - 1;
@@ -983,6 +1019,11 @@ impl Environment {
         log_dbg!("Created new thread {} with stack {:#x}–{:#x}, will execute function {:?} with data {:?}", new_thread_id, stack_alloc.to_bits(), (stack_high_addr - 1), start_routine, user_data);
 
         new_thread_id
+    }
+
+    #[allow(unused)]
+    pub fn get_tl_framework_state(&mut self) -> &mut frameworks::ThreadLocalState {
+        &mut self.threads[self.current_thread].framework_state
     }
 
     /// Put the current thread to sleep for some duration, running other threads
@@ -997,6 +1038,43 @@ impl Environment {
         );
         let until = Instant::now().checked_add(duration).unwrap();
         self.yield_thread(ThreadBlock::Sleeping(until));
+    }
+
+    pub fn suspend_thread(&mut self, thread: ThreadId) {
+        match &mut self.threads[thread].blocked_by {
+            ThreadBlock::Suspended(count, _) => {
+                *count += 1;
+            }
+            _ => {
+                let previous_thread_state = std::mem::replace(
+                    &mut self.threads[thread].blocked_by,
+                    ThreadBlock::NotBlocked,
+                );
+                log_dbg!("Suspend thread {} from {:?}", thread, previous_thread_state);
+                self.threads[thread].blocked_by =
+                    ThreadBlock::Suspended(1, Box::new(previous_thread_state));
+            }
+        }
+    }
+
+    pub fn resume_thread(&mut self, thread: ThreadId) {
+        let old = std::mem::replace(
+            &mut self.threads[thread].blocked_by,
+            ThreadBlock::NotBlocked,
+        );
+        match old {
+            ThreadBlock::Suspended(count, previous_thread_state) => {
+                assert!(count > 0);
+                if count > 1 {
+                    self.threads[thread].blocked_by =
+                        ThreadBlock::Suspended(count - 1, previous_thread_state);
+                } else {
+                    log_dbg!("Resume thread {} to {:?}", thread, previous_thread_state);
+                    self.threads[thread].blocked_by = *previous_thread_state;
+                }
+            }
+            _ => unreachable!(),
+        }
     }
 
     /// Block the current thread until the given mutex unlocks.
@@ -1466,6 +1544,13 @@ impl Environment {
                             svc,
                         ) {
                             f.call_from_guest(self);
+                            if let Some(len) = self.options.zero_stack_after_guest_to_host_call {
+                                log_once!("Applying zeroing of stack after guest to host call.");
+                                let start = self.cpu.regs()[cpu::Cpu::SP] - len;
+                                self.mem
+                                    .bytes_at_mut(mem::Ptr::from_bits(start), len)
+                                    .fill(0);
+                            }
                             // On entry_size 4 return here since there's
                             // no space to add a ret after the svc call
                             if svc & dyld::Dyld::SVC_LAZY_LINK_RET_FLAG != 0 {
@@ -1617,7 +1702,7 @@ impl Environment {
                             return thread_id;
                         }
                     }
-                    ThreadBlock::Condition(cond) => {
+                    ThreadBlock::Condition(cond, deadline) => {
                         let host_cond = self
                             .libc_state
                             .pthread
@@ -1637,6 +1722,27 @@ impl Environment {
                             self.threads[thread_id].blocked_by = ThreadBlock::NotBlocked;
                             self.relock_unblocked_mutex_for_thread(thread_id, mutex);
                             return thread_id;
+                        } else if let Some(deadline) = deadline {
+                            let time = SystemTime::now()
+                                .duration_since(SystemTime::UNIX_EPOCH)
+                                .unwrap();
+                            if deadline <= time {
+                                log_dbg!(
+                                    "Thread {} is timed out on cond var {:?}.",
+                                    thread_id,
+                                    cond
+                                );
+                                assert!(!host_cond.timed_out.contains(&thread_id));
+                                host_cond.timed_out.insert(thread_id);
+
+                                assert!(host_cond.waking.is_empty());
+                                host_cond.waiting.retain(|&t| t != thread_id);
+
+                                assert!(!self.mutex_state.mutex_is_locked(mutex));
+                                self.threads[thread_id].blocked_by = ThreadBlock::NotBlocked;
+                                self.relock_unblocked_mutex_for_thread(thread_id, mutex);
+                                return thread_id;
+                            }
                         }
                     }
                     ThreadBlock::Joining(joinee_thread, ptr) => {
@@ -1660,6 +1766,21 @@ impl Environment {
                         return thread_id;
                     }
                     ThreadBlock::WaitingForDebugger(_) => unreachable!(),
+                    ThreadBlock::Suspended(cnt, _) => {
+                        assert!(cnt > 0);
+                    }
+                    ThreadBlock::FileObjectLock(file_ptr) => {
+                        // TODO: fairness
+                        let acquired = self.libc_state.stdio.try_acquire_file_object_lock(
+                            &mut self.mem,
+                            file_ptr,
+                            thread_id,
+                        );
+                        if acquired {
+                            self.threads[thread_id].blocked_by = ThreadBlock::NotBlocked;
+                            return thread_id;
+                        }
+                    }
                 }
             }
 
@@ -1676,6 +1797,7 @@ impl Environment {
                 // This should hopefully not happen, but if a thread is
                 // blocked on another thread waiting for a deferred return,
                 // it could.
+                // TODO: handle a thread waiting on condition with a timeout
                 panic!("No active threads, program has deadlocked!");
             }
         }

@@ -12,15 +12,14 @@
 use crate::dyld::FunctionExports;
 use crate::environment::Environment;
 use crate::export_c_func;
+use crate::libc::mach::arm::task::task_t;
 use crate::libc::mach::init::MACH_TASK_SELF;
 use crate::libc::mach::thread_info::{kern_return_t, KERN_SUCCESS};
 use crate::libc::semaphore::{sem_destroy, sem_init, sem_post, sem_t, sem_wait};
 use crate::mem::MutPtr;
 
-type task = std::ffi::c_void;
-type task_t = MutPtr<task>;
-
-// Opaque type, can be anything we want. Reusing sem_t for convenience
+// Opaque type. Reusing sem_t for convenience
+// TODO: `semaphore_t` should be `mach_port_t`
 type semaphore = sem_t;
 type semaphore_t = MutPtr<semaphore>;
 
@@ -31,7 +30,7 @@ fn semaphore_create(
     policy: i32,
     value: i32,
 ) -> kern_return_t {
-    assert_eq!(task.to_bits(), MACH_TASK_SELF);
+    assert_eq!(task, MACH_TASK_SELF);
     assert_eq!(policy, 0);
 
     let open_semaphore: semaphore_t = env.mem.alloc_and_write(0);

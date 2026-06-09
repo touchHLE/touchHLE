@@ -46,7 +46,7 @@ fn CFRunLoopTimerCreate(
     callout: CFRunLoopTimerCallBack,
     context_ptr: MutPtr<CFRunLoopTimerContext>,
 ) -> CFRunLoopTimerRef {
-    assert_eq!(allocator, kCFAllocatorDefault); // unimplemented
+    assert!(allocator == kCFAllocatorDefault || env.mem.read(allocator).is_system_default()); // unimplemented
     assert_eq!(flags, 0);
     assert_eq!(order, 0);
 

@@ -8,10 +8,12 @@
 use crate::frameworks::core_graphics::cg_context::CGContextSetRGBFillColor;
 use crate::frameworks::core_graphics::cg_geometry::CGPointZero;
 use crate::frameworks::core_graphics::{CGFloat, CGPoint, CGRect, CGSize};
-use crate::frameworks::foundation::NSUInteger;
+use crate::frameworks::foundation::ns_string::to_rust_string;
+use crate::frameworks::foundation::{NSRange, NSUInteger};
 use crate::frameworks::uikit::ui_color;
 use crate::frameworks::uikit::ui_font::{
-    UILineBreakModeTailTruncation, UITextAlignment, UITextAlignmentLeft,
+    break_lines_with_font, UILineBreakModeTailTruncation, UILineBreakModeWordWrap, UITextAlignment,
+    UITextAlignmentLeft,
 };
 use crate::frameworks::uikit::ui_graphics::UIGraphicsGetCurrentContext;
 use crate::frameworks::uikit::ui_view::ui_control::ui_text_field::UIReturnKeyType;
@@ -180,6 +182,62 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 - (())setEditable:(bool)editable {
     env.objc.borrow_mut::<UITextViewHostObject>(this).editable = editable;
+}
+
+- (())scrollRangeToVisible:(NSRange)range {
+    let &mut UITextViewHostObject {
+        font,
+        text,
+        ..
+    } = env.objc.borrow_mut(this);
+
+    if range.location > msg![env; text length] {
+        return;
+    }
+
+    let bounds: CGRect = msg![env; this bounds];
+    let bound_size = bounds.size;
+
+    let text = to_rust_string(env, text);
+
+    let lines = break_lines_with_font(env, font, &text, Some((bound_size, UILineBreakModeWordWrap)));
+
+    let mut line_count = 0;
+    let mut current_position = 0;
+
+    for (_, line) in lines {
+        current_position += line.len();
+
+        if let Some(offset) = text[current_position..].find(|c: char| !c.is_whitespace()) {
+            current_position += offset;
+        } else {
+            current_position = text.len();
+        }
+
+        if range.location <= current_position as u32 {
+            break;
+        }
+
+        line_count += 1;
+    }
+
+    let line_height: CGFloat = msg![env; font lineHeight];
+    let leading: CGFloat = msg![env; font leading];
+
+    let height_to_range_start = (line_count + 1) as f32 * line_height - leading;
+
+    let content_offset: CGPoint = msg![env; this contentOffset];
+
+    if height_to_range_start - line_height < content_offset.y {
+        let new_scroll_y = CGPoint {x: 0.0, y: line_count as f32 * line_height};
+        () = msg![env; this setContentOffset:new_scroll_y];
+    }
+    else if height_to_range_start > content_offset.y + bound_size.height {
+        let new_scroll_y = CGPoint {x: 0.0, y: height_to_range_start- bound_size.height};
+        () = msg![env; this setContentOffset:new_scroll_y];
+    }
+
+    update_scroll(env, this);
 }
 
 - (())setReturnKeyType:(UIReturnKeyType)type_ {

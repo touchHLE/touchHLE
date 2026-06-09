@@ -1,17 +1,9 @@
 /target
 /vendor/boost
 /touchHLE_sandbox
-/touchHLE_apps/*.ipa
-/touchHLE_apps/*.app
+/touchHLE_apps
 touchHLE_log.txt
 touchHLE_wallpaper.*
-
-# Xcode (integration testing app)
-
-*.pbxuser
-!default.pbxuser
-*.mode1v3
-!default.mode1v3
 
 # Android
 
@@ -27,6 +19,10 @@ local.properties
 android/app/src/main/jniLibs
 android/app/build
 android/build
+
+# macOS
+
+.DS_Store
 
 # Default developer dump file
 

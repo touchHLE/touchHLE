@@ -126,6 +126,9 @@ impl OpenAL<'_> {
     pub unsafe fn IsSource(&self, source: ALuint) -> ALboolean {
         al_sys::alIsSource(source)
     }
+    pub unsafe fn IsExtensionPresent(&self, extName: *const ALchar) -> ALboolean {
+        al_sys::alIsExtensionPresent(extName)
+    }
 
     pub unsafe fn Enable(&self, capability: ALenum) {
         al_sys::alEnable(capability)
@@ -275,6 +278,19 @@ impl OpenAL<'_> {
     }
     pub unsafe fn SourceRewind(&self, source: ALuint) {
         al_sys::alSourceRewind(source)
+    }
+
+    pub unsafe fn SourcePlayv(&self, n: ALsizei, sources: *const ALuint) {
+        al_sys::alSourcePlayv(n, sources)
+    }
+    pub unsafe fn SourcePausev(&self, n: ALsizei, sources: *const ALuint) {
+        al_sys::alSourcePausev(n, sources)
+    }
+    pub unsafe fn SourceStopv(&self, n: ALsizei, sources: *const ALuint) {
+        al_sys::alSourceStopv(n, sources)
+    }
+    pub unsafe fn SourceRewindv(&self, n: ALsizei, sources: *const ALuint) {
+        al_sys::alSourceRewindv(n, sources)
     }
 
     pub unsafe fn SourceQueueBuffers(&self, source: ALuint, nb: ALsizei, buffers: *const ALuint) {

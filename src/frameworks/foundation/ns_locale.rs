@@ -7,17 +7,26 @@
 
 use super::{ns_array, ns_string};
 use crate::dyld::{ConstantExports, HostConstant};
-use crate::frameworks::core_foundation::cf_locale::kCFLocaleCountryCode;
-use crate::objc::{id, nil, objc_classes, release, retain, ClassExports, HostObject, NSZonePtr};
+use crate::frameworks::core_foundation::cf_locale::{kCFLocaleCountryCode, kCFLocaleIdentifier};
+use crate::objc::{
+    autorelease, id, msg, nil, objc_classes, release, retain, ClassExports, HostObject, NSZonePtr,
+};
 use crate::window::{get_preferred_country_codes, get_preferred_language_codes};
 use crate::Environment;
 
 const NSLocaleCountryCode: &str = "NSLocaleCountryCode";
+const NSLocaleIdentifier: &str = "NSLocaleIdentifier";
 
-pub const CONSTANTS: ConstantExports = &[(
-    "_NSLocaleCountryCode",
-    HostConstant::NSString(NSLocaleCountryCode),
-)];
+pub const CONSTANTS: ConstantExports = &[
+    (
+        "_NSLocaleCountryCode",
+        HostConstant::NSString(NSLocaleCountryCode),
+    ),
+    (
+        "_NSLocaleIdentifier",
+        HostConstant::NSString(NSLocaleIdentifier),
+    ),
+];
 
 #[derive(Default)]
 pub struct State {
@@ -170,6 +179,11 @@ pub const CLASSES: ClassExports = objc_classes! {
     retain(env, this)
 }
 
+- (id)localeIdentifier {
+    let locale_id_key = ns_string::get_static_str(env, NSLocaleIdentifier);
+    msg![env; this objectForKey:locale_id_key]
+}
+
 - (id)objectForKey:(id)key {
     let key_str: &str = &ns_string::to_rust_string(env, key);
     match key_str {
@@ -179,6 +193,19 @@ pub const CLASSES: ClassExports = objc_classes! {
         NSLocaleCountryCode | kCFLocaleCountryCode => {
             let &NSLocaleHostObject { country_code, .. } = env.objc.borrow(this);
             country_code
+        },
+        // TODO: Define NSLocaleIdentifier _as_ kCFLocaleIdentifier
+        NSLocaleIdentifier | kCFLocaleIdentifier => {
+            let &NSLocaleHostObject { country_code, language_code } = env.objc.borrow(this);
+            assert!(country_code != nil); // TODO
+            assert!(language_code != nil); // TODO
+            let locale_id_str = format!(
+                "{}_{}",
+                ns_string::to_rust_string(env, language_code),
+                ns_string::to_rust_string(env, country_code)
+            );
+            let res = ns_string::from_rust_string(env, locale_id_str);
+            autorelease(env, res)
         },
         _ => unimplemented!()
     }

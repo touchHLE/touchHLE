@@ -33,6 +33,7 @@ pub mod core_motion;
 pub mod foundation;
 pub mod game_kit;
 pub mod media_player;
+pub mod message_ui;
 pub mod openal;
 pub mod opengles;
 pub mod store_kit;
@@ -42,6 +43,7 @@ pub mod uikit;
 /// Container for state of various child modules
 #[derive(Default)]
 pub struct State {
+    avfoundation: avfoundation::State,
     audio_toolbox: audio_toolbox::State,
     core_animation: core_animation::State,
     foundation: foundation::State,
@@ -49,4 +51,10 @@ pub struct State {
     openal: openal::State,
     opengles: opengles::State,
     uikit: uikit::State,
+}
+
+/// Container for thread local state of various child modules
+#[derive(Default)]
+pub struct ThreadLocalState {
+    foundation: foundation::ThreadLocalState,
 }

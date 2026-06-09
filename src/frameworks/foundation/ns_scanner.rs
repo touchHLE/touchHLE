@@ -88,6 +88,16 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.borrow::<NSScannerHostObject>(this).to_be_skipped
 }
 
+- (NSUInteger)scanLocation {
+    env.objc.borrow::<NSScannerHostObject>(this).pos
+}
+
+- (())setScanLocation:(NSUInteger)loc {
+    let host = env.objc.borrow_mut::<NSScannerHostObject>(this);
+    assert!(loc <= host.len); // TODO: raise NSRangeException
+    host.pos = loc;
+}
+
 - (bool)isAtEnd {
     skip_characters(env, this);
     let NSScannerHostObject { len, pos, .. } = env.objc.borrow::<NSScannerHostObject>(this);

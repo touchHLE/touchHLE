@@ -6,8 +6,9 @@
 
 use crate::dyld::{ConstantExports, HostConstant};
 use crate::frameworks::foundation::NSInteger;
-use crate::objc::{id, nil, release, retain, ClassExports, HostObject, NSZonePtr};
-use crate::objc_classes;
+use crate::objc::{
+    autorelease, id, msg, nil, objc_classes, release, retain, ClassExports, HostObject, NSZonePtr,
+};
 
 /// `NSString*`
 pub type NSErrorDomain = id;
@@ -38,6 +39,14 @@ pub const CLASSES: ClassExports = objc_classes! {
         user_info: nil
     });
     env.objc.alloc_object(this, host_object, &mut env.mem)
+}
+
++ (id)errorWithDomain:(NSErrorDomain)domain
+                 code:(NSInteger)code
+             userInfo:(id)user_info {
+    let new: id = msg![env; this alloc];
+    let new: id = msg![env; new initWithDomain:domain code:code userInfo:user_info];
+    autorelease(env, new)
 }
 
 - (id)initWithDomain:(NSErrorDomain)domain

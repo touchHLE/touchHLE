@@ -36,6 +36,7 @@ use std::collections::{HashMap, HashSet};
 use std::io;
 use std::io::{Read, Write};
 use std::net::{SocketAddr, SocketAddrV4, TcpListener, TcpStream, UdpSocket};
+use std::time::Duration;
 
 pub const AF_INET: i32 = 2;
 pub const SOCK_STREAM: i32 = 1;
@@ -49,6 +50,8 @@ const SO_ERROR: i32 = 0x1007;
 
 #[allow(non_camel_case_types)]
 pub type sa_family_t = u8;
+
+const FD_SETSIZE: i32 = 1024;
 
 #[derive(Copy, Clone, Debug)]
 #[repr(C, packed)]
@@ -409,7 +412,25 @@ fn select(
     // TODO: handle errno properly
     set_errno(env, 0);
 
-    assert!(n_fds > 0 && n_fds < 1024);
+    if !(0..=FD_SETSIZE).contains(&n_fds) {
+        set_errno(env, EINVAL);
+        return -1;
+    }
+
+    if n_fds == 0 {
+        // Apparently, this is a portable way of using select() as usleep()
+        // https://stackoverflow.com/questions/3125645/why-use-select-instead-of-sleep
+        // ¯\_(ツ)_/¯
+        assert!(read_fds.is_null());
+        assert!(write_fds.is_null());
+        assert!(error_fds.is_null());
+        let timeval = env.mem.read(timeout);
+        let duration = Duration::from_secs(timeval.tv_sec.try_into().unwrap())
+            + Duration::from_micros(timeval.tv_usec.try_into().unwrap());
+        log_dbg!("select() used as sleep for {:?}", duration);
+        env.sleep(duration);
+        return 0;
+    }
 
     let should_block = if !timeout.is_null() {
         let timeval = env.mem.read(timeout);

@@ -35,10 +35,10 @@ pub(super) unsafe fn allocate_memory(size: usize) -> std::io::Result<*mut core::
 
 #[cfg(unix)]
 pub(super) unsafe fn allocate_memory(size: usize) -> std::io::Result<*mut core::ffi::c_void> {
-    use libc::{mmap, sysconf, MAP_ANONYMOUS, MAP_PRIVATE, PROT_READ, PROT_WRITE, _SC_PAGESIZE};
+    use libc::{mmap, sysconf, MAP_ANONYMOUS, MAP_PRIVATE, PROT_READ, PROT_WRITE};
 
     const PAGE_SIZE: usize = crate::mem::PAGE_SIZE as usize;
-    let host_page_size = unsafe { sysconf(_SC_PAGESIZE) as usize };
+    let host_page_size = unsafe { sysconf(libc::_SC_PAGESIZE) as usize };
 
     assert!(
         host_page_size >= PAGE_SIZE,

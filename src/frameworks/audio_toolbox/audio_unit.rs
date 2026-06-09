@@ -37,18 +37,18 @@ type AudioUnitScope = u32;
 type AudioUnitElement = u32;
 
 #[repr(C, packed)]
-struct AudioBufferList<const COUNT: usize> {
-    number_buffers: u32,
-    buffers: [AudioBuffer; COUNT],
+pub struct AudioBufferList<const COUNT: usize> {
+    pub number_buffers: u32,
+    pub buffers: [AudioBuffer; COUNT],
 }
 unsafe impl SafeRead for AudioBufferList<1> {}
 unsafe impl SafeRead for AudioBufferList<2> {}
 
 #[repr(C, packed)]
 pub struct AudioBuffer {
-    number_channels: u32,
-    data_byte_size: u32,
-    data: MutVoidPtr,
+    pub number_channels: u32,
+    pub data_byte_size: u32,
+    pub data: MutVoidPtr,
 }
 
 // TODO: Other scopes

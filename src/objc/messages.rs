@@ -13,9 +13,148 @@
 
 use super::{id, nil, Class, ObjC, IMP, SEL};
 use crate::abi::{CallFromHost, GuestRet};
-use crate::mem::{ConstPtr, MutVoidPtr, SafeRead};
+use crate::environment::ThreadId;
+use crate::libc::pthread::cond::{
+    pthread_cond_broadcast, pthread_cond_destroy, pthread_cond_init, pthread_cond_t,
+    pthread_cond_wait,
+};
+use crate::libc::pthread::mutex::{
+    pthread_mutex_destroy, pthread_mutex_init, pthread_mutex_lock, pthread_mutex_t,
+    pthread_mutex_unlock,
+};
+use crate::mem::{guest_size_of, ConstPtr, MutPtr, MutVoidPtr, SafeRead};
+use crate::objc::classes::InitializationStatus;
 use crate::Environment;
 use std::any::TypeId;
+
+pub(super) struct ThreadInitializer {
+    mutex: MutPtr<pthread_mutex_t>,
+    cond: MutPtr<pthread_cond_t>,
+    tid: ThreadId,
+    waiters: u32,
+}
+
+fn maybe_initialize_class(env: &mut Environment, receiver: id) {
+    let class_host_object = env.objc.get_host_object(receiver).unwrap();
+    let Some(&super::ClassHostObject {
+        superclass,
+        is_metaclass,
+        is_initialized,
+        ..
+    }) = class_host_object.as_any().downcast_ref()
+    else {
+        // If it's here, there's one of two cases:
+        //
+        // 1: The receiver is an instance. The class should then have already
+        // called +initialize since you need to call +alloc to create an
+        // instance (this also needs to be upheld for instances created with
+        // class_createInstance(), whenever we implement that)
+        //
+        // 2: The reciever is a fake/unimplemented class. There's no reason to
+        // send +initialize to those, so we don't bother.
+        return;
+    };
+
+    if is_metaclass || is_initialized == InitializationStatus::Initialized {
+        // On the offchance that this is a metaclass, we don't need to send
+        // +initialize to it. We also don't need to send it if the class is
+        // already initialized.
+        return;
+    }
+
+    // This class is not initialized, but there might be classes above it in the
+    // hierarchy that also need to be checked, so check those first.
+    if !superclass.is_null() {
+        maybe_initialize_class(env, superclass);
+    }
+
+    if is_initialized == InitializationStatus::Initializing {
+        env.objc
+            .initializer_threads
+            .get_mut(&receiver)
+            .unwrap()
+            .waiters += 1;
+        let ThreadInitializer {
+            mutex, cond, tid, ..
+        } = *env.objc.initializer_threads.get(&receiver).unwrap();
+
+        // The current thread is already initializing, so let it call other
+        // messages while it does so.
+        if tid == env.current_thread {
+            return;
+        }
+
+        // We are waiting for another thread to initialize, wait for it to
+        // broadcast that it has finished.
+        pthread_mutex_lock(env, mutex);
+        loop {
+            let class_host_object = env.objc.get_host_object(receiver).unwrap();
+            let &super::ClassHostObject { is_initialized, .. } =
+                class_host_object.as_any().downcast_ref().unwrap();
+            if is_initialized == InitializationStatus::Initialized {
+                break;
+            }
+            pthread_cond_wait(env, cond, mutex);
+        }
+        pthread_mutex_unlock(env, mutex);
+
+        let ThreadInitializer {
+            ref mut waiters, ..
+        } = *env.objc.initializer_threads.get_mut(&receiver).unwrap();
+        *waiters -= 1;
+        if *waiters == 0 {
+            // We're the last waiter for this initialize, so clean up state on
+            // the way out.
+            pthread_cond_destroy(env, cond);
+            pthread_mutex_destroy(env, mutex);
+            env.objc.initializer_threads.remove(&receiver);
+        }
+    } else {
+        log_dbg!(
+            "Initializing {:?} on thread {}",
+            env.objc.try_get_class_name(receiver),
+            env.current_thread
+        );
+        let regs = *env.cpu.regs();
+
+        let mutex = env.mem.alloc(guest_size_of::<pthread_mutex_t>()).cast();
+        let cond = env.mem.alloc(guest_size_of::<pthread_cond_t>()).cast();
+        pthread_mutex_init(env, mutex, ConstPtr::null());
+        pthread_cond_init(env, cond, ConstPtr::null());
+        env.objc.initializer_threads.insert(
+            receiver,
+            ThreadInitializer {
+                mutex,
+                cond,
+                tid: env.current_thread,
+                waiters: 0,
+            },
+        );
+
+        let super::ClassHostObject { is_initialized, .. } = env.objc.borrow_mut(receiver);
+        *is_initialized = InitializationStatus::Initializing;
+        () = msg![env; receiver initialize];
+        let super::ClassHostObject { is_initialized, .. } = env.objc.borrow_mut(receiver);
+        *is_initialized = InitializationStatus::Initialized;
+        env.cpu.regs_mut().copy_from_slice(&regs);
+        log_dbg!(
+            "Done initializing {:?} on thread {}",
+            env.objc.try_get_class_name(receiver),
+            env.current_thread
+        );
+        if env.objc.initializer_threads.get(&receiver).unwrap().waiters == 0 {
+            // Nobody ended up waiting for this initializer, so we can just
+            // destroy it.
+            pthread_cond_destroy(env, cond);
+            pthread_mutex_destroy(env, mutex);
+            env.objc.initializer_threads.remove(&receiver);
+        } else {
+            pthread_mutex_lock(env, mutex);
+            pthread_cond_broadcast(env, cond);
+            pthread_mutex_unlock(env, mutex);
+        }
+    }
+}
 
 /// The core implementation of `objc_msgSend`, the main function of Objective-C.
 ///
@@ -37,6 +176,11 @@ fn objc_msgSend_inner(
     super2: Option<Class>,
     tolerate_type_mismatch: bool,
 ) {
+    log_dbg!(
+        "Dispatching {} for {:?}",
+        selector.as_str(&env.mem),
+        receiver
+    );
     let message_type_info = env.objc.message_type_info.take();
 
     if receiver == nil {
@@ -48,6 +192,7 @@ fn objc_msgSend_inner(
 
     let orig_class = super2.unwrap_or_else(|| ObjC::read_isa(receiver, &env.mem));
     assert!(orig_class != nil);
+    maybe_initialize_class(env, receiver);
 
     // Traverse the chain of superclasses to find the method implementation.
 
@@ -84,6 +229,7 @@ fn objc_msgSend_inner(
         if let Some(&super::ClassHostObject {
             superclass,
             ref methods,
+            ref name,
             ..
         }) = host_object.as_any().downcast_ref()
         {
@@ -95,6 +241,7 @@ fn objc_msgSend_inner(
             }
 
             if let Some(imp) = methods.get(&selector) {
+                log_dbg!("Found method on: {}", name);
                 match imp {
                     IMP::Host(host_imp) => {
                         // TODO: do type checks when calling GuestIMPs too.
@@ -170,7 +317,7 @@ Type mismatch when sending message {} to {:?}!
 
 /// Standard variant of `objc_msgSend`. See [objc_msgSend_inner].
 #[allow(non_snake_case)]
-pub(super) fn objc_msgSend(env: &mut Environment, receiver: id, selector: SEL) {
+pub(crate) fn objc_msgSend(env: &mut Environment, receiver: id, selector: SEL) {
     objc_msgSend_inner(
         env, receiver, selector, /* super2: */ None, /* tolerate_type_mismatch: */ false,
     )
@@ -200,6 +347,18 @@ pub(super) fn objc_msgSend_stret(
 ) {
     objc_msgSend_inner(
         env, receiver, selector, /* super2: */ None, /* tolerate_type_mismatch: */ false,
+    )
+}
+
+#[allow(non_snake_case)]
+pub(crate) fn _touchHLE_objc_msgSend_stret_tolerant(
+    env: &mut Environment,
+    _stret: MutVoidPtr,
+    receiver: id,
+    selector: SEL,
+) {
+    objc_msgSend_inner(
+        env, receiver, selector, /* super2: */ None, /* tolerate_type_mismatch: */ true,
     )
 }
 
@@ -290,10 +449,12 @@ where
     (R, P): MsgSendSignature,
     R: GuestRet,
 {
-    // Provide type info for dynamic type checking.
-    env.objc.message_type_info = Some(<(R, P) as MsgSendSignature>::type_info());
-    assert!(R::SIZE_IN_MEM.is_none());
-    (_touchHLE_objc_msgSend_tolerant as fn(&mut Environment, id, SEL)).call_from_host(env, args)
+    if R::SIZE_IN_MEM.is_some() {
+        (_touchHLE_objc_msgSend_stret_tolerant as fn(&mut Environment, MutVoidPtr, id, SEL))
+            .call_from_host(env, args)
+    } else {
+        (_touchHLE_objc_msgSend_tolerant as fn(&mut Environment, id, SEL)).call_from_host(env, args)
+    }
 }
 
 /// Counterpart of [MsgSendSignature] for [msg_send_super2].

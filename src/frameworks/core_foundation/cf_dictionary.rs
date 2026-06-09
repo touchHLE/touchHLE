@@ -34,7 +34,7 @@ fn CFDictionaryCreateMutable(
     key_callbacks: ConstPtr<CFDictionaryKeyCallBacks>,
     value_callbacks: ConstPtr<CFDictionaryValueCallBacks>,
 ) -> CFMutableDictionaryRef {
-    assert_eq!(allocator, kCFAllocatorDefault); // unimplemented
+    assert!(allocator == kCFAllocatorDefault || env.mem.read(allocator).is_system_default()); // unimplemented
     assert_eq!(capacity, 0); // TODO: fixed capacity support
 
     let new = msg_class![env; _touchHLE_NSMutableDictionary_non_retaining alloc];
@@ -152,7 +152,7 @@ fn _touchHLE_CFDictionary_retain(
     allocator: CFAllocatorRef,
     value: ConstVoidPtr,
 ) -> ConstVoidPtr {
-    assert_eq!(allocator, kCFAllocatorDefault); // unimplemented
+    assert!(allocator == kCFAllocatorDefault || env.mem.read(allocator).is_system_default()); // unimplemented
     CFRetain(env, value.cast_mut().cast()).cast_const().cast()
 }
 fn _touchHLE_CFDictionary_release(
@@ -160,7 +160,7 @@ fn _touchHLE_CFDictionary_release(
     allocator: CFAllocatorRef,
     value: ConstVoidPtr,
 ) {
-    assert_eq!(allocator, kCFAllocatorDefault); // unimplemented
+    assert!(allocator == kCFAllocatorDefault || env.mem.read(allocator).is_system_default()); // unimplemented
     CFRelease(env, value.cast_mut().cast());
 }
 fn _touchHLE_CFDictionary_copyDescription(

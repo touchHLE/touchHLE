@@ -25,7 +25,7 @@ pub fn CFDataCreate(
     bytes: ConstPtr<u8>,
     length: CFIndex,
 ) -> CFDataRef {
-    assert!(allocator == kCFAllocatorDefault); // unimplemented
+    assert!(allocator == kCFAllocatorDefault || env.mem.read(allocator).is_system_default()); // unimplemented
     let bytes: ConstVoidPtr = bytes.cast();
     let length: NSUInteger = length.try_into().unwrap();
     let new: id = msg_class![env; NSData alloc];

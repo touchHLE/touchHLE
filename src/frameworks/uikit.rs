@@ -23,7 +23,9 @@ pub mod ui_geometry;
 pub mod ui_graphics;
 pub mod ui_image;
 pub mod ui_image_picker_controller;
+pub mod ui_local_notification;
 pub mod ui_nib;
+pub mod ui_pasteboard;
 pub mod ui_responder;
 pub mod ui_screen;
 pub mod ui_touch;
@@ -43,7 +45,9 @@ pub const DYLIB: crate::dyld::HostDylib = crate::dyld::HostDylib {
         ui_font::CLASSES,
         ui_image::CLASSES,
         ui_image_picker_controller::CLASSES,
+        ui_local_notification::CLASSES,
         ui_nib::CLASSES,
+        ui_pasteboard::CLASSES,
         ui_responder::CLASSES,
         ui_screen::CLASSES,
         ui_touch::CLASSES,
@@ -101,12 +105,8 @@ pub fn handle_events(env: &mut Environment) -> Option<Instant> {
     use crate::window::Event;
     use crate::window::TextInputEvent;
 
-    loop {
-        // NSRunLoop will never call this function in headless mode.
-        let Some(event) = env.window_mut().pop_event() else {
-            break;
-        };
-
+    // NSRunLoop will never call this function in headless mode.
+    while let Some(event) = env.window_mut().pop_event() {
         match event {
             Event::Quit => {
                 echo!("User requested quit, exiting.");

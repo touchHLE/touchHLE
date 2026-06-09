@@ -30,6 +30,7 @@ pub mod cf_socket;
 pub mod cf_string;
 pub mod cf_type;
 pub mod cf_url;
+pub mod cf_uuid;
 pub mod time;
 
 pub const DYLIB: crate::dyld::HostDylib = crate::dyld::HostDylib {
@@ -37,6 +38,7 @@ pub const DYLIB: crate::dyld::HostDylib = crate::dyld::HostDylib {
     aliases: &[],
     class_exports: &[
         cf_run_loop_timer::CLASSES, // Special internal classes.
+        cf_uuid::CLASSES,
     ],
     constant_exports: &[
         cf_allocator::CONSTANTS,
@@ -62,6 +64,7 @@ pub const DYLIB: crate::dyld::HostDylib = crate::dyld::HostDylib {
         cf_string::FUNCTIONS,
         cf_type::FUNCTIONS,
         cf_url::FUNCTIONS,
+        cf_uuid::FUNCTIONS,
         time::FUNCTIONS,
     ],
 };

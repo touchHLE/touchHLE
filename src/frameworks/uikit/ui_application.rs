@@ -11,11 +11,11 @@ use crate::frameworks::foundation::ns_string::{from_rust_string, get_static_str}
 use crate::frameworks::foundation::{ns_array, ns_string, NSInteger, NSUInteger};
 use crate::mem::MutPtr;
 use crate::objc::{
-    autorelease, id, msg, msg_class, nil, objc_classes, release, retain, ClassExports, HostObject,
-    NSZonePtr,
+    autorelease, id, msg, msg_class, nil, objc_classes, release, retain, todo_objc_setter,
+    ClassExports, HostObject, NSZonePtr,
 };
 use crate::window::DeviceOrientation;
-use crate::{todo_objc_setter, Environment};
+use crate::Environment;
 
 #[derive(Default)]
 pub struct State {
@@ -113,10 +113,16 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (())setStatusBarStyle:(UIStatusBarStyle)style {
     todo_objc_setter!(this, style);
 }
+- (())setStatusBarStyle:(UIStatusBarStyle)style
+               animated:(bool)_animated {
+    // TODO: animation
+    msg![env; this setStatusBarStyle:style]
+}
 
 - (UIInterfaceOrientation)statusBarOrientation {
     match env.window().current_rotation() {
         DeviceOrientation::Portrait => UIDeviceOrientationPortrait,
+        DeviceOrientation::PortraitUpsideDown => UIDeviceOrientationPortraitUpsideDown,
         DeviceOrientation::LandscapeLeft => UIDeviceOrientationLandscapeLeft,
         DeviceOrientation::LandscapeRight => UIDeviceOrientationLandscapeRight
     }
@@ -124,6 +130,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (())setStatusBarOrientation:(UIInterfaceOrientation)orientation {
     env.on_parent_stack_in_coroutine(|window, _| {window.rotate_device(match orientation {
         UIDeviceOrientationPortrait => DeviceOrientation::Portrait,
+        UIDeviceOrientationPortraitUpsideDown => DeviceOrientation::PortraitUpsideDown,
         UIDeviceOrientationLandscapeLeft => DeviceOrientation::LandscapeLeft,
         UIDeviceOrientationLandscapeRight => DeviceOrientation::LandscapeRight,
         _ => unimplemented!("Orientation {} not handled yet", orientation),
@@ -214,6 +221,13 @@ pub const CLASSES: ClassExports = objc_classes! {
     log!("TODO: ignoring setApplicationIconBadgeNumber:{}", bn);
 }
 
+- (bool)applicationSupportsShakeToEdit {
+    true // default value
+}
+- (())setApplicationSupportsShakeToEdit:(bool)enable {
+    log!("TODO: ignoring setApplicationSupportsShakeToEdit:{}", enable);
+}
+
 // UIResponder implementation
 // From the Apple UIView docs regarding [UIResponder nextResponder]:
 // "The shared UIApplication object normally returns nil, but it returns its
@@ -229,6 +243,13 @@ pub const CLASSES: ClassExports = objc_classes! {
     } else {
         nil
     }
+}
+
+- (())cancelAllLocalNotifications {
+    log!("TODO: [(UIApplication*){:?} cancelAllLocalNotifications", this);
+}
+- (())scheduleLocalNotification:(id)local_notif { // UILocalNotification *
+    log!("TODO: [(UIApplication*){:?} scheduleLocalNotification:{:?}", this, local_notif);
 }
 
 @end

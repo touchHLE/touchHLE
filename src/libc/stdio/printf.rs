@@ -15,7 +15,7 @@ use crate::libc::stdio::{fwrite, getc, ungetc, EOF, FILE};
 use crate::libc::stdlib::{atof_inner_generic, str_to_int_inner_generic};
 use crate::libc::string::strlen;
 use crate::libc::wchar::wchar_t;
-use crate::mem::{ConstPtr, GuestUSize, Mem, MutPtr, MutVoidPtr, Ptr};
+use crate::mem::{guest_size_of, ConstPtr, GuestUSize, Mem, MutPtr, MutVoidPtr, Ptr};
 use crate::objc::{id, msg, nil};
 use crate::Environment;
 use std::collections::HashSet;
@@ -123,6 +123,15 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
         };
 
         let length_modifier = match get_format_char(&env.mem, format_char_idx) {
+            b'h' => {
+                format_char_idx += 1;
+                if get_format_char(&env.mem, format_char_idx) == b'h' {
+                    format_char_idx += 1;
+                    Some("hh")
+                } else {
+                    Some("h")
+                }
+            }
             b'l' => {
                 format_char_idx += 1;
                 if get_format_char(&env.mem, format_char_idx) == b'l' {
@@ -138,6 +147,7 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
                 format_char_idx += 1;
                 Some("ll")
             }
+            b'j' | b'z' | b't' | b'L' => unimplemented!(),
             _ => None,
         };
 
@@ -197,50 +207,50 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
                 let c = char::from_u32(c.into()).unwrap();
                 write!(&mut res, "{c}").unwrap();
             }
-            b's' => {
+            b's' | b'S' => {
                 assert!(!prepend_sign);
-                // TODO: support length modifier
-                assert!(length_modifier.is_none());
-                let c_string: ConstPtr<u8> = args.next(env);
-                assert!(pad_char == ' '); // TODO
-                if !c_string.is_null() {
-                    if let Some(precision) = precision {
-                        assert!(!left_justified);
-                        let str_len = strlen(env, c_string);
-                        res.extend_from_slice(
-                            env.mem.bytes_at(c_string, str_len.min(precision as _)),
-                        )
-                    } else if pad_width > 0 {
-                        let pad_width = pad_width as usize;
-                        let str = env.mem.cstr_at_utf8(c_string).unwrap();
-                        if left_justified {
-                            write!(&mut res, "{str:<pad_width$}").unwrap();
-                        } else {
-                            write!(&mut res, "{str:>pad_width$}").unwrap();
-                        }
+                if length_modifier == Some("l") || specifier == b'S' {
+                    if specifier == b'S' {
+                        assert!(length_modifier.is_none());
+                    }
+                    assert!(precision.is_none());
+                    assert!(!left_justified);
+                    let ctype_locale = setlocale(env, LC_CTYPE, Ptr::null());
+                    assert_eq!(env.mem.read(ctype_locale), b'C');
+                    let w_string: ConstPtr<wchar_t> = args.next(env);
+                    assert!(pad_char == ' ' && pad_width == 0); // TODO
+                    if !w_string.is_null() {
+                        res.extend_from_slice(env.mem.wcstr_at(w_string).as_bytes());
                     } else {
-                        res.extend_from_slice(env.mem.cstr_at(c_string));
+                        res.extend_from_slice("(null)".as_bytes());
                     }
                 } else {
-                    assert!(!left_justified);
-                    assert!(precision.is_none());
-                    res.extend_from_slice("(null)".as_bytes());
-                }
-            }
-            b'S' => {
-                assert!(!prepend_sign);
-                assert!(!left_justified);
-                // TODO: support length modifier
-                assert!(length_modifier.is_none());
-                // TODO: support other locales
-                let ctype_locale = setlocale(env, LC_CTYPE, Ptr::null());
-                assert_eq!(env.mem.read(ctype_locale), b'C');
-                let w_string: ConstPtr<wchar_t> = args.next(env);
-                assert!(pad_char == ' ' && pad_width == 0); // TODO
-                if !w_string.is_null() {
-                    res.extend_from_slice(env.mem.wcstr_at(w_string).as_bytes());
-                } else {
-                    res.extend_from_slice("(null)".as_bytes());
+                    assert!(length_modifier.is_none()); // TODO
+                    let c_string: ConstPtr<u8> = args.next(env);
+                    assert!(pad_char == ' '); // TODO
+                    if !c_string.is_null() {
+                        if let Some(precision) = precision {
+                            assert!(!left_justified);
+                            let str_len = strlen(env, c_string);
+                            res.extend_from_slice(
+                                env.mem.bytes_at(c_string, str_len.min(precision as _)),
+                            )
+                        } else if pad_width > 0 {
+                            let pad_width = pad_width as usize;
+                            let str = env.mem.cstr_at_utf8(c_string).unwrap();
+                            if left_justified {
+                                write!(&mut res, "{str:<pad_width$}").unwrap();
+                            } else {
+                                write!(&mut res, "{str:>pad_width$}").unwrap();
+                            }
+                        } else {
+                            res.extend_from_slice(env.mem.cstr_at(c_string));
+                        }
+                    } else {
+                        assert!(!left_justified);
+                        assert!(precision.is_none());
+                        res.extend_from_slice("(null)".as_bytes());
+                    }
                 }
             }
             b'd' | b'i' | b'u' => {
@@ -251,13 +261,27 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
                     if length_modifier == Some("ll") {
                         let uint: u64 = args.next(env);
                         uint.try_into().unwrap()
+                    } else if length_modifier == Some("hh") {
+                        let uint: u8 = args.next(env);
+                        uint.into()
+                    } else if length_modifier == Some("h") {
+                        let uint: u16 = args.next(env);
+                        uint.into()
                     } else {
+                        assert!(length_modifier.is_none() || length_modifier == Some("l"));
                         let uint: u32 = args.next(env);
                         uint.into()
                     }
                 } else if length_modifier == Some("ll") {
                     args.next(env)
+                } else if length_modifier == Some("hh") {
+                    let int: i8 = args.next(env);
+                    int.into()
+                } else if length_modifier == Some("h") {
+                    let int: i16 = args.next(env);
+                    int.into()
                 } else {
+                    assert!(length_modifier.is_none() || length_modifier == Some("l"));
                     let int: i32 = args.next(env);
                     int.into()
                 };
@@ -312,7 +336,20 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
                 assert!(!left_justified);
                 // Note: on 32-bit system unsigned int and unsigned long
                 // are u32, so length_modifier is ignored
-                let uint: u32 = args.next(env);
+                let uint: u32 = if length_modifier == Some("ll") {
+                    let uint: u64 = args.next(env);
+                    uint.try_into().unwrap()
+                } else if length_modifier == Some("hh") {
+                    let uint: u8 = args.next(env);
+                    uint.into()
+                } else if length_modifier == Some("h") {
+                    let uint: u16 = args.next(env);
+                    uint.into()
+                } else {
+                    assert!(length_modifier.is_none() || length_modifier == Some("l"));
+                    let uint: u32 = args.next(env);
+                    uint
+                };
                 if pad_width > 0 {
                     assert!(precision.is_none()); // TODO
                     let pad_width = pad_width as usize;
@@ -339,7 +376,20 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
                 assert!(precision.is_none());
                 // Note: on 32-bit system unsigned int and unsigned long
                 // are u32, so length_modifier is ignored
-                let uint: u32 = args.next(env);
+                let uint: u32 = if length_modifier == Some("ll") {
+                    let uint: u64 = args.next(env);
+                    uint.try_into().unwrap()
+                } else if length_modifier == Some("hh") {
+                    let uint: u8 = args.next(env);
+                    uint.into()
+                } else if length_modifier == Some("h") {
+                    let uint: u16 = args.next(env);
+                    uint.into()
+                } else {
+                    assert!(length_modifier.is_none() || length_modifier == Some("l"));
+                    let uint: u32 = args.next(env);
+                    uint
+                };
                 if pad_width > 0 {
                     let pad_width = pad_width as usize;
                     if pad_char == '0' && precision.is_none() {
@@ -507,6 +557,34 @@ fn snprintf(
     log_dbg!("snprintf() implemented as a wrapper of vsnprintf()");
 
     vsnprintf(env, dest, n, format, args.start())
+}
+
+fn vasprintf(
+    env: &mut Environment,
+    ret: MutPtr<MutPtr<u8>>,
+    format: ConstPtr<u8>,
+    arg: VaList,
+) -> i32 {
+    log_dbg!(
+        "vasprintf({:?}, {:?} ({:?}), ...)",
+        ret,
+        format,
+        env.mem.cstr_at_utf8(format)
+    );
+
+    let res = printf_inner::<false, _>(env, |mem, idx| mem.read(format + idx), arg);
+    let count: GuestUSize = (res.len() + 1).try_into().unwrap();
+
+    let dest: MutPtr<u8> = env.mem.alloc(count * guest_size_of::<u8>()).cast();
+
+    let dest_slice = env.mem.bytes_at_mut(dest, count);
+    for (i, &byte) in res.iter().chain(b"\0".iter()).enumerate() {
+        dest_slice[i] = byte;
+    }
+
+    env.mem.write(ret, dest);
+
+    res.len().try_into().unwrap()
 }
 
 fn vprintf(env: &mut Environment, format: ConstPtr<u8>, arg: VaList) -> i32 {
@@ -853,58 +931,46 @@ where
                     0
                 };
 
-                match length_modifier {
-                    Some(lm) => {
-                        match lm {
-                            "h" => {
-                                // signed short*
-                                let res = str_to_int_inner_generic(
-                                    env,
-                                    &getc_fn,
-                                    &ungetc_fn,
-                                    subject,
-                                    src_char_idx,
-                                    base,
-                                    if max_width > 0 { max_width } else { u32::MAX },
-                                    |s, base| i16::from_str_radix(s, base).unwrap_or(i16::MAX),
-                                    |num| num.checked_mul(-1).unwrap_or(i16::MIN),
-                                );
-                                match res {
-                                    Ok((val, len)) => {
-                                        src_char_idx += len;
-                                        let c_int_ptr: ConstPtr<i16> = args.next(env);
-                                        env.mem.write(c_int_ptr.cast_mut(), val);
-                                    }
-                                    Err(_) => break,
-                                }
+                let res = str_to_int_inner_generic(
+                    env,
+                    &getc_fn,
+                    &ungetc_fn,
+                    subject,
+                    src_char_idx,
+                    base,
+                    if max_width > 0 { max_width } else { u32::MAX },
+                    |s, base| {
+                        // We parse as i64 to accommodate for
+                        // `signed long long` case (reserved for future use).
+                        // Later, the actual conversion to target type is
+                        // happening when we actually write value back.
+                        i64::from_str_radix(s, base).unwrap()
+                    },
+                    |num| num.checked_mul(-1).unwrap(),
+                );
+                match res {
+                    Ok((val, len)) => {
+                        src_char_idx += len;
+                        match length_modifier {
+                            Some("hh") => {
+                                let c_char_ptr: ConstPtr<i8> = args.next(env);
+                                env.mem.write(c_char_ptr.cast_mut(), val as i8);
                             }
-                            _ => unimplemented!(),
-                        }
-                    }
-                    _ => {
-                        let res = str_to_int_inner_generic(
-                            env,
-                            &getc_fn,
-                            &ungetc_fn,
-                            subject,
-                            src_char_idx,
-                            base,
-                            if max_width > 0 { max_width } else { u32::MAX },
-                            |s, base| i32::from_str_radix(s, base).unwrap_or(i32::MAX),
-                            |num| num.checked_mul(-1).unwrap_or(i32::MIN),
-                        );
-                        match res {
-                            Ok((val, len)) => {
-                                src_char_idx += len;
+                            Some("h") => {
+                                let c_short_ptr: ConstPtr<i16> = args.next(env);
+                                env.mem.write(c_short_ptr.cast_mut(), val as i16);
+                            }
+                            None => {
                                 let c_int_ptr: ConstPtr<i32> = args.next(env);
-                                env.mem.write(c_int_ptr.cast_mut(), val);
+                                env.mem.write(c_int_ptr.cast_mut(), val as i32);
                             }
-                            Err(_) => break,
+                            _ => unimplemented!("length_modifier {:?}", length_modifier),
                         }
                     }
+                    Err(_) => break,
                 }
             }
-            b'f' => {
+            b'f' | b'g' => {
                 assert_eq!(max_width, 0); // TODO
                 let res = atof_inner_generic(env, &getc_fn, &ungetc_fn, subject, src_char_idx);
                 let val = match res {
@@ -929,7 +995,6 @@ where
                 }
             }
             b'x' | b'X' | b'u' => {
-                assert!(length_modifier.is_none());
                 let base: u32 = match specifier {
                     b'x' | b'X' => 16,
                     b'u' => 10,
@@ -943,20 +1008,38 @@ where
                     src_char_idx,
                     base,
                     if max_width > 0 { max_width } else { u32::MAX },
-                    |s, base| u32::from_str_radix(s, base).unwrap_or(u32::MAX),
+                    |s, base| {
+                        // We parse as u64 to accommodate for
+                        // `unsigned long long` case (reserved for future use).
+                        // Later, the actual conversion to target type is
+                        // happening when we actually write value back.
+                        u64::from_str_radix(s, base).unwrap()
+                    },
                     |num| num.wrapping_neg(),
                 );
                 match res {
                     Ok((val, len)) => {
                         src_char_idx += len;
-                        let c_u32_ptr: ConstPtr<u32> = args.next(env);
-                        env.mem.write(c_u32_ptr.cast_mut(), val);
+                        match length_modifier {
+                            Some("hh") => {
+                                let c_char_ptr: ConstPtr<u8> = args.next(env);
+                                env.mem.write(c_char_ptr.cast_mut(), val as u8);
+                            }
+                            Some("h") => {
+                                let c_short_ptr: ConstPtr<u16> = args.next(env);
+                                env.mem.write(c_short_ptr.cast_mut(), val as u16);
+                            }
+                            None => {
+                                let c_u32_ptr: ConstPtr<u32> = args.next(env);
+                                env.mem.write(c_u32_ptr.cast_mut(), val as u32);
+                            }
+                            _ => unimplemented!("length_modifier {:?}", length_modifier),
+                        }
                     }
                     Err(_) => break,
                 }
             }
             b'[' => {
-                assert_eq!(max_width, 0);
                 assert!(length_modifier.is_none());
                 // [set] case
                 assert_ne!(env.mem.read(format + format_char_idx), b']');
@@ -988,19 +1071,27 @@ where
                 }
                 let mut dst_ptr: MutPtr<u8> = args.next(env);
                 let mut matched = false;
-                // Consume `src` while chars are not in the set
+                // Consume `src` while chars are in the set
+                // (or not in the set if inverted)
                 let mut cc = getc_fn(env, subject, src_char_idx).unwrap().into(); // TODO: EOF
                 src_char_idx += 1;
+                let mut match_count = 0;
                 while set.contains(&cc) ^ inverted && cc != b'\0' {
                     matched = true;
                     env.mem.write(dst_ptr, cc);
                     dst_ptr += 1;
+                    match_count += 1;
+                    if max_width > 0 && match_count == max_width {
+                        break;
+                    }
                     cc = getc_fn(env, subject, src_char_idx).unwrap().into(); // TODO: EOF
                     src_char_idx += 1;
                 }
-                // we need to backtrack one position
-                ungetc_fn(env, subject, cc);
-                src_char_idx -= 1;
+                if !(set.contains(&cc) ^ inverted && cc != b'\0') {
+                    // We need to backtrack one position
+                    ungetc_fn(env, subject, cc);
+                    src_char_idx -= 1;
+                }
                 if matched {
                     env.mem.write(dst_ptr, b'\0');
                 } else {
@@ -1202,6 +1293,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(vsscanf(_, _, _)),
     export_c_func!(fscanf(_, _, _)),
     export_c_func!(snprintf(_, _, _, _)),
+    export_c_func!(vasprintf(_, _, _)),
     export_c_func!(vprintf(_, _)),
     export_c_func!(vsnprintf(_, _, _, _)),
     export_c_func!(vsprintf(_, _, _)),

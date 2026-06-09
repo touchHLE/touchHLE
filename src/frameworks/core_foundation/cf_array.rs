@@ -26,7 +26,7 @@ fn CFArrayCreateMutable(
     capacity: CFIndex,
     callbacks: ConstVoidPtr, // TODO, should be `const CFArrayCallBacks*`
 ) -> CFMutableArrayRef {
-    assert!(allocator == kCFAllocatorDefault); // unimplemented
+    assert!(allocator == kCFAllocatorDefault || env.mem.read(allocator).is_system_default()); // unimplemented
     assert!(capacity == 0); // TODO: fixed capacity support
     assert!(callbacks.is_null()); // TODO: support retaining etc
 

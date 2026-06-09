@@ -10,7 +10,7 @@ use super::ns_property_list_serialization::{
     deserialize_plist_from_file, NSPropertyListBinaryFormat_v1_0,
 };
 use super::ns_string::{from_rust_string, get_static_str, to_rust_string};
-use super::{ns_array, ns_keyed_unarchiver, ns_string, ns_url, NSUInteger, _nib_archive_decoder};
+use super::{_nib_archive_decoder, ns_array, ns_keyed_unarchiver, ns_string, ns_url, NSUInteger};
 use crate::abi::{CallFromHost, GuestFunction, VaList};
 use crate::frameworks::core_foundation::{CFHashCode, CFIndex};
 use crate::frameworks::foundation::ns_enumerator::{
@@ -18,6 +18,9 @@ use crate::frameworks::foundation::ns_enumerator::{
 };
 use crate::frameworks::foundation::ns_file_manager::{
     NSFileModificationDate, NSFileSize, NSFileType,
+};
+use crate::frameworks::foundation::ns_keyed_archiver::{
+    encode_object, get_value_to_encode_for_current_key,
 };
 use crate::fs::GuestPath;
 use crate::mem::{ConstPtr, MutPtr, Ptr, SafeRead};
@@ -476,6 +479,43 @@ pub const CLASSES: ClassExports = objc_classes! {
     msg![env; this objectForKey:key]
 }
 
+- (NSUInteger)hash {
+    // TODO: define better hash
+    msg![env; this count]
+}
+- (bool)isEqual:(id)other {
+    if this == other {
+        return true;
+    }
+    let class: Class = msg_class![env; NSDictionary class];
+    if !msg![env; other isKindOfClass:class] {
+        return false;
+    }
+    msg![env; this isEqualToDictionary:other]
+}
+- (bool)isEqualToDictionary:(id)other { // NSDictionary *
+    if other == nil {
+        return false;
+    }
+    let count: NSUInteger = msg![env; this count];
+    let other_count: NSUInteger = msg![env; other count];
+    if count != other_count {
+        return false;
+    }
+    let keys_arr = msg![env; this allKeys];
+    let keys_count: NSUInteger = msg![env; keys_arr count];
+    for i in 0..keys_count {
+        let key: id = msg![env; keys_arr objectAtIndex:i];
+        let value: id = msg![env; this objectForKey:key];
+        let other_value: id = msg![env; other objectForKey:key];
+        let equal: bool = msg![env; value isEqual:other_value];
+        if !equal {
+            return false;
+        }
+    }
+    true
+}
+
 // NSDictionary(NSFileAttributes) category
 // TODO: implement categories properly
 - (id)fileModificationDate {
@@ -637,6 +677,14 @@ pub const CLASSES: ClassExports = objc_classes! {
     mut_dict
 }
 
+// NSCoding implementation
+- (id)initWithCoder:(id)coder {
+    init_with_coder_inner(env, this, coder)
+}
+- (())encodeWithCoder:(id)coder {
+    encode_with_coder_inner(env, this, coder)
+}
+
 - (id)description {
     build_description(env, this)
 }
@@ -678,34 +726,10 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 // NSCoding implementation
 - (id)initWithCoder:(id)coder {
-    let class: Class = msg![env; coder class];
-    let keyed_unarch_class: Class = msg_class![env; NSKeyedUnarchiver class];
-    let nib_archive_class: Class = msg_class![env; _touchHLE_NIBArchiveDecoder class];
-    let tuples = if env.objc.class_is_subclass_of(class, keyed_unarch_class) {
-        // It seems that every NSDictionary item in an NSKeyedArchiver plist
-        // looks like:
-        // {
-        //   "$class" => (uid of NSDictionary class goes here),
-        //   "NS.keys" => [
-        //     // keys here
-        //   ]
-        //   "NS.objects" => [
-        //     // objects here
-        //   ]
-        // }
-        ns_keyed_unarchiver::decode_current_dict(env, coder)
-    } else if env.objc.class_is_subclass_of(class, nib_archive_class) {
-        _nib_archive_decoder::decode_current_dict(env, coder)
-    } else {
-        unimplemented!()
-    };
-
-    release(env, this);
-    let dict = dict_from_keys_and_objects(env, &tuples);
-
-    let mut_dict = msg![env; dict mutableCopy];
-    release(env, dict);
-    mut_dict
+    init_with_coder_inner(env, this, coder)
+}
+- (())encodeWithCoder:(id)coder {
+    encode_with_coder_inner(env, this, coder)
 }
 
 - (id)initWithObjects:(id)objects //NSArray *
@@ -994,4 +1018,55 @@ fn build_description(env: &mut Environment, dict: id) -> id {
     let desc_imm = msg![env; desc copy];
     release(env, desc);
     autorelease(env, desc_imm)
+}
+
+fn init_with_coder_inner(env: &mut Environment, dict: id, coder: id) -> id {
+    let class: Class = msg![env; coder class];
+    let keyed_unarch_class: Class = msg_class![env; NSKeyedUnarchiver class];
+    let nib_archive_class: Class = msg_class![env; _touchHLE_NIBArchiveDecoder class];
+    // It seems that every NSDictionary item in an NSKeyedArchiver plist looks
+    // like:
+    // {
+    //   "$class" => (uid of NSDictionary class goes here),
+    //   "NS.keys" => [
+    //     // keys here
+    //   ]
+    //   "NS.objects" => [
+    //     // objects here
+    //   ]
+    // }
+    let tuples = if env.objc.class_is_subclass_of(class, keyed_unarch_class) {
+        ns_keyed_unarchiver::decode_current_dict(env, coder)
+    } else if env.objc.class_is_subclass_of(class, nib_archive_class) {
+        _nib_archive_decoder::decode_current_dict(env, coder)
+    } else {
+        unimplemented!()
+    };
+
+    let mut host_obj: DictionaryHostObject = std::mem::take(env.objc.borrow_mut(dict));
+    assert!(host_obj.map.is_empty());
+    for (key, val) in tuples {
+        host_obj.insert(env, key, val, /* copy_key: */ true);
+    }
+    *env.objc.borrow_mut(dict) = host_obj;
+    dict
+}
+
+fn encode_with_coder_inner(env: &mut Environment, dict: id, coder: id) {
+    let host_obj: DictionaryHostObject = std::mem::take(env.objc.borrow_mut(dict));
+    let mut encoded_keys = vec![];
+    let mut encoded_vals = vec![];
+    for (k, _) in host_obj.map.values().flatten() {
+        let kk = encode_object(env, coder, *k);
+        encoded_keys.push(plist::Value::Uid(kk));
+    }
+    for (_, v) in host_obj.map.values().flatten() {
+        let vv = encode_object(env, coder, *v);
+        encoded_vals.push(plist::Value::Uid(vv));
+    }
+    *env.objc.borrow_mut(dict) = host_obj;
+
+    let scope = get_value_to_encode_for_current_key(env, coder);
+    scope.insert("NS.keys".to_string(), plist::Value::Array(encoded_keys));
+    scope.insert("NS.objects".to_string(), plist::Value::Array(encoded_vals));
 }

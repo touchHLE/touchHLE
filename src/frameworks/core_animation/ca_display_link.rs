@@ -9,13 +9,19 @@ use crate::frameworks::foundation::ns_run_loop::NSRunLoopMode;
 use crate::frameworks::foundation::ns_timer::set_time_interval;
 use crate::frameworks::foundation::NSInteger;
 use crate::objc::{
-    autorelease, id, msg, msg_class, nil, objc_classes, release, retain, ClassExports, HostObject,
-    NSZonePtr, SEL,
+    autorelease, id, msg, msg_class, msg_send, nil, objc_classes, release, retain, ClassExports,
+    HostObject, NSZonePtr, SEL,
 };
 
 #[derive(Default)]
 struct CADisplayLinkHostObject {
+    target: id,
+    selector: Option<SEL>,
+    /// Weak reference. The timer retains the display link (as its target),
+    /// so the timer necessarily outlives the display link. After `invalidate`,
+    /// this pointer must not be used.
     ns_timer: id,
+    paused: bool,
 }
 impl HostObject for CADisplayLinkHostObject {}
 
@@ -30,17 +36,30 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 + (id)displayLinkWithTarget:(id)target selector:(SEL)sel {
+    let display_link: id = msg![env; this new];
+    // Because timer will pass itself as a second arg in ns_timer:handle_timer,
+    // we need to use a re-direction: first fire the timer on the display link,
+    // then call the original selector, passing the link as a second argument!
+    let redirect_sel: SEL = env.objc.lookup_selector("_touchHLE_displayLinkTimerDidFire:").unwrap();
     let ns_timer = msg_class![env; NSTimer timerWithTimeInterval:(1.0/60.0)
-                     target:target
-                   selector:sel
+                     target:display_link
+                   selector:redirect_sel
                    userInfo:nil
                     repeats:true];
-    retain(env, ns_timer);
-    let display_link: id = msg![env; this new];
+    retain(env, target);
     let host_object = env.objc.borrow_mut::<CADisplayLinkHostObject>(display_link);
+    host_object.target = target;
+    host_object.selector = Some(sel);
     host_object.ns_timer = ns_timer;
     log_dbg!("[CADisplayLink displayLinkWithTarget:{:?} selector:{}] => {:?}", target, sel.as_str(&env.mem), display_link);
     autorelease(env, display_link)
+}
+
+- (bool)isPaused {
+    env.objc.borrow::<CADisplayLinkHostObject>(this).paused
+}
+- (())setPaused:(bool)paused {
+    env.objc.borrow_mut::<CADisplayLinkHostObject>(this).paused = paused;
 }
 
 - (())setFrameInterval:(NSInteger)frameInterval {
@@ -64,9 +83,27 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (())dealloc {
-    let host_object = env.objc.borrow::<CADisplayLinkHostObject>(this);
-    release(env, host_object.ns_timer);
+    let &CADisplayLinkHostObject { target, .. } = env.objc.borrow(this);
+    release(env, target);
     env.objc.dealloc_object(this, &mut env.mem);
+}
+
+- (())_touchHLE_displayLinkTimerDidFire:(id)timer { // NSTimer *
+    let &CADisplayLinkHostObject {
+        target,
+        selector,
+        ns_timer,
+        paused,
+        ..
+    } = env.objc.borrow::<CADisplayLinkHostObject>(this);
+    assert_eq!(ns_timer, timer);
+    if paused {
+        // This could be improved, as we're still running the timer,
+        // but just not passing the actual call.
+        return;
+    }
+    // Signature is `- (void) selector:(CADisplayLink *)sender;`
+    () = msg_send(env, (target, selector.unwrap(), this));
 }
 
 @end

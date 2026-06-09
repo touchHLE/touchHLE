@@ -9,7 +9,7 @@
 
 use crate::dyld::{export_c_func, ConstantExports, FunctionExports, HostConstant};
 use crate::environment::Environment;
-use crate::libc::mach::thread_info::mach_port_t;
+use crate::libc::mach::port::mach_port_t;
 use crate::mem::PAGE_SIZE;
 
 // Unique mock value so we can assert against itself
@@ -17,6 +17,13 @@ pub const MACH_TASK_SELF: mach_port_t = 0x7461736b;
 
 pub fn mach_task_self(_env: &mut Environment) -> mach_port_t {
     MACH_TASK_SELF
+}
+
+fn mach_thread_self(env: &mut Environment) -> mach_port_t {
+    // TODO: implement port rights
+    // for now, just return the thread id + 1.
+    // (Plus 1 is to avoid having MACH_PORT_NULL for the main thread)
+    (env.current_thread + 1).try_into().unwrap()
 }
 
 pub const CONSTANTS: ConstantExports = &[
@@ -35,4 +42,7 @@ pub const CONSTANTS: ConstantExports = &[
     ),
 ];
 
-pub const FUNCTIONS: FunctionExports = &[export_c_func!(mach_task_self())];
+pub const FUNCTIONS: FunctionExports = &[
+    export_c_func!(mach_task_self()),
+    export_c_func!(mach_thread_self()),
+];

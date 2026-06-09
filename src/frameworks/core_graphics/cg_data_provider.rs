@@ -17,7 +17,7 @@ use crate::frameworks::core_foundation::cf_url::CFURLRef;
 use crate::frameworks::core_foundation::{CFRelease, CFRetain, CFTypeRef};
 use crate::frameworks::foundation::ns_string::to_rust_string;
 use crate::frameworks::foundation::NSUInteger;
-use crate::mem::{ConstVoidPtr, GuestUSize, MutVoidPtr};
+use crate::mem::{ConstPtr, ConstVoidPtr, GuestUSize, MutPtr, MutVoidPtr, SafeRead};
 use crate::objc::{id, msg, msg_class, objc_classes, ClassExports, HostObject};
 use crate::Environment;
 
@@ -25,6 +25,25 @@ pub type CGDataProviderRef = CFTypeRef;
 
 /// `(*void)(void *info, const void *data, size_t size)`
 type CGDataProviderReleaseDataCallback = GuestFunction;
+
+///  `(*size_t)(void *info, void *buffer, size_t count)`
+type CGDataProviderGetBytesCallback = GuestFunction;
+///  `(*off_t)(void *info, off_t count)`
+type CGDataProviderSkipForwardCallback = GuestFunction;
+///  `(*void)(void *info)`
+type CGDataProviderRewindCallback = GuestFunction;
+///  `(*void)(void *info)`
+type CGDataProviderReleaseInfoCallback = GuestFunction;
+
+#[repr(C, packed)]
+struct CGDataProviderSequentialCallbacks {
+    version: u32,
+    get_bytes: CGDataProviderGetBytesCallback,
+    skip_forward: CGDataProviderSkipForwardCallback,
+    rewind: CGDataProviderRewindCallback,
+    release_info: CGDataProviderReleaseInfoCallback,
+}
+unsafe impl SafeRead for CGDataProviderSequentialCallbacks {}
 
 // A CGDataProvider is supposed to be a collection of callbacks used for
 // accessing data, but at least for now, we instead only support some specific
@@ -94,6 +113,56 @@ pub fn CGDataProviderRetain(env: &mut Environment, c: CGDataProviderRef) -> CGDa
     } else {
         c
     }
+}
+
+fn CGDataProviderCreateSequential(
+    env: &mut Environment,
+    info: MutVoidPtr,
+    callbacks: ConstPtr<CGDataProviderSequentialCallbacks>,
+) -> CGDataProviderRef {
+    let callbacks = env.mem.read(callbacks);
+    let version = callbacks.version;
+    assert_eq!(version, 0);
+
+    // TODO: use rewind callback
+    let get_bytes_callback = callbacks.get_bytes;
+    let release_info = callbacks.release_info;
+
+    // We are reading all data at once in chunks
+    // TODO: implement proper sequential provider
+    let chunk_size = 1024;
+    let chunk = env.mem.alloc(chunk_size);
+    let mut bytes: Vec<u8> = Vec::new();
+    loop {
+        let read: GuestUSize = get_bytes_callback.call_from_host(env, (info, chunk, chunk_size));
+        if read == 0 {
+            break;
+        }
+        assert!(read <= chunk_size); // safeguard
+        bytes.extend_from_slice(env.mem.bytes_at(chunk.cast(), read));
+    }
+    env.mem.free(chunk);
+
+    // TODO: Technically, we should release at dealloc.
+    // Does it really matter?
+    if !release_info.to_ptr().is_null() {
+        () = release_info.call_from_host(env, (info,));
+    }
+
+    let total_size: GuestUSize = bytes.len().try_into().unwrap();
+    let data: MutPtr<u8> = env.mem.alloc(total_size).cast();
+    env.mem
+        .bytes_at_mut(data, total_size)
+        .copy_from_slice(&bytes);
+
+    let cf_data = CFDataCreate(
+        env,
+        kCFAllocatorDefault,
+        data.cast().cast_const(),
+        total_size.try_into().unwrap(),
+    );
+    env.mem.free(data.cast());
+    CGDataProviderCreateWithCFData(env, cf_data)
 }
 
 fn CGDataProviderCreateWithData(
@@ -179,6 +248,19 @@ fn CGDataProviderCopyData(env: &mut Environment, provider: CGDataProviderRef) ->
     }
 }
 
+fn CGDataProviderCreateWithFilename(
+    env: &mut Environment,
+    filename: ConstPtr<u8>,
+) -> CGDataProviderRef {
+    log_dbg!(
+        "CGDataProviderCreateWithFilename('{:?}')",
+        env.mem.cstr_at_utf8(filename)
+    );
+    let path: id = msg_class![env; NSString stringWithCString:filename];
+    let data: id = msg_class![env; NSData dataWithContentsOfFile:path];
+    CGDataProviderCreateWithCFData(env, data)
+}
+
 fn CGDataProviderCreateWithURL(env: &mut Environment, url: CFURLRef) -> CGDataProviderRef {
     assert!(msg![env; url isFileURL]); // TODO
     let path: id = msg![env; url path];
@@ -205,8 +287,10 @@ fn CGDataProviderCreateWithCFData(env: &mut Environment, data: CFDataRef) -> CGD
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGDataProviderRetain(_)),
     export_c_func!(CGDataProviderRelease(_)),
+    export_c_func!(CGDataProviderCreateSequential(_, _)),
     export_c_func!(CGDataProviderCreateWithData(_, _, _, _)),
     export_c_func!(CGDataProviderCopyData(_)),
+    export_c_func!(CGDataProviderCreateWithFilename(_)),
     export_c_func!(CGDataProviderCreateWithURL(_)),
     export_c_func!(CGDataProviderCreateWithCFData(_)),
 ];

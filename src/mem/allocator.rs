@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
-use super::{GuestUSize, Mem, VAddr, PAGE_SIZE, PAGE_SIZE_ALIGN_MASK};
+use super::{GuestUSize, VAddr, PAGE_SIZE};
 use std::collections::BTreeMap;
 use std::num::NonZeroU32;
 
@@ -23,14 +23,21 @@ pub struct Chunk {
 
 impl Chunk {
     pub fn new(base: VAddr, size: GuestUSize) -> Chunk {
-        if size >= PAGE_SIZE {
-            // Check for invariant of page alignment
-            assert!(base & PAGE_SIZE_ALIGN_MASK == 0);
-        }
         Chunk {
             base,
             size: NonZeroU32::new(size).unwrap(),
         }
+    }
+
+    fn merge(self, other: Chunk) -> Chunk {
+        assert!(
+            self.last_byte() + 1 == other.base || other.last_byte() + 1 == self.base,
+            "Chunks must be adjacent to merge"
+        );
+        Chunk::new(
+            self.base.min(other.base),
+            self.size.get() + other.size.get(),
+        )
     }
 
     #[inline(always)]
@@ -49,15 +56,31 @@ impl Chunk {
             return None;
         }
 
-        let left = match middle.base - self.base {
-            0 => None,
-            size => Some(Chunk::new(self.base, size)),
+        Some(self.difference(middle))
+    }
+
+    #[inline(always)]
+    /// Returns parts of `self` that don't overlap with other
+    fn difference(&self, other: Chunk) -> (Option<Chunk>, Option<Chunk>) {
+        if other.last_byte() < self.base {
+            return (None, Some(*self));
+        }
+
+        if other.base > self.last_byte() {
+            return (Some(*self), None);
+        }
+
+        let left = match other.base.checked_sub(self.base) {
+            None | Some(0) => None,
+            Some(size) => Some(Chunk::new(self.base, size)),
         };
-        let right = match self.last_byte() - middle.last_byte() {
-            0 => None,
-            size => Some(Chunk::new(middle.last_byte() + 1, size)),
+
+        let right = match self.last_byte().checked_sub(other.last_byte()) {
+            None | Some(0) => None,
+            Some(size) => Some(Chunk::new(other.last_byte() + 1, size)),
         };
-        Some((left, right))
+
+        (left, right)
     }
 }
 
@@ -77,11 +100,14 @@ impl std::fmt::Debug for Chunk {
 mod chunk_tests {
     use super::Chunk;
     #[test]
-    fn test() {
+    fn contains() {
         assert!(Chunk::new(2, 4).contains(2));
         assert!(Chunk::new(2, 4).contains(5));
         assert!(!Chunk::new(2, 4).contains(6));
+    }
 
+    #[test]
+    fn trisect() {
         assert_eq!(
             Chunk::new(2, 4).trisect_by(Chunk::new(3, 2)),
             Some((Some(Chunk::new(2, 1)), Some(Chunk::new(5, 1))))
@@ -96,6 +122,55 @@ mod chunk_tests {
         );
         assert_eq!(Chunk::new(2, 4).trisect_by(Chunk::new(1, 2)), None);
         assert_eq!(Chunk::new(2, 4).trisect_by(Chunk::new(5, 2)), None);
+    }
+
+    #[test]
+    fn merge() {
+        let a = Chunk::new(0, 10);
+        let b = Chunk::new(10, 10);
+        assert_eq!(a.merge(b), Chunk::new(0, 20));
+        assert_eq!(b.merge(a), Chunk::new(0, 20));
+    }
+
+    #[test]
+    #[should_panic]
+    fn merge_non_adjacent() {
+        let a = Chunk::new(0, 10);
+        let b = Chunk::new(20, 10);
+        a.merge(b);
+    }
+
+    #[test]
+    fn difference() {
+        let test_chunk = Chunk::new(10, 10);
+        assert_eq!(
+            test_chunk.difference(Chunk::new(0, 5)),
+            (None, Some(Chunk::new(10, 10)))
+        );
+
+        assert_eq!(
+            test_chunk.difference(Chunk::new(20, 10)),
+            (Some(Chunk::new(10, 10)), None)
+        );
+
+        assert_eq!(test_chunk.difference(Chunk::new(10, 10)), (None, None));
+
+        assert_eq!(test_chunk.difference(Chunk::new(9, 15)), (None, None));
+
+        assert_eq!(
+            test_chunk.difference(Chunk::new(5, 10)),
+            (None, Some(Chunk::new(15, 5)))
+        );
+
+        assert_eq!(
+            test_chunk.difference(Chunk::new(15, 10)),
+            (Some(Chunk::new(10, 5)), None)
+        );
+
+        assert_eq!(
+            test_chunk.difference(Chunk::new(13, 3)),
+            (Some(Chunk::new(10, 3)), Some(Chunk::new(16, 4)))
+        );
     }
 }
 
@@ -131,29 +206,91 @@ mod collections {
         pub fn get_size_with_base(&self, base: VAddr) -> Option<NonZeroU32> {
             self.chunks.get(&base).copied()
         }
+
+        pub fn overlapping_chunks(&self, chunk: Chunk) -> impl Iterator<Item = Chunk> + '_ {
+            let start = self
+                .chunks
+                .range(..=chunk.base)
+                .next_back()
+                .filter(|(&base, &size)| chunk.base < base + size.get())
+                .map(|(&base, _)| base)
+                .unwrap_or(chunk.base);
+
+            self.chunks
+                .range(start..=chunk.last_byte())
+                .map(|(&base, size)| Chunk::new(base, size.get()))
+        }
+
+        /// Remove all chunks overlapping a provided Chunk. In the case
+        /// of overlap the non overlapping portion is left
+        pub fn remove_range(&mut self, remove: Chunk) {
+            let bases: Vec<VAddr> = self
+                .overlapping_chunks(remove)
+                .map(|chunk| chunk.base)
+                .collect();
+
+            for base in bases {
+                let chunk = self.remove_with_base(base).unwrap();
+                let (left, right) = chunk.difference(remove);
+                if let Some(left) = left {
+                    self.insert(left);
+                }
+
+                if let Some(right) = right {
+                    self.insert(right);
+                }
+            }
+        }
     }
 
-    #[derive(Default, Debug)]
+    impl IntoIterator for ChunkMap {
+        type Item = Chunk;
+        type IntoIter = std::iter::Map<
+            std::collections::btree_map::IntoIter<VAddr, NonZeroU32>,
+            fn((VAddr, NonZeroU32)) -> Self::Item,
+        >;
+
+        fn into_iter(self) -> Self::IntoIter {
+            self.chunks
+                .into_iter()
+                .map(|(base, size)| Chunk { base, size })
+        }
+    }
+
+    #[derive(Debug)]
     pub struct SizeBucketedChunkMap {
+        min_chunk_size: u32,
         chunks: ChunkMap,
-        chunks_by_log2_size: [Vec<Chunk>; Self::bucket_for(u32::MAX) + 1],
+        chunks_by_log2_size: Vec<Vec<Chunk>>,
     }
     impl SizeBucketedChunkMap {
+        pub fn new(min_chunk_size: u32) -> Self {
+            Self {
+                min_chunk_size,
+                chunks: Default::default(),
+                chunks_by_log2_size: vec![
+                    Vec::new();
+                    (u32::MAX.ilog2() - min_chunk_size.ilog2()) as usize + 1
+                ],
+            }
+        }
+
         /// Get log2 size bucket for chunk.
-        #[inline(always)]
-        const fn bucket_for(size: GuestUSize) -> usize {
-            (size.ilog2() - MIN_CHUNK_SIZE.ilog2()) as usize
+        fn bucket_for(&self, size: GuestUSize) -> usize {
+            (size.ilog2() - self.min_chunk_size.ilog2()) as usize
         }
 
         pub fn insert(&mut self, chunk: Chunk) {
-            assert!(chunk.size.get() >= MIN_CHUNK_SIZE);
+            assert!(chunk.size.get() >= self.min_chunk_size);
             self.chunks.insert(chunk);
-            self.chunks_by_log2_size[Self::bucket_for(chunk.size.get())].push(chunk);
+            let bucket_size = self.bucket_for(chunk.size.get());
+            self.chunks_by_log2_size[bucket_size].push(chunk);
         }
 
         #[inline(always)]
         fn remove_from_bucket(&mut self, chunk: Chunk) {
-            let bucket = &mut self.chunks_by_log2_size[Self::bucket_for(chunk.size.get())];
+            let bucket_size = self.bucket_for(chunk.size.get());
+            let bucket = &mut self.chunks_by_log2_size[bucket_size];
             // Search from the end (recent frees are usually at the end, so
             // following the generational hypothesis, that's a better place to
             // start)
@@ -174,6 +311,28 @@ mod collections {
             let chunk = self.chunks.remove_with_end(end)?;
             self.remove_from_bucket(chunk);
             Some(chunk)
+        }
+
+        /// Remove all chunks overlapping a provided Chunk. In the case
+        /// of overlap the non overlapping portion is carved out
+        pub fn remove_range(&mut self, remove: Chunk) {
+            let bases: Vec<VAddr> = self
+                .chunks
+                .overlapping_chunks(remove)
+                .map(|chunk| chunk.base)
+                .collect();
+
+            for base in bases {
+                let chunk = self.remove_with_base(base).unwrap();
+                let (left, right) = chunk.difference(remove);
+                if let Some(left) = left {
+                    self.insert(left);
+                }
+
+                if let Some(right) = right {
+                    self.insert(right);
+                }
+            }
         }
 
         fn allocate_in_bucket(&mut self, size: GuestUSize, bucket: usize) -> Option<Chunk> {
@@ -209,34 +368,19 @@ mod collections {
             }
 
             let alloc = Chunk::new(existing.base, size);
-            let rump_base = existing.base + size;
-            let rump_size = existing.size.get() - size;
-            if rump_size >= PAGE_SIZE && rump_base & PAGE_SIZE_ALIGN_MASK != 0 {
-                assert!(existing.base & PAGE_SIZE_ALIGN_MASK == 0);
-                // re-align base address by splitting in 2 chunks:
-                // less than page size, not aligned
-                let left = Chunk::new(existing.base + size, PAGE_SIZE - size);
-                // (maybe) more than page size, aligned
-                let right = Chunk::new(existing.base + PAGE_SIZE, existing.size.get() - PAGE_SIZE);
-                assert_eq!(left.last_byte() + 1, right.base); // sanity check, bases
-                assert_eq!(left.size.get() + right.size.get(), rump_size); // sanity check, sizes
-                self.insert(left);
-                self.insert(right);
-            } else {
-                let rump = Chunk::new(rump_base, rump_size);
-                self.insert(rump);
-            }
+            let rump = Chunk::new(existing.base + size, existing.size.get() - size);
+            self.insert(rump);
 
             Some(alloc)
         }
 
         pub fn allocate(&mut self, size: GuestUSize) -> Option<Chunk> {
-            assert!(size >= MIN_CHUNK_SIZE);
+            assert!(size >= self.min_chunk_size);
 
             // Look in the smallest bucket first. This is the only bucket where
             // an exact match can be found.
 
-            let bucket = Self::bucket_for(size);
+            let bucket = self.bucket_for(size);
             if let Some(alloc) = self.allocate_in_bucket(size, bucket) {
                 return Some(alloc);
             }
@@ -264,67 +408,72 @@ use collections::{ChunkMap, SizeBucketedChunkMap};
 
 /// Tracks which memory is in use and makes allocations from it.
 #[derive(Debug)]
-pub struct Allocator {
+pub struct HeapAllocator {
     used_chunks: ChunkMap,
     unused_chunks: SizeBucketedChunkMap,
+    // These are chunks that are managed by an external allocator
+    external_chunks: ChunkMap,
+    backing_chunks: Vec<Chunk>,
 }
 
-impl Allocator {
-    pub fn new() -> Allocator {
-        let main_thread_stack =
-            Chunk::new(Mem::MAIN_THREAD_STACK_LOW_END, Mem::MAIN_THREAD_STACK_SIZE);
-        let rest = Chunk::new(0, Mem::MAIN_THREAD_STACK_LOW_END);
+impl HeapAllocator {
+    /// Size of chunks requested by the heap from the VM allocator.
+    /// This is set to 2MiB based on the original jemalloc paper.
+    pub const HEAP_CHUNK_SIZE: GuestUSize = 2 * 1024 * 1024;
 
-        let mut used_chunks: ChunkMap = Default::default();
-        used_chunks.insert(main_thread_stack);
+    /// This is the maximum allocation for the heap. Anything else is deferred
+    /// to the vm allocator. This is set to 15 KiB according to:
+    /// <https://www.cocoawithlove.com/2010/05/look-at-how-malloc-works-on-mac.html>
+    pub const HEAP_ALLOCATION_THRESHOLD: GuestUSize = (15 * 1024) - 1;
 
-        let mut unused_chunks: SizeBucketedChunkMap = Default::default();
-        unused_chunks.insert(rest);
+    pub fn new(vm: &mut VMAllocator, size: GuestUSize) -> HeapAllocator {
+        let mut unused_chunks = SizeBucketedChunkMap::new(MIN_CHUNK_SIZE);
+        let mut backing_chunks = Vec::new();
 
-        Allocator {
-            used_chunks,
+        if size > 0 {
+            let base_chunk = vm
+                .allocate(None, size)
+                .expect("Failed to allocate heap space");
+            backing_chunks.push(base_chunk);
+            unused_chunks.insert(base_chunk);
+        }
+
+        HeapAllocator {
+            used_chunks: Default::default(),
             unused_chunks,
+            external_chunks: Default::default(),
+            backing_chunks,
         }
     }
 
-    pub fn reserve(&mut self, chunk: Chunk) {
-        let mut to_trisect = None;
-        for unused_chunk in self.unused_chunks.iter() {
-            if unused_chunk.trisect_by(chunk).is_some() {
-                to_trisect = Some(unused_chunk);
-                break;
-            }
-        }
+    pub fn alloc(&mut self, vm: &mut VMAllocator, size: GuestUSize) -> Option<Chunk> {
+        let size = size.max(MIN_CHUNK_SIZE);
+        let size = Self::align(size, MIN_CHUNK_SIZE);
 
-        let Some(to_trisect) = to_trisect else {
-            panic!("Could not reserve chunk {chunk:?}!");
-        };
-
-        let (before, after) = to_trisect.trisect_by(chunk).unwrap();
-        self.unused_chunks.remove_with_base(to_trisect.base);
-        if let Some(before) = before {
-            self.unused_chunks.insert(before);
-        }
-        if let Some(after) = after {
-            self.unused_chunks.insert(after);
-        }
-        self.used_chunks.insert(chunk);
-    }
-
-    pub fn alloc(&mut self, size: GuestUSize) -> VAddr {
-        let size = if size < PAGE_SIZE {
-            let size = size.max(MIN_CHUNK_SIZE);
-            Self::align(size, MIN_CHUNK_SIZE)
+        let alloc = if size > Self::HEAP_ALLOCATION_THRESHOLD {
+            let alloc = vm.allocate(None, size).ok()?;
+            self.external_chunks.insert(alloc);
+            alloc
         } else {
-            Self::align(size, PAGE_SIZE)
+            let alloc = self.unused_chunks.allocate(size).or_else(|| {
+                self.grow(vm);
+                self.unused_chunks.allocate(size)
+            })?;
+            self.used_chunks.insert(alloc);
+            alloc
         };
 
-        let Some(alloc) = self.unused_chunks.allocate(size) else {
-            panic!("Could not find large enough chunk to allocate {size:#x} bytes");
-        };
-        self.used_chunks.insert(alloc);
+        Some(alloc)
+    }
 
-        alloc.base
+    /// Special case for valloc().
+    /// This does not respect [Self::HEAP_ALLOCATION_THRESHOLD]!
+    pub fn valloc(&mut self, vm: &mut VMAllocator, size: GuestUSize) -> Option<Chunk> {
+        assert!(size > 0); // TODO
+        let size = size.next_multiple_of(PAGE_SIZE);
+        let alloc = vm.allocate(None, size).ok()?;
+        self.external_chunks.insert(alloc);
+        Some(alloc)
     }
 
     fn align(size: GuestUSize, align: GuestUSize) -> GuestUSize {
@@ -337,6 +486,9 @@ impl Allocator {
 
     /// This is used for realloc
     pub fn find_allocated_size(&mut self, base: VAddr) -> GuestUSize {
+        if let Some(size) = self.external_chunks.get_size_with_base(base) {
+            return size.get();
+        }
         let Some(size) = self.used_chunks.get_size_with_base(base) else {
             panic!("Can't find {base:#x}, unknown allocation!");
         };
@@ -345,7 +497,12 @@ impl Allocator {
 
     /// Returns the size of the freed chunk so it can be zeroed if desired
     #[must_use]
-    pub fn free(&mut self, base: VAddr) -> GuestUSize {
+    pub fn free(&mut self, vm: &mut VMAllocator, base: VAddr) -> GuestUSize {
+        if let Some(freed) = self.external_chunks.remove_with_base(base) {
+            vm.deallocate(freed.base, freed.size.get());
+            return freed.size.get();
+        }
+
         let Some(freed) = self.used_chunks.remove_with_base(base) else {
             log!("Can't free {:#x}, unknown allocation!", base);
             return 0;
@@ -356,25 +513,135 @@ impl Allocator {
             .remove_with_base(freed.last_byte() + 1)
             .or_else(|| self.unused_chunks.remove_with_end(freed.base))
         {
-            let new_base = freed.base.min(adjacent.base);
-            let new_size = freed.size.get() + adjacent.size.get();
-            if new_size >= PAGE_SIZE && new_base & PAGE_SIZE_ALIGN_MASK != 0 {
-                // Invariant of page alignment would be violated!
-                // So we're not combining
-                self.unused_chunks.insert(adjacent);
-                self.unused_chunks.insert(freed);
-            } else {
-                // We are good to combine
-                let combined = Chunk::new(
-                    freed.base.min(adjacent.base),
-                    freed.size.get() + adjacent.size.get(),
-                );
-                self.unused_chunks.insert(combined);
-            }
+            let combined = adjacent.merge(freed);
+            self.unused_chunks.insert(combined);
         } else {
             self.unused_chunks.insert(freed);
         }
 
         freed.size.get()
+    }
+
+    /// Consume the allocator returning an iterator over the managed
+    /// virtual memory chunks
+    pub fn into_vm_chunks(self) -> impl Iterator<Item = Chunk> {
+        self.external_chunks.into_iter().chain(self.backing_chunks)
+    }
+
+    fn grow(&mut self, vm: &mut VMAllocator) {
+        log!("Attempting to grow heap.");
+        let chunk = vm
+            .allocate(None, Self::HEAP_CHUNK_SIZE)
+            .expect("Failed to allocate memory for heap.");
+
+        self.backing_chunks.push(chunk);
+        self.unused_chunks.insert(chunk);
+    }
+}
+
+#[derive(Debug)]
+pub enum VMAllocError {
+    AddressUnavailable,
+    NoSpace,
+}
+
+/// Virtual Memory Allocator which handles allocation with page granularity
+#[derive(Debug)]
+pub struct VMAllocator {
+    used_chunks: ChunkMap,
+    unused_chunks: SizeBucketedChunkMap,
+}
+
+impl VMAllocator {
+    pub fn new(base: VAddr, size: GuestUSize) -> VMAllocator {
+        let allocation_space = Chunk::new(base, size);
+
+        let mut unused_chunks = SizeBucketedChunkMap::new(PAGE_SIZE);
+        unused_chunks.insert(allocation_space);
+
+        VMAllocator {
+            used_chunks: Default::default(),
+            unused_chunks,
+        }
+    }
+
+    pub fn allocate(
+        &mut self,
+        address: Option<VAddr>,
+        size: GuestUSize,
+    ) -> Result<Chunk, VMAllocError> {
+        let size = size.next_multiple_of(PAGE_SIZE);
+        match address {
+            Some(address) => {
+                let address = address & !(PAGE_SIZE - 1);
+                self.allocate_at(address, size)
+            }
+            None => self.allocate_any(size),
+        }
+    }
+
+    pub fn deallocate(&mut self, address: VAddr, size: GuestUSize) -> Chunk {
+        // From testing vm_deallocate you can deallocate anything as long as
+        // the memory is not protected. Since we have no permissions we can
+        // always succeed
+        let size = size.next_multiple_of(PAGE_SIZE);
+        let address = address & !(PAGE_SIZE - 1);
+        let freed = Chunk::new(address, size);
+
+        self.used_chunks.remove_range(freed);
+        self.unused_chunks.remove_range(freed);
+
+        let left_adjacent = self.unused_chunks.remove_with_base(freed.last_byte() + 1);
+        let right_adjacent = self.unused_chunks.remove_with_end(freed.base);
+
+        let mut combined = freed;
+
+        if let Some(adjacent) = left_adjacent {
+            combined = combined.merge(adjacent);
+        }
+
+        if let Some(adjacent) = right_adjacent {
+            combined = combined.merge(adjacent);
+        }
+
+        self.unused_chunks.insert(combined);
+        freed
+    }
+
+    fn allocate_at(&mut self, address: VAddr, size: GuestUSize) -> Result<Chunk, VMAllocError> {
+        assert!(address.is_multiple_of(PAGE_SIZE));
+        assert!(size.is_multiple_of(PAGE_SIZE) && size >= PAGE_SIZE);
+        let chunk = Chunk::new(address, size);
+
+        let to_trisect = self
+            .unused_chunks
+            .iter()
+            .find(|unused_chunk| unused_chunk.contains(address))
+            .ok_or(VMAllocError::AddressUnavailable)?;
+
+        let (before, after) = to_trisect.trisect_by(chunk).ok_or(VMAllocError::NoSpace)?;
+        self.unused_chunks.remove_with_base(to_trisect.base);
+        if let Some(before) = before {
+            self.unused_chunks.insert(before);
+        }
+        if let Some(after) = after {
+            self.unused_chunks.insert(after);
+        }
+        self.used_chunks.insert(chunk);
+
+        Ok(chunk)
+    }
+
+    fn allocate_any(&mut self, size: GuestUSize) -> Result<Chunk, VMAllocError> {
+        assert!(size.is_multiple_of(PAGE_SIZE) && size >= PAGE_SIZE);
+
+        let alloc = self
+            .unused_chunks
+            .allocate(size)
+            .ok_or(VMAllocError::NoSpace)?;
+
+        self.used_chunks.insert(alloc);
+
+        Ok(alloc)
     }
 }

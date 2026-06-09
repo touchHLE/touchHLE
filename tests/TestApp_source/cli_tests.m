@@ -19,6 +19,9 @@
 #include <fcntl.h>
 #include <fenv.h>
 #include <locale.h>
+#include <mach/kern_return.h>
+#include <mach/thread_info.h>
+#include <malloc/malloc.h>
 #include <math.h>
 #include <pthread.h>
 #include <semaphore.h>
@@ -28,6 +31,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/time.h>
 #include <sys/types.h>
 #include <time.h>
 #include <unistd.h>
@@ -35,11 +39,23 @@
 
 #import "SyncTester.h"
 
+// TODO: include from <mach/thread_act.h> once available in the common-sdk
+extern kern_return_t thread_suspend(mach_port_t target_act);
+extern kern_return_t thread_resume(mach_port_t target_act);
+extern kern_return_t thread_info(mach_port_t target_act, natural_t flavor,
+                                 integer_t *thread_info_out,
+                                 natural_t *thread_info_out_cnt);
+
 // Declare test functions from other files.
 
 int test_AutoreleasePool(void);    // AutoReleasePoolTest.m
 int test_CGAffineTransform(void);  // CGAffineTransform.c
 int test_RespondsToSelector(void); // RespondsToSelector.m
+int test_Initialize(void);         // Initialize.m
+
+#ifndef DEFINE_ME_WHEN_BUILDING_ON_MACOS
+int test_cpp_virtual_inheritance(void); // CppVirtualInheritance.cpp
+#endif
 
 // === Main code ===
 
@@ -115,187 +131,443 @@ char *str_format(const char *format, ...) {
 }
 
 int test_vsnprintf() {
-  int res = 0;
   char *str;
 
   // Test %s
   str = str_format("%s", "test");
-  res += !!strcmp(str, "test");
+  if (strcmp(str, "test") != 0) {
+    free(str);
+    return -1;
+  }
   free(str);
   // Test %s NULL
   str = str_format("%s", NULL);
-  res += !!strcmp(str, "(null)");
+  if (strcmp(str, "(null)") != 0) {
+    free(str);
+    return -2;
+  }
   free(str);
   // Test % without a specifier
   str = str_format("abc%");
-  res += !!strcmp(str, "abc");
+  if (strcmp(str, "abc") != 0) {
+    free(str);
+    return -3;
+  }
   free(str);
   // Test %x
   str = str_format("%x", 2042);
-  res += !!strcmp(str, "7fa");
+  if (strcmp(str, "7fa") != 0) {
+    free(str);
+    return -4;
+  }
   free(str);
   str = str_format("0x%08x", 184638698);
-  res += !!strcmp(str, "0x0b015cea");
+  if (strcmp(str, "0x0b015cea") != 0) {
+    free(str);
+    return -5;
+  }
   free(str);
   // Test %d
   str = str_format("%d|%8d|%08d|%.d|%8.d|%.3d|%8.3d|%08.3d|%*d|%0*d", 5, 5, 5,
                    5, 5, 5, 5, 5, 8, 5, 8, 5);
-  res += !!strcmp(
-      str,
-      "5|       5|00000005|5|       5|005|     005|     005|       5|00000005");
+  if (strcmp(str, "5|       5|00000005|5|       5|005|     005|     005|       "
+                  "5|00000005") != 0) {
+    free(str);
+    return -6;
+  }
   free(str);
   // Test %d with alternative form
   str = str_format("%#.2d", 5);
-  res += !!strcmp(str, "05");
+  if (strcmp(str, "05") != 0) {
+    free(str);
+    return -7;
+  }
   free(str);
   // Test %f
   str = str_format("%f|%8f|%08f|%.f|%8.f|%.3f|%8.3f|%08.3f|%*f|%0*f", 10.12345,
                    10.12345, 10.12345, 10.12345, 10.12345, 10.12345, 10.12345,
                    10.12345, 8, 10.12345, 8, 10.12345);
-  res += !!strcmp(str, "10.123450|10.123450|10.123450|10|      10|10.123|  "
-                       "10.123|0010.123|10.123450|10.123450");
+  if (strcmp(str, "10.123450|10.123450|10.123450|10|      10|10.123|  "
+                  "10.123|0010.123|10.123450|10.123450") != 0) {
+    free(str);
+    return -8;
+  }
   free(str);
   str = str_format("%f|%8f|%08f|%.f|%8.f|%.3f|%8.3f|%08.3f|%*f|%0*f", -10.12345,
                    -10.12345, -10.12345, -10.12345, -10.12345, -10.12345,
                    -10.12345, -10.12345, 8, -10.12345, 8, -10.12345);
-  res += !!strcmp(str, "-10.123450|-10.123450|-10.123450|-10|     -10|-10.123| "
-                       "-10.123|-010.123|-10.123450|-10.123450");
+  if (strcmp(str, "-10.123450|-10.123450|-10.123450|-10|     -10|-10.123| "
+                  "-10.123|-010.123|-10.123450|-10.123450") != 0) {
+    free(str);
+    return -9;
+  }
   free(str);
   // Test %e
   str = str_format("%e|%8e|%08e|%.e|%8.e|%.3e|%8.3e|%08.3e|%*e|%0*e", 10.12345,
                    10.12345, 10.12345, 10.12345, 10.12345, 10.12345, 10.12345,
                    10.12345, 8, 10.12345, 8, 10.12345);
-  res += !!strcmp(
-      str, "1.012345e+01|1.012345e+01|1.012345e+01|1e+01|   "
-           "1e+01|1.012e+01|1.012e+01|1.012e+01|1.012345e+01|1.012345e+01");
+  if (strcmp(str,
+             "1.012345e+01|1.012345e+01|1.012345e+01|1e+01|   "
+             "1e+01|1.012e+01|1.012e+01|1.012e+01|1.012345e+01|1.012345e+01") !=
+      0) {
+    free(str);
+    return -10;
+  }
   free(str);
   str = str_format("%e|%8e|%08e|%.e|%8.e|%.3e|%8.3e|%08.3e|%*e|%0*e", -10.12345,
                    -10.12345, -10.12345, -10.12345, -10.12345, -10.12345,
                    -10.12345, -10.12345, 8, -10.12345, 8, -10.12345);
-  res += !!strcmp(
-      str,
-      "-1.012345e+01|-1.012345e+01|-1.012345e+01|-1e+01|  "
-      "-1e+01|-1.012e+01|-1.012e+01|-1.012e+01|-1.012345e+01|-1.012345e+01");
+  if (strcmp(str, "-1.012345e+01|-1.012345e+01|-1.012345e+01|-1e+01|  "
+                  "-1e+01|-1.012e+01|-1.012e+01|-1.012e+01|-1.012345e+01|-1."
+                  "012345e+01") != 0) {
+    free(str);
+    return -11;
+  }
   free(str);
   // Test %g
   str = str_format("%g|%8g|%08g|%.g|%8.g|%.3g|%8.3g|%08.3g|%*g|%0*g", 10.12345,
                    10.12345, 10.12345, 10.12345, 10.12345, 10.12345, 10.12345,
                    10.12345, 8, 10.12345, 8, 10.12345);
-  res += !!strcmp(str, "10.1235| 10.1235|010.1235|1e+01|   1e+01|10.1|    "
-                       "10.1|000010.1| 10.1235|010.1235");
+  if (strcmp(str, "10.1235| 10.1235|010.1235|1e+01|   1e+01|10.1|    "
+                  "10.1|000010.1| 10.1235|010.1235") != 0) {
+    free(str);
+    return -12;
+  }
   free(str);
   str = str_format("%g|%8g|%08g|%.g|%8.g|%.3g|%8.3g|%08.3g|%*g|%0*g", -10.12345,
                    -10.12345, -10.12345, -10.12345, -10.12345, -10.12345,
                    -10.12345, -10.12345, 8, -10.12345, 8, -10.12345);
-  res += !!strcmp(str, "-10.1235|-10.1235|-10.1235|-1e+01|  -1e+01|-10.1|   "
-                       "-10.1|-00010.1|-10.1235|-10.1235");
+  if (strcmp(str, "-10.1235|-10.1235|-10.1235|-1e+01|  -1e+01|-10.1|   "
+                  "-10.1|-00010.1|-10.1235|-10.1235") != 0) {
+    free(str);
+    return -13;
+  }
   free(str);
   str = str_format("%f|%8f|%08f|%.f|%8.f|%.3f|%8.3f|%08.3f|%*f|%0*f", -10.12345,
                    -10.12345, -10.12345, -10.12345, -10.12345, -10.12345,
                    -10.12345, -10.12345, 8, -10.12345, 8, -10.12345);
-  res += !!strcmp(str, "-10.123450|-10.123450|-10.123450|-10|     -10|-10.123| "
-                       "-10.123|-010.123|-10.123450|-10.123450");
+  if (strcmp(str, "-10.123450|-10.123450|-10.123450|-10|     -10|-10.123| "
+                  "-10.123|-010.123|-10.123450|-10.123450") != 0) {
+    free(str);
+    return -14;
+  }
   free(str);
   // Test %e
   str = str_format("%e|%8e|%08e|%.e|%8.e|%.3e|%8.3e|%08.3e|%*e|%0*e", 10.12345,
                    10.12345, 10.12345, 10.12345, 10.12345, 10.12345, 10.12345,
                    10.12345, 8, 10.12345, 8, 10.12345);
-  res += !!strcmp(
-      str, "1.012345e+01|1.012345e+01|1.012345e+01|1e+01|   "
-           "1e+01|1.012e+01|1.012e+01|1.012e+01|1.012345e+01|1.012345e+01");
+  if (strcmp(str,
+             "1.012345e+01|1.012345e+01|1.012345e+01|1e+01|   "
+             "1e+01|1.012e+01|1.012e+01|1.012e+01|1.012345e+01|1.012345e+01") !=
+      0) {
+    free(str);
+    return -15;
+  }
   free(str);
   str = str_format("%e|%8e|%08e|%.e|%8.e|%.3e|%8.3e|%08.3e|%*e|%0*e", -10.12345,
                    -10.12345, -10.12345, -10.12345, -10.12345, -10.12345,
                    -10.12345, -10.12345, 8, -10.12345, 8, -10.12345);
-  res += !!strcmp(
-      str,
-      "-1.012345e+01|-1.012345e+01|-1.012345e+01|-1e+01|  "
-      "-1e+01|-1.012e+01|-1.012e+01|-1.012e+01|-1.012345e+01|-1.012345e+01");
+  if (strcmp(str, "-1.012345e+01|-1.012345e+01|-1.012345e+01|-1e+01|  "
+                  "-1e+01|-1.012e+01|-1.012e+01|-1.012e+01|-1.012345e+01|-1."
+                  "012345e+01") != 0) {
+    free(str);
+    return -16;
+  }
   free(str);
   str = str_format("%e|%8e|%08e|%.e|%8.e|%.3e|%8.3e|%08.3e|%*e|%0*e", 0.0, 0.0,
                    0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 16, 0.0, 16, 0.0);
-  res += !!strcmp(
-      str,
-      "0.000000e+00|0.000000e+00|0.000000e+00|0e+00|   "
-      "0e+00|0.000e+00|0.000e+00|0.000e+00|    0.000000e+00|00000.000000e+00");
+  if (strcmp(str, "0.000000e+00|0.000000e+00|0.000000e+00|0e+00|   "
+                  "0e+00|0.000e+00|0.000e+00|0.000e+00|    "
+                  "0.000000e+00|00000.000000e+00") != 0) {
+    free(str);
+    return -17;
+  }
   free(str);
   // Test %g
   str = str_format("%g|%8g|%08g|%.g|%8.g|%.3g|%8.3g|%08.3g|%*g|%0*g", 10.12345,
                    10.12345, 10.12345, 10.12345, 10.12345, 10.12345, 10.12345,
                    10.12345, 8, 10.12345, 8, 10.12345);
-  res += !!strcmp(str, "10.1235| 10.1235|010.1235|1e+01|   1e+01|10.1|    "
-                       "10.1|000010.1| 10.1235|010.1235");
+  if (strcmp(str, "10.1235| 10.1235|010.1235|1e+01|   1e+01|10.1|    "
+                  "10.1|000010.1| 10.1235|010.1235") != 0) {
+    free(str);
+    return -18;
+  }
   free(str);
   str = str_format("%g|%8g|%08g|%.g|%8.g|%.3g|%8.3g|%08.3g|%*g|%0*g", -10.12345,
                    -10.12345, -10.12345, -10.12345, -10.12345, -10.12345,
                    -10.12345, -10.12345, 8, -10.12345, 8, -10.12345);
-  res += !!strcmp(str, "-10.1235|-10.1235|-10.1235|-1e+01|  -1e+01|-10.1|   "
-                       "-10.1|-00010.1|-10.1235|-10.1235");
+  if (strcmp(str, "-10.1235|-10.1235|-10.1235|-1e+01|  -1e+01|-10.1|   "
+                  "-10.1|-00010.1|-10.1235|-10.1235") != 0) {
+    free(str);
+    return -19;
+  }
   free(str);
   str = str_format("%g|%8g|%08g|%.g|%8.g|%.3g|%8.3g|%08.3g|%*g|%0*g", 0.0, 0.0,
                    0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 16, 0.0, 16, 0.0);
-  res += !!strcmp(
-      str, "0|       0|00000000|0|       0|0|       0|00000000|               "
-           "0|0000000000000000");
+  if (strcmp(
+          str,
+          "0|       0|00000000|0|       0|0|       0|00000000|               "
+          "0|0000000000000000") != 0) {
+    free(str);
+    return -20;
+  }
   free(str);
   // Test %g with trailing zeros
   str = str_format("%.14g", 1.0);
-  res += !!strcmp(str, "1");
+  if (strcmp(str, "1") != 0) {
+    free(str);
+    return -21;
+  }
   free(str);
   // Test %g with big number
   str = str_format("%.14g", 10000000000.0);
-  res += !!strcmp(str, "10000000000");
+  if (strcmp(str, "10000000000") != 0) {
+    free(str);
+    return -22;
+  }
   free(str);
   // Test %g with a precision argument
   str = str_format("%.*g", 4, 10.234);
-  res += !!strcmp(str, "10.23");
+  if (strcmp(str, "10.23") != 0) {
+    free(str);
+    return -23;
+  }
   free(str);
   // Test length modifiers
   str = str_format("%d %ld %lld %qd %u %lu %llu %qu", 10, 100, 4294967296,
                    4294967296, 10, 100, 4294967296, 4294967296);
-  res += !!strcmp(str,
-                  "10 100 4294967296 4294967296 10 100 4294967296 4294967296");
+  if (strcmp(str,
+             "10 100 4294967296 4294967296 10 100 4294967296 4294967296") !=
+      0) {
+    free(str);
+    return -24;
+  }
   free(str);
   // Test %.50s with a long string
   str = str_format("%.50s",
                    "ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZ");
-  res += !!strcmp(str, "ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWX");
+  if (strcmp(str, "ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWX") != 0) {
+    free(str);
+    return -25;
+  }
   free(str);
   // Test precision for %x
   str = str_format("%.8x-%.8x-%.2x", 10, 9999999, 9999999);
-  res += !!strcmp(str, "0000000a-0098967f-98967f");
+  if (strcmp(str, "0000000a-0098967f-98967f") != 0) {
+    free(str);
+    return -26;
+  }
   free(str);
   // Test unknown specifier skip
   str = str_format("%I");
-  res += !!strcmp(str, "I");
+  if (strcmp(str, "I") != 0) {
+    free(str);
+    return -27;
+  }
   free(str);
   // Test %s with padding
   const char *s = "Hello";
   str = str_format("[%10s]", s);
-  res += !!strcmp(str, "[     Hello]");
+  if (strcmp(str, "[     Hello]") != 0) {
+    free(str);
+    return -28;
+  }
   free(str);
   str = str_format("[%-10s]", s);
-  res += !!strcmp(str, "[Hello     ]");
+  if (strcmp(str, "[Hello     ]") != 0) {
+    free(str);
+    return -29;
+  }
   free(str);
   str = str_format("[%*s]", 10, s);
-  res += !!strcmp(str, "[     Hello]");
+  if (strcmp(str, "[     Hello]") != 0) {
+    free(str);
+    return -30;
+  }
   free(str);
   str = str_format("[%-*s]", 10, s);
-  res += !!strcmp(str, "[Hello     ]");
+  if (strcmp(str, "[Hello     ]") != 0) {
+    free(str);
+    return -31;
+  }
   free(str);
   // Test %p with padding
   str = str_format("%90p", &str);
-  res += (strlen(str) == 90) ? 0 : 1;
+  if (strlen(str) != 90) {
+    free(str);
+    return -32;
+  }
   free(str);
   // Test sign prepend
   str = str_format("%+08d", 31501);
-  res += !!strcmp(str, "+0031501");
+  if (strcmp(str, "+0031501") != 0) {
+    free(str);
+    return -33;
+  }
   free(str);
   str = str_format("%+08d", -31501);
-  res += !!strcmp(str, "-0031501");
+  if (strcmp(str, "-0031501") != 0) {
+    free(str);
+    return -34;
+  }
+  free(str);
+  // Test h length modifier (%hd, %hu, %hx, %ho)
+  str = str_format("%hd", 42);
+  if (strcmp(str, "42") != 0) {
+    free(str);
+    return -35;
+  }
+  free(str);
+  str = str_format("%hd", -42);
+  if (strcmp(str, "-42") != 0) {
+    free(str);
+    return -36;
+  }
+  free(str);
+  // Truncation: 32768 wraps to -32768 as signed short
+  str = str_format("%hd", 32768);
+  if (strcmp(str, "-32768") != 0) {
+    free(str);
+    return -37;
+  }
+  free(str);
+  // Truncation: 65535 is -1 as signed short
+  str = str_format("%hd", 65535);
+  if (strcmp(str, "-1") != 0) {
+    free(str);
+    return -38;
+  }
+  free(str);
+  str = str_format("%hu", 65535);
+  if (strcmp(str, "65535") != 0) {
+    free(str);
+    return -39;
+  }
+  free(str);
+  // Truncation: 65536 wraps to 0 as unsigned short
+  str = str_format("%hu", 65536);
+  if (strcmp(str, "0") != 0) {
+    free(str);
+    return -40;
+  }
+  free(str);
+  str = str_format("%hx", 0x1234);
+  if (strcmp(str, "1234") != 0) {
+    free(str);
+    return -41;
+  }
+  free(str);
+  // Truncation: upper bits dropped
+  str = str_format("%hx", 0x12345);
+  if (strcmp(str, "2345") != 0) {
+    free(str);
+    return -42;
+  }
+  free(str);
+  // Test hh length modifier (%hhd, %hhu, %hhx, %hho)
+  str = str_format("%hhd", 127);
+  if (strcmp(str, "127") != 0) {
+    free(str);
+    return -43;
+  }
+  free(str);
+  str = str_format("%hhd", -128);
+  if (strcmp(str, "-128") != 0) {
+    free(str);
+    return -44;
+  }
+  free(str);
+  // Truncation: 128 wraps to -128 as signed char
+  str = str_format("%hhd", 128);
+  if (strcmp(str, "-128") != 0) {
+    free(str);
+    return -45;
+  }
+  free(str);
+  // Truncation: 255 is -1 as signed char
+  str = str_format("%hhd", 255);
+  if (strcmp(str, "-1") != 0) {
+    free(str);
+    return -46;
+  }
+  free(str);
+  // Truncation: 256 wraps to 0
+  str = str_format("%hhd", 256);
+  if (strcmp(str, "0") != 0) {
+    free(str);
+    return -47;
+  }
+  free(str);
+  str = str_format("%hhu", 255);
+  if (strcmp(str, "255") != 0) {
+    free(str);
+    return -48;
+  }
+  free(str);
+  // Truncation: 256 wraps to 0 as unsigned char
+  str = str_format("%hhu", 256);
+  if (strcmp(str, "0") != 0) {
+    free(str);
+    return -49;
+  }
+  free(str);
+  // -1 as unsigned char is 255
+  str = str_format("%hhu", -1);
+  if (strcmp(str, "255") != 0) {
+    free(str);
+    return -50;
+  }
+  free(str);
+  str = str_format("%hhx", 0xAB);
+  if (strcmp(str, "ab") != 0) {
+    free(str);
+    return -51;
+  }
+  free(str);
+  // Truncation: upper bits dropped
+  str = str_format("%hhx", 0x1AB);
+  if (strcmp(str, "ab") != 0) {
+    free(str);
+    return -52;
+  }
+  free(str);
+  // Test %ls (wide string, C locale)
+  str = str_format("%ls", L"hello");
+  if (strcmp(str, "hello") != 0) {
+    free(str);
+    return -53;
+  }
+  free(str);
+  // Test %ls with ASCII-only wide string
+  str = str_format("%ls", L"foo bar");
+  if (strcmp(str, "foo bar") != 0) {
+    free(str);
+    return -54;
+  }
+  free(str);
+  // Test %ls with empty wide string
+  str = str_format("%ls", L"");
+  if (strcmp(str, "") != 0) {
+    free(str);
+    return -55;
+  }
+  free(str);
+  // Test %ls NULL
+  str = str_format("%ls", (wchar_t *)NULL);
+  if (strcmp(str, "(null)") != 0) {
+    free(str);
+    return -56;
+  }
+  free(str);
+  // Test %ls embedded in a larger format string
+  str = str_format("pre-%ls-post", L"mid");
+  if (strcmp(str, "pre-mid-post") != 0) {
+    free(str);
+    return -57;
+  }
   free(str);
 
-  return res;
+  return 0;
 }
 
 int test_sscanf() {
@@ -303,7 +575,7 @@ int test_sscanf() {
   short c, d;
   float f;
   double lf;
-  char str[256], str1[4];
+  char str[256], str1[16];
   int matched = sscanf("1.23", "%d.%d", &a, &b);
   if (!(matched == 2 && a == 1 && b == 23))
     return -1;
@@ -395,6 +667,228 @@ int test_sscanf() {
   if (!(matched == 8 && strcmp(str, "\"origin\"") == 0 && a == -1 && f1 == 0 &&
         fabs(f4 + 0.7071067095) < 1e-10 && f6 == 0))
     return -30;
+  // '%g' test cases
+  matched = sscanf("123", "%g", &f);
+  if (!(matched == 1 && f == 123.0f))
+    return -31;
+  matched = sscanf("1.23", "%g", &f);
+  if (!(matched == 1 && fabs(f - 1.23f) < 1e-5f))
+    return -32;
+  matched = sscanf("1.23e-4", "%g", &f);
+  if (!(matched == 1 && fabs(f - 1.23e-4f) < 1e-8f))
+    return -33;
+  matched = sscanf("1.23E4", "%g", &f);
+  if (!(matched == 1 && fabs(f - 12300.0f) < 1e-5f))
+    return -34;
+  matched = sscanf("+1.23", "%g", &f);
+  if (!(matched == 1 && fabs(f - 1.23f) < 1e-5f))
+    return -35;
+  matched = sscanf("-1.23", "%g", &f);
+  if (!(matched == 1 && fabs(f - -1.23f) < 1e-5f))
+    return -36;
+  matched = sscanf(".5", "%g", &f);
+  if (!(matched == 1 && fabs(f - 0.5f) < 1e-5f))
+    return -37;
+  matched = sscanf("-.5", "%g", &f);
+  if (!(matched == 1 && fabs(f - -0.5f) < 1e-5f))
+    return -38;
+  matched = sscanf("1e5", "%g", &f);
+  if (!(matched == 1 && fabs(f - 100000.0f) < 1e-5f))
+    return -39;
+  matched = sscanf("1.e5", "%g", &f);
+  if (!(matched == 1 && fabs(f - 100000.0f) < 1e-5f))
+    return -40;
+  matched = sscanf("  1.23", "%g", &f);
+  if (!(matched == 1 && fabs(f - 1.23f) < 1e-5f))
+    return -41;
+  matched = sscanf("+1.23e+4", "%g", &f);
+  if (!(matched == 1 && fabs(f - 12300.0f) < 1e-5f))
+    return -42;
+  matched = sscanf("-1.23e-4", "%g", &f);
+  if (!(matched == 1 && fabs(f - -0.000123f) < 1e-8f))
+    return -43;
+  matched = sscanf("123.", "%g", &f);
+  if (!(matched == 1 && f == 123.0f))
+    return -44;
+  // max_width for %[ specifier
+  matched = sscanf("hello", "%3[a-z]", str);
+  if (!(matched == 1 && strcmp(str, "hel") == 0))
+    return -45;
+  matched = sscanf("abcXYZ", "%3[a-z]%3[A-Z]", str, str1);
+  if (!(matched == 2 && strcmp(str, "abc") == 0 && strcmp(str1, "XYZ") == 0))
+    return -46;
+  matched = sscanf("abc,def", "%3[^,],%3[^,]", str, str1);
+  if (!(matched == 2 && strcmp(str, "abc") == 0 && strcmp(str1, "def") == 0))
+    return -47;
+  matched = sscanf("abcdef", "%3[a-z]", str);
+  if (!(matched == 1 && strcmp(str, "abc") == 0))
+    return -48;
+  matched = sscanf("ab", "%5[a-z]", str);
+  if (!(matched == 1 && strcmp(str, "ab") == 0))
+    return -49;
+  // width of 1
+  matched = sscanf("abc", "%1[a-z]", str);
+  if (!(matched == 1 && strcmp(str, "a") == 0))
+    return -50;
+  // negated set stopped by width, not by excluded char
+  matched = sscanf("abcde", "%3[^X]", str);
+  if (!(matched == 1 && strcmp(str, "abc") == 0))
+    return -51;
+  // negated set stopped by excluded char before width is reached
+  matched = sscanf("abXde", "%5[^X]", str);
+  if (!(matched == 1 && strcmp(str, "ab") == 0))
+    return -52;
+  // input length exactly equals width
+  matched = sscanf("abc", "%3[a-z]", str);
+  if (!(matched == 1 && strcmp(str, "abc") == 0))
+    return -53;
+  // width limits %[ leaving remainder for next conversion
+  matched = sscanf("abcdef", "%3[a-z]%s", str, str1);
+  if (!(matched == 2 && strcmp(str, "abc") == 0 && strcmp(str1, "def") == 0))
+    return -54;
+  // first char not in set with width: no match
+  matched = sscanf("123", "%3[a-z]", str);
+  if (matched != 0)
+    return -55;
+  // %hu (unsigned short) edge cases
+  unsigned short us, us2;
+  matched = sscanf("0", "%hu", &us);
+  if (!(matched == 1 && us == 0))
+    return -56;
+  matched = sscanf("65535", "%hu", &us);
+  if (!(matched == 1 && us == 65535))
+    return -57;
+  // Truncation: 65536 wraps to 0 as unsigned short
+  matched = sscanf("65536", "%hu", &us);
+  if (!(matched == 1 && us == 0))
+    return -58;
+  // Truncation: 65537 wraps to 1 as unsigned short
+  matched = sscanf("65537", "%hu", &us);
+  if (!(matched == 1 && us == 1))
+    return -59;
+  matched = sscanf("100 200", "%hu %hu", &us, &us2);
+  if (!(matched == 2 && us == 100 && us2 == 200))
+    return -60;
+  // width limits the conversion
+  matched = sscanf("12345", "%3hu", &us);
+  if (!(matched == 1 && us == 123))
+    return -61;
+  // %hhu (unsigned char) edge cases
+  unsigned char uc, uc2;
+  matched = sscanf("0", "%hhu", &uc);
+  if (!(matched == 1 && uc == 0))
+    return -62;
+  matched = sscanf("255", "%hhu", &uc);
+  if (!(matched == 1 && uc == 255))
+    return -63;
+  // Truncation: 256 wraps to 0 as unsigned char
+  matched = sscanf("256", "%hhu", &uc);
+  if (!(matched == 1 && uc == 0))
+    return -64;
+  // Truncation: 257 wraps to 1 as unsigned char
+  matched = sscanf("257", "%hhu", &uc);
+  if (!(matched == 1 && uc == 1))
+    return -65;
+  matched = sscanf("10 20", "%hhu %hhu", &uc, &uc2);
+  if (!(matched == 2 && uc == 10 && uc2 == 20))
+    return -66;
+  // width limits the conversion
+  matched = sscanf("12345", "%2hhu", &uc);
+  if (!(matched == 1 && uc == 12))
+    return -67;
+  // Overflow above UINT_MAX: per C semantics, the input is parsed as
+  // a wide unsigned and only the low bits are stored, so 0x100000000
+  // gives 0 in both u16 and u8.
+  matched = sscanf("4294967296", "%hu", &us);
+  if (!(matched == 1 && us == 0))
+    return -68;
+  matched = sscanf("4294967296", "%hhu", &uc);
+  if (!(matched == 1 && uc == 0))
+    return -69;
+  // %hx (unsigned short, hex) truncation
+  matched = sscanf("ffff", "%hx", &us);
+  if (!(matched == 1 && us == 0xFFFF))
+    return -70;
+  // Truncation: 0x10000 wraps to 0 as unsigned short
+  matched = sscanf("10000", "%hx", &us);
+  if (!(matched == 1 && us == 0))
+    return -71;
+  // Truncation: 0x10001 wraps to 1 as unsigned short
+  matched = sscanf("10001", "%hx", &us);
+  if (!(matched == 1 && us == 1))
+    return -72;
+  // %hhx (unsigned char, hex) truncation
+  matched = sscanf("ff", "%hhx", &uc);
+  if (!(matched == 1 && uc == 0xFF))
+    return -73;
+  // Truncation: 0x100 wraps to 0 as unsigned char
+  matched = sscanf("100", "%hhx", &uc);
+  if (!(matched == 1 && uc == 0))
+    return -74;
+  // Truncation: 0x101 wraps to 1 as unsigned char
+  matched = sscanf("101", "%hhx", &uc);
+  if (!(matched == 1 && uc == 1))
+    return -75;
+  // %hd (signed short) edge cases
+  short ss, ss2;
+  matched = sscanf("0", "%hd", &ss);
+  if (!(matched == 1 && ss == 0))
+    return -76;
+  matched = sscanf("32767", "%hd", &ss);
+  if (!(matched == 1 && ss == 32767))
+    return -77;
+  matched = sscanf("-32768", "%hd", &ss);
+  if (!(matched == 1 && ss == -32768))
+    return -78;
+  // Truncation: 32768 wraps to -32768 as signed short
+  matched = sscanf("32768", "%hd", &ss);
+  if (!(matched == 1 && ss == -32768))
+    return -79;
+  // Truncation: -32769 wraps to 32767 as signed short
+  matched = sscanf("-32769", "%hd", &ss);
+  if (!(matched == 1 && ss == 32767))
+    return -80;
+  matched = sscanf("-100 200", "%hd %hd", &ss, &ss2);
+  if (!(matched == 2 && ss == -100 && ss2 == 200))
+    return -81;
+  // width limits the conversion
+  matched = sscanf("12345", "%3hd", &ss);
+  if (!(matched == 1 && ss == 123))
+    return -82;
+  // width counts the sign character
+  matched = sscanf("-12345", "%4hd", &ss);
+  if (!(matched == 1 && ss == -123))
+    return -83;
+  // %hhd (signed char) edge cases
+  signed char sc, sc2;
+  matched = sscanf("0", "%hhd", &sc);
+  if (!(matched == 1 && sc == 0))
+    return -84;
+  matched = sscanf("127", "%hhd", &sc);
+  if (!(matched == 1 && sc == 127))
+    return -85;
+  matched = sscanf("-128", "%hhd", &sc);
+  if (!(matched == 1 && sc == -128))
+    return -86;
+  // Truncation: 128 wraps to -128 as signed char
+  matched = sscanf("128", "%hhd", &sc);
+  if (!(matched == 1 && sc == -128))
+    return -87;
+  // Truncation: -129 wraps to 127 as signed char
+  matched = sscanf("-129", "%hhd", &sc);
+  if (!(matched == 1 && sc == 127))
+    return -88;
+  matched = sscanf("-10 20", "%hhd %hhd", &sc, &sc2);
+  if (!(matched == 2 && sc == -10 && sc2 == 20))
+    return -89;
+  // width limits the conversion
+  matched = sscanf("12345", "%2hhd", &sc);
+  if (!(matched == 1 && sc == 12))
+    return -90;
+  // width counts the sign character
+  matched = sscanf("-12345", "%3hhd", &sc);
+  if (!(matched == 1 && sc == -12))
+    return -91;
   return 0;
 }
 
@@ -416,6 +910,21 @@ int test_realloc() {
   int res = memcmp(ptr, "abcd", 4);
   free(ptr);
   return res == 0 ? 0 : -1;
+}
+
+int test_valloc() {
+  void *ptr = valloc(1);
+  // Assume at least 4Kb page size alignment
+  if (((uintptr_t)ptr & 0xFFF) != 0) {
+    return -1;
+  }
+  if (ptr == NULL)
+    return -2;
+  ptr = realloc(ptr, 16);
+  if (ptr == NULL)
+    return -3;
+  free(ptr);
+  return 0;
 }
 
 int test_atof() {
@@ -834,6 +1343,75 @@ int test_mtsem() {
   return 0;
 }
 
+sem_t *thread_suspend_semaphore;
+sem_t *thread_suspend_ready;
+int thread_suspend_flag = 0;
+
+void *thread_suspend_thread_func(void *arg) {
+  sem_post(thread_suspend_ready);
+  sem_wait(thread_suspend_semaphore);
+  thread_suspend_flag = 1;
+  return NULL;
+}
+
+int test_thread_suspend_resume() {
+  thread_suspend_flag = 0;
+
+  thread_suspend_semaphore = sem_open("thread_suspend_test", O_CREAT, 0644, 0);
+  if (thread_suspend_semaphore == SEM_FAILED) {
+    printf("Error opening semaphore\n");
+    return -1;
+  }
+  thread_suspend_ready = sem_open("thread_suspend_ready", O_CREAT, 0644, 0);
+  if (thread_suspend_ready == SEM_FAILED) {
+    sem_close(thread_suspend_semaphore);
+    sem_unlink("thread_suspend_test");
+    printf("Error opening ready semaphore\n");
+    return -2;
+  }
+
+  pthread_t thr;
+  if (pthread_create(&thr, NULL, thread_suspend_thread_func, NULL) != 0)
+    return -3;
+
+  // Wait until the worker has reached sem_wait().
+  sem_wait(thread_suspend_ready);
+
+  mach_port_t thr_port = pthread_mach_thread_np(thr);
+  if (thread_suspend(thr_port) != KERN_SUCCESS)
+    return -4;
+
+  // Check that run_state reports TH_STATE_WAITING while suspended.
+  thread_basic_info_data_t thr_info;
+  mach_msg_type_number_t info_count = THREAD_BASIC_INFO_COUNT;
+  if (thread_info(thr_port, THREAD_BASIC_INFO, (thread_info_t)&thr_info,
+                  &info_count) != KERN_SUCCESS)
+    return -5;
+  if (thr_info.run_state != TH_STATE_WAITING)
+    return -6;
+
+  // Post the semaphore while the thread is suspended - it should not wake up.
+  sem_post(thread_suspend_semaphore);
+  sched_yield();
+
+  if (thread_suspend_flag != 0)
+    return -7;
+
+  if (thread_resume(thr_port) != KERN_SUCCESS)
+    return -8;
+
+  pthread_join(thr, NULL);
+
+  if (thread_suspend_flag != 1)
+    return -9;
+
+  sem_close(thread_suspend_semaphore);
+  sem_unlink("thread_suspend_test");
+  sem_close(thread_suspend_ready);
+  sem_unlink("thread_suspend_ready");
+  return 0;
+}
+
 int done = 0, done2 = 0;
 pthread_mutex_t m;
 pthread_cond_t c, c2;
@@ -852,7 +1430,7 @@ void *child(void *arg) {
 
 void *child2(void *arg) {
   pthread_mutex_lock(&m);
-  while (done == 0) {
+  while (done2 == 0) {
     pthread_cond_wait(&c2, &m);
   }
   pthread_mutex_unlock(&m);
@@ -876,23 +1454,371 @@ int test_cond_var() {
   pthread_create(&p, NULL, child, NULL);
   thr_join();
 
+  if (done != 1)
+    return -1;
+
   // Should wake up all threads
+  int result;
   pthread_t p1, p2, p3;
-  pthread_cond_init(&c2, NULL);
-  pthread_create(&p1, NULL, child, NULL);
-  pthread_create(&p2, NULL, child, NULL);
-  pthread_create(&p3, NULL, child, NULL);
+  result = pthread_cond_init(&c2, NULL);
+  if (result != 0)
+    return -2;
+  pthread_create(&p1, NULL, child2, NULL);
+  pthread_create(&p2, NULL, child2, NULL);
+  pthread_create(&p3, NULL, child2, NULL);
   usleep(100);
-  pthread_mutex_lock(&m);
-  done = 1;
-  pthread_cond_broadcast(&c);
-  pthread_mutex_unlock(&m);
+  result = pthread_mutex_lock(&m);
+  if (result != 0)
+    return -3;
+  done2 = 1;
+  result = pthread_cond_broadcast(&c2);
+  if (result != 0)
+    return -4;
+  result = pthread_mutex_unlock(&m);
+  if (result != 0)
+    return -5;
   pthread_join(p1, NULL);
   pthread_join(p2, NULL);
   pthread_join(p3, NULL);
 
-  return done == 1 ? 0 : -1;
+  return 0;
 }
+
+pthread_mutex_t m_static = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t c_static = PTHREAD_COND_INITIALIZER,
+               c2_static = PTHREAD_COND_INITIALIZER;
+
+void thr_exit_static() {
+  pthread_mutex_lock(&m_static);
+  done = 1;
+  pthread_cond_signal(&c_static);
+  pthread_mutex_unlock(&m_static);
+}
+
+void *child_static(void *arg) {
+  thr_exit_static();
+  return NULL;
+}
+
+void *child2_static(void *arg) {
+  pthread_mutex_lock(&m_static);
+  while (done2 == 0) {
+    pthread_cond_wait(&c2_static, &m_static);
+  }
+  pthread_mutex_unlock(&m_static);
+  return NULL;
+}
+
+void thr_join_static() {
+  pthread_mutex_lock(&m_static);
+  while (done == 0) {
+    pthread_cond_wait(&c_static, &m_static);
+  }
+  pthread_mutex_unlock(&m_static);
+}
+
+int test_cond_var_static() {
+  pthread_t p;
+  done = 0;
+  done2 = 0;
+
+  // We test that statically allocated cond vars and mutexes work
+  // by using them without calling pthread_mutex_init and pthread_cond_init
+
+  pthread_create(&p, NULL, child_static, NULL);
+  thr_join_static();
+
+  if (done != 1)
+    return -1;
+
+  // Should wake up all threads
+  int result;
+  pthread_t p1, p2, p3;
+  pthread_create(&p1, NULL, child2_static, NULL);
+  pthread_create(&p2, NULL, child2_static, NULL);
+  pthread_create(&p3, NULL, child2_static, NULL);
+  usleep(100);
+  result = pthread_mutex_lock(&m_static);
+  if (result != 0)
+    return -2;
+  done2 = 1;
+  result = pthread_cond_broadcast(&c2_static);
+  if (result != 0)
+    return -3;
+  result = pthread_mutex_unlock(&m_static);
+  if (result != 0)
+    return -4;
+  pthread_join(p1, NULL);
+  pthread_join(p2, NULL);
+  pthread_join(p3, NULL);
+
+  return 0;
+}
+
+// === pthread_cond_timedwait tests ===
+
+struct timedwait_signaler_args {
+  pthread_mutex_t *mu;
+  pthread_cond_t *cv;
+};
+
+void *timedwait_signaler(void *arg) {
+  struct timedwait_signaler_args *a = arg;
+  usleep(20000); // 20ms - well before the 500ms deadline
+  pthread_mutex_lock(a->mu);
+  pthread_cond_signal(a->cv);
+  pthread_mutex_unlock(a->mu);
+  return NULL;
+}
+
+// Test : signal arrives before deadline - should return 0, not ETIMEDOUT
+int test_cond_timedwait_signaled_before_timeout() {
+  pthread_mutex_t mu;
+  pthread_cond_t cv;
+  if (pthread_mutex_init(&mu, NULL) != 0)
+    return -1;
+  if (pthread_cond_init(&cv, NULL) != 0)
+    return -2;
+
+  struct timedwait_signaler_args args = {&mu, &cv};
+  pthread_t p;
+  if (pthread_create(&p, NULL, timedwait_signaler, &args) != 0)
+    return -3;
+
+  struct timeval tv;
+  gettimeofday(&tv, NULL);
+  // Generous 500ms deadline
+  struct timespec ts = {.tv_sec = tv.tv_sec,
+                        .tv_nsec = tv.tv_usec * 1000 + 500000000};
+  if (ts.tv_nsec >= 1000000000) {
+    ts.tv_sec += 1;
+    ts.tv_nsec -= 1000000000;
+  }
+
+  pthread_mutex_lock(&mu);
+  int result = pthread_cond_timedwait(&cv, &mu, &ts);
+  pthread_mutex_unlock(&mu);
+
+  pthread_join(p, NULL);
+  pthread_cond_destroy(&cv);
+  pthread_mutex_destroy(&mu);
+
+  if (result != 0)
+    return -4;
+  return 0;
+}
+
+// Test : deadline already in the past - should return ETIMEDOUT immediately
+int test_cond_timedwait_past_deadline() {
+  pthread_mutex_t mu;
+  pthread_cond_t cv;
+  if (pthread_mutex_init(&mu, NULL) != 0)
+    return -1;
+  if (pthread_cond_init(&cv, NULL) != 0)
+    return -2;
+
+  // Use a timestamp far in the past
+  struct timespec ts = {.tv_sec = 1, .tv_nsec = 0};
+
+  pthread_mutex_lock(&mu);
+  int result = pthread_cond_timedwait(&cv, &mu, &ts);
+  pthread_mutex_unlock(&mu);
+
+  pthread_cond_destroy(&cv);
+  pthread_mutex_destroy(&mu);
+
+  if (result != ETIMEDOUT)
+    return -3;
+  return 0;
+}
+
+struct timedwait_broadcast_args {
+  pthread_mutex_t *mu;
+  pthread_cond_t *cv;
+  int ready;
+};
+
+void *timedwait_broadcast_waiter(void *arg) {
+  struct timedwait_broadcast_args *a = arg;
+  struct timeval tv;
+  gettimeofday(&tv, NULL);
+  struct timespec ts = {.tv_sec = tv.tv_sec,
+                        .tv_nsec = tv.tv_usec * 1000 + 500000000};
+  if (ts.tv_nsec >= 1000000000) {
+    ts.tv_sec += 1;
+    ts.tv_nsec -= 1000000000;
+  }
+  pthread_mutex_lock(a->mu);
+  while (a->ready == 0)
+    pthread_cond_timedwait(a->cv, a->mu, &ts);
+  pthread_mutex_unlock(a->mu);
+  return NULL;
+}
+
+// Test: broadcast wakes all timedwait threads
+int test_cond_timedwait_broadcast() {
+  pthread_mutex_t mu;
+  pthread_cond_t cv;
+  if (pthread_mutex_init(&mu, NULL) != 0)
+    return -1;
+  if (pthread_cond_init(&cv, NULL) != 0)
+    return -2;
+
+  struct timedwait_broadcast_args args = {&mu, &cv, 0};
+  pthread_t p1, p2, p3;
+  if (pthread_create(&p1, NULL, timedwait_broadcast_waiter, &args) != 0)
+    return -3;
+  if (pthread_create(&p2, NULL, timedwait_broadcast_waiter, &args) != 0)
+    return -4;
+  if (pthread_create(&p3, NULL, timedwait_broadcast_waiter, &args) != 0)
+    return -5;
+
+  usleep(50000); // let all three threads reach their waits
+  pthread_mutex_lock(&mu);
+  args.ready = 1;
+  int result = pthread_cond_broadcast(&cv);
+  pthread_mutex_unlock(&mu);
+
+  if (result != 0)
+    return -6;
+
+  pthread_join(p1, NULL);
+  pthread_join(p2, NULL);
+  pthread_join(p3, NULL);
+
+  pthread_cond_destroy(&cv);
+  pthread_mutex_destroy(&mu);
+  return 0;
+}
+
+// Test: timed-out state on a cond must not persist across calls. After one
+// thread times out, a later signaled timedwait on the same cond must
+// return 0, not ETIMEDOUT.
+int test_cond_timedwait_flag_not_sticky() {
+  pthread_mutex_t mu;
+  pthread_cond_t cv;
+  if (pthread_mutex_init(&mu, NULL) != 0)
+    return -1;
+  if (pthread_cond_init(&cv, NULL) != 0)
+    return -2;
+
+  // First call: force an immediate timeout.
+  struct timespec past = {.tv_sec = 1, .tv_nsec = 0};
+  pthread_mutex_lock(&mu);
+  int first = pthread_cond_timedwait(&cv, &mu, &past);
+  pthread_mutex_unlock(&mu);
+  if (first != ETIMEDOUT)
+    return -3;
+
+  // Second call on the same cond: should be signaled and return 0.
+  struct timedwait_signaler_args args = {&mu, &cv};
+  pthread_t p;
+  if (pthread_create(&p, NULL, timedwait_signaler, &args) != 0)
+    return -4;
+
+  struct timeval tv;
+  gettimeofday(&tv, NULL);
+  struct timespec ts = {.tv_sec = tv.tv_sec,
+                        .tv_nsec = tv.tv_usec * 1000 + 500000000};
+  if (ts.tv_nsec >= 1000000000) {
+    ts.tv_sec += 1;
+    ts.tv_nsec -= 1000000000;
+  }
+
+  pthread_mutex_lock(&mu);
+  int second = pthread_cond_timedwait(&cv, &mu, &ts);
+  pthread_mutex_unlock(&mu);
+
+  pthread_join(p, NULL);
+  pthread_cond_destroy(&cv);
+  pthread_mutex_destroy(&mu);
+
+  if (second != 0)
+    return -5;
+  return 0;
+}
+
+struct timedwait_sibling_args {
+  pthread_mutex_t *mu;
+  pthread_cond_t *cv;
+  long sec_offset;
+  long ns_offset; // must be < 1000000000
+  int result;
+};
+
+void *timedwait_sibling_sleeper(void *arg) {
+  (void)arg;
+  usleep(200000);
+  return NULL;
+}
+
+void *timedwait_sibling_waiter(void *arg) {
+  struct timedwait_sibling_args *a = arg;
+  struct timeval tv;
+  gettimeofday(&tv, NULL);
+  struct timespec ts = {.tv_sec = tv.tv_sec + a->sec_offset,
+                        .tv_nsec = tv.tv_usec * 1000 + a->ns_offset};
+  if (ts.tv_nsec >= 1000000000) {
+    ts.tv_sec += 1;
+    ts.tv_nsec -= 1000000000;
+  }
+  pthread_mutex_lock(a->mu);
+  a->result = pthread_cond_timedwait(a->cv, a->mu, &ts);
+  pthread_mutex_unlock(a->mu);
+  return NULL;
+}
+
+// Test: when one waiter times out, other waiters on the same cond must
+// still be reachable by a later signal - i.e. a timeout on one thread
+// must not drop sibling waiters from the queue.
+int test_cond_timedwait_sibling_not_dropped() {
+  pthread_mutex_t mu;
+  pthread_cond_t cv;
+  if (pthread_mutex_init(&mu, NULL) != 0)
+    return -1;
+  if (pthread_cond_init(&cv, NULL) != 0)
+    return -2;
+
+  struct timedwait_sibling_args long_args = {&mu, &cv, 3, 0, -999};
+  struct timedwait_sibling_args short_args = {&mu, &cv, 0, 100000000, -999};
+  pthread_t p_long, p_short, p_sleeper;
+  if (pthread_create(&p_long, NULL, timedwait_sibling_waiter, &long_args) != 0)
+    return -3;
+  usleep(20000); // let the long-deadline waiter enter the wait first
+  if (pthread_create(&p_short, NULL, timedwait_sibling_waiter, &short_args) !=
+      0)
+    return -4;
+  // A thread unrelated to the cond var - keeps the scheduler ticking while
+  // the waiters are blocked on Condition, and verifies that sibling fallout
+  // from the timeout doesn't leak to unrelated threads.
+  if (pthread_create(&p_sleeper, NULL, timedwait_sibling_sleeper, NULL) != 0)
+    return -8;
+
+  // Join the short waiter first. This forces the scheduler to actually
+  // process short's timeout before we signal, so the bug path (which
+  // clears the entire waiting queue on timeout) has a chance to fire.
+  pthread_join(p_short, NULL);
+  if (short_args.result != ETIMEDOUT)
+    return -5;
+
+  // Now signal. The long waiter must still be reachable.
+  pthread_mutex_lock(&mu);
+  int res = pthread_cond_signal(&cv);
+  pthread_mutex_unlock(&mu);
+  if (res != 0)
+    return -6;
+
+  pthread_join(p_long, NULL);
+  pthread_join(p_sleeper, NULL);
+  pthread_cond_destroy(&cv);
+  pthread_mutex_destroy(&mu);
+
+  if (long_args.result != 0)
+    return -7;
+  return 0;
+}
+
+// === end pthread_cond_timedwait tests ===
 
 pthread_mutex_t normal_mutex;
 int normal_unlock_res = -1;
@@ -927,6 +1853,78 @@ int test_pthread_mutex_normal() {
 
   if (normal_unlock_res != 0)
     return -9;
+
+  return 0;
+}
+
+pthread_mutex_t recursive_mutex;
+int recursive_trylock_res = -1;
+
+void *recursive_trylocker(void *arg) {
+  recursive_trylock_res = pthread_mutex_trylock(&recursive_mutex);
+  return NULL;
+}
+
+int test_pthread_mutex_recursive_trylock() {
+  pthread_mutexattr_t attr;
+  if (pthread_mutexattr_init(&attr) != 0)
+    return -1;
+  if (pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE) != 0)
+    return -2;
+  if (pthread_mutex_init(&recursive_mutex, &attr) != 0)
+    return -3;
+  if (pthread_mutexattr_destroy(&attr) != 0)
+    return -4;
+
+  if (pthread_mutex_trylock(&recursive_mutex) != 0)
+    return -5;
+
+  if (pthread_mutex_trylock(&recursive_mutex) != 0)
+    return -6;
+
+  pthread_t p;
+  if (pthread_create(&p, NULL, recursive_trylocker, NULL) != 0)
+    return -7;
+  if (pthread_join(p, NULL) != 0)
+    return -8;
+
+  if (recursive_trylock_res != EBUSY)
+    return -9;
+
+  if (pthread_mutex_unlock(&recursive_mutex) != 0)
+    return -10;
+  if (pthread_mutex_unlock(&recursive_mutex) != 0)
+    return -11;
+
+  if (pthread_mutex_destroy(&recursive_mutex) != 0)
+    return -12;
+
+  return 0;
+}
+
+int second_thread_thread_size_res = -1;
+
+void *second_thread(void *arg) {
+  size_t stack_size = pthread_get_stacksize_np(pthread_self());
+  if (stack_size == 512 * 1024) {
+    second_thread_thread_size_res = 0;
+  }
+  return NULL;
+}
+
+int test_pthread_get_stacksize_np() {
+  size_t stack_size = pthread_get_stacksize_np(pthread_self());
+  if (stack_size != 1024 * 1024 - getpagesize()) {
+    return -1;
+  }
+
+  pthread_t p;
+  if (pthread_create(&p, NULL, second_thread, NULL) != 0)
+    return -2;
+  if (pthread_join(p, NULL) != 0)
+    return -3;
+  if (second_thread_thread_size_res != 0)
+    return -4;
 
   return 0;
 }
@@ -1429,6 +2427,289 @@ int test_fscanf_new() {
   if (!(matched == 8 && strcmp(str, "\"origin\"") == 0 && a == -1 &&
         f1 == 0.0f && fabs(f4 + 0.7071067095f) < 1e-10f && f6 == 0.0f))
     return -30;
+  SKIP_LINE(file);
+
+  // '%g' test cases
+  matched = fscanf(file, "%g", &f);
+  if (!(matched == 1 && f == 123.0f))
+    return -31;
+  SKIP_LINE(file);
+
+  matched = fscanf(file, "%g", &f);
+  if (!(matched == 1 && fabs(f - 1.23f) < 1e-5f))
+    return -32;
+  SKIP_LINE(file);
+
+  matched = fscanf(file, "%g", &f);
+  if (!(matched == 1 && fabs(f - 1.23e-4f) < 1e-8f))
+    return -33;
+  SKIP_LINE(file);
+
+  matched = fscanf(file, "%g", &f);
+  if (!(matched == 1 && fabs(f - 12300.0f) < 1e-5f))
+    return -34;
+  SKIP_LINE(file);
+
+  matched = fscanf(file, "%g", &f);
+  if (!(matched == 1 && fabs(f - 1.23f) < 1e-5f))
+    return -35;
+  SKIP_LINE(file);
+
+  matched = fscanf(file, "%g", &f);
+  if (!(matched == 1 && fabs(f - -1.23f) < 1e-5f))
+    return -36;
+  SKIP_LINE(file);
+
+  matched = fscanf(file, "%g", &f);
+  if (!(matched == 1 && fabs(f - 0.5f) < 1e-5f))
+    return -37;
+  SKIP_LINE(file);
+
+  matched = fscanf(file, "%g", &f);
+  if (!(matched == 1 && fabs(f - -0.5f) < 1e-5f))
+    return -38;
+  SKIP_LINE(file);
+
+  matched = fscanf(file, "%g", &f);
+  if (!(matched == 1 && fabs(f - 100000.0f) < 1e-5f))
+    return -39;
+  SKIP_LINE(file);
+
+  matched = fscanf(file, "%g", &f);
+  if (!(matched == 1 && fabs(f - 100000.0f) < 1e-5f))
+    return -40;
+  SKIP_LINE(file);
+
+  matched = fscanf(file, "%g", &f);
+  if (!(matched == 1 && fabs(f - 1.23f) < 1e-5f))
+    return -41;
+  SKIP_LINE(file);
+
+  matched = fscanf(file, "%g", &f);
+  if (!(matched == 1 && fabs(f - 12300.0f) < 1e-5f))
+    return -42;
+  SKIP_LINE(file);
+
+  matched = fscanf(file, "%g", &f);
+  if (!(matched == 1 && fabs(f - -0.000123f) < 1e-8f))
+    return -43;
+  SKIP_LINE(file);
+
+  matched = fscanf(file, "%g", &f);
+  if (!(matched == 1 && f == 123.0f))
+    return -44;
+  SKIP_LINE(file);
+
+  // %hu (unsigned short) edge cases
+  unsigned short us, us2;
+  matched = fscanf(file, "%hu", &us);
+  if (!(matched == 1 && us == 0))
+    return -45;
+  SKIP_LINE(file);
+
+  matched = fscanf(file, "%hu", &us);
+  if (!(matched == 1 && us == 65535))
+    return -46;
+  SKIP_LINE(file);
+
+  // Truncation: 65536 wraps to 0 as unsigned short
+  matched = fscanf(file, "%hu", &us);
+  if (!(matched == 1 && us == 0))
+    return -47;
+  SKIP_LINE(file);
+
+  // Truncation: 65537 wraps to 1 as unsigned short
+  matched = fscanf(file, "%hu", &us);
+  if (!(matched == 1 && us == 1))
+    return -48;
+  SKIP_LINE(file);
+
+  matched = fscanf(file, "%hu %hu", &us, &us2);
+  if (!(matched == 2 && us == 100 && us2 == 200))
+    return -49;
+  SKIP_LINE(file);
+
+  // width limits the conversion
+  matched = fscanf(file, "%3hu", &us);
+  if (!(matched == 1 && us == 123))
+    return -50;
+  SKIP_LINE(file);
+
+  // %hhu (unsigned char) edge cases
+  unsigned char uc, uc2;
+  matched = fscanf(file, "%hhu", &uc);
+  if (!(matched == 1 && uc == 0))
+    return -51;
+  SKIP_LINE(file);
+
+  matched = fscanf(file, "%hhu", &uc);
+  if (!(matched == 1 && uc == 255))
+    return -52;
+  SKIP_LINE(file);
+
+  // Truncation: 256 wraps to 0 as unsigned char
+  matched = fscanf(file, "%hhu", &uc);
+  if (!(matched == 1 && uc == 0))
+    return -53;
+  SKIP_LINE(file);
+
+  // Truncation: 257 wraps to 1 as unsigned char
+  matched = fscanf(file, "%hhu", &uc);
+  if (!(matched == 1 && uc == 1))
+    return -54;
+  SKIP_LINE(file);
+
+  matched = fscanf(file, "%hhu %hhu", &uc, &uc2);
+  if (!(matched == 2 && uc == 10 && uc2 == 20))
+    return -55;
+  SKIP_LINE(file);
+
+  // width limits the conversion
+  matched = fscanf(file, "%2hhu", &uc);
+  if (!(matched == 1 && uc == 12))
+    return -56;
+  SKIP_LINE(file);
+
+  // Overflow above UINT_MAX: per C semantics, the input is parsed as
+  // a wide unsigned and only the low bits are stored, so 0x100000000
+  // gives 0 in both u16 and u8.
+  matched = fscanf(file, "%hu", &us);
+  if (!(matched == 1 && us == 0))
+    return -57;
+  SKIP_LINE(file);
+
+  matched = fscanf(file, "%hhu", &uc);
+  if (!(matched == 1 && uc == 0))
+    return -58;
+  SKIP_LINE(file);
+
+  // %hx (unsigned short, hex) truncation
+  matched = fscanf(file, "%hx", &us);
+  if (!(matched == 1 && us == 0xFFFF))
+    return -59;
+  SKIP_LINE(file);
+
+  // Truncation: 0x10000 wraps to 0 as unsigned short
+  matched = fscanf(file, "%hx", &us);
+  if (!(matched == 1 && us == 0))
+    return -60;
+  SKIP_LINE(file);
+
+  // Truncation: 0x10001 wraps to 1 as unsigned short
+  matched = fscanf(file, "%hx", &us);
+  if (!(matched == 1 && us == 1))
+    return -61;
+  SKIP_LINE(file);
+
+  // %hhx (unsigned char, hex) truncation
+  matched = fscanf(file, "%hhx", &uc);
+  if (!(matched == 1 && uc == 0xFF))
+    return -62;
+  SKIP_LINE(file);
+
+  // Truncation: 0x100 wraps to 0 as unsigned char
+  matched = fscanf(file, "%hhx", &uc);
+  if (!(matched == 1 && uc == 0))
+    return -63;
+  SKIP_LINE(file);
+
+  // Truncation: 0x101 wraps to 1 as unsigned char
+  matched = fscanf(file, "%hhx", &uc);
+  if (!(matched == 1 && uc == 1))
+    return -64;
+  SKIP_LINE(file);
+
+  // %hd (signed short) edge cases
+  short ss, ss2;
+  matched = fscanf(file, "%hd", &ss);
+  if (!(matched == 1 && ss == 0))
+    return -65;
+  SKIP_LINE(file);
+
+  matched = fscanf(file, "%hd", &ss);
+  if (!(matched == 1 && ss == 32767))
+    return -66;
+  SKIP_LINE(file);
+
+  matched = fscanf(file, "%hd", &ss);
+  if (!(matched == 1 && ss == -32768))
+    return -67;
+  SKIP_LINE(file);
+
+  // Truncation: 32768 wraps to -32768 as signed short
+  matched = fscanf(file, "%hd", &ss);
+  if (!(matched == 1 && ss == -32768))
+    return -68;
+  SKIP_LINE(file);
+
+  // Truncation: -32769 wraps to 32767 as signed short
+  matched = fscanf(file, "%hd", &ss);
+  if (!(matched == 1 && ss == 32767))
+    return -69;
+  SKIP_LINE(file);
+
+  matched = fscanf(file, "%hd %hd", &ss, &ss2);
+  if (!(matched == 2 && ss == -100 && ss2 == 200))
+    return -70;
+  SKIP_LINE(file);
+
+  // width limits the conversion
+  matched = fscanf(file, "%3hd", &ss);
+  if (!(matched == 1 && ss == 123))
+    return -71;
+  SKIP_LINE(file);
+
+  // width counts the sign character
+  matched = fscanf(file, "%4hd", &ss);
+  if (!(matched == 1 && ss == -123))
+    return -72;
+  SKIP_LINE(file);
+
+  // %hhd (signed char) edge cases
+  signed char sc, sc2;
+  matched = fscanf(file, "%hhd", &sc);
+  if (!(matched == 1 && sc == 0))
+    return -73;
+  SKIP_LINE(file);
+
+  matched = fscanf(file, "%hhd", &sc);
+  if (!(matched == 1 && sc == 127))
+    return -74;
+  SKIP_LINE(file);
+
+  matched = fscanf(file, "%hhd", &sc);
+  if (!(matched == 1 && sc == -128))
+    return -75;
+  SKIP_LINE(file);
+
+  // Truncation: 128 wraps to -128 as signed char
+  matched = fscanf(file, "%hhd", &sc);
+  if (!(matched == 1 && sc == -128))
+    return -76;
+  SKIP_LINE(file);
+
+  // Truncation: -129 wraps to 127 as signed char
+  matched = fscanf(file, "%hhd", &sc);
+  if (!(matched == 1 && sc == 127))
+    return -77;
+  SKIP_LINE(file);
+
+  matched = fscanf(file, "%hhd %hhd", &sc, &sc2);
+  if (!(matched == 2 && sc == -10 && sc2 == 20))
+    return -78;
+  SKIP_LINE(file);
+
+  // width limits the conversion
+  matched = fscanf(file, "%2hhd", &sc);
+  if (!(matched == 1 && sc == 12))
+    return -79;
+  SKIP_LINE(file);
+
+  // width counts the sign character
+  matched = fscanf(file, "%3hhd", &sc);
+  if (!(matched == 1 && sc == -12))
+    return -80;
+  SKIP_LINE(file);
 
   fclose(file);
   return 0;
@@ -1574,6 +2855,272 @@ int test_fwrite() {
   }
   return 0;
 }
+
+// === flockfile / funlockfile tests ===
+
+int test_flockfile_basic() {
+  FILE *file = fopen("TestApp", "r");
+  if (file == NULL)
+    return -1;
+
+  flockfile(file);
+  funlockfile(file);
+
+  fclose(file);
+  return 0;
+}
+
+// flockfile is required to be recursive: the same thread may acquire the
+// lock multiple times and must release it the same number of times.
+int test_flockfile_recursive() {
+  FILE *file = fopen("TestApp", "r");
+  if (file == NULL)
+    return -1;
+
+  flockfile(file);
+  flockfile(file);
+  flockfile(file);
+  funlockfile(file);
+  funlockfile(file);
+  funlockfile(file);
+
+  // After unlocking the matching number of times, the stream must be
+  // available again, so ftrylockfile must succeed.
+  if (ftrylockfile(file) != 0) {
+    fclose(file);
+    return -2;
+  }
+  funlockfile(file);
+
+  fclose(file);
+  return 0;
+}
+
+int test_ftrylockfile_unlocked() {
+  FILE *file = fopen("TestApp", "r");
+  if (file == NULL)
+    return -1;
+
+  if (ftrylockfile(file) != 0) {
+    fclose(file);
+    return -2;
+  }
+  funlockfile(file);
+
+  fclose(file);
+  return 0;
+}
+
+struct ftrylockfile_args {
+  FILE *file;
+  int result;
+};
+
+void *ftrylockfile_other_thread(void *arg) {
+  struct ftrylockfile_args *a = arg;
+  a->result = ftrylockfile(a->file);
+  // If we somehow obtained the lock (we shouldn't), release it so the
+  // main thread is not left blocked.
+  if (a->result == 0)
+    funlockfile(a->file);
+  return NULL;
+}
+
+// When a stream is locked by one thread, ftrylockfile from another thread
+// must fail (return non-zero).
+int test_ftrylockfile_locked_by_other_thread() {
+  FILE *file = fopen("TestApp", "r");
+  if (file == NULL)
+    return -1;
+
+  flockfile(file);
+
+  struct ftrylockfile_args args = {file, -1};
+  pthread_t p;
+  if (pthread_create(&p, NULL, ftrylockfile_other_thread, &args) != 0) {
+    funlockfile(file);
+    fclose(file);
+    return -2;
+  }
+  if (pthread_join(p, NULL) != 0) {
+    funlockfile(file);
+    fclose(file);
+    return -3;
+  }
+
+  funlockfile(file);
+  fclose(file);
+
+  if (args.result == 0)
+    return -4;
+  return 0;
+}
+
+struct flockfile_blocking_args {
+  FILE *file;
+  pthread_mutex_t *mu;
+  pthread_cond_t *cv;
+  int *started;
+  int *acquired;
+};
+
+void *flockfile_blocking_thread(void *arg) {
+  struct flockfile_blocking_args *a = arg;
+
+  // Announce that we are about to attempt flockfile, so the main thread
+  // does not have to rely on a sleep to know we have made progress.
+  pthread_mutex_lock(a->mu);
+  *(a->started) = 1;
+  pthread_cond_signal(a->cv);
+  pthread_mutex_unlock(a->mu);
+
+  // This call must block until the main thread releases the stream lock.
+  flockfile(a->file);
+
+  pthread_mutex_lock(a->mu);
+  *(a->acquired) = 1;
+  pthread_cond_signal(a->cv);
+  pthread_mutex_unlock(a->mu);
+
+  funlockfile(a->file);
+  return NULL;
+}
+
+// flockfile must block another thread until the lock is released by the
+// thread that currently owns it.
+int test_flockfile_blocks_other_thread() {
+  FILE *file = fopen("TestApp", "r");
+  if (file == NULL)
+    return -1;
+
+  pthread_mutex_t mu;
+  if (pthread_mutex_init(&mu, NULL) != 0) {
+    fclose(file);
+    return -2;
+  }
+  pthread_cond_t cv;
+  if (pthread_cond_init(&cv, NULL) != 0) {
+    pthread_mutex_destroy(&mu);
+    fclose(file);
+    return -3;
+  }
+
+  int started = 0;
+  int acquired = 0;
+  struct flockfile_blocking_args args = {file, &mu, &cv, &started, &acquired};
+
+  flockfile(file);
+
+  pthread_t p;
+  if (pthread_create(&p, NULL, flockfile_blocking_thread, &args) != 0) {
+    funlockfile(file);
+    pthread_cond_destroy(&cv);
+    pthread_mutex_destroy(&mu);
+    fclose(file);
+    return -4;
+  }
+
+  // Wait until the worker thread has reached the point right before
+  // flockfile, then yield so the scheduler can run it into the blocking
+  // call.
+  pthread_mutex_lock(&mu);
+  while (!started)
+    pthread_cond_wait(&cv, &mu);
+  pthread_mutex_unlock(&mu);
+  sched_yield();
+
+  pthread_mutex_lock(&mu);
+  int acquired_before_unlock = acquired;
+  pthread_mutex_unlock(&mu);
+
+  funlockfile(file);
+
+  // Once we have released the stream lock, the worker must eventually be
+  // able to acquire it. Wait for that signal rather than for thread join
+  // so that a hang in flockfile is attributed to this assertion.
+  pthread_mutex_lock(&mu);
+  while (!acquired)
+    pthread_cond_wait(&cv, &mu);
+  pthread_mutex_unlock(&mu);
+
+  if (pthread_join(p, NULL) != 0) {
+    pthread_cond_destroy(&cv);
+    pthread_mutex_destroy(&mu);
+    fclose(file);
+    return -5;
+  }
+
+  pthread_cond_destroy(&cv);
+  pthread_mutex_destroy(&mu);
+  fclose(file);
+
+  if (acquired_before_unlock != 0)
+    return -6;
+  if (acquired != 1)
+    return -7;
+  return 0;
+}
+
+// flockfile is most commonly used to make a sequence of stdio calls atomic
+// from the perspective of other threads. Verify that the main stdio entry
+// points work normally while the current thread holds the stream lock.
+int test_flockfile_io_while_locked() {
+  FILE *file = fopen("TestApp", "r");
+  if (file == NULL)
+    return -1;
+
+  flockfile(file);
+
+  // ftello must succeed and report the initial position.
+  if (ftello(file) != 0) {
+    funlockfile(file);
+    fclose(file);
+    return -2;
+  }
+
+  // fread must succeed and advance the position.
+  char buf[8];
+  size_t n = fread(buf, 1, sizeof(buf), file);
+  if (n != sizeof(buf)) {
+    funlockfile(file);
+    fclose(file);
+    return -3;
+  }
+  if (ftello(file) != (off_t)sizeof(buf)) {
+    funlockfile(file);
+    fclose(file);
+    return -4;
+  }
+
+  // fseeko must succeed and reset the position.
+  if (fseeko(file, 0, SEEK_SET) != 0) {
+    funlockfile(file);
+    fclose(file);
+    return -5;
+  }
+  if (ftello(file) != 0) {
+    funlockfile(file);
+    fclose(file);
+    return -6;
+  }
+
+  // feof / clearerr / fflush / fileno must not abort while the lock is
+  // held by the calling thread.
+  (void)feof(file);
+  clearerr(file);
+  (void)fflush(file);
+  if (fileno(file) < 0) {
+    funlockfile(file);
+    fclose(file);
+    return -7;
+  }
+
+  funlockfile(file);
+  fclose(file);
+  return 0;
+}
+
+// === end flockfile / funlockfile tests ===
 
 int test_open() {
   int fd;
@@ -3558,6 +5105,292 @@ int test_strftime() {
   return 0;
 }
 
+@interface InvocationTarget : NSObject {
+@public
+  id receivedValue;
+  const char *cstringValue;
+  int intValue;
+}
+- (void)storeValue:(id)value;
+- (void)clearValue;
+- (void)storeCString:(const char *)str;
+- (void)storeIntPtr:(int *)ptr;
+@end
+
+@implementation InvocationTarget
+- (void)storeValue:(id)value {
+  receivedValue = value;
+}
+- (void)clearValue {
+  receivedValue = nil;
+}
+- (void)storeCString:(const char *)str {
+  cstringValue = str;
+}
+- (void)storeIntPtr:(int *)ptr {
+  intValue = *ptr;
+}
+@end
+
+static BOOL g_deallocTrackerDidDealloc = NO;
+
+@interface DeallocTracker : NSObject
+@end
+
+@implementation DeallocTracker
+- (void)dealloc {
+  g_deallocTrackerDidDealloc = YES;
+  [super dealloc];
+}
+@end
+
+int test_NSMethodSignature() {
+  NSAutoreleasePool *pool = [NSAutoreleasePool new];
+
+  // "v12@0:4@8" = void return, 3 args: self(@), _cmd(:), one id(@)
+  NSMethodSignature *sig =
+      [NSMethodSignature signatureWithObjCTypes:"v12@0:4@8"];
+
+  if ([sig numberOfArguments] != 3) {
+    [pool drain];
+    return -1;
+  }
+
+  // methodReturnType should be "v"
+  if (strcmp([sig methodReturnType], "v") != 0) {
+    [pool drain];
+    return -2;
+  }
+
+  // arg 0 = "@" (self)
+  if (strcmp([sig getArgumentTypeAtIndex:0], "@") != 0) {
+    [pool drain];
+    return -3;
+  }
+
+  // arg 1 = ":" (SEL)
+  if (strcmp([sig getArgumentTypeAtIndex:1], ":") != 0) {
+    [pool drain];
+    return -4;
+  }
+
+  // arg 2 = "@" (id argument)
+  if (strcmp([sig getArgumentTypeAtIndex:2], "@") != 0) {
+    [pool drain];
+    return -5;
+  }
+
+  // "v8@0:4" = void return, 2 args: self, _cmd (no extra args)
+  NSMethodSignature *sig2 = [NSMethodSignature signatureWithObjCTypes:"v8@0:4"];
+  if ([sig2 numberOfArguments] != 2) {
+    [pool drain];
+    return -6;
+  }
+  if (strcmp([sig2 methodReturnType], "v") != 0) {
+    [pool drain];
+    return -7;
+  }
+
+  // "v12@0:4^i8" = void return, 3 args: self(@), _cmd(:), pointer-to-int(^i)
+  NSMethodSignature *sig3 =
+      [NSMethodSignature signatureWithObjCTypes:"v12@0:4^i8"];
+  if ([sig3 numberOfArguments] != 3) {
+    [pool drain];
+    return -8;
+  }
+  if (strcmp([sig3 methodReturnType], "v") != 0) {
+    [pool drain];
+    return -9;
+  }
+  if (strcmp([sig3 getArgumentTypeAtIndex:2], "^i") != 0) {
+    [pool drain];
+    return -10;
+  }
+
+  [pool drain];
+  return 0;
+}
+
+int test_NSInvocation() {
+  NSAutoreleasePool *pool = [NSAutoreleasePool new];
+
+  InvocationTarget *target = [InvocationTarget new];
+  NSMethodSignature *sig =
+      [NSMethodSignature signatureWithObjCTypes:"v12@0:4@8"];
+  NSInvocation *inv = [NSInvocation invocationWithMethodSignature:sig];
+
+  [inv setTarget:target];
+  SEL sel = NSSelectorFromString([NSString stringWithUTF8String:"storeValue:"]);
+  [inv setSelector:sel];
+
+  // setArgument:atIndex: takes a pointer to the argument value
+  NSObject *val = [NSObject new];
+  [inv setArgument:&val atIndex:2];
+  [inv invoke];
+
+  if (target->receivedValue != val) {
+    [pool drain];
+    return -1;
+  }
+
+  [pool drain];
+  return 0;
+}
+
+int test_NSInvocation_invokeWithTarget() {
+  NSAutoreleasePool *pool = [NSAutoreleasePool new];
+
+  InvocationTarget *target1 = [InvocationTarget new];
+  InvocationTarget *target2 = [InvocationTarget new];
+  NSMethodSignature *sig =
+      [NSMethodSignature signatureWithObjCTypes:"v12@0:4@8"];
+  NSInvocation *inv = [NSInvocation invocationWithMethodSignature:sig];
+
+  [inv setTarget:target1];
+  SEL sel = NSSelectorFromString([NSString stringWithUTF8String:"storeValue:"]);
+  [inv setSelector:sel];
+
+  NSObject *val = [NSObject new];
+  [inv setArgument:&val atIndex:2];
+
+  // invokeWithTarget: should use target2, not target1
+  [inv invokeWithTarget:target2];
+
+  if (target2->receivedValue != val) {
+    [pool drain];
+    return -1;
+  }
+
+  [pool drain];
+  return 0;
+}
+
+int test_NSInvocation_retainArguments() {
+  NSAutoreleasePool *pool = [NSAutoreleasePool new];
+
+  // Test 1: object argument is retained by the invocation.
+  {
+    InvocationTarget *target = [InvocationTarget new];
+    NSMethodSignature *sig =
+        [NSMethodSignature signatureWithObjCTypes:"v12@0:4@8"];
+    NSInvocation *inv = [NSInvocation invocationWithMethodSignature:sig];
+    [inv setTarget:target];
+    SEL sel =
+        NSSelectorFromString([NSString stringWithUTF8String:"storeValue:"]);
+    [inv setSelector:sel];
+
+    NSObject *val = [[NSObject alloc] init]; // retainCount = 1
+    NSUInteger before = [val retainCount];
+    [inv setArgument:&val atIndex:2];
+    [inv retainArguments]; // invocation must retain val
+    if ([val retainCount] != before + 1) {
+      [pool drain];
+      return -1;
+    }
+    // Invoke still works; val is alive because the invocation holds it.
+    [inv invoke];
+    if (target->receivedValue != val) {
+      [pool drain];
+      return -2;
+    }
+    [val release]; // balance our alloc; invocation still holds one ref
+  }
+
+  // Test 2: C string argument is copied so the invocation owns the bytes.
+  {
+    InvocationTarget *target = [InvocationTarget new];
+    // "v12@0:4*8" = void, self(@), _cmd(:), const char *(*)
+    NSMethodSignature *sig =
+        [NSMethodSignature signatureWithObjCTypes:"v12@0:4*8"];
+    NSInvocation *inv = [NSInvocation invocationWithMethodSignature:sig];
+    [inv setTarget:target];
+    SEL sel =
+        NSSelectorFromString([NSString stringWithUTF8String:"storeCString:"]);
+    [inv setSelector:sel];
+
+    char buf[16];
+    strcpy(buf, "hello");
+    const char *ptr = buf;
+    [inv setArgument:&ptr atIndex:2];
+    [inv retainArguments]; // must copy "hello" into invocation-owned memory
+
+    // Overwrite original buffer; invocation must pass its copy, not buf.
+    strcpy(buf, "world");
+
+    [inv invoke];
+    if (strcmp(target->cstringValue, "hello") != 0) {
+      [pool drain];
+      return -3;
+    }
+  }
+
+  // Test 3: invocation keeps @ arg alive after caller drops its reference.
+  {
+    InvocationTarget *target = [InvocationTarget new];
+    NSMethodSignature *sig =
+        [NSMethodSignature signatureWithObjCTypes:"v12@0:4@8"];
+    NSInvocation *inv = [NSInvocation invocationWithMethodSignature:sig];
+    [inv setTarget:target];
+    SEL sel =
+        NSSelectorFromString([NSString stringWithUTF8String:"storeValue:"]);
+    [inv setSelector:sel];
+
+    g_deallocTrackerDidDealloc = NO;
+    DeallocTracker *val = [[DeallocTracker alloc] init];
+    DeallocTracker *weakVal = val; // un-retained alias
+    [inv setArgument:&val atIndex:2];
+    [inv retainArguments]; // invocation owns its own reference now
+    [val release];         // caller drops its reference
+    val = nil;
+
+    // Without the invocation's retain, val would now be deallocated.
+    if (g_deallocTrackerDidDealloc) {
+      [pool drain];
+      return -4;
+    }
+    [inv invoke];
+    if (target->receivedValue != weakVal) {
+      [pool drain];
+      return -5;
+    }
+    if (g_deallocTrackerDidDealloc) {
+      [pool drain];
+      return -6;
+    }
+  }
+
+  [pool drain];
+  return 0;
+}
+
+int test_NSInvocation_pointer() {
+  NSAutoreleasePool *pool = [NSAutoreleasePool new];
+
+  InvocationTarget *target = [InvocationTarget new];
+  // "v12@0:4^i8" = void, self(@), _cmd(:), int *(^i)
+  NSMethodSignature *sig =
+      [NSMethodSignature signatureWithObjCTypes:"v12@0:4^i8"];
+  NSInvocation *inv = [NSInvocation invocationWithMethodSignature:sig];
+
+  [inv setTarget:target];
+  SEL sel =
+      NSSelectorFromString([NSString stringWithUTF8String:"storeIntPtr:"]);
+  [inv setSelector:sel];
+
+  int x = 42;
+  int *ptr = &x;
+  [inv setArgument:&ptr atIndex:2];
+  [inv invoke];
+
+  if (target->intValue != 42) {
+    [pool drain];
+    return -1;
+  }
+
+  [pool drain];
+  return 0;
+}
+
 @interface CharBufferObject : NSObject {
 @public
   char *buffer;
@@ -3604,6 +5437,52 @@ int test_strftime() {
 }
 @end
 
+@interface IntCoderObject : NSObject {
+@public
+  int value;
+}
+@end
+
+@implementation IntCoderObject
+- (instancetype)initWithValue:(int)v {
+  self = [super init];
+  value = v;
+  return self;
+}
+
+- (void)encodeWithCoder:(NSCoder *)coder {
+  [coder encodeInt:value forKey:[NSString stringWithUTF8String:"value"]];
+}
+
+- (instancetype)initWithCoder:(NSCoder *)coder {
+  self = [super init];
+  value = [coder decodeIntForKey:[NSString stringWithUTF8String:"value"]];
+  return self;
+}
+@end
+
+int test_NSKeyedArchiver_encodeIntForKey() {
+  NSAutoreleasePool *pool = [NSAutoreleasePool new];
+
+  int values[] = {12345, 0, -1, -12345, 0x7FFFFFFF, -0x80000000};
+  int count = sizeof(values) / sizeof(int);
+
+  for (int i = 0; i < count; i++) {
+    IntCoderObject *obj = [[IntCoderObject alloc] initWithValue:values[i]];
+    NSData *archivedData = [NSKeyedArchiver archivedDataWithRootObject:obj];
+    IntCoderObject *unarchivedObj =
+        [NSKeyedUnarchiver unarchiveObjectWithData:archivedData];
+
+    if (unarchivedObj->value != values[i]) {
+      [pool drain];
+      return -(i + 1);
+    }
+  }
+
+  [pool drain];
+  return 0;
+}
+
 int test_NSKeyedArchiver_NSKeyedUnarchiver() {
   NSAutoreleasePool *pool = [NSAutoreleasePool new];
   char buffer[100];
@@ -3631,6 +5510,541 @@ int test_NSKeyedArchiver_NSKeyedUnarchiver() {
   return 0;
 }
 
+int test_NSKeyedArchiver_NSDictionary_of_NSArray_of_NSStrings() {
+  NSAutoreleasePool *pool = [NSAutoreleasePool new];
+
+  NSArray *fruits =
+      [NSArray arrayWithObjects:[NSString stringWithUTF8String:"apple"],
+                                [NSString stringWithUTF8String:"banana"],
+                                [NSString stringWithUTF8String:"cherry"], nil];
+  NSArray *colors =
+      [NSArray arrayWithObjects:[NSString stringWithUTF8String:"red"],
+                                [NSString stringWithUTF8String:"green"],
+                                [NSString stringWithUTF8String:"blue"], nil];
+  NSArray *values = [NSArray arrayWithObjects:fruits, colors, nil];
+  NSArray *keys =
+      [NSArray arrayWithObjects:[NSString stringWithUTF8String:"fruits"],
+                                [NSString stringWithUTF8String:"colors"], nil];
+  NSDictionary *dict = [NSDictionary dictionaryWithObjects:values forKeys:keys];
+
+  NSData *archivedData = [NSKeyedArchiver archivedDataWithRootObject:dict];
+  NSDictionary *unarchivedDict =
+      [NSKeyedUnarchiver unarchiveObjectWithData:archivedData];
+
+  if (![unarchivedDict isKindOfClass:[NSDictionary class]]) {
+    [pool drain];
+    return -1;
+  }
+  if ([unarchivedDict count] != [dict count]) {
+    [pool drain];
+    return -2;
+  }
+  if (![unarchivedDict isEqualToDictionary:dict]) {
+    [pool drain];
+    return -3;
+  }
+
+  NSArray *unarchivedFruits =
+      [unarchivedDict objectForKey:[NSString stringWithUTF8String:"fruits"]];
+  if (![unarchivedFruits isKindOfClass:[NSArray class]]) {
+    [pool drain];
+    return -4;
+  }
+  if (![unarchivedFruits isEqualToArray:fruits]) {
+    [pool drain];
+    return -5;
+  }
+
+  NSArray *unarchivedColors =
+      [unarchivedDict objectForKey:[NSString stringWithUTF8String:"colors"]];
+  if (![unarchivedColors isKindOfClass:[NSArray class]]) {
+    [pool drain];
+    return -6;
+  }
+  if (![unarchivedColors isEqualToArray:colors]) {
+    [pool drain];
+    return -7;
+  }
+
+  for (NSUInteger i = 0; i < [unarchivedFruits count]; i++) {
+    if (![[unarchivedFruits objectAtIndex:i] isKindOfClass:[NSString class]]) {
+      [pool drain];
+      return -8;
+    }
+  }
+
+  [pool drain];
+  return 0;
+}
+
+int test_NSNumber_stringValue() {
+  NSAutoreleasePool *pool = [NSAutoreleasePool new];
+
+  NSNumber *num;
+  NSString *result;
+  NSString *expected;
+
+  // Bool: YES -> "1"
+  num = [NSNumber numberWithBool:YES];
+  result = [num stringValue];
+  expected = [NSString stringWithUTF8String:"1"];
+  if (![result isEqualToString:expected]) {
+    [pool drain];
+    return -1;
+  }
+
+  // Bool: NO -> "0"
+  num = [NSNumber numberWithBool:NO];
+  result = [num stringValue];
+  expected = [NSString stringWithUTF8String:"0"];
+  if (![result isEqualToString:expected]) {
+    [pool drain];
+    return -2;
+  }
+
+  // Int: 0 -> "0"
+  num = [NSNumber numberWithInt:0];
+  result = [num stringValue];
+  expected = [NSString stringWithUTF8String:"0"];
+  if (![result isEqualToString:expected]) {
+    [pool drain];
+    return -3;
+  }
+
+  // Int: 42 -> "42"
+  num = [NSNumber numberWithInt:42];
+  result = [num stringValue];
+  expected = [NSString stringWithUTF8String:"42"];
+  if (![result isEqualToString:expected]) {
+    [pool drain];
+    return -4;
+  }
+
+  // Int: -100 -> "-100"
+  num = [NSNumber numberWithInt:-100];
+  result = [num stringValue];
+  expected = [NSString stringWithUTF8String:"-100"];
+  if (![result isEqualToString:expected]) {
+    [pool drain];
+    return -5;
+  }
+
+  // Int: INT_MAX -> "2147483647"
+  num = [NSNumber numberWithInt:2147483647];
+  result = [num stringValue];
+  expected = [NSString stringWithUTF8String:"2147483647"];
+  if (![result isEqualToString:expected]) {
+    [pool drain];
+    return -6;
+  }
+
+  // Int: INT_MIN -> "-2147483648"
+  num = [NSNumber numberWithInt:-2147483648];
+  result = [num stringValue];
+  expected = [NSString stringWithUTF8String:"-2147483648"];
+  if (![result isEqualToString:expected]) {
+    [pool drain];
+    return -7;
+  }
+
+  // LongLong: 0 -> "0"
+  num = [NSNumber numberWithLongLong:0LL];
+  result = [num stringValue];
+  expected = [NSString stringWithUTF8String:"0"];
+  if (![result isEqualToString:expected]) {
+    [pool drain];
+    return -8;
+  }
+
+  // LongLong: 9999999999 -> "9999999999"
+  num = [NSNumber numberWithLongLong:9999999999LL];
+  result = [num stringValue];
+  expected = [NSString stringWithUTF8String:"9999999999"];
+  if (![result isEqualToString:expected]) {
+    [pool drain];
+    return -9;
+  }
+
+  // LongLong: -9999999999 -> "-9999999999"
+  num = [NSNumber numberWithLongLong:-9999999999LL];
+  result = [num stringValue];
+  expected = [NSString stringWithUTF8String:"-9999999999"];
+  if (![result isEqualToString:expected]) {
+    [pool drain];
+    return -10;
+  }
+
+  // UnsignedInt: 0 -> "0"
+  num = [NSNumber numberWithUnsignedInt:0U];
+  result = [num stringValue];
+  expected = [NSString stringWithUTF8String:"0"];
+  if (![result isEqualToString:expected]) {
+    [pool drain];
+    return -11;
+  }
+
+  // UnsignedLongLong: 0 -> "0"
+  num = [NSNumber numberWithUnsignedLongLong:0ULL];
+  result = [num stringValue];
+  expected = [NSString stringWithUTF8String:"0"];
+  if (![result isEqualToString:expected]) {
+    [pool drain];
+    return -12;
+  }
+
+  // Float: 0.0 -> "0"
+  num = [NSNumber numberWithFloat:0.0f];
+  result = [num stringValue];
+  expected = [NSString stringWithUTF8String:"0"];
+  if (![result isEqualToString:expected]) {
+    [pool drain];
+    return -13;
+  }
+
+  // Float: 1.5 -> "1.5"
+  num = [NSNumber numberWithFloat:1.5f];
+  result = [num stringValue];
+  expected = [NSString stringWithUTF8String:"1.5"];
+  if (![result isEqualToString:expected]) {
+    [pool drain];
+    return -14;
+  }
+
+  // Float: -1.25 -> "-1.25"
+  num = [NSNumber numberWithFloat:-1.25f];
+  result = [num stringValue];
+  expected = [NSString stringWithUTF8String:"-1.25"];
+  if (![result isEqualToString:expected]) {
+    [pool drain];
+    return -15;
+  }
+
+  // Double: 0.0 -> "0"
+  num = [NSNumber numberWithDouble:0.0];
+  result = [num stringValue];
+  expected = [NSString stringWithUTF8String:"0"];
+  if (![result isEqualToString:expected]) {
+    [pool drain];
+    return -16;
+  }
+
+  // Double: 1.5 -> "1.5"
+  num = [NSNumber numberWithDouble:1.5];
+  result = [num stringValue];
+  expected = [NSString stringWithUTF8String:"1.5"];
+  if (![result isEqualToString:expected]) {
+    [pool drain];
+    return -17;
+  }
+
+  // Double: -1.25 -> "-1.25"
+  num = [NSNumber numberWithDouble:-1.25];
+  result = [num stringValue];
+  expected = [NSString stringWithUTF8String:"-1.25"];
+  if (![result isEqualToString:expected]) {
+    [pool drain];
+    return -18;
+  }
+
+  // Short: 0 -> "0"
+  num = [NSNumber numberWithShort:0];
+  result = [num stringValue];
+  expected = [NSString stringWithUTF8String:"0"];
+  if (![result isEqualToString:expected]) {
+    [pool drain];
+    return -19;
+  }
+
+  // Short: 100 -> "100"
+  num = [NSNumber numberWithShort:100];
+  result = [num stringValue];
+  expected = [NSString stringWithUTF8String:"100"];
+  if (![result isEqualToString:expected]) {
+    [pool drain];
+    return -20;
+  }
+
+  // Short: SHRT_MIN -> "-32768"
+  num = [NSNumber numberWithShort:-32768];
+  result = [num stringValue];
+  expected = [NSString stringWithUTF8String:"-32768"];
+  if (![result isEqualToString:expected]) {
+    [pool drain];
+    return -21;
+  }
+
+  // Short: SHRT_MAX -> "32767"
+  num = [NSNumber numberWithShort:32767];
+  result = [num stringValue];
+  expected = [NSString stringWithUTF8String:"32767"];
+  if (![result isEqualToString:expected]) {
+    [pool drain];
+    return -22;
+  }
+
+  // UnsignedShort: 0 -> "0"
+  num = [NSNumber numberWithUnsignedShort:0];
+  result = [num stringValue];
+  expected = [NSString stringWithUTF8String:"0"];
+  if (![result isEqualToString:expected]) {
+    [pool drain];
+    return -23;
+  }
+
+  // Char: 0 -> "0"
+  num = [NSNumber numberWithChar:0];
+  result = [num stringValue];
+  expected = [NSString stringWithUTF8String:"0"];
+  if (![result isEqualToString:expected]) {
+    [pool drain];
+    return -24;
+  }
+
+  // Char: 65 -> "65"
+  num = [NSNumber numberWithChar:65];
+  result = [num stringValue];
+  expected = [NSString stringWithUTF8String:"65"];
+  if (![result isEqualToString:expected]) {
+    [pool drain];
+    return -25;
+  }
+
+  // Char: SCHAR_MIN -> "-128"
+  num = [NSNumber numberWithChar:-128];
+  result = [num stringValue];
+  expected = [NSString stringWithUTF8String:"-128"];
+  if (![result isEqualToString:expected]) {
+    [pool drain];
+    return -26;
+  }
+
+  // Char: SCHAR_MAX -> "127"
+  num = [NSNumber numberWithChar:127];
+  result = [num stringValue];
+  expected = [NSString stringWithUTF8String:"127"];
+  if (![result isEqualToString:expected]) {
+    [pool drain];
+    return -27;
+  }
+
+  [pool drain];
+  return 0;
+}
+
+@interface NotificationObserver : NSObject {
+@public
+  int receivedCount;
+  id lastNotification;
+}
+- (void)handleNotification:(NSNotification *)notification;
+@end
+
+@implementation NotificationObserver
+- (void)handleNotification:(NSNotification *)notification {
+  receivedCount++;
+  [lastNotification release];
+  lastNotification = [notification retain];
+}
+- (void)dealloc {
+  [lastNotification release];
+  [super dealloc];
+}
+@end
+
+// When name is nil, the observer should receive notifications of any name.
+int test_NSNotificationCenter_addObserver_nilName() {
+  NSAutoreleasePool *pool = [NSAutoreleasePool new];
+
+  NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
+  NotificationObserver *observer = [NotificationObserver new];
+  SEL sel = NSSelectorFromString(
+      [NSString stringWithUTF8String:"handleNotification:"]);
+
+  [center addObserver:observer selector:sel name:nil object:nil];
+
+  [center postNotificationName:[NSString stringWithUTF8String:"FirstName"]
+                        object:nil];
+  if (observer->receivedCount != 1) {
+    [center removeObserver:observer];
+    [observer release];
+    [pool drain];
+    return -1;
+  }
+
+  [center postNotificationName:[NSString stringWithUTF8String:"SecondName"]
+                        object:nil];
+  if (observer->receivedCount != 2) {
+    [center removeObserver:observer];
+    [observer release];
+    [pool drain];
+    return -2;
+  }
+
+  // The last notification's name should match the most recently posted one.
+  NSString *lastName = [observer->lastNotification name];
+  NSString *expectedName = [NSString stringWithUTF8String:"SecondName"];
+  if (![lastName isEqualToString:expectedName]) {
+    [center removeObserver:observer];
+    [observer release];
+    [pool drain];
+    return -3;
+  }
+
+  [center removeObserver:observer];
+  [observer release];
+  [pool drain];
+  return 0;
+}
+
+// When name is nil but object is specified, only notifications from that
+// sender (with any name) should be delivered to the observer.
+int test_NSNotificationCenter_addObserver_nilName_withObject() {
+  NSAutoreleasePool *pool = [NSAutoreleasePool new];
+
+  NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
+  NotificationObserver *observer = [NotificationObserver new];
+  SEL sel = NSSelectorFromString(
+      [NSString stringWithUTF8String:"handleNotification:"]);
+
+  NSObject *sender = [NSObject new];
+  NSObject *otherSender = [NSObject new];
+
+  [center addObserver:observer selector:sel name:nil object:sender];
+
+  // Notification from the matching sender should be delivered, regardless of
+  // the notification's name.
+  [center postNotificationName:[NSString stringWithUTF8String:"AnyName"]
+                        object:sender];
+  if (observer->receivedCount != 1) {
+    [center removeObserver:observer];
+    [sender release];
+    [otherSender release];
+    [observer release];
+    [pool drain];
+    return -1;
+  }
+
+  // Notification from a different sender should be filtered out, even though
+  // name is nil.
+  [center postNotificationName:[NSString stringWithUTF8String:"AnyName"]
+                        object:otherSender];
+  if (observer->receivedCount != 1) {
+    [center removeObserver:observer];
+    [sender release];
+    [otherSender release];
+    [observer release];
+    [pool drain];
+    return -2;
+  }
+
+  // A different notification name from the matching sender should still be
+  // delivered.
+  [center postNotificationName:[NSString stringWithUTF8String:"OtherName"]
+                        object:sender];
+  if (observer->receivedCount != 2) {
+    [center removeObserver:observer];
+    [sender release];
+    [otherSender release];
+    [observer release];
+    [pool drain];
+    return -3;
+  }
+
+  [center removeObserver:observer];
+  [sender release];
+  [otherSender release];
+  [observer release];
+  [pool drain];
+  return 0;
+}
+
+// An observer registered with name=nil should be properly unregistered by
+// removeObserver:, so it must not receive any further notifications.
+int test_NSNotificationCenter_addObserver_nilName_removeObserver() {
+  NSAutoreleasePool *pool = [NSAutoreleasePool new];
+
+  NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
+  NotificationObserver *observer = [NotificationObserver new];
+  SEL sel = NSSelectorFromString(
+      [NSString stringWithUTF8String:"handleNotification:"]);
+
+  [center addObserver:observer selector:sel name:nil object:nil];
+
+  [center postNotificationName:[NSString stringWithUTF8String:"BeforeRemove"]
+                        object:nil];
+  if (observer->receivedCount != 1) {
+    [center removeObserver:observer];
+    [observer release];
+    [pool drain];
+    return -1;
+  }
+
+  [center removeObserver:observer];
+
+  [center postNotificationName:[NSString stringWithUTF8String:"AfterRemove"]
+                        object:nil];
+  if (observer->receivedCount != 1) {
+    [observer release];
+    [pool drain];
+    return -2;
+  }
+
+  // Posting under a different name after removal should not deliver either.
+  [center postNotificationName:[NSString stringWithUTF8String:"OtherName"]
+                        object:nil];
+  if (observer->receivedCount != 1) {
+    [observer release];
+    [pool drain];
+    return -3;
+  }
+
+  [observer release];
+  [pool drain];
+  return 0;
+}
+
+int test_malloc_zone_basic() {
+  malloc_zone_t *zone = malloc_create_zone(0, 0);
+  unsigned char *p = malloc_zone_malloc(zone, 128);
+  if (zone->size(zone, p) != 128) {
+    return -1;
+  }
+
+  memset(p, 0xAB, 128);
+  for (int i = 0; i < 128; i++) {
+    if (p[i] != 0xAB) {
+      malloc_zone_free(zone, p);
+      malloc_destroy_zone(zone);
+      return -2;
+    }
+  }
+  malloc_zone_free(zone, p);
+  malloc_destroy_zone(zone);
+
+  return 0;
+}
+
+int test_malloc_zone_struct_dispatch() {
+  malloc_zone_t *zone = malloc_default_zone();
+  if (!zone)
+    return -1;
+
+  void *p = zone->malloc(zone, 128);
+  if (!p)
+    return -2;
+
+  // malloc_size() uses the default zone. If the allocation did not work
+  // this should cause a panic and thus fail the test.
+  size_t sz = malloc_size(p);
+  if (sz != 128) {
+    zone->free(zone, p);
+    return -3;
+  }
+
+  zone->free(zone, p);
+  return 0;
+}
+
 // clang-format off
 #define FUNC_DEF(func)                                                         \
   { &func, #func }
@@ -3644,16 +6058,20 @@ struct {
     FUNC_DEF(test_getcwd_chdir),
     FUNC_DEF(test_synchronized),
     FUNC_DEF(test_read_directory_as_fd),
+    FUNC_DEF(test_pthread_get_stacksize_np),
+    FUNC_DEF(test_cpp_virtual_inheritance),
 #endif
     FUNC_DEF(test_qsort),
     FUNC_DEF(test_vsnprintf),
     FUNC_DEF(test_sscanf),
     FUNC_DEF(test_swscanf),
     FUNC_DEF(test_realloc),
+    FUNC_DEF(test_valloc),
     FUNC_DEF(test_atof),
     FUNC_DEF(test_strtof),
     FUNC_DEF(test_sem),
     FUNC_DEF(test_mtsem),
+    FUNC_DEF(test_thread_suspend_resume),
     FUNC_DEF(test_CGAffineTransform),
     FUNC_DEF(test_strncpy),
     FUNC_DEF(test_strncat),
@@ -3674,10 +6092,23 @@ struct {
     FUNC_DEF(test_mbstowcs),
     FUNC_DEF(test_CFMutableString),
     FUNC_DEF(test_fwrite),
+    FUNC_DEF(test_flockfile_basic),
+    FUNC_DEF(test_flockfile_recursive),
+    FUNC_DEF(test_ftrylockfile_unlocked),
+    FUNC_DEF(test_ftrylockfile_locked_by_other_thread),
+    FUNC_DEF(test_flockfile_blocks_other_thread),
+    FUNC_DEF(test_flockfile_io_while_locked),
     FUNC_DEF(test_open),
     FUNC_DEF(test_close),
     FUNC_DEF(test_cond_var),
+    FUNC_DEF(test_cond_var_static),
+    FUNC_DEF(test_cond_timedwait_signaled_before_timeout),
+    FUNC_DEF(test_cond_timedwait_past_deadline),
+    FUNC_DEF(test_cond_timedwait_broadcast),
+    FUNC_DEF(test_cond_timedwait_flag_not_sticky),
+    FUNC_DEF(test_cond_timedwait_sibling_not_dropped),
     FUNC_DEF(test_pthread_mutex_normal),
+    FUNC_DEF(test_pthread_mutex_recursive_trylock),
     FUNC_DEF(test_CFMutableDictionary_NullCallbacks),
     FUNC_DEF(test_CFMutableDictionary_CustomCallbacks_PrimitiveTypes),
     FUNC_DEF(test_CFMutableDictionary_CustomCallbacks_CFTypes),
@@ -3705,7 +6136,22 @@ struct {
     FUNC_DEF(test_strptime),
     FUNC_DEF(test_strftime),
     FUNC_DEF(test_RespondsToSelector),
+    FUNC_DEF(test_NSKeyedArchiver_encodeIntForKey),
     FUNC_DEF(test_NSKeyedArchiver_NSKeyedUnarchiver),
+    FUNC_DEF(test_NSKeyedArchiver_NSDictionary_of_NSArray_of_NSStrings),
+    FUNC_DEF(test_AutoreleasePool),
+    FUNC_DEF(test_NSNumber_stringValue),
+    FUNC_DEF(test_NSMethodSignature),
+    FUNC_DEF(test_NSInvocation),
+    FUNC_DEF(test_NSInvocation_invokeWithTarget),
+    FUNC_DEF(test_NSInvocation_retainArguments),
+    FUNC_DEF(test_NSInvocation_pointer),
+    FUNC_DEF(test_Initialize),
+    FUNC_DEF(test_NSNotificationCenter_addObserver_nilName),
+    FUNC_DEF(test_NSNotificationCenter_addObserver_nilName_withObject),
+    FUNC_DEF(test_NSNotificationCenter_addObserver_nilName_removeObserver),
+    FUNC_DEF(test_malloc_zone_basic),
+    FUNC_DEF(test_malloc_zone_struct_dispatch),
 };
 // clang-format on
 

@@ -11,7 +11,7 @@ use crate::frameworks::core_foundation::time::{
     apple_epoch, CFAbsoluteTimeGetGregorianDate, SECS_FROM_UNIX_TO_APPLE_EPOCHS,
 };
 use crate::objc::{
-    autorelease, id, msg, msg_class, nil, objc_classes, release, ClassExports, HostObject,
+    autorelease, id, msg, msg_class, nil, objc_classes, release, retain, ClassExports, HostObject,
     NSZonePtr,
 };
 
@@ -171,7 +171,7 @@ pub const CLASSES: ClassExports = objc_classes! {
         .duration_since(apple_epoch())
         .unwrap()
         .as_secs_f64();
-    time_interval - host_object.time_interval
+    host_object.time_interval - time_interval
 }
 
 - (NSTimeInterval)timeIntervalSince1970 {
@@ -198,6 +198,11 @@ pub const CLASSES: ClassExports = objc_classes! {
     let host_object = env.objc.borrow::<NSDateHostObject>(this);
     let another_date_host_object = env.objc.borrow::<NSDateHostObject>(anotherDate);
     from_rust_ordering(host_object.time_interval.total_cmp(&another_date_host_object.time_interval))
+}
+
+// NSCopying implementation
+- (id)copyWithZone:(NSZonePtr)_zone {
+    retain(env, this)
 }
 
 - (id)description {

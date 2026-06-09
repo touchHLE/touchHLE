@@ -22,7 +22,7 @@ use crate::dyld::{export_c_func, FunctionExports, HostDylib};
 use crate::libc::string::strcmp;
 use crate::mem::{ConstPtr, ConstVoidPtr, GuestUSize, MutPtr, MutVoidPtr, Ptr, SafeWrite};
 use crate::Environment;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::ffi::{CStr, CString};
 
 pub const DYLIB: HostDylib = HostDylib {
@@ -39,6 +39,13 @@ pub struct State {
     contexts: HashMap<MutPtr<GuestALCcontext>, OpenALContext>,
     strings_cache: HashMap<ALenum, ConstPtr<u8>>,
     current_ctx: MutPtr<GuestALCcontext>,
+    warned_invalid_contexts: HashSet<MutPtr<GuestALCcontext>>,
+    warned_invalid_devices: HashSet<MutPtr<GuestALCdevice>>,
+    warned_null_device: bool,
+    warned_mixer_rate: bool,
+    warned_mixer_get_rate: bool,
+    warned_mixer_output_rate_proc: bool,
+    warned_invalid_host_devices: HashSet<*mut ALCdevice>,
 }
 impl State {
     fn get(env: &mut Environment) -> &mut Self {
@@ -68,30 +75,38 @@ impl SafeWrite for GuestALCcontext {}
 macro_rules! try_get_context {
     ($env: ident, $name: ident) => {
         let state = &mut $env.framework_state.openal;
+        let ctx_ptr = state.current_ctx;
         let Some($name) = state
             .contexts
-            .get_mut(&state.current_ctx)
+            .get_mut(&ctx_ptr)
             .map(|ctx| ctx.make_current(&mut $env.openal_manager))
         else {
-            log_dbg!(
-                "Attempted to get context but currently active context {:?} is invalid, skipping!",
-                State::get($env).current_ctx
-            );
+            let state = State::get($env);
+            if state.warned_invalid_contexts.insert(ctx_ptr) {
+                log!(
+                    "Attempted to get context but currently active context {:?} is invalid, skipping!",
+                    ctx_ptr
+                );
+            }
             // TODO: set error
             return;
         };
     };
     ($env: ident, $name: ident, $rval: expr) => {
         let state = &mut $env.framework_state.openal;
+        let ctx_ptr = state.current_ctx;
         let Some($name) = state
             .contexts
-            .get_mut(&state.current_ctx)
+            .get_mut(&ctx_ptr)
             .map(|ctx| ctx.make_current(&mut $env.openal_manager))
         else {
-            log_dbg!(
-                "Attempted to get context but currently active context {:?} is invalid, skipping!",
-                State::get($env).current_ctx
-            );
+            let state = State::get($env);
+            if state.warned_invalid_contexts.insert(ctx_ptr) {
+                log!(
+                    "Attempted to get context but currently active context {:?} is invalid, skipping!",
+                    ctx_ptr
+                );
+            }
             // TODO: set error
             return $rval;
         };
@@ -126,16 +141,32 @@ fn alcOpenDevice(env: &mut Environment, devicename: ConstPtr<u8>) -> MutPtr<Gues
     }
 
     let guest_res = env.mem.alloc_and_write(GuestALCdevice { _filler: 0 });
-    State::get(env).devices.insert(guest_res, res);
+    let state = State::get(env);
+    state.devices.insert(guest_res, res);
+    state.warned_invalid_devices.remove(&guest_res);
+    // Remove from host-side device warnings as host pointer is reused.
+    state.warned_invalid_host_devices.remove(&res);
     log_dbg!("alcOpenDevice(NULL) => {:?} (host: {:?})", guest_res, res,);
     guest_res
 }
 fn alcCloseDevice(env: &mut Environment, device: MutPtr<GuestALCdevice>) -> bool {
     if device.is_null() {
-        log!("alcCloseDevice() is called with NULL device, ignoring");
+        let state = State::get(env);
+        if !state.warned_null_device {
+            log!("alcCloseDevice() is called with NULL device, ignoring");
+            state.warned_null_device = true;
+        }
         return false;
     }
-    let host_device = State::get(env).devices.remove(&device).unwrap();
+    let Some(host_device) = State::get(env).devices.remove(&device) else {
+        if State::get(env).warned_invalid_devices.insert(device) {
+            log!(
+                "alcCloseDevice({:?}) called for unknown/already-closed device, ignoring",
+                device
+            );
+        }
+        return false;
+    };
     env.mem.free(device.cast());
     let res = unsafe { al::alcCloseDevice(host_device) };
     log_dbg!("alcCloseDevice({:?}) => {:?}", device, res,);
@@ -143,7 +174,15 @@ fn alcCloseDevice(env: &mut Environment, device: MutPtr<GuestALCdevice>) -> bool
 }
 
 fn alcGetError(env: &mut Environment, device: MutPtr<GuestALCdevice>) -> i32 {
-    let &host_device = State::get(env).devices.get(&device).unwrap();
+    let Some(&host_device) = State::get(env).devices.get(&device) else {
+        if State::get(env).warned_invalid_devices.insert(device) {
+            log!(
+                "alcGetError({:?}): unknown guest device, returning ALC_INVALID_DEVICE",
+                device
+            );
+        }
+        return al::ALC_INVALID_DEVICE;
+    };
 
     let res = unsafe { al::alcGetError(host_device) };
     log_dbg!("alcGetError({:?}) => {:#x}", host_device, res);
@@ -164,7 +203,7 @@ fn alcGetString(
     env.mem.alloc_and_write_cstr(s.to_bytes()).cast_const()
 }
 
-const ALLOWED_CONTEXT_ATTRIBUTES: [ALCint; 5] = [
+const STANDARD_CONTEXT_ATTRIBUTES: [ALCint; 5] = [
     ALC_FREQUENCY,
     ALC_REFRESH,
     ALC_SYNC,
@@ -189,7 +228,14 @@ fn alcCreateContext(
                 attr,
                 env.mem.read(ptr + 1)
             );
-            assert!(ALLOWED_CONTEXT_ATTRIBUTES.contains(&attr)); // TODO
+            if !STANDARD_CONTEXT_ATTRIBUTES.contains(&attr) {
+                // TODO: strip the attribute instead of passing through?
+                log!(
+                    "Warning: alcCreateContext requested non-standard attribute: {:#x} => {}",
+                    attr,
+                    env.mem.read(ptr + 1)
+                );
+            }
             ptr += 2;
         }
 
@@ -199,7 +245,15 @@ fn alcCreateContext(
     };
 
     let state = State::get(env);
-    let &host_device = state.devices.get(&device).unwrap();
+    let Some(&host_device) = state.devices.get(&device) else {
+        if state.warned_invalid_devices.insert(device) {
+            log!(
+                "alcCreateContext({:?}, (...)): unknown guest device, returning NULL",
+                device
+            );
+        }
+        return Ptr::null();
+    };
 
     let res = unsafe {
         OpenALContext::new_with_device_and_attrlist(
@@ -222,33 +276,72 @@ fn alcCreateContext(
         ctx,
     );
 
-    State::get(env).contexts.insert(guest_res, ctx);
+    let state = State::get(env);
+    state.contexts.insert(guest_res, ctx);
+    state.warned_invalid_contexts.remove(&guest_res);
     guest_res
 }
+
 fn alcDestroyContext(env: &mut Environment, context: MutPtr<GuestALCcontext>) {
     if context.is_null() {
-        log!("alcDestroyContext() is called with NULL context, ignoring");
+        log_dbg!("alcDestroyContext() is called with NULL context, ignoring");
         return;
     }
-    let _host_context = State::get(env).contexts.remove(&context).unwrap();
+
+    let state = State::get(env);
+
+    if state.current_ctx == context {
+        state.current_ctx = Ptr::null();
+    }
+
+    let Some(_host_context) = state.contexts.remove(&context) else {
+        // Don’t crash on shutdown / double-destroy.
+        if state.warned_invalid_contexts.insert(context) {
+            log!(
+                "alcDestroyContext({:?}) called for unknown/already-destroyed context, ignoring",
+                context
+            );
+        }
+
+        return;
+    };
+
     env.mem.free(context.cast());
     log!("alcDestroyContext({:?})", context);
 }
 
 fn alcProcessContext(env: &mut Environment, context: MutPtr<GuestALCcontext>) {
     if context.is_null() {
-        log!("alcProcessContext() is called with NULL context, ignoring");
+        log_dbg!("alcProcessContext() is called with NULL context, ignoring");
         return;
     }
-    let host_context = State::get(env).contexts.get_mut(&context).unwrap();
+    let state = State::get(env);
+    let Some(host_context) = state.contexts.get_mut(&context) else {
+        if state.warned_invalid_contexts.insert(context) {
+            log!(
+                "alcProcessContext({:?}): unknown guest context, ignoring",
+                context
+            );
+        }
+        return;
+    };
     host_context.ProcessContext()
 }
 fn alcSuspendContext(env: &mut Environment, context: MutPtr<GuestALCcontext>) {
     if context.is_null() {
-        log!("alcSuspendContext() is called with NULL context, ignoring");
+        log_dbg!("alcSuspendContext() is called with NULL context, ignoring");
         return;
     }
-    let host_context = State::get(env).contexts.get_mut(&context).unwrap();
+    let state = State::get(env);
+    let Some(host_context) = state.contexts.get_mut(&context) else {
+        if state.warned_invalid_contexts.insert(context) {
+            log!(
+                "alcSuspendContext({:?}): unknown guest context, ignoring",
+                context
+            );
+        }
+        return;
+    };
     host_context.SuspendContext()
 }
 
@@ -272,17 +365,44 @@ fn alcGetContextsDevice(
     context: MutPtr<GuestALCcontext>,
 ) -> MutPtr<GuestALCdevice> {
     if context.is_null() {
-        log!("alcGetContextsDevice() is called with NULL context, ignoring");
+        log_dbg!("alcGetContextsDevice() is called with NULL context, ignoring");
         return Ptr::null();
     }
-    let host_context = State::get(env).contexts.get(&context).unwrap();
+
+    let state = State::get(env);
+
+    let Some(host_context) = state.contexts.get(&context) else {
+        if state.warned_invalid_contexts.insert(context) {
+            log!(
+                "alcGetContextsDevice(): unknown guest context {:?}, returning NULL",
+                context
+            );
+        }
+        return Ptr::null();
+    };
+
     let host_device = host_context.GetContextsDevice();
-    *State::get(env)
+
+    if host_device.is_null() {
+        log_dbg!("alcGetContextsDevice(): host device is NULL, ignoring");
+        return Ptr::null();
+    }
+
+    let Some((&guest_device, _)) = state
         .devices
         .iter()
-        .find(|(&_guest, &host)| host == host_device)
-        .unwrap()
-        .0
+        .find(|(_guest, &host)| host == host_device)
+    else {
+        if state.warned_invalid_host_devices.insert(host_device) {
+            log!(
+                "alcGetContextsDevice(): host device {:?} not found in mapping (shutdown race?), returning NULL",
+                host_device
+            );
+        }
+        return Ptr::null();
+    };
+
+    guest_device
 }
 
 fn alcGetProcAddress(
@@ -300,7 +420,11 @@ fn alcGetProcAddress(
         Ptr::from_bits(ptr.addr_with_thumb_bit())
     } else {
         if mangled_func_name == "_alcMacOSMixerOutputRate" {
-            log!("Tolerating nonexistent alcMacOSMixerOutputRate() func in alcGetProcAddress(), returning NULL.");
+            let state = State::get(env);
+            if !state.warned_mixer_output_rate_proc {
+                log!("Tolerating nonexistent alcMacOSMixerOutputRate() func in alcGetProcAddress(), returning NULL.");
+                state.warned_mixer_output_rate_proc = true;
+            }
             return Ptr::null();
         }
         panic!(
@@ -355,6 +479,13 @@ fn alGetBufferi(env: &mut Environment, buffer: ALuint, param: ALenum, value: Mut
 fn alIsSource(env: &mut Environment, source: ALuint) -> ALboolean {
     try_get_context!(env, context, 0);
     unsafe { context.IsSource(source) }
+}
+
+fn alIsExtensionPresent(env: &mut Environment, ext_name: ConstPtr<u8>) -> ALboolean {
+    try_get_context!(env, context, 0);
+    let s = env.mem.cstr_at_utf8(ext_name).unwrap();
+    let ss = CString::new(s).unwrap();
+    unsafe { context.IsExtensionPresent(ss.as_ptr()) }
 }
 
 fn alEnable(env: &mut Environment, capability: ALenum) {
@@ -615,6 +746,31 @@ fn alSourceRewind(env: &mut Environment, source: ALuint) {
     unsafe { context.SourceRewind(source) };
 }
 
+fn alSourcePlayv(env: &mut Environment, nsources: ALsizei, sources: ConstPtr<ALuint>) {
+    let nsources_usize: GuestUSize = nsources.try_into().unwrap();
+    let sources = env.mem.ptr_at(sources, nsources_usize);
+    try_get_context!(env, context);
+    unsafe { context.SourcePlayv(nsources, sources) };
+}
+fn alSourcePausev(env: &mut Environment, nsources: ALsizei, sources: ConstPtr<ALuint>) {
+    let nsources_usize: GuestUSize = nsources.try_into().unwrap();
+    let sources = env.mem.ptr_at(sources, nsources_usize);
+    try_get_context!(env, context);
+    unsafe { context.SourcePausev(nsources, sources) };
+}
+fn alSourceStopv(env: &mut Environment, nsources: ALsizei, sources: ConstPtr<ALuint>) {
+    let nsources_usize: GuestUSize = nsources.try_into().unwrap();
+    let sources = env.mem.ptr_at(sources, nsources_usize);
+    try_get_context!(env, context);
+    unsafe { context.SourceStopv(nsources, sources) };
+}
+fn alSourceRewindv(env: &mut Environment, nsources: ALsizei, sources: ConstPtr<ALuint>) {
+    let nsources_usize: GuestUSize = nsources.try_into().unwrap();
+    let sources = env.mem.ptr_at(sources, nsources_usize);
+    try_get_context!(env, context);
+    unsafe { context.SourceRewindv(nsources, sources) };
+}
+
 fn alSourceQueueBuffers(
     env: &mut Environment,
     source: ALuint,
@@ -674,13 +830,17 @@ fn alGenBuffers(env: &mut Environment, n: ALsizei, buffers: MutPtr<ALuint>) {
 fn alDeleteBuffers(env: &mut Environment, n: ALsizei, buffers: ConstPtr<ALuint>) {
     let n_usize: GuestUSize = n.try_into().unwrap();
     let buffers = env.mem.ptr_at(buffers, n_usize);
+    let ctx_ptr = State::get(env).current_ctx;
     let Some(context) = State::try_make_current(env) else {
-        log!(
-            "Attempted alDeleteBuffers({}, {:?}) with inactive context {:?}, skipping!",
-            n,
-            buffers,
-            State::get(env).current_ctx
-        );
+        let state = State::get(env);
+        if state.warned_invalid_contexts.insert(ctx_ptr) {
+            log!(
+                "Attempted alDeleteBuffers({}, {:?}) with inactive context {:?}, skipping!",
+                n,
+                buffers,
+                ctx_ptr
+            );
+        }
         return;
     };
     unsafe { context.DeleteBuffers(n, buffers) };
@@ -721,12 +881,20 @@ fn alBufferDataStatic(
 }
 
 // Apple-specific extension to OpenAL
-fn alcMacOSXMixerOutputRate(_env: &mut Environment, value: ALdouble) {
-    log!("App wants to set mixer output sample rate to {} Hz", value);
+fn alcMacOSXMixerOutputRate(env: &mut Environment, value: ALdouble) {
+    let state = State::get(env);
+    if !state.warned_mixer_rate {
+        log!("App wants to set mixer output sample rate to {} Hz", value);
+        state.warned_mixer_rate = true;
+    }
 }
-fn alcMacOSXGetMixerOutputRate(_env: &mut Environment) -> ALdouble {
+fn alcMacOSXGetMixerOutputRate(env: &mut Environment) -> ALdouble {
     // Default was checked on iPhone 3GS, iOS 4.0.1
-    log!("App wants to get mixer output sample rate, returning default 0");
+    let state = State::get(env);
+    if !state.warned_mixer_get_rate {
+        log!("App wants to get mixer output sample rate, returning default 0");
+        state.warned_mixer_get_rate = true;
+    }
     0.0
 }
 
@@ -819,22 +987,7 @@ fn alGetIntegerv(_env: &mut Environment, _param: ALenum, _values: MutPtr<ALint>)
 fn alGetProcAddress(env: &mut Environment, funcName: ConstPtr<u8>) -> MutVoidPtr {
     alcGetProcAddress(env, Ptr::null(), funcName)
 }
-fn alIsExtensionPresent(_env: &mut Environment, _extName: ConstPtr<u8>) -> ALboolean {
-    todo!();
-}
 fn alIsEnabled(_env: &mut Environment, _capability: ALenum) -> ALboolean {
-    todo!();
-}
-fn alSourcePlayv(_env: &mut Environment, _nsources: ALsizei, _sources: ConstPtr<ALuint>) {
-    todo!();
-}
-fn alSourcePausev(_env: &mut Environment, _nsources: ALsizei, _sources: ConstPtr<ALuint>) {
-    todo!();
-}
-fn alSourceStopv(_env: &mut Environment, _nsources: ALsizei, _sources: ConstPtr<ALuint>) {
-    todo!();
-}
-fn alSourceRewindv(_env: &mut Environment, _nsources: ALsizei, _sources: ConstPtr<ALuint>) {
     todo!();
 }
 

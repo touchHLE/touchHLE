@@ -13,18 +13,20 @@
 //! but it is not the current focus of the touchHLE. The current focus is,
 //! you know, **GAMES**.
 
-use crate::dyld::HostDylib;
+use crate::dyld::{ConstantExports, HostConstant, HostDylib};
 use crate::objc::{id, objc_classes, ClassExports};
 
 pub const DYLIB: HostDylib = HostDylib {
     path: "/System/Library/Frameworks/CoreLocation.framework/CoreLocation",
     aliases: &[],
     class_exports: &[CLASSES],
-    constant_exports: &[],
+    constant_exports: &[CONSTANTS],
     function_exports: &[],
 };
 
 type CLLocationAccuracy = f64;
+type CLLocationDegrees = f64;
+type CLLocationDistance = f64;
 
 const CLASSES: ClassExports = objc_classes! {
 
@@ -61,6 +63,12 @@ const CLASSES: ClassExports = objc_classes! {
 - (())setDesiredAccuracy:(CLLocationAccuracy)_acc {
     // TODO
 }
+- (())setHeadingFilter:(CLLocationDegrees)_filter {
+    // TODO
+}
+- (())setDistanceFilter:(CLLocationDistance)_filter {
+    // TODO
+}
 
 @end
 
@@ -69,3 +77,14 @@ const CLASSES: ClassExports = objc_classes! {
 @end
 
 };
+
+const CONSTANTS: ConstantExports = &[
+    (
+        "_kCLHeadingFilterNone",
+        HostConstant::Custom(|env| env.mem.alloc_and_write(-1f64).cast().cast_const()),
+    ),
+    (
+        "_kCLLocationAccuracyKilometer",
+        HostConstant::Custom(|env| env.mem.alloc_and_write(1000f64).cast().cast_const()),
+    ),
+];

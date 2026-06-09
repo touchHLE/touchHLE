@@ -174,6 +174,7 @@ fn scandir(
     let mut output: MutPtr<MutPtr<dirent>> = env.mem.alloc(size).cast();
     env.mem.write(list, output);
 
+    #[allow(clippy::explicit_counter_loop)]
     for entry in tmp_vec {
         env.mem.write(output, entry);
         output += 1;

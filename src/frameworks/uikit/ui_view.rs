@@ -703,6 +703,13 @@ pub const CLASSES: ClassExports = objc_classes! {
     log!("TODO: [(UIView *){:?} sizeToFit]", this);
 }
 
+- (())setContentScaleFactor:(CGFloat)factor {
+    todo_objc_setter!(this, factor);
+}
+- (CGFloat)contentScaleFactor {
+    1.0 // TODO
+}
+
 @end
 
 };

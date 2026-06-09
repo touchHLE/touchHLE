@@ -109,11 +109,6 @@ com.ea.candcra.row: --landscape-left
 # (force composition fixes black boxes on Android Adreno GPUs)
 com.chillingo.defenderchronicles: --landscape-left --force-composition
 
-# SimCity
-# (we neeed to force language to avoid a crash)
-com.ea.simcitybv: --preferred-languages=en
-com.ea.simcityinc: --preferred-languages=en
-
 # Tom Clancy's Splinter Cell: Conviction
 # Note: "Force composition" flag is needed to fix broken render after the first level.
 com.gameloft.SplinterCell: --force-composition
@@ -189,8 +184,44 @@ com.mastertronic.casper: --force-composition
 4rv4l3j0ur: --landscape-left
 
 # Brothers In Arms: Hour Of Heroes
-com.gameloft.BIA: --landscape-left
+# 25 bytes is the minimum amount of bytes needed to clear the PVR flag stored on the stack.
+# This prevents "Game Card has been removed" issue.
+com.gameloft.BIA: --landscape-left --zero-stack-after-guest-to-host-call=25
 
 # Hero of Sparta II
 # Stick = Move, A = Jump, B = Quick attack, X = Block, Y = Weapon select, LeftShoulder = Focus kill
 com.gameloft.HOS2: --stick-to-touch=28,206,84,84 --button-to-touch=Start,25,25 --button-to-touch=B,394,234 --button-to-touch=A,456,190 --button-to-touch=X,350,294 --button-to-touch=Y,434,22 --button-to-touch=LeftShoulder,446,286
+
+# Unity's 3D World demo
+com.unity3d.3Dworld: --landscape-left --force-composition
+
+# Zombieville
+com.KelliNoda.Zombieville: --landscape-left --force-composition
+
+# Ace Combat Xi
+# Start: Pause, DPad: Pitch/Yaw, Left stick: Pitch/Roll, Left shoulder button: Throttle, X: Brake, Y: Objective, B: Missile, A: Gun
+com.namconetworks.AceCombatXi: --landscape-left --y-tilt-offset=45 --button-to-touch=Start,195,310 --dpad-to-touch=15,150,75,75 --button-to-touch=LeftShoulder,33,263 --button-to-touch=X,115,295  --button-to-touch=Y,355,230 --button-to-touch=B,440,260 --button-to-touch=A,355,300
+
+# Tiki Towers
+com.mrgoodliving.TikiTowers: --landscape-left
+
+# Resident Evil Degeneration
+jp.co.capcom.residentevil.en: --landscape-left --stabilize-virtual-cursor=0.1,10 --button-to-touch=A,430,280 --button-to-touch=B,440,200 --button-to-touch=Y,440,100 --button-to-touch=Start,30,30 --dpad-to-touch=25,200,95,100 --stick-to-touch=25,200,95,100
+
+# COD Zombies
+# DPad/Stick = Move, Left shoulder = Knife, A = Shoot, B = Aim, X = Reload, Y = Grenade, Start = Pause
+com.activision.callofduty: --x-tilt-offset=-10 --dpad-to-touch=30,215,80,80 --stick-to-touch=30,215,80,80 --button-to-touch=A,387,210 --button-to-touch=B,455,185 --button-to-touch=X,455,25 --button-to-touch=Y,440,95 --button-to-touch=LeftShoulder,240,310 --button-to-touch=Start,20,25
+
+# Pandemonium
+# DPad/Stick = Move, Up = Switch Character, X = Fargus Attack, A = Fire, B = Jump, LeftShoulder = Switch Camera, Start = Pause
+com.ea.pandyinc: --landscape-left --button-to-touch=DPadLeft,50,230 --button-to-touch=DPadRight,160,230 --button-to-touch=DPadDown,110,290 --button-to-touch=X,295,295 --button-to-touch=A,360,280 --button-to-touch=B,450,255 --button-to-touch=Start,445,15 --button-to-touch=LeftShoulder,15,15 --button-to-touch=DPadUp,240,40
+
+# Samurai: Way of the warrior
+com.madfingergames.Samurai: --force-composition
+
+# NEX
+com.StarByte.NEX: --landscape-left --force-composition
+
+# Galaxy on Fire
+# In Game controls A = Weapon Select, X = Boost, B = Fire, Y = Missle, Start = Pause
+www.fishlabs.net.GalaxyOnFire: --landscape-right --button-to-touch=A,427,274 --button-to-touch=X,380,254 --button-to-touch=Y,124,291 --button-to-touch=B,444,221 --button-to-touch=Start,444,20

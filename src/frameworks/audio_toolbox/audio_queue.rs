@@ -18,16 +18,14 @@ use crate::frameworks::carbon_core::OSStatus;
 use crate::frameworks::core_audio_types::{
     debug_fourcc, fourcc, kAudioFormatAppleIMA4, kAudioFormatFlagIsBigEndian,
     kAudioFormatFlagIsFloat, kAudioFormatFlagIsPacked, kAudioFormatFlagIsSignedInteger,
-    kAudioFormatLinearPCM, AudioStreamBasicDescription,
+    kAudioFormatLinearPCM, AudioStreamBasicDescription, AudioTimeStamp,
 };
 use crate::frameworks::core_foundation::cf_run_loop::{
     kCFRunLoopCommonModes, CFRunLoopGetMain, CFRunLoopMode, CFRunLoopRef,
 };
 use crate::frameworks::foundation::ns_run_loop;
 use crate::frameworks::foundation::ns_string::get_static_str;
-use crate::mem::{
-    guest_size_of, ConstPtr, ConstVoidPtr, GuestUSize, Mem, MutPtr, MutVoidPtr, Ptr, SafeRead,
-};
+use crate::mem::{guest_size_of, ConstPtr, GuestUSize, Mem, MutPtr, MutVoidPtr, Ptr, SafeRead};
 use crate::objc::msg;
 use crate::Environment;
 use std::collections::{HashMap, VecDeque};
@@ -126,6 +124,7 @@ type AudioQueuePropertyListenerProc = GuestFunction;
 const kAudioQueueErr_InvalidBuffer: OSStatus = -66687;
 const kAudioQueueErr_InvalidPropertySize: OSStatus = -66683;
 const kAudioQueueErr_BufferInQueue: OSStatus = -66679;
+const kAudioQueueErr_CannotStart: OSStatus = -66681;
 
 pub fn AudioQueueNewOutput(
     env: &mut Environment,
@@ -319,6 +318,29 @@ pub fn AudioQueueAllocateBuffer(
     env.mem.write(out_buffer, buffer_ptr);
 
     0 // success
+}
+
+fn AudioQueueEnqueueBufferWithParameters(
+    env: &mut Environment,
+    in_aq: AudioQueueRef,
+    in_buffer: AudioQueueBufferRef,
+    in_num_packet_descs: u32,
+    in_packet_descs: MutVoidPtr,
+    in_trim_frames_at_start: u32,
+    in_trim_frames_at_end: u32,
+    in_num_param_values: u32,
+    in_param_values: MutVoidPtr,
+    in_start_time: ConstPtr<AudioTimeStamp>,
+    out_actual_start_time: MutPtr<AudioTimeStamp>,
+) -> OSStatus {
+    // TODO
+    assert_eq!(in_trim_frames_at_start, 0);
+    assert_eq!(in_trim_frames_at_end, 0);
+    assert_eq!(in_num_param_values, 0);
+    assert!(in_param_values.is_null());
+    assert!(in_start_time.is_null());
+    assert!(out_actual_start_time.is_null());
+    AudioQueueEnqueueBuffer(env, in_aq, in_buffer, in_num_packet_descs, in_packet_descs)
 }
 
 pub fn AudioQueueEnqueueBuffer(
@@ -633,14 +655,14 @@ pub fn decode_buffer(
 
 /// Ensure an audio queue has an OpenAL source and at least one queued OpenAL
 /// buffer.
-fn prime_audio_queue(env: &mut Environment, in_aq: AudioQueueRef) {
+fn prime_audio_queue(env: &mut Environment, in_aq: AudioQueueRef) -> Result<(), ()> {
     let (state, context) =
         State::get_with_context(&mut env.framework_state, &mut env.openal_manager);
 
     let host_object = state.audio_queues.get_mut(&in_aq).unwrap();
 
     if !is_supported_audio_format(&host_object.format) {
-        return;
+        return Err(());
     }
 
     if host_object.al_source.is_none() {
@@ -716,6 +738,7 @@ fn prime_audio_queue(env: &mut Environment, in_aq: AudioQueueRef) {
         unsafe { context.SourceQueueBuffers(al_source, 1, &next_al_buffer) };
         assert!(unsafe { context.GetError() } == 0);
     }
+    Ok(())
 }
 
 fn unqueue_buffers<F: FnMut(ALuint)>(al_source: ALuint, context: &OpenAL<'_>, mut callback: F) {
@@ -795,7 +818,7 @@ pub fn handle_audio_queue(env: &mut Environment, in_aq: AudioQueueRef) {
 
     // Push new buffers etc.
 
-    prime_audio_queue(env, in_aq);
+    _ = prime_audio_queue(env, in_aq);
 
     let context = env
         .framework_state
@@ -851,9 +874,16 @@ fn AudioQueuePrime(
 ) -> OSStatus {
     return_if_null!(in_aq);
 
-    assert!(out_number_of_frames_prepared.is_null()); // TODO
-    prime_audio_queue(env, in_aq);
-    0 // success
+    match prime_audio_queue(env, in_aq) {
+        Ok(_) => {
+            assert!(out_number_of_frames_prepared.is_null()); // TODO
+            0 // success
+        }
+        Err(_) => {
+            log!("Warning: Cannot prime audio queue!");
+            kAudioQueueErr_CannotStart
+        }
+    }
 }
 
 fn notify_aq_is_running(env: &mut Environment, in_aq: AudioQueueRef) {
@@ -876,13 +906,13 @@ fn notify_aq_is_running(env: &mut Environment, in_aq: AudioQueueRef) {
 pub fn AudioQueueStart(
     env: &mut Environment,
     in_aq: AudioQueueRef,
-    in_device_start_time: ConstVoidPtr, // should be `const AudioTimeStamp*`
+    in_device_start_time: ConstPtr<AudioTimeStamp>,
 ) -> OSStatus {
     return_if_null!(in_aq);
 
     assert!(in_device_start_time.is_null()); // TODO
 
-    prime_audio_queue(env, in_aq);
+    _ = prime_audio_queue(env, in_aq);
 
     let (state, context) =
         State::get_with_context(&mut env.framework_state, &mut env.openal_manager);
@@ -1096,6 +1126,18 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(AudioQueueAllocateBufferWithPacketDescriptions(_, _, _, _)),
     export_c_func!(AudioQueueAllocateBuffer(_, _, _)),
     export_c_func!(AudioQueueEnqueueBuffer(_, _, _, _)),
+    export_c_func!(AudioQueueEnqueueBufferWithParameters(
+        _,
+        _,
+        _,
+        _,
+        _,
+        _,
+        _,
+        _,
+        _,
+        _
+    )),
     export_c_func!(AudioQueueAddPropertyListener(_, _, _, _)),
     export_c_func!(AudioQueueRemovePropertyListener(_, _, _, _)),
     export_c_func!(AudioQueueGetPropertySize(_, _, _)),

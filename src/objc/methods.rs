@@ -126,17 +126,14 @@ impl ClassHostObject {
             let method_ptr: ConstPtr<method_t> =
                 Ptr::from_bits(methods_base_ptr.to_bits() + i * entsize);
 
-            // TODO: support type strings
-            let method_t {
-                name,
-                types: _,
-                imp,
-            } = mem.read(method_ptr);
+            let method_t { name, types, imp } = mem.read(method_ptr);
 
             // There is no guarantee this string is unique or known.
             // We must deduplicate it like any other.
             let sel = objc.register_bin_selector(name, mem);
             self.methods.insert(sel, IMP::Guest(imp));
+            // TODO: avoid storing duplicated signatures globally
+            self.guest_method_signatures.insert(sel, types);
         }
     }
 }
@@ -162,9 +159,28 @@ impl ObjC {
         }
     }
 
+    pub fn class_get_method_signature(&self, class: Class, sel: SEL) -> Option<&ConstPtr<u8>> {
+        // TODO: support `host` method signatures
+        let mut class = class;
+        loop {
+            let &ClassHostObject {
+                superclass,
+                ref methods,
+                ref guest_method_signatures,
+                ..
+            } = self.borrow(class);
+            if methods.contains_key(&sel) {
+                return guest_method_signatures.get(&sel);
+            } else if superclass == nil {
+                return None;
+            } else {
+                class = superclass;
+            }
+        }
+    }
+
     /// Same as [Self::class_has_method], but using a named selector (rather
     /// than a pointer).
-    #[allow(dead_code)]
     pub fn class_has_method_named(&self, class: Class, sel_name: &str) -> bool {
         if let Some(sel) = self.lookup_selector(sel_name) {
             self.class_has_method(class, sel)
@@ -176,6 +192,16 @@ impl ObjC {
     /// Checks if a given object has a method (responds to a selector).
     pub fn object_has_method(&self, mem: &Mem, obj: id, sel: SEL) -> bool {
         self.class_has_method(ObjC::read_isa(obj, mem), sel)
+    }
+
+    #[allow(dead_code)]
+    pub fn object_get_method_signature(
+        &self,
+        mem: &Mem,
+        obj: id,
+        sel: SEL,
+    ) -> Option<&ConstPtr<u8>> {
+        self.class_get_method_signature(ObjC::read_isa(obj, mem), sel)
     }
 
     /// Same as [Self::object_has_method], but using a named selector (rather

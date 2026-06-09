@@ -180,6 +180,10 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 - (())drawAtPoint:(CGPoint)point {
     let context = UIGraphicsGetCurrentContext(env);
+    if context == nil {
+        log!("Warning: [(UIImage*){:?} drawAtPoint:{:?}] is called with nil context, ignoring.", this, point);
+        return;
+    }
     let image = env.objc.borrow::<UIImageHostObject>(this).cg_image;
     let rect = CGRect {
         origin: point,

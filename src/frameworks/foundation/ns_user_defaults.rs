@@ -252,7 +252,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     }
     let ns_number_class = env.objc.get_known_class("NSNumber", &mut env.mem);
     if env.objc.class_is_subclass_of(val_class, ns_number_class) {
-        todo!();
+        return msg![env; val stringValue];
     }
     nil
 }
@@ -266,6 +266,20 @@ pub const CLASSES: ClassExports = objc_classes! {
     let val_class: Class = msg![env; val class];
     let ns_array_class = env.objc.get_known_class("NSArray", &mut env.mem);
     if env.objc.class_is_subclass_of(val_class, ns_array_class) {
+        return val;
+    }
+    nil
+}
+
+- (id)dictionaryForKey:(id)key {
+    log_dbg!("NSUserDefaults dictionaryForKey:{}", to_rust_string(env, key));
+    let val: id = msg![env; this objectForKey:key];
+    if val == nil {
+        return nil;
+    }
+    let val_class: Class = msg![env; val class];
+    let ns_dictionary_class = env.objc.get_known_class("NSDictionary", &mut env.mem);
+    if env.objc.class_is_subclass_of(val_class, ns_dictionary_class) {
         return val;
     }
     nil

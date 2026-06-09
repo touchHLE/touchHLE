@@ -15,7 +15,8 @@ use super::{kCFNotFound, CFComparisonResult, CFIndex, CFOptionFlags, CFRange};
 use crate::abi::{DotDotDot, VaList};
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::frameworks::foundation::{ns_string, unichar, NSNotFound, NSRange, NSUInteger};
-use crate::mem::{ConstPtr, MutPtr};
+use crate::libc::string::strlen;
+use crate::mem::{ConstPtr, GuestUSize, MutPtr};
 use crate::objc::{id, msg, msg_class};
 use crate::Environment;
 
@@ -101,7 +102,7 @@ fn CFStringCreateCopy(
     allocator: CFAllocatorRef,
     the_string: CFStringRef,
 ) -> CFStringRef {
-    assert_eq!(allocator, kCFAllocatorDefault); // unimplemented
+    assert!(allocator == kCFAllocatorDefault || env.mem.read(allocator).is_system_default()); // unimplemented
     msg![env; the_string copy]
 }
 
@@ -110,7 +111,7 @@ fn CFStringCreateMutable(
     allocator: CFAllocatorRef,
     max_length: CFIndex,
 ) -> CFMutableStringRef {
-    assert_eq!(allocator, kCFAllocatorDefault); // unimplemented
+    assert!(allocator == kCFAllocatorDefault || env.mem.read(allocator).is_system_default()); // unimplemented
     assert_eq!(max_length, 0);
     msg_class![env; NSMutableString new]
 }
@@ -121,7 +122,7 @@ fn CFStringCreateMutableCopy(
     max_length: CFIndex,
     the_string: CFStringRef,
 ) -> CFMutableStringRef {
-    assert_eq!(allocator, kCFAllocatorDefault); // unimplemented
+    assert!(allocator == kCFAllocatorDefault || env.mem.read(allocator).is_system_default()); // unimplemented
     assert_eq!(max_length, 0);
     msg![env; the_string mutableCopy]
 }
@@ -134,7 +135,7 @@ fn CFStringCreateWithBytes(
     encoding: CFStringEncoding,
     is_external: bool,
 ) -> CFStringRef {
-    assert_eq!(allocator, kCFAllocatorDefault); // unimplemented
+    assert!(allocator == kCFAllocatorDefault || env.mem.read(allocator).is_system_default()); // unimplemented
     assert!(!is_external); // TODO
     let encoding = CFStringConvertEncodingToNSStringEncoding(env, encoding);
     let length: NSUInteger = num_bytes.try_into().unwrap();
@@ -148,10 +149,28 @@ fn CFStringCreateWithCString(
     c_string: ConstPtr<u8>,
     encoding: CFStringEncoding,
 ) -> CFStringRef {
-    assert!(allocator == kCFAllocatorDefault); // unimplemented
+    assert!(allocator == kCFAllocatorDefault || env.mem.read(allocator).is_system_default()); // unimplemented
     let encoding = CFStringConvertEncodingToNSStringEncoding(env, encoding);
     let ns_string: id = msg_class![env; NSString alloc];
     msg![env; ns_string initWithCString:c_string encoding:encoding]
+}
+
+fn CFStringCreateWithCStringNoCopy(
+    env: &mut Environment,
+    allocator: CFAllocatorRef,
+    c_string: ConstPtr<u8>,
+    encoding: CFStringEncoding,
+    deallocator: CFAllocatorRef,
+) -> CFStringRef {
+    assert!(allocator == kCFAllocatorDefault || env.mem.read(allocator).is_system_default()); // unimplemented
+    assert!(env.mem.read(deallocator).is_null()); // unimplemented
+    let encoding = CFStringConvertEncodingToNSStringEncoding(env, encoding);
+    let c_len: GuestUSize = strlen(env, c_string);
+    let ns_string: id = msg_class![env; NSString alloc];
+    // Docs of CFStringCreateWithCStringNoCopy says caller should never assume
+    // that the object is using the external buffer (it could be copied or even
+    // dumped). So we can "safely" invoke a method which does copy!
+    msg![env; ns_string initWithBytes:c_string length:c_len encoding:encoding]
 }
 
 fn CFStringCreateWithFormat(
@@ -172,9 +191,24 @@ fn CFStringCreateWithFormatAndArguments(
     format: CFStringRef,
     args: VaList,
 ) -> CFStringRef {
-    assert!(allocator == kCFAllocatorDefault); // unimplemented
+    assert!(allocator == kCFAllocatorDefault || env.mem.read(allocator).is_system_default()); // unimplemented
     let res = ns_string::with_format(env, format, args);
     ns_string::from_rust_string(env, res)
+}
+
+fn CFStringCreateWithSubstring(
+    env: &mut Environment,
+    allocator: CFAllocatorRef,
+    the_string: CFStringRef,
+    range: CFRange,
+) -> CFStringRef {
+    assert!(allocator == kCFAllocatorDefault || env.mem.read(allocator).is_system_default()); // unimplemented
+    let range = NSRange {
+        location: range.location.try_into().unwrap(),
+        length: range.length.try_into().unwrap(),
+    };
+    let res: id = msg![env; the_string substringWithRange:range];
+    msg![env; res copy]
 }
 
 pub type CFStringCompareFlags = CFOptionFlags;
@@ -233,6 +267,15 @@ fn CFStringGetCharacters(
     };
     msg![env; string getCharacters:buffer range:range]
 }
+
+fn CFStringGetCharactersPtr(_env: &mut Environment, _the_string: CFStringRef) -> ConstPtr<unichar> {
+    // NULL is expected if the function cannot provide a buffer of Unicode
+    // characters `efficiently`. Moreover, the same doc claims that the caller
+    // should not `count on receiving a non-NULL result from this function
+    // under any circumstances`. Win-win situation, if you ask me!
+    ConstPtr::null()
+}
+
 fn CFStringGetCStringPtr(
     env: &mut Environment,
     the_string: CFStringRef,
@@ -252,6 +295,46 @@ fn CFStringGetCString(
     let encoding = CFStringConvertEncodingToNSStringEncoding(env, encoding);
     let buffer_size = buffer_size as NSUInteger;
     msg![env; a getCString:buffer maxLength:buffer_size encoding:encoding]
+}
+
+fn CFStringGetBytes(
+    env: &mut Environment,
+    string: CFStringRef,
+    range: CFRange,
+    encoding: CFStringEncoding,
+    loss_byte: u8,
+    is_external: bool,
+    buffer: MutPtr<u8>,
+    max_buf_len: CFIndex,
+    used_buf_len: MutPtr<CFIndex>,
+) -> CFIndex {
+    assert_eq!(loss_byte, 0);
+    assert!(!is_external); // TODO
+
+    let range_len = range.length;
+    let range = NSRange {
+        location: range.location.try_into().unwrap(),
+        length: range_len.try_into().unwrap(),
+    };
+    // TODO: avoid copying
+    let substring: id = msg![env; string substringWithRange:range];
+
+    let encoding = CFStringConvertEncodingToNSStringEncoding(env, encoding);
+    let buffer_size: NSUInteger = max_buf_len.try_into().unwrap();
+    let success: bool =
+        ns_string::get_bytes_buffer_inner(env, substring, buffer, buffer_size, encoding, false);
+    assert!(success); // TODO
+    let length: NSUInteger = msg![env; substring length];
+    assert_eq!(length, range_len.try_into().unwrap());
+
+    if !used_buf_len.is_null() {
+        let result_bytes_length: NSUInteger =
+            msg![env; substring lengthOfBytesUsingEncoding:encoding];
+        env.mem
+            .write(used_buf_len, result_bytes_length.try_into().unwrap());
+    }
+
+    length.try_into().unwrap()
 }
 
 fn CFStringGetLength(env: &mut Environment, the_string: CFStringRef) -> CFIndex {
@@ -339,6 +422,18 @@ fn CFStringGetPascalString(
     )
 }
 
+type CFStringNormalizationForm = CFIndex;
+
+fn CFStringNormalize(
+    env: &mut Environment,
+    the_string: CFMutableStringRef,
+    the_form: CFStringNormalizationForm,
+) {
+    let str = ns_string::to_rust_string(env, the_string);
+    log!("TODO: CFStringNormalize('{}', {})", str, the_form);
+    assert!(str.is_ascii()); // TODO
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CFStringAppend(_, _)),
     export_c_func!(CFStringAppendCString(_, _, _)),
@@ -350,15 +445,19 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CFStringCreateMutableCopy(_, _, _)),
     export_c_func!(CFStringCreateWithBytes(_, _, _, _, _)),
     export_c_func!(CFStringCreateWithCString(_, _, _)),
+    export_c_func!(CFStringCreateWithCStringNoCopy(_, _, _, _)),
     export_c_func!(CFStringCreateWithFormat(_, _, _, _)),
     export_c_func!(CFStringCreateWithFormatAndArguments(_, _, _, _)),
+    export_c_func!(CFStringCreateWithSubstring(_, _, _)),
     export_c_func!(CFStringCompare(_, _, _)),
     export_c_func!(CFStringCompareWithOptions(_, _, _, _)),
     export_c_func!(CFStringDelete(_, _)),
     export_c_func!(CFStringGetCharacterAtIndex(_, _)),
     export_c_func!(CFStringGetCharacters(_, _, _)),
+    export_c_func!(CFStringGetCharactersPtr(_)),
     export_c_func!(CFStringGetCStringPtr(_, _)),
     export_c_func!(CFStringGetCString(_, _, _, _)),
+    export_c_func!(CFStringGetBytes(_, _, _, _, _, _, _, _)),
     export_c_func!(CFStringGetIntValue(_)),
     export_c_func!(CFStringGetLength(_)),
     export_c_func!(CFStringFind(_, _, _)),
@@ -366,4 +465,5 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CFStringUppercase(_, _)),
     export_c_func!(CFStringCreateWithPascalString(_, _, _)),
     export_c_func!(CFStringGetPascalString(_, _, _, _)),
+    export_c_func!(CFStringNormalize(_, _)),
 ];

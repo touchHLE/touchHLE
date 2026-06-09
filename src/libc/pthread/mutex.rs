@@ -165,7 +165,12 @@ pub fn pthread_mutex_trylock(env: &mut Environment, mutex: MutPtr<pthread_mutex_
         }
     };
     let mutex_data = env.mem.read(mutex);
-    if env.mutex_state.mutex_is_locked(mutex_data.mutex_id) {
+    if env.mutex_state.mutex_is_locked(mutex_data.mutex_id)
+        && !(env.mutex_state.mutex_is_recursive(mutex_data.mutex_id)
+            && env
+                .mutex_state
+                .mutex_is_locked_by(mutex_data.mutex_id, env.current_thread))
+    {
         EBUSY
     } else {
         pthread_mutex_lock(env, mutex)

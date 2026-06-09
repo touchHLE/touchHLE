@@ -9,9 +9,9 @@
 
 use crate::dyld::HostFunction;
 use crate::frameworks::audio_toolbox::audio_file::{
-    self, kAudioFilePropertyDataFormat, kAudioFilePropertyPacketSizeUpperBound,
-    kAudioFileReadPermission, AudioFileClose, AudioFileGetProperty, AudioFileID, AudioFileOpenURL,
-    AudioFileReadPackets,
+    self, guest_audio_file_read_from_vec, kAudioFilePropertyDataFormat,
+    kAudioFilePropertyPacketSizeUpperBound, kAudioFileReadPermission, AudioFileClose,
+    AudioFileGetProperty, AudioFileID, AudioFileOpenURL, AudioFileReadPackets,
 };
 use crate::frameworks::audio_toolbox::audio_queue::{
     kAudioQueueParam_Volume, AudioQueueAllocateBuffer, AudioQueueBufferRef, AudioQueueDispose,
@@ -22,13 +22,12 @@ use crate::frameworks::carbon_core::eofErr;
 use crate::frameworks::core_audio_types::AudioStreamBasicDescription;
 use crate::frameworks::core_foundation::cf_run_loop::kCFRunLoopCommonModes;
 use crate::frameworks::foundation::ns_error::NSOSStatusErrorDomain;
-use crate::frameworks::foundation::{ns_string, NSInteger, NSTimeInterval};
-use crate::mem::{guest_size_of, GuestUSize, MutPtr, MutVoidPtr, Ptr};
+use crate::frameworks::foundation::{ns_string, NSInteger, NSTimeInterval, NSUInteger};
+use crate::mem::{guest_size_of, ConstVoidPtr, GuestUSize, MutPtr, MutVoidPtr, Ptr};
 use crate::objc::{
-    id, msg, msg_class, nil, release, retain, todo_objc_setter, Class, ClassExports, HostObject,
-    NSZonePtr,
+    autorelease, id, msg, msg_class, nil, objc_classes, release, retain, todo_objc_setter, Class,
+    ClassExports, HostObject, NSZonePtr,
 };
-use crate::objc_classes;
 use crate::Environment;
 
 const kNumberBuffers: usize = 3;
@@ -82,10 +81,10 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (id)initWithContentsOfURL:(id)url // NSURL*
-                      error:(MutPtr<id>)outError { // NSError**
+                      error:(MutPtr<id>)out_error { // NSError**
     let path: id = msg![env; url path];
     let path_str = ns_string::to_rust_string(env, path);
-    log_dbg!("[(AVAudioPlayer*){:?} initWithContentsOfURL:{:?} {} outError:{:?}]", this, url, path_str, outError);
+    log_dbg!("[(AVAudioPlayer*){:?} initWithContentsOfURL:{:?} {} outError:{:?}]", this, url, path_str, out_error);
 
     retain(env, url);
     env.objc.borrow_mut::<AVAudioPlayerHostObject>(this).audio_file_url = url;
@@ -97,16 +96,43 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.borrow_mut::<AVAudioPlayerHostObject>(this).audio_file_id = Some(audio_file_id);
     env.mem.free(tmp_afi_ptr.cast());
     if status != 0 {
-        if !outError.is_null() {
+        if !out_error.is_null() {
             let domain = ns_string::get_static_str(env, NSOSStatusErrorDomain);
             let error = msg_class![env; NSError alloc];
             let error = msg![env; error initWithDomain:domain code:status userInfo:nil];
-            env.mem.write(outError, error);
+            autorelease(env, error);
+            env.mem.write(out_error, error);
         }
+        release(env, this);
         return nil;
     }
 
     this
+}
+
+- (id)initWithData:(id)data // NSData*
+             error:(MutPtr<id>)out_error { // NSError**
+    let bytes: ConstVoidPtr = msg![env; data bytes];
+    let length: NSUInteger = msg![env; data length];
+    let data_vec = env
+        .mem
+        .bytes_at(bytes.cast(), length)
+        .to_vec();
+
+    assert_eq!(env.objc.borrow::<AVAudioPlayerHostObject>(this).audio_file_url, nil);
+
+    match guest_audio_file_read_from_vec(env, data_vec) {
+        Ok(audio_file_id) => {
+            assert!(env.objc.borrow::<AVAudioPlayerHostObject>(this).audio_file_id.is_none());
+            env.objc.borrow_mut::<AVAudioPlayerHostObject>(this).audio_file_id = Some(audio_file_id);
+            this
+        }
+        Err(_) => {
+            assert!(out_error.is_null()); // TODO
+            release(env, this);
+            nil
+        }
+    }
 }
 
 - (())setDelegate:(id)delegate {
@@ -303,6 +329,17 @@ pub const CLASSES: ClassExports = objc_classes! {
         }
     }
     log_dbg!("[(AVAudioPlayer *) {:?} setCurrentTime: {}]", this, currentTime);
+}
+
+- (NSTimeInterval)duration {
+    let host_object = env.objc.borrow::<AVAudioPlayerHostObject>(this);
+    let audio_file_id = host_object.audio_file_id.unwrap();
+    let audio_file = &audio_file::State::get(&mut env.framework_state)
+        .audio_files
+        .get(&audio_file_id)
+        .unwrap()
+        .audio_file;
+    audio_file.estimated_duration()
 }
 
 @end

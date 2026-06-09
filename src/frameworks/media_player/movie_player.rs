@@ -122,9 +122,13 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.borrow::<MPMoviePlayerControllerHostObject>(this).content_url
 }
 
+- (id)backgroundColor {
+    msg_class![env; UIColor blackColor] // TODO
+}
 - (())setBackgroundColor:(id)color { // UIColor*
     todo_objc_setter!(this, color);
 }
+
 - (())setScalingMode:(MPMovieScalingMode)mode {
     todo_objc_setter!(this, mode);
 }

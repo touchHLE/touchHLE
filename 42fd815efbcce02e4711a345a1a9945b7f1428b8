@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "891ed1b0_f1921246",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2026-06-09T20:30:08Z",
+      "side": 1,
+      "message": "So apparently this is also needed for Critter Crunch.  Used to create the initial save file.  Apologize for uploading a compiled touchHLE.apk with this initially! I was messing around with something and accidentally added that.  Patch set 2 is good!",
+      "revId": "42fd815efbcce02e4711a345a1a9945b7f1428b8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

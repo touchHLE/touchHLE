@@ -88,6 +88,24 @@
       "parentUuid": "920f7601_96325b96",
       "revId": "59ca44ddfc11e604dd8660d0f285c890ab865a04",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e89a33d6_f935ce2d",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1039141
+      },
+      "writtenOn": "2026-06-09T18:44:42Z",
+      "side": 1,
+      "message": "I\u0027ll check (again) through my app collection for games that make use of ExtAudioFile and has ima4 support, but seems so far it\u0027s just ones that aren\u0027t anywhere close to being supported/booting up hence I can\u0027t test them. Would you or @ciciplusplus@gmail.com happen to be aware of a compatible game that has both? If not then no worries",
+      "parentUuid": "58cfcd8c_f76b4140",
+      "revId": "59ca44ddfc11e604dd8660d0f285c890ab865a04",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

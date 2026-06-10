@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9f4c68ba_b4289000",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-06-10T00:02:16Z",
+      "side": 1,
+      "message": "Can we include (perhaps in the README) a reference to the specific commit hash and tag this was built from?",
+      "revId": "7cd4d60fc06b5a8c01f6151795bd085244ea2092",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

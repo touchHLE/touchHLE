@@ -16,6 +16,24 @@
       "message": "Can we include (perhaps in the README) a reference to the specific commit hash and tag this was built from?",
       "revId": "7cd4d60fc06b5a8c01f6151795bd085244ea2092",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "64cd16df_9516d480",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2026-06-10T02:34:02Z",
+      "side": 1,
+      "message": "I changed the readme to have the build code link directly to the release tag. Does that work?",
+      "parentUuid": "9f4c68ba_b4289000",
+      "revId": "7cd4d60fc06b5a8c01f6151795bd085244ea2092",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

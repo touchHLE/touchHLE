@@ -16,7 +16,9 @@ use crate::frameworks::uikit;
 use crate::gles::gles11_raw as gles11; // constants only
 use crate::gles::gles11_raw::types::*;
 use crate::gles::present::{present_frame, FpsCounter};
-use crate::gles::{create_gles1_ctx, create_gles2_ctx, gles1_on_gl2, GLESContext, GLES};
+use crate::gles::{
+    create_gles1_ctx, create_gles2_ctx, create_gles3_ctx, gles1_on_gl2, GLESContext, GLES,
+};
 use crate::mem::MutPtr;
 use crate::objc::{id, msg, nil, objc_classes, release, retain, ClassExports, HostObject};
 use crate::options::Options;
@@ -33,6 +35,11 @@ pub const kEAGLDrawablePropertyColorFormat: &str = "ColorFormat";
 pub const kEAGLDrawablePropertyRetainedBacking: &str = "RetainedBacking";
 pub const kEAGLColorFormatRGBA8: &str = "RGBA8";
 pub const kEAGLColorFormatRGB565: &str = "RGB565";
+/// `kEAGLColorFormatSRGBA8` — sRGB 8888 EAGL color format, added in
+/// iOS 7. Apps that supply this string in `drawableProperties` are
+/// requesting a sRGB-encoded color renderbuffer (per
+/// `EAGLDrawable.h`).
+pub const kEAGLColorFormatSRGBA8: &str = "SRGBA8";
 
 pub const CONSTANTS: ConstantExports = &[
     (
@@ -51,14 +58,36 @@ pub const CONSTANTS: ConstantExports = &[
         "_kEAGLColorFormatRGB565",
         HostConstant::NSString(kEAGLColorFormatRGB565),
     ),
+    (
+        "_kEAGLColorFormatSRGBA8",
+        HostConstant::NSString(kEAGLColorFormatSRGBA8),
+    ),
 ];
 
 type EAGLRenderingAPI = u32;
 const kEAGLRenderingAPIOpenGLES1: EAGLRenderingAPI = 1;
 const kEAGLRenderingAPIOpenGLES2: EAGLRenderingAPI = 2;
-#[allow(dead_code)]
 const kEAGLRenderingAPIOpenGLES3: EAGLRenderingAPI = 3;
 
+/// Resolve the EAGL rendering API the host should actually create a context
+/// for. When `prefer_gles2_context` is set and the app requested ES 1.1, we
+/// transparently upgrade to ES 2.0 so apps that ask for ES 1.1 but drive
+/// rendering with shader entry points (`glUseProgram`, `glCreateShader`, …)
+/// route through the real native ES 2.0 backend instead of falling through
+/// to the GLES 1.1-only stubs in `gles_generic`.
+fn effective_eagl_api(requested: EAGLRenderingAPI, prefer_gles2_context: bool) -> EAGLRenderingAPI {
+    if prefer_gles2_context && requested == kEAGLRenderingAPIOpenGLES1 {
+        log!(
+            "EAGL: --prefer-gles2-context active, upgrading initWithAPI:{} \
+             (kEAGLRenderingAPIOpenGLES1) to kEAGLRenderingAPIOpenGLES2",
+            requested
+        );
+        return kEAGLRenderingAPIOpenGLES2;
+    }
+    requested
+}
+
+#[derive(Default)]
 pub(super) struct EAGLContextHostObject {
     pub(super) gles_ctx: Option<Box<dyn GLESContext>>,
     /// Which EAGL rendering API was requested. This influences how
@@ -115,9 +144,12 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (id)initWithAPI:(EAGLRenderingAPI)api sharegroup:(id)group {
-    if api != kEAGLRenderingAPIOpenGLES1 && api != kEAGLRenderingAPIOpenGLES2 {
+    if api != kEAGLRenderingAPIOpenGLES1
+        && api != kEAGLRenderingAPIOpenGLES2
+        && api != kEAGLRenderingAPIOpenGLES3
+    {
         log!(
-            "TODO: App requested EAGL initWithAPI:{} sharegroup:{:?}, returning nil as we only support API 1 and 2",
+            "App requested EAGL initWithAPI:{} sharegroup:{:?}, returning nil as we only support APIs 1, 2 and 3",
             api,
             group
         );
@@ -140,10 +172,12 @@ pub const CLASSES: ClassExports = objc_classes! {
     }
     env.window.as_mut().unwrap().set_share_with_current_context(true);
 
-    let mut gles_ins = if api == kEAGLRenderingAPIOpenGLES2 {
-        create_gles2_ctx(env)
-    } else {
-        create_gles1_ctx(env)
+    let effective_api = effective_eagl_api(api, env.options.prefer_gles2_context);
+
+    let mut gles_ins = match effective_api {
+        kEAGLRenderingAPIOpenGLES3 => create_gles3_ctx(env),
+        kEAGLRenderingAPIOpenGLES2 => create_gles2_ctx(env),
+        _ => create_gles1_ctx(env),
     };
 
     let window = env.window.as_mut().expect("OpenGL ES is not supported in headless mode");
@@ -153,7 +187,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     }
 
     env.objc.borrow_mut::<EAGLContextHostObject>(this).gles_ctx = Some(gles_ins);
-    env.objc.borrow_mut::<EAGLContextHostObject>(this).api = api;
+    env.objc.borrow_mut::<EAGLContextHostObject>(this).api = effective_api;
 
     env.window.as_mut().unwrap().set_share_with_current_context(false);
 
@@ -162,18 +196,23 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (id)initWithAPI:(EAGLRenderingAPI)api {
-    if api != kEAGLRenderingAPIOpenGLES1 && api != kEAGLRenderingAPIOpenGLES2 {
+    if api != kEAGLRenderingAPIOpenGLES1
+        && api != kEAGLRenderingAPIOpenGLES2
+        && api != kEAGLRenderingAPIOpenGLES3
+    {
         log!(
-            "TODO: App requested EAGL initWithAPI:{}, returning nil as we only support API 1 and 2",
+            "App requested EAGL initWithAPI:{}, returning nil as we only support APIs 1, 2 and 3",
             api
         );
         return nil;
     }
 
-    let mut gles_ins = if api == kEAGLRenderingAPIOpenGLES2 {
-        create_gles2_ctx(env)
-    } else {
-        create_gles1_ctx(env)
+    let effective_api = effective_eagl_api(api, env.options.prefer_gles2_context);
+
+    let mut gles_ins = match effective_api {
+        kEAGLRenderingAPIOpenGLES3 => create_gles3_ctx(env),
+        kEAGLRenderingAPIOpenGLES2 => create_gles2_ctx(env),
+        _ => create_gles1_ctx(env),
     };
 
     let window = env.window.as_mut().expect("OpenGL ES is not supported in headless mode");
@@ -183,7 +222,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     }
 
     env.objc.borrow_mut::<EAGLContextHostObject>(this).gles_ctx = Some(gles_ins);
-    env.objc.borrow_mut::<EAGLContextHostObject>(this).api = api;
+    env.objc.borrow_mut::<EAGLContextHostObject>(this).api = effective_api;
 
     this
 }
@@ -215,9 +254,71 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (bool)renderbufferStorage:(NSUInteger)target
                fromDrawable:(id)drawable { // EAGLDrawable (always CAEAGLayer*)
     log!("[EAGLContext renderbufferStorage:{:#x} fromDrawable:{:?}]", target, drawable);
-    assert!(drawable != nil); // TODO: handle unbinding
 
     assert!(target == gles11::RENDERBUFFER_OES);
+
+    // Apple's `EAGLContext` documentation for
+    // `-renderbufferStorage:fromDrawable:` states that passing `nil` for the
+    // drawable "deletes any earlier binding" of the currently bound
+    // renderbuffer to a drawable and returns `YES`. touchHLE used to
+    // assert against this case (`drawable != nil`), which crashed apps
+    // that legitimately unbind during teardown (e.g. Resident Evil 4 —
+    // HyperHLE log #5 — calls `renderbufferStorage:fromDrawable:nil`
+    // while tearing down its EAGL surface during a scene transition).
+    //
+    // Spec behaviour: look up the currently bound renderbuffer (via
+    // `RENDERBUFFER_BINDING_OES`), drop its entry from the
+    // (renderbuffer -> drawable) map, and release the retained drawable.
+    // No new storage is allocated in this case.
+    if drawable == nil {
+        let window = env
+            .window
+            .as_mut()
+            .expect("OpenGL ES is not supported in headless mode");
+        let current_renderbuffer = {
+            let Some(mut gles) = super::sync_context(
+                &mut env.framework_state.opengles,
+                &mut env.objc,
+                window,
+                env.current_thread,
+            ) else {
+                // No current EAGL context: there can't be a meaningful
+                // renderbuffer binding to remove. Apple-style soft failure.
+                log!(
+                    "[EAGLContext renderbufferStorage:{:#x} fromDrawable:nil] \
+                     called with no current GL context for thread {}; \
+                     treating as no-op.",
+                    target,
+                    env.current_thread
+                );
+                return true;
+            };
+            let mut renderbuffer: gles11::types::GLint = 0;
+            unsafe {
+                gles.GetIntegerv(gles11::RENDERBUFFER_BINDING_OES, &mut renderbuffer);
+            }
+            renderbuffer as gles11::types::GLuint
+        };
+
+        let removed = {
+            let host_obj = env.objc.borrow_mut::<EAGLContextHostObject>(this);
+            host_obj
+                .renderbuffer_drawable_bindings
+                .borrow_mut()
+                .remove(&current_renderbuffer)
+        };
+        if let Some(old_drawable) = removed {
+            release(env, old_drawable);
+        } else {
+            log_dbg!(
+                "[EAGLContext renderbufferStorage:{:#x} fromDrawable:nil]: \
+                 no drawable was bound to renderbuffer {} — nothing to unbind.",
+                target,
+                current_renderbuffer
+            );
+        }
+        return true;
+    }
 
     let props: id = msg![env; drawable drawableProperties];
 
@@ -254,9 +355,48 @@ pub const CLASSES: ClassExports = objc_classes! {
         // Unclear from documentation if this method requires an appropriate
         // context to already be active, but that seems to be the case
         // in practice?
-        let mut gles = super::sync_context(&mut env.framework_state.opengles, &mut env.objc, window, env.current_thread);
+        let Some(mut gles) = super::sync_context(
+            &mut env.framework_state.opengles,
+            &mut env.objc,
+            window,
+            env.current_thread,
+        ) else {
+            log!(
+                "[EAGLContext renderbufferStorage:{:#x} fromDrawable:{:?}] \
+                 called with no current GL context for thread {}; failing \
+                 the call instead of crashing.",
+                target,
+                drawable,
+                env.current_thread
+            );
+            return false;
+        };
         unsafe {
+            // Clear any pre-existing error so we can detect failure of the
+            // storage allocation reliably.
+            while gles.GetError() != gles11::NO_ERROR {}
             gles.RenderbufferStorageOES(target, internalformat, width.try_into().unwrap(), height.try_into().unwrap());
+            if gles.GetError() != gles11::NO_ERROR {
+                // RGBA8 is optional in OpenGL ES 1.1 Common Profile (requires
+                // OES_rgb8_rgba8). Fall back to RGBA4 (0x8056) which is
+                // required by OES_framebuffer_object.
+                const GL_RGBA4: gles11::types::GLenum = 0x8056;
+                gles.RenderbufferStorageOES(
+                    target,
+                    GL_RGBA4,
+                    width.try_into().unwrap(),
+                    height.try_into().unwrap(),
+                );
+                if gles.GetError() != gles11::NO_ERROR {
+                    log!(
+                        "[EAGLContext renderbufferStorage:{:#x} fromDrawable:{:?}] \
+                         failed to allocate renderbuffer storage (tried RGBA8 and RGBA4)",
+                        target,
+                        drawable
+                    );
+                    return false;
+                }
+            }
             let mut renderbuffer = 0;
             gles.GetIntegerv(gles11::RENDERBUFFER_BINDING_OES, &mut renderbuffer);
             renderbuffer as _
@@ -331,7 +471,24 @@ pub const CLASSES: ClassExports = objc_classes! {
     // Unclear from documentation if this method requires the context to be
     // current, but it would be weird if it didn't?
     let window = env.window.as_mut().expect("OpenGL ES is not supported in headless mode");
-    let mut gles = super::sync_context(&mut env.framework_state.opengles, &mut env.objc, window, env.current_thread);
+    let Some(mut gles) = super::sync_context(&mut env.framework_state.opengles, &mut env.objc, window, env.current_thread) else {
+        // No current EAGL context. Apple's docs require the receiver to be
+        // the current context for `presentRenderbuffer:` to succeed; the
+        // canonical iOS behaviour is to silently return NO in this state
+        // rather than abort. Returning here also keeps the framerate
+        // limiter from leaking a sleep if we somehow get here without a
+        // context.
+        log!(
+            "[EAGLContext presentRenderbuffer:{:#x}] called with no current \
+             GL context for thread {}; returning NO.",
+            target,
+            env.current_thread
+        );
+        if let Some(sleep_for) = sleep_for {
+            env.sleep(sleep_for);
+        }
+        return false;
+    };
 
     let renderbuffer: GLuint = unsafe {
         let mut renderbuffer = 0;
@@ -393,13 +550,53 @@ pub const CLASSES: ClassExports = objc_classes! {
         );
         let pixels_vec = get_pixels_vec_for_presenting(env, drawable);
         // re-borrow
-        let (pixels_vec, width, height) = {
-            let mut gles = super::sync_context(&mut env.framework_state.opengles, &mut env.objc, env.window.as_mut().unwrap(), env.current_thread);
-            unsafe {
-                read_renderbuffer(gles.as_mut(), pixels_vec)
+        let read_result = {
+            let maybe_gles = super::sync_context(
+                &mut env.framework_state.opengles,
+                &mut env.objc,
+                env.window.as_mut().unwrap(),
+                env.current_thread,
+            );
+            match maybe_gles {
+                Some(mut gles) => Some(unsafe { read_renderbuffer(gles.as_mut(), pixels_vec) }),
+                None => {
+                    log!(
+                        "[EAGLContext presentRenderbuffer:{:#x}] lost GL \
+                         context for thread {} between fast-path and \
+                         slow-path; skipping copy-back.",
+                        target,
+                        env.current_thread
+                    );
+                    None
+                }
             }
         };
+        let Some((pixels_vec, width, height)) = read_result else {
+            if let Some(sleep_for) = sleep_for {
+                env.sleep(sleep_for);
+            }
+            return false;
+        };
         present_pixels(env, drawable, pixels_vec, width, height);
+
+        // The slow path stores the freshly rendered frame in `presented_pixels`
+        // on the drawable, but the *screen* is only updated when the Core
+        // Animation compositor runs. The compositor is normally driven from
+        // NSRunLoop iterations, but some games (notably Temple Run) drive
+        // their own render loop and only spin NSRunLoop very rarely, so the
+        // screen would otherwise update at well below 2 FPS even though the
+        // app is rendering at 60 FPS.
+        //
+        // Apple's documentation for `-[EAGLContext presentRenderbuffer:]`
+        // states that the contents of the renderbuffer are displayed when
+        // this method returns. To honour that contract — and to keep the
+        // composited overlay (UIKit controls drawn on top of the EAGL view)
+        // in step with the rendered frame — drive the compositor here
+        // explicitly when we are on this slow path. We pass `force: true`
+        // so the compositor's 60Hz throttle doesn't suppress this tick;
+        // recomposite_if_necessary still updates its internal scheduler so
+        // NSRunLoop-driven ticks remain rate-limited.
+        crate::frameworks::core_animation::recomposite_if_necessary(env, true);
     }
 
     if let Some(sleep_for) = sleep_for {
@@ -557,6 +754,14 @@ unsafe fn read_renderbuffer(gles: &mut dyn GLES, mut pixel_buffer: Vec<u8>) -> (
         renderbuffer,
     );
 
+    // On tile-based GPUs (Mali, Adreno, PowerVR) the per-tile color buffer
+    // isn't guaranteed to be resolved to the renderbuffer's main memory
+    // until the driver decides to flush. glReadPixels is supposed to imply
+    // a flush, but some drivers don't kick off the resolve aggressively
+    // enough and we end up reading uninitialized (black) pixels. Force the
+    // tile resolve here so the slow-path composite gets the actual frame.
+    gles.Finish();
+
     // Read the pixels
     let size = (width_u32 as usize)
         .checked_mul(height_u32 as usize)
@@ -705,8 +910,57 @@ unsafe fn present_renderbuffer_es2(
     gles.Disable(gles2::SCISSOR_TEST);
     gles.Clear(gles2::COLOR_BUFFER_BIT | gles2::DEPTH_BUFFER_BIT | gles2::STENCIL_BUFFER_BIT);
 
-    // Compile the present shader program once and cache it.
-    let program = ensure_present_program(gles);
+    // Compile the present shader program once and cache it. If the shader
+    // fails to compile/link (e.g. on a host with a buggy GLSL ES driver),
+    // skip the present pass instead of crashing — the previous frame
+    // remains on screen and the app continues to run.
+    let Some(program) = ensure_present_program(gles) else {
+        log!("Warning: present_renderbuffer_es2: present shader unavailable, skipping frame.");
+        gles.DeleteTextures(1, &tex);
+        // Restore vertex attribute enabled state so the app's next draw works.
+        for (i, &was) in attrib_was_enabled.iter().enumerate() {
+            if was != 0 {
+                gles.EnableVertexAttribArray(i as GLuint);
+            } else {
+                gles.DisableVertexAttribArray(i as GLuint);
+            }
+        }
+        gles.UseProgram(if old_program > 0 {
+            old_program as GLuint
+        } else {
+            0
+        });
+        gles.BindBuffer(gles2::ARRAY_BUFFER, old_array_buffer as GLuint);
+        gles.BindBuffer(gles2::ELEMENT_ARRAY_BUFFER, old_elem_buffer as GLuint);
+        gles.BindFramebuffer(gles2::FRAMEBUFFER, old_framebuffer as GLuint);
+        gles.BindTexture(gles2::TEXTURE_2D, old_texture as GLuint);
+        gles.ActiveTexture(old_active_texture as GLenum);
+        gles.Viewport(
+            old_viewport[0],
+            old_viewport[1],
+            old_viewport[2] as _,
+            old_viewport[3] as _,
+        );
+        gles.ClearColor(
+            old_clear_color[0],
+            old_clear_color[1],
+            old_clear_color[2],
+            old_clear_color[3],
+        );
+        if depth_test_was_on {
+            gles.Enable(gles2::DEPTH_TEST);
+        }
+        if cull_was_on {
+            gles.Enable(gles2::CULL_FACE);
+        }
+        if blend_was_on {
+            gles.Enable(gles2::BLEND);
+        }
+        if scissor_was_on {
+            gles.Enable(gles2::SCISSOR_TEST);
+        }
+        return;
+    };
     gles.UseProgram(program.program);
     gles.Uniform1i(program.u_tex, 0);
     let m = crate::matrix::Matrix::<4>::from(&rotation_matrix);
@@ -833,10 +1087,10 @@ thread_local! {
         const { std::cell::Cell::new(None) };
 }
 
-unsafe fn ensure_present_program(gles: &mut dyn GLES) -> PresentProgram {
+unsafe fn ensure_present_program(gles: &mut dyn GLES) -> Option<PresentProgram> {
     use crate::gles::gles2_raw as gles2;
     if let Some(p) = PRESENT_PROGRAM.with(|c| c.get()) {
-        return p;
+        return Some(p);
     }
 
     let vs_src = b"\
@@ -872,7 +1126,9 @@ unsafe fn ensure_present_program(gles: &mut dyn GLES) -> PresentProgram {
             len as _,
         ))
         .unwrap_or("?");
-        panic!("present_es2 vertex shader compile failed: {s}");
+        log!("Warning: present_es2 vertex shader compile failed: {s}");
+        gles.DeleteShader(vs);
+        return None;
     }
 
     let fs = gles.CreateShader(gles2::FRAGMENT_SHADER);
@@ -890,7 +1146,10 @@ unsafe fn ensure_present_program(gles: &mut dyn GLES) -> PresentProgram {
             len as _,
         ))
         .unwrap_or("?");
-        panic!("present_es2 fragment shader compile failed: {s}");
+        log!("Warning: present_es2 fragment shader compile failed: {s}");
+        gles.DeleteShader(vs);
+        gles.DeleteShader(fs);
+        return None;
     }
 
     let prog = gles.CreateProgram();
@@ -911,7 +1170,11 @@ unsafe fn ensure_present_program(gles: &mut dyn GLES) -> PresentProgram {
             len as _,
         ))
         .unwrap_or("?");
-        panic!("present_es2 program link failed: {s}");
+        log!("Warning: present_es2 program link failed: {s}");
+        gles.DeleteShader(vs);
+        gles.DeleteShader(fs);
+        gles.DeleteProgram(prog);
+        return None;
     }
 
     let a_pos = gles.GetAttribLocation(prog, b"aPos\0".as_ptr() as *const _);
@@ -927,7 +1190,7 @@ unsafe fn ensure_present_program(gles: &mut dyn GLES) -> PresentProgram {
         u_tex_mat,
     };
     PRESENT_PROGRAM.with(|c| c.set(Some(result)));
-    result
+    Some(result)
 }
 
 /// Copies the pixels in a renderbuffer bound to `GL_RENDERBUFFER_BINDING_OES`
@@ -935,19 +1198,119 @@ unsafe fn ensure_present_program(gles: &mut dyn GLES) -> PresentProgram {
 /// [present_frame], trying to avoid noticeably modifying OpenGL ES state while
 /// doing so. The front and back buffers are then swapped.
 unsafe fn present_renderbuffer(env: &mut Environment) {
+    // Capture this up front because the env borrow is moved into the GL
+    // context machinery below.
+    let trace_gl_errors = env.options.trace_gl_errors;
+
     // Save these for when we need to draw the frame
     let viewport = env.window.as_mut().unwrap().viewport();
-    let rotation_matrix = env.window.as_mut().unwrap().rotation_matrix();
+    let device_family = env.window.as_mut().unwrap().device_family();
+    let device_orientation = env.window.as_mut().unwrap().current_rotation();
+    // For iPad apps in a non-portrait orientation, the UIKit auto-rotation
+    // path (`UIWindow addSubview:` in ui_window.rs) applies a rotation
+    // transform to the rootViewController's view so that the app, which
+    // typically draws content "upright" inside the EAGL layer's portrait
+    // bounds, ends up rotated for landscape display when Core Animation
+    // composites it. touchHLE bypasses CA composition for EAGL apps that
+    // call `presentRenderbuffer:` directly, so we have to replicate that
+    // additional rotation here. Without it, iPad landscape games (e.g.
+    // Plants vs. Zombies HD) render upside-down. iPhone-only landscape
+    // games (e.g. Plants vs. Zombies, the iPhone version) typically rotate
+    // their drawing themselves, so we must NOT apply the extra rotation
+    // for them.
+    // FIXME: A cleaner solution would be to read the actual transform from
+    //        the EAGL layer's view hierarchy and apply it here, instead of
+    //        using a device-family heuristic.
+    // Patched: Disabled iPad autorotation compensation for Angry Birds HD
+    // FIXME: Revisit orientation heuristics to correctly handle auto-rotation
+    //        via actual layer/view hierarchy transforms instead of a hardcoded false.
+    let needs_autorotation_compensation = false;
+    let rotation_matrix = if needs_autorotation_compensation {
+        env.window
+            .as_mut()
+            .unwrap()
+            .rotation_matrix()
+            .multiply(&crate::matrix::Matrix::z_rotation(std::f32::consts::PI))
+    } else {
+        env.window.as_mut().unwrap().rotation_matrix()
+    };
     let virtual_cursor_visible_at = env.window.as_mut().unwrap().virtual_cursor_visible_at();
 
-    let gles_ctx = super::get_thread_context(
+    let Some(gles_ctx) = super::get_thread_context(
         &mut env.framework_state.opengles,
         &mut env.objc,
         env.current_thread,
-    );
+    ) else {
+        // No current EAGL context for this thread. The caller already
+        // returned `true` from `presentRenderbuffer:` (since the renderbuffer
+        // existed in `renderbuffer_drawable_bindings`), so the only thing
+        // left to do here is skip the host-side composition step and pump
+        // a single SDL swap so the window keeps animating. Without this
+        // guard the emulator used to abort with the panic visible in
+        // HyperHLE log #5 (`opengles.rs:56` — Option::unwrap on a None
+        // current_ctx).
+        log!(
+            "present_renderbuffer: no current GL context for thread {}; \
+             skipping host present and swapping window only.",
+            env.current_thread
+        );
+        if let Some(window) = env.window.as_ref() {
+            window.swap_window();
+        }
+        return;
+    };
 
     let mut gles_boxed = gles_ctx.make_current(env.window.as_mut().unwrap());
     let gles = gles_boxed.as_mut();
+
+    // Per-section diagnostic checkpoint helper. When --trace-gl-errors is
+    // on, this drains GL errors after each named section of
+    // present_renderbuffer and logs the *first* time each named section
+    // produces an error. Without an explicit per-section split, all
+    // errors generated by our host-side present logic accumulate into
+    // the GL error queue and are either silently drained at the end
+    // (see below) or get incorrectly attributed to whatever guest gl*
+    // call happens next, which makes it impossible to tell which of our
+    // own state queries / FBO operations / texture uploads is the actual
+    // culprit on a strict native ES 1.1 driver (e.g. ARM Mali, Qualcomm
+    // Adreno's ES 1.1 surface). The caller-provided AtomicBool means
+    // each unique checkpoint logs at most once for the entire app run,
+    // so this stays out of normal logs even when an error reproduces
+    // every frame. Implemented as a free function (not a macro) so each
+    // call site is a clean re-borrow of `gles` for NLL.
+    unsafe fn present_check(
+        gles: &mut dyn GLES,
+        trace: bool,
+        seen: &std::sync::atomic::AtomicBool,
+        section: &'static str,
+    ) {
+        if !trace {
+            return;
+        }
+        let err = gles.GetError();
+        if err == 0 {
+            return;
+        }
+        if !seen.swap(true, std::sync::atomic::Ordering::Relaxed) {
+            log!(
+                "[--trace-gl-errors] present_renderbuffer: section {:?} produced GL error {:#x} [this log will only be shown once]",
+                section,
+                err
+            );
+        }
+        while gles.GetError() != 0 {}
+    }
+
+    // Drain anything the guest might have left in the queue so we can
+    // attribute new errors below to our own code, not to whatever
+    // happened before presentRenderbuffer:.
+    if trace_gl_errors {
+        while gles.GetError() != 0 {}
+    }
+    {
+        static SEEN: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+        present_check(gles, trace_gl_errors, &SEEN, "after make_current");
+    }
 
     // On a real OpenGL ES 2.0 driver (Android etc.) the fixed-function code
     // path below cannot be used — there is no glMatrixMode / glColor4f /
@@ -968,27 +1331,137 @@ unsafe fn present_renderbuffer(env: &mut Environment) {
 
     let renderbuffer: GLuint = get_int(gles, gles11::RENDERBUFFER_BINDING_OES) as _;
     let (width, height) = get_renderbuffer_size(gles);
+    {
+        static SEEN: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+        present_check(
+            gles,
+            trace_gl_errors,
+            &SEEN,
+            "after renderbuffer-size queries",
+        );
+    }
+
+    {
+        use std::sync::atomic::{AtomicBool, Ordering};
+        static SEEN: AtomicBool = AtomicBool::new(false);
+        if !SEEN.swap(true, Ordering::Relaxed) {
+            log!(
+                "First present_renderbuffer ES1.1 path: renderbuffer={} size={}x{} (npot_w={} npot_h={}) [this log will only be shown once]",
+                renderbuffer,
+                width,
+                height,
+                !(width as u32).is_power_of_two(),
+                !(height as u32).is_power_of_two(),
+            );
+        }
+    }
 
     // To avoid confusing the guest app, we need to be able to undo any
     // state changes we make.
     let old_framebuffer: GLuint = get_int(gles, gles11::FRAMEBUFFER_BINDING_OES) as _;
     let old_texture_2d: GLuint = get_int(gles, gles11::TEXTURE_BINDING_2D) as _;
+    {
+        static SEEN: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
 
-    // Create a framebuffer we can use to read from the renderbuffer
-    let mut src_framebuffer = 0;
-    gles.GenFramebuffersOES(1, &mut src_framebuffer);
-    gles.BindFramebufferOES(gles11::FRAMEBUFFER_OES, src_framebuffer);
-    gles.FramebufferRenderbufferOES(
-        gles11::FRAMEBUFFER_OES,
-        gles11::COLOR_ATTACHMENT0_OES,
-        gles11::RENDERBUFFER_OES,
-        renderbuffer,
-    );
+        present_check(
+            gles,
+            trace_gl_errors,
+            &SEEN,
+            "after old_framebuffer/old_texture queries",
+        );
+    }
+
+    // Tile-based GPUs (e.g. Qualcomm Adreno, ARM Mali) defer rasterisation:
+    // the draws the app issued into the renderbuffer may still live in
+    // fast tile-local memory at the moment the app calls
+    // -presentRenderbuffer:. They are only "resolved" to the
+    // renderbuffer's actual main-memory storage at well-defined points,
+    // typically eglSwapBuffers, FBO unbinding, glReadPixels, or
+    // CopyTexImage2D from the bound FBO.
+    //
+    // We *used* to create our own throwaway FBO (`src_framebuffer`),
+    // attach the app's renderbuffer to it, and CopyTexImage2D from
+    // there. That worked on lenient drivers (Mesa / llvmpipe / Apple
+    // PowerVR / Adreno ES 3.x layer) but failed on ARM Mali r32p1
+    // (Mali-G57 MC2 in OpenGL ES-CM 1.1 mode), which on this code path
+    // produces an all-zero renderbuffer. The renderbuffer-content probe
+    // we added in the previous PR confirms this on real hardware:
+    // BL=BR=TL=TR=(0,0,0,255) at every first frame.
+    //
+    // Why did it fail on Mali? The act of `BindFramebufferOES(..,
+    // src_framebuffer)` unbinds the FBO the app rendered into, and on
+    // Mali r32p1 that unbind *discards* the tile data instead of
+    // resolving it to the renderbuffer's main memory. By the time
+    // CopyTexImage2D runs against `src_framebuffer`, the renderbuffer
+    // is empty. Forcing a 1-pixel glReadPixels + glFinish *before* the
+    // unbind also turned out not to be enough — the driver's resolve
+    // heuristics on that path still produce zeros (verified by user
+    // log on Mali-G57 MC2 with the previous attempt).
+    //
+    // The robust fix is to skip the FBO switch entirely: the app's own
+    // FBO already has the renderbuffer attached at color attachment 0
+    // (that's how the app rendered into it in the first place), so we
+    // can CopyTexImage2D directly from the currently-bound FBO. That
+    // way Mali never has a reason to discard the tile data: the same
+    // FBO that the draws went into is the FBO we're now reading from.
+    //
+    // The standard iPhone EAGL pattern guarantees old_framebuffer != 0
+    // at this point (the app must bind its own FBO before drawing into
+    // a renderbuffer-attached attachment, since FBO 0 has no such
+    // attachment). Out of paranoia we still keep a fallback for
+    // old_framebuffer == 0 that creates a temporary FBO and attaches
+    // the renderbuffer to it — this matches the pre-fix behaviour and
+    // lets weird non-iOS-pattern apps still present *something*.
+    let mut src_framebuffer: GLuint = 0;
+    let used_app_fbo = old_framebuffer != 0;
+    if !used_app_fbo {
+        gles.GenFramebuffersOES(1, &mut src_framebuffer);
+        gles.BindFramebufferOES(gles11::FRAMEBUFFER_OES, src_framebuffer);
+        gles.FramebufferRenderbufferOES(
+            gles11::FRAMEBUFFER_OES,
+            gles11::COLOR_ATTACHMENT0_OES,
+            gles11::RENDERBUFFER_OES,
+            renderbuffer,
+        );
+    }
+    {
+        static SEEN: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+        present_check(
+            gles,
+            trace_gl_errors,
+            &SEEN,
+            if used_app_fbo {
+                "after using app's bound FBO as copy source (no FBO switch)"
+            } else {
+                "after fallback FBO create+bind+attach (old_framebuffer==0)"
+            },
+        );
+    }
 
     // Create a texture with a copy of the pixels in the framebuffer
     let mut texture: GLuint = 0;
     gles.GenTextures(1, &mut texture);
     gles.BindTexture(gles11::TEXTURE_2D, texture);
+    // Force completion of any pending draws targeting the renderbuffer
+    // BEFORE we copy from it. On a spec-conformant driver glCopyTexImage2D
+    // implicitly syncs, but on ARM Mali r32p1 (Mali-G57 MC2 OpenGL ES-CM
+    // 1.1) we have evidence that it doesn't always: the LEGO Ninjago
+    // splash logo (frames 0..30) renders fine — its few draws are
+    // already tile-resolved by the time we Copy — but the title menu
+    // (~frame 120, many more draws per frame) reads back as a uniform
+    // colour from the renderbuffer probe even though every guest GL
+    // state field is identical to the working logo frame. The simplest
+    // explanation that fits all the evidence is that the title menu's
+    // tile cache hasn't been resolved to main memory when CopyTexImage2D
+    // runs, so the copy reads stale or uninitialised pixels. glFinish()
+    // is the heaviest possible sync but the safest one — any present
+    // path that needs to display a renderbuffer is *already* on the
+    // critical path of the frame, so spending a few hundred microseconds
+    // ensuring correctness is fine. (And on lenient drivers glFinish on
+    // an already-flushed pipeline is essentially free.)
+    gles.Finish();
     gles.CopyTexImage2D(
         gles11::TEXTURE_2D,
         0,
@@ -999,33 +1472,274 @@ unsafe fn present_renderbuffer(env: &mut Environment) {
         height,
         0,
     );
+    {
+        static SEEN: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+        present_check(
+            gles,
+            trace_gl_errors,
+            &SEEN,
+            "after Finish + CopyTexImage2D",
+        );
+    }
+    // Diagnostic probe: read a few pixels of the renderbuffer the guest
+    // just rendered into, so we can tell apart "renderbuffer is empty /
+    // all-black" (a guest-side or attach-side / tile-resolve bug) from
+    // "renderbuffer has content but present_frame is mis-displaying it"
+    // (a present-side bug). At this point the read source FBO is
+    // whichever copy source we used above: the app's own FBO
+    // (used_app_fbo, normal iOS pattern) or the throwaway src_framebuffer
+    // (fallback for old_framebuffer == 0). Either way, ReadPixels reads
+    // from FRAMEBUFFER_BINDING, so the values logged here describe the
+    // pixels CopyTexImage2D just copied.
+    //
+    // We sample several frames (the very first frame is often just a
+    // glClear and shows zeros even on healthy drivers — we need to also
+    // see what later "real game" frames look like) and we sample the
+    // image centre as well as the corners (the corners on UI screens
+    // are often legitimately black, while the centre is where the
+    // actual artwork lives, so that's a much better "did anything
+    // render?" signal). Gated on --trace-gl-errors.
+    if trace_gl_errors {
+        use std::sync::atomic::{AtomicUsize, Ordering};
+        static PROBE_COUNT: AtomicUsize = AtomicUsize::new(0);
+        let count = PROBE_COUNT.fetch_add(1, Ordering::Relaxed);
+        // Probe at frames 0, 1, 5, 30, 120, 600 — covers "first frame
+        // before app drew anything", "second frame", a couple of early
+        // splash frames, ~half-second-in, ~2s-in, ~10s-in. After that
+        // every 600 frames so a long-running session still gives us
+        // periodic snapshots without flooding the log.
+        let should_log = matches!(count, 0 | 1 | 5 | 30 | 120 | 600) || count.is_multiple_of(600);
+        if should_log {
+            // 5 single-pixel reads: 4 corners + centre.
+            let mut tl: [u8; 4] = [0; 4];
+            let mut tr: [u8; 4] = [0; 4];
+            let mut bl: [u8; 4] = [0; 4];
+            let mut br: [u8; 4] = [0; 4];
+            let mut cc: [u8; 4] = [0; 4];
+            let xmax = width.saturating_sub(1).max(0);
+            let ymax = height.saturating_sub(1).max(0);
+            let xmid = width / 2;
+            let ymid = height / 2;
+            for (x, y, buf) in [
+                (0, 0, &mut bl),
+                (xmax, 0, &mut br),
+                (0, ymax, &mut tl),
+                (xmax, ymax, &mut tr),
+                (xmid, ymid, &mut cc),
+            ] {
+                gles.ReadPixels(
+                    x,
+                    y,
+                    1,
+                    1,
+                    gles11::RGBA,
+                    gles11::UNSIGNED_BYTE,
+                    buf.as_mut_ptr() as *mut _,
+                );
+            }
+            // Drain any GL error this probe may have generated; it must
+            // not leak into the guest-visible error queue.
+            while gles.GetError() != 0 {}
+            // Snapshot the guest's current GL state — this tells us how
+            // the *app* was set up at presentRenderbuffer entry, which
+            // is the moment the previous frame's draws were issued.
+            // Useful for diagnosing "renderbuffer is uniform colour"
+            // bugs that look like draws no-op'd: does the app even
+            // have a vertex array enabled? Was a texture bound? Is
+            // alpha-test or depth-test rejecting fragments? etc.
+            //
+            // Each query is wrapped with an error-drain so a strict
+            // driver that rejects an enum just shows up as 0 in the
+            // log without poisoning the queue for the next query.
+            let qb = |gles: &mut dyn GLES, name: GLenum| -> GLboolean {
+                while gles.GetError() != 0 {}
+                let mut v: GLboolean = gles11::FALSE;
+                gles.GetBooleanv(name, &mut v);
+                while gles.GetError() != 0 {}
+                v
+            };
+            let qi = |gles: &mut dyn GLES, name: GLenum| -> GLint {
+                while gles.GetError() != 0 {}
+                let mut v: GLint = 0;
+                gles.GetIntegerv(name, &mut v);
+                while gles.GetError() != 0 {}
+                v
+            };
+            let qf4 = |gles: &mut dyn GLES, name: GLenum| -> [GLfloat; 4] {
+                while gles.GetError() != 0 {}
+                let mut v: [GLfloat; 4] = [0.0; 4];
+                gles.GetFloatv(name, v.as_mut_ptr());
+                while gles.GetError() != 0 {}
+                v
+            };
+            let blend_on = qb(gles, gles11::BLEND);
+            let blend_src = qi(gles, gles11::BLEND_SRC) as u32;
+            let blend_dst = qi(gles, gles11::BLEND_DST) as u32;
+            let depth_on = qb(gles, gles11::DEPTH_TEST);
+            let alpha_on = qb(gles, gles11::ALPHA_TEST);
+            let cull_on = qb(gles, gles11::CULL_FACE);
+            let texture_2d_on = qb(gles, gles11::TEXTURE_2D);
+            let varr_on = qb(gles, gles11::VERTEX_ARRAY);
+            let carr_on = qb(gles, gles11::COLOR_ARRAY);
+            let tarr_on = qb(gles, gles11::TEXTURE_COORD_ARRAY);
+            let array_buffer = qi(gles, gles11::ARRAY_BUFFER_BINDING);
+            let elem_buffer = qi(gles, gles11::ELEMENT_ARRAY_BUFFER_BINDING);
+            let clear_color = qf4(gles, gles11::COLOR_CLEAR_VALUE);
+            let current_color = qf4(gles, gles11::CURRENT_COLOR);
+            log!(
+                "[--trace-gl-errors] present_renderbuffer renderbuffer-content probe \
+                 (frame={}, used_app_fbo={}, viewport={:?}, renderbuffer={}x{}): \
+                 BL=({},{},{},{}) BR=({},{},{},{}) TL=({},{},{},{}) TR=({},{},{},{}) \
+                 CENTER=({},{},{},{}) \
+                 | guest GL state: app_fbo={} app_tex2d={} \
+                 array_buffer={} element_buffer={} \
+                 BLEND={} (src=0x{:04x} dst=0x{:04x}) DEPTH_TEST={} ALPHA_TEST={} \
+                 CULL_FACE={} TEXTURE_2D={} \
+                 vertex_arr={} color_arr={} texcoord_arr={} \
+                 clear_color=({:.3},{:.3},{:.3},{:.3}) current_color=({:.3},{:.3},{:.3},{:.3})",
+                count,
+                used_app_fbo,
+                viewport,
+                width,
+                height,
+                bl[0],
+                bl[1],
+                bl[2],
+                bl[3],
+                br[0],
+                br[1],
+                br[2],
+                br[3],
+                tl[0],
+                tl[1],
+                tl[2],
+                tl[3],
+                tr[0],
+                tr[1],
+                tr[2],
+                tr[3],
+                cc[0],
+                cc[1],
+                cc[2],
+                cc[3],
+                old_framebuffer,
+                old_texture_2d,
+                array_buffer,
+                elem_buffer,
+                blend_on,
+                blend_src,
+                blend_dst,
+                depth_on,
+                alpha_on,
+                cull_on,
+                texture_2d_on,
+                varr_on,
+                carr_on,
+                tarr_on,
+                clear_color[0],
+                clear_color[1],
+                clear_color[2],
+                clear_color[3],
+                current_color[0],
+                current_color[1],
+                current_color[2],
+                current_color[3],
+            );
+        }
+    }
     // The texture will not have any mip levels so we must ensure the filter
-    // does not use them, else rendering will fail.
+    // does not use them, else rendering will fail. Also force
+    // GL_CLAMP_TO_EDGE wrap because the renderbuffer is typically a
+    // non-power-of-two size (e.g. 480x320 for an iPhone landscape app)
+    // and many ES 1.1 implementations only allow GL_CLAMP_TO_EDGE for
+    // NPOT textures; without an explicit wrap the texture would inherit
+    // GL_REPEAT and render as black on strict drivers. Set both
+    // MIN_FILTER and MAG_FILTER explicitly so neither falls back to a
+    // mipmap-using default.
     gles.TexParameteri(
         gles11::TEXTURE_2D,
         gles11::TEXTURE_MIN_FILTER,
         gles11::LINEAR as _,
     );
+    gles.TexParameteri(
+        gles11::TEXTURE_2D,
+        gles11::TEXTURE_MAG_FILTER,
+        gles11::LINEAR as _,
+    );
+    gles.TexParameteri(
+        gles11::TEXTURE_2D,
+        gles11::TEXTURE_WRAP_S,
+        gles11::CLAMP_TO_EDGE as _,
+    );
+    gles.TexParameteri(
+        gles11::TEXTURE_2D,
+        gles11::TEXTURE_WRAP_T,
+        gles11::CLAMP_TO_EDGE as _,
+    );
+    {
+        static SEEN: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
 
-    // Clean up the framebuffer object since we no longer need it.
-    // This also sets the framebuffer bindings back to zero, so rendering
-    // will go to the default framebuffer (the window).
-    gles.DeleteFramebuffersOES(1, &src_framebuffer);
+        present_check(
+            gles,
+            trace_gl_errors,
+            &SEEN,
+            "after TexParameteri (filter+wrap)",
+        );
+    }
+
+    // Stop using the source FBO so the present_frame quad below renders
+    // to the default framebuffer (the SDL window) instead of the
+    // renderbuffer / our throwaway FBO. In the no-FBO-switch path we
+    // simply unbind the app's FBO; we'll restore it again at the end of
+    // this function. In the fallback path, deleting the throwaway FBO
+    // also implicitly unbinds it, leaving FRAMEBUFFER_BINDING == 0.
+    if used_app_fbo {
+        gles.BindFramebufferOES(gles11::FRAMEBUFFER_OES, 0);
+    } else {
+        gles.DeleteFramebuffersOES(1, &src_framebuffer);
+    }
+    {
+        static SEEN: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+        present_check(
+            gles,
+            trace_gl_errors,
+            &SEEN,
+            if used_app_fbo {
+                "after BindFramebufferOES(0) (release app's FBO for present)"
+            } else {
+                "after DeleteFramebuffersOES (fallback path)"
+            },
+        );
+    }
 
     // Reset various things that could affect the quad or virtual cursor we're
     // going to draw. Back up the old state while doing so, so it can be
     // restored later. The app's subsequent drawing will be messed up if we
     // don't restore it.
 
-    // GL_CURRENT_PROGRAM (0x8B8D) is an ES 2.0 / GL 2.0 piece of state. ES 1.x
-    // contexts won't have any program bound, in which case this is a harmless
-    // no-op. ES 2.0 apps do have one bound and we must clear it so our
-    // fixed-function quad-drawing code below works.
-    const CURRENT_PROGRAM: GLenum = 0x8B8D;
-    let old_program: GLuint = get_int(gles, CURRENT_PROGRAM) as _;
-    if old_program != 0 {
-        gles.UseProgram(0);
-    }
+    // We *used* to query GL_CURRENT_PROGRAM (0x8B8D) here and call
+    // glUseProgram(0) to clear any program before drawing the fixed-function
+    // present quad. The original assumption was: "ES 1.x contexts won't have
+    // any program bound, so this is a harmless no-op on ES 1.1 backends; ES
+    // 2.0 apps that nevertheless landed in this path needed the clear so the
+    // fixed-function quad would work."
+    //
+    // That assumption is wrong on real-world Android ES 1.1 drivers. On
+    // Adreno (and similar GPUs whose ES 1.1 surface is implemented on top of
+    // an underlying ES 3.x engine), querying GL_CURRENT_PROGRAM returns a
+    // non-zero handle pointing at the driver's own internal program (used
+    // for fixed-function emulation). Calling our generic gles.UseProgram(0)
+    // on a GLES1Native backend then no-ops (gles_generic stub) — the program
+    // is *not* actually unbound, but our fixed-function quad below now runs
+    // with that internal program intercepting the draws, which produces a
+    // black screen.
+    //
+    // The reverse path (a GLES2 app that somehow landed here) is now
+    // impossible: the `if gles.is_es2()` branch above returns early for any
+    // ES 2.0 backend. So just drop the clear/restore entirely on the
+    // remaining (non-ES2) path. See LEGO Ninjago: Spinjitzu Scavenger Hunt.
 
     let old_arrays = {
         let mut old_arrays = [gles11::FALSE; gles1_on_gl2::ARRAYS.len()];
@@ -1035,25 +1749,130 @@ unsafe fn present_renderbuffer(env: &mut Environment) {
         }
         old_arrays
     };
-    let old_capabilities = {
-        let mut old_capabilities = [gles11::FALSE; gles1_on_gl2::CAPABILITIES.len()];
-        for (is_enabled, &name) in old_capabilities
+    {
+        static SEEN: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+        present_check(
+            gles,
+            trace_gl_errors,
+            &SEEN,
+            "after old_arrays save+disable",
+        );
+    }
+    // On a strict native ES 1.1 driver (e.g. ARM Mali on Android), some
+    // entries in CAPABILITIES are spec-invalid for ES 1.1 even though they
+    // are valid in desktop GL 2.1 (where the gles1_on_gl2 emulator runs).
+    // Querying / disabling those would yield GL_INVALID_ENUM. The hard-coded
+    // CAPABILITIES_GL21_ONLY list catches the *known* offenders, but real
+    // Android drivers have plenty of further per-vendor / per-extension
+    // quirks (e.g. r32p1 Mali-G57 in OpenGL ES-CM 1.1 mode rejects more caps
+    // than the spec strictly says it should). Rather than maintain a growing
+    // allow-list per driver, we drain GL errors *per cap* here: any cap that
+    // GetBooleanv rejects is recorded as "skip" (None) so the matching
+    // restore loop below also leaves it alone instead of trying to Enable /
+    // Disable it and producing yet another error. This keeps the GL error
+    // queue clean for the subsequent present_check sections — without it,
+    // the very first cap that errors would poison the queue and make every
+    // later checkpoint look like *it* failed.
+    let is_native_es1 = gles.is_native_es1();
+    let old_capabilities: [Option<GLboolean>; gles1_on_gl2::CAPABILITIES.len()] = {
+        let mut old_capabilities: [Option<GLboolean>; gles1_on_gl2::CAPABILITIES.len()] =
+            [None; gles1_on_gl2::CAPABILITIES.len()];
+        // Collect rejected caps so we can log them as a single line the
+        // first time present runs. Useful for diagnosing "title menu
+        // black on Mali but logo works" style bugs: maybe Mali rejected
+        // the very cap the title menu relies on (e.g. ALPHA_TEST,
+        // POINT_SPRITE_OES, ...).
+        static FIRST_PRESENT: std::sync::atomic::AtomicBool =
+            std::sync::atomic::AtomicBool::new(true);
+        let log_rejects =
+            trace_gl_errors && FIRST_PRESENT.swap(false, std::sync::atomic::Ordering::Relaxed);
+        let mut rejected_caps: Vec<GLenum> = Vec::new();
+        for (slot, &name) in old_capabilities
             .iter_mut()
             .zip(gles1_on_gl2::CAPABILITIES.iter())
         {
-            gles.GetBooleanv(name, is_enabled);
+            if is_native_es1 && gles1_on_gl2::CAPABILITIES_GL21_ONLY.contains(&name) {
+                continue;
+            }
+            // Drain anything that leaked in from earlier so we can attribute
+            // a fresh error to *this* cap.
+            while gles.GetError() != 0 {}
+            let mut value: GLboolean = gles11::FALSE;
+            gles.GetBooleanv(name, &mut value);
+            let mut probe_failed = false;
+            while gles.GetError() != 0 {
+                probe_failed = true;
+            }
+            if probe_failed {
+                // Driver doesn't accept this cap. Leave slot as None so we
+                // also skip it on restore, and don't try to Disable it.
+                if log_rejects {
+                    rejected_caps.push(name);
+                }
+                continue;
+            }
+            *slot = Some(value);
             gles.Disable(name);
+            // Disable on a valid cap shouldn't error, but a few drivers are
+            // looser on Get than on Enable/Disable; drain to be safe.
+            while gles.GetError() != 0 {}
+        }
+        if log_rejects && !rejected_caps.is_empty() {
+            let names: Vec<String> = rejected_caps
+                .iter()
+                .map(|c| format!("0x{:04x}", c))
+                .collect();
+            log!(
+                "[--trace-gl-errors] present_renderbuffer driver rejected {} ES1.1 caps \
+                 (will be skipped on save/restore): [{}]. \
+                 Hard-coded CAPABILITIES_GL21_ONLY allow-list missed these — they \
+                 may also be rejected when the *guest* tries to use them, which \
+                 could explain why some screens render black.",
+                rejected_caps.len(),
+                names.join(", "),
+            );
         }
         old_capabilities
     };
+    {
+        static SEEN: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+        present_check(
+            gles,
+            trace_gl_errors,
+            &SEEN,
+            "after old_capabilities save+disable",
+        );
+    }
     let old_matrix_mode: GLenum = get_int(gles, gles11::MATRIX_MODE) as _;
     for mode in [gles11::MODELVIEW, gles11::PROJECTION, gles11::TEXTURE] {
         gles.MatrixMode(mode);
         gles.PushMatrix();
         gles.LoadIdentity();
     }
+    {
+        static SEEN: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+        present_check(
+            gles,
+            trace_gl_errors,
+            &SEEN,
+            "after matrix push+identity for all 3 stacks",
+        );
+    }
     let old_color: [GLfloat; 4] = get_floats(gles, gles11::CURRENT_COLOR);
     gles.Color4f(1.0, 1.0, 1.0, 1.0);
+    {
+        static SEEN: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+        present_check(
+            gles,
+            trace_gl_errors,
+            &SEEN,
+            "after old_color save + Color4f white",
+        );
+    }
 
     // Back up other things that will be modified while drawing.
     let old_viewport: (GLint, GLint, GLsizei, GLsizei) = {
@@ -1076,6 +1895,16 @@ unsafe fn present_renderbuffer(env: &mut Environment) {
     let old_tex_coord_array_pointer = get_ptr(gles, gles11::TEXTURE_COORD_ARRAY_POINTER);
     let old_blend_sfactor: GLenum = get_int(gles, gles11::BLEND_SRC) as _;
     let old_blend_dfactor: GLenum = get_int(gles, gles11::BLEND_DST) as _;
+    {
+        static SEEN: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+        present_check(
+            gles,
+            trace_gl_errors,
+            &SEEN,
+            "after viewport/clear/blend/array-pointer state save",
+        );
+    }
 
     let old_tex_env_mode = get_tex_env_int(gles, gles11::TEXTURE_ENV, gles11::TEXTURE_ENV_MODE);
     // if the mode is REPLACE, we don't have to reset the other texture
@@ -1086,12 +1915,32 @@ unsafe fn present_renderbuffer(env: &mut Environment) {
         gles11::TEXTURE_ENV_MODE,
         tex_env_mode_arr.as_ptr().cast(),
     );
+    {
+        static SEEN: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+        present_check(gles, trace_gl_errors, &SEEN, "after TexEnviv setup");
+    }
 
     // Draw the quad
     present_frame(gles, viewport, rotation_matrix, virtual_cursor_visible_at);
+    {
+        static SEEN: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+        present_check(
+            gles,
+            trace_gl_errors,
+            &SEEN,
+            "after present_frame (textured quad draw)",
+        );
+    }
 
     // Clean up the texture
     gles.DeleteTextures(1, &texture);
+    {
+        static SEEN: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+        present_check(gles, trace_gl_errors, &SEEN, "after DeleteTextures");
+    }
 
     // Restore all the state saved before rendering
     for (&is_enabled, info) in old_arrays.iter().zip(gles1_on_gl2::ARRAYS.iter()) {
@@ -1101,10 +1950,19 @@ unsafe fn present_renderbuffer(env: &mut Environment) {
             _ => unreachable!(),
         }
     }
-    for (&is_enabled, &name) in old_capabilities
+    for (&saved, &name) in old_capabilities
         .iter()
         .zip(gles1_on_gl2::CAPABILITIES.iter())
     {
+        if is_native_es1 && gles1_on_gl2::CAPABILITIES_GL21_ONLY.contains(&name) {
+            continue;
+        }
+        // None means the save loop above couldn't query this cap (the
+        // driver rejected it with INVALID_ENUM). Don't try to Enable /
+        // Disable it here either — that would just produce another error.
+        let Some(is_enabled) = saved else {
+            continue;
+        };
         match is_enabled {
             gles11::TRUE => gles.Enable(name),
             gles11::FALSE => gles.Disable(name),
@@ -1116,6 +1974,11 @@ unsafe fn present_renderbuffer(env: &mut Environment) {
         gles.PopMatrix();
     }
     gles.MatrixMode(old_matrix_mode);
+    {
+        static SEEN: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+        present_check(gles, trace_gl_errors, &SEEN, "after matrix pop+restore");
+    }
     gles.Color4f(old_color[0], old_color[1], old_color[2], old_color[3]);
     gles.Viewport(
         old_viewport.0,
@@ -1147,6 +2010,16 @@ unsafe fn present_renderbuffer(env: &mut Environment) {
     );
     gles.BindBuffer(gles11::ARRAY_BUFFER, old_array_buffer);
     gles.BlendFunc(old_blend_sfactor, old_blend_dfactor);
+    {
+        static SEEN: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+        present_check(
+            gles,
+            trace_gl_errors,
+            &SEEN,
+            "after vertex/texcoord/buffer/blend restore",
+        );
+    }
 
     let old_tex_env_mode_arr = [old_tex_env_mode; 1];
     gles.TexEnviv(
@@ -1154,6 +2027,11 @@ unsafe fn present_renderbuffer(env: &mut Environment) {
         gles11::TEXTURE_ENV_MODE,
         old_tex_env_mode_arr.as_ptr().cast(),
     );
+    {
+        static SEEN: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+        present_check(gles, trace_gl_errors, &SEEN, "after TexEnviv restore");
+    }
 
     std::mem::drop(gles_boxed);
 
@@ -1163,17 +2041,61 @@ unsafe fn present_renderbuffer(env: &mut Environment) {
 
     let mut gles_boxed = gles_ctx.make_current(env.window.as_mut().unwrap());
     let gles = gles_boxed.as_mut();
+    {
+        static SEEN: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+        present_check(
+            gles,
+            trace_gl_errors,
+            &SEEN,
+            "after swap_window + re-make-current",
+        );
+    }
 
     // Restore the other bindings
     gles.BindTexture(gles11::TEXTURE_2D, old_texture_2d);
     gles.BindFramebufferOES(gles11::FRAMEBUFFER_OES, old_framebuffer);
+    {
+        static SEEN: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
 
-    // Restore the previously bound shader program (ES 2.0).
-    if old_program != 0 {
-        gles.UseProgram(old_program);
+        present_check(
+            gles,
+            trace_gl_errors,
+            &SEEN,
+            "after BindTexture + BindFramebufferOES restore",
+        );
     }
 
-    // { let err = gles.GetError(); if err != 0 { panic!("{:#x}", err); } }
+    // (See the long comment above for why we no longer save/restore
+    // GL_CURRENT_PROGRAM on this ES 1.1 present path.)
+
+    // Drain any GL errors generated by our own host-side present logic so
+    // they don't leak into the guest's GL error queue and get attributed
+    // to whatever guest call happens next (which previously confused the
+    // --trace-gl-errors output and could perturb apps that poll
+    // glGetError themselves). On strict ES 1.1 drivers (Mali, Adreno
+    // ES1.1 surface) some of the wide state save/restore queries above
+    // can return GL_INVALID_ENUM for state variables the driver doesn't
+    // recognise; that's a host-side issue with our save list, not
+    // anything the guest did. Log the first error once per app run for
+    // diagnostics, then silently drain the rest.
+    {
+        use std::sync::atomic::{AtomicBool, Ordering};
+        static REPORTED_ERR: AtomicBool = AtomicBool::new(false);
+        let first = gles.GetError();
+        if first != 0 && !REPORTED_ERR.swap(true, Ordering::Relaxed) {
+            log!(
+                "Note: present_renderbuffer left GL error {:#x} in queue; \
+                 draining. Further errors from the present path will be \
+                 silently consumed [this log will only be shown once]",
+                first
+            );
+        }
+        // Drain any further pending errors (GL keeps them queued one at
+        // a time per error code; spec says implementations may keep an
+        // unbounded number).
+        while gles.GetError() != 0 {}
+    }
 }
 
 pub fn EAGLGetVersion(env: &mut Environment, major: MutPtr<u32>, minor: MutPtr<u32>) {
@@ -1195,3 +2117,4 @@ pub fn EAGLGetVersion(env: &mut Environment, major: MutPtr<u32>, minor: MutPtr<u
 }
 
 pub const FUNCTIONS: FunctionExports = &[export_c_func!(EAGLGetVersion(_, _))];
+

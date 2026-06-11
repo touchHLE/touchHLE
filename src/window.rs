@@ -127,7 +127,8 @@ pub enum FingerId {
     Touch(i64),
     VirtualCursor,
     ButtonToTouch(crate::options::Button),
-    StickToTouch,
+    LeftStickToTouch,
+    RightStickToTouch,
     DpadToTouch,
 }
 pub type Coords = (f32, f32);
@@ -236,7 +237,8 @@ pub struct Window {
     controller_ctx: sdl2::GameControllerSubsystem,
     controllers: Vec<sdl2::controller::GameController>,
     dpad_state: DpadState,
-    stick_active: bool,
+    left_stick_active: bool,
+    right_stick_active: bool,
     _sensor_ctx: sdl2::SensorSubsystem,
     accelerometer: Option<sdl2::sensor::Sensor>,
     virtual_cursor_last: Option<(f32, f32, bool, bool)>,
@@ -391,7 +393,8 @@ impl Window {
                 down: false,
                 active: false,
             },
-            stick_active: false,
+            left_stick_active: false,
+            right_stick_active: false,
             _sensor_ctx: sensor_ctx,
             accelerometer,
             virtual_cursor_last: None,
@@ -479,9 +482,8 @@ impl Window {
                 sdl2::controller::Button::B => Some(crate::options::Button::B),
                 sdl2::controller::Button::X => Some(crate::options::Button::X),
                 sdl2::controller::Button::Y => Some(crate::options::Button::Y),
-                sdl2::controller::Button::LeftShoulder => {
-                    Some(crate::options::Button::LeftShoulder)
-                }
+                sdl2::controller::Button::LeftShoulder => Some(crate::options::Button::LeftShoulder),
+                sdl2::controller::Button::RightShoulder => Some(crate::options::Button::RightShoulder),
                 _ => None,
             }
         }
@@ -676,12 +678,11 @@ impl Window {
                 }
                 E::ControllerAxisMotion { axis, .. } => {
                     controller_updated = true;
-                    let Some((x, y, w, h)) = options.stick_to_touch else {
-                        continue;
-                    };
-                    if axis == sdl2::controller::Axis::LeftX
-                        || axis == sdl2::controller::Axis::LeftY
-                    {
+
+                    if axis == sdl2::controller::Axis::LeftX || axis == sdl2::controller::Axis::LeftY {
+                        let Some((x, y, w, h)) = options.left_stick_to_touch else {
+                            continue
+                        };
                         let (stick_x, stick_y, _) = self.get_controller_stick(options.left_deadzone, true);
                         let coords = transform_input_coords(
                             self,
@@ -692,21 +693,51 @@ impl Window {
                             true,
                         );
                         if stick_x.abs() < options.left_deadzone && stick_y.abs() < options.left_deadzone {
-                            if !self.stick_active {
+                            if !self.left_stick_active {
                                 // Ignore deadzone events when stick is inactive
                                 continue;
                             } else {
                                 // Release touch when stick returns to deadzone
-                                self.stick_active = false;
-                                Event::TouchesUp(HashMap::from([(FingerId::StickToTouch, coords)]))
+                                self.left_stick_active = false;
+                                Event::TouchesUp(HashMap::from([(FingerId::LeftStickToTouch, coords)]))
                             }
-                        } else if !self.stick_active {
+                        } else if !self.left_stick_active {
                             // New touch
-                            self.stick_active = true;
-                            Event::TouchesDown(HashMap::from([(FingerId::StickToTouch, coords)]))
+                            self.left_stick_active = true;
+                            Event::TouchesDown(HashMap::from([(FingerId::LeftStickToTouch, coords)]))
                         } else {
                             // Move existing touch
-                            Event::TouchesMove(HashMap::from([(FingerId::StickToTouch, coords)]))
+                            Event::TouchesMove(HashMap::from([(FingerId::LeftStickToTouch, coords)]))
+                        }
+                    } else if axis == sdl2::controller::Axis::RightX || axis == sdl2::controller::Axis::RightY {
+                        let Some((x, y, w, h)) = options.right_stick_to_touch else {
+                            continue
+                        };
+                        let (stick_x, stick_y, _) = self.get_controller_stick(options.right_deadzone, false);
+                        let coords = transform_input_coords(
+                            self,
+                            (
+                                x + ((stick_x + 1.0) / 2.0) * w,
+                                y + ((stick_y + 1.0) / 2.0) * h,
+                            ),
+                            true,
+                        );
+                        if stick_x.abs() < options.right_deadzone && stick_y.abs() < options.right_deadzone {
+                            if !self.right_stick_active {
+                                // Ignore deadzone events when stick is inactive
+                                continue;
+                            } else {
+                                // Release touch when stick returns to deadzone
+                                self.right_stick_active = false;
+                                Event::TouchesUp(HashMap::from([(FingerId::RightStickToTouch, coords)]))
+                            }
+                        } else if !self.right_stick_active {
+                            // New touch
+                            self.right_stick_active = true;
+                            Event::TouchesDown(HashMap::from([(FingerId::RightStickToTouch, coords)]))
+                        } else {
+                            // Move existing touch
+                            Event::TouchesMove(HashMap::from([(FingerId::RightStickToTouch, coords)]))
                         }
                     } else {
                         continue;
@@ -846,7 +877,7 @@ impl Window {
             })
         }
 
-        if controller_updated {
+        if options.right_stick_to_touch.is_none() && controller_updated {
             let (new_x, new_y, pressed, pressed_changed, moved) =
                 self.update_virtual_cursor(options);
             self.event_queue

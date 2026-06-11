@@ -113,8 +113,8 @@ Game controller options:
         part of the screen.
 
         This is three parts separated by commas: the name of a button (DPadLeft,
-        DPadUp, DPadRight, DPadDown, Start, LeftShoulder or Xbox-like
-        A, B, X or Y), the X co-ordinate and the Y co-ordinate.
+        DPadUp, DPadRight, DPadDown, Start, LeftShoulder, RightShoulder,
+        or Xbox-like A, B, X or Y), the X co-ordinate and the Y co-ordinate.
         The co-ordinates are floating-point (decimal) numbers. 0,0 is the
         top-left corner. The bottom-right corner is 320,480 if the app is in
         portrait, and 480,320 if the app is in landscape.
@@ -148,8 +148,9 @@ Game controller options:
         right analog stick (tap/hold by pressing the stick or right shoulder
         button).
 
-    --stick-to-touch=...
-        Maps the left analog stick to simulated finger movement within a region
+    --left-stick-to-touch=...
+    --right-stick-to-touch=...
+        Maps the analog stick to simulated finger movement within a region
         of the simulated touch screen of the device. This is useful for games
         which use analog movement controls.
 
@@ -158,9 +159,12 @@ Game controller options:
         bottom-right corner is 320,480 if the app is in portrait, and 480,320
         if the app is in landscape.
 
-        For example, --stick-to-touch=10,10,100,100 will map the left analog
+        For example, --left-stick-to-touch=10,10,100,100 will map the left analog
         stick to control a touch within a 100x100 pixel region starting at
         (10,10) on the screen.
+
+        If --right-stick-to-touch is set, its virtual cursor function is disabled,
+        allowing for right analog stick to be mapped in twin-stick shooters.
 
         Except where specified in touchHLE_default_options.txt, this is not used
         by default. There is however a virtual cursor that is controlled by the

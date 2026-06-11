@@ -35,7 +35,7 @@ Input methods:
 - For simulated touch input, there are four options:
   - Mouse/trackpad input (tap/hold/drag by pressing the left mouse button)
   - Virtual cursor using a game controller (move the cursor with the right analog stick, and tap/hold/drag by pressing the stick or the right shoulder button)
-  - Mapping of game controller buttons or the left analog stick to specific on-screen locations (see the descriptions of `--button-to-touch=`, `--dpad-to-touch=` and `--stick-to-touch=` in `OPTIONS_HELP.txt`)
+  - Mapping of game controller buttons or the analog sticks to specific on-screen locations (see the descriptions of `--button-to-touch=`, `--dpad-to-touch=`, `--left-stick-to-touch=` and `--right-stick-to-touch=` in `OPTIONS_HELP.txt`)
   - Real touch input, if you're on a device that has a touch screen
 - For simulated accelerometer input, there are three options:
   - Tilt control simulation using the left analog stick of a game controller

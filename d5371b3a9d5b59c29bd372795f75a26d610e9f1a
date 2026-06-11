@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "df0fe972_8ec8bf21",
+        "filename": "tests/TestApp_source/GUITestsCALayerTestsView.m",
+        "patchSetId": 18
+      },
+      "lineNbr": 517,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2026-06-11T20:30:48Z",
+      "side": 1,
+      "message": "woops, yeah, this does nothing now",
+      "parentUuid": "15ff03f0_ccc573e1",
+      "revId": "d5371b3a9d5b59c29bd372795f75a26d610e9f1a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "3bff0b93_5f77f61d",
@@ -31,6 +49,24 @@
       "writtenOn": "2026-06-07T22:57:46Z",
       "side": 1,
       "message": "This would be a nice opportunity to test some other property instead of `position`.",
+      "revId": "d5371b3a9d5b59c29bd372795f75a26d610e9f1a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "0b5e6555_e6c2cf28",
+        "filename": "tests/TestApp_source/GUITestsCALayerTestsView.m",
+        "patchSetId": 18
+      },
+      "lineNbr": 520,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2026-06-11T20:30:48Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "3bff0b93_5f77f61d",
       "revId": "d5371b3a9d5b59c29bd372795f75a26d610e9f1a",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

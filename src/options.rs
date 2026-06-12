@@ -78,6 +78,7 @@ pub struct Options {
     pub dumping_file: PathBuf,
     pub ignore_gl_errors: bool,
     pub zero_stack_after_guest_to_host_call: Option<u32>,
+    pub hide_cursor: bool,
 }
 
 impl Default for Options {
@@ -113,6 +114,7 @@ impl Default for Options {
             dumping_file: crate::paths::user_data_base_path().join("DUMP.txt"),
             ignore_gl_errors: false,
             zero_stack_after_guest_to_host_call: None,
+            hide_cursor: false,
         }
     }
 }
@@ -154,6 +156,7 @@ impl Options {
                 "right" => TiltControlsStick::Right,
                 _ => TiltControlsStick::Left
             };
+            self.hide_cursor = self.analog_stick_tilt_controls == TiltControlsStick::Right;
         } else if let Some(value) = arg.strip_prefix("--left-deadzone=") {
             self.left_deadzone = parse_degrees(value, "left stick deadzone")?;
         } else if let Some(value) = arg.strip_prefix("--right-deadzone=") {
@@ -214,6 +217,7 @@ impl Options {
                 .map_err(|_| "--right-stick-to-touch= requires four values".to_string())?;
 
             self.right_stick_to_touch = Some((nums[0], nums[1], nums[2], nums[3]));
+            self.hide_cursor = true;
         } else if let Some(values) = arg.strip_prefix("--dpad-to-touch=") {
             let nums: [f32; 4] = values
                 .split(',')

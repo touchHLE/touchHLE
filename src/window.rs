@@ -877,7 +877,7 @@ impl Window {
             })
         }
 
-        if controller_updated && options.right_stick_to_touch.is_none() && options.analog_stick_tilt_controls != TiltControlsStick::Right {
+        if controller_updated && !options.hide_cursor {
             let (new_x, new_y, pressed, pressed_changed, moved) =
                 self.update_virtual_cursor(options);
             self.event_queue

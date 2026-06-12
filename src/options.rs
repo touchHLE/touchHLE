@@ -32,6 +32,19 @@ pub enum Button {
     RightShoulder,
 }
 
+/// Game controller analog stick as tilt controls for `--analog-stick-tilt-controls=` option.
+#[derive(Copy, Clone, Hash, PartialEq, Eq, Debug)]
+pub enum TiltControlsStick {
+    None,
+    Left,
+    Right
+}
+impl std::fmt::Display for TiltControlsStick {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        std::fmt::Debug::fmt(self, f)
+    }
+}
+
 /// Struct containing all user-configurable options.
 #[derive(Clone)]
 pub struct Options {
@@ -41,7 +54,7 @@ pub struct Options {
     pub scale_hack: NonZeroU32,
     pub left_deadzone: f32,
     pub right_deadzone: f32,
-    pub analog_stick_tilt_controls: bool,
+    pub analog_stick_tilt_controls: TiltControlsStick,
     pub x_tilt_range: f32,
     pub y_tilt_range: f32,
     pub x_tilt_offset: f32,
@@ -74,7 +87,7 @@ impl Default for Options {
             device_family: None,
             initial_orientation: DeviceOrientation::Portrait,
             scale_hack: NonZeroU32::new(1).unwrap(),
-            analog_stick_tilt_controls: true,
+            analog_stick_tilt_controls: TiltControlsStick::Left,
             left_deadzone: 0.1,
             right_deadzone: 0.1,
             x_tilt_range: 60.0,
@@ -135,8 +148,12 @@ impl Options {
             self.scale_hack = value
                 .parse()
                 .map_err(|_| "Invalid scale hack factor".to_string())?;
-        } else if arg == "--disable-analog-stick-tilt-controls" {
-            self.analog_stick_tilt_controls = false;
+        } else if let Some(value) = arg.strip_prefix("--analog-stick-tilt-controls=") {
+            self.analog_stick_tilt_controls = match value {
+                "none" => TiltControlsStick::None,
+                "right" => TiltControlsStick::Right,
+                _ => TiltControlsStick::Left
+            };
         } else if let Some(value) = arg.strip_prefix("--left-deadzone=") {
             self.left_deadzone = parse_degrees(value, "left stick deadzone")?;
         } else if let Some(value) = arg.strip_prefix("--right-deadzone=") {

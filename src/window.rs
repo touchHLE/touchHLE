@@ -16,7 +16,7 @@ use crate::gles::present::present_frame;
 use crate::gles::{create_gles1_ctx_no_parent_stack, GLESContext, GLES};
 use crate::image::Image;
 use crate::matrix::Matrix;
-use crate::options::Options;
+use crate::options::{Options, TiltControlsStick};
 use crate::Environment;
 use sdl2::mouse::MouseButton;
 use sdl2::pixels::PixelFormatEnum;
@@ -877,7 +877,7 @@ impl Window {
             })
         }
 
-        if options.right_stick_to_touch.is_none() && controller_updated {
+        if controller_updated && options.right_stick_to_touch.is_none() && options.analog_stick_tilt_controls != TiltControlsStick::Right {
             let (new_x, new_y, pressed, pressed_changed, moved) =
                 self.update_virtual_cursor(options);
             self.event_queue
@@ -933,26 +933,28 @@ impl Window {
         log!("Warning: Controller disconnected: {}", controller.name());
     }
     pub fn print_accelerometer_notice(&self, options: &Options) {
+        let hasTiltStick = options.analog_stick_tilt_controls != TiltControlsStick::None;
+
         log!("This app uses the accelerometer.");
 
-        if !self.controllers.is_empty() && options.analog_stick_tilt_controls {
-            log!("Your connected controller's left analog stick will be used for accelerometer simulation.");
+        if !self.controllers.is_empty() && hasTiltStick {
+            log!("Your connected controller's analog stick will be used for accelerometer simulation.");
             if self.accelerometer.is_some() {
                 log!("Disconnect the controller if you want to use your device's accelerometer.");
             }
         } else if self.accelerometer.is_some() {
             log!("Your device's accelerometer will be used for accelerometer simulation.");
-            if options.analog_stick_tilt_controls {
+            if hasTiltStick {
                 log!("Connect a controller if you would prefer to use an analog stick.");
             }
-        } else if self.controllers.is_empty() && options.analog_stick_tilt_controls {
+        } else if self.controllers.is_empty() && hasTiltStick {
             log!("Connect a controller to get accelerometer simulation.");
         }
 
         if self.accelerometer.is_none() {
             log!(
                 "You can {}hold right click and move the cursor to simulate the accelerometer.",
-                if options.analog_stick_tilt_controls {
+                if hasTiltStick {
                     "also "
                 } else {
                     ""
@@ -964,7 +966,7 @@ impl Window {
     /// Get the real or simulated accelerometer output.
     /// See also [crate::frameworks::uikit::ui_accelerometer].
     pub fn get_acceleration(&self, options: &Options) -> (f32, f32, f32) {
-        if self.controllers.is_empty() || !options.analog_stick_tilt_controls {
+        if self.controllers.is_empty() || options.analog_stick_tilt_controls == TiltControlsStick::None {
             if let Some(ref accelerometer) = self.accelerometer {
                 let data = accelerometer.get_data().unwrap();
                 let sdl2::sensor::SensorData::Accel(data) = data else {
@@ -980,6 +982,8 @@ impl Window {
                 let (x, y, z) = (x / gravity, y / gravity, z / gravity);
                 return (x, y, z);
             }
+
+            return (0.0, 0.0, -1.0);
         }
 
         let (x, y) = if self
@@ -990,8 +994,13 @@ impl Window {
                 .map(|(x, y, _right_click_hold)| (x, y))
                 .unwrap()
         } else {
-            // Get left analog stick input. The range is [-1, 1] on each axis.
-            let (x, y, _) = self.get_controller_stick(options.left_deadzone, true);
+            // Get analog stick input. The range is [-1, 1] on each axis.
+            let isLeftStick = options.analog_stick_tilt_controls == TiltControlsStick::Left;
+            let (x, y, _) = self.get_controller_stick(if isLeftStick {
+                options.left_deadzone
+            } else {
+                options.right_deadzone
+            }, isLeftStick);
             (x, y)
         };
 

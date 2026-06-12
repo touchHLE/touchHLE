@@ -918,10 +918,7 @@ impl Window {
             log!("ignoring fingerprint device: {}", controller_name);
             return;
         }
-        log!(
-            "New controller connected: {}. Left stick = device tilt. Right stick = touch input (press the stick or shoulder button to tap/hold).",
-            controller_name
-        );
+        log!("New controller connected: {}.", controller_name);
         self.controllers.push(controller);
     }
     fn controller_removed(&mut self, instance_id: u32) {

@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "44530809_b363ce09",
+        "filename": "src/frameworks/uikit/ui_view/ui_control/ui_button.rs",
+        "patchSetId": 63
+      },
+      "lineNbr": 295,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2026-06-13T20:41:21Z",
+      "side": 1,
+      "message": "Can this use the todo_objc_setter?",
+      "range": {
+        "startLine": 295,
+        "startChar": 0,
+        "endLine": 295,
+        "endChar": 2
+      },
+      "revId": "b0d240e27b160e4b04624722a592c95bb2920b1f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

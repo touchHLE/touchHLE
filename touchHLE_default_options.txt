@@ -228,3 +228,6 @@ www.fishlabs.net.GalaxyOnFire: --landscape-right --button-to-touch=A,427,274 --b
 
 # Palm Heroes
 com.palmheroes.PalmHeroes: --landscape-right
+
+# Aqua Moto Racing
+com.resolutioninteractive.AMRacing: --landscape-right

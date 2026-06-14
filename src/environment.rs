@@ -424,6 +424,12 @@ impl Environment {
                         // sliding is not needed.
                         0
                     }
+                    "libxml2.2.dylib" | "libxml2.dylib" | "libxml2.2.7.8.dylib" => {
+                        // We build `libxml2` from sources with our OSS
+                        // toolchain, the base address is already set and
+                        // sliding is not needed.
+                        0
+                    }
                     _ => unimplemented!("Unknown binary slide for {}", name),
                 };
                 let dylib = mach_o::MachO::load_from_file(

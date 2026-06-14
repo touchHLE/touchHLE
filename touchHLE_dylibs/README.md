@@ -31,6 +31,14 @@ These are impractical to reimplement, but they are Free Software.
 * Build code: <https://github.com/touchHLE/sqlite-dylib>
 * Source code: <https://github.com/sqlite/sqlite/tree/version-3.6.10>
 
+## `libxml2.dylib`
+
+* Alias: `libxml2.2.dylib`
+* License: libxml2 license (see `COPYING.libxml2`)
+* Binary origin: compilation of libxml2 source code
+* Build code: <https://github.com/touchHLE/libxml2-dylib>
+* Source code: <https://github.com/apple-oss-distributions/libxml2/tree/libxml2-22.3>
+
 ## Original Apple license acknowledgements
 
 > **Free Software Foundation** ( libgcc, libstdc++ )

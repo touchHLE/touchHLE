@@ -160,6 +160,11 @@ This distribution of touchHLE includes binaries for SQLite (libsqlite3),
 available under Public Domain.
 ";
 
+const INTERNAL_XML2_DYLIB_DESCRIPTION: &str = "
+This distribution of touchHLE includes binaries for libxml2, available under
+the following license:
+";
+
 const INTERNAL_LIBERATION_FONTS_DESCRIPTION: &str = "
 This distribution of touchHLE includes Liberation Sans fonts, available under
 the following license:
@@ -247,6 +252,13 @@ fn print(out: &mut String, resources_are_external_files: bool) -> Result<(), std
         )?;
         divider(out)?;
         writeln!(out, "{INTERNAL_SQLITE3_DYLIB_DESCRIPTION}")?;
+        divider(out)?;
+        writeln!(out, "{INTERNAL_XML2_DYLIB_DESCRIPTION}")?;
+        writeln!(
+            out,
+            "{}",
+            read_bundled_file(&format!("{}/COPYING.libxml2", crate::paths::DYLIBS_DIR))
+        )?;
         divider(out)?;
         writeln!(out, "{INTERNAL_LIBERATION_FONTS_DESCRIPTION}")?;
         writeln!(

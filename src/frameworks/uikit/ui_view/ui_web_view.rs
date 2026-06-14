@@ -27,6 +27,12 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (())setDelegate:(id)_delegate {
     // TODO
 }
+    - (id) instanceMethodSignatureForSelector:(id) _sel {
+        // Return nil to inform the Objective-C runtime that no signature exists.
+        // This prevents the emulator from crashing and bypasses the web request.
+        nil
+    }
+
 - (())loadRequest:(id)request { // NSURLRequest*
     let url_string = if request != nil {
         let url = msg![env; request URL];

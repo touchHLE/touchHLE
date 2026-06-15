@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d2fadb81_c4a16b63",
+        "filename": "touchHLE_dylibs/COPYING.libxml2",
+        "patchSetId": 1
+      },
+      "lineNbr": 3,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-06-15T22:05:10Z",
+      "side": 1,
+      "message": "Do we maybe need to add the other copyright notices here? Hmm :/",
+      "revId": "1813877300a673a06db2a6f8b51966b550017543",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

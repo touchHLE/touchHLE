@@ -16,4 +16,26 @@ fn sched_yield(env: &mut Environment) -> i32 {
     0 // success
 }
 
-pub const FUNCTIONS: FunctionExports = &[export_c_func!(sched_yield())];
+fn sched_get_priority_max(_env: &mut Environment, _priority: i32) -> i32 {
+    // iOS ignores the priority value and always returns 0
+    log_dbg!(
+        "sched_get_priority_max: ignoring priority level {}",
+        _priority
+    );
+    0
+}
+
+fn sched_get_priority_min(_env: &mut Environment, _priority: i32) -> i32 {
+    // iOS ignores the priority value and always returns 0
+    log_dbg!(
+        "sched_get_priority_min: ignoring priority level {}",
+        _priority
+    );
+    0
+}
+
+pub const FUNCTIONS: FunctionExports = &[
+    export_c_func!(sched_yield()),
+    export_c_func!(sched_get_priority_min(_)),
+    export_c_func!(sched_get_priority_max(_)),
+];

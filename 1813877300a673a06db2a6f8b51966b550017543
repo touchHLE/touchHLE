@@ -52,6 +52,24 @@
       "parentUuid": "728511d7_692d2c1c",
       "revId": "1813877300a673a06db2a6f8b51966b550017543",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d2dbc192_9090cada",
+        "filename": "touchHLE_dylibs/COPYING.libxml2",
+        "patchSetId": 1
+      },
+      "lineNbr": 3,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-06-19T16:49:17Z",
+      "side": 1,
+      "message": "Done, please check.",
+      "parentUuid": "ea2f2c7f_56dd67c3",
+      "revId": "1813877300a673a06db2a6f8b51966b550017543",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

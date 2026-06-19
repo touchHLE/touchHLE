@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "5e31d1c4_921fbca3",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 55
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-06-19T18:28:26Z",
+      "side": 1,
+      "message": "Sorry for missing that you had updated these patches…",
+      "revId": "4240a9982d303761639bb0ec3dce653fe755f67b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

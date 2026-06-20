@@ -261,6 +261,24 @@ impl Options {
         };
         Ok(true)
     }
+
+    /// Validates that the provided option combination is valid, and sets
+    /// defaults for certain combinations of options.
+    ///
+    /// If you are adding default options, you should prefer to add them using
+    /// the "org.touchhle.[all/(os)]" in touchHLE_default_options. Only use
+    /// this when you have default options that are dependent on other options.
+    pub fn validate_and_fixup_options(&mut self) -> Result<(), String> {
+        // This doesn't do anything yet, but it will soon!
+        Ok(())
+    }
+}
+
+#[derive(Default, PartialEq)]
+pub struct FileOptions {
+    pub global: Option<String>,
+    pub os: Option<String>,
+    pub app: Option<String>,
 }
 
 /// Try to get app-specific options from a file.
@@ -268,8 +286,10 @@ impl Options {
 /// Returns [Ok] if there is no error when reading the file, otherwise [Err].
 /// The [Ok] value is a [Some] with the options if they could be found, or
 /// [None] if no options were found for this app.
-pub fn get_options_from_file<F: Read>(file: F, app_id: &str) -> Result<Option<String>, String> {
+pub fn get_options_from_file<F: Read>(file: F, app_id: &str) -> Result<FileOptions, String> {
     let file = BufReader::new(file);
+    let os_app_id = format!("org.touchhle.{}", std::env::consts::OS);
+    let mut file_options = FileOptions::default();
     for (line_no, line) in BufRead::lines(file).enumerate() {
         // Line numbering usually starts from 1
         let line_no = line_no + 1;
@@ -292,18 +312,36 @@ pub fn get_options_from_file<F: Read>(file: F, app_id: &str) -> Result<Option<St
         let (line_app_id, line_options) = line.split_once(':').ok_or_else(|| format!("Line {line_no} is not a comment and is missing a colon (:) to separate the app ID from the options"))?;
         let line_app_id = line_app_id.trim();
 
-        if line_app_id != app_id {
-            continue;
-        }
-
-        let line_options = line_options.trim();
-        if line_options.is_empty() {
-            return Ok(None);
-        } else {
-            return Ok(Some(line_options.to_string()));
+        if line_app_id == "org.touchhle.all" {
+            let line_options = line_options.trim();
+            if !line_options.is_empty() {
+                if file_options.global.is_some() {
+                    echo!("Warning: global options specified twice, using first line.");
+                    continue;
+                }
+                file_options.global = Some(line_options.to_string());
+            }
+        } else if line_app_id == os_app_id {
+            let line_options = line_options.trim();
+            if file_options.os.is_some() {
+                echo!("Warning: os-specific options specified twice, using first line.");
+                continue;
+            }
+            if !line_options.is_empty() {
+                file_options.os = Some(line_options.to_string());
+            }
+        } else if line_app_id == app_id {
+            let line_options = line_options.trim();
+            if file_options.app.is_some() {
+                echo!("Warning: app-specific options specified twice, using first line.");
+                continue;
+            }
+            if !line_options.is_empty() {
+                file_options.app = Some(line_options.to_string());
+            }
         }
     }
-    Ok(None)
+    Ok(file_options)
 }
 
 #[derive(Default, Clone)]

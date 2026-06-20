@@ -62,6 +62,8 @@ use std::path::PathBuf;
 
 pub use touchHLE_version::*;
 
+use crate::options::FileOptions;
+
 /// This is the true entry point on Android (SDLActivity calls it after
 /// initialization). On other platforms the true entry point is in src/bin.rs.
 #[cfg(target_os = "android")]
@@ -292,23 +294,43 @@ pub fn main<T: Iterator<Item = String>>(mut args: T) -> Result<(), String> {
         options: &mut options::Options,
         app_id: &str,
     ) -> Result<(), String> {
-        match options::get_options_from_file(file, app_id) {
-            Ok(Some(options_string)) => {
-                echo!(
-                    "Using options from {} for this app: {}",
-                    path,
-                    options_string
-                );
-                for option_arg in options_string.split_ascii_whitespace() {
-                    match options.parse_argument(option_arg) {
-                        Ok(true) => (),
-                        Ok(false) => return Err(format!("Unknown option {option_arg:?}")),
-                        Err(err) => return Err(format!("Invalid option {option_arg:?}: {err}")),
-                    }
+        fn apply_string(
+            options: &mut options::Options,
+            options_string: &str,
+            option_type: &str,
+        ) -> Result<(), String> {
+            echo!(
+                "Using {} options for this app: {}",
+                option_type,
+                options_string
+            );
+            for option_arg in options_string.split_ascii_whitespace() {
+                match options.parse_argument(option_arg) {
+                    Ok(true) => (),
+                    Ok(false) => return Err(format!("Unknown option {option_arg:?}")),
+                    Err(err) => return Err(format!("Invalid option {option_arg:?}: {err}")),
                 }
             }
-            Ok(None) => {
-                echo!("No options found for this app in {}", path);
+            Ok(())
+        }
+
+        echo!("Applying options from file {}:", path);
+
+        match options::get_options_from_file(file, app_id) {
+            Ok(file_options) => {
+                if file_options == FileOptions::default() {
+                    echo!("No options found for this app.");
+                } else {
+                    if let Some(global_options) = &file_options.global {
+                        apply_string(options, global_options, "global")?;
+                    }
+                    if let Some(os_options) = &file_options.os {
+                        apply_string(options, os_options, "os")?;
+                    }
+                    if let Some(app_options) = &file_options.app {
+                        apply_string(options, app_options, "app-specific")?;
+                    }
+                }
             }
             Err(e) => {
                 echo!("Warning: {}", e);

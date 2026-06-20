@@ -11,5 +11,8 @@
 # output. To get a list of possible options, see OPTIONS_HELP.txt or run
 # touchHLE with the --help flag.
 #
+# The special app name "org.touchhle.all" applies to all apps, with app
+# specific options taking precedence over options specified in this way.
+#
 # Text on a line following a hash sign (#) is treated as a comment and ignored.
 # Empty lines are also ignored.

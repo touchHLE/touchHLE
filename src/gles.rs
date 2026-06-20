@@ -80,7 +80,7 @@ pub use gles_generic::GLES;
 use crate::environment::Environment;
 
 /// Labels for [GLES] implementations and an abstraction for constructing them.
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq)]
 pub enum GLESImplementation {
     /// [gles1_native::GLES1Native].
     GLES1Native,

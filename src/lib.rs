@@ -62,6 +62,8 @@ use std::path::PathBuf;
 
 pub use touchHLE_version::*;
 
+use crate::options::FileOptions;
+
 /// This is the true entry point on Android (SDLActivity calls it after
 /// initialization). On other platforms the true entry point is in src/bin.rs.
 #[cfg(target_os = "android")]
@@ -181,15 +183,98 @@ pub fn main<T: Iterator<Item = String>>(mut args: T) -> Result<(), String> {
         return Ok(());
     }
 
+    // Apply options from files
+    fn apply_options<F: std::io::Read, P: std::fmt::Display>(
+        file: F,
+        path: P,
+        options: &mut options::Options,
+        app_id: &str,
+    ) -> Result<(), String> {
+        fn apply_string(
+            options: &mut options::Options,
+            options_string: &str,
+            option_type: &str,
+        ) -> Result<(), String> {
+            echo!(
+                "Using {} options for this app: {}",
+                option_type,
+                options_string
+            );
+            for option_arg in options_string.split_ascii_whitespace() {
+                match options.parse_argument(option_arg) {
+                    Ok(true) => (),
+                    Ok(false) => return Err(format!("Unknown option {option_arg:?}")),
+                    Err(err) => return Err(format!("Invalid option {option_arg:?}: {err}")),
+                }
+            }
+            Ok(())
+        }
+
+        echo!("Applying options from file {}:", path);
+
+        match options::get_options_from_file(file, app_id) {
+            Ok(file_options) => {
+                if file_options == FileOptions::default() {
+                    echo!("No options found for this app.");
+                } else {
+                    if let Some(global_options) = &file_options.global {
+                        apply_string(options, global_options, "global")?;
+                    }
+                    if let Some(os_options) = &file_options.os {
+                        apply_string(options, os_options, "os")?;
+                    }
+                    if let Some(app_options) = &file_options.app {
+                        apply_string(options, app_options, "app-specific")?;
+                    }
+                }
+            }
+            Err(e) => {
+                echo!("Warning: {}", e);
+            }
+        }
+        Ok(())
+    }
+
+    let default_options_path = paths::DEFAULT_OPTIONS_FILE;
+    let user_options_path = paths::user_data_base_path().join(paths::USER_OPTIONS_FILE);
+
     let bundle_path = if let Some(bundle_path) = bundle_path {
         bundle_path
     } else {
         let mut options = options::Options::default();
-        // Apply command-line options only (no app-specific options apply)
+        // Apply command-line options and options using the special app picker
+        // app name (don't rely on the app name for your own use! -_-)
+        match paths::ResourceFile::open(default_options_path) {
+            Ok(mut file) => apply_options(
+                file.get(),
+                default_options_path,
+                &mut options,
+                "org.touchhle.app_picker",
+            )?,
+            Err(err) => echo!("Warning: Could not open {}: {}", default_options_path, err),
+        }
+
+        match std::fs::File::open(&user_options_path) {
+            Ok(file) => apply_options(
+                file,
+                user_options_path.display(),
+                &mut options,
+                "org.touchhle.app_picker",
+            )?,
+            Err(err) => echo!(
+                "Warning: Could not open {}: {}",
+                user_options_path.display(),
+                err
+            ),
+        }
+
         for option_arg in &option_args {
             let parse_result = options.parse_argument(option_arg);
             assert!(parse_result == Ok(true));
         }
+
+        options.validate_and_fixup_options().unwrap();
+
         if options.headless {
             return Err(
                 "No app specified. Use the --help flag to see command-line usage.".to_string(),
@@ -285,43 +370,11 @@ pub fn main<T: Iterator<Item = String>>(mut args: T) -> Result<(), String> {
         return Ok(());
     }
 
-    // Apply options from files
-    fn apply_options<F: std::io::Read, P: std::fmt::Display>(
-        file: F,
-        path: P,
-        options: &mut options::Options,
-        app_id: &str,
-    ) -> Result<(), String> {
-        match options::get_options_from_file(file, app_id) {
-            Ok(Some(options_string)) => {
-                echo!(
-                    "Using options from {} for this app: {}",
-                    path,
-                    options_string
-                );
-                for option_arg in options_string.split_ascii_whitespace() {
-                    match options.parse_argument(option_arg) {
-                        Ok(true) => (),
-                        Ok(false) => return Err(format!("Unknown option {option_arg:?}")),
-                        Err(err) => return Err(format!("Invalid option {option_arg:?}: {err}")),
-                    }
-                }
-            }
-            Ok(None) => {
-                echo!("No options found for this app in {}", path);
-            }
-            Err(e) => {
-                echo!("Warning: {}", e);
-            }
-        }
-        Ok(())
-    }
-    let default_options_path = paths::DEFAULT_OPTIONS_FILE;
     match paths::ResourceFile::open(default_options_path) {
         Ok(mut file) => apply_options(file.get(), default_options_path, &mut options, app_id)?,
         Err(err) => echo!("Warning: Could not open {}: {}", default_options_path, err),
     }
-    let user_options_path = paths::user_data_base_path().join(paths::USER_OPTIONS_FILE);
+
     match std::fs::File::open(&user_options_path) {
         Ok(file) => apply_options(file, user_options_path.display(), &mut options, app_id)?,
         Err(err) => echo!(
@@ -337,6 +390,8 @@ pub fn main<T: Iterator<Item = String>>(mut args: T) -> Result<(), String> {
         let parse_result = options.parse_argument(&option_arg);
         assert!(parse_result == Ok(true));
     }
+
+    options.validate_and_fixup_options().unwrap();
 
     let res = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
         Environment::new(bundle, fs, options.clone(), app_args.unwrap_or_default())

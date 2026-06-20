@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d819b41d_d7257cbb",
+        "filename": "src/frameworks/uikit/ui_view/ui_label.rs",
+        "patchSetId": 63
+      },
+      "lineNbr": 243,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2026-06-20T22:30:39Z",
+      "side": 1,
+      "message": "Can we use the todo setter macro here?",
+      "range": {
+        "startLine": 243,
+        "startChar": 0,
+        "endLine": 243,
+        "endChar": 2
+      },
+      "revId": "1adbacd7dc9c178911b1014b2d2deadc8e4393d4",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

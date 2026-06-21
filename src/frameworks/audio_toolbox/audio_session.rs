@@ -10,6 +10,8 @@ use crate::dyld::{export_c_func, FunctionExports};
 use crate::frameworks::carbon_core::OSStatus;
 use crate::frameworks::core_audio_types::{debug_fourcc, fourcc};
 use crate::frameworks::core_foundation::cf_run_loop::{CFRunLoopMode, CFRunLoopRef};
+use crate::frameworks::core_foundation::cf_string::CFStringRef;
+use crate::frameworks::foundation::ns_string;
 use crate::mem::{guest_size_of, ConstVoidPtr, GuestUSize, MutPtr, MutVoidPtr};
 use crate::Environment;
 
@@ -22,6 +24,7 @@ const kAudioSessionBadPropertySizeError: OSStatus = fourcc(b"!siz") as _;
 type AudioSessionPropertyID = u32;
 const kAudioSessionProperty_OtherAudioIsPlaying: AudioSessionPropertyID = fourcc(b"othr");
 const kAudioSessionProperty_AudioCategory: AudioSessionPropertyID = fourcc(b"acat");
+const kAudioSessionProperty_AudioRoute: AudioSessionPropertyID = fourcc(b"rout");
 const kAudioSessionProperty_CurrentHardwareSampleRate: AudioSessionPropertyID = fourcc(b"chsr");
 const kAudioSessionProperty_CurrentHardwareOutputNumberChannels: AudioSessionPropertyID =
     fourcc(b"choc");
@@ -106,6 +109,10 @@ fn AudioSessionGetProperty(
         }
         kAudioSessionProperty_AudioCategory => {
             let value: u32 = state.audio_session_category;
+            env.mem.write(out_data.cast(), value);
+        }
+        kAudioSessionProperty_AudioRoute => {
+            let value: CFStringRef = ns_string::from_rust_string(env, String::from("Speaker"));
             env.mem.write(out_data.cast(), value);
         }
         kAudioSessionProperty_CurrentHardwareSampleRate => {
@@ -226,6 +233,7 @@ fn get_audio_session_property_size(in_ID: AudioSessionPropertyID) -> GuestUSize 
     match in_ID {
         kAudioSessionProperty_OtherAudioIsPlaying => guest_size_of::<u32>(),
         kAudioSessionProperty_AudioCategory => guest_size_of::<u32>(),
+        kAudioSessionProperty_AudioRoute => guest_size_of::<CFStringRef>(),
         kAudioSessionProperty_CurrentHardwareSampleRate => guest_size_of::<f64>(),
         kAudioSessionProperty_CurrentHardwareOutputNumberChannels => guest_size_of::<u32>(),
         kAudioSessionProperty_CurrentHardwareOutputVolume => guest_size_of::<f32>(),

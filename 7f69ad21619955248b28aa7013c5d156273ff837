@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "97c84e29_f7688f29",
+        "filename": "src/frameworks/uikit/ui_screen.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 42,
+      "author": {
+        "id": 1039141
+      },
+      "writtenOn": "2026-06-21T18:40:04Z",
+      "side": 1,
+      "message": "Done, thanks for the suggested fix",
+      "parentUuid": "21676f8e_66e5bf27",
+      "revId": "7f69ad21619955248b28aa7013c5d156273ff837",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "8de0dc9b_82d2e8a6",

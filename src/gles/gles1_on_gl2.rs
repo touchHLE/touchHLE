@@ -39,6 +39,7 @@ use std::ffi::CStr;
 pub const CAPABILITIES: &[GLenum] = &[
     gl21::ALPHA_TEST,
     gl21::BLEND,
+    gl21::COLOR_ARRAY,
     gl21::COLOR_LOGIC_OP,
     gl21::CLIP_PLANE0,
     gl21::CLIP_PLANE1,
@@ -72,6 +73,7 @@ pub const CAPABILITIES: &[GLenum] = &[
     gl21::SCISSOR_TEST,
     gl21::STENCIL_TEST,
     gl21::TEXTURE_2D,
+    gl21::TEXTURE_COORD_ARRAY,
     // Same as POINT_SPRITE_OES from the GLES extension
     gl21::POINT_SPRITE,
 ];
@@ -103,8 +105,6 @@ struct ArrayStateBackup {
 }
 
 /// List of arrays shared by OpenGL ES 1.1 and OpenGL 2.1.
-///
-/// TODO: GL_POINT_SIZE_ARRAY_OES?
 pub const ARRAYS: &[ArrayInfo] = &[
     ArrayInfo {
         name: gl21::COLOR_ARRAY,
@@ -133,6 +133,14 @@ pub const ARRAYS: &[ArrayInfo] = &[
         size: Some(gl21::VERTEX_ARRAY_SIZE),
         stride: gl21::VERTEX_ARRAY_STRIDE,
         pointer: gl21::VERTEX_ARRAY_POINTER,
+    },
+    ArrayInfo {
+        // Note: none of these values exist in gl21 so they need to be hardcoded
+        name: 0x8b9c,           // GL_POINT_SIZE_ARRAY_OES
+        buffer_binding: 0x8B9F, // GL_POINT_SIZE_ARRAY_BUFFER_BINDING_OES
+        size: None,
+        stride: 0x898B,  // GL_POINT_SIZE_ARRAY_STRIDE_OES
+        pointer: 0x898C, // GL_POINT_SIZE_ARRAY_POINTER_OES
     },
 ];
 
@@ -409,7 +417,13 @@ impl GLESContext for GLES1OnGL2Context {
             state: GLES1OnGL2State {
                 pointer_is_fixed_point: [false; ARRAYS.len()],
                 fixed_point_texture_units: HashSet::new(),
-                fixed_point_translation_buffers: [Vec::new(), Vec::new(), Vec::new(), Vec::new()],
+                fixed_point_translation_buffers: [
+                    Vec::new(),
+                    Vec::new(),
+                    Vec::new(),
+                    Vec::new(),
+                    Vec::new(),
+                ],
             },
             is_loaded: false,
         })

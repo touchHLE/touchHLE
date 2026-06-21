@@ -130,6 +130,14 @@ pub const CLASSES: ClassExports = objc_classes! {
     () = msg![env; this setHidden:false];
 }
 
+// We only model the single main screen
+- (id)screen {
+    msg_class![env; UIScreen mainScreen]
+}
+- (())setScreen:(id)screen {
+    log_dbg!("[(UIWindow*){:?} setScreen:{:?}]", this, screen);
+}
+
 // UIResponder implementation
 // From the Apple UIView docs regarding [UIResponder nextResponder]:
 // "UIWindow returns the application object."

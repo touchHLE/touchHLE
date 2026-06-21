@@ -3,6 +3,23 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "21676f8e_66e5bf27",
+        "filename": "src/frameworks/uikit/ui_screen.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 42,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-06-21T15:57:54Z",
+      "side": 1,
+      "message": "There\u0027s a bug here, `ns_array::from_vec` doesn\u0027t retain the elements for you.\n\nYou could add a `retain` here, but the neatest solution is probably to replace both lines 42 and 43 with just `msg_class![env; NSArray arrayWithObject:main_screen]` (this would obviate my other comment).",
+      "revId": "7f69ad21619955248b28aa7013c5d156273ff837",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "8de0dc9b_82d2e8a6",
         "filename": "src/frameworks/uikit/ui_screen.rs",
         "patchSetId": 1

@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8de0dc9b_82d2e8a6",
+        "filename": "src/frameworks/uikit/ui_screen.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 43,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-06-21T15:49:33Z",
+      "side": 1,
+      "message": "There\u0027s nothing wrong with this as written, but we usually would write this with the shortcut function `autorelease(env, array)`",
+      "revId": "7f69ad21619955248b28aa7013c5d156273ff837",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

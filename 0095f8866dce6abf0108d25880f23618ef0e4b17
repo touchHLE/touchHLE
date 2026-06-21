@@ -107,6 +107,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "5bfd33cd_9de20a43",
+        "filename": "src/frameworks/uikit/ui_view.rs",
+        "patchSetId": 53
+      },
+      "lineNbr": 46,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2026-06-21T15:03:17Z",
+      "side": 1,
+      "message": "Sorry, i have the habit of doing everything at once. I forgot about it and marked it as done after the rename",
+      "parentUuid": "7aa70b48_67c10bd2",
+      "revId": "0095f8866dce6abf0108d25880f23618ef0e4b17",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "fe92a31f_fee6fa7a",

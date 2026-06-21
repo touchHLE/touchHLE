@@ -49,6 +49,7 @@ pub(super) struct CALayerHostObject {
     pub(super) opacity: f32,
     pub(super) background_color: Option<CGColorHostObject>,
     pub(super) corner_radius: CGFloat,
+    pub(super) contents_scale: CGFloat,
     pub(super) needs_display: bool,
     pub(super) needs_display_on_bounds_change: bool,
     /// `CGImageRef*`
@@ -127,6 +128,7 @@ pub const CLASSES: ClassExports = objc_classes! {
         opacity: 1.0,
         background_color: None, // transparency
         corner_radius: 0.0,
+        contents_scale: 1.0,
         needs_display: false,
         needs_display_on_bounds_change: false,
         contents: nil,
@@ -397,6 +399,13 @@ pub const CLASSES: ClassExports = objc_classes! {
         let corner_radius: id = msg_class![env; NSNumber numberWithFloat:corner_radius];
         add_default_implied_basic_animation(env, this, "cornerRadius", old_corner_radius, corner_radius);
     }
+}
+
+- (CGFloat)contentsScale {
+    env.objc.borrow::<CALayerHostObject>(this).contents_scale
+}
+- (())setContentsScale:(CGFloat)contents_scale {
+    env.objc.borrow_mut::<CALayerHostObject>(this).contents_scale = contents_scale;
 }
 
 - (bool)needsDisplay {

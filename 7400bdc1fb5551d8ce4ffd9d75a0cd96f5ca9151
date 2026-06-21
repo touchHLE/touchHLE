@@ -16,6 +16,24 @@
       "message": "This implementation doesn\u0027t actually do anything.",
       "revId": "7400bdc1fb5551d8ce4ffd9d75a0cd96f5ca9151",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b72ee6e0_7e95e759",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1039141
+      },
+      "writtenOn": "2026-06-21T19:08:21Z",
+      "side": 1,
+      "message": "Yeah I checked throughout the codebase and it seems that a 1.0 scale is assumed. Like in UIScreen scale is hardcoded to 1.0 (since there’s a TODO to support retina), UIView contentScaleFactor also returns 1.0, and UIImage scale does the same. I did my change based on that precedent, should I at least add the TODO for now?",
+      "parentUuid": "65d2decc_5e9d95e8",
+      "revId": "7400bdc1fb5551d8ce4ffd9d75a0cd96f5ca9151",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

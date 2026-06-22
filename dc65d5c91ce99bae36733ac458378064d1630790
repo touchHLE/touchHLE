@@ -16,6 +16,24 @@
       "message": "This test will be flaky, because occasionally these will match by sheer coincidence. Please remove the test.",
       "revId": "dc65d5c91ce99bae36733ac458378064d1630790",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "7e0b21ef_728771b0",
+        "filename": "tests/TestApp_source/cli_tests.m",
+        "patchSetId": 5
+      },
+      "lineNbr": 974,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2026-06-22T14:21:33Z",
+      "side": 1,
+      "message": "It was passing when I ran it, but I agree anything based on time like this can be flaky. Removed the test.",
+      "parentUuid": "15a900a0_30935861",
+      "revId": "dc65d5c91ce99bae36733ac458378064d1630790",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

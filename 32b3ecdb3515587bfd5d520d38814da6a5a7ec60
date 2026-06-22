@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "e421d578_8fb10b1a",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 4
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1039550
+      },
+      "writtenOn": "2026-06-22T20:47:14Z",
+      "side": 1,
+      "message": "Tested with Sophie\u0027s Dreams version 1.0 -\u003e com.digitalflamemedia.Sophie\n\nNote: This makes the game playable.",
+      "revId": "32b3ecdb3515587bfd5d520d38814da6a5a7ec60",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

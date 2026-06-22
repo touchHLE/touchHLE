@@ -16,6 +16,23 @@
       "message": "Tested with Sophie\u0027s Dreams version 1.0 -\u003e com.digitalflamemedia.Sophie\n\nNote: This makes the game playable.",
       "revId": "32b3ecdb3515587bfd5d520d38814da6a5a7ec60",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d9cf7626_73aef6b8",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 4
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-06-22T21:10:48Z",
+      "side": 1,
+      "message": "I don\u0027t understand how this works, you can\u0027t translate an array when there\u0027s no array support.",
+      "revId": "32b3ecdb3515587bfd5d520d38814da6a5a7ec60",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

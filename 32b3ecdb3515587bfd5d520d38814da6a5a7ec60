@@ -33,6 +33,24 @@
       "message": "I don\u0027t understand how this works, you can\u0027t translate an array when there\u0027s no array support.",
       "revId": "32b3ecdb3515587bfd5d520d38814da6a5a7ec60",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c6934e54_eaf01884",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 4
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1039550
+      },
+      "writtenOn": "2026-06-23T05:01:43Z",
+      "side": 1,
+      "message": "Hi @hikari@noyu.me, thanks for taking a look!\n\nThe idea behind this patch was to fix an issue with Sophie\u0027s Dreams. The game tries to access the array in the ARRAYS const with the name 0x8B9C, which maps to the GL_POINT_SIZE_ARRAY_OES array type.\n\nThe game crashes when executing the DisableClientState function due to failing the assert.\n\nIf this is the incorrect approach then I don\u0027t mind modifying my changes, but I would not know what the best approach would be. Another idea I had was to remove the assert or add a way to skip the assert if name \u003d\u003d 0x8B9C (GL_POINT_SIZE_ARRAY_OES), but I don\u0027t know if that\u0027s the right way to go.",
+      "parentUuid": "d9cf7626_73aef6b8",
+      "revId": "32b3ecdb3515587bfd5d520d38814da6a5a7ec60",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

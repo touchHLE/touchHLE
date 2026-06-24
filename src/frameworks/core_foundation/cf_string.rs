@@ -311,10 +311,10 @@ fn CFStringGetBytes(
     assert_eq!(loss_byte, 0);
     assert!(!is_external); // TODO
 
-    let range_len = range.length;
+    let range_len = range.length.try_into().unwrap();
     let range = NSRange {
         location: range.location.try_into().unwrap(),
-        length: range_len.try_into().unwrap(),
+        length: range_len,
     };
     // TODO: avoid copying
     let substring: id = msg![env; string substringWithRange:range];
@@ -325,7 +325,7 @@ fn CFStringGetBytes(
         ns_string::get_bytes_buffer_inner(env, substring, buffer, buffer_size, encoding, false);
     assert!(success); // TODO
     let length: NSUInteger = msg![env; substring length];
-    assert_eq!(length, range_len.try_into().unwrap());
+    assert_eq!(length, range_len);
 
     if !used_buf_len.is_null() {
         let result_bytes_length: NSUInteger =

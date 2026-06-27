@@ -4,6 +4,24 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 //! Wrapper for OpenAL usage.
+
+// ============================================================
+// ИСПРАВЛЕНИЕ:
+//
+// OpenAL::GetBufferi — параметр value должен быть *const ALint → *mut ALint
+//
+// СТАРОЕ: pub unsafe fn GetBufferi(&self, buffer: ALuint, param: ALenum, value: *const ALint)
+// НОВОЕ:  pub unsafe fn GetBufferi(&self, buffer: ALuint, param: ALenum, value: *mut ALint)
+//
+// alGetBufferi в OpenAL API является getter-функцией: она ЗАПИСЫВАЕТ
+// возвращаемое целое значение по указателю value. В al.h объявлено:
+//   AL_API void AL_APIENTRY alGetBufferi(ALuint buffer, ALenum param, ALint *value);
+// Передача *const ALint означает, что вызывающий код не может получить
+// результат через изменяемую ссылку, а Rust не позволяет тривиально
+// передать &mut i32 туда, где ожидается *const.
+// Исправлено в соответствии с lib.rs (openal-soft wrapper).
+// ============================================================
+
 use al_sys::alc_types::{ALCcontext, ALCdevice};
 use std::marker::PhantomData;
 use touchHLE_openal_soft_wrapper as al_sys;
@@ -13,7 +31,10 @@ pub use al_sys::al_defines::*;
 pub use al_sys::al_types;
 pub use al_sys::alc_defines::*;
 pub use al_sys::alc_types;
-pub use al_sys::{alcCloseDevice, alcGetError, alcGetString, alcOpenDevice};
+pub use al_sys::{
+    alcCloseDevice, alcGetEnumValue, alcGetError, alcGetIntegerv, alcGetString,
+    alcIsExtensionPresent, alcOpenDevice,
+};
 
 use al_types::*;
 
@@ -25,8 +46,82 @@ impl OpenALManager {
         if OPENALMANAGER_INSTANCE_EXISTS.swap(true, std::sync::atomic::Ordering::SeqCst) {
             return Err("Only one OpenALManager can exist at a time!".to_string());
         }
+        // OpenAL Soft picks a single playback backend at first-use time, based
+        // on whichever entry in `BackendList` initialises first. On Linux the
+        // ALSA backend's `init()` always succeeds whenever libasound is
+        // present, even on hosts that have no sound cards (no `/dev/snd`,
+        // sandboxes, headless containers, CI, etc.). The actual
+        // `alcOpenDevice(NULL)` call then fails, and crucially OpenAL Soft has
+        // no fallback: subsequent attempts (including `alcOpenDevice("No
+        // Output")`) all go through the already-committed ALSA factory and
+        // also fail, leaving touchHLE with no usable audio context. That used
+        // to manifest as a black-screen crash because AudioToolbox would
+        // unwind the main thread when its lazy OpenAL context could not be
+        // created.
+        //
+        // Detect that situation up-front and ask OpenAL Soft to use its
+        // `null` ("No Output") backend by setting `ALSOFT_DRIVERS=null`. The
+        // env var is read on the first OpenAL call, so it must be set before
+        // any device is opened. We only do this if the user hasn't already
+        // chosen a driver explicitly.
+        ensure_openal_backend_available();
         Ok(Self {})
     }
+}
+
+fn ensure_openal_backend_available() {
+    // Respect any user-provided override.
+    if std::env::var_os("ALSOFT_DRIVERS").is_some() {
+        return;
+    }
+
+    if host_audio_backend_available() {
+        return;
+    }
+
+    log!(
+        "No host audio backend detected; forcing OpenAL Soft to use the \
+        \"null\" (\"No Output\") backend so emulation can run silently. \
+        Set ALSOFT_DRIVERS to override this fallback."
+    );
+    // SAFETY: `OpenALManager::new` runs once, very early in startup, before
+    // touchHLE creates any worker thread, and before any OpenAL call has been
+    // made. No other thread can be reading the environment concurrently.
+    unsafe {
+        std::env::set_var("ALSOFT_DRIVERS", "null");
+    }
+}
+
+#[cfg(target_os = "linux")]
+fn host_audio_backend_available() -> bool {
+    // ALSA: `/dev/snd` is the canonical sound-device tree the kernel exposes
+    // when at least one sound card is present.
+    if std::path::Path::new("/dev/snd").exists() {
+        return true;
+    }
+
+    // PulseAudio / PipeWire user sockets.
+    if let Some(runtime) = std::env::var_os("XDG_RUNTIME_DIR") {
+        let runtime = std::path::Path::new(&runtime);
+        if runtime.join("pulse").join("native").exists() || runtime.join("pipewire-0").exists() {
+            return true;
+        }
+    }
+
+    // Out-of-band PulseAudio configuration.
+    if std::env::var_os("PULSE_SERVER").is_some()
+        || std::env::var_os("PULSE_RUNTIME_PATH").is_some()
+    {
+        return true;
+    }
+    false
+}
+
+#[cfg(not(target_os = "linux"))]
+fn host_audio_backend_available() -> bool {
+    // CoreAudio / WASAPI / OpenAL on Apple / Windows / Android are part of
+    // the OS and are always available, so we don't need to probe.
+    true
 }
 
 impl Drop for OpenALManager {
@@ -45,11 +140,60 @@ pub struct OpenALContext {
 
 impl OpenALContext {
     pub fn new(_manager: &mut OpenALManager) -> Result<Self, String> {
-        let device = unsafe { al_sys::alcOpenDevice(std::ptr::null()) };
+        // Try the host's default audio device first.
+        let mut device = unsafe { al_sys::alcOpenDevice(std::ptr::null()) };
         if device.is_null() {
-            return Err("Could not open OpenAL device".to_string());
+            // Fall back to OpenAL Soft's "No Output" null backend so that
+            // emulation can keep running on hosts without a working audio
+            // device (for example: headless/CI hosts, broken ALSA configs,
+            // restricted Android audio policies). Sound will be silent, but
+            // the emulator will not crash and the audio APIs will continue
+            // to behave as expected from the guest's perspective.
+            log!(
+                "Could not open default OpenAL device; \
+                 falling back to OpenAL Soft \"No Output\" (silent) backend. \
+                 Sound will not be audible."
+            );
+            let null_name = b"No Output\0";
+            device = unsafe { al_sys::alcOpenDevice(null_name.as_ptr() as *const _) };
+            if device.is_null() {
+                return Err(
+                    "Could not open OpenAL device (default and \"No Output\" both failed)"
+                        .to_string(),
+                );
+            }
         }
-        unsafe { Self::new_with_device_and_attrlist(_manager, device, std::ptr::null()) }
+        match unsafe { Self::new_with_device_and_attrlist(_manager, device, std::ptr::null()) } {
+            Ok(ctx) => Ok(ctx),
+            Err(e) => {
+                log!(
+                    "Could not create OpenAL context on selected device: {}; trying OpenAL Soft \"No Output\" backend.",
+                    e
+                );
+
+                unsafe {
+                    al_sys::alcCloseDevice(device);
+                    // SAFETY: This is a last-chance fallback during audio context creation.
+                    // touchHLE is still on the main startup/audio path here, and this is only
+                    // used after the selected OpenAL device failed to create a context.
+                    std::env::set_var("ALSOFT_DRIVERS", "null");
+                }
+
+                let null_name = b"No Output\0";
+                let null_device = unsafe { al_sys::alcOpenDevice(null_name.as_ptr() as *const _) };
+
+                if null_device.is_null() {
+                    return Err(
+                        "Could not open OpenAL null backend after context creation failure"
+                            .to_string(),
+                    );
+                }
+
+                unsafe {
+                    Self::new_with_device_and_attrlist(_manager, null_device, std::ptr::null())
+                }
+            }
+        }
     }
 
     pub unsafe fn new_with_device_and_attrlist(
@@ -134,7 +278,9 @@ impl OpenAL<'_> {
         al_sys::alEnable(capability)
     }
 
-    pub unsafe fn GetBufferi(&self, buffer: ALuint, param: ALenum, value: *const ALint) {
+    // FIX: value изменён с *const ALint на *mut ALint —
+    // alGetBufferi записывает значение по этому указателю.
+    pub unsafe fn GetBufferi(&self, buffer: ALuint, param: ALenum, value: *mut ALint) {
         al_sys::alGetBufferi(buffer, param, value)
     }
 
@@ -328,3 +474,4 @@ impl OpenAL<'_> {
         al_sys::alSpeedOfSound(speed)
     }
 }
+

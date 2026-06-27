@@ -8,5 +8,11 @@
 #define STBI_ONLY_PNG
 #define STBI_ONLY_BMP
 #define STBI_ONLY_GIF
+#define STBI_ONLY_TGA
 #define STBI_NO_STDIO
+
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#define STBIW_NO_STDIO
+
 #include "../../../vendor/stb/stb_image.h"
+#include "../../../vendor/stb/stb_image_write.h"

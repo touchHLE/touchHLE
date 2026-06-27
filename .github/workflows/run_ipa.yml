@@ -1,0 +1,197 @@
+name: Download and run IPA
+
+# Manually-triggered workflow that downloads an `.ipa` (or zipped `.app`) from a
+# provided URL, builds touchHLE, and runs the app under touchHLE on Linux,
+# Windows and macOS.
+#
+# touchHLE normally opens a window and runs the app indefinitely, neither of
+# which suits CI, so the run is bounded by `dev-scripts/ci-run-app.sh`, which
+# launches the emulator, waits a fixed number of seconds, and then stops it.
+# On Linux the run happens under a virtual framebuffer (xvfb) so SDL has a
+# display to draw into; the Windows and macOS runners can create windows
+# directly.
+
+on:
+  workflow_dispatch:
+    inputs:
+      ipa_url:
+        description: Direct download link to the .ipa (or .app .zip) to run
+        type: string
+        required: true
+      run_seconds:
+        description: How long to let the app run before stopping it (seconds)
+        type: string
+        required: false
+        default: "60"
+      extra_args:
+        description: Extra arguments to pass to touchHLE (e.g. "--scale-hack=2")
+        type: string
+        required: false
+        default: ""
+
+env:
+  CARGO_TERM_COLOR: always
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  run-ipa:
+    name: Run on ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            name: Linux
+            bin: ./target/release/touchHLE
+            boost_key: boost_1_81_0_linux
+          - os: windows-latest
+            name: Windows
+            bin: ./target/release/touchHLE.exe
+            boost_key: boost_1_81_0_windows
+          - os: macos-latest
+            name: macOS
+            bin: ./target/release/touchHLE
+            boost_key: boost_1_81_0_macos
+
+    steps:
+      - name: Checkout touchHLE
+        uses: actions/checkout@main
+        with:
+          submodules: recursive
+
+      - name: Install Linux build and runtime dependencies
+        if: runner.os == 'Linux'
+        # SDL2 and openal-soft are built from source, so the development headers
+        # for the audio, video and input backends they detect must be available.
+        # `xvfb` provides a headless X server to run the GUI under.
+        run: |
+          sudo apt-get update -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq \
+            build-essential \
+            pkg-config \
+            libasound2-dev \
+            libpulse-dev \
+            libsndio-dev \
+            libdbus-1-dev \
+            libudev-dev \
+            libx11-dev \
+            libxext-dev \
+            libxcursor-dev \
+            libxi-dev \
+            libxrandr-dev \
+            libxss-dev \
+            libxxf86vm-dev \
+            libxkbcommon-dev \
+            libwayland-dev \
+            wayland-protocols \
+            libgl1-mesa-dev \
+            libegl1-mesa-dev \
+            libgl1-mesa-dri \
+            xvfb
+
+      - name: Cache Rust build artifacts
+        uses: Swatinem/rust-cache@master
+
+      - name: Try to get cached copy of Boost
+        id: cache-boost
+        uses: actions/cache@main
+        with:
+          path: vendor/boost
+          key: ${{ matrix.boost_key }}
+
+      # Linux and macOS use the .tar.gz; Windows uses the .7z (7z is preinstalled
+      # on the Windows runners and handles long paths more reliably there).
+      - if: ${{ steps.cache-boost.outputs.cache-hit != 'true' && runner.os != 'Windows' }}
+        name: Download and extract Boost (Linux/macOS)
+        run: |
+          curl -L -O "https://archives.boost.io/release/1.81.0/source/boost_1_81_0.tar.gz"
+          mkdir -p vendor
+          tar xzf boost_1_81_0.tar.gz -C vendor
+          mv vendor/boost_1_81_0 vendor/boost
+
+      - if: ${{ steps.cache-boost.outputs.cache-hit != 'true' && runner.os == 'Windows' }}
+        name: Download Boost (Windows)
+        run: curl -L -o boost_1_81_0.7z "https://archives.boost.io/release/1.81.0/source/boost_1_81_0.7z"
+
+      - if: ${{ steps.cache-boost.outputs.cache-hit != 'true' && runner.os == 'Windows' }}
+        name: Extract Boost (Windows)
+        run: 7z -ovendor x boost_1_81_0.7z && ren vendor\boost_1_81_0 boost
+
+      - name: Setup CMake
+        uses: lukka/get-cmake@latest
+        with:
+          cmakeVersion: "~3.29.0"
+
+      - name: Build touchHLE
+        run: cargo build --release
+
+      # The Windows runners only expose Microsoft's GDI generic OpenGL 1.1,
+      # which can't satisfy the OpenGL 2.1 context that touchHLE's GLES1-on-GL2
+      # layer requires. Both the native GLES path and the GL2 fallback therefore
+      # fail and the app aborts with "Couldn't create OpenGL ES 1.1 context!".
+      # Drop in Mesa3D's llvmpipe software renderer as a per-app opengl32.dll
+      # next to the binary so a complete OpenGL implementation is available
+      # without a GPU. Linux already gets llvmpipe via libgl1-mesa-dri and macOS
+      # ships a usable system OpenGL, so this is only needed on Windows.
+      - name: Set up software OpenGL (Mesa) on Windows
+        if: runner.os == 'Windows'
+        shell: bash
+        env:
+          MESA_VERSION: "24.3.4"
+        run: |
+          set -euo pipefail
+          curl -fL --retry 4 --retry-delay 2 -o mesa.7z \
+            "https://github.com/pal1000/mesa-dist-win/releases/download/${MESA_VERSION}/mesa3d-${MESA_VERSION}-release-msvc.7z"
+          7z x mesa.7z -omesa
+          # The opengl32.dll loader plus its gallium/llvmpipe dependencies must
+          # sit next to touchHLE.exe so Windows loads Mesa instead of the system
+          # OpenGL. Copying the whole x64 set keeps every dependency satisfied.
+          cp mesa/x64/*.dll target/release/
+          # Force the software rasterizer; the runners have no usable GPU.
+          echo "GALLIUM_DRIVER=llvmpipe" >> "$GITHUB_ENV"
+
+      - name: Download IPA
+        shell: bash
+        env:
+          IPA_URL: ${{ inputs.ipa_url }}
+        run: |
+          set -euo pipefail
+          mkdir -p downloaded_app
+          echo "Downloading IPA from: $IPA_URL"
+          # `-f` makes curl fail (non-zero exit) on HTTP errors instead of
+          # silently saving an error page as "app.ipa".
+          curl -fL --retry 4 --retry-delay 2 -o downloaded_app/app.ipa "$IPA_URL"
+          ls -lh downloaded_app/app.ipa
+
+      - name: Inspect app bundle
+        shell: bash
+        run: ${{ matrix.bin }} downloaded_app/app.ipa --info
+
+      - name: Run app under touchHLE
+        shell: bash
+        env:
+          RUN_SECONDS: ${{ inputs.run_seconds }}
+          EXTRA_ARGS: ${{ inputs.extra_args }}
+        run: |
+          set -uo pipefail
+          if [ "${RUNNER_OS}" = "Linux" ]; then
+            # Provide a virtual display for SDL/OpenGL on the headless runner.
+            xvfb-run -a --server-args="-screen 0 640x960x24" \
+              ./dev-scripts/ci-run-app.sh "${{ matrix.bin }}" "${RUN_SECONDS}" \
+              downloaded_app/app.ipa ${EXTRA_ARGS}
+          else
+            ./dev-scripts/ci-run-app.sh "${{ matrix.bin }}" "${RUN_SECONDS}" \
+              downloaded_app/app.ipa ${EXTRA_ARGS}
+          fi
+
+      - name: Upload run log
+        if: always()
+        uses: actions/upload-artifact@main
+        with:
+          name: HyperHLE_run_log_${{ matrix.name }}
+          path: run.log
+          if-no-files-found: ignore

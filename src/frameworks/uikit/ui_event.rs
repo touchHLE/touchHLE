@@ -6,13 +6,35 @@
 //! `UIEvent`.
 
 use super::ui_touch::UITouchHostObject;
-use crate::frameworks::foundation::{NSTimeInterval, NSUInteger};
+use crate::frameworks::foundation::{NSInteger, NSTimeInterval, NSUInteger};
 use crate::mem::MutVoidPtr;
 use crate::objc::{
     id, msg, msg_class, nil, objc_classes, release, retain, ClassExports, HostObject, NSZonePtr,
 };
 use crate::Environment;
 
+type UIEventType = NSUInteger;
+type UIEventSubtype = NSInteger;
+
+const UIEventTypeTouches: UIEventType = 0;
+const UIEventTypePresses: UIEventType = 1;
+const UIEventTypeMotion: UIEventType = 2;
+const UIEventTypeRemoteControl: UIEventType = 4;
+
+const UIEventSubtypeNone: UIEventSubtype = 0;
+const UIEventSubtypeMotionShake: UIEventSubtype = 1;
+const UIEventSubtypeRemoteControlPlay: UIEventSubtype = 100;
+const UIEventSubtypeRemoteControlPause: UIEventSubtype = 101;
+const UIEventSubtypeRemoteControlStop: UIEventSubtype = 102;
+const UIEventSubtypeRemoteControlTogglePlayPause: UIEventSubtype = 103;
+const UIEventSubtypeRemoteControlNextTrack: UIEventSubtype = 104;
+const UIEventSubtypeRemoteControlPreviousTrack: UIEventSubtype = 105;
+const UIEventSubtypeRemoteControlBeginSeekingBackward: UIEventSubtype = 106;
+const UIEventSubtypeRemoteControlEndSeekingBackward: UIEventSubtype = 107;
+const UIEventSubtypeRemoteControlBeginSeekingForward: UIEventSubtype = 108;
+const UIEventSubtypeRemoteControlEndSeekingForward: UIEventSubtype = 109;
+
+#[derive(Default)]
 pub(super) struct UIEventHostObject {
     /// `NSSet<UITouch*>*`
     touches: id,
@@ -67,6 +89,40 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (id)allTouches {
     let &UIEventHostObject { touches, .. } = env.objc.borrow(this);
     touches
+}
+
+// Add to @implementation UIEvent:
+
+- (id)touchesForWindow:(id)window {
+    let &UIEventHostObject { touches, .. } = env.objc.borrow(this);
+    let result: id = msg_class![env; NSMutableSet new];
+    let touches_arr: id = msg![env; touches allObjects];
+    let count: NSUInteger = msg![env; touches_arr count];
+    for i in 0..count {
+        let touch: id = msg![env; touches_arr objectAtIndex:i];
+        let touch_view: id = msg![env; touch view];
+        if touch_view != nil {
+            let touch_window: id = msg![env; touch_view window];
+            if touch_window == window {
+                let _: () = msg![env; result addObject:touch];
+            }
+        }
+    }
+    result
+}
+
+- (id)touchesForGestureRecognizer:(id)_recognizer {
+    // Return all touches — gesture recognizers are not implemented.
+    let &UIEventHostObject { touches, .. } = env.objc.borrow(this);
+    touches
+}
+
+- (UIEventType)type {
+    UIEventTypeTouches
+}
+
+- (UIEventSubtype)subtype {
+    UIEventSubtypeNone
 }
 
 // TODO: more accessors

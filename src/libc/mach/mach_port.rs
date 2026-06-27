@@ -9,10 +9,8 @@
 //! based games would install an `exception handler` using below functions.
 //! (See [mini-darwin.c](https://github.com/mono/mono/blob/62121afbb28f0b62f100ec9a942d10c5e0f4814f/mono/mini/mini-darwin.c#L171) from mono repo)
 //!
-//! We would prefer to crash on exception anyway,
-//! so it should be fine to just have stubs.
-
-// TODO: implement port rights
+//! We emulate minimal port allocation so that callers get valid port
+//! names back and don't try to free garbage values later.
 
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::libc::mach::core_types::natural_t;
@@ -28,19 +26,45 @@ type mach_port_right_t = natural_t;
 
 type mach_msg_type_name_t = u32;
 
+/// Counter for generating unique synthetic mach port names.
+/// Real Darwin starts port names at low values and increments by 4 (they are
+/// indices into a port table). We start at 0x100 to avoid collision with any
+/// well-known port constants the guest might check.
+static mut NEXT_PORT_NAME: mach_port_name_t = 0x100;
+
 fn mach_port_allocate(
-    _env: &mut Environment,
+    env: &mut Environment,
     task: ipc_space_t,
     right: mach_port_right_t,
     name: MutPtr<mach_port_name_t>,
 ) -> kern_return_t {
-    assert_eq!(task, MACH_TASK_SELF);
-    log!(
-        "TODO: mach_port_allocate({:#x}, {}, {:?})",
+    if task != MACH_TASK_SELF {
+        log!(
+            "Warning: mach_port_allocate called with unexpected task {:#x} (expected {:#x})",
+            task,
+            MACH_TASK_SELF
+        );
+    }
+
+    // Generate a unique port name and write it to the output parameter
+    let port_name = unsafe {
+        let n = NEXT_PORT_NAME;
+        NEXT_PORT_NAME += 4; // Darwin increments by 4
+        n
+    };
+
+    if !name.is_null() {
+        env.mem.write(name, port_name);
+    }
+
+    log_dbg!(
+        "mach_port_allocate(task={:#x}, right={}, name={:?}) => port_name={}",
         task,
         right,
-        name
+        name,
+        port_name
     );
+
     KERN_SUCCESS
 }
 
@@ -49,8 +73,13 @@ fn mach_port_deallocate(
     task: ipc_space_t,
     name: mach_port_name_t,
 ) -> kern_return_t {
-    assert_eq!(task, MACH_TASK_SELF);
-    log_dbg!("TODO: mach_port_deallocate({:#x}, {})", task, name);
+    if task != MACH_TASK_SELF {
+        log!(
+            "Warning: mach_port_deallocate called with unexpected task {:#x}",
+            task
+        );
+    }
+    log_dbg!("mach_port_deallocate(task={:#x}, name={})", task, name);
     KERN_SUCCESS
 }
 
@@ -58,12 +87,17 @@ fn mach_port_insert_right(
     _env: &mut Environment,
     task: ipc_space_t,
     name: mach_port_name_t,
-    poly: mach_port_t,               // called `right` in some docs
-    poly_poly: mach_msg_type_name_t, // called `right_type` in some docs
+    poly: mach_port_t,
+    poly_poly: mach_msg_type_name_t,
 ) -> kern_return_t {
-    assert_eq!(task, MACH_TASK_SELF);
-    log!(
-        "TODO: mach_port_insert_right({:#x}, {}, {}, {})",
+    if task != MACH_TASK_SELF {
+        log!(
+            "Warning: mach_port_insert_right called with unexpected task {:#x}",
+            task
+        );
+    }
+    log_dbg!(
+        "mach_port_insert_right(task={:#x}, name={}, poly={}, poly_poly={})",
         task,
         name,
         poly,

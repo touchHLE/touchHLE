@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}About — HyperHLE app compatibility database{% endblock %}
+{% block content %}
+<h1>About</h1>
+
+<p>
+  <strong>HyperHLE</strong> is a community fork of the touchHLE iPhone OS
+  emulator, maintained at
+  <a href="https://github.com/j92580498-max/touchHLE">j92580498-max/touchHLE</a>.
+  This site is its compatibility database — anyone can
+  <a href="/submit">submit a report</a> for an app they've tested in
+  HyperHLE: app name, version, OS / device, GPU, rating, remarks, and a
+  screenshot.
+</p>
+
+<h2>Submitting a report</h2>
+<p>
+  The fastest way to submit a report is to upload your HyperHLE log file
+  on the submit page — the site will pull the app name, version, bundle
+  identifier, GPU, OS and emulator version straight out of the log so you
+  only need to add a rating, remarks and (optionally) a screenshot.
+</p>
+
+<h2>Rating scale</h2>
+<table class="legend-table">
+  <thead><tr><th>Rating</th><th>Description</th></tr></thead>
+  <tbody>
+    {% for value, desc in rating_legend %}
+    <tr><td class="stars">{{ value | stars }}</td><td>{{ desc }}</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<h2>Inspiration</h2>
+<p>
+  This site is modelled on the original
+  <a href="https://appdb.touchhle.org/">appdb.touchhle.org</a> by upstream
+  touchHLE. HyperHLE is an independent community fork; this database is
+  not affiliated with upstream.
+</p>
+
+<h2>Moderation</h2>
+<p>
+  Submitting a report requires signing in with GitHub. Reports go into a
+  moderation queue reviewed by the site admins before they appear
+  publicly. The current admins are:
+</p>
+<ul class="admin-list-inline">
+  <li><a href="https://github.com/TimofeyLednev">@TimofeyLednev</a></li>
+  <li><a href="https://github.com/j92580498-max">@j92580498-max</a></li>
+  <li><a href="https://github.com/makaherpasswordlostmedia">@makaherpasswordlostmedia</a></li>
+</ul>
+<p class="muted">
+  We only request the GitHub <code>read:user</code> scope — public profile
+  info (id, login, avatar). No email access, no repo access.
+</p>
+
+<h2>House rules</h2>
+<ul>
+  <li>Only test apps you legally own.</li>
+  <li>No links to pirated content. “Abandonware” is still piracy.</li>
+  <li>Be precise — include the HyperHLE version, your OS, your GPU.</li>
+</ul>
+{% endblock %}

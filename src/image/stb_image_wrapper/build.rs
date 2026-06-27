@@ -18,4 +18,5 @@ fn main() {
         .compile("stb_image_wrapper");
     rerun_if_changed(&package_root.join("lib.c"));
     rerun_if_changed(&workspace_root.join("vendor/stb/stb_image.h"));
+    rerun_if_changed(&workspace_root.join("vendor/stb/stb_image_write.h"));
 }

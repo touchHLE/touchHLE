@@ -1,0 +1,406 @@
+name: Build HyperHLE
+
+on:
+  workflow_dispatch:
+    inputs:
+      publish_hyperhle_release:
+        description: Publish a HyperHLE release (after all builds succeed)
+        type: boolean
+        default: false
+  push:
+    branches: [ "trunk" ]
+  pull_request:
+    branches: [ "trunk" ]
+  create: # for tags
+
+env:
+  CARGO_TERM_COLOR: always
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-osx:
+    runs-on: macos-latest  
+
+    steps:  
+      - name: Checkout touchHLE
+        uses: actions/checkout@main
+        with:
+          submodules: recursive
+          
+      - name: Cache Rust build artifacts
+        uses: Swatinem/rust-cache@master
+
+      - name: Try to get cached copy of Boost  
+        id: cache-boost  
+        uses: actions/cache@main
+        with:  
+          path: vendor/boost  
+          key: boost_1_81_0_macos  
+          
+      - if: ${{ steps.cache-boost.outputs.cache-hit != 'true' }}  
+        name: Download Boost  
+        run: curl -L -O "https://archives.boost.io/release/1.81.0/source/boost_1_81_0.tar.gz"  
+        
+      - if: ${{ steps.cache-boost.outputs.cache-hit != 'true' }}  
+        name: Extract Boost  
+        run: mkdir -p vendor && tar xzf boost_1_81_0.tar.gz -C vendor && mv vendor/boost_1_81_0 vendor/boost  
+
+      - name: Setup CMake
+        uses: lukka/get-cmake@latest
+        with:
+          cmakeVersion: "~3.29.0"
+
+      - name: Install x86_64 toolchain  
+        run: rustup target add x86_64-apple-darwin  
+        
+      - name: Build  
+        run: cargo build --target x86_64-apple-darwin --release  
+
+      - name: Create .app bundle and DMG
+        # `hdiutil create` periodically fails on the `macos-15-arm64` GitHub
+        # Actions runners with `hdiutil: create failed - Resource busy` when
+        # Spotlight (`mds`/`mds_stores`) decides to index `touchHLE-dmg-src`
+        # at the same moment hdiutil tries to snapshot it, or when a stale
+        # `/Volumes/touchHLE` from a previous run hasn't fully detached.
+        # Mirror the workaround Apple documents in TN2065 / `hdiutil(1)` —
+        # detach any stray attachment, pass `-ov` so an existing image is
+        # overwritten cleanly, and retry a few times. See
+        # <https://developer.apple.com/library/archive/technotes/tn2065/_index.html>.
+        run: |
+          set -eu
+          cd dev-scripts
+          ./make-macos-bundle.sh \
+            ../target/x86_64-apple-darwin/release/touchHLE \
+            "`cargo run --package touchHLE_version`" \
+            "`cargo run --package touchHLE_version -- --branding`"
+          mkdir touchHLE-dmg-src
+          mv *.app touchHLE-dmg-src/
+          # Forbid Spotlight from indexing the staging folder so it can't
+          # race with hdiutil for an exclusive handle.
+          touch touchHLE-dmg-src/.metadata_never_index || true
+          # Tear down any stale mount left over from a previous run.
+          if [ -d "/Volumes/touchHLE" ]; then
+            hdiutil detach -force "/Volumes/touchHLE" || true
+          fi
+          # Retry hdiutil up to 5 times with growing back-off.
+          attempt=1
+          max_attempts=5
+          until hdiutil create -ov -volname touchHLE \
+              -srcfolder touchHLE-dmg-src touchHLE.dmg; do
+            if [ "$attempt" -ge "$max_attempts" ]; then
+              echo "hdiutil create still failed after $max_attempts attempts" >&2
+              exit 1
+            fi
+            sleep_secs=$((attempt * 5))
+            echo "hdiutil create failed (attempt $attempt); retrying in ${sleep_secs}s" >&2
+            if [ -d "/Volumes/touchHLE" ]; then
+              hdiutil detach -force "/Volumes/touchHLE" || true
+            fi
+            sleep "$sleep_secs"
+            attempt=$((attempt + 1))
+          done
+          mv touchHLE.dmg ..
+          
+      - uses: actions/upload-artifact@main
+        with:
+          name: HyperHLE_macOS_x86_64
+          path: touchHLE.dmg
+
+  build-linux:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout touchHLE
+        uses: actions/checkout@main
+        with:
+          submodules: recursive
+
+      - name: Install Linux build dependencies
+        # SDL2 and openal-soft are built from source (the `static` feature uses
+        # the `bundled` SDL2 build), so the development headers for the audio,
+        # video and input backends they detect must be available.
+        run: |
+          sudo apt-get update -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq \
+            build-essential \
+            pkg-config \
+            libasound2-dev \
+            libpulse-dev \
+            libsndio-dev \
+            libdbus-1-dev \
+            libudev-dev \
+            libx11-dev \
+            libxext-dev \
+            libxcursor-dev \
+            libxi-dev \
+            libxrandr-dev \
+            libxss-dev \
+            libxxf86vm-dev \
+            libxkbcommon-dev \
+            libwayland-dev \
+            wayland-protocols \
+            libgl1-mesa-dev \
+            libegl1-mesa-dev
+
+      - name: Cache Rust build artifacts
+        uses: Swatinem/rust-cache@master
+
+      - name: Try to get cached copy of Boost
+        id: cache-boost
+        uses: actions/cache@main
+        with:
+          path: vendor/boost
+          key: boost_1_81_0_linux
+
+      - if: ${{ steps.cache-boost.outputs.cache-hit != 'true' }}
+        name: Download Boost
+        run: curl -L -O "https://archives.boost.io/release/1.81.0/source/boost_1_81_0.tar.gz"
+
+      - if: ${{ steps.cache-boost.outputs.cache-hit != 'true' }}
+        name: Extract Boost
+        run: mkdir -p vendor && tar xzf boost_1_81_0.tar.gz -C vendor && mv vendor/boost_1_81_0 vendor/boost
+
+      - name: Setup CMake
+        uses: lukka/get-cmake@latest
+        with:
+          cmakeVersion: "~3.29.0"
+
+      - name: Build
+        run: cargo build --release
+
+      - name: Create bundle
+        run: cd dev-scripts && ./make-linux-bundle.sh ../target/release/touchHLE && mv touchHLE_linux_bundle/ ..
+
+      - uses: actions/upload-artifact@main
+        with:
+          name: HyperHLE_Linux_x86_64
+          path: touchHLE_linux_bundle/
+
+  build-android:
+    runs-on: ubuntu-latest  
+
+    steps:  
+    - name: Checkout touchHLE
+      uses: actions/checkout@main
+      with:
+        submodules: recursive
+
+    - name: Cache Rust build artifacts
+      uses: actions/cache@main
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          target
+        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-cargo-
+          
+    - name: Try to get cached copy of Boost  
+      id: cache-boost  
+      uses: actions/cache@main
+      with:  
+        path: vendor/boost  
+        key: boost_1_81_0  
+
+    - if: ${{ steps.cache-boost.outputs.cache-hit != 'true' }}  
+      name: Download Boost  
+      run: curl -L -o boost_1_81_0.7z "https://archives.boost.io/release/1.81.0/source/boost_1_81_0.7z"  
+
+    - if: ${{ steps.cache-boost.outputs.cache-hit != 'true' }}  
+      name: Extract Boost  
+      run: 7z -ovendor x boost_1_81_0.7z && mv vendor/boost_1_81_0 vendor/boost  
+
+    - name: Try to get cached copy of cmake  
+      id: cache-cmake  
+      uses: actions/cache@main
+      with:  
+        path: vendor/cmake  
+        key: cmake_3_31_6_linux  
+
+    - if: ${{ steps.cache-cmake.outputs.cache-hit != 'true' }}  
+      name: Download Cmake  
+      run: curl -L -O "https://github.com/Kitware/CMake/releases/download/v3.31.6/cmake-3.31.6-linux-x86_64.tar.gz"  
+
+    - if: ${{ steps.cache-cmake.outputs.cache-hit != 'true' }}  
+      name: Extract Cmake  
+      run: tar xzvf "cmake-3.31.6-linux-x86_64.tar.gz" -C vendor && mv vendor/cmake-3.31.6-linux-x86_64 vendor/cmake  
+
+    - name: Install AArch64 Android Rust toolchain  
+      run: rustup target add aarch64-linux-android  
+
+    - name: Install cargo-ndk  
+      run: cargo install cargo-ndk@3.5.4  
+
+    - name: Try to get a cached copy of Gradle  
+      id: cache-gradle  
+      uses: actions/cache@main
+      with:  
+        path: gradle  
+        key: gradle-8.11.1  
+
+    - if: ${{ steps.cache-gradle.outputs.cache-hit != 'true' }}  
+      name: Download Gradle  
+      run: curl -L -o gradle-8.11.1-bin.zip "https://services.gradle.org/distributions/gradle-8.11.1-bin.zip"  
+
+    - if: ${{ steps.cache-gradle.outputs.cache-hit != 'true' }}  
+      name: Extract Gradle  
+      run: 7z -ogradle x gradle-8.11.1-bin.zip  
+
+    - name: Try to get a cached copy of Android NDK  
+      id: cache-android-ndk  
+      uses: actions/cache@main
+      with:  
+        path: android-ndk  
+        key: android-ndk-r25c  
+
+    - if: ${{ steps.cache-android-ndk.outputs.cache-hit != 'true' }}  
+      name: Download Android NDK  
+      run: curl -L -o android-ndk-r25c-linux.zip "https://dl.google.com/android/repository/android-ndk-r25c-linux.zip"  
+
+    - if: ${{ steps.cache-android-ndk.outputs.cache-hit != 'true' }}  
+      name: Extract Android NDK  
+      run: 7z -oandroid-ndk -snld x android-ndk-r25c-linux.zip  
+
+    - name: Link Android NDK  
+      run: ln -s $PWD'/android-ndk/android-ndk-r25c' $ANDROID_SDK_ROOT'/ndk/25.2.9519653'  
+
+    - name: Generate local.properties file  
+      run: echo 'sdk.dir='$ANDROID_SDK_ROOT > android/local.properties  
+
+    - name: Build for Android  
+      run: cd android && ../gradle/gradle-8.11.1/bin/gradle assembleRelease && mv app/build/outputs/apk/release/app-release.apk ../touchHLE.apk  
+      env:  
+        ANDROID_NDK_ROOT: '/usr/local/lib/android/sdk/ndk/25.2.9519653'  
+        CMAKE: ${{ github.workspace }}/vendor/cmake/bin/cmake  
+
+    - uses: actions/upload-artifact@main
+      with:  
+        name: HyperHLE_Android_AArch64  
+        path: touchHLE.apk
+
+  build-win:
+    runs-on: windows-2022  
+
+    steps:  
+    - name: Checkout touchHLE
+      uses: actions/checkout@main
+      with:
+        submodules: recursive
+        
+    - name: Cache Rust build artifacts
+      uses: Swatinem/rust-cache@master
+
+    - name: Try to get cached copy of Boost  
+      id: cache-boost  
+      uses: actions/cache@main
+      with:  
+        path: vendor\boost  
+        key: boost_1_81_0  
+        
+    - if: ${{ steps.cache-boost.outputs.cache-hit != 'true' }}  
+      name: Download Boost  
+      run: curl -L -o boost_1_81_0.7z "https://archives.boost.io/release/1.81.0/source/boost_1_81_0.7z"  
+      
+    - if: ${{ steps.cache-boost.outputs.cache-hit != 'true' }}  
+      name: Extract Boost  
+      run: 7z -ovendor x boost_1_81_0.7z && ren vendor\boost_1_81_0 boost  
+
+    - name: Setup CMake
+      uses: lukka/get-cmake@latest
+      with:
+        cmakeVersion: "~3.29.0"
+
+    - name: Build  
+      run: cargo build --release  
+
+    - name: Create bundle  
+      shell: bash  
+      run: cd dev-scripts && ./make-windows-bundle.sh ../target/release/touchHLE.exe && mv touchHLE_windows_bundle/ ..  
+      
+    - uses: actions/upload-artifact@main
+      with:  
+        name: HyperHLE_Windows_x86_64  
+        path: touchHLE_windows_bundle/
+
+  check-hyperhle-release:
+    runs-on: ubuntu-latest
+    if: >-
+      (github.event_name == 'push' && github.ref == 'refs/heads/t') ||
+      github.event_name == 'workflow_dispatch'
+    outputs:
+      should_release: ${{ steps.check.outputs.should_release }}
+      version: ${{ steps.check.outputs.version }}
+      changelog_from: ${{ steps.check.outputs.changelog_from }}
+      changelog_limit: ${{ steps.check.outputs.changelog_limit }}
+    steps:
+      - name: Checkout touchHLE
+        uses: actions/checkout@main
+        with:
+          fetch-depth: 0
+      - name: Check whether a HyperHLE release is due
+        id: check
+        env:
+          FORCE_HYPERHLE_RELEASE: ${{ github.event_name == 'workflow_dispatch' && inputs.publish_hyperhle_release && 'true' || '' }}
+        run: ./dev-scripts/hyperhle-should-release.sh
+
+  publish-hyperhle-release:
+    needs: [check-hyperhle-release, build-osx, build-linux, build-android, build-win]
+    if: >-
+      needs.check-hyperhle-release.result == 'success' &&
+      needs.check-hyperhle-release.outputs.should_release == 'true' &&
+      needs.build-osx.result == 'success' &&
+      needs.build-linux.result == 'success' &&
+      needs.build-android.result == 'success' &&
+      needs.build-win.result == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout touchHLE
+        uses: actions/checkout@main
+        with:
+          submodules: recursive
+          fetch-depth: 0
+      - name: Download macOS artifact
+        uses: actions/download-artifact@main
+        with:
+          name: HyperHLE_macOS_x86_64
+          path: artifacts/macos
+      - name: Download Android artifact
+        uses: actions/download-artifact@main
+        with:
+          name: HyperHLE_Android_AArch64
+          path: artifacts/android
+      - name: Download Windows artifact
+        uses: actions/download-artifact@main
+        with:
+          name: HyperHLE_Windows_x86_64
+          path: artifacts/windows
+      - name: Download Linux artifact
+        uses: actions/download-artifact@main
+        with:
+          name: HyperHLE_Linux_x86_64
+          path: artifacts/linux
+      - name: Install packaging tools
+        run: sudo apt-get update -qq && sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq pandoc zip
+      - name: Package HyperHLE release files
+        env:
+          GITHUB_SERVER_URL: ${{ github.server_url }}
+          FORCE_HYPERHLE_RELEASE: ${{ github.event_name == 'workflow_dispatch' && inputs.publish_hyperhle_release && 'true' || '' }}
+          VERSION: ${{ needs.check-hyperhle-release.outputs.version }}
+          CHANGELOG_FROM: ${{ needs.check-hyperhle-release.outputs.changelog_from }}
+          CHANGELOG_LIMIT: ${{ needs.check-hyperhle-release.outputs.changelog_limit }}
+        run: ./dev-scripts/package-hyperhle-release.sh "$VERSION" "$CHANGELOG_FROM"
+      - name: Publish HyperHLE release
+        uses: softprops/action-gh-release@master
+        with:
+          tag_name: ${{ needs.check-hyperhle-release.outputs.version }}
+          name: HyperHLE ${{ needs.check-hyperhle-release.outputs.version }}
+          body_path: release/RELEASE_NOTES.md
+          files: |
+            release/HyperHLE_*.zip
+          fail_on_unmatched_files: true

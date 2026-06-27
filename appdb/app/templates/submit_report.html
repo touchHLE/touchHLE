@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% block title %}Submit a report — HyperHLE app compatibility database{% endblock %}
+{% block content %}
+<p><a href="/">← All apps</a></p>
+
+<h1>Submit a compatibility report</h1>
+
+{% if error %}<div class="error">{{ error }}</div>{% endif %}
+{% if info %}<div class="info">{{ info }}</div>{% endif %}
+
+<p class="muted">
+  You're signed in as <strong>{{ current_user.display_name }}</strong>.
+  {% if current_user.is_admin %}
+    As an admin your reports will be auto-approved.
+  {% else %}
+    Submitted reports go into the moderation queue and are reviewed by
+    the site admins before they appear publicly.
+  {% endif %}
+</p>
+
+<section class="autofill">
+  <h2>Quick autofill from a HyperHLE log</h2>
+  <p class="muted">
+    Upload your <code>log.txt</code> (Android: <code>log.txt</code> in the
+    HyperHLE files folder; desktop: redirect the terminal output to a file)
+    and we'll fill in app name, version, bundle ID, GPU, OS and emulator
+    version automatically. You can edit any field afterwards.
+  </p>
+  <form class="autofill-form" method="post" action="/submit/parse-log" enctype="multipart/form-data">
+    <input type="file" name="log_file" accept=".txt,.log,text/plain" required />
+    <button type="submit">Autofill from log</button>
+  </form>
+</section>
+
+<form class="report-form" method="post" action="/submit" enctype="multipart/form-data">
+  <fieldset>
+    <legend>App</legend>
+
+    <label for="app_id">Choose an app</label>
+    <select id="app_id" name="app_id" required>
+      <option value="">— pick one —</option>
+      <option value="__new__" {% if form.get('app_id') == '__new__' %}selected{% endif %}>+ Add a new app</option>
+      {% for a in apps %}
+      <option value="{{ a.id }}"
+        {% if form.get('app_id') == a.id|string or (selected_app and selected_app.id == a.id and not form.get('app_id')) %}selected{% endif %}>
+        {{ a.name }}{% if a.release_year %} ({{ a.release_year }}){% endif %}
+      </option>
+      {% endfor %}
+    </select>
+
+    <div class="new-app-fields">
+      <p class="muted">Only fill these out if you picked “+ Add a new app” above.</p>
+      <label>New app name <input type="text" name="new_app_name" value="{{ form.get('new_app_name', '') }}" /></label>
+      <label>Release year <input type="number" name="new_app_year" min="2007" max="2030" value="{{ form.get('new_app_year', '') }}" /></label>
+      <label>Developer / Publisher <input type="text" name="new_app_publisher" value="{{ form.get('new_app_publisher', '') }}" /></label>
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend>App version (the version you tested)</legend>
+    <label>Version number <span class="req">*</span>
+      <input type="text" name="version_number" required value="{{ form.get('version_number', '') }}" placeholder="1.0.2" />
+    </label>
+    <label>Display name (as shown on iPhone home screen)
+      <input type="text" name="display_name" value="{{ form.get('display_name', '') }}" placeholder="Monkey Ball" />
+    </label>
+    <label>Bundle identifier
+      <input type="text" name="bundle_identifier" value="{{ form.get('bundle_identifier', '') }}" placeholder="com.example.app" />
+    </label>
+    <label>Minimum iOS version
+      <input type="text" name="minimum_ios_version" value="{{ form.get('minimum_ios_version', '') }}" placeholder="2.0" />
+    </label>
+  </fieldset>
+
+  <fieldset>
+    <legend>Test environment</legend>
+    <label>HyperHLE version <span class="req">*</span>
+      <input type="text" name="touchhle_version" required value="{{ form.get('touchhle_version', '') }}" placeholder="UNOFFICIAL 9424a29c / v0.2.3" />
+    </label>
+    <label>Operating system <span class="req">*</span>
+      <input type="text" name="operating_system" required value="{{ form.get('operating_system', '') }}" placeholder="Android 14 / Windows 11 / macOS 14" />
+    </label>
+    <label>GPU
+      <input type="text" name="gpu" value="{{ form.get('gpu', '') }}" placeholder="ARM Mali-G57 MC2 / NVIDIA GTX 1660" />
+    </label>
+    <label>Scale hack supported?
+      <select name="scale_hack">
+        <option value=""></option>
+        {% for s in scale_hack_choices %}
+        <option value="{{ s }}" {% if form.get('scale_hack') == s %}selected{% endif %}>{{ s }}</option>
+        {% endfor %}
+      </select>
+    </label>
+  </fieldset>
+
+  <fieldset>
+    <legend>Rating <span class="req">*</span></legend>
+    <p class="muted">Pick the rating that best matches your experience.</p>
+    <div class="rating-choices">
+      {% for value, desc in rating_legend %}
+      <label class="rating-choice">
+        <input type="radio" name="rating" value="{{ value }}"
+          {% if form.get('rating') == value|string %}checked{% endif %} required />
+        <span class="stars">{{ value | stars }}</span>
+        <span class="rating-desc">{{ desc }}</span>
+      </label>
+      {% endfor %}
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend>Details</legend>
+    <label>Remarks
+      <textarea name="remarks" rows="4" placeholder="What works, what doesn't, where it fails…">{{ form.get('remarks', '') }}</textarea>
+    </label>
+    <label>Screenshot (upload an image file)
+      <input type="file" name="screenshot_file" accept="image/png,image/jpeg,image/webp,image/gif" />
+      <span class="muted small">PNG, JPG, WEBP or GIF, up to 5 MB.</span>
+    </label>
+    <label>…or paste a screenshot URL
+      <input type="url" name="screenshot_url" value="{{ form.get('screenshot_url', '') }}" placeholder="https://…/screenshot.png" />
+    </label>
+  </fieldset>
+
+  <button type="submit" class="primary">Submit report</button>
+</form>
+{% endblock %}

@@ -81,6 +81,86 @@ fn pthread_mutexattr_settype(
     env.mem.write(attr, attr_copy);
     0 // success
 }
+fn pthread_mutexattr_gettype(
+    env: &mut Environment,
+    attr: ConstPtr<pthread_mutexattr_t>,
+    type_out: MutPtr<i32>,
+) -> i32 {
+    check_magic!(env, attr, MAGIC_MUTEXATTR);
+    if type_out.is_null() {
+        return EINVAL;
+    }
+    let attr_copy = env.mem.read(attr);
+    env.mem.write(type_out, attr_copy.type_);
+    0 // success
+}
+/// `pthread_mutexattr_setprotocol(attr, protocol)` — Apple's
+/// `<pthread/pthread.h>` declares this for POSIX priority-inheritance
+/// support. Permitted protocols are:
+///   - `PTHREAD_PRIO_NONE     = 0` (no priority changes — Apple default)
+///   - `PTHREAD_PRIO_INHERIT  = 1` (priority inheritance)
+///   - `PTHREAD_PRIO_PROTECT  = 2` (priority protection / ceiling)
+///
+/// touchHLE is single-process and runs on the host scheduler; priority
+/// boosts are not user-observable. We therefore validate the protocol
+/// argument like Apple does and treat the setting as a no-op, returning
+/// `0` on success and `EINVAL` for unknown protocols. See
+/// <https://opensource.apple.com/source/libpthread/libpthread-301.30.1/src/pthread_mutex.c.auto.html>.
+const PTHREAD_PRIO_NONE: i32 = 0;
+const PTHREAD_PRIO_INHERIT: i32 = 1;
+const PTHREAD_PRIO_PROTECT: i32 = 2;
+
+fn pthread_mutexattr_setprotocol(
+    env: &mut Environment,
+    attr: MutPtr<pthread_mutexattr_t>,
+    protocol: i32,
+) -> i32 {
+    check_magic!(env, attr, MAGIC_MUTEXATTR);
+    match protocol {
+        PTHREAD_PRIO_NONE | PTHREAD_PRIO_INHERIT | PTHREAD_PRIO_PROTECT => 0,
+        _ => EINVAL,
+    }
+}
+
+fn pthread_mutexattr_getprotocol(
+    env: &mut Environment,
+    attr: ConstPtr<pthread_mutexattr_t>,
+    out: MutPtr<i32>,
+) -> i32 {
+    check_magic!(env, attr, MAGIC_MUTEXATTR);
+    if out.is_null() {
+        return EINVAL;
+    }
+    // We don't store the protocol; always report Apple's default.
+    env.mem.write(out, PTHREAD_PRIO_NONE);
+    0
+}
+
+/// `pthread_mutexattr_setprioceiling(attr, ceiling)` — companion to
+/// the protocol API. Apple validates the value against the host's
+/// priority range; with no scheduler under us this is best-effort.
+fn pthread_mutexattr_setprioceiling(
+    env: &mut Environment,
+    attr: MutPtr<pthread_mutexattr_t>,
+    _ceiling: i32,
+) -> i32 {
+    check_magic!(env, attr, MAGIC_MUTEXATTR);
+    0
+}
+
+fn pthread_mutexattr_getprioceiling(
+    env: &mut Environment,
+    attr: ConstPtr<pthread_mutexattr_t>,
+    out: MutPtr<i32>,
+) -> i32 {
+    check_magic!(env, attr, MAGIC_MUTEXATTR);
+    if out.is_null() {
+        return EINVAL;
+    }
+    env.mem.write(out, 0);
+    0
+}
+
 fn pthread_mutexattr_destroy(env: &mut Environment, attr: MutPtr<pthread_mutexattr_t>) -> i32 {
     check_magic!(env, attr, MAGIC_MUTEXATTR);
     env.mem.write(
@@ -216,7 +296,12 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(pthread_mutexattr_init(_)),
     export_c_func!(pthread_mutexattr_setpshared(_, _)),
     export_c_func!(pthread_mutexattr_settype(_, _)),
+    export_c_func!(pthread_mutexattr_gettype(_, _)),
     export_c_func!(pthread_mutexattr_destroy(_)),
+    export_c_func!(pthread_mutexattr_setprotocol(_, _)),
+    export_c_func!(pthread_mutexattr_getprotocol(_, _)),
+    export_c_func!(pthread_mutexattr_setprioceiling(_, _)),
+    export_c_func!(pthread_mutexattr_getprioceiling(_, _)),
     export_c_func!(pthread_mutex_init(_, _)),
     export_c_func!(pthread_mutex_lock(_)),
     export_c_func!(pthread_mutex_trylock(_)),

@@ -15,6 +15,7 @@ use super::ca_layer::CALayerHostObject;
 use crate::frameworks::core_animation::animation;
 use crate::frameworks::core_graphics::cg_color::CGColorHostObject;
 use crate::frameworks::core_graphics::{cg_bitmap_context, cg_image, CGFloat, CGRect};
+use crate::frameworks::foundation::ns_time_interval_to_duration_or_zero;
 use crate::gles::gles11_raw as gles11; // constants only
 use crate::gles::gles11_raw::types::*;
 use crate::gles::present::{present_frame, FpsCounter};
@@ -63,6 +64,13 @@ unsafe fn load_matrix(gles: &mut dyn GLES, matrix: Matrix<4>) {
 ///
 /// Returns the time a recomposite is due, if any.
 pub fn recomposite_if_necessary(env: &mut Environment, force: bool) -> Option<Instant> {
+    // Compositing requires a window/render target. In headless mode there is
+    // none, so there is nothing to composite; skip rather than touching the
+    // absent window further down.
+    if env.window.is_none() {
+        return None;
+    }
+
     let mut animation_state = animation::State::default();
     let windows = env.framework_state.uikit.ui_view.ui_window.windows.clone();
     if !windows.iter().any(|&window| !msg![env; window isHidden]) {
@@ -108,12 +116,20 @@ pub fn recomposite_if_necessary(env: &mut Environment, force: bool) -> Option<In
         if advance_by > 1 {
             log_dbg!("Warning: compositor is lagging. It is overdue by {}s and has missed {} interval(s)!", overdue_by.as_secs_f64(), advance_by - 1);
         }
-        let advance_by = Duration::from_secs_f64(interval)
+        let advance_by = ns_time_interval_to_duration_or_zero(interval)
             .checked_mul(advance_by)
-            .unwrap();
-        Some(recomposite_next.checked_add(advance_by).unwrap())
+            .unwrap_or(Duration::ZERO);
+        Some(recomposite_next.checked_add(advance_by).unwrap_or(recomposite_next))
     } else {
-        Some(now.checked_add(Duration::from_secs_f64(interval)).unwrap())
+        // Apple's NSTimer/CADisplayLink "missed deadline" handling is
+        // tolerant of bogus intervals: if the guest hands us a negative
+        // or NaN value (seen with games that compute frameInterval from
+        // an uninitialised float), we treat it as "fire immediately"
+        // instead of panicking inside `Duration::from_secs_f64`.
+        Some(
+            now.checked_add(ns_time_interval_to_duration_or_zero(interval))
+                .unwrap_or(now),
+        )
     };
     env.framework_state
         .core_animation
@@ -202,11 +218,11 @@ pub fn recomposite_if_necessary(env: &mut Environment, force: bool) -> Option<In
                 texture,
                 0,
             );
-            assert_eq!(gles.GetError(), 0);
-            assert_eq!(
-                gles.CheckFramebufferStatusOES(gles11::FRAMEBUFFER_OES),
-                gles11::FRAMEBUFFER_COMPLETE_OES
-            );
+
+            // ХАК: Убраны вызовы assert_eq!, которые убивали приложение
+            // при ошибках GL (типа GL_OUT_OF_MEMORY = 1285)
+            let _ = gles.GetError(); // Просто сбрасываем флаг текущей ошибки, чтобы он не висел
+            let _ = gles.CheckFramebufferStatusOES(gles11::FRAMEBUFFER_OES); // Проверяем, но не крашимся
         }
         env.framework_state
             .core_animation
@@ -354,7 +370,10 @@ pub fn recomposite_if_necessary(env: &mut Environment, force: bool) -> Option<In
         gles.LoadIdentity();
         gles.BindBuffer(gles11::ARRAY_BUFFER, 0);
         gles.BindBuffer(gles11::ELEMENT_ARRAY_BUFFER, 0);
-        assert_eq!(gles.GetError(), 0);
+
+        // ХАК: Снова убираем assert_eq!(gles.GetError(), 0);
+        // Мы прощаем OpenGL за потерю фокуса!
+        let _ = gles.GetError();
     }
 
     // Present our rendered frame (bound to TEXTURE_2D). This copies it to the
@@ -526,6 +545,90 @@ unsafe fn composite_layer_recursive(
         false
     };
 
+    // Draw background pattern image (tiled), if any
+    let have_background = if host_obj.background_pattern_cg_image != nil {
+        let pattern_cg = host_obj.background_pattern_cg_image;
+        let image = cg_image::borrow_image(&env.objc, pattern_cg);
+        let (img_w, img_h) = image.dimensions();
+
+        // Get or create the cached GL texture for this pattern
+        let pattern_tex = {
+            let orig = env.objc.borrow::<CALayerHostObject>(layer);
+            orig.background_pattern_gles_texture
+        };
+        let tex = if let Some(t) = pattern_tex {
+            t
+        } else {
+            let mut t: GLuint = 0;
+            gles.GenTextures(1, &mut t);
+            gles.BindTexture(gles11::TEXTURE_2D, t);
+            let pixels = image.pixels();
+            upload_rgba8_pixels(gles.as_mut(), pixels, (img_w, img_h));
+            gles.TexParameteri(
+                gles11::TEXTURE_2D,
+                gles11::TEXTURE_WRAP_S,
+                gles11::REPEAT as _,
+            );
+            gles.TexParameteri(
+                gles11::TEXTURE_2D,
+                gles11::TEXTURE_WRAP_T,
+                gles11::REPEAT as _,
+            );
+            gles.TexParameteri(
+                gles11::TEXTURE_2D,
+                gles11::TEXTURE_MIN_FILTER,
+                gles11::NEAREST as _,
+            );
+            gles.TexParameteri(
+                gles11::TEXTURE_2D,
+                gles11::TEXTURE_MAG_FILTER,
+                gles11::NEAREST as _,
+            );
+            env.objc
+                .borrow_mut::<CALayerHostObject>(layer)
+                .background_pattern_gles_texture = Some(t);
+            t
+        };
+        gles.BindTexture(gles11::TEXTURE_2D, tex);
+
+        // Compute tiled texture coordinates
+        let tile_x = host_obj.bounds.size.width / img_w as f32;
+        let tile_y = host_obj.bounds.size.height / img_h as f32;
+        let tiled_coords: [f32; 8] = [0.0, tile_y, 0.0, 0.0, tile_x, tile_y, tile_x, 0.0];
+
+        let misc = env
+            .framework_state
+            .core_animation
+            .composition
+            .misc_gl_objects
+            .as_ref()
+            .unwrap();
+
+        gles.Color4f(opacity, opacity, opacity, opacity);
+        gles.Enable(gles11::BLEND);
+        gles.BlendFunc(gles11::ONE, gles11::ONE_MINUS_SRC_ALPHA);
+        gles.Enable(gles11::TEXTURE_2D);
+
+        gles.EnableClientState(gles11::VERTEX_ARRAY);
+        gles.BindBuffer(gles11::ARRAY_BUFFER, misc.basic_square_buffer);
+        gles.VertexPointer(2, gles11::FLOAT, 0, 0 as *const GLvoid);
+
+        gles.EnableClientState(gles11::TEXTURE_COORD_ARRAY);
+        gles.BindBuffer(gles11::ARRAY_BUFFER, 0);
+        gles.TexCoordPointer(2, gles11::FLOAT, 0, tiled_coords.as_ptr() as *const GLvoid);
+
+        gles.DrawElements(
+            gles11::TRIANGLES,
+            SQUARE_INDICES.len() as _,
+            gles11::UNSIGNED_BYTE,
+            0 as *const GLvoid,
+        );
+
+        true
+    } else {
+        have_background
+    };
+
     let need_texture = host_obj.presented_pixels.is_some()
         || host_obj.contents != nil
         || host_obj.cg_context.is_some();
@@ -632,10 +735,24 @@ unsafe fn composite_layer_recursive(
     }
     std::mem::drop(gles);
 
-    // avoid holding mutable borrow while recursing
-    let original_host_obj = env.objc.borrow_mut::<CALayerHostObject>(layer);
-    for &child_layer in &original_host_obj.sublayers.clone() {
-        // TODO: clipping/masksToBounds support
+    // Sort sublayers by zPosition for correct back-to-front compositing.
+    // Per Apple's CALayer documentation (iOS 2.0+):
+    //   "Sublayers that share the same value in their zPosition property
+    //    are rendered in the order they appear in the sublayers array."
+    // We clone the sublayer list, sort by zPosition (stable sort preserves
+    // order of equal elements), then composite each child.
+    let sorted_sublayers = {
+        let original_host_obj = env.objc.borrow::<CALayerHostObject>(layer);
+        let mut sublayers_copy = original_host_obj.sublayers.clone();
+        sublayers_copy.sort_by(|&a, &b| {
+            let z_a = env.objc.borrow::<CALayerHostObject>(a).z_position;
+            let z_b = env.objc.borrow::<CALayerHostObject>(b).z_position;
+            z_a.partial_cmp(&z_b).unwrap_or(std::cmp::Ordering::Equal)
+        });
+        sublayers_copy
+    };
+
+    for child_layer in sorted_sublayers {
         composite_layer_recursive(
             env,
             animation_state,
@@ -725,5 +842,22 @@ unsafe fn upload_rgba8_pixels(gles: &mut dyn GLES, pixels: &[u8], dimensions: (u
         gles11::TEXTURE_2D,
         gles11::TEXTURE_MAG_FILTER,
         gles11::LINEAR as _,
+    );
+    // Force CLAMP_TO_EDGE on both axes. The CAEAGLLayer pixel buffers we
+    // upload here are virtually always NPOT (e.g. 480x320, 320x480), and
+    // strict ES 1.1 drivers without GL_OES_texture_npot only support NPOT
+    // textures with CLAMP_TO_EDGE wrapping; with GL_REPEAT the texture is
+    // "incomplete" and samples as (0,0,0,1), making the whole composited
+    // window appear black on Mali and similar tile-based GPUs even though
+    // more permissive drivers (Mesa Zink, desktop GL) silently accept it.
+    gles.TexParameteri(
+        gles11::TEXTURE_2D,
+        gles11::TEXTURE_WRAP_S,
+        gles11::CLAMP_TO_EDGE as _,
+    );
+    gles.TexParameteri(
+        gles11::TEXTURE_2D,
+        gles11::TEXTURE_WRAP_T,
+        gles11::CLAMP_TO_EDGE as _,
     );
 }

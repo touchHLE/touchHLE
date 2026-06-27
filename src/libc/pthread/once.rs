@@ -29,7 +29,27 @@ fn pthread_once(
     init_routine: GuestFunction, // void (*init_routine)(void)
 ) -> i32 {
     let pthread_once_t { magic, init } = env.mem.read(once_control);
-    assert!(magic == MAGIC_ONCE);
+    if magic != MAGIC_ONCE {
+        // The caller passed something that isn't a pthread_once_t (e.g. it
+        // forgot to initialise the storage with PTHREAD_ONCE_INIT). Real
+        // Apple libc would dereference whatever garbage is there and likely
+        // crash; we have no good way to know what the caller intended.
+        // Treat the slot as fresh (initialise it to MAGIC_ONCE + init=0) and
+        // run the init routine once, so the guest at least sees a valid
+        // pthread_once_t after the call.
+        log!(
+            "Warning: pthread_once(): once_control at {:?} has bad magic {:#x}; re-initialising and running init routine once.",
+            once_control,
+            magic
+        );
+        let new_once = pthread_once_t {
+            magic: MAGIC_ONCE,
+            init: 0xFFFFFFFF,
+        };
+        env.mem.write(once_control, new_once);
+        () = init_routine.call_from_host(env, ());
+        return 0;
+    }
     match init {
         0 => {
             log_dbg!(
@@ -51,7 +71,17 @@ fn pthread_once(
                 once_control
             );
         }
-        _ => panic!(),
+        other => {
+            // Some other intermediate state we don't model (e.g. another
+            // thread is currently running the init routine on real Apple
+            // libc). The least surprising behaviour is to treat it as
+            // already-initialised so we don't re-enter the init routine.
+            log!(
+                "Warning: pthread_once(): once_control at {:?} has unexpected init state {:#x}; treating as already initialised.",
+                once_control,
+                other
+            );
+        }
     };
     0 // success. TODO: return an error on failure?
 }

@@ -11,6 +11,7 @@ mod media_library;
 mod media_picker_controller;
 mod media_playlist;
 mod media_query;
+pub mod mf_mail_compose_view_controller;
 mod movie_player;
 mod music_player;
 
@@ -26,6 +27,7 @@ pub const DYLIB: crate::dyld::HostDylib = crate::dyld::HostDylib {
         media_picker_controller::CLASSES,
         media_playlist::CLASSES,
         media_query::CLASSES,
+        mf_mail_compose_view_controller::CLASSES,
     ],
     constant_exports: &[movie_player::CONSTANTS, music_player::CONSTANTS],
     function_exports: &[],

@@ -177,4 +177,191 @@ impl Matrix<4> {
             [x, y, z, 1.0],
         ])
     }
+
+    /// Determinant of a 4×4 matrix, computed via cofactor expansion along the
+    /// first row.
+    pub fn determinant(&self) -> f32 {
+        let m = self.flat();
+        let inv0 = m[5] * m[10] * m[15] - m[5] * m[11] * m[14] - m[9] * m[6] * m[15]
+            + m[9] * m[7] * m[14]
+            + m[13] * m[6] * m[11]
+            - m[13] * m[7] * m[10];
+        let inv4 = -m[4] * m[10] * m[15] + m[4] * m[11] * m[14] + m[8] * m[6] * m[15]
+            - m[8] * m[7] * m[14]
+            - m[12] * m[6] * m[11]
+            + m[12] * m[7] * m[10];
+        let inv8 = m[4] * m[9] * m[15] - m[4] * m[11] * m[13] - m[8] * m[5] * m[15]
+            + m[8] * m[7] * m[13]
+            + m[12] * m[5] * m[11]
+            - m[12] * m[7] * m[9];
+        let inv12 = -m[4] * m[9] * m[14] + m[4] * m[10] * m[13] + m[8] * m[5] * m[14]
+            - m[8] * m[6] * m[13]
+            - m[12] * m[5] * m[10]
+            + m[12] * m[6] * m[9];
+        m[0] * inv0 + m[1] * inv4 + m[2] * inv8 + m[3] * inv12
+    }
+
+    /// Invert a 4×4 matrix, returning `None` if the matrix is singular.
+    ///
+    /// Uses the standard adjugate/cofactor algorithm (the same formula used by
+    /// MESA's `gluInvertMatrix`) on the column-major flat representation.
+    pub fn inverse(&self) -> Option<Self> {
+        let m = self.flat();
+        let mut inv = [0f32; 16];
+
+        inv[0] = m[5] * m[10] * m[15] - m[5] * m[11] * m[14] - m[9] * m[6] * m[15]
+            + m[9] * m[7] * m[14]
+            + m[13] * m[6] * m[11]
+            - m[13] * m[7] * m[10];
+        inv[4] = -m[4] * m[10] * m[15] + m[4] * m[11] * m[14] + m[8] * m[6] * m[15]
+            - m[8] * m[7] * m[14]
+            - m[12] * m[6] * m[11]
+            + m[12] * m[7] * m[10];
+        inv[8] = m[4] * m[9] * m[15] - m[4] * m[11] * m[13] - m[8] * m[5] * m[15]
+            + m[8] * m[7] * m[13]
+            + m[12] * m[5] * m[11]
+            - m[12] * m[7] * m[9];
+        inv[12] = -m[4] * m[9] * m[14] + m[4] * m[10] * m[13] + m[8] * m[5] * m[14]
+            - m[8] * m[6] * m[13]
+            - m[12] * m[5] * m[10]
+            + m[12] * m[6] * m[9];
+        inv[1] = -m[1] * m[10] * m[15] + m[1] * m[11] * m[14] + m[9] * m[2] * m[15]
+            - m[9] * m[3] * m[14]
+            - m[13] * m[2] * m[11]
+            + m[13] * m[3] * m[10];
+        inv[5] = m[0] * m[10] * m[15] - m[0] * m[11] * m[14] - m[8] * m[2] * m[15]
+            + m[8] * m[3] * m[14]
+            + m[12] * m[2] * m[11]
+            - m[12] * m[3] * m[10];
+        inv[9] = -m[0] * m[9] * m[15] + m[0] * m[11] * m[13] + m[8] * m[1] * m[15]
+            - m[8] * m[3] * m[13]
+            - m[12] * m[1] * m[11]
+            + m[12] * m[3] * m[9];
+        inv[13] = m[0] * m[9] * m[14] - m[0] * m[10] * m[13] - m[8] * m[1] * m[14]
+            + m[8] * m[2] * m[13]
+            + m[12] * m[1] * m[10]
+            - m[12] * m[2] * m[9];
+        inv[2] = m[1] * m[6] * m[15] - m[1] * m[7] * m[14] - m[5] * m[2] * m[15]
+            + m[5] * m[3] * m[14]
+            + m[13] * m[2] * m[7]
+            - m[13] * m[3] * m[6];
+        inv[6] = -m[0] * m[6] * m[15] + m[0] * m[7] * m[14] + m[4] * m[2] * m[15]
+            - m[4] * m[3] * m[14]
+            - m[12] * m[2] * m[7]
+            + m[12] * m[3] * m[6];
+        inv[10] = m[0] * m[5] * m[15] - m[0] * m[7] * m[13] - m[4] * m[1] * m[15]
+            + m[4] * m[3] * m[13]
+            + m[12] * m[1] * m[7]
+            - m[12] * m[3] * m[5];
+        inv[14] = -m[0] * m[5] * m[14] + m[0] * m[6] * m[13] + m[4] * m[1] * m[14]
+            - m[4] * m[2] * m[13]
+            - m[12] * m[1] * m[6]
+            + m[12] * m[2] * m[5];
+        inv[3] = -m[1] * m[6] * m[11] + m[1] * m[7] * m[10] + m[5] * m[2] * m[11]
+            - m[5] * m[3] * m[10]
+            - m[9] * m[2] * m[7]
+            + m[9] * m[3] * m[6];
+        inv[7] = m[0] * m[6] * m[11] - m[0] * m[7] * m[10] - m[4] * m[2] * m[11]
+            + m[4] * m[3] * m[10]
+            + m[8] * m[2] * m[7]
+            - m[8] * m[3] * m[6];
+        inv[11] = -m[0] * m[5] * m[11] + m[0] * m[7] * m[9] + m[4] * m[1] * m[11]
+            - m[4] * m[3] * m[9]
+            - m[8] * m[1] * m[7]
+            + m[8] * m[3] * m[5];
+        inv[15] = m[0] * m[5] * m[10] - m[0] * m[6] * m[9] - m[4] * m[1] * m[10]
+            + m[4] * m[2] * m[9]
+            + m[8] * m[1] * m[6]
+            - m[8] * m[2] * m[5];
+
+        let det = m[0] * inv[0] + m[1] * inv[4] + m[2] * inv[8] + m[3] * inv[12];
+        if det == 0.0 || !det.is_finite() {
+            return None;
+        }
+        let inv_det = 1.0 / det;
+        for v in &mut inv {
+            *v *= inv_det;
+        }
+
+        let mut cols = [[0f32; 4]; 4];
+        for c in 0..4 {
+            for r in 0..4 {
+                cols[c][r] = inv[c * 4 + r];
+            }
+        }
+        Some(Matrix(cols))
+    }
+
+    /// Flatten the column-major storage to a length-16 array such that
+    /// `flat[c*4 + r]` is the element at column `c`, row `r`.
+    fn flat(&self) -> [f32; 16] {
+        let mut out = [0f32; 16];
+        for c in 0..4 {
+            for r in 0..4 {
+                out[c * 4 + r] = self.0[c][r];
+            }
+        }
+        out
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Matrix;
+
+    fn approx_eq(a: &Matrix<4>, b: &Matrix<4>, eps: f32) -> bool {
+        let ca = a.columns();
+        let cb = b.columns();
+        for c in 0..4 {
+            for r in 0..4 {
+                if (ca[c][r] - cb[c][r]).abs() > eps {
+                    return false;
+                }
+            }
+        }
+        true
+    }
+
+    #[test]
+    fn matrix4_identity_inverse_is_identity() {
+        let id = Matrix::<4>::identity();
+        assert!(approx_eq(&id.inverse().unwrap(), &id, 1e-6));
+    }
+
+    #[test]
+    fn matrix4_inverse_round_trip() {
+        // A non-trivial invertible matrix: scale * rotation-like * translation.
+        let m = Matrix::<4>::from_columns([
+            [2.0, 0.0, 0.0, 0.0],
+            [0.0, 0.5, 0.0, 0.0],
+            [0.0, 0.0, -1.0, 0.0],
+            [3.0, 4.0, 5.0, 1.0],
+        ]);
+        let inv = m.inverse().expect("matrix should be invertible");
+        let id = Matrix::<4>::identity();
+        assert!(approx_eq(&m.multiply(&inv), &id, 1e-5));
+        assert!(approx_eq(&inv.multiply(&m), &id, 1e-5));
+    }
+
+    #[test]
+    fn matrix4_singular_returns_none() {
+        let m = Matrix::<4>::from_columns([
+            [1.0, 2.0, 3.0, 4.0],
+            [2.0, 4.0, 6.0, 8.0], // second column is 2× the first → singular
+            [0.0, 1.0, 0.0, 0.0],
+            [0.0, 0.0, 1.0, 0.0],
+        ]);
+        assert!(m.inverse().is_none());
+    }
+
+    #[test]
+    fn matrix4_determinant_diagonal() {
+        let m = Matrix::<4>::from_columns([
+            [2.0, 0.0, 0.0, 0.0],
+            [0.0, 3.0, 0.0, 0.0],
+            [0.0, 0.0, 4.0, 0.0],
+            [0.0, 0.0, 0.0, 5.0],
+        ]);
+        assert!((m.determinant() - 120.0).abs() < 1e-5);
+    }
 }

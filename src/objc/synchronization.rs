@@ -81,21 +81,28 @@ pub(super) fn objc_sync_exit(env: &mut Environment, obj: id) -> i32 {
                     }
                 }
                 Err(_) => {
-                    panic!("Attempt to exit from @synchronized block for object {:#x} that was entered on a different thread!",
-                           obj.to_bits()
+                    // The @synchronized exit ran on a different thread
+                    // than the entry (or the mutex was already destroyed).
+                    // The Apple runtime simply returns a non-zero error
+                    // code in this case; surface that instead of bringing
+                    // down the whole emulator with a panic.
+                    log!(
+                        "Warning: @synchronized exit for object {:#x} called on a thread that did not enter the block (or on an already-destroyed mutex).",
+                        obj.to_bits()
                     );
-                    // See below.
+                    return -1;
                 }
             }
         }
         None => {
-            panic!(
-                "Attempt to exit from @synchronized block for object {:#x} that was not entered properly",
+            // No @synchronized entry was ever recorded for this object;
+            // following Apple's runtime we report a non-zero error code
+            // instead of crashing the host.
+            log!(
+                "Warning: @synchronized exit for object {:#x} that was never entered; ignoring.",
                 obj.to_bits()
             );
-            // Should technically return an error (non-zero), although I don't
-            // think it's ever checked? Something probably went wrong to get
-            // here.
+            return -1;
         }
     }
 

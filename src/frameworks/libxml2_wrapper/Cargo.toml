@@ -1,0 +1,23 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+[package]
+name = "touchHLE_libxml2_wrapper"
+version = { workspace = true }
+edition = { workspace = true }
+license = { workspace = true }
+authors = { workspace = true }
+homepage = { workspace = true }
+
+[lib]
+path = "lib.rs"
+
+[features]
+# Build libxml2 from the vendored sources as a static library and link it.
+# Off by default so unrelated test/build flows still work; the main crate
+# turns this on.
+static = []
+
+[build-dependencies]
+cc = { workspace = true }
+cmake = { workspace = true }

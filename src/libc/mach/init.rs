@@ -10,8 +10,6 @@
 use crate::dyld::{export_c_func, ConstantExports, FunctionExports, HostConstant};
 use crate::environment::Environment;
 use crate::libc::mach::port::mach_port_t;
-use crate::mem::PAGE_SIZE;
-
 // Unique mock value so we can assert against itself
 pub const MACH_TASK_SELF: mach_port_t = 0x7461736b;
 
@@ -35,10 +33,6 @@ pub const CONSTANTS: ConstantExports = &[
                 .cast_void()
                 .cast_const()
         }),
-    ),
-    (
-        "_vm_page_size",
-        HostConstant::Custom(|env| env.mem.alloc_and_write(PAGE_SIZE).cast_void().cast_const()),
     ),
 ];
 

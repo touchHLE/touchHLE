@@ -232,8 +232,9 @@ public:
     user_config.coprocessors[15] = std::make_shared<ArmDynarmicCP15>();
     mon = std::make_unique<Dynarmic::ExclusiveMonitor>(1);
     user_config.global_monitor = mon.get();
-    // TODO: only do this in debug builds? it's probably expensive
+#ifndef NDEBUG
     user_config.check_halt_on_memory_access = true;
+#endif
     if (direct_memory_access_ptr) {
       // Allow fast accesses to all pages other than the null page, which will
       // fall back to a memory callback, which will then abort execution.

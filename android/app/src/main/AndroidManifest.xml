@@ -31,6 +31,10 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
 
+    <!-- Allow the in-app updater to hand a downloaded APK to the system
+         package installer (see MainActivity.installApk). -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+
     <!-- External mouse input events -->
     <uses-feature
         android:name="android.hardware.type.pc"
@@ -102,6 +106,18 @@
             <intent-filter>
                 <action android:name="android.content.action.DOCUMENTS_PROVIDER" />
             </intent-filter>
+        </provider>
+
+        <!-- Exposes the downloaded update APK to the system package installer
+             via a content:// URI (see MainActivity.installApk). -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
         </provider>
     </application>
 

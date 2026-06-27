@@ -18,3 +18,15 @@ pub mod gl21compat {
 pub mod gles11 {
     include!(concat!(env!("OUT_DIR"), "/gles11.rs"));
 }
+#[allow(warnings)]
+pub mod gles2 {
+    include!(concat!(env!("OUT_DIR"), "/gles2.rs"));
+}
+#[allow(warnings)]
+pub mod gles30 {
+    include!(concat!(env!("OUT_DIR"), "/gles30.rs"));
+}
+#[allow(warnings)]
+pub mod gl33core {
+    include!(concat!(env!("OUT_DIR"), "/gl33core.rs"));
+}

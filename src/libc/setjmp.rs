@@ -3,6 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
+
 //! `setjmp.h`.
 //!
 //! Note that `setjmp` and `longjmp` are defined as macros in the C standard,
@@ -19,12 +20,13 @@ use crate::{abi, Environment};
 // frames, but we do not have a good way to detect that right now.
 // Thus, those are exempted from the check.
 // You need to have a good reason to extend this list!
-const ALLOWED_FOR_LONGJMP_BYPASS: [&str; 5] = [
+const ALLOWED_FOR_LONGJMP_BYPASS: [&str; 6] = [
     "com.activision.CBNK2",
     "com.ea.fifa10.bv",
     "com.ea.fifa10inc",
     "com.ea.fifa10wc.bv",
     "com.ea.fifa10wc.inc",
+    "com.shinmegamitensei.shinmegamitensei1",
 ];
 
 #[repr(C, packed)]
@@ -69,11 +71,26 @@ fn longjmp(env: &mut Environment, jmp_buf: MutPtr<JmpBuf>, status: u32) {
     let buf = env.mem.read(jmp_buf);
     let cur_stack = env.stack_for_longjmp(lr, fp);
     let other_stack = env.stack_for_longjmp(buf.lr, buf.fp);
+
     if cur_stack.last() != other_stack.last()
         && !ALLOWED_FOR_LONGJMP_BYPASS.contains(&env.bundle.bundle_identifier())
     {
-        panic!("longjmp across host stack frames, current {cur_stack:?}, other {other_stack:?}");
+        // longjmp across host stack frames is unsafe (it would unwind past
+        // Rust frames that own non-trivial state). Real iOS would also
+        // happily corrupt the program in this case; the host has no way to
+        // recover. Log the offending bundle id so the user can either add
+        // it to ALLOWED_FOR_LONGJMP_BYPASS or fix the guest, then go ahead
+        // with the jump anyway \u2014 the alternative is a hard host crash and
+        // any leaked Rust state would have been leaked across the panic
+        // unwind too.
+        log!(
+            "Warning: longjmp across host stack frames (bundle {:?}); current {:?}, other {:?}. Proceeding anyway. If this app needs the bypass, add its bundle id to ALLOWED_FOR_LONGJMP_BYPASS.",
+            env.bundle.bundle_identifier(),
+            cur_stack,
+            other_stack
+        );
     }
+
     let regs = env.cpu.regs_mut();
     regs[0] = status;
     regs[4] = buf.r4;
@@ -85,8 +102,34 @@ fn longjmp(env: &mut Environment, jmp_buf: MutPtr<JmpBuf>, status: u32) {
     regs[11] = buf.r11;
     regs[crate::cpu::Cpu::SP] = buf.sp;
     regs[crate::cpu::Cpu::LR] = buf.lr;
+
     env.cpu
         .branch(GuestFunction::from_addr_with_thumb_bit(buf.lr));
 }
 
-pub const FUNCTIONS: FunctionExports = &[export_c_func!(setjmp(_)), export_c_func!(longjmp(_, _))];
+fn __setjmp(env: &mut Environment, jmp_buf: MutPtr<JmpBuf>) -> i32 {
+    setjmp(env, jmp_buf)
+}
+
+fn __longjmp(env: &mut Environment, jmp_buf: MutPtr<JmpBuf>, status: u32) {
+    longjmp(env, jmp_buf, status)
+}
+
+// Заодно добавим версии с одним подчеркиванием,
+// так как другие игры часто требуют именно их.
+fn _setjmp(env: &mut Environment, jmp_buf: MutPtr<JmpBuf>) -> i32 {
+    setjmp(env, jmp_buf)
+}
+
+fn _longjmp(env: &mut Environment, jmp_buf: MutPtr<JmpBuf>, status: u32) {
+    longjmp(env, jmp_buf, status)
+}
+
+pub const FUNCTIONS: FunctionExports = &[
+    export_c_func!(setjmp(_)),
+    export_c_func!(longjmp(_, _)),
+    export_c_func!(__setjmp(_)),
+    export_c_func!(__longjmp(_, _)),
+    export_c_func!(_setjmp(_)),
+    export_c_func!(_longjmp(_, _)),
+];

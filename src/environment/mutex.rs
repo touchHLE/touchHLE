@@ -168,10 +168,16 @@ impl Environment {
         if locking_thread == current_thread {
             match mutex.type_ {
                 MutexType::PTHREAD_MUTEX_NORMAL => {
-                    // This case would be a deadlock, we may as well panic.
-                    panic!(
-                        "Attempted to lock non-error-checking mutex #{mutex_id} for thread {current_thread}, already locked by same thread!",
+                    // POSIX says behaviour is undefined here; on real iOS the
+                    // guest deadlocks. We can't deadlock a single host thread
+                    // safely, and panicking tears the whole emulator down for
+                    // a guest bug. Treat it like an error-checking mutex and
+                    // surface EDEADLK so the guest at least has a chance to
+                    // notice rather than corrupting host state.
+                    log!(
+                        "Warning: pthread_mutex_lock: non-error-checking mutex #{mutex_id} would deadlock on thread {current_thread}; returning EDEADLK instead of panicking the host.",
                     );
+                    return Err(EDEADLK);
                 }
                 MutexType::PTHREAD_MUTEX_ERRORCHECK => {
                     log_dbg!("Attempted to lock error-checking mutex #{} for thread {}, already locked by same thread! Returning EDEADLK.", mutex_id, current_thread);
@@ -208,10 +214,12 @@ impl Environment {
         let Some((locking_thread, lock_count)) = mutex.locked else {
             match mutex.type_ {
                 MutexType::PTHREAD_MUTEX_NORMAL => {
-                    // This case is undefined, we may as well panic.
-                    panic!(
-                        "Attempted to unlock non-error-checking mutex #{mutex_id} for thread {current_thread}, already unlocked!",
+                    // Убираем panic!, так как реальные iOS-игры часто пытаются
+                    // разблокировать уже разблокированные мьютексы.
+                    log_dbg!(
+                        "Warning: Attempted to unlock non-error-checking mutex #{mutex_id} for thread {current_thread}, already unlocked! Ignoring and returning EPERM.",
                     );
+                    return Err(EPERM);
                 }
                 MutexType::PTHREAD_MUTEX_ERRORCHECK | MutexType::PTHREAD_MUTEX_RECURSIVE => {
                     log_dbg!(

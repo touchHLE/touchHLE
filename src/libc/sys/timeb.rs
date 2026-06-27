@@ -39,8 +39,8 @@ fn ftime(env: &mut Environment, tb: MutPtr<timeb>) -> i32 {
         timeb {
             time,
             millitm,
-            timezone: 0, // TODO
-            dstflag: 0,  // TODO
+            timezone: (env.libc_state.time.timezone_offset_seconds / 60) as i16,
+            dstflag: env.libc_state.time.daylight_flag as i16,
         },
     );
     0 // Success (always)

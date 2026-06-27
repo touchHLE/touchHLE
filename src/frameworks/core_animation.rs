@@ -1,8 +1,10 @@
 /*
  * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * License, v. 2.0.
+ * If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
+//!
 //! The Core Animation framework.
 //!
 //! Useful resources:
@@ -11,9 +13,11 @@
 pub mod ca_animation;
 pub mod ca_display_link;
 pub mod ca_eagl_layer;
+pub mod ca_keyframe_animation; // <-- ДОБАВЛЕН НОВЫЙ МОДУЛЬ
 pub mod ca_layer;
 pub mod ca_media_timing_function;
 pub mod ca_transaction;
+pub mod ca_transform3d; // <-- НАШ НОВЫЙ МОДУЛЬ ДЛЯ ТРАНСФОРМАЦИЙ
 
 mod animation;
 mod composition;
@@ -35,6 +39,7 @@ pub const DYLIB: crate::dyld::HostDylib = crate::dyld::HostDylib {
         ca_animation::CLASSES,
         ca_display_link::CLASSES,
         ca_eagl_layer::CLASSES,
+        ca_keyframe_animation::CLASSES, // <-- КЛАСС ЭКСПОРТИРОВАН
         ca_layer::CLASSES,
         ca_media_timing_function::CLASSES,
         ca_transaction::CLASSES,
@@ -44,8 +49,12 @@ pub const DYLIB: crate::dyld::HostDylib = crate::dyld::HostDylib {
         ca_layer::CONSTANTS,
         ca_media_timing_function::CONSTANTS,
         ca_transaction::CONSTANTS,
+        ca_transform3d::CONSTANTS, // <-- ЭКСПОРТ КОНСТАНТЫ IDENTITY
     ],
-    function_exports: &[FUNCTIONS],
+    function_exports: &[
+        FUNCTIONS,
+        ca_transform3d::FUNCTIONS, // <-- ЭКСПОРТ НОВЫХ ФУНКЦИЙ (MakeRotation и т.д.)
+    ],
 };
 
 #[derive(Default)]

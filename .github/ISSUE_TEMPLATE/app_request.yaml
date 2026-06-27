@@ -1,15 +1,18 @@
-name: Request support for a specific app
-description: We do not take these requests. Please do not make them.
+name: Request support for a specific app (old form — please use “Request a fix for a specific game / app”)
+description: This form is kept for compatibility. Please use the “Request a fix for a specific game / app” form instead.
 labels: ["issue does not meet guidelines"]
 body:
   - type: markdown
     attributes:
       value: |
-        We do not take requests to add support for specific apps.
-        Please do not make such requests.
+        This fork of touchHLE **does** accept requests to fix specific games or
+        apps, but we use a different form for them. Please close this form and
+        open the
+        [**Request a fix for a specific game / app**](https://github.com/j92580498-max/touchHLE/issues/new?template=game_fix_request.yml)
+        form instead, which has all the fields needed to investigate the issue.
   - type: checkboxes
     attributes:
       label: By submitting this issue, I certify that…
       options:
-        - label: I understand my issue will be immediately rejected.
+        - label: I understand this form is deprecated and I should use the “Request a fix for a specific game / app” form.
           required: true

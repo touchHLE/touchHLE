@@ -67,17 +67,56 @@ pub unsafe fn present_frame(
     gles.ClearColor(0.0, 0.0, 0.0, 1.0);
     gles.Clear(gles11::COLOR_BUFFER_BIT | gles11::DEPTH_BUFFER_BIT | gles11::STENCIL_BUFFER_BIT);
     gles.BindBuffer(gles11::ARRAY_BUFFER, 0);
+    // Stretch the full rendered frame to fill the active host viewport.
+    //
+    // This does NOT crop or shift the texture. The whole renderbuffer is
+    // sampled from normal 0..1 texture coordinates and mapped to a full-screen
+    // quad. This is the correct "fill the current window" behavior for
+    // PotatoGold-style landscape tests.
+    if std::env::var_os("TOUCHHLE_PRESENT_STRETCH_TO_VIEWPORT").is_some() {
+        log_once!(
+            "TOUCHHLE_PRESENT_STRETCH_TO_VIEWPORT=1: stretching full rendered frame to the active viewport [this log will only be shown once]"
+        );
+    }
+
     let vertices: [f32; 12] = [
         -1.0, -1.0, -1.0, 1.0, 1.0, -1.0, 1.0, -1.0, -1.0, 1.0, 1.0, 1.0,
     ];
     gles.EnableClientState(gles11::VERTEX_ARRAY);
     gles.VertexPointer(2, gles11::FLOAT, 0, vertices.as_ptr() as *const GLvoid);
-    let tex_coords: [f32; 12] = [0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0];
+
+    let tex_coords: [f32; 12] = [
+        0.0, 0.0,
+        0.0, 1.0,
+        1.0, 0.0,
+        1.0, 0.0,
+        0.0, 1.0,
+        1.0, 1.0,
+    ];
     gles.EnableClientState(gles11::TEXTURE_COORD_ARRAY);
     gles.TexCoordPointer(2, gles11::FLOAT, 0, tex_coords.as_ptr() as *const GLvoid);
-    let matrix = Matrix::<4>::from(&rotation_matrix);
+    // Apply the device-rotation matrix to the TEXTURE matrix, but rotate
+    // around the centre of the tex coord square (0.5, 0.5) instead of the
+    // origin. The naive `LoadMatrixf(rotation_matrix)` rotates around (0, 0),
+    // which sends standard [0, 1]² UVs out of range — e.g. for a 90° rotation
+    // (v, -u) reaches v' = -u ∈ [-1, 0]. On lenient drivers (Mesa, Apple
+    // PowerVR) GL_REPEAT wrap quietly maps that back into [0, 1], but
+    // strict drivers (Qualcomm Adreno's native ES 1.1 path) treat the
+    // resulting sample of an NPOT texture (renderbuffer is typically
+    // 320x480) as undefined and produce a mangled / black presented
+    // frame. Pre- and post-translating by (0.5, 0.5) keeps tex coords in
+    // [0, 1]² for any 90°/180°/270°/identity device rotation while
+    // producing the same visual output as before on lenient drivers.
+    let r = Matrix::<4>::from(&rotation_matrix);
+    let to_center = Matrix::<4>::translate_3d(-0.5, -0.5, 0.0);
+    let from_center = Matrix::<4>::translate_3d(0.5, 0.5, 0.0);
+    // Note: Matrix::multiply(&other) computes `other · self` in
+    // linear-algebra terms (other is applied AFTER self), so to get
+    // `from_center · r · to_center` we chain in the order
+    // to_center.multiply(&r).multiply(&from_center).
+    let centered_rotation = to_center.multiply(&r).multiply(&from_center);
     gles.MatrixMode(gles11::TEXTURE);
-    gles.LoadMatrixf(matrix.columns().as_ptr() as *const _);
+    gles.LoadMatrixf(centered_rotation.columns().as_ptr() as *const _);
     gles.Enable(gles11::TEXTURE_2D);
     gles.DrawArrays(gles11::TRIANGLES, 0, 6);
     // clean this up so we don't need to worry about it in e.g. Core Animation

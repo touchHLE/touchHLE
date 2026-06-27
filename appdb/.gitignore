@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+*.pyc
+*.sqlite3
+.DS_Store
+*.egg-info/
+build/
+dist/
+uploads/
+# Deploy-time secrets bootstrap (never commit OAuth / session secrets).
+app/_runtime_env.py

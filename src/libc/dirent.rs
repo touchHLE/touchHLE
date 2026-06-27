@@ -8,7 +8,7 @@
 use crate::abi::GuestFunction;
 use crate::dyld::FunctionExports;
 use crate::fs::{FsNodeType, GuestPath};
-use crate::libc::errno::set_errno;
+use crate::libc::errno::{set_errno, EBADF, ENOENT};
 use crate::mem::{guest_size_of, ConstPtr, MutPtr, Ptr, SafeRead};
 use crate::{export_c_func, impl_GuestRet_for_large_struct, Environment};
 use std::collections::HashMap;
@@ -58,21 +58,32 @@ pub(super) fn opendir(env: &mut Environment, filename: ConstPtr<u8>) -> MutPtr<D
     // TODO: handle errno properly
     set_errno(env, 0);
 
-    let path_string = env.mem.cstr_at_utf8(filename).unwrap().to_owned();
+    let path_bytes = env.mem.cstr_at(filename);
+    let Ok(path_string) = std::str::from_utf8(path_bytes) else {
+        log!("opendir: non-UTF8 path, returning NULL");
+        set_errno(env, ENOENT);
+        return Ptr::null();
+    };
+    let path_string = path_string.to_owned();
     log_dbg!("opendir: filename {}", path_string);
     let guest_path = GuestPath::new(&path_string);
     let is_dir = env.fs.is_dir(guest_path);
     if is_dir {
         let dir = env.mem.alloc_and_write(DIR { idx: 0 });
         log_dbg!("opendir: new DIR ptr: {:?}", dir);
-        let iter = env.fs.enumerate_with_types(guest_path).unwrap();
+        let Ok(iter) = env.fs.enumerate_with_types(guest_path) else {
+            // Directory was removed between is_dir check and enumerate
+            log!("opendir: directory disappeared, returning NULL");
+            env.mem.free(dir.cast());
+            set_errno(env, ENOENT);
+            return Ptr::null();
+        };
         let vec = iter.map(|(str, type_)| (str.to_string(), type_)).collect();
-        assert!(!State::get_mut(env).open_dirs.contains_key(&dir));
         State::get_mut(env).open_dirs.insert(dir, vec);
-        assert!(!State::get_mut(env).read_dirs.contains_key(&dir));
         State::get_mut(env).read_dirs.insert(dir, Vec::new());
         dir
     } else {
+        set_errno(env, ENOENT);
         Ptr::null()
     }
 }
@@ -83,7 +94,11 @@ pub(super) fn readdir(env: &mut Environment, dirp: MutPtr<DIR>) -> MutPtr<dirent
     set_errno(env, 0);
 
     let mut dir = env.mem.read(dirp);
-    let vec = env.libc_state.dirent.open_dirs.get(&dirp).unwrap();
+    let Some(vec) = env.libc_state.dirent.open_dirs.get(&dirp) else {
+        log!("readdir: invalid DIR pointer {:?}, returning NULL", dirp);
+        set_errno(env, EBADF);
+        return Ptr::null();
+    };
     log_dbg!(
         "readdir: dirp {:?}, idx {}, entry '{:?}'",
         dirp,
@@ -183,9 +198,37 @@ fn scandir(
     count
 }
 
+fn rewinddir(env: &mut Environment, dirp: MutPtr<DIR>) {
+    // В POSIX rewinddir ничего не возвращает (void).
+    if dirp.is_null() {
+        return;
+    }
+
+    // Проверяем, что директория действительно открыта и отслеживается эмулятором
+    if !env.libc_state.dirent.open_dirs.contains_key(&dirp) {
+        log!(
+            "Warning: rewinddir called with invalid or already closed dirp: {:?}",
+            dirp
+        );
+        return;
+    }
+
+    // Считываем структуру DIR из памяти гостя
+    let mut dir = env.mem.read(dirp);
+
+    // Сбрасываем курсор на начало
+    dir.idx = 0;
+
+    // Записываем обновленную структуру обратно в память гостя
+    env.mem.write(dirp, dir);
+
+    log_dbg!("rewinddir({:?}) - stream reset to beginning", dirp);
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(opendir(_)),
     export_c_func!(readdir(_)),
     export_c_func!(closedir(_)),
     export_c_func!(scandir(_, _, _, _)),
+    export_c_func!(rewinddir(_)),
 ];

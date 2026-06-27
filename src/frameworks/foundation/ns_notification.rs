@@ -12,6 +12,7 @@ use crate::objc::{
 /// `NSString*`
 pub type NSNotificationName = id;
 
+#[derive(Default)]
 struct NSNotificationHostObject {
     name: id,
     object: id,

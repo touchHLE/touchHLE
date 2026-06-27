@@ -15,7 +15,6 @@
 //! - The host can access both "guest memory" and "host memory".
 //! - A "guest function" is emulated Arm code, usually from the app binary.
 //! - A "host function" is a Rust function that is part of this emulator.
-
 // Allow the crate to have a non-snake-case name (touchHLE).
 // This also allows items in the crate to have non-snake-case names.
 #![allow(non_snake_case)]
@@ -49,6 +48,7 @@ mod objc;
 mod options;
 mod paths;
 mod stack;
+mod update;
 mod window;
 
 // Environment is used very frequently used and used to be in this module, so
@@ -61,7 +61,6 @@ use environment::{Environment, MutexId, MutexType, ThreadId, PTHREAD_MUTEX_DEFAU
 use std::path::PathBuf;
 
 pub use touchHLE_version::*;
-
 /// This is the true entry point on Android (SDLActivity calls it after
 /// initialization). On other platforms the true entry point is in src/bin.rs.
 #[cfg(target_os = "android")]
@@ -86,7 +85,6 @@ pub extern "C" fn SDL_main(
             echo!("Panic: {}", payload);
         }
     }));
-
     // Empty args: brings up app picker.
     match main([String::new()].into_iter()) {
         Ok(_) => echo!("touchHLE finished"),
@@ -113,7 +111,6 @@ Special options:
     --info
         Print basic information about the app bundle without running the app.
 ";
-
 pub fn main<T: Iterator<Item = String>>(mut args: T) -> Result<(), String> {
     echo!(
         "touchHLE {}{}{} — https://touchhle.org/",
@@ -146,7 +143,6 @@ pub fn main<T: Iterator<Item = String>>(mut args: T) -> Result<(), String> {
     let mut option_args = Vec::new();
     let mut options = options::Options::default();
     let mut app_args = None::<Vec<String>>;
-
     for arg in args {
         if let Some(ref mut app_args) = app_args {
             app_args.push(arg);
@@ -181,6 +177,12 @@ pub fn main<T: Iterator<Item = String>>(mut args: T) -> Result<(), String> {
         return Ok(());
     }
 
+    // Check GitHub for a newer build and offer to self-update. Best-effort and
+    // interactive, so skip it for headless runs and `--info`.
+    if !options.headless && !just_info {
+        update::check_for_update();
+    }
+
     let bundle_path = if let Some(bundle_path) = bundle_path {
         bundle_path
     } else {
@@ -202,7 +204,6 @@ pub fn main<T: Iterator<Item = String>>(mut args: T) -> Result<(), String> {
         option_args.append(&mut extra_options);
         bundle_path
     };
-
     // When PowerShell does tab-completion on a directory, for some reason it
     // expands it to `'..\My Bundle.app\'` and that trailing \ seems to
     // get interpreted as escaping a double quotation mark?
@@ -224,6 +225,57 @@ pub fn main<T: Iterator<Item = String>>(mut args: T) -> Result<(), String> {
     };
 
     let app_id = bundle.bundle_identifier();
+
+    // ULTRAHLE_MINIONJUMP_SCREEN_BEGIN
+    // Minion Jump / SheepEscape needs the iPad landscape identity/profile.
+    unsafe {
+        std::env::remove_var("TOUCHHLE_FORCE_IPAD_DEVICE_IDENTITY");
+        std::env::remove_var("TOUCHHLE_FORCE_IPAD_LANDSCAPE_SCREEN");
+    }
+
+    if matches!(
+        app_id,
+        "com.apprisetec9.minionjump" | "com.risinghighapps.kingdomprincepro"
+    ) {
+        unsafe {
+            std::env::set_var("TOUCHHLE_FORCE_IPAD_DEVICE_IDENTITY", "1");
+            std::env::set_var("TOUCHHLE_FORCE_IPAD_LANDSCAPE_SCREEN", "1");
+        }
+    }
+    // ULTRAHLE_MINIONJUMP_SCREEN_END
+
+    // ULTRAHLE_POTATO_LANDSCAPE_BEGIN
+    // Potato Panic / Potato Story: use normal PC-style present rotation/composition; remap touch coordinates as landscape-right.
+    unsafe {
+        std::env::remove_var("TOUCHHLE_FORCE_LANDSCAPE_VIEWPORT");
+        std::env::remove_var("TOUCHHLE_FORCE_LANDSCAPE_RENDERBUFFER");
+        std::env::remove_var("TOUCHHLE_FORCE_LANDSCAPE_VIEW_BOUNDS");
+        std::env::remove_var("TOUCHHLE_TOUCH_LOCATION_PORTRAIT_TO_LANDSCAPE");
+        std::env::remove_var("TOUCHHLE_TOUCH_MODE");
+        std::env::remove_var("TOUCHHLE_TOUCH_LOCATION_X_OFFSET");
+        std::env::remove_var("TOUCHHLE_TOUCH_LOCATION_Y_OFFSET");
+        std::env::remove_var("TOUCHHLE_PRESENT_STRETCH_TO_VIEWPORT");
+        std::env::remove_var("TOUCHHLE_POTATO_ANDROID_THUMB2_COMPAT");
+    }
+
+    if matches!(app_id, "at.source.potpan" | "at.source.potato3D") {
+        unsafe {
+            std::env::set_var("TOUCHHLE_TOUCH_LOCATION_PORTRAIT_TO_LANDSCAPE", "1");
+            std::env::set_var("TOUCHHLE_TOUCH_MODE", "right-flip-x");
+
+            if cfg!(target_os = "android") {
+                // Potato Story/Panic must use the same logical GL shape as desktop:
+                // 480x320 landscape, not Android's current 320x480 Cocos viewport.
+                std::env::set_var("TOUCHHLE_POTATO_ANDROID_THUMB2_COMPAT", "1");
+                std::env::set_var("TOUCHHLE_FORCE_LANDSCAPE_VIEWPORT", "1");
+                std::env::set_var("TOUCHHLE_FORCE_LANDSCAPE_RENDERBUFFER", "1");
+                std::env::set_var("TOUCHHLE_FORCE_LANDSCAPE_VIEW_BOUNDS", "1");
+                std::env::set_var("TOUCHHLE_PRESENT_STRETCH_TO_VIEWPORT", "1");
+            }
+        }
+    }
+    // ULTRAHLE_POTATO_LANDSCAPE_END
+
     let minimum_os_version = bundle.minimum_os_version();
     let required_device_capabilities = bundle.required_device_capabilities();
     let device_family = bundle.device_family_array();
@@ -239,7 +291,7 @@ pub fn main<T: Iterator<Item = String>>(mut args: T) -> Result<(), String> {
     }
     echo!(
         "- Minimum OS version: {}",
-        minimum_os_version.unwrap_or("(not specified)")
+        minimum_os_version.as_deref().unwrap_or("(not specified)")
     );
     echo!(
         "- Required device capabilities: {}",
@@ -263,22 +315,43 @@ pub fn main<T: Iterator<Item = String>>(mut args: T) -> Result<(), String> {
     );
     echo!();
 
-    if let Some(version) = minimum_os_version {
-        let (major, minor_etc) = version.split_once('.').unwrap();
-        let minor = minor_etc
-            .split_once('.')
-            .map_or(minor_etc, |(minor, _etc)| minor);
-        let major: u32 = major.parse().unwrap();
-        let minor: u32 = minor.parse().unwrap();
-        if major > 4 || (major == 4 && minor > 0) {
-            echo!("Warning: app requires OS version {}. Only apps for iOS 4.0 and earlier are currently supported.", version);
+    if let Some(version) = minimum_os_version.as_deref() {
+        // Apple's `MinimumOSVersion` Info.plist key follows the standard
+        // dotted version format (`MAJOR[.MINOR[.PATCH]]`). Some apps ship
+        // with just `"7"`, others with `"7.0"`, others with `"7.0.0"` or
+        // even `"6.1.3"` — see Apple's
+        // <https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/iPhoneOSKeys.html#//apple_ref/doc/uid/TP40009252-SW33>.
+        // Previously we required at least one `.` separator and would
+        // `unwrap()` the resulting Option, which panicked when the value
+        // was a bare integer (e.g. Swordigo's iPhone OS bundle declares
+        // `MinimumOSVersion = 7`). Parse defensively instead and treat any
+        // non-numeric / unparseable component as zero, matching how dyld
+        // itself tolerates malformed plists.
+        let (major_str, minor_str) = match version.split_once('.') {
+            Some((maj, rest)) => {
+                let minor_str = rest.split_once('.').map_or(rest, |(minor, _patch)| minor);
+                (maj, minor_str)
+            }
+            None => (version, "0"),
+        };
+        let major: u32 = major_str.parse().unwrap_or(0);
+        let minor: u32 = minor_str.parse().unwrap_or(0);
+        // Apps targeting up to iOS 9.0 attempt to run silently. Only warn
+        // when the deployment target is beyond iOS 9, where breakage from
+        // missing post-iOS-9 APIs becomes the rule rather than the exception.
+        if major > 9 || (major == 9 && minor > 0) {
+            echo!(
+                "Warning: app requires OS version {}. touchHLE currently aims \
+                 for iOS 2.x–9.0; newer APIs may be missing.",
+                version
+            );
         }
     }
 
-    if required_device_capabilities.contains(&"opengles-2")
-        || required_device_capabilities.contains(&"opengles-3")
-    {
-        echo!("Warning: app requires OpenGL ES 2.0+ support. Only OpenGL ES 1.1 is currently supported.");
+    if required_device_capabilities.contains(&"opengles-3") {
+        echo!(
+            "Warning: app requires OpenGL ES 3.0+ support. Only OpenGL ES 1.1 and 2.0 are currently supported."
+        );
     }
 
     if just_info {
@@ -331,7 +404,6 @@ pub fn main<T: Iterator<Item = String>>(mut args: T) -> Result<(), String> {
         ),
     }
     echo!();
-
     // Apply command-line options
     for option_arg in option_args {
         let parse_result = options.parse_argument(&option_arg);

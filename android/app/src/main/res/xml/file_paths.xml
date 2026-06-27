@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at https://mozilla.org/MPL/2.0/. -->
+
+<!-- Paths the FileProvider declared in AndroidManifest.xml is allowed to share.
+     The in-app updater stages the downloaded APK in the app's external files
+     directory (getExternalFilesDir(null), which is also what SDL's
+     SDL_AndroidGetExternalStoragePath returns), so that path must be covered. -->
+<paths>
+    <external-files-path
+        name="update"
+        path="." />
+</paths>

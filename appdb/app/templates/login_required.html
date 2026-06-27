@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Sign in — HyperHLE app compatibility database{% endblock %}
+{% block content %}
+<h1>Sign in to submit a report</h1>
+
+{% if oauth_configured %}
+<p>
+  Submitting a compatibility report requires signing in with your
+  GitHub account so admins can verify reports and contact you about
+  them. We only read your <em>public profile</em> (id, login, avatar) —
+  no email, no repo access.
+</p>
+<p>
+  <a class="button primary" href="/auth/github/login{% if next_path %}?next={{ next_path }}{% endif %}">
+    Sign in with GitHub
+  </a>
+</p>
+<p class="muted">
+  Reports submitted by ordinary users go into a moderation queue
+  reviewed by the site admins (currently
+  <code>@TimofeyLednev</code>, <code>@j92580498-max</code> and
+  <code>@makaherpasswordlostmedia</code>).
+</p>
+{% else %}
+<div class="error">
+  GitHub OAuth is not configured on this server. The administrator
+  needs to set <code>GITHUB_OAUTH_CLIENT_ID</code> and
+  <code>GITHUB_OAUTH_CLIENT_SECRET</code> as environment variables /
+  Fly secrets and redeploy.
+</div>
+{% endif %}
+{% endblock %}

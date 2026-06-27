@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Thanks — HyperHLE app compatibility database{% endblock %}
+{% block content %}
+<h1>Thanks for submitting a report!</h1>
+<p>
+  Your report has been added to the moderation queue. One of the site
+  admins will review it shortly; once approved, it'll appear on the app
+  page for everyone.
+</p>
+<p>
+  In the meantime, you can still see your own pending reports on the
+  app's detail page (they're marked
+  <span class="status-badge status-pending">pending</span>).
+</p>
+<p>
+  <a class="button" href="/">Back to the app list</a>
+  <a class="button" href="/submit">Submit another report</a>
+</p>
+{% endblock %}

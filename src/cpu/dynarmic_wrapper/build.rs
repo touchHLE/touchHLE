@@ -41,6 +41,18 @@ fn main() {
     build.define("DYNARMIC_USE_BUNDLED_EXTERNALS", "ON");
     build.define("CMAKE_POLICY_VERSION_MINIMUM", "3.5");
 
+    // The fmt library bundled with dynarmic (v10.1.0) uses a `consteval`
+    // constructor for `basic_format_string` to perform compile-time format
+    // string checking. Newer compilers (e.g. AppleClang 21 / Xcode 26) reject
+    // this because the constructor's pointer arithmetic isn't a constant
+    // expression under their stricter `consteval` evaluation, breaking the
+    // build. Predefining FMT_CONSTEVAL to empty makes fmt's `#ifndef
+    // FMT_CONSTEVAL` block a no-op, so the constructor is no longer
+    // `consteval` and FMT_HAS_CONSTEVAL stays undefined (it gates the
+    // compile-time `parse_format_string` call). fmt then falls back to runtime
+    // format-string checking. This is harmless on older compilers too.
+    build.cxxflag("-DFMT_CONSTEVAL=");
+
     // This is Windows- and Android-specific because on macOS or Linux, you can
     // easily get Boost with a package manager.
     let os = env::var("CARGO_CFG_TARGET_OS").expect("CARGO_CFG_TARGET_OS was not set");
@@ -62,6 +74,10 @@ fn main() {
         build.define("CMAKE_SYSTEM_NAME", "Android");
         build.define("CMAKE_SYSTEM_VERSION", "21");
         build.define("ANDROID", "ON");
+        // Without this, CMake's architecture probe sees 32-bit `__arm__` and
+        // builds dynarmic for arm instead of arm64, which breaks 64-bit FP
+        // helpers (e.g. FPRecipExponent) when cross-compiling for AArch64.
+        build.define("CMAKE_ANDROID_ARCH_ABI", "arm64-v8a");
     }
     // dynarmic can't be dynamically linked
     let dynarmic_out = build.build();
@@ -125,11 +141,15 @@ fn main() {
     //rerun_if_changed(&dynarmic_root);
     rerun_if_changed(&workspace_root.join(".git/modules/dynarmic/HEAD"));
 
-    cc::Build::new()
+    let mut wrapper_build = cc::Build::new();
+    wrapper_build
         .file(package_root.join("lib.cpp"))
         .cpp(true)
         .std("c++17")
-        .include(dynarmic_out.join("include"))
-        .compile("dynarmic_wrapper");
+        .include(dynarmic_out.join("include"));
+    if !cfg!(debug_assertions) {
+        wrapper_build.define("NDEBUG", "1");
+    }
+    wrapper_build.compile("dynarmic_wrapper");
     rerun_if_changed(&package_root.join("lib.cpp"));
 }

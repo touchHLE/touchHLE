@@ -5,16 +5,17 @@
  */
 //! Handling of Objective-C selectors.
 //!
-//! These are the names used to look up method implementations in Objective-C.
-//! In Apple's implementation, they are always null-terminated C strings, but
-//! they are meant to be treated as opaque values. Selector strings should be
-//! (TODO) interned so pointer comparison can be used instead of string
-//! comparison.
+//! These are the names used to look up method implementations in
+//! Objective-C. In Apple's implementation, they are always
+//! null-terminated C strings, but they are meant to be treated as
+//! opaque values. Selector strings should be (TODO) interned so
+//! pointer comparison can be used instead of string comparison.
 //!
 //! Resources:
 //! - Apple's [The Objective-C Programming Language](https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/ObjectiveC/Chapters/ocSelectors.html)
 
 use std::collections::HashMap;
+use std::sync::{OnceLock, Mutex};
 
 use super::ObjC;
 use crate::abi::{GuestArg, GuestRet};
@@ -22,8 +23,9 @@ use crate::mach_o::MachO;
 use crate::mem::{ConstPtr, Mem, MutPtr, Ptr, SafeRead};
 use crate::Environment;
 
-/// Create a string literal for a selector from Objective-C message syntax
-/// components. Useful for [super::objc_classes] and for [super::msg].
+/// Create a string literal for a selector from Objective-C message
+/// syntax components. Useful for [super::objc_classes] and for
+/// [super::msg].
 #[macro_export]
 macro_rules! selector {
     // "foo"
@@ -36,7 +38,7 @@ macro_rules! selector {
 pub use crate::selector; // #[macro_export] is weird...
 
 /// Opaque type used for selectors.
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
+#[derive(Debug, Copy, Clone, Default, Eq, PartialEq, Hash)]
 #[repr(transparent)]
 #[allow(clippy::upper_case_acronyms)] // silly clippit, this isn't an acronym!
 pub struct SEL(ConstPtr<u8>);
@@ -61,11 +63,24 @@ impl GuestRet for SEL {
 
 impl SEL {
     pub fn as_str(self, mem: &Mem) -> &str {
-        // selectors are probably always UTF-8 but this hasn't been verified
-        mem.cstr_at_utf8(self.0).unwrap()
+        // Selectors are expected to be UTF-8, but if a corrupt or
+        // misinterpreted pointer is passed (e.g. a class pointer used
+        // as SEL), the bytes may not be valid UTF-8. Return a safe
+        // fallback instead of panicking so that callers can log the
+        // issue and continue execution.
+        match mem.cstr_at_utf8(self.0) {
+            Ok(s) => s,
+            Err(_) => "<invalid-selector-utf8>",
+        }
     }
     pub fn is_null(self) -> bool {
         self.0.is_null()
+    }
+    /// A null/sentinel SEL. Useful for places that need a "no selector"
+    /// value (e.g. block-based notification observers don't carry a
+    /// selector, but still flow through the same Observer struct).
+    pub const fn null() -> Self {
+        SEL(Ptr::null())
     }
 }
 
@@ -76,10 +91,11 @@ impl ObjC {
         self.selectors.get(name).copied()
     }
 
-    /// Register a selector using a Rust [String]. Despite the name there is no
-    /// inherent "host" quality of the resulting selector, but because this
-    /// function will allocate a new C string, this function is not the most
-    /// efficient route if there's already a constant string in the app binary.
+    /// Register a selector using a Rust [String]. Despite the name
+    /// there is no inherent "host" quality of the resulting selector,
+    /// but because this function will allocate a new C string, this
+    /// function is not the most efficient route if there's already a
+    /// constant string in the app binary.
     pub fn register_host_selector(&mut self, name: String, mem: &mut Mem) -> SEL {
         if let Some(existing) = self.lookup_selector(&name) {
             return existing;
@@ -93,8 +109,9 @@ impl ObjC {
     /// Register and deduplicate all the selectors of host classes.
     ///
     /// To avoid wasting guest memory, call this after calling
-    /// [ObjC::register_bin_selectors], so that selector strings in the app
-    /// binary can be re-used. [crate::dyld] calls both of these.
+    /// [ObjC::register_bin_selectors], so that selector strings in
+    /// the app binary can be re-used. [crate::dyld] calls both of
+    /// these.
     pub fn register_host_selectors(&mut self, mem: &mut Mem) {
         for (_name, template) in crate::dyld::DYLIB_LIST
             .iter()
@@ -116,20 +133,33 @@ impl ObjC {
 
     /// Register a selector from the application binary. Must be a
     /// static-lifetime constant string.
-    pub(super) fn register_bin_selector(&mut self, sel_cstr: ConstPtr<u8>, mem: &Mem) -> SEL {
-        let sel_str = mem.cstr_at_utf8(sel_cstr).unwrap();
+    pub(super) fn register_bin_selector(
+        &mut self,
+        sel_cstr: ConstPtr<u8>,
+        mem: &Mem,
+    ) -> Option<SEL> {
+        // If the bytes at the selector pointer are not valid UTF-8
+        // (e.g. a corrupted or misaligned binary section), skip the
+        // entry rather than panicking.
+        let sel_str = match mem.cstr_at_utf8(sel_cstr) {
+            Ok(s) => s,
+            Err(_) => {
+                warn_non_utf8_selector_once(sel_cstr);
+                return None;
+            }
+        };
 
         if let Some(existing_sel) = self.lookup_selector(sel_str) {
-            existing_sel
+            Some(existing_sel)
         } else {
             let sel = SEL(sel_cstr);
             self.selectors.insert(sel_str.to_string(), sel);
-            sel
+            Some(sel)
         }
     }
 
-    /// For use by [crate::dyld]: register and deduplicate all the selectors
-    /// referenced in the application binary.
+    /// For use by [crate::dyld]: register and deduplicate all the
+    /// selectors referenced in the application binary.
     pub fn register_bin_selectors(&mut self, bin: &MachO, mem: &mut Mem) {
         let Some(selrefs) = bin.get_section("__objc_selrefs") else {
             return;
@@ -141,8 +171,9 @@ impl ObjC {
             let selref = base + i;
             let sel_cstr = mem.read(selref);
 
-            let sel = self.register_bin_selector(sel_cstr, mem);
-            mem.write(selref, sel.0);
+            if let Some(sel) = self.register_bin_selector(sel_cstr, mem) {
+                mem.write(selref, sel.0);
+            }
         }
     }
 
@@ -155,8 +186,10 @@ impl ObjC {
     ///     "selectors": [
     ///         {
     ///             "selector": ((name of selector)),
-    ///             "instance_implementations": [ ((names of classes)) ] | null,
-    ///             "class_implementations": [ ((names of classes)) ] | null,
+    ///             "instance_implementations": [ ((names of classes)) ]
+    ///                 | null,
+    ///             "class_implementations": [ ((names of classes)) ]
+    ///                 | null,
     ///         },
     ///         ...
     ///     ],
@@ -175,16 +208,17 @@ impl ObjC {
             return Ok(());
         };
         assert!(selrefs.size % 4 == 0);
-        // We manually gather selectors from the binary since it represents
-        // the selectors actually used, whereas using self.selectors
-        // would include all host selectors.
+        // We manually gather selectors from the binary since it
+        // represents the selectors actually used, whereas using
+        // self.selectors would include all host selectors.
         let base: ConstPtr<SEL> = Ptr::from_bits(selrefs.addr);
         let bin_sels: Vec<SEL> = (0..(selrefs.size / 4))
             .map(|i| mem.read(base + i))
             .collect();
 
-        // Gather all selectors in all linked classes. The first vector is for
-        // instance methods, the second is for class methods.
+        // Gather all selectors in all linked classes. The first
+        // vector is for instance methods, the second for class
+        // methods.
         let mut impl_selectors: HashMap<SEL, (Vec<&str>, Vec<&str>)> = HashMap::new();
         for class in self.classes.values() {
             let class_host_object = self.get_host_object(*class).unwrap();
@@ -208,8 +242,9 @@ impl ObjC {
             }
         }
 
-        // Also check unlinked host classes: just because the binary doesn't
-        // link them in directly doesn't mean that it won't use it!
+        // Also check unlinked host classes: just because the binary
+        // doesn't link them in directly doesn't mean it won't use
+        // them.
         for (class_name, template) in crate::dyld::DYLIB_LIST
             .iter()
             .flat_map(|dylib| dylib.class_exports)
@@ -235,7 +270,8 @@ impl ObjC {
 
         write!(
             file,
-            "{{\n    \"object\": \"selectors\",\n    \"selectors\": [ "
+            "{{\n    \"object\": \"selectors\",\n    \
+             \"selectors\": [ "
         )?;
         for (i, sel) in bin_sels.iter().enumerate() {
             // Why doesn't json allow trailing commas...
@@ -273,12 +309,79 @@ impl ObjC {
 
 /// Standard Objective-C runtime function for selector registration.
 pub(super) fn sel_registerName(env: &mut Environment, name: ConstPtr<u8>) -> SEL {
-    let name = env.mem.cstr_at_utf8(name).unwrap();
+    // Guard against a null or invalid pointer being passed as the
+    // selector name; return a null SEL rather than panicking.
+    if name.is_null() {
+        log!("Warning: sel_registerName called with null pointer");
+        return SEL(Ptr::null());
+    }
 
-    if let Some(existing) = env.objc.lookup_selector(name) {
+    let name_str = match env.mem.cstr_at_utf8(name) {
+        Ok(s) => s,
+        Err(_) => {
+            log!(
+                "Warning: sel_registerName: name at {:?} is not \
+                 valid UTF-8; returning null SEL",
+                name
+            );
+            return SEL(Ptr::null());
+        }
+    };
+
+    if let Some(existing) = env.objc.lookup_selector(name_str) {
         return existing;
     }
 
-    let name = name.to_string();
-    env.objc.register_host_selector(name, &mut env.mem)
+    let name_str = name_str.to_string();
+    env.objc.register_host_selector(name_str, &mut env.mem)
+}
+
+/// `SEL sel_getUid(const char *str)` — per Apple's runtime, this is
+/// functionally identical to `sel_registerName`: it registers a method
+/// name with the runtime and returns the corresponding selector.
+/// Reference: <https://developer.apple.com/documentation/objectivec/sel_getuid(_:)>
+pub(super) fn sel_getUid(env: &mut Environment, name: ConstPtr<u8>) -> SEL {
+    sel_registerName(env, name)
+}
+
+/// `const char *sel_getName(SEL sel)` — returns the C string name of a
+/// selector. In our runtime a [SEL] already wraps a pointer to its
+/// null-terminated name string, so we simply return that pointer.
+/// A null selector maps to the C string "<null selector>" in Apple's
+/// implementation; we return a null pointer, which callers treat as an
+/// empty/absent name.
+/// Reference: <https://developer.apple.com/documentation/objectivec/sel_getname(_:)>
+pub(super) fn sel_getName(_env: &mut Environment, sel: SEL) -> ConstPtr<u8> {
+    sel.0
+}
+
+/// `BOOL sel_isEqual(SEL lhs, SEL rhs)` — returns whether two selectors
+/// are equal. Selectors are registered/deduplicated, so a pointer
+/// comparison matches Apple's behavior. As a fallback (e.g. for an
+/// unregistered binary selector pointer), compare the underlying name
+/// strings too.
+/// Reference: <https://developer.apple.com/documentation/objectivec/sel_isequal(_:_:)>
+pub(super) fn sel_isEqual(env: &mut Environment, lhs: SEL, rhs: SEL) -> bool {
+    if lhs.0 == rhs.0 {
+        return true;
+    }
+    if lhs.is_null() || rhs.is_null() {
+        return false;
+    }
+    lhs.as_str(&env.mem) == rhs.as_str(&env.mem)
+}
+
+fn warn_non_utf8_selector_once(sel_cstr: ConstPtr<u8>) {
+    use std::collections::HashSet;
+    static SEEN: OnceLock<Mutex<HashSet<u32>>> = OnceLock::new();
+    let seen = SEEN.get_or_init(|| Mutex::new(HashSet::new()));
+    let addr = sel_cstr.to_bits();
+    let mut guard = seen.lock().unwrap();
+    if guard.insert(addr) {
+        log!(
+            "Warning: skipping bin selector at {:?}: not valid UTF-8 \
+             (further occurrences at this address will be silenced)",
+            sel_cstr
+        );
+    }
 }

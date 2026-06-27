@@ -2,10 +2,10 @@
 set -e
 
 PHASE="$1"
-if [[ "$PHASE" = "--prepare-files" ]]; then
+if [ "$PHASE" = "--prepare-files" ]; then
     shift
 
-    if [[ $# != 0 ]]; then
+    if [ $# != 0 ]; then
         echo "Error! Unexpected argument"
         exit 1
     fi
@@ -33,36 +33,36 @@ if [[ "$PHASE" = "--prepare-files" ]]; then
     cp ../OPTIONS_HELP.txt new_release/
     cp ../touchHLE_default_options.txt new_release/
     cp ../touchHLE_options.txt new_release/
-elif [[ "$PHASE" = "--create-zip-windows" || "$PHASE" = "--create-zip-macos" || "$PHASE" = "--create-zip-android" ]]; then
+elif [ "$PHASE" = "--create-zip-windows" ] || [ "$PHASE" = "--create-zip-linux" ] || [ "$PHASE" = "--create-zip-macos" ] || [ "$PHASE" = "--create-zip-android" ]; then
     shift
 
     PATH_TO_BINARY="$1"
-    if [[ -z "$PATH_TO_BINARY" ]]; then
+    if [ -z "$PATH_TO_BINARY" ]; then
         echo "Error! Path to binary must be provided"
         exit 1
     fi
     shift
 
-    if [[ "x$1" != "x-o" ]]; then
+    if [ "x$1" != "x-o" ]; then
         echo "Error! -o expected"
         exit 1
     fi
     shift
 
     OUTPUT_PATH="$1"
-    if [[ -z "$OUTPUT_PATH" ]]; then
+    if [ -z "$OUTPUT_PATH" ]; then
         echo "Error! Output path must be provided"
     fi
     shift
     OUTPUT_PATH=$(readlink -f $(dirname "$OUTPUT_PATH"))/$(basename "$OUTPUT_PATH")
     rm -f "$OUTPUT_PATH"
 
-    if [[ $# != 0 ]]; then
+    if [ $# != 0 ]; then
         echo "Error! Unexpected argument"
         exit 1
     fi
 
-    if ! [[ -d "new_release" ]]; then
+    if [ ! -d "new_release" ]; then
         echo "Error! --prepare-files phase must be run first"
         exit 1
     fi
@@ -70,7 +70,9 @@ elif [[ "$PHASE" = "--create-zip-windows" || "$PHASE" = "--create-zip-macos" || 
     zip -j "$OUTPUT_PATH" "$PATH_TO_BINARY"
 
     cd new_release/
-    if [[ "$PHASE" = "--create-zip-windows" ]]; then
+    if [ "$PHASE" = "--create-zip-windows" ] || [ "$PHASE" = "--create-zip-linux" ]; then
+        # Like Windows, the Linux binary is shipped standalone, so it needs the
+        # full set of support files (dylibs, fonts, options) bundled alongside.
         zip -r "$OUTPUT_PATH" *
     else
         zip "$OUTPUT_PATH" CHANGELOG.html COPYING.txt README.html
@@ -86,6 +88,7 @@ else
     echo
     echo "  ./prepare-release.sh --create-zip-macos path/to/touchHLE.dmg -o touchHLE_vX.Y.Z_macOS_x86_x64.zip"
     echo "  ./prepare-release.sh --create-zip-windows path/to/touchHLE.exe -o touchHLE_vX.Y.Z_Windows_x86_64.zip"
+    echo "  ./prepare-release.sh --create-zip-linux path/to/touchHLE -o touchHLE_vX.Y.Z_Linux_x86_64.zip"
     echo "  ./prepare-release.sh --create-zip-android path/to/touchHLE.apk -o touchHLE_vX.Y.Z_Android_AArch64.zip"
     exit 1
 fi

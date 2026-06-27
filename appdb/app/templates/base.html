@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>{% block title %}HyperHLE app compatibility database{% endblock %}</title>
+<link rel="stylesheet" href="/static/style.css" />
+<script src="/static/script.js" defer></script>
+</head>
+<body>
+<header class="site-header">
+  <div class="container">
+    <a class="brand" href="/">HyperHLE app compatibility database</a>
+    <nav>
+      <a href="/">Apps</a>
+      <a href="/submit">Submit a report</a>
+      <a href="/about">About</a>
+      {% if current_user and current_user.is_admin %}
+      <a class="nav-admin" href="/admin">
+        Admin{% if pending_count %} <span class="badge">{{ pending_count }}</span>{% endif %}
+      </a>
+      {% endif %}
+      {% if current_user %}
+        <span class="nav-user">
+          {% if current_user.avatar_url %}<img class="avatar" src="{{ current_user.avatar_url }}" alt="" />{% endif %}
+          {{ current_user.display_name }}
+        </span>
+        <form class="logout-form" method="post" action="/auth/logout">
+          <button type="submit" class="link-button">Sign out</button>
+        </form>
+      {% else %}
+        {% if oauth_configured %}
+          <a class="nav-login" href="/auth/github/login">Sign in with GitHub</a>
+        {% else %}
+          <span class="nav-login disabled" title="GitHub OAuth is not configured on this server">Sign in (disabled)</span>
+        {% endif %}
+      {% endif %}
+    </nav>
+  </div>
+</header>
+
+<main class="container">
+  {% block content %}{% endblock %}
+</main>
+
+<footer class="site-footer">
+  <div class="container">
+    Community-run compatibility database for
+    <a href="https://github.com/j92580498-max/touchHLE">HyperHLE</a>
+    (an iPhone OS emulator fork). Modelled on
+    <a href="https://appdb.touchhle.org/">appdb.touchhle.org</a>.
+    Reports are reviewed by the site admins before they appear publicly.
+  </div>
+</footer>
+</body>
+</html>

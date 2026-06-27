@@ -1,0 +1,21 @@
+[project]
+name = "hyperhle-appdb"
+version = "0.1.0"
+description = "HyperHLE app compatibility database — community reports of which iPhone OS apps work in HyperHLE."
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi[standard]>=0.115.0",
+    "uvicorn[standard]>=0.30.0",
+    "jinja2>=3.1.0",
+    "sqlalchemy>=2.0.0",
+    "python-multipart>=0.0.9",
+    "itsdangerous>=2.2.0",
+    "httpx>=0.27.0",
+]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["app"]

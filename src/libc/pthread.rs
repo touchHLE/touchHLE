@@ -32,6 +32,7 @@ pub mod cond;
 pub mod key;
 pub mod mutex;
 pub mod once;
+pub mod rwlock;
 pub mod thread;
 
 #[derive(Default)]

@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Apps</h1>
+
+<section class="legend">
+  <h2>Legend / Stats</h2>
+  <table class="legend-table">
+    <thead>
+      <tr><th># of apps</th><th>Rating</th><th>Description</th></tr>
+    </thead>
+    <tbody>
+      {% for value, desc in rating_legend %}
+      <tr>
+        <td class="num">{{ rating_counts.get(value, 0) }}</td>
+        <td class="stars">{{ value | stars }}</td>
+        <td>{{ desc }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<section>
+  <form class="search-form" method="get" action="/">
+    <input type="search" name="q" value="{{ q }}" placeholder="Search apps or publishers…" />
+    <button type="submit">Search</button>
+    {% if q %}<a class="clear" href="/">clear</a>{% endif %}
+  </form>
+
+  <p class="muted">{{ total_apps }} app{{ '' if total_apps == 1 else 's' }} listed.
+    <a href="/submit">Submit a compatibility report →</a></p>
+
+  <table class="apps-table sortable-table searchable-table">
+    <thead>
+      <tr>
+        <th>App name</th>
+        <th>Release year</th>
+        <th>Developer / Publisher</th>
+        <th>Best rating</th>
+        <th>Last updated</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for a in apps %}
+      <tr>
+        <td><a href="/apps/{{ a.id }}">{{ a.name }}</a></td>
+        <td>{{ a.release_year or '' }}</td>
+        <td>{{ a.developer_publisher or '' }}</td>
+        <td class="stars">{{ best_rating.get(a.id) | stars }}</td>
+        <td>{% set lu = last_updated.get(a.id) %}{% if lu %}<time datetime="{{ lu | iso_utc }}">{{ lu | fmt_dt }}</time>{% endif %}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="5" class="empty">No apps match.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}

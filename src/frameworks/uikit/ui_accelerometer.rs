@@ -14,7 +14,7 @@ use crate::objc::{
     NSZonePtr, TrivialHostObject, SEL,
 };
 use crate::Environment;
-use std::time::{Duration, Instant};
+use std::time::Instant;
 
 #[derive(Default)]
 pub struct State {
@@ -30,6 +30,7 @@ type UIAccelerationValue = f64;
 
 const DEFAULT_UPDATE_INTERVAL: f64 = 1.0 / 60.0;
 
+#[derive(Default)]
 struct UIAccelerationHostObject {
     x: UIAccelerationValue,
     y: UIAccelerationValue,
@@ -130,7 +131,8 @@ pub(super) fn handle_accelerometer(env: &mut Environment) -> Option<Instant> {
     let delegate = state.delegate?;
 
     let ns_interval = state.update_interval.unwrap_or(DEFAULT_UPDATE_INTERVAL);
-    let rust_interval = Duration::from_secs_f64(ns_interval);
+    let rust_interval =
+        crate::frameworks::foundation::ns_time_interval_to_duration_or_zero(ns_interval);
 
     let now = Instant::now();
     if let Some(due_by) = state.due_by {

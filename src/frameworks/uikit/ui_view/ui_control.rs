@@ -8,6 +8,7 @@
 //! Useful resources:
 //! - The [Target-Action section](https://developer.apple.com/library/archive/documentation/General/Conceptual/CocoaEncyclopedia/Target-Action/Target-Action.html) of Apple's "Concepts in Objective-C Programming".
 
+pub mod ui_bar_button_item;
 pub mod ui_button;
 pub mod ui_segmented_control;
 pub mod ui_slider;
@@ -33,7 +34,7 @@ pub const UIControlEventTouchUpInside: UIControlEvents = 1 << 6;
 const UIControlEventTouchUpOutside: UIControlEvents = 1 << 7;
 pub const UIControlEventValueChanged: UIControlEvents = 1 << 12;
 
-struct UIControlHostObject {
+pub struct UIControlHostObject {
     superclass: super::UIViewHostObject,
     enabled: bool,
     selected: bool,
@@ -69,19 +70,21 @@ const UIControlStateSelected: UIControlState = 1 << 2;
 const UIControlStateFocused: UIControlState = 1 << 3;
 
 fn send_actions(env: &mut Environment, this: id, event: id, control_event: UIControlEvents) {
-    log_dbg!(
-        "Control event {:?} in control {:?} for event {:?}",
-        control_event,
-        this,
-        event,
-    );
-
     let UIControlHostObject { action_targets, .. } = env.objc.borrow(this);
     let action_targets: Vec<_> = action_targets
         .iter()
         .filter(|&(_target, _action, for_control_events)| (for_control_events & control_event) != 0)
         .map(|&(target, action, _for_control_events)| (target, action))
         .collect();
+
+    if !action_targets.is_empty() {
+        log!(
+            "UIControl {:?} dispatching {} action(s) for control event mask {:#x}",
+            this,
+            action_targets.len(),
+            control_event,
+        );
+    }
 
     for (target, action) in action_targets {
         assert!(target != nil); // TODO
@@ -162,6 +165,10 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 - (bool)tracking {
     env.objc.borrow::<UIControlHostObject>(this).tracking
+}
+
+- (())cancelTrackingWithEvent:(id)_event {
+    // default implementation, subclasses can override this
 }
 
 - (bool)beginTrackingWithTouch:(id)_touch // UITouch*
@@ -327,8 +334,36 @@ forControlEvents:(UIControlEvents)events {
             );
             () = msg_send(env, (target, action, this, event));
         }
-        _ => panic!(),
+        other => {
+            // UIControl actions have 0, 1 or 2 explicit arguments (plus self
+            // and the selector). Anything else is a malformed selector; on
+            // real UIKit Objective-C would just `objc_msgSend` the call and
+            // garble the arguments. Logging is safer than crashing the host
+            // when an end-of-life iOS app registers an unusual selector.
+            log!(
+                "Warning: UIControl::send_actions: unsupported argument count {} for {:?}; skipping.",
+                other,
+                sel_str
+            );
+        }
     };
+}
+
+- (())removeTarget:(id)target
+            action:(SEL)action
+  forControlEvents:(UIControlEvents)events {
+    let action_targets = &mut env.objc.borrow_mut::<UIControlHostObject>(this).action_targets;
+    action_targets.retain(|(t, a, e)| {
+        // If target is nil, match any target; otherwise only the specified one.
+        let target_match = target == crate::objc::nil || *t == target;
+        // If action selector is null/zero, match any action; otherwise only
+        // the specified one.
+        let action_match = action.is_null() || *a == action;
+        // Only remove entries where events overlap.
+        let events_match = (*e & events) != 0;
+        // Retain entries that do NOT match all three conditions.
+        !(target_match && action_match && events_match)
+    });
 }
 
 // TODO: more triggers/targets/actions stuff

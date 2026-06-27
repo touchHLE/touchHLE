@@ -27,7 +27,7 @@ pub fn get_log_file() -> &'static File {
 /// from.
 macro_rules! log {
     ($($arg:tt)+) => {
-        echo!("{}: {}", module_path!(), format_args!($($arg)+));
+        echo!("{}: {}", module_path!(), format_args!($($arg)+))
     }
 }
 

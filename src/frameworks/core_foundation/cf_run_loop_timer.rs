@@ -9,7 +9,7 @@
 
 use crate::abi::CallFromHost;
 use crate::abi::GuestFunction;
-use crate::dyld::{export_c_func, FunctionExports};
+use crate::dyld::FunctionExports;
 use crate::frameworks::core_foundation::cf_allocator::{kCFAllocatorDefault, CFAllocatorRef};
 use crate::frameworks::core_foundation::cf_run_loop::{CFRunLoopMode, CFRunLoopRef};
 use crate::frameworks::core_foundation::time::{CFAbsoluteTime, CFTimeInterval};
@@ -101,12 +101,12 @@ fn CFRunLoopTimerInvalidate(env: &mut Environment, timer: CFRunLoopTimerRef) {
 }
 
 pub const FUNCTIONS: FunctionExports = &[
-    export_c_func!(CFRunLoopTimerCreate(_, _, _, _, _, _, _)),
-    export_c_func!(CFRunLoopAddTimer(_, _, _)),
-    export_c_func!(CFRunLoopTimerInvalidate(_)),
+    // CFRunLoopTimerCreate, CFRunLoopAddTimer and CFRunLoopTimerInvalidate
+    // are exported from cf_run_loop; not duplicated here.
 ];
 
 /// Belongs to _touchHLE_CFTimerTarget
+#[derive(Default)]
 struct CFTimerTargetHostObject {
     callout: GuestFunction,
     info: MutVoidPtr,

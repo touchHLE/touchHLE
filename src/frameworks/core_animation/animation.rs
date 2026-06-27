@@ -94,7 +94,18 @@ impl State {
             }
 
             let repeat_count: f32 = msg![env; animation repeatCount];
-            assert!(repeat_count >= 0.0);
+            // A negative `repeatCount` is technically undefined per the
+            // CABasicAnimation docs; clamp to 0 (i.e. no repeats) instead of
+            // crashing the host.
+            let repeat_count = if repeat_count.is_finite() && repeat_count >= 0.0 {
+                repeat_count
+            } else {
+                log!(
+                    "Warning: CABasicAnimation: invalid repeatCount {}; clamping to 0.",
+                    repeat_count
+                );
+                0.0
+            };
             // Setting [repeatCount] to greatestFiniteMagnitude will cause
             // the animation to repeat forever.
             let effective_repeat_count = if repeat_count == f32::MAX {
@@ -249,7 +260,13 @@ impl State {
                     );
                     presentation.position = from_value + by_value * interpolation_amount;
                 }
-                _ => panic!("Attempted to animate on key {}", key_path),
+                _ => {
+                    log_dbg!(
+                        "Warning: Skipping animation on unsupported key path {:?}",
+                        key_path
+                    );
+                    continue;
+                }
             }
         }
 
@@ -257,10 +274,28 @@ impl State {
     }
 
     pub fn update_started_and_finished_animations(self, env: &mut Environment) {
+        // `animationDidStart:` and `animationDidStop:finished:` are optional
+        // CAAnimationDelegate methods. Many apps either don't set a delegate
+        // at all or set one that only implements one of the two. We must
+        // register the selectors so msg! doesn't panic with "Unknown
+        // selector" when nothing in the binary referenced them, and then
+        // gate the actual send on `respondsToSelector:` so we mirror the
+        // Cocoa behavior of silently no-op'ing when the delegate doesn't
+        // implement the method.
+        let did_start_sel = env
+            .objc
+            .register_host_selector("animationDidStart:".to_string(), &mut env.mem);
+        let did_stop_sel = env
+            .objc
+            .register_host_selector("animationDidStop:finished:".to_string(), &mut env.mem);
+
         for animation in self.started_animations {
             let delegate = msg![env; animation delegate];
             if delegate != nil {
-                () = msg![env; delegate animationDidStart: animation];
+                let responds: bool = msg![env; delegate respondsToSelector: did_start_sel];
+                if responds {
+                    () = msg![env; delegate animationDidStart: animation];
+                }
             }
         }
 
@@ -270,7 +305,10 @@ impl State {
         for (layer, animation, finished, removed_on_completion, key) in self.finished_animations {
             let delegate = msg![env; animation delegate];
             if delegate != nil {
-                () = msg![env; delegate animationDidStop: animation finished: finished];
+                let responds: bool = msg![env; delegate respondsToSelector: did_stop_sel];
+                if responds {
+                    () = msg![env; delegate animationDidStop: animation finished: finished];
+                }
             }
 
             if removed_on_completion {
@@ -287,6 +325,7 @@ impl State {
     }
 }
 
+#[allow(clippy::eq_op)]
 fn get_from_and_by_values<T>(
     current_value: Option<T>,
     from_value: Option<T>,
@@ -296,9 +335,16 @@ fn get_from_and_by_values<T>(
 where
     T: Copy + Sub<Output = T>,
 {
-    if from_value.is_some() && to_value.is_some() && by_value.is_some() {
-        panic!("Cannot specify all three of fromValue, toValue, and byValue");
-    } else if let (Some(from_value), Some(to_value)) = (from_value, to_value) {
+    // The semantics of fromValue/toValue/byValue follow Apple's docs. If a
+    // misbehaving guest specifies all three, fall back to using from/to and
+    // ignoring `byValue` instead of crashing the host.
+    if let (Some(from_value), Some(to_value)) = (from_value, to_value) {
+        if by_value.is_some() {
+            log_dbg!(
+                "CABasicAnimation: all three of fromValue/toValue/byValue set; \
+                 ignoring byValue"
+            );
+        }
         let by_value = to_value - from_value.to_owned();
         (from_value, by_value)
     } else if let (Some(from_value), Some(by_value)) = (from_value, by_value) {
@@ -307,20 +353,57 @@ where
         let from_value = to_value - by_value;
         (from_value, by_value.to_owned())
     } else if let Some(from_value) = from_value {
-        let by_value = current_value.unwrap() - from_value;
-        (from_value.to_owned(), by_value)
+        if let Some(current) = current_value {
+            let by_value = current - from_value;
+            (from_value.to_owned(), by_value)
+        } else {
+            // No current value to derive `by` from — treat as a no-op animation.
+            (from_value.to_owned(), from_value - from_value)
+        }
     } else if let Some(to_value) = to_value {
-        let from_value = current_value.unwrap();
-        let by_value = to_value - from_value;
-        (from_value.to_owned(), by_value)
+        if let Some(from_value) = current_value {
+            let by_value = to_value - from_value;
+            (from_value.to_owned(), by_value)
+        } else {
+            (to_value.to_owned(), to_value - to_value)
+        }
     } else if let Some(by_value) = by_value {
-        let from_value = current_value.unwrap();
-        (from_value.to_owned(), by_value.to_owned())
+        if let Some(from_value) = current_value {
+            (from_value.to_owned(), by_value.to_owned())
+        } else {
+            // Pick a zero-equivalent start; the animation will still be valid.
+            (by_value - by_value, by_value.to_owned())
+        }
     } else {
-        // TODO: All properties are nil. Interpolates between the previous
-        // value of keyPath in the target layer’s presentation layer and the
-        // current value of keyPath in the target layer’s presentation layer.
-        unimplemented!()
+        // All properties are nil. The official semantics call for interpolating
+        // between the previous and current presentation-layer values of
+        // `keyPath`, which we don't track here. Fall back to a no-op animation
+        // starting from `current_value` (or zero if even that is missing).
+        if let Some(current) = current_value {
+            (current.to_owned(), current - current)
+        } else {
+            log!(
+                "Warning: CABasicAnimation: from/to/by all nil and no current \
+                 value; emitting no-op animation."
+            );
+            // SAFETY: this branch will only happen when `current_value` is
+            // None AND none of from/to/by were set, in which case the caller
+            // has no expectation about the values; default-constructing via
+            // a zero-size subtraction is impossible without a concrete T.
+            // Fall back to a panic-free degenerate path: re-use whatever the
+            // caller passed by returning the same Option-default. We avoid
+            // requiring `Default` on T by computing a zero from the unwrap
+            // we already know exists in *some* branch above; if we get here
+            // we genuinely have nothing to animate, so we cannot produce a
+            // value of T. Returning here would require Default; since we
+            // can't add that bound without ripping through all callers, log
+            // the fact and panic with a clearer message (still better than
+            // the silent `unimplemented!`).
+            unreachable!(
+                "CABasicAnimation: from/to/by all nil and current_value missing; \
+                 no value of T available to interpolate."
+            )
+        }
     }
 }
 

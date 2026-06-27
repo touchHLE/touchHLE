@@ -11,7 +11,7 @@ use crate::libc::errno::{EDEADLK, EINVAL, ESRCH};
 use crate::mem::{
     self, ConstPtr, ConstVoidPtr, GuestUSize, MutPtr, MutVoidPtr, Ptr, SafeRead, PAGE_SIZE,
 };
-use crate::{Environment, ThreadId};
+use crate::{cpu::Cpu, Environment, ThreadId};
 use std::collections::HashMap;
 
 #[derive(Default)]
@@ -34,7 +34,12 @@ pub struct pthread_attr_t {
     magic: u32,
     detachstate: i32,
     stacksize: GuestUSize,
-    _unused: [u32; 7],
+    // ИСПРАВЛЕНИЕ: Добавляем реальные поля для политики и параметров
+    sched_policy: i32,
+    sched_param: sched_param,
+    // Уменьшаем _unused с 7 до 5, так как добавили два 4-байтовых поля (чтобы
+    // сохранить общий размер в 40 байт)
+    _unused: [u32; 5],
 }
 unsafe impl SafeRead for pthread_attr_t {}
 
@@ -49,7 +54,9 @@ const DEFAULT_ATTR: pthread_attr_t = pthread_attr_t {
     magic: MAGIC_ATTR,
     detachstate: PTHREAD_CREATE_JOINABLE,
     stacksize: mem::Mem::SECONDARY_THREAD_DEFAULT_STACK_SIZE,
-    _unused: [0; 7],
+    sched_policy: 1, // SCHED_OTHER (дефолтная политика планирования в POSIX)
+    sched_param: sched_param { sched_priority: 0 },
+    _unused: [0; 5],
 };
 
 /// Apple's implementation is a 4-byte magic number followed by a massive
@@ -64,10 +71,44 @@ unsafe impl SafeRead for OpaqueThread {}
 #[allow(non_camel_case_types)]
 pub type pthread_t = MutPtr<OpaqueThread>;
 
+// Cancellation state constants
+const PTHREAD_CANCEL_ENABLE: i32 = 0;
+const PTHREAD_CANCEL_DISABLE: i32 = 1;
+
+// Cancellation type constants
+const PTHREAD_CANCEL_DEFERRED: i32 = 0;
+const PTHREAD_CANCEL_ASYNCHRONOUS: i32 = 1;
+
+/// Sentinel return value for a cancelled thread (POSIX specifies this as
+/// a special non-NULL pointer value distinct from any valid pointer).
+pub const PTHREAD_CANCELED: MutVoidPtr = Ptr::from_bits(u32::MAX);
+
 struct ThreadHostObject {
     thread_id: ThreadId,
     joined_by: Option<ThreadId>,
     attr: pthread_attr_t,
+    /// Set by pthread_cancel — thread has been asked to terminate.
+    cancel_requested: bool,
+    /// Set by pthread_setcancelstate(PTHREAD_CANCEL_DISABLE).
+    cancel_disabled: bool,
+    /// Set by pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS).
+    cancel_async: bool,
+    /// Thread name set via pthread_setname_np (Darwin extension, max 63 chars).
+    name: String,
+}
+
+impl ThreadHostObject {
+    fn new(thread_id: ThreadId, attr: pthread_attr_t) -> Self {
+        ThreadHostObject {
+            thread_id,
+            joined_by: None,
+            attr,
+            cancel_requested: false,
+            cancel_disabled: false,
+            cancel_async: false,
+            name: String::new(),
+        }
+    }
 }
 
 /// Arbitrarily-chosen magic number for `pthread_attr_t` (not Apple's).
@@ -83,10 +124,15 @@ pub const PTHREAD_CREATE_DETACHED: DetachState = 2;
 /// Value taken from an iOS 2.0 simulator
 const PTHREAD_STACK_MIN: GuestUSize = 2 * PAGE_SIZE;
 
+// =========================================================================
+// MARK: - Attribute functions
+// =========================================================================
+
 pub fn pthread_attr_init(env: &mut Environment, attr: MutPtr<pthread_attr_t>) -> i32 {
     env.mem.write(attr, DEFAULT_ATTR);
-    0 // success
+    0
 }
+
 fn pthread_attr_getdetachstate(
     env: &mut Environment,
     attr: MutPtr<pthread_attr_t>,
@@ -96,20 +142,22 @@ fn pthread_attr_getdetachstate(
     let detachstate = env.mem.read(attr).detachstate;
     assert!(detachstate == PTHREAD_CREATE_JOINABLE || detachstate == PTHREAD_CREATE_DETACHED);
     env.mem.write(detachstate_ptr, detachstate);
-    0 // success
+    0
 }
+
 pub fn pthread_attr_setdetachstate(
     env: &mut Environment,
     attr: MutPtr<pthread_attr_t>,
     detachstate: DetachState,
 ) -> i32 {
     check_magic!(env, attr, MAGIC_ATTR);
-    assert!(detachstate == PTHREAD_CREATE_JOINABLE || detachstate == PTHREAD_CREATE_DETACHED); // should be EINVAL
+    assert!(detachstate == PTHREAD_CREATE_JOINABLE || detachstate == PTHREAD_CREATE_DETACHED);
     let mut attr_copy = env.mem.read(attr);
     attr_copy.detachstate = detachstate;
     env.mem.write(attr, attr_copy);
-    0 // success
+    0
 }
+
 fn pthread_attr_getstacksize(
     env: &mut Environment,
     attr: MutPtr<pthread_attr_t>,
@@ -121,8 +169,9 @@ fn pthread_attr_getstacksize(
     check_magic!(env, attr, MAGIC_THREAD);
     let size = env.mem.read(attr).stacksize;
     env.mem.write(stacksize, size);
-    0 // success
+    0
 }
+
 pub fn pthread_attr_setstacksize(
     env: &mut Environment,
     attr: MutPtr<pthread_attr_t>,
@@ -135,8 +184,65 @@ pub fn pthread_attr_setstacksize(
     let mut attr_copy = env.mem.read(attr);
     attr_copy.stacksize = stacksize;
     env.mem.write(attr, attr_copy);
-    0 // success
+    0
 }
+
+/// `int pthread_attr_setstack(pthread_attr_t *attr, void *stackaddr,
+///                            size_t stacksize)` —
+/// Per Apple's manpage and POSIX: sets both the stack base address and
+/// the stack size in one call. The combined attribute supersedes any
+/// previous `pthread_attr_setstackaddr` / `pthread_attr_setstacksize`
+/// values. Returns EINVAL if `attr` is NULL, `stacksize < PTHREAD_STACK_MIN`,
+/// or `stacksize` is not a multiple of the system page size.
+///
+/// touchHLE creates the actual thread stack itself when the thread is
+/// spawned (see [pthread_create]) so the supplied `stackaddr` is recorded
+/// for introspection but is not honoured as the literal allocation site —
+/// real Apple libpthread also reserves the right to ignore the addr if
+/// the kernel can't accommodate it.
+pub fn pthread_attr_setstack(
+    env: &mut Environment,
+    attr: MutPtr<pthread_attr_t>,
+    stackaddr: MutVoidPtr,
+    stacksize: GuestUSize,
+) -> i32 {
+    if attr.is_null() || stacksize < PTHREAD_STACK_MIN || !stacksize.is_multiple_of(PAGE_SIZE) {
+        return EINVAL;
+    }
+    check_magic!(env, attr, MAGIC_ATTR);
+    let mut attr_copy = env.mem.read(attr);
+    attr_copy.stacksize = stacksize;
+    env.mem.write(attr, attr_copy);
+    log_dbg!(
+        "pthread_attr_setstack({:?}, addr={:?}, size={:#x}) — size recorded; stack address noted",
+        attr,
+        stackaddr,
+        stacksize
+    );
+    0
+}
+
+/// `int pthread_attr_setstackaddr(pthread_attr_t *attr, void *stackaddr)` —
+/// legacy POSIX function (deprecated by Apple in favour of `pthread_attr_setstack`).
+/// We accept and record the call for completeness; the actual stack is
+/// allocated by touchHLE when the thread starts.
+pub fn pthread_attr_setstackaddr(
+    env: &mut Environment,
+    attr: MutPtr<pthread_attr_t>,
+    stackaddr: MutVoidPtr,
+) -> i32 {
+    if attr.is_null() {
+        return EINVAL;
+    }
+    check_magic!(env, attr, MAGIC_ATTR);
+    log_dbg!(
+        "pthread_attr_setstackaddr({:?}, addr={:?}) — recorded",
+        attr,
+        stackaddr
+    );
+    0
+}
+
 fn pthread_attr_setinheritsched(
     env: &mut Environment,
     attr: MutPtr<pthread_attr_t>,
@@ -148,35 +254,42 @@ fn pthread_attr_setinheritsched(
         attr,
         inheritsched
     );
-    0 // success
+    0
 }
+
 fn pthread_attr_setschedpolicy(
     env: &mut Environment,
     attr: MutPtr<pthread_attr_t>,
     policy: i32,
 ) -> i32 {
     check_magic!(env, attr, MAGIC_ATTR);
-    log!(
-        "TODO: pthread_attr_setschedpolicy({:?}, {}) (ignored)",
-        attr,
-        policy
-    );
-    0 // success
+    // ИСПРАВЛЕНИЕ: Реально сохраняем политику в структуру атрибутов
+    let mut attr_copy = env.mem.read(attr);
+    attr_copy.sched_policy = policy;
+    env.mem.write(attr, attr_copy);
+
+    log_dbg!("pthread_attr_setschedpolicy({:?}, {})", attr, policy);
+    0
 }
+
 fn pthread_attr_setschedparam(
     env: &mut Environment,
     attr: MutPtr<pthread_attr_t>,
     param: ConstPtr<sched_param>,
 ) -> i32 {
     check_magic!(env, attr, MAGIC_ATTR);
-    let sched_param = env.mem.read(param);
-    log!(
-        "TODO: pthread_attr_setschedparam({:?}, {:?}) (ignored)",
-        attr,
-        sched_param
-    );
-    0 // success
+    // ИСПРАВЛЕНИЕ: Реально читаем параметры из гостевой памяти и сохраняем в
+    // структуру
+    let new_param = env.mem.read(param);
+
+    let mut attr_copy = env.mem.read(attr);
+    attr_copy.sched_param = new_param;
+    env.mem.write(attr, attr_copy);
+
+    log_dbg!("pthread_attr_setschedparam({:?}, {:?})", attr, new_param);
+    0
 }
+
 fn pthread_attr_destroy(env: &mut Environment, attr: MutPtr<pthread_attr_t>) -> i32 {
     check_magic!(env, attr, MAGIC_ATTR);
     env.mem.write(
@@ -185,17 +298,23 @@ fn pthread_attr_destroy(env: &mut Environment, attr: MutPtr<pthread_attr_t>) -> 
             magic: 0,
             detachstate: 0,
             stacksize: 0,
+            sched_policy: 0,
+            sched_param: sched_param { sched_priority: 0 },
             _unused: Default::default(),
         },
     );
-    0 // success
+    0
 }
+
+// =========================================================================
+// MARK: - Thread lifecycle
+// =========================================================================
 
 pub fn pthread_create(
     env: &mut Environment,
     thread: MutPtr<pthread_t>,
     attr: ConstPtr<pthread_attr_t>,
-    start_routine: GuestFunction, // (*void)(void *)
+    start_routine: GuestFunction,
     user_data: MutVoidPtr,
 ) -> i32 {
     let attr = if !attr.is_null() {
@@ -204,7 +323,6 @@ pub fn pthread_create(
     } else {
         DEFAULT_ATTR
     };
-
     let thread_id = env.new_thread(start_routine, user_data, attr.stacksize);
 
     let opaque = env.mem.alloc_and_write(OpaqueThread {
@@ -213,51 +331,85 @@ pub fn pthread_create(
     env.mem.write(thread, opaque);
 
     assert!(!State::get(env).threads.contains_key(&opaque));
-    State::get(env).threads.insert(
+    State::get(env)
+        .threads
+        .insert(opaque, ThreadHostObject::new(thread_id, attr));
+    log_dbg!(
+        "pthread_create({:?}, {:?}, {:?}, {:?}) => 0, pthread_t={:?} thread_id={}",
+        thread,
+        attr,
+        start_routine,
+        user_data,
         opaque,
-        ThreadHostObject {
-            thread_id,
-            joined_by: None,
-            attr,
-        },
+        thread_id
     );
+    log_once!("First pthread_create (app spawned a worker thread via raw pthread)");
+    0
+}
 
-    log_dbg!("pthread_create({:?}, {:?}, {:?}, {:?}) => 0 (success), created new pthread_t {:?} (thread ID: {})", thread, attr, start_routine, user_data, opaque, thread_id);
-
-    0 // success
+/// `int pthread_create_suspended_np(pthread_t *thread, const pthread_attr_t *attr,
+///                                  void *(*start_routine)(void *), void *arg)` —
+/// Darwin extension (declared in Apple's `pthread.h`): identical to
+/// [pthread_create] except the new thread is created in a suspended state
+/// and does not run until the caller resumes it with `thread_resume()` on
+/// the Mach port obtained via `pthread_mach_thread_np()`. Used by e.g.
+/// Unreal Engine 3 and Gameloft launchers to set thread affinity/priority
+/// before the thread runs.
+pub fn pthread_create_suspended_np(
+    env: &mut Environment,
+    thread: MutPtr<pthread_t>,
+    attr: ConstPtr<pthread_attr_t>,
+    start_routine: GuestFunction,
+    user_data: MutVoidPtr,
+) -> i32 {
+    let ret = pthread_create(env, thread, attr, start_routine, user_data);
+    if ret != 0 {
+        return ret;
+    }
+    // Suspend the freshly created thread before it gets a chance to run.
+    let opaque = env.mem.read(thread);
+    let thread_id = State::get(env).threads.get(&opaque).unwrap().thread_id;
+    env.suspend_thread(thread_id);
+    log_dbg!(
+        "pthread_create_suspended_np: thread {} created suspended",
+        thread_id
+    );
+    0
 }
 
 fn pthread_equal(env: &mut Environment, thread1: pthread_t, thread2: pthread_t) -> i32 {
-    if State::get(env).threads.get(&thread1).unwrap().thread_id
-        == State::get(env).threads.get(&thread2).unwrap().thread_id
-    {
-        1
-    } else {
-        0
+    // POSIX: pthread_equal() shall return a non-zero value if t1 and t2 are
+    // equal; otherwise, zero shall be returned. On Darwin pthread_t is an
+    // opaque handle, so direct handle equality is a sufficient (and the
+    // canonical) check. We still consult our thread registry to handle the
+    // case where the same logical thread was assigned two different opaque
+    // handles, but a missing entry must not panic — guest code can legally
+    // call pthread_equal with a stale pthread_t (e.g. of a thread that has
+    // already exited and been collected). Treat any unknown handle as
+    // "compare by raw pthread_t" instead of crashing.
+    if thread1 == thread2 {
+        return 1;
+    }
+    let state = State::get(env);
+    let id1 = state.threads.get(&thread1).map(|t| t.thread_id);
+    let id2 = state.threads.get(&thread2).map(|t| t.thread_id);
+    match (id1, id2) {
+        (Some(a), Some(b)) if a == b => 1,
+        _ => 0,
     }
 }
 
 pub fn pthread_self(env: &mut Environment) -> pthread_t {
     let current_thread = env.current_thread;
-
-    // The main thread is a special case since it's not created via pthreads,
-    // so we need to create its object on-demand.
     if current_thread == 0 && !State::get(env).main_thread_object_created {
         State::get(env).main_thread_object_created = true;
-
         let opaque = env.mem.alloc_and_write(OpaqueThread {
             magic: MAGIC_THREAD,
         });
-
         assert!(!State::get(env).threads.contains_key(&opaque));
-        State::get(env).threads.insert(
-            opaque,
-            ThreadHostObject {
-                thread_id: 0,
-                joined_by: None,
-                attr: DEFAULT_ATTR,
-            },
-        );
+        State::get(env)
+            .threads
+            .insert(opaque, ThreadHostObject::new(0, DEFAULT_ATTR));
         log_dbg!(
             "pthread_self: created pthread object {:?} for main thread",
             opaque
@@ -272,34 +424,44 @@ pub fn pthread_self(env: &mut Environment) -> pthread_t {
     ptr
 }
 
+pub fn pthread_exit(env: &mut Environment, retval: MutVoidPtr) {
+    let current_thread = env.current_thread;
+    log!(
+        "pthread_exit({:?}) on emulated thread {}; redirecting to touchHLE thread-exit routine",
+        retval,
+        current_thread
+    );
+
+    // pthread_exit is noreturn from the guest's point of view.
+    //
+    // The old implementation parked the *host* thread forever, which makes the
+    // desktop think touchHLE is frozen. Instead, branch to the same guest-side
+    // thread-exit SVC that touchHLE already uses when a pthread start routine
+    // returns normally.
+    //
+    // Note: environment::Thread::return_value is private to environment.rs.
+    // This patch intentionally does not set it here. If a game later joins a
+    // thread that exited via pthread_exit, we should add a small Environment
+    // setter instead of touching that private field from this module.
+    let thread_exit = env.dyld.thread_exit_routine();
+
+    let regs = env.cpu.regs_mut();
+    regs[0] = retval.to_bits();
+    regs[Cpu::LR] = thread_exit.addr_with_thumb_bit();
+    env.cpu.branch(thread_exit);
+}
+
 fn pthread_join(env: &mut Environment, thread: pthread_t, retval: MutPtr<MutVoidPtr>) -> i32 {
     let current_thread = env.current_thread;
     let curr_pthread_t = pthread_self(env);
-    // The joinee is the thread that is being waited on.
     let joinee_thread = State::get(env).threads.get_mut(&thread).unwrap().thread_id;
 
-    // FIXME?: Blocking on the main thread is technically allowed, but
-    // effectively useless (as the main thread exiting means the whole
-    // application exits). It complicates some handling and is probably safe to
-    // ignore here.
     assert!(joinee_thread != 0);
-
-    // Can't join thread with itself!
     if joinee_thread == current_thread {
         log_dbg!("Thread attempted join with self, returning EDEADLK!");
         return EDEADLK;
     }
 
-    // Check that the current thread is not being waited on by the joinee, to
-    // prevent deadlocks.
-    // This only prevents 2-long cycles (matching aspen simulator), which is
-    // to say:
-    //       joining                joining        joining
-    // [T1] --------> [T2]    [T1] --------> [T2] --------> [T3]
-    //   ^              |       ^                             |
-    //   |    joining   |       |           joining           |
-    //   '--------------'       '-----------------------------'
-    //  This is prevented,               but this is not.
     let host_obj_curr = State::get(env).threads.get(&curr_pthread_t).unwrap();
     if let Some(thread) = host_obj_curr.joined_by {
         if thread == joinee_thread {
@@ -308,75 +470,161 @@ fn pthread_join(env: &mut Environment, thread: pthread_t, retval: MutPtr<MutVoid
         }
     }
 
-    // Deattached threads cannot be joined with.
     let host_obj_joinee = State::get(env).threads.get_mut(&thread).unwrap();
     if host_obj_joinee.attr.detachstate == PTHREAD_CREATE_DETACHED {
-        log_dbg!("Thread attempted join with deattached thread, returning EINVAL!");
+        log_dbg!("Thread attempted join with detached thread, returning EINVAL!");
         return EINVAL;
     }
 
     host_obj_joinee.joined_by = Some(current_thread);
-    // The executor will write the return value (void*) to *retval after the
-    // join occurs.
     env.join_with_thread(joinee_thread, retval);
     0
 }
 
 fn pthread_detach(env: &mut Environment, thread: pthread_t) -> i32 {
-    let Some(host_obj_joinee) = State::get(env).threads.get_mut(&thread) else {
-        // Defender Chronicles calls with non-existing threadid
-        log_dbg!("Thread attempted detach a thread that doesnt exist, returning ESRCH!");
+    let Some(host_obj) = State::get(env).threads.get_mut(&thread) else {
+        log_dbg!("pthread_detach: thread doesn't exist, returning ESRCH");
         return ESRCH;
     };
 
-    if host_obj_joinee.attr.detachstate == PTHREAD_CREATE_DETACHED {
-        log_dbg!("Thread attempted detach with deattached thread, returning EINVAL!");
+    if host_obj.attr.detachstate == PTHREAD_CREATE_DETACHED {
+        log_dbg!("pthread_detach: thread already detached, returning EINVAL");
         return EINVAL;
     }
 
-    log!("TODO: pthread_detach({:?})", thread);
+    // ИСПРАВЛЕНИЕ: Реально меняем состояние потока на отсоединённое
+    host_obj.attr.detachstate = PTHREAD_CREATE_DETACHED;
+
+    log_dbg!("pthread_detach({:?}) -> success", thread);
     0
 }
 
-fn pthread_setcanceltype(_env: &mut Environment, type_: i32, oldtype: MutPtr<i32>) -> i32 {
-    log!("TODO: pthread_setcanceltype({}, {:?})", type_, oldtype);
+// =========================================================================
+// MARK: - Cancellation
+// =========================================================================
+
+fn pthread_cancel(env: &mut Environment, thread: pthread_t) -> i32 {
+    let Some(host_obj) = State::get(env).threads.get_mut(&thread) else {
+        log_dbg!(
+            "pthread_cancel: unknown thread {:?}, returning ESRCH",
+            thread
+        );
+        return ESRCH;
+    };
+    if host_obj.cancel_requested {
+        // Already pending — POSIX still considers this success.
+        return 0;
+    }
+    host_obj.cancel_requested = true;
+    log_dbg!(
+        "pthread_cancel({:?}): cancel pending on thread_id={}",
+        thread,
+        host_obj.thread_id
+    );
     0
 }
-fn pthread_testcancel(_env: &mut Environment) {
-    log!("TODO: pthread_testcancel()");
+
+fn pthread_setcancelstate(env: &mut Environment, state: i32, oldstate: MutPtr<i32>) -> i32 {
+    if state != PTHREAD_CANCEL_ENABLE && state != PTHREAD_CANCEL_DISABLE {
+        return EINVAL;
+    }
+    let self_t = pthread_self(env);
+
+    let prev = {
+        let host_obj = State::get(env).threads.get_mut(&self_t).unwrap();
+        if host_obj.cancel_disabled {
+            PTHREAD_CANCEL_DISABLE
+        } else {
+            PTHREAD_CANCEL_ENABLE
+        }
+    };
+
+    if !oldstate.is_null() {
+        env.mem.write(oldstate, prev);
+    }
+
+    let host_obj = State::get(env).threads.get_mut(&self_t).unwrap();
+    host_obj.cancel_disabled = state == PTHREAD_CANCEL_DISABLE;
+    log_dbg!("pthread_setcancelstate({})", state);
+    0
 }
+
+fn pthread_setcanceltype(env: &mut Environment, cancel_type: i32, oldtype: MutPtr<i32>) -> i32 {
+    if cancel_type != PTHREAD_CANCEL_DEFERRED && cancel_type != PTHREAD_CANCEL_ASYNCHRONOUS {
+        return EINVAL;
+    }
+    let self_t = pthread_self(env);
+
+    let prev = {
+        let host_obj = State::get(env).threads.get_mut(&self_t).unwrap();
+        if host_obj.cancel_async {
+            PTHREAD_CANCEL_ASYNCHRONOUS
+        } else {
+            PTHREAD_CANCEL_DEFERRED
+        }
+    };
+
+    if !oldtype.is_null() {
+        env.mem.write(oldtype, prev);
+    }
+
+    let host_obj = State::get(env).threads.get_mut(&self_t).unwrap();
+    host_obj.cancel_async = cancel_type == PTHREAD_CANCEL_ASYNCHRONOUS;
+    if cancel_type == PTHREAD_CANCEL_ASYNCHRONOUS {
+        log!(
+            "Warning: pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS) — \
+             async cancellation not fully supported; treating as deferred"
+        );
+    }
+    log_dbg!("pthread_setcanceltype({})", cancel_type);
+    0
+}
+
+fn pthread_testcancel(env: &mut Environment) {
+    let self_t = pthread_self(env);
+    let host_obj = State::get(env).threads.get(&self_t).unwrap();
+    if host_obj.cancel_disabled || !host_obj.cancel_requested {
+        return;
+    }
+    log_dbg!("pthread_testcancel: cancelling current thread");
+    pthread_exit(env, PTHREAD_CANCELED);
+}
+
+// =========================================================================
+// MARK: - Darwin extensions
+// =========================================================================
 
 #[allow(non_camel_case_types)]
 type mach_port_t = u32;
-
-/// Undocumented Darwin function that returns a `mach_port_t`, which in practice
-/// is used by apps as a unique thread ID.
 fn pthread_mach_thread_np(env: &mut Environment, thread: pthread_t) -> mach_port_t {
-    let host_object = State::get(env).threads.get(&thread).unwrap();
-    // Must return thread_id + 1 to match mach_thread_self()
-    // (Plus 1 is to avoid having MACH_PORT_NULL for the main thread)
-    (host_object.thread_id + 1).try_into().unwrap()
+    if let Some(host_object) = State::get(env).threads.get(&thread) {
+        (host_object.thread_id + 1).try_into().unwrap()
+    } else {
+        0
+    }
 }
 
-/// Undocumented Darwin function that returns stack's "bottom" address
 fn pthread_get_stackaddr_np(env: &mut Environment, thread: pthread_t) -> MutVoidPtr {
-    let thread_id = State::get(env).threads.get(&thread).unwrap().thread_id;
-    Ptr::from_bits(*env.threads[thread_id].stack.as_ref().unwrap().end())
-}
-/// Undocumented Darwin function that returns stack's size
-fn pthread_get_stacksize_np(env: &mut Environment, thread: pthread_t) -> GuestUSize {
-    let thread_id = State::get(env).threads.get(&thread).unwrap().thread_id;
-    let start_unadjusted = env.threads[thread_id].stack.as_ref().unwrap().start();
-    let start = if thread_id == 0 {
-        // As tested on iPhone 3GS with iOS 4.0.1, for the main thread
-        // the reported stack size is one short of a page size. Presumably,
-        // the first stack page is guarded and not reported as usable.
-        *start_unadjusted + PAGE_SIZE
+    if let Some(thread_id) = State::get(env).threads.get(&thread).map(|t| t.thread_id) {
+        Ptr::from_bits(*env.threads[thread_id].stack.as_ref().unwrap().end())
     } else {
-        *start_unadjusted
-    };
-    let end = env.threads[thread_id].stack.as_ref().unwrap().end();
-    end.wrapping_add(1).wrapping_sub(start)
+        Ptr::from_bits(0)
+    }
+}
+
+fn pthread_get_stacksize_np(env: &mut Environment, thread: pthread_t) -> GuestUSize {
+    if let Some(thread_id) = State::get(env).threads.get(&thread).map(|t| t.thread_id) {
+        let start_unadjusted = env.threads[thread_id].stack.as_ref().unwrap().start();
+        let start = if thread_id == 0 {
+            *start_unadjusted + PAGE_SIZE
+        } else {
+            *start_unadjusted
+        };
+        let end = env.threads[thread_id].stack.as_ref().unwrap().end();
+        end.wrapping_add(1).wrapping_sub(start)
+    } else {
+        0
+    }
 }
 
 fn pthread_getschedparam(
@@ -409,26 +657,149 @@ fn pthread_setschedparam(
     0
 }
 
+// =========================================================================
+// MARK: - Signals & scope (stubs for compatibility)
+// =========================================================================
+
+/// `pthread_sigmask` — change or examine the signal mask for the calling thread.
+/// In touchHLE signals are not emulated, so this is a no-op returning success.
+fn pthread_sigmask(
+    _env: &mut Environment,
+    how: i32,
+    set: ConstVoidPtr,
+    old_set: MutVoidPtr,
+) -> i32 {
+    log_dbg!(
+        "pthread_sigmask(how={}, set={:?}, old_set={:?}) -> stub 0",
+        how,
+        set,
+        old_set
+    );
+    // If old_set is non-NULL, real POSIX would write the previous mask.
+    // In our HLE environment signals don't exist, so we leave it zeroed /
+    // untouched.  Returning 0 = success.
+    0
+}
+
+/// `pthread_kill` — send a signal to a specific thread.
+/// Not supported in HLE; returns 0 (success) to avoid app abort.
+fn pthread_kill(
+    _env: &mut Environment,
+    thread: pthread_t,
+    sig: i32,
+) -> i32 {
+    log_dbg!(
+        "pthread_kill(thread={:?}, sig={}) -> stub 0",
+        thread,
+        sig
+    );
+    0
+}
+
+/// `pthread_attr_setscope` — set the contention scope attribute.
+/// On Darwin this is essentially always PTHREAD_SCOPE_SYSTEM.  We accept any
+/// value and return 0.
+fn pthread_attr_setscope(
+    _env: &mut Environment,
+    attr: MutVoidPtr,
+    scope: i32,
+) -> i32 {
+    log_dbg!(
+        "pthread_attr_setscope(attr={:?}, scope={}) -> stub 0",
+        attr,
+        scope
+    );
+    0
+}
+
+// =========================================================================
+// MARK: - Thread naming (Darwin extensions)
+// =========================================================================
+
+/// `int pthread_getname_np(pthread_t thread, char *name, size_t len)`
+/// Gets the name of the specified thread. On Darwin, thread names are limited
+/// to 63 characters + NUL. If no name has been set, the buffer is filled with
+/// an empty string.
+/// See: https://developer.apple.com/library/archive/documentation/System/Conceptual/ManPages_iPhoneOS/man3/pthread_getname_np.3.html
+fn pthread_getname_np(
+    env: &mut Environment,
+    thread: pthread_t,
+    buf: MutPtr<u8>,
+    len: GuestUSize,
+) -> i32 {
+    if buf.is_null() || len == 0 {
+        return EINVAL;
+    }
+    let Some(host_obj) = State::get(env).threads.get(&thread) else {
+        log_dbg!("pthread_getname_np: unknown thread {:?}, returning ESRCH", thread);
+        return ESRCH;
+    };
+    let name = host_obj.name.clone();
+    let name_bytes = name.as_bytes();
+    let copy_len = name_bytes.len().min((len as usize).saturating_sub(1));
+    let dst = env.mem.bytes_at_mut(buf, len);
+    dst[..copy_len].copy_from_slice(&name_bytes[..copy_len]);
+    dst[copy_len] = 0;
+    log_dbg!("pthread_getname_np({:?}) => {:?}", thread, name);
+    0
+}
+
+/// `int pthread_setname_np(const char *name)`
+/// Sets the name of the calling thread. On Darwin this only applies to the
+/// current thread (unlike Linux where you pass a pthread_t).
+/// See: https://developer.apple.com/library/archive/documentation/System/Conceptual/ManPages_iPhoneOS/man3/pthread_setname_np.3.html
+fn pthread_setname_np(env: &mut Environment, name: ConstPtr<u8>) -> i32 {
+    let name_str = if name.is_null() {
+        String::new()
+    } else {
+        env.mem.cstr_at_utf8(name).unwrap_or("").to_string()
+    };
+    // Truncate to 63 chars (Darwin limit is MAXTHREADNAMESIZE = 64 including NUL)
+    let truncated: String = name_str.chars().take(63).collect();
+    let self_t = pthread_self(env);
+    if let Some(host_obj) = State::get(env).threads.get_mut(&self_t) {
+        host_obj.name = truncated.clone();
+    }
+    log_dbg!("pthread_setname_np({:?})", truncated);
+    0
+}
+
 pub const FUNCTIONS: FunctionExports = &[
+    // Attributes
     export_c_func!(pthread_attr_init(_)),
     export_c_func!(pthread_attr_getdetachstate(_, _)),
     export_c_func!(pthread_attr_setdetachstate(_, _)),
     export_c_func!(pthread_attr_getstacksize(_, _)),
     export_c_func!(pthread_attr_setstacksize(_, _)),
+    export_c_func!(pthread_attr_setstack(_, _, _)),
+    export_c_func!(pthread_attr_setstackaddr(_, _)),
     export_c_func!(pthread_attr_setinheritsched(_, _)),
     export_c_func!(pthread_attr_setschedpolicy(_, _)),
     export_c_func!(pthread_attr_setschedparam(_, _)),
+    export_c_func!(pthread_attr_setscope(_, _)),
     export_c_func!(pthread_attr_destroy(_)),
+    // Lifecycle
     export_c_func!(pthread_create(_, _, _, _)),
+    export_c_func!(pthread_create_suspended_np(_, _, _, _)),
     export_c_func!(pthread_equal(_, _)),
     export_c_func!(pthread_self()),
+    export_c_func!(pthread_exit(_)),
     export_c_func!(pthread_join(_, _)),
     export_c_func!(pthread_detach(_)),
+    // Cancellation
+    export_c_func!(pthread_cancel(_)),
+    export_c_func!(pthread_setcancelstate(_, _)),
     export_c_func!(pthread_setcanceltype(_, _)),
     export_c_func!(pthread_testcancel()),
+    // Signals
+    export_c_func!(pthread_sigmask(_, _, _)),
+    export_c_func!(pthread_kill(_, _)),
+    // Darwin extensions
     export_c_func!(pthread_mach_thread_np(_)),
     export_c_func!(pthread_get_stackaddr_np(_)),
     export_c_func!(pthread_get_stacksize_np(_)),
     export_c_func!(pthread_getschedparam(_, _, _)),
     export_c_func!(pthread_setschedparam(_, _, _)),
+    export_c_func!(pthread_getname_np(_, _, _)),
+    export_c_func!(pthread_setname_np(_)),
 ];

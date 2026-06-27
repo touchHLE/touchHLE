@@ -21,6 +21,9 @@ if [[ $# == 3 ]]; then
     rm -rf "$ICON_NAME.icns" "$ICON_NAME.iconset"
     mkdir "$ICON_NAME.iconset"
     cp ../res/"$ICON_NAME.png" "$ICON_NAME.iconset"/icon_512x512.png
+    # iconutil requires the image to match the size implied by its filename
+    # (512x512), so resize in case the source PNG has different dimensions.
+    sips -z 512 512 "$ICON_NAME.iconset"/icon_512x512.png > /dev/null
     iconutil -c icns -o "$ICON_NAME.icns" "$ICON_NAME.iconset"
 
     rm -rf "$APP_NAME.app"

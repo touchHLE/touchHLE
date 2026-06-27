@@ -5,7 +5,8 @@
  */
 //! Image decoding.
 //!
-//! Currently, supports PNG (treated as 8-bit sRGB), JPEG, BMP and GIF files.
+//! Currently, supports PNG (treated as 8-bit sRGB), JPEG, BMP, GIF, and TGA
+//! files.
 //!
 //! Implemented as a wrapper around the C library stb_image, since it supports
 //! "CgBI" PNG files (an Apple proprietary extension used in iPhone OS apps).
@@ -22,12 +23,16 @@ use std::ffi::{c_int, c_uchar, CStr};
 use touchHLE_pvrt_decompress_wrapper::*;
 use touchHLE_stb_image_wrapper::*;
 
+#[derive(Default)]
 pub struct Image {
     pixels: PixelStore,
     dimensions: (u32, u32),
 }
 
+#[derive(Default)]
 enum PixelStore {
+    #[default]
+    Empty,
     StbImage(*mut c_uchar),
     Vec(Vec<u8>),
 }
@@ -37,13 +42,11 @@ const PNG_MAGIC_NUMBER: [u8; 8] = [137, 80, 78, 71, 13, 10, 26, 10];
 impl Image {
     pub fn from_bytes(bytes: &[u8]) -> Result<Image, String> {
         let len: c_int = bytes.len().try_into().unwrap();
-
         let mut x: c_int = 0;
         let mut y: c_int = 0;
         let mut _channels_in_file: c_int = 0;
 
         // TODO: we're currently assuming this is sRGB, can we check somehow?
-
         let pixels = unsafe {
             // stb_image's support for CgBI images is a bit incomplete:
             // - If we don't ask it to "convert to RGB" for us, it will load
@@ -75,6 +78,7 @@ impl Image {
         if bytes.starts_with(&PNG_MAGIC_NUMBER) {
             let len = width as usize * height as usize * 4;
             let pixels = unsafe { std::slice::from_raw_parts_mut(pixels, len) };
+
             let mut i = 0;
             while i < pixels.len() {
                 let a = pixels[i + 3] as f32 / 255.0;
@@ -101,6 +105,14 @@ impl Image {
         }
     }
 
+    pub fn from_pixels(width: u32, height: u32, pixels: Vec<u8>) -> Self {
+        assert_eq!(pixels.len(), (width * height * 4) as usize);
+        Image {
+            pixels: PixelStore::Vec(pixels),
+            dimensions: (width, height),
+        }
+    }
+
     pub fn dimensions(&self) -> (u32, u32) {
         self.dimensions
     }
@@ -109,6 +121,7 @@ impl Image {
     /// alpha). Rows are in top-to-bottom order.
     pub fn pixels(&self) -> &[u8] {
         match self.pixels {
+            PixelStore::Empty => &[],
             PixelStore::Vec(ref vec) => vec,
             PixelStore::StbImage(ptr) => unsafe {
                 std::slice::from_raw_parts(
@@ -121,6 +134,7 @@ impl Image {
 
     fn pixels_mut(&mut self) -> &mut [u8] {
         match self.pixels {
+            PixelStore::Empty => &mut [],
             PixelStore::Vec(ref mut vec) => vec,
             PixelStore::StbImage(ptr) => unsafe {
                 std::slice::from_raw_parts_mut(
@@ -140,6 +154,7 @@ impl Image {
         let (x_usize, y_usize) = (x as usize, y as usize);
         let (width, height) = self.dimensions;
         let (width, height) = (width as usize, height as usize);
+
         if x >= 0 && x_usize < width && y >= 0 && y_usize < height {
             let rgba = &self.pixels()[y_usize * width * 4 + x_usize * 4..][..4];
             let [r, g, b, a]: [u8; 4] = rgba.try_into().unwrap();
@@ -167,11 +182,13 @@ impl Image {
         } else {
             (f32::INFINITY, f32::INFINITY)
         };
+
         let (sheen_center_x, sheen_center_y, sheen_radius) = if add_sheen {
             (w / 2.0, -(h / 2.0), h)
         } else {
             (f32::INFINITY, f32::INFINITY, 0.0)
         };
+
         for y_usize in 0..h_usize {
             for x_usize in 0..w_usize {
                 let x = x_usize as f32;
@@ -180,12 +197,15 @@ impl Image {
                 let corner_x = (radius - x).max(x - right_corners_begin);
                 let corner_y = (radius - y).max(y - bottom_corners_begin);
                 let corner_circle_distance = corner_x.hypot(corner_y);
+
                 let x_edge_distance = (x).min(w - x - 1.0);
                 let y_edge_distance = (y).min(h - y - 1.0);
                 let actual_corner_distance = x_edge_distance.hypot(y_edge_distance);
+
                 let rounded_edge_distance = x_edge_distance
                     .min(y_edge_distance)
                     .min((radius.max(actual_corner_distance) - corner_circle_distance).max(0.0));
+
                 let icon_opacity = if corner_x > 0.0 && corner_y > 0.0 {
                     // Bad approximation of the pixel coverage of a filled arc.
                     let distance = (corner_circle_distance - radius).clamp(0.0, 1.0);
@@ -194,6 +214,7 @@ impl Image {
                 } else {
                     1.0
                 };
+
                 let sheen_opacity = {
                     let distance = (x - sheen_center_x).hypot(y - sheen_center_y);
                     // Bad approximation of the pixel coverage of a filled arc.
@@ -207,6 +228,7 @@ impl Image {
                     // There is also extra shinyness around the rim.
                     (1.0 - area) * taper
                 };
+
                 let rgba = &mut self.pixels_mut()[y_usize * w_usize * 4 + x_usize * 4..][..4];
                 for channel in rgba.iter_mut() {
                     *channel = (*channel as f32 * icon_opacity * (1.0 - sheen_opacity)
@@ -214,6 +236,54 @@ impl Image {
                         as u8;
                 }
             }
+        }
+    }
+
+    /// Writes an RGBA image to a PNG file using stb_image_write_png_to_func
+    /// This is used by `UIImageWriteToSavedPhotosAlbum` to save images
+    ///
+    /// Parameters:
+    /// - `ctx_ptr`: Context pointer used by the stb write callback.
+    /// - `w`: Image width in pixels.
+    /// - `h`: Image height in pixels.
+    /// - `rgba`: Raw pixel buffer in RGBA8888 format.
+    /// - `stride`: Number of bytes per image row (normally `width * 4`).
+    ///
+    /// Returns:
+    /// The return value from `stbi_write_png`:
+    /// - non-zero on success
+    /// - zero on failure.
+    pub fn write_png_image(
+        &self,
+        ctx_ptr: *mut std::ffi::c_void,
+        w: i32,
+        h: i32,
+        rgba: &[u8],
+        stride: i32,
+    ) -> i32 {
+        unsafe extern "C" fn write_cb(
+            context: *mut std::ffi::c_void,
+            data: *mut std::ffi::c_void,
+            size: std::ffi::c_int,
+        ) {
+            if context.is_null() || data.is_null() || size <= 0 {
+                return;
+            }
+            let out: &mut Vec<u8> = &mut *(context as *mut Vec<u8>);
+            let bytes = std::slice::from_raw_parts(data as *const u8, size as usize);
+            out.extend_from_slice(bytes);
+        }
+
+        unsafe {
+            stbi_write_png_to_func(
+                Some(write_cb),
+                ctx_ptr,
+                w,
+                h,
+                4,
+                rgba.as_ptr().cast(),
+                stride,
+            )
         }
     }
 }
@@ -230,7 +300,7 @@ impl Drop for Image {
     fn drop(&mut self) {
         match self.pixels {
             PixelStore::StbImage(ptr) => unsafe { stbi_image_free(ptr.cast()) },
-            PixelStore::Vec(_) => (),
+            PixelStore::Vec(_) | PixelStore::Empty => (),
         }
     }
 }

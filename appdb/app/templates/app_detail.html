@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block title %}{{ app.name }} — HyperHLE app compatibility database{% endblock %}
+{% block content %}
+<p><a href="/">← All apps</a></p>
+
+<h1>{{ app.name }}</h1>
+
+<table class="kv-table">
+  <tr><th>App name</th><td>{{ app.name }}</td></tr>
+  <tr><th>Release year</th><td>{{ app.release_year or '—' }}</td></tr>
+  <tr><th>Developer / Publisher</th><td>{{ app.developer_publisher or '—' }}</td></tr>
+  <tr><th>First reported</th><td>{{ app.first_reported_at | fmt_dt }}</td></tr>
+  <tr><th>First reported by</th><td>{{ app.first_reported_by or '—' }}</td></tr>
+</table>
+
+<p><a class="button" href="/submit?app_id={{ app.id }}">+ Submit a report for this app</a></p>
+
+<h2>Versions</h2>
+{% if versions %}
+<table class="apps-table">
+  <thead>
+    <tr>
+      <th>Version</th>
+      <th>Display name</th>
+      <th>Bundle identifier</th>
+      <th>Min iOS</th>
+      <th>Best rating</th>
+      <th>Last updated</th>
+      <th>First reported by</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for v in versions %}
+    <tr>
+      <td>{{ v.version_number }}</td>
+      <td>{{ v.display_name or '' }}</td>
+      <td><code>{{ v.bundle_identifier or '' }}</code></td>
+      <td>{{ v.minimum_ios_version or '' }}</td>
+      <td class="stars">{{ v.best_rating | stars }}</td>
+      <td>{{ v.last_updated | fmt_dt }}</td>
+      <td>{{ v.first_reported_by or '' }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="muted">No versions reported yet.</p>
+{% endif %}
+
+<h2>Reports</h2>
+{% if reports %}
+<table class="apps-table reports-table">
+  <thead>
+    <tr>
+      <th>Version</th>
+      <th>HyperHLE version</th>
+      <th>Operating system</th>
+      <th>GPU</th>
+      <th>Scale hack</th>
+      <th>Rating</th>
+      <th>Reported</th>
+      <th>By</th>
+      <th>Remarks</th>
+      <th>Screenshot</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for r in reports %}
+    <tr class="report-row report-{{ r.status }}">
+      <td>
+        {{ r.version_number }}
+        {% if r.status != 'approved' %}
+          <span class="status-badge status-{{ r.status }}">{{ r.status }}</span>
+        {% endif %}
+      </td>
+      <td>{{ r.touchhle_version }}</td>
+      <td>{{ r.operating_system }}</td>
+      <td>{{ r.gpu or '' }}</td>
+      <td>{{ r.scale_hack or '' }}</td>
+      <td class="stars">{{ r.rating | stars }}</td>
+      <td>{{ r.reported_at | fmt_dt }}</td>
+      <td>{{ r.reported_by or '' }}</td>
+      <td>{{ r.remarks or '' }}</td>
+      <td>
+        {% if r.screenshot_filename %}
+          <a href="/uploads/{{ r.screenshot_filename }}" target="_blank" rel="noopener">
+            <img class="thumb" src="/uploads/{{ r.screenshot_filename }}" alt="screenshot" />
+          </a>
+        {% elif r.screenshot_url %}
+          <a href="{{ r.screenshot_url }}" target="_blank" rel="noopener">View</a>
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="muted">No reports yet — <a href="/submit?app_id={{ app.id }}">be the first to submit one</a>.</p>
+{% endif %}
+
+<h2>Legend</h2>
+<table class="legend-table">
+  <thead><tr><th>Rating</th><th>Description</th></tr></thead>
+  <tbody>
+    {% for value, desc in rating_legend %}
+    <tr><td class="stars">{{ value | stars }}</td><td>{{ desc }}</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

@@ -18,12 +18,31 @@ use crate::mem::{GuestUSize, Mem, MutPtr, Ptr};
 /// ```c
 /// int main(int argc, char *argv[], char *envp[], char *apple[]);
 /// ```
+///
+/// There are two ways an executable's entry point receives these:
+///
+/// * Old-style `LC_UNIXTHREAD`/`LC_THREAD` binaries (iPhone OS 2.x–3.0) jump
+///   to a `start` routine that reads `argc`/`argv`/… off the stack and then
+///   calls `main` itself.
+/// * `LC_MAIN` binaries (iPhone OS 3.1 and later, including the 32-bit App
+///   Store builds touchHLE also targets) have their entry point be the C
+///   `main` function directly; dyld calls it with `argc`, `argv`, `envp` and
+///   `apple` already loaded into `r0`–`r3` per the AAPCS calling convention.
+///
+/// We always lay the data out on the stack (harmless for `LC_MAIN`), and when
+/// `pass_args_in_registers` is set we *also* populate `r0`–`r3` so that an
+/// `LC_MAIN` `main` sees its arguments. Without this, `main` would read
+/// whatever garbage was left in those registers as `argc`/`argv`, which
+/// typically leads to walking an invalid `argv` and crashing very early in
+/// startup (e.g. BioShock aborts inside its allocator while copying the
+/// command line).
 pub fn prep_stack_for_start(
     mem: &mut Mem,
     cpu: &mut Cpu,
     argv: &[&str],
     envp: &[&str],
     apple: &[&str],
+    pass_args_in_registers: bool,
 ) {
     let argc: i32 = argv.len().try_into().unwrap();
 
@@ -109,5 +128,21 @@ pub fn prep_stack_for_start(
 
     assert!(stack_height.is_multiple_of(4)); // ensure padding worked properly
 
-    cpu.regs_mut()[Cpu::SP] = stack_ptr.to_bits();
+    let sp = stack_ptr.to_bits();
+    cpu.regs_mut()[Cpu::SP] = sp;
+
+    if pass_args_in_registers {
+        // The on-stack layout, from `sp` upwards, is exactly `string_ptrs` in
+        // order: `[argc][argv[0]…argv[argc-1]][NULL][envp…][NULL][apple…][NULL]`.
+        // dyld passes `main` these as `main(argc, argv, envp, apple)`, where
+        // `argv`/`envp`/`apple` are pointers to the respective sub-arrays.
+        let argv_ptr = sp + 4; // skip argc
+        let envp_ptr = argv_ptr + 4 * (argv.len() as u32 + 1); // skip argv + NULL
+        let apple_ptr = envp_ptr + 4 * (envp.len() as u32 + 1); // skip envp + NULL
+        let regs = cpu.regs_mut();
+        regs[0] = argc as u32;
+        regs[1] = argv_ptr;
+        regs[2] = envp_ptr;
+        regs[3] = apple_ptr;
+    }
 }

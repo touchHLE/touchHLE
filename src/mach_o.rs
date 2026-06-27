@@ -51,10 +51,20 @@ pub struct MachO {
     pub external_relocations: Vec<(u32, String)>,
     /// Address/program counter value for the entry point.
     pub entry_point_pc: Option<u32>,
+    /// Whether the entry point came from an `LC_MAIN` load command rather
+    /// than `LC_UNIXTHREAD`/`LC_THREAD`. With `LC_MAIN`, the entry point is
+    /// the C `main` function itself, which dyld calls with
+    /// `(argc, argv, envp, apple)` passed in registers per the calling
+    /// convention, rather than a `start` routine that reads them from the
+    /// stack.
+    pub entry_point_is_lc_main: bool,
     /// End address of the highest-addressed segment.
     /// This is used by get_end() to return the first address after the last
     /// segment in the executable.
     pub last_segment_end: u32,
+    /// Base address of the __TEXT segment (where the mach_header lives in
+    /// memory). Used by `_dyld_get_image_header`.
+    pub text_base: u32,
 }
 
 #[derive(Debug)]
@@ -236,7 +246,13 @@ fn cpu_subtype_to_str(ty: cpu_subtype_t) -> &'static str {
         mach_object::CPU_SUBTYPE_ARM_V7S => "armv7s",
         mach_object::CPU_SUBTYPE_ARM_V7K => "armv7k",
         mach_object::CPU_SUBTYPE_ARM_V8 => "armv8",
-        _ => panic!("Unexpected cpu subtype: {ty:?}"),
+        _ => {
+            log!(
+                "Warning: cpu_subtype_to_str: unexpected cpu subtype: {:?}; using 'armv???'.",
+                ty
+            );
+            "armv???"
+        }
     }
 }
 
@@ -259,10 +275,37 @@ impl MachO {
         let (header, commands) = match file {
             OFile::MachFile { header, commands } => (header, commands),
             OFile::FatFile { files, .. } => {
-                let mut best_subslice = None;
+                let mut best_subslice: Option<&[u8]> = None;
                 let mut best_type = None;
+                let mut had_truncated_slice = false;
                 for (arch, _) in files {
                     if arch.cputype != mach_object::CPU_TYPE_ARM {
+                        continue;
+                    }
+                    // Per Apple's Mach-O FAT documentation, each `fat_arch`
+                    // gives an absolute offset and size into the wrapping FAT
+                    // file. Some malformed / partially-downloaded IPAs (e.g.
+                    // Bike Race Free) have a header that describes a slice
+                    // larger than the bytes we actually have on disk, which
+                    // used to crash with `range end index N out of range for
+                    // slice of length M`. Bounds-check here and skip the slice
+                    // instead of panicking; we'll fall back to whatever other
+                    // slice is present, or surface a clean error.
+                    let off = arch.offset as usize;
+                    let size = arch.size as usize;
+                    let end = off.checked_add(size);
+                    let in_bounds = matches!(end, Some(e) if e <= bytes.len());
+                    if !in_bounds {
+                        log!(
+                            "Warning: FAT slice (cputype {:#x}, cpusubtype {:#x}) declares \
+                             range {:#x}..{:#x}, past end of file ({:#x}); skipping this slice.",
+                            arch.cputype,
+                            arch.cpusubtype,
+                            off,
+                            off.saturating_add(size),
+                            bytes.len(),
+                        );
+                        had_truncated_slice = true;
                         continue;
                     }
                     if arch.cpusubtype == mach_object::CPU_SUBTYPE_ARM_V7
@@ -270,14 +313,14 @@ impl MachO {
                             && best_type != Some(mach_object::CPU_SUBTYPE_ARM_V7))
                         || best_type.is_none()
                     {
-                        best_subslice = Some(
-                            &bytes[arch.offset as usize..arch.offset as usize + arch.size as usize],
-                        );
+                        best_subslice = Some(&bytes[off..off + size]);
                         best_type = Some(arch.cpusubtype);
                     }
                 }
                 return if let Some(subslice) = best_subslice {
                     MachO::load_from_bytes(subslice, into_mem, name, slide_to_address)
+                } else if had_truncated_slice {
+                    Err("FAT binary is truncated: declared ARM slice extends past end of file (the .ipa may be corrupt or incomplete)")
                 } else {
                     Err("No supported architecture in the fat binary")
                 };
@@ -323,6 +366,7 @@ impl MachO {
         let mut indirect_undef_symbols: Vec<Option<String>> = Vec::new();
         let mut external_relocations: Vec<(u32, String)> = Vec::new();
         let mut entry_point_pc: Option<u32> = None;
+        let mut entry_point_is_lc_main = false;
 
         let slide = slide_to_address;
 
@@ -368,11 +412,47 @@ impl MachO {
                             true
                         }
                         "__DATA" => true,
+                        // `__RESTRICT` is a one-section segment Apple's
+                        // linker emits to mark a binary as non-injectable
+                        // (it disables `DYLD_INSERT_LIBRARIES` and the
+                        // task-port debugging path in dyld). It contains a
+                        // `__restrict` C-string section; the segment is
+                        // documented in Apple's open-source dyld
+                        // (`dyld/src/ImageLoaderMachO.cpp`) and xnu's
+                        // `bsd/kern/mach_loader.c`. We don't enforce that
+                        // policy in HLE, so treat the segment as a regular
+                        // read-only data segment without spamming a warning.
+                        "__RESTRICT" => true,
+                        // `__S3E_DATA` is a data segment used by the Marmalade SDK
+                        // (formerly Airplay SDK), which some older iOS games link with.
+                        "__S3E_DATA" => true,
                         _ => {
                             log!("Warning: Unexpected segment name: {}", segname);
                             true
                         }
                     };
+
+                    // Apple's xnu kernel (`bsd/kern/mach_loader.c`,
+                    // `parse_machfile()` → `load_segment()`) explicitly
+                    // skips `LC_SEGMENT` commands whose `vmsize == 0` —
+                    // they reserve no address space and have no data.
+                    // Some shipping iOS binaries (e.g. games containing a
+                    // dummy `__RESTRICT` segment from older linkers) emit
+                    // zero-vmsize segments; reserving 0 bytes used to
+                    // panic our allocator (`NonZeroU32::new(0).unwrap()`
+                    // in `Chunk::new`), so honour the kernel's contract
+                    // and silently ignore them here.
+                    if load_me && vmsize == 0 {
+                        log_dbg!(
+                            "Skipping zero-vmsize segment {} at {:#x} (matches xnu mach_loader.c behaviour)",
+                            segname,
+                            vmaddr + slide
+                        );
+                        all_sections.extend_from_slice(&sections);
+                        segment_offsets.push(vmaddr);
+                        last_segment_end = last_segment_end.max(vmaddr + slide);
+                        continue;
+                    }
 
                     if load_me {
                         log_dbg!(
@@ -388,11 +468,33 @@ impl MachO {
                         // the memory is already zeroed!
                         if filesize > 0 {
                             assert!(filesize <= vmsize);
-
-                            let src = &bytes[fileoff..][..filesize as usize];
-                            let dst =
-                                into_mem.bytes_at_mut(Ptr::from_bits(vmaddr + slide), filesize);
-                            dst.copy_from_slice(src);
+                            let fileoff: usize = fileoff
+                                .try_into()
+                                .map_err(|_| "Segment file offset does not fit host usize")?;
+                            let filesize_usize = filesize as usize;
+                            let file_end = fileoff
+                                .checked_add(filesize_usize)
+                                .ok_or("Segment file range overflows host usize")?;
+                            if file_end > bytes.len() {
+                                log!(
+                                    "Warning: segment {} declares file range \
+                                     {:#x}..{:#x}, past end of Mach-O file \
+                                     ({:#x}); loading available bytes and \
+                                     leaving the rest zero-filled",
+                                    segname,
+                                    fileoff,
+                                    file_end,
+                                    bytes.len(),
+                                );
+                            }
+                            if fileoff < bytes.len() {
+                                let available_end = file_end.min(bytes.len());
+                                let src = &bytes[fileoff..available_end];
+                                let copy_len = src.len() as GuestUSize;
+                                let dst =
+                                    into_mem.bytes_at_mut(Ptr::from_bits(vmaddr + slide), copy_len);
+                                dst.copy_from_slice(src);
+                            }
                         }
                     }
 
@@ -462,21 +564,38 @@ impl MachO {
                             &mut cursor,
                         );
                         indirect_undef_symbols.push(match sym {
-                            // apparently used in apps?
-                            Some(Symbol::Undefined { name: Some(n), .. }) => Some(String::from(n)),
-                            // apparently used in libraries?
-                            Some(Symbol::Prebound { name: Some(n), .. }) => Some(String::from(n)),
-                            // apparently used within libstdc++ for linking to
-                            // itself, e.g. to "__Znwm". might be a PIC thing
-                            Some(Symbol::Defined { name: Some(n), .. }) => Some(String::from(n)),
+                            // Если имя есть (Some), оно превратится в
+                            // Some(String).
+                            // Если имени нет (None), вернется None, и мы
+                            // избежим паники.
+                            Some(Symbol::Undefined { name, .. }) => name.map(String::from),
+                            Some(Symbol::Prebound { name, .. }) => name.map(String::from),
+                            Some(Symbol::Defined { name, .. }) => name.map(String::from),
+                            // Debug-символы по-прежнему игнорируем
+                            Some(Symbol::Debug { .. }) => None,
                             None => None,
-                            _ => panic!("Unexpected symbol kind {sym:?}"),
+                            other => {
+                                log!(
+                                    "Warning: indirect symbol table contains an unexpected symbol kind {:?}; treating as anonymous.",
+                                    other
+                                );
+                                None
+                            }
                         })
                     }
 
                     let extrels = &bytes[extreloff as usize..][..nextrel as usize * 8];
                     for entry in extrels.chunks(8) {
-                        let reloc = Reloc::parse(is_bigend, entry.try_into().unwrap());
+                        let entry_arr: [u8; 8] = match entry.try_into() {
+                            Ok(a) => a,
+                            Err(_) => {
+                                log!(
+                                    "Warning: external relocation table entry is not 8 bytes; truncated dynamic symbol table."
+                                );
+                                break;
+                            }
+                        };
+                        let reloc = Reloc::parse(is_bigend, entry_arr);
                         let Reloc::External {
                             addr,
                             sym_idx,
@@ -485,7 +604,11 @@ impl MachO {
                             type_: 0, // generic
                         } = reloc
                         else {
-                            panic!("Unhandled extrel: {reloc:?}")
+                            log!(
+                                "Warning: skipping unsupported external relocation entry: {:?}",
+                                reloc
+                            );
+                            continue;
                         };
                         let addr = if split_segs {
                             addr + first_read_write_segment_base.unwrap()
@@ -528,7 +651,13 @@ impl MachO {
                                 into_mem.write(ptr_ptr, 0); // Clear prebinding.
                                 external_relocations.push((addr, String::from(n)));
                             }
-                            _ => panic!("Unexpected symbol kind {sym:?}"),
+                            other => {
+                                log!(
+                                    "Warning: external relocation references an unexpected symbol kind {:?}; skipping fixup at {:#x}.",
+                                    other,
+                                    addr
+                                );
+                            }
                         };
                     }
                 }
@@ -548,10 +677,27 @@ impl MachO {
                         __cpsr: 0,
                     } = state
                     else {
-                        panic!("Unexpected initial thread state in {name:?}: {state:?}");
+                        log!(
+                            "Warning: unexpected initial thread state in {:?}: {:?}; falling back to extracted PC if present.",
+                            name,
+                            state
+                        );
+                        // Try to read the PC anyway; otherwise leave entry
+                        // unset which will surface as a clear error later.
+                        if let ThreadState::Arm { __pc, .. } = state {
+                            if entry_point_pc.is_none() {
+                                entry_point_pc = Some(__pc);
+                            }
+                        }
+                        continue;
                     };
-                    // There should only be a single initial thread state.
-                    assert!(entry_point_pc.is_none());
+                    if entry_point_pc.is_some() {
+                        log!(
+                            "Warning: multiple initial thread states in {:?}; ignoring extra entries.",
+                            name
+                        );
+                        continue;
+                    }
                     entry_point_pc = Some(pc);
                 }
                 // New-style entry point PC command
@@ -567,6 +713,7 @@ impl MachO {
                     assert!(entry_point_pc.is_none());
                     let entryoff: u32 = entryoff.try_into().unwrap();
                     entry_point_pc = Some(text_segment_base.unwrap() + entryoff);
+                    entry_point_is_lc_main = true;
                 }
                 // Used in iOS 3.1+ apps. Also contains info about
                 // weak and lazy binds, but we already handle those.
@@ -577,8 +724,56 @@ impl MachO {
                     bind_size,
                     ..
                 } => {
+                    fn checked_dyld_info_slice<'a>(
+                        bytes: &'a [u8],
+                        off: u64,
+                        size: u64,
+                        kind: &str,
+                        name: &str,
+                    ) -> &'a [u8] {
+                        // Convert to host usize with bounds checking — a truncated
+                        // Mach-O (e.g. a corrupt IPA) can declare a dyld_info range
+                        // that runs past EOF, and the raw slice panics with
+                        // "range end index N out of range for slice of length M".
+                        // Apple's dyld bails out on the binary; we degrade
+                        // gracefully and load the rest.
+                        let Ok(off_usize) = usize::try_from(off) else {
+                            log!(
+                                "Warning: {} dyld_info range starts at {:#x} past host usize \
+                                 in {:?}; skipping.",
+                                kind, off, name
+                            );
+                            return &[];
+                        };
+                        let Ok(size_usize) = usize::try_from(size) else {
+                            log!(
+                                "Warning: {} dyld_info range size {:#x} past host usize \
+                                 in {:?}; skipping.",
+                                kind, size, name
+                            );
+                            return &[];
+                        };
+                        let Some(end) = off_usize.checked_add(size_usize) else {
+                            log!(
+                                "Warning: {} dyld_info range {:#x}..{:#x}+{:#x} overflows \
+                                 in {:?}; skipping.",
+                                kind, off_usize, off_usize, size_usize, name
+                            );
+                            return &[];
+                        };
+                        if end > bytes.len() {
+                            log!(
+                                "Warning: {} dyld_info range {:#x}..{:#x} past end of \
+                                 Mach-O file ({:#x}) in {:?}; skipping.",
+                                kind, off_usize, end, bytes.len(), name
+                            );
+                            return &[];
+                        }
+                        &bytes[off_usize..end]
+                    }
+
                     let rebase_opcodes = Rebase::parse(
-                        &bytes[rebase_off as usize..][..rebase_size as usize],
+                        checked_dyld_info_slice(bytes, rebase_off as u64, rebase_size as u64, "rebase", &name),
                         size_of::<GuestUSize>(),
                     );
 
@@ -598,15 +793,17 @@ impl MachO {
                                 );
                                 into_mem.write(original_location, old + slide);
                             }
-                            _ => unimplemented!(
-                                "Unhandled DyldInfo rebase symbol type: {:?}",
-                                symb.symbol_type
-                            ),
+                            other => {
+                                log!(
+                                    "Warning: unhandled DyldInfo rebase symbol type: {:?}; skipping.",
+                                    other
+                                );
+                            }
                         }
                     }
 
                     let bind_opcodes = Bind::parse(
-                        &bytes[bind_off as usize..][..bind_size as usize],
+                        checked_dyld_info_slice(bytes, bind_off as u64, bind_size as u64, "bind", &name),
                         size_of::<GuestUSize>(),
                     );
                     for symb in bind_opcodes {
@@ -618,10 +815,12 @@ impl MachO {
                                 log_dbg!("Pointer bind: {:#x} -> {}", addr, symb.name);
                                 external_relocations.push((addr, symb.name));
                             }
-                            _ => unimplemented!(
-                                "Unhandled DyldInfo bind symbol type: {:?}",
-                                symb.symbol_type
-                            ),
+                            other => {
+                                log!(
+                                    "Warning: unhandled DyldInfo bind symbol type: {:?}; skipping.",
+                                    other
+                                );
+                            }
                         }
                     }
                 }
@@ -687,7 +886,9 @@ impl MachO {
             exported_symbols,
             external_relocations,
             entry_point_pc,
+            entry_point_is_lc_main,
             last_segment_end,
+            text_base: text_segment_base.unwrap_or(first_segment_base.unwrap_or(0)),
         })
     }
 

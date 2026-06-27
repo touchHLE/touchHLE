@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}Admin — HyperHLE app compatibility database{% endblock %}
+{% block content %}
+<h1>Moderation queue</h1>
+
+<nav class="status-tabs">
+  <a class="status-tab {% if selected_status == 'pending' %}active{% endif %}" href="/admin?status=pending">
+    Pending <span class="badge">{{ counts['pending'] }}</span>
+  </a>
+  <a class="status-tab {% if selected_status == 'approved' %}active{% endif %}" href="/admin?status=approved">
+    Approved <span class="badge">{{ counts['approved'] }}</span>
+  </a>
+  <a class="status-tab {% if selected_status == 'rejected' %}active{% endif %}" href="/admin?status=rejected">
+    Rejected <span class="badge">{{ counts['rejected'] }}</span>
+  </a>
+  <a class="status-tab {% if selected_status == 'all' %}active{% endif %}" href="/admin?status=all">
+    All
+  </a>
+</nav>
+
+{% if reports %}
+<div class="admin-list">
+  {% for r in reports %}
+  <article class="admin-report report-{{ r.status }}">
+    <header>
+      <span class="status-badge status-{{ r.status }}">{{ r.status }}</span>
+      <a href="/apps/{{ r.app_id }}"><strong>{{ r.app.name }}</strong></a>
+      <span class="muted">version {{ r.version_number }}</span>
+      <span class="stars">{{ r.rating | stars }}</span>
+      <span class="muted">submitted {{ r.reported_at | fmt_dt }} by {{ r.reported_by or '—' }}</span>
+    </header>
+    <table class="kv-table">
+      <tr><th>Display name</th><td>{{ r.display_name or '—' }}</td></tr>
+      <tr><th>Bundle id</th><td><code>{{ r.bundle_identifier or '—' }}</code></td></tr>
+      <tr><th>Min iOS</th><td>{{ r.minimum_ios_version or '—' }}</td></tr>
+      <tr><th>HyperHLE</th><td>{{ r.touchhle_version }}</td></tr>
+      <tr><th>OS</th><td>{{ r.operating_system }}</td></tr>
+      <tr><th>GPU</th><td>{{ r.gpu or '—' }}</td></tr>
+      <tr><th>Scale hack</th><td>{{ r.scale_hack or '—' }}</td></tr>
+      <tr><th>Remarks</th><td>{{ r.remarks or '—' }}</td></tr>
+      <tr>
+        <th>Screenshot</th>
+        <td>
+          {% if r.screenshot_filename %}
+            <a href="/uploads/{{ r.screenshot_filename }}" target="_blank" rel="noopener">
+              <img class="thumb" src="/uploads/{{ r.screenshot_filename }}" alt="screenshot" />
+            </a>
+          {% elif r.screenshot_url %}
+            <a href="{{ r.screenshot_url }}" target="_blank" rel="noopener">{{ r.screenshot_url }}</a>
+          {% else %}—{% endif %}
+        </td>
+      </tr>
+      {% if r.reviewed_at %}
+      <tr><th>Reviewed</th><td>{{ r.reviewed_at | fmt_dt }} by {{ r.reviewer.display_name if r.reviewer else '—' }}</td></tr>
+      {% endif %}
+      {% if r.rejection_reason %}
+      <tr><th>Rejection reason</th><td>{{ r.rejection_reason }}</td></tr>
+      {% endif %}
+    </table>
+
+    <div class="admin-actions">
+      {% if r.status != 'approved' %}
+      <form method="post" action="/admin/reports/{{ r.id }}/approve">
+        <button type="submit" class="primary">Approve</button>
+      </form>
+      {% endif %}
+      {% if r.status != 'rejected' %}
+      <form method="post" action="/admin/reports/{{ r.id }}/reject" class="reject-form">
+        <input type="text" name="reason" placeholder="Rejection reason (optional)" />
+        <button type="submit">Reject</button>
+      </form>
+      {% endif %}
+      <form method="post" action="/admin/reports/{{ r.id }}/delete"
+            onsubmit="return confirm('Delete this report permanently?');">
+        <button type="submit" class="danger">Delete</button>
+      </form>
+    </div>
+  </article>
+  {% endfor %}
+</div>
+{% else %}
+<p class="muted">Nothing in this bucket right now.</p>
+{% endif %}
+{% endblock %}
